@@ -10,7 +10,7 @@ const config = {
     adapter: adapter(),
     alias: {
       $lib: resolve('./src/lib'),
-      $paraglide: resolve('./src/lib/paraglide')
+      $paraglide: resolve('./src/lib/paraglide'),
 	  '$paraglide/runtime': resolve('./src/lib/paraglide/runtime')
     }
   },
