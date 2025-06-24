@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from 'eslint-plugin-storybook';
+
 import prettier from 'eslint-config-prettier';
 import { includeIgnoreFile } from '@eslint/compat';
 import js from '@eslint/js';
@@ -20,14 +23,10 @@ export default ts.config(
 		languageOptions: {
 			globals: { ...globals.browser, ...globals.node }
 		},
-		rules: { "no-undef": 'off' }
+		rules: { 'no-undef': 'off' }
 	},
 	{
-		files: [
-			'**/*.svelte',
-			'**/*.svelte.ts',
-			'**/*.svelte.js'
-		],
+		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
 		languageOptions: {
 			parserOptions: {
 				projectService: true,
@@ -36,5 +35,6 @@ export default ts.config(
 				svelteConfig
 			}
 		}
-	}
+	},
+	storybook.configs['flat/recommended']
 );
