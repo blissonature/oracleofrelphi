@@ -1,4 +1,4 @@
-import { initParaglide } from '@inlang/paraglide-js-adapter-sveltekit';
+import { initParaglide } from '@inlang/paraglide-js';
 import type { AvailableLanguageTag } from '$paraglide/runtime';
 
 export const { locale, locales } = initParaglide<AvailableLanguageTag>({
