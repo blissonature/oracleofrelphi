@@ -1,7 +1,5 @@
-import { initParaglide } from '@inlang/paraglide-js';
-import type { AvailableLanguageTag } from '$paraglide/runtime';
+import { languageTag, availableLanguageTags, setLanguageTag } from '$paraglide/runtime';
 
-export const { locale, locales } = initParaglide<AvailableLanguageTag>({
-  project: new URL('../../project.inlang', import.meta.url),
-  outDir: 'src/lib/paraglide'
-});
+export const locale = languageTag;
+export const locales = availableLanguageTags;
+export const setLocale = setLanguageTag;
