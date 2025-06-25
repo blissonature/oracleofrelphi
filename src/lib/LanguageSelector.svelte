@@ -1,24 +1,22 @@
 <!-- src/lib/LanguageSelector.svelte -->
 
 <script lang="ts">
-  import { setLocale } from './i18n.js';
+  import { setLocale, availableLanguageTags } from './i18n.js';
 
   let selected: string;
 
-  let availableLanguages = [
-    { code: 'en', label: 'English' },
-    { code: 'ga', label: 'Gaeilge' },
-    { code: 'el', label: 'Ελληνικά' },
-    { code: 'he', label: 'עברית' },
-    { code: 'ar', label: 'العربية' },
-    { code: 'la', label: 'Latine' }
-  ];
-
   function choose(code: string) {
-    setLocale(code);
     selected = code;
+    setLocale(code);
   }
+
+  const availableLanguages = availableLanguageTags.map((tag: string) => ({
+    code: tag,
+    label: tag.toUpperCase() // or use a prettier name map if needed
+  }));
 </script>
+
+
 
 
 <style>
