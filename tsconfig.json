@@ -10,6 +10,12 @@
     "sourceMap": true,
     "strict": true,
     "module": "NodeNext",
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "NodeNext",
+    "baseUrl": ".", 
+    "paths": {
+      "$lib/*": ["src/lib/*"],
+      "$paraglide/*": ["src/lib/paraglide/*"],
+      "$paraglide/runtime": ["src/lib/paraglide/runtime/index.js"]
+    }
   }
 }
