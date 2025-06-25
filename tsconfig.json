@@ -15,7 +15,7 @@
     "paths": {
       "$lib/*": ["src/lib/*"],
       "$paraglide/*": ["src/lib/paraglide/*"],
-      "$paraglide/runtime": ["src/lib/paraglide/runtime/index.js"]
+      "$paraglide/runtime": ["src/lib/paraglide/runtime/index.ts"]
     }
   }
 }

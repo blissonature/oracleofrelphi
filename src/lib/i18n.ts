@@ -1,5 +1,5 @@
-import { languageTag, setLanguageTag, availableLanguageTags } from '$paraglide/runtime';
+import { availableLanguageTags, setLanguageTag } from '$paraglide/runtime';
 
-export const locale = languageTag;
+export const locale = null; // placeholder until real implementation
 export const locales = availableLanguageTags;
 export const setLocale = setLanguageTag;
