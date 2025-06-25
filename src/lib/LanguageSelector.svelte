@@ -1,10 +1,9 @@
 <!-- src/lib/LanguageSelector.svelte -->
 
-<script>
-  import * as m from '$paraglide/messages'; // This gives you access to the message keys
+<script lang="ts">
+  import { setLocale } from '../i18n.ts';
 
-  import { locale, locales } from '$lib/i18n';
-  import { onMount } from 'svelte';
+  let selected: string;
 
   let availableLanguages = [
     { code: 'en', label: 'English' },
@@ -15,17 +14,12 @@
     { code: 'la', label: 'Latine' }
   ];
 
-  let selected;
-
-  onMount(() => {
-    selected = $locale;
-  });
-
-  function choose(code) {
-    locale.set(code);
+  function choose(code: string) {
+    setLocale(code);
     selected = code;
   }
 </script>
+
 
 <style>
   .selector {
