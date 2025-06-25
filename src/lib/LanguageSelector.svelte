@@ -1,7 +1,7 @@
 <!-- src/lib/LanguageSelector.svelte -->
 
 <script lang="ts">
-  import { setLocale } from '../i18n.js';
+  import { setLocale } from './i18n.js';
 
   let selected: string;
 
