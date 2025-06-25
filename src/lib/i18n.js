@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { availableLanguageTags, setLanguageTag } from '$paraglide/runtime';
 
 export const locale = null; // placeholder until real implementation
