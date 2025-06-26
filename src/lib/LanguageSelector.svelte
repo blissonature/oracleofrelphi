@@ -1,5 +1,4 @@
 <script lang="ts">
-
   import { setLocale, availableLanguageTags } from './i18n.js';
 
   let selected: string;
@@ -11,7 +10,7 @@
 
   const availableLanguages = availableLanguageTags.map((tag: string) => ({
     code: tag,
-    label: tag.toUpperCase(), // or use a prettier name map if needed
+    label: tag.toUpperCase() // or use a prettier name map if needed
   }));
 </script>
 
