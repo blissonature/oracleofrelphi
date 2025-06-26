@@ -1,6 +1,6 @@
-<!-- src/lib/LanguageSelector.svelte -->
-
 <script lang="ts">
+  // Extend HTML attributes to recognize on:click in TS
+
   import { setLocale, availableLanguageTags } from './i18n.js';
 
   let selected: string;
@@ -12,12 +12,9 @@
 
   const availableLanguages = availableLanguageTags.map((tag: string) => ({
     code: tag,
-    label: tag.toUpperCase() // or use a prettier name map if needed
+    label: tag.toUpperCase(), // or use a prettier name map if needed
   }));
 </script>
-
-
-
 
 <style>
   .selector {
@@ -55,7 +52,8 @@
   {#each availableLanguages as lang}
     <button
       class="flame-button {selected === lang.code ? 'active' : ''}"
-      on:click={() => choose(lang.code)}>
+      on:click={() => choose(lang.code)}
+    >
       {lang.label}
     </button>
   {/each}
