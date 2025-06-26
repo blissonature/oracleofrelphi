@@ -1,5 +1,4 @@
 <script lang="ts">
-  // Extend HTML attributes to recognize on:click in TS
 
   import { setLocale, availableLanguageTags } from './i18n.js';
 
