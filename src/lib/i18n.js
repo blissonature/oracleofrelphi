@@ -1,4 +1,4 @@
-import { setLocale } from '$paraglide/runtime';
-import { locales as availableLanguageTags } from '$paraglide';
+import { setLocale, locale } from '$paraglide/runtime';
+import { availableLanguageTags } from '$paraglide';
 
-export { setLocale, availableLanguageTags };
+export { setLocale, availableLanguageTags, locale };
