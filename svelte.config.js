@@ -11,7 +11,7 @@ const config = {
     alias: {
       $lib: resolve('./src/lib'),
       $paraglide: resolve('./src/lib/paraglide'),
-      $paraglideRuntime: resolve('./src/lib/paraglide/runtime')
+      '$paraglide/runtime': resolve('./src/lib/paraglide/runtime')
     }
   },
   extensions: ['.svelte', '.svx']
