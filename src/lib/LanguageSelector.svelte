@@ -17,7 +17,8 @@
 <div class="selector">
   {#each availableLanguages as lang}
     <button
-      class="flame-button {selected === lang.code ? 'active' : ''}"
+      class="flame-button"
+      class:active={selected === lang.code}
       on:click={() => choose(lang.code)}
     >
       {lang.label}
