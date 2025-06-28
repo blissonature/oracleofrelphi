@@ -25,7 +25,6 @@
     </button>
   {/each}
 </div>
-
 <style>
   .selector {
     display: flex;
