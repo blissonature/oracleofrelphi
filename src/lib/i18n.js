@@ -1,9 +1,4 @@
-//@ts-nocheck
+import { setLocale } from '$paraglide/runtime';
+import { availableLanguageTags } from '$paraglide';
 
-import { availableLanguageTags, setLanguageTag } from '$paraglide/runtime';
-
-export const locale = null; // placeholder until real implementation
-export const locales = availableLanguageTags;
-export const setLocale = setLanguageTag;
-export { availableLanguageTags };
-
+export { setLocale, availableLanguageTags };
