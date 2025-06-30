@@ -295,7 +295,7 @@ main { margin-top: 2.6em; }
 }
 
 .question-card:hover, .question-card:focus-within {
-  background: #222;
+  background: #e53935;
   color: #fff;
   transform: translateY(-3px) scale(1.04);
   box-shadow: 0 6px 36px rgba(229,57,53,0.13);
