@@ -194,3 +194,45 @@ main { margin-top: 2.6em; }
   font-weight: 400;
   letter-spacing: 0.01em;
 }
+.invocation-section {
+  background: #faf8f7; /* off-white, subtle */
+  border: 2px solid #e53935; /* Relphi-red accent */
+  border-radius: 1.5em;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+  max-width: 36em;
+  margin: 2.5em auto 2.5em auto;
+  padding: 2em 1.4em 2.2em 1.4em;
+}
+.invocation-section h2 {
+  margin-top: 0;
+  margin-bottom: 1em;
+  font-size: 1.42em;
+  letter-spacing: 0.01em;
+  font-weight: 700;
+  color: #111;
+  text-align: center;
+}
+.invocation-section ol {
+  max-width: 32em;
+  margin: 0.5em auto 1.2em auto;
+  text-align: left;
+  font-size: 1em;
+  color: #222;
+  padding-left: 1.3em;
+}
+.invocation-examples {
+  list-style: none;
+  padding: 0;
+  margin: 1em auto 0 auto;
+  max-width: 32em;
+  text-align: center;
+}
+.invocation-examples li {
+  font-style: italic;
+  font-size: 1.07em;
+  color: #e53935;
+  margin: 0.38em 0;
+  padding: 0;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
