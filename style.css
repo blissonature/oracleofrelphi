@@ -337,11 +337,50 @@ main { margin-top: 2.6em; }
 
 @media (max-width: 900px) {
   .suggested-questions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(370px, 1fr));
+  gap: 1.5em;
+  max-width: 900px;
+  margin: 2.5em auto 0 auto;
+  justify-items: center;
+  align-items: stretch;
+  padding: 0 1em;
+}
+
+.question-card {
+  background: #fff;
+  border: 2px solid #e53935;
+  border-radius: 1.3em;
+  padding: 1.2em 1.8em;
+  font-size: 1.13em;
+  font-family: 'EB Garamond', 'Georgia', serif;
+  color: #222;
+  box-shadow: 0 3px 16px rgba(0,0,0,0.08);
+  font-style: italic;
+  cursor: pointer;
+  transition: transform 0.14s, box-shadow 0.16s, background 0.2s, color 0.2s;
+  width: 370px;        /* FIXED width for all cards */
+  min-width: 370px;
+  max-width: 370px;
+  text-align: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  box-sizing: border-box;
+}
+
+@media (max-width: 800px) {
+  .suggested-questions {
     grid-template-columns: 1fr;
     gap: 1em;
     padding: 0 0.3em;
   }
   .question-card {
-    max-width: 98vw;
+    width: 98vw;
+    min-width: unset;
+    max-width: 99vw;
   }
+}
 }
