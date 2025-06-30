@@ -261,19 +261,31 @@ main { margin-top: 2.6em; }
   box-shadow: 0 8px 32px rgba(229,57,53,0.19);
   outline: none;
 }
+.suggested-questions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5em;
+  max-width: 900px;
+  margin: 2.5em auto 0 auto;
+  justify-items: center;
+  align-items: stretch;
+  padding: 0 1em;
+}
+
 .question-card {
   background: #fff;
   border: 2px solid #e53935;
   border-radius: 1.3em;
   padding: 1.2em 1.8em;
-  font-size: 1.09em;
+  font-size: 1.13em;
   font-family: 'EB Garamond', 'Georgia', serif;
   color: #222;
-  box-shadow: 0 3px 16px rgba(0,0,0,0.09);
+  box-shadow: 0 3px 16px rgba(0,0,0,0.08);
   font-style: italic;
   cursor: pointer;
-  transition: transform 0.14s, box-shadow 0.16s;
-  max-width: 280px;
+  transition: transform 0.14s, box-shadow 0.16s, background 0.2s, color 0.2s;
+  max-width: 350px;
+  min-width: 0;
   text-align: center;
   position: relative;
   display: flex;
@@ -281,12 +293,20 @@ main { margin-top: 2.6em; }
   justify-content: center;
   gap: 0.6em;
 }
-.copy-btn {
+
+.question-card:hover, .question-card:focus-within {
+  background: #e53935;
+  color: #fff;
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 6px 36px rgba(229,57,53,0.13);
+}
+
+.question-card .copy-btn {
   background: none;
   border: none;
   color: #e53935;
   font-size: 1em;
-  margin-left: 0.4em;
+  margin-left: 0.6em;
   cursor: pointer;
   padding: 0.1em 0.2em;
   border-radius: 0.7em;
@@ -295,6 +315,10 @@ main { margin-top: 2.6em; }
   align-items: center;
   position: relative;
 }
+.question-card:hover .copy-btn, .question-card:focus-within .copy-btn {
+  color: #fff;
+}
+
 .copy-btn:focus {
   outline: 2px solid #e53935;
 }
@@ -303,23 +327,21 @@ main { margin-top: 2.6em; }
   pointer-events: none;
 }
 .copied-text {
-  color: #111;
-  font-size: 0.98em;
+  color: #fff;
+  font-size: 0.97em;
   margin-left: 0.25em;
   font-style: normal;
   pointer-events: none;
   font-weight: 500;
 }
-.question-card:hover, .question-card:focus-within {
-  background: #e53935;
-  color: #fff;
-  transform: translateY(-3px) scale(1.04);
-  box-shadow: 0 6px 36px rgba(229,57,53,0.15);
-}
-.question-card:hover .copy-btn, .question-card:focus-within .copy-btn {
-  color: #fff;
-}
-.question-card:hover .copied-text,
-.question-card:focus-within .copied-text {
-  color: #fff;
+
+@media (max-width: 900px) {
+  .suggested-questions {
+    grid-template-columns: 1fr;
+    gap: 1em;
+    padding: 0 0.3em;
+  }
+  .question-card {
+    max-width: 98vw;
+  }
 }
