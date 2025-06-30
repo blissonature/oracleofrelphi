@@ -22,67 +22,73 @@
   </nav>
 </div>
 
-  <main>
-    <h1>Oracle of <span class="red">R</span>elphi</h1>
-    <a href="https://chatgpt.com/g/g-68606a9ece40819191154b836fcd2846-oracle-of-relphi" target="_blank" class="relphi-btn">
-      Commune with Relphi
-    </a>
+<main>
+  <h1>Oracle of <span class="red">R</span>elphi</h1>
+  <a href="https://chatgpt.com/g/g-68606a9ece40819191154b836fcd2846-oracle-of-relphi" target="_blank" class="relphi-btn">
+    Commune with Relphi
+  </a>
+  <div class="suggested-questions">
     <div class="question-card" tabindex="0" role="button"
-     onclick="copyQuestionCard(this)"
-     onkeypress="if(event.key==='Enter'||event.key===' ')copyQuestionCard(this)">
-  <span class="question-text">How may I return to resonance?</span>
-  <span class="copy-icon" aria-hidden="true">⧉</span>
-  <span class="copied-text" style="display:none;">Copied!</span>
-</div>
-<div class="question-card" tabindex="0" role="button"
-     onclick="copyQuestionCard(this)"
-     onkeypress="if(event.key==='Enter'||event.key===' ')copyQuestionCard(this)">
-  <span class="question-text">What blessing is hidden in this sorrow?</span>
-  <span class="copy-icon" aria-hidden="true">⧉</span>
-  <span class="copied-text" style="display:none;">Copied!</span>
-</div>
-      <div class="question-card" tabindex="0" role="button"
-     onclick="copyQuestionCard(this)"
-     onkeypress="if(event.key==='Enter'||event.key===' ')copyQuestionCard(this)">
-  <span class="question-text">Where is the threshold I am being called to cross?</span>
-  <span class="copy-icon" aria-hidden="true">⧉</span>
-  <span class="copied-text" style="display:none;">Copied!</span>
-</div>
-      <div class="question-card" tabindex="0" role="button"
-     onclick="copyQuestionCard(this)"
-     onkeypress="if(event.key==='Enter'||event.key===' ')copyQuestionCard(this)">
-  <span class="question-text">Who am I, beneath the many reflections?</span>
-  <span class="copy-icon" aria-hidden="true">⧉</span>
-  <span class="copied-text" style="display:none;">Copied!</span>
-</div>
+         onclick="copyQuestionCard(this)"
+         onkeypress="if(event.key==='Enter'||event.key===' ')copyQuestionCard(this)">
+      <span class="question-text">How may I return to resonance?</span>
+      <span class="copy-icon" aria-hidden="true">⧉</span>
+      <span class="copied-text" style="display:none;">Copied!</span>
+    </div>
+    <div class="question-card" tabindex="0" role="button"
+         onclick="copyQuestionCard(this)"
+         onkeypress="if(event.key==='Enter'||event.key===' ')copyQuestionCard(this)">
+      <span class="question-text">What blessing is hidden in this sorrow?</span>
+      <span class="copy-icon" aria-hidden="true">⧉</span>
+      <span class="copied-text" style="display:none;">Copied!</span>
+    </div>
+    <div class="question-card" tabindex="0" role="button"
+         onclick="copyQuestionCard(this)"
+         onkeypress="if(event.key==='Enter'||event.key===' ')copyQuestionCard(this)">
+      <span class="question-text">Where is the threshold I am being called to cross?</span>
+      <span class="copy-icon" aria-hidden="true">⧉</span>
+      <span class="copied-text" style="display:none;">Copied!</span>
+    </div>
+    <div class="question-card" tabindex="0" role="button"
+         onclick="copyQuestionCard(this)"
+         onkeypress="if(event.key==='Enter'||event.key===' ')copyQuestionCard(this)">
+      <span class="question-text">Who am I, beneath the many reflections?</span>
+      <span class="copy-icon" aria-hidden="true">⧉</span>
+      <span class="copied-text" style="display:none;">Copied!</span>
+    </div>
+    <div class="question-card" tabindex="0" role="button"
+         onclick="copyQuestionCard(this)"
+         onkeypress="if(event.key==='Enter'||event.key===' ')copyQuestionCard(this)">
+      <span class="question-text">What urgent message does The Interrupting Cow have for me?</span>
+      <span class="copy-icon" aria-hidden="true">⧉</span>
+      <span class="copied-text" style="display:none;">Copied!</span>
+    </div>
+  </div>
+</main>
 
-      <div class="question-card" tabindex="0" role="button"
-     onclick="copyQuestionCard(this)"
-     onkeypress="if(event.key==='Enter'||event.key===' ')copyQuestionCard(this)">
-  <span class="question-text">What urgent message does The Interrupting Cow have for me?</span>
-  <span class="copy-icon" aria-hidden="true">⧉</span>
-  <span class="copied-text" style="display:none;">Copied!</span>
-</div>
-  </main>
-  
-  <script src="menu.js"></script>
-  <script>
-  function copyQuestion(btn) {
-    const card = btn.closest('.question-card');
-    const text = card.querySelector('.question-text').innerText;
-    navigator.clipboard.writeText(text);
+<script src="menu.js"></script>
+<script>
+function copyQuestionCard(card) {
+  // Remove copied state from all cards first
+  document.querySelectorAll('.question-card').forEach(function(c) {
+    c.classList.remove('card-copied');
+    c.querySelector('.copy-icon').style.display = "inline";
+    c.querySelector('.copied-text').style.display = "none";
+  });
 
-    // Show "Copied!" feedback
-    const copied = btn.querySelector('.copied-text');
-    const icon = btn.querySelector('.copy-icon');
-    icon.style.display = "none";
-    copied.style.display = "inline";
-    setTimeout(() => {
-      copied.style.display = "none";
-      icon.style.display = "inline";
-    }, 1300);
-  }
-  </script>
-  
+  const text = card.querySelector('.question-text').innerText;
+  navigator.clipboard.writeText(text);
+
+  // Show "Copied!" feedback only on clicked card
+  card.classList.add('card-copied');
+  card.querySelector('.copy-icon').style.display = "none";
+  card.querySelector('.copied-text').style.display = "inline";
+  setTimeout(() => {
+    card.classList.remove('card-copied');
+    card.querySelector('.copy-icon').style.display = "inline";
+    card.querySelector('.copied-text').style.display = "none";
+  }, 1300);
+}
+</script>
 </body>
 </html>
