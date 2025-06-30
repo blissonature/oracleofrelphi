@@ -1,0 +1,36 @@
+body {
+  background: #1a1831;
+  color: #f5ece2;
+  font-family: 'EB Garamond', 'Georgia', serif;
+  display: flex; min-height: 100vh; flex-direction: column; justify-content: center; align-items: center;
+  margin: 0;
+}
+main {
+  max-width: 480px;
+  margin: 2rem;
+  padding: 2rem;
+  background: rgba(32,26,52,0.9);
+  border-radius: 2em;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.22);
+  text-align: center;
+}
+.logo { width: 84px; margin-bottom: 1rem;}
+.oracle-btn, .donate-btn {
+  display: inline-block;
+  background: #cdb4ff;
+  color: #271a3c;
+  padding: 0.7em 1.8em;
+  border-radius: 2em;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.15em;
+  margin: 1.2em 0;
+  transition: background 0.2s;
+}
+.oracle-btn:hover, .donate-btn:hover { background: #b18aff; }
+nav a {
+  margin: 0 0.6em; color: #a68aaf; text-decoration: none; font-size: 1.08em;
+}
+nav a:hover { color: #ffea00; }
+.invocation { font-style: italic; font-size: 1.1em; margin-bottom: 2em;}
+h1, h2 { letter-spacing: 0.03em; }
