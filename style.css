@@ -261,3 +261,65 @@ main { margin-top: 2.6em; }
   box-shadow: 0 8px 32px rgba(229,57,53,0.19);
   outline: none;
 }
+.question-card {
+  background: #fff;
+  border: 2px solid #e53935;
+  border-radius: 1.3em;
+  padding: 1.2em 1.8em;
+  font-size: 1.09em;
+  font-family: 'EB Garamond', 'Georgia', serif;
+  color: #222;
+  box-shadow: 0 3px 16px rgba(0,0,0,0.09);
+  font-style: italic;
+  cursor: pointer;
+  transition: transform 0.14s, box-shadow 0.16s;
+  max-width: 280px;
+  text-align: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+}
+.copy-btn {
+  background: none;
+  border: none;
+  color: #e53935;
+  font-size: 1em;
+  margin-left: 0.4em;
+  cursor: pointer;
+  padding: 0.1em 0.2em;
+  border-radius: 0.7em;
+  transition: background 0.13s, color 0.13s;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.copy-btn:focus {
+  outline: 2px solid #e53935;
+}
+.copy-icon {
+  font-size: 1.15em;
+  pointer-events: none;
+}
+.copied-text {
+  color: #111;
+  font-size: 0.98em;
+  margin-left: 0.25em;
+  font-style: normal;
+  pointer-events: none;
+  font-weight: 500;
+}
+.question-card:hover, .question-card:focus-within {
+  background: #e53935;
+  color: #fff;
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 6px 36px rgba(229,57,53,0.15);
+}
+.question-card:hover .copy-btn, .question-card:focus-within .copy-btn {
+  color: #fff;
+}
+.question-card:hover .copied-text,
+.question-card:focus-within .copied-text {
+  color: #fff;
+}
