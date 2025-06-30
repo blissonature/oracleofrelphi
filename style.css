@@ -1,45 +1,55 @@
-/* === Oracle of Relphi Theme === */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap');
 
+/* === Base styles === */
 body {
   margin: 0;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background-color: white;
-  color: #000;
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+  color: #111;
   text-align: center;
-  padding: 2rem;
+  padding: 3rem 1rem;
 }
 
+/* === Logo === */
 .logo {
-  max-width: 120px;
-  margin: 0 auto 1rem auto;
-  display: block;
+  max-width: 100px;
+  margin-bottom: 1.5rem;
 }
 
-/* Title style */
+/* === Main Title === */
 h1 {
-  font-size: 2.5rem;
+  font-size: 2.75rem;
   font-weight: 700;
-  margin: 0.25rem 0;
+  margin: 0.5rem 0;
 }
 
-/* Relphi "R" highlight */
-h1 span.red {
-  color: #e53935;
+h1 .red {
+  color: #e53935; /* match your logo's red */
 }
 
-/* Tagline style */
+/* === Tagline & Quote === */
 .invocation {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-style: italic;
-  font-weight: 300;
   color: #333;
-  margin-top: 0.5rem;
+  margin-top: 1rem;
+  line-height: 1.6;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* Optional: smooth & sacred spacing */
-main {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 2rem;
-  line-height: 1.6;
+/* === Links === */
+.links a {
+  display: inline-block;
+  margin: 0.5rem 1rem;
+  text-decoration: none;
+  font-weight: 500;
+  color: #e53935;
+  border-bottom: 1px solid transparent;
+  transition: border 0.2s ease;
+}
+
+.links a:hover {
+  border-bottom: 1px solid #e53935;
 }
