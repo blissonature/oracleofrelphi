@@ -1,36 +1,45 @@
+/* === Oracle of Relphi Theme === */
+
 body {
-  background: #1a1831;
-  color: #f5ece2;
-  font-family: 'EB Garamond', 'Georgia', serif;
-  display: flex; min-height: 100vh; flex-direction: column; justify-content: center; align-items: center;
   margin: 0;
-}
-main {
-  max-width: 480px;
-  margin: 2rem;
-  padding: 2rem;
-  background: rgba(32,26,52,0.9);
-  border-radius: 2em;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.22);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: white;
+  color: #000;
   text-align: center;
+  padding: 2rem;
 }
-.logo { width: 84px; margin-bottom: 1rem;}
-.oracle-btn, .donate-btn {
-  display: inline-block;
-  background: #cdb4ff;
-  color: #271a3c;
-  padding: 0.7em 1.8em;
-  border-radius: 2em;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 1.15em;
-  margin: 1.2em 0;
-  transition: background 0.2s;
+
+.logo {
+  max-width: 120px;
+  margin: 0 auto 1rem auto;
+  display: block;
 }
-.oracle-btn:hover, .donate-btn:hover { background: #b18aff; }
-nav a {
-  margin: 0 0.6em; color: #a68aaf; text-decoration: none; font-size: 1.08em;
+
+/* Title style */
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0.25rem 0;
 }
-nav a:hover { color: #ffea00; }
-.invocation { font-style: italic; font-size: 1.1em; margin-bottom: 2em;}
-h1, h2 { letter-spacing: 0.03em; }
+
+/* Relphi "R" highlight */
+h1 span.red {
+  color: #e53935;
+}
+
+/* Tagline style */
+.invocation {
+  font-size: 1.25rem;
+  font-style: italic;
+  font-weight: 300;
+  color: #333;
+  margin-top: 0.5rem;
+}
+
+/* Optional: smooth & sacred spacing */
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem;
+  line-height: 1.6;
+}
