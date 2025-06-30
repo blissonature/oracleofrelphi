@@ -6,7 +6,6 @@ document.addEventListener('click', function(event) {
   if (menuButton.contains(event.target)) {
     menuContainer.classList.toggle('active');
   } else {
-    // Close if clicked elsewhere
     menuContainer.classList.remove('active');
   }
 });
