@@ -385,3 +385,55 @@ main { margin-top: 2.6em; }
   }
 }
 }
+.site-footer {
+  margin-top: 3em;
+  padding: 2em 0 1em 0;
+  text-align: center;
+  background: transparent;
+}
+.footer-tagline {
+  font-family: 'Montserrat', 'Arial', sans-serif;
+  font-size: 1.38em;
+  font-style: italic;
+  color: #222;
+  letter-spacing: 0.03em;
+  font-weight: 400;
+  opacity: 0.93;
+  margin-bottom: 0.4em;
+}
+.footer-with {
+  color: #e53935;
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.footer-credit {
+  font-family: 'EB Garamond', 'Georgia', serif;
+  font-size: 1.05em;
+  color: #6a2424;
+  opacity: 0.83;
+  letter-spacing: 0.01em;
+  margin-top: 0.2em;
+}
+.footer-author {
+  color: #e53935;
+  font-style: normal;
+  font-weight: 600;
+}
+.footer-ltg {
+  font-style: italic;
+  color: #333;
+  font-weight: 400;
+}
+@media (max-width: 600px) {
+  .footer-tagline {
+    font-size: 1em;
+    padding: 0 0.4em;
+  }
+  .site-footer {
+    padding: 1.2em 0 0.6em 0;
+  }
+  .footer-credit {
+    font-size: 0.98em;
+  }
+}
