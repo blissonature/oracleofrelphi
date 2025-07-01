@@ -14,7 +14,7 @@
     }
     .about-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      grid-template-columns: 1fr;
       gap: 2em;
       margin: 2.5em 0 2em 0;
     }
@@ -28,7 +28,7 @@
     }
     .capabilities-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: 1fr;
       gap: 1.4em;
       margin: 1.5em 0 2.2em 0;
     }
@@ -46,8 +46,28 @@
       font-size: 1.15em;
       color: #273d57;
     }
-    @media (max-width: 600px) {
-      .about-grid, .capabilities-grid { grid-template-columns: 1fr; }
+
+    /* --- Responsive Styles --- */
+    @media (min-width: 700px) {
+      .about-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (min-width: 950px) {
+      .capabilities-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
+    @media (min-width: 600px) and (max-width: 949px) {
+      .capabilities-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 699px) {
+      .about-grid,
+      .capabilities-grid {
+        grid-template-columns: 1fr;
+      }
       .about-card, .capability-card { padding: 1.2em 0.7em; }
     }
   </style>
