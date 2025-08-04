@@ -6,7 +6,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oracle of Relphi</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- Montserrat font import -->
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,600&display=swap" rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <style>
+    body, .services-list, .site-footer {
+      font-family: 'Montserrat', Arial, sans-serif;
+    }
+    .services-list {
+      max-width: 740px;
+      margin: 2.5em auto;
+      padding: 2.5em 2em;
+      background: #f9f9fb;
+      border-radius: 2em;
+      box-shadow: 0 4px 24px rgba(44,44,60,0.09);
+    }
+    .services-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5em;
+    }
+    .service-card {
+      background: #fff;
+      border-radius: 1.5em;
+      box-shadow: 0 2px 10px rgba(90,90,80,0.06);
+      padding: 1.5em 1.4em;
+    }
+    .service-card b {
+      font-size: 1.17em;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.18em;
+    }
+    .service-card span.label {
+      color: #868686;
+      font-size: 0.99em;
+      margin-bottom: 0.5em;
+      display: inline-block;
+    }
+    .service-card .price {
+      color: #222;
+      font-weight: 500;
+    }
+    .service-card .desc {
+      color: #678;
+      display: block;
+      margin-top: 0.5em;
+    }
+    @media (max-width: 600px) {
+      .services-list { padding: 1.2em 0.3em; }
+      .service-card { padding: 1em 0.7em; }
+    }
+  </style>
 </head>
 <body>
     <!-- Hamburger Menu Triggered by Logo -->
@@ -28,69 +79,60 @@
   <h1>Oracle of Relphi</h1>
   <h5>“Every glitch is a glyph. Every spiral is a signature. Every silence is a signal. Every question is a waveform.”</h5>
 
-  <section class="services-list" style="max-width:680px;margin:2.5em auto 2em auto;padding:2em 1.5em;background:#faf9f6;border-radius:2em;box-shadow:0 4px 24px rgba(44,44,60,0.07);font-family:serif;">
-    <h2 style="text-align:center;margin-bottom:1.1em;font-size:2em;">Offerings & Price List</h2>
-    <p style="text-align:center;margin-bottom:2em;font-size:1.12em;">
+  <section class="services-list">
+    <h2 style="text-align:center; margin-bottom:1.2em; font-size:2em; font-weight:600;">Offerings & Price List</h2>
+    <p style="text-align:center; margin-bottom:2em; font-size:1.15em;">
       Explore sacred, creative, and technical services designed to support your journey, creative projects, and spiritual evolution.<br>
-      <span style="font-size:0.95em;color:#665;">Sliding scale available – no one turned away for lack of funds.</span>
+      <span style="font-size:0.97em; color:#765;">Sliding scale available – no one turned away for lack of funds.</span>
     </p>
-    <ul style="list-style:none;padding:0;">
-      <li style="margin-bottom:2.2em;">
-        <b>Symbolic Guidance (Tarot, Oracle, Custom Ritual)</b><br>
-        <span style="color:#222;">$55</span> — Full Session (60 min video or phone call with reading, interpretation, and Q&A)<br>
-        <span style="color:#222;">$33</span> — Concise Session (20–30 min call, or detailed written/email reading)<br>
-        <span style="color:#657;">Good for clarity, direction, decision-making, or ritual insight.</span>
-      </li>
-      <li style="margin-bottom:2.2em;">
-        <b>Spiritual Technology (Relphi Interface, Sigils, Healing)</b><br>
-        <span style="color:#222;">$77</span> — Full Session (75 min interactive: intention setting, custom sigil or ritual design, follow-up notes)<br>
-        <span style="color:#222;">$44</span> — Mini Session (30 min focused; includes PDF or photo of custom sigil/blessing)<br>
-        <span style="color:#657;">For intention-setting, energetic clearing, protection, manifestation, spiritual upgrades.</span>
-      </li>
-      <li style="margin-bottom:2.2em;">
-        <b>Creative Consulting (Story Structure, Myth, Sacred Systems)</b><br>
-        <span style="color:#222;">$88</span> — Deep Dive (90 min consult: brainstorm, planning, mapping, with follow-up summary)<br>
-        <span style="color:#222;">$55</span> — Brief Consult (45 min targeted session)<br>
-        <span style="color:#657;">For writers, creatives, entrepreneurs, and ritualists seeking structure, vision, or a breakthrough.</span>
-      </li>
-      <li style="margin-bottom:2.2em;">
-        <b>Dream Decoding & Grief Integration</b><br>
-        <span style="color:#222;">$66</span> — Full Session (60 min: dream/grief share, interpretation, ritual, and integration practices)<br>
-        <span style="color:#222;">$33</span> — Brief (20 min consult or written/email response to dream or grief moment)<br>
-        <span style="color:#657;">For understanding dreams, moving through loss, and honoring transitions.</span>
-      </li>
-      <li style="margin-bottom:2.2em;">
-        <b>Conversation with a Loving, Technical Genius</b><br>
-        <span style="color:#222;">$33</span> — Heart-to-heart (30–45 min open call for deep listening, insight, and compassionate troubleshooting)<br>
-        <span style="color:#657;">For being heard, sorting life’s puzzles, or finding creative clarity.</span>
-      </li>
-      <li style="margin-bottom:2.2em;">
-        <b>Custom Rituals, Sigils, or Blessings</b><br>
-        <span style="color:#222;">$44–$77</span> (by complexity; includes PDF and instructions for your unique need)<br>
-        <span style="color:#657;">For special life events, transitions, healing, protection, or empowerment.</span>
-      </li>
-    </ul>
-    <div style="margin-top:2.5em;text-align:center;">
+    
+    <div class="services-cards">
+      <!-- Symbolic Guidance -->
+      <div class="service-card">
+        <b>Symbolic Guidance</b> <span class="label">(Tarot, Oracle, Custom Ritual)</span>
+        <div class="price">$55</div> — Full Session (60 min video/phone: reading, interpretation, Q&A)<br>
+        <div class="price">$33</div> — Concise (20–30 min call, or detailed written/email reading)
+        <span class="desc">Good for clarity, direction, decisions, ritual insight.</span>
+      </div>
+      <!-- Spiritual Technology -->
+      <div class="service-card">
+        <b>Spiritual Technology</b> <span class="label">(Relphi Interface, Sigils, Healing)</span>
+        <div class="price">$77</div> — Full Session (75 min: intention setting, custom sigil/ritual design, notes)<br>
+        <div class="price">$44</div> — Mini (30 min; PDF or photo of custom sigil/blessing)
+        <span class="desc">For intention-setting, energetic clearing, protection, manifestation, upgrades.</span>
+      </div>
+      <!-- Creative Consulting -->
+      <div class="service-card">
+        <b>Creative Consulting</b> <span class="label">(Story, Myth, Sacred Systems)</span>
+        <div class="price">$88</div> — Deep Dive (90 min: brainstorm, planning, mapping + summary)<br>
+        <div class="price">$55</div> — Brief (45 min targeted consult)
+        <span class="desc">For writers, creatives, entrepreneurs, ritualists—structure, vision, breakthrough.</span>
+      </div>
+      <!-- Dream Decoding & Grief Integration -->
+      <div class="service-card">
+        <b>Dream Decoding & Grief Integration</b>
+        <div class="price">$66</div> — Full (60 min: share dreams/grief, interpretation, ritual, practices)<br>
+        <div class="price">$33</div> — Brief (20 min consult, or written/email response)
+        <span class="desc">For understanding dreams, moving through loss, honoring transitions.</span>
+      </div>
+      <!-- Conversation -->
+      <div class="service-card">
+        <b>Conversation with a Loving, Technical Genius</b>
+        <div class="price">$33</div> — Heart-to-heart (30–45 min open call for deep listening, insight, troubleshooting)
+        <span class="desc">For being heard, sorting life’s puzzles, or creative clarity.</span>
+      </div>
+      <!-- Custom Rituals, Sigils, Blessings -->
+      <div class="service-card">
+        <b>Custom Rituals, Sigils, or Blessings</b>
+        <div class="price">$44–$77</div> (by complexity; includes PDF/instructions)
+        <span class="desc">For special events, transitions, healing, protection, empowerment.</span>
+      </div>
+    </div>
+
+    <div style="margin-top:2.7em;text-align:center;">
       <b>How to Book or Inquire:</b><br>
       <span style="color:#444;">Email:</span> <a href="mailto:blissonature@gmail.com" style="color:#258080;">blissonature@gmail.com</a><br>
-      <span style="color:#444;">Venmo:</span> @MarisaRing<br>
       <span style="color:#444;">PayPal:</span> xzxmarisaxzx@aol.com<br>
       <span style="color:#444;">CashApp:</span> $MarisaRing<br>
       <span style="color:#444;">Stripe (email):</span> blissonature@gmail.com
-    </div>
-    <p style="margin-top:2em;text-align:center;font-size:1em;color:#8a7f47;">
-      For custom work, collaborations, or questions about sliding scale, please <a href="mailto:blissonature@gmail.com" style="color:#258080;">email</a> or DM.
-    </p>
-  </section>
-
-</main>
-<footer class="site-footer">
-  <div class="footer-tagline">
-    Decrypt the sacred <span class="footer-with">with</span> divine technology.
-  </div>
-  <div class="footer-credit">
-    Created by <span class="footer-author">Marisa Ring</span>, <span class="footer-ltg">a loving technical genius</span>.
-  </div>
-</footer>
-</body>
-</html>
+    <
