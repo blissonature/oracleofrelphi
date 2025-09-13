@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Planetary Hours (No-Frills)</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 2rem; }
+    .card { max-width: 560px; border: 1px solid #ddd; border-radius: 12px; padding: 16px; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .hrs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-top: 12px; }
+    .hr { padding: 6px 8px; border-radius: 8px; border: 1px solid #eee; }
+    .hr.now { border-color: #999; font-weight: 600; }
+    .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .tiny { font-size: 12px; color: #666; }
+    .pill { padding: 4px 8px; border: 1px solid #ddd; border-radius: 999px; }
+    .bar { height: 8px; background: #eee; border-radius: 999px; overflow: hidden; }
+    .bar > div { height: 100%; width: 0%; background: #000; }
+    button, input { padding: 6px 8px; }
+    label { font-size: 12px; color: #444; }
+  </style>
+  <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+</head>
+<body>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;">
+      <div>
+        <div class="tiny">Current Planetary Hour</div>
+        <div id="current" style="font-size: 28px; font-weight: 700;">–</div>
+        <div class="row" style="margin-top:6px;">
+          <span class="pill mono" id="range">–</span>
+          <span class="pill mono" id="countdown">–</span>
+          <span class="pill" id="weekday">–</span>
+        </div>
+      </div>
+      <div>
+        <div class="tiny">Location</div>
+        <div class="row">
+          <button id="geoBtn" title="Use browser location">Use my location</button>
+          <div class="row">
+            <label>Lat <input id="lat" size="8" placeholder="40.76" /></label>
+            <label>Lon <input id="lon" size="8" placeholder="-111.89" /></label>
+            <button id="setBtn">Set</button>
+          </div>
+        </div>
+        <div class="tiny mono" id="locEcho">–</div>
+      </div>
+    </div>
+
+    <div style="margin:12px 0;">
+      <div class="tiny">Progress</div>
+      <div class="bar"><div id="progress"></div></div>
+    </div>
+
+    <div class="tiny" id="suninfo">–</div>
+
+    <div class="hrs" id="list"></div>
+  </div>
+
+<script>
+(function(){
+  // Chaldean order & day rulers
+  const ORDER = ["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"];
+  const DAY_RULER = { 0:"Sun", 1:"Moon", 2:"Mars", 3:"Mercury", 4:"Jupiter", 5:"Venus", 6:"Saturn" }; // 0=Sun..6=Sat
+  const WEEKDAY_NAME = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+  // UI nodes
+  const elCurrent = document.getElementById('current');
+  const elRange = document.getElementById('range');
+  const elCountdown = document.getElementById('countdown');
+  const elWeekday = document.getElementById('weekday');
+  const elList = document.getElementById('list');
+  const elSuninfo = document.getElementById('suninfo');
+  const elProgress = document.getElementById('progress');
+  const elLat = document.getElementById('lat');
+  const elLon = document.getElementById('lon');
+  const elLocEcho = document.getElementById('locEcho');
+
+  const geoBtn = document.getElementById('geoBtn');
+  const setBtn = document.getElementById('setBtn');
+
+  // State
+  let lat = null, lon = null;
+  let schedule = []; // 24 entries: {start, end, planet, idx}
+  let nextRecalcAt = 0; // timestamp when we must rebuild schedule (e.g., at next sunrise)
+  let tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  // Helpers
+  const fmt = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const pad2 = (n) => String(n).padStart(2,'0');
+  const ms = (h=0,m=0,s=0) => ((h*3600)+(m*60)+s)*1000;
+
+  function chaldeanSequence(startPlanet, length){
+    const start = ORDER.indexOf(startPlanet);
+    const seq = [];
+    for (let i=0;i<length;i++){
+      seq.push(ORDER[(start + i) % ORDER.length]);
+    }
+    return seq;
+  }
+
+  function buildSchedule(date, lat, lon){
+    // date is local (visitor) date; we’ll compute today’s sunrise/sunset and next sunrise
+    const timesToday = SunCalc.getTimes(date, lat, lon);
+    // guard: polar edge cases
+    if(!timesToday.sunrise || !timesToday.sunset){
+      throw new Error("Sun never rises/sets for this date/location.");
+    }
+    const sunrise = timesToday.sunrise;
+    const sunset = timesToday.sunset;
+
+    const tomorrow = new Date(date.getFullYear(), date.getMonth(), date.getDate()+1);
+    const timesTomorrow = SunCalc.getTimes(tomorrow, lat, lon);
+    const nextSunrise = timesTomorrow.sunrise;
+
+    // durations
+    const dayLen = sunset - sunrise;
+    const nightLen = nextSunrise - sunset;
+
+    const dayHour = dayLen / 12;
+    const nightHour = nightLen / 12;
+
+    // Day ruler starts at sunrise
+    const weekday = date.getDay(); // 0=Sun..6=Sat
+    const dayRuler = DAY_RULER[weekday];
+
+    const daySeq = chaldeanSequence(dayRuler, 12);
+    const nightSeq = chaldeanSequence(daySeq[12 % 7], 12); // continue sequence after day’s 12th hour
+
+    const out = [];
+    // Build 12 day hours
+    for(let i=0;i<12;i++){
+      const start = new Date(sunrise.getTime() + i*dayHour);
+      const end   = new Date(sunrise.getTime() + (i+1)*dayHour);
+      out.push({ start, end, planet: daySeq[i], idx: i+1 });
+    }
+    // Build 12 night hours
+    for(let i=0;i<12;i++){
+      const start = new Date(sunset.getTime() + i*nightHour);
+      const end   = new Date(sunset.getTime() + (i+1)*nightHour);
+      out.push({ start, end, planet: nightSeq[i], idx: 13+i });
+    }
+
+    // next rebuild is nextSunrise (the schedule changes then)
+    nextRecalcAt = nextSunrise.getTime();
+    return { out, sunrise, sunset, nextSunrise, weekdayName: WEEKDAY_NAME[weekday] };
+  }
+
+  function renderList(){
+    elList.innerHTML = "";
+    schedule.forEach(h => {
+      const div = document.createElement('div');
+      div.className = 'hr';
+      div.dataset.idx = h.idx;
+      div.innerHTML = `<div><strong>${h.idx <= 12 ? "Day" : "Night"} ${((h.idx-1)%12)+1}</strong> — ${h.planet}</div>
+                       <div class="tiny mono">${fmt(h.start)} – ${fmt(h.end)}</div>`;
+      elList.appendChild(div);
+    });
+  }
+
+  function updateNow(){
+    if(!schedule.length) return;
+    const now = Date.now();
+
+    // rebuild schedule right after next sunrise
+    if(now >= nextRecalcAt - 1000){
+      try { init(lat, lon, true); } catch(e) {}
+      return;
+    }
+
+    // find current hour
+    const curIdx = schedule.findIndex(h => now >= h.start.getTime() && now < h.end.getTime());
+    const current = (curIdx >= 0) ? schedule[curIdx] : null;
+
+    if(current){
+      elCurrent.textContent = current.planet;
+      elRange.textContent = `${fmt(current.start)}–${fmt(current.end)}`;
+      elWeekday.textContent = getWeekdayName(current.start);
+
+      // countdown
+      const remainMs = current.end.getTime() - now;
+      const ss = Math.floor((remainMs/1000)%60);
+      const mm = Math.floor((remainMs/1000/60)%60);
+      const hh = Math.floor(remainMs/1000/3600);
+      elCountdown.textContent = `Next in ${hh? hh+":" : ""}${pad2(mm)}:${pad2(ss)}`;
+
+      // progress bar
+      const dur = current.end - current.start;
+      const prog = 100 * (1 - (remainMs / dur));
+      elProgress.style.width = `${Math.max(0, Math.min(100, prog))}%`;
+    } else {
+      elCurrent.textContent = "—";
+      elRange.textContent = "—";
+      elCountdown.textContent = "—";
+      elProgress.style.width = "0%";
+    }
+
+    // highlight
+    [...document.querySelectorAll('.hr')].forEach((n,i)=> {
+      if(i === curIdx) n.classList.add('now'); else n.classList.remove('now');
+    });
+  }
+
+  function getWeekdayName(d){ return WEEKDAY_NAME[d.getDay()]; }
+
+  function init(newLat, newLon, force=false){
+    if(!force && lat===newLat && lon===newLon && schedule.length) return;
+    lat = Number(newLat); lon = Number(newLon);
+    if(Number.isNaN(lat) || Number.isNaN(lon)) throw new Error("Invalid lat/lon.");
+
+    elLocEcho.textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)} (${tz})`;
+
+    const today = new Date(); // local date/time
+    const built = buildSchedule(new Date(today.getFullYear(), today.getMonth(), today.getDate()), lat, lon);
+    schedule = built.out;
+
+    elSuninfo.textContent =
+      `Sunrise ${fmt(built.sunrise)} • Sunset ${fmt(built.sunset)} • Next sunrise ${fmt(built.nextSunrise)} • ${built.weekdayName} ruled by ${DAY_RULER[new Date().getDay()]}`;
+
+    renderList();
+    updateNow();
+  }
+
+  // Geolocation + manual set
+  geoBtn.onclick = () => {
+    if(!navigator.geolocation){ alert("Geolocation not supported."); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        elLat.value = pos.coords.latitude.toFixed(6);
+        elLon.value = pos.coords.longitude.toFixed(6);
+        init(pos.coords.latitude, pos.coords.longitude, true);
+      },
+      err => alert("Location error: " + err.message),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+  setBtn.onclick = () => init(elLat.value, elLon.value, true);
+
+  // Defaults: try to guess a sensible starting point (Salt Lake City as an example)
+  elLat.value = "40.7608";
+  elLon.value = "-111.8910";
+  init(parseFloat(elLat.value), parseFloat(elLon.value), true);
+
+  // Ticker
+  function tick(){ updateNow(); requestAnimationFrame(tick); }
+  tick();
+
+  // Recompute at midnight local to refresh weekday text even if sun times didn’t force a rebuild
+  const msToMidnight = (()=> {
+    const now = new Date();
+    const mid = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+    return mid - now + 50;
+  })();
+  setTimeout(()=> init(lat, lon, true), msToMidnight);
+
+})();
+</script>
+</body>
+</html>
