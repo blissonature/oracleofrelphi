@@ -83,13 +83,12 @@
   // State
   let lat = null, lon = null;
   let schedule = []; // 24 entries: {start, end, planet, idx}
-  let nextRecalcAt = 0; // timestamp when we must rebuild schedule (e.g., at next sunrise)
+  let nextRecalcAt = 0; // timestamp to rebuild at next sunrise
   let tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   // Helpers
   const fmt = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
   const pad2 = (n) => String(n).padStart(2,'0');
-  const ms = (h=0,m=0,s=0) => ((h*3600)+(m*60)+s)*1000;
 
   function chaldeanSequence(startPlanet, length){
     const start = ORDER.indexOf(startPlanet);
@@ -100,10 +99,14 @@
     return seq;
   }
 
+  function scheduleRebuild(atMs){
+    const delay = Math.max(0, atMs - Date.now() + 100); // small buffer
+    setTimeout(() => init(lat, lon, true), delay);
+  }
+
   function buildSchedule(date, lat, lon){
-    // date is local (visitor) date; we’ll compute today’s sunrise/sunset and next sunrise
+    // Sun times for today and tomorrow (local)
     const timesToday = SunCalc.getTimes(date, lat, lon);
-    // guard: polar edge cases
     if(!timesToday.sunrise || !timesToday.sunset){
       throw new Error("Sun never rises/sets for this date/location.");
     }
@@ -117,7 +120,6 @@
     // durations
     const dayLen = sunset - sunrise;
     const nightLen = nextSunrise - sunset;
-
     const dayHour = dayLen / 12;
     const nightHour = nightLen / 12;
 
@@ -125,26 +127,31 @@
     const weekday = date.getDay(); // 0=Sun..6=Sat
     const dayRuler = DAY_RULER[weekday];
 
+    // Build sequences
     const daySeq = chaldeanSequence(dayRuler, 12);
-    const nightSeq = chaldeanSequence(daySeq[12 % 7], 12); // continue sequence after day’s 12th hour
+    const lastDayPlanet = daySeq[11];
+    const nextAfterDay = ORDER[(ORDER.indexOf(lastDayPlanet) + 1) % ORDER.length]; // ✅ correct handoff
+    const nightSeq = chaldeanSequence(nextAfterDay, 12);
 
     const out = [];
-    // Build 12 day hours
+    // 12 day hours
     for(let i=0;i<12;i++){
       const start = new Date(sunrise.getTime() + i*dayHour);
       const end   = new Date(sunrise.getTime() + (i+1)*dayHour);
       out.push({ start, end, planet: daySeq[i], idx: i+1 });
     }
-    // Build 12 night hours
+    // 12 night hours
     for(let i=0;i<12;i++){
       const start = new Date(sunset.getTime() + i*nightHour);
       const end   = new Date(sunset.getTime() + (i+1)*nightHour);
       out.push({ start, end, planet: nightSeq[i], idx: 13+i });
     }
 
-    // next rebuild is nextSunrise (the schedule changes then)
+    // next rebuild at next sunrise
     nextRecalcAt = nextSunrise.getTime();
-    return { out, sunrise, sunset, nextSunrise, weekdayName: WEEKDAY_NAME[weekday] };
+    scheduleRebuild(nextRecalcAt);
+
+    return { out, sunrise, sunset, nextSunrise, weekday, weekdayName: WEEKDAY_NAME[weekday] };
   }
 
   function renderList(){
@@ -163,20 +170,14 @@
     if(!schedule.length) return;
     const now = Date.now();
 
-    // rebuild schedule right after next sunrise
-    if(now >= nextRecalcAt - 1000){
-      try { init(lat, lon, true); } catch(e) {}
-      return;
-    }
-
     // find current hour
-    const curIdx = schedule.findIndex(h => now >= h.start.getTime() && now < h.end.getTime());
+    const curIdx = schedule.findIndex(h => (now >= h.start.getTime()) && (now < h.end.getTime()));
     const current = (curIdx >= 0) ? schedule[curIdx] : null;
 
     if(current){
       elCurrent.textContent = current.planet;
       elRange.textContent = `${fmt(current.start)}–${fmt(current.end)}`;
-      elWeekday.textContent = getWeekdayName(current.start);
+      elWeekday.textContent = WEEKDAY_NAME[current.start.getDay()];
 
       // countdown
       const remainMs = current.end.getTime() - now;
@@ -202,8 +203,6 @@
     });
   }
 
-  function getWeekdayName(d){ return WEEKDAY_NAME[d.getDay()]; }
-
   function init(newLat, newLon, force=false){
     if(!force && lat===newLat && lon===newLon && schedule.length) return;
     lat = Number(newLat); lon = Number(newLon);
@@ -215,8 +214,9 @@
     const built = buildSchedule(new Date(today.getFullYear(), today.getMonth(), today.getDate()), lat, lon);
     schedule = built.out;
 
+    // Use weekday from buildSchedule (stable across midnight)
     elSuninfo.textContent =
-      `Sunrise ${fmt(built.sunrise)} • Sunset ${fmt(built.sunset)} • Next sunrise ${fmt(built.nextSunrise)} • ${built.weekdayName} ruled by ${DAY_RULER[new Date().getDay()]}`;
+      `Sunrise ${fmt(built.sunrise)} • Sunset ${fmt(built.sunset)} • Next sunrise ${fmt(built.nextSunrise)} • ${built.weekdayName} ruled by ${DAY_RULER[built.weekday]}`;
 
     renderList();
     updateNow();
@@ -237,22 +237,21 @@
   };
   setBtn.onclick = () => init(elLat.value, elLon.value, true);
 
-  // Defaults: try to guess a sensible starting point (Salt Lake City as an example)
+  // Defaults (Salt Lake City example)
   elLat.value = "40.7608";
   elLon.value = "-111.8910";
   init(parseFloat(elLat.value), parseFloat(elLon.value), true);
 
-  // Ticker
-  function tick(){ updateNow(); requestAnimationFrame(tick); }
-  tick();
+  // Update once per second (stable on iOS)
+  setInterval(updateNow, 1000);
 
-  // Recompute at midnight local to refresh weekday text even if sun times didn’t force a rebuild
-  const msToMidnight = (()=> {
+  // Recompute at local midnight to refresh weekday label if user leaves tab open
+  (function(){
     const now = new Date();
     const mid = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
-    return mid - now + 50;
+    const delay = Math.max(0, mid - now + 50);
+    setTimeout(()=> init(lat, lon, true), delay);
   })();
-  setTimeout(()=> init(lat, lon, true), msToMidnight);
 
 })();
 </script>
