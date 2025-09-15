@@ -54,6 +54,10 @@
       opacity: 1; transition: left .6s ease, opacity .6s ease;
       background: #fff; border-color: #eee; font-weight: 500;
     }
+
+    /* Planet info line */
+    #planetInfo { font-size: 16px; color:#333; margin-top:4px; }
+    #planetInfo .sym { font-size: 20px; margin-right:6px; }
   </style>
   <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 </head>
@@ -63,12 +67,15 @@
       <div>
         <div class="tiny">Current Planetary Hour</div>
         <div id="current" style="font-size: 28px; font-weight: 700;">–</div>
+        <div id="planetInfo" class="tiny"><span class="sym"></span><span class="about"></span></div>
         <div class="row" style="margin-top:6px;">
           <span class="pill mono" id="range">–</span>
           <span class="pill mono" id="countdown">–</span>
+          <span class="pill" id="nextPreview">Next: –</span>
           <span class="pill" id="weekday">–</span>
         </div>
       </div>
+
       <div>
         <div class="tiny">Location</div>
         <div class="row">
@@ -146,17 +153,30 @@
   const DAY_RULER = { 0:"Sun", 1:"Moon", 2:"Mars", 3:"Mercury", 4:"Jupiter", 5:"Venus", 6:"Saturn" }; // 0=Sun..6=Sat
   const WEEKDAY_NAME = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
+  // Planet glyphs + essence
+  const PLANET_INFO = {
+    "Sun":     { symbol: "☉", about: "Ruler of Vitality & Purpose" },
+    "Moon":    { symbol: "☽", about: "Ruler of Cycles & Emotion" },
+    "Mercury": { symbol: "☿", about: "Ruler of Thought & Exchange" },
+    "Venus":   { symbol: "♀", about: "Ruler of Harmony & Affection" },
+    "Mars":    { symbol: "♂", about: "Ruler of Energy & Action" },
+    "Jupiter": { symbol: "♃", about: "Ruler of Growth & Wisdom" },
+    "Saturn":  { symbol: "♄", about: "Ruler of Structure & Time" }
+  };
+
   // UI nodes
   const elCurrent = document.getElementById('current');
   const elRange = document.getElementById('range');
   const elCountdown = document.getElementById('countdown');
   const elWeekday = document.getElementById('weekday');
+  const elNextPreview = document.getElementById('nextPreview');
   const elList = document.getElementById('list');
   const elSuninfo = document.getElementById('suninfo');
   const elProgress = document.getElementById('progress');
   const elLat = document.getElementById('lat');
   const elLon = document.getElementById('lon');
   const elLocEcho = document.getElementById('locEcho');
+  const elPlanetInfo = document.getElementById('planetInfo');
 
   const geoBtn = document.getElementById('geoBtn');
   const setBtn = document.getElementById('setBtn');
@@ -206,8 +226,6 @@
   }
 
   function buildSchedule(dateLocalMidnight, lat, lon){
-    // SunCalc uses Date in system tz but works with UTC internally;
-    // We pass a Date that represents local midnight of the selected tz.
     const timesToday = SunCalc.getTimes(dateLocalMidnight, lat, lon);
     if(!timesToday.sunrise || !timesToday.sunset){
       throw new Error("Sun never rises/sets for this date/location.");
@@ -219,13 +237,13 @@
     const timesTomorrow = SunCalc.getTimes(tomorrowLocalMidnight, lat, lon);
     const nextSunrise = timesTomorrow.sunrise;
 
-    const dayLen = sunrise && sunset ? (sunset - sunrise) : 0;
+    const dayLen = sunset - sunrise;
     const nightLen = nextSunrise - sunset;
     const dayHour = dayLen / 12;
     const nightHour = nightLen / 12;
 
     // Day ruler starts at sunrise (weekday in target tz)
-    const weekday = tzWeekday(sunrise, tz); // use sunrise instant for clarity
+    const weekday = tzWeekday(sunrise, tz);
     const dayRuler = DAY_RULER[weekday];
 
     const daySeq = chaldeanSequence(dayRuler, 12);
@@ -261,10 +279,11 @@
   function renderList(){
     elList.innerHTML = "";
     schedule.forEach(h => {
+      const info = PLANET_INFO[h.planet];
       const div = document.createElement('div');
       div.className = 'hr';
       div.dataset.idx = h.idx;
-      div.innerHTML = `<div><strong>${h.idx <= 12 ? "Day" : "Night"} ${((h.idx-1)%12)+1}</strong> — ${h.planet}</div>
+      div.innerHTML = `<div><strong>${h.idx <= 12 ? "Day" : "Night"} ${((h.idx-1)%12)+1}</strong> — ${info.symbol} ${h.planet}</div>
                        <div class="tiny mono">${fmtInTZ(h.start, tz)} – ${fmtInTZ(h.end, tz)}</div>`;
       elList.appendChild(div);
     });
@@ -283,6 +302,16 @@
     setTimeout(() => ghost.remove(), 650);
   }
 
+  function updatePlanetInfo(planet){
+    const info = PLANET_INFO[planet];
+    elPlanetInfo.innerHTML = `<span class="sym">${info.symbol}</span><span class="about">${planet} — ${info.about}</span>`;
+  }
+
+  function updateNextPreview(nextPlanet){
+    const info = PLANET_INFO[nextPlanet];
+    elNextPreview.textContent = `Next: ${info.symbol} ${nextPlanet}`;
+  }
+
   function updateNow(){
     if(!schedule.length) return;
     const now = Date.now();
@@ -290,7 +319,11 @@
     const current = (curIdx >= 0) ? schedule[curIdx] : null;
 
     if(current){
+      const curInfo = PLANET_INFO[current.planet];
+
       elCurrent.textContent = current.planet;
+      updatePlanetInfo(current.planet);
+
       elRange.textContent = `${fmtInTZ(current.start, tz)}–${fmtInTZ(current.end, tz)}`;
       // weekday label in chosen tz
       const wd = tzWeekday(current.start, tz);
@@ -302,20 +335,26 @@
       const hh = Math.floor(remainMs/1000/3600);
       elCountdown.textContent = `Next in ${hh? hh+":" : ""}${pad2(mm)}:${pad2(ss)}`;
 
+      // Next preview
+      const nextIdx = (curIdx + 1) % schedule.length;
+      updateNextPreview(schedule[nextIdx].planet);
+
       const dur = current.end - current.start;
       const pct = 100 * (1 - (remainMs / dur));
       elProgress.style.width = `${Math.max(0, Math.min(100, pct))}%`;
 
+      // moving chip
+      const label = `${curInfo.symbol} ${current.planet}`;
       if (lastPlanet === null) {
-        chip.textContent = current.planet;
+        chip.textContent = label;
         chip.style.left = '0%';
       }
       if (lastPlanet && current.planet !== lastPlanet) {
-        makeGhostChip(lastPlanet, lastPct);
-        chip.textContent = current.planet;
+        makeGhostChip(`${PLANET_INFO[lastPlanet].symbol} ${lastPlanet}`, lastPct);
+        chip.textContent = label;
         chip.style.left = '0%';
       } else {
-        chip.textContent = current.planet;
+        chip.textContent = label;
       }
       chip.style.left = `${Math.max(0, Math.min(100, pct))}%`;
       lastPlanet = current.planet;
@@ -324,6 +363,7 @@
       elCurrent.textContent = "—";
       elRange.textContent = "—";
       elCountdown.textContent = "—";
+      elNextPreview.textContent = "Next: –";
       elProgress.style.width = "0%";
     }
 
