@@ -5,141 +5,149 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Planetary Hours</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; }
-    .card { max-width: 560px; border: 1px solid #ddd; border-radius: 12px; padding: 16px; }
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 2rem; }
+    .card { max-width: 640px; border: 1px solid #ddd; border-radius: 12px; padding: 16px; }
     .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .hrs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-top: 12px; }
     .hr { padding: 6px 8px; border-radius: 8px; border: 1px solid #eee; }
-    .hr.now { border-color: #999; font-weight: 600; }
-    .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
+    .hr.now { border-color: #000; font-weight: 600; background: #fafafa; }
+    .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .tiny { font-size: 12px; color: #666; }
-    .pill { padding: 4px 8px; border: 1px solid #ddd; border-radius: 999px; }
+    .pill { padding: 4px 8px; border: 1px solid #ddd; border-radius: 999px; background:#fff; }
     .bar { height: 8px; background: #eee; border-radius: 999px; overflow: hidden; }
     .bar > div { height: 100%; width: 0%; background: #000; }
-    .ruler { position: relative; height: 40px; border: 1px solid #eee; border-radius: 999px; margin: 14px 0; }
-    .chip { position: absolute; top: 50%; transform: translate(-50%, -50%);
-            padding: 6px 12px; border-radius: 999px; border: 1px solid #ddd; background: white; }
+    button, input, select { padding: 6px 8px; }
+    label { font-size: 12px; color: #444; }
+    .ticker { display:flex; justify-content:space-between; margin:12px 0; }
+    .ticker span { flex:1; text-align:center; font-size:14px; }
+    .ticker .current { font-weight:700; background:#f0f0f0; border-radius:12px; padding:2px 6px; }
+    .links { display:flex; gap:12px; margin-top:10px; }
+    .links a { padding:6px 12px; border:1px solid #ddd; border-radius:999px; text-decoration:none; font-size:14px; }
   </style>
   <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 </head>
 <body>
-<div class="card">
-  <div class="tiny">Current Planetary Hour</div>
-  <div id="current" style="font-size: 28px; font-weight: 700;">–</div>
-  <div id="planetInfo" class="tiny"></div>
-  <div id="clock" class="mono tiny">–</div>
+  <div class="card">
+    <div class="tiny">Current Planetary Hour</div>
+    <h1 id="current">–</h1>
+    <div id="dayruler" class="tiny">–</div>
+    <div id="nowtime" class="tiny mono">–</div>
 
-  <div class="row" style="margin-top:6px;">
-    <span class="pill mono" id="range">–</span>
-    <span class="pill mono" id="countdown">–</span>
-    <span class="pill" id="nextPreview">Next: –</span>
-    <span class="pill" id="weekday">–</span>
+    <div class="row" style="margin-top:6px;">
+      <span class="pill mono" id="range">–</span>
+      <span class="pill mono" id="elapsed">–</span>
+      <span class="pill mono" id="remain">–</span>
+      <span class="pill" id="weekday">–</span>
+    </div>
+
+    <div class="ticker">
+      <span id="prev">–</span>
+      <span class="current" id="curTicker">–</span>
+      <span id="next">–</span>
+    </div>
+
+    <div class="row" style="margin-top:6px;">
+      <div>
+        <div class="tiny">Location</div>
+        <div class="row">
+          <button id="geoBtn">Use my location</button>
+          <label>Lat <input id="lat" size="8" /></label>
+          <label>Lon <input id="lon" size="8" /></label>
+          <button id="setBtn">Set</button>
+        </div>
+        <label class="tiny">Timezone <select id="tzSelect"></select></label>
+        <button id="tzBtn">Use timezone</button>
+        <div class="tiny mono" id="locEcho">–</div>
+      </div>
+    </div>
+
+    <div class="links">
+      <a href="https://chatgpt.com/g/g-68606a9ece40819191154b836fcd2846-oracle-of-relphi" target="_blank">Commune with the Oracle</a>
+      <a href="https://ko-fi.com/oracleofrelphi" target="_blank">Donate</a>
+    </div>
+
+    <div style="margin:12px 0;">
+      <div class="tiny">Progress</div>
+      <div class="bar"><div id="progress"></div></div>
+    </div>
+
+    <div class="tiny" id="suninfo">–</div>
+
+    <div class="hrs" id="list"></div>
   </div>
-
-  <div class="row" style="margin-top:8px;">
-    <label>Timezone
-      <select id="tzSelect">
-        <option value="America/Denver" data-lat="40.7608" data-lon="-111.8910">America/Denver (Denver)</option>
-        <option value="America/Los_Angeles" data-lat="34.0522" data-lon="-118.2437">Los Angeles</option>
-        <option value="America/New_York" data-lat="40.7128" data-lon="-74.0060">New York</option>
-        <option value="Europe/London" data-lat="51.5074" data-lon="-0.1278">London</option>
-        <option value="Australia/Sydney" data-lat="-33.8688" data-lon="151.2093">Sydney</option>
-      </select>
-    </label>
-    <button id="useTzBtn">Use timezone</button>
-  </div>
-
-  <div class="ruler">
-    <div class="chip" id="chip">–</div>
-  </div>
-
-  <div class="bar"><div id="progress"></div></div>
-  <div class="tiny" id="suninfo">–</div>
-  <div class="hrs" id="list"></div>
-</div>
 
 <script>
 (function(){
   const ORDER = ["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"];
   const DAY_RULER = {0:"Sun",1:"Moon",2:"Mars",3:"Mercury",4:"Jupiter",5:"Venus",6:"Saturn"};
   const WEEKDAY_NAME = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const INFO = {
-    Sun:{sym:"☉",about:"Vitality & Purpose"},
-    Moon:{sym:"☽",about:"Cycles & Emotion"},
-    Mercury:{sym:"☿",about:"Thought & Exchange"},
-    Venus:{sym:"♀",about:"Harmony & Affection"},
-    Mars:{sym:"♂",about:"Energy & Action"},
-    Jupiter:{sym:"♃",about:"Growth & Wisdom"},
-    Saturn:{sym:"♄",about:"Structure & Time"}
-  };
 
-  const elCur=document.getElementById('current'), elInfo=document.getElementById('planetInfo'),
-        elClock=document.getElementById('clock'), elRange=document.getElementById('range'),
-        elCd=document.getElementById('countdown'), elNext=document.getElementById('nextPreview'),
-        elWd=document.getElementById('weekday'), elSun=document.getElementById('suninfo'),
-        elList=document.getElementById('list'), elProg=document.getElementById('progress'),
-        chip=document.getElementById('chip'), tzSel=document.getElementById('tzSelect');
+  const elCurrent=document.getElementById('current'),
+        elDayruler=document.getElementById('dayruler'),
+        elNowtime=document.getElementById('nowtime'),
+        elRange=document.getElementById('range'),
+        elElapsed=document.getElementById('elapsed'),
+        elRemain=document.getElementById('remain'),
+        elWeekday=document.getElementById('weekday'),
+        elList=document.getElementById('list'),
+        elSuninfo=document.getElementById('suninfo'),
+        elProgress=document.getElementById('progress'),
+        elLocEcho=document.getElementById('locEcho'),
+        elPrev=document.getElementById('prev'),
+        elCurTicker=document.getElementById('curTicker'),
+        elNext=document.getElementById('next'),
+        tzSelect=document.getElementById('tzSelect');
 
-  let tz="America/Denver", lat=40.7608, lon=-111.8910, sched=[];
+  let lat=40.7608, lon=-111.8910, tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  let schedule=[], nextRecalcAt=0;
 
-  function chaldean(start,len){const s=ORDER.indexOf(start);return Array.from({length:len},(_,i)=>ORDER[(s+i)%7]);}
-  function fmt(d){return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',timeZone:tz});}
-  function clockStr(d){return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',timeZone:tz});}
+  // populate tz list
+  Intl.supportedValuesOf("timeZone").forEach(z=>{
+    const o=document.createElement('option');o.value=z;o.text=z;if(z===tz) o.selected=true;tzSelect.appendChild(o);
+  });
 
-  function build(){
-    const now=new Date();
-    // get today's sunrise/sunset
-    const times=SunCalc.getTimes(now,lat,lon);
-    const tomorrow=new Date(now); tomorrow.setDate(now.getDate()+1);
-    const times2=SunCalc.getTimes(tomorrow,lat,lon);
-
-    const sunrise=times.sunrise, sunset=times.sunset, nextSunrise=times2.sunrise;
-    const dayHr=(sunset-sunrise)/12, nightHr=(nextSunrise-sunset)/12;
-    const wd=new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short'}).format(sunrise);
-    const wdi=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(wd);
-    const seqDay=chaldean(DAY_RULER[wdi],12);
-    const seqNight=chaldean(ORDER[(ORDER.indexOf(seqDay[11])+1)%7],12);
-
-    sched=[];
-    for(let i=0;i<12;i++) sched.push({planet:seqDay[i],start:new Date(sunrise.getTime()+i*dayHr),end:new Date(sunrise.getTime()+(i+1)*dayHr)});
-    for(let i=0;i<12;i++) sched.push({planet:seqNight[i],start:new Date(sunset.getTime()+i*nightHr),end:new Date(sunset.getTime()+(i+1)*nightHr)});
-
-    elSun.textContent=`Sunrise ${fmt(sunrise)} • Sunset ${fmt(sunset)} • Next sunrise ${fmt(nextSunrise)} • ${WEEKDAY_NAME[wdi]} ruled by ${DAY_RULER[wdi]}`;
-    elList.innerHTML="";
-    sched.forEach((h,j)=>{
-      const div=document.createElement('div');
-      div.className='hr'; div.innerHTML=`<div><strong>${j<12?"Day":"Night"} ${j%12+1}</strong> — ${INFO[h.planet].sym} ${h.planet}</div><div class="tiny mono">${fmt(h.start)}–${fmt(h.end)}</div>`;
-      elList.appendChild(div);
-    });
+  function fmt(d){return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+  function chaldeanSeq(start,len){const s=ORDER.indexOf(start),out=[];for(let i=0;i<len;i++)out.push(ORDER[(s+i)%7]);return out;}
+  function build(date,lat,lon){
+    const t=SunCalc.getTimes(date,lat,lon);
+    const sunrise=t.sunrise, sunset=t.sunset, nextSunrise=SunCalc.getTimes(new Date(date.getFullYear(),date.getMonth(),date.getDate()+1),lat,lon).sunrise;
+    const dayLen=sunset-sunrise, nightLen=nextSunrise-sunset, dh=dayLen/12, nh=nightLen/12;
+    const dr=DAY_RULER[date.getDay()], daySeq=chaldeanSeq(dr,12), nightSeq=chaldeanSeq(daySeq[12%7],12);
+    const out=[];
+    for(let i=0;i<12;i++){out.push({start:new Date(sunrise.getTime()+i*dh),end:new Date(sunrise.getTime()+(i+1)*dh),planet:daySeq[i]});}
+    for(let i=0;i<12;i++){out.push({start:new Date(sunset.getTime()+i*nh),end:new Date(sunset.getTime()+(i+1)*nh),planet:nightSeq[i]});}
+    nextRecalcAt=nextSunrise.getTime();return {out,sunrise,sunset,nextSunrise,dayRuler:dr,weekdayName:WEEKDAY_NAME[date.getDay()]};
   }
-
-  function tick(){
-    const now=new Date();
-    elClock.textContent=clockStr(now);
-    const cur=sched.find(h=>now>=h.start && now<h.end) || sched[sched.length-1];
-    elCur.textContent=cur.planet;
-    elInfo.textContent=`${INFO[cur.planet].sym} ${cur.planet} — ${INFO[cur.planet].about}`;
-    elRange.textContent=`${fmt(cur.start)}–${fmt(cur.end)}`;
-    const next=sched[(sched.indexOf(cur)+1)%24]; elNext.textContent=`Next: ${INFO[next.planet].sym} ${next.planet}`;
-    const remain=cur.end-now; const mm=Math.floor(remain/60000)%60, hh=Math.floor(remain/3600000);
-    elCd.textContent=`Next in ${hh?hh+":" : ""}${mm.toString().padStart(2,"0")}`;
-    const pct=100*((now-cur.start)/(cur.end-cur.start)); elProg.style.width=pct+"%";
-    chip.textContent=`${INFO[cur.planet].sym} ${cur.planet}`; chip.style.left=pct+"%";
-    [...document.querySelectorAll('.hr')].forEach(div=>div.classList.remove('now'));
-    const idx=sched.indexOf(cur); if(idx>=0) elList.children[idx].classList.add('now');
+  function renderList(){elList.innerHTML="";schedule.forEach((h,i)=>{const d=document.createElement('div');d.className='hr';d.innerHTML=`<div><strong>${i<12?"Day":"Night"} ${((i)%12)+1}</strong> — ${h.planet}</div><div class="tiny mono">${fmt(h.start)} – ${fmt(h.end)}</div>`;elList.appendChild(d);});}
+  function update(){
+    const now=new Date(), t=now.getTime();
+    if(t>=nextRecalcAt-1000)init(lat,lon,true);
+    const cur=schedule.find(h=>t>=h.start.getTime()&&t<h.end.getTime());
+    if(!cur)return;
+    elCurrent.textContent=cur.planet; elRange.textContent=`${fmt(cur.start)}–${fmt(cur.end)}`;
+    elNowtime.textContent=`Current time: ${fmt(now)}`;
+    const dr=DAY_RULER[now.getDay()];elDayruler.textContent=`${WEEKDAY_NAME[now.getDay()]} — Ruled by ${dr}`;
+    const remainMs=cur.end-t, elapsedMs=t-cur.start.getTime(), dur=cur.end-cur.start;
+    elElapsed.textContent=`Elapsed ${Math.floor(elapsedMs/60000)}m`;
+    elRemain.textContent=`Remain ${Math.ceil(remainMs/60000)}m`;
+    elProgress.style.width=`${100*(1-remainMs/dur)}%`;
+    const idx=schedule.indexOf(cur);
+    elPrev.textContent=(idx>0?schedule[idx-1].planet:"–");
+    elCurTicker.textContent=cur.planet;
+    elNext.textContent=(idx<schedule.length-1?schedule[idx+1].planet:"–");
   }
-
-  function init(newTz,newLat,newLon){ tz=newTz; lat=newLat; lon=newLon; build(); tick(); }
-
-  // timezone change
-  document.getElementById('useTzBtn').onclick=()=>{
-    const opt=tzSel.options[tzSel.selectedIndex];
-    init(opt.value, parseFloat(opt.dataset.lat), parseFloat(opt.dataset.lon));
-  };
-
-  // default boot Denver
-  init("America/Denver",40.7608,-111.8910);
-  setInterval(tick,1000);
+  function init(newLat,newLon,force=false){
+    lat=Number(newLat); lon=Number(newLon); tz=tzSelect.value;
+    elLocEcho.textContent=`${lat.toFixed(4)}, ${lon.toFixed(4)} (${tz})`;
+    const today=new Date();const built=build(new Date(today.getFullYear(),today.getMonth(),today.getDate()),lat,lon);
+    schedule=built.out; elSuninfo.textContent=`Sunrise ${fmt(built.sunrise)} • Sunset ${fmt(built.sunset)} • Next sunrise ${fmt(built.nextSunrise)} • ${built.weekdayName} ruled by ${built.dayRuler}`;
+    renderList(); update();
+  }
+  document.getElementById('geoBtn').onclick=()=>navigator.geolocation.getCurrentPosition(pos=>{elLat.value=pos.coords.latitude.toFixed(6);elLon.value=pos.coords.longitude.toFixed(6);init(pos.coords.latitude,pos.coords.longitude,true);});
+  document.getElementById('setBtn').onclick=()=>init(elLat.value,elLon.value,true);
+  document.getElementById('tzBtn').onclick=()=>init(lat,lon,true);
+  init(lat,lon,true); setInterval(update,1000*10);
 })();
 </script>
 </body>
