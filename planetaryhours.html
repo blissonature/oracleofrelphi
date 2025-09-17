@@ -18,7 +18,6 @@
   .grid { display:grid; gap:12px; }
   .g2 { grid-template-columns: 1fr 1fr; }
   .g3 { grid-template-columns: repeat(3,1fr); }
-  .g4 { grid-template-columns: repeat(4,1fr); }
   .bar { height:10px; background:#eee; border-radius:999px; overflow:hidden; }
   .bar > div { height:100%; width:0%; background: var(--accent); transition: width .4s ease; }
   .ticker { font-size: 14px; }
@@ -38,20 +37,21 @@
   .delta.neg { color: var(--bad); }
   .stack { display:grid; gap:6px; }
   .center { text-align:center; }
-  .fade { opacity: .75; }
   .hero { display:grid; grid-template-columns: 1fr 1.2fr 1fr; align-items:center; gap:12px; }
   .hero .slot { min-height: 76px; }
   .bridge { font-weight: 600; }
   .chip { display:inline-flex; align-items:center; gap:.4em; padding:.25rem .6rem; border:1px solid var(--line); border-radius:999px; }
-  .rulerband { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
   .legend { display:flex; gap:8px; flex-wrap:wrap; }
   .anim-ruler { position: relative; height: 8px; background:#eee; border-radius:999px; overflow:hidden; }
   .anim-ruler > div { position:absolute; left:0; top:0; bottom:0; width:100%; transform: translateX(-100%); background:#000; animation: sweep linear forwards; }
   @keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(0%); } }
   .note { background:#fffef7; border:1px solid #f0e6b3; padding:8px 10px; border-radius:10px; }
+  .warn { background:#fff5f5; border:1px solid #f3c2c2; padding:8px 10px; border-radius:10px; color:#7b1a1a; }
 </style>
 <!-- SunCalc for sunrise/sunset -->
 <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+<!-- Luxon for robust timezone handling -->
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -60,7 +60,7 @@
     <div>
       <h1>Planetary Hours</h1>
       <div class="ticker mono" id="clock">—</div>
-      <div class="tiny" id="contextLabel">Using system time & location</div>
+      <div class="tiny" id="statusLine">—</div>
     </div>
     <div class="legend tiny">
       <span class="chip"><span class="sym">♄</span> Saturn</span>
@@ -94,6 +94,9 @@
           <button id="setLL">Set</button>
         </div>
         <div class="tiny mono" id="locEcho">—</div>
+        <div class="warn tiny" id="geoWarn" style="display:none; margin-top:6px;">
+          Geolocation needs HTTPS (or localhost). If it fails, use search or lat/lon.
+        </div>
       </div>
 
       <div class="col">
@@ -212,15 +215,15 @@
 
 <script>
 (function(){
-  // ————— Data —————
+  const DateTime = luxon.DateTime;
+
+  // ——— Data
   const ORDER = ["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"];
   const SYMBOL = { Saturn:"♄", Jupiter:"♃", Mars:"♂", Sun:"☉", Venus:"♀", Mercury:"☿", Moon:"☾" };
   const WEEKDAY = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const DAY_RULER = { 0:"Sun", 1:"Moon", 2:"Mars", 3:"Mercury", 4:"Jupiter", 5:"Venus", 6:"Saturn" };
-  const WEIGHT = { // sidereal years basis (Moon approx. 0.075)
-    Saturn:29.5, Jupiter:11.9, Mars:1.88, Sun:1.0, Venus:0.62, Mercury:0.24, Moon:0.075
-  };
-  const ESSENCE = { // Day ruler essence (what it's in charge of)
+  const WEIGHT = { Saturn:29.5, Jupiter:11.9, Mars:1.88, Sun:1.0, Venus:0.62, Mercury:0.24, Moon:0.075 };
+  const ESSENCE = {
     Sun:"Vitality, visibility, leadership",
     Moon:"Care, memory, intuition",
     Mars:"Action, courage, cutting",
@@ -248,74 +251,44 @@
     Saturn:"Grounding, stillness, order"
   };
 
-  // ————— Utilities —————
-  const $ = sel => document.querySelector(sel);
-  const fmtTime = (d, tz) => d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', hour12:true, timeZone: tz});
-  const fmt24 = (d, tz) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false, timeZone: tz});
-  const fmtDate = (d, tz) => d.toLocaleDateString([], {year:'numeric', month:'short', day:'numeric', timeZone: tz});
+  // ——— Utils
+  const $ = s => document.querySelector(s);
+  const fmtTime = (d, tz) => DateTime.fromJSDate(d).setZone(tz).toFormat("h:mm a");
+  const fmtDate = (d, tz) => DateTime.fromJSDate(d).setZone(tz).toFormat("MMM d, yyyy");
   const pad2 = n => String(n).padStart(2,'0');
   const clamp = (x,a,b) => Math.max(a, Math.min(b,x));
-
-  // Convert a "wall clock" in a target timeZone to a JS Date in UTC space
-  function makeZonedDate(year, month, day, hour=0, minute=0, tz="auto"){
-    const zone = (tz==="auto") ? Intl.DateTimeFormat().resolvedOptions().timeZone : (tz==="utc" ? "UTC" : tz);
-    // Get the UTC timestamp that corresponds to these local components in that timeZone
-    const dtf = new Intl.DateTimeFormat('en-US', {
-      timeZone: zone, year:'numeric', month:'2-digit', day:'2-digit',
-      hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
-    });
-    const parts = dtf.formatToParts(new Date(Date.UTC(year, month, day, hour, minute, 0)));
-    // map parts to an object
-    const map = {};
-    for (const p of parts) map[p.type] = p.value;
-    // Now construct a string interpreted in that TZ, then parse to Date (which is in local) -> use getTime equivalently
-    const isoLocal = `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}:${map.second}`;
-    // Trick: Date.parse on iso without Z interprets as local; we correct by asking dtf for the timestamp of that wall time
-    const asUTC = new Date(isoLocal + ':00Z'); // safe anchor
-    // But we still need exact wall→utc mapping; better: ask the formatter for epoch milliseconds
-    const ms = Date.parse(`${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}:${map.second}Z`);
-    return new Date(ms);
-  }
-
-  // Build chaldean sequence starting at startPlanet
-  function chaldean(startPlanet, len){
-    const s = ORDER.indexOf(startPlanet);
+  const chaldean = (start, len)=> {
+    const s = ORDER.indexOf(start);
     return Array.from({length: len}, (_,i)=> ORDER[(s+i)%7]);
-  }
+  };
 
-  // ————— State —————
+  // ——— State
   let state = {
     lat: 40.7608, lon: -111.8910,
     tzMode: 'auto', tzCustom: '',
-    when: null,               // JS Date (moment to anchor)
-    anchorTZ: null,           // chosen TZ for display
-    schedule: [],             // 24 entries: {start,end,planet,idx,phase}
-    sunrise: null, sunset: null, nextSunrise: null,
-    weekdayName: '', dayRuler: '', bridgeHour: null, bridgeDelta: null
+    when: null,                 // JS Date in real time
+    anchorTZ: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    schedule: [],
+    sunrise:null, sunset:null, nextSunrise:null,
+    weekdayName:'', dayRuler:'', bridgeHour:null, bridgeDelta:null
   };
 
-  // ————— Core: schedule builder —————
-  function buildSchedule(theDate, tz, lat, lon){
-    // theDate is a JS Date representing "now" in UTC; tz is the display/anchor zone
-    // derive the civil date in that tz
-    const zone = (tz==='auto') ? Intl.DateTimeFormat().resolvedOptions().timeZone : (tz==='utc' ? 'UTC' : tz);
+  // Build schedule for the civil day in selected tz
+  function buildSchedule(anchorJSDate, tzMode, lat, lon){
+    const zone = (tzMode==='auto') ? Intl.DateTimeFormat().resolvedOptions().timeZone
+               : (tzMode==='utc' ? 'UTC' : tzMode);
+    // Civil date in zone
+    const anchor = DateTime.fromJSDate(anchorJSDate).setZone(zone);
+    const civil = anchor.startOf('day'); // local midnight in chosen zone
 
-    // Get year-month-day in zone
-    const parts = new Intl.DateTimeFormat('en-US', {timeZone:zone, year:'numeric', month:'numeric', day:'numeric'}).formatToParts(theDate);
-    const y = +parts.find(p=>p.type==='year').value;
-    const m = +parts.find(p=>p.type==='month').value - 1;
-    const d = +parts.find(p=>p.type==='day').value;
-
-    // "Local" midnight in that zone -> Date object
-    const localMid = makeZonedDate(y,m,d,0,0,zone);
-
-    // Sun times for civil day at location
-    const timesToday = SunCalc.getTimes(localMid, lat, lon);
+    // Sun times (SunCalc expects JS Date in local/UTC; it uses epoch internally)
+    const todayMidJS = civil.toJSDate();
+    const timesToday = SunCalc.getTimes(todayMidJS, lat, lon);
     const sunrise = timesToday.sunrise;
-    const sunset = timesToday.sunset;
+    const sunset  = timesToday.sunset;
 
-    const tomorrowMid = makeZonedDate(y,m,d+1,0,0,zone);
-    const timesTomorrow = SunCalc.getTimes(tomorrowMid, lat, lon);
+    const tomorrowMidJS = civil.plus({days:1}).toJSDate();
+    const timesTomorrow = SunCalc.getTimes(tomorrowMidJS, lat, lon);
     const nextSunrise = timesTomorrow.sunrise;
 
     if(!sunrise || !sunset || !nextSunrise) throw new Error("Sun never rises/sets for this date/location.");
@@ -325,13 +298,15 @@
     const dayHour = dayLen / 12;
     const nightHour = nightLen / 12;
 
-    const weekdayIdx = new Date(fmtDate(localMid,zone) + ' 00:00:00').getDay(); // safe, but simpler: use sunrise date
-    const weekdayName = WEEKDAY[sunrise.getDay()];
-    const dayRuler = DAY_RULER[sunrise.getDay()]; // day starts at sunrise
+    const weekdayName = WEEKDAY[ DateTime.fromJSDate(sunrise).setZone(zone).weekday % 7 ];
+    const weekdayIdx = DateTime.fromJSDate(sunrise).setZone(zone).weekday % 7; // 0 Sun … 6 Sat (we’ll remap)
+    const jsSunrise = DateTime.fromJSDate(sunrise).setZone(zone);
+    const dayRuler = DAY_RULER[jsSunrise.toJSDate().getDay()]; // day starts at sunrise by weekday
 
-    // Build hours
+    // Sequences
     const daySeq = chaldean(dayRuler, 12);
     const nightSeq = chaldean(daySeq[12 % 7], 12);
+
     const out = [];
     for(let i=0;i<12;i++){
       const start = new Date(sunrise.getTime() + i*dayHour);
@@ -344,95 +319,88 @@
       out.push({ idx:13+i, phase:"Dark", planet: nightSeq[i], start, end });
     }
 
-    // Bridge hour (hour before next sunrise)
-    const bridge = out[23]; // last dark hour
-    // Next day first hour
-    const nextDayRuler = DAY_RULER[(sunrise.getDay()+1)%7];
-    const nextSeqFirst = chaldean(nextDayRuler, 1)[0];
-
+    // Bridge hour (last dark hour) and Δ to next day first hour
+    const bridge = out[23];
+    const nextDayIdx = (DateTime.fromJSDate(sunrise).toJSDate().getDay()+1)%7;
+    const nextDayRuler = DAY_RULER[nextDayIdx];
+    const nextSeqFirst = chaldean(nextDayRuler,1)[0];
     const bridgeDelta = (WEIGHT[nextDayRuler] * WEIGHT[nextSeqFirst]) - (WEIGHT[dayRuler] * WEIGHT[bridge.planet]);
 
-    return {out, sunrise, sunset, nextSunrise, weekdayName, dayRuler, bridgeHour: bridge, bridgeDelta, zone};
+    return {out, sunrise, sunset, nextSunrise, weekdayName, dayRuler, bridgeHour:bridge, bridgeDelta, zone};
   }
 
-  // ————— Rendering —————
   function renderAll(){
     const tz = state.anchorTZ;
-    // Clock & context
     const now = state.when || new Date();
-    $("#clock").textContent = `${fmtDate(now, tz)} • ${fmtTime(now, tz).replace(':00 ',' ')}`;
-    $("#contextLabel").textContent = `Location ${state.lat.toFixed(4)}, ${state.lon.toFixed(4)} • Timezone: ${tz}`;
+    $("#clock").textContent = `${fmtDate(now, tz)} • ${DateTime.fromJSDate(now).setZone(tz).toFormat("h:mm a")}`;
+    $("#statusLine").textContent = `Location ${state.lat.toFixed(4)}, ${state.lon.toFixed(4)} • TZ: ${tz}`;
 
-    // Day/Hour rulers now
     const sched = state.schedule;
     const msNow = now.getTime();
     const idx = sched.findIndex(h => msNow >= h.start.getTime() && msNow < h.end.getTime());
-    const cur = (idx >= 0) ? sched[idx] : null;
-    const prev = (idx>0) ? sched[idx-1] : null;
-    const next = (idx>=0 && idx<sched.length-1) ? sched[idx+1] : null;
+    const cur = (idx>=0)? sched[idx] : null;
+    const prev = (idx>0)? sched[idx-1] : null;
+    const next = (idx>=0 && idx<sched.length-1)? sched[idx+1] : null;
 
-    // Hero band
     $("#currentRuler").innerHTML = cur ? `${SYMBOL[cur.planet]} ${cur.planet}` : "—";
     $("#prevRuler").innerHTML = prev ? `${SYMBOL[prev.planet]} ${prev.planet}` : "—";
     $("#nextRuler").innerHTML = next ? `${SYMBOL[next.planet]} ${next.planet}` : "—";
     $("#hrRange").textContent = cur ? `${fmtTime(cur.start, tz)} – ${fmtTime(cur.end, tz)}` : "—";
     $("#brightDark").textContent = cur ? cur.phase : "—";
 
-    // Progress
     if(cur){
       const remain = cur.end - msNow;
       const dur = cur.end - cur.start;
       const mm = Math.floor((remain/1000/60)%60);
       const hh = Math.floor((remain/1000/3600));
-      $("#countdown").textContent = `Next in ${hh? hh+":" : ""}${pad2(mm)}`;
+      $("#countdown").textContent = `Next in ${hh? hh+":" : ""}${String(mm).padStart(2,'0')}`;
       $("#progress").style.width = `${clamp(100*(1 - remain/dur),0,100)}%`;
-      // Sweep animation length set to hour length
+
       const sweep = $("#sweep");
       sweep.style.animationDuration = `${dur/1000}s`;
       const elapsed = (msNow - cur.start)/dur;
       sweep.style.animationDelay = `${-elapsed * (dur/1000)}s`;
+    } else {
+      $("#countdown").textContent = "—";
+      $("#progress").style.width = "0%";
     }
 
-    // Day info, hour info, multiplier
+    // Day + Hour info + Mult
+    $("#weekdayEcho").textContent = `${state.weekdayName} ruled by ${state.dayRuler}`;
+    $("#sunInfo").textContent = `Sunrise ${fmtTime(state.sunrise, tz)} • Sunset ${fmtTime(state.sunset, tz)} • Next sunrise ${fmtTime(state.nextSunrise, tz)}`;
+
     const dayEss = ESSENCE[state.dayRuler];
     $("#dayInfo").innerHTML = `<span class="mid"><span class="sym">${SYMBOL[state.dayRuler]}</span> ${state.dayRuler}</span>
       <div class="tiny">Weight: <span class="mono">x${WEIGHT[state.dayRuler]}</span> • ${dayEss}</div>`;
 
     if(cur){
-      const focus = (cur.phase==="Bright" ? FOCUS_BRIGHT : FOCUS_DARK)[cur.planet];
-      const hourWeight = WEIGHT[cur.planet];
+      const focus = (cur.phase==="Bright"? FOCUS_BRIGHT : FOCUS_DARK)[cur.planet];
+      const wH = WEIGHT[cur.planet];
       $("#hourInfo").innerHTML = `<span class="mid"><span class="sym">${SYMBOL[cur.planet]}</span> ${cur.planet} <span class="tiny">(${cur.phase})</span></span>
-        <div class="tiny">Weight: <span class="mono">x${hourWeight}</span> • ${focus}</div>`;
-      const mult = WEIGHT[state.dayRuler] * hourWeight;
-      $("#multInfo").innerHTML = `<span class="mono">x${mult.toFixed(3)}</span>`;
+        <div class="tiny">Weight: <span class="mono">x${wH}</span> • ${focus}</div>`;
+      $("#multInfo").innerHTML = `<span class="mono">x${(WEIGHT[state.dayRuler]*wH).toFixed(3)}</span>`;
     } else {
       $("#hourInfo").textContent = "—";
       $("#multInfo").textContent = "—";
     }
 
-    // Sunrise/sunset, weekday
-    $("#sunInfo").textContent = `Sunrise ${fmtTime(state.sunrise, tz)} • Sunset ${fmtTime(state.sunset, tz)} • Next sunrise ${fmtTime(state.nextSunrise, tz)}`;
-    $("#weekdayEcho").textContent = `${state.weekdayName} ruled by ${state.dayRuler}`;
-
-    // Bridge hour / Δ
+    // Bridge
     const b = state.bridgeHour;
     const nextDayRuler = DAY_RULER[(state.sunrise.getDay()+1)%7];
     const nextFirst = chaldean(nextDayRuler,1)[0];
     $("#bridgeInfo").innerHTML = `
       <span class="bridge">${fmtTime(b.start, tz)}–${fmtTime(b.end, tz)}</span> •
       Last dark ruler: <strong>${SYMBOL[b.planet]} ${b.planet}</strong> → Next day first ruler: <strong>${SYMBOL[nextFirst]} ${nextFirst}</strong>`;
-    const d = state.bridgeDelta;
-    const signClass = (d>=0) ? 'pos' : 'neg';
-    $("#bridgeDelta").innerHTML = `<span class="delta ${signClass}">${d>=0?'+':''}${d.toFixed(3)}</span>`;
+    const d = state.bridgeDelta; const sign = (d>=0)?'pos':'neg';
+    $("#bridgeDelta").innerHTML = `<span class="delta ${sign}">${d>=0?'+':''}${d.toFixed(3)}</span>`;
 
     // Table
-    const tbody = $("#hoursTable tbody");
-    tbody.innerHTML = "";
+    const tbody = $("#hoursTable tbody"); tbody.innerHTML = "";
     sched.forEach(h=>{
       const tr = document.createElement('tr');
       if(cur && h.idx===cur.idx) tr.classList.add('now');
-      const focus = (h.phase==="Bright" ? FOCUS_BRIGHT : FOCUS_DARK)[h.planet];
-      const m = WEIGHT[state.dayRuler] * WEIGHT[h.planet];
+      const focus = (h.phase==="Bright"? FOCUS_BRIGHT : FOCUS_DARK)[h.planet];
+      const mult = WEIGHT[state.dayRuler]*WEIGHT[h.planet];
       tr.innerHTML = `
         <td class="mono">${h.idx}</td>
         <td>${h.phase}</td>
@@ -440,19 +408,17 @@
         <td class="mono">${fmtTime(h.end, tz)}</td>
         <td><span class="sym">${SYMBOL[h.planet]}</span> ${h.planet}</td>
         <td class="tiny" style="max-width:420px">${focus}</td>
-        <td class="mono">x${m.toFixed(3)}</td>`;
+        <td class="mono">x${mult.toFixed(3)}</td>`;
       tbody.appendChild(tr);
     });
   }
 
-  // ————— Init / Recalc —————
   function recalc(){
-    const tz = (state.tzMode==='auto') ? Intl.DateTimeFormat().resolvedOptions().timeZone
-              : (state.tzMode==='utc' ? 'UTC' : state.tzCustom || Intl.DateTimeFormat().resolvedOptions().timeZone);
-    state.anchorTZ = tz;
-    const now = state.when || new Date();
+    state.anchorTZ = (state.tzMode==='auto') ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                  : (state.tzMode==='utc' ? 'UTC' : state.tzCustom || Intl.DateTimeFormat().resolvedOptions().timeZone);
+    const when = state.when || new Date();
     try{
-      const built = buildSchedule(now, state.tzMode==='custom' ? state.tzCustom : state.tzMode, state.lat, state.lon);
+      const built = buildSchedule(when, (state.tzMode==='custom'? state.tzCustom : state.tzMode), state.lat, state.lon);
       state.schedule = built.out;
       state.sunrise = built.sunrise;
       state.sunset = built.sunset;
@@ -467,30 +433,24 @@
     }
   }
 
-  // ————— Controls —————
-  const geoBtn = $("#geoBtn");
-  const utcBtn = $("#utcBtn");
-  const addr = $("#addr");
-  const searchBtn = $("#searchBtn");
-  const latIn = $("#lat");
-  const lonIn = $("#lon");
-  const setLL = $("#setLL");
-  const tzMode = $("#tzMode");
-  const tzCustom = $("#tzCustom");
-  const datePick = $("#datePick");
-  const timePick = $("#timePick");
-  const useNow = $("#useNow");
-  const applyDT = $("#applyDT");
-  const locEcho = $("#locEcho");
-  const dtEcho = $("#dtEcho");
+  // ——— Controls
+  const geoBtn = $("#geoBtn"), utcBtn=$("#utcBtn"), addr=$("#addr"), searchBtn=$("#searchBtn");
+  const latIn=$("#lat"), lonIn=$("#lon"), setLL=$("#setLL");
+  const tzMode=$("#tzMode"), tzCustom=$("#tzCustom");
+  const datePick=$("#datePick"), timePick=$("#timePick"), useNow=$("#useNow"), applyDT=$("#applyDT");
+  const locEcho=$("#locEcho"), dtEcho=$("#dtEcho"), geoWarn=$("#geoWarn");
 
   function echoLoc(){ locEcho.textContent = `${state.lat.toFixed(4)}, ${state.lon.toFixed(4)} (${state.anchorTZ})`; }
   function echoDT(){
-    const tz = state.anchorTZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
-    dtEcho.textContent = state.when ? `Custom datetime: ${fmtDate(state.when,tz)} • ${fmtTime(state.when,tz)}` : `Using system clock`;
+    const tz = state.anchorTZ;
+    dtEcho.textContent = state.when
+      ? `Custom datetime: ${DateTime.fromJSDate(state.when).setZone(tz).toFormat("MMM d, yyyy • h:mm a")}`
+      : `Using system clock`;
   }
 
   geoBtn.onclick = ()=>{
+    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+    geoWarn.style.display = isSecure ? 'none' : 'block';
     if(!navigator.geolocation){ alert("Geolocation not supported."); return; }
     navigator.geolocation.getCurrentPosition(
       pos=>{
@@ -508,12 +468,14 @@
     echoLoc(); recalc();
   };
 
+  // Address search via geocode.maps.co (Nominatim wrapper with CORS)
   searchBtn.onclick = async ()=>{
     const q = addr.value.trim();
     if(!q){ alert("Enter a place name or address."); return; }
     try{
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`;
+      const url = `https://geocode.maps.co/search?q=${encodeURIComponent(q)}&limit=1`;
       const res = await fetch(url, {headers:{'Accept':'application/json'}});
+      if(!res.ok) throw new Error(res.status + " " + res.statusText);
       const js = await res.json();
       if(!js.length){ alert("No results."); return; }
       const best = js[0];
@@ -526,7 +488,7 @@
   };
 
   setLL.onclick = ()=>{
-    const la = parseFloat(latIn.value); const lo = parseFloat(lonIn.value);
+    const la = parseFloat(latIn.value), lo = parseFloat(lonIn.value);
     if(Number.isNaN(la) || Number.isNaN(lo)){ alert("Enter valid lat/lon."); return; }
     state.lat = la; state.lon = lo; echoLoc(); recalc();
   };
@@ -534,36 +496,38 @@
   tzMode.onchange = ()=>{
     state.tzMode = tzMode.value;
     tzCustom.style.display = (state.tzMode==='custom') ? 'inline-block' : 'none';
+    if(state.tzMode!=='custom'){ state.tzCustom=''; }
     recalc();
   };
   tzCustom.onchange = ()=>{
-    if(state.tzMode==='custom'){
-      try{ new Intl.DateTimeFormat('en-US',{timeZone:tzCustom.value}).format(new Date()); }
-      catch(e){ alert("Invalid IANA timezone."); return; }
+    try{
+      // Validate zone with Luxon
+      const test = DateTime.now().setZone(tzCustom.value);
+      if(!test.isValid) throw new Error("Invalid IANA timezone");
       state.tzCustom = tzCustom.value;
       recalc();
-    }
+    }catch(e){ alert("Invalid IANA timezone."); }
   };
 
   useNow.onclick = ()=>{ state.when = null; datePick.value=""; timePick.value=""; echoDT(); recalc(); };
   applyDT.onclick = ()=>{
-    const z = (state.tzMode==='auto')? Intl.DateTimeFormat().resolvedOptions().timeZone : (state.tzMode==='utc'?'UTC':state.tzCustom||Intl.DateTimeFormat().resolvedOptions().timeZone);
-    const today = new Date();
-    const dval = datePick.value ? new Date(datePick.value) : today;
+    const z = (state.tzMode==='auto') ? Intl.DateTimeFormat().resolvedOptions().timeZone
+             : (state.tzMode==='utc' ? 'UTC' : (state.tzCustom || Intl.DateTimeFormat().resolvedOptions().timeZone));
+    const today = DateTime.now().setZone(z);
+    const dval = datePick.value ? DateTime.fromISO(datePick.value, {zone:z}) : today;
     const tval = timePick.value || "00:00";
     const [hh,mm] = tval.split(":").map(x=>parseInt(x,10));
-    const y = dval.getFullYear(), m = dval.getMonth(), d = dval.getDate();
-    state.when = makeZonedDate(y,m,d,hh,mm,(state.tzMode==='custom'?state.tzCustom:state.tzMode));
+    const custom = dval.set({hour:hh, minute:mm, second:0, millisecond:0});
+    if(!custom.isValid){ alert("Invalid date/time."); return; }
+    state.when = custom.toJSDate();
     echoDT(); recalc();
   };
 
-  // Ticker
   function tick(){
     if(!state.when){ renderAll(); }
     requestAnimationFrame(tick);
   }
 
-  // Defaults
   (function init(){
     state.tzMode = 'auto';
     state.when = null;
