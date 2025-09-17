@@ -1,256 +1,576 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Planetary Hours</title>
-  <style>
-    :root {
-      --fg:#111; --muted:#666; --line:#ddd; --soft:#eee; --chip:#fff;
-    }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; color:var(--fg); }
-    .card { max-width: 720px; border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
-    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .tiny { font-size: 12px; color: var(--muted); }
-    .pill { padding: 6px 10px; border:1px solid var(--line); border-radius:999px; background:#fff; }
-    .btn  { text-decoration:none; padding:8px 12px; border:1px solid var(--line); border-radius:999px; font-size:14px; background:#fff; }
-    .bar { height: 8px; background: var(--soft); border-radius:999px; overflow:hidden; }
-    .bar > div { height:100%; width:0%; background:#000; }
-    .hrs { display:grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top:12px; }
-    .hr { padding:8px 10px; border-radius:10px; border:1px solid var(--soft); }
-    .hr.now { border-color:#000; font-weight:600; background:#fafafa; }
-
-    /* Hour ruler strip */
-    .ruler { position:relative; height:48px; border:1px solid var(--soft); border-radius:999px; margin:14px 0; background:#f8f8f8; }
-    .chip { position:absolute; top:50%; transform:translate(-50%,-50%); padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:var(--chip); white-space:nowrap; }
-    .chip.current { font-weight:700; box-shadow:0 1px 0 rgba(0,0,0,0.04); }
-    .chip.side { opacity:.65; font-size:13px; }
-
-    /* Links row */
-    .links { display:flex; gap:12px; margin:10px 0 4px; }
-  </style>
-  <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Planetary Hours</title>
+<style>
+  :root { --fg:#111; --muted:#666; --line:#e6e6e6; --pill:#f5f5f5; --accent:#111; --good:#0a7; --bad:#b00; }
+  html,body { margin:0; padding:0; color:var(--fg); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#fff; }
+  .wrap { max-width:1000px; margin: 24px auto 96px; padding: 0 16px; }
+  h1 { font-size: 24px; margin: 0 0 8px; }
+  .muted { color: var(--muted); }
+  .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .col { display:flex; flex-direction:column; gap:6px; }
+  .card { border:1px solid var(--line); border-radius:16px; padding:16px; background:#fff; }
+  .pill { background: var(--pill); border:1px solid var(--line); border-radius:999px; padding:4px 10px; display:inline-flex; gap:6px; align-items:center; }
+  .grid { display:grid; gap:12px; }
+  .g2 { grid-template-columns: 1fr 1fr; }
+  .g3 { grid-template-columns: repeat(3,1fr); }
+  .g4 { grid-template-columns: repeat(4,1fr); }
+  .bar { height:10px; background:#eee; border-radius:999px; overflow:hidden; }
+  .bar > div { height:100%; width:0%; background: var(--accent); transition: width .4s ease; }
+  .ticker { font-size: 14px; }
+  .big { font-size: 32px; font-weight: 800; letter-spacing: .2px; display:flex; align-items:center; gap:.35em; }
+  .mid { font-size: 18px; font-weight: 700; display:flex; align-items:center; gap:.4em; }
+  .sym { font-size: 1.05em; }
+  button, input, select { padding:7px 9px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+  button { cursor:pointer; }
+  label { font-size:12px; color:#444; display:flex; gap:6px; align-items:center; }
+  .hrline { height:1px; background:var(--line); margin:12px 0; }
+  table { border-collapse: collapse; width:100%; }
+  th, td { border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; vertical-align:top; }
+  th { font-size:12px; text-transform: uppercase; letter-spacing:.04em; color:#444; }
+  .now { background: #fafafa; border-left: 3px solid #000; }
+  .tiny { font-size:12px; color: var(--muted); }
+  .delta.pos { color: var(--good); }
+  .delta.neg { color: var(--bad); }
+  .stack { display:grid; gap:6px; }
+  .center { text-align:center; }
+  .fade { opacity: .75; }
+  .hero { display:grid; grid-template-columns: 1fr 1.2fr 1fr; align-items:center; gap:12px; }
+  .hero .slot { min-height: 76px; }
+  .bridge { font-weight: 600; }
+  .chip { display:inline-flex; align-items:center; gap:.4em; padding:.25rem .6rem; border:1px solid var(--line); border-radius:999px; }
+  .rulerband { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .legend { display:flex; gap:8px; flex-wrap:wrap; }
+  .anim-ruler { position: relative; height: 8px; background:#eee; border-radius:999px; overflow:hidden; }
+  .anim-ruler > div { position:absolute; left:0; top:0; bottom:0; width:100%; transform: translateX(-100%); background:#000; animation: sweep linear forwards; }
+  @keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(0%); } }
+  .note { background:#fffef7; border:1px solid #f0e6b3; padding:8px 10px; border-radius:10px; }
+</style>
+<!-- SunCalc for sunrise/sunset -->
+<script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 </head>
 <body>
-<div class="card">
+<div class="wrap">
 
-  <div class="tiny">Current Planetary Hour</div>
-  <div id="current" style="font-size:34px; font-weight:800; line-height:1.1;">–</div>
-  <div id="dayruler" class="tiny">–</div>
-  <div id="clock" class="tiny mono" style="margin-top:2px;">–</div>
-
-  <div class="row" style="margin-top:10px;">
-    <span class="pill mono" id="range">–</span>
-    <span class="pill mono" id="elapsed">–</span>
-    <span class="pill mono" id="remain">–</span>
-    <span class="pill" id="weekday">–</span>
-    <span class="pill" id="nextPreview">Next: –</span>
+  <div class="row" style="justify-content:space-between;">
+    <div>
+      <h1>Planetary Hours</h1>
+      <div class="ticker mono" id="clock">—</div>
+      <div class="tiny" id="contextLabel">Using system time & location</div>
+    </div>
+    <div class="legend tiny">
+      <span class="chip"><span class="sym">♄</span> Saturn</span>
+      <span class="chip"><span class="sym">♃</span> Jupiter</span>
+      <span class="chip"><span class="sym">♂</span> Mars</span>
+      <span class="chip"><span class="sym">☉</span> Sun</span>
+      <span class="chip"><span class="sym">♀</span> Venus</span>
+      <span class="chip"><span class="sym">☿</span> Mercury</span>
+      <span class="chip"><span class="sym">☾</span> Moon</span>
+    </div>
   </div>
 
-  <!-- Ruler with prev / current / next chips -->
-  <div class="ruler">
-    <div class="chip side" id="chipPrev" style="left:10%;">–</div>
-    <div class="chip current" id="chip" style="left:50%;">–</div>
-    <div class="chip side" id="chipNext" style="left:90%;">–</div>
+  <!-- Controls -->
+  <div class="card" style="margin-top:12px;">
+    <div class="grid g2">
+      <div class="col">
+        <div class="tiny">Location</div>
+        <div class="row">
+          <button id="geoBtn" title="Browser geolocation">Use my location</button>
+          <button id="utcBtn" title="UTC mode (0,0)">UTC (0°, 0°)</button>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <label>Search place
+            <input id="addr" placeholder="Address, landmark, city…" size="32" />
+          </label>
+          <button id="searchBtn">Find</button>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <label>Lat <input id="lat" size="8" placeholder="40.7608"></label>
+          <label>Lon <input id="lon" size="8" placeholder="-111.8910"></label>
+          <button id="setLL">Set</button>
+        </div>
+        <div class="tiny mono" id="locEcho">—</div>
+      </div>
+
+      <div class="col">
+        <div class="tiny">Time & Timezone</div>
+        <div class="row">
+          <label>Timezone
+            <select id="tzMode">
+              <option value="auto">Auto (system)</option>
+              <option value="utc">UTC</option>
+              <option value="custom">Custom IANA…</option>
+            </select>
+          </label>
+          <input id="tzCustom" placeholder="e.g., America/Denver" style="display:none" />
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <label>Date <input type="date" id="datePick"></label>
+          <label>Time <input type="time" id="timePick"></label>
+          <button id="useNow">Use now</button>
+          <button id="applyDT">Apply</button>
+        </div>
+        <div class="tiny" id="dtEcho">—</div>
+      </div>
+    </div>
   </div>
 
-  <div class="row" style="margin-top:4px;">
-    <label>Timezone
-      <select id="tzSelect">
-        <!-- Pre-filled handful + Denver default -->
-        <option value="America/Denver" data-lat="40.7608" data-lon="-111.8910" selected>America/Denver (Denver)</option>
-        <option value="America/Los_Angeles" data-lat="34.0522" data-lon="-118.2437">Los Angeles</option>
-        <option value="America/New_York" data-lat="40.7128" data-lon="-74.0060">New York</option>
-        <option value="Europe/London" data-lat="51.5074" data-lon="-0.1278">London</option>
-        <option value="Europe/Paris" data-lat="48.8566" data-lon="2.3522">Paris</option>
-        <option value="Asia/Tokyo" data-lat="35.6762" data-lon="139.6503">Tokyo</option>
-        <option value="Australia/Sydney" data-lat="-33.8688" data-lon="151.2093">Sydney</option>
-      </select>
-    </label>
-    <button id="useTzBtn" class="pill">Use timezone</button>
-    <button id="geoBtn" class="pill">Use my location</button>
-    <span id="locEcho" class="tiny mono">–</span>
+  <!-- Hero rulers -->
+  <div class="card" style="margin-top:12px;">
+    <div class="hero">
+      <div class="slot center">
+        <div class="tiny">Next ruler</div>
+        <div class="mid" id="nextRuler">—</div>
+      </div>
+      <div class="slot">
+        <div class="tiny">Current hour</div>
+        <div class="big" id="currentRuler">—</div>
+        <div class="row">
+          <span class="pill mono" id="hrRange">—</span>
+          <span class="pill mono" id="countdown">—</span>
+          <span class="pill" id="brightDark">—</span>
+        </div>
+      </div>
+      <div class="slot center">
+        <div class="tiny">Previous ruler</div>
+        <div class="mid" id="prevRuler">—</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <div class="tiny">Progress</div>
+      <div class="bar"><div id="progress"></div></div>
+      <div class="anim-ruler" style="margin-top:6px;"><div id="sweep"></div></div>
+    </div>
+
+    <div class="hrline"></div>
+
+    <div class="grid g3">
+      <div class="stack">
+        <div class="tiny">Day ruler</div>
+        <div id="dayInfo">—</div>
+      </div>
+      <div class="stack">
+        <div class="tiny">Hour ruler</div>
+        <div id="hourInfo">—</div>
+      </div>
+      <div class="stack">
+        <div class="tiny">Multiplier</div>
+        <div id="multInfo" class="mid">—</div>
+      </div>
+    </div>
+
+    <div class="hrline"></div>
+
+    <div class="grid g3">
+      <div class="stack">
+        <div class="tiny">Sunrise / Sunset</div>
+        <div id="sunInfo" class="mono">—</div>
+      </div>
+      <div class="stack">
+        <div class="tiny">Bridge hour (last dark hour)</div>
+        <div id="bridgeInfo">—</div>
+      </div>
+      <div class="stack">
+        <div class="tiny">Δ at daybreak</div>
+        <div id="bridgeDelta" class="mid">—</div>
+      </div>
+    </div>
   </div>
 
-  <div class="links">
-    <a class="btn" href="https://chatgpt.com/g/g-68606a9ece40819191154b836fcd2846-oracle-of-relphi" target="_blank" rel="noopener">Commune with the Oracle</a>
-    <a class="btn" href="https://ko-fi.com/oracleofrelphi" target="_blank" rel="noopener">Donate</a>
+  <!-- Day planner table -->
+  <div class="card" style="margin-top:12px;">
+    <div class="row" style="justify-content:space-between;">
+      <div class="mid">Today’s Planetary Hours</div>
+      <div class="tiny" id="weekdayEcho">—</div>
+    </div>
+    <div class="hrline"></div>
+    <table id="hoursTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Phase</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Ruler</th>
+          <th>Focus</th>
+          <th>Multiplier</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="note tiny" style="margin-top:10px;">
+      Multiplier = x(day weight × hour weight), weights are sidereal orbital periods (years). Phase labels: Bright (sunrise→sunset), Dark (sunset→next sunrise).
+    </div>
   </div>
 
-  <div style="margin:12px 0;">
-    <div class="tiny">Progress</div>
-    <div class="bar"><div id="progress"></div></div>
-  </div>
-
-  <div class="tiny" id="suninfo">–</div>
-  <div class="hrs" id="list"></div>
 </div>
 
 <script>
 (function(){
-  // ——— Ephemeris & labels ———
+  // ————— Data —————
   const ORDER = ["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"];
-  const DAY_RULER = {0:"Sun",1:"Moon",2:"Mars",3:"Mercury",4:"Jupiter",5:"Venus",6:"Saturn"};
-  const WEEKDAY_NAME = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const INFO = {
-    Sun:{sym:"☉",about:"Vitality & Purpose"},
-    Moon:{sym:"☽",about:"Cycles & Emotion"},
-    Mercury:{sym:"☿",about:"Thought & Exchange"},
-    Venus:{sym:"♀",about:"Harmony & Affection"},
-    Mars:{sym:"♂",about:"Energy & Action"},
-    Jupiter:{sym:"♃",about:"Growth & Wisdom"},
-    Saturn:{sym:"♄",about:"Structure & Time"}
+  const SYMBOL = { Saturn:"♄", Jupiter:"♃", Mars:"♂", Sun:"☉", Venus:"♀", Mercury:"☿", Moon:"☾" };
+  const WEEKDAY = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const DAY_RULER = { 0:"Sun", 1:"Moon", 2:"Mars", 3:"Mercury", 4:"Jupiter", 5:"Venus", 6:"Saturn" };
+  const WEIGHT = { // sidereal years basis (Moon approx. 0.075)
+    Saturn:29.5, Jupiter:11.9, Mars:1.88, Sun:1.0, Venus:0.62, Mercury:0.24, Moon:0.075
+  };
+  const ESSENCE = { // Day ruler essence (what it's in charge of)
+    Sun:"Vitality, visibility, leadership",
+    Moon:"Care, memory, intuition",
+    Mars:"Action, courage, cutting",
+    Mercury:"Speech, learning, commerce",
+    Jupiter:"Meaning, growth, blessing",
+    Venus:"Harmony, attraction, aesthetics",
+    Saturn:"Structure, limits, duty"
+  };
+  const FOCUS_BRIGHT = {
+    Sun:"Lead, shine, self-expression",
+    Moon:"Emotional clarity with warmth",
+    Mars:"Bold action, decisive push",
+    Mercury:"Communication, learning",
+    Jupiter:"Abundance, teaching, planning",
+    Venus:"Beauty, art, connection",
+    Saturn:"Structure, discipline, edits"
+  };
+  const FOCUS_DARK = {
+    Sun:"Restore vitality, inner radiance",
+    Moon:"Subconscious healing, deep care",
+    Mars:"Inner resolve, martial calm",
+    Mercury:"Dream journaling, reflection",
+    Jupiter:"Satisfying rest, quiet faith",
+    Venus:"Soothing affection, reconciliation",
+    Saturn:"Grounding, stillness, order"
   };
 
-  // ——— DOM ———
-  const elCur   = document.getElementById('current');
-  const elDay   = document.getElementById('dayruler');
-  const elClock = document.getElementById('clock');
-  const elRange = document.getElementById('range');
-  const elElapsed = document.getElementById('elapsed');
-  const elRemain  = document.getElementById('remain');
-  const elWeekday = document.getElementById('weekday');
-  const elNextPrev = document.getElementById('nextPreview');
-  const elSun   = document.getElementById('suninfo');
-  const elList  = document.getElementById('list');
-  const elProg  = document.getElementById('progress');
-  const chip    = document.getElementById('chip');
-  const chipPrev= document.getElementById('chipPrev');
-  const chipNext= document.getElementById('chipNext');
-  const tzSel   = document.getElementById('tzSelect');
-  const useTzBtn= document.getElementById('useTzBtn');
-  const geoBtn  = document.getElementById('geoBtn');
-  const locEcho = document.getElementById('locEcho');
+  // ————— Utilities —————
+  const $ = sel => document.querySelector(sel);
+  const fmtTime = (d, tz) => d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', hour12:true, timeZone: tz});
+  const fmt24 = (d, tz) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false, timeZone: tz});
+  const fmtDate = (d, tz) => d.toLocaleDateString([], {year:'numeric', month:'short', day:'numeric', timeZone: tz});
+  const pad2 = n => String(n).padStart(2,'0');
+  const clamp = (x,a,b) => Math.max(a, Math.min(b,x));
 
-  // ——— State ———
-  let tz = "America/Denver";
-  let lat = 40.7608, lon = -111.8910;
-  let schedule = [];            // 24 items
-  let nextRecalcAt = 0;         // ms timestamp (next sunrise)
-
-  // ——— Helpers ———
-  const pad2 = n => String(n).padStart(2,"0");
-  const fmt = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', timeZone: tz});
-  const clockStr = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', timeZone: tz});
-
-  function chaldean(start,len){
-    const s = ORDER.indexOf(start);
-    return Array.from({length:len}, (_,i)=> ORDER[(s+i)%7]);
+  // Convert a "wall clock" in a target timeZone to a JS Date in UTC space
+  function makeZonedDate(year, month, day, hour=0, minute=0, tz="auto"){
+    const zone = (tz==="auto") ? Intl.DateTimeFormat().resolvedOptions().timeZone : (tz==="utc" ? "UTC" : tz);
+    // Get the UTC timestamp that corresponds to these local components in that timeZone
+    const dtf = new Intl.DateTimeFormat('en-US', {
+      timeZone: zone, year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+    });
+    const parts = dtf.formatToParts(new Date(Date.UTC(year, month, day, hour, minute, 0)));
+    // map parts to an object
+    const map = {};
+    for (const p of parts) map[p.type] = p.value;
+    // Now construct a string interpreted in that TZ, then parse to Date (which is in local) -> use getTime equivalently
+    const isoLocal = `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}:${map.second}`;
+    // Trick: Date.parse on iso without Z interprets as local; we correct by asking dtf for the timestamp of that wall time
+    const asUTC = new Date(isoLocal + ':00Z'); // safe anchor
+    // But we still need exact wall→utc mapping; better: ask the formatter for epoch milliseconds
+    const ms = Date.parse(`${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}:${map.second}Z`);
+    return new Date(ms);
   }
 
-  function buildSchedule(){
-    // Use device local civil day for SunCalc; we only use tz for formatting the display
-    const today = new Date();
-    const times = SunCalc.getTimes(today, lat, lon);
-    const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate()+1);
-    const times2 = SunCalc.getTimes(tomorrow, lat, lon);
+  // Build chaldean sequence starting at startPlanet
+  function chaldean(startPlanet, len){
+    const s = ORDER.indexOf(startPlanet);
+    return Array.from({length: len}, (_,i)=> ORDER[(s+i)%7]);
+  }
 
-    const sunrise = times.sunrise, sunset = times.sunset, nextSunrise = times2.sunrise;
-    const dayHour  = (sunset - sunrise) / 12;
-    const nightHour= (nextSunrise - sunset) / 12;
+  // ————— State —————
+  let state = {
+    lat: 40.7608, lon: -111.8910,
+    tzMode: 'auto', tzCustom: '',
+    when: null,               // JS Date (moment to anchor)
+    anchorTZ: null,           // chosen TZ for display
+    schedule: [],             // 24 entries: {start,end,planet,idx,phase}
+    sunrise: null, sunset: null, nextSunrise: null,
+    weekdayName: '', dayRuler: '', bridgeHour: null, bridgeDelta: null
+  };
 
-    const weekday = today.getDay();                   // 0..6 local
-    const dayRuler = DAY_RULER[weekday];
-    const seqDay   = chaldean(dayRuler, 12);
-    const seqNight = chaldean(ORDER[(ORDER.indexOf(seqDay[11])+1)%7], 12);
+  // ————— Core: schedule builder —————
+  function buildSchedule(theDate, tz, lat, lon){
+    // theDate is a JS Date representing "now" in UTC; tz is the display/anchor zone
+    // derive the civil date in that tz
+    const zone = (tz==='auto') ? Intl.DateTimeFormat().resolvedOptions().timeZone : (tz==='utc' ? 'UTC' : tz);
 
-    schedule = [];
+    // Get year-month-day in zone
+    const parts = new Intl.DateTimeFormat('en-US', {timeZone:zone, year:'numeric', month:'numeric', day:'numeric'}).formatToParts(theDate);
+    const y = +parts.find(p=>p.type==='year').value;
+    const m = +parts.find(p=>p.type==='month').value - 1;
+    const d = +parts.find(p=>p.type==='day').value;
+
+    // "Local" midnight in that zone -> Date object
+    const localMid = makeZonedDate(y,m,d,0,0,zone);
+
+    // Sun times for civil day at location
+    const timesToday = SunCalc.getTimes(localMid, lat, lon);
+    const sunrise = timesToday.sunrise;
+    const sunset = timesToday.sunset;
+
+    const tomorrowMid = makeZonedDate(y,m,d+1,0,0,zone);
+    const timesTomorrow = SunCalc.getTimes(tomorrowMid, lat, lon);
+    const nextSunrise = timesTomorrow.sunrise;
+
+    if(!sunrise || !sunset || !nextSunrise) throw new Error("Sun never rises/sets for this date/location.");
+
+    const dayLen = sunset - sunrise;
+    const nightLen = nextSunrise - sunset;
+    const dayHour = dayLen / 12;
+    const nightHour = nightLen / 12;
+
+    const weekdayIdx = new Date(fmtDate(localMid,zone) + ' 00:00:00').getDay(); // safe, but simpler: use sunrise date
+    const weekdayName = WEEKDAY[sunrise.getDay()];
+    const dayRuler = DAY_RULER[sunrise.getDay()]; // day starts at sunrise
+
+    // Build hours
+    const daySeq = chaldean(dayRuler, 12);
+    const nightSeq = chaldean(daySeq[12 % 7], 12);
+    const out = [];
     for(let i=0;i<12;i++){
-      schedule.push({planet:seqDay[i], start:new Date(sunrise.getTime()+i*dayHour), end:new Date(sunrise.getTime()+(i+1)*dayHour)});
+      const start = new Date(sunrise.getTime() + i*dayHour);
+      const end   = new Date(sunrise.getTime() + (i+1)*dayHour);
+      out.push({ idx:i+1, phase:"Bright", planet: daySeq[i], start, end });
     }
     for(let i=0;i<12;i++){
-      schedule.push({planet:seqNight[i], start:new Date(sunset.getTime()+i*nightHour), end:new Date(sunset.getTime()+(i+1)*nightHour)});
+      const start = new Date(sunset.getTime() + i*nightHour);
+      const end   = new Date(sunset.getTime() + (i+1)*nightHour);
+      out.push({ idx:13+i, phase:"Dark", planet: nightSeq[i], start, end });
     }
 
-    nextRecalcAt = nextSunrise.getTime();
+    // Bridge hour (hour before next sunrise)
+    const bridge = out[23]; // last dark hour
+    // Next day first hour
+    const nextDayRuler = DAY_RULER[(sunrise.getDay()+1)%7];
+    const nextSeqFirst = chaldean(nextDayRuler, 1)[0];
 
-    // Header info
-    elSun.textContent = `Sunrise ${fmt(sunrise)} • Sunset ${fmt(sunset)} • Next sunrise ${fmt(nextSunrise)} • ${WEEKDAY_NAME[weekday]} ruled by ${dayRuler}`;
-    elDay.textContent = `${WEEKDAY_NAME[weekday]} — Ruled by ${INFO[dayRuler].sym} ${dayRuler}`;
+    const bridgeDelta = (WEIGHT[nextDayRuler] * WEIGHT[nextSeqFirst]) - (WEIGHT[dayRuler] * WEIGHT[bridge.planet]);
 
-    // Rebuild list
-    elList.innerHTML = "";
-    schedule.forEach((h,idx)=>{
-      const div = document.createElement('div');
-      div.className = 'hr';
-      div.innerHTML = `<div><strong>${idx<12? "Day":"Night"} ${idx%12+1}</strong> — ${INFO[h.planet].sym} ${h.planet}</div>
-                       <div class="tiny mono">${fmt(h.start)} – ${fmt(h.end)}</div>`;
-      elList.appendChild(div);
+    return {out, sunrise, sunset, nextSunrise, weekdayName, dayRuler, bridgeHour: bridge, bridgeDelta, zone};
+  }
+
+  // ————— Rendering —————
+  function renderAll(){
+    const tz = state.anchorTZ;
+    // Clock & context
+    const now = state.when || new Date();
+    $("#clock").textContent = `${fmtDate(now, tz)} • ${fmtTime(now, tz).replace(':00 ',' ')}`;
+    $("#contextLabel").textContent = `Location ${state.lat.toFixed(4)}, ${state.lon.toFixed(4)} • Timezone: ${tz}`;
+
+    // Day/Hour rulers now
+    const sched = state.schedule;
+    const msNow = now.getTime();
+    const idx = sched.findIndex(h => msNow >= h.start.getTime() && msNow < h.end.getTime());
+    const cur = (idx >= 0) ? sched[idx] : null;
+    const prev = (idx>0) ? sched[idx-1] : null;
+    const next = (idx>=0 && idx<sched.length-1) ? sched[idx+1] : null;
+
+    // Hero band
+    $("#currentRuler").innerHTML = cur ? `${SYMBOL[cur.planet]} ${cur.planet}` : "—";
+    $("#prevRuler").innerHTML = prev ? `${SYMBOL[prev.planet]} ${prev.planet}` : "—";
+    $("#nextRuler").innerHTML = next ? `${SYMBOL[next.planet]} ${next.planet}` : "—";
+    $("#hrRange").textContent = cur ? `${fmtTime(cur.start, tz)} – ${fmtTime(cur.end, tz)}` : "—";
+    $("#brightDark").textContent = cur ? cur.phase : "—";
+
+    // Progress
+    if(cur){
+      const remain = cur.end - msNow;
+      const dur = cur.end - cur.start;
+      const mm = Math.floor((remain/1000/60)%60);
+      const hh = Math.floor((remain/1000/3600));
+      $("#countdown").textContent = `Next in ${hh? hh+":" : ""}${pad2(mm)}`;
+      $("#progress").style.width = `${clamp(100*(1 - remain/dur),0,100)}%`;
+      // Sweep animation length set to hour length
+      const sweep = $("#sweep");
+      sweep.style.animationDuration = `${dur/1000}s`;
+      const elapsed = (msNow - cur.start)/dur;
+      sweep.style.animationDelay = `${-elapsed * (dur/1000)}s`;
+    }
+
+    // Day info, hour info, multiplier
+    const dayEss = ESSENCE[state.dayRuler];
+    $("#dayInfo").innerHTML = `<span class="mid"><span class="sym">${SYMBOL[state.dayRuler]}</span> ${state.dayRuler}</span>
+      <div class="tiny">Weight: <span class="mono">x${WEIGHT[state.dayRuler]}</span> • ${dayEss}</div>`;
+
+    if(cur){
+      const focus = (cur.phase==="Bright" ? FOCUS_BRIGHT : FOCUS_DARK)[cur.planet];
+      const hourWeight = WEIGHT[cur.planet];
+      $("#hourInfo").innerHTML = `<span class="mid"><span class="sym">${SYMBOL[cur.planet]}</span> ${cur.planet} <span class="tiny">(${cur.phase})</span></span>
+        <div class="tiny">Weight: <span class="mono">x${hourWeight}</span> • ${focus}</div>`;
+      const mult = WEIGHT[state.dayRuler] * hourWeight;
+      $("#multInfo").innerHTML = `<span class="mono">x${mult.toFixed(3)}</span>`;
+    } else {
+      $("#hourInfo").textContent = "—";
+      $("#multInfo").textContent = "—";
+    }
+
+    // Sunrise/sunset, weekday
+    $("#sunInfo").textContent = `Sunrise ${fmtTime(state.sunrise, tz)} • Sunset ${fmtTime(state.sunset, tz)} • Next sunrise ${fmtTime(state.nextSunrise, tz)}`;
+    $("#weekdayEcho").textContent = `${state.weekdayName} ruled by ${state.dayRuler}`;
+
+    // Bridge hour / Δ
+    const b = state.bridgeHour;
+    const nextDayRuler = DAY_RULER[(state.sunrise.getDay()+1)%7];
+    const nextFirst = chaldean(nextDayRuler,1)[0];
+    $("#bridgeInfo").innerHTML = `
+      <span class="bridge">${fmtTime(b.start, tz)}–${fmtTime(b.end, tz)}</span> •
+      Last dark ruler: <strong>${SYMBOL[b.planet]} ${b.planet}</strong> → Next day first ruler: <strong>${SYMBOL[nextFirst]} ${nextFirst}</strong>`;
+    const d = state.bridgeDelta;
+    const signClass = (d>=0) ? 'pos' : 'neg';
+    $("#bridgeDelta").innerHTML = `<span class="delta ${signClass}">${d>=0?'+':''}${d.toFixed(3)}</span>`;
+
+    // Table
+    const tbody = $("#hoursTable tbody");
+    tbody.innerHTML = "";
+    sched.forEach(h=>{
+      const tr = document.createElement('tr');
+      if(cur && h.idx===cur.idx) tr.classList.add('now');
+      const focus = (h.phase==="Bright" ? FOCUS_BRIGHT : FOCUS_DARK)[h.planet];
+      const m = WEIGHT[state.dayRuler] * WEIGHT[h.planet];
+      tr.innerHTML = `
+        <td class="mono">${h.idx}</td>
+        <td>${h.phase}</td>
+        <td class="mono">${fmtTime(h.start, tz)}</td>
+        <td class="mono">${fmtTime(h.end, tz)}</td>
+        <td><span class="sym">${SYMBOL[h.planet]}</span> ${h.planet}</td>
+        <td class="tiny" style="max-width:420px">${focus}</td>
+        <td class="mono">x${m.toFixed(3)}</td>`;
+      tbody.appendChild(tr);
     });
   }
 
-  function updateNow(){
-    const now = new Date();
-    const nowMs = now.getTime();
-    elClock.textContent = `Current time: ${clockStr(now)}`;
-
-    // Rebuild right after sunrise (schedule rolls)
-    if (nowMs >= nextRecalcAt - 1000) { buildSchedule(); }
-
-    // Current / prev / next
-    const cur = schedule.find(h => now >= h.start && now < h.end) || schedule[schedule.length-1];
-    const idx = schedule.indexOf(cur);
-    const prev = schedule[(idx+23)%24], next = schedule[(idx+1)%24];
-
-    // Header line
-    elCur.textContent = `${INFO[cur.planet].sym} ${cur.planet}`;
-    elRange.textContent = `${fmt(cur.start)}–${fmt(cur.end)}`;
-    elWeekday.textContent = WEEKDAY_NAME[now.getDay()];
-
-    // Elapsed / remaining (minutes)
-    const dur = (cur.end - cur.start);
-    const elMin = Math.floor((now - cur.start)/60000);
-    const remMin= Math.ceil((cur.end - now)/60000);
-    elElapsed.textContent = `Elapsed ${elMin}m`;
-    elRemain.textContent   = `Remain ${remMin}m`;
-
-    // Progress bar
-    elProg.style.width = `${Math.max(0,Math.min(100, 100*(now - cur.start)/dur))}%`;
-
-    // Ruler chips
-    const pct = 100 * ((now - cur.start) / dur);     // 0..100
-    chip.textContent = `${INFO[cur.planet].sym} ${cur.planet}`; chip.style.left = `${pct}%`;
-    chipPrev.textContent = `${INFO[prev.planet].sym} ${prev.planet}`;
-    chipNext.textContent = `${INFO[next.planet].sym} ${next.planet}`;
-    elNextPrev.textContent = `Next: ${INFO[next.planet].sym} ${next.planet}`;
-
-    // Highlight list row
-    [...document.querySelectorAll('.hr')].forEach(n=>n.classList.remove('now'));
-    if (idx>=0 && elList.children[idx]) elList.children[idx].classList.add('now');
+  // ————— Init / Recalc —————
+  function recalc(){
+    const tz = (state.tzMode==='auto') ? Intl.DateTimeFormat().resolvedOptions().timeZone
+              : (state.tzMode==='utc' ? 'UTC' : state.tzCustom || Intl.DateTimeFormat().resolvedOptions().timeZone);
+    state.anchorTZ = tz;
+    const now = state.when || new Date();
+    try{
+      const built = buildSchedule(now, state.tzMode==='custom' ? state.tzCustom : state.tzMode, state.lat, state.lon);
+      state.schedule = built.out;
+      state.sunrise = built.sunrise;
+      state.sunset = built.sunset;
+      state.nextSunrise = built.nextSunrise;
+      state.weekdayName = built.weekdayName;
+      state.dayRuler = built.dayRuler;
+      state.bridgeHour = built.bridgeHour;
+      state.bridgeDelta = built.bridgeDelta;
+      renderAll();
+    }catch(e){
+      alert("Schedule error: " + e.message);
+    }
   }
 
-  // ——— Location / TZ controls ———
-  function bootFromSelect(){
-    const opt = tzSel.options[tzSel.selectedIndex];
-    tz  = opt.value;
-    lat = parseFloat(opt.dataset.lat);
-    lon = parseFloat(opt.dataset.lon);
-    locEcho.textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)} (${tz})`;
-    buildSchedule(); updateNow();
+  // ————— Controls —————
+  const geoBtn = $("#geoBtn");
+  const utcBtn = $("#utcBtn");
+  const addr = $("#addr");
+  const searchBtn = $("#searchBtn");
+  const latIn = $("#lat");
+  const lonIn = $("#lon");
+  const setLL = $("#setLL");
+  const tzMode = $("#tzMode");
+  const tzCustom = $("#tzCustom");
+  const datePick = $("#datePick");
+  const timePick = $("#timePick");
+  const useNow = $("#useNow");
+  const applyDT = $("#applyDT");
+  const locEcho = $("#locEcho");
+  const dtEcho = $("#dtEcho");
+
+  function echoLoc(){ locEcho.textContent = `${state.lat.toFixed(4)}, ${state.lon.toFixed(4)} (${state.anchorTZ})`; }
+  function echoDT(){
+    const tz = state.anchorTZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    dtEcho.textContent = state.when ? `Custom datetime: ${fmtDate(state.when,tz)} • ${fmtTime(state.when,tz)}` : `Using system clock`;
   }
 
-  useTzBtn.onclick = bootFromSelect;
-
-  geoBtn.onclick = () => {
-    if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
+  geoBtn.onclick = ()=>{
+    if(!navigator.geolocation){ alert("Geolocation not supported."); return; }
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        lat = pos.coords.latitude;
-        lon = pos.coords.longitude;
-        // keep current tz selection for formatting
-        locEcho.textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)} (${tz})`;
-        buildSchedule(); updateNow();
+      pos=>{
+        state.lat = pos.coords.latitude; state.lon = pos.coords.longitude;
+        echoLoc(); recalc();
       },
-      err => alert("Location error: " + err.message),
+      err=> alert("Location error: " + err.message),
       { enableHighAccuracy:true, timeout:10000, maximumAge:60000 }
     );
   };
 
-  // ——— Initial boot: Denver pre-set ———
-  bootFromSelect();
-  // ticker (smooth enough with 1s; change to requestAnimationFrame if you prefer)
-  setInterval(updateNow, 1000);
+  utcBtn.onclick = ()=>{
+    state.lat = 0; state.lon = 0;
+    state.tzMode = 'utc'; tzMode.value = 'utc';
+    echoLoc(); recalc();
+  };
+
+  searchBtn.onclick = async ()=>{
+    const q = addr.value.trim();
+    if(!q){ alert("Enter a place name or address."); return; }
+    try{
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`;
+      const res = await fetch(url, {headers:{'Accept':'application/json'}});
+      const js = await res.json();
+      if(!js.length){ alert("No results."); return; }
+      const best = js[0];
+      state.lat = parseFloat(best.lat);
+      state.lon = parseFloat(best.lon);
+      echoLoc(); recalc();
+    }catch(e){
+      alert("Search failed: " + e.message);
+    }
+  };
+
+  setLL.onclick = ()=>{
+    const la = parseFloat(latIn.value); const lo = parseFloat(lonIn.value);
+    if(Number.isNaN(la) || Number.isNaN(lo)){ alert("Enter valid lat/lon."); return; }
+    state.lat = la; state.lon = lo; echoLoc(); recalc();
+  };
+
+  tzMode.onchange = ()=>{
+    state.tzMode = tzMode.value;
+    tzCustom.style.display = (state.tzMode==='custom') ? 'inline-block' : 'none';
+    recalc();
+  };
+  tzCustom.onchange = ()=>{
+    if(state.tzMode==='custom'){
+      try{ new Intl.DateTimeFormat('en-US',{timeZone:tzCustom.value}).format(new Date()); }
+      catch(e){ alert("Invalid IANA timezone."); return; }
+      state.tzCustom = tzCustom.value;
+      recalc();
+    }
+  };
+
+  useNow.onclick = ()=>{ state.when = null; datePick.value=""; timePick.value=""; echoDT(); recalc(); };
+  applyDT.onclick = ()=>{
+    const z = (state.tzMode==='auto')? Intl.DateTimeFormat().resolvedOptions().timeZone : (state.tzMode==='utc'?'UTC':state.tzCustom||Intl.DateTimeFormat().resolvedOptions().timeZone);
+    const today = new Date();
+    const dval = datePick.value ? new Date(datePick.value) : today;
+    const tval = timePick.value || "00:00";
+    const [hh,mm] = tval.split(":").map(x=>parseInt(x,10));
+    const y = dval.getFullYear(), m = dval.getMonth(), d = dval.getDate();
+    state.when = makeZonedDate(y,m,d,hh,mm,(state.tzMode==='custom'?state.tzCustom:state.tzMode));
+    echoDT(); recalc();
+  };
+
+  // Ticker
+  function tick(){
+    if(!state.when){ renderAll(); }
+    requestAnimationFrame(tick);
+  }
+
+  // Defaults
+  (function init(){
+    state.tzMode = 'auto';
+    state.when = null;
+    echoLoc(); echoDT();
+    recalc(); tick();
+  })();
+
 })();
 </script>
 </body>
