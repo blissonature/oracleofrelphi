@@ -1,38 +1,363 @@
-function pad2(n){ return String(n).padStart(2,'0'); }
-function fmtDateParam(tz, d){
-  const p = zonedParts(tz, d);
-  return `${p.year}-${p.month}-${p.day}`;               // YYYY-MM-DD
-}
-function fmtTimeParam(tz, d){
-  const p = zonedParts(tz, d);
-  return `${p.hour}:${p.minute}`;                      // HH:MM (24h)
-}
-$("#copyLinkBtn").onclick = async () => {
-  const url = new URL(location.href);
-  const q = url.searchParams;
-  q.set('lat', state.lat.toFixed(6));
-  q.set('lon', state.lon.toFixed(6));
-  q.set('tz', state.tz);
-  q.set('mode', state.useCustom ? 'custom' : 'auto');
-  q.set('date', fmtDateParam(state.tz, state.when));
-  q.set('time', fmtTimeParam(state.tz, state.when));
-  try { await navigator.clipboard.writeText(url.toString()); alert("Link copied!"); }
-  catch { prompt("Copy this URL:", url.toString()); }
-};
+<script>
+(() => {
+  // ---------- CONFIG ----------
+  const ORDER = ["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"];
+  const DAY_RULER = { 0:"Sun", 1:"Moon", 2:"Mars", 3:"Mercury", 4:"Jupiter", 5:"Venus", 6:"Saturn" }; // Sun..Sat
+  const WEEKDAY_NAME = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const SYMBOL = { Sun:"☉", Moon:"☾", Mars:"♂", Mercury:"☿", Jupiter:"♃", Venus:"♀", Saturn:"♄" };
 
-// on load, hydrate from params
-(function hydrateFromURL(){
-  const q = new URLSearchParams(location.search);
-  if (q.has('lat')) state.lat = +q.get('lat');
-  if (q.has('lon')) state.lon = +q.get('lon');
-  if (q.has('tz'))  state.tz  = q.get('tz');
-  if (q.get('mode') === 'custom' && q.has('date') && q.has('time')) {
-    const [Y,M,D] = q.get('date').split('-').map(Number);
-    const [h,m]   = q.get('time').split(':').map(Number);
-    // Build a Date matching the zoned components (in system clock)
-    state.when = new Date(Y, M-1, D, h, m, 0);
-    state.useCustom = true;
+  // ---------- DOM ----------
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => [...document.querySelectorAll(sel)];
+
+  const elCurrent    = $('#current');
+  const elRange      = $('#range');
+  const elCountdown  = $('#countdown');
+  const elWeekday    = $('#weekday');
+  const elNextChip   = $('#nextChip');
+  const elPrevChip   = $('#prevChip');
+  const elProgress   = $('#progress');
+
+  const elLat        = $('#lat');
+  const elLon        = $('#lon');
+  const elSet        = $('#setBtn');
+  const elGeo        = $('#geoBtn');
+  const elFind       = $('#findBtn');
+  const elSearch     = $('#searchInput');
+
+  const elTZ         = $('#tzSelect');
+  const elDate       = $('#dateInput');
+  const elTime       = $('#timeInput');
+  const elApply      = $('#applyBtn');
+  const elUseNow     = $('#useNowBtn');
+
+  const elBridgeInfo = $('#bridgeInfo');
+  const elBridgeDelta= $('#bridgeDelta');
+  const elCopyLink   = $('#copyLinkBtn');
+  const elList       = $('#list');
+
+  // ---------- STATE ----------
+  const state = {
+    lat: 40.7608,
+    lon: -111.8910,
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    when: new Date(),
+    useCustom: false,
+    schedule: [],
+    sunrise: null,
+    sunset: null,
+    nextSunrise: null,
+    dayRuler: "Sun",
+    weekdayName: "Sunday",
+    bridgeHour: null,
+    firstHourNextDay: null,
+    bridgeDelta: 0
+  };
+
+  // ---------- TZ HELPERS ----------
+  function zonedParts(tz, d=new Date()){
+    const fmt = new Intl.DateTimeFormat('en-CA',{
+      timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'
+    });
+    return fmt.formatToParts(d).reduce((o,p)=> (o[p.type]=p.value,o),{});
   }
-  buildScheduleForState(state);
-  renderAll();
+  function startOfZonedDay(tz, d=new Date()){
+    const p = zonedParts(tz, d);
+    return new Date(+p.year, +p.month-1, +p.day, 0, 0, 0);
+  }
+  function fmtTime(d, tz){
+    return new Intl.DateTimeFormat([], { timeZone: tz, hour:'2-digit', minute:'2-digit' }).format(d);
+  }
+  function fmtDateParam(tz, d){
+    const p = zonedParts(tz, d);
+    return `${p.year}-${p.month}-${p.day}`;
+  }
+  function fmtTimeParam(tz, d){
+    const p = zonedParts(tz, d);
+    return `${p.hour}:${p.minute}`;
+  }
+  const pad2 = n => String(n).padStart(2,'0');
+
+  // ---------- CORE: schedule build ----------
+  function chaldeanSequence(startPlanet, length){
+    const start = ORDER.indexOf(startPlanet);
+    const seq = [];
+    for(let i=0;i<length;i++) seq.push(ORDER[(start+i)%ORDER.length]);
+    return seq;
+  }
+
+  function buildSchedule(localDateAtMidnight, lat, lon){
+    // SunCalc uses Date in local time (we supply local dates that correspond to the chosen tz mids)
+    const timesToday = SunCalc.getTimes(localDateAtMidnight, lat, lon);
+    const sunrise = timesToday.sunrise;
+    const sunset  = timesToday.sunset;
+    if(!sunrise || !sunset) throw new Error("Sun never rises/sets for this date/location.");
+
+    const tomorrow = new Date(localDateAtMidnight.getFullYear(), localDateAtMidnight.getMonth(), localDateAtMidnight.getDate()+1);
+    const timesTomorrow = SunCalc.getTimes(tomorrow, lat, lon);
+    const nextSunrise = timesTomorrow.sunrise;
+
+    const dayLen = sunset - sunrise;
+    const nightLen = nextSunrise - sunset;
+    const dayHour = dayLen/12;
+    const nightHour = nightLen/12;
+
+    const weekday = sunrise.getDay();                       // Day begins at sunrise
+    const dayRuler = DAY_RULER[weekday];
+    const daySeq = chaldeanSequence(dayRuler, 12);
+    const nightSeq = chaldeanSequence(daySeq[12%7], 12);
+
+    const out = [];
+    for(let i=0;i<12;i++){
+      out.push({
+        idx: i+1,
+        phase: 'Bright',
+        planet: daySeq[i],
+        start: new Date(sunrise.getTime()+ i*dayHour),
+        end:   new Date(sunrise.getTime()+ (i+1)*dayHour)
+      });
+    }
+    for(let i=0;i<12;i++){
+      out.push({
+        idx: 13+i,
+        phase: 'Dark',
+        planet: nightSeq[i],
+        start: new Date(sunset.getTime()+ i*nightHour),
+        end:   new Date(sunset.getTime()+ (i+1)*nightHour)
+      });
+    }
+    return { out, sunrise, sunset, nextSunrise, weekdayName: WEEKDAY_NAME[weekday], dayRuler };
+  }
+
+  function buildScheduleForState(){
+    // anchor to midnight in selected tz to avoid weekday drift
+    const baseMid = startOfZonedDay(state.tz, state.when);
+    const built = buildSchedule(new Date(baseMid.getFullYear(), baseMid.getMonth(), baseMid.getDate()), state.lat, state.lon);
+    state.schedule   = built.out;
+    state.sunrise    = built.sunrise;
+    state.sunset     = built.sunset;
+    state.nextSunrise= built.nextSunrise;
+    state.weekdayName= built.weekdayName;
+    state.dayRuler   = built.dayRuler;
+
+    // bridge hour: last dark hour (idx 24)
+    const last = state.schedule[23];
+    state.bridgeHour = { start:last.start, end:state.sunrise, planet:last.planet };
+    // first hour next day = idx 1 of next day sequence (we can reuse ORDER)
+    const nextDayRuler = DAY_RULER[state.nextSunrise.getDay()];
+    state.firstHourNextDay = nextDayRuler;
+
+    // multiplier Δ (example: use orbital-year proxies if you have them—here neutral demo)
+    const ORBIT_YEARS = { Sun:1, Moon:0.0748, Mercury:0.2408, Venus:0.6152, Mars:1.8808, Jupiter:11.862, Saturn:29.457 };
+    const m1 = ORBIT_YEARS[last.planet] * ORBIT_YEARS[state.dayRuler];
+    const m2 = ORBIT_YEARS[state.firstHourNextDay] * ORBIT_YEARS[DAY_RULER[state.nextSunrise.getDay()]];
+    state.bridgeDelta = (m2 - m1);
+  }
+
+  // ---------- RENDER ----------
+  function renderList(){
+    if(!elList) return;
+    elList.innerHTML = '';
+    state.schedule.forEach(h=>{
+      const row = document.createElement('div');
+      row.className = 'hr';
+      row.innerHTML = `
+        <div><strong>${h.phase}</strong> — ${SYMBOL[h.planet]} ${h.planet}</div>
+        <div class="tiny mono">${fmtTime(h.start, state.tz)} – ${fmtTime(h.idx===24 ? state.sunrise : h.end, state.tz)}</div>`;
+      elList.appendChild(row);
+    });
+  }
+
+  function renderHeader(){
+    const now = state.useCustom ? state.when : new Date();
+    const curIdx = state.schedule.findIndex(h => now >= h.start && now < h.end);
+    const cur = curIdx >= 0 ? state.schedule[curIdx] : null;
+
+    // weekday/day-ruler badge (based on sunrise of that day)
+    if(elWeekday) elWeekday.textContent = state.weekdayName;
+
+    if(cur){
+      if(elCurrent) elCurrent.textContent = `${SYMBOL[cur.planet]} ${cur.planet}`;
+      if(elRange)   elRange.textContent = `${fmtTime(cur.start, state.tz)} – ${fmtTime(cur.end, state.tz)}`;
+
+      // countdown + single progress bar
+      const remainMs = cur.end - now;
+      const mm = Math.floor((remainMs/1000/60)%60);
+      const hh = Math.floor((remainMs/1000/3600));
+      if(elCountdown) elCountdown.textContent = `Next in ${hh ? hh+":" : ""}${pad2(mm)}`;
+
+      const dur = cur.end - cur.start;
+      const prog = 100*(1 - (remainMs/dur));
+      if(elProgress) elProgress.style.width = `${Math.max(0, Math.min(100, prog))}%`;
+
+      // prev / next chips
+      const nxt = state.schedule[(curIdx+1)%24];
+      const prv = state.schedule[(curIdx-1+24)%24];
+      if(elNextChip) elNextChip.textContent = `${SYMBOL[nxt.planet]} ${nxt.planet}`;
+      if(elPrevChip) elPrevChip.textContent = `${SYMBOL[prv.planet]} ${prv.planet}`;
+    } else {
+      if(elCurrent) elCurrent.textContent = '—';
+      if(elRange)   elRange.textContent = '—';
+      if(elCountdown) elCountdown.textContent = '—';
+      if(elProgress) elProgress.style.width = '0%';
+    }
+
+    // Bridge info
+    if(elBridgeInfo){
+      elBridgeInfo.innerHTML =
+        `${fmtTime(state.bridgeHour.start, state.tz)}–${fmtTime(state.sunrise, state.tz)} • ` +
+        `Last dark ruler: <strong>${SYMBOL[state.bridgeHour.planet]} ${state.bridgeHour.planet}</strong> ` +
+        `→ Next day first ruler: <strong>${SYMBOL[state.firstHourNextDay]} ${state.firstHourNextDay}</strong>`;
+    }
+    if(elBridgeDelta){
+      const s = state.bridgeDelta >= 0 ? 'pos' : 'neg';
+      const sign = state.bridgeDelta >= 0 ? '+' : '';
+      elBridgeDelta.innerHTML = `<span class="delta ${s}">${sign}${state.bridgeDelta.toFixed(3)}</span>`;
+    }
+
+    // highlight current hour in list
+    if(elList){
+      $$('#list .hr').forEach((n,i)=> n.classList.toggle('now', i===curIdx));
+    }
+  }
+
+  function renderAll(){
+    renderHeader();
+    renderList();
+  }
+
+  // ---------- TICKER ----------
+  function tick(){
+    if(!state.useCustom) state.when = new Date();
+    renderHeader();
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- ADDRESS SEARCH (robust) ----------
+  async function geocode(q){
+    const url = `https://geocode.maps.co/search?q=${encodeURIComponent(q)}&limit=1`;
+    const r = await fetch(url, { headers:{'Accept':'application/json'} });
+    const j = await r.json();
+    if(!j || !j.length) throw new Error("Place not found");
+    const { lat, lon } = j[0];
+    return { lat:+lat, lon:+lon };
+  }
+
+  // ---------- EVENTS ----------
+  if(elGeo){
+    elGeo.onclick = () => {
+      if(!navigator.geolocation) return alert("Geolocation not supported.");
+      navigator.geolocation.getCurrentPosition(pos=>{
+        state.lat = +pos.coords.latitude;
+        state.lon = +pos.coords.longitude;
+        if(elLat) elLat.value = state.lat.toFixed(6);
+        if(elLon) elLon.value = state.lon.toFixed(6);
+        buildScheduleForState(); renderAll();
+      }, err=> alert("Location error: " + err.message), { enableHighAccuracy:true, timeout:10000, maximumAge:60000 });
+    };
+  }
+  if(elSet){
+    elSet.onclick = () => {
+      const la = parseFloat(elLat.value), lo = parseFloat(elLon.value);
+      if(Number.isFinite(la) && Number.isFinite(lo)){
+        state.lat = la; state.lon = lo; buildScheduleForState(); renderAll();
+      }
+    };
+  }
+  if(elFind){
+    elFind.onclick = async () => {
+      const q = (elSearch?.value || '').trim();
+      if(!q) return;
+      try{
+        const g = await geocode(q);
+        state.lat = g.lat; state.lon = g.lon;
+        if(elLat) elLat.value = g.lat.toFixed(6);
+        if(elLon) elLon.value = g.lon.toFixed(6);
+        buildScheduleForState(); renderAll();
+      }catch(e){ alert("Address search failed: " + e.message); }
+    };
+  }
+  if(elUseNow){
+    elUseNow.onclick = () => {
+      state.useCustom = false;
+      state.when = new Date();
+      if(elDate){
+        const p = zonedParts(state.tz, state.when);
+        elDate.value = `${p.year}-${p.month}-${p.day}`;
+      }
+      if(elTime){
+        const p = zonedParts(state.tz, state.when);
+        elTime.value = `${p.hour}:${p.minute}`;
+      }
+      buildScheduleForState(); renderAll();
+    };
+  }
+  if(elApply){
+    elApply.onclick = () => {
+      const tz = elTZ?.value || state.tz;
+      state.tz = tz;
+      // build custom Date from inputs (interpreted as clock in chosen tz)
+      if(elDate && elTime && elDate.value && elTime.value){
+        const [Y,M,D] = elDate.value.split('-').map(Number);
+        const [h,m]   = elTime.value.split(':').map(Number);
+        state.when = new Date(Y, M-1, D, h, m, 0);
+        state.useCustom = true;
+      } else {
+        state.when = new Date(); state.useCustom = false;
+      }
+      buildScheduleForState(); renderAll();
+    };
+  }
+  if(elTZ){
+    elTZ.onchange = () => {
+      state.tz = elTZ.value;
+      buildScheduleForState(); renderAll();
+    };
+  }
+  if(elCopyLink){
+    elCopyLink.onclick = async () => {
+      const url = new URL(location.href);
+      const q = url.searchParams;
+      q.set('lat', state.lat.toFixed(6));
+      q.set('lon', state.lon.toFixed(6));
+      q.set('tz', state.tz);
+      q.set('mode', state.useCustom ? 'custom' : 'auto');
+      q.set('date', fmtDateParam(state.tz, state.when));
+      q.set('time', fmtTimeParam(state.tz, state.when));
+      const s = url.toString();
+      try { await navigator.clipboard.writeText(s); alert("Link copied!"); }
+      catch { prompt("Copy this URL:", s); }
+    };
+  }
+
+  // ---------- HYDRATE FROM URL ----------
+  (function hydrate(){
+    const q = new URLSearchParams(location.search);
+    if(q.has('lat')) state.lat = +q.get('lat');
+    if(q.has('lon')) state.lon = +q.get('lon');
+    if(q.has('tz'))  state.tz  = q.get('tz');
+    if(q.get('mode') === 'custom' && q.has('date') && q.has('time')){
+      const [Y,M,D] = q.get('date').split('-').map(Number);
+      const [h,m]   = q.get('time').split(':').map(Number);
+      state.when = new Date(Y, M-1, D, h, m, 0);
+      state.useCustom = true;
+    } else {
+      state.when = new Date();
+      state.useCustom = false;
+    }
+
+    if(elLat) elLat.value = state.lat.toFixed(6);
+    if(elLon) elLon.value = state.lon.toFixed(6);
+    if(elTZ)  elTZ.value  = state.tz;
+
+    if(elDate) elDate.value = fmtDateParam(state.tz, state.when);
+    if(elTime) elTime.value = fmtTimeParam(state.tz, state.when);
+
+    buildScheduleForState();
+    renderAll();
+    tick();
+  })();
+
 })();
+</script>
