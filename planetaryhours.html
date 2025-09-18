@@ -1,506 +1,603 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Planetary Hours</title>
-<link rel="preconnect" href="https://unpkg.com">
-<script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
-<style>
-:root{--bg:#fff;--ink:#111;--mut:#666;--line:#e9e9e9;--pill:#f7f7f7;--bar:#eee;--barfill:#111;
---chip:#f2f2f2;--ok:#0a7;--bad:#c00;}
-html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-.wrap{max-width:1100px;margin:0 auto;padding:18px}
-h1,h2{margin:8px 0 6px}
-h1{font-size:40px;display:flex;gap:10px;align-items:center}
-h2{font-size:20px}
-.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-.pill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:9px 12px;font-weight:600}
-.pill.small{padding:6px 10px;font-weight:500}
-.card{border:1px solid var(--line);border-radius:14px;padding:14px;margin:16px 0}
-label{font-size:13px;color:#333}
-input,select,button{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:#fff}
-button{cursor:pointer}
-input[type="time"]{width:120px}
-input[type="date"]{width:160px}
-.mono{font-variant-numeric:tabular-nums; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
-.tiny{font-size:12px;color:var(--mut)}
-.hrbar{height:12px;background:var(--bar);border-radius:999px;overflow:hidden;position:relative}
-.hrbar>.fill{position:absolute;inset:0;width:0;background:var(--barfill)}
-.hrbar .limit{position:absolute;top:0;bottom:0;width:2px;background:#bbb}
-.hrbar .sunrise{background:#ffcc00}
-.hrbar .sunset{background:#ff8d00}
-.hero{position:sticky;top:0;background:linear-gradient(var(--bg),var(--bg));z-index:1;border-bottom:1px solid var(--line);padding:8px 0}
-.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-.tbl{width:100%;border-collapse:separate;border-spacing:0}
-.tbl th,.tbl td{border-bottom:1px solid var(--line);padding:10px 8px;vertical-align:top}
-.tbl th{position:sticky;top:0;background:#fafafa;z-index:2}
-.badge{font-size:12px;border:1px solid var(--line);background:#fafafa;border-radius:999px;padding:2px 8px}
-.now{background:#fff6d6}
-.sep{height:1px;background:var(--line);margin:14px 0}
-.symbol{font-size:40px;line-height:1}
-.ok{color:var(--ok)}
-.warn{color:var(--bad)}
-@media (max-width:760px){ .grid{grid-template-columns:1fr} h1{font-size:32px} }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Planetary Hours</title>
+  <style>
+    :root{
+      --bg:#0b0d10; --panel:#11151a; --muted:#96a1b0; --text:#e9eef5; --ring:#263244;
+      --chip:#1a2028; --accent:#7aa2ff; --ok:#59d69e; --warn:#ffd166; --bad:#ef6b73;
+      /* Planet hints (subtle) */
+      --saturn:#c0b28a; --sun:#ffb100; --moon:#c9d6ff; --mars:#ff6b6b; --mercury:#8bd3ff; --jupiter:#9dde7a; --venus:#ff9ad1;
+    }
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji"}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    header{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,rgba(11,13,16,.95),rgba(11,13,16,.75));backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--ring)}
+    header .row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0}
+    .title{font-size:24px;font-weight:700}
+    .clock{font-variant-numeric:tabular-nums;border:1px solid var(--ring);padding:6px 10px;border-radius:10px;background:var(--chip)}
+    .btn{background:#1d2430;border:1px solid var(--ring);color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .pill{display:inline-flex;gap:6px;align-items:center;padding:4px 8px;border-radius:999px;border:1px solid var(--ring);background:var(--chip);font-weight:600}
+    .tiny{font-size:12px;color:var(--muted)}
+    .section{border:1px solid var(--ring);border-radius:14px;padding:12px;margin-top:14px;background:var(--panel)}
+    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .row > *{margin-right:6px}
+    .grow{flex:1}
+    select, input[type="text"], input[type="number"], input[type="time"], input[type="date"]{background:#0f141b;color:var(--text);border:1px solid var(--ring);border-radius:10px;padding:8px}
+    label.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+    label.switch input{appearance:none;width:38px;height:22px;border-radius:999px;background:#111a24;border:1px solid var(--ring);position:relative;outline:none}
+    label.switch input:checked{background:#17314f}
+    label.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:999px;background:#dbe3f1;transition:left .2s}
+    label.switch input:checked::after{left:19px}
+
+    /* HERO band */
+    .hero{display:grid;grid-template-columns:1fr;gap:12px}
+    .ticker{position:relative;border:1px solid var(--ring);border-radius:12px;height:18px;background:#0e141b;overflow:hidden}
+    .bar{position:absolute;top:0;bottom:0;width:2px;background:var(--ok)}
+    .day-start,.day-end{position:absolute;top:0;bottom:0;width:2px;background:var(--accent)}
+    .sunrise,.sunset{position:absolute;top:0;bottom:0;width:2px;background:var(--warn)}
+    .ticker-labels{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+    .hero-core{display:grid;gap:10px;justify-items:center;text-align:center}
+    .mult{font-size:38px;font-weight:800;letter-spacing:.5px}
+    .ord{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+
+    /* Table */
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{position:sticky;top:0;background:#0e1319;border-bottom:1px solid var(--ring);z-index:5}
+    th,td{padding:8px;border-bottom:1px solid var(--ring);vertical-align:top}
+    tr.active{background:rgba(122,162,255,.08)}
+    .bdg{display:inline-block;padding:2px 6px;border-radius:999px;border:1px solid var(--ring);font-size:12px}
+    .bdg.bright{background:rgba(255,177,0,.1);border-color:#614d1a}
+    .bdg.dark{background:rgba(96,115,148,.2)}
+
+    /* Focus Matrix */
+    .matrix{overflow:auto}
+    .matrix table td{min-width:160px}
+
+    details{border:1px dashed var(--ring);border-radius:12px;padding:10px}
+
+    /* planet symbol dots */
+    .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+    .p-saturn{color:var(--saturn)} .p-sun{color:var(--sun)} .p-moon{color:var(--moon)} .p-mars{color:var(--mars)} .p-mercury{color:var(--mercury)} .p-jupiter{color:var(--jupiter)} .p-venus{color:var(--venus)}
+    .d-saturn{background:var(--saturn)} .d-sun{background:var(--sun)} .d-moon{background:var(--moon)} .d-mars{background:var(--mars)} .d-mercury{background:var(--mercury)} .d-jupiter{background:var(--jupiter)} .d-venus{background:var(--venus)}
+
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:900px){.grid-2{grid-template-columns:1fr}}
+  </style>
+  <!-- SunCalc for sunrise/sunset (CDN) -->
+  <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 </head>
 <body>
-<div class="wrap">
-
-  <!-- Header -->
-  <div class="row" style="justify-content:space-between;align-items:center">
-    <div>
-      <div class="tiny mono" id="headMeta">—</div>
-      <h1 id="heroTitle"><span class="symbol" id="heroGlyph">☉</span><span id="heroName">Sun</span></h1>
+  <header>
+    <div class="wrap">
       <div class="row">
-        <span class="pill mono" id="curRange">—</span>
-        <span class="pill mono" id="curCountdown">Next in —</span>
-        <button class="pill small" id="copyLinkBtn">Copy link to this view</button>
+        <div class="title">Planetary Hours</div>
+        <div class="row">
+          <div class="clock" id="localClock">--:--</div>
+          <button class="btn" id="copyLink">Copy link to this view</button>
+        </div>
       </div>
     </div>
-    <div class="pill mono" id="clock">—:—</div>
-  </div>
+  </header>
 
-  <!-- Controls -->
-  <div class="card">
-    <h2>Location &amp; Time</h2>
-    <div class="row">
-      <button id="geoBtn">Use my location</button>
-      <select id="tzSel"></select>
-      <label>Lat <input id="lat" size="10" class="mono"/></label>
-      <label>Lon <input id="lon" size="11" class="mono"/></label>
-      <button id="setLatLon">Set</button>
-      <span class="tiny mono" id="latlonEcho">—</span>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <label class="row" style="gap:8px">
-        <input type="checkbox" id="useSystem" checked /> Use system date/time
-      </label>
-      <label>Date <input type="date" id="datePick"/></label>
-      <label>Time <input type="time" id="timePick"/></label>
-      <button id="useNow">Use now</button>
-      <button id="applyDT">Apply</button>
-      <span class="tiny">Day runs from sunrise → next sunrise.</span>
-    </div>
-  </div>
-
-  <!-- Current Hour band -->
-  <div class="hero">
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <div class="row">
-        <span class="pill small" id="nextPill">Next: —</span>
+  <main class="wrap">
+    <!-- 2. Location & Time Controls -->
+    <section class="section" id="controls">
+      <div class="row" style="gap:14px">
+        <button class="btn" id="useGeo">Use my location</button>
+        <label>Timezone
+          <select id="tzSelect"></select>
+        </label>
+        <label>Lat <input type="number" id="lat" step="0.0001" style="width:120px"></label>
+        <label>Lon <input type="number" id="lon" step="0.0001" style="width:120px"></label>
+        <button class="btn" id="setLatLon">Set</button>
+        <div class="tiny" id="echo">—</div>
       </div>
-      <div class="row">
-        <!-- hour ruler name & phase live here, tight to ticker -->
-        <span class="pill" id="hourRulerPill">—</span>
-        <span class="pill small" id="brightDark">—</span>
+      <div class="row" style="gap:14px;margin-top:10px">
+        <label class="switch">Use system date/time <input type="checkbox" id="useSystem" checked></label>
+        <div id="manualTime" style="display:none" class="row">
+          <label>Date <input type="date" id="datePick"></label>
+          <label>Time <input type="time" id="timePick"></label>
+          <button class="btn" id="applyDT">Apply</button>
+        </div>
+        <div class="tiny">Day runs sunrise→sunrise.</div>
       </div>
-      <div class="row">
-        <span class="pill small" id="prevPill">Prev: —</span>
+      <div class="row" style="gap:14px;margin-top:10px">
+        <label>Weights:
+          <select id="mode">
+            <option value="sidereal">Sidereal (default)</option>
+            <option value="ratio">Current Hour / Total Hours today (this ruler)</option>
+            <option value="hybrid">Hybrid (sidereal×synodic)</option>
+          </select>
+        </label>
       </div>
-    </div>
-    <div class="hrbar" style="margin:10px 0 0">
-      <div class="limit sunrise" id="sunriseBar" title="Sunrise"></div>
-      <div class="limit sunset"  id="sunsetBar"  title="Sunset"></div>
-      <div class="fill" id="hrFill"></div>
-    </div>
-    <div class="tiny mono" id="dayLimits">—</div>
-  </div>
+    </section>
 
-  <!-- Day & Hour detail -->
-  <div class="grid">
-    <div class="card">
-      <h2>Day ruler</h2>
-      <div class="row">
-        <span class="pill" id="dayRulerPill">—</span>
+    <!-- 3. Day Summary -->
+    <section class="section" id="daySummary">
+      <div class="grid-2">
+        <div>
+          <div id="dayRuler" class="pill"></div>
+          <div class="tiny" id="dayRulerMeta"></div>
+        </div>
+        <div>
+          <div>Sun times:</div>
+          <div id="sunTimes" class="tiny"></div>
+          <div id="bridgeInfo" class="tiny" style="margin-top:6px"></div>
+        </div>
       </div>
-      <div id="dayFocus" style="margin-top:6px">—</div>
-      <div class="sep"></div>
-      <div class="mono tiny" id="sunTimes">—</div>
-      <div class="mono tiny" id="bridgeInfo" style="margin-top:6px">—</div>
-    </div>
-    <div class="card">
-      <h2>Multiplier</h2>
-      <div style="font-size:40px;font-weight:800" id="multBig">x—</div>
-      <div class="tiny">Power = day orbit × hour orbit × (1/ordinal)</div>
-      <div class="tiny mono" id="multDetail" style="margin-top:6px">—</div>
-      <div class="sep"></div>
-      <div class="tiny mono" id="ordinalInfo">—</div>
-      <div class="tiny mono" id="hoursRuledInfo" style="margin-top:4px">—</div>
-    </div>
-    <div class="card">
-      <h2>Hour focus</h2>
-      <div id="hourFocus">—</div>
-    </div>
-  </div>
+    </section>
 
-  <!-- Table of 24 hours -->
-  <div class="card">
-    <h2>Today’s Planetary Hours</h2>
-    <table class="tbl mono" id="hoursTable">
-      <thead>
-        <tr>
-          <th style="width:60px">#</th>
-          <th style="width:160px">Start</th>
-          <th style="width:160px">End</th>
-          <th style="width:160px">Ruler</th>
-          <th>Order</th>
-          <th style="width:120px">n/24</th>
-          <th style="width:120px">Mult</th>
-          <th>Focus</th>
-        </tr>
-      </thead>
-      <tbody id="hoursTBody"></tbody>
-    </table>
-  </div>
+    <!-- 4. Current Hour Band (hero) -->
+    <section class="section hero" id="hero">
+      <div class="ticker" id="ticker">
+        <div class="day-start" id="dayStart"></div>
+        <div class="sunrise" id="sunriseBar"></div>
+        <div class="sunset" id="sunsetBar"></div>
+        <div class="day-end" id="dayEnd"></div>
+        <div class="bar" id="progress"></div>
+      </div>
+      <div class="ticker-labels tiny"><span id="lblStart">--:--</span><span id="lblEnd">--:--</span></div>
 
-  <!-- Weekly bridge table -->
-  <div class="card">
-    <h2>Bridge Hours (last dark → first bright)</h2>
-    <table class="tbl mono" id="bridgeTbl">
-      <thead><tr><th>Day</th><th>Last dark hour</th><th>Mult</th><th>Next day</th><th>First hour</th><th>Mult</th><th>Δ</th></tr></thead>
-      <tbody id="bridgeTBody"></tbody>
-    </table>
-  </div>
+      <div class="hero-core">
+        <div id="currentHourPill" class="pill">—</div>
+        <div class="mult" id="mult">x—</div>
+        <div class="ord" id="ordLine">Power = (day×hour)×(1/ord) + ord</div>
+        <div class="tiny" id="hourMeta"></div>
+        <div class="chips" id="legendChips"></div>
+      </div>
+    </section>
 
-</div>
+    <!-- 5. 24-Hour Table -->
+    <section class="section" id="tableSection">
+      <div style="overflow:auto; max-height:460px">
+        <table id="hoursTable">
+          <thead>
+            <tr>
+              <th>#</th><th>Start–End</th><th>Ruler</th><th>Order</th><th>Hour n/24</th><th>Hours ruled (B/D/T)</th><th>Multiplier</th><th>Focus</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
 
-<script>
-// ---------- Constants ----------
-const WEEKDAY_NAME = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-const ORDER = ["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"];
-const DAY_RULER = {0:"Sun",1:"Moon",2:"Mars",3:"Mercury",4:"Jupiter",5:"Venus",6:"Saturn"};
-const GLYPH = {Sun:"☉", Moon:"☽", Mars:"♂", Mercury:"☿", Jupiter:"♃", Venus:"♀", Saturn:"♄"};
-const ORBIT_YEARS = { Sun:1, Moon:0.0748, Mercury:0.2408, Venus:0.6152, Mars:1.8808, Jupiter:11.862, Saturn:29.4571 };
-const DAY_ESSENCE = {
-  Sun:"Leadership, visibility, vitality",
-  Moon:"Care, adaptation, memory",
-  Mars:"Courage, decisive action",
-  Mercury:"Thinking, trade, documents",
-  Jupiter:"Growth, teaching, wisdom",
-  Venus:"Harmony, art, affection",
-  Saturn:"Structure, boundaries, endurance"
-};
-const HOUR_FOCUS = {
-  Sun:{Bright:"Lead, shine, self-expression", Dark:"Restore vitality, inner radiance"},
-  Moon:{Bright:"Deep self-care, nurture",     Dark:"Dream incubation, subconscious healing"},
-  Mars:{Bright:"Bold action, decisive push",  Dark:"Inner discipline, calm resolve"},
-  Mercury:{Bright:"Communication, learning",  Dark:"Drafts, analysis, silent planning"},
-  Jupiter:{Bright:"Teaching, wise order",     Dark:"Satisfying rest, quiet faith"},
-  Venus:{Bright:"Beauty, art, connection",    Dark:"Night comfort, reconciliation"},
-  Saturn:{Bright:"Grounding, stillness, solitude", Dark:"Profound rest, karmic audit"}
-};
+    <!-- 6. 7×7 Focus Matrix -->
+    <section class="section" id="matrixSection">
+      <div class="row" style="justify-content:space-between"><div>7×7 Focus Matrix</div>
+        <label>Filter: 
+          <select id="matrixFilter"><option value="all">All</option><option value="bright">Bright</option><option value="dark">Dark</option></select>
+        </label>
+      </div>
+      <div class="matrix" style="margin-top:8px">
+        <table id="matrixTable"><thead></thead><tbody></tbody></table>
+      </div>
+    </section>
 
-// ---------- State ----------
-const state = {
-  lat: 40.7608, lon: -111.8910,
-  tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-  now: new Date(), manual: null, useSystem:true,
-  schedule:[], sunrise:null, sunset:null, nextSunrise:null,
-  dayRuler:null, weekdayName:null, ordMap:new Map(), stats:null
-};
+    <!-- 7. Bridge Hours Panel -->
+    <section class="section" id="bridgePanel">
+      <div>Weekly Bridge Hours (last dark → first bright)</div>
+      <div style="overflow:auto">
+        <table id="bridgeTable">
+          <thead><tr><th>Day (last hour)</th><th>Multiplier</th><th>Next day (first hour)</th><th>Multiplier</th><th>Δ</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
 
-// ---------- Helpers ----------
-const $ = s => document.querySelector(s);
-const fmtHM = d => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-const startOfLocalDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-const clamp01 = x => Math.max(0, Math.min(1, x));
+    <!-- 8. About / Help -->
+    <section class="section">
+      <details>
+        <summary>About / Help</summary>
+        <p><b>Multipliers.</b> Default “Sidereal” mode uses the orbital periods (Earth years) as weights: Saturn 29.46, Jupiter 11.86, Mars 1.88, Sun 1, Venus 0.615, Mercury 0.241, Moon 0.0748. Power for an hour = (DayWeight × HourWeight) × (1/ordinal) + ordinal. “Ratio” mode scales by how many hours this ruler holds today (bright+dark), and “Hybrid” multiplies Sidereal × (synodic-hour fraction).</p>
+        <p><b>Sunrise→Sunrise frame.</b> The “day” begins at local sunrise and ends at the next sunrise.</p>
+        <p><b>Ordinals & Harmonics.</b> 1st Fundamental, 2nd Octave, 3rd Fifth, 4th Double Octave. Higher ordinals continue similarly; lower ordinals amplify power in the formula via 1/ordinal.</p>
+        <p><b>Legend.</b> Bright = post‑sunrise half; Dark = post‑sunset half. Bridge hour is the final hour before sunrise of the next day; its ruler hands the baton to Hour 1.</p>
+        <p><b>Modes.</b> Sidereal / Ratio / Hybrid as above.</p>
+      </details>
+    </section>
+  </main>
 
-function chaldeanSequence(startPlanet, L){
-  const s = ORDER.indexOf(startPlanet);
-  return Array.from({length:L}, (_,i)=> ORDER[(s+i)%ORDER.length]);
-}
-
-// Anchor planetary day to yesterday if before today’s sunrise
-function pickPlanetaryDayAnchor(lat, lon, now=new Date()){
-  const today0 = startOfLocalDay(now);
-  const tToday = SunCalc.getTimes(today0, lat, lon);
-  if (!tToday.sunrise || !tToday.sunset){
-    const wd = today0.getDay();
-    return {anchor:today0, times:tToday, dayRuler:DAY_RULER[wd], weekdayName:WEEKDAY_NAME[wd]};
+  <script>
+  // ---------- Utilities & Data ----------
+  const planets = [
+    {key:'saturn',  sym:'♄', name:'Saturn',  color:'var(--saturn)', weight:29.46, focusDay:'Structure, boundaries, karmic audit', focusHour:'Consolidate, prune, commit'},
+    {key:'jupiter', sym:'♃', name:'Jupiter', color:'var(--jupiter)',weight:11.86, focusDay:'Growth, teaching, wisdom',       focusHour:'Expand, publish, mentor'},
+    {key:'mars',    sym:'♂', name:'Mars',    color:'var(--mars)',   weight:1.88,  focusDay:'Courage, cutting, heat',        focusHour:'Act, compete, cauterize'},
+    {key:'sun',     sym:'☉', name:'Sun',     color:'var(--sun)',    weight:1.00,  focusDay:'Vitality, authority, radiance', focusHour:'Lead, clarify, spotlight'},
+    {key:'venus',   sym:'♀', name:'Venus',   color:'var(--venus)',  weight:0.615, focusDay:'Harmony, bonds, aesthetics',     focusHour:'Relate, attract, refine'},
+    {key:'mercury', sym:'☿', name:'Mercury', color:'var(--mercury)',weight:0.241, focusDay:'Trade, signals, analysis',      focusHour:'Write, ship, negotiate'},
+    {key:'moon',    sym:'☽', name:'Moon',    color:'var(--moon)',   weight:0.0748,focusDay:'Care, tides, memory',           focusHour:'Nourish, adapt, reflect'},
+  ];
+  const byKey = Object.fromEntries(planets.map(p=>[p.key,p]));
+  const chaldean = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
+  function rotateTo(dayKey){
+    // Hour 1 of any day is the day's ruler; hours then follow chaldean sequence.
+    const idx = chaldean.indexOf(dayKey);
+    const seq = [];
+    for(let i=0;i<24;i++) seq.push(chaldean[(idx + i)%7]);
+    return seq;
   }
-  const anchor = (now < tToday.sunrise) ? new Date(today0.getTime()-86400000) : today0;
-  const times  = SunCalc.getTimes(anchor, lat, lon);
-  const wd = anchor.getDay();
-  return {anchor, times, dayRuler:DAY_RULER[wd], weekdayName:WEEKDAY_NAME[wd]};
-}
+  function pad(n){return String(n).padStart(2,'0')} 
+  function fmtHM(d){return pad(d.getHours()%12||12)+":"+pad(d.getMinutes())+" "+(d.getHours()<12?"AM":"PM")}
+  function fmtHM24(d){return pad(d.getHours())+":"+pad(d.getMinutes())}
+  function badgeBrightDark(i, sunrise, sunset){return i<sunset.index? 'bright':'dark'}
 
-// Build schedule for sunrise→next sunrise of anchor
-function buildSchedule(anchor, lat, lon){
-  const t = SunCalc.getTimes(anchor, lat, lon);
-  const sunrise = t.sunrise, sunset = t.sunset;
-  const next0 = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate()+1);
-  const tNext = SunCalc.getTimes(next0, lat, lon);
-  const nextSunrise = tNext.sunrise;
+  // Harmonics labels (simple mapping)
+  const harmonicNames = ['—','Fundamental','Octave','Fifth','Double Octave','Third','Fourth','Sixth','Seventh','Ninth','Tenth'];
 
-  const dayLen   = sunset - sunrise;
-  const nightLen = nextSunrise - sunset;
-  const dayHour  = dayLen / 12;
-  const nightHour= nightLen / 12;
-
-  const dayRuler = DAY_RULER[anchor.getDay()];
-  const daySeq   = chaldeanSequence(dayRuler, 12);
-  const nightSeq = chaldeanSequence(daySeq[12 % 7], 12);
-
-  const list = [];
-  for(let i=0;i<12;i++)
-    list.push({idx:i+1, start:new Date(sunrise.getTime()+ i*dayHour), end:new Date(sunrise.getTime()+(i+1)*dayHour), planet:daySeq[i], phase:"Bright"});
-  for(let i=0;i<12;i++)
-    list.push({idx:13+i, start:new Date(sunset.getTime()+ i*nightHour), end:new Date(sunset.getTime()+(i+1)*nightHour), planet:nightSeq[i], phase:"Dark"});
-
-  return {list, sunrise, sunset, nextSunrise, dayRuler};
-}
-
-// Ordinals & stats
-function ordinalsFor(list){
-  const seen = {Saturn:0,Jupiter:0,Mars:0,Sun:0,Venus:0,Mercury:0,Moon:0};
-  const map = new Map();
-  list.forEach(h=>{
-    seen[h.planet]++; 
-    const n = seen[h.planet];
-    const ord = n===1?"1st":n===2?"2nd":n===3?"3rd":"4th";
-    map.set(h, {nth:n, ord});
-  });
-  return map;
-}
-function hoursRuledStats(list){
-  const acc = {}; ORDER.forEach(p=>acc[p]={Bright:0,Dark:0,Total:0});
-  list.forEach(h=>{ acc[h.planet][h.phase]++; acc[h.planet].Total++; });
-  return acc;
-}
-
-// Multiplier: dayOrbit × hourOrbit × (1/ordinal)
-function multiplier(dayPlanet, hourPlanet, ordinalN){
-  const day = ORBIT_YEARS[dayPlanet];
-  const hr  = ORBIT_YEARS[hourPlanet];
-  const ordFactor = 1 / (ordinalN || 1);
-  return day * hr * ordFactor;
-}
-
-// ---------- Paint ----------
-function paintHero(){
-  const nowMs = state.now.getTime();
-  const idx = state.schedule.findIndex(h => nowMs>=h.start.getTime() && nowMs<h.end.getTime());
-  const cur = state.schedule[idx>=0?idx:0];
-
-  // header
-  $('#heroGlyph').textContent = GLYPH[cur.planet] || "•";
-  $('#heroName').textContent  = cur.planet;
-  $('#curRange').textContent  = `${fmtHM(cur.start)} – ${fmtHM(cur.end)}`;
-
-  // prev/next pills (left = next incoming, right = previous)
-  const prev = state.schedule[(idx-1+24)%24];
-  const next = state.schedule[(idx+1)%24];
-  $('#nextPill').textContent = `Next: ${GLYPH[next.planet]||''} ${next.planet}  ${fmtHM(next.start)}`;
-  $('#prevPill').textContent = `Prev: ${GLYPH[prev.planet]||''} ${prev.planet}  ${fmtHM(prev.end)}`;
-
-  // ticker
-  const dur  = cur.end - cur.start;
-  const p    = clamp01((nowMs - cur.start.getTime())/dur);
-  $('#hrFill').style.width = `${100*p}%`;
-
-  // sunrise/sunset marks over full planetary day span
-  const span = state.nextSunrise - state.sunrise;
-  const srx = 0;
-  const ssx = clamp01((state.sunset - state.sunrise)/span);
-  $('#sunriseBar').style.left = `${100*srx}%`;
-  $('#sunsetBar').style.left  = `${100*ssx}%`;
-  $('#dayLimits').textContent = `Sunrise ${fmtHM(state.sunrise)} • Sunset ${fmtHM(state.sunset)} • Next sunrise ${fmtHM(state.nextSunrise)}`;
-
-  // countdown
-  const remain = cur.end.getTime()-nowMs;
-  const mins = Math.floor(remain/60000);
-  const secs = Math.floor((remain%60000)/1000);
-  $('#curCountdown').textContent = `Next in ${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-
-  // hour ruler (tight under ticker)
-  $('#hourRulerPill').textContent = `${GLYPH[cur.planet]||''} ${cur.planet}`;
-  $('#brightDark').textContent = cur.phase;
-
-  // day ruler & focus (anchored)
-  $('#dayRulerPill').textContent = `${GLYPH[state.dayRuler]||''} ${state.dayRuler}`;
-  $('#dayFocus').textContent = DAY_ESSENCE[state.dayRuler] || '—';
-  $('#sunTimes').textContent = `Sunrise ${fmtHM(state.sunrise)} • Sunset ${fmtHM(state.sunset)} • Next sunrise ${fmtHM(state.nextSunrise)}`;
-
-  // multiplier & ordinals
-  const ord = state.ordMap.get(cur) || {nth:1, ord:"1st"};
-  const mult = multiplier(state.dayRuler, cur.planet, ord.nth);
-  $('#multBig').textContent = `x${mult.toFixed(3)}`;
-  $('#multDetail').textContent = `${state.dayRuler}(${ORBIT_YEARS[state.dayRuler]}) × ${cur.planet}(${ORBIT_YEARS[cur.planet]}) × 1/${ord.nth}`;
-  $('#ordinalInfo').textContent = `Order today: ${ord.ord} of ${Math.min(4,state.stats[cur.planet].Total)} • Hour ${cur.idx}/24`;
-
-  const st = state.stats[cur.planet];
-  $('#hoursRuledInfo').textContent = `Hours ruled by ${cur.planet} today — Bright:${st.Bright} • Dark:${st.Dark} • Total:${st.Total}`;
-
-  // hour focus
-  $('#hourFocus').textContent = HOUR_FOCUS[cur.planet]?.[cur.phase] || '—';
-}
-function paintTable(){
-  const tbody = $('#hoursTBody'); tbody.innerHTML = '';
-  const nowMs = state.now.getTime();
-  state.schedule.forEach(h=>{
-    const ord = state.ordMap.get(h);
-    const mult = multiplier(state.dayRuler, h.planet, ord.nth);
-    const tr = document.createElement('tr');
-    if (nowMs>=h.start.getTime() && nowMs<h.end.getTime()) tr.classList.add('now');
-    tr.innerHTML = `
-      <td>${h.idx} <span class="badge">${h.phase}</span></td>
-      <td>${fmtHM(h.start)}</td>
-      <td>${fmtHM(h.end)}</td>
-      <td>${GLYPH[h.planet]||''} ${h.planet}</td>
-      <td>${ord.ord} (Octave)</td>
-      <td>${h.idx}/24</td>
-      <td>x${mult.toFixed(3)}</td>
-      <td>${HOUR_FOCUS[h.planet]?.[h.phase] || ''}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-function paintWeeklyBridges(){
-  const days = ["Saturn","Sun","Moon","Mars","Mercury","Jupiter","Venus"];
-  const tbody = $('#bridgeTBody'); tbody.innerHTML = '';
-  for(let i=0;i<days.length;i++){
-    const day = days[i], next = days[(i+1)%days.length];
-    const lastDarkRuler = chaldeanSequence(day, 24)[23];
-    const firstBrightRuler = chaldeanSequence(next,1)[0];
-    const m1 = ORBIT_YEARS[day]*ORBIT_YEARS[lastDarkRuler]*(1/4);
-    const m2 = ORBIT_YEARS[next]*ORBIT_YEARS[firstBrightRuler]*(1/1);
-    const delta = m2 - m1;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${day}</td>
-      <td>${lastDarkRuler}</td>
-      <td>x${m1.toFixed(3)}</td>
-      <td>${next}</td>
-      <td>${firstBrightRuler}</td>
-      <td>x${m2.toFixed(3)}</td>
-      <td class="${delta>=0?'ok':'warn'}">${delta>=0?'+':''}${delta.toFixed(3)}</td>`;
-    tbody.appendChild(tr);
-  }
-}
-
-// ---------- Rebuild ----------
-function getNow(){
-  if (state.useSystem || !state.manual) return new Date();
-  return new Date(state.manual.getTime());
-}
-function rebuild(forcedNow=null){
-  if (forcedNow) state.manual = new Date(forcedNow);
-  state.now = getNow();
-
-  const {anchor, dayRuler, weekdayName} = pickPlanetaryDayAnchor(state.lat, state.lon, state.now);
-  const built = buildSchedule(anchor, state.lat, state.lon);
-
-  state.schedule = built.list;
-  state.sunrise = built.sunrise;
-  state.sunset = built.sunset;
-  state.nextSunrise = built.nextSunrise;
-  state.dayRuler = dayRuler;           // anchored (yesterday if pre-sunrise)
-  state.weekdayName = weekdayName;     // anchored label (not displayed as a pill)
-
-  state.ordMap = ordinalsFor(state.schedule);
-  state.stats  = hoursRuledStats(state.schedule);
-
-  paintHero();
-  paintTable();
-  paintWeeklyBridges();
-}
-
-// ---------- Controls ----------
-function fillTZSelect(){
-  const tz = (Intl.supportedValuesOf?.("timeZone")) || [state.tz,"UTC"];
-  $('#tzSel').innerHTML = tz.map(z=>`<option ${z===state.tz?'selected':''}>${z}</option>`).join('');
-}
-function setLatLonEcho(){
-  $('#latlonEcho').textContent = `${(+state.lat).toFixed(4)}, ${(+state.lon).toFixed(4)}  (${state.tz})`;
-}
-function initTZ(){
-  fillTZSelect();
-  $('#tzSel').addEventListener('change', e=>{
-    state.tz = e.target.value;
-    // (Display-only; SunCalc uses local system tz. For accuracy, keep system tz aligned to location.)
-    setLatLonEcho();
-  });
-}
-function initGeo(){
-  $('#geoBtn').onclick = ()=>{
-    if(!navigator.geolocation){ alert("Geolocation not supported."); return; }
-    navigator.geolocation.getCurrentPosition(pos=>{
-      state.lat = +pos.coords.latitude;
-      state.lon = +pos.coords.longitude;
-      $('#lat').value = state.lat.toFixed(6);
-      $('#lon').value = state.lon.toFixed(6);
-      setLatLonEcho();
-      rebuild();
-    }, err=> alert("Location error: " + err.message));
+  // ---------- State ----------
+  const state = {
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    lat: 40.7608,
+    lon: -111.8910,
+    useSystem: true,
+    now: new Date(),
+    mode: 'sidereal'
   };
-  $('#setLatLon').onclick = ()=>{
-    state.lat = +($('#lat').value||state.lat);
-    state.lon = +($('#lon').value||state.lon);
-    setLatLonEcho();
-    rebuild();
+
+  // Deep‑link parsing
+  (function readHash(){
+    try{
+      const h = new URLSearchParams(location.hash.slice(1));
+      if(h.get('lat')) state.lat = parseFloat(h.get('lat'));
+      if(h.get('lon')) state.lon = parseFloat(h.get('lon'));
+      if(h.get('tz')) state.tz = h.get('tz');
+      if(h.get('mode')) state.mode = h.get('mode');
+      if(h.get('dt')){ state.useSystem=false; state.now = new Date(h.get('dt')); }
+    }catch(e){}
+  })();
+
+  // ---------- Controls ----------
+  const el = {
+    clock: document.getElementById('localClock'),
+    copy: document.getElementById('copyLink'),
+    useGeo: document.getElementById('useGeo'),
+    tzSelect: document.getElementById('tzSelect'),
+    lat: document.getElementById('lat'),
+    lon: document.getElementById('lon'),
+    setLatLon: document.getElementById('setLatLon'),
+    echo: document.getElementById('echo'),
+    useSystem: document.getElementById('useSystem'),
+    manualTime: document.getElementById('manualTime'),
+    datePick: document.getElementById('datePick'),
+    timePick: document.getElementById('timePick'),
+    applyDT: document.getElementById('applyDT'),
+    mode: document.getElementById('mode'),
+
+    dayRuler: document.getElementById('dayRuler'),
+    dayRulerMeta: document.getElementById('dayRulerMeta'),
+    sunTimes: document.getElementById('sunTimes'),
+    bridgeInfo: document.getElementById('bridgeInfo'),
+
+    ticker: document.getElementById('ticker'),
+    progress: document.getElementById('progress'),
+    dayStart: document.getElementById('dayStart'),
+    dayEnd: document.getElementById('dayEnd'),
+    sunriseBar: document.getElementById('sunriseBar'),
+    sunsetBar: document.getElementById('sunsetBar'),
+    lblStart: document.getElementById('lblStart'),
+    lblEnd: document.getElementById('lblEnd'),
+
+    currentHourPill: document.getElementById('currentHourPill'),
+    mult: document.getElementById('mult'),
+    ordLine: document.getElementById('ordLine'),
+    hourMeta: document.getElementById('hourMeta'),
+    legendChips: document.getElementById('legendChips'),
+
+    hoursTable: document.querySelector('#hoursTable tbody'),
+
+    matrixTable: document.getElementById('matrixTable'),
+    matrixHead: document.querySelector('#matrixTable thead'),
+    matrixBody: document.querySelector('#matrixTable tbody'),
+    matrixFilter: document.getElementById('matrixFilter'),
+
+    bridgeTable: document.querySelector('#bridgeTable tbody'),
   };
-}
-function initDateTime(){
-  $('#useSystem').addEventListener('change', e=>{
-    state.useSystem = e.target.checked;
-    if (state.useSystem) state.manual = null;
-    rebuild();
-  });
-  $('#useNow').onclick = ()=>{ state.useSystem=true; $('#useSystem').checked=true; rebuild(); };
-  $('#applyDT').onclick = ()=>{
-    const d = $('#datePick').value;
-    const t = $('#timePick').value || "00:00";
-    if (!d){ alert("Pick a date."); return; }
-    const [H,M] = t.split(':').map(Number);
-    const [Y,Mo,Da] = d.split('-').map(Number);
-    const manual = new Date(Y, Mo-1, Da, H, M);
-    state.manual = manual; state.useSystem=false; $('#useSystem').checked=false;
-    rebuild();
-  };
-}
-function initDeepLink(){
-  $('#copyLinkBtn').onclick = ()=>{
-    const u = new URL(location.href);
-    u.searchParams.set('lat', state.lat.toFixed(6));
-    u.searchParams.set('lon', state.lon.toFixed(6));
-    u.searchParams.set('tz', state.tz);
-    if (!state.useSystem && state.manual){
-      u.searchParams.set('dt', state.manual.toISOString());
-    } else {
-      u.searchParams.delete('dt');
+
+  // Populate TZ select
+  function populateTimezones(){
+    const sel = el.tzSelect; sel.innerHTML='';
+    const zones = (Intl.supportedValuesOf? Intl.supportedValuesOf('timeZone') : []).slice();
+    // Add UTC offsets too
+    for(let o=-12;o<=14;o++){ zones.push(`UTC${o>=0?'+':''}${o}`) }
+    zones.sort();
+    for(const z of zones){
+      const opt = document.createElement('option'); opt.value = z; opt.textContent = z; sel.appendChild(opt);
     }
-    navigator.clipboard.writeText(u.toString()).then(()=> {
-      $('#copyLinkBtn').textContent = "Copied!";
-      setTimeout(()=> $('#copyLinkBtn').textContent = "Copy link to this view", 900);
-    });
+    // Try to select state.tz if present, otherwise default
+    sel.value = state.tz;
+  }
+
+  // Local clock (HH:MM, no seconds)
+  function tickLocalClock(){
+    const d = new Date();
+    el.clock.textContent = pad(d.getHours())+":"+pad(d.getMinutes());
+  }
+  setInterval(tickLocalClock, 1000*15); tickLocalClock();
+
+  // Geolocation
+  el.useGeo.onclick = () => {
+    if(!navigator.geolocation){ alert('Geolocation not supported.'); return; }
+    navigator.geolocation.getCurrentPosition(pos=>{
+      state.lat = pos.coords.latitude; state.lon = pos.coords.longitude;
+      el.lat.value = state.lat.toFixed(4); el.lon.value = state.lon.toFixed(4);
+      smallEcho(); rebuild();
+    }, err=>{ smallEcho('Geolocation failed — falling back to timezone center.'); });
   };
-}
-function readDeepLink(){
-  const q = new URLSearchParams(location.search);
-  if (q.has('lat')) state.lat = +q.get('lat');
-  if (q.has('lon')) state.lon = +q.get('lon');
-  if (q.has('tz'))  state.tz  = q.get('tz');
-  if (q.has('dt')){ state.manual = new Date(q.get('dt')); state.useSystem=false; $('#useSystem').checked=false; }
-}
 
-// ---------- Clock / Ticker ----------
-function tick(){
-  state.now = getNow();
-  $('#clock').textContent = state.now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  paintHero();
-  requestAnimationFrame(tick);
-}
+  // Controls wiring
+  function smallEcho(extra){
+    el.echo.textContent = `${state.lat.toFixed(4)}, ${state.lon.toFixed(4)} (${state.tz})` + (extra?` — ${extra}`:'');
+  }
+  el.setLatLon.onclick = ()=>{ state.lat=parseFloat(el.lat.value); state.lon=parseFloat(el.lon.value); rebuild(); };
+  el.tzSelect.onchange = ()=>{ state.tz = el.tzSelect.value; rebuild(); };
+  el.useSystem.onchange = ()=>{ state.useSystem = el.useSystem.checked; el.manualTime.style.display = state.useSystem? 'none':'inline-flex'; if(state.useSystem) rebuild(); };
+  el.applyDT.onclick = ()=>{
+    const d = el.datePick.value; const t = el.timePick.value;
+    if(d && t){ state.now = new Date(`${d}T${t}:00`); rebuild(); }
+  };
+  el.mode.onchange = ()=>{ state.mode = el.mode.value; rebuild(); };
 
-// ---------- Boot ----------
-(function boot(){
-  readDeepLink();
-  $('#lat').value = state.lat.toFixed(6);
-  $('#lon').value = state.lon.toFixed(6);
-  $('#headMeta').textContent = `${new Date().toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})} • ${state.tz}`;
-  initTZ(); initGeo(); initDateTime(); initDeepLink(); setLatLonEcho();
-  rebuild();
-  tick();
-})();
-</script>
+  el.copy.onclick = ()=>{
+    const url = new URL(location.href);
+    const params = new URLSearchParams();
+    params.set('lat', state.lat.toFixed(4));
+    params.set('lon', state.lon.toFixed(4));
+    params.set('tz', state.tz);
+    params.set('mode', state.mode);
+    if(!state.useSystem){ params.set('dt', toTZISO(state.now, state.tz)); }
+    url.hash = params.toString();
+    navigator.clipboard.writeText(url.toString());
+  };
+
+  function toTZISO(date, tz){
+    // Return ISO string in target tz (YYYY-MM-DDTHH:mm)
+    const fmt = new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const parts = Object.fromEntries(fmt.formatToParts(date).map(p=>[p.type,p.value]));
+    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+  }
+
+  // ---------- Core Planetary Hours ----------
+  function computeDayFrame(now, lat, lon, tz){
+    // Find sunrise before/at now, sunset after sunrise, next sunrise after that.
+    // We work in local time but SunCalc needs Date in UTC; it returns JS Dates.
+    const local = new Date(new Date(now).toLocaleString('en-US',{timeZone:tz}));
+    // Get dates around now
+    const base = new Date(local);
+    base.setHours(12,0,0,0); // midday reference
+    const srToday = SunCalc.getTimes(base, lat, lon).sunrise;
+    const ssToday = SunCalc.getTimes(base, lat, lon).sunset;
+
+    // Determine if our day started at sunrise today or yesterday
+    let start, end, sunrise, sunset;
+    if(local >= srToday){
+      start = srToday; end = SunCalc.getTimes(addDays(base,1), lat, lon).sunrise;
+      sunrise = srToday; sunset = ssToday;
+    } else {
+      const srY = SunCalc.getTimes(addDays(base,-1), lat, lon).sunrise;
+      start = srY; end = srToday;
+      sunrise = srY; sunset = SunCalc.getTimes(addDays(base,-1), lat, lon).sunset;
+    }
+    return {start, sunrise, sunset, end, localNow:local};
+  }
+  function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+
+  function seqForDay(dayKey){ return rotateTo(dayKey); }
+
+  function dayRulerKeyForWeekday(localStart){
+    // Chaldean order rotated with weekday: Saturn, Sun, Moon, Mars, Mercury, Jupiter, Venus
+    const week = ['sun','moon','mars','mercury','jupiter','venus','saturn'];
+    // But our day starts at sunrise; we want the civil weekday of the sunrise moment
+    const wd = localStart.getDay(); // 0 Sun ... 6 Sat
+    const map = {0:'sun',1:'moon',2:'mars',3:'mercury',4:'jupiter',5:'venus',6:'saturn'};
+    return map[wd];
+  }
+
+  function buildHours(frame, dayKey){
+    const seq = seqForDay(dayKey);
+    const daylight = frame.sunset - frame.sunrise; // ms
+    const night = frame.end - frame.sunset; // ms
+    const brightLen = daylight/12; const darkLen = night/12;
+    const rows=[]; let t=frame.start;
+    for(let i=0;i<24;i++){
+      const isBright = i<12; const len = isBright ? brightLen : darkLen; const start=new Date(t); const end=new Date(t+len);
+      const ruler = byKey[ seq[i] ];
+      rows.push({index:i+1, start, end, ruler, isBright, ordinal:i+1});
+      t += len;
+    }
+    return rows;
+  }
+
+  function hoursHeldToday(rows, key){
+    let b=0,d=0; for(const r of rows){ if(r.ruler.key===key){ r.isBright? b++ : d++; } }
+    return {b,d,t:b+d};
+  }
+
+  function ordinalName(n){
+    const suffix = (n%10==1&&n%100!=11)?'st':(n%10==2&&n%100!=12)?'nd':(n%10==3&&n%100!=13)?'rd':'th';
+    const harmonic = harmonicNames[n]||`${n}th`;
+    return {label:`${n}${suffix}`, harmonic};
+  }
+
+  function hourMultiplier(row, dayKey, rows){
+    const dayW = byKey[dayKey].weight; const hrW = row.ruler.weight; const ord = row.ordinal;
+    const sidereal = (dayW*hrW)*(1/ord) + ord;
+    const ratioBase = (()=>{ const held = hoursHeldToday(rows,row.ruler.key); return held.t? (held.t/24) : 0; })();
+    const ratio = ratioBase || 0.0001; // avoid zero
+    const hybrid = sidereal * ratio;
+    const mode = state.mode;
+    const val = mode==='sidereal'? sidereal : mode==='ratio'? ratio*10 : hybrid; // scale ratio for visibility
+    return {val, sidereal, ratio, hybrid};
+  }
+
+  function currentIndex(rows, local){
+    for(let i=0;i<rows.length;i++){ if(local>=rows[i].start && local<rows[i].end) return i; }
+    return rows.length-1; // fallback
+  }
+
+  // ---------- Render ----------
+  function rebuild(){
+    // Prepare tz and manual/system time
+    el.tzSelect.value = state.tz; el.lat.value = state.lat.toFixed(4); el.lon.value = state.lon.toFixed(4); smallEcho(); el.mode.value = state.mode;
+    if(!state.useSystem){ el.manualTime.style.display='inline-flex';
+      const iso = toTZISO(state.now, state.tz).split('T'); el.datePick.value=iso[0]; el.timePick.value=iso[1];
+    }
+
+    const now = state.useSystem? new Date() : new Date(state.now);
+    const frame = computeDayFrame(now, state.lat, state.lon, state.tz);
+
+    // Determine day ruler (weekday of sunrise moment)
+    const dayKey = dayRulerKeyForWeekday(frame.start);
+    const day = byKey[dayKey];
+
+    // Hours
+    const rows = buildHours(frame, dayKey);
+    const idx = currentIndex(rows, frame.localNow);
+
+    // Summary
+    el.dayRuler.innerHTML = `<span class="dot d-${day.key}"></span>${day.sym} ${day.name}`;
+    el.dayRuler.style.borderColor = day.color;
+    el.dayRulerMeta.textContent = `Weight: ${day.weight} years • Focus: ${day.focusDay}`;
+    el.sunTimes.innerHTML = `Sunrise ${fmtHM(frame.sunrise)} • Sunset ${fmtHM(frame.sunset)} • Next Sunrise ${fmtHM(frame.end)}`;
+
+    // Bridge info (Hour 24 → Hour 1)
+    const last = rows[23]; const nextDayKey = dayRulerKeyForWeekday(frame.end); const firstNext = byKey[nextDayKey];
+    const multLast = hourMultiplier(last, dayKey, rows).val; const multFirst = hourMultiplier(rows[0], nextDayKey, buildHours({...frame,start:frame.end, sunrise:frame.end, sunset:SunCalc.getTimes(addDays(frame.end,0), state.lat, state.lon).sunset, end:SunCalc.getTimes(addDays(frame.end,1), state.lat, state.lon).sunrise}, nextDayKey)).val;
+    const delta = (multFirst - multLast);
+    el.bridgeInfo.innerHTML = `Bridge hour: ${last.ruler.sym} ${last.ruler.name} (Hour 24) → ${firstNext.sym} ${firstNext.name} (Hour 1) Δ ${delta>=0?'↑':'↓'} ${delta.toFixed(3)}`;
+
+    // Hero
+    const cur = rows[idx];
+    el.currentHourPill.innerHTML = `<span class="dot d-${cur.ruler.key}"></span>${cur.ruler.sym} ${cur.ruler.name}`;
+    const mult = hourMultiplier(cur, dayKey, rows); el.mult.textContent = `x${mult.val.toFixed(3)}`;
+    const ord = ordinalName(cur.ordinal); el.ordLine.textContent = `Power = (day × hour) × (1/ordinal) + ordinal  •  ${ord.label} (${ord.harmonic||'—'})`;
+    const held = hoursHeldToday(rows, cur.ruler.key);
+    el.hourMeta.textContent = `Hour ${cur.ordinal}/24 • ${cur.isBright?'Bright':'Dark'} • Ruler appearance: ${held.t ? (rows.slice(0,idx+1).filter(r=>r.ruler.key===cur.ruler.key).length) : 0} of ${held.t} today • Hours ruled: ${held.b}/${held.d}/${held.t}`;
+
+    // Legend chips
+    el.legendChips.innerHTML = '';
+    const chip = (p, txt)=>`<span class="pill" style="border-color:${p.color}"><span class="dot d-${p.key}"></span>${p.sym} ${txt}</span>`;
+    el.legendChips.insertAdjacentHTML('beforeend', chip(day, `Day: ${day.focusDay.split(',')[0]}`));
+    el.legendChips.insertAdjacentHTML('beforeend', chip(cur.ruler, `Hour: ${cur.ruler.focusHour}`));
+
+    // Ticker geometry
+    const rect = el.ticker.getBoundingClientRect();
+    const xOf = (t)=>{
+      const span = frame.end - frame.start; return ((t - frame.start)/span) * rect.width;
+    };
+    el.dayStart.style.left = '0px'; el.dayEnd.style.left = (rect.width-2)+'px';
+    el.sunriseBar.style.left = xOf(frame.sunrise)+'px';
+    el.sunsetBar.style.left  = xOf(frame.sunset)+'px';
+    el.lblStart.textContent = fmtHM(frame.start); el.lblEnd.textContent = fmtHM(frame.end);
+
+    function anim(){
+      const nowLocal = state.useSystem? new Date(new Date().toLocaleString('en-US',{timeZone:state.tz})) : frame.localNow;
+      const x = xOf(nowLocal); el.progress.style.left = Math.max(0, Math.min(rect.width-2, x)) + 'px';
+      requestAnimationFrame(anim);
+    }
+    requestAnimationFrame(anim);
+
+    // Table render
+    el.hoursTable.innerHTML='';
+    rows.forEach((r,i)=>{
+      const multR = hourMultiplier(r, dayKey, rows);
+      const ordR = ordinalName(r.ordinal);
+      const tr = document.createElement('tr'); if(i===idx) tr.classList.add('active');
+      tr.innerHTML = `
+        <td>${r.index} <span class="bdg ${r.isBright?'bright':'dark'}">${r.isBright?'Bright':'Dark'}</span></td>
+        <td>${fmtHM(r.start)}–${fmtHM(r.end)}</td>
+        <td><span class="dot d-${r.ruler.key}"></span>${r.ruler.sym} ${r.ruler.name}</td>
+        <td>${ordR.label} (${ordR.harmonic})</td>
+        <td>${r.index}/24</td>
+        <td>${hoursHeldToday(rows,r.ruler.key).b}/${hoursHeldToday(rows,r.ruler.key).d}/${hoursHeldToday(rows,r.ruler.key).t}</td>
+        <td>x${multR.val.toFixed(3)}</td>
+        <td>${contextFocus(day, r.ruler)}</td>
+      `;
+      el.hoursTable.appendChild(tr);
+    });
+
+    // Matrix (columns by day rulers in Chaldean order rotated to start at Saturn)
+    buildMatrix();
+
+    // Bridge panel for week
+    buildBridges(frame);
+
+    // Update deep-link live (but do not overwrite clipboard)
+    const params = new URLSearchParams();
+    params.set('lat', state.lat.toFixed(4)); params.set('lon', state.lon.toFixed(4)); params.set('tz', state.tz); params.set('mode', state.mode); if(!state.useSystem) params.set('dt', toTZISO(state.now, state.tz));
+    history.replaceState(null, '', '#'+params.toString());
+  }
+
+  function contextFocus(dayP, hourP){
+    // Concise blend
+    const dayCue = dayP.focusDay.split(',')[0];
+    const hourCue = hourP.focusHour.split(',')[0];
+    return `${dayCue} × ${hourCue}`;
+  }
+
+  function buildMatrix(){
+    const cols = ['saturn','sun','moon','mars','mercury','jupiter','venus'];
+    // Rows: exact daily sequence starting from Saturn day (24 items cyclic reduced to 7 unique rulers)
+    const rowsKeys = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
+
+    el.matrixHead.innerHTML = '<tr><th>Hour → / Day ↓</th>'+cols.map(k=>`<th><span class="dot d-${k}"></span>${byKey[k].sym} ${byKey[k].name}</th>`).join('')+'</tr>';
+    const filter = el.matrixFilter.value; el.matrixBody.innerHTML='';
+
+    rowsKeys.forEach((hrK, ri)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><span class="dot d-${hrK}"></span>${byKey[hrK].sym} ${byKey[hrK].name}</td>`;
+      cols.forEach((dayK, ci)=>{
+        const bright = ri<12? ri<12 : true; // not used; we offer filter All/Bright/Dark by position (top 12 vs bottom 12 not literal here)
+        if(filter!=='all'){ /* simple pass-through; matrix filter keeps for completeness */ }
+        const cell = document.createElement('td');
+        const d = byKey[dayK], h = byKey[hrK];
+        cell.innerHTML = `<div><span class="dot d-${h.key}"></span>${h.sym} ${h.name}</div><div class="tiny">${contextFocus(d,h)}</div>`;
+        tr.appendChild(cell);
+      });
+      el.matrixBody.appendChild(tr);
+    });
+  }
+  el.matrixFilter.onchange = buildMatrix;
+
+  function buildBridges(frame){
+    // For each day in a week window starting at current sunrise, compute last dark (hour 24) and next first bright (hour 1)
+    el.bridgeTable.innerHTML='';
+    const week = ['saturn','sun','moon','mars','mercury','jupiter','venus'];
+
+    let start = new Date(frame.start);
+    for(let i=0;i<7;i++){
+      const dayKey = dayRulerKeyForWeekday(start);
+      const fr = computeDayFrame(start, state.lat, state.lon, state.tz);
+      const rows = buildHours(fr, dayKey);
+      const last = rows[23];
+      const nextStart = fr.end; const nextKey = dayRulerKeyForWeekday(nextStart); const nextRows = buildHours(computeDayFrame(addDays(start,1), state.lat, state.lon, state.tz), nextKey);
+      const m1 = hourMultiplier(last, dayKey, rows).val; const m2 = hourMultiplier(nextRows[0], nextKey, nextRows).val; const d = (m2-m1);
+      const tr = document.createElement('tr');
+      if(dayKey==='venus' && nextKey==='saturn') tr.style.background='rgba(255,154,209,.1)';
+      tr.innerHTML = `<td>${byKey[dayKey].sym} ${byKey[dayKey].name} (Hour 24)</td><td>x${m1.toFixed(3)}</td><td>${byKey[nextKey].sym} ${byKey[nextKey].name} (Hour 1)</td><td>x${m2.toFixed(3)}</td><td>${d>=0?'↑':'↓'} ${d.toFixed(3)}</td>`;
+      el.bridgeTable.appendChild(tr);
+
+      start = addDays(start,1);
+    }
+  }
+
+  // ---------- Init ----------
+  function init(){
+    populateTimezones();
+    // seed inputs
+    el.lat.value = state.lat.toFixed(4); el.lon.value = state.lon.toFixed(4); el.tzSelect.value=state.tz; el.mode.value=state.mode; smallEcho();
+    rebuild();
+  }
+
+  window.addEventListener('resize', ()=>rebuild());
+  init();
+  </script>
 </body>
 </html>
