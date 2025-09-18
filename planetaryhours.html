@@ -225,61 +225,86 @@
     return { start:frameStart, end:frameEnd, sunrise:sr1, sunset:frameSunset, nextSunrise:frameEnd, dayRulerKey, polar:false };
   }
 
-  function renderHero(){
-    const now = S.useSystem? new Date(): S.dt;
-
-    // Normal detection
-    let iNow = S.hours.findIndex(h=> now>=h.start && now<h.end);
-
-    // Edge: if we've slipped past hour 23 end but before next sunrise,
-    // clamp to hour 24 display.
-    if(iNow === -1 && now >= S.hours[23].end && now < S.frame.end){
-      iNow = 23;
-    }
-    const curr = S.hours[ clamp(iNow,0,23) ];
-    const prev = S.hours[ (curr.idx-2+24)%24 ];
-
-    // --- Correct "Next" pill across the frame boundary ---
-    let nextRulerKey, nextStart;
-    if (curr.idx === 24) {
-      // Next hour is the FIRST HOUR OF THE NEXT DAY (day ruler of tomorrow)
-      nextRulerKey = DAY_RULERS[(S.frame.start.getDay()+1)%7];
-      nextStart = S.frame.end; // next sunrise
-    } else {
-      nextRulerKey = S.hours[(curr.idx)%24].ruler; // inside the same frame
-      nextStart = S.hours[(curr.idx)%24].start;
-    }
-    const pr = PLANETS.find(p=>p.key===prev.ruler);
-    const cr = PLANETS.find(p=>p.key===curr.ruler);
-    const nx = PLANETS.find(p=>p.key===nextRulerKey);
-
-    byId('currentPill').innerHTML = `${cr.symbol} <strong>${cr.name}</strong>`;
-    byId('prevPill').innerHTML = `Prev: ${pr.symbol} ${pr.name} • ends ${fmtHM(prev.end)}`;
-    byId('nextPill').innerHTML = `Next: ${nx.symbol} ${nx.name} • starts ${fmtHM(nextStart)}`;
-
-    byId('multiplier').textContent = 'x' + curr.mult.toFixed(3);
-    byId('ordinalChip').textContent = ORDINALS[curr.ordinal]||(`${curr.ordinal}th`);
-    const bd = curr.isBright? 'Bright' : 'Dark';
-    byId('metaLine').textContent = `Hour ${curr.idx}/24 • ${bd} • Ruler appearance: ${curr.counts.T} of 24 today • Hours ruled B/D/T: ${curr.counts.B}/${curr.counts.D}/${curr.counts.T}`;
-
-    // Approaching sunrise line (dynamic)
-    const nextDayRulerKey = DAY_RULERS[(S.frame.start.getDay()+1)%7];
-    const nextDay = PLANETS.find(p=>p.key===nextDayRulerKey);
-    const text = curr.idx===24 ? `Approaching sunrise → ${nextDay.symbol} ${nextDay.name} day` : `Next sunrise → ${nextDay.symbol} ${nextDay.name} day`;
-    byId('approachLine').textContent = text;
-
-    // Legend chips
-    const dr = PLANETS.find(p=>p.key===S.frame.dayRulerKey);
-    byId('legendChips').innerHTML = `
-      <span class="pill" style="border-color:${dr.color}">${dr.symbol} ${dr.name} — ${dr.focusDay}</span>
-      <span class="pill" style="border-color:${cr.color}">${cr.symbol} ${cr.name} — ${cr.focusHour}</span>
-    `;
-
-    // Bridge Δ (hour24 -> next hour1)
-    const h24 = S.hours[23], h1 = S.hours[0]; const delta = h1.mult - h24.mult; const arrow = delta>0? '↑' : delta<0? '↓' : '→'; byId('bridgeLine').textContent = `${PLANETS.find(p=>p.key===h24.ruler).symbol} ${cap(h24.ruler)} (Hour 24) → ${PLANETS.find(p=>p.key===h1.ruler).symbol} ${cap(h1.ruler)} (Hour 1) Δ ${delta>=0?'+':''}${delta.toFixed(3)} ${arrow}`;
-
-    layoutTickerMarkers();
+function renderHero(){
+  // Make sure we actually have a frame and 24 hours built
+  if (!S.frame || !Array.isArray(S.hours) || S.hours.length !== 24) {
+    // Leave placeholders visible, don't throw
+    return;
   }
+
+  const now = S.useSystem ? new Date() : S.dt;
+
+  // Find the current hour; if not found but we're before next sunrise,
+  // treat it as the last (24th) hour to avoid a boundary crash.
+  let iNow = S.hours.findIndex(h => now >= h.start && now < h.end);
+  if (iNow === -1 && now >= S.hours[23].end && now < S.frame.end) iNow = 23;
+
+  // If still not found (shouldn’t happen), bail safely
+  if (iNow === -1) return;
+
+  const curr = S.hours[iNow];
+  const prev = S.hours[(iNow - 1 + 24) % 24];
+
+  // --- Correct "Next" pill across the sunrise boundary ---
+  let nextRulerKey, nextStart;
+  if (curr.idx === 24) {
+    // Next hour belongs to NEXT DAY's day ruler (Hour 1)
+    nextRulerKey = DAY_RULERS[(S.frame.start.getDay() + 1) % 7];
+    nextStart    = S.frame.end; // next sunrise
+  } else {
+    const nxt = S.hours[(iNow + 1) % 24];
+    nextRulerKey = nxt.ruler;
+    nextStart    = nxt.start;
+  }
+
+  const pr = PLANETS.find(p => p.key === prev.ruler);
+  const cr = PLANETS.find(p => p.key === curr.ruler);
+  const nx = PLANETS.find(p => p.key === nextRulerKey);
+  if (!pr || !cr || !nx) return; // extra guard
+
+  // Pills
+  byId('currentPill').innerHTML = `${cr.symbol} <strong>${cr.name}</strong>`;
+  byId('prevPill').innerHTML    = `Prev: ${pr.symbol} ${pr.name} • ends ${fmtHM(prev.end)}`;
+  byId('nextPill').innerHTML    = `Next: ${nx.symbol} ${nx.name} • starts ${fmtHM(nextStart)}`;
+
+  // Multiplier + meta
+  byId('multiplier').textContent = 'x' + (curr.mult ?? 0).toFixed(3);
+  byId('ordinalChip').textContent = ORDINALS[curr.ordinal] || `${curr.ordinal}th`;
+  byId('metaLine').textContent =
+    `Hour ${curr.idx}/24 • ${curr.isBright ? 'Bright' : 'Dark'} • ` +
+    `Ruler appearance: ${curr.counts?.T ?? 0} of 24 today • ` +
+    `Hours ruled B/D/T: ${curr.counts?.B ?? 0}/${curr.counts?.D ?? 0}/${curr.counts?.T ?? 0}`;
+
+  // “Approaching sunrise” line
+  const nextDayRulerKey = DAY_RULERS[(S.frame.start.getDay()+1) % 7];
+  const nextDay = PLANETS.find(p => p.key === nextDayRulerKey);
+  byId('approachLine').textContent =
+    curr.idx === 24
+      ? `Approaching sunrise → ${nextDay.symbol} ${nextDay.name} day`
+      : `Next sunrise → ${nextDay.symbol} ${nextDay.name} day`;
+
+  // Legend chips
+  const dr = PLANETS.find(p => p.key === S.frame.dayRulerKey);
+  if (dr) {
+    byId('legendChips').innerHTML =
+      `<span class="pill" style="border-color:${dr.color}">${dr.symbol} ${dr.name} — ${dr.focusDay}</span>` +
+      ` <span class="pill" style="border-color:${cr.color}">${cr.symbol} ${cr.name} — ${cr.focusHour}</span>`;
+  }
+
+  // Bridge Δ (Hour 24 -> Hour 1)
+  const h24 = S.hours[23], h1 = S.hours[0];
+  if (h24 && h1) {
+    const delta = (h1.mult ?? 0) - (h24.mult ?? 0);
+    const arrow = delta > 0 ? '↑' : (delta < 0 ? '↓' : '→');
+    byId('bridgeLine').textContent =
+      `${PLANETS.find(p=>p.key===h24.ruler).symbol} ${cap(h24.ruler)} (Hour 24) → ` +
+      `${PLANETS.find(p=>p.key===h1.ruler).symbol} ${cap(h1.ruler)} (Hour 1) ` +
+      `Δ ${delta >= 0 ? '+' : ''}${delta.toFixed(3)} ${arrow}`;
+  }
+
+  layoutTickerMarkers();
+}
+
   </script>
 </body>
 </html>
