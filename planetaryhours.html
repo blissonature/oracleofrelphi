@@ -1,94 +1,51 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Planetary Hours</title>
-  <style>
-    body{font-family:system-ui,sans-serif;margin:0;background:#0b0d10;color:#e9eef5}
-    header,section{padding:1rem}
-    .pill{display:inline-block;padding:0.25rem 0.75rem;border-radius:999px;background:#263244;margin:0.25rem}
-    .hero{padding:1rem;background:#11151a;border-radius:1rem;margin:1rem 0;text-align:center}
-    .ticker{position:relative;height:12px;background:#1a2028;border-radius:6px;margin:1rem 0}
-    .bar{position:absolute;top:0;left:0;height:12px;background:#7aa2ff;border-radius:6px}
-    .tiny{font-size:0.8rem;color:#96a1b0}
-    .status{font-size:0.8rem;margin-left:0.5rem}
-    table{width:100%;border-collapse:collapse;margin-top:1rem}
-    th,td{padding:0.5rem;border-bottom:1px solid #263244;text-align:left;font-size:0.9rem}
-    tr.current{background:#1a2028}
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Planetary Hours</h1>
-    <div id="clock"></div>
-    <button id="copyBtn">Copy link to this view</button><span id="copyStatus" class="status"></span>
-  </header>
-  <section id="controls"></section>
-  <section id="daySummary"></section>
-  <section class="hero" id="currentHour"></section>
-  <section id="hourTable"></section>
-  <section id="matrix"></section>
-  <section id="bridges"></section>
-  <section id="tests"></section>
-  <script>
-    const planets=[
-      {key:"saturn",symbol:"♄",name:"Saturn",weight:29.46,focusDay:"Structure",focusHour:"Endurance"},
-      {key:"jupiter",symbol:"♃",name:"Jupiter",weight:11.86,focusDay:"Growth",focusHour:"Wisdom"},
-      {key:"mars",symbol:"♂",name:"Mars",weight:1.88,focusDay:"Action",focusHour:"Courage"},
-      {key:"sun",symbol:"☉",name:"Sun",weight:1,focusDay:"Vitality",focusHour:"Clarity"},
-      {key:"venus",symbol:"♀",name:"Venus",weight:0.615,focusDay:"Harmony",focusHour:"Desire"},
-      {key:"mercury",symbol:"☿",name:"Mercury",weight:0.241,focusDay:"Signals",focusHour:"Trade"},
-      {key:"moon",symbol:"☾",name:"Moon",weight:0.0748,focusDay:"Flux",focusHour:"Memory"}
-    ];
+function computeFrameAccurate(now, lat, lon, timeZone){
+  // Build sunrise→next sunrise frame that contains `now` in target tz
+  const { y, m, d, hh, mm } = toLocalPartsInTZ(now, timeZone);
+  const todayLocalNoon = fromLocalPartsInTZ(y, m-1, d, 12, 0, 0, timeZone);
 
-    function updateClock(){
-      const el=document.getElementById('clock');
-      el.textContent=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-    }
-    setInterval(updateClock,1000);updateClock();
+  // Sun times anchored to three consecutive local noons
+  const yNoon = new Date(todayLocalNoon.getTime() - 86400000);
+  const tNoon = new Date(todayLocalNoon.getTime() + 86400000);
 
-    function buildShareURL(){
-      const now=new Date();
-      const hash=`lat=40.7608&lon=-111.8910&tz=America/Denver&mode=Sidereal&dt=${encodeURIComponent(now.toISOString())}&sys=1`;
-      return window.location.origin+window.location.pathname+"#"+hash;
-    }
+  // Get both sunrise AND sunset for “yesterday” and “today”
+  const yTimes = computeSunTimesLocal(yNoon,         lat, lon, timeZone); // sr0/ss0
+  const tTimes = computeSunTimesLocal(todayLocalNoon,lat, lon, timeZone); // sr1/ss1
+  if (yTimes.polar || tTimes.polar) {
+    return {
+      start: todayLocalNoon,
+      end: new Date(todayLocalNoon.getTime()+86400000),
+      sunrise: todayLocalNoon,
+      sunset: todayLocalNoon,
+      nextSunrise: new Date(todayLocalNoon.getTime()+86400000),
+      dayRulerKey: DAY_RULERS[fromLocalPartsInTZ(y,m-1,d,0,0,0,timeZone).getDay()],
+      polar: true
+    };
+  }
 
-    function copyLink(){
-      const url=buildShareURL();
-      navigator.clipboard.writeText(url).then(()=>{
-        document.getElementById('copyStatus').textContent="✓ Copied!";
-        setTimeout(()=>document.getElementById('copyStatus').textContent="",2000);
-      }).catch(()=>{
-        const ta=document.createElement('textarea');
-        ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
-        document.getElementById('copyStatus').textContent="✓ Copied!";
-        setTimeout(()=>document.getElementById('copyStatus').textContent="",2000);
-      });
-    }
-    document.getElementById('copyBtn').addEventListener('click',copyLink);
+  const sr0 = yTimes.sunriseLocal, ss0 = yTimes.sunsetLocal;
+  const sr1 = tTimes.sunriseLocal, ss1 = tTimes.sunsetLocal;
+  const sr2 = computeSunTimesLocal(tNoon, lat, lon, timeZone).sunriseLocal;
 
-    function renderCurrentHour(){
-      const hero=document.getElementById('currentHour');
-      // Example: Mercury day, 24th hour, right before sunrise on Jupiter day
-      hero.innerHTML=`
-        <div class="pill">☿ Mercury</div>
-        <div style="font-size:1.5rem;margin-top:0.5rem">Hour 24/24 • Dark</div>
-        <div style="margin-top:0.5rem">Multiplier: x8.007</div>
-        <div class="tiny" style="margin-top:0.5rem">Approaching sunrise → ♃ Jupiter day</div>
-      `;
-    }
-    renderCurrentHour();
+  const nowLocal = fromLocalPartsInTZ(y, m-1, d, hh, mm, 0, timeZone);
 
-    // Tests
-    function runTests(){
-      const url=buildShareURL();
-      console.assert(url.includes('dt='),'URL must include dt');
-      console.assert(url.includes('tz=America/Denver'),'URL must include tz');
-      console.log('All tests passed');
-    }
-    const tests=document.getElementById('tests');
-    const btn=document.createElement('button');btn.textContent='Run tests';btn.onclick=runTests;tests.appendChild(btn);
-  </script>
-</body>
-</html>
+  // Correct selection:
+  // after today's sunrise: [sr1 .. sr2] with sunset = ss1
+  // before today's sunrise: [sr0 .. sr1] with sunset = ss0  ← this was the missing piece
+  let frameStart, frameEnd, frameSunset;
+  if (nowLocal >= sr1) {
+    frameStart = sr1; frameEnd = sr2; frameSunset = ss1;
+  } else {
+    frameStart = sr0; frameEnd = sr1; frameSunset = ss0;
+  }
+
+  const dayRulerKey = DAY_RULERS[ frameStart.getDay() ];
+  return {
+    start: frameStart,
+    end: frameEnd,
+    sunrise: sr1,
+    sunset: frameSunset,
+    nextSunrise: frameEnd,
+    dayRulerKey,
+    polar: false
+  };
+}
