@@ -320,7 +320,6 @@
 
     const params=new URLSearchParams(); params.set('lat',state.lat.toFixed(4)); params.set('lon',state.lon.toFixed(4)); params.set('tz',state.tz); params.set('mode',state.mode); if(!state.useSystem) params.set('dt', toTZISO(state.now,state.tz)); history.replaceState(null,'','#'+params.toString());
   
-
   function init(){ populateTimezones(); el.lat.value=state.lat.toFixed(4); el.lon.value=state.lon.toFixed(4); el.tzSelect.value=state.tz; el.mode.value=state.mode; smallEcho(); rebuild(); }
   window.addEventListener('resize', rebuild);
   init();
