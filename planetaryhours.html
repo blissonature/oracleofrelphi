@@ -8,17 +8,15 @@
 <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 <style>
 :root{--bg:#fff;--ink:#111;--mut:#666;--line:#e9e9e9;--pill:#f7f7f7;--bar:#eee;--barfill:#111;
---pink:rgba(245,132,255,.25);--chip:#f2f2f2;--ok:#0a7;--bad:#c00;}
+--chip:#f2f2f2;--ok:#0a7;--bad:#c00;}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 .wrap{max-width:1100px;margin:0 auto;padding:18px}
-h1,h2,h3{margin:8px 0 6px}
-h1{font-size:42px;display:flex;gap:12px;align-items:center}
-h2{font-size:22px}
+h1,h2{margin:8px 0 6px}
+h1{font-size:40px;display:flex;gap:10px;align-items:center}
+h2{font-size:20px}
 .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-.pill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:10px 14px;font-weight:600}
+.pill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:9px 12px;font-weight:600}
 .pill.small{padding:6px 10px;font-weight:500}
-.pill.ghost{background:#fff}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 16px}
 .card{border:1px solid var(--line);border-radius:14px;padding:14px;margin:16px 0}
 label{font-size:13px;color:#333}
 input,select,button{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:#fff}
@@ -29,7 +27,7 @@ input[type="date"]{width:160px}
 .tiny{font-size:12px;color:var(--mut)}
 .hrbar{height:12px;background:var(--bar);border-radius:999px;overflow:hidden;position:relative}
 .hrbar>.fill{position:absolute;inset:0;width:0;background:var(--barfill)}
-.hrbar .limit{position:absolute;top:0;bottom:0;width:2px;background:#ccc}
+.hrbar .limit{position:absolute;top:0;bottom:0;width:2px;background:#bbb}
 .hrbar .sunrise{background:#ffcc00}
 .hrbar .sunset{background:#ff8d00}
 .hero{position:sticky;top:0;background:linear-gradient(var(--bg),var(--bg));z-index:1;border-bottom:1px solid var(--line);padding:8px 0}
@@ -40,18 +38,10 @@ input[type="date"]{width:160px}
 .badge{font-size:12px;border:1px solid var(--line);background:#fafafa;border-radius:999px;padding:2px 8px}
 .now{background:#fff6d6}
 .sep{height:1px;background:var(--line);margin:14px 0}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
 .symbol{font-size:40px;line-height:1}
-.warn{color:var(--bad)}
 .ok{color:var(--ok)}
-/* planet accent dots */
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
-.dot-Saturn{background:#6b6b6b}.dot-Jupiter{background:#b8860b}.dot-Mars{background:#c1442e}
-.dot-Sun{background:#ffcc00}.dot-Venus{background:#d96aa7}.dot-Mercury{background:#7b8fa6}.dot-Moon{background:#8aa6ff}
-@media (max-width:760px){
-  .grid{grid-template-columns:1fr}
-  h1{font-size:34px}
-}
+.warn{color:var(--bad)}
+@media (max-width:760px){ .grid{grid-template-columns:1fr} h1{font-size:32px} }
 </style>
 </head>
 <body>
@@ -101,8 +91,9 @@ input[type="date"]{width:160px}
         <span class="pill small" id="nextPill">Next: —</span>
       </div>
       <div class="row">
-        <span class="pill mono" id="curPhase">—</span>
-        <span class="pill" id="weekdayPill">—</span>
+        <!-- hour ruler name & phase live here, tight to ticker -->
+        <span class="pill" id="hourRulerPill">—</span>
+        <span class="pill small" id="brightDark">—</span>
       </div>
       <div class="row">
         <span class="pill small" id="prevPill">Prev: —</span>
@@ -129,21 +120,17 @@ input[type="date"]{width:160px}
       <div class="mono tiny" id="bridgeInfo" style="margin-top:6px">—</div>
     </div>
     <div class="card">
-      <h2>Hour ruler</h2>
-      <div class="row">
-        <span class="pill" id="hourRulerPill">—</span>
-        <span class="pill small" id="brightDark">—</span>
-      </div>
-      <div id="hourFocus" style="margin-top:6px">—</div>
+      <h2>Multiplier</h2>
+      <div style="font-size:40px;font-weight:800" id="multBig">x—</div>
+      <div class="tiny">Power = day orbit × hour orbit × (1/ordinal)</div>
+      <div class="tiny mono" id="multDetail" style="margin-top:6px">—</div>
       <div class="sep"></div>
       <div class="tiny mono" id="ordinalInfo">—</div>
       <div class="tiny mono" id="hoursRuledInfo" style="margin-top:4px">—</div>
     </div>
     <div class="card">
-      <h2>Multiplier</h2>
-      <div style="font-size:40px;font-weight:800" id="multBig">x—</div>
-      <div class="tiny">Power = day orbit × hour orbit × (1/ordinal)</div>
-      <div class="tiny mono" id="multDetail" style="margin-top:6px">—</div>
+      <h2>Hour focus</h2>
+      <div id="hourFocus">—</div>
     </div>
   </div>
 
@@ -179,14 +166,12 @@ input[type="date"]{width:160px}
 </div>
 
 <script>
-// ---------- Constants & data ----------
+// ---------- Constants ----------
 const WEEKDAY_NAME = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const ORDER = ["Saturn","Jupiter","Mars","Sun","Venus","Mercury","Moon"];
 const DAY_RULER = {0:"Sun",1:"Moon",2:"Mars",3:"Mercury",4:"Jupiter",5:"Venus",6:"Saturn"};
 const GLYPH = {Sun:"☉", Moon:"☽", Mars:"♂", Mercury:"☿", Jupiter:"♃", Venus:"♀", Saturn:"♄"};
 const ORBIT_YEARS = { Sun:1, Moon:0.0748, Mercury:0.2408, Venus:0.6152, Mars:1.8808, Jupiter:11.862, Saturn:29.4571 };
-
-// Day essences (short) and Hour essences (bright/dark nuanced)
 const DAY_ESSENCE = {
   Sun:"Leadership, visibility, vitality",
   Moon:"Care, adaptation, memory",
@@ -198,23 +183,12 @@ const DAY_ESSENCE = {
 };
 const HOUR_FOCUS = {
   Sun:{Bright:"Lead, shine, self-expression", Dark:"Restore vitality, inner radiance"},
-  Moon:{Bright:"Deep self-care, nurture", Dark:"Dream incubation, subconscious healing"},
-  Mars:{Bright:"Bold action, decisive push", Dark:"Inner discipline, calm resolve"},
-  Mercury:{Bright:"Communication, learning", Dark:"Drafts, analysis, silent planning"},
-  Jupiter:{Bright:"Teaching, wise order", Dark:"Satisfying rest, quiet faith"},
-  Venus:{Bright:"Beauty, art, connection", Dark:"Night comfort, reconciliation"},
+  Moon:{Bright:"Deep self-care, nurture",     Dark:"Dream incubation, subconscious healing"},
+  Mars:{Bright:"Bold action, decisive push",  Dark:"Inner discipline, calm resolve"},
+  Mercury:{Bright:"Communication, learning",  Dark:"Drafts, analysis, silent planning"},
+  Jupiter:{Bright:"Teaching, wise order",     Dark:"Satisfying rest, quiet faith"},
+  Venus:{Bright:"Beauty, art, connection",    Dark:"Night comfort, reconciliation"},
   Saturn:{Bright:"Grounding, stillness, solitude", Dark:"Profound rest, karmic audit"}
-};
-
-// Interaction copy (hour on day), bright/dark variants (concise)
-const INTERACTION_BRIEF = {
-  Sun:{Sun:"Bureaucratic express lane / Low friction", Moon:"Warm clarity", Mars:"Courage with vision", Mercury:"Clear expression", Jupiter:"Radiant generosity", Venus:"Creative joy", Saturn:"Responsible leadership"},
-  Moon:{Sun:"Emotional anchoring in self", Moon:"Subconscious healing", Mars:"Protect and steady", Mercury:"Speak feelings, poetry", Jupiter:"Nurturing optimism", Venus:"Night tenderness", Saturn:"Disciplined emotions"},
-  Mars:{Sun:"Courage with vision", Moon:"Inner armor", Mars:"Direct, lubricated thrust", Mercury:"Strategic energy", Jupiter:"Expansive daring", Venus:"Grounded desire", Saturn:"Stoic endurance"},
-  Mercury:{Sun:"Clear expression", Moon:"Night reflection", Mars:"Tactical thinking", Mercury:"Bureaucratic express lane / Low friction", Jupiter:"Persuasion, teaching", Venus:"Intimate dialogue", Saturn:"Silent study"},
-  Jupiter:{Sun:"Radiant generosity", Moon:"Quiet grace", Mars:"Strategy + growth", Mercury:"Subtle wisdom", Jupiter:"Bureaucratic express lane / Low friction", Venus:"Generous love", Saturn:"Philosophical order"},
-  Venus:{Sun:"Creative joy", Moon:"Soothing affection", Mars:"Soften conflict", Mercury:"Intimate messages", Jupiter:"Gracious generosity", Venus:"Bureaucratic express lane / Low friction", Saturn:"Enduring devotion"},
-  Saturn:{Sun:"Enduring core strength", Moon:"Reflective detachment", Mars:"Martial discipline", Mercury:"Prune & focus", Jupiter:"Ground growth plans", Venus:"Structure in love", Saturn:"Bureaucratic express lane / Low friction"}
 };
 
 // ---------- State ----------
@@ -227,22 +201,20 @@ const state = {
 };
 
 // ---------- Helpers ----------
-const $ = sel => document.querySelector(sel);
+const $ = s => document.querySelector(s);
 const fmtHM = d => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 const startOfLocalDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const clamp01 = x => Math.max(0, Math.min(1, x));
 
-// build Chaldean sequence of length L starting from planet P
 function chaldeanSequence(startPlanet, L){
   const s = ORDER.indexOf(startPlanet);
   return Array.from({length:L}, (_,i)=> ORDER[(s+i)%ORDER.length]);
 }
 
-// pick anchor planetary day (yesterday if before today’s sunrise)
+// Anchor planetary day to yesterday if before today’s sunrise
 function pickPlanetaryDayAnchor(lat, lon, now=new Date()){
   const today0 = startOfLocalDay(now);
-  const tToday  = SunCalc.getTimes(today0, lat, lon);
-  // polar guard
+  const tToday = SunCalc.getTimes(today0, lat, lon);
   if (!tToday.sunrise || !tToday.sunset){
     const wd = today0.getDay();
     return {anchor:today0, times:tToday, dayRuler:DAY_RULER[wd], weekdayName:WEEKDAY_NAME[wd]};
@@ -253,14 +225,12 @@ function pickPlanetaryDayAnchor(lat, lon, now=new Date()){
   return {anchor, times, dayRuler:DAY_RULER[wd], weekdayName:WEEKDAY_NAME[wd]};
 }
 
-// Build schedule for the sunrise→next sunrise window of 'anchor' date
+// Build schedule for sunrise→next sunrise of anchor
 function buildSchedule(anchor, lat, lon){
   const t = SunCalc.getTimes(anchor, lat, lon);
-  const sunrise = t.sunrise;
-  const sunset  = t.sunset;
-
+  const sunrise = t.sunrise, sunset = t.sunset;
   const next0 = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate()+1);
-  const tNext  = SunCalc.getTimes(next0, lat, lon);
+  const tNext = SunCalc.getTimes(next0, lat, lon);
   const nextSunrise = tNext.sunrise;
 
   const dayLen   = sunset - sunrise;
@@ -273,24 +243,23 @@ function buildSchedule(anchor, lat, lon){
   const nightSeq = chaldeanSequence(daySeq[12 % 7], 12);
 
   const list = [];
-  for(let i=0;i<12;i++){
+  for(let i=0;i<12;i++)
     list.push({idx:i+1, start:new Date(sunrise.getTime()+ i*dayHour), end:new Date(sunrise.getTime()+(i+1)*dayHour), planet:daySeq[i], phase:"Bright"});
-  }
-  for(let i=0;i<12;i++){
+  for(let i=0;i<12;i++)
     list.push({idx:13+i, start:new Date(sunset.getTime()+ i*nightHour), end:new Date(sunset.getTime()+(i+1)*nightHour), planet:nightSeq[i], phase:"Dark"});
-  }
+
   return {list, sunrise, sunset, nextSunrise, dayRuler};
 }
 
-// ordinal order (1st/2nd/3rd/4th) among occurrences of each planet today
+// Ordinals & stats
 function ordinalsFor(list){
   const seen = {Saturn:0,Jupiter:0,Mars:0,Sun:0,Venus:0,Mercury:0,Moon:0};
   const map = new Map();
   list.forEach(h=>{
     seen[h.planet]++; 
-    const nth = seen[h.planet];
-    const ord = nth===1?"1st":nth===2?"2nd":nth===3?"3rd":"4th";
-    map.set(h, {nth, ord});
+    const n = seen[h.planet];
+    const ord = n===1?"1st":n===2?"2nd":n===3?"3rd":"4th";
+    map.set(h, {nth:n, ord});
   });
   return map;
 }
@@ -300,7 +269,7 @@ function hoursRuledStats(list){
   return acc;
 }
 
-// multiplier: dayOrbit * hourOrbit * (1/ordinal)
+// Multiplier: dayOrbit × hourOrbit × (1/ordinal)
 function multiplier(dayPlanet, hourPlanet, ordinalN){
   const day = ORBIT_YEARS[dayPlanet];
   const hr  = ORBIT_YEARS[hourPlanet];
@@ -308,32 +277,18 @@ function multiplier(dayPlanet, hourPlanet, ordinalN){
   return day * hr * ordFactor;
 }
 
-// ---------- UI population ----------
-function fillTZSelect(){
-  const tz = Intl.supportedValuesOf?.("timeZone") || [state.tz,"UTC"];
-  $('#tzSel').innerHTML = tz.map(z=>`<option ${z===state.tz?'selected':''}>${z}</option>`).join('');
-}
-function setLatLonEcho(){
-  $('#latlonEcho').textContent = `${(+state.lat).toFixed(4)}, ${(+state.lon).toFixed(4)}  (${state.tz})`;
-}
-function getNow(){
-  if (state.useSystem || !state.manual) return new Date();
-  return new Date(state.manual.getTime()); // keep as local
-}
+// ---------- Paint ----------
 function paintHero(){
-  const now = state.now.getTime();
-  // find current hour
-  const idx = state.schedule.findIndex(h => now>=h.start.getTime() && now<h.end.getTime());
-  const cur = state.schedule[idx >= 0 ? idx : 0];
+  const nowMs = state.now.getTime();
+  const idx = state.schedule.findIndex(h => nowMs>=h.start.getTime() && nowMs<h.end.getTime());
+  const cur = state.schedule[idx>=0?idx:0];
 
   // header
   $('#heroGlyph').textContent = GLYPH[cur.planet] || "•";
   $('#heroName').textContent  = cur.planet;
   $('#curRange').textContent  = `${fmtHM(cur.start)} – ${fmtHM(cur.end)}`;
-  $('#curPhase').textContent  = cur.phase;
-  $('#weekdayPill').textContent = state.weekdayName;
 
-  // prev/next pills (left = next, right = prev to match left→right feed)
+  // prev/next pills (left = next incoming, right = previous)
   const prev = state.schedule[(idx-1+24)%24];
   const next = state.schedule[(idx+1)%24];
   $('#nextPill').textContent = `Next: ${GLYPH[next.planet]||''} ${next.planet}  ${fmtHM(next.start)}`;
@@ -341,48 +296,53 @@ function paintHero(){
 
   // ticker
   const dur  = cur.end - cur.start;
-  const p    = clamp01((now - cur.start.getTime())/dur);
+  const p    = clamp01((nowMs - cur.start.getTime())/dur);
   $('#hrFill').style.width = `${100*p}%`;
 
-  // sunrise/sunset position
-  const span = state.nextSunrise - state.sunrise; // whole planetary day length
-  const srx = clamp01((state.sunrise - state.sunrise)/span); // 0
-  const ssx = clamp01((state.sunset  - state.sunrise)/span);
+  // sunrise/sunset marks over full planetary day span
+  const span = state.nextSunrise - state.sunrise;
+  const srx = 0;
+  const ssx = clamp01((state.sunset - state.sunrise)/span);
   $('#sunriseBar').style.left = `${100*srx}%`;
   $('#sunsetBar').style.left  = `${100*ssx}%`;
-
   $('#dayLimits').textContent = `Sunrise ${fmtHM(state.sunrise)} • Sunset ${fmtHM(state.sunset)} • Next sunrise ${fmtHM(state.nextSunrise)}`;
 
   // countdown
-  const remain = cur.end.getTime()-now;
-  const mm = Math.floor(remain/60000);
-  const ss = Math.floor((remain%60000)/1000);
-  $('#curCountdown').textContent = `Next in ${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  const remain = cur.end.getTime()-nowMs;
+  const mins = Math.floor(remain/60000);
+  const secs = Math.floor((remain%60000)/1000);
+  $('#curCountdown').textContent = `Next in ${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
 
-  // multiplier + textual blocks
+  // hour ruler (tight under ticker)
+  $('#hourRulerPill').textContent = `${GLYPH[cur.planet]||''} ${cur.planet}`;
+  $('#brightDark').textContent = cur.phase;
+
+  // day ruler & focus (anchored)
   $('#dayRulerPill').textContent = `${GLYPH[state.dayRuler]||''} ${state.dayRuler}`;
   $('#dayFocus').textContent = DAY_ESSENCE[state.dayRuler] || '—';
   $('#sunTimes').textContent = `Sunrise ${fmtHM(state.sunrise)} • Sunset ${fmtHM(state.sunset)} • Next sunrise ${fmtHM(state.nextSunrise)}`;
 
+  // multiplier & ordinals
   const ord = state.ordMap.get(cur) || {nth:1, ord:"1st"};
   const mult = multiplier(state.dayRuler, cur.planet, ord.nth);
-  $('#hourRulerPill').textContent = `${GLYPH[cur.planet]||''} ${cur.planet}`;
-  $('#brightDark').textContent = cur.phase;
-  $('#hourFocus').textContent = HOUR_FOCUS[cur.planet]?.[cur.phase] || '—';
   $('#multBig').textContent = `x${mult.toFixed(3)}`;
   $('#multDetail').textContent = `${state.dayRuler}(${ORBIT_YEARS[state.dayRuler]}) × ${cur.planet}(${ORBIT_YEARS[cur.planet]}) × 1/${ord.nth}`;
   $('#ordinalInfo').textContent = `Order today: ${ord.ord} of ${Math.min(4,state.stats[cur.planet].Total)} • Hour ${cur.idx}/24`;
+
   const st = state.stats[cur.planet];
   $('#hoursRuledInfo').textContent = `Hours ruled by ${cur.planet} today — Bright:${st.Bright} • Dark:${st.Dark} • Total:${st.Total}`;
+
+  // hour focus
+  $('#hourFocus').textContent = HOUR_FOCUS[cur.planet]?.[cur.phase] || '—';
 }
 function paintTable(){
   const tbody = $('#hoursTBody'); tbody.innerHTML = '';
-  const now = state.now.getTime();
+  const nowMs = state.now.getTime();
   state.schedule.forEach(h=>{
     const ord = state.ordMap.get(h);
     const mult = multiplier(state.dayRuler, h.planet, ord.nth);
     const tr = document.createElement('tr');
-    if (now>=h.start.getTime() && now<h.end.getTime()) tr.classList.add('now');
+    if (nowMs>=h.start.getTime() && nowMs<h.end.getTime()) tr.classList.add('now');
     tr.innerHTML = `
       <td>${h.idx} <span class="badge">${h.phase}</span></td>
       <td>${fmtHM(h.start)}</td>
@@ -395,18 +355,14 @@ function paintTable(){
     tbody.appendChild(tr);
   });
 }
-
-// simple weekly bridge generator from canonical sequence (Sat→…→Fri)
 function paintWeeklyBridges(){
   const days = ["Saturn","Sun","Moon","Mars","Mercury","Jupiter","Venus"];
   const tbody = $('#bridgeTBody'); tbody.innerHTML = '';
   for(let i=0;i<days.length;i++){
     const day = days[i], next = days[(i+1)%days.length];
-    // last dark hour is hour #24 ruler for 'day'; first bright is hour #1 ruler for 'next'
-    const lastDarkRuler = chaldeanSequence(day, 12+12).slice(-1)[0]; // robust
+    const lastDarkRuler = chaldeanSequence(day, 24)[23];
     const firstBrightRuler = chaldeanSequence(next,1)[0];
-    const m1 = ORBIT_YEARS[day]*ORBIT_YEARS[lastDarkRuler]*(1/ ( // assume last occurrence ordinal=4th
-      4));
+    const m1 = ORBIT_YEARS[day]*ORBIT_YEARS[lastDarkRuler]*(1/4);
     const m2 = ORBIT_YEARS[next]*ORBIT_YEARS[firstBrightRuler]*(1/1);
     const delta = m2 - m1;
     const tr = document.createElement('tr');
@@ -422,20 +378,24 @@ function paintWeeklyBridges(){
   }
 }
 
-// ---------- Rebuild pipeline ----------
+// ---------- Rebuild ----------
+function getNow(){
+  if (state.useSystem || !state.manual) return new Date();
+  return new Date(state.manual.getTime());
+}
 function rebuild(forcedNow=null){
   if (forcedNow) state.manual = new Date(forcedNow);
   state.now = getNow();
 
-  const {anchor, times, dayRuler, weekdayName} = pickPlanetaryDayAnchor(state.lat, state.lon, state.now);
+  const {anchor, dayRuler, weekdayName} = pickPlanetaryDayAnchor(state.lat, state.lon, state.now);
   const built = buildSchedule(anchor, state.lat, state.lon);
 
   state.schedule = built.list;
   state.sunrise = built.sunrise;
   state.sunset = built.sunset;
   state.nextSunrise = built.nextSunrise;
-  state.dayRuler = dayRuler;                    // ✅ from anchor (yesterday if pre-sunrise)
-  state.weekdayName = weekdayName;
+  state.dayRuler = dayRuler;           // anchored (yesterday if pre-sunrise)
+  state.weekdayName = weekdayName;     // anchored label (not displayed as a pill)
 
   state.ordMap = ordinalsFor(state.schedule);
   state.stats  = hoursRuledStats(state.schedule);
@@ -446,13 +406,19 @@ function rebuild(forcedNow=null){
 }
 
 // ---------- Controls ----------
+function fillTZSelect(){
+  const tz = (Intl.supportedValuesOf?.("timeZone")) || [state.tz,"UTC"];
+  $('#tzSel').innerHTML = tz.map(z=>`<option ${z===state.tz?'selected':''}>${z}</option>`).join('');
+}
+function setLatLonEcho(){
+  $('#latlonEcho').textContent = `${(+state.lat).toFixed(4)}, ${(+state.lon).toFixed(4)}  (${state.tz})`;
+}
 function initTZ(){
   fillTZSelect();
   $('#tzSel').addEventListener('change', e=>{
     state.tz = e.target.value;
-    try{ Intl.DateTimeFormat('en-US',{timeZone:state.tz}).format(new Date()); }catch{}
+    // (Display-only; SunCalc uses local system tz. For accuracy, keep system tz aligned to location.)
     setLatLonEcho();
-    rebuild();
   });
 }
 function initGeo(){
@@ -486,8 +452,8 @@ function initDateTime(){
     const t = $('#timePick').value || "00:00";
     if (!d){ alert("Pick a date."); return; }
     const [H,M] = t.split(':').map(Number);
-    const parts = d.split('-').map(Number);
-    const manual = new Date(parts[0], parts[1]-1, parts[2], H, M);
+    const [Y,Mo,Da] = d.split('-').map(Number);
+    const manual = new Date(Y, Mo-1, Da, H, M);
     state.manual = manual; state.useSystem=false; $('#useSystem').checked=false;
     rebuild();
   };
@@ -519,11 +485,8 @@ function readDeepLink(){
 
 // ---------- Clock / Ticker ----------
 function tick(){
-  // live clock
-  const nowShow = getNow();
-  $('#clock').textContent = nowShow.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  // repaint lightweight hero bits
-  state.now = nowShow;
+  state.now = getNow();
+  $('#clock').textContent = state.now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
   paintHero();
   requestAnimationFrame(tick);
 }
