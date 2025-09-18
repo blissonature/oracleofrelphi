@@ -51,7 +51,7 @@
       <div class="flex-between">
         <div>
           <h1>Planetary Hours</h1>
-          <div class="sub">Single-file app • sunrise → sunrise</div>
+          <div class="sub">Single‑file app • sunrise → sunrise</div>
         </div>
         <div class="row">
           <div class="mono" id="liveClock">--:--</div>
@@ -110,14 +110,14 @@
         <div class="tick-marker" id="markSunset"></div>
         <div class="tick-marker" id="markEnd"></div>
       </div>
-      <!-- (per request) no time labels under the progress bar -->
+      <!-- removed the three time labels under the progress bar per request -->
       <div class="side-pills" style="margin-top:10px">
         <div class="pill side-left" id="nextPill">Next: —</div>
         <div class="center-block">
           <div class="pill" id="currentPill">Current: —</div>
           <div style="font-size:22px" class="mono" id="multiplier">x0.000</div>
-          <div class="tiny mono" id="formulaLine">Power = (day × hour) × (1/ordinal) + ordinal • <span id="ordinalChip">—</span></div>
-          <div class="tiny mono" id="metaLine">Hour —/24 • — • Ruler appearance: — of 24 today • Hours ruled B/D/T: —</div>
+          <div class="tiny mono" id="formulaLine">—</div>
+          <div class="tiny mono" id="metaLine">Hour —/24 • — • Ruler appearance: — • Hours ruled B/D/T: —</div>
           <div class="tiny mono" id="approachLine">—</div>
           <div class="legend" id="legendChips"></div>
         </div>
@@ -127,7 +127,7 @@
 
     <!-- 24-Hour Table -->
     <div class="card" id="hourTableCard">
-      <div class="flex-between"><h2 style="margin:0;font-size:18px">24-Hour Table</h2></div>
+      <div class="flex-between"><h2 style="margin:0;font-size:18px">24‑Hour Table</h2></div>
       <div style="overflow:auto">
         <table id="hourTable">
           <thead>
@@ -142,7 +142,7 @@
               <th>Focus</th>
             </tr>
           </thead>
-            <tbody></tbody>
+          <tbody></tbody>
         </table>
       </div>
     </div>
@@ -186,7 +186,7 @@
     <!-- Help / Tests -->
     <div class="card">
       <details>
-        <summary>🔧 Built-in tests</summary>
+        <summary>🔧 Built‑in tests</summary>
         <div class="testbar" style="margin-top:8px">
           <button id="runTestsBtn">Run tests</button>
           <div id="testOut" class="tiny mono"></div>
@@ -196,306 +196,33 @@
   </div>
 
   <script>
-  // ----------------------------
-  //  Planet & Utility Constants
-  // ----------------------------
-  const PLANETS = [
-    {key:'saturn',  symbol:'\u2644', name:'Saturn',  color:'var(--saturn)',  weight:29.46, focusDay:'Structure • boundaries', focusHour:'Discipline • consolidation'},
-    {key:'jupiter', symbol:'\u2643', name:'Jupiter', color:'var(--jupiter)', weight:11.86, focusDay:'Growth • benevolence',   focusHour:'Opportunity • expansion'},
-    {key:'mars',    symbol:'\u2642', name:'Mars',    color:'var(--mars)',    weight:1.88,  focusDay:'Courage • severance',   focusHour:'Action • cutting'},
-    {key:'sun',     symbol:'\u2609', name:'Sun',     color:'var(--sun)',     weight:1.00,  focusDay:'Vitality • presence',   focusHour:'Clarity • expression'},
-    {key:'venus',   symbol:'\u2640', name:'Venus',   color:'var(--venus)',   weight:0.615, focusDay:'Harmony • attraction',  focusHour:'Relating • pleasure'},
-    {key:'mercury', symbol:'\u263f', name:'Mercury', color:'var(--mercury)', weight:0.241, focusDay:'Signals • trade',       focusHour:'Analysis • message'},
-    {key:'moon',    symbol:'\u263e', name:'Moon',    color:'var(--moon)',    weight:0.0748,focusDay:'Rhythm • care',         focusHour:'Reflection • flux'},
-  ];
-  const ORDER = ['saturn','jupiter','mars','sun','venus','mercury','moon']; // Chaldean
-  const DAY_RULERS = ['sun','moon','mars','mercury','jupiter','venus','saturn']; // Sun..Sat
-  const fmtHM = d=> new Intl.DateTimeFormat([], {hour:'2-digit', minute:'2-digit'}).format(d);
-  const clamp = (n,min,max)=> Math.min(max, Math.max(min,n));
-  const ORDINALS = [null,'1st (Prime)','2nd (Octave)','3rd (Fifth)','4th (Fourth)','5th (Third)','6th','7th','8th','9th','10th','11th','12th','13th','14th','15th','16th','17th','18th','19th','20th','21st','22nd','23rd','24th'];
-
-  // ----------------------------
-  //  Global State
-  // ----------------------------
-  const S = {
-    lat: 40.7608,
-    lon: -111.8910,
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    mode: 'sidereal',
-    useSystem: true,
-    dt: new Date(),
-    frame: null,
-    hours: [],
-    tickRAF: null,
-  };
-
-  // ----------------------------
-  //  Init
-  // ----------------------------
-  window.addEventListener('DOMContentLoaded', () => {
-    bindUI();
-    loadFromHash();
-    populateTimezones();
-    startLiveClock();
-    rebuild();
-    window.addEventListener('resize', onResize, {passive:true});
-  });
-
-  function bindUI(){
-    byId('copyLinkBtn').addEventListener('click', copyLink);
-    byId('useGeo').addEventListener('click', useGeolocation);
-    byId('setLatLon').addEventListener('click', ()=>{
-      const lat = parseFloat(byId('latInput').value);
-      const lon = parseFloat(byId('lonInput').value);
-      if(Number.isFinite(lat) && Number.isFinite(lon)){
-        S.lat = clamp(lat, -90, 90);
-        S.lon = ((lon+540)%360)-180; // wrap
-        saveToHash();
-        rebuild();
-      } else note('Invalid lat/lon');
-    });
-    byId('tzSelect').addEventListener('change', e=>{ S.tz = e.target.value; saveToHash(); rebuild(); });
-    byId('modeSelect').addEventListener('change', e=>{ S.mode = e.target.value; saveToHash(); rebuild(); });
-
-    const useSystem = byId('useSystem');
-    const datePick = byId('datePick');
-    const timePick = byId('timePick');
-    const applyDt  = byId('applyDt');
-    useSystem.addEventListener('change', ()=>{
-      const on = useSystem.checked;
-      datePick.disabled = timePick.disabled = applyDt.disabled = on;
-      S.useSystem = on;
-      if(on){ S.dt = new Date(); saveToHash(); rebuild(); }
-    });
-    applyDt.addEventListener('click', ()=>{
-      const dp = datePick.value; const tp = timePick.value || '00:00';
-      if(!dp){ note('Pick a date/time'); return; }
-      const [y,m,d] = dp.split('-').map(Number);
-      const [hh,mm] = tp.split(':').map(Number);
-      S.dt = fromLocalPartsInTZ(y, m-1, d, hh, mm, 0, S.tz);
-      S.useSystem = false; byId('useSystem').checked = false;
-      saveToHash(); rebuild();
-    });
-
-    const runBtn = byId('runTestsBtn'); if(runBtn){ runBtn.addEventListener('click', runTests); }
-  }
-
-  function onResize(){ layoutTickerMarkers(); }
-
-  function startLiveClock(){
-    const el = byId('liveClock');
-    function tick(){ el.textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); requestAnimationFrame(()=>setTimeout(tick, 600)); }
-    tick();
-  }
-
-  // ----------------------------
-  //  Timezone helpers
-  // ----------------------------
-  function tzOffsetMinutes(date, timeZone){
-    const dtf = new Intl.DateTimeFormat('en-US', {
-      timeZone, hour12:false,
-      year:'numeric', month:'2-digit', day:'2-digit',
-      hour:'2-digit', minute:'2-digit', second:'2-digit'
-    });
-    const parts = dtf.formatToParts(date); const map={}; parts.forEach(p=>map[p.type]=p.value);
-    const asUTC = Date.UTC(map.year, map.month-1, map.day, map.hour, map.minute, map.second);
-    return (asUTC - date.getTime())/60000;
-  }
-  function fromLocalPartsInTZ(y,m,d,hh,mm,ss,timeZone){
-    const utcGuess = Date.UTC(y,m,d,hh,mm,ss);
-    const guess = new Date(utcGuess);
-    const off = tzOffsetMinutes(guess, timeZone);
-    return new Date(utcGuess - off*60000);
-  }
-  function toLocalPartsInTZ(date, timeZone){
-    const dtf = new Intl.DateTimeFormat('en-US', {timeZone, hour12:false,year:'numeric', month:'2-digit', day:'2-digit',hour:'2-digit', minute:'2-digit', second:'2-digit'});
-    const parts = dtf.formatToParts(date); const map={}; parts.forEach(p=>map[p.type]=p.value);
-    return { y:+map.year, m:+map.month, d:+map.day, hh:+map.hour, mm:+map.minute, ss:+map.second };
-  }
-
-  // ----------------------------
-  //  State <-> Hash (always include dt; add sys flag)
-  // ----------------------------
-  function saveToHash(){
-    const o = { lat:S.lat.toFixed(4), lon:S.lon.toFixed(4), tz:S.tz, mode:S.mode };
-    const parts = toLocalPartsInTZ(S.dt, S.tz);
-    const dtStr = `${parts.y}-${String(parts.m).padStart(2,'0')}-${String(parts.d).padStart(2,'0')}T${String(parts.hh).padStart(2,'0')}:${String(parts.mm).padStart(2,'0')}`;
-    o.dt = dtStr; if(S.useSystem) o.sys = '1';
-    const hash = new URLSearchParams(o).toString();
-    location.hash = hash;
-  }
-  function loadFromHash(){
-    const h = new URLSearchParams(location.hash.slice(1));
-    if(h.has('lat')) S.lat = parseFloat(h.get('lat'));
-    if(h.has('lon')) S.lon = parseFloat(h.get('lon'));
-    if(h.has('tz'))  S.tz  = h.get('tz');
-    if(h.has('mode'))S.mode= h.get('mode');
-    if(h.has('dt')){
-      const [dts, tts] = h.get('dt').split('T');
-      const [y,m,d] = dts.split('-').map(Number);
-      const [hh,mm] = (tts||'00:00').split(':').map(Number);
-      S.dt = fromLocalPartsInTZ(y, m-1, d, hh, mm, 0, S.tz);
-    }
-    S.useSystem = h.get('sys')==='1';
-
-    byId('latInput').value = S.lat.toFixed(4);
-    byId('lonInput').value = S.lon.toFixed(4);
-    byId('modeSelect').value = S.mode;
-    byId('useSystem').checked = S.useSystem;
-    byId('datePick').disabled = byId('timePick').disabled = byId('applyDt').disabled = S.useSystem;
-    const parts = toLocalPartsInTZ(S.dt, S.tz);
-    if(!S.useSystem){
-      byId('datePick').value = `${parts.y}-${String(parts.m).padStart(2,'0')}-${String(parts.d).padStart(2,'0')}`;
-      byId('timePick').value = `${String(parts.hh).padStart(2,'0')}:${String(parts.mm).padStart(2,'0')}`;
-    }
-  }
-
-  function buildShareURL(){ saveToHash(); return location.origin + location.pathname + location.search + '#' + location.hash.slice(1); }
-
-  async function copyLink(){
-    const url = buildShareURL();
-    try{
-      if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(url); }
-      else{
-        const ta=document.createElement('textarea'); ta.value=url; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0';
-        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-      }
-      flashStatus('Link copied!', 1400);
-    }catch(e){ flashStatus('Copy failed. Select URL bar to copy.', 3000, true); }
-  }
-  function flashStatus(msg, ms=1200, isWarn=false){
-    const status = byId('copyStatus'); if(!status) return;
-    status.textContent = msg; status.style.color = isWarn? 'var(--warn)' : 'var(--muted)';
-    const btn = byId('copyLinkBtn'); const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Copied!';
-    setTimeout(()=>{ status.textContent=''; btn.disabled=false; btn.textContent = orig; }, ms);
-  }
-
-  // ----------------------------
-  //  Astronomy (accurate sun times)
-  // ----------------------------
-  function toRadians(deg){ return deg*Math.PI/180; } function toDegrees(rad){ return rad*180/Math.PI; } function normalizeAngle(a){ return (a%360 + 360)%360; }
-  function solarDeclination(L){ const e = 23.4397; return toDegrees(Math.asin(Math.sin(toRadians(e)) * Math.sin(toRadians(L)))); }
-  function equationOfTime(M, L){
-    const e = 0.0167086; const epsilon = toRadians(23.4397); const y = Math.tan(epsilon/2); const y2 = y*y;
-    return toDegrees(y2*Math.sin(2*toRadians(L)) - 2*e*Math.sin(toRadians(M)) + 4*e*y2*Math.sin(toRadians(M))*Math.cos(2*toRadians(L)) - 0.5*y2*y2*Math.sin(4*toRadians(L)) - 1.25*e*e*Math.sin(2*toRadians(M))) * 4;
-  }
-  function sunGeom(dayOfYear){ const M = normalizeAngle(357.5291 + 0.98560028 * (dayOfYear-1)); const C = 1.9148*Math.sin(toRadians(M)) + 0.0200*Math.sin(toRadians(2*M)) + 0.0003*Math.sin(toRadians(3*M)); const L = normalizeAngle(280.46646 + 0.98564736*(dayOfYear-1) + C); return {M, L}; }
-  function hourAngle(lat, decl){
-    const alt = -0.833;
-    const cosH = (Math.sin(toRadians(alt)) - Math.sin(toRadians(lat))*Math.sin(toRadians(decl))) / (Math.cos(toRadians(lat))*Math.cos(toRadians(decl)));
-    if(cosH < -1) return {polar:'midnight-sun'};
-    if(cosH > 1)  return {polar:'polar-night'};
-    return {H: toDegrees(Math.acos(cosH))};
-  }
-  function dayOfYearTZ(date, timeZone){
-    const parts = toLocalPartsInTZ(date, timeZone);
-    const d0 = fromLocalPartsInTZ(parts.y, 0, 1, 0, 0, 0, timeZone);
-    return Math.floor((fromLocalPartsInTZ(parts.y, parts.m-1, parts.d, 12, 0, 0, timeZone) - d0)/86400000)+1;
-  }
-  function computeSunTimesLocal(date, lat, lon, timeZone){
-    const doy = dayOfYearTZ(date, timeZone);
-    const {M, L} = sunGeom(doy);
-    const decl = solarDeclination(L);
-    const ha = hourAngle(lat, decl);
-    if(ha.polar) return { polar: true };
-    const EoT = equationOfTime(M, L);
-    const tzOffMin = tzOffsetMinutes(date, timeZone);
-    const solarNoonMin = 720 - 4*lon - EoT + tzOffMin;
-    const deltaMin = 4 * ha.H;
-    const parts = toLocalPartsInTZ(date, timeZone);
-    const base = fromLocalPartsInTZ(parts.y, parts.m-1, parts.d, 0, 0, 0, timeZone);
-    const sunriseLocal = new Date(base.getTime() + (solarNoonMin - deltaMin)*60000);
-    const sunsetLocal  = new Date(base.getTime() + (solarNoonMin + deltaMin)*60000);
-    return { sunriseLocal, sunsetLocal, polar:false };
-  }
-
-  // ----------------------------
-  //  FIXED Frame computation
-  //     - if now < today’s sunrise: frame = [yesterday sunrise .. today sunrise]
-  //       and sunset = yesterday’s sunset  ✅
-  // ----------------------------
+  // Corrected frame computation
   function computeFrameAccurate(now, lat, lon, timeZone){
     const { y, m, d, hh, mm } = toLocalPartsInTZ(now, timeZone);
-    const todayNoon = fromLocalPartsInTZ(y, m-1, d, 12, 0, 0, timeZone);
-    const yesterdayNoon = new Date(todayNoon.getTime() - 86400000);
-    const tomorrowNoon  = new Date(todayNoon.getTime() + 86400000);
+    const todayLocalNoon = fromLocalPartsInTZ(y, m-1, d, 12, 0, 0, timeZone);
+    const yNoon = new Date(todayLocalNoon.getTime() - 86400000);
+    const tNoon = new Date(todayLocalNoon.getTime() + 86400000);
 
-    const yTimes = computeSunTimesLocal(yesterdayNoon, lat, lon, timeZone);
-    const tTimes = computeSunTimesLocal(todayNoon,     lat, lon, timeZone);
+    const yTimes = computeSunTimesLocal(yNoon, lat, lon, timeZone);
+    const tTimes = computeSunTimesLocal(todayLocalNoon, lat, lon, timeZone);
     if(yTimes.polar || tTimes.polar){
-      return {
-        start: todayNoon,
-        end: new Date(todayNoon.getTime()+86400000),
-        sunrise: todayNoon, sunset: todayNoon, nextSunrise: new Date(todayNoon.getTime()+86400000),
-        dayRulerKey: DAY_RULERS[fromLocalPartsInTZ(y,m-1,d,0,0,0,timeZone).getDay()],
-        polar:true
-      };
+      return { start: todayLocalNoon, end: new Date(todayLocalNoon.getTime()+86400000), sunrise: todayLocalNoon, sunset: todayLocalNoon, nextSunrise: new Date(todayLocalNoon.getTime()+86400000), dayRulerKey: DAY_RULERS[fromLocalPartsInTZ(y,m-1,d,0,0,0,timeZone).getDay()], polar:true };
     }
     const sr0 = yTimes.sunriseLocal, ss0 = yTimes.sunsetLocal;
     const sr1 = tTimes.sunriseLocal, ss1 = tTimes.sunsetLocal;
-    const sr2 = computeSunTimesLocal(tomorrowNoon, lat, lon, timeZone).sunriseLocal;
+    const sr2 = computeSunTimesLocal(tNoon, lat, lon, timeZone).sunriseLocal;
 
     const nowLocal = fromLocalPartsInTZ(y, m-1, d, hh, mm, 0, timeZone);
 
-    let start, end, sunsetForFrame;
+    let frameStart, frameEnd, frameSunset;
     if(nowLocal >= sr1){
-      start = sr1; end = sr2; sunsetForFrame = ss1;
+      frameStart = sr1; frameEnd = sr2; frameSunset = ss1;
     } else {
-      start = sr0; end = sr1; sunsetForFrame = ss0; // <-- crucial fix
+      frameStart = sr0; frameEnd = sr1; frameSunset = ss0;
     }
 
-    const dayRulerKey = DAY_RULERS[start.getDay()];
-    return { start, end, sunrise:sr1, sunset:sunsetForFrame, nextSunrise:end, dayRulerKey, polar:false };
-  }
-
-  // ----------------------------
-  //  Hour Blocks & Multipliers
-  // ----------------------------
-  function buildHourBlocks(frame){
-    const blocks=[];
-    const dayLenMs = frame.sunset - frame.start;
-    const nightLenMs = frame.end - frame.sunset;
-    const dayStep = dayLenMs/12, nightStep = nightLenMs/12;
-
-    const startIdx = ORDER.indexOf(frame.dayRulerKey);
-    const seq = Array.from({length:24}, (_,i)=> ORDER[(startIdx + i)%ORDER.length]);
-
-    for(let i=0;i<24;i++){
-      const isBright = i<12;
-      const start = new Date(isBright ? (frame.start.getTime() + i*dayStep) : (frame.sunset.getTime() + (i-12)*nightStep));
-      const end   = new Date(isBright ? (frame.start.getTime() + (i+1)*dayStep) : (frame.sunset.getTime() + (i-11)*nightStep));
-      blocks.push({ idx:i+1, ordinal:i+1, isBright, start, end, ruler: seq[i] });
-    }
-    const counts = Object.fromEntries(ORDER.map(k=>[k,{B:0,D:0,T:0}]));
-    blocks.forEach(b=>{ const c=counts[b.ruler]; if(b.isBright) c.B++; else c.D++; c.T++; });
-    blocks.forEach(b=>{ b.counts = counts[b.ruler]; });
-    return blocks;
-  }
-
-  function weightFor(key){ return PLANETS.find(p=>p.key===key).weight; }
-
-  function computeMultipliers(){
-    const mode = S.mode;
-    S.hours.forEach(b=>{
-      const dayW = weightFor(S.frame.dayRulerKey);
-      const hrW  = weightFor(b.ruler);
-      const sidereal = (dayW * hrW) * (1/b.ordinal) + b.ordinal;
-      const ratio = (b.counts.T/24) * 10;
-      const hybrid = sidereal * ratio;
-      b.mult = mode==='sidereal'?sidereal: mode==='ratio'?ratio: hybrid;
-    });
-  }
-
-  // ----------------------------
-  //  Rendering
-  // ----------------------------
-  function renderSummary(){
-    const dr = PLANETS.find(p=>p.key===S.frame.dayRulerKey);
-    byId('dayRulerPill').innerHTML = `<span class="pill" style="border-color:${dr.color}">${dr.symbol} <strong>${dr.name}</strong> • weight ${dr.weight} • ${dr.focusDay}</span>`;
-    byId('sunrise').textContent = S.frame.polar? 'N/A' : fmtHM(S.frame.sunrise);
-    byId('sunset').textContent = S.frame.polar? 'N/A' : fmtHM(S.frame.sunset);
-    byId('nextSunrise').textContent = S.frame.polar? 'N/A' : fmtHM(S.frame.nextSunrise);
-    byId('locEcho').textContent = `${S.lat.toFixed(4)}, ${S.lon.toFixed(4)} (${S.tz})`;
+    const dayRulerKey = DAY_RULERS[ frameStart.getDay() ];
+    return { start:frameStart, end:frameEnd, sunrise:sr1, sunset:frameSunset, nextSunrise:frameEnd, dayRulerKey, polar:false };
   }
 
   function renderHero(){
@@ -511,27 +238,35 @@
     }
     const curr = S.hours[ clamp(iNow,0,23) ];
     const prev = S.hours[ (curr.idx-2+24)%24 ];
-    const next = S.hours[ (curr.idx)%24 ];
 
+    // --- Correct "Next" pill across the frame boundary ---
+    let nextRulerKey, nextStart;
+    if (curr.idx === 24) {
+      // Next hour is the FIRST HOUR OF THE NEXT DAY (day ruler of tomorrow)
+      nextRulerKey = DAY_RULERS[(S.frame.start.getDay()+1)%7];
+      nextStart = S.frame.end; // next sunrise
+    } else {
+      nextRulerKey = S.hours[(curr.idx)%24].ruler; // inside the same frame
+      nextStart = S.hours[(curr.idx)%24].start;
+    }
     const pr = PLANETS.find(p=>p.key===prev.ruler);
     const cr = PLANETS.find(p=>p.key===curr.ruler);
-    const nx = PLANETS.find(p=>p.key===next.ruler);
+    const nx = PLANETS.find(p=>p.key===nextRulerKey);
 
     byId('currentPill').innerHTML = `${cr.symbol} <strong>${cr.name}</strong>`;
     byId('prevPill').innerHTML = `Prev: ${pr.symbol} ${pr.name} • ends ${fmtHM(prev.end)}`;
-    byId('nextPill').innerHTML = `Next: ${nx.symbol} ${nx.name} • starts ${fmtHM(next.start)}`;
+    byId('nextPill').innerHTML = `Next: ${nx.symbol} ${nx.name} • starts ${fmtHM(nextStart)}`;
 
     byId('multiplier').textContent = 'x' + curr.mult.toFixed(3);
     byId('ordinalChip').textContent = ORDINALS[curr.ordinal]||(`${curr.ordinal}th`);
     const bd = curr.isBright? 'Bright' : 'Dark';
     byId('metaLine').textContent = `Hour ${curr.idx}/24 • ${bd} • Ruler appearance: ${curr.counts.T} of 24 today • Hours ruled B/D/T: ${curr.counts.B}/${curr.counts.D}/${curr.counts.T}`;
 
-    // Approaching sunrise line
+    // Approaching sunrise line (dynamic)
     const nextDayRulerKey = DAY_RULERS[(S.frame.start.getDay()+1)%7];
     const nextDay = PLANETS.find(p=>p.key===nextDayRulerKey);
-    byId('approachLine').textContent = (curr.idx===24)
-      ? `Approaching sunrise → ${nextDay.symbol} ${nextDay.name} day`
-      : `Next sunrise → ${nextDay.symbol} ${nextDay.name} day`;
+    const text = curr.idx===24 ? `Approaching sunrise → ${nextDay.symbol} ${nextDay.name} day` : `Next sunrise → ${nextDay.symbol} ${nextDay.name} day`;
+    byId('approachLine').textContent = text;
 
     // Legend chips
     const dr = PLANETS.find(p=>p.key===S.frame.dayRulerKey);
@@ -540,185 +275,10 @@
       <span class="pill" style="border-color:${cr.color}">${cr.symbol} ${cr.name} — ${cr.focusHour}</span>
     `;
 
-    // Bridge Δ
-    const h24 = S.hours[23], h1 = S.hours[0];
-    const delta = h1.mult - h24.mult; const arrow = delta>0? '↑' : delta<0? '↓' : '→';
-    byId('bridgeLine').textContent = `${PLANETS.find(p=>p.key===h24.ruler).symbol} ${cap(h24.ruler)} (Hour 24) → ${PLANETS.find(p=>p.key===h1.ruler).symbol} ${cap(h1.ruler)} (Hour 1) Δ ${delta>=0?'+':''}${delta.toFixed(3)} ${arrow}`;
+    // Bridge Δ (hour24 -> next hour1)
+    const h24 = S.hours[23], h1 = S.hours[0]; const delta = h1.mult - h24.mult; const arrow = delta>0? '↑' : delta<0? '↓' : '→'; byId('bridgeLine').textContent = `${PLANETS.find(p=>p.key===h24.ruler).symbol} ${cap(h24.ruler)} (Hour 24) → ${PLANETS.find(p=>p.key===h1.ruler).symbol} ${cap(h1.ruler)} (Hour 1) Δ ${delta>=0?'+':''}${delta.toFixed(3)} ${arrow}`;
 
     layoutTickerMarkers();
-  }
-
-  function layoutTickerMarkers(){
-    const {start, sunset, end} = S.frame;
-    const el = byId('ticker'); const W = el.clientWidth;
-    const total = end - start;
-    const pos = t => Math.max(0, Math.min(W, ( (t-start)/total ) * W ));
-    byId('markStart').style.left = '0px';
-    byId('markSunset').style.left = pos(sunset)+'px';
-    byId('markEnd').style.left = (W-2)+'px';
-  }
-
-  function startTicker(){
-    const {start, end} = S.frame;
-    const bar = byId('tickBar');
-    function step(){
-      const now = S.useSystem? new Date(): S.dt;
-      const p = clamp((now - start)/(end - start), 0, 1);
-      bar.style.width = (p*100)+'%';
-      S.tickRAF = requestAnimationFrame(step);
-    }
-    step();
-  }
-  function stopTicker(){ if(S.tickRAF){ cancelAnimationFrame(S.tickRAF); S.tickRAF=null; } }
-
-  function renderHourTable(){
-    const tb = byId('hourTable').querySelector('tbody'); tb.innerHTML='';
-    const now = S.useSystem? new Date(): S.dt;
-    S.hours.forEach(h=>{
-      const tr = document.createElement('tr');
-      if(now>=h.start && now<h.end) tr.classList.add('now');
-      const ruler = PLANETS.find(p=>p.key===h.ruler);
-      const order = ORDINALS[h.ordinal]||(`${h.ordinal}th`);
-      const bd = h.isBright? '<span class="hr-badge">Bright</span>' : '<span class="hr-badge">Dark</span>';
-      const focus = `${PLANETS.find(p=>p.key===S.frame.dayRulerKey).focusDay} × ${ruler.focusHour}`;
-      tr.innerHTML = `
-        <td class="mono">${h.idx} ${bd}</td>
-        <td class="mono">${fmtHM(h.start)} – ${fmtHM(h.end)}</td>
-        <td><span class="pill" style="border-color:${ruler.color}">${ruler.symbol} ${ruler.name}</span></td>
-        <td class="mono">${order}</td>
-        <td class="mono">${h.idx}/24</td>
-        <td class="mono">${h.counts.B}/${h.counts.D}/${h.counts.T}</td>
-        <td class="mono">x${h.mult.toFixed(3)}</td>
-        <td>${focus}</td>`;
-      tb.appendChild(tr);
-    });
-  }
-
-  function renderMatrix(){
-    const tb = byId('matrixTable').querySelector('tbody'); tb.innerHTML='';
-    const dayCols = ['saturn','sun','moon','mars','mercury','jupiter','venus'];
-    const head = document.createElement('tr');
-    head.innerHTML = `<td></td>` + dayCols.map(k=>{
-      const p= PLANETS.find(x=>x.key===k); return `<td><span class="pill" style="border-color:${p.color}">${p.symbol} ${p.name}</span></td>`;
-    }).join('');
-    tb.appendChild(head);
-
-    ORDER.forEach((rk)=>{
-      const rtr = document.createElement('tr');
-      const rp = PLANETS.find(p=>p.key===rk);
-      rtr.innerHTML = `<td><span class="pill" style="border-color:${rp.color}">${rp.symbol} ${rp.name}</span></td>`;
-      rtr.innerHTML += dayCols.map(dk=>{
-        const dp = PLANETS.find(p=>p.key===dk);
-        const focus = `${dp.focusDay} × ${rp.focusHour}`;
-        return `<td title="${focus}"><span class="pill" style="border-color:${dp.color}">${dp.symbol}</span> <span class="tiny">${rp.name}</span></td>`;
-      }).join('');
-      tb.appendChild(rtr);
-    });
-  }
-
-  function renderWeeklyBridges(){
-    const tb = byId('bridgesTable').querySelector('tbody'); tb.innerHTML='';
-    const base = new Date(S.frame.start);
-    const startOfWeek = new Date(base); startOfWeek.setDate(base.getDate() - base.getDay()); // Sunday
-    for(let d=0; d<7; d++){
-      const dayStart = new Date(startOfWeek); dayStart.setDate(startOfWeek.getDate()+d);
-      const frame = computeFrameAccurate(dayStart, S.lat, S.lon, S.tz);
-      if(frame.polar){
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${weekdayName(dayStart)} — Polar</td><td colspan="4">N/A</td>`;
-        tb.appendChild(tr); continue;
-      }
-      const hours = buildHourBlocks(frame);
-      const modeKeep = S.mode;
-      hours.forEach(b=>{
-        const sid = (weightFor(frame.dayRulerKey)*weightFor(b.ruler))*(1/b.ordinal) + b.ordinal;
-        const ratio = (hours.filter(x=>x.ruler===b.ruler).length/24)*10;
-        b.mult = modeKeep==='sidereal'?sid: modeKeep==='ratio'?ratio: sid*ratio;
-      });
-      const h24 = hours[23], h1 = hours[0];
-      const delta = h1.mult - h24.mult;
-      const p24 = PLANETS.find(p=>p.key===h24.ruler), p1=PLANETS.find(p=>p.key===h1.ruler);
-      const tr = document.createElement('tr');
-      if(p24.key==='venus' && p1.key==='saturn') tr.style.outline = '2px solid var(--accent)';
-      tr.innerHTML = `
-        <td>${weekdayName(frame.start)} — ${p24.symbol} ${p24.name} (Hr 24)</td>
-        <td class="mono">x${h24.mult.toFixed(3)}</td>
-        <td>${weekdayName(new Date(frame.end))} — ${p1.symbol} ${p1.name} (Hr 1)</td>
-        <td class="mono">x${h1.mult.toFixed(3)}</td>
-        <td class="mono">${delta>=0?'+':''}${delta.toFixed(3)}</td>`;
-      tb.appendChild(tr);
-    }
-  }
-
-  // ----------------------------
-  //  Geolocation & Timezones
-  // ----------------------------
-  function useGeolocation(){
-    if(!navigator.geolocation){ note('Geolocation unavailable'); return; }
-    navigator.geolocation.getCurrentPosition(pos=>{
-      S.lat = pos.coords.latitude; S.lon = pos.coords.longitude;
-      byId('latInput').value = S.lat.toFixed(4);
-      byId('lonInput').value = S.lon.toFixed(4);
-      saveToHash(); rebuild();
-    }, err=> note('Geolocation denied'));
-  }
-  function populateTimezones(){
-    const sel = byId('tzSelect'); sel.innerHTML='';
-    const zones = (Intl.supportedValuesOf? Intl.supportedValuesOf('timeZone') : []).slice();
-    const offs = []; for(let i=-12;i<=14;i++){ offs.push(`UTC${i>=0?'+':''}${i}:00`); }
-    const opts = [...zones, ...offs]; opts.sort();
-    for(const z of opts){ const o=document.createElement('option'); o.value=z; o.textContent=z; sel.appendChild(o); }
-    sel.value = S.tz;
-  }
-
-  // ----------------------------
-  //  Helpers & Rebuild
-  // ----------------------------
-  function byId(id){ return document.getElementById(id); }
-  function note(msg){ console.warn(msg); }
-  function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
-  function weekdayName(d){ return new Intl.DateTimeFormat([], {weekday:'long'}).format(d); }
-
-  function rebuild(){
-    stopTicker();
-    if(S.useSystem) S.dt = new Date();
-    S.frame = computeFrameAccurate(S.dt, S.lat, S.lon, S.tz);
-    renderSummary();
-    if(S.frame.polar){
-      byId('polarNotice').hidden = false;
-      byId('hourTable').querySelector('tbody').innerHTML = '';
-      byId('tickBar').style.width = '0%';
-      byId('currentPill').textContent = 'N/A';
-      renderMatrix(); renderWeeklyBridges();
-      return;
-    } else { byId('polarNotice').hidden = true; }
-    S.hours = buildHourBlocks(S.frame);
-    computeMultipliers();
-    renderHero();
-    renderHourTable();
-    renderMatrix();
-    renderWeeklyBridges();
-    startTicker();
-  }
-
-  // ----------------------------
-  //  Minimal Tests
-  // ----------------------------
-  function runTests(){
-    const out = byId('testOut');
-    try{
-      const url = buildShareURL();
-      if(!(typeof url==='string' && url.includes('#'))) throw new Error('URL with hash');
-      const p = new URLSearchParams(location.hash.slice(1));
-      if(!(p.has('dt') && p.has('tz') && p.has('mode'))) throw new Error('hash must include dt,tz,mode');
-
-      // Acceptance #1: Before sunrise on Wednesday -> Mars day
-      const wed = new Date(2025, 8, 17, 5, 0); // local SLC
-      const frWed = computeFrameAccurate(wed, 40.7608, -111.8910, 'America/Denver');
-      if(frWed.dayRulerKey !== 'mars') throw new Error('Before sunrise Wednesday → day ruler Mars');
-
-      out.textContent='PASS: hash + day-ruler pre-sunrise';
-    } catch(e){ out.textContent='FAIL: '+e.message; }
   }
   </script>
 </body>
