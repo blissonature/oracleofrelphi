@@ -11,300 +11,318 @@
       --saturn:#c0b28a; --sun:#ffb100; --moon:#c9d6ff; --mars:#ff6b6b; --mercury:#8bd3ff; --jupiter:#9dde7a; --venus:#ff9ad1;
     }
     html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,Segoe UI Emoji;}
-    .wrap{max-width:1100px;margin:0 auto;padding:20px;}
-    h1{font-size:28px;margin:0 0 6px}
-    .sub{color:var(--muted);font-size:13px}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .card{background:var(--panel);border:1px solid var(--ring);border-radius:14px;padding:14px;margin-top:12px}
-    button,select,input{background:var(--chip);border:1px solid var(--ring);color:var(--text);border-radius:10px;padding:8px 10px}
-    button.primary{background:var(--accent);border-color:transparent;color:#0b0d10;font-weight:600}
-    .pill{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border:1px solid var(--ring);border-radius:999px;padding:6px 10px;font-size:13px}
+    body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans"}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    header{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,rgba(11,13,16,.95),rgba(11,13,16,.75));backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--ring)}
+    header .row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0}
+    .title{font-size:24px;font-weight:700}
+    .clock{font-variant-numeric:tabular-nums;border:1px solid var(--ring);padding:6px 10px;border-radius:10px;background:var(--chip)}
+    .btn{background:#1d2430;border:1px solid var(--ring);color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .pill{display:inline-flex;gap:6px;align-items:center;padding:4px 8px;border-radius:999px;border:1px solid var(--ring);background:var(--chip);font-weight:600}
     .tiny{font-size:12px;color:var(--muted)}
-    .hr-badge{font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--ring);background:#0f1318;color:var(--muted)}
-    .ticker{position:relative;height:12px;background:#0e1319;border:1px solid var(--ring);border-radius:999px;overflow:hidden}
-    .tick-bar{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--accent),#94b6ff)}
-    .tick-marker{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ring)}
-    .now-row{background:#0e141b;border:1px solid #2b3a4f}
-    table{width:100%;border-collapse:separate;border-spacing:0 6px}
-    th,td{font-size:13px;padding:10px}
-    thead th{position:sticky;top:0;background:var(--panel);z-index:1;border-bottom:1px solid var(--ring)}
-    tbody tr{background:#0e141b;border:1px solid var(--ring)}
-    tbody tr.now{outline:2px solid var(--accent);}
-    .flex-between{display:flex;justify-content:space-between;align-items:center}
-    .mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
-    .side-pills{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
-    .side-left{justify-self:start}
-    .side-right{justify-self:end}
-    .center-block{display:grid;gap:6px;justify-items:center}
-    .legend{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    .section{border:1px solid var(--ring);border-radius:14px;padding:12px;margin-top:14px;background:var(--panel)}
+    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .row > *{margin-right:6px}
+    .grow{flex:1}
+    select, input[type="text"], input[type="number"], input[type="time"], input[type="date"]{background:#0f141b;color:var(--text);border:1px solid var(--ring);border-radius:10px;padding:8px}
+    label.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+    label.switch input{appearance:none;width:38px;height:22px;border-radius:999px;background:#111a24;border:1px solid var(--ring);position:relative;outline:none}
+    label.switch input:checked{background:#17314f}
+    label.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:999px;background:#dbe3f1;transition:left .2s}
+    label.switch input:checked::after{left:19px}
+
+    .hero{display:grid;grid-template-columns:1fr;gap:12px}
+    .ticker{position:relative;border:1px solid var(--ring);border-radius:12px;height:18px;background:#0e141b;overflow:hidden}
+    .bar{position:absolute;top:0;bottom:0;width:2px;background:var(--ok)}
+    .day-start,.day-end{position:absolute;top:0;bottom:0;width:2px;background:var(--accent)}
+    .sunrise,.sunset{position:absolute;top:0;bottom:0;width:2px;background:var(--warn)}
+    .ticker-labels{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+    .hero-core{display:grid;gap:10px;justify-items:center;text-align:center}
+    .mult{font-size:38px;font-weight:800;letter-spacing:.5px}
+    .ord{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{position:sticky;top:0;background:#0e1319;border-bottom:1px solid var(--ring);z-index:5}
+    th,td{padding:8px;border-bottom:1px solid var(--ring);vertical-align:top}
+    tr.active{background:rgba(122,162,255,.08)}
+    .bdg{display:inline-block;padding:2px 6px;border-radius:999px;border:1px solid var(--ring);font-size:12px}
+    .bdg.bright{background:rgba(255,177,0,.1);border-color:#614d1a}
+    .bdg.dark{background:rgba(96,115,148,.2)}
+
     .matrix{overflow:auto}
-    .matrix table td{white-space:nowrap}
-    .testbar{display:flex;gap:8px;align-items:center}
-    .warn{color:var(--warn)}
+    .matrix table td{min-width:160px}
+
+    details{border:1px dashed var(--ring);border-radius:12px;padding:10px}
+
+    .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+    .p-saturn{color:var(--saturn)} .p-sun{color:var(--sun)} .p-moon{color:var(--moon)} .p-mars{color:var(--mars)} .p-mercury{color:var(--mercury)} .p-jupiter{color:var(--jupiter)} .p-venus{color:var(--venus)}
+    .d-saturn{background:var(--saturn)} .d-sun{background:var(--sun)} .d-moon{background:var(--moon)} .d-mars{background:var(--mars)} .d-mercury{background:var(--mercury)} .d-jupiter{background:var(--jupiter)} .d-venus{background:var(--venus)}
+
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:900px){.grid-2{grid-template-columns:1fr}}
   </style>
+  <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <!-- Header -->
-    <div class="card" id="header">
-      <div class="flex-between">
-        <div>
-          <h1>Planetary Hours</h1>
-          <div class="sub">Single‑file app • sunrise → sunrise</div>
-        </div>
+  <header>
+    <div class="wrap">
+      <div class="row">
+        <div class="title">Planetary Hours</div>
         <div class="row">
-          <div class="mono" id="liveClock">--:--</div>
-          <button id="copyLinkBtn" class="primary" aria-describedby="copyStatus">Copy link to this view</button>
-          <span id="copyStatus" class="tiny" aria-live="polite"></span>
+          <div class="clock" id="localClock">--:--</div>
+          <button class="btn" id="copyLink">Copy link to this view</button>
         </div>
       </div>
     </div>
+  </header>
 
-    <!-- Location & Time Controls -->
-    <div class="card" id="controls">
-      <div class="row" id="locRow">
-        <button id="useGeo">Use my location</button>
-        <select id="tzSelect"></select>
-        <input id="latInput" class="mono" placeholder="Lat" size="10" />
-        <input id="lonInput" class="mono" placeholder="Lon" size="10" />
-        <button id="setLatLon">Set</button>
-        <div class="tiny mono" id="locEcho">—</div>
-      </div>
-      <div class="row" id="dtRow" style="margin-top:8px">
-        <label class="row" style="gap:6px">
-          <input type="checkbox" id="useSystem" checked /> Use system date/time
+  <main class="wrap">
+    <section class="section" id="controls">
+      <div class="row" style="gap:14px">
+        <button class="btn" id="useGeo">Use my location</button>
+        <label>Timezone
+          <select id="tzSelect"></select>
         </label>
-        <input type="date" id="datePick" disabled />
-        <input type="time" id="timePick" disabled />
-        <button id="applyDt" disabled>Apply</button>
-        <div class="tiny">Day runs sunrise → sunrise.</div>
+        <label>Lat <input type="number" id="lat" step="0.0001" style="width:120px"></label>
+        <label>Lon <input type="number" id="lon" step="0.0001" style="width:120px"></label>
+        <button class="btn" id="setLatLon">Set</button>
+        <div class="tiny" id="echo">—</div>
       </div>
-      <div class="row" id="modeRow" style="margin-top:8px">
-        <label>Mode:</label>
-        <select id="modeSelect">
-          <option value="sidereal">Sidereal</option>
-          <option value="ratio">Ratio</option>
-          <option value="hybrid">Hybrid</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Day Summary -->
-    <div class="card" id="summary">
-      <div class="row" id="dayRulerPill">—</div>
-      <div class="row" style="margin-top:8px">
-        <div class="pill">Sunrise <span class="mono" id="sunrise">--:--</span></div>
-        <div class="pill">Sunset <span class="mono" id="sunset">--:--</span></div>
-        <div class="pill">Next Sunrise <span class="mono" id="nextSunrise">--:--</span></div>
-        <div class="pill" id="bridgeLine">Bridge: —</div>
-        <div class="tiny warn" id="polarNotice" hidden>Sun never rises/sets for this date/location. Matrix & bridges remain available.</div>
-      </div>
-    </div>
-
-    <!-- Current Hour Band (Hero) -->
-    <div class="card" id="hero">
-      <div class="ticker" id="ticker">
-        <div class="tick-bar" id="tickBar"></div>
-        <div class="tick-marker" id="markStart"></div>
-        <div class="tick-marker" id="markSunset"></div>
-        <div class="tick-marker" id="markEnd"></div>
-      </div>
-      <!-- removed the three time labels under the progress bar per request -->
-      <div class="side-pills" style="margin-top:10px">
-        <div class="pill side-left" id="nextPill">Next: —</div>
-        <div class="center-block">
-          <div class="pill" id="currentPill">Current: —</div>
-          <div style="font-size:22px" class="mono" id="multiplier">x0.000</div>
-          <div class="tiny mono" id="formulaLine">—</div>
-          <div class="tiny mono" id="metaLine">Hour —/24 • — • Ruler appearance: — • Hours ruled B/D/T: —</div>
-          <div class="tiny mono" id="approachLine">—</div>
-          <div class="legend" id="legendChips"></div>
+      <div class="row" style="gap:14px;margin-top:10px">
+        <label class="switch">Use system date/time <input type="checkbox" id="useSystem" checked></label>
+        <div id="manualTime" style="display:none" class="row">
+          <label>Date <input type="date" id="datePick"></label>
+          <label>Time <input type="time" id="timePick"></label>
+          <button class="btn" id="applyDT">Apply</button>
         </div>
-        <div class="pill side-right" id="prevPill">Prev: —</div>
+        <div class="tiny">Day runs sunrise→sunrise.</div>
       </div>
-    </div>
+      <div class="row" style="gap:14px;margin-top:10px">
+        <label>Weights:
+          <select id="mode">
+            <option value="sidereal">Sidereal (default)</option>
+            <option value="ratio">Current Hour / Total Hours today (this ruler)</option>
+            <option value="hybrid">Hybrid (sidereal×synodic)</option>
+          </select>
+        </label>
+      </div>
+    </section>
 
-    <!-- 24-Hour Table -->
-    <div class="card" id="hourTableCard">
-      <div class="flex-between"><h2 style="margin:0;font-size:18px">24‑Hour Table</h2></div>
-      <div style="overflow:auto">
-        <table id="hourTable">
+    <section class="section" id="daySummary">
+      <div class="grid-2">
+        <div>
+          <div id="dayRuler" class="pill"></div>
+          <div class="tiny" id="dayRulerMeta"></div>
+        </div>
+        <div>
+          <div>Sun times:</div>
+          <div id="sunTimes" class="tiny"></div>
+          <div id="bridgeInfo" class="tiny" style="margin-top:6px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section hero" id="hero">
+      <div class="ticker" id="ticker">
+        <div class="day-start" id="dayStart"></div>
+        <div class="sunrise" id="sunriseBar"></div>
+        <div class="sunset" id="sunsetBar"></div>
+        <div class="day-end" id="dayEnd"></div>
+        <div class="bar" id="progress"></div>
+      </div>
+      <div class="ticker-labels tiny"><span id="lblStart">--:--</span><span id="lblEnd">--:--</span></div>
+
+      <div class="hero-core">
+        <div id="currentHourPill" class="pill">—</div>
+        <div class="mult" id="mult">x—</div>
+        <div class="ord" id="ordLine">Power = (day×hour)×(1/ord) + ord</div>
+        <div class="tiny" id="hourMeta"></div>
+        <div class="chips" id="legendChips"></div>
+      </div>
+    </section>
+
+    <section class="section" id="tableSection">
+      <div style="overflow:auto; max-height:460px">
+        <table id="hoursTable">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Start–End</th>
-              <th>Ruler</th>
-              <th>Order</th>
-              <th>Hour</th>
-              <th>Hours ruled (B/D/T)</th>
-              <th>Multiplier</th>
-              <th>Focus</th>
+              <th>#</th><th>Start–End</th><th>Ruler</th><th>Order</th><th>Hour n/24</th><th>Hours ruled (B/D/T)</th><th>Multiplier</th><th>Focus</th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
-    </div>
+    </section>
 
-    <!-- 7×7 Focus Matrix -->
-    <div class="card" id="matrixCard">
-      <div class="flex-between">
-        <h2 style="margin:0;font-size:18px">7×7 Focus Matrix</h2>
-        <div class="row"><label>Filter:</label>
-          <select id="matrixFilter">
-            <option value="all">All</option>
-            <option value="bright">Bright</option>
-            <option value="dark">Dark</option>
-          </select>
-        </div>
+    <section class="section" id="matrixSection">
+      <div class="row" style="justify-content:space-between"><div>7×7 Focus Matrix</div>
+        <label>Filter: 
+          <select id="matrixFilter"><option value="all">All</option><option value="bright">Bright</option><option value="dark">Dark</option></select>
+        </label>
       </div>
       <div class="matrix" style="margin-top:8px">
-        <table id="matrixTable"><tbody></tbody></table>
+        <table id="matrixTable"><thead></thead><tbody></tbody></table>
       </div>
-    </div>
+    </section>
 
-    <!-- Weekly Bridge Hours -->
-    <div class="card" id="bridgesCard">
-      <h2 style="margin:0 0 8px;font-size:18px">Weekly Bridge Hours</h2>
+    <section class="section" id="bridgePanel">
+      <div>Weekly Bridge Hours (last dark → first bright)</div>
       <div style="overflow:auto">
-        <table id="bridgesTable">
-          <thead>
-            <tr>
-              <th>Day (last hr)</th>
-              <th>Multiplier</th>
-              <th>Next day (first hr)</th>
-              <th>Multiplier</th>
-              <th>Δ</th>
-            </tr>
-          </thead>
+        <table id="bridgeTable">
+          <thead><tr><th>Day (last hour)</th><th>Multiplier</th><th>Next day (first hour)</th><th>Multiplier</th><th>Δ</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
-    </div>
+    </section>
 
-    <!-- Help / Tests -->
-    <div class="card">
+    <section class="section">
       <details>
-        <summary>🔧 Built‑in tests</summary>
-        <div class="testbar" style="margin-top:8px">
-          <button id="runTestsBtn">Run tests</button>
-          <div id="testOut" class="tiny mono"></div>
-        </div>
+        <summary>About / Help</summary>
+        <p><b>Multipliers.</b> Default “Sidereal” mode uses the orbital periods (Earth years) as weights: Saturn 29.46, Jupiter 11.86, Mars 1.88, Sun 1, Venus 0.615, Mercury 0.241, Moon 0.0748. Power for an hour = (DayWeight × HourWeight) × (1/ordinal) + ordinal. “Ratio” mode scales by how many hours this ruler holds today (bright+dark), and “Hybrid” multiplies Sidereal × (synodic-hour fraction).</p>
+        <p><b>Sunrise→Sunrise frame.</b> The “day” begins at local sunrise and ends at the next sunrise.</p>
+        <p><b>Ordinals & Harmonics.</b> 1st Fundamental, 2nd Octave, 3rd Fifth, 4th Double Octave. Higher ordinals continue similarly; lower ordinals amplify power in the formula via 1/ordinal.</p>
+        <p><b>Legend.</b> Bright = post‑sunrise half; Dark = post‑sunset half. Bridge hour is the final hour before sunrise of the next day; its ruler hands the baton to Hour 1.</p>
+        <p><b>Modes.</b> Sidereal / Ratio / Hybrid as above.</p>
       </details>
-    </div>
-  </div>
+    </section>
+  </main>
 
   <script>
-  // Corrected frame computation
-  function computeFrameAccurate(now, lat, lon, timeZone){
-    const { y, m, d, hh, mm } = toLocalPartsInTZ(now, timeZone);
-    const todayLocalNoon = fromLocalPartsInTZ(y, m-1, d, 12, 0, 0, timeZone);
-    const yNoon = new Date(todayLocalNoon.getTime() - 86400000);
-    const tNoon = new Date(todayLocalNoon.getTime() + 86400000);
+  const planets = [
+    {key:'saturn',  sym:'♄', name:'Saturn',  color:'var(--saturn)', weight:29.46, focusDay:'Structure, boundaries, karmic audit', focusHour:'Consolidate, prune, commit'},
+    {key:'jupiter', sym:'♃', name:'Jupiter', color:'var(--jupiter)',weight:11.86, focusDay:'Growth, teaching, wisdom',       focusHour:'Expand, publish, mentor'},
+    {key:'mars',    sym:'♂', name:'Mars',    color:'var(--mars)',   weight:1.88,  focusDay:'Courage, cutting, heat',        focusHour:'Act, compete, cauterize'},
+    {key:'sun',     sym:'☉', name:'Sun',     color:'var(--sun)',    weight:1.00,  focusDay:'Vitality, authority, radiance', focusHour:'Lead, clarify, spotlight'},
+    {key:'venus',   sym:'♀', name:'Venus',   color:'var(--venus)',  weight:0.615, focusDay:'Harmony, bonds, aesthetics',     focusHour:'Relate, attract, refine'},
+    {key:'mercury', sym:'☿', name:'Mercury', color:'var(--mercury)',weight:0.241, focusDay:'Trade, signals, analysis',      focusHour:'Write, ship, negotiate'},
+    {key:'moon',    sym:'☽', name:'Moon',    color:'var(--moon)',   weight:0.0748,focusDay:'Care, tides, memory',           focusHour:'Nourish, adapt, reflect'},
+  ];
+  const byKey = Object.fromEntries(planets.map(p=>[p.key,p]));
+  const chaldean = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
+  function rotateTo(dayKey){ const idx=chaldean.indexOf(dayKey); const seq=[]; for(let i=0;i<24;i++) seq.push(chaldean[(idx+i)%7]); return seq; }
+  function pad(n){return String(n).padStart(2,'0')} 
+  function fmtHM(d){return pad(d.getHours()%12||12)+":"+pad(d.getMinutes())+" "+(d.getHours()<12?"AM":"PM")}
+  function fmtHM24(d){return pad(d.getHours())+":"+pad(d.getMinutes())}
+  function ordinalName(n){ const s=(n%10==1&&n%100!=11)?'st':(n%10==2&&n%100!=12)?'nd':(n%10==3&&n%100!=13)?'rd':'th'; const harmonic=['—','Fundamental','Octave','Fifth','Double Octave'][n]||`${n}th`; return {label:`${n}${s}`,harmonic}; }
 
-    const yTimes = computeSunTimesLocal(yNoon, lat, lon, timeZone);
-    const tTimes = computeSunTimesLocal(todayLocalNoon, lat, lon, timeZone);
-    if(yTimes.polar || tTimes.polar){
-      return { start: todayLocalNoon, end: new Date(todayLocalNoon.getTime()+86400000), sunrise: todayLocalNoon, sunset: todayLocalNoon, nextSunrise: new Date(todayLocalNoon.getTime()+86400000), dayRulerKey: DAY_RULERS[fromLocalPartsInTZ(y,m-1,d,0,0,0,timeZone).getDay()], polar:true };
+  const state = { tz: Intl.DateTimeFormat().resolvedOptions().timeZone, lat: 40.7608, lon: -111.8910, useSystem: true, now: new Date(), mode: 'sidereal' };
+
+  (function readHash(){ try{ const h=new URLSearchParams(location.hash.slice(1)); if(h.get('lat')) state.lat=parseFloat(h.get('lat')); if(h.get('lon')) state.lon=parseFloat(h.get('lon')); if(h.get('tz')) state.tz=h.get('tz'); if(h.get('mode')) state.mode=h.get('mode'); if(h.get('dt')){ state.useSystem=false; state.now=new Date(h.get('dt')); } }catch(e){} })();
+
+  const el = {
+    clock: document.getElementById('localClock'), copy: document.getElementById('copyLink'), useGeo: document.getElementById('useGeo'), tzSelect: document.getElementById('tzSelect'), lat: document.getElementById('lat'), lon: document.getElementById('lon'), setLatLon: document.getElementById('setLatLon'), echo: document.getElementById('echo'), useSystem: document.getElementById('useSystem'), manualTime: document.getElementById('manualTime'), datePick: document.getElementById('datePick'), timePick: document.getElementById('timePick'), applyDT: document.getElementById('applyDT'), mode: document.getElementById('mode'), dayRuler: document.getElementById('dayRuler'), dayRulerMeta: document.getElementById('dayRulerMeta'), sunTimes: document.getElementById('sunTimes'), bridgeInfo: document.getElementById('bridgeInfo'), ticker: document.getElementById('ticker'), progress: document.getElementById('progress'), dayStart: document.getElementById('dayStart'), dayEnd: document.getElementById('dayEnd'), sunriseBar: document.getElementById('sunriseBar'), sunsetBar: document.getElementById('sunsetBar'), lblStart: document.getElementById('lblStart'), lblEnd: document.getElementById('lblEnd'), currentHourPill: document.getElementById('currentHourPill'), mult: document.getElementById('mult'), ordLine: document.getElementById('ordLine'), hourMeta: document.getElementById('hourMeta'), legendChips: document.getElementById('legendChips'), hoursTable: document.querySelector('#hoursTable tbody'), matrixTable: document.getElementById('matrixTable'), matrixHead: document.querySelector('#matrixTable thead'), matrixBody: document.querySelector('#matrixTable tbody'), matrixFilter: document.getElementById('matrixFilter'), bridgeTable: document.querySelector('#bridgeTable tbody'), };
+
+  function populateTimezones(){
+    const sel=el.tzSelect; sel.innerHTML='';
+    const zones=(Intl.supportedValuesOf? Intl.supportedValuesOf('timeZone'):[]).slice();
+    for(let o=-12;o<=14;o++){ zones.push(`UTC${o>=0?'+':''}${o}`) }
+    zones.sort(); zones.forEach(z=>{ const opt=document.createElement('option'); opt.value=z; opt.textContent=z; sel.appendChild(opt); });
+    sel.value = state.tz;
+  }
+
+  function tickLocalClock(){ const d=new Date(); el.clock.textContent = pad(d.getHours())+":"+pad(d.getMinutes()); }
+  setInterval(tickLocalClock, 1000*15); tickLocalClock();
+
+  el.useGeo.onclick=()=>{ if(!navigator.geolocation){ alert('Geolocation not supported.'); return; } navigator.geolocation.getCurrentPosition(pos=>{ state.lat=pos.coords.latitude; state.lon=pos.coords.longitude; el.lat.value=state.lat.toFixed(4); el.lon.value=state.lon.toFixed(4); smallEcho(); rebuild(); }, _=>{ smallEcho('Geolocation failed — falling back to timezone center.'); }); };
+
+  function smallEcho(extra){ el.echo.textContent = `${state.lat.toFixed(4)}, ${state.lon.toFixed(4)} (${state.tz})` + (extra?` — ${extra}`:''); }
+  el.setLatLon.onclick=()=>{ state.lat=parseFloat(el.lat.value); state.lon=parseFloat(el.lon.value); rebuild(); };
+  el.tzSelect.onchange=()=>{ state.tz=el.tzSelect.value; rebuild(); };
+  el.useSystem.onchange=()=>{ state.useSystem=el.useSystem.checked; el.manualTime.style.display = state.useSystem? 'none':'inline-flex'; if(state.useSystem) rebuild(); };
+  el.applyDT.onclick=()=>{ const d=el.datePick.value; const t=el.timePick.value; if(d&&t){ state.now=new Date(`${d}T${t}:00`); rebuild(); } };
+  el.mode.onchange=()=>{ state.mode=el.mode.value; rebuild(); };
+  el.copy.onclick=()=>{ const url=new URL(location.href); const params=new URLSearchParams(); params.set('lat',state.lat.toFixed(4)); params.set('lon',state.lon.toFixed(4)); params.set('tz',state.tz); params.set('mode',state.mode); if(!state.useSystem){ params.set('dt', toTZISO(state.now,state.tz)); } url.hash=params.toString(); navigator.clipboard.writeText(url.toString()); };
+
+  function toTZISO(date,tz){ const fmt=new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); const parts=Object.fromEntries(fmt.formatToParts(date).map(p=>[p.type,p.value])); return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`; }
+
+  function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+  function computeDayFrame(now,lat,lon,tz){
+    const local=new Date(new Date(now).toLocaleString('en-US',{timeZone:tz}));
+    const base=new Date(local); base.setHours(12,0,0,0);
+    const tt=SunCalc.getTimes(base,lat,lon); const sr=tt.sunrise, ss=tt.sunset;
+    if(local>=sr){ const next=SunCalc.getTimes(addDays(base,1),lat,lon); return {start:sr, sunrise:sr, sunset:ss, end:next.sunrise, localNow:local}; }
+    const prev=SunCalc.getTimes(addDays(base,-1),lat,lon); return {start:prev.sunrise, sunrise:prev.sunrise, sunset:prev.sunset, end:sr, localNow:local};
+  }
+  function seqForDay(dayKey){ return rotateTo(dayKey); }
+  function dayRulerKeyForWeekday(localStart){ const map={0:'sun',1:'moon',2:'mars',3:'mercury',4:'jupiter',5:'venus',6:'saturn'}; return map[ localStart.getDay() ]; }
+
+  function buildHours(frame, dayKey){
+    const seq=seqForDay(dayKey);
+    const daylight = frame.sunset - frame.sunrise;
+    const night    = frame.end    - frame.sunset;
+    const brightLen= daylight/12, darkLen = night/12;
+    const rows=[]; let t = frame.start.getTime();
+    for(let i=0;i<24;i++){
+      const isBright = i<12; const len=isBright?brightLen:darkLen; const start=new Date(t); const end=new Date(t+len);
+      const ruler = byKey[ seq[i] ]; rows.push({index:i+1,start,end,ruler,isBright,ordinal:i+1}); t+=len;
     }
-    const sr0 = yTimes.sunriseLocal, ss0 = yTimes.sunsetLocal;
-    const sr1 = tTimes.sunriseLocal, ss1 = tTimes.sunsetLocal;
-    const sr2 = computeSunTimesLocal(tNoon, lat, lon, timeZone).sunriseLocal;
-
-    const nowLocal = fromLocalPartsInTZ(y, m-1, d, hh, mm, 0, timeZone);
-
-    let frameStart, frameEnd, frameSunset;
-    if(nowLocal >= sr1){
-      frameStart = sr1; frameEnd = sr2; frameSunset = ss1;
-    } else {
-      frameStart = sr0; frameEnd = sr1; frameSunset = ss0;
+    return rows;
+  }
+  function hoursHeldToday(rows,key){ let b=0,d=0; for(const r of rows){ if(r.ruler.key===key){ r.isBright? b++ : d++; } } return {b,d,t:b+d}; }
+  function hourMultiplier(row, dayKey, rows){ const dayW=byKey[dayKey].weight; const hrW=row.ruler.weight; const ord=row.ordinal; const sid=(dayW*hrW)*(1/ord)+ord; const held=hoursHeldToday(rows,row.ruler.key); const ratio=held.t? (held.t/24):0.0001; const hy=sid*ratio; const m=state.mode; const val=m==='sidereal'?sid: m==='ratio'? ratio*10: hy; return {val,sidereal:sid,ratio,hybrid:hy}; }
+  function currentIndex(rows, local){
+    // Robust index finder using numeric times + binary search to avoid boundary/floating issues
+    const t = local.getTime();
+    const firstStart = rows[0].start.getTime();
+    const lastEnd    = rows[rows.length-1].end.getTime();
+    if (t < firstStart) return 0; // before the day frame
+    if (t >= lastEnd)  return rows.length-1; // after the frame (shouldn't happen normally)
+    let lo = 0, hi = rows.length - 1;
+    while (lo <= hi){
+      const mid = (lo + hi) >> 1;
+      const s = rows[mid].start.getTime();
+      const e = rows[mid].end.getTime();
+      if (t < s) hi = mid - 1;
+      else if (t >= e) lo = mid + 1;
+      else return mid; // s <= t < e
     }
-
-    const dayRulerKey = DAY_RULERS[ frameStart.getDay() ];
-    return { start:frameStart, end:frameEnd, sunrise:sr1, sunset:frameSunset, nextSunrise:frameEnd, dayRulerKey, polar:false };
+    // Fallback clamp
+    return Math.max(0, Math.min(rows.length-1, lo));
   }
 
-function renderHero(){
-  // Make sure we actually have a frame and 24 hours built
-  if (!S.frame || !Array.isArray(S.hours) || S.hours.length !== 24) {
-    // Leave placeholders visible, don't throw
-    return;
-  }
+    // Hero
+    const cur=rows[idx];
+    el.currentHourPill.innerHTML = `<span class="dot d-${cur.ruler.key}"></span>${cur.ruler.sym} ${cur.ruler.name}`;
+    const mult=hourMultiplier(cur,dayKey,rows); el.mult.textContent=`x${mult.val.toFixed(3)}`;
+    const ord=ordinalName(cur.ordinal); el.ordLine.textContent=`Power = (day × hour) × (1/ordinal) + ordinal  •  ${ord.label} (${ord.harmonic||'—'})`;
+    const held=hoursHeldToday(rows,cur.ruler.key);
+    el.hourMeta.textContent=`Hour ${cur.ordinal}/24 • ${cur.isBright?'Bright':'Dark'} • Ruler appearance: ${rows.slice(0,idx+1).filter(r=>r.ruler.key===cur.ruler.key).length} of ${held.t} today • Hours ruled: ${held.b}/${held.d}/${held.t}`;
 
-  const now = S.useSystem ? new Date() : S.dt;
+    el.legendChips.innerHTML='';
+    const chip=(p,txt)=>`<span class="pill" style="border-color:${p.color}"><span class=\"dot d-${p.key}\"></span>${p.sym} ${txt}</span>`;
+    el.legendChips.insertAdjacentHTML('beforeend', chip(day, `Day: ${day.focusDay.split(',')[0]}`));
+    el.legendChips.insertAdjacentHTML('beforeend', chip(cur.ruler, `Hour: ${cur.ruler.focusHour}`));
 
-  // Find the current hour; if not found but we're before next sunrise,
-  // treat it as the last (24th) hour to avoid a boundary crash.
-  let iNow = S.hours.findIndex(h => now >= h.start && now < h.end);
-  if (iNow === -1 && now >= S.hours[23].end && now < S.frame.end) iNow = 23;
+    const rect=el.ticker.getBoundingClientRect(); const xOf=t=>{ const span=frame.end-frame.start; return ((t-frame.start)/span)*rect.width; };
+    el.dayStart.style.left='0px'; el.dayEnd.style.left=(rect.width-2)+'px';
+    el.sunriseBar.style.left=xOf(frame.sunrise)+'px'; el.sunsetBar.style.left=xOf(frame.sunset)+'px';
+    el.lblStart.textContent=fmtHM(frame.start); el.lblEnd.textContent=fmtHM(frame.end);
 
-  // If still not found (shouldn’t happen), bail safely
-  if (iNow === -1) return;
+    function anim(){ const nowLocal = state.useSystem? new Date(new Date().toLocaleString('en-US',{timeZone:state.tz})) : frame.localNow; const x=xOf(nowLocal); el.progress.style.left=Math.max(0,Math.min(rect.width-2,x))+'px'; requestAnimationFrame(anim); }
+    requestAnimationFrame(anim);
 
-  const curr = S.hours[iNow];
-  const prev = S.hours[(iNow - 1 + 24) % 24];
+    el.hoursTable.innerHTML=''; rows.forEach((r,i)=>{ const multR=hourMultiplier(r,dayKey,rows); const ordR=ordinalName(r.ordinal); const tr=document.createElement('tr'); if(i===idx) tr.classList.add('active'); tr.innerHTML=`
+      <td>${r.index} <span class="bdg ${r.isBright?'bright':'dark'}">${r.isBright?'Bright':'Dark'}</span></td>
+      <td>${fmtHM(r.start)}–${fmtHM(r.end)}</td>
+      <td><span class="dot d-${r.ruler.key}"></span>${r.ruler.sym} ${r.ruler.name}</td>
+      <td>${ordR.label} (${ordR.harmonic})</td>
+      <td>${r.index}/24</td>
+      <td>${hoursHeldToday(rows,r.ruler.key).b}/${hoursHeldToday(rows,r.ruler.key).d}/${hoursHeldToday(rows,r.ruler.key).t}</td>
+      <td>x${multR.val.toFixed(3)}</td>
+      <td>${contextFocus(day,r.ruler)}</td>`; el.hoursTable.appendChild(tr); });
 
-  // --- Correct "Next" pill across the sunrise boundary ---
-  let nextRulerKey, nextStart;
-  if (curr.idx === 24) {
-    // Next hour belongs to NEXT DAY's day ruler (Hour 1)
-    nextRulerKey = DAY_RULERS[(S.frame.start.getDay() + 1) % 7];
-    nextStart    = S.frame.end; // next sunrise
-  } else {
-    const nxt = S.hours[(iNow + 1) % 24];
-    nextRulerKey = nxt.ruler;
-    nextStart    = nxt.start;
-  }
+    buildMatrix();
+    buildBridges(frame);
 
-  const pr = PLANETS.find(p => p.key === prev.ruler);
-  const cr = PLANETS.find(p => p.key === curr.ruler);
-  const nx = PLANETS.find(p => p.key === nextRulerKey);
-  if (!pr || !cr || !nx) return; // extra guard
-
-  // Pills
-  byId('currentPill').innerHTML = `${cr.symbol} <strong>${cr.name}</strong>`;
-  byId('prevPill').innerHTML    = `Prev: ${pr.symbol} ${pr.name} • ends ${fmtHM(prev.end)}`;
-  byId('nextPill').innerHTML    = `Next: ${nx.symbol} ${nx.name} • starts ${fmtHM(nextStart)}`;
-
-  // Multiplier + meta
-  byId('multiplier').textContent = 'x' + (curr.mult ?? 0).toFixed(3);
-  byId('ordinalChip').textContent = ORDINALS[curr.ordinal] || `${curr.ordinal}th`;
-  byId('metaLine').textContent =
-    `Hour ${curr.idx}/24 • ${curr.isBright ? 'Bright' : 'Dark'} • ` +
-    `Ruler appearance: ${curr.counts?.T ?? 0} of 24 today • ` +
-    `Hours ruled B/D/T: ${curr.counts?.B ?? 0}/${curr.counts?.D ?? 0}/${curr.counts?.T ?? 0}`;
-
-  // “Approaching sunrise” line
-  const nextDayRulerKey = DAY_RULERS[(S.frame.start.getDay()+1) % 7];
-  const nextDay = PLANETS.find(p => p.key === nextDayRulerKey);
-  byId('approachLine').textContent =
-    curr.idx === 24
-      ? `Approaching sunrise → ${nextDay.symbol} ${nextDay.name} day`
-      : `Next sunrise → ${nextDay.symbol} ${nextDay.name} day`;
-
-  // Legend chips
-  const dr = PLANETS.find(p => p.key === S.frame.dayRulerKey);
-  if (dr) {
-    byId('legendChips').innerHTML =
-      `<span class="pill" style="border-color:${dr.color}">${dr.symbol} ${dr.name} — ${dr.focusDay}</span>` +
-      ` <span class="pill" style="border-color:${cr.color}">${cr.symbol} ${cr.name} — ${cr.focusHour}</span>`;
-  }
-
-  // Bridge Δ (Hour 24 -> Hour 1)
-  const h24 = S.hours[23], h1 = S.hours[0];
-  if (h24 && h1) {
-    const delta = (h1.mult ?? 0) - (h24.mult ?? 0);
-    const arrow = delta > 0 ? '↑' : (delta < 0 ? '↓' : '→');
-    byId('bridgeLine').textContent =
-      `${PLANETS.find(p=>p.key===h24.ruler).symbol} ${cap(h24.ruler)} (Hour 24) → ` +
-      `${PLANETS.find(p=>p.key===h1.ruler).symbol} ${cap(h1.ruler)} (Hour 1) ` +
-      `Δ ${delta >= 0 ? '+' : ''}${delta.toFixed(3)} ${arrow}`;
-  }
-
-  layoutTickerMarkers();
-}
-
+    const params=new URLSearchParams(); params.set('lat',state.lat.toFixed(4)); params.set('lon',state.lon.toFixed(4)); params.set('tz',state.tz); params.set('mode',state.mode); if(!state.useSystem) params.set('dt', toTZISO(state.now,state.tz)); history.replaceState(null,'','#'+params.toString());
+  
+  function init(){ populateTimezones(); el.lat.value=state.lat.toFixed(4); el.lon.value=state.lon.toFixed(4); el.tzSelect.value=state.tz; el.mode.value=state.mode; smallEcho(); rebuild(); }
+  window.addEventListener('resize', rebuild);
+  init();
   </script>
 </body>
 </html>
