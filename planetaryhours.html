@@ -1,10 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Planetary Hours</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Planetary Hours</title>
+<style>
     :root{
       --bg:#0b0d10; --panel:#11151a; --muted:#96a1b0; --text:#e9eef5; --ring:#263244;
       --chip:#1a2028; --accent:#7aa2ff; --ok:#59d69e; --warn:#ffd166; --bad:#ef6b73;
@@ -65,133 +66,124 @@
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media (max-width:900px){.grid-2{grid-template-columns:1fr}}
   </style>
-  <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+<script src="suncalc.js"></script>
 </head>
-<body>
-  <header>
-    <div class="wrap">
-      <div class="row">
-        <div class="title">Planetary Hours</div>
-        <div class="row">
-          <div class="clock" id="localClock">--:--</div>
-          <button class="btn" id="copyLink">Copy link to this view</button>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <section class="section" id="controls">
-      <div class="row" style="gap:14px">
-        <button class="btn" id="useGeo">Use my location</button>
-        <label>Timezone
+<body><div id="nav-placeholder"></div>
+<header>
+<div class="wrap">
+<div class="row">
+<div class="title">Planetary Hours</div>
+<div class="row">
+<div class="clock" id="localClock">--:--</div>
+<button class="btn" id="copyLink">Copy link to this view</button>
+</div>
+</div>
+</div>
+</header>
+<main class="wrap">
+<section class="section" id="controls">
+<div class="row" style="gap:14px">
+<button class="btn" id="useGeo">Use my location</button>
+<label>Timezone
           <select id="tzSelect"></select>
-        </label>
-        <label>Lat <input type="number" id="lat" step="0.0001" style="width:120px"></label>
-        <label>Lon <input type="number" id="lon" step="0.0001" style="width:120px"></label>
-        <button class="btn" id="setLatLon">Set</button>
-        <div class="tiny" id="echo">—</div>
-      </div>
-      <div class="row" style="gap:14px;margin-top:10px">
-        <label class="switch">Use system date/time <input type="checkbox" id="useSystem" checked></label>
-        <div id="manualTime" style="display:none" class="row">
-          <label>Date <input type="date" id="datePick"></label>
-          <label>Time <input type="time" id="timePick"></label>
-          <button class="btn" id="applyDT">Apply</button>
-        </div>
-        <div class="tiny">Day runs sunrise→sunrise.</div>
-      </div>
-      <div class="row" style="gap:14px;margin-top:10px">
-        <label>Weights:
+</label>
+<label>Lat <input id="lat" step="0.0001" style="width:120px" type="number"/></label>
+<label>Lon <input id="lon" step="0.0001" style="width:120px" type="number"/></label>
+<button class="btn" id="setLatLon">Set</button>
+<div class="tiny" id="echo">—</div>
+</div>
+<div class="row" style="gap:14px;margin-top:10px">
+<label class="switch">Use system date/time <input checked="" id="useSystem" type="checkbox"/></label>
+<div class="row" id="manualTime" style="display:none">
+<label>Date <input id="datePick" type="date"/></label>
+<label>Time <input id="timePick" type="time"/></label>
+<button class="btn" id="applyDT">Apply</button>
+</div>
+<div class="tiny">Day runs sunrise→sunrise.</div>
+</div>
+<div class="row" style="gap:14px;margin-top:10px">
+<label>Weights:
           <select id="mode">
-            <option value="sidereal">Sidereal (default)</option>
-            <option value="ratio">Current Hour / Total Hours today (this ruler)</option>
-            <option value="hybrid">Hybrid (sidereal×synodic)</option>
-          </select>
-        </label>
-      </div>
-    </section>
-
-    <section class="section" id="daySummary">
-      <div class="grid-2">
-        <div>
-          <div id="dayRuler" class="pill"></div>
-          <div class="tiny" id="dayRulerMeta"></div>
-        </div>
-        <div>
-          <div>Sun times:</div>
-          <div id="sunTimes" class="tiny"></div>
-          <div id="bridgeInfo" class="tiny" style="margin-top:6px"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section hero" id="hero">
-      <div class="ticker" id="ticker">
-        <div class="day-start" id="dayStart"></div>
-        <div class="sunrise" id="sunriseBar"></div>
-        <div class="sunset" id="sunsetBar"></div>
-        <div class="day-end" id="dayEnd"></div>
-        <div class="bar" id="progress"></div>
-      </div>
-      <div class="ticker-labels tiny"><span id="lblStart">--:--</span><span id="lblEnd">--:--</span></div>
-
-      <div class="hero-core">
-        <div id="currentHourPill" class="pill">—</div>
-        <div class="mult" id="mult">x—</div>
-        <div class="ord" id="ordLine">Power = (day×hour)×(1/ord) + ord</div>
-        <div class="tiny" id="hourMeta"></div>
-        <div class="chips" id="legendChips"></div>
-      </div>
-    </section>
-
-    <section class="section" id="tableSection">
-      <div style="overflow:auto; max-height:460px">
-        <table id="hoursTable">
-          <thead>
-            <tr>
-              <th>#</th><th>Start–End</th><th>Ruler</th><th>Order</th><th>Hour n/24</th><th>Hours ruled (B/D/T)</th><th>Multiplier</th><th>Focus</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="section" id="matrixSection">
-      <div class="row" style="justify-content:space-between"><div>7×7 Focus Matrix</div>
-        <label>Filter: 
+<option value="sidereal">Sidereal (default)</option>
+<option value="ratio">Current Hour / Total Hours today (this ruler)</option>
+<option value="hybrid">Hybrid (sidereal×synodic)</option>
+</select>
+</label>
+</div>
+</section>
+<section class="section" id="daySummary">
+<div class="grid-2">
+<div>
+<div class="pill" id="dayRuler"></div>
+<div class="tiny" id="dayRulerMeta"></div>
+</div>
+<div>
+<div>Sun times:</div>
+<div class="tiny" id="sunTimes"></div>
+<div class="tiny" id="bridgeInfo" style="margin-top:6px"></div>
+</div>
+</div>
+</section>
+<section class="section hero" id="hero">
+<div class="ticker" id="ticker">
+<div class="day-start" id="dayStart"></div>
+<div class="sunrise" id="sunriseBar"></div>
+<div class="sunset" id="sunsetBar"></div>
+<div class="day-end" id="dayEnd"></div>
+<div class="bar" id="progress"></div>
+</div>
+<div class="ticker-labels tiny"><span id="lblStart">--:--</span><span id="lblEnd">--:--</span></div>
+<div class="hero-core">
+<div class="pill" id="currentHourPill">—</div>
+<div class="mult" id="mult">x—</div>
+<div class="ord" id="ordLine">Power = (day×hour)×(1/ord) + ord</div>
+<div class="tiny" id="hourMeta"></div>
+<div class="chips" id="legendChips"></div>
+</div>
+</section>
+<section class="section" id="tableSection">
+<div style="overflow:auto; max-height:460px">
+<table id="hoursTable">
+<thead>
+<tr>
+<th>#</th><th>Start–End</th><th>Ruler</th><th>Order</th><th>Hour n/24</th><th>Hours ruled (B/D/T)</th><th>Multiplier</th><th>Focus</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+<section class="section" id="matrixSection">
+<div class="row" style="justify-content:space-between"><div>7×7 Focus Matrix</div>
+<label>Filter: 
           <select id="matrixFilter"><option value="all">All</option><option value="bright">Bright</option><option value="dark">Dark</option></select>
-        </label>
-      </div>
-      <div class="matrix" style="margin-top:8px">
-        <table id="matrixTable"><thead></thead><tbody></tbody></table>
-      </div>
-    </section>
-
-    <section class="section" id="bridgePanel">
-      <div>Weekly Bridge Hours (last dark → first bright)</div>
-      <div style="overflow:auto">
-        <table id="bridgeTable">
-          <thead><tr><th>Day (last hour)</th><th>Multiplier</th><th>Next day (first hour)</th><th>Multiplier</th><th>Δ</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="section">
-      <details>
-        <summary>About / Help</summary>
-        <p><b>Multipliers.</b> Default “Sidereal” mode uses the orbital periods (Earth years) as weights: Saturn 29.46, Jupiter 11.86, Mars 1.88, Sun 1, Venus 0.615, Mercury 0.241, Moon 0.0748. Power for an hour = (DayWeight × HourWeight) × (1/ordinal) + ordinal. “Ratio” mode scales by how many hours this ruler holds today (bright+dark), and “Hybrid” multiplies Sidereal × (synodic-hour fraction).</p>
-        <p><b>Sunrise→Sunrise frame.</b> The “day” begins at local sunrise and ends at the next sunrise.</p>
-        <p><b>Ordinals & Harmonics.</b> 1st Fundamental, 2nd Octave, 3rd Fifth, 4th Double Octave. Higher ordinals continue similarly; lower ordinals amplify power in the formula via 1/ordinal.</p>
-        <p><b>Legend.</b> Bright = post‑sunrise half; Dark = post‑sunset half. Bridge hour is the final hour before sunrise of the next day; its ruler hands the baton to Hour 1.</p>
-        <p><b>Modes.</b> Sidereal / Ratio / Hybrid as above.</p>
-      </details>
-    </section>
-  </main>
-
-  <script>
+</label>
+</div>
+<div class="matrix" style="margin-top:8px">
+<table id="matrixTable"><thead></thead><tbody></tbody></table>
+</div>
+</section>
+<section class="section" id="bridgePanel">
+<div>Weekly Bridge Hours (last dark → first bright)</div>
+<div style="overflow:auto">
+<table id="bridgeTable">
+<thead><tr><th>Day (last hour)</th><th>Multiplier</th><th>Next day (first hour)</th><th>Multiplier</th><th>Δ</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+<section class="section">
+<details>
+<summary>About / Help</summary>
+<p><b>Multipliers.</b> Default “Sidereal” mode uses the orbital periods (Earth years) as weights: Saturn 29.46, Jupiter 11.86, Mars 1.88, Sun 1, Venus 0.615, Mercury 0.241, Moon 0.0748. Power for an hour = (DayWeight × HourWeight) × (1/ordinal) + ordinal. “Ratio” mode scales by how many hours this ruler holds today (bright+dark), and “Hybrid” multiplies Sidereal × (synodic-hour fraction).</p>
+<p><b>Sunrise→Sunrise frame.</b> The “day” begins at local sunrise and ends at the next sunrise.</p>
+<p><b>Ordinals &amp; Harmonics.</b> 1st Fundamental, 2nd Octave, 3rd Fifth, 4th Double Octave. Higher ordinals continue similarly; lower ordinals amplify power in the formula via 1/ordinal.</p>
+<p><b>Legend.</b> Bright = post‑sunrise half; Dark = post‑sunset half. Bridge hour is the final hour before sunrise of the next day; its ruler hands the baton to Hour 1.</p>
+<p><b>Modes.</b> Sidereal / Ratio / Hybrid as above.</p>
+</details>
+</section>
+</main>
+<script>
   const planets = [
     {key:'saturn',  sym:'♄', name:'Saturn',  color:'var(--saturn)', weight:29.46, focusDay:'Structure, boundaries, karmic audit', focusHour:'Consolidate, prune, commit'},
     {key:'jupiter', sym:'♃', name:'Jupiter', color:'var(--jupiter)',weight:11.86, focusDay:'Growth, teaching, wisdom',       focusHour:'Expand, publish, mentor'},
@@ -324,5 +316,5 @@
   window.addEventListener('resize', rebuild);
   init();
   </script>
-</body>
+<script src="navloader.js"></script></body>
 </html>
