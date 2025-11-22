@@ -452,3 +452,7 @@ main { margin-top: 2.6em; }
 .capabilities-grid {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
+
+/* Logo size fix */
+.nav-logo{height:40px;width:auto;display:block;object-fit:contain;}
+.logo-area{display:flex;align-items:center;padding:8px 0;}

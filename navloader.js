@@ -1,13 +1,17 @@
 function loadNav() {
   fetch("nav.html")
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById("nav-placeholder").innerHTML = data;
-    });
+    .then(function(response){ return response.text(); })
+    .then(function(data){
+      var container = document.getElementById("nav-placeholder");
+      if (container) container.innerHTML = data;
+    })
+    .catch(function(e){ console.error("Failed to load nav:", e); });
 }
 document.addEventListener("DOMContentLoaded", loadNav);
 
 function toggleMenu() {
-  const menu = document.getElementById('menu');
-  menu.classList.toggle('active');
+  var menu = document.getElementById('menu');
+  if (menu) {
+    menu.classList.toggle('active');
+  }
 }
