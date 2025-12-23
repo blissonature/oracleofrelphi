@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Soul Grammar</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    .controls {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5em;
+      margin-bottom: 1em;
+    }
+    .controls input[type="text"], .controls select {
+      padding: 0.5em;
+      font-size: 1em;
+    }
+    .controls button {
+      padding: 0.5em 1em;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    .term-list {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: left;
+    }
+    .term {
+      border-bottom: 1px solid #ccc;
+      padding: 0.8em 0;
+    }
+    .term h3 {
+      margin: 0;
+    }
+    .tags {
+      margin-top: 0.4em;
+    }
+    .tag {
+      display: inline-block;
+      background: #e0e2e6;
+      color: #333;
+      padding: 0.2em 0.6em;
+      margin: 0 0.3em 0.3em 0;
+      border-radius: 0.5em;
+      font-size: 0.85em;
+      cursor: pointer;
+    }
+    .tag:hover {
+      background: #cdb4ff;
+    }
+    #termForm {
+      display: none;
+      max-width: 600px;
+      margin: 2em auto;
+      text-align: left;
+    }
+    #termForm input, #termForm textarea {
+      width: 100%;
+      padding: 0.5em;
+      margin-bottom: 0.7em;
+      font-size: 1em;
+    }
+    #termForm button {
+      padding: 0.6em 1.2em;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    .filter-info {
+      margin-bottom: 0.8em;
+      cursor: pointer;
+      color: #6a2424;
+    }
+  </style>
+</head>
+<body>
+  <div class="menu-container" id="menuContainer">
+    <button class="logo-btn" aria-label="Open navigation menu" id="menuButton">
+      <img src="logo.png" alt="Oracle of Relphi logo" width="44" height="44"/>
+    </button>
+    <nav class="dropdown-menu" id="dropdownMenu" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="about.html">About</a>
+      <a href="guide.html">Guide</a>
+      <a href="soulgrammar.html">Soul Grammar</a>
+      <a href="/forsacreduseonly.html">For Sacred Use Only</a>
+      <a href="https://ko-fi.com/oracleofrelphi" target="_blank">Support</a>
+    </nav>
+  </div>
+
+  <main>
+    <h2>Soul Grammar</h2>
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Search terms...">
+      <select id="sortSelect">
+        <option value="az">A–Z</option>
+        <option value="za">Z–A</option>
+        <option value="new">Newest</option>
+        <option value="old">Oldest</option>
+      </select>
+      <button id="adminButton">Admin Login</button>
+    </div>
+    <div id="tagFilter" class="filter-info"></div>
+    <div id="termList" class="term-list"></div>
+
+    <form id="termForm">
+      <h3>Add New Term</h3>
+      <input type="text" id="newTerm" placeholder="Term" required>
+      <textarea id="newDefinition" placeholder="Definition" required></textarea>
+      <input type="text" id="newTags" placeholder="Tags (comma separated)">
+      <button type="submit">Save Term</button>
+    </form>
+  </main>
+
+  <script src="menu.js"></script>
+  <script>
+    const password = 'relphi';
+    let terms = [];
+    let activeTag = null;
+    const termList = document.getElementById('termList');
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
+    const tagFilter = document.getElementById('tagFilter');
+
+    function loadTerms() {
+      const saved = localStorage.getItem('soulTerms');
+      if (saved) {
+        terms = JSON.parse(saved);
+      } else {
+        terms = [
+          {term:'Resonance', definition:'Alignment with fundamental frequencies.', tags:['harmony','frequency'], created: Date.now()},
+          {term:'Glyph', definition:'Symbol encoded with multilayered meaning.', tags:['symbol','code'], created: Date.now()}
+        ];
+        saveTerms();
+      }
+    }
+
+    function saveTerms() {
+      localStorage.setItem('soulTerms', JSON.stringify(terms));
+    }
+
+    function renderTerms() {
+      const query = searchInput.value.toLowerCase();
+      let filtered = terms.filter(t =>
+        (!activeTag || t.tags.includes(activeTag)) &&
+        (t.term.toLowerCase().includes(query) || t.definition.toLowerCase().includes(query))
+      );
+      const sort = sortSelect.value;
+      if (sort === 'az') { filtered.sort((a,b)=>a.term.localeCompare(b.term)); }
+      else if (sort === 'za') { filtered.sort((a,b)=>b.term.localeCompare(a.term)); }
+      else if (sort === 'new') { filtered.sort((a,b)=>b.created - a.created); }
+      else if (sort === 'old') { filtered.sort((a,b)=>a.created - b.created); }
+      termList.innerHTML = '';
+      if (filtered.length === 0) {
+        termList.innerHTML = '<p>No terms found.</p>';
+        return;
+      }
+      filtered.forEach(t => {
+        const div = document.createElement('div');
+        div.className = 'term';
+        div.innerHTML = '<h3>'+t.term+'</h3><p>'+t.definition+'</p>';
+        const tagDiv = document.createElement('div');
+        tagDiv.className = 'tags';
+        t.tags.forEach(tag => {
+          const span = document.createElement('span');
+          span.className = 'tag';
+          span.textContent = tag;
+          span.addEventListener('click', () => {
+            activeTag = tag;
+            tagFilter.textContent = 'Filtered by tag: '+tag+' (click to clear)';
+            renderTerms();
+          });
+          tagDiv.appendChild(span);
+        });
+        div.appendChild(tagDiv);
+        termList.appendChild(div);
+      });
+    }
+
+    tagFilter.addEventListener('click', () => {
+      if (activeTag) {
+        activeTag = null;
+        tagFilter.textContent = '';
+        renderTerms();
+      }
+    });
+
+    document.getElementById('adminButton').addEventListener('click', () => {
+      const pass = prompt('Enter admin password:');
+      if (pass === password) {
+        document.getElementById('termForm').style.display = 'block';
+        document.getElementById('adminButton').style.display = 'none';
+      } else {
+        alert('Incorrect password.');
+      }
+    });
+
+    document.getElementById('termForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const term = document.getElementById('newTerm').value.trim();
+      const definition = document.getElementById('newDefinition').value.trim();
+      const tags = document.getElementById('newTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+      if (!term || !definition) return;
+      terms.push({term, definition, tags, created: Date.now()});
+      saveTerms();
+      document.getElementById('termForm').reset();
+      renderTerms();
+    });
+
+    searchInput.addEventListener('input', renderTerms);
+    sortSelect.addEventListener('change', renderTerms);
+
+    loadTerms();
+    renderTerms();
+  </script>
+</body>
+</html>
