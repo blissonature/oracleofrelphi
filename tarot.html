@@ -1,9 +1,273 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="utf-8"/>
-<link href="favicon.ico" rel="icon" type="image/x-icon"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Tarot Weaver · Oracle of Relphi</title>
-<link href="style.css" rel="stylesheet"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-</head><body><div id="nav-placeholder"></div><main><h1>Tarot Weaver</h1><p>Tarot Weaver will be the interactive tarot chamber of Relphi, supporting spreads, reversals, elemental and court-matrix logic, and Relphi-specific interpretations.</p><p>It will eventually connect with your other tools so that readings can reference planetary hours, harmonic structures, and memory palaces.</p></main><script src="navloader.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="favicon.ico" rel="icon" type="image/x-icon"/>
+  <title>Tarot Ledger · Oracle of Relphi</title>
+  <link href="style.css?v=300" rel="stylesheet"/>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <main class="tarot-app-shell">
+    <section class="tarot-hero compact">
+      <h1>Tarot Ledger</h1>
+    </section>
+
+    <section class="tarot-mode-bar" aria-label="Tarot Ledger modes">
+      <button id="showAllCards" type="button">Show All Cards</button>
+      <button id="drawMode" type="button">Draw Cards</button>
+      <button id="dateMode" type="button" hidden>Date Field</button>
+      <button id="chartMode" type="button">Sky Chart</button>
+      <button id="currentSkyMode" type="button" hidden>Current Sky</button>
+      <button id="clearSearch" type="button">Clear</button>
+    </section>
+
+    <section id="shortListPanel" class="short-list-panel" hidden aria-label="Selected card row"></section>
+
+    <section class="tarot-command-panel tarot-command-drawer" aria-label="Tarot command panel">
+      <details>
+        <summary><span>Command and search</span><button id="clearSearchKeywordsCollapsed" class="drawer-clear-keywords" type="button">Clear keywords only</button></summary>
+        <label class="command-label" for="oracleCommand">Command or search</label>
+        <div class="command-row">
+          <div class="search-input-wrap">
+            <input id="oracleCommand" type="search" placeholder="Ex. /draw or Saturn, Libra, Sorrow, Lamed, Cups" autocomplete="off"/>
+            <button id="clearSearchKeywords" class="quick-search-clear" type="button" aria-label="Clear search terms">×</button>
+          </div>
+          <button id="runCommand" type="button">Search</button>
+          <button class="clear-keywords-button" type="button" data-clear-search-terms>Clear keywords only</button>
+        </div>
+        <div id="commandMenu" class="command-menu" hidden></div>
+      </details>
+    </section>
+
+    <section id="tarotSummary" class="tarot-summary" aria-live="polite">
+      <div><strong id="resultCount">No</strong><span id="resultNoun"> cards shown</span></div>
+      <div id="activeSummary">Begin with a search, a spread, a date, a chart placement, or show the full deck.</div>
+    </section>
+
+    <section id="visibilityPanel" class="tarot-visibility-panel" hidden aria-label="Show and hide card groups">
+      <div class="panel-heading-row">
+        <div>
+          <p class="eyebrow">Browse visibility</p>
+          <h2>Show / Hide</h2>
+          <p>All categories start checked. Uncheck a group to hide those cards from the full deck view.</p>
+        </div>
+        <div class="button-row">
+          <button id="resetVisibility" type="button">Reset Visibility</button>
+          <button id="showDecansOnly" type="button">Show Decans Only</button>
+          <button id="hideAllCards" type="button">Hide All</button>
+        </div>
+      </div>
+      <div class="visibility-grid">
+        <fieldset>
+          <legend>Card Type</legend>
+          <label><input type="checkbox" data-filter-group="type" value="Major" checked/> Majors</label>
+          <label><input type="checkbox" data-filter-group="type" value="Ace" checked/> Aces</label>
+          <label><input type="checkbox" data-filter-group="type" value="Pip" checked/> Pips</label>
+          <label><input type="checkbox" data-filter-group="type" value="Court" checked/> Courts</label>
+        </fieldset>
+        <fieldset>
+          <legend>Suit</legend>
+          <label><input type="checkbox" data-filter-group="suit" value="Wands" checked/> Wands</label>
+          <label><input type="checkbox" data-filter-group="suit" value="Cups" checked/> Cups</label>
+          <label><input type="checkbox" data-filter-group="suit" value="Swords" checked/> Swords</label>
+          <label><input type="checkbox" data-filter-group="suit" value="Pentacles" checked/> Pentacles / Disks</label>
+        </fieldset>
+        <fieldset>
+          <legend>Value / Rank</legend>
+          <div class="rank-mode-toggles" aria-label="Pip mode groups">
+            <label><input type="checkbox" data-rank-mode="cardinal" checked/> Cardinal pips: Twos, Threes, Fours</label>
+            <label><input type="checkbox" data-rank-mode="fixed" checked/> Fixed pips: Fives, Sixes, Sevens</label>
+            <label><input type="checkbox" data-rank-mode="mutable" checked/> Mutable pips: Eights, Nines, Tens</label>
+          </div>
+          <label><input type="checkbox" data-filter-group="rank" value="Ace" checked/> Aces</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Two" checked/> Twos</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Three" checked/> Threes</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Four" checked/> Fours</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Five" checked/> Fives</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Six" checked/> Sixes</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Seven" checked/> Sevens</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Eight" checked/> Eights</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Nine" checked/> Nines</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Ten" checked/> Tens</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Princess" checked/> Pages / Princesses</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Prince" checked/> Knights / Princes</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Queen" checked/> Queens</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Knight" checked/> Kings / Knights</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Major" checked/> Majors</label>
+        </fieldset>
+        <fieldset>
+          <legend>Element</legend>
+          <label><input type="checkbox" data-filter-group="element" value="Fire" checked/> Fire</label>
+          <label><input type="checkbox" data-filter-group="element" value="Water" checked/> Water</label>
+          <label><input type="checkbox" data-filter-group="element" value="Air" checked/> Air</label>
+          <label><input type="checkbox" data-filter-group="element" value="Earth" checked/> Earth</label>
+          <label><input type="checkbox" data-filter-group="element" value="Mixed" checked/> Mixed / Spirit / none</label>
+        </fieldset>
+      </div>
+    </section>
+
+    <section id="datePanel" class="tarot-tool-panel" hidden aria-label="Date field">
+      <div class="panel-heading-row compact-panel-heading">
+        <div>
+          <h2>Date Field</h2>
+        </div>
+      </div>
+      <div class="inline-form">
+        <label>Date <input id="dateInput" type="date"/></label>
+        <button id="readDate" type="button">Read Date</button>
+      </div>
+      <div id="dateOutput" class="ledger-output"></div>
+    </section>
+
+            <section id="chartPanel" class="tarot-tool-panel" hidden aria-label="Sky creator and chart comparison">
+      <div class="panel-heading-row">
+        <div>
+          <p class="eyebrow">Chart Placement and Comparison</p>
+          <h2>Sky Chart</h2>
+          <p>Create one sky at a time. Paste Astro-Seek placements or build placements manually; both sides stay synchronized. Use Sky A as the primary sky and Sky B when comparison is needed.</p>
+        </div>
+        <div class="button-row">
+          <button id="exportChart" type="button">Export Sky Data</button>
+        </div>
+      </div>
+
+      <details id="skyCreatorDrawer" class="sky-creator-drawer" open>
+        <summary><span>Sky Builder</span><span id="skyCreatorDrawerStatus" class="sky-creator-drawer-status">Sky A empty · Sky B empty</span></summary>
+        <section class="sky-creator-tool" aria-label="Sky creator">
+        <div class="sky-creator-toolbar">
+          <label>Editing sky
+            <select id="skyCreatorTarget">
+              <option value="chart">Sky A · primary</option>
+              <option value="currentSky">Sky B · comparison</option>
+            </select>
+          </label>
+          <div class="sky-creator-actions">
+            <button id="skyCreatorSave" type="button">Save Sky</button>
+            <button id="skyCreatorLoad" type="button">Load Saved</button>
+            <button id="skyCreatorClear" type="button">Clear Sky</button>
+            <button id="skyCreatorExportText" type="button">Export Sky Text</button>
+            <button id="skyCreatorImportText" type="button">Import Sky Text</button>
+            <input id="skyCreatorTextFile" type="file" accept=".txt,text/plain" hidden>
+          </div>
+        </div>
+
+        <div class="sky-workbench sky-creator-meta" aria-label="Sky files and notes">
+          <label class="sky-creator-name-label">Sky name / previously loaded <span class="sky-creator-name-control"><input id="skyCreatorName" type="text" autocomplete="off" placeholder="Type a sky name or choose saved sky"><button id="skyCreatorNameClear" class="sky-creator-name-clear" type="button" aria-label="Clear sky name" title="Clear sky name" hidden>×</button></span><div id="skyCreatorSuggestions" class="sky-creator-suggestions" hidden></div></label>
+          <select id="skyCreatorLibrary" class="visually-hidden" tabindex="-1" aria-hidden="true"><option value="">Choose saved sky…</option></select>
+          <label class="sky-notes-label">Notes <textarea id="skyCreatorNotes" rows="3" placeholder="Notes for this sky"></textarea></label>
+        </div>
+
+
+        <details class="sky-calc-drawer">
+          <summary>Calculate sky positions</summary>
+          <div class="sky-calc-panel">
+            <label>Target sky
+              <select id="skyCalcTarget">
+                <option value="currentSky">Sky B · comparison</option>
+                <option value="chart">Sky A · primary</option>
+              </select>
+            </label>
+            <label>Date and time
+              <input id="skyCalcDateTime" type="datetime-local">
+            </label>
+            <label>Sky name
+              <input id="skyCalcName" type="text" placeholder="Ex. Current sky">
+            </label>
+            <label>Latitude
+              <input id="skyCalcLatitude" type="number" step="0.0001" min="-90" max="90" inputmode="decimal" placeholder="Ex. 40.7608">
+            </label>
+            <label>Longitude
+              <input id="skyCalcLongitude" type="number" step="0.0001" min="-180" max="180" inputmode="decimal" placeholder="Ex. -111.8910">
+            </label>
+            <label>Location label
+              <input id="skyCalcLocation" type="text" placeholder="Ex. Salt Lake City, Utah">
+            </label>
+            <label>Time zone
+              <input id="skyCalcTimeZone" type="text" placeholder="Ex. America/Denver">
+            </label>
+            <button id="skyCalcNow" type="button">Use now</button>
+            <button id="skyCalcSeed" type="button">Use editing sky metadata</button>
+            <button id="skyCalcAttach" type="button">Attach to sky</button>
+            <button id="skyCalcGeo" type="button">Use my location</button>
+            <button id="skyCalcSearchLocation" type="button">Search location</button>
+            <button id="skyCalcResolveCoords" type="button">Resolve coordinates</button>
+            <button id="skyCalcReverseSolve" type="button">Infer date/place from placements</button>
+            <button id="skyCalcRun" type="button">Calculate with Astronomy Engine</button>
+            <p id="skyCalcStatus" class="generated-note" aria-live="polite">Calculates geocentric ecliptic longitude for planets, plus Rising, Midheaven, and whole-sign houses from the chosen date, time, and location. Coordinates can resolve location label and IANA time zone; calculated date/time is interpreted in that coordinate time zone when available. Saved/imported metadata can restore date, time, and location; no private birth data is hard-coded.</p>
+          </div>
+        </details>
+
+        <div class="sky-creator-side-by-side">
+          <label class="sky-paste-panel" for="skyCreatorPaste">
+            <span>Paste or type placements</span>
+            <textarea id="skyCreatorPaste" rows="12" placeholder="Ex. Sun Libra 15°00’, in 2nd House&#10;Moon Cancer 28°25’, in 11th House"></textarea>
+          </label>
+          <details class="placement-entry-drawer compact-placement-builder sky-creator-builder" open>
+            <summary>Manual placement builder</summary>
+            <div id="skyCreatorForm" class="chart-form"></div>
+          </details>
+        </div>
+        </section>
+      </details>
+
+      <section class="sky-output-box sky-output-unified" aria-label="Sky chart results">
+        <div id="chartOutput" class="ledger-output"></div>
+        <div id="currentSkyOutput" class="ledger-output" hidden></div>
+      </section>
+      <p id="chartDownloadStatus" class="download-status" aria-live="polite"></p>
+    </section>
+    <section id="spreadPanel" class="tarot-tool-panel" hidden aria-label="Spread engine">
+      <div class="panel-heading-row">
+        <div>
+          <p class="eyebrow">Spread Engine</p>
+          <h2>Draw Cards</h2>
+          <p>Choose a layout, draw a card series, reveal the positions, write notes, and download the reading.</p>
+        </div>
+      </div>
+      <div class="inline-form">
+        <label>Layout
+          <select id="spreadSelect">
+            <option value="pastPresentFuture">Past / Present / Future</option>
+            <option value="timeMindBodySpirit">3×3 Time · Mind / Body / Spirit</option>
+            <option value="celticCross">Celtic Cross</option>
+          </select>
+        </label>
+        <button id="drawSpread" type="button">Draw Cards</button>
+        <button id="revealSpread" type="button">Reveal All</button>
+        <button id="clearSpread" type="button">Clear Spread</button>
+        <label class="spread-toggle"><input id="crossedLayoutToggle" type="checkbox" checked/> Crossed layout</label>
+        <label class="spread-toggle"><input id="positionStickerToggle" type="checkbox" checked/> Position stickers</label>
+        <label class="spread-toggle"><input id="tutorialOrderToggle" type="checkbox" checked/> Tutorial order</label>
+      </div>
+      <div id="spreadOutput" class="spread-output"></div>
+      <article id="spreadCardDetail" class="tarot-detail spread-card-detail" hidden aria-live="polite"></article>
+      <label class="notes-label">Notes
+        <textarea id="spreadNotes" rows="5" placeholder="Ex. Write your reading notes here."></textarea>
+      </label>
+      <div class="button-row">
+        <button id="downloadSpreadHtml" type="button">Download Reading</button>
+        <button id="downloadSpreadJson" type="button">Export Spread Data</button>
+      </div>
+      <p id="downloadStatus" class="download-status" aria-live="polite"></p>
+      <div id="spreadAnalysis" class="ledger-output"></div>
+    </section>
+
+    <section id="browsePanel" class="tarot-layout" hidden>
+      <div class="tarot-list-panel">
+        <h2>Cards</h2>
+        <div id="cardList" class="tarot-card-list" role="list"></div>
+      </div>
+      <article id="cardDetail" class="tarot-detail" aria-live="polite"></article>
+    </section>
+  </main>
+
+  <script src="navloader.js"></script>
+  <script src="tarot-cards.js"></script>
+  <script src="relphi-locked-interpretations.js?v=207"></script>
+  <script src="relphi-rising-sign-house-offset-effects.js?v=219"></script>
+  <script src="vendor/astronomy-engine/astronomy.browser.min.js"></script>
+  <script src="tarot-app.js?v=300"></script>
+</body>
+</html>

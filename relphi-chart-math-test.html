@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Relphi Chart Math Validation</title>
+  <link href="style.css?v=300" rel="stylesheet"/>
+</head>
+<body>
+  <main class="page-shell">
+    <h1>Relphi Chart Math <span class="red">Validation</span></h1>
+    <p class="generated-note">Formula Ascendant is checked against a numerical horizon-geometry solver. These fixtures validate internal agreement only; external ephemeris comparison should be added before claiming published-grade chart calculation.</p>
+    <pre id="relphiChartMathResults">Running fixtures…</pre>
+  </main>
+  <script src="relphi-chart-math.js?v=203"></script>
+  <script src="relphi-test-fixtures.js?v=203"></script>
+  <script>
+    const output = document.getElementById('relphiChartMathResults');
+    try {
+      const results = window.RelphiChartMathFixtures.run({ toleranceDegrees: 0.25 });
+      output.textContent = JSON.stringify(results, null, 2);
+    } catch (error) {
+      output.textContent = String(error && error.message ? error.message : error);
+    }
+  </script>
+</body>
+</html>
