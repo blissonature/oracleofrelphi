@@ -72,6 +72,39 @@
     document.head.appendChild(style);
   }
 
+  function cleanStoredSkyLabel(value) {
+    return String(value || '')
+      .replace(/\s*[·•—–|-]\s*Transit\b/gi, '')
+      .replace(/\s*\(Transit\)\s*/gi, ' ')
+      .replace(/^Transit\s*[·•—–|-]\s*/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
+  function cleanStoredSkyRoles() {
+    const library = document.getElementById('skyCreatorLibrary');
+    if (library) {
+      Array.from(library.options || []).forEach(function (option) {
+        const cleaned = cleanStoredSkyLabel(option.textContent);
+        if (cleaned && cleaned !== option.textContent) option.textContent = cleaned;
+      });
+    }
+
+    const suggestions = document.getElementById('skyCreatorSuggestions');
+    if (suggestions) {
+      suggestions.querySelectorAll('*').forEach(function (node) {
+        if (node.children.length === 0 && /^\s*Transit\s*$/i.test(node.textContent || '')) {
+          node.remove();
+          return;
+        }
+        if (node.children.length === 0) {
+          const cleaned = cleanStoredSkyLabel(node.textContent);
+          if (cleaned !== node.textContent) node.textContent = cleaned;
+        }
+      });
+    }
+  }
+
   function install() {
     addStyles();
 
@@ -87,6 +120,9 @@
 
     setRole('chart', roles.chart);
     setRole('currentSky', roles.currentSky);
+    cleanStoredSkyRoles();
+
+    new MutationObserver(cleanStoredSkyRoles).observe(document.body, { childList:true, subtree:true, characterData:true });
   }
 
   window.RelphiSkyRoles = Object.assign({}, roles);
