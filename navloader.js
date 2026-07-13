@@ -107,7 +107,7 @@
       appendScript('standardize-zodiac-wheels.js?v=2');
     }
     if (/(^|\/)sky-chart\.html$/.test(window.location.pathname)) {
-      appendScript('sky-chart-static-dynamic.js?v=1');
+      appendScript('sky-chart-static-dynamic.js?v=2');
       appendScript('sky-chart-aspect-duration-fix.js?v=2');
     }
   }
@@ -189,7 +189,7 @@
       return;
     }
 
-    fetch('nav.html?v=11')
+    fetch('nav.html?v=12')
       .then(function (response) {
         if (!response.ok) throw new Error('Could not load nav.html');
         return response.text();
