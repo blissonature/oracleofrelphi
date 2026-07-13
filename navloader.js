@@ -106,6 +106,9 @@
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('standardize-zodiac-wheels.js?v=2');
     }
+    if (/(^|\/)sky-chart\.html$/.test(window.location.pathname)) {
+      appendScript('sky-chart-aspect-duration-fix.js?v=1');
+    }
   }
 
   function ensureNavStyles() {
@@ -185,7 +188,7 @@
       return;
     }
 
-    fetch('nav.html?v=9')
+    fetch('nav.html?v=10')
       .then(function (response) {
         if (!response.ok) throw new Error('Could not load nav.html');
         return response.text();
