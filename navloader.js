@@ -93,6 +93,21 @@
     });
   }
 
+  function appendScript(src) {
+    const base = src.split('?')[0];
+    if (document.querySelector('script[src^="' + base + '"]')) return;
+    const script = document.createElement('script');
+    script.src = src;
+    document.body.appendChild(script);
+  }
+
+  function loadPageEnhancements() {
+    if (/(^|\/)planetaryhours\.html$/.test(window.location.pathname)) {
+      appendScript('planetary-hours-location-prompt.js?v=2');
+      appendScript('standardize-zodiac-wheels.js?v=2');
+    }
+  }
+
   function ensureNavStyles() {
     if (hasSharedStyleSheet() || document.getElementById('relphi-nav-style')) return;
     const style = document.createElement('style');
@@ -163,13 +178,14 @@
 
   function loadNav() {
     ensureNavStyles();
+    loadPageEnhancements();
 
     if (document.querySelector('.menu-container')) {
       initMenu();
       return;
     }
 
-    fetch('nav.html')
+    fetch('nav.html?v=7')
       .then(function (response) {
         if (!response.ok) throw new Error('Could not load nav.html');
         return response.text();
