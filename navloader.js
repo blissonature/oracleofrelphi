@@ -109,9 +109,9 @@
       return;
     }
 
-    if (!document.querySelector('script[src="menu.js"]')) {
+    if (!document.querySelector('script[src^="menu.js"]')) {
       const script = document.createElement('script');
-      script.src = 'menu.js';
+      script.src = 'menu.js?v=4';
       script.onload = function () {
         if (window.RelphiInitMenu) window.RelphiInitMenu();
       };
