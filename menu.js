@@ -31,13 +31,17 @@
     });
   }
 
-  function loadAstrologyFoundationGlyphs() {
-    if (!/(^|\/)astrology-foundations\.html$/.test(window.location.pathname)) return;
-    if (document.querySelector('script[src^="planet-glyph-loader.js"]')) return;
-
+  function appendScript(src) {
+    if (document.querySelector(`script[src^="${src.split('?')[0]}"]`)) return;
     const script = document.createElement('script');
-    script.src = 'planet-glyph-loader.js?v=3';
+    script.src = src;
     document.body.appendChild(script);
+  }
+
+  function loadAstrologyFoundationEnhancements() {
+    if (!/(^|\/)astrology-foundations\.html$/.test(window.location.pathname)) return;
+    appendScript('planet-glyph-loader.js?v=4');
+    appendScript('astrology-foundations-mobile-signs.js?v=1');
   }
 
   document.addEventListener('click', function (event) {
@@ -63,10 +67,10 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       initRelphiMenu();
-      loadAstrologyFoundationGlyphs();
+      loadAstrologyFoundationEnhancements();
     });
   } else {
     initRelphiMenu();
-    loadAstrologyFoundationGlyphs();
+    loadAstrologyFoundationEnhancements();
   }
 })();
