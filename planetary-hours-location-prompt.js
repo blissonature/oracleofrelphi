@@ -46,6 +46,45 @@
     if (prompt) prompt.remove();
   }
 
+  function useCoordinates(position, status) {
+    const lat = Number(position.coords.latitude);
+    const lon = Number(position.coords.longitude);
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      status.textContent = 'Your browser did not return usable coordinates.';
+      return;
+    }
+
+    const packet = {
+      datetime: new Date().toISOString().slice(0, 16),
+      lat: String(lat),
+      lon: String(lon),
+      tz: tz,
+      loc: 'Current browser location',
+      useSystem: true,
+      savedAt: new Date().toISOString()
+    };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(packet)); } catch (error) {}
+    try { sessionStorage.removeItem(DISMISS_KEY); } catch (error) {}
+
+    const hash = new URLSearchParams();
+    hash.set('phShare', '1');
+    hash.set('lat', lat.toFixed(6));
+    hash.set('lon', lon.toFixed(6));
+    hash.set('tz', tz);
+    hash.set('loc', 'Current browser location');
+    status.textContent = 'Location received. Recalculating planetary hours…';
+    location.replace(location.pathname + location.search + '#' + hash.toString());
+  }
+
+  function geolocationMessage(error) {
+    if (!error) return 'Location could not be obtained.';
+    if (error.code === 1) return 'Location permission was denied. Allow location access for this site in Safari settings, then try again.';
+    if (error.code === 2) return 'Your location is currently unavailable.';
+    if (error.code === 3) return 'The location request timed out. Try again.';
+    return 'Location could not be obtained.';
+  }
+
   function showPrompt() {
     if (document.getElementById('phLocationPrompt')) return;
 
@@ -59,7 +98,8 @@
     const card = document.createElement('div');
     card.style.cssText = 'width:min(92vw,30rem);background:#fff;border:2px solid #dc1f18;border-radius:1.2rem;padding:1rem 1.05rem;box-shadow:0 1.2rem 3rem rgba(0,0,0,.28);text-align:left;';
     card.innerHTML = '<h2 id="phLocationPromptTitle" style="margin:.1rem 0 .45rem;text-align:left;">Use your location?</h2>' +
-      '<p style="margin:.2rem 0 .9rem;line-height:1.45;">Planetary Hours is still using the Greenwich demonstration location. Your planetary day, sunrise, sunset, and hour ruler should use your actual location.</p>' +
+      '<p style="margin:.2rem 0 .75rem;line-height:1.45;">Planetary Hours is still using the Greenwich demonstration location. Your planetary day, sunrise, sunset, and hour ruler should use your actual location.</p>' +
+      '<p id="phLocationPromptStatus" aria-live="polite" style="min-height:1.35em;margin:.15rem 0 .75rem;color:#8b1511;font-weight:700;"></p>' +
       '<div style="display:flex;flex-wrap:wrap;gap:.55rem;">' +
       '<button type="button" id="phPromptUseLocation" style="font:inherit;font-weight:800;border:0;border-radius:999px;background:#dc1f18;color:#fff;padding:.7rem 1rem;">Use my location</button>' +
       '<button type="button" id="phPromptKeepDemo" style="font:inherit;font-weight:800;border:1.5px solid #111;border-radius:999px;background:#fff;color:#111;padding:.7rem 1rem;">Keep Greenwich for now</button>' +
@@ -69,11 +109,23 @@
 
     const use = document.getElementById('phPromptUseLocation');
     const keep = document.getElementById('phPromptKeepDemo');
+    const status = document.getElementById('phLocationPromptStatus');
 
     use.addEventListener('click', function () {
-      removePrompt();
-      const existing = document.getElementById('useGeo');
-      if (existing) existing.click();
+      if (!navigator.geolocation) {
+        status.textContent = 'Geolocation is unavailable in this browser.';
+        return;
+      }
+      use.disabled = true;
+      status.textContent = 'Waiting for location permission…';
+      navigator.geolocation.getCurrentPosition(
+        function (position) { useCoordinates(position, status); },
+        function (error) {
+          use.disabled = false;
+          status.textContent = geolocationMessage(error);
+        },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+      );
     });
 
     keep.addEventListener('click', function () {
