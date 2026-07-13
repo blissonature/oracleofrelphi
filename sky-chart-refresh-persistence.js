@@ -34,7 +34,6 @@
       libraryValue: byId('skyCreatorLibrary')?.value || '',
       libraryLabel: byId('skyCreatorLibrary')?.selectedOptions?.[0]?.textContent?.trim() || '',
       form: readFormSnapshot(),
-      outputHtml: byId(target === 'chart' ? 'chartOutput' : 'currentSkyOutput')?.innerHTML || '',
       savedAt: Date.now()
     };
   }
@@ -52,17 +51,19 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(session)); } catch (error) {}
   }
 
-  function saveCurrentTarget() {
-    if (restoring) return;
-    const target = byId('skyCreatorTarget')?.value || activeTarget || 'chart';
-    if (!TARGETS.includes(target)) return;
+  function saveTarget(target) {
+    if (restoring || !TARGETS.includes(target)) return;
     const session = loadSession();
     session.skies = session.skies || {};
     session.skies[target] = readTargetSnapshot(target);
     session.activeTarget = target;
     session.compareOpen = !byId('skyWizardComparePanel')?.hidden;
-    session.roles = window.RelphiSkyRoles || null;
     writeSession(session);
+  }
+
+  function saveCurrentTarget() {
+    const target = byId('skyCreatorTarget')?.value || activeTarget || 'chart';
+    saveTarget(target);
     activeTarget = target;
   }
 
@@ -167,9 +168,10 @@
     if (targetSelect) {
       activeTarget = targetSelect.value || 'chart';
       targetSelect.addEventListener('change', function () {
-        saveCurrentTarget();
+        const previousTarget = activeTarget;
+        saveTarget(previousTarget);
         activeTarget = targetSelect.value || 'chart';
-      });
+      }, true);
     }
 
     document.addEventListener('input', function (event) {
