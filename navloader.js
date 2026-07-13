@@ -110,6 +110,7 @@
       appendScript('sky-chart-static-dynamic.js?v=2');
       appendScript('sky-chart-aspect-duration-fix.js?v=2');
       appendScript('sky-chart-relationship-language.js?v=1');
+      appendScript('sky-chart-refresh-persistence.js?v=1');
     }
   }
 
@@ -190,7 +191,7 @@
       return;
     }
 
-    fetch('nav.html?v=13')
+    fetch('nav.html?v=14')
       .then(function (response) {
         if (!response.ok) throw new Error('Could not load nav.html');
         return response.text();
