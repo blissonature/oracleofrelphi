@@ -1,0 +1,7 @@
+Version 362: Planetary Hours mini wheel alignment
+- Uses the Sky Chart wheel orientation and structural hierarchy.
+- House cusp lines now reach the center; house numbers remain central.
+- Zodiac glyphs sit inside the core circumference.
+- Current planet markers use exact contact dots, faint center rays, outward sticks, and exterior glyph balls.
+- Close placements are collision-separated while their sticks point back to exact longitudes.
+- ASC/DSC and MC/IC axes are included as a compact preview.

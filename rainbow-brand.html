@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<link href="favicon.ico" rel="icon" type="image/x-icon"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Rainbow Brand · Oracle of Relphi</title>
+<link href="style.css?v=346" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#241815;
+  --muted:#6d5550;
+  --paper:#fffaf6;
+  --soft:#f7ede7;
+  --red:#dc1f18;
+  --gold:#f7c948;
+  --night:#120b16;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:#111;font-family:'Montserrat',Arial,sans-serif;line-height:1.55;text-align:center;padding:1rem 1rem 2rem}
+main{max-width:1120px;margin:4.5rem auto 0;padding:1.25rem;text-align:left}
+a{color:#9f1d1b}
+.hero{text-align:center;margin:1rem auto 1.25rem;max-width:820px}
+.hero h1{font-size:clamp(2.1rem,5vw,3.4rem);font-weight:700;line-height:1;margin:.25rem 0 .6rem;color:#111;letter-spacing:.02em}.hero h1 .red{color:#dc1f18}
+.hero p{margin:.45rem auto;color:var(--muted);font-size:1.05rem}
+.brand-shell{display:grid;grid-template-columns:minmax(0,1fr) 295px;gap:1rem;align-items:start}
+.brand-stage-card,.brand-panel{border:2px solid #dc1f18;border-radius:1.25rem;background:#faf8f7;box-shadow:0 4px 18px rgba(0,0,0,.05)}
+.brand-stage-card{padding:.75rem;position:relative;overflow:hidden}
+.brand-stage-head{display:flex;justify-content:space-between;gap:.75rem;align-items:center;padding:.25rem .35rem .75rem;color:var(--muted);font-size:.94rem}
+.brand-stage-head strong{color:var(--ink)}
+.canvas-wrap{position:relative;min-height:560px;border-radius:1rem;overflow:hidden;background:
+  radial-gradient(circle at 30% 20%,rgba(255,255,255,.08),transparent 26%),
+  radial-gradient(circle at 70% 85%,rgba(220,31,24,.10),transparent 34%),
+  linear-gradient(135deg,#100915,#1a1020 42%,#0b0710);
+  border:1px solid rgba(255,255,255,.15);
+  cursor:none;
+  touch-action:none;
+}
+#brandCanvas{display:block;width:100%;height:560px;touch-action:none}
+.brand-orb{position:fixed;left:0;top:0;border-radius:999px;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);display:none;background:radial-gradient(circle, #fff 0 22%, rgba(255,255,255,.88) 34%, rgba(255,244,188,.48) 52%, rgba(255,255,255,.15) 72%, transparent 100%);box-shadow:0 0 18px 8px rgba(255,255,255,.45),0 0 44px 18px rgba(255,222,115,.25),0 0 86px 28px rgba(255,255,255,.18);mix-blend-mode:screen}
+.brand-panel{padding:1rem;position:sticky;top:1rem}
+.brand-panel h2{font-size:1.1rem;margin:.15rem 0 .65rem;color:#dc1f18;text-transform:uppercase;letter-spacing:.08em}
+.control-group{border-top:1px solid #ecd9d4;padding-top:.85rem;margin-top:.85rem}
+.control-group:first-of-type{border-top:0;padding-top:0;margin-top:0}
+label{display:block;font-weight:700;margin:.4rem 0 .25rem}
+select,input[type=range]{width:100%}
+select{border:1px solid #d7b8b1;border-radius:.7rem;background:#fffaf6;padding:.55rem;font:inherit;color:var(--ink)}
+input[type=range]{accent-color:#d42624}
+.band-readout{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.2rem 0 .45rem;font-weight:700}
+.band-readout output{color:#b91918}
+.band-buttons{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.55rem}
+.band-buttons button,.tool-actions button,.brand-tool-toggle button{border:1px solid #d8aaa2;background:#fff8f2;border-radius:999px;padding:.42rem .58rem;font:inherit;font-size:.9rem;cursor:pointer;color:#5b241f}
+.brand-tool-toggle{display:flex;flex-wrap:wrap;gap:.45rem}.brand-tool-toggle button.is-active{background:#5b241f;color:#fff8f2;border-color:#5b241f}
+.band-buttons button[aria-pressed=true]{background:#b91918;color:#fff;border-color:#b91918}
+.tool-actions{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.75rem}
+.tool-actions button{font-weight:700}
+.tool-actions .danger{border-color:#e7b6ae;color:#9d1816}
+.hint{font-size:.92rem;color:var(--muted);margin:.45rem 0 0}.inline-toggle{display:flex;align-items:center;gap:.45rem;font-weight:600;margin:.55rem 0 .25rem;color:#333}.inline-toggle input{width:auto}
+.meaning{background:#fff;border:1px solid #e9d7d2;border-radius:1rem;padding:.8rem;margin-top:1rem;color:#333}
+.meaning p{margin:.35rem 0}.meaning b{color:#dc1f18}
+.status{font-size:.92rem;color:#fff;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:.35rem .65rem;position:absolute;left:1rem;bottom:1rem;backdrop-filter:blur(4px)}
+@media(max-width:860px){.brand-shell{grid-template-columns:1fr}.brand-panel{position:static}.canvas-wrap{min-height:420px}#brandCanvas{height:420px}.brand-stage-head{display:block}.brand-stage-head span{display:block;margin-top:.3rem}}
+</style>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<main>
+  <section class="hero">
+    <h1>Rainbow <span class="red">Brand</span></h1>
+    <p>Press and hold to gather heat. Release to prang the substrate.</p>
+  </section>
+
+  <section class="brand-shell" aria-label="Rainbow Brand interactive tool">
+    <div class="brand-stage-card">
+      <div class="brand-stage-head">
+        <strong>Receiving surface</strong>
+        <span>Press and hold to grow the white-hot orb. Release to stamp.</span>
+      </div>
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="brandCanvas" aria-label="Rainbow Brand canvas"></canvas>
+        <div class="status" id="statusText">Ready to Prang.</div>
+      </div>
+    </div>
+
+    <aside class="brand-panel" aria-label="Rainbow Brand controls">
+      <h2>Branding Iron</h2>
+      <div class="control-group">
+        <label>Tool</label>
+        <div class="brand-tool-toggle" role="group" aria-label="Rainbow Brand tool mode">
+          <button type="button" id="brandToolBrand" class="is-active" aria-pressed="true">Brand</button>
+          <button type="button" id="brandToolSwirl" aria-pressed="false">Swirl</button>
+        </div>
+        <p class="hint"><b>Brand</b> keeps the original hold-to-grow and release-to-Prang action. <b>Swirl</b> mixes already-stamped color by dragging over the canvas.</p>
+      </div>
+      <div class="control-group">
+        <label for="bandRange">Pack size</label>
+        <div class="band-readout"><span>Frequency bands</span><output id="bandOut">7</output></div>
+        <input id="bandRange" type="range" min="2" max="360" value="7" step="1"/>
+        <div class="band-buttons" id="bandButtons" aria-label="Common band counts"></div>
+        <label class="inline-toggle"><input id="randomPackToggle" type="checkbox"> Randomize pack size on each prang</label><p class="hint">Pack size controls how many bands the brand resolves into; the meaning key below names the prang, substrate, brand, and discretized frequency bands.</p>
+      </div>
+
+      <div class="control-group">
+        <label for="anchorRange">Brand rotation</label>
+        <div class="band-readout"><span>Spectrum / hemisphere angle</span><output id="anchorOut">0°</output></div>
+        <input id="anchorRange" type="range" min="0" max="359" value="0" step="1"/>
+        <label class="inline-toggle"><input id="randomAnchorToggle" type="checkbox"> Randomize Brand rotation on each prang</label><p class="hint">For three or more bands, this rotates where the spectrum begins. For two bands, this rotates the black/white hemisphere split.</p>
+      </div>
+
+      <div class="control-group">
+        <label for="overlapMode">Overlap mode</label>
+        <select id="overlapMode">
+          <option value="replace">Replace: newest brand dominates</option>
+          <option value="mix">Mix: split the color difference</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="growthSpeed">Hold growth</label>
+        <input id="growthSpeed" type="range" min="0.55" max="1.85" value="1" step="0.05"/>
+        <p class="hint">Longer hold means a larger branding iron before release.</p>
+      </div>
+
+      <div class="tool-actions">
+        <button type="button" id="saveCanvasBtn">Save image</button>
+        <button type="button" id="undoBtn">Undo last Prang</button>
+        <button type="button" id="clearBtn" class="danger">Clear canvas</button>
+      </div>
+
+      <div class="meaning">
+        <p><b>Before prang:</b> undivided continuum inside the white-hot branding iron.</p>
+        <p><b>PRAAAAAAANG!:</b> contact with the substrate.</p>
+        <p><b>Brand:</b> a rainbow spectrum made visible and discretized into usable frequency bands, like a box of crayons.</p>
+      </div>
+    </aside>
+  </section>
+</main>
+<div class="brand-orb" id="brandOrb" aria-hidden="true"></div>
+<script>
+(function(){
+  const canvas = document.getElementById('brandCanvas');
+  const wrap = document.getElementById('canvasWrap');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const orb = document.getElementById('brandOrb');
+  const bandRange = document.getElementById('bandRange');
+  const bandOut = document.getElementById('bandOut');
+  const bandButtons = document.getElementById('bandButtons');
+  const overlapMode = document.getElementById('overlapMode');
+  const growthSpeed = document.getElementById('growthSpeed');
+  const anchorRange = document.getElementById('anchorRange');
+  const anchorOut = document.getElementById('anchorOut');
+  const randomPackToggle = document.getElementById('randomPackToggle');
+  const randomAnchorToggle = document.getElementById('randomAnchorToggle');
+  const statusText = document.getElementById('statusText');
+  const undoBtn = document.getElementById('undoBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const saveCanvasBtn = document.getElementById('saveCanvasBtn');
+  const brandToolBrand = document.getElementById('brandToolBrand');
+  const brandToolSwirl = document.getElementById('brandToolSwirl');
+
+  const presets = [2,3,4,5,6,7,8,9,10,11,12,22,24,36,72,78,120,360,'∞'];
+  const randomPackPool = [2,3,4,5,6,7,8,9,10,11,12,22,24,36,72,78,120,360];
+  let bandSetting = 7;
+  let stamps = [];
+  let redoStamps = [];
+  let isHolding = false;
+  let isSwirling = false;
+  let toolMode = 'brand';
+  let holdStart = 0;
+  let pointer = {x:0,y:0,inside:false};
+  let previewRadius = 7;
+  let raf = null;
+  let dpr = 1;
+
+  function resizeCanvas(){
+    const rect = wrap.getBoundingClientRect();
+    dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.max(1, Math.round(rect.width * dpr));
+    canvas.height = Math.max(1, Math.round(rect.height * dpr));
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    stamps.forEach(s => drawStamp(s, false));
+  }
+
+  function hsvToRgb(h,s,v){
+    let r=0,g=0,b=0;
+    const i = Math.floor(h*6);
+    const f = h*6 - i;
+    const p = v*(1-s), q = v*(1-f*s), t = v*(1-(1-f)*s);
+    switch(i % 6){
+      case 0: r=v; g=t; b=p; break;
+      case 1: r=q; g=v; b=p; break;
+      case 2: r=p; g=v; b=t; break;
+      case 3: r=p; g=q; b=v; break;
+      case 4: r=t; g=p; b=v; break;
+      case 5: r=v; g=p; b=q; break;
+    }
+    return [Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+  }
+
+  function sourceColor(dx, dy, radius, bands, anchorDeg){
+    if(bands === 2){
+      const rot=(anchorDeg||0)*Math.PI/180; const yy = dx*Math.sin(rot)+dy*Math.cos(rot); return yy < 0 ? [255,255,255] : [0,0,0];
+    }
+    let angle = Math.atan2(dy, dx);
+    if(angle < 0) angle += Math.PI*2;
+    let hue = angle / (Math.PI*2);
+    hue = (hue + (anchorDeg || 0) / 360) % 1;
+    if(bands === 4){
+      const palette = [[229,57,53],[247,201,72],[87,200,59],[61,130,238]];
+      return palette[Math.floor(hue * 4) % 4];
+    }
+    if(bands !== 'continuous'){
+      hue = (Math.floor(hue * bands)) / bands;
+    }
+    return hsvToRgb(hue, 1, 1);
+  }
+
+  function drawStamp(stamp, save=true){
+    const x = Math.round(stamp.x * dpr), y = Math.round(stamp.y * dpr), r = Math.round(stamp.r * dpr);
+    const left = Math.max(0, x-r), top = Math.max(0, y-r);
+    const right = Math.min(canvas.width, x+r), bottom = Math.min(canvas.height, y+r);
+    const w = right-left, h = bottom-top;
+    if(w <= 0 || h <= 0) return;
+    const img = ctx.getImageData(left, top, w, h);
+    const data = img.data;
+    for(let py=0; py<h; py++){
+      for(let px=0; px<w; px++){
+        const dx = left + px - x;
+        const dy = top + py - y;
+        const dist2 = dx*dx + dy*dy;
+        if(dist2 > r*r) continue;
+        const src = sourceColor(dx, dy, r, stamp.bands, stamp.anchorDeg);
+        const i = (py*w + px)*4;
+        const hasPaint = data[i+3] > 0;
+        if(stamp.mode === 'mix' && hasPaint){
+          data[i] = Math.round((data[i] + src[0]) / 2);
+          data[i+1] = Math.round((data[i+1] + src[1]) / 2);
+          data[i+2] = Math.round((data[i+2] + src[2]) / 2);
+          data[i+3] = 255;
+        } else {
+          data[i] = src[0];
+          data[i+1] = src[1];
+          data[i+2] = src[2];
+          data[i+3] = 255;
+        }
+      }
+    }
+    ctx.putImageData(img, left, top);
+    if(save){
+      stamps.push(stamp);
+      redoStamps = [];
+    }
+  }
+
+  function setBand(value){
+    bandSetting = value;
+    const isContinuous = value === 'continuous';
+    if(!isContinuous && value <= 72) bandRange.value = value;
+    bandOut.textContent = isContinuous ? 'continuous approximation' : String(value);
+    [...bandButtons.querySelectorAll('button')].forEach(btn => {
+      const raw = btn.dataset.value;
+      const val = raw === 'continuous' ? 'continuous' : Number(raw);
+      btn.setAttribute('aria-pressed', val === value ? 'true' : 'false');
+    });
+    statusText.textContent = isContinuous ? 'Continuous approximation selected.' : value + ' frequency bands selected.';
+  }
+
+  function buildPresetButtons(){
+    bandButtons.innerHTML = '';
+    presets.forEach(p => {
+      const btn = document.createElement('button');
+      const val = p === '∞' ? 'continuous' : String(p);
+      btn.type = 'button';
+      btn.dataset.value = val;
+      btn.textContent = p === '∞' ? '∞' : String(p);
+      btn.addEventListener('click', () => setBand(val === 'continuous' ? 'continuous' : Number(val)));
+      bandButtons.appendChild(btn);
+    });
+    setBand(7);
+  }
+
+  function updateOrb(){
+    if(!pointer.inside){ orb.style.display = 'none'; return; }
+    const size = previewRadius * 2;
+    orb.style.width = size + 'px';
+    orb.style.height = size + 'px';
+    orb.style.left = pointer.x + 'px';
+    orb.style.top = pointer.y + 'px';
+    orb.style.display = 'block';
+  }
+
+  function animateHold(t){
+    if(!isHolding) return;
+    const elapsed = Math.max(0, t - holdStart);
+    const speed = Number(growthSpeed.value) || 1;
+    const maxR = Math.max(260, Math.min(wrap.clientWidth, wrap.clientHeight) * 0.86);
+    previewRadius = Math.min(maxR, 7 + elapsed * 0.075 * speed);
+    updateOrb();
+    raf = requestAnimationFrame(animateHold);
+  }
+
+  function localPoint(evt){
+    const rect = canvas.getBoundingClientRect();
+    return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+  }
+
+
+  function setToolMode(mode){
+    toolMode = mode === 'swirl' ? 'swirl' : 'brand';
+    brandToolBrand?.classList.toggle('is-active', toolMode === 'brand');
+    brandToolSwirl?.classList.toggle('is-active', toolMode === 'swirl');
+    brandToolBrand?.setAttribute('aria-pressed', toolMode === 'brand' ? 'true' : 'false');
+    brandToolSwirl?.setAttribute('aria-pressed', toolMode === 'swirl' ? 'true' : 'false');
+    statusText.textContent = toolMode === 'swirl' ? 'Swirl mode: drag through existing color to mix it.' : 'Brand mode: hold to gather heat, release to Prang.';
+  }
+  function swirlAt(clientX, clientY){
+    const p = localPoint({clientX, clientY});
+    const x = Math.round(p.x * dpr), y = Math.round(p.y * dpr);
+    const r = Math.round(Math.max(18, Math.min(72, previewRadius || 44)) * dpr);
+    const left = Math.max(0, x-r), top = Math.max(0, y-r);
+    const right = Math.min(canvas.width, x+r), bottom = Math.min(canvas.height, y+r);
+    const w = right-left, h = bottom-top;
+    if(w <= 2 || h <= 2) return;
+    const source = ctx.getImageData(left, top, w, h);
+    const target = ctx.createImageData(w, h);
+    target.data.set(source.data);
+    const strength = .42;
+    for(let py=0; py<h; py++){
+      for(let px=0; px<w; px++){
+        const dx = left + px - x;
+        const dy = top + py - y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist > r) continue;
+        const falloff = 1 - dist / r;
+        const angle = strength * falloff * falloff;
+        const cos = Math.cos(angle), sin = Math.sin(angle);
+        const sx = Math.round((dx*cos - dy*sin) + x - left);
+        const sy = Math.round((dx*sin + dy*cos) + y - top);
+        if(sx < 0 || sx >= w || sy < 0 || sy >= h) continue;
+        const si = (sy*w + sx)*4;
+        const ti = (py*w + px)*4;
+        if(source.data[si+3] === 0) continue;
+        target.data[ti] = source.data[si];
+        target.data[ti+1] = source.data[si+1];
+        target.data[ti+2] = source.data[si+2];
+        target.data[ti+3] = source.data[si+3];
+      }
+    }
+    ctx.putImageData(target, left, top);
+  }
+
+  wrap.addEventListener('pointerenter', evt => { pointer.inside = true; pointer.x = evt.clientX; pointer.y = evt.clientY; updateOrb(); });
+  wrap.addEventListener('pointerleave', () => { if(!isHolding){ pointer.inside = false; updateOrb(); } });
+  wrap.addEventListener('pointermove', evt => { pointer.inside = true; pointer.x = evt.clientX; pointer.y = evt.clientY; updateOrb(); if(isSwirling) swirlAt(evt.clientX, evt.clientY); });
+  wrap.addEventListener('pointerdown', evt => {
+    evt.preventDefault();
+    wrap.setPointerCapture(evt.pointerId);
+    pointer.inside = true;
+    pointer.x = evt.clientX;
+    pointer.y = evt.clientY;
+    if(toolMode === 'swirl'){
+      isSwirling = true;
+      previewRadius = 44;
+      updateOrb();
+      swirlAt(evt.clientX, evt.clientY);
+      statusText.textContent = 'Swirling existing color.';
+      return;
+    }
+    previewRadius = 7;
+    isHolding = true;
+    holdStart = performance.now();
+    statusText.textContent = 'Heat gathering... release to Prang.';
+    updateOrb();
+    if(raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(animateHold);
+  });
+
+  function finishPrang(evt){
+    if(isSwirling){
+      evt.preventDefault();
+      isSwirling = false;
+      statusText.textContent = 'Swirl complete.';
+      return;
+    }
+    if(!isHolding) return;
+    evt.preventDefault();
+    isHolding = false;
+    if(raf) cancelAnimationFrame(raf);
+    const p = localPoint(evt);
+    if(randomPackToggle && randomPackToggle.checked){
+      const nextPack = randomPackPool[Math.floor(Math.random() * randomPackPool.length)];
+      setBand(nextPack);
+    }
+    if(randomAnchorToggle && randomAnchorToggle.checked){
+      anchorRange.value = String(Math.floor(Math.random() * 360));
+      anchorOut.textContent = anchorRange.value + '°';
+    }
+    const stamp = {
+      x: p.x,
+      y: p.y,
+      r: previewRadius,
+      bands: bandSetting === 'continuous' ? 'continuous' : Number(bandSetting),
+      anchorDeg: Number(anchorRange.value) || 0,
+      mode: overlapMode.value
+    };
+    drawStamp(stamp, true);
+    statusText.textContent = 'PRAAAAAAANG!';
+    previewRadius = 7;
+    updateOrb();
+  }
+
+  wrap.addEventListener('pointerup', finishPrang);
+  wrap.addEventListener('pointercancel', evt => { isHolding = false; isSwirling = false; if(raf) cancelAnimationFrame(raf); previewRadius = 7; updateOrb(); });
+
+  brandToolBrand?.addEventListener('click', () => setToolMode('brand'));
+  brandToolSwirl?.addEventListener('click', () => setToolMode('swirl'));
+  bandRange.addEventListener('input', () => setBand(Number(bandRange.value)));
+  anchorRange.addEventListener('input', () => { anchorOut.textContent = anchorRange.value + '°'; });
+
+  function saveCanvasImage(){
+    const out = document.createElement('canvas');
+    out.width = canvas.width;
+    out.height = canvas.height;
+    const octx = out.getContext('2d');
+    const bg = octx.createLinearGradient(0,0,out.width,out.height);
+    bg.addColorStop(0,'#100915');
+    bg.addColorStop(.45,'#1a1020');
+    bg.addColorStop(1,'#0b0710');
+    octx.fillStyle = bg;
+    octx.fillRect(0,0,out.width,out.height);
+    octx.drawImage(canvas,0,0);
+    const fileName = 'rainbow-brand-' + new Date().toISOString().slice(0,10) + '.png';
+    const finalize = (blob) => {
+      if(!blob){
+        const a = document.createElement('a');
+        a.href = out.toDataURL('image/png');
+        a.download = fileName;
+        a.click();
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1200);
+    };
+    if(out.toBlob) out.toBlob(finalize,'image/png'); else finalize(null);
+    statusText.textContent = 'Rainbow Brand image saved.';
+  }
+
+  function undoPrang(){
+    if(!stamps.length) return;
+    redoStamps.push(stamps.pop());
+    resizeCanvas();
+    statusText.textContent = stamps.length ? 'Last Prang undone.' : 'Canvas clear.';
+  }
+  function redoPrang(){
+    if(!redoStamps.length) return;
+    stamps.push(redoStamps.pop());
+    resizeCanvas();
+    statusText.textContent = 'Prang restored.';
+  }
+  saveCanvasBtn.addEventListener('click', saveCanvasImage);
+  undoBtn.addEventListener('click', undoPrang);
+  clearBtn.addEventListener('click', () => { stamps = []; redoStamps = []; resizeCanvas(); statusText.textContent = 'Canvas clear.'; });
+  window.addEventListener('keydown', evt => {
+    const mod = evt.ctrlKey || evt.metaKey;
+    if(!mod) return;
+    const key = evt.key.toLowerCase();
+    if(key === 'z' && !evt.shiftKey){ evt.preventDefault(); undoPrang(); }
+    if(key === 'y' || (key === 'z' && evt.shiftKey)){ evt.preventDefault(); redoPrang(); }
+  });
+  window.addEventListener('resize', resizeCanvas);
+
+  buildPresetButtons();
+  resizeCanvas();
+})();
+</script>
+<script src="navloader.js"></script>
+</body>
+</html>

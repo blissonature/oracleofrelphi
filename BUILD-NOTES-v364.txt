@@ -1,0 +1,8 @@
+Oracle of Relphi v364
+
+- Removed the large Step 3 review card.
+- Added a compact results toolbar immediately above the Sky Ledger.
+- Consolidated Load, placements export/import, and Clear into a Sky data menu.
+- Replaced JSON-only chart export with a compact text reading containing Sky A, optional Sky B, each sky’s internal relationships, and cross-sky relationships.
+- Export headings and relationship endpoints identify skies by stored date, local time, time zone, and location rather than saved names such as Marisa or Here and now.
+- Preserves v363 transit-to-natal applying/separating logic.

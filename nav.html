@@ -1,16 +1,37 @@
-<div class="menu-container" id="menuContainer">
-  <button class="logo-btn" aria-label="Open navigation menu" id="menuButton">
+<div class="menu-container anniversary-nav" id="menuContainer">
+  <button class="logo-btn" aria-label="Open navigation menu" aria-controls="dropdownMenu" aria-expanded="false" id="menuButton" type="button">
     <img src="logo.png" alt="Oracle of Relphi logo" width="44" height="44"/>
+    <span class="nav-brand-text">Oracle of <span>Relphi</span></span>
+    <span class="nav-edition-badge">Anniversary</span>
   </button>
-  <nav class="dropdown-menu" id="dropdownMenu" aria-label="Main navigation">
-    <a href="index.html">Home</a>
-    <a href="services.html">Services</a>
-    <a href="about.html">About</a>
-    <a href="planetaryhours.html">Planetary Hours</a>
-    <a href="light-tone-zodiac.html">Light-Tone Zodiac</a>
-    <a href="guide.html">Guide</a>
-    <a href="/forsacreduseonly.html">For Sacred Use Only</a>
-    <a href="https://ko-fi.com/oracleofrelphi" target="_blank">Support</a>
-  
+  <nav class="dropdown-menu architecture-menu" id="dropdownMenu" aria-label="Main navigation">
+    <a class="nav-primary-link" href="index.html">Home</a>
+    <a class="nav-primary-link" href="tools.html">All Tools</a>
+    <details class="nav-tool-group" open>
+      <summary>Instruments</summary>
+      <a href="tarot.html"><span>Tarot Ledger</span><small>Search · Draw · Sense</small></a>
+      <a href="sky-chart.html"><span>Sky Chart</span><small>Build · Compare · Relate</small></a>
+      <a href="planetaryhours.html"><span>Planetary Hours</span><small>Day · Hour · Moon</small></a>
+    </details>
+    <details class="nav-tool-group">
+      <summary>Learn</summary>
+      <a href="glyphs.html"><span>Glyph Trainer</span><small>Marks · Letters · Aspects</small></a>
+      <a href="astrology-foundations.html"><span>Astrology Foundations</span><small>Planets · Signs · Houses</small></a>
+      <a href="constellations.html"><span>Constellation Trainer</span><small>Sky patterns</small></a>
+      <a href="guide.html"><span>Guide</span><small>Start here</small></a>
+    </details>
+    <details class="nav-tool-group">
+      <summary>Reference</summary>
+      <a href="mythic-atlas.html"><span>Mythic Atlas</span><small>Gods · Planets · Cards</small></a>
+      <a href="ancient-measures.html"><span>Ancient Measures</span><small>Body · Horizon · Rope</small></a>
+      <a href="rainbow-brand.html"><span>Rainbow Brand</span><small>Color spectrum</small></a>
+    </details>
+    <details class="nav-tool-group">
+      <summary>Studio</summary>
+      <a href="about.html"><span>About</span><small>Creator and purpose</small></a>
+      <a href="services.html"><span>Services</span><small>Learning environments</small></a>
+      <a href="forsacreduseonly.html"><span>For Sacred Use Only</span><small>Use agreement</small></a>
+      <a href="https://ko-fi.com/oracleofrelphi" target="_blank" rel="noopener"><span>Support</span><small>Ko-fi</small></a>
+    </details>
   </nav>
 </div>

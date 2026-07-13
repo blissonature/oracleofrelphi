@@ -1,0 +1,9 @@
+Oracle of Relphi v363
+
+Applying/separating correction:
+- Transit and progression pairs advance only the moving Sky B placement.
+- Natal/reference Sky A placements remain fixed coordinates.
+- Stored natal ephemeris speeds are ignored by timing-status logic.
+- Internal, synastry, and neutral comparison modes do not receive applying/separating labels.
+
+Planetary Hours mini-wheel changes from v362 are retained.

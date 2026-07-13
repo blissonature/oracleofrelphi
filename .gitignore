@@ -1,0 +1,34 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+
+# Local backups and generated archives
+*.zip
+*-bak
+*.bak
+*.codex-bak
+*cache-bust*-bak
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Dependency/build/cache folders
+node_modules/
+dist/
+build/
+.cache/
+.parcel-cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
