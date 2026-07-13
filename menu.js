@@ -36,7 +36,7 @@
     if (document.querySelector('script[src^="planet-glyph-loader.js"]')) return;
 
     const script = document.createElement('script');
-    script.src = 'planet-glyph-loader.js?v=1';
+    script.src = 'planet-glyph-loader.js?v=2';
     document.body.appendChild(script);
   }
 
