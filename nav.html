@@ -1,4 +1,21 @@
-<link rel="stylesheet" href="astrology-foundations-mobile.css?v=2"/>
+<style id="astrology-foundations-mobile-inline">
+@media (max-width:600px){
+  body .foundation-page{width:100%!important;max-width:none!important;margin:1rem auto .75rem!important;padding:0 .45rem!important;box-sizing:border-box!important;overflow-x:hidden!important}
+  body .foundation-panel{width:100%!important;max-width:100%!important;padding:.6rem!important;box-sizing:border-box!important;overflow:hidden!important}
+  body .matrix-scroll{width:100%!important;max-width:100%!important;overflow:visible!important;padding:0!important}
+  body .foundation-matrix{min-width:0!important;width:100%!important;max-width:100%!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.34rem!important}
+  body .foundation-matrix .matrix-corner{display:none!important}
+  body .foundation-matrix .matrix-head{min-width:0!important;padding:.36rem .1rem!important;border-radius:.7rem!important;font-size:.69rem!important;line-height:1.05!important;overflow-wrap:anywhere!important}
+  body .foundation-matrix .matrix-row-label{grid-column:1/-1!important;min-width:0!important;margin:.05rem 0 0!important;padding:.3rem .45rem!important;border:0!important;border-radius:.65rem!important;box-shadow:none!important;background:rgba(17,17,17,.055)!important;font-size:.75rem!important;line-height:1!important}
+  body .foundation-matrix .flip-tile{min-width:0!important;width:100%!important;height:4.2rem!important}
+  body .foundation-matrix .flip-face{min-width:0!important;padding:.25rem!important;border-radius:.7rem!important}
+  body .foundation-matrix .front-glyph{font-size:clamp(1.8rem,10vw,2.25rem)!important;line-height:1!important}
+  body .foundation-matrix .flip-back{padding:.28rem!important;font-size:.64rem!important;line-height:1.1!important;overflow-wrap:anywhere!important}
+  body .foundation-matrix.house-matrix{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body .house-matrix .flip-front .label{color:#111!important;-webkit-text-fill-color:#111!important}
+}
+@media (max-width:350px){body .foundation-matrix.house-matrix{grid-template-columns:1fr!important}}
+</style>
 <div class="menu-container anniversary-nav" id="menuContainer">
   <button class="logo-btn" aria-label="Open navigation menu" aria-controls="dropdownMenu" aria-expanded="false" id="menuButton" type="button">
     <img src="logo.png" alt="Oracle of Relphi logo" width="44" height="44"/>
