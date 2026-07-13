@@ -94,8 +94,6 @@
   }
 
   function ensureNavStyles() {
-    // Standard pages get their navigation look from style.css.
-    // Standalone tool pages get this fallback so the nav still matches.
     if (hasSharedStyleSheet() || document.getElementById('relphi-nav-style')) return;
     const style = document.createElement('style');
     style.id = 'relphi-nav-style';
@@ -111,7 +109,7 @@
 
     if (!document.querySelector('script[src^="menu.js"]')) {
       const script = document.createElement('script');
-      script.src = 'menu.js?v=4';
+      script.src = 'menu.js?v=5';
       script.onload = function () {
         if (window.RelphiInitMenu) window.RelphiInitMenu();
       };
