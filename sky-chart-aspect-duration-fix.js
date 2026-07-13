@@ -44,9 +44,7 @@
     const pattern = new RegExp("([A-Z][A-Za-z0-9 .:/_\\-]{0,70}?)(?:'s|’s)\\s+(" + planetPattern + ")", 'g');
     const pairs = [];
     let match;
-    while ((match = pattern.exec(text))) {
-      pairs.push({ label:match[1].trim(), planet:match[2] });
-    }
+    while ((match = pattern.exec(text))) pairs.push({ label:match[1].trim(), planet:match[2] });
     return pairs;
   }
 
@@ -62,6 +60,13 @@
     const currentRoles = roles();
     const dynamicTarget = currentRoles.chart === 'dynamic' ? 'chart' : (currentRoles.currentSky === 'dynamic' ? 'currentSky' : null);
     if (!dynamicTarget) return null;
+
+    // Planetary Hours explicitly seeds the primary sky. When Sky A is Dynamic,
+    // this label is the most reliable source of the duration-setting body.
+    if (dynamicTarget === 'chart') {
+      const ph = text.match(/Planetary Hours date(?:'s|’s)\s+(Moon|Mercury|Venus|Sun|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)/i);
+      if (ph) return ph[1];
+    }
 
     const pairs = extractPairs(text);
     if (!pairs.length) return null;
@@ -81,8 +86,7 @@
 
     if (bestScore > 0) return best;
 
-    // Common explicit moving-sky labels remain a backward-compatible fallback.
-    const explicit = text.match(/(?:Planetary Hours date|transit|current sky|moving sky)(?:'s|’s)?\s+(Moon|Mercury|Venus|Sun|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)/i);
+    const explicit = text.match(/(?:transit|current sky|moving sky)(?:'s|’s)?\s+(Moon|Mercury|Venus|Sun|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)/i);
     return explicit ? explicit[1] : null;
   }
 
@@ -97,10 +101,12 @@
 
     nodes.forEach(function (node) {
       let value = node.nodeValue || '';
-      if (!/Short-lived|Brief|Developing|Long-term|several hours|several days|several months|many months|several weeks|closest passage|repeated exact passages/i.test(value)) return;
+      if (!/Short-lived|Brief|Developing|Long-term|Weekly|passing weather|hours|days|weeks|months|closest passage|repeated exact passages/i.test(value)) return;
 
       value = value
+        .replace(/Weekly\s*\/\s*passing weather/gi, DURATION[body].tier)
         .replace(/(?:Short-lived|Brief|Developing|Long-term)(?:\s*\/\s*[A-Za-z-]+)?/gi, DURATION[body].tier)
+        .replace(/days to two weeks/gi, DURATION[body].phrase)
         .replace(/several hours;\s*the closest passage is usually contained within part of a day/gi, DURATION[body].phrase)
         .replace(/several days;\s*the closest passage is usually strongest for hours to a day/gi, DURATION[body].phrase)
         .replace(/several days;\s*the closest passage is usually strongest for about a day/gi, DURATION[body].phrase)
