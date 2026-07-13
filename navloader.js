@@ -103,7 +103,7 @@
 
   function loadPageEnhancements() {
     if (/(^|\/)planetaryhours\.html$/.test(window.location.pathname)) {
-      appendScript('planetary-hours-location-prompt.js?v=2');
+      appendScript('planetary-hours-location-prompt.js?v=3');
       appendScript('standardize-zodiac-wheels.js?v=2');
     }
   }
@@ -185,7 +185,7 @@
       return;
     }
 
-    fetch('nav.html?v=7')
+    fetch('nav.html?v=8')
       .then(function (response) {
         if (!response.ok) throw new Error('Could not load nav.html');
         return response.text();
