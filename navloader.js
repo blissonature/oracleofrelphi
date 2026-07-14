@@ -1,5 +1,26 @@
 // Loads shared navigation and initializes the menu after nav.html is present.
 (function () {
+  function initGoogleAnalytics() {
+    const measurementId = 'G-PNWZP2MW64';
+    const isProduction = /(^|\.)oracleofrelphi\.com$/i.test(window.location.hostname);
+    if (!isProduction || document.getElementById('relphi-google-tag')) return;
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function () {
+      window.dataLayer.push(arguments);
+    };
+    window.gtag('js', new Date());
+    window.gtag('config', measurementId);
+
+    const script = document.createElement('script');
+    script.id = 'relphi-google-tag';
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(measurementId);
+    document.head.appendChild(script);
+  }
+
+  initGoogleAnalytics();
+
   const relphiNavCss = `
 .menu-container {
   position: absolute;
@@ -110,6 +131,10 @@
       appendScript('sky-chart-static-dynamic.js?v=2');
       appendScript('sky-chart-aspect-duration-fix.js?v=2');
       appendScript('sky-chart-relationship-language.js?v=1');
+      appendScript('sky-chart-refresh-persistence.js?v=1');
+      appendScript('sky-chart-related-relationships-v2.js?v=2');
+      appendScript('sky-ledger-glyph-alignment.js?v=1');
+      appendScript('sky-ledger-wheel-glyphs.js?v=1');
     }
   }
 
@@ -190,7 +215,7 @@
       return;
     }
 
-    fetch('nav.html?v=13')
+    fetch('nav.html?v=14')
       .then(function (response) {
         if (!response.ok) throw new Error('Could not load nav.html');
         return response.text();
