@@ -18,50 +18,72 @@
 
   function durationSentence(root) {
     const text = root.textContent || '';
-    const match = text.match(/(several hours;[^.]+|several days;[^.]+|one to several weeks;[^.]+|several weeks to a few months;[^.]+|several months;[^.]+|many months;[^.]+)/i);
+    const match = text.match(/(several hours;[^.]+|several days;[^.]+|one to several weeks;[^.]+|several weeks to a few months;[^.]+|several months;[^.]+|many months;[^.]+|days to two weeks)/i);
     if (!match) return '';
-    return 'This influence lasts ' + match[1].replace(/^several /i, 'several ').replace(/;\s*the closest passage/i, ', with the closest passage').replace(/;\s*repeated exact passages/i, ', and repeated exact passages') + '.';
+    if (/^days to two weeks$/i.test(match[1])) return 'This influence lasts days to two weeks.';
+    return 'This influence lasts ' + match[1]
+      .replace(/;\s*the closest passage/i, ', with the closest passage')
+      .replace(/;\s*repeated exact passages/i, ', and repeated exact passages') + '.';
+  }
+
+  function findReadingRoot() {
+    const headings = Array.from(document.querySelectorAll('body *')).filter(function (el) {
+      return /^Relationship reading$/i.test((el.textContent || '').trim());
+    });
+    if (!headings.length) return null;
+    const heading = headings[headings.length - 1];
+    return heading.parentElement || heading;
+  }
+
+  function parseReading(text) {
+    return text.match(/(.+?)(?:'s|’s)\s+(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\s+in\s+([A-Za-z]+)\s+([^\s]+)\s+forms an?\s+(conjunction|opposition|square|trine|sextile|quincunx)\s+with\s+(.+?)(?:'s|’s)\s+(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\s+in\s+([A-Za-z]+)\s+([^\.]+)\./i);
   }
 
   function rewrite(root) {
+    if (!root || root.dataset.relphiRelationshipRewrite === 'done') return;
+    const fullText = (root.textContent || '').replace(/\s+/g, ' ').trim();
+    const match = parseReading(fullText);
+    if (!match) return;
+
+    const leftName = match[1].replace(/^Relationship reading\s*/i, '').trim();
+    const leftPlanet = match[2], leftSign = match[3], leftDegree = match[4];
+    const aspect = match[5].toLowerCase();
+    const rightName = match[6].trim(), rightPlanet = match[7], rightSign = match[8], rightDegree = match[9].trim();
+    const elementMatch = fullText.match(/Shared\s+(fire|earth|air|water)\s+element/i);
+    const orbMatch = fullText.match(/Orb:\s*([^·]+?)\s*·\s*([^\.]+(?:orb)?)/i);
+
+    let sentence = 'Because ' + leftName + "'s " + leftPlanet + ' in ' + leftSign + ' ' + leftDegree + ' forms a ' + aspect + ' to ' + rightName + "'s " + rightPlanet + ' in ' + rightSign + ' ' + rightDegree + ', there is ' + (ASPECT_QUALITY[aspect] || 'a meaningful contact') + ' between ' + (PLANET_MEANING[leftPlanet] || leftPlanet) + ' (' + leftPlanet + ') and ' + (PLANET_MEANING[rightPlanet] || rightPlanet) + ' (' + rightPlanet + ').';
+    if (elementMatch && ELEMENT_FLAVOR[elementMatch[1].toLowerCase()]) sentence += ' ' + ELEMENT_FLAVOR[elementMatch[1].toLowerCase()];
+    const duration = durationSentence(root.closest('article, section, div') || root);
+    if (duration) sentence += ' ' + duration;
+    if (orbMatch) sentence += ' Orb: ' + orbMatch[1].trim() + ' · ' + orbMatch[2].trim().replace(/\s*orb$/i, '') + '.';
+
+    const textNodes = [];
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
-
-    nodes.forEach(function (node) {
-      const value = (node.nodeValue || '').trim();
-      if (!/ forms an? /i.test(value) || !/The contact is/i.test(value)) return;
-
-      const match = value.match(/^(.+?)'s\s+(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\s+in\s+([A-Za-z]+)\s+([^ ]+)\s+forms an?\s+(conjunction|opposition|square|trine|sextile|quincunx)\s+with\s+(.+?)'s\s+(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\s+in\s+([A-Za-z]+)\s+([^\.]+)\./i);
-      if (!match) return;
-
-      const leftName = match[1], leftPlanet = match[2], leftSign = match[3], leftDegree = match[4];
-      const aspect = match[5].toLowerCase();
-      const rightName = match[6], rightPlanet = match[7], rightSign = match[8], rightDegree = match[9].trim();
-      const elementMatch = value.match(/Shared\s+(fire|earth|air|water)\s+element/i);
-      const orbMatch = value.match(/Orb:\s*([^\.]+(?:\.[^\s]+)?)(?:\s*·\s*([^\.]+))?/i);
-
-      let sentence = 'Because ' + leftName + "'s " + leftPlanet + ' in ' + leftSign + ' ' + leftDegree + ' forms a ' + aspect + ' to ' + rightName + "'s " + rightPlanet + ' in ' + rightSign + ' ' + rightDegree + ', there is ' + (ASPECT_QUALITY[aspect] || 'a meaningful contact') + ' between ' + (PLANET_MEANING[leftPlanet] || leftPlanet) + ' (' + leftPlanet + ') and ' + (PLANET_MEANING[rightPlanet] || rightPlanet) + ' (' + rightPlanet + ').';
-      if (elementMatch && ELEMENT_FLAVOR[elementMatch[1].toLowerCase()]) sentence += ' ' + ELEMENT_FLAVOR[elementMatch[1].toLowerCase()];
-      const duration = durationSentence(root);
-      if (duration) sentence += ' ' + duration;
-      if (orbMatch) sentence += ' Orb: ' + orbMatch[1].trim() + (orbMatch[2] ? ' · ' + orbMatch[2].trim() : '') + '.';
-
-      node.nodeValue = sentence;
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+    const firstSentenceNode = textNodes.find(function (node) {
+      return /forms an?\s+(conjunction|opposition|square|trine|sextile|quincunx)/i.test(node.nodeValue || '');
     });
+    if (!firstSentenceNode) return;
+
+    firstSentenceNode.nodeValue = sentence;
+    textNodes.forEach(function (node) {
+      if (node === firstSentenceNode) return;
+      if (/The contact is|Shared\s+(fire|earth|air|water)\s+element|Shared\s+(cardinal|fixed|mutable)\s+modality|Orb:/i.test(node.nodeValue || '')) node.nodeValue = '';
+    });
+    root.dataset.relphiRelationshipRewrite = 'done';
   }
 
   function run() {
-    document.querySelectorAll('body *').forEach(function (el) {
-      const text = el.textContent || '';
-      if (/RELATIONSHIP READING/i.test(text)) rewrite(el);
-    });
+    rewrite(findReadingRoot());
   }
 
   function start() {
     run();
     let queued = false;
     new MutationObserver(function () {
+      const root = findReadingRoot();
+      if (root) delete root.dataset.relphiRelationshipRewrite;
       if (queued) return;
       queued = true;
       requestAnimationFrame(function () { queued = false; run(); });
