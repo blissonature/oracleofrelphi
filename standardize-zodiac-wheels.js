@@ -5,13 +5,6 @@
   const path = location.pathname;
   if (!/(^|\/)(planetaryhours|tarot)\.html$/.test(path)) return;
 
-  function loadGlyphBubbleTreatment() {
-    if (document.querySelector('script[src^="relphi-glyph-bubbles.js"]')) return;
-    const script = document.createElement('script');
-    script.src = 'relphi-glyph-bubbles.js?v=1';
-    document.body.appendChild(script);
-  }
-
   const PLANETS = {
     '☉':'sun','⊙':'sun','☽':'moon','☾':'moon','☿':'mercury','♀':'venus','♂':'mars',
     '♃':'jupiter','♄':'saturn','♅':'uranus','⛢':'uranus','♆':'neptune','♇':'pluto','⯓':'pluto',
@@ -114,7 +107,6 @@
   }
 
   function start() {
-    loadGlyphBubbleTreatment();
     run(document);
     let queued = false;
     new MutationObserver(function () {
