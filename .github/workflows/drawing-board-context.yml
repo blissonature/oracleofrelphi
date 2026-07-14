@@ -14,20 +14,12 @@ jobs:
       - name: Fetch repository quietly
         shell: bash
         run: git clone -q --depth 1 "https://github.com/${GITHUB_REPOSITORY}.git" repo
-      - name: Print Drawing Board function index
+      - name: Print Drawing Board snapshot source
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
           lines = Path('repo/tarot-app.js').read_text(encoding='latin1').splitlines()
-          board_terms = ('shortList', 'Board', 'CardRow', 'cardRow', 'rowCard', 'rowEnvelope', 'rowSense', 'rowTable', 'drawing')
-          for i, line in enumerate(lines, 1):
-              stripped = line.strip()
-              is_function = re.match(r'(?:async\s+)?function\s+[A-Za-z0-9_]+', stripped)
-              is_exposure = 'window.' in line and any(term in line for term in board_terms)
-              is_storage = ('localStorage' in line or 'sessionStorage' in line) and any(term in line for term in board_terms)
-              is_binding = ('addEventListener' in line or '.onclick' in line) and any(term in line for term in board_terms)
-              if ((is_function and any(term in line for term in board_terms)) or is_exposure or is_storage or is_binding):
-                  print(f'{i:05d}: {line}')
+          for n in range(900, 961):
+              print(f'{n:05d}: {lines[n-1]}')
           PY
