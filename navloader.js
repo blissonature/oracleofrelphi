@@ -125,8 +125,8 @@
   function loadPageEnhancements() {
     if (/(^|\/)planetaryhours\.html$/.test(window.location.pathname)) {
       appendScript('planetary-hours-location-prompt.js?v=4');
-      appendScript('standardize-zodiac-wheels.js?v=3');
-      appendScript('relphi-glyph-bubbles.js?v=1');
+      appendScript('standardize-zodiac-wheels.js?v=4');
+      appendScript('relphi-glyph-bubbles.js?v=2');
     }
     if (/(^|\/)sky-chart\.html$/.test(window.location.pathname)) {
       appendScript('sky-chart-static-dynamic.js?v=2');
@@ -136,7 +136,7 @@
       appendScript('sky-chart-related-relationships-v2.js?v=2');
       appendScript('sky-ledger-glyph-alignment.js?v=1');
       appendScript('sky-ledger-wheel-glyphs.js?v=2');
-      appendScript('relphi-glyph-bubbles.js?v=1');
+      appendScript('relphi-glyph-bubbles.js?v=2');
     }
   }
 
