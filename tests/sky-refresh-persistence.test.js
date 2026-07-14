@@ -32,12 +32,15 @@ const elements = {
   skyCreatorName: new FakeElement('skyCreatorName'),
   skyCreatorNotes: new FakeElement('skyCreatorNotes'),
   skyCreatorPaste: new FakeElement('skyCreatorPaste'),
+  skyMotionMode: new FakeElement('skyMotionMode', 'static'),
   skyCreatorLibrary: new FakeElement('skyCreatorLibrary'),
   skyWizardComparePanel: new FakeElement('skyWizardComparePanel'),
   skyWizardCompareButton: new FakeElement('skyWizardCompareButton'),
   chartOutput: new FakeElement('chartOutput'),
-  currentSkyOutput: new FakeElement('currentSkyOutput')
+  currentSkyOutput: new FakeElement('currentSkyOutput'),
+  chartPanel: new FakeElement('chartPanel')
 };
+elements.chartPanel.dataset.skyChartMode = 'compare';
 elements.skyWizardComparePanel.hidden = true;
 elements.skyCreatorPaste.dataset.skyKind = 'chart';
 
@@ -45,10 +48,11 @@ const storage = new Map();
 storage.set('relphiSkyChartSessionV1', JSON.stringify({
   skies: {
     chart: { name:'Sky A', notes:'', paste:'Sun,Aries,1,0', form:[] },
-    currentSky: { name:'Sky B', notes:'', paste:'Moon,Taurus,2,0', form:[] }
+    currentSky: { name:'Sky B', notes:'', paste:'Moon,Taurus,2,0', motionMode:'dynamic', form:[] }
   },
   activeTarget: 'chart',
-  compareOpen: true
+  compareOpen: true,
+  chartMode: 'compare'
 }));
 
 const windowListeners = {};
@@ -56,6 +60,10 @@ const documentListeners = {};
 const document = {
   visibilityState: 'visible',
   getElementById(id) { return elements[id] || null; },
+  querySelector(selector) {
+    if (selector === '[data-sky-chart-mode="compare"]') return { click() { elements.chartPanel.dataset.skyChartMode = 'compare'; } };
+    return null;
+  },
   querySelectorAll() { return []; },
   addEventListener(type, listener) { (documentListeners[type] ||= []).push(listener); }
 };
@@ -92,6 +100,8 @@ setTimeout(() => {
   (windowListeners.pagehide || []).forEach(listener => listener());
   const saved = JSON.parse(storage.get('relphiSkyChartSessionV1'));
   assert.equal(saved.skies.chart.paste, 'Sun,Leo,5,0', 'pagehide flushes the active sky for Safari/iPhone refreshes');
-  assert.equal(saved.version, 2);
+  assert.equal(saved.version, 3);
+  assert.equal(saved.skies.currentSky.motionMode, 'dynamic', 'Sky B Static/Dynamic choice survives refresh');
+  assert.equal(saved.chartMode, 'compare', 'comparison language survives refresh');
   console.log('sky refresh persistence tests passed');
 }, 2100);

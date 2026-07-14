@@ -31,6 +31,7 @@
       name: byId('skyCreatorName')?.value || '',
       notes: byId('skyCreatorNotes')?.value || '',
       paste: byId('skyCreatorPaste')?.value || '',
+      motionMode: byId('skyMotionMode')?.value || 'static',
       libraryValue: byId('skyCreatorLibrary')?.value || '',
       libraryLabel: byId('skyCreatorLibrary')?.selectedOptions?.[0]?.textContent?.trim() || '',
       form: readFormSnapshot(),
@@ -58,7 +59,8 @@
     session.skies[target] = readTargetSnapshot(target);
     session.activeTarget = target;
     session.compareOpen = !byId('skyWizardComparePanel')?.hidden;
-    session.version = 2;
+    session.chartMode = byId('chartPanel')?.dataset?.skyChartMode || session.chartMode || 'single';
+    session.version = 3;
     writeSession(session);
   }
 
@@ -96,6 +98,7 @@
     applyField('skyCreatorName', snapshot.name || '');
     applyField('skyCreatorNotes', snapshot.notes || '');
     applyField('skyCreatorPaste', snapshot.paste || '');
+    applyField('skyMotionMode', snapshot.motionMode || 'static');
     (snapshot.form || []).forEach(function (item) {
       const el = byId(item.id);
       if (!el) return;
@@ -133,6 +136,10 @@
 
     const compareButton = byId('skyWizardCompareButton');
     if (session.skies.currentSky && compareButton && byId('skyWizardComparePanel')?.hidden) compareButton.click();
+    if (session.skies.currentSky) {
+      const mode = ['transit','synastry','compare'].includes(session.chartMode) ? session.chartMode : 'compare';
+      document.querySelector?.(`[data-sky-chart-mode="${mode}"]`)?.click();
+    }
 
     restoreTarget('chart', session.skies.chart, function () {
       restoreTarget('currentSky', session.skies.currentSky, function () {

@@ -309,7 +309,7 @@
   }
 
   const state = {
-    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: false, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, rowSenseSelections: {}, rowSenseNotes: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#fffaf0', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
+    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: false, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, rowSenseSelections: {}, rowSenseNotes: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#fffaf0', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, skyWizardPath: { chart:'', currentSky:'' }, skyWizardEditing: { chart:false, currentSky:false }, skyWizardCompareRequested:false, skyMotionMode: { chart:'static', currentSky:'static' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
   };
 
   function escapeHtml(value) {
@@ -4236,7 +4236,12 @@
   }
   function setSkyBuilderUiMode(mode) {
     state.skyBuilderUiMode = mode === 'advanced' ? 'advanced' : 'wizard';
+    if (state.skyBuilderUiMode === 'advanced') {
+      closeSkyWizardInline('chart');
+      closeSkyWizardInline('currentSky');
+    }
     updateSkyBuilderUiMode();
+    updateSkyWizardTargets();
   }
   function skyEntrySourceForButton(btn) {
     if (!btn) return '';
@@ -4254,6 +4259,12 @@
     state.skyEntryMethod = { chart:'', currentSky:'', ...(state.skyEntryMethod || {}) };
     state.skyEntrySource[targetKind] = source;
     state.skyEntryMethod[targetKind] = source;
+    if (source && skyPlacementCount(targetKind) > 0) {
+      state.skyWizardPath = { chart:'', currentSky:'', ...(state.skyWizardPath || {}) };
+      state.skyWizardEditing = { chart:false, currentSky:false, ...(state.skyWizardEditing || {}) };
+      state.skyWizardPath[targetKind] = source === 'here-now' ? 'here-now' : (['paste','manual','stored'].includes(source) ? 'existing' : 'there-then');
+      state.skyWizardEditing[targetKind] = false;
+    }
     state.skyLibrarySelection = { chart:'', currentSky:'', ...(state.skyLibrarySelection || {}) };
     if (source && source !== 'stored' && source !== 'calculated') state.skyLibrarySelection[targetKind] = '';
     updateSkyEntryActionUi();
@@ -4327,19 +4338,68 @@
   function isGeneratedSkyCalculationNote(note = '') {
     return /^Calculated with Astronomy Engine\b/i.test(String(note || '').trim());
   }
+  function skyWizardPathLabel(kind = 'chart') {
+    const path = state.skyWizardPath?.[kind] || '';
+    if (path === 'here-now') return 'Here and Now';
+    if (path === 'there-then') return 'There and Then';
+    if (path === 'existing') return 'Enter an Existing Sky';
+    const source = state.skyEntrySource?.[kind] || state.skyEntryMethod?.[kind] || '';
+    if (source === 'here-now') return 'Here and Now';
+    if (source === 'calculated' || source === 'planetary-hours') return 'There and Then';
+    if (['paste','manual','stored'].includes(source)) return 'Enter an Existing Sky';
+    return 'Choose Where and When';
+  }
   function skyWizardLoadedHeading(kind = 'chart') {
-    const meta = skyFields(kind);
-    const name = String(state[meta.nameKey] || '').trim();
+    return skyWizardPathLabel(kind);
+  }
+  function setSkyWizardPath(kind = 'chart', path = '') {
+    const targetKind = kind === 'currentSky' ? 'currentSky' : 'chart';
+    state.skyWizardPath = { chart:'', currentSky:'', ...(state.skyWizardPath || {}) };
+    state.skyWizardEditing = { chart:false, currentSky:false, ...(state.skyWizardEditing || {}) };
+    state.skyWizardPath[targetKind] = ['here-now','there-then','existing'].includes(path) ? path : '';
+    state.skyWizardEditing[targetKind] = true;
+    updateSkyWizardTargets();
+  }
+  function skyWizardSummaryText(kind = 'chart') {
+    const profile = currentSkyCalcProfile(kind);
     const count = skyPlacementCount(kind);
-    if (!count) return kind === 'currentSky' ? 'Comparison sky' : 'Here and Now';
-    if (/^here and now$/i.test(name)) return 'Here and Now';
-    return name || (kind === 'currentSky' ? 'Comparison sky' : 'First sky');
+    const parts = [skyWizardPathLabel(kind)];
+    if (profile.dateTime) parts.push(String(profile.dateTime).replace('T', ' at '));
+    if (profile.location) parts.push(profile.location);
+    if (profile.timeZone) parts.push(profile.timeZone);
+    if (profile.houseSystem) parts.push(skyHouseSystemLabel(profile.houseSystem));
+    parts.push(state.skyMotionMode?.[kind] === 'dynamic' ? 'Dynamic' : 'Static');
+    parts.push(`${count} placement${count === 1 ? '' : 's'}`);
+    return parts.filter(Boolean).join(' · ');
+  }
+  function updateSkyWizardProgress(kind = 'chart') {
+    const isB = kind === 'currentSky';
+    const ready = skyPlacementCount(kind) > 0 && !state.skyWizardEditing?.[kind];
+    const complete = $(isB ? 'skyWizardCompareComplete' : 'skyWizardPrimaryComplete');
+    const title = $(isB ? 'skyWizardCompareCompleteTitle' : 'skyWizardPrimaryCompleteTitle');
+    const text = $(isB ? 'skyWizardCompareCompleteText' : 'skyWizardPrimaryCompleteText');
+    const paths = document.querySelector(`[data-sky-wizard-paths="${kind}"]`);
+    if (complete) complete.hidden = !ready;
+    if (ready && skyWizardInlineActive?.[kind]) closeSkyWizardInline(kind);
+    if (title) {
+      const meta = skyFields(kind);
+      title.textContent = state[meta.nameKey] || (isB ? 'Sky B' : 'Sky A');
+    }
+    if (text) text.textContent = skyWizardSummaryText(kind);
+    if (paths) paths.hidden = ready;
+    qsa(`[data-sky-path-panel][data-sky-entry-kind="${kind}"]`).forEach(panel => {
+      panel.hidden = ready || panel.dataset.skyPathPanel !== (state.skyWizardPath?.[kind] || '');
+    });
   }
   function skyWizardLoadedHelp(kind = 'chart') {
     const count = skyPlacementCount(kind);
-    if (!count) return kind === 'currentSky'
-      ? 'Choose how to enter the second sky.'
-      : 'Use the current place and time, or choose another where and when.';
+    if (!count) {
+      const path = state.skyWizardPath?.[kind] || '';
+      if (path === 'here-now') return 'Create the sky for the current moment using the shared saved location, or establish one now.';
+      if (path === 'there-then') return 'Choose the moment whose sky you want to calculate.';
+      if (path === 'existing') return 'Choose how to enter or retrieve the placements you already have.';
+      return kind === 'currentSky' ? 'Choose where and when for the comparison sky.' : 'Choose the moment whose sky you want to create.';
+    }
     const source = state.skyEntrySource?.[kind] || '';
     if (source === 'stored') return 'Loaded from your stored skies. Choose another entry method to inspect or revise it.';
     if (source === 'here-now') return 'Using the current place and time.';
@@ -4385,25 +4445,40 @@
     if (aHelp) aHelp.textContent = skyWizardLoadedHelp('chart');
     updateSkyWizardCalculationDetails('chart');
     updateSkyWizardCalculationDetails('currentSky');
+    const hasA = skyPlacementCount('chart') > 0;
     const hasB = skyPlacementCount('currentSky') > 0;
+    updateSkyWizardProgress('chart');
+    updateSkyWizardProgress('currentSky');
+    const compareStep = $('skyWizardCompareStep');
+    if (compareStep) compareStep.hidden = !hasA;
     const comparePanel = $('skyWizardComparePanel');
-    if (comparePanel) comparePanel.hidden = !needsB;
+    if (comparePanel) comparePanel.hidden = !state.skyWizardCompareRequested;
+    const secondaryEntry = document.querySelector('.sky-wizard-entry-card-secondary');
+    if (secondaryEntry) secondaryEntry.hidden = !needsB;
     const compareBtn = $('skyWizardCompareButton');
     if (compareBtn) {
-      compareBtn.textContent = hasB ? 'Comparison sky added' : (needsB ? 'Choose comparison sky' : 'Compare to another sky');
+      compareBtn.textContent = hasB ? 'Comparison sky added' : 'Add comparison sky';
       compareBtn.classList.toggle('is-selected', hasB);
       compareBtn.setAttribute('aria-pressed', hasB ? 'true' : 'false');
-      compareBtn.setAttribute('aria-expanded', needsB ? 'true' : 'false');
+      compareBtn.setAttribute('aria-expanded', state.skyWizardCompareRequested ? 'true' : 'false');
     }
+    qsa('[data-sky-wizard-target]').forEach(btn => {
+      const isB = btn.dataset.skyWizardTarget === 'currentSky';
+      const active = (isB ? 'currentSky' : 'chart') === skyCreatorKind();
+      btn.disabled = isB && !needsB;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
     const readHelp = $('skyWizardReadHelp');
     if (readHelp) {
       readHelp.textContent = needsB
         ? `${skyRelationshipTitle()} will be generated after the second sky has placements.`
-        : 'The wheel appears as soon as the first sky has placements. Use Compare to another sky when you need relationships.';
+        : 'The wheel appears as soon as the first sky has placements. Use Add comparison sky when you need relationships.';
     }
     updateSkyEntryActionUi();
   }
   function ensureSecondSkyMode(mode = 'transit') {
+    state.skyWizardCompareRequested = true;
     if (!skyChartNeedsB()) setSkyChartMode(mode, { skipRender:true });
     const panel = $('skyWizardComparePanel');
     if (panel) panel.hidden = false;
@@ -4498,6 +4573,12 @@
     body.replaceChildren();
     body.appendChild(item.node);
     item.node.hidden = false;
+    if (section === 'calc') {
+      const parts = String($('skyCalcDateTime')?.value || '').split('T');
+      if ($('skyWizardDate')) $('skyWizardDate').value = parts[0] || '';
+      if ($('skyWizardTime')) $('skyWizardTime').value = (parts[1] || '').slice(0, 5);
+      updateSkyLocationConfirmation(readSkyCalcInputs());
+    }
     if ('open' in item.node) item.node.open = true;
     item.node.setAttribute?.('open', '');
     panel.hidden = false;
@@ -4581,7 +4662,7 @@
     document.querySelector('.sky-calc-drawer')?.removeAttribute('open');
   }
   function skyCreatorKind() { if (!skyChartNeedsB()) return 'chart'; return $('skyCreatorTarget')?.value || state.skyCreatorTarget || 'chart'; }
-  function setSkyCreatorKind(kind) { state.skyCreatorTarget = (kind === 'currentSky' && skyChartNeedsB()) ? 'currentSky' : 'chart'; const sel = $('skyCreatorTarget'); if (sel) sel.value = state.skyCreatorTarget; const calc = $('skyCalcTarget'); if (calc) calc.value = state.skyCreatorTarget; updateSkyChartModeUi(); }
+  function setSkyCreatorKind(kind) { state.skyCreatorTarget = (kind === 'currentSky' && skyChartNeedsB()) ? 'currentSky' : 'chart'; const sel = $('skyCreatorTarget'); if (sel) sel.value = state.skyCreatorTarget; const calc = $('skyCalcTarget'); if (calc) calc.value = state.skyCreatorTarget; const motion = $('skyMotionMode'); if (motion) motion.value = state.skyMotionMode?.[state.skyCreatorTarget] || 'static'; updateSkyChartModeUi(); }
   function actualPlacementKind(kind) { return kind === 'skyCreator' ? skyCreatorKind() : kind; }
   function resetSkyCreatorBuilder() { const form = $('skyCreatorForm'); if (form) { delete form.dataset.compactReady; form.innerHTML = ''; } }
   function openChart() { collapseCardRow(); state.mode = 'chart'; showPanel('chartPanel'); setVisible('currentSkyPanel', false); updateSummary([]); hideCommandMenu(); renderSkyCreator(); renderChart(); renderCurrentSky(); pushHistory(); }
@@ -7093,7 +7174,7 @@ ${notes || ''}`;
   function applySharedLocationToSkyInputs() {
     const profile = sharedLocationProfile();
     if (!profile || !hasCompleteSharedLocation(profile)) {
-      updateSkySharedLocationStatus('No saved location. Use my location or choose manually.');
+      updateSkySharedLocationStatus('No saved location. Detect your location automatically or add one manually.');
       return false;
     }
     const values = { skyCalcLatitude:profile.latitude, skyCalcLongitude:profile.longitude, skyCalcLocation:profile.location, skyCalcTimeZone:profile.timeZone };
@@ -7122,7 +7203,7 @@ ${notes || ''}`;
   function applyPlanetaryHoursWhereWhenSettings() {
     const profile = readPlanetaryHoursWhereWhenSettings();
     if (!profile || !hasCompleteSharedLocation(profile)) {
-      skyCalcStatus('No complete shared location is saved yet. Use my location or choose a location manually.', true);
+      skyCalcStatus('No complete shared location is saved yet. Detect your location automatically or add a location manually.', true);
       return false;
     }
     writeSkyCalcInputs(profile, { force:true });
@@ -7240,29 +7321,61 @@ ${notes || ''}`;
     maybeRememberSkyCalcProfile();
     return meaningfulSkyCalcProfile(readSkyCalcInputs());
   }
+  async function applySkyLocationSearchResult(result) {
+    if (!result) return null;
+    const token = window.RelphiLocation.beginSelection();
+    if ($('skyCalcLatitude')) $('skyCalcLatitude').value = Number(result.lat).toFixed(4);
+    if ($('skyCalcLongitude')) $('skyCalcLongitude').value = Number(result.lon).toFixed(4);
+    if ($('skyCalcLocation')) $('skyCalcLocation').value = result.display_name || '';
+    const profile = await enrichSkyCalcFromCoordinates({ forceTimeZone:true, reverseLocation:false, selectionToken:token });
+    if (!window.RelphiLocation.isCurrent(token)) return null;
+    saveSharedLocationFromSky('manual', token);
+    updateSkyLocationConfirmation(profile);
+    const list = $('skyCalcLocationResults');
+    if (list) { list.hidden = true; list.replaceChildren(); }
+    skyCalcStatus('Selected location: ' + (result.display_name || '') + (profile.timeZone ? '; time zone resolved as ' + profile.timeZone + '.' : '.'));
+    return profile;
+  }
   async function searchSkyCalcLocation() {
     const query = $('skyCalcLocation')?.value?.trim() || $('skyCalcName')?.value?.trim() || '';
-    if (!query) { skyCalcStatus('Type a location label first, then search.', true); return; }
+    if (!query) { skyCalcStatus('Type a city, address, or place first, then search.', true); return null; }
     const token = window.RelphiLocation.beginSelection();
     try {
       skyCalcStatus('Searching for ' + query + '...');
-      const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query);
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(query);
       const response = await fetch(url, { headers: { 'Accept':'application/json' } });
       if (!response.ok) throw new Error('Location search failed with status ' + response.status + '.');
       const results = await response.json();
-      if (!window.RelphiLocation.isCurrent(token)) return;
-      const first = Array.isArray(results) ? results[0] : null;
-      if (!first) throw new Error('No location match found. Try a more specific place name.');
-      if ($('skyCalcLatitude')) $('skyCalcLatitude').value = Number(first.lat).toFixed(4);
-      if ($('skyCalcLongitude')) $('skyCalcLongitude').value = Number(first.lon).toFixed(4);
-      if ($('skyCalcLocation')) $('skyCalcLocation').value = first.display_name || query;
-      const profile = await enrichSkyCalcFromCoordinates({ forceTimeZone:true, reverseLocation:false, selectionToken:token });
-      if (!window.RelphiLocation.isCurrent(token)) return;
-      saveSharedLocationFromSky('manual', token);
-      skyCalcStatus('Location found: ' + first.display_name + (profile.timeZone ? '; time zone resolved as ' + profile.timeZone + '.' : '.'));
+      if (!window.RelphiLocation.isCurrent(token)) return null;
+      if (!Array.isArray(results) || !results.length) throw new Error('No location match found. Try a more specific place name.');
+      const list = $('skyCalcLocationResults');
+      if (list) {
+        list.replaceChildren();
+        results.forEach(result => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = result.display_name || query;
+          button.addEventListener('click', () => applySkyLocationSearchResult(result));
+          list.appendChild(button);
+        });
+        list.hidden = false;
+      }
+      skyCalcStatus('Choose a location from the search results.');
+      return results;
     } catch (error) {
       skyCalcStatus(error?.message || 'Could not search that location.', true);
+      return null;
     }
+  }
+  function updateSkyLocationConfirmation(profile = readSkyCalcInputs()) {
+    const box = $('skyCalcLocationConfirmation');
+    const name = $('skyCalcLocationConfirmationName');
+    const zone = $('skyCalcLocationConfirmationZone');
+    const location = String(profile?.location || $('skyCalcLocation')?.value || '').trim();
+    const timeZone = String(profile?.timeZone || $('skyCalcTimeZone')?.value || '').trim();
+    if (box) box.hidden = !(location && timeZone);
+    if (name) name.textContent = location;
+    if (zone) zone.textContent = timeZone;
   }
   async function captureSkyCalcLocation() {
     const token = window.RelphiLocation.beginSelection();
@@ -7277,6 +7390,7 @@ ${notes || ''}`;
       if (!window.RelphiLocation.isCurrent(token)) return false;
       if (!saveSharedLocationFromSky('geolocation', token)) throw new Error('Coordinates were received, but a complete location and time zone could not be established.');
       maybeRememberSkyCalcProfile();
+      updateSkyLocationConfirmation(profile);
       skyCalcStatus('Location captured' + (profile.location ? ': ' + profile.location : '') + '. Time zone: ' + profile.timeZone + '. Review, then calculate the sky.');
       return true;
     } catch (error) {
@@ -7503,7 +7617,12 @@ ${notes || ''}`;
       }
       renderSkyCreator();
       renderChart();
-      setSkyEntrySource(target, consumeSkyPendingEntrySource(target, 'calculated'));
+      const completedSource = consumeSkyPendingEntrySource(target, 'calculated');
+      setSkyEntrySource(target, completedSource);
+      state.skyWizardPath = { chart:'', currentSky:'', ...(state.skyWizardPath || {}) };
+      state.skyWizardEditing = { chart:false, currentSky:false, ...(state.skyWizardEditing || {}) };
+      state.skyWizardPath[target] = completedSource === 'here-now' ? 'here-now' : (['paste','manual','stored'].includes(completedSource) ? 'existing' : 'there-then');
+      state.skyWizardEditing[target] = false;
       updateSkyCreatorDeleteStoredButton();
       skyCalcStatus(`Calculated ${skyCreatorLabel(target)} for ${timestampLabelInZone(date, profile.timeZone)} at ${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)}${profile.timeZone ? ` (${profile.timeZone})` : ''}. Stored Rising, Midheaven, ${skyHouseSystemLabel(houseSystem)} houses, and planetary retrograde/station states. ${risingLabel}.${selectedStoredRecordId ? ' The loaded stored sky was updated.' : ''}`);
       return true;
@@ -7520,9 +7639,14 @@ ${notes || ''}`;
     state.skyCalcActiveTarget = initialKind === 'currentSky' ? 'currentSky' : 'chart';
     hydrateSkyCalculationPanel(state.skyCalcActiveTarget, { force:true });
     applySharedLocationToSkyInputs();
-    $('skySharedUseLocation')?.addEventListener('click', captureSkyCalcLocation);
-    $('skySharedChooseManual')?.addEventListener('click', () => showSkyManualLocation('Choose a place or enter coordinates and a time zone.'));
+    qsa('[data-detect-location]').forEach(btn => btn.addEventListener('click', async event => {
+      event.preventDefault();
+      const kind = prepareSkyEntryAction(btn);
+      setSkyWizardPath(kind, 'here-now');
+      if (await captureSkyCalcLocation()) await setHereAndNowForSky(kind);
+    }));
     $('skyCalcGeo')?.addEventListener('click', captureSkyCalcLocation);
+    $('skyWizardCalcDetect')?.addEventListener('click', captureSkyCalcLocation);
     ['skyCalcLatitude','skyCalcLongitude','skyCalcLocation','skyCalcTimeZone'].forEach(id => $(id)?.addEventListener('change', () => { window.RelphiLocation.beginSelection(); saveSharedLocationFromSky('manual'); }));
     $('skyCalcTarget')?.addEventListener('change', () => {
       switchSkyCalculationTarget(skyCalcTargetKind());
@@ -7554,6 +7678,31 @@ ${notes || ''}`;
       }
     });
     $('skyCalcSearchLocation')?.addEventListener('click', searchSkyCalcLocation);
+    const syncWizardDateTime = () => {
+      const date = $('skyWizardDate')?.value || '';
+      const time = $('skyWizardTime')?.value || '';
+      if (dateEl && date && time) dateEl.value = date + 'T' + time;
+      maybeRememberSkyCalcProfile();
+    };
+    ['skyWizardDate','skyWizardTime'].forEach(id => $(id)?.addEventListener('change', syncWizardDateTime));
+    const syncWizardDateTimeFromAdvanced = () => {
+      const parts = String(dateEl?.value || '').split('T');
+      if ($('skyWizardDate')) $('skyWizardDate').value = parts[0] || '';
+      if ($('skyWizardTime')) $('skyWizardTime').value = (parts[1] || '').slice(0, 5);
+    };
+    dateEl?.addEventListener('change', syncWizardDateTimeFromAdvanced);
+    syncWizardDateTimeFromAdvanced();
+    $('skyCalcCoordinateToggle')?.addEventListener('click', event => {
+      const open = event.currentTarget.getAttribute('aria-expanded') !== 'true';
+      event.currentTarget.setAttribute('aria-expanded', open ? 'true' : 'false');
+      document.querySelector('.sky-coordinate-grid')?.classList.toggle('is-open', open);
+      $('skyCalcResolveCoords')?.classList.toggle('is-open', open);
+    });
+    $('skyWizardCalculationOptions')?.addEventListener('click', event => {
+      const open = event.currentTarget.getAttribute('aria-expanded') !== 'true';
+      event.currentTarget.setAttribute('aria-expanded', open ? 'true' : 'false');
+      document.querySelector('.sky-calc-setup')?.classList.toggle('show-wizard-options', open);
+    });
     $('skyCalcResolveCoords')?.addEventListener('click', () => {
       const token = window.RelphiLocation.beginSelection();
       enrichSkyCalcFromCoordinates({ forceLocation:true, forceTimeZone:true, selectionToken:token }).then(profile => {
@@ -8255,6 +8404,7 @@ ${notes || ''}`;
       placements: cloneSkySlotValue(state[f.stateKey] || {}),
       name: state[f.nameKey] || '',
       notes: state[f.notesKey] || '',
+      motionMode: state.skyMotionMode?.[targetKind] || 'static',
       calcProfile: cloneSkySlotValue(currentSkyCalcProfile(targetKind))
     };
   }
@@ -8265,6 +8415,8 @@ ${notes || ''}`;
     state[f.stateKey] = cloneSkySlotValue(snapshot.placements || {});
     state[f.nameKey] = String(snapshot.name || '');
     state[f.notesKey] = String(snapshot.notes || '');
+    state.skyMotionMode = { chart:'static', currentSky:'static', ...(state.skyMotionMode || {}) };
+    state.skyMotionMode[targetKind] = snapshot.motionMode === 'dynamic' ? 'dynamic' : 'static';
     setSkyCalcProfile(targetKind, cloneSkySlotValue(snapshot.calcProfile || {}));
   }
   function getSkyLibrary() {
@@ -8890,8 +9042,38 @@ ${notes || ''}`;
       setSkyChartMode(btn.dataset.skyChartMode);
       if (skyChartNeedsB()) setSkyCreatorKind('currentSky');
     }));
-    $('skyWizardCompareButton')?.addEventListener('click', () => ensureSecondSkyMode('transit'));
+    $('skyWizardCompareButton')?.addEventListener('click', () => {
+      state.skyWizardCompareRequested = true;
+      updateSkyWizardTargets();
+    });
+    $('skyWizardContinueSingle')?.addEventListener('click', () => {
+      state.skyWizardCompareRequested = false;
+      if (skyChartNeedsB()) setSkyChartMode('single');
+      updateSkyWizardTargets();
+      $('chartOutput')?.scrollIntoView?.({ block:'start', behavior:'smooth' });
+    });
     qsa('[data-sky-builder-ui]').forEach(btn => btn.addEventListener('click', () => setSkyBuilderUiMode(btn.dataset.skyBuilderUi)));
+    qsa('[data-sky-path]').forEach(btn => btn.addEventListener('click', () => {
+      const kind = btn.dataset.skyEntryKind === 'currentSky' ? 'currentSky' : 'chart';
+      const path = btn.dataset.skyPath || '';
+      setSkyWizardPath(kind, path);
+      if (path === 'here-now') {
+        const saved = readPlanetaryHoursWhereWhenSettings() || {};
+        if (hasCompleteSharedLocation(saved)) {
+          setSkyEntryMethod(kind, 'here-now');
+          setHereAndNowForSky(kind);
+        }
+      } else if (path === 'there-then') {
+        const opener = document.querySelector(`[data-sky-path-panel="there-then"][data-sky-entry-kind="${kind}"] [data-open-sky-calc]`);
+        opener?.click();
+      }
+    }));
+    qsa('[data-change-sky]').forEach(btn => btn.addEventListener('click', () => {
+      const kind = btn.dataset.changeSky === 'currentSky' ? 'currentSky' : 'chart';
+      state.skyWizardEditing = { chart:false, currentSky:false, ...(state.skyWizardEditing || {}) };
+      state.skyWizardEditing[kind] = true;
+      updateSkyWizardTargets();
+    }));
     qsa('[data-sky-wizard-target]').forEach(btn => btn.addEventListener('click', () => { if (!btn.disabled) { setSkyCreatorKind(btn.dataset.skyWizardTarget); if (typeof switchSkyCalculationTarget === 'function') switchSkyCalculationTarget(state.skyCreatorTarget); } }));
     qsa('[data-close-sky-inline]').forEach(btn => btn.addEventListener('click', () => closeSkyWizardInline(btn.dataset.closeSkyInline)));
     $('skyCreatorSaveWizard')?.addEventListener('click', saveSkyCreator);
@@ -8900,6 +9082,12 @@ ${notes || ''}`;
     if (target) target.addEventListener('change', () => {
       if ($('skyCalcTarget') && typeof switchSkyCalculationTarget === 'function') switchSkyCalculationTarget(target.value);
       else switchSkyCreatorTarget(target.value);
+    });
+    $('skyMotionMode')?.addEventListener('change', event => {
+      const kind = skyCreatorKind();
+      state.skyMotionMode = { chart:'static', currentSky:'static', ...(state.skyMotionMode || {}) };
+      state.skyMotionMode[kind] = event.currentTarget.value === 'dynamic' ? 'dynamic' : 'static';
+      updateSkyWizardTargets();
     });
     const nameEl = $('skyCreatorName');
     if (nameEl) {
