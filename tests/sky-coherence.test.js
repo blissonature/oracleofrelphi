@@ -36,8 +36,9 @@ assert.match(css, /relationship-sky-label[^}]*width: max-content/s);
 assert.match(css, /relationship-sky-label[^}]*height: 1\.75rem/s);
 assert.match(css, /@media \(max-width: 640px\)[\s\S]*min-height: 0 !important/);
 
-assert.match(glyphs, /relphiWheelGlyphPending/);
-assert.match(glyphs, /validPosition/);
-assert.match(glyphs, /querySelectorAll\(':scope > \.relphi-wheel-planet-glyph'\)/);
-assert.match(glyphs, /group\.remove\(\)/);
+assert.match(glyphs, /Stable fallback for Sky Chart wheel glyphs/);
+assert.match(glyphs, /querySelectorAll\('\.relphi-wheel-planet-glyph'\)/);
+assert.match(glyphs, /removeAttribute\('visibility'\)/);
+assert.match(glyphs, /RelphiWheelGlyphFallback/);
+assert.doesNotMatch(glyphs, /fetch\('assets\/planet-glyphs\//, 'unstable SVG path enhancer remains disabled');
 console.log('Sky coherence regression tests passed');
