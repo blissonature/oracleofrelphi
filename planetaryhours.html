@@ -548,6 +548,11 @@
   }
   @media (max-width: 900px) {
     .ph-summary-grid-merged { grid-template-columns: 1fr !important; }
+    .ph-summary-grid-consolidated > .ph-hour-frame { order: 1; }
+    .ph-summary-grid-consolidated > .ph-day-frame { order: 2; }
+    .ph-summary-grid-consolidated > .ph-moon-frame { order: 3; }
+    .ph-summary-grid-consolidated > .ph-wanderer-strip,
+    .ph-summary-grid-consolidated > .ph-sky-orientation { order: 4; }
     .ph-ticker-shell { grid-template-columns: 1fr; }
     .ph-edge-day { text-align: center; }
   }
@@ -1247,6 +1252,7 @@
 <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/cosinekitty/astronomy@master/source/js/astronomy.browser.min.js"></script>
+<script src="relphi-location-service.js?v=1"></script>
 <style>/* v319 Planetary Hours system time visibility */ .ph-row-system-time{display:inline-flex!important}.ph-row-system-time input:disabled{opacity:.7;background:#f7f3ed;color:#444}</style>
 </head>
 <body>
@@ -1504,7 +1510,7 @@
     saturn: 'https://commons.wikimedia.org/wiki/Special:FilePath/Rubens_saturn.jpg?width=240'
   };
   const browserTimeZone = (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
-  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, heptagramHourOverride: null, timeFormat: '12h' };
+  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', locationSource: 'demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, heptagramHourOverride: null, timeFormat: '12h' };
   const locationPresets = [
     {name:'Greenwich, London, UK', lat:51.4769, lon:-0.0005, tz:'Europe/London'},
     {name:'Boston, Massachusetts, USA', lat:42.3601, lon:-71.0589, tz:'America/New_York'},
@@ -1669,6 +1675,7 @@
     state.lon = lon;
     if (data.tz) state.tz = String(data.tz);
     if (data.loc) state.locationName = String(data.loc);
+    state.locationSource = String(data.source || 'legacy');
     state.useSystem = data.useSystem !== false;
     if (data.datetime && !state.useSystem) {
       if (window.luxon && window.luxon.DateTime) {
@@ -1683,9 +1690,7 @@
   }
 
   function loadStoredWhereWhen() {
-    try {
-      return applyStoredWhereWhen(JSON.parse(localStorage.getItem('relphiPlanetaryHoursWhereWhen') || 'null'));
-    } catch (error) { return false; }
+    return applyStoredWhereWhen(window.RelphiLocation && window.RelphiLocation.read());
   }
 
   function hashParams() {
@@ -1733,6 +1738,7 @@
       if (h.get('lon')) state.lon = safeNumber(h.get('lon'), state.lon);
       if (h.get('tz')) state.tz = h.get('tz');
       if (h.get('loc')) state.locationName = h.get('loc');
+      state.locationSource = 'share';
       if (h.get('dt')) { state.useSystem = false; state.now = new Date(h.get('dt')); }
     } catch (error) {}
   }
@@ -1770,6 +1776,8 @@
     state.lat = loc.lat;
     state.lon = loc.lon;
     state.tz = loc.tz;
+    state.locationSource = 'manual';
+    if (window.RelphiLocation) window.RelphiLocation.beginSelection();
     el.lat.value = state.lat.toFixed(4);
     el.lon.value = state.lon.toFixed(4);
     el.tzSelect.value = state.tz;
@@ -1800,17 +1808,19 @@
   }
 
   function savePlanetaryHoursWhereWhen() {
+    if (state.locationSource === 'demo' || !window.RelphiLocation) return;
     try {
       const now = localNow();
-      localStorage.setItem('relphiPlanetaryHoursWhereWhen', JSON.stringify({
+      window.RelphiLocation.save({
         datetime: dateInputValueFor(now, state.tz) + 'T' + timeInputValueFor(now, state.tz),
         lat: String(state.lat),
         lon: String(state.lon),
         tz: state.tz || '',
         loc: state.locationName || '',
+        source: state.locationSource,
         useSystem: !!state.useSystem,
         savedAt: new Date().toISOString()
-      }));
+      });
     } catch (error) {}
   }
 
@@ -2818,12 +2828,16 @@
   }
 
   function bindEvents() {
-    el.useGeo.addEventListener('click', function () {
-      if (!navigator.geolocation) { smallEcho('Geolocation is unavailable.'); return; }
-      navigator.geolocation.getCurrentPosition(function (pos) {
+    el.useGeo.addEventListener('click', async function () {
+      const token = window.RelphiLocation.beginSelection();
+      try {
+        smallEcho('Waiting for location permissionâ€¦');
+        const pos = await window.RelphiLocation.getCurrentPosition();
+        if (!window.RelphiLocation.isCurrent(token)) return;
         state.lat = pos.coords.latitude;
         state.lon = pos.coords.longitude;
         state.locationName = 'Current browser location';
+        state.locationSource = 'geolocation';
         const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
         if (browserTz) { state.tz = browserTz; el.tzSelect.value = state.tz; }
         el.lat.value = state.lat.toFixed(4);
@@ -2831,12 +2845,14 @@
         el.locationSearch.value = '';
         el.locationNote.textContent = 'Current location selected; timezone set from this browser.';
         rebuild();
-      }, function () { smallEcho('Geolocation failed.'); });
+      } catch (error) {
+        if (window.RelphiLocation.isCurrent(token)) smallEcho(window.RelphiLocation.errorMessage(error));
+      }
     });
-    el.setLatLon.addEventListener('click', function () { state.locationName = 'Manual coordinates'; el.locationNote.textContent = 'Manual coordinates are active. Keep timezone paired with the intended place.'; rebuild(); });
+    el.setLatLon.addEventListener('click', function () { if (window.RelphiLocation) window.RelphiLocation.beginSelection(); state.locationName = 'Manual coordinates'; state.locationSource = 'manual'; el.locationNote.textContent = 'Manual coordinates are active. Keep timezone paired with the intended place.'; rebuild(); });
     el.applyLocation.addEventListener('click', function () { applyLocationPreset(matchLocation(el.locationSearch.value)); });
     el.locationSearch.addEventListener('change', function () { const loc = matchLocation(el.locationSearch.value); if (loc) applyLocationPreset(loc); });
-    el.tzSelect.addEventListener('change', function () { el.locationNote.innerHTML = '<span class="ph-warning">Timezone changed separately from the selected location. Check that it still matches the intended place.</span>'; rebuild(); });
+    el.tzSelect.addEventListener('change', function () { if (state.locationSource !== 'demo') state.locationSource = 'manual'; el.locationNote.innerHTML = '<span class="ph-warning">Timezone changed separately from the selected location. Check that it still matches the intended place.</span>'; rebuild(); });
     el.useSystem.addEventListener('change', function () {
       state.useSystem = el.useSystem.checked;
       el.manualTime.style.display = 'inline-flex'; if (el.datePick) el.datePick.disabled = state.useSystem; if (el.timePick) el.timePick.disabled = state.useSystem;

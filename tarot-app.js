@@ -4527,10 +4527,7 @@
     if (section === 'manual') document.querySelector('.placement-entry-drawer')?.setAttribute('open', '');
   }
   async function setHereAndNowForSky(kind = 'currentSky') {
-    // Protect the other sky before any shared editor or mode switch runs.
-    // The previous protection began inside runSkyCalculation(), which was too
-    // late: switching the shared target could already overwrite the other
-    // slot's name or metadata before the snapshot was taken.
+    // Preserve the untouched sky while the shared calculation controls switch targets.
     const targetKind = kind === 'currentSky' ? 'currentSky' : 'chart';
     const protectedKind = targetKind === 'currentSky' ? 'chart' : 'currentSky';
     const protectedSnapshot = captureSkySlot(protectedKind);
@@ -4541,31 +4538,36 @@
     const now = new Date();
     const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
     let profile = readPlanetaryHoursWhereWhenSettings() || {};
-    profile = { ...profile, dateTime: localDateTimeValueInZone(now, profile.timeZone || browserZone), timeZone: profile.timeZone || browserZone, name: kind === 'currentSky' ? 'Here and now' : 'Here and now' };
-    const haveCoords = hasSkyCalcData(profile);
-    if (!haveCoords && navigator.geolocation) {
+    profile = { ...profile, dateTime: localDateTimeValueInZone(now, profile.timeZone || browserZone), timeZone: profile.timeZone || browserZone, name: 'Here and now' };
+    const haveCoords = hasCompleteSharedLocation(profile);
+    if (!haveCoords) {
+      const token = window.RelphiLocation.beginSelection();
       try {
-        const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy:true, maximumAge:60000, timeout:10000 }));
+        const position = await window.RelphiLocation.getCurrentPosition({ enableHighAccuracy:true, maximumAge:60000, timeout:10000 });
+        if (!window.RelphiLocation.isCurrent(token)) return;
         profile.latitude = Number(position.coords.latitude).toFixed(4);
         profile.longitude = Number(position.coords.longitude).toFixed(4);
-        profile.location = profile.location || 'Here';
+        profile.location = 'Here';
       } catch (error) {
-        skyCalcStatus(error?.message || 'Here is not available yet. Grant location permission once, or use Planetary Hours/Advanced to set a place.', true);
+        const message = window.RelphiLocation.errorMessage(error);
+        skyCalcStatus(message, true);
+        showSkyManualLocation(message);
         return;
       }
-    }
-    if (!hasSkyCalcData(profile)) {
-      skyCalcStatus('Here is not available yet. Grant location permission once, or use Planetary Hours/Advanced to set a place.', true);
-      return;
     }
     writeSkyCalcInputs(profile, { force:true });
     const name = $('skyCalcName');
     if (name) name.value = profile.name || 'Here and now';
-    try { await enrichSkyCalcFromCoordinates({ forceLocation:true, forceTimeZone:true, setDateTimeToNow:true }); } catch (error) {}
+    if (!haveCoords) {
+      const token = window.RelphiLocation.beginSelection();
+      try { await enrichSkyCalcFromCoordinates({ forceLocation:true, forceTimeZone:true, setDateTimeToNow:true, selectionToken:token }); } catch (error) {}
+      if (!saveSharedLocationFromSky('geolocation', token)) {
+        showSkyManualLocation('A complete location and time zone could not be established. Choose a location manually.');
+        return;
+      }
+    }
     setSkyPendingEntrySource(targetKind, 'here-now');
     const calculated = await runSkyCalculation(targetKind);
-    // Restore the untouched slot after the entire Here-and-Now workflow,
-    // including all shared-control target changes and renders.
     restoreSkySlot(protectedKind, protectedSnapshot);
     if (!calculated) {
       renderSkyCreator();
@@ -7062,32 +7064,70 @@ ${notes || ''}`;
     const p = meaningfulSkyCalcProfile(profile);
     return !!(p.dateTime || p.latitude || p.longitude || p.location || p.timeZone);
   }
-  function readPlanetaryHoursWhereWhenSettings() {
-    try {
-      const raw = localStorage.getItem('relphiPlanetaryHoursWhereWhen');
-      if (!raw) return null;
-      const data = JSON.parse(raw);
-      return meaningfulSkyCalcProfile({
-        dateTime: normalizeLocalDateTimeValue(data.datetime || ''),
-        latitude: data.lat || data.latitude || '',
-        longitude: data.lon || data.longitude || '',
-        location: data.loc || data.location || data.locationName || '',
-        timeZone: data.tz || data.timeZone || '',
-        name: 'Planetary Hours Where and When'
-      });
-    } catch (error) {
-      return null;
+  function hasCompleteSharedLocation(profile = {}) {
+    const latitude = Number(profile.latitude ?? profile.lat);
+    const longitude = Number(profile.longitude ?? profile.lon);
+    const timeZone = String(profile.timeZone ?? profile.tz ?? '').trim();
+    if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180 || !timeZone) return false;
+    try { new Intl.DateTimeFormat('en-US', { timeZone }).format(new Date()); return true; }
+    catch (error) { return false; }
+  }
+  function sharedLocationProfile() {
+    const data = window.RelphiLocation?.read();
+    if (!data) return null;
+    return meaningfulSkyCalcProfile({ latitude:data.lat, longitude:data.lon, location:data.loc, timeZone:data.tz });
+  }
+  function updateSkySharedLocationStatus(message, isError = false) {
+    const status = $('skySharedLocationStatus');
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle('is-error', !!isError);
+  }
+  function saveSharedLocationFromSky(source = 'manual', token) {
+    const profile = meaningfulSkyCalcProfile(readSkyCalcInputs());
+    if (!hasCompleteSharedLocation(profile) || !window.RelphiLocation) return null;
+    const saved = window.RelphiLocation.save({ lat:profile.latitude, lon:profile.longitude, tz:profile.timeZone, loc:profile.location, source }, token == null ? undefined : { token });
+    if (saved) updateSkySharedLocationStatus((saved.loc || 'Selected location') + ' - ' + saved.tz);
+    return saved;
+  }
+  function applySharedLocationToSkyInputs() {
+    const profile = sharedLocationProfile();
+    if (!profile || !hasCompleteSharedLocation(profile)) {
+      updateSkySharedLocationStatus('No saved location. Use my location or choose manually.');
+      return false;
     }
+    const values = { skyCalcLatitude:profile.latitude, skyCalcLongitude:profile.longitude, skyCalcLocation:profile.location, skyCalcTimeZone:profile.timeZone };
+    Object.entries(values).forEach(([id, value]) => { const field = $(id); if (field) field.value = value || ''; });
+    updateSkySharedLocationStatus((profile.location || 'Saved location') + ' - ' + profile.timeZone);
+    return true;
+  }
+  function showSkyManualLocation(message) {
+    if (message) updateSkySharedLocationStatus(message, true);
+    openSkyCreatorDrawerSection('calc');
+    document.querySelector('.sky-calc-drawer')?.setAttribute('open', '');
+    setTimeout(() => ($('skyCalcLocation') || $('skyCalcLatitude'))?.focus?.(), 80);
+  }
+  function readPlanetaryHoursWhereWhenSettings() {
+    const data = window.RelphiLocation?.read();
+    if (!data) return null;
+    return meaningfulSkyCalcProfile({
+      dateTime: normalizeLocalDateTimeValue(data.datetime || ''),
+      latitude: data.lat,
+      longitude: data.lon,
+      location: data.loc,
+      timeZone: data.tz,
+      name: 'Shared Where and When'
+    });
   }
   function applyPlanetaryHoursWhereWhenSettings() {
     const profile = readPlanetaryHoursWhereWhenSettings();
-    if (!profile || !hasSkyCalcData(profile)) {
-      skyCalcStatus('Open Planetary Hours once, or use its Sky Chart jump, so those Where and When settings can be shared.', true);
+    if (!profile || !hasCompleteSharedLocation(profile)) {
+      skyCalcStatus('No complete shared location is saved yet. Use my location or choose a location manually.', true);
       return false;
     }
     writeSkyCalcInputs(profile, { force:true });
     maybeRememberSkyCalcProfile();
-    skyCalcStatus('Using Planetary Hours Where and When settings.');
+    skyCalcStatus('Using the shared Where and When settings.');
     return true;
   }
   function knownSkyCalculationSeed(kind, name='', placements={}) {
@@ -7176,17 +7216,19 @@ ${notes || ''}`;
     if (!latitude || !longitude) return meaningfulSkyCalcProfile(readSkyCalcInputs());
     let location = locEl?.value?.trim() || '';
     let timeZone = tzEl?.value?.trim() || '';
+    const token = options.selectionToken;
+    const isCurrent = () => token == null || !window.RelphiLocation || window.RelphiLocation.isCurrent(token);
     try {
       if ((!location || options.forceLocation) && options.reverseLocation !== false) {
         location = await reverseSkyCalcLocation(latitude, longitude);
+        if (!isCurrent()) return meaningfulSkyCalcProfile(readSkyCalcInputs());
         if (locEl && location) locEl.value = location;
       }
-    } catch (error) {
-      // Keep going: time zone is more important for calculation.
-    }
+    } catch (error) {}
     try {
       if (!timeZone || options.forceTimeZone) {
         const zone = await resolveSkyCalcTimeZone(latitude, longitude);
+        if (!isCurrent()) return meaningfulSkyCalcProfile(readSkyCalcInputs());
         timeZone = zone?.timeZone || timeZone;
         if (tzEl && timeZone) tzEl.value = timeZone;
         if (dtEl && (options.setDateTimeToNow || !dtEl.value) && timeZone) dtEl.value = localDateTimeValueInZone(new Date(), timeZone);
@@ -7194,27 +7236,56 @@ ${notes || ''}`;
     } catch (error) {
       if (options.requireTimeZone) throw error;
     }
+    if (!isCurrent()) return meaningfulSkyCalcProfile(readSkyCalcInputs());
     maybeRememberSkyCalcProfile();
     return meaningfulSkyCalcProfile(readSkyCalcInputs());
   }
   async function searchSkyCalcLocation() {
     const query = $('skyCalcLocation')?.value?.trim() || $('skyCalcName')?.value?.trim() || '';
     if (!query) { skyCalcStatus('Type a location label first, then search.', true); return; }
+    const token = window.RelphiLocation.beginSelection();
     try {
-      skyCalcStatus(`Searching for ${query}…`);
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+      skyCalcStatus('Searching for ' + query + '...');
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query);
       const response = await fetch(url, { headers: { 'Accept':'application/json' } });
-      if (!response.ok) throw new Error(`Location search failed with status ${response.status}.`);
+      if (!response.ok) throw new Error('Location search failed with status ' + response.status + '.');
       const results = await response.json();
+      if (!window.RelphiLocation.isCurrent(token)) return;
       const first = Array.isArray(results) ? results[0] : null;
       if (!first) throw new Error('No location match found. Try a more specific place name.');
       if ($('skyCalcLatitude')) $('skyCalcLatitude').value = Number(first.lat).toFixed(4);
       if ($('skyCalcLongitude')) $('skyCalcLongitude').value = Number(first.lon).toFixed(4);
       if ($('skyCalcLocation')) $('skyCalcLocation').value = first.display_name || query;
-      const profile = await enrichSkyCalcFromCoordinates({ forceTimeZone:true, reverseLocation:false });
-      skyCalcStatus(`Location found: ${first.display_name}. Coordinates stored from OpenStreetMap Nominatim${profile.timeZone ? `; time zone resolved as ${profile.timeZone}.` : '.'}`);
+      const profile = await enrichSkyCalcFromCoordinates({ forceTimeZone:true, reverseLocation:false, selectionToken:token });
+      if (!window.RelphiLocation.isCurrent(token)) return;
+      saveSharedLocationFromSky('manual', token);
+      skyCalcStatus('Location found: ' + first.display_name + (profile.timeZone ? '; time zone resolved as ' + profile.timeZone + '.' : '.'));
     } catch (error) {
       skyCalcStatus(error?.message || 'Could not search that location.', true);
+    }
+  }
+  async function captureSkyCalcLocation() {
+    const token = window.RelphiLocation.beginSelection();
+    try {
+      updateSkySharedLocationStatus('Waiting for location permission...');
+      skyCalcStatus('Waiting for location permission...');
+      const position = await window.RelphiLocation.getCurrentPosition({ enableHighAccuracy:true, maximumAge:60000, timeout:10000 });
+      if (!window.RelphiLocation.isCurrent(token)) return false;
+      if ($('skyCalcLatitude')) $('skyCalcLatitude').value = Number(position.coords.latitude).toFixed(4);
+      if ($('skyCalcLongitude')) $('skyCalcLongitude').value = Number(position.coords.longitude).toFixed(4);
+      const profile = await enrichSkyCalcFromCoordinates({ forceLocation:true, forceTimeZone:true, setDateTimeToNow:true, selectionToken:token });
+      if (!window.RelphiLocation.isCurrent(token)) return false;
+      if (!saveSharedLocationFromSky('geolocation', token)) throw new Error('Coordinates were received, but a complete location and time zone could not be established.');
+      maybeRememberSkyCalcProfile();
+      skyCalcStatus('Location captured' + (profile.location ? ': ' + profile.location : '') + '. Time zone: ' + profile.timeZone + '. Review, then calculate the sky.');
+      return true;
+    } catch (error) {
+      if (window.RelphiLocation.isCurrent(token)) {
+        const message = window.RelphiLocation.errorMessage(error);
+        skyCalcStatus(message, true);
+        showSkyManualLocation(message);
+      }
+      return false;
     }
   }
 
@@ -7272,6 +7343,7 @@ ${notes || ''}`;
     return { latitude:Number(best.latitude.toFixed(4)), error:best.error };
   }
   async function inferSkyCalcFromPlacements() {
+    const locationToken = window.RelphiLocation.beginSelection();
     try {
       const { kind, fields, placements } = skyReverseTargetsForKind();
       const targets = SKY_CALC_BODIES.map(body => ({ body, longitude:placementTargetLongitude(placements[body]) })).filter(item => item.longitude != null);
@@ -7340,15 +7412,18 @@ ${notes || ''}`;
       let timeZone = '';
       try {
         location = await reverseSkyCalcLocation(latitude, longitude);
+        if (!window.RelphiLocation.isCurrent(locationToken)) return;
         if ($('skyCalcLocation')) $('skyCalcLocation').value = location;
       } catch (error) {}
       try {
         const tzInfo = await resolveSkyCalcTimeZone(latitude, longitude);
+        if (!window.RelphiLocation.isCurrent(locationToken)) return;
         timeZone = tzInfo?.timeZone || '';
         if ($('skyCalcTimeZone')) $('skyCalcTimeZone').value = timeZone;
       } catch (error) {}
       if ($('skyCalcDateTime')) $('skyCalcDateTime').value = localDateTimeValueInZone(best.date, timeZone);
       const profile = meaningfulSkyCalcProfile(readSkyCalcInputs());
+      saveSharedLocationFromSky('manual', locationToken);
       setSkyCalcProfile(kind, profile);
       skyCalcStatus(`Inferred from placements: ${profile.dateTime || best.date.toISOString()}${timeZone ? ` (${timeZone})` : ''}, latitude ${Number(latitude).toFixed(4)}, longitude ${Number(longitude).toFixed(4)}${location ? `, ${location}` : ''}. Attach to sky to save this metadata.`);
     } catch (error) {
@@ -7382,8 +7457,10 @@ ${notes || ''}`;
     const longitude = $('skyCalcLongitude')?.value ?? '';
     const houseSystem = normalizeSkyHouseSystem($('skyCalcHouseSystem')?.value || 'whole-sign');
     const locationLabel = $('skyCalcLocation')?.value?.trim() || '';
+    const locationToken = window.RelphiLocation.beginSelection();
     try {
-      const resolved = await enrichSkyCalcFromCoordinates({ forceLocation:true, forceTimeZone:true, requireTimeZone:false });
+      const resolved = await enrichSkyCalcFromCoordinates({ forceLocation:true, forceTimeZone:true, requireTimeZone:false, selectionToken:locationToken });
+      if (!window.RelphiLocation.isCurrent(locationToken)) throw new Error('Location changed while the lookup was running. Review the newer selection and calculate again.');
       const timeZone = resolved.timeZone || $('skyCalcTimeZone')?.value?.trim() || '';
       const date = dateFromLocalDateTimeInZone(raw, timeZone);
       const calculatedPlacements = calculateSkyWithAstronomy(date, latitude, longitude, houseSystem);
@@ -7442,6 +7519,11 @@ ${notes || ''}`;
     const initialKind = typeof skyCreatorKind === 'function' ? skyCreatorKind() : skyCalcTargetKind();
     state.skyCalcActiveTarget = initialKind === 'currentSky' ? 'currentSky' : 'chart';
     hydrateSkyCalculationPanel(state.skyCalcActiveTarget, { force:true });
+    applySharedLocationToSkyInputs();
+    $('skySharedUseLocation')?.addEventListener('click', captureSkyCalcLocation);
+    $('skySharedChooseManual')?.addEventListener('click', () => showSkyManualLocation('Choose a place or enter coordinates and a time zone.'));
+    $('skyCalcGeo')?.addEventListener('click', captureSkyCalcLocation);
+    ['skyCalcLatitude','skyCalcLongitude','skyCalcLocation','skyCalcTimeZone'].forEach(id => $(id)?.addEventListener('change', () => { window.RelphiLocation.beginSelection(); saveSharedLocationFromSky('manual'); }));
     $('skyCalcTarget')?.addEventListener('change', () => {
       switchSkyCalculationTarget(skyCalcTargetKind());
     });
@@ -7457,8 +7539,10 @@ ${notes || ''}`;
       if (event.currentTarget.checked) applyPlanetaryHoursWhereWhenSettings();
     });
     $('skyCalcNow')?.addEventListener('click', async () => {
+      const token = window.RelphiLocation.beginSelection();
       try {
-        const profile = await enrichSkyCalcFromCoordinates({ forceTimeZone:true, reverseLocation:false });
+        const profile = await enrichSkyCalcFromCoordinates({ forceTimeZone:true, reverseLocation:false, selectionToken:token });
+        if (!window.RelphiLocation.isCurrent(token)) return;
         const timeZone = profile.timeZone || $('skyCalcTimeZone')?.value?.trim() || '';
         if (dateEl) dateEl.value = localDateTimeValueInZone(new Date(), timeZone);
         maybeRememberSkyCalcProfile();
@@ -7471,28 +7555,14 @@ ${notes || ''}`;
     });
     $('skyCalcSearchLocation')?.addEventListener('click', searchSkyCalcLocation);
     $('skyCalcResolveCoords')?.addEventListener('click', () => {
-      enrichSkyCalcFromCoordinates({ forceLocation:true, forceTimeZone:true }).then(profile => {
+      const token = window.RelphiLocation.beginSelection();
+      enrichSkyCalcFromCoordinates({ forceLocation:true, forceTimeZone:true, selectionToken:token }).then(profile => {
+        if (!window.RelphiLocation.isCurrent(token)) return;
+        saveSharedLocationFromSky('manual', token);
         skyCalcStatus(`Coordinates resolved${profile.location ? `: ${profile.location}` : ''}${profile.timeZone ? `. Time zone: ${profile.timeZone}` : ''}.`);
       }).catch(error => skyCalcStatus(error?.message || 'Could not resolve those coordinates.', true));
     });
     $('skyCalcReverseSolve')?.addEventListener('click', inferSkyCalcFromPlacements);
-    $('skyCalcGeo')?.addEventListener('click', () => {
-      if (!navigator.geolocation) { skyCalcStatus('Geolocation is not available in this browser.', true); return; }
-      navigator.geolocation.getCurrentPosition(position => {
-        const latEl = $('skyCalcLatitude');
-        const lonEl = $('skyCalcLongitude');
-        if (latEl) latEl.value = Number(position.coords.latitude).toFixed(4);
-        if (lonEl) lonEl.value = Number(position.coords.longitude).toFixed(4);
-        enrichSkyCalcFromCoordinates({ forceLocation:true, forceTimeZone:true, setDateTimeToNow:true }).then(profile => {
-          skyCalcStatus(`Location captured${profile.location ? `: ${profile.location}` : ''}${profile.timeZone ? `. Time zone resolved as ${profile.timeZone}` : ''}. Review, then calculate the sky.`);
-        }).catch(err => {
-          maybeRememberSkyCalcProfile();
-          skyCalcStatus(err?.message || 'Location captured, but lookup details could not be resolved. Review, then calculate the sky.', true);
-        });
-      }, error => {
-        skyCalcStatus(error?.message || 'Could not retrieve your location.', true);
-      }, { enableHighAccuracy:true, maximumAge:60000, timeout:10000 });
-    });
     ['skyCalcDateTime','skyCalcLatitude','skyCalcLongitude','skyCalcLocation','skyCalcTimeZone','skyCalcName','skyCalcHouseSystem'].forEach(id => $(id)?.addEventListener('change', () => maybeRememberSkyCalcProfile()));
     qsa('[data-open-sky-calc]').forEach(btn => {
       if (btn.dataset.skyCalcOpenReady) return;

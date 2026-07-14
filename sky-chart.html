@@ -143,6 +143,13 @@
             <h3 id="skyWizardPrimaryHeading">Here and Now</h3>
             <p id="skyWizardPrimaryHelp">Use the current place and time, or choose another where and when.</p>
             <p id="skyWizardPrimaryStatus" class="sky-wizard-status-line">First sky: empty</p>
+            <div class="sky-location-status-control" aria-label="Shared location">
+              <span id="skySharedLocationStatus" aria-live="polite">Checking saved location...</span>
+              <div>
+                <button id="skySharedUseLocation" type="button">Use my location</button>
+                <button id="skySharedChooseManual" type="button">Choose manually</button>
+              </div>
+            </div>
           </div>
           <div class="sky-wizard-entry-card sky-wizard-entry-card-here-now" aria-label="First sky entry methods">
             <button type="button" class="sky-wizard-action sky-wizard-action-primary" data-sky-entry-kind="chart" data-sky-here-now><span>Use Here and Now</span><small>Uses the current place and time when available.</small></button>
@@ -383,7 +390,8 @@
   <script src="relphi-rising-sign-house-offset-effects.js?v=219"></script>
   <script src="vendor/astronomy-engine/astronomy.browser.min.js"></script>
   <script src="relphi-house-systems.js?v=318"></script>
-  <script src="tarot-app.js?v=364"></script>
+  <script src="relphi-location-service.js?v=1"></script>
+  <script src="tarot-app.js?v=365"></script>
   <script>
   window.addEventListener('load', function(){
     document.getElementById('chartMode')?.click();
@@ -398,14 +406,15 @@
     const dateTime = params.get('datetime') || (params.get('date') ? params.get('date') + 'T12:00' : '');
     if (dateTime || params.get('lat') || params.get('lon')) {
       try {
-        localStorage.setItem('relphiPlanetaryHoursWhereWhen', JSON.stringify({
+        window.RelphiLocation.save({
           datetime: dateTime,
           lat: params.get('lat') || '',
           lon: params.get('lon') || '',
           tz: params.get('tz') || '',
           loc: params.get('loc') || '',
+          source: 'share',
           savedAt: new Date().toISOString()
-        }));
+        });
       } catch (error) {}
       document.getElementById('skyCreatorDrawer')?.setAttribute('open', '');
       document.querySelector('.sky-calc-drawer')?.setAttribute('open', '');
