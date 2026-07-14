@@ -61,60 +61,6 @@
     if (prompt) prompt.remove();
   }
 
-  function applyPosition(position, status, button) {
-    const f = currentFields();
-    const lat = Number(position.coords.latitude);
-    const lon = Number(position.coords.longitude);
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-
-    if (!f.lat || !f.lon || !f.set || !Number.isFinite(lat) || !Number.isFinite(lon)) {
-      status.textContent = 'The page could not apply your coordinates.';
-      button.disabled = false;
-      return;
-    }
-
-    f.lat.value = lat.toFixed(6);
-    f.lon.value = lon.toFixed(6);
-    f.lat.dispatchEvent(new Event('input', { bubbles:true }));
-    f.lon.dispatchEvent(new Event('input', { bubbles:true }));
-    f.lat.dispatchEvent(new Event('change', { bubbles:true }));
-    f.lon.dispatchEvent(new Event('change', { bubbles:true }));
-
-    if (f.tz) {
-      f.tz.value = tz;
-      f.tz.dispatchEvent(new Event('change', { bubbles:true }));
-    }
-    if (f.search) f.search.value = '';
-    if (f.note) f.note.textContent = 'Current browser location selected; timezone set from this browser.';
-
-    status.textContent = 'Location received. Applying coordinates…';
-    f.set.click();
-
-    setTimeout(function () {
-      const now = currentFields();
-      const applied = now.lat && now.lon &&
-        Math.abs(Number(now.lat.value) - lat) < 0.001 &&
-        Math.abs(Number(now.lon.value) - lon) < 0.001 &&
-        !isGreenwich(Number(now.lat.value), Number(now.lon.value), now.search && now.search.value);
-
-      if (applied) {
-        try { sessionStorage.removeItem(DISMISS_KEY); } catch (error) {}
-        removePrompt();
-      } else {
-        status.textContent = 'The coordinates were received, but the page did not switch away from Greenwich.';
-        button.disabled = false;
-      }
-    }, 900);
-  }
-
-  function messageFor(error) {
-    if (!error) return 'Location could not be obtained.';
-    if (error.code === 1) return 'Location permission was denied. Allow location access for oracleofrelphi.com in Safari settings, then try again.';
-    if (error.code === 2) return 'Your location is currently unavailable.';
-    if (error.code === 3) return 'The location request timed out. Try again.';
-    return 'Location could not be obtained.';
-  }
-
   function showPrompt() {
     if (document.getElementById('phLocationPrompt')) return;
 
@@ -140,17 +86,25 @@
     const status = document.getElementById('phLocationPromptStatus');
 
     use.addEventListener('click', function () {
-      if (!navigator.geolocation) {
+      const fields = currentFields();
+      if (!window.RelphiLocation || !fields.useGeo) {
         status.textContent = 'Geolocation is unavailable in this browser.';
         return;
       }
       use.disabled = true;
       status.textContent = 'Waiting for location permission…';
-      navigator.geolocation.getCurrentPosition(
-        function (position) { applyPosition(position, status, use); },
-        function (error) { use.disabled = false; status.textContent = messageFor(error); },
-        { enableHighAccuracy:false, timeout:15000, maximumAge:300000 }
-      );
+      window.addEventListener('relphi:location-changed', function (event) {
+        if (event.detail && event.detail.source === 'geolocation') {
+          try { sessionStorage.removeItem(DISMISS_KEY); } catch (error) {}
+          removePrompt();
+        }
+      }, { once:true });
+      fields.useGeo.click();
+      setTimeout(function () {
+        if (!document.getElementById('phLocationPrompt')) return;
+        use.disabled = false;
+        status.textContent = document.getElementById('echo')?.textContent || 'Choose a location manually or try again.';
+      }, 16000);
     });
 
     keep.addEventListener('click', function () {

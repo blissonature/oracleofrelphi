@@ -17756,6 +17756,30 @@ html body .or-card-grid.tarot-result-grid{align-items:start!important;grid-auto-
   font-size: .82rem;
   line-height: 1.2;
 }
+.sky-location-status-control {
+  display: grid;
+  gap: .45rem;
+  margin-top: .75rem;
+  padding: .65rem .75rem;
+  border: 1px solid rgba(220,31,24,.2);
+  border-radius: .85rem;
+  background: rgba(255,255,255,.72);
+  font-size: .86rem;
+}
+.sky-location-status-control > div { display:flex; flex-wrap:wrap; gap:.4rem; }
+.sky-location-status-control button {
+  border: 1px solid #dc1f18;
+  border-radius: 999px;
+  background: #fff;
+  color: #8b1511;
+  padding: .4rem .65rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.sky-location-status-control button:first-child { background:#dc1f18; color:#fff; }
+.sky-location-status-control button:focus-visible { outline:3px solid rgba(220,31,24,.25); outline-offset:2px; }
+.sky-location-status-control .is-error { color:#8b1511; font-weight:700; }
 .sky-wizard-compare-button {
   appearance: none;
   border: 1px solid #dc1f18;

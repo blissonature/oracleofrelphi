@@ -124,7 +124,7 @@
 
   function loadPageEnhancements() {
     if (/(^|\/)planetaryhours\.html$/.test(window.location.pathname)) {
-      appendScript('planetary-hours-location-prompt.js?v=4');
+      appendScript('planetary-hours-location-prompt.js?v=5');
       appendScript('standardize-zodiac-wheels.js?v=2');
     }
     if (/(^|\/)sky-chart\.html$/.test(window.location.pathname)) {
