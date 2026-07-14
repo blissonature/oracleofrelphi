@@ -11,13 +11,15 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Fetch repository quietly
+        shell: bash
+        run: git clone -q --depth 1 "https://github.com/${GITHUB_REPOSITORY}.git" repo
       - name: Print Drawing Board source index
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          lines = Path('tarot-app.js').read_text(encoding='latin1').splitlines()
+          lines = Path('repo/tarot-app.js').read_text(encoding='latin1').splitlines()
           terms = [
               'shortList', 'Drawing Board', 'cardRowBoard', 'renderShort',
               'renderCardRow', 'rowCardTransforms', 'shortListName',
