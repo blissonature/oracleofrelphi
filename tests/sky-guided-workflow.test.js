@@ -42,14 +42,14 @@ assert.match(css, /data-sky-builder-ui="advanced"[^\n]*sky-wizard-shell/);
 assert.match(app, /closeSkyWizardInline\('chart'\)/);
 assert.match(app, /closeSkyWizardInline\('currentSky'\)/);
 assert.match(app, /skyWizardPath: \{ chart:'', currentSky:'' \}/);
-assert.match(app, /skyMotionMode: \{ chart:'static', currentSky:'static' \}/);
+assert.match(app, /skyMotionMode: \{ chart:'static', currentSky:'dynamic' \}/);
 assert.match(html, /id="skyMotionMode"/);
 
 assert.match(html, /<section id="skyCreatorDrawer"/);
 assert.doesNotMatch(html, /<details id="skyCreatorDrawer"/, 'Advanced is not a disclosure below Wizard');
 assert.match(html, /data-sky-wizard-target="chart"/);
 assert.match(html, /data-sky-wizard-target="currentSky"/);
-assert.match(html, /Use Planetary Hours settings/);
+assert.match(html, /Use Planetary Hours Where and When/);
 assert.match(css, /sky-calc-shared-actions \{ display: none; \}/, 'technical metadata actions are hidden in Wizard only');
 
 assert.match(persistence, /motionMode: byId\('skyMotionMode'\)/);

@@ -1,131 +1,88 @@
-// Minimal Static / Dynamic role controls for Sky Chart comparisons.
+// Shared Static / Dynamic role contract for transit comparisons.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   const STORAGE_KEY = 'relphiSkyChartRoles';
-  const HELP = 'Static for a natal or reference chart. Dynamic for a moving transit or event sky.';
-  const defaults = { chart: 'dynamic', currentSky: 'static' };
-  let roles = loadRoles();
+  const targets = ['chart', 'currentSky'];
+  let roles = load();
 
-  function loadRoles() {
+  function load() {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      return {
-        chart: saved && saved.chart === 'static' ? 'static' : 'dynamic',
-        currentSky: saved && saved.currentSky === 'dynamic' ? 'dynamic' : 'static'
-      };
-    } catch (error) {
-      return Object.assign({}, defaults);
-    }
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || {};
+      return { chart:saved.chart === 'dynamic' ? 'dynamic' : 'static', currentSky:saved.currentSky === 'static' ? 'static' : 'dynamic' };
+    } catch (error) { return { chart:'static', currentSky:'dynamic' }; }
   }
-
-  function saveRoles() {
+  function mode() {
+    return document.querySelector('[data-sky-chart-mode="transit"][aria-pressed="true"]') ? 'transit' : 'other';
+  }
+  function validity() {
+    const values = targets.map(target => roles[target]);
+    return values.filter(value => value === 'static').length === 1 && values.filter(value => value === 'dynamic').length === 1;
+  }
+  function contract() {
+    return {
+      chart:roles.chart,
+      currentSky:roles.currentSky,
+      valid:validity(),
+      staticTarget:targets.find(target => roles[target] === 'static') || null,
+      dynamicTarget:targets.find(target => roles[target] === 'dynamic') || null
+    };
+  }
+  function save() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(roles)); } catch (error) {}
-    window.RelphiSkyRoles = Object.assign({}, roles);
-    document.dispatchEvent(new CustomEvent('relphi:skyroleschange', { detail: window.RelphiSkyRoles }));
+    window.RelphiSkyRoles = contract();
+    document.dispatchEvent(new CustomEvent('relphi:skyroleschange', { detail:window.RelphiSkyRoles }));
   }
-
+  function syncCore(target) {
+    const targetSelect = document.getElementById('skyCreatorTarget');
+    const roleSelect = document.getElementById('skyMotionMode');
+    if (!targetSelect || !roleSelect) return;
+    const previous = targetSelect.value;
+    targetSelect.value = target;
+    targetSelect.dispatchEvent(new Event('change', { bubbles:true }));
+    roleSelect.value = roles[target];
+    roleSelect.dispatchEvent(new Event('change', { bubbles:true }));
+    targetSelect.value = previous;
+    targetSelect.dispatchEvent(new Event('change', { bubbles:true }));
+  }
   function setRole(target, role) {
     roles[target] = role === 'dynamic' ? 'dynamic' : 'static';
-    document.querySelectorAll('[data-relphi-role-target="' + target + '"]').forEach(function (control) {
-      control.querySelectorAll('button[data-role]').forEach(function (button) {
-        const active = button.dataset.role === roles[target];
+    syncCore(target);
+    render();
+    save();
+  }
+  function control(target, label) {
+    return '<article class="sky-role-card" data-relphi-role-target="' + target + '"><strong>' + label + '</strong><div class="sky-role-toggle" role="group" aria-label="' + label + ' transit role"><button type="button" data-role="static">Static</button><button type="button" data-role="dynamic">Dynamic</button></div><small>' + (roles[target] === 'static' ? 'Natal or fixed reference' : 'Moving transit sky') + '</small></article>';
+  }
+  function render() {
+    const editor = document.getElementById('skyTransitRoleEditor');
+    if (!editor) return;
+    const transit = mode() === 'transit';
+    editor.hidden = !transit;
+    if (!transit) return;
+    editor.innerHTML = '<div class="sky-role-grid">' + control('chart', 'Sky A') + control('currentSky', 'Sky B') + '</div><p class="sky-role-validation" role="status">' + (validity() ? 'Transit direction is explicit: one Static reference and one Dynamic moving sky.' : 'Choose exactly one Static sky and one Dynamic sky. Transit results are paused until the roles are corrected.') + '</p>';
+    editor.querySelectorAll('[data-relphi-role-target]').forEach(function (card) {
+      card.querySelectorAll('[data-role]').forEach(function (button) {
+        const active = roles[card.dataset.relphiRoleTarget] === button.dataset.role;
         button.classList.toggle('is-active', active);
         button.setAttribute('aria-pressed', String(active));
+        button.addEventListener('click', function () { setRole(card.dataset.relphiRoleTarget, button.dataset.role); });
       });
     });
-    saveRoles();
   }
-
-  function makeControl(target, label) {
-    const wrap = document.createElement('div');
-    wrap.className = 'sky-role-control';
-    wrap.dataset.relphiRoleTarget = target;
-    wrap.innerHTML =
-      '<span class="sky-role-label">' + label + ' type</span>' +
-      '<div class="sky-role-toggle" role="group" aria-label="' + label + ' sky type">' +
-        '<button type="button" data-role="static" aria-pressed="false">Static</button>' +
-        '<button type="button" data-role="dynamic" aria-pressed="false">Dynamic</button>' +
-      '</div>' +
-      '<button type="button" class="sky-role-help" title="' + HELP + '" aria-label="' + HELP + '">?</button>';
-
-    wrap.querySelectorAll('button[data-role]').forEach(function (button) {
-      button.addEventListener('click', function () { setRole(target, button.dataset.role); });
-    });
-    return wrap;
-  }
-
-  function addStyles() {
-    if (document.getElementById('sky-role-control-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'sky-role-control-styles';
-    style.textContent = `
-      .sky-role-control{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin:.55rem 0 0;color:#222}
-      .sky-role-label{font-size:.82rem;font-weight:800;letter-spacing:.02em}
-      .sky-role-toggle{display:inline-flex;padding:2px;border:1px solid rgba(220,31,24,.3);border-radius:999px;background:#fff}
-      .sky-role-toggle button{appearance:none;border:0;background:transparent;color:#333;border-radius:999px;padding:.38rem .68rem;font:inherit;font-size:.8rem;font-weight:800;cursor:pointer}
-      .sky-role-toggle button.is-active{background:#111;color:#fff}
-      .sky-role-help{width:1.55rem;height:1.55rem;padding:0;border:1px solid #999;border-radius:50%;background:#fff;color:#333;font:inherit;font-size:.78rem;font-weight:900;cursor:help}
-      @media(max-width:600px){.sky-role-control{justify-content:flex-start}.sky-role-label{flex-basis:100%}}
-    `;
-    document.head.appendChild(style);
-  }
-
-  function cleanStoredSkyLabel(value) {
-    return String(value || '')
-      .replace(/\s*[·•—–|-]\s*Transit\b/gi, '')
-      .replace(/\s*\(Transit\)\s*/gi, ' ')
-      .replace(/^Transit\s*[·•—–|-]\s*/gi, '')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-  }
-
-  function cleanStoredSkyRoles() {
-    const library = document.getElementById('skyCreatorLibrary');
-    if (library) {
-      Array.from(library.options || []).forEach(function (option) {
-        const cleaned = cleanStoredSkyLabel(option.textContent);
-        if (cleaned && cleaned !== option.textContent) option.textContent = cleaned;
-      });
-    }
-
-    const suggestions = document.getElementById('skyCreatorSuggestions');
-    if (suggestions) {
-      suggestions.querySelectorAll('*').forEach(function (node) {
-        if (node.children.length === 0 && /^\s*Transit\s*$/i.test(node.textContent || '')) {
-          node.remove();
-          return;
-        }
-        if (node.children.length === 0) {
-          const cleaned = cleanStoredSkyLabel(node.textContent);
-          if (cleaned !== node.textContent) node.textContent = cleaned;
-        }
-      });
-    }
-  }
-
   function install() {
-    addStyles();
-
-    const primaryAnchor = document.getElementById('skyWizardPrimaryStatus');
-    if (primaryAnchor && !document.querySelector('[data-relphi-role-target="chart"]')) {
-      primaryAnchor.insertAdjacentElement('afterend', makeControl('chart', 'First sky'));
+    const tabs = document.querySelector('.sky-advanced-sky-tabs');
+    if (tabs && !document.getElementById('skyTransitRoleEditor')) {
+      const editor = document.createElement('section');
+      editor.id = 'skyTransitRoleEditor';
+      editor.className = 'sky-transit-role-editor';
+      editor.setAttribute('aria-label', 'Transit roles');
+      tabs.insertAdjacentElement('afterend', editor);
     }
-
-    const compareAnchor = document.getElementById('skyWizardCompareStatus');
-    if (compareAnchor && !document.querySelector('[data-relphi-role-target="currentSky"]')) {
-      compareAnchor.insertAdjacentElement('afterend', makeControl('currentSky', 'Second sky'));
-    }
-
-    setRole('chart', roles.chart);
-    setRole('currentSky', roles.currentSky);
-    cleanStoredSkyRoles();
-
-    new MutationObserver(cleanStoredSkyRoles).observe(document.body, { childList:true, subtree:true, characterData:true });
+    document.addEventListener('click', function (event) { if (event.target.closest('[data-sky-chart-mode]')) setTimeout(render); });
+    render(); save();
   }
-
-  window.RelphiSkyRoles = Object.assign({}, roles);
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
-  else install();
+  window.RelphiSkyRoles = contract();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true }); else install();
 })();

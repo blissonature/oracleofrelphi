@@ -1391,16 +1391,16 @@
             <p class="ph-tiny" id="moonVisibility">—</p>
           </div>
         </div>
-      </div>
       <div class="ph-wanderer-strip" aria-label="Traditional wanderer rise and set times">
         <div class="ph-section-heading compact">
           <p class="eyebrow">Wanderer visibility</p>
           <h3>Rise, set, and current sky position</h3>
-          <p class="ph-planet-instructions">Choose a tile to see rise, set, visibility, compass direction, and altitude together. Tiles are ordered by practical viewing: naked eye, binoculars, telescope, not practical, then below horizon.</p>
+          <p class="ph-planet-instructions">Bodies above the horizon come first. Expand any row for its observing details.</p>
         </div>
         <div class="ph-wanderer-grid" id="wandererGrid">
           <p class="ph-tiny">Planet positions load here when Astronomy Engine is available.</p>
         </div>
+      </div>
       </div>
       <section class="ph-sky-orientation ph-sky-orientation-inline ph-sky-orientation-merged ph-sr-only" id="skyOrientationPanel" aria-label="Selected wanderer orientation">
     <div class="ph-section-heading ph-sr-only">
@@ -1485,6 +1485,7 @@
   </section>
 </main>
 
+<script src="planetary-hours-geometry.js?v=1"></script>
 <script>
 (function () {
   const planets = [
@@ -1811,16 +1812,19 @@
     if (state.locationSource === 'demo' || !window.RelphiLocation) return;
     try {
       const now = localNow();
-      window.RelphiLocation.save({
+      const packet = {
         datetime: dateInputValueFor(now, state.tz) + 'T' + timeInputValueFor(now, state.tz),
         lat: String(state.lat),
         lon: String(state.lon),
         tz: state.tz || '',
         loc: state.locationName || '',
         source: state.locationSource,
+        houseSystem: 'whole-sign',
         useSystem: !!state.useSystem,
         savedAt: new Date().toISOString()
-      });
+      };
+      window.RelphiLocation.save(packet);
+      localStorage.setItem('relphiPlanetaryHoursWhereWhen', JSON.stringify(packet));
     } catch (error) {}
   }
 
@@ -2192,12 +2196,30 @@
         const contact = phZodiacPoint(item.lon, coreWheelRadius, cx, cy);
         const ball = phZodiacPoint(displayLon, lollipopRadius, cx, cy);
         const clustered = Math.abs((((displayLon - item.lon) % 360) + 540) % 360 - 180) > 0.05;
-        return '<g class="planet-marker' + (clustered ? ' is-clustered' : '') + '"><line class="planet-center-ray" x1="' + cx + '" y1="' + cy + '" x2="' + contact.x.toFixed(1) + '" y2="' + contact.y.toFixed(1) + '"></line><circle class="planet-contact" cx="' + contact.x.toFixed(1) + '" cy="' + contact.y.toFixed(1) + '" r="1.8"></circle><line class="planet-stick" x1="' + contact.x.toFixed(1) + '" y1="' + contact.y.toFixed(1) + '" x2="' + ball.x.toFixed(1) + '" y2="' + ball.y.toFixed(1) + '"></line><circle class="planet-dot" cx="' + ball.x.toFixed(1) + '" cy="' + ball.y.toFixed(1) + '" r="7"></circle><text class="planet-label" x="' + ball.x.toFixed(1) + '" y="' + (ball.y + 0.5).toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + (skyGlyphs[item.body] || item.body[0]) + '</text><title>' + item.body + ' ' + item.placement.sign + ' ' + item.placement.degree + '°' + String(item.placement.minute).padStart(2, '0') + '′</title></g>';
+        return '<g class="planet-marker' + (clustered ? ' is-clustered' : '') + '" data-body="' + item.body + '" data-true-longitude="' + item.lon.toFixed(6) + '" data-display-longitude="' + displayLon.toFixed(6) + '"><line class="planet-center-ray" x1="' + cx + '" y1="' + cy + '" x2="' + contact.x.toFixed(1) + '" y2="' + contact.y.toFixed(1) + '"></line><circle class="planet-contact" cx="' + contact.x.toFixed(1) + '" cy="' + contact.y.toFixed(1) + '" r="1.8"></circle><line class="planet-stick" x1="' + contact.x.toFixed(1) + '" y1="' + contact.y.toFixed(1) + '" x2="' + ball.x.toFixed(1) + '" y2="' + ball.y.toFixed(1) + '"></line><circle class="planet-dot" cx="' + ball.x.toFixed(1) + '" cy="' + ball.y.toFixed(1) + '" r="7"></circle><text class="planet-label" x="' + ball.x.toFixed(1) + '" y="' + (ball.y + 0.5).toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + (skyGlyphs[item.body] || item.body[0]) + '</text><title>' + item.body + ' ' + item.placement.sign + ' ' + item.placement.degree + '°' + String(item.placement.minute).padStart(2, '0') + '′</title></g>';
       }).join('');
       el.phCurrentWheel.innerHTML = '<svg class="ph-current-wheel" viewBox="0 0 220 220" role="img" aria-label="Current planetary placements mini zodiac wheel with houses, signs, angles, and separated placement markers"><circle class="wheel-core" cx="110" cy="110" r="' + coreWheelRadius + '"></circle><g class="house-layer">' + houseTicks + '</g><g class="sign-layer">' + signTrack + '</g><g class="angle-layer">' + axes + '</g><g class="planet-layer">' + markers + '</g><circle cx="110" cy="110" r="3" fill="#111"></circle></svg><p class="ph-tiny">Preview only. Use Sky Chart for the full reading.</p>';
+      requestAnimationFrame(function () {
+        const svg = el.phCurrentWheel.querySelector('svg');
+        if (svg && window.RelphiPlanetaryHoursGeometry) window.RelphiPlanetaryHoursGeometry.layoutWheel(svg);
+      });
+
     } catch (error) {
       el.phCurrentWheel.innerHTML = '<p class="ph-tiny">Current wheel unavailable: ' + String(error.message || error) + '</p>';
     }
+  }
+
+  const wandererDisclosureState = new Map();
+  const wandererHorizonState = new Map();
+  let wandererContextKey = '';
+
+  function wandererIcon(item) {
+    const viewing = item.visibility.viewing;
+    if (!item.above) return { glyph:'↓', label:'Below the horizon' };
+    if (viewing === 'Naked eye') return { glyph:'◉', label:'Above horizon; visible to the naked eye' };
+    if (viewing === 'Binoculars') return { glyph:'◌', label:'Above horizon; binoculars recommended' };
+    if (viewing === 'Telescope') return { glyph:'⌕', label:'Above horizon; telescope recommended' };
+    return { glyph:'○', label:'Above horizon; not practically visible now' };
   }
 
   function renderWandererGrid(frame) {
@@ -2208,64 +2230,60 @@
     }
     const now = frame ? frame.localNow : localNow();
     const start = localStartOfDayFor(now, state.tz);
+    const contextKey = [state.lat.toFixed(3), state.lon.toFixed(3), state.tz, dateInputValueFor(now, state.tz)].join('|');
+    if (contextKey !== wandererContextKey) {
+      wandererDisclosureState.clear();
+      wandererHorizonState.clear();
+      wandererContextKey = contextKey;
+    }
     const observer = new Astronomy.Observer(state.lat, state.lon, 0);
     let sunAlt = null;
     try { sunAlt = Number(skyHorizontal('Sun', now, state.lat, state.lon).altitude); } catch (error) {}
-    const bodies = skyBodies.slice();
     const nowPct = percentageThroughDay(now, start);
-    const items = bodies.map(function (body) {
+    const items = skyBodies.slice().map(function (body) {
       let altitude = NaN, azimuth = NaN, direction = '—';
       try {
         const hor = skyHorizontal(body, now, state.lat, state.lon);
-        altitude = Number(hor.altitude);
-        azimuth = Number(hor.azimuth);
-        direction = skyCompassDirection(azimuth);
+        altitude = Number(hor.altitude); azimuth = Number(hor.azimuth); direction = skyCompassDirection(azimuth);
       } catch (error) {}
       const rise = searchWandererRiseSet(body, observer, start, +1);
       const set = searchWandererRiseSet(body, observer, start, -1);
       const above = Number.isFinite(altitude) && altitude > 0;
-      const risePct = rise ? percentageThroughDay(rise, start) : null;
-      const setPct = set ? percentageThroughDay(set, start) : null;
       const visibility = skyVisibility(body, altitude, sunAlt);
-      const obstructionCue = skyObstructionCue(altitude, body);
-      const obstructionIcon = skyObstructionIcon(altitude);
-      return { body: body, altitude: altitude, azimuth: azimuth, direction: direction, above: above, rise: rise, set: set, risePct: risePct, setPct: setPct, visibility: visibility, obstructionCue: obstructionCue, obstructionIcon: obstructionIcon };
+      return { body, altitude, azimuth, direction, above, rise, set, risePct:rise ? percentageThroughDay(rise, start) : null, setPct:set ? percentageThroughDay(set, start) : null, visibility, obstructionCue:skyObstructionCue(altitude, body), obstructionIcon:skyObstructionIcon(altitude) };
     }).sort(function (a, b) {
-      function viewingRank(item) {
-        if (!item.above) return 5;
-        if (item.visibility.viewing === 'Naked eye') return 1;
-        if (item.visibility.viewing === 'Binoculars') return 2;
-        if (item.visibility.viewing === 'Telescope') return 3;
-        return 4;
-      }
-      const rankA = viewingRank(a);
-      const rankB = viewingRank(b);
-      if (rankA !== rankB) return rankA - rankB;
+      if (a.above !== b.above) return a.above ? -1 : 1;
       return (b.altitude || -999) - (a.altitude || -999);
     });
-    el.wandererGrid.innerHTML = items.map(function (item) {
-      const body = item.body;
-      return '<button class="ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (state.skyBody === body ? 'is-selected' : '') + '" type="button" data-sky-body="' + body + '" aria-pressed="' + (state.skyBody === body ? 'true' : 'false') + '" aria-label="Orient to ' + body + '">' +
-        (item.visibility.practical ? '<span class="ph-wanderer-visibility-dot" aria-hidden="true"></span>' : '') +
-        '<div class="ph-wanderer-title"><span class="ph-wanderer-title-main"><span class="glyph">' + (skyGlyphs[body] || '') + '</span><span>' + body + '</span></span><span class="ph-wanderer-status-stack"><span class="ph-wanderer-status sky-state">' + (item.above ? 'above' : 'below') + '</span><span class="ph-wanderer-status viewing">' + item.visibility.viewing + '</span></span></div>' +
-        '<div class="ph-wanderer-rail" aria-label="Rise/set visualization for ' + body + '">' +
-          aboveSegmentsMarkup(item.rise, item.set, start) +
-          (item.risePct === null ? '' : '<span class="ph-wanderer-crossing rise" title="Rise ' + fmtHM(item.rise) + '" style="left:' + item.risePct + '%"></span>') +
-          (item.setPct === null ? '' : '<span class="ph-wanderer-crossing set" title="Set ' + fmtHM(item.set) + '" style="left:' + item.setPct + '%"></span>') +
-          '<span class="ph-wanderer-now" title="Current time" style="left:' + nowPct + '%"></span>' +
-        '</div>' +
-        '<div class="ph-wanderer-caption"><span>Rise ' + (item.rise ? fmtHM(item.rise) : '—') + '</span><span>Set ' + (item.set ? fmtHM(item.set) : '—') + '</span></div>' +
-        '<dl class="ph-wanderer-facts">' +
-          '<div><dt>Alt</dt><dd>' + (Number.isFinite(item.altitude) ? skyRound(item.altitude, 0) + '° ' + item.direction + ' ' + item.obstructionIcon : '— ' + item.obstructionIcon) + '</dd></div>' +
-          '<div><dt>Az</dt><dd>' + (Number.isFinite(item.azimuth) ? skyRound(item.azimuth, 0) + '°' : '—') + '</dd></div>' +
-          '<div><dt>Guide</dt><dd>' + item.visibility.viewing + '</dd></div>' +
-        '</dl>' +
-        (state.skyBody === body ? '<div class="ph-wanderer-selected-guide"><strong>Orientation guide</strong><p>' + (item.above ? 'Face ' + item.direction + '. Lift your eyes about ' + skyRound(item.altitude, 0) + ' degrees above the horizon.' : body + ' is below the horizon now.') + '</p><p>' + item.obstructionCue + '</p><p>' + item.visibility.reason + '</p></div>' : '') +
-        '<div class="ph-wanderer-mini-meters" aria-hidden="true">' + wandererMiniCompassMarkup(item) + wandererMiniAltitudeMarkup(item) + '</div>' +
-      '</button>';
-    }).join('');
-  }
 
+    items.forEach(function (item) {
+      const previous = wandererHorizonState.get(item.body);
+      if (previous !== undefined && previous !== item.above) wandererDisclosureState.delete(item.body);
+      wandererHorizonState.set(item.body, item.above);
+    });
+
+    el.wandererGrid.innerHTML = items.map(function (item) {
+      const icon = wandererIcon(item);
+      const open = wandererDisclosureState.has(item.body) ? wandererDisclosureState.get(item.body) : item.above;
+      const nextEvent = item.above ? ('Sets ' + (item.set ? fmtHM(item.set) : '—')) : ('Rises ' + (item.rise ? fmtHM(item.rise) : '—'));
+      return '<details class="ph-wanderer-item ' + (item.above ? 'is-above' : 'is-below') + '" data-wanderer-body="' + item.body + '"' + (open ? ' open' : '') + '>' +
+        '<summary><span class="ph-wanderer-identity"><span class="glyph" aria-hidden="true">' + (skyGlyphs[item.body] || '') + '</span><strong>' + item.body + '</strong></span>' +
+        '<span class="ph-wanderer-summary-status"><span class="ph-wanderer-icon" role="img" aria-label="' + icon.label + '" title="' + icon.label + '">' + icon.glyph + '</span><span>' + (item.above ? 'Above' : 'Below') + '</span><span class="ph-wanderer-next">' + nextEvent + '</span></span></summary>' +
+        '<div class="ph-wanderer-detail">' +
+          '<div class="ph-wanderer-rail" aria-label="Rise and set visualization for ' + item.body + '">' + aboveSegmentsMarkup(item.rise, item.set, start) +
+            (item.risePct === null ? '' : '<span class="ph-wanderer-crossing rise" title="Rise ' + fmtHM(item.rise) + '" style="left:' + item.risePct + '%"></span>') +
+            (item.setPct === null ? '' : '<span class="ph-wanderer-crossing set" title="Set ' + fmtHM(item.set) + '" style="left:' + item.setPct + '%"></span>') +
+            '<span class="ph-wanderer-now" title="Selected time" style="left:' + nowPct + '%"></span></div>' +
+          '<div class="ph-wanderer-caption"><span>Rise ' + (item.rise ? fmtHM(item.rise) : '—') + '</span><span>Set ' + (item.set ? fmtHM(item.set) : '—') + '</span></div>' +
+          '<dl class="ph-wanderer-facts"><div><dt>Altitude</dt><dd>' + (Number.isFinite(item.altitude) ? skyRound(item.altitude, 0) + '° ' + item.direction : '—') + '</dd></div><div><dt>Azimuth</dt><dd>' + (Number.isFinite(item.azimuth) ? skyRound(item.azimuth, 0) + '°' : '—') + '</dd></div><div><dt>Viewing</dt><dd>' + item.visibility.viewing + '</dd></div></dl>' +
+          '<p class="ph-wanderer-guidance">' + item.obstructionCue + ' ' + item.visibility.reason + '</p>' +
+          '<div class="ph-wanderer-mini-meters" aria-hidden="true">' + wandererMiniCompassMarkup(item) + wandererMiniAltitudeMarkup(item) + '</div>' +
+        '</div></details>';
+    }).join('');
+    el.wandererGrid.querySelectorAll('.ph-wanderer-item').forEach(function (item) {
+      item.addEventListener('toggle', function () { wandererDisclosureState.set(item.dataset.wandererBody, item.open); });
+    });
+  }
 
   function renderSkyOrientation(force) {
     if (!el.skyQuery || (!state.skyHasRun && !force)) return;
@@ -2718,6 +2736,9 @@
     el.hourMarks.innerHTML = zones + marks;
   }
 
+  let lastAutoScrolledHour = null;
+  let tableScrollContext = '';
+  let tableManuallyScrolled = false;
   function renderHoursTable(rows, dayKey, idx) {
     el.hoursTable.innerHTML = '';
     rows.forEach(function (r, i) {
@@ -2734,6 +2755,20 @@
         '<td>' + fullContextStatement(byKey[dayKey], r, rows) + '</td>';
       el.hoursTable.appendChild(tr);
     });
+    const wrap = el.hoursTable.closest('.ph-table-wrap');
+    const context = [state.lat.toFixed(3), state.lon.toFixed(3), state.tz, dateInputValueFor(rows[idx].start, state.tz), state.useSystem ? 'live' : 'selected'].join('|');
+    const meaningfulChange = context !== tableScrollContext || idx !== lastAutoScrolledHour;
+    if (meaningfulChange && (!tableManuallyScrolled || context !== tableScrollContext || idx !== lastAutoScrolledHour)) {
+      requestAnimationFrame(function () {
+        const active = el.hoursTable.querySelector('tr.active');
+        if (!active || !wrap) return;
+        const top = active.offsetTop - Math.max(0, (wrap.clientHeight - active.offsetHeight) / 2);
+        wrap.scrollTo({ top:Math.max(0, top), behavior:'auto' });
+      });
+      lastAutoScrolledHour = idx;
+      tableScrollContext = context;
+      tableManuallyScrolled = false;
+    }
   }
 
   function syncHash() {
@@ -2828,6 +2863,8 @@
   }
 
   function bindEvents() {
+    const tableWrap = el.hoursTable && el.hoursTable.closest('.ph-table-wrap');
+    if (tableWrap) tableWrap.addEventListener('scroll', function (event) { if (event.isTrusted) tableManuallyScrolled = true; }, { passive:true });
     el.useGeo.addEventListener('click', async function () {
       const token = window.RelphiLocation.beginSelection();
       try {

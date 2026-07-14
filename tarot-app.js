@@ -309,7 +309,7 @@
   }
 
   const state = {
-    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: false, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, rowSenseSelections: {}, rowSenseNotes: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#fffaf0', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, skyWizardPath: { chart:'', currentSky:'' }, skyWizardEditing: { chart:false, currentSky:false }, skyWizardCompareRequested:false, skyMotionMode: { chart:'static', currentSky:'static' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
+    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: false, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, rowSenseSelections: {}, rowSenseNotes: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#fffaf0', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, skyWizardPath: { chart:'', currentSky:'' }, skyWizardEditing: { chart:false, currentSky:false }, skyWizardCompareRequested:false, skyMotionMode: { chart:'static', currentSky:'dynamic' }, skySameSkyMode:'exclude', relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
   };
 
   function escapeHtml(value) {
@@ -4437,6 +4437,10 @@
     const needsB = skyChartNeedsB();
     const aStatus = $('skyWizardPrimaryStatus');
     const bStatus = $('skyWizardCompareStatus');
+    const primaryName = $('skyWizardPrimaryName');
+    const compareName = $('skyWizardCompareName');
+    if (primaryName && document.activeElement !== primaryName) primaryName.value = state.chartName || '';
+    if (compareName && document.activeElement !== compareName) compareName.value = state.currentSkyName || '';
     if (aStatus) aStatus.textContent = skyLoadedSummary('chart');
     if (bStatus) bStatus.textContent = needsB ? skyLoadedSummary('currentSky') : 'Second sky: not started';
     const aHeading = $('skyWizardPrimaryHeading');
@@ -5840,7 +5844,11 @@
     const orbRef = lockedIngredient(orbIntensityRef(pair.aspect.orb, exactAspectAllowedOrb()));
     const orbTone = orbRef?.name ? String(orbRef.name).toLowerCase() : formatOrb(pair.aspect.orb);
     const sentences = [];
-    sentences.push(`${a} ${aspect === 'conjunction' ? 'conjoins' : `forms ${nameWithArticle(aspect)} with`} ${b}.`);
+    if (String(pair.relation || '').toLowerCase() === 'internal') {
+      const pointA = placementDisplay(pair.a.body, pair.a.p);
+      const pointB = placementDisplay(pair.b.body, pair.b.p);
+      sentences.push(`${leftLabel}'s ${pointA} forms ${nameWithArticle(aspect)} to ${pointB} in the same sky.`);
+    } else sentences.push(`${a} ${aspect === 'conjunction' ? 'conjoins' : `forms ${nameWithArticle(aspect)} with`} ${b}.`);
     if (sameSign) {
       sentences.push(sameSignContextSentence(pair));
       sentences.push(aspectContactSentence(pair, true, sameDecan));
@@ -5940,12 +5948,22 @@
     const found = TERM_LENGTH_RULES.find(rule => rule.bodies.some(item => canonicalRelationshipBody(item).toLowerCase() === String(b).toLowerCase()));
     return found || { label:'Term unknown', detail:'duration depends on motion data' };
   }
+  function skyTransitRoleContract() {
+    const external = window.RelphiSkyRoles || {};
+    const roles = {
+      chart: external.chart || state.skyMotionMode?.chart || 'static',
+      currentSky: external.currentSky || state.skyMotionMode?.currentSky || 'dynamic'
+    };
+    const valid = roles.chart !== roles.currentSky && ['static','dynamic'].includes(roles.chart) && ['static','dynamic'].includes(roles.currentSky);
+    return { ...roles, valid, dynamicTarget:valid ? (roles.chart === 'dynamic' ? 'chart' : 'currentSky') : null, staticTarget:valid ? (roles.chart === 'static' ? 'chart' : 'currentSky') : null };
+  }
   function movingAndFixedEndpoints(pair) {
     const relation = String(pair?.relation || 'internal').toLowerCase();
     if (relation !== 'transit' && relation !== 'progression') return null;
     const endpoints = [pair?.a, pair?.b].filter(Boolean);
-    const moving = endpoints.find(item => item?.kind === 'currentSky') || pair?.a || null;
-    const fixed = endpoints.find(item => item !== moving) || pair?.b || null;
+    const contract = skyTransitRoleContract();
+    const moving = endpoints.find(item => item?.kind === contract.dynamicTarget) || null;
+    const fixed = endpoints.find(item => item?.kind === contract.staticTarget) || null;
     return moving && fixed ? { moving, fixed } : null;
   }
   function aspectTermLength(pair) {
@@ -6008,6 +6026,7 @@
   }
   function relationshipModeNote(relation, labels=['Placement A','Placement B']) {
     const r = String(relation || 'internal').toLowerCase();
+    if (r === 'transit-invalid') return 'Choose exactly one Static sky and one Dynamic sky. Transit relationships are paused until the roles are corrected.';
     if (r === 'transit') return `Transit mode reads ${labels[0]} as the moving sky and ${labels[1]} as the natal or reference sky. Timing fields belong here: start, exact pass or passes, end, duration, and recurrence frequency.`;
     if (r === 'progression') return `Progression mode reads ${labels[0]} as the progressed sky and ${labels[1]} as the natal or reference sky. It describes symbolic development through time, not an external sky event.`;
     if (r === 'synastry') return `Synastry compares two peer skies: ${labels[0]} and ${labels[1]}.`;
@@ -6057,7 +6076,7 @@
     const b = placementGlyphCluster(pair.b);
     const cls = String(pair.aspect.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const titleText = `${placementRelationshipHubTitle(pair.a, pair.a.label || labels[0])} ${pair.aspect.name} ${placementRelationshipHubTitle(pair.b, pair.b.label || labels[1])} · ${pair.aspect.chirality || 'neutral'} · orb ${formatOrb(pair.aspect.orb)}`;
-    return `<button type="button" class="relationship-list-row aspect-${escapeHtml(cls)}${selected ? ' is-selected' : ''}" ${exactAspectPairDataAttributes(pair)} aria-pressed="${selected ? 'true' : 'false'}" title="${escapeHtml(titleText)}"><span class="relationship-list-points"><strong>${escapeHtml(pair.aspect.glyph || '')}</strong><span>${escapeHtml(a)}</span><span aria-hidden="true">→</span><span>${escapeHtml(b)}</span></span><span class="relationship-list-meta"><span>${escapeHtml(formatOrb(pair.aspect.orb))}</span><span>${escapeHtml(pair.aspect.chirality || 'neutral')}</span></span></button>`;
+    return `<button type="button" class="relationship-list-row aspect-${escapeHtml(cls)}${selected ? ' is-selected' : ''}" ${exactAspectPairDataAttributes(pair)} aria-pressed="${selected ? 'true' : 'false'}" title="${escapeHtml(titleText)}"><span class="relationship-list-points"><svg class="relationship-line-sample" viewBox="0 0 32 6" aria-hidden="true"><line class="chart-wheel-aspect-${escapeHtml(cls)}" x1="1" y1="3" x2="31" y2="3"></line></svg><strong>${escapeHtml(pair.aspect.glyph || '')}</strong><span>${escapeHtml(a)}</span><span aria-hidden="true">→</span><span>${escapeHtml(b)}</span></span><span class="relationship-list-meta"><span>${escapeHtml(formatOrb(pair.aspect.orb))}</span><span>${escapeHtml(pair.aspect.chirality || 'neutral')}</span></span></button>`;
   }
   function renderRelationshipMasterDetail(filteredPairs, filters, labels=['Placement A','Placement B']) {
     if (!filteredPairs?.length) {
@@ -6817,7 +6836,15 @@
     const bLabel = skyDisplayLabel('currentSky', 'Sky B');
     if (mode === 'bb') return { entriesA:b, entriesB:null, relation:'internal', labels:[bLabel,bLabel], title:`${bLabel} internal` };
     if (mode === 'ba') return { entriesA:b, entriesB:a, relation:'synastry', labels:[bLabel,aLabel], title:`Synastry: ${bLabel} to ${aLabel}` };
-    if (mode === 'transit') return { entriesA:b, entriesB:a, relation:'transit', labels:[bLabel,aLabel], title:`Transit: ${bLabel} to ${aLabel}` };
+    if (mode === 'transit') {
+      const roles = skyTransitRoleContract();
+      if (!roles.valid) return { entriesA:[], entriesB:[], relation:'transit-invalid', labels:[aLabel,bLabel], title:'Transit roles need correction' };
+      const dynamicEntries = roles.dynamicTarget === 'chart' ? a : b;
+      const staticEntries = roles.staticTarget === 'chart' ? a : b;
+      const dynamicLabel = roles.dynamicTarget === 'chart' ? aLabel : bLabel;
+      const staticLabel = roles.staticTarget === 'chart' ? aLabel : bLabel;
+      return { entriesA:dynamicEntries, entriesB:staticEntries, relation:'transit', labels:[dynamicLabel,staticLabel], title:`Transit: ${dynamicLabel} to ${staticLabel}` };
+    }
     if (mode === 'progression') return { entriesA:b, entriesB:a, relation:'progression', labels:[bLabel,aLabel], title:`Progression: ${bLabel} to ${aLabel}` };
     if (mode === 'ab') return { entriesA:a, entriesB:b, relation:skyChartMode()==='compare'?'compare':'synastry', labels:[aLabel,bLabel], title:`${skyRelationshipTitle()}: ${aLabel} to ${bLabel}` };
     return { entriesA:a, entriesB:null, relation:'internal', labels:[aLabel,aLabel], title:`${aLabel} internal` };
@@ -7189,7 +7216,9 @@ ${notes || ''}`;
     setTimeout(() => ($('skyCalcLocation') || $('skyCalcLatitude'))?.focus?.(), 80);
   }
   function readPlanetaryHoursWhereWhenSettings() {
-    const data = window.RelphiLocation?.read();
+    let data = null;
+    try { data = JSON.parse(localStorage.getItem('relphiPlanetaryHoursWhereWhen') || 'null'); } catch (error) {}
+    if (!data) data = window.RelphiLocation?.read();
     if (!data) return null;
     return meaningfulSkyCalcProfile({
       dateTime: normalizeLocalDateTimeValue(data.datetime || ''),
@@ -7197,7 +7226,8 @@ ${notes || ''}`;
       longitude: data.lon,
       location: data.loc,
       timeZone: data.tz,
-      name: 'Shared Where and When'
+      name: 'Shared Where and When',
+      houseSystem: data.houseSystem || 'whole-sign'
     });
   }
   function applyPlanetaryHoursWhereWhenSettings() {
@@ -7750,7 +7780,13 @@ ${notes || ''}`;
         const ok = applyPlanetaryHoursWhereWhenSettings();
         const toggle = $('skyCalcUsePlanetaryHours');
         if (toggle) toggle.checked = !!ok;
-        if (ok) { runSkyCalculation(kind).then(() => { document.getElementById('skyCreatorDrawer')?.removeAttribute('open'); document.querySelector('.sky-calc-drawer')?.removeAttribute('open'); }); }
+        const signature = ok ? JSON.stringify(readPlanetaryHoursWhereWhenSettings()) : '';
+        if (ok && btn.dataset.phConfirmed === signature) {
+          runSkyCalculation(kind).then(() => { document.getElementById('skyCreatorDrawer')?.removeAttribute('open'); document.querySelector('.sky-calc-drawer')?.removeAttribute('open'); });
+        } else if (ok) {
+          btn.dataset.phConfirmed = signature;
+          skyCalcStatus('Planetary Hours moment imported. Review the confirmation, then choose this action again to create the sky.');
+        }
       });
     });
     qsa('[data-focus-sky-paste]').forEach(btn => {
@@ -8117,7 +8153,7 @@ ${notes || ''}`;
       return `${axisLine(rising, 'asc', 'ASC', 'DSC')}${axisLine(mc, 'mc', 'MC', 'IC')}`;
     };
     const axes = ui.showA ? axisHtmlFor(visibleEntriesA, 'sky-a', aLabel) : '';
-    const aspectKey = `<div class="chart-wheel-aspect-key" aria-label="Aspect color key"><span class="key-conjunction">☌ conjunction</span><span class="key-opposition">☍ opposition</span><span class="key-trine">△ trine</span><span class="key-square">□ square</span><span class="key-sextile">✶ sextile</span><span class="key-quincunx">⚻ quincunx</span></div>`;
+    const aspectKey = `<div class="chart-wheel-aspect-key" aria-label="Aspect color and line-style key"><span class="key-conjunction"><svg class="relationship-line-sample" viewBox="0 0 32 6" aria-hidden="true"><line class="chart-wheel-aspect-conjunction" x1="1" y1="3" x2="31" y2="3"></line></svg>☌ conjunction</span><span class="key-opposition"><svg class="relationship-line-sample" viewBox="0 0 32 6" aria-hidden="true"><line class="chart-wheel-aspect-opposition" x1="1" y1="3" x2="31" y2="3"></line></svg>☍ opposition</span><span class="key-trine"><svg class="relationship-line-sample" viewBox="0 0 32 6" aria-hidden="true"><line class="chart-wheel-aspect-trine" x1="1" y1="3" x2="31" y2="3"></line></svg>△ trine</span><span class="key-square"><svg class="relationship-line-sample" viewBox="0 0 32 6" aria-hidden="true"><line class="chart-wheel-aspect-square" x1="1" y1="3" x2="31" y2="3"></line></svg>□ square</span><span class="key-sextile"><svg class="relationship-line-sample" viewBox="0 0 32 6" aria-hidden="true"><line class="chart-wheel-aspect-sextile" x1="1" y1="3" x2="31" y2="3"></line></svg>✶ sextile</span><span class="key-quincunx"><svg class="relationship-line-sample" viewBox="0 0 32 6" aria-hidden="true"><line class="chart-wheel-aspect-quincunx" x1="1" y1="3" x2="31" y2="3"></line></svg>⚻ quincunx</span></div>`;
     return `<section class="chart-wheel-panel unified-sky-wheel sky-relationships-wheel"><div class="chart-wheel-head"><h3>${escapeHtml(wheelTitle)}</h3><p class="generated-note">${escapeHtml(wheelHelp)}</p></div><p class="sky-ring-legend"><span class="legend-chip sky-a"></span> ${escapeHtml(aLabel)}${entriesB.length ? ` <span class="legend-sep">·</span> <span class="legend-chip sky-b"></span> ${escapeHtml(bLabel)}` : ''}</p>${aspectKey}<svg class="chart-wheel-plot" viewBox="-20 -20 600 600" role="img" aria-label="${escapeHtml(wheelTitle)}"><circle class="chart-wheel-core" cx="${cx}" cy="${cy}" r="${geometry.coreWheelRadius}"></circle><g class="chart-wheel-house-layer">${houseStructure}</g><g class="chart-wheel-all-aspects">${allAspectLines}</g><g class="chart-wheel-axes">${axes}</g><g class="chart-wheel-aspect-ranges">${arc}</g><g class="chart-wheel-selected-aspects">${selectedAspectLines}</g><g class="chart-wheel-sign-track">${signTrack}</g><g class="chart-wheel-markers">${markersA}${markersB}</g><circle class="chart-wheel-center" cx="${cx}" cy="${cy}" r="4"></circle></svg></section>`;
   }
   function skyRelationshipControlHtml(allPairs, filters) {
@@ -8125,35 +8161,47 @@ ${notes || ''}`;
   }
   function renderSkyRelationshipsPanel(entriesA, entriesB) {
     const filters = exactAspectFilters();
-    const cfg = skyChartModeConfig();
     let modeKey = 'aa';
     if (skyChartMode() === 'transit') modeKey = 'transit';
     else if (skyChartNeedsB()) modeKey = 'ab';
     const mode = skyAspectModeEntries(modeKey);
     const ui = skyAspectUiState();
-    setSkyAspectUi({ mode:modeKey, showA: ui.showA !== false, showB: skyChartNeedsB() ? ui.showB !== false : false, orb:Number(filters.orb) || 0, chirality:filters.chirality || 'both' });
+    setSkyAspectUi({ mode:modeKey, showA:ui.showA !== false, showB:skyChartNeedsB() ? ui.showB !== false : false, orb:Number(filters.orb) || 0, chirality:filters.chirality || 'both' });
     const nextUi = skyAspectUiState();
     const maxOrb = Math.max(0, Number(filters.orb) || 0);
-    const allPairs = exactAspectPairs(mode.entriesA, mode.entriesB || mode.entriesA, maxOrb, mode.relation, filters.chirality || 'both');
-    const filtered = allPairs.filter(pair => exactAspectMatches(pair, filters));
+    const crossPairs = exactAspectPairs(mode.entriesA, mode.entriesB || mode.entriesA, maxOrb, mode.relation, filters.chirality || 'both');
+    const dual = skyChartNeedsB() && mode.relation !== 'transit-invalid';
+    const sameMode = dual ? (state.skySameSkyMode || 'exclude') : 'include';
+    const internalA = dual ? exactAspectPairs(skyEntries('chart'), skyEntries('chart'), maxOrb, 'internal', filters.chirality || 'both') : [];
+    const internalB = dual ? exactAspectPairs(skyEntries('currentSky'), skyEntries('currentSky'), maxOrb, 'internal', filters.chirality || 'both') : [];
+    const allPairs = sameMode === 'exclude' ? crossPairs : [...crossPairs, ...internalA, ...internalB].sort((a,b) => a.aspect.orb - b.aspect.orb);
+    const filteredAll = allPairs.filter(pair => exactAspectMatches(pair, filters));
+    const selectedRelationship = nextUi.selectedRelationship;
+    const selectedPlacement = nextUi.selected;
+    const filtered = selectedRelationship
+      ? filteredAll.filter(relationshipPairMatchesUiSelection)
+      : selectedPlacement ? filteredAll.filter(pair => [pair.a,pair.b].some(item => item.kind === selectedPlacement.kind && item.body === selectedPlacement.body)) : filteredAll;
     const note = relationshipModeNote(mode.relation, mode.labels);
-    const empty = !allPairs.length ? `<p class="generated-note">No exact major aspects are within ${escapeHtml(formatOrb(maxOrb))}.</p>` : '';
-    const details = filtered.length ? renderRelationshipMasterDetail(filtered, filters, mode.labels) : `<p class="generated-note">No exact aspects match the selected filters.</p>`;
-    const relationshipTitle = (() => {
-      const active = activePlacementFilterNames(filters);
-      return active.length
-        ? `Relationships: ${active.map(body => relationshipBodyGlyphLabel(body)).join(', ')}`
-        : 'Relationships';
-    })();
+    const empty = !allPairs.length ? `<p class="generated-note">${escapeHtml(note)} ${mode.relation === 'transit-invalid' ? '' : `No exact major aspects are within ${escapeHtml(formatOrb(maxOrb))}.`}</p>` : '';
+    const relationshipTitle = selectedRelationship || selectedPlacement ? 'Isolated relationships' : 'Relationships';
     const selectedPair = filtered.find(relationshipPairMatchesUiSelection) || filtered[0];
-    const relationshipRows = filtered.length
-      ? filtered.map(pair => relationshipListRowHtml(pair, pair === selectedPair, mode.labels)).join('')
-      : '';
-    const controls = skyRelationshipControlHtml(allPairs, filters);
-    const listPanel = `<aside class="sky-relationships-side-panel sky-relationships-list-panel" aria-label="Exact relationships"><h4>Exact relationships</h4>${empty || (filtered.length ? `<div class="relationship-master-list"><h4>${escapeHtml(relationshipTitle)} <span>${filtered.length}</span></h4><div class="relationship-list-rows">${relationshipRows}</div></div>` : details)}</aside>`;
-    const wheelPanel = `<div class="sky-relationships-wheel-panel"><div class="sky-relationships-wheel-controls" aria-label="Relationship filters">${controls}</div>${renderUnifiedSkyWheel(entriesA, entriesB, { plotPairs: filtered, titleText:'Relationship wheel', helpText:'' })}${listPanel}</div>`;
-    const detailPanel = `<aside class="sky-relationships-side-panel sky-relationships-detail-panel" aria-label="Selected relationship"><h4>Selected relationship</h4>${selectedPair ? exactAspectCard(selectedPair, mode.labels[0], mode.labels[1]) : details}</aside>`;
-    return `<section class="sky-relationships-panel" aria-label="Sky Relationships"><div class="sky-relationships-three-panel">${wheelPanel}${detailPanel}</div></section>`;
+    const labelsForPair = pair => pair?.relation === 'internal' ? [pair.a.kind === 'currentSky' ? skyDisplayLabel('currentSky','Sky B') : skyDisplayLabel('chart','Sky A'), pair.a.kind === 'currentSky' ? skyDisplayLabel('currentSky','Sky B') : skyDisplayLabel('chart','Sky A')] : mode.labels;
+    const rowsFor = pairs => pairs.map(pair => relationshipListRowHtml(pair, pair === selectedPair, labelsForPair(pair))).join('');
+    let relationshipRows = rowsFor(filtered);
+    if (sameMode === 'separate' && dual && !selectedRelationship && !selectedPlacement) {
+      const crossFiltered = crossPairs.filter(pair => exactAspectMatches(pair, filters));
+      const aFiltered = internalA.filter(pair => exactAspectMatches(pair, filters));
+      const bFiltered = internalB.filter(pair => exactAspectMatches(pair, filters));
+      const section = (title, pairs) => `<section class="same-sky-result-section"><h5>${escapeHtml(title)} <span>${pairs.length}</span></h5><div class="relationship-list-rows">${rowsFor(pairs) || '<p class="generated-note">No matching aspects.</p>'}</div></section>`;
+      relationshipRows = section('Cross-sky relationships', crossFiltered) + section(`${skyDisplayLabel('chart','Sky A')} · same sky`, aFiltered) + section(`${skyDisplayLabel('currentSky','Sky B')} · same sky`, bFiltered);
+    }
+    const sameControl = dual ? `<fieldset class="same-sky-control"><legend>Same-sky aspects</legend>${['include','exclude','separate'].map(value => `<button type="button" data-same-sky-mode="${value}" aria-pressed="${sameMode === value}">${value === 'separate' ? 'Show separately' : value[0].toUpperCase()+value.slice(1)}</button>`).join('')}</fieldset>` : '';
+    const controls = `<div class="sky-relationships-control-strip">${sameControl}${exactAspectControlHtml(allPairs, filters)}</div>`;
+    const listPanel = `<aside class="sky-relationships-side-panel sky-relationships-list-panel" aria-label="Exact relationships"><h4>Exact relationships</h4>${empty || `<div class="relationship-master-list"><h4>${escapeHtml(relationshipTitle)} <span>${filtered.length}</span></h4><div class="relationship-list-rows">${relationshipRows || '<p class="generated-note">No exact aspects match the selected filters.</p>'}</div></div>`}</aside>`;
+    const wheelPanel = `<div class="sky-relationships-wheel-panel"><div class="sky-relationships-wheel-controls" aria-label="Relationship filters">${controls}</div>${renderUnifiedSkyWheel(entriesA, entriesB, { plotPairs:filtered, titleText:'Relationship wheel', helpText:'' })}${listPanel}</div>`;
+    const detailLabels = labelsForPair(selectedPair);
+    const detailPanel = `<aside class="sky-relationships-side-panel sky-relationships-detail-panel" aria-label="Selected relationship"><h4>Selected relationship</h4>${selectedPair ? exactAspectCard(selectedPair, detailLabels[0], detailLabels[1]) : (empty || '<p class="generated-note">Select a relationship to read it.</p>')}</aside>`;
+    return `<section class="sky-relationships-panel${selectedRelationship || selectedPlacement ? ' is-isolated' : ''}" data-same-sky-mode="${sameMode}" aria-label="Sky Relationships"><p class="generated-note sky-relationship-mode-note">${escapeHtml(note)}</p><div class="sky-relationships-three-panel">${wheelPanel}${detailPanel}</div></section>`;
   }
   function renderSkyAspectModePanel() {
     return renderSkyRelationshipsPanel(skyEntries('chart'), skyChartNeedsB() ? skyEntries('currentSky') : []);
@@ -8196,6 +8244,7 @@ ${notes || ''}`;
   function bindUnifiedSkyControls() {
     const root = $('chartOutput');
     if (!root) return;
+    qsa('[data-same-sky-mode]', root).forEach(control => control.addEventListener('click', () => { state.skySameSkyMode = control.dataset.sameSkyMode || 'exclude'; setSkyAspectUi({ selected:null, selectedRelationship:null }); renderChart(); }));
     qsa('[data-sky-ui]', root).forEach(control => {
       const key = control.dataset.skyUi;
       const handler = () => {
@@ -8219,6 +8268,12 @@ ${notes || ''}`;
         point.classList.toggle('is-aspect-dimmed', !!line && !hit);
       });
     };
+    root.querySelector('.chart-wheel-plot')?.addEventListener('click', event => {
+      if (event.target !== event.currentTarget && !event.target.classList.contains('chart-wheel-core') && !event.target.classList.contains('chart-wheel-center')) return;
+      state.transitFilters = { ...(state.transitFilters || {}), placement:[] };
+      setSkyAspectUi({ selected:null, selectedRelationship:null });
+      renderChart();
+    });
     qsa('.chart-wheel-aspect[data-aspect-a-kind]', root).forEach(line => {
       line.addEventListener('mouseenter', () => setAspectHover(line));
       line.addEventListener('focus', () => setAspectHover(line));
@@ -9136,6 +9191,16 @@ ${notes || ''}`;
     $('skyCreatorExportText')?.addEventListener('click', exportSkyCreatorText);
     $('skyCreatorImportText')?.addEventListener('click', () => $('skyCreatorTextFile')?.click());
     $('skyCreatorTextFile')?.addEventListener('change', () => { importSkyCreatorTextFile($('skyCreatorTextFile').files?.[0]); $('skyCreatorTextFile').value = ''; });
+    [['skyWizardPrimaryName','chart'],['skyWizardCompareName','currentSky']].forEach(([id,kind]) => {
+      const input = $(id); if (!input || input.dataset.skyNameReady) return;
+      input.dataset.skyNameReady = 'true';
+      input.addEventListener('input', () => {
+        const meta = skyFields(kind);
+        state[meta.nameKey] = input.value.trim();
+        if (skyCreatorKind() === kind && $('skyCreatorName')) $('skyCreatorName').value = input.value;
+        updateSkyWizardTargets();
+      });
+    });
     refreshSkyCreatorLibrary();
     renderSkyCreator();
   }

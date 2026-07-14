@@ -19995,3 +19995,95 @@ body.sky-chart-page .unified-sky-wheel .chart-wheel-all-aspects .chart-wheel-asp
   .sky-data-menu,
   .sky-data-menu > summary { width: 100%; text-align: center; }
 }
+/* Planetary Hours compact wanderer stack and bounded active-hour viewport. */
+body.planetary-hours-page .ph-moon-frame .ph-wanderer-strip,
+body:has(#hoursTable) .ph-moon-frame .ph-wanderer-strip {
+  margin-top: 1rem;
+  padding-top: .8rem;
+  border-top: 1px solid var(--relphi-line, rgba(17,17,17,.16));
+}
+body:has(#hoursTable) .ph-wanderer-grid { display: grid; grid-template-columns: 1fr; gap: .35rem; }
+body:has(#hoursTable) .ph-wanderer-item { border: 1px solid rgba(17,17,17,.14); border-radius: .7rem; background: #fff; overflow: clip; }
+body:has(#hoursTable) .ph-wanderer-item.is-above { border-color: rgba(220,31,24,.34); }
+body:has(#hoursTable) .ph-wanderer-item summary { display: flex; align-items: center; justify-content: space-between; gap: .55rem; padding: .5rem .6rem; cursor: pointer; list-style: none; }
+body:has(#hoursTable) .ph-wanderer-item summary::-webkit-details-marker { display: none; }
+body:has(#hoursTable) .ph-wanderer-identity,
+body:has(#hoursTable) .ph-wanderer-summary-status { display: inline-flex; align-items: center; gap: .38rem; min-width: 0; }
+body:has(#hoursTable) .ph-wanderer-identity .glyph { font-size: 1.1rem; }
+body:has(#hoursTable) .ph-wanderer-summary-status { justify-content: flex-end; font-size: .72rem; font-weight: 800; color: #4d4742; }
+body:has(#hoursTable) .ph-wanderer-icon { display: inline-grid; place-items: center; width: 1.35rem; height: 1.35rem; border: 1px solid currentColor; border-radius: 999px; }
+body:has(#hoursTable) .ph-wanderer-next { font-variant-numeric: tabular-nums; white-space: nowrap; }
+body:has(#hoursTable) .ph-wanderer-detail { display: grid; gap: .4rem; padding: .05rem .6rem .65rem; }
+body:has(#hoursTable) .ph-wanderer-guidance { margin: 0; font-size: .78rem; line-height: 1.35; color: #555; }
+body:has(#hoursTable) .ph-table-wrap { max-height: min(68vh, 38rem); overflow: auto; scroll-behavior: auto; }
+body:has(#hoursTable) #hoursTable thead { position: sticky; top: 0; z-index: 2; background: #fff; }
+
+/* Sky Chart coherence: shared gutters, transit roles, relationship legend, and paired-card geometry. */
+body.sky-chart-page #chartPanel { --sky-gutter: clamp(.8rem, 2vw, 1.35rem); }
+body.sky-chart-page .sky-wizard-step,
+body.sky-chart-page .sky-builder-advanced-panel,
+body.sky-chart-page .sky-relationships-wheel-controls,
+body.sky-chart-page .sky-relationships-list-panel,
+body.sky-chart-page .sky-relationships-detail-panel { padding: var(--sky-gutter); }
+body.sky-chart-page .sky-builder-mode-button.is-active,
+body.sky-chart-page .sky-wizard-compare-button.is-selected,
+body.sky-chart-page .sky-wizard-compare-button[aria-pressed="true"],
+body.sky-chart-page .sky-advanced-comparison button.is-active,
+body.sky-chart-page .sky-advanced-sky-tabs button.is-active {
+  border-color: #991913 !important;
+  background: #991913 !important;
+  color: #fff !important;
+}
+body.sky-chart-page .sky-creator-toolbar label:has(#skyCreatorTarget),
+body.sky-chart-page .sky-creator-toolbar label:has(#skyMotionMode) { display: none; }
+body.sky-chart-page .sky-wizard-entry-card:has(.sky-wizard-complete-card:not([hidden])) > .sky-wizard-name-label,
+body.sky-chart-page .sky-wizard-entry-card:has(.sky-wizard-complete-card:not([hidden])) > .sky-wizard-ph-import,
+body.sky-chart-page .sky-wizard-entry-card:has(.sky-wizard-complete-card:not([hidden])) > .sky-wizard-ph-confirmation { display: none; }
+body.sky-chart-page .sky-location-confirmation strong { color: #991913; }
+.sky-wizard-name-label { display: grid; gap: .3rem; margin-top: .65rem; font-size: .78rem; font-weight: 850; }
+.sky-wizard-name-label input { width: 100%; min-height: 2.55rem; border: 1px solid rgba(17,17,17,.22); border-radius: .55rem; background: #fff; padding: .55rem .65rem; font: inherit; }
+.sky-wizard-ph-import { display: grid; gap: .16rem; width: 100%; margin-top: .55rem; border: 1px solid rgba(153,25,19,.35); border-radius: .7rem; background: #fff8f6; color: #332d29; padding: .62rem .7rem; text-align: left; cursor: pointer; }
+.sky-wizard-ph-import small { color: #625751; }
+.sky-wizard-ph-confirmation { margin-top: .45rem; border-left: 3px solid #991913; background: #fff8f6; padding: .48rem .62rem; font-size: .78rem; line-height: 1.4; }
+.sky-transit-role-editor { margin: 0 var(--sky-gutter) .8rem; padding: .7rem; border: 1px solid rgba(153,25,19,.18); border-radius: .8rem; background: #fffaf8; }
+.sky-role-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .65rem; }
+.sky-role-card { display: grid; gap: .42rem; min-width: 0; }
+.sky-role-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: .25rem; }
+.sky-role-toggle button { border: 1px solid rgba(17,17,17,.2); border-radius: .5rem; background: #fff; color: #332d29; padding: .48rem; font-weight: 800; cursor: pointer; }
+.sky-role-toggle button.is-active { border-color: #991913; background: #991913; color: #fff; }
+.sky-role-validation { margin: .6rem 0 0; font-size: .78rem; font-weight: 750; }
+.same-sky-control { display: inline-flex; align-items: center; gap: .3rem; margin: 0; border: 0; padding: 0; }
+.same-sky-control legend { float: left; margin-right: .35rem; font-size: .72rem; font-weight: 850; }
+.same-sky-control button { border: 1px solid rgba(17,17,17,.2); border-radius: 999px; background: #fff; padding: .36rem .58rem; font-size: .72rem; font-weight: 800; }
+.same-sky-control button[aria-pressed="true"] { border-color: #991913; background: #fff0ed; color: #7f1510; box-shadow: inset 0 0 0 1px #991913; }
+.same-sky-result-section { margin-top: .65rem; padding-top: .55rem; border-top: 1px solid rgba(17,17,17,.12); }
+.same-sky-result-section h5 { display: flex; justify-content: space-between; gap: .5rem; margin: 0 0 .4rem; }
+.sky-relationship-mode-note { margin: 0 0 .65rem; padding-inline: var(--sky-gutter); }
+.chart-wheel-aspect-conjunction { stroke-dasharray: 3 3; }
+.chart-wheel-aspect-opposition { stroke-dasharray: none; }
+.chart-wheel-aspect-trine { stroke-dasharray: 8 3; }
+.chart-wheel-aspect-square { stroke-dasharray: 2 2; }
+.chart-wheel-aspect-sextile { stroke-dasharray: 6 2; }
+.chart-wheel-aspect-quincunx { stroke-dasharray: 8 3 2 3; }
+.relationship-line-sample { display: inline-block; flex: 0 0 1.8rem; width: 1.8rem; height: .42rem; overflow: visible; vertical-align: middle; }
+.relationship-line-sample line { stroke-width: 3; vector-effect: non-scaling-stroke; }
+.chart-wheel-aspect-key > span { display: inline-flex; align-items: center; gap: .3rem; }
+body.sky-chart-page .relationship-list-points { grid-template-columns: auto auto minmax(0,1fr) auto minmax(0,1fr) !important; }
+body.sky-chart-page .relationship-prose-panel,
+body.sky-chart-page .relationship-prose-panel p,
+body.sky-chart-page .relationship-reading-head,
+body.sky-chart-page .relationship-reading-head p,
+body.sky-chart-page .relationship-timing-line,
+body.sky-chart-page .generated-note { user-select: text !important; -webkit-user-select: text !important; }
+body.sky-chart-page .relationship-reading-pair { align-items: stretch; grid-template-columns: minmax(0,1fr) 2.25rem minmax(0,1fr); }
+body.sky-chart-page .relationship-reading-pair > .relationship-placement-card { display: grid; grid-template-rows: 1.75rem auto minmax(0,1fr); width: 100%; height: 100%; min-width: 0; align-content: stretch; }
+body.sky-chart-page .relationship-sky-label { display: inline-flex; align-items: center; align-self: start; justify-self: start; width: max-content; max-width: 100%; height: 1.75rem; min-height: 1.75rem; padding: .25rem .5rem; border: 1px solid rgba(17,17,17,.2); border-radius: 999px; font: 800 .68rem/1 Montserrat,sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.sky-chart-page .relationship-card-caption { display: grid; align-content: start; }
+body.sky-chart-page .sky-relationships-panel.is-isolated .sky-relationships-list-panel,
+body.sky-chart-page .sky-relationships-panel.is-isolated .sky-relationships-detail-panel { box-shadow: inset 0 3px 0 #991913; }
+@media (max-width: 640px) {
+  .sky-role-grid { grid-template-columns: 1fr; }
+  .same-sky-control { display: flex; flex-wrap: wrap; width: 100%; }
+  body.sky-chart-page .relationship-reading-pair { grid-template-columns: 1fr; }
+  body.sky-chart-page .relationship-reading-pair > .relationship-placement-card { height: auto; min-height: 0 !important; grid-template-rows: auto auto auto; }
+}
