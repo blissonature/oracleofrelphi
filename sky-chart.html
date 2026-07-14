@@ -150,6 +150,9 @@
               <button type="button" class="sky-wizard-action" data-sky-path="there-then" data-sky-entry-kind="chart"><span>There and Then</span><small>Choose another date, time, and place.</small></button>
               <button type="button" class="sky-wizard-action sky-wizard-action-quiet" data-sky-path="existing" data-sky-entry-kind="chart"><span>I already have a sky</span><small>Enter or retrieve existing placements.</small></button>
             </div>
+            <label class="sky-wizard-name-label">Sky name <input id="skyWizardPrimaryName" type="text" autocomplete="off" placeholder="Name this sky"></label>
+            <button type="button" class="sky-wizard-ph-import" data-sky-entry-kind="chart" data-use-ph-settings><span>Use Planetary Hours Where and When</span><small>Import the exact active Planetary Hours date, time, place, time zone, and calculation context.</small></button>
+            <div class="sky-wizard-ph-confirmation" data-ph-confirmation="chart" hidden aria-live="polite"></div>
             <div class="sky-wizard-path-panel" data-sky-path-panel="here-now" data-sky-entry-kind="chart" hidden>
               <p class="sky-wizard-path-help">Use the shared saved location, or choose how to establish one.</p>
               <div class="sky-location-status-control" aria-label="Shared location">
@@ -161,7 +164,6 @@
             <div class="sky-wizard-path-panel" data-sky-path-panel="there-then" data-sky-entry-kind="chart" hidden>
               <p class="sky-wizard-path-help">Choose the moment whose sky you want to calculate.</p>
               <button type="button" class="sky-wizard-action sky-wizard-action-primary" data-sky-entry-kind="chart" data-open-sky-calc><span>Choose This Moment</span><small>Enter a date, time, and location.</small></button>
-              <button type="button" class="sky-wizard-action" data-sky-entry-kind="chart" data-sky-here-now><span>Use Here and Now</span></button>
             </div>
             <div class="sky-wizard-path-panel" data-sky-path-panel="existing" data-sky-entry-kind="chart" hidden>
               <button type="button" class="sky-wizard-action" data-sky-entry-kind="chart" data-focus-sky-paste><span>Type or paste</span><small>Paste copied chart rows or saved sky text.</small></button>
@@ -211,6 +213,9 @@
                   <button type="button" class="sky-wizard-action" data-sky-path="there-then" data-sky-entry-kind="currentSky"><span>There and Then</span></button>
                   <button type="button" class="sky-wizard-action sky-wizard-action-quiet" data-sky-path="existing" data-sky-entry-kind="currentSky"><span>I already have a sky</span></button>
                 </div>
+                <label class="sky-wizard-name-label">Sky name <input id="skyWizardCompareName" type="text" autocomplete="off" placeholder="Name this sky"></label>
+                <button type="button" class="sky-wizard-ph-import" data-sky-entry-kind="currentSky" data-use-ph-settings><span>Use Planetary Hours Where and When</span><small>Import the exact active Planetary Hours context.</small></button>
+                <div class="sky-wizard-ph-confirmation" data-ph-confirmation="currentSky" hidden aria-live="polite"></div>
                 <div class="sky-wizard-path-panel" data-sky-path-panel="here-now" data-sky-entry-kind="currentSky" hidden>
                   <button type="button" class="sky-wizard-action" data-sky-entry-kind="currentSky" data-detect-location><span>Detect my location automatically</span></button>
                   <button type="button" class="sky-wizard-action" data-sky-entry-kind="currentSky" data-open-sky-calc><span>Add a location manually</span></button>
@@ -218,7 +223,6 @@
                 <div class="sky-wizard-path-panel" data-sky-path-panel="there-then" data-sky-entry-kind="currentSky" hidden>
                   <p class="sky-wizard-path-help">Choose the moment whose sky you want to calculate.</p>
                   <button type="button" class="sky-wizard-action sky-wizard-action-primary" data-sky-entry-kind="currentSky" data-open-sky-calc><span>Choose This Moment</span></button>
-                  <button type="button" class="sky-wizard-action" data-sky-entry-kind="currentSky" data-sky-here-now><span>Use Here and Now</span></button>
                 </div>
                 <div class="sky-wizard-path-panel" data-sky-path-panel="existing" data-sky-entry-kind="currentSky" hidden>
                   <button type="button" class="sky-wizard-action" data-sky-entry-kind="currentSky" data-focus-sky-paste><span>Type or paste</span></button>
@@ -327,11 +331,11 @@
               </section>
               <section class="sky-calc-column sky-calc-where-column" aria-label="Where">
                 <h3>Where</h3>
-                <label class="sky-location-search-label">Type a location
+                <label class="sky-location-search-label">City, address, or place
                   <input id="skyCalcLocation" type="text" placeholder="Ex. London, Cairo, Salem MA, or an address">
                 </label>
                 <div class="sky-calc-button-row sky-location-button-row">
-                  <button id="skyCalcSearchLocation" class="relphi-secondary-action" type="button">Search location</button>
+                  <button id="skyCalcSearchLocation" class="relphi-secondary-action" type="button">Add a location manually</button>
                   <button id="skyCalcGeo" type="button">Detect my location automatically</button>
                 </div>
                 <div id="skyCalcLocationResults" class="sky-location-results" hidden aria-label="Location search results"></div>
@@ -354,10 +358,7 @@
               </section>
             </div>
             <div class="sky-calc-shared-actions">
-              <label class="sky-ph-settings-toggle">
-                <input id="skyCalcUsePlanetaryHours" type="checkbox">
-                Use Planetary Hours settings
-              </label>
+              <button id="skyCalcUsePlanetaryHours" class="sky-ph-settings-toggle" type="button" data-use-ph-settings>Use Planetary Hours Where and When</button>
               <button id="skyCalcSeed" type="button">Use editing sky metadata</button>
               <button id="skyCalcReverseSolve" type="button">Infer date/place from placements</button>
               <button id="skyCalcAttach" type="button">Attach to sky</button>

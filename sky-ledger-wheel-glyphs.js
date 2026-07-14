@@ -85,8 +85,18 @@
     const cx = numericAttribute(circle, 'cx');
     const cy = numericAttribute(circle, 'cy');
     const r = numericAttribute(circle, 'r');
+    const svg = text.closest('svg');
+    const viewBox = svg && svg.viewBox && svg.viewBox.baseVal;
+    const validPosition = Number.isFinite(cx) && Number.isFinite(cy) && Number.isFinite(r) && r > 0 &&
+      (!viewBox || !viewBox.width || (cx - r >= viewBox.x && cy - r >= viewBox.y && cx + r <= viewBox.x + viewBox.width && cy + r <= viewBox.y + viewBox.height));
+    if (!validPosition) {
+      delete text.dataset.relphiWheelGlyphPending;
+      return;
+    }
+    text.parentElement.querySelectorAll(':scope > .relphi-wheel-planet-glyph').forEach(function (existing) { existing.remove(); });
     const group = document.createElementNS(NS, 'g');
     group.setAttribute('class', 'relphi-wheel-planet-glyph');
+    group.setAttribute('data-relphi-glyph-for', (text.textContent || '').trim());
     group.setAttribute('aria-hidden', 'true');
     group.style.pointerEvents = 'none';
     const color = glyphColor(text, circle);
@@ -102,8 +112,8 @@
 
     text.parentNode.insertBefore(group, text.nextSibling);
     let box;
-    try { box = group.getBBox(); } catch (error) { group.remove(); return; }
-    if (!box.width || !box.height) { group.remove(); return; }
+    try { box = group.getBBox(); } catch (error) { group.remove(); delete text.dataset.relphiWheelGlyphPending; return; }
+    if (!Number.isFinite(box.x) || !Number.isFinite(box.y) || !Number.isFinite(box.width) || !Number.isFinite(box.height) || !box.width || !box.height) { group.remove(); delete text.dataset.relphiWheelGlyphPending; return; }
 
     // Leave one CSS pixel of breathing room between the visible path and the circle stroke.
     const available = Math.max(1, (r * 2) - 2);
@@ -114,22 +124,28 @@
 
     text.setAttribute('visibility', 'hidden');
     text.dataset.relphiWheelGlyphAligned = 'true';
+    delete text.dataset.relphiWheelGlyphPending;
   }
 
   function alignText(text) {
-    if (!text || text.dataset.relphiWheelGlyphAligned === 'true') return;
+    if (!text || text.dataset.relphiWheelGlyphAligned === 'true' || text.dataset.relphiWheelGlyphPending === 'true') return;
     const symbol = (text.textContent || '').trim();
     const name = GLYPHS[symbol];
     if (!name) return;
     const circle = nearbyCircle(text);
     if (!circle) return;
-    loadPaths(name).then(function (paths) { installGlyph(text, circle, paths); }).catch(function () {});
+    text.dataset.relphiWheelGlyphPending = 'true';
+    loadPaths(name).then(function (paths) { installGlyph(text, circle, paths); }).catch(function () { delete text.dataset.relphiWheelGlyphPending; });
   }
 
   function run(root) {
     const scope = root && root.querySelectorAll ? root : document;
     scope.querySelectorAll('svg text').forEach(alignText);
     if (root && root.matches && root.matches('svg text')) alignText(root);
+    scope.querySelectorAll('svg .relphi-wheel-planet-glyph').forEach(function (group) {
+      const parent = group.parentElement;
+      if (!parent || !parent.querySelector('text[data-relphi-wheel-glyph-aligned="true"]')) group.remove();
+    });
   }
 
   function start() {
