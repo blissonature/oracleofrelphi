@@ -1,0 +1,42 @@
+name: Run Drawing Board persistence apply
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/run-drawing-board-apply.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Apply implementation script
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          workflow = Path('.github/workflows/apply-drawing-board-persistence.yml').read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          start = workflow.index(marker) + len(marker)
+          end = workflow.index("\n          PY\n", start)
+          script = textwrap.dedent(workflow[start:end])
+          exec(compile(script, 'drawing-board-apply.py', 'exec'))
+          PY
+          node --check tarot-app.js
+          node tests/drawing-board-persistence.test.js
+      - name: Commit implementation
+        shell: bash
+        run: |
+          git config user.name "Oracle of Relphi automation"
+          git config user.email "marisa3d19@gmail.com"
+          git add tarot-app.js tarot.html tests/drawing-board-persistence.test.js
+          git commit -m "Persist Drawing Board across navigation"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
