@@ -28,6 +28,6 @@ jobs:
               is_exposure = 'window.' in line and any(term in line for term in board_terms)
               is_storage = ('localStorage' in line or 'sessionStorage' in line) and any(term in line for term in board_terms)
               is_binding = ('addEventListener' in line or '.onclick' in line) and any(term in line for term in board_terms)
-              if (is_function and any(term in line for term in board_terms) or is_exposure or is_storage or is_binding:
+              if ((is_function and any(term in line for term in board_terms)) or is_exposure or is_storage or is_binding):
                   print(f'{i:05d}: {line}')
           PY
