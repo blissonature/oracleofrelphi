@@ -24,12 +24,12 @@ jobs:
           cd repo
           python - <<'PY'
           from pathlib import Path
-          import textwrap
           workflow = Path('.github/workflows/apply-drawing-board-persistence.yml').read_text(encoding='utf-8')
           marker = "          python - <<'PY'\n"
           start = workflow.index(marker) + len(marker)
           end = workflow.index("\n          PY\n", start)
-          script = textwrap.dedent(workflow[start:end])
+          extracted = workflow[start:end]
+          script = '\n'.join(line[10:] if line.startswith('          ') else line for line in extracted.splitlines())
           exec(compile(script, 'drawing-board-apply.py', 'exec'))
           PY
           node --check tarot-app.js
