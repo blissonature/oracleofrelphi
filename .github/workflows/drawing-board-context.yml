@@ -1,0 +1,46 @@
+name: Drawing board context
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print Drawing Board source context
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tarot-app.js')
+          text = p.read_text(encoding='latin1')
+          lines = text.splitlines()
+          terms = [
+              'shortList', 'Drawing Board', 'cardRowBoard', 'renderShort',
+              'renderCardRow', 'rowCardTransforms', 'shortListName',
+              'downloadShort', 'exportShort', 'importShort', 'rowEnvelopeLayout',
+              'landingOpenBoard'
+          ]
+          hits = []
+          for i, line in enumerate(lines):
+              if any(term in line for term in terms):
+                  hits.append(i)
+          ranges = []
+          for i in hits:
+              start = max(0, i - 16)
+              end = min(len(lines), i + 28)
+              if ranges and start <= ranges[-1][1] + 8:
+                  ranges[-1] = (ranges[-1][0], max(ranges[-1][1], end))
+              else:
+                  ranges.append((start, end))
+          print('MATCH_COUNT', len(hits), 'RANGE_COUNT', len(ranges))
+          for start, end in ranges:
+              print(f'\n===== LINES {start+1}-{end} =====')
+              for n in range(start, end):
+                  print(f'{n+1:05d}: {lines[n]}')
+          PY
