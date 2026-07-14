@@ -1,5 +1,26 @@
 // Loads shared navigation and initializes the menu after nav.html is present.
 (function () {
+  function initGoogleAnalytics() {
+    const measurementId = 'G-PNWZP2MW64';
+    const isProduction = /(^|\.)oracleofrelphi\.com$/i.test(window.location.hostname);
+    if (!isProduction || document.getElementById('relphi-google-tag')) return;
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function () {
+      window.dataLayer.push(arguments);
+    };
+    window.gtag('js', new Date());
+    window.gtag('config', measurementId);
+
+    const script = document.createElement('script');
+    script.id = 'relphi-google-tag';
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(measurementId);
+    document.head.appendChild(script);
+  }
+
+  initGoogleAnalytics();
+
   const relphiNavCss = `
 .menu-container {
   position: absolute;
