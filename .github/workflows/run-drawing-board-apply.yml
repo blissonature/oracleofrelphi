@@ -22,6 +22,7 @@ jobs:
         shell: bash
         run: |
           cd repo
+          mkdir -p tests
           python - <<'PY'
           from pathlib import Path
           workflow = Path('.github/workflows/apply-drawing-board-persistence.yml').read_text(encoding='utf-8')
