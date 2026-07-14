@@ -17,14 +17,16 @@
     });
   }
 
-  function loadKillSwitch() {
-    if (document.querySelector('script[src^="sky-chart-glyph-kill-switch.js"]')) return;
+  function appendOnce(src) {
+    const base = src.split('?')[0];
+    if (document.querySelector('script[src^="' + base + '"]')) return;
     const script = document.createElement('script');
-    script.src = 'sky-chart-glyph-kill-switch.js?v=2';
+    script.src = src;
     document.body.appendChild(script);
   }
 
   emergencyClean();
-  loadKillSwitch();
+  appendOnce('sky-chart-glyph-kill-switch.js?v=2');
+  appendOnce('relphi-glyph-bubbles.js?v=1');
   window.RelphiWheelGlyphFallback = { clean: emergencyClean };
 })();
