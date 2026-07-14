@@ -19742,6 +19742,165 @@ body.sky-chart-page .unified-sky-wheel .chart-wheel-all-aspects .chart-wheel-asp
   border-radius: 18px;
   background: rgba(255,253,248,.94);
 }
+
+/* v366 guided moment workflow: Wizard and Advanced are mutually exclusive. */
+#chartPanel [hidden] { display: none !important; }
+#chartPanel[data-sky-builder-ui="wizard"] .sky-builder-advanced-panel { display: none !important; }
+#chartPanel[data-sky-builder-ui="advanced"] .sky-builder-advanced-panel {
+  display: block;
+  margin: 1rem 0;
+}
+.sky-advanced-header { margin-bottom: .8rem; }
+.sky-advanced-header h3 { margin: .1rem 0 .25rem; }
+.sky-wizard-paths,
+.sky-wizard-path-panel,
+.sky-wizard-compare-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+  grid-column: 1 / -1;
+}
+.sky-wizard-paths .sky-wizard-action-quiet,
+.sky-wizard-path-panel .sky-wizard-path-help,
+.sky-wizard-complete-card { grid-column: 1 / -1; }
+.sky-wizard-action-quiet {
+  min-height: auto;
+  background: transparent !important;
+  border-style: dashed;
+  color: rgba(54,38,32,.78);
+}
+.sky-wizard-path-help { margin: 0; color: rgba(54,38,32,.7); }
+.sky-wizard-complete-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid rgba(57,70,64,.24);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255,255,255,.98), rgba(244,247,244,.92));
+  box-shadow: 0 14px 32px rgba(57,70,64,.08);
+}
+.sky-wizard-complete-card h4,
+.sky-wizard-complete-card p { margin: 0; }
+.sky-wizard-complete-card > div > p:last-child { margin-top: .35rem; color: rgba(54,38,32,.7); line-height: 1.45; }
+.sky-wizard-complete-card button {
+  border: 1px solid rgba(54,38,32,.22);
+  border-radius: 999px;
+  background: #fff;
+  color: #332d29;
+  padding: .55rem .8rem;
+  font-weight: 750;
+}
+.sky-wizard-compare-choice { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sky-wizard-calc-intro { display: none; }
+.sky-wizard-datetime,
+.sky-wizard-coordinate-toggle,
+.sky-wizard-calculation-options-toggle { display: none; }
+.sky-location-confirmation {
+  display: grid;
+  gap: .15rem;
+  padding: .7rem .8rem;
+  border: 1px solid rgba(57,70,64,.22);
+  border-radius: .8rem;
+  background: rgba(244,247,244,.9);
+  color: rgba(54,38,32,.75);
+}
+.sky-location-confirmation strong { color: #394640; }
+.sky-location-results {
+  display: grid;
+  gap: .35rem;
+  padding: .4rem;
+  border: 1px solid rgba(54,38,32,.14);
+  border-radius: .8rem;
+  background: #fff;
+}
+.sky-location-results button {
+  border: 0;
+  border-radius: .55rem;
+  background: rgba(244,241,236,.8);
+  color: #332d29;
+  padding: .6rem .7rem;
+  text-align: left;
+  cursor: pointer;
+}
+.sky-location-results button:hover,
+.sky-location-results button:focus-visible { background: rgba(220,31,24,.08); }
+.sky-advanced-comparison,
+.sky-advanced-sky-tabs {
+  display: grid;
+  gap: .55rem;
+  margin-bottom: .75rem;
+}
+.sky-advanced-comparison { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sky-advanced-sky-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sky-advanced-comparison button,
+.sky-advanced-sky-tabs button {
+  border: 1px solid rgba(54,38,32,.16);
+  border-radius: .8rem;
+  background: rgba(255,255,255,.86);
+  color: #332d29;
+  padding: .7rem;
+  text-align: left;
+}
+.sky-advanced-sky-tabs button strong,
+.sky-advanced-sky-tabs button span { display: block; }
+.sky-advanced-sky-tabs button span { margin-top: .2rem; color: rgba(54,38,32,.62); font-size: .78rem; }
+.sky-advanced-comparison button.is-active,
+.sky-advanced-sky-tabs button.is-active {
+  border-color: #394640;
+  background: #394640;
+  color: #fff;
+}
+.sky-advanced-sky-tabs button.is-active span { color: rgba(255,255,255,.76); }
+.sky-advanced-sky-tabs button:disabled { opacity: .42; cursor: not-allowed; }
+#chartPanel[data-sky-chart-mode="single"] #skyWizardComparePanel:not([hidden]) { display: grid; }
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-wizard-calc-intro {
+  display: grid;
+  gap: .45rem;
+  margin-bottom: .8rem;
+}
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-wizard-calc-intro h3,
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-wizard-calc-intro p { margin: 0; }
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-calc-setup label:has(#skyCalcTarget),
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-calc-setup label:has(#skyCalcName),
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-calc-setup label:has(#skyCalcHouseSystem),
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-advanced-datetime,
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry label:has(#skyCalcTimeZone),
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry #skyCalcGeo,
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-coordinate-grid,
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry #skyCalcResolveCoords,
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-calc-shared-actions { display: none; }
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-calc-setup.show-wizard-options label:has(#skyCalcHouseSystem) { display: grid; }
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-wizard-datetime {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+}
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-wizard-coordinate-toggle,
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-wizard-calculation-options-toggle { display: inline-flex; }
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-coordinate-grid.is-open { display: grid; }
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry #skyCalcResolveCoords.is-open { display: inline-flex; }
+#chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-calc-run-box #skyCalcRun {
+  background: #dc1f18;
+  border-color: #dc1f18;
+}
+#chartPanel[data-sky-builder-ui="advanced"] .sky-wizard-datetime,
+#chartPanel[data-sky-builder-ui="advanced"] .sky-wizard-coordinate-toggle,
+#chartPanel[data-sky-builder-ui="advanced"] .sky-wizard-calculation-options-toggle,
+#chartPanel[data-sky-builder-ui="advanced"] .sky-wizard-calc-intro { display: none !important; }
+@media (min-width: 900px) {
+  #chartPanel[data-sky-builder-ui="advanced"] .sky-creator-side-by-side { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .sky-wizard-paths,
+  .sky-wizard-path-panel,
+  .sky-wizard-compare-choice,
+  #chartPanel[data-sky-builder-ui="wizard"] .sky-wizard-inline-entry .sky-wizard-datetime { grid-template-columns: 1fr; }
+  .sky-wizard-complete-card { grid-template-columns: 1fr; }
+  .sky-advanced-comparison { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sky-advanced-sky-tabs { grid-template-columns: 1fr; }
+}
 .sky-results-toolbar[hidden] { display: none !important; }
 .sky-results-toolbar-label {
   min-width: 0;
