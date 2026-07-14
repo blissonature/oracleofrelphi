@@ -12,14 +12,16 @@ permissions:
 jobs:
   apply:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - name: Apply implementation script
+      - name: Fetch branch quietly
+        shell: bash
+        run: git clone -q --branch feature/drawing-board-persistence "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+      - name: Apply and verify implementation
         shell: bash
         run: |
+          cd repo
           python - <<'PY'
           from pathlib import Path
           import textwrap
@@ -35,8 +37,9 @@ jobs:
       - name: Commit implementation
         shell: bash
         run: |
+          cd repo
           git config user.name "Oracle of Relphi automation"
           git config user.email "marisa3d19@gmail.com"
           git add tarot-app.js tarot.html tests/drawing-board-persistence.test.js
           git commit -m "Persist Drawing Board across navigation"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git push origin HEAD:feature/drawing-board-persistence
