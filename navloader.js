@@ -111,6 +111,7 @@
       appendScript('sky-chart-aspect-duration-fix.js?v=2');
       appendScript('sky-chart-relationship-language.js?v=1');
       appendScript('sky-chart-refresh-persistence.js?v=1');
+      appendScript('sky-chart-related-relationships-v2.js?v=2');
     }
   }
 
