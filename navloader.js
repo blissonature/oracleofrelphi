@@ -134,7 +134,7 @@
       appendScript('sky-chart-refresh-persistence.js?v=2');
       appendScript('sky-chart-related-relationships-v2.js?v=2');
       appendScript('sky-ledger-glyph-alignment.js?v=1');
-      appendScript('sky-ledger-wheel-glyphs.js?v=3');
+      appendScript('sky-chart-glyph-kill-switch.js?v=1');
       appendScript('sky-chart-coherence.js?v=1');
     }
   }
