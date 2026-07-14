@@ -1,58 +1,32 @@
-// Stable fallback for Sky Chart wheel glyphs.
-//
-// The SVG-path enhancer is intentionally disabled until each source glyph can be
-// normalized and mounted inside its own marker without shared transforms or
-// asynchronous render races. Keep the original text glyphs visible and remove
-// any enhanced path groups left by an earlier render.
+// Compatibility guard for the retired Sky Chart SVG-path glyph enhancer.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  const GLYPHS = new Set([
-    '☉', '☽', '☿', '♀', '♂', '♃', '♄', '♅', '♆', '♇', '⯓'
-  ]);
-  let queued = false;
+  const SYMBOLS = new Set(['☉','☽','☿','♀','♂','♃','♄','♅','♆','♇','⯓']);
 
-  function restoreTextGlyph(text) {
-    if (!text || !GLYPHS.has((text.textContent || '').trim())) return;
-    text.removeAttribute('visibility');
-    text.style.removeProperty('visibility');
-    delete text.dataset.relphiWheelGlyphAligned;
-    delete text.dataset.relphiWheelGlyphPending;
-  }
-
-  function clean(root) {
-    const scope = root && root.querySelectorAll ? root : document;
-
-    scope.querySelectorAll('.relphi-wheel-planet-glyph').forEach(function (group) {
-      group.remove();
+  function emergencyClean() {
+    window.RelphiDisableWheelPathGlyphs = true;
+    document.querySelectorAll('.relphi-wheel-planet-glyph, g[data-relphi-glyph-for]').forEach(function (node) {
+      node.remove();
     });
-
-    scope.querySelectorAll('svg text').forEach(restoreTextGlyph);
-    if (root && root.matches && root.matches('svg text')) restoreTextGlyph(root);
-  }
-
-  function scheduleClean() {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(function () {
-      queued = false;
-      clean(document);
+    document.querySelectorAll('.chart-wheel-markers text, svg text[data-relphi-wheel-glyph-aligned], svg text[data-relphi-wheel-glyph-pending]').forEach(function (text) {
+      if (!SYMBOLS.has((text.textContent || '').trim())) return;
+      text.removeAttribute('visibility');
+      text.style.setProperty('visibility', 'visible', 'important');
+      text.dataset.relphiWheelGlyphAligned = 'true';
+      text.dataset.relphiWheelGlyphPending = 'true';
     });
   }
 
-  function start() {
-    clean(document);
-    new MutationObserver(scheduleClean).observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+  function loadKillSwitch() {
+    if (document.querySelector('script[src^="sky-chart-glyph-kill-switch.js"]')) return;
+    const script = document.createElement('script');
+    script.src = 'sky-chart-glyph-kill-switch.js?v=1';
+    document.body.appendChild(script);
   }
 
-  window.RelphiWheelGlyphFallback = { clean: clean };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start, { once: true });
-  } else {
-    start();
-  }
+  emergencyClean();
+  loadKillSwitch();
+  window.RelphiWheelGlyphFallback = { clean: emergencyClean };
 })();
