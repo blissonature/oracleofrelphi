@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - .github/workflows/drawing-board-browser-test.yml
+      - tests/drawing-board-navigation.browser.js
+      - tarot-app.js
+      - tarot.html
 
 permissions:
   contents: read
