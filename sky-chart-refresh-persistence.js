@@ -58,6 +58,7 @@
     session.skies[target] = readTargetSnapshot(target);
     session.activeTarget = target;
     session.compareOpen = !byId('skyWizardComparePanel')?.hidden;
+    session.version = 2;
     writeSession(session);
   }
 
@@ -72,6 +73,11 @@
     saveTimer = setTimeout(saveCurrentTarget, 120);
   }
 
+  function flushSave() {
+    clearTimeout(saveTimer);
+    saveCurrentTarget();
+  }
+
   function dispatchChange(el) {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
@@ -83,27 +89,6 @@
     if (typeof value === 'boolean') el.checked = value;
     else el.value = value == null ? '' : value;
     dispatchChange(el);
-  }
-
-  function waitForLibraryOption(value, label, callback, attempts) {
-    const select = byId('skyCreatorLibrary');
-    const tries = attempts || 0;
-    if (!select) {
-      if (tries < 30) setTimeout(function () { waitForLibraryOption(value, label, callback, tries + 1); }, 100);
-      return;
-    }
-    const options = Array.from(select.options);
-    const match = options.find(function (option) {
-      return (value && option.value === value) || (label && option.textContent.trim() === label);
-    });
-    if (match) {
-      select.value = match.value;
-      dispatchChange(select);
-      callback(true);
-      return;
-    }
-    if (tries < 30) setTimeout(function () { waitForLibraryOption(value, label, callback, tries + 1); }, 100);
-    else callback(false);
   }
 
   function restoreForm(snapshot) {
@@ -128,20 +113,21 @@
     activeTarget = target;
 
     setTimeout(function () {
-      if (snapshot.libraryValue || snapshot.libraryLabel) {
-        waitForLibraryOption(snapshot.libraryValue, snapshot.libraryLabel, function (loaded) {
-          if (!loaded) restoreForm(snapshot);
-          setTimeout(done, 180);
-        });
-      } else {
-        restoreForm(snapshot);
-        setTimeout(done, 180);
+      // The captured working paste is authoritative. A library option can be
+      // stale or empty, so never skip restoring the actual in-progress sky.
+      restoreForm(snapshot);
+      const library = byId('skyCreatorLibrary');
+      if (library && snapshot.libraryValue && Array.from(library.options).some(function (option) { return option.value === snapshot.libraryValue; })) {
+        library.value = snapshot.libraryValue;
       }
+      // Sky Chart's paste importer is intentionally debounced by 260 ms.
+      // Do not switch targets until that import has committed to this sky.
+      setTimeout(done, 420);
     }, 180);
   }
 
-  function restoreSession() {
-    const session = loadSession();
+  function restoreSession(savedSession) {
+    const session = savedSession || loadSession();
     if (!session.skies || (!session.skies.chart && !session.skies.currentSky)) return;
     restoring = true;
 
@@ -164,6 +150,11 @@
   }
 
   function install() {
+    const savedSession = loadSession();
+    const hasSavedSky = !!(savedSession.skies && (savedSession.skies.chart || savedSession.skies.currentSky));
+    // Block initial render/input noise from replacing the saved session before
+    // the delayed UI restoration has finished.
+    restoring = hasSavedSky;
     const targetSelect = byId('skyCreatorTarget');
     if (targetSelect) {
       activeTarget = targetSelect.value || 'chart';
@@ -180,9 +171,21 @@
     document.addEventListener('change', function (event) {
       if (event.target.closest?.('#skyCreatorDrawer, #skyWizardPrimaryEntryPanel, #skyWizardCompareEntryPanel')) queueSave();
     }, true);
-    window.addEventListener('beforeunload', saveCurrentTarget);
+    window.addEventListener('beforeunload', flushSave);
+    window.addEventListener('pagehide', flushSave);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') flushSave();
+    });
 
-    setTimeout(restoreSession, 650);
+    if (typeof MutationObserver === 'function') {
+      const observer = new MutationObserver(queueSave);
+      ['chartOutput','currentSkyOutput'].forEach(function (id) {
+        const output = byId(id);
+        if (output) observer.observe(output, { childList:true, subtree:true });
+      });
+    }
+
+    if (hasSavedSky) setTimeout(function () { restoreSession(savedSession); }, 650);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
