@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="robots" content="noindex,nofollow,noarchive"/>
+  <title>PR #22 Preview · Oracle of Relphi</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#fff;font-family:Montserrat,Arial,sans-serif}
+    body{display:grid;grid-template-rows:auto 1fr}
+    .preview-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1rem;background:#111;color:#fff;border-bottom:3px solid #dc1f18;position:relative;z-index:2}
+    .preview-bar strong{font-size:.92rem}
+    .preview-bar span{font-size:.78rem;opacity:.8}
+    .preview-bar a{color:#fff;background:#dc1f18;border-radius:999px;padding:.45rem .7rem;text-decoration:none;font-size:.78rem;font-weight:800;white-space:nowrap}
+    iframe{display:block;width:100%;height:100%;border:0;background:#fff}
+    @media(max-width:600px){.preview-bar{align-items:flex-start}.preview-bar span{display:block;margin-top:.15rem}.preview-bar a{font-size:.7rem}}
+  </style>
+</head>
+<body>
+  <header class="preview-bar">
+    <div><strong>PR #22 visual preview</strong><span> · Music Theory colors applied to Sky Chart aspects</span></div>
+    <a href="sky-chart.html">Exit preview</a>
+  </header>
+  <iframe id="pr22Preview" title="Sky Chart with PR #22 aspect colors" src="sky-chart.html?preview=pr22-render"></iframe>
+  <script>
+  (function(){
+    const frame=document.getElementById('pr22Preview');
+    const mappings=[
+      {names:['conjunction'],color:'#dc1f18'},
+      {names:['semi-sextile','semisextile'],color:'#fb8c00'},
+      {names:['undecile'],color:'#fb9305'},
+      {names:['decile'],color:'#fb9b0b'},
+      {names:['novile'],color:'#fca512'},
+      {names:['semi-square','semisquare','octile'],color:'#fcb21a'},
+      {names:['septile'],color:'#fcc226'},
+      {names:['sextile'],color:'#fdd835'},
+      {names:['quintile'],color:'#c9c93a'},
+      {names:['binovile'],color:'#a7bf3e'},
+      {names:['square'],color:'#7cb342'},
+      {names:['biseptile'],color:'#57ad68'},
+      {names:['tridecile'],color:'#48ab77'},
+      {names:['trine'],color:'#26a69a'},
+      {names:['sesquiquadrate','sesquisquare','tri-octile'],color:'#2297c0'},
+      {names:['biquintile'],color:'#208ed6'},
+      {names:['quincunx','inconjunct'],color:'#1e88e5'},
+      {names:['triseptile'],color:'#227fdd'},
+      {names:['opposition'],color:'#3949ab'}
+    ];
+    function rules(){
+      return mappings.map(function(item){
+        const rows=item.names.flatMap(function(name){return [
+          'html body.sky-chart-page .relationship-list-row.aspect-'+name,
+          'html body.sky-chart-page .chart-wheel-aspect-key .key-'+name
+        ];}).join(',');
+        const lines=item.names.map(function(name){return 'html body.sky-chart-page .chart-wheel-aspect-'+name;}).join(',');
+        const centers=item.names.map(function(name){return 'html body.sky-chart-page .chart-wheel-aspect-center.chart-wheel-aspect-'+name;}).join(',');
+        return rows+'{--relationship-aspect-color:'+item.color+' !important;}'+
+          lines+'{stroke:'+item.color+' !important;}'+
+          centers+'{fill:'+item.color+' !important;}';
+      }).join('\n');
+    }
+    function apply(){
+      const doc=frame.contentDocument;
+      if(!doc||!doc.head)return;
+      let style=doc.getElementById('relphi-pr22-render-override');
+      if(!style){style=doc.createElement('style');style.id='relphi-pr22-render-override';doc.head.appendChild(style)}
+      style.textContent=rules();
+    }
+    frame.addEventListener('load',function(){apply();setTimeout(apply,300);setTimeout(apply,1200)});
+  })();
+  </script>
+</body>
+</html>
