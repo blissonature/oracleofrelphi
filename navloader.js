@@ -129,15 +129,15 @@
       appendScript('relphi-glyph-bubbles.js?v=2');
     }
     if (/(^|\/)sky-chart\.html$/.test(window.location.pathname)) {
+      appendScript('sky-chart-stability-hotfix.js?v=1');
       appendScript('sky-chart-static-dynamic.js?v=2');
       appendScript('sky-chart-aspect-duration-fix.js?v=2');
       appendScript('sky-chart-relationship-language.js?v=1');
-      appendScript('sky-chart-refresh-persistence.js?v=1');
       appendScript('sky-chart-related-relationships-v2.js?v=2');
       appendScript('sky-ledger-glyph-alignment.js?v=1');
       appendScript('sky-ledger-wheel-glyphs.js?v=2');
       appendScript('relphi-glyph-bubbles.js?v=2');
-      appendScript('sky-chart-relationship-color-hints.js?v=1');
+      appendScript('sky-chart-relationship-color-hints.js?v=2');
     }
   }
 
