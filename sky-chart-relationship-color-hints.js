@@ -2,45 +2,121 @@
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
+  // Exact palette already used by Astrology Foundations → Tonic Scale / Music Theory.
+  const TONIC_COLORS = [
+    '#dc1f18', // C / root
+    '#fb8c00', // C sharp / D flat
+    '#fdd835', // D
+    '#7cb342', // D sharp / E flat
+    '#26a69a', // E
+    '#1e88e5', // F
+    '#3949ab', // F sharp / G flat
+    '#8e24aa', // G
+    '#d81b60', // G sharp / A flat
+    '#6d4c41', // A
+    '#546e7a', // A sharp / B flat
+    '#111111'  // B
+  ];
+
+  const ASPECTS = [
+    { key:'conjunction', degrees:0, aliases:['conjunction'] },
+    { key:'semisextile', degrees:30, aliases:['semi-sextile', 'semisextile'] },
+    { key:'undecile', degrees:360 / 11, aliases:['undecile'] },
+    { key:'decile', degrees:36, aliases:['decile'] },
+    { key:'novile', degrees:40, aliases:['novile'] },
+    { key:'semisquare', degrees:45, aliases:['semi-square', 'semisquare', 'octile'] },
+    { key:'septile', degrees:360 / 7, aliases:['septile'] },
+    { key:'sextile', degrees:60, aliases:['sextile'] },
+    { key:'quintile', degrees:72, aliases:['quintile'] },
+    { key:'binovile', degrees:80, aliases:['binovile'] },
+    { key:'square', degrees:90, aliases:['square'] },
+    { key:'biseptile', degrees:720 / 7, aliases:['biseptile'] },
+    { key:'tridecile', degrees:108, aliases:['tridecile'] },
+    { key:'trine', degrees:120, aliases:['trine'] },
+    { key:'sesquiquadrate', degrees:135, aliases:['sesquiquadrate', 'sesquisquare', 'tri-octile'] },
+    { key:'biquintile', degrees:144, aliases:['biquintile'] },
+    { key:'quincunx', degrees:150, aliases:['quincunx', 'inconjunct'] },
+    { key:'triseptile', degrees:1080 / 7, aliases:['triseptile'] },
+    { key:'opposition', degrees:180, aliases:['opposition'] }
+  ];
+
+  function hexToRgb(hex) {
+    const value = String(hex || '').replace('#', '');
+    return {
+      r: parseInt(value.slice(0, 2), 16),
+      g: parseInt(value.slice(2, 4), 16),
+      b: parseInt(value.slice(4, 6), 16)
+    };
+  }
+
+  function toHex(value) {
+    return Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0');
+  }
+
+  function mixHex(a, b, amount) {
+    const first = hexToRgb(a);
+    const second = hexToRgb(b);
+    const t = Math.max(0, Math.min(1, Number(amount) || 0));
+    return '#' +
+      toHex(first.r + (second.r - first.r) * t) +
+      toHex(first.g + (second.g - first.g) * t) +
+      toHex(first.b + (second.b - first.b) * t);
+  }
+
+  function colorForDegrees(degrees) {
+    const chromaticStep = Math.max(0, Number(degrees) || 0) / 30;
+    const lower = Math.floor(chromaticStep);
+    const fraction = chromaticStep - lower;
+    const first = TONIC_COLORS[lower % TONIC_COLORS.length];
+    const second = TONIC_COLORS[(lower + 1) % TONIC_COLORS.length];
+    return fraction < 0.0001 ? first : mixHex(first, second, fraction);
+  }
+
+  const ASPECT_COLORS = ASPECTS.reduce(function (result, aspect) {
+    result[aspect.key] = colorForDegrees(aspect.degrees);
+    aspect.aliases.forEach(function (alias) { result[alias] = result[aspect.key]; });
+    return result;
+  }, {});
+
+  function classSelectors(prefix, aliases) {
+    return aliases.map(function (alias) { return prefix + alias; }).join(',\n');
+  }
+
+  function aspectCss(aspect) {
+    const color = ASPECT_COLORS[aspect.key];
+    const relationshipSelectors = aspect.aliases.reduce(function (selectors, alias) {
+      selectors.push('body.sky-chart-page .relationship-list-row.aspect-' + alias);
+      selectors.push('body.sky-chart-page .chart-wheel-aspect-key .key-' + alias);
+      return selectors;
+    }, []).join(',\n');
+    const wheelSelectors = classSelectors('body.sky-chart-page .chart-wheel-aspect-', aspect.aliases);
+    const centerSelectors = aspect.aliases.map(function (alias) {
+      return 'body.sky-chart-page .chart-wheel-aspect-center.chart-wheel-aspect-' + alias;
+    }).join(',\n');
+
+    return relationshipSelectors + ' { --relationship-aspect-color:' + color + '; }\n' +
+      wheelSelectors + ' { stroke:' + color + ' !important; }\n' +
+      centerSelectors + ' { fill:' + color + ' !important; }';
+  }
+
   function injectStyles() {
     if (document.getElementById('relphi-relationship-color-hints')) return;
     const style = document.createElement('style');
     style.id = 'relphi-relationship-color-hints';
+
+    const customProperties = ASPECTS.map(function (aspect) {
+      return '--aspect-' + aspect.key + ':' + ASPECT_COLORS[aspect.key] + ';';
+    }).join('');
+
     style.textContent = `
+body.sky-chart-page {
+  ${customProperties}
+}
 body.sky-chart-page .relationship-list-row,
 body.sky-chart-page .chart-wheel-aspect-key > span { --relationship-aspect-color:#6b625d; }
-body.sky-chart-page .relationship-list-row.aspect-conjunction,
-body.sky-chart-page .chart-wheel-aspect-key .key-conjunction { --relationship-aspect-color:#111; }
-body.sky-chart-page .relationship-list-row.aspect-opposition,
-body.sky-chart-page .chart-wheel-aspect-key .key-opposition { --relationship-aspect-color:#7b1fa2; }
-body.sky-chart-page .relationship-list-row.aspect-trine,
-body.sky-chart-page .chart-wheel-aspect-key .key-trine { --relationship-aspect-color:#1e88e5; }
-body.sky-chart-page .relationship-list-row.aspect-square,
-body.sky-chart-page .relationship-list-row.aspect-semi-square,
-body.sky-chart-page .relationship-list-row.aspect-semisquare,
-body.sky-chart-page .relationship-list-row.aspect-octile,
-body.sky-chart-page .relationship-list-row.aspect-sesquiquadrate,
-body.sky-chart-page .relationship-list-row.aspect-tri-octile,
-body.sky-chart-page .chart-wheel-aspect-key .key-square { --relationship-aspect-color:#dc1f18; }
-body.sky-chart-page .relationship-list-row.aspect-sextile,
-body.sky-chart-page .relationship-list-row.aspect-semi-sextile,
-body.sky-chart-page .relationship-list-row.aspect-semisextile,
-body.sky-chart-page .chart-wheel-aspect-key .key-sextile { --relationship-aspect-color:#2e7d32; }
-body.sky-chart-page .relationship-list-row.aspect-quincunx,
-body.sky-chart-page .relationship-list-row.aspect-inconjunct,
-body.sky-chart-page .chart-wheel-aspect-key .key-quincunx { --relationship-aspect-color:#d97706; }
-body.sky-chart-page .relationship-list-row.aspect-quintile,
-body.sky-chart-page .relationship-list-row.aspect-biquintile,
-body.sky-chart-page .relationship-list-row.aspect-decile,
-body.sky-chart-page .relationship-list-row.aspect-tridecile { --relationship-aspect-color:#b7791f; }
-body.sky-chart-page .relationship-list-row.aspect-novile,
-body.sky-chart-page .relationship-list-row.aspect-binovile,
-body.sky-chart-page .relationship-list-row.aspect-septile,
-body.sky-chart-page .relationship-list-row.aspect-biseptile,
-body.sky-chart-page .relationship-list-row.aspect-triseptile,
-body.sky-chart-page .relationship-list-row.aspect-undecile { --relationship-aspect-color:#6d4c9f; }
+${ASPECTS.map(aspectCss).join('\n')}
 
-/* The row's existing vertical edge is now the aspect cue. */
+/* The row's existing vertical edge is the aspect-color cue. */
 body.sky-chart-page .relationship-list-row {
   position:relative !important;
   overflow:hidden;
@@ -62,7 +138,7 @@ body.sky-chart-page .relationship-list-row .relationship-line-sample {
   display:none !important;
 }
 
-/* Selection is a complete Relphi-red stroke, separate from the aspect color. */
+/* Selection remains a complete Relphi-red stroke, separate from aspect color. */
 body.sky-chart-page .relationship-list-row.is-selected,
 body.sky-chart-page .relationship-list-row[aria-pressed="true"] {
   border-color:#dc1f18 !important;
@@ -150,6 +226,11 @@ body.sky-chart-page .chart-wheel-aspect-key .chart-wheel-aspect-quincunx { strok
     new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true });
   }
 
+  window.RelphiHarmonicPalette = {
+    tonicColors:TONIC_COLORS.slice(),
+    aspectColors:Object.assign({}, ASPECT_COLORS),
+    colorForDegrees:colorForDegrees
+  };
   window.RelphiRelationshipColorHints = { enhance:enhance };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
   else install();
