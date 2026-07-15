@@ -137,7 +137,9 @@
       appendScript('sky-ledger-glyph-alignment.js?v=1');
       appendScript('sky-ledger-wheel-glyphs.js?v=2');
       appendScript('relphi-glyph-bubbles.js?v=2');
-      appendScript('sky-chart-relationship-color-hints.js?v=2');
+      const previewPr = new URLSearchParams(window.location.search).get('preview');
+      if (previewPr === 'pr22') appendScript('sky-chart-relationship-color-hints-pr22.js?v=1');
+      else appendScript('sky-chart-relationship-color-hints.js?v=2');
     }
   }
 
