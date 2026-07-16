@@ -1,18 +1,29 @@
-// Coordinates the core target only at real placement-creation boundaries.
+// Coordinates Sky A / Sky B assignment without rendering an empty comparison slot.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   let intendedTarget = 'chart';
-  let forcing = false;
+  let awaitingSkyB = false;
 
   function byId(id) { return document.getElementById(id); }
-  function fire(element, type) {
-    if (element) element.dispatchEvent(new Event(type, { bubbles:true }));
-  }
 
   function pendingTarget() {
     return document.body.dataset.relphiPendingSkyKind === 'currentSky' ? 'currentSky' : 'chart';
+  }
+
+  function hasPlacements(text) {
+    return /(?:Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|Rising|ASC|MC|Midheaven)[\s\S]{0,100}\d{1,2}°/i.test(String(text || ''));
+  }
+
+  function setTargetSilently(kind) {
+    intendedTarget = kind === 'currentSky' ? 'currentSky' : 'chart';
+    ['skyCreatorTarget', 'skyCalcTarget'].forEach(function (id) {
+      const select = byId(id);
+      if (select) select.value = intendedTarget;
+    });
+    const paste = byId('skyCreatorPaste');
+    if (paste) paste.dataset.skyKind = intendedTarget;
   }
 
   function comparisonModeIsActive() {
@@ -21,39 +32,31 @@
     });
   }
 
-  function ensureComparisonMode() {
+  function enableComparisonMode() {
     if (comparisonModeIsActive()) return;
     const mode = document.querySelector('[data-sky-chart-mode="compare"]') ||
       document.querySelector('[data-sky-chart-mode="synastry"]') ||
       document.querySelector('[data-sky-chart-mode="transit"]');
-    if (mode) mode.click();
+    mode?.click();
   }
 
-  function forceTarget(kind) {
-    intendedTarget = kind === 'currentSky' ? 'currentSky' : 'chart';
-    if (forcing) return;
-    forcing = true;
-    try {
-      if (intendedTarget === 'currentSky') ensureComparisonMode();
-      ['skyCreatorTarget', 'skyCalcTarget'].forEach(function (id) {
-        const select = byId(id);
-        if (!select || select.value === intendedTarget) return;
-        select.value = intendedTarget;
-        fire(select, 'input');
-        fire(select, 'change');
-      });
-      const paste = byId('skyCreatorPaste');
-      if (paste) paste.dataset.skyKind = intendedTarget;
-    } finally {
-      forcing = false;
-    }
+  function completeSkyBWhenReady() {
+    if (!awaitingSkyB) return;
+    const output = byId('currentSkyOutput');
+    if (!hasPlacements(output?.textContent || '')) return;
+
+    awaitingSkyB = false;
+    enableComparisonMode();
+    output.hidden = false;
+    output.removeAttribute('hidden');
+    window.dispatchEvent(new Event('resize'));
   }
 
   function isSetupControl(node) {
     return !!node?.closest?.('#relphiAddComparison, #relphiSkyNameContinue, #relphiHereNow, #relphiChooseWhenWhere');
   }
 
-  function isSharedCommitControl(node) {
+  function isCommitControl(node) {
     return !!node?.closest?.(
       '#skyCalcRun, #skyCalcAttach, .sky-paste-create-button, ' +
       '#skyCreatorForm button, [data-create-sky], [data-confirm-sky]'
@@ -62,38 +65,43 @@
 
   function guard(event) {
     if (isSetupControl(event.target)) {
-      // Naming and configuring Sky B must leave the completed Sky A renderer active.
-      if (pendingTarget() === 'currentSky') forceTarget('chart');
+      // Keep the visible renderer on Sky A while Sky B is only being configured.
+      if (pendingTarget() === 'currentSky') setTargetSilently('chart');
       return;
     }
-    if (isSharedCommitControl(event.target)) {
-      // Commit the pending slot only when placements are about to be created.
-      forceTarget(pendingTarget());
-    }
+
+    if (!isCommitControl(event.target)) return;
+    const target = pendingTarget();
+    setTargetSilently(target);
+    awaitingSkyB = target === 'currentSky';
   }
 
   function install() {
-    document.addEventListener('pointerdown', guard, true);
-    document.addEventListener('mousedown', guard, true);
-    document.addEventListener('touchstart', guard, true);
-    document.addEventListener('click', guard, true);
-    document.addEventListener('focusin', guard, true);
+    ['pointerdown', 'mousedown', 'touchstart', 'click'].forEach(function (type) {
+      document.addEventListener(type, guard, true);
+    });
 
-    document.addEventListener('change', function (event) {
-      if (forcing) return;
-      if (event.target === byId('skyCreatorTarget') || event.target === byId('skyCalcTarget')) {
-        intendedTarget = event.target.value === 'currentSky' ? 'currentSky' : 'chart';
-      }
-    }, true);
+    const output = byId('currentSkyOutput');
+    if (output) {
+      new MutationObserver(completeSkyBWhenReady).observe(output, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+    }
 
-    new MutationObserver(function () {
-      // Do not reassert Sky B while the Wizard is still naming or configuring it.
-      if (intendedTarget === 'currentSky' && pendingTarget() !== 'currentSky') forceTarget('currentSky');
-    }).observe(document.body, { childList:true, subtree:true });
+    const status = byId('skyCalcStatus');
+    if (status) {
+      new MutationObserver(completeSkyBWhenReady).observe(status, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+    }
   }
 
   window.RelphiSkyCoreTargetFix = {
-    forceTarget: forceTarget,
+    forceTarget: setTargetSilently,
     getIntendedTarget: function () { return intendedTarget; }
   };
 
