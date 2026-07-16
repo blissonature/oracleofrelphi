@@ -76,7 +76,7 @@
         'sky-chart-active-sky-controls.js?v=2',
         'sky-chart-core-target-fix.js?v=3',
         'sky-chart-language-cleanup.js?v=5',
-        'sky-chart-wizard-ui-state-fix.js?v=5',
+        'sky-chart-wizard-ui-state-fix.js?v=6',
         'sky-chart-aspect-keyboard.js?v=1'
       ].forEach(appendScript);
       const preview = new URLSearchParams(location.search).get('preview');
