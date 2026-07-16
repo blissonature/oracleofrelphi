@@ -70,13 +70,13 @@
         'sky-ledger-wheel-glyphs.js?v=2',
         'relphi-glyph-bubbles.js?v=2',
         'sky-chart-provenance-fix.js?v=1',
-        'sky-chart-wizard-v2.js?v=4',
-        'sky-chart-delay-comparison-render.js?v=1',
+        'sky-chart-wizard-v2.js?v=5',
         'sky-chart-wizard-native-flow-fix.js?v=3',
         'sky-chart-active-sky-controls.js?v=2',
         'sky-chart-core-target-fix.js?v=1',
         'sky-chart-language-cleanup.js?v=5',
-        'sky-chart-wizard-ui-state-fix.js?v=2'
+        'sky-chart-wizard-state-controller.js?v=1',
+        'sky-chart-wizard-ui-state-fix.js?v=3'
       ].forEach(appendScript);
       const preview = new URLSearchParams(location.search).get('preview');
       appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
