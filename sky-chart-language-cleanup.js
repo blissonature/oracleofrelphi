@@ -4,10 +4,11 @@
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   const replacements = [
-    [/Paste from Astro-Seek/gi, 'Paste or type'],
-    [/Astro-Seek paste/gi, 'Paste or type'],
-    [/AstroSeek paste/gi, 'Paste or type'],
-    [/from Astro-Seek/gi, 'from pasted or typed placements'],
+    [/Paste from Astro-Seek/gi, 'Type or paste'],
+    [/Astro-Seek paste/gi, 'Type or paste'],
+    [/AstroSeek paste/gi, 'Type or paste'],
+    [/Paste or type/gi, 'Type or paste'],
+    [/from Astro-Seek/gi, 'from typed or pasted placements'],
     [/Astro-Seek/gi, 'another chart source']
   ];
 
