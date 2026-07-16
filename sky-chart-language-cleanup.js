@@ -18,17 +18,13 @@
     }, String(value || ''));
   }
 
-  function hideRetiredWizard() {
-    if (document.getElementById('relphi-progressive-wizard-style')) return;
-    const style = document.createElement('style');
-    style.id = 'relphi-progressive-wizard-style';
-    style.textContent = `
-      body.sky-chart-page .sky-wizard-shell-frictionless,
-      body.sky-chart-page .sky-wizard-shell:not([data-relphi-wizard-v2]) {
-        display: none !important;
-      }
-    `;
-    document.head.appendChild(style);
+  function removeRetiredWizard() {
+    document.querySelectorAll('.sky-wizard-shell-frictionless').forEach(function (panel) {
+      panel.hidden = true;
+      panel.setAttribute('aria-hidden', 'true');
+      panel.style.setProperty('display', 'none', 'important');
+      panel.remove();
+    });
   }
 
   function cleanElement(element) {
@@ -54,11 +50,11 @@
     });
     if (scope.nodeType === Node.ELEMENT_NODE) cleanElement(scope);
     scope.querySelectorAll?.('*').forEach(cleanElement);
-    hideRetiredWizard();
+    removeRetiredWizard();
   }
 
   function install() {
-    hideRetiredWizard();
+    removeRetiredWizard();
     clean(document.body);
     new MutationObserver(function (records) {
       records.forEach(function (record) {
@@ -69,7 +65,7 @@
           } else clean(node);
         });
       });
-      hideRetiredWizard();
+      removeRetiredWizard();
     }).observe(document.body, { childList:true, subtree:true, characterData:true });
   }
 
