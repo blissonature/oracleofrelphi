@@ -53,9 +53,8 @@
 
   function placementSummary(output) {
     if (!output) return '';
-    const text = output.textContent || '';
-    const matches = text.match(/(?:Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|Rising|ASC|MC|Midheaven)\b/gi) || [];
-    const unique = Array.from(new Set(matches.map(function (v) { return v.toLowerCase(); })));
+    const matches = (output.textContent || '').match(/(?:Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|Rising|ASC|MC|Midheaven)\b/gi) || [];
+    const unique = Array.from(new Set(matches.map(function (value) { return value.toLowerCase(); })));
     return unique.length ? unique.length + ' placements loaded.' : 'Placements loaded.';
   }
 
@@ -63,10 +62,9 @@
     const heading = byId('relphiSkyCompleteHeading');
     const summary = byId('relphiSkyCompleteSummary');
     const add = byId('relphiAddComparison');
-    const output = outputFor(kind);
     setName(name);
     if (heading) heading.textContent = name + ' is now ' + slotLabel(kind);
-    if (summary) summary.textContent = placementSummary(output) + ' Loaded from your saved skies.';
+    if (summary) summary.textContent = placementSummary(outputFor(kind)) + ' Loaded from your saved skies.';
     if (add) add.hidden = kind !== 'chart';
     showStage('relphiSkyCompleteStage');
     byId('relphiSkyCompleteStage')?.scrollIntoView({ block:'start', behavior:'smooth' });
@@ -74,9 +72,9 @@
   }
 
   function savedRecords() {
-    const core = byId('skyCreatorLibrary');
-    if (!core) return [];
-    return Array.from(core.options).filter(function (option) { return option.value; }).map(function (option) {
+    const library = byId('skyCreatorLibrary');
+    if (!library) return [];
+    return Array.from(library.options).filter(function (option) { return option.value; }).map(function (option) {
       return { name: option.textContent.trim(), value: option.value };
     });
   }
@@ -93,28 +91,26 @@
     savedRecords().forEach(function (record) {
       const option = document.createElement('option');
       option.value = record.name;
-      option.dataset.savedValue = record.value;
       list.appendChild(option);
     });
   }
 
   function loadSaved(record, kind) {
-    const core = byId('skyCreatorLibrary');
+    const library = byId('skyCreatorLibrary');
     const status = byId('relphiSkyNameError');
-    if (!core || !record) return;
+    if (!library || !record) return;
 
     setTarget(kind);
     setName(record.name);
-    core.value = record.value;
-    fire(core, 'input');
-    fire(core, 'change');
+    library.value = record.value;
+    fire(library, 'input');
+    fire(library, 'change');
     if (status) status.textContent = 'Loading “' + record.name + '” into ' + slotLabel(kind) + '…';
     byId('skyCreatorLoad')?.click();
 
     const started = Date.now();
     (function check() {
-      const output = outputFor(kind);
-      if (hasPlacements(output?.textContent || '')) {
+      if (hasPlacements(outputFor(kind)?.textContent || '')) {
         if (status) status.textContent = '';
         completeSaved(record.name, kind);
         return;
@@ -131,8 +127,8 @@
     const wait = function () {
       const stage = byId('relphiSkyNameStage');
       const input = byId('relphiSkyNameInput');
-      const core = byId('skyCreatorLibrary');
-      if (!stage || !input || !core) return setTimeout(wait, 50);
+      const library = byId('skyCreatorLibrary');
+      if (!stage || !input || !library) return setTimeout(wait, 50);
 
       byId('relphiSavedSkyStart')?.remove();
       const label = stage.querySelector('label[for="relphiSkyNameInput"]');
@@ -141,6 +137,8 @@
       input.setAttribute('role', 'combobox');
       input.setAttribute('aria-autocomplete', 'list');
       input.autocomplete = 'off';
+      input.placeholder = 'Type a new name or choose a saved sky';
+      input.value = '';
 
       let list = byId('relphiSavedSkyNames');
       if (!list) {
@@ -149,26 +147,24 @@
         input.insertAdjacentElement('afterend', list);
       }
       refreshDatalist();
-      new MutationObserver(refreshDatalist).observe(core, { childList:true });
-
-      if (!input.value.trim()) input.value = defaultName();
+      new MutationObserver(refreshDatalist).observe(library, { childList:true });
 
       input.addEventListener('input', function () {
         const record = exactSavedRecord(input.value);
         const error = byId('relphiSkyNameError');
-        if (error && !error.textContent.startsWith('Loading')) {
-          error.textContent = record ? 'Saved sky found. Continue will load it into ' + slotLabel(intendedKind()) + '.' : 'Continue will create a new sky with this name.';
-        }
+        if (!error || error.textContent.startsWith('Loading')) return;
+        if (!input.value.trim()) error.textContent = 'Type a new name or choose a saved sky.';
+        else error.textContent = record ? 'Saved sky found. Continue will load it into ' + slotLabel(intendedKind()) + '.' : 'Continue will create a new sky with this name.';
       });
 
       document.addEventListener('click', function (event) {
         if (!event.target.closest?.('#relphiAddComparison')) return;
-        core.value = '';
-        byId('relphiSavedSkyStart')?.remove();
+        library.value = '';
         setTimeout(function () {
-          input.value = defaultName();
-          input.placeholder = 'Comparison sky name';
-          fire(input, 'input');
+          input.value = '';
+          input.placeholder = 'Type a new name or choose a saved sky';
+          const error = byId('relphiSkyNameError');
+          if (error) error.textContent = 'Type a new name or choose a saved sky.';
           input.focus();
         }, 0);
       }, true);
@@ -176,6 +172,12 @@
       document.addEventListener('click', function (event) {
         const button = event.target.closest?.('#relphiSkyNameContinue');
         if (!button) return;
+
+        if (!input.value.trim()) {
+          input.value = defaultName();
+          fire(input, 'input');
+        }
+
         const record = exactSavedRecord(input.value.trim());
         if (!record) return;
 
@@ -219,21 +221,6 @@
       });
       setAspectState(item, !item.classList.contains('relphi-aspect-active'));
     });
-    document.addEventListener('keydown', function (event) {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      const item = aspectCandidate(event.target);
-      if (!item) return;
-      event.preventDefault();
-      item.click();
-    });
-    const enhance = function () {
-      document.querySelectorAll('[data-aspect], [data-relationship], .aspect-row, .relationship-row, .aspect-line, .relationship-line').forEach(function (el) {
-        if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
-        if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
-      });
-    };
-    enhance();
-    new MutationObserver(enhance).observe(document.body, { childList:true, subtree:true });
   }
 
   function installStyles() {
