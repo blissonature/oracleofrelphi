@@ -18,6 +18,13 @@
     }, String(value || ''));
   }
 
+  function loadWizardNativeFlow() {
+    if (document.querySelector('script[src^="sky-chart-wizard-native-flow-fix.js"]')) return;
+    const script = document.createElement('script');
+    script.src = 'sky-chart-wizard-native-flow-fix.js?v=1';
+    document.body.appendChild(script);
+  }
+
   function cleanElement(element) {
     if (!element || element.nodeType !== Node.ELEMENT_NODE) return;
     ['placeholder', 'title', 'aria-label'].forEach(function (attribute) {
@@ -44,6 +51,7 @@
   }
 
   function install() {
+    loadWizardNativeFlow();
     clean(document.body);
     new MutationObserver(function (records) {
       records.forEach(function (record) {
