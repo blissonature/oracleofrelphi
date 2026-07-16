@@ -1,4 +1,4 @@
-// Keeps the public Sky Chart language source-neutral and preserves the progressive Wizard.
+// Keeps the public Sky Chart language source-neutral.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -16,15 +16,6 @@
     return replacements.reduce(function (text, pair) {
       return text.replace(pair[0], pair[1]);
     }, String(value || ''));
-  }
-
-  function removeRetiredWizard() {
-    document.querySelectorAll('.sky-wizard-shell-frictionless').forEach(function (panel) {
-      panel.hidden = true;
-      panel.setAttribute('aria-hidden', 'true');
-      panel.style.setProperty('display', 'none', 'important');
-      panel.remove();
-    });
   }
 
   function cleanElement(element) {
@@ -50,11 +41,9 @@
     });
     if (scope.nodeType === Node.ELEMENT_NODE) cleanElement(scope);
     scope.querySelectorAll?.('*').forEach(cleanElement);
-    removeRetiredWizard();
   }
 
   function install() {
-    removeRetiredWizard();
     clean(document.body);
     new MutationObserver(function (records) {
       records.forEach(function (record) {
@@ -65,7 +54,6 @@
           } else clean(node);
         });
       });
-      removeRetiredWizard();
     }).observe(document.body, { childList:true, subtree:true, characterData:true });
   }
 
