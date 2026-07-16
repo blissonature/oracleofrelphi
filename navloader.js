@@ -138,7 +138,7 @@
       appendScript('sky-ledger-wheel-glyphs.js?v=2');
       appendScript('relphi-glyph-bubbles.js?v=2');
       appendScript('sky-chart-provenance-fix.js?v=1');
-      appendScript('sky-chart-wizard-v2.js?v=2');
+      appendScript('sky-chart-wizard-v2.js?v=3');
       appendScript('sky-chart-core-target-fix.js?v=1');
       appendScript('sky-chart-language-cleanup.js?v=4');
       const previewPr = new URLSearchParams(window.location.search).get('preview');
