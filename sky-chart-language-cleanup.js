@@ -1,4 +1,4 @@
-// Keeps the public Sky Chart language source-neutral and the Wizard headings method-neutral.
+// Keeps the public Sky Chart language source-neutral and the Wizard sequence coherent.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -21,7 +21,9 @@
   function enforceWizardLanguage() {
     const heading = document.getElementById('skyWizardPrimaryHeading');
     const help = document.getElementById('skyWizardPrimaryHelp');
-    const step = document.querySelector('.sky-wizard-step-first .sky-wizard-step-copy .eyebrow');
+    const eyebrow = document.querySelector('.sky-wizard-step-first .sky-wizard-step-copy .eyebrow');
+    const creationStep = document.querySelector('.sky-wizard-step-first .sky-wizard-step-label');
+    const comparisonStep = document.querySelector('.sky-wizard-step-compare .sky-wizard-step-label');
 
     if (heading && /^here and now$/i.test(heading.textContent.trim())) {
       heading.textContent = 'Choose how to create this sky';
@@ -29,9 +31,11 @@
     if (help && /current place and time|here and now/i.test(help.textContent)) {
       help.textContent = 'Use existing placements, open a saved sky, or calculate the sky from a time and place.';
     }
-    if (step && /^where and when$/i.test(step.textContent.trim())) {
-      step.textContent = 'First sky';
+    if (eyebrow && /^where and when$/i.test(eyebrow.textContent.trim())) {
+      eyebrow.textContent = 'First sky';
     }
+    if (creationStep) creationStep.textContent = 'Step 2';
+    if (comparisonStep) comparisonStep.textContent = 'Step 3';
   }
 
   function cleanElement(element) {
