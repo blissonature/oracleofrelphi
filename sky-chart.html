@@ -122,7 +122,7 @@
       <div id="dateOutput" class="ledger-output"></div>
     </section>
 
-            <section id="chartPanel" class="tarot-tool-panel" aria-label="Sky creator and chart comparison">
+    <section id="chartPanel" class="tarot-tool-panel" aria-label="Sky creator and chart comparison">
       <div class="panel-heading-row sky-chart-hero-panel sky-chart-hero-redesign">
         <div>
           <p class="eyebrow">Sky Chart</p>
@@ -134,73 +134,6 @@
           <button id="skyBuilderAdvancedMode" class="sky-builder-mode-button" type="button" data-sky-builder-ui="advanced" aria-pressed="false">Advanced</button>
         </div>
       </div>
-
-      <section class="sky-wizard-shell sky-wizard-shell-frictionless" aria-label="Guided Sky Builder">
-        <div class="sky-wizard-step sky-wizard-step-first">
-          <div class="sky-wizard-step-label">Step 1</div>
-          <div class="sky-wizard-step-copy">
-            <p class="eyebrow">Where and When</p>
-            <h3 id="skyWizardPrimaryHeading">Here and Now</h3>
-            <p id="skyWizardPrimaryHelp">Use the current place and time, or choose another where and when.</p>
-            <p id="skyWizardPrimaryStatus" class="sky-wizard-status-line">First sky: empty</p>
-          </div>
-          <div class="sky-wizard-entry-card sky-wizard-entry-card-here-now" aria-label="First sky entry methods">
-            <button type="button" class="sky-wizard-action sky-wizard-action-primary" data-sky-entry-kind="chart" data-sky-here-now><span>Use Here and Now</span><small>Uses the current place and time when available.</small></button>
-            <button type="button" class="sky-wizard-action" data-sky-entry-kind="chart" data-open-sky-calc><span>Change Where / When</span><small>Choose a different date, time, place, or house system.</small></button>
-            <button type="button" class="sky-wizard-action" data-sky-entry-kind="chart" data-focus-sky-paste><span>Type or paste</span><small>Paste copied chart rows or saved sky text.</small></button>
-            <button type="button" class="sky-wizard-action" data-sky-entry-kind="chart" data-focus-sky-manual><span>Form-field entry</span><small>Placement, sign, optional decan, degree, and arcminutes.</small></button>
-            <button type="button" class="sky-wizard-action" data-sky-entry-kind="chart" data-focus-sky-library><span>Use stored sky</span><small>Search your saved skies by name.</small></button>
-            <details id="skyWizardPrimaryCalculationDetails" class="sky-wizard-calculation-details" hidden>
-              <summary id="skyWizardPrimaryCalculationSummary">Calculation details</summary>
-              <p id="skyWizardPrimaryCalculationText"></p>
-            </details>
-          </div>
-          <div id="skyWizardPrimaryEntryPanel" class="sky-wizard-inline-entry" hidden>
-            <div class="sky-wizard-inline-entry-head"><div><p class="eyebrow">First sky</p><h4 id="skyWizardPrimaryEntryTitle">Enter first sky</h4></div><button type="button" class="sky-wizard-inline-close" data-close-sky-inline="chart" aria-label="Close first sky entry">×</button></div>
-            <div id="skyWizardPrimaryEntryBody" class="sky-wizard-inline-entry-body"></div>
-          </div>
-        </div>
-
-        <div class="sky-wizard-step sky-wizard-step-compare" id="skyWizardCompareStep">
-          <div class="sky-wizard-step-label">Step 2</div>
-          <div class="sky-wizard-step-copy">
-            <p class="eyebrow">Optional comparison</p>
-            <h3>Compare to another sky</h3>
-            <p>After the first sky is created, add a second sky only when the reading calls for it.</p>
-            <p id="skyWizardCompareStatus" class="sky-wizard-status-line">Second sky: not started</p>
-          </div>
-          <div class="sky-wizard-compare-block">
-            <button id="skyWizardCompareButton" type="button" class="sky-wizard-compare-button" aria-pressed="false" aria-expanded="false">Compare to another sky</button>
-            <div id="skyWizardComparePanel" class="sky-wizard-compare-panel" hidden>
-              <div class="sky-wizard-comparison-language" aria-label="Comparison language">
-                <p class="eyebrow">Comparison language</p>
-                <div class="sky-mode-card-row sky-wizard-mode-grid sky-wizard-mode-grid-compact" role="group" aria-label="Sky Chart comparison mode">
-                  <button type="button" class="sky-mode-card" data-sky-chart-mode="transit" aria-pressed="false"><span class="sky-mode-card-kicker">Transits</span><strong>Base + moving sky</strong><span>Best for now, a date, or Planetary Hours.</span></button>
-                  <button type="button" class="sky-mode-card" data-sky-chart-mode="synastry" aria-pressed="false"><span class="sky-mode-card-kicker">Synastry</span><strong>Two peer charts</strong><span>Best for two people or subjects.</span></button>
-                  <button type="button" class="sky-mode-card" data-sky-chart-mode="compare" aria-pressed="false"><span class="sky-mode-card-kicker">Compare</span><strong>Two neutral skies</strong><span>Best for event-to-event comparisons.</span></button>
-                </div>
-              </div>
-              <div class="sky-wizard-entry-card sky-wizard-entry-card-secondary" aria-label="Second sky entry methods">
-                <button type="button" class="sky-wizard-action sky-wizard-action-primary" data-sky-entry-kind="currentSky" data-sky-here-now><span>Here and now</span><small>Use the shared Here and Now when available; type a place only if needed.</small></button>
-                <button type="button" class="sky-wizard-action" data-sky-entry-kind="currentSky" data-use-ph-settings><span>Planetary Hours Where and When</span><small>Use the shared place and time, even if it is not Here and Now.</small></button>
-                <button type="button" class="sky-wizard-action" data-sky-entry-kind="currentSky" data-open-sky-calc><span>Enter date and time</span><small>Calculate from a chosen date, time, place, and house system.</small></button>
-                <button type="button" class="sky-wizard-action" data-sky-entry-kind="currentSky" data-focus-sky-paste><span>Type or paste field</span><small>Paste copied chart rows or saved sky text.</small></button>
-                <button type="button" class="sky-wizard-action" data-sky-entry-kind="currentSky" data-focus-sky-manual><span>Form-field entry</span><small>Placement, sign, optional decan, degree, and arcminutes.</small></button>
-                <button type="button" class="sky-wizard-action" data-sky-entry-kind="currentSky" data-focus-sky-library><span>Use stored sky</span><small>Search saved second skies by name.</small></button>
-                <details id="skyWizardCompareCalculationDetails" class="sky-wizard-calculation-details" hidden>
-                  <summary id="skyWizardCompareCalculationSummary">Calculation details</summary>
-                  <p id="skyWizardCompareCalculationText"></p>
-                </details>
-              </div>
-            </div>
-          </div>
-          <div id="skyWizardCompareEntryPanel" class="sky-wizard-inline-entry sky-wizard-inline-entry-secondary" hidden>
-            <div class="sky-wizard-inline-entry-head"><div><p class="eyebrow">Comparison sky</p><h4 id="skyWizardCompareEntryTitle">Enter comparison sky</h4></div><button type="button" class="sky-wizard-inline-close" data-close-sky-inline="currentSky" aria-label="Close comparison sky entry">×</button></div>
-            <div id="skyWizardCompareEntryBody" class="sky-wizard-inline-entry-body"></div>
-          </div>
-        </div>
-
-      </section>
 
       <details id="skyCreatorDrawer" class="sky-creator-drawer sky-builder-advanced-panel">
         <summary><span>Advanced editor</span><span id="skyCreatorDrawerStatus" class="sky-creator-drawer-status">Direct controls for saved skies, calculation, paste, and manual placements</span></summary>
