@@ -232,10 +232,21 @@
       #relphiSkyNameStage{display:block;max-width:760px;margin:0 auto}
       #relphiSkyNameStage>.sky-wizard-step-copy{margin-bottom:1rem}
       #relphiSkyNameStage>.sky-creator-name-label{display:block;margin-bottom:.45rem;font-weight:700}
-      #relphiSkyNameInput{width:100%;min-height:48px;padding:.75rem 1rem;border:1px solid rgba(0,0,0,.28);border-radius:12px;background:#fff}
+      #relphiSkyNameInput{width:100%;min-height:48px;padding:.75rem 1rem;border:1px solid rgba(0,0,0,.18);border-radius:14px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+      #relphiSkyNameInput:focus{outline:3px solid rgba(220,31,24,.16);border-color:#dc1f18}
       #relphiSkyNameStage .button-row{margin-top:.85rem}
       #relphiSkyNameError.generated-note{min-height:0;padding:.5rem 0 0!important;border-left:0!important;background:transparent!important}
       #relphiSkyNameError.generated-note:empty{display:none}
+      #relphiSkyWizard button,#skyResultsToolbar button,#skyDataMenu button,.sky-wizard-shell button{appearance:none;-webkit-appearance:none;font:inherit;font-weight:700;border-radius:999px;border:1px solid rgba(0,0,0,.14);padding:.72rem 1.15rem;background:#fff;color:#111;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;transition:transform .14s ease,box-shadow .14s ease,background .14s ease,border-color .14s ease}
+      #relphiSkyWizard button:hover,#skyResultsToolbar button:hover,#skyDataMenu button:hover,.sky-wizard-shell button:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(0,0,0,.10);border-color:rgba(220,31,24,.45)}
+      #relphiSkyWizard button:focus-visible,#skyResultsToolbar button:focus-visible,#skyDataMenu button:focus-visible,.sky-wizard-shell button:focus-visible{outline:3px solid rgba(220,31,24,.18);outline-offset:2px}
+      #relphiSkyWizard .relphi-primary-action,#relphiAddComparison,#relphiSkyNameContinue,#skyCalcRun,#exportChart{background:#dc1f18!important;color:#fff!important;border-color:#dc1f18!important;box-shadow:0 7px 18px rgba(220,31,24,.18)!important}
+      #relphiSkyWizard .relphi-secondary-action{background:#fff!important;color:#111!important;border-color:rgba(220,31,24,.45)!important}
+      #relphiSkyWizard .sky-wizard-action{border-radius:18px!important;text-align:left!important;padding:1rem 1.1rem!important}
+      #relphiSkyWizard .sky-wizard-action span{display:block;font-weight:700}
+      #relphiSkyWizard .sky-wizard-action small{display:block;margin-top:.2rem;font-weight:400;opacity:.72}
+      #skyResultsToolbar summary{border-radius:999px;border:1px solid rgba(0,0,0,.14);padding:.72rem 1.15rem;background:#fff;font-weight:700;cursor:pointer;list-style:none;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+      #skyResultsToolbar summary::-webkit-details-marker{display:none}
       .relphi-aspect-hover,.relphi-aspect-active{cursor:pointer;filter:brightness(.9);opacity:1!important}
       svg .relphi-aspect-hover,svg .relphi-aspect-active{stroke-width:4px!important;opacity:1!important}
       .relphi-aspect-active{outline:3px solid rgba(227,29,23,.25);outline-offset:2px}
