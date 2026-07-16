@@ -1,4 +1,4 @@
-// Keeps the public Sky Chart language source-neutral.
+// Keeps the public Sky Chart language source-neutral and the Wizard headings method-neutral.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -16,6 +16,22 @@
     return replacements.reduce(function (text, pair) {
       return text.replace(pair[0], pair[1]);
     }, String(value || ''));
+  }
+
+  function enforceWizardLanguage() {
+    const heading = document.getElementById('skyWizardPrimaryHeading');
+    const help = document.getElementById('skyWizardPrimaryHelp');
+    const step = document.querySelector('.sky-wizard-step-first .sky-wizard-step-copy .eyebrow');
+
+    if (heading && /^here and now$/i.test(heading.textContent.trim())) {
+      heading.textContent = 'Choose how to create this sky';
+    }
+    if (help && /current place and time|here and now/i.test(help.textContent)) {
+      help.textContent = 'Use existing placements, open a saved sky, or calculate the sky from a time and place.';
+    }
+    if (step && /^where and when$/i.test(step.textContent.trim())) {
+      step.textContent = 'First sky';
+    }
   }
 
   function cleanElement(element) {
@@ -41,6 +57,7 @@
     });
     if (scope.nodeType === Node.ELEMENT_NODE) cleanElement(scope);
     scope.querySelectorAll?.('*').forEach(cleanElement);
+    enforceWizardLanguage();
   }
 
   function install() {
@@ -54,7 +71,8 @@
           } else clean(node);
         });
       });
-    }).observe(document.body, { childList:true, subtree:true });
+      enforceWizardLanguage();
+    }).observe(document.body, { childList:true, subtree:true, characterData:true });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
