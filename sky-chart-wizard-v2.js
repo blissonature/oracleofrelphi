@@ -22,6 +22,10 @@
     return eyebrow.includes('comparison') || placeholder.includes('comparison') ? 'currentSky' : 'chart';
   }
 
+  function hasPlacements(element) {
+    return /(?:Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|Rising|ASC|MC|Midheaven)[\s\S]{0,100}\d{1,2}°/i.test(element?.textContent || '');
+  }
+
   function activateWizard() {
     const advancedButton = byId('skyBuilderAdvancedMode');
     const wizardButton = byId('skyBuilderWizardMode');
@@ -186,6 +190,8 @@
       const status = byId('skyCalcStatus');
       const text = status ? status.textContent.trim() : '';
       if (!/^Calculated Sky for\b/i.test(text)) return;
+      const output = activeKind === 'currentSky' ? byId('currentSkyOutput') : byId('chartOutput');
+      if (!hasPlacements(output)) return;
       closeCreationControls();
       byId('relphiSkyCompleteHeading').textContent = activeName + ' is now ' + (activeKind === 'chart' ? 'Sky A' : 'Sky B');
       byId('relphiSkyCompleteSummary').textContent = text;
@@ -193,8 +199,9 @@
       go('relphiSkyCompleteStage');
     }
 
-    const status = byId('skyCalcStatus');
-    if (status) new MutationObserver(completeCalculatedSky).observe(status, { childList:true, subtree:true, characterData:true });
+    [byId('skyCalcStatus'), byId('chartOutput'), byId('currentSkyOutput')].forEach(function (node) {
+      if (node) new MutationObserver(completeCalculatedSky).observe(node, { childList:true, subtree:true, characterData:true });
+    });
 
     byId('relphiSkyNameContinue').addEventListener('click', function () {
       const input = byId('relphiSkyNameInput');
@@ -253,7 +260,6 @@
       focusAfterPaint(byId('skyCalcRun'));
     });
     byId('relphiChooseWhenWhere').addEventListener('click', function () { openCalculator(); focusAfterPaint(byId('skyCalcDateTime')); });
-    byId('skyCalcRun')?.addEventListener('click', commitTarget, true);
 
     byId('relphiAddComparison').addEventListener('click', function () {
       activeKind = 'currentSky';
