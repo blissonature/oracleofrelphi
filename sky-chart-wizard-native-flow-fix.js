@@ -123,6 +123,13 @@
     });
   }
 
+  function loadActiveSkyControls() {
+    if (document.querySelector('script[src^="sky-chart-active-sky-controls.js"]')) return;
+    const script = document.createElement('script');
+    script.src = 'sky-chart-active-sky-controls.js?v=1';
+    document.body.appendChild(script);
+  }
+
   function interceptWizardChoices(event) {
     const hereNow = event.target.closest && event.target.closest('#relphiHereNow');
     const choose = event.target.closest && event.target.closest('#relphiChooseWhenWhere');
@@ -150,6 +157,7 @@
         return;
       }
       installSavedSkyPicker();
+      loadActiveSkyControls();
       document.addEventListener('click', interceptWizardChoices, true);
       const savedChoice = byId('relphiSavedSky');
       if (savedChoice) savedChoice.hidden = true;
