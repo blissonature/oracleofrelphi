@@ -4,19 +4,52 @@
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   function byId(id) { return document.getElementById(id); }
-  function show(element) { if (element) element.hidden = false; }
-  function hide(element) { if (element) element.hidden = true; }
   function fire(element, type) { if (element) element.dispatchEvent(new Event(type, { bubbles:true })); }
 
-  function openAdvanced() {
+  function activateAdvanced() {
+    const advancedButton = byId('skyBuilderAdvancedMode');
+    const wizardButton = byId('skyBuilderWizardMode');
     const drawer = byId('skyCreatorDrawer');
-    if (drawer) drawer.open = true;
+
+    if (advancedButton) advancedButton.click();
+    if (wizardButton) {
+      wizardButton.classList.remove('is-active');
+      wizardButton.setAttribute('aria-pressed', 'false');
+    }
+    if (advancedButton) {
+      advancedButton.classList.add('is-active');
+      advancedButton.setAttribute('aria-pressed', 'true');
+    }
+    if (drawer) {
+      drawer.hidden = false;
+      drawer.removeAttribute('hidden');
+      drawer.style.setProperty('display', 'block', 'important');
+      drawer.open = true;
+    }
+    document.body.dataset.skyBuilderUi = 'advanced';
+    return drawer;
   }
 
   function openCalculator() {
-    openAdvanced();
-    const drawer = document.querySelector('.sky-calc-drawer');
-    if (drawer) drawer.open = true;
+    const drawer = activateAdvanced();
+    const calculator = document.querySelector('.sky-calc-drawer');
+    if (calculator) {
+      calculator.hidden = false;
+      calculator.removeAttribute('hidden');
+      calculator.style.setProperty('display', 'block', 'important');
+      calculator.open = true;
+    }
+    return calculator || drawer;
+  }
+
+  function focusAfterPaint(element) {
+    if (!element) return;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        element.scrollIntoView({ block:'center', behavior:'smooth' });
+        if (typeof element.focus === 'function') element.focus();
+      });
+    });
   }
 
   function install() {
@@ -59,7 +92,7 @@
         <div class="sky-wizard-entry-card">
           <button id="relphiTypePaste" class="sky-wizard-action" type="button"><span>Type or paste</span><small>Enter copied placement text.</small></button>
           <button id="relphiFormEntry" class="sky-wizard-action" type="button"><span>Form-field entry</span><small>Build placements one field at a time.</small></button>
-          <button id="relphiSavedSky" class="sky-wizard-action" type="button"><span>Use stored sky</span><small>Open a sky you previously saved.</small></button>
+          <button id="relphiSavedSky" class="sky-wizard-action" type="button"><span>Use stored sky</span><small>Choose a sky you previously saved.</small></button>
         </div>
         <button id="relphiBackToMethodFromExisting" class="relphi-secondary-action" type="button">Back</button>
       </div>
@@ -78,8 +111,11 @@
 
     const stages = ['relphiSkyNameStage','relphiSkyMethodStage','relphiExistingStage','relphiCalculateStage'];
     function go(id) {
-      stages.forEach(function (stageId) { const stage = byId(stageId); if (stage) stage.hidden = stageId !== id; });
-      wizard.scrollIntoView({ block:'start', behavior:'smooth' });
+      stages.forEach(function (stageId) {
+        const stage = byId(stageId);
+        if (stage) stage.hidden = stageId !== id;
+      });
+      focusAfterPaint(byId(id));
     }
 
     byId('relphiSkyNameContinue').addEventListener('click', function () {
@@ -106,27 +142,40 @@
     byId('relphiBackToMethodFromCalculate').addEventListener('click', function () { go('relphiSkyMethodStage'); });
 
     byId('relphiTypePaste').addEventListener('click', function () {
-      advanced.hidden = false; openAdvanced();
-      const field = byId('skyCreatorPaste'); if (field) { field.scrollIntoView({ block:'center' }); field.focus(); }
+      activateAdvanced();
+      focusAfterPaint(byId('skyCreatorPaste'));
     });
+
     byId('relphiFormEntry').addEventListener('click', function () {
-      advanced.hidden = false; openAdvanced();
-      const form = byId('skyCreatorForm'); if (form) { form.scrollIntoView({ block:'center' }); form.querySelector('input,select,button')?.focus(); }
+      activateAdvanced();
+      const form = byId('skyCreatorForm');
+      focusAfterPaint(form && (form.querySelector('input,select,button') || form));
     });
+
     byId('relphiSavedSky').addEventListener('click', function () {
-      advanced.hidden = false; openAdvanced();
-      const load = byId('skyCreatorLoad'); if (load) load.click();
-      else byId('skyCreatorName')?.focus();
+      activateAdvanced();
+      const library = byId('skyCreatorLibrary');
+      if (library) {
+        library.classList.remove('visually-hidden');
+        library.removeAttribute('aria-hidden');
+        library.removeAttribute('tabindex');
+        library.style.setProperty('display', 'block', 'important');
+        focusAfterPaint(library);
+      } else {
+        byId('skyCreatorLoad')?.click();
+      }
     });
+
     byId('relphiHereNow').addEventListener('click', function () {
-      advanced.hidden = false; openCalculator();
+      openCalculator();
       byId('skyCalcNow')?.click();
       byId('skyCalcGeo')?.click();
-      byId('skyCalcRun')?.scrollIntoView({ block:'center' });
+      focusAfterPaint(byId('skyCalcRun'));
     });
+
     byId('relphiChooseWhenWhere').addEventListener('click', function () {
-      advanced.hidden = false; openCalculator();
-      const field = byId('skyCalcDateTime'); if (field) { field.scrollIntoView({ block:'center' }); field.focus(); }
+      openCalculator();
+      focusAfterPaint(byId('skyCalcDateTime'));
     });
 
     byId('relphiSkyNameInput').focus();
