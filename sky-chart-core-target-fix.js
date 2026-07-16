@@ -23,7 +23,7 @@
     const select = byId(id);
     if (!select) return;
     const target = kind === 'currentSky' ? 'currentSky' : 'chart';
-    if (select.value !== target) select.value = target;
+    select.value = target;
     if (notify) {
       fire(select, 'input');
       fire(select, 'change');
@@ -70,8 +70,12 @@
     window.dispatchEvent(new Event('resize'));
   }
 
-  function isSetupControl(node) {
-    return !!node?.closest?.('#relphiAddComparison, #relphiSkyNameContinue, #relphiHereNow, #relphiChooseWhenWhere');
+  function isComparisonStart(node) {
+    return !!node?.closest?.('#relphiAddComparison, #relphiSkyNameContinue');
+  }
+
+  function isCalculatorSetup(node) {
+    return !!node?.closest?.('#relphiHereNow, #relphiChooseWhenWhere');
   }
 
   function isCalculatorRun(node) {
@@ -86,17 +90,27 @@
   }
 
   function guard(event) {
-    if (isSetupControl(event.target)) {
-      if (pendingTarget() === 'currentSky') {
+    const target = pendingTarget();
+
+    if (isComparisonStart(event.target)) {
+      if (target === 'currentSky') {
+        // Keep the completed first sky visible while the second sky is only being named.
         setSelect('skyCreatorTarget', 'chart', false);
         setSelect('skyCalcTarget', 'chart', false);
       }
       return;
     }
 
-    const target = pendingTarget();
+    if (isCalculatorSetup(event.target)) {
+      // Give the calculator its real destination early enough for its internal state to update,
+      // while leaving the visible renderer on Sky A.
+      setSelect('skyCreatorTarget', 'chart', false);
+      setCalculatorTarget(target);
+      awaitingSkyB = target === 'currentSky';
+      return;
+    }
+
     if (isCalculatorRun(event.target)) {
-      // Tell the calculator to write Sky B without waking the visible Sky B renderer.
       setCalculatorTarget(target);
       awaitingSkyB = target === 'currentSky';
       return;
@@ -131,6 +145,7 @@
 
   window.RelphiSkyCoreTargetFix = {
     forceTarget: setVisibleTarget,
+    prepareCalculator: setCalculatorTarget,
     getIntendedTarget: function () { return intendedTarget; }
   };
 
