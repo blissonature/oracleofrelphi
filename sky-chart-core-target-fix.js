@@ -1,10 +1,11 @@
-// Coordinates Sky A / Sky B assignment without rendering an empty comparison slot.
+// Preserves Sky A while the legacy calculator produces a comparison sky.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   let intendedTarget = 'chart';
   let awaitingSkyB = false;
+  let skyASnapshot = null;
 
   function byId(id) { return document.getElementById(id); }
   function fire(element, type) {
@@ -56,10 +57,47 @@
     mode?.click();
   }
 
+  function preserveSkyA() {
+    const output = byId('chartOutput');
+    if (!output || !hasPlacements(output.textContent || '')) return;
+    skyASnapshot = {
+      html: output.innerHTML,
+      text: output.textContent,
+      className: output.className,
+      hidden: output.hidden
+    };
+  }
+
+  function transferLegacyResultToSkyB() {
+    if (!awaitingSkyB || !skyASnapshot) return false;
+    const chart = byId('chartOutput');
+    const current = byId('currentSkyOutput');
+    if (!chart || !current) return false;
+
+    const calculatedHtml = chart.innerHTML;
+    const calculatedText = chart.textContent || '';
+    const changed = calculatedHtml !== skyASnapshot.html;
+    if (!changed || !hasPlacements(calculatedText)) return false;
+
+    current.innerHTML = calculatedHtml;
+    current.hidden = false;
+    current.removeAttribute('hidden');
+
+    chart.innerHTML = skyASnapshot.html;
+    chart.className = skyASnapshot.className;
+    chart.hidden = skyASnapshot.hidden;
+    if (!skyASnapshot.hidden) chart.removeAttribute('hidden');
+
+    return hasPlacements(current.textContent || '') && hasPlacements(chart.textContent || '');
+  }
+
   function completeSkyBWhenReady() {
     if (!awaitingSkyB) return;
     const output = byId('currentSkyOutput');
-    if (!hasPlacements(output?.textContent || '')) return;
+    let ready = hasPlacements(output?.textContent || '');
+
+    if (!ready) ready = transferLegacyResultToSkyB();
+    if (!ready) return;
 
     awaitingSkyB = false;
     setVisibleTarget('currentSky');
@@ -67,6 +105,9 @@
     output.hidden = false;
     output.removeAttribute('hidden');
     delete document.body.dataset.relphiPendingSkyKind;
+    skyASnapshot = null;
+    fire(output, 'input');
+    fire(output, 'change');
     window.dispatchEvent(new Event('resize'));
   }
 
@@ -94,7 +135,7 @@
 
     if (isComparisonStart(event.target)) {
       if (target === 'currentSky') {
-        // Keep the completed first sky visible while the second sky is only being named.
+        preserveSkyA();
         setSelect('skyCreatorTarget', 'chart', false);
         setSelect('skyCalcTarget', 'chart', false);
       }
@@ -102,8 +143,7 @@
     }
 
     if (isCalculatorSetup(event.target)) {
-      // Give the calculator its real destination early enough for its internal state to update,
-      // while leaving the visible renderer on Sky A.
+      if (target === 'currentSky') preserveSkyA();
       setSelect('skyCreatorTarget', 'chart', false);
       setCalculatorTarget(target);
       awaitingSkyB = target === 'currentSky';
@@ -111,36 +151,27 @@
     }
 
     if (isCalculatorRun(event.target)) {
+      if (target === 'currentSky') preserveSkyA();
       setCalculatorTarget(target);
       awaitingSkyB = target === 'currentSky';
       return;
     }
 
-    if (isCreatorCommit(event.target)) {
-      setVisibleTarget(target);
-    }
+    if (isCreatorCommit(event.target)) setVisibleTarget(target);
   }
 
   function install() {
     document.addEventListener('click', guard, true);
 
-    const output = byId('currentSkyOutput');
-    if (output) {
-      new MutationObserver(completeSkyBWhenReady).observe(output, {
+    ['chartOutput', 'currentSkyOutput', 'skyCalcStatus'].forEach(function (id) {
+      const node = byId(id);
+      if (!node) return;
+      new MutationObserver(completeSkyBWhenReady).observe(node, {
         childList:true,
         subtree:true,
         characterData:true
       });
-    }
-
-    const status = byId('skyCalcStatus');
-    if (status) {
-      new MutationObserver(completeSkyBWhenReady).observe(status, {
-        childList:true,
-        subtree:true,
-        characterData:true
-      });
-    }
+    });
   }
 
   window.RelphiSkyCoreTargetFix = {
