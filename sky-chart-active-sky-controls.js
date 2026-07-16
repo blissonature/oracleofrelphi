@@ -30,15 +30,16 @@
     byId(id)?.scrollIntoView({ block:'start', behavior:'smooth' });
   }
 
+  function setText(element, value) {
+    if (element && element.textContent !== value) element.textContent = value;
+  }
+
   function refreshLabels() {
     const name = activeName();
     const slot = activeSlot();
-    const save = byId('relphiSaveActiveSky');
-    const edit = byId('relphiEditActiveSky');
-    const clear = byId('relphiClearActiveSky');
-    if (save) save.textContent = 'Save “' + name + '”';
-    if (edit) edit.textContent = 'Edit “' + name + '”';
-    if (clear) clear.textContent = 'Clear ' + slot;
+    setText(byId('relphiSaveActiveSky'), 'Save “' + name + '”');
+    setText(byId('relphiEditActiveSky'), 'Edit “' + name + '”');
+    setText(byId('relphiClearActiveSky'), 'Clear ' + slot);
   }
 
   function resetWizardForSlot(slot) {
@@ -59,8 +60,6 @@
 
   function clearActiveSlot() {
     const slot = activeSlot();
-
-    // This invokes the app's own active-slot clear action. It does not delete a saved record.
     byId('skyCreatorClear')?.click();
 
     ['skyCreatorName','skyCalcName','skyCreatorNotes','skyCreatorPaste'].forEach(function (id) {
@@ -126,7 +125,6 @@
         element?.addEventListener('input', refreshLabels);
         element?.addEventListener('change', refreshLabels);
       });
-      new MutationObserver(refreshLabels).observe(complete, { childList:true, subtree:true, characterData:true });
     };
     wait();
   }

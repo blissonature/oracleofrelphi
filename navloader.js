@@ -140,7 +140,7 @@
       appendScript('sky-chart-provenance-fix.js?v=1');
       appendScript('sky-chart-wizard-v2.js?v=4');
       appendScript('sky-chart-wizard-native-flow-fix.js?v=2');
-      appendScript('sky-chart-active-sky-controls.js?v=1');
+      appendScript('sky-chart-active-sky-controls.js?v=2');
       appendScript('sky-chart-core-target-fix.js?v=1');
       appendScript('sky-chart-language-cleanup.js?v=5');
       const previewPr = new URLSearchParams(window.location.search).get('preview');
