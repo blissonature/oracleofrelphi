@@ -11,11 +11,13 @@
     const placeholder = (byId('relphiSkyNameInput')?.placeholder || '').toLowerCase();
     return eyebrow.includes('comparison') || placeholder.includes('comparison') ? 'currentSky' : 'chart';
   }
+
   function slotLabel(kind) { return kind === 'currentSky' ? 'Sky B' : 'Sky A'; }
   function outputFor(kind) { return kind === 'currentSky' ? byId('currentSkyOutput') : byId('chartOutput'); }
   function hasPlacements(text) {
     return /(?:Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|Rising|ASC|MC|Midheaven)[\s\S]{0,100}\d{1,2}°/i.test(String(text || ''));
   }
+
   function setTarget(kind) {
     ['skyCreatorTarget','skyCalcTarget'].forEach(function (id) {
       const select = byId(id);
@@ -25,6 +27,7 @@
       fire(select, 'change');
     });
   }
+
   function setName(name) {
     ['relphiSkyNameInput','skyCreatorName','skyCalcName'].forEach(function (id) {
       const input = byId(id);
@@ -34,17 +37,20 @@
       fire(input, 'change');
     });
   }
+
   function defaultName() {
     const d = new Date();
     const pad = function (n) { return String(n).padStart(2, '0'); };
     return 'Untitled Sky ' + pad(d.getUTCMonth()+1) + pad(d.getUTCDate()) + String(d.getUTCFullYear()).slice(-2) + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + pad(d.getUTCSeconds()) + 'UT';
   }
+
   function showStage(id) {
     ['relphiSkyNameStage','relphiSkyMethodStage','relphiExistingStage','relphiCalculateStage','relphiSkyCompleteStage'].forEach(function (stageId) {
       const stage = byId(stageId);
       if (stage) stage.hidden = stageId !== id;
     });
   }
+
   function placementSummary(output) {
     if (!output) return '';
     const text = output.textContent || '';
@@ -52,6 +58,7 @@
     const unique = Array.from(new Set(matches.map(function (v) { return v.toLowerCase(); })));
     return unique.length ? unique.length + ' placements loaded.' : 'Placements loaded.';
   }
+
   function completeSaved(name, kind) {
     const heading = byId('relphiSkyCompleteHeading');
     const summary = byId('relphiSkyCompleteSummary');
@@ -73,10 +80,12 @@
       return { name: option.textContent.trim(), value: option.value };
     });
   }
+
   function exactSavedRecord(name) {
     const normalized = String(name || '').trim().toLowerCase();
     return savedRecords().find(function (record) { return record.name.toLowerCase() === normalized; }) || null;
   }
+
   function refreshDatalist() {
     const list = byId('relphiSavedSkyNames');
     if (!list) return;
@@ -93,6 +102,7 @@
     const core = byId('skyCreatorLibrary');
     const status = byId('relphiSkyNameError');
     if (!core || !record) return;
+
     setTarget(kind);
     setName(record.name);
     core.value = record.value;
@@ -153,6 +163,8 @@
 
       document.addEventListener('click', function (event) {
         if (!event.target.closest?.('#relphiAddComparison')) return;
+        core.value = '';
+        byId('relphiSavedSkyStart')?.remove();
         setTimeout(function () {
           input.value = defaultName();
           input.placeholder = 'Comparison sky name';
@@ -164,12 +176,9 @@
       document.addEventListener('click', function (event) {
         const button = event.target.closest?.('#relphiSkyNameContinue');
         if (!button) return;
-        const name = input.value.trim();
-        const record = exactSavedRecord(name);
-        if (!record) {
-          setTarget(intendedKind());
-          return;
-        }
+        const record = exactSavedRecord(input.value.trim());
+        if (!record) return;
+
         event.preventDefault();
         event.stopImmediatePropagation();
         loadSaved(record, intendedKind());
@@ -185,11 +194,13 @@
       '#currentSkyOutput svg line, #currentSkyOutput svg path, #currentSkyOutput svg circle, #currentSkyOutput svg g'
     );
   }
+
   function setAspectState(element, active) {
     if (!element) return;
     element.classList.toggle('relphi-aspect-active', active);
     element.setAttribute('aria-pressed', active ? 'true' : 'false');
   }
+
   function installAspectInteractions() {
     document.addEventListener('pointerover', function (event) {
       const item = aspectCandidate(event.target);
@@ -230,6 +241,7 @@
     const style = document.createElement('style');
     style.id = 'relphiWizardUiStateStyles';
     style.textContent = `
+      #relphiSavedSkyStart{display:none!important}
       #relphiSkyNameStage{display:block;max-width:760px;margin:0 auto}
       #relphiSkyNameStage>.sky-wizard-step-copy{margin-bottom:1rem}
       #relphiSkyNameStage>.sky-creator-name-label{display:block;margin-bottom:.45rem;font-weight:700}
@@ -249,6 +261,7 @@
     installUnifiedNameField();
     installAspectInteractions();
   }
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
   else start();
 })();
