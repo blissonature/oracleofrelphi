@@ -76,8 +76,7 @@
         'sky-chart-active-sky-controls.js?v=2',
         'sky-chart-core-target-fix.js?v=1',
         'sky-chart-language-cleanup.js?v=5',
-        'sky-chart-wizard-state-controller.js?v=1',
-        'sky-chart-wizard-ui-state-fix.js?v=4'
+        'sky-chart-wizard-ui-state-fix.js?v=5'
       ].forEach(appendScript);
       const preview = new URLSearchParams(location.search).get('preview');
       appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
