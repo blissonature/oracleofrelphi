@@ -1,4 +1,4 @@
-// Keeps the public Sky Chart language source-neutral and the Wizard sequence coherent.
+// Keeps the public Sky Chart language source-neutral and preserves the progressive Wizard.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -18,24 +18,17 @@
     }, String(value || ''));
   }
 
-  function enforceWizardLanguage() {
-    const heading = document.getElementById('skyWizardPrimaryHeading');
-    const help = document.getElementById('skyWizardPrimaryHelp');
-    const eyebrow = document.querySelector('.sky-wizard-step-first .sky-wizard-step-copy .eyebrow');
-    const creationStep = document.querySelector('.sky-wizard-step-first .sky-wizard-step-label');
-    const comparisonStep = document.querySelector('.sky-wizard-step-compare .sky-wizard-step-label');
-
-    if (heading && /^here and now$/i.test(heading.textContent.trim())) {
-      heading.textContent = 'Choose how to create this sky';
-    }
-    if (help && /current place and time|here and now/i.test(help.textContent)) {
-      help.textContent = 'Use existing placements, open a saved sky, or calculate the sky from a time and place.';
-    }
-    if (eyebrow && /^where and when$/i.test(eyebrow.textContent.trim())) {
-      eyebrow.textContent = 'First sky';
-    }
-    if (creationStep) creationStep.textContent = 'Step 2';
-    if (comparisonStep) comparisonStep.textContent = 'Step 3';
+  function hideRetiredWizard() {
+    if (document.getElementById('relphi-progressive-wizard-style')) return;
+    const style = document.createElement('style');
+    style.id = 'relphi-progressive-wizard-style';
+    style.textContent = `
+      body.sky-chart-page .sky-wizard-shell-frictionless,
+      body.sky-chart-page .sky-wizard-shell:not([data-relphi-wizard-v2]) {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   function cleanElement(element) {
@@ -61,10 +54,11 @@
     });
     if (scope.nodeType === Node.ELEMENT_NODE) cleanElement(scope);
     scope.querySelectorAll?.('*').forEach(cleanElement);
-    enforceWizardLanguage();
+    hideRetiredWizard();
   }
 
   function install() {
+    hideRetiredWizard();
     clean(document.body);
     new MutationObserver(function (records) {
       records.forEach(function (record) {
@@ -75,7 +69,7 @@
           } else clean(node);
         });
       });
-      enforceWizardLanguage();
+      hideRetiredWizard();
     }).observe(document.body, { childList:true, subtree:true, characterData:true });
   }
 
