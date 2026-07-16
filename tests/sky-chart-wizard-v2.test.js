@@ -23,14 +23,18 @@ const source = zlib.gunzipSync(Buffer.from(encoded[1], 'base64')).toString('utf8
   'Here and Now',
   'Choose another time and place',
   'Nothing is applied until you press Create this sky.',
-  'sharedPaste.dataset.skyKind = activeTarget',
-  'confirmedNames[activeTarget] = name',
-  'Sky B · comparison sky'
+  'Sky B · comparison sky',
+  'skyCreatorTarget',
+  'skyCalcTarget',
+  'skyCreatorSaveWizard',
+  'relphiWizardPaste',
+  'dataset.skyKind',
+  'currentSky'
 ].forEach(fragment => assert.ok(source.includes(fragment), 'Missing Wizard behavior: ' + fragment));
 
-assert.ok(source.includes("activeTarget = kind === 'currentSky' ? 'currentSky' : 'chart'"), 'Sky A and Sky B do not have an explicit active target.');
-assert.ok(source.includes("sharedPaste.value = text"), 'The explicit paste commit is missing.');
 assert.ok(!source.includes('Where and When</p>\n            <h3 id="skyWizardPrimaryHeading">Here and Now'), 'The retired permanent Here and Now heading returned.');
+assert.ok(source.includes('Nothing is applied until you press Create this sky.'), 'Pasting can occur without an explicit commit boundary.');
+assert.ok(source.includes('It was created in ${"currentSky"===n?"Sky B":"Sky A"} as its own named sky.'), 'The completion state does not preserve each sky as a separate named object.');
 
 assert.ok(nav.includes("appendScript('sky-chart-wizard-v2.js?v=1')"), 'The live Sky Chart does not load the new Wizard.');
 assert.ok(nav.includes("appendScript('sky-chart-provenance-fix.js?v=1')"), 'The factual provenance repair is not loaded.');
