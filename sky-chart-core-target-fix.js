@@ -7,6 +7,9 @@
   let awaitingSkyB = false;
 
   function byId(id) { return document.getElementById(id); }
+  function fire(element, type) {
+    if (element) element.dispatchEvent(new Event(type, { bubbles:true }));
+  }
 
   function pendingTarget() {
     return document.body.dataset.relphiPendingSkyKind === 'currentSky' ? 'currentSky' : 'chart';
@@ -16,12 +19,25 @@
     return /(?:Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|Rising|ASC|MC|Midheaven)[\s\S]{0,100}\d{1,2}°/i.test(String(text || ''));
   }
 
-  function setTargetSilently(kind) {
+  function setSelect(id, kind, notify) {
+    const select = byId(id);
+    if (!select) return;
+    const target = kind === 'currentSky' ? 'currentSky' : 'chart';
+    if (select.value !== target) select.value = target;
+    if (notify) {
+      fire(select, 'input');
+      fire(select, 'change');
+    }
+  }
+
+  function setCalculatorTarget(kind) {
     intendedTarget = kind === 'currentSky' ? 'currentSky' : 'chart';
-    ['skyCreatorTarget', 'skyCalcTarget'].forEach(function (id) {
-      const select = byId(id);
-      if (select) select.value = intendedTarget;
-    });
+    setSelect('skyCalcTarget', intendedTarget, true);
+  }
+
+  function setVisibleTarget(kind) {
+    intendedTarget = kind === 'currentSky' ? 'currentSky' : 'chart';
+    setSelect('skyCreatorTarget', intendedTarget, true);
     const paste = byId('skyCreatorPaste');
     if (paste) paste.dataset.skyKind = intendedTarget;
   }
@@ -46,9 +62,11 @@
     if (!hasPlacements(output?.textContent || '')) return;
 
     awaitingSkyB = false;
+    setVisibleTarget('currentSky');
     enableComparisonMode();
     output.hidden = false;
     output.removeAttribute('hidden');
+    delete document.body.dataset.relphiPendingSkyKind;
     window.dispatchEvent(new Event('resize'));
   }
 
@@ -56,52 +74,63 @@
     return !!node?.closest?.('#relphiAddComparison, #relphiSkyNameContinue, #relphiHereNow, #relphiChooseWhenWhere');
   }
 
-  function isCommitControl(node) {
+  function isCalculatorRun(node) {
+    return !!node?.closest?.('#skyCalcRun');
+  }
+
+  function isCreatorCommit(node) {
     return !!node?.closest?.(
-      '#skyCalcRun, #skyCalcAttach, .sky-paste-create-button, ' +
-      '#skyCreatorForm button, [data-create-sky], [data-confirm-sky]'
+      '#skyCalcAttach, .sky-paste-create-button, #skyCreatorForm button, ' +
+      '[data-create-sky], [data-confirm-sky]'
     );
   }
 
   function guard(event) {
     if (isSetupControl(event.target)) {
-      // Keep the visible renderer on Sky A while Sky B is only being configured.
-      if (pendingTarget() === 'currentSky') setTargetSilently('chart');
+      if (pendingTarget() === 'currentSky') {
+        setSelect('skyCreatorTarget', 'chart', false);
+        setSelect('skyCalcTarget', 'chart', false);
+      }
       return;
     }
 
-    if (!isCommitControl(event.target)) return;
     const target = pendingTarget();
-    setTargetSilently(target);
-    awaitingSkyB = target === 'currentSky';
+    if (isCalculatorRun(event.target)) {
+      // Tell the calculator to write Sky B without waking the visible Sky B renderer.
+      setCalculatorTarget(target);
+      awaitingSkyB = target === 'currentSky';
+      return;
+    }
+
+    if (isCreatorCommit(event.target)) {
+      setVisibleTarget(target);
+    }
   }
 
   function install() {
-    ['pointerdown', 'mousedown', 'touchstart', 'click'].forEach(function (type) {
-      document.addEventListener(type, guard, true);
-    });
+    document.addEventListener('click', guard, true);
 
     const output = byId('currentSkyOutput');
     if (output) {
       new MutationObserver(completeSkyBWhenReady).observe(output, {
-        childList: true,
-        subtree: true,
-        characterData: true
+        childList:true,
+        subtree:true,
+        characterData:true
       });
     }
 
     const status = byId('skyCalcStatus');
     if (status) {
       new MutationObserver(completeSkyBWhenReady).observe(status, {
-        childList: true,
-        subtree: true,
-        characterData: true
+        childList:true,
+        subtree:true,
+        characterData:true
       });
     }
   }
 
   window.RelphiSkyCoreTargetFix = {
-    forceTarget: setTargetSilently,
+    forceTarget: setVisibleTarget,
     getIntendedTarget: function () { return intendedTarget; }
   };
 
