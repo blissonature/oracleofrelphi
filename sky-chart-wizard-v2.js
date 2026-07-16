@@ -16,6 +16,12 @@
     });
   }
 
+  function visibleKind() {
+    const eyebrow = (byId('relphiSkyNameEyebrow')?.textContent || '').toLowerCase();
+    const placeholder = (byId('relphiSkyNameInput')?.placeholder || '').toLowerCase();
+    return eyebrow.includes('comparison') || placeholder.includes('comparison') ? 'currentSky' : 'chart';
+  }
+
   function activateWizard() {
     const advancedButton = byId('skyBuilderAdvancedMode');
     const wizardButton = byId('skyBuilderWizardMode');
@@ -179,9 +185,9 @@
         input.focus();
         return;
       }
+      activeKind = visibleKind();
       activeName = name;
       byId('relphiSkyNameError').textContent = '';
-      // This is the sole transition that activates Sky A or Sky B.
       setTarget(activeKind);
       const creatorName = byId('skyCreatorName');
       const calcName = byId('skyCalcName');
@@ -223,7 +229,6 @@
     byId('relphiChooseWhenWhere').addEventListener('click', function () { openCalculator(); focusAfterPaint(byId('skyCalcDateTime')); });
 
     byId('relphiAddComparison').addEventListener('click', function () {
-      // Prepare the Wizard for Sky B without changing the renderer target yet.
       activeKind = 'currentSky';
       activeName = '';
       byId('relphiSkyNameEyebrow').textContent = 'Comparison sky';
