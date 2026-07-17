@@ -104,6 +104,7 @@
         appendScript('sky-chart-wizard-v3.js?v=2', function () {
           appendScript('sky-chart-wizard-v3-unified-continue.js?v=1');
           appendScript('sky-chart-wizard-v3-corrections.js?v=3');
+          appendScript('sky-chart-wizard-v3-stage-fix.js?v=1');
           appendScript('sky-chart-language-cleanup.js?v=6');
           appendScript('sky-chart-aspect-keyboard.js?v=1');
           setTimeout(function () {
