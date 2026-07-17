@@ -100,6 +100,7 @@
       ].forEach(function (src) { appendScript(src); });
 
       if (preview === 'pr55') {
+        appendScript('sky-chart-wizard-v3-resume.js?v=1');
         appendScript('sky-chart-wizard-v3.js?v=1', function () {
           setTimeout(function () {
             if (!document.getElementById('relphiSkyWizard')) showPreviewLoadFailure();
