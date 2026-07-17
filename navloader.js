@@ -36,7 +36,7 @@
     if (document.getElementById('relphi-nav-style') || document.querySelector('link[href*="style.css"]')) return;
     const style = document.createElement('style');
     style.id = 'relphi-nav-style';
-    style.textContent = '.menu-container{position:absolute;top:1rem;left:1rem;z-index:999}.logo-btn{background:none;border:0;cursor:pointer;padding:0;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center}.logo-btn img{width:44px;height:44px}.dropdown-menu{display:none;position:absolute;top:56px;left:0;min-width:180px;background:#111;border:2px solid #fff;border-radius:1.25em;box-shadow:0 8px 32px rgba(0,0,0,.26);padding:.7em 0}.dropdown-menu a,.dropdown-menu summary{display:block;color:#fff;text-decoration:none;padding:1em 1.5em;font-size:1.05em;white-space:nowrap}.dropdown-menu a:hover,.dropdown-menu a:focus{background:#dc1f18}.menu-container.active .dropdown-menu{display:block}.dropdown-menu .nav-tool-group a{padding-left:2.25em}@media(max-width:600px){.dropdown-menu{min-width:130px;left:-10px}}';
+    style.textContent = '.menu-container{position:absolute;top:1rem;left:1rem;z-index:999}.logo-btn{background:none;border:0;cursor:pointer;padding:0;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center}.logo-btn img{width:44px;height:44px}.dropdown-menu{display:none;position:absolute;top:56px;left:0;min-width:180px;background:#111;border:2px solid #fff;border-radius:1.25em;box-shadow:0 8px 32px rgba(0,0,0,.26);padding:.7em 0}.dropdown-menu a,.dropdown-menu summary{display:block;color:#fff;text-decoration:none;padding:1em 1.5em;font-size:1.05em;white-space:nowrap}.dropdown-menu a:hover,.dropdown-menu a:focus{background:#dc1f18}.menu-container.active .dropdown-menu a{padding-left:2.25em}@media(max-width:600px){.dropdown-menu{min-width:130px;left:-10px}}';
     document.head.appendChild(style);
   }
 
@@ -100,12 +100,13 @@
       ].forEach(function (src) { appendScript(src); });
 
       if (preview === 'pr55') {
-        appendScript('sky-chart-wizard-v3-native-render.js?v=3');
+        appendScript('sky-chart-wizard-v3-native-render.js?v=4');
         appendScript('sky-chart-wizard-v3.js?v=2', function () {
           appendScript('sky-chart-wizard-v3-unified-continue.js?v=1');
           appendScript('sky-chart-wizard-v3-corrections.js?v=3');
           appendScript('sky-chart-wizard-v3-stage-fix.js?v=1');
           appendScript('sky-chart-wizard-v3-edit-fix.js?v=1');
+          appendScript('sky-chart-pr55-identity-navigation-fix.js?v=1');
           appendScript('sky-chart-language-cleanup.js?v=6');
           appendScript('sky-chart-aspect-keyboard.js?v=1');
           setTimeout(function () {
