@@ -8,10 +8,8 @@
   const RESUME_KEY = 'relphiWizardV3Resume';
   let resume = null;
 
-  try {
-    resume = JSON.parse(sessionStorage.getItem(RESUME_KEY) || 'null');
-    if (resume?.skyA && resume?.skyB) sessionStorage.removeItem(RESUME_KEY);
-  } catch (_) { resume = null; }
+  try { resume = JSON.parse(sessionStorage.getItem(RESUME_KEY) || 'null'); }
+  catch (_) { resume = null; }
 
   function byId(id) { return document.getElementById(id); }
   function fire(node, type) { if (node) node.dispatchEvent(new Event(type, { bubbles:true })); }
@@ -31,7 +29,9 @@
     if (!source || typeof source !== 'object' || Array.isArray(source)) return {};
     return Object.fromEntries(Object.entries(source).filter(function (entry) {
       const item = entry[1];
-      return item && typeof item === 'object' && !Array.isArray(item) && (String(item.sign || '').trim() || Number.isFinite(Number(item.degree)));
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
+      const degree = item.degree;
+      return String(item.sign || '').trim() || (degree !== '' && degree != null && Number.isFinite(Number(degree)));
     }));
   }
   function hasPlacements(value) { return !!Object.keys(placements(value)).length; }
@@ -43,10 +43,17 @@
     return Array.isArray(value) ? value : [];
   }
   function recordByName(name) {
-    return records().find(function (record) { return normalize(record?.name) === normalize(name) && Object.keys(placements(record)).length; }) || null;
+    return records().find(function (record) {
+      return normalize(record?.name) === normalize(name) && Object.keys(placements(record)).length;
+    }) || null;
   }
   function payload(record) {
-    return record ? { name:record.name, notes:record.notes || '', placements:placements(record), calcProfile:record.calcProfile || {} } : null;
+    return record ? {
+      name:record.name,
+      notes:record.notes || '',
+      placements:placements(record),
+      calcProfile:record.calcProfile || {}
+    } : null;
   }
   function setTarget(kind) {
     ['skyCreatorTarget','skyCalcTarget'].forEach(function (id) {
@@ -87,8 +94,15 @@
     const calcName = byId('skyCalcName');
     if (creatorName) creatorName.value = record.name;
     if (calcName) calcName.value = record.name;
+
     const beforeOutput = output.innerHTML;
     const beforeChart = chart?.innerHTML || '';
+    if (kind === 'currentSky') {
+      output.innerHTML = '';
+      output.hidden = false;
+      output.removeAttribute('hidden');
+    }
+
     select.value = record.id;
     fire(select, 'input');
     fire(select, 'change');
@@ -96,27 +110,29 @@
 
     return waitUntil(function () {
       const slot = readJson(SLOT_KEYS[kind], null);
-      const changed = outputHasPlacements(output) || output.innerHTML !== beforeOutput || (kind === 'currentSky' && (chart?.innerHTML || '') !== beforeChart);
-      return hasPlacements(slot) && normalize(slot.name) === normalize(record.name) && changed;
-    }, 10000).then(function () {
-      if (kind === 'currentSky') byId('chartMode')?.click();
-      return true;
-    });
+      if (!hasPlacements(slot) || normalize(slot.name) !== normalize(record.name)) return false;
+      if (kind === 'chart') return outputHasPlacements(output) && output.innerHTML !== beforeOutput;
+      return outputHasPlacements(output) || (chart?.innerHTML || '') !== beforeChart;
+    }, 12000);
   }
   function finish(aRecord, bRecord) {
     const a = payload(aRecord);
     const b = payload(bRecord);
     writeJson(SLOT_KEYS.chart, a);
     writeJson(SLOT_KEYS.currentSky, b);
+
+    const chart = byId('chartOutput');
     const current = byId('currentSkyOutput');
-    if (current && current.innerHTML.trim()) {
+    if (chart) chart.dataset.skyName = a.name;
+    if (current) {
       current.hidden = false;
       current.removeAttribute('hidden');
       current.dataset.skyName = b.name;
     }
-    const chart = byId('chartOutput');
-    if (chart) chart.dataset.skyName = a.name;
+
+    byId('chartMode')?.click();
     document.body.dataset.relphiSkyBReady = 'true';
+    try { sessionStorage.removeItem(RESUME_KEY); } catch (_) {}
     window.RelphiSkyWizardV3?.renderComplete?.();
     window.dispatchEvent(new CustomEvent('relphi:sky-b-ready', { detail:{ skyA:a.name, skyB:b.name } }));
     window.dispatchEvent(new Event('resize'));
@@ -131,15 +147,10 @@
     writeJson(SLOT_KEYS.chart, a);
     writeJson(SLOT_KEYS.currentSky, b);
 
-    const chart = byId('chartOutput');
-    const current = byId('currentSkyOutput');
-    if (outputHasPlacements(chart) && outputHasPlacements(current)) {
-      finish(aRecord, bRecord);
-      return;
-    }
-
-    loadRecord(aRecord, 'chart').then(function () {
-      return loadRecord(bRecord, 'currentSky');
+    // Load the comparison slot first. Restore Sky A last so Sky B cannot replace
+    // the primary chart while the native loader is still settling.
+    loadRecord(bRecord, 'currentSky').then(function () {
+      return loadRecord(aRecord, 'chart');
     }).then(function () {
       finish(aRecord, bRecord);
     }).catch(function () {
@@ -151,7 +162,8 @@
   }
 
   if (resume?.skyA && resume?.skyB) {
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(restore, 1400); }, { once:true });
-    else setTimeout(restore, 1400);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () { setTimeout(restore, 1400); }, { once:true });
+    } else setTimeout(restore, 1400);
   }
 })();
