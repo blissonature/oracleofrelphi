@@ -94,7 +94,7 @@
   }
 
   function loadPreviewSkyBuilder() {
-    const commit = '2905cc04669865ad2441c794ffecc4ac29a9bda7';
+    const commit = '06dc6a4896b24a752c77d9d16b3f7d6c06b6028a';
     const primaryBase = 'https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@' + commit + '/';
     const fallbackBase = 'https://rawcdn.githack.com/blissonature/oracleofrelphi/' + commit + '/';
     const branchFiles = [
