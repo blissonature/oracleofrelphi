@@ -56,6 +56,7 @@
         'sky-chart-here-now-flow.js?v=2',
         'sky-chart-wizard-v2.js?v=7',
         'sky-chart-wizard-native-flow-fix.js?v=4',
+        'sky-chart-save-verification-v1.js?v=1',
         'sky-chart-active-sky-controls.js?v=3',
         'sky-chart-language-cleanup.js?v=5',
         'sky-chart-wizard-ui-state-fix.js?v=6',
