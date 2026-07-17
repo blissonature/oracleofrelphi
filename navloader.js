@@ -144,7 +144,7 @@
       ].forEach(function (src) { appendScript(src); });
 
       if (preview === 'pr55') {
-        loadPreviewSkyBuilder();
+        appendScript('sky-chart-preview-state-fix.js?v=1', loadPreviewSkyBuilder, loadPreviewSkyBuilder);
       } else {
         [
           'sky-chart-core-workspace-v1.js?v=2',
