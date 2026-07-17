@@ -52,6 +52,7 @@
         'sky-ledger-wheel-glyphs.js?v=2',
         'relphi-glyph-bubbles.js?v=2',
         'sky-chart-provenance-fix.js?v=1',
+        'sky-chart-saved-sky-recovery.js?v=1',
         'sky-chart-core-workspace-v1.js?v=1',
         'sky-chart-here-now-flow.js?v=2',
         'sky-chart-wizard-v2.js?v=7',
