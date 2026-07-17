@@ -42,7 +42,25 @@
       appendScript('planetary-hours-location-prompt.js?v=4'); appendScript('standardize-zodiac-wheels.js?v=4'); appendScript('relphi-glyph-bubbles.js?v=2');
     }
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
-      ['sky-chart-stability-hotfix.js?v=1','sky-chart-static-dynamic.js?v=2','sky-chart-aspect-duration-fix.js?v=2','sky-chart-relationship-language.js?v=2','sky-chart-related-relationships-v2.js?v=2','sky-ledger-glyph-alignment.js?v=1','sky-ledger-wheel-glyphs.js?v=2','relphi-glyph-bubbles.js?v=2','sky-chart-provenance-fix.js?v=1','sky-chart-wizard-v2.js?v=7','sky-chart-wizard-native-flow-fix.js?v=4','sky-chart-active-sky-controls.js?v=2','sky-chart-core-target-fix.js?v=6','sky-chart-here-now-flow.js?v=1','sky-chart-language-cleanup.js?v=5','sky-chart-wizard-ui-state-fix.js?v=6','sky-chart-aspect-keyboard.js?v=1'].forEach(appendScript);
+      [
+        'sky-chart-stability-hotfix.js?v=1',
+        'sky-chart-static-dynamic.js?v=2',
+        'sky-chart-aspect-duration-fix.js?v=2',
+        'sky-chart-relationship-language.js?v=2',
+        'sky-chart-related-relationships-v2.js?v=2',
+        'sky-ledger-glyph-alignment.js?v=1',
+        'sky-ledger-wheel-glyphs.js?v=2',
+        'relphi-glyph-bubbles.js?v=2',
+        'sky-chart-provenance-fix.js?v=1',
+        'sky-chart-core-workspace-v1.js?v=1',
+        'sky-chart-here-now-flow.js?v=2',
+        'sky-chart-wizard-v2.js?v=7',
+        'sky-chart-wizard-native-flow-fix.js?v=4',
+        'sky-chart-active-sky-controls.js?v=3',
+        'sky-chart-language-cleanup.js?v=5',
+        'sky-chart-wizard-ui-state-fix.js?v=6',
+        'sky-chart-aspect-keyboard.js?v=1'
+      ].forEach(appendScript);
       const preview = new URLSearchParams(location.search).get('preview'); appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
     }
   }
