@@ -43,10 +43,6 @@
     }
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
       const preview = new URLSearchParams(location.search).get('preview');
-      if (preview === 'pr55') {
-        appendScript('https://raw.githack.com/blissonature/oracleofrelphi/a26d4e67cc6659837fdb2ac96dda41e8885eee9e/sky-chart-saved-sky-recovery.js');
-        appendScript('https://raw.githack.com/blissonature/oracleofrelphi/a26d4e67cc6659837fdb2ac96dda41e8885eee9e/sky-chart-pr56-preview.js');
-      }
       [
         'sky-chart-stability-hotfix.js?v=1',
         'sky-chart-static-dynamic.js?v=2',
@@ -56,17 +52,39 @@
         'sky-ledger-glyph-alignment.js?v=1',
         'sky-ledger-wheel-glyphs.js?v=2',
         'relphi-glyph-bubbles.js?v=2',
-        'sky-chart-provenance-fix.js?v=1',
-        'sky-chart-core-workspace-v1.js?v=2',
-        'sky-chart-here-now-flow.js?v=2',
-        'sky-chart-wizard-v2.js?v=7',
-        'sky-chart-wizard-native-flow-fix.js?v=4',
-        'sky-chart-save-verification-v1.js?v=1',
-        'sky-chart-active-sky-controls.js?v=3',
-        'sky-chart-language-cleanup.js?v=5',
-        'sky-chart-wizard-ui-state-fix.js?v=6',
-        'sky-chart-aspect-keyboard.js?v=1'
+        'sky-chart-provenance-fix.js?v=1'
       ].forEach(appendScript);
+
+      if (preview === 'pr55') {
+        const reviewBase = 'https://raw.githack.com/blissonature/oracleofrelphi/dc721a36bdfaf0e289f8a3b600cc1f5b3d74f2be/';
+        [
+          reviewBase + 'sky-chart-saved-sky-recovery.js',
+          reviewBase + 'sky-chart-core-workspace-v1.js',
+          reviewBase + 'sky-chart-here-now-flow.js',
+          'sky-chart-wizard-v2.js?v=7',
+          reviewBase + 'sky-chart-wizard-native-flow-fix.js',
+          reviewBase + 'sky-chart-start-over.js',
+          'sky-chart-save-verification-v1.js?v=1',
+          'sky-chart-active-sky-controls.js?v=3',
+          reviewBase + 'sky-chart-active-name-sync.js',
+          'sky-chart-language-cleanup.js?v=5',
+          'sky-chart-wizard-ui-state-fix.js?v=6',
+          reviewBase + 'sky-chart-saved-load-guard.js',
+          'sky-chart-aspect-keyboard.js?v=1'
+        ].forEach(appendScript);
+      } else {
+        [
+          'sky-chart-core-workspace-v1.js?v=2',
+          'sky-chart-here-now-flow.js?v=2',
+          'sky-chart-wizard-v2.js?v=7',
+          'sky-chart-wizard-native-flow-fix.js?v=4',
+          'sky-chart-save-verification-v1.js?v=1',
+          'sky-chart-active-sky-controls.js?v=3',
+          'sky-chart-language-cleanup.js?v=5',
+          'sky-chart-wizard-ui-state-fix.js?v=6',
+          'sky-chart-aspect-keyboard.js?v=1'
+        ].forEach(appendScript);
+      }
       appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
     }
   }
