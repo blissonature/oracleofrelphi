@@ -2,15 +2,11 @@
 (function () {
   'use strict';
 
-  function existingScript(src) {
-    const base = src.split('?')[0];
-    return document.querySelector('script[src^="' + base + '"]');
-  }
-
   function appendScript(src, onload, onerror) {
-    const existing = existingScript(src);
+    const base = src.split('?')[0];
+    const existing = document.querySelector('script[src^="' + base + '"]');
     if (existing) {
-      if (onload) window.setTimeout(onload, 0);
+      if (onload) setTimeout(onload, 0);
       return existing;
     }
     const script = document.createElement('script');
@@ -20,17 +16,6 @@
     if (onerror) script.addEventListener('error', onerror, { once:true });
     document.body.appendChild(script);
     return script;
-  }
-
-  function loadScriptWithFallback(primary, fallback) {
-    return new Promise(function (resolve) {
-      appendScript(primary, function () { resolve(true); }, function () {
-        const failed = existingScript(primary);
-        failed?.remove();
-        if (!fallback) return resolve(false);
-        appendScript(fallback, function () { resolve(true); }, function () { resolve(false); });
-      });
-    });
   }
 
   function initAnalytics() {
@@ -93,42 +78,6 @@
     });
   }
 
-  function loadPreviewSkyBuilder() {
-    const commit = '06dc6a4896b24a752c77d9d16b3f7d6c06b6028a';
-    const primaryBase = 'https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@' + commit + '/';
-    const fallbackBase = 'https://rawcdn.githack.com/blissonature/oracleofrelphi/' + commit + '/';
-    const branchFiles = [
-      'sky-chart-saved-sky-recovery.js',
-      'sky-chart-two-sky-authority.js',
-      'sky-chart-builder-continuity.js',
-      'sky-chart-start-over.js',
-      'sky-chart-named-save-guarantee.js'
-    ];
-    const resuming = new URLSearchParams(location.search).has('finalTwoSky');
-
-    function loadBranchScripts() {
-      let chain = Promise.resolve(true);
-      branchFiles.forEach(function (file) {
-        chain = chain.then(function () {
-          return loadScriptWithFallback(primaryBase + file, fallbackBase + file);
-        });
-      });
-      chain.then(function () {
-        if (resuming) appendScript('sky-chart-final-workflow.js?v=2');
-        appendScript('sky-chart-active-sky-controls.js?v=3');
-        appendScript('sky-chart-language-cleanup.js?v=5');
-        appendScript('sky-chart-aspect-keyboard.js?v=1');
-        window.setTimeout(function () {
-          if (!document.getElementById('relphiSkyWizard')) showPreviewLoadFailure();
-        }, 1800);
-      });
-    }
-
-    appendScript('sky-chart-final-guard.js?v=1');
-    if (resuming) loadBranchScripts();
-    else appendScript('sky-chart-final-workflow.js?v=2', loadBranchScripts, loadBranchScripts);
-  }
-
   function loadEnhancements() {
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
       appendScript('planetary-hours-location-prompt.js?v=4');
@@ -151,7 +100,13 @@
       ].forEach(function (src) { appendScript(src); });
 
       if (preview === 'pr55') {
-        appendScript('sky-chart-preview-state-fix.js?v=2', loadPreviewSkyBuilder, loadPreviewSkyBuilder);
+        appendScript('sky-chart-wizard-v3.js?v=1', function () {
+          setTimeout(function () {
+            if (!document.getElementById('relphiSkyWizard')) showPreviewLoadFailure();
+          }, 1600);
+        }, showPreviewLoadFailure);
+        appendScript('sky-chart-language-cleanup.js?v=5');
+        appendScript('sky-chart-aspect-keyboard.js?v=1');
       } else {
         [
           'sky-chart-core-workspace-v1.js?v=2',
