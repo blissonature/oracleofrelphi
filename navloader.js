@@ -56,7 +56,7 @@
       ].forEach(appendScript);
 
       if (preview === 'pr55') {
-        const reviewBase = 'https://raw.githack.com/blissonature/oracleofrelphi/8a7ba543e8b9724805bdc730d1c7fb8c2ff9123c/';
+        const reviewBase = 'https://raw.githack.com/blissonature/oracleofrelphi/cf38704b511da490a44867caed4f284d4e3fa8e7/';
         [
           reviewBase + 'sky-chart-saved-sky-recovery.js',
           reviewBase + 'sky-chart-two-sky-authority.js',
