@@ -43,7 +43,10 @@
     }
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
       const preview = new URLSearchParams(location.search).get('preview');
-      if (preview === 'pr55') appendScript('https://raw.githack.com/blissonature/oracleofrelphi/77893ef052303809790277c5320f1dc476d66e15/sky-chart-saved-sky-recovery.js');
+      if (preview === 'pr55') {
+        appendScript('https://raw.githack.com/blissonature/oracleofrelphi/a26d4e67cc6659837fdb2ac96dda41e8885eee9e/sky-chart-saved-sky-recovery.js');
+        appendScript('https://raw.githack.com/blissonature/oracleofrelphi/a26d4e67cc6659837fdb2ac96dda41e8885eee9e/sky-chart-pr56-preview.js');
+      }
       [
         'sky-chart-stability-hotfix.js?v=1',
         'sky-chart-static-dynamic.js?v=2',
