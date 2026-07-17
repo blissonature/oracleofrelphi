@@ -113,6 +113,7 @@
     });
 
     chain.then(function () {
+      appendScript('sky-chart-final-workflow.js?v=1');
       appendScript('sky-chart-active-sky-controls.js?v=3');
       appendScript('sky-chart-language-cleanup.js?v=5');
       appendScript('sky-chart-aspect-keyboard.js?v=1');
