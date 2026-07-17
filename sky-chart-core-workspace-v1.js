@@ -1,55 +1,25 @@
-// Repairs the legacy single-slot calculator by rebuilding both core sky slots before comparison.
+// Coordinates Sky A and Sky B through the native saved-sky library.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  let buildingSkyB = false;
-  let awaitingCalculation = false;
-  let skyA = null;
-  function byId(id) { return document.getElementById(id); }
-  function fire(el, type) { if (el) el.dispatchEvent(new Event(type, { bubbles:true })); }
-  function hasPlacements(text) { return /(?:Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|Rising|ASC|MC|Midheaven)[\s\S]{0,120}\d{1,2}°/i.test(String(text || '')); }
-  function setField(id, value) { const el = byId(id); if (!el) return; el.value = value || ''; fire(el, 'input'); fire(el, 'change'); }
-  function setTarget(kind) { ['skyCreatorTarget','skyCalcTarget'].forEach(function (id) { const el = byId(id); if (!el) return; el.value = kind; fire(el, 'input'); fire(el, 'change'); }); }
-  function pasteCommitButton() { return document.querySelector('.sky-paste-create-button, [data-create-sky], [data-confirm-sky]'); }
-  function captureSkyA() {
-    if (skyA) return true;
-    const output = byId('chartOutput');
-    const paste = byId('skyCreatorPaste')?.value || '';
-    if (!output || !hasPlacements(output.textContent || '')) return false;
-    skyA = { html:output.innerHTML, paste:paste, name:byId('skyCreatorName')?.value || '', notes:byId('skyCreatorNotes')?.value || '' };
-    return true;
-  }
-  function currentCalculatedRecord() { return { html:byId('chartOutput')?.innerHTML || '', paste:byId('skyCreatorPaste')?.value || '', name:byId('skyCalcName')?.value || byId('skyCreatorName')?.value || '', notes:byId('skyCreatorNotes')?.value || '' }; }
-  function writeSlot(kind, record) {
-    setTarget(kind); setField('skyCreatorName', record.name); setField('skyCalcName', record.name); setField('skyCreatorNotes', record.notes); setField('skyCreatorPaste', record.paste);
-    const commit = pasteCommitButton();
-    if (commit && hasPlacements(record.paste)) { commit.click(); return true; }
-    const output = kind === 'currentSky' ? byId('currentSkyOutput') : byId('chartOutput');
-    if (output && record.html) { output.innerHTML = record.html; output.hidden = false; output.removeAttribute('hidden'); return true; }
-    return false;
-  }
-  function enableComparison() { const mode = document.querySelector('[data-sky-chart-mode="compare"], [data-sky-chart-mode="synastry"], [data-sky-chart-mode="transit"]'); mode?.click(); byId('currentSkyOutput')?.removeAttribute('hidden'); window.dispatchEvent(new Event('resize')); }
-  function finishComparison() {
-    if (!buildingSkyB || !awaitingCalculation || !skyA) return;
-    const status = byId('skyCalcStatus')?.textContent || '';
-    const chart = byId('chartOutput');
-    if (!/^Calculated Sky for\b/i.test(status.trim()) || !hasPlacements(chart?.textContent || '')) return;
-    const skyB = currentCalculatedRecord();
-    if (!hasPlacements(skyB.paste) && chart?.innerHTML === skyA.html) return;
-    writeSlot('currentSky', skyB);
-    writeSlot('chart', skyA);
-    const current = byId('currentSkyOutput');
-    if (current && !hasPlacements(current.textContent || '') && skyB.html) { current.innerHTML = skyB.html; current.hidden = false; current.removeAttribute('hidden'); }
-    if (chart && !hasPlacements(chart.textContent || '') && skyA.html) chart.innerHTML = skyA.html;
-    if (!hasPlacements(chart?.textContent || '') || !hasPlacements(current?.textContent || '')) return;
-    setTarget('currentSky'); enableComparison(); buildingSkyB = false; awaitingCalculation = false; document.body.dataset.relphiSkyBReady = 'true'; delete document.body.dataset.relphiPendingSkyKind; window.dispatchEvent(new CustomEvent('relphi:sky-b-ready'));
-  }
-  function beginSkyB() { buildingSkyB = true; document.body.dataset.relphiPendingSkyKind = 'currentSky'; captureSkyA(); }
-  function prepareCalculation() { if (!buildingSkyB) return; captureSkyA(); awaitingCalculation = true; setTarget('chart'); }
-  function install() {
-    document.addEventListener('click', function (event) { const node = event.target; if (node?.closest?.('#relphiAddComparison')) beginSkyB(); if (node?.closest?.('#relphiSkyNameContinue') && ((byId('relphiSkyNameEyebrow')?.textContent || '').toLowerCase().includes('comparison'))) beginSkyB(); if (node?.closest?.('#relphiHereNow, #relphiChooseWhenWhere, #skyCalcRun')) prepareCalculation(); }, true);
-    ['chartOutput','currentSkyOutput','skyCalcStatus'].forEach(function (id) { const node = byId(id); if (node) new MutationObserver(finishComparison).observe(node, { childList:true, subtree:true, characterData:true }); });
-  }
-  window.RelphiSkyWorkspace = { beginSkyB:beginSkyB, prepareCalculation:prepareCalculation, isBuildingSkyB:function () { return buildingSkyB; } };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true }); else install();
+  let buildingSkyB=false, awaitingCalculation=false, rebuilding=false, skyAName='', skyBName='';
+  function byId(id){return document.getElementById(id);} function fire(el,type){if(el)el.dispatchEvent(new Event(type,{bubbles:true}));}
+  function hasPlacements(text){return /(?:Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|Rising|ASC|MC|Midheaven)[\s\S]{0,120}\d{1,2}°/i.test(String(text||''));}
+  function waitUntil(test,timeout){const started=Date.now();return new Promise(function(resolve,reject){(function check(){try{if(test())return resolve(true);}catch(_){ }if(Date.now()-started>timeout)return reject(new Error('Timed out'));setTimeout(check,80);})();});}
+  function setField(id,value){const el=byId(id);if(!el)return;el.value=value||'';fire(el,'input');fire(el,'change');}
+  function setTarget(kind){['skyCreatorTarget','skyCalcTarget'].forEach(function(id){const el=byId(id);if(!el)return;el.value=kind;fire(el,'input');fire(el,'change');});}
+  function optionFor(name){const library=byId('skyCreatorLibrary');if(!library||!name)return null;return Array.from(library.options).find(function(option){return option.textContent.trim().toLowerCase()===name.trim().toLowerCase();})||null;}
+  function headingName(){const text=byId('relphiSkyCompleteHeading')?.textContent||'';return text.match(/^(.*?)\s+is now\s+Sky [AB]$/i)?.[1]?.trim()||'';}
+  function currentName(){return byId('skyCreatorName')?.value.trim()||byId('skyCalcName')?.value.trim()||headingName();}
+  async function saveNative(name,kind){if(!name)throw new Error('Missing sky name');setTarget(kind);setField('skyCreatorName',name);setField('skyCalcName',name);byId('skyCreatorSaveWizard')?.click();await waitUntil(function(){return !!optionFor(name);},5000);}
+  async function loadNative(name,kind){const option=optionFor(name),library=byId('skyCreatorLibrary');if(!option||!library)throw new Error('Saved sky unavailable: '+name);setTarget(kind);library.value=option.value;fire(library,'input');fire(library,'change');const output=kind==='currentSky'?byId('currentSkyOutput'):byId('chartOutput');const before=output?.textContent||'';byId('skyCreatorLoad')?.click();await waitUntil(function(){const text=output?.textContent||'';return hasPlacements(text)&&(text!==before||!hasPlacements(before));},6000);}
+  function enableComparison(){const mode=document.querySelector('[data-sky-chart-mode="compare"], [data-sky-chart-mode="synastry"], [data-sky-chart-mode="transit"]');mode?.click();const current=byId('currentSkyOutput');if(current){current.hidden=false;current.removeAttribute('hidden');}window.dispatchEvent(new Event('resize'));}
+  function finishWizard(){const status=byId('skyCalcStatus')?.textContent.trim()||'';const heading=byId('relphiSkyCompleteHeading'),summary=byId('relphiSkyCompleteSummary');if(heading)heading.textContent=skyBName+' is now Sky B';if(summary)summary.textContent=status;['relphiSkyNameStage','relphiSkyMethodStage','relphiExistingStage','relphiCalculateStage'].forEach(function(id){const stage=byId(id);if(stage)stage.hidden=true;});const complete=byId('relphiSkyCompleteStage');if(complete){complete.hidden=false;complete.scrollIntoView({block:'start',behavior:'smooth'});}const add=byId('relphiAddComparison');if(add)add.hidden=true;}
+  async function rebuildBoth(){if(rebuilding||!buildingSkyB||!awaitingCalculation)return;const status=byId('skyCalcStatus')?.textContent.trim()||'',chart=byId('chartOutput');if(!/^Calculated Sky for\b/i.test(status)||!hasPlacements(chart?.textContent||''))return;rebuilding=true;try{skyBName=skyBName||byId('skyCalcName')?.value.trim()||byId('relphiSkyNameInput')?.value.trim();await saveNative(skyBName,'chart');await loadNative(skyAName,'chart');await loadNative(skyBName,'currentSky');const current=byId('currentSkyOutput');if(!hasPlacements(chart?.textContent||'')||!hasPlacements(current?.textContent||''))throw new Error('Both sky slots were not restored');setTarget('currentSky');enableComparison();buildingSkyB=false;awaitingCalculation=false;document.body.dataset.relphiSkyBReady='true';delete document.body.dataset.relphiPendingSkyKind;finishWizard();window.dispatchEvent(new CustomEvent('relphi:sky-b-ready',{detail:{skyA:skyAName,skyB:skyBName}}));}catch(error){const note=byId('relphiHereNowProgress')||byId('relphiSkyNameError');if(note)note.textContent='Could not restore both skies. '+error.message;}finally{rebuilding=false;}}
+  async function beginSkyB(){if(buildingSkyB)return;skyAName=currentName();if(!skyAName)return;buildingSkyB=true;document.body.dataset.relphiPendingSkyKind='currentSky';try{await saveNative(skyAName,'chart');}catch(_){ }}
+  function captureSkyBName(){const eyebrow=(byId('relphiSkyNameEyebrow')?.textContent||'').toLowerCase();if(!eyebrow.includes('comparison'))return;skyBName=byId('relphiSkyNameInput')?.value.trim()||'';if(skyBName){setField('skyCalcName',skyBName);setField('skyCreatorName',skyBName);}}
+  function prepareCalculation(){if(!buildingSkyB)return;awaitingCalculation=true;setTarget('chart');setField('skyCalcName',skyBName);setField('skyCreatorName',skyBName);}
+  function install(){document.addEventListener('click',function(event){const node=event.target;if(node?.closest?.('#relphiAddComparison'))beginSkyB();if(node?.closest?.('#relphiSkyNameContinue'))captureSkyBName();if(node?.closest?.('#relphiHereNow, #relphiChooseWhenWhere, #skyCalcRun'))prepareCalculation();},true);['chartOutput','currentSkyOutput','skyCalcStatus','skyCreatorLibrary'].forEach(function(id){const node=byId(id);if(node)new MutationObserver(rebuildBoth).observe(node,{childList:true,subtree:true,characterData:true});});}
+  window.RelphiSkyWorkspace={beginSkyB:beginSkyB,prepareCalculation:prepareCalculation,isBuildingSkyB:function(){return buildingSkyB;}};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
