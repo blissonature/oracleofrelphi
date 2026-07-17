@@ -100,7 +100,7 @@
       ].forEach(function (src) { appendScript(src); });
 
       if (preview === 'pr55') {
-        appendScript('sky-chart-builder-v4.js?v=1', function () {
+        appendScript('sky-chart-builder-v4.js?v=2', function () {
           appendScript('sky-chart-language-cleanup.js?v=6');
           appendScript('sky-chart-aspect-keyboard.js?v=1');
           setTimeout(function () {
