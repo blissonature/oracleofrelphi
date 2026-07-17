@@ -5,13 +5,8 @@
 
   function byId(id) { return document.getElementById(id); }
   function readyForCalculation() {
-    return !!(
-      byId('skyCalcDateTime')?.value &&
-      byId('skyCalcLatitude')?.value &&
-      byId('skyCalcLongitude')?.value
-    );
+    return !!(byId('skyCalcDateTime')?.value && byId('skyCalcLatitude')?.value && byId('skyCalcLongitude')?.value);
   }
-
   function setProgress(message) {
     let note = byId('relphiHereNowProgress');
     const stage = byId('relphiCalculateStage');
@@ -25,29 +20,31 @@
     }
     note.textContent = message;
   }
-
   function hideManualCalculator() {
     const drawer = byId('skyCreatorDrawer');
-    if (drawer) {
-      drawer.open = false;
-      drawer.hidden = true;
-      drawer.setAttribute('hidden', '');
-      drawer.style.removeProperty('display');
-    }
+    const calculator = document.querySelector('.sky-calc-drawer');
+    [calculator, drawer].forEach(function (node) {
+      if (!node) return;
+      node.open = false;
+      node.hidden = true;
+      node.setAttribute('hidden', '');
+      node.style.removeProperty('display');
+    });
+    document.body.dataset.skyBuilderUi = 'wizard';
   }
-
   function runHereNow() {
-    window.RelphiSkyCoreTargetFix?.prepareCalculator?.();
-    byId('skyCalcNow')?.click();
-    byId('skyCalcGeo')?.click();
+    window.RelphiSkyWorkspace?.prepareCalculation?.();
     hideManualCalculator();
     setProgress('Using your current time and location…');
+    byId('skyCalcNow')?.click();
+    byId('skyCalcGeo')?.click();
 
     const started = Date.now();
     (function waitForLocation() {
+      hideManualCalculator();
       if (readyForCalculation()) {
-        setProgress('Calculating Sky B…');
-        window.RelphiSkyCoreTargetFix?.prepareCalculator?.();
+        setProgress('Calculating the comparison sky…');
+        window.RelphiSkyWorkspace?.prepareCalculation?.();
         byId('skyCalcRun')?.click();
         return;
       }
@@ -55,10 +52,9 @@
         setProgress('Current location could not be resolved. Choose a time and place instead.');
         return;
       }
-      setTimeout(waitForLocation, 150);
+      setTimeout(waitForLocation, 120);
     })();
   }
-
   function install() {
     document.addEventListener('click', function (event) {
       const button = event.target.closest?.('#relphiHereNow');
@@ -68,7 +64,6 @@
       runHereNow();
     }, true);
   }
-
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
   else install();
 })();
