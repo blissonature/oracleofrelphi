@@ -104,23 +104,29 @@
       'sky-chart-start-over.js',
       'sky-chart-named-save-guarantee.js'
     ];
+    const resuming = new URLSearchParams(location.search).has('finalTwoSky');
 
-    let chain = Promise.resolve(true);
-    branchFiles.forEach(function (file) {
-      chain = chain.then(function () {
-        return loadScriptWithFallback(primaryBase + file, fallbackBase + file);
+    function loadBranchScripts() {
+      let chain = Promise.resolve(true);
+      branchFiles.forEach(function (file) {
+        chain = chain.then(function () {
+          return loadScriptWithFallback(primaryBase + file, fallbackBase + file);
+        });
       });
-    });
+      chain.then(function () {
+        if (resuming) appendScript('sky-chart-final-workflow.js?v=2');
+        appendScript('sky-chart-active-sky-controls.js?v=3');
+        appendScript('sky-chart-language-cleanup.js?v=5');
+        appendScript('sky-chart-aspect-keyboard.js?v=1');
+        window.setTimeout(function () {
+          if (!document.getElementById('relphiSkyWizard')) showPreviewLoadFailure();
+        }, 1800);
+      });
+    }
 
-    chain.then(function () {
-      appendScript('sky-chart-final-workflow.js?v=1');
-      appendScript('sky-chart-active-sky-controls.js?v=3');
-      appendScript('sky-chart-language-cleanup.js?v=5');
-      appendScript('sky-chart-aspect-keyboard.js?v=1');
-      window.setTimeout(function () {
-        if (!document.getElementById('relphiSkyWizard')) showPreviewLoadFailure();
-      }, 1800);
-    });
+    appendScript('sky-chart-final-guard.js?v=1');
+    if (resuming) loadBranchScripts();
+    else appendScript('sky-chart-final-workflow.js?v=2', loadBranchScripts, loadBranchScripts);
   }
 
   function loadEnhancements() {
