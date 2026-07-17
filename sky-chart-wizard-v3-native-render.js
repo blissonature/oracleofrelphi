@@ -98,7 +98,6 @@
     const commit = findCommitButton();
     if (!output || !text || !commit) return Promise.reject(new Error('Native placement commit is unavailable'));
 
-    const before = output.innerHTML;
     setTarget(kind);
     setValue('skyCreatorName', payload.name || (kind === 'currentSky' ? 'Sky B' : 'Sky A'));
     setValue('skyCalcName', payload.name || (kind === 'currentSky' ? 'Sky B' : 'Sky A'));
@@ -115,7 +114,7 @@
     commit.click();
     return waitUntil(function () {
       preserveSlots(a, b);
-      return outputHasPlacements(output) && output.innerHTML !== before;
+      return outputHasPlacements(output);
     }, 10000).then(function () {
       preserveSlots(a, b);
       output.dataset.skyName = payload.name || (kind === 'currentSky' ? 'Sky B' : 'Sky A');
