@@ -100,7 +100,7 @@
       ].forEach(function (src) { appendScript(src); });
 
       if (preview === 'pr55') {
-        appendScript('sky-chart-wizard-v3-native-render.js?v=1');
+        appendScript('sky-chart-wizard-v3-native-render.js?v=2');
         appendScript('sky-chart-wizard-v3.js?v=2', function () {
           appendScript('sky-chart-wizard-v3-unified-continue.js?v=1');
           appendScript('sky-chart-wizard-v3-corrections.js?v=3');
