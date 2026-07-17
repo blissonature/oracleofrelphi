@@ -101,13 +101,14 @@
 
       if (preview === 'pr55') {
         appendScript('sky-chart-wizard-v3-resume.js?v=1');
-        appendScript('sky-chart-wizard-v3.js?v=1', function () {
+        appendScript('sky-chart-wizard-v3.js?v=2', function () {
+          appendScript('sky-chart-wizard-v3-corrections.js?v=1');
+          appendScript('sky-chart-language-cleanup.js?v=6');
+          appendScript('sky-chart-aspect-keyboard.js?v=1');
           setTimeout(function () {
             if (!document.getElementById('relphiSkyWizard')) showPreviewLoadFailure();
           }, 1600);
         }, showPreviewLoadFailure);
-        appendScript('sky-chart-language-cleanup.js?v=5');
-        appendScript('sky-chart-aspect-keyboard.js?v=1');
       } else {
         [
           'sky-chart-core-workspace-v1.js?v=2',
@@ -116,7 +117,7 @@
           'sky-chart-wizard-native-flow-fix.js?v=4',
           'sky-chart-save-verification-v1.js?v=1',
           'sky-chart-active-sky-controls.js?v=3',
-          'sky-chart-language-cleanup.js?v=5',
+          'sky-chart-language-cleanup.js?v=6',
           'sky-chart-wizard-ui-state-fix.js?v=6',
           'sky-chart-aspect-keyboard.js?v=1'
         ].forEach(function (src) { appendScript(src); });
