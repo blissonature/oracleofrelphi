@@ -5,6 +5,7 @@
 
   const LIBRARY_KEY = 'relphiSkyLibraryV1';
   const SLOT_KEYS = { chart:'relphiTarotChart', currentSky:'relphiCurrentSky' };
+  let lastRenderSignature = '';
 
   function byId(id) { return document.getElementById(id); }
   function fire(node, type) { if (node) node.dispatchEvent(new Event(type, { bubbles:true })); }
@@ -141,6 +142,11 @@
     const id = action === 'edit' ? 'relphiEditActiveSky' : 'relphiClearActiveSky';
     byId(id)?.click();
   }
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>'"]/g, function (character) {
+      return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[character];
+    });
+  }
   function panelMarkup(info) {
     return '<article class="relphi-finished-sky-panel" data-kind="' + info.kind + '">' +
       '<div><p class="eyebrow">' + info.label + '</p><h3>' + escapeHtml(info.name) + '</h3><p>' + info.count + ' placements</p></div>' +
@@ -148,11 +154,6 @@
         '<button type="button" data-sky-edit="' + info.kind + '">Edit</button>' +
         '<button type="button" data-sky-clear="' + info.kind + '">Clear</button>' +
       '</div></article>';
-  }
-  function escapeHtml(value) {
-    return String(value || '').replace(/[&<>'"]/g, function (character) {
-      return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[character];
-    });
   }
   function renderFinishedWorkspace() {
     const complete = byId('relphiSkyCompleteStage');
@@ -162,6 +163,7 @@
     if (!skyA) return;
 
     byId('relphiBuilderMinimize')?.remove();
+    const signature = [skyA.name, skyA.count, skyB?.name || '', skyB?.count || 0].join('|');
     const oldCopy = complete.querySelector('.sky-wizard-step-copy');
     const oldRow = complete.querySelector('.button-row');
     if (oldCopy) oldCopy.hidden = true;
@@ -173,8 +175,12 @@
       workspace.id = 'relphiFinishedSkyWorkspace';
       complete.appendChild(workspace);
     }
-    workspace.innerHTML = '<div class="relphi-finished-sky-grid">' + panelMarkup(skyA) + (skyB ? panelMarkup(skyB) : '') + '</div>' +
-      (!skyB ? '<button id="relphiCompactAddComparison" class="relphi-primary-action" type="button">Add a comparison sky</button>' : '');
+    if (signature !== lastRenderSignature || workspace.dataset.signature !== signature) {
+      workspace.dataset.signature = signature;
+      workspace.innerHTML = '<div class="relphi-finished-sky-grid">' + panelMarkup(skyA) + (skyB ? panelMarkup(skyB) : '') + '</div>' +
+        (!skyB ? '<button id="relphiCompactAddComparison" class="relphi-primary-action" type="button">Add a comparison sky</button>' : '');
+      lastRenderSignature = signature;
+    }
 
     const status = byId('relphiBuilderStatusPanel');
     if (status) status.hidden = true;
@@ -205,6 +211,11 @@
       status.textContent = '';
     }
   }
+  function refreshCompactState() {
+    clearFalsePlacementError();
+    renderFinishedWorkspace();
+    byId('relphiBuilderMinimize')?.remove();
+  }
   function install() {
     installStyles();
 
@@ -230,21 +241,14 @@
       if (clear) {
         event.preventDefault();
         activateExistingControl(clear.dataset.skyClear, 'clear');
-        setTimeout(renderFinishedWorkspace, 100);
+        setTimeout(refreshCompactState, 100);
       }
     }, true);
 
-    const observer = new MutationObserver(function () {
-      clearFalsePlacementError();
-      renderFinishedWorkspace();
-      byId('relphiBuilderMinimize')?.remove();
-    });
-    observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['hidden'] });
-    setInterval(function () {
-      clearFalsePlacementError();
-      renderFinishedWorkspace();
-      byId('relphiBuilderMinimize')?.remove();
-    }, 700);
+    window.addEventListener('relphi:sky-a-ready', refreshCompactState);
+    window.addEventListener('relphi:sky-b-ready', refreshCompactState);
+    window.addEventListener('relphi:saved-sky-assigned', refreshCompactState);
+    setInterval(refreshCompactState, 700);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
