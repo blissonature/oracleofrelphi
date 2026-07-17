@@ -42,6 +42,8 @@
       appendScript('planetary-hours-location-prompt.js?v=4'); appendScript('standardize-zodiac-wheels.js?v=4'); appendScript('relphi-glyph-bubbles.js?v=2');
     }
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
+      const preview = new URLSearchParams(location.search).get('preview');
+      if (preview === 'pr55') appendScript('https://raw.githack.com/blissonature/oracleofrelphi/77893ef052303809790277c5320f1dc476d66e15/sky-chart-saved-sky-recovery.js');
       [
         'sky-chart-stability-hotfix.js?v=1',
         'sky-chart-static-dynamic.js?v=2',
@@ -62,7 +64,7 @@
         'sky-chart-wizard-ui-state-fix.js?v=6',
         'sky-chart-aspect-keyboard.js?v=1'
       ].forEach(appendScript);
-      const preview = new URLSearchParams(location.search).get('preview'); appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
+      appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
     }
   }
   function start() {
