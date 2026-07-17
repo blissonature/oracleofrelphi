@@ -7,17 +7,7 @@
   const LIBRARY_KEY = 'relphiSkyLibraryV1';
   const SLOT_KEYS = { skyA:'relphiTarotChart', skyB:'relphiCurrentSky' };
   const STATE_KEY = 'relphiSkyBuilderV4State';
-
-  const state = readSession(STATE_KEY, {
-    step:'nameA',
-    editingSlot:'skyA',
-    pendingName:'',
-    skyA:null,
-    skyB:null,
-    beforeSignature:'',
-    calculating:false
-  });
-
+  const state = readSession(STATE_KEY, { step:'nameA', editingSlot:'skyA', pendingName:'', skyA:null, skyB:null, beforeSignature:'', calculating:false });
   let root;
   let calcOriginalParent = null;
   let calcOriginalNext = null;
@@ -25,30 +15,18 @@
 
   function byId(id) { return document.getElementById(id); }
   function normalize(value) { return String(value || '').trim().toLowerCase(); }
-  function readJson(key, fallback) {
-    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
-    catch (_) { return fallback; }
-  }
-  function writeJson(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
-    catch (_) { return false; }
-  }
+  function readJson(key, fallback) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }
+  function writeJson(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (_) { return false; } }
   function removeJson(key) { try { localStorage.removeItem(key); } catch (_) {} }
-  function readSession(key, fallback) {
-    try { const raw = sessionStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
-    catch (_) { return fallback; }
-  }
-  function saveState() {
-    try { sessionStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (_) {}
-  }
+  function readSession(key, fallback) { try { const raw = sessionStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }
+  function saveState() { try { sessionStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (_) {} }
   function clearState() { try { sessionStorage.removeItem(STATE_KEY); } catch (_) {} }
   function placementEntries(payload) {
     const source = payload && (payload.placements || payload);
     if (!source || typeof source !== 'object' || Array.isArray(source)) return {};
     return Object.fromEntries(Object.entries(source).filter(function (entry) {
       const item = entry[1];
-      return item && typeof item === 'object' && !Array.isArray(item) &&
-        (String(item.sign || '').trim() || (item.degree !== '' && item.degree != null && Number.isFinite(Number(item.degree))));
+      return item && typeof item === 'object' && !Array.isArray(item) && (String(item.sign || '').trim() || (item.degree !== '' && item.degree != null && Number.isFinite(Number(item.degree))));
     }));
   }
   function hasPlacements(payload) { return Object.keys(placementEntries(payload)).length > 0; }
@@ -60,22 +38,11 @@
   }
   function records() {
     const list = readJson(LIBRARY_KEY, []);
-    return Array.isArray(list) ? list.filter(function (record) {
-      return record && String(record.name || '').trim() && hasPlacements(record);
-    }) : [];
+    return Array.isArray(list) ? list.filter(function (record) { return record && String(record.name || '').trim() && hasPlacements(record); }) : [];
   }
-  function recordByName(name) {
-    return records().find(function (record) { return normalize(record.name) === normalize(name); }) || null;
-  }
+  function recordByName(name) { return records().find(function (record) { return normalize(record.name) === normalize(name); }) || null; }
   function payloadFromRecord(record) {
-    return {
-      name:String(record.name || '').trim(),
-      notes:String(record.notes || ''),
-      placements:placementEntries(record.placements),
-      calcProfile:record.calcProfile && typeof record.calcProfile === 'object' ? record.calcProfile : {},
-      savedAt:record.savedAt || new Date().toISOString(),
-      savedAtLocal:record.savedAtLocal || new Date().toLocaleString()
-    };
+    return { name:String(record.name || '').trim(), notes:String(record.notes || ''), placements:placementEntries(record.placements), calcProfile:record.calcProfile && typeof record.calcProfile === 'object' ? record.calcProfile : {}, savedAt:record.savedAt || new Date().toISOString(), savedAtLocal:record.savedAtLocal || new Date().toLocaleString() };
   }
   function defaultName() {
     const now = new Date();
@@ -83,12 +50,7 @@
     return 'Untitled Sky ' + now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + pad(now.getMinutes());
   }
   function fire(node, type) { if (node) node.dispatchEvent(new Event(type, { bubbles:true })); }
-  function setValue(id, value, notify) {
-    const field = byId(id);
-    if (!field) return;
-    field.value = value == null ? '' : String(value);
-    if (notify !== false) { fire(field, 'input'); fire(field, 'change'); }
-  }
+  function setValue(id, value, notify) { const field = byId(id); if (!field) return; field.value = value == null ? '' : String(value); if (notify !== false) { fire(field, 'input'); fire(field, 'change'); } }
   function nativeKind(slot) { return slot === 'skyB' ? 'currentSky' : 'chart'; }
   function slotKey(slot) { return SLOT_KEYS[slot]; }
   function setNativeTarget(slot) {
@@ -118,76 +80,37 @@
     node.classList.toggle('is-error', !!error);
     node.hidden = !message;
   }
-  function savedOptions() {
-    return records().map(function (record) {
-      return '<option value="' + escapeHtml(record.name) + '"></option>';
-    }).join('');
-  }
-  function escapeHtml(value) {
-    return String(value || '').replace(/[&<>"']/g, function (char) {
-      return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char];
-    });
-  }
+  function escapeHtml(value) { return String(value || '').replace(/[&<>"']/g, function (char) { return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]; }); }
+  function savedOptions() { return records().map(function (record) { return '<option value="' + escapeHtml(record.name) + '"></option>'; }).join(''); }
   function panel(slot, payload) {
     const label = slot === 'skyA' ? 'Sky A' : 'Sky B';
-    return '<article class="relphi-v4-sky-panel" data-slot="' + slot + '">' +
-      '<div><span class="eyebrow">' + label + '</span><h3>' + escapeHtml(payload.name || label) + '</h3><p>' + Object.keys(placementEntries(payload)).length + ' placements</p></div>' +
-      '<div class="relphi-v4-panel-actions"><button type="button" data-edit="' + slot + '">Edit</button><button type="button" data-clear="' + slot + '">Clear</button></div>' +
-      '</article>';
+    return '<article class="relphi-v4-sky-panel" data-slot="' + slot + '"><div><span class="eyebrow">' + label + '</span><h3>' + escapeHtml(payload.name || label) + '</h3><p>' + Object.keys(placementEntries(payload)).length + ' placements</p></div><div class="relphi-v4-panel-actions"><button type="button" data-edit="' + slot + '">Edit</button><button type="button" data-clear="' + slot + '">Clear</button></div></article>';
   }
   function render() {
     if (!root) return;
     let body = '';
     const a = state.skyA && hasPlacements(state.skyA) ? state.skyA : null;
     const b = state.skyB && hasPlacements(state.skyB) ? state.skyB : null;
-
     if (state.step === 'nameA' || state.step === 'nameB') {
       const slot = state.step === 'nameB' ? 'skyB' : 'skyA';
-      const label = slot === 'skyA' ? 'First sky' : 'Comparison sky';
-      const title = slot === 'skyA' ? 'Choose or name Sky A' : 'Choose or name Sky B';
-      body = '<section class="relphi-v4-card"><span class="eyebrow">' + label + '</span><h2>' + title + '</h2>' +
-        '<p>Choose a saved sky, type a new name, or continue for an automatic Untitled Sky name.</p>' +
-        '<label>Sky name <span>optional</span><input id="relphiV4Name" list="relphiV4Saved" autocomplete="off" value="' + escapeHtml(state.pendingName || '') + '"></label>' +
-        '<datalist id="relphiV4Saved">' + savedOptions() + '</datalist>' +
-        '<div class="relphi-v4-actions">' + (slot === 'skyB' ? '<button class="secondary" type="button" data-action="back-complete">Back</button>' : '') + '<button class="primary" type="button" data-action="continue-name">Continue</button></div></section>';
+      body = '<section class="relphi-v4-card"><span class="eyebrow">' + (slot === 'skyA' ? 'First sky' : 'Comparison sky') + '</span><h2>' + (slot === 'skyA' ? 'Choose or name Sky A' : 'Choose or name Sky B') + '</h2><p>Choose a saved sky, type a new name, or continue for an automatic Untitled Sky name.</p><label>Sky name <span>optional</span><input id="relphiV4Name" list="relphiV4Saved" autocomplete="off" value="' + escapeHtml(state.pendingName || '') + '"></label><datalist id="relphiV4Saved">' + savedOptions() + '</datalist><div class="relphi-v4-actions">' + (slot === 'skyB' ? '<button class="secondary" type="button" data-action="back-complete">Back</button>' : '') + '<button class="primary" type="button" data-action="continue-name">Continue</button></div></section>';
     } else if (state.step === 'methodA' || state.step === 'methodB') {
-      const label = state.editingSlot === 'skyA' ? 'Sky A' : 'Sky B';
-      body = '<section class="relphi-v4-card"><span class="eyebrow">Create the sky</span><h2>How will you create “' + escapeHtml(state.pendingName) + '”?</h2>' +
-        '<div class="relphi-v4-choice-grid"><button class="choice" type="button" data-action="saved"><strong>Use a saved sky</strong><span>Load placements already in your library.</span></button><button class="choice" type="button" data-action="calculate"><strong>Calculate a sky</strong><span>Calculate from a time and place.</span></button></div>' +
-        '<button class="secondary back" type="button" data-action="back-name">Back</button></section>';
+      body = '<section class="relphi-v4-card"><span class="eyebrow">Create the sky</span><h2>How will you create “' + escapeHtml(state.pendingName) + '”?</h2><div class="relphi-v4-choice-grid"><button class="choice" type="button" data-action="saved"><strong>Use a saved sky</strong><span>Load placements already in your library.</span></button><button class="choice" type="button" data-action="calculate"><strong>Calculate a sky</strong><span>Calculate from a time and place.</span></button></div><button class="secondary back" type="button" data-action="back-name">Back</button></section>';
     } else if (state.step === 'chooseSavedA' || state.step === 'chooseSavedB') {
-      body = '<section class="relphi-v4-card"><span class="eyebrow">Saved skies</span><h2>Choose a saved sky</h2>' +
-        '<label>Saved sky<select id="relphiV4SavedSelect"><option value="">Choose…</option>' + records().map(function (r) { return '<option value="' + escapeHtml(r.name) + '">' + escapeHtml(r.name) + '</option>'; }).join('') + '</select></label>' +
-        '<div class="relphi-v4-actions"><button class="secondary" type="button" data-action="back-method">Back</button><button class="primary" type="button" data-action="load-saved">Load sky</button></div></section>';
+      body = '<section class="relphi-v4-card"><span class="eyebrow">Saved skies</span><h2>Choose a saved sky</h2><label>Saved sky<select id="relphiV4SavedSelect"><option value="">Choose…</option>' + records().map(function (r) { return '<option value="' + escapeHtml(r.name) + '">' + escapeHtml(r.name) + '</option>'; }).join('') + '</select></label><div class="relphi-v4-actions"><button class="secondary" type="button" data-action="back-method">Back</button><button class="primary" type="button" data-action="load-saved">Load sky</button></div></section>';
     } else if (state.step === 'calculateA' || state.step === 'calculateB') {
-      body = '<section class="relphi-v4-card"><span class="eyebrow">Calculate</span><h2>Choose the time and place</h2>' +
-        '<div id="relphiV4CalcChoices" class="relphi-v4-choice-grid"><button class="choice" type="button" data-action="here-now"><strong>Here and Now</strong><span>Use the current time and your present location.</span></button><button class="choice" type="button" data-action="manual"><strong>Choose a time and place</strong><span>Enter another date, time, and location.</span></button></div>' +
-        '<div id="relphiV4CalcMount" hidden></div><button class="secondary back" type="button" data-action="back-method">Back</button></section>';
+      body = '<section class="relphi-v4-card"><span class="eyebrow">Calculate</span><h2>Choose the time and place</h2><div id="relphiV4CalcChoices" class="relphi-v4-choice-grid"><button class="choice" type="button" data-action="here-now"><strong>Here and Now</strong><span>Use the current time and your present location.</span></button><button class="choice" type="button" data-action="manual"><strong>Choose a time and place</strong><span>Enter another date, time, and location.</span></button></div><div id="relphiV4CalcMount" hidden></div><button class="secondary back" type="button" data-action="back-method">Back</button></section>';
     } else if (state.step === 'completeA' || state.step === 'completeBoth') {
-      body = '<section class="relphi-v4-complete">' + panel('skyA', a) + (b ? panel('skyB', b) : '') + '</section>' +
-        (!b ? '<button class="primary add-comparison" type="button" data-action="add-comparison">Add a comparison sky</button>' : '');
+      body = '<section class="relphi-v4-complete">' + panel('skyA', a) + (b ? panel('skyB', b) : '') + '</section>' + (!b ? '<button class="primary add-comparison" type="button" data-action="add-comparison">Add a comparison sky</button>' : '');
     }
-
     root.innerHTML = '<div class="relphi-v4-toolbar"><button type="button" data-action="start-over">Start Over</button></div>' + body + '<p id="relphiV4Status" class="relphi-v4-status" hidden aria-live="polite"></p>';
     setResultsVisible(!!a);
     if (a) writeJson(SLOT_KEYS.skyA, a);
     if (b) { writeJson(SLOT_KEYS.skyB, b); activateComparison(); }
     saveState();
   }
-  function rememberCalculator() {
-    const calculator = document.querySelector('.sky-calc-drawer');
-    if (!calculator || calcOriginalParent) return;
-    calcOriginalParent = calculator.parentElement;
-    calcOriginalNext = calculator.nextSibling;
-  }
-  function closeCalculator() {
-    const calculator = document.querySelector('.sky-calc-drawer');
-    if (!calculator) return;
-    calculator.open = false;
-    calculator.hidden = true;
-    calculator.removeAttribute('open');
-    if (calcOriginalParent && calculator.parentElement !== calcOriginalParent) calcOriginalParent.insertBefore(calculator, calcOriginalNext || null);
-  }
+  function rememberCalculator() { const calculator = document.querySelector('.sky-calc-drawer'); if (!calculator || calcOriginalParent) return; calcOriginalParent = calculator.parentElement; calcOriginalNext = calculator.nextSibling; }
+  function closeCalculator() { const calculator = document.querySelector('.sky-calc-drawer'); if (!calculator) return; calculator.open = false; calculator.hidden = true; calculator.removeAttribute('open'); if (calcOriginalParent && calculator.parentElement !== calcOriginalParent) calcOriginalParent.insertBefore(calculator, calcOriginalNext || null); }
   function openCalculator(clearFields) {
     rememberCalculator();
     const calculator = document.querySelector('.sky-calc-drawer');
@@ -195,13 +118,8 @@
     const choices = byId('relphiV4CalcChoices');
     if (!calculator || !mount) { status('The calculator is unavailable.', true); return; }
     if (choices) choices.hidden = true;
-    mount.hidden = false;
-    mount.appendChild(calculator);
-    calculator.hidden = false;
-    calculator.open = true;
-    calculator.setAttribute('open', '');
-    setNativeTarget(state.editingSlot);
-    setValue('skyCalcName', state.pendingName || defaultName(), false);
+    mount.hidden = false; mount.appendChild(calculator); calculator.hidden = false; calculator.open = true; calculator.setAttribute('open', '');
+    setNativeTarget(state.editingSlot); setValue('skyCalcName', state.pendingName || defaultName(), false);
     if (clearFields) ['skyCalcDateTime','skyCalcTimeZone','skyCalcLocation','skyCalcLatitude','skyCalcLongitude'].forEach(function (id) { setValue(id, '', false); });
     byId('skyCalcDateTime')?.focus();
   }
@@ -210,6 +128,8 @@
       const select = byId('skyCreatorLibrary');
       const output = slot === 'skyB' ? byId('currentSkyOutput') : byId('chartOutput');
       if (!record || !select || !output) return reject(new Error('Native saved-sky controls unavailable'));
+      const expected = payloadFromRecord(record);
+      const expectedSignature = signature(expected);
       setNativeTarget(slot);
       setValue('skyCreatorName', record.name, false);
       setValue('skyCalcName', record.name, false);
@@ -219,7 +139,11 @@
       const started = Date.now();
       (function wait() {
         const payload = readJson(slotKey(slot), null);
-        if (hasPlacements(payload) && normalize(payload.name) === normalize(record.name)) return resolve(payload);
+        if (hasPlacements(payload) && signature(payload) === expectedSignature) {
+          const verified = { ...payload, name:record.name };
+          writeJson(slotKey(slot), verified);
+          return resolve(verified);
+        }
         if (Date.now() - started > 10000) return reject(new Error('Saved sky did not load'));
         setTimeout(wait, 120);
       })();
@@ -229,19 +153,9 @@
     if (!hasPlacements(payload)) return;
     payload = { ...payload, name:state.pendingName || payload.name || defaultName() };
     writeJson(slotKey(state.editingSlot), payload);
-    if (state.editingSlot === 'skyA') {
-      state.skyA = payload;
-      state.skyB = null;
-      removeJson(SLOT_KEYS.skyB);
-      state.step = 'completeA';
-    } else {
-      state.skyB = payload;
-      if (state.skyA) writeJson(SLOT_KEYS.skyA, state.skyA);
-      state.step = 'completeBoth';
-    }
-    state.calculating = false;
-    closeCalculator();
-    render();
+    if (state.editingSlot === 'skyA') { state.skyA = payload; state.skyB = null; removeJson(SLOT_KEYS.skyB); state.step = 'completeA'; }
+    else { state.skyB = payload; if (state.skyA) writeJson(SLOT_KEYS.skyA, state.skyA); state.step = 'completeBoth'; }
+    state.calculating = false; closeCalculator(); render();
   }
   function watchCalculation() {
     clearTimeout(pollTimer);
@@ -250,50 +164,26 @@
       if (!state.calculating) return;
       const payload = readJson(slotKey(state.editingSlot), null);
       if (hasPlacements(payload) && signature(payload) !== state.beforeSignature) return finishSlot(payload);
-      if (Date.now() - started > 20000) {
-        state.calculating = false;
-        status('The calculation did not finish. The existing sky was not replaced.', true);
-        return;
-      }
+      if (Date.now() - started > 20000) { state.calculating = false; status('The calculation did not finish. The existing sky was not replaced.', true); return; }
       pollTimer = setTimeout(check, 150);
     };
     pollTimer = setTimeout(check, 100);
   }
-  function prepareRun() {
-    setNativeTarget(state.editingSlot);
-    state.beforeSignature = signature(readJson(slotKey(state.editingSlot), null));
-    state.calculating = true;
-    saveState();
-    watchCalculation();
-  }
+  function prepareRun() { setNativeTarget(state.editingSlot); state.beforeSignature = signature(readJson(slotKey(state.editingSlot), null)); state.calculating = true; saveState(); watchCalculation(); }
+  function localDateTimeValue(date) { const pad = function (n) { return String(n).padStart(2, '0'); }; return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes()); }
   function runHereNow() {
-    openCalculator(false);
-    prepareRun();
+    openCalculator(false); prepareRun();
     setValue('skyCalcDateTime', localDateTimeValue(new Date()), false);
     setValue('skyCalcTimeZone', Intl.DateTimeFormat().resolvedOptions().timeZone || '', false);
     if (!navigator.geolocation) { state.calculating = false; status('Current location is unavailable. Choose a time and place instead.', true); return; }
     navigator.geolocation.getCurrentPosition(function (position) {
-      setValue('skyCalcLatitude', position.coords.latitude.toFixed(6), false);
-      setValue('skyCalcLongitude', position.coords.longitude.toFixed(6), false);
-      setValue('skyCalcLocation', 'Current location', false);
-      setNativeTarget(state.editingSlot);
-      byId('skyCalcRun')?.click();
-    }, function () {
-      state.calculating = false;
-      status('Location permission was unavailable. Choose a time and place instead.', true);
-    }, { enableHighAccuracy:false, timeout:12000, maximumAge:60000 });
-  }
-  function localDateTimeValue(date) {
-    const pad = function (n) { return String(n).padStart(2, '0'); };
-    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+      setValue('skyCalcLatitude', position.coords.latitude.toFixed(6), false); setValue('skyCalcLongitude', position.coords.longitude.toFixed(6), false); setValue('skyCalcLocation', 'Current location', false); setNativeTarget(state.editingSlot); byId('skyCalcRun')?.click();
+    }, function () { state.calculating = false; status('Location permission was unavailable. Choose a time and place instead.', true); }, { enableHighAccuracy:false, timeout:12000, maximumAge:60000 });
   }
   function openAdvanced(slot) {
     const payload = slot === 'skyB' ? state.skyB : state.skyA;
     if (!payload) return;
-    state.editingSlot = slot;
-    setNativeTarget(slot);
-    setValue('skyCreatorName', payload.name, false);
-    setValue('skyCreatorNotes', payload.notes || '', false);
+    state.editingSlot = slot; setNativeTarget(slot); setValue('skyCreatorName', payload.name, false); setValue('skyCreatorNotes', payload.notes || '', false);
     const drawer = byId('skyCreatorDrawer');
     if (drawer) { drawer.hidden = false; drawer.open = true; drawer.setAttribute('open', ''); }
   }
@@ -303,45 +193,32 @@
     const clear = event.target.closest('[data-clear]')?.dataset.clear;
     if (edit) return openAdvanced(edit);
     if (clear) {
-      if (clear === 'skyA') {
-        state.skyA = null; state.skyB = null; state.step = 'nameA'; state.pendingName = ''; removeJson(SLOT_KEYS.skyA); removeJson(SLOT_KEYS.skyB);
-      } else {
-        state.skyB = null; state.step = 'completeA'; removeJson(SLOT_KEYS.skyB);
-      }
+      if (clear === 'skyA') { state.skyA = null; state.skyB = null; state.step = 'nameA'; state.pendingName = ''; removeJson(SLOT_KEYS.skyA); removeJson(SLOT_KEYS.skyB); }
+      else { state.skyB = null; state.step = 'completeA'; removeJson(SLOT_KEYS.skyB); }
       return render();
     }
     if (!action) return;
-    if (action === 'start-over') {
-      if (!window.confirm('Start over? This clears the current Sky A and Sky B. Saved skies will not be deleted.')) return;
-      removeJson(SLOT_KEYS.skyA); removeJson(SLOT_KEYS.skyB); clearState(); location.reload(); return;
-    }
+    if (action === 'start-over') { if (!window.confirm('Start over? This clears the current Sky A and Sky B. Saved skies will not be deleted.')) return; removeJson(SLOT_KEYS.skyA); removeJson(SLOT_KEYS.skyB); clearState(); location.reload(); return; }
     if (action === 'continue-name') {
       const input = byId('relphiV4Name');
       state.pendingName = input?.value.trim() || defaultName();
       const record = recordByName(state.pendingName);
-      if (record) {
-        status('Loading “' + record.name + '”…');
-        return loadRecord(record, state.editingSlot).then(finishSlot).catch(function (error) { status(error.message + '.', true); });
-      }
-      state.step = state.editingSlot === 'skyA' ? 'methodA' : 'methodB';
-      return render();
+      if (record) { status('Loading “' + record.name + '”…'); return loadRecord(record, state.editingSlot).then(finishSlot).catch(function (error) { status(error.message + '.', true); }); }
+      state.step = state.editingSlot === 'skyA' ? 'methodA' : 'methodB'; return render();
     }
     if (action === 'back-name') { state.step = state.editingSlot === 'skyA' ? 'nameA' : 'nameB'; return render(); }
     if (action === 'saved') { state.step = state.editingSlot === 'skyA' ? 'chooseSavedA' : 'chooseSavedB'; return render(); }
     if (action === 'calculate') { state.step = state.editingSlot === 'skyA' ? 'calculateA' : 'calculateB'; return render(); }
     if (action === 'back-method') { closeCalculator(); state.step = state.editingSlot === 'skyA' ? 'methodA' : 'methodB'; return render(); }
     if (action === 'load-saved') {
-      const name = byId('relphiV4SavedSelect')?.value || '';
-      const record = recordByName(name);
+      const record = recordByName(byId('relphiV4SavedSelect')?.value || '');
       if (!record) return status('Choose a saved sky.', true);
       status('Loading “' + record.name + '”…');
       return loadRecord(record, state.editingSlot).then(finishSlot).catch(function (error) { status(error.message + '.', true); });
     }
     if (action === 'manual') return openCalculator(true);
     if (action === 'here-now') return runHereNow();
-    if (action === 'add-comparison') {
-      state.editingSlot = 'skyB'; state.pendingName = ''; state.step = 'nameB'; return render();
-    }
+    if (action === 'add-comparison') { state.editingSlot = 'skyB'; state.pendingName = ''; state.step = 'nameB'; return render(); }
     if (action === 'back-complete') { state.step = state.skyB ? 'completeBoth' : 'completeA'; return render(); }
   }
   function installStyles() {
@@ -353,25 +230,14 @@
   }
   function install() {
     installStyles();
-    const oldWizard = byId('relphiSkyWizard');
-    if (oldWizard) oldWizard.remove();
-    root = document.createElement('section');
-    root.className = 'relphi-v4-root';
-    root.id = 'relphiSkyBuilderV4';
-    const hero = document.querySelector('.sky-chart-hero-panel');
-    (hero || document.body).insertAdjacentElement('afterend', root);
+    const oldWizard = byId('relphiSkyWizard'); if (oldWizard) oldWizard.remove();
+    root = document.createElement('section'); root.className = 'relphi-v4-root'; root.id = 'relphiSkyBuilderV4';
+    const hero = document.querySelector('.sky-chart-hero-panel'); (hero || document.body).insertAdjacentElement('afterend', root);
     root.addEventListener('click', handleClick);
-    document.addEventListener('click', function (event) {
-      if (!event.target.closest('#skyCalcRun')) return;
-      if (!state.calculating) prepareRun();
-      setNativeTarget(state.editingSlot);
-    }, true);
-
+    document.addEventListener('click', function (event) { if (!event.target.closest('#skyCalcRun')) return; if (!state.calculating) prepareRun(); setNativeTarget(state.editingSlot); }, true);
     if (state.skyA && hasPlacements(state.skyA)) writeJson(SLOT_KEYS.skyA, state.skyA);
     if (state.skyB && hasPlacements(state.skyB)) writeJson(SLOT_KEYS.skyB, state.skyB);
     render();
   }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
-  else install();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true }); else install();
 })();
