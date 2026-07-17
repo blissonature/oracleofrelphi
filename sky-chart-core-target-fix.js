@@ -4,6 +4,7 @@
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   let intendedTarget = 'chart';
+  let buildingSkyB = false;
   let awaitingSkyB = false;
   let skyASnapshot = null;
 
@@ -12,8 +13,15 @@
     if (element) element.dispatchEvent(new Event(type, { bubbles:true }));
   }
 
+  function wizardSaysSkyB() {
+    const eyebrow = (byId('relphiSkyNameEyebrow')?.textContent || '').toLowerCase();
+    const placeholder = (byId('relphiSkyNameInput')?.placeholder || '').toLowerCase();
+    return buildingSkyB || document.body.dataset.relphiPendingSkyKind === 'currentSky' ||
+      eyebrow.includes('comparison') || placeholder.includes('comparison');
+  }
+
   function pendingTarget() {
-    return document.body.dataset.relphiPendingSkyKind === 'currentSky' ? 'currentSky' : 'chart';
+    return wizardSaysSkyB() ? 'currentSky' : 'chart';
   }
 
   function hasPlacements(text) {
@@ -58,12 +66,15 @@
   }
 
   function preserveSkyA() {
+    if (skyASnapshot) return;
     const output = byId('chartOutput');
     if (!output || !hasPlacements(output.textContent || '')) return;
     skyASnapshot = {
       html: output.innerHTML,
       className: output.className,
-      hidden: output.hidden
+      hidden: output.hidden,
+      paste: byId('skyCreatorPaste')?.value || '',
+      name: byId('skyCreatorName')?.value || ''
     };
   }
 
@@ -97,10 +108,10 @@
     if (!ready) return;
 
     awaitingSkyB = false;
-    setVisibleTarget('currentSky');
     enableComparisonMode();
     output.hidden = false;
     output.removeAttribute('hidden');
+    buildingSkyB = false;
     delete document.body.dataset.relphiPendingSkyKind;
     skyASnapshot = null;
     fire(output, 'input');
@@ -108,53 +119,41 @@
     window.dispatchEvent(new Event('resize'));
   }
 
-  function isComparisonStart(node) {
-    return !!node?.closest?.('#relphiAddComparison, #relphiSkyNameContinue');
+  function beginSkyB() {
+    buildingSkyB = true;
+    document.body.dataset.relphiPendingSkyKind = 'currentSky';
+    preserveSkyA();
+    setSelect('skyCreatorTarget', 'chart', false);
   }
 
-  function isCalculatorSetup(node) {
-    return !!node?.closest?.('#relphiHereNow, #relphiChooseWhenWhere');
-  }
-
-  function isCalculatorRun(node) {
-    return !!node?.closest?.('#skyCalcRun');
-  }
-
-  function isCreatorCommit(node) {
-    return !!node?.closest?.(
-      '#skyCalcAttach, .sky-paste-create-button, #skyCreatorForm button, ' +
-      '[data-create-sky], [data-confirm-sky]'
-    );
+  function prepareCalculation() {
+    const target = pendingTarget();
+    if (target === 'currentSky') {
+      buildingSkyB = true;
+      preserveSkyA();
+      setSelect('skyCreatorTarget', 'chart', false);
+    }
+    setCalculatorTarget(target);
+    awaitingSkyB = target === 'currentSky';
   }
 
   function guard(event) {
-    const target = pendingTarget();
-
-    if (isComparisonStart(event.target)) {
-      if (target === 'currentSky') {
-        preserveSkyA();
-        setSelect('skyCreatorTarget', 'chart', false);
-        setSelect('skyCalcTarget', 'chart', false);
-      }
+    const node = event.target;
+    if (node?.closest?.('#relphiAddComparison')) {
+      beginSkyB();
       return;
     }
-
-    if (isCalculatorSetup(event.target)) {
-      if (target === 'currentSky') preserveSkyA();
-      setSelect('skyCreatorTarget', 'chart', false);
-      setCalculatorTarget(target);
-      awaitingSkyB = target === 'currentSky';
+    if (node?.closest?.('#relphiSkyNameContinue') && wizardSaysSkyB()) {
+      beginSkyB();
       return;
     }
-
-    if (isCalculatorRun(event.target)) {
-      if (target === 'currentSky') preserveSkyA();
-      setCalculatorTarget(target);
-      awaitingSkyB = target === 'currentSky';
+    if (node?.closest?.('#relphiHereNow, #relphiChooseWhenWhere, #skyCalcRun')) {
+      prepareCalculation();
       return;
     }
-
-    if (isCreatorCommit(event.target)) setVisibleTarget(target);
+    if (node?.closest?.('#skyCalcAttach, .sky-paste-create-button, #skyCreatorForm button, [data-create-sky], [data-confirm-sky]')) {
+      setVisibleTarget(pendingTarget());
+    }
   }
 
   function install() {
@@ -172,7 +171,9 @@
 
   window.RelphiSkyCoreTargetFix = {
     forceTarget: setVisibleTarget,
-    prepareCalculator: setCalculatorTarget,
+    prepareCalculator: prepareCalculation,
+    beginSkyB: beginSkyB,
+    isBuildingSkyB: function () { return buildingSkyB; },
     getIntendedTarget: function () { return intendedTarget; }
   };
 
