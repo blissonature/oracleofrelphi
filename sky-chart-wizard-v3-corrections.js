@@ -5,7 +5,6 @@
 
   const SLOT_KEYS = { chart:'relphiTarotChart', currentSky:'relphiCurrentSky' };
   const SNAPSHOT_KEY = 'relphiWizardV3SkyA';
-  const RESUME_KEY = 'relphiWizardV3Resume';
   const STAGES = ['relphiV3Name','relphiV3Method','relphiV3ExistingStage','relphiV3CalculateStage','relphiV3Complete'];
   let userInteracted = false;
   let completedInThisVisit = false;
@@ -26,8 +25,9 @@
     const value = payload && (payload.placements || payload);
     if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
     return Object.values(value).some(function (placement) {
-      return placement && typeof placement === 'object' && !Array.isArray(placement) &&
-        (String(placement.sign || '').trim() || Number.isFinite(Number(placement.degree)));
+      if (!placement || typeof placement !== 'object' || Array.isArray(placement)) return false;
+      const degree = placement.degree;
+      return String(placement.sign || '').trim() || (degree !== '' && degree != null && Number.isFinite(Number(degree)));
     });
   }
   function fire(node, type) {
@@ -108,7 +108,7 @@
   function comparisonInProgress() {
     const eyebrow = String(byId('relphiV3NameEyebrow')?.textContent || '').toLowerCase();
     const snapshot = readJson(SNAPSHOT_KEY, null, true);
-    return eyebrow.includes('comparison') || (!!snapshot?.payload && !completedInThisVisit && !byId('relphiV3Complete')?.querySelector('[data-kind="currentSky"]'));
+    return eyebrow.includes('comparison') || (!!snapshot?.payload && !byId('relphiV3Complete')?.querySelector('[data-kind="currentSky"]'));
   }
   function preserveAdvancedState() {
     const snapshot = readJson(SNAPSHOT_KEY, null, true);
@@ -146,6 +146,8 @@
     if (!complete || complete.hidden) return;
     const panelA = complete.querySelector('[data-kind="chart"]');
     if (!panelA) return;
+    const resuming = new URLSearchParams(location.search).has('v3resume');
+    if (!userInteracted && !resuming) return;
     completedInThisVisit = true;
     userInteracted = true;
     delete document.body.dataset.relphiV3AwaitingChoice;
@@ -156,7 +158,7 @@
     const style = document.createElement('style');
     style.id = 'relphiV3CorrectionStyles';
     style.textContent = `
-      #relphiV3StartOver{appearance:none!important;-webkit-appearance:none!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;float:none!important;margin:1rem 0 1rem auto!important;min-height:44px!important;padding:.7rem 1.2rem!important;border:1px solid rgba(220,31,24,.42)!important;border-radius:999px!important;background:#fff!important;color:#111!important;font:inherit!important;font-weight:700!important;box-shadow:0 5px 16px rgba(0,0,0,.07)!important;cursor:pointer!important}
+      #relphiV3StartOver{appearance:none!important;-webkit-appearance:none!important;display:flex!important;align-items:center!important;justify-content:center!important;width:max-content!important;float:none!important;margin:1rem 0 1rem auto!important;min-height:44px!important;padding:.7rem 1.2rem!important;border:1px solid rgba(220,31,24,.42)!important;border-radius:999px!important;background:#fff!important;color:#111!important;font:inherit!important;font-weight:700!important;box-shadow:0 5px 16px rgba(0,0,0,.07)!important;cursor:pointer!important}
       #relphiV3StartOver:hover{border-color:#dc1f18!important;transform:translateY(-1px)}
       #relphiV3Method .relphi-v3-choice-grid{display:grid!important;visibility:visible!important;opacity:1!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1rem!important}
       #relphiV3Method .relphi-v3-choice-grid>.choice{display:flex!important;visibility:visible!important;opacity:1!important;min-height:140px!important}
