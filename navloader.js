@@ -62,7 +62,7 @@
   }
 
   function showPreviewLoadFailure() {
-    if (document.getElementById('relphiPreviewLoadFailure') || document.getElementById('relphiSkyWizard')) return;
+    if (document.getElementById('relphiPreviewLoadFailure') || document.getElementById('relphiSkyBuilderV4')) return;
     const hero = document.querySelector('.sky-chart-hero-panel');
     if (!hero) return;
     const note = document.createElement('div');
@@ -100,13 +100,12 @@
       ].forEach(function (src) { appendScript(src); });
 
       if (preview === 'pr55') {
-        appendScript('sky-chart-wizard-v3.js?v=2', function () {
-          appendScript('sky-chart-pr55-authority.js?v=2');
+        appendScript('sky-chart-builder-v4.js?v=1', function () {
           appendScript('sky-chart-language-cleanup.js?v=6');
           appendScript('sky-chart-aspect-keyboard.js?v=1');
           setTimeout(function () {
-            if (!document.getElementById('relphiSkyWizard')) showPreviewLoadFailure();
-          }, 1600);
+            if (!document.getElementById('relphiSkyBuilderV4')) showPreviewLoadFailure();
+          }, 1200);
         }, showPreviewLoadFailure);
       } else {
         [
