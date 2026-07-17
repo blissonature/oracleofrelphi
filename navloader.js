@@ -56,21 +56,18 @@
       ].forEach(appendScript);
 
       if (preview === 'pr55') {
-        const reviewBase = 'https://raw.githack.com/blissonature/oracleofrelphi/bbafe282d6beb87a650060cb27f879c9f98428f0/';
+        const reviewBase = 'https://raw.githack.com/blissonature/oracleofrelphi/7807022d2fc5231a1e93e12413ca2888a8cdf691/';
         [
           reviewBase + 'sky-chart-saved-sky-recovery.js',
-          'sky-chart-core-target-fix.js?v=5',
-          reviewBase + 'sky-chart-here-now-flow.js',
           'sky-chart-wizard-v2.js?v=7',
           reviewBase + 'sky-chart-wizard-native-flow-fix.js',
           reviewBase + 'sky-chart-start-over.js',
           'sky-chart-save-verification-v1.js?v=1',
           'sky-chart-active-sky-controls.js?v=3',
-          reviewBase + 'sky-chart-active-name-sync.js',
           'sky-chart-language-cleanup.js?v=5',
           'sky-chart-wizard-ui-state-fix.js?v=6',
           reviewBase + 'sky-chart-saved-load-guard.js',
-          reviewBase + 'sky-chart-wizard-finalize-two-skies.js',
+          reviewBase + 'sky-chart-two-sky-authority.js',
           'sky-chart-aspect-keyboard.js?v=1'
         ].forEach(appendScript);
       } else {
