@@ -56,7 +56,7 @@
       ].forEach(appendScript);
 
       if (preview === 'pr55') {
-        const reviewBase = 'https://raw.githack.com/blissonature/oracleofrelphi/044db1548fce723b114fdea95b53259ab71a7a55/';
+        const reviewBase = 'https://raw.githack.com/blissonature/oracleofrelphi/a79123436eea9b3bb59741f20c8687cbe0ecaa1e/';
         [
           reviewBase + 'sky-chart-saved-sky-recovery.js',
           'sky-chart-wizard-v2.js?v=7',
@@ -64,6 +64,7 @@
           reviewBase + 'sky-chart-start-over.js',
           'sky-chart-save-verification-v1.js?v=1',
           'sky-chart-active-sky-controls.js?v=3',
+          reviewBase + 'sky-chart-named-save-guarantee.js',
           'sky-chart-language-cleanup.js?v=5',
           'sky-chart-wizard-ui-state-fix.js?v=6',
           reviewBase + 'sky-chart-saved-load-guard.js',
