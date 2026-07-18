@@ -5,7 +5,7 @@
   if (new URLSearchParams(location.search).get('preview') !== 'pr55') return;
 
   const LIBRARY_KEY = 'relphiSkyLibraryV1';
-  const SKY_A_KEY = 'relphiTarotChart';
+  const SKY_A_KEY = 'relphiSkyChartA';
   const PREFS_KEY = 'relphiSkyBuilderV4Preferences';
   const DEFAULT_SKY_B = 'Now';
 

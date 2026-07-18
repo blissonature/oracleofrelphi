@@ -15,7 +15,7 @@
       <h1>Sky <span class="red">Chart</span></h1><p class="tarot-hero-subtitle">Create and compare chart placements.</p>
     </section>
 
-    <section class="tarot-mode-bar" aria-label="Tarot Ledger modes">
+    <section class="tarot-mode-bar" aria-label="Sky Chart controls">
       <button id="showAllCards" type="button" hidden>Show All Cards</button>
       <button id="drawMode" type="button" hidden>Draw Cards</button>
       <button id="dateMode" type="button" hidden>Date Field</button>
@@ -258,6 +258,12 @@
         </div>
       </section>
 
+      <button id="saveChart" type="button" hidden aria-hidden="true" tabindex="-1">Save Sky A state</button>
+      <button id="saveCurrentSky" type="button" hidden aria-hidden="true" tabindex="-1">Save Sky B state</button>
+      <button id="loadChart" type="button" hidden aria-hidden="true" tabindex="-1">Load Sky A state</button>
+      <button id="loadCurrentSky" type="button" hidden aria-hidden="true" tabindex="-1">Load Sky B state</button>
+      <button id="clearCurrentSky" type="button" hidden aria-hidden="true" tabindex="-1">Clear Sky B state</button>
+
       <section class="sky-output-box sky-output-unified" aria-label="Sky chart results">
         <div id="chartOutput" class="ledger-output"></div>
         <div id="currentSkyOutput" class="ledger-output" hidden></div>
@@ -309,14 +315,14 @@
     </section>
   </main>
 
-  <script src="navloader.js"></script>
+  <script src="navloader.js?v=21"></script>
   <script src="tarot-cards.js"></script>
   <script src="relphi-locked-interpretations.js?v=207"></script>
   <script src="relphi-card-senses.js?v=1"></script>
   <script src="relphi-rising-sign-house-offset-effects.js?v=219"></script>
   <script src="vendor/astronomy-engine/astronomy.browser.min.js"></script>
   <script src="relphi-house-systems.js?v=318"></script>
-  <script src="tarot-app.js?v=364"></script>
+  <script src="tarot-app.js?v=366"></script>
   <script>
   window.addEventListener('load', function(){
     document.getElementById('chartMode')?.click();

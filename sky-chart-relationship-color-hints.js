@@ -2,20 +2,21 @@
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  // Exact palette already used by Astrology Foundations → Tonic Scale / Music Theory.
+  // A 12-step pitch-class palette that also follows the color wheel.
+  // Semitones advance by one hue step; 180° lands on the complementary hue.
   const TONIC_COLORS = [
-    '#dc1f18', // C / root
-    '#fb8c00', // C sharp / D flat
-    '#fdd835', // D
-    '#7cb342', // D sharp / E flat
-    '#26a69a', // E
-    '#1e88e5', // F
-    '#3949ab', // F sharp / G flat
-    '#8e24aa', // G
-    '#d81b60', // G sharp / A flat
-    '#6d4c41', // A
-    '#546e7a', // A sharp / B flat
-    '#111111'  // B
+    '#d7263d', // C / root · red
+    '#e85d04', // C sharp / D flat · red-orange
+    '#f59e0b', // D · orange
+    '#d4a017', // D sharp / E flat · yellow
+    '#84cc16', // E · yellow-green
+    '#16a34a', // F · green
+    '#0d9488', // F sharp / G flat · teal, complement of the root
+    '#2563eb', // G · blue
+    '#4f46e5', // G sharp / A flat · indigo
+    '#7c3aed', // A · violet
+    '#c026d3', // A sharp / B flat · magenta
+    '#db2777'  // B · rose
   ];
 
   const ASPECTS = [

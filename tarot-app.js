@@ -1787,16 +1787,18 @@
   }
 
   const CARD_ROW_ENVELOPE_W = 174;
-  const CARD_ROW_ENVELOPE_H = 455;
+  const CARD_ROW_ENVELOPE_H = 390;
   const CARD_ROW_TABLE_COLS = 3;
   const CARD_ROW_TABLE_ROWS = 5;
   const CARD_ROW_SNAP_GRIDS = { 'one-sixteenth': { label: '1/16 card', fraction: 1/16 }, 'one-eighth': { label: '1/8 card', fraction: 1/8 }, 'one-sixth': { label: '1/6 card', fraction: 1/6 }, 'one-fourth': { label: '1/4 card', fraction: 1/4 }, 'one-third': { label: '1/3 card', fraction: 1/3 }, 'one-half': { label: '1/2 card', fraction: 1/2 }, 'one-card': { label: '1 card', fraction: 1 } };
   const CARD_ROW_SNAP_ORDER = ['one-sixteenth','one-eighth','one-sixth','one-fourth','one-third','one-half','one-card'];
   const CARD_ROW_ROTATION_SNAP_STEPS = [1, 5, 10, 15, 30, 45, 90];
-  const CARD_ROW_OLD_DEFAULT_GAP_X_PX = 24;
-  const CARD_ROW_OLD_DEFAULT_GAP_Y_PX = 28;
-  const CARD_ROW_DEFAULT_GAP_X_PX = 42;
-  const CARD_ROW_DEFAULT_GAP_Y_PX = 56;
+  const CARD_ROW_LEGACY_DEFAULT_GAPS = [
+    { x: 42, y: 56 },
+    { x: 24, y: 28 }
+  ];
+  const CARD_ROW_DEFAULT_GAP_X_PX = 0;
+  const CARD_ROW_DEFAULT_GAP_Y_PX = 0;
   function rowZoomValue() { return Math.max(.45, Math.min(2.4, Number(state.rowZoom) || 1)); }
   function rowPanXValue() { return Number.isFinite(Number(state.rowPanX)) ? Number(state.rowPanX) : 0; }
   function rowPanYValue() { return Number.isFinite(Number(state.rowPanY)) ? Number(state.rowPanY) : 0; }
@@ -1837,15 +1839,17 @@
     const cols = rowDefaultColumnCount();
     return { x: (index % cols) * rowDefaultStepX(), y: Math.floor(index / cols) * rowDefaultStepY() };
   }
-  function rowEnvelopeOldDefaultPosition(index) {
-    const cols = rowDefaultColumnCount();
-    const oldStepX = CARD_ROW_ENVELOPE_W + CARD_ROW_OLD_DEFAULT_GAP_X_PX;
-    const oldStepY = CARD_ROW_ENVELOPE_H + CARD_ROW_OLD_DEFAULT_GAP_Y_PX;
+  function rowEnvelopeLegacyDefaultPosition(index, gap) {
+    const oldStepX = CARD_ROW_ENVELOPE_W + gap.x;
+    const oldStepY = CARD_ROW_ENVELOPE_H + gap.y;
+    const cols = Math.max(1, Math.floor(cardRowAvailableWidth() / oldStepX));
     return { x: (index % cols) * oldStepX, y: Math.floor(index / cols) * oldStepY };
   }
   function isRowOldDefaultPosition(index, saved) {
-    const old = rowEnvelopeOldDefaultPosition(index);
-    return Math.abs(Number(saved.x) - old.x) <= 1 && Math.abs(Number(saved.y) - old.y) <= 1;
+    return CARD_ROW_LEGACY_DEFAULT_GAPS.some(gap => {
+      const old = rowEnvelopeLegacyDefaultPosition(index, gap);
+      return Math.abs(Number(saved.x) - old.x) <= 1 && Math.abs(Number(saved.y) - old.y) <= 1;
+    });
   }
   function rowEnvelopePosition(index) {
     const saved = state.rowEnvelopeLayout?.[index];
@@ -1920,23 +1924,27 @@
     return v ? `url(${v.replace(/\)/g, '%29')})` : 'none';
   }
   function cardRowBoardMetrics(slotCount) {
+    if (!slotCount) return { width: Math.max(CARD_ROW_ENVELOPE_W + 48, cardRowAvailableWidth()), height: 240 };
     const count = Math.max(1, slotCount);
+    const placeholderOnly = !(state.shortList || []).length;
+    const envelopeHeight = placeholderOnly ? Math.ceil(CARD_ROW_ENVELOPE_W * 866 / 500) + 55 : CARD_ROW_ENVELOPE_H;
     const positions = Array.from({ length: count }, (_, i) => rowEnvelopePosition(i));
     const extents = positions.map((pos, i) => {
       const t = rowCardTransform(i);
       const radians = Math.abs(t.rotation) * Math.PI / 180;
       const rotatedW = (Math.abs(Math.cos(radians)) * CARD_ROW_ENVELOPE_W + Math.abs(Math.sin(radians)) * CARD_ROW_ENVELOPE_H) * t.scale;
-      const rotatedH = (Math.abs(Math.sin(radians)) * CARD_ROW_ENVELOPE_W + Math.abs(Math.cos(radians)) * CARD_ROW_ENVELOPE_H) * t.scale;
-      return { x: pos.x + Math.max(CARD_ROW_ENVELOPE_W, rotatedW), y: pos.y + Math.max(CARD_ROW_ENVELOPE_H, rotatedH) };
+      const rotatedH = (Math.abs(Math.sin(radians)) * CARD_ROW_ENVELOPE_W + Math.abs(Math.cos(radians)) * envelopeHeight) * t.scale;
+      return { x: pos.x + Math.max(CARD_ROW_ENVELOPE_W, rotatedW), y: pos.y + Math.max(envelopeHeight, rotatedH) };
     });
     const maxX = Math.max(...extents.map(pos => pos.x), rowTableLogicalWidth(slotCount));
-    const maxY = Math.max(...extents.map(pos => pos.y), rowTableLogicalHeight(slotCount));
+    const maxY = Math.max(...extents.map(pos => pos.y), placeholderOnly ? envelopeHeight : rowTableLogicalHeight(slotCount));
     return { width: Math.ceil(maxX + 48), height: Math.ceil(maxY + 48) };
   }
   function cardRowWorkspaceStyle(slotCount) {
     const zoom = rowZoomValue();
     const metrics = cardRowBoardMetrics(slotCount);
-    const minHeight = Math.max(620, Math.min(1100, Math.ceil(metrics.height) + 92));
+    const placeholderOnly = !(state.shortList || []).length;
+    const minHeight = !slotCount ? 300 : (placeholderOnly ? Math.max(390, Math.min(760, Math.ceil(metrics.height) + 60)) : Math.max(620, Math.min(1100, Math.ceil(metrics.height) + 92)));
     const tableColor = state.rowTableColor || '#fffaf0';
     const tableImage = cssUrlValue(state.rowTableImage || '');
     return `--row-table-bg:${tableColor};--row-table-image:${tableImage};min-height:${minHeight}px;`;
@@ -2247,7 +2255,7 @@
     const drawScope = state.rowDrawScope || 'full';
     const pileIsShuffled = !!state.rowShuffled;
     const option = (value, label) => `<option value="${value}" ${drawScope === value ? 'selected' : ''}>${label}</option>`;
-    const displaySlots = Math.max(1, rowSlots);
+    const displaySlots = rowSlots;
     const boardDrawerOpen = boardDrawerWasOpen !== false || state.cardRowBoardOpen;
     const optionsOpen = !!(optionsWasOpen || state.cardRowSettingsOpen);
     const boardHtml = `${items.length ? rowStatsHtml(items, selectedItems) : '<p class="short-list-empty card-row-board-empty">Draw a card or add placeholders. The board is ready.</p>'}<div class="card-row-workspace" style="${cardRowWorkspaceStyle(displaySlots)}" aria-label="Pan-and-zoom Drawing Board workspace"><div class="card-row-workspace-toolbar"><label class="card-row-zoom-label" title="Zoom the board">Zoom <input id="rowZoom" type="range" min="0.45" max="2.4" step="0.01" value="${rowZoom}"><span id="rowZoomValue">${Math.round(rowZoom * 100)}%</span></label><button type="button" id="resetCardRowPan" title="Center the Drawing Board">Center</button><span class="card-row-pan-note">Drag the table background to pan. Position stickers appear only when you add a placeholder or type a sticker.</span></div><div class="short-list-row card-row-board" style="${cardRowBoardStyle(displaySlots)}" aria-label="Movable Drawing Board">${Array.from({ length: displaySlots }).map((_, i) => { const card = items[i]; const envelopeArt = rowEnvelopeArtFor(i); const panel = rowPositionPanelHtml(i, { force: !card }); if (card) { return rowCardEnvelopeHtml(card, i, panel); } return `<div class="card-row-item card-row-placeholder-item" data-row-index="${i}" data-row-placeholder="${i}" style="${cardRowItemStyle(i)}">${panel}<div class="card-row-drop-card${envelopeArt ? ' has-custom-envelope-art' : ''}" tabindex="0">${envelopeArt ? `<img src="${escapeHtml(envelopeArt)}" alt="Custom placeholder art for position ${i + 1}">` : '<span class="card-row-drop-card-inner">Position placeholder</span>'}</div></div>`; }).join('')}</div></div>`;
@@ -2284,7 +2292,34 @@
       toggleRowCardReversal(button.dataset.rowReverse);
     }, { capture:true });
     const clear = $('clearShortList');
-    if (clear) clear.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); pushBoardUndo(); state.rowCardReversals = {}; state.rowSenseSelections = {}; state.rowSenseNotes = {}; state.shortListPositionCardIds = []; state.rowEnvelopeLayout = {}; state.rowCardTransforms = {}; state.shortListSelection = []; state.shortList = []; resetRowDrawDeck(); refreshShortListViews(); });
+    if (clear) clear.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      pushBoardUndo();
+      state.shortListName = '';
+      state.shortListNotes = '';
+      state.shortListPositionLabels = [];
+      state.shortListPositionCardIds = [];
+      state.rowCardReversals = {};
+      state.rowSenseSelections = {};
+      state.rowSenseNotes = {};
+      state.rowEnvelopeLayout = {};
+      state.rowCardTransforms = {};
+      state.rowEnvelopeArt = {};
+      state.rowEnvelopeColor = '#f3f0ea';
+      state.rowTableColor = '#fffaf0';
+      state.rowTableImage = '';
+      state.rowPanX = 0;
+      state.rowPanY = 0;
+      state.rowTransformTarget = 0;
+      state.shortListSelection = [];
+      state.shortList = [];
+      state.customCardArt = {};
+      customCardArtStore = {};
+      writeCustomCardArtStore(customCardArtStore);
+      resetRowDrawDeck();
+      refreshShortListViews();
+    });
     const undo = $('undoShortList');
     if (undo) undo.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); undoShortList(); });
     const redo = $('redoShortList');
@@ -3302,33 +3337,15 @@
     const planetList = signList(a.planet || a.decan_ruler);
     const signInfo = SIGN_DATA[signs[0]] || {};
     const element = card.element || elementKey(card) || signInfo.element || '';
-    const pieces = [`${name} reversed.`];
-    pieces.push('Reversal keeps the same Relphi ingredients, but turns their operation inward, delayed, blocked, overextended, misread, or returning for correction.');
+    const pieces = [`${name} reversed shows its core operation turning inward, meeting obstruction, becoming overextended, or returning for correction.`];
     if (card.card_type === 'Major') {
-      const n = numberFunction(card);
-      if (n) pieces.push(`Number layer under reversal: ${n.replace(/\.$/, '')}, but the sequence is being questioned or re-entered.`);
-      planetList.forEach(p => { const line = planetReversalLens(p); if (line) pieces.push(line); });
-      signs.forEach(sign => { const line = signReversalLens(sign); if (line) pieces.push(line); });
-      if (!signs.length && element && ELEMENT_REVERSAL_LENSES[element]) pieces.push(ELEMENT_REVERSAL_LENSES[element]);
-      const letter = letterLayer(card); if (letter) pieces.push(`Letter layer reversed: ${letter.replace(/\.$/, '')}, but the image is not yet moving cleanly through the person or situation.`);
-      const priority = detailSummaryForCard(card); if (priority) pieces.push(`Emergence under reversal: ${priority} becomes a place of repair, delay, shadow, or reorientation.`);
+      const lens = planetReversalLens(planetList[0]) || (element && ELEMENT_REVERSAL_LENSES[element]) || rankReversalLens(card);
+      if (lens) pieces.push(lens);
       return cleanSentence(pieces.join(' '));
     }
     const rankLine = rankReversalLens(card);
     if (rankLine) pieces.push(rankLine);
-    if (element && ELEMENT_REVERSAL_LENSES[element]) pieces.push(ELEMENT_REVERSAL_LENSES[element]);
-    if (card.card_type === 'Ace') {
-      pieces.push('The suit is present as source, but the source may need clearing before it can become a clean beginning.');
-    } else if (card.card_type === 'Court') {
-      pieces.push(`${courtRoleLabel(card)} reversed shows ${suitDisplay(card)} / ${element || 'element'} as a role that has not yet found its right posture.`);
-      const rulers = signRulersFor(card).map(p => planetReversalLens(p)).filter(Boolean);
-      if (rulers.length) pieces.push(`Ruler pressure: ${rulers.join(' ')}`);
-    } else if (card.card_type === 'Pip') {
-      const decan = a.decan_ruler || a.planet || '';
-      if (decan) pieces.push(`Decan force reversed: ${planetReversalLens(decan)}`);
-      signs.forEach(sign => { const line = signReversalLens(sign); if (line) pieces.push(`Zodiac field reversed: ${line}`); });
-      pieces.push('The event shape is real, but its ingredients are not moving in their clean upright channel yet.');
-    }
+    else if (element && ELEMENT_REVERSAL_LENSES[element]) pieces.push(ELEMENT_REVERSAL_LENSES[element]);
     return cleanSentence(pieces.join(' '));
   }
   function layerInterpretationForOrientation(card, reversed = false) {
@@ -4373,6 +4390,12 @@
     updateSkyChartModeUi();
     if (!options.skipRender) { resetSkyCreatorBuilder(); renderSkyCreator(); renderChart(); }
   }
+  window.RelphiSkyChartController = {
+    setMode: mode => setSkyChartMode(mode),
+    getMode: () => skyChartMode(),
+    needsComparison: () => skyChartNeedsB(),
+    render: () => renderChart()
+  };
   function optionTextForSkyKind(kind) {
     const role = skyRoleLabel(kind, kind === 'currentSky' ? 'Sky B' : 'Sky A');
     if (kind === 'currentSky' && !skyChartNeedsB()) return `${role} · choose a comparison mode first`;
@@ -7561,7 +7584,10 @@ ${notes || ''}`;
     const houseSystem = normalizeSkyHouseSystem($('skyCalcHouseSystem')?.value || 'whole-sign');
     const locationLabel = $('skyCalcLocation')?.value?.trim() || '';
     try {
-      const resolved = await enrichSkyCalcFromCoordinates({ forceLocation:true, forceTimeZone:true, requireTimeZone:false });
+      const enteredTimeZone = $('skyCalcTimeZone')?.value?.trim() || '';
+      const resolved = enteredTimeZone
+        ? { timeZone:enteredTimeZone }
+        : await enrichSkyCalcFromCoordinates({ forceLocation:false, forceTimeZone:true, reverseLocation:false, requireTimeZone:false });
       const timeZone = resolved.timeZone || $('skyCalcTimeZone')?.value?.trim() || '';
       const date = dateFromLocalDateTimeInZone(raw, timeZone);
       const calculatedPlacements = calculateSkyWithAstronomy(date, latitude, longitude, houseSystem);
@@ -8293,8 +8319,9 @@ ${notes || ''}`;
     const unifiedResults = renderUnifiedChartResults(entriesA, entriesB);
     const output = $('chartOutput');
     if (!output) return;
+    const skyResultsHeading = isDedicatedSkyChartPage() ? (entriesB.length ? 'Sky comparison' : 'Sky placements') : 'Sky Ledger';
     output.innerHTML = hasEntries
-      ? `<h3>Sky Ledger</h3>${aIntro}${bIntro}${relationships}${unifiedResults}`
+      ? `<h3>${skyResultsHeading}</h3>${aIntro}${bIntro}${relationships}${unifiedResults}`
       : '<p>No placements entered yet.</p>';
     const hiddenB = $('currentSkyOutput');
     if (hiddenB) { hiddenB.hidden = true; hiddenB.innerHTML = ''; }
@@ -8306,8 +8333,12 @@ ${notes || ''}`;
     updateSkyCreatorDrawerState();
   }
 
-  function saveChart() { readChartForm(); readSkyMeta('chart'); localStorage.setItem('relphiTarotChart', JSON.stringify({ name: state.chartName, notes: state.chartNotes, placements: state.chart })); upsertSkyLibrary('chart', state.chartName, state.chartNotes, state.chart, currentSkyCalcProfile('chart')); renderChart(); }
-  function loadChart() { const saved = localStorage.getItem('relphiTarotChart'); if (saved) { const payload = JSON.parse(saved); const placements = payload.placements || payload; writeSkyMeta('chart', payload.name || '', payload.notes || ''); setSkyCalcProfile('chart', meaningfulSkyCalcProfile({ ...(payload.calcProfile || parseSkyCalcProfileFromText(payload.name || '', payload.notes || '')), name: payload.name || '' })); if (skyCalcTargetKind() === 'chart') hydrateSkyCalculationPanel('chart', { force:true }); writeChartForm(placements); setTimeout(() => { readChartForm(); renderChart(); }, 0); } }
+  function skySlotStorageKey(kind) {
+    if (isDedicatedSkyChartPage()) return kind === 'currentSky' ? 'relphiSkyChartB' : 'relphiSkyChartA';
+    return kind === 'currentSky' ? 'relphiCurrentSky' : 'relphiTarotChart';
+  }
+  function saveChart() { readChartForm(); readSkyMeta('chart'); localStorage.setItem(skySlotStorageKey('chart'), JSON.stringify({ name: state.chartName, notes: state.chartNotes, placements: state.chart })); upsertSkyLibrary('chart', state.chartName, state.chartNotes, state.chart, currentSkyCalcProfile('chart')); renderChart(); }
+  function loadChart() { const saved = localStorage.getItem(skySlotStorageKey('chart')); if (saved) { const payload = JSON.parse(saved); const placements = payload.placements || payload; writeSkyMeta('chart', payload.name || '', payload.notes || ''); setSkyCalcProfile('chart', meaningfulSkyCalcProfile({ ...(payload.calcProfile || parseSkyCalcProfileFromText(payload.name || '', payload.notes || '')), name: payload.name || '' })); if (skyCalcTargetKind() === 'chart') hydrateSkyCalculationPanel('chart', { force:true }); writeChartForm(placements); setTimeout(() => { readChartForm(); renderChart(); }, 0); } }
   function clearChart() { writeSkyMeta('chart', '', ''); writeChartForm({}); }
 
   function openCurrentSky() { setSkyCreatorKind('currentSky'); openChart(); }
@@ -9114,8 +9145,8 @@ ${notes || ''}`;
   function renderCurrentSky() {
     renderChart();
   }
-  function saveCurrentSky() { readCurrentSkyForm(); readSkyMeta('currentSky'); localStorage.setItem('relphiCurrentSky', JSON.stringify({ name: state.currentSkyName, notes: state.currentSkyNotes, placements: state.currentSky })); upsertSkyLibrary('currentSky', state.currentSkyName, state.currentSkyNotes, state.currentSky, currentSkyCalcProfile('currentSky')); renderCurrentSky(); }
-  function loadCurrentSky() { const saved = localStorage.getItem('relphiCurrentSky'); if (saved) { const payload = JSON.parse(saved); const placements = payload.placements || payload; writeSkyMeta('currentSky', payload.name || '', payload.notes || ''); setSkyCalcProfile('currentSky', meaningfulSkyCalcProfile({ ...(payload.calcProfile || parseSkyCalcProfileFromText(payload.name || '', payload.notes || '')), name: payload.name || '' })); if (skyCalcTargetKind() === 'currentSky') hydrateSkyCalculationPanel('currentSky', { force:true }); writeCurrentSkyForm(placements); setTimeout(() => { readCurrentSkyForm(); renderCurrentSky(); }, 0); } }
+  function saveCurrentSky() { readCurrentSkyForm(); readSkyMeta('currentSky'); localStorage.setItem(skySlotStorageKey('currentSky'), JSON.stringify({ name: state.currentSkyName, notes: state.currentSkyNotes, placements: state.currentSky })); upsertSkyLibrary('currentSky', state.currentSkyName, state.currentSkyNotes, state.currentSky, currentSkyCalcProfile('currentSky')); renderCurrentSky(); }
+  function loadCurrentSky() { const saved = localStorage.getItem(skySlotStorageKey('currentSky')); if (saved) { const payload = JSON.parse(saved); const placements = payload.placements || payload; writeSkyMeta('currentSky', payload.name || '', payload.notes || ''); setSkyCalcProfile('currentSky', meaningfulSkyCalcProfile({ ...(payload.calcProfile || parseSkyCalcProfileFromText(payload.name || '', payload.notes || '')), name: payload.name || '' })); if (skyCalcTargetKind() === 'currentSky') hydrateSkyCalculationPanel('currentSky', { force:true }); writeCurrentSkyForm(placements); setTimeout(() => { readCurrentSkyForm(); renderCurrentSky(); }, 0); } }
   function clearCurrentSky() { writeSkyMeta('currentSky', '', ''); writeCurrentSkyForm({}); }
 
   function applyHistory(snapshot) {

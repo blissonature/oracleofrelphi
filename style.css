@@ -18519,6 +18519,14 @@ html body .short-list-row.card-row-board .card-row-placeholder-item .card-row-po
   display: flex !important;
 }
 
+/* Drawing Board cards should end with their final control, not a reserved envelope tail. */
+html body .card-row-workspace .short-list-row.card-row-board .card-row-item:not(.card-row-placeholder-item) {
+  height: max-content !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  align-content: start !important;
+}
+
 /* Sky Chart blocker repair: houses, aspect key, readable hover, split rings */
 .chart-wheel-house-layer { pointer-events:none; }
 .chart-wheel-house-cusp line { stroke:#111; stroke-width:.75; opacity:.34; vector-effect:non-scaling-stroke; }

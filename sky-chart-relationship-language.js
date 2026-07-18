@@ -23,6 +23,28 @@
     MC:'Midheaven'
   };
 
+  const BODY_KIND = {
+    Sun:'luminary',
+    Moon:'luminary',
+    ASC:'angle',
+    MC:'angle'
+  };
+
+  const SIGN_MEANING = {
+    Aries:'initiative, directness, courage, impulse, and beginning',
+    Taurus:'embodiment, value, pleasure, endurance, and material continuity',
+    Gemini:'language, exchange, curiosity, movement, and multiplicity',
+    Cancer:'care, protection, memory, belonging, and attachment',
+    Leo:'radiance, creativity, pride, loyalty, and recognition',
+    Virgo:'discernment, service, refinement, repair, and usefulness',
+    Libra:'relationship, balance, fairness, dialogue, and mutual recognition',
+    Scorpio:'intensity, secrecy, survival, bonding, and emotional truth',
+    Sagittarius:'meaning, faith, exploration, philosophy, and freedom',
+    Capricorn:'structure, responsibility, endurance, mastery, and worldly form',
+    Aquarius:'systems, reform, collective intelligence, detachment, and future orientation',
+    Pisces:'surrender, imagination, compassion, permeability, and release'
+  };
+
   const ASPECT_MEANING = {
     conjunction:'a concentrated relationship in which the two functions operate together and intensify one another',
     opposition:'a polarized relationship that creates awareness through contrast, mirroring, and negotiation',
@@ -43,6 +65,38 @@
 
   function displayTerm(body) {
     return BODY_TERM[body] || body;
+  }
+
+  function storedSky(key) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || 'null');
+      return value && typeof value === 'object' ? value : null;
+    } catch (_) { return null; }
+  }
+
+  function degreeParts(value) {
+    const parts = String(value || '').match(/\d+/g) || [];
+    return { degree:Number(parts[0]), minute:parts.length > 1 ? Number(parts[1]) : null };
+  }
+
+  function verifiedOwner(fallback, body, sign, degreeText) {
+    const wanted = degreeParts(degreeText);
+    const matches = ['relphiSkyChartA', 'relphiSkyChartB'].map(storedSky).filter(function (sky) {
+      const placements = sky && (sky.placements || sky);
+      const placement = placements && placements[body];
+      if (!placement || placement.sign !== sign || Number(placement.degree) !== wanted.degree) return false;
+      return wanted.minute == null || placement.minute == null || Number(placement.minute) === wanted.minute;
+    });
+    if (matches.length !== 1) return fallback;
+    return String(matches[0].name || fallback).trim() || fallback;
+  }
+
+  function placementPhrase(owner, body, sign, degree) {
+    const bodyMeaning = BODY_MEANING[body] || body;
+    const bodyKind = BODY_KIND[body] || 'planet';
+    const signMeaning = SIGN_MEANING[sign];
+    return owner + "'s " + displayTerm(body) + ' (' + bodyKind + ': ' + bodyMeaning + ') in ' + sign +
+      (signMeaning ? ' (sign: ' + signMeaning + ')' : '') + ' at ' + degree;
   }
 
   function durationSentence(root) {
@@ -87,13 +141,13 @@
       const rightBody = match[7];
       const rightSign = match[8];
       const rightDegree = match[9].trim();
+      const verifiedLeftName = verifiedOwner(leftName, leftBody, leftSign, leftDegree);
+      const verifiedRightName = verifiedOwner(rightName, rightBody, rightSign, rightDegree);
       const elementMatch = value.match(/Shared\s+(fire|earth|air|water)\s+element/i);
       const orbMatch = value.match(/Orb:\s*([^·.]+(?:\.[^·\s]+)?)(?:\s*·\s*([^\.]+))?/i);
 
-      let sentence = leftName + "'s " + (BODY_MEANING[leftBody] || leftBody) +
-        ' (' + displayTerm(leftBody) + ' in ' + leftSign + ' ' + leftDegree + ') connects with ' +
-        rightName + "'s " + (BODY_MEANING[rightBody] || rightBody) +
-        ' (' + displayTerm(rightBody) + ' in ' + rightSign + ' ' + rightDegree + ') through ' +
+      let sentence = placementPhrase(verifiedLeftName, leftBody, leftSign, leftDegree) + ' connects with ' +
+        placementPhrase(verifiedRightName, rightBody, rightSign, rightDegree) + ' through ' +
         (ASPECT_MEANING[aspect] || 'a meaningful relationship') + ' (' + aspect + ').';
 
       if (elementMatch) {

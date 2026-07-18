@@ -2755,12 +2755,15 @@
     const skyDateTime = dateKeyForLedger + 'T' + timeInputValueFor(frame.localNow, state.tz);
     if (el.dateFieldLink) {
       const skyParams = new URLSearchParams({
+        preview: 'pr55',
+        source: 'planetary-hours',
         datetime: skyDateTime,
         lat: String(state.lat),
         lon: String(state.lon),
         tz: state.tz || '',
         loc: state.locationName || '',
-        calc: '1'
+        calc: '1',
+        name: 'Planetary Hours ' + skyDateTime.replace('T', ' ')
       });
       el.dateFieldLink.href = 'sky-chart.html?' + skyParams.toString() + '#sky-calc';
     }

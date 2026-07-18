@@ -1,0 +1,411 @@
+// Drawing Board workflow: adjacent defaults, optional numbered stickers, prefabs, full clear, and lean exports.
+(function () {
+  'use strict';
+  if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
+
+  const STICKER_TOGGLE_KEY = 'relphiDrawingBoardPositionStickersV1';
+  const PREFAB_KEY = 'relphiDrawingBoardStickerPrefabsV1';
+  let scheduled = false;
+  let descriptionSelectionCard = null;
+  let arrivalPending = (!location.search || location.search === '?board=workflow-v2') && (!location.hash || location.hash === '#tarot');
+
+  function stickersEnabled() {
+    try { return localStorage.getItem(STICKER_TOGGLE_KEY) !== '0'; }
+    catch (_) { return true; }
+  }
+  function setStickersEnabled(value) {
+    try { localStorage.setItem(STICKER_TOGGLE_KEY, value ? '1' : '0'); } catch (_) {}
+  }
+  function prefabs() {
+    try {
+      const value = JSON.parse(localStorage.getItem(PREFAB_KEY) || '[]');
+      return Array.isArray(value) ? value.filter(item => item && item.name && Array.isArray(item.labels)) : [];
+    } catch (_) { return []; }
+  }
+  function savePrefabs(value) {
+    try { localStorage.setItem(PREFAB_KEY, JSON.stringify(value.slice(0, 40))); } catch (_) {}
+  }
+  function labelsFromField(field) {
+    return String(field?.value || '').split(',').map(value => value.trim()).filter(Boolean);
+  }
+  function setLabels(field, labels) {
+    if (!field) return;
+    field.value = labels.join(', ');
+    field.dispatchEvent(new Event('input', { bubbles:true }));
+    field.dispatchEvent(new Event('change', { bubbles:true }));
+  }
+  function ensureNumberedStickers(panel) {
+    if (!stickersEnabled()) return false;
+    const field = panel.querySelector('#rowPositionLabels');
+    const cardCount = panel.querySelectorAll('.card-row-item [data-row-card]').length;
+    if (!field || !cardCount) return false;
+    const labels = labelsFromField(field);
+    let changed = false;
+    for (let index = 0; index < cardCount; index += 1) {
+      if (!labels[index]) { labels[index] = 'Position #' + (index + 1); changed = true; }
+    }
+    if (changed) setLabels(field, labels);
+    return changed;
+  }
+  function addStickerToggle(panel) {
+    const toolbar = panel.querySelector('.card-row-icon-toolbar');
+    if (!toolbar || toolbar.querySelector('#rowPositionStickersQuick')) return;
+    const label = document.createElement('label');
+    label.className = 'quick-position-sticker-toggle';
+    label.title = 'Give every card an editable numbered position sticker';
+    label.innerHTML = '<input id="rowPositionStickersQuick" type="checkbox"' + (stickersEnabled() ? ' checked' : '') + '> Position stickers';
+    const reversals = toolbar.querySelector('.quick-reversal-toggle');
+    toolbar.insertBefore(label, reversals || toolbar.firstChild);
+    label.querySelector('input').addEventListener('change', event => {
+      setStickersEnabled(event.currentTarget.checked);
+      scheduleEnhance();
+    });
+  }
+  function addPrefabControls(panel) {
+    const field = panel.querySelector('#rowPositionLabels');
+    const host = field?.closest('label');
+    const datalist = panel.querySelector('#rowStickerPresetList');
+    if (!field || !host) return;
+    if (datalist) {
+      datalist.querySelectorAll('[data-custom-sticker-prefab]').forEach(option => option.remove());
+      prefabs().forEach(item => {
+        const option = document.createElement('option');
+        option.dataset.customStickerPrefab = 'true';
+        option.value = item.labels.join(', ');
+        option.label = item.name;
+        datalist.appendChild(option);
+      });
+    }
+    if (panel.querySelector('.row-sticker-prefab-controls')) return;
+    const controls = document.createElement('span');
+    controls.className = 'row-sticker-prefab-controls';
+    controls.innerHTML = '<button type="button" id="rowStickerPrefabSave">Save as prefab</button><small>Saved prefabs appear in the Position stickers field.</small>';
+    host.appendChild(controls);
+    controls.querySelector('#rowStickerPrefabSave').addEventListener('click', () => {
+      const labels = labelsFromField(field);
+      if (!labels.length) return window.alert('Add at least one position sticker before saving a prefab.');
+      const name = window.prompt('Name this position-sticker prefab:');
+      if (!String(name || '').trim()) return;
+      const list = prefabs();
+      const normalized = String(name).trim().toLowerCase();
+      const next = { name:String(name).trim().slice(0, 60), labels:labels.slice(0, 40) };
+      const existing = list.findIndex(item => item.name.toLowerCase() === normalized);
+      if (existing >= 0) list[existing] = next; else list.push(next);
+      savePrefabs(list);
+      scheduleEnhance();
+    });
+  }
+  function addHelpfulTip(panel) {
+    const drawer = panel.querySelector('.card-row-drawing-board');
+    if (!drawer || panel.querySelector('.drawing-board-helpful-tip')) return;
+    const tip = document.createElement('aside');
+    tip.className = 'drawing-board-helpful-tip';
+    tip.innerHTML = '<strong>Helpful tip</strong><span>You can upload an image as the Drawing Board background in More Board Options.</span>';
+    drawer.insertAdjacentElement('afterend', tip);
+  }
+
+  function removeUnavailableSelectionControls(panel) {
+    ['resetRowCardTransform', 'selectAllRow', 'clearRowSelection'].forEach(id => {
+      panel.querySelector('#' + id)?.remove();
+    });
+  }
+
+  function setArrivalState() {
+    document.querySelector('.tarot-command-drawer > details')?.setAttribute('open', '');
+    const clear = document.getElementById('clearSearch');
+    if (clear) {
+      clear.textContent = 'Hide Cards';
+      clear.title = 'Hide card results without clearing the Drawing Board';
+    }
+    if (!arrivalPending) return;
+    const panel = document.getElementById('shortListPanel');
+    if (panel) panel.hidden = false;
+  }
+  function cardExportData(panel) {
+    return Array.from(panel.querySelectorAll('.card-row-item[data-row-index]')).map((item, index) => {
+      const card = item.querySelector('[data-row-card]');
+      if (!card) return null;
+      const id = card.dataset.rowCard || '';
+      const title = card.querySelector('.or-card-title-banner')?.textContent.trim() || id.replace(/_/g, ' ');
+      const position = item.querySelector('.card-row-position-editor')?.textContent.trim() || 'Position #' + (index + 1);
+      const interpretation = card.querySelector('.or-layer-scroll span')?.textContent.trim() || '';
+      return { id, title, position, interpretation, reversed:item.classList.contains('is-row-reversed') || card.dataset.rowReversed === 'true' };
+    }).filter(Boolean);
+  }
+  function printableHtml(panel) {
+    const cards = cardExportData(panel);
+    const name = panel.querySelector('#rowName')?.value.trim() || 'Drawing Board';
+    const notes = panel.querySelector('#rowNotes')?.value.trim() || '';
+    const exportedAt = new Intl.DateTimeFormat(undefined, { dateStyle:'long', timeStyle:'short' }).format(new Date());
+    const logoUrl = new URL('logo.png', location.href).href;
+    const cardHtml = cards.map((card, index) => '<article class="card"><div class="position"><span>' + escapeHtml(card.position) + '</span><b>' + String(index + 1).padStart(2, '0') + '</b></div><div class="art-frame"><img class="' + (card.reversed ? 'reversed' : '') + '" src="' + optimizedCardUrl(card.id) + '" alt="' + escapeHtml(card.title + (card.reversed ? ', reversed' : ', upright')) + '"></div><div class="card-copy"><div class="card-heading"><h2>' + escapeHtml(card.title) + '</h2><span class="orientation ' + (card.reversed ? 'is-reversed' : '') + '">' + (card.reversed ? 'Reversed' : 'Upright') + '</span></div><p>' + escapeHtml(card.interpretation) + '</p></div></article>').join('');
+    const notesHtml = notes ? '<section class="reading-notes"><span>Reading notes</span><p>' + escapeHtml(notes) + '</p></section>' : '';
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + escapeHtml(name) + ' · Oracle of Relphi</title><style>' +
+      '@page{size:A4;margin:10mm}*{box-sizing:border-box}html{background:#eee7df}body{--red:#dc1f18;--ink:#111;--paper:#fffdf8;--muted:#665e58;margin:0;font-family:Inter,Montserrat,"Segoe UI",Arial,sans-serif;color:var(--ink);background:linear-gradient(135deg,#f2ebe3,#fffaf4 46%,#eee6dd);line-height:1.45}.page{width:min(1380px,calc(100% - 32px));margin:24px auto;background:var(--paper);border:1px solid rgba(17,17,17,.14);box-shadow:0 24px 70px rgba(40,28,20,.13)}.masthead{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;padding:24px 30px;border-top:8px solid var(--red);border-bottom:1px solid rgba(17,17,17,.16);background:#111;color:#fff}.brand-mark{width:58px;height:58px;object-fit:cover;background:#fff;border:4px solid #fff}.brand-copy span,.reading-kicker,.reading-notes>span{display:block;text-transform:uppercase;letter-spacing:.15em;font-size:11px;font-weight:900;color:#ff6a62}.brand-copy strong{display:block;font-family:Georgia,serif;font-size:25px;line-height:1.05}.export-meta{text-align:right;color:#d5cec8;font-size:12px}.reading-head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;padding:32px 30px 26px}.reading-head h1{margin:4px 0 0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(34px,5vw,66px);line-height:.96;letter-spacing:-.035em}.reading-count{min-width:120px;text-align:center;padding:14px 18px;border:1px solid rgba(17,17,17,.18);border-radius:999px;font-weight:900}.reading-count b{color:var(--red)}.reading-notes{margin:0 30px 28px;padding:18px 20px;border-left:5px solid var(--red);background:#f7f0e9}.reading-notes p{margin:5px 0 0;white-space:pre-wrap}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;padding:0 30px 34px}.card{break-inside:avoid;display:grid;grid-template-rows:auto auto 1fr;min-width:0;border:1px solid rgba(17,17,17,.18);border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 10px 28px rgba(34,24,18,.08)}.position{display:flex;justify-content:space-between;gap:12px;align-items:center;min-height:44px;padding:9px 12px;background:#111;color:#fff;font-weight:900}.position span{overflow-wrap:anywhere}.position b{color:#ff6a62;font-size:12px;letter-spacing:.12em}.art-frame{display:grid;place-items:center;aspect-ratio:320/554;padding:8px;background:linear-gradient(145deg,#f5ede5,#fff)}.card img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 5px 8px rgba(17,17,17,.14))}.card img.reversed{transform:rotate(180deg)}.card-copy{padding:13px 14px 16px}.card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.card h2{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:18px;line-height:1.05}.orientation{flex:none;padding:4px 7px;border:1px solid rgba(17,17,17,.2);border-radius:999px;text-transform:uppercase;letter-spacing:.08em;font-size:8px;font-weight:900;color:var(--muted)}.orientation.is-reversed{border-color:rgba(220,31,24,.45);color:var(--red);background:#fff2f0}.card p{margin:9px 0 0;color:#3f3833;font-size:12px;line-height:1.45}.footer{display:flex;justify-content:space-between;gap:20px;padding:20px 30px;border-top:1px solid rgba(17,17,17,.14);color:var(--muted);font-size:12px}.footer strong{color:#111}@media(max-width:1100px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:820px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.masthead{grid-template-columns:auto 1fr}.export-meta{grid-column:1/-1;text-align:left}.reading-head{grid-template-columns:1fr}.reading-count{justify-self:start}}@media(max-width:580px){.page{width:100%;margin:0;border:0}.masthead,.reading-head{padding-left:20px;padding-right:20px}.grid{grid-template-columns:1fr;padding-left:20px;padding-right:20px}.reading-notes{margin-left:20px;margin-right:20px}.footer{flex-direction:column;padding-left:20px;padding-right:20px}}@media print{html,body{background:#fff}.page{width:100%;margin:0;border:0;box-shadow:none}.masthead{padding:12mm 8mm 7mm}.brand-mark{width:13mm;height:13mm}.reading-head{padding:8mm 8mm 6mm}.reading-head h1{font-size:28pt}.reading-notes{margin:0 8mm 7mm}.grid{grid-template-columns:repeat(3,1fr);gap:5mm;padding:0 8mm 8mm}.card{border-radius:3mm;box-shadow:none}.position{min-height:10mm;padding:2mm 3mm}.art-frame{padding:2mm}.card-copy{padding:3mm}.card h2{font-size:11pt}.card p{font-size:8pt}.footer{padding:5mm 8mm}}' +
+      '</style></head><body><main class="page"><header class="masthead"><img class="brand-mark" src="' + logoUrl + '" alt="Oracle of Relphi mark"><div class="brand-copy"><span>Tarot Ledger</span><strong>Oracle of Relphi</strong></div><div class="export-meta">Prepared ' + escapeHtml(exportedAt) + '<br>Drawing Board reading</div></header><section class="reading-head"><div><span class="reading-kicker">A Relphi reading</span><h1>' + escapeHtml(name) + '</h1></div><div class="reading-count"><b>' + cards.length + '</b> card' + (cards.length === 1 ? '' : 's') + '</div></section>' + notesHtml + '<section class="grid">' + cardHtml + '</section><footer class="footer"><span><strong>Oracle of Relphi</strong> · Tarot Ledger</span><span>Created with the Relphi Drawing Board</span></footer></main></body></html>';
+  }
+  function optimizedCardUrl(id) {
+    return new URL('assets/tarot/rws-export/' + encodeURIComponent(id) + '.webp', location.href).href;
+  }
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
+  }
+  function addLeanExports(panel) {
+    const tools = panel.querySelector('.card-row-composer');
+    if (!tools || tools.querySelector('#printRowPdf')) return;
+    const optimized = document.createElement('button');
+    optimized.type = 'button';
+    optimized.id = 'downloadRowOptimizedHtml';
+    optimized.textContent = 'Download web version';
+    const pdf = document.createElement('button');
+    pdf.type = 'button';
+    pdf.id = 'printRowPdf';
+    pdf.textContent = 'Print / save PDF';
+    const imageButton = tools.querySelector('#printCardRowImage');
+    tools.insertBefore(optimized, imageButton?.nextSibling || null);
+    tools.insertBefore(pdf, optimized.nextSibling);
+    optimized.addEventListener('click', () => {
+      const blob = new Blob([printableHtml(panel)], { type:'text/html' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'drawing-board-optimized.html';
+      document.body.appendChild(link); link.click(); link.remove();
+    });
+    pdf.addEventListener('click', () => {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) return window.alert('Allow pop-ups to open the PDF print view.');
+      try { printWindow.opener = null; } catch (_) {}
+      printWindow.document.open();
+      printWindow.document.write(printableHtml(panel));
+      printWindow.document.close();
+      printWindow.addEventListener('load', () => setTimeout(() => printWindow.print(), 250), { once:true });
+    });
+  }
+  function organizeBoardOptions(panel) {
+    const composer = panel.querySelector('.card-row-composer');
+    if (!composer || composer.classList.contains('is-relphi-organized')) return;
+    composer.classList.add('is-relphi-organized');
+
+    const control = id => {
+      const element = panel.querySelector('#' + id);
+      return element?.closest('label') || element;
+    };
+    const tabs = document.createElement('div');
+    tabs.className = 'board-options-tabs';
+    tabs.setAttribute('role', 'tablist');
+    tabs.setAttribute('aria-label', 'Drawing Board options');
+    composer.appendChild(tabs);
+    const block = (kind, title, description) => {
+      const section = document.createElement('section');
+      section.className = 'card-row-control-block card-row-control-block--' + kind + ' is-collapsed';
+      section.id = 'board-options-' + kind;
+      section.setAttribute('role', 'tabpanel');
+      section.innerHTML = '<div class="board-options-body"></div>';
+      composer.appendChild(section);
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'board-options-toggle';
+      toggle.setAttribute('role', 'tab');
+      toggle.setAttribute('aria-controls', section.id);
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.title = description;
+      toggle.textContent = title;
+      tabs.appendChild(toggle);
+      toggle.addEventListener('click', () => {
+        const willOpen = section.classList.contains('is-collapsed');
+        composer.querySelectorAll(':scope > .card-row-control-block').forEach(other => {
+          other.classList.add('is-collapsed');
+        });
+        tabs.querySelectorAll('.board-options-toggle').forEach(button => button.setAttribute('aria-expanded', 'false'));
+        section.classList.toggle('is-collapsed', !willOpen);
+        toggle.setAttribute('aria-expanded', String(willOpen));
+      });
+      return section.querySelector('.board-options-body');
+    };
+    const move = (destination, node) => { if (node) destination.appendChild(node); };
+
+    const setup = block('setup', 'Reading setup', 'Choose the reading structure and the cards available before drawing.');
+    move(setup, control('rowName'));
+    move(setup, control('rowPositionLabels'));
+    move(setup, control('rowDrawScope'));
+    move(setup, control('rowAllowRepeats'));
+    move(setup, control('rowNotes'));
+
+    const tools = block('tools', 'Arrange board', 'Reposition, align, rotate, and style the creative workspace.');
+    const alignment = document.createElement('div');
+    alignment.className = 'board-snap-control';
+    alignment.setAttribute('aria-label', 'Alignment snap controls');
+    move(alignment, control('rowSnapEnabled'));
+    move(alignment, panel.querySelector('#rowSnapGridMinus'));
+    move(alignment, panel.querySelector('#rowSnapGridValue'));
+    move(alignment, panel.querySelector('#rowSnapGridPlus'));
+    tools.appendChild(alignment);
+    const rotation = document.createElement('div');
+    rotation.className = 'board-snap-control';
+    rotation.setAttribute('aria-label', 'Rotation snap controls');
+    move(rotation, control('rowRotationSnapEnabled'));
+    move(rotation, panel.querySelector('#rowRotationSnapMinus'));
+    move(rotation, panel.querySelector('#rowRotationSnapValue'));
+    move(rotation, panel.querySelector('#rowRotationSnapPlus'));
+    tools.appendChild(rotation);
+    composer.querySelector('.card-row-snap-steppers')?.remove();
+    move(tools, control('rowEnvelopeColor'));
+    move(tools, control('rowTableColor'));
+    move(tools, panel.querySelector('#rowTableImageUpload'));
+    move(tools, panel.querySelector('#rowTableImageReset'));
+    move(tools, panel.querySelector('#resetCardRowLayout'));
+
+    const renameLabel = (id, text) => {
+      const label = control(id);
+      const textNode = Array.from(label?.childNodes || []).find(node => node.nodeType === 3);
+      if (textNode) textNode.textContent = text + ' ';
+    };
+    renameLabel('rowEnvelopeColor', 'Card / placeholder color');
+    renameLabel('rowTableColor', 'Board color');
+    const boardImageUpload = panel.querySelector('#rowTableImageUpload');
+    const boardImageReset = panel.querySelector('#rowTableImageReset');
+    if (boardImageUpload) boardImageUpload.textContent = 'Upload board image';
+    if (boardImageReset) boardImageReset.textContent = 'Remove board image';
+    const panNote = panel.querySelector('.card-row-pan-note');
+    if (panNote) panNote.textContent = panNote.textContent.replace(/table background/i, 'board background');
+
+    const exports = block('export', 'Save & export', 'Keep a web version, a print-ready PDF, or reusable board data.');
+    ['downloadRowHtml', 'downloadRowTextHtml', 'printCardRowImage', 'snapshotCardRowArrangement'].forEach(id => panel.querySelector('#' + id)?.remove());
+    const data = panel.querySelector('#downloadRowJson');
+    if (data) data.textContent = 'Download board data (JSON)';
+    move(exports, panel.querySelector('#downloadRowOptimizedHtml'));
+    move(exports, panel.querySelector('#printRowPdf'));
+    move(exports, data);
+    move(composer, panel.querySelector('#rowTableImageFile'));
+
+    const arrangeSection = panel.querySelector('#board-options-tools');
+    const arrangeToggle = tabs.querySelector('[aria-controls="board-options-tools"]');
+    const workspaceToolbar = panel.querySelector('.card-row-workspace-toolbar');
+    if (arrangeSection && arrangeToggle && workspaceToolbar) {
+      const flyout = document.createElement('div');
+      flyout.className = 'board-arrange-flyout';
+      arrangeToggle.classList.add('board-arrange-trigger');
+      arrangeToggle.textContent = 'Arrange';
+      flyout.appendChild(arrangeToggle);
+      flyout.appendChild(arrangeSection);
+      workspaceToolbar.appendChild(flyout);
+    }
+
+    const envelopeColor = panel.querySelector('#rowEnvelopeColor');
+    const applyEnvelopeColor = () => {
+      const color = envelopeColor?.value || '#f3f0ea';
+      const board = panel.querySelector('.short-list-row.card-row-board');
+      board?.style.setProperty('--relphi-envelope-bg', color);
+      board?.style.setProperty('--relphi-card-envelope-bg', color);
+      board?.querySelectorAll('.card-row-item,.card-row-drop-card,.card-row-position-panel,.or-card,.relphi-surface').forEach(element => {
+        element.style.setProperty('background-color', color, 'important');
+      });
+    };
+    if (envelopeColor) {
+      envelopeColor.addEventListener('input', applyEnvelopeColor);
+      envelopeColor.addEventListener('change', applyEnvelopeColor);
+      applyEnvelopeColor();
+    }
+  }
+  function reinforceReversalUi(panel) {
+    const allowed = !!panel.querySelector('#rowAllowReversalsQuick')?.checked;
+    panel.classList.toggle('row-reversals-disabled', !allowed);
+    panel.querySelectorAll('.card-row-item.is-row-reversed').forEach(item => {
+      item.querySelectorAll('.or-card-art, .spread-card-art').forEach(image => { image.style.transform = 'rotate(180deg)'; });
+    });
+  }
+  function enhance() {
+    scheduled = false;
+    const panel = document.getElementById('shortListPanel');
+    if (!panel || panel.hidden) return;
+    if (arrivalPending) {
+      const drawer = panel.querySelector('.card-row-drawing-board');
+      if (drawer) {
+        if (!cardExportData(panel).length) drawer.open = false;
+        arrivalPending = false;
+      }
+    }
+    addStickerToggle(panel);
+    panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
+    addPrefabControls(panel);
+    addHelpfulTip(panel);
+    removeUnavailableSelectionControls(panel);
+    addLeanExports(panel);
+    organizeBoardOptions(panel);
+    reinforceReversalUi(panel);
+    ensureNumberedStickers(panel);
+  }
+  function scheduleEnhance() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(enhance);
+  }
+  function descriptionLayerFromEvent(event) {
+    return event.target.closest?.('#shortListPanel .card-row-board .or-card-layer.relphi-info-layer, #shortListPanel .card-row-board .relphi-info-scroll');
+  }
+  function beginDescriptionSelection(event) {
+    const description = descriptionLayerFromEvent(event);
+    if (!description || event.button !== 0) return;
+    const card = description.closest('[data-row-card]');
+    if (!card) return;
+    descriptionSelectionCard = card;
+    card.draggable = false;
+    card.dataset.descriptionSelecting = 'true';
+    event.stopImmediatePropagation();
+  }
+  function endDescriptionSelection() {
+    const card = descriptionSelectionCard;
+    descriptionSelectionCard = null;
+    if (!card) return;
+    setTimeout(() => {
+      if (!card.isConnected) return;
+      card.draggable = true;
+      delete card.dataset.descriptionSelecting;
+    }, 0);
+  }
+  function start() {
+    const style = document.createElement('style');
+    style.textContent = '.quick-position-sticker-toggle{display:inline-flex;align-items:center;gap:.35rem;font-weight:750}.row-position-stickers-disabled .card-row-item:not(.card-row-placeholder-item)>.card-row-position-panel{display:none!important}.row-reversals-disabled .card-row-reverse-toggle{display:none!important}.row-sticker-prefab-controls{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-top:.45rem}.row-sticker-prefab-controls small{color:#665e58;font-weight:500}.short-list-row.card-row-board .card-row-card,.short-list-row.card-row-board .card-row-drop-card{width:100%!important;margin-left:0!important;margin-right:0!important}.short-list-row.card-row-board .card-row-position-panel{margin-left:0!important;margin-right:0!important}.card-row-workspace .card-row-item .or-card-layer.relphi-info-layer,.card-row-workspace .card-row-item .or-card-layer.relphi-info-layer *{user-select:text!important;-webkit-user-select:text!important;cursor:text!important}.drawing-board-helpful-tip{display:flex;gap:.65rem;align-items:baseline;margin:.7rem .2rem 0;padding:.7rem .9rem;border-left:4px solid #dc1f18;border-radius:.65rem;background:#fff8f3;color:#3f3732}.drawing-board-helpful-tip strong{white-space:nowrap}.card-row-composer.is-relphi-organized{--board-red:#dc1f18;--board-ink:#171412;--board-line:#d8cec5;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem!important;align-items:start;padding:.9rem!important;background:#f7f2ec!important;border-radius:18px}.card-row-composer.is-relphi-organized>.card-row-control-block{display:flex!important;align-content:flex-start;align-items:center;gap:.7rem!important;min-width:0;margin:0!important;padding:1rem!important;border:1px solid var(--board-line)!important;border-radius:14px!important;background:#fff!important;box-shadow:none!important}.card-row-composer.is-relphi-organized>.card-row-control-block--writing,.card-row-composer.is-relphi-organized>.card-row-control-block--export{grid-column:1/-1}.board-options-heading{flex:0 0 100%;margin:0 0 .1rem;padding:0 0 .7rem;border-bottom:1px solid #ece4dd}.board-options-heading h4{margin:0;color:var(--board-ink);font-size:1rem;line-height:1.2}.board-options-heading p{margin:.25rem 0 0;color:#6b625c;font-size:.78rem;line-height:1.35}.card-row-composer.is-relphi-organized label{color:var(--board-ink);font-weight:750}.card-row-composer.is-relphi-organized input[type=text],.card-row-composer.is-relphi-organized select,.card-row-composer.is-relphi-organized textarea{border:1px solid #bdb3aa!important;border-radius:9px!important;background:#fff!important}.card-row-control-block--writing .card-row-name-label,.card-row-control-block--writing .card-row-position-label{flex:1 1 18rem}.card-row-control-block--writing .card-row-notes-label{flex:1 0 100%}.card-row-control-block--draw .card-row-draw-scope-label{flex:1 1 13rem}.board-snap-control{display:grid;grid-template-columns:minmax(8.5rem,1fr) 2.35rem minmax(5rem,auto) 2.35rem;align-items:center;gap:.35rem;flex:1 1 100%;padding:.45rem;border:1px solid #e1d8d0;border-radius:11px;background:#fbf8f5}.board-snap-control>label{margin:0!important}.board-snap-control>button,.card-row-composer.is-relphi-organized button{min-height:2.35rem;padding:.48rem .78rem!important;border:1px solid #aaa098!important;border-radius:9px!important;background:#fff!important;color:var(--board-ink)!important;box-shadow:none!important;font-weight:800!important}.board-snap-control>button{min-width:2.35rem;padding:.35rem!important}.board-snap-control>span{min-width:0;text-align:center;font-weight:800;color:#5f5751}.card-row-control-block--table .card-row-color-label,.card-row-control-block--table .card-row-table-color-label{display:flex;align-items:center;gap:.45rem;padding:.35rem .55rem;border:1px solid #e1d8d0;border-radius:9px;background:#fbf8f5}.card-row-control-block--table input[type=color]{width:2.4rem;height:2rem;padding:2px;border:0;background:transparent}.card-row-control-block--export #downloadRowOptimizedHtml{border-color:var(--board-red)!important;background:var(--board-red)!important;color:#fff!important}.card-row-control-block--export button{flex:1 1 10rem}.card-row-composer.is-relphi-organized button:hover:not(:disabled){border-color:var(--board-red)!important}.card-row-composer.is-relphi-organized button:focus-visible,.card-row-composer.is-relphi-organized input:focus-visible,.card-row-composer.is-relphi-organized select:focus-visible,.card-row-composer.is-relphi-organized textarea:focus-visible{outline:3px solid rgba(220,31,24,.22)!important;outline-offset:2px}.card-row-composer.is-relphi-organized button:disabled{opacity:.45}.card-row-composer.is-relphi-organized>#rowTableImageFile{display:none}@media(max-width:850px){.card-row-composer.is-relphi-organized{grid-template-columns:1fr}.card-row-composer.is-relphi-organized>.card-row-control-block{grid-column:1}.board-snap-control{grid-template-columns:minmax(7.5rem,1fr) 2.35rem minmax(4.5rem,auto) 2.35rem}}@media(max-width:520px){.board-snap-control{grid-template-columns:1fr repeat(3,auto)}.card-row-composer.is-relphi-organized>.card-row-control-block{padding:.8rem!important}}';
+    style.textContent += '.card-row-drawing-board .card-row-workspace-toolbar{border-radius:12px!important}.card-row-drawing-board .card-row-workspace-toolbar .card-row-zoom-label{border-radius:8px!important}.card-row-composer.is-relphi-organized{grid-template-columns:1fr!important;gap:.35rem!important;padding:.45rem!important;background:#f7f2ec!important;border-radius:12px!important}.card-row-composer.is-relphi-organized>.card-row-control-block{display:block!important;grid-column:1!important;max-width:100%!important;box-sizing:border-box!important;overflow:visible!important;padding:0!important;border-radius:10px!important}.card-row-composer.is-relphi-organized>.card-row-control-block>*{max-width:100%;box-sizing:border-box}.card-row-composer.is-relphi-organized .board-options-heading{width:100%!important;margin:0!important;padding:0!important;border:0!important}.card-row-composer.is-relphi-organized .board-options-toggle{display:flex!important;width:100%!important;min-height:2.35rem!important;align-items:center!important;justify-content:space-between!important;gap:.75rem!important;padding:.45rem .65rem!important;border:0!important;border-radius:9px!important;background:#fff!important;color:#171412!important;text-align:left!important}.card-row-composer.is-relphi-organized .board-options-toggle:hover,.card-row-composer.is-relphi-organized .board-options-toggle:focus-visible{background:#fff8f3!important;color:#171412!important}.board-options-toggle>span:first-child{font-size:.9rem;font-weight:900}.board-options-chevron{color:#dc1f18;font-size:1.15rem;font-weight:900;line-height:1}.card-row-control-block:not(.is-collapsed) .board-options-chevron{transform:rotate(45deg)}.card-row-composer.is-relphi-organized .board-options-body{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:.6rem!important;width:100%!important;padding:.65rem!important;border-top:1px solid #ece4dd!important}.card-row-composer.is-relphi-organized .card-row-control-block.is-collapsed>.board-options-body{display:none!important}.card-row-composer.is-relphi-organized .board-snap-control{width:100%!important}';
+    style.textContent += '.card-row-composer.is-relphi-organized .card-row-control-block--layout .board-options-body{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.5rem!important}.card-row-composer.is-relphi-organized .card-row-control-block--layout.is-collapsed>.board-options-body{display:none!important}.card-row-composer.is-relphi-organized .board-snap-control{grid-template-columns:minmax(6.5rem,1fr) 2rem minmax(3.7rem,auto) 2rem!important;width:auto!important;min-height:2.55rem!important;padding:.25rem!important;gap:.25rem!important}.card-row-composer.is-relphi-organized .board-snap-control>button{min-width:2rem!important;min-height:2rem!important;padding:.2rem!important}.card-row-composer.is-relphi-organized .board-snap-control>label{font-size:.82rem!important}.card-row-composer.is-relphi-organized .board-snap-control>span{font-size:.8rem!important}@media(max-width:720px){.card-row-composer.is-relphi-organized .card-row-control-block--layout .board-options-body{grid-template-columns:1fr!important}}';
+    style.textContent += '.card-row-workspace .or-card-layer.relphi-info-layer,.card-row-workspace .or-card-layer.relphi-info-layer *,.card-row-workspace .relphi-info-scroll,.card-row-workspace .relphi-info-scroll *{pointer-events:auto!important;user-select:text!important;-webkit-user-select:text!important;-webkit-user-drag:none!important;touch-action:pan-y!important}';
+    style.textContent += 'html body #shortListPanel .card-row-drawing-board,html body #shortListPanel .card-row-drawing-board button,html body #shortListPanel .card-row-drawing-board input,html body #shortListPanel .card-row-drawing-board select,html body #shortListPanel .card-row-drawing-board textarea{font-family:Montserrat,"Segoe UI",Arial,sans-serif!important}html body #shortListPanel .card-row-composer.is-relphi-organized{display:block!important;margin:0!important;padding:.45rem!important;border-radius:10px!important;background:#f5f0ea!important}html body #shortListPanel .board-options-tabs{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:.35rem!important;margin:0!important}html body #shortListPanel .board-options-tabs .board-options-toggle{width:100%!important;min-width:0!important;min-height:2.25rem!important;padding:.4rem .5rem!important;border:1px solid #c9c0b8!important;border-radius:8px!important;background:#fff!important;color:#171412!important;font-size:.78rem!important;font-weight:800!important;line-height:1.15!important;text-align:center!important;white-space:normal!important;box-shadow:none!important}html body #shortListPanel .board-options-tabs .board-options-toggle[aria-expanded="true"]{border-color:#dc1f18!important;background:#fff4f1!important;color:#b81712!important}html body #shortListPanel .card-row-composer.is-relphi-organized>.card-row-control-block{display:block!important;width:100%!important;margin:.4rem 0 0!important;padding:0!important;border:1px solid #d8cec5!important;border-radius:9px!important;background:#fff!important;box-shadow:none!important}html body #shortListPanel .card-row-composer.is-relphi-organized>.card-row-control-block.is-collapsed{display:none!important}html body #shortListPanel .card-row-composer.is-relphi-organized .board-options-body{display:flex!important;flex-wrap:wrap!important;align-items:end!important;gap:.5rem!important;width:100%!important;padding:.6rem!important;border:0!important}html body #shortListPanel .card-row-control-block--writing .board-options-body{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:start!important}html body #shortListPanel .card-row-control-block--writing .card-row-name-label{grid-column:1!important}html body #shortListPanel .card-row-control-block--writing .card-row-position-label{grid-column:2!important}html body #shortListPanel .card-row-control-block--writing .card-row-notes-label{grid-column:1/-1!important}html body #shortListPanel .card-row-composer.is-relphi-organized label{min-width:0!important;margin:0!important;color:#171412!important;font-size:.78rem!important;font-weight:800!important;line-height:1.2!important}html body #shortListPanel .card-row-composer.is-relphi-organized input[type="text"],html body #shortListPanel .card-row-composer.is-relphi-organized select,html body #shortListPanel .card-row-composer.is-relphi-organized textarea{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;min-height:2.35rem!important;margin:.25rem 0 0!important;padding:.45rem .6rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font-size:.84rem!important;font-weight:600!important;line-height:1.25!important;box-sizing:border-box!important;box-shadow:none!important}html body #shortListPanel .card-row-composer.is-relphi-organized textarea{height:2.75rem!important;resize:vertical!important}html body #shortListPanel .row-sticker-prefab-controls{display:flex!important;align-items:center!important;gap:.45rem!important;margin:.35rem 0 0!important}html body #shortListPanel .row-sticker-prefab-controls small{font-size:.7rem!important;line-height:1.2!important;color:#6b625c!important}html body #shortListPanel .card-row-composer.is-relphi-organized button:not(.board-options-toggle){min-height:2.25rem!important;padding:.4rem .65rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font-size:.78rem!important;font-weight:800!important;line-height:1.1!important;box-shadow:none!important}html body #shortListPanel .card-row-drawing-board input[type="checkbox"]{accent-color:#111!important}html body #shortListPanel .card-row-icon-toolbar button,html body #shortListPanel .card-row-icon-toolbar label{border-radius:8px!important;font-size:.78rem!important}html body #shortListPanel .card-row-control-block--layout .board-options-body{grid-template-columns:repeat(2,minmax(0,1fr))!important}html body #shortListPanel .board-snap-control{min-width:0!important;border-radius:7px!important;background:#faf7f3!important}html body #shortListPanel .card-row-control-block--table .card-row-color-label,html body #shortListPanel .card-row-control-block--table .card-row-table-color-label{border-radius:7px!important}@media(max-width:760px){html body #shortListPanel .board-options-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important}html body #shortListPanel .card-row-control-block--writing .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .card-row-control-block--writing .card-row-name-label,html body #shortListPanel .card-row-control-block--writing .card-row-position-label,html body #shortListPanel .card-row-control-block--writing .card-row-notes-label{grid-column:1!important}html body #shortListPanel .card-row-control-block--layout .board-options-body{grid-template-columns:1fr!important}}';
+    style.textContent += 'html body #shortListPanel .board-options-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important}html body #shortListPanel .card-row-control-block--setup .board-options-body{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:start!important}html body #shortListPanel .card-row-control-block--setup .card-row-name-label{grid-column:1!important}html body #shortListPanel .card-row-control-block--setup .card-row-position-label{grid-column:2!important}html body #shortListPanel .card-row-control-block--setup .card-row-draw-scope-label{grid-column:1!important}html body #shortListPanel .card-row-control-block--setup .spread-toggle{grid-column:2!important;align-self:end!important;min-height:2.35rem!important;display:flex!important;align-items:center!important;gap:.4rem!important}html body #shortListPanel .card-row-control-block--setup .card-row-notes-label{grid-column:1/-1!important}html body #shortListPanel .card-row-control-block--tools .board-options-body{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:end!important}html body #shortListPanel .card-row-control-block--tools .board-snap-control{width:100%!important}html body #shortListPanel .card-row-control-block--tools button{width:100%!important}@media(max-width:760px){html body #shortListPanel .board-options-tabs{grid-template-columns:1fr!important}html body #shortListPanel .card-row-control-block--setup .board-options-body,html body #shortListPanel .card-row-control-block--tools .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .card-row-control-block--setup .card-row-name-label,html body #shortListPanel .card-row-control-block--setup .card-row-position-label,html body #shortListPanel .card-row-control-block--setup .card-row-draw-scope-label,html body #shortListPanel .card-row-control-block--setup .spread-toggle,html body #shortListPanel .card-row-control-block--setup .card-row-notes-label{grid-column:1!important}}';
+    style.textContent += 'html body #shortListPanel .board-options-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important}html body #shortListPanel .board-arrange-flyout{position:relative!important;display:block!important;margin-left:auto!important;font-family:Montserrat,"Segoe UI",Arial,sans-serif!important}html body #shortListPanel .board-arrange-trigger{min-height:1.8rem!important;padding:.22rem .55rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font-size:.74rem!important;font-weight:800!important;box-shadow:none!important}html body #shortListPanel .board-arrange-trigger[aria-expanded="true"]{border-color:#dc1f18!important;background:#fff4f1!important;color:#b81712!important}html body #shortListPanel .board-arrange-flyout>.card-row-control-block{position:absolute!important;top:calc(100% + .35rem)!important;right:0!important;z-index:120!important;display:block!important;width:min(34rem,calc(100vw - 3rem))!important;margin:0!important;padding:0!important;border:1px solid #cfc5bc!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 30px rgba(30,20,15,.16)!important}html body #shortListPanel .board-arrange-flyout>.card-row-control-block.is-collapsed{display:none!important}html body #shortListPanel .board-arrange-flyout .board-options-body{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:end!important;gap:.4rem!important;padding:.45rem!important}html body #shortListPanel .board-arrange-flyout .board-snap-control{grid-template-columns:minmax(5.5rem,1fr) 1.8rem minmax(3.4rem,auto) 1.8rem!important;min-height:2.25rem!important;width:100%!important;padding:.2rem!important;border-radius:7px!important}html body #shortListPanel .board-arrange-flyout .board-snap-control>button{min-width:1.8rem!important;min-height:1.8rem!important;padding:.15rem!important;border-radius:6px!important}html body #shortListPanel .board-arrange-flyout label{min-width:0!important;margin:0!important;font-size:.72rem!important;font-weight:800!important;line-height:1.15!important}html body #shortListPanel .board-arrange-flyout button:not(.board-arrange-trigger){min-height:2rem!important;padding:.3rem .5rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font-size:.72rem!important;font-weight:800!important;box-shadow:none!important}html body #shortListPanel .board-arrange-flyout input[type="color"]{width:2.2rem!important;height:1.8rem!important}html body #shortListPanel .short-list-row.card-row-board .card-row-placeholder-item{height:max-content!important;min-height:0!important;max-height:none!important;grid-template-rows:auto auto!important}html body #shortListPanel .short-list-row.card-row-board .card-row-placeholder-item .card-row-drop-card{height:auto!important;min-height:0!important;max-height:none!important;aspect-ratio:500/866!important}@media(max-width:700px){html body #shortListPanel .board-arrange-flyout .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .board-options-tabs{grid-template-columns:1fr!important}}';
+    style.textContent += 'html body #shortListPanel .card-row-control-block--setup .card-row-position-label{grid-column:1/-1!important;grid-row:1!important}html body #shortListPanel .card-row-control-block--setup .card-row-name-label{grid-column:1!important;grid-row:2!important}html body #shortListPanel .card-row-control-block--setup .card-row-draw-scope-label{grid-column:2!important;grid-row:2!important}html body #shortListPanel .card-row-control-block--setup .spread-toggle{grid-column:1!important;grid-row:3!important}html body #shortListPanel .card-row-control-block--setup .card-row-notes-label{grid-column:2!important;grid-row:3!important}@media(max-width:760px){html body #shortListPanel .card-row-control-block--setup .card-row-position-label,html body #shortListPanel .card-row-control-block--setup .card-row-name-label,html body #shortListPanel .card-row-control-block--setup .card-row-draw-scope-label,html body #shortListPanel .card-row-control-block--setup .spread-toggle,html body #shortListPanel .card-row-control-block--setup .card-row-notes-label{grid-column:1!important;grid-row:auto!important}}';
+    document.head.appendChild(style);
+    setArrivalState();
+    new MutationObserver(scheduleEnhance).observe(document.body, { childList:true, subtree:true });
+    document.addEventListener('pointerdown', beginDescriptionSelection, true);
+    window.addEventListener('pointerup', endDescriptionSelection, true);
+    window.addEventListener('pointercancel', endDescriptionSelection, true);
+    document.addEventListener('dragstart', event => {
+      if (!descriptionLayerFromEvent(event)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+    document.addEventListener('selectstart', event => {
+      if (descriptionLayerFromEvent(event)) event.stopImmediatePropagation();
+    }, true);
+    document.addEventListener('click', event => {
+      const openArrange = document.querySelector('#shortListPanel .board-arrange-flyout>.card-row-control-block:not(.is-collapsed)');
+      if (openArrange && !event.target.closest?.('.board-arrange-flyout')) {
+        openArrange.classList.add('is-collapsed');
+        document.querySelector('#shortListPanel .board-arrange-trigger')?.setAttribute('aria-expanded', 'false');
+      }
+      const description = event.target.closest?.('#shortListPanel .or-card-layer.relphi-info-layer');
+      if (description && !event.target.closest('button,a,input,select,textarea')) {
+        event.stopImmediatePropagation();
+        return;
+      }
+      const clear = event.target.closest?.('#clearShortList');
+      if (!clear) return;
+      if (window.confirm('Clear the entire Drawing Board, including cards, envelopes, position stickers, custom art, notes, and layout?')) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+    scheduleEnhance();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
+  else start();
+})();
