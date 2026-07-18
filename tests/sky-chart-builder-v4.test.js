@@ -55,5 +55,10 @@ assert.match(tarotDateBridge, /relphiPlanetaryHoursWhereWhen/, 'Tarot date skies
 assert.match(tarotDateBridge, /byId\('saveChart'\)\?\.click\(\)/, 'Tarot date skies must save only through the Tarot Ledger chart bridge.');
 assert.match(glyphStyle, /Planetary Hours mini zodiac wheel/, 'Comparison marker styling must document its Planetary Hours source.');
 assert.match(glyphStyle, /chart-wheel-stick-knob/, 'Comparison wheel marker discs must match the Planetary Hours treatment.');
+assert.match(glyphStyle, /r:10\.5px!important/, 'Comparison placement circles must be large enough to read.');
+assert.match(glyphStyle, /font-size:13px!important/, 'Comparison placement glyphs must be large enough to read.');
+assert.match(builder, /String\(minute\)\.padStart\(2, '0'\) \+ '′'/, 'Completed Sky panels must show placement minutes.');
+assert.match(nav, /sky-chart-ph-glyph-style-v1\.js\?v=2/, 'The larger glyph stylesheet must be cache-busted.');
+assert.match(nav, /sky-chart-builder-v4\.js\?v=9/, 'The minute-aware Sky panel must be cache-busted.');
 
 console.log('SkyChart V4 engine, Tarot, storage, calculator, and synchronized-editor checks passed.');

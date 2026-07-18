@@ -100,13 +100,13 @@
         'sky-ledger-glyph-alignment.js?v=1',
         'sky-ledger-wheel-glyphs.js?v=2',
         'sky-chart-sign-cusps-v1.js?v=1',
-        'sky-chart-ph-glyph-style-v1.js?v=1',
+        'sky-chart-ph-glyph-style-v1.js?v=2',
         'relphi-glyph-bubbles.js?v=2',
         'sky-chart-provenance-fix.js?v=1'
       ].forEach(function (src) { appendScript(src); });
 
       if (preview === 'pr55') {
-        appendScript('sky-chart-builder-v4.js?v=8', function () {
+        appendScript('sky-chart-builder-v4.js?v=9', function () {
           appendScript('sky-chart-builder-v4-defaults.js?v=1');
           appendScript('sky-chart-language-cleanup.js?v=6');
           appendScript('sky-chart-aspect-keyboard.js?v=1');

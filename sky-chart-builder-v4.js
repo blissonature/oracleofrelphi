@@ -142,8 +142,10 @@
     const entries = Object.entries(placementEntries(payload));
     const preview = entries.slice(0, 6).map(function (entry) {
       const placement = entry[1] || {};
-      const degree = placement.degree == null || placement.degree === '' ? '' : ' ' + placement.degree + 'Â°';
-      return '<li><strong>' + escapeHtml(entry[0]) + '</strong><span>' + escapeHtml((placement.sign || '') + degree) + '</span></li>';
+      const hasDegree = placement.degree != null && placement.degree !== '';
+      const minute = placement.minute == null || placement.minute === '' || Number.isNaN(Number(placement.minute)) ? 0 : Number(placement.minute);
+      const coordinate = hasDegree ? ' ' + placement.degree + 'Â°' + String(minute).padStart(2, '0') + 'â€²' : '';
+      return '<li><strong>' + escapeHtml(entry[0]) + '</strong><span>' + escapeHtml((placement.sign || '') + coordinate) + '</span></li>';
     }).join('');
     const remainder = entries.length > 6 ? '<li class="more">+' + (entries.length - 6) + ' more</li>' : '';
     return '<article class="relphi-v4-sky-panel ' + (slot === 'skyA' ? 'is-sky-a' : 'is-sky-b') + '" data-slot="' + slot + '"><div class="relphi-v4-panel-copy"><span class="eyebrow">' + label + '</span><h3>' + escapeHtml(payload.name || label) + '</h3><p>' + entries.length + ' placements</p><ul class="relphi-v4-placement-preview">' + preview + remainder + '</ul></div><div class="relphi-v4-panel-actions"><button type="button" data-edit="' + slot + '">Edit</button><button type="button" data-clear="' + slot + '">Clear</button></div></article>';
@@ -167,293 +169,6 @@
     } else if (state.step === 'calculateA' || state.step === 'calculateB') {
       body = '<section class="relphi-v4-card"><span class="eyebrow">Calculate</span><h2>Choose the time and place</h2><div id="relphiV4CalcChoices" class="relphi-v4-choice-grid"><button class="choice" type="button" data-action="here-now"><strong>Here and Now</strong><span>Use the current time and your present location.</span></button><button class="choice" type="button" data-action="manual"><strong>Choose a time and place</strong><span>Enter another date, time, and location.</span></button></div><div id="relphiV4CalcMount" hidden></div><button class="secondary back" type="button" data-action="back-method">Back</button></section>';
     } else if (state.step === 'placementsA' || state.step === 'placementsB') {
-      body = '<section class="relphi-v4-card relphi-v4-placement-card"><span class="eyebrow">Placement editor</span><h2>Type, paste, or build placements</h2><p>Both sides are the same sky. Editing either side updates the other and immediately refreshes the wheel and Tarot correspondences.</p><label>Sky name<input id="relphiV4PlacementName" value="' + escapeHtml(state.pendingName || '') + '"></label><div id="relphiV4PlacementMount" class="relphi-v4-placement-mount"></div><div class="relphi-v4-actions"><button class="secondary" type="button" data-action="back-method">Back</button><button class="primary" type="button" data-action="finish-placements">Use these placements</button></div></section>';
-    } else if (state.step === 'completeA' || state.step === 'completeBoth') {
-      body = '<section class="relphi-v4-complete">' + panel('skyA', a) + (b ? panel('skyB', b) : '') + '</section>' + (!b ? '<button class="primary add-comparison" type="button" data-action="add-comparison">Add a comparison sky</button>' : '');
-    }
-    root.innerHTML = '<div class="relphi-v4-toolbar"><button type="button" data-action="start-over">Start Over</button></div>' + body + '<p id="relphiV4Status" class="relphi-v4-status" hidden aria-live="polite"></p>';
-    if (state.step === 'placementsA' || state.step === 'placementsB') openPlacementEditor();
-    setResultsVisible(!!a);
-    if (a) writeJson(SLOT_KEYS.skyA, a);
-    if (b) { writeJson(SLOT_KEYS.skyB, b); activateComparison(); }
-    if (a && (state.step === 'completeA' || state.step === 'completeBoth')) syncNativeSlots(a, b);
-    saveState();
-  }
-  function rememberCalculator() { const calculator = document.querySelector('.sky-calc-drawer'); if (!calculator || calcOriginalParent) return; calcOriginalParent = calculator.parentElement; calcOriginalNext = calculator.nextSibling; }
-  function closeCalculator() { const calculator = document.querySelector('.sky-calc-drawer'); if (!calculator) return; calculator.open = false; calculator.hidden = true; calculator.removeAttribute('open'); if (calcOriginalParent && calculator.parentElement !== calcOriginalParent) calcOriginalParent.insertBefore(calculator, calcOriginalNext || null); }
-  function rememberPlacementEditor() { const editor = document.querySelector('.sky-creator-side-by-side'); if (!editor || placementOriginalParent) return; placementOriginalParent = editor.parentElement; placementOriginalNext = editor.nextSibling; }
-  function restorePlacementEditor() { const editor = document.querySelector('.sky-creator-side-by-side'); if (!editor || !placementOriginalParent || editor.parentElement === placementOriginalParent) return; placementOriginalParent.insertBefore(editor, placementOriginalNext || null); }
-  function openPlacementEditor() {
-    rememberPlacementEditor();
-    const editor = document.querySelector('.sky-creator-side-by-side');
-    const mount = byId('relphiV4PlacementMount');
-    if (!editor || !mount) { status('The placement editor is unavailable.', true); return; }
-    setNativeTarget(state.editingSlot);
-    setValue('skyCreatorName', state.pendingName || defaultName(), false);
-    mount.appendChild(editor);
-    editor.hidden = false;
-    editor.querySelector('.placement-entry-drawer')?.setAttribute('open', '');
-    const form = byId('skyCreatorForm');
-    if (form && !form.dataset.relphiLiveSync) {
-      form.dataset.relphiLiveSync = 'true';
-      let liveTimer = 0;
-      const sync = function (event) {
-        if (!event.target.matches('input,select')) return;
-        clearTimeout(liveTimer);
-        liveTimer = setTimeout(function () {
-          if (byId('skyCreatorPlacementBody')?.value && byId('skyCreatorPlacementSign')?.value) byId('skyCreatorPlacementAdd')?.click();
-        }, 120);
-      };
-      form.addEventListener('input', sync);
-      form.addEventListener('change', sync);
-    }
-    byId('skyCreatorPaste')?.focus();
-  }
-  function openCalculator(clearFields) {
-    rememberCalculator();
-    const calculator = document.querySelector('.sky-calc-drawer');
-    const mount = byId('relphiV4CalcMount');
-    const choices = byId('relphiV4CalcChoices');
-    if (!calculator || !mount) { status('The calculator is unavailable.', true); return; }
-    if (choices) choices.hidden = true;
-    mount.hidden = false; mount.appendChild(calculator); calculator.hidden = false; calculator.open = true; calculator.setAttribute('open', '');
-    setNativeTarget(state.editingSlot); setValue('skyCalcName', state.pendingName || defaultName(), false);
-    if (clearFields) ['skyCalcDateTime','skyCalcTimeZone','skyCalcLocation','skyCalcLatitude','skyCalcLongitude'].forEach(function (id) { setValue(id, '', false); });
-    byId('skyCalcDateTime')?.focus();
-  }
-  function loadRecord(record, slot) {
-    return new Promise(function (resolve, reject) {
-      const select = byId('skyCreatorLibrary');
-      const output = slot === 'skyB' ? byId('currentSkyOutput') : byId('chartOutput');
-      if (!record || !select || !output) return reject(new Error('Native saved-sky controls unavailable'));
-      const expected = payloadFromRecord(record);
-      const expectedSignature = signature(expected);
-      setNativeTarget(slot);
-      setValue('skyCreatorName', record.name, false);
-      setValue('skyCalcName', record.name, false);
-      select.value = record.id;
-      fire(select, 'input'); fire(select, 'change');
-      byId('skyCreatorLoad')?.click();
-      const started = Date.now();
-      (function wait() {
-        const payload = readJson(slotKey(slot), null);
-        if (hasPlacements(payload) && signature(payload) === expectedSignature) {
-          const verified = { ...payload, name:record.name };
-          writeJson(slotKey(slot), verified);
-          return resolve(verified);
-        }
-        if (Date.now() - started > 10000) return reject(new Error('Saved sky did not load'));
-        setTimeout(wait, 120);
-      })();
-    });
-  }
-  function localDateTimeValueInZone(date, timeZone) {
-    try {
-      const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone:timeZone || undefined, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hourCycle:'h23' }).formatToParts(date).filter(function (part) { return part.type !== 'literal'; }).map(function (part) { return [part.type, part.value]; }));
-      return parts.year + '-' + parts.month + '-' + parts.day + 'T' + parts.hour + ':' + parts.minute;
-    } catch (_) { return localDateTimeValue(date); }
-  }
-  function calculationProfileFromFields(payload) {
-    return {
-      dateTime:byId('skyCalcDateTime')?.value || '',
-      latitude:byId('skyCalcLatitude')?.value || '',
-      longitude:byId('skyCalcLongitude')?.value || '',
-      location:byId('skyCalcLocation')?.value || '',
-      timeZone:byId('skyCalcTimeZone')?.value || '',
-      houseSystem:byId('skyCalcHouseSystem')?.value || 'whole-sign',
-      name:String(payload?.name || state.pendingName || '')
-    };
-  }
-  function recoverCalculationProfile(payload) {
-    if (!payload || typeof payload !== 'object') return payload;
-    const existing = payload.calcProfile && typeof payload.calcProfile === 'object' ? payload.calcProfile : {};
-    if (existing.dateTime) return payload;
-    const notes = String(payload.notes || '');
-    const instantMatch = notes.match(/Motion state sampled around\s+(\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d(?:\.\d+)?)?Z)/i);
-    const coordinates = notes.match(/latitude\s+(-?\d+(?:\.\d+)?)\s+and longitude\s+(-?\d+(?:\.\d+)?)/i);
-    const zone = notes.match(/Time zone:\s*([^\.]+)\./i)?.[1]?.trim() || existing.timeZone || '';
-    const location = notes.match(/Location:\s*(.+?)\.\s*Time zone:/i)?.[1]?.trim() || existing.location || '';
-    const instant = instantMatch ? new Date(instantMatch[1]) : null;
-    if (!instant || Number.isNaN(instant.getTime())) return payload;
-    return { ...payload, calcProfile:{ ...existing, dateTime:localDateTimeValueInZone(instant, zone), latitude:coordinates?.[1] || existing.latitude || '', longitude:coordinates?.[2] || existing.longitude || '', location, timeZone:zone, houseSystem:existing.houseSystem || 'whole-sign', name:String(payload.name || existing.name || '') } };
-  }
-  function finishSlot(payload) {
-    if (!hasPlacements(payload)) return;
-    payload = { ...payload, name:state.pendingName || payload.name || defaultName() };
-    payload = state.calculating
-      ? { ...payload, calcProfile:calculationProfileFromFields(payload) }
-      : recoverCalculationProfile(payload);
-    writeJson(slotKey(state.editingSlot), payload);
-    if (state.editingSlot === 'skyA') { state.skyA = payload; state.skyB = null; removeJson(SLOT_KEYS.skyB); state.step = 'completeA'; }
-    else { state.skyB = payload; if (state.skyA) writeJson(SLOT_KEYS.skyA, state.skyA); state.step = 'completeBoth'; }
-    state.calculating = false; closeCalculator(); render();
-  }
-  function watchCalculation() {
-    clearTimeout(pollTimer);
-    const started = Date.now();
-    const check = function () {
-      if (!state.calculating) return;
-      const nativeStatus = byId('skyCalcStatus')?.textContent.trim() || '';
-      const calculationFinished = /^Calculated\b/i.test(nativeStatus);
-      if (calculationFinished) byId(state.editingSlot === 'skyB' ? 'saveCurrentSky' : 'saveChart')?.click();
-      const payload = readJson(slotKey(state.editingSlot), null);
-      if (hasPlacements(payload) && (calculationFinished || signature(payload) !== state.beforeSignature)) return finishSlot(payload);
-      if (Date.now() - started > 500 && /^(Could not|Enter |Choose |Location |Date |Time zone)/i.test(nativeStatus)) { state.calculating = false; saveState(); status(nativeStatus, true); return; }
-      if (Date.now() - started > 60000) { state.calculating = false; saveState(); status('The calculation did not finish within one minute. The existing sky was not replaced.', true); return; }
-      pollTimer = setTimeout(check, 150);
-    };
-    pollTimer = setTimeout(check, 100);
-  }
-  function prepareRun() { setNativeTarget(state.editingSlot); state.beforeSignature = signature(readJson(slotKey(state.editingSlot), null)); state.calculating = true; saveState(); watchCalculation(); }
-  function localDateTimeValue(date) { const pad = function (n) { return String(n).padStart(2, '0'); }; return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes()); }
-  function runHereNow() {
-    setNativeTarget(state.editingSlot);
-    status('Using your current time and locationâ€¦');
-    setValue('skyCalcDateTime', localDateTimeValue(new Date()), false);
-    setValue('skyCalcTimeZone', Intl.DateTimeFormat().resolvedOptions().timeZone || '', false);
-    if (!navigator.geolocation) { state.calculating = false; status('Current location is unavailable. Choose a time and place instead.', true); return; }
-    navigator.geolocation.getCurrentPosition(function (position) {
-      setValue('skyCalcLatitude', position.coords.latitude.toFixed(6), false); setValue('skyCalcLongitude', position.coords.longitude.toFixed(6), false); setValue('skyCalcLocation', 'Current location', false); setNativeTarget(state.editingSlot); byId('skyCalcRun')?.click();
-    }, function () { state.calculating = false; status('Location permission was unavailable. Choose a time and place instead.', true); }, { enableHighAccuracy:false, timeout:12000, maximumAge:60000 });
-  }
-  function applyExternalHandoff() {
-    if (!externalHandoff) return;
-    const replacingExisting = hasPlacements(state.editingSlot === 'skyA' ? state.skyA : state.skyB);
-    if (state.editingSlot === 'skyB') activateComparison();
-    openCalculator(false);
-    setValue('skyCalcDateTime', externalHandoff.dateTime, false);
-    setValue('skyCalcLatitude', externalHandoff.latitude, false);
-    setValue('skyCalcLongitude', externalHandoff.longitude, false);
-    setValue('skyCalcTimeZone', externalHandoff.timeZone, false);
-    setValue('skyCalcLocation', externalHandoff.location, false);
-    setValue('skyCalcName', externalHandoff.name, false);
-    const cleanUrl = new URL(location.href);
-    ['datetime','date','lat','lon','tz','loc','name','calc','source'].forEach(function (key) { cleanUrl.searchParams.delete(key); });
-    history.replaceState(history.state, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
-    if (replacingExisting) {
-      status('The supplied date, time, and place are loaded. Sky A and Sky B are already occupied, so review the values and run the calculation when you are ready to replace this sky.');
-      return;
-    }
-    status('Creating a sky from the supplied date, time, and placeÃ¢â‚¬Â¦');
-    if (externalHandoff.autoRun && externalHandoff.latitude && externalHandoff.longitude) setTimeout(function () { byId('skyCalcRun')?.click(); }, 0);
-  }
-  function openAdvanced(slot) {
-    const payload = slot === 'skyB' ? state.skyB : state.skyA;
-    if (!payload) return;
-    state.editingSlot = slot;
-    state.pendingName = payload.name || (slot === 'skyA' ? 'Sky A' : 'Sky B');
-    setNativeTarget(slot);
-    state.step = slot === 'skyA' ? 'placementsA' : 'placementsB';
-    render();
-  }
-  function handleClick(event) {
-    const action = event.target.closest('[data-action]')?.dataset.action;
-    const edit = event.target.closest('[data-edit]')?.dataset.edit;
-    const clear = event.target.closest('[data-clear]')?.dataset.clear;
-    const loadName = event.target.closest('[data-load-name]')?.dataset.loadName;
-    if (loadName) {
-      const record = recordByName(loadName);
-      if (!record) return status('That saved sky is no longer available.', true);
-      state.pendingName = record.name;
-      status('Loading â€œ' + record.name + 'â€â€¦');
-      return loadRecord(record, state.editingSlot).then(finishSlot).catch(function (error) { status(error.message + '.', true); });
-    }
-    if (edit) return openAdvanced(edit);
-    if (clear) {
-      if (clear === 'skyA') { state.skyA = null; state.skyB = null; state.step = 'nameA'; state.pendingName = ''; removeJson(SLOT_KEYS.skyA); removeJson(SLOT_KEYS.skyB); }
-      else { state.skyB = null; state.step = 'completeA'; removeJson(SLOT_KEYS.skyB); }
-      return render();
-    }
-    if (!action) return;
-    if (action === 'toggle-name-menu') {
-      const menu = byId('relphiV4NameMenu');
-      const toggle = event.target.closest('[data-action="toggle-name-menu"]');
-      if (!menu || !toggle) return;
-      menu.hidden = !menu.hidden;
-      toggle.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
-      return;
-    }
-    if (action === 'start-over') { if (!window.confirm('Start over? This clears the current Sky A and Sky B. Saved skies will not be deleted.')) return; removeJson(SLOT_KEYS.skyA); removeJson(SLOT_KEYS.skyB); clearState(); location.reload(); return; }
-    if (action === 'continue-name') {
-      const input = byId('relphiV4Name');
-      state.pendingName = input?.value.trim() || defaultName();
-      const record = recordByName(state.pendingName);
-      if (record) { state.step = state.editingSlot === 'skyA' ? 'nameConflictA' : 'nameConflictB'; return render(); }
-      state.step = state.editingSlot === 'skyA' ? 'methodA' : 'methodB'; return render();
-    }
-    if (action === 'back-name') { state.step = state.editingSlot === 'skyA' ? 'nameA' : 'nameB'; return render(); }
-    if (action === 'saved') { state.step = state.editingSlot === 'skyA' ? 'chooseSavedA' : 'chooseSavedB'; return render(); }
-    if (action === 'load-conflict') {
-      const record = recordByName(state.pendingName);
-      if (!record) return status('That saved sky is no longer available.', true);
-      status('Loading â€œ' + record.name + 'â€â€¦');
-      return loadRecord(record, state.editingSlot).then(finishSlot).catch(function (error) { status(error.message + '.', true); });
-    }
-    if (action === 'create-copy') {
-      state.pendingName = event.target.closest('[data-copy-name]')?.dataset.copyName || nextAvailableName(state.pendingName);
-      state.step = state.editingSlot === 'skyA' ? 'methodA' : 'methodB';
-      return render();
-    }
-    if (action === 'placements') { state.step = state.editingSlot === 'skyA' ? 'placementsA' : 'placementsB'; return render(); }
-    if (action === 'calculate') { state.step = state.editingSlot === 'skyA' ? 'calculateA' : 'calculateB'; return render(); }
-    if (action === 'back-method') {
-      closeCalculator();
-      const editingExisting = hasPlacements(state.editingSlot === 'skyA' ? state.skyA : state.skyB);
-      state.step = editingExisting ? (hasPlacements(state.skyB) ? 'completeBoth' : 'completeA') : (state.editingSlot === 'skyA' ? 'methodA' : 'methodB');
-      return render();
-    }
-    if (action === 'load-saved') {
-      const record = recordByName(byId('relphiV4SavedSelect')?.value || '');
-      if (!record) return status('Choose a saved sky.', true);
-      status('Loading â€œ' + record.name + 'â€â€¦');
-      return loadRecord(record, state.editingSlot).then(finishSlot).catch(function (error) { status(error.message + '.', true); });
-    }
-    if (action === 'manual') return openCalculator(true);
-    if (action === 'here-now') return runHereNow();
-    if (action === 'finish-placements') {
-      const kind = nativeKind(state.editingSlot);
-      const editedName = byId('relphiV4PlacementName')?.value.trim() || defaultName();
-      setValue('skyCreatorName', editedName, false);
-      byId('skyCreatorSaveWizard')?.click();
-      byId(state.editingSlot === 'skyB' ? 'saveCurrentSky' : 'saveChart')?.click();
-      const payload = readJson(slotKey(state.editingSlot), null);
-      if (!hasPlacements(payload)) return status('Add at least one valid placement before continuing.', true);
-      state.pendingName = editedName || payload.name || defaultName();
-      return finishSlot(payload);
-    }
-    if (action === 'add-comparison') { activateComparison(); state.editingSlot = 'skyB'; state.pendingName = ''; state.step = 'nameB'; return render(); }
-    if (action === 'back-complete') { state.step = state.skyB ? 'completeBoth' : 'completeA'; return render(); }
-  }
-  function installStyles() {
-    if (byId('relphiV4Styles')) return;
-    const style = document.createElement('style');
-    style.id = 'relphiV4Styles';
-    style.textContent = '.relphi-v4-root{margin:1.5rem auto;max-width:1400px}.relphi-v4-toolbar{display:flex;justify-content:flex-end;margin-bottom:1rem}.relphi-v4-toolbar button,.relphi-v4-root button{appearance:none;border:1px solid rgba(220,31,24,.42);border-radius:999px;background:#fff;color:#111;font:inherit;font-weight:700;padding:.8rem 1.25rem;min-height:48px}.relphi-v4-root button.primary{background:#e72018;color:#fff;border-color:#e72018;box-shadow:0 12px 24px rgba(231,32,24,.18)}.relphi-v4-card,.relphi-v4-complete{background:#fffaf4;border:1px solid #e6ddd4;border-radius:28px;padding:2rem}.relphi-v4-card h2{margin:.25rem 0 .5rem}.relphi-v4-card label{display:grid;gap:.45rem;margin:1.25rem 0;font-weight:700}.relphi-v4-card input,.relphi-v4-card select{font:inherit;padding:.9rem 1rem;border:1px solid #d8d1cb;border-radius:18px;background:#fff}.relphi-v4-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1.5rem 0}.relphi-v4-choice-grid .choice{border-radius:28px;min-height:150px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}.relphi-v4-choice-grid strong{font-size:1.2rem}.relphi-v4-choice-grid span{font-weight:400;color:#777;margin-top:.35rem}.relphi-v4-actions{display:flex;gap:.75rem;justify-content:flex-end}.relphi-v4-complete{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.relphi-v4-sky-panel{--sky-accent:#dc1f18;background:#fff;border:1px solid color-mix(in srgb,var(--sky-accent) 30%,#ddd);border-top:5px solid var(--sky-accent);border-radius:24px;padding:1.5rem;display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}.relphi-v4-sky-panel.is-sky-b{--sky-accent:#3166e2}.relphi-v4-sky-panel .eyebrow{color:var(--sky-accent)}.relphi-v4-sky-panel h3{margin:.25rem 0}.relphi-v4-panel-copy{min-width:0;flex:1}.relphi-v4-placement-preview{list-style:none;margin:.9rem 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem .9rem}.relphi-v4-placement-preview li{display:flex;justify-content:space-between;gap:.5rem;font-size:.88rem;border-bottom:1px solid #eee7df;padding:.25rem 0}.relphi-v4-placement-preview span{color:#5f5751}.relphi-v4-placement-preview .more{color:#6b625d;border:0}.relphi-v4-panel-actions{display:flex;gap:.65rem}.add-comparison{margin-top:1rem}.relphi-v4-status{background:#fff;border-left:4px solid #e72018;border-radius:16px;padding:1rem 1.25rem}.relphi-v4-status.is-error{color:#8b1713}.eyebrow{text-transform:uppercase;letter-spacing:.12em;color:#e45d55;font-weight:800;font-size:.8rem}#skyBuilderModeSwitch{display:none!important}@media(max-width:760px){.relphi-v4-choice-grid,.relphi-v4-complete{grid-template-columns:1fr}.relphi-v4-sky-panel{align-items:flex-start;flex-direction:column}.relphi-v4-panel-actions{width:100%}.relphi-v4-panel-actions button{flex:1}.relphi-v4-card,.relphi-v4-complete{padding:1.25rem}}';
-    style.textContent += '.relphi-v4-choice-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}.relphi-v4-placement-mount .sky-creator-side-by-side{margin:1rem 0;display:grid!important}.relphi-v4-placement-card .sky-paste-panel,.relphi-v4-placement-card .placement-entry-drawer{background:#fff}';
-    style.textContent += '.relphi-v4-combobox{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;margin:0!important}.relphi-v4-combobox input{min-width:0}.relphi-v4-combobox-toggle{border-radius:16px!important;min-width:52px;padding:.6rem!important;font-size:1.35rem}.relphi-v4-name-menu{margin:-.75rem 0 1.25rem;padding:.5rem;background:#fff;border:1px solid #d8d1cb;border-radius:18px;box-shadow:0 16px 36px rgba(30,22,18,.12);max-height:19rem;overflow:auto}.relphi-v4-name-menu>button{width:100%;border:0!important;border-radius:12px!important;display:flex;justify-content:space-between;gap:1rem;text-align:left;box-shadow:none!important}.relphi-v4-name-menu>button:hover,.relphi-v4-name-menu>button:focus-visible{background:#fff2ef}.relphi-v4-name-menu>button span{color:#777;font-weight:500}.relphi-v4-name-menu p{margin:.6rem;color:#777}.relphi-v4-conflict-choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1.5rem 0}.relphi-v4-conflict-choice .choice{min-height:145px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;border-radius:24px}.relphi-v4-conflict-choice .choice span{font-weight:400;color:#777;margin-top:.35rem}';
-    document.head.appendChild(style);
-  }
-  function install() {
-    installStyles();
-    const oldWizard = byId('relphiSkyWizard'); if (oldWizard) oldWizard.remove();
-    root = document.createElement('section'); root.className = 'relphi-v4-root'; root.id = 'relphiSkyBuilderV4';
-    const hero = document.querySelector('.sky-chart-hero-panel'); (hero || document.body).insertAdjacentElement('afterend', root);
-    root.addEventListener('click', handleClick);
-    document.addEventListener('click', function (event) { if (!event.target.closest('#skyCalcRun')) return; if (!state.calculating) prepareRun(); setNativeTarget(state.editingSlot); }, true);
-    if (state.skyA && hasPlacements(state.skyA)) writeJson(SLOT_KEYS.skyA, state.skyA);
-    if (state.skyB && hasPlacements(state.skyB)) writeJson(SLOT_KEYS.skyB, state.skyB);
-    if (externalHandoff) {
-      state.editingSlot = !hasPlacements(state.skyA) ? 'skyA' : 'skyB';
-      state.pendingName = externalHandoff.name;
-      state.step = state.editingSlot === 'skyA' ? 'calculateA' : 'calculateB';
-      if (state.editingSlot === 'skyB') activateComparison();
-    }
-    render();
-    setTimeout(function () {
-      nativeSyncSignature = '';
-      syncNativeSlots(state.skyA, state.skyB);
-      if (externalHandoff) setTimeout(applyExternalHandoff, 0);
-    }, 0);
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true }); else install();
-})();
+      body = '<section class="relphi-v4-card relphi-v4-placement-card"><span class="eyebrow">Placement editor</span><h2>Type, paste, or build placements</h2><p>Both sides are the same sky. Editing either side updates the other and immediately refreshes the wheel and Tarot correspondences.</p><label>Sky name<input id="relphiV4PlacementName" value="' + escapeHtml(state.pendingName || '') + '"></label><div id="relphiV4PlacementMount" class="relphi-v4-placement-mount"></div><div class="relphi-v4-actions"><button class="secondary" type="buttonÛÞ÷¶‰žËkºwµçM±½Ð¤°¹Õ±°¤ì4(€€€€€¥˜€¡¡…ÍA±…•µ•¹ÑÌ¡Á…å±½…¤€˜˜€¡…±Õ±…Ñ¥½¹¥¹¥Í¡•ñðÍ¥¹…ÑÕÉ”¡Á…å±½…¤€„ôôÍÑ…Ñ”¹‰•™½É•M¥¹…ÑÕÉ”¤¤É•ÑÕÉ¸™¥¹¥Í¡M±½Ð¡Á…å±½…¤ì4(€€€€€¥˜€¡…Ñ”¹¹½Ü ¤€´ÍÑ…ÉÑ•€ø€ÔÀÀ€˜˜€½x¡½Õ±¹½Ññ¹Ñ•Èñ¡½½Í”ñ1½…Ñ¥½¸ñ…Ñ”ñQ¥µ”é½¹”¤½¤¹Ñ•ÍÐ¡¹…Ñ¥Ù•MÑ…ÑÕÌ¤¤ìÍÑ…Ñ”¹…±Õ±…Ñ¥¹œ€ô™…±Í”ìÍ…Ù•MÑ…Ñ” ¤ìÍÑ…ÑÕÌ¡¹…Ñ¥Ù•MÑ…ÑÕÌ°ÑÉÕ”¤ìÉ•ÑÕÉ¸ìô4(€€€€€¥˜€¡…Ñ”¹¹½Ü ¤€´ÍÑ…ÉÑ•€ø€ØÀÀÀÀ¤ìÍÑ…Ñ”¹…±Õ±…Ñ¥¹œ€ô™…±Í”ìÍ…Ù•MÑ…Ñ” ¤ìÍÑ…ÑÕÌ Q¡”…±Õ±…Ñ¥½¸‘¥¹½Ð™¥¹¥Í Ý¥Ñ¡¥¸½¹”µ¥¹ÕÑ”¸Q¡”•á¥ÍÑ¥¹œÍ­äÝ…Ì¹½ÐÉ•Á±…•¸œ°ÑÉÕ”¤ìÉ•ÑÕÉ¸ìô4(€€€€€Á½±±Q¥µ•È€ôÍ•ÑQ¥µ•½ÕÐ¡¡•¬°€ÄÔÀ¤ì4(€€€ôì4(€€€Á½±±Q¥µ•È€ôÍ•ÑQ¥µ•½ÕÐ¡¡•¬°€ÄÀÀ¤ì4(€ô4(€™Õ¹Ñ¥½¸ÁÉ•Á…É•IÕ¸ ¤ìÍ•Ñ9…Ñ¥Ù•Q…É•Ð¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð¤ìÍÑ…Ñ”¹‰•™½É•M¥¹…ÑÕÉ”€ôÍ¥¹…ÑÕÉ”¡É•…‘)Í½¸¡Í±½Ñ-•ä¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð¤°¹Õ±°¤¤ìÍÑ…Ñ”¹…±Õ±…Ñ¥¹œ€ôÑÉÕ”ìÍ…Ù•MÑ…Ñ” ¤ìÝ…Ñ¡…±Õ±…Ñ¥½¸ ¤ìô4(€™Õ¹Ñ¥½¸±½…±…Ñ•Q¥µ•Y…±Õ”¡‘…Ñ”¤ì½¹ÍÐÁ…€ô™Õ¹Ñ¥½¸€¡¸¤ìÉ•ÑÕÉ¸MÑÉ¥¹œ¡¸¤¹Á…‘MÑ…ÉÐ È°€œÀœ¤ìôìÉ•ÑÕÉ¸‘…Ñ”¹•ÑÕ±±e•…È ¤€¬€œ´œ€¬Á…¡‘…Ñ”¹•Ñ5½¹Ñ  ¤€¬€Ä¤€¬€œ´œ€¬Á…¡‘…Ñ”¹•Ñ…Ñ” ¤¤€¬€Pœ€¬Á…¡‘…Ñ”¹•Ñ!½ÕÉÌ ¤¤€¬€œèœ€¬Á…¡‘…Ñ”¹•Ñ5¥¹ÕÑ•Ì ¤¤ìô4(€™Õ¹Ñ¥½¸ÉÕ¹!•É•9½Ü ¤ì4(€€€Í•Ñ9…Ñ¥Ù•Q…É•Ð¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð¤ì4(€€€ÍÑ…ÑÕÌ UÍ¥¹œå½ÕÈÕÉÉ•¹ÐÑ¥µ”…¹±½…Ñ¥½»Š˜œ¤ì4(€€€Í•ÑY…±Õ” Í­å…±…Ñ•Q¥µ”œ°±½…±…Ñ•Q¥µ•Y…±Õ”¡¹•Ü…Ñ” ¤¤°™…±Í”¤ì4(€€€Í•ÑY…±Õ” Í­å…±Q¥µ•i½¹”œ°%¹Ñ°¹…Ñ•Q¥µ•½Éµ…Ð ¤¹É•Í½±Ù•‘=ÁÑ¥½¹Ì ¤¹Ñ¥µ•i½¹”ñð€œœ°™…±Í”¤ì4(€€€¥˜€ …¹…Ù¥…Ñ½È¹•½±½…Ñ¥½¸¤ìÍÑ…Ñ”¹…±Õ±…Ñ¥¹œ€ô™…±Í”ìÍÑ…ÑÕÌ ÕÉÉ•¹Ð±½…Ñ¥½¸¥ÌÕ¹…Ù…¥±…‰±”¸¡½½Í”„Ñ¥µ”…¹Á±…”¥¹ÍÑ•…¸œ°ÑÉÕ”¤ìÉ•ÑÕÉ¸ìô4(€€€¹…Ù¥…Ñ½È¹•½±½…Ñ¥½¸¹•ÑÕÉÉ•¹ÑA½Í¥Ñ¥½¸¡™Õ¹Ñ¥½¸€¡Á½Í¥Ñ¥½¸¤ì4(€€€€€Í•ÑY…±Õ” Í­å…±1…Ñ¥ÑÕ‘”œ°Á½Í¥Ñ¥½¸¹½½É‘Ì¹±…Ñ¥ÑÕ‘”¹Ñ½¥á• Ø¤°™…±Í”¤ìÍ•ÑY…±Õ” Í­å…±1½¹¥ÑÕ‘”œ°Á½Í¥Ñ¥½¸¹½½É‘Ì¹±½¹¥ÑÕ‘”¹Ñ½¥á• Ø¤°™…±Í”¤ìÍ•ÑY…±Õ” Í­å…±1½…Ñ¥½¸œ°€ÕÉÉ•¹Ð±½…Ñ¥½¸œ°™…±Í”¤ìÍ•Ñ9…Ñ¥Ù•Q…É•Ð¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð¤ì‰å% Í­å…±IÕ¸œ¤ü¹±¥¬ ¤ì4(€€€ô°™Õ¹Ñ¥½¸€ ¤ìÍÑ…Ñ”¹…±Õ±…Ñ¥¹œ€ô™…±Í”ìÍÑ…ÑÕÌ 1½…Ñ¥½¸Á•Éµ¥ÍÍ¥½¸Ý…ÌÕ¹…Ù…¥±…‰±”¸¡½½Í”„Ñ¥µ”…¹Á±…”¥¹ÍÑ•…¸œ°ÑÉÕ”¤ìô°ì•¹…‰±•!¥¡ÕÉ…äé™…±Í”°Ñ¥µ•½ÕÐèÄÈÀÀÀ°µ…á¥µÕµ”èØÀÀÀÀô¤ì4(€ô4(€™Õ¹Ñ¥½¸…ÁÁ±åáÑ•É¹…±!…¹‘½™˜ ¤ì4(€€€¥˜€ …•áÑ•É¹…±!…¹‘½™˜¤É•ÑÕÉ¸ì4(€€€½¹ÍÐÉ•Á±…¥¹á¥ÍÑ¥¹œ€ô¡…ÍA±…•µ•¹ÑÌ¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€üÍÑ…Ñ”¹Í­å€èÍÑ…Ñ”¹Í­å¤ì4(€€€¥˜€¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ¤…Ñ¥Ù…Ñ•½µÁ…É¥Í½¸ ¤ì4(€€€½Á•¹…±Õ±…Ñ½È¡™…±Í”¤ì4(€€€Í•ÑY…±Õ” Í­å…±…Ñ•Q¥µ”œ°•áÑ•É¹…±!…¹‘½™˜¹‘…Ñ•Q¥µ”°™…±Í”¤ì4(€€€Í•ÑY…±Õ” Í­å…±1…Ñ¥ÑÕ‘”œ°•áÑ•É¹…±!…¹‘½™˜¹±…Ñ¥ÑÕ‘”°™…±Í”¤ì4(€€€Í•ÑY…±Õ” Í­å…±1½¹¥ÑÕ‘”œ°•áÑ•É¹…±!…¹‘½™˜¹±½¹¥ÑÕ‘”°™…±Í”¤ì4(€€€Í•ÑY…±Õ” Í­å…±Q¥µ•i½¹”œ°•áÑ•É¹…±!…¹‘½™˜¹Ñ¥µ•i½¹”°™…±Í”¤ì4(€€€Í•ÑY…±Õ” Í­å…±1½…Ñ¥½¸œ°•áÑ•É¹…±!…¹‘½™˜¹±½…Ñ¥½¸°™…±Í”¤ì4(€€€Í•ÑY…±Õ” Í­å…±9…µ”œ°•áÑ•É¹…±!…¹‘½™˜¹¹…µ”°™…±Í”¤ì4(€€€½¹ÍÐ±•…¹UÉ°€ô¹•ÜUI0¡±½…Ñ¥½¸¹¡É•˜¤ì4(€€€l‘…Ñ•Ñ¥µ”œ°‘…Ñ”œ°±…Ðœ°±½¸œ°Ñèœ°±½Œœ°¹…µ”œ°…±Œœ°Í½ÕÉ”t¹™½É… ¡™Õ¹Ñ¥½¸€¡­•ä¤ì±•…¹UÉ°¹Í•…É¡A…É…µÌ¹‘•±•Ñ”¡­•ä¤ìô¤ì4(€€€¡¥ÍÑ½Éä¹É•Á±…•MÑ…Ñ”¡¡¥ÍÑ½Éä¹ÍÑ…Ñ”°€œœ°±•…¹UÉ°¹Á…Ñ¡¹…µ”€¬±•…¹UÉ°¹Í•…É €¬±•…¹UÉ°¹¡…Í ¤ì4(€€€¥˜€¡É•Á±…¥¹á¥ÍÑ¥¹œ¤ì4(€€€€€ÍÑ…ÑÕÌ Q¡”ÍÕÁÁ±¥•‘…Ñ”°Ñ¥µ”°…¹Á±…”…É”±½…‘•¸M­ä…¹M­ä…É”…±É•…‘ä½ÕÁ¥•°Í¼É•Ù¥•ÜÑ¡”Ù…±Õ•Ì…¹ÉÕ¸Ñ¡”…±Õ±…Ñ¥½¸Ý¡•¸å½Ô…É”É•…‘äÑ¼É•Á±…”Ñ¡¥ÌÍ­ä¸œ¤ì4(€€€€€É•ÑÕÉ¸ì4(€€€ô4(€€€ÍÑ…ÑÕÌ É•…Ñ¥¹œ„Í­ä™É½´Ñ¡”ÍÕÁÁ±¥•‘…Ñ”°Ñ¥µ”°…¹Á±…—‹Š
+³
+˜œ¤ì4(€€€¥˜€¡•áÑ•É¹…±!…¹‘½™˜¹…ÕÑ½IÕ¸€˜˜•áÑ•É¹…±!…¹‘½™˜¹±…Ñ¥ÑÕ‘”€˜˜•áÑ•É¹…±!…¹‘½™˜¹±½¹¥ÑÕ‘”¤Í•ÑQ¥µ•½ÕÐ¡™Õ¹Ñ¥½¸€ ¤ì‰å% Í­å…±IÕ¸œ¤ü¹±¥¬ ¤ìô°€À¤ì4(€ô4(€™Õ¹Ñ¥½¸½Á•¹‘Ù…¹•¡Í±½Ð¤ì4(€€€½¹ÍÐÁ…å±½…€ôÍ±½Ð€ôôô€Í­åœ€üÍÑ…Ñ”¹Í­å€èÍÑ…Ñ”¹Í­åì4(€€€¥˜€ …Á…å±½…¤É•ÑÕÉ¸ì4(€€€ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôÍ±½Ðì4(€€€ÍÑ…Ñ”¹Á•¹‘¥¹9…µ”€ôÁ…å±½…¹¹…µ”ñð€¡Í±½Ð€ôôô€Í­åœ€ü€M­äœ€è€M­äœ¤ì4(€€€Í•Ñ9…Ñ¥Ù•Q…É•Ð¡Í±½Ð¤ì4(€€€ÍÑ…Ñ”¹ÍÑ•À€ôÍ±½Ð€ôôô€Í­åœ€ü€Á±…•µ•¹ÑÍœ€è€Á±…•µ•¹ÑÍœì4(€€€É•¹‘•È ¤ì4(€ô4(€™Õ¹Ñ¥½¸¡…¹‘±•±¥¬¡•Ù•¹Ð¤ì4(€€€½¹ÍÐ…Ñ¥½¸€ô•Ù•¹Ð¹Ñ…É•Ð¹±½Í•ÍÐ m‘…Ñ„µ…Ñ¥½¹tœ¤ü¹‘…Ñ…Í•Ð¹…Ñ¥½¸ì4(€€€½¹ÍÐ•‘¥Ð€ô•Ù•¹Ð¹Ñ…É•Ð¹±½Í•ÍÐ m‘…Ñ„µ•‘¥Ñtœ¤ü¹‘…Ñ…Í•Ð¹•‘¥Ðì4(€€€½¹ÍÐ±•…È€ô•Ù•¹Ð¹Ñ…É•Ð¹±½Í•ÍÐ m‘…Ñ„µ±•…Étœ¤ü¹‘…Ñ…Í•Ð¹±•…Èì4(€€€½¹ÍÐ±½…‘9…µ”€ô•Ù•¹Ð¹Ñ…É•Ð¹±½Í•ÍÐ m‘…Ñ„µ±½…µ¹…µ•tœ¤ü¹‘…Ñ…Í•Ð¹±½…‘9…µ”ì4(€€€¥˜€¡±½…‘9…µ”¤ì4(€€€€€½¹ÍÐÉ•½É€ôÉ•½É‘	å9…µ”¡±½…‘9…µ”¤ì4(€€€€€¥˜€ …É•½É¤É•ÑÕÉ¸ÍÑ…ÑÕÌ Q¡…ÐÍ…Ù•Í­ä¥Ì¹¼±½¹•È…Ù…¥±…‰±”¸œ°ÑÉÕ”¤ì4(€€€€€ÍÑ…Ñ”¹Á•¹‘¥¹9…µ”€ôÉ•½É¹¹…µ”ì4(€€€€€ÍÑ…ÑÕÌ 1½…‘¥¹œƒŠpœ€¬É•½É¹¹…µ”€¬€ŸŠwŠ˜œ¤ì4(€€€€€É•ÑÕÉ¸±½…‘I•½É¡É•½É°ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð¤¹Ñ¡•¸¡™¥¹¥Í¡M±½Ð¤¹…Ñ ¡™Õ¹Ñ¥½¸€¡•ÉÉ½È¤ìÍÑ…ÑÕÌ¡•ÉÉ½È¹µ•ÍÍ…”€¬€œ¸œ°ÑÉÕ”¤ìô¤ì4(€€€ô4(€€€¥˜€¡•‘¥Ð¤É•ÑÕÉ¸½Á•¹‘Ù…¹•¡•‘¥Ð¤ì4(€€€¥˜€¡±•…È¤ì4(€€€€€¥˜€¡±•…È€ôôô€Í­åœ¤ìÍÑ…Ñ”¹Í­å€ô¹Õ±°ìÍÑ…Ñ”¹Í­å€ô¹Õ±°ìÍÑ…Ñ”¹ÍÑ•À€ô€¹…µ•œìÍÑ…Ñ”¹Á•¹‘¥¹9…µ”€ô€œœìÉ•µ½Ù•)Í½¸¡M1=Q}-eL¹Í­å¤ìÉ•µ½Ù•)Í½¸¡M1=Q}-eL¹Í­å¤ìô4(€€€€€•±Í”ìÍÑ…Ñ”¹Í­å€ô¹Õ±°ìÍÑ…Ñ”¹ÍÑ•À€ô€½µÁ±•Ñ•œìÉ•µ½Ù•)Í½¸¡M1=Q}-eL¹Í­å¤ìô4(€€€€€É•ÑÕÉ¸É•¹‘•È ¤ì4(€€€ô4(€€€¥˜€ ……Ñ¥½¸¤É•ÑÕÉ¸ì4(€€€¥˜€¡…Ñ¥½¸€ôôô€Ñ½±”µ¹…µ”µµ•¹Ôœ¤ì4(€€€€€½¹ÍÐµ•¹Ô€ô‰å% É•±Á¡¥XÑ9…µ•5•¹Ôœ¤ì4(€€€€€½¹ÍÐÑ½±”€ô•Ù•¹Ð¹Ñ…É•Ð¹±½Í•ÍÐ m‘…Ñ„µ…Ñ¥½¸ô‰Ñ½±”µ¹…µ”µµ•¹Ô‰tœ¤ì4(€€€€€¥˜€ …µ•¹Ôñð€…Ñ½±”¤É•ÑÕÉ¸ì4(€€€€€µ•¹Ô¹¡¥‘‘•¸€ô€…µ•¹Ô¹¡¥‘‘•¸ì4(€€€€€Ñ½±”¹Í•ÑÑÑÉ¥‰ÕÑ” …É¥„µ•áÁ…¹‘•œ°µ•¹Ô¹¡¥‘‘•¸€ü€™…±Í”œ€è€ÑÉÕ”œ¤ì4(€€€€€É•ÑÕÉ¸ì4(€€€ô4(€€€¥˜€¡…Ñ¥½¸€ôôô€ÍÑ…ÉÐµ½Ù•Èœ¤ì¥˜€ …Ý¥¹‘½Ü¹½¹™¥É´ MÑ…ÉÐ½Ù•ÈüQ¡¥Ì±•…ÉÌÑ¡”ÕÉÉ•¹ÐM­ä…¹M­ä¸M…Ù•Í­¥•ÌÝ¥±°¹½Ð‰”‘•±•Ñ•¸œ¤¤É•ÑÕÉ¸ìÉ•µ½Ù•)Í½¸¡M1=Q}-eL¹Í­å¤ìÉ•µ½Ù•)Í½¸¡M1=Q}-eL¹Í­å¤ì±•…ÉMÑ…Ñ” ¤ì±½…Ñ¥½¸¹É•±½… ¤ìÉ•ÑÕÉ¸ìô4(€€€¥˜€¡…Ñ¥½¸€ôôô€½¹Ñ¥¹Õ”µ¹…µ”œ¤ì4(€€€€€½¹ÍÐ¥¹ÁÕÐ€ô‰å% É•±Á¡¥XÑ9…µ”œ¤ì4(€€€€€ÍÑ…Ñ”¹Á•¹‘¥¹9…µ”€ô¥¹ÁÕÐü¹Ù…±Õ”¹ÑÉ¥´ ¤ñð‘•™…Õ±Ñ9…µ” ¤ì4(€€€€€½¹ÍÐÉ•½É€ôÉ•½É‘	å9…µ”¡ÍÑ…Ñ”¹Á•¹‘¥¹9…µ”¤ì4(€€€€€¥˜€¡É•½É¤ìÍÑ…Ñ”¹ÍÑ•À€ôÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€ü€¹…µ•½¹™±¥Ñœ€è€¹…µ•½¹™±¥ÑœìÉ•ÑÕÉ¸É•¹‘•È ¤ìô4(€€€€€ÍÑ…Ñ”¹ÍÑ•À€ôÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€ü€µ•Ñ¡½‘œ€è€µ•Ñ¡½‘œìÉ•ÑÕÉ¸É•¹‘•È ¤ì4(€€€ô4(€€€¥˜€¡…Ñ¥½¸€ôôô€‰…¬µ¹…µ”œ¤ìÍÑ…Ñ”¹ÍÑ•À€ôÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€ü€¹…µ•œ€è€¹…µ•œìÉ•ÑÕÉ¸É•¹‘•È ¤ìô4(€€€¥˜€¡…Ñ¥½¸€ôôô€Í…Ù•œ¤ìÍÑ…Ñ”¹ÍÑ•À€ôÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€ü€¡½½Í•M…Ù•‘œ€è€¡½½Í•M…Ù•‘œìÉ•ÑÕÉ¸É•¹‘•È ¤ìô4(€€€¥˜€¡…Ñ¥½¸€ôôô€±½…µ½¹™±¥Ðœ¤ì4(€€€€€½¹ÍÐÉ•½É€ôÉ•½É‘	å9…µ”¡ÍÑ…Ñ”¹Á•¹‘¥¹9…µ”¤ì4(€€€€€¥˜€ …É•½É¤É•ÑÕÉ¸ÍÑ…ÑÕÌ Q¡…ÐÍ…Ù•Í­ä¥Ì¹¼±½¹•È…Ù…¥±…‰±”¸œ°ÑÉÕ”¤ì4(€€€€€ÍÑ…ÑÕÌ 1½…‘¥¹œƒŠpœ€¬É•½É¹¹…µ”€¬€ŸŠwŠ˜œ¤ì4(€€€€€É•ÑÕÉ¸±½…‘I•½É¡É•½É°ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð¤¹Ñ¡•¸¡™¥¹¥Í¡M±½Ð¤¹…Ñ ¡™Õ¹Ñ¥½¸€¡•ÉÉ½È¤ìÍÑ…ÑÕÌ¡•ÉÉ½È¹µ•ÍÍ…”€¬€œ¸œ°ÑÉÕ”¤ìô¤ì4(€€€ô4(€€€¥˜€¡…Ñ¥½¸€ôôô€É•…Ñ”µ½Áäœ¤ì4(€€€€€ÍÑ…Ñ”¹Á•¹‘¥¹9…µ”€ô•Ù•¹Ð¹Ñ…É•Ð¹±½Í•ÍÐ m‘…Ñ„µ½Áäµ¹…µ•tœ¤ü¹‘…Ñ…Í•Ð¹½Áå9…µ”ñð¹•áÑÙ…¥±…‰±•9…µ”¡ÍÑ…Ñ”¹Á•¹‘¥¹9…µ”¤ì4(€€€€€ÍÑ…Ñ”¹ÍÑ•À€ôÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€ü€µ•Ñ¡½‘œ€è€µ•Ñ¡½‘œì4(€€€€€É•ÑÕÉ¸É•¹‘•È ¤ì4(€€€ô4(€€€¥˜€¡…Ñ¥½¸€ôôô€Á±…•µ•¹ÑÌœ¤ìÍÑ…Ñ”¹ÍÑ•À€ôÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€ü€Á±…•µ•¹ÑÍœ€è€Á±…•µ•¹ÑÍœìÉ•ÑÕÉ¸É•¹‘•È ¤ìô4(€€€¥˜€¡…Ñ¥½¸€ôôô€…±Õ±…Ñ”œ¤ìÍÑ…Ñ”¹ÍÑ•À€ôÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€ü€…±Õ±…Ñ•œ€è€…±Õ±…Ñ•œìÉ•ÑÕÉ¸É•¹‘•È ¤ìô4(€€€¥˜€¡…Ñ¥½¸€ôôô€‰…¬µµ•Ñ¡½œ¤ì4(€€€€€±½Í•…±Õ±…Ñ½È ¤ì4(€€€€€½¹ÍÐ•‘¥Ñ¥¹á¥ÍÑ¥¹œ€ô¡…ÍA±…•µ•¹ÑÌ¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€üÍÑ…Ñ”¹Í­å€èÍÑ…Ñ”¹Í­å¤ì4(€€€€€ÍÑ…Ñ”¹ÍÑ•À€ô•‘¥Ñ¥¹á¥ÍÑ¥¹œ€ü€¡¡…ÍA±…•µ•¹ÑÌ¡ÍÑ…Ñ”¹Í­å¤€ü€½µÁ±•Ñ•	½Ñ œ€è€½µÁ±•Ñ•œ¤€è€¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€ü€µ•Ñ¡½‘œ€è€µ•Ñ¡½‘œ¤ì4(€€€€€É•ÑÕÉ¸É•¹‘•È ¤ì4(€€€ô4(€€€¥˜€¡…Ñ¥½¸€ôôô€±½…µÍ…Ù•œ¤ì4(€€€€€½¹ÍÐÉ•½É€ôÉ•½É‘	å9…µ”¡‰å% É•±Á¡¥XÑM…Ù•‘M•±•Ðœ¤ü¹Ù…±Õ”ñð€œœ¤ì4(€€€€€¥˜€ …É•½É¤É•ÑÕÉ¸ÍÑ…ÑÕÌ ¡½½Í”„Í…Ù•Í­ä¸œ°ÑÉÕ”¤ì4(€€€€€ÍÑ…ÑÕÌ 1½…‘¥¹œƒŠpœ€¬É•½É¹¹…µ”€¬€ŸŠwŠ˜œ¤ì4(€€€€€É•ÑÕÉ¸±½…‘I•½É¡É•½É°ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð¤¹Ñ¡•¸¡™¥¹¥Í¡M±½Ð¤¹…Ñ ¡™Õ¹Ñ¥½¸€¡•ÉÉ½È¤ìÍÑ…ÑÕÌ¡•ÉÉ½È¹µ•ÍÍ…”€¬€œ¸œ°ÑÉÕ”¤ìô¤ì4(€€€ô4(€€€¥˜€¡…Ñ¥½¸€ôôô€µ…¹Õ…°œ¤É•ÑÕÉ¸½Á•¹…±Õ±…Ñ½È¡ÑÉÕ”¤ì4(€€€¥˜€¡…Ñ¥½¸€ôôô€¡•É”µ¹½Üœ¤É•ÑÕÉ¸ÉÕ¹!•É•9½Ü ¤ì4(€€€¥˜€¡…Ñ¥½¸€ôôô€™¥¹¥Í µÁ±…•µ•¹ÑÌœ¤ì4(€€€€€½¹ÍÐ­¥¹€ô¹…Ñ¥Ù•-¥¹¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð¤ì4(€€€€€½¹ÍÐ•‘¥Ñ•‘9…µ”€ô‰å% É•±Á¡¥XÑA±…•µ•¹Ñ9…µ”œ¤ü¹Ù…±Õ”¹ÑÉ¥´ ¤ñð‘•™…Õ±Ñ9…µ” ¤ì4(€€€€€Í•ÑY…±Õ” Í­åÉ•…Ñ½É9…µ”œ°•‘¥Ñ•‘9…µ”°™…±Í”¤ì4(€€€€€‰å% Í­åÉ•…Ñ½ÉM…Ù•]¥é…Éœ¤ü¹±¥¬ ¤ì4(€€€€€‰å%¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€ü€Í…Ù•ÕÉÉ•¹ÑM­äœ€è€Í…Ù•¡…ÉÐœ¤ü¹±¥¬ ¤ì4(€€€€€½¹ÍÐÁ…å±½…€ôÉ•…‘)Í½¸¡Í±½Ñ-•ä¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð¤°¹Õ±°¤ì4(€€€€€¥˜€ …¡…ÍA±…•µ•¹ÑÌ¡Á…å±½…¤¤É•ÑÕÉ¸ÍÑ…ÑÕÌ ‘…Ð±•…ÍÐ½¹”Ù…±¥Á±…•µ•¹Ð‰•™½É”½¹Ñ¥¹Õ¥¹œ¸œ°ÑÉÕ”¤ì4(€€€€€ÍÑ…Ñ”¹Á•¹‘¥¹9…µ”€ô•‘¥Ñ•‘9…µ”ñðÁ…å±½…¹¹…µ”ñð‘•™…Õ±Ñ9…µ” ¤ì4(€€€€€É•ÑÕÉ¸™¥¹¥Í¡M±½Ð¡Á…å±½…¤ì4(€€€ô4(€€€¥˜€¡…Ñ¥½¸€ôôô€…‘µ½µÁ…É¥Í½¸œ¤ì…Ñ¥Ù…Ñ•½µÁ…É¥Í½¸ ¤ìÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ô€Í­åœìÍÑ…Ñ”¹Á•¹‘¥¹9…µ”€ô€œœìÍÑ…Ñ”¹ÍÑ•À€ô€¹…µ•œìÉ•ÑÕÉ¸É•¹‘•È ¤ìô4(€€€¥˜€¡…Ñ¥½¸€ôôô€‰…¬µ½µÁ±•Ñ”œ¤ìÍÑ…Ñ”¹ÍÑ•À€ôÍÑ…Ñ”¹Í­å€ü€½µÁ±•Ñ•	½Ñ œ€è€½µÁ±•Ñ•œìÉ•ÑÕÉ¸É•¹‘•È ¤ìô4(€ô4(€™Õ¹Ñ¥½¸¥¹ÍÑ…±±MÑå±•Ì ¤ì4(€€€¥˜€¡‰å% É•±Á¡¥XÑMÑå±•Ìœ¤¤É•ÑÕÉ¸ì4(€€€½¹ÍÐÍÑå±”€ô‘½Õµ•¹Ð¹É•…Ñ•±•µ•¹Ð ÍÑå±”œ¤ì4(€€€ÍÑå±”¹¥€ô€É•±Á¡¥XÑMÑå±•Ìœì4(€€€ÍÑå±”¹Ñ•áÑ½¹Ñ•¹Ð€ô€œ¹É•±Á¡¤µØÐµÉ½½Ñíµ…É¥¸èÄ¸ÕÉ•´…ÕÑ¼íµ…àµÝ¥‘Ñ èÄÐÀÁÁáô¹É•±Á¡¤µØÐµÑ½½±‰…Éí‘¥ÍÁ±…äé™±•àí©ÕÍÑ¥™äµ½¹Ñ•¹Ðé™±•àµ•¹íµ…É¥¸µ‰½ÑÑ½´èÅÉ•µô¹É•±Á¡¤µØÐµÑ½½±‰…È‰ÕÑÑ½¸°¹É•±Á¡¤µØÐµÉ½½Ð‰ÕÑÑ½¹í…ÁÁ•…É…¹”é¹½¹”í‰½É‘•ÈèÅÁàÍ½±¥É‰„ ÈÈÀ°ÌÄ°ÈÐ°¸ÐÈ¤í‰½É‘•ÈµÉ…‘¥ÕÌèääåÁàí‰…­É½Õ¹è™™˜í½±½ÈèŒÄÄÄí™½¹Ðé¥¹¡•É¥Ðí™½¹ÐµÝ•¥¡ÐèÜÀÀíÁ…‘‘¥¹œè¸áÉ•´€Ä¸ÈÕÉ•´íµ¥¸µ¡•¥¡ÐèÐáÁáô¹É•±Á¡¤µØÐµÉ½½Ð‰ÕÑÑ½¸¹ÁÉ¥µ…Éåí‰…­É½Õ¹è”ÜÈÀÄàí½±½Èè™™˜í‰½É‘•Èµ½±½Èè”ÜÈÀÄàí‰½àµÍ¡…‘½ÜèÀ€ÄÉÁà€ÈÑÁàÉ‰„ ÈÌÄ°ÌÈ°ÈÐ°¸Äà¥ô¹É•±Á¡¤µØÐµ…É°¹É•±Á¡¤µØÐµ½µÁ±•Ñ•í‰…­É½Õ¹è™™™…˜Ðí‰½É‘•ÈèÅÁàÍ½±¥€”Ù‘‘Ðí‰½É‘•ÈµÉ…‘¥ÕÌèÈáÁàíÁ…‘‘¥¹œèÉÉ•µô¹É•±Á¡¤µØÐµ…É Éíµ…É¥¸è¸ÈÕÉ•´€À€¸ÕÉ•µô¹É•±Á¡¤µØÐµ…É±…‰•±í‘¥ÍÁ±…äéÉ¥í…Àè¸ÐÕÉ•´íµ…É¥¸èÄ¸ÈÕÉ•´€Àí™½¹ÐµÝ•¥¡ÐèÜÀÁô¹É•±Á¡¤µØÐµ…É¥¹ÁÕÐ°¹É•±Á¡¤µØÐµ…ÉÍ•±•Ñí™½¹Ðé¥¹¡•É¥ÐíÁ…‘‘¥¹œè¸åÉ•´€ÅÉ•´í‰½É‘•ÈèÅÁàÍ½±¥€áÅˆí‰½É‘•ÈµÉ…‘¥ÕÌèÄáÁàí‰…­É½Õ¹è™™™ô¹É•±Á¡¤µØÐµ¡½¥”µÉ¥‘í‘¥ÍÁ±…äéÉ¥íÉ¥µÑ•µÁ±…Ñ”µ½±Õµ¹ÌéÉ•Á•…Ð È±µ¥¹µ…à À°Å™È¤¤í…ÀèÅÉ•´íµ…É¥¸èÄ¸ÕÉ•´€Áô¹É•±Á¡¤µØÐµ¡½¥”µÉ¥€¹¡½¥•í‰½É‘•ÈµÉ…‘¥ÕÌèÈáÁàíµ¥¸µ¡•¥¡ÐèÄÔÁÁàíÑ•áÐµ…±¥¸é±•™Ðí‘¥ÍÁ±…äé™±•àí™±•àµ‘¥É•Ñ¥½¸é½±Õµ¸í…±¥¸µ¥Ñ•µÌé™±•àµÍÑ…ÉÐí©ÕÍÑ¥™äµ½¹Ñ•¹Ðé•¹Ñ•Éô¹É•±Á¡¤µØÐµ¡½¥”µÉ¥ÍÑÉ½¹í™½¹ÐµÍ¥é”èÄ¸ÉÉ•µô¹É•±Á¡¤µØÐµ¡½¥”µÉ¥ÍÁ…¹í™½¹ÐµÝ•¥¡ÐèÐÀÀí½±½ÈèŒÜÜÜíµ…É¥¸µÑ½Àè¸ÌÕÉ•µô¹É•±Á¡¤µØÐµ…Ñ¥½¹Íí‘¥ÍÁ±…äé™±•àí…Àè¸ÜÕÉ•´í©ÕÍÑ¥™äµ½¹Ñ•¹Ðé™±•àµ•¹‘ô¹É•±Á¡¤µØÐµ½µÁ±•Ñ•í‘¥ÍÁ±…äéÉ¥íÉ¥µÑ•µÁ±…Ñ”µ½±Õµ¹ÌéÉ•Á•…Ð È±µ¥¹µ…à À°Å™È¤¤í…ÀèÅÉ•µô¹É•±Á¡¤µØÐµÍ­äµÁ…¹•±ì´µÍ­äµ…•¹Ðè‘ŒÅ˜Äàí‰…­É½Õ¹è™™˜í‰½É‘•ÈèÅÁàÍ½±¥½±½Èµµ¥à¡¥¸ÍÉˆ±Ù…È ´µÍ­äµ…•¹Ð¤€ÌÀ”°‘‘¤í‰½É‘•ÈµÑ½ÀèÕÁàÍ½±¥Ù…È ´µÍ­äµ…•¹Ð¤í‰½É‘•ÈµÉ…‘¥ÕÌèÈÑÁàíÁ…‘‘¥¹œèÄ¸ÕÉ•´í‘¥ÍÁ±…äé™±•àí©ÕÍÑ¥™äµ½¹Ñ•¹ÐéÍÁ…”µ‰•ÑÝ••¸í…ÀèÅÉ•´í…±¥¸µ¥Ñ•µÌé™±•àµÍÑ…ÉÑô¹É•±Á¡¤µØÐµÍ­äµÁ…¹•°¹¥ÌµÍ­äµ‰ì´µÍ­äµ…•¹ÐèŒÌÄØÙ”Éô¹É•±Á¡¤µØÐµÍ­äµÁ…¹•°€¹•å•‰É½Ýí½±½ÈéÙ…È ´µÍ­äµ…•¹Ð¥ô¹É•±Á¡¤µØÐµÍ­äµÁ…¹•° Ííµ…É¥¸è¸ÈÕÉ•´€Áô¹É•±Á¡¤µØÐµÁ…¹•°µ½Áåíµ¥¸µÝ¥‘Ñ èÀí™±•àèÅô¹É•±Á¡¤µØÐµÁ±…•µ•¹ÐµÁÉ•Ù¥•Ýí±¥ÍÐµÍÑå±”é¹½¹”íµ…É¥¸è¸åÉ•´€À€ÀíÁ…‘‘¥¹œèÀí‘¥ÍÁ±…äéÉ¥íÉ¥µÑ•µÁ±…Ñ”µ½±Õµ¹ÌéÉ•Á•…Ð È±µ¥¹µ…à À°Å™È¤¤í…Àè¸ÌÕÉ•´€¸åÉ•µô¹É•±Á¡¤µØÐµÁ±…•µ•¹ÐµÁÉ•Ù¥•Ü±¥í‘¥ÍÁ±…äé™±•àí©ÕÍÑ¥™äµ½¹Ñ•¹ÐéÍÁ…”µ‰•ÑÝ••¸í…Àè¸ÕÉ•´í™½¹ÐµÍ¥é”è¸àáÉ•´í‰½É‘•Èµ‰½ÑÑ½´èÅÁàÍ½±¥€••”Ý‘˜íÁ…‘‘¥¹œè¸ÈÕÉ•´€Áô¹É•±Á¡¤µØÐµÁ±…•µ•¹ÐµÁÉ•Ù¥•ÜÍÁ…¹í½±½ÈèŒÕ˜ÔÜÔÅô¹É•±Á¡¤µØÐµÁ±…•µ•¹ÐµÁÉ•Ù¥•Ü€¹µ½É•í½±½ÈèŒÙˆØÈÕí‰½É‘•ÈèÁô¹É•±Á¡¤µØÐµÁ…¹•°µ…Ñ¥½¹Íí‘¥ÍÁ±…äé™±•àí…Àè¸ØÕÉ•µô¹…‘µ½µÁ…É¥Í½¹íµ…É¥¸µÑ½ÀèÅÉ•µô¹É•±Á¡¤µØÐµÍÑ…ÑÕÍí‰…­É½Õ¹è™™˜í‰½É‘•Èµ±•™ÐèÑÁàÍ½±¥€”ÜÈÀÄàí‰½É‘•ÈµÉ…‘¥ÕÌèÄÙÁàíÁ…‘‘¥¹œèÅÉ•´€Ä¸ÈÕÉ•µô¹É•±Á¡¤µØÐµÍÑ…ÑÕÌ¹¥Ìµ•ÉÉ½Éí½±½ÈèŒáˆÄÜÄÍô¹•å•‰É½ÝíÑ•áÐµÑÉ…¹Í™½É´éÕÁÁ•É…Í”í±•ÑÑ•ÈµÍÁ…¥¹œè¸ÄÉ•´í½±½Èè”ÐÕÔÔí™½¹ÐµÝ•¥¡ÐèàÀÀí™½¹ÐµÍ¥é”è¸áÉ•µôÍ­å	Õ¥±‘•É5½‘•MÝ¥Ñ¡í‘¥ÍÁ±…äé¹½¹”…¥µÁ½ÉÑ…¹Ñõµ•‘¥„¡µ…àµÝ¥‘Ñ èÜØÁÁà¥ì¹É•±Á¡¤µØÐµ¡½¥”µÉ¥°¹É•±Á¡¤µØÐµ½µÁ±•Ñ•íÉ¥µÑ•µÁ±…Ñ”µ½±Õµ¹ÌèÅ™Éô¹É•±Á¡¤µØÐµÍ­äµÁ…¹•±í…±¥¸µ¥Ñ•µÌé™±•àµÍÑ…ÉÐí™±•àµ‘¥É•Ñ¥½¸é½±Õµ¹ô¹É•±Á¡¤µØÐµÁ…¹•°µ…Ñ¥½¹ÍíÝ¥‘Ñ èÄÀÀ•ô¹É•±Á¡¤µØÐµÁ…¹•°µ…Ñ¥½¹Ì‰ÕÑÑ½¹í™±•àèÅô¹É•±Á¡¤µØÐµ…É°¹É•±Á¡¤µØÐµ½µÁ±•Ñ•íÁ…‘‘¥¹œèÄ¸ÈÕÉ•µõôœì4(€€€ÍÑå±”¹Ñ•áÑ½¹Ñ•¹Ð€¬ô€œ¹É•±Á¡¤µØÐµ¡½¥”µÉ¥‘íÉ¥µÑ•µÁ±…Ñ”µ½±Õµ¹ÌéÉ•Á•…Ð¡…ÕÑ¼µ™¥Ð±µ¥¹µ…à ÈÈÁÁà°Å™È¤¥ô¹É•±Á¡¤µØÐµÁ±…•µ•¹Ðµµ½Õ¹Ð€¹Í­äµÉ•…Ñ½ÈµÍ¥‘”µ‰äµÍ¥‘•íµ…É¥¸èÅÉ•´€Àí‘¥ÍÁ±…äéÉ¥…¥µÁ½ÉÑ…¹Ñô¹É•±Á¡¤µØÐµÁ±…•µ•¹Ðµ…É€¹Í­äµÁ…ÍÑ”µÁ…¹•°°¹É•±Á¡¤µØÐµÁ±…•µ•¹Ðµ…É€¹Á±…•µ•¹Ðµ•¹ÑÉäµ‘É…Ý•Éí‰…­É½Õ¹è™™™ôœì4(€€€ÍÑå±”¹Ñ•áÑ½¹Ñ•¹Ð€¬ô€œ¹É•±Á¡¤µØÐµ½µ‰½‰½áí‘¥ÍÁ±…äéÉ¥íÉ¥µÑ•µÁ±…Ñ”µ½±Õµ¹Ìéµ¥¹µ…à À°Å™È¤…ÕÑ¼í…Àè¸ÕÉ•´íµ…É¥¸èÀ…¥µÁ½ÉÑ…¹Ñô¹É•±Á¡¤µØÐµ½µ‰½‰½à¥¹ÁÕÑíµ¥¸µÝ¥‘Ñ èÁô¹É•±Á¡¤µØÐµ½µ‰½‰½àµÑ½±•í‰½É‘•ÈµÉ…‘¥ÕÌèÄÙÁà…¥µÁ½ÉÑ…¹Ðíµ¥¸µÝ¥‘Ñ èÔÉÁàíÁ…‘‘¥¹œè¸ÙÉ•´…¥µÁ½ÉÑ…¹Ðí™½¹ÐµÍ¥é”èÄ¸ÌÕÉ•µô¹É•±Á¡¤µØÐµ¹…µ”µµ•¹Õíµ…É¥¸è´¸ÜÕÉ•´€À€Ä¸ÈÕÉ•´íÁ…‘‘¥¹œè¸ÕÉ•´í‰…­É½Õ¹è™™˜í‰½É‘•ÈèÅÁàÍ½±¥€áÅˆí‰½É‘•ÈµÉ…‘¥ÕÌèÄáÁàí‰½àµÍ¡…‘½ÜèÀ€ÄÙÁà€ÌÙÁàÉ‰„ ÌÀ°ÈÈ°Äà°¸ÄÈ¤íµ…àµ¡•¥¡ÐèÄåÉ•´í½Ù•É™±½Üé…ÕÑ½ô¹É•±Á¡¤µØÐµ¹…µ”µµ•¹Ôù‰ÕÑÑ½¹íÝ¥‘Ñ èÄÀÀ”í‰½É‘•ÈèÀ…¥µÁ½ÉÑ…¹Ðí‰½É‘•ÈµÉ…‘¥ÕÌèÄÉÁà…¥µÁ½ÉÑ…¹Ðí‘¥ÍÁ±…äé™±•àí©ÕÍÑ¥™äµ½¹Ñ•¹ÐéÍÁ…”µ‰•ÑÝ••¸í…ÀèÅÉ•´íÑ•áÐµ…±¥¸é±•™Ðí‰½àµÍ¡…‘½Üé¹½¹”…¥µÁ½ÉÑ…¹Ñô¹É•±Á¡¤µØÐµ¹…µ”µµ•¹Ôù‰ÕÑÑ½¸é¡½Ù•È°¹É•±Á¡¤µØÐµ¹…µ”µµ•¹Ôù‰ÕÑÑ½¸é™½ÕÌµÙ¥Í¥‰±•í‰…­É½Õ¹è™™˜É•™ô¹É•±Á¡¤µØÐµ¹…µ”µµ•¹Ôù‰ÕÑÑ½¸ÍÁ…¹í½±½ÈèŒÜÜÜí™½¹ÐµÝ•¥¡ÐèÔÀÁô¹É•±Á¡¤µØÐµ¹…µ”µµ•¹ÔÁíµ…É¥¸è¸ÙÉ•´í½±½ÈèŒÜÜÝô¹É•±Á¡¤µØÐµ½¹™±¥Ðµ¡½¥•í‘¥ÍÁ±…äéÉ¥íÉ¥µÑ•µÁ±…Ñ”µ½±Õµ¹ÌéÉ•Á•…Ð¡…ÕÑ¼µ™¥Ð±µ¥¹µ…à ÈÐÁÁà°Å™È¤¤í…ÀèÅÉ•´íµ…É¥¸èÄ¸ÕÉ•´€Áô¹É•±Á¡¤µØÐµ½¹™±¥Ðµ¡½¥”€¹¡½¥•íµ¥¸µ¡•¥¡ÐèÄÐÕÁàíÑ•áÐµ…±¥¸é±•™Ðí‘¥ÍÁ±…äé™±•àí™±•àµ‘¥É•Ñ¥½¸é½±Õµ¸í…±¥¸µ¥Ñ•µÌé™±•àµÍÑ…ÉÐí©ÕÍÑ¥™äµ½¹Ñ•¹Ðé•¹Ñ•Èí‰½É‘•ÈµÉ…‘¥ÕÌèÈÑÁáô¹É•±Á¡¤µØÐµ½¹™±¥Ðµ¡½¥”€¹¡½¥”ÍÁ…¹í™½¹ÐµÝ•¥¡ÐèÐÀÀí½±½ÈèŒÜÜÜíµ…É¥¸µÑ½Àè¸ÌÕÉ•µôœì4(€€€‘½Õµ•¹Ð¹¡•…¹…ÁÁ•¹‘¡¥±¡ÍÑå±”¤ì4(€ô4(€™Õ¹Ñ¥½¸¥¹ÍÑ…±° ¤ì4(€€€¥¹ÍÑ…±±MÑå±•Ì ¤ì4(€€€½¹ÍÐ½±‘]¥é…É€ô‰å% É•±Á¡¥M­å]¥é…Éœ¤ì¥˜€¡½±‘]¥é…É¤½±‘]¥é…É¹É•µ½Ù” ¤ì4(€€€É½½Ð€ô‘½Õµ•¹Ð¹É•…Ñ•±•µ•¹Ð Í•Ñ¥½¸œ¤ìÉ½½Ð¹±…ÍÍ9…µ”€ô€É•±Á¡¤µØÐµÉ½½ÐœìÉ½½Ð¹¥€ô€É•±Á¡¥M­å	Õ¥±‘•ÉXÐœì4(€€€½¹ÍÐ¡•É¼€ô‘½Õµ•¹Ð¹ÅÕ•ÉåM•±•Ñ½È œ¹Í­äµ¡…ÉÐµ¡•É¼µÁ…¹•°œ¤ì€¡¡•É¼ñð‘½Õµ•¹Ð¹‰½‘ä¤¹¥¹Í•ÉÑ‘©…•¹Ñ±•µ•¹Ð …™Ñ•É•¹œ°É½½Ð¤ì4(€€€É½½Ð¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ°¡…¹‘±•±¥¬¤ì4(€€€‘½Õµ•¹Ð¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ°™Õ¹Ñ¥½¸€¡•Ù•¹Ð¤ì¥˜€ …•Ù•¹Ð¹Ñ…É•Ð¹±½Í•ÍÐ œÍ­å…±IÕ¸œ¤¤É•ÑÕÉ¸ì¥˜€ …ÍÑ…Ñ”¹…±Õ±…Ñ¥¹œ¤ÁÉ•Á…É•IÕ¸ ¤ìÍ•Ñ9…Ñ¥Ù•Q…É•Ð¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð¤ìô°ÑÉÕ”¤ì4(€€€¥˜€¡ÍÑ…Ñ”¹Í­å€˜˜¡…ÍA±…•µ•¹ÑÌ¡ÍÑ…Ñ”¹Í­å¤¤ÝÉ¥Ñ•)Í½¸¡M1=Q}-eL¹Í­å°ÍÑ…Ñ”¹Í­å¤ì4(€€€¥˜€¡ÍÑ…Ñ”¹Í­å€˜˜¡…ÍA±…•µ•¹ÑÌ¡ÍÑ…Ñ”¹Í­å¤¤ÝÉ¥Ñ•)Í½¸¡M1=Q}-eL¹Í­å°ÍÑ…Ñ”¹Í­å¤ì4(€€€¥˜€¡•áÑ•É¹…±!…¹‘½™˜¤ì4(€€€€€ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ô€…¡…ÍA±…•µ•¹ÑÌ¡ÍÑ…Ñ”¹Í­å¤€ü€Í­åœ€è€Í­åœì4(€€€€€ÍÑ…Ñ”¹Á•¹‘¥¹9…µ”€ô•áÑ•É¹…±!…¹‘½™˜¹¹…µ”ì4(€€€€€ÍÑ…Ñ”¹ÍÑ•À€ôÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ€ü€…±Õ±…Ñ•œ€è€…±Õ±…Ñ•œì4(€€€€€¥˜€¡ÍÑ…Ñ”¹•‘¥Ñ¥¹M±½Ð€ôôô€Í­åœ¤…Ñ¥Ù…Ñ•½µÁ…É¥Í½¸ ¤ì4(€€€ô4(€€€É•¹‘•È ¤ì4(€€€Í•ÑQ¥µ•½ÕÐ¡™Õ¹Ñ¥½¸€ ¤ì4(€€€€€¹…Ñ¥Ù•Må¹M¥¹…ÑÕÉ”€ô€œœì4(€€€€€Íå¹9…Ñ¥Ù•M±½ÑÌ¡ÍÑ…Ñ”¹Í­å°ÍÑ…Ñ”¹Í­å¤ì4(€€€€€¥˜€¡•áÑ•É¹…±!…¹‘½™˜¤Í•ÑQ¥µ•½ÕÐ¡…ÁÁ±åáÑ•É¹…±!…¹‘½™˜°€À¤ì4(€€€ô°€À¤ì4(€ô4(€¥˜€¡‘½Õµ•¹Ð¹É•…‘åMÑ…Ñ”€ôôô€±½…‘¥¹œœ¤‘½Õµ•¹Ð¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È =5½¹Ñ•¹Ñ1½…‘•œ°¥¹ÍÑ…±°°ì½¹”éÑÉÕ”ô¤ì•±Í”¥¹ÍÑ…±° ¤ì4)ô¤ ¤ì4
