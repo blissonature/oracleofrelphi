@@ -9,8 +9,8 @@ const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=18/);
-assert.match(page, /navloader\.js\?v=39/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=19/);
+assert.match(page, /navloader\.js\?v=40/);
 assert.match(page, /tarot-app\.js\?v=359/);
 
 assert.match(workflow, /Position stickers/);
@@ -40,6 +40,10 @@ assert.match(workflow, /board-history-menu/);
 assert.match(workflow, /Position stickers', 'Choose a saved spread or type your own positions/);
 assert.match(workflow, /Reading details', 'Name the reading and keep its notes together/);
 assert.match(workflow, /Draw settings', 'Choose the cards available for this reading/);
+assert.match(workflow, /move\(spreadSetup, control\('rowPositionStickersQuick'\)\)/);
+assert.match(workflow, /move\(drawSetup, control\('rowAllowReversalsQuick'\)\)/);
+assert.doesNotMatch(workflow, /move\(choices, '\.quick-position-sticker-toggle'\)/);
+assert.match(workflow, /panel\.querySelector\('#rowPositionStickersQuick'\)/);
 assert.match(workflow, /settingsPanel.*Board options/);
 assert.match(workflow, /Reading setup/);
 assert.match(workflow, /Arrange board/);
