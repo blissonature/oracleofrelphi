@@ -100,7 +100,7 @@
     if (!drawer || panel.querySelector('.drawing-board-helpful-tip')) return;
     const tip = document.createElement('aside');
     tip.className = 'drawing-board-helpful-tip';
-    tip.innerHTML = '<strong>Helpful tip</strong><span>You can upload an image as the Drawing Board background in More Board Options.</span>';
+    tip.innerHTML = '<strong>Helpful tip</strong><span>Open Arrange and choose Upload board image to add a custom background.</span>';
     drawer.insertAdjacentElement('afterend', tip);
   }
 
@@ -225,11 +225,21 @@
     const move = (destination, node) => { if (node) destination.appendChild(node); };
 
     const setup = block('setup', 'Reading setup', 'Choose the reading structure and the cards available before drawing.');
-    move(setup, control('rowName'));
-    move(setup, control('rowPositionLabels'));
-    move(setup, control('rowDrawScope'));
-    move(setup, control('rowAllowRepeats'));
-    move(setup, control('rowNotes'));
+    const setupGroup = (kind, title, description) => {
+      const group = document.createElement('section');
+      group.className = 'board-setup-group board-setup-group--' + kind;
+      group.innerHTML = '<header><strong>' + title + '</strong><span>' + description + '</span></header>';
+      setup.appendChild(group);
+      return group;
+    };
+    const spreadSetup = setupGroup('spread', 'Position stickers', 'Choose a saved spread or type your own positions.');
+    const readingSetup = setupGroup('reading', 'Reading details', 'Name the reading and keep its notes together.');
+    const drawSetup = setupGroup('draw', 'Draw settings', 'Choose the cards available for this reading.');
+    move(spreadSetup, control('rowPositionLabels'));
+    move(readingSetup, control('rowName'));
+    move(readingSetup, control('rowNotes'));
+    move(drawSetup, control('rowDrawScope'));
+    move(drawSetup, control('rowAllowRepeats'));
 
     const tools = block('tools', 'Arrange board', 'Reposition, align, rotate, and style the creative workspace.');
     const alignment = document.createElement('div');
@@ -291,6 +301,18 @@
       workspaceToolbar.appendChild(flyout);
     }
 
+    const settingsPanel = panel.querySelector('.card-row-more-options');
+    if (settingsPanel?.querySelector(':scope > summary')) settingsPanel.querySelector(':scope > summary').textContent = 'Board options';
+    const setupSection = panel.querySelector('#board-options-setup');
+    const setupToggle = tabs.querySelector('[aria-controls="board-options-setup"]');
+    if (!panel.querySelector('[data-row-card]') && setupSection && setupToggle) {
+      if (settingsPanel) settingsPanel.open = true;
+      setupSection.classList.remove('is-collapsed');
+      setupToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    organizeBoardHeader(panel);
+
     const envelopeColor = panel.querySelector('#rowEnvelopeColor');
     const applyEnvelopeColor = () => {
       const color = envelopeColor?.value || '#f3f0ea';
@@ -305,6 +327,51 @@
       envelopeColor.addEventListener('input', applyEnvelopeColor);
       envelopeColor.addEventListener('change', applyEnvelopeColor);
       applyEnvelopeColor();
+    }
+  }
+  function organizeBoardHeader(panel) {
+    const toolbar = panel.querySelector('.card-row-icon-toolbar');
+    if (!toolbar || toolbar.classList.contains('is-relphi-modern')) return;
+    toolbar.classList.add('is-relphi-modern');
+    const group = kind => {
+      const node = document.createElement('span');
+      node.className = 'board-header-group board-header-group--' + kind;
+      toolbar.appendChild(node);
+      return node;
+    };
+    const move = (destination, selector) => {
+      const node = toolbar.querySelector(selector);
+      if (node) destination.appendChild(node);
+    };
+    const create = group('create');
+    move(create, '#drawRandomRowCard');
+    move(create, '#addCardPlaceholder');
+    const choices = group('choices');
+    move(choices, '.quick-position-sticker-toggle');
+    move(choices, '.quick-reversal-toggle');
+    const history = group('history');
+    const historyToggle = document.createElement('button');
+    historyToggle.type = 'button';
+    historyToggle.className = 'board-history-toggle';
+    historyToggle.textContent = 'History';
+    historyToggle.setAttribute('aria-expanded', 'false');
+    const historyMenu = document.createElement('span');
+    historyMenu.className = 'board-history-menu';
+    historyMenu.hidden = true;
+    history.append(historyToggle, historyMenu);
+    move(historyMenu, '#undoShortList');
+    move(historyMenu, '#redoShortList');
+    historyToggle.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      historyMenu.hidden = !historyMenu.hidden;
+      historyToggle.setAttribute('aria-expanded', String(!historyMenu.hidden));
+    });
+    historyMenu.addEventListener('click', event => event.stopPropagation());
+    const clear = toolbar.querySelector('#clearShortList');
+    if (clear) {
+      clear.classList.add('board-clear-action');
+      toolbar.appendChild(clear);
     }
   }
   function reinforceReversalUi(panel) {
@@ -373,6 +440,8 @@
     style.textContent += 'html body #shortListPanel .board-options-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important}html body #shortListPanel .card-row-control-block--setup .board-options-body{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:start!important}html body #shortListPanel .card-row-control-block--setup .card-row-name-label{grid-column:1!important}html body #shortListPanel .card-row-control-block--setup .card-row-position-label{grid-column:2!important}html body #shortListPanel .card-row-control-block--setup .card-row-draw-scope-label{grid-column:1!important}html body #shortListPanel .card-row-control-block--setup .spread-toggle{grid-column:2!important;align-self:end!important;min-height:2.35rem!important;display:flex!important;align-items:center!important;gap:.4rem!important}html body #shortListPanel .card-row-control-block--setup .card-row-notes-label{grid-column:1/-1!important}html body #shortListPanel .card-row-control-block--tools .board-options-body{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:end!important}html body #shortListPanel .card-row-control-block--tools .board-snap-control{width:100%!important}html body #shortListPanel .card-row-control-block--tools button{width:100%!important}@media(max-width:760px){html body #shortListPanel .board-options-tabs{grid-template-columns:1fr!important}html body #shortListPanel .card-row-control-block--setup .board-options-body,html body #shortListPanel .card-row-control-block--tools .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .card-row-control-block--setup .card-row-name-label,html body #shortListPanel .card-row-control-block--setup .card-row-position-label,html body #shortListPanel .card-row-control-block--setup .card-row-draw-scope-label,html body #shortListPanel .card-row-control-block--setup .spread-toggle,html body #shortListPanel .card-row-control-block--setup .card-row-notes-label{grid-column:1!important}}';
     style.textContent += 'html body #shortListPanel .board-options-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important}html body #shortListPanel .board-arrange-flyout{position:relative!important;display:block!important;margin-left:auto!important;font-family:Montserrat,"Segoe UI",Arial,sans-serif!important}html body #shortListPanel .board-arrange-trigger{min-height:1.8rem!important;padding:.22rem .55rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font-size:.74rem!important;font-weight:800!important;box-shadow:none!important}html body #shortListPanel .board-arrange-trigger[aria-expanded="true"]{border-color:#dc1f18!important;background:#fff4f1!important;color:#b81712!important}html body #shortListPanel .board-arrange-flyout>.card-row-control-block{position:absolute!important;top:calc(100% + .35rem)!important;right:0!important;z-index:120!important;display:block!important;width:min(34rem,calc(100vw - 3rem))!important;margin:0!important;padding:0!important;border:1px solid #cfc5bc!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 30px rgba(30,20,15,.16)!important}html body #shortListPanel .board-arrange-flyout>.card-row-control-block.is-collapsed{display:none!important}html body #shortListPanel .board-arrange-flyout .board-options-body{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:end!important;gap:.4rem!important;padding:.45rem!important}html body #shortListPanel .board-arrange-flyout .board-snap-control{grid-template-columns:minmax(5.5rem,1fr) 1.8rem minmax(3.4rem,auto) 1.8rem!important;min-height:2.25rem!important;width:100%!important;padding:.2rem!important;border-radius:7px!important}html body #shortListPanel .board-arrange-flyout .board-snap-control>button{min-width:1.8rem!important;min-height:1.8rem!important;padding:.15rem!important;border-radius:6px!important}html body #shortListPanel .board-arrange-flyout label{min-width:0!important;margin:0!important;font-size:.72rem!important;font-weight:800!important;line-height:1.15!important}html body #shortListPanel .board-arrange-flyout button:not(.board-arrange-trigger){min-height:2rem!important;padding:.3rem .5rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font-size:.72rem!important;font-weight:800!important;box-shadow:none!important}html body #shortListPanel .board-arrange-flyout input[type="color"]{width:2.2rem!important;height:1.8rem!important}html body #shortListPanel .short-list-row.card-row-board .card-row-placeholder-item{height:max-content!important;min-height:0!important;max-height:none!important;grid-template-rows:auto auto!important}html body #shortListPanel .short-list-row.card-row-board .card-row-placeholder-item .card-row-drop-card{height:auto!important;min-height:0!important;max-height:none!important;aspect-ratio:500/866!important}@media(max-width:700px){html body #shortListPanel .board-arrange-flyout .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .board-options-tabs{grid-template-columns:1fr!important}}';
     style.textContent += 'html body #shortListPanel .card-row-control-block--setup .card-row-position-label{grid-column:1/-1!important;grid-row:1!important}html body #shortListPanel .card-row-control-block--setup .card-row-name-label{grid-column:1!important;grid-row:2!important}html body #shortListPanel .card-row-control-block--setup .card-row-draw-scope-label{grid-column:2!important;grid-row:2!important}html body #shortListPanel .card-row-control-block--setup .spread-toggle{grid-column:1!important;grid-row:3!important}html body #shortListPanel .card-row-control-block--setup .card-row-notes-label{grid-column:2!important;grid-row:3!important}@media(max-width:760px){html body #shortListPanel .card-row-control-block--setup .card-row-position-label,html body #shortListPanel .card-row-control-block--setup .card-row-name-label,html body #shortListPanel .card-row-control-block--setup .card-row-draw-scope-label,html body #shortListPanel .card-row-control-block--setup .spread-toggle,html body #shortListPanel .card-row-control-block--setup .card-row-notes-label{grid-column:1!important;grid-row:auto!important}}';
+    style.textContent += 'html body #shortListPanel .short-list-drawer.card-row-drawing-board>summary{padding:.65rem .75rem!important;border-bottom:1px solid #e6ddd5!important}html body #shortListPanel .card-row-icon-toolbar.is-relphi-modern{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:.35rem!important}html body #shortListPanel .board-header-group{display:inline-flex!important;align-items:center!important;gap:.3rem!important}html body #shortListPanel .board-header-group--create{padding-right:.35rem!important;border-right:1px solid #ddd4cc!important}html body #shortListPanel .board-header-group--choices{gap:.5rem!important}html body #shortListPanel .board-header-group--choices label{display:inline-flex!important;align-items:center!important;gap:.3rem!important;min-height:2.2rem!important;margin:0!important;padding:.35rem .5rem!important;border:1px solid #d0c7bf!important;border-radius:8px!important;background:#fff!important;font-size:.76rem!important;font-weight:800!important;white-space:nowrap!important}html body #shortListPanel .board-header-group--history{position:relative!important}html body #shortListPanel .board-history-toggle::after{content:" ▾";font-size:.68rem}html body #shortListPanel .board-history-menu{position:absolute!important;right:0!important;top:calc(100% + .35rem)!important;z-index:140!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:.3rem!important;min-width:10rem!important;padding:.4rem!important;border:1px solid #cec4bb!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 28px rgba(30,20,15,.15)!important}html body #shortListPanel .board-history-menu[hidden]{display:none!important}html body #shortListPanel .board-clear-action:not(:disabled){border-color:rgba(220,31,24,.48)!important;color:#b81712!important}html body #shortListPanel .card-row-more-options>summary{text-transform:none!important;letter-spacing:0!important;font-size:.78rem!important}html body #shortListPanel .card-row-control-block--setup .board-options-body{display:grid!important;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr) minmax(0,.85fr)!important;gap:.55rem!important;padding:.55rem!important;align-items:stretch!important}html body #shortListPanel .board-setup-group{display:flex!important;flex-direction:column!important;gap:.45rem!important;min-width:0!important;padding:.6rem!important;border:1px solid #ded5cd!important;border-radius:9px!important;background:#fff!important}html body #shortListPanel .board-setup-group>header{display:flex!important;flex-direction:column!important;gap:.12rem!important;padding-bottom:.42rem!important;border-bottom:1px solid #eee7e1!important}html body #shortListPanel .board-setup-group>header strong{font-size:.82rem!important;line-height:1.15!important}html body #shortListPanel .board-setup-group>header span{color:#6b625c!important;font-size:.68rem!important;font-weight:550!important;line-height:1.25!important}html body #shortListPanel .board-setup-group label{width:100%!important}html body #shortListPanel .board-setup-group .card-row-position-label,html body #shortListPanel .board-setup-group .card-row-name-label,html body #shortListPanel .board-setup-group .card-row-draw-scope-label,html body #shortListPanel .board-setup-group .card-row-notes-label,html body #shortListPanel .board-setup-group .spread-toggle{grid-column:auto!important;grid-row:auto!important}html body #shortListPanel .board-setup-group--draw .spread-toggle{margin-top:auto!important;min-height:2.35rem!important;display:flex!important;align-items:center!important;gap:.4rem!important}html body #shortListPanel .card-row-workspace-toolbar{display:grid!important;grid-template-columns:auto minmax(12rem,1fr) auto auto!important;align-items:center!important;gap:.45rem!important;padding:.38rem .5rem!important;border:1px solid #d5ccc4!important;background:rgba(255,253,248,.95)!important}html body #shortListPanel .card-row-workspace-toolbar .card-row-zoom-label{grid-column:1!important;grid-row:1!important;margin:0!important}html body #shortListPanel .card-row-workspace-toolbar .card-row-pan-note{grid-column:2!important;grid-row:1!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}html body #shortListPanel .card-row-workspace-toolbar #resetCardRowPan{grid-column:3!important;grid-row:1!important}html body #shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{grid-column:4!important;grid-row:1!important;margin:0!important}@media(max-width:940px){html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:1fr 1fr!important}html body #shortListPanel .board-setup-group--spread{grid-column:1/-1!important}}@media(max-width:720px){html body #shortListPanel .short-list-drawer.card-row-drawing-board>summary{align-items:flex-start!important}html body #shortListPanel .card-row-icon-toolbar.is-relphi-modern{justify-content:flex-start!important}html body #shortListPanel .board-header-group--choices{order:4!important;flex-basis:100%!important}html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .board-setup-group--spread{grid-column:auto!important}html body #shortListPanel .card-row-workspace-toolbar{grid-template-columns:1fr auto auto!important}html body #shortListPanel .card-row-workspace-toolbar .card-row-zoom-label{grid-column:1/-1!important;grid-row:1!important}html body #shortListPanel .card-row-workspace-toolbar .card-row-pan-note{grid-column:1!important;grid-row:2!important}html body #shortListPanel .card-row-workspace-toolbar #resetCardRowPan{grid-column:2!important;grid-row:2!important}html body #shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{grid-column:3!important;grid-row:2!important}}';
+    style.textContent += 'html body #shortListPanel .card-row-composer.is-relphi-organized .card-row-control-block--setup .board-options-body{display:grid!important;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr) minmax(0,.85fr)!important;align-items:stretch!important}html body #shortListPanel .card-row-composer.is-relphi-organized .board-setup-group>label{flex:none!important}@media(max-width:940px){html body #shortListPanel .card-row-composer.is-relphi-organized .card-row-control-block--setup .board-options-body{grid-template-columns:1fr 1fr!important}}@media(max-width:720px){html body #shortListPanel .card-row-composer.is-relphi-organized .card-row-control-block--setup .board-options-body{grid-template-columns:1fr!important}}';
     document.head.appendChild(style);
     setArrivalState();
     new MutationObserver(scheduleEnhance).observe(document.body, { childList:true, subtree:true });
@@ -392,6 +461,11 @@
       if (openArrange && !event.target.closest?.('.board-arrange-flyout')) {
         openArrange.classList.add('is-collapsed');
         document.querySelector('#shortListPanel .board-arrange-trigger')?.setAttribute('aria-expanded', 'false');
+      }
+      const openHistory = document.querySelector('#shortListPanel .board-history-menu:not([hidden])');
+      if (openHistory && !event.target.closest?.('.board-header-group--history')) {
+        openHistory.hidden = true;
+        document.querySelector('#shortListPanel .board-history-toggle')?.setAttribute('aria-expanded', 'false');
       }
       const description = event.target.closest?.('#shortListPanel .or-card-layer.relphi-info-layer');
       if (description && !event.target.closest('button,a,input,select,textarea')) {
