@@ -78,6 +78,29 @@
     });
   }
 
+  function loadSkyBuilder(attempt) {
+    const retry = Number(attempt) || 0;
+    const suffix = retry ? '&retry=' + Date.now() : '';
+    const retryOrFail = function () {
+      const failed = document.querySelector('script[src^="sky-chart-builder-v4.js"]');
+      if (failed) failed.remove();
+      if (retry < 2) {
+        setTimeout(function () { loadSkyBuilder(retry + 1); }, 250);
+        return;
+      }
+      showPreviewLoadFailure();
+    };
+    appendScript('sky-chart-builder-v4.js?v=9' + suffix, function () {
+      setTimeout(function () {
+        if (!document.getElementById('relphiSkyBuilderV4')) return retryOrFail();
+        document.getElementById('relphiPreviewLoadFailure')?.remove();
+        appendScript('sky-chart-builder-v4-defaults.js?v=1');
+        appendScript('sky-chart-language-cleanup.js?v=6');
+        appendScript('sky-chart-aspect-keyboard.js?v=1');
+      }, 100);
+    }, retryOrFail);
+  }
+
   function loadEnhancements() {
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
@@ -106,14 +129,7 @@
       ].forEach(function (src) { appendScript(src); });
 
       if (preview === 'pr55') {
-        appendScript('sky-chart-builder-v4.js?v=9', function () {
-          appendScript('sky-chart-builder-v4-defaults.js?v=1');
-          appendScript('sky-chart-language-cleanup.js?v=6');
-          appendScript('sky-chart-aspect-keyboard.js?v=1');
-          setTimeout(function () {
-            if (!document.getElementById('relphiSkyBuilderV4')) showPreviewLoadFailure();
-          }, 1200);
-        }, showPreviewLoadFailure);
+        loadSkyBuilder(0);
       } else {
         [
           'sky-chart-core-workspace-v1.js?v=2',

@@ -60,5 +60,9 @@ assert.match(glyphStyle, /font-size:13px!important/, 'Comparison placement glyph
 assert.match(builder, /String\(minute\)\.padStart\(2, '0'\) \+ '′'/, 'Completed Sky panels must show placement minutes.');
 assert.match(nav, /sky-chart-ph-glyph-style-v1\.js\?v=2/, 'The larger glyph stylesheet must be cache-busted.');
 assert.match(nav, /sky-chart-builder-v4\.js\?v=9/, 'The minute-aware Sky panel must be cache-busted.');
+assert.match(nav, /function loadSkyBuilder\(attempt\)/, 'The Sky Builder loader must recover from a failed asset request.');
+assert.match(nav, /retry < 2/, 'The Sky Builder loader must retry before showing its failure message.');
+assert.match(nav, /failed\.remove\(\)/, 'A failed builder script must be removed before retrying with a fresh cache key.');
+assert.match(page, /navloader\.js\?v=23/, 'The resilient Sky Builder loader must be cache-busted.');
 
 console.log('SkyChart V4 engine, Tarot, storage, calculator, and synchronized-editor checks passed.');
