@@ -38,6 +38,8 @@ assert.match(builder, /toLowerCase\(\) === 'now' \? '' : requestedName/, 'A lega
 assert.match(builder, /data-action="quick-birth"/, 'The quick choices must include My birth chart.');
 assert.match(builder, /Create a new sky/, 'The opening screen must clearly identify the primary new-sky path.');
 assert.match(builder, /value=""/, 'A fresh new-sky field must not inherit the name of a saved sky.');
+assert.match(builder, /data-form-type="other"[\s\S]*readonly/, 'The fresh name field must resist browser autofill until the user chooses to type.');
+assert.match(builder, /freshNameInput\.value = ''[\s\S]*freshNameInput\.readOnly = false/, 'The name field must be blank when it is intentionally activated.');
 assert.match(builder, /Set up My birth chart/, 'The birth-chart quick action must explain its one-time setup purpose.');
 assert.match(builder, /state\.quickPurpose === 'birth' \? 'My birth chart'/, 'Birth-chart setup must save under its stable quick-action name without asking the user to name it.');
 assert.match(builder, /clear === 'skyA' && hasPlacements\(state\.skyB\)/, 'Clearing Sky A must detect an occupied Sky B.');
@@ -78,7 +80,7 @@ assert.match(builder, /setTimeout\(function \(\) \{ byId\('skyCalcRun'\)\?\.clic
 assert.match(builder, /\['datetime','date','lat','lon','tz','loc','name','calc','source'\]/, 'Consumed handoff parameters must be removed before the legacy loader runs.');
 assert.match(planetaryHours, /preview: 'pr55'/, 'Planetary Hours must open the current SkyChart wizard.');
 assert.match(planetaryHours, /source: 'planetary-hours'/, 'Planetary Hours must identify its SkyChart handoff.');
-assert.match(planetaryHours, /navloader\.js\?v=47/, 'Planetary Hours must load the corrected shared navigation controller.');
+assert.match(planetaryHours, /navloader\.js\?v=48/, 'Planetary Hours must load the corrected shared navigation controller.');
 assert.match(menu, /__relphiMenuControllerInstalled/, 'The navigation controller must guard against duplicate initialization.');
 assert.match(menu, /event\.target\.closest\('\.menu-container \.logo-btn, \.menu-container #menuButton'\)/, 'The logo must use one delegated click controller.');
 assert.doesNotMatch(menu, /button\.addEventListener\('click'/, 'The logo must not also receive a second per-button click listener.');
@@ -92,7 +94,7 @@ assert.match(glyphStyle, /font-size:13px!important/, 'Comparison placement glyph
 assert.match(builder, /String\(minute\)\.padStart\(2, '0'\) \+ '′'/, 'Completed Sky panels must show placement minutes.');
 assert.match(nav, /sky-chart-ph-glyph-style-v1\.js\?v=2/, 'The larger glyph stylesheet must be cache-busted.');
 assert.match(nav, /menu\.js\?v=6/, 'The single-toggle menu controller must be cache-busted.');
-assert.match(nav, /sky-chart-builder-v4\.js\?v=15/, 'The direct-handoff Sky Builder must be cache-busted.');
+assert.match(nav, /sky-chart-builder-v4\.js\?v=16/, 'The direct-handoff Sky Builder must be cache-busted.');
 assert.match(nav, /function loadSkyBuilder\(attempt\)/, 'The Sky Builder loader must recover from a failed asset request.');
 assert.match(nav, /function waitForSkyBuilder\(started, onTimeout\)/, 'The loader must wait for builder installation, not merely script download.');
 assert.match(nav, /Date\.now\(\) - started < 8000/, 'The readiness wait must be bounded.');
@@ -100,6 +102,6 @@ assert.match(builder, /relphi:sky-builder-ready/, 'The builder must announce tha
 assert.match(builder, /byId\('relphiPreviewLoadFailure'\)\?\.remove\(\)/, 'A late builder install must remove a stale failure notice.');
 assert.match(nav, /retry < 2/, 'The Sky Builder loader must retry before showing its failure message.');
 assert.match(nav, /failed\.remove\(\)/, 'A failed builder script must be removed before retrying with a fresh cache key.');
-assert.match(page, /navloader\.js\?v=47/, 'The direct-handoff and menu fixes must be cache-busted on Sky Chart.');
+assert.match(page, /navloader\.js\?v=48/, 'The direct-handoff and menu fixes must be cache-busted on Sky Chart.');
 
 console.log('SkyChart V4 engine, Tarot, storage, calculator, and synchronized-editor checks passed.');

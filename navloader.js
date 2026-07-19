@@ -117,7 +117,7 @@
       }
       showPreviewLoadFailure();
     };
-    appendScript('sky-chart-builder-v4.js?v=15' + suffix, function () {
+    appendScript('sky-chart-builder-v4.js?v=16' + suffix, function () {
       waitForSkyBuilder(Date.now(), retryOrFail);
     }, retryOrFail);
   }
