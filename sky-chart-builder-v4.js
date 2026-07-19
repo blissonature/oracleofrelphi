@@ -193,8 +193,11 @@
     root.innerHTML = '<div class="relphi-v4-toolbar"><button type="button" data-action="start-over">Start Over</button></div>' + body + '<p id="relphiV4Status" class="relphi-v4-status" hidden aria-live="polite"></p>';
     const freshNameInput = byId('relphiV4Name');
     if (freshNameInput) {
+      let nameClaimed = false;
       freshNameInput.value = '';
-      const unlockName = function () { freshNameInput.readOnly = false; freshNameInput.value = ''; };
+      const autofillGuard = setInterval(function () { if (!nameClaimed) freshNameInput.value = ''; }, 50);
+      setTimeout(function () { clearInterval(autofillGuard); if (!nameClaimed) freshNameInput.value = ''; }, 2500);
+      const unlockName = function () { nameClaimed = true; clearInterval(autofillGuard); freshNameInput.readOnly = false; freshNameInput.value = ''; };
       freshNameInput.addEventListener('pointerdown', unlockName, { once:true });
       freshNameInput.addEventListener('focus', unlockName, { once:true });
     }
