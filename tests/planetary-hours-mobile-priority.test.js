@@ -5,6 +5,12 @@ const path = require('node:path');
 const page = fs.readFileSync(path.resolve(__dirname, '..', 'planetaryhours.html'), 'utf8');
 const inline = fs.readFileSync(path.resolve(__dirname, '..', 'planetaryhours.html.inline.js'), 'utf8');
 
+assert.ok(Buffer.byteLength(page, 'utf8') > 150000,
+  'Planetary Hours HTML is unexpectedly short and may have been truncated.');
+assert.ok(Buffer.byteLength(inline, 'utf8') > 80000,
+  'The extracted Planetary Hours script is unexpectedly short and may have been truncated.');
+assert.match(page, /<\/script>\s*<script src="navloader\.js"><\/script>\s*<\/body>\s*<\/html>\s*$/,
+  'Planetary Hours must retain its complete closing script, body, and document tags.');
 assert.match(page, /ph-summary-grid-consolidated > \.ph-living-heptagram-frame \{ order: 1; \}/,
   'The living heptagram must lead the mobile summary.');
 assert.match(page, /ph-summary-grid-consolidated > \.ph-day-frame \{ order: 2; \}/,
