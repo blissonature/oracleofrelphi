@@ -139,7 +139,7 @@
         'sky-chart-stability-hotfix.js?v=1',
         'sky-chart-static-dynamic.js?v=2',
         'sky-chart-aspect-duration-fix.js?v=2',
-        'sky-chart-relationship-language.js?v=4',
+        'sky-chart-relationship-language.js?v=5',
         'sky-chart-related-relationships-v2.js?v=2',
         'sky-ledger-glyph-alignment.js?v=1',
         'sky-ledger-wheel-glyphs.js?v=2',

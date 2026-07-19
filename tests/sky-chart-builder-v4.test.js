@@ -67,6 +67,6 @@ assert.match(builder, /relphi:sky-builder-ready/, 'The builder must announce tha
 assert.match(builder, /byId\('relphiPreviewLoadFailure'\)\?\.remove\(\)/, 'A late builder install must remove a stale failure notice.');
 assert.match(nav, /retry < 2/, 'The Sky Builder loader must retry before showing its failure message.');
 assert.match(nav, /failed\.remove\(\)/, 'A failed builder script must be removed before retrying with a fresh cache key.');
-assert.match(page, /navloader\.js\?v=41/, 'The readiness-aware loader must be cache-busted on Sky Chart.');
+assert.match(page, /navloader\.js\?v=42/, 'The progressive relationship reader and readiness-aware loader must be cache-busted on Sky Chart.');
 
 console.log('SkyChart V4 engine, Tarot, storage, calculator, and synchronized-editor checks passed.');
