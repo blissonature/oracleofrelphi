@@ -78,7 +78,13 @@
   function defaultName() {
     const now = new Date();
     const pad = function (n) { return String(n).padStart(2, '0'); };
-    return 'Untitled Sky ' + now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + pad(now.getMinutes());
+    return 'Unnamed sky · ' + now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  }
+  function automaticName(payload) {
+    const recovered = recoverCalculationProfile(payload || {});
+    const dateTime = byId('skyCalcDateTime')?.value || recovered?.calcProfile?.dateTime || '';
+    const date = String(dateTime).match(/^\d{4}-\d\d-\d\d/)?.[0];
+    return nextAvailableName(date ? 'Unnamed sky · ' + date : defaultName());
   }
   function fire(node, type) { if (node) node.dispatchEvent(new Event(type, { bubbles:true })); }
   function setValue(id, value, notify) { const field = byId(id); if (!field) return; field.value = value == null ? '' : String(value); if (notify !== false) { fire(field, 'input'); fire(field, 'change'); } }
@@ -163,7 +169,9 @@
       const copyName = nextAvailableName(state.pendingName);
       body = '<section class="relphi-v4-card"><span class="eyebrow">Name already saved</span><h2>“' + escapeHtml(state.pendingName) + '” is in your library</h2><p>Load the saved sky, or keep this as a separate sky with the next available computer-style name.</p><div class="relphi-v4-conflict-choice"><button class="choice" type="button" data-action="load-conflict"><strong>Load “' + escapeHtml(state.pendingName) + '”</strong><span>Use the placements already saved under this name.</span></button><button class="choice" type="button" data-action="create-copy" data-copy-name="' + escapeHtml(copyName) + '"><strong>Create “' + escapeHtml(copyName) + '”</strong><span>Keep the saved sky untouched and create a separate entry.</span></button></div><button class="secondary back" type="button" data-action="back-name">Back</button></section>';
     } else if (state.step === 'methodA' || state.step === 'methodB') {
-      body = '<section class="relphi-v4-card"><span class="eyebrow">Create the sky</span><h2>How will you create “' + escapeHtml(state.pendingName) + '”?</h2><div class="relphi-v4-choice-grid"><button class="choice" type="button" data-action="placements"><strong>Enter placements</strong><span>Type, paste, or use fields in one synchronized editor.</span></button><button class="choice" type="button" data-action="calculate"><strong>Calculate a sky</strong><span>Calculate from a time and place.</span></button></div><button class="secondary back" type="button" data-action="back-name">Back</button></section>';
+      const editing = hasPlacements(state.editingSlot === 'skyA' ? state.skyA : state.skyB);
+      const subject = state.pendingName ? '“' + escapeHtml(state.pendingName) + '”' : 'this unnamed sky';
+      body = '<section class="relphi-v4-card"><span class="eyebrow">' + (editing ? 'Edit the sky' : 'Create the sky') + '</span><h2>How will you ' + (editing ? 'edit ' : 'create ') + subject + '?</h2><div class="relphi-v4-choice-grid"><button class="choice" type="button" data-action="placements"><strong>Edit placements</strong><span>Type, paste, or use fields in one synchronized editor.</span></button><button class="choice" type="button" data-action="calculate"><strong>Edit calculation</strong><span>Change the date, time, place, or house system and recalculate.</span></button></div><button class="secondary back" type="button" data-action="back-name">Back</button></section>';
     } else if (state.step === 'chooseSavedA' || state.step === 'chooseSavedB') {
       body = '<section class="relphi-v4-card"><span class="eyebrow">Saved skies</span><h2>Choose a saved sky</h2><label>Saved sky<select id="relphiV4SavedSelect"><option value="">Choose…</option>' + records().map(function (r) { return '<option value="' + escapeHtml(r.name) + '">' + escapeHtml(r.name) + '</option>'; }).join('') + '</select></label><div class="relphi-v4-actions"><button class="secondary" type="button" data-action="back-method">Back</button><button class="primary" type="button" data-action="load-saved">Load sky</button></div></section>';
     } else if (state.step === 'calculateA' || state.step === 'calculateB') {
@@ -191,7 +199,7 @@
     const mount = byId('relphiV4PlacementMount');
     if (!editor || !mount) { status('The placement editor is unavailable.', true); return; }
     setNativeTarget(state.editingSlot);
-    setValue('skyCreatorName', state.pendingName || defaultName(), false);
+    setValue('skyCreatorName', state.pendingName, false);
     mount.appendChild(editor);
     editor.hidden = false;
     editor.querySelector('.placement-entry-drawer')?.setAttribute('open', '');
@@ -219,35 +227,26 @@
     if (!calculator || !mount) { status('The calculator is unavailable.', true); return; }
     if (choices) choices.hidden = true;
     mount.hidden = false; mount.appendChild(calculator); calculator.hidden = false; calculator.open = true; calculator.setAttribute('open', '');
-    setNativeTarget(state.editingSlot); setValue('skyCalcName', state.pendingName || defaultName(), false);
+    setNativeTarget(state.editingSlot); setValue('skyCalcName', state.pendingName, false);
     if (clearFields) ['skyCalcDateTime','skyCalcTimeZone','skyCalcLocation','skyCalcLatitude','skyCalcLongitude'].forEach(function (id) { setValue(id, '', false); });
+    else {
+      const payload = recoverCalculationProfile(state.editingSlot === 'skyB' ? state.skyB : state.skyA);
+      const profile = payload?.calcProfile || {};
+      setValue('skyCalcDateTime', profile.dateTime || '', false);
+      setValue('skyCalcTimeZone', profile.timeZone || '', false);
+      setValue('skyCalcLocation', profile.location || '', false);
+      setValue('skyCalcLatitude', profile.latitude || '', false);
+      setValue('skyCalcLongitude', profile.longitude || '', false);
+      setValue('skyCalcHouseSystem', profile.houseSystem || 'whole-sign', false);
+    }
     byId('skyCalcDateTime')?.focus();
   }
   function loadRecord(record, slot) {
-    return new Promise(function (resolve, reject) {
-      const select = byId('skyCreatorLibrary');
-      const output = slot === 'skyB' ? byId('currentSkyOutput') : byId('chartOutput');
-      if (!record || !select || !output) return reject(new Error('Native saved-sky controls unavailable'));
-      const expected = payloadFromRecord(record);
-      const expectedSignature = signature(expected);
-      setNativeTarget(slot);
-      setValue('skyCreatorName', record.name, false);
-      setValue('skyCalcName', record.name, false);
-      select.value = record.id;
-      fire(select, 'input'); fire(select, 'change');
-      byId('skyCreatorLoad')?.click();
-      const started = Date.now();
-      (function wait() {
-        const payload = readJson(slotKey(slot), null);
-        if (hasPlacements(payload) && signature(payload) === expectedSignature) {
-          const verified = { ...payload, name:record.name };
-          writeJson(slotKey(slot), verified);
-          return resolve(verified);
-        }
-        if (Date.now() - started > 10000) return reject(new Error('Saved sky did not load'));
-        setTimeout(wait, 120);
-      })();
-    });
+    if (!record || !hasPlacements(record)) return Promise.reject(new Error('Saved sky has no usable placements'));
+    setNativeTarget(slot);
+    const payload = recoverCalculationProfile(payloadFromRecord(record));
+    writeJson(slotKey(slot), payload);
+    return Promise.resolve(payload);
   }
   function localDateTimeValueInZone(date, timeZone) {
     try {
@@ -281,12 +280,12 @@
   }
   function finishSlot(payload) {
     if (!hasPlacements(payload)) return;
-    payload = { ...payload, name:state.pendingName || payload.name || defaultName() };
+    payload = { ...payload, name:state.pendingName || automaticName(payload) };
     payload = state.calculating
       ? { ...payload, calcProfile:calculationProfileFromFields(payload) }
       : recoverCalculationProfile(payload);
     writeJson(slotKey(state.editingSlot), payload);
-    if (state.editingSlot === 'skyA') { state.skyA = payload; state.skyB = null; removeJson(SLOT_KEYS.skyB); state.step = 'completeA'; }
+    if (state.editingSlot === 'skyA') { state.skyA = payload; if (hasPlacements(state.skyB)) writeJson(SLOT_KEYS.skyB, state.skyB); state.step = hasPlacements(state.skyB) ? 'completeBoth' : 'completeA'; }
     else { state.skyB = payload; if (state.skyA) writeJson(SLOT_KEYS.skyA, state.skyA); state.step = 'completeBoth'; }
     state.calculating = false; closeCalculator(); render();
   }
@@ -306,10 +305,11 @@
     };
     pollTimer = setTimeout(check, 100);
   }
-  function prepareRun() { setNativeTarget(state.editingSlot); state.beforeSignature = signature(readJson(slotKey(state.editingSlot), null)); state.calculating = true; saveState(); watchCalculation(); }
+  function prepareRun() { setNativeTarget(state.editingSlot); state.pendingName = byId('skyCalcName')?.value.trim() || ''; state.beforeSignature = signature(readJson(slotKey(state.editingSlot), null)); state.calculating = true; saveState(); watchCalculation(); }
   function localDateTimeValue(date) { const pad = function (n) { return String(n).padStart(2, '0'); }; return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes()); }
   function runHereNow() {
     setNativeTarget(state.editingSlot);
+    setValue('skyCalcName', state.pendingName, false);
     status('Using your current time and location…');
     setValue('skyCalcDateTime', localDateTimeValue(new Date()), false);
     setValue('skyCalcTimeZone', Intl.DateTimeFormat().resolvedOptions().timeZone || '', false);
@@ -343,9 +343,9 @@
     const payload = slot === 'skyB' ? state.skyB : state.skyA;
     if (!payload) return;
     state.editingSlot = slot;
-    state.pendingName = payload.name || (slot === 'skyA' ? 'Sky A' : 'Sky B');
+    state.pendingName = payload.name || '';
     setNativeTarget(slot);
-    state.step = slot === 'skyA' ? 'placementsA' : 'placementsB';
+    state.step = slot === 'skyA' ? 'methodA' : 'methodB';
     render();
   }
   function handleClick(event) {
@@ -378,8 +378,8 @@
     if (action === 'start-over') { if (!window.confirm('Start over? This clears the current Sky A and Sky B. Saved skies will not be deleted.')) return; removeJson(SLOT_KEYS.skyA); removeJson(SLOT_KEYS.skyB); clearState(); location.reload(); return; }
     if (action === 'continue-name') {
       const input = byId('relphiV4Name');
-      state.pendingName = input?.value.trim() || defaultName();
-      const record = recordByName(state.pendingName);
+      state.pendingName = input?.value.trim() || '';
+      const record = state.pendingName ? recordByName(state.pendingName) : null;
       if (record) { state.step = state.editingSlot === 'skyA' ? 'nameConflictA' : 'nameConflictB'; return render(); }
       state.step = state.editingSlot === 'skyA' ? 'methodA' : 'methodB'; return render();
     }
@@ -410,17 +410,17 @@
       status('Loading “' + record.name + '”…');
       return loadRecord(record, state.editingSlot).then(finishSlot).catch(function (error) { status(error.message + '.', true); });
     }
-    if (action === 'manual') return openCalculator(true);
+    if (action === 'manual') return openCalculator(!hasPlacements(state.editingSlot === 'skyA' ? state.skyA : state.skyB));
     if (action === 'here-now') return runHereNow();
     if (action === 'finish-placements') {
       const kind = nativeKind(state.editingSlot);
-      const editedName = byId('relphiV4PlacementName')?.value.trim() || defaultName();
+      const editedName = byId('relphiV4PlacementName')?.value.trim() || '';
       setValue('skyCreatorName', editedName, false);
       byId('skyCreatorSaveWizard')?.click();
       byId(state.editingSlot === 'skyB' ? 'saveCurrentSky' : 'saveChart')?.click();
       const payload = readJson(slotKey(state.editingSlot), null);
       if (!hasPlacements(payload)) return status('Add at least one valid placement before continuing.', true);
-      state.pendingName = editedName || payload.name || defaultName();
+      state.pendingName = editedName;
       return finishSlot(payload);
     }
     if (action === 'add-comparison') { activateComparison(); state.editingSlot = 'skyB'; state.pendingName = ''; state.step = 'nameB'; return render(); }
