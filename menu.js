@@ -1,6 +1,12 @@
 // Oracle of Relphi navigation menu behavior.
 // Safe to load before or after nav.html is injected.
 (function () {
+  if (window.__relphiMenuControllerInstalled) {
+    window.RelphiInitMenu?.();
+    return;
+  }
+  window.__relphiMenuControllerInstalled = true;
+
   function setOpen(container, button, isOpen) {
     container.classList.toggle('active', isOpen);
     if (button) button.setAttribute('aria-expanded', String(isOpen));
@@ -19,15 +25,6 @@
       button.setAttribute('aria-controls', menu.id || 'dropdownMenu');
       button.setAttribute('aria-expanded', 'false');
 
-      button.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        setOpen(container, button, !container.classList.contains('active'));
-      });
-
-      menu.addEventListener('click', function (event) {
-        if (event.target.closest('a')) setOpen(container, button, false);
-      });
     });
   }
 
@@ -46,6 +43,19 @@
   }
 
   document.addEventListener('click', function (event) {
+    const button = event.target.closest('.menu-container .logo-btn, .menu-container #menuButton');
+    if (button) {
+      event.preventDefault();
+      const container = button.closest('.menu-container');
+      if (container) setOpen(container, button, !container.classList.contains('active'));
+      return;
+    }
+    const menuLink = event.target.closest('.menu-container .dropdown-menu a');
+    if (menuLink) {
+      const container = menuLink.closest('.menu-container');
+      if (container) setOpen(container, container.querySelector('.logo-btn, #menuButton'), false);
+      return;
+    }
     document.querySelectorAll('.menu-container.active').forEach(function (container) {
       if (!container.contains(event.target)) {
         setOpen(container, container.querySelector('.logo-btn, #menuButton'), false);

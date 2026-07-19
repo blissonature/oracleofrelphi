@@ -325,7 +325,9 @@
     if (!externalHandoff) return;
     const replacingExisting = hasPlacements(state.editingSlot === 'skyA' ? state.skyA : state.skyB);
     if (state.editingSlot === 'skyB') activateComparison();
-    openCalculator(false);
+    const calculateImmediately = externalHandoff.autoRun && externalHandoff.latitude && externalHandoff.longitude;
+    if (calculateImmediately) { closeCalculator(); setNativeTarget(state.editingSlot); }
+    else openCalculator(false);
     setValue('skyCalcDateTime', externalHandoff.dateTime, false);
     setValue('skyCalcLatitude', externalHandoff.latitude, false);
     setValue('skyCalcLongitude', externalHandoff.longitude, false);
@@ -335,12 +337,16 @@
     const cleanUrl = new URL(location.href);
     ['datetime','date','lat','lon','tz','loc','name','calc','source'].forEach(function (key) { cleanUrl.searchParams.delete(key); });
     history.replaceState(history.state, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+    if (calculateImmediately) {
+      status(replacingExisting ? 'Updating the comparison sky from Planetary Hours…' : 'Creating the Planetary Hours sky…');
+      setTimeout(function () { byId('skyCalcRun')?.click(); }, 0);
+      return;
+    }
     if (replacingExisting) {
       status('The supplied date, time, and place are loaded. Sky A and Sky B are already occupied, so review the values and run the calculation when you are ready to replace this sky.');
       return;
     }
     status('Creating a sky from the supplied date, time, and placeâ€¦');
-    if (externalHandoff.autoRun && externalHandoff.latitude && externalHandoff.longitude) setTimeout(function () { byId('skyCalcRun')?.click(); }, 0);
   }
   function openAdvanced(slot) {
     const payload = slot === 'skyB' ? state.skyB : state.skyA;

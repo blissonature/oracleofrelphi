@@ -42,7 +42,7 @@
 
   function initMenu() {
     if (window.RelphiInitMenu) return window.RelphiInitMenu();
-    appendScript('menu.js?v=5');
+    appendScript('menu.js?v=6');
   }
 
   function injectNav(html) {
@@ -117,7 +117,7 @@
       }
       showPreviewLoadFailure();
     };
-    appendScript('sky-chart-builder-v4.js?v=12' + suffix, function () {
+    appendScript('sky-chart-builder-v4.js?v=13' + suffix, function () {
       waitForSkyBuilder(Date.now(), retryOrFail);
     }, retryOrFail);
   }
