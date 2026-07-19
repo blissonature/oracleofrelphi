@@ -314,7 +314,7 @@
       if (calculationFinished) byId(state.editingSlot === 'skyB' ? 'saveCurrentSky' : 'saveChart')?.click();
       const payload = readJson(slotKey(state.editingSlot), null);
       if (hasPlacements(payload) && (calculationFinished || signature(payload) !== state.beforeSignature)) return finishSlot(payload);
-      if (Date.now() - started > 500 && /^(Could not|Enter |Choose |Location |Date |Time zone)/i.test(nativeStatus)) { state.calculating = false; saveState(); status(nativeStatus, true); return; }
+      if (Date.now() - started > 500 && /^(Could not|Enter |Choose |No location|Location search failed|Date |Time zone)/i.test(nativeStatus)) { state.calculating = false; saveState(); status(nativeStatus, true); return; }
       if (Date.now() - started > 60000) { state.calculating = false; saveState(); status('The calculation did not finish within one minute. The existing sky was not replaced.', true); return; }
       pollTimer = setTimeout(check, 150);
     };

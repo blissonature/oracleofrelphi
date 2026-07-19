@@ -65,6 +65,7 @@ assert.match(app, /const enteredTimeZone = \$\('skyCalcTimeZone'\)/, 'The calcul
 assert.doesNotMatch(app, /const resolved = await enrichSkyCalcFromCoordinates\(\{ forceLocation:true, forceTimeZone:true, requireTimeZone:false \}\)/, 'The calculator must not block every run on forced location enrichment.');
 assert.match(builder, /function runAfterLocationSearch\(\)/, 'Calculate must wait for a typed location to resolve before using its coordinates.');
 assert.match(builder, /foundLatitude && foundLongitude[\s\S]*byId\('skyCalcRun'\)\?\.click\(\)/, 'The deferred calculation must run only after both coordinates are present.');
+assert.doesNotMatch(builder, /\|Location \|/, 'A successful Location found message must not cancel the calculation watcher.');
 assert.match(builder, /input\.addEventListener\('focus',[\s\S]*input\.select\(\)/, 'Focusing the location field must make its existing text easy to replace.');
 assert.match(builder, /\['skyCalcLocation','skyCalcLatitude','skyCalcLongitude','skyCalcTimeZone'\]/, 'Clearing a location must also clear its stale coordinate and time-zone data.');
 assert.match(nav, /sky-chart-sign-cusps-v1\.js/, 'The full sign-cusp overlay must load on SkyChart.');
@@ -77,7 +78,7 @@ assert.match(builder, /setTimeout\(function \(\) \{ byId\('skyCalcRun'\)\?\.clic
 assert.match(builder, /\['datetime','date','lat','lon','tz','loc','name','calc','source'\]/, 'Consumed handoff parameters must be removed before the legacy loader runs.');
 assert.match(planetaryHours, /preview: 'pr55'/, 'Planetary Hours must open the current SkyChart wizard.');
 assert.match(planetaryHours, /source: 'planetary-hours'/, 'Planetary Hours must identify its SkyChart handoff.');
-assert.match(planetaryHours, /navloader\.js\?v=46/, 'Planetary Hours must load the corrected shared navigation controller.');
+assert.match(planetaryHours, /navloader\.js\?v=47/, 'Planetary Hours must load the corrected shared navigation controller.');
 assert.match(menu, /__relphiMenuControllerInstalled/, 'The navigation controller must guard against duplicate initialization.');
 assert.match(menu, /event\.target\.closest\('\.menu-container \.logo-btn, \.menu-container #menuButton'\)/, 'The logo must use one delegated click controller.');
 assert.doesNotMatch(menu, /button\.addEventListener\('click'/, 'The logo must not also receive a second per-button click listener.');
@@ -91,7 +92,7 @@ assert.match(glyphStyle, /font-size:13px!important/, 'Comparison placement glyph
 assert.match(builder, /String\(minute\)\.padStart\(2, '0'\) \+ '′'/, 'Completed Sky panels must show placement minutes.');
 assert.match(nav, /sky-chart-ph-glyph-style-v1\.js\?v=2/, 'The larger glyph stylesheet must be cache-busted.');
 assert.match(nav, /menu\.js\?v=6/, 'The single-toggle menu controller must be cache-busted.');
-assert.match(nav, /sky-chart-builder-v4\.js\?v=14/, 'The direct-handoff Sky Builder must be cache-busted.');
+assert.match(nav, /sky-chart-builder-v4\.js\?v=15/, 'The direct-handoff Sky Builder must be cache-busted.');
 assert.match(nav, /function loadSkyBuilder\(attempt\)/, 'The Sky Builder loader must recover from a failed asset request.');
 assert.match(nav, /function waitForSkyBuilder\(started, onTimeout\)/, 'The loader must wait for builder installation, not merely script download.');
 assert.match(nav, /Date\.now\(\) - started < 8000/, 'The readiness wait must be bounded.');
@@ -99,6 +100,6 @@ assert.match(builder, /relphi:sky-builder-ready/, 'The builder must announce tha
 assert.match(builder, /byId\('relphiPreviewLoadFailure'\)\?\.remove\(\)/, 'A late builder install must remove a stale failure notice.');
 assert.match(nav, /retry < 2/, 'The Sky Builder loader must retry before showing its failure message.');
 assert.match(nav, /failed\.remove\(\)/, 'A failed builder script must be removed before retrying with a fresh cache key.');
-assert.match(page, /navloader\.js\?v=46/, 'The direct-handoff and menu fixes must be cache-busted on Sky Chart.');
+assert.match(page, /navloader\.js\?v=47/, 'The direct-handoff and menu fixes must be cache-busted on Sky Chart.');
 
 console.log('SkyChart V4 engine, Tarot, storage, calculator, and synchronized-editor checks passed.');
