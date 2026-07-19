@@ -69,13 +69,40 @@
     note.id = 'relphiPreviewLoadFailure';
     note.className = 'generated-note';
     note.setAttribute('role', 'alert');
-    note.innerHTML = '<strong>The Sky Builder preview did not finish loading.</strong> <button type="button" id="relphiRetryPreview">Retry preview</button>';
+    note.innerHTML = '<strong>The Sky Builder preview did not finish loading.</strong> <button type="button" id="relphiRetryPreview" class="relphi-preview-retry">Retry preview</button>';
     hero.insertAdjacentElement('afterend', note);
-    document.getElementById('relphiRetryPreview')?.addEventListener('click', function () {
+    const retryButton = document.getElementById('relphiRetryPreview');
+    if (retryButton) {
+      Object.assign(retryButton.style, {
+        appearance:'none', border:'1px solid rgba(220,31,24,.45)', borderRadius:'999px',
+        background:'#fff', color:'#111', font:'inherit', fontWeight:'800',
+        marginLeft:'.5rem', padding:'.55rem .9rem', cursor:'pointer'
+      });
+    }
+    retryButton?.addEventListener('click', function () {
       const url = new URL(location.href);
       url.searchParams.set('previewRetry', String(Date.now()));
       location.replace(url.toString());
     });
+  }
+
+  function finishSkyBuilderLoad() {
+    if (!document.getElementById('relphiSkyBuilderV4') || window.__relphiSkyBuilderEnhancementsLoaded) return false;
+    window.__relphiSkyBuilderEnhancementsLoaded = true;
+    document.getElementById('relphiPreviewLoadFailure')?.remove();
+    appendScript('sky-chart-builder-v4-defaults.js?v=1');
+    appendScript('sky-chart-language-cleanup.js?v=6');
+    appendScript('sky-chart-aspect-keyboard.js?v=1');
+    return true;
+  }
+
+  function waitForSkyBuilder(started, onTimeout) {
+    if (finishSkyBuilderLoad()) return;
+    if (Date.now() - started < 8000) {
+      setTimeout(function () { waitForSkyBuilder(started, onTimeout); }, 50);
+      return;
+    }
+    onTimeout();
   }
 
   function loadSkyBuilder(attempt) {
@@ -90,14 +117,8 @@
       }
       showPreviewLoadFailure();
     };
-    appendScript('sky-chart-builder-v4.js?v=9' + suffix, function () {
-      setTimeout(function () {
-        if (!document.getElementById('relphiSkyBuilderV4')) return retryOrFail();
-        document.getElementById('relphiPreviewLoadFailure')?.remove();
-        appendScript('sky-chart-builder-v4-defaults.js?v=1');
-        appendScript('sky-chart-language-cleanup.js?v=6');
-        appendScript('sky-chart-aspect-keyboard.js?v=1');
-      }, 100);
+    appendScript('sky-chart-builder-v4.js?v=10' + suffix, function () {
+      waitForSkyBuilder(Date.now(), retryOrFail);
     }, retryOrFail);
   }
 

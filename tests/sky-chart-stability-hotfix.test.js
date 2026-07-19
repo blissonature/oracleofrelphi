@@ -26,7 +26,10 @@ includes(colors, "row.querySelectorAll('.relationship-line-sample')", 'Old horiz
 excludes(colors, 'points.prepend(sample(aspect))', 'Horizontal samples are still being added to relationship rows.');
 
 excludes(nav, "appendScript('sky-chart-refresh-persistence.js", 'Broken refresh persistence is still loaded.');
-includes(nav, "appendScript('sky-chart-stability-hotfix.js?v=1')", 'Stability layer is not loaded first.');
-includes(nav, "appendScript('sky-chart-relationship-color-hints.js?v=2')", 'Revised color cue is not cache-busted.');
+includes(nav, "'sky-chart-stability-hotfix.js?v=1'", 'Stability layer is not loaded.');
+if (nav.indexOf("'sky-chart-stability-hotfix.js?v=1'") > nav.indexOf("'sky-chart-static-dynamic.js?v=2'")) {
+  throw new Error('Stability layer is not loaded first.');
+}
+includes(nav, "'sky-chart-relationship-color-hints.js?v=3'", 'Revised color cue is not cache-busted.');
 
 console.log('sky chart stability hotfix: ok');

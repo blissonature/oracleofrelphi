@@ -59,10 +59,14 @@ assert.match(glyphStyle, /r:10\.5px!important/, 'Comparison placement circles mu
 assert.match(glyphStyle, /font-size:13px!important/, 'Comparison placement glyphs must be large enough to read.');
 assert.match(builder, /String\(minute\)\.padStart\(2, '0'\) \+ '′'/, 'Completed Sky panels must show placement minutes.');
 assert.match(nav, /sky-chart-ph-glyph-style-v1\.js\?v=2/, 'The larger glyph stylesheet must be cache-busted.');
-assert.match(nav, /sky-chart-builder-v4\.js\?v=9/, 'The minute-aware Sky panel must be cache-busted.');
+assert.match(nav, /sky-chart-builder-v4\.js\?v=10/, 'The readiness-aware Sky Builder must be cache-busted.');
 assert.match(nav, /function loadSkyBuilder\(attempt\)/, 'The Sky Builder loader must recover from a failed asset request.');
+assert.match(nav, /function waitForSkyBuilder\(started, onTimeout\)/, 'The loader must wait for builder installation, not merely script download.');
+assert.match(nav, /Date\.now\(\) - started < 8000/, 'The readiness wait must be bounded.');
+assert.match(builder, /relphi:sky-builder-ready/, 'The builder must announce that installation is complete.');
+assert.match(builder, /byId\('relphiPreviewLoadFailure'\)\?\.remove\(\)/, 'A late builder install must remove a stale failure notice.');
 assert.match(nav, /retry < 2/, 'The Sky Builder loader must retry before showing its failure message.');
 assert.match(nav, /failed\.remove\(\)/, 'A failed builder script must be removed before retrying with a fresh cache key.');
-assert.match(page, /navloader\.js\?v=23/, 'The resilient Sky Builder loader must be cache-busted.');
+assert.match(page, /navloader\.js\?v=41/, 'The readiness-aware loader must be cache-busted on Sky Chart.');
 
 console.log('SkyChart V4 engine, Tarot, storage, calculator, and synchronized-editor checks passed.');
