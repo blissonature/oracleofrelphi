@@ -194,7 +194,10 @@
               <section class="sky-calc-column sky-calc-where-column" aria-label="Where">
                 <h3>Where</h3>
                 <label class="sky-location-search-label">Type a location
-                  <input id="skyCalcLocation" type="text" placeholder="Ex. London, Cairo, Salem MA, or an address">
+                  <span class="sky-location-search-control">
+                    <input id="skyCalcLocation" type="text" placeholder="Ex. London, Cairo, Salem MA, or an address">
+                    <button id="skyCalcLocationClear" class="sky-location-search-clear" type="button" aria-label="Clear location" title="Clear location" hidden>×</button>
+                  </span>
                 </label>
                 <div class="sky-calc-button-row sky-location-button-row">
                   <button id="skyCalcSearchLocation" class="relphi-secondary-action" type="button">Search location</button>
@@ -315,7 +318,7 @@
     </section>
   </main>
 
-  <script src="navloader.js?v=45"></script>
+  <script src="navloader.js?v=46"></script>
   <script src="tarot-cards.js"></script>
   <script src="relphi-locked-interpretations.js?v=207"></script>
   <script src="relphi-card-senses.js?v=1"></script>

@@ -7,10 +7,14 @@
   const LIBRARY_KEY = 'relphiSkyLibraryV1';
   const SLOT_KEYS = { skyA:'relphiSkyChartA', skyB:'relphiSkyChartB' };
   const STATE_KEY = 'relphiSkyBuilderV4State';
-  const state = readSession(STATE_KEY, { step:'nameA', editingSlot:'skyA', pendingName:'', skyA:null, skyB:null, beforeSignature:'', calculating:false });
+  const state = readSession(STATE_KEY, { step:'nameA', editingSlot:'skyA', pendingName:'', quickPurpose:'', skyA:null, skyB:null, beforeSignature:'', calculating:false });
   state.calculating = false;
   state.beforeSignature = '';
-  if ((state.step === 'nameA' || state.step === 'nameB') && String(state.pendingName || '').trim().toLowerCase() === 'now') state.pendingName = '';
+  state.quickPurpose = state.quickPurpose || '';
+  if (state.step === 'nameA' || state.step === 'nameB') {
+    state.pendingName = '';
+    state.quickPurpose = '';
+  }
   if (!hasPlacements(state.skyA)) state.skyA = readJson(SLOT_KEYS.skyA, null);
   if (!hasPlacements(state.skyB)) state.skyB = readJson(SLOT_KEYS.skyB, null);
   if (hasPlacements(state.skyA)) state.step = hasPlacements(state.skyB) ? 'completeBoth' : 'completeA';
@@ -20,6 +24,7 @@
   let placementOriginalParent = null;
   let placementOriginalNext = null;
   let pollTimer = 0;
+  let resolvingLocation = false;
   let nativeSyncSignature = '';
   const externalHandoff = readExternalHandoff();
 
@@ -167,7 +172,7 @@
     if (state.step === 'nameA' || state.step === 'nameB') {
       const slot = state.step === 'nameB' ? 'skyB' : 'skyA';
       const birthRecord = recordByName('My birth chart');
-      body = '<section class="relphi-v4-card"><span class="eyebrow">' + (slot === 'skyA' ? 'First sky' : 'Comparison sky') + '</span><h2>' + (slot === 'skyA' ? 'Choose Sky A' : 'Choose Sky B') + '</h2><div class="relphi-v4-quick-start" aria-label="Quick sky choices"><button class="choice primary" type="button" data-action="quick-now"><strong>Now</strong><span>Use the present moment and your current location. No name required.</span></button><button class="choice" type="button" data-action="quick-birth"><strong>My birth chart</strong><span>' + (birthRecord ? 'Load your saved birth chart.' : 'Enter your birth date, time, and place once, then save it for one-click use.') + '</span></button></div><p class="relphi-v4-or"><span>or</span></p><p>Choose a saved sky or optionally type a name before creating another one.</p><label><span class="relphi-v4-field-label">Sky name or saved sky <small>optional</small></span><span class="relphi-v4-combobox"><input id="relphiV4Name" name="relphi-sky-name" autocomplete="one-time-code" aria-autocomplete="list" aria-controls="relphiV4NameMenu" value="' + escapeHtml(state.pendingName || '') + '"><button class="relphi-v4-combobox-toggle" type="button" data-action="toggle-name-menu" aria-label="Show saved skies" aria-expanded="false">⌄</button></span></label><div id="relphiV4NameMenu" class="relphi-v4-name-menu" role="listbox" hidden>' + (records().length ? records().map(function (record) { return '<button type="button" role="option" data-load-name="' + escapeHtml(record.name) + '"><strong>' + escapeHtml(record.name) + '</strong><span>' + Object.keys(placementEntries(record)).length + ' placements</span></button>'; }).join('') : '<p>No saved skies yet.</p>') + '</div><div class="relphi-v4-actions">' + (slot === 'skyB' ? '<button class="secondary" type="button" data-action="back-complete">Back</button>' : '') + '<button class="primary" type="button" data-action="continue-name">Continue</button></div></section>';
+      body = '<section class="relphi-v4-card"><span class="eyebrow">' + (slot === 'skyA' ? 'First sky' : 'Comparison sky') + '</span><h2>' + (slot === 'skyA' ? 'Create or load Sky A' : 'Create or load Sky B') + '</h2><div class="relphi-v4-quick-start" aria-label="Quick sky choices"><button class="choice primary" type="button" data-action="quick-now"><strong>Now</strong><span>Use the present moment and your current location. No name required.</span></button><button class="choice" type="button" data-action="quick-birth"><strong>My birth chart</strong><span>' + (birthRecord ? 'Load your saved birth chart.' : 'Set it up once with your birth date, time, and place.') + '</span></button></div><p class="relphi-v4-or"><span>or</span></p><div class="relphi-v4-new-sky"><h3>Create a new sky</h3><p>Start here for any other date, time, place, or set of placements. A name is optional.</p><label><span class="relphi-v4-field-label">Optional name or saved sky</span><span class="relphi-v4-combobox"><input id="relphiV4Name" name="relphi-sky-name" autocomplete="one-time-code" aria-autocomplete="list" aria-controls="relphiV4NameMenu" value=""><button class="relphi-v4-combobox-toggle" type="button" data-action="toggle-name-menu" aria-label="Show saved skies" aria-expanded="false">⌄</button></span></label><div id="relphiV4NameMenu" class="relphi-v4-name-menu" role="listbox" hidden>' + (records().length ? records().map(function (record) { return '<button type="button" role="option" data-load-name="' + escapeHtml(record.name) + '"><strong>' + escapeHtml(record.name) + '</strong><span>' + Object.keys(placementEntries(record)).length + ' placements</span></button>'; }).join('') : '<p>No saved skies yet.</p>') + '</div></div><div class="relphi-v4-actions">' + (slot === 'skyB' ? '<button class="secondary" type="button" data-action="back-complete">Back</button>' : '') + '<button class="primary" type="button" data-action="continue-name">Create a sky</button></div></section>';
     } else if (state.step === 'nameConflictA' || state.step === 'nameConflictB') {
       const copyName = nextAvailableName(state.pendingName);
       body = '<section class="relphi-v4-card"><span class="eyebrow">Name already saved</span><h2>“' + escapeHtml(state.pendingName) + '” is in your library</h2><p>Load the saved sky, or keep this as a separate sky with the next available computer-style name.</p><div class="relphi-v4-conflict-choice"><button class="choice" type="button" data-action="load-conflict"><strong>Load “' + escapeHtml(state.pendingName) + '”</strong><span>Use the placements already saved under this name.</span></button><button class="choice" type="button" data-action="create-copy" data-copy-name="' + escapeHtml(copyName) + '"><strong>Create “' + escapeHtml(copyName) + '”</strong><span>Keep the saved sky untouched and create a separate entry.</span></button></div><button class="secondary back" type="button" data-action="back-name">Back</button></section>';
@@ -178,7 +183,8 @@
     } else if (state.step === 'chooseSavedA' || state.step === 'chooseSavedB') {
       body = '<section class="relphi-v4-card"><span class="eyebrow">Saved skies</span><h2>Choose a saved sky</h2><label>Saved sky<select id="relphiV4SavedSelect"><option value="">Choose…</option>' + records().map(function (r) { return '<option value="' + escapeHtml(r.name) + '">' + escapeHtml(r.name) + '</option>'; }).join('') + '</select></label><div class="relphi-v4-actions"><button class="secondary" type="button" data-action="back-method">Back</button><button class="primary" type="button" data-action="load-saved">Load sky</button></div></section>';
     } else if (state.step === 'calculateA' || state.step === 'calculateB') {
-      body = '<section class="relphi-v4-card"><span class="eyebrow">Calculate</span><h2>Choose the time and place</h2><div id="relphiV4CalcChoices" class="relphi-v4-choice-grid"><button class="choice" type="button" data-action="here-now"><strong>Here and Now</strong><span>Use the current time and your present location.</span></button><button class="choice" type="button" data-action="manual"><strong>Choose a time and place</strong><span>Enter another date, time, and location.</span></button></div><div id="relphiV4CalcMount" hidden></div><button class="secondary back" type="button" data-action="back-method">Back</button></section>';
+      const birthSetup = state.quickPurpose === 'birth';
+      body = '<section class="relphi-v4-card"><span class="eyebrow">' + (birthSetup ? 'One-time setup' : 'Calculate') + '</span><h2>' + (birthSetup ? 'Set up My birth chart' : 'Choose the time and place') + '</h2>' + (birthSetup ? '<p>Enter your birth date, time, and place. This sky will be saved as <strong>My birth chart</strong> so the quick button can load it next time.</p>' : '') + '<div id="relphiV4CalcChoices" class="relphi-v4-choice-grid"><button class="choice" type="button" data-action="here-now"><strong>Here and Now</strong><span>Use the current time and your present location.</span></button><button class="choice" type="button" data-action="manual"><strong>Choose a time and place</strong><span>Enter another date, time, and location.</span></button></div><div id="relphiV4CalcMount" hidden></div><button class="secondary back" type="button" data-action="back-method">Back</button></section>';
     } else if (state.step === 'placementsA' || state.step === 'placementsB') {
       body = '<section class="relphi-v4-card relphi-v4-placement-card"><span class="eyebrow">Placement editor</span><h2>Type, paste, or build placements</h2><p>Both sides are the same sky. Editing either side updates the other and immediately refreshes the wheel and Tarot correspondences.</p><label>Sky name<input id="relphiV4PlacementName" value="' + escapeHtml(state.pendingName || '') + '"></label><div id="relphiV4PlacementMount" class="relphi-v4-placement-mount"></div><div class="relphi-v4-actions"><button class="secondary" type="button" data-action="back-method">Back</button><button class="primary" type="button" data-action="finish-placements">Use these placements</button></div></section>';
     } else if (state.step === 'completeA' || state.step === 'completeBoth') {
@@ -230,7 +236,13 @@
     if (!calculator || !mount) { status('The calculator is unavailable.', true); return; }
     if (choices) choices.hidden = true;
     mount.hidden = false; mount.appendChild(calculator); calculator.hidden = false; calculator.open = true; calculator.setAttribute('open', '');
-    setNativeTarget(state.editingSlot); setValue('skyCalcName', state.pendingName, false);
+    setNativeTarget(state.editingSlot);
+    const nameInput = byId('skyCalcName');
+    setValue('skyCalcName', state.quickPurpose === 'birth' ? 'My birth chart' : state.pendingName, false);
+    if (nameInput) {
+      nameInput.readOnly = state.quickPurpose === 'birth';
+      nameInput.title = state.quickPurpose === 'birth' ? 'Saved automatically as My birth chart' : '';
+    }
     if (clearFields) ['skyCalcDateTime','skyCalcTimeZone','skyCalcLocation','skyCalcLatitude','skyCalcLongitude'].forEach(function (id) { setValue(id, '', false); });
     else {
       const payload = recoverCalculationProfile(state.editingSlot === 'skyB' ? state.skyB : state.skyA);
@@ -283,14 +295,14 @@
   }
   function finishSlot(payload) {
     if (!hasPlacements(payload)) return;
-    payload = { ...payload, name:state.pendingName || automaticName(payload) };
+    payload = { ...payload, name:(state.quickPurpose === 'birth' ? 'My birth chart' : state.pendingName) || automaticName(payload) };
     payload = state.calculating
       ? { ...payload, calcProfile:calculationProfileFromFields(payload) }
       : recoverCalculationProfile(payload);
     writeJson(slotKey(state.editingSlot), payload);
     if (state.editingSlot === 'skyA') { state.skyA = payload; if (hasPlacements(state.skyB)) writeJson(SLOT_KEYS.skyB, state.skyB); state.step = hasPlacements(state.skyB) ? 'completeBoth' : 'completeA'; }
     else { state.skyB = payload; if (state.skyA) writeJson(SLOT_KEYS.skyA, state.skyA); state.step = 'completeBoth'; }
-    state.calculating = false; closeCalculator(); render();
+    state.calculating = false; state.quickPurpose = ''; closeCalculator(); render();
   }
   function watchCalculation() {
     clearTimeout(pollTimer);
@@ -308,7 +320,52 @@
     };
     pollTimer = setTimeout(check, 100);
   }
-  function prepareRun() { setNativeTarget(state.editingSlot); state.pendingName = byId('skyCalcName')?.value.trim() || ''; state.beforeSignature = signature(readJson(slotKey(state.editingSlot), null)); state.calculating = true; saveState(); watchCalculation(); }
+  function runAfterLocationSearch() {
+    if (resolvingLocation) return;
+    const location = byId('skyCalcLocation')?.value.trim() || '';
+    const latitude = byId('skyCalcLatitude')?.value.trim() || '';
+    const longitude = byId('skyCalcLongitude')?.value.trim() || '';
+    if (!location || (latitude && longitude)) return;
+    resolvingLocation = true;
+    status('Finding coordinates for ' + location + '…');
+    byId('skyCalcSearchLocation')?.click();
+    const started = Date.now();
+    const check = function () {
+      const foundLatitude = byId('skyCalcLatitude')?.value.trim() || '';
+      const foundLongitude = byId('skyCalcLongitude')?.value.trim() || '';
+      const nativeStatus = byId('skyCalcStatus')?.textContent.trim() || '';
+      if (foundLatitude && foundLongitude) {
+        resolvingLocation = false;
+        byId('skyCalcLocation')?.dispatchEvent(new Event('input', { bubbles:true }));
+        byId('skyCalcRun')?.click();
+        return;
+      }
+      if (/^(No location|Location search failed|Could not search|Type a location)/i.test(nativeStatus) || Date.now() - started > 15000) {
+        resolvingLocation = false;
+        status(nativeStatus || 'That location could not be resolved. Your entries are still here so you can correct the place and try again.', true);
+        return;
+      }
+      setTimeout(check, 100);
+    };
+    setTimeout(check, 100);
+  }
+  function installLocationControls() {
+    const input = byId('skyCalcLocation');
+    const clear = byId('skyCalcLocationClear');
+    if (!input || input.dataset.relphiReplaceReady) return;
+    input.dataset.relphiReplaceReady = 'true';
+    const updateClear = function () { if (clear) clear.hidden = !input.value.trim(); };
+    input.addEventListener('focus', function () { input.select(); });
+    input.addEventListener('input', updateClear);
+    clear?.addEventListener('click', function () {
+      ['skyCalcLocation','skyCalcLatitude','skyCalcLongitude','skyCalcTimeZone'].forEach(function (id) { setValue(id, '', false); });
+      updateClear();
+      input.focus();
+      status('Location cleared. Type another place or use your current location.');
+    });
+    updateClear();
+  }
+  function prepareRun() { setNativeTarget(state.editingSlot); state.pendingName = state.quickPurpose === 'birth' ? 'My birth chart' : (byId('skyCalcName')?.value.trim() || ''); state.beforeSignature = signature(readJson(slotKey(state.editingSlot), null)); state.calculating = true; saveState(); watchCalculation(); }
   function localDateTimeValue(date) { const pad = function (n) { return String(n).padStart(2, '0'); }; return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes()); }
   function runHereNow() {
     setNativeTarget(state.editingSlot);
@@ -371,7 +428,16 @@
     }
     if (edit) return openAdvanced(edit);
     if (clear) {
-      if (clear === 'skyA') { state.skyA = null; state.skyB = null; state.step = 'nameA'; state.pendingName = ''; removeJson(SLOT_KEYS.skyA); removeJson(SLOT_KEYS.skyB); }
+      if (clear === 'skyA' && hasPlacements(state.skyB)) {
+        state.skyA = state.skyB;
+        state.skyB = null;
+        state.editingSlot = 'skyA';
+        state.step = 'completeA';
+        state.pendingName = '';
+        state.quickPurpose = '';
+        writeJson(SLOT_KEYS.skyA, state.skyA);
+        removeJson(SLOT_KEYS.skyB);
+      } else if (clear === 'skyA') { state.skyA = null; state.skyB = null; state.editingSlot = 'skyA'; state.step = 'nameA'; state.pendingName = ''; state.quickPurpose = ''; removeJson(SLOT_KEYS.skyA); removeJson(SLOT_KEYS.skyB); }
       else { state.skyB = null; state.step = 'completeA'; removeJson(SLOT_KEYS.skyB); }
       return render();
     }
@@ -387,14 +453,16 @@
     if (action === 'start-over') { if (!window.confirm('Start over? This clears the current Sky A and Sky B. Saved skies will not be deleted.')) return; removeJson(SLOT_KEYS.skyA); removeJson(SLOT_KEYS.skyB); clearState(); location.reload(); return; }
     if (action === 'quick-now') {
       state.pendingName = '';
+      state.quickPurpose = '';
       state.step = state.editingSlot === 'skyA' ? 'calculateA' : 'calculateB';
       render();
       return setTimeout(runHereNow, 0);
     }
     if (action === 'quick-birth') {
       const record = recordByName('My birth chart');
-      if (record) { state.pendingName = record.name; return loadRecord(record, state.editingSlot).then(finishSlot).catch(function (error) { status(error.message + '.', true); }); }
-      state.pendingName = 'My birth chart';
+      if (record) { state.pendingName = record.name; state.quickPurpose = ''; return loadRecord(record, state.editingSlot).then(finishSlot).catch(function (error) { status(error.message + '.', true); }); }
+      state.pendingName = '';
+      state.quickPurpose = 'birth';
       state.step = state.editingSlot === 'skyA' ? 'calculateA' : 'calculateB';
       render();
       return setTimeout(function () { openCalculator(true); }, 0);
@@ -402,6 +470,7 @@
     if (action === 'continue-name') {
       const input = byId('relphiV4Name');
       state.pendingName = input?.value.trim() || '';
+      state.quickPurpose = '';
       const record = state.pendingName ? recordByName(state.pendingName) : null;
       if (record) { state.step = state.editingSlot === 'skyA' ? 'nameConflictA' : 'nameConflictB'; return render(); }
       state.step = state.editingSlot === 'skyA' ? 'methodA' : 'methodB'; return render();
@@ -423,6 +492,12 @@
     if (action === 'calculate') { state.step = state.editingSlot === 'skyA' ? 'calculateA' : 'calculateB'; return render(); }
     if (action === 'back-method') {
       closeCalculator();
+      if (state.quickPurpose === 'birth') {
+        state.quickPurpose = '';
+        state.pendingName = '';
+        state.step = state.editingSlot === 'skyA' ? 'nameA' : 'nameB';
+        return render();
+      }
       const editingExisting = hasPlacements(state.editingSlot === 'skyA' ? state.skyA : state.skyB);
       state.step = editingExisting ? (hasPlacements(state.skyB) ? 'completeBoth' : 'completeA') : (state.editingSlot === 'skyA' ? 'methodA' : 'methodB');
       return render();
@@ -446,7 +521,7 @@
       state.pendingName = editedName;
       return finishSlot(payload);
     }
-    if (action === 'add-comparison') { activateComparison(); state.editingSlot = 'skyB'; state.pendingName = ''; state.step = 'nameB'; return render(); }
+    if (action === 'add-comparison') { activateComparison(); state.editingSlot = 'skyB'; state.pendingName = ''; state.quickPurpose = ''; state.step = 'nameB'; return render(); }
     if (action === 'back-complete') { state.step = state.skyB ? 'completeBoth' : 'completeA'; return render(); }
   }
   function installStyles() {
@@ -457,6 +532,7 @@
     style.textContent += '.relphi-v4-choice-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}.relphi-v4-placement-mount .sky-creator-side-by-side{margin:1rem 0;display:grid!important}.relphi-v4-placement-card .sky-paste-panel,.relphi-v4-placement-card .placement-entry-drawer{background:#fff}';
     style.textContent += '.relphi-v4-combobox{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;margin:0!important}.relphi-v4-combobox input{min-width:0}.relphi-v4-combobox-toggle{border-radius:16px!important;min-width:52px;padding:.6rem!important;font-size:1.35rem}.relphi-v4-name-menu{margin:-.75rem 0 1.25rem;padding:.5rem;background:#fff;border:1px solid #d8d1cb;border-radius:18px;box-shadow:0 16px 36px rgba(30,22,18,.12);max-height:19rem;overflow:auto}.relphi-v4-name-menu>button{width:100%;border:0!important;border-radius:12px!important;display:flex;justify-content:space-between;gap:1rem;text-align:left;box-shadow:none!important}.relphi-v4-name-menu>button:hover,.relphi-v4-name-menu>button:focus-visible{background:#fff2ef}.relphi-v4-name-menu>button span{color:#777;font-weight:500}.relphi-v4-name-menu p{margin:.6rem;color:#777}.relphi-v4-conflict-choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1.5rem 0}.relphi-v4-conflict-choice .choice{min-height:145px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;border-radius:24px}.relphi-v4-conflict-choice .choice span{font-weight:400;color:#777;margin-top:.35rem}';
     style.textContent += '.relphi-v4-quick-start{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin:1.15rem 0}.relphi-v4-quick-start .choice{min-height:92px;border-radius:20px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}.relphi-v4-quick-start .choice span{margin-top:.25rem;font-weight:500;font-size:.88rem;opacity:.78}.relphi-v4-quick-start .primary span{color:inherit;opacity:.9}.relphi-v4-or{display:flex;align-items:center;gap:.75rem;color:#857b74;font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em}.relphi-v4-or:before,.relphi-v4-or:after{content:"";height:1px;background:#e6ddd4;flex:1}.relphi-v4-field-label{display:flex;align-items:baseline;gap:.45rem}.relphi-v4-field-label small{color:#857b74;font-size:.78em;font-weight:650}@media(max-width:620px){.relphi-v4-quick-start{grid-template-columns:1fr}}';
+    style.textContent += '.relphi-v4-new-sky{margin-top:.75rem;padding:1.15rem 1.25rem;border:1px solid #e6ddd4;border-radius:20px;background:#fff}.relphi-v4-new-sky h3{margin:0 0 .25rem}.relphi-v4-new-sky p{margin:.25rem 0;color:#6f6761}.sky-location-search-control{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.4rem}.sky-location-search-clear{min-width:48px;padding:.55rem!important;border-radius:14px!important}.sky-location-search-clear[hidden]{display:none!important}';
     document.head.appendChild(style);
   }
   function install() {
@@ -466,7 +542,20 @@
     root = document.createElement('section'); root.className = 'relphi-v4-root'; root.id = 'relphiSkyBuilderV4';
     const hero = document.querySelector('.sky-chart-hero-panel'); (hero || document.body).insertAdjacentElement('afterend', root);
     root.addEventListener('click', handleClick);
-    document.addEventListener('click', function (event) { if (!event.target.closest('#skyCalcRun')) return; if (!state.calculating) prepareRun(); setNativeTarget(state.editingSlot); }, true);
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('#skyCalcRun')) return;
+      const missingCoordinates = !(byId('skyCalcLatitude')?.value.trim() && byId('skyCalcLongitude')?.value.trim());
+      const hasLocation = !!byId('skyCalcLocation')?.value.trim();
+      if (!resolvingLocation && missingCoordinates && hasLocation) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        runAfterLocationSearch();
+        return;
+      }
+      if (!state.calculating) prepareRun();
+      setNativeTarget(state.editingSlot);
+    }, true);
+    installLocationControls();
     if (state.skyA && hasPlacements(state.skyA)) writeJson(SLOT_KEYS.skyA, state.skyA);
     if (state.skyB && hasPlacements(state.skyB)) writeJson(SLOT_KEYS.skyB, state.skyB);
     if (externalHandoff) {
