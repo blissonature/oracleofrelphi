@@ -30,6 +30,11 @@ assert.match(builder, /state\.pendingName = input\?\.value\.trim\(\) \|\| ''/, '
 assert.match(builder, /'Unnamed sky · ' \+ date/, 'Unnamed calculated skies must use their actual sky date.');
 assert.match(builder, /Promise\.resolve\(payload\)/, 'Saved skies must load from their authoritative library payload without waiting on unrelated slot persistence.');
 assert.match(builder, /state\.step = hasPlacements\(state\.skyB\) \? 'completeBoth' : 'completeA'/, 'Editing Sky A must preserve an existing Sky B comparison.');
+assert.match(builder, /data-action="quick-now"/, 'The name screen must offer a one-click Now sky action.');
+assert.match(builder, /Use the present moment and your current location\. No name required\./, 'The Now action must explain that naming is unnecessary.');
+assert.match(builder, /state\.pendingName = ''[\s\S]*setTimeout\(runHereNow, 0\)/, 'The Now action must bypass naming and run the current time/location calculation.');
+assert.match(builder, /toLowerCase\(\) === 'now' \? '' : requestedName/, 'A legacy Now handoff must not become a sky name.');
+assert.match(builder, /data-action="quick-birth"/, 'The quick choices must include My birth chart.');
 assert.match(builder, /function calculationProfileFromFields\(payload\)/, 'Calculated skies must retain their entered local date/time profile.');
 assert.match(builder, /function recoverCalculationProfile\(payload\)/, 'Older calculated skies must recover local time from their saved instant and time zone.');
 assert.match(builder, /skyCreatorSaveWizard/, 'The placement editor must commit through the native engine.');
@@ -66,7 +71,7 @@ assert.match(glyphStyle, /r:10\.5px!important/, 'Comparison placement circles mu
 assert.match(glyphStyle, /font-size:13px!important/, 'Comparison placement glyphs must be large enough to read.');
 assert.match(builder, /String\(minute\)\.padStart\(2, '0'\) \+ '′'/, 'Completed Sky panels must show placement minutes.');
 assert.match(nav, /sky-chart-ph-glyph-style-v1\.js\?v=2/, 'The larger glyph stylesheet must be cache-busted.');
-assert.match(nav, /sky-chart-builder-v4\.js\?v=11/, 'The edit-aware Sky Builder must be cache-busted.');
+assert.match(nav, /sky-chart-builder-v4\.js\?v=12/, 'The quick-start Sky Builder must be cache-busted.');
 assert.match(nav, /function loadSkyBuilder\(attempt\)/, 'The Sky Builder loader must recover from a failed asset request.');
 assert.match(nav, /function waitForSkyBuilder\(started, onTimeout\)/, 'The loader must wait for builder installation, not merely script download.');
 assert.match(nav, /Date\.now\(\) - started < 8000/, 'The readiness wait must be bounded.');
@@ -74,6 +79,6 @@ assert.match(builder, /relphi:sky-builder-ready/, 'The builder must announce tha
 assert.match(builder, /byId\('relphiPreviewLoadFailure'\)\?\.remove\(\)/, 'A late builder install must remove a stale failure notice.');
 assert.match(nav, /retry < 2/, 'The Sky Builder loader must retry before showing its failure message.');
 assert.match(nav, /failed\.remove\(\)/, 'A failed builder script must be removed before retrying with a fresh cache key.');
-assert.match(page, /navloader\.js\?v=43/, 'The edit-aware Sky Builder loader must be cache-busted on Sky Chart.');
+assert.match(page, /navloader\.js\?v=44/, 'The quick-start Sky Builder loader must be cache-busted on Sky Chart.');
 
 console.log('SkyChart V4 engine, Tarot, storage, calculator, and synchronized-editor checks passed.');
