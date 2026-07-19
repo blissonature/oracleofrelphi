@@ -81,6 +81,8 @@ assert.match(builder, /setTimeout\(function \(\) \{ byId\('skyCalcRun'\)\?\.clic
 assert.match(builder, /\['datetime','date','lat','lon','tz','loc','name','calc','source'\]/, 'Consumed handoff parameters must be removed before the legacy loader runs.');
 assert.match(planetaryHours, /preview: 'pr55'/, 'Planetary Hours must open the current SkyChart wizard.');
 assert.match(planetaryHours, /source: 'planetary-hours'/, 'Planetary Hours must identify its SkyChart handoff.');
+assert.match(planetaryHours, /<a class="ph-current-wheel-card" id="phCurrentWheelCard"/, 'The full current-placement wheel card must be an accessible link.');
+assert.match(planetaryHours, /el\.dateFieldLink\.href = skyChartHref;[\s\S]*el\.phCurrentWheelCard\.href = skyChartHref;/, 'The button and full wheel card must always share the exact same Sky Chart handoff URL.');
 assert.match(planetaryHours, /navloader\.js\?v=49/, 'Planetary Hours must load the corrected shared navigation controller.');
 assert.match(menu, /__relphiMenuControllerInstalled/, 'The navigation controller must guard against duplicate initialization.');
 assert.match(menu, /event\.target\.closest\('\.menu-container \.logo-btn, \.menu-container #menuButton'\)/, 'The logo must use one delegated click controller.');

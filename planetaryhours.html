@@ -1219,13 +1219,20 @@
 
 
   .ph-current-wheel-card {
+    display:block;
     margin:.65rem auto 0;
     max-width:270px;
     border:1px solid var(--relphi-line);
     border-radius:1rem;
     background:#fff;
     padding:.55rem;
+    color:inherit;
+    text-decoration:none;
+    cursor:pointer;
+    transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease;
   }
+  .ph-current-wheel-card:hover { border-color:rgba(220,31,24,.55); box-shadow:0 8px 22px rgba(0,0,0,.07); transform:translateY(-1px); }
+  .ph-current-wheel-card:focus-visible { outline:3px solid rgba(220,31,24,.3); outline-offset:3px; border-color:var(--relphi-red); }
   .ph-current-wheel-card h3 { margin:.05rem 0 .25rem; font-size:.95rem; }
   .ph-current-wheel { width:min(242px, 100%); height:auto; display:block; margin:0 auto; overflow:visible; }
   .ph-current-wheel .wheel-core { fill:#fffaf7; stroke:#c4c1bc; stroke-width:1.25; }
@@ -1356,7 +1363,7 @@
         <p id="sunTimes">—</p>
         <p class="ph-tiny" id="bridgeInfo">—</p>
         <p><a class="ph-btn ph-datefield-link" id="dateFieldLink" href="sky-chart.html#sky-calc">Jump to this date in Sky Chart</a></p>
-        <div class="ph-current-wheel-card" id="phCurrentWheelCard"><h3>Current placements</h3><div id="phCurrentWheel"><p class="ph-tiny">Planet wheel loads when Astronomy Engine is available.</p></div></div>
+        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this date and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"><p class="ph-tiny">Planet wheel loads when Astronomy Engine is available.</p></div></a>
       </div>
       <div class="ph-hour-frame ph-hour-frame-merged ph-living-heptagram-frame">
         <p class="eyebrow">Living planetary hour</p>
@@ -1611,6 +1618,7 @@
     moonTimes: document.getElementById('moonTimes'),
     moonVisibility: document.getElementById('moonVisibility'),
     dateFieldLink: document.getElementById('dateFieldLink'),
+    phCurrentWheelCard: document.getElementById('phCurrentWheelCard'),
     phCurrentWheel: document.getElementById('phCurrentWheel'),
     ticker: document.getElementById('ticker'),
     tickerFill: document.getElementById('tickerFill'),
@@ -2817,7 +2825,9 @@
         calc: '1',
         name: 'Planetary Hours ' + skyDateTime.replace('T', ' ')
       });
-      el.dateFieldLink.href = 'sky-chart.html?' + skyParams.toString() + '#sky-calc';
+      const skyChartHref = 'sky-chart.html?' + skyParams.toString() + '#sky-calc';
+      el.dateFieldLink.href = skyChartHref;
+      if (el.phCurrentWheelCard) el.phCurrentWheelCard.href = skyChartHref;
     }
     if (el.topHourRuler && cur) el.topHourRuler.innerHTML = pillFor(cur.ruler, cur.ruler.name + ' hour');
     if (el.topHourTime && cur) el.topHourTime.textContent = fmtHM(cur.start) + '–' + fmtHM(cur.end) + ' • ' + (cur.isBright ? 'Bright' : 'Dark') + ' hour ' + cur.index;
