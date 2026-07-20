@@ -135,7 +135,6 @@
 
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
       const preview = new URLSearchParams(location.search).get('preview');
-      if (preview === 'pr55') appendScript('https://raw.githack.com/blissonature/oracleofrelphi/77893ef052303809790277c5320f1dc476d66e15/sky-chart-saved-sky-recovery.js');
       [
         'sky-chart-stability-hotfix.js?v=1',
         'sky-chart-static-dynamic.js?v=2',
@@ -147,25 +146,10 @@
         'sky-chart-sign-cusps-v1.js?v=1',
         'sky-chart-ph-glyph-style-v1.js?v=2',
         'relphi-glyph-bubbles.js?v=2',
-        'sky-chart-provenance-fix.js?v=1',
-        'sky-chart-saved-sky-recovery.js?v=1'
+        'sky-chart-provenance-fix.js?v=1'
       ].forEach(function (src) { appendScript(src); });
 
-      if (preview === 'pr55') {
-        loadSkyBuilder(0);
-      } else {
-        [
-          'sky-chart-core-workspace-v1.js?v=2',
-          'sky-chart-here-now-flow.js?v=2',
-          'sky-chart-wizard-v2.js?v=7',
-          'sky-chart-wizard-native-flow-fix.js?v=4',
-          'sky-chart-save-verification-v1.js?v=1',
-          'sky-chart-active-sky-controls.js?v=3',
-          'sky-chart-language-cleanup.js?v=6',
-          'sky-chart-wizard-ui-state-fix.js?v=6',
-          'sky-chart-aspect-keyboard.js?v=1'
-        ].forEach(function (src) { appendScript(src); });
-      }
+      loadSkyBuilder(0);
       appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
     }
   }
