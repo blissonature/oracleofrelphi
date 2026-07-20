@@ -147,7 +147,8 @@
         'sky-chart-sign-cusps-v1.js?v=1',
         'sky-chart-ph-glyph-style-v1.js?v=2',
         'relphi-glyph-bubbles.js?v=2',
-        'sky-chart-provenance-fix.js?v=1'
+        'sky-chart-provenance-fix.js?v=1',
+        'sky-chart-wheel-label-collision-v1.js?v=4'
       ].forEach(function (src) { appendScript(src); });
 
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
