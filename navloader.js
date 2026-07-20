@@ -149,21 +149,7 @@
         'sky-chart-provenance-fix.js?v=1'
       ].forEach(function (src) { appendScript(src); });
 
-      if (preview === 'pr55') {
-        loadSkyBuilder(0);
-      } else {
-        [
-          'sky-chart-core-workspace-v1.js?v=2',
-          'sky-chart-here-now-flow.js?v=2',
-          'sky-chart-wizard-v2.js?v=7',
-          'sky-chart-wizard-native-flow-fix.js?v=4',
-          'sky-chart-save-verification-v1.js?v=1',
-          'sky-chart-active-sky-controls.js?v=3',
-          'sky-chart-language-cleanup.js?v=6',
-          'sky-chart-wizard-ui-state-fix.js?v=6',
-          'sky-chart-aspect-keyboard.js?v=1'
-        ].forEach(function (src) { appendScript(src); });
-      }
+      loadSkyBuilder(0);
       appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
     }
   }
