@@ -1,12 +1,15 @@
-// Separates crowded outer-wheel placement labels while preserving their wheel anchors.
+// Makes only local, tangential corrections to crowded outer-wheel glyph bubbles.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   const BODY_LABEL = /(?:\b(?:Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|Node|Lilith|Chiron|Fortune|Vertex|Ascendant|Rising|Midheaven|ASC|MC)\b|[☉☽☿♀♂♃♄♅♆♇⯓⚸⚷])/i;
   const SVG_NS = 'http://www.w3.org/2000/svg';
-  const GAP = 8;
-  const EDGE = 18;
+  const MIN_BUBBLE_RADIUS = 8;
+  const MAX_BUBBLE_RADIUS = 24;
+  const BUBBLE_GAP = 5;
+  const MAX_SHIFT = 34;
+  const ITERATIONS = 16;
   let queued = false;
   let running = false;
 
@@ -25,256 +28,289 @@
     return { x:0, y:0, width:width, height:height };
   }
 
-  function pointDistance(x, y, cx, cy) {
-    return Math.hypot(x - cx, y - cy);
+  function distance(x1, y1, x2, y2) {
+    return Math.hypot(x2 - x1, y2 - y1);
   }
 
-  function lineGeometry(line, cx, cy) {
-    const x1 = number(line.getAttribute('x1'));
-    const y1 = number(line.getAttribute('y1'));
-    const x2 = number(line.getAttribute('x2'));
-    const y2 = number(line.getAttribute('y2'));
-    const d1 = pointDistance(x1, y1, cx, cy);
-    const d2 = pointDistance(x2, y2, cx, cy);
-    return d1 <= d2
-      ? { inner:'1', innerX:x1, innerY:y1, outerX:x2, outerY:y2, outerDistance:d2 }
-      : { inner:'2', innerX:x2, innerY:y2, outerX:x1, outerY:y1, outerDistance:d1 };
-  }
+  function restoreLegacy(svg) {
+    svg.querySelectorAll('g[data-relphi-collision-base-transform]').forEach(function (group) {
+      const base = group.dataset.relphiCollisionBaseTransform;
+      if (base === '__none__') group.removeAttribute('transform');
+      else if (base != null) group.setAttribute('transform', base);
+      delete group.dataset.relphiCollisionBaseTransform;
+      delete group.dataset.relphiCollisionDx;
+      delete group.dataset.relphiCollisionDy;
+      delete group.dataset.relphiLabelCollision;
+    });
 
-  function restore(group) {
-    if (!group.dataset.relphiCollisionBaseTransform) {
-      group.dataset.relphiCollisionBaseTransform = group.getAttribute('transform') || '__none__';
-    }
-    const base = group.dataset.relphiCollisionBaseTransform;
-    if (base === '__none__') group.removeAttribute('transform');
-    else group.setAttribute('transform', base);
-
-    group.querySelectorAll('line[data-relphi-collision-line]').forEach(function (line) {
+    svg.querySelectorAll('line[data-relphi-collision-line]').forEach(function (line) {
       ['x1','y1','x2','y2'].forEach(function (name) {
         const stored = line.dataset['relphiCollision' + name.toUpperCase()];
         if (stored != null) line.setAttribute(name, stored);
+        delete line.dataset['relphiCollision' + name.toUpperCase()];
       });
+      delete line.dataset.relphiCollisionLine;
     });
-    group.querySelectorAll('circle[data-relphi-collision-anchor]').forEach(function (circle) {
+
+    svg.querySelectorAll('circle[data-relphi-collision-anchor]').forEach(function (circle) {
       if (circle.dataset.relphiCollisionCx != null) circle.setAttribute('cx', circle.dataset.relphiCollisionCx);
       if (circle.dataset.relphiCollisionCy != null) circle.setAttribute('cy', circle.dataset.relphiCollisionCy);
-    });
-    delete group.dataset.relphiCollisionDx;
-    delete group.dataset.relphiCollisionDy;
-  }
-
-  function qualifyingGroup(group, cx, cy, minRadius) {
-    if (!BODY_LABEL.test(group.textContent || '')) return false;
-    const lines = Array.from(group.querySelectorAll('line'));
-    if (!lines.length || !group.querySelector('circle') || !group.querySelector('text')) return false;
-    return lines.some(function (line) {
-      return lineGeometry(line, cx, cy).outerDistance > minRadius;
+      delete circle.dataset.relphiCollisionCx;
+      delete circle.dataset.relphiCollisionCy;
+      delete circle.dataset.relphiCollisionAnchor;
     });
   }
 
-  function candidateGroups(svg, box) {
-    const cx = box.x + box.width / 2;
-    const cy = box.y + box.height / 2;
-    const minRadius = Math.min(box.width, box.height) * 0.31;
-    const all = Array.from(svg.querySelectorAll('g')).filter(function (group) {
-      return qualifyingGroup(group, cx, cy, minRadius);
+  function restoreLocal(svg) {
+    svg.querySelectorAll('[data-relphi-bubble-base-transform]').forEach(function (node) {
+      const base = node.dataset.relphiBubbleBaseTransform;
+      if (base === '__none__') node.removeAttribute('transform');
+      else node.setAttribute('transform', base);
+      delete node.dataset.relphiBubbleBaseTransform;
+      delete node.dataset.relphiBubbleDx;
+      delete node.dataset.relphiBubbleDy;
     });
-    return all.filter(function (group) {
-      return !all.some(function (other) {
-        return other !== group && group.contains(other);
+
+    svg.querySelectorAll('line[data-relphi-bubble-leader]').forEach(function (line) {
+      ['x1','y1','x2','y2'].forEach(function (name) {
+        const key = 'relphiBubble' + name.toUpperCase();
+        if (line.dataset[key] != null) line.setAttribute(name, line.dataset[key]);
+        delete line.dataset[key];
       });
+      delete line.dataset.relphiBubbleLeader;
     });
   }
 
-  function labelBounds(group, geometry) {
-    const candidates = Array.from(group.querySelectorAll('text, circle, rect')).filter(function (node) {
-      let bounds;
-      try { bounds = node.getBBox(); }
-      catch (_) { return false; }
-      if (!bounds || bounds.width < 0 || bounds.height < 0) return false;
-      const x = bounds.x + bounds.width / 2;
-      const y = bounds.y + bounds.height / 2;
-      const outerDistance = pointDistance(x, y, geometry.outerX, geometry.outerY);
-      const innerDistance = pointDistance(x, y, geometry.innerX, geometry.innerY);
-      return outerDistance <= innerDistance;
-    });
-    if (!candidates.length) return null;
-    let union = null;
-    candidates.forEach(function (node) {
-      let bounds;
-      try { bounds = node.getBBox(); }
-      catch (_) { return; }
-      const next = {
-        x:bounds.x,
-        y:bounds.y,
-        right:bounds.x + bounds.width,
-        bottom:bounds.y + bounds.height
-      };
-      if (!union) union = next;
-      else {
-        union.x = Math.min(union.x, next.x);
-        union.y = Math.min(union.y, next.y);
-        union.right = Math.max(union.right, next.right);
-        union.bottom = Math.max(union.bottom, next.bottom);
-      }
-    });
-    if (!union) return null;
-    return { x:union.x, y:union.y, width:union.right - union.x, height:union.bottom - union.y };
-  }
-
-  function makeItem(group, box) {
-    restore(group);
-    const cx = box.x + box.width / 2;
-    const cy = box.y + box.height / 2;
-    const lines = Array.from(group.querySelectorAll('line'));
-    let leader = null;
-    let geometry = null;
-    lines.forEach(function (line) {
-      const next = lineGeometry(line, cx, cy);
-      if (!geometry || next.outerDistance > geometry.outerDistance) {
-        leader = line;
-        geometry = next;
-      }
-    });
-    if (!leader || !geometry) return null;
-    let bounds = labelBounds(group, geometry);
-    if (!bounds) {
-      try { bounds = group.getBBox(); }
-      catch (_) { return null; }
-    }
-    if (!bounds || !Number.isFinite(bounds.x) || bounds.width <= 0 || bounds.height <= 0) return null;
-
-    const x = bounds.x + bounds.width / 2;
-    const y = bounds.y + bounds.height / 2;
-    const dx = geometry.outerX - cx;
-    const dy = geometry.outerY - cy;
-    const dominantHorizontal = Math.abs(dx) >= Math.abs(dy);
-    const zone = dominantHorizontal ? (dx >= 0 ? 'right' : 'left') : (dy >= 0 ? 'bottom' : 'top');
-
+  function endpoint(line, name) {
     return {
-      group:group,
-      leader:leader,
-      geometry:geometry,
-      x:x,
-      y:y,
-      width:bounds.width,
-      height:bounds.height,
-      zone:zone,
-      proposedX:x,
-      proposedY:y
+      x:number(line.getAttribute('x' + name)),
+      y:number(line.getAttribute('y' + name)),
+      name:name
     };
   }
 
-  function centeredPack(items, axis, min, max) {
-    if (items.length < 2) return;
-    const size = axis === 'x' ? 'width' : 'height';
-    const desired = axis === 'x' ? 'x' : 'y';
-    const proposed = axis === 'x' ? 'proposedX' : 'proposedY';
-    items.sort(function (a, b) { return a[desired] - b[desired]; });
-
-    items[0][proposed] = Math.max(min + items[0][size] / 2, items[0][desired]);
-    for (let index = 1; index < items.length; index += 1) {
-      const previous = items[index - 1];
-      const item = items[index];
-      const separation = previous[size] / 2 + item[size] / 2 + GAP;
-      item[proposed] = Math.max(item[desired], previous[proposed] + separation);
-    }
-
-    const desiredMean = items.reduce(function (sum, item) { return sum + item[desired]; }, 0) / items.length;
-    const packedMean = items.reduce(function (sum, item) { return sum + item[proposed]; }, 0) / items.length;
-    const recenter = desiredMean - packedMean;
-    items.forEach(function (item) { item[proposed] += recenter; });
-
-    const first = items[0];
-    const last = items[items.length - 1];
-    const lowerOverflow = min - (first[proposed] - first[size] / 2);
-    if (lowerOverflow > 0) items.forEach(function (item) { item[proposed] += lowerOverflow; });
-    const upperOverflow = (last[proposed] + last[size] / 2) - max;
-    if (upperOverflow > 0) items.forEach(function (item) { item[proposed] -= upperOverflow; });
-
-    for (let index = items.length - 2; index >= 0; index -= 1) {
-      const item = items[index];
-      const next = items[index + 1];
-      const separation = item[size] / 2 + next[size] / 2 + GAP;
-      item[proposed] = Math.min(item[proposed], next[proposed] - separation);
-    }
-    const finalOverflow = min - (items[0][proposed] - items[0][size] / 2);
-    if (finalOverflow > 0) items.forEach(function (item) { item[proposed] += finalOverflow; });
-  }
-
-  function storeLine(line) {
-    if (line.dataset.relphiCollisionLine) return;
-    line.dataset.relphiCollisionLine = 'true';
-    ['x1','y1','x2','y2'].forEach(function (name) {
-      line.dataset['relphiCollision' + name.toUpperCase()] = line.getAttribute(name) || '0';
+  function bubbleCandidates(group) {
+    return Array.from(group.querySelectorAll('circle')).filter(function (circle) {
+      const radius = number(circle.getAttribute('r'));
+      return radius >= MIN_BUBBLE_RADIUS && radius <= MAX_BUBBLE_RADIUS;
     });
   }
 
-  function anchorCircle(group, geometry, cx, cy) {
-    const circles = Array.from(group.querySelectorAll('circle'));
-    if (!circles.length) return null;
-    const nearest = circles.reduce(function (best, circle) {
-      const x = number(circle.getAttribute('cx'));
-      const y = number(circle.getAttribute('cy'));
-      const distance = pointDistance(x, y, geometry.innerX, geometry.innerY);
-      const centerDistance = pointDistance(x, y, cx, cy);
-      if (!best || distance < best.distance) return { circle:circle, distance:distance, centerDistance:centerDistance };
-      return best;
-    }, null);
-    if (!nearest || nearest.distance > 14 || nearest.centerDistance >= geometry.outerDistance - 12) return null;
-    return nearest.circle;
-  }
-
-  function apply(item, box) {
-    const dx = item.proposedX - item.x;
-    const dy = item.proposedY - item.y;
-    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
-
-    const group = item.group;
-    const base = group.dataset.relphiCollisionBaseTransform;
-    const translate = 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')';
-    group.setAttribute('transform', base === '__none__' ? translate : base + ' ' + translate);
-    group.dataset.relphiCollisionDx = String(dx);
-    group.dataset.relphiCollisionDy = String(dy);
-    group.dataset.relphiLabelCollision = 'true';
-
-    storeLine(item.leader);
-    if (item.geometry.inner === '1') {
-      item.leader.setAttribute('x1', String(item.geometry.innerX - dx));
-      item.leader.setAttribute('y1', String(item.geometry.innerY - dy));
-    } else {
-      item.leader.setAttribute('x2', String(item.geometry.innerX - dx));
-      item.leader.setAttribute('y2', String(item.geometry.innerY - dy));
-    }
+  function analyzeGroup(group, box) {
+    if (!BODY_LABEL.test(group.textContent || '')) return null;
+    const bubbles = bubbleCandidates(group);
+    const lines = Array.from(group.querySelectorAll('line'));
+    if (!bubbles.length || !lines.length || !group.querySelector('text')) return null;
 
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
-    const anchor = anchorCircle(group, item.geometry, cx, cy);
-    if (anchor) {
-      if (!anchor.dataset.relphiCollisionAnchor) {
-        anchor.dataset.relphiCollisionAnchor = 'true';
-        anchor.dataset.relphiCollisionCx = anchor.getAttribute('cx') || '0';
-        anchor.dataset.relphiCollisionCy = anchor.getAttribute('cy') || '0';
+    const minimumOuterRadius = Math.min(box.width, box.height) * 0.31;
+    let best = null;
+
+    bubbles.forEach(function (bubble) {
+      const bubbleX = number(bubble.getAttribute('cx'));
+      const bubbleY = number(bubble.getAttribute('cy'));
+      const radius = number(bubble.getAttribute('r'));
+      const bubbleDistance = distance(cx, cy, bubbleX, bubbleY);
+      if (bubbleDistance < minimumOuterRadius) return;
+
+      lines.forEach(function (line) {
+        const one = endpoint(line, '1');
+        const two = endpoint(line, '2');
+        const oneToBubble = distance(one.x, one.y, bubbleX, bubbleY);
+        const twoToBubble = distance(two.x, two.y, bubbleX, bubbleY);
+        const outer = oneToBubble <= twoToBubble ? one : two;
+        const inner = outer === one ? two : one;
+        const outerToBubble = Math.min(oneToBubble, twoToBubble);
+        const innerRadius = distance(cx, cy, inner.x, inner.y);
+        const lineLength = distance(one.x, one.y, two.x, two.y);
+
+        if (outerToBubble > radius + 10) return;
+        if (innerRadius >= bubbleDistance - 12 || lineLength < 24) return;
+
+        const score = outerToBubble + Math.abs((bubbleDistance - innerRadius) - lineLength) * 0.02;
+        if (!best || score < best.score) {
+          best = {
+            group:group,
+            bubble:bubble,
+            bubbleX:bubbleX,
+            bubbleY:bubbleY,
+            radius:radius,
+            line:line,
+            outer:outer,
+            inner:inner,
+            score:score
+          };
+        }
+      });
+    });
+
+    return best;
+  }
+
+  function markerGroups(svg, box) {
+    const analyzed = Array.from(svg.querySelectorAll('g')).map(function (group) {
+      return analyzeGroup(group, box);
+    }).filter(Boolean);
+
+    return analyzed.filter(function (item) {
+      return !analyzed.some(function (other) {
+        return other !== item && item.group.contains(other.group);
+      });
+    });
+  }
+
+  function nodeCenter(node) {
+    let bounds;
+    try { bounds = node.getBBox(); }
+    catch (_) { return null; }
+    if (!bounds || !Number.isFinite(bounds.x) || !Number.isFinite(bounds.y)) return null;
+    return { x:bounds.x + bounds.width / 2, y:bounds.y + bounds.height / 2 };
+  }
+
+  function movableNodes(item) {
+    const nodes = [];
+    Array.from(item.group.querySelectorAll('circle')).forEach(function (circle) {
+      const x = number(circle.getAttribute('cx'));
+      const y = number(circle.getAttribute('cy'));
+      if (distance(x, y, item.bubbleX, item.bubbleY) <= 4) nodes.push(circle);
+    });
+
+    Array.from(item.group.querySelectorAll('text')).forEach(function (text) {
+      const center = nodeCenter(text);
+      if (!center) return;
+      const toBubble = distance(center.x, center.y, item.bubbleX, item.bubbleY);
+      const toAnchor = distance(center.x, center.y, item.inner.x, item.inner.y);
+      if (toBubble <= 92 && toBubble < toAnchor) nodes.push(text);
+    });
+
+    return Array.from(new Set(nodes));
+  }
+
+  function makeItems(svg, box) {
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    return markerGroups(svg, box).map(function (item, index) {
+      const angle = Math.atan2(item.bubbleY - cy, item.bubbleX - cx);
+      item.index = index;
+      item.angle = angle;
+      item.tangentX = -Math.sin(angle);
+      item.tangentY = Math.cos(angle);
+      item.offset = 0;
+      item.nodes = movableNodes(item);
+      return item;
+    }).filter(function (item) {
+      return item.nodes.length > 0;
+    });
+  }
+
+  function position(item) {
+    return {
+      x:item.bubbleX + item.tangentX * item.offset,
+      y:item.bubbleY + item.tangentY * item.offset
+    };
+  }
+
+  function clamp(value, minimum, maximum) {
+    return Math.max(minimum, Math.min(maximum, value));
+  }
+
+  function relax(items, box) {
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+
+    for (let iteration = 0; iteration < ITERATIONS; iteration += 1) {
+      let changed = false;
+      for (let left = 0; left < items.length; left += 1) {
+        for (let right = left + 1; right < items.length; right += 1) {
+          const first = items[left];
+          const second = items[right];
+          const firstPosition = position(first);
+          const secondPosition = position(second);
+          const actual = distance(firstPosition.x, firstPosition.y, secondPosition.x, secondPosition.y);
+          const required = first.radius + second.radius + BUBBLE_GAP;
+          if (actual >= required - 0.25) continue;
+
+          const meanX = (firstPosition.x + secondPosition.x) / 2;
+          const meanY = (firstPosition.y + secondPosition.y) / 2;
+          const meanAngle = Math.atan2(meanY - cy, meanX - cx);
+          const tangentX = -Math.sin(meanAngle);
+          const tangentY = Math.cos(meanAngle);
+          const projectedOrder = (secondPosition.x - firstPosition.x) * tangentX + (secondPosition.y - firstPosition.y) * tangentY;
+          const direction = Math.abs(projectedOrder) > 0.01
+            ? Math.sign(projectedOrder)
+            : (first.angle <= second.angle ? 1 : -1);
+          const push = (required - actual) * 0.56 + 0.2;
+
+          first.offset = clamp(first.offset - direction * push / 2, -MAX_SHIFT, MAX_SHIFT);
+          second.offset = clamp(second.offset + direction * push / 2, -MAX_SHIFT, MAX_SHIFT);
+          changed = true;
+        }
       }
-      anchor.setAttribute('cx', String(number(anchor.dataset.relphiCollisionCx) - dx));
-      anchor.setAttribute('cy', String(number(anchor.dataset.relphiCollisionCy) - dy));
+      if (!changed) break;
     }
   }
 
-  function arrange(svg) {
-    const box = viewBox(svg);
-    const groups = candidateGroups(svg, box);
-    if (groups.length < 2) return;
-    const items = groups.map(function (group) { return makeItem(group, box); }).filter(Boolean);
-    if (items.length < 2) return;
+  function shiftNode(node, dx, dy) {
+    if (!node.dataset.relphiBubbleBaseTransform) {
+      node.dataset.relphiBubbleBaseTransform = node.getAttribute('transform') || '__none__';
+    }
+    const base = node.dataset.relphiBubbleBaseTransform;
+    const shift = 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')';
+    node.setAttribute('transform', base === '__none__' ? shift : base + ' ' + shift);
+    node.dataset.relphiBubbleDx = String(dx);
+    node.dataset.relphiBubbleDy = String(dy);
+  }
 
-    const zones = { left:[], right:[], top:[], bottom:[] };
-    items.forEach(function (item) { zones[item.zone].push(item); });
-    centeredPack(zones.left, 'y', box.y + EDGE, box.y + box.height - EDGE);
-    centeredPack(zones.right, 'y', box.y + EDGE, box.y + box.height - EDGE);
-    centeredPack(zones.top, 'x', box.x + EDGE, box.x + box.width - EDGE);
-    centeredPack(zones.bottom, 'x', box.x + EDGE, box.x + box.width - EDGE);
-    items.forEach(function (item) { apply(item, box); });
+  function rememberLeader(line) {
+    if (line.dataset.relphiBubbleLeader) return;
+    line.dataset.relphiBubbleLeader = 'true';
+    ['x1','y1','x2','y2'].forEach(function (name) {
+      line.dataset['relphiBubble' + name.toUpperCase()] = line.getAttribute(name) || '0';
+    });
+  }
+
+  function setLeader(item, bubbleX, bubbleY) {
+    const line = item.line;
+    rememberLeader(line);
+    const vectorX = bubbleX - item.inner.x;
+    const vectorY = bubbleY - item.inner.y;
+    const length = Math.hypot(vectorX, vectorY) || 1;
+    const edgeX = bubbleX - vectorX / length * (item.radius + 0.75);
+    const edgeY = bubbleY - vectorY / length * (item.radius + 0.75);
+
+    if (item.inner.name === '1') {
+      line.setAttribute('x1', String(item.inner.x));
+      line.setAttribute('y1', String(item.inner.y));
+      line.setAttribute('x2', edgeX.toFixed(2));
+      line.setAttribute('y2', edgeY.toFixed(2));
+    } else {
+      line.setAttribute('x2', String(item.inner.x));
+      line.setAttribute('y2', String(item.inner.y));
+      line.setAttribute('x1', edgeX.toFixed(2));
+      line.setAttribute('y1', edgeY.toFixed(2));
+    }
+  }
+
+  function apply(items) {
+    items.forEach(function (item) {
+      if (Math.abs(item.offset) < 0.35) return;
+      const dx = item.tangentX * item.offset;
+      const dy = item.tangentY * item.offset;
+      item.nodes.forEach(function (node) { shiftNode(node, dx, dy); });
+      setLeader(item, item.bubbleX + dx, item.bubbleY + dy);
+      item.group.dataset.relphiBubbleCollision = 'true';
+    });
+  }
+
+  function arrange(svg) {
+    restoreLegacy(svg);
+    restoreLocal(svg);
+    const box = viewBox(svg);
+    const items = makeItems(svg, box);
+    if (items.length < 2) return;
+    relax(items, box);
+    apply(items);
   }
 
   function run() {
