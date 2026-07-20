@@ -90,6 +90,7 @@
     if (!document.getElementById('relphiSkyBuilderV4') || window.__relphiSkyBuilderEnhancementsLoaded) return false;
     window.__relphiSkyBuilderEnhancementsLoaded = true;
     document.getElementById('relphiPreviewLoadFailure')?.remove();
+    window.dispatchEvent(new Event('relphi:sky-builder-v4-loaded'));
     appendScript('sky-chart-builder-v4-defaults.js?v=1');
     appendScript('sky-chart-language-cleanup.js?v=6');
     appendScript('sky-chart-aspect-keyboard.js?v=1');
@@ -117,7 +118,7 @@
       }
       showPreviewLoadFailure();
     };
-    appendScript('sky-chart-builder-v4.js?v=17' + suffix, function () {
+    appendScript('sky-chart-builder-v4.js?v=18' + suffix, function () {
       waitForSkyBuilder(Date.now(), retryOrFail);
     }, retryOrFail);
   }
@@ -149,6 +150,7 @@
         'sky-chart-provenance-fix.js?v=1'
       ].forEach(function (src) { appendScript(src); });
 
+      appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);
       appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
     }
