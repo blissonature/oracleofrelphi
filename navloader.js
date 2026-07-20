@@ -135,6 +135,7 @@
 
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
       const preview = new URLSearchParams(location.search).get('preview');
+      if (preview === 'pr55') appendScript('https://raw.githack.com/blissonature/oracleofrelphi/77893ef052303809790277c5320f1dc476d66e15/sky-chart-saved-sky-recovery.js');
       [
         'sky-chart-stability-hotfix.js?v=1',
         'sky-chart-static-dynamic.js?v=2',
@@ -146,7 +147,8 @@
         'sky-chart-sign-cusps-v1.js?v=1',
         'sky-chart-ph-glyph-style-v1.js?v=2',
         'relphi-glyph-bubbles.js?v=2',
-        'sky-chart-provenance-fix.js?v=1'
+        'sky-chart-provenance-fix.js?v=1',
+        'sky-chart-saved-sky-recovery.js?v=1'
       ].forEach(function (src) { appendScript(src); });
 
       if (preview === 'pr55') {
