@@ -86,13 +86,44 @@
     });
   }
 
+  function labelBounds(group, geometry) {
+    const candidates = Array.from(group.querySelectorAll('text, circle, rect')).filter(function (node) {
+      let bounds;
+      try { bounds = node.getBBox(); }
+      catch (_) { return false; }
+      if (!bounds || bounds.width < 0 || bounds.height < 0) return false;
+      const x = bounds.x + bounds.width / 2;
+      const y = bounds.y + bounds.height / 2;
+      const outerDistance = pointDistance(x, y, geometry.outerX, geometry.outerY);
+      const innerDistance = pointDistance(x, y, geometry.innerX, geometry.innerY);
+      return outerDistance <= innerDistance;
+    });
+    if (!candidates.length) return null;
+    let union = null;
+    candidates.forEach(function (node) {
+      let bounds;
+      try { bounds = node.getBBox(); }
+      catch (_) { return; }
+      const next = {
+        x:bounds.x,
+        y:bounds.y,
+        right:bounds.x + bounds.width,
+        bottom:bounds.y + bounds.height
+      };
+      if (!union) union = next;
+      else {
+        union.x = Math.min(union.x, next.x);
+        union.y = Math.min(union.y, next.y);
+        union.right = Math.max(union.right, next.right);
+        union.bottom = Math.max(union.bottom, next.bottom);
+      }
+    });
+    if (!union) return null;
+    return { x:union.x, y:union.y, width:union.right - union.x, height:union.bottom - union.y };
+  }
+
   function makeItem(group, box) {
     restore(group);
-    let bounds;
-    try { bounds = group.getBBox(); }
-    catch (_) { return null; }
-    if (!bounds || !Number.isFinite(bounds.x) || bounds.width <= 0 || bounds.height <= 0) return null;
-
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
     const lines = Array.from(group.querySelectorAll('line'));
@@ -106,6 +137,12 @@
       }
     });
     if (!leader || !geometry) return null;
+    let bounds = labelBounds(group, geometry);
+    if (!bounds) {
+      try { bounds = group.getBBox(); }
+      catch (_) { return null; }
+    }
+    if (!bounds || !Number.isFinite(bounds.x) || bounds.width <= 0 || bounds.height <= 0) return null;
 
     const x = bounds.x + bounds.width / 2;
     const y = bounds.y + bounds.height / 2;
