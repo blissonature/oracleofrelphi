@@ -1,296 +1,303 @@
-// Separates only crowded Sky Chart lollipop bubbles while preserving exact wheel anchors.
+// Separates the live Sky Chart lollipops as complete placement units.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  const PLACEMENT_SELECTOR = '.chart-wheel-placement';
-  const DISC_SELECTOR = 'circle.chart-wheel-marker-disc';
+  const PLACEMENT = '.chart-wheel-placement-stick';
+  const KNOB = 'circle.chart-wheel-stick-knob';
+  const LEADER = 'line.chart-wheel-stick';
+  const MOVABLE = [
+    'circle.chart-wheel-stick-knob',
+    '.chart-wheel-marker-glyph',
+    '.chart-wheel-marker-degree',
+    '.chart-wheel-marker-name',
+    'image.standardized-planet-glyph',
+    'image.relphi-bubble-glyph-image'
+  ].join(',');
   const SVG_NS = 'http://www.w3.org/2000/svg';
-  const BUBBLE_GAP = 4;
-  const MAX_ARC_SHIFT = 42;
-  const ITERATIONS = 28;
+  const BUBBLE_GAP = 5.5;
+  const BOX_GAP = 2.5;
+  const MAX_TANGENTIAL_SHIFT = 58;
+  const MAX_RADIAL_SHIFT = 20;
+  const ITERATIONS = 42;
   let queued = false;
   let running = false;
 
-  function numeric(value) {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : NaN;
+  function num(value) {
+    const result = Number(value);
+    return Number.isFinite(result) ? result : NaN;
+  }
+
+  function pointDistance(a, b) {
+    return Math.hypot(b.x - a.x, b.y - a.y);
   }
 
   function viewBox(svg) {
     const box = svg.viewBox && svg.viewBox.baseVal;
-    if (box && box.width > 0 && box.height > 0) {
-      return { x:box.x, y:box.y, width:box.width, height:box.height };
-    }
-    const width = numeric(svg.getAttribute('width')) || svg.clientWidth || 800;
-    const height = numeric(svg.getAttribute('height')) || svg.clientHeight || 800;
-    return { x:0, y:0, width:width, height:height };
-  }
-
-  function distance(a, b) {
-    return Math.hypot(b.x - a.x, b.y - a.y);
-  }
-
-  function normalizeAngle(value) {
-    let angle = value;
-    while (angle <= -Math.PI) angle += Math.PI * 2;
-    while (angle > Math.PI) angle -= Math.PI * 2;
-    return angle;
+    if (box && box.width > 0 && box.height > 0) return { x:box.x, y:box.y, width:box.width, height:box.height };
+    return {
+      x:0,
+      y:0,
+      width:num(svg.getAttribute('width')) || svg.clientWidth || 800,
+      height:num(svg.getAttribute('height')) || svg.clientHeight || 800
+    };
   }
 
   function endpoint(line, suffix) {
-    return {
-      x:numeric(line.getAttribute('x' + suffix)),
-      y:numeric(line.getAttribute('y' + suffix)),
-      suffix:suffix
-    };
+    return { x:num(line.getAttribute('x' + suffix)), y:num(line.getAttribute('y' + suffix)), suffix:suffix };
   }
 
   function validPoint(point) {
     return point && Number.isFinite(point.x) && Number.isFinite(point.y);
   }
 
+  function rememberTransform(node) {
+    if (node.dataset.relphiLollipopBaseTransform != null) return;
+    node.dataset.relphiLollipopBaseTransform = node.getAttribute('transform') || '__none__';
+  }
+
   function restore(svg) {
-    svg.querySelectorAll('[data-relphi-exact-base-transform]').forEach(function (node) {
-      const base = node.dataset.relphiExactBaseTransform;
+    svg.querySelectorAll('[data-relphi-lollipop-base-transform]').forEach(function (node) {
+      const base = node.dataset.relphiLollipopBaseTransform;
       if (base === '__none__') node.removeAttribute('transform');
       else node.setAttribute('transform', base);
-      delete node.dataset.relphiExactBaseTransform;
-      delete node.dataset.relphiExactDx;
-      delete node.dataset.relphiExactDy;
+      delete node.dataset.relphiLollipopBaseTransform;
     });
-
-    svg.querySelectorAll('line[data-relphi-exact-leader]').forEach(function (line) {
+    svg.querySelectorAll('line[data-relphi-lollipop-leader]').forEach(function (line) {
       ['x1','y1','x2','y2'].forEach(function (name) {
-        const key = 'relphiExact' + name.toUpperCase();
+        const key = 'relphiLollipop' + name.toUpperCase();
         if (line.dataset[key] != null) line.setAttribute(name, line.dataset[key]);
         delete line.dataset[key];
       });
-      delete line.dataset.relphiExactLeader;
+      delete line.dataset.relphiLollipopLeader;
     });
-
-    svg.querySelectorAll(PLACEMENT_SELECTOR).forEach(function (group) {
-      delete group.dataset.relphiExactShift;
-      delete group.dataset.relphiExactAngleShift;
-    });
-    delete svg.dataset.relphiWheelCollisionResidual;
-  }
-
-  function leaderFor(group, discCenter, discRadius, wheelCenter) {
-    const preferred = group.querySelector(
-      'line.chart-wheel-marker-leader, line.chart-wheel-leader, line[class*="leader"], line[class*="stem"]'
-    );
-    const lines = preferred ? [preferred] : Array.from(group.querySelectorAll('line'));
-    let best = null;
-
-    lines.forEach(function (line) {
-      const one = endpoint(line, '1');
-      const two = endpoint(line, '2');
-      if (!validPoint(one) || !validPoint(two)) return;
-
-      const oneDistance = distance(one, discCenter);
-      const twoDistance = distance(two, discCenter);
-      const outer = oneDistance <= twoDistance ? one : two;
-      const anchor = outer === one ? two : one;
-      const outerDistance = Math.min(oneDistance, twoDistance);
-      const anchorRadius = distance(anchor, wheelCenter);
-      const discDistance = distance(discCenter, wheelCenter);
-      const length = distance(one, two);
-
-      if (outerDistance > discRadius + 12) return;
-      if (anchorRadius >= discDistance - 8) return;
-      if (length < discRadius * 1.5) return;
-
-      const score = outerDistance + Math.abs(discDistance - anchorRadius - length) * 0.01;
-      if (!best || score < best.score) {
-        best = { line:line, outer:outer, anchor:anchor, score:score };
-      }
-    });
-
-    return best;
-  }
-
-  function movableNodes(group, disc, discCenter) {
-    const candidates = [disc]
-      .concat(Array.from(group.querySelectorAll('text, image, .relphi-wheel-planet-glyph')))
-      .concat(Array.from(group.querySelectorAll('circle')).filter(function (circle) {
-        if (circle === disc) return false;
-        const center = { x:numeric(circle.getAttribute('cx')), y:numeric(circle.getAttribute('cy')) };
-        return validPoint(center) && distance(center, discCenter) <= 3;
-      }));
-
-    const unique = Array.from(new Set(candidates.filter(Boolean)));
-    return unique.filter(function (node) {
-      return !unique.some(function (possibleParent) {
-        return possibleParent !== node && possibleParent.contains && possibleParent.contains(node);
-      });
+    svg.querySelectorAll(PLACEMENT).forEach(function (group) {
+      delete group.dataset.relphiLollipopShift;
+      delete group.dataset.relphiLollipopRadialShift;
     });
   }
 
-  function collect(svg, box) {
+  function nodeBox(node) {
+    try {
+      const box = node.getBBox();
+      if (![box.x, box.y, box.width, box.height].every(Number.isFinite)) return null;
+      return { x:box.x, y:box.y, width:box.width, height:box.height };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function leaderGeometry(line, center, wheelCenter, radius) {
+    if (!line) return null;
+    const one = endpoint(line, '1');
+    const two = endpoint(line, '2');
+    if (!validPoint(one) || !validPoint(two)) return null;
+    const oneToKnob = pointDistance(one, center);
+    const twoToKnob = pointDistance(two, center);
+    const outer = oneToKnob <= twoToKnob ? one : two;
+    const anchor = outer === one ? two : one;
+    if (Math.min(oneToKnob, twoToKnob) > radius + 12) return null;
+    if (pointDistance(anchor, wheelCenter) >= pointDistance(center, wheelCenter) - 6) return null;
+    return { line:line, anchor:anchor };
+  }
+
+  function collect(svg) {
+    const box = viewBox(svg);
     const wheelCenter = { x:box.x + box.width / 2, y:box.y + box.height / 2 };
-    return Array.from(svg.querySelectorAll(PLACEMENT_SELECTOR)).map(function (group, index) {
-      const disc = group.querySelector(DISC_SELECTOR);
-      if (!disc) return null;
-
-      const center = {
-        x:numeric(disc.getAttribute('cx')),
-        y:numeric(disc.getAttribute('cy'))
-      };
-      const radius = numeric(disc.getAttribute('r'));
+    return Array.from(svg.querySelectorAll(PLACEMENT)).map(function (group, index) {
+      const knob = group.querySelector(KNOB);
+      const line = group.querySelector(LEADER);
+      if (!knob || !line) return null;
+      const center = { x:num(knob.getAttribute('cx')), y:num(knob.getAttribute('cy')) };
+      const radius = num(knob.getAttribute('r'));
       if (!validPoint(center) || !Number.isFinite(radius) || radius <= 0) return null;
-
-      const radialDistance = distance(center, wheelCenter);
-      if (radialDistance < Math.min(box.width, box.height) * 0.3) return null;
-
-      const leader = leaderFor(group, center, radius, wheelCenter);
+      const leader = leaderGeometry(line, center, wheelCenter, radius);
       if (!leader) return null;
-
+      const nodes = Array.from(group.querySelectorAll(MOVABLE));
+      if (!nodes.includes(knob)) nodes.unshift(knob);
+      const boxes = nodes.map(nodeBox).filter(Boolean);
+      const radialDistance = pointDistance(wheelCenter, center);
+      if (!boxes.length || radialDistance < Math.min(box.width, box.height) * 0.3) return null;
+      const angle = Math.atan2(center.y - wheelCenter.y, center.x - wheelCenter.x);
       return {
         index:index,
         group:group,
-        disc:disc,
-        nodes:movableNodes(group, disc, center),
-        line:leader.line,
+        knob:knob,
+        line:line,
         anchor:leader.anchor,
+        nodes:Array.from(new Set(nodes)),
+        boxes:boxes,
         center:center,
         radius:radius,
+        wheelCenter:wheelCenter,
         radialDistance:radialDistance,
-        angle:Math.atan2(center.y - wheelCenter.y, center.x - wheelCenter.x),
-        angleShift:0,
-        maxAngleShift:MAX_ARC_SHIFT / radialDistance,
-        wheelCenter:wheelCenter
+        angle:angle,
+        tangent:{ x:-Math.sin(angle), y:Math.cos(angle) },
+        normal:{ x:Math.cos(angle), y:Math.sin(angle) },
+        tangential:0,
+        radial:0
       };
-    }).filter(function (item) {
-      return item && item.nodes.length > 0;
-    });
+    }).filter(Boolean);
   }
 
-  function position(item) {
-    const angle = item.angle + item.angleShift;
+  function offset(item) {
     return {
-      x:item.wheelCenter.x + item.radialDistance * Math.cos(angle),
-      y:item.wheelCenter.y + item.radialDistance * Math.sin(angle)
+      x:item.tangent.x * item.tangential + item.normal.x * item.radial,
+      y:item.tangent.y * item.tangential + item.normal.y * item.radial
     };
   }
 
-  function clampShift(item) {
-    item.angleShift = Math.max(-item.maxAngleShift, Math.min(item.maxAngleShift, item.angleShift));
+  function centerAt(item) {
+    const shift = offset(item);
+    return { x:item.center.x + shift.x, y:item.center.y + shift.y };
   }
 
-  function separate(items) {
-    for (let iteration = 0; iteration < ITERATIONS; iteration += 1) {
-      let changed = false;
+  function shiftedBoxes(item) {
+    const shift = offset(item);
+    return item.boxes.map(function (box) {
+      return { x:box.x + shift.x, y:box.y + shift.y, width:box.width, height:box.height };
+    });
+  }
 
+  function rectanglesOverlap(a, b, gap) {
+    return a.x < b.x + b.width + gap &&
+      a.x + a.width + gap > b.x &&
+      a.y < b.y + b.height + gap &&
+      a.y + a.height + gap > b.y;
+  }
+
+  function footprintOverlap(first, second) {
+    const firstBoxes = shiftedBoxes(first);
+    const secondBoxes = shiftedBoxes(second);
+    for (const a of firstBoxes) {
+      for (const b of secondBoxes) {
+        if (rectanglesOverlap(a, b, BOX_GAP)) return true;
+      }
+    }
+    return false;
+  }
+
+  function collision(first, second) {
+    const a = centerAt(first);
+    const b = centerAt(second);
+    const bubbleMissing = first.radius + second.radius + BUBBLE_GAP - pointDistance(a, b);
+    const boxesOverlap = footprintOverlap(first, second);
+    return {
+      active:bubbleMissing > 0 || boxesOverlap,
+      pressure:Math.max(1.2, bubbleMissing > 0 ? bubbleMissing : 3.5)
+    };
+  }
+
+  function angularDirection(first, second) {
+    let delta = second.angle - first.angle;
+    while (delta <= -Math.PI) delta += Math.PI * 2;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    return Math.sign(delta) || (first.index <= second.index ? 1 : -1);
+  }
+
+  function solve(items) {
+    for (let pass = 0; pass < ITERATIONS; pass += 1) {
+      let changed = false;
       for (let left = 0; left < items.length; left += 1) {
         for (let right = left + 1; right < items.length; right += 1) {
           const first = items[left];
           const second = items[right];
-          const firstPosition = position(first);
-          const secondPosition = position(second);
-          const actual = distance(firstPosition, secondPosition);
-          const required = first.radius + second.radius + BUBBLE_GAP;
-          if (actual >= required - 0.15) continue;
-
-          let signedDifference = normalizeAngle(
-            (second.angle + second.angleShift) - (first.angle + first.angleShift)
-          );
-          let direction = Math.sign(signedDifference);
-          if (!direction) direction = first.index <= second.index ? 1 : -1;
-
-          const averageRadius = Math.max(1, (first.radialDistance + second.radialDistance) / 2);
-          const angularPush = ((required - actual) / averageRadius) * 0.62 + 0.00035;
-          first.angleShift -= direction * angularPush / 2;
-          second.angleShift += direction * angularPush / 2;
-          clampShift(first);
-          clampShift(second);
+          const contact = collision(first, second);
+          if (!contact.active) continue;
+          const direction = angularDirection(first, second);
+          const push = Math.min(5.5, contact.pressure * 0.58 + 0.45);
+          first.tangential = Math.max(-MAX_TANGENTIAL_SHIFT, Math.min(MAX_TANGENTIAL_SHIFT, first.tangential - direction * push / 2));
+          second.tangential = Math.max(-MAX_TANGENTIAL_SHIFT, Math.min(MAX_TANGENTIAL_SHIFT, second.tangential + direction * push / 2));
           changed = true;
         }
       }
+      if (!changed) break;
+    }
 
+    // Radial movement is a small last resort only when tangential movement is exhausted.
+    for (let pass = 0; pass < 8; pass += 1) {
+      let changed = false;
+      for (let left = 0; left < items.length; left += 1) {
+        for (let right = left + 1; right < items.length; right += 1) {
+          const first = items[left];
+          const second = items[right];
+          if (!collision(first, second).active) continue;
+          const target = Math.abs(first.tangential) >= Math.abs(second.tangential) ? first : second;
+          const next = Math.min(MAX_RADIAL_SHIFT, target.radial + 2.25);
+          if (next !== target.radial) {
+            target.radial = next;
+            changed = true;
+          }
+        }
+      }
       if (!changed) break;
     }
   }
 
-  function rememberTransform(node) {
-    if (node.dataset.relphiExactBaseTransform != null) return;
-    node.dataset.relphiExactBaseTransform = node.getAttribute('transform') || '__none__';
-  }
-
   function translate(node, dx, dy) {
     rememberTransform(node);
-    const base = node.dataset.relphiExactBaseTransform;
-    const shift = 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')';
-    node.setAttribute('transform', base === '__none__' ? shift : base + ' ' + shift);
-    node.dataset.relphiExactDx = dx.toFixed(2);
-    node.dataset.relphiExactDy = dy.toFixed(2);
+    const base = node.dataset.relphiLollipopBaseTransform;
+    const move = 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')';
+    node.setAttribute('transform', base === '__none__' ? move : base + ' ' + move);
   }
 
   function rememberLeader(line) {
-    if (line.dataset.relphiExactLeader) return;
-    line.dataset.relphiExactLeader = 'true';
+    if (line.dataset.relphiLollipopLeader) return;
+    line.dataset.relphiLollipopLeader = 'true';
     ['x1','y1','x2','y2'].forEach(function (name) {
-      line.dataset['relphiExact' + name.toUpperCase()] = line.getAttribute(name) || '0';
+      line.dataset['relphiLollipop' + name.toUpperCase()] = line.getAttribute(name) || '0';
     });
   }
 
-  function connectLeader(item, newCenter) {
-    const vector = {
-      x:newCenter.x - item.anchor.x,
-      y:newCenter.y - item.anchor.y
-    };
+  function connectLeader(item, center) {
+    const vector = { x:center.x - item.anchor.x, y:center.y - item.anchor.y };
     const length = Math.hypot(vector.x, vector.y) || 1;
-    const outer = {
-      x:newCenter.x - vector.x / length * (item.radius + 0.75),
-      y:newCenter.y - vector.y / length * (item.radius + 0.75)
+    const edge = {
+      x:center.x - vector.x / length * (item.radius + 0.6),
+      y:center.y - vector.y / length * (item.radius + 0.6)
     };
-
     rememberLeader(item.line);
     if (item.anchor.suffix === '1') {
       item.line.setAttribute('x1', item.anchor.x.toFixed(2));
       item.line.setAttribute('y1', item.anchor.y.toFixed(2));
-      item.line.setAttribute('x2', outer.x.toFixed(2));
-      item.line.setAttribute('y2', outer.y.toFixed(2));
+      item.line.setAttribute('x2', edge.x.toFixed(2));
+      item.line.setAttribute('y2', edge.y.toFixed(2));
     } else {
       item.line.setAttribute('x2', item.anchor.x.toFixed(2));
       item.line.setAttribute('y2', item.anchor.y.toFixed(2));
-      item.line.setAttribute('x1', outer.x.toFixed(2));
-      item.line.setAttribute('y1', outer.y.toFixed(2));
+      item.line.setAttribute('x1', edge.x.toFixed(2));
+      item.line.setAttribute('y1', edge.y.toFixed(2));
     }
   }
 
   function apply(items) {
     items.forEach(function (item) {
-      if (Math.abs(item.angleShift) < 0.0001) return;
-      const next = position(item);
-      const dx = next.x - item.center.x;
-      const dy = next.y - item.center.y;
-      item.nodes.forEach(function (node) { translate(node, dx, dy); });
-      connectLeader(item, next);
-      item.group.dataset.relphiExactShift = Math.hypot(dx, dy).toFixed(2);
-      item.group.dataset.relphiExactAngleShift = (item.angleShift * 180 / Math.PI).toFixed(3);
+      const shift = offset(item);
+      if (Math.hypot(shift.x, shift.y) < 0.25) return;
+      item.nodes.forEach(function (node) { translate(node, shift.x, shift.y); });
+      connectLeader(item, centerAt(item));
+      item.group.dataset.relphiLollipopShift = Math.hypot(shift.x, shift.y).toFixed(2);
+      item.group.dataset.relphiLollipopRadialShift = item.radial.toFixed(2);
     });
   }
 
-  function residualOverlap(items) {
-    let residual = 0;
+  function residual(items) {
+    let count = 0;
     for (let left = 0; left < items.length; left += 1) {
       for (let right = left + 1; right < items.length; right += 1) {
-        const actual = distance(position(items[left]), position(items[right]));
-        const required = items[left].radius + items[right].radius + BUBBLE_GAP;
-        if (actual < required - 0.5) residual += 1;
+        if (collision(items[left], items[right]).active) count += 1;
       }
     }
-    return residual;
+    return count;
   }
 
   function arrange(svg) {
     restore(svg);
-    const items = collect(svg, viewBox(svg));
+    const items = collect(svg);
     if (items.length < 2) return;
-    separate(items);
+    solve(items);
     apply(items);
-    svg.dataset.relphiWheelCollisionResidual = String(residualOverlap(items));
+    svg.dataset.relphiWheelCollisionResidual = String(residual(items));
   }
 
   function run() {
@@ -321,7 +328,7 @@
       const relevant = records.some(function (record) {
         return Array.from(record.addedNodes || []).some(function (node) {
           return node.nodeType === Node.ELEMENT_NODE &&
-            (node.namespaceURI === SVG_NS || node.matches?.(PLACEMENT_SELECTOR) || node.querySelector?.(PLACEMENT_SELECTOR));
+            (node.namespaceURI === SVG_NS || node.matches?.(PLACEMENT) || node.querySelector?.(PLACEMENT));
         });
       });
       if (relevant) schedule();
