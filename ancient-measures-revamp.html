@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ancient Measures Revamp · Oracle of Relphi</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <style>
+    :root{--red:#dc1f18;--ink:#141414;--paper:#f7f1e6;--panel:rgba(255,255,255,.92);--line:rgba(20,20,20,.16);--muted:#625d56}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:Montserrat,Arial,sans-serif;background:#111;color:var(--ink)}
+    body{overflow:hidden}
+    button,input{font:inherit}
+    .app{height:100vh;display:grid;grid-template-columns:minmax(270px,340px) 1fr;grid-template-rows:auto 1fr;background:#111}
+    header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1rem;background:#fff;border-bottom:1px solid #ddd;z-index:4}
+    .brand{display:flex;align-items:center;gap:.7rem;min-width:0}
+    .brand img{width:38px;height:38px;border-radius:50%}
+    .brand strong{font-size:1rem;letter-spacing:.02em}.brand span{color:var(--red)}
+    .status{font-size:.78rem;color:#555;white-space:nowrap}.status b{color:#176c36}
+    aside{position:relative;z-index:3;overflow:auto;padding:1rem;background:var(--paper);border-right:1px solid rgba(255,255,255,.16)}
+    h1{margin:0;font-size:1.7rem;line-height:1.05}h1 span{color:var(--red)}
+    .lede{margin:.45rem 0 1rem;color:var(--muted);font-size:.9rem;line-height:1.45}
+    .section{margin:0 0 .85rem;padding:.85rem;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+    .section h2{font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;margin:0 0 .65rem;color:#3a3631}
+    .metrics{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    .metric{padding:.55rem;background:#fff;border:1px solid var(--line);border-radius:12px}.metric small{display:block;color:#6a655f;font-size:.68rem}.metric strong{display:block;margin-top:.12rem;font-size:1rem}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:.55rem}
+    button{border:1px solid #222;border-radius:999px;padding:.58rem .7rem;background:#fff;color:#111;font-weight:700;cursor:pointer}
+    button:hover,button:focus{outline:2px solid rgba(220,31,24,.25);outline-offset:2px}
+    button.primary{background:var(--red);border-color:var(--red);color:#fff}
+    button.active{background:#111;color:#fff}
+    label{display:block;font-size:.78rem;font-weight:700;margin-top:.65rem}
+    input[type=range]{width:100%;accent-color:var(--red)}
+    .hint{font-size:.76rem;line-height:1.4;color:#5c5751;margin:.5rem 0 0}
+    .legend{display:grid;gap:.45rem;font-size:.76rem}.legend div{display:flex;align-items:center;gap:.5rem}.swatch{width:14px;height:14px;border-radius:50%;border:1px solid #222}.rope{background:#b98a55}.peg{background:#b53b2f}.knot{background:#f4e5be}.shadow{background:#5a6a78}
+    main{position:relative;min-width:0;background:#121212}
+    #scene{position:absolute;inset:0}
+    .overlay{position:absolute;left:1rem;bottom:1rem;max-width:min(470px,calc(100% - 2rem));padding:.75rem .9rem;background:rgba(255,255,255,.9);border-radius:14px;border:1px solid rgba(255,255,255,.5);font-size:.78rem;line-height:1.45;backdrop-filter:blur(10px)}
+    .overlay strong{color:var(--red)}
+    .modebar{position:absolute;right:1rem;top:1rem;display:flex;gap:.45rem;padding:.35rem;background:rgba(255,255,255,.88);border-radius:999px;backdrop-filter:blur(8px)}
+    .modebar button{padding:.45rem .72rem;font-size:.75rem;border:0}
+    .error{color:#a11b17;font-size:.75rem;min-height:1.2em;margin-top:.4rem}
+    @media(max-width:760px){body{overflow:auto}.app{height:auto;min-height:100vh;grid-template-columns:1fr;grid-template-rows:auto auto minmax(62vh,1fr)}header{grid-column:1}.status{display:none}aside{border-right:0;border-bottom:1px solid #bbb;max-height:none}main{min-height:62vh}.overlay{font-size:.72rem}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><img src="logo.png" alt="Oracle of Relphi logo"><strong>Oracle of Relphi · <span>Ancient Measures Lab</span></strong></div>
+    <div class="status"><b>TEST BRANCH</b> · Three.js spatial prototype</div>
+  </header>
+
+  <aside>
+    <h1>Rope, Line, and <span>Building</span></h1>
+    <p class="lede">A fixed-length measuring cord in a shared field. Move the stakes; the rope obeys length, gravity, and ground.</p>
+
+    <section class="section">
+      <h2>Live measure</h2>
+      <div class="metrics">
+        <div class="metric"><small>Fixed rope</small><strong id="ropeLength">12.00 units</strong></div>
+        <div class="metric"><small>Used by triangle</small><strong id="perimeter">12.00 units</strong></div>
+        <div class="metric"><small>Available slack</small><strong id="slack">0.00 units</strong></div>
+        <div class="metric"><small>Largest angle</small><strong id="angle">90.0°</strong></div>
+      </div>
+      <div class="error" id="constraintMessage" aria-live="polite"></div>
+    </section>
+
+    <section class="section">
+      <h2>Construction</h2>
+      <div class="row">
+        <button class="primary" id="lock345" type="button">Set 3–4–5</button>
+        <button id="reset" type="button">Reset field</button>
+      </div>
+      <label for="ropeRange">Rope length <span id="ropeRangeValue">12.0</span></label>
+      <input id="ropeRange" type="range" min="8" max="20" step="0.1" value="12">
+      <label for="gravityRange">Visible gravity <span id="gravityValue">0.55</span></label>
+      <input id="gravityRange" type="range" min="0" max="1.4" step="0.05" value="0.55">
+      <p class="hint">Drag any red stake across the ground. A move that would demand more cord than exists is constrained at the valid boundary.</p>
+    </section>
+
+    <section class="section">
+      <h2>Field conditions</h2>
+      <div class="row">
+        <button id="sunToggle" class="active" type="button">Sun + shadow</button>
+        <button id="gridToggle" class="active" type="button">Survey grid</button>
+      </div>
+      <label for="sunRange">Solar bearing <span id="sunValue">225°</span></label>
+      <input id="sunRange" type="range" min="0" max="360" step="1" value="225">
+      <p class="hint">The field is already the beginning of the wider system: local horizon, cardinal bearings, gnomon, rope geometry, and later celestial instruments.</p>
+    </section>
+
+    <section class="section">
+      <h2>Reading the scene</h2>
+      <div class="legend">
+        <div><span class="swatch peg"></span> draggable survey stakes</div>
+        <div><span class="swatch rope"></span> fixed-length cord</div>
+        <div><span class="swatch knot"></span> twelve equal rope divisions</div>
+        <div><span class="swatch shadow"></span> solar shadow direction</div>
+      </div>
+    </section>
+  </aside>
+
+  <main>
+    <div id="scene" role="img" aria-label="Interactive three-dimensional ancient surveying field with a fixed rope, three draggable stakes, knots, a gnomon, cardinal directions, and sunlight"></div>
+    <div class="modebar" aria-label="Camera presets">
+      <button id="overhead" type="button">Survey view</button>
+      <button id="ground" type="button">Human view</button>
+    </div>
+    <div class="overlay"><strong>Move a stake.</strong> The pointer expresses intention; the rope constraint decides the nearest valid position. Orbit with the background, zoom with the wheel, and use the camera presets to compare abstract geometry with embodied sight.</div>
+  </main>
+</div>
+
+<script type="module">
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+  import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js';
+
+  const host = document.getElementById('scene');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xd8c9ad);
+  scene.fog = new THREE.Fog(0xd8c9ad, 24, 65);
+
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  camera.position.set(10, 10, 12);
+
+  const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  host.appendChild(renderer.domElement);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.target.set(0,0.8,0);
+  controls.maxPolarAngle = Math.PI/2.03;
+  controls.minDistance = 5;
+  controls.maxDistance = 32;
+
+  scene.add(new THREE.HemisphereLight(0xfff4d6,0x53616b,1.75));
+  const sun = new THREE.DirectionalLight(0xfff2c7,3.2);
+  sun.position.set(-10,14,-10);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.left=-18;sun.shadow.camera.right=18;sun.shadow.camera.top=18;sun.shadow.camera.bottom=-18;
+  scene.add(sun);
+
+  const groundMat = new THREE.MeshStandardMaterial({color:0xb9a47f,roughness:.98,metalness:0});
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(50,50),groundMat);
+  ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+
+  const grid = new THREE.GridHelper(30,30,0x594d3b,0x8e7e66);
+  grid.position.y=.012;grid.material.opacity=.38;grid.material.transparent=true;scene.add(grid);
+
+  const cardinal = new THREE.Group();
+  scene.add(cardinal);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(8.8,8.86,128),new THREE.MeshBasicMaterial({color:0x3d3429,side:THREE.DoubleSide,transparent:true,opacity:.5}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=.025;cardinal.add(ring);
+  function labelSprite(text,color='#151515'){
+    const c=document.createElement('canvas');c.width=192;c.height=96;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.font='700 48px Arial';x.textAlign='center';x.textBaseline='middle';x.fillStyle=color;x.fillText(text,96,48);const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));sp.scale.set(1.5,.75,1);return sp;
+  }
+  [['N',0,-9],['S',0,9],['E',9,0],['W',-9,0]].forEach(([t,x,z])=>{const s=labelSprite(t,t==='N'?'#b51f18':'#171717');s.position.set(x,.18,z);cardinal.add(s)});
+
+  const gnomon = new THREE.Group();scene.add(gnomon);gnomon.position.set(-6,0,4);
+  const gBase = new THREE.Mesh(new THREE.CylinderGeometry(.65,.72,.18,48),new THREE.MeshStandardMaterial({color:0x78624a,roughness:.9}));gBase.position.y=.09;gBase.castShadow=true;gBase.receiveShadow=true;gnomon.add(gBase);
+  const gRod = new THREE.Mesh(new THREE.CylinderGeometry(.08,.11,3,24),new THREE.MeshStandardMaterial({color:0x352b24,roughness:.78}));gRod.position.y=1.6;gRod.castShadow=true;gnomon.add(gRod);
+
+  const stakeMat = new THREE.MeshStandardMaterial({color:0xa9362d,roughness:.7});
+  const stakes=[];
+  const positions=[new THREE.Vector3(-2.5,0,2),new THREE.Vector3(2.5,0,2),new THREE.Vector3(-2.5,0,-2)];
+  function makeStake(i){
+    const group=new THREE.Group();group.userData.index=i;
+    const shaft=new THREE.Mesh(new THREE.CylinderGeometry(.11,.16,1.5,24),stakeMat);shaft.position.y=.75;shaft.castShadow=true;shaft.userData.stake=group;group.add(shaft);
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.1,24),new THREE.MeshStandardMaterial({color:0x6b211c,roughness:.65}));cap.position.y=1.5;cap.castShadow=true;cap.userData.stake=group;group.add(cap);
+    const halo=new THREE.Mesh(new THREE.RingGeometry(.28,.38,32),new THREE.MeshBasicMaterial({color:0xdc1f18,side:THREE.DoubleSide,transparent:true,opacity:.75}));halo.rotation.x=-Math.PI/2;halo.position.y=.03;halo.userData.stake=group;group.add(halo);
+    group.position.copy(positions[i]);scene.add(group);stakes.push(group);
+  }
+  positions.forEach((_,i)=>makeStake(i));
+
+  let ropeLength=12, gravity=.55;
+  const ropeMat=new THREE.MeshStandardMaterial({color:0xb17e45,roughness:1,metalness:0});
+  let ropeMesh=null;const knotGroup=new THREE.Group();scene.add(knotGroup);
+
+  function distances(points){return [points[0].distanceTo(points[1]),points[1].distanceTo(points[2]),points[2].distanceTo(points[0])];}
+  function perimeter(points){return distances(points).reduce((a,b)=>a+b,0)}
+  function triangleAngles(points){
+    const [a,b,c]=distances(points); // AB, BC, CA
+    const clamp=v=>Math.max(-1,Math.min(1,v));
+    const A=Math.acos(clamp((a*a+c*c-b*b)/(2*a*c)))*180/Math.PI;
+    const B=Math.acos(clamp((a*a+b*b-c*c)/(2*a*b)))*180/Math.PI;
+    return [A,B,180-A-B];
+  }
+  function segmentCurve(a,b,sag,share){
+    const pts=[];const samples=Math.max(12,Math.round(30*share));
+    for(let i=0;i<=samples;i++){
+      const t=i/samples;const p=new THREE.Vector3().lerpVectors(a,b,t);
+      const lateral=Math.sin(Math.PI*t)*sag*.12;
+      const dir=new THREE.Vector3().subVectors(b,a).normalize();
+      const side=new THREE.Vector3(-dir.z,0,dir.x);
+      p.addScaledVector(side,lateral);
+      p.y=.18+Math.sin(Math.PI*t)*sag;
+      pts.push(p);
+    }
+    return pts;
+  }
+  function rebuildRope(){
+    const p=stakes.map(s=>s.position.clone());
+    const ds=distances(p);const used=ds.reduce((a,b)=>a+b,0);const slack=Math.max(0,ropeLength-used);
+    const points=[];
+    [[0,1],[1,2],[2,0]].forEach(([ia,ib],idx)=>{
+      const share=ds[idx]/used;
+      const sag=slack*share*gravity;
+      const seg=segmentCurve(p[ia],p[ib],sag,share);
+      if(points.length)seg.shift();points.push(...seg);
+    });
+    const curve=new THREE.CatmullRomCurve3(points,true,'centripetal');
+    if(ropeMesh){scene.remove(ropeMesh);ropeMesh.geometry.dispose();}
+    ropeMesh=new THREE.Mesh(new THREE.TubeGeometry(curve,220,.075,10,true),ropeMat);ropeMesh.castShadow=true;ropeMesh.receiveShadow=true;scene.add(ropeMesh);
+    knotGroup.clear();
+    const knotGeo=new THREE.SphereGeometry(.13,16,12);const knotMat=new THREE.MeshStandardMaterial({color:0xf2dfb5,roughness:.85});
+    for(let i=0;i<12;i++){const k=new THREE.Mesh(knotGeo,knotMat);k.position.copy(curve.getPointAt(i/12));k.castShadow=true;knotGroup.add(k)}
+    document.getElementById('ropeLength').textContent=ropeLength.toFixed(2)+' units';
+    document.getElementById('perimeter').textContent=used.toFixed(2)+' units';
+    document.getElementById('slack').textContent=slack.toFixed(2)+' units';
+    document.getElementById('angle').textContent=Math.max(...triangleAngles(p)).toFixed(1)+'°';
+  }
+
+  function set345(){
+    const scale=ropeLength/12;
+    stakes[0].position.set(-1.5*scale,0,2*scale);
+    stakes[1].position.set(1.5*scale,0,2*scale);
+    stakes[2].position.set(-1.5*scale,0,-2*scale);
+    rebuildRope();
+    document.getElementById('constraintMessage').textContent='Locked to a 3–4–5 perimeter: one exact right angle.';
+  }
+  set345();
+
+  const raycaster=new THREE.Raycaster();const pointer=new THREE.Vector2();let dragging=null;
+  function pointerNDC(e){const r=renderer.domElement.getBoundingClientRect();pointer.x=((e.clientX-r.left)/r.width)*2-1;pointer.y=-((e.clientY-r.top)/r.height)*2+1;}
+  renderer.domElement.addEventListener('pointerdown',e=>{
+    pointerNDC(e);raycaster.setFromCamera(pointer,camera);
+    const hits=raycaster.intersectObjects(stakes,true);
+    if(hits.length){dragging=hits[0].object.userData.stake;controls.enabled=false;renderer.domElement.setPointerCapture(e.pointerId);}
+  });
+  renderer.domElement.addEventListener('pointermove',e=>{
+    if(!dragging)return;pointerNDC(e);raycaster.setFromCamera(pointer,camera);const hit=new THREE.Vector3();if(!raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),0),hit))return;
+    const old=dragging.position.clone();dragging.position.set(hit.x,0,hit.z);
+    let p=stakes.map(s=>s.position.clone());let used=perimeter(p);
+    if(used>ropeLength){
+      let lo=0,hi=1,best=old.clone();
+      for(let n=0;n<24;n++){const t=(lo+hi)/2;const test=old.clone().lerp(hit,t);dragging.position.copy(test);p=stakes.map(s=>s.position.clone());if(perimeter(p)<=ropeLength){best.copy(test);lo=t}else hi=t}
+      dragging.position.copy(best);document.getElementById('constraintMessage').textContent='Constraint reached: no additional rope is available.';
+    }else document.getElementById('constraintMessage').textContent='';
+    rebuildRope();
+  });
+  function endDrag(e){if(!dragging)return;dragging=null;controls.enabled=true;try{renderer.domElement.releasePointerCapture(e.pointerId)}catch{}}
+  renderer.domElement.addEventListener('pointerup',endDrag);renderer.domElement.addEventListener('pointercancel',endDrag);
+
+  function updateSun(){const deg=Number(document.getElementById('sunRange').value);const r=18;const rad=THREE.MathUtils.degToRad(deg);sun.position.set(Math.sin(rad)*r,14,-Math.cos(rad)*r);document.getElementById('sunValue').textContent=deg+'°';}
+  document.getElementById('sunRange').addEventListener('input',updateSun);
+  document.getElementById('ropeRange').addEventListener('input',e=>{ropeLength=Number(e.target.value);document.getElementById('ropeRangeValue').textContent=ropeLength.toFixed(1);const p=stakes.map(s=>s.position.clone());if(perimeter(p)>ropeLength)set345();else rebuildRope()});
+  document.getElementById('gravityRange').addEventListener('input',e=>{gravity=Number(e.target.value);document.getElementById('gravityValue').textContent=gravity.toFixed(2);rebuildRope()});
+  document.getElementById('lock345').addEventListener('click',set345);
+  document.getElementById('reset').addEventListener('click',()=>{ropeLength=12;gravity=.55;document.getElementById('ropeRange').value=12;document.getElementById('ropeRangeValue').textContent='12.0';document.getElementById('gravityRange').value=.55;document.getElementById('gravityValue').textContent='.55';set345();camera.position.set(10,10,12);controls.target.set(0,.8,0)});
+  document.getElementById('gridToggle').addEventListener('click',e=>{grid.visible=!grid.visible;e.currentTarget.classList.toggle('active',grid.visible)});
+  document.getElementById('sunToggle').addEventListener('click',e=>{sun.visible=!sun.visible;e.currentTarget.classList.toggle('active',sun.visible)});
+  function tweenCamera(pos,target){const start=camera.position.clone(),st=controls.target.clone(),begin=performance.now();function step(now){const t=Math.min(1,(now-begin)/650);const u=1-Math.pow(1-t,3);camera.position.lerpVectors(start,pos,u);controls.target.lerpVectors(st,target,u);if(t<1)requestAnimationFrame(step)}requestAnimationFrame(step)}
+  document.getElementById('overhead').addEventListener('click',()=>tweenCamera(new THREE.Vector3(.1,18,.1),new THREE.Vector3(0,0,0)));
+  document.getElementById('ground').addEventListener('click',()=>tweenCamera(new THREE.Vector3(9,2.2,10),new THREE.Vector3(0,.7,0)));
+
+  function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+  addEventListener('resize',resize);resize();updateSun();
+  function animate(){controls.update();renderer.render(scene,camera);requestAnimationFrame(animate)}animate();
+</script>
+</body>
+</html>
