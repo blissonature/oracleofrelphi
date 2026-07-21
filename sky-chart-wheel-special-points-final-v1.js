@@ -1,4 +1,4 @@
-// Preview-only unified finalizer for special-point glyphs, hover solidity, and leader geometry.
+// Preview-only unified finalizer for special-point glyphs, optical centering, hover solidity, and leader geometry.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -71,6 +71,49 @@
     catch (_) { return point; }
   }
 
+  function visibleArtworkRect(node) {
+    if (!node) return null;
+    if (!node.matches?.('svg.relphi-bold-inline-glyph')) return node.getBoundingClientRect();
+    const shapes = node.querySelectorAll('path,circle,ellipse,rect,line,polyline,polygon');
+    let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+    shapes.forEach(function (shape) {
+      const rect = shape.getBoundingClientRect();
+      if (!rect.width && !rect.height) return;
+      left = Math.min(left, rect.left);
+      top = Math.min(top, rect.top);
+      right = Math.max(right, rect.right);
+      bottom = Math.max(bottom, rect.bottom);
+    });
+    if (!Number.isFinite(left)) return node.getBoundingClientRect();
+    return { left:left, top:top, right:right, bottom:bottom, width:right-left, height:bottom-top };
+  }
+
+  function centerVisibleGlyph(group) {
+    const bubble = group.querySelector('circle.chart-wheel-stick-knob');
+    const node = group.querySelector('svg.relphi-bold-inline-glyph') || group.querySelector('.chart-wheel-marker-glyph');
+    if (!bubble || !node) return;
+
+    if (node.dataset.relphiOpticalBaseTransform == null) {
+      node.dataset.relphiOpticalBaseTransform = node.getAttribute('transform') || '__none__';
+    }
+    const base = node.dataset.relphiOpticalBaseTransform;
+    if (base === '__none__') node.removeAttribute('transform');
+    else node.setAttribute('transform', base);
+
+    const bubbleRect = bubble.getBoundingClientRect();
+    const artRect = visibleArtworkRect(node);
+    if (!artRect) return;
+    const target = { x:bubbleRect.left + bubbleRect.width / 2, y:bubbleRect.top + bubbleRect.height / 2 };
+    const current = { x:artRect.left + artRect.width / 2, y:artRect.top + artRect.height / 2 };
+    const parent = node.parentNode;
+    const targetLocal = screenToLocal(parent, target);
+    const currentLocal = screenToLocal(parent, current);
+    const dx = targetLocal.x - currentLocal.x;
+    const dy = targetLocal.y - currentLocal.y;
+    const shift = 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')';
+    node.setAttribute('transform', base === '__none__' ? shift : base + ' ' + shift);
+  }
+
   function connectLeader(group) {
     const bubble = group.querySelector('circle.chart-wheel-stick-knob');
     const contact = group.querySelector('circle.chart-wheel-contact-dot');
@@ -141,6 +184,7 @@
     scheduled = false;
     document.querySelectorAll(PLACEMENT).forEach(function (group) {
       normalizeGlyph(group);
+      centerVisibleGlyph(group);
       connectLeader(group);
       setSolid(group, false);
       wire(group);
