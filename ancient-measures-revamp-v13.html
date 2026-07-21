@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ancient Measures Lab · Full Construction View</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#111}
+iframe{display:block;width:100%;height:100%;border:0;background:#111}
+</style>
+</head>
+<body>
+<iframe id="lesson" title="Ancient Measures Earth-orientation rope lesson" src="https://raw.githack.com/blissonature/oracleofrelphi/9ba47bb814d2c2491de9af8176349af1b6b0ca62/ancient-measures-revamp-v12.html"></iframe>
+<script>
+const frame=document.getElementById('lesson');
+frame.addEventListener('load',()=>{
+  const tryFrame=()=>{
+    try{
+      const doc=frame.contentDocument;
+      const survey=doc&&doc.getElementById('survey');
+      if(survey){survey.click();return;}
+    }catch(e){}
+    setTimeout(tryFrame,120);
+  };
+  setTimeout(tryFrame,250);
+});
+</script>
+</body>
+</html>
