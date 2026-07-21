@@ -62,11 +62,13 @@
       leader.setAttribute('y1', localBubble.y.toFixed(2));
     }
 
-    // Keep the opaque bubble and its glyph above the line segment hidden beneath it.
+    // One stable paint order: leader, opaque bubble, text fallback, inline planet glyph.
     group.appendChild(leader);
     group.appendChild(knob);
-    const glyph = group.querySelector('svg.relphi-bold-inline-glyph, .chart-wheel-marker-glyph');
-    if (glyph) group.appendChild(glyph);
+    const textGlyph = group.querySelector('.chart-wheel-marker-glyph');
+    const inlineGlyph = group.querySelector('svg.relphi-bold-inline-glyph');
+    if (textGlyph) group.appendChild(textGlyph);
+    if (inlineGlyph) group.appendChild(inlineGlyph);
   }
 
   function apply() {
