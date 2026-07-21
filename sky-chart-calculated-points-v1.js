@@ -201,20 +201,25 @@
     return changed;
   }
 
-  function augmentSlot(kind) {
+  function augmentSlot(kind, options) {
     const key = SLOT_KEYS[kind] || SLOT_KEYS.chart;
     const payload = read(key);
     if (!payload) return false;
     const changed = augmentPayload(payload);
     if (!changed) return false;
     write(key, payload);
-    if (!reloading) {
+
+    const shouldReload = Boolean(options && options.reload);
+    if (shouldReload && !reloading) {
       reloading = true;
       const loadId = kind === 'currentSky' ? 'loadCurrentSky' : 'loadChart';
       document.getElementById(loadId)?.click();
       setTimeout(function () { reloading = false; }, 0);
     }
-    window.dispatchEvent(new CustomEvent('relphi:extra-points-updated', { detail:{ calculated:true } }));
+
+    window.dispatchEvent(new CustomEvent('relphi:extra-points-updated', {
+      detail:{ calculated:true, reloaded:shouldReload }
+    }));
     return true;
   }
 
@@ -224,25 +229,22 @@
     let attempts = 0;
     function check() {
       attempts += 1;
-      if (augmentSlot(kind) || attempts >= 40) return;
+      if (augmentSlot(kind, { reload:true }) || attempts >= 40) return;
       pending = setTimeout(check, 100);
     }
     pending = setTimeout(check, 0);
   }
 
   function install() {
-    // Canonicalize stored slots before the native builder performs its first render.
-    augmentSlot('chart');
-    augmentSlot('currentSky');
+    // This script is loaded before the Sky Builder. Canonicalize storage now so
+    // the builder's first native render already contains the complete point set.
+    // Do not click loadChart/loadCurrentSky here: that caused a second SVG render.
+    augmentSlot('chart', { reload:false });
+    augmentSlot('currentSky', { reload:false });
 
     document.addEventListener('click', function (event) {
       if (event.target.closest?.('#skyCalcRun')) runAfterCalculation();
     }, true);
-
-    window.addEventListener('relphi:sky-builder-v4-loaded', function () {
-      augmentSlot('chart');
-      augmentSlot('currentSky');
-    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
