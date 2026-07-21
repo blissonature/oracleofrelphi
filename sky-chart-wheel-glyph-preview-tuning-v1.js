@@ -67,7 +67,7 @@
     const cy = num(knob.getAttribute('cy'));
     if (!Number.isFinite(cx) || !Number.isFinite(cy)) return;
 
-    text.textContent = key === 'MC' ? 'MC' : 'AC';
+    text.textContent = key === 'MC' ? 'MC' : 'ASC';
     text.setAttribute('x', String(cx));
     text.setAttribute('y', String(cy));
     text.setAttribute('text-anchor', 'middle');
