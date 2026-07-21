@@ -6,6 +6,8 @@
   const style = document.createElement('style');
   style.id = 'relphiPhGlyphStyle';
   style.textContent = [
+    '.unified-sky-wheel svg:not(.relphi-layout-ready),#chartOutput svg:not(.relphi-layout-ready),#currentSkyOutput svg:not(.relphi-layout-ready),.sky-output-box svg:not(.relphi-layout-ready){visibility:hidden!important}',
+    '.unified-sky-wheel svg.relphi-layout-ready,#chartOutput svg.relphi-layout-ready,#currentSkyOutput svg.relphi-layout-ready,.sky-output-box svg.relphi-layout-ready{visibility:visible!important}',
     '.unified-sky-wheel .chart-wheel-placement-stick{--ph-marker:#dc1f18;outline:none}',
     '.unified-sky-wheel .chart-wheel-placement-stick.sky-b{--ph-marker:#3166e2}',
     '.unified-sky-wheel .chart-wheel-placement-stick .chart-wheel-center-ray{stroke:#222!important;stroke-width:.55!important;opacity:.13!important}',
@@ -24,4 +26,48 @@
     '@media(max-width:600px){.unified-sky-wheel .chart-wheel-placement-stick .chart-wheel-stick-knob{r:18px!important}.unified-sky-wheel .chart-wheel-placement-stick:not(.has-preview-inline-glyph) .chart-wheel-marker-glyph{font-size:18.5px!important}.unified-sky-wheel .chart-wheel-placement-stick.has-preview-angle-text .chart-wheel-marker-glyph{font-size:12px!important;font-weight:750!important}}'
   ].join('');
   document.head.appendChild(style);
+
+  const selector = '.unified-sky-wheel svg, #chartOutput svg, #currentSkyOutput svg, .sky-output-box svg';
+
+  function markReady(svg) {
+    if (!(svg instanceof SVGElement)) return;
+    const placements = Array.from(svg.querySelectorAll('.chart-wheel-placement-stick'));
+    if (!placements.length) return;
+    const glyphsReady = placements.every(function (group) {
+      return group.classList.contains('has-preview-inline-glyph') ||
+        group.classList.contains('has-preview-angle-text');
+    });
+    const layoutFinished = svg.dataset.relphiLayoutBusy !== 'true' && svg.style.opacity === '1';
+    if (glyphsReady && layoutFinished) svg.classList.add('relphi-layout-ready');
+  }
+
+  function scan(root) {
+    if (root instanceof SVGElement && root.matches(selector)) markReady(root);
+    root.querySelectorAll?.(selector).forEach(markReady);
+  }
+
+  function installGuard() {
+    scan(document);
+    new MutationObserver(function (records) {
+      const svgs = new Set();
+      records.forEach(function (record) {
+        const targetSvg = record.target instanceof Element ? record.target.closest('svg') : null;
+        if (targetSvg && targetSvg.matches(selector)) svgs.add(targetSvg);
+        Array.from(record.addedNodes || []).forEach(function (node) {
+          if (!(node instanceof Element)) return;
+          if (node.matches?.(selector)) svgs.add(node);
+          node.querySelectorAll?.(selector).forEach(function (svg) { svgs.add(svg); });
+        });
+      });
+      svgs.forEach(markReady);
+    }).observe(document.body, {
+      childList:true,
+      subtree:true,
+      attributes:true,
+      attributeFilter:['class','style','data-relphi-layout-busy']
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installGuard, { once:true });
+  else installGuard();
 })();
