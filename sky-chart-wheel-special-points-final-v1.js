@@ -1,4 +1,4 @@
-// Preview-only unified finalizer for special-point glyphs, optical centering, hover solidity, and leader geometry.
+// Preview-only unified finalizer for standardized glyphs, optical centering, hover solidity, and leader geometry.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -23,6 +23,20 @@
   };
   const TEXT_BY_STALE_TEXT = { 'Ds':'DSC', 'V':'Vx' };
 
+  // Optical standards are intentionally not identical numerical sizes.
+  // They are tuned to produce a uniform apparent size and stroke weight.
+  const GLYPH_STYLE = {
+    '☊':  { size:'18.5px', weight:'500', dx:0.0,  dy:0.45 },
+    '☋':  { size:'18.5px', weight:'500', dx:0.0,  dy:0.45 },
+    '⊗':  { size:'18px',   weight:'500', dx:0.0,  dy:0.10 },
+    '⚸':  { size:'19.5px', weight:'500', dx:0.15, dy:0.70 },
+    'ASC':{ size:'11.5px', weight:'600', dx:0.0,  dy:0.25 },
+    'DSC':{ size:'11px',   weight:'600', dx:0.0,  dy:0.25, spacing:'-0.035em' },
+    'MC': { size:'12px',   weight:'600', dx:0.0,  dy:0.25 },
+    'IC': { size:'12px',   weight:'600', dx:0.0,  dy:0.25 },
+    'Vx': { size:'11.5px', weight:'600', dx:0.0,  dy:0.25 }
+  };
+
   function bare(value) {
     return String(value || '').replace(/[\uFE0E\uFE0F]/g, '').trim();
   }
@@ -38,25 +52,25 @@
 
   function normalizeGlyph(group) {
     const text = glyphNode(group);
-    if (!text) return;
+    if (!text) return '';
     const name = placementName(group);
     const stale = bare(text.textContent);
-    const symbol = SYMBOL_BY_NAME[name] || SYMBOL_BY_STALE_TEXT[stale];
-    const label = TEXT_BY_NAME[name] || TEXT_BY_STALE_TEXT[stale];
+    const glyph = SYMBOL_BY_NAME[name] || SYMBOL_BY_STALE_TEXT[stale] ||
+      TEXT_BY_NAME[name] || TEXT_BY_STALE_TEXT[stale] || stale;
+    const spec = GLYPH_STYLE[glyph];
 
-    if (symbol) {
-      text.textContent = symbol;
-      text.style.setProperty('font-size', name === 'lilith' || stale === '⚸' ? '20px' : '19px', 'important');
-      text.style.setProperty('font-weight', '500', 'important');
-      text.style.setProperty('letter-spacing', '0', 'important');
-    } else if (label) {
-      text.textContent = label;
-      text.style.setProperty('font-size', label === 'DSC' ? '11px' : '12.5px', 'important');
-      text.style.setProperty('font-weight', '600', 'important');
-      text.style.setProperty('letter-spacing', label === 'DSC' ? '-0.04em' : '0', 'important');
-    }
+    if (glyph !== stale) text.textContent = glyph;
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
+    text.style.setProperty('font-family', '"Segoe UI Symbol","Noto Sans Symbols 2","Arial Unicode MS",system-ui,sans-serif', 'important');
+
+    if (spec) {
+      text.style.setProperty('font-size', spec.size, 'important');
+      text.style.setProperty('font-weight', spec.weight, 'important');
+      text.style.setProperty('letter-spacing', spec.spacing || '0', 'important');
+      text.dataset.relphiOpticalGlyph = glyph;
+    }
+    return glyph;
   }
 
   function screenCenter(node) {
@@ -88,7 +102,7 @@
     return { left:left, top:top, right:right, bottom:bottom, width:right-left, height:bottom-top };
   }
 
-  function centerVisibleGlyph(group) {
+  function centerVisibleGlyph(group, glyph) {
     const bubble = group.querySelector('circle.chart-wheel-stick-knob');
     const node = group.querySelector('svg.relphi-bold-inline-glyph') || group.querySelector('.chart-wheel-marker-glyph');
     if (!bubble || !node) return;
@@ -103,7 +117,12 @@
     const bubbleRect = bubble.getBoundingClientRect();
     const artRect = visibleArtworkRect(node);
     if (!artRect) return;
-    const target = { x:bubbleRect.left + bubbleRect.width / 2, y:bubbleRect.top + bubbleRect.height / 2 };
+
+    const spec = GLYPH_STYLE[glyph] || { dx:0, dy:0 };
+    const target = {
+      x:bubbleRect.left + bubbleRect.width / 2 + (spec.dx || 0),
+      y:bubbleRect.top + bubbleRect.height / 2 + (spec.dy || 0)
+    };
     const current = { x:artRect.left + artRect.width / 2, y:artRect.top + artRect.height / 2 };
     const parent = node.parentNode;
     const targetLocal = screenToLocal(parent, target);
@@ -148,7 +167,7 @@
       bubble.style.setProperty('stroke-opacity', '1', 'important');
     }
     if (leader) leader.style.setProperty('opacity', solid ? '1' : '.88', 'important');
-    glyphs.forEach(function (glyph) { glyph.style.setProperty('opacity', '1', 'important'); });
+    glyphs.forEach(function (node) { node.style.setProperty('opacity', '1', 'important'); });
   }
 
   function raise(group) {
@@ -183,8 +202,8 @@
   function finalize() {
     scheduled = false;
     document.querySelectorAll(PLACEMENT).forEach(function (group) {
-      normalizeGlyph(group);
-      centerVisibleGlyph(group);
+      const glyph = normalizeGlyph(group);
+      centerVisibleGlyph(group, glyph);
       connectLeader(group);
       setSolid(group, false);
       wire(group);
