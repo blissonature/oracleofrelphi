@@ -1,11 +1,16 @@
-// Branch-only preview interactions. Layout is owned exclusively by the tuning script.
+// Branch-only preview interactions plus final micro-refinement.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   const PLACEMENT = '.chart-wheel-placement-stick';
+  const SVG_SELECTOR = '.unified-sky-wheel svg, #chartOutput svg, #currentSkyOutput svg, .sky-output-box svg';
+  const EXTRA_OUTWARD = 6;
+  const REFINED_RADIUS = 16.5;
+  const LEADER_OVERLAP = 1.1;
   let tooltip = null;
   let pinned = null;
+  let refinementQueued = false;
 
   function appendOnce(src) {
     const base = src.split('?')[0];
@@ -49,6 +54,14 @@
       pointerEvents:'none'
     });
     document.body.appendChild(badge);
+  }
+
+  function installRefinementStyle() {
+    if (document.getElementById('relphiWheelRefinementStyle')) return;
+    const style = document.createElement('style');
+    style.id = 'relphiWheelRefinementStyle';
+    style.textContent = '.unified-sky-wheel .chart-wheel-placement-stick .chart-wheel-stick-knob{r:' + REFINED_RADIUS + 'px!important}';
+    document.head.appendChild(style);
   }
 
   function ensureTooltip() {
@@ -105,15 +118,111 @@
     group.addEventListener('blur', function () { if (!pinned) clear(group); });
   }
 
+  function number(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : NaN;
+  }
+
+  function pointToRoot(node, x, y) {
+    const matrix = node.getCTM?.();
+    return matrix ? new DOMPoint(x, y).matrixTransform(matrix) : new DOMPoint(x, y);
+  }
+
+  function pointFromRoot(node, point) {
+    const matrix = node.getCTM?.();
+    if (!matrix) return point;
+    try { return point.matrixTransform(matrix.inverse()); }
+    catch (_) { return point; }
+  }
+
+  function rememberTransform(node) {
+    if (node.dataset.relphiRefinementBaseTransform != null) return;
+    node.dataset.relphiRefinementBaseTransform = node.getAttribute('transform') || '__none__';
+  }
+
+  function restoreTransform(node) {
+    const base = node.dataset.relphiRefinementBaseTransform;
+    if (base == null) return;
+    if (base === '__none__') node.removeAttribute('transform');
+    else node.setAttribute('transform', base);
+  }
+
+  function moveFromBase(node, dx, dy) {
+    rememberTransform(node);
+    restoreTransform(node);
+    const base = node.dataset.relphiRefinementBaseTransform;
+    const shift = 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')';
+    node.setAttribute('transform', base === '__none__' ? shift : base + ' ' + shift);
+  }
+
+  function refineGroup(group, wheelCenter) {
+    const knob = group.querySelector('circle.chart-wheel-stick-knob');
+    const contact = group.querySelector('circle.chart-wheel-contact-dot');
+    const leader = group.querySelector('line.chart-wheel-stick');
+    if (!knob || !contact || !leader) return;
+
+    const moving = [knob, group.querySelector('.chart-wheel-marker-glyph'), group.querySelector('svg.relphi-bold-inline-glyph')].filter(Boolean);
+    moving.forEach(restoreTransform);
+
+    const knobCenter = pointToRoot(knob, number(knob.getAttribute('cx')), number(knob.getAttribute('cy')));
+    const vx = knobCenter.x - wheelCenter.x;
+    const vy = knobCenter.y - wheelCenter.y;
+    const length = Math.hypot(vx, vy) || 1;
+    const target = new DOMPoint(knobCenter.x + vx / length * EXTRA_OUTWARD, knobCenter.y + vy / length * EXTRA_OUTWARD);
+
+    moving.forEach(function (node) {
+      const localNow = pointFromRoot(node, knobCenter);
+      const localTarget = pointFromRoot(node, target);
+      moveFromBase(node, localTarget.x - localNow.x, localTarget.y - localNow.y);
+    });
+
+    knob.setAttribute('r', String(REFINED_RADIUS));
+
+    const anchor = pointToRoot(contact, number(contact.getAttribute('cx')), number(contact.getAttribute('cy')));
+    const lx = target.x - anchor.x;
+    const ly = target.y - anchor.y;
+    const leaderLength = Math.hypot(lx, ly) || 1;
+    const edge = new DOMPoint(
+      target.x - lx / leaderLength * (REFINED_RADIUS - LEADER_OVERLAP),
+      target.y - ly / leaderLength * (REFINED_RADIUS - LEADER_OVERLAP)
+    );
+    const localAnchor = pointFromRoot(leader, anchor);
+    const localEdge = pointFromRoot(leader, edge);
+    leader.setAttribute('x1', localAnchor.x.toFixed(2));
+    leader.setAttribute('y1', localAnchor.y.toFixed(2));
+    leader.setAttribute('x2', localEdge.x.toFixed(2));
+    leader.setAttribute('y2', localEdge.y.toFixed(2));
+  }
+
+  function refineSvg(svg) {
+    const view = svg.viewBox?.baseVal;
+    const wheelCenter = view && view.width ? new DOMPoint(view.x + view.width / 2, view.y + view.height / 2) : new DOMPoint(400, 400);
+    svg.querySelectorAll(PLACEMENT).forEach(function (group) { refineGroup(group, wheelCenter); });
+  }
+
+  function refineAll() {
+    refinementQueued = false;
+    document.querySelectorAll(SVG_SELECTOR).forEach(refineSvg);
+  }
+
+  function scheduleRefinement() {
+    if (refinementQueued) return;
+    refinementQueued = true;
+    queueMicrotask(refineAll);
+  }
+
   function run() {
     installPreviewGuard();
+    installRefinementStyle();
     document.querySelectorAll(PLACEMENT).forEach(wire);
+    scheduleRefinement();
   }
 
   function install() {
     appendOnce('sky-chart-wheel-glyph-preview-fixes-v1.js?v=1');
     run();
     window.addEventListener('relphi:sky-builder-v4-loaded', run);
+    window.addEventListener('resize', scheduleRefinement, { passive:true });
     document.addEventListener('click', function () { if (pinned) { clear(pinned); pinned = null; } });
     new MutationObserver(function (records) {
       if (records.some(function (record) {
