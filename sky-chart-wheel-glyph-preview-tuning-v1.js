@@ -1,9 +1,8 @@
-// Branch-only tuning: slightly longer lollipops and uniform ASC/MC glyph assets.
+// Branch-only tuning: slightly longer lollipops and compact ASC/MC marks.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  const NS = 'http://www.w3.org/2000/svg';
   const PLACEMENT = '.chart-wheel-placement-stick';
   const EXTRA_LENGTH = 7;
   let queued = false;
@@ -53,33 +52,27 @@
     });
   }
 
-  function ensureAngleGlyph(group) {
+  function normalizeAngleMark(group) {
     const text = group.querySelector('.chart-wheel-marker-glyph');
     const knob = group.querySelector('circle.chart-wheel-stick-knob');
     if (!text || !knob) return;
     const key = bare(text.textContent);
-    const asset = key === 'ASC' ? 'ascendant' : key === 'MC' ? 'midheaven' : '';
-    if (!asset) return;
+    if (key !== 'ASC' && key !== 'MC' && key !== 'AC') return;
+
+    group.querySelector('image.relphi-angle-glyph-image')?.remove();
+    group.classList.remove('has-preview-angle-image');
+    group.classList.add('has-preview-angle-text');
 
     const cx = num(knob.getAttribute('cx'));
     const cy = num(knob.getAttribute('cy'));
     if (!Number.isFinite(cx) || !Number.isFinite(cy)) return;
 
-    let image = group.querySelector('image.relphi-angle-glyph-image');
-    if (!image) {
-      image = document.createElementNS(NS, 'image');
-      image.classList.add('relphi-angle-glyph-image');
-      image.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-      image.setAttribute('pointer-events', 'none');
-      group.appendChild(image);
-    }
-    const size = 17.5;
-    image.setAttribute('href', 'assets/planet-glyphs/' + asset + '.svg?v=1');
-    image.setAttribute('x', String(cx - size / 2));
-    image.setAttribute('y', String(cy - size / 2));
-    image.setAttribute('width', String(size));
-    image.setAttribute('height', String(size));
-    group.classList.add('has-preview-angle-image');
+    text.textContent = key === 'MC' ? 'MC' : 'AC';
+    text.setAttribute('x', String(cx));
+    text.setAttribute('y', String(cy));
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'central');
+    text.style.removeProperty('display');
   }
 
   function extendPlacement(group, svgCenter) {
@@ -100,13 +93,11 @@
     const dx = vx / length * EXTRA_LENGTH;
     const dy = vy / length * EXTRA_LENGTH;
 
-    const nodes = [
+    [
       knob,
       group.querySelector('.chart-wheel-marker-glyph'),
-      group.querySelector('image.relphi-bubble-glyph-image'),
-      group.querySelector('image.relphi-angle-glyph-image')
-    ].filter(Boolean);
-    nodes.forEach(function (node) { translate(node, dx, dy); });
+      group.querySelector('image.relphi-bubble-glyph-image')
+    ].filter(Boolean).forEach(function (node) { translate(node, dx, dy); });
 
     rememberLeader(leader);
     restoreLeader(leader);
@@ -131,7 +122,7 @@
     const box = svg.viewBox && svg.viewBox.baseVal;
     const center = box && box.width ? { x:box.x + box.width / 2, y:box.y + box.height / 2 } : { x:400, y:400 };
     svg.querySelectorAll(PLACEMENT).forEach(function (group) {
-      ensureAngleGlyph(group);
+      normalizeAngleMark(group);
       extendPlacement(group, center);
     });
   }
