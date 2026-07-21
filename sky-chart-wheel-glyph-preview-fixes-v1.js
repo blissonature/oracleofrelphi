@@ -1,4 +1,4 @@
-// Preview-only cleanup: remove duplicate source glyphs and close leader-to-bubble gaps.
+// Preview-only cleanup: remove duplicate source glyphs, close leader gaps, and raise hovered placements.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -7,6 +7,15 @@
   const BUBBLE_RADIUS = 17.5;
   const STROKE_OVERLAP = 1.5;
   let queued = false;
+
+  function appendOnce(src) {
+    const base = src.split('?')[0];
+    if (document.querySelector('script[src^="' + base + '"]')) return;
+    const script = document.createElement('script');
+    script.async = false;
+    script.src = src;
+    document.body.appendChild(script);
+  }
 
   function num(value) {
     const result = Number(value);
@@ -59,7 +68,6 @@
     const vy = bubbleRoot.y - anchorRoot.y;
     const length = Math.hypot(vx, vy) || 1;
 
-    // End beneath the bubble stroke so no white gap can appear.
     const edgeRoot = {
       x:bubbleRoot.x - vx / length * (BUBBLE_RADIUS - STROKE_OVERLAP),
       y:bubbleRoot.y - vy / length * (BUBBLE_RADIUS - STROKE_OVERLAP)
@@ -74,11 +82,39 @@
     leader.style.strokeLinecap = 'round';
   }
 
+  function raise(group) {
+    if (group.dataset.relphiRaised === 'true') return;
+    const parent = group.parentNode;
+    if (!parent) return;
+    const marker = document.createComment('relphi-placement-order');
+    parent.insertBefore(marker, group);
+    group.__relphiOrderMarker = marker;
+    group.dataset.relphiRaised = 'true';
+    parent.appendChild(group);
+  }
+
+  function restore(group) {
+    const marker = group.__relphiOrderMarker;
+    if (marker?.parentNode) marker.parentNode.replaceChild(group, marker);
+    delete group.__relphiOrderMarker;
+    delete group.dataset.relphiRaised;
+  }
+
+  function wireForeground(group) {
+    if (group.dataset.relphiForegroundWired) return;
+    group.dataset.relphiForegroundWired = 'true';
+    group.addEventListener('pointerenter', function () { raise(group); });
+    group.addEventListener('pointerleave', function () { restore(group); });
+    group.addEventListener('focusin', function () { raise(group); });
+    group.addEventListener('focusout', function () { restore(group); });
+  }
+
   function run() {
     queued = false;
     document.querySelectorAll(PLACEMENT).forEach(function (group) {
       removeDuplicateGlyphs(group);
       connectLeader(group);
+      wireForeground(group);
     });
   }
 
@@ -89,8 +125,10 @@
   }
 
   function install() {
+    appendOnce('sky-chart-extra-points-support-v1.js?v=1');
     schedule();
     window.addEventListener('relphi:sky-builder-v4-loaded', schedule);
+    window.addEventListener('relphi:extra-points-updated', schedule);
     window.addEventListener('resize', schedule, { passive:true });
     new MutationObserver(function (records) {
       if (records.some(function (record) {
