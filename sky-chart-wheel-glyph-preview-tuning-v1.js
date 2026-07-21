@@ -1,14 +1,15 @@
-// Branch-only tuning: balanced bubble size, collision spacing, and optically centered glyphs.
+// Branch-only tuning: wide bubble orbit, stable bold glyphs, and exact leader connections.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   const NS = 'http://www.w3.org/2000/svg';
   const PLACEMENT = '.chart-wheel-placement-stick';
-  const EXTRA_LENGTH = 8;
+  const OUTWARD_SHIFT = 24;
   const GLYPH_SIZE = 26;
-  const MIN_CENTER_GAP = 39;
-  const MAX_TANGENTIAL = 48;
+  const BUBBLE_RADIUS = 17.5;
+  const MIN_CENTER_GAP = 44;
+  const MAX_TANGENTIAL = 72;
   const ASSETS = {
     '☉':'sun','⊙':'sun','☽':'moon','☾':'moon','☿':'mercury','♀':'venus','♂':'mars',
     '♃':'jupiter','♄':'saturn','♅':'uranus','⛢':'uranus','♆':'neptune','♇':'pluto','⯓':'pluto'
@@ -30,39 +31,41 @@
     return group.classList.contains('sky-b') ? '#3166e2' : '#dc1f18';
   }
 
-  function rememberTransform(node) {
-    if (node.dataset.previewTuneBaseTransform != null) return;
-    node.dataset.previewTuneBaseTransform = node.getAttribute('transform') || '__none__';
+  function rootPoint(node, x, y) {
+    const matrix = node.getCTM && node.getCTM();
+    if (!matrix) return { x:x, y:y };
+    const point = new DOMPoint(x, y).matrixTransform(matrix);
+    return { x:point.x, y:point.y };
   }
 
-  function restoreNode(node) {
-    const base = node.dataset.previewTuneBaseTransform;
-    if (base == null) return;
-    if (base === '__none__') node.removeAttribute('transform');
-    else node.setAttribute('transform', base);
+  function localPoint(node, point) {
+    const matrix = node.getCTM && node.getCTM();
+    if (!matrix) return point;
+    try {
+      const local = new DOMPoint(point.x, point.y).matrixTransform(matrix.inverse());
+      return { x:local.x, y:local.y };
+    } catch (_) {
+      return point;
+    }
+  }
+
+  function rememberTransform(node) {
+    if (node.dataset.previewWideBaseTransform != null) return;
+    node.dataset.previewWideBaseTransform = node.getAttribute('transform') || '__none__';
   }
 
   function translate(node, dx, dy) {
     rememberTransform(node);
-    restoreNode(node);
-    const base = node.dataset.previewTuneBaseTransform;
+    const base = node.dataset.previewWideBaseTransform;
     const move = 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')';
     node.setAttribute('transform', base === '__none__' ? move : base + ' ' + move);
   }
 
   function rememberLeader(line) {
-    if (line.dataset.previewTuneLeader) return;
-    line.dataset.previewTuneLeader = 'true';
+    if (line.dataset.previewWideLeader) return;
+    line.dataset.previewWideLeader = 'true';
     ['x1','y1','x2','y2'].forEach(function (name) {
-      line.dataset['previewTune' + name.toUpperCase()] = line.getAttribute(name) || '0';
-    });
-  }
-
-  function restoreLeader(line) {
-    if (!line.dataset.previewTuneLeader) return;
-    ['x1','y1','x2','y2'].forEach(function (name) {
-      const value = line.dataset['previewTune' + name.toUpperCase()];
-      if (value != null) line.setAttribute(name, value);
+      line.dataset['previewWide' + name.toUpperCase()] = line.getAttribute(name) || '0';
     });
   }
 
@@ -153,6 +156,8 @@
       inline.classList.add('relphi-bold-inline-glyph');
       inline.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       inline.setAttribute('pointer-events', 'none');
+      const knobTransform = knob.getAttribute('transform');
+      if (knobTransform) inline.setAttribute('transform', knobTransform);
       positionInlineGlyph(inline, knob);
 
       const content = document.createElementNS(NS, 'g');
@@ -170,13 +175,6 @@
     }).finally(function () {
       delete group.dataset.previewInlineLoading;
     });
-  }
-
-  function rootPoint(node, x, y) {
-    const matrix = node.getCTM && node.getCTM();
-    if (!matrix) return { x:x, y:y };
-    const point = new DOMPoint(x, y).matrixTransform(matrix);
-    return { x:point.x, y:point.y };
   }
 
   function collect(svg) {
@@ -201,19 +199,30 @@
       const length = Math.hypot(vx, vy) || 1;
       const normal = { x:vx / length, y:vy / length };
       const tangent = { x:-normal.y, y:normal.x };
-      return { index:index, group:group, knob:knob, contact:contact, leader:leader, base:base, anchor:anchor, normal:normal, tangent:tangent, tangential:0 };
+      return {
+        index:index,
+        group:group,
+        knob:knob,
+        contact:contact,
+        leader:leader,
+        base:base,
+        anchor:anchor,
+        normal:normal,
+        tangent:tangent,
+        tangential:0
+      };
     }).filter(Boolean);
   }
 
   function position(item) {
     return {
-      x:item.base.x + item.normal.x * EXTRA_LENGTH + item.tangent.x * item.tangential,
-      y:item.base.y + item.normal.y * EXTRA_LENGTH + item.tangent.y * item.tangential
+      x:item.base.x + item.normal.x * OUTWARD_SHIFT + item.tangent.x * item.tangential,
+      y:item.base.y + item.normal.y * OUTWARD_SHIFT + item.tangent.y * item.tangential
     };
   }
 
   function solve(items) {
-    for (let pass = 0; pass < 32; pass += 1) {
+    for (let pass = 0; pass < 44; pass += 1) {
       let changed = false;
       for (let a = 0; a < items.length; a += 1) {
         for (let b = a + 1; b < items.length; b += 1) {
@@ -225,13 +234,49 @@
           if (distance >= MIN_CENTER_GAP) continue;
           const cross = first.normal.x * second.normal.y - first.normal.y * second.normal.x;
           const direction = Math.sign(cross) || (first.index < second.index ? 1 : -1);
-          const push = Math.min(5, (MIN_CENTER_GAP - distance) * 0.58 + 0.35);
+          const push = Math.min(6.5, (MIN_CENTER_GAP - distance) * 0.62 + 0.45);
           first.tangential = Math.max(-MAX_TANGENTIAL, Math.min(MAX_TANGENTIAL, first.tangential - direction * push / 2));
           second.tangential = Math.max(-MAX_TANGENTIAL, Math.min(MAX_TANGENTIAL, second.tangential + direction * push / 2));
           changed = true;
         }
       }
       if (!changed) break;
+    }
+  }
+
+  function connectLeader(item, final) {
+    rememberLeader(item.leader);
+    const x1 = num(item.leader.dataset.previewWideX1);
+    const y1 = num(item.leader.dataset.previewWideY1);
+    const x2 = num(item.leader.dataset.previewWideX2);
+    const y2 = num(item.leader.dataset.previewWideY2);
+    if (![x1,y1,x2,y2].every(Number.isFinite)) return;
+
+    const oneRoot = rootPoint(item.leader, x1, y1);
+    const twoRoot = rootPoint(item.leader, x2, y2);
+    const oneToAnchor = Math.hypot(oneRoot.x - item.anchor.x, oneRoot.y - item.anchor.y);
+    const twoToAnchor = Math.hypot(twoRoot.x - item.anchor.x, twoRoot.y - item.anchor.y);
+
+    const vx = final.x - item.anchor.x;
+    const vy = final.y - item.anchor.y;
+    const length = Math.hypot(vx, vy) || 1;
+    const edgeRoot = {
+      x:final.x - vx / length * (BUBBLE_RADIUS + 0.8),
+      y:final.y - vy / length * (BUBBLE_RADIUS + 0.8)
+    };
+    const anchorLocal = localPoint(item.leader, item.anchor);
+    const edgeLocal = localPoint(item.leader, edgeRoot);
+
+    if (oneToAnchor <= twoToAnchor) {
+      item.leader.setAttribute('x1', anchorLocal.x.toFixed(2));
+      item.leader.setAttribute('y1', anchorLocal.y.toFixed(2));
+      item.leader.setAttribute('x2', edgeLocal.x.toFixed(2));
+      item.leader.setAttribute('y2', edgeLocal.y.toFixed(2));
+    } else {
+      item.leader.setAttribute('x2', anchorLocal.x.toFixed(2));
+      item.leader.setAttribute('y2', anchorLocal.y.toFixed(2));
+      item.leader.setAttribute('x1', edgeLocal.x.toFixed(2));
+      item.leader.setAttribute('y1', edgeLocal.y.toFixed(2));
     }
   }
 
@@ -245,28 +290,7 @@
       item.group.querySelector('image.relphi-bubble-glyph-image'),
       item.group.querySelector('svg.relphi-bold-inline-glyph')
     ].filter(Boolean).forEach(function (node) { translate(node, dx, dy); });
-
-    rememberLeader(item.leader);
-    restoreLeader(item.leader);
-    const x1 = num(item.leader.getAttribute('x1'));
-    const y1 = num(item.leader.getAttribute('y1'));
-    const x2 = num(item.leader.getAttribute('x2'));
-    const y2 = num(item.leader.getAttribute('y2'));
-    if (![x1,y1,x2,y2].every(Number.isFinite)) return;
-
-    const d1 = Math.hypot(x1 - item.anchor.x, y1 - item.anchor.y);
-    const d2 = Math.hypot(x2 - item.anchor.x, y2 - item.anchor.y);
-    const vx = final.x - item.anchor.x;
-    const vy = final.y - item.anchor.y;
-    const length = Math.hypot(vx, vy) || 1;
-    const edge = { x:final.x - vx / length * 18.1, y:final.y - vy / length * 18.1 };
-    if (d1 <= d2) {
-      item.leader.setAttribute('x2', edge.x.toFixed(2));
-      item.leader.setAttribute('y2', edge.y.toFixed(2));
-    } else {
-      item.leader.setAttribute('x1', edge.x.toFixed(2));
-      item.leader.setAttribute('y1', edge.y.toFixed(2));
-    }
+    connectLeader(item, final);
   }
 
   function tune(svg) {
