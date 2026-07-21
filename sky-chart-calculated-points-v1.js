@@ -1,4 +1,4 @@
-// Preview-only calculated support for North Node, Lilith, Vertex, and Part of Fortune.
+// Preview-only calculated support for nodes, angles, Lilith, Vertex, and Part of Fortune.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -6,6 +6,7 @@
   const SLOT_KEYS = { chart:'relphiSkyChartA', currentSky:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   let pending = 0;
+  let reloading = false;
 
   function norm(x) { x = Number(x); return ((x % 360) + 360) % 360; }
   function rad(x) { return Number(x) * Math.PI / 180; }
@@ -22,13 +23,18 @@
     return norm(signIndex * 30 + Number(item.degree) + (Number(item.minute) || 0) / 60 + (Number(item.second) || 0) / 3600);
   }
 
-  function findPlacement(map, names) {
+  function keyFor(map, names) {
     const keys = Object.keys(map || {});
     for (const name of names) {
-      const key = keys.find(function (candidate) { return candidate.toLowerCase() === name.toLowerCase(); });
-      if (key) return map[key];
+      const exact = keys.find(function (candidate) { return candidate.toLowerCase() === name.toLowerCase(); });
+      if (exact) return exact;
     }
-    return null;
+    return '';
+  }
+
+  function findPlacement(map, names) {
+    const key = keyFor(map, names);
+    return key ? map[key] : null;
   }
 
   function placementFromLongitude(lon, house, extra) {
@@ -48,7 +54,7 @@
   function julianDay(date) { return date.getTime() / 86400000 + 2440587.5; }
 
   function dateFromProfile(profile) {
-    const candidates = [profile.utcDateTime, profile.utcIso, profile.instant, profile.dateTimeUtc, profile.isoUtc, profile.calculatedAtUtc, profile.dateTime];
+    const candidates = [profile.utcDateTime, profile.utcIso, profile.instant, profile.dateTimeUtc, profile.isoUtc, profile.calculatedAtUtc, profile.dateTime, profile.datetime];
     for (const value of candidates) {
       if (!value) continue;
       const date = new Date(value);
@@ -66,6 +72,12 @@
     const T = (jd - 2451545.0) / 36525;
     const perigee = 83.3532465 + 4069.0137287 * T - 0.0103200 * T * T - Math.pow(T,3) / 80053 + Math.pow(T,4) / 18999000;
     return norm(perigee + 180);
+  }
+
+  function rightAscensionFromEcliptic(lon, obliquity) {
+    const lambda = rad(lon);
+    const eps = rad(obliquity);
+    return norm(deg(Math.atan2(Math.sin(lambda) * Math.cos(eps), Math.cos(lambda))));
   }
 
   function vertexLongitude(lst, latitude, obliquity) {
@@ -88,9 +100,13 @@
     return norm(deg(Math.atan2(yEcl, chosen.x)));
   }
 
-  function houseForLongitude(lon, payload) {
+  function profileCusps(payload) {
     const profile = payload.calcProfile || {};
-    const cusps = Array.isArray(profile.houseCusps) ? profile.houseCusps : Array.isArray(profile.cusps) ? profile.cusps : null;
+    return Array.isArray(profile.houseCusps) ? profile.houseCusps : Array.isArray(profile.cusps) ? profile.cusps : null;
+  }
+
+  function houseForLongitude(lon, payload) {
+    const cusps = profileCusps(payload);
     if (!cusps || cusps.length < 12) return '';
     for (let i = 0; i < 12; i += 1) {
       const start = norm(cusps[i]);
@@ -107,16 +123,20 @@
     if (!map || typeof map !== 'object') return false;
     const profile = payload.calcProfile || {};
     const date = dateFromProfile(profile);
-    const asc = longitudeOf(findPlacement(map, ['Ascendant','ASC','AC']));
+    const asc = longitudeOf(findPlacement(map, ['Rising','Ascendant','ASC','AC']));
+    const mc = longitudeOf(findPlacement(map, ['MC','Midheaven']));
     const sun = longitudeOf(findPlacement(map, ['Sun']));
     const moon = longitudeOf(findPlacement(map, ['Moon']));
     let changed = false;
 
-    function add(name, lon, extra) {
+    function add(name, lon, extra, aliases) {
       if (!Number.isFinite(lon)) return;
-      const old = findPlacement(map, [name]);
+      const names = [name].concat(aliases || []);
+      const existingKey = keyFor(map, names);
+      const old = existingKey ? map[existingKey] : null;
       const next = placementFromLongitude(lon, houseForLongitude(lon, payload), extra);
-      if (!old || Math.abs(longitudeOf(old) - lon) > 1 / 120) {
+      if (!old || Math.abs(longitudeOf(old) - lon) > 1 / 120 || existingKey !== name) {
+        if (existingKey && existingKey !== name) delete map[existingKey];
         map[name] = next;
         changed = true;
       }
@@ -124,21 +144,33 @@
 
     if (date) {
       const jd = julianDay(date);
-      add('North Node', meanNorthNode(jd), { retrograde:true, calculation:'mean lunar node' });
-      add('Lilith', meanLilith(jd), { calculation:'mean lunar apogee' });
+      const north = meanNorthNode(jd);
+      add('North Node', north, { retrograde:true, glyph:'☊', calculation:'mean lunar node' }, ['Node']);
+      add('South Node', norm(north + 180), { retrograde:true, glyph:'☋', calculation:'opposite mean lunar node' });
+      add('Lilith', meanLilith(jd), { glyph:'⚸', calculation:'mean lunar apogee' });
     }
 
-    const lst = Number(profile.siderealDegrees ?? profile.localSiderealDegrees ?? profile.lstDegrees);
-    const latitude = Number(profile.latitude ?? profile.lat);
+    if (Number.isFinite(asc)) {
+      add('Rising', asc, { glyph:'ASC', angle:true, calculation:'ascendant' }, ['Ascendant','ASC','AC']);
+      add('Dsc', norm(asc + 180), { glyph:'DSC', angle:true, calculation:'opposite ascendant' }, ['Descendant','DSC']);
+    }
+    if (Number.isFinite(mc)) {
+      add('MC', mc, { glyph:'MC', angle:true, calculation:'midheaven' }, ['Midheaven']);
+      add('IC', norm(mc + 180), { glyph:'IC', angle:true, calculation:'opposite midheaven' });
+    }
+
     const obliquity = Number(profile.obliquityDegrees ?? profile.obliquity ?? 23.4392911);
-    add('Vertex', vertexLongitude(lst, latitude, obliquity), { calculation:'prime vertical intersection' });
+    const latitude = Number(profile.latitude ?? profile.lat ?? profile.coordinates?.latitude);
+    let lst = Number(profile.siderealDegrees ?? profile.localSiderealDegrees ?? profile.lstDegrees ?? profile.localSiderealTimeDegrees);
+    if (!Number.isFinite(lst) && Number.isFinite(mc)) lst = rightAscensionFromEcliptic(mc, obliquity);
+    add('Vertex', vertexLongitude(lst, latitude, obliquity), { glyph:'Vx', calculation:'prime vertical intersection' });
 
     if ([asc, sun, moon].every(Number.isFinite)) {
       const sunPlacement = findPlacement(map, ['Sun']);
       const sunHouse = Number(sunPlacement && sunPlacement.house);
       const isDay = Number.isFinite(sunHouse) ? sunHouse >= 7 && sunHouse <= 12 : true;
       const fortune = isDay ? asc + moon - sun : asc + sun - moon;
-      add('Part of Fortune', norm(fortune), { calculation:isDay ? 'day formula' : 'night formula' });
+      add('Part of Fortune', norm(fortune), { glyph:'⊗', calculation:isDay ? 'day formula' : 'night formula' }, ['Fortune','POF']);
     }
 
     if (payload.placements && payload.placements !== map) payload.placements = map;
@@ -148,10 +180,17 @@
   function augmentSlot(kind) {
     const key = SLOT_KEYS[kind] || SLOT_KEYS.chart;
     const payload = read(key);
-    if (!payload || !augmentPayload(payload)) return false;
+    if (!payload) return false;
+    const changed = augmentPayload(payload);
+    if (!changed) return false;
     write(key, payload);
-    const loadId = kind === 'currentSky' ? 'loadCurrentSky' : 'loadChart';
-    document.getElementById(loadId)?.click();
+    if (!reloading) {
+      reloading = true;
+      const loadId = kind === 'currentSky' ? 'loadCurrentSky' : 'loadChart';
+      document.getElementById(loadId)?.click();
+      setTimeout(function () { reloading = false; }, 0);
+    }
+    window.dispatchEvent(new CustomEvent('relphi:extra-points-updated', { detail:{ calculated:true } }));
     return true;
   }
 
@@ -161,7 +200,7 @@
     let attempts = 0;
     function check() {
       attempts += 1;
-      if (augmentSlot(kind) || attempts >= 30) return;
+      if (augmentSlot(kind) || attempts >= 40) return;
       pending = setTimeout(check, 100);
     }
     pending = setTimeout(check, 0);
@@ -171,7 +210,9 @@
     if (event.target.closest?.('#skyCalcRun')) runAfterCalculation();
   }, true);
   window.addEventListener('relphi:sky-builder-v4-loaded', function () {
-    augmentSlot('chart');
-    augmentSlot('currentSky');
+    setTimeout(function () {
+      augmentSlot('chart');
+      augmentSlot('currentSky');
+    }, 0);
   });
 })();
