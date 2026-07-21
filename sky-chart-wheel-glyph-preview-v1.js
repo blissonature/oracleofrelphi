@@ -7,6 +7,15 @@
   let tooltip = null;
   let pinned = null;
 
+  function appendOnce(src) {
+    const base = src.split('?')[0];
+    if (document.querySelector('script[src^="' + base + '"]')) return;
+    const script = document.createElement('script');
+    script.async = false;
+    script.src = src;
+    document.body.appendChild(script);
+  }
+
   function bare(value) {
     return String(value || '').replace(/[\uFE0E\uFE0F]/g, '').trim();
   }
@@ -102,6 +111,7 @@
   }
 
   function install() {
+    appendOnce('sky-chart-wheel-glyph-preview-fixes-v1.js?v=1');
     run();
     window.addEventListener('relphi:sky-builder-v4-loaded', run);
     document.addEventListener('click', function () { if (pinned) { clear(pinned); pinned = null; } });
