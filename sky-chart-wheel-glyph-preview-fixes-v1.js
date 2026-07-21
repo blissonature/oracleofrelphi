@@ -1,4 +1,4 @@
-// Preview-only cleanup: remove duplicate source glyphs, close leader gaps, and raise hovered placements.
+// Preview-only cleanup: remove duplicate source glyphs, close leader gaps, raise hovered placements, and standardize special points.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -37,6 +37,41 @@
       return { x:local.x, y:local.y };
     } catch (_) {
       return point;
+    }
+  }
+
+  function placementName(group) {
+    return String(group.querySelector('.chart-wheel-marker-name')?.textContent || group.dataset.body || group.dataset.placement || '').trim().toLowerCase();
+  }
+
+  function standardizeSpecialGlyph(group) {
+    const text = group.querySelector('.chart-wheel-marker-glyph');
+    if (!text) return;
+    const name = placementName(group);
+    const map = [
+      [/part of fortune|fortune|pof/, '⊗'],
+      [/lilith|black moon/, '⚸'],
+      [/south node|descending node/, '☋'],
+      [/north node|ascending node|^node$/, '☊'],
+      [/vertex/, 'Vx'],
+      [/descendant|^dsc$|^dc$/, 'DSC'],
+      [/imum coeli|^ic$/, 'IC'],
+      [/ascendant|rising|^asc$|^ac$/, 'ASC'],
+      [/midheaven|^mc$/, 'MC']
+    ];
+    const match = map.find(function (entry) { return entry[0].test(name); });
+    if (!match) return;
+    text.textContent = match[1];
+    text.style.display = '';
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'central');
+    text.setAttribute('font-family', 'Noto Sans Symbols 2, Segoe UI Symbol, Arial Unicode MS, system-ui, sans-serif');
+    text.setAttribute('font-weight', /^(ASC|DSC|MC|IC|Vx)$/.test(match[1]) ? '700' : '850');
+    text.setAttribute('font-size', match[1] === '⚸' ? '19.5' : /^(ASC|DSC|MC|IC|Vx)$/.test(match[1]) ? '11.5' : '18');
+    const knob = group.querySelector('circle.chart-wheel-stick-knob');
+    if (knob) {
+      text.setAttribute('x', knob.getAttribute('cx'));
+      text.setAttribute('y', knob.getAttribute('cy'));
     }
   }
 
@@ -112,6 +147,7 @@
   function run() {
     queued = false;
     document.querySelectorAll(PLACEMENT).forEach(function (group) {
+      standardizeSpecialGlyph(group);
       removeDuplicateGlyphs(group);
       connectLeader(group);
       wireForeground(group);
@@ -125,8 +161,8 @@
   }
 
   function install() {
-    appendOnce('sky-chart-extra-points-support-v1.js?v=1');
-    appendOnce('sky-chart-calculated-points-v1.js?v=1');
+    appendOnce('sky-chart-extra-points-support-v1.js?v=2');
+    appendOnce('sky-chart-calculated-points-v1.js?v=2');
     schedule();
     window.addEventListener('relphi:sky-builder-v4-loaded', schedule);
     window.addEventListener('relphi:extra-points-updated', schedule);
