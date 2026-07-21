@@ -1,4 +1,4 @@
-// Preview-only final pass for canonical special-point glyphs and exact leader attachment.
+// Preview-only final pass for canonical special-point glyphs, optical centering, and exact leader attachment.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -17,13 +17,14 @@
   };
   const TEXT_POINTS = new Set(['DSC','Vx','ASC','MC','IC']);
   let queued = false;
+  let secondFrame = 0;
 
   function bare(value) {
     return String(value || '').replace(/[\uFE0E\uFE0F]/g, '').trim();
   }
 
   function canonicalizeStoredData() {
-    let changed = false;
+    let anyChanged = false;
     SLOT_KEYS.forEach(function (storageKey) {
       let payload;
       try { payload = JSON.parse(localStorage.getItem(storageKey) || 'null'); }
@@ -31,7 +32,7 @@
       if (!payload || typeof payload !== 'object') return;
       const map = payload.placements || payload;
       if (!map || typeof map !== 'object') return;
-
+      let slotChanged = false;
       const expected = {
         'North Node':'☊', 'South Node':'☋', 'Part of Fortune':'⊗', 'Lilith':'⚸',
         'Dsc':'DSC', 'DSC':'DSC', 'Vertex':'Vx', 'Rising':'ASC', 'MC':'MC', 'IC':'IC'
@@ -43,14 +44,15 @@
         if (!key || !map[key] || typeof map[key] !== 'object') return;
         if (map[key].glyph !== expected[name]) {
           map[key].glyph = expected[name];
-          changed = true;
+          slotChanged = true;
+          anyChanged = true;
         }
       });
-      if (changed) {
+      if (slotChanged) {
         try { localStorage.setItem(storageKey, JSON.stringify(payload)); } catch (_) {}
       }
     });
-    return changed;
+    return anyChanged;
   }
 
   function groupKey(group) {
@@ -99,6 +101,48 @@
     catch (_) { return point; }
   }
 
+  function restoreBaseTransform(node) {
+    if (!node) return;
+    if (node.dataset.relphiCenterBaseTransform == null) {
+      node.dataset.relphiCenterBaseTransform = node.getAttribute('transform') || '__none__';
+    }
+    const base = node.dataset.relphiCenterBaseTransform;
+    if (base === '__none__') node.removeAttribute('transform');
+    else node.setAttribute('transform', base);
+  }
+
+  function centerNodeOnBubble(node, bubble) {
+    if (!node || !bubble || typeof node.getBBox !== 'function') return;
+    restoreBaseTransform(node);
+    let box;
+    try { box = node.getBBox(); } catch (_) { return; }
+    if (!box || !Number.isFinite(box.width) || !Number.isFinite(box.height)) return;
+
+    const cx = number(bubble.getAttribute('cx'));
+    const cy = number(bubble.getAttribute('cy'));
+    if (![cx, cy].every(Number.isFinite)) return;
+
+    const bubbleCenterRoot = toRoot(bubble, cx, cy);
+    const nodeCenterRoot = toRoot(node, box.x + box.width / 2, box.y + box.height / 2);
+    const parent = node.parentNode && node.parentNode.getCTM ? node.parentNode : node;
+    const targetLocal = fromRoot(parent, bubbleCenterRoot);
+    const currentLocal = fromRoot(parent, nodeCenterRoot);
+    const dx = targetLocal.x - currentLocal.x;
+    const dy = targetLocal.y - currentLocal.y;
+    const base = node.dataset.relphiCenterBaseTransform;
+    const shift = 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')';
+    node.setAttribute('transform', base === '__none__' ? shift : base + ' ' + shift);
+  }
+
+  function centerGlyph(group) {
+    const bubble = group.querySelector('circle.chart-wheel-stick-knob');
+    if (!bubble) return;
+    const inline = group.querySelector('svg.relphi-bold-inline-glyph');
+    const text = group.querySelector('.chart-wheel-marker-glyph');
+    if (inline) centerNodeOnBubble(inline, bubble);
+    else if (text) centerNodeOnBubble(text, bubble);
+  }
+
   function attachLeader(group) {
     const knob = group.querySelector('circle.chart-wheel-stick-knob');
     const contact = group.querySelector('circle.chart-wheel-contact-dot');
@@ -113,14 +157,15 @@
     if (![cx, cy, ax, ay, radius].every(Number.isFinite)) return;
 
     const center = toRoot(knob, cx, cy);
+    const radiusPoint = toRoot(knob, cx + radius, cy);
+    const renderedRadius = Math.hypot(radiusPoint.x - center.x, radiusPoint.y - center.y) || radius;
     const anchor = toRoot(contact, ax, ay);
     const dx = center.x - anchor.x;
     const dy = center.y - anchor.y;
     const length = Math.hypot(dx, dy) || 1;
-    // Tuck the leader 1.25 SVG units beneath the circle stroke so no white gap can show.
     const edge = new DOMPoint(
-      center.x - dx / length * Math.max(0, radius - 1.25),
-      center.y - dy / length * Math.max(0, radius - 1.25)
+      center.x - dx / length * Math.max(0, renderedRadius - 1.25),
+      center.y - dy / length * Math.max(0, renderedRadius - 1.25)
     );
     const localAnchor = fromRoot(leader, anchor);
     const localEdge = fromRoot(leader, edge);
@@ -131,12 +176,19 @@
     leader.style.strokeLinecap = 'round';
   }
 
-  function run() {
-    queued = false;
+  function runGeometry() {
+    secondFrame = 0;
     document.querySelectorAll(PLACEMENT).forEach(function (group) {
-      applyGlyph(group);
+      centerGlyph(group);
       attachLeader(group);
     });
+  }
+
+  function run() {
+    queued = false;
+    document.querySelectorAll(PLACEMENT).forEach(applyGlyph);
+    if (secondFrame) cancelAnimationFrame(secondFrame);
+    secondFrame = requestAnimationFrame(runGeometry);
   }
 
   function schedule() {
@@ -148,8 +200,8 @@
   function install() {
     const changed = canonicalizeStoredData();
     schedule();
-    if (changed && !sessionStorage.getItem('relphi-r31-canonical-reload')) {
-      sessionStorage.setItem('relphi-r31-canonical-reload', '1');
+    if (changed && !sessionStorage.getItem('relphi-r33-canonical-reload')) {
+      sessionStorage.setItem('relphi-r33-canonical-reload', '1');
       setTimeout(function () {
         document.getElementById('loadChart')?.click();
         document.getElementById('loadCurrentSky')?.click();
