@@ -1,4 +1,4 @@
-// Branch-only support for pasted Part of Fortune, Lilith, North Node, and Vertex placements.
+// Branch-only support for pasted nodes, angles, Lilith, Vertex, and Part of Fortune.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -9,7 +9,12 @@
     { name:'Part of Fortune', aliases:['part of fortune','fortune','pars fortunae','pof'], glyph:'⊗' },
     { name:'Lilith', aliases:['black moon lilith','lilith','bml'], glyph:'⚸' },
     { name:'North Node', aliases:['true north node','mean north node','north node','ascending node','node'], glyph:'☊' },
-    { name:'Vertex', aliases:['vertex','vx'], glyph:'Vx' }
+    { name:'South Node', aliases:['south node','descending node'], glyph:'☋' },
+    { name:'Vertex', aliases:['vertex','vx'], glyph:'Vx' },
+    { name:'Rising', aliases:['rising','ascendant','asc','ac'], glyph:'ASC' },
+    { name:'Dsc', aliases:['descendant','dsc','dc'], glyph:'DSC' },
+    { name:'MC', aliases:['midheaven','mc'], glyph:'MC' },
+    { name:'IC', aliases:['imum coeli','ic'], glyph:'IC' }
   ];
 
   function readJson(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; } }
@@ -29,12 +34,12 @@
     const sign = SIGNS.find(function (candidate) { return new RegExp('\\b' + candidate + '\\b', 'i').test(line); });
     if (!sign) return null;
     const coordinate = line.match(/(\d{1,2})(?:\s*[°º]|\s+deg(?:ree)?s?)\s*(\d{1,2})?\s*(?:[′'’]|min(?:ute)?s?)?/i) ||
-      line.match(new RegExp('\\b' + sign + '\\b\\s*(\d{1,2})(?:[:°º\\s]+(\d{1,2}))?', 'i'));
+      line.match(new RegExp('\\b' + sign + '\\b\\s*(\\d{1,2})(?:[:°º\\s]+(\\d{1,2}))?', 'i'));
     if (!coordinate) return null;
     const degree = Math.max(0, Math.min(29, Number(coordinate[1])));
     const minute = Math.max(0, Math.min(59, Number(coordinate[2] || 0)));
-    const houseMatch = line.match(/(?:in\s*)?(\d{1,2})(?:st|nd|rd|th)?\s*house/i);
-    const retrograde = /(?:\bretrograde\b|\bRx\b|℞)/i.test(line);
+    const houseMatch = line.match(/(?:in\s*)?(\d{1,2})(?:st|nd|rd|th)?\s*house/i) || line.match(/,(\d{1,2})(?:,|$)/);
+    const retrograde = /(?:\bretrograde\b|\bRx\b|℞|,R\b)/i.test(line);
     return {
       name:point.name,
       value:{ sign:sign, degree:degree, minute:minute, house:houseMatch ? Number(houseMatch[1]) : '', retrograde:retrograde, glyph:point.glyph, source:'pasted-extra-point' }
