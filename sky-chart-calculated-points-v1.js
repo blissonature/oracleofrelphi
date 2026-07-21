@@ -23,10 +23,15 @@
     return norm(signIndex * 30 + Number(item.degree) + (Number(item.minute) || 0) / 60 + (Number(item.second) || 0) / 3600);
   }
 
+  function matchingKeys(map, names) {
+    const wanted = new Set((names || []).map(function (name) { return String(name).trim().toLowerCase(); }));
+    return Object.keys(map || {}).filter(function (candidate) { return wanted.has(candidate.trim().toLowerCase()); });
+  }
+
   function keyFor(map, names) {
-    const keys = Object.keys(map || {});
+    const matches = matchingKeys(map, names);
     for (const name of names) {
-      const exact = keys.find(function (candidate) { return candidate.toLowerCase() === name.toLowerCase(); });
+      const exact = matches.find(function (candidate) { return candidate.toLowerCase() === name.toLowerCase(); });
       if (exact) return exact;
     }
     return '';
@@ -117,6 +122,14 @@
     return '';
   }
 
+  function sameMetadata(old, next) {
+    if (!old || !next) return false;
+    return String(old.glyph || '') === String(next.glyph || '') &&
+      Boolean(old.angle) === Boolean(next.angle) &&
+      Boolean(old.retrograde) === Boolean(next.retrograde) &&
+      String(old.calculation || '') === String(next.calculation || '');
+  }
+
   function augmentPayload(payload) {
     if (!payload || typeof payload !== 'object') return false;
     const map = entries(payload);
@@ -132,11 +145,22 @@
     function add(name, lon, extra, aliases) {
       if (!Number.isFinite(lon)) return;
       const names = [name].concat(aliases || []);
-      const existingKey = keyFor(map, names);
-      const old = existingKey ? map[existingKey] : null;
+      const matches = matchingKeys(map, names);
+      const canonicalKey = matches.find(function (key) { return key.toLowerCase() === name.toLowerCase(); }) || '';
+      const sourceKey = canonicalKey || matches[0] || '';
+      const old = sourceKey ? map[sourceKey] : null;
       const next = placementFromLongitude(lon, houseForLongitude(lon, payload), extra);
-      if (!old || Math.abs(longitudeOf(old) - lon) > 1 / 120 || existingKey !== name) {
-        if (existingKey && existingKey !== name) delete map[existingKey];
+      const longitudeChanged = !old || Math.abs(longitudeOf(old) - lon) > 1 / 120;
+      const recordChanged = longitudeChanged || sourceKey !== name || !sameMetadata(old, next);
+      const duplicates = matches.filter(function (key) { return key !== sourceKey; });
+
+      duplicates.forEach(function (key) {
+        delete map[key];
+        changed = true;
+      });
+
+      if (recordChanged) {
+        if (sourceKey && sourceKey !== name) delete map[sourceKey];
         map[name] = next;
         changed = true;
       }
@@ -145,32 +169,32 @@
     if (date) {
       const jd = julianDay(date);
       const north = meanNorthNode(jd);
-      add('North Node', north, { retrograde:true, glyph:'☊', calculation:'mean lunar node' }, ['Node']);
-      add('South Node', norm(north + 180), { retrograde:true, glyph:'☋', calculation:'opposite mean lunar node' });
-      add('Lilith', meanLilith(jd), { glyph:'⚸', calculation:'mean lunar apogee' });
+      add('North Node', north, { retrograde:true, glyph:'☊', calculation:'mean lunar node' }, ['Node','True North Node','Mean North Node','Ascending Node']);
+      add('South Node', norm(north + 180), { retrograde:true, glyph:'☋', calculation:'opposite mean lunar node' }, ['Descending Node']);
+      add('Lilith', meanLilith(jd), { glyph:'⚸', calculation:'mean lunar apogee' }, ['Black Moon Lilith','BML']);
     }
 
     if (Number.isFinite(asc)) {
       add('Rising', asc, { glyph:'ASC', angle:true, calculation:'ascendant' }, ['Ascendant','ASC','AC']);
-      add('Dsc', norm(asc + 180), { glyph:'DSC', angle:true, calculation:'opposite ascendant' }, ['Descendant','DSC']);
+      add('Dsc', norm(asc + 180), { glyph:'DSC', angle:true, calculation:'opposite ascendant' }, ['Descendant','DSC','DC']);
     }
     if (Number.isFinite(mc)) {
       add('MC', mc, { glyph:'MC', angle:true, calculation:'midheaven' }, ['Midheaven']);
-      add('IC', norm(mc + 180), { glyph:'IC', angle:true, calculation:'opposite midheaven' });
+      add('IC', norm(mc + 180), { glyph:'IC', angle:true, calculation:'opposite midheaven' }, ['Imum Coeli']);
     }
 
     const obliquity = Number(profile.obliquityDegrees ?? profile.obliquity ?? 23.4392911);
     const latitude = Number(profile.latitude ?? profile.lat ?? profile.coordinates?.latitude);
     let lst = Number(profile.siderealDegrees ?? profile.localSiderealDegrees ?? profile.lstDegrees ?? profile.localSiderealTimeDegrees);
     if (!Number.isFinite(lst) && Number.isFinite(mc)) lst = rightAscensionFromEcliptic(mc, obliquity);
-    add('Vertex', vertexLongitude(lst, latitude, obliquity), { glyph:'Vx', calculation:'prime vertical intersection' });
+    add('Vertex', vertexLongitude(lst, latitude, obliquity), { glyph:'Vx', calculation:'prime vertical intersection' }, ['Vx']);
 
     if ([asc, sun, moon].every(Number.isFinite)) {
       const sunPlacement = findPlacement(map, ['Sun']);
       const sunHouse = Number(sunPlacement && sunPlacement.house);
       const isDay = Number.isFinite(sunHouse) ? sunHouse >= 7 && sunHouse <= 12 : true;
       const fortune = isDay ? asc + moon - sun : asc + sun - moon;
-      add('Part of Fortune', norm(fortune), { glyph:'⊗', calculation:isDay ? 'day formula' : 'night formula' }, ['Fortune','POF']);
+      add('Part of Fortune', norm(fortune), { glyph:'⊗', calculation:isDay ? 'day formula' : 'night formula' }, ['Fortune','POF','Pars Fortunae']);
     }
 
     if (payload.placements && payload.placements !== map) payload.placements = map;
@@ -206,13 +230,21 @@
     pending = setTimeout(check, 0);
   }
 
-  document.addEventListener('click', function (event) {
-    if (event.target.closest?.('#skyCalcRun')) runAfterCalculation();
-  }, true);
-  window.addEventListener('relphi:sky-builder-v4-loaded', function () {
-    setTimeout(function () {
+  function install() {
+    // Canonicalize stored slots before the native builder performs its first render.
+    augmentSlot('chart');
+    augmentSlot('currentSky');
+
+    document.addEventListener('click', function (event) {
+      if (event.target.closest?.('#skyCalcRun')) runAfterCalculation();
+    }, true);
+
+    window.addEventListener('relphi:sky-builder-v4-loaded', function () {
       augmentSlot('chart');
       augmentSlot('currentSky');
-    }, 0);
-  });
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
+  else install();
 })();
