@@ -1,12 +1,14 @@
-// Branch-only tuning: stable long lollipops, large bubbles, and bold centered inline glyph assets.
+// Branch-only tuning: balanced bubble size, collision spacing, and optically centered glyphs.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   const NS = 'http://www.w3.org/2000/svg';
   const PLACEMENT = '.chart-wheel-placement-stick';
-  const EXTRA_LENGTH = 28;
-  const GLYPH_SIZE = 29;
+  const EXTRA_LENGTH = 8;
+  const GLYPH_SIZE = 26;
+  const MIN_CENTER_GAP = 39;
+  const MAX_TANGENTIAL = 48;
   const ASSETS = {
     '☉':'sun','⊙':'sun','☽':'moon','☾':'moon','☿':'mercury','♀':'venus','♂':'mars',
     '♃':'jupiter','♄':'saturn','♅':'uranus','⛢':'uranus','♆':'neptune','♇':'pluto','⯓':'pluto'
@@ -69,7 +71,7 @@
       const fill = node.getAttribute('fill');
       if (fill !== 'none') node.setAttribute('fill', color);
       node.setAttribute('stroke', color);
-      node.setAttribute('stroke-width', '2.35');
+      node.setAttribute('stroke-width', '1.65');
       node.setAttribute('stroke-linecap', 'round');
       node.setAttribute('stroke-linejoin', 'round');
       node.setAttribute('paint-order', 'stroke fill');
@@ -78,11 +80,10 @@
 
   function fetchAsset(asset) {
     if (!assetMarkup.has(asset)) {
-      assetMarkup.set(asset, fetch('assets/planet-glyphs/' + asset + '.svg?v=4')
-        .then(function (response) {
-          if (!response.ok) throw new Error('glyph fetch failed');
-          return response.text();
-        }));
+      assetMarkup.set(asset, fetch('assets/planet-glyphs/' + asset + '.svg?v=4').then(function (response) {
+        if (!response.ok) throw new Error('glyph fetch failed');
+        return response.text();
+      }));
     }
     return assetMarkup.get(asset);
   }
@@ -95,6 +96,22 @@
     inline.setAttribute('y', String(cy - GLYPH_SIZE / 2));
     inline.setAttribute('width', String(GLYPH_SIZE));
     inline.setAttribute('height', String(GLYPH_SIZE));
+  }
+
+  function opticallyCenter(inline) {
+    const content = inline.querySelector('.relphi-glyph-content');
+    if (!content) return;
+    try {
+      const box = content.getBBox();
+      if (![box.x, box.y, box.width, box.height].every(Number.isFinite) || !box.width || !box.height) return;
+      const pad = Math.max(box.width, box.height) * 0.10;
+      inline.setAttribute('viewBox', [
+        box.x - pad,
+        box.y - pad,
+        box.width + pad * 2,
+        box.height + pad * 2
+      ].join(' '));
+    } catch (_) {}
   }
 
   function installInlineGlyph(group) {
@@ -112,7 +129,6 @@
       group.classList.remove('has-preview-inline-glyph');
       text.style.removeProperty('display');
       text.setAttribute('fill', markerColor(group));
-      text.removeAttribute('stroke');
       return;
     }
 
@@ -135,16 +151,20 @@
       const parsed = new DOMParser().parseFromString(markup, 'image/svg+xml').documentElement;
       const inline = document.createElementNS(NS, 'svg');
       inline.classList.add('relphi-bold-inline-glyph');
-      inline.setAttribute('viewBox', parsed.getAttribute('viewBox') || '0 0 100 100');
       inline.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       inline.setAttribute('pointer-events', 'none');
       positionInlineGlyph(inline, knob);
+
+      const content = document.createElementNS(NS, 'g');
+      content.classList.add('relphi-glyph-content');
       Array.from(parsed.childNodes).forEach(function (node) {
-        if (node.nodeType === Node.ELEMENT_NODE) inline.appendChild(document.importNode(node, true));
+        if (node.nodeType === Node.ELEMENT_NODE) content.appendChild(document.importNode(node, true));
       });
+      inline.appendChild(content);
       boldAsset(inline, markerColor(group));
       group.appendChild(inline);
       group.classList.add('has-preview-inline-glyph');
+      requestAnimationFrame(function () { opticallyCenter(inline); });
     }).catch(function () {
       text.style.removeProperty('display');
     }).finally(function () {
@@ -152,51 +172,108 @@
     });
   }
 
-  function extendPlacement(group, svgCenter) {
-    const knob = group.querySelector('circle.chart-wheel-stick-knob');
-    const contact = group.querySelector('circle.chart-wheel-contact-dot');
-    const leader = group.querySelector('line.chart-wheel-stick');
-    if (!knob || !contact || !leader) return;
+  function rootPoint(node, x, y) {
+    const matrix = node.getCTM && node.getCTM();
+    if (!matrix) return { x:x, y:y };
+    const point = new DOMPoint(x, y).matrixTransform(matrix);
+    return { x:point.x, y:point.y };
+  }
 
-    const ax = num(contact.getAttribute('cx'));
-    const ay = num(contact.getAttribute('cy'));
-    if (![ax,ay].every(Number.isFinite)) return;
+  function collect(svg) {
+    const box = svg.viewBox && svg.viewBox.baseVal;
+    const center = box && box.width ? { x:box.x + box.width / 2, y:box.y + box.height / 2 } : { x:400, y:400 };
+    return Array.from(svg.querySelectorAll(PLACEMENT)).map(function (group, index) {
+      const knob = group.querySelector('circle.chart-wheel-stick-knob');
+      const contact = group.querySelector('circle.chart-wheel-contact-dot');
+      const leader = group.querySelector('line.chart-wheel-stick');
+      if (!knob || !contact || !leader) return null;
 
-    const vx = ax - svgCenter.x;
-    const vy = ay - svgCenter.y;
-    const length = Math.hypot(vx, vy) || 1;
-    const dx = vx / length * EXTRA_LENGTH;
-    const dy = vy / length * EXTRA_LENGTH;
+      const cx = num(knob.getAttribute('cx'));
+      const cy = num(knob.getAttribute('cy'));
+      const ax = num(contact.getAttribute('cx'));
+      const ay = num(contact.getAttribute('cy'));
+      if (![cx,cy,ax,ay].every(Number.isFinite)) return null;
 
-    [knob, group.querySelector('.chart-wheel-marker-glyph'), group.querySelector('image.relphi-bubble-glyph-image'), group.querySelector('svg.relphi-bold-inline-glyph')]
-      .filter(Boolean).forEach(function (node) { translate(node, dx, dy); });
+      const base = rootPoint(knob, cx, cy);
+      const anchor = rootPoint(contact, ax, ay);
+      const vx = anchor.x - center.x;
+      const vy = anchor.y - center.y;
+      const length = Math.hypot(vx, vy) || 1;
+      const normal = { x:vx / length, y:vy / length };
+      const tangent = { x:-normal.y, y:normal.x };
+      return { index:index, group:group, knob:knob, contact:contact, leader:leader, base:base, anchor:anchor, normal:normal, tangent:tangent, tangential:0 };
+    }).filter(Boolean);
+  }
 
-    rememberLeader(leader);
-    restoreLeader(leader);
-    const x1 = num(leader.getAttribute('x1'));
-    const y1 = num(leader.getAttribute('y1'));
-    const x2 = num(leader.getAttribute('x2'));
-    const y2 = num(leader.getAttribute('y2'));
+  function position(item) {
+    return {
+      x:item.base.x + item.normal.x * EXTRA_LENGTH + item.tangent.x * item.tangential,
+      y:item.base.y + item.normal.y * EXTRA_LENGTH + item.tangent.y * item.tangential
+    };
+  }
+
+  function solve(items) {
+    for (let pass = 0; pass < 32; pass += 1) {
+      let changed = false;
+      for (let a = 0; a < items.length; a += 1) {
+        for (let b = a + 1; b < items.length; b += 1) {
+          const first = items[a];
+          const second = items[b];
+          const p = position(first);
+          const q = position(second);
+          const distance = Math.hypot(q.x - p.x, q.y - p.y);
+          if (distance >= MIN_CENTER_GAP) continue;
+          const cross = first.normal.x * second.normal.y - first.normal.y * second.normal.x;
+          const direction = Math.sign(cross) || (first.index < second.index ? 1 : -1);
+          const push = Math.min(5, (MIN_CENTER_GAP - distance) * 0.58 + 0.35);
+          first.tangential = Math.max(-MAX_TANGENTIAL, Math.min(MAX_TANGENTIAL, first.tangential - direction * push / 2));
+          second.tangential = Math.max(-MAX_TANGENTIAL, Math.min(MAX_TANGENTIAL, second.tangential + direction * push / 2));
+          changed = true;
+        }
+      }
+      if (!changed) break;
+    }
+  }
+
+  function apply(item) {
+    const final = position(item);
+    const dx = final.x - item.base.x;
+    const dy = final.y - item.base.y;
+    [
+      item.knob,
+      item.group.querySelector('.chart-wheel-marker-glyph'),
+      item.group.querySelector('image.relphi-bubble-glyph-image'),
+      item.group.querySelector('svg.relphi-bold-inline-glyph')
+    ].filter(Boolean).forEach(function (node) { translate(node, dx, dy); });
+
+    rememberLeader(item.leader);
+    restoreLeader(item.leader);
+    const x1 = num(item.leader.getAttribute('x1'));
+    const y1 = num(item.leader.getAttribute('y1'));
+    const x2 = num(item.leader.getAttribute('x2'));
+    const y2 = num(item.leader.getAttribute('y2'));
     if (![x1,y1,x2,y2].every(Number.isFinite)) return;
 
-    const d1 = Math.hypot(x1 - ax, y1 - ay);
-    const d2 = Math.hypot(x2 - ax, y2 - ay);
+    const d1 = Math.hypot(x1 - item.anchor.x, y1 - item.anchor.y);
+    const d2 = Math.hypot(x2 - item.anchor.x, y2 - item.anchor.y);
+    const vx = final.x - item.anchor.x;
+    const vy = final.y - item.anchor.y;
+    const length = Math.hypot(vx, vy) || 1;
+    const edge = { x:final.x - vx / length * 18.1, y:final.y - vy / length * 18.1 };
     if (d1 <= d2) {
-      leader.setAttribute('x2', (x2 + dx).toFixed(2));
-      leader.setAttribute('y2', (y2 + dy).toFixed(2));
+      item.leader.setAttribute('x2', edge.x.toFixed(2));
+      item.leader.setAttribute('y2', edge.y.toFixed(2));
     } else {
-      leader.setAttribute('x1', (x1 + dx).toFixed(2));
-      leader.setAttribute('y1', (y1 + dy).toFixed(2));
+      item.leader.setAttribute('x1', edge.x.toFixed(2));
+      item.leader.setAttribute('y1', edge.y.toFixed(2));
     }
   }
 
   function tune(svg) {
-    const box = svg.viewBox && svg.viewBox.baseVal;
-    const center = box && box.width ? { x:box.x + box.width / 2, y:box.y + box.height / 2 } : { x:400, y:400 };
-    svg.querySelectorAll(PLACEMENT).forEach(function (group) {
-      installInlineGlyph(group);
-      extendPlacement(group, center);
-    });
+    svg.querySelectorAll(PLACEMENT).forEach(installInlineGlyph);
+    const items = collect(svg);
+    solve(items);
+    items.forEach(apply);
   }
 
   function run() {
