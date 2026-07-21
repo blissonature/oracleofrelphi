@@ -1,0 +1,1 @@
+Preview revision 10: stable non-blinking inline glyphs with fixed centering and weight.
