@@ -162,11 +162,28 @@
     const bubble = group.querySelector('.chart-wheel-stick-knob');
     const leader = group.querySelector('.chart-wheel-stick');
     const glyphs = group.querySelectorAll('.chart-wheel-marker-glyph, svg.relphi-bold-inline-glyph');
-    if (bubble) {
-      bubble.style.setProperty('fill-opacity', solid ? '1' : '.92', 'important');
-      bubble.style.setProperty('stroke-opacity', '1', 'important');
+
+    if (solid) {
+      group.style.setProperty('opacity', '1', 'important');
+      if (bubble) {
+        bubble.style.setProperty('fill', '#ffffff', 'important');
+        bubble.style.setProperty('fill-opacity', '1', 'important');
+        bubble.style.setProperty('stroke-opacity', '1', 'important');
+        bubble.style.setProperty('opacity', '1', 'important');
+      }
+      if (leader) leader.style.setProperty('opacity', '1', 'important');
+      glyphs.forEach(function (node) { node.style.setProperty('opacity', '1', 'important'); });
+      return;
     }
-    if (leader) leader.style.setProperty('opacity', solid ? '1' : '.88', 'important');
+
+    group.style.removeProperty('opacity');
+    if (bubble) {
+      bubble.style.removeProperty('fill');
+      bubble.style.setProperty('fill-opacity', '.92', 'important');
+      bubble.style.setProperty('stroke-opacity', '1', 'important');
+      bubble.style.removeProperty('opacity');
+    }
+    if (leader) leader.style.setProperty('opacity', '.88', 'important');
     glyphs.forEach(function (node) { node.style.setProperty('opacity', '1', 'important'); });
   }
 
