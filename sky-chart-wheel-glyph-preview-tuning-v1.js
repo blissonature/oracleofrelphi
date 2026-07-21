@@ -31,6 +31,24 @@
     return group.classList.contains('sky-b') ? '#3166e2' : '#dc1f18';
   }
 
+  function rootPoint(node, x, y) {
+    const matrix = node.getCTM && node.getCTM();
+    if (!matrix) return { x:x, y:y };
+    const point = new DOMPoint(x, y).matrixTransform(matrix);
+    return { x:point.x, y:point.y };
+  }
+
+  function localPoint(node, point) {
+    const matrix = node.getCTM && node.getCTM();
+    if (!matrix) return point;
+    try {
+      const local = new DOMPoint(point.x, point.y).matrixTransform(matrix.inverse());
+      return { x:local.x, y:local.y };
+    } catch (_) {
+      return point;
+    }
+  }
+
   function rememberTransform(node) {
     if (node.dataset.relphiLayoutBaseTransform != null) return;
     node.dataset.relphiLayoutBaseTransform = node.getAttribute('transform') || '__none__';
@@ -222,19 +240,50 @@
     }
   }
 
-  function connectLeader(item, target) {
+  function connectLeader(item) {
     restoreLeader(item.leader);
-    const vx = target.x - item.anchor.x;
-    const vy = target.y - item.anchor.y;
+
+    const cx = num(item.knob.getAttribute('cx'));
+    const cy = num(item.knob.getAttribute('cy'));
+    const ax = num(item.contact.getAttribute('cx'));
+    const ay = num(item.contact.getAttribute('cy'));
+    if (![cx,cy,ax,ay].every(Number.isFinite)) return;
+
+    // Read the actual rendered positions after transforms have been applied.
+    const bubbleRoot = rootPoint(item.knob, cx, cy);
+    const anchorRoot = rootPoint(item.contact, ax, ay);
+    const vx = bubbleRoot.x - anchorRoot.x;
+    const vy = bubbleRoot.y - anchorRoot.y;
     const length = Math.hypot(vx, vy) || 1;
-    const edge = {
-      x:target.x - vx / length * (BUBBLE_RADIUS + 0.5),
-      y:target.y - vy / length * (BUBBLE_RADIUS + 0.5)
+    const edgeRoot = {
+      x:bubbleRoot.x - vx / length * (BUBBLE_RADIUS + 0.5),
+      y:bubbleRoot.y - vy / length * (BUBBLE_RADIUS + 0.5)
     };
-    item.leader.setAttribute('x1', item.anchor.x.toFixed(2));
-    item.leader.setAttribute('y1', item.anchor.y.toFixed(2));
-    item.leader.setAttribute('x2', edge.x.toFixed(2));
-    item.leader.setAttribute('y2', edge.y.toFixed(2));
+
+    // Convert both rendered points into the leader line's own coordinate system.
+    const anchorLocal = localPoint(item.leader, anchorRoot);
+    const edgeLocal = localPoint(item.leader, edgeRoot);
+
+    const baseX1 = num(item.leader.dataset.relphiLayoutX1);
+    const baseY1 = num(item.leader.dataset.relphiLayoutY1);
+    const baseX2 = num(item.leader.dataset.relphiLayoutX2);
+    const baseY2 = num(item.leader.dataset.relphiLayoutY2);
+    const oneRoot = rootPoint(item.leader, baseX1, baseY1);
+    const twoRoot = rootPoint(item.leader, baseX2, baseY2);
+    const oneIsAnchor = Math.hypot(oneRoot.x - anchorRoot.x, oneRoot.y - anchorRoot.y) <=
+      Math.hypot(twoRoot.x - anchorRoot.x, twoRoot.y - anchorRoot.y);
+
+    if (oneIsAnchor) {
+      item.leader.setAttribute('x1', anchorLocal.x.toFixed(2));
+      item.leader.setAttribute('y1', anchorLocal.y.toFixed(2));
+      item.leader.setAttribute('x2', edgeLocal.x.toFixed(2));
+      item.leader.setAttribute('y2', edgeLocal.y.toFixed(2));
+    } else {
+      item.leader.setAttribute('x2', anchorLocal.x.toFixed(2));
+      item.leader.setAttribute('y2', anchorLocal.y.toFixed(2));
+      item.leader.setAttribute('x1', edgeLocal.x.toFixed(2));
+      item.leader.setAttribute('y1', edgeLocal.y.toFixed(2));
+    }
   }
 
   function apply(item) {
@@ -246,7 +295,9 @@
       item.group.querySelector('.chart-wheel-marker-glyph'),
       item.group.querySelector('svg.relphi-bold-inline-glyph')
     ].filter(Boolean).forEach(function (node) { move(node, dx, dy); });
-    connectLeader(item, target);
+
+    // Connect only after the bubble has reached its final rendered position.
+    connectLeader(item);
   }
 
   function layoutSvg(svg) {
