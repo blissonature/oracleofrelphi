@@ -1,12 +1,10 @@
-// Branch-only tuning: longer lollipops, larger bubbles, and sky-colored glyphs.
+// Branch-only tuning: longer lollipops, larger bubbles, and truly bold sky-colored glyphs.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  const NS = 'http://www.w3.org/2000/svg';
   const PLACEMENT = '.chart-wheel-placement-stick';
   const EXTRA_LENGTH = 14;
-  const GLYPH_SIZE = 22;
   let queued = false;
 
   function num(value) {
@@ -58,87 +56,31 @@
     });
   }
 
-  function normalizeAngleMark(group) {
+  function normalizeGlyph(group) {
     const text = group.querySelector('.chart-wheel-marker-glyph');
     const knob = group.querySelector('circle.chart-wheel-stick-knob');
     if (!text || !knob) return;
-    const key = bare(text.textContent);
-    if (key !== 'ASC' && key !== 'MC' && key !== 'AC') return;
 
-    group.querySelector('image.relphi-angle-glyph-image')?.remove();
-    group.classList.remove('has-preview-angle-image');
-    group.classList.add('has-preview-angle-text');
+    group.querySelectorAll('image.relphi-bubble-glyph-image, image.relphi-angle-glyph-image, svg.relphi-colored-glyph').forEach(function (node) { node.remove(); });
+    group.classList.remove('has-preview-image', 'has-preview-angle-image', 'has-preview-colored-glyph');
 
     const cx = num(knob.getAttribute('cx'));
     const cy = num(knob.getAttribute('cy'));
     if (!Number.isFinite(cx) || !Number.isFinite(cy)) return;
 
-    text.textContent = key === 'MC' ? 'MC' : 'ASC';
+    const key = bare(text.textContent);
+    if (key === 'AC') text.textContent = 'ASC';
     text.setAttribute('x', String(cx));
     text.setAttribute('y', String(cy));
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
     text.setAttribute('fill', markerColor(group));
+    text.setAttribute('stroke', markerColor(group));
+    text.setAttribute('paint-order', 'stroke fill');
     text.style.removeProperty('display');
-  }
 
-  function recolorImportedGlyph(root, color) {
-    root.querySelectorAll('*').forEach(function (node) {
-      const fill = node.getAttribute('fill');
-      const stroke = node.getAttribute('stroke');
-      if (fill && fill !== 'none') node.setAttribute('fill', color);
-      if (stroke && stroke !== 'none') node.setAttribute('stroke', color);
-    });
-  }
-
-  function colorizePlanetGlyph(group) {
-    const image = group.querySelector('image.relphi-bubble-glyph-image');
-    const knob = group.querySelector('circle.chart-wheel-stick-knob');
-    if (!image || !knob || group.dataset.previewColorGlyphLoading === 'true') return;
-
-    const href = image.getAttribute('href') || image.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
-    if (!href) return;
-
-    const color = markerColor(group);
-    const existing = group.querySelector('svg.relphi-colored-glyph');
-    if (existing) {
-      recolorImportedGlyph(existing, color);
-      image.style.display = 'none';
-      return;
-    }
-
-    group.dataset.previewColorGlyphLoading = 'true';
-    fetch(href).then(function (response) {
-      if (!response.ok) throw new Error('glyph fetch failed');
-      return response.text();
-    }).then(function (markup) {
-      const parsed = new DOMParser().parseFromString(markup, 'image/svg+xml').documentElement;
-      const cx = num(knob.getAttribute('cx'));
-      const cy = num(knob.getAttribute('cy'));
-      if (!Number.isFinite(cx) || !Number.isFinite(cy)) return;
-
-      const inline = document.createElementNS(NS, 'svg');
-      inline.classList.add('relphi-colored-glyph');
-      inline.setAttribute('viewBox', parsed.getAttribute('viewBox') || '0 0 100 100');
-      inline.setAttribute('x', String(cx - GLYPH_SIZE / 2));
-      inline.setAttribute('y', String(cy - GLYPH_SIZE / 2));
-      inline.setAttribute('width', String(GLYPH_SIZE));
-      inline.setAttribute('height', String(GLYPH_SIZE));
-      inline.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-      inline.setAttribute('pointer-events', 'none');
-      Array.from(parsed.childNodes).forEach(function (node) {
-        if (node.nodeType === Node.ELEMENT_NODE) inline.appendChild(document.importNode(node, true));
-      });
-      recolorImportedGlyph(inline, color);
-      image.insertAdjacentElement('afterend', inline);
-      image.style.display = 'none';
-      group.classList.add('has-preview-colored-glyph');
-      schedule();
-    }).catch(function () {
-      image.style.display = '';
-    }).finally(function () {
-      delete group.dataset.previewColorGlyphLoading;
-    });
+    if (key === 'ASC' || key === 'AC' || key === 'MC') group.classList.add('has-preview-angle-text');
+    else group.classList.remove('has-preview-angle-text');
   }
 
   function extendPlacement(group, svgCenter) {
@@ -159,12 +101,8 @@
     const dx = vx / length * EXTRA_LENGTH;
     const dy = vy / length * EXTRA_LENGTH;
 
-    [
-      knob,
-      group.querySelector('.chart-wheel-marker-glyph'),
-      group.querySelector('image.relphi-bubble-glyph-image'),
-      group.querySelector('svg.relphi-colored-glyph')
-    ].filter(Boolean).forEach(function (node) { translate(node, dx, dy); });
+    [knob, group.querySelector('.chart-wheel-marker-glyph')]
+      .filter(Boolean).forEach(function (node) { translate(node, dx, dy); });
 
     rememberLeader(leader);
     restoreLeader(leader);
@@ -189,8 +127,7 @@
     const box = svg.viewBox && svg.viewBox.baseVal;
     const center = box && box.width ? { x:box.x + box.width / 2, y:box.y + box.height / 2 } : { x:400, y:400 };
     svg.querySelectorAll(PLACEMENT).forEach(function (group) {
-      normalizeAngleMark(group);
-      colorizePlanetGlyph(group);
+      normalizeGlyph(group);
       extendPlacement(group, center);
     });
   }
