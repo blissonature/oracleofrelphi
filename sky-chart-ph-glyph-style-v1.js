@@ -17,11 +17,11 @@
     '.unified-sky-wheel .chart-wheel-placement-stick .chart-wheel-marker-name,.unified-sky-wheel .chart-wheel-placement-stick .chart-wheel-marker-degree{display:none!important}',
     '.unified-sky-wheel .chart-wheel-placement-stick.has-preview-inline-glyph .chart-wheel-marker-glyph{display:none!important}',
     '.unified-sky-wheel .chart-wheel-placement-stick:not(.has-preview-inline-glyph) .chart-wheel-marker-glyph{display:block!important;fill:var(--ph-marker)!important;font-family:"Segoe UI Symbol","Noto Sans Symbols 2","Noto Sans Symbols","DejaVu Sans",sans-serif!important;font-size:18px!important;font-weight:900!important;text-anchor:middle!important;dominant-baseline:central!important}',
-    '.unified-sky-wheel .chart-wheel-placement-stick.has-preview-angle-text .chart-wheel-marker-glyph{display:block!important;fill:var(--ph-marker)!important;font-family:system-ui,sans-serif!important;font-size:10.25px!important;font-weight:900!important;letter-spacing:-.5px!important;text-anchor:middle!important;dominant-baseline:central!important}',
+    '.unified-sky-wheel .chart-wheel-placement-stick.has-preview-angle-text .chart-wheel-marker-glyph{display:block!important;fill:var(--ph-marker)!important;font-family:system-ui,sans-serif!important;font-size:11.5px!important;font-weight:750!important;letter-spacing:-.3px!important;text-anchor:middle!important;dominant-baseline:central!important}',
     '.unified-sky-wheel .chart-wheel-placement-stick image.relphi-bubble-glyph-image,.unified-sky-wheel .chart-wheel-placement-stick svg.relphi-colored-glyph{display:none!important}',
     '.unified-sky-wheel .chart-wheel-placement-stick svg.relphi-bold-inline-glyph{display:block!important;pointer-events:none!important;overflow:visible}',
     '.unified-sky-wheel .is-preview-aspect-active{opacity:1!important;stroke-width:2.5!important;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}',
-    '@media(max-width:600px){.unified-sky-wheel .chart-wheel-placement-stick .chart-wheel-stick-knob{r:18px!important}.unified-sky-wheel .chart-wheel-placement-stick:not(.has-preview-inline-glyph) .chart-wheel-marker-glyph{font-size:18.5px!important}}'
+    '@media(max-width:600px){.unified-sky-wheel .chart-wheel-placement-stick .chart-wheel-stick-knob{r:18px!important}.unified-sky-wheel .chart-wheel-placement-stick:not(.has-preview-inline-glyph) .chart-wheel-marker-glyph{font-size:18.5px!important}.unified-sky-wheel .chart-wheel-placement-stick.has-preview-angle-text .chart-wheel-marker-glyph{font-size:12px!important;font-weight:750!important}}'
   ].join('');
   document.head.appendChild(style);
 })();
