@@ -8,15 +8,24 @@
     Aries:'♈', Taurus:'♉', Gemini:'♊', Cancer:'♋', Leo:'♌', Virgo:'♍',
     Libra:'♎', Scorpio:'♏', Sagittarius:'♐', Capricorn:'♑', Aquarius:'♒', Pisces:'♓'
   };
-  const SPECIAL_SIZES = {
-    'north node':'22px',
-    'south node':'22px',
-    'lilith':'24px',
-    'part of fortune':'22px',
-    'vertex':'16px',
-    'ic':'16px',
-    'dsc':'13.5px',
-    'descendant':'13.5px'
+  const POINT_GLYPHS = {
+    'north node':'☊',
+    'south node':'☋',
+    'lilith':'⚸',
+    'part of fortune':'⊗'
+  };
+  const SPECIAL_STYLES = {
+    'north node':{ size:'19px', weight:'650' },
+    'south node':{ size:'19px', weight:'650' },
+    'lilith':{ size:'20px', weight:'650' },
+    'part of fortune':{ size:'19px', weight:'650' },
+    'vertex':{ size:'13.5px', weight:'600' },
+    'ic':{ size:'13px', weight:'600' },
+    'dsc':{ size:'12.5px', weight:'600' },
+    'descendant':{ size:'12.5px', weight:'600' },
+    'asc':{ size:'13px', weight:'600' },
+    'rising':{ size:'13px', weight:'600' },
+    'mc':{ size:'13px', weight:'600' }
   };
   let queued = false;
 
@@ -59,15 +68,21 @@
     return SIGN_GLYPHS[bare(item && item.sign)] || '';
   }
 
-  function opticalSize(group) {
+  function polish(group) {
     const name = placementName(group).toLowerCase();
-    const size = SPECIAL_SIZES[name];
-    if (!size) return;
+    const style = SPECIAL_STYLES[name];
+    if (!style) return;
     const text = group.querySelector('.chart-wheel-marker-glyph');
     if (!text) return;
-    text.style.setProperty('font-size', size, 'important');
-    text.style.setProperty('font-weight', name === 'vertex' || name === 'ic' || name === 'dsc' || name === 'descendant' ? '750' : '850', 'important');
-    text.style.setProperty('letter-spacing', name === 'dsc' || name === 'descendant' ? '-0.04em' : '0', 'important');
+
+    if (POINT_GLYPHS[name]) text.textContent = POINT_GLYPHS[name];
+    else if (name === 'vertex') text.textContent = 'Vx';
+    else if (name === 'descendant') text.textContent = 'DSC';
+    else if (name === 'rising') text.textContent = 'ASC';
+
+    text.style.setProperty('font-size', style.size, 'important');
+    text.style.setProperty('font-weight', style.weight, 'important');
+    text.style.setProperty('letter-spacing', '0', 'important');
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
   }
@@ -84,7 +99,7 @@
 
   function run() {
     queued = false;
-    document.querySelectorAll(PLACEMENT).forEach(opticalSize);
+    document.querySelectorAll(PLACEMENT).forEach(polish);
   }
 
   function schedule() {
