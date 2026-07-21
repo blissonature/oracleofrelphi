@@ -127,6 +127,7 @@
   function install() {
     appendOnce('sky-chart-extra-points-support-v1.js?v=1');
     appendOnce('sky-chart-calculated-points-v1.js?v=2');
+    appendOnce('sky-chart-special-point-source-normalizer-v1.js?v=1');
     appendOnce('sky-chart-special-point-static-v1.js?v=2');
     appendOnce('sky-chart-wheel-solid-hover-v1.js?v=1');
     schedule();
