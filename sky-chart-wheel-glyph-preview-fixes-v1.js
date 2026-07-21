@@ -126,6 +126,7 @@
 
   function install() {
     appendOnce('sky-chart-extra-points-support-v1.js?v=1');
+    appendOnce('sky-chart-calculated-points-v1.js?v=1');
     schedule();
     window.addEventListener('relphi:sky-builder-v4-loaded', schedule);
     window.addEventListener('relphi:extra-points-updated', schedule);
