@@ -1,1 +1,0 @@
-Sky Chart preview revision 40 removes the retired cross-tool glyph shim and kill-switch from the Sky Chart loader.
