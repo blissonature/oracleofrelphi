@@ -1,8 +1,9 @@
-// Sky Chart preview: one non-destructive final geometry and glyph pass.
+// Sky Chart preview: grouped marker units, optical centering, and center-anchored leaders.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
+  const NS = 'http://www.w3.org/2000/svg';
   const PLACEMENT = '.chart-wheel-placement-stick';
   const SVG_SELECTOR = '.unified-sky-wheel svg, #chartOutput svg, #currentSkyOutput svg, .sky-output-box svg';
   const PLANET_GLYPH_SIZE = 30;
@@ -14,7 +15,6 @@
   };
   const SYMBOLS = new Set(['☊','☋','⊗','⚸']);
   const ANGLES = new Set(['ASC','DSC','MC','IC','VX']);
-  const OPTICAL_Y = { '☊':0.4, '☋':0.4, '⊗':0.2, '⚸':0.8, ASC:0.4, DSC:0.4, MC:0.4, IC:0.4, VX:0.4 };
   let queued = false;
 
   function number(value) {
@@ -45,6 +45,53 @@
     return TEXT_GLYPHS[key] || TEXT_GLYPHS[visible.toUpperCase()] || visible;
   }
 
+  function ensureMarkerUnit(group) {
+    let unit = group.querySelector(':scope > g.relphi-marker-unit');
+    if (!unit) {
+      unit = document.createElementNS(NS, 'g');
+      unit.classList.add('relphi-marker-unit');
+      const leader = group.querySelector(':scope > line.chart-wheel-stick');
+      if (leader?.nextSibling) group.insertBefore(unit, leader.nextSibling);
+      else group.appendChild(unit);
+    }
+
+    [
+      group.querySelector(':scope > circle.chart-wheel-stick-knob'),
+      group.querySelector(':scope > .chart-wheel-marker-glyph'),
+      group.querySelector(':scope > svg.relphi-bold-inline-glyph'),
+      group.querySelector(':scope > svg.relphi-colored-glyph'),
+      group.querySelector(':scope > image.relphi-bubble-glyph-image')
+    ].filter(Boolean).forEach(function (node) {
+      unit.appendChild(node);
+    });
+    return unit;
+  }
+
+  function clearOpticalTransform(node) {
+    const transform = node.getAttribute('transform') || '';
+    node.setAttribute('transform', transform.replace(/\s*translate\([^)]*\)\s*$/, '').trim());
+  }
+
+  function opticalCenter(node, artwork, knob, cx, cy) {
+    if (!node || !artwork || typeof artwork.getBBox !== 'function') return;
+    clearOpticalTransform(node);
+    let box;
+    try { box = artwork.getBBox(); }
+    catch (_) { return; }
+    if (!box || !Number.isFinite(box.width) || !Number.isFinite(box.height)) return;
+
+    const artCenter = toRoot(artwork, box.x + box.width / 2, box.y + box.height / 2);
+    const bubbleCenter = toRoot(knob, cx, cy);
+    const parent = node.parentNode;
+    if (!(parent instanceof SVGElement)) return;
+    const origin = fromRoot(parent, artCenter);
+    const target = fromRoot(parent, bubbleCenter);
+    const dx = target.x - origin.x;
+    const dy = target.y - origin.y;
+    const base = node.getAttribute('transform') || '';
+    node.setAttribute('transform', (base + ' translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')').trim());
+  }
+
   function standardizeGlyph(group, knob) {
     const cx = number(knob.getAttribute('cx'));
     const cy = number(knob.getAttribute('cy'));
@@ -58,14 +105,15 @@
       const isSymbol = SYMBOLS.has(value);
       const isAngle = ANGLES.has(normalized);
       text.setAttribute('x', cx.toFixed(2));
-      text.setAttribute('y', (cy + (OPTICAL_Y[normalized] ?? OPTICAL_Y[value] ?? 0)).toFixed(2));
+      text.setAttribute('y', cy.toFixed(2));
       text.setAttribute('text-anchor', 'middle');
       text.setAttribute('dominant-baseline', 'central');
       text.style.setProperty('font-family', isSymbol ? 'Arial Unicode MS, Noto Sans Symbols 2, Noto Sans Symbols, serif' : 'system-ui, sans-serif', 'important');
-      text.style.setProperty('font-size', isSymbol ? '25px' : (isAngle ? '12.5px' : '24px'), 'important');
+      text.style.setProperty('font-size', isSymbol ? '27px' : (isAngle ? '12.5px' : '25px'), 'important');
       text.style.setProperty('font-weight', isSymbol ? '600' : (isAngle ? '650' : '700'), 'important');
       text.style.setProperty('letter-spacing', isAngle ? '-0.35px' : '0', 'important');
       text.style.setProperty('opacity', '1', 'important');
+      opticalCenter(text, text, knob, cx, cy);
     }
 
     const inline = group.querySelector('svg.relphi-bold-inline-glyph');
@@ -75,10 +123,12 @@
       inline.setAttribute('width', String(PLANET_GLYPH_SIZE));
       inline.setAttribute('height', String(PLANET_GLYPH_SIZE));
       inline.style.setProperty('opacity', '1', 'important');
+      opticalCenter(inline, inline.querySelector('path') || inline, knob, cx, cy);
     }
   }
 
   function centerAnchor(group) {
+    ensureMarkerUnit(group);
     const knob = group.querySelector('circle.chart-wheel-stick-knob');
     const contact = group.querySelector('circle.chart-wheel-contact-dot');
     const leader = group.querySelector('line.chart-wheel-stick');
@@ -133,7 +183,6 @@
     if (queued) return;
     queued = true;
     requestAnimationFrame(function () {
-      // Run after the authoritative layout renderer without modifying child order.
       requestAnimationFrame(apply);
     });
   }
