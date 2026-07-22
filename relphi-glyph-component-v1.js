@@ -19,7 +19,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=9');
+    const response = await fetch(path + '?v=10');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -51,28 +51,27 @@
     const sourceStroke = largestStroke(node);
     const visibleWidth = box.width + sourceStroke;
     const visibleHeight = box.height + sourceStroke;
-    let maximumScale;
+    let scale;
 
-    if (entry.fitMode === 'symbol') {
+    if (entry.fitMode === 'letter') {
+      // Lettered points use one literal font size. They are centered only; they are
+      // never independently resized from their measured width or height.
+      scale = 1;
+    } else if (entry.fitMode === 'symbol') {
       const usableDiameter = availableRadius * 2;
-      maximumScale = Math.min(usableDiameter / visibleWidth, usableDiameter / visibleHeight) * 0.9;
-    } else if (entry.fitMode === 'letter') {
-      // All lettered points share one normalized text width and one cap-height target.
-      // Width is only a safety clamp, so MC/IC/Vx cannot auto-enlarge relative to ASC/DSC.
-      const targetCapHeight = availableRadius * 1.12;
-      const heightScale = targetCapHeight / visibleHeight;
-      const widthScale = (availableRadius * 2) / visibleWidth;
-      maximumScale = Math.min(heightScale, widthScale);
+      const maximumScale = Math.min(usableDiameter / visibleWidth, usableDiameter / visibleHeight) * 0.9;
+      scale = maximumScale * Math.max(0.1, Number(entry.scale) || 1);
     } else if (entry.fitMode === 'box') {
       const innerSquareSide = availableRadius * Math.SQRT2;
-      maximumScale = Math.min(innerSquareSide / visibleWidth, innerSquareSide / visibleHeight);
+      const maximumScale = Math.min(innerSquareSide / visibleWidth, innerSquareSide / visibleHeight);
+      scale = maximumScale * Math.max(0.1, Number(entry.scale) || 1);
     } else {
       const halfW = visibleWidth / 2;
       const halfH = visibleHeight / 2;
-      maximumScale = availableRadius / (Math.hypot(halfW, halfH) || 1);
+      const maximumScale = availableRadius / (Math.hypot(halfW, halfH) || 1);
+      scale = maximumScale * Math.max(0.1, Number(entry.scale) || 1);
     }
 
-    const scale = maximumScale * Math.max(0.1, Number(entry.scale) || 1);
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
     node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0}) scale(${scale}) translate(${-cx} ${-cy})`);
@@ -120,13 +119,10 @@
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
     text.setAttribute('fill', color);
-    text.style.fontFamily = lettered ? 'system-ui,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
+    text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
     text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
-    text.style.fontSize = lettered ? '24px' : '34px';
-    if (lettered) {
-      text.setAttribute('textLength', '28');
-      text.setAttribute('lengthAdjust', 'spacingAndGlyphs');
-    }
+    text.style.fontSize = lettered ? '16px' : '34px';
+    text.style.fontVariantCaps = 'normal';
     parent.appendChild(text);
     return text;
   }
