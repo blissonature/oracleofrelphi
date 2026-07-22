@@ -13,11 +13,11 @@
 
   const TEXT_GLYPHS = {
     SUN:'☉', MOON:'☽', MERCURY:'☿', VENUS:'♀', MARS:'♂',
-    JUPITER:'♃', SATURN:'♄', URANUS:'♅', NEPTUNE:'♆', PLUTO:'⯓',
+    JUPITER:'♃', SATURN:'♄', URANUS:'♅', NEPTUNE:'♆', PLUTO:'PLUTO_VECTOR',
     NO:'☊', SO:'☋', PA:'⊗',
     'NORTH NODE':'☊', NODE:'☊', 'TRUE NODE':'☊', 'MEAN NODE':'☊',
     'SOUTH NODE':'☋',
-    'PART OF FORTUNE':'⊗', FORTUNE:'⊗', POF:'⊗',
+    'PART OF FORTUNE':'⊗', FORTUNE:'⊗', POF:'⊗', 'HEART OF FORTUNE':'⊗',
     LILITH:'⚸', 'BLACK MOON LILITH':'⚸',
     DS:'DSC', DSC:'DSC', DESCENDANT:'DSC',
     V:'Vx', VX:'Vx', VERTEX:'Vx',
@@ -25,29 +25,28 @@
     MC:'MC', MIDHEAVEN:'MC', IC:'IC', IMUMCOELI:'IC', 'IMUM COELI':'IC'
   };
 
-  const PLANETS = new Set(['☉','☽','☿','♀','♂','♃','♄','♅','♆','⯓']);
+  const PLANETS = new Set(['☉','☽','☿','♀','♂','♃','♄','♅','♆']);
   const SYMBOLS = new Set(['☊','☋','⊗','⚸']);
   const ANGLES = new Set(['ASC','DSC','MC','IC','VX']);
 
-  // Apparent-size profiles compensate for the unequal visual boxes in symbol fonts.
+  // Profiles target equal apparent line weight and fill ratio, not equal nominal font size.
   const GLYPH_PROFILE = {
-    '☉':{ size:29, weight:600, stroke:0.34, offset:[0,0.65] },
-    '☽':{ size:29, weight:600, stroke:0.34, offset:[0.35,0] },
-    '☿':{ size:28.5, weight:600, stroke:0.34, offset:[0,0.35] },
-    '♀':{ size:25.5, weight:550, stroke:0.16, offset:[0,0.2] },
-    '♂':{ size:25.5, weight:550, stroke:0.16, offset:[-0.25,0.1] },
-    '♃':{ size:28.5, weight:600, stroke:0.34, offset:[0.2,0] },
-    '♄':{ size:28.5, weight:600, stroke:0.34, offset:[0.15,0.2] },
-    '♅':{ size:28.5, weight:600, stroke:0.34, offset:[0,0.25] },
-    '♆':{ size:28.5, weight:600, stroke:0.34, offset:[0,0.35] },
-    '⯓':{ size:28.5, weight:600, stroke:0.34, offset:[0,0.2] },
-    '☊':{ size:28, weight:600, stroke:0.28, offset:[0,0.25] },
-    '☋':{ size:28, weight:600, stroke:0.28, offset:[0,0.25] },
-    '⊗':{ size:28, weight:600, stroke:0.28, offset:[0,0.65] },
-    '⚸':{ size:28, weight:600, stroke:0.28, offset:[0,0.65] }
+    '☉':{ size:28.5, weight:500, offset:[0,0.6] },
+    '☽':{ size:28.5, weight:500, offset:[0.3,0] },
+    '☿':{ size:28, weight:500, offset:[0,0.3] },
+    '♀':{ size:25, weight:400, offset:[0,0.1] },
+    '♂':{ size:25, weight:400, offset:[-0.2,0.05] },
+    '♃':{ size:28, weight:500, offset:[0.15,0] },
+    '♄':{ size:28, weight:500, offset:[0.1,0.15] },
+    '♅':{ size:28, weight:500, offset:[0,0.2] },
+    '♆':{ size:27.5, weight:450, offset:[0,0.25] },
+    '☊':{ size:27.5, weight:500, offset:[0,0.2] },
+    '☋':{ size:27.5, weight:500, offset:[0,0.2] },
+    '⊗':{ size:26, weight:400, offset:[0,0.45] },
+    '⚸':{ size:25.5, weight:400, offset:[0,0.45] }
   };
 
-  const ANGLE_PROFILE = { size:15.5, weight:700, offset:[0,0.25] };
+  const ANGLE_PROFILE = { size:15.75, weight:650, offset:[0,0.2] };
   let queued = false;
 
   function num(value) {
@@ -113,61 +112,91 @@
     unit.removeAttribute('transform');
   }
 
-  function opticalCenter(text, cx, cy, offset) {
-    text.removeAttribute('transform');
+  function opticalCenter(node, cx, cy, offset) {
+    node.removeAttribute('transform');
     let box;
-    try { box = text.getBBox(); }
+    try { box = node.getBBox(); }
     catch (_) { return; }
     if (!box || !Number.isFinite(box.width) || !Number.isFinite(box.height)) return;
     const visualX = box.x + box.width / 2;
     const visualY = box.y + box.height / 2;
     const dx = cx - visualX + offset[0];
     const dy = cy - visualY + offset[1];
-    text.setAttribute('transform', 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')');
+    node.setAttribute('transform', 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')');
   }
 
-  function styleGlyph(group, knob, text) {
+  function ensurePlutoVector(unit, cx, cy, markerColor) {
+    let vector = unit.querySelector(':scope > g.relphi-pluto-vector');
+    if (!vector) {
+      vector = document.createElementNS(NS, 'g');
+      vector.classList.add('relphi-pluto-vector');
+      vector.innerHTML = [
+        '<circle class="pluto-head" r="3.15"/>',
+        '<path class="pluto-crescent" d="M -7 -1.5 Q 0 5.2 7 -1.5"/>',
+        '<line class="pluto-stem" x1="0" y1="2.4" x2="0" y2="10"/>',
+        '<line class="pluto-cross" x1="-5" y1="7" x2="5" y2="7"/>'
+      ].join('');
+      unit.appendChild(vector);
+    }
+    vector.setAttribute('transform', 'translate(' + cx.toFixed(2) + ' ' + (cy - 0.15).toFixed(2) + ')');
+    vector.setAttribute('fill', 'none');
+    vector.setAttribute('stroke', markerColor);
+    vector.setAttribute('stroke-width', '2.05');
+    vector.setAttribute('stroke-linecap', 'round');
+    vector.setAttribute('stroke-linejoin', 'round');
+    vector.style.setProperty('display', 'inline', 'important');
+    vector.style.setProperty('opacity', '1', 'important');
+    return vector;
+  }
+
+  function hidePlutoVector(unit) {
+    const vector = unit.querySelector(':scope > g.relphi-pluto-vector');
+    if (vector) vector.style.setProperty('display', 'none', 'important');
+  }
+
+  function styleGlyph(group, unit, knob, text) {
     if (!knob || !text) return;
     const cx = num(knob.getAttribute('cx'));
     const cy = num(knob.getAttribute('cy'));
     if (![cx, cy].every(Number.isFinite)) return;
 
     const value = canonicalText(group, text);
-    text.textContent = value;
-    const normalized = value.toUpperCase();
-    const isPlanet = PLANETS.has(value);
-    const isSymbol = SYMBOLS.has(value);
-    const isAngle = ANGLES.has(normalized);
     const markerColor = color(group);
-    const profile = GLYPH_PROFILE[value] || (isAngle ? ANGLE_PROFILE : { size:27, weight:700, stroke:0, offset:[0,0] });
+    const isPluto = value === 'PLUTO_VECTOR';
 
-    text.setAttribute('x', cx.toFixed(2));
-    text.setAttribute('y', cy.toFixed(2));
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('dominant-baseline', 'central');
-    text.setAttribute('fill', markerColor);
-    text.style.setProperty('display', 'inline', 'important');
-    text.style.setProperty('visibility', 'visible', 'important');
-    text.style.setProperty('font-family', (isPlanet || isSymbol)
-      ? 'Apple Symbols, Segoe UI Symbol, Noto Sans Symbols 2, Noto Sans Symbols, Arial Unicode MS, serif'
-      : 'system-ui, sans-serif', 'important');
-    text.style.setProperty('font-size', profile.size + 'px', 'important');
-    text.style.setProperty('font-weight', String(profile.weight), 'important');
-    text.style.setProperty('letter-spacing', isAngle ? '-0.4px' : '0', 'important');
-    text.style.setProperty('opacity', '1', 'important');
-
-    if (profile.stroke > 0) {
-      text.style.setProperty('stroke', markerColor, 'important');
-      text.style.setProperty('stroke-width', profile.stroke + 'px', 'important');
-      text.style.setProperty('paint-order', 'stroke fill', 'important');
-      text.style.setProperty('stroke-linejoin', 'round', 'important');
+    if (isPluto) {
+      text.textContent = '';
+      text.style.setProperty('display', 'none', 'important');
+      ensurePlutoVector(unit, cx, cy, markerColor);
     } else {
+      hidePlutoVector(unit);
+      text.textContent = value;
+      const normalized = value.toUpperCase();
+      const isPlanet = PLANETS.has(value);
+      const isSymbol = SYMBOLS.has(value);
+      const isAngle = ANGLES.has(normalized);
+      const profile = GLYPH_PROFILE[value] || (isAngle ? ANGLE_PROFILE : { size:27, weight:600, offset:[0,0] });
+
+      text.setAttribute('x', cx.toFixed(2));
+      text.setAttribute('y', cy.toFixed(2));
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dominant-baseline', 'central');
+      text.setAttribute('fill', markerColor);
+      text.style.setProperty('display', 'inline', 'important');
+      text.style.setProperty('visibility', 'visible', 'important');
+      text.style.setProperty('font-family', (isPlanet || isSymbol)
+        ? 'Apple Symbols, Segoe UI Symbol, Noto Sans Symbols 2, Noto Sans Symbols, Arial Unicode MS, serif'
+        : 'system-ui, sans-serif', 'important');
+      text.style.setProperty('font-size', profile.size + 'px', 'important');
+      text.style.setProperty('font-weight', String(profile.weight), 'important');
+      text.style.setProperty('letter-spacing', isAngle ? '-0.35px' : '0', 'important');
+      text.style.setProperty('opacity', '1', 'important');
       text.style.removeProperty('stroke');
       text.style.removeProperty('stroke-width');
       text.style.removeProperty('paint-order');
+      text.style.removeProperty('stroke-linejoin');
+      opticalCenter(text, cx, cy, profile.offset);
     }
-
-    opticalCenter(text, cx, cy, profile.offset);
 
     knob.setAttribute('r', String(BUBBLE_RADIUS));
     knob.style.setProperty('fill', '#fff', 'important');
@@ -186,7 +215,7 @@
       const contact = group.querySelector('circle.chart-wheel-contact-dot');
       const leader = group.querySelector('line.chart-wheel-stick');
       if (!marker.knob || !marker.text || !contact || !leader) return null;
-      styleGlyph(group, marker.knob, marker.text);
+      styleGlyph(group, marker.unit, marker.knob, marker.text);
 
       const cx = num(marker.knob.getAttribute('cx'));
       const cy = num(marker.knob.getAttribute('cy'));
