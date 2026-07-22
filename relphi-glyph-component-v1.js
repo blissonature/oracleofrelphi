@@ -19,7 +19,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=7');
+    const response = await fetch(path + '?v=8');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -53,14 +53,15 @@
     const visibleHeight = box.height + sourceStroke;
     let maximumScale;
 
-    if (entry.fitMode === 'box') {
-      // Compact text and point glyphs have transparent rectangle corners. Fit the
-      // visible width/height to the circle's inner square rather than penalizing
-      // them by the full bounding-box diagonal.
+    if (entry.fitMode === 'symbol') {
+      // Unicode point glyphs occupy far less than the corners of their text box.
+      // Fit against the usable diameter, then retain a small optical reserve.
+      const usableDiameter = availableRadius * 2;
+      maximumScale = Math.min(usableDiameter / visibleWidth, usableDiameter / visibleHeight) * 0.9;
+    } else if (entry.fitMode === 'box') {
       const innerSquareSide = availableRadius * Math.SQRT2;
       maximumScale = Math.min(innerSquareSide / visibleWidth, innerSquareSide / visibleHeight);
     } else {
-      // Artwork with visible outer curves is fitted by its complete corner radius.
       const halfW = visibleWidth / 2;
       const halfH = visibleHeight / 2;
       maximumScale = availableRadius / (Math.hypot(halfW, halfH) || 1);
@@ -114,7 +115,7 @@
     text.setAttribute('dominant-baseline', 'central');
     text.setAttribute('fill', color);
     text.style.fontFamily = /^(ASC|DSC|MC|IC|Vx)$/.test(entry.fallback) ? 'system-ui,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
-    text.style.fontWeight = /^(ASC|DSC|MC|IC|Vx)$/.test(entry.fallback) ? '700' : '600';
+    text.style.fontWeight = entry.fontWeight || (/^(ASC|DSC|MC|IC|Vx)$/.test(entry.fallback) ? '700' : '600');
     text.style.fontSize = /^(ASC|DSC|MC|IC|Vx)$/.test(entry.fallback) ? '22px' : '34px';
     parent.appendChild(text);
     return text;
