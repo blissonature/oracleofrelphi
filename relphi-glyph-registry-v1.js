@@ -18,11 +18,11 @@
     ['south-node','South Node',['south node','descending node','☋','so'],null,1.08,0,0.3,'☋','symbol','400'],
     ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],null,1.32,0,-0.2,'⚸','symbol','400'],
     ['part-of-fortune','Part of Fortune',['part of fortune','fortune','pars fortunae','pof','⊗','pa'],null,.92,0,0,'fortune','circle'],
-    ['vertex','Vertex',['vertex','vx'],null,1,0,0,'Vx','box','700'],
-    ['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'ASC','box','700'],
-    ['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'DSC','box','700'],
-    ['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','box','700'],
-    ['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','box','700']
+    ['vertex','Vertex',['vertex','vx'],null,1,0,0,'Vx','letter','700'],
+    ['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'ASC','letter','700'],
+    ['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'DSC','letter','700'],
+    ['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','letter','700'],
+    ['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','letter','700']
   ].map(([id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight]) => ({ id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight }));
 
   const byId = new Map(entries.map(entry => [entry.id, entry]));
