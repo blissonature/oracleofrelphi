@@ -4,26 +4,26 @@
   if (window.RelphiGlyphRegistry) return;
 
   const entries = [
-    ['sun','Sun',['sun','☉','⊙'],'assets/planet-glyphs/sun.svg',1,0,0],
-    ['moon','Moon',['moon','☽','☾'],'assets/planet-glyphs/moon.svg',1,0,0],
-    ['mercury','Mercury',['mercury','☿'],'assets/planet-glyphs/mercury.svg',1,0,0],
-    ['venus','Venus',['venus','♀'],'assets/planet-glyphs/venus.svg',1,0,0],
-    ['mars','Mars',['mars','♂'],'assets/planet-glyphs/mars.svg',1,0,0],
-    ['jupiter','Jupiter',['jupiter','♃'],'assets/planet-glyphs/jupiter.svg',1,0,0],
-    ['saturn','Saturn',['saturn','♄'],'assets/planet-glyphs/saturn.svg',1,0,0],
-    ['uranus','Uranus',['uranus','♅','⛢'],'assets/planet-glyphs/uranus.svg',1,0,0],
-    ['neptune','Neptune',['neptune','♆'],'assets/planet-glyphs/neptune.svg',1,0,0],
-    ['pluto','Pluto',['pluto','♇','⯓','pl'],'assets/planet-glyphs/pluto.svg',1,0,0],
-    ['north-node','North Node',['north node','true node','mean node','ascending node','node','☊','no'],null,1.05,0,-0.5,'☊'],
-    ['south-node','South Node',['south node','descending node','☋','so'],null,1.05,0,0.5,'☋'],
-    ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],null,1.02,0,-0.6,'⚸'],
-    ['part-of-fortune','Part of Fortune',['part of fortune','fortune','pars fortunae','pof','⊗','pa'],null,1.02,0,0,'fortune'],
-    ['vertex','Vertex',['vertex','vx'],null,.82,0,0,'Vx'],
-    ['asc','Ascendant',['asc','ascendant','rising','ac'],null,.76,0,0,'ASC'],
-    ['dsc','Descendant',['dsc','descendant','dc'],null,.76,0,0,'DSC'],
-    ['mc','Midheaven',['mc','midheaven'],null,.82,0,0,'MC'],
-    ['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,.82,0,0,'IC']
-  ].map(([id,name,aliases,asset,scale,dx,dy,fallback]) => ({ id,name,aliases,asset,scale,dx,dy,fallback }));
+    ['sun','Sun',['sun','☉','⊙'],'assets/planet-glyphs/sun.svg',1,0,0,null,'circle'],
+    ['moon','Moon',['moon','☽','☾'],'assets/planet-glyphs/moon.svg',1,1.1,0.35,null,'circle'],
+    ['mercury','Mercury',['mercury','☿'],'assets/planet-glyphs/mercury.svg',1,0,0,null,'circle'],
+    ['venus','Venus',['venus','♀'],'assets/planet-glyphs/venus.svg',1,0,0,null,'circle'],
+    ['mars','Mars',['mars','♂'],'assets/planet-glyphs/mars.svg',1,-0.95,0.9,null,'circle'],
+    ['jupiter','Jupiter',['jupiter','♃'],'assets/planet-glyphs/jupiter.svg',1,0,0,null,'circle'],
+    ['saturn','Saturn',['saturn','♄'],'assets/planet-glyphs/saturn.svg',1,0,0,null,'circle'],
+    ['uranus','Uranus',['uranus','♅','⛢'],'assets/planet-glyphs/uranus.svg',1,0.55,0.45,null,'circle'],
+    ['neptune','Neptune',['neptune','♆'],'assets/planet-glyphs/neptune.svg',1,0,0.95,null,'circle'],
+    ['pluto','Pluto',['pluto','♇','⯓','pl'],'assets/planet-glyphs/pluto.svg',1,0,0,null,'circle'],
+    ['north-node','North Node',['north node','true node','mean node','ascending node','node','☊','no'],null,.96,0,-0.3,'☊','box'],
+    ['south-node','South Node',['south node','descending node','☋','so'],null,.96,0,0.3,'☋','box'],
+    ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],null,.94,0,-0.2,'⚸','box'],
+    ['part-of-fortune','Part of Fortune',['part of fortune','fortune','pars fortunae','pof','⊗','pa'],null,.92,0,0,'fortune','circle'],
+    ['vertex','Vertex',['vertex','vx'],null,.95,0,0,'Vx','box'],
+    ['asc','Ascendant',['asc','ascendant','rising','ac'],null,.92,0,0,'ASC','box'],
+    ['dsc','Descendant',['dsc','descendant','dc'],null,.92,0,0,'DSC','box'],
+    ['mc','Midheaven',['mc','midheaven'],null,.96,0,0,'MC','box'],
+    ['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,.96,0,0,'IC','box']
+  ].map(([id,name,aliases,asset,scale,dx,dy,fallback,fitMode]) => ({ id,name,aliases,asset,scale,dx,dy,fallback,fitMode }));
 
   const byId = new Map(entries.map(entry => [entry.id, entry]));
   const aliases = new Map();
