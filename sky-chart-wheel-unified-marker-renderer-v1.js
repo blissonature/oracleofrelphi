@@ -10,15 +10,31 @@
   const MIN_CENTER_GAP = 43;
   const MAX_TANGENTIAL = 84;
   const BUBBLE_RADIUS = 17.5;
+
   const TEXT_GLYPHS = {
+    SUN:'☉', MOON:'☽', MERCURY:'☿', VENUS:'♀', MARS:'♂',
+    JUPITER:'♃', SATURN:'♄', URANUS:'♅', NEPTUNE:'♆', PLUTO:'♇',
     NO:'☊', SO:'☋', PA:'⊗',
-    'NORTH NODE':'☊', 'SOUTH NODE':'☋',
-    'PART OF FORTUNE':'⊗', FORTUNE:'⊗',
-    LILITH:'⚸', DS:'DSC', DSC:'DSC', V:'Vx', VX:'Vx', AC:'ASC'
+    'NORTH NODE':'☊', NODE:'☊', 'TRUE NODE':'☊', 'MEAN NODE':'☊',
+    'SOUTH NODE':'☋',
+    'PART OF FORTUNE':'⊗', FORTUNE:'⊗', POF:'⊗',
+    LILITH:'⚸', 'BLACK MOON LILITH':'⚸',
+    DS:'DSC', DSC:'DSC', DESCENDANT:'DSC',
+    V:'Vx', VX:'Vx', VERTEX:'Vx',
+    AC:'ASC', ASC:'ASC', RISING:'ASC', ASCENDANT:'ASC',
+    MC:'MC', MIDHEAVEN:'MC', IC:'IC', IMUMCOELI:'IC', 'IMUM COELI':'IC'
   };
+
+  const PLANETS = new Set(['☉','☽','☿','♀','♂','♃','♄','♅','♆','♇']);
   const SYMBOLS = new Set(['☊','☋','⊗','⚸']);
   const ANGLES = new Set(['ASC','DSC','MC','IC','VX']);
-  const OPTICAL_Y = { '☊':0.4, '☋':0.4, '⊗':0.1, '⚸':0.8, ASC:0.3, DSC:0.3, MC:0.3, IC:0.3, VX:0.3 };
+  const OPTICAL = {
+    '☉':[0,0], '☽':[0.35,0], '☿':[0,0.35], '♀':[0,0.2], '♂':[-0.35,0.15],
+    '♃':[0.2,0], '♄':[0.15,0.2], '♅':[0,0.25], '♆':[0,0.35], '♇':[0,0.1],
+    '☊':[0,0.25], '☋':[0,0.25], '⊗':[0,0], '⚸':[0,0.65],
+    ASC:[0,0.2], DSC:[0,0.2], MC:[0,0.2], IC:[0,0.2], VX:[0,0.2]
+  };
+
   let queued = false;
 
   function num(value) {
@@ -49,7 +65,9 @@
   function canonicalText(group, text) {
     const visible = bare(text.textContent);
     const name = bare(group.querySelector('.chart-wheel-marker-name')?.textContent).toUpperCase();
-    return TEXT_GLYPHS[name] || TEXT_GLYPHS[visible.toUpperCase()] || visible;
+    const dataName = bare(group.dataset.name || group.dataset.placement || group.getAttribute('data-name') || '').toUpperCase();
+    const key = name || dataName;
+    return TEXT_GLYPHS[key] || TEXT_GLYPHS[visible.toUpperCase()] || visible;
   }
 
   function removeLegacyGlyphLayers(group) {
@@ -82,7 +100,7 @@
     unit.removeAttribute('transform');
   }
 
-  function opticalCenter(text, cx, cy) {
+  function opticalCenter(text, cx, cy, value) {
     text.removeAttribute('transform');
     let box;
     try { box = text.getBBox(); }
@@ -90,8 +108,9 @@
     if (!box || !Number.isFinite(box.width) || !Number.isFinite(box.height)) return;
     const visualX = box.x + box.width / 2;
     const visualY = box.y + box.height / 2;
-    const dx = cx - visualX;
-    const dy = cy - visualY;
+    const offset = OPTICAL[value.toUpperCase()] || OPTICAL[value] || [0,0];
+    const dx = cx - visualX + offset[0];
+    const dy = cy - visualY + offset[1];
     text.setAttribute('transform', 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')');
   }
 
@@ -104,23 +123,36 @@
     const value = canonicalText(group, text);
     text.textContent = value;
     const normalized = value.toUpperCase();
+    const isPlanet = PLANETS.has(value);
     const isSymbol = SYMBOLS.has(value);
     const isAngle = ANGLES.has(normalized);
     const markerColor = color(group);
 
     text.setAttribute('x', cx.toFixed(2));
-    text.setAttribute('y', (cy + (OPTICAL_Y[normalized] ?? OPTICAL_Y[value] ?? 0)).toFixed(2));
+    text.setAttribute('y', cy.toFixed(2));
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
     text.setAttribute('fill', markerColor);
     text.style.setProperty('display', 'inline', 'important');
     text.style.setProperty('visibility', 'visible', 'important');
-    text.style.setProperty('font-family', isSymbol ? 'Arial Unicode MS, Noto Sans Symbols 2, Noto Sans Symbols, serif' : 'system-ui, sans-serif', 'important');
-    text.style.setProperty('font-size', isSymbol ? '27px' : (isAngle ? '12.5px' : '27px'), 'important');
-    text.style.setProperty('font-weight', isSymbol ? '600' : (isAngle ? '650' : '800'), 'important');
-    text.style.setProperty('letter-spacing', isAngle ? '-0.35px' : '0', 'important');
+    text.style.setProperty('font-family', (isPlanet || isSymbol)
+      ? 'Apple Symbols, Segoe UI Symbol, Noto Sans Symbols 2, Noto Sans Symbols, Arial Unicode MS, serif'
+      : 'system-ui, sans-serif', 'important');
+    text.style.setProperty('font-size', isPlanet ? '29px' : (isSymbol ? '28px' : (isAngle ? '14.5px' : '27px')), 'important');
+    text.style.setProperty('font-weight', isAngle ? '700' : (isPlanet || isSymbol ? '600' : '800'), 'important');
+    text.style.setProperty('letter-spacing', isAngle ? '-0.4px' : '0', 'important');
     text.style.setProperty('opacity', '1', 'important');
-    opticalCenter(text, cx, cy);
+    if (isPlanet || isSymbol) {
+      text.style.setProperty('stroke', markerColor, 'important');
+      text.style.setProperty('stroke-width', isPlanet ? '0.42px' : '0.32px', 'important');
+      text.style.setProperty('paint-order', 'stroke fill', 'important');
+      text.style.setProperty('stroke-linejoin', 'round', 'important');
+    } else {
+      text.style.removeProperty('stroke');
+      text.style.removeProperty('stroke-width');
+      text.style.removeProperty('paint-order');
+    }
+    opticalCenter(text, cx, cy, value);
 
     knob.setAttribute('r', String(BUBBLE_RADIUS));
     knob.style.setProperty('fill', '#fff', 'important');
