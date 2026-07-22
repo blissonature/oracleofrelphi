@@ -29,7 +29,6 @@
   const SYMBOLS = new Set(['☊','☋','⊗','⚸']);
   const ANGLES = new Set(['ASC','DSC','MC','IC','VX']);
 
-  // Profiles target equal apparent line weight and fill ratio, not equal nominal font size.
   const GLYPH_PROFILE = {
     '☉':{ size:28.5, weight:500, offset:[0,0.6] },
     '☽':{ size:28.5, weight:500, offset:[0.3,0] },
@@ -77,7 +76,15 @@
   function canonicalText(group, text) {
     const visible = bare(text.textContent);
     const name = bare(group.querySelector('.chart-wheel-marker-name')?.textContent).toUpperCase();
-    const dataName = bare(group.dataset.name || group.dataset.placement || group.getAttribute('data-name') || '').toUpperCase();
+    const dataName = bare(
+      group.dataset.body ||
+      group.dataset.name ||
+      group.dataset.placement ||
+      group.getAttribute('data-body') ||
+      group.getAttribute('data-name') ||
+      group.getAttribute('aria-label') ||
+      ''
+    ).toUpperCase();
     const key = name || dataName;
     return TEXT_GLYPHS[key] || TEXT_GLYPHS[visible.toUpperCase()] || visible;
   }
@@ -145,6 +152,7 @@
     vector.setAttribute('stroke-linecap', 'round');
     vector.setAttribute('stroke-linejoin', 'round');
     vector.style.setProperty('display', 'inline', 'important');
+    vector.style.setProperty('visibility', 'visible', 'important');
     vector.style.setProperty('opacity', '1', 'important');
     return vector;
   }
@@ -166,7 +174,9 @@
 
     if (isPluto) {
       text.textContent = '';
+      text.removeAttribute('aria-label');
       text.style.setProperty('display', 'none', 'important');
+      text.style.setProperty('visibility', 'hidden', 'important');
       ensurePlutoVector(unit, cx, cy, markerColor);
     } else {
       hidePlutoVector(unit);
@@ -261,10 +271,10 @@
     }
   }
 
-  function connectLeader(item, target) {
+  function connectLeader(item) {
     const contactRoot = rootPoint(item.contact, item.anchor.x, item.anchor.y);
     const unitMatrix = item.unit.getCTM?.();
-    const bubbleRoot = unitMatrix ? new DOMPoint(item.original.x, item.original.y).matrixTransform(unitMatrix) : new DOMPoint(target.x, target.y);
+    const bubbleRoot = unitMatrix ? new DOMPoint(item.original.x, item.original.y).matrixTransform(unitMatrix) : new DOMPoint(item.original.x, item.original.y);
     const contactLocal = localPoint(item.leader, contactRoot);
     const bubbleLocal = localPoint(item.leader, bubbleRoot);
 
@@ -299,7 +309,7 @@
       const dx = target.x - item.original.x;
       const dy = target.y - item.original.y;
       item.unit.setAttribute('transform', 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')');
-      connectLeader(item, target);
+      connectLeader(item);
       item.group.style.setProperty('opacity', '1', 'important');
     });
     svg.classList.add('relphi-layout-ready');
