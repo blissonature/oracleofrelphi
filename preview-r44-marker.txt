@@ -1,0 +1,1 @@
+Preview revision 44: grouped placement markers and visible-bounds optical centering.
