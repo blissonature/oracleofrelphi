@@ -1,0 +1,1 @@
+Revision 50: identify Pluto from canonical data-body metadata and render vector-only Pluto glyph.
