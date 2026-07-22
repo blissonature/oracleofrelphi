@@ -123,18 +123,28 @@
     }, retryOrFail);
   }
 
+  function loadSharedGlyphSystem(adapter) {
+    appendScript('relphi-glyph-core-v2.js?v=1', function () {
+      if (adapter) appendScript(adapter);
+    });
+  }
+
   function loadEnhancements() {
-    if (/(^|\/)tarot\.html$/.test(location.pathname)) {
+    const path = location.pathname;
+    if (/(^|\/)tarot\.html$/.test(path)) {
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
       appendScript('drawing-board-workflow-v2.js?v=19');
+      loadSharedGlyphSystem('relphi-shared-glyph-adapters-v2.js?v=1');
     }
-    if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
+    if (/(^|\/)planetaryhours\.html$/.test(path)) {
       appendScript('planetary-hours-location-prompt.js?v=4');
-      appendScript('standardize-zodiac-wheels.js?v=4');
-      appendScript('relphi-glyph-bubbles.js?v=2');
+      loadSharedGlyphSystem('relphi-shared-glyph-adapters-v2.js?v=1');
+    }
+    if (/(^|\/)(glyphs|astrology-foundations)\.html$/.test(path)) {
+      loadSharedGlyphSystem('relphi-shared-glyph-adapters-v2.js?v=1');
     }
 
-    if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
+    if (/(^|\/)sky-chart\.html$/.test(path)) {
       const preview = new URLSearchParams(location.search).get('preview');
       [
         'sky-chart-stability-hotfix.js?v=1',
@@ -142,17 +152,13 @@
         'sky-chart-aspect-duration-fix.js?v=2',
         'sky-chart-relationship-language.js?v=5',
         'sky-chart-related-relationships-v2.js?v=2',
-        'sky-ledger-glyph-alignment.js?v=1',
         'sky-chart-sign-cusps-v1.js?v=1',
-        'sky-chart-ph-glyph-style-v1.js?v=preview5',
         'sky-chart-provenance-fix.js?v=1',
         'sky-chart-extra-points-support-v1.js?v=2',
-        'sky-chart-calculated-points-v1.js?v=3',
-        'sky-chart-wheel-glyph-preview-v1.js?v=5',
-        'sky-chart-wheel-unified-marker-renderer-v4.js?v=1',
-        'sky-chart-special-vector-color-v1.js?v=1'
+        'sky-chart-calculated-points-v1.js?v=3'
       ].forEach(function (src) { appendScript(src); });
-
+      loadSharedGlyphSystem('relphi-sky-chart-glyph-adapter-v2.js?v=1');
+      appendScript('sky-chart-tooltip-close-v1.js?v=1');
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);
       appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
