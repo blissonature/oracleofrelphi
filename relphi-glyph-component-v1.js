@@ -19,7 +19,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=6');
+    const response = await fetch(path + '?v=7');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -45,22 +45,30 @@
     try { box = node.getBBox(); } catch (_) { return; }
     if (!box || !box.width || !box.height) return;
 
-    // getBBox excludes stroke. Fit the complete visible mark inside the circular
-    // bubble, preserving at least one intended-use pixel between glyph and the
-    // inside edge of the perimeter stroke.
     const gap = Math.max(1, Number(padding) || 1);
     const boundaryInset = Math.max(0, Number(bubbleStrokeWidth) || 0) / 2;
     const availableRadius = Math.max(1, radius - boundaryInset - gap);
     const sourceStroke = largestStroke(node);
-    const halfW = box.width / 2 + sourceStroke / 2;
-    const halfH = box.height / 2 + sourceStroke / 2;
-    const sourceOuterRadius = Math.hypot(halfW, halfH) || 1;
-    const maximumScale = availableRadius / sourceOuterRadius;
-    const requestedScale = maximumScale * Math.min(1, Number(entry.scale) || 1);
-    const scale = Math.min(maximumScale, requestedScale);
+    const visibleWidth = box.width + sourceStroke;
+    const visibleHeight = box.height + sourceStroke;
+    let maximumScale;
+
+    if (entry.fitMode === 'box') {
+      // Compact text and point glyphs have transparent rectangle corners. Fit the
+      // visible width/height to the circle's inner square rather than penalizing
+      // them by the full bounding-box diagonal.
+      const innerSquareSide = availableRadius * Math.SQRT2;
+      maximumScale = Math.min(innerSquareSide / visibleWidth, innerSquareSide / visibleHeight);
+    } else {
+      // Artwork with visible outer curves is fitted by its complete corner radius.
+      const halfW = visibleWidth / 2;
+      const halfH = visibleHeight / 2;
+      maximumScale = availableRadius / (Math.hypot(halfW, halfH) || 1);
+    }
+
+    const scale = maximumScale * Math.max(0.1, Number(entry.scale) || 1);
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
-
     node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0}) scale(${scale}) translate(${-cx} ${-cy})`);
   }
 
