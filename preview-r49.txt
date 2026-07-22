@@ -1,0 +1,1 @@
+Preview revision 49: normalized glyph line weights, optical centering, and vector Pluto.
