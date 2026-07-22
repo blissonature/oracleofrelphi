@@ -11,19 +11,19 @@
     ['mars','Mars',['mars','♂'],'assets/planet-glyphs/mars.svg',1,-0.95,0.9,null,'circle'],
     ['jupiter','Jupiter',['jupiter','♃'],'assets/planet-glyphs/jupiter.svg',1,0,0,null,'circle'],
     ['saturn','Saturn',['saturn','♄'],'assets/planet-glyphs/saturn.svg',1,0,0,null,'circle'],
-    ['uranus','Uranus',['uranus','♅','⛢'],'assets/planet-glyphs/uranus.svg',1,0.25,0.45,null,'circle'],
+    ['uranus','Uranus',['uranus','♅','⛢'],'assets/planet-glyphs/uranus.svg',1,0.05,0.45,null,'circle'],
     ['neptune','Neptune',['neptune','♆'],'assets/planet-glyphs/neptune.svg',1,0,0.95,null,'circle'],
     ['pluto','Pluto',['pluto','♇','⯓','pl'],'assets/planet-glyphs/pluto.svg',1,0,0,null,'circle'],
-    ['north-node','North Node',['north node','true node','mean node','ascending node','node','☊','no'],null,1,0,-0.3,'☊','box'],
-    ['south-node','South Node',['south node','descending node','☋','so'],null,1,0,0.3,'☋','box'],
-    ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],null,1,0,-0.2,'⚸','box'],
+    ['north-node','North Node',['north node','true node','mean node','ascending node','node','☊','no'],null,1.08,0,-0.3,'☊','symbol','400'],
+    ['south-node','South Node',['south node','descending node','☋','so'],null,1.08,0,0.3,'☋','symbol','400'],
+    ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],null,1.08,0,-0.2,'⚸','symbol','400'],
     ['part-of-fortune','Part of Fortune',['part of fortune','fortune','pars fortunae','pof','⊗','pa'],null,.92,0,0,'fortune','circle'],
-    ['vertex','Vertex',['vertex','vx'],null,1,0,0,'Vx','box'],
-    ['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'ASC','box'],
-    ['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'DSC','box'],
-    ['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','box'],
-    ['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','box']
-  ].map(([id,name,aliases,asset,scale,dx,dy,fallback,fitMode]) => ({ id,name,aliases,asset,scale,dx,dy,fallback,fitMode }));
+    ['vertex','Vertex',['vertex','vx'],null,1,0,0,'Vx','box','700'],
+    ['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'ASC','box','700'],
+    ['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'DSC','box','700'],
+    ['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','box','700'],
+    ['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','box','700']
+  ].map(([id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight]) => ({ id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight }));
 
   const byId = new Map(entries.map(entry => [entry.id, entry]));
   const aliases = new Map();
