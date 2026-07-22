@@ -1,0 +1,1 @@
+Revision 48: standardized apparent glyph sizing, corrected optical centering for Sun and Fortune, and alternate Pluto glyph.
