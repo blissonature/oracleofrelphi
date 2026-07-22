@@ -56,6 +56,7 @@
     group.querySelectorAll('svg.relphi-bold-inline-glyph,svg.relphi-colored-glyph,image.relphi-bubble-glyph-image').forEach(function (node) {
       node.remove();
     });
+    group.classList.remove('has-preview-inline-glyph', 'has-preview-angle-text');
   }
 
   function ensureUnit(group) {
@@ -66,7 +67,12 @@
       group.appendChild(unit);
     }
     const knob = group.querySelector(':scope > circle.chart-wheel-stick-knob, g.relphi-marker-unit > circle.chart-wheel-stick-knob');
-    const text = group.querySelector(':scope > .chart-wheel-marker-glyph, g.relphi-marker-unit > .chart-wheel-marker-glyph');
+    let text = group.querySelector(':scope > .chart-wheel-marker-glyph, g.relphi-marker-unit > .chart-wheel-marker-glyph');
+    if (!text && knob) {
+      text = document.createElementNS(NS, 'text');
+      text.classList.add('chart-wheel-marker-glyph');
+      text.textContent = bare(group.dataset.glyph || group.dataset.symbol || group.getAttribute('data-glyph') || '');
+    }
     if (knob && knob.parentNode !== unit) unit.appendChild(knob);
     if (text && text.parentNode !== unit) unit.appendChild(text);
     return { unit, knob, text };
@@ -76,7 +82,7 @@
     unit.removeAttribute('transform');
   }
 
-  function opticalCenter(text, knob, cx, cy) {
+  function opticalCenter(text, cx, cy) {
     text.removeAttribute('transform');
     let box;
     try { box = text.getBBox(); }
@@ -102,18 +108,19 @@
     const isAngle = ANGLES.has(normalized);
     const markerColor = color(group);
 
-    text.style.removeProperty('display');
     text.setAttribute('x', cx.toFixed(2));
     text.setAttribute('y', (cy + (OPTICAL_Y[normalized] ?? OPTICAL_Y[value] ?? 0)).toFixed(2));
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
     text.setAttribute('fill', markerColor);
+    text.style.setProperty('display', 'inline', 'important');
+    text.style.setProperty('visibility', 'visible', 'important');
     text.style.setProperty('font-family', isSymbol ? 'Arial Unicode MS, Noto Sans Symbols 2, Noto Sans Symbols, serif' : 'system-ui, sans-serif', 'important');
     text.style.setProperty('font-size', isSymbol ? '27px' : (isAngle ? '12.5px' : '27px'), 'important');
     text.style.setProperty('font-weight', isSymbol ? '600' : (isAngle ? '650' : '800'), 'important');
     text.style.setProperty('letter-spacing', isAngle ? '-0.35px' : '0', 'important');
     text.style.setProperty('opacity', '1', 'important');
-    opticalCenter(text, knob, cx, cy);
+    opticalCenter(text, cx, cy);
 
     knob.setAttribute('r', String(BUBBLE_RADIUS));
     knob.style.setProperty('fill', '#fff', 'important');
