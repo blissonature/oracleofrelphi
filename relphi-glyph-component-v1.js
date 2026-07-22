@@ -19,7 +19,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=9');
+    const response = await fetch(path + '?v=10');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -41,6 +41,14 @@
 
   function fit(node, radius, padding, entry, bubbleStrokeWidth) {
     node.removeAttribute('transform');
+
+    // Lettered points use one literal typographic size. Do not width-fit,
+    // compress, or expand individual labels after font assignment.
+    if (entry.fitMode === 'letter') {
+      node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0})`);
+      return;
+    }
+
     let box;
     try { box = node.getBBox(); } catch (_) { return; }
     if (!box || !box.width || !box.height) return;
@@ -56,13 +64,6 @@
     if (entry.fitMode === 'symbol') {
       const usableDiameter = availableRadius * 2;
       maximumScale = Math.min(usableDiameter / visibleWidth, usableDiameter / visibleHeight) * 0.9;
-    } else if (entry.fitMode === 'letter') {
-      // All lettered points share one normalized text width and one cap-height target.
-      // Width is only a safety clamp, so MC/IC/Vx cannot auto-enlarge relative to ASC/DSC.
-      const targetCapHeight = availableRadius * 1.12;
-      const heightScale = targetCapHeight / visibleHeight;
-      const widthScale = (availableRadius * 2) / visibleWidth;
-      maximumScale = Math.min(heightScale, widthScale);
     } else if (entry.fitMode === 'box') {
       const innerSquareSide = availableRadius * Math.SQRT2;
       maximumScale = Math.min(innerSquareSide / visibleWidth, innerSquareSide / visibleHeight);
@@ -120,13 +121,10 @@
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
     text.setAttribute('fill', color);
-    text.style.fontFamily = lettered ? 'system-ui,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
+    text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
     text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
-    text.style.fontSize = lettered ? '24px' : '34px';
-    if (lettered) {
-      text.setAttribute('textLength', '28');
-      text.setAttribute('lengthAdjust', 'spacingAndGlyphs');
-    }
+    text.style.fontSize = lettered ? '16px' : '34px';
+    if (entry.id === 'asc' || entry.id === 'dsc') text.style.letterSpacing = '0.45px';
     parent.appendChild(text);
     return text;
   }
