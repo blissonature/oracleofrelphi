@@ -30,22 +30,25 @@
   const ANGLES = new Set(['ASC','DSC','MC','IC','VX']);
 
   const GLYPH_PROFILE = {
-    '☉':{ size:28.5, weight:500, offset:[0,0.6] },
-    '☽':{ size:28.5, weight:500, offset:[0.3,0] },
+    '☉':{ size:28.5, weight:500, offset:[0,1.2] },
+    '☽':{ size:28.5, weight:600, offset:[0.3,0] },
     '☿':{ size:28, weight:500, offset:[0,0.3] },
     '♀':{ size:25, weight:400, offset:[0,0.1] },
     '♂':{ size:25, weight:400, offset:[-0.2,0.05] },
-    '♃':{ size:28, weight:500, offset:[0.15,0] },
+    '♃':{ size:28, weight:500, offset:[1.0,0] },
     '♄':{ size:28, weight:500, offset:[0.1,0.15] },
-    '♅':{ size:28, weight:500, offset:[0,0.2] },
+    '♅':{ size:29.5, weight:500, offset:[0,0.2] },
     '♆':{ size:27.5, weight:450, offset:[0,0.25] },
-    '☊':{ size:27.5, weight:500, offset:[0,0.2] },
+    '☊':{ size:27.5, weight:500, offset:[0,-0.4] },
     '☋':{ size:27.5, weight:500, offset:[0,0.2] },
     '⊗':{ size:26, weight:400, offset:[0,0.45] },
-    '⚸':{ size:25.5, weight:400, offset:[0,0.45] }
+    '⚸':{ size:25.5, weight:400, offset:[0,-0.55] }
   };
 
   const ANGLE_PROFILE = { size:15.75, weight:650, offset:[0,0.2] };
+  const ANGLE_OFFSETS = {
+    ASC:[1,0.2], DSC:[1,0.2], MC:[0,0.2], IC:[0,0.2], VX:[0,0.2]
+  };
   let queued = false;
 
   function num(value) {
@@ -185,7 +188,11 @@
       const isPlanet = PLANETS.has(value);
       const isSymbol = SYMBOLS.has(value);
       const isAngle = ANGLES.has(normalized);
-      const profile = GLYPH_PROFILE[value] || (isAngle ? ANGLE_PROFILE : { size:27, weight:600, offset:[0,0] });
+      const profile = GLYPH_PROFILE[value] || (isAngle ? {
+        size:ANGLE_PROFILE.size,
+        weight:ANGLE_PROFILE.weight,
+        offset:ANGLE_OFFSETS[normalized] || ANGLE_PROFILE.offset
+      } : { size:27, weight:600, offset:[0,0] });
 
       text.setAttribute('x', cx.toFixed(2));
       text.setAttribute('y', cy.toFixed(2));
