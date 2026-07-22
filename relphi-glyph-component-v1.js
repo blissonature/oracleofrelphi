@@ -19,7 +19,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=8');
+    const response = await fetch(path + '?v=9');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -54,10 +54,15 @@
     let maximumScale;
 
     if (entry.fitMode === 'symbol') {
-      // Unicode point glyphs occupy far less than the corners of their text box.
-      // Fit against the usable diameter, then retain a small optical reserve.
       const usableDiameter = availableRadius * 2;
       maximumScale = Math.min(usableDiameter / visibleWidth, usableDiameter / visibleHeight) * 0.9;
+    } else if (entry.fitMode === 'letter') {
+      // All lettered points share one normalized text width and one cap-height target.
+      // Width is only a safety clamp, so MC/IC/Vx cannot auto-enlarge relative to ASC/DSC.
+      const targetCapHeight = availableRadius * 1.12;
+      const heightScale = targetCapHeight / visibleHeight;
+      const widthScale = (availableRadius * 2) / visibleWidth;
+      maximumScale = Math.min(heightScale, widthScale);
     } else if (entry.fitMode === 'box') {
       const innerSquareSide = availableRadius * Math.SQRT2;
       maximumScale = Math.min(innerSquareSide / visibleWidth, innerSquareSide / visibleHeight);
@@ -108,15 +113,20 @@
 
   function textGlyph(parent, entry, color) {
     const text = svg('text');
+    const lettered = /^(ASC|DSC|MC|IC|Vx)$/.test(entry.fallback);
     text.textContent = entry.fallback;
     text.setAttribute('x', '0');
     text.setAttribute('y', '0');
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
     text.setAttribute('fill', color);
-    text.style.fontFamily = /^(ASC|DSC|MC|IC|Vx)$/.test(entry.fallback) ? 'system-ui,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
-    text.style.fontWeight = entry.fontWeight || (/^(ASC|DSC|MC|IC|Vx)$/.test(entry.fallback) ? '700' : '600');
-    text.style.fontSize = /^(ASC|DSC|MC|IC|Vx)$/.test(entry.fallback) ? '22px' : '34px';
+    text.style.fontFamily = lettered ? 'system-ui,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
+    text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
+    text.style.fontSize = lettered ? '24px' : '34px';
+    if (lettered) {
+      text.setAttribute('textLength', '28');
+      text.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+    }
     parent.appendChild(text);
     return text;
   }
