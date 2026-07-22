@@ -52,7 +52,8 @@
       }
       .chart-wheel-placement-stick.is-preview-active .chart-wheel-stick,
       .chart-wheel-placement-stick.is-preview-active .chart-wheel-marker-glyph,
-      .chart-wheel-placement-stick.is-preview-active svg.relphi-bold-inline-glyph{
+      .chart-wheel-placement-stick.is-preview-active .relphi-pluto-vector,
+      .chart-wheel-placement-stick.is-preview-active .relphi-fortune-vector{
         opacity:1!important
       }
     `;
@@ -80,13 +81,41 @@
     tooltip.id = 'relphiWheelPreviewTooltip';
     tooltip.setAttribute('role', 'status');
     Object.assign(tooltip.style, {
-      position:'fixed', zIndex:'99998', display:'none', maxWidth:'220px',
+      position:'absolute', zIndex:'99998', display:'none', maxWidth:'220px',
       padding:'8px 11px', border:'2px solid #111', borderRadius:'12px',
       background:'#fff', color:'#111', boxShadow:'0 5px 18px rgba(0,0,0,.18)',
       font:'750 13px/1.25 system-ui,sans-serif', textAlign:'center', pointerEvents:'none'
     });
     document.body.appendChild(tooltip);
     return tooltip;
+  }
+
+  function viewportPageBox() {
+    const view = window.visualViewport;
+    if (view) {
+      return {
+        left:view.pageLeft,
+        top:view.pageTop,
+        width:view.width,
+        height:view.height
+      };
+    }
+    return { left:window.scrollX, top:window.scrollY, width:window.innerWidth, height:window.innerHeight };
+  }
+
+  function positionTooltip(group) {
+    if (!tooltip || tooltip.style.display === 'none') return;
+    const knob = group.querySelector('.chart-wheel-stick-knob') || group;
+    const rect = knob.getBoundingClientRect();
+    const view = viewportPageBox();
+    const own = tooltip.getBoundingClientRect();
+    const centerX = view.left + rect.left + rect.width / 2;
+    const markerTop = view.top + rect.top;
+    const left = Math.max(view.left + 8, Math.min(view.left + view.width - own.width - 8, centerX - own.width / 2));
+    let top = markerTop - own.height - 10;
+    if (top < view.top + 8) top = view.top + rect.bottom + 10;
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
   }
 
   function raise(group) {
@@ -111,16 +140,12 @@
 
   function show(group) {
     const node = ensureTooltip();
-    const knob = group.querySelector('.chart-wheel-stick-knob') || group;
-    const rect = knob.getBoundingClientRect();
     node.textContent = placementLabel(group);
     node.style.borderColor = markerColor(group);
     node.style.display = 'block';
-    const own = node.getBoundingClientRect();
-    node.style.left = Math.max(8, Math.min(innerWidth - own.width - 8, rect.left + rect.width / 2 - own.width / 2)) + 'px';
-    node.style.top = Math.max(8, rect.top - own.height - 10) + 'px';
     raise(group);
     group.classList.add('is-preview-active');
+    positionTooltip(group);
   }
 
   function clear(group) {
@@ -159,11 +184,19 @@
     root.querySelectorAll?.(PLACEMENT).forEach(wire);
   }
 
+  function repositionPinned() {
+    if (pinned) positionTooltip(pinned);
+  }
+
   function install() {
     installPreviewGuard();
     installInteractionStyle();
     scan(document);
     window.addEventListener('relphi:sky-builder-v4-loaded', function () { scan(document); });
+    window.addEventListener('scroll', repositionPinned, { passive:true });
+    window.addEventListener('resize', repositionPinned, { passive:true });
+    window.visualViewport?.addEventListener('scroll', repositionPinned, { passive:true });
+    window.visualViewport?.addEventListener('resize', repositionPinned, { passive:true });
     document.addEventListener('click', function () {
       if (pinned) {
         const current = pinned;
