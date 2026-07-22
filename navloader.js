@@ -148,8 +148,8 @@
         'sky-chart-provenance-fix.js?v=1',
         'sky-chart-extra-points-support-v1.js?v=2',
         'sky-chart-calculated-points-v1.js?v=3',
-        'sky-chart-wheel-glyph-preview-v1.js?v=4',
-        'sky-chart-wheel-unified-marker-renderer-v2.js?v=1'
+        'sky-chart-wheel-glyph-preview-v1.js?v=5',
+        'sky-chart-wheel-unified-marker-renderer-v3.js?v=1'
       ].forEach(function (src) { appendScript(src); });
 
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
