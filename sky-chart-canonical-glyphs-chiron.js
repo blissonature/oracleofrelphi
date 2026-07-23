@@ -3,6 +3,8 @@
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const XLINK_NS = 'http://www.w3.org/1999/xlink';
   const GLYPHS = {
     sun:'sun', moon:'moon', mercury:'mercury', venus:'venus', mars:'mars',
     jupiter:'jupiter', saturn:'saturn', uranus:'uranus', neptune:'neptune',
@@ -10,7 +12,7 @@
     southnode:'south-node', vertex:'vertex', partoffortune:'part-of-fortune'
   };
   const SYMBOLS = {
-    '☉':'sun', '☽':'moon', '☿':'mercury', '♀':'venus', '♂':'mars',
+    '☉':'sun', '☽':'moon', '☾':'moon', '☿':'mercury', '♀':'venus', '♂':'mars',
     '♃':'jupiter', '♄':'saturn', '♅':'uranus', '♆':'neptune',
     '♇':'pluto', '⯓':'pluto', '⚷':'chiron', '⚸':'lilith',
     '☊':'northnode', '☋':'southnode', '⊗':'partoffortune'
@@ -22,20 +24,26 @@
     southnode:'South Node', vertex:'Vertex', partoffortune:'Part of Fortune'
   };
   const ALIASES = {
-    sol:'sun', luna:'moon', node:'northnode', blackmoon:'lilith', blackmoonlilith:'lilith',
-    meanlilith:'lilith', trueblackmoonlilith:'lilith', meannode:'northnode', truenode:'northnode',
-    northlunarnode:'northnode', ascendingnode:'northnode', dragonshead:'northnode',
+    sol:'sun', luna:'moon', node:'northnode', nnode:'northnode', snode:'southnode',
+    blackmoon:'lilith', blackmoonlilith:'lilith', meanlilith:'lilith', trueblackmoonlilith:'lilith',
+    meannode:'northnode', truenode:'northnode', northlunarnode:'northnode', ascendingnode:'northnode', dragonshead:'northnode',
     southlunarnode:'southnode', descendingnode:'southnode', dragonstail:'southnode',
-    fortune:'partoffortune', lotoffortune:'partoffortune', parsfortunae:'partoffortune',
-    pof:'partoffortune', vx:'vertex'
+    fortune:'partoffortune', lotoffortune:'partoffortune', parsfortunae:'partoffortune', pof:'partoffortune',
+    vx:'vertex'
   };
   const NAMES = Object.keys(GLYPHS);
-  const SYMBOL_PATTERN = /[☉☽☿♀♂♃♄♅♆♇⯓⚷⚸☊☋⊗]/;
-  const SYMBOL_ONLY_PATTERN = /^[☉☽☿♀♂♃♄♅♆♇⯓⚷⚸☊☋⊗]$/;
+  const SYMBOL_PATTERN = /[☉☽☾☿♀♂♃♄♅♆♇⯓⚷⚸☊☋⊗]/;
+  const SYMBOL_ONLY_PATTERN = /^[☉☽☾☿♀♂♃♄♅♆♇⯓⚷⚸☊☋⊗]$/;
 
   function normalize(value) { return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }
-  function canonicalName(value) { const key = normalize(value); return ALIASES[key] || (GLYPHS[key] ? key : ''); }
+  function canonicalName(value) {
+    const text = String(value || '').trim();
+    if (SYMBOLS[text]) return SYMBOLS[text];
+    const key = normalize(text);
+    return ALIASES[key] || (GLYPHS[key] ? key : '');
+  }
   function glyphUrl(name) { return 'assets/planet-glyphs/' + GLYPHS[name] + '.svg'; }
+
   function makeImage(name, className) {
     const image = document.createElement('img');
     image.className = className || 'relphi-canonical-body-glyph relphi-canonical-planet-glyph';
@@ -46,20 +54,75 @@
     image.dataset.relphiPlanet = name;
     return image;
   }
+
+  function makeSvgImage(name, source) {
+    const image = document.createElementNS(SVG_NS, 'image');
+    const sizeFromStyle = parseFloat(getComputedStyle(source).fontSize) || 18;
+    const size = Math.max(18, Math.min(42, sizeFromStyle * 1.45));
+    let x = parseFloat(source.getAttribute('x'));
+    let y = parseFloat(source.getAttribute('y'));
+    if (!Number.isFinite(x)) x = 0;
+    if (!Number.isFinite(y)) y = 0;
+    const anchor = source.getAttribute('text-anchor') || getComputedStyle(source).textAnchor;
+    if (anchor === 'middle') x -= size / 2;
+    else if (anchor === 'end') x -= size;
+    y -= size * 0.72;
+    image.setAttribute('x', String(x));
+    image.setAttribute('y', String(y));
+    image.setAttribute('width', String(size));
+    image.setAttribute('height', String(size));
+    image.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    image.setAttribute('href', glyphUrl(name));
+    image.setAttributeNS(XLINK_NS, 'xlink:href', glyphUrl(name));
+    image.setAttribute('class', 'relphi-canonical-svg-wheel-glyph');
+    image.setAttribute('aria-hidden', 'true');
+    image.dataset.relphiBody = name;
+    image.dataset.relphiCanonicalGlyph = 'true';
+    const transform = source.getAttribute('transform');
+    if (transform) image.setAttribute('transform', transform);
+    return image;
+  }
+
   function ensureStyles() {
     if (document.getElementById('relphi-canonical-sky-glyph-style')) return;
     const style = document.createElement('style');
     style.id = 'relphi-canonical-sky-glyph-style';
-    style.textContent = '.relphi-canonical-body-glyph,.relphi-canonical-planet-glyph{width:1.15em;height:1.15em;display:inline-block;object-fit:contain;vertical-align:-.18em;flex:0 0 auto}.relphi-canonical-glyph-label{display:inline-flex;align-items:center;gap:.3em}.relphi-canonical-wheel-glyph{width:100%;height:100%;display:block;object-fit:contain;pointer-events:none}';
+    style.textContent = [
+      '.relphi-canonical-body-glyph,.relphi-canonical-planet-glyph{width:1.15em;height:1.15em;display:inline-block;object-fit:contain;vertical-align:-.18em;flex:0 0 auto}',
+      '.relphi-canonical-glyph-label{display:inline-flex;align-items:center;gap:.3em}',
+      '.relphi-canonical-wheel-glyph{width:100%;height:100%;display:block;object-fit:contain;pointer-events:none}',
+      '.relphi-canonical-svg-wheel-glyph{pointer-events:none;overflow:visible}',
+      'svg text[data-relphi-canonical-source="true"]{visibility:hidden!important}'
+    ].join('\n');
     document.head.appendChild(style);
     document.documentElement.classList.add('relphi-expanded-body-set-supported');
   }
+
+  function replaceSvgText(element) {
+    if (!element || element.namespaceURI !== SVG_NS || element.localName !== 'text') return;
+    if (element.dataset.relphiCanonicalSource === 'true') return;
+    const raw = String(element.textContent || '').trim();
+    const symbol = raw.match(SYMBOL_PATTERN)?.[0] || '';
+    let name = symbol ? SYMBOLS[symbol] : canonicalName(raw);
+    if (!name) name = bodyFromElement(element);
+    if (!name) return;
+    if (!symbol && !/wheel|marker|glyph|planet|body|point|node/i.test(String(element.getAttribute('class') || '') + ' ' + String(element.parentElement?.getAttribute('class') || ''))) return;
+    const image = makeSvgImage(name, element);
+    element.parentNode?.insertBefore(image, element.nextSibling);
+    element.dataset.relphiCanonicalSource = 'true';
+    element.setAttribute('aria-hidden', 'true');
+  }
+
   function replaceTextGlyph(node) {
     if (!node || node.nodeType !== Node.TEXT_NODE || !node.nodeValue) return;
-    const match = node.nodeValue.match(SYMBOL_PATTERN);
-    if (!match) return;
     const parent = node.parentElement;
     if (!parent || parent.closest('script,style,textarea,input,option')) return;
+    if (parent.namespaceURI === SVG_NS) {
+      replaceSvgText(parent.closest('text'));
+      return;
+    }
+    const match = node.nodeValue.match(SYMBOL_PATTERN);
+    if (!match) return;
     const fragment = document.createDocumentFragment();
     const before = node.nodeValue.slice(0, match.index);
     const after = node.nodeValue.slice(match.index + match[0].length);
@@ -69,10 +132,12 @@
     parent.replaceChild(fragment, node);
     parent.classList.add('relphi-canonical-glyph-label');
   }
+
   function bodyFromElement(element) {
     if (!element || element.nodeType !== Node.ELEMENT_NODE) return '';
-    const values = [element.dataset.planet, element.dataset.body, element.dataset.object,
-      element.getAttribute('aria-label'), element.getAttribute('title'), element.getAttribute('data-name'), element.className];
+    const values = [element.dataset?.planet, element.dataset?.body, element.dataset?.object,
+      element.getAttribute('aria-label'), element.getAttribute('title'), element.getAttribute('data-name'),
+      element.getAttribute('id'), element.getAttribute('class')];
     for (const value of values) {
       const direct = canonicalName(value);
       if (direct) return direct;
@@ -81,9 +146,14 @@
     }
     return canonicalName(element.textContent);
   }
+
   function replaceGlyphElement(element) {
-    if (!element || element.dataset.relphiCanonicalGlyph === 'true') return;
-    if (element.matches('img.relphi-canonical-body-glyph,img.relphi-canonical-planet-glyph')) return;
+    if (!element || element.dataset?.relphiCanonicalGlyph === 'true') return;
+    if (element.namespaceURI === SVG_NS) {
+      if (element.localName === 'text') replaceSvgText(element);
+      return;
+    }
+    if (element.matches?.('img.relphi-canonical-body-glyph,img.relphi-canonical-planet-glyph')) return;
     const name = bodyFromElement(element);
     if (!name) return;
     const text = String(element.textContent || '').trim();
@@ -94,6 +164,7 @@
     element.dataset.relphiCanonicalGlyph = 'true';
     element.setAttribute('aria-label', element.getAttribute('aria-label') || LABELS[name]);
   }
+
   function ensureBodyOptions(root) {
     const scope = root && root.querySelectorAll ? root : document;
     scope.querySelectorAll('select').forEach(function (select) {
@@ -105,9 +176,12 @@
       });
     });
   }
+
   function run(root) {
     ensureStyles();
     const scope = root && root.querySelectorAll ? root : document;
+    if (scope.matches?.('svg text')) replaceSvgText(scope);
+    scope.querySelectorAll('svg text').forEach(replaceSvgText);
     scope.querySelectorAll('*').forEach(replaceGlyphElement);
     const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
     const nodes = [];
@@ -115,6 +189,7 @@
     nodes.forEach(replaceTextGlyph);
     ensureBodyOptions(scope);
   }
+
   function loadCalculatedPointBridge() {
     if (document.querySelector('script[src^="sky-chart-calculated-point-bridge.js"]')) return;
     const script = document.createElement('script');
@@ -122,31 +197,31 @@
     script.async = false;
     document.body.appendChild(script);
   }
+
   function start() {
     run(document);
     loadCalculatedPointBridge();
     let queued = false;
-    new MutationObserver(function (mutations) {
+    new MutationObserver(function () {
       if (queued) return;
       queued = true;
       requestAnimationFrame(function () {
         queued = false;
-        mutations.forEach(function (mutation) {
-          mutation.addedNodes.forEach(function (node) {
-            if (node.nodeType === Node.ELEMENT_NODE) run(node);
-            else if (node.nodeType === Node.TEXT_NODE) replaceTextGlyph(node);
-          });
-        });
+        run(document);
       });
-    }).observe(document.body, { childList:true, subtree:true });
+    }).observe(document.body, { childList:true, subtree:true, characterData:true });
+    window.addEventListener('resize', function () { run(document); });
+    window.addEventListener('relphi:sky-builder-v4-loaded', function () { run(document); });
     window.RelphiCanonicalSkyGlyphs = {
       glyphs:Object.assign({}, GLYPHS), symbols:Object.assign({}, SYMBOLS), labels:Object.assign({}, LABELS),
-      canonicalName:canonicalName, url:glyphUrl, image:makeImage, refresh:function () { run(document); }
+      canonicalName:canonicalName, url:glyphUrl, image:makeImage, svgImage:makeSvgImage,
+      refresh:function () { run(document); }
     };
     window.dispatchEvent(new CustomEvent('relphi:canonical-sky-glyphs-ready', {
-      detail:{ bodies:NAMES.slice(), skyA:true, skyB:true, chiron:true, lilith:true, nodes:true, vertex:true, partOfFortune:true }
+      detail:{ bodies:NAMES.slice(), skyA:true, skyB:true, svgWheel:true, chiron:true, lilith:true, nodes:true, vertex:true, partOfFortune:true }
     }));
   }
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
   else start();
 })();
