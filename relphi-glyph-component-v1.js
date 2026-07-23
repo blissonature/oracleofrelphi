@@ -149,7 +149,7 @@
     const lettered = entry.fitMode === 'letter' || aspectLetter || hebrewLetter;
     text.textContent = entry.fallback;
     text.setAttribute('x', '0');
-    text.setAttribute('y', hebrewLetter ? '3' : '0');
+    text.setAttribute('y', hebrewLetter ? '1.5' : '0');
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
     text.setAttribute('fill', color);
