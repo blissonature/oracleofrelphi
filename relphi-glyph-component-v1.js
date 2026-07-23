@@ -18,16 +18,14 @@
   }
 
   function thickenToNodeWeight(root, entry, color) {
-    if (entry.id === 'north-node' || entry.id === 'south-node' || entry.id === 'lilith') return;
-
-    if (entry.fitMode === 'letter') {
-      root.style.fontWeight = '800';
-      root.setAttribute('stroke', color);
-      root.setAttribute('stroke-width', '0.28');
-      root.setAttribute('paint-order', 'stroke fill');
-      root.setAttribute('stroke-linejoin', 'round');
-      return;
-    }
+    // Keep the approved weights for Nodes, Lilith, Fortune, and lettered points.
+    if (
+      entry.id === 'north-node' ||
+      entry.id === 'south-node' ||
+      entry.id === 'lilith' ||
+      entry.id === 'part-of-fortune' ||
+      entry.fitMode === 'letter'
+    ) return;
 
     root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
       const fill = node.getAttribute('fill');
@@ -36,10 +34,10 @@
 
       if (stroke && stroke !== 'none') {
         node.setAttribute('stroke', color);
-        node.setAttribute('stroke-width', String(current + 0.42));
+        node.setAttribute('stroke-width', String(current + 0.9));
       } else if (fill && fill !== 'none') {
         node.setAttribute('stroke', color);
-        node.setAttribute('stroke-width', '0.52');
+        node.setAttribute('stroke-width', '1.15');
         node.setAttribute('paint-order', 'stroke fill');
       }
       node.setAttribute('stroke-linecap', 'round');
@@ -49,7 +47,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=11');
+    const response = await fetch(path + '?v=12');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -73,7 +71,7 @@
     node.removeAttribute('transform');
 
     // Lettered points use one literal typographic size. Do not width-fit,
-    // compress, or expand individual labels after font assignment.
+    // compress, expand, or alter individual labels after font assignment.
     if (entry.fitMode === 'letter') {
       node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0})`);
       return;
