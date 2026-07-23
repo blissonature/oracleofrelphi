@@ -433,7 +433,7 @@
       };
       window.dispatchEvent(new CustomEvent('relphi:canonical-sky-glyphs-ready', {
         detail:{
-          version:11,
+          version:12,
           architecture:'one-geometry-color-parameterized',
           geometrySource:'RelphiGlyphComponent.createBubble',
           wheelVariant:WHEEL_VARIANT
