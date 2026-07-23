@@ -132,6 +132,7 @@
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('standardize-zodiac-wheels.js?v=4');
       appendScript('relphi-glyph-bubbles.js?v=2');
+      appendScript('planetary-hours-3d-link-v1.js?v=1');
     }
     if (/(^|\/)glyphs\.html$/.test(location.pathname)) {
       appendScript('relphi-glyph-registry-v1.js?v=19', function () {
