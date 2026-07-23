@@ -22,8 +22,8 @@
     southnode:'South Node', vertex:'Vertex', partoffortune:'Part of Fortune'
   };
   const ALIASES = {
-    sol:'sun', luna:'moon', blackmoon:'lilith', blackmoonlilith:'lilith',
-    trueblackmoonlilith:'lilith', meannode:'northnode', truenode:'northnode',
+    sol:'sun', luna:'moon', node:'northnode', blackmoon:'lilith', blackmoonlilith:'lilith',
+    meanlilith:'lilith', trueblackmoonlilith:'lilith', meannode:'northnode', truenode:'northnode',
     northlunarnode:'northnode', ascendingnode:'northnode', dragonshead:'northnode',
     southlunarnode:'southnode', descendingnode:'southnode', dragonstail:'southnode',
     fortune:'partoffortune', lotoffortune:'partoffortune', parsfortunae:'partoffortune',
@@ -33,13 +33,8 @@
   const SYMBOL_PATTERN = /[☉☽☿♀♂♃♄♅♆♇⯓⚷⚸☊☋⊗]/;
   const SYMBOL_ONLY_PATTERN = /^[☉☽☿♀♂♃♄♅♆♇⯓⚷⚸☊☋⊗]$/;
 
-  function normalize(value) {
-    return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-  }
-  function canonicalName(value) {
-    const normalized = normalize(value);
-    return ALIASES[normalized] || (GLYPHS[normalized] ? normalized : '');
-  }
+  function normalize(value) { return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }
+  function canonicalName(value) { const key = normalize(value); return ALIASES[key] || (GLYPHS[key] ? key : ''); }
   function glyphUrl(name) { return 'assets/planet-glyphs/' + GLYPHS[name] + '.svg'; }
   function makeImage(name, className) {
     const image = document.createElement('img');
@@ -55,12 +50,7 @@
     if (document.getElementById('relphi-canonical-sky-glyph-style')) return;
     const style = document.createElement('style');
     style.id = 'relphi-canonical-sky-glyph-style';
-    style.textContent = [
-      '.relphi-canonical-body-glyph,.relphi-canonical-planet-glyph{width:1.15em;height:1.15em;display:inline-block;object-fit:contain;vertical-align:-.18em;flex:0 0 auto}',
-      '.relphi-canonical-glyph-label{display:inline-flex;align-items:center;gap:.3em}',
-      '.relphi-canonical-wheel-glyph{width:100%;height:100%;display:block;object-fit:contain;pointer-events:none}',
-      '.relphi-expanded-body-set-supported{--relphi-expanded-body-set-supported:1}'
-    ].join('\n');
+    style.textContent = '.relphi-canonical-body-glyph,.relphi-canonical-planet-glyph{width:1.15em;height:1.15em;display:inline-block;object-fit:contain;vertical-align:-.18em;flex:0 0 auto}.relphi-canonical-glyph-label{display:inline-flex;align-items:center;gap:.3em}.relphi-canonical-wheel-glyph{width:100%;height:100%;display:block;object-fit:contain;pointer-events:none}';
     document.head.appendChild(style);
     document.documentElement.classList.add('relphi-expanded-body-set-supported');
   }
@@ -68,14 +58,13 @@
     if (!node || node.nodeType !== Node.TEXT_NODE || !node.nodeValue) return;
     const match = node.nodeValue.match(SYMBOL_PATTERN);
     if (!match) return;
-    const name = SYMBOLS[match[0]];
     const parent = node.parentElement;
     if (!parent || parent.closest('script,style,textarea,input,option')) return;
+    const fragment = document.createDocumentFragment();
     const before = node.nodeValue.slice(0, match.index);
     const after = node.nodeValue.slice(match.index + match[0].length);
-    const fragment = document.createDocumentFragment();
     if (before) fragment.appendChild(document.createTextNode(before));
-    fragment.appendChild(makeImage(name));
+    fragment.appendChild(makeImage(SYMBOLS[match[0]]));
     if (after) fragment.appendChild(document.createTextNode(after));
     parent.replaceChild(fragment, node);
     parent.classList.add('relphi-canonical-glyph-label');
@@ -83,16 +72,12 @@
   function bodyFromElement(element) {
     if (!element || element.nodeType !== Node.ELEMENT_NODE) return '';
     const values = [element.dataset.planet, element.dataset.body, element.dataset.object,
-      element.getAttribute('aria-label'), element.getAttribute('title'),
-      element.getAttribute('data-name'), element.className];
+      element.getAttribute('aria-label'), element.getAttribute('title'), element.getAttribute('data-name'), element.className];
     for (const value of values) {
       const direct = canonicalName(value);
       if (direct) return direct;
       const text = String(value || '').toLowerCase();
-      for (const name of NAMES) {
-        const label = LABELS[name].toLowerCase();
-        if (text.includes(label) || text.includes(name)) return name;
-      }
+      for (const name of NAMES) if (text.includes(LABELS[name].toLowerCase()) || text.includes(name)) return name;
     }
     return canonicalName(element.textContent);
   }
@@ -102,9 +87,8 @@
     const name = bodyFromElement(element);
     if (!name) return;
     const text = String(element.textContent || '').trim();
-    const symbolOnly = SYMBOL_ONLY_PATTERN.test(text);
     const glyphClass = /wheel|marker|glyph/i.test(String(element.className || ''));
-    if (!symbolOnly && !glyphClass) return;
+    if (!SYMBOL_ONLY_PATTERN.test(text) && !glyphClass) return;
     element.textContent = '';
     element.appendChild(makeImage(name, glyphClass ? 'relphi-canonical-wheel-glyph' : 'relphi-canonical-body-glyph relphi-canonical-planet-glyph'));
     element.dataset.relphiCanonicalGlyph = 'true';
@@ -113,16 +97,11 @@
   function ensureBodyOptions(root) {
     const scope = root && root.querySelectorAll ? root : document;
     scope.querySelectorAll('select').forEach(function (select) {
-      const existing = new Set(Array.from(select.options).map(function (option) {
-        return canonicalName(option.value || option.textContent);
-      }).filter(Boolean));
+      const existing = new Set(Array.from(select.options).map(function (option) { return canonicalName(option.value || option.textContent); }).filter(Boolean));
       if (!existing.size) return;
       NAMES.forEach(function (name) {
         if (existing.has(name)) return;
-        const option = document.createElement('option');
-        option.value = LABELS[name];
-        option.textContent = LABELS[name];
-        select.appendChild(option);
+        select.appendChild(new Option(LABELS[name], LABELS[name]));
       });
     });
   }
@@ -131,13 +110,21 @@
     const scope = root && root.querySelectorAll ? root : document;
     scope.querySelectorAll('*').forEach(replaceGlyphElement);
     const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
-    const textNodes = [];
-    while (walker.nextNode()) textNodes.push(walker.currentNode);
-    textNodes.forEach(replaceTextGlyph);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(replaceTextGlyph);
     ensureBodyOptions(scope);
+  }
+  function loadCalculatedPointBridge() {
+    if (document.querySelector('script[src^="sky-chart-calculated-point-bridge.js"]')) return;
+    const script = document.createElement('script');
+    script.src = 'sky-chart-calculated-point-bridge.js?v=1';
+    script.async = false;
+    document.body.appendChild(script);
   }
   function start() {
     run(document);
+    loadCalculatedPointBridge();
     let queued = false;
     new MutationObserver(function (mutations) {
       if (queued) return;
@@ -153,12 +140,11 @@
       });
     }).observe(document.body, { childList:true, subtree:true });
     window.RelphiCanonicalSkyGlyphs = {
-      glyphs:Object.assign({}, GLYPHS), symbols:Object.assign({}, SYMBOLS),
-      labels:Object.assign({}, LABELS), canonicalName:canonicalName,
-      url:glyphUrl, image:makeImage, refresh:function () { run(document); }
+      glyphs:Object.assign({}, GLYPHS), symbols:Object.assign({}, SYMBOLS), labels:Object.assign({}, LABELS),
+      canonicalName:canonicalName, url:glyphUrl, image:makeImage, refresh:function () { run(document); }
     };
     window.dispatchEvent(new CustomEvent('relphi:canonical-sky-glyphs-ready', {
-      detail:{ bodies:NAMES.slice(), chiron:true, lilith:true, nodes:true, vertex:true, partOfFortune:true }
+      detail:{ bodies:NAMES.slice(), skyA:true, skyB:true, chiron:true, lilith:true, nodes:true, vertex:true, partOfFortune:true }
     }));
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
