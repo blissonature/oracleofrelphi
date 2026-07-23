@@ -25,6 +25,7 @@
       entry.id === 'part-of-fortune' ||
       entry.fitMode === 'letter' ||
       entry.fitMode === 'hebrew-letter' ||
+      entry.fitMode === 'greek-letter' ||
       String(entry.asset || '').startsWith('assets/zodiac-glyphs/') ||
       String(entry.asset || '').startsWith('assets/element-glyphs/') ||
       String(entry.asset || '').startsWith('assets/aspect-glyphs/')
@@ -77,7 +78,7 @@
   function fit(node, radius, padding, entry, bubbleStrokeWidth) {
     node.removeAttribute('transform');
 
-    if (entry.fitMode === 'letter' || entry.fitMode === 'hebrew-letter') {
+    if (entry.fitMode === 'letter' || entry.fitMode === 'hebrew-letter' || entry.fitMode === 'greek-letter') {
       node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0})`);
       return;
     }
@@ -146,7 +147,8 @@
     const text = svg('text');
     const aspectLetter = entry.fitMode === 'aspect-letter';
     const hebrewLetter = entry.fitMode === 'hebrew-letter';
-    const lettered = entry.fitMode === 'letter' || aspectLetter || hebrewLetter;
+    const greekLetter = entry.fitMode === 'greek-letter';
+    const lettered = entry.fitMode === 'letter' || aspectLetter || hebrewLetter || greekLetter;
     text.textContent = entry.fallback;
     text.setAttribute('x', '0');
     text.setAttribute('y', hebrewLetter ? '-2' : '0');
@@ -156,11 +158,13 @@
     if (hebrewLetter) {
       text.setAttribute('direction', 'rtl');
       text.style.fontFamily = 'Noto Serif Hebrew,SBL Hebrew,Ezra SIL,David Libre,Times New Roman,serif';
+    } else if (greekLetter) {
+      text.style.fontFamily = 'Noto Serif,Times New Roman,Georgia,serif';
     } else {
       text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
     }
     text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
-    text.style.fontSize = hebrewLetter ? '31px' : aspectLetter ? '24px' : lettered ? '16px' : '34px';
+    text.style.fontSize = hebrewLetter ? '31px' : greekLetter ? '30px' : aspectLetter ? '24px' : lettered ? '16px' : '34px';
     if (entry.id === 'asc' || entry.id === 'dsc') text.style.letterSpacing = '-0.35px';
     parent.appendChild(text);
     return text;
