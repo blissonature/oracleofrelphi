@@ -1,4 +1,4 @@
-// Single-source SkyChart integration for the approved Relphi glyph system.
+// Unified SkyChart renderer for the approved Relphi glyph geometry.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -6,19 +6,16 @@
   const NS = 'http://www.w3.org/2000/svg';
   const PLACEMENT_SELECTOR = '.chart-wheel-placement-stick';
   const WHEEL_SELECTOR = '#chartOutput svg,#currentSkyOutput svg,#tarot-chart svg,.sky-output-box svg';
+  const WHEEL_VARIANT = 'inscribed';
+  const DEFAULT_COLOR = '#dc1f18';
+  const FALLBACK_COLORS = Object.freeze({ skyA:'#dc1f18', skyB:'#3166e2' });
+  const MIN_RADIUS = 12.5;
+  const MAX_RADIUS = 15.5;
+  const RADIUS_RATIO = 0.0225;
   const BODY_IDS = new Set([
     'sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto',
     'chiron','north-node','south-node','lilith','part-of-fortune','vertex','asc','dsc','mc','ic'
   ]);
-  const SKY_A = '#dc1f18';
-  const SKY_B = '#3166e2';
-  const WHEEL_VARIANT = 'inscribed';
-  const MIN_RADIUS = 12.5;
-  const MAX_RADIUS = 15.5;
-  const RADIUS_RATIO = 0.0225;
-  const LEGACY_STYLE_MARKERS = [
-    'sky-ledger-glyph','wheel-glyph','ph-glyph','glyph-bubble','canonical-sky-glyph'
-  ];
   const GLYPH_SOURCE_SELECTOR = [
     'text.chart-wheel-marker-glyph',
     'text[data-glyph-id]',
@@ -30,14 +27,19 @@
     '[data-body-name]',
     '[data-planet-name]'
   ].join(',');
-  const LEGACY_NODE_SELECTOR = [
-    'image',
-    '.standardized-planet-glyph',
-    '.relphi-bubble-glyph-image',
+  const LEGACY_GLYPH_SELECTOR = [
+    '.chart-wheel-marker-glyph:not(.relphi-sky-glyph-host)',
+    '.relphi-canonical-glyph:not(.relphi-sky-glyph-host .relphi-canonical-glyph)',
+    '.relphi-glyph-bubble:not(.relphi-sky-glyph-host .relphi-glyph-bubble)',
+    'image.standardized-planet-glyph',
+    'image.relphi-bubble-glyph-image',
     '.relphi-v2-glyph-host',
     '.relphi-sky-glyph-layer',
     '.canonical-sky-glyph'
   ].join(',');
+  const LEGACY_STYLE_MARKERS = [
+    'sky-ledger-glyph','wheel-glyph','ph-glyph','glyph-bubble','canonical-sky-glyph'
+  ];
 
   let renderQueued = false;
   let renderRunning = false;
@@ -121,87 +123,112 @@
     let entry = entryFromAttributes(container);
     if (entry) return entry;
 
-    const explicit = container.querySelector(GLYPH_SOURCE_SELECTOR);
-    entry = entryFromAttributes(explicit) || entryFor(explicit && explicit.textContent);
+    const glyphSource = container.querySelector(GLYPH_SOURCE_SELECTOR);
+    entry = entryFromAttributes(glyphSource) || entryFor(glyphSource && glyphSource.textContent);
     if (entry) return entry;
 
-    const name = container.querySelector(NAME_SOURCE_SELECTOR);
-    entry = entryFromAttributes(name) || entryFor(name && name.textContent);
+    const nameSource = container.querySelector(NAME_SOURCE_SELECTOR);
+    entry = entryFromAttributes(nameSource) || entryFor(nameSource && nameSource.textContent);
     if (entry) return entry;
 
-    const texts = Array.from(container.querySelectorAll('text'));
-    for (const text of texts) {
-      if (/degree|minute|house/i.test(String(text.className && text.className.baseVal || ''))) continue;
+    for (const text of Array.from(container.querySelectorAll('text'))) {
+      const className = String(text.className && text.className.baseVal || '');
+      if (/degree|minute|house/i.test(className)) continue;
       entry = entryFromAttributes(text) || entryFor(text.textContent);
       if (entry) return entry;
     }
     return null;
   }
 
-  function normalizePaint(value) {
-    return String(value || '').trim().toLowerCase().replace(/\s+/g, '');
-  }
-
-  function paintColor(value) {
-    const paint = normalizePaint(value);
-    if (!paint || paint === 'none' || paint === 'transparent') return null;
-    if (
-      paint.includes('#3166e2') ||
-      paint.includes('rgb(49,102,226)') ||
-      paint.includes('rgba(49,102,226,')
-    ) return SKY_B;
-    if (
-      paint.includes('#dc1f18') ||
-      paint.includes('rgb(220,31,24)') ||
-      paint.includes('rgba(220,31,24,')
-    ) return SKY_A;
-    return null;
+  function cleanColor(value, allowNeutral) {
+    const color = String(value || '').trim();
+    if (!color) return null;
+    const normalized = color.toLowerCase().replace(/\s+/g, '');
+    if (normalized === 'none' || normalized === 'transparent' || normalized === 'rgba(0,0,0,0)') return null;
+    if (!allowNeutral && (
+      normalized === '#000' || normalized === '#000000' || normalized === 'black' ||
+      normalized === '#fff' || normalized === '#ffffff' || normalized === 'white' ||
+      normalized === 'rgb(0,0,0)' || normalized === 'rgb(255,255,255)'
+    )) return null;
+    return color;
   }
 
   function colorFromNode(node) {
     if (!node) return null;
-    const direct = [
-      node.getAttribute && node.getAttribute('fill'),
-      node.getAttribute && node.getAttribute('stroke'),
-      node.style && node.style.fill,
-      node.style && node.style.stroke
-    ];
-    for (const value of direct) {
-      const color = paintColor(value);
-      if (color) return color;
+    const nodes = [node].concat(Array.from(node.querySelectorAll ? node.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text') : []));
+    for (const item of nodes) {
+      const direct = [
+        item.getAttribute && item.getAttribute('stroke'),
+        item.style && item.style.stroke,
+        item.getAttribute && item.getAttribute('fill'),
+        item.style && item.style.fill
+      ];
+      for (const value of direct) {
+        const color = cleanColor(value, false);
+        if (color) return color;
+      }
+      try {
+        const style = getComputedStyle(item);
+        const color = cleanColor(style.stroke, false) || cleanColor(style.fill, false);
+        if (color) return color;
+      } catch (_) {}
     }
-    try {
-      const style = getComputedStyle(node);
-      return paintColor(style.fill) || paintColor(style.stroke);
-    } catch (_) {
-      return null;
-    }
+    return null;
   }
 
-  function colorFromPlacement(container) {
-    const saved = paintColor(container.dataset && container.dataset.relphiSkyColor);
-    if (saved) return saved;
+  function explicitPlacementColor(container) {
+    const nodes = [container].concat(Array.from(container.closest ? container.closest('[data-sky-color],[data-relphi-sky-color],[data-color]') ? [container.closest('[data-sky-color],[data-relphi-sky-color],[data-color]')] : []));
+    for (const node of nodes) {
+      if (!node) continue;
+      const values = [
+        node.dataset && node.dataset.relphiSkyColor,
+        node.dataset && node.dataset.skyColor,
+        node.dataset && node.dataset.color,
+        node.getAttribute && node.getAttribute('data-relphi-sky-color'),
+        node.getAttribute && node.getAttribute('data-sky-color')
+      ];
+      try { values.push(getComputedStyle(node).getPropertyValue('--relphi-sky-color')); } catch (_) {}
+      for (const value of values) {
+        const color = cleanColor(value, true);
+        if (color) return color;
+      }
+    }
+    return null;
+  }
 
-    const signature = [
+  function slotIdentity(container) {
+    const values = [
       container.dataset && container.dataset.sky,
       container.dataset && container.dataset.skyId,
       container.dataset && container.dataset.slot,
       container.dataset && container.dataset.kind,
-      container.getAttribute && container.getAttribute('class'),
-      container.closest && container.closest('[data-sky],[data-sky-id],#chartOutput,#currentSkyOutput')?.getAttribute('id')
+      container.getAttribute && container.getAttribute('class')
     ].filter(Boolean).join(' ').toLowerCase();
+    if (/(sky.?b|current.?sky|comparison)/.test(values)) return 'skyB';
+    if (/(sky.?a|primary)/.test(values)) return 'skyA';
+    const output = container.closest && container.closest('#chartOutput,#currentSkyOutput');
+    if (output && output.id === 'currentSkyOutput') return 'skyB';
+    return 'skyA';
+  }
 
-    if (/(sky.?b|current.?sky|comparison|blue)/.test(signature)) return SKY_B;
-    if (/(sky.?a|primary|chartoutput|red)/.test(signature)) return SKY_A;
+  function placementColor(container) {
+    const explicit = explicitPlacementColor(container);
+    if (explicit) return explicit;
 
-    const candidates = Array.from(container.querySelectorAll(
-      GLYPH_SOURCE_SELECTOR + ',circle.chart-wheel-stick-knob,line.chart-wheel-stick'
-    ));
-    for (const node of candidates) {
-      const color = colorFromNode(node);
+    const candidates = [
+      container.querySelector(GLYPH_SOURCE_SELECTOR),
+      container.querySelector('.relphi-canonical-glyph'),
+      container.querySelector('.relphi-glyph-bubble'),
+      container.querySelector('image.standardized-planet-glyph'),
+      container.querySelector('image.relphi-bubble-glyph-image'),
+      container.querySelector('circle.chart-wheel-stick-knob')
+    ];
+    for (const candidate of candidates) {
+      const color = colorFromNode(candidate);
       if (color) return color;
     }
-    return container.closest && container.closest('#currentSkyOutput') ? SKY_B : SKY_A;
+
+    return FALLBACK_COLORS[slotIdentity(container)] || DEFAULT_COLOR;
   }
 
   function numberAttr(node, name) {
@@ -217,26 +244,7 @@
     return Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, span * RADIUS_RATIO));
   }
 
-  function removeLegacyArtwork(container) {
-    container.querySelectorAll(LEGACY_NODE_SELECTOR).forEach(function (node) {
-      if (!node.closest('.relphi-sky-glyph-host')) node.remove();
-    });
-
-    Array.from(container.querySelectorAll('text')).forEach(function (text) {
-      if (text.closest('.relphi-sky-glyph-host')) return;
-      const className = String(text.className && text.className.baseVal || '');
-      const resolved = entryFromAttributes(text) || entryFor(text.textContent);
-      if (!resolved) return;
-      if (/chart-wheel-marker-name|degree|minute|house/i.test(className)) return;
-      text.remove();
-    });
-
-    const hosts = Array.from(container.querySelectorAll(':scope > .relphi-sky-glyph-host'));
-    hosts.slice(1).forEach(function (host) { host.remove(); });
-  }
-
   function prepareKnob(knob, radius) {
-    if (!knob) return;
     knob.dataset.relphiGeometryOnly = 'true';
     knob.setAttribute('r', String(radius));
     knob.setAttribute('fill', 'none');
@@ -245,20 +253,25 @@
     knob.setAttribute('stroke-opacity', '0');
   }
 
-  function placementKey(entry, color, x, y, radius) {
-    return [
-      entry.id,
-      color === SKY_B ? 'b' : 'a',
-      WHEEL_VARIANT,
-      x.toFixed(3),
-      y.toFixed(3),
-      radius.toFixed(3)
-    ].join(':');
+  function removeLegacyArtwork(container) {
+    container.querySelectorAll(LEGACY_GLYPH_SELECTOR).forEach(function (node) {
+      if (!node.closest('.relphi-sky-glyph-host')) node.remove();
+    });
+    Array.from(container.querySelectorAll(GLYPH_SOURCE_SELECTOR)).forEach(function (source) {
+      if (!source.closest('.relphi-sky-glyph-host')) source.remove();
+    });
+    const hosts = Array.from(container.querySelectorAll(':scope > .relphi-sky-glyph-host'));
+    hosts.slice(1).forEach(function (host) { host.remove(); });
   }
 
-  function renderBubble(host, entry, color, radius) {
+  function placementKey(entry, color, x, y, radius) {
+    return [entry.id, WHEEL_VARIANT, color, x.toFixed(3), y.toFixed(3), radius.toFixed(3)].join(':');
+  }
+
+  function renderInscribed(host, entry, color, radius) {
     host.replaceChildren();
     host.dataset.glyphVariant = WHEEL_VARIANT;
+    host.dataset.glyphColor = color;
     const bubble = window.RelphiGlyphComponent.createBubble(host, entry.id, {
       radius:radius,
       padding:1.25,
@@ -270,16 +283,14 @@
   }
 
   function drawPlacement(container) {
-    if (!container || !container.querySelectorAll) return;
-
-    const svg = container.ownerSVGElement;
-    const knob = container.querySelector('circle.chart-wheel-stick-knob');
+    const svg = container && container.ownerSVGElement;
+    const knob = container && container.querySelector('circle.chart-wheel-stick-knob');
     if (!svg || !knob) return;
 
     const entry = entryFromPlacement(container);
     if (!entry) return;
 
-    const color = colorFromPlacement(container);
+    const color = placementColor(container);
     const x = numberAttr(knob, 'cx');
     const y = numberAttr(knob, 'cy');
     if (x == null || y == null) return;
@@ -292,44 +303,34 @@
 
     const key = placementKey(entry, color, x, y, radius);
     let host = container.querySelector(':scope > .relphi-sky-glyph-host');
-
     if (host && host.dataset.placementKey === key) return;
     if (host) host.remove();
 
     host = document.createElementNS(NS, 'g');
-    host.classList.add('chart-wheel-marker-glyph', 'relphi-sky-glyph-host');
+    host.classList.add('relphi-sky-glyph-host');
     host.dataset.glyphId = entry.id;
     host.dataset.glyphVariant = WHEEL_VARIANT;
-    host.dataset.sky = color === SKY_B ? 'b' : 'a';
+    host.dataset.glyphColor = color;
     host.dataset.placementKey = key;
     host.setAttribute('aria-label', entry.name);
     host.setAttribute('transform', 'translate(' + x.toFixed(3) + ' ' + y.toFixed(3) + ')');
     container.appendChild(host);
 
-    renderBubble(host, entry, color, radius).catch(function (error) {
+    renderInscribed(host, entry, color, radius).then(function () {
+      if (window.RelphiWheelCollision && typeof window.RelphiWheelCollision.schedule === 'function') {
+        window.RelphiWheelCollision.schedule();
+      }
+    }).catch(function (error) {
       host.remove();
       console.error('Could not draw approved SkyChart glyph:', entry.id, error);
     });
   }
 
-  function removeDetachedLegacyArtwork(svg) {
-    svg.querySelectorAll('.relphi-v2-glyph-host,.relphi-sky-glyph-layer').forEach(function (node) {
-      node.remove();
-    });
-    svg.querySelectorAll('image').forEach(function (image) {
-      if (!image.closest(PLACEMENT_SELECTOR) && !image.closest('.relphi-sky-glyph-host')) image.remove();
-    });
-    svg.querySelectorAll(GLYPH_SOURCE_SELECTOR).forEach(function (source) {
-      if (!source.closest(PLACEMENT_SELECTOR)) source.remove();
-    });
-  }
-
   function renderWheel(svg) {
-    if (!svg || !svg.querySelectorAll) return;
-    const placements = Array.from(svg.querySelectorAll(PLACEMENT_SELECTOR));
+    const placements = Array.from(svg && svg.querySelectorAll ? svg.querySelectorAll(PLACEMENT_SELECTOR) : []);
     if (!placements.length) return;
     svg.dataset.glyphVariant = WHEEL_VARIANT;
-    removeDetachedLegacyArtwork(svg);
+    svg.querySelectorAll('.relphi-v2-glyph-host,.relphi-sky-glyph-layer').forEach(function (node) { node.remove(); });
     placements.forEach(drawPlacement);
   }
 
@@ -350,59 +351,48 @@
 
   function audit() {
     const result = {
+      geometrySource:'RelphiGlyphComponent.createBubble',
       wheelVariant:WHEEL_VARIANT,
       wheels:0,
       placements:0,
       hosts:0,
-      redHosts:0,
-      blueHosts:0,
       duplicatePlacements:0,
       plainHosts:0,
-      remainingGlyphSources:0,
+      remainingLegacyGlyphs:0,
       oversizedHosts:0,
-      misplacedHosts:0
+      colors:{}
     };
 
     document.querySelectorAll(WHEEL_SELECTOR).forEach(function (svg) {
       const placements = Array.from(svg.querySelectorAll(PLACEMENT_SELECTOR));
       if (!placements.length) return;
       result.wheels += 1;
-      const expectedRadius = standardRadius(svg);
       result.placements += placements.length;
+      const expectedRadius = standardRadius(svg);
 
       placements.forEach(function (group) {
-        const knob = group.querySelector('circle.chart-wheel-stick-knob');
         const hosts = Array.from(group.querySelectorAll(':scope > .relphi-sky-glyph-host'));
         result.hosts += hosts.length;
         if (hosts.length > 1) result.duplicatePlacements += 1;
         hosts.forEach(function (host) {
           if (host.dataset.glyphVariant === 'plain') result.plainHosts += 1;
-          if (host.dataset.sky === 'b') result.blueHosts += 1;
-          else result.redHosts += 1;
+          const color = host.dataset.glyphColor || 'unknown';
+          result.colors[color] = (result.colors[color] || 0) + 1;
           try {
             const box = host.getBBox();
             if (box.width > expectedRadius * 2.8 || box.height > expectedRadius * 2.8) result.oversizedHosts += 1;
           } catch (_) {}
-          if (knob) {
-            const x = numberAttr(knob, 'cx');
-            const y = numberAttr(knob, 'cy');
-            const transform = host.getAttribute('transform') || '';
-            if (x != null && y != null && !transform.includes(x.toFixed(3)) && !transform.includes(y.toFixed(3))) {
-              result.misplacedHosts += 1;
-            }
-          }
         });
+        result.remainingLegacyGlyphs += group.querySelectorAll(LEGACY_GLYPH_SELECTOR).length;
       });
-      result.remainingGlyphSources += svg.querySelectorAll(GLYPH_SOURCE_SELECTOR).length;
     });
 
     result.valid =
+      result.hosts === result.placements &&
       result.duplicatePlacements === 0 &&
       result.plainHosts === 0 &&
-      result.remainingGlyphSources === 0 &&
-      result.oversizedHosts === 0 &&
-      result.misplacedHosts === 0 &&
-      result.hosts === result.placements;
+      result.remainingLegacyGlyphs === 0 &&
+      result.oversizedHosts === 0;
     return result;
   }
 
@@ -433,25 +423,22 @@
     dependencies().then(function () {
       render();
       new MutationObserver(scheduleRender).observe(document.body, { childList:true, subtree:true });
-
       window.RelphiCanonicalSkyGlyphs = {
         registry:window.RelphiGlyphRegistry,
         component:window.RelphiGlyphComponent,
+        geometrySource:'single',
         wheelVariant:WHEEL_VARIANT,
         refresh:scheduleRender,
         audit:audit
       };
-
       window.dispatchEvent(new CustomEvent('relphi:canonical-sky-glyphs-ready', {
         detail:{
-          version:8,
-          architecture:'knob-anchored-one-placement-one-inscribed-host',
-          wheelVariant:WHEEL_VARIANT,
-          skyA:true,
-          skyB:true
+          version:9,
+          architecture:'one-geometry-color-parameterized',
+          geometrySource:'RelphiGlyphComponent.createBubble',
+          wheelVariant:WHEEL_VARIANT
         }
       }));
-
       if (!document.querySelector('script[src^="sky-chart-calculated-point-bridge.js"]')) {
         const bridge = document.createElement('script');
         bridge.src = 'sky-chart-calculated-point-bridge.js?v=2';
@@ -463,9 +450,6 @@
     });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start, { once:true });
-  } else {
-    start();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
+  else start();
 })();
