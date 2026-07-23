@@ -133,6 +133,13 @@
       appendScript('standardize-zodiac-wheels.js?v=4');
       appendScript('relphi-glyph-bubbles.js?v=2');
     }
+    if (/(^|\/)glyphs\.html$/.test(location.pathname)) {
+      appendScript('relphi-glyph-registry-v1.js?v=19', function () {
+        appendScript('relphi-glyph-component-v1.js?v=19', function () {
+          appendScript('glyph-trainer-canonical-v1.js?v=1');
+        });
+      });
+    }
 
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
       const preview = new URLSearchParams(location.search).get('preview');
