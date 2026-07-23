@@ -16,7 +16,7 @@
     ['pluto','Pluto',['pluto','♇','⯓','pl'],'assets/planet-glyphs/pluto.svg',1,0,0,null,'circle'],
     ['north-node','North Node',['north node','true node','mean node','ascending node','node','☊','no'],null,1.18,0,-0.3,'☊','symbol','400'],
     ['south-node','South Node',['south node','descending node','☋','so'],null,1.18,0,0.3,'☋','symbol','400'],
-    ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],null,1.12,0,0.35,'lilith','symbol','400'],
+    ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],null,1,0,0.7,'lilith','lilith','400'],
     ['part-of-fortune','Part of Fortune',['part of fortune','fortune','pars fortunae','pof','⊗','pa'],null,.92,0,0,'fortune','circle'],
     ['vertex','Vertex',['vertex','vx'],null,1,0,0,'Vx','letter','700'],
     ['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'ASC','letter','700'],
