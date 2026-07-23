@@ -75,7 +75,6 @@
     style.id = 'relphi-sky-glyph-native-style';
     style.textContent = [
       '.relphi-sky-glyph-host{pointer-events:none}',
-      '.relphi-sky-glyph-host *{vector-effect:non-scaling-stroke}',
       '.relphi-sky-glyph-host>.relphi-glyph-bubble{isolation:isolate}',
       '.relphi-sky-glyph-host>.relphi-glyph-bubble>circle{fill:#fff}'
     ].join('');
@@ -337,7 +336,7 @@
         audit:audit
       };
       window.dispatchEvent(new CustomEvent('relphi:canonical-sky-glyphs-ready', {
-        detail:{ version:6, architecture:'one-placement-one-inscribed-host', wheelVariant:WHEEL_VARIANT, skyA:true, skyB:true }
+        detail:{ version:7, architecture:'one-placement-one-inscribed-host', wheelVariant:WHEEL_VARIANT, skyA:true, skyB:true }
       }));
 
       if (!document.querySelector('script[src^="sky-chart-calculated-point-bridge.js"]')) {
