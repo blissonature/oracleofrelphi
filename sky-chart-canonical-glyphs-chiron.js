@@ -11,6 +11,12 @@
     'text[data-planet-glyph]',
     'text[data-body-glyph]'
   ].join(',');
+  const LEGACY_VISUAL_SELECTOR = [
+    'image.standardized-planet-glyph',
+    'image.relphi-bubble-glyph-image',
+    '.relphi-glyph-bubble',
+    '.relphi-canonical-glyph'
+  ].join(',');
   const WHEEL_SELECTOR = '#chartOutput svg,#currentSkyOutput svg,#tarot-chart svg,.sky-output-box svg';
   const BODY_IDS = new Set([
     'sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto',
@@ -18,6 +24,9 @@
   ]);
   const SKY_A = '#dc1f18';
   const SKY_B = '#3166e2';
+  const PLAIN = 'plain';
+  const INSCRIBED = 'inscribed';
+  const WHEEL_VARIANT = PLAIN;
   const LEGACY_STYLE_MARKERS = ['sky-ledger-glyph','wheel-glyph','ph-glyph','glyph-bubble','canonical-sky-glyph'];
   let renderQueued = false;
   let renderRunning = false;
@@ -43,6 +52,18 @@
       .then(function () {
         return loadScript('relphi-glyph-component-v1.js?v=19', function () { return !!window.RelphiGlyphComponent; });
       });
+  }
+
+  function normalizeVariant(value, fallback) {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === 'circle' || normalized === 'circled' || normalized === 'bubble' || normalized === INSCRIBED) return INSCRIBED;
+    if (normalized === PLAIN) return PLAIN;
+    return fallback || PLAIN;
+  }
+
+  function requestedVariant(node, fallback) {
+    const explicit = node?.closest?.('[data-glyph-variant]')?.dataset?.glyphVariant || node?.dataset?.glyphVariant;
+    return normalizeVariant(explicit, fallback);
   }
 
   function removeLegacyGlyphStyling() {
@@ -131,10 +152,10 @@
     return Math.max(10.5, Math.min(17, span * 0.0255));
   }
 
-  function placementKey(container, entry, center) {
+  function placementKey(container, entry, center, variant) {
     const slot = isSkyB(container) ? 'b' : 'a';
     const groupKey = container?.dataset?.body || container?.dataset?.planet || container?.dataset?.object || '';
-    return [slot, entry.id, groupKey, center.x.toFixed(2), center.y.toFixed(2)].join(':');
+    return [slot, entry.id, variant, groupKey, center.x.toFixed(2), center.y.toFixed(2)].join(':');
   }
 
   function removeDuplicateHosts(container, keep) {
@@ -143,8 +164,48 @@
     });
   }
 
+  function removeLegacyVisuals(container) {
+    container.querySelectorAll(LEGACY_VISUAL_SELECTOR).forEach(function (node) {
+      if (!node.closest('.relphi-sky-glyph-host')) node.remove();
+    });
+  }
+
+  function preparePlacementChrome(container) {
+    const knob = container.querySelector('circle.chart-wheel-stick-knob');
+    if (!knob) return;
+    knob.dataset.relphiGeometryOnly = 'true';
+    knob.setAttribute('fill', 'none');
+    knob.setAttribute('stroke', 'none');
+    knob.setAttribute('fill-opacity', '0');
+    knob.setAttribute('stroke-opacity', '0');
+  }
+
+  function renderApprovedGlyph(host, entry, options) {
+    const variant = normalizeVariant(options.variant, PLAIN);
+    host.replaceChildren();
+    host.dataset.glyphVariant = variant;
+    if (variant === INSCRIBED) {
+      return window.RelphiGlyphComponent.createBubble(host, entry.id, {
+        radius:options.radius,
+        padding:options.padding,
+        color:options.color,
+        fill:'#fff',
+        strokeWidth:2.15
+      }).ready;
+    }
+    return window.RelphiGlyphComponent.draw(host, entry.id, {
+      radius:options.radius,
+      padding:options.padding,
+      color:options.color,
+      bubbleStrokeWidth:0
+    });
+  }
+
   function drawPlacementContainer(container) {
     if (!container || !container.querySelectorAll) return;
+    preparePlacementChrome(container);
+    removeLegacyVisuals(container);
+
     const sources = Array.from(container.querySelectorAll(GLYPH_SOURCE_SELECTOR)).filter(function (node) {
       return !!identityForGlyphSource(node);
     });
@@ -161,8 +222,11 @@
     const svg = source.ownerSVGElement;
     const hostParent = source.parentElement || container;
     const center = sourceCenter(source);
-    const key = placementKey(container, entry, center);
-    const matching = existing.find(function (host) { return host.dataset.placementKey === key; });
+    const variant = WHEEL_VARIANT;
+    const key = placementKey(container, entry, center, variant);
+    const matching = existing.find(function (host) {
+      return host.dataset.placementKey === key && host.dataset.glyphVariant === variant;
+    });
 
     sources.forEach(function (node) { node.remove(); });
 
@@ -177,15 +241,16 @@
     host.dataset.glyphId = entry.id;
     host.dataset.sky = isSkyB(container) ? 'b' : 'a';
     host.dataset.placementKey = key;
+    host.dataset.glyphVariant = variant;
     host.setAttribute('aria-label', entry.name);
     host.setAttribute('transform', 'translate(' + center.x + ' ' + center.y + ')');
     hostParent.appendChild(host);
 
-    window.RelphiGlyphComponent.draw(host, entry.id, {
+    renderApprovedGlyph(host, entry, {
+      variant:variant,
       radius:wheelRadius(svg),
       padding:1.35,
-      color:skyColor(container),
-      bubbleStrokeWidth:0
+      color:skyColor(container)
     }).catch(function (error) {
       console.error('Could not draw approved SkyChart glyph:', entry.id, error);
     });
@@ -193,6 +258,7 @@
 
   function renderWheel(svg) {
     if (!svg || !svg.querySelectorAll) return;
+    svg.dataset.glyphVariant = WHEEL_VARIANT;
     svg.querySelectorAll('.relphi-sky-glyph-layer').forEach(function (node) { node.remove(); });
     Array.from(svg.querySelectorAll(PLACEMENT_SELECTOR)).forEach(drawPlacementContainer);
     Array.from(svg.querySelectorAll(GLYPH_SOURCE_SELECTOR)).forEach(function (source) {
@@ -208,14 +274,16 @@
     const entry = identityForInline(element);
     if (!entry) return;
 
+    const variant = requestedVariant(element, PLAIN);
     const already = element.querySelector(':scope > .relphi-sky-inline-glyph');
-    if (already?.dataset?.glyphId === entry.id) return;
+    if (already?.dataset?.glyphId === entry.id && already.dataset.glyphVariant === variant) return;
 
     const color = skyColor(element);
     element.removeAttribute('style');
     const host = document.createElement('span');
     host.className = 'relphi-sky-inline-glyph';
     host.dataset.glyphId = entry.id;
+    host.dataset.glyphVariant = variant;
     host.setAttribute('aria-label', entry.name);
     const svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('viewBox', '-24 -24 48 48');
@@ -223,11 +291,11 @@
     host.appendChild(svg);
     element.replaceChildren(host);
 
-    window.RelphiGlyphComponent.draw(svg, entry.id, {
-      radius:17,
+    renderApprovedGlyph(svg, entry, {
+      variant:variant,
+      radius:variant === INSCRIBED ? 19 : 17,
       padding:1.35,
-      color:color,
-      bubbleStrokeWidth:0
+      color:color
     }).catch(function (error) {
       console.error('Could not draw approved inline glyph:', entry.id, error);
     });
@@ -249,14 +317,25 @@
 
   function audit() {
     const wheels = Array.from(document.querySelectorAll(WHEEL_SELECTOR));
-    const result = { wheels:wheels.length, placements:0, hosts:0, duplicatePlacements:0, legacyGlyphSources:0 };
+    const result = {
+      wheels:wheels.length,
+      wheelVariant:WHEEL_VARIANT,
+      placements:0,
+      hosts:0,
+      plainHosts:0,
+      inscribedHosts:0,
+      duplicatePlacements:0,
+      legacyGlyphSources:0
+    };
     wheels.forEach(function (svg) {
       const placements = Array.from(svg.querySelectorAll(PLACEMENT_SELECTOR));
       result.placements += placements.length;
       placements.forEach(function (group) {
-        const count = group.querySelectorAll('.relphi-sky-glyph-host').length;
-        result.hosts += count;
-        if (count > 1) result.duplicatePlacements += 1;
+        const hosts = Array.from(group.querySelectorAll('.relphi-sky-glyph-host'));
+        result.hosts += hosts.length;
+        result.plainHosts += hosts.filter(function (host) { return host.dataset.glyphVariant === PLAIN; }).length;
+        result.inscribedHosts += hosts.filter(function (host) { return host.dataset.glyphVariant === INSCRIBED; }).length;
+        if (hosts.length > 1) result.duplicatePlacements += 1;
       });
       result.legacyGlyphSources += svg.querySelectorAll(GLYPH_SOURCE_SELECTOR).length;
     });
@@ -295,11 +374,12 @@
       window.RelphiCanonicalSkyGlyphs = {
         registry:window.RelphiGlyphRegistry,
         component:window.RelphiGlyphComponent,
+        wheelVariant:WHEEL_VARIANT,
         refresh:scheduleRender,
         audit:audit
       };
       window.dispatchEvent(new CustomEvent('relphi:canonical-sky-glyphs-ready', {
-        detail:{ version:4, architecture:'one-source-one-host', source:'RelphiGlyphComponent', skyA:true, skyB:true }
+        detail:{ version:5, architecture:'one-source-one-variant-one-host', wheelVariant:WHEEL_VARIANT, skyA:true, skyB:true }
       }));
 
       if (!document.querySelector('script[src^="sky-chart-calculated-point-bridge.js"]')) {
