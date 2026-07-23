@@ -149,7 +149,7 @@
     const lettered = entry.fitMode === 'letter' || aspectLetter || hebrewLetter;
     text.textContent = entry.fallback;
     text.setAttribute('x', '0');
-    text.setAttribute('y', hebrewLetter ? '1.5' : '0');
+    text.setAttribute('y', hebrewLetter ? '0.75' : '0');
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
     text.setAttribute('fill', color);
@@ -160,7 +160,7 @@
       text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
     }
     text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
-    text.style.fontSize = hebrewLetter ? '31px' : aspectLetter ? '24px' : lettered ? '16px' : '34px';
+    text.style.fontSize = hebrewLetter ? (entry.id === 'hebrew-qoph' ? '29px' : '31px') : aspectLetter ? '24px' : lettered ? '16px' : '34px';
     if (entry.id === 'asc' || entry.id === 'dsc') text.style.letterSpacing = '-0.35px';
     parent.appendChild(text);
     return text;
