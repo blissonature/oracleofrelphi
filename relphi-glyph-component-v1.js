@@ -25,7 +25,8 @@
       entry.id === 'part-of-fortune' ||
       entry.fitMode === 'letter' ||
       String(entry.asset || '').startsWith('assets/zodiac-glyphs/') ||
-      String(entry.asset || '').startsWith('assets/element-glyphs/')
+      String(entry.asset || '').startsWith('assets/element-glyphs/') ||
+      String(entry.asset || '').startsWith('assets/aspect-glyphs/')
     ) return;
 
     root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
