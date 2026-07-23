@@ -146,7 +146,7 @@
         'sky-chart-provenance-fix.js?v=1',
         'relphi-glyph-registry-v1.js?v=19',
         'relphi-glyph-component-v1.js?v=19',
-        'sky-chart-canonical-glyphs-chiron.js?v=10',
+        'sky-chart-canonical-glyphs-chiron.js?v=11',
         'sky-chart-wheel-label-collision-v1.js?v=6'
       ].forEach(function (src) { appendScript(src); });
 
