@@ -149,18 +149,18 @@
     const lettered = entry.fitMode === 'letter' || aspectLetter || hebrewLetter;
     text.textContent = entry.fallback;
     text.setAttribute('x', '0');
-    text.setAttribute('y', '0');
+    text.setAttribute('y', hebrewLetter ? '3' : '0');
     text.setAttribute('text-anchor', 'middle');
     text.setAttribute('dominant-baseline', 'central');
     text.setAttribute('fill', color);
     if (hebrewLetter) {
       text.setAttribute('direction', 'rtl');
-      text.style.fontFamily = 'Noto Sans Hebrew,Arial Hebrew,Arial,sans-serif';
+      text.style.fontFamily = 'Noto Serif Hebrew,SBL Hebrew,Ezra SIL,David Libre,Times New Roman,serif';
     } else {
       text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
     }
     text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
-    text.style.fontSize = hebrewLetter ? '25px' : aspectLetter ? '24px' : lettered ? '16px' : '34px';
+    text.style.fontSize = hebrewLetter ? '31px' : aspectLetter ? '24px' : lettered ? '16px' : '34px';
     if (entry.id === 'asc' || entry.id === 'dsc') text.style.letterSpacing = '-0.35px';
     parent.appendChild(text);
     return text;
