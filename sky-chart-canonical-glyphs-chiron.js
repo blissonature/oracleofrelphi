@@ -24,7 +24,7 @@
   const ALIASES = {
     sol:'sun', luna:'moon', blackmoon:'lilith', blackmoonlilith:'lilith',
     trueblackmoonlilith:'lilith', meannode:'northnode', truenode:'northnode',
-    northlunar node:'northnode', ascendingnode:'northnode', dragonshead:'northnode',
+    northlunarnode:'northnode', ascendingnode:'northnode', dragonshead:'northnode',
     southlunarnode:'southnode', descendingnode:'southnode', dragonstail:'southnode',
     fortune:'partoffortune', lotoffortune:'partoffortune', parsfortunae:'partoffortune',
     pof:'partoffortune', vx:'vertex'
@@ -36,16 +36,11 @@
   function normalize(value) {
     return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
   }
-
   function canonicalName(value) {
     const normalized = normalize(value);
     return ALIASES[normalized] || (GLYPHS[normalized] ? normalized : '');
   }
-
-  function glyphUrl(name) {
-    return 'assets/planet-glyphs/' + GLYPHS[name] + '.svg';
-  }
-
+  function glyphUrl(name) { return 'assets/planet-glyphs/' + GLYPHS[name] + '.svg'; }
   function makeImage(name, className) {
     const image = document.createElement('img');
     image.className = className || 'relphi-canonical-body-glyph relphi-canonical-planet-glyph';
@@ -56,7 +51,6 @@
     image.dataset.relphiPlanet = name;
     return image;
   }
-
   function ensureStyles() {
     if (document.getElementById('relphi-canonical-sky-glyph-style')) return;
     const style = document.createElement('style');
@@ -70,7 +64,6 @@
     document.head.appendChild(style);
     document.documentElement.classList.add('relphi-expanded-body-set-supported');
   }
-
   function replaceTextGlyph(node) {
     if (!node || node.nodeType !== Node.TEXT_NODE || !node.nodeValue) return;
     const match = node.nodeValue.match(SYMBOL_PATTERN);
@@ -87,14 +80,11 @@
     parent.replaceChild(fragment, node);
     parent.classList.add('relphi-canonical-glyph-label');
   }
-
   function bodyFromElement(element) {
     if (!element || element.nodeType !== Node.ELEMENT_NODE) return '';
-    const values = [
-      element.dataset.planet, element.dataset.body, element.dataset.object,
+    const values = [element.dataset.planet, element.dataset.body, element.dataset.object,
       element.getAttribute('aria-label'), element.getAttribute('title'),
-      element.getAttribute('data-name'), element.className
-    ];
+      element.getAttribute('data-name'), element.className];
     for (const value of values) {
       const direct = canonicalName(value);
       if (direct) return direct;
@@ -106,7 +96,6 @@
     }
     return canonicalName(element.textContent);
   }
-
   function replaceGlyphElement(element) {
     if (!element || element.dataset.relphiCanonicalGlyph === 'true') return;
     if (element.matches('img.relphi-canonical-body-glyph,img.relphi-canonical-planet-glyph')) return;
@@ -121,7 +110,6 @@
     element.dataset.relphiCanonicalGlyph = 'true';
     element.setAttribute('aria-label', element.getAttribute('aria-label') || LABELS[name]);
   }
-
   function ensureBodyOptions(root) {
     const scope = root && root.querySelectorAll ? root : document;
     scope.querySelectorAll('select').forEach(function (select) {
@@ -138,7 +126,6 @@
       });
     });
   }
-
   function run(root) {
     ensureStyles();
     const scope = root && root.querySelectorAll ? root : document;
@@ -149,7 +136,6 @@
     textNodes.forEach(replaceTextGlyph);
     ensureBodyOptions(scope);
   }
-
   function start() {
     run(document);
     let queued = false;
@@ -166,21 +152,15 @@
         });
       });
     }).observe(document.body, { childList:true, subtree:true });
-
     window.RelphiCanonicalSkyGlyphs = {
-      glyphs:Object.assign({}, GLYPHS),
-      symbols:Object.assign({}, SYMBOLS),
-      labels:Object.assign({}, LABELS),
-      canonicalName:canonicalName,
-      url:glyphUrl,
-      image:makeImage,
-      refresh:function () { run(document); }
+      glyphs:Object.assign({}, GLYPHS), symbols:Object.assign({}, SYMBOLS),
+      labels:Object.assign({}, LABELS), canonicalName:canonicalName,
+      url:glyphUrl, image:makeImage, refresh:function () { run(document); }
     };
     window.dispatchEvent(new CustomEvent('relphi:canonical-sky-glyphs-ready', {
       detail:{ bodies:NAMES.slice(), chiron:true, lilith:true, nodes:true, vertex:true, partOfFortune:true }
     }));
   }
-
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
   else start();
 })();
