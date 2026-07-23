@@ -14,6 +14,7 @@
     ['uranus','Uranus',['uranus','♅','⛢'],'assets/planet-glyphs/uranus.svg',1,0.05,0.8,null,'circle'],
     ['neptune','Neptune',['neptune','♆'],'assets/planet-glyphs/neptune.svg',1,0,1.3,null,'circle'],
     ['pluto','Pluto',['pluto','♇','⯓','pl'],'assets/planet-glyphs/pluto.svg',1,0,0,null,'circle'],
+    ['chiron','Chiron',['chiron','⚷'],null,1.08,0,0,'⚷','symbol','400'],
     ['aries','Aries',['aries','♈'],'assets/zodiac-glyphs/aries.svg',1,0,0.9,null,'circle'],
     ['taurus','Taurus',['taurus','♉'],'assets/zodiac-glyphs/taurus.svg',1,0,0.9,null,'circle'],
     ['gemini','Gemini',['gemini','♊'],'assets/zodiac-glyphs/gemini.svg',0.95,0,0,null,'circle'],
