@@ -144,10 +144,10 @@
         'sky-chart-related-relationships-v2.js?v=2',
         'sky-chart-sign-cusps-v1.js?v=1',
         'sky-chart-provenance-fix.js?v=1',
-        'sky-chart-wheel-label-collision-v1.js?v=5',
         'relphi-glyph-registry-v1.js?v=19',
         'relphi-glyph-component-v1.js?v=19',
-        'sky-chart-canonical-glyphs-chiron.js?v=7'
+        'sky-chart-canonical-glyphs-chiron.js?v=9',
+        'sky-chart-wheel-label-collision-v1.js?v=6'
       ].forEach(function (src) { appendScript(src); });
 
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
