@@ -50,7 +50,6 @@
       const signature = ((node.id || '') + ' ' + (node.getAttribute('href') || '')).toLowerCase();
       if (LEGACY_STYLE_MARKERS.some(function (marker) { return signature.includes(marker); })) node.remove();
     });
-    // Earlier preview passes created detached top-level layers. They are not part of the new architecture.
     document.querySelectorAll('.relphi-sky-glyph-layer,.relphi-v2-glyph-host').forEach(function (node) { node.remove(); });
   }
 
@@ -127,8 +126,8 @@
   }
 
   function wheelRadius(svg) {
-    const viewBox = svg.viewBox?.baseVal;
-    const span = viewBox && viewBox.width ? Math.min(viewBox.width, viewBox.height) : Math.min(svg.clientWidth || 600, svg.clientHeight || 600);
+    const viewBox = svg?.viewBox?.baseVal;
+    const span = viewBox && viewBox.width ? Math.min(viewBox.width, viewBox.height) : Math.min(svg?.clientWidth || 600, svg?.clientHeight || 600);
     return Math.max(10.5, Math.min(17, span * 0.0255));
   }
 
@@ -139,7 +138,7 @@
   }
 
   function removeDuplicateHosts(container, keep) {
-    Array.from(container.querySelectorAll(':scope > .relphi-sky-glyph-host')).forEach(function (host) {
+    Array.from(container.querySelectorAll('.relphi-sky-glyph-host')).forEach(function (host) {
       if (host !== keep) host.remove();
     });
   }
@@ -149,9 +148,8 @@
     const sources = Array.from(container.querySelectorAll(GLYPH_SOURCE_SELECTOR)).filter(function (node) {
       return !!identityForGlyphSource(node);
     });
-    const existing = Array.from(container.querySelectorAll(':scope > .relphi-sky-glyph-host'));
+    const existing = Array.from(container.querySelectorAll('.relphi-sky-glyph-host'));
 
-    // A settled placement already has one managed component and no legacy source.
     if (!sources.length) {
       if (existing.length > 1) removeDuplicateHosts(container, existing[0]);
       return;
@@ -160,11 +158,12 @@
     const source = sources[0];
     const entry = identityForGlyphSource(source);
     if (!entry) return;
+    const svg = source.ownerSVGElement;
+    const hostParent = source.parentElement || container;
     const center = sourceCenter(source);
     const key = placementKey(container, entry, center);
     const matching = existing.find(function (host) { return host.dataset.placementKey === key; });
 
-    // Remove every legacy glyph source in this placement, including accidental duplicate producers.
     sources.forEach(function (node) { node.remove(); });
 
     if (matching) {
@@ -180,10 +179,10 @@
     host.dataset.placementKey = key;
     host.setAttribute('aria-label', entry.name);
     host.setAttribute('transform', 'translate(' + center.x + ' ' + center.y + ')');
-    container.appendChild(host);
+    hostParent.appendChild(host);
 
     window.RelphiGlyphComponent.draw(host, entry.id, {
-      radius:wheelRadius(source.ownerSVGElement),
+      radius:wheelRadius(svg),
       padding:1.35,
       color:skyColor(container),
       bubbleStrokeWidth:0
@@ -195,11 +194,7 @@
   function renderWheel(svg) {
     if (!svg || !svg.querySelectorAll) return;
     svg.querySelectorAll('.relphi-sky-glyph-layer').forEach(function (node) { node.remove(); });
-
-    const placements = Array.from(svg.querySelectorAll(PLACEMENT_SELECTOR));
-    placements.forEach(drawPlacementContainer);
-
-    // Some angle or point markers may use the glyph class without a placement wrapper.
+    Array.from(svg.querySelectorAll(PLACEMENT_SELECTOR)).forEach(drawPlacementContainer);
     Array.from(svg.querySelectorAll(GLYPH_SOURCE_SELECTOR)).forEach(function (source) {
       if (source.closest(PLACEMENT_SELECTOR)) return;
       const parent = source.parentElement;
@@ -259,7 +254,7 @@
       const placements = Array.from(svg.querySelectorAll(PLACEMENT_SELECTOR));
       result.placements += placements.length;
       placements.forEach(function (group) {
-        const count = group.querySelectorAll(':scope > .relphi-sky-glyph-host').length;
+        const count = group.querySelectorAll('.relphi-sky-glyph-host').length;
         result.hosts += count;
         if (count > 1) result.duplicatePlacements += 1;
       });
