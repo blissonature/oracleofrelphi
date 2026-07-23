@@ -48,7 +48,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=22');
+    const response = await fetch(path + '?v=23');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -143,7 +143,8 @@
 
   function textGlyph(parent, entry, color) {
     const text = svg('text');
-    const lettered = entry.fitMode === 'letter';
+    const aspectLetter = entry.fitMode === 'aspect-letter';
+    const lettered = entry.fitMode === 'letter' || aspectLetter;
     text.textContent = entry.fallback;
     text.setAttribute('x', '0');
     text.setAttribute('y', '0');
@@ -152,7 +153,7 @@
     text.setAttribute('fill', color);
     text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
     text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
-    text.style.fontSize = lettered ? '16px' : '34px';
+    text.style.fontSize = aspectLetter ? '24px' : lettered ? '16px' : '34px';
     if (entry.id === 'asc' || entry.id === 'dsc') text.style.letterSpacing = '-0.35px';
     parent.appendChild(text);
     return text;
