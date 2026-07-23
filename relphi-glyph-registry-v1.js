@@ -72,7 +72,31 @@
     ['hebrew-qoph','Qoph',['qoph','qof','koph','kuf','ק'],null,1,0,0,'ק','hebrew-letter','600'],
     ['hebrew-resh','Resh',['resh','ר'],null,1,0,0,'ר','hebrew-letter','600'],
     ['hebrew-shin','Shin',['shin','ש'],null,1,0,0,'ש','hebrew-letter','600'],
-    ['hebrew-tav','Tav',['tav','tau','thav','ת'],null,1,0,0,'ת','hebrew-letter','600']
+    ['hebrew-tav','Tav',['tav','tau','thav','ת'],null,1,0,0,'ת','hebrew-letter','600'],
+    ['greek-alpha','Alpha',['alpha','Α','α'],null,1,0,0,'Α','greek-letter','600'],
+    ['greek-beta','Beta',['beta','Β','β'],null,1,0,0,'Β','greek-letter','600'],
+    ['greek-gamma','Gamma',['gamma','Γ','γ'],null,1,0,0,'Γ','greek-letter','600'],
+    ['greek-delta','Delta',['delta','Δ','δ'],null,1,0,0,'Δ','greek-letter','600'],
+    ['greek-epsilon','Epsilon',['epsilon','epsílon','Ε','ε'],null,1,0,0,'Ε','greek-letter','600'],
+    ['greek-zeta','Zeta',['zeta','Ζ','ζ'],null,1,0,0,'Ζ','greek-letter','600'],
+    ['greek-eta','Eta',['eta','Η','η'],null,1,0,0,'Η','greek-letter','600'],
+    ['greek-theta','Theta',['theta','thêta','Θ','θ'],null,1,0,0,'Θ','greek-letter','600'],
+    ['greek-iota','Iota',['iota','Ι','ι'],null,1,0,0,'Ι','greek-letter','600'],
+    ['greek-kappa','Kappa',['kappa','Κ','κ'],null,1,0,0,'Κ','greek-letter','600'],
+    ['greek-lambda','Lambda',['lambda','lamda','Λ','λ'],null,1,0,0,'Λ','greek-letter','600'],
+    ['greek-mu','Mu',['mu','Μ','μ'],null,1,0,0,'Μ','greek-letter','600'],
+    ['greek-nu','Nu',['nu','Ν','ν'],null,1,0,0,'Ν','greek-letter','600'],
+    ['greek-xi','Xi',['xi','Ξ','ξ'],null,1,0,0,'Ξ','greek-letter','600'],
+    ['greek-omicron','Omicron',['omicron','Ο','ο'],null,1,0,0,'Ο','greek-letter','600'],
+    ['greek-pi','Pi',['pi','Π','π'],null,1,0,0,'Π','greek-letter','600'],
+    ['greek-rho','Rho',['rho','Ρ','ρ'],null,1,0,0,'Ρ','greek-letter','600'],
+    ['greek-sigma','Sigma',['sigma','Σ','σ','ς'],null,1,0,0,'Σ','greek-letter','600'],
+    ['greek-tau','Tau',['tau','Τ','τ'],null,1,0,0,'Τ','greek-letter','600'],
+    ['greek-upsilon','Upsilon',['upsilon','ypsilon','Υ','υ'],null,1,0,0,'Υ','greek-letter','600'],
+    ['greek-phi','Phi',['phi','Φ','φ','ϕ'],null,1,0,0,'Φ','greek-letter','600'],
+    ['greek-chi','Chi',['chi','Χ','χ'],null,1,0,0,'Χ','greek-letter','600'],
+    ['greek-psi','Psi',['psi','Ψ','ψ'],null,1,0,0,'Ψ','greek-letter','600'],
+    ['greek-omega','Omega',['omega','Ω','ω'],null,1,0,0,'Ω','greek-letter','600']
   ].map(([id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight]) => ({ id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight }));
 
   const byId = new Map(entries.map(entry => [entry.id, entry]));
