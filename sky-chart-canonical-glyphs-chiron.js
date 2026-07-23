@@ -177,9 +177,9 @@
   }
 
   function explicitPlacementColor(container) {
-    const nodes = [container].concat(Array.from(container.closest ? container.closest('[data-sky-color],[data-relphi-sky-color],[data-color]') ? [container.closest('[data-sky-color],[data-relphi-sky-color],[data-color]')] : []));
+    const explicitAncestor = container.closest && container.closest('[data-sky-color],[data-relphi-sky-color],[data-color]');
+    const nodes = explicitAncestor && explicitAncestor !== container ? [container, explicitAncestor] : [container];
     for (const node of nodes) {
-      if (!node) continue;
       const values = [
         node.dataset && node.dataset.relphiSkyColor,
         node.dataset && node.dataset.skyColor,
@@ -433,7 +433,7 @@
       };
       window.dispatchEvent(new CustomEvent('relphi:canonical-sky-glyphs-ready', {
         detail:{
-          version:9,
+          version:10,
           architecture:'one-geometry-color-parameterized',
           geometrySource:'RelphiGlyphComponent.createBubble',
           wheelVariant:WHEEL_VARIANT
