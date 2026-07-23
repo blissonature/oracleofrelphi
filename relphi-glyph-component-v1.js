@@ -174,7 +174,7 @@
 
   function textGlyph(parent, entry, color) {
     const text = svg('text');
-    const lettered = /^(ASC|DSC|MC|IC|Vx)$/.test(entry.fallback);
+    const lettered = entry.fitMode === 'letter';
     text.textContent = entry.fallback;
     text.setAttribute('x', '0');
     text.setAttribute('y', '0');
@@ -184,7 +184,7 @@
     text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
     text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
     text.style.fontSize = lettered ? '16px' : '34px';
-    if (entry.id === 'asc' || entry.id === 'dsc') text.style.letterSpacing = '0.45px';
+    if (entry.id === 'asc' || entry.id === 'dsc') text.style.letterSpacing = '-0.35px';
     parent.appendChild(text);
     return text;
   }
