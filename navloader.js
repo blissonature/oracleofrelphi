@@ -147,7 +147,7 @@
         'sky-chart-wheel-label-collision-v1.js?v=5',
         'relphi-glyph-registry-v1.js?v=19',
         'relphi-glyph-component-v1.js?v=19',
-        'sky-chart-canonical-glyphs-chiron.js?v=3'
+        'sky-chart-canonical-glyphs-chiron.js?v=6'
       ].forEach(function (src) { appendScript(src); });
 
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
