@@ -1,4 +1,4 @@
-// Canonical semantic registry for astrology glyphs used across Relphi.
+// Canonical semantic registry for glyphs used across Relphi.
 (function () {
   'use strict';
   if (window.RelphiGlyphRegistry) return;
@@ -50,7 +50,29 @@
     ['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'Asc','letter','700'],
     ['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'Dsc','letter','700'],
     ['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','letter','700'],
-    ['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','letter','700']
+    ['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','letter','700'],
+    ['hebrew-aleph','Aleph',['aleph','alef','א'],null,1,0,0,'א','hebrew-letter','600'],
+    ['hebrew-beth','Beth',['beth','bet','beit','ב'],null,1,0,0,'ב','hebrew-letter','600'],
+    ['hebrew-gimel','Gimel',['gimel','gimmel','ג'],null,1,0,0,'ג','hebrew-letter','600'],
+    ['hebrew-daleth','Daleth',['daleth','dalet','daled','ד'],null,1,0,0,'ד','hebrew-letter','600'],
+    ['hebrew-heh','Heh',['heh','he','hei','ה'],null,1,0,0,'ה','hebrew-letter','600'],
+    ['hebrew-vav','Vav',['vav','vau','waw','ו'],null,1,0,0,'ו','hebrew-letter','600'],
+    ['hebrew-zayin','Zayin',['zayin','zain','zayn','ז'],null,1,0,0,'ז','hebrew-letter','600'],
+    ['hebrew-cheth','Cheth',['cheth','chet','heth','het','ח'],null,1,0,0,'ח','hebrew-letter','600'],
+    ['hebrew-teth','Teth',['teth','tet','ט'],null,1,0,0,'ט','hebrew-letter','600'],
+    ['hebrew-yod','Yod',['yod','yud','י'],null,1,0,0,'י','hebrew-letter','600'],
+    ['hebrew-kaph','Kaph',['kaph','kaf','כ'],null,1,0,0,'כ','hebrew-letter','600'],
+    ['hebrew-lamed','Lamed',['lamed','ל'],null,1,0,0,'ל','hebrew-letter','600'],
+    ['hebrew-mem','Mem',['mem','מ'],null,1,0,0,'מ','hebrew-letter','600'],
+    ['hebrew-nun','Nun',['nun','נ'],null,1,0,0,'נ','hebrew-letter','600'],
+    ['hebrew-samekh','Samekh',['samekh','samech','ס'],null,1,0,0,'ס','hebrew-letter','600'],
+    ['hebrew-ayin','Ayin',['ayin','ע'],null,1,0,0,'ע','hebrew-letter','600'],
+    ['hebrew-peh','Peh',['peh','pe','פ'],null,1,0,0,'פ','hebrew-letter','600'],
+    ['hebrew-tzaddi','Tzaddi',['tzaddi','tzadi','tsadi','tsade','צ'],null,1,0,0,'צ','hebrew-letter','600'],
+    ['hebrew-qoph','Qoph',['qoph','qof','koph','kuf','ק'],null,1,0,0,'ק','hebrew-letter','600'],
+    ['hebrew-resh','Resh',['resh','ר'],null,1,0,0,'ר','hebrew-letter','600'],
+    ['hebrew-shin','Shin',['shin','ש'],null,1,0,0,'ש','hebrew-letter','600'],
+    ['hebrew-tav','Tav',['tav','tau','thav','ת'],null,1,0,0,'ת','hebrew-letter','600']
   ].map(([id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight]) => ({ id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight }));
 
   const byId = new Map(entries.map(entry => [entry.id, entry]));
