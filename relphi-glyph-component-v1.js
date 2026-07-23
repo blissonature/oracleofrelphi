@@ -45,7 +45,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=16');
+    const response = await fetch(path + '?v=17');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -138,7 +138,6 @@
     return group;
   }
 
-  // Shared filled cross primitive based on the Mercury/Venus planetary-cross proportions.
   function planetaryCross(parent, color, topY, bottomY, barY) {
     const group = svg('g');
     const stem = svg('rect');
@@ -163,17 +162,20 @@
   function lilith(parent, color) {
     const group = svg('g');
 
-    // Exactly one closed, filled crescent path opening to the right.
+    // One solid crescent, opening right. Its lower tip lands exactly on x=0,
+    // allowing the planetary cross stem to join it without a gap or side spur.
     const crescent = svg('path');
     crescent.setAttribute(
       'd',
-      'M5.4-11.4C-2-11.4-5.5-6.3-5.5 0C-5.5 6.3-2 11.4 5.4 11.4C1.9 8.3 0.35 4.55 0.35 0C0.35-4.55 1.9-8.3 5.4-11.4Z'
+      'M5.8-11.3C-1.8-11.3-6.1-6.35-6.1 0C-6.1 6.35-1.8 11.3 5.8 11.3C2.15 8.65 0.2 4.75 0.2 0C0.2-4.75 2.15-8.65 5.8-11.3Z'
     );
     crescent.setAttribute('fill', color);
     crescent.setAttribute('stroke', 'none');
 
     group.appendChild(crescent);
-    planetaryCross(group, color, 3.15, 14.15, 8.75);
+    // Shared Mercury/Venus/Pluto cross. The stem begins at the crescent's
+    // bottom-center join and remains on the bubble's fixed x=0 centerline.
+    planetaryCross(group, color, 10.55, 16.2, 13.45);
     parent.appendChild(group);
     return group;
   }
