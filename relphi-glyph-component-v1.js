@@ -45,7 +45,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=18');
+    const response = await fetch(path + '?v=19');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -138,45 +138,36 @@
     return group;
   }
 
-  // Canonical planetary cross proportions extracted from the Mercury/Venus family.
-  function planetaryCross(parent, color, topY, bottomY, barY) {
-    const group = svg('g');
-    const stem = svg('rect');
-    stem.setAttribute('x', '-0.73');
-    stem.setAttribute('y', String(topY));
-    stem.setAttribute('width', '1.46');
-    stem.setAttribute('height', String(bottomY - topY));
-    stem.setAttribute('rx', '0.7');
-    stem.setAttribute('fill', color);
-    const bar = svg('rect');
-    bar.setAttribute('x', '-4.15');
-    bar.setAttribute('y', String(barY - 0.73));
-    bar.setAttribute('width', '8.3');
-    bar.setAttribute('height', '1.46');
-    bar.setAttribute('rx', '0.7');
-    bar.setAttribute('fill', color);
-    group.append(stem, bar);
-    parent.appendChild(group);
-    return group;
+  // Shared Mercury/Venus/Pluto cross primitive. The complete vertical and
+  // horizontal strokes are equal in length and use the approved line weight.
+  function planetaryCross(parent, color, topY, size, centerY) {
+    const cross = svg('path');
+    const half = size / 2;
+    cross.setAttribute('d', `M0 ${topY}V${topY + size}M${-half} ${centerY}H${half}`);
+    cross.setAttribute('fill', 'none');
+    cross.setAttribute('stroke', color);
+    cross.setAttribute('stroke-width', '1.45');
+    cross.setAttribute('stroke-linecap', 'round');
+    cross.setAttribute('stroke-linejoin', 'round');
+    parent.appendChild(cross);
+    return cross;
   }
 
   function lilith(parent, color) {
     const group = svg('g');
 
-    // Compact, solid crescent based on the approved raster sample. It opens
-    // right, avoids the earlier elongated silhouette, and balances around x=0.
+    // Compact approved crescent: wider and shorter than the rejected elongated
+    // version, opening right, with one solid closed path and no extra crescent.
     const crescent = svg('path');
     crescent.setAttribute(
       'd',
-      'M4.6-11.5C-1.5-11.5-5.5-7.7-5.5-2.7C-5.5 2.3-1.5 6.1 4.6 6.1C1.7 4.1 0.3 0.9 0.3-2.7C0.3-6.3 1.7-9.5 4.6-11.5Z'
+      'M8.2-13.1C-1.4-13-7.7-8-7.7-3C-7.7 2.1-1.8 5.4 7 4.2C2.9 2.1 1.1-0.3 1.1-3C1.1-7 3.2-10.5 8.2-13.1Z'
     );
     crescent.setAttribute('fill', color);
     crescent.setAttribute('stroke', 'none');
 
     group.appendChild(crescent);
-    // The cross joins the crescent at its lower center and uses the canonical
-    // Mercury/Venus proportions without a Lilith-specific redraw.
-    planetaryCross(group, color, 5.7, 11.5, 8.5);
+    planetaryCross(group, color, 4, 10.4, 9.2);
     parent.appendChild(group);
     return group;
   }
