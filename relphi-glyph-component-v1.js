@@ -47,7 +47,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=12');
+    const response = await fetch(path + '?v=13');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -140,6 +140,31 @@
     return group;
   }
 
+  function lilith(parent, color) {
+    const group = svg('g');
+
+    // The crescent is intentionally solid and visually dominant.
+    const crescent = svg('path');
+    crescent.setAttribute('d', 'M2.7 -10.8C-3.9 -10.7-7.8-6.2-7.8 0C-7.8 6.3-3.8 10.8 2.7 10.8C-0.8 8.1-2.3 4.4-2.3 0C-2.3-4.4-0.8-8.1 2.7-10.8Z');
+    crescent.setAttribute('fill', color);
+    crescent.setAttribute('stroke', 'none');
+
+    // The cross is weighted after the final glyph scale. non-scaling-stroke
+    // prevents enlargement from making it heavier than the other crosses.
+    const cross = svg('path');
+    cross.setAttribute('d', 'M0 8.2V16.2M-4.1 12.2H4.1');
+    cross.setAttribute('fill', 'none');
+    cross.setAttribute('stroke', color);
+    cross.setAttribute('stroke-width', '1.45');
+    cross.setAttribute('stroke-linecap', 'round');
+    cross.setAttribute('stroke-linejoin', 'round');
+    cross.setAttribute('vector-effect', 'non-scaling-stroke');
+
+    group.append(crescent, cross);
+    parent.appendChild(group);
+    return group;
+  }
+
   function textGlyph(parent, entry, color) {
     const text = svg('text');
     const lettered = /^(ASC|DSC|MC|IC|Vx)$/.test(entry.fallback);
@@ -169,6 +194,8 @@
 
     if (entry.id === 'sun') {
       art = sun(parent, color);
+    } else if (entry.id === 'lilith') {
+      art = lilith(parent, color);
     } else if (entry.asset) {
       const source = await loadAsset(entry.asset);
       art = svg('g');
