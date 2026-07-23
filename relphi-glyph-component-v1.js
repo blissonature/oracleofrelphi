@@ -24,7 +24,8 @@
       entry.id === 'lilith' ||
       entry.id === 'part-of-fortune' ||
       entry.fitMode === 'letter' ||
-      String(entry.asset || '').startsWith('assets/zodiac-glyphs/')
+      String(entry.asset || '').startsWith('assets/zodiac-glyphs/') ||
+      String(entry.asset || '').startsWith('assets/element-glyphs/')
     ) return;
 
     root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
@@ -46,7 +47,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=21');
+    const response = await fetch(path + '?v=22');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
