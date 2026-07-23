@@ -45,7 +45,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=19');
+    const response = await fetch(path + '?v=20');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -138,40 +138,6 @@
     return group;
   }
 
-  // Shared Mercury/Venus/Pluto cross primitive. The complete vertical and
-  // horizontal strokes are equal in length and use the approved line weight.
-  function planetaryCross(parent, color, topY, size, centerY) {
-    const cross = svg('path');
-    const half = size / 2;
-    cross.setAttribute('d', `M0 ${topY}V${topY + size}M${-half} ${centerY}H${half}`);
-    cross.setAttribute('fill', 'none');
-    cross.setAttribute('stroke', color);
-    cross.setAttribute('stroke-width', '1.45');
-    cross.setAttribute('stroke-linecap', 'round');
-    cross.setAttribute('stroke-linejoin', 'round');
-    parent.appendChild(cross);
-    return cross;
-  }
-
-  function lilith(parent, color) {
-    const group = svg('g');
-
-    // Compact approved crescent: wider and shorter than the rejected elongated
-    // version, opening right, with one solid closed path and no extra crescent.
-    const crescent = svg('path');
-    crescent.setAttribute(
-      'd',
-      'M8.2-13.1C-1.4-13-7.7-8-7.7-3C-7.7 2.1-1.8 5.4 7 4.2C2.9 2.1 1.1-0.3 1.1-3C1.1-7 3.2-10.5 8.2-13.1Z'
-    );
-    crescent.setAttribute('fill', color);
-    crescent.setAttribute('stroke', 'none');
-
-    group.appendChild(crescent);
-    planetaryCross(group, color, 4, 10.4, 9.2);
-    parent.appendChild(group);
-    return group;
-  }
-
   function textGlyph(parent, entry, color) {
     const text = svg('text');
     const lettered = entry.fitMode === 'letter';
@@ -201,7 +167,6 @@
     let art;
 
     if (entry.id === 'sun') art = sun(parent, color);
-    else if (entry.id === 'lilith') art = lilith(parent, color);
     else if (entry.asset) {
       const source = await loadAsset(entry.asset);
       art = svg('g');
