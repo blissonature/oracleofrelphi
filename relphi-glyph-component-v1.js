@@ -5,7 +5,6 @@
 
   const NS = 'http://www.w3.org/2000/svg';
   const cache = new Map();
-  const MOON_PATH = 'M29.11,14.75 L26.50,16.24 L26.50,17.73 L27.62,18.85 L33.59,21.09 L37.32,23.70 L41.42,27.80 L44.78,32.65 L48.51,42.73 L49.25,51.68 L46.64,62.87 L42.91,69.59 L35.82,76.67 L27.24,80.40 L26.50,81.15 L26.50,83.02 L29.48,84.51 L35.08,85.63 L41.79,85.63 L50.37,83.76 L55.22,81.52 L62.31,76.30 L67.53,69.96 L70.15,65.11 L73.13,54.29 L73.13,46.46 L71.64,38.99 L69.03,32.65 L65.67,27.43 L61.19,22.58 L55.60,18.48 L51.87,16.61 L44.03,14.37 L34.70,14.00 Z M36.20,17.73 L45.90,18.48 L53.73,21.83 L57.83,24.82 L61.56,28.55 L65.67,34.52 L68.65,42.35 L69.40,47.95 L69.40,52.80 L67.91,60.26 L63.06,69.59 L54.48,77.42 L47.02,80.78 L39.93,81.90 L35.82,81.15 L44.03,74.44 L48.88,67.35 L52.24,57.65 L52.98,48.32 L51.49,38.99 L48.13,30.79 L43.66,24.45 L36.20,18.48 Z';
 
   function svg(name) {
     return document.createElementNS(NS, name);
@@ -50,7 +49,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=14');
+    const response = await fetch(path + '?v=15');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -161,29 +160,31 @@
   function lilith(parent, color) {
     const group = svg('g');
 
-    // Reuse Luna's approved crescent geometry at an intermediate size. The
-    // horizontal offset balances the crescent's visible mass around x=0.
-    const crescentGroup = svg('g');
-    crescentGroup.setAttribute('transform', 'translate(2.15 -4.35) scale(.22) translate(-49.8 -49.8)');
+    // Approved construction: a solid crescent opening to the right. The outer
+    // and inner circles are offset so the crescent's visible mass is balanced
+    // around the same x=0 centerline used by the cross.
     const crescent = svg('path');
-    crescent.setAttribute('d', MOON_PATH);
+    crescent.setAttribute(
+      'd',
+      'M0.8-12.1A7.6 7.6 0 1 0 0.8 3.1A7.6 7.6 0 1 0 0.8-12.1Z ' +
+      'M4.1-10.7A6.2 6.2 0 1 1 4.1 1.7A6.2 6.2 0 1 1 4.1-10.7Z'
+    );
     crescent.setAttribute('fill', color);
     crescent.setAttribute('fill-rule', 'evenodd');
     crescent.setAttribute('clip-rule', 'evenodd');
     crescent.setAttribute('stroke', 'none');
-    crescentGroup.appendChild(crescent);
 
-    // The cross remains on the bubble's fixed vertical centerline. Its
-    // geometry and 1.45 stroke match the established planetary crosses.
+    // Planetary-cross geometry: centered on x=0, matching the established
+    // Mercury/Venus/Saturn cross weight and proportions.
     const cross = svg('path');
-    cross.setAttribute('d', 'M0 3.7V14.4M-4 9.35H4');
+    cross.setAttribute('d', 'M0 2.4V14.1M-4 8.65H4');
     cross.setAttribute('fill', 'none');
     cross.setAttribute('stroke', color);
     cross.setAttribute('stroke-width', '1.45');
     cross.setAttribute('stroke-linecap', 'round');
     cross.setAttribute('stroke-linejoin', 'round');
 
-    group.append(crescentGroup, cross);
+    group.append(crescent, cross);
     parent.appendChild(group);
     return group;
   }
