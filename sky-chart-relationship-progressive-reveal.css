@@ -1,0 +1,28 @@
+body.sky-chart-page .relationship-placement-card [data-relphi-reveal-layer="name"][hidden],
+body.sky-chart-page .relationship-placement-card [data-relphi-reveal-layer="detail"][hidden] {
+  display: none !important;
+}
+
+body.sky-chart-page .relationship-placement-card [data-relphi-reveal-layer] {
+  cursor: pointer;
+}
+
+body.sky-chart-page .relationship-placement-card [data-relphi-reveal-layer]:focus-visible {
+  outline: 2px solid rgba(220, 31, 24, .62);
+  outline-offset: 3px;
+  border-radius: .35rem;
+}
+
+body.sky-chart-page .relationship-placement-card[data-relphi-reveal-stage="glyph"] [data-relphi-reveal-layer="glyph"] {
+  transform: scale(1.02);
+}
+
+body.sky-chart-page .relationship-placement-card [data-relphi-reveal-layer="glyph"] {
+  transition: transform .16s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.sky-chart-page .relationship-placement-card [data-relphi-reveal-layer="glyph"] {
+    transition: none;
+  }
+}
