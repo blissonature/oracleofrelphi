@@ -123,6 +123,31 @@
     }, retryOrFail);
   }
 
+  function ensureCanonicalSkyBootStyle() {
+    if (document.getElementById('relphi-canonical-sky-boot-style')) return;
+    const style = document.createElement('style');
+    style.id = 'relphi-canonical-sky-boot-style';
+    style.textContent = [
+      '.sky-chart-page .unified-sky-wheel svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
+      '.sky-chart-page #chartOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
+      '.sky-chart-page #currentSkyOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
+      '.sky-chart-page .sky-output-box svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback){visibility:hidden!important}',
+      '.sky-chart-page svg.relphi-canonical-ready,.sky-chart-page svg.relphi-canonical-fallback{visibility:visible!important}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+
+  function loadCanonicalSkyWheel() {
+    ensureCanonicalSkyBootStyle();
+    appendScript('relphi-glyph-registry-v1.js?v=19', function () {
+      appendScript('relphi-glyph-component-v1.js?v=19', function () {
+        appendScript('sky-chart-wheel-canonical-component-v1.js?v=2', function () {
+          appendScript('sky-chart-wheel-marker-interaction-v1.js?v=1');
+        });
+      });
+    });
+  }
+
   function loadEnhancements() {
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
@@ -133,6 +158,13 @@
       appendScript('standardize-zodiac-wheels.js?v=4');
       appendScript('relphi-glyph-bubbles.js?v=2');
     }
+    if (/(^|\/)glyphs\.html$/.test(location.pathname)) {
+      appendScript('relphi-glyph-registry-v1.js?v=19', function () {
+        appendScript('relphi-glyph-component-v1.js?v=19', function () {
+          appendScript('glyph-trainer-canonical-v1.js?v=1');
+        });
+      });
+    }
 
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
       const preview = new URLSearchParams(location.search).get('preview');
@@ -142,14 +174,13 @@
         'sky-chart-aspect-duration-fix.js?v=2',
         'sky-chart-relationship-language.js?v=5',
         'sky-chart-related-relationships-v2.js?v=2',
-        'sky-ledger-glyph-alignment.js?v=1',
-        'sky-ledger-wheel-glyphs.js?v=2',
         'sky-chart-sign-cusps-v1.js?v=1',
-        'sky-chart-ph-glyph-style-v1.js?v=3',
-        'relphi-glyph-bubbles.js?v=2',
         'sky-chart-provenance-fix.js?v=1',
-        'sky-chart-wheel-label-collision-v1.js?v=5'
+        'sky-chart-extra-points-support-v1.js?v=3',
+        'sky-chart-calculated-points-v1.js?v=4',
+        'sky-chart-special-vector-color-v1.js?v=1'
       ].forEach(function (src) { appendScript(src); });
+      loadCanonicalSkyWheel();
 
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);

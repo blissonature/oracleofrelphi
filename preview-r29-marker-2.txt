@@ -1,0 +1,1 @@
+Fresh preview path for solid hover and special-point glyph correction.

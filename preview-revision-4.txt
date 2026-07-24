@@ -1,0 +1,1 @@
+Sky Chart glyph preview revision 4. This marker forces a new immutable preview branch snapshot.

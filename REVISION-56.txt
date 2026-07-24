@@ -1,0 +1,1 @@
+Revision 56: custom Pluto and Part of Fortune paths inherit the exact host marker CSS variable.

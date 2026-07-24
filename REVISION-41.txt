@@ -1,0 +1,1 @@
+Revision 41 anchors each Sky Chart leader to its placement-circle center so the opaque bubble covers the hidden segment.

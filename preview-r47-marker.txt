@@ -1,0 +1,1 @@
+Revision 47: canonical planet glyph mapping, optical centering, larger angle labels.
