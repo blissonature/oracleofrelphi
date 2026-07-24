@@ -11,6 +11,8 @@
     document.body.appendChild(script);
   }
 
+  loadDrawingBoardExportPreserver();
+
   function byId(id) { return document.getElementById(id); }
   function fire(node, type) { if (node) node.dispatchEvent(new Event(type, { bubbles:true })); }
   function setValue(id, value) {
@@ -88,7 +90,6 @@
     })();
   }
   function start() {
-    loadDrawingBoardExportPreserver();
     const button = byId('readDate');
     if (!button || button.dataset.dateSkyBridge) return;
     button.dataset.dateSkyBridge = 'true';
