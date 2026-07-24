@@ -125,9 +125,7 @@
 
   function loadCanonicalGlyphSource(onready) {
     appendScript('relphi-glyph-registry-v1.js?v=24', function () {
-      appendScript('relphi-glyph-component-v1.js?v=24', function () {
-        appendScript('relphi-glyph-site-canonical-v1.js?v=1', onready);
-      });
+      appendScript('relphi-glyph-component-v1.js?v=24', onready);
     });
   }
 
