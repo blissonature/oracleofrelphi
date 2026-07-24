@@ -149,14 +149,11 @@
         'sky-chart-aspect-duration-fix.js?v=2',
         'sky-chart-relationship-language.js?v=5',
         'sky-chart-related-relationships-v2.js?v=2',
-        'sky-ledger-glyph-alignment.js?v=1',
         'sky-chart-sign-cusps-v1.js?v=1',
-        'sky-chart-ph-glyph-style-v1.js?v=preview5',
         'sky-chart-provenance-fix.js?v=1',
-        'sky-chart-extra-points-support-v1.js?v=2',
-        'sky-chart-calculated-points-v1.js?v=3',
-        'sky-chart-wheel-glyph-preview-v1.js?v=5',
-        'sky-chart-wheel-unified-marker-renderer-v4.js?v=1',
+        'sky-chart-extra-points-support-v1.js?v=3',
+        'sky-chart-calculated-points-v1.js?v=4',
+        'sky-chart-wheel-unified-marker-renderer-v4.js?v=2',
         'sky-chart-special-vector-color-v1.js?v=1'
       ].forEach(function (src) { appendScript(src); });
 
