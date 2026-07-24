@@ -11,6 +11,7 @@
   ];
   const preserved = new Map();
   let queued = false;
+  let retryTimer = 0;
 
   function ensureStash() {
     let stash = document.getElementById('relphiDrawingBoardExportStash');
@@ -64,7 +65,8 @@
   function reconcile() {
     queued = false;
     captureControls();
-    if (!restoreControls()) requestAnimationFrame(schedule);
+    clearTimeout(retryTimer);
+    if (preserved.size && !restoreControls()) retryTimer = setTimeout(schedule, 40);
   }
 
   function schedule() {
@@ -74,6 +76,8 @@
   }
 
   function start() {
+    if (!document.body || document.documentElement.dataset.relphiDrawingBoardExportPreserver === 'true') return;
+    document.documentElement.dataset.relphiDrawingBoardExportPreserver = 'true';
     ensureStash();
     schedule();
     new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true });
@@ -81,6 +85,6 @@
     window.addEventListener('relphi:drawing-board-restored', schedule);
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
-  else start();
+  if (document.body) start();
+  else document.addEventListener('DOMContentLoaded', start, { once:true });
 })();
