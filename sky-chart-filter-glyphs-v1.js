@@ -39,7 +39,7 @@
     return !!node.closest && !!node.closest([
       '#chartPanel','#chartOutput','#currentSkyOutput','.relationship-list','.relationship-filters',
       '.aspect-relationship-filters','[data-sky-chart-mode]','[data-comparison-filter]',
-      '[data-aspect-filter]','[data-zodiac-filter]','.relationship-list-row'
+      '[data-aspect-filter]','[data-zodiac-filter]','.relationship-list-row','.relphi-progressive-reading'
     ].join(','));
   }
 
@@ -61,18 +61,28 @@
     return svg;
   }
 
-  function identify(value) { return aliases.get(normalize(value)) || null; }
+  function identify(value) {
+    const raw = String(value || '').replace(/[\uFE0E\uFE0F]/g,'').trim();
+    const registryEntry = window.RelphiGlyphRegistry && window.RelphiGlyphRegistry.resolve(raw);
+    if (registryEntry) return registryEntry.id;
+    return aliases.get(normalize(raw)) || null;
+  }
 
   function decorateVisual(node) {
     if (!node || node.dataset.relphiCanonicalGlyphAsset === 'done') return;
     if (node.matches('input,select,textarea') || node.querySelector('input,select,textarea,img')) return;
     const identity = identify(node.textContent || node.getAttribute('aria-label') || node.dataset.value || '');
     if (!identity) return;
-    const name = names.get(identity) || node.textContent.trim();
+    const name = names.get(identity) || window.RelphiGlyphRegistry?.get(identity)?.name || node.textContent.trim();
     node.textContent = '';
     const icon = canonicalIcon(identity);
-    const label = document.createElement('span'); label.className = 'relphi-filter-canonical-name'; label.textContent = name;
-    node.append(icon,label);
+    if (node.classList.contains('relphi-progressive-glyph')) {
+      node.append(icon);
+      node.setAttribute('aria-label','Reveal ' + name);
+    } else {
+      const label = document.createElement('span'); label.className = 'relphi-filter-canonical-name'; label.textContent = name;
+      node.append(icon,label);
+    }
     node.dataset.relphiCanonicalGlyphAsset = 'done';
   }
 
@@ -80,8 +90,7 @@
     if (!option || option.dataset.relphiCanonicalGlyphAsset === 'done') return;
     const identity = identify(option.textContent || option.label || option.value);
     if (!identity) return;
-    // Native options cannot reliably render SVG. Use the canonical name, never a font glyph substitute.
-    const name = names.get(identity);
+    const name = names.get(identity) || window.RelphiGlyphRegistry?.get(identity)?.name;
     option.textContent = name; option.label = name;
     option.dataset.relphiCanonicalGlyphAsset = 'done';
   }
@@ -96,10 +105,10 @@
       const raw = node.nodeValue || '';
       const match = raw.match(/^\s*([☉☽☿♀♂♃♄♅♆♇⯓⚷⚸☊☋⊗♈-♓☌☍□△✶⚺⚻⚼∠]|bQ|ASC|DSC|MC|IC|Vx)\s+([A-Za-z][A-Za-z -]+)/);
       if (!match) return;
-      const identity = identify(match[1] + ' ' + match[2]) || identify(match[2]);
+      const identity = identify(match[1]) || identify(match[2]);
       if (!identity) return;
       const wrap = document.createElement('span'); wrap.className = 'relphi-filter-canonical-label';
-      wrap.append(canonicalIcon(identity), document.createTextNode((names.get(identity) || match[2]) + raw.slice(match[0].length)));
+      wrap.append(canonicalIcon(identity), document.createTextNode((names.get(identity) || window.RelphiGlyphRegistry?.get(identity)?.name || match[2]) + raw.slice(match[0].length)));
       node.parentNode.replaceChild(wrap,node);
     });
   }
@@ -107,14 +116,14 @@
   function styles() {
     if (document.getElementById('relphi-filter-canonical-styles')) return;
     const style = document.createElement('style'); style.id = 'relphi-filter-canonical-styles';
-    style.textContent = '.relphi-filter-canonical-glyph{width:1.35em;height:1.35em;display:inline-block;flex:0 0 1.35em;vertical-align:-.28em;overflow:visible}.relphi-filter-canonical-name{min-width:0}.relphi-filter-canonical-label{display:inline-flex;align-items:center;gap:.28em}.relationship-list-row .relphi-filter-canonical-glyph,[role="option"] .relphi-filter-canonical-glyph{width:1.5em;height:1.5em;flex-basis:1.5em}';
+    style.textContent = '.relphi-filter-canonical-glyph{width:1.35em;height:1.35em;display:inline-block;flex:0 0 1.35em;vertical-align:-.28em;overflow:visible}.relphi-filter-canonical-name{min-width:0}.relphi-filter-canonical-label{display:inline-flex;align-items:center;gap:.28em}.relationship-list-row .relphi-filter-canonical-glyph,[role="option"] .relphi-filter-canonical-glyph{width:1.5em;height:1.5em;flex-basis:1.5em}.relphi-progressive-glyph .relphi-filter-canonical-glyph{width:1.2em;height:1.2em;vertical-align:-.22em}';
     document.head.appendChild(style);
   }
 
   function run() {
     styles();
     document.querySelectorAll('option').forEach(function (option) { if (relevant(option)) cleanNativeOption(option); });
-    document.querySelectorAll('button,[role="option"],[role="checkbox"],[data-body],[data-planet],[data-point],[data-sign],[data-aspect],.relationship-list-row span,.relationship-list-row strong').forEach(function (node) {
+    document.querySelectorAll('button,[role="option"],[role="checkbox"],[data-body],[data-planet],[data-point],[data-sign],[data-aspect],.relationship-list-row span,.relationship-list-row strong,.relphi-progressive-glyph').forEach(function (node) {
       if (relevant(node)) decorateVisual(node);
     });
     document.querySelectorAll('.relationship-list-row,.relationship-list,.relationship-filters,.aspect-relationship-filters').forEach(decorateLeadingText);
