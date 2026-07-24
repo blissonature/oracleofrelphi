@@ -1,4 +1,4 @@
-// Branch-only support for pasted nodes, angles, Lilith, Vertex, and Part of Fortune.
+// Branch-only support for pasted nodes, angles, Lilith, Chiron, Vertex, and Part of Fortune.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -8,6 +8,7 @@
   const POINTS = [
     { name:'Part of Fortune', aliases:['part of fortune','fortune','pars fortunae','pof'], glyph:'⊗' },
     { name:'Lilith', aliases:['black moon lilith','lilith','bml'], glyph:'⚸' },
+    { name:'Chiron', aliases:['chiron'], glyph:'⚷' },
     { name:'North Node', aliases:['true north node','mean north node','north node','ascending node','node'], glyph:'☊' },
     { name:'South Node', aliases:['south node','descending node'], glyph:'☋' },
     { name:'Vertex', aliases:['vertex','vx'], glyph:'Vx' },
@@ -38,7 +39,7 @@
     if (!coordinate) return null;
     const degree = Math.max(0, Math.min(29, Number(coordinate[1])));
     const minute = Math.max(0, Math.min(59, Number(coordinate[2] || 0)));
-    const houseMatch = line.match(/(?:in\s*)?(\d{1,2})(?:st|nd|rd|th)?\s*house/i) || line.match(/,(\d{1,2})(?:,|$)/);
+    const houseMatch = line.match(/(?:\bin\s*)?(\d{1,2})(?:st|nd|rd|th)?\s*house/i) || line.match(/,(\d{1,2})(?:,|$)/);
     const retrograde = /(?:\bretrograde\b|\bRx\b|℞|,R\b)/i.test(line);
     return {
       name:point.name,
