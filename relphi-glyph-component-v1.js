@@ -17,40 +17,9 @@
     });
   }
 
-  function thickenToNodeWeight(root, entry, color) {
-    if (
-      entry.id === 'north-node' ||
-      entry.id === 'south-node' ||
-      entry.id === 'lilith' ||
-      entry.id === 'part-of-fortune' ||
-      entry.fitMode === 'letter' ||
-      entry.fitMode === 'hebrew-letter' ||
-      entry.fitMode === 'greek-letter' ||
-      String(entry.asset || '').startsWith('assets/zodiac-glyphs/') ||
-      String(entry.asset || '').startsWith('assets/element-glyphs/') ||
-      String(entry.asset || '').startsWith('assets/aspect-glyphs/')
-    ) return;
-
-    root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
-      const fill = node.getAttribute('fill');
-      const stroke = node.getAttribute('stroke');
-      const current = parseFloat(node.getAttribute('stroke-width')) || 0;
-      if (stroke && stroke !== 'none') {
-        node.setAttribute('stroke', color);
-        node.setAttribute('stroke-width', String(current + 0.9));
-      } else if (fill && fill !== 'none') {
-        node.setAttribute('stroke', color);
-        node.setAttribute('stroke-width', '1.15');
-        node.setAttribute('paint-order', 'stroke fill');
-      }
-      node.setAttribute('stroke-linecap', 'round');
-      node.setAttribute('stroke-linejoin', 'round');
-    });
-  }
-
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=23');
+    const response = await fetch(path + '?v=24');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -192,7 +161,6 @@
     else art = textGlyph(parent, entry, color);
 
     art.classList.add('relphi-canonical-glyph', 'relphi-glyph-' + entry.id);
-    thickenToNodeWeight(art, entry, color);
     await new Promise(resolve => requestAnimationFrame(resolve));
     fit(art, radius, padding, entry, bubbleStrokeWidth);
     return art;
