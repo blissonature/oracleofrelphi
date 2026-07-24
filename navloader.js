@@ -123,6 +123,14 @@
     }, retryOrFail);
   }
 
+  function loadCanonicalSkyWheel() {
+    appendScript('relphi-glyph-registry-v1.js?v=19', function () {
+      appendScript('relphi-glyph-component-v1.js?v=19', function () {
+        appendScript('sky-chart-wheel-canonical-component-v1.js?v=1');
+      });
+    });
+  }
+
   function loadEnhancements() {
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
@@ -153,9 +161,9 @@
         'sky-chart-provenance-fix.js?v=1',
         'sky-chart-extra-points-support-v1.js?v=3',
         'sky-chart-calculated-points-v1.js?v=4',
-        'sky-chart-wheel-unified-marker-renderer-v4.js?v=2',
         'sky-chart-special-vector-color-v1.js?v=1'
       ].forEach(function (src) { appendScript(src); });
+      loadCanonicalSkyWheel();
 
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);
