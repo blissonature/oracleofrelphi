@@ -5,7 +5,7 @@
 
   const BUTTON_ID = 'snapshotCardRowArrangement';
   const STATUS_ID = 'drawingBoardSnapshotStatus';
-  const LIB_URL = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+  const LIB_URL = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
   let queued = false;
   let libraryPromise = null;
 
@@ -36,12 +36,16 @@
   }
 
   function loadLibrary() {
-    if (window.html2canvas) return Promise.resolve(window.html2canvas);
+    if (window.htmlToImage?.toPng) return Promise.resolve(window.htmlToImage);
     if (libraryPromise) return libraryPromise;
     libraryPromise = new Promise(function (resolve, reject) {
       const existing = document.querySelector('script[src="' + LIB_URL + '"]');
       if (existing) {
-        existing.addEventListener('load', function () { resolve(window.html2canvas); }, { once:true });
+        if (window.htmlToImage?.toPng) return resolve(window.htmlToImage);
+        existing.addEventListener('load', function () {
+          if (window.htmlToImage?.toPng) resolve(window.htmlToImage);
+          else reject(new Error('Snapshot library loaded without becoming available.'));
+        }, { once:true });
         existing.addEventListener('error', function () { reject(new Error('Snapshot library did not load.')); }, { once:true });
         return;
       }
@@ -50,7 +54,7 @@
       script.async = true;
       script.crossOrigin = 'anonymous';
       script.addEventListener('load', function () {
-        if (window.html2canvas) resolve(window.html2canvas);
+        if (window.htmlToImage?.toPng) resolve(window.htmlToImage);
         else reject(new Error('Snapshot library loaded without becoming available.'));
       }, { once:true });
       script.addEventListener('error', function () { reject(new Error('Snapshot library did not load.')); }, { once:true });
@@ -71,21 +75,13 @@
     }));
   }
 
-  function downloadCanvas(canvas, name) {
-    return new Promise(function (resolve, reject) {
-      canvas.toBlob(function (blob) {
-        if (!blob) return reject(new Error('The browser could not create the PNG file.'));
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-        resolve();
-      }, 'image/png');
-    });
+  function triggerDownload(dataUrl, name) {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
   async function saveSnapshot(panel, destination, button) {
@@ -98,25 +94,42 @@
     setStatus(destination, 'Preparing the arrangement snapshot…', false);
     try {
       await waitForImages(target);
-      const html2canvas = await loadLibrary();
-      const scale = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
-      const canvas = await html2canvas(target, {
-        backgroundColor:null,
-        scale:scale,
-        useCORS:true,
-        allowTaint:false,
-        logging:false,
-        imageTimeout:10000,
-        scrollX:-window.scrollX,
-        scrollY:-window.scrollY,
-        windowWidth:document.documentElement.clientWidth,
-        windowHeight:document.documentElement.clientHeight
+      const htmlToImage = await loadLibrary();
+      const rect = target.getBoundingClientRect();
+      const width = Math.max(1, Math.ceil(target.scrollWidth || rect.width));
+      const height = Math.max(1, Math.ceil(target.scrollHeight || rect.height));
+      const maxPixels = 24000000;
+      const idealRatio = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+      const safeRatio = Math.min(idealRatio, Math.sqrt(maxPixels / Math.max(1, width * height)));
+      const dataUrl = await htmlToImage.toPng(target, {
+        cacheBust:true,
+        pixelRatio:Math.max(1, safeRatio),
+        width:width,
+        height:height,
+        canvasWidth:Math.ceil(width * Math.max(1, safeRatio)),
+        canvasHeight:Math.ceil(height * Math.max(1, safeRatio)),
+        backgroundColor:'transparent',
+        skipAutoScale:true,
+        includeQueryParams:true,
+        style:{
+          margin:'0',
+          transform:'none',
+          transformOrigin:'top left'
+        },
+        filter:function (node) {
+          return !(node instanceof Element && (
+            node.id === BUTTON_ID ||
+            node.id === STATUS_ID ||
+            node.closest?.('#board-options-export')
+          ));
+        }
       });
-      await downloadCanvas(canvas, filename(panel));
+      triggerDownload(dataUrl, filename(panel));
       setStatus(destination, 'Arrangement snapshot saved as PNG.', false);
     } catch (error) {
       console.error('Drawing Board snapshot failed:', error);
-      setStatus(destination, 'The PNG snapshot could not be created. Reload once and try again.', true);
+      const detail = String(error?.message || error || 'unknown capture error').replace(/\s+/g, ' ').slice(0, 180);
+      setStatus(destination, 'Snapshot failed: ' + detail, true);
     } finally {
       button.disabled = false;
     }
@@ -157,7 +170,7 @@
     window.addEventListener('relphi:drawing-board-restored', schedule);
 
     const style = document.createElement('style');
-    style.textContent = '#shortListPanel #snapshotCardRowArrangement{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}#shortListPanel .drawing-board-snapshot-status{flex:1 0 100%;min-height:1.2em;color:#4f4741;font-size:.74rem;font-weight:650}#shortListPanel .drawing-board-snapshot-status[data-error="true"]{color:#b81712}';
+    style.textContent = '#shortListPanel #snapshotCardRowArrangement{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}#shortListPanel .drawing-board-snapshot-status{flex:1 0 100%;min-height:1.2em;color:#4f4741;font-size:.74rem;font-weight:650;overflow-wrap:anywhere}#shortListPanel .drawing-board-snapshot-status[data-error="true"]{color:#b81712}';
     document.head.appendChild(style);
   }
 
