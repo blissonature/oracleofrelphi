@@ -123,10 +123,25 @@
     }, retryOrFail);
   }
 
+  function ensureCanonicalSkyBootStyle() {
+    if (document.getElementById('relphi-canonical-sky-boot-style')) return;
+    const style = document.createElement('style');
+    style.id = 'relphi-canonical-sky-boot-style';
+    style.textContent = [
+      '.sky-chart-page .unified-sky-wheel svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
+      '.sky-chart-page #chartOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
+      '.sky-chart-page #currentSkyOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
+      '.sky-chart-page .sky-output-box svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback){visibility:hidden!important}',
+      '.sky-chart-page svg.relphi-canonical-ready,.sky-chart-page svg.relphi-canonical-fallback{visibility:visible!important}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+
   function loadCanonicalSkyWheel() {
+    ensureCanonicalSkyBootStyle();
     appendScript('relphi-glyph-registry-v1.js?v=19', function () {
       appendScript('relphi-glyph-component-v1.js?v=19', function () {
-        appendScript('sky-chart-wheel-canonical-component-v1.js?v=1');
+        appendScript('sky-chart-wheel-canonical-component-v1.js?v=2');
       });
     });
   }
