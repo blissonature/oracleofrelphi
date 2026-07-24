@@ -1,0 +1,238 @@
+name: Rebuild Glyph Trainer cleanly
+
+on:
+  push:
+    paths:
+      - '.github/workflows/rebuild-glyph-trainer-clean.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rebuild Glyph Trainer from Master Glyph Set
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          old = Path('glyphs.html').read_text(encoding='utf-8')
+          match = re.search(r'const glyphs = (\[.*?\]);\s*const myths =', old, re.S)
+          if not match:
+              raise SystemExit('Could not extract glyph data from glyphs.html')
+          glyph_json = match.group(1)
+
+          data_js = "// Glyph Trainer content data. Artwork comes exclusively from the Master Glyph Set.\n" + \
+                    "window.RelphiGlyphTrainerData = Object.freeze(" + glyph_json + ");\n"
+          Path('glyph-trainer-data-v1.js').write_text(data_js, encoding='utf-8')
+
+          html = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Glyph Trainer · Oracle of Relphi</title>
+  <link href="style.css?v=346" rel="stylesheet"/>
+  <link href="favicon.ico" rel="icon" type="image/x-icon"/>
+  <style>
+    .glyph-page{--relphi-red:#dc1f18;--relphi-soft:#faf8f7;--relphi-line:rgba(220,31,24,.22);max-width:1080px;margin:3.25rem auto 1.5rem;padding:0 1rem}
+    .glyph-page h1,.glyph-page h2,.glyph-page h3{text-align:center}.glyph-page h1{font-size:clamp(2.25rem,6vw,3.75rem);margin:.2rem 0}.glyph-page h2{margin:.1rem 0 .65rem;font-size:clamp(1.35rem,3vw,2rem)}
+    .glyph-subtitle{max-width:680px;margin:.15rem auto 1rem;color:#333;line-height:1.35;font-style:italic;text-align:center;font-size:clamp(.98rem,1.8vw,1.16rem)}
+    .glyph-panel{background:var(--relphi-soft);border:2px solid var(--relphi-red);border-radius:1.15em;box-shadow:0 4px 18px rgba(0,0,0,.045);padding:.82em;margin:.9em auto}
+    .glyph-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5em}.glyph-input,.glyph-select,.glyph-btn{font:inherit;font-size:.92rem;border-radius:2em}
+    .glyph-input,.glyph-select{background:#fff;border:1px solid var(--relphi-line);color:#111;padding:.52em .78em}.glyph-input{min-width:min(100%,300px)}
+    .glyph-btn{background:var(--relphi-red);color:#fff;border:0;box-shadow:0 4px 16px rgba(220,31,24,.11);cursor:pointer;padding:.58em 1.05em}.glyph-btn.secondary{background:#111}.glyph-btn:hover,.glyph-btn:focus{outline:2px solid currentColor;outline-offset:2px}
+    .glyph-results-meta,.glyph-note{text-align:center;color:#555;line-height:1.55}.glyph-note{max-width:860px;margin:.8em auto 0}
+    .glyph-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75em;margin-top:.75em}
+    .glyph-card{background:#fff;border:1px solid var(--relphi-line);border-radius:1.2em;padding:1em;box-shadow:0 2px 14px rgba(0,0,0,.035);display:flex;flex-direction:column;gap:.65em;min-width:0;overflow:hidden}
+    .glyph-card-header{display:grid;grid-template-columns:4.5rem 1fr;gap:.8em;align-items:center}
+    .glyph-symbol,.glyph-flash-symbol{display:grid;place-items:center;background:#111;color:#fff;overflow:visible}
+    .glyph-symbol{width:4.5rem;height:4.5rem;border-radius:1rem}.glyph-symbol>svg{width:3.35rem;height:3.35rem;display:block;overflow:visible}
+    .glyph-flash{max-width:560px;margin:0 auto;text-align:center}.glyph-flash-symbol{width:min(34vw,7.5rem);height:min(34vw,7.5rem);margin:.25em auto;border-radius:1.35rem}.glyph-flash-symbol>svg{width:min(20vw,5rem);height:min(20vw,5rem);display:block;overflow:visible}
+    .glyph-name{font-size:1.2rem;font-weight:800;margin:0;overflow-wrap:anywhere}.glyph-kind{color:var(--relphi-red);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;font-weight:800;margin:.25em 0 0}
+    .glyph-facts{display:grid;gap:.45em}.glyph-fact b{color:var(--relphi-red)}.glyph-pill{display:inline-flex;align-items:center;border:1px solid var(--relphi-line);border-radius:999px;background:#fff;padding:.28em .7em;font-size:.88rem;font-weight:700;margin:.15em .2em .15em 0}
+    .glyph-flash-answer{background:#fff;border:1px solid var(--relphi-line);border-radius:1em;padding:.75em;margin-top:.75em;text-align:left}
+    .cat-planet .glyph-symbol{background:linear-gradient(135deg,#111,#4b1b1b)}.cat-angle .glyph-symbol{background:linear-gradient(135deg,#111,#5a3a0f)}.cat-sign .glyph-symbol{background:linear-gradient(135deg,#111,#1f3a4a)}.cat-element .glyph-symbol{background:linear-gradient(135deg,#111,#3a2c18)}.cat-aspect .glyph-symbol{background:linear-gradient(135deg,#111,#2f3b25)}.cat-hebrew .glyph-symbol{background:linear-gradient(135deg,#111,#3a2c50)}.cat-greek .glyph-symbol{background:linear-gradient(135deg,#111,#3c3150)}
+    @media(max-width:640px){.glyph-card-header{grid-template-columns:1fr;text-align:center}.glyph-symbol{margin:0 auto}}
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <main class="glyph-page">
+    <h1>Glyph <span class="red">Trainer</span></h1>
+    <p class="glyph-subtitle">Glyph practice for planets, signs, aspects, Hebrew letters, and Greek letters.</p>
+
+    <section class="glyph-panel" aria-label="Glyph trainer controls">
+      <div class="glyph-row">
+        <input class="glyph-input" id="glyphSearch" type="search" placeholder="Search glyph, name, meaning, hook, tradition, tarot, or deity"/>
+        <select class="glyph-select" id="glyphCategory">
+          <option value="all">All glyphs and symbols</option><option value="planet">Planets and points</option><option value="angle">Angles and lettered positions</option><option value="sign">Zodiac signs</option><option value="element">Elements</option><option value="aspect">Aspects</option><option value="hebrew">Hebrew letters</option><option value="greek">Greek letters</option>
+        </select>
+        <button class="glyph-btn" id="showBrowse" type="button">Browse</button>
+        <button class="glyph-btn secondary" id="showFlash" type="button">Flashcard</button>
+        <button class="glyph-btn secondary" id="showAllGlyphs" type="button">Show All</button>
+      </div>
+      <p class="glyph-results-meta" id="glyphMeta">—</p>
+    </section>
+
+    <section class="glyph-panel" id="flashPanel" hidden aria-label="Glyph flashcard practice">
+      <h2>Flashcard Practice</h2>
+      <div class="glyph-flash">
+        <div class="glyph-flash-symbol" id="flashSymbol"></div>
+        <div class="glyph-row">
+          <button class="glyph-btn secondary" id="prevFlash" type="button">Back</button>
+          <button class="glyph-btn" id="revealFlash" type="button">Reveal</button>
+          <button class="glyph-btn secondary" id="nextFlash" type="button">Next</button>
+        </div>
+        <div class="glyph-flash-answer" id="flashAnswer" hidden></div>
+      </div>
+      <p class="glyph-note">Flashcards use the current search and category filter.</p>
+    </section>
+
+    <section class="glyph-panel" id="browsePanel" aria-label="Glyph browsing results">
+      <h2>Glyph Library</h2>
+      <div class="glyph-grid" id="glyphGrid"></div>
+    </section>
+  </main>
+
+  <script src="glyph-trainer-data-v1.js?v=1"></script>
+  <script src="relphi-glyph-registry-v1.js?v=19"></script>
+  <script src="relphi-glyph-component-v1.js?v=20"></script>
+  <script src="glyph-trainer-page-v2.js?v=1"></script>
+  <script src="navloader.js"></script>
+</body>
+</html>
+'''
+          Path('glyphs.html').write_text(html, encoding='utf-8')
+
+          app = r'''// Glyph Trainer page behavior. Artwork is rendered only by the Master Glyph Set component.
+(function () {
+  'use strict';
+
+  const data = Array.from(window.RelphiGlyphTrainerData || []);
+  const component = window.RelphiGlyphComponent;
+  const registry = window.RelphiGlyphRegistry;
+  if (!component || !registry) throw new Error('Master Glyph Set failed to load.');
+
+  const el = {
+    search: document.getElementById('glyphSearch'),
+    category: document.getElementById('glyphCategory'),
+    meta: document.getElementById('glyphMeta'),
+    grid: document.getElementById('glyphGrid'),
+    browsePanel: document.getElementById('browsePanel'),
+    flashPanel: document.getElementById('flashPanel'),
+    showBrowse: document.getElementById('showBrowse'),
+    showFlash: document.getElementById('showFlash'),
+    showAll: document.getElementById('showAllGlyphs'),
+    flashSymbol: document.getElementById('flashSymbol'),
+    flashAnswer: document.getElementById('flashAnswer'),
+    revealFlash: document.getElementById('revealFlash'),
+    nextFlash: document.getElementById('nextFlash'),
+    prevFlash: document.getElementById('prevFlash')
+  };
+
+  let flashIndex = 0;
+  let flashSet = data.slice();
+  let showAll = false;
+
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const fact = (label, value) => value ? `<div class="glyph-fact"><b>${escapeHtml(label)}:</b> ${escapeHtml(value)}</div>` : '';
+
+  function filtered() {
+    const query = el.search.value.trim().toLowerCase();
+    const category = el.category.value;
+    return data.filter(glyph => {
+      const categoryMatch = category === 'all' || glyph.category === category;
+      const textMatch = !query || Object.values(glyph).join(' ').toLowerCase().includes(query);
+      return categoryMatch && textMatch;
+    });
+  }
+
+  async function renderMasterGlyph(holder, glyph, radius) {
+    holder.replaceChildren();
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '-32 -32 64 64');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', glyph.name);
+    holder.appendChild(svg);
+    await component.draw(svg, glyph.name, { radius, padding: 2, color: 'currentColor' });
+  }
+
+  function cardMarkup(glyph, index) {
+    return `<article class="glyph-card cat-${escapeHtml(glyph.category)}" data-glyph-index="${index}">
+      <div class="glyph-card-header">
+        <div class="glyph-symbol" data-glyph-art aria-label="Symbol ${escapeHtml(glyph.name)}"></div>
+        <div><p class="glyph-kind">${escapeHtml(glyph.type)}</p><h3 class="glyph-name">${escapeHtml(glyph.name)}</h3><span class="glyph-pill">Pronounced: ${escapeHtml(glyph.pronunciation)}</span></div>
+      </div>
+      <div class="glyph-facts">
+        ${fact('Plain meaning', glyph.plain)}${fact('Memory hook', glyph.hook)}${fact('Tradition', glyph.tradition)}${fact('Degrees', glyph.degrees)}${fact('Starter orb', glyph.orb)}${fact('Element', glyph.element)}${fact('Mode', glyph.mode)}${fact('Deity bridge', glyph.deity)}${fact('Tarot bridge', glyph.tarot)}${fact('Numeric value', glyph.numeric)}
+      </div>
+    </article>`;
+  }
+
+  async function renderBrowse() {
+    const query = el.search.value.trim();
+    const category = el.category.value;
+    if (!showAll && !query && category === 'all') {
+      el.grid.innerHTML = '<p class="glyph-note">Choose a category, search a term, or use Show All.</p>';
+      el.meta.textContent = 'No glyphs loaded yet.';
+      flashSet = data.slice();
+      await renderFlash(false);
+      return;
+    }
+
+    const results = filtered();
+    el.grid.innerHTML = results.map((glyph, index) => cardMarkup(glyph, index)).join('') || '<p>No glyphs match this filter yet.</p>';
+    el.meta.textContent = `${results.length} glyph${results.length === 1 ? '' : 's'} shown.`;
+    flashSet = results.length ? results : data.slice();
+    flashIndex = Math.min(flashIndex, Math.max(0, flashSet.length - 1));
+
+    await Promise.all(Array.from(el.grid.querySelectorAll('[data-glyph-art]')).map((holder, index) => renderMasterGlyph(holder, results[index], 25)));
+    await renderFlash(false);
+  }
+
+  function flashAnswerMarkup(glyph) {
+    return `<h3>${escapeHtml(glyph.name)}</h3>${fact('Type', glyph.type)}${fact('Pronunciation', glyph.pronunciation)}${fact('Plain meaning', glyph.plain)}${fact('Memory hook', glyph.hook)}${fact('Tradition', glyph.tradition)}${fact('Degrees', glyph.degrees)}${fact('Starter orb', glyph.orb)}${fact('Tarot bridge', glyph.tarot)}${fact('Numeric value', glyph.numeric)}`;
+  }
+
+  async function renderFlash(showAnswer) {
+    if (!flashSet.length) flashSet = data.slice();
+    const glyph = flashSet[flashIndex % flashSet.length];
+    await renderMasterGlyph(el.flashSymbol, glyph, 27);
+    el.flashAnswer.innerHTML = flashAnswerMarkup(glyph);
+    el.flashAnswer.hidden = !showAnswer;
+  }
+
+  el.search.addEventListener('input', () => { showAll = false; renderBrowse(); });
+  el.category.addEventListener('change', () => { showAll = false; renderBrowse(); });
+  el.showAll.addEventListener('click', () => { showAll = true; el.category.value = 'all'; el.search.value = ''; renderBrowse(); });
+  el.showBrowse.addEventListener('click', () => { el.browsePanel.hidden = false; el.flashPanel.hidden = true; renderBrowse(); });
+  el.showFlash.addEventListener('click', () => { el.flashPanel.hidden = false; el.browsePanel.hidden = true; renderFlash(false); });
+  el.revealFlash.addEventListener('click', () => renderFlash(true));
+  el.prevFlash.addEventListener('click', () => { flashIndex = (flashIndex - 1 + flashSet.length) % flashSet.length; renderFlash(false); });
+  el.nextFlash.addEventListener('click', () => { flashIndex = (flashIndex + 1) % flashSet.length; renderFlash(false); });
+
+  renderBrowse();
+})();
+'''
+          Path('glyph-trainer-page-v2.js').write_text(app, encoding='utf-8')
+
+          # Remove obsolete trainer-specific renderer; the new page calls the Master Glyph Set directly.
+          obsolete = Path('glyph-trainer-canonical-v1.js')
+          if obsolete.exists(): obsolete.unlink()
+          PY
+
+      - name: Remove temporary workflow
+        run: rm .github/workflows/rebuild-glyph-trainer-clean.yml
+
+      - name: Commit rebuilt trainer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Rebuild Glyph Trainer around Master Glyph Set"
+          git push
