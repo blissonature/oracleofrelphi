@@ -1,4 +1,4 @@
-// Focused Drawing Board interactions: direct undo/redo, targeted draws, full card detail links, and mobile-safe controls.
+// Focused Drawing Board interactions: direct undo/redo, targeted draws, full card detail links, and mobile-safe zoom.
 (function () {
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
@@ -23,20 +23,27 @@
     return true;
   }
 
-  function ensureForegroundLayer(panel) {
+  function restoreToolbarPlacement(panel) {
     const drawer = panel.querySelector('.card-row-drawing-board');
-    if (!drawer) return;
-    let layer = drawer.querySelector(':scope > .relphi-board-ui-layer');
-    if (!layer) {
-      layer = document.createElement('div');
-      layer.className = 'relphi-board-ui-layer';
-      drawer.insertBefore(layer, drawer.firstChild);
-    }
+    const workspace = panel.querySelector('.card-row-workspace');
     const headerToolbar = panel.querySelector('.card-row-icon-toolbar');
     const workspaceToolbar = panel.querySelector('.card-row-workspace-toolbar');
-    [headerToolbar, workspaceToolbar].forEach(function (toolbar) {
-      if (toolbar && toolbar.parentElement !== layer) layer.appendChild(toolbar);
-    });
+    const layer = drawer?.querySelector(':scope > .relphi-board-ui-layer');
+
+    if (drawer && headerToolbar && headerToolbar.parentElement === layer) {
+      drawer.insertBefore(headerToolbar, workspace || layer);
+    }
+    if (workspace && workspaceToolbar && workspaceToolbar.parentElement === layer) {
+      workspace.insertBefore(workspaceToolbar, workspace.firstChild);
+    }
+    layer?.remove();
+  }
+
+  function iconSvg(kind) {
+    const path = kind === 'undo'
+      ? '<path d="M9 7 4 12l5 5"/><path d="M4 12h9a7 7 0 0 1 7 7"/>'
+      : '<path d="m15 7 5 5-5 5"/><path d="M20 12h-9a7 7 0 0 0-7 7"/>';
+    return '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
   }
 
   function directHistoryControls(panel) {
@@ -48,11 +55,11 @@
       group.className = 'board-header-group board-header-group--history';
       toolbar.insertBefore(group, toolbar.querySelector('#clearShortList') || null);
     }
-    [[panel.querySelector('#undoShortList'), '↶', 'Undo'], [panel.querySelector('#redoShortList'), '↷', 'Redo']].forEach(function (entry) {
+    [[panel.querySelector('#undoShortList'), 'undo', 'Undo'], [panel.querySelector('#redoShortList'), 'redo', 'Redo']].forEach(function (entry) {
       const button = entry[0];
       if (!button) return;
       button.classList.add('board-history-icon');
-      button.textContent = entry[1];
+      button.innerHTML = iconSvg(entry[1]);
       button.setAttribute('aria-label', entry[2]);
       button.title = entry[2];
       if (button.parentElement !== group) group.appendChild(button);
@@ -201,13 +208,80 @@
     });
   }
 
+  function installPinchZoom(panel) {
+    const workspace = panel.querySelector('.card-row-workspace');
+    if (!workspace || workspace.dataset.relphiPinchZoom === 'true') return;
+    workspace.dataset.relphiPinchZoom = 'true';
+
+    let pinching = false;
+    let startDistance = 0;
+    let startZoom = 100;
+    let disabledCards = [];
+
+    function zoomInput() {
+      return workspace.querySelector('.card-row-workspace-toolbar input[type="range"]') ||
+        panel.querySelector('.card-row-workspace-toolbar input[type="range"]');
+    }
+    function distance(touches) {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.hypot(dx, dy);
+    }
+    function begin(event) {
+      if (event.touches.length !== 2) return;
+      const input = zoomInput();
+      if (!input) return;
+      pinching = true;
+      startDistance = distance(event.touches);
+      startZoom = Number(input.value) || 100;
+      disabledCards = Array.from(workspace.querySelectorAll('[draggable="true"], .card-row-item [data-row-card]')).map(function (node) {
+        const wasDraggable = node.draggable;
+        node.draggable = false;
+        return [node, wasDraggable];
+      });
+      workspace.classList.add('relphi-is-pinching');
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    function move(event) {
+      if (!pinching || event.touches.length !== 2) return;
+      const input = zoomInput();
+      if (!input || !startDistance) return;
+      const min = Number(input.min || 25);
+      const max = Number(input.max || 250);
+      const next = Math.max(min, Math.min(max, startZoom * (distance(event.touches) / startDistance)));
+      input.value = String(next);
+      input.dispatchEvent(new Event('input', { bubbles:true }));
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    function end(event) {
+      if (!pinching || event.touches.length > 1) return;
+      pinching = false;
+      disabledCards.forEach(function (entry) {
+        if (entry[0].isConnected) entry[0].draggable = entry[1];
+      });
+      disabledCards = [];
+      workspace.classList.remove('relphi-is-pinching');
+      zoomInput()?.dispatchEvent(new Event('change', { bubbles:true }));
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+
+    workspace.addEventListener('touchstart', begin, { capture:true, passive:false });
+    workspace.addEventListener('touchmove', move, { capture:true, passive:false });
+    workspace.addEventListener('touchend', end, { capture:true, passive:false });
+    workspace.addEventListener('touchcancel', end, { capture:true, passive:false });
+  }
+
   function enhance() {
     const panel = root();
     if (!panel || panel.hidden) return;
-    ensureForegroundLayer(panel);
+    restoreToolbarPlacement(panel);
     directHistoryControls(panel);
     installPositionStickerEditor(panel);
     keepBoardCloseAfterPlaceholder(panel);
+    installPinchZoom(panel);
     panel.querySelectorAll('.card-row-item').forEach(function (item) {
       if (isEmptyItem(item)) {
         item.classList.add('relphi-clickable-placeholder');
@@ -227,26 +301,32 @@
     const style = document.createElement('style');
     style.id = 'relphi-drawing-board-interactions-style';
     style.textContent = [
-      '#shortListPanel{overflow:visible!important}',
-      '#shortListPanel .card-row-drawing-board{position:relative!important;overflow:visible!important;isolation:isolate!important}',
-      '#shortListPanel .relphi-board-ui-layer{position:sticky!important;top:.35rem!important;z-index:2147483000!important;display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:space-between!important;gap:.45rem!important;width:100%!important;overflow:visible!important;pointer-events:none!important;transform:none!important}',
-      '#shortListPanel .relphi-board-ui-layer>.card-row-icon-toolbar,#shortListPanel .relphi-board-ui-layer>.card-row-workspace-toolbar{position:relative!important;z-index:2147483001!important;overflow:visible!important;pointer-events:auto!important;transform:none!important;isolation:isolate!important}',
-      '#shortListPanel .card-row-workspace,#shortListPanel .short-list-row.card-row-board,#shortListPanel .card-row-board-grid,#shortListPanel .card-row-item,#shortListPanel .or-card,#shortListPanel .or-card-art{z-index:0!important}',
+      '#shortListPanel .relphi-board-ui-layer{display:none!important}',
+      '#shortListPanel .card-row-workspace{position:relative!important;isolation:isolate!important}',
+      '#shortListPanel .card-row-workspace-toolbar{position:relative!important;z-index:1000!important;background:#fff!important;opacity:1!important}',
+      '#shortListPanel .card-row-board,#shortListPanel .card-row-board-grid,#shortListPanel .card-row-item{position:relative!important;z-index:1!important}',
       '#shortListPanel .board-header-group--history{display:inline-flex!important;align-items:center!important;gap:.4rem!important;min-width:5.4rem!important}',
-      '#shortListPanel .board-history-icon{appearance:none!important;display:inline-grid!important;place-items:center!important;width:2.5rem!important;min-width:2.5rem!important;max-width:2.5rem!important;height:2.5rem!important;min-height:2.5rem!important;padding:0!important;border:2px solid #171412!important;border-radius:9px!important;background:#fff!important;background-color:#fff!important;color:#171412!important;box-shadow:0 2px 5px rgba(0,0,0,.12)!important;font-size:1.45rem!important;font-weight:900!important;line-height:1!important;opacity:1!important}',
-      'html body #shortListPanel .card-row-icon-toolbar #drawRandomRowCard,html body #shortListPanel #drawRandomRowCard{appearance:none!important;-webkit-appearance:none!important;border:2px solid #b81712!important;background:#dc1f18!important;background-color:#dc1f18!important;background-image:none!important;color:#fff!important;box-shadow:none!important}',
-      'html body #shortListPanel .card-row-workspace-toolbar input[type="range"],html body #shortListPanel .card-row-zoom-label input{accent-color:#dc1f18!important}',
-      'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-webkit-slider-runnable-track{background:linear-gradient(90deg,#dc1f18,#dc1f18)!important}',
+      '#shortListPanel .board-history-icon{appearance:none!important;display:inline-grid!important;place-items:center!important;width:2.6rem!important;min-width:2.6rem!important;max-width:2.6rem!important;height:2.6rem!important;min-height:2.6rem!important;padding:0!important;border:2px solid #171412!important;border-radius:9px!important;background:#fff!important;color:#171412!important;box-shadow:none!important;opacity:1!important}',
+      '#shortListPanel .board-history-icon svg{display:block!important;width:1.4rem!important;height:1.4rem!important}',
+      'html body #shortListPanel #drawRandomRowCard,html body #shortListPanel #drawRandomRowCard:hover,html body #shortListPanel #drawRandomRowCard:focus,html body #shortListPanel #drawRandomRowCard:active{appearance:none!important;-webkit-appearance:none!important;border:2px solid #b81712!important;background:#dc1f18!important;background-color:#dc1f18!important;background-image:none!important;color:#fff!important;box-shadow:none!important}',
+      'html body #shortListPanel .card-row-workspace-toolbar input[type="range"],html body #shortListPanel .card-row-workspace-toolbar meter,html body #shortListPanel .card-row-workspace-toolbar progress{accent-color:#dc1f18!important;color:#dc1f18!important}',
+      'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-webkit-slider-runnable-track{background:#d8cec5!important}',
       'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-webkit-slider-thumb{background:#fff!important;border:2px solid #171412!important}',
+      'html body #shortListPanel .card-row-workspace-toolbar meter::-webkit-meter-optimum-value,html body #shortListPanel .card-row-workspace-toolbar progress::-webkit-progress-value{background:#dc1f18!important}',
+      'html body #shortListPanel .card-row-workspace-toolbar meter::-webkit-meter-bar,html body #shortListPanel .card-row-workspace-toolbar progress::-webkit-progress-bar{background:#d8cec5!important}',
       'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-moz-range-track{background:#d8cec5!important}',
       'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-moz-range-progress{background:#dc1f18!important}',
       'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-moz-range-thumb{background:#fff!important;border:2px solid #171412!important}',
+      '#shortListPanel .board-arrange-flyout{position:relative!important;z-index:1100!important;max-width:100%!important}',
+      '#shortListPanel .board-arrange-flyout .card-row-control-block{position:static!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;background:#fff!important;opacity:1!important;overflow:visible!important}',
+      '#shortListPanel .board-arrange-flyout .board-options-body{background:#fff!important;opacity:1!important}',
       '#shortListPanel .relphi-card-title-link{cursor:pointer!important;text-decoration:none!important;border-radius:.25rem!important;transition:background-color .15s ease,color .15s ease!important}',
       '#shortListPanel .relphi-card-title-link:hover,#shortListPanel .relphi-card-title-link:focus-visible{background:#fff1ee!important;color:#b81712!important;outline:none!important}',
       '#shortListPanel .relphi-position-prefab-select{display:block!important;width:100%!important;max-width:100%!important;min-height:2.45rem!important;margin-top:.35rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;color:#171412!important;padding:.45rem .6rem!important;box-sizing:border-box!important}',
       '#shortListPanel .relphi-clickable-placeholder,#shortListPanel .relphi-clickable-placeholder .card-row-drop-card,#shortListPanel .relphi-clickable-placeholder .card-row-card{cursor:pointer!important}',
       '#shortListPanel .relphi-targeted-draw-pending{outline:4px solid rgba(220,31,24,.38)!important;outline-offset:4px!important;cursor:wait!important}',
-      '@media(max-width:700px){#shortListPanel .relphi-board-ui-layer{position:sticky!important;top:.2rem!important;display:grid!important;grid-template-columns:1fr!important;gap:.3rem!important}#shortListPanel .relphi-board-ui-layer>.card-row-icon-toolbar,#shortListPanel .relphi-board-ui-layer>.card-row-workspace-toolbar{width:100%!important;max-width:100%!important;box-sizing:border-box!important}#shortListPanel .board-arrange-flyout{position:static!important;width:auto!important;max-width:100%!important}#shortListPanel .board-arrange-flyout>.card-row-control-block,#shortListPanel .board-arrange-flyout .card-row-control-block{position:fixed!important;left:.5rem!important;right:.5rem!important;top:5.5rem!important;width:auto!important;max-width:none!important;max-height:calc(100dvh - 6rem)!important;margin:0!important;overflow:auto!important;overscroll-behavior:contain!important;z-index:2147483640!important;border-radius:12px!important;box-shadow:0 14px 40px rgba(0,0,0,.24)!important}#shortListPanel .board-arrange-flyout .board-options-body{display:grid!important;grid-template-columns:1fr!important;width:100%!important;max-width:100%!important;overflow:visible!important}#shortListPanel .card-row-more-options{scroll-margin-top:7rem!important}}'
+      '#shortListPanel .card-row-workspace.relphi-is-pinching,#shortListPanel .card-row-workspace.relphi-is-pinching *{touch-action:none!important;user-select:none!important;-webkit-user-select:none!important}',
+      '@media(max-width:700px){#shortListPanel .board-arrange-flyout{display:flex!important;flex-wrap:wrap!important;width:100%!important}#shortListPanel .board-arrange-flyout>.board-arrange-trigger{flex:0 0 auto!important}#shortListPanel .board-arrange-flyout>.card-row-control-block{flex:1 0 100%!important;margin-top:.35rem!important;max-height:none!important;overflow:visible!important;border:1px solid #d8cec5!important;border-radius:10px!important;box-shadow:none!important}#shortListPanel .board-arrange-flyout .board-options-body{display:grid!important;grid-template-columns:1fr!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}}'
     ].join('');
     document.head.appendChild(style);
 
