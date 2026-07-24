@@ -129,7 +129,7 @@
 
   function loadFilterGlyphs() {
     if (document.querySelector('script[src^="sky-chart-filter-glyphs-v1.js"]')) return;
-    const script = document.createElement('script'); script.src = 'sky-chart-filter-glyphs-v1.js?v=1'; script.async = false; document.body.appendChild(script);
+    const script = document.createElement('script'); script.src = 'sky-chart-filter-glyphs-v1.js?v=2'; script.async = false; document.body.appendChild(script);
   }
   function run() { document.querySelectorAll('body *').forEach(function (element) { if (/RELATIONSHIP READING/i.test(element.textContent || '')) rewrite(element); }); }
   function start() { installStyles(); loadFilterGlyphs(); run(); let queued=false; new MutationObserver(function () { if (queued) return; queued=true; requestAnimationFrame(function () { queued=false; run(); }); }).observe(document.body,{childList:true,subtree:true,characterData:true}); }
