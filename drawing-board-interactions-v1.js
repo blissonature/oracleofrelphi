@@ -1,4 +1,4 @@
-// Focused Drawing Board interactions: direct undo/redo, targeted draws, full card detail links, and stable foreground controls.
+// Focused Drawing Board interactions: direct undo/redo, targeted draws, full card detail links, and mobile-safe controls.
 (function () {
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
@@ -48,9 +48,7 @@
       group.className = 'board-header-group board-header-group--history';
       toolbar.insertBefore(group, toolbar.querySelector('#clearShortList') || null);
     }
-    const undo = panel.querySelector('#undoShortList');
-    const redo = panel.querySelector('#redoShortList');
-    [[undo, '↶', 'Undo'], [redo, '↷', 'Redo']].forEach(function (entry) {
+    [[panel.querySelector('#undoShortList'), '↶', 'Undo'], [panel.querySelector('#redoShortList'), '↷', 'Redo']].forEach(function (entry) {
       const button = entry[0];
       if (!button) return;
       button.classList.add('board-history-icon');
@@ -82,11 +80,9 @@
     if (!panel || activeTarget || !isEmptyItem(item)) return;
     const draw = panel.querySelector('#drawRandomRowCard');
     if (!draw || draw.disabled) return;
-
     activeTarget = item;
     item.classList.add('relphi-targeted-draw-pending', 'relphi-target-draw-proxy');
     item.classList.remove('card-row-placeholder-item');
-
     const emptyItems = Array.from(panel.querySelectorAll('.card-row-item')).filter(isEmptyItem);
     const first = emptyItems[0] || item;
     const swapped = first !== item && swapItems(item, first);
@@ -150,10 +146,9 @@
     const field = panel.querySelector('#rowPositionLabels');
     if (!field || field.dataset.relphiStickerEditor === 'true') return;
     field.dataset.relphiStickerEditor = 'true';
-
     let userEditing = false;
-    field.addEventListener('focus', function () { userEditing = true; });
-    field.addEventListener('blur', function () { window.setTimeout(function () { userEditing = false; }, 150); });
+    field.addEventListener('focus', function () { userEditing = true; field.dataset.relphiManualValue = field.value; });
+    field.addEventListener('blur', function () { window.setTimeout(function () { userEditing = false; }, 200); });
     field.addEventListener('input', function (event) {
       if (event.isTrusted) {
         userEditing = true;
@@ -179,7 +174,6 @@
         select.selectedIndex = 0;
       });
     }
-
     const datalistId = field.getAttribute('list');
     const datalist = datalistId ? document.getElementById(datalistId) : panel.querySelector('#rowStickerPresetList');
     const values = datalist ? Array.from(datalist.querySelectorAll('option')).map(function (option) {
@@ -194,12 +188,26 @@
     }
   }
 
+  function keepBoardCloseAfterPlaceholder(panel) {
+    const add = panel.querySelector('#addCardPlaceholder');
+    if (!add || add.dataset.relphiCloseOptions === 'true') return;
+    add.dataset.relphiCloseOptions = 'true';
+    add.addEventListener('click', function () {
+      window.setTimeout(function () {
+        const options = panel.querySelector('.card-row-more-options');
+        if (options) options.open = false;
+        panel.querySelector('.card-row-workspace')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      }, 80);
+    });
+  }
+
   function enhance() {
     const panel = root();
     if (!panel || panel.hidden) return;
     ensureForegroundLayer(panel);
     directHistoryControls(panel);
     installPositionStickerEditor(panel);
+    keepBoardCloseAfterPlaceholder(panel);
     panel.querySelectorAll('.card-row-item').forEach(function (item) {
       if (isEmptyItem(item)) {
         item.classList.add('relphi-clickable-placeholder');
@@ -216,7 +224,6 @@
   function start() {
     if (document.documentElement.dataset.relphiDrawingBoardInteractions === 'true') return;
     document.documentElement.dataset.relphiDrawingBoardInteractions = 'true';
-
     const style = document.createElement('style');
     style.id = 'relphi-drawing-board-interactions-style';
     style.textContent = [
@@ -225,17 +232,21 @@
       '#shortListPanel .relphi-board-ui-layer{position:sticky!important;top:.35rem!important;z-index:2147483000!important;display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:space-between!important;gap:.45rem!important;width:100%!important;overflow:visible!important;pointer-events:none!important;transform:none!important}',
       '#shortListPanel .relphi-board-ui-layer>.card-row-icon-toolbar,#shortListPanel .relphi-board-ui-layer>.card-row-workspace-toolbar{position:relative!important;z-index:2147483001!important;overflow:visible!important;pointer-events:auto!important;transform:none!important;isolation:isolate!important}',
       '#shortListPanel .card-row-workspace,#shortListPanel .short-list-row.card-row-board,#shortListPanel .card-row-board-grid,#shortListPanel .card-row-item,#shortListPanel .or-card,#shortListPanel .or-card-art{z-index:0!important}',
-      '#shortListPanel .board-arrange-flyout,#shortListPanel .board-arrange-flyout .card-row-control-block,#shortListPanel .card-row-more-options[open],#shortListPanel .card-row-more-options[open] .card-row-composer{position:relative!important;z-index:2147483002!important;overflow:visible!important}',
       '#shortListPanel .board-header-group--history{display:inline-flex!important;align-items:center!important;gap:.4rem!important;min-width:5.4rem!important}',
-      '#shortListPanel .board-history-icon{appearance:none!important;display:inline-grid!important;place-items:center!important;width:2.5rem!important;min-width:2.5rem!important;max-width:2.5rem!important;height:2.5rem!important;min-height:2.5rem!important;padding:0!important;border:2px solid #171412!important;border-radius:9px!important;background:#fff!important;color:#171412!important;box-shadow:0 2px 5px rgba(0,0,0,.12)!important;font-size:1.45rem!important;font-weight:900!important;line-height:1!important;opacity:1!important}',
-      '#shortListPanel #drawRandomRowCard{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important;box-shadow:none!important}',
-      '#shortListPanel .card-row-position-label,#shortListPanel .row-sticker-prefab-controls{position:relative!important;z-index:20!important;overflow:visible!important}',
-      '#shortListPanel #rowPositionLabels,#shortListPanel .relphi-position-prefab-select{display:block!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;margin-top:.35rem!important;position:relative!important;z-index:21!important}',
-      '#shortListPanel .relphi-position-prefab-select{min-height:2.45rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;color:#171412!important;padding:.45rem .6rem!important}',
+      '#shortListPanel .board-history-icon{appearance:none!important;display:inline-grid!important;place-items:center!important;width:2.5rem!important;min-width:2.5rem!important;max-width:2.5rem!important;height:2.5rem!important;min-height:2.5rem!important;padding:0!important;border:2px solid #171412!important;border-radius:9px!important;background:#fff!important;background-color:#fff!important;color:#171412!important;box-shadow:0 2px 5px rgba(0,0,0,.12)!important;font-size:1.45rem!important;font-weight:900!important;line-height:1!important;opacity:1!important}',
+      'html body #shortListPanel .card-row-icon-toolbar #drawRandomRowCard,html body #shortListPanel #drawRandomRowCard{appearance:none!important;-webkit-appearance:none!important;border:2px solid #b81712!important;background:#dc1f18!important;background-color:#dc1f18!important;background-image:none!important;color:#fff!important;box-shadow:none!important}',
+      'html body #shortListPanel .card-row-workspace-toolbar input[type="range"],html body #shortListPanel .card-row-zoom-label input{accent-color:#dc1f18!important}',
+      'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-webkit-slider-runnable-track{background:linear-gradient(90deg,#dc1f18,#dc1f18)!important}',
+      'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-webkit-slider-thumb{background:#fff!important;border:2px solid #171412!important}',
+      'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-moz-range-track{background:#d8cec5!important}',
+      'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-moz-range-progress{background:#dc1f18!important}',
+      'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-moz-range-thumb{background:#fff!important;border:2px solid #171412!important}',
+      '#shortListPanel .relphi-card-title-link{cursor:pointer!important;text-decoration:none!important;border-radius:.25rem!important;transition:background-color .15s ease,color .15s ease!important}',
+      '#shortListPanel .relphi-card-title-link:hover,#shortListPanel .relphi-card-title-link:focus-visible{background:#fff1ee!important;color:#b81712!important;outline:none!important}',
+      '#shortListPanel .relphi-position-prefab-select{display:block!important;width:100%!important;max-width:100%!important;min-height:2.45rem!important;margin-top:.35rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;color:#171412!important;padding:.45rem .6rem!important;box-sizing:border-box!important}',
       '#shortListPanel .relphi-clickable-placeholder,#shortListPanel .relphi-clickable-placeholder .card-row-drop-card,#shortListPanel .relphi-clickable-placeholder .card-row-card{cursor:pointer!important}',
       '#shortListPanel .relphi-targeted-draw-pending{outline:4px solid rgba(220,31,24,.38)!important;outline-offset:4px!important;cursor:wait!important}',
-      '#shortListPanel .relphi-card-title-link{cursor:pointer!important;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.16em}',
-      '#shortListPanel .relphi-card-title-link:focus-visible{outline:3px solid rgba(220,31,24,.28)!important;outline-offset:2px!important}'
+      '@media(max-width:700px){#shortListPanel .relphi-board-ui-layer{position:sticky!important;top:.2rem!important;display:grid!important;grid-template-columns:1fr!important;gap:.3rem!important}#shortListPanel .relphi-board-ui-layer>.card-row-icon-toolbar,#shortListPanel .relphi-board-ui-layer>.card-row-workspace-toolbar{width:100%!important;max-width:100%!important;box-sizing:border-box!important}#shortListPanel .board-arrange-flyout{position:static!important;width:auto!important;max-width:100%!important}#shortListPanel .board-arrange-flyout>.card-row-control-block,#shortListPanel .board-arrange-flyout .card-row-control-block{position:fixed!important;left:.5rem!important;right:.5rem!important;top:5.5rem!important;width:auto!important;max-width:none!important;max-height:calc(100dvh - 6rem)!important;margin:0!important;overflow:auto!important;overscroll-behavior:contain!important;z-index:2147483640!important;border-radius:12px!important;box-shadow:0 14px 40px rgba(0,0,0,.24)!important}#shortListPanel .board-arrange-flyout .board-options-body{display:grid!important;grid-template-columns:1fr!important;width:100%!important;max-width:100%!important;overflow:visible!important}#shortListPanel .card-row-more-options{scroll-margin-top:7rem!important}}'
     ].join('');
     document.head.appendChild(style);
 
@@ -247,7 +258,6 @@
       event.stopImmediatePropagation();
       drawInto(item);
     }, true);
-
     document.addEventListener('click', function (event) {
       const title = event.target.closest?.(PANEL + ' .card-row-board .or-card-title-banner');
       if (!title) return;
@@ -255,7 +265,6 @@
       event.stopImmediatePropagation();
       revealFullCard(cardIdentity(title));
     }, true);
-
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       const title = event.target.closest?.(PANEL + ' .card-row-board .or-card-title-banner');
@@ -263,7 +272,6 @@
       event.preventDefault();
       revealFullCard(cardIdentity(title));
     }, true);
-
     new MutationObserver(function () { requestAnimationFrame(enhance); }).observe(document.body, {
       childList:true, subtree:true, attributes:true, attributeFilter:['hidden','class']
     });
