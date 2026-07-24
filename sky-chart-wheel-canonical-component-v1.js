@@ -1,4 +1,4 @@
-// SkyChart wheel: one canonical inscribed glyph component per placement, in root SVG coordinates.
+// SkyChart wheel: one atomic canonical inscribed-glyph render per wheel.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -7,8 +7,11 @@
   const WHEEL_SELECTOR = '.unified-sky-wheel svg,#chartOutput svg,#currentSkyOutput svg,.sky-output-box svg';
   const PLACEMENT_SELECTOR = '.chart-wheel-placement-stick';
   const LAYER_CLASS = 'relphi-canonical-marker-layer';
+  const STAGING_CLASS = 'relphi-canonical-marker-staging';
   const HOST_CLASS = 'relphi-canonical-marker-host';
   const LEADER_CLASS = 'relphi-canonical-marker-leader';
+  const READY_CLASS = 'relphi-canonical-ready';
+  const FALLBACK_CLASS = 'relphi-canonical-fallback';
   const RED = '#dc1f18';
   const BLUE = '#3166e2';
   const PURPLE = '#7651c9';
@@ -21,6 +24,9 @@
 
   let queued = false;
   let rendering = false;
+  let dirty = false;
+  let timer = 0;
+  const generations = new WeakMap();
 
   function svgNode(name) {
     return document.createElementNS(NS, name);
@@ -35,15 +41,34 @@
     return String(value || '').replace(/[\uFE0E\uFE0F]/g, '').trim();
   }
 
-  function rootPoint(node, x, y) {
-    const matrix = node && node.getCTM && node.getCTM();
-    if (!matrix) return { x:x, y:y };
+  function nextGeneration(svg) {
+    const value = (generations.get(svg) || 0) + 1;
+    generations.set(svg, value);
+    return value;
+  }
+
+  function isCurrent(svg, generation) {
+    return svg.isConnected && generations.get(svg) === generation;
+  }
+
+  function pointInRoot(svg, node, x, y) {
     try {
-      const point = new DOMPoint(x, y).matrixTransform(matrix);
-      return { x:point.x, y:point.y };
-    } catch (_) {
-      return { x:x, y:y };
-    }
+      const nodeMatrix = node && node.getScreenCTM && node.getScreenCTM();
+      const rootMatrix = svg && svg.getScreenCTM && svg.getScreenCTM();
+      if (nodeMatrix && rootMatrix) {
+        const screenPoint = new DOMPoint(x, y).matrixTransform(nodeMatrix);
+        const rootPoint = screenPoint.matrixTransform(rootMatrix.inverse());
+        return { x:rootPoint.x, y:rootPoint.y };
+      }
+    } catch (_) {}
+    try {
+      const matrix = node && node.getCTM && node.getCTM();
+      if (matrix) {
+        const point = new DOMPoint(x, y).matrixTransform(matrix);
+        return { x:point.x, y:point.y };
+      }
+    } catch (_) {}
+    return { x:x, y:y };
   }
 
   function wheelCenter(svg) {
@@ -93,26 +118,6 @@
     return null;
   }
 
-  function colorFromNode(node) {
-    if (!node) return null;
-    const values = [
-      node.getAttribute && node.getAttribute('fill'),
-      node.getAttribute && node.getAttribute('stroke'),
-      node.style && node.style.fill,
-      node.style && node.style.stroke
-    ];
-    try {
-      const style = getComputedStyle(node);
-      values.push(style.fill, style.stroke, style.color);
-    } catch (_) {}
-    for (const value of values) {
-      const text = String(value || '').trim();
-      if (!text || text === 'none' || text === 'transparent' || /rgba\([^)]*,\s*0\s*\)$/.test(text)) continue;
-      if (/^(#|rgb|hsl)/i.test(text)) return text;
-    }
-    return null;
-  }
-
   function skyIdentity(group) {
     const signature = [
       group.className && group.className.baseVal,
@@ -121,27 +126,22 @@
       group.dataset && group.dataset.kind,
       group.getAttribute && group.getAttribute('aria-label')
     ].filter(Boolean).join(' ').toLowerCase();
-    if (/(sky.?c|third)/.test(signature)) return 'skyC';
-    if (/(sky.?b|current.?sky|comparison|blue)/.test(signature)) return 'skyB';
+    if (/(sky[-_ ]?c|third)/.test(signature)) return 'skyC';
+    if (/(sky[-_ ]?b|current[-_ ]?sky|comparison)/.test(signature)) return 'skyB';
     return 'skyA';
   }
 
-  function placementColor(group, sky) {
-    const glyph = group.querySelector('.chart-wheel-marker-glyph,[data-glyph-id]');
-    const knob = group.querySelector('circle.chart-wheel-stick-knob');
-    const leader = group.querySelector('line.chart-wheel-stick');
-    const explicit = colorFromNode(glyph) || colorFromNode(knob) || colorFromNode(leader);
-    if (explicit) return explicit;
+  function skyColor(sky) {
     return sky === 'skyB' ? BLUE : sky === 'skyC' ? PURPLE : RED;
   }
 
-  function contactForPlacement(group) {
+  function contactForPlacement(svg, group) {
     const contact = group.querySelector('circle.chart-wheel-contact-dot');
     if (contact) {
       const x = numberAttr(contact, 'cx');
       const y = numberAttr(contact, 'cy');
       if (Number.isFinite(x) && Number.isFinite(y)) {
-        const root = rootPoint(contact, x, y);
+        const root = pointInRoot(svg, contact, x, y);
         if (Number.isFinite(root.x) && Number.isFinite(root.y)) return root;
       }
     }
@@ -150,7 +150,7 @@
       const x = numberAttr(knob, 'cx');
       const y = numberAttr(knob, 'cy');
       if (Number.isFinite(x) && Number.isFinite(y)) {
-        const root = rootPoint(knob, x, y);
+        const root = pointInRoot(svg, knob, x, y);
         if (Number.isFinite(root.x) && Number.isFinite(root.y)) return root;
       }
     }
@@ -168,7 +168,7 @@
     const placements = [];
     Array.from(svg.querySelectorAll(PLACEMENT_SELECTOR)).forEach(function (group, index) {
       const entry = entryFromPlacement(group);
-      const contact = contactForPlacement(group);
+      const contact = contactForPlacement(svg, group);
       if (!entry || !contact) return;
       const dx = contact.x - center.x;
       const dy = contact.y - center.y;
@@ -176,18 +176,16 @@
       const radial = { x:dx / length, y:dy / length };
       const tangent = { x:-radial.y, y:radial.x };
       const sky = skyIdentity(group);
-      const color = placementColor(group, sky);
-      const outward = laneDistance(sky, radius);
       placements.push({
         index:index,
         group:group,
         entry:entry,
         sky:sky,
-        color:color,
+        color:skyColor(sky),
         contact:contact,
         radial:radial,
         tangent:tangent,
-        outward:outward,
+        outward:laneDistance(sky, radius),
         tangential:0
       });
     });
@@ -234,23 +232,20 @@
     }
     style.textContent = [
       '.' + LAYER_CLASS + '{pointer-events:none}',
+      '.' + STAGING_CLASS + '{visibility:hidden!important;pointer-events:none}',
       '.' + HOST_CLASS + '{pointer-events:none}',
       '.' + LEADER_CLASS + '{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;vector-effect:non-scaling-stroke}',
-      '.chart-wheel-marker-glyph{display:none!important;visibility:hidden!important;opacity:0!important}',
-      'circle.chart-wheel-stick-knob{display:none!important;visibility:hidden!important;opacity:0!important}',
-      'line.chart-wheel-stick{display:none!important;visibility:hidden!important;opacity:0!important}',
-      '.relphi-marker-unit,.relphi-wheel-planet-glyph,.relphi-approved-glyph,.relphi-fortune-vector,svg.relphi-colored-glyph,svg.relphi-bold-inline-glyph,image.relphi-bubble-glyph-image{display:none!important;visibility:hidden!important;opacity:0!important}'
+      'svg.' + READY_CLASS + ' .chart-wheel-marker-glyph{display:none!important;visibility:hidden!important;opacity:0!important}',
+      'svg.' + READY_CLASS + ' circle.chart-wheel-stick-knob{display:none!important;visibility:hidden!important;opacity:0!important}',
+      'svg.' + READY_CLASS + ' line.chart-wheel-stick{display:none!important;visibility:hidden!important;opacity:0!important}',
+      'svg.' + READY_CLASS + ' .relphi-marker-unit,svg.' + READY_CLASS + ' .relphi-wheel-planet-glyph,svg.' + READY_CLASS + ' .relphi-approved-glyph,svg.' + READY_CLASS + ' .relphi-fortune-vector,svg.' + READY_CLASS + ' svg.relphi-colored-glyph,svg.' + READY_CLASS + ' svg.relphi-bold-inline-glyph,svg.' + READY_CLASS + ' image.relphi-bubble-glyph-image{display:none!important;visibility:hidden!important;opacity:0!important}'
     ].join('');
   }
 
-  function purgeLegacy(svg) {
-    svg.querySelectorAll('.relphi-sky-glyph-layer,.relphi-v2-glyph-host,.canonical-sky-glyph').forEach(function (node) { node.remove(); });
-    svg.querySelectorAll(':scope > .' + LAYER_CLASS).forEach(function (node) { node.remove(); });
-  }
-
-  function createLayer(svg) {
+  function createLayer(svg, generation) {
     const layer = svgNode('g');
-    layer.classList.add(LAYER_CLASS);
+    layer.classList.add(LAYER_CLASS, STAGING_CLASS);
+    layer.dataset.generation = String(generation);
     layer.setAttribute('aria-label', 'Canonical sky placement glyphs');
     const leaders = svgNode('g');
     leaders.classList.add('relphi-canonical-leader-layer');
@@ -298,16 +293,11 @@
     return bubble.ready.then(function () {
       host.dataset.ready = 'true';
       return host;
-    }).catch(function (error) {
-      host.remove();
-      console.error('Canonical SkyChart glyph failed:', item.entry.id, error);
-      return null;
     });
   }
 
-  function audit(svg, placements, layer, radius) {
+  function audit(placements, layer, radius) {
     const hosts = Array.from(layer.querySelectorAll('.' + HOST_CLASS));
-    const ids = hosts.map(function (host) { return host.dataset.glyphId; });
     let oversized = 0;
     hosts.forEach(function (host) {
       try {
@@ -315,7 +305,7 @@
         if (box.width > radius * 2.55 || box.height > radius * 2.55) oversized += 1;
       } catch (_) {}
     });
-    const result = {
+    return {
       registry:'RelphiGlyphRegistry',
       component:'RelphiGlyphComponent.createBubble',
       variant:'inscribed',
@@ -323,38 +313,85 @@
       hosts:hosts.length,
       leaders:layer.querySelectorAll('.' + LEADER_CLASS).length,
       oversized:oversized,
-      ids:ids,
       valid:hosts.length === placements.length && oversized === 0
     };
+  }
+
+  function publish(svg, layer, placements, radius, generation) {
+    if (!isCurrent(svg, generation)) {
+      layer.remove();
+      return null;
+    }
+    const result = audit(placements, layer, radius);
+    if (!result.valid) {
+      layer.remove();
+      if (!svg.querySelector(':scope > .' + LAYER_CLASS + ':not(.' + STAGING_CLASS + ')')) {
+        svg.classList.add(FALLBACK_CLASS);
+      }
+      return result;
+    }
+    svg.querySelectorAll(':scope > .' + LAYER_CLASS + ':not(.' + STAGING_CLASS + ')').forEach(function (oldLayer) {
+      oldLayer.remove();
+    });
+    layer.classList.remove(STAGING_CLASS);
+    svg.classList.remove(FALLBACK_CLASS);
+    svg.classList.add(READY_CLASS);
     svg.dataset.relphiCanonicalGlyphAudit = JSON.stringify(result);
     return result;
   }
 
   function renderWheel(svg) {
-    purgeLegacy(svg);
+    const generation = nextGeneration(svg);
     const radius = standardRadius(svg);
     const placements = collectPlacements(svg, radius);
-    if (!placements.length) return Promise.resolve(null);
+    if (!placements.length) {
+      if (!svg.querySelector(':scope > .' + LAYER_CLASS + ':not(.' + STAGING_CLASS + ')')) {
+        svg.classList.add(FALLBACK_CLASS);
+      }
+      return Promise.resolve(null);
+    }
     solveCollisions(placements, radius);
-    const layer = createLayer(svg);
-    const jobs = [];
-    placements.forEach(function (item) {
+    const layer = createLayer(svg, generation);
+    const jobs = placements.map(function (item) {
       const point = position(item);
       drawLeader(layer.leaders, item, point, radius);
-      jobs.push(drawHost(layer.glyphs, item, point, radius));
+      return drawHost(layer.glyphs, item, point, radius);
     });
-    return Promise.allSettled(jobs).then(function () {
-      return audit(svg, placements, layer.root, radius);
+    return Promise.all(jobs).then(function () {
+      return publish(svg, layer.root, placements, radius, generation);
+    }).catch(function (error) {
+      layer.root.remove();
+      if (isCurrent(svg, generation) && !svg.querySelector(':scope > .' + LAYER_CLASS + ':not(.' + STAGING_CLASS + ')')) {
+        svg.classList.add(FALLBACK_CLASS);
+      }
+      console.error('Canonical SkyChart wheel render failed:', error);
+      return null;
+    });
+  }
+
+  function settleFrames(count) {
+    return new Promise(function (resolve) {
+      function step(remaining) {
+        if (remaining <= 0) return resolve();
+        requestAnimationFrame(function () { step(remaining - 1); });
+      }
+      step(count);
     });
   }
 
   function render() {
-    if (rendering) return;
+    if (rendering) {
+      dirty = true;
+      return;
+    }
     rendering = true;
+    dirty = false;
     queued = false;
     ensureStyles();
-    const wheels = Array.from(document.querySelectorAll(WHEEL_SELECTOR));
-    Promise.allSettled(wheels.map(renderWheel)).then(function (results) {
+    settleFrames(2).then(function () {
+      const wheels = Array.from(document.querySelectorAll(WHEEL_SELECTOR));
+      return Promise.allSettled(wheels.map(renderWheel));
+    }).then(function (results) {
       const audits = results.map(function (result) {
         return result.status === 'fulfilled' ? result.value : null;
       }).filter(Boolean);
@@ -364,35 +401,43 @@
       });
     }).finally(function () {
       rendering = false;
+      if (dirty) schedule(60);
     });
   }
 
-  function schedule() {
-    if (queued || rendering) return;
+  function schedule(delay) {
+    dirty = true;
+    if (rendering) return;
+    clearTimeout(timer);
+    if (queued && !delay) return;
     queued = true;
-    requestAnimationFrame(render);
+    timer = setTimeout(function () {
+      queued = false;
+      render();
+    }, Number.isFinite(Number(delay)) ? Number(delay) : 80);
   }
 
   function relevant(records) {
     return records.some(function (record) {
       return Array.from(record.addedNodes || []).some(function (node) {
-        if (!node || node.nodeType !== 1 || node.closest && node.closest('.' + LAYER_CLASS)) return false;
-        return node.matches && (node.matches(PLACEMENT_SELECTOR) || node.matches(WHEEL_SELECTOR)) ||
-          node.querySelector && (node.querySelector(PLACEMENT_SELECTOR) || node.querySelector(WHEEL_SELECTOR));
+        if (!node || node.nodeType !== 1) return false;
+        if (node.closest && node.closest('.' + LAYER_CLASS)) return false;
+        return (node.matches && (node.matches(PLACEMENT_SELECTOR) || node.matches(WHEEL_SELECTOR))) ||
+          (node.querySelector && (node.querySelector(PLACEMENT_SELECTOR) || node.querySelector(WHEEL_SELECTOR)));
       });
     });
   }
 
   function install() {
     ensureStyles();
-    schedule();
+    schedule(0);
     new MutationObserver(function (records) {
-      if (relevant(records)) schedule();
+      if (relevant(records)) schedule(100);
     }).observe(document.body, { childList:true, subtree:true });
-    window.addEventListener('resize', schedule, { passive:true });
-    window.addEventListener('relphi:sky-builder-v4-loaded', schedule);
-    window.addEventListener('relphi:extra-points-updated', schedule);
-    window.RelphiCanonicalSkyWheel = Object.freeze({ render:schedule });
+    window.addEventListener('resize', function () { schedule(120); }, { passive:true });
+    window.addEventListener('relphi:sky-builder-v4-loaded', function () { schedule(120); });
+    window.addEventListener('relphi:extra-points-updated', function () { schedule(120); });
+    window.RelphiCanonicalSkyWheel = Object.freeze({ render:function () { schedule(0); } });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
