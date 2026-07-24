@@ -127,6 +127,9 @@
       appendScript('planetary-hours-location-prompt.js?v=5');
       appendScript('standardize-zodiac-wheels.js?v=2');
     }
+    if (/(^|\/)tarot\.html$/.test(window.location.pathname)) {
+      appendScript('drawing-board-table-actions-v1.js?v=1');
+    }
     if (/(^|\/)sky-chart\.html$/.test(window.location.pathname)) {
       appendScript('sky-chart-static-dynamic.js?v=3');
       appendScript('sky-chart-aspect-duration-fix.js?v=2');
