@@ -1,100 +1,128 @@
-// Keeps comparison and relationship filter labels aligned with the canonical Sky Chart glyph vocabulary.
+// Renders Sky Chart comparison and relationship controls from the Master Glyph Set.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  const LABELS = new Map();
-  function add(glyph, name, aliases) {
-    [name].concat(aliases || []).forEach(function (alias) {
-      LABELS.set(normalize(alias), glyph + ' ' + name);
+  const aliases = new Map();
+  const names = new Map();
+  function add(identity, name, alternatives) {
+    names.set(identity, name);
+    [identity, name].concat(alternatives || []).forEach(function (value) {
+      aliases.set(normalize(value), identity);
     });
   }
   function normalize(value) {
     return String(value || '')
+      .replace(/[\uFE0E\uFE0F]/g, '')
       .replace(/[☉☽☿♀♂♃♄♅♆♇⯓⚷⚸☊☋⊗♈-♓☌☍□△✶⚺⚻⚼∠]/g, ' ')
       .replace(/\b(?:bQ|bN|bS|tD|tS|ASC|DSC|MC|IC|Vx)\b/g, ' ')
       .replace(/[^a-z0-9]+/gi, ' ')
-      .trim()
-      .toLowerCase();
+      .trim().toLowerCase();
   }
 
-  add('☉','Sun'); add('☽','Moon'); add('☿','Mercury'); add('♀','Venus'); add('♂','Mars');
-  add('♃','Jupiter'); add('♄','Saturn'); add('♅','Uranus'); add('♆','Neptune'); add('⯓','Pluto');
-  add('⚷','Chiron'); add('☊','North Node',['True Node','Mean Node','Ascending Node','Node']);
-  add('☋','South Node',['Descending Node']); add('⚸','Lilith',['Black Moon Lilith','BML']);
-  add('⊗','Part of Fortune',['Fortune','Pars Fortunae','PoF']); add('Vx','Vertex');
-  add('ASC','Ascendant',['Rising','ASC']); add('DSC','Descendant',['DSC']);
-  add('MC','Midheaven',['MC']); add('IC','Imum Coeli',['IC']);
-
-  [['♈','Aries'],['♉','Taurus'],['♊','Gemini'],['♋','Cancer'],['♌','Leo'],['♍','Virgo'],
-   ['♎','Libra'],['♏','Scorpio'],['♐','Sagittarius'],['♑','Capricorn'],['♒','Aquarius'],['♓','Pisces']]
-    .forEach(function (pair) { add(pair[0], pair[1]); });
-
-  add('☌','Conjunction',['Conjunct']);
-  add('⚺','Semisextile',['Semi-sextile','Semi sextile']);
-  add('U','Undecile');
-  add('D','Decile',['Semiquintile','Semi-quintile']);
-  add('N','Novile');
-  add('∠','Semisquare',['Semi-square','Semi square','Octile']);
-  add('S','Septile');
-  add('✶','Sextile');
-  add('Q','Quintile');
-  add('bN','Binovile',['Bi-novile','Bi novile']);
-  add('□','Square');
-  add('bS','Biseptile',['Bi-septile','Bi septile']);
-  add('tD','Tridecile',['Tri-decile','Tri decile']);
-  add('△','Trine');
-  add('⚼','Sesquiquadrate',['Sesquisquare','Sesqui-square','Tri-octile','Trioctile']);
-  add('bQ','Biquintile',['Bi-quintile','Bi quintile']);
-  add('⚻','Quincunx',['Inconjunct']);
-  add('tS','Triseptile',['Tri-septile','Tri septile']);
-  add('☍','Opposition',['Opposite']);
-
-  function decorateOption(option) {
-    if (!option || option.dataset.relphiCanonicalGlyphLabel === 'done') return;
-    const key = normalize(option.textContent || option.label || option.value);
-    const label = LABELS.get(key);
-    if (!label) return;
-    option.textContent = label;
-    option.label = label;
-    option.dataset.relphiCanonicalGlyphLabel = 'done';
-  }
-
-  function decorateButton(button) {
-    if (!button || button.dataset.relphiCanonicalGlyphLabel === 'done') return;
-    if (button.querySelector('svg,img,input,select')) return;
-    const key = normalize(button.textContent);
-    const label = LABELS.get(key);
-    if (!label) return;
-    button.textContent = label;
-    button.dataset.relphiCanonicalGlyphLabel = 'done';
-  }
+  add('sun','Sun'); add('moon','Moon'); add('mercury','Mercury'); add('venus','Venus'); add('mars','Mars');
+  add('jupiter','Jupiter'); add('saturn','Saturn'); add('uranus','Uranus'); add('neptune','Neptune'); add('pluto','Pluto');
+  add('chiron','Chiron'); add('north-node','North Node',['True Node','Mean Node','Ascending Node','Node']);
+  add('south-node','South Node',['Descending Node']); add('lilith','Lilith',['Black Moon Lilith','BML']);
+  add('part-of-fortune','Part of Fortune',['Fortune','Pars Fortunae','PoF']); add('vertex','Vertex',['Vx']);
+  add('asc','Ascendant',['Rising','ASC']); add('dsc','Descendant',['DSC']); add('mc','Midheaven',['MC']); add('ic','Imum Coeli',['IC']);
+  ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'].forEach(function (name) { add(name.toLowerCase(),name); });
+  add('conjunction','Conjunction',['Conjunct']); add('semi-sextile','Semisextile',['Semi-sextile','Semi sextile']);
+  add('octile','Semisquare',['Semi-square','Semi square','Octile']); add('sextile','Sextile'); add('quintile','Quintile');
+  add('square','Square'); add('trine','Trine'); add('tri-octile','Sesquiquadrate',['Sesquisquare','Sesqui-square','Tri-octile','Trioctile']);
+  add('bi-quintile','Biquintile',['Bi-quintile','Bi quintile']); add('quincunx','Quincunx',['Inconjunct']); add('opposition','Opposition',['Opposite']);
+  add('undecile','Undecile'); add('decile','Decile',['Semiquintile','Semi-quintile']); add('novile','Novile'); add('septile','Septile');
+  add('binovile','Binovile',['Bi-novile','Bi novile']); add('biseptile','Biseptile',['Bi-septile','Bi septile']);
+  add('tridecile','Tridecile',['Tri-decile','Tri decile']); add('triseptile','Triseptile',['Tri-septile','Tri septile']);
 
   function relevant(node) {
-    return !!node.closest([
-      '#chartPanel','#chartOutput','#currentSkyOutput',
-      '.relationship-list','.relationship-filters','.aspect-relationship-filters',
-      '[data-sky-chart-mode]','[data-comparison-filter]','[data-aspect-filter]','[data-zodiac-filter]'
+    return !!node.closest && !!node.closest([
+      '#chartPanel','#chartOutput','#currentSkyOutput','.relationship-list','.relationship-filters',
+      '.aspect-relationship-filters','[data-sky-chart-mode]','[data-comparison-filter]',
+      '[data-aspect-filter]','[data-zodiac-filter]','.relationship-list-row'
     ].join(','));
   }
 
+  function canonicalIcon(identity) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','-12 -12 24 24');
+    svg.setAttribute('aria-hidden','true');
+    svg.classList.add('relphi-filter-canonical-glyph');
+    const group = document.createElementNS('http://www.w3.org/2000/svg','g');
+    svg.appendChild(group);
+    const component = window.RelphiGlyphComponent;
+    if (component && window.RelphiGlyphRegistry && window.RelphiGlyphRegistry.resolve(identity)) {
+      component.draw(group, identity, { radius:9.5, padding:.5, color:'#111' }).catch(function () {});
+    } else {
+      const fallback = document.createElementNS('http://www.w3.org/2000/svg','text');
+      fallback.setAttribute('text-anchor','middle'); fallback.setAttribute('dominant-baseline','central'); fallback.setAttribute('font-size','8');
+      fallback.textContent = names.get(identity) || identity; group.appendChild(fallback);
+    }
+    return svg;
+  }
+
+  function identify(value) { return aliases.get(normalize(value)) || null; }
+
+  function decorateVisual(node) {
+    if (!node || node.dataset.relphiCanonicalGlyphAsset === 'done') return;
+    if (node.matches('input,select,textarea') || node.querySelector('input,select,textarea,img')) return;
+    const identity = identify(node.textContent || node.getAttribute('aria-label') || node.dataset.value || '');
+    if (!identity) return;
+    const name = names.get(identity) || node.textContent.trim();
+    node.textContent = '';
+    const icon = canonicalIcon(identity);
+    const label = document.createElement('span'); label.className = 'relphi-filter-canonical-name'; label.textContent = name;
+    node.append(icon,label);
+    node.dataset.relphiCanonicalGlyphAsset = 'done';
+  }
+
+  function cleanNativeOption(option) {
+    if (!option || option.dataset.relphiCanonicalGlyphAsset === 'done') return;
+    const identity = identify(option.textContent || option.label || option.value);
+    if (!identity) return;
+    // Native options cannot reliably render SVG. Use the canonical name, never a font glyph substitute.
+    const name = names.get(identity);
+    option.textContent = name; option.label = name;
+    option.dataset.relphiCanonicalGlyphAsset = 'done';
+  }
+
+  function decorateLeadingText(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function (node) {
+      const parent = node.parentElement;
+      if (!parent || parent.closest('.relphi-filter-canonical-label') || !relevant(parent)) return;
+      const raw = node.nodeValue || '';
+      const match = raw.match(/^\s*([☉☽☿♀♂♃♄♅♆♇⯓⚷⚸☊☋⊗♈-♓☌☍□△✶⚺⚻⚼∠]|bQ|ASC|DSC|MC|IC|Vx)\s+([A-Za-z][A-Za-z -]+)/);
+      if (!match) return;
+      const identity = identify(match[1] + ' ' + match[2]) || identify(match[2]);
+      if (!identity) return;
+      const wrap = document.createElement('span'); wrap.className = 'relphi-filter-canonical-label';
+      wrap.append(canonicalIcon(identity), document.createTextNode((names.get(identity) || match[2]) + raw.slice(match[0].length)));
+      node.parentNode.replaceChild(wrap,node);
+    });
+  }
+
+  function styles() {
+    if (document.getElementById('relphi-filter-canonical-styles')) return;
+    const style = document.createElement('style'); style.id = 'relphi-filter-canonical-styles';
+    style.textContent = '.relphi-filter-canonical-glyph{width:1.35em;height:1.35em;display:inline-block;flex:0 0 1.35em;vertical-align:-.28em;overflow:visible}.relphi-filter-canonical-name{min-width:0}.relphi-filter-canonical-label{display:inline-flex;align-items:center;gap:.28em}.relationship-list-row .relphi-filter-canonical-glyph,[role="option"] .relphi-filter-canonical-glyph{width:1.5em;height:1.5em;flex-basis:1.5em}';
+    document.head.appendChild(style);
+  }
+
   function run() {
-    document.querySelectorAll('option').forEach(function (option) {
-      if (relevant(option)) decorateOption(option);
+    styles();
+    document.querySelectorAll('option').forEach(function (option) { if (relevant(option)) cleanNativeOption(option); });
+    document.querySelectorAll('button,[role="option"],[role="checkbox"],[data-body],[data-planet],[data-point],[data-sign],[data-aspect],.relationship-list-row span,.relationship-list-row strong').forEach(function (node) {
+      if (relevant(node)) decorateVisual(node);
     });
-    document.querySelectorAll('button,[role="option"],[role="checkbox"]').forEach(function (button) {
-      if (relevant(button)) decorateButton(button);
-    });
+    document.querySelectorAll('.relationship-list-row,.relationship-list,.relationship-filters,.aspect-relationship-filters').forEach(decorateLeadingText);
   }
 
   let queued = false;
-  function schedule() {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(function () { queued = false; run(); });
-  }
-
+  function schedule() { if (queued) return; queued = true; requestAnimationFrame(function () { queued = false; run(); }); }
   run();
-  new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true });
+  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
   window.RelphiSkyFilterGlyphs = Object.freeze({ refresh:run });
 })();
