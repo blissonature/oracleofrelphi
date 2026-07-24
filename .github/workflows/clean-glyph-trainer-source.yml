@@ -1,0 +1,44 @@
+name: Clean Glyph Trainer source
+
+on:
+  push:
+    paths:
+      - '.github/workflows/clean-glyph-trainer-source.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  clean-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove conflicting SVG presentation rules
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('glyphs.html')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace(".glyph-symbol svg{width:3.35rem;height:3.35rem;display:block;stroke:currentColor;fill:none;stroke-width:12;stroke-linecap:round;stroke-linejoin:round;overflow:visible}", ".glyph-symbol svg{width:3.35rem;height:3.35rem;display:block;overflow:visible}")
+          text = text.replace(".glyph-flash-symbol svg{width:min(20vw,5rem);height:min(20vw,5rem);stroke:currentColor;fill:none;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;overflow:visible}", ".glyph-flash-symbol svg{width:min(20vw,5rem);height:min(20vw,5rem);display:block;overflow:visible}")
+          path.write_text(text, encoding='utf-8')
+
+          js = Path('glyph-trainer-canonical-v1.js')
+          source = js.read_text(encoding='utf-8')
+          start = source.find('  function installMasterGlyphReset() {')
+          end = source.find('  function identityFor(holder) {')
+          if start != -1 and end != -1 and end > start:
+              source = source[:start] + source[end:]
+          source = source.replace('    installMasterGlyphReset();\n', '')
+          js.write_text(source, encoding='utf-8')
+          PY
+      - name: Remove temporary workflow
+        run: rm .github/workflows/clean-glyph-trainer-source.yml
+      - name: Commit clean implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add glyphs.html glyph-trainer-canonical-v1.js .github/workflows/clean-glyph-trainer-source.yml
+          git commit -m "Clean Glyph Trainer canonical SVG styling"
+          git push
