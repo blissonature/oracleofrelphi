@@ -18,29 +18,6 @@
     return registry.resolve(cardName) || registry.resolve(holder.textContent);
   }
 
-  function normalizeLineWeight(root) {
-    root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(function (node) {
-      const paintOrder = String(node.getAttribute('paint-order') || '').trim();
-      const fill = node.getAttribute('fill');
-      const stroke = node.getAttribute('stroke');
-
-      // The shared renderer adds this outline to filled planet artwork.
-      // Remove it in Glyph Trainer so dense glyphs do not close up into scribbles.
-      if (paintOrder === 'stroke fill' && fill && fill !== 'none') {
-        node.removeAttribute('stroke');
-        node.removeAttribute('stroke-width');
-        node.removeAttribute('paint-order');
-      } else if (stroke && stroke !== 'none') {
-        // Restore the source SVG's native stroke after the renderer's +0.9 weight pass.
-        const width = parseFloat(node.getAttribute('stroke-width'));
-        if (Number.isFinite(width)) node.setAttribute('stroke-width', String(Math.max(0.75, width - 0.9)));
-      }
-
-      node.setAttribute('stroke-linecap', 'round');
-      node.setAttribute('stroke-linejoin', 'round');
-    });
-  }
-
   function renderHolder(holder) {
     const component = window.RelphiGlyphComponent;
     const entry = identityFor(holder);
@@ -61,8 +38,6 @@
       radius: holder.id === 'flashSymbol' ? 27 : 25,
       padding: 2,
       color: 'currentColor'
-    }).then(function () {
-      normalizeLineWeight(root);
     }).catch(function () {
       if (root.isConnected && holder.contains(root)) holder.textContent = fallback;
     });
