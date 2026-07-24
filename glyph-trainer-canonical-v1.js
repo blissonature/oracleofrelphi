@@ -5,6 +5,24 @@
   const NS = 'http://www.w3.org/2000/svg';
   let scanQueued = false;
 
+  function installMasterGlyphReset() {
+    if (document.getElementById('glyph-trainer-master-glyph-reset')) return;
+    const style = document.createElement('style');
+    style.id = 'glyph-trainer-master-glyph-reset';
+    style.textContent = [
+      '.glyph-page .glyph-symbol > svg[data-relphi-canonical-id],',
+      '.glyph-page .glyph-flash-symbol > svg[data-relphi-canonical-id]{',
+      'stroke:none;',
+      'fill:initial;',
+      'stroke-width:initial;',
+      'stroke-linecap:initial;',
+      'stroke-linejoin:initial;',
+      'overflow:visible;',
+      '}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+
   function identityFor(holder) {
     const registry = window.RelphiGlyphRegistry;
     if (!registry) return null;
@@ -55,6 +73,7 @@
   }
 
   function start() {
+    installMasterGlyphReset();
     scan();
     const page = document.querySelector('.glyph-page');
     if (!page) return;
