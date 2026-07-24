@@ -6,7 +6,6 @@
   const NS = 'http://www.w3.org/2000/svg';
   const symbolPattern = /^(☉|⊙|☽|☾|☿|♀|♂|♃|♄|♅|⛢|♆|♇|⚷|♈|♉|♊|♋|♌|♍|♎|♏|♐|♑|♒|♓|🜂|🜄|🜁|🜃|☌|☍|△|▲|□|■|✶|⚹|⚺|⚻|⚼|☊|☋|⚸|⊗)(?:\s+|$)/;
   const skipTags = new Set(['SCRIPT','STYLE','TEXTAREA','INPUT','OPTION','SELECT','CODE','PRE']);
-  const processing = new WeakSet();
 
   function colorFor(element) {
     const computed = getComputedStyle(element);
@@ -61,7 +60,7 @@
   }
 
   function canonicalizeElement(element) {
-    if (!(element instanceof Element) || processing.has(element) || skipTags.has(element.tagName)) return;
+    if (!(element instanceof Element) || skipTags.has(element.tagName)) return;
     if (element.closest('[data-relphi-canonical-skip="true"]')) return;
     if (element.querySelector('.relphi-site-glyph,[data-relphi-canonical-glyph]')) return;
 
@@ -75,9 +74,7 @@
     const entry = registry && (registry.get(identity) || registry.resolve(identity));
     if (!entry) return;
 
-    processing.add(element);
     if (!explicit && replaceSvgToken(element, entry)) return;
-
     const remainder = explicit ? '' : text.slice(match[0].length).trim();
     replaceHtmlToken(element, entry, remainder);
   }
@@ -85,7 +82,7 @@
   function scan(root) {
     if (!(root instanceof Element || root instanceof Document || root instanceof DocumentFragment)) return;
     if (root instanceof Element) canonicalizeElement(root);
-    root.querySelectorAll('[data-relphi-glyph],body *').forEach(canonicalizeElement);
+    root.querySelectorAll('*').forEach(canonicalizeElement);
   }
 
   const observer = new MutationObserver(function (records) {
