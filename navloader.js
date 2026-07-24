@@ -136,6 +136,7 @@
       appendScript('sky-ledger-glyph-alignment.js?v=1');
       appendScript('sky-chart-glyph-kill-switch.js?v=1');
       appendScript('sky-chart-coherence.js?v=1');
+      appendScript('sky-chart-relationship-progressive-reveal.js?v=1');
     }
   }
 
