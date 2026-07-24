@@ -1,0 +1,52 @@
+name: Repair Astrology Foundations mojibake
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/repair-astrology-foundations-mojibake.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Repair encoding artifacts
+        run: |
+          python -m pip install --quiet ftfy
+          python - <<'PY'
+          from pathlib import Path
+          from ftfy import fix_text
+
+          path = Path('astrology-foundations.html')
+          original = path.read_text(encoding='utf-8')
+          repaired = fix_text(original)
+
+          if repaired == original:
+              print('No encoding artifacts required repair.')
+          else:
+              path.write_text(repaired, encoding='utf-8', newline='')
+              print(f'Repaired {sum(a != b for a, b in zip(original, repaired))} differing character positions.')
+
+          workflow = Path('.github/workflows/repair-astrology-foundations-mojibake.yml')
+          workflow.unlink()
+          PY
+
+      - name: Commit repaired file and remove workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add astrology-foundations.html .github/workflows/repair-astrology-foundations-mojibake.yml
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "Clean mojibake from Astrology Foundations"
+          git push
