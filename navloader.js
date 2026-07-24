@@ -123,6 +123,14 @@
     }, retryOrFail);
   }
 
+  function loadCanonicalGlyphSource(onready) {
+    appendScript('relphi-glyph-registry-v1.js?v=24', function () {
+      appendScript('relphi-glyph-component-v1.js?v=24', function () {
+        appendScript('relphi-glyph-site-canonical-v1.js?v=1', onready);
+      });
+    });
+  }
+
   function loadEnhancements() {
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
@@ -135,11 +143,7 @@
       appendScript('planetary-hours-3d-link-v1.js?v=1');
     }
     if (/(^|\/)glyphs\.html$/.test(location.pathname)) {
-      appendScript('relphi-glyph-registry-v1.js?v=19', function () {
-        appendScript('relphi-glyph-component-v1.js?v=19', function () {
-          appendScript('glyph-trainer-canonical-v1.js?v=1');
-        });
-      });
+      appendScript('glyph-trainer-canonical-v1.js?v=1');
     }
 
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
@@ -170,7 +174,7 @@
   function start() {
     initAnalytics();
     ensureNavStyles();
-    loadEnhancements();
+    loadCanonicalGlyphSource(loadEnhancements);
     if (document.querySelector('.menu-container')) return initMenu();
     fetch('nav.html?v=14')
       .then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); })
