@@ -136,6 +136,11 @@
     activeHost = null;
   }
 
+  function dismiss() {
+    pinnedHost = null;
+    hide(true);
+  }
+
   function hostFromEvent(event) {
     return event.target && event.target.closest && event.target.closest(HOST_SELECTOR);
   }
@@ -171,10 +176,7 @@
         if (pinnedHost) show(host, event); else hide(true);
         return;
       }
-      if (pinnedHost) {
-        pinnedHost = null;
-        hide(true);
-      }
+      if (pinnedHost) dismiss();
     });
     document.addEventListener('keydown', function (event) {
       const host = hostFromEvent(event);
@@ -183,14 +185,10 @@
         pinnedHost = pinnedHost === host ? null : host;
         if (pinnedHost) show(host); else hide(true);
       }
-      if (event.key === 'Escape') {
-        pinnedHost = null;
-        hide(true);
-      }
+      if (event.key === 'Escape') dismiss();
     });
-    window.addEventListener('resize', function () {
-      if (activeHost) positionTooltip(activeHost);
-    }, { passive:true });
+    window.addEventListener('resize', dismiss, { passive:true });
+    window.addEventListener('scroll', dismiss, { passive:true, capture:true });
   }
 
   function install() {
