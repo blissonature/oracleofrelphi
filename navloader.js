@@ -142,13 +142,11 @@
         'sky-chart-aspect-duration-fix.js?v=2',
         'sky-chart-relationship-language.js?v=5',
         'sky-chart-related-relationships-v2.js?v=2',
-        'sky-ledger-glyph-alignment.js?v=1',
-        'sky-ledger-wheel-glyphs.js?v=2',
         'sky-chart-sign-cusps-v1.js?v=1',
-        'sky-chart-ph-glyph-style-v1.js?v=3',
-        'relphi-glyph-bubbles.js?v=2',
         'sky-chart-provenance-fix.js?v=1',
-        'sky-chart-wheel-label-collision-v1.js?v=5'
+        'relphi-glyph-registry-v1.js?v=19',
+        'relphi-glyph-component-v1.js?v=19',
+        'sky-chart-canonical-glyphs-chiron.js?v=13'
       ].forEach(function (src) { appendScript(src); });
 
       appendScript('sky-chart-builder-v4-unlock.js?v=1');

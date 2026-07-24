@@ -1,25 +1,25 @@
-// Separates the live Sky Chart lollipops as complete placement units.
+// Collision layout for complete SkyChart placement units using the unified glyph host.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
+  const SVG_NS = 'http://www.w3.org/2000/svg';
   const PLACEMENT = '.chart-wheel-placement-stick';
   const KNOB = 'circle.chart-wheel-stick-knob';
   const LEADER = 'line.chart-wheel-stick';
   const MOVABLE = [
     'circle.chart-wheel-stick-knob',
-    '.chart-wheel-marker-glyph',
+    '.relphi-sky-glyph-host',
     '.chart-wheel-marker-degree',
-    '.chart-wheel-marker-name',
-    'image.standardized-planet-glyph',
-    'image.relphi-bubble-glyph-image'
+    '.chart-wheel-marker-name'
   ].join(',');
-  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const WHEEL_SELECTOR = '#chartOutput svg,#currentSkyOutput svg,#tarot-chart svg,.sky-output-box svg';
   const BUBBLE_GAP = 5.5;
   const BOX_GAP = 2.5;
-  const MAX_TANGENTIAL_SHIFT = 58;
-  const MAX_RADIAL_SHIFT = 20;
-  const ITERATIONS = 42;
+  const MAX_TANGENTIAL_SHIFT = 64;
+  const MAX_RADIAL_SHIFT = 24;
+  const ITERATIONS = 48;
+
   let queued = false;
   let running = false;
 
@@ -28,13 +28,19 @@
     return Number.isFinite(result) ? result : NaN;
   }
 
-  function pointDistance(a, b) {
+  function validPoint(point) {
+    return point && Number.isFinite(point.x) && Number.isFinite(point.y);
+  }
+
+  function distance(a, b) {
     return Math.hypot(b.x - a.x, b.y - a.y);
   }
 
-  function viewBox(svg) {
-    const box = svg.viewBox && svg.viewBox.baseVal;
-    if (box && box.width > 0 && box.height > 0) return { x:box.x, y:box.y, width:box.width, height:box.height };
+  function rootViewBox(svg) {
+    const box = svg && svg.viewBox && svg.viewBox.baseVal;
+    if (box && box.width > 0 && box.height > 0) {
+      return { x:box.x, y:box.y, width:box.width, height:box.height };
+    }
     return {
       x:0,
       y:0,
@@ -43,17 +49,65 @@
     };
   }
 
-  function endpoint(line, suffix) {
-    return { x:num(line.getAttribute('x' + suffix)), y:num(line.getAttribute('y' + suffix)), suffix:suffix };
+  function rootPoint(node, x, y, svg) {
+    const sourceMatrix = node && node.getScreenCTM && node.getScreenCTM();
+    const rootMatrix = svg && svg.getScreenCTM && svg.getScreenCTM();
+    if (!sourceMatrix || !rootMatrix || typeof rootMatrix.inverse !== 'function') return { x:x, y:y };
+    try {
+      const point = svg.createSVGPoint();
+      point.x = x;
+      point.y = y;
+      return point.matrixTransform(sourceMatrix).matrixTransform(rootMatrix.inverse());
+    } catch (_) {
+      return { x:x, y:y };
+    }
   }
 
-  function validPoint(point) {
-    return point && Number.isFinite(point.x) && Number.isFinite(point.y);
+  function pointInNode(node, point, svg) {
+    const rootMatrix = svg && svg.getScreenCTM && svg.getScreenCTM();
+    const nodeMatrix = node && node.getScreenCTM && node.getScreenCTM();
+    if (!rootMatrix || !nodeMatrix || typeof nodeMatrix.inverse !== 'function') return point;
+    try {
+      const svgPoint = svg.createSVGPoint();
+      svgPoint.x = point.x;
+      svgPoint.y = point.y;
+      return svgPoint.matrixTransform(rootMatrix).matrixTransform(nodeMatrix.inverse());
+    } catch (_) {
+      return point;
+    }
+  }
+
+  function nodeBox(node, svg) {
+    let box;
+    try { box = node.getBBox(); } catch (_) { return null; }
+    if (!box || ![box.x, box.y, box.width, box.height].every(Number.isFinite)) return null;
+    const corners = [
+      rootPoint(node, box.x, box.y, svg),
+      rootPoint(node, box.x + box.width, box.y, svg),
+      rootPoint(node, box.x, box.y + box.height, svg),
+      rootPoint(node, box.x + box.width, box.y + box.height, svg)
+    ];
+    const xs = corners.map(function (point) { return point.x; });
+    const ys = corners.map(function (point) { return point.y; });
+    return {
+      x:Math.min.apply(Math, xs),
+      y:Math.min.apply(Math, ys),
+      width:Math.max.apply(Math, xs) - Math.min.apply(Math, xs),
+      height:Math.max.apply(Math, ys) - Math.min.apply(Math, ys)
+    };
   }
 
   function rememberTransform(node) {
     if (node.dataset.relphiLollipopBaseTransform != null) return;
     node.dataset.relphiLollipopBaseTransform = node.getAttribute('transform') || '__none__';
+  }
+
+  function rememberLeader(line) {
+    if (line.dataset.relphiLollipopLeader) return;
+    line.dataset.relphiLollipopLeader = 'true';
+    ['x1','y1','x2','y2'].forEach(function (name) {
+      line.dataset['relphiLollipop' + name.toUpperCase()] = line.getAttribute(name) || '0';
+    });
   }
 
   function restore(svg) {
@@ -77,58 +131,67 @@
     });
   }
 
-  function nodeBox(node) {
-    try {
-      const box = node.getBBox();
-      if (![box.x, box.y, box.width, box.height].every(Number.isFinite)) return null;
-      return { x:box.x, y:box.y, width:box.width, height:box.height };
-    } catch (_) {
-      return null;
-    }
+  function knobGeometry(knob, svg) {
+    const cx = num(knob.getAttribute('cx'));
+    const cy = num(knob.getAttribute('cy'));
+    const radius = num(knob.getAttribute('r'));
+    if (![cx, cy, radius].every(Number.isFinite) || radius <= 0) return null;
+    const center = rootPoint(knob, cx, cy, svg);
+    const edge = rootPoint(knob, cx + radius, cy, svg);
+    return { center:center, radius:Math.max(1, distance(center, edge)) };
   }
 
-  function leaderGeometry(line, center, wheelCenter, radius) {
+  function endpoint(line, suffix, svg) {
+    const x = num(line.getAttribute('x' + suffix));
+    const y = num(line.getAttribute('y' + suffix));
+    if (![x, y].every(Number.isFinite)) return null;
+    const point = rootPoint(line, x, y, svg);
+    point.suffix = suffix;
+    return point;
+  }
+
+  function leaderGeometry(line, center, wheelCenter, radius, svg) {
     if (!line) return null;
-    const one = endpoint(line, '1');
-    const two = endpoint(line, '2');
+    const one = endpoint(line, '1', svg);
+    const two = endpoint(line, '2', svg);
     if (!validPoint(one) || !validPoint(two)) return null;
-    const oneToKnob = pointDistance(one, center);
-    const twoToKnob = pointDistance(two, center);
+    const oneToKnob = distance(one, center);
+    const twoToKnob = distance(two, center);
     const outer = oneToKnob <= twoToKnob ? one : two;
     const anchor = outer === one ? two : one;
-    if (Math.min(oneToKnob, twoToKnob) > radius + 12) return null;
-    if (pointDistance(anchor, wheelCenter) >= pointDistance(center, wheelCenter) - 6) return null;
-    return { line:line, anchor:anchor };
+    if (Math.min(oneToKnob, twoToKnob) > radius + 18) return null;
+    if (distance(anchor, wheelCenter) >= distance(center, wheelCenter) - 4) return null;
+    return { line:line, anchor:anchor, outer:outer };
   }
 
   function collect(svg) {
-    const box = viewBox(svg);
+    const box = rootViewBox(svg);
     const wheelCenter = { x:box.x + box.width / 2, y:box.y + box.height / 2 };
     return Array.from(svg.querySelectorAll(PLACEMENT)).map(function (group, index) {
       const knob = group.querySelector(KNOB);
       const line = group.querySelector(LEADER);
       if (!knob || !line) return null;
-      const center = { x:num(knob.getAttribute('cx')), y:num(knob.getAttribute('cy')) };
-      const radius = num(knob.getAttribute('r'));
-      if (!validPoint(center) || !Number.isFinite(radius) || radius <= 0) return null;
-      const leader = leaderGeometry(line, center, wheelCenter, radius);
+      const knobInfo = knobGeometry(knob, svg);
+      if (!knobInfo) return null;
+      const leader = leaderGeometry(line, knobInfo.center, wheelCenter, knobInfo.radius, svg);
       if (!leader) return null;
-      const nodes = Array.from(group.querySelectorAll(MOVABLE));
+      const nodes = Array.from(new Set(Array.from(group.querySelectorAll(MOVABLE))));
       if (!nodes.includes(knob)) nodes.unshift(knob);
-      const boxes = nodes.map(nodeBox).filter(Boolean);
-      const radialDistance = pointDistance(wheelCenter, center);
-      if (!boxes.length || radialDistance < Math.min(box.width, box.height) * 0.3) return null;
-      const angle = Math.atan2(center.y - wheelCenter.y, center.x - wheelCenter.x);
+      const boxes = nodes.map(function (node) { return nodeBox(node, svg); }).filter(Boolean);
+      if (!boxes.length) return null;
+      const radialDistance = distance(wheelCenter, knobInfo.center);
+      const angle = Math.atan2(knobInfo.center.y - wheelCenter.y, knobInfo.center.x - wheelCenter.x);
       return {
         index:index,
+        svg:svg,
         group:group,
         knob:knob,
         line:line,
         anchor:leader.anchor,
-        nodes:Array.from(new Set(nodes)),
+        nodes:nodes,
         boxes:boxes,
-        center:center,
-        radius:radius,
+        center:knobInfo.center,
+        radius:knobInfo.radius,
         wheelCenter:wheelCenter,
         radialDistance:radialDistance,
         angle:angle,
@@ -180,11 +243,11 @@
   function collision(first, second) {
     const a = centerAt(first);
     const b = centerAt(second);
-    const bubbleMissing = first.radius + second.radius + BUBBLE_GAP - pointDistance(a, b);
+    const bubbleMissing = first.radius + second.radius + BUBBLE_GAP - distance(a, b);
     const boxesOverlap = footprintOverlap(first, second);
     return {
       active:bubbleMissing > 0 || boxesOverlap,
-      pressure:Math.max(1.2, bubbleMissing > 0 ? bubbleMissing : 3.5)
+      pressure:Math.max(1.25, bubbleMissing > 0 ? bubbleMissing : 3.75)
     };
   }
 
@@ -205,7 +268,7 @@
           const contact = collision(first, second);
           if (!contact.active) continue;
           const direction = angularDirection(first, second);
-          const push = Math.min(5.5, contact.pressure * 0.58 + 0.45);
+          const push = Math.min(6.25, contact.pressure * 0.58 + 0.5);
           first.tangential = Math.max(-MAX_TANGENTIAL_SHIFT, Math.min(MAX_TANGENTIAL_SHIFT, first.tangential - direction * push / 2));
           second.tangential = Math.max(-MAX_TANGENTIAL_SHIFT, Math.min(MAX_TANGENTIAL_SHIFT, second.tangential + direction * push / 2));
           changed = true;
@@ -214,8 +277,7 @@
       if (!changed) break;
     }
 
-    // Radial movement is a small last resort only when tangential movement is exhausted.
-    for (let pass = 0; pass < 8; pass += 1) {
+    for (let pass = 0; pass < 10; pass += 1) {
       let changed = false;
       for (let left = 0; left < items.length; left += 1) {
         for (let right = left + 1; right < items.length; right += 1) {
@@ -223,7 +285,7 @@
           const second = items[right];
           if (!collision(first, second).active) continue;
           const target = Math.abs(first.tangential) >= Math.abs(second.tangential) ? first : second;
-          const next = Math.min(MAX_RADIAL_SHIFT, target.radial + 2.25);
+          const next = Math.min(MAX_RADIAL_SHIFT, target.radial + 2.5);
           if (next !== target.radial) {
             target.radial = next;
             changed = true;
@@ -234,39 +296,55 @@
     }
   }
 
-  function translate(node, dx, dy) {
-    rememberTransform(node);
-    const base = node.dataset.relphiLollipopBaseTransform;
-    const move = 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')';
-    node.setAttribute('transform', base === '__none__' ? move : base + ' ' + move);
+  function rootVectorInParent(node, dx, dy, svg) {
+    const parent = node.parentNode;
+    const rootMatrix = svg && svg.getScreenCTM && svg.getScreenCTM();
+    const parentMatrix = parent && parent.getScreenCTM && parent.getScreenCTM();
+    if (!rootMatrix || !parentMatrix || typeof parentMatrix.inverse !== 'function') return { x:dx, y:dy };
+    try {
+      const zero = svg.createSVGPoint();
+      zero.x = 0;
+      zero.y = 0;
+      const delta = svg.createSVGPoint();
+      delta.x = dx;
+      delta.y = dy;
+      const parentInverse = parentMatrix.inverse();
+      const localZero = zero.matrixTransform(rootMatrix).matrixTransform(parentInverse);
+      const localDelta = delta.matrixTransform(rootMatrix).matrixTransform(parentInverse);
+      return { x:localDelta.x - localZero.x, y:localDelta.y - localZero.y };
+    } catch (_) {
+      return { x:dx, y:dy };
+    }
   }
 
-  function rememberLeader(line) {
-    if (line.dataset.relphiLollipopLeader) return;
-    line.dataset.relphiLollipopLeader = 'true';
-    ['x1','y1','x2','y2'].forEach(function (name) {
-      line.dataset['relphiLollipop' + name.toUpperCase()] = line.getAttribute(name) || '0';
-    });
+  function translate(node, dx, dy, svg) {
+    rememberTransform(node);
+    const base = node.dataset.relphiLollipopBaseTransform;
+    const local = rootVectorInParent(node, dx, dy, svg);
+    const move = 'translate(' + local.x.toFixed(2) + ' ' + local.y.toFixed(2) + ')';
+    node.setAttribute('transform', base === '__none__' ? move : move + ' ' + base);
+  }
+
+  function setLeaderEndpoint(line, suffix, point, svg) {
+    const local = pointInNode(line, point, svg);
+    line.setAttribute('x' + suffix, local.x.toFixed(2));
+    line.setAttribute('y' + suffix, local.y.toFixed(2));
   }
 
   function connectLeader(item, center) {
     const vector = { x:center.x - item.anchor.x, y:center.y - item.anchor.y };
     const length = Math.hypot(vector.x, vector.y) || 1;
     const edge = {
-      x:center.x - vector.x / length * (item.radius + 0.6),
-      y:center.y - vector.y / length * (item.radius + 0.6)
+      x:center.x - vector.x / length * (item.radius + 0.8),
+      y:center.y - vector.y / length * (item.radius + 0.8)
     };
     rememberLeader(item.line);
     if (item.anchor.suffix === '1') {
-      item.line.setAttribute('x1', item.anchor.x.toFixed(2));
-      item.line.setAttribute('y1', item.anchor.y.toFixed(2));
-      item.line.setAttribute('x2', edge.x.toFixed(2));
-      item.line.setAttribute('y2', edge.y.toFixed(2));
+      setLeaderEndpoint(item.line, '1', item.anchor, item.svg);
+      setLeaderEndpoint(item.line, '2', edge, item.svg);
     } else {
-      item.line.setAttribute('x2', item.anchor.x.toFixed(2));
-      item.line.setAttribute('y2', item.anchor.y.toFixed(2));
-      item.line.setAttribute('x1', edge.x.toFixed(2));
-      item.line.setAttribute('y1', edge.y.toFixed(2));
+      setLeaderEndpoint(item.line, '2', item.anchor, item.svg);
+      setLeaderEndpoint(item.line, '1', edge, item.svg);
     }
   }
 
@@ -274,7 +352,7 @@
     items.forEach(function (item) {
       const shift = offset(item);
       if (Math.hypot(shift.x, shift.y) < 0.25) return;
-      item.nodes.forEach(function (node) { translate(node, shift.x, shift.y); });
+      item.nodes.forEach(function (node) { translate(node, shift.x, shift.y, item.svg); });
       connectLeader(item, centerAt(item));
       item.group.dataset.relphiLollipopShift = Math.hypot(shift.x, shift.y).toFixed(2);
       item.group.dataset.relphiLollipopRadialShift = item.radial.toFixed(2);
@@ -305,7 +383,7 @@
     if (running) return;
     running = true;
     try {
-      document.querySelectorAll('#chartOutput svg, #currentSkyOutput svg, #tarot-chart svg, .sky-output-box svg').forEach(arrange);
+      document.querySelectorAll(WHEEL_SELECTOR).forEach(arrange);
     } finally {
       running = false;
     }
@@ -322,6 +400,7 @@
     [120, 360, 900, 1800].forEach(function (delay) { setTimeout(schedule, delay); });
     window.addEventListener('resize', schedule, { passive:true });
     window.addEventListener('relphi:sky-builder-v4-loaded', schedule);
+    window.addEventListener('relphi:canonical-sky-glyphs-ready', schedule);
     const root = document.getElementById('chartPanel') || document.body;
     new MutationObserver(function (records) {
       if (running) return;
