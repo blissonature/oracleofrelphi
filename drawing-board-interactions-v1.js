@@ -1,4 +1,4 @@
-// Focused Drawing Board interactions: direct undo/redo, reliable targeted draws, and full card detail links.
+// Focused Drawing Board interactions: direct undo/redo, targeted draws, full card detail links, and stable foreground controls.
 (function () {
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
@@ -21,6 +21,22 @@
     marker.parentNode.insertBefore(b, marker);
     marker.remove();
     return true;
+  }
+
+  function ensureForegroundLayer(panel) {
+    const drawer = panel.querySelector('.card-row-drawing-board');
+    if (!drawer) return;
+    let layer = drawer.querySelector(':scope > .relphi-board-ui-layer');
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.className = 'relphi-board-ui-layer';
+      drawer.insertBefore(layer, drawer.firstChild);
+    }
+    const headerToolbar = panel.querySelector('.card-row-icon-toolbar');
+    const workspaceToolbar = panel.querySelector('.card-row-workspace-toolbar');
+    [headerToolbar, workspaceToolbar].forEach(function (toolbar) {
+      if (toolbar && toolbar.parentElement !== layer) layer.appendChild(toolbar);
+    });
   }
 
   function directHistoryControls(panel) {
@@ -130,10 +146,60 @@
     })();
   }
 
+  function installPositionStickerEditor(panel) {
+    const field = panel.querySelector('#rowPositionLabels');
+    if (!field || field.dataset.relphiStickerEditor === 'true') return;
+    field.dataset.relphiStickerEditor = 'true';
+
+    let userEditing = false;
+    field.addEventListener('focus', function () { userEditing = true; });
+    field.addEventListener('blur', function () { window.setTimeout(function () { userEditing = false; }, 150); });
+    field.addEventListener('input', function (event) {
+      if (event.isTrusted) {
+        userEditing = true;
+        field.dataset.relphiManualValue = field.value;
+      } else if (userEditing && /^Position #\d+(?:\s*,\s*Position #\d+)*$/i.test(field.value.trim())) {
+        field.value = field.dataset.relphiManualValue || '';
+      }
+    });
+
+    let select = panel.querySelector('#rowPositionPrefabSelect');
+    if (!select) {
+      select = document.createElement('select');
+      select.id = 'rowPositionPrefabSelect';
+      select.className = 'relphi-position-prefab-select';
+      select.setAttribute('aria-label', 'Choose a position-sticker prefab');
+      field.insertAdjacentElement('afterend', select);
+      select.addEventListener('change', function () {
+        if (!select.value) return;
+        field.value = select.value;
+        field.dataset.relphiManualValue = select.value;
+        field.dispatchEvent(new Event('input', { bubbles:true }));
+        field.dispatchEvent(new Event('change', { bubbles:true }));
+        select.selectedIndex = 0;
+      });
+    }
+
+    const datalistId = field.getAttribute('list');
+    const datalist = datalistId ? document.getElementById(datalistId) : panel.querySelector('#rowStickerPresetList');
+    const values = datalist ? Array.from(datalist.querySelectorAll('option')).map(function (option) {
+      return { value: option.value, label: option.label || option.value };
+    }).filter(function (item) { return item.value; }) : [];
+    const signature = JSON.stringify(values);
+    if (select.dataset.signature !== signature) {
+      select.dataset.signature = signature;
+      select.innerHTML = '<option value="">Choose a position-sticker prefab…</option>' + values.map(function (item) {
+        return '<option value="' + item.value.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">' + item.label.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</option>';
+      }).join('');
+    }
+  }
+
   function enhance() {
     const panel = root();
     if (!panel || panel.hidden) return;
+    ensureForegroundLayer(panel);
     directHistoryControls(panel);
+    installPositionStickerEditor(panel);
     panel.querySelectorAll('.card-row-item').forEach(function (item) {
       if (isEmptyItem(item)) {
         item.classList.add('relphi-clickable-placeholder');
@@ -155,15 +221,17 @@
     style.id = 'relphi-drawing-board-interactions-style';
     style.textContent = [
       '#shortListPanel{overflow:visible!important}',
-      '#shortListPanel .card-row-drawing-board,#shortListPanel .card-row-more-options,#shortListPanel .card-row-composer,#shortListPanel .card-row-control-block,#shortListPanel .board-options-body{overflow:visible!important}',
-      '#shortListPanel .card-row-icon-toolbar,#shortListPanel .card-row-workspace-toolbar,#shortListPanel .board-options-tabs,#shortListPanel .board-arrange-flyout,#shortListPanel .board-history-menu{position:relative!important;z-index:10020!important;isolation:isolate}',
-      '#shortListPanel .board-arrange-flyout .card-row-control-block,#shortListPanel .card-row-more-options[open],#shortListPanel .card-row-more-options[open] .card-row-composer{position:relative!important;z-index:10030!important}',
-      '#shortListPanel .card-row-workspace,#shortListPanel .short-list-row.card-row-board{position:relative!important;z-index:1!important}',
-      '#shortListPanel .card-row-item,#shortListPanel .card-row-board-grid{z-index:auto!important}',
-      '#shortListPanel .card-row-position-label,#shortListPanel .row-sticker-prefab-controls{position:relative!important;z-index:10040!important;overflow:visible!important}',
-      '#shortListPanel #rowPositionLabels{position:relative!important;z-index:10041!important}',
-      '#shortListPanel .board-header-group--history{display:inline-flex!important;align-items:center!important;gap:.3rem!important}',
-      '#shortListPanel .board-history-icon{display:inline-grid!important;place-items:center!important;width:2.25rem!important;min-width:2.25rem!important;height:2.25rem!important;padding:0!important;border-radius:8px!important;font-size:1.25rem!important;line-height:1!important}',
+      '#shortListPanel .card-row-drawing-board{position:relative!important;overflow:visible!important;isolation:isolate!important}',
+      '#shortListPanel .relphi-board-ui-layer{position:sticky!important;top:.35rem!important;z-index:2147483000!important;display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:space-between!important;gap:.45rem!important;width:100%!important;overflow:visible!important;pointer-events:none!important;transform:none!important}',
+      '#shortListPanel .relphi-board-ui-layer>.card-row-icon-toolbar,#shortListPanel .relphi-board-ui-layer>.card-row-workspace-toolbar{position:relative!important;z-index:2147483001!important;overflow:visible!important;pointer-events:auto!important;transform:none!important;isolation:isolate!important}',
+      '#shortListPanel .card-row-workspace,#shortListPanel .short-list-row.card-row-board,#shortListPanel .card-row-board-grid,#shortListPanel .card-row-item,#shortListPanel .or-card,#shortListPanel .or-card-art{z-index:0!important}',
+      '#shortListPanel .board-arrange-flyout,#shortListPanel .board-arrange-flyout .card-row-control-block,#shortListPanel .card-row-more-options[open],#shortListPanel .card-row-more-options[open] .card-row-composer{position:relative!important;z-index:2147483002!important;overflow:visible!important}',
+      '#shortListPanel .board-header-group--history{display:inline-flex!important;align-items:center!important;gap:.4rem!important;min-width:5.4rem!important}',
+      '#shortListPanel .board-history-icon{appearance:none!important;display:inline-grid!important;place-items:center!important;width:2.5rem!important;min-width:2.5rem!important;max-width:2.5rem!important;height:2.5rem!important;min-height:2.5rem!important;padding:0!important;border:2px solid #171412!important;border-radius:9px!important;background:#fff!important;color:#171412!important;box-shadow:0 2px 5px rgba(0,0,0,.12)!important;font-size:1.45rem!important;font-weight:900!important;line-height:1!important;opacity:1!important}',
+      '#shortListPanel #drawRandomRowCard{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important;box-shadow:none!important}',
+      '#shortListPanel .card-row-position-label,#shortListPanel .row-sticker-prefab-controls{position:relative!important;z-index:20!important;overflow:visible!important}',
+      '#shortListPanel #rowPositionLabels,#shortListPanel .relphi-position-prefab-select{display:block!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;margin-top:.35rem!important;position:relative!important;z-index:21!important}',
+      '#shortListPanel .relphi-position-prefab-select{min-height:2.45rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;color:#171412!important;padding:.45rem .6rem!important}',
       '#shortListPanel .relphi-clickable-placeholder,#shortListPanel .relphi-clickable-placeholder .card-row-drop-card,#shortListPanel .relphi-clickable-placeholder .card-row-card{cursor:pointer!important}',
       '#shortListPanel .relphi-targeted-draw-pending{outline:4px solid rgba(220,31,24,.38)!important;outline-offset:4px!important;cursor:wait!important}',
       '#shortListPanel .relphi-card-title-link{cursor:pointer!important;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.16em}',
