@@ -14,6 +14,10 @@
   let copySourceId = '';
   let templateMode = 'existing';
   let labelsOpen = false;
+  let newPromptArmed = false;
+  let suppressOmniboxHandler = false;
+  const NEW_TEMPLATE_OPTION = 'New';
+  const NEW_TEMPLATE_PROMPT = 'Enter your own comma-separated position labels…';
 
   const transform = (x, y, rotation = 0, scale = 1, zIndex = 1) => ({ x, y, rotation, scale, zIndex });
   const position = (id, label, drawOrder, value, semantics = {}) => ({
@@ -392,7 +396,7 @@
     schedule();
   }
   function renderOmniboxOptions(datalist) {
-    datalist.innerHTML = allPrefabs().map(prefab => {
+    datalist.innerHTML = '<option value="' + NEW_TEMPLATE_OPTION + '" label="Create a new Spread Template"></option>' + allPrefabs().map(prefab => {
       const group = prefab.source === 'shipped' ? 'Shipped spread' : 'My spread';
       return '<option value="' + escapeHtml(displayName(prefab)) + '" label="' + escapeHtml(group + ': ' + labelsValue(prefab)) + '"></option>';
     }).join('');
@@ -519,7 +523,7 @@
       toggle.id = 'relphiLabelsToggle';
       toggle.type = 'button';
       toggle.className = 'relphi-labels-toggle';
-      toggle.textContent = 'Labels';
+      toggle.textContent = 'Templates';
       toolbar.appendChild(toggle);
       toggle.addEventListener('click', event => {
         event.preventDefault();
@@ -536,33 +540,63 @@
     if (!drawer) {
       drawer = document.createElement('section');
       drawer.className = 'relphi-labels-drawer';
-      drawer.innerHTML = '<header><div><strong>Labels</strong><span>Position labels, placement, rotation, and scale belong to a Spread Template.</span></div><button type="button" class="relphi-labels-close" aria-label="Close Labels">Close</button></header><fieldset class="relphi-template-mode"><legend>Spread Template</legend><label><input type="radio" name="relphiTemplateMode" value="existing"> Existing</label><label><input type="radio" name="relphiTemplateMode" value="new"> New</label></fieldset><div class="relphi-labels-field"></div><div class="relphi-labels-dynamic"></div>';
+      drawer.innerHTML = '<header><div><strong>Templates</strong><span>Position labels, placement, rotation, and scale belong to a Spread Template.</span></div><button type="button" class="relphi-labels-close" aria-label="Close Templates">Close</button></header><div class="relphi-labels-field"><div class="relphi-template-omnibox"></div></div><div class="relphi-labels-dynamic"></div>';
       board.querySelector(':scope > summary')?.insertAdjacentElement('afterend', drawer);
       drawer.querySelector('.relphi-labels-close')?.addEventListener('click', () => {
         labelsOpen = false;
         schedule();
       });
-      drawer.querySelectorAll('input[name="relphiTemplateMode"]').forEach(input => input.addEventListener('change', () => {
-        templateMode = input.value;
+    }
+    drawer.hidden = !labelsOpen;
+    const fieldHost = drawer.querySelector('.relphi-labels-field');
+    const omnibox = drawer.querySelector('.relphi-template-omnibox');
+    const fieldLabel = field.closest('label');
+    const quickLabel = panel.querySelector('#rowPositionStickersQuick')?.closest('label');
+    if (fieldLabel && fieldLabel.parentElement !== omnibox) omnibox.appendChild(fieldLabel);
+    let clearSelection = drawer.querySelector('#relphiTemplateClear');
+    if (!clearSelection) {
+      clearSelection = document.createElement('button');
+      clearSelection.id = 'relphiTemplateClear';
+      clearSelection.type = 'button';
+      clearSelection.className = 'relphi-template-clear';
+      clearSelection.setAttribute('aria-label', 'Clear template selection');
+      clearSelection.title = 'Clear template selection';
+      clearSelection.textContent = '×';
+      omnibox.appendChild(clearSelection);
+      clearSelection.addEventListener('click', () => {
+        if (bridge()?.getState()?.designMode) return;
         selectedId = '';
+        templateMode = 'existing';
         draftLayout = null;
         draftName = '';
         copySourceId = '';
+        newPromptArmed = false;
         field.value = '';
+        suppressOmniboxHandler = true;
         field.dispatchEvent(new Event('input', { bubbles:true }));
+        suppressOmniboxHandler = false;
         schedule();
-      }));
+      });
     }
-    drawer.hidden = !labelsOpen;
-    drawer.querySelectorAll('input[name="relphiTemplateMode"]').forEach(input => {
-      input.checked = input.value === templateMode;
-      input.disabled = !!state.designMode;
-    });
-    const fieldHost = drawer.querySelector('.relphi-labels-field');
-    const fieldLabel = field.closest('label');
-    const quickLabel = panel.querySelector('#rowPositionStickersQuick')?.closest('label');
-    if (fieldLabel && fieldLabel.parentElement !== fieldHost) fieldHost.appendChild(fieldLabel);
     if (quickLabel && quickLabel.parentElement !== fieldHost) fieldHost.appendChild(quickLabel);
+    if (quickLabel && !quickLabel.dataset.relphiEyeControl) {
+      quickLabel.dataset.relphiEyeControl = 'true';
+      Array.from(quickLabel.childNodes).filter(node => node.nodeType === 3).forEach(node => node.remove());
+      const eye = document.createElement('span');
+      eye.className = 'relphi-template-eye';
+      eye.setAttribute('aria-hidden', 'true');
+      eye.innerHTML = '<svg viewBox="0 0 24 24" focusable="false"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.75"></circle><path class="relphi-eye-slash" d="M4 4l16 16"></path></svg>';
+      quickLabel.appendChild(eye);
+      const quickInput = quickLabel.querySelector('input');
+      const syncEye = () => {
+        const visible = !!quickInput?.checked;
+        quickLabel.classList.toggle('is-visible', visible);
+        quickLabel.title = visible ? 'Hide position stickers' : 'Show position stickers';
+        quickLabel.setAttribute('aria-label', visible ? 'Hide position stickers' : 'Show position stickers');
+      };
+      quickInput?.addEventListener('change', syncEye);
+      syncEye();
+    }
     panel.querySelector('.board-labels-staging')?.remove();
 
     const available = allPrefabs();
@@ -571,36 +605,71 @@
     const exactValue = available.find(item => displayName(item).toLowerCase() === normalizedValue);
     const labelValue = available.find(item => labelsValue(item).toLowerCase() === normalizedValue);
     if (activePrefab && !state.designMode) selectedId = activePrefab.id;
-    else if (templateMode === 'existing' && exactValue) selectedId = exactValue.id;
+    else if (exactValue) selectedId = exactValue.id;
     else if (templateMode === 'existing' && !state.designMode && labelValue) selectedId = labelValue.id;
     else if (!state.designMode && normalizedValue) selectedId = '';
     renderOmniboxOptions(datalist);
     field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', templateMode === 'existing' ? 'Choose a saved Spread Template…' : 'Type comma-separated position labels…');
+    field.setAttribute('placeholder', 'Choose a Spread Template or type position labels…');
     field.setAttribute('aria-label', 'Spread Template labels');
+    if (newPromptArmed && !state.designMode && !String(field.value || '').trim()) field.value = NEW_TEMPLATE_PROMPT;
+    clearSelection.hidden = state.designMode || state.locked || !String(field.value || '').trim();
+    clearSelection.disabled = !!state.designMode || !!state.locked;
     if (!field.dataset.relphiLabelsDrawerBound) {
       field.dataset.relphiLabelsDrawerBound = 'true';
       const chooseFromOmnibox = event => {
+        if (suppressOmniboxHandler) return;
         if (bridge()?.getState()?.designMode) return;
-        const match = templateMode === 'existing' && allPrefabs().find(item => displayName(item).toLowerCase() === String(field.value || '').trim().toLowerCase());
+        const value = String(field.value || '').trim();
+        if (value.toLowerCase() === NEW_TEMPLATE_OPTION.toLowerCase()) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          selectedId = '';
+          templateMode = 'new';
+          draftLayout = null;
+          draftName = '';
+          copySourceId = '';
+          field.value = '';
+          suppressOmniboxHandler = true;
+          field.dispatchEvent(new Event('input', { bubbles:true }));
+          suppressOmniboxHandler = false;
+          newPromptArmed = true;
+          schedule();
+          return;
+        }
+        const match = allPrefabs().find(item => displayName(item).toLowerCase() === value.toLowerCase());
         if (match) {
           event.preventDefault();
           event.stopImmediatePropagation();
           selectedId = match.id;
+          templateMode = 'existing';
           draftLayout = null;
           draftName = '';
           copySourceId = '';
+          newPromptArmed = false;
+          field.value = labelsValue(match);
           schedule();
           return;
         }
+        if (value === NEW_TEMPLATE_PROMPT) return;
         selectedId = '';
+        templateMode = 'new';
         draftLayout = null;
         draftName = '';
         copySourceId = '';
+        newPromptArmed = false;
+        clearSelection.hidden = !value;
         schedule();
       };
       field.addEventListener('input', chooseFromOmnibox, true);
       field.addEventListener('change', chooseFromOmnibox, true);
+      field.addEventListener('pointerdown', () => {
+        if (!newPromptArmed || field.value !== NEW_TEMPLATE_PROMPT) return;
+        newPromptArmed = false;
+        field.value = '';
+        clearSelection.hidden = true;
+        field.dispatchEvent(new Event('input', { bubbles:true }));
+      });
     }
 
     const prefab = prefabById(selectedId) || draftLayout;
@@ -644,7 +713,7 @@
       workspace.insertBefore(banner, workspace.firstChild);
     }
     if (state.designMode) {
-      banner.innerHTML = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish from the Labels drawer.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
+      banner.innerHTML = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish from the Templates drawer.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
       banner.querySelector('[data-design-action="remove"]')?.addEventListener('click', () => bridge()?.removePosition(state.transformTarget));
     } else {
       banner.innerHTML = '<strong>Active layout locked</strong><span>' + (state.activeLayout ? displayName(state.activeLayout) : 'Custom layout') + ' is snapshotted for this reading. Clear the board to choose or redesign a spread.</span>';
@@ -749,14 +818,20 @@
       '#shortListPanel .relphi-labels-drawer>header strong{font-size:.94rem}',
       '#shortListPanel .relphi-labels-drawer>header span{color:#6b625c;font-size:.72rem;line-height:1.3}',
       '#shortListPanel .relphi-labels-close{min-height:2rem!important;padding:.3rem .55rem!important}',
-      '#shortListPanel .relphi-template-mode{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem .8rem;margin:0;padding:.5rem .6rem;border:1px solid #ded5cd;border-radius:8px;background:#fff}',
-      '#shortListPanel .relphi-template-mode legend{padding:0 .25rem;font-size:.76rem;font-weight:900}',
-      '#shortListPanel .relphi-template-mode label{display:inline-flex!important;align-items:center!important;gap:.35rem!important;width:auto!important;margin:0!important;font-size:.78rem!important}',
-      '#shortListPanel .relphi-template-mode input{margin:0!important;accent-color:#111}',
-      '#shortListPanel .relphi-labels-field{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:.55rem}',
-      '#shortListPanel .relphi-labels-field>label:first-child{display:grid!important;gap:.2rem!important;width:100%!important;margin:0!important;font-size:.78rem!important;font-weight:800!important}',
-      '#shortListPanel .relphi-labels-field input[type="text"]{display:block!important;width:100%!important;min-height:2.35rem!important;margin:.2rem 0 0!important;padding:.45rem .6rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;box-sizing:border-box!important}',
-      '#shortListPanel .relphi-labels-field .quick-position-sticker-toggle{display:flex!important;align-items:center!important;gap:.4rem!important;min-height:2.35rem!important;margin:0!important;padding:.4rem .55rem!important;border:1px solid #ded5cd!important;border-radius:8px!important;background:#fff!important;white-space:nowrap!important}',
+      '#shortListPanel .relphi-labels-drawer button{min-height:2.25rem!important;padding:.4rem .65rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.78rem!important;font-weight:800!important;line-height:1.1!important;box-shadow:none!important}',
+      '#shortListPanel .relphi-labels-drawer button.primary{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}',
+      '#shortListPanel .relphi-labels-field{display:grid!important;grid-template-columns:minmax(0,1fr) max-content!important;align-items:end!important;gap:.55rem!important}',
+      '#shortListPanel .relphi-template-omnibox{position:relative;display:grid;min-width:0}',
+      '#shortListPanel .relphi-template-omnibox>label{display:grid!important;gap:.2rem!important;width:100%!important;margin:0!important;font-size:.78rem!important;font-weight:800!important}',
+      '#shortListPanel .relphi-template-omnibox input[type="text"]{display:block!important;width:100%!important;min-height:2.35rem!important;margin:.2rem 0 0!important;padding:.45rem 2.35rem .45rem .6rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;box-sizing:border-box!important}',
+      '#shortListPanel .relphi-template-clear{position:absolute!important;right:.25rem!important;bottom:.22rem!important;z-index:2!important;display:grid!important;place-items:center!important;width:1.9rem!important;min-width:1.9rem!important;height:1.9rem!important;min-height:1.9rem!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important;font-size:1.15rem!important;line-height:1!important}',
+      '#shortListPanel .relphi-template-clear[hidden]{display:none!important}',
+      '#shortListPanel .relphi-labels-field .quick-position-sticker-toggle{position:relative!important;display:grid!important;place-items:center!important;width:2.35rem!important;min-width:2.35rem!important;height:2.35rem!important;min-height:2.35rem!important;margin:0!important;padding:0!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#777!important;box-sizing:border-box!important;cursor:pointer!important}',
+      '#shortListPanel .relphi-labels-field .quick-position-sticker-toggle.is-visible{color:#171412!important}',
+      '#shortListPanel .relphi-labels-field .quick-position-sticker-toggle input{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}',
+      '#shortListPanel .relphi-template-eye{display:block;width:1.2rem;height:1.2rem;pointer-events:none}',
+      '#shortListPanel .relphi-template-eye svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}',
+      '#shortListPanel .quick-position-sticker-toggle.is-visible .relphi-eye-slash{display:none}',
       '#shortListPanel .relphi-labels-dynamic{display:grid;gap:.55rem}',
       '#shortListPanel #relphiSpreadNameHelp.is-error{color:#a01813!important;font-weight:750!important}',
       '#shortListPanel .relphi-layout-status{position:relative;z-index:1200;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.3rem 1rem;align-items:center;margin:.45rem;padding:.7rem .8rem;border:2px solid #171412;border-radius:10px;background:#fff;color:#171412;box-shadow:0 7px 18px rgba(35,24,18,.14)}',
@@ -769,7 +844,7 @@
       '#shortListPanel .relphi-layout-design-mode #drawRandomRowCard{opacity:.52!important}',
       '#shortListPanel .relphi-center-helper{position:absolute;left:540px;top:610px;z-index:160!important;min-width:118px;min-height:46px;padding:.65rem .9rem;border:2px solid #171412;border-radius:999px;background:#fff!important;color:#171412!important;font:inherit;font-size:.78rem;font-weight:900;box-shadow:0 5px 14px rgba(30,20,15,.16);touch-action:manipulation}',
       '#shortListPanel .relphi-center-helper:focus-visible{outline:3px solid rgba(220,31,24,.35);outline-offset:3px}',
-      '@media(max-width:700px){#shortListPanel .relphi-labels-field{grid-template-columns:1fr}#shortListPanel .relphi-layout-status{grid-template-columns:1fr}#shortListPanel .relphi-layout-status>span,#shortListPanel .relphi-layout-status>div{grid-column:1;grid-row:auto}#shortListPanel .relphi-layout-status>div{justify-content:flex-start}#shortListPanel .relphi-prefab-actions button{flex:1 1 46%}}'
+      '@media(max-width:700px){#shortListPanel .relphi-labels-field{grid-template-columns:minmax(0,1fr) max-content!important;gap:.35rem!important}#shortListPanel .relphi-layout-status{grid-template-columns:1fr}#shortListPanel .relphi-layout-status>span,#shortListPanel .relphi-layout-status>div{grid-column:1;grid-row:auto}#shortListPanel .relphi-layout-status>div{justify-content:flex-start}#shortListPanel .relphi-prefab-actions button{flex:1 1 46%}}'
     ].join('');
     document.head.appendChild(style);
   }
