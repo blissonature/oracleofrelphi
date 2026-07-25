@@ -65,6 +65,8 @@ assert.match(source, /Open Center/);
 assert.match(source, /Restore Cross/);
 assert.match(source, /relphiDrawingBoardSpreadPrefabsV2/);
 assert.match(source, /SHIPPED\.some\(item => item\.id === clean\.id\)/);
+assert.match(source, /button:disabled\{opacity:\.45!important;cursor:default!important\}/);
+assert.doesNotMatch(source, /cursor:not-allowed/);
 assert.doesNotMatch(source, /drawnCardIds|readingName|readingNotes/);
 
 assert.match(app, /rowActiveLayout:\s*cloneBoardValue\(state\.rowActiveLayout,\s*null\)/);
