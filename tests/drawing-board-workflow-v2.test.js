@@ -9,10 +9,10 @@ const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=21/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=22/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=2/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=2/);
-assert.match(page, /navloader\.js\?v=43/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=3/);
+assert.match(page, /navloader\.js\?v=44/);
 assert.match(page, /tarot-app\.js\?v=360/);
 
 assert.match(workflow, /Position stickers/);
@@ -49,7 +49,8 @@ assert.match(workflow, /board-setup-group--draw \.spread-toggle,html body #short
 assert.match(workflow, /board-setup-group--draw \.quick-reversal-toggle input\{flex:0 0 auto!important;width:1rem!important;height:1rem!important;margin:0!important\}/);
 assert.match(workflow, /function normalizeDisabledButtonCursors\(panel\)/);
 assert.match(workflow, /button\.style\.setProperty\('cursor', 'default', 'important'\)/);
-assert.match(workflow, /#undoShortList:disabled[\s\S]*#redoShortList:disabled[\s\S]*#clearShortList:disabled\{cursor:default!important\}/);
+assert.match(workflow, /#undoShortList:disabled[\s\S]*#redoShortList:disabled[\s\S]*#clearShortList:disabled\{[\s\S]*cursor:default!important\}/);
+assert.match(workflow, /#undoShortList:disabled[\s\S]*#redoShortList:disabled[\s\S]*#clearShortList:disabled\{opacity:\.4!important;border:1px solid rgba\(17,17,17,\.28\)!important;background:#fffdf8!important;color:rgba\(17,17,17,\.48\)!important/);
 assert.doesNotMatch(workflow, /move\(choices, '\.quick-position-sticker-toggle'\)/);
 assert.match(workflow, /panel\.querySelector\('#rowPositionStickersQuick'\)/);
 assert.match(workflow, /settingsPanel.*Board options/);

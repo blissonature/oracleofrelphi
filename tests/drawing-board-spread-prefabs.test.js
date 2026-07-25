@@ -55,6 +55,28 @@ const celtic11 = api.shipped.find(item => item.id === 'celtic-cross-11');
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').crosses, 'covering');
 assert.equal(celtic11.positions.find(item => item.role === 'covering').covers, 'significator');
 assert.equal(celtic11.positions.find(item => item.role === 'crossing').crosses, 'covering');
+assert.equal(celtic11.positions[0].label, 'Significator');
+assert.deepEqual(
+  Array.from(celtic10.positions, item => item.label),
+  [
+    '1 · What covers you',
+    '2 · What crosses you',
+    '3 · What crowns you',
+    '4 · What is beneath you',
+    '5 · What is behind you',
+    '6 · What is before you',
+    '7 · Yourself',
+    '8 · Your house',
+    '9 · Your hopes or fears',
+    '10 · What will come'
+  ]
+);
+assert.equal(celtic10.positions.find(item => item.id === 'behind').transform.x, .62);
+assert.equal(celtic10.positions.find(item => item.id === 'before').transform.x, 0);
+assert.equal(celtic11.positions.find(item => item.id === 'behind').transform.x, .62);
+assert.equal(celtic11.positions.find(item => item.id === 'before').transform.x, 0);
+assert.equal(celtic10.positions.find(item => item.role === 'crossing').transform.rotation, 90);
+assert.equal(celtic11.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.ok(celtic10.positions.filter(item => item.openTransform).length >= 2);
 assert.ok(celtic11.positions.filter(item => item.openTransform).length >= 3);
 
@@ -74,6 +96,6 @@ assert.match(app, /rowCenterOpen/, 'temporary Celtic view state should exist');
 assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Celtic view must not persist in the board snapshot');
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=2/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=3/);
 
 console.log('Drawing Board spread prefab regression checks passed.');

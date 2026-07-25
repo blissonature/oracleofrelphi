@@ -54,23 +54,23 @@
       editable:false,
       helper:'celtic-center',
       positions:[
-        position('covering', 'What covers', 1, transform(.34, .34, 0, .48, 20), {
+        position('covering', '1 · What covers you', 1, transform(.31, .31, 0, .45, 20), {
           role:'covering',
-          openTransform:transform(.18, .36, 0, .48, 20)
+          openTransform:transform(.22, .43, 0, .45, 20)
         }),
-        position('crossing', 'What crosses', 2, transform(.34, .34, 90, .48, 30), {
+        position('crossing', '2 · What crosses you', 2, transform(.31, .31, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
-          openTransform:transform(.47, .36, 90, .48, 30)
+          openTransform:transform(.42, .43, 0, .45, 30)
         }),
-        position('crowning', 'What crowns', 3, transform(.34, .02, 0, .48, 4)),
-        position('beneath', 'What is beneath', 4, transform(.34, .68, 0, .48, 4)),
-        position('behind', 'What is behind', 5, transform(.03, .34, 0, .48, 4)),
-        position('before', 'What is before', 6, transform(.64, .34, 0, .48, 4)),
-        position('self', 'The self', 7, transform(.80, .70, 0, .48, 4)),
-        position('house', 'The house', 8, transform(.80, .47, 0, .48, 4)),
-        position('hopes-fears', 'Hopes or fears', 9, transform(.80, .24, 0, .48, 4)),
-        position('outcome', 'What will come', 10, transform(.80, .01, 0, .48, 4))
+        position('crowning', '3 · What crowns you', 3, transform(.31, .00, 0, .45, 4)),
+        position('beneath', '4 · What is beneath you', 4, transform(.31, .68, 0, .45, 4)),
+        position('behind', '5 · What is behind you', 5, transform(.62, .31, 0, .45, 4)),
+        position('before', '6 · What is before you', 6, transform(.00, .31, 0, .45, 4)),
+        position('self', '7 · Yourself', 7, transform(.82, .68, 0, .45, 4)),
+        position('house', '8 · Your house', 8, transform(.82, .45, 0, .45, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 9, transform(.82, .22, 0, .45, 4)),
+        position('outcome', '10 · What will come', 10, transform(.82, .00, 0, .45, 4))
       ]
     },
     {
@@ -81,28 +81,28 @@
       editable:false,
       helper:'celtic-center',
       positions:[
-        position('significator', 'Significator', 1, transform(.34, .34, 0, .48, 10), {
+        position('significator', 'Significator', 1, transform(.31, .31, 0, .45, 10), {
           role:'significator',
-          openTransform:transform(.07, .36, 0, .48, 10)
+          openTransform:transform(.13, .43, 0, .45, 10)
         }),
-        position('covering', 'What covers', 2, transform(.34, .34, 0, .48, 20), {
+        position('covering', '1 · What covers you', 2, transform(.31, .31, 0, .45, 20), {
           role:'covering',
           covers:'significator',
-          openTransform:transform(.30, .36, 0, .48, 20)
+          openTransform:transform(.31, .43, 0, .45, 20)
         }),
-        position('crossing', 'What crosses', 3, transform(.34, .34, 90, .48, 30), {
+        position('crossing', '2 · What crosses you', 3, transform(.31, .31, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
-          openTransform:transform(.53, .36, 90, .48, 30)
+          openTransform:transform(.49, .43, 0, .45, 30)
         }),
-        position('crowning', 'What crowns', 4, transform(.34, .02, 0, .48, 4)),
-        position('beneath', 'What is beneath', 5, transform(.34, .68, 0, .48, 4)),
-        position('behind', 'What is behind', 6, transform(.03, .34, 0, .48, 4)),
-        position('before', 'What is before', 7, transform(.64, .34, 0, .48, 4)),
-        position('self', 'The self', 8, transform(.80, .70, 0, .48, 4)),
-        position('house', 'The house', 9, transform(.80, .47, 0, .48, 4)),
-        position('hopes-fears', 'Hopes or fears', 10, transform(.80, .24, 0, .48, 4)),
-        position('outcome', 'What will come', 11, transform(.80, .01, 0, .48, 4))
+        position('crowning', '3 · What crowns you', 4, transform(.31, .00, 0, .45, 4)),
+        position('beneath', '4 · What is beneath you', 5, transform(.31, .68, 0, .45, 4)),
+        position('behind', '5 · What is behind you', 6, transform(.62, .31, 0, .45, 4)),
+        position('before', '6 · What is before you', 7, transform(.00, .31, 0, .45, 4)),
+        position('self', '7 · Yourself', 8, transform(.82, .68, 0, .45, 4)),
+        position('house', '8 · Your house', 9, transform(.82, .45, 0, .45, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.82, .22, 0, .45, 4)),
+        position('outcome', '10 · What will come', 11, transform(.82, .00, 0, .45, 4))
       ]
     }
   ]);
