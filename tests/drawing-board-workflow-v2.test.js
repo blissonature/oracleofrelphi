@@ -9,10 +9,10 @@ const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=19/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=20/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=2/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=1/);
-assert.match(page, /navloader\.js\?v=41/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=2/);
+assert.match(page, /navloader\.js\?v=42/);
 assert.match(page, /tarot-app\.js\?v=360/);
 
 assert.match(workflow, /Position stickers/);
@@ -43,7 +43,10 @@ assert.match(workflow, /Position stickers', 'Choose a saved spread or type your 
 assert.match(workflow, /Reading details', 'Name the reading and keep its notes together/);
 assert.match(workflow, /Draw settings', 'Choose the cards available for this reading/);
 assert.match(workflow, /move\(spreadSetup, control\('rowPositionStickersQuick'\)\)/);
+assert.match(workflow, /move\(drawSetup, control\('rowAllowRepeats'\)\)/);
 assert.match(workflow, /move\(drawSetup, control\('rowAllowReversalsQuick'\)\)/);
+assert.match(workflow, /board-setup-group--draw \.spread-toggle,html body #shortListPanel \.board-setup-group--draw \.quick-reversal-toggle\{display:flex!important;flex-direction:row!important;align-items:center!important;gap:\.4rem!important;width:100%!important/);
+assert.match(workflow, /board-setup-group--draw \.quick-reversal-toggle input\{flex:0 0 auto!important;width:1rem!important;height:1rem!important;margin:0!important\}/);
 assert.doesNotMatch(workflow, /move\(choices, '\.quick-position-sticker-toggle'\)/);
 assert.match(workflow, /panel\.querySelector\('#rowPositionStickersQuick'\)/);
 assert.match(workflow, /settingsPanel.*Board options/);
