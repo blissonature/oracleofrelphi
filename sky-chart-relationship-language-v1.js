@@ -1,4 +1,4 @@
-// Progressive relationship language. Identity and artwork come only from the unified inscribed glyph roster.
+// Progressive relationship language. Geometry comes from the unified inscribed roster; color comes from Sky Chart context.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -44,7 +44,38 @@
   function component() { return window.RelphiGlyphComponent; }
   function resolve(value) { return registry()?.resolve(String(value || '').trim()) || null; }
 
-  function glyphButton(entry) {
+  function cssColor(root, names, fallback) {
+    const style = root ? getComputedStyle(root) : null;
+    for (const name of names) {
+      const value = style?.getPropertyValue(name)?.trim();
+      if (value) return value;
+    }
+    const color = style?.color?.trim();
+    return color || fallback || '#111111';
+  }
+
+  function sourceCard(root, side) {
+    const selectors = side === 'a'
+      ? ['[data-relationship-side="a"]','[data-side="a"]','[data-chart="chart"]','[data-sky="a"]','.relationship-placement-card:first-of-type']
+      : ['[data-relationship-side="b"]','[data-side="b"]','[data-chart="currentSky"]','[data-sky="b"]','.relationship-placement-card:nth-of-type(2)'];
+    return selectors.map(selector => root.querySelector(selector)).find(Boolean) || root;
+  }
+
+  function sideColor(root, side) {
+    const card = sourceCard(root, side);
+    return cssColor(card,
+      side === 'a'
+        ? ['--sky-a-color','--chart-a-color','--comparison-a-color','--relationship-a-color','--glyph-color']
+        : ['--sky-b-color','--chart-b-color','--comparison-b-color','--relationship-b-color','--glyph-color'],
+      side === 'a' ? '#8b1e3f' : '#24527a'
+    );
+  }
+
+  function relationshipColor(root) {
+    return cssColor(root,['--relationship-color','--aspect-color','--accent-color','--glyph-color'],'#6a4b7c');
+  }
+
+  function glyphButton(entry, color) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'relphi-progressive-term relphi-progressive-glyph';
@@ -56,18 +87,18 @@
     svg.setAttribute('aria-hidden','true');
     svg.classList.add('relphi-progressive-svg');
     button.appendChild(svg);
-    const bubble = component().createBubble(svg, entry.id);
+    const bubble = component().createBubble(svg, entry.id, { color });
     bubble.ready.catch(function () {});
     return button;
   }
 
-  function token(identity, meaning) {
+  function token(identity, meaning, color) {
     const entry = resolve(identity);
     if (!entry) return null;
     const wrap = document.createElement('span');
     wrap.className = 'relphi-progressive-token';
     wrap.dataset.glyphIdentity = entry.id;
-    const glyph = glyphButton(entry);
+    const glyph = glyphButton(entry, color);
     glyph.addEventListener('click', function (event) {
       event.stopPropagation();
       const name = wrap.querySelector('.relphi-progressive-name');
@@ -81,6 +112,7 @@
       nameButton.type = 'button';
       nameButton.className = 'relphi-progressive-term relphi-progressive-name';
       nameButton.textContent = entry.name;
+      nameButton.style.color = color;
       nameButton.setAttribute('aria-expanded','false');
       nameButton.addEventListener('click', function (inner) {
         inner.stopPropagation();
@@ -109,17 +141,17 @@
     return wrap;
   }
 
-  function appendToken(parent, identity, meaning) {
-    const node = token(identity, meaning);
+  function appendToken(parent, identity, meaning, color) {
+    const node = token(identity, meaning, color);
     if (!node) return false;
     parent.appendChild(node);
     return true;
   }
 
-  function placement(parent, body, sign, degree) {
-    if (!appendToken(parent, body)) return false;
+  function placement(parent, body, sign, degree, color) {
+    if (!appendToken(parent, body, null, color)) return false;
     parent.append(' in ');
-    if (!appendToken(parent, sign)) return false;
+    if (!appendToken(parent, sign, null, color)) return false;
     parent.append(' at ' + degree);
     return true;
   }
@@ -140,33 +172,33 @@
       if (!/ forms an? /i.test(value)) return;
       const match = parse(value);
       if (!match) return;
-      const bodyA = resolve(match[2]);
-      const signA = resolve(match[3]);
-      const aspect = resolve(match[5]);
-      const bodyB = resolve(match[7]);
-      const signB = resolve(match[8]);
+      const bodyA = resolve(match[2]), signA = resolve(match[3]), aspect = resolve(match[5]);
+      const bodyB = resolve(match[7]), signB = resolve(match[8]);
       if (!bodyA || !signA || !aspect || !bodyB || !signB) return;
+      const colorA = sideColor(root,'a');
+      const colorB = sideColor(root,'b');
+      const accent = relationshipColor(root);
       const reading = document.createElement('span');
       reading.className = 'relphi-progressive-reading';
       reading.append('Between ' + match[1].trim() + ' and ' + match[6].trim() + ', ');
-      if (!placement(reading, bodyA.id, signA.id, match[4])) return;
+      if (!placement(reading, bodyA.id, signA.id, match[4], colorA)) return;
       reading.append(' connects with ');
-      if (!placement(reading, bodyB.id, signB.id, match[9].trim())) return;
+      if (!placement(reading, bodyB.id, signB.id, match[9].trim(), colorB)) return;
       reading.append(' through ');
-      if (!appendToken(reading, aspect.id)) return;
+      if (!appendToken(reading, aspect.id, null, accent)) return;
       reading.append('.');
       const elementMatch = value.match(/Shared\s+(fire|earth|air|water)\s+element/i);
       if (elementMatch) {
         const element = resolve(elementMatch[1]);
         if (element) {
           reading.append(' They share ');
-          appendToken(reading, element.id);
+          appendToken(reading, element.id, null, accent);
           reading.append('.');
         }
       }
       const orbMatch = value.match(/Orb:\s*([^\.]+(?:\.|$))/i);
       if (orbMatch) reading.append(' Orb: ' + orbMatch[1].trim());
-      node.parentNode?.replaceChild(reading, node);
+      node.parentNode?.replaceChild(reading,node);
       changed = true;
     });
     if (changed) root.dataset.relphiProgressiveComplete = 'true';
@@ -176,26 +208,22 @@
     if (document.getElementById('relphi-progressive-reading-styles')) return;
     const style = document.createElement('style');
     style.id = 'relphi-progressive-reading-styles';
-    style.textContent = '.relphi-progressive-reading{line-height:1.75}.relphi-progressive-token{display:inline;vertical-align:baseline}.relphi-progressive-term{appearance:none;border:0;background:transparent;color:inherit;font:inherit;padding:0;margin:0;cursor:pointer;text-align:left}.relphi-progressive-svg{width:1.7em;height:1.7em;display:inline-block;vertical-align:-.44em;overflow:visible}.relphi-progressive-name,.relphi-progressive-meaning{margin-left:.22em}.relphi-progressive-name{font-weight:800;text-decoration:underline dotted rgba(17,17,17,.38);text-underline-offset:.2em}.relphi-progressive-meaning{color:#554d48;font-weight:520}.relphi-progressive-term:focus-visible{outline:2px solid rgba(220,31,24,.32);outline-offset:2px;border-radius:.2em}';
+    style.textContent = '.relphi-progressive-reading{line-height:1.75}.relphi-progressive-token{display:inline;vertical-align:baseline}.relphi-progressive-term{appearance:none;border:0;background:transparent;color:inherit;font:inherit;padding:0;margin:0;cursor:pointer;text-align:left}.relphi-progressive-svg{width:1.7em;height:1.7em;display:inline-block;vertical-align:-.44em;overflow:visible}.relphi-progressive-name,.relphi-progressive-meaning{margin-left:.22em}.relphi-progressive-name{font-weight:800;text-decoration:underline dotted currentColor;text-underline-offset:.2em}.relphi-progressive-meaning{color:inherit;font-weight:520}.relphi-progressive-term:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:.2em}';
     document.head.appendChild(style);
   }
 
   function ensureFilterRenderer() {
     if (document.querySelector('script[src^="sky-chart-filter-glyphs-v1.js"]')) return;
     const script = document.createElement('script');
-    script.src = 'sky-chart-filter-glyphs-v1.js?v=7';
+    script.src = 'sky-chart-filter-glyphs-v1.js?v=8';
     script.async = false;
     document.body.appendChild(script);
   }
 
-  let observer;
-  let queued = false;
-  let running = false;
-
+  let observer, queued = false, running = false;
   function candidateRoots() {
     return document.querySelectorAll('.relationship-reading-pair,.relationship-reading,.relationship-card,[data-relationship-reading]');
   }
-
   function run() {
     if (running) return;
     if (!registry() || !component()) { setTimeout(schedule,80); return; }
@@ -206,13 +234,11 @@
     observer?.observe(document.body,{childList:true,subtree:true});
     running = false;
   }
-
   function schedule() {
     if (queued || running) return;
     queued = true;
     requestAnimationFrame(function () { queued = false; run(); });
   }
-
   function start() {
     ensureFilterRenderer();
     observer = new MutationObserver(function (records) {
@@ -225,7 +251,6 @@
     });
     run();
   }
-
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
 })();
