@@ -3,7 +3,6 @@
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  const RED = '#dc1f18';
   const MEANING = {
     sun:'luminary: identity, vitality, and conscious purpose', moon:'luminary: feelings, instincts, and emotional needs',
     mercury:'planet: thought, perception, and communication', venus:'planet: values, attraction, affection, and relating',
@@ -53,11 +52,11 @@
     button.setAttribute('aria-label','Reveal ' + entry.name);
     button.setAttribute('aria-expanded','false');
     const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.setAttribute('viewBox','-22 -22 44 44');
+    svg.setAttribute('viewBox','-32 -32 64 64');
     svg.setAttribute('aria-hidden','true');
     svg.classList.add('relphi-progressive-svg');
     button.appendChild(svg);
-    const bubble = component().createBubble(svg, entry.id, { radius:19, padding:1, color:RED, fill:'#fff', strokeWidth:2.35 });
+    const bubble = component().createBubble(svg, entry.id);
     bubble.ready.catch(function () {});
     return button;
   }
@@ -184,7 +183,7 @@
   function ensureFilterRenderer() {
     if (document.querySelector('script[src^="sky-chart-filter-glyphs-v1.js"]')) return;
     const script = document.createElement('script');
-    script.src = 'sky-chart-filter-glyphs-v1.js?v=6';
+    script.src = 'sky-chart-filter-glyphs-v1.js?v=7';
     script.async = false;
     document.body.appendChild(script);
   }
