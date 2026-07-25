@@ -64,26 +64,47 @@ assert.equal(celtic11.positions[0].label, 'Significator');
 assert.deepEqual(
   Array.from(celtic10.positions, item => item.label),
   [
-    '1 · What covers you',
-    '2 · What crosses you',
-    '3 · What crowns you',
-    '4 · What is beneath you',
-    '5 · What is behind you',
-    '6 · What is before you',
-    '7 · Yourself',
-    '8 · Your house',
-    '9 · Your hopes or fears',
-    '10 · What will come'
+    '1 Â· What covers you',
+    '2 Â· What crosses you',
+    '3 Â· What crowns you',
+    '4 Â· What is beneath you',
+    '5 Â· What is behind you',
+    '6 Â· What is before you',
+    '7 Â· Yourself',
+    '8 Â· Your house',
+    '9 Â· Your hopes or fears',
+    '10 Â· What will come'
   ]
 );
-assert.equal(celtic10.positions.find(item => item.id === 'behind').transform.x, .62);
-assert.equal(celtic10.positions.find(item => item.id === 'before').transform.x, 0);
-assert.equal(celtic11.positions.find(item => item.id === 'behind').transform.x, .62);
-assert.equal(celtic11.positions.find(item => item.id === 'before').transform.x, 0);
+assert.equal(celtic10.positions.find(item => item.id === 'behind').transform.x, .52);
+assert.equal(celtic10.positions.find(item => item.id === 'before').transform.x, .04);
+assert.equal(celtic11.positions.find(item => item.id === 'behind').transform.x, .52);
+assert.equal(celtic11.positions.find(item => item.id === 'before').transform.x, .04);
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.equal(celtic11.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.ok(celtic10.positions.filter(item => item.openTransform).length >= 2);
 assert.ok(celtic11.positions.filter(item => item.openTransform).length >= 3);
+assert.equal(
+  JSON.stringify(celtic10.positions.slice(0, 2).map(item => [item.transform.x, item.transform.y])),
+  JSON.stringify([[.28, .34], [.28, .34]]),
+  'the ten-card center should pile before being opened'
+);
+assert.equal(
+  JSON.stringify(celtic11.positions.slice(0, 3).map(item => [item.transform.x, item.transform.y])),
+  JSON.stringify([[.28, .34], [.28, .34], [.28, .34]]),
+  'significator, cover, and cross should share one piled center'
+);
+assert.equal(
+  JSON.stringify(celtic11.positions.slice(0, 3).map(item => item.openTransform.x)),
+  JSON.stringify([.08, .28, .48]),
+  'the open center should place its three cards side by side'
+);
+assert.equal(celtic11.positions[2].openTransform.rotation, 0);
+assert.equal(
+  JSON.stringify(celtic11.positions.slice(7).map(item => [item.transform.x, item.transform.y])),
+  JSON.stringify([[.82, .70], [.82, .47], [.82, .24], [.82, .01]]),
+  'the right-hand ladder should rise from Self to Outcome'
+);
 
 assert.match(source, /return prefab\.cardCount \+ ' \| ' \+ prefab\.name/);
 assert.match(source, /Save As Copy and Use/);
@@ -100,7 +121,7 @@ assert.match(source, /className = 'relphi-labels-drawer'/);
 assert.match(source, /toggle\.textContent = 'Templates'/);
 assert.match(source, /NEW_TEMPLATE_OPTION = 'New'/);
 assert.match(source, /Create a new Spread Template/);
-assert.match(source, /NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…'/);
+assert.match(source, /NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Templateâ€¦'/);
 assert.match(source, /id = 'relphiTemplateClear'/);
 assert.match(source, /Clear template selection/);
 assert.match(source, /field\.value = displayName\(match\)/);
@@ -129,6 +150,8 @@ assert.match(source, /SHIPPED\.some\(item => item\.id === clean\.id\)/);
 assert.match(source, /button:disabled\{opacity:\.45!important;cursor:default!important\}/);
 assert.match(source, /function addPrecisionControls/);
 assert.match(source, /data-row-drawer-field="x"/);
+assert.match(source, /card-row-transform-summary-label/);
+assert.match(source, /opacity:\.24!important/);
 assert.match(source, /zoomCardRowExtents/);
 assert.doesNotMatch(source, /cursor:not-allowed/);
 assert.doesNotMatch(source, /drawnCardIds|readingName|readingNotes/);
@@ -139,6 +162,7 @@ assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Cel
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
 assert.match(source, /draftName = String\(state\.currentLayout\.name/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=8/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=9/);
 
 console.log('Drawing Board spread prefab regression checks passed.');
+

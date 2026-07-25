@@ -12,8 +12,8 @@ const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
 assert.match(nav, /drawing-board-workflow-v2\.js\?v=24/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=4/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=8/);
-assert.match(page, /navloader\.js\?v=50/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=9/);
+assert.match(page, /navloader\.js\?v=51/);
 assert.match(page, /tarot-app\.js\?v=360/);
 
 assert.match(workflow, /Show position stickers/);
@@ -160,3 +160,4 @@ assert.match(exportedHtml, /assets\/tarot\/rws-export\/the_fool\.webp/);
 assert.match(exportedHtml, /A sample note\./);
 
 console.log('Drawing Board workflow v2 regression checks passed.');
+

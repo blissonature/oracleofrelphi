@@ -17,7 +17,7 @@
   let newPromptArmed = false;
   let suppressOmniboxHandler = false;
   const NEW_TEMPLATE_OPTION = 'New';
-  const NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…';
+  const NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Templateâ€¦';
 
   const transform = (x, y, rotation = 0, scale = 1, zIndex = 1) => ({ x, y, rotation, scale, zIndex });
   const position = (id, label, drawOrder, value, semantics = {}) => ({
@@ -112,23 +112,23 @@
       editable:false,
       helper:'celtic-center',
       positions:[
-        position('covering', '1 · What covers you', 1, transform(.31, .31, 0, .45, 20), {
+        position('covering', '1 Â· What covers you', 1, transform(.28, .34, 0, .45, 20), {
           role:'covering',
-          openTransform:transform(.22, .43, 0, .45, 20)
+          openTransform:transform(.18, .40, 0, .45, 20)
         }),
-        position('crossing', '2 · What crosses you', 2, transform(.31, .31, 90, .45, 30), {
+        position('crossing', '2 Â· What crosses you', 2, transform(.28, .34, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
-          openTransform:transform(.42, .43, 0, .45, 30)
+          openTransform:transform(.40, .40, 0, .45, 30)
         }),
-        position('crowning', '3 · What crowns you', 3, transform(.31, .00, 0, .45, 4)),
-        position('beneath', '4 · What is beneath you', 4, transform(.31, .68, 0, .45, 4)),
-        position('behind', '5 · What is behind you', 5, transform(.62, .31, 0, .45, 4)),
-        position('before', '6 · What is before you', 6, transform(.00, .31, 0, .45, 4)),
-        position('self', '7 · Yourself', 7, transform(.82, .68, 0, .45, 4)),
-        position('house', '8 · Your house', 8, transform(.82, .45, 0, .45, 4)),
-        position('hopes-fears', '9 · Your hopes or fears', 9, transform(.82, .22, 0, .45, 4)),
-        position('outcome', '10 · What will come', 10, transform(.82, .00, 0, .45, 4))
+        position('crowning', '3 Â· What crowns you', 3, transform(.28, .01, 0, .45, 4)),
+        position('beneath', '4 Â· What is beneath you', 4, transform(.28, .69, 0, .45, 4)),
+        position('behind', '5 Â· What is behind you', 5, transform(.52, .34, 0, .45, 4)),
+        position('before', '6 Â· What is before you', 6, transform(.04, .34, 0, .45, 4)),
+        position('self', '7 Â· Yourself', 7, transform(.82, .70, 0, .45, 4)),
+        position('house', '8 Â· Your house', 8, transform(.82, .47, 0, .45, 4)),
+        position('hopes-fears', '9 Â· Your hopes or fears', 9, transform(.82, .24, 0, .45, 4)),
+        position('outcome', '10 Â· What will come', 10, transform(.82, .01, 0, .45, 4))
       ]
     },
     {
@@ -139,28 +139,28 @@
       editable:false,
       helper:'celtic-center',
       positions:[
-        position('significator', 'Significator', 1, transform(.31, .31, 0, .45, 10), {
+        position('significator', 'Significator', 1, transform(.28, .34, 0, .45, 10), {
           role:'significator',
-          openTransform:transform(.13, .43, 0, .45, 10)
+          openTransform:transform(.08, .40, 0, .45, 10)
         }),
-        position('covering', '1 · What covers you', 2, transform(.31, .31, 0, .45, 20), {
+        position('covering', '1 Â· What covers you', 2, transform(.28, .34, 0, .45, 20), {
           role:'covering',
           covers:'significator',
-          openTransform:transform(.31, .43, 0, .45, 20)
+          openTransform:transform(.28, .40, 0, .45, 20)
         }),
-        position('crossing', '2 · What crosses you', 3, transform(.31, .31, 90, .45, 30), {
+        position('crossing', '2 Â· What crosses you', 3, transform(.28, .34, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
-          openTransform:transform(.49, .43, 0, .45, 30)
+          openTransform:transform(.48, .40, 0, .45, 30)
         }),
-        position('crowning', '3 · What crowns you', 4, transform(.31, .00, 0, .45, 4)),
-        position('beneath', '4 · What is beneath you', 5, transform(.31, .68, 0, .45, 4)),
-        position('behind', '5 · What is behind you', 6, transform(.62, .31, 0, .45, 4)),
-        position('before', '6 · What is before you', 7, transform(.00, .31, 0, .45, 4)),
-        position('self', '7 · Yourself', 8, transform(.82, .68, 0, .45, 4)),
-        position('house', '8 · Your house', 9, transform(.82, .45, 0, .45, 4)),
-        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.82, .22, 0, .45, 4)),
-        position('outcome', '10 · What will come', 11, transform(.82, .00, 0, .45, 4))
+        position('crowning', '3 Â· What crowns you', 4, transform(.28, .01, 0, .45, 4)),
+        position('beneath', '4 Â· What is beneath you', 5, transform(.28, .69, 0, .45, 4)),
+        position('behind', '5 Â· What is behind you', 6, transform(.52, .34, 0, .45, 4)),
+        position('before', '6 Â· What is before you', 7, transform(.04, .34, 0, .45, 4)),
+        position('self', '7 Â· Yourself', 8, transform(.82, .70, 0, .45, 4)),
+        position('house', '8 Â· Your house', 9, transform(.82, .47, 0, .45, 4)),
+        position('hopes-fears', '9 Â· Your hopes or fears', 10, transform(.82, .24, 0, .45, 4)),
+        position('outcome', '10 Â· What will come', 11, transform(.82, .01, 0, .45, 4))
       ]
     },
     {
@@ -450,7 +450,7 @@
     else if (!state.designMode && normalizedValue) selectedId = '';
     renderOmniboxOptions(datalist);
     field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a spread design or type comma-separated position stickers…');
+    field.setAttribute('placeholder', 'Choose a spread design or type comma-separated position stickersâ€¦');
     field.setAttribute('aria-label', 'Position stickers and spread designs');
     if (!field.dataset.relphiSpreadOmniboxBound) {
       field.dataset.relphiSpreadOmniboxBound = 'true';
@@ -576,7 +576,7 @@
       clearSelection.className = 'relphi-template-clear';
       clearSelection.setAttribute('aria-label', 'Clear template selection');
       clearSelection.title = 'Clear template selection';
-      clearSelection.textContent = '×';
+      clearSelection.textContent = 'Ã—';
       omnibox.appendChild(clearSelection);
       clearSelection.addEventListener('click', () => {
         if (bridge()?.getState()?.designMode) return;
@@ -625,7 +625,7 @@
     else if (!state.designMode && normalizedValue) selectedId = '';
     renderOmniboxOptions(datalist);
     field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a Spread Template or type position labels…');
+    field.setAttribute('placeholder', 'Choose a Spread Template or type position labelsâ€¦');
     field.setAttribute('aria-label', 'Spread Template name');
     if (state.designMode && document.activeElement !== field) field.value = draftName;
     if (newPromptArmed && !state.designMode && !String(field.value || '').trim()) field.value = NEW_TEMPLATE_PROMPT;
@@ -735,7 +735,7 @@
       workspace.insertBefore(banner, workspace.firstChild);
     }
     if (state.designMode) {
-      banner.innerHTML = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish from the Templates drawer.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
+      banner.innerHTML = '<strong>Designing Spread Template â€” card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish from the Templates drawer.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
       banner.querySelector('[data-design-action="remove"]')?.addEventListener('click', () => bridge()?.removePosition(state.transformTarget));
     } else {
       banner.innerHTML = '<strong>Active layout locked</strong><span>' + (state.activeLayout ? displayName(state.activeLayout) : 'Custom layout') + ' is snapshotted for this reading. Clear the board to choose or redesign a spread.</span>';
@@ -805,7 +805,7 @@
       extents.type = 'button';
       extents.title = 'Zoom to show all cards';
       extents.setAttribute('aria-label', 'Zoom Extents');
-      extents.textContent = '⛶';
+      extents.textContent = 'â›¶';
       toolbar.insertBefore(extents, toolbar.querySelector('#resetCardRowPan'));
       extents.addEventListener('click', event => {
         event.preventDefault();
@@ -841,7 +841,7 @@
       drawer.className = 'card-row-transform-drawer';
       drawer.style.setProperty('--row-drawer-inverse-scale', String(1 / Math.max(.45, Number(transform.scale) || 1)));
       drawer.style.setProperty('--row-drawer-inverse-rotation', (-Number(transform.rotation || 0)) + 'deg');
-      drawer.innerHTML = '<summary aria-label="Edit position ' + (index + 1) + ' values"><span>' + escapeHtml(label) + '</span><b aria-hidden="true">⌄</b></summary><div class="card-row-transform-drawer-body">' +
+      drawer.innerHTML = '<summary aria-label="Adjust ' + escapeHtml(label) + '" title="Adjust position values"><span class="card-row-transform-summary-label">' + escapeHtml('Adjust ' + label) + '</span><b aria-hidden="true">â‹¯</b></summary><div class="card-row-transform-drawer-body">' +
         '<label>Label<input type="text" maxlength="90" data-row-drawer-field="label" value="' + escapeHtml(label) + '"' + (locked ? ' disabled' : '') + '></label>' +
         '<div class="card-row-drawer-numbers">' +
         '<label>X<input type="number" step="1" data-row-drawer-field="x" value="' + Math.round(Number(transform.x || 0) * 900) + '"' + (locked ? ' disabled' : '') + '></label>' +
@@ -851,7 +851,7 @@
       item.appendChild(drawer);
       drawer.querySelectorAll('[data-row-drawer-field]').forEach(input => {
         input.addEventListener('input', () => {
-          if (input.dataset.rowDrawerField === 'label') drawer.querySelector('summary span').textContent = input.value || 'Position ' + (index + 1);
+          if (input.dataset.rowDrawerField === 'label') drawer.querySelector('summary span').textContent = 'Adjust ' + (input.value || 'Position ' + (index + 1));
         });
         input.addEventListener('change', () => {
           const next = clone(bridge()?.getState()?.currentLayout);
@@ -945,7 +945,8 @@
       '#shortListPanel .card-row-workspace{position:relative!important;overflow:hidden!important;background:var(--row-table-image,none) center/cover no-repeat,repeating-linear-gradient(0deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),repeating-linear-gradient(90deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),var(--row-table-bg,#fffaf0)!important}',
       '#shortListPanel .card-row-workspace .short-list-row.card-row-board{top:0!important;overflow:visible!important;background:var(--row-table-image,none) center/cover no-repeat,repeating-linear-gradient(0deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),repeating-linear-gradient(90deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),var(--row-table-bg,#fffaf0)!important}',
       'html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item{position:absolute!important}',
-      '#shortListPanel .card-row-workspace-toolbar{position:absolute!important;top:.55rem!important;left:.55rem!important;right:auto!important;z-index:1500!important;display:grid!important;grid-template-columns:1fr!important;justify-items:center!important;gap:.3rem!important;width:2.7rem!important;max-width:2.7rem!important;margin:0!important;padding:.4rem .28rem!important;border:1px solid rgba(23,20,18,.28)!important;border-radius:999px!important;background:rgba(255,250,244,.94)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important;backdrop-filter:blur(4px)}',
+      '#shortListPanel .card-row-workspace-toolbar{position:absolute!important;top:.55rem!important;left:.55rem!important;right:auto!important;z-index:1500!important;display:grid!important;grid-template-columns:1fr!important;justify-items:center!important;gap:.3rem!important;width:2.7rem!important;max-width:2.7rem!important;margin:0!important;padding:.4rem .28rem!important;border:1px solid rgba(23,20,18,.28)!important;border-radius:999px!important;background:rgba(255,250,244,.94)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important;backdrop-filter:blur(4px);opacity:.24!important;transition:opacity .22s ease!important}',
+      '#shortListPanel .card-row-workspace-toolbar:hover,#shortListPanel .card-row-workspace-toolbar:focus-within{opacity:.96!important}',
       '#shortListPanel .card-row-zoom-label{display:grid!important;justify-items:center!important;gap:.2rem!important;width:auto!important;margin:0!important;padding:0!important}',
       '#shortListPanel .card-row-zoom-label>span{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}',
       '#shortListPanel #rowZoom{writing-mode:vertical-lr!important;direction:rtl!important;appearance:slider-vertical!important;width:1rem!important;min-width:1rem!important;max-width:1rem!important;height:6.5rem!important;min-height:6.5rem!important;margin:.1rem 0!important;padding:0!important}',
@@ -958,22 +959,24 @@
       'html body #shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>#resetCardRowPan{grid-column:1!important;grid-row:auto!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{width:2rem!important;min-width:2rem!important;margin:0!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;padding:0!important;border-radius:999px!important;font-size:0!important}',
-      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button::before{content:"↔";font-size:1rem}',
-      '#shortListPanel .card-row-transform-drawer{--row-drawer-inverse-scale:1;--row-drawer-inverse-rotation:0deg;position:absolute!important;top:0!important;left:calc(100% + .4rem)!important;z-index:1700!important;width:15rem!important;max-width:min(15rem,70vw)!important;transform:scale(var(--row-drawer-inverse-scale)) rotate(var(--row-drawer-inverse-rotation))!important;transform-origin:0 0!important;color:#171412!important;font:inherit!important}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button::before{content:"â†”";font-size:1rem}',
+      '#shortListPanel .card-row-transform-drawer{--row-drawer-inverse-scale:1;--row-drawer-inverse-rotation:0deg;position:absolute!important;top:0!important;left:calc(100% + .4rem)!important;z-index:1700!important;width:2rem!important;max-width:min(15rem,70vw)!important;transform:scale(var(--row-drawer-inverse-scale)) rotate(var(--row-drawer-inverse-rotation))!important;transform-origin:0 0!important;color:#171412!important;font:inherit!important}',
+      '#shortListPanel .card-row-transform-drawer[open]{width:15rem!important}',
       '#shortListPanel .card-row-item:has(.card-row-transform-drawer[open]){z-index:1800!important}',
-      '#shortListPanel .card-row-transform-drawer>summary{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.45rem!important;min-height:2rem!important;padding:.35rem .5rem!important;border:1px solid #9d948d!important;border-radius:7px!important;background:#fffaf4!important;box-shadow:0 3px 9px rgba(30,20,15,.12)!important;cursor:pointer!important;font-size:.7rem!important;font-weight:850!important;list-style:none!important}',
+      '#shortListPanel .card-row-transform-drawer>summary{display:grid!important;place-items:center!important;width:2rem!important;height:2rem!important;min-height:2rem!important;padding:0!important;border:1px solid #9d948d!important;border-radius:999px!important;background:#fffaf4!important;box-shadow:0 3px 9px rgba(30,20,15,.12)!important;cursor:pointer!important;font-size:1rem!important;font-weight:850!important;line-height:1!important;list-style:none!important}',
       '#shortListPanel .card-row-transform-drawer>summary::-webkit-details-marker{display:none!important}',
-      '#shortListPanel .card-row-transform-summary-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-      '#shortListPanel .card-row-transform-drawer[open]>summary{border-radius:7px 7px 0 0!important}',
+      '#shortListPanel .card-row-transform-summary-label{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}',
+      '#shortListPanel .card-row-transform-drawer[open]>summary{border-radius:999px!important}',
       '#shortListPanel .card-row-transform-fields{display:grid!important;grid-template-columns:1fr 1fr!important;gap:.42rem!important;padding:.55rem!important;border:1px solid #9d948d!important;border-top:0!important;border-radius:0 0 7px 7px!important;background:#fffaf4!important;box-shadow:0 6px 15px rgba(30,20,15,.14)!important}',
       '#shortListPanel .card-row-transform-fields label{display:grid!important;gap:.18rem!important;margin:0!important;color:#5f5751!important;font-size:.64rem!important;font-weight:800!important}',
       '#shortListPanel .card-row-transform-fields label:first-child{grid-column:1/-1}',
       '#shortListPanel .card-row-transform-fields input{width:100%!important;min-width:0!important;min-height:2rem!important;margin:0!important;padding:.3rem .4rem!important;border:1px solid #bdb3aa!important;border-radius:5px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important;box-sizing:border-box!important}',
-      '#shortListPanel .card-row-transform-drawer-body{display:grid!important;gap:.42rem!important;padding:.55rem!important;border:1px solid #9d948d!important;border-top:0!important;border-radius:0 0 7px 7px!important;background:#fffaf4!important;box-shadow:0 6px 15px rgba(30,20,15,.14)!important}',
+      '#shortListPanel .card-row-transform-drawer-body{position:absolute!important;top:2.3rem!important;left:0!important;display:grid!important;width:15rem!important;max-width:min(15rem,70vw)!important;gap:.42rem!important;padding:.55rem!important;border:1px solid #9d948d!important;border-radius:7px!important;background:#fffaf4!important;box-shadow:0 6px 15px rgba(30,20,15,.14)!important;box-sizing:border-box!important}',
       '#shortListPanel .card-row-transform-drawer-body label{display:grid!important;gap:.18rem!important;margin:0!important;color:#5f5751!important;font-size:.64rem!important;font-weight:800!important}',
       '#shortListPanel .card-row-drawer-numbers{display:grid!important;grid-template-columns:1fr 1fr!important;gap:.42rem!important}',
       '#shortListPanel .card-row-transform-drawer-body input{width:100%!important;min-width:0!important;min-height:2rem!important;margin:0!important;padding:.3rem .4rem!important;border:1px solid #bdb3aa!important;border-radius:5px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important;box-sizing:border-box!important}',
       '#shortListPanel .card-row-workspace .relphi-layout-status{margin-left:3.8rem!important}',
+      '@media(prefers-reduced-motion:reduce){#shortListPanel .card-row-workspace-toolbar{transition:none!important}}',
       '@media(max-width:700px){#shortListPanel .relphi-labels-field{grid-template-columns:max-content minmax(0,1fr)!important;gap:.35rem!important}#shortListPanel .relphi-layout-status{grid-template-columns:1fr}#shortListPanel .relphi-layout-status>span,#shortListPanel .relphi-layout-status>div{grid-column:1;grid-row:auto}#shortListPanel .relphi-layout-status>div{justify-content:flex-start}#shortListPanel .relphi-prefab-actions button{flex:1 1 46%}#shortListPanel .card-row-transform-drawer{left:0!important;top:calc(100% + .35rem)!important}}'
     ].join('');
     document.head.appendChild(style);
@@ -995,3 +998,4 @@
     list:allPrefabs
   });
 })();
+
