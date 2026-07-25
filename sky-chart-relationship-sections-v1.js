@@ -3,11 +3,23 @@
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  if (!document.querySelector('script[src^="sky-chart-calculated-points-storage-bridge-v1.js"]')) {
+  function loadCalculatedBridge() {
+    if (document.querySelector('script[src^="sky-chart-calculated-points-storage-bridge-v1.js"]')) return;
     const bridge = document.createElement('script');
     bridge.async = false;
     bridge.src = 'sky-chart-calculated-points-storage-bridge-v1.js?v=3';
     document.body.appendChild(bridge);
+  }
+
+  if (!document.querySelector('script[src^="sky-chart-jpl-cors-bridge-v1.js"]')) {
+    const corsBridge = document.createElement('script');
+    corsBridge.async = false;
+    corsBridge.src = 'sky-chart-jpl-cors-bridge-v1.js?v=1';
+    corsBridge.addEventListener('load', loadCalculatedBridge, { once:true });
+    corsBridge.addEventListener('error', loadCalculatedBridge, { once:true });
+    document.body.appendChild(corsBridge);
+  } else {
+    loadCalculatedBridge();
   }
 
   const HOST_ID = 'relphiStructuralRelationshipSections';
