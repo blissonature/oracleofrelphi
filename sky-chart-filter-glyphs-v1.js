@@ -3,7 +3,6 @@
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  const RED = '#dc1f18';
   let observer;
   let running = false;
   let queued = false;
@@ -28,16 +27,10 @@
 
   function inscribedIcon(entry, className) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.setAttribute('viewBox','-22 -22 44 44');
+    svg.setAttribute('viewBox','-32 -32 64 64');
     svg.setAttribute('aria-hidden','true');
     svg.classList.add(className || 'relphi-unified-glyph');
-    const bubble = window.RelphiGlyphComponent.createBubble(svg, entry.id, {
-      radius:19,
-      padding:1,
-      color:RED,
-      fill:'#fff',
-      strokeWidth:2.35
-    });
+    const bubble = window.RelphiGlyphComponent.createBubble(svg, entry.id);
     bubble.ready.catch(function () {});
     return svg;
   }
