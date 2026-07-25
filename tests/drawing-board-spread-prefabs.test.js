@@ -122,6 +122,7 @@ assert.match(app, /rowCenterOpen/, 'temporary Celtic view state should exist');
 assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Celtic view must not persist in the board snapshot');
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=5/);
+assert.match(source, /draftName = copySourceId \|\|/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=6/);
 
 console.log('Drawing Board spread prefab regression checks passed.');

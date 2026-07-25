@@ -508,8 +508,8 @@
     if (!board || !toolbar || !field || !datalist) return;
     if (state.designMode && !draftLayout && state.currentLayout?.positions?.length) {
       draftLayout = clone(state.currentLayout);
-      draftName = String(state.currentLayout.name || '').trim() === 'Untitled spread' ? '' : String(state.currentLayout.name || '');
       copySourceId = String(state.currentLayout.basedOn || '');
+      draftName = copySourceId || String(state.currentLayout.name || '').trim() === 'Untitled spread' ? '' : String(state.currentLayout.name || '');
       templateMode = copySourceId ? 'existing' : 'new';
     }
 
