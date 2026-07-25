@@ -112,23 +112,23 @@
       editable:false,
       helper:'celtic-center',
       positions:[
-        position('covering', '1 · What covers you', 1, transform(.28, .34, 0, .45, 20), {
+        position('covering', '1 · What covers you', 1, transform(.25, .326, 0, .45, 20), {
           role:'covering',
-          openTransform:transform(.18, .40, 0, .45, 20)
+          openTransform:transform(.25, .326, 0, .45, 20)
         }),
-        position('crossing', '2 · What crosses you', 2, transform(.28, .34, 90, .45, 30), {
+        position('crossing', '2 · What crosses you', 2, transform(.25, .326, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
-          openTransform:transform(.40, .40, 0, .45, 30)
+          openTransform:transform(.355, .326, 0, .45, 30)
         }),
-        position('crowning', '3 · What crowns you', 3, transform(.28, .01, 0, .45, 4)),
-        position('beneath', '4 · What is beneath you', 4, transform(.28, .69, 0, .45, 4)),
-        position('behind', '5 · What is behind you', 5, transform(.52, .34, 0, .45, 4)),
-        position('before', '6 · What is before you', 6, transform(.04, .34, 0, .45, 4)),
-        position('self', '7 · Yourself', 7, transform(.82, .70, 0, .45, 4)),
-        position('house', '8 · Your house', 8, transform(.82, .47, 0, .45, 4)),
-        position('hopes-fears', '9 · Your hopes or fears', 9, transform(.82, .24, 0, .45, 4)),
-        position('outcome', '10 · What will come', 10, transform(.82, .01, 0, .45, 4))
+        position('crowning', '3 · What crowns you', 3, transform(.25, .10, 0, .45, 4)),
+        position('beneath', '4 · What is beneath you', 4, transform(.25, .552, 0, .45, 4)),
+        position('behind', '5 · What is behind you', 5, transform(.04, .326, 0, .45, 4)),
+        position('before', '6 · What is before you', 6, transform(.46, .326, 0, .45, 4)),
+        position('self', '7 · Yourself', 7, transform(.76, .718, 0, .45, 4)),
+        position('house', '8 · Your house', 8, transform(.76, .492, 0, .45, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 9, transform(.76, .266, 0, .45, 4)),
+        position('outcome', '10 · What will come', 10, transform(.76, .04, 0, .45, 4))
       ]
     },
     {
@@ -139,28 +139,28 @@
       editable:false,
       helper:'celtic-center',
       positions:[
-        position('significator', 'Significator', 1, transform(.28, .34, 0, .45, 10), {
+        position('significator', 'Significator', 1, transform(.25, .326, 0, .45, 10), {
           role:'significator',
-          openTransform:transform(.08, .40, 0, .45, 10)
+          openTransform:transform(.145, .326, 0, .45, 10)
         }),
-        position('covering', '1 · What covers you', 2, transform(.28, .34, 0, .45, 20), {
+        position('covering', '1 · What covers you', 2, transform(.25, .326, 0, .45, 20), {
           role:'covering',
           covers:'significator',
-          openTransform:transform(.28, .40, 0, .45, 20)
+          openTransform:transform(.25, .326, 0, .45, 20)
         }),
-        position('crossing', '2 · What crosses you', 3, transform(.28, .34, 90, .45, 30), {
+        position('crossing', '2 · What crosses you', 3, transform(.25, .326, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
-          openTransform:transform(.48, .40, 0, .45, 30)
+          openTransform:transform(.355, .326, 0, .45, 30)
         }),
-        position('crowning', '3 · What crowns you', 4, transform(.28, .01, 0, .45, 4)),
-        position('beneath', '4 · What is beneath you', 5, transform(.28, .69, 0, .45, 4)),
-        position('behind', '5 · What is behind you', 6, transform(.52, .34, 0, .45, 4)),
-        position('before', '6 · What is before you', 7, transform(.04, .34, 0, .45, 4)),
-        position('self', '7 · Yourself', 8, transform(.82, .70, 0, .45, 4)),
-        position('house', '8 · Your house', 9, transform(.82, .47, 0, .45, 4)),
-        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.82, .24, 0, .45, 4)),
-        position('outcome', '10 · What will come', 11, transform(.82, .01, 0, .45, 4))
+        position('crowning', '3 · What crowns you', 4, transform(.25, .10, 0, .45, 4)),
+        position('beneath', '4 · What is beneath you', 5, transform(.25, .552, 0, .45, 4)),
+        position('behind', '5 · What is behind you', 6, transform(.04, .326, 0, .45, 4)),
+        position('before', '6 · What is before you', 7, transform(.46, .326, 0, .45, 4)),
+        position('self', '7 · Yourself', 8, transform(.76, .718, 0, .45, 4)),
+        position('house', '8 · Your house', 9, transform(.76, .492, 0, .45, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.76, .266, 0, .45, 4)),
+        position('outcome', '10 · What will come', 11, transform(.76, .04, 0, .45, 4))
       ]
     },
     {
@@ -593,7 +593,7 @@
         schedule();
       });
     }
-    if (quickLabel && quickLabel.parentElement !== fieldHost) fieldHost.insertBefore(quickLabel, omnibox);
+    if (quickLabel && quickLabel.parentElement !== omnibox) omnibox.appendChild(quickLabel);
     if (quickLabel && !quickLabel.dataset.relphiEyeControl) {
       quickLabel.dataset.relphiEyeControl = 'true';
       Array.from(quickLabel.childNodes).filter(node => node.nodeType === 3).forEach(node => node.remove());
@@ -793,7 +793,7 @@
       schedule();
     };
   }
-  function addPrecisionControls(panel, state) {
+  function addWorkspaceControls(panel) {
     const board = panel.querySelector('.card-row-board');
     const workspace = panel.querySelector('.card-row-workspace');
     const toolbar = panel.querySelector('.card-row-workspace-toolbar');
@@ -829,44 +829,16 @@
         zoom.dispatchEvent(new Event('change', { bubbles:true }));
       });
     }
-    const layout = state.currentLayout;
-    board.querySelectorAll('.card-row-item[data-row-index]').forEach(item => {
-      if (item.querySelector('.card-row-transform-drawer')) return;
-      const index = Math.max(0, Number(item.dataset.rowIndex) || 0);
-      const position = layout?.positions?.[index];
-      const transform = position?.transform || {};
-      const label = String(position?.label || 'Position ' + (index + 1));
-      const locked = state.locked && !state.designMode;
-      const drawer = document.createElement('details');
-      drawer.className = 'card-row-transform-drawer';
-      drawer.style.setProperty('--row-drawer-inverse-scale', String(1 / Math.max(.45, Number(transform.scale) || 1)));
-      drawer.style.setProperty('--row-drawer-inverse-rotation', (-Number(transform.rotation || 0)) + 'deg');
-      drawer.innerHTML = '<summary aria-label="Adjust ' + escapeHtml(label) + '" title="Adjust position values"><span class="card-row-transform-summary-label">' + escapeHtml('Adjust ' + label) + '</span><b aria-hidden="true">⋯</b></summary><div class="card-row-transform-drawer-body">' +
-        '<label>Label<input type="text" maxlength="90" data-row-drawer-field="label" value="' + escapeHtml(label) + '"' + (locked ? ' disabled' : '') + '></label>' +
-        '<div class="card-row-drawer-numbers">' +
-        '<label>X<input type="number" step="1" data-row-drawer-field="x" value="' + Math.round(Number(transform.x || 0) * 900) + '"' + (locked ? ' disabled' : '') + '></label>' +
-        '<label>Y<input type="number" step="1" data-row-drawer-field="y" value="' + Math.round(Number(transform.y || 0) * 760) + '"' + (locked ? ' disabled' : '') + '></label>' +
-        '<label>Scale<input type="number" min=".45" max="2.5" step=".01" data-row-drawer-field="scale" value="' + (Number(transform.scale) || 1) + '"' + (locked ? ' disabled' : '') + '></label>' +
-        '<label>Rotation<input type="number" min="-180" max="180" step="1" data-row-drawer-field="rotation" value="' + (Number(transform.rotation) || 0) + '"' + (locked ? ' disabled' : '') + '></label></div></div>';
-      item.appendChild(drawer);
-      drawer.querySelectorAll('[data-row-drawer-field]').forEach(input => {
-        input.addEventListener('input', () => {
-          if (input.dataset.rowDrawerField === 'label') drawer.querySelector('summary span').textContent = 'Adjust ' + (input.value || 'Position ' + (index + 1));
-        });
-        input.addEventListener('change', () => {
-          const next = clone(bridge()?.getState()?.currentLayout);
-          if (!next?.positions?.[index]) return;
-          const target = next.positions[index];
-          const field = input.dataset.rowDrawerField;
-          if (field === 'label') target.label = String(input.value || 'Position ' + (index + 1)).slice(0, 90);
-          if (field === 'x') target.transform.x = Math.max(0, Number(input.value) || 0) / 900;
-          if (field === 'y') target.transform.y = Math.max(0, Number(input.value) || 0) / 760;
-          if (field === 'scale') target.transform.scale = Math.max(.45, Math.min(2.5, Number(input.value) || 1));
-          if (field === 'rotation') target.transform.rotation = Math.max(-180, Math.min(180, Number(input.value) || 0));
-          bridge()?.applyLayout(next, { designMode:true });
-        });
-      });
-    });
+    if (!toolbar.dataset.relphiFadeBound) {
+      toolbar.dataset.relphiFadeBound = 'true';
+      let fadeTimer = 0;
+      const showRecentlyUsed = () => {
+        window.clearTimeout(fadeTimer);
+        toolbar.classList.add('is-recently-used');
+        fadeTimer = window.setTimeout(() => toolbar.classList.remove('is-recently-used'), 1800);
+      };
+      ['pointerenter','pointermove','focusin','input','click'].forEach(type => toolbar.addEventListener(type, showRecentlyUsed));
+    }
   }
   function enhance() {
     queued = false;
@@ -881,7 +853,7 @@
       addDesignControls(panel, state);
       lockControls(panel, state);
       applyCenterView(panel, state);
-      addPrecisionControls(panel, state);
+      addWorkspaceControls(panel);
     } finally {
       enhancing = false;
     }
@@ -918,14 +890,14 @@
       '#shortListPanel .relphi-labels-close{min-height:2rem!important;padding:.3rem .55rem!important}',
       '#shortListPanel .relphi-labels-drawer button{min-height:2.25rem!important;padding:.4rem .65rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.78rem!important;font-weight:800!important;line-height:1.1!important;box-shadow:none!important}',
       '#shortListPanel .relphi-labels-drawer button.primary{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}',
-      '#shortListPanel .relphi-labels-field{display:grid!important;grid-template-columns:max-content minmax(0,1fr)!important;align-items:end!important;gap:.55rem!important}',
+      '#shortListPanel .relphi-labels-field{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:end!important;gap:.55rem!important}',
       '#shortListPanel .relphi-template-omnibox{position:relative;display:grid;min-width:0}',
       '#shortListPanel .relphi-template-omnibox>label{display:grid!important;gap:.2rem!important;width:100%!important;margin:0!important;font-size:.78rem!important;font-weight:800!important}',
-      '#shortListPanel .relphi-template-omnibox input[type="text"]{display:block!important;width:100%!important;min-height:2.35rem!important;margin:.2rem 0 0!important;padding:.45rem 2.35rem .45rem .6rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;box-sizing:border-box!important}',
+      '#shortListPanel .relphi-template-omnibox input[type="text"]{display:block!important;width:100%!important;min-height:2.35rem!important;margin:.2rem 0 0!important;padding:.45rem 2.35rem .45rem 2.65rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;box-sizing:border-box!important}',
       '#shortListPanel .relphi-template-clear{position:absolute!important;right:.25rem!important;bottom:.22rem!important;z-index:2!important;display:grid!important;place-items:center!important;width:1.9rem!important;min-width:1.9rem!important;height:1.9rem!important;min-height:1.9rem!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important;font-size:1.15rem!important;line-height:1!important}',
       '#shortListPanel .relphi-template-clear[hidden]{display:none!important}',
-      '#shortListPanel .relphi-labels-field .quick-position-sticker-toggle{position:relative!important;display:grid!important;place-items:center!important;width:2.35rem!important;min-width:2.35rem!important;height:2.35rem!important;min-height:2.35rem!important;margin:0!important;padding:0!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#777!important;box-sizing:border-box!important;cursor:pointer!important}',
-      '#shortListPanel .relphi-labels-field .quick-position-sticker-toggle.is-visible{color:#171412!important}',
+      '#shortListPanel .relphi-template-omnibox .quick-position-sticker-toggle{position:absolute!important;left:.25rem!important;bottom:.22rem!important;z-index:2!important;display:grid!important;place-items:center!important;width:1.9rem!important;min-width:1.9rem!important;height:1.9rem!important;min-height:1.9rem!important;margin:0!important;padding:0!important;border:0!important;border-radius:5px!important;background:transparent!important;color:#b4aca5!important;box-shadow:inset 0 1px 1px rgba(255,255,255,.9),inset 0 -1px 1px rgba(70,55,45,.08)!important;filter:drop-shadow(0 1px 0 rgba(255,255,255,.9));opacity:.72!important;box-sizing:border-box!important;cursor:pointer!important}',
+      '#shortListPanel .relphi-template-omnibox .quick-position-sticker-toggle.is-visible{color:#171412!important;opacity:1!important}',
       '#shortListPanel .relphi-labels-field .quick-position-sticker-toggle input{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}',
       '#shortListPanel .relphi-template-eye{display:block;width:1.2rem;height:1.2rem;pointer-events:none}',
       '#shortListPanel .relphi-template-eye svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}',
@@ -945,8 +917,8 @@
       '#shortListPanel .card-row-workspace{position:relative!important;overflow:hidden!important;background:var(--row-table-image,none) center/cover no-repeat,repeating-linear-gradient(0deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),repeating-linear-gradient(90deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),var(--row-table-bg,#fffaf0)!important}',
       '#shortListPanel .card-row-workspace .short-list-row.card-row-board{top:0!important;overflow:visible!important;background:var(--row-table-image,none) center/cover no-repeat,repeating-linear-gradient(0deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),repeating-linear-gradient(90deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),var(--row-table-bg,#fffaf0)!important}',
       'html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item{position:absolute!important}',
-      '#shortListPanel .card-row-workspace-toolbar{position:absolute!important;top:.55rem!important;left:.55rem!important;right:auto!important;z-index:1500!important;display:grid!important;grid-template-columns:1fr!important;justify-items:center!important;gap:.3rem!important;width:2.7rem!important;max-width:2.7rem!important;margin:0!important;padding:.4rem .28rem!important;border:1px solid rgba(23,20,18,.28)!important;border-radius:999px!important;background:rgba(255,250,244,.94)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important;backdrop-filter:blur(4px);opacity:.24!important;transition:opacity .22s ease!important}',
-      '#shortListPanel .card-row-workspace-toolbar:hover,#shortListPanel .card-row-workspace-toolbar:focus-within{opacity:.96!important}',
+      '#shortListPanel .card-row-workspace-toolbar{position:absolute!important;top:.55rem!important;left:.55rem!important;right:auto!important;z-index:1500!important;display:grid!important;grid-template-columns:1fr!important;justify-items:center!important;gap:.3rem!important;width:2.7rem!important;max-width:2.7rem!important;margin:0!important;padding:.4rem .28rem!important;border:1px solid rgba(23,20,18,.28)!important;border-radius:999px!important;background:rgba(255,250,244,.94)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important;backdrop-filter:blur(4px);opacity:0!important;transition:opacity .35s ease!important}',
+      '#shortListPanel .card-row-workspace-toolbar:hover,#shortListPanel .card-row-workspace-toolbar:focus-within,#shortListPanel .card-row-workspace-toolbar.is-recently-used{opacity:.96!important}',
       '#shortListPanel .card-row-zoom-label{display:grid!important;justify-items:center!important;gap:.2rem!important;width:auto!important;margin:0!important;padding:0!important}',
       '#shortListPanel .card-row-zoom-label>span{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}',
       '#shortListPanel #rowZoom{writing-mode:vertical-lr!important;direction:rtl!important;appearance:slider-vertical!important;width:1rem!important;min-width:1rem!important;max-width:1rem!important;height:6.5rem!important;min-height:6.5rem!important;margin:.1rem 0!important;padding:0!important}',
@@ -960,24 +932,9 @@
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{width:2rem!important;min-width:2rem!important;margin:0!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;padding:0!important;border-radius:999px!important;font-size:0!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button::before{content:"↔";font-size:1rem}',
-      '#shortListPanel .card-row-transform-drawer{--row-drawer-inverse-scale:1;--row-drawer-inverse-rotation:0deg;position:absolute!important;top:0!important;left:calc(100% + .4rem)!important;z-index:1700!important;width:2rem!important;max-width:min(15rem,70vw)!important;transform:scale(var(--row-drawer-inverse-scale)) rotate(var(--row-drawer-inverse-rotation))!important;transform-origin:0 0!important;color:#171412!important;font:inherit!important}',
-      '#shortListPanel .card-row-transform-drawer[open]{width:15rem!important}',
-      '#shortListPanel .card-row-item:has(.card-row-transform-drawer[open]){z-index:1800!important}',
-      '#shortListPanel .card-row-transform-drawer>summary{display:grid!important;place-items:center!important;width:2rem!important;height:2rem!important;min-height:2rem!important;padding:0!important;border:1px solid #9d948d!important;border-radius:999px!important;background:#fffaf4!important;box-shadow:0 3px 9px rgba(30,20,15,.12)!important;cursor:pointer!important;font-size:1rem!important;font-weight:850!important;line-height:1!important;list-style:none!important}',
-      '#shortListPanel .card-row-transform-drawer>summary::-webkit-details-marker{display:none!important}',
-      '#shortListPanel .card-row-transform-summary-label{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}',
-      '#shortListPanel .card-row-transform-drawer[open]>summary{border-radius:999px!important}',
-      '#shortListPanel .card-row-transform-fields{display:grid!important;grid-template-columns:1fr 1fr!important;gap:.42rem!important;padding:.55rem!important;border:1px solid #9d948d!important;border-top:0!important;border-radius:0 0 7px 7px!important;background:#fffaf4!important;box-shadow:0 6px 15px rgba(30,20,15,.14)!important}',
-      '#shortListPanel .card-row-transform-fields label{display:grid!important;gap:.18rem!important;margin:0!important;color:#5f5751!important;font-size:.64rem!important;font-weight:800!important}',
-      '#shortListPanel .card-row-transform-fields label:first-child{grid-column:1/-1}',
-      '#shortListPanel .card-row-transform-fields input{width:100%!important;min-width:0!important;min-height:2rem!important;margin:0!important;padding:.3rem .4rem!important;border:1px solid #bdb3aa!important;border-radius:5px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important;box-sizing:border-box!important}',
-      '#shortListPanel .card-row-transform-drawer-body{position:absolute!important;top:2.3rem!important;left:0!important;display:grid!important;width:15rem!important;max-width:min(15rem,70vw)!important;gap:.42rem!important;padding:.55rem!important;border:1px solid #9d948d!important;border-radius:7px!important;background:#fffaf4!important;box-shadow:0 6px 15px rgba(30,20,15,.14)!important;box-sizing:border-box!important}',
-      '#shortListPanel .card-row-transform-drawer-body label{display:grid!important;gap:.18rem!important;margin:0!important;color:#5f5751!important;font-size:.64rem!important;font-weight:800!important}',
-      '#shortListPanel .card-row-drawer-numbers{display:grid!important;grid-template-columns:1fr 1fr!important;gap:.42rem!important}',
-      '#shortListPanel .card-row-transform-drawer-body input{width:100%!important;min-width:0!important;min-height:2rem!important;margin:0!important;padding:.3rem .4rem!important;border:1px solid #bdb3aa!important;border-radius:5px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important;box-sizing:border-box!important}',
       '#shortListPanel .card-row-workspace .relphi-layout-status{margin-left:3.8rem!important}',
       '@media(prefers-reduced-motion:reduce){#shortListPanel .card-row-workspace-toolbar{transition:none!important}}',
-      '@media(max-width:700px){#shortListPanel .relphi-labels-field{grid-template-columns:max-content minmax(0,1fr)!important;gap:.35rem!important}#shortListPanel .relphi-layout-status{grid-template-columns:1fr}#shortListPanel .relphi-layout-status>span,#shortListPanel .relphi-layout-status>div{grid-column:1;grid-row:auto}#shortListPanel .relphi-layout-status>div{justify-content:flex-start}#shortListPanel .relphi-prefab-actions button{flex:1 1 46%}#shortListPanel .card-row-transform-drawer{left:0!important;top:calc(100% + .35rem)!important}}'
+      '@media(max-width:700px){#shortListPanel .relphi-labels-field{grid-template-columns:minmax(0,1fr)!important;gap:.35rem!important}#shortListPanel .relphi-layout-status{grid-template-columns:1fr}#shortListPanel .relphi-layout-status>span,#shortListPanel .relphi-layout-status>div{grid-column:1;grid-row:auto}#shortListPanel .relphi-layout-status>div{justify-content:flex-start}#shortListPanel .relphi-prefab-actions button{flex:1 1 46%}}'
     ].join('');
     document.head.appendChild(style);
   }

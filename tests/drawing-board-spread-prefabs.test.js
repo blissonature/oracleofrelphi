@@ -76,35 +76,41 @@ assert.deepEqual(
     '10 · What will come'
   ]
 );
-assert.equal(celtic10.positions.find(item => item.id === 'behind').transform.x, .52);
-assert.equal(celtic10.positions.find(item => item.id === 'before').transform.x, .04);
-assert.equal(celtic11.positions.find(item => item.id === 'behind').transform.x, .52);
-assert.equal(celtic11.positions.find(item => item.id === 'before').transform.x, .04);
+assert.equal(celtic10.positions.find(item => item.id === 'behind').transform.x, .04);
+assert.equal(celtic10.positions.find(item => item.id === 'before').transform.x, .46);
+assert.equal(celtic11.positions.find(item => item.id === 'behind').transform.x, .04);
+assert.equal(celtic11.positions.find(item => item.id === 'before').transform.x, .46);
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.equal(celtic11.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.ok(celtic10.positions.filter(item => item.openTransform).length >= 2);
 assert.ok(celtic11.positions.filter(item => item.openTransform).length >= 3);
 assert.equal(
   JSON.stringify(celtic10.positions.slice(0, 2).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.28, .34], [.28, .34]]),
+  JSON.stringify([[.25, .326], [.25, .326]]),
   'the ten-card center should pile before being opened'
 );
 assert.equal(
   JSON.stringify(celtic11.positions.slice(0, 3).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.28, .34], [.28, .34], [.28, .34]]),
+  JSON.stringify([[.25, .326], [.25, .326], [.25, .326]]),
   'significator, cover, and cross should share one piled center'
 );
 assert.equal(
   JSON.stringify(celtic11.positions.slice(0, 3).map(item => item.openTransform.x)),
-  JSON.stringify([.08, .28, .48]),
+  JSON.stringify([.145, .25, .355]),
   'the open center should place its three cards side by side'
 );
 assert.equal(celtic11.positions[2].openTransform.rotation, 0);
 assert.equal(
   JSON.stringify(celtic11.positions.slice(7).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.82, .70], [.82, .47], [.82, .24], [.82, .01]]),
+  JSON.stringify([[.76, .718], [.76, .492], [.76, .266], [.76, .04]]),
   'the right-hand ladder should rise from Self to Outcome'
 );
+assert.ok(Math.abs(celtic11.positions[0].openTransform.x - celtic11.positions.find(item => item.id === 'behind').transform.x - .105) < 1e-12);
+assert.ok(Math.abs(celtic11.positions[1].openTransform.x - celtic11.positions[0].openTransform.x - .105) < 1e-12);
+assert.ok(Math.abs(celtic11.positions[2].openTransform.x - celtic11.positions[1].openTransform.x - .105) < 1e-12);
+assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'before').transform.x - celtic11.positions[2].openTransform.x - .105) < 1e-12);
+assert.ok(Math.abs(celtic11.positions[1].openTransform.y - celtic11.positions.find(item => item.id === 'crowning').transform.y - .226) < 1e-12);
+assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'beneath').transform.y - celtic11.positions[1].openTransform.y - .226) < 1e-12);
 
 assert.match(source, /return prefab\.cardCount \+ ' \| ' \+ prefab\.name/);
 assert.match(source, /Save As Copy and Use/);
@@ -127,6 +133,7 @@ assert.match(source, /Clear template selection/);
 assert.match(source, /field\.value = displayName\(match\)/);
 assert.match(source, /newPromptArmed = false/);
 assert.match(source, /className = 'relphi-template-eye'/);
+assert.match(source, /quickLabel\.parentElement !== omnibox/);
 assert.match(source, /Hide position stickers/);
 assert.match(source, /relphi-eye-slash/);
 assert.doesNotMatch(source, /name="relphiTemplateMode"/);
@@ -148,10 +155,11 @@ assert.match(source, /relphiDrawingBoardSpreadPrefabsV2/);
 assert.match(source, /relphiDrawingBoardStickerPrefabsV1/);
 assert.match(source, /SHIPPED\.some\(item => item\.id === clean\.id\)/);
 assert.match(source, /button:disabled\{opacity:\.45!important;cursor:default!important\}/);
-assert.match(source, /function addPrecisionControls/);
-assert.match(source, /data-row-drawer-field="x"/);
-assert.match(source, /card-row-transform-summary-label/);
-assert.match(source, /opacity:\.24!important/);
+assert.match(source, /function addWorkspaceControls/);
+assert.doesNotMatch(source, /card-row-transform-drawer/);
+assert.doesNotMatch(source, /data-row-drawer-field/);
+assert.match(source, /opacity:0!important/);
+assert.match(source, /is-recently-used/);
 assert.match(source, /zoomCardRowExtents/);
 assert.doesNotMatch(source, /cursor:not-allowed/);
 assert.doesNotMatch(source, /drawnCardIds|readingName|readingNotes/);
@@ -162,6 +170,6 @@ assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Cel
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
 assert.match(source, /draftName = String\(state\.currentLayout\.name/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=9/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=10/);
 
 console.log('Drawing Board spread prefab regression checks passed.');
