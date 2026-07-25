@@ -5,7 +5,7 @@
 
   const entries = [
     ['sun','Sun',['sun','☉','⊙'],'assets/planet-glyphs/sun.svg',1,0,0,null,'circle'],
-    ['moon','Moon',['moon','☽','☾'],'assets/planet-glyphs/moon.svg',1.083,2.7,0,null,'circle'],
+    ['moon','Moon',['moon','☽','☾'],'assets/planet-glyphs/moon.svg',1.083,2.7,1,null,'circle'],
     ['mercury','Mercury',['mercury','☿'],'assets/planet-glyphs/mercury.svg',1,0,0,null,'circle'],
     ['venus','Venus',['venus','♀'],'assets/planet-glyphs/venus.svg',1,0,0,null,'circle'],
     ['mars','Mars',['mars','♂'],'assets/planet-glyphs/mars.svg',1,-0.95,0.9,null,'circle'],
