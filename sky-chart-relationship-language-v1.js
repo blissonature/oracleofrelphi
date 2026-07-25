@@ -44,113 +44,32 @@
   function resolve(value) { return registry()?.resolve(String(value || '').trim()) || null; }
 
   function glyphButton(entry) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'relphi-progressive-term relphi-progressive-glyph';
-    button.dataset.glyphIdentity = entry.id;
-    button.setAttribute('aria-label','Reveal ' + entry.name);
-    button.setAttribute('aria-expanded','false');
-    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.setAttribute('viewBox','-12 -12 24 24');
-    svg.setAttribute('aria-hidden','true');
-    svg.classList.add('relphi-progressive-svg');
-    const group = document.createElementNS('http://www.w3.org/2000/svg','g');
-    svg.appendChild(group); button.appendChild(svg);
-    component().draw(group,entry.id,{radius:9.5,padding:.5,color:'#111'}).catch(function () {});
-    return button;
+    const button = document.createElement('button'); button.type='button'; button.className='relphi-progressive-term relphi-progressive-glyph';
+    button.dataset.glyphIdentity=entry.id; button.setAttribute('aria-label','Reveal '+entry.name); button.setAttribute('aria-expanded','false');
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('viewBox','-12 -12 24 24'); svg.setAttribute('aria-hidden','true'); svg.classList.add('relphi-progressive-svg');
+    const group=document.createElementNS('http://www.w3.org/2000/svg','g'); svg.appendChild(group); button.appendChild(svg);
+    component().draw(group,entry.id,{radius:9.5,padding:.5,color:'#111'}).catch(function(){}); return button;
   }
 
-  function token(identity, meaning) {
-    const entry = resolve(identity);
-    if (!entry) return null;
-    const wrap = document.createElement('span');
-    wrap.className = 'relphi-progressive-token';
-    const glyph = glyphButton(entry);
-    glyph.addEventListener('click',function (event) {
-      event.stopPropagation();
-      const existing = wrap.querySelector('.relphi-progressive-name');
-      if (existing) {
-        wrap.querySelector('.relphi-progressive-meaning')?.remove(); existing.remove(); glyph.setAttribute('aria-expanded','false'); return;
-      }
-      const name = document.createElement('button');
-      name.type = 'button'; name.className = 'relphi-progressive-term relphi-progressive-name'; name.textContent = ' ' + entry.name; name.setAttribute('aria-expanded','false');
-      name.addEventListener('click',function (inner) {
-        inner.stopPropagation();
-        const old = wrap.querySelector('.relphi-progressive-meaning');
-        if (old) { old.remove(); name.setAttribute('aria-expanded','false'); return; }
-        const detail = document.createElement('button');
-        detail.type = 'button'; detail.className = 'relphi-progressive-term relphi-progressive-meaning'; detail.textContent = ' (' + (meaning || MEANING[entry.id] || entry.name) + ')';
-        detail.addEventListener('click',function (last) { last.stopPropagation(); detail.remove(); name.setAttribute('aria-expanded','false'); });
-        wrap.appendChild(detail); name.setAttribute('aria-expanded','true');
-      });
-      wrap.appendChild(name); glyph.setAttribute('aria-expanded','true');
-    });
+  function token(identity,meaning) {
+    const entry=resolve(identity); if(!entry) return null;
+    const wrap=document.createElement('span'); wrap.className='relphi-progressive-token'; const glyph=glyphButton(entry);
+    glyph.addEventListener('click',function(event){event.stopPropagation();const existing=wrap.querySelector('.relphi-progressive-name');if(existing){wrap.querySelector('.relphi-progressive-meaning')?.remove();existing.remove();glyph.setAttribute('aria-expanded','false');return;}const name=document.createElement('button');name.type='button';name.className='relphi-progressive-term relphi-progressive-name';name.textContent=' '+entry.name;name.setAttribute('aria-expanded','false');name.addEventListener('click',function(inner){inner.stopPropagation();const old=wrap.querySelector('.relphi-progressive-meaning');if(old){old.remove();name.setAttribute('aria-expanded','false');return;}const detail=document.createElement('button');detail.type='button';detail.className='relphi-progressive-term relphi-progressive-meaning';detail.textContent=' ('+(meaning||MEANING[entry.id]||entry.name)+')';detail.addEventListener('click',function(last){last.stopPropagation();detail.remove();name.setAttribute('aria-expanded','false');});wrap.appendChild(detail);name.setAttribute('aria-expanded','true');});wrap.appendChild(name);glyph.setAttribute('aria-expanded','true');});
     wrap.appendChild(glyph); return wrap;
   }
 
-  function appendToken(parent,identity,meaning) {
-    const node = token(identity,meaning);
-    if (!node) return false;
-    parent.appendChild(node); return true;
-  }
+  function appendToken(parent,identity,meaning){const node=token(identity,meaning);if(!node)return false;parent.appendChild(node);return true;}
+  function placement(parent,body,sign,degree){if(!appendToken(parent,body))return false;parent.append(' in ');if(!appendToken(parent,sign))return false;parent.append(' at '+degree);return true;}
+  function parse(value){return value.match(/^(.+?)(?:'s|’s)\s+(.+?)\s+in\s+(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\s+([^\s]+)\s+forms an?\s+(.+?)\s+with\s+(.+?)(?:'s|’s)\s+(.+?)\s+in\s+(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\s+([^\.]+)\./i);}
 
-  function placement(parent,body,sign,degree) {
-    if (!appendToken(parent,body)) return false;
-    parent.append(' in ');
-    if (!appendToken(parent,sign)) return false;
-    parent.append(' at ' + degree);
-    return true;
-  }
+  function rewrite(root){const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(function(node){if(node.parentElement?.closest('.relphi-progressive-reading'))return;const value=(node.nodeValue||'').replace(/\s+/g,' ').trim();if(!/ forms an? /i.test(value))return;const match=parse(value);if(!match)return;const bodyA=resolve(match[2]),signA=resolve(match[3]),aspect=resolve(match[5]),bodyB=resolve(match[7]),signB=resolve(match[8]);if(!bodyA||!signA||!aspect||!bodyB||!signB)return;const reading=document.createElement('span');reading.className='relphi-progressive-reading';reading.append('Between '+match[1].trim()+' and '+match[6].trim()+', ');if(!placement(reading,bodyA.id,signA.id,match[4]))return;reading.append(' connects with ');if(!placement(reading,bodyB.id,signB.id,match[9].trim()))return;reading.append(' through ');if(!appendToken(reading,aspect.id))return;reading.append('.');const elementMatch=value.match(/Shared\s+(fire|earth|air|water)\s+element/i);if(elementMatch){const element=resolve(elementMatch[1]);if(element){reading.append(' They share ');appendToken(reading,element.id);reading.append('.');}}const orbMatch=value.match(/Orb:\s*([^\.]+(?:\.|$))/i);if(orbMatch)reading.append(' Orb: '+orbMatch[1].trim());const hint=document.createElement('span');hint.className='relphi-progressive-hint';hint.textContent='Select a glyph for its name, then select the name for its meaning. Select either again to fold back.';reading.appendChild(hint);node.parentNode?.replaceChild(reading,node);});}
 
-  function parse(value) {
-    return value.match(/^(.+?)(?:'s|’s)\s+(.+?)\s+in\s+(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\s+([^\s]+)\s+forms an?\s+(.+?)\s+with\s+(.+?)(?:'s|’s)\s+(.+?)\s+in\s+(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\s+([^\.]+)\./i);
-  }
-
-  function rewrite(root) {
-    const walker = document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-    const nodes=[]; while (walker.nextNode()) nodes.push(walker.currentNode);
-    nodes.forEach(function (node) {
-      if (node.parentElement?.closest('.relphi-progressive-reading')) return;
-      const value=(node.nodeValue || '').replace(/\s+/g,' ').trim();
-      if (!/ forms an? /i.test(value)) return;
-      const match=parse(value); if (!match) return;
-      const bodyA=resolve(match[2]), signA=resolve(match[3]), aspect=resolve(match[5]), bodyB=resolve(match[7]), signB=resolve(match[8]);
-      if (!bodyA || !signA || !aspect || !bodyB || !signB) return;
-      const reading=document.createElement('span'); reading.className='relphi-progressive-reading';
-      reading.append('Between ' + match[1].trim() + ' and ' + match[6].trim() + ', ');
-      if (!placement(reading,bodyA.id,signA.id,match[4])) return;
-      reading.append(' connects with ');
-      if (!placement(reading,bodyB.id,signB.id,match[9].trim())) return;
-      reading.append(' through '); if (!appendToken(reading,aspect.id)) return; reading.append('.');
-      const elementMatch=value.match(/Shared\s+(fire|earth|air|water)\s+element/i);
-      if (elementMatch) { const element=resolve(elementMatch[1]); if (element) { reading.append(' They share '); appendToken(reading,element.id); reading.append('.'); } }
-      const orbMatch=value.match(/Orb:\s*([^\.]+(?:\.|$))/i); if (orbMatch) reading.append(' Orb: ' + orbMatch[1].trim());
-      const hint=document.createElement('span'); hint.className='relphi-progressive-hint'; hint.textContent='Select a glyph for its name, then select the name for its meaning. Select either again to fold back.'; reading.appendChild(hint);
-      node.parentNode?.replaceChild(reading,node);
-    });
-  }
-
-  function styles() {
-    if (document.getElementById('relphi-progressive-reading-styles')) return;
-    const style=document.createElement('style'); style.id='relphi-progressive-reading-styles';
-    style.textContent='.relphi-progressive-reading{line-height:1.75}.relphi-progressive-term{appearance:none;border:0;background:transparent;color:inherit;font:inherit;padding:0;cursor:pointer;text-align:left}.relphi-progressive-svg{width:1.2em;height:1.2em;display:inline-block;vertical-align:-.22em;overflow:visible}.relphi-progressive-name,.relphi-progressive-meaning{margin-left:.22em}.relphi-progressive-name{font-weight:800;text-decoration:underline dotted rgba(17,17,17,.38);text-underline-offset:.2em}.relphi-progressive-meaning{color:#554d48;font-weight:520}.relphi-progressive-term:focus-visible{outline:2px solid rgba(220,31,24,.32);outline-offset:2px;border-radius:.2em}.relphi-progressive-hint{display:block;margin-top:.55rem;color:#706761;font-size:.78rem;font-weight:650}';
-    document.head.appendChild(style);
-  }
+  function styles(){if(document.getElementById('relphi-progressive-reading-styles'))return;const style=document.createElement('style');style.id='relphi-progressive-reading-styles';style.textContent='.relphi-progressive-reading{line-height:1.75}.relphi-progressive-term{appearance:none;border:0;background:transparent;color:inherit;font:inherit;padding:0;cursor:pointer;text-align:left}.relphi-progressive-svg{width:1.2em;height:1.2em;display:inline-block;vertical-align:-.22em;overflow:visible}.relphi-progressive-name,.relphi-progressive-meaning{margin-left:.22em}.relphi-progressive-name{font-weight:800;text-decoration:underline dotted rgba(17,17,17,.38);text-underline-offset:.2em}.relphi-progressive-meaning{color:#554d48;font-weight:520}.relphi-progressive-term:focus-visible{outline:2px solid rgba(220,31,24,.32);outline-offset:2px;border-radius:.2em}.relphi-progressive-hint{display:block;margin-top:.55rem;color:#706761;font-size:.78rem;font-weight:650}';document.head.appendChild(style);}
+  function ensureFilterRenderer(){if(document.querySelector('script[src^="sky-chart-filter-glyphs-v1.js"]'))return;const script=document.createElement('script');script.src='sky-chart-filter-glyphs-v1.js?v=4';script.async=false;document.body.appendChild(script);}
 
   let observer,queued=false,running=false;
-  function run() {
-    if (running) return;
-    if (!registry() || !component()) { setTimeout(schedule,80); return; }
-    running=true; observer?.disconnect(); styles();
-    document.querySelectorAll('body *').forEach(function (element) { if (/RELATIONSHIP READING/i.test(element.textContent || '')) rewrite(element); });
-    observer?.observe(document.body,{childList:true,subtree:true,characterData:true}); running=false;
-  }
-  function schedule() { if (queued || running) return; queued=true; requestAnimationFrame(function () { queued=false; run(); }); }
-  function start() {
-    observer=new MutationObserver(function (records) {
-      if (records.some(function (record) { return record.type==='characterData' || Array.from(record.addedNodes).some(function (node) { return node.nodeType===1 && !node.matches?.('.relphi-progressive-token,.relphi-progressive-svg'); }); })) schedule();
-    });
-    run();
-  }
-  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
+  function run(){if(running)return;if(!registry()||!component()){setTimeout(schedule,80);return;}running=true;observer?.disconnect();styles();document.querySelectorAll('body *').forEach(function(element){if(/RELATIONSHIP READING/i.test(element.textContent||''))rewrite(element);});observer?.observe(document.body,{childList:true,subtree:true,characterData:true});running=false;}
+  function schedule(){if(queued||running)return;queued=true;requestAnimationFrame(function(){queued=false;run();});}
+  function start(){ensureFilterRenderer();observer=new MutationObserver(function(records){if(records.some(function(record){return record.type==='characterData'||Array.from(record.addedNodes).some(function(node){return node.nodeType===1&&!node.matches?.('.relphi-progressive-token,.relphi-progressive-svg,.relphi-unified-glyph,.relphi-unified-name');});}))schedule();});run();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
