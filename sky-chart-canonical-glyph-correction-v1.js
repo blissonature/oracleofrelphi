@@ -35,7 +35,8 @@
     const identity = identityFor(button);
     const component = window.RelphiGlyphComponent;
     const registry = window.RelphiGlyphRegistry;
-    if (!identity || !component || !registry?.resolve(identity)) return;
+    const entry = identity && registry?.resolve(identity);
+    if (!identity || !component || !entry) return;
 
     button.dataset.relphiCanonicalArt = 'true';
     button.replaceChildren();
@@ -51,7 +52,7 @@
     component.draw(svg, identity, { radius:17, padding:1.5, color:'currentColor', bubbleStrokeWidth:0 })
       .catch(function () {
         button.dataset.relphiCanonicalArt = 'failed';
-        const fallback = registry.resolve(identity)?.aliases?.find(function (value) { return /[^A-Za-z\s-]/.test(value); }) || registry.resolve(identity)?.fallback || name;
+        const fallback = entry.aliases?.find(function (value) { return /[^A-Za-z\s-]/.test(value); }) || entry.fallback || entry.name;
         button.textContent = fallback;
       });
   }
