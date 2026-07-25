@@ -25,12 +25,27 @@
     ].join(','));
   }
 
-  function inscribedIcon(entry, className) {
+  function contextualColor(node) {
+    if (!node) return '#111111';
+    const style = getComputedStyle(node);
+    const candidates = [
+      node.dataset.glyphColor,
+      node.dataset.color,
+      style.getPropertyValue('--glyph-color'),
+      style.getPropertyValue('--sky-color'),
+      style.getPropertyValue('--relationship-color'),
+      style.getPropertyValue('--aspect-color'),
+      style.color
+    ];
+    return candidates.map(value => String(value || '').trim()).find(Boolean) || '#111111';
+  }
+
+  function inscribedIcon(entry, color, className) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('viewBox','-32 -32 64 64');
     svg.setAttribute('aria-hidden','true');
     svg.classList.add(className || 'relphi-unified-glyph');
-    const bubble = window.RelphiGlyphComponent.createBubble(svg, entry.id);
+    const bubble = window.RelphiGlyphComponent.createBubble(svg, entry.id, { color: color });
     bubble.ready.catch(function () {});
     return svg;
   }
@@ -42,7 +57,8 @@
     const source = node.dataset.glyphIdentity || node.dataset.body || node.dataset.planet || node.dataset.point || node.dataset.sign || node.dataset.aspect || node.getAttribute('aria-label') || node.textContent;
     const entry = resolve(source) || resolve(node.textContent);
     if (!entry) return;
-    node.replaceChildren(inscribedIcon(entry));
+    const color = contextualColor(node);
+    node.replaceChildren(inscribedIcon(entry, color));
     const label = document.createElement('span');
     label.className = 'relphi-unified-name';
     label.textContent = entry.name;
