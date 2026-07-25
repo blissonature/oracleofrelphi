@@ -174,6 +174,7 @@
         'sky-chart-aspect-duration-fix.js?v=2',
         'sky-chart-relationship-language.js?v=5',
         'sky-chart-canonical-relationship-ui-v1.js?v=1',
+        'sky-chart-canonical-glyph-correction-v1.js?v=1',
         'sky-chart-related-relationships-v2.js?v=2',
         'sky-chart-sign-cusps-v1.js?v=1',
         'sky-chart-provenance-fix.js?v=1',
