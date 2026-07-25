@@ -17,7 +17,7 @@
   let newPromptArmed = false;
   let suppressOmniboxHandler = false;
   const NEW_TEMPLATE_OPTION = 'New';
-  const NEW_TEMPLATE_PROMPT = 'Enter your own comma-separated position labels…';
+  const NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…';
 
   const transform = (x, y, rotation = 0, scale = 1, zIndex = 1) => ({ x, y, rotation, scale, zIndex });
   const position = (id, label, drawOrder, value, semantics = {}) => ({
@@ -306,17 +306,28 @@
     if (!prefab || !requireClear('design a layout')) return;
     const copy = clone(prefab);
     copy.id = uniqueId(copy.name + '-copy');
-    copy.name = '';
+    copy.name = prefab.name;
     copy.source = 'custom';
     copy.editable = true;
     copy.basedOn = prefab.id;
     draftLayout = copy;
-    draftName = '';
+    draftName = prefab.name;
     copySourceId = prefab.id;
     selectedId = copy.id;
     labelsOpen = true;
     templateMode = 'existing';
     bridge()?.applyLayout(copy, { designMode:true });
+    schedule();
+  }
+  function cancelDesign() {
+    document.getElementById('clearShortList')?.click();
+    selectedId = copySourceId || '';
+    draftLayout = null;
+    draftName = '';
+    copySourceId = '';
+    templateMode = 'existing';
+    newPromptArmed = false;
+    labelsOpen = true;
     schedule();
   }
   function beginCustomDesign() {
@@ -488,20 +499,19 @@
     const custom = prefab?.source === 'custom' && !designing;
     const count = Number(state.slotCount) || Number(draftLayout?.positions?.length) || 0;
     const conflict = designing && templateNameConflict(draftName, count);
-    const copySource = copySourceId ? prefabById(copySourceId) : null;
     const selection = templateMode === 'existing' && prefab && !designing
       ? '<div class="relphi-selected-design"><span>Selected template</span><strong>' + escapeHtml(displayName(prefab)) + '</strong></div>'
       : templateMode === 'new' && !designing
         ? '<div class="relphi-selected-design"><span>New template</span><strong>' + (count ? count + ' labels ready to design' : 'Type labels in the field above') + '</strong></div>'
         : '';
-    const nameField = designing
-      ? '<label class="relphi-spread-design-name">Spread Template name<input id="relphiSpreadDesignName" type="text" maxlength="60" value="' + escapeHtml(draftName) + '" placeholder="' + escapeHtml(copySource ? copySource.name + ' copy' : 'Name this reusable template') + '" aria-describedby="relphiSpreadNameHelp"><small id="relphiSpreadNameHelp" class="' + (conflict ? 'is-error' : '') + '">' + (conflict ? 'That ' + count + '-card name already exists. Enter a unique name.' : 'The card count plus template name must be unique. This does not name the reading.') + '</small></label>'
+    const nameHelp = designing
+      ? '<small id="relphiSpreadNameHelp" class="' + (conflict ? 'is-error' : '') + '">' + (conflict ? 'That ' + count + '-card name already exists. Change the template name above to create a unique copy.' : 'Editing the template name above creates a new template. Card count plus name must be unique.') + '</small>'
       : '';
-    return selection + nameField + '<div class="relphi-prefab-actions">' +
-      (!designing && templateMode === 'existing' && prefab ? '<button type="button" data-prefab-action="use"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Use Template</button><button type="button" data-prefab-action="copy"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Edit as Copy</button>' : '') +
+    return selection + nameHelp + '<div class="relphi-prefab-actions">' +
+      (!designing && templateMode === 'existing' && prefab ? '<button type="button" data-prefab-action="use"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Use Template</button><button type="button" data-prefab-action="copy"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Customize Template</button>' : '') +
       (!designing && templateMode === 'existing' && custom ? '<button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
       (!designing && templateMode === 'new' ? '<button type="button" data-prefab-action="design"' + (!state.slotCount || state.hasCards || state.locked ? ' disabled' : '') + '>Design Template</button>' : '') +
-      (designing ? '<button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!draftName.trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button>' : '') +
+      (designing ? '<button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!draftName.trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button>' : '') +
       '</div>';
   }
   function addLabelsDrawer(panel, state) {
@@ -513,7 +523,7 @@
     if (state.designMode && !draftLayout && state.currentLayout?.positions?.length) {
       draftLayout = clone(state.currentLayout);
       copySourceId = String(state.currentLayout.basedOn || '');
-      draftName = copySourceId || String(state.currentLayout.name || '').trim() === 'Untitled spread' ? '' : String(state.currentLayout.name || '');
+      draftName = String(state.currentLayout.name || '').trim() === 'Untitled spread' ? '' : String(state.currentLayout.name || '');
       templateMode = copySourceId ? 'existing' : 'new';
     }
 
@@ -553,6 +563,11 @@
     const fieldLabel = field.closest('label');
     const quickLabel = panel.querySelector('#rowPositionStickersQuick')?.closest('label');
     if (fieldLabel && fieldLabel.parentElement !== omnibox) omnibox.appendChild(fieldLabel);
+    if (fieldLabel && !fieldLabel.dataset.relphiTemplateLabel) {
+      const textNode = Array.from(fieldLabel.childNodes).find(node => node.nodeType === 3);
+      if (textNode) textNode.nodeValue = 'Spread Template ';
+      fieldLabel.dataset.relphiTemplateLabel = 'true';
+    }
     let clearSelection = drawer.querySelector('#relphiTemplateClear');
     if (!clearSelection) {
       clearSelection = document.createElement('button');
@@ -578,7 +593,7 @@
         schedule();
       });
     }
-    if (quickLabel && quickLabel.parentElement !== fieldHost) fieldHost.appendChild(quickLabel);
+    if (quickLabel && quickLabel.parentElement !== fieldHost) fieldHost.insertBefore(quickLabel, omnibox);
     if (quickLabel && !quickLabel.dataset.relphiEyeControl) {
       quickLabel.dataset.relphiEyeControl = 'true';
       Array.from(quickLabel.childNodes).filter(node => node.nodeType === 3).forEach(node => node.remove());
@@ -611,7 +626,8 @@
     renderOmniboxOptions(datalist);
     field.setAttribute('list', 'rowStickerPresetList');
     field.setAttribute('placeholder', 'Choose a Spread Template or type position labels…');
-    field.setAttribute('aria-label', 'Spread Template labels');
+    field.setAttribute('aria-label', 'Spread Template name');
+    if (state.designMode && document.activeElement !== field) field.value = draftName;
     if (newPromptArmed && !state.designMode && !String(field.value || '').trim()) field.value = NEW_TEMPLATE_PROMPT;
     clearSelection.hidden = state.designMode || state.locked || !String(field.value || '').trim();
     clearSelection.disabled = !!state.designMode || !!state.locked;
@@ -619,8 +635,26 @@
       field.dataset.relphiLabelsDrawerBound = 'true';
       const chooseFromOmnibox = event => {
         if (suppressOmniboxHandler) return;
-        if (bridge()?.getState()?.designMode) return;
         const value = String(field.value || '').trim();
+        if (bridge()?.getState()?.designMode) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          draftName = value.replace(/^\d+\s*\|\s*/, '').slice(0, 60);
+          if (draftLayout) draftLayout.name = draftName;
+          const liveState = bridge()?.getState();
+          const count = Number(liveState?.slotCount) || 0;
+          const conflict = templateNameConflict(draftName, count);
+          const help = drawer.querySelector('#relphiSpreadNameHelp');
+          const save = drawer.querySelector('[data-prefab-action="save"]');
+          if (help) {
+            help.classList.toggle('is-error', conflict);
+            help.textContent = conflict
+              ? 'That ' + count + '-card name already exists. Change the template name above to create a unique copy.'
+              : 'Editing the template name above creates a new template. Card count plus name must be unique.';
+          }
+          if (save) save.disabled = !draftName.trim() || conflict;
+          return;
+        }
         if (value.toLowerCase() === NEW_TEMPLATE_OPTION.toLowerCase()) {
           event.preventDefault();
           event.stopImmediatePropagation();
@@ -647,15 +681,17 @@
           draftName = '';
           copySourceId = '';
           newPromptArmed = false;
-          field.value = labelsValue(match);
+          field.value = displayName(match);
           schedule();
           return;
         }
         if (value === NEW_TEMPLATE_PROMPT) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
         selectedId = '';
         templateMode = 'new';
         draftLayout = null;
-        draftName = '';
+        draftName = value.slice(0, 60);
         copySourceId = '';
         newPromptArmed = false;
         clearSelection.hidden = !value;
@@ -673,29 +709,15 @@
     }
 
     const prefab = prefabById(selectedId) || draftLayout;
+    if (!state.designMode && templateMode === 'existing' && prefab && document.activeElement !== field) field.value = displayName(prefab);
     const dynamic = drawer.querySelector('.relphi-labels-dynamic');
     dynamic.innerHTML = labelsDrawerMarkup(prefab, state);
-    const nameField = dynamic.querySelector('#relphiSpreadDesignName');
-    nameField?.addEventListener('input', () => {
-      draftName = String(nameField.value || '').slice(0, 60);
-      if (draftLayout) draftLayout.name = draftName;
-      const count = Number(bridge()?.getState()?.slotCount) || 0;
-      const conflict = templateNameConflict(draftName, count);
-      const help = dynamic.querySelector('#relphiSpreadNameHelp');
-      const save = dynamic.querySelector('[data-prefab-action="save"]');
-      if (help) {
-        help.classList.toggle('is-error', conflict);
-        help.textContent = conflict
-          ? 'That ' + count + '-card name already exists. Enter a unique name.'
-          : 'The card count plus template name must be unique. This does not name the reading.';
-      }
-      if (save) save.disabled = !draftName.trim() || conflict;
-    });
     dynamic.querySelector('[data-prefab-action="use"]')?.addEventListener('click', () => applyForUse(prefabById(selectedId)));
     dynamic.querySelector('[data-prefab-action="copy"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId), { copy:true }));
     dynamic.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
     dynamic.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
     dynamic.querySelector('[data-prefab-action="once"]')?.addEventListener('click', () => finishDesign(false));
+    dynamic.querySelector('[data-prefab-action="cancel"]')?.addEventListener('click', cancelDesign);
     dynamic.querySelector('[data-prefab-action="save"]')?.addEventListener('click', () => finishDesign(true));
   }
   function addDesignControls(panel, state) {
@@ -771,6 +793,81 @@
       schedule();
     };
   }
+  function addPrecisionControls(panel, state) {
+    const board = panel.querySelector('.card-row-board');
+    const workspace = panel.querySelector('.card-row-workspace');
+    const toolbar = panel.querySelector('.card-row-workspace-toolbar');
+    if (!board || !workspace || !toolbar) return;
+    let extents = toolbar.querySelector('#zoomCardRowExtents');
+    if (!extents) {
+      extents = document.createElement('button');
+      extents.id = 'zoomCardRowExtents';
+      extents.type = 'button';
+      extents.title = 'Zoom to show all cards';
+      extents.setAttribute('aria-label', 'Zoom Extents');
+      extents.textContent = '⛶';
+      toolbar.insertBefore(extents, toolbar.querySelector('#resetCardRowPan'));
+      extents.addEventListener('click', event => {
+        event.preventDefault();
+        document.getElementById('resetCardRowPan')?.click();
+        const items = Array.from(board.querySelectorAll('.card-row-item'));
+        if (!items.length) return;
+        const zoom = document.getElementById('rowZoom');
+        if (!zoom) return;
+        const current = Math.max(.45, Number(zoom.value) || 1);
+        const logical = items.map(item => {
+          const left = Number.parseFloat(item.style.left) || 0;
+          const top = Number.parseFloat(item.style.top) || 0;
+          const scale = Number.parseFloat(item.style.getPropertyValue('--row-card-scale')) || 1;
+          return { left, top, right:left + 210 * scale, bottom:top + 382 * scale };
+        });
+        const maxX = Math.max(...logical.map(value => value.right));
+        const maxY = Math.max(...logical.map(value => value.bottom));
+        const fit = Math.max(.45, Math.min(2.4, Math.min((workspace.clientWidth - 96) / Math.max(1, maxX), (workspace.clientHeight - 96) / Math.max(1, maxY))));
+        zoom.value = String(fit);
+        zoom.dispatchEvent(new Event('input', { bubbles:true }));
+        zoom.dispatchEvent(new Event('change', { bubbles:true }));
+      });
+    }
+    const layout = state.currentLayout;
+    board.querySelectorAll('.card-row-item[data-row-index]').forEach(item => {
+      if (item.querySelector('.card-row-transform-drawer')) return;
+      const index = Math.max(0, Number(item.dataset.rowIndex) || 0);
+      const position = layout?.positions?.[index];
+      const transform = position?.transform || {};
+      const label = String(position?.label || 'Position ' + (index + 1));
+      const locked = state.locked && !state.designMode;
+      const drawer = document.createElement('details');
+      drawer.className = 'card-row-transform-drawer';
+      drawer.style.setProperty('--row-drawer-inverse-scale', String(1 / Math.max(.45, Number(transform.scale) || 1)));
+      drawer.style.setProperty('--row-drawer-inverse-rotation', (-Number(transform.rotation || 0)) + 'deg');
+      drawer.innerHTML = '<summary aria-label="Edit position ' + (index + 1) + ' values"><span>' + escapeHtml(label) + '</span><b aria-hidden="true">⌄</b></summary><div class="card-row-transform-drawer-body">' +
+        '<label>Label<input type="text" maxlength="90" data-row-drawer-field="label" value="' + escapeHtml(label) + '"' + (locked ? ' disabled' : '') + '></label>' +
+        '<div class="card-row-drawer-numbers">' +
+        '<label>X<input type="number" step="1" data-row-drawer-field="x" value="' + Math.round(Number(transform.x || 0) * 900) + '"' + (locked ? ' disabled' : '') + '></label>' +
+        '<label>Y<input type="number" step="1" data-row-drawer-field="y" value="' + Math.round(Number(transform.y || 0) * 760) + '"' + (locked ? ' disabled' : '') + '></label>' +
+        '<label>Scale<input type="number" min=".45" max="2.5" step=".01" data-row-drawer-field="scale" value="' + (Number(transform.scale) || 1) + '"' + (locked ? ' disabled' : '') + '></label>' +
+        '<label>Rotation<input type="number" min="-180" max="180" step="1" data-row-drawer-field="rotation" value="' + (Number(transform.rotation) || 0) + '"' + (locked ? ' disabled' : '') + '></label></div></div>';
+      item.appendChild(drawer);
+      drawer.querySelectorAll('[data-row-drawer-field]').forEach(input => {
+        input.addEventListener('input', () => {
+          if (input.dataset.rowDrawerField === 'label') drawer.querySelector('summary span').textContent = input.value || 'Position ' + (index + 1);
+        });
+        input.addEventListener('change', () => {
+          const next = clone(bridge()?.getState()?.currentLayout);
+          if (!next?.positions?.[index]) return;
+          const target = next.positions[index];
+          const field = input.dataset.rowDrawerField;
+          if (field === 'label') target.label = String(input.value || 'Position ' + (index + 1)).slice(0, 90);
+          if (field === 'x') target.transform.x = Math.max(0, Number(input.value) || 0) / 900;
+          if (field === 'y') target.transform.y = Math.max(0, Number(input.value) || 0) / 760;
+          if (field === 'scale') target.transform.scale = Math.max(.45, Math.min(2.5, Number(input.value) || 1));
+          if (field === 'rotation') target.transform.rotation = Math.max(-180, Math.min(180, Number(input.value) || 0));
+          bridge()?.applyLayout(next, { designMode:true });
+        });
+      });
+    });
+  }
   function enhance() {
     queued = false;
     if (enhancing) return;
@@ -784,6 +881,7 @@
       addDesignControls(panel, state);
       lockControls(panel, state);
       applyCenterView(panel, state);
+      addPrecisionControls(panel, state);
     } finally {
       enhancing = false;
     }
@@ -820,7 +918,7 @@
       '#shortListPanel .relphi-labels-close{min-height:2rem!important;padding:.3rem .55rem!important}',
       '#shortListPanel .relphi-labels-drawer button{min-height:2.25rem!important;padding:.4rem .65rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.78rem!important;font-weight:800!important;line-height:1.1!important;box-shadow:none!important}',
       '#shortListPanel .relphi-labels-drawer button.primary{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}',
-      '#shortListPanel .relphi-labels-field{display:grid!important;grid-template-columns:minmax(0,1fr) max-content!important;align-items:end!important;gap:.55rem!important}',
+      '#shortListPanel .relphi-labels-field{display:grid!important;grid-template-columns:max-content minmax(0,1fr)!important;align-items:end!important;gap:.55rem!important}',
       '#shortListPanel .relphi-template-omnibox{position:relative;display:grid;min-width:0}',
       '#shortListPanel .relphi-template-omnibox>label{display:grid!important;gap:.2rem!important;width:100%!important;margin:0!important;font-size:.78rem!important;font-weight:800!important}',
       '#shortListPanel .relphi-template-omnibox input[type="text"]{display:block!important;width:100%!important;min-height:2.35rem!important;margin:.2rem 0 0!important;padding:.45rem 2.35rem .45rem .6rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;box-sizing:border-box!important}',
@@ -844,7 +942,39 @@
       '#shortListPanel .relphi-layout-design-mode #drawRandomRowCard{opacity:.52!important}',
       '#shortListPanel .relphi-center-helper{position:absolute;left:540px;top:610px;z-index:160!important;min-width:118px;min-height:46px;padding:.65rem .9rem;border:2px solid #171412;border-radius:999px;background:#fff!important;color:#171412!important;font:inherit;font-size:.78rem;font-weight:900;box-shadow:0 5px 14px rgba(30,20,15,.16);touch-action:manipulation}',
       '#shortListPanel .relphi-center-helper:focus-visible{outline:3px solid rgba(220,31,24,.35);outline-offset:3px}',
-      '@media(max-width:700px){#shortListPanel .relphi-labels-field{grid-template-columns:minmax(0,1fr) max-content!important;gap:.35rem!important}#shortListPanel .relphi-layout-status{grid-template-columns:1fr}#shortListPanel .relphi-layout-status>span,#shortListPanel .relphi-layout-status>div{grid-column:1;grid-row:auto}#shortListPanel .relphi-layout-status>div{justify-content:flex-start}#shortListPanel .relphi-prefab-actions button{flex:1 1 46%}}'
+      '#shortListPanel .card-row-workspace{position:relative!important;overflow:hidden!important;background:var(--row-table-image,none) center/cover no-repeat,repeating-linear-gradient(0deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),repeating-linear-gradient(90deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),var(--row-table-bg,#fffaf0)!important}',
+      '#shortListPanel .card-row-workspace .short-list-row.card-row-board{top:0!important;overflow:visible!important;background:var(--row-table-image,none) center/cover no-repeat,repeating-linear-gradient(0deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),repeating-linear-gradient(90deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),var(--row-table-bg,#fffaf0)!important}',
+      'html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item{position:absolute!important}',
+      '#shortListPanel .card-row-workspace-toolbar{position:absolute!important;top:.55rem!important;left:.55rem!important;right:auto!important;z-index:1500!important;display:grid!important;grid-template-columns:1fr!important;justify-items:center!important;gap:.3rem!important;width:2.7rem!important;max-width:2.7rem!important;margin:0!important;padding:.4rem .28rem!important;border:1px solid rgba(23,20,18,.28)!important;border-radius:999px!important;background:rgba(255,250,244,.94)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important;backdrop-filter:blur(4px)}',
+      '#shortListPanel .card-row-zoom-label{display:grid!important;justify-items:center!important;gap:.2rem!important;width:auto!important;margin:0!important;padding:0!important}',
+      '#shortListPanel .card-row-zoom-label>span{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}',
+      '#shortListPanel #rowZoom{writing-mode:vertical-lr!important;direction:rtl!important;appearance:slider-vertical!important;width:1rem!important;min-width:1rem!important;max-width:1rem!important;height:6.5rem!important;min-height:6.5rem!important;margin:.1rem 0!important;padding:0!important}',
+      '#shortListPanel #rowZoomValue{font-size:.58rem!important;font-weight:800!important;line-height:1!important}',
+      '#shortListPanel .card-row-workspace-toolbar>button{display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;border:1px solid #aaa098!important;border-radius:999px!important;background:#fff!important;color:#171412!important;font-size:1rem!important;line-height:1!important}',
+      '#shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar{grid-template-columns:1fr!important;grid-auto-flow:row!important;align-items:center!important;justify-content:center!important;height:auto!important;min-height:0!important;max-height:none!important}',
+      '#shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar .card-row-zoom-label{grid-column:1!important;grid-row:auto!important}',
+      '#shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>button{grid-column:1!important;grid-row:auto!important}',
+      'html body #shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>*{grid-column:1!important;grid-row:auto!important}',
+      'html body #shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>#resetCardRowPan{grid-column:1!important;grid-row:auto!important}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{width:2rem!important;min-width:2rem!important;margin:0!important}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;padding:0!important;border-radius:999px!important;font-size:0!important}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button::before{content:"↔";font-size:1rem}',
+      '#shortListPanel .card-row-transform-drawer{--row-drawer-inverse-scale:1;--row-drawer-inverse-rotation:0deg;position:absolute!important;top:0!important;left:calc(100% + .4rem)!important;z-index:1700!important;width:15rem!important;max-width:min(15rem,70vw)!important;transform:scale(var(--row-drawer-inverse-scale)) rotate(var(--row-drawer-inverse-rotation))!important;transform-origin:0 0!important;color:#171412!important;font:inherit!important}',
+      '#shortListPanel .card-row-item:has(.card-row-transform-drawer[open]){z-index:1800!important}',
+      '#shortListPanel .card-row-transform-drawer>summary{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.45rem!important;min-height:2rem!important;padding:.35rem .5rem!important;border:1px solid #9d948d!important;border-radius:7px!important;background:#fffaf4!important;box-shadow:0 3px 9px rgba(30,20,15,.12)!important;cursor:pointer!important;font-size:.7rem!important;font-weight:850!important;list-style:none!important}',
+      '#shortListPanel .card-row-transform-drawer>summary::-webkit-details-marker{display:none!important}',
+      '#shortListPanel .card-row-transform-summary-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '#shortListPanel .card-row-transform-drawer[open]>summary{border-radius:7px 7px 0 0!important}',
+      '#shortListPanel .card-row-transform-fields{display:grid!important;grid-template-columns:1fr 1fr!important;gap:.42rem!important;padding:.55rem!important;border:1px solid #9d948d!important;border-top:0!important;border-radius:0 0 7px 7px!important;background:#fffaf4!important;box-shadow:0 6px 15px rgba(30,20,15,.14)!important}',
+      '#shortListPanel .card-row-transform-fields label{display:grid!important;gap:.18rem!important;margin:0!important;color:#5f5751!important;font-size:.64rem!important;font-weight:800!important}',
+      '#shortListPanel .card-row-transform-fields label:first-child{grid-column:1/-1}',
+      '#shortListPanel .card-row-transform-fields input{width:100%!important;min-width:0!important;min-height:2rem!important;margin:0!important;padding:.3rem .4rem!important;border:1px solid #bdb3aa!important;border-radius:5px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important;box-sizing:border-box!important}',
+      '#shortListPanel .card-row-transform-drawer-body{display:grid!important;gap:.42rem!important;padding:.55rem!important;border:1px solid #9d948d!important;border-top:0!important;border-radius:0 0 7px 7px!important;background:#fffaf4!important;box-shadow:0 6px 15px rgba(30,20,15,.14)!important}',
+      '#shortListPanel .card-row-transform-drawer-body label{display:grid!important;gap:.18rem!important;margin:0!important;color:#5f5751!important;font-size:.64rem!important;font-weight:800!important}',
+      '#shortListPanel .card-row-drawer-numbers{display:grid!important;grid-template-columns:1fr 1fr!important;gap:.42rem!important}',
+      '#shortListPanel .card-row-transform-drawer-body input{width:100%!important;min-width:0!important;min-height:2rem!important;margin:0!important;padding:.3rem .4rem!important;border:1px solid #bdb3aa!important;border-radius:5px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.72rem!important;box-sizing:border-box!important}',
+      '#shortListPanel .card-row-workspace .relphi-layout-status{margin-left:3.8rem!important}',
+      '@media(max-width:700px){#shortListPanel .relphi-labels-field{grid-template-columns:max-content minmax(0,1fr)!important;gap:.35rem!important}#shortListPanel .relphi-layout-status{grid-template-columns:1fr}#shortListPanel .relphi-layout-status>span,#shortListPanel .relphi-layout-status>div{grid-column:1;grid-row:auto}#shortListPanel .relphi-layout-status>div{justify-content:flex-start}#shortListPanel .relphi-prefab-actions button{flex:1 1 46%}#shortListPanel .card-row-transform-drawer{left:0!important;top:calc(100% + .35rem)!important}}'
     ].join('');
     document.head.appendChild(style);
   }
