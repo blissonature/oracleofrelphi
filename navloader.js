@@ -141,8 +141,10 @@
     ensureCanonicalSkyBootStyle();
     appendScript('relphi-glyph-registry-v1.js?v=19', function () {
       appendScript('relphi-glyph-component-v1.js?v=20', function () {
-        appendScript('sky-chart-wheel-canonical-component-v1.js?v=2', function () {
-          appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
+        appendScript('sky-chart-wheel-e9344099-canonical-master-v1.js?v=1', function () {
+          appendScript('sky-chart-wheel-canonical-component-v1.js?v=3', function () {
+            appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
+          });
         });
       });
     });
