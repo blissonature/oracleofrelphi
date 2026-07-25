@@ -10,8 +10,10 @@ const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
 assert.match(nav, /drawing-board-workflow-v2\.js\?v=19/);
-assert.match(page, /navloader\.js\?v=40/);
-assert.match(page, /tarot-app\.js\?v=359/);
+assert.match(nav, /drawing-board-interactions-v1\.js\?v=2/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=1/);
+assert.match(page, /navloader\.js\?v=41/);
+assert.match(page, /tarot-app\.js\?v=360/);
 
 assert.match(workflow, /Position stickers/);
 assert.match(workflow, /Position #/);

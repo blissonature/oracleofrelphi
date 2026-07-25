@@ -154,6 +154,8 @@
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
       appendScript('drawing-board-workflow-v2.js?v=19');
+      appendScript('drawing-board-interactions-v1.js?v=2');
+      appendScript('drawing-board-spread-prefabs-v1.js?v=1');
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
       appendScript('planetary-hours-location-prompt.js?v=4');
