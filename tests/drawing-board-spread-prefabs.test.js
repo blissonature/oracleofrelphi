@@ -64,16 +64,16 @@ assert.equal(celtic11.positions[0].label, 'Significator');
 assert.deepEqual(
   Array.from(celtic10.positions, item => item.label),
   [
-    '1 Â· What covers you',
-    '2 Â· What crosses you',
-    '3 Â· What crowns you',
-    '4 Â· What is beneath you',
-    '5 Â· What is behind you',
-    '6 Â· What is before you',
-    '7 Â· Yourself',
-    '8 Â· Your house',
-    '9 Â· Your hopes or fears',
-    '10 Â· What will come'
+    '1 · What covers you',
+    '2 · What crosses you',
+    '3 · What crowns you',
+    '4 · What is beneath you',
+    '5 · What is behind you',
+    '6 · What is before you',
+    '7 · Yourself',
+    '8 · Your house',
+    '9 · Your hopes or fears',
+    '10 · What will come'
   ]
 );
 assert.equal(celtic10.positions.find(item => item.id === 'behind').transform.x, .52);
@@ -121,7 +121,7 @@ assert.match(source, /className = 'relphi-labels-drawer'/);
 assert.match(source, /toggle\.textContent = 'Templates'/);
 assert.match(source, /NEW_TEMPLATE_OPTION = 'New'/);
 assert.match(source, /Create a new Spread Template/);
-assert.match(source, /NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Templateâ€¦'/);
+assert.match(source, /NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…'/);
 assert.match(source, /id = 'relphiTemplateClear'/);
 assert.match(source, /Clear template selection/);
 assert.match(source, /field\.value = displayName\(match\)/);
@@ -165,4 +165,3 @@ assert.match(source, /draftName = String\(state\.currentLayout\.name/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=9/);
 
 console.log('Drawing Board spread prefab regression checks passed.');
-

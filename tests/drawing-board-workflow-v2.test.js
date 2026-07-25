@@ -160,4 +160,3 @@ assert.match(exportedHtml, /assets\/tarot\/rws-export\/the_fool\.webp/);
 assert.match(exportedHtml, /A sample note\./);
 
 console.log('Drawing Board workflow v2 regression checks passed.');
-

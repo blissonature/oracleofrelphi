@@ -17,7 +17,7 @@
   let newPromptArmed = false;
   let suppressOmniboxHandler = false;
   const NEW_TEMPLATE_OPTION = 'New';
-  const NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Templateâ€¦';
+  const NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…';
 
   const transform = (x, y, rotation = 0, scale = 1, zIndex = 1) => ({ x, y, rotation, scale, zIndex });
   const position = (id, label, drawOrder, value, semantics = {}) => ({
@@ -112,23 +112,23 @@
       editable:false,
       helper:'celtic-center',
       positions:[
-        position('covering', '1 Â· What covers you', 1, transform(.28, .34, 0, .45, 20), {
+        position('covering', '1 · What covers you', 1, transform(.28, .34, 0, .45, 20), {
           role:'covering',
           openTransform:transform(.18, .40, 0, .45, 20)
         }),
-        position('crossing', '2 Â· What crosses you', 2, transform(.28, .34, 90, .45, 30), {
+        position('crossing', '2 · What crosses you', 2, transform(.28, .34, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
           openTransform:transform(.40, .40, 0, .45, 30)
         }),
-        position('crowning', '3 Â· What crowns you', 3, transform(.28, .01, 0, .45, 4)),
-        position('beneath', '4 Â· What is beneath you', 4, transform(.28, .69, 0, .45, 4)),
-        position('behind', '5 Â· What is behind you', 5, transform(.52, .34, 0, .45, 4)),
-        position('before', '6 Â· What is before you', 6, transform(.04, .34, 0, .45, 4)),
-        position('self', '7 Â· Yourself', 7, transform(.82, .70, 0, .45, 4)),
-        position('house', '8 Â· Your house', 8, transform(.82, .47, 0, .45, 4)),
-        position('hopes-fears', '9 Â· Your hopes or fears', 9, transform(.82, .24, 0, .45, 4)),
-        position('outcome', '10 Â· What will come', 10, transform(.82, .01, 0, .45, 4))
+        position('crowning', '3 · What crowns you', 3, transform(.28, .01, 0, .45, 4)),
+        position('beneath', '4 · What is beneath you', 4, transform(.28, .69, 0, .45, 4)),
+        position('behind', '5 · What is behind you', 5, transform(.52, .34, 0, .45, 4)),
+        position('before', '6 · What is before you', 6, transform(.04, .34, 0, .45, 4)),
+        position('self', '7 · Yourself', 7, transform(.82, .70, 0, .45, 4)),
+        position('house', '8 · Your house', 8, transform(.82, .47, 0, .45, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 9, transform(.82, .24, 0, .45, 4)),
+        position('outcome', '10 · What will come', 10, transform(.82, .01, 0, .45, 4))
       ]
     },
     {
@@ -143,24 +143,24 @@
           role:'significator',
           openTransform:transform(.08, .40, 0, .45, 10)
         }),
-        position('covering', '1 Â· What covers you', 2, transform(.28, .34, 0, .45, 20), {
+        position('covering', '1 · What covers you', 2, transform(.28, .34, 0, .45, 20), {
           role:'covering',
           covers:'significator',
           openTransform:transform(.28, .40, 0, .45, 20)
         }),
-        position('crossing', '2 Â· What crosses you', 3, transform(.28, .34, 90, .45, 30), {
+        position('crossing', '2 · What crosses you', 3, transform(.28, .34, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
           openTransform:transform(.48, .40, 0, .45, 30)
         }),
-        position('crowning', '3 Â· What crowns you', 4, transform(.28, .01, 0, .45, 4)),
-        position('beneath', '4 Â· What is beneath you', 5, transform(.28, .69, 0, .45, 4)),
-        position('behind', '5 Â· What is behind you', 6, transform(.52, .34, 0, .45, 4)),
-        position('before', '6 Â· What is before you', 7, transform(.04, .34, 0, .45, 4)),
-        position('self', '7 Â· Yourself', 8, transform(.82, .70, 0, .45, 4)),
-        position('house', '8 Â· Your house', 9, transform(.82, .47, 0, .45, 4)),
-        position('hopes-fears', '9 Â· Your hopes or fears', 10, transform(.82, .24, 0, .45, 4)),
-        position('outcome', '10 Â· What will come', 11, transform(.82, .01, 0, .45, 4))
+        position('crowning', '3 · What crowns you', 4, transform(.28, .01, 0, .45, 4)),
+        position('beneath', '4 · What is beneath you', 5, transform(.28, .69, 0, .45, 4)),
+        position('behind', '5 · What is behind you', 6, transform(.52, .34, 0, .45, 4)),
+        position('before', '6 · What is before you', 7, transform(.04, .34, 0, .45, 4)),
+        position('self', '7 · Yourself', 8, transform(.82, .70, 0, .45, 4)),
+        position('house', '8 · Your house', 9, transform(.82, .47, 0, .45, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.82, .24, 0, .45, 4)),
+        position('outcome', '10 · What will come', 11, transform(.82, .01, 0, .45, 4))
       ]
     },
     {
@@ -450,7 +450,7 @@
     else if (!state.designMode && normalizedValue) selectedId = '';
     renderOmniboxOptions(datalist);
     field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a spread design or type comma-separated position stickersâ€¦');
+    field.setAttribute('placeholder', 'Choose a spread design or type comma-separated position stickers…');
     field.setAttribute('aria-label', 'Position stickers and spread designs');
     if (!field.dataset.relphiSpreadOmniboxBound) {
       field.dataset.relphiSpreadOmniboxBound = 'true';
@@ -576,7 +576,7 @@
       clearSelection.className = 'relphi-template-clear';
       clearSelection.setAttribute('aria-label', 'Clear template selection');
       clearSelection.title = 'Clear template selection';
-      clearSelection.textContent = 'Ã—';
+      clearSelection.textContent = '×';
       omnibox.appendChild(clearSelection);
       clearSelection.addEventListener('click', () => {
         if (bridge()?.getState()?.designMode) return;
@@ -625,7 +625,7 @@
     else if (!state.designMode && normalizedValue) selectedId = '';
     renderOmniboxOptions(datalist);
     field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a Spread Template or type position labelsâ€¦');
+    field.setAttribute('placeholder', 'Choose a Spread Template or type position labels…');
     field.setAttribute('aria-label', 'Spread Template name');
     if (state.designMode && document.activeElement !== field) field.value = draftName;
     if (newPromptArmed && !state.designMode && !String(field.value || '').trim()) field.value = NEW_TEMPLATE_PROMPT;
@@ -735,7 +735,7 @@
       workspace.insertBefore(banner, workspace.firstChild);
     }
     if (state.designMode) {
-      banner.innerHTML = '<strong>Designing Spread Template â€” card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish from the Templates drawer.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
+      banner.innerHTML = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish from the Templates drawer.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
       banner.querySelector('[data-design-action="remove"]')?.addEventListener('click', () => bridge()?.removePosition(state.transformTarget));
     } else {
       banner.innerHTML = '<strong>Active layout locked</strong><span>' + (state.activeLayout ? displayName(state.activeLayout) : 'Custom layout') + ' is snapshotted for this reading. Clear the board to choose or redesign a spread.</span>';
@@ -805,7 +805,7 @@
       extents.type = 'button';
       extents.title = 'Zoom to show all cards';
       extents.setAttribute('aria-label', 'Zoom Extents');
-      extents.textContent = 'â›¶';
+      extents.textContent = '⛶';
       toolbar.insertBefore(extents, toolbar.querySelector('#resetCardRowPan'));
       extents.addEventListener('click', event => {
         event.preventDefault();
@@ -841,7 +841,7 @@
       drawer.className = 'card-row-transform-drawer';
       drawer.style.setProperty('--row-drawer-inverse-scale', String(1 / Math.max(.45, Number(transform.scale) || 1)));
       drawer.style.setProperty('--row-drawer-inverse-rotation', (-Number(transform.rotation || 0)) + 'deg');
-      drawer.innerHTML = '<summary aria-label="Adjust ' + escapeHtml(label) + '" title="Adjust position values"><span class="card-row-transform-summary-label">' + escapeHtml('Adjust ' + label) + '</span><b aria-hidden="true">â‹¯</b></summary><div class="card-row-transform-drawer-body">' +
+      drawer.innerHTML = '<summary aria-label="Adjust ' + escapeHtml(label) + '" title="Adjust position values"><span class="card-row-transform-summary-label">' + escapeHtml('Adjust ' + label) + '</span><b aria-hidden="true">⋯</b></summary><div class="card-row-transform-drawer-body">' +
         '<label>Label<input type="text" maxlength="90" data-row-drawer-field="label" value="' + escapeHtml(label) + '"' + (locked ? ' disabled' : '') + '></label>' +
         '<div class="card-row-drawer-numbers">' +
         '<label>X<input type="number" step="1" data-row-drawer-field="x" value="' + Math.round(Number(transform.x || 0) * 900) + '"' + (locked ? ' disabled' : '') + '></label>' +
@@ -959,7 +959,7 @@
       'html body #shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>#resetCardRowPan{grid-column:1!important;grid-row:auto!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{width:2rem!important;min-width:2rem!important;margin:0!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;padding:0!important;border-radius:999px!important;font-size:0!important}',
-      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button::before{content:"â†”";font-size:1rem}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button::before{content:"↔";font-size:1rem}',
       '#shortListPanel .card-row-transform-drawer{--row-drawer-inverse-scale:1;--row-drawer-inverse-rotation:0deg;position:absolute!important;top:0!important;left:calc(100% + .4rem)!important;z-index:1700!important;width:2rem!important;max-width:min(15rem,70vw)!important;transform:scale(var(--row-drawer-inverse-scale)) rotate(var(--row-drawer-inverse-rotation))!important;transform-origin:0 0!important;color:#171412!important;font:inherit!important}',
       '#shortListPanel .card-row-transform-drawer[open]{width:15rem!important}',
       '#shortListPanel .card-row-item:has(.card-row-transform-drawer[open]){z-index:1800!important}',
@@ -998,4 +998,3 @@
     list:allPrefabs
   });
 })();
-
