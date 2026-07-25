@@ -46,6 +46,12 @@
     'bQ':['bi-quintile','Bi-Quintile','a creative relationship that supports refined skill and unusual synthesis']
   };
 
+  const LIBRARY_KEY = 'relphiSkyLibraryV1';
+  const SLOT_A_KEY = 'relphiSkyChartA';
+  const SLOT_B_KEY = 'relphiSkyChartB';
+  const BUILDER_STATE_KEY = 'relphiSkyBuilderV4State';
+  const BIRTH_SETUP_KEY = 'relphiBirthProfileSetupV1';
+
   function registryEntry(id) {
     try { return window.RelphiGlyphRegistry && window.RelphiGlyphRegistry.resolve(id); }
     catch (_) { return null; }
@@ -54,6 +60,104 @@
   function centerMars() {
     const mars = registryEntry('mars');
     if (mars) { mars.dx = 0; mars.dy = 0; }
+  }
+
+  function readJson(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (_) { return fallback; }
+  }
+
+  function hasBirthRecord() {
+    const records = readJson(LIBRARY_KEY, []);
+    return Array.isArray(records) && records.some(function (record) {
+      return String(record && record.name || '').trim().toLowerCase() === 'my birth chart';
+    });
+  }
+
+  function rememberBirthSetupContext() {
+    if (hasBirthRecord() || sessionStorage.getItem(BIRTH_SETUP_KEY)) return;
+    const context = {
+      slotA:localStorage.getItem(SLOT_A_KEY),
+      slotB:localStorage.getItem(SLOT_B_KEY),
+      builderState:sessionStorage.getItem(BUILDER_STATE_KEY),
+      startedAt:Date.now()
+    };
+    sessionStorage.setItem(BIRTH_SETUP_KEY, JSON.stringify(context));
+    document.documentElement.classList.add('relphi-birth-profile-setup');
+  }
+
+  function restoreStoredValue(storage, key, value) {
+    if (value == null) storage.removeItem(key);
+    else storage.setItem(key, value);
+  }
+
+  function finishBirthProfileSetup() {
+    const raw = sessionStorage.getItem(BIRTH_SETUP_KEY);
+    if (!raw || !hasBirthRecord()) return false;
+    let context;
+    try { context = JSON.parse(raw); }
+    catch (_) { context = {}; }
+    restoreStoredValue(localStorage, SLOT_A_KEY, context.slotA);
+    restoreStoredValue(localStorage, SLOT_B_KEY, context.slotB);
+    restoreStoredValue(sessionStorage, BUILDER_STATE_KEY, context.builderState);
+    sessionStorage.removeItem(BIRTH_SETUP_KEY);
+    sessionStorage.setItem('relphiBirthProfileSavedNotice', '1');
+    location.reload();
+    return true;
+  }
+
+  function maintainBirthProfileSetup() {
+    const active = sessionStorage.getItem(BIRTH_SETUP_KEY);
+    document.documentElement.classList.toggle('relphi-birth-profile-setup', !!active);
+    if (!active) return;
+
+    document.querySelectorAll('.sky-calc-setup label').forEach(function (label) {
+      if (/target sky/i.test(label.textContent || '')) {
+        label.hidden = true;
+        label.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    const setupCard = Array.from(document.querySelectorAll('.relphi-v4-card')).find(function (card) {
+      return /set up my birth chart/i.test(card.textContent || '');
+    });
+    if (setupCard) {
+      setupCard.querySelectorAll('[data-action="here-now"]').forEach(function (button) { button.hidden = true; });
+      const manual = setupCard.querySelector('[data-action="manual"]');
+      if (manual) {
+        const title = manual.querySelector('strong');
+        const copy = manual.querySelector('span');
+        if (title) title.textContent = 'Enter birth details';
+        if (copy) copy.textContent = 'Enter your birth date, exact time, and birthplace.';
+      }
+    }
+
+    finishBirthProfileSetup();
+  }
+
+  function showBirthProfileSavedNotice() {
+    if (sessionStorage.getItem('relphiBirthProfileSavedNotice') !== '1') return;
+    sessionStorage.removeItem('relphiBirthProfileSavedNotice');
+    const host = document.getElementById('relphiSkyBuilderV4') || document.querySelector('.sky-chart-hero-panel');
+    if (!host || document.getElementById('relphiBirthProfileSaved')) return;
+    const note = document.createElement('p');
+    note.id = 'relphiBirthProfileSaved';
+    note.className = 'generated-note';
+    note.setAttribute('role', 'status');
+    note.textContent = 'My birth chart is saved in your sky library. No Sky A or Sky B was selected.';
+    host.insertAdjacentElement('afterend', note);
+  }
+
+  function installBirthProfileBehavior() {
+    document.addEventListener('click', function (event) {
+      const button = event.target.closest('[data-action="quick-birth"]');
+      if (!button || hasBirthRecord()) return;
+      rememberBirthSetupContext();
+    }, true);
+    maintainBirthProfileSetup();
+    showBirthProfileSavedNotice();
   }
 
   function token(symbol, data, kind) {
@@ -170,6 +274,7 @@
       '.relphi-canonical-token-name{font-weight:800;text-decoration:underline dotted rgba(17,17,17,.4);text-underline-offset:.18em}',
       '.relphi-canonical-token-meaning{color:#554d48;font-weight:520;text-align:left}',
       '.relphi-canonical-token button:hover,.relphi-canonical-token button:focus-visible{color:#b81712;outline:2px solid rgba(220,31,24,.32);outline-offset:2px}',
+      '.relphi-birth-profile-setup .relphi-v4-complete{visibility:hidden}',
       '@media(max-width:600px){',
       '.relphi-mobile-dual-card-view{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;gap:.45rem!important}',
       '.relphi-mobile-dual-card-view .relphi-dual-card-item{grid-row:1!important;min-width:0!important;width:100%!important;max-width:100%!important}',
@@ -184,12 +289,14 @@
 
   function run() {
     centerMars();
+    maintainBirthProfileSetup();
     document.querySelectorAll('.relphi-progressive-reading').forEach(rebuild);
     markDualCardViews();
   }
 
   function start() {
     installStyles();
+    installBirthProfileBehavior();
     run();
     let queued = false;
     new MutationObserver(function () {
