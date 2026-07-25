@@ -81,11 +81,19 @@ assert.ok(celtic10.positions.filter(item => item.openTransform).length >= 2);
 assert.ok(celtic11.positions.filter(item => item.openTransform).length >= 3);
 
 assert.match(source, /return prefab\.cardCount \+ ' \| ' \+ prefab\.name/);
-assert.match(source, /Save as Prefab and Use/);
+assert.match(source, /Save Spread Design and Use/);
 assert.match(source, />Use Once</);
+assert.match(source, /Position stickers and spread designs/);
+assert.match(source, /renderOmniboxOptions\(datalist\)/);
+assert.match(source, /id="relphiSpreadDesignName"/);
+assert.match(source, /This names the reusable design, not this reading\./);
+assert.match(source, /Design These Positions/);
+assert.doesNotMatch(source, /relphiSpreadPrefabSelect/);
+assert.doesNotMatch(source, /window\.prompt/);
 assert.match(source, /Open Center/);
 assert.match(source, /Restore Cross/);
 assert.match(source, /relphiDrawingBoardSpreadPrefabsV2/);
+assert.match(source, /relphiDrawingBoardStickerPrefabsV1/);
 assert.match(source, /SHIPPED\.some\(item => item\.id === clean\.id\)/);
 assert.match(source, /button:disabled\{opacity:\.45!important;cursor:default!important\}/);
 assert.doesNotMatch(source, /cursor:not-allowed/);
@@ -96,6 +104,6 @@ assert.match(app, /rowCenterOpen/, 'temporary Celtic view state should exist');
 assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Celtic view must not persist in the board snapshot');
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=3/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=4/);
 
 console.log('Drawing Board spread prefab regression checks passed.');

@@ -156,6 +156,7 @@
     const field = panel.querySelector('#rowPositionLabels');
     if (!field || field.dataset.relphiStickerEditor === 'true') return;
     field.dataset.relphiStickerEditor = 'true';
+    panel.querySelector('#rowPositionPrefabSelect')?.remove();
 
     let userEditing = false;
     field.addEventListener('focus', function () { userEditing = true; });
@@ -169,35 +170,6 @@
       }
     });
 
-    let select = panel.querySelector('#rowPositionPrefabSelect');
-    if (!select) {
-      select = document.createElement('select');
-      select.id = 'rowPositionPrefabSelect';
-      select.className = 'relphi-position-prefab-select';
-      select.setAttribute('aria-label', 'Choose a position-sticker prefab');
-      field.insertAdjacentElement('afterend', select);
-      select.addEventListener('change', function () {
-        if (!select.value) return;
-        field.value = select.value;
-        field.dataset.relphiManualValue = select.value;
-        field.dispatchEvent(new Event('input', { bubbles:true }));
-        field.dispatchEvent(new Event('change', { bubbles:true }));
-        select.selectedIndex = 0;
-      });
-    }
-
-    const datalistId = field.getAttribute('list');
-    const datalist = datalistId ? document.getElementById(datalistId) : panel.querySelector('#rowStickerPresetList');
-    const values = datalist ? Array.from(datalist.querySelectorAll('option')).map(function (option) {
-      return { value: option.value, label: option.label || option.value };
-    }).filter(function (item) { return item.value; }) : [];
-    const signature = JSON.stringify(values);
-    if (select.dataset.signature !== signature) {
-      select.dataset.signature = signature;
-      select.innerHTML = '<option value="">Choose a position-sticker prefab…</option>' + values.map(function (item) {
-        return '<option value="' + item.value.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">' + item.label.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</option>';
-      }).join('');
-    }
   }
 
   function keepBoardCloseAfterPlaceholder(panel) {

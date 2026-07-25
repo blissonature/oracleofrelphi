@@ -4,7 +4,6 @@
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
 
   const STICKER_TOGGLE_KEY = 'relphiDrawingBoardPositionStickersV1';
-  const PREFAB_KEY = 'relphiDrawingBoardStickerPrefabsV1';
   let scheduled = false;
   let descriptionSelectionCard = null;
   let arrivalPending = (!location.search || location.search === '?board=workflow-v2') && (!location.hash || location.hash === '#tarot');
@@ -15,15 +14,6 @@
   }
   function setStickersEnabled(value) {
     try { localStorage.setItem(STICKER_TOGGLE_KEY, value ? '1' : '0'); } catch (_) {}
-  }
-  function prefabs() {
-    try {
-      const value = JSON.parse(localStorage.getItem(PREFAB_KEY) || '[]');
-      return Array.isArray(value) ? value.filter(item => item && item.name && Array.isArray(item.labels)) : [];
-    } catch (_) { return []; }
-  }
-  function savePrefabs(value) {
-    try { localStorage.setItem(PREFAB_KEY, JSON.stringify(value.slice(0, 40))); } catch (_) {}
   }
   function labelsFromField(field) {
     return String(field?.value || '').split(',').map(value => value.trim()).filter(Boolean);
@@ -53,45 +43,11 @@
     const label = document.createElement('label');
     label.className = 'quick-position-sticker-toggle';
     label.title = 'Give every card an editable numbered position sticker';
-    label.innerHTML = '<input id="rowPositionStickersQuick" type="checkbox"' + (stickersEnabled() ? ' checked' : '') + '> Position stickers';
+    label.innerHTML = '<input id="rowPositionStickersQuick" type="checkbox"' + (stickersEnabled() ? ' checked' : '') + '> Show position stickers';
     const reversals = toolbar.querySelector('.quick-reversal-toggle');
     toolbar.insertBefore(label, reversals || toolbar.firstChild);
     label.querySelector('input').addEventListener('change', event => {
       setStickersEnabled(event.currentTarget.checked);
-      scheduleEnhance();
-    });
-  }
-  function addPrefabControls(panel) {
-    const field = panel.querySelector('#rowPositionLabels');
-    const host = field?.closest('label');
-    const datalist = panel.querySelector('#rowStickerPresetList');
-    if (!field || !host) return;
-    if (datalist) {
-      datalist.querySelectorAll('[data-custom-sticker-prefab]').forEach(option => option.remove());
-      prefabs().forEach(item => {
-        const option = document.createElement('option');
-        option.dataset.customStickerPrefab = 'true';
-        option.value = item.labels.join(', ');
-        option.label = item.name;
-        datalist.appendChild(option);
-      });
-    }
-    if (panel.querySelector('.row-sticker-prefab-controls')) return;
-    const controls = document.createElement('span');
-    controls.className = 'row-sticker-prefab-controls';
-    controls.innerHTML = '<button type="button" id="rowStickerPrefabSave">Save as prefab</button><small>Saved prefabs appear in the Position stickers field.</small>';
-    host.appendChild(controls);
-    controls.querySelector('#rowStickerPrefabSave').addEventListener('click', () => {
-      const labels = labelsFromField(field);
-      if (!labels.length) return window.alert('Add at least one position sticker before saving a prefab.');
-      const name = window.prompt('Name this position-sticker prefab:');
-      if (!String(name || '').trim()) return;
-      const list = prefabs();
-      const normalized = String(name).trim().toLowerCase();
-      const next = { name:String(name).trim().slice(0, 60), labels:labels.slice(0, 40) };
-      const existing = list.findIndex(item => item.name.toLowerCase() === normalized);
-      if (existing >= 0) list[existing] = next; else list.push(next);
-      savePrefabs(list);
       scheduleEnhance();
     });
   }
@@ -232,7 +188,7 @@
       setup.appendChild(group);
       return group;
     };
-    const spreadSetup = setupGroup('spread', 'Position stickers', 'Choose a saved spread or type your own positions.');
+    const spreadSetup = setupGroup('spread', 'Spread design', 'Choose a reusable design or type position stickers for a custom one.');
     const readingSetup = setupGroup('reading', 'Reading details', 'Name the reading and keep its notes together.');
     const drawSetup = setupGroup('draw', 'Draw settings', 'Choose the cards available for this reading.');
     move(spreadSetup, control('rowPositionLabels'));
@@ -398,7 +354,6 @@
     }
     addStickerToggle(panel);
     panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
-    addPrefabControls(panel);
     addHelpfulTip(panel);
     removeUnavailableSelectionControls(panel);
     addLeanExports(panel);
