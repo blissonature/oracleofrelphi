@@ -1,0 +1,51 @@
+name: Validate Chiron accuracy
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/validate-chiron-accuracy.yml
+      - scripts/validate-chiron-accuracy.mjs
+      - data/chiron-anchors.json
+      - sky-chart-chiron-local-v1.js
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install MIT-licensed Astronomy Engine
+        run: npm install --no-save astronomy-engine
+      - name: Compare local Chiron with JPL Horizons
+        id: validation
+        continue-on-error: true
+        run: node scripts/validate-chiron-accuracy.mjs
+      - name: Commit validation report
+        run: |
+          if [ ! -f data/chiron-validation-report.json ]; then
+            echo "Validation report was not produced."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/chiron-validation-report.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Record Chiron accuracy validation"
+            git push origin HEAD:feature/chart-axes-angular-frame
+          fi
+      - name: Enforce one-arcminute threshold
+        if: steps.validation.outcome == 'failure'
+        run: exit 1
