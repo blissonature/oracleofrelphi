@@ -1,0 +1,28 @@
+{
+  "name": "Oracle of Relphi Canonical Glyph System",
+  "version": 1,
+  "approved_at_commit": "0d56ee7ec0ea0fc3e44debcb809afde09f3271ab",
+  "registry": "relphi-glyph-registry-v1.js",
+  "component": "relphi-glyph-component-v1.js",
+  "reference_preview": "glyphs-unified-preview.html",
+  "presentations": {
+    "plain": {
+      "description": "Canonical master geometry with the enclosing circle hidden.",
+      "circle_visible": false
+    },
+    "inscribed": {
+      "description": "The same canonical master geometry with the enclosing circle visible.",
+      "circle_visible": true
+    }
+  },
+  "usage": {
+    "zodiac_wheel_sign_ring": "plain",
+    "sky_placement_markers": "inscribed"
+  },
+  "rules": [
+    "Do not substitute Unicode glyphs when a canonical asset exists.",
+    "Do not create separate geometry for plain and inscribed variants.",
+    "Do not use legacy wheel glyph renderers as a source of truth.",
+    "Consumers must use the registry and component named above."
+  ]
+}
