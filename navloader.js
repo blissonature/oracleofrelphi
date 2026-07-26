@@ -100,6 +100,7 @@
     appendScript('sky-chart-builder-v4-defaults.js?v=1');
     appendScript('sky-chart-language-cleanup.js?v=6');
     appendScript('sky-chart-aspect-keyboard.js?v=1');
+    appendScript('sky-chart-placement-constellation-v1.js?v=1');
     return true;
   }
 
