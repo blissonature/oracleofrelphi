@@ -32,4 +32,5 @@
   });
   load('sky-chart-progressive-current-reading-v1.js?v=1');
   load('sky-chart-slot-identity-v1.js?v=2');
+  load('sky-chart-studio-v1.js?v=1');
 })();
