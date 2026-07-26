@@ -7795,6 +7795,53 @@ ${notes || ''}`;
       const timeZone = resolved.timeZone || $('skyCalcTimeZone')?.value?.trim() || '';
       const date = dateFromLocalDateTimeInZone(raw, timeZone);
       const calculatedPlacements = calculateSkyWithAstronomy(date, latitude, longitude, houseSystem);
+      // relphiChironDirectPlacementV1: Chiron enters the real placement array before state/render/save.
+      const relphiChironApi = window.RelphiChironLocal || (window.RelphiChironReady ? await window.RelphiChironReady : null);
+      if (!relphiChironApi || typeof relphiChironApi.calculate !== 'function') throw new Error('The local Chiron calculator did not load.');
+      const relphiChironState = relphiChironApi.calculate(date);
+      const relphiNorm = value => ((Number(value) % 360) + 360) % 360;
+      const relphiPlacementLongitude = placement => {
+        if (!placement) return NaN;
+        if (Number.isFinite(Number(placement.longitude))) return relphiNorm(placement.longitude);
+        const signIndex = SIGNS.findIndex(sign => sign.toLowerCase() === String(placement.sign || '').toLowerCase());
+        return signIndex < 0 ? NaN : relphiNorm(signIndex * 30 + Number(placement.degree || 0) + Number(placement.minute || 0) / 60 + Number(placement.second || 0) / 3600);
+      };
+      const relphiChironLongitude = relphiNorm(relphiChironState.longitude);
+      const relphiAscendant = relphiPlacementLongitude(calculatedPlacements.Rising || calculatedPlacements.ASC);
+      const relphiMidheaven = relphiPlacementLongitude(calculatedPlacements.MC);
+      const relphiJulianDay = date.getTime() / 86400000 + 2440587.5;
+      const relphiT = (relphiJulianDay - 2451545.0) / 36525;
+      const relphiObliquity = 23.43929111 - 0.0130041667 * relphiT - 1.63889e-7 * relphiT * relphiT + 5.03611e-7 * relphiT * relphiT * relphiT;
+      const relphiSidereal = relphiNorm(Number(window.Astronomy.SiderealTime(date)) * 15 + Number(longitude));
+      const relphiHouseResult = window.RelphiHouseSystems.calculateCusps({
+        system:houseSystem,
+        ascendant:relphiAscendant,
+        midheaven:relphiMidheaven,
+        siderealDegrees:relphiSidereal,
+        obliquityDegrees:relphiObliquity,
+        latitude:Number(latitude)
+      });
+      const relphiCusps = relphiHouseResult.cusps;
+      let relphiChironHouse = '';
+      for (let relphiIndex = 0; relphiIndex < 12; relphiIndex += 1) {
+        const relphiStart = relphiNorm(relphiCusps[relphiIndex]);
+        const relphiEnd = relphiNorm(relphiCusps[(relphiIndex + 1) % 12]);
+        if (relphiNorm(relphiChironLongitude - relphiStart) < relphiNorm(relphiEnd - relphiStart)) { relphiChironHouse = relphiIndex + 1; break; }
+      }
+      let relphiWithin = relphiChironLongitude % 30;
+      let relphiDegree = Math.floor(relphiWithin);
+      let relphiMinute = Math.round((relphiWithin - relphiDegree) * 60);
+      if (relphiMinute === 60) { relphiMinute = 0; relphiDegree += 1; }
+      if (relphiDegree === 30) relphiDegree = 0;
+      calculatedPlacements.Chiron = {
+        sign:SIGNS[Math.floor(relphiChironLongitude / 30)],
+        degree:relphiDegree,
+        minute:relphiMinute,
+        house:relphiChironHouse,
+        retrograde:Boolean(relphiChironState.retrograde),
+        longitude:relphiChironLongitude,
+        calculation:relphiChironState.source
+      };
       const prefersAscLabel = !!existingTargetPlacements.ASC && !existingTargetPlacements.Rising;
       if (prefersAscLabel && calculatedPlacements.Rising) {
         calculatedPlacements.ASC = calculatedPlacements.Rising;
@@ -7836,7 +7883,7 @@ ${notes || ''}`;
       renderChart();
       setSkyEntrySource(target, consumeSkyPendingEntrySource(target, 'calculated'));
       updateSkyCreatorDeleteStoredButton();
-      skyCalcStatus(`Calculated ${skyCreatorLabel(target)} for ${timestampLabelInZone(date, profile.timeZone)} at ${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)}${profile.timeZone ? ` (${profile.timeZone})` : ''}. Stored Rising, Midheaven, ${skyHouseSystemLabel(houseSystem)} houses, and planetary retrograde/station states. ${risingLabel}.${selectedStoredRecordId ? ' The loaded stored sky was updated.' : ''}`);
+      skyCalcStatus(`Calculated ${skyCreatorLabel(target)} for ${timestampLabelInZone(date, profile.timeZone)} at ${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)}${profile.timeZone ? ` (${profile.timeZone})` : ''}. Stored Rising, Midheaven, Chiron, ${skyHouseSystemLabel(houseSystem)} houses, and planetary retrograde/station states. ${risingLabel}.${selectedStoredRecordId ? ' The loaded stored sky was updated.' : ''}`);
       return true;
     } catch (error) {
       restoreSkySlot(protectedKind, protectedSnapshot);
