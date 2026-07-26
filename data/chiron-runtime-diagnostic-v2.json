@@ -1,0 +1,103 @@
+{
+  "generatedAt": "2026-07-26T05:16:46.198Z",
+  "tests": {
+    "astronomy.browser.min.js": {
+      "ok": true
+    },
+    "typeof Astronomy": {
+      "ok": true,
+      "value": "object"
+    },
+    "typeof window.Astronomy": {
+      "ok": true,
+      "value": "object"
+    },
+    "Astronomy keys": {
+      "ok": true,
+      "value": [
+        "SiderealTime",
+        "Vector",
+        "StateVector",
+        "EclipticCoordinates",
+        "ObserverVector",
+        "VectorObserver",
+        "ObserverGravity",
+        "Ecliptic",
+        "EclipticGeoMoon",
+        "HelioVector",
+        "GeoVector",
+        "EclipticLongitude",
+        "VectorFromSphere",
+        "EquatorFromVector",
+        "SphereFromVector",
+        "HorizonFromVector",
+        "VectorFromHorizon",
+        "RotateVector",
+        "GravitySimulator"
+      ]
+    },
+    "astronomyApi": {
+      "ok": true,
+      "value": {
+        "directType": "object",
+        "windowType": "object",
+        "keys": [
+          "SiderealTime",
+          "Vector",
+          "StateVector",
+          "EclipticCoordinates",
+          "ObserverVector",
+          "VectorObserver",
+          "ObserverGravity",
+          "Ecliptic",
+          "EclipticGeoMoon",
+          "HelioVector",
+          "GeoVector",
+          "EclipticLongitude",
+          "VectorFromSphere",
+          "EquatorFromVector",
+          "SphereFromVector",
+          "HorizonFromVector",
+          "VectorFromHorizon",
+          "RotateVector",
+          "GravitySimulator"
+        ]
+      }
+    },
+    "relphi-house-systems.js": {
+      "ok": true
+    },
+    "sky-chart-chiron-local-v1.js": {
+      "ok": true
+    },
+    "calculateChiron": {
+      "ok": false
+    },
+    "siderealTime": {
+      "ok": true,
+      "value": 0.4586027614504778
+    },
+    "houseCusps": {
+      "ok": true,
+      "value": {
+        "system": "whole-sign",
+        "label": "Whole Sign",
+        "cusps": [
+          330,
+          0,
+          30,
+          60,
+          90,
+          120,
+          150,
+          180,
+          210,
+          240,
+          270,
+          300
+        ],
+        "note": "Whole-sign houses start at zero degrees of the rising sign."
+      }
+    }
+  }
+}
