@@ -1,0 +1,86 @@
+FOUND: async function runSkyCalculation @ 12196249
+
+async function runSkyCalculation(explicitTarget = '') {
+    const dateEl = $('skyCalcDateTime');
+    const requestedTarget = explicitTarget === 'currentSky' || explicitTarget === 'chart' ? explicitTarget : '';
+    const target = requestedTarget === 'currentSky' && skyChartNeedsB()
+      ? 'currentSky'
+      : requestedTarget === 'chart'
+        ? 'chart'
+        : skyCalcTargetKind();
+    const targetSelect = $('skyCalcTarget');
+    if (targetSelect) targetSelect.value = target;
+    const protectedKind = target === 'currentSky' ? 'chart' : 'currentSky';
+    const protectedSnapshot = captureSkySlot(protectedKind);
+    const existingTargetPlacements = cloneSkySlotValue(statePlacementsForKind(target));
+    const selectedStoredRecordId = state.skyLibrarySelection?.[target] || '';
+    if (typeof skyCreatorKind === 'function' && skyCreatorKind() !== target) {
+      setSkyCreatorKind(target);
+      writeSkyCreatorMeta?.(target);
+    } else {
+      readSkyCreatorMeta?.();
+    }
+    state.skyCalcActiveTarget = target;
+    const raw = dateEl?.value || '';
+    const latitude = $('skyCalcLatitude')?.value ?? '';
+    const longitude = $('skyCalcLongitude')?.value ?? '';
+    const houseSystem = normalizeSkyHouseSystem($('skyCalcHouseSystem')?.value || 'whole-sign');
+    const locationLabel = $('skyCalcLocation')?.value?.trim() || '';
+    try {
+      const enteredTimeZone = $('skyCalcTimeZone')?.value?.trim() || '';
+      const resolved = enteredTimeZone
+        ? { timeZone:enteredTimeZone }
+        : await enrichSkyCalcFromCoordinates({ forceLocation:false, forceTimeZone:true, reverseLocation:false, requireTimeZone:false });
+      const timeZone = resolved.timeZone || $('skyCalcTimeZone')?.value?.trim() || '';
+      const date = dateFromLocalDateTimeInZone(raw, timeZone);
+      const calculatedPlacements = calculateSkyWithAstronomy(date, latitude, longitude, houseSystem);
+      const prefersAscLabel = !!existingTargetPlacements.ASC && !existingTargetPlacements.Rising;
+      if (prefersAscLabel && calculatedPlacements.Rising) {
+        calculatedPlacements.ASC = calculatedPlacements.Rising;
+        delete calculatedPlacements.Rising;
+      }
+      const preservedCustomPlacements = {};
+      Object.entries(existingTargetPlacements || {}).forEach(([body, placement]) => {
+        if (!SKY_CALC_BODIES.includes(body) && body !== 'Rising' && body !== 'ASC' && body !== 'MC' && !String(body).startsWith('_')) {
+          preservedCustomPlacements[body] = cloneSkySlotValue(placement);
+        }
+      });
+      const placements = { ...preservedCustomPlacements, ...calculatedPlacements };
+      const label = $('skyCalcName')?.value?.trim() || defaultSkyName(target, date, timeZone);
+      if ($('skyCalcName') && !$('skyCalcName').value.trim()) $('skyCalcName').value = label;
+      const profile = { dateTime: raw, latitude:String(latitude), longitude:String(longitude), location:$('skyCalcLocation')?.value?.trim() || locationLabel, timeZone:$('skyCalcTimeZone')?.value?.trim() || '', name:label, houseSystem };
+      setSkyCalcProfile(target, profile);
+      const risingPlacement = placements.Rising || placements.ASC;
+      const risingLabel = risingPlacement ? `${risingPlacement.sign} Rising` : 'Rising unavailable';
+      const locationNote = profile.location ? ` Location: ${profile.location}.` : '';
+      const timeZoneNote = profile.timeZone ? ` Time zone: ${profile.timeZone}.` : '';
+      const notes = `Calculated with Astronomy Engine by Don Cross (MIT). Geocentric ecliptic longitudes. Rising and Midheaven computed from latitude ${Number(latitude).toFixed(4)} and longitude ${Number(longitude).toFixed(4)}. Houses assigned by ${skyHouseSystemLabel(houseSystem)} from the calculated angles.${locationNote}${timeZoneNote} Motion state sampled around ${date.toISOString()}.`;
+      writeSkyMeta(target, label, notes);
+      if (target === 'currentSky') writeCurrentSkyForm(placements, { forcePasteSync:true });
+      else writeChartForm(placements, { forcePasteSync:true });
+      setSkyCreatorKind(target);
+      writeSkyCreatorMeta(target);
+      restoreSkySlot(protectedKind, protectedSnapshot);
+      if (selectedStoredRecordId) {
+        replaceSkyLibraryRecord(selectedStoredRecordId, {
+          name:label,
+          notes,
+          placements:cloneSkySlotValue(placements),
+          calcProfile:cloneSkySlotValue(profile)
+        });
+        state.skyLibrarySelection = { chart:'', currentSky:'', ...(state.skyLibrarySelection || {}) };
+        state.skyLibrarySelection[target] = selectedStoredRecordId;
+      }
+      renderSkyCreator();
+      renderChart();
+      setSkyEntrySource(target, consumeSkyPendingEntrySource(target, 'calculated'));
+      updateSkyCreatorDeleteStoredButton();
+      skyCalcStatus(`Calculated ${skyCreatorLabel(target)} for ${timestampLabelInZone(date, profile.timeZone)} at ${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)}${profile.timeZone ? ` (${profile.timeZone})` : ''}. Stored Rising, Midheaven, ${skyHouseSystemLabel(houseSystem)} houses, and planetary retrograde/station states. ${risingLabel}.${selectedStoredRecordId ? ' The loaded stored sky was updated.' : ''}`);
+      return true;
+    } catch (error) {
+      restoreSkySlot(protectedKind, protectedSnapshot);
+      consumeSkyPendingEntrySource(target, '');
+      skyCalcStatus(error?.message || 'Could not calculate sky positions.', true);
+      return false;
+    }
+  }
