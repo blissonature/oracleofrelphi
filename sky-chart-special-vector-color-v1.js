@@ -27,5 +27,7 @@
   load('sky-chart-chiron-local-v1.js?v=3', function () {
     load('sky-chart-calculated-points-storage-bridge-v2.js?v=3');
   });
-  load('sky-chart-relationship-scope-progressive-v1.js?v=3');
+  load('sky-chart-relationship-scope-progressive-v1.js?v=3', function () {
+    load('sky-chart-cross-axis-groups-v1.js?v=1');
+  });
 })();
