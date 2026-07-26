@@ -1,4 +1,4 @@
-// Compatibility no-op for color, plus local Chiron calculation bootstrap.
+// Compatibility no-op for color, plus local Chiron and relationship UX bootstrap.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
@@ -27,4 +27,5 @@
   load('sky-chart-chiron-local-v1.js?v=3', function () {
     load('sky-chart-calculated-points-storage-bridge-v2.js?v=3');
   });
+  load('sky-chart-relationship-scope-progressive-v1.js?v=1');
 })();
