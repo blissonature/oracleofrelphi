@@ -37,7 +37,7 @@
 
     load('relphi-approved-inscribed-unit-v1.js?v=2', function () {
       load('sky-chart-progressive-current-reading-v1.js?v=2', function () {
-        load('sky-chart-canonical-glyph-correction-v1.js?v=3');
+        load('sky-chart-canonical-glyph-correction-v1.js?v=4');
       });
     });
   }
