@@ -16,6 +16,20 @@
     Quintile:'quintile', 'Bi-Quintile':'bi-quintile'
   };
 
+  function ensureStyles() {
+    if (document.getElementById('relphi-progressive-canonical-size')) return;
+    const style = document.createElement('style');
+    style.id = 'relphi-progressive-canonical-size';
+    style.textContent = [
+      '.relphi-progressive-reading{line-height:1.75}',
+      '.relphi-progressive-token{display:inline-flex;align-items:center;vertical-align:middle;max-width:100%}',
+      '.relphi-progressive-glyph{display:inline-grid!important;place-items:center!important;vertical-align:middle!important;width:1.45em!important;height:1.45em!important;min-width:1.45em!important;min-height:1.45em!important;max-width:1.45em!important;max-height:1.45em!important;padding:0!important;margin:0 .12em!important;line-height:1!important;overflow:hidden!important;border:0!important;background:transparent!important}',
+      '.relphi-progressive-glyph>svg{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;overflow:hidden!important}',
+      '.relphi-progressive-name,.relphi-progressive-meaning{vertical-align:baseline}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+
   function identityFor(button) {
     const label = button.getAttribute('aria-label') || '';
     const name = label.replace(/^Reveal\s+/i, '').trim();
@@ -38,15 +52,17 @@
     const original = button.textContent;
     button.dataset.relphiCanonicalArt = 'pending';
 
-    // Build offscreen. Never remove the visible symbol until the approved unit is ready.
+    // Build detached and publish atomically. The fixed viewport clips only overflow;
+    // it does not alter the approved unit's internal geometry or positioning.
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '-20 -20 40 40');
-    svg.setAttribute('width', '1.2em');
-    svg.setAttribute('height', '1.2em');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('focusable', 'false');
     svg.style.display = 'block';
-    svg.style.overflow = 'visible';
+    svg.style.width = '100%';
+    svg.style.height = '100%';
+    svg.style.overflow = 'hidden';
 
     let bubble;
     try {
@@ -75,6 +91,7 @@
   }
 
   function run() {
+    ensureStyles();
     document.querySelectorAll('.relphi-canonical-token-glyph, .relphi-progressive-glyph').forEach(canonicalize);
   }
 
