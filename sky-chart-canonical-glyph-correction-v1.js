@@ -22,11 +22,12 @@
     style.id = 'relphi-progressive-canonical-size';
     style.textContent = [
       '.relphi-progressive-reading{line-height:1.75}',
-      '.relphi-progressive-token{display:inline-flex;align-items:center;vertical-align:middle;max-width:100%}',
-      '.relphi-progressive-glyph{display:inline-grid!important;place-items:center!important;vertical-align:middle!important;width:1.45em!important;height:1.45em!important;min-width:1.45em!important;min-height:1.45em!important;max-width:1.45em!important;max-height:1.45em!important;padding:0!important;margin:0 .12em!important;line-height:1!important;overflow:hidden!important;border:0!important;background:transparent!important}',
-      '.relphi-progressive-glyph>svg{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;overflow:hidden!important}',
-      '.relphi-progressive-name,.relphi-progressive-meaning{vertical-align:baseline}',
-      '.relphi-progressive-glyph-stage{position:fixed!important;left:-10000px!important;top:-10000px!important;width:40px!important;height:40px!important;visibility:hidden!important;pointer-events:none!important;overflow:hidden!important}'
+      '.relphi-progressive-token,.relphi-canonical-token{display:inline-flex;align-items:center;vertical-align:middle;max-width:100%}',
+      '.relphi-progressive-glyph,.relphi-canonical-token-glyph{display:inline-grid!important;place-items:center!important;vertical-align:middle!important;width:1.45em!important;height:1.45em!important;min-width:1.45em!important;min-height:1.45em!important;max-width:1.45em!important;max-height:1.45em!important;padding:0!important;margin:0 .12em!important;line-height:1!important;overflow:hidden!important;border:0!important;background:transparent!important}',
+      '.relphi-progressive-glyph>svg,.relphi-canonical-token-glyph>svg{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;overflow:hidden!important}',
+      '.relphi-progressive-name,.relphi-progressive-meaning,.relphi-canonical-token-name,.relphi-canonical-token-meaning{vertical-align:baseline}',
+      '.relphi-progressive-glyph-stage{position:fixed!important;left:-10000px!important;top:-10000px!important;width:40px!important;height:40px!important;visibility:hidden!important;pointer-events:none!important;overflow:hidden!important}',
+      '.relationship-explore-pieces[data-relphi-retired="true"]{display:none!important}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -122,9 +123,23 @@
     });
   }
 
+  function retireDuplicateExplore() {
+    document.querySelectorAll('.relphi-progressive-reading,.relphi-canonical-relationship-reading').forEach(function (reading) {
+      if (!reading.querySelector('.relphi-canonical-token-glyph,.relphi-progressive-glyph')) return;
+      const panel = reading.closest('.relationship-prose-panel') || reading.parentElement;
+      const explore = panel && panel.querySelector('.relationship-explore-pieces');
+      if (explore) {
+        explore.dataset.relphiRetired = 'true';
+        explore.hidden = true;
+        explore.setAttribute('aria-hidden', 'true');
+      }
+    });
+  }
+
   function run() {
     ensureStyles();
     document.querySelectorAll('.relphi-canonical-token-glyph, .relphi-progressive-glyph').forEach(canonicalize);
+    retireDuplicateExplore();
   }
 
   function start() {
