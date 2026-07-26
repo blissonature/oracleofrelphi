@@ -7888,7 +7888,7 @@ ${notes || ''}`;
     } catch (error) {
       restoreSkySlot(protectedKind, protectedSnapshot);
       consumeSkyPendingEntrySource(target, '');
-      skyCalcStatus(error?.message || 'Could not calculate sky positions.', true);
+      skyCalcStatus(error?.message || String(error || 'Could not calculate sky positions.'), true);
       return false;
     }
   }

@@ -398,8 +398,9 @@
 
     const anchor = nearestAnchor(date);
     const epoch = new Date(anchor.epoch);
-    const initial = new A.StateVector(anchor.x, anchor.y, anchor.z, anchor.vx, anchor.vy, anchor.vz, epoch);
-    const sim = new A.GravitySimulator(A.Body.Sun, epoch, [initial]);
+    const time = A.MakeTime(epoch);
+    const initial = new A.StateVector(anchor.x, anchor.y, anchor.z, anchor.vx, anchor.vy, anchor.vz, time);
+    const sim = new A.GravitySimulator(A.Body.Sun, time, [initial]);
     const direction = date.getTime() >= epoch.getTime() ? 1 : -1;
     const stepDays = 5 * direction;
     let cursor = new Date(epoch);

@@ -158,9 +158,9 @@
   function loadChironPipeline() {
     if (window.RelphiChironReady) return window.RelphiChironReady;
     window.RelphiChironReady = new Promise(function (resolve, reject) {
-      appendScript('sky-chart-chiron-local-v1.js?v=direct-41-anchors-2', function () {
+      appendScript('sky-chart-chiron-local-v1.js?v=direct-41-anchors-4', function () {
         if (!window.RelphiChironLocal) return reject(new Error('Chiron module loaded without its API.'));
-        appendScript('sky-chart-calculated-points-storage-bridge-v2.js?v=direct-41-anchors-2', function () { resolve(window.RelphiChironLocal); }, reject);
+        appendScript('sky-chart-calculated-points-storage-bridge-v2.js?v=direct-41-anchors-4', function () { resolve(window.RelphiChironLocal); }, reject);
       }, reject);
     });
     return window.RelphiChironReady;
