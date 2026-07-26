@@ -1,0 +1,63 @@
+name: Restore approved angle glyph assets
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/restore-approved-angle-glyph-assets.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+      - name: Replace text fallbacks with approved SVG masters
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'relphi-glyph-registry-v1.js';
+          let source = fs.readFileSync(path, 'utf8');
+          const ascBefore = "['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'Asc','letter','700']";
+          const ascAfter = "['asc','Ascendant',['asc','ascendant','rising','ac'],'assets/planet-glyphs/ascendant.svg',1,0,0,null,'circle','700']";
+          const mcBefore = "['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','letter','700']";
+          const mcAfter = "['mc','Midheaven',['mc','midheaven'],'assets/planet-glyphs/midheaven.svg',1,0,0,null,'circle','700']";
+          if (!source.includes(ascBefore) && !source.includes(ascAfter)) throw new Error('Ascendant registry entry not found.');
+          if (!source.includes(mcBefore) && !source.includes(mcAfter)) throw new Error('Midheaven registry entry not found.');
+          source = source.replace(ascBefore, ascAfter).replace(mcBefore, mcAfter);
+          fs.writeFileSync(path, source);
+
+          if (!fs.existsSync('assets/planet-glyphs/ascendant.svg')) throw new Error('Approved Ascendant master missing.');
+          if (!fs.existsSync('assets/planet-glyphs/midheaven.svg')) throw new Error('Approved Midheaven master missing.');
+
+          let nav = fs.readFileSync('navloader.js', 'utf8');
+          nav = nav.replace(/relphi-glyph-registry-v1\.js\?v=[^']+/g, 'relphi-glyph-registry-v1.js?v=canon-approved-angle-assets-1');
+          nav = nav.replace(/relphi-glyph-component-v1\.js\?v=[^']+/g, 'relphi-glyph-component-v1.js?v=canon-approved-angle-assets-1');
+          fs.writeFileSync('navloader.js', nav);
+
+          let html = fs.readFileSync('sky-chart.html', 'utf8');
+          const match = html.match(/navloader\.js\?v=(\d+)/);
+          if (match) html = html.replace(/navloader\.js\?v=\d+/, `navloader.js?v=${Number(match[1]) + 1}`);
+          fs.writeFileSync('sky-chart.html', html);
+          NODE
+      - name: Verify no text fallback for approved masters
+        run: |
+          set -euo pipefail
+          grep -q "assets/planet-glyphs/ascendant.svg" relphi-glyph-registry-v1.js
+          grep -q "assets/planet-glyphs/midheaven.svg" relphi-glyph-registry-v1.js
+          ! grep -q "'Asc','letter'" relphi-glyph-registry-v1.js
+          ! grep -q "'MC','letter'" relphi-glyph-registry-v1.js
+      - name: Commit restoration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add relphi-glyph-registry-v1.js navloader.js sky-chart.html
+          git commit -m "Use approved Ascendant and Midheaven glyph masters" || exit 0
+          git push origin HEAD:feature/chart-axes-angular-frame
