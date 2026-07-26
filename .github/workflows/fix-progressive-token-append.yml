@@ -1,0 +1,53 @@
+name: Fix progressive token append
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/fix-progressive-token-append.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+      - name: Repair active progressive relationship tokens
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'sky-chart-canonical-relationship-ui-v1.js';
+          let source = fs.readFileSync(path, 'utf8');
+          const before = "    });\n    return wrap;\n  }\n\n  function text(value)";
+          const after = "    });\n    wrap.appendChild(glyph);\n    return wrap;\n  }\n\n  function text(value)";
+          if (!source.includes(before) && !source.includes(after)) throw new Error('Token return site not found.');
+          source = source.replace(before, after);
+          fs.writeFileSync(path, source);
+
+          let nav = fs.readFileSync('navloader.js', 'utf8');
+          nav = nav.replace(/sky-chart-canonical-relationship-ui-v1\.js\?v=[^']+/g, 'sky-chart-canonical-relationship-ui-v1.js?v=token-append-1');
+          fs.writeFileSync('navloader.js', nav);
+
+          let html = fs.readFileSync('sky-chart.html', 'utf8');
+          const match = html.match(/navloader\.js\?v=(\d+)/);
+          if (match) html = html.replace(/navloader\.js\?v=\d+/, `navloader.js?v=${Number(match[1]) + 1}`);
+          fs.writeFileSync('sky-chart.html', html);
+          NODE
+      - name: Verify repair
+        run: |
+          grep -q "wrap.appendChild(glyph);" sky-chart-canonical-relationship-ui-v1.js
+          grep -q "token-append-1" navloader.js
+      - name: Commit repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sky-chart-canonical-relationship-ui-v1.js navloader.js sky-chart.html
+          git commit -m "Append progressive glyph controls to relationship tokens" || exit 0
+          git push origin HEAD:feature/chart-axes-angular-frame
