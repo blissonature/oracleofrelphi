@@ -32,6 +32,7 @@
   });
   load('sky-chart-progressive-current-reading-v1.js?v=1');
   load('sky-chart-slot-identity-v1.js?v=2');
-  // Sky Studio scripts are temporarily disabled because their DOM observers
-  // rewrote the same nodes they observed and caused an infinite refresh loop.
+  load('sky-chart-calculation-completion-guard-v1.js?v=1');
+  // Sky Studio scripts remain disabled until their rendering is rebuilt without
+  // self-triggering observers.
 })();
