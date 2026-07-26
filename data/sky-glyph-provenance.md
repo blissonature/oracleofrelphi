@@ -1,0 +1,56 @@
+# Sky Chart glyph provenance
+
+This report identifies every source that can draw or recolor a Sky Chart glyph.
+
+- `navloader.js`: text_nodes, fallbacks, red_literal
+- `relphi-glyph-component-v1.js`: text_nodes, fallbacks, inline_svg, recoloring, red_literal
+- `relphi-glyph-registry-v1.js`: asset_paths, fallbacks, unicode_glyphs
+- `sky-chart-active-sky-controls.js`: text_nodes
+- `sky-chart-builder-v4-defaults.js`: fallbacks
+- `sky-chart-builder-v4.js`: text_nodes, fallbacks, red_literal
+- `sky-chart-calculated-points-storage-bridge-v1.js`: text_nodes, unicode_glyphs
+- `sky-chart-calculated-points-storage-bridge-v2.js`: text_nodes, unicode_glyphs
+- `sky-chart-calculated-points-v1.js`: unicode_glyphs
+- `sky-chart-canonical-glyph-correction-v1.js`: text_nodes, fallbacks, inline_svg
+- `sky-chart-canonical-relationship-ui-v1.js`: text_nodes, fallbacks, unicode_glyphs
+- `sky-chart-core-workspace-v1.js`: text_nodes
+- `sky-chart-extra-points-support-v1.js`: unicode_glyphs
+- `sky-chart-final-guard.js`: text_nodes
+- `sky-chart-final-workflow.js`: text_nodes, fallbacks, red_literal
+- `sky-chart-glyph-kill-switch.js`: text_nodes, unicode_glyphs
+- `sky-chart-here-now-flow.js`: text_nodes
+- `sky-chart-isolation-final.js`: text_nodes
+- `sky-chart-preview-state-fix.js`: text_nodes, fallbacks
+- `sky-chart-progressive-wizard-fix.js`: text_nodes
+- `sky-chart-r31-finalize-v1.js`: text_nodes, unicode_glyphs, recoloring
+- `sky-chart-related-relationships-v2.js`: text_nodes, unicode_glyphs, red_literal
+- `sky-chart-relationship-color-hints-pr22.js`: text_nodes, inline_svg, red_literal
+- `sky-chart-relationship-color-hints.js`: text_nodes, inline_svg, red_literal
+- `sky-chart-relationship-language.js`: text_nodes, fallbacks, unicode_glyphs
+- `sky-chart-relationship-sections-v1.js`: text_nodes, unicode_glyphs
+- `sky-chart-save-verification-v1.js`: text_nodes
+- `sky-chart-sign-cusps-v1.js`: text_nodes, inline_svg
+- `sky-chart-special-point-polish-v1.js`: text_nodes, unicode_glyphs
+- `sky-chart-special-point-source-normalizer-v1.js`: unicode_glyphs
+- `sky-chart-special-point-static-v1.js`: text_nodes, unicode_glyphs
+- `sky-chart-stability-hotfix.js`: text_nodes, unicode_glyphs, red_literal
+- `sky-chart-static-dynamic.js`: text_nodes
+- `sky-chart-tooltip-close-v1.js`: text_nodes
+- `sky-chart-wheel-canonical-component-v1.js`: text_nodes, fallbacks, red_literal
+- `sky-chart-wheel-center-anchored-leaders-v1.js`: text_nodes, unicode_glyphs
+- `sky-chart-wheel-dynamic-clusters-v1.js`: text_nodes, inline_svg, recoloring, red_literal
+- `sky-chart-wheel-e9344099-canonical-master-v1.js`: fallbacks, inline_svg, recoloring, red_literal
+- `sky-chart-wheel-final-leaders-v1.js`: recoloring
+- `sky-chart-wheel-glyph-preview-tuning-v1.js`: text_nodes, unicode_glyphs, inline_svg, recoloring, red_literal
+- `sky-chart-wheel-glyph-preview-v1.js`: text_nodes, unicode_glyphs, red_literal
+- `sky-chart-wheel-marker-interaction-v1.js`: text_nodes, fallbacks
+- `sky-chart-wheel-solid-hover-v1.js`: recoloring
+- `sky-chart-wheel-special-points-final-v1.js`: text_nodes, unicode_glyphs, recoloring
+- `sky-chart-wheel-unified-marker-renderer-v1.js`: text_nodes, unicode_glyphs, inline_svg, recoloring, red_literal
+- `sky-chart-wheel-unified-marker-renderer-v2.js`: text_nodes, unicode_glyphs, inline_svg, recoloring, red_literal
+- `sky-chart-wheel-unified-marker-renderer-v3.js`: text_nodes, unicode_glyphs, inline_svg, recoloring, red_literal
+- `sky-chart-wheel-unified-marker-renderer-v5.js`: text_nodes, unicode_glyphs, inline_svg, recoloring, red_literal
+- `sky-chart-wheel-unified-marker-renderer-v6.js`: asset_paths, text_nodes, unicode_glyphs, inline_svg, recoloring, red_literal
+- `sky-chart-wizard-state-controller.js`: text_nodes
+- `sky-chart-wizard-ui-state-fix.js`: text_nodes, red_literal
+- `sky-chart-wizard-v2.js`: text_nodes
