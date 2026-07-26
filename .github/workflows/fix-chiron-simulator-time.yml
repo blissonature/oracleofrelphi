@@ -1,0 +1,82 @@
+name: Fix Chiron simulator time mismatch
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/fix-chiron-simulator-time.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Use the StateVector normalized time
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          let source=fs.readFileSync('sky-chart-chiron-local-v1.js','utf8');
+          const before='const sim = new A.GravitySimulator(A.Body.Sun, epoch, [initial]);';
+          const after='const sim = new A.GravitySimulator(A.Body.Sun, initial.t, [initial]);';
+          if (!source.includes(before) && !source.includes(after)) throw new Error('GravitySimulator constructor was not found.');
+          source=source.replace(before,after);
+          fs.writeFileSync('sky-chart-chiron-local-v1.js',source);
+
+          let nav=fs.readFileSync('navloader.js','utf8');
+          nav=nav.replace(/sky-chart-chiron-local-v1\.js\?v=[^']+/g,'sky-chart-chiron-local-v1.js?v=direct-41-anchors-3');
+          nav=nav.replace(/sky-chart-calculated-points-storage-bridge-v2\.js\?v=[^']+/g,'sky-chart-calculated-points-storage-bridge-v2.js?v=direct-41-anchors-3');
+          fs.writeFileSync('navloader.js',nav);
+
+          let app=fs.readFileSync('tarot-app.js','utf8');
+          app=app.replace("skyCalcStatus(error?.message || 'Could not calculate sky positions.', true);","skyCalcStatus(error?.message || String(error || 'Could not calculate sky positions.'), true);");
+          fs.writeFileSync('tarot-app.js',app);
+
+          let html=fs.readFileSync('sky-chart.html','utf8');
+          html=html.replace(/navloader\.js\?v=\d+/,'navloader.js?v=52');
+          html=html.replace(/tarot-app\.js\?v=\d+/,'tarot-app.js?v=368');
+          fs.writeFileSync('sky-chart.html',html);
+          NODE
+      - name: Validate full local Chiron calculation
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          const s={console,Date,Math,JSON,Number,String,Boolean,Array,Object,Error,TypeError,setTimeout,clearTimeout};
+          s.window=s;s.self=s;s.globalThis=s;vm.createContext(s);
+          vm.runInContext(fs.readFileSync('vendor/astronomy-engine/astronomy.browser.min.js','utf8'),s,{filename:'astronomy.browser.min.js'});
+          vm.runInContext(fs.readFileSync('sky-chart-chiron-local-v1.js','utf8'),s,{filename:'sky-chart-chiron-local-v1.js'});
+          const dates=['1985-10-08T08:37:00.000Z','2026-07-26T04:12:00.000Z','2097-06-15T12:00:00.000Z'];
+          const results=dates.map(iso=>({iso,result:vm.runInContext(`window.RelphiChironLocal.calculate(new Date('${iso}'))`,s)}));
+          for(const item of results){
+            if(!Number.isFinite(item.result.longitude)) throw new Error('Non-finite Chiron longitude for '+item.iso);
+            if(item.result.longitude<0||item.result.longitude>=360) throw new Error('Out-of-range Chiron longitude for '+item.iso);
+          }
+          fs.mkdirSync('data',{recursive:true});
+          fs.writeFileSync('data/chiron-simulator-time-fix-validation.json',JSON.stringify({generatedAt:new Date().toISOString(),results},null,2));
+          console.log(JSON.stringify(results,null,2));
+          NODE
+      - name: Verify versions and direct integration
+        run: |
+          set -euo pipefail
+          grep -q "GravitySimulator(A.Body.Sun, initial.t" sky-chart-chiron-local-v1.js
+          grep -q "direct-41-anchors-3" navloader.js
+          grep -q "navloader.js?v=52" sky-chart.html
+          grep -q "tarot-app.js?v=368" sky-chart.html
+          grep -q "relphiChironDirectPlacementV1" tarot-app.js
+      - name: Commit verified fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sky-chart-chiron-local-v1.js navloader.js tarot-app.js sky-chart.html data/chiron-simulator-time-fix-validation.json
+          git commit -m "Fix Chiron GravitySimulator time mismatch"
+          git push origin HEAD:feature/chart-axes-angular-frame
