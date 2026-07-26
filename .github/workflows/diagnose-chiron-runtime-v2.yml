@@ -1,0 +1,85 @@
+name: Diagnose Chiron runtime v2
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/diagnose-chiron-runtime-v2.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Execute modules in one browser-like VM global
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const vm = require('vm');
+          const sandbox = {
+            console,
+            Date,
+            Math,
+            JSON,
+            Number,
+            String,
+            Boolean,
+            Array,
+            Object,
+            Error,
+            TypeError,
+            setTimeout,
+            clearTimeout
+          };
+          sandbox.window = sandbox;
+          sandbox.self = sandbox;
+          sandbox.globalThis = sandbox;
+          vm.createContext(sandbox);
+          const report = { generatedAt:new Date().toISOString(), tests:{} };
+          function run(name, code) {
+            try {
+              const value = vm.runInContext(code, sandbox, { filename:name });
+              report.tests[name] = { ok:true, value };
+              return value;
+            } catch (error) {
+              report.tests[name] = { ok:false, name:error?.name, message:error?.message, stack:error?.stack };
+              return null;
+            }
+          }
+          run('astronomy.browser.min.js', fs.readFileSync('vendor/astronomy-engine/astronomy.browser.min.js','utf8'));
+          report.tests.astronomyApi = {
+            ok:true,
+            value:{
+              directType:run('typeof Astronomy','typeof Astronomy'),
+              windowType:run('typeof window.Astronomy','typeof window.Astronomy'),
+              keys:run('Astronomy keys','typeof Astronomy === "object" ? Object.keys(Astronomy).filter(k=>/Gravity|StateVector|Vector|Ecliptic|Sidereal/.test(k)) : []')
+            }
+          };
+          run('relphi-house-systems.js', fs.readFileSync('relphi-house-systems.js','utf8'));
+          run('sky-chart-chiron-local-v1.js', fs.readFileSync('sky-chart-chiron-local-v1.js','utf8'));
+          const dateIso = '2026-07-26T04:12:00.000Z';
+          run('calculateChiron', `window.RelphiChironLocal.calculate(new Date('${dateIso}'))`);
+          run('siderealTime', `Astronomy.SiderealTime(new Date('${dateIso}'))`);
+          run('houseCusps', `window.RelphiHouseSystems.calculateCusps({system:'whole-sign',ascendant:330.2167,midheaven:253.6,siderealDegrees:Astronomy.SiderealTime(new Date('${dateIso}'))*15-111.891,obliquityDegrees:23.436,latitude:40.7608})`);
+          fs.mkdirSync('data',{recursive:true});
+          fs.writeFileSync('data/chiron-runtime-diagnostic-v2.json', JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report,null,2));
+          NODE
+      - name: Commit diagnostic report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/chiron-runtime-diagnostic-v2.json
+          git commit -m "Record browser-context Chiron diagnostic" || exit 0
+          git push origin HEAD:feature/chart-axes-angular-frame
