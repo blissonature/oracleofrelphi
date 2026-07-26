@@ -27,14 +27,22 @@
     return [sign,[degree,minute].filter(Boolean).join('')].filter(Boolean).join(' ')+retro||'Not set';
   }
   function escapeHtml(value){return String(value||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])}
-  function registryEntry(identity){try{return window.RelphiGlyphRegistry&&(window.RelphiGlyphRegistry.get(identity)||window.RelphiGlyphRegistry.resolve(identity))}catch(_){return null}}
-  function canonicalImage(identity,label){
-    const entry=registryEntry(identity);
-    if(!entry||!entry.asset)return '';
-    return '<img src="'+escapeHtml(entry.asset)+'" alt="" aria-hidden="true">';
+  function glyphMount(identity,label){
+    return '<svg class="relphi-canonical-card-glyph" data-relphi-glyph="'+escapeHtml(identity)+'" viewBox="-12 -12 24 24" role="img" aria-label="'+escapeHtml(label)+'"></svg>';
+  }
+  function renderGlyphs(root){
+    if(!window.RelphiGlyphComponent)return;
+    const panel=root.closest('.relphi-v4-sky-panel');
+    const color=(panel&&getComputedStyle(panel).getPropertyValue('--sky-accent').trim())||'#dc1f18';
+    root.querySelectorAll('svg[data-relphi-glyph]:not([data-relphi-rendered])').forEach(function(svg){
+      svg.dataset.relphiRendered='pending';
+      window.RelphiGlyphComponent.draw(svg,svg.dataset.relphiGlyph,{radius:10.3,padding:.9,color:color,bubbleStrokeWidth:0})
+        .then(function(){svg.dataset.relphiRendered='true'})
+        .catch(function(){svg.dataset.relphiRendered='error';svg.setAttribute('aria-label',(svg.getAttribute('aria-label')||'Glyph')+' unavailable')});
+    });
   }
   function identityCard(label,value,identity){
-    return '<div class="relphi-sky-identity-item"><span class="relphi-sky-identity-glyph" aria-hidden="true">'+canonicalImage(identity,label)+'</span><span class="relphi-sky-identity-copy"><small>'+label+'</small><strong>'+escapeHtml(value)+'</strong></span></div>';
+    return '<div class="relphi-sky-identity-item"><span class="relphi-sky-identity-glyph">'+glyphMount(identity,label)+'</span><span class="relphi-sky-identity-copy"><small>'+label+'</small><strong>'+escapeHtml(value)+'</strong></span></div>';
   }
   function orderedEntries(map){
     const used=new Set(),result=[];
@@ -50,7 +58,7 @@
     list.innerHTML=shown.map(entry=>'<li><strong>'+escapeHtml(LABEL[entry.key]||entry.key)+'</strong><span>'+escapeHtml(coordinate(entry.item))+'</span></li>').join('')+(ordered.length>6?'<li class="more">+'+(ordered.length-6)+' more</li>':'');
     list.dataset.relphiOrdered='true';
   }
-  function axisGlyph(identity){return '<span class="relphi-axis-glyph" aria-hidden="true">'+canonicalImage(identity,identity)+'</span>'}
+  function axisGlyph(identity){return '<span class="relphi-axis-glyph">'+glyphMount(identity,identity)+'</span>'}
   function axisRow(axis,map){
     const left=findEntry(map,axis.left),right=findEntry(map,axis.right);
     if(!left||!right)return '';
@@ -92,6 +100,7 @@
     section.hidden=!rows.length;
     section.querySelector('.relphi-card-axes-list').innerHTML=rows.join('');
     bindAxes(section);
+    renderGlyphs(section);
   }
   function enhancePanel(panel){
     const slot=panel.dataset.slot;
@@ -103,8 +112,12 @@
     const rising=findEntry(map,['Rising','Ascendant','ASC','AC']);
     let strip=panel.querySelector('.relphi-sky-identity-strip');
     if(!strip){strip=document.createElement('div');strip.className='relphi-sky-identity-strip';const count=panel.querySelector('.relphi-v4-panel-copy > p');(count||panel.querySelector('.relphi-v4-panel-copy h3'))?.insertAdjacentElement('afterend',strip)}
-    strip.innerHTML=identityCard('Sun',coordinate(sun&&sun.item),'sun')+identityCard('Moon',coordinate(moon&&moon.item),'moon')+identityCard('Rising',coordinate(rising&&rising.item),'asc');
-    strip.dataset.signature=[coordinate(sun&&sun.item),coordinate(moon&&moon.item),coordinate(rising&&rising.item)].join('|');
+    const signature=[coordinate(sun&&sun.item),coordinate(moon&&moon.item),coordinate(rising&&rising.item)].join('|');
+    if(strip.dataset.signature!==signature){
+      strip.innerHTML=identityCard('Sun',coordinate(sun&&sun.item),'sun')+identityCard('Moon',coordinate(moon&&moon.item),'moon')+identityCard('Rising',coordinate(rising&&rising.item),'asc');
+      strip.dataset.signature=signature;
+    }
+    renderGlyphs(strip);
     rebuildPreview(panel,map);
     addAxes(panel,map);
   }
@@ -129,7 +142,7 @@
   function styles(){
     if(document.getElementById('relphi-slot-identity-styles'))return;
     const s=document.createElement('style');s.id='relphi-slot-identity-styles';
-    s.textContent='[data-relphi-deprecated-target="true"]{display:none!important}.relphi-sky-identity-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem;margin:.9rem 0 1rem}.relphi-sky-identity-item{display:flex;align-items:center;gap:.55rem;min-width:0;padding:.65rem .7rem;border:1px solid color-mix(in srgb,var(--sky-accent) 24%,#e4ddd6);border-radius:14px;background:color-mix(in srgb,var(--sky-accent) 5%,#fff)}.relphi-sky-identity-glyph{display:grid;place-items:center;flex:0 0 auto;width:1.75rem;height:1.75rem;border-radius:50%;background:#fff}.relphi-sky-identity-glyph img,.relphi-axis-glyph img{display:block;width:100%;height:100%;object-fit:contain}.relphi-sky-identity-copy{display:grid;min-width:0;line-height:1.15}.relphi-sky-identity-copy small{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#756b64}.relphi-sky-identity-copy strong{font-size:.93rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.relphi-card-axes{margin-top:1rem;padding-top:.9rem;border-top:1px solid #e8e0d9}.relphi-card-axes-heading{display:flex;align-items:center;justify-content:space-between}.relphi-card-axes-heading h4{margin:0 0 .55rem;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase}.relphi-card-axes-list{display:grid;gap:.45rem}.relphi-card-axis{display:grid;gap:.3rem}.relphi-card-axis button{appearance:none;border:0!important;box-shadow:none!important;background:transparent!important;color:inherit;min-height:0!important;padding:.35rem .2rem!important;text-align:left}.relphi-card-axis-symbols{display:grid!important;grid-template-columns:1.45rem minmax(0,1fr) auto 1.45rem minmax(0,1fr);align-items:center;gap:.38rem;width:100%}.relphi-axis-glyph{display:block;width:1.35rem;height:1.35rem}.relphi-axis-coordinate{font-size:.78rem;color:#5f5751}.relphi-axis-link{font-weight:900;color:var(--sky-accent)}.relphi-card-axis-name{font-weight:800!important;text-decoration:underline dotted rgba(17,17,17,.38);text-underline-offset:.18em}.relphi-card-axis-meaning{font-size:.82rem!important;color:#5f5751!important;line-height:1.4}.relphi-card-axis button:hover,.relphi-card-axis button:focus-visible{color:#b81712;outline:2px solid rgba(220,31,24,.28);outline-offset:2px;border-radius:.35rem}@media(max-width:520px){.relphi-sky-identity-strip{grid-template-columns:1fr}.relphi-sky-identity-copy strong{white-space:normal}.relphi-card-axis-symbols{grid-template-columns:1.25rem minmax(0,1fr) auto 1.25rem minmax(0,1fr)}}';
+    s.textContent='[data-relphi-deprecated-target="true"]{display:none!important}.relphi-sky-identity-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem;margin:.9rem 0 1rem}.relphi-sky-identity-item{display:flex;align-items:center;gap:.55rem;min-width:0;padding:.65rem .7rem;border:1px solid color-mix(in srgb,var(--sky-accent) 24%,#e4ddd6);border-radius:14px;background:color-mix(in srgb,var(--sky-accent) 5%,#fff)}.relphi-sky-identity-glyph{display:grid;place-items:center;flex:0 0 auto;width:1.75rem;height:1.75rem;border-radius:50%;background:#fff}.relphi-canonical-card-glyph{display:block;width:100%;height:100%;overflow:visible}.relphi-sky-identity-copy{display:grid;min-width:0;line-height:1.15}.relphi-sky-identity-copy small{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#756b64}.relphi-sky-identity-copy strong{font-size:.93rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.relphi-card-axes{margin-top:1rem;padding-top:.9rem;border-top:1px solid #e8e0d9}.relphi-card-axes-heading{display:flex;align-items:center;justify-content:space-between}.relphi-card-axes-heading h4{margin:0 0 .55rem;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase}.relphi-card-axes-list{display:grid;gap:.45rem}.relphi-card-axis{display:grid;gap:.3rem}.relphi-card-axis button{appearance:none;border:0!important;box-shadow:none!important;background:transparent!important;color:inherit;min-height:0!important;padding:.35rem .2rem!important;text-align:left}.relphi-card-axis-symbols{display:grid!important;grid-template-columns:1.45rem minmax(0,1fr) auto 1.45rem minmax(0,1fr);align-items:center;gap:.38rem;width:100%}.relphi-axis-glyph{display:block;width:1.35rem;height:1.35rem}.relphi-axis-coordinate{font-size:.78rem;color:#5f5751}.relphi-axis-link{font-weight:900;color:var(--sky-accent)}.relphi-card-axis-name{font-weight:800!important;text-decoration:underline dotted rgba(17,17,17,.38);text-underline-offset:.18em}.relphi-card-axis-meaning{font-size:.82rem!important;color:#5f5751!important;line-height:1.4}.relphi-card-axis button:hover,.relphi-card-axis button:focus-visible{color:#b81712;outline:2px solid rgba(220,31,24,.28);outline-offset:2px;border-radius:.35rem}@media(max-width:520px){.relphi-sky-identity-strip{grid-template-columns:1fr}.relphi-sky-identity-copy strong{white-space:normal}.relphi-card-axis-symbols{grid-template-columns:1.25rem minmax(0,1fr) auto 1.25rem minmax(0,1fr)}}';
     document.head.appendChild(s);
   }
   function run(){queued=false;enforceContext()}
