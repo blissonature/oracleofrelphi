@@ -30,6 +30,7 @@
       .replace(/[ \t]+\n/g, '\n')
       .replace(/\n[ \t]+/g, '\n')
       .replace(/[ \t]{2,}/g, ' ')
+      .replace(/([.!?])(?=[A-Z])/g, '$1 ')
       .trim();
   }
 
