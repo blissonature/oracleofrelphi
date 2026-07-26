@@ -46,5 +46,31 @@
     return { longitude:longitude, retrograde:motion < 0, source:'Astronomy Engine GravitySimulator with embedded JPL anchor state' };
   }
 
+  function installApprovedWheelGlyphs() {
+    if (window.__relphiApprovedWheelGlyphOverride) return;
+    window.__relphiApprovedWheelGlyphOverride = true;
+    const root = 'https://raw.githack.com/blissonature/oracleofrelphi/feature/sky-chart-canonical-glyphs-chiron/';
+    const load = function (src, done) {
+      const script = document.createElement('script');
+      script.async = false;
+      script.src = root + src;
+      if (done) script.addEventListener('load', done, { once:true });
+      document.body.appendChild(script);
+    };
+    const activate = function () {
+      document.querySelectorAll('.relphi-sky-glyph-layer').forEach(function (node) { node.remove(); });
+      window.RelphiGlyphComponent = null;
+      load('relphi-glyph-component-v1.js?v=canonical-23', function () {
+        load('sky-chart-canonical-glyphs-chiron.js?v=13-canonical', function () {
+          window.RelphiCanonicalSkyGlyphs?.refresh?.();
+        });
+      });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', activate, { once:true });
+    else setTimeout(activate, 0);
+    window.addEventListener('relphi:sky-builder-v4-loaded', activate, { once:true });
+  }
+
   window.RelphiChironLocal = { calculate:calculate, anchors:ANCHORS };
+  installApprovedWheelGlyphs();
 })();
