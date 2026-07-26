@@ -11,7 +11,7 @@
   let queued=false;
 
   function read(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
-  function write(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}}
+  function write(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_) {}}
   function sig(payload){
     const source=payload&&(payload.placements||payload);
     if(!source||typeof source!=='object'||Array.isArray(source)) return '';
@@ -81,33 +81,81 @@
     return {withinA:saved.withinA!==false,withinB:saved.withinB!==false,between:saved.between!==false};
   }
 
-  function ensureScopeControl(){
+  function relationshipsHeading(){
+    return Array.from(document.querySelectorAll('h1,h2,h3,h4,[role="heading"]')).find(node=>/^relationships$/i.test(String(node.textContent||'').trim()))||null;
+  }
+
+  function relationshipsPanel(heading){
+    if(!heading)return null;
+    let node=heading.parentElement;
+    while(node&&node!==document.body){
+      if(node.querySelector('.relationship-list-row')||/relationship/i.test(String(node.className||''))) return node;
+      node=node.parentElement;
+    }
+    return heading.parentElement;
+  }
+
+  function placeChartAxesAboveRelationships(){
     const structural=document.getElementById('relphiStructuralRelationshipSections');
-    const axes=structural&&structural.querySelector('[data-relationship-section="axes"]');
-    if(!axes)return null;
-    axes.hidden=false;
+    const heading=relationshipsHeading();
+    const panel=relationshipsPanel(heading);
+    if(!structural||!panel)return null;
     structural.classList.add('relphi-chart-axes-box');
-    let control=document.getElementById('relphiRelationshipScope');
-    if(!control){
-      control=document.createElement('fieldset');
-      control.id='relphiRelationshipScope';
-      control.className='relphi-relationship-scope';
-      control.innerHTML='<legend>Show relationship sets</legend><div class="relphi-relationship-scope-options"><label><input type="checkbox" data-scope="withinA"> Sky A ↔ Sky A</label><label><input type="checkbox" data-scope="withinB"> Sky B ↔ Sky B</label><label><input type="checkbox" data-scope="between"> Sky A ↔ Sky B</label></div>';
-      const heading=axes.querySelector('.relphi-relationship-subsection-heading');
-      heading.insertAdjacentElement('afterend',control);
-      control.addEventListener('change',()=>{
+    structural.classList.toggle('relphi-chart-axes-two-skies',hasSkyB());
+    if(structural.nextElementSibling!==panel) panel.insertAdjacentElement('beforebegin',structural);
+    return {structural,heading,panel};
+  }
+
+  function ensureScopeControl(){
+    const placement=placeChartAxesAboveRelationships();
+    if(!placement)return null;
+    const {heading}=placement;
+    let header=heading.closest('.panel-heading-row,.relationship-heading,.section-heading,.heading-row')||heading.parentElement;
+    header.classList.add('relphi-relationships-heading-row');
+
+    let shell=document.getElementById('relphiRelationshipScope');
+    if(!shell){
+      shell=document.createElement('div');
+      shell.id='relphiRelationshipScope';
+      shell.className='relphi-relationship-scope';
+      shell.innerHTML='<button type="button" class="relphi-relationship-filter-button" aria-haspopup="true" aria-expanded="false"><span>Filter</span><span aria-hidden="true">▾</span></button><div class="relphi-relationship-filter-flyout" hidden><strong>Show</strong><label><input type="checkbox" data-scope="withinA"> A ↔ A</label><label><input type="checkbox" data-scope="withinB"> B ↔ B</label><label><input type="checkbox" data-scope="between"> A ↔ B</label></div>';
+      header.appendChild(shell);
+      const button=shell.querySelector('.relphi-relationship-filter-button');
+      const flyout=shell.querySelector('.relphi-relationship-filter-flyout');
+      button.addEventListener('click',event=>{
+        event.stopPropagation();
+        const open=flyout.hidden;
+        flyout.hidden=!open;
+        button.setAttribute('aria-expanded',open?'true':'false');
+      });
+      shell.addEventListener('click',event=>event.stopPropagation());
+      shell.addEventListener('change',()=>{
         if(!hasSkyB())return;
-        const state={withinA:control.querySelector('[data-scope="withinA"]').checked,withinB:control.querySelector('[data-scope="withinB"]').checked,between:control.querySelector('[data-scope="between"]').checked};
+        const state={withinA:shell.querySelector('[data-scope="withinA"]').checked,withinB:shell.querySelector('[data-scope="withinB"]').checked,between:shell.querySelector('[data-scope="between"]').checked};
         write(SCOPE_KEY,state);applyScope();
       });
+      document.addEventListener('click',()=>{
+        flyout.hidden=true;
+        button.setAttribute('aria-expanded','false');
+      });
+      document.addEventListener('keydown',event=>{
+        if(event.key==='Escape'){
+          flyout.hidden=true;
+          button.setAttribute('aria-expanded','false');
+          button.focus();
+        }
+      });
+    } else if(shell.parentElement!==header){
+      header.appendChild(shell);
     }
+
     const twoSkies=hasSkyB(),state=savedScopes(twoSkies);
-    const a=control.querySelector('[data-scope="withinA"]'),b=control.querySelector('[data-scope="withinB"]'),between=control.querySelector('[data-scope="between"]');
+    const a=shell.querySelector('[data-scope="withinA"]'),b=shell.querySelector('[data-scope="withinB"]'),between=shell.querySelector('[data-scope="between"]');
     a.checked=state.withinA;a.disabled=false;
     b.checked=state.withinB;b.disabled=!twoSkies;
     between.checked=state.between;between.disabled=!twoSkies;
-    control.dataset.twoSkies=twoSkies?'true':'false';
-    return control;
+    shell.dataset.twoSkies=twoSkies?'true':'false';
+    return shell;
   }
 
   function applyScope(){
@@ -118,13 +166,6 @@
       'between':control.querySelector('[data-scope="between"]').checked
     };
     relationshipRows().forEach(host=>{const type=classify(host);host.dataset.relphiRelationshipScope=type;host.hidden=type?!enabled[type]:false});
-    document.querySelectorAll('.relphi-relationship-subsection').forEach(section=>{
-      const rows=Array.from(section.querySelectorAll(':scope .relationship-list-row'));
-      const visible=rows.filter(row=>!row.hidden).length;
-      const badge=section.querySelector('.relphi-relationship-subsection-count');
-      if(badge){badge.textContent=String(visible);badge.setAttribute('aria-label',visible+(visible===1?' relationship':' relationships'))}
-      if(section.dataset.relationshipSection!=='axes')section.hidden=rows.length>0&&visible===0;
-    });
   }
 
   function strengthenTextGlyphs(){
@@ -158,12 +199,12 @@
   function styles(){
     if(document.getElementById('relphi-relationship-scope-progressive-style'))return;
     const s=document.createElement('style');s.id='relphi-relationship-scope-progressive-style';
-    s.textContent='.relphi-chart-axes-box{display:grid;gap:.85rem;margin:0 0 1.25rem;padding:1rem;border:2px solid rgba(220,31,24,.42);border-radius:1rem;background:linear-gradient(180deg,rgba(220,31,24,.055),rgba(255,255,255,.88));box-shadow:0 4px 16px rgba(0,0,0,.045)}.relphi-chart-axes-box .relphi-relationship-axes{display:grid!important}.relphi-relationship-scope{margin:0;padding:.75rem;border:1px solid rgba(0,0,0,.16);border-radius:.75rem;background:rgba(255,255,255,.82)}.relphi-relationship-scope legend{padding:0 .35rem;font-weight:850}.relphi-relationship-scope-options{display:flex;flex-wrap:wrap;gap:.55rem 1rem}.relphi-relationship-scope-options label{display:inline-flex;align-items:center;gap:.38rem;font-weight:720}.relphi-relationship-scope-options input:disabled+*{opacity:.5}.relphi-heavy-venus-mars{font-weight:950!important;text-shadow:.025em 0 currentColor,-.025em 0 currentColor,0 .025em currentColor,0 -.025em currentColor}.relphi-canonical-token[data-relphi-reveal-level="glyph"] .relphi-canonical-token-name,.relphi-canonical-token[data-relphi-reveal-level="glyph"] .relphi-canonical-token-meaning{display:none!important}.relphi-canonical-token[data-relphi-reveal-level="name"] .relphi-canonical-token-meaning{display:none!important}@media(max-width:600px){.relphi-mobile-dual-card-view{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;column-gap:.45rem!important;align-items:start!important}.relphi-mobile-dual-card-view .relphi-dual-card-item{grid-row:1!important;width:100%!important;max-width:100%!important;min-width:0!important}.relphi-mobile-dual-card-view .relphi-dual-card-item:first-of-type{grid-column:1!important}.relphi-mobile-dual-card-view .relphi-dual-card-item:nth-of-type(2){grid-column:2!important}.relphi-mobile-dual-card-view .relphi-progressive-reading,.relphi-mobile-dual-card-view .relphi-canonical-relationship-reading,.relphi-mobile-dual-card-view [class*="reading"]{grid-column:1/-1!important}.relphi-relationship-scope-options{display:grid;grid-template-columns:1fr}.relphi-chart-axes-box{padding:.8rem}}';
+    s.textContent='.relphi-chart-axes-box{display:grid;gap:.9rem;margin:0 0 1.15rem;padding:1rem;border:1px solid rgba(220,31,24,.36);border-radius:1rem;background:#fff;box-shadow:0 4px 16px rgba(0,0,0,.05)}.relphi-chart-axes-box .relphi-relationship-subsection{padding:0}.relphi-chart-axes-box .relphi-relationship-subsection-heading{padding-bottom:.5rem;border-bottom:1px solid rgba(220,31,24,.16)}.relphi-chart-axes-two-skies [data-relationship-section="axes"] .relphi-relationship-subsection-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}.relphi-relationships-heading-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:.75rem!important;position:relative}.relphi-relationship-scope{position:relative;margin-left:auto}.relphi-relationship-filter-button{display:inline-flex;align-items:center;gap:.45rem;appearance:none;border:1px solid rgba(220,31,24,.4);border-radius:999px;background:#fff;color:#111;font:inherit;font-size:.84rem;font-weight:800;padding:.42rem .72rem;cursor:pointer}.relphi-relationship-filter-button:hover,.relphi-relationship-filter-button:focus-visible{background:rgba(220,31,24,.06);border-color:#dc1f18}.relphi-relationship-filter-flyout{position:absolute;right:0;top:calc(100% + .42rem);z-index:30;min-width:9.5rem;padding:.55rem;border:1px solid rgba(0,0,0,.16);border-radius:.75rem;background:#fff;box-shadow:0 10px 28px rgba(0,0,0,.14)}.relphi-relationship-filter-flyout strong{display:block;margin:0 0 .35rem;padding:0 .2rem;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#655}.relphi-relationship-filter-flyout label{display:flex;align-items:center;gap:.45rem;padding:.4rem .35rem;border-radius:.45rem;font-weight:720;white-space:nowrap}.relphi-relationship-filter-flyout label:hover{background:rgba(220,31,24,.055)}.relphi-relationship-filter-flyout input{margin:0}.relphi-relationship-filter-flyout input:disabled{opacity:.45}.relphi-heavy-venus-mars{font-weight:950!important;text-shadow:.025em 0 currentColor,-.025em 0 currentColor,0 .025em currentColor,0 -.025em currentColor}.relphi-canonical-token[data-relphi-reveal-level="glyph"] .relphi-canonical-token-name,.relphi-canonical-token[data-relphi-reveal-level="glyph"] .relphi-canonical-token-meaning{display:none!important}.relphi-canonical-token[data-relphi-reveal-level="name"] .relphi-canonical-token-meaning{display:none!important}@media(max-width:600px){.relphi-mobile-dual-card-view{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;column-gap:.45rem!important;align-items:start!important}.relphi-mobile-dual-card-view .relphi-dual-card-item{grid-row:1!important;width:100%!important;max-width:100%!important;min-width:0!important}.relphi-mobile-dual-card-view .relphi-dual-card-item:first-of-type{grid-column:1!important}.relphi-mobile-dual-card-view .relphi-dual-card-item:nth-of-type(2){grid-column:2!important}.relphi-mobile-dual-card-view .relphi-progressive-reading,.relphi-mobile-dual-card-view .relphi-canonical-relationship-reading,.relphi-mobile-dual-card-view [class*="reading"]{grid-column:1/-1!important}.relphi-chart-axes-two-skies [data-relationship-section="axes"] .relphi-relationship-subsection-list{grid-template-columns:minmax(0,1fr)}.relphi-chart-axes-box{padding:.8rem}.relphi-relationship-filter-flyout{right:0}}';
     document.head.appendChild(s);
   }
 
   function run(){queued=false;protectNatalSetup();dedupeLibrary();ensureScopeControl();applyScope();strengthenTextGlyphs();dualCards();finishProgressiveReveal()}
   function queue(){if(queued)return;queued=true;requestAnimationFrame(run)}
-  function start(){styles();run();document.addEventListener('click',()=>setTimeout(queue,0),true);new MutationObserver(queue).observe(document.body,{childList:true,subtree:true,characterData:true});window.addEventListener('storage',queue);document.addEventListener('relphi:skyroleschange',queue)}
+  function start(){styles();run();new MutationObserver(queue).observe(document.body,{childList:true,subtree:true,characterData:true});window.addEventListener('storage',queue);document.addEventListener('relphi:skyroleschange',queue);window.addEventListener('resize',queue,{passive:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
