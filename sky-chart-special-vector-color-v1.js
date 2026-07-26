@@ -31,15 +31,13 @@
       return;
     }
 
-    // An earlier race could load this adapter before the component existed, causing
-    // it to exit without installing. Remove that inert script so it can execute now.
     if (!window.__relphiApprovedInscribedUnitV1) {
       document.querySelector('script[src^="relphi-approved-inscribed-unit-v1.js"]')?.remove();
     }
 
     load('relphi-approved-inscribed-unit-v1.js?v=2', function () {
       load('sky-chart-progressive-current-reading-v1.js?v=2', function () {
-        load('sky-chart-canonical-glyph-correction-v1.js?v=2');
+        load('sky-chart-canonical-glyph-correction-v1.js?v=3');
       });
     });
   }
