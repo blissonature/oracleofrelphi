@@ -14,6 +14,14 @@
     Quintile:'quintile', 'Bi-Quintile':'bi-quintile'
   };
 
+  function loadComparisonZodiacCanon() {
+    if (document.querySelector('script[src^="sky-chart-comparison-zodiac-inscribed-v1.js"]')) return;
+    const script = document.createElement('script');
+    script.async = false;
+    script.src = 'sky-chart-comparison-zodiac-inscribed-v1.js?v=1';
+    document.body.appendChild(script);
+  }
+
   function correctRegistry() {
     const registry = window.RelphiGlyphRegistry;
     if (!registry) return;
@@ -59,6 +67,7 @@
 
   function run() {
     correctRegistry();
+    loadComparisonZodiacCanon();
     document.querySelectorAll('.relphi-canonical-token-glyph, .relphi-progressive-glyph').forEach(canonicalize);
   }
 
