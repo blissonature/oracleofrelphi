@@ -12,7 +12,7 @@
         if (existing.dataset.relphiLoaded === 'true') setTimeout(done, 0);
         else existing.addEventListener('load', done, { once:true });
       }
-      return;
+      return existing;
     }
     const script = document.createElement('script');
     script.async = false;
@@ -22,16 +22,35 @@
       if (done) done();
     }, { once:true });
     document.body.appendChild(script);
+    return script;
   }
 
-  load('relphi-approved-inscribed-unit-v1.js?v=1');
+  function loadProgressiveReveal(started) {
+    if (!window.RelphiGlyphRegistry || !window.RelphiGlyphComponent?.createBubble) {
+      if (Date.now() - started < 8000) return setTimeout(function(){loadProgressiveReveal(started)}, 40);
+      return;
+    }
+
+    // An earlier race could load this adapter before the component existed, causing
+    // it to exit without installing. Remove that inert script so it can execute now.
+    if (!window.__relphiApprovedInscribedUnitV1) {
+      document.querySelector('script[src^="relphi-approved-inscribed-unit-v1.js"]')?.remove();
+    }
+
+    load('relphi-approved-inscribed-unit-v1.js?v=2', function () {
+      load('sky-chart-progressive-current-reading-v1.js?v=2', function () {
+        load('sky-chart-canonical-glyph-correction-v1.js?v=2');
+      });
+    });
+  }
+
+  loadProgressiveReveal(Date.now());
   load('sky-chart-chiron-local-v1.js?v=3', function () {
     load('sky-chart-calculated-points-storage-bridge-v2.js?v=3');
   });
   load('sky-chart-relationship-scope-progressive-v1.js?v=3', function () {
     load('sky-chart-cross-axis-groups-v1.js?v=1');
   });
-  load('sky-chart-progressive-current-reading-v1.js?v=1');
   load('sky-chart-slot-identity-v1.js?v=3');
   load('sky-chart-calculation-completion-guard-v1.js?v=1');
   // Sky Studio scripts remain disabled until their rendering is rebuilt without
