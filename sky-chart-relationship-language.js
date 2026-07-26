@@ -14,20 +14,44 @@
     Uranus:'freedom, disruption, originality, and change',
     Neptune:'imagination, sensitivity, surrender, and vision',
     Pluto:'power, depth, transformation, and compulsion',
+    Chiron:'the wound, the healing intelligence developed around it, and the capacity to guide healing',
+    'North Node':'developmental direction, unfamiliar growth, and the path of becoming',
+    'South Node':'familiar patterns, inherited capacities, and the past being integrated',
+    Lilith:'untamed instinct, refusal, exile, and uncompromised self-possession',
+    'Part of Fortune':'the place where circumstance, embodiment, and ease can support flourishing',
+    Vertex:'encounters that feel consequential, fated, or outside ordinary control',
     ASC:'the way a person enters life, meets the world, and is immediately perceived',
-    MC:'public direction, vocation, visibility, and the role a person grows toward'
+    DSC:'the qualities met through partners, counterparts, and the relational field',
+    MC:'public direction, vocation, visibility, and the role a person grows toward',
+    IC:'roots, private foundations, ancestry, and the innermost sense of home'
   };
 
   const BODY_TERM = {
     ASC:'Ascendant',
-    MC:'Midheaven'
+    DSC:'Descendant',
+    MC:'Midheaven',
+    IC:'Imum Coeli'
   };
 
   const BODY_KIND = {
     Sun:'luminary',
     Moon:'luminary',
     ASC:'angle',
-    MC:'angle'
+    DSC:'angle',
+    MC:'angle',
+    IC:'angle',
+    'North Node':'node',
+    'South Node':'node',
+    'Part of Fortune':'calculated point',
+    Vertex:'calculated point',
+    Lilith:'calculated point',
+    Chiron:'minor planet'
+  };
+
+  const BODY_KEY_ALIASES = {
+    ASC:['ASC','Ascendant'], DSC:['DSC','Descendant'], MC:['MC','Midheaven'], IC:['IC','Imum Coeli'],
+    'North Node':['North Node','Node','NN'], 'South Node':['South Node','SouthNode','SN'],
+    'Part of Fortune':['Part of Fortune','Fortune','PoF'], Vertex:['Vertex','Vx'], Lilith:['Lilith'], Chiron:['Chiron']
   };
 
   const SIGN_MEANING = {
@@ -51,7 +75,12 @@
     square:'a tense, activating relationship that demands movement, effort, and development',
     trine:'a flowing, low-resistance relationship in which the two functions support one another naturally',
     sextile:'a cooperative relationship that creates usable opportunities when it is consciously engaged',
-    quincunx:'an awkward but productive relationship that requires ongoing adjustment and recalibration'
+    quincunx:'an awkward but productive relationship that requires ongoing adjustment and recalibration',
+    'semi-sextile':'a subtle relationship that asks two functions to notice and accommodate one another',
+    octile:'a minor hard relationship that creates friction and presses for action',
+    'tri-octile':'a minor hard relationship that intensifies pressure toward adjustment and expression',
+    quintile:'a creative relationship that supports specialized talent and intentional pattern-making',
+    'bi-quintile':'a creative relationship that supports refined skill and unusual synthesis'
   };
 
   const ELEMENT_MEANING = {
@@ -63,20 +92,23 @@
 
   const BODY_GLYPH = {
     Sun:'☉', Moon:'☽', Mercury:'☿', Venus:'♀', Mars:'♂', Jupiter:'♃', Saturn:'♄',
-    Uranus:'♅', Neptune:'♆', Pluto:'⯓', ASC:'ASC', MC:'MC'
+    Uranus:'♅', Neptune:'♆', Pluto:'⯓', Chiron:'⚷', 'North Node':'☊', 'South Node':'☋',
+    Lilith:'⚸', 'Part of Fortune':'⊗', Vertex:'Vx', ASC:'ASC', DSC:'DSC', MC:'MC', IC:'IC'
   };
   const SIGN_GLYPH = {
     Aries:'♈', Taurus:'♉', Gemini:'♊', Cancer:'♋', Leo:'♌', Virgo:'♍',
     Libra:'♎', Scorpio:'♏', Sagittarius:'♐', Capricorn:'♑', Aquarius:'♒', Pisces:'♓'
   };
-  const ASPECT_GLYPH = { conjunction:'☌', opposition:'☍', square:'□', trine:'△', sextile:'✶', quincunx:'⚻' };
+  const ASPECT_GLYPH = {
+    conjunction:'☌', opposition:'☍', square:'□', trine:'△', sextile:'✶', quincunx:'⚻',
+    'semi-sextile':'⚺', octile:'∠', 'tri-octile':'⚼', quintile:'Q', 'bi-quintile':'bQ'
+  };
   const ELEMENT_GLYPH = { fire:'🜂', earth:'🜃', air:'🜁', water:'🜄' };
 
-  const BODY_PATTERN = '(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|ASC|MC)';
+  const BODY_PATTERN = '(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|Chiron|North Node|South Node|Lilith|Part of Fortune|Vertex|ASC|DSC|MC|IC)';
+  const ASPECT_PATTERN = '(conjunction|opposition|square|trine|sextile|quincunx|semi-sextile|octile|tri-octile|quintile|bi-quintile)';
 
-  function displayTerm(body) {
-    return BODY_TERM[body] || body;
-  }
+  function displayTerm(body) { return BODY_TERM[body] || body; }
 
   function storedSky(key) {
     try {
@@ -90,11 +122,17 @@
     return { degree:Number(parts[0]), minute:parts.length > 1 ? Number(parts[1]) : null };
   }
 
+  function placementFor(placements, body) {
+    const keys = BODY_KEY_ALIASES[body] || [body];
+    for (let i = 0; i < keys.length; i += 1) if (placements && placements[keys[i]]) return placements[keys[i]];
+    return null;
+  }
+
   function verifiedOwner(fallback, body, sign, degreeText) {
     const wanted = degreeParts(degreeText);
     const matches = ['relphiSkyChartA', 'relphiSkyChartB'].map(storedSky).filter(function (sky) {
       const placements = sky && (sky.placements || sky);
-      const placement = placements && placements[body];
+      const placement = placementFor(placements, body);
       if (!placement || placement.sign !== sign || Number(placement.degree) !== wanted.degree) return false;
       return wanted.minute == null || placement.minute == null || Number(placement.minute) === wanted.minute;
     });
@@ -107,6 +145,7 @@
   function progressiveToken(glyph, name, meaning) {
     const token = document.createElement('span');
     token.className = 'relphi-progressive-token';
+    token.dataset.revealLevel = 'glyph';
     const glyphButton = document.createElement('button');
     glyphButton.type = 'button';
     glyphButton.className = 'relphi-progressive-term relphi-progressive-glyph';
@@ -118,7 +157,12 @@
     function removeMeaning() { token.querySelector('.relphi-progressive-meaning')?.remove(); }
     function toggleMeaning(nameButton) {
       const existing = token.querySelector('.relphi-progressive-meaning');
-      if (existing) { existing.remove(); nameButton.setAttribute('aria-expanded', 'false'); return; }
+      if (existing) {
+        existing.remove();
+        nameButton.setAttribute('aria-expanded', 'false');
+        token.dataset.revealLevel = 'name';
+        return;
+      }
       const meaningButton = document.createElement('button');
       meaningButton.type = 'button';
       meaningButton.className = 'relphi-progressive-term relphi-progressive-meaning';
@@ -128,9 +172,11 @@
         event.stopPropagation();
         meaningButton.remove();
         nameButton.setAttribute('aria-expanded', 'false');
+        token.dataset.revealLevel = 'name';
       });
       token.appendChild(meaningButton);
       nameButton.setAttribute('aria-expanded', 'true');
+      token.dataset.revealLevel = 'meaning';
     }
 
     glyphButton.addEventListener('click', function (event) {
@@ -140,6 +186,7 @@
         removeMeaning();
         existingName.remove();
         glyphButton.setAttribute('aria-expanded', 'false');
+        token.dataset.revealLevel = 'glyph';
         return;
       }
       const nameButton = document.createElement('button');
@@ -148,9 +195,10 @@
       nameButton.textContent = ' ' + name;
       nameButton.setAttribute('aria-label', 'Reveal what ' + name + ' represents');
       nameButton.setAttribute('aria-expanded', 'false');
-      nameButton.addEventListener('click', function (event) { event.stopPropagation(); toggleMeaning(nameButton); });
+      nameButton.addEventListener('click', function (nameEvent) { nameEvent.stopPropagation(); toggleMeaning(nameButton); });
       token.appendChild(nameButton);
       glyphButton.setAttribute('aria-expanded', 'true');
+      token.dataset.revealLevel = 'name';
     });
     return token;
   }
@@ -174,8 +222,8 @@
   }
 
   function durationSentence(root) {
-    const text = root.textContent || '';
-    const match = text.match(/(several hours;[^.]+|several days;[^.]+|one to several weeks;[^.]+|several weeks to a few months;[^.]+|several months;[^.]+|many months;[^.]+)/i);
+    const value = root.textContent || '';
+    const match = value.match(/(several hours;[^.]+|several days;[^.]+|one to several weeks;[^.]+|several weeks to a few months;[^.]+|several months;[^.]+|many months;[^.]+)/i);
     if (!match) return '';
     return 'This influence lasts ' + match[1]
       .replace(/;\s*the closest passage/i, ', with the closest passage')
@@ -186,7 +234,7 @@
     const pattern = new RegExp(
       "^(.+?)'s\\s+" + BODY_PATTERN +
       "\\s+in\\s+([A-Za-z]+)\\s+([^ ]+)\\s+forms an?\\s+" +
-      '(conjunction|opposition|square|trine|sextile|quincunx)' +
+      ASPECT_PATTERN +
       "\\s+with\\s+(.+?)'s\\s+" + BODY_PATTERN +
       "\\s+in\\s+([A-Za-z]+)\\s+([^\\.]+)\\.",
       'i'
@@ -244,7 +292,7 @@
       if (orbMatch) reading.appendChild(text(' Orb: ' + orbMatch[1].trim() + (orbMatch[2] ? ' · ' + orbMatch[2].trim() : '') + '.'));
       const hint = document.createElement('span');
       hint.className = 'relphi-progressive-hint';
-      hint.textContent = 'Select symbols to unfold them; select revealed text to fold it back.';
+      hint.textContent = 'Select a symbol for its name, then select the name for its meaning. Select either level again to fold back.';
       reading.appendChild(hint);
       node.parentNode?.replaceChild(reading, node);
     });
@@ -252,8 +300,8 @@
 
   function run() {
     document.querySelectorAll('body *').forEach(function (element) {
-      const text = element.textContent || '';
-      if (/RELATIONSHIP READING/i.test(text)) rewrite(element);
+      const value = element.textContent || '';
+      if (/RELATIONSHIP READING/i.test(value)) rewrite(element);
     });
   }
 
@@ -264,10 +312,7 @@
     new MutationObserver(function () {
       if (queued) return;
       queued = true;
-      requestAnimationFrame(function () {
-        queued = false;
-        run();
-      });
+      requestAnimationFrame(function () { queued = false; run(); });
     }).observe(document.body, { childList:true, subtree:true, characterData:true });
   }
 
