@@ -24,9 +24,11 @@
   function aspect(row) {
     if (row.classList.contains('aspect-opposition')) return 'opposition';
     if (row.classList.contains('aspect-square')) return 'square';
+    if (row.classList.contains('aspect-conjunction')) return 'conjunction';
     const value = text(row);
     if (value.includes('☍') || /\bopposition\b/.test(value)) return 'opposition';
     if (value.includes('□') || /\bsquare\b/.test(value)) return 'square';
+    if (value.includes('☌') || /\bconjunction\b/.test(value)) return 'conjunction';
     return '';
   }
   function classify(row) {
@@ -34,6 +36,13 @@
     if (kind === 'opposition' && (pair(found, 'ASC', 'DSC') || pair(found, 'MC', 'IC') || pair(found, 'NN', 'SN'))) return 'axes';
     if (kind === 'square' && (pair(found, 'ASC', 'MC') || pair(found, 'ASC', 'IC') || pair(found, 'DSC', 'MC') || pair(found, 'DSC', 'IC'))) return 'frame';
     return '';
+  }
+  function axisSelf(row) {
+    const found = identities(row);
+    return aspect(row) === 'conjunction' && found.size === 1 && ['ASC','DSC','MC','IC','NN','SN'].includes(Array.from(found)[0]);
+  }
+  function structuralKey(row) {
+    return aspect(row) + '|' + Array.from(identities(row)).sort().join('|');
   }
   function section(kind, title) {
     const node = document.createElement('section');
@@ -94,9 +103,7 @@
       host.appendChild(section('axes', 'Chart Axes'));
       host.appendChild(section('frame', 'Angular Frame'));
     }
-    if (panel && panel.parentElement && (host.parentElement !== panel.parentElement || host.nextElementSibling !== panel)) {
-      panel.parentElement.insertBefore(host, panel);
-    }
+    if (panel && panel.parentElement && (host.parentElement !== panel.parentElement || host.nextElementSibling !== panel)) panel.parentElement.insertBefore(host, panel);
     host.dataset.twoSkies = localStorage.getItem('relphiSkyChartB') ? 'true' : 'false';
     return host;
   }
@@ -116,13 +123,26 @@
       styles();
       const rows = Array.from(document.querySelectorAll('.relationship-list-row'));
       if (!rows.length) return;
-      const list = rows.find(function (row) { return !classify(row) && !row.closest('.relphi-structural-relationship-sections'); })?.parentElement || rows.find(function (row) { return !row.closest('.relphi-structural-relationship-sections'); })?.parentElement;
+      const list = rows.find(function (row) { return !classify(row) && !axisSelf(row) && !row.closest('.relphi-structural-relationship-sections'); })?.parentElement || rows.find(function (row) { return !row.closest('.relphi-structural-relationship-sections'); })?.parentElement;
       if (!list) return;
       const host = ensureHost(list);
       const axes = host.querySelector('[data-relationship-section="axes"] .relphi-relationship-subsection-list');
       const frame = host.querySelector('[data-relationship-section="frame"] .relphi-relationship-subsection-list');
+      const seenAxes = new Set();
       rows.forEach(function (row) {
         const group = classify(row);
+        if (axisSelf(row)) {
+          row.remove();
+          return;
+        }
+        if (group === 'axes') {
+          const key = structuralKey(row);
+          if (seenAxes.has(key)) {
+            row.remove();
+            return;
+          }
+          seenAxes.add(key);
+        }
         const target = group === 'axes' ? axes : group === 'frame' ? frame : list;
         if (row.parentElement !== target) target.appendChild(row);
       });
