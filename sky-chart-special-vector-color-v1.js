@@ -31,4 +31,5 @@
     load('sky-chart-cross-axis-groups-v1.js?v=1');
   });
   load('sky-chart-progressive-current-reading-v1.js?v=1');
+  load('sky-chart-slot-identity-v1.js?v=1');
 })();
