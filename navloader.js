@@ -148,7 +148,7 @@
     appendScript('relphi-glyph-registry-v1.js?v=canon-0d56ee7-direct-1', function () {
       appendScript('relphi-glyph-component-v1.js?v=canon-0d56ee7-direct-1', function () {
         appendScript('sky-chart-wheel-canonical-component-v1.js?v=canon-0d56ee7-direct-1', function () {
-          appendScript('sky-chart-comparison-zodiac-inscribed-v1.js?v=canon-0d56ee7-direct-1');
+          appendScript('sky-chart-comparison-zodiac-inscribed-v1.js?v=stable-visible-2');
           appendScript('sky-chart-wheel-marker-interaction-v1.js?v=3');
         });
       });
