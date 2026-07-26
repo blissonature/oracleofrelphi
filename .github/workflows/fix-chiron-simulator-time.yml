@@ -22,20 +22,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Use the StateVector normalized time
+      - name: Use one Astronomy Engine AstroTime
         run: |
           node <<'NODE'
           const fs=require('fs');
           let source=fs.readFileSync('sky-chart-chiron-local-v1.js','utf8');
-          const before='const sim = new A.GravitySimulator(A.Body.Sun, epoch, [initial]);';
-          const after='const sim = new A.GravitySimulator(A.Body.Sun, initial.t, [initial]);';
-          if (!source.includes(before) && !source.includes(after)) throw new Error('GravitySimulator constructor was not found.');
-          source=source.replace(before,after);
+          source=source.replace(
+            "const epoch = new Date(anchor.epoch);\n    const initial = new A.StateVector(anchor.x, anchor.y, anchor.z, anchor.vx, anchor.vy, anchor.vz, epoch);\n    const sim = new A.GravitySimulator(A.Body.Sun, epoch, [initial]);",
+            "const epoch = new Date(anchor.epoch);\n    const time = A.MakeTime(epoch);\n    const initial = new A.StateVector(anchor.x, anchor.y, anchor.z, anchor.vx, anchor.vy, anchor.vz, time);\n    const sim = new A.GravitySimulator(A.Body.Sun, time, [initial]);"
+          );
+          source=source.replace(
+            "const epoch = new Date(anchor.epoch);\n    const initial = new A.StateVector(anchor.x, anchor.y, anchor.z, anchor.vx, anchor.vy, anchor.vz, epoch);\n    const sim = new A.GravitySimulator(A.Body.Sun, initial.t, [initial]);",
+            "const epoch = new Date(anchor.epoch);\n    const time = A.MakeTime(epoch);\n    const initial = new A.StateVector(anchor.x, anchor.y, anchor.z, anchor.vx, anchor.vy, anchor.vz, time);\n    const sim = new A.GravitySimulator(A.Body.Sun, time, [initial]);"
+          );
+          if (!source.includes('const time = A.MakeTime(epoch);')) throw new Error('AstroTime patch did not apply.');
           fs.writeFileSync('sky-chart-chiron-local-v1.js',source);
 
           let nav=fs.readFileSync('navloader.js','utf8');
-          nav=nav.replace(/sky-chart-chiron-local-v1\.js\?v=[^']+/g,'sky-chart-chiron-local-v1.js?v=direct-41-anchors-3');
-          nav=nav.replace(/sky-chart-calculated-points-storage-bridge-v2\.js\?v=[^']+/g,'sky-chart-calculated-points-storage-bridge-v2.js?v=direct-41-anchors-3');
+          nav=nav.replace(/sky-chart-chiron-local-v1\.js\?v=[^']+/g,'sky-chart-chiron-local-v1.js?v=direct-41-anchors-4');
+          nav=nav.replace(/sky-chart-calculated-points-storage-bridge-v2\.js\?v=[^']+/g,'sky-chart-calculated-points-storage-bridge-v2.js?v=direct-41-anchors-4');
           fs.writeFileSync('navloader.js',nav);
 
           let app=fs.readFileSync('tarot-app.js','utf8');
@@ -68,8 +73,9 @@ jobs:
       - name: Verify versions and direct integration
         run: |
           set -euo pipefail
-          grep -q "GravitySimulator(A.Body.Sun, initial.t" sky-chart-chiron-local-v1.js
-          grep -q "direct-41-anchors-3" navloader.js
+          grep -q "const time = A.MakeTime(epoch)" sky-chart-chiron-local-v1.js
+          grep -q "GravitySimulator(A.Body.Sun, time" sky-chart-chiron-local-v1.js
+          grep -q "direct-41-anchors-4" navloader.js
           grep -q "navloader.js?v=52" sky-chart.html
           grep -q "tarot-app.js?v=368" sky-chart.html
           grep -q "relphiChironDirectPlacementV1" tarot-app.js
@@ -78,5 +84,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add sky-chart-chiron-local-v1.js navloader.js tarot-app.js sky-chart.html data/chiron-simulator-time-fix-validation.json
-          git commit -m "Fix Chiron GravitySimulator time mismatch"
+          git commit -m "Fix Chiron with shared Astronomy AstroTime"
           git push origin HEAD:feature/chart-axes-angular-frame
