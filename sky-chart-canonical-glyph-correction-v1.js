@@ -22,6 +22,11 @@
     return NAME_TO_ID[name] || window.RelphiGlyphRegistry?.resolve(name)?.id || '';
   }
 
+  function resolvedColor(button) {
+    const value = getComputedStyle(button).color;
+    return value && value !== 'rgba(0, 0, 0, 0)' ? value : '#111111';
+  }
+
   function canonicalize(button) {
     if (!button || button.dataset.relphiCanonicalArt === 'true' || button.dataset.relphiCanonicalArt === 'pending') return;
     const identity = identityFor(button);
@@ -32,7 +37,8 @@
 
     const original = button.textContent;
     button.dataset.relphiCanonicalArt = 'pending';
-    button.replaceChildren();
+
+    // Build offscreen. Never remove the visible symbol until the approved unit is ready.
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '-20 -20 40 40');
     svg.setAttribute('width', '1.2em');
@@ -41,16 +47,24 @@
     svg.setAttribute('focusable', 'false');
     svg.style.display = 'block';
     svg.style.overflow = 'visible';
-    button.appendChild(svg);
 
-    const bubble = component.createBubble(svg, identity, {
-      radius:17,
-      padding:1,
-      color:'currentColor',
-      fill:'#ffffff',
-      strokeWidth:2.35
-    });
+    let bubble;
+    try {
+      bubble = component.createBubble(svg, identity, {
+        radius:17,
+        padding:1,
+        color:resolvedColor(button),
+        fill:'#ffffff',
+        strokeWidth:2.35
+      });
+    } catch (_) {
+      button.dataset.relphiCanonicalArt = 'failed';
+      return;
+    }
+
     bubble.ready.then(function () {
+      if (!button.isConnected) return;
+      button.replaceChildren(svg);
       button.dataset.relphiCanonicalArt = 'true';
       button.dataset.glyphId = identity;
       button.dataset.masterSource = 'glyphs-unified-preview@0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
