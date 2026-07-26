@@ -3,25 +3,6 @@
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  function loadCalculatedBridge() {
-    if (document.querySelector('script[src^="sky-chart-calculated-points-storage-bridge-v2.js"]')) return;
-    const bridge = document.createElement('script');
-    bridge.async = false;
-    bridge.src = 'sky-chart-calculated-points-storage-bridge-v2.js?v=1';
-    document.body.appendChild(bridge);
-  }
-
-  if (!document.querySelector('script[src^="sky-chart-chiron-local-v1.js"]')) {
-    const chiron = document.createElement('script');
-    chiron.async = false;
-    chiron.src = 'sky-chart-chiron-local-v1.js?v=1';
-    chiron.addEventListener('load', loadCalculatedBridge, { once:true });
-    chiron.addEventListener('error', loadCalculatedBridge, { once:true });
-    document.body.appendChild(chiron);
-  } else {
-    loadCalculatedBridge();
-  }
-
   const HOST_ID = 'relphiStructuralRelationshipSections';
   let queued = false;
   let running = false;
@@ -65,15 +46,37 @@
     if (document.getElementById('relphi-relationship-section-styles')) return;
     const style = document.createElement('style');
     style.id = 'relphi-relationship-section-styles';
-    style.textContent = '.relphi-structural-relationship-sections{display:grid;gap:1rem;margin:0 0 1.15rem}.relphi-relationship-subsection{display:grid;gap:.55rem}.relphi-relationship-subsection-heading{display:flex;align-items:center;justify-content:space-between;gap:.75rem}.relphi-relationship-subsection-heading h3{margin:0;font-size:1rem;line-height:1.2}.relphi-relationship-subsection-count{display:inline-flex;align-items:center;justify-content:center;min-width:2rem;min-height:2rem;padding:.2rem .55rem;border-radius:999px;background:rgba(220,31,24,.08);border:1px solid rgba(220,31,24,.22);font-size:.78rem;font-weight:900}.relphi-relationship-subsection-list{display:grid;gap:.55rem}.relphi-relationship-subsection[hidden]{display:none}';
+    style.textContent = [
+      '.relphi-structural-relationship-sections{display:grid;gap:1rem;margin:0 0 1rem;padding:1rem;border:1px solid rgba(0,0,0,.14);border-radius:1.15rem;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.035)}',
+      '.relphi-relationship-subsection{display:grid;gap:.65rem}',
+      '.relphi-relationship-subsection-heading{display:flex;align-items:center;justify-content:space-between;gap:.75rem}',
+      '.relphi-relationship-subsection-heading h3{margin:0;font-size:1.05rem;line-height:1.2}',
+      '.relphi-relationship-subsection-count{display:inline-flex;align-items:center;justify-content:center;min-width:2rem;min-height:2rem;padding:.2rem .55rem;border-radius:999px;background:rgba(220,31,24,.08);border:1px solid rgba(220,31,24,.22);font-size:.78rem;font-weight:900}',
+      '.relphi-relationship-subsection-list{display:grid;gap:.55rem}',
+      '.relphi-structural-relationship-sections[data-two-skies="true"] .relphi-relationship-axes .relphi-relationship-subsection-list{grid-template-columns:repeat(2,minmax(0,1fr))}',
+      '.relphi-relationship-subsection[hidden]{display:none}',
+      '@media(max-width:680px){.relphi-structural-relationship-sections[data-two-skies="true"] .relphi-relationship-axes .relphi-relationship-subsection-list{grid-template-columns:1fr}}'
+    ].join('');
     document.head.appendChild(style);
   }
   function ordinaryHeading() {
     return Array.from(document.querySelectorAll('h1,h2,h3,h4,[role="heading"]')).find(function (node) { return /^relationships$/i.test(String(node.textContent || '').trim()); }) || null;
   }
+  function relationshipsPanel(list) {
+    const heading = ordinaryHeading();
+    if (!heading) return list.parentElement || list;
+    let node = heading;
+    let candidate = null;
+    while (node && node !== document.body) {
+      if (node.contains(list)) candidate = node;
+      if (candidate && node.parentElement && !node.parentElement.contains(list)) break;
+      node = node.parentElement;
+    }
+    return candidate || list.parentElement || list;
+  }
   function ordinaryCount(count) {
     const heading = ordinaryHeading();
-    const row = heading?.parentElement;
+    const row = heading && heading.parentElement;
     if (!row) return;
     const candidates = Array.from(row.querySelectorAll('span,strong,output,div')).filter(function (node) { return node !== heading && /^\d+$/.test(String(node.textContent || '').trim()); });
     const badge = candidates.find(function (node) { return /count|badge/i.test(node.className || '') || node.getAttribute('aria-label'); }) || candidates[candidates.length - 1];
@@ -82,24 +85,29 @@
     badge.setAttribute('aria-label', count + (count === 1 ? ' relationship' : ' relationships'));
   }
   function ensureHost(list) {
+    const panel = relationshipsPanel(list);
     let host = document.getElementById(HOST_ID);
-    if (!host || host.nextElementSibling !== list) {
-      host?.remove();
+    if (!host) {
       host = document.createElement('div');
       host.id = HOST_ID;
       host.className = 'relphi-structural-relationship-sections';
       host.appendChild(section('axes', 'Chart Axes'));
       host.appendChild(section('frame', 'Angular Frame'));
-      list.insertAdjacentElement('beforebegin', host);
     }
+    if (panel && panel.parentElement && (host.parentElement !== panel.parentElement || host.nextElementSibling !== panel)) {
+      panel.parentElement.insertBefore(host, panel);
+    }
+    host.dataset.twoSkies = localStorage.getItem('relphiSkyChartB') ? 'true' : 'false';
     return host;
   }
   function update(sectionNode) {
     const count = sectionNode.querySelectorAll(':scope > .relphi-relationship-subsection-list > .relationship-list-row').length;
     sectionNode.hidden = count === 0;
     const badge = sectionNode.querySelector('.relphi-relationship-subsection-count');
-    badge.textContent = String(count);
-    badge.setAttribute('aria-label', count + (count === 1 ? ' relationship' : ' relationships'));
+    if (badge) {
+      badge.textContent = String(count);
+      badge.setAttribute('aria-label', count + (count === 1 ? ' relationship' : ' relationships'));
+    }
   }
   function organize() {
     if (running) return;
