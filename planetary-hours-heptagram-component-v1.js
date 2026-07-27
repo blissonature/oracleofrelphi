@@ -11,7 +11,6 @@
     saturn:{name:'Saturn',sym:'♄'}, jupiter:{name:'Jupiter',sym:'♃'}, mars:{name:'Mars',sym:'♂'},
     sun:{name:'Sun',sym:'☉'}, venus:{name:'Venus',sym:'♀'}, mercury:{name:'Mercury',sym:'☿'}, moon:{name:'Moon',sym:'☽'}
   };
-  let instanceCount = 0;
 
   function pointFor(key) {
     const idx = CHALDEAN.indexOf(key);
@@ -38,15 +37,8 @@
       x2:(a.x + (b.x-a.x)*t).toFixed(2), y2:(a.y + (b.y-a.y)*t).toFixed(2)
     });
   }
-  function rulerRing(host, radius, word, id) {
-    host.appendChild(svgNode('circle',{class:'relphi-phc-ruler-ring',cx:0,cy:0,r:radius}));
-    const textRadius = radius - 4.5;
-    host.appendChild(svgNode('path',{id:id,class:'relphi-phc-ring-text-path',d:'M '+(-textRadius)+' 0 A '+textRadius+' '+textRadius+' 0 0 0 '+textRadius+' 0',fill:'none'}));
-    const text = svgNode('text',{class:'relphi-phc-ring-word'});
-    const path = svgNode('textPath',{href:'#'+id,startOffset:'50%','text-anchor':'middle'});
-    path.textContent = word;
-    text.appendChild(path);
-    host.appendChild(text);
+  function rulerRing(host, radius, className) {
+    host.appendChild(svgNode('circle',{class:'relphi-phc-ruler-ring '+className,cx:0,cy:0,r:radius}));
   }
   function ensureStyles() {
     if (document.getElementById('relphi-phc-style')) return;
@@ -62,7 +54,7 @@
       .relphi-phc .p-saturn{color:var(--saturn)}.relphi-phc .p-jupiter{color:var(--jupiter)}.relphi-phc .p-mars{color:var(--mars)}.relphi-phc .p-sun{color:var(--sun)}.relphi-phc .p-venus{color:var(--venus)}.relphi-phc .p-mercury{color:var(--mercury)}.relphi-phc .p-moon{color:var(--moon)}
       .relphi-phc-glyph{font:900 28px/1 "Segoe UI Symbol","Noto Sans Symbols 2","Noto Sans Symbols","Arial Unicode MS",sans-serif;fill:currentColor;paint-order:stroke;stroke:currentColor;stroke-width:.65px}
       .relphi-phc-label{font:800 12px/1 system-ui,sans-serif;fill:currentColor;paint-order:stroke;stroke:rgba(255,250,240,.78);stroke-width:3px}
-      .relphi-phc-ruler-ring{fill:none;stroke:currentColor;stroke-width:1.8;vector-effect:non-scaling-stroke}.relphi-phc-ring-text-path{stroke:none}.relphi-phc-ring-word{fill:currentColor;font:900 6.5px/1 system-ui,sans-serif;letter-spacing:1.1px}
+      .relphi-phc-ruler-ring{fill:none;stroke:currentColor;stroke-width:1.8;vector-effect:non-scaling-stroke}.relphi-phc-ruler-ring.is-day{stroke-width:2}.relphi-phc-ruler-ring.is-hour{stroke-width:1.65}
       @media(prefers-reduced-motion:no-preference){.relphi-phc-star.current{animation:relphiPhcTrace 1.8s ease-in-out infinite alternate}}@keyframes relphiPhcTrace{from{filter:drop-shadow(0 0 3px rgba(220,31,24,.28));opacity:.82}to{filter:drop-shadow(0 0 13px rgba(220,31,24,.62));opacity:1}}
     `;
     document.head.appendChild(style);
@@ -80,7 +72,6 @@
     const currentKey = sequence24[selectedHour-1] || dayKey;
     const weekIndex = Math.max(0, WEEK_PATH.indexOf(dayKey));
     const dayFraction = selectedPosition >= 24 ? 1 : Math.max(0, Math.min(1,(selectedPosition-1)/23));
-    const idBase = 'relphiPhc'+(++instanceCount)+'-';
 
     target.setAttribute('viewBox','0 0 360 360');
     target.classList.add('relphi-phc');
@@ -114,8 +105,8 @@
       } else {
         const glyph=svgNode('text',{class:'relphi-phc-glyph',x:0,y:9,'text-anchor':'middle'}); glyph.textContent=planet.sym; host.appendChild(glyph);
       }
-      if (opts.showRulerRings !== false && key===dayKey) rulerRing(host,31,'DAY',idBase+'day-'+key);
-      if (opts.showRulerRings !== false && key===currentKey) rulerRing(host,24,'HOUR',idBase+'hour-'+key);
+      if (opts.showRulerRings !== false && key===dayKey) rulerRing(host,31,'is-day');
+      if (opts.showRulerRings !== false && key===currentKey) rulerRing(host,24,'is-hour');
       target.appendChild(host);
       if (opts.showLabels !== false) { const label=svgNode('text',{class:'relphi-phc-label p-'+key,x:lp.x.toFixed(2),y:lp.y.toFixed(2),'text-anchor':'middle'}); label.textContent=planet.name; target.appendChild(label); }
     });
