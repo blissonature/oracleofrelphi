@@ -52,12 +52,16 @@
   });
   load('sky-chart-calculation-completion-guard-v1.js?v=1');
   load('sky-chart-dual-house-rings-v1.js?v=2', function () {
-    load('sky-chart-structural-ring-clearance-v1.js?v=1');
+    load('sky-chart-structural-ring-clearance-v1.js?v=1', function () {
+      load('sky-chart-wheel-stability-v1.js?v=1');
+    });
     load('sky-chart-house-system-filter-v1.js?v=1', function () {
       load('sky-chart-house-system-filter-match-v1.js?v=1');
     });
   });
   load('sky-chart-planetary-hours-portal-v1.js?v=1');
   load('sky-chart-birth-flow-isolation-v1.js?v=1');
-  load('sky-chart-workspace-edit-persistence-v1.js?v=1');
+  load('sky-chart-workspace-edit-persistence-v1.js?v=1', function () {
+    load('sky-chart-workspace-reconciliation-v1.js?v=1');
+  });
 })();
