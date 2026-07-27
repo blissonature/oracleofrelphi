@@ -7,6 +7,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const SLOT_KEYS = { skyA:'relphiSkyChartA', skyB:'relphiSkyChartB' };
   const CHALDEAN = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
+  const HEPTAGRAM_VERTEX = [0,3,6,2,5,1,4];
   const WEEKDAY_RULER = { 0:'sun', 1:'moon', 2:'mars', 3:'mercury', 4:'jupiter', 5:'venus', 6:'saturn' };
   let activeSlot = 'skyA';
   let queued = false;
@@ -68,10 +69,11 @@
     const localSunrise = DateTime.fromJSDate(sunrise).setZone(data.tz);
     const dayRuler = WEEKDAY_RULER[localSunrise.weekday % 7];
     const hourRuler = CHALDEAN[(CHALDEAN.indexOf(dayRuler) + ordinalIndex) % 7];
-    return { dayRuler:dayRuler, hourRuler:hourRuler, bright:bright, ordinal:ordinalIndex + 1, hourProgress:hourProgress };
+    return { dayRuler:dayRuler, hourRuler:hourRuler, ordinal:ordinalIndex + 1, hourProgress:hourProgress };
   }
   function el(name, attrs) { const node=document.createElementNS(NS,name); Object.keys(attrs||{}).forEach(function(key){node.setAttribute(key,attrs[key]);}); return node; }
-  function point(index, radius) { const angle=(-90+index*360/7)*Math.PI/180; return {x:180+Math.cos(angle)*radius,y:180+Math.sin(angle)*radius}; }
+  function vertexPoint(vertex, radius) { const angle=(-90+vertex*360/7)*Math.PI/180; return {x:180+Math.cos(angle)*radius,y:180+Math.sin(angle)*radius}; }
+  function planetPoint(chaldeanIndex, radius) { return vertexPoint(HEPTAGRAM_VERTEX[chaldeanIndex % 7], radius); }
   function ring(group, radius, word, id) {
     const circle=el('circle',{cx:'0',cy:'0',r:String(radius),class:'relphi-ph-ruler-ring'});
     const textRadius=radius-4.5;
@@ -83,16 +85,13 @@
   function tracePath(dayRuler, ordinal, hourProgress) {
     const start = CHALDEAN.indexOf(dayRuler);
     const points = [];
-    for (let step = 0; step <= 24; step += 1) points.push(point((start + step) % 7, 116));
+    for (let step = 0; step <= 24; step += 1) points.push(planetPoint((start + step) % 7, 116));
     const completed = Math.max(0, Math.min(23, ordinal - 1));
     let d = 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
     for (let step = 1; step <= completed; step += 1) d += ' L ' + points[step].x.toFixed(2) + ' ' + points[step].y.toFixed(2);
     const from = points[completed];
     const to = points[completed + 1];
-    const partial = {
-      x:from.x + (to.x - from.x) * hourProgress,
-      y:from.y + (to.y - from.y) * hourProgress
-    };
+    const partial = { x:from.x + (to.x - from.x) * hourProgress, y:from.y + (to.y - from.y) * hourProgress };
     d += ' L ' + partial.x.toFixed(2) + ' ' + partial.y.toFixed(2);
     return d;
   }
@@ -114,20 +113,19 @@
     try {
       await dependencies();
       const moment=planetaryMoment(data);
-      const signature=[activeSlot,data.datetime,data.lat,data.lon,data.tz,moment.dayRuler,moment.hourRuler,moment.ordinal,moment.hourProgress.toFixed(3),moment.bright?'day':'night'].join('|');
+      const signature=[activeSlot,data.datetime,data.lat,data.lon,data.tz,moment.dayRuler,moment.hourRuler,moment.ordinal,moment.hourProgress.toFixed(3)].join('|');
       if(signature===lastSignature&&portal.querySelector('svg')?.dataset.ready==='true')return;
       lastSignature=signature; portal.hidden=false;
-      portal.classList.toggle('is-night',!moment.bright); portal.classList.toggle('is-daylight',moment.bright);
+      portal.classList.remove('is-night','is-daylight');
       portal.href=linkFor(data); portal.dataset.slot=activeSlot;
       portal.setAttribute('aria-label','Open '+data.payload.name+' at its selected moment in Planetary Hours');
       portal.onclick=function(){try{localStorage.setItem('relphiPlanetaryHoursWhereWhen',JSON.stringify({datetime:data.datetime,lat:data.lat,lon:data.lon,tz:data.tz,loc:data.loc,useSystem:false,savedAt:new Date().toISOString()}));}catch(_){}};
       const svg=portal.querySelector('svg'); svg.replaceChildren(); svg.dataset.ready='pending';
-      const ink=moment.bright?'#111111':'#f8f0e5'; const surface=moment.bright?'#fffaf3':'#111111';
       svg.appendChild(el('path',{class:'relphi-ph-heptagram-trace',d:tracePath(moment.dayRuler,moment.ordinal,moment.hourProgress)}));
       const ready=[];
       CHALDEAN.forEach(function(id,index){
-        const p=point(index,116); const host=el('g',{class:'relphi-ph-node','data-planet':id,transform:'translate('+p.x+' '+p.y+')'}); svg.appendChild(host);
-        const bubble=window.RelphiGlyphComponent?.createBubble(host,id,{radius:15,padding:1,color:ink,fill:surface,strokeWidth:2.35}); if(bubble?.ready)ready.push(bubble.ready);
+        const p=planetPoint(index,116); const host=el('g',{class:'relphi-ph-node','data-planet':id,transform:'translate('+p.x+' '+p.y+')'}); svg.appendChild(host);
+        const bubble=window.RelphiGlyphComponent?.createBubble(host,id,{radius:15,padding:1,color:'#111111',fill:'#fffaf3',strokeWidth:2.35}); if(bubble?.ready)ready.push(bubble.ready);
         if(id===moment.dayRuler)ring(host,31,'DAY','relphiPhDayArc'+index);
         if(id===moment.hourRuler)ring(host,24,'HOUR','relphiPhHourArc'+index);
       });
@@ -139,7 +137,7 @@
     if(document.getElementById('relphi-ph-portal-style'))return;
     const style=document.createElement('style'); style.id='relphi-ph-portal-style'; style.textContent=`
       .relphi-ph-portal{--portal-surface:#fffaf3;--portal-ink:#111;display:block;width:min(100%,260px);margin:0 auto .75rem;border:1px solid rgba(220,31,24,.22);border-radius:1rem;background:var(--portal-surface);color:var(--portal-ink);text-decoration:none;overflow:hidden;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
-      .relphi-ph-portal.is-night{--portal-surface:#111;--portal-ink:#f8f0e5;border-color:rgba(255,255,255,.18)}.relphi-ph-portal svg{display:block;width:100%;height:auto;max-height:230px}.relphi-ph-portal:hover{transform:translateY(-1px);box-shadow:0 .6rem 1.4rem rgba(0,0,0,.10);border-color:rgba(220,31,24,.5)}.relphi-ph-portal:focus-visible{outline:3px solid rgba(220,31,24,.3);outline-offset:3px}
+      .relphi-ph-portal svg{display:block;width:100%;height:auto;max-height:230px}.relphi-ph-portal:hover{transform:translateY(-1px);box-shadow:0 .6rem 1.4rem rgba(0,0,0,.10);border-color:rgba(220,31,24,.5)}.relphi-ph-portal:focus-visible{outline:3px solid rgba(220,31,24,.3);outline-offset:3px}
       .relphi-ph-heptagram-trace{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.relphi-ph-node{color:currentColor}.relphi-ph-ruler-ring{fill:none;stroke:currentColor;stroke-width:1.8;vector-effect:non-scaling-stroke}.relphi-ph-ring-text-path{stroke:none}.relphi-ph-ring-word{fill:currentColor;font:900 6.5px/1 system-ui,sans-serif;letter-spacing:1.1px}.relphi-ph-portal .relphi-glyph-bubble>circle{fill:var(--portal-surface)!important;stroke:currentColor!important}
       @media(max-width:760px){.relphi-ph-portal{width:min(100%,220px)}.relphi-ph-portal svg{max-height:195px}}@media(prefers-reduced-motion:reduce){.relphi-ph-portal{transition:none}.relphi-ph-portal:hover{transform:none}}
     `; document.head.appendChild(style);
