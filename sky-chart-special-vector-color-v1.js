@@ -54,7 +54,9 @@
   load('sky-chart-calculation-completion-guard-v1.js?v=1');
   load('sky-chart-dual-house-rings-v1.js?v=3', function () {
     load('sky-chart-wheel-stability-v1.js?v=3', function () {
-      load('sky-chart-zodiac-placement-band-v1.js?v=1');
+      load('sky-chart-zodiac-placement-band-v1.js?v=1', function () {
+        load('sky-chart-protected-ring-ownership-v1.js?v=1');
+      });
     });
     load('sky-chart-house-system-filter-v1.js?v=1', function () {
       load('sky-chart-house-system-filter-match-v1.js?v=1', function () {
