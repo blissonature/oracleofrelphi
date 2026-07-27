@@ -52,4 +52,5 @@
   });
   load('sky-chart-calculation-completion-guard-v1.js?v=1');
   load('sky-chart-dual-house-rings-v1.js?v=1');
+  load('sky-chart-planetary-hours-portal-v1.js?v=1');
 })();
