@@ -28,7 +28,7 @@
     return section && section !== container ? section : heading.parentElement;
   }
 
-  function copyTypography(source, target, properties) {
+  function copyProperties(source, target, properties) {
     if (!source || !target) return;
     const computed = getComputedStyle(source);
     properties.forEach(function (property) {
@@ -54,12 +54,11 @@
       #relphiHouseSystemFilter .relphi-house-system-choices{
         display:flex!important;flex-direction:column!important;align-items:stretch!important;
         justify-content:flex-start!important;width:100%!important;margin:0!important;
-        padding:0!important;gap:.42rem!important;text-align:left!important;
+        padding:0!important;gap:0!important;row-gap:0!important;text-align:left!important;
       }
       #relphiHouseSystemFilter .relphi-house-system-choices label{
         display:flex!important;flex-direction:row!important;align-items:center!important;
         justify-content:flex-start!important;width:100%!important;min-height:0!important;
-        margin:0!important;padding:.08rem .25rem!important;gap:.48rem!important;
         text-align:left!important;cursor:pointer!important;
       }
       #relphiHouseSystemFilter .relphi-house-system-choices label span{
@@ -67,8 +66,7 @@
       }
       #relphiHouseSystemFilter input[type="radio"]{
         appearance:auto!important;-webkit-appearance:radio!important;display:inline-block!important;
-        flex:0 0 auto!important;margin:0!important;padding:0!important;
-        accent-color:#596a64!important;vertical-align:middle!important;
+        flex:0 0 auto!important;accent-color:#596a64!important;vertical-align:middle!important;
       }
       #relphiHouseSystemFilter .relphi-house-system-status{
         display:block!important;min-height:0!important;margin:.5rem 0 0!important;
@@ -79,7 +77,7 @@
     document.head.appendChild(style);
   }
 
-  function matchExistingTypography(fieldset, heading, container) {
+  function matchExistingAppearance(fieldset, heading, container) {
     const section = referenceSection(heading, container);
     const referenceLabel = section && Array.from(section.querySelectorAll('label')).find(function (label) {
       return label.querySelector('input[type="checkbox"],input[type="radio"]');
@@ -87,22 +85,26 @@
     const referenceInput = referenceLabel && referenceLabel.querySelector('input[type="checkbox"],input[type="radio"]');
     const legend = fieldset.querySelector('legend');
 
-    copyTypography(heading, legend, [
-      'font-family','font-size','font-weight','line-height','letter-spacing','text-transform','color'
+    copyProperties(heading, legend, [
+      'font-family','font-size','font-weight','line-height','letter-spacing','text-transform','color',
+      'margin-top','margin-right','margin-bottom','margin-left','padding-top','padding-right','padding-bottom','padding-left'
     ]);
 
     fieldset.querySelectorAll('.relphi-house-system-choices label').forEach(function (label) {
-      copyTypography(referenceLabel, label, [
-        'font-family','font-size','font-weight','line-height','letter-spacing','text-transform','color'
+      copyProperties(referenceLabel, label, [
+        'font-family','font-size','font-weight','line-height','letter-spacing','text-transform','color',
+        'margin-top','margin-right','margin-bottom','margin-left',
+        'padding-top','padding-right','padding-bottom','padding-left',
+        'min-height','column-gap','gap'
       ]);
     });
 
     if (referenceInput) {
       const inputStyle = getComputedStyle(referenceInput);
       fieldset.querySelectorAll('input[type="radio"]').forEach(function (input) {
-        input.style.setProperty('width', inputStyle.width, 'important');
-        input.style.setProperty('height', inputStyle.height, 'important');
-        input.style.setProperty('min-width', inputStyle.width, 'important');
+        ['width','height','min-width','margin-top','margin-right','margin-bottom','margin-left'].forEach(function (property) {
+          input.style.setProperty(property, inputStyle.getPropertyValue(property), 'important');
+        });
       });
     }
   }
@@ -119,7 +121,7 @@
       const section = referenceSection(heading, container);
       const anchor = section || heading;
       if (fieldset.nextElementSibling !== anchor) anchor.parentNode.insertBefore(fieldset, anchor);
-      matchExistingTypography(fieldset, heading, container);
+      matchExistingAppearance(fieldset, heading, container);
     } else {
       const panel = container.querySelector(':scope > div,:scope > section,:scope > .filter-panel,:scope > .filter-options,:scope > .sky-filter-options') || container;
       if (panel.firstElementChild !== fieldset) panel.insertBefore(fieldset, panel.firstElementChild);
