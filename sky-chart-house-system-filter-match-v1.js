@@ -49,6 +49,44 @@
     return fieldset.querySelector('input[type="radio"]:checked')?.value || localStorage.getItem('relphiSkyChartHouseSystemViewV1') || 'whole-sign';
   }
 
+  function copyMetric(sourceStyle, target, property) {
+    const value = sourceStyle.getPropertyValue(property);
+    if (value) target.style.setProperty(property, value, 'important');
+  }
+
+  function matchNativeSpacing(fieldset, reference) {
+    const nativeList = reference.parentElement;
+    const houseList = fieldset.querySelector('.relphi-house-system-filter > *:nth-child(2), :scope > *:nth-child(2)');
+    if (!nativeList || !houseList) return;
+
+    const listStyle = getComputedStyle(nativeList);
+    ['display','flex-direction','grid-template-columns','row-gap','column-gap','gap','margin-top','margin-right','margin-bottom','margin-left','padding-top','padding-right','padding-bottom','padding-left'].forEach(function (property) {
+      copyMetric(listStyle, houseList, property);
+    });
+
+    const rowStyle = getComputedStyle(reference);
+    const sourceInput = reference.querySelector('input[type="checkbox"],input[type="radio"]');
+    const inputStyle = sourceInput ? getComputedStyle(sourceInput) : null;
+
+    fieldset.querySelectorAll('label').forEach(function (row) {
+      ['display','align-items','justify-content','gap','row-gap','column-gap','margin-top','margin-right','margin-bottom','margin-left','padding-top','padding-right','padding-bottom','padding-left','min-height','height','line-height','font-size','font-weight'].forEach(function (property) {
+        copyMetric(rowStyle, row, property);
+      });
+      row.style.setProperty('width', '100%', 'important');
+
+      const input = row.querySelector('input[type="radio"]');
+      if (input && inputStyle) {
+        ['width','height','min-width','margin-top','margin-right','margin-bottom','margin-left'].forEach(function (property) {
+          copyMetric(inputStyle, input, property);
+        });
+      }
+    });
+
+    fieldset.style.setProperty('margin', '0', 'important');
+    fieldset.style.setProperty('padding', '0', 'important');
+    fieldset.style.setProperty('border', '0', 'important');
+  }
+
   function cloneOption(reference, value, labelText, selected) {
     const row = reference.cloneNode(false);
     row.removeAttribute('for');
@@ -102,8 +140,9 @@
       fieldset.className = (housesSection.className || '') + ' relphi-house-system-filter';
       fieldset.replaceChildren(nativeHeading, nativeList, status);
       fieldset.dataset.nativeStructure = 'true';
-      fieldset.style.cssText = 'min-width:0;border:0;margin:0;padding:0;';
     }
+
+    matchNativeSpacing(fieldset, reference);
 
     if (fieldset.nextElementSibling !== setsSection) {
       setsSection.parentNode.insertBefore(fieldset, setsSection);
