@@ -1,152 +1,82 @@
-// Compact Planetary Hours portal for Sky Chart. Reuses the site's canonical glyph component
-// and the Planetary Hours sunrise-to-sunrise / Chaldean-order model.
+// Compact Planetary Hours portal for Sky Chart. The heptagram itself is rendered by the
+// reusable copy extracted from planetaryhours.html; this file only supplies the selected moment.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  const NS = 'http://www.w3.org/2000/svg';
-  const SLOT_KEYS = { skyA:'relphiSkyChartA', skyB:'relphiSkyChartB' };
-  const CHALDEAN = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
-  const HEPTAGRAM_VERTEX = [0,3,6,2,5,1,4];
-  const WEEKDAY_RULER = { 0:'sun', 1:'moon', 2:'mars', 3:'mercury', 4:'jupiter', 5:'venus', 6:'saturn' };
-  let activeSlot = 'skyA';
-  let queued = false;
-  let dependenciesPromise = null;
-  let lastSignature = '';
+  const SLOT_KEYS={skyA:'relphiSkyChartA',skyB:'relphiSkyChartB'};
+  const CHALDEAN=['saturn','jupiter','mars','sun','venus','mercury','moon'];
+  const WEEKDAY_RULER={0:'sun',1:'moon',2:'mars',3:'mercury',4:'jupiter',5:'venus',6:'saturn'};
+  let activeSlot='skyA',queued=false,dependenciesPromise=null,lastSignature='';
 
-  function read(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; } }
-  function profile(payload) { return payload && payload.calcProfile && typeof payload.calcProfile === 'object' ? payload.calcProfile : {}; }
-  function loadScript(src, test) {
-    if (test()) return Promise.resolve();
-    return new Promise(function (resolve, reject) {
-      const base = src.split('?')[0];
-      let script = document.querySelector('script[src^="' + base + '"]');
-      if (script) { script.addEventListener('load', resolve, {once:true}); script.addEventListener('error', reject, {once:true}); return; }
-      script = document.createElement('script'); script.src = src; script.async = true;
-      script.addEventListener('load', resolve, {once:true}); script.addEventListener('error', reject, {once:true});
-      document.head.appendChild(script);
+  function read(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_){return null}}
+  function profile(payload){return payload&&payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{}}
+  function loadScript(src,test){
+    if(test())return Promise.resolve();
+    return new Promise(function(resolve,reject){
+      const base=src.split('?')[0];let script=document.querySelector('script[src^="'+base+'"]');
+      if(script){script.addEventListener('load',resolve,{once:true});script.addEventListener('error',reject,{once:true});return}
+      script=document.createElement('script');script.src=src;script.async=true;script.addEventListener('load',resolve,{once:true});script.addEventListener('error',reject,{once:true});document.head.appendChild(script);
     });
   }
-  function dependencies() {
-    if (!dependenciesPromise) dependenciesPromise = Promise.all([
-      loadScript('https://unpkg.com/suncalc@1.9.0/suncalc.js', function(){ return !!window.SunCalc; }),
-      loadScript('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js', function(){ return !!window.luxon?.DateTime; })
+  function dependencies(){
+    if(!dependenciesPromise)dependenciesPromise=Promise.all([
+      loadScript('https://unpkg.com/suncalc@1.9.0/suncalc.js',function(){return !!window.SunCalc}),
+      loadScript('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',function(){return !!window.luxon?.DateTime}),
+      loadScript('planetary-hours-heptagram-component-v1.js?v=1',function(){return !!window.RelphiPlanetaryHoursHeptagram})
     ]);
     return dependenciesPromise;
   }
-  function dataForSlot(slot) {
-    const payload = read(SLOT_KEYS[slot]);
-    const p = profile(payload);
-    const lat = Number(p.latitude), lon = Number(p.longitude);
-    if (!payload || !p.dateTime || !Number.isFinite(lat) || !Number.isFinite(lon) || !p.timeZone) return null;
-    return { payload:payload, datetime:String(p.dateTime), lat:lat, lon:lon, tz:String(p.timeZone), loc:String(p.location || ''), houseSystem:String(p.houseSystem || '') };
+  function dataForSlot(slot){
+    const payload=read(SLOT_KEYS[slot]),p=profile(payload),lat=Number(p.latitude),lon=Number(p.longitude);
+    if(!payload||!p.dateTime||!Number.isFinite(lat)||!Number.isFinite(lon)||!p.timeZone)return null;
+    return{payload:payload,datetime:String(p.dateTime),lat:lat,lon:lon,tz:String(p.timeZone),loc:String(p.location||'')};
   }
-  function selectedData() { return dataForSlot(activeSlot) || dataForSlot('skyA') || dataForSlot('skyB'); }
-  function localNoon(dt) { return dt.startOf('day').plus({hours:12}).toJSDate(); }
-  function planetaryMoment(data) {
-    const DateTime = window.luxon.DateTime;
-    const selected = DateTime.fromISO(data.datetime, {zone:data.tz});
-    if (!selected.isValid) throw new Error('Invalid selected date or time');
-    const instant = selected.toJSDate();
-    const today = window.SunCalc.getTimes(localNoon(selected), data.lat, data.lon);
-    let sunrise = today.sunrise, sunset = today.sunset, dayDate = selected;
-    if (!(sunrise instanceof Date) || !(sunset instanceof Date)) throw new Error('Sunrise or sunset unavailable');
-    if (instant < sunrise) {
-      dayDate = selected.minus({days:1});
-      const prior = window.SunCalc.getTimes(localNoon(dayDate), data.lat, data.lon);
-      sunrise = prior.sunrise; sunset = prior.sunset;
-    }
-    const nextSunrise = window.SunCalc.getTimes(localNoon(dayDate.plus({days:1})), data.lat, data.lon).sunrise;
-    if (!(nextSunrise instanceof Date)) throw new Error('Next sunrise unavailable');
-    const bright = instant >= sunrise && instant < sunset;
-    const halfStart = bright ? sunrise : sunset;
-    const halfEnd = bright ? sunset : nextSunrise;
-    const hourLength = (halfEnd - halfStart) / 12;
-    const elapsed = Math.max(0, Math.min(12, (instant - halfStart) / hourLength));
-    const halfIndex = Math.max(0, Math.min(11, Math.floor(elapsed)));
-    const ordinalIndex = bright ? halfIndex : 12 + halfIndex;
-    const hourProgress = Math.max(0, Math.min(1, elapsed - halfIndex));
-    const localSunrise = DateTime.fromJSDate(sunrise).setZone(data.tz);
-    const dayRuler = WEEKDAY_RULER[localSunrise.weekday % 7];
-    const hourRuler = CHALDEAN[(CHALDEAN.indexOf(dayRuler) + ordinalIndex) % 7];
-    return { dayRuler:dayRuler, hourRuler:hourRuler, ordinal:ordinalIndex + 1, hourProgress:hourProgress };
+  function selectedData(){return dataForSlot(activeSlot)||dataForSlot('skyA')||dataForSlot('skyB')}
+  function localNoon(dt){return dt.startOf('day').plus({hours:12}).toJSDate()}
+  function planetaryMoment(data){
+    const DateTime=window.luxon.DateTime,selected=DateTime.fromISO(data.datetime,{zone:data.tz});
+    if(!selected.isValid)throw new Error('Invalid selected date or time');
+    const instant=selected.toJSDate(),today=SunCalc.getTimes(localNoon(selected),data.lat,data.lon);
+    let sunrise=today.sunrise,sunset=today.sunset,dayDate=selected;
+    if(!(sunrise instanceof Date)||!(sunset instanceof Date))throw new Error('Sunrise or sunset unavailable');
+    if(instant<sunrise){dayDate=selected.minus({days:1});const prior=SunCalc.getTimes(localNoon(dayDate),data.lat,data.lon);sunrise=prior.sunrise;sunset=prior.sunset}
+    const nextSunrise=SunCalc.getTimes(localNoon(dayDate.plus({days:1})),data.lat,data.lon).sunrise;
+    if(!(nextSunrise instanceof Date))throw new Error('Next sunrise unavailable');
+    const bright=instant>=sunrise&&instant<sunset,halfStart=bright?sunrise:sunset,halfEnd=bright?sunset:nextSunrise,hourLength=(halfEnd-halfStart)/12;
+    const elapsed=Math.max(0,Math.min(12,(instant-halfStart)/hourLength)),halfIndex=Math.max(0,Math.min(11,Math.floor(elapsed))),ordinalIndex=bright?halfIndex:12+halfIndex,hourProgress=Math.max(0,Math.min(1,elapsed-halfIndex));
+    const localSunrise=DateTime.fromJSDate(sunrise).setZone(data.tz),dayRuler=WEEKDAY_RULER[localSunrise.weekday%7],sequence24=Array.from({length:24},function(_,i){return CHALDEAN[(CHALDEAN.indexOf(dayRuler)+i)%7]});
+    return{dayRuler:dayRuler,sequence24:sequence24,selectedPosition:ordinalIndex+1+hourProgress,hourRuler:sequence24[ordinalIndex]};
   }
-  function el(name, attrs) { const node=document.createElementNS(NS,name); Object.keys(attrs||{}).forEach(function(key){node.setAttribute(key,attrs[key]);}); return node; }
-  function vertexPoint(vertex, radius) { const angle=(-90+vertex*360/7)*Math.PI/180; return {x:180+Math.cos(angle)*radius,y:180+Math.sin(angle)*radius}; }
-  function planetPoint(chaldeanIndex, radius) { return vertexPoint(HEPTAGRAM_VERTEX[chaldeanIndex % 7], radius); }
-  function ring(group, radius, word, id) {
-    const circle=el('circle',{cx:'0',cy:'0',r:String(radius),class:'relphi-ph-ruler-ring'});
-    const textRadius=radius-4.5;
-    const arc=el('path',{id:id,d:'M '+(-textRadius)+' 0 A '+textRadius+' '+textRadius+' 0 0 0 '+textRadius+' 0',fill:'none',class:'relphi-ph-ring-text-path'});
-    const text=el('text',{class:'relphi-ph-ring-word','dominant-baseline':'auto'});
-    const path=el('textPath',{href:'#'+id,startOffset:'50%','text-anchor':'middle'}); path.textContent=word;
-    text.appendChild(path); group.append(circle,arc,text);
+  function portalMarkup(){return '<a id="relphiPlanetaryHoursPortal" class="relphi-ph-portal" href="planetaryhours.html" aria-label="Open this selected moment in Planetary Hours"><svg role="img" aria-label="Living planetary-hours heptagram"></svg></a>'}
+  function ensurePortal(){
+    let portal=document.getElementById('relphiPlanetaryHoursPortal');if(portal)return portal;
+    const center=document.querySelector('#relphiSkyWorkspace .relphi-workspace-center')||document.querySelector('.sky-output-box');if(!center)return null;
+    const holder=document.createElement('div');holder.innerHTML=portalMarkup();portal=holder.firstElementChild;center.insertAdjacentElement('afterbegin',portal);return portal;
   }
-  function tracePath(dayRuler, ordinal, hourProgress) {
-    const start = CHALDEAN.indexOf(dayRuler);
-    const points = [];
-    for (let step = 0; step <= 24; step += 1) points.push(planetPoint((start + step) % 7, 116));
-    const completed = Math.max(0, Math.min(23, ordinal - 1));
-    let d = 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
-    for (let step = 1; step <= completed; step += 1) d += ' L ' + points[step].x.toFixed(2) + ' ' + points[step].y.toFixed(2);
-    const from = points[completed];
-    const to = points[completed + 1];
-    const partial = { x:from.x + (to.x - from.x) * hourProgress, y:from.y + (to.y - from.y) * hourProgress };
-    d += ' L ' + partial.x.toFixed(2) + ' ' + partial.y.toFixed(2);
-    return d;
-  }
-  function portalMarkup() { return '<a id="relphiPlanetaryHoursPortal" class="relphi-ph-portal" href="planetaryhours.html" aria-label="Open this selected moment in Planetary Hours"><svg viewBox="0 0 360 360" role="img" aria-label="Partially traced planetary day and hour heptagram"></svg></a>'; }
-  function ensurePortal() {
-    let portal=document.getElementById('relphiPlanetaryHoursPortal'); if(portal)return portal;
-    const center=document.querySelector('#relphiSkyWorkspace .relphi-workspace-center')||document.querySelector('.sky-output-box'); if(!center)return null;
-    const holder=document.createElement('div'); holder.innerHTML=portalMarkup(); portal=holder.firstElementChild; center.insertAdjacentElement('afterbegin',portal); return portal;
-  }
-  function linkFor(data) {
-    const url=new URL('planetaryhours.html',location.href);
-    url.searchParams.set('datetime',data.datetime); url.searchParams.set('lat',data.lat); url.searchParams.set('lon',data.lon); url.searchParams.set('tz',data.tz);
-    if(data.loc)url.searchParams.set('loc',data.loc); url.searchParams.set('useSystem','0'); return url.pathname+url.search;
-  }
-  async function draw() {
-    queued=false;
-    const portal=ensurePortal(); if(!portal)return;
-    const data=selectedData(); if(!data){portal.hidden=true;lastSignature='';return;}
-    try {
-      await dependencies();
-      const moment=planetaryMoment(data);
-      const signature=[activeSlot,data.datetime,data.lat,data.lon,data.tz,moment.dayRuler,moment.hourRuler,moment.ordinal,moment.hourProgress.toFixed(3)].join('|');
+  function linkFor(data){const url=new URL('planetaryhours.html',location.href);url.searchParams.set('datetime',data.datetime);url.searchParams.set('lat',data.lat);url.searchParams.set('lon',data.lon);url.searchParams.set('tz',data.tz);if(data.loc)url.searchParams.set('loc',data.loc);url.searchParams.set('useSystem','0');return url.pathname+url.search}
+  async function draw(){
+    queued=false;const portal=ensurePortal();if(!portal)return;const data=selectedData();if(!data){portal.hidden=true;lastSignature='';return}
+    try{
+      await dependencies();const moment=planetaryMoment(data),signature=[activeSlot,data.datetime,data.lat,data.lon,data.tz,moment.dayRuler,moment.hourRuler,moment.selectedPosition.toFixed(3)].join('|');
       if(signature===lastSignature&&portal.querySelector('svg')?.dataset.ready==='true')return;
-      lastSignature=signature; portal.hidden=false;
-      portal.classList.remove('is-night','is-daylight');
-      portal.href=linkFor(data); portal.dataset.slot=activeSlot;
-      portal.setAttribute('aria-label','Open '+data.payload.name+' at its selected moment in Planetary Hours');
-      portal.onclick=function(){try{localStorage.setItem('relphiPlanetaryHoursWhereWhen',JSON.stringify({datetime:data.datetime,lat:data.lat,lon:data.lon,tz:data.tz,loc:data.loc,useSystem:false,savedAt:new Date().toISOString()}));}catch(_){}};
-      const svg=portal.querySelector('svg'); svg.replaceChildren(); svg.dataset.ready='pending';
-      svg.appendChild(el('path',{class:'relphi-ph-heptagram-trace',d:tracePath(moment.dayRuler,moment.ordinal,moment.hourProgress)}));
-      const ready=[];
-      CHALDEAN.forEach(function(id,index){
-        const p=planetPoint(index,116); const host=el('g',{class:'relphi-ph-node','data-planet':id,transform:'translate('+p.x+' '+p.y+')'}); svg.appendChild(host);
-        const bubble=window.RelphiGlyphComponent?.createBubble(host,id,{radius:15,padding:1,color:'#111111',fill:'#fffaf3',strokeWidth:2.35}); if(bubble?.ready)ready.push(bubble.ready);
-        if(id===moment.dayRuler)ring(host,31,'DAY','relphiPhDayArc'+index);
-        if(id===moment.hourRuler)ring(host,24,'HOUR','relphiPhHourArc'+index);
-      });
-      await Promise.allSettled(ready); svg.dataset.ready='true';
-    } catch(error){portal.hidden=true;lastSignature='';}
+      lastSignature=signature;portal.hidden=false;portal.href=linkFor(data);portal.dataset.slot=activeSlot;portal.setAttribute('aria-label','Open '+(data.payload.name||'this sky')+' at its selected moment in Planetary Hours');
+      portal.onclick=function(){try{localStorage.setItem('relphiPlanetaryHoursWhereWhen',JSON.stringify({datetime:data.datetime,lat:data.lat,lon:data.lon,tz:data.tz,loc:data.loc,useSystem:false,savedAt:new Date().toISOString()}))}catch(_){}};
+      const svg=portal.querySelector('svg');svg.dataset.ready='pending';
+      const result=window.RelphiPlanetaryHoursHeptagram.render(svg,{dayRuler:moment.dayRuler,sequence24:moment.sequence24,selectedPosition:moment.selectedPosition,glyphComponent:window.RelphiGlyphComponent,showLabels:false,showRulerRings:true});
+      await result.ready;svg.dataset.ready='true';
+    }catch(error){portal.hidden=true;lastSignature=''}
   }
-  function schedule(){if(queued)return;queued=true;requestAnimationFrame(draw);}
+  function schedule(){if(queued)return;queued=true;requestAnimationFrame(draw)}
   function styles(){
     if(document.getElementById('relphi-ph-portal-style'))return;
-    const style=document.createElement('style'); style.id='relphi-ph-portal-style'; style.textContent=`
-      .relphi-ph-portal{--portal-surface:#fffaf3;--portal-ink:#111;display:block;width:min(100%,260px);margin:0 auto .75rem;border:1px solid rgba(220,31,24,.22);border-radius:1rem;background:var(--portal-surface);color:var(--portal-ink);text-decoration:none;overflow:hidden;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
-      .relphi-ph-portal svg{display:block;width:100%;height:auto;max-height:230px}.relphi-ph-portal:hover{transform:translateY(-1px);box-shadow:0 .6rem 1.4rem rgba(0,0,0,.10);border-color:rgba(220,31,24,.5)}.relphi-ph-portal:focus-visible{outline:3px solid rgba(220,31,24,.3);outline-offset:3px}
-      .relphi-ph-heptagram-trace{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.relphi-ph-node{color:currentColor}.relphi-ph-ruler-ring{fill:none;stroke:currentColor;stroke-width:1.8;vector-effect:non-scaling-stroke}.relphi-ph-ring-text-path{stroke:none}.relphi-ph-ring-word{fill:currentColor;font:900 6.5px/1 system-ui,sans-serif;letter-spacing:1.1px}.relphi-ph-portal .relphi-glyph-bubble>circle{fill:var(--portal-surface)!important;stroke:currentColor!important}
+    const style=document.createElement('style');style.id='relphi-ph-portal-style';style.textContent=`
+      .relphi-ph-portal{display:block;width:min(100%,260px);margin:0 auto .75rem;border:1px solid rgba(220,31,24,.16);border-radius:1rem;background:#fff;text-decoration:none;overflow:hidden;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+      .relphi-ph-portal svg{display:block;width:100%;height:auto;max-height:230px}.relphi-ph-portal:hover{transform:translateY(-1px);box-shadow:0 .6rem 1.4rem rgba(0,0,0,.08);border-color:rgba(220,31,24,.45)}.relphi-ph-portal:focus-visible{outline:3px solid rgba(220,31,24,.3);outline-offset:3px}
+      .relphi-ph-portal .relphi-glyph-bubble>circle{fill:#fff!important}
       @media(max-width:760px){.relphi-ph-portal{width:min(100%,220px)}.relphi-ph-portal svg{max-height:195px}}@media(prefers-reduced-motion:reduce){.relphi-ph-portal{transition:none}.relphi-ph-portal:hover{transform:none}}
-    `; document.head.appendChild(style);
+    `;document.head.appendChild(style);
   }
-  function start(){
-    styles();schedule();
-    window.addEventListener('relphi:placement-focus',function(event){if(event.detail?.slot){activeSlot=event.detail.slot;schedule();}});
-    window.addEventListener('storage',schedule); window.addEventListener('relphi:sky-builder-v4-loaded',schedule);
-    const chart=document.getElementById('chartPanel'); if(chart)new MutationObserver(schedule).observe(chart,{childList:true,subtree:true});
-  }
+  function start(){styles();schedule();window.addEventListener('relphi:placement-focus',function(event){if(event.detail?.slot){activeSlot=event.detail.slot;schedule()}});window.addEventListener('storage',schedule);window.addEventListener('relphi:sky-builder-v4-loaded',schedule);const chart=document.getElementById('chartPanel');if(chart)new MutationObserver(schedule).observe(chart,{childList:true,subtree:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
