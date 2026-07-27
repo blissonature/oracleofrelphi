@@ -8,6 +8,7 @@
   const COLORS = { skyA:'#dc1f18', skyB:'#3166e2' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const LAYER_CLASS = 'relphi-dual-house-rings';
+  const WHEEL_SELECTOR = '.unified-sky-wheel > svg,.unified-sky-wheel svg.chart-wheel-svg,#chartOutput svg.chart-wheel-svg,#currentSkyOutput svg.chart-wheel-svg,.sky-output-box svg.chart-wheel-svg';
   let queued = false;
 
   function read(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; } }
@@ -54,7 +55,6 @@
   }
   function angularSpan(from, to) { return normalized(to - from); }
   function chartAngle(longitudeValue, skyAsc, baseAsc) {
-    // The primary chart's Ascendant is fixed at the left side of the wheel.
     return normalized(180 + (longitudeValue - baseAsc));
   }
   function svgNode(name, attrs) {
@@ -68,6 +68,11 @@
     const width = Number(svg.getAttribute('width')) || svg.clientWidth || 800;
     const height = Number(svg.getAttribute('height')) || svg.clientHeight || 800;
     return { cx:width/2, cy:height/2, span:Math.min(width,height) };
+  }
+  function isActualChartWheel(svg) {
+    if (!svg || !svg.isConnected) return false;
+    if (svg.closest('#relphiPlanetaryHoursPortal,.relphi-ph-portal')) return false;
+    return !!svg.querySelector('.chart-wheel-placement-stick,.relphi-canonical-marker-layer,.chart-wheel-contact-dot');
   }
   function addRing(layer, payload, sky, baseAsc, outerRadius, thickness) {
     const cusps = calculatedCusps(payload);
@@ -101,7 +106,7 @@
     });
   }
   function renderSvg(svg) {
-    if (!svg || !svg.isConnected) return;
+    if (!isActualChartWheel(svg)) return;
     svg.querySelectorAll(':scope > .' + LAYER_CLASS).forEach(function (node) { node.remove(); });
     const a = read(SLOT_KEYS.skyA), b = read(SLOT_KEYS.skyB);
     if (!a) return;
@@ -118,9 +123,16 @@
     svg.insertBefore(layer,svg.firstChild);
     hideLegacyHouseNumbers(svg);
   }
+  function cleanNonWheelSvgs() {
+    document.querySelectorAll('svg .' + LAYER_CLASS).forEach(function (layer) {
+      const svg = layer.closest('svg');
+      if (!isActualChartWheel(svg)) layer.remove();
+    });
+  }
   function run() {
     queued = false;
-    document.querySelectorAll('.unified-sky-wheel svg,#chartOutput svg,#currentSkyOutput svg,.sky-output-box svg').forEach(renderSvg);
+    cleanNonWheelSvgs();
+    document.querySelectorAll(WHEEL_SELECTOR).forEach(renderSvg);
   }
   function queue() { if (queued) return; queued = true; requestAnimationFrame(run); }
   function start() {
