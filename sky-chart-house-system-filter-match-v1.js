@@ -22,97 +22,89 @@
     }) || null;
   }
 
+  function referenceSection(heading, container) {
+    if (!heading) return null;
+    const section = heading.closest('fieldset,.filter-subsection,.sky-filter-subsection,.filter-section,.sky-filter-section,section');
+    return section && section !== container ? section : heading.parentElement;
+  }
+
+  function copyTypography(source, target, properties) {
+    if (!source || !target) return;
+    const computed = getComputedStyle(source);
+    properties.forEach(function (property) {
+      target.style.setProperty(property, computed.getPropertyValue(property), 'important');
+    });
+  }
+
   function installStyles() {
     if (document.getElementById('relphi-house-system-filter-match-style')) return;
     const style = document.createElement('style');
     style.id = 'relphi-house-system-filter-match-style';
     style.textContent = `
       #relphiHouseSystemFilter{
-        display:block!important;
-        width:100%!important;
-        max-width:none!important;
-        margin:0 0 .9rem!important;
-        padding:0 0 .9rem!important;
-        border:0!important;
-        border-bottom:1px solid rgba(17,17,17,.12)!important;
-        text-align:left!important;
-        font:inherit!important;
+        display:block!important;width:100%!important;max-width:none!important;
+        margin:0 0 .9rem!important;padding:0 0 .9rem!important;
+        border:0!important;border-bottom:1px solid rgba(17,17,17,.12)!important;
+        text-align:left!important;font:inherit!important;
       }
       #relphiHouseSystemFilter legend{
-        display:block!important;
-        width:100%!important;
-        margin:0 0 .55rem!important;
-        padding:0!important;
-        color:#6f6f6f!important;
-        font:inherit!important;
-        font-size:.78rem!important;
-        font-weight:800!important;
-        line-height:1.2!important;
-        letter-spacing:.055em!important;
-        text-align:left!important;
-        text-transform:uppercase!important;
+        display:block!important;width:100%!important;margin:0 0 .55rem!important;
+        padding:0!important;text-align:left!important;
       }
       #relphiHouseSystemFilter .relphi-house-system-choices{
-        display:flex!important;
-        flex-direction:column!important;
-        align-items:stretch!important;
-        justify-content:flex-start!important;
-        width:100%!important;
-        margin:0!important;
-        padding:0!important;
-        gap:.42rem!important;
-        text-align:left!important;
+        display:flex!important;flex-direction:column!important;align-items:stretch!important;
+        justify-content:flex-start!important;width:100%!important;margin:0!important;
+        padding:0!important;gap:.42rem!important;text-align:left!important;
       }
       #relphiHouseSystemFilter .relphi-house-system-choices label{
-        display:flex!important;
-        flex-direction:row!important;
-        align-items:center!important;
-        justify-content:flex-start!important;
-        width:100%!important;
-        min-height:0!important;
-        margin:0!important;
-        padding:.08rem .25rem!important;
-        gap:.48rem!important;
-        color:#171717!important;
-        font:inherit!important;
-        font-size:.98rem!important;
-        font-weight:700!important;
-        line-height:1.35!important;
-        text-align:left!important;
-        cursor:pointer!important;
+        display:flex!important;flex-direction:row!important;align-items:center!important;
+        justify-content:flex-start!important;width:100%!important;min-height:0!important;
+        margin:0!important;padding:.08rem .25rem!important;gap:.48rem!important;
+        text-align:left!important;cursor:pointer!important;
       }
       #relphiHouseSystemFilter .relphi-house-system-choices label span{
-        display:inline!important;
-        width:auto!important;
-        margin:0!important;
-        padding:0!important;
-        text-align:left!important;
+        display:inline!important;width:auto!important;margin:0!important;padding:0!important;text-align:left!important;
       }
       #relphiHouseSystemFilter input[type="radio"]{
-        appearance:auto!important;
-        -webkit-appearance:radio!important;
-        display:inline-block!important;
-        flex:0 0 auto!important;
-        width:1.18rem!important;
-        height:1.18rem!important;
-        min-width:1.18rem!important;
-        margin:0!important;
-        padding:0!important;
-        accent-color:#596a64!important;
-        vertical-align:middle!important;
+        appearance:auto!important;-webkit-appearance:radio!important;display:inline-block!important;
+        flex:0 0 auto!important;margin:0!important;padding:0!important;
+        accent-color:#596a64!important;vertical-align:middle!important;
       }
       #relphiHouseSystemFilter .relphi-house-system-status{
-        display:block!important;
-        min-height:0!important;
-        margin:.5rem 0 0!important;
-        padding:0!important;
-        font-size:.78rem!important;
-        font-weight:600!important;
-        line-height:1.35!important;
-        text-align:left!important;
+        display:block!important;min-height:0!important;margin:.5rem 0 0!important;
+        padding:0!important;font-size:.78rem!important;font-weight:600!important;
+        line-height:1.35!important;text-align:left!important;
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function matchExistingTypography(fieldset, heading, container) {
+    const section = referenceSection(heading, container);
+    const referenceLabel = section && Array.from(section.querySelectorAll('label')).find(function (label) {
+      return label.querySelector('input[type="checkbox"],input[type="radio"]');
+    });
+    const referenceInput = referenceLabel && referenceLabel.querySelector('input[type="checkbox"],input[type="radio"]');
+    const legend = fieldset.querySelector('legend');
+
+    copyTypography(heading, legend, [
+      'font-family','font-size','font-weight','line-height','letter-spacing','text-transform','color'
+    ]);
+
+    fieldset.querySelectorAll('.relphi-house-system-choices label').forEach(function (label) {
+      copyTypography(referenceLabel, label, [
+        'font-family','font-size','font-weight','line-height','letter-spacing','text-transform','color'
+      ]);
+    });
+
+    if (referenceInput) {
+      const inputStyle = getComputedStyle(referenceInput);
+      fieldset.querySelectorAll('input[type="radio"]').forEach(function (input) {
+        input.style.setProperty('width', inputStyle.width, 'important');
+        input.style.setProperty('height', inputStyle.height, 'important');
+        input.style.setProperty('min-width', inputStyle.width, 'important');
+      });
+    }
   }
 
   function placeAndNormalize() {
@@ -124,9 +116,10 @@
 
     const heading = setsHeading(container);
     if (heading) {
-      const candidate = heading.closest('fieldset,.filter-subsection,.sky-filter-subsection,.filter-section,.sky-filter-section,section');
-      const anchor = candidate && candidate !== container ? candidate : heading;
+      const section = referenceSection(heading, container);
+      const anchor = section || heading;
       if (fieldset.nextElementSibling !== anchor) anchor.parentNode.insertBefore(fieldset, anchor);
+      matchExistingTypography(fieldset, heading, container);
     } else {
       const panel = container.querySelector(':scope > div,:scope > section,:scope > .filter-panel,:scope > .filter-options,:scope > .sky-filter-options') || container;
       if (panel.firstElementChild !== fieldset) panel.insertBefore(fieldset, panel.firstElementChild);
