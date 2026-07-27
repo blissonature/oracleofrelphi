@@ -61,12 +61,14 @@
     const halfStart = bright ? sunrise : sunset;
     const halfEnd = bright ? sunset : nextSunrise;
     const hourLength = (halfEnd - halfStart) / 12;
-    const halfIndex = Math.max(0, Math.min(11, Math.floor((instant - halfStart) / hourLength)));
-    const ordinal = bright ? halfIndex : 12 + halfIndex;
+    const elapsed = Math.max(0, Math.min(12, (instant - halfStart) / hourLength));
+    const halfIndex = Math.max(0, Math.min(11, Math.floor(elapsed)));
+    const ordinalIndex = bright ? halfIndex : 12 + halfIndex;
+    const hourProgress = Math.max(0, Math.min(1, elapsed - halfIndex));
     const localSunrise = DateTime.fromJSDate(sunrise).setZone(data.tz);
     const dayRuler = WEEKDAY_RULER[localSunrise.weekday % 7];
-    const hourRuler = CHALDEAN[(CHALDEAN.indexOf(dayRuler) + ordinal) % 7];
-    return { dayRuler:dayRuler, hourRuler:hourRuler, bright:bright, ordinal:ordinal + 1 };
+    const hourRuler = CHALDEAN[(CHALDEAN.indexOf(dayRuler) + ordinalIndex) % 7];
+    return { dayRuler:dayRuler, hourRuler:hourRuler, bright:bright, ordinal:ordinalIndex + 1, hourProgress:hourProgress };
   }
   function el(name, attrs) { const node=document.createElementNS(NS,name); Object.keys(attrs||{}).forEach(function(key){node.setAttribute(key,attrs[key]);}); return node; }
   function point(index, radius) { const angle=(-90+index*360/7)*Math.PI/180; return {x:180+Math.cos(angle)*radius,y:180+Math.sin(angle)*radius}; }
@@ -78,7 +80,23 @@
     const path=el('textPath',{href:'#'+id,startOffset:'50%','text-anchor':'middle'}); path.textContent=word;
     text.appendChild(path); group.append(circle,arc,text);
   }
-  function portalMarkup() { return '<a id="relphiPlanetaryHoursPortal" class="relphi-ph-portal" href="planetaryhours.html" aria-label="Open this selected moment in Planetary Hours"><svg viewBox="0 0 360 360" role="img" aria-label="Planetary day and hour heptagram"></svg></a>'; }
+  function tracePath(dayRuler, ordinal, hourProgress) {
+    const start = CHALDEAN.indexOf(dayRuler);
+    const points = [];
+    for (let step = 0; step <= 24; step += 1) points.push(point((start + step) % 7, 116));
+    const completed = Math.max(0, Math.min(23, ordinal - 1));
+    let d = 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
+    for (let step = 1; step <= completed; step += 1) d += ' L ' + points[step].x.toFixed(2) + ' ' + points[step].y.toFixed(2);
+    const from = points[completed];
+    const to = points[completed + 1];
+    const partial = {
+      x:from.x + (to.x - from.x) * hourProgress,
+      y:from.y + (to.y - from.y) * hourProgress
+    };
+    d += ' L ' + partial.x.toFixed(2) + ' ' + partial.y.toFixed(2);
+    return d;
+  }
+  function portalMarkup() { return '<a id="relphiPlanetaryHoursPortal" class="relphi-ph-portal" href="planetaryhours.html" aria-label="Open this selected moment in Planetary Hours"><svg viewBox="0 0 360 360" role="img" aria-label="Partially traced planetary day and hour heptagram"></svg></a>'; }
   function ensurePortal() {
     let portal=document.getElementById('relphiPlanetaryHoursPortal'); if(portal)return portal;
     const center=document.querySelector('#relphiSkyWorkspace .relphi-workspace-center')||document.querySelector('.sky-output-box'); if(!center)return null;
@@ -96,7 +114,7 @@
     try {
       await dependencies();
       const moment=planetaryMoment(data);
-      const signature=[activeSlot,data.datetime,data.lat,data.lon,data.tz,moment.dayRuler,moment.hourRuler,moment.bright?'day':'night'].join('|');
+      const signature=[activeSlot,data.datetime,data.lat,data.lon,data.tz,moment.dayRuler,moment.hourRuler,moment.ordinal,moment.hourProgress.toFixed(3),moment.bright?'day':'night'].join('|');
       if(signature===lastSignature&&portal.querySelector('svg')?.dataset.ready==='true')return;
       lastSignature=signature; portal.hidden=false;
       portal.classList.toggle('is-night',!moment.bright); portal.classList.toggle('is-daylight',moment.bright);
@@ -105,8 +123,7 @@
       portal.onclick=function(){try{localStorage.setItem('relphiPlanetaryHoursWhereWhen',JSON.stringify({datetime:data.datetime,lat:data.lat,lon:data.lon,tz:data.tz,loc:data.loc,useSystem:false,savedAt:new Date().toISOString()}));}catch(_){}};
       const svg=portal.querySelector('svg'); svg.replaceChildren(); svg.dataset.ready='pending';
       const ink=moment.bright?'#111111':'#f8f0e5'; const surface=moment.bright?'#fffaf3':'#111111';
-      const order=[0,3,6,2,5,1,4,0];
-      svg.appendChild(el('path',{class:'relphi-ph-heptagram-star',d:order.map(function(i,n){const p=point(i,116);return(n?'L ':'M ')+p.x.toFixed(2)+' '+p.y.toFixed(2);}).join(' ')}));
+      svg.appendChild(el('path',{class:'relphi-ph-heptagram-trace',d:tracePath(moment.dayRuler,moment.ordinal,moment.hourProgress)}));
       const ready=[];
       CHALDEAN.forEach(function(id,index){
         const p=point(index,116); const host=el('g',{class:'relphi-ph-node','data-planet':id,transform:'translate('+p.x+' '+p.y+')'}); svg.appendChild(host);
@@ -123,7 +140,7 @@
     const style=document.createElement('style'); style.id='relphi-ph-portal-style'; style.textContent=`
       .relphi-ph-portal{--portal-surface:#fffaf3;--portal-ink:#111;display:block;width:min(100%,260px);margin:0 auto .75rem;border:1px solid rgba(220,31,24,.22);border-radius:1rem;background:var(--portal-surface);color:var(--portal-ink);text-decoration:none;overflow:hidden;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
       .relphi-ph-portal.is-night{--portal-surface:#111;--portal-ink:#f8f0e5;border-color:rgba(255,255,255,.18)}.relphi-ph-portal svg{display:block;width:100%;height:auto;max-height:230px}.relphi-ph-portal:hover{transform:translateY(-1px);box-shadow:0 .6rem 1.4rem rgba(0,0,0,.10);border-color:rgba(220,31,24,.5)}.relphi-ph-portal:focus-visible{outline:3px solid rgba(220,31,24,.3);outline-offset:3px}
-      .relphi-ph-heptagram-star{fill:none;stroke:currentColor;stroke-width:1.4;opacity:.34}.relphi-ph-node{color:currentColor}.relphi-ph-ruler-ring{fill:none;stroke:currentColor;stroke-width:1.8;vector-effect:non-scaling-stroke}.relphi-ph-ring-text-path{stroke:none}.relphi-ph-ring-word{fill:currentColor;font:900 6.5px/1 system-ui,sans-serif;letter-spacing:1.1px}.relphi-ph-portal .relphi-glyph-bubble>circle{fill:var(--portal-surface)!important;stroke:currentColor!important}
+      .relphi-ph-heptagram-trace{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.relphi-ph-node{color:currentColor}.relphi-ph-ruler-ring{fill:none;stroke:currentColor;stroke-width:1.8;vector-effect:non-scaling-stroke}.relphi-ph-ring-text-path{stroke:none}.relphi-ph-ring-word{fill:currentColor;font:900 6.5px/1 system-ui,sans-serif;letter-spacing:1.1px}.relphi-ph-portal .relphi-glyph-bubble>circle{fill:var(--portal-surface)!important;stroke:currentColor!important}
       @media(max-width:760px){.relphi-ph-portal{width:min(100%,220px)}.relphi-ph-portal svg{max-height:195px}}@media(prefers-reduced-motion:reduce){.relphi-ph-portal{transition:none}.relphi-ph-portal:hover{transform:none}}
     `; document.head.appendChild(style);
   }
