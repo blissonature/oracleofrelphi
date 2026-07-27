@@ -65,6 +65,8 @@
   load('sky-chart-planetary-hours-portal-v1.js?v=1');
   load('sky-chart-birth-flow-isolation-v1.js?v=1');
   load('sky-chart-workspace-edit-persistence-v1.js?v=1', function () {
-    load('sky-chart-workspace-reconciliation-v1.js?v=1');
+    load('sky-chart-workspace-reconciliation-v1.js?v=1', function () {
+      load('sky-chart-final-wheel-layout-v1.js?v=1');
+    });
   });
 })();
