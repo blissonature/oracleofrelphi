@@ -1,4 +1,4 @@
-// Prevents mobile-scroll redraw flicker and publishes canonical markers only after exact-degree leaders are complete.
+// Prevents mobile-scroll redraw flicker and anchors leaders to exact zodiac degrees without blanking glyphs.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -11,7 +11,6 @@
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const KEYS = { skyA:'relphiSkyChartA', skyB:'relphiSkyChartB' };
   let lastLayoutWidth = document.documentElement.clientWidth;
-  let lastLayoutHeight = document.documentElement.clientHeight;
   let queued = false;
 
   function read(key) {
@@ -115,14 +114,27 @@
     return line;
   }
 
+  function revealGlyphLayer(markerLayer) {
+    markerLayer.style.visibility = 'visible';
+    markerLayer.style.opacity = '1';
+    markerLayer.querySelectorAll('.' + HOST).forEach(function (host) {
+      host.style.visibility = 'visible';
+      host.style.opacity = '1';
+    });
+  }
+
   function finalizeLayer(svg, markerLayer) {
     if (!markerLayer || markerLayer.classList.contains(STAGING)) return false;
+
+    // Never blank the wheel while exact leader geometry is still being resolved.
+    revealGlyphLayer(markerLayer);
+
     const frame = structure(svg);
     if (!frame) return false;
     const hosts = Array.from(markerLayer.querySelectorAll('.' + HOST));
     const lines = Array.from(markerLayer.querySelectorAll('.' + LEADER));
     if (!hosts.length || lines.length < hosts.length) return false;
-    if (hosts.some(function (host) { return host.dataset.ready !== 'true' || !translate(host); })) return false;
+    if (hosts.some(function (host) { return !translate(host); })) return false;
 
     lines.forEach(function (line) {
       delete line.dataset.relphiAssigned;
@@ -167,14 +179,11 @@
     if (!completed) return false;
 
     markerLayer.dataset.relphiDegreeAnchored = 'true';
-    hosts.forEach(function (host) { host.style.visibility = 'visible'; host.style.opacity = '1'; });
     lines.forEach(function (line) {
       line.style.display = 'block';
       line.style.visibility = 'visible';
       line.style.opacity = '1';
     });
-    markerLayer.style.visibility = 'visible';
-    markerLayer.style.opacity = '1';
     window.dispatchEvent(new CustomEvent('relphi:wheel-markers-finalized', { detail:{ svg, markerLayer } }));
     return true;
   }
@@ -186,6 +195,7 @@
         layer.style.opacity = '0';
         return;
       }
+      revealGlyphLayer(layer);
       finalizeLayer(svg, layer);
     });
   }
@@ -215,13 +225,11 @@
 
   function suppressChromeResize(event) {
     const width = document.documentElement.clientWidth;
-    const height = document.documentElement.clientHeight;
-    if (width === lastLayoutWidth && height === lastLayoutHeight) {
+    if (width === lastLayoutWidth) {
       event.stopImmediatePropagation();
       return;
     }
     lastLayoutWidth = width;
-    lastLayoutHeight = height;
   }
 
   function styles() {
@@ -230,7 +238,8 @@
     style.id = 'relphi-wheel-stability-style';
     style.textContent = [
       '.' + LAYER + '.' + STAGING + '{visibility:hidden!important;opacity:0!important}',
-      '.' + LAYER + ':not([data-relphi-degree-anchored="true"]):not(.' + STAGING + '){visibility:hidden!important;opacity:0!important}',
+      '.' + LAYER + ':not(.' + STAGING + '){visibility:visible!important;opacity:1!important}',
+      '.' + LAYER + ':not(.' + STAGING + ') .' + HOST + '{visibility:visible!important;opacity:1!important}',
       '.' + LEADER + ':not([data-relphi-exact-degree="true"]){visibility:hidden!important;opacity:0!important}',
       '.' + LEADER + '[data-relphi-exact-degree="true"]{display:block!important;visibility:visible!important;opacity:1!important;stroke:#111;stroke-width:1.6;stroke-linecap:round;vector-effect:non-scaling-stroke}'
     ].join('');
