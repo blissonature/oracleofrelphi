@@ -72,8 +72,9 @@
   function point(index, radius) { const angle=(-90+index*360/7)*Math.PI/180; return {x:180+Math.cos(angle)*radius,y:180+Math.sin(angle)*radius}; }
   function ring(group, radius, word, id) {
     const circle=el('circle',{cx:'0',cy:'0',r:String(radius),class:'relphi-ph-ruler-ring'});
-    const arc=el('path',{id:id,d:'M '+(-radius)+' 0 A '+radius+' '+radius+' 0 0 1 '+radius+' 0',fill:'none'});
-    const text=el('text',{class:'relphi-ph-ring-word'});
+    const textRadius=radius-4.5;
+    const arc=el('path',{id:id,d:'M '+(-textRadius)+' 0 A '+textRadius+' '+textRadius+' 0 0 0 '+textRadius+' 0',fill:'none',class:'relphi-ph-ring-text-path'});
+    const text=el('text',{class:'relphi-ph-ring-word','dominant-baseline':'auto'});
     const path=el('textPath',{href:'#'+id,startOffset:'50%','text-anchor':'middle'}); path.textContent=word;
     text.appendChild(path); group.append(circle,arc,text);
   }
@@ -122,7 +123,7 @@
     const style=document.createElement('style'); style.id='relphi-ph-portal-style'; style.textContent=`
       .relphi-ph-portal{--portal-surface:#fffaf3;--portal-ink:#111;display:block;width:min(100%,260px);margin:0 auto .75rem;border:1px solid rgba(220,31,24,.22);border-radius:1rem;background:var(--portal-surface);color:var(--portal-ink);text-decoration:none;overflow:hidden;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
       .relphi-ph-portal.is-night{--portal-surface:#111;--portal-ink:#f8f0e5;border-color:rgba(255,255,255,.18)}.relphi-ph-portal svg{display:block;width:100%;height:auto;max-height:230px}.relphi-ph-portal:hover{transform:translateY(-1px);box-shadow:0 .6rem 1.4rem rgba(0,0,0,.10);border-color:rgba(220,31,24,.5)}.relphi-ph-portal:focus-visible{outline:3px solid rgba(220,31,24,.3);outline-offset:3px}
-      .relphi-ph-heptagram-star{fill:none;stroke:currentColor;stroke-width:1.4;opacity:.34}.relphi-ph-node{color:currentColor}.relphi-ph-ruler-ring{fill:none;stroke:currentColor;stroke-width:1.8;vector-effect:non-scaling-stroke}.relphi-ph-ring-word{fill:currentColor;font:900 6.5px/1 system-ui,sans-serif;letter-spacing:1.1px}.relphi-ph-portal .relphi-glyph-bubble>circle{fill:var(--portal-surface)!important;stroke:currentColor!important}
+      .relphi-ph-heptagram-star{fill:none;stroke:currentColor;stroke-width:1.4;opacity:.34}.relphi-ph-node{color:currentColor}.relphi-ph-ruler-ring{fill:none;stroke:currentColor;stroke-width:1.8;vector-effect:non-scaling-stroke}.relphi-ph-ring-text-path{stroke:none}.relphi-ph-ring-word{fill:currentColor;font:900 6.5px/1 system-ui,sans-serif;letter-spacing:1.1px}.relphi-ph-portal .relphi-glyph-bubble>circle{fill:var(--portal-surface)!important;stroke:currentColor!important}
       @media(max-width:760px){.relphi-ph-portal{width:min(100%,220px)}.relphi-ph-portal svg{max-height:195px}}@media(prefers-reduced-motion:reduce){.relphi-ph-portal{transition:none}.relphi-ph-portal:hover{transform:none}}
     `; document.head.appendChild(style);
   }
