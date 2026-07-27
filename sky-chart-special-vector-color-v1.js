@@ -43,6 +43,7 @@
     });
   }
 
+  load('sky-chart-mobile-scroll-resize-guard-v1.js?v=1');
   loadProgressiveReveal(Date.now());
   load('sky-chart-chiron-local-v1.js?v=3', function () {
     load('sky-chart-calculated-points-storage-bridge-v2.js?v=3');
