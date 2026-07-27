@@ -34,9 +34,9 @@
   function saveSystem(value) { try { localStorage.setItem(SETTING_KEY,value); } catch (_) {} }
 
   function houseFilterContainer() {
-    const candidates = Array.from(document.querySelectorAll('details,fieldset,.filter-group,.sky-filter-group,.chart-filter-group'));
+    const candidates = Array.from(document.querySelectorAll('details,fieldset,.filter-group,.sky-filter-group,.chart-filter-group,.sky-filter-category'));
     return candidates.find(function(node){
-      const summary=node.querySelector(':scope > summary,:scope > legend,:scope > button,:scope > .filter-heading');
+      const summary=node.querySelector(':scope > summary,:scope > legend,:scope > button,:scope > .filter-heading,:scope > .sky-filter-heading');
       return String(summary?.textContent || '').trim().replace(/\s+/g,' ').toLowerCase().startsWith('houses');
     }) || null;
   }
@@ -58,7 +58,7 @@
     });
     const status=document.createElement('p'); status.className='relphi-house-system-status'; status.setAttribute('aria-live','polite');
     fieldset.append(choices,status);
-    const panel=container.querySelector(':scope > div,:scope > section,:scope > .filter-panel,:scope > .filter-options');
+    const panel=container.querySelector(':scope > div,:scope > section,:scope > .filter-panel,:scope > .filter-options,:scope > .sky-filter-options');
     (panel || container).appendChild(fieldset);
     fieldset.addEventListener('change',function(event){
       const input=event.target.closest('input[type="radio"]');
@@ -68,11 +68,21 @@
 
   function hideCreationControl() {
     const select=document.getElementById('skyCalcHouseSystem');
-    if (!select) return;
-    select.value=activeSystem();
-    const label=select.closest('label');
-    if(label){ label.hidden=true; label.setAttribute('aria-hidden','true'); }
-    select.tabIndex=-1;
+    if (select) {
+      select.value=activeSystem();
+      const label=select.closest('label');
+      if(label){ label.hidden=true; label.setAttribute('aria-hidden','true'); }
+      select.tabIndex=-1;
+    }
+    document.querySelectorAll('.relphi-workspace-meta div').forEach(function(row){
+      const term=String(row.querySelector('dt')?.textContent || '').trim().toLowerCase();
+      if(term==='houses' || term==='house system') row.remove();
+    });
+    document.querySelectorAll('.relphi-v4-choice-grid .choice span').forEach(function(copy){
+      if(/date, time, place, or house system/i.test(copy.textContent || '')) copy.textContent='Change the date, time, or place and recalculate.';
+    });
+    const calcSummary=document.querySelector('.sky-calc-drawer > summary small');
+    if(calcSummary && /house system/i.test(calcSummary.textContent || '')) calcSummary.textContent='Astronomy Engine · date · time · typed location';
   }
 
   function setBusy(fieldset,busy,message) {
@@ -103,15 +113,17 @@
     const ph=document.getElementById('skyCalcUsePlanetaryHours'); if(ph){ph.checked=false;fire(ph,'change');}
     const before=JSON.stringify(placements(payload));
     const status=document.getElementById('skyCalcStatus');
+    const previousStatus=String(status?.textContent || '').trim();
     document.getElementById('skyCalcRun')?.click();
     const started=Date.now();
+    let calculationFinished=false;
     while(Date.now()-started<65000){
       const text=String(status?.textContent || '').trim();
-      if(/^Calculated\b/i.test(text)) break;
+      if(/^Calculated\b/i.test(text) && (text!==previousStatus || Date.now()-started>500)){calculationFinished=true;break;}
       if(/^(Could not|Enter |Choose |No location|Location search failed|Date |Time zone)/i.test(text)) throw new Error(text);
       await delay(140);
     }
-    if(!/^Calculated\b/i.test(String(status?.textContent || '').trim())) throw new Error('House recalculation did not finish.');
+    if(!calculationFinished) throw new Error('House recalculation did not finish.');
     document.getElementById(slot==='skyA'?'saveChart':'saveCurrentSky')?.click();
     const saveStarted=Date.now();
     while(Date.now()-saveStarted<10000){
