@@ -58,7 +58,9 @@
     });
     load('sky-chart-house-system-filter-v1.js?v=1', function () {
       load('sky-chart-house-system-filter-match-v1.js?v=1', function () {
-        load('sky-chart-house-system-validation-v1.js?v=1');
+        load('sky-chart-house-system-validation-v1.js?v=1', function () {
+          load('sky-chart-house-system-atomic-guard-v1.js?v=1');
+        });
       });
     });
   });
