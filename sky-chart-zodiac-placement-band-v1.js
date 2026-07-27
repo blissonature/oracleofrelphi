@@ -1,4 +1,4 @@
-// Expands the zodiac band inward and lays comparison placements inside it with exact-degree leaders.
+// Places degree notches on the outside of the zodiac sign ring and keeps placements inside them.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -11,8 +11,9 @@
   const LEADER = 'relphi-canonical-marker-leader';
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const KEYS = { skyA:'relphiSkyChartA', skyB:'relphiSkyChartB' };
-  const MAX_SHIFT_DEGREES = 11;
+  const MAX_SHIFT = 12;
   let queued = false;
+  let applying = false;
 
   function read(key) {
     try { return JSON.parse(localStorage.getItem(key) || 'null'); }
@@ -26,10 +27,10 @@
 
   function longitude(item) {
     if (!item) return NaN;
-    const signIndex = SIGNS.findIndex(function (sign) {
-      return sign.toLowerCase() === String(item.sign || '').trim().toLowerCase();
+    const sign = SIGNS.findIndex(function (name) {
+      return name.toLowerCase() === String(item.sign || '').trim().toLowerCase();
     });
-    return signIndex < 0 ? NaN : signIndex * 30 + Number(item.degree || 0) + Number(item.minute || 0) / 60;
+    return sign < 0 ? NaN : sign * 30 + Number(item.degree || 0) + Number(item.minute || 0) / 60;
   }
 
   function normalize(value) {
@@ -77,15 +78,14 @@
   function hostRadius(host) {
     const circle = host.querySelector('.relphi-glyph-bubble > circle');
     const radius = Number(circle && circle.getAttribute('r'));
-    if (Number.isFinite(radius) && radius > 0) return radius;
-    return 18;
+    return Number.isFinite(radius) && radius > 0 ? radius : 18;
   }
 
-  function expandBand(svg, structure) {
+  function prepareBand(structure) {
     const zodiac = structure.querySelector('.' + ZODIAC);
-    if (!zodiac) return null;
-    const circles = zodiac.querySelectorAll(':scope > circle');
-    if (circles.length < 2) return null;
+    const circles = zodiac && zodiac.querySelectorAll(':scope > circle');
+    if (!zodiac || !circles || circles.length < 2) return null;
+
     const cx = Number(structure.dataset.cx);
     const cy = Number(structure.dataset.cy);
     const outer = number(circles[0], 'r');
@@ -93,24 +93,30 @@
     if (![cx, cy, outer, originalInner].every(Number.isFinite)) return null;
 
     const originalThickness = outer - originalInner;
-    const extension = Math.max(20, Math.min(32, originalThickness * .62));
+    const extension = Math.max(22, Math.min(34, originalThickness * .68));
     const inner = originalInner - extension;
     const thickness = outer - inner;
-    const signRadius = outer - thickness * .16;
+    const signRadius = inner + thickness * .62;
     const hasB = !!read(KEYS.skyB) && Object.keys(placements(read(KEYS.skyB))).length > 0;
-    const laneA = inner + thickness * (hasB ? .21 : .34);
-    const laneB = inner + thickness * .49;
 
-    circles[1].setAttribute('r', inner.toFixed(3));
+    // Keep only the outer border. The degree notches now live on this edge.
+    circles[0].style.display = '';
+    circles[1].style.display = 'none';
+
     zodiac.querySelectorAll('.relphi-zodiac-sign-divider,.relphi-zodiac-decan-tick,.relphi-zodiac-degree-tick').forEach(function (line) {
       const x = number(line, 'x1');
       const y = number(line, 'y1');
       if (!Number.isFinite(x) || !Number.isFinite(y)) return;
       const degrees = Math.atan2(y - cy, x - cx) * 180 / Math.PI;
-      let endRadius = inner + thickness * .10;
-      if (line.classList.contains('relphi-zodiac-sign-divider')) endRadius = outer;
-      else if (line.classList.contains('relphi-zodiac-decan-tick')) endRadius = inner + thickness * .24;
-      const start = point(cx, cy, inner, degrees);
+      let startRadius = outer;
+      let endRadius = outer - thickness * .10;
+      if (line.classList.contains('relphi-zodiac-sign-divider')) {
+        startRadius = inner;
+        endRadius = outer;
+      } else if (line.classList.contains('relphi-zodiac-decan-tick')) {
+        endRadius = outer - thickness * .24;
+      }
+      const start = point(cx, cy, startRadius, degrees);
       const end = point(cx, cy, endRadius, degrees);
       line.setAttribute('x1', start.x.toFixed(3));
       line.setAttribute('y1', start.y.toFixed(3));
@@ -118,49 +124,50 @@
       line.setAttribute('y2', end.y.toFixed(3));
     });
 
-    zodiac.querySelectorAll('.relphi-zodiac-plain-host').forEach(function (host, index) {
-      const asc = ascendantLongitude();
-      if (!Number.isFinite(asc)) return;
-      const position = point(cx, cy, signRadius, angleForLongitude(index * 30 + 15, asc));
-      host.setAttribute('transform', 'translate(' + position.x.toFixed(3) + ' ' + position.y.toFixed(3) + ')');
-    });
+    const asc = ascendantLongitude();
+    if (Number.isFinite(asc)) {
+      zodiac.querySelectorAll('.relphi-zodiac-plain-host').forEach(function (host, index) {
+        const position = point(cx, cy, signRadius, angleForLongitude(index * 30 + 15, asc));
+        host.setAttribute('transform', 'translate(' + position.x.toFixed(3) + ' ' + position.y.toFixed(3) + ')');
+      });
+    }
 
-    structure.dataset.innerLimit = String(inner);
     structure.dataset.zodiacInner = String(inner);
     structure.dataset.zodiacOuter = String(outer);
+    structure.dataset.zodiacNotchRadius = String(outer);
     structure.dataset.zodiacSignRadius = String(signRadius);
-    structure.dataset.placementLaneA = String(laneA);
-    structure.dataset.placementLaneB = String(laneB);
-    structure.dataset.bandExpanded = 'true';
-    return { cx, cy, inner, outer, thickness, signRadius, laneA, laneB, hasB };
+    structure.dataset.innerLimit = String(inner);
+    structure.dataset.bandExpanded = 'outside-notches';
+
+    return { cx, cy, inner, outer, thickness, signRadius, hasB };
   }
 
   function lineForHost(lines, host, index) {
-    const matching = lines.find(function (line) {
+    const match = lines.find(function (line) {
       return line.dataset.used !== 'true' && line.dataset.glyphId === host.dataset.glyphId &&
         (!line.dataset.sky || line.dataset.sky === host.dataset.sky);
     });
-    const line = matching || lines[index] || null;
+    const line = match || lines[index] || null;
     if (line) line.dataset.used = 'true';
     return line;
   }
 
   function resolveCollisions(items) {
-    for (let pass = 0; pass < 70; pass += 1) {
+    for (let pass = 0; pass < 80; pass += 1) {
       let changed = false;
       for (let a = 0; a < items.length; a += 1) {
         for (let b = a + 1; b < items.length; b += 1) {
           const first = items[a];
           const second = items[b];
-          const p = point(first.cx, first.cy, first.radius, first.angle + first.shift);
-          const q = point(second.cx, second.cy, second.radius, second.angle + second.shift);
-          const minimum = first.glyphRadius + second.glyphRadius + 5;
+          const p = point(first.cx, first.cy, first.lane, first.angle + first.shift);
+          const q = point(second.cx, second.cy, second.lane, second.angle + second.shift);
+          const minimum = first.radius + second.radius + 5;
           const distance = Math.hypot(q.x - p.x, q.y - p.y);
           if (distance >= minimum) continue;
           const direction = normalize(second.angle - first.angle) < 180 ? 1 : -1;
-          const push = Math.min(1.15, Math.max(.18, (minimum - distance) / Math.max(first.radius, second.radius) * 18));
-          first.shift = Math.max(-MAX_SHIFT_DEGREES, Math.min(MAX_SHIFT_DEGREES, first.shift - direction * push / 2));
-          second.shift = Math.max(-MAX_SHIFT_DEGREES, Math.min(MAX_SHIFT_DEGREES, second.shift + direction * push / 2));
+          const push = Math.min(1.2, Math.max(.2, (minimum - distance) / Math.max(first.lane, second.lane) * 20));
+          first.shift = Math.max(-MAX_SHIFT, Math.min(MAX_SHIFT, first.shift - direction * push / 2));
+          second.shift = Math.max(-MAX_SHIFT, Math.min(MAX_SHIFT, second.shift + direction * push / 2));
           changed = true;
         }
       }
@@ -169,28 +176,34 @@
   }
 
   function placeMarkers(svg, frame) {
-    const markerLayers = Array.from(svg.querySelectorAll(':scope > .' + MARKERS + ':not(.relphi-canonical-marker-staging)'));
-    const markerLayer = markerLayers[markerLayers.length - 1];
+    const layers = Array.from(svg.querySelectorAll(':scope > .' + MARKERS + ':not(.relphi-canonical-marker-staging)'));
+    const markerLayer = layers[layers.length - 1];
     if (!markerLayer) return false;
     const hosts = Array.from(markerLayer.querySelectorAll('.' + HOST));
     const lines = Array.from(markerLayer.querySelectorAll('.' + LEADER));
     const asc = ascendantLongitude();
     if (!hosts.length || !Number.isFinite(asc)) return false;
 
+    const largest = hosts.reduce(function (value, host) { return Math.max(value, hostRadius(host)); }, 18);
+    const innerSafe = frame.inner + largest + 5;
+    const outerSafe = frame.signRadius - largest - 8;
+    const available = Math.max(10, outerSafe - innerSafe);
+    const laneA = innerSafe + available * (frame.hasB ? .28 : .5);
+    const laneB = innerSafe + available * .72;
+
     const items = hosts.map(function (host, index) {
-      const item = placementForHost(host);
-      const degree = longitude(item);
-      if (!Number.isFinite(degree)) return null;
+      const value = longitude(placementForHost(host));
+      if (!Number.isFinite(value)) return null;
       return {
         host,
         line:null,
         index,
         cx:frame.cx,
         cy:frame.cy,
-        angle:angleForLongitude(degree, asc),
+        angle:angleForLongitude(value, asc),
         shift:0,
-        radius:host.dataset.sky === 'skyB' ? frame.laneB : frame.laneA,
-        glyphRadius:hostRadius(host)
+        lane:host.dataset.sky === 'skyB' ? laneB : laneA,
+        radius:hostRadius(host)
       };
     }).filter(Boolean);
     if (!items.length) return false;
@@ -199,10 +212,13 @@
     items.forEach(function (item) { item.line = lineForHost(lines, item.host, item.index); });
     resolveCollisions(items);
 
+    applying = true;
     items.forEach(function (item) {
-      const anchor = point(frame.cx, frame.cy, frame.inner, item.angle);
-      const display = point(frame.cx, frame.cy, item.radius, item.angle + item.shift);
-      item.host.setAttribute('transform', 'translate(' + display.x.toFixed(3) + ' ' + display.y.toFixed(3) + ')');
+      const anchor = point(frame.cx, frame.cy, frame.outer, item.angle);
+      const display = point(frame.cx, frame.cy, item.lane, item.angle + item.shift);
+      const transform = 'translate(' + display.x.toFixed(3) + ' ' + display.y.toFixed(3) + ')';
+      item.host.setAttribute('transform', transform);
+      item.host.dataset.relphiProtectedTransform = transform;
       item.host.dataset.trueDegreeAngle = item.angle.toFixed(5);
       item.host.dataset.displayDegreeAngle = (item.angle + item.shift).toFixed(5);
       item.host.style.visibility = 'visible';
@@ -221,29 +237,27 @@
       item.line.style.opacity = '1';
     });
     lines.forEach(function (line) { delete line.dataset.used; });
+    markerLayer.dataset.relphiPlacementBand = 'inside-outside-notches';
     markerLayer.dataset.relphiDegreeAnchored = 'true';
-    markerLayer.dataset.relphiPlacementBand = 'true';
     markerLayer.style.visibility = 'visible';
     markerLayer.style.opacity = '1';
+    applying = false;
     return true;
   }
 
-  function layoutWheel(svg) {
+  function layout(svg) {
     const structures = Array.from(svg.querySelectorAll(':scope > .' + STRUCTURE + '[data-ready="true"]'));
     const structure = structures[structures.length - 1];
     if (!structure) return false;
-    const frame = expandBand(svg, structure);
-    if (!frame) return false;
-    return placeMarkers(svg, frame);
+    const frame = prepareBand(structure);
+    return frame ? placeMarkers(svg, frame) : false;
   }
 
   function run() {
     queued = false;
     let incomplete = false;
-    document.querySelectorAll(WHEELS).forEach(function (svg) {
-      if (!layoutWheel(svg)) incomplete = true;
-    });
-    if (incomplete) setTimeout(queue, 100);
+    document.querySelectorAll(WHEELS).forEach(function (svg) { if (!layout(svg)) incomplete = true; });
+    if (incomplete) setTimeout(queue, 120);
   }
 
   function queue() {
@@ -253,8 +267,12 @@
   }
 
   function relevant(records) {
+    if (applying) return false;
     return records.some(function (record) {
-      return Array.from(record.addedNodes || []).some(function (node) {
+      if (record.type === 'attributes' && record.target && record.target.classList && record.target.classList.contains(HOST)) {
+        return record.target.getAttribute('transform') !== record.target.dataset.relphiProtectedTransform;
+      }
+      return Array.from(record.addedNodes || []).concat(Array.from(record.removedNodes || [])).some(function (node) {
         return node && node.nodeType === 1 &&
           ((node.matches && node.matches('.' + STRUCTURE + ',.' + MARKERS)) ||
            (node.querySelector && node.querySelector('.' + STRUCTURE + ',.' + MARKERS)));
@@ -273,11 +291,17 @@
   function start() {
     styles();
     queue();
-    new MutationObserver(function (records) { if (relevant(records)) queue(); }).observe(document.body, { childList:true, subtree:true });
+    new MutationObserver(function (records) { if (relevant(records)) queue(); }).observe(document.body, {
+      childList:true,
+      subtree:true,
+      attributes:true,
+      attributeFilter:['transform','data-ready']
+    });
     window.addEventListener('relphi:wheel-structure-ready', queue);
     window.addEventListener('relphi:wheel-markers-finalized', queue);
     window.addEventListener('relphi:extra-points-updated', queue);
     window.addEventListener('relphi:house-system-changed', queue);
+    window.addEventListener('storage', queue);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
