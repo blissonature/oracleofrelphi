@@ -1,4 +1,4 @@
-// Comparison-wheel geometry: shared placement ring, exact-degree leaders, and notch-anchored aspects.
+// Comparison-wheel geometry: shared placement ring, inner exact-degree notches, leaders, and notch-anchored aspects.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -117,20 +117,20 @@
   }
 
   function collisionLayout(items, markerRadius) {
-    for (let pass = 0; pass < 180; pass += 1) {
+    for (let pass = 0; pass < 220; pass += 1) {
       let changed = false;
       for (let i = 0; i < items.length; i += 1) {
         for (let j = i + 1; j < items.length; j += 1) {
           const a = items[i], b = items[j];
           const p = point(a.cx, a.cy, a.lane, a.angle + a.shift);
           const q = point(b.cx, b.cy, b.lane, b.angle + b.shift);
-          const minimum = markerRadius * 2 + 4;
+          const minimum = markerRadius * 2 + 3;
           const distance = Math.hypot(q.x - p.x, q.y - p.y);
           if (distance >= minimum) continue;
           const direction = normalize(b.angle - a.angle) < 180 ? 1 : -1;
-          const push = Math.min(2, Math.max(.25, (minimum - distance) / a.lane * 30));
-          a.shift = Math.max(-22, Math.min(22, a.shift - direction * push / 2));
-          b.shift = Math.max(-22, Math.min(22, b.shift + direction * push / 2));
+          const push = Math.min(2.2, Math.max(.25, (minimum - distance) / a.lane * 34));
+          a.shift = Math.max(-24, Math.min(24, a.shift - direction * push / 2));
+          b.shift = Math.max(-24, Math.min(24, b.shift + direction * push / 2));
           changed = true;
         }
       }
@@ -150,7 +150,7 @@
       if (![x1, y1, x2, y2].every(Number.isFinite)) return;
       const r1 = Math.hypot(x1 - frame.cx, y1 - frame.cy);
       const r2 = Math.hypot(x2 - frame.cx, y2 - frame.cy);
-      if (r1 < frame.inner * .42 || r2 < frame.inner * .42 || r1 > frame.outer + 12 || r2 > frame.outer + 12) return;
+      if (r1 < frame.inner * .35 || r2 < frame.inner * .35 || r1 > frame.outer + 16 || r2 > frame.outer + 16) return;
       const a1 = Math.atan2(y1 - frame.cy, x1 - frame.cx) * 180 / Math.PI;
       const a2 = Math.atan2(y2 - frame.cy, x2 - frame.cx) * 180 / Math.PI;
       const p1 = point(frame.cx, frame.cy, notchRadius, a1);
@@ -181,16 +181,12 @@
     overlay.style.visibility = 'hidden';
     svg.appendChild(overlay);
 
-    const bandWidth = Math.max(1, frame.outer - frame.inner);
-    const markerRadius = Math.max(11.5, Math.min(14, bandWidth * .22));
-    const notchRadius = frame.inner;
-    const minimumLane = notchRadius + markerRadius + 11;
-    const maximumLane = frame.outer - markerRadius - 8;
-    const sharedLane = Math.max(minimumLane, Math.min(maximumLane, frame.inner + bandWidth * .58));
-    if (!(sharedLane > notchRadius + markerRadius)) {
-      overlay.remove();
-      return false;
-    }
+    const bandWidth = Math.max(28, frame.outer - frame.inner);
+    const markerRadius = Math.max(10, Math.min(12, bandWidth * .26));
+    // The notches sit deliberately inside the previous inner edge, creating a real
+    // leader corridor instead of asking the glyph bubble to fit on top of the ticks.
+    const notchRadius = Math.max(frame.inner * .82, frame.inner - markerRadius - 12);
+    const sharedLane = Math.min(frame.outer - markerRadius - 5, frame.inner + Math.max(markerRadius + 5, bandWidth * .52));
 
     const items = records.map(function (record) {
       const value = longitude(placementFor(record.id, record.sky));
@@ -201,16 +197,35 @@
     collisionLayout(items, markerRadius);
 
     const aspectLayer = svgNode('g', { class:'relphi-degree-anchored-aspects', 'pointer-events':'none' });
+    const guideLayer = svgNode('g', { class:'relphi-placement-degree-guides', 'pointer-events':'none' });
     const leaderLayer = svgNode('g', { class:'relphi-exact-degree-leaders', 'pointer-events':'none' });
     const markerLayer = svgNode('g', { class:'relphi-shared-placement-ring' });
-    overlay.append(aspectLayer, leaderLayer, markerLayer);
+    overlay.append(aspectLayer, guideLayer, leaderLayer, markerLayer);
+
+    guideLayer.appendChild(svgNode('circle', {
+      class:'relphi-placement-notch-circle',
+      cx:frame.cx,
+      cy:frame.cy,
+      r:notchRadius.toFixed(3)
+    }));
     redrawAspects(svg, frame, notchRadius, aspectLayer);
 
     const jobs = [];
     applying = true;
     items.forEach(function (item) {
       const anchor = point(frame.cx, frame.cy, notchRadius, item.angle);
+      const notchInner = point(frame.cx, frame.cy, notchRadius - 3.5, item.angle);
+      const notchOuter = point(frame.cx, frame.cy, notchRadius + 4.5, item.angle);
       const display = point(frame.cx, frame.cy, item.lane, item.angle + item.shift);
+
+      guideLayer.appendChild(svgNode('line', {
+        class:'relphi-placement-degree-notch',
+        'data-sky':item.sky,
+        'data-glyph-id':item.id,
+        stroke:COLORS[item.sky],
+        x1:notchInner.x.toFixed(3), y1:notchInner.y.toFixed(3),
+        x2:notchOuter.x.toFixed(3), y2:notchOuter.y.toFixed(3)
+      }));
       leaderLayer.appendChild(svgNode('line', {
         class:'relphi-exact-degree-leader',
         'data-sky':item.sky,
@@ -240,8 +255,10 @@
       }
     });
 
-    Promise.all(jobs).then(function () {
+    Promise.allSettled(jobs).then(function (results) {
       if (!svg.isConnected || overlay.dataset.renderId !== String(renderId)) return;
+      const successes = results.filter(function (result) { return result.status === 'fulfilled'; }).length;
+      if (!successes) { overlay.remove(); return; }
       items.forEach(function (item) {
         item.host.dataset.relphiV2Hidden = 'true';
         item.host.style.visibility = 'hidden';
@@ -250,8 +267,8 @@
       if (previous && previous !== overlay) previous.remove();
       overlay.style.visibility = 'visible';
       overlay.dataset.ready = 'true';
-    }).catch(function () {
-      overlay.remove();
+      overlay.dataset.notchRadius = String(notchRadius);
+      overlay.dataset.placementRadius = String(sharedLane);
     }).finally(function () {
       applying = false;
     });
@@ -264,7 +281,7 @@
     document.querySelectorAll(WHEELS).forEach(function (svg) {
       if (!render(svg)) pending = true;
     });
-    if (pending) setTimeout(queue, 160);
+    if (pending) setTimeout(queue, 180);
   }
   function queue() {
     if (queued) return;
@@ -286,8 +303,10 @@
     style.textContent = [
       '.' + OVERLAY + '{pointer-events:none}',
       '.relphi-degree-anchored-aspects{opacity:.96}',
+      '.relphi-placement-notch-circle{fill:none;stroke:#aeb3ba;stroke-width:1;vector-effect:non-scaling-stroke}',
+      '.relphi-placement-degree-notch{stroke-width:1.8;stroke-linecap:round;vector-effect:non-scaling-stroke}',
       '.relphi-exact-degree-leaders{opacity:1}',
-      '.relphi-exact-degree-leader{stroke-width:1.35;stroke-linecap:round;opacity:.92;vector-effect:non-scaling-stroke}',
+      '.relphi-exact-degree-leader{stroke-width:1.55;stroke-linecap:round;opacity:.96;vector-effect:non-scaling-stroke}',
       '.relphi-degree-anchored-aspect{vector-effect:non-scaling-stroke}',
       '.relphi-shared-placement-host{pointer-events:auto}'
     ].join('');
