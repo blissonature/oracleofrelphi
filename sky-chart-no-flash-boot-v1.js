@@ -1,4 +1,4 @@
-// Prevents visitors from seeing intermediate Sky Chart renderers.
+// Prevents visitors from seeing intermediate Sky Chart renderers without blanking the page.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -10,15 +10,17 @@
     style.id = 'relphi-sky-no-flash-style';
     style.textContent = `
       .sky-chart-page.relphi-sky-preparing #relphiSkyWorkspace{
-        visibility:hidden!important;
-        opacity:0!important;
+        display:block!important;
+        visibility:visible!important;
+        opacity:1!important;
         pointer-events:none!important;
+        min-height:34rem!important;
+        position:relative!important;
       }
-      .sky-chart-page.relphi-sky-preparing #chartOutput{
-        min-height:34rem;
-        position:relative;
+      .sky-chart-page.relphi-sky-preparing #relphiSkyWorkspace>*{
+        visibility:hidden!important;
       }
-      .sky-chart-page.relphi-sky-preparing #chartOutput::before{
+      .sky-chart-page.relphi-sky-preparing #relphiSkyWorkspace::before{
         content:'Preparing chart…';
         position:absolute;
         inset:0;
@@ -31,13 +33,19 @@
         background:#fff;
         border:1px solid rgba(17,17,17,.09);
         border-radius:1rem;
+        visibility:visible!important;
+        z-index:50;
       }
       .sky-chart-page.relphi-sky-final-ready #relphiSkyWorkspace{
+        display:grid!important;
         visibility:visible!important;
         opacity:1!important;
         pointer-events:auto!important;
       }
-      .sky-chart-page.relphi-sky-final-ready #chartOutput::before{display:none!important}
+      .sky-chart-page.relphi-sky-final-ready #relphiSkyWorkspace>*{
+        visibility:visible!important;
+      }
+      .sky-chart-page.relphi-sky-final-ready #relphiSkyWorkspace::before{display:none!important}
     `;
     document.head.appendChild(style);
   }
