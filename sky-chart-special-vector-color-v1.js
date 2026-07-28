@@ -71,6 +71,7 @@
   load('sky-chart-workspace-edit-persistence-v1.js?v=1', function () {
     load('sky-chart-workspace-reconciliation-v1.js?v=1', function () {
       load('sky-chart-sky-b-card-guard-v1.js?v=1');
+      load('sky-chart-workspace-mobile-order-v1.js?v=1');
       load('sky-chart-final-wheel-layout-v1.js?v=1', function () {
         load('sky-chart-wheel-geometry-v2.js?v=2');
       });
