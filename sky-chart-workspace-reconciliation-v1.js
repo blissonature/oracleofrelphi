@@ -65,6 +65,47 @@
     if (changed) write(sessionStorage, STATE_KEY, state);
   }
 
+  function revealBuilder() {
+    const root = document.getElementById('relphiSkyBuilderV4');
+    if (!root) return;
+    root.hidden = false;
+    root.removeAttribute('hidden');
+    root.classList.add('relphi-v4-external-open');
+    const moveToBuilder = function () {
+      root.scrollIntoView({
+        block:'start',
+        behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+      });
+      const heading = root.querySelector('h2');
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll:true });
+      }
+    };
+    requestAnimationFrame(function () { requestAnimationFrame(moveToBuilder); });
+  }
+
+  function openComparisonBuilder() {
+    const native = document.querySelector('#relphiSkyBuilderV4 [data-action="add-comparison"]');
+    if (native) {
+      native.click();
+      revealBuilder();
+      return;
+    }
+
+    const state = read(sessionStorage, STATE_KEY) || {};
+    state.step = 'nameB';
+    state.editingSlot = 'skyB';
+    state.pendingName = '';
+    state.quickPurpose = '';
+    write(sessionStorage, STATE_KEY, state);
+
+    // The native builder owns rendering. Reload only as a last-resort recovery path.
+    const url = new URL(location.href);
+    url.searchParams.set('openSkyB', '1');
+    location.replace(url.toString());
+  }
+
   function addComparisonButton(workspace) {
     if (!workspace || workspace.querySelector('[data-relphi-add-comparison]')) return;
     if (recover('skyB')) return;
@@ -75,17 +116,7 @@
     button.dataset.relphiAddComparison = 'true';
     button.className = 'relphi-workspace-add-comparison';
     button.textContent = 'Add a comparison sky';
-    button.addEventListener('click', function () {
-      const native = document.querySelector('#relphiSkyBuilderV4 [data-action="add-comparison"]');
-      if (native) return native.click();
-      const state = read(sessionStorage, STATE_KEY) || {};
-      state.step = 'nameB';
-      state.editingSlot = 'skyB';
-      state.pendingName = '';
-      state.quickPurpose = '';
-      write(sessionStorage, STATE_KEY, state);
-      location.reload();
-    });
+    button.addEventListener('click', openComparisonBuilder);
     skyA.appendChild(button);
   }
 
@@ -93,7 +124,7 @@
     if (document.getElementById('relphi-workspace-reconciliation-style')) return;
     const style = document.createElement('style');
     style.id = 'relphi-workspace-reconciliation-style';
-    style.textContent = '.relphi-workspace-add-comparison{display:block;width:calc(100% - 32px);margin:0 16px 16px;padding:.7rem;border:1px solid var(--panel-accent,#dc1f18);border-radius:5px;background:#fff;color:var(--panel-accent,#dc1f18);font:inherit;font-weight:800;cursor:pointer}';
+    style.textContent = '.relphi-workspace-add-comparison{display:block;width:calc(100% - 32px);margin:0 16px 16px;padding:.7rem;border:1px solid var(--panel-accent,#dc1f18);border-radius:5px;background:#fff;color:var(--panel-accent,#dc1f18);font:inherit;font-weight:800;cursor:pointer}.relphi-v4-root.relphi-v4-external-open{scroll-margin-top:1rem}';
     document.head.appendChild(style);
   }
 
@@ -141,6 +172,20 @@
     window.addEventListener('storage', queue);
     window.addEventListener('relphi:sky-builder-v4-loaded', queue);
     window.addEventListener('relphi:extra-points-updated', queue);
+
+    // Recovery for a reload initiated before the native builder was available.
+    if (new URLSearchParams(location.search).get('openSkyB') === '1') {
+      const tryOpen = function () {
+        const native = document.querySelector('#relphiSkyBuilderV4 [data-action="add-comparison"]');
+        if (!native) return setTimeout(tryOpen, 80);
+        native.click();
+        revealBuilder();
+        const url = new URL(location.href);
+        url.searchParams.delete('openSkyB');
+        history.replaceState(null, '', url.toString());
+      };
+      tryOpen();
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
