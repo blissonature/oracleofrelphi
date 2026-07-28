@@ -74,9 +74,10 @@
       load('sky-chart-skinny-cards-v1.js?v=3', function () {
         load('sky-chart-skinny-cluster-context-v1.js?v=1');
       });
-      // The experimental shared-ring overlay remains paused because it can hide
-      // the stable comparison wheel before replacement glyphs have rendered.
-      load('sky-chart-center-panel-recovery-v1.js?v=2');
+      // One final wheel owns placement candy balls, exact notches, leaders, and aspects.
+      load('sky-chart-wheel-geometry-v2.js?v=6', function () {
+        load('sky-chart-final-render-gate-v1.js?v=1');
+      });
     });
   });
 })();
