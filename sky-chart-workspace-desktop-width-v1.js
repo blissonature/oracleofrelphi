@@ -8,6 +8,53 @@
     const style = document.createElement('style');
     style.id = 'relphi-workspace-desktop-width-style';
     style.textContent = `
+      #relphiSkyWorkspace .relphi-workspace-center,
+      #relphiSkyWorkspace .relphi-workspace-wheel-slot,
+      #relphiSkyWorkspace .sky-output-box,
+      #relphiSkyWorkspace .unified-sky-wheel {
+        height: auto !important;
+        min-height: 0 !important;
+        align-self: start !important;
+      }
+      #relphiSkyWorkspace .relphi-mobile-dual-card-view {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+        grid-auto-rows: auto !important;
+        align-items: start !important;
+        gap: .55rem !important;
+        min-height: 0 !important;
+        height: auto !important;
+      }
+      #relphiSkyWorkspace .relphi-mobile-dual-card-view .relphi-dual-card-item {
+        grid-row: 1 !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      #relphiSkyWorkspace .relphi-mobile-dual-card-view .relphi-dual-card-item:first-of-type {
+        grid-column: 1 !important;
+      }
+      #relphiSkyWorkspace .relphi-mobile-dual-card-view .relphi-dual-card-item:nth-of-type(2) {
+        grid-column: 3 !important;
+      }
+      #relphiSkyWorkspace .relphi-mobile-dual-card-view .relphi-progressive-reading,
+      #relphiSkyWorkspace .relphi-mobile-dual-card-view .relphi-canonical-relationship-reading,
+      #relphiSkyWorkspace .relphi-mobile-dual-card-view [class*="reading"] {
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        margin-top: .25rem !important;
+        line-height: 1.55 !important;
+        overflow-wrap: normal !important;
+        word-break: normal !important;
+        white-space: normal !important;
+      }
+      #relphiSkyWorkspace .relphi-canonical-token {
+        flex-wrap: nowrap !important;
+        white-space: nowrap !important;
+      }
       @media (min-width: 1180px) {
         body.sky-chart-page > main.tarot-app-shell {
           width: min(96vw, 1500px) !important;
@@ -29,6 +76,8 @@
         #relphiSkyWorkspace .sky-output-box > *,
         #relphiSkyWorkspace .unified-sky-wheel > * {
           max-width: 100% !important;
+          min-height: 0 !important;
+          height: auto !important;
         }
         #relphiSkyWorkspace .relphi-workspace-sky {
           min-width: 0 !important;
