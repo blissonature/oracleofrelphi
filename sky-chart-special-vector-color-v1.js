@@ -78,6 +78,7 @@
       });
       // One atomic renderer owns both skies' placements, dots, sticks, and aspect endpoints.
       load('sky-chart-comparison-lollipop-v1.js?v=4', function () {
+        load('sky-chart-comparison-glyph-scale-v1.js?v=1');
         load('sky-chart-comparison-exclusive-scene-v1.js?v=1');
         load('sky-chart-final-render-gate-v1.js?v=6');
       });
