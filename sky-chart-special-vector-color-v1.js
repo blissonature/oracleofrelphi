@@ -50,9 +50,7 @@
   });
   load('sky-chart-calculation-completion-guard-v1.js?v=1');
   load('sky-chart-dual-house-rings-v1.js?v=3', function () {
-    load('sky-chart-wheel-stability-v1.js?v=3', function () {
-      load('sky-chart-zodiac-placement-band-v1.js?v=2');
-    });
+    load('sky-chart-wheel-stability-v1.js?v=3');
     load('sky-chart-house-system-filter-v1.js?v=1', function () {
       load('sky-chart-house-system-filter-match-v1.js?v=1', function () {
         load('sky-chart-house-system-validation-v1.js?v=1', function () {
@@ -69,10 +67,10 @@
     load('sky-chart-workspace-reconciliation-v1.js?v=1', function () {
       load('sky-chart-sky-b-card-guard-v1.js?v=1');
       load('sky-chart-workspace-mobile-order-v1.js?v=1');
-      // These two scripts must always be requested in order. Do not wait on an
-      // existing-script load event, because that event may already have fired.
-      load('sky-chart-final-wheel-layout-v1.js?v=1');
-      load('sky-chart-wheel-geometry-v2.js?v=3');
+      // The shared-ring renderer is the sole owner of placement positions,
+      // exact-degree leaders, and aspect endpoints. Older placement-layout
+      // modules are intentionally not loaded because they overwrite this geometry.
+      load('sky-chart-wheel-geometry-v2.js?v=4');
     });
   });
 })();
