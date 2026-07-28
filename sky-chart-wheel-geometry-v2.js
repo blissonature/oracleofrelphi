@@ -1,4 +1,4 @@
-// Comparison-wheel overlay: fresh canonical placements inside the degree ring, exact-degree leaders, and degree-anchored aspects.
+// Comparison-wheel geometry: shared placement ring, exact-degree leaders, and notch-anchored aspects.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -15,13 +15,24 @@
   let applying = false;
   let generation = 0;
 
-  function read(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; } }
-  function placements(payload) { const value = payload && (payload.placements || payload); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
-  function normalize(value) { value %= 360; return value < 0 ? value + 360 : value; }
+  function read(key) {
+    try { return JSON.parse(localStorage.getItem(key) || 'null'); }
+    catch (_) { return null; }
+  }
+  function placements(payload) {
+    const value = payload && (payload.placements || payload);
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  }
+  function normalize(value) {
+    value %= 360;
+    return value < 0 ? value + 360 : value;
+  }
   function longitude(item) {
     if (!item) return NaN;
     if (Number.isFinite(Number(item.longitude))) return normalize(Number(item.longitude));
-    const sign = SIGNS.findIndex(function (name) { return name.toLowerCase() === String(item.sign || '').trim().toLowerCase(); });
+    const sign = SIGNS.findIndex(function (name) {
+      return name.toLowerCase() === String(item.sign || '').trim().toLowerCase();
+    });
     return sign < 0 ? NaN : sign * 30 + Number(item.degree || 0) + Number(item.minute || 0) / 60 + Number(item.second || 0) / 3600;
   }
   function resolveId(value) {
@@ -37,7 +48,10 @@
   }
   function ascLongitude() {
     const map = mapFor('skyA');
-    const key = Object.keys(map).find(function (name) { const id = resolveId(name); return id === 'asc' || /^(rising|ascendant|asc|ac)$/i.test(name); });
+    const key = Object.keys(map).find(function (name) {
+      const id = resolveId(name);
+      return id === 'asc' || /^(rising|ascendant|asc|ac)$/i.test(name);
+    });
     return key ? longitude(map[key]) : NaN;
   }
   function point(cx, cy, radius, degrees) {
@@ -45,7 +59,10 @@
     return { x:cx + Math.cos(radians) * radius, y:cy + Math.sin(radians) * radius };
   }
   function angleFor(value, asc) { return normalize(180 + value - asc); }
-  function num(node, name) { const value = Number(node && node.getAttribute(name)); return Number.isFinite(value) ? value : NaN; }
+  function num(node, name) {
+    const value = Number(node && node.getAttribute(name));
+    return Number.isFinite(value) ? value : NaN;
+  }
   function svgNode(name, attrs) {
     const node = document.createElementNS(NS, name);
     Object.keys(attrs || {}).forEach(function (key) { node.setAttribute(key, String(attrs[key])); });
@@ -58,8 +75,10 @@
     const zodiac = structure && structure.querySelector('.' + ZODIAC);
     const circles = zodiac && zodiac.querySelectorAll(':scope > circle');
     if (!structure || !zodiac || !circles || circles.length < 2) return null;
-    const cx = Number(structure.dataset.cx), cy = Number(structure.dataset.cy);
-    const outer = num(circles[0], 'r'), inner = num(circles[1], 'r');
+    const cx = Number(structure.dataset.cx);
+    const cy = Number(structure.dataset.cy);
+    const outer = num(circles[0], 'r');
+    const inner = num(circles[1], 'r');
     if (![cx, cy, outer, inner].every(Number.isFinite)) return null;
     return { structure, zodiac, cx, cy, outer, inner };
   }
@@ -98,25 +117,28 @@
   }
 
   function collisionLayout(items, markerRadius) {
-    for (let pass = 0; pass < 140; pass += 1) {
+    for (let pass = 0; pass < 180; pass += 1) {
       let changed = false;
-      for (let i = 0; i < items.length; i += 1) for (let j = i + 1; j < items.length; j += 1) {
-        const a = items[i], b = items[j];
-        const p = point(a.cx, a.cy, a.lane, a.angle + a.shift), q = point(b.cx, b.cy, b.lane, b.angle + b.shift);
-        const minimum = markerRadius * 2 + 4;
-        const distance = Math.hypot(q.x - p.x, q.y - p.y);
-        if (distance >= minimum) continue;
-        const direction = normalize(b.angle - a.angle) < 180 ? 1 : -1;
-        const push = Math.min(1.8, Math.max(.25, (minimum - distance) / Math.max(a.lane, b.lane) * 28));
-        a.shift = Math.max(-18, Math.min(18, a.shift - direction * push / 2));
-        b.shift = Math.max(-18, Math.min(18, b.shift + direction * push / 2));
-        changed = true;
+      for (let i = 0; i < items.length; i += 1) {
+        for (let j = i + 1; j < items.length; j += 1) {
+          const a = items[i], b = items[j];
+          const p = point(a.cx, a.cy, a.lane, a.angle + a.shift);
+          const q = point(b.cx, b.cy, b.lane, b.angle + b.shift);
+          const minimum = markerRadius * 2 + 4;
+          const distance = Math.hypot(q.x - p.x, q.y - p.y);
+          if (distance >= minimum) continue;
+          const direction = normalize(b.angle - a.angle) < 180 ? 1 : -1;
+          const push = Math.min(2, Math.max(.25, (minimum - distance) / a.lane * 30));
+          a.shift = Math.max(-22, Math.min(22, a.shift - direction * push / 2));
+          b.shift = Math.max(-22, Math.min(22, b.shift + direction * push / 2));
+          changed = true;
+        }
       }
       if (!changed) break;
     }
   }
 
-  function redrawAspects(svg, frame, layer) {
+  function redrawAspects(svg, frame, notchRadius, layer) {
     const candidates = Array.from(svg.querySelectorAll('line')).filter(function (node) {
       if (node.closest('.' + STRUCTURE + ',.' + OVERLAY + ',.relphi-final-degree-leaders')) return false;
       const cls = String(node.getAttribute('class') || '');
@@ -126,14 +148,18 @@
     candidates.forEach(function (node) {
       const x1 = num(node, 'x1'), y1 = num(node, 'y1'), x2 = num(node, 'x2'), y2 = num(node, 'y2');
       if (![x1, y1, x2, y2].every(Number.isFinite)) return;
-      const r1 = Math.hypot(x1 - frame.cx, y1 - frame.cy), r2 = Math.hypot(x2 - frame.cx, y2 - frame.cy);
+      const r1 = Math.hypot(x1 - frame.cx, y1 - frame.cy);
+      const r2 = Math.hypot(x2 - frame.cx, y2 - frame.cy);
       if (r1 < frame.inner * .42 || r2 < frame.inner * .42 || r1 > frame.outer + 12 || r2 > frame.outer + 12) return;
       const a1 = Math.atan2(y1 - frame.cy, x1 - frame.cx) * 180 / Math.PI;
       const a2 = Math.atan2(y2 - frame.cy, x2 - frame.cx) * 180 / Math.PI;
-      const p1 = point(frame.cx, frame.cy, frame.outer, a1), p2 = point(frame.cx, frame.cy, frame.outer, a2);
+      const p1 = point(frame.cx, frame.cy, notchRadius, a1);
+      const p2 = point(frame.cx, frame.cy, notchRadius, a2);
       const clone = node.cloneNode(false);
-      clone.setAttribute('x1', p1.x.toFixed(3)); clone.setAttribute('y1', p1.y.toFixed(3));
-      clone.setAttribute('x2', p2.x.toFixed(3)); clone.setAttribute('y2', p2.y.toFixed(3));
+      clone.setAttribute('x1', p1.x.toFixed(3));
+      clone.setAttribute('y1', p1.y.toFixed(3));
+      clone.setAttribute('x2', p2.x.toFixed(3));
+      clone.setAttribute('y2', p2.y.toFixed(3));
       clone.classList.add('relphi-degree-anchored-aspect');
       layer.appendChild(clone);
       node.dataset.relphiOriginalAspect = 'true';
@@ -143,51 +169,59 @@
 
   function render(svg) {
     const component = window.RelphiGlyphComponent;
-    const frame = frameFor(svg), asc = ascLongitude();
+    const frame = frameFor(svg);
+    const asc = ascLongitude();
     if (!component?.createBubble || !frame || !Number.isFinite(asc)) return false;
     const records = collect(svg);
     if (!records.length) return false;
 
     const renderId = ++generation;
-    const old = svg.querySelector(':scope > .' + OVERLAY);
+    const previous = svg.querySelector(':scope > .' + OVERLAY);
     const overlay = svgNode('g', { class:OVERLAY, 'pointer-events':'none', 'data-render-id':renderId });
     overlay.style.visibility = 'hidden';
     svg.appendChild(overlay);
 
-    const markerRadius = Math.max(12.5, Math.min(15, (frame.outer - frame.inner) * .38));
-    // Deliberately leave a visible gap between the degree-notch arc and both placement lanes.
-    const outerLane = Math.max(frame.inner - markerRadius - 20, frame.inner * .72);
-    const innerLane = Math.max(outerLane - markerRadius * 2 - 12, frame.inner * .54);
+    const bandWidth = Math.max(1, frame.outer - frame.inner);
+    const markerRadius = Math.max(11.5, Math.min(14, bandWidth * .22));
+    const notchRadius = frame.inner;
+    const minimumLane = notchRadius + markerRadius + 11;
+    const maximumLane = frame.outer - markerRadius - 8;
+    const sharedLane = Math.max(minimumLane, Math.min(maximumLane, frame.inner + bandWidth * .58));
+    if (!(sharedLane > notchRadius + markerRadius)) {
+      overlay.remove();
+      return false;
+    }
+
     const items = records.map(function (record) {
       const value = longitude(placementFor(record.id, record.sky));
       if (!Number.isFinite(value)) return null;
-      return { ...record, cx:frame.cx, cy:frame.cy, angle:angleFor(value, asc), shift:0, lane:record.sky === 'skyB' ? innerLane : outerLane };
+      return { ...record, cx:frame.cx, cy:frame.cy, angle:angleFor(value, asc), shift:0, lane:sharedLane };
     }).filter(Boolean);
     if (!items.length) { overlay.remove(); return false; }
     collisionLayout(items, markerRadius);
 
     const aspectLayer = svgNode('g', { class:'relphi-degree-anchored-aspects', 'pointer-events':'none' });
     const leaderLayer = svgNode('g', { class:'relphi-exact-degree-leaders', 'pointer-events':'none' });
-    const markerLayer = svgNode('g', { class:'relphi-inside-sign-placements' });
+    const markerLayer = svgNode('g', { class:'relphi-shared-placement-ring' });
     overlay.append(aspectLayer, leaderLayer, markerLayer);
-    redrawAspects(svg, frame, aspectLayer);
+    redrawAspects(svg, frame, notchRadius, aspectLayer);
 
     const jobs = [];
     applying = true;
     items.forEach(function (item) {
-      const anchor = point(frame.cx, frame.cy, frame.outer, item.angle);
+      const anchor = point(frame.cx, frame.cy, notchRadius, item.angle);
       const display = point(frame.cx, frame.cy, item.lane, item.angle + item.shift);
-      const leader = svgNode('line', {
+      leaderLayer.appendChild(svgNode('line', {
         class:'relphi-exact-degree-leader',
         'data-sky':item.sky,
         'data-glyph-id':item.id,
+        stroke:COLORS[item.sky],
         x1:anchor.x.toFixed(3), y1:anchor.y.toFixed(3),
         x2:display.x.toFixed(3), y2:display.y.toFixed(3)
-      });
-      leaderLayer.appendChild(leader);
+      }));
 
       const host = svgNode('g', {
-        class:'relphi-inside-sign-placement-host',
+        class:'relphi-shared-placement-host',
         'data-sky':item.sky,
         'data-glyph-id':item.id,
         transform:'translate(' + display.x.toFixed(3) + ' ' + display.y.toFixed(3) + ')'
@@ -201,34 +235,42 @@
           fill:'#fff',
           strokeWidth:2.35
         }).ready);
-      } catch (_) {
-        jobs.push(Promise.reject(_));
+      } catch (error) {
+        jobs.push(Promise.reject(error));
       }
     });
 
-    Promise.allSettled(jobs).then(function (results) {
+    Promise.all(jobs).then(function () {
       if (!svg.isConnected || overlay.dataset.renderId !== String(renderId)) return;
-      const successes = results.filter(function (result) { return result.status === 'fulfilled'; }).length;
-      if (!successes) { overlay.remove(); return; }
       items.forEach(function (item) {
         item.host.dataset.relphiV2Hidden = 'true';
         item.host.style.visibility = 'hidden';
         item.host.style.opacity = '0';
       });
-      if (old && old !== overlay) old.remove();
+      if (previous && previous !== overlay) previous.remove();
       overlay.style.visibility = 'visible';
       overlay.dataset.ready = 'true';
-    }).finally(function () { applying = false; });
+    }).catch(function () {
+      overlay.remove();
+    }).finally(function () {
+      applying = false;
+    });
     return true;
   }
 
   function run() {
     queued = false;
     let pending = false;
-    document.querySelectorAll(WHEELS).forEach(function (svg) { if (!render(svg)) pending = true; });
+    document.querySelectorAll(WHEELS).forEach(function (svg) {
+      if (!render(svg)) pending = true;
+    });
     if (pending) setTimeout(queue, 160);
   }
-  function queue() { if (queued) return; queued = true; requestAnimationFrame(function () { requestAnimationFrame(run); }); }
+  function queue() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { requestAnimationFrame(run); });
+  }
   function relevant(records) {
     if (applying) return false;
     return records.some(function (record) {
@@ -243,11 +285,11 @@
     style.id = 'relphi-wheel-geometry-v2-style';
     style.textContent = [
       '.' + OVERLAY + '{pointer-events:none}',
-      '.relphi-degree-anchored-aspects{opacity:.92}',
+      '.relphi-degree-anchored-aspects{opacity:.96}',
       '.relphi-exact-degree-leaders{opacity:1}',
-      '.relphi-exact-degree-leader{stroke:#111;stroke-width:1.25;stroke-linecap:round;opacity:.92;vector-effect:non-scaling-stroke}',
+      '.relphi-exact-degree-leader{stroke-width:1.35;stroke-linecap:round;opacity:.92;vector-effect:non-scaling-stroke}',
       '.relphi-degree-anchored-aspect{vector-effect:non-scaling-stroke}',
-      '.relphi-inside-sign-placement-host{pointer-events:auto}'
+      '.relphi-shared-placement-host{pointer-events:auto}'
     ].join('');
     document.head.appendChild(style);
   }
