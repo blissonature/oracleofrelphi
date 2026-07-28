@@ -74,6 +74,7 @@
       load('sky-chart-skinny-cards-v1.js?v=4', function () {
         load('sky-chart-skinny-cluster-context-v1.js?v=1');
         load('sky-chart-skinny-heptagram-v1.js?v=1');
+        load('sky-chart-skinny-aspect-anchor-v1.js?v=1');
       });
       // One final wheel owns placement candy balls, exact notches, leaders, and aspects.
       load('sky-chart-wheel-geometry-v2.js?v=6', function () {
