@@ -1,4 +1,4 @@
-// Final comparison-wheel overlay: placements inside the sign border, exact-degree leaders, and aspect endpoints on the degree ring.
+// Comparison-wheel overlay: fresh canonical placements inside the degree ring, exact-degree leaders, and degree-anchored aspects.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -10,8 +10,10 @@
   const OVERLAY = 'relphi-wheel-geometry-v2';
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const KEYS = { skyA:'relphiSkyChartA', skyB:'relphiSkyChartB' };
+  const COLORS = { skyA:'#dc1f18', skyB:'#3166e2' };
   let queued = false;
   let applying = false;
+  let generation = 0;
 
   function read(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; } }
   function placements(payload) { const value = payload && (payload.placements || payload); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
@@ -44,6 +46,11 @@
   }
   function angleFor(value, asc) { return normalize(180 + value - asc); }
   function num(node, name) { const value = Number(node && node.getAttribute(name)); return Number.isFinite(value) ? value : NaN; }
+  function svgNode(name, attrs) {
+    const node = document.createElementNS(NS, name);
+    Object.keys(attrs || {}).forEach(function (key) { node.setAttribute(key, String(attrs[key])); });
+    return node;
+  }
 
   function frameFor(svg) {
     const structures = Array.from(svg.querySelectorAll(':scope > .' + STRUCTURE + '[data-ready="true"]'));
@@ -53,7 +60,7 @@
     if (!structure || !zodiac || !circles || circles.length < 2) return null;
     const cx = Number(structure.dataset.cx), cy = Number(structure.dataset.cy);
     const outer = num(circles[0], 'r'), inner = num(circles[1], 'r');
-    if (![cx,cy,outer,inner].every(Number.isFinite)) return null;
+    if (![cx, cy, outer, inner].every(Number.isFinite)) return null;
     return { structure, zodiac, cx, cy, outer, inner };
   }
 
@@ -74,16 +81,7 @@
     }
     return bubble.parentElement;
   }
-  function radiusFor(host) {
-    const circle = host.querySelector('.relphi-glyph-bubble>circle,.relphi-approved-inscribed-unit .relphi-glyph-bubble>circle');
-    const r = Number(circle && circle.getAttribute('r'));
-    if (Number.isFinite(r) && r > 0) {
-      const match = String(host.querySelector('.relphi-approved-inscribed-unit')?.getAttribute('transform') || '').match(/scale\(([-+\d.]+)\)/);
-      return match ? r * Number(match[1]) : r;
-    }
-    return 18;
-  }
-  function collect(svg, frame) {
+  function collect(svg) {
     const seen = new Set();
     const result = [];
     svg.querySelectorAll('.relphi-glyph-bubble').forEach(function (bubble) {
@@ -94,103 +92,174 @@
       const sky = skyFor(host);
       if (!id || !placementFor(id, sky)) return;
       seen.add(host);
-      result.push({ host, id, sky, radius:radiusFor(host) });
+      result.push({ host, id, sky });
     });
     return result;
   }
 
-  function collisionLayout(items) {
-    for (let pass=0; pass<120; pass+=1) {
-      let changed=false;
-      for (let i=0;i<items.length;i+=1) for (let j=i+1;j<items.length;j+=1) {
-        const a=items[i], b=items[j];
-        const p=point(a.cx,a.cy,a.lane,a.angle+a.shift), q=point(b.cx,b.cy,b.lane,b.angle+b.shift);
-        const min=a.radius+b.radius+5, dist=Math.hypot(q.x-p.x,q.y-p.y);
-        if (dist>=min) continue;
-        const direction=normalize(b.angle-a.angle)<180?1:-1;
-        const push=Math.min(1.5,Math.max(.2,(min-dist)/Math.max(a.lane,b.lane)*24));
-        a.shift=Math.max(-16,Math.min(16,a.shift-direction*push/2));
-        b.shift=Math.max(-16,Math.min(16,b.shift+direction*push/2));
-        changed=true;
+  function collisionLayout(items, markerRadius) {
+    for (let pass = 0; pass < 140; pass += 1) {
+      let changed = false;
+      for (let i = 0; i < items.length; i += 1) for (let j = i + 1; j < items.length; j += 1) {
+        const a = items[i], b = items[j];
+        const p = point(a.cx, a.cy, a.lane, a.angle + a.shift), q = point(b.cx, b.cy, b.lane, b.angle + b.shift);
+        const minimum = markerRadius * 2 + 4;
+        const distance = Math.hypot(q.x - p.x, q.y - p.y);
+        if (distance >= minimum) continue;
+        const direction = normalize(b.angle - a.angle) < 180 ? 1 : -1;
+        const push = Math.min(1.8, Math.max(.25, (minimum - distance) / Math.max(a.lane, b.lane) * 28));
+        a.shift = Math.max(-18, Math.min(18, a.shift - direction * push / 2));
+        b.shift = Math.max(-18, Math.min(18, b.shift + direction * push / 2));
+        changed = true;
       }
-      if(!changed)break;
+      if (!changed) break;
     }
   }
 
-  function svgNode(name, attrs) {
-    const node=document.createElementNS(NS,name);
-    Object.keys(attrs||{}).forEach(function(key){node.setAttribute(key,String(attrs[key]));});
-    return node;
-  }
-
-  function redrawAspects(svg, frame, overlay) {
-    const aspectLayer=svgNode('g',{class:'relphi-degree-anchored-aspects','pointer-events':'none'});
-    const candidates=Array.from(svg.querySelectorAll('line,path')).filter(function(node){
-      if(node.closest('.'+STRUCTURE+',.'+OVERLAY+',.relphi-final-degree-leaders'))return false;
-      const cls=String(node.getAttribute('class')||'');
-      const stroke=String(node.getAttribute('stroke')||getComputedStyle(node).stroke||'').toLowerCase();
-      return /aspect|relationship|connection/i.test(cls)||(/rgb|#/.test(stroke)&&!/none|transparent|#111|#000|black|dc1f18|3166e2/.test(stroke));
+  function redrawAspects(svg, frame, layer) {
+    const candidates = Array.from(svg.querySelectorAll('line')).filter(function (node) {
+      if (node.closest('.' + STRUCTURE + ',.' + OVERLAY + ',.relphi-final-degree-leaders')) return false;
+      const cls = String(node.getAttribute('class') || '');
+      const stroke = String(node.getAttribute('stroke') || getComputedStyle(node).stroke || '').toLowerCase();
+      return /aspect|relationship|connection/i.test(cls) || (/rgb|#/.test(stroke) && !/none|transparent|#111|#000|black|dc1f18|3166e2/.test(stroke));
     });
-    candidates.forEach(function(node){
-      if(node.tagName.toLowerCase()!=='line')return;
-      const x1=num(node,'x1'),y1=num(node,'y1'),x2=num(node,'x2'),y2=num(node,'y2');
-      if(![x1,y1,x2,y2].every(Number.isFinite))return;
-      const r1=Math.hypot(x1-frame.cx,y1-frame.cy),r2=Math.hypot(x2-frame.cx,y2-frame.cy);
-      if(r1<frame.inner*.45||r2<frame.inner*.45||r1>frame.outer+8||r2>frame.outer+8)return;
-      const a1=Math.atan2(y1-frame.cy,x1-frame.cx)*180/Math.PI;
-      const a2=Math.atan2(y2-frame.cy,x2-frame.cx)*180/Math.PI;
-      const p1=point(frame.cx,frame.cy,frame.outer,a1),p2=point(frame.cx,frame.cy,frame.outer,a2);
-      const clone=node.cloneNode(false);
-      clone.setAttribute('x1',p1.x.toFixed(3));clone.setAttribute('y1',p1.y.toFixed(3));
-      clone.setAttribute('x2',p2.x.toFixed(3));clone.setAttribute('y2',p2.y.toFixed(3));
+    candidates.forEach(function (node) {
+      const x1 = num(node, 'x1'), y1 = num(node, 'y1'), x2 = num(node, 'x2'), y2 = num(node, 'y2');
+      if (![x1, y1, x2, y2].every(Number.isFinite)) return;
+      const r1 = Math.hypot(x1 - frame.cx, y1 - frame.cy), r2 = Math.hypot(x2 - frame.cx, y2 - frame.cy);
+      if (r1 < frame.inner * .42 || r2 < frame.inner * .42 || r1 > frame.outer + 12 || r2 > frame.outer + 12) return;
+      const a1 = Math.atan2(y1 - frame.cy, x1 - frame.cx) * 180 / Math.PI;
+      const a2 = Math.atan2(y2 - frame.cy, x2 - frame.cx) * 180 / Math.PI;
+      const p1 = point(frame.cx, frame.cy, frame.outer, a1), p2 = point(frame.cx, frame.cy, frame.outer, a2);
+      const clone = node.cloneNode(false);
+      clone.setAttribute('x1', p1.x.toFixed(3)); clone.setAttribute('y1', p1.y.toFixed(3));
+      clone.setAttribute('x2', p2.x.toFixed(3)); clone.setAttribute('y2', p2.y.toFixed(3));
       clone.classList.add('relphi-degree-anchored-aspect');
-      aspectLayer.appendChild(clone);
-      node.dataset.relphiOriginalAspect='true';node.style.visibility='hidden';
+      layer.appendChild(clone);
+      node.dataset.relphiOriginalAspect = 'true';
+      node.style.visibility = 'hidden';
     });
-    overlay.appendChild(aspectLayer);
   }
 
   function render(svg) {
-    const frame=frameFor(svg), asc=ascLongitude();
-    if(!frame||!Number.isFinite(asc))return false;
-    const records=collect(svg,frame);
-    if(!records.length)return false;
-    const old=svg.querySelector(':scope>.'+OVERLAY);if(old)old.remove();
-    const overlay=svgNode('g',{class:OVERLAY,'pointer-events':'none'});
+    const component = window.RelphiGlyphComponent;
+    const frame = frameFor(svg), asc = ascLongitude();
+    if (!component?.createBubble || !frame || !Number.isFinite(asc)) return false;
+    const records = collect(svg);
+    if (!records.length) return false;
+
+    const renderId = ++generation;
+    const old = svg.querySelector(':scope > .' + OVERLAY);
+    const overlay = svgNode('g', { class:OVERLAY, 'pointer-events':'none', 'data-render-id':renderId });
+    overlay.style.visibility = 'hidden';
     svg.appendChild(overlay);
-    const largest=records.reduce(function(v,r){return Math.max(v,r.radius);},18);
-    const laneOuter=Math.max(frame.inner-largest-10,frame.inner*.78);
-    const laneInner=Math.max(laneOuter-largest*2-8,frame.inner*.60);
-    const items=records.map(function(record){
-      const value=longitude(placementFor(record.id,record.sky));
-      if(!Number.isFinite(value))return null;
-      return {...record,cx:frame.cx,cy:frame.cy,angle:angleFor(value,asc),shift:0,lane:record.sky==='skyB'?laneInner:laneOuter};
+
+    const markerRadius = Math.max(12.5, Math.min(15, (frame.outer - frame.inner) * .38));
+    // Deliberately leave a visible gap between the degree-notch arc and both placement lanes.
+    const outerLane = Math.max(frame.inner - markerRadius - 20, frame.inner * .72);
+    const innerLane = Math.max(outerLane - markerRadius * 2 - 12, frame.inner * .54);
+    const items = records.map(function (record) {
+      const value = longitude(placementFor(record.id, record.sky));
+      if (!Number.isFinite(value)) return null;
+      return { ...record, cx:frame.cx, cy:frame.cy, angle:angleFor(value, asc), shift:0, lane:record.sky === 'skyB' ? innerLane : outerLane };
     }).filter(Boolean);
-    collisionLayout(items);
-    const leaderLayer=svgNode('g',{class:'relphi-exact-degree-leaders','pointer-events':'none'});
-    const markerLayer=svgNode('g',{class:'relphi-inside-sign-placements'});
-    overlay.append(leaderLayer,markerLayer);
-    applying=true;
-    items.forEach(function(item){
-      const anchor=point(frame.cx,frame.cy,frame.outer,item.angle);
-      const display=point(frame.cx,frame.cy,item.lane,item.angle+item.shift);
-      const clone=item.host.cloneNode(true);
-      clone.removeAttribute('style');
-      clone.setAttribute('transform','translate('+display.x.toFixed(3)+' '+display.y.toFixed(3)+')');
-      clone.dataset.sky=item.sky;clone.dataset.glyphId=item.id;
-      markerLayer.appendChild(clone);
-      item.host.dataset.relphiV2Hidden='true';item.host.style.visibility='hidden';item.host.style.opacity='0';
-      leaderLayer.appendChild(svgNode('line',{class:'relphi-exact-degree-leader','data-sky':item.sky,'data-glyph-id':item.id,x1:anchor.x.toFixed(3),y1:anchor.y.toFixed(3),x2:display.x.toFixed(3),y2:display.y.toFixed(3)}));
+    if (!items.length) { overlay.remove(); return false; }
+    collisionLayout(items, markerRadius);
+
+    const aspectLayer = svgNode('g', { class:'relphi-degree-anchored-aspects', 'pointer-events':'none' });
+    const leaderLayer = svgNode('g', { class:'relphi-exact-degree-leaders', 'pointer-events':'none' });
+    const markerLayer = svgNode('g', { class:'relphi-inside-sign-placements' });
+    overlay.append(aspectLayer, leaderLayer, markerLayer);
+    redrawAspects(svg, frame, aspectLayer);
+
+    const jobs = [];
+    applying = true;
+    items.forEach(function (item) {
+      const anchor = point(frame.cx, frame.cy, frame.outer, item.angle);
+      const display = point(frame.cx, frame.cy, item.lane, item.angle + item.shift);
+      const leader = svgNode('line', {
+        class:'relphi-exact-degree-leader',
+        'data-sky':item.sky,
+        'data-glyph-id':item.id,
+        x1:anchor.x.toFixed(3), y1:anchor.y.toFixed(3),
+        x2:display.x.toFixed(3), y2:display.y.toFixed(3)
+      });
+      leaderLayer.appendChild(leader);
+
+      const host = svgNode('g', {
+        class:'relphi-inside-sign-placement-host',
+        'data-sky':item.sky,
+        'data-glyph-id':item.id,
+        transform:'translate(' + display.x.toFixed(3) + ' ' + display.y.toFixed(3) + ')'
+      });
+      markerLayer.appendChild(host);
+      try {
+        jobs.push(component.createBubble(host, item.id, {
+          radius:markerRadius,
+          padding:1,
+          color:COLORS[item.sky],
+          fill:'#fff',
+          strokeWidth:2.35
+        }).ready);
+      } catch (_) {
+        jobs.push(Promise.reject(_));
+      }
     });
-    redrawAspects(svg,frame,overlay);
-    applying=false;
+
+    Promise.allSettled(jobs).then(function (results) {
+      if (!svg.isConnected || overlay.dataset.renderId !== String(renderId)) return;
+      const successes = results.filter(function (result) { return result.status === 'fulfilled'; }).length;
+      if (!successes) { overlay.remove(); return; }
+      items.forEach(function (item) {
+        item.host.dataset.relphiV2Hidden = 'true';
+        item.host.style.visibility = 'hidden';
+        item.host.style.opacity = '0';
+      });
+      if (old && old !== overlay) old.remove();
+      overlay.style.visibility = 'visible';
+      overlay.dataset.ready = 'true';
+    }).finally(function () { applying = false; });
     return true;
   }
 
-  function run(){queued=false;let pending=false;document.querySelectorAll(WHEELS).forEach(function(svg){if(!render(svg))pending=true;});if(pending)setTimeout(queue,140);}
-  function queue(){if(queued)return;queued=true;requestAnimationFrame(function(){requestAnimationFrame(run);});}
-  function relevant(records){if(applying)return false;return records.some(function(record){return Array.from(record.addedNodes||[]).concat(Array.from(record.removedNodes||[])).some(function(node){return node&&node.nodeType===1&&((node.matches&&node.matches('.'+STRUCTURE+',.relphi-glyph-bubble,.relphi-canonical-marker-layer'))||(node.querySelector&&node.querySelector('.'+STRUCTURE+',.relphi-glyph-bubble,.relphi-canonical-marker-layer')));});});}
-  function styles(){if(document.getElementById('relphi-wheel-geometry-v2-style'))return;const style=document.createElement('style');style.id='relphi-wheel-geometry-v2-style';style.textContent='.'+OVERLAY+'{pointer-events:none}.relphi-exact-degree-leader{stroke:#111;stroke-width:1.15;stroke-linecap:round;opacity:.9;vector-effect:non-scaling-stroke}.relphi-degree-anchored-aspect{vector-effect:non-scaling-stroke}';document.head.appendChild(style);}
-  function start(){styles();queue();new MutationObserver(function(records){if(relevant(records))queue();}).observe(document.body,{childList:true,subtree:true});window.addEventListener('relphi:wheel-structure-ready',queue);window.addEventListener('relphi:extra-points-updated',queue);window.addEventListener('relphi:house-system-changed',queue);window.addEventListener('storage',queue);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+  function run() {
+    queued = false;
+    let pending = false;
+    document.querySelectorAll(WHEELS).forEach(function (svg) { if (!render(svg)) pending = true; });
+    if (pending) setTimeout(queue, 160);
+  }
+  function queue() { if (queued) return; queued = true; requestAnimationFrame(function () { requestAnimationFrame(run); }); }
+  function relevant(records) {
+    if (applying) return false;
+    return records.some(function (record) {
+      return Array.from(record.addedNodes || []).concat(Array.from(record.removedNodes || [])).some(function (node) {
+        return node && node.nodeType === 1 && ((node.matches && node.matches('.' + STRUCTURE + ',.relphi-glyph-bubble,.relphi-canonical-marker-layer')) || (node.querySelector && node.querySelector('.' + STRUCTURE + ',.relphi-glyph-bubble,.relphi-canonical-marker-layer')));
+      });
+    });
+  }
+  function styles() {
+    if (document.getElementById('relphi-wheel-geometry-v2-style')) return;
+    const style = document.createElement('style');
+    style.id = 'relphi-wheel-geometry-v2-style';
+    style.textContent = [
+      '.' + OVERLAY + '{pointer-events:none}',
+      '.relphi-degree-anchored-aspects{opacity:.92}',
+      '.relphi-exact-degree-leaders{opacity:1}',
+      '.relphi-exact-degree-leader{stroke:#111;stroke-width:1.25;stroke-linecap:round;opacity:.92;vector-effect:non-scaling-stroke}',
+      '.relphi-degree-anchored-aspect{vector-effect:non-scaling-stroke}',
+      '.relphi-inside-sign-placement-host{pointer-events:auto}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+  function start() {
+    styles();
+    queue();
+    new MutationObserver(function (records) { if (relevant(records)) queue(); }).observe(document.body, { childList:true, subtree:true });
+    window.addEventListener('relphi:wheel-structure-ready', queue);
+    window.addEventListener('relphi:extra-points-updated', queue);
+    window.addEventListener('relphi:house-system-changed', queue);
+    window.addEventListener('storage', queue);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
+  else start();
 })();
