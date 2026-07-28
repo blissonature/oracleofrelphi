@@ -8,10 +8,7 @@
     const base = src.split('?')[0];
     const existing = document.querySelector('script[src^="' + base + '"]');
     if (existing) {
-      if (done) {
-        if (existing.dataset.relphiLoaded === 'true') setTimeout(done, 0);
-        else existing.addEventListener('load', done, { once:true });
-      }
+      if (done) setTimeout(done, 0);
       return existing;
     }
     const script = document.createElement('script');
@@ -72,9 +69,10 @@
     load('sky-chart-workspace-reconciliation-v1.js?v=1', function () {
       load('sky-chart-sky-b-card-guard-v1.js?v=1');
       load('sky-chart-workspace-mobile-order-v1.js?v=1');
-      load('sky-chart-final-wheel-layout-v1.js?v=1', function () {
-        load('sky-chart-wheel-geometry-v2.js?v=2');
-      });
+      // These two scripts must always be requested in order. Do not wait on an
+      // existing-script load event, because that event may already have fired.
+      load('sky-chart-final-wheel-layout-v1.js?v=1');
+      load('sky-chart-wheel-geometry-v2.js?v=3');
     });
   });
 })();
