@@ -1,10 +1,11 @@
-// Reveals the Sky Chart workspace only when the final cards and lollipop wheel are ready.
+// Reveals the Sky Chart quickly, then allows the final lollipop wheel to replace atomically.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   let timer = 0;
   let started = Date.now();
+  let revealed = false;
 
   function hasSkyB() {
     try { return !!JSON.parse(localStorage.getItem('relphiSkyChartB') || 'null'); }
@@ -31,37 +32,44 @@
     return !!overlay && overlay.querySelectorAll('.relphi-shared-placement-host').length > 1;
   }
 
+  function reveal(finalReady) {
+    if (revealed) return;
+    revealed = true;
+    window.RelphiSkyRenderGate?.reveal();
+    document.body.classList.toggle('relphi-sky-render-fallback', !finalReady);
+    if (finalReady) window.dispatchEvent(new Event('relphi:sky-final-render-ready'));
+  }
+
   function check() {
     clearTimeout(timer);
     const workspace = document.getElementById('relphiSkyWorkspace');
-    if (workspace && cardsReady(workspace) && wheelReady(workspace)) {
+    const finalReady = !!workspace && cardsReady(workspace) && wheelReady(workspace);
+    if (finalReady) {
       requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          window.RelphiSkyRenderGate?.reveal();
-          window.dispatchEvent(new Event('relphi:sky-final-render-ready'));
-        });
+        requestAnimationFrame(function () { reveal(true); });
       });
       return;
     }
-    if (Date.now() - started > 15000) {
-      // Keep a stable fallback rather than exposing intermediate redraws.
-      const note = document.querySelector('#chartOutput::before');
-      window.RelphiSkyRenderGate?.reveal();
-      document.body.classList.add('relphi-sky-render-fallback');
+    if (Date.now() - started >= 1000) {
+      reveal(false);
       return;
     }
-    timer = setTimeout(check, 100);
+    timer = setTimeout(check, 80);
   }
 
-  function prepareAndCheck() {
-    started = Date.now();
-    window.RelphiSkyRenderGate?.prepare();
-    check();
+  function recheckWithoutHiding() {
+    if (!revealed) return check();
+    const workspace = document.getElementById('relphiSkyWorkspace');
+    if (workspace && cardsReady(workspace) && wheelReady(workspace)) {
+      document.body.classList.remove('relphi-sky-render-fallback');
+      window.dispatchEvent(new Event('relphi:sky-final-render-ready'));
+    }
   }
 
-  window.addEventListener('storage', prepareAndCheck);
-  window.addEventListener('relphi:extra-points-updated', prepareAndCheck);
-  window.addEventListener('relphi:house-system-changed', prepareAndCheck);
+  window.addEventListener('storage', recheckWithoutHiding);
+  window.addEventListener('relphi:extra-points-updated', recheckWithoutHiding);
+  window.addEventListener('relphi:house-system-changed', recheckWithoutHiding);
+  window.addEventListener('relphi:wheel-structure-ready', recheckWithoutHiding);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', check, {once:true});
   else check();
 })();
