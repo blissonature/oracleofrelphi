@@ -89,7 +89,7 @@
   async function drawMiniZodiac(slot, payload, card) {
     const svg = card.querySelector('.relphi-skinny-solo svg');
     const component = window.RelphiGlyphComponent;
-    if (!svg || !component?.draw) return;
+    if (!svg || !component?.draw || !component?.createBubble) return;
     svg.replaceChildren();
 
     const color = COLORS[slot];
@@ -141,10 +141,10 @@
       svg.appendChild(node('line',{class:'planet-center-ray',x1:cx,y1:cy,x2:anchor.x,y2:anchor.y,stroke:'#222','stroke-width':'.55',opacity:'.13'}));
       svg.appendChild(node('line',{class:'planet-stick',x1:anchor.x,y1:anchor.y,x2:display.x,y2:display.y,stroke:'#222','stroke-width':'.9',opacity:'.72','stroke-linecap':'round'}));
       svg.appendChild(node('circle',{class:'planet-contact',cx:anchor.x,cy:anchor.y,r:'2.1',fill:color,stroke:'#fff','stroke-width':'.7'}));
-      const marker = node('g',{class:'planet-marker',transform:'translate(' + display.x + ' ' + display.y + ')','data-glyph-id':entry.id});
-      marker.appendChild(node('circle',{class:'planet-dot',cx:0,cy:0,r:'8.2',fill:'#fff',stroke:color,'stroke-width':'1.45'}));
+      const marker = node('g',{class:'planet-marker relphi-inscribed-lollipop',transform:'translate(' + display.x + ' ' + display.y + ')','data-glyph-id':entry.id});
       svg.appendChild(marker);
-      jobs.push(component.draw(marker,entry.id,{radius:5.4,padding:.35,color:color}));
+      const bubble = component.createBubble(marker,entry.id,{radius:8.2,padding:1,color:color,fill:'#fff',strokeWidth:2.35});
+      if (bubble?.ready) jobs.push(bubble.ready);
     });
     await Promise.allSettled(jobs);
   }
