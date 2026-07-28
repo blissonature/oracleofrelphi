@@ -1,4 +1,4 @@
-// Atomic comparison-wheel lollipop renderer built directly from saved sky data.
+// Atomic comparison-wheel lollipop renderer built directly from both saved skies.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -15,13 +15,12 @@
   let generation = 0;
 
   function read(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; } }
-  function placements(payload) { const value = payload && (payload.placements || payload); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
   function normalize(value) { value %= 360; return value < 0 ? value + 360 : value; }
   function longitude(item) {
     if (!item) return NaN;
     if (Number.isFinite(Number(item.longitude))) return normalize(Number(item.longitude));
-    const sign = SIGNS.findIndex(name => name.toLowerCase() === String(item.sign || '').trim().toLowerCase());
-    return sign < 0 ? NaN : sign * 30 + Number(item.degree || 0) + Number(item.minute || 0) / 60 + Number(item.second || 0) / 3600;
+    const sign = SIGNS.findIndex(name => name.toLowerCase() === String(item.sign || item.zodiac || '').trim().toLowerCase());
+    return sign < 0 ? NaN : sign * 30 + Number(item.degree || item.degrees || 0) + Number(item.minute || item.minutes || 0) / 60 + Number(item.second || item.seconds || 0) / 3600;
   }
   function resolve(value) {
     try { return window.RelphiGlyphRegistry?.resolve(value)?.id || window.RelphiGlyphRegistry?.get(value)?.id || ''; }
@@ -30,6 +29,33 @@
   function point(cx, cy, radius, degrees) { const r = degrees * Math.PI / 180; return { x:cx + Math.cos(r) * radius, y:cy + Math.sin(r) * radius }; }
   function node(name, attrs) { const el = document.createElementNS(NS,name); Object.entries(attrs || {}).forEach(([k,v]) => el.setAttribute(k,String(v))); return el; }
   function num(el, attr) { const value = Number(el?.getAttribute(attr)); return Number.isFinite(value) ? value : NaN; }
+
+  function placementEntries(payload) {
+    if (!payload) return [];
+    const candidates = [payload.placements, payload.positions, payload.points, payload.bodies, payload];
+    const source = candidates.find(value => value && typeof value === 'object');
+    if (!source) return [];
+    if (Array.isArray(source)) {
+      return source.map((item,index) => {
+        const key = item?.name || item?.label || item?.body || item?.planet || item?.point || item?.id || String(index);
+        return [String(key), item];
+      });
+    }
+    return Object.entries(source).filter(([,item]) => item && typeof item === 'object' && !Array.isArray(item));
+  }
+
+  function glyphId(key, item) {
+    const candidates = [key, item?.name, item?.label, item?.body, item?.planet, item?.point, item?.glyphId, item?.id];
+    for (const candidate of candidates) {
+      if (!candidate) continue;
+      const direct = resolve(candidate);
+      if (direct) return direct;
+      const cleaned = String(candidate).replace(/^[^A-Za-z]+/, '').replace(/\s+/g, ' ').trim();
+      const fallback = resolve(cleaned);
+      if (fallback) return fallback;
+    }
+    return '';
+  }
 
   function frameFor(svg) {
     const structures = Array.from(svg.querySelectorAll('.' + STRUCTURE + '[data-ready="true"]'));
@@ -44,24 +70,30 @@
   }
 
   function ascLongitude() {
-    const map = placements(read(KEYS.skyA));
-    const key = Object.keys(map).find(name => /^(rising|ascendant|asc|ac)$/i.test(name));
-    return key ? longitude(map[key]) : NaN;
+    const entries = placementEntries(read(KEYS.skyA));
+    const found = entries.find(([key,item]) => /^(rising|ascendant|asc|ac)$/i.test(String(key)) || /^(rising|ascendant|asc|ac)$/i.test(String(item?.name || item?.label || '')));
+    return found ? longitude(found[1]) : NaN;
   }
   function angleFor(value, asc) { return normalize(180 + value - asc); }
 
-  function records() {
-    return ['skyA','skyB'].flatMap(sky => {
-      const map = placements(read(KEYS[sky]));
-      return Object.keys(map).map(key => ({ sky, key, id:resolve(key), item:map[key], value:longitude(map[key]) }))
-        .filter(record => record.id && Number.isFinite(record.value));
+  function recordsBySky() {
+    const result = { skyA:[], skyB:[] };
+    Object.keys(result).forEach(sky => {
+      result[sky] = placementEntries(read(KEYS[sky])).map(([key,item]) => ({
+        sky,
+        key,
+        id:glyphId(key,item),
+        item,
+        value:longitude(item)
+      })).filter(record => record.id && Number.isFinite(record.value));
     });
+    return result;
   }
 
   function layout(items, lane, markerRadius) {
     const sorted = items.slice().sort((a,b) => a.angle - b.angle);
     const minimum = Math.max(7, Math.asin(Math.min(.98,(markerRadius * 2 + 3) / (2 * lane))) * 360 / Math.PI);
-    for (let pass=0; pass<160; pass+=1) {
+    for (let pass=0; pass<180; pass+=1) {
       let moved = false;
       for (let i=0; i<sorted.length; i+=1) {
         const a = sorted[i], b = sorted[(i+1)%sorted.length];
@@ -106,12 +138,14 @@
     const component = window.RelphiGlyphComponent;
     const frame = frameFor(svg);
     const asc = ascLongitude();
-    const source = records();
-    if (!component?.createBubble || !frame || !Number.isFinite(asc) || source.length < 2) return false;
+    const grouped = recordsBySky();
+    const hasSkyB = !!read(KEYS.skyB);
+    if (!component?.createBubble || !frame || !Number.isFinite(asc) || !grouped.skyA.length || (hasSkyB && !grouped.skyB.length)) return false;
+    const source = grouped.skyA.concat(grouped.skyB);
 
     const renderId = ++generation;
     const previous = svg.querySelector(':scope > .' + OVERLAY);
-    const overlay = node('g',{class:OVERLAY,'data-render-id':renderId,'pointer-events':'none'});
+    const overlay = node('g',{class:OVERLAY,'data-render-id':renderId,'pointer-events':'none','data-sky-a-count':grouped.skyA.length,'data-sky-b-count':grouped.skyB.length});
     overlay.style.visibility='hidden';
     svg.appendChild(overlay);
 
@@ -143,23 +177,31 @@
       const display=point(frame.cx,frame.cy,lane,item.angle+item.shift);
       const notchIn=point(frame.cx,frame.cy,anchorRadius-3.5,item.angle);
       const notchOut=point(frame.cx,frame.cy,anchorRadius+3.5,item.angle);
-      guides.appendChild(node('line',{class:'relphi-comparison-notch',stroke:COLORS[item.sky],x1:notchIn.x,y1:notchIn.y,x2:notchOut.x,y2:notchOut.y}));
-      leaders.appendChild(node('line',{class:'relphi-comparison-stick',stroke:COLORS[item.sky],x1:display.x,y1:display.y,x2:anchor.x,y2:anchor.y}));
-      guides.appendChild(node('circle',{class:'relphi-comparison-placement-dot',fill:COLORS[item.sky],cx:anchor.x,cy:anchor.y,r:2.25}));
+      guides.appendChild(node('line',{class:'relphi-comparison-notch',stroke:COLORS[item.sky],'data-sky':item.sky,x1:notchIn.x,y1:notchIn.y,x2:notchOut.x,y2:notchOut.y}));
+      leaders.appendChild(node('line',{class:'relphi-comparison-stick',stroke:COLORS[item.sky],'data-sky':item.sky,x1:display.x,y1:display.y,x2:anchor.x,y2:anchor.y}));
+      guides.appendChild(node('circle',{class:'relphi-comparison-placement-dot',fill:COLORS[item.sky],'data-sky':item.sky,cx:anchor.x,cy:anchor.y,r:2.25}));
       const host=node('g',{class:'relphi-comparison-candy','data-sky':item.sky,'data-glyph-id':item.id,transform:'translate('+display.x+' '+display.y+')'});
       markers.appendChild(host);
-      try { jobs.push(component.createBubble(host,item.id,{radius:markerRadius,padding:1,color:COLORS[item.sky],fill:'#fff',strokeWidth:2.35}).ready); }
-      catch (error) { jobs.push(Promise.reject(error)); }
+      try {
+        const ready = component.createBubble(host,item.id,{radius:markerRadius,padding:1,color:COLORS[item.sky],fill:'#fff',strokeWidth:2.35}).ready;
+        jobs.push(Promise.resolve(ready).then(() => ({sky:item.sky,host})).catch(error => Promise.reject({sky:item.sky,error})));
+      } catch (error) { jobs.push(Promise.reject({sky:item.sky,error})); }
     });
 
     Promise.allSettled(jobs).then(results => {
       if (!svg.isConnected || overlay.dataset.renderId !== String(renderId)) return;
-      if (!results.some(result => result.status === 'fulfilled')) { overlay.remove(); return; }
+      const completed = { skyA:0, skyB:0 };
+      results.forEach(result => { if (result.status === 'fulfilled') completed[result.value.sky] += 1; });
+      const completeA = completed.skyA === grouped.skyA.length;
+      const completeB = !hasSkyB || completed.skyB === grouped.skyB.length;
+      if (!completeA || !completeB) { overlay.remove(); return; }
+      overlay.dataset.skyAReady = String(completed.skyA);
+      overlay.dataset.skyBReady = String(completed.skyB);
       hideLegacy(svg,overlay,frame);
       previous?.remove();
       overlay.style.visibility='visible';
       overlay.dataset.ready='true';
-      window.dispatchEvent(new Event('relphi:comparison-lollipop-ready'));
+      window.dispatchEvent(new CustomEvent('relphi:comparison-lollipop-ready',{detail:{skyA:completed.skyA,skyB:completed.skyB}}));
     });
     return true;
   }
