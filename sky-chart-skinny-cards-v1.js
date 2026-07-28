@@ -8,6 +8,7 @@
   const COLORS = { skyA:'#dc1f18', skyB:'#3166e2' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const ORDER = ['Sun','Moon','Rising','Ascendant','ASC','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','Chiron','North Node','South Node','Lilith','Vertex','Part of Fortune','MC','IC','Descendant','Dsc','DSC'];
+  const ANGLE_HOUSES = { rising:1, ascendant:1, asc:1, ac:1, descendant:7, dsc:7, dc:7, mc:10, midheaven:10, ic:4, 'imum coeli':4, imumcoeli:4 };
   let mountQueued = false;
 
   function read(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; } }
@@ -46,6 +47,32 @@
   function signature(payload) {
     return JSON.stringify([payload?.name, profile(payload), ordered(placements(payload)).map(key => [key, placements(payload)[key]])]);
   }
+  function cuspArray(payload) {
+    const raw = profile(payload).houseCusps || payload?.houseCusps || payload?.cusps;
+    if (!Array.isArray(raw) || raw.length < 12) return null;
+    const cusps = raw.slice(0,12).map(Number);
+    return cusps.every(Number.isFinite) ? cusps.map(normalize) : null;
+  }
+  function derivedHouse(key, item, payload) {
+    const angleHouse = ANGLE_HOUSES[String(key || '').trim().toLowerCase()];
+    if (angleHouse) return angleHouse;
+
+    const raw = Number(item?.house);
+    if (Number.isInteger(raw) && raw >= 1 && raw <= 12) return raw;
+
+    const lon = longitude(item);
+    const cusps = cuspArray(payload);
+    if (!Number.isFinite(lon) || !cusps) return null;
+
+    for (let index=0; index<12; index+=1) {
+      const start = cusps[index];
+      const end = cusps[(index+1)%12];
+      const span = normalize(end - start) || 30;
+      const offset = normalize(lon - start);
+      if (offset < span || Math.abs(offset - span) < 1e-7) return index + 1;
+    }
+    return null;
+  }
 
   function shell(slot, payload, card) {
     const map = placements(payload);
@@ -57,33 +84,54 @@
         const item = map[key] || {};
         const bodyId = resolve(key);
         const signId = resolve(item.sign || '');
+        const house = derivedHouse(key,item,payload);
         return '<button type="button" class="relphi-skinny-row" role="listitem" data-slot="' + slot + '" data-placement-key="' + esc(key) + '" data-glyph-id="' + esc(bodyId) + '">' +
           glyphSvg(bodyId, key, 'relphi-skinny-body-glyph') +
           (signId ? glyphSvg(signId, item.sign, 'relphi-skinny-sign-glyph') : '<span></span>') +
           '<span class="relphi-skinny-coordinate">' + esc(coordinate(item)) + '</span>' +
-          '<span class="relphi-skinny-house">' + (item.house == null || item.house === '' ? '' : esc(item.house)) + (item.retrograde ? ' ℞' : '') + '</span>' +
+          '<span class="relphi-skinny-house">' + (house == null ? '' : esc(house)) + (item.retrograde ? ' ℞' : '') + '</span>' +
         '</button>';
       }).join('') + '</div>';
   }
 
   function spreadMarkers(entries) {
+    if (entries.length < 2) return entries.map(entry => ({...entry,displayAngle:entry.angle}));
+
     const sorted = entries.slice().sort((a,b) => a.angle - b.angle);
-    const minimum = 12;
-    for (let pass=0; pass<3; pass+=1) {
-      for (let i=1; i<sorted.length; i+=1) {
-        const gap = sorted[i].displayAngle - sorted[i-1].displayAngle;
-        if (gap < minimum) sorted[i].displayAngle += minimum - gap;
-      }
-      if (sorted.length > 1) {
-        const wrapGap = sorted[0].displayAngle + 360 - sorted[sorted.length-1].displayAngle;
-        if (wrapGap < minimum) {
-          const shift = (minimum - wrapGap) / 2;
-          sorted[0].displayAngle += shift;
-          sorted[sorted.length-1].displayAngle -= shift;
-        }
-      }
+    let largestGap = -1;
+    let cutAfter = 0;
+    for (let i=0; i<sorted.length; i+=1) {
+      const current = sorted[i].angle;
+      const next = i === sorted.length - 1 ? sorted[0].angle + 360 : sorted[i+1].angle;
+      const gap = next - current;
+      if (gap > largestGap) { largestGap = gap; cutAfter = i; }
     }
-    return sorted;
+
+    const linear = [];
+    for (let step=1; step<=sorted.length; step+=1) {
+      const entry = sorted[(cutAfter + step) % sorted.length];
+      const angle = entry.angle + ((cutAfter + step) >= sorted.length ? 360 : 0);
+      linear.push({...entry,unwrappedAngle:angle});
+    }
+
+    const clusterGap = 18;
+    const minimum = 12;
+    const clusters = [];
+    let cluster = [linear[0]];
+    for (let i=1; i<linear.length; i+=1) {
+      if (linear[i].unwrappedAngle - linear[i-1].unwrappedAngle <= clusterGap) cluster.push(linear[i]);
+      else { clusters.push(cluster); cluster = [linear[i]]; }
+    }
+    clusters.push(cluster);
+
+    return clusters.flatMap(group => {
+      if (group.length === 1) return [{...group[0],displayAngle:normalize(group[0].angle)}];
+      const center = group.reduce((sum,entry) => sum + entry.unwrappedAngle,0) / group.length;
+      return group.map((entry,index) => ({
+        ...entry,
+        displayAngle:normalize(center + (index - (group.length - 1) / 2) * minimum)
+      }));
+    });
   }
 
   async function drawMiniZodiac(slot, payload, card) {
@@ -112,15 +160,14 @@
       component.draw(signHost,SIGNS[i],{radius:6.4,padding:.4,color:'#4a4744'}).catch(()=>{});
     }
 
-    const cusps = profile(payload).houseCusps || payload.houseCusps || payload.cusps;
-    if (Array.isArray(cusps) && cusps.length >= 12) {
-      cusps.slice(0,12).forEach((value,index) => {
-        const angle = normalize(180 + Number(value) - asc);
+    const cusps = cuspArray(payload);
+    if (cusps) {
+      cusps.forEach((value,index) => {
+        const angle = normalize(180 + value - asc);
         const p1 = point(cx,cy,0,angle), p2 = point(cx,cy,coreR,angle);
         svg.appendChild(node('line',{class:'house-cusp',x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:'#77736e','stroke-width':'.62',opacity:'.24'}));
-        const next = Number(cusps[(index+1)%12]);
-        let span = normalize(next - Number(value)); if (!span) span = 30;
-        const labelAngle = normalize(180 + Number(value) + span/2 - asc);
+        const span = normalize(cusps[(index+1)%12] - value) || 30;
+        const labelAngle = normalize(180 + value + span/2 - asc);
         const hp = point(cx,cy,48,labelAngle);
         const text = node('text',{class:'house-label',x:hp.x,y:hp.y,'text-anchor':'middle','dominant-baseline':'central',fill:'#5f5b56','font-size':'7','font-weight':'800',opacity:'.64'});
         text.textContent = String(index+1);
@@ -130,7 +177,7 @@
 
     const entries = ordered(map).map(key => ({key,item:map[key],id:resolve(key)})).filter(entry => entry.id && Number.isFinite(longitude(entry.item))).map(entry => {
       const angle = normalize(180 + longitude(entry.item) - asc);
-      return {...entry,angle,displayAngle:angle};
+      return {...entry,angle};
     });
 
     const jobs = [];
