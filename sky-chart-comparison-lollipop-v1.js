@@ -4,7 +4,7 @@
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const WHEELS = '.unified-sky-wheel svg.chart-wheel-svg,#chartOutput svg.chart-wheel-svg,.sky-output-box svg.chart-wheel-svg';
+  const WHEELS = '.unified-sky-wheel > svg,.unified-sky-wheel svg.chart-wheel-svg,#chartOutput svg.chart-wheel-svg,#currentSkyOutput svg.chart-wheel-svg,.sky-output-box svg.chart-wheel-svg';
   const STRUCTURE = 'relphi-dual-house-rings';
   const ZODIAC = 'relphi-zodiac-structure-ring';
   const OVERLAY = 'relphi-comparison-lollipop-v1';
@@ -32,7 +32,7 @@
   function num(el, attr) { const value = Number(el?.getAttribute(attr)); return Number.isFinite(value) ? value : NaN; }
 
   function frameFor(svg) {
-    const structures = Array.from(svg.querySelectorAll(':scope > .' + STRUCTURE + '[data-ready="true"]'));
+    const structures = Array.from(svg.querySelectorAll('.' + STRUCTURE + '[data-ready="true"]'));
     const structure = structures[structures.length - 1];
     const zodiac = structure?.querySelector('.' + ZODIAC);
     const circles = zodiac?.querySelectorAll(':scope > circle');
@@ -66,7 +66,7 @@
       for (let i=0; i<sorted.length; i+=1) {
         const a = sorted[i], b = sorted[(i+1)%sorted.length];
         const aPos = a.angle + a.shift;
-        let bPos = b.angle + b.shift + (i === sorted.length - 1 ? 360 : 0);
+        const bPos = b.angle + b.shift + (i === sorted.length - 1 ? 360 : 0);
         const gap = bPos - aPos;
         if (gap >= minimum) continue;
         const push = (minimum - gap) / 2;
@@ -92,18 +92,14 @@
     });
   }
 
-  function hideLegacy(svg, overlay) {
+  function hideLegacy(svg, overlay, frame) {
     svg.querySelectorAll('.relphi-wheel-geometry-v2,.relphi-canonical-marker-layer').forEach(el => { if (el !== overlay) el.style.display='none'; });
     svg.querySelectorAll('.relphi-glyph-bubble').forEach(bubble => {
       if (bubble.closest('.' + STRUCTURE + ',.' + OVERLAY)) return;
-      let host = bubble.parentElement;
-      while (host?.parentElement && host.parentElement.namespaceURI === NS && !host.parentElement.matches('svg')) {
-        if (host.classList?.contains('relphi-canonical-marker-host') || host.dataset?.glyphId) break;
-        host = host.parentElement;
-      }
+      const host = bubble.closest('.relphi-canonical-marker-host,[data-glyph-id]') || bubble.parentElement;
       if (host && !host.closest('.' + STRUCTURE + ',.' + OVERLAY)) host.style.display='none';
     });
-    aspectCandidates(svg,frameFor(svg)).forEach(line => line.style.visibility='hidden');
+    aspectCandidates(svg,frame).forEach(line => line.style.visibility='hidden');
   }
 
   function render(svg) {
@@ -119,10 +115,9 @@
     overlay.style.visibility='hidden';
     svg.appendChild(overlay);
 
-    const markerRadius = Math.max(9,Math.min(11,(frame.outer-frame.inner)*.25));
-    // One shared exact-longitude circumference. Leaders and aspects meet at the same placement dots.
+    const markerRadius = Math.max(7.5,Math.min(9,(frame.outer-frame.inner)*.21));
     const anchorRadius = frame.inner;
-    const lane = Math.max(frame.outer + markerRadius + 8, anchorRadius + markerRadius * 3.1);
+    const lane = frame.outer + markerRadius + 5;
     const items = layout(source.map(record => ({...record,angle:angleFor(record.value,asc),shift:0})),lane,markerRadius);
 
     const aspects = node('g',{class:'relphi-comparison-aspects'});
@@ -146,11 +141,11 @@
     items.forEach(item => {
       const anchor=point(frame.cx,frame.cy,anchorRadius,item.angle);
       const display=point(frame.cx,frame.cy,lane,item.angle+item.shift);
-      const notchIn=point(frame.cx,frame.cy,anchorRadius-4,item.angle);
-      const notchOut=point(frame.cx,frame.cy,anchorRadius+4,item.angle);
+      const notchIn=point(frame.cx,frame.cy,anchorRadius-3.5,item.angle);
+      const notchOut=point(frame.cx,frame.cy,anchorRadius+3.5,item.angle);
       guides.appendChild(node('line',{class:'relphi-comparison-notch',stroke:COLORS[item.sky],x1:notchIn.x,y1:notchIn.y,x2:notchOut.x,y2:notchOut.y}));
       leaders.appendChild(node('line',{class:'relphi-comparison-stick',stroke:COLORS[item.sky],x1:display.x,y1:display.y,x2:anchor.x,y2:anchor.y}));
-      guides.appendChild(node('circle',{class:'relphi-comparison-placement-dot',fill:COLORS[item.sky],cx:anchor.x,cy:anchor.y,r:2.4}));
+      guides.appendChild(node('circle',{class:'relphi-comparison-placement-dot',fill:COLORS[item.sky],cx:anchor.x,cy:anchor.y,r:2.25}));
       const host=node('g',{class:'relphi-comparison-candy','data-sky':item.sky,'data-glyph-id':item.id,transform:'translate('+display.x+' '+display.y+')'});
       markers.appendChild(host);
       try { jobs.push(component.createBubble(host,item.id,{radius:markerRadius,padding:1,color:COLORS[item.sky],fill:'#fff',strokeWidth:2.35}).ready); }
@@ -160,7 +155,7 @@
     Promise.allSettled(jobs).then(results => {
       if (!svg.isConnected || overlay.dataset.renderId !== String(renderId)) return;
       if (!results.some(result => result.status === 'fulfilled')) { overlay.remove(); return; }
-      hideLegacy(svg,overlay);
+      hideLegacy(svg,overlay,frame);
       previous?.remove();
       overlay.style.visibility='visible';
       overlay.dataset.ready='true';
@@ -176,13 +171,23 @@
     const style=document.createElement('style'); style.id='relphi-comparison-lollipop-style'; style.textContent=`
       .${OVERLAY}{pointer-events:none}
       .relphi-comparison-anchor-ring{fill:none;stroke:#aeb3ba;stroke-width:1;vector-effect:non-scaling-stroke}
-      .relphi-comparison-notch{stroke-width:1.6;stroke-linecap:round;vector-effect:non-scaling-stroke}
-      .relphi-comparison-stick{stroke-width:1.35;stroke-linecap:round;opacity:.92;vector-effect:non-scaling-stroke}
-      .relphi-comparison-placement-dot{stroke:#fff;stroke-width:.8;vector-effect:non-scaling-stroke}
-      .relphi-comparison-aspect{vector-effect:non-scaling-stroke}
+      .relphi-comparison-notch{stroke-width:1.45;stroke-linecap:round;vector-effect:non-scaling-stroke}
+      .relphi-comparison-stick{stroke-width:1.15;stroke-linecap:round;opacity:.88;vector-effect:non-scaling-stroke}
+      .relphi-comparison-placement-dot{stroke:#fff;stroke-width:.7;vector-effect:non-scaling-stroke}
+      .relphi-comparison-aspect{vector-effect:non-scaling-stroke;opacity:.72}
       .relphi-comparison-candy{pointer-events:auto}
     `; document.head.appendChild(style);
   }
-  function start() { styles(); queue(); window.addEventListener('storage',queue); window.addEventListener('relphi:extra-points-updated',queue); window.addEventListener('relphi:house-system-changed',queue); window.addEventListener('relphi:wheel-structure-ready',queue); }
+  function start() {
+    styles();
+    queue();
+    new MutationObserver(records => {
+      if (records.some(record => Array.from(record.addedNodes || []).some(added => added.nodeType === 1 && (added.matches?.(WHEELS) || added.querySelector?.(WHEELS) || added.matches?.('.' + STRUCTURE))))) queue();
+    }).observe(document.body,{childList:true,subtree:true});
+    window.addEventListener('storage',queue);
+    window.addEventListener('relphi:extra-points-updated',queue);
+    window.addEventListener('relphi:house-system-changed',queue);
+    window.addEventListener('relphi:wheel-structure-ready',queue);
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
 })();
