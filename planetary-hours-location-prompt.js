@@ -1,4 +1,4 @@
-// Planetary Hours location handoff and mobile settings cleanup.
+// Planetary Hours location handoff, mobile settings cleanup, and hour-24 countdown correction.
 (function () {
   'use strict';
   if (!/(^|\/)planetaryhours\.html$/.test(location.pathname)) return;
@@ -54,6 +54,103 @@
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function parseClock(text) {
+    const match = String(text || '').trim().match(/(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
+    if (!match) return null;
+    let hour = Number(match[1]);
+    const minute = Number(match[2]);
+    const meridiem = match[3] ? match[3].toUpperCase() : '';
+    if (!Number.isFinite(hour) || !Number.isFinite(minute) || minute > 59) return null;
+    if (meridiem) {
+      if (hour < 1 || hour > 12) return null;
+      hour %= 12;
+      if (meridiem === 'PM') hour += 12;
+    } else if (hour > 23) return null;
+    return { hour:hour, minute:minute, totalMinutes:hour * 60 + minute };
+  }
+
+  function zonedClock(timeZone) {
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23'
+      }).formatToParts(new Date());
+      const values = {};
+      parts.forEach(function (part) { if (part.type !== 'literal') values[part.type] = Number(part.value); });
+      if (![values.hour, values.minute, values.second].every(Number.isFinite)) return null;
+      return { hour:values.hour, minute:values.minute, second:values.second };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function correctHourTwentyFourCountdown() {
+    const label = document.getElementById('heptagramHourLabel');
+    const countdown = document.getElementById('minuteCountdown');
+    const currentCard = document.getElementById('currentHourCard');
+    const useSystem = document.getElementById('useSystem');
+    if (!label || !countdown || !currentCard) return;
+    if (useSystem && !useSystem.checked) return;
+    const labelText = label.textContent || '';
+    if (!/^Live now\b/.test(labelText) || !/\bhour 24 of 24\b/.test(labelText)) return;
+
+    const rangeElement = currentCard.querySelector('.ph-mini-time');
+    const range = rangeElement ? rangeElement.textContent.split('–') : [];
+    if (range.length !== 2) return;
+    const start = parseClock(range[0]);
+    const end = parseClock(range[1]);
+    if (!start || !end) return;
+
+    const tzField = document.getElementById('tzSelect');
+    const timeZone = tzField && tzField.value ? tzField.value : (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+    const now = zonedClock(timeZone);
+    if (!now) return;
+
+    let secondsLeft = end.totalMinutes * 60 - (now.hour * 3600 + now.minute * 60 + now.second);
+    if (secondsLeft <= 0) secondsLeft += 86400;
+    const minutesLeft = Math.max(0, Math.round(secondsLeft / 60));
+    const main = countdown.querySelector('.ph-countdown-main');
+    if (main) {
+      const corrected = minutesLeft + ' minutes left';
+      if (main.textContent !== corrected) main.textContent = corrected;
+    }
+
+    let durationMinutes = end.totalMinutes - start.totalMinutes;
+    if (durationMinutes <= 0) durationMinutes += 1440;
+    const progress = Math.max(0, Math.min(100, Math.round((1 - secondsLeft / (durationMinutes * 60)) * 100)));
+    const timeText = document.getElementById('heptagramTimeText');
+    if (timeText && /The hour handoff is \d+% drawn\./.test(timeText.textContent)) {
+      timeText.textContent = timeText.textContent.replace(/The hour handoff is \d+% drawn\./, 'The hour handoff is ' + progress + '% drawn.');
+    }
+  }
+
+  function installHourTwentyFourFix() {
+    const targets = [
+      document.getElementById('minuteCountdown'),
+      document.getElementById('heptagramHourLabel'),
+      document.getElementById('currentHourCard')
+    ].filter(Boolean);
+    if (!targets.length) return;
+    let scheduled = false;
+    const scheduleCorrection = function () {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(function () {
+        scheduled = false;
+        correctHourTwentyFourCountdown();
+      });
+    };
+    const observer = new MutationObserver(scheduleCorrection);
+    targets.forEach(function (target) {
+      observer.observe(target, { childList:true, subtree:true, characterData:true });
+    });
+    setInterval(correctHourTwentyFourCountdown, 5000);
+    scheduleCorrection();
   }
 
   function removePrompt() {
@@ -162,6 +259,7 @@
 
   function start() {
     installMobileCleanup();
+    installHourTwentyFourFix();
     let tries = 0;
     const timer = setInterval(function () {
       tries += 1;
