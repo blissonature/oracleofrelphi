@@ -190,6 +190,7 @@
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
       const preview = new URLSearchParams(location.search).get('preview');
       [
+        'sky-chart-no-flash-boot-v1.js?v=1',
         'sky-chart-stability-hotfix.js?v=1',
         'sky-chart-static-dynamic.js?v=2',
         'sky-chart-aspect-duration-fix.js?v=2',
