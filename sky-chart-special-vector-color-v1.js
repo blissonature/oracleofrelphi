@@ -67,7 +67,7 @@
     load('sky-chart-workspace-reconciliation-v1.js?v=1', function () {
       load('sky-chart-sky-b-card-guard-v1.js?v=1');
       load('sky-chart-workspace-mobile-order-v1.js?v=1');
-      load('sky-chart-workspace-desktop-width-v1.js?v=1');
+      load('sky-chart-workspace-desktop-width-v1.js?v=2');
       // The shared-ring renderer is the sole owner of placement positions,
       // exact-degree leaders, and aspect endpoints. Older placement-layout
       // modules are intentionally not loaded because they overwrite this geometry.
