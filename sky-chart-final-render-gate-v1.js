@@ -26,9 +26,9 @@
 
   function wheelReady(workspace) {
     if (!hasSkyB()) return true;
-    const wheel = workspace.querySelector('.unified-sky-wheel svg.chart-wheel-svg,#chartOutput svg.chart-wheel-svg,.sky-output-box svg.chart-wheel-svg');
+    const wheel = workspace.querySelector('.unified-sky-wheel > svg,.unified-sky-wheel svg.chart-wheel-svg,#chartOutput svg.chart-wheel-svg,#currentSkyOutput svg.chart-wheel-svg,.sky-output-box svg.chart-wheel-svg');
     if (!wheel) return false;
-    const overlay = wheel.querySelector(':scope > .relphi-comparison-lollipop-v1[data-ready="true"]');
+    const overlay = wheel.querySelector('.relphi-comparison-lollipop-v1[data-ready="true"]');
     return !!overlay && overlay.querySelectorAll('.relphi-comparison-candy').length > 1;
   }
 
