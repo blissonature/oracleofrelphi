@@ -74,10 +74,9 @@
       load('sky-chart-skinny-cards-v1.js?v=1', function () {
         load('sky-chart-skinny-cards-ph-zodiac-v1.js?v=1');
       });
-      // The shared-ring renderer is the sole owner of placement positions,
-      // exact-degree leaders, and aspect endpoints. Older placement-layout
-      // modules are intentionally not loaded because they overwrite this geometry.
-      load('sky-chart-wheel-geometry-v2.js?v=5');
+      // The experimental shared-ring overlay is intentionally paused because it can
+      // hide the stable wheel before replacement glyphs have rendered.
+      load('sky-chart-center-panel-recovery-v1.js?v=1');
     });
   });
 })();
