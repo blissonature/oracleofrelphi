@@ -1,4 +1,4 @@
-// Reveals the Sky Chart quickly, then allows the final lollipop wheel to replace atomically.
+// Reveals the Sky Chart quickly, then allows the final two-sky lollipop wheel to replace atomically.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -29,7 +29,12 @@
     const wheel = workspace.querySelector('.unified-sky-wheel > svg,.unified-sky-wheel svg.chart-wheel-svg,#chartOutput svg.chart-wheel-svg,#currentSkyOutput svg.chart-wheel-svg,.sky-output-box svg.chart-wheel-svg');
     if (!wheel) return false;
     const overlay = wheel.querySelector('.relphi-comparison-lollipop-v1[data-ready="true"]');
-    return !!overlay && overlay.querySelectorAll('.relphi-comparison-candy').length > 1;
+    if (!overlay) return false;
+    const a = overlay.querySelectorAll('.relphi-comparison-candy[data-sky="skyA"]').length;
+    const b = overlay.querySelectorAll('.relphi-comparison-candy[data-sky="skyB"]').length;
+    const readyA = Number(overlay.dataset.skyAReady || 0);
+    const readyB = Number(overlay.dataset.skyBReady || 0);
+    return a > 0 && b > 0 && a === readyA && b === readyB;
   }
 
   function reveal(finalReady) {
