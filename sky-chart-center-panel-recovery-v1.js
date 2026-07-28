@@ -4,6 +4,7 @@
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
   let queued = false;
+  let timer = 0;
 
   function restoreWheel() {
     document.querySelectorAll('.relphi-wheel-geometry-v2').forEach(function (overlay) { overlay.remove(); });
@@ -24,8 +25,7 @@
       let branch = host;
       let parent = branch.parentElement;
       while (parent && parent.id !== 'relphiSkyWorkspace') {
-        const display = getComputedStyle(parent).display;
-        if (display === 'grid') {
+        if (getComputedStyle(parent).display === 'grid') {
           branch.classList.add('relphi-selected-grid-branch');
           break;
         }
@@ -41,10 +41,13 @@
     fullWidthSelectedRelationship();
   }
 
-  function queue() {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(run);
+  function queue(delay) {
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(run);
+    }, delay || 0);
   }
 
   function installStyles() {
@@ -52,37 +55,10 @@
     const style = document.createElement('style');
     style.id = 'relphi-center-panel-recovery-style';
     style.textContent = `
-      .relphi-selected-grid-branch{
-        grid-column:1 / -1!important;
-        width:100%!important;
-        max-width:none!important;
-        min-width:0!important;
-      }
-      .relphi-selected-full-row{
-        display:block!important;
-        width:100%!important;
-        max-width:none!important;
-        min-width:0!important;
-        height:auto!important;
-        min-height:0!important;
-        overflow:visible!important;
-      }
-      .relphi-selected-full-row .relphi-progressive-reading,
-      .relphi-selected-full-row .relphi-canonical-relationship-reading{
-        width:100%!important;
-        max-width:none!important;
-        min-width:0!important;
-        white-space:normal!important;
-        overflow-wrap:normal!important;
-        word-break:normal!important;
-        line-height:1.5!important;
-      }
-      .relphi-selected-full-row p,
-      .relphi-selected-full-row li,
-      .relphi-selected-full-row span{
-        word-break:normal!important;
-        overflow-wrap:normal!important;
-      }
+      .relphi-selected-grid-branch{grid-column:1 / -1!important;width:100%!important;max-width:none!important;min-width:0!important}
+      .relphi-selected-full-row{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;height:auto!important;min-height:0!important;overflow:visible!important}
+      .relphi-selected-full-row .relphi-progressive-reading,.relphi-selected-full-row .relphi-canonical-relationship-reading{width:100%!important;max-width:none!important;min-width:0!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;line-height:1.5!important}
+      .relphi-selected-full-row p,.relphi-selected-full-row li,.relphi-selected-full-row span{word-break:normal!important;overflow-wrap:normal!important}
     `;
     document.head.appendChild(style);
   }
@@ -90,8 +66,12 @@
   function start() {
     installStyles();
     run();
-    new MutationObserver(queue).observe(document.body, {childList:true, subtree:true});
-    window.addEventListener('storage', queue);
+    [80, 220, 500, 900].forEach(function (delay) { setTimeout(run, delay); });
+    document.addEventListener('click', function (event) {
+      if (event.target.closest('[data-relationship-index],.relationship-row,.relphi-relationship-row,[data-relphi-relationship]')) queue(50);
+    }, true);
+    window.addEventListener('storage', function () { queue(70); });
+    window.addEventListener('relphi:extra-points-updated', function () { queue(70); });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true});
