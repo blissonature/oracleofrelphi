@@ -61,10 +61,15 @@
     if (rebuilding) return;
     rebuilding = true;
     const workspace = document.getElementById('relphiSkyWorkspace');
-    if (workspace && !workspace.querySelector('[data-workspace-slot="skyB"]')) workspace.remove();
+    if (workspace) {
+      // Do not remove the workspace: the live wheel is mounted inside it.
+      // Invalidating the signature lets the workspace renderer capture the
+      // existing output first, then replace the cards safely in one pass.
+      workspace.dataset.signature = '__relphi_force_sky_b_rebuild__' + Date.now();
+    }
     window.dispatchEvent(new Event('storage'));
     window.dispatchEvent(new Event('relphi:extra-points-updated'));
-    setTimeout(function () { rebuilding = false; queue(); }, 120);
+    setTimeout(function () { rebuilding = false; queue(); }, 160);
   }
 
   function run() {
@@ -76,9 +81,7 @@
       rebuildWorkspace();
       return;
     }
-    if (!usable(skyB) && blueComparisonExists()) {
-      setTimeout(queue, 120);
-    }
+    if (!usable(skyB) && blueComparisonExists()) setTimeout(queue, 120);
   }
 
   function queue() {
