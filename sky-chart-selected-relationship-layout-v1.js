@@ -55,10 +55,6 @@
     const shell = document.createElement('div');
     shell.className = 'relphi-selected-closeup-shell';
 
-    const readingRow = document.createElement('section');
-    readingRow.className = 'relphi-selected-closeup-reading';
-    readingRow.appendChild(reading);
-
     const orbRow = document.createElement('div');
     orbRow.className = 'relphi-selected-closeup-orb';
     if (orb && orb !== cardA && orb !== cardB && !orb.contains(cardA) && !orb.contains(cardB)) orbRow.appendChild(orb);
@@ -73,9 +69,13 @@
     bSlot.appendChild(cardB);
     cardsRow.append(aSlot, bSlot);
 
-    shell.appendChild(readingRow);
+    const readingRow = document.createElement('section');
+    readingRow.className = 'relphi-selected-closeup-reading';
+    readingRow.appendChild(reading);
+
     if (orbRow.childElementCount) shell.appendChild(orbRow);
     shell.appendChild(cardsRow);
+    shell.appendChild(readingRow);
     host.appendChild(shell);
 
     originalChildren.forEach(function (child) {
@@ -114,12 +114,13 @@
       .relphi-selected-relationship-reassembled{display:block!important;position:relative!important;height:auto!important;min-height:0!important;overflow:visible!important}
       .relphi-selected-relationship-reassembled>.relphi-selected-closeup-legacy{display:none!important}
       .relphi-selected-closeup-shell{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:1rem!important;width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;position:relative!important;z-index:1!important}
-      .relphi-selected-closeup-reading{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:1rem!important;position:relative!important;inset:auto!important;transform:none!important}
-      .relphi-selected-closeup-reading .relphi-progressive-reading,.relphi-selected-closeup-reading .relphi-canonical-relationship-reading{display:block!important;width:100%!important;max-width:68ch!important;min-width:0!important;margin:0!important;line-height:1.55!important;overflow-wrap:normal!important;word-break:normal!important;white-space:normal!important}
       .relphi-selected-closeup-orb{display:flex!important;justify-content:center!important;align-items:flex-start!important;width:100%!important;min-width:0!important;position:relative!important;inset:auto!important;transform:none!important;z-index:1!important}
       .relphi-selected-closeup-orb>*{position:relative!important;inset:auto!important;transform:none!important;margin:0 auto!important;max-width:100%!important}
       .relphi-selected-closeup-cards{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1rem!important;align-items:start!important;width:100%!important;min-width:0!important;position:relative!important;z-index:2!important}
       .relphi-selected-closeup-card,.relphi-selected-closeup-card>*{width:100%!important;max-width:100%!important;min-width:0!important;position:relative!important;inset:auto!important;transform:none!important;margin:0!important}
+      .relphi-selected-closeup-reading{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:1rem!important;position:relative!important;inset:auto!important;transform:none!important;grid-column:1 / -1!important}
+      .relphi-selected-closeup-reading .relphi-progressive-reading,.relphi-selected-closeup-reading .relphi-canonical-relationship-reading{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;line-height:1.55!important;overflow-wrap:normal!important;word-break:normal!important;white-space:normal!important}
+      .relphi-selected-closeup-reading p{max-width:none!important;width:100%!important}
       @media(max-width:600px){.relphi-selected-closeup-shell{gap:.75rem!important}.relphi-selected-closeup-cards{gap:.55rem!important}.relphi-selected-closeup-reading{padding:.8rem!important}.relphi-selected-closeup-reading .relphi-progressive-reading,.relphi-selected-closeup-reading .relphi-canonical-relationship-reading{max-width:none!important;line-height:1.5!important}}
     `;
     document.head.appendChild(style);
@@ -128,11 +129,7 @@
   function start() {
     installStyles();
     run();
-
-    // Retry briefly for the initial asynchronous relationship render, then stop.
     [50, 150, 350, 700, 1200].forEach(function (delay) { setTimeout(run, delay); });
-
-    // Reassemble only after genuine user/data events, never after our own DOM moves.
     document.addEventListener('click', function (event) {
       if (event.target.closest('[data-relationship-index],.relationship-row,.relphi-relationship-row,[data-relphi-relationship]')) queue(40);
     }, true);
