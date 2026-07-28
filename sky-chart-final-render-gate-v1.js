@@ -28,8 +28,8 @@
     if (!hasSkyB()) return true;
     const wheel = workspace.querySelector('.unified-sky-wheel svg.chart-wheel-svg,#chartOutput svg.chart-wheel-svg,.sky-output-box svg.chart-wheel-svg');
     if (!wheel) return false;
-    const overlay = wheel.querySelector(':scope > .relphi-wheel-geometry-v2[data-ready="true"]');
-    return !!overlay && overlay.querySelectorAll('.relphi-shared-placement-host').length > 1;
+    const overlay = wheel.querySelector(':scope > .relphi-comparison-lollipop-v1[data-ready="true"]');
+    return !!overlay && overlay.querySelectorAll('.relphi-comparison-candy').length > 1;
   }
 
   function reveal(finalReady) {
@@ -70,6 +70,7 @@
   window.addEventListener('relphi:extra-points-updated', recheckWithoutHiding);
   window.addEventListener('relphi:house-system-changed', recheckWithoutHiding);
   window.addEventListener('relphi:wheel-structure-ready', recheckWithoutHiding);
+  window.addEventListener('relphi:comparison-lollipop-ready', recheckWithoutHiding);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', check, {once:true});
   else check();
 })();
