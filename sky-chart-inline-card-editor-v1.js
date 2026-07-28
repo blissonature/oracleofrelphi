@@ -25,7 +25,9 @@
   function setNative(id, value) {
     const node = document.getElementById(id);
     if (!node) return;
-    node.value = value == null ? '' : String(value);
+    const next = value == null ? '' : String(value);
+    if (node.value === next) return;
+    node.value = next;
     fire(node, 'input');
     fire(node, 'change');
   }
@@ -139,7 +141,10 @@
       calculator.setAttribute('open', '');
 
       const form = target.querySelector('.relphi-inline-sky-editor');
-      form.addEventListener('input', function () { syncSimpleToNative(form); });
+      form.addEventListener('input', function (event) {
+        if (!event.target.matches('[name="inline-name"],[name="inline-datetime"],[name="inline-location"]')) return;
+        syncSimpleToNative(form);
+      });
       form.addEventListener('click', function (event) {
         const action = event.target.closest('[data-inline-action]')?.dataset.inlineAction;
         if (action === 'now') runCalculation(form, true);
