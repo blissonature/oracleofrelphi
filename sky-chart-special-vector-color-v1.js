@@ -71,7 +71,7 @@
       load('sky-chart-workspace-desktop-width-v1.js?v=3');
       load('sky-chart-inline-card-editor-v1.js?v=2');
       load('sky-chart-selected-relationship-layout-v1.js?v=2');
-      load('sky-chart-skinny-cards-v1.js?v=2');
+      load('sky-chart-skinny-cards-v1.js?v=3');
       // The experimental shared-ring overlay remains paused because it can hide
       // the stable comparison wheel before replacement glyphs have rendered.
       load('sky-chart-center-panel-recovery-v1.js?v=1');
