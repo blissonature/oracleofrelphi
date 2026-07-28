@@ -76,9 +76,9 @@
         load('sky-chart-skinny-heptagram-v1.js?v=1');
         load('sky-chart-skinny-aspect-anchor-v1.js?v=1');
       });
-      // One atomic renderer owns comparison placements, dots, sticks, and aspect endpoints.
-      load('sky-chart-comparison-lollipop-v1.js?v=2', function () {
-        load('sky-chart-final-render-gate-v1.js?v=4');
+      // One atomic renderer owns both skies' placements, dots, sticks, and aspect endpoints.
+      load('sky-chart-comparison-lollipop-v1.js?v=3', function () {
+        load('sky-chart-final-render-gate-v1.js?v=5');
       });
     });
   });
