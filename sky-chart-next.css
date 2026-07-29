@@ -1,0 +1,39 @@
+:root{
+  --ink:#171717;
+  --paper:#fbf7ee;
+  --panel:#fffdf8;
+  --line:rgba(23,23,23,.16);
+  --muted:#6e675d;
+  --sky-a:#c9211e;
+  --sky-b:#2462d0;
+  --crayon-01:#e53935;
+  --crayon-02:#f06b32;
+  --crayon-03:#f39a2e;
+  --crayon-04:#f5be3d;
+  --crayon-05:#f1dc43;
+  --crayon-06:#a9cf46;
+  --crayon-07:#43a85b;
+  --crayon-08:#2ca69b;
+  --crayon-09:#3285c7;
+  --crayon-10:#5961c8;
+  --crayon-11:#8c4fb4;
+  --crayon-12:#bd438e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,select{font:inherit}
+.scn-shell{max-width:1600px;margin:0 auto;padding:24px}
+.scn-header{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:20px}
+.scn-header h1{margin:.1rem 0;font-family:Georgia,serif;font-size:clamp(2rem,4vw,4rem);font-weight:500}.scn-header h1 span{color:var(--sky-a)}
+.scn-header p{margin:.25rem 0;color:var(--muted)}
+.scn-eyebrow{text-transform:uppercase;letter-spacing:.15em;font-size:.72rem;font-weight:800;color:var(--muted)}
+.scn-controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.scn-controls label{display:grid;gap:5px;font-size:.78rem;font-weight:800}.scn-controls select,.scn-controls button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:.7rem .85rem}.scn-controls button{cursor:pointer}
+.scn-workspace{display:grid;grid-template-columns:minmax(170px,220px) minmax(0,1fr) minmax(170px,220px);gap:18px;align-items:start}
+.scn-sky-card,.scn-wheel-panel,.scn-inspector{background:var(--panel);border:1px solid var(--line);border-radius:18px}
+.scn-sky-card{padding:14px;min-height:480px}.scn-card-heading{display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--line)}.scn-sky-chip{padding:.25rem .5rem;border-radius:999px;color:#fff;font-size:.72rem;font-weight:900}.scn-sky-a-card .scn-sky-chip{background:var(--sky-a)}.scn-sky-b-card .scn-sky-chip{background:var(--sky-b)}.scn-sky-card>p{font-size:.8rem;line-height:1.45;color:var(--muted)}
+.scn-ledger{display:grid;gap:4px;margin-top:12px}.scn-ledger-row{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid rgba(23,23,23,.08);font-size:.78rem}.scn-ledger-glyph{width:20px;height:20px}.scn-ledger-glyph svg{width:100%;height:100%;overflow:visible}
+.scn-wheel-panel{padding:14px;min-height:740px}.scn-status{padding:12px;text-align:center;color:var(--muted);font-weight:700}.scn-wheel-mount{aspect-ratio:1/1;max-width:900px;margin:0 auto}.scn-wheel-mount svg{display:block;width:100%;height:100%;overflow:visible}
+.scn-legend{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:.78rem;color:var(--muted)}.scn-legend span{display:flex;align-items:center;gap:6px}.scn-legend i{display:inline-block;width:12px;height:12px;border-radius:50%}.sky-a-dot{background:var(--sky-a)}.sky-b-dot{background:var(--sky-b)}.rainbow-dot{background:conic-gradient(var(--crayon-01),var(--crayon-05),var(--crayon-07),var(--crayon-09),var(--crayon-11),var(--crayon-01))}
+.scn-inspector{margin-top:18px;padding:20px}.scn-inspector h2{margin:.25rem 0 .5rem;font-family:Georgia,serif;font-weight:500}.scn-inspector p{max-width:850px;line-height:1.55}
+.scn-wheel .ring-outline{fill:none;stroke:#201d19;stroke-width:1.2}.scn-wheel .house-cusp{stroke:rgba(23,23,23,.36);stroke-width:1}.scn-wheel .degree-tick{stroke:rgba(23,23,23,.2)}.scn-wheel .degree-tick.major{stroke:rgba(23,23,23,.48)}.scn-wheel .zodiac-cusp{stroke:rgba(23,23,23,.72);stroke-width:1.6}.scn-wheel .house-number{font:700 16px/1 Georgia,serif;fill:#26211d;text-anchor:middle;dominant-baseline:middle}.scn-wheel .placement-leader{fill:none;stroke-width:1.7;opacity:.7}.scn-wheel .placement-dot{stroke:#fff;stroke-width:1.2}.scn-wheel .sky-separator{stroke-width:5;stroke-linecap:round}.scn-wheel [data-interactive]{cursor:pointer;transition:opacity .15s ease}.scn-wheel .is-dim{opacity:.2}.scn-wheel .is-selected{filter:drop-shadow(0 0 4px rgba(0,0,0,.24))}
+@media(max-width:900px){.scn-header{align-items:start;flex-direction:column}.scn-workspace{grid-template-columns:1fr}.scn-sky-card{min-height:0}.scn-wheel-panel{min-height:0}.scn-sky-a-card{order:1}.scn-sky-b-card{order:2}.scn-wheel-panel{order:3}}
