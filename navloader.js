@@ -139,12 +139,10 @@
 
   function loadCanonicalSkyWheel() {
     ensureCanonicalSkyBootStyle();
-    appendScript('relphi-glyph-registry-v1.js?v=19', function () {
-      appendScript('relphi-glyph-component-v1.js?v=20', function () {
-        appendScript('sky-chart-wheel-e9344099-canonical-master-v1.js?v=1', function () {
-          appendScript('sky-chart-wheel-canonical-component-v1.js?v=3', function () {
-            appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
-          });
+    appendScript('relphi-glyph-registry-v1.js?v=0d56ee7', function () {
+      appendScript('relphi-glyph-component-v1.js?v=0d56ee7', function () {
+        appendScript('sky-chart-wheel-canonical-component-v1.js?v=4', function () {
+          appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
         });
       });
     });
@@ -161,8 +159,8 @@
       appendScript('relphi-glyph-bubbles.js?v=2');
     }
     if (/(^|\/)glyphs\.html$/.test(location.pathname)) {
-      appendScript('relphi-glyph-registry-v1.js?v=19', function () {
-        appendScript('relphi-glyph-component-v1.js?v=20', function () {
+      appendScript('relphi-glyph-registry-v1.js?v=0d56ee7', function () {
+        appendScript('relphi-glyph-component-v1.js?v=0d56ee7', function () {
           appendScript('glyph-trainer-canonical-v1.js?v=1');
         });
       });
@@ -176,7 +174,7 @@
         'sky-chart-aspect-duration-fix.js?v=2',
         'sky-chart-relationship-language.js?v=5',
         'sky-chart-canonical-relationship-ui-v1.js?v=1',
-        'sky-chart-canonical-glyph-correction-v1.js?v=1',
+        'sky-chart-canonical-glyph-correction-v1.js?v=2',
         'sky-chart-related-relationships-v2.js?v=2',
         'sky-chart-sign-cusps-v1.js?v=1',
         'sky-chart-provenance-fix.js?v=1',
@@ -203,6 +201,6 @@
       .catch(fallbackNav);
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 })();
