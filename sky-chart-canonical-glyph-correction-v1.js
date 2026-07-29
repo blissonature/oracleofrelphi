@@ -1,4 +1,4 @@
-// Ensures every SkyChart relationship token uses the canonical glyph renderer.
+// Ensures every SkyChart relationship token uses the shared canonical glyph renderer.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -13,16 +13,6 @@
     Quincunx:'quincunx', 'Semi-Sextile':'semi-sextile', Octile:'octile', 'Tri-Octile':'tri-octile',
     Quintile:'quintile', 'Bi-Quintile':'bi-quintile'
   };
-
-  function correctRegistry() {
-    const registry = window.RelphiGlyphRegistry;
-    if (!registry) return;
-    const mars = registry.resolve('mars');
-    if (mars) {
-      mars.dx = 0;
-      mars.dy = 0;
-    }
-  }
 
   function identityFor(button) {
     const label = button.getAttribute('aria-label') || '';
@@ -58,7 +48,6 @@
   }
 
   function run() {
-    correctRegistry();
     document.querySelectorAll('.relphi-canonical-token-glyph, .relphi-progressive-glyph').forEach(canonicalize);
   }
 
