@@ -46,6 +46,11 @@ label{display:block;font-weight:700;margin:.4rem 0 .25rem}
 select,input[type=range]{width:100%}
 select{border:1px solid #d7b8b1;border-radius:.7rem;background:#fffaf6;padding:.55rem;font:inherit;color:var(--ink)}
 input[type=range]{accent-color:#d42624}
+.angle-entry{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin:.45rem 0}
+.angle-field{margin:0;font-size:.82rem;color:var(--muted)}
+.angle-input-wrap{display:flex;align-items:center;gap:.35rem;margin-top:.2rem}
+.angle-input-wrap input{width:100%;min-width:0;border:1px solid #d7b8b1;border-radius:.7rem;background:#fffaf6;padding:.5rem;font:inherit;color:var(--ink)}
+.angle-input-wrap b{font-size:1.1rem;color:#5b241f}
 .band-readout{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.2rem 0 .45rem;font-weight:700}
 .band-readout output{color:#b91918}
 .band-buttons{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.55rem}
@@ -110,9 +115,13 @@ input[type=range]{accent-color:#d42624}
 
       <div class="control-group">
         <label for="anchorRange">Brand rotation</label>
-        <div class="band-readout"><span>Spectrum / hemisphere angle</span><output id="anchorOut">0°</output></div>
+        <div class="band-readout"><span>Spectrum / hemisphere angle</span><output id="anchorOut">0° 00′</output></div>
+        <div class="angle-entry" role="group" aria-label="Exact Brand rotation">
+          <label class="angle-field" for="anchorDegrees"><span>Degrees</span><span class="angle-input-wrap"><input id="anchorDegrees" type="number" min="0" max="359" value="0" step="1" inputmode="numeric"/><b aria-hidden="true">°</b></span></label>
+          <label class="angle-field" for="anchorMinutes"><span>Arcminutes</span><span class="angle-input-wrap"><input id="anchorMinutes" type="number" min="0" max="59" value="0" step="1" inputmode="numeric"/><b aria-hidden="true">′</b></span></label>
+        </div>
         <input id="anchorRange" type="range" min="0" max="359" value="0" step="1"/>
-        <label class="inline-toggle"><input id="randomAnchorToggle" type="checkbox"> Randomize Brand rotation on each prang</label><p class="hint">For three or more bands, this rotates where the spectrum begins. For two bands, this rotates the black/white hemisphere split.</p>
+        <label class="inline-toggle"><input id="randomAnchorToggle" type="checkbox"> Randomize Brand rotation on each prang</label><p class="hint">Type exact degrees and arcminutes. The slider changes whole degrees and resets arcminutes to zero. For three or more bands, this rotates where the spectrum begins. For two bands, this rotates the black/white hemisphere split.</p>
       </div>
 
       <div class="control-group">
@@ -156,6 +165,8 @@ input[type=range]{accent-color:#d42624}
   const overlapMode = document.getElementById('overlapMode');
   const growthSpeed = document.getElementById('growthSpeed');
   const anchorRange = document.getElementById('anchorRange');
+  const anchorDegrees = document.getElementById('anchorDegrees');
+  const anchorMinutes = document.getElementById('anchorMinutes');
   const anchorOut = document.getElementById('anchorOut');
   const randomPackToggle = document.getElementById('randomPackToggle');
   const randomAnchorToggle = document.getElementById('randomAnchorToggle');
@@ -297,6 +308,42 @@ input[type=range]{accent-color:#d42624}
       bandButtons.appendChild(btn);
     });
     setBand(7);
+  }
+
+  function normalizeAnchor(degrees, minutes){
+    let totalMinutes = Math.round((Number(degrees) || 0) * 60 + (Number(minutes) || 0));
+    totalMinutes = ((totalMinutes % 21600) + 21600) % 21600;
+    return {
+      degrees: Math.floor(totalMinutes / 60),
+      minutes: totalMinutes % 60,
+      decimal: totalMinutes / 60
+    };
+  }
+
+  function showAnchor(value){
+    anchorRange.value = String(value.degrees);
+    anchorOut.textContent = value.degrees + '° ' + String(value.minutes).padStart(2,'0') + '′';
+  }
+
+  function setAnchor(degrees, minutes=0){
+    const value = normalizeAnchor(degrees, minutes);
+    anchorDegrees.value = String(value.degrees);
+    anchorMinutes.value = String(value.minutes);
+    showAnchor(value);
+    return value.decimal;
+  }
+
+  function previewTypedAnchor(){
+    if(anchorDegrees.value === '' || anchorMinutes.value === '') return;
+    showAnchor(normalizeAnchor(anchorDegrees.value, anchorMinutes.value));
+  }
+
+  function commitTypedAnchor(){
+    setAnchor(anchorDegrees.value, anchorMinutes.value);
+  }
+
+  function getAnchorDegrees(){
+    return normalizeAnchor(anchorDegrees.value, anchorMinutes.value).decimal;
   }
 
   function getSwirlRadius(){
@@ -445,8 +492,8 @@ input[type=range]{accent-color:#d42624}
       setBand(nextPack);
     }
     if(randomAnchorToggle && randomAnchorToggle.checked){
-      anchorRange.value = String(Math.floor(Math.random() * 360));
-      anchorOut.textContent = anchorRange.value + '°';
+      const totalArcminutes = Math.floor(Math.random() * 21600);
+      setAnchor(Math.floor(totalArcminutes / 60), totalArcminutes % 60);
     }
     const stamp = {
       type: 'stamp',
@@ -454,7 +501,7 @@ input[type=range]{accent-color:#d42624}
       y: p.y,
       r: previewRadius,
       bands: bandSetting === 'continuous' ? 'continuous' : Number(bandSetting),
-      anchorDeg: Number(anchorRange.value) || 0,
+      anchorDeg: getAnchorDegrees(),
       mode: overlapMode.value
     };
     drawStamp(stamp, true);
@@ -486,7 +533,11 @@ input[type=range]{accent-color:#d42624}
     }
   });
   bandRange.addEventListener('input', () => setBand(Number(bandRange.value)));
-  anchorRange.addEventListener('input', () => { anchorOut.textContent = anchorRange.value + '°'; });
+  anchorRange.addEventListener('input', () => setAnchor(anchorRange.value, 0));
+  anchorDegrees.addEventListener('input', previewTypedAnchor);
+  anchorMinutes.addEventListener('input', previewTypedAnchor);
+  anchorDegrees.addEventListener('change', commitTypedAnchor);
+  anchorMinutes.addEventListener('change', commitTypedAnchor);
 
   function saveCanvasImage(){
     const out = document.createElement('canvas');
@@ -549,6 +600,7 @@ input[type=range]{accent-color:#d42624}
   window.addEventListener('resize', resizeCanvas);
 
   buildPresetButtons();
+  setAnchor(0, 0);
   setToolMode('brand');
   resizeCanvas();
 })();
