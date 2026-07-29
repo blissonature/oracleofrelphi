@@ -24,8 +24,20 @@
     <div id="ugGrid" class="ug-grid"></div>
   </section>
 </main>
-<script src="relphi-glyph-registry-v1.js?v=19"></script>
-<script src="relphi-glyph-component-v1.js?v=19"></script>
+<script src="relphi-glyph-registry-v1.js?v=master-0d56ee7"></script>
+<script>
+(function(){
+  'use strict';
+  const entries=window.RelphiGlyphRegistry&&window.RelphiGlyphRegistry.entries;
+  if(!Array.isArray(entries)) throw new Error('Canonical registry unavailable.');
+  const moon=entries.find(entry=>entry.id==='moon');
+  const chiron=entries.find(entry=>entry.id==='chiron');
+  if(!moon||!chiron) throw new Error('Approved master entries unavailable.');
+  Object.assign(moon,{scale:1.083,dx:2.7,dy:1});
+  Object.assign(chiron,{scale:1.242,dx:0,dy:0});
+})();
+</script>
+<script src="relphi-glyph-component-e9344099.js?v=master-0d56ee7"></script>
 <script>
 (function(){
   'use strict';
