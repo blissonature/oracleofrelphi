@@ -8,30 +8,52 @@
   };
   const cache=new Map();
   const svg=name=>document.createElementNS(NS,name);
+  function parseViewBox(root,path){
+    const raw=String(root.getAttribute('viewBox')||'').trim();
+    const values=raw.split(/[ ,]+/).map(Number);
+    if(values.length===4&&values.every(Number.isFinite)&&values[2]>0&&values[3]>0){
+      return{x:values[0],y:values[1],width:values[2],height:values[3]};
+    }
+    const width=parseFloat(root.getAttribute('width'));
+    const height=parseFloat(root.getAttribute('height'));
+    if(Number.isFinite(width)&&width>0&&Number.isFinite(height)&&height>0){
+      return{x:0,y:0,width,height};
+    }
+    throw new Error('Canonical glyph has no usable viewBox: '+path);
+  }
   async function source(path){
-    if(cache.has(path))return cache.get(path).cloneNode(true);
+    if(cache.has(path)){
+      const cached=cache.get(path);
+      return{root:cached.root.cloneNode(true),box:{...cached.box}};
+    }
     const response=await fetch(path);
     if(!response.ok)throw new Error('Canonical glyph asset unavailable: '+path);
-    const node=new DOMParser().parseFromString(await response.text(),'image/svg+xml').documentElement;
-    cache.set(path,node);
-    return node.cloneNode(true);
+    const root=new DOMParser().parseFromString(await response.text(),'image/svg+xml').documentElement;
+    if(!root||String(root.nodeName).toLowerCase()==='parsererror')throw new Error('Canonical glyph asset could not be parsed: '+path);
+    const box=parseViewBox(root,path);
+    cache.set(path,{root:root.cloneNode(true),box});
+    return{root,box:{...box}};
   }
   function recolor(root,color){
-    root.querySelectorAll('*').forEach(node=>{
+    [root,...root.querySelectorAll('*')].forEach(node=>{
+      if(!node.getAttribute)return;
       const fill=node.getAttribute('fill');const stroke=node.getAttribute('stroke');
       if(fill&&fill!=='none')node.setAttribute('fill',color);
       if(stroke&&stroke!=='none')node.setAttribute('stroke',color);
+      if(node.style){
+        if(node.style.fill&&node.style.fill!=='none')node.style.fill=color;
+        if(node.style.stroke&&node.style.stroke!=='none')node.style.stroke=color;
+      }
     });
   }
   async function draw(parent,id,{radius=18,color='#171717'}={}){
     const entry=entries[id];if(!entry)throw new Error('Unknown canonical glyph: '+id);
     const [,path,scale=1,dx=0,dy=0]=entry;
-    const imported=await source(path);const art=svg('g');
-    Array.from(imported.children).forEach(child=>art.appendChild(document.importNode(child,true)));
+    const loaded=await source(path);const art=svg('g');
+    Array.from(loaded.root.children).forEach(child=>art.appendChild(document.importNode(child,true)));
+    if(!art.childNodes.length)throw new Error('Empty canonical glyph asset: '+id);
     parent.appendChild(art);recolor(art,color);
-    await new Promise(resolve=>requestAnimationFrame(resolve));
-    const box=art.getBBox();
-    if(!box.width||!box.height)throw new Error('Empty canonical glyph: '+id);
+    const box=loaded.box;
     const fit=(radius*1.72)/Math.max(box.width,box.height)*scale;
     const cx=box.x+box.width/2,cy=box.y+box.height/2;
     art.setAttribute('transform',`translate(${dx} ${dy}) scale(${fit}) translate(${-cx} ${-cy})`);
