@@ -50,10 +50,10 @@
     const bg=svgEl('circle');bg.setAttribute('cx',C.x);bg.setAttribute('cy',C.y);bg.setAttribute('r',R.aOut+8);bg.setAttribute('fill','#fffdf8');bg.setAttribute('stroke','rgba(23,23,23,.12)');svg.appendChild(bg);
 
     const cuspA=houseCusps(skies.A,system),cuspB=houseCusps(skies.B,system);
-    const groups={};['bHouses','zodiac','aHouses','ticks','leaders','dots','glyphs','separators'].forEach(k=>{groups[k]=svgEl('g');groups[k].dataset.layer=k;svg.appendChild(groups[k])});
+    const groups={};['bHouses','zodiac','aHouses','ticks','leaders','dots','glyphs'].forEach(k=>{groups[k]=svgEl('g');groups[k].dataset.layer=k;svg.appendChild(groups[k])});
 
-    cuspB.forEach((start,i)=>{const end=cuspB[(i+1)%12];const p=svgEl('path');p.setAttribute('d',annularPath(R.bIn,R.bOut,start,end));p.setAttribute('fill',COLORS[i]);p.setAttribute('fill-opacity','.5');p.dataset.interactive='house';p.dataset.sky='B';p.dataset.house=String(i+1);groups.bHouses.appendChild(p);line(groups.bHouses,R.bIn,R.bOut,start,'house-cusp');text(groups.bHouses,(R.bIn+R.bOut)/2,start+norm(end-start)/2,String(i+1),'house-number')});
-    cuspA.forEach((start,i)=>{const end=cuspA[(i+1)%12];const p=svgEl('path');p.setAttribute('d',annularPath(R.aIn,R.aOut,start,end));p.setAttribute('fill',COLORS[i]);p.setAttribute('fill-opacity','.5');p.dataset.interactive='house';p.dataset.sky='A';p.dataset.house=String(i+1);groups.aHouses.appendChild(p);line(groups.aHouses,R.aIn,R.aOut,start,'house-cusp');text(groups.aHouses,(R.aIn+R.aOut)/2,start+norm(end-start)/2,String(i+1),'house-number')});
+    cuspB.forEach((start,i)=>{const end=cuspB[(i+1)%12];const p=svgEl('path');p.setAttribute('d',annularPath(R.bIn,R.bOut,start,end));p.setAttribute('fill',COLORS[i]);p.setAttribute('fill-opacity','.5');p.dataset.interactive='house';p.dataset.sky='B';p.dataset.house=String(i+1);groups.bHouses.appendChild(p);line(groups.bHouses,R.bIn,R.bOut,end,'house-divider',SKY_B);text(groups.bHouses,(R.bIn+R.bOut)/2,start+norm(end-start)/2,String(i+1),'house-number')});
+    cuspA.forEach((start,i)=>{const end=cuspA[(i+1)%12];const p=svgEl('path');p.setAttribute('d',annularPath(R.aIn,R.aOut,start,end));p.setAttribute('fill',COLORS[i]);p.setAttribute('fill-opacity','.5');p.dataset.interactive='house';p.dataset.sky='A';p.dataset.house=String(i+1);groups.aHouses.appendChild(p);line(groups.aHouses,R.aIn,R.aOut,end,'house-divider',SKY_A);text(groups.aHouses,(R.aIn+R.aOut)/2,start+norm(end-start)/2,String(i+1),'house-number')});
 
     const glyphJobs=[];
     for(let i=0;i<12;i++){
@@ -67,7 +67,6 @@
     async function drawPlacement(item,skyId){const sky=skies[skyId],degreeR=skyId==='A'?R.aDegree:R.bDegree;const anchor=polar(degreeR,item.longitude),bubble=polar(item.lane,item.displayLongitude);const leader=svgEl('line');leader.setAttribute('x1',bubble.x);leader.setAttribute('y1',bubble.y);leader.setAttribute('x2',anchor.x);leader.setAttribute('y2',anchor.y);leader.setAttribute('stroke',sky.color);leader.setAttribute('class','placement-leader');groups.leaders.appendChild(leader);const dot=svgEl('circle');dot.setAttribute('cx',anchor.x);dot.setAttribute('cy',anchor.y);dot.setAttribute('r','4.3');dot.setAttribute('fill',sky.color);dot.setAttribute('class','placement-dot');groups.dots.appendChild(dot);const g=svgEl('g');g.setAttribute('transform',`translate(${bubble.x} ${bubble.y})`);g.dataset.interactive='placement';g.dataset.sky=skyId;g.dataset.placement=item.id;g.dataset.house=String(item.house);g.dataset.longitude=String(item.longitude);groups.glyphs.appendChild(g);await window.SkyChartNextGlyphs.bubble(g,item.id,{radius:item.id==='sun'||item.id==='moon'?19:16,color:sky.color})}
     placeA.forEach(item=>glyphJobs.push(drawPlacement(item,'A')));placeB.forEach(item=>glyphJobs.push(drawPlacement(item,'B')));
 
-    line(groups.separators,R.bIn,R.bOut,90,'sky-separator',SKY_B);line(groups.separators,R.aIn,R.aOut,90,'sky-separator',SKY_A);
     await Promise.all(glyphJobs);
     wireInteractions(svg,cuspA,cuspB,system);
     document.getElementById('wheelMount').replaceChildren(svg);status.hidden=true;renderLedgers(cuspA,cuspB);
