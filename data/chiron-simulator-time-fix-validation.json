@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-07-26T05:22:05.888Z",
+  "results": [
+    {
+      "iso": "1985-10-08T08:37:00.000Z",
+      "result": {
+        "longitude": 74.48845947281609,
+        "retrograde": true,
+        "source": "Astronomy Engine GravitySimulator with embedded JPL Horizons anchors"
+      }
+    },
+    {
+      "iso": "2026-07-26T04:12:00.000Z",
+      "result": {
+        "longitude": 30.833918216877635,
+        "retrograde": false,
+        "source": "Astronomy Engine GravitySimulator with embedded JPL Horizons anchors"
+      }
+    },
+    {
+      "iso": "2097-06-15T12:00:00.000Z",
+      "result": {
+        "longitude": 190.98887913521412,
+        "retrograde": false,
+        "source": "Astronomy Engine GravitySimulator with embedded JPL Horizons anchors"
+      }
+    }
+  ]
+}

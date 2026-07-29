@@ -1,0 +1,154 @@
+{
+  "generatedAt": "2026-07-26T05:17:44.162Z",
+  "tests": {
+    "stateVector": {
+      "ok": true,
+      "value": {
+        "x": 17.27380717632477,
+        "t": "Wed Jan 01 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
+      }
+    },
+    "gravityConstructor": {
+      "ok": false,
+      "error": {
+        "type": "string",
+        "raw": "Inconsistent times in bodyStates",
+        "constructor": "String",
+        "own": {
+          "0": "I",
+          "1": "n",
+          "2": "c",
+          "3": "o",
+          "4": "n",
+          "5": "s",
+          "6": "i",
+          "7": "s",
+          "8": "t",
+          "9": "e",
+          "10": "n",
+          "11": "t",
+          "12": " ",
+          "13": "t",
+          "14": "i",
+          "15": "m",
+          "16": "e",
+          "17": "s",
+          "18": " ",
+          "19": "i",
+          "20": "n",
+          "21": " ",
+          "22": "b",
+          "23": "o",
+          "24": "d",
+          "25": "y",
+          "26": "S",
+          "27": "t",
+          "28": "a",
+          "29": "t",
+          "30": "e",
+          "31": "s",
+          "length": "32"
+        }
+      }
+    },
+    "updateOneDay": {
+      "ok": false,
+      "error": {
+        "type": "object",
+        "raw": "ReferenceError: sim is not defined",
+        "name": "ReferenceError",
+        "message": "sim is not defined",
+        "constructor": "ReferenceError",
+        "own": {
+          "stack": "updateOneDay:1\nwindow.states=sim.Update(new Date('2025-01-02T00:00:00.000Z')); ({length:states.length,x:states[0].x,t:String(states[0].t)})\n              ^\n\nReferenceError: sim is not defined\n    at updateOneDay:1:15\n    at Script.runInContext (node:vm:149:12)\n    at Object.runInContext (node:vm:301:6)\n    at test ([stdin]:11:41)\n    at [stdin]:16:1\n    at runScriptInThisContext (node:internal/vm:209:10)\n    at node:internal/process/execution:118:14\n    at [stdin]-wrapper:6:24\n    at runScript (node:internal/process/execution:101:62)\n    at evalScript (node:internal/process/execution:133:3)",
+          "message": "sim is not defined"
+        }
+      }
+    },
+    "solarEarth": {
+      "ok": false,
+      "error": {
+        "type": "object",
+        "raw": "ReferenceError: sim is not defined",
+        "name": "ReferenceError",
+        "message": "sim is not defined",
+        "constructor": "ReferenceError",
+        "own": {
+          "stack": "solarEarth:1\nwindow.earth=sim.SolarSystemBodyState(Astronomy.Body.Earth); ({x:earth.x,t:String(earth.t)})\n             ^\n\nReferenceError: sim is not defined\n    at solarEarth:1:14\n    at Script.runInContext (node:vm:149:12)\n    at Object.runInContext (node:vm:301:6)\n    at test ([stdin]:11:41)\n    at [stdin]:17:1\n    at runScriptInThisContext (node:internal/vm:209:10)\n    at node:internal/process/execution:118:14\n    at [stdin]-wrapper:6:24\n    at runScript (node:internal/process/execution:101:62)\n    at evalScript (node:internal/process/execution:133:3)",
+          "message": "sim is not defined"
+        }
+      }
+    },
+    "geoVector": {
+      "ok": false,
+      "error": {
+        "type": "object",
+        "raw": "ReferenceError: states is not defined",
+        "name": "ReferenceError",
+        "message": "states is not defined",
+        "constructor": "ReferenceError",
+        "own": {
+          "stack": "geoVector:1\nwindow.geo=new Astronomy.Vector(states[0].x-earth.x,states[0].y-earth.y,states[0].z-earth.z,states[0].t); ({x:geo.x,t:String(geo.t)})\n                                ^\n\nReferenceError: states is not defined\n    at geoVector:1:33\n    at Script.runInContext (node:vm:149:12)\n    at Object.runInContext (node:vm:301:6)\n    at test ([stdin]:11:41)\n    at [stdin]:18:1\n    at runScriptInThisContext (node:internal/vm:209:10)\n    at node:internal/process/execution:118:14\n    at [stdin]-wrapper:6:24\n    at runScript (node:internal/process/execution:101:62)\n    at evalScript (node:internal/process/execution:133:3)",
+          "message": "states is not defined"
+        }
+      }
+    },
+    "ecliptic": {
+      "ok": false,
+      "error": {
+        "type": "object",
+        "raw": "ReferenceError: geo is not defined",
+        "name": "ReferenceError",
+        "message": "geo is not defined",
+        "constructor": "ReferenceError",
+        "own": {
+          "stack": "ecliptic:1\nAstronomy.Ecliptic(geo)\n                   ^\n\nReferenceError: geo is not defined\n    at ecliptic:1:20\n    at Script.runInContext (node:vm:149:12)\n    at Object.runInContext (node:vm:301:6)\n    at test ([stdin]:11:41)\n    at [stdin]:19:1\n    at runScriptInThisContext (node:internal/vm:209:10)\n    at node:internal/process/execution:118:14\n    at [stdin]-wrapper:6:24\n    at runScript (node:internal/process/execution:101:62)\n    at evalScript (node:internal/process/execution:133:3)",
+          "message": "geo is not defined"
+        }
+      }
+    },
+    "fullCalculate": {
+      "ok": false,
+      "error": {
+        "type": "string",
+        "raw": "Inconsistent times in bodyStates",
+        "constructor": "String",
+        "own": {
+          "0": "I",
+          "1": "n",
+          "2": "c",
+          "3": "o",
+          "4": "n",
+          "5": "s",
+          "6": "i",
+          "7": "s",
+          "8": "t",
+          "9": "e",
+          "10": "n",
+          "11": "t",
+          "12": " ",
+          "13": "t",
+          "14": "i",
+          "15": "m",
+          "16": "e",
+          "17": "s",
+          "18": " ",
+          "19": "i",
+          "20": "n",
+          "21": " ",
+          "22": "b",
+          "23": "o",
+          "24": "d",
+          "25": "y",
+          "26": "S",
+          "27": "t",
+          "28": "a",
+          "29": "t",
+          "30": "e",
+          "31": "s",
+          "length": "32"
+        }
+      }
+    }
+  }
+}

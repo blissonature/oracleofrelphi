@@ -1,0 +1,98 @@
+name: Enforce canonical wheel masters
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/enforce-canonical-wheel-masters.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+
+      - name: Preserve complete canonical placement bubbles
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'sky-chart-wheel-canonical-component-v1.js';
+          let source = fs.readFileSync(path, 'utf8');
+
+          source = source.replace(
+            /function standardRadius\(svg\) \{[\s\S]*?\n  \}/,
+            `function standardRadius() {\n    // The canonical inscribed master is atomic: fixed radius, stroke, padding, and internal placement.\n    return 19;\n  }`
+          );
+
+          const oldBubble = `const bubble = window.RelphiGlyphComponent.createBubble(host, item.entry.id, {\n      radius:radius,\n      padding:1.35,\n      color:item.color,\n      fill:'#fff',\n      strokeWidth:2.25\n    });`;
+          const newBubble = `const bubble = window.RelphiGlyphComponent.createBubble(host, item.entry.id, {\n      color:item.color\n    });`;
+          if (!source.includes(oldBubble) && !source.includes(newBubble)) throw new Error('Placement bubble call was not found.');
+          source = source.replace(oldBubble, newBubble);
+
+          const styleNeedle = `      'svg.' + READY_CLASS + ' .chart-wheel-marker-glyph{display:none!important;visibility:hidden!important;opacity:0!important}',`;
+          const styleReplacement = `${styleNeedle}\n      'svg.' + READY_CLASS + ' .chart-wheel-placement-stick text{display:none!important;visibility:hidden!important;opacity:0!important}',\n      'svg.' + READY_CLASS + ' .chart-wheel-placement-stick circle:not(.chart-wheel-contact-dot){display:none!important;visibility:hidden!important;opacity:0!important}',\n      'svg.' + READY_CLASS + ' .chart-wheel-placement-stick path,svg.' + READY_CLASS + ' .chart-wheel-placement-stick rect,svg.' + READY_CLASS + ' .chart-wheel-placement-stick ellipse,svg.' + READY_CLASS + ' .chart-wheel-placement-stick polygon,svg.' + READY_CLASS + ' .chart-wheel-placement-stick polyline{display:none!important;visibility:hidden!important;opacity:0!important}',`;
+          if (!source.includes(styleNeedle)) throw new Error('Canonical ready style insertion point was not found.');
+          if (!source.includes('.chart-wheel-placement-stick text{display:none')) source = source.replace(styleNeedle, styleReplacement);
+
+          source = source.replace("component:'RelphiGlyphComponent.createBubble',", "component:'RelphiGlyphComponent.createBubble',\n      masterRadius:19,\n      nativeArtworkSuppressed:true,");
+          fs.writeFileSync(path, source);
+          NODE
+
+      - name: Preserve complete canonical zodiac bubbles
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'sky-chart-comparison-zodiac-inscribed-v1.js';
+          let source = fs.readFileSync(path, 'utf8');
+          source = source.replace(
+            /const view = svg\.viewBox && svg\.viewBox\.baseVal;\n    const span =[^;]+;\n    const radius =[^;]+;/,
+            `const radius = 19;`
+          );
+          const oldBubble = `const bubble = component.createBubble(host, entry.id, {\n        radius:radius,\n        padding:1,\n        color:'#111',\n        fill:'#fff',\n        strokeWidth:2.35\n      });`;
+          const newBubble = `const bubble = component.createBubble(host, entry.id, {\n        color:'#111'\n      });`;
+          if (!source.includes(oldBubble) && !source.includes(newBubble)) throw new Error('Zodiac bubble call was not found.');
+          source = source.replace(oldBubble, newBubble);
+          source = source.replace("component:'RelphiGlyphComponent.createBubble',", "component:'RelphiGlyphComponent.createBubble',\n        masterRadius:19,");
+          fs.writeFileSync(path, source);
+          NODE
+
+      - name: Bust renderer caches
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          let nav = fs.readFileSync('navloader.js', 'utf8');
+          nav = nav
+            .replace(/sky-chart-wheel-canonical-component-v1\.js\?v=[^']+/g, 'sky-chart-wheel-canonical-component-v1.js?v=canon-0d56ee7-direct-3')
+            .replace(/sky-chart-comparison-zodiac-inscribed-v1\.js\?v=[^']+/g, 'sky-chart-comparison-zodiac-inscribed-v1.js?v=canon-0d56ee7-direct-3');
+          fs.writeFileSync('navloader.js', nav);
+
+          let html = fs.readFileSync('sky-chart.html', 'utf8');
+          html = html.replace(/navloader\.js\?v=\d+/, 'navloader.js?v=53');
+          fs.writeFileSync('sky-chart.html', html);
+          NODE
+
+      - name: Verify canonical integrity rules
+        run: |
+          set -euo pipefail
+          grep -q 'return 19;' sky-chart-wheel-canonical-component-v1.js
+          grep -q 'nativeArtworkSuppressed:true' sky-chart-wheel-canonical-component-v1.js
+          grep -q '.chart-wheel-placement-stick text{display:none' sky-chart-wheel-canonical-component-v1.js
+          grep -q 'const radius = 19;' sky-chart-comparison-zodiac-inscribed-v1.js
+          grep -q 'canon-0d56ee7-direct-3' navloader.js
+          grep -q 'navloader.js?v=53' sky-chart.html
+
+      - name: Commit integrity fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sky-chart-wheel-canonical-component-v1.js sky-chart-comparison-zodiac-inscribed-v1.js navloader.js sky-chart.html
+          git commit -m "Render untouched canonical wheel masters" || exit 0
+          git push origin HEAD:feature/chart-axes-angular-frame

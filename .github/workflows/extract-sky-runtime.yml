@@ -1,0 +1,53 @@
+name: Extract Sky Chart runtime source
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/extract-sky-runtime.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Extract relevant runtime sections
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const source = fs.readFileSync('tarot-app.js','utf8');
+          const needles = ['skyCalcRun','relphiSkyChartA','relphiSkyChartB','Calculate Placements','placements','localStorage.setItem'];
+          const chunks = [];
+          for (const needle of needles) {
+            let from = 0;
+            while (true) {
+              const i = source.indexOf(needle, from);
+              if (i < 0) break;
+              const start = Math.max(0, i - 2500);
+              const end = Math.min(source.length, i + 5000);
+              chunks.push(`\n===== ${needle} @ ${i} =====\n` + source.slice(start, end));
+              from = i + needle.length;
+              if (chunks.length > 80) break;
+            }
+          }
+          fs.mkdirSync('data',{recursive:true});
+          fs.writeFileSync('data/sky-runtime-source.txt', chunks.join('\n'));
+          NODE
+      - name: Commit extracted source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/sky-runtime-source.txt
+          git commit -m "Extract Sky Chart runtime source" || exit 0
+          git push origin HEAD:feature/chart-axes-angular-frame

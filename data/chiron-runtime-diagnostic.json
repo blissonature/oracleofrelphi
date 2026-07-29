@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-07-26T05:15:52.732Z",
+  "astronomyLoaded": false,
+  "chironLoaded": true,
+  "tests": {
+    "loadAstronomy": {
+      "ok": true,
+      "value": {
+        "hasAstronomy": false,
+        "hasGravitySimulator": "undefined",
+        "hasStateVector": "undefined",
+        "hasVector": "undefined",
+        "hasEcliptic": "undefined",
+        "hasSiderealTime": "undefined"
+      }
+    },
+    "loadHouseSystems": {
+      "ok": true,
+      "value": {
+        "hasHouseSystems": true,
+        "hasCalculateCusps": "function"
+      }
+    },
+    "loadChiron": {
+      "ok": true,
+      "value": {
+        "hasChiron": true,
+        "anchors": 41,
+        "calculate": "function"
+      }
+    },
+    "calculateChiron": {
+      "ok": false,
+      "name": "Error",
+      "message": "Astronomy Engine GravitySimulator is unavailable.",
+      "stack": "Error: Astronomy Engine GravitySimulator is unavailable.\n    at propagateTo (sky-chart-chiron-local-v1.js:396:13)\n    at Object.calculate (sky-chart-chiron-local-v1.js:429:23)\n    at [stdin]:38:74\n    at capture ([stdin]:8:19)\n    at [stdin]:38:16\n    at runScriptInThisContext (node:internal/vm:209:10)\n    at node:internal/process/execution:118:14\n    at [stdin]-wrapper:6:24\n    at runScript (node:internal/process/execution:101:62)\n    at evalScript (node:internal/process/execution:133:3)"
+    },
+    "siderealTime": {
+      "ok": false,
+      "name": "TypeError",
+      "message": "Cannot read properties of undefined (reading 'SiderealTime')",
+      "stack": "TypeError: Cannot read properties of undefined (reading 'SiderealTime')\n    at [stdin]:39:48\n    at capture ([stdin]:8:19)\n    at [stdin]:39:1\n    at runScriptInThisContext (node:internal/vm:209:10)\n    at node:internal/process/execution:118:14\n    at [stdin]-wrapper:6:24\n    at runScript (node:internal/process/execution:101:62)\n    at evalScript (node:internal/process/execution:133:3)\n    at node:internal/main/eval_stdin:32:5\n    at Socket.<anonymous> (node:internal/process/execution:234:5)"
+    },
+    "houseCusps": {
+      "ok": false,
+      "name": "TypeError",
+      "message": "Cannot read properties of undefined (reading 'SiderealTime')",
+      "stack": "TypeError: Cannot read properties of undefined (reading 'SiderealTime')\n    at [stdin]:42:43\n    at capture ([stdin]:8:19)\n    at [stdin]:40:1\n    at runScriptInThisContext (node:internal/vm:209:10)\n    at node:internal/process/execution:118:14\n    at [stdin]-wrapper:6:24\n    at runScript (node:internal/process/execution:101:62)\n    at evalScript (node:internal/process/execution:133:3)\n    at node:internal/main/eval_stdin:32:5\n    at Socket.<anonymous> (node:internal/process/execution:234:5)"
+    }
+  }
+}

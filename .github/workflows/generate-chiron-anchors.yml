@@ -1,0 +1,46 @@
+name: Generate Chiron anchors
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/generate-chiron-anchors.yml
+      - scripts/generate-chiron-anchors.mjs
+      - sky-chart-chiron-local-v1.js
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate Chiron ephemeris anchors
+        run: node scripts/generate-chiron-anchors.mjs
+
+      - name: Commit generated anchor table
+        run: |
+          if git diff --quiet -- data/chiron-anchors.json sky-chart-chiron-local-v1.js; then
+            echo "No generated changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/chiron-anchors.json sky-chart-chiron-local-v1.js
+          git commit -m "Embed Chiron ephemeris anchors"
+          git push origin HEAD:feature/chart-axes-angular-frame

@@ -1,0 +1,86 @@
+name: Audit Sky Chart glyph provenance
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/audit-sky-glyph-provenance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+          fetch-depth: 0
+      - name: Undo unapproved Ascendant and Midheaven substitutions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('relphi-glyph-registry-v1.js')
+          s=p.read_text()
+          s=s.replace("['asc','Ascendant',['asc','ascendant','rising','ac'],'assets/planet-glyphs/ascendant.svg',1,0,0,null,'circle','700']", "['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'Asc','letter','700']")
+          s=s.replace("['mc','Midheaven',['mc','midheaven'],'assets/planet-glyphs/midheaven.svg',1,0,0,null,'circle','700']", "['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','letter','700']")
+          p.write_text(s)
+          PY
+      - name: Generate glyph provenance report
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, json
+          roots=['sky-chart.html','navloader.js','relphi-glyph-registry-v1.js','relphi-glyph-component-v1.js']
+          roots += [str(p) for p in Path('.').glob('sky-chart-*.js')]
+          patterns={
+            'asset_paths': re.compile(r"assets/(?:planet|zodiac|aspect|element)-glyphs/[^'\"? )]+"),
+            'text_nodes': re.compile(r"createElementNS\([^\n]*['\"]text['\"]|textContent\s*=|innerHTML\s*=.*<text",re.I),
+            'fallbacks': re.compile(r"fallback|fitMode\s*===\s*['\"](?:letter|symbol)|textGlyph",re.I),
+            'unicode_glyphs': re.compile(r"[☉☽☾☿♀♂♃♄♅⛢♆♇⯓⚷☊☋⚸⊗♈♉♊♋♌♍♎♏♐♑♒♓]"),
+            'inline_svg': re.compile(r"<svg|<path|<circle|createElementNS\([^\n]*['\"](?:path|circle|svg)['\"]",re.I),
+            'recoloring': re.compile(r"recolor|setAttribute\(['\"](?:stroke|fill)['\"]|style\.(?:fill|stroke)|--ph-marker",re.I),
+            'red_literal': re.compile(r"#dc1f18|rgb\(220\s*,\s*31\s*,\s*24\)",re.I),
+          }
+          report={'generated_from': 'feature/chart-axes-angular-frame', 'files':{}}
+          for f in sorted(set(roots)):
+            p=Path(f)
+            if not p.exists() or not p.is_file(): continue
+            try: lines=p.read_text(errors='replace').splitlines()
+            except Exception: continue
+            hits={k:[] for k in patterns}
+            for i,line in enumerate(lines,1):
+              for k,rx in patterns.items():
+                if rx.search(line): hits[k].append({'line':i,'text':line.strip()[:500]})
+            if any(hits.values()): report['files'][f]=hits
+          # Explicit registry snapshot for relevant placements.
+          registry=Path('relphi-glyph-registry-v1.js').read_text()
+          ids=['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','north-node','south-node','lilith','part-of-fortune','vertex','asc','dsc','mc','ic']
+          report['registry_entries']={}
+          for ident in ids:
+            m=re.search(r"\['"+re.escape(ident)+r"'[^\n]+",registry)
+            report['registry_entries'][ident]=m.group(0).strip() if m else None
+          Path('data').mkdir(exist_ok=True)
+          Path('data/sky-glyph-provenance.json').write_text(json.dumps(report,indent=2,ensure_ascii=False))
+          # concise markdown index
+          out=['# Sky Chart glyph provenance','', 'This report identifies every source that can draw or recolor a Sky Chart glyph.','']
+          for f,hits in report['files'].items():
+            categories=[k for k,v in hits.items() if v]
+            out.append(f"- `{f}`: {', '.join(categories)}")
+          Path('data/sky-glyph-provenance.md').write_text('\n'.join(out)+'\n')
+          PY
+      - name: Verify unauthorized substitutions are gone
+        run: |
+          ! grep -q "\['asc'.*assets/planet-glyphs/ascendant.svg" relphi-glyph-registry-v1.js
+          ! grep -q "\['mc'.*assets/planet-glyphs/midheaven.svg" relphi-glyph-registry-v1.js
+      - name: Commit audit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add relphi-glyph-registry-v1.js data/sky-glyph-provenance.json data/sky-glyph-provenance.md
+          git commit -m "Audit Sky Chart glyph provenance and undo unapproved masters"
+          git push origin HEAD:feature/chart-axes-angular-frame

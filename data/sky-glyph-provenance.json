@@ -1,0 +1,2671 @@
+{
+  "generated_from": "feature/chart-axes-angular-frame",
+  "files": {
+    "navloader.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 45,
+          "text": "style.textContent = '.menu-container{position:absolute;top:1rem;left:1rem;z-index:999}.logo-btn{background:none;border:0;cursor:pointer;padding:0;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center}.logo-btn img{width:44px;height:44px}.dropdown-menu{display:none;position:absolute;top:56px;left:0;min-width:180px;background:#111;border:2px solid #fff;border-radius:1.25em;box-shadow:0 8px 32px rgba(0,0,0,.26);padding:.7em 0}.dropdown-menu a,.dropdown-menu"
+        },
+        {
+          "line": 136,
+          "text": "style.textContent = ["
+        }
+      ],
+      "fallbacks": [
+        {
+          "line": 66,
+          "text": "function fallbackNav() {"
+        },
+        {
+          "line": 137,
+          "text": "'.sky-chart-page .unified-sky-wheel svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',"
+        },
+        {
+          "line": 138,
+          "text": "'.sky-chart-page #chartOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',"
+        },
+        {
+          "line": 139,
+          "text": "'.sky-chart-page #currentSkyOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',"
+        },
+        {
+          "line": 140,
+          "text": "'.sky-chart-page .sky-output-box svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback){visibility:hidden!important}',"
+        },
+        {
+          "line": 141,
+          "text": "'.sky-chart-page svg.relphi-canonical-ready,.sky-chart-page svg.relphi-canonical-fallback{visibility:visible!important}'"
+        },
+        {
+          "line": 222,
+          "text": ".catch(fallbackNav);"
+        }
+      ],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": [
+        {
+          "line": 45,
+          "text": "style.textContent = '.menu-container{position:absolute;top:1rem;left:1rem;z-index:999}.logo-btn{background:none;border:0;cursor:pointer;padding:0;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center}.logo-btn img{width:44px;height:44px}.dropdown-menu{display:none;position:absolute;top:56px;left:0;min-width:180px;background:#111;border:2px solid #fff;border-radius:1.25em;box-shadow:0 8px 32px rgba(0,0,0,.26);padding:.7em 0}.dropdown-menu a,.dropdown-menu"
+        }
+      ]
+    },
+    "relphi-glyph-component-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 152,
+          "text": "text.textContent = entry.fallback;"
+        }
+      ],
+      "fallbacks": [
+        {
+          "line": 26,
+          "text": "entry.fitMode === 'letter' ||"
+        },
+        {
+          "line": 81,
+          "text": "if (entry.fitMode === 'letter' || entry.fitMode === 'hebrew-letter' || entry.fitMode === 'greek-letter') {"
+        },
+        {
+          "line": 103,
+          "text": "if (entry.fitMode === 'symbol') {"
+        },
+        {
+          "line": 146,
+          "text": "function textGlyph(parent, entry, color) {"
+        },
+        {
+          "line": 151,
+          "text": "const lettered = entry.fitMode === 'letter' || aspectLetter || hebrewLetter || greekLetter;"
+        },
+        {
+          "line": 152,
+          "text": "text.textContent = entry.fallback;"
+        },
+        {
+          "line": 191,
+          "text": "} else if (entry.fallback === 'fortune') art = fortune(parent, color);"
+        },
+        {
+          "line": 192,
+          "text": "else art = textGlyph(parent, entry, color);"
+        }
+      ],
+      "unicode_glyphs": [],
+      "inline_svg": [
+        {
+          "line": 135,
+          "text": "group.innerHTML = '<circle cx=\"0\" cy=\"0\" r=\"9\" fill=\"none\"/><path d=\"M-6.35-6.35L6.35 6.35M6.35-6.35L-6.35 6.35\" fill=\"none\"/>';"
+        }
+      ],
+      "recoloring": [
+        {
+          "line": 10,
+          "text": "function recolor(root, color) {"
+        },
+        {
+          "line": 14,
+          "text": "if (fill && fill !== 'none') node.setAttribute('fill', color);"
+        },
+        {
+          "line": 15,
+          "text": "if (stroke && stroke !== 'none') node.setAttribute('stroke', color);"
+        },
+        {
+          "line": 39,
+          "text": "node.setAttribute('stroke', color);"
+        },
+        {
+          "line": 42,
+          "text": "node.setAttribute('stroke', color);"
+        },
+        {
+          "line": 122,
+          "text": "ring.setAttribute('fill', 'none');"
+        },
+        {
+          "line": 123,
+          "text": "ring.setAttribute('stroke', color);"
+        },
+        {
+          "line": 127,
+          "text": "dot.setAttribute('fill', color);"
+        },
+        {
+          "line": 137,
+          "text": "node.setAttribute('stroke', color);"
+        },
+        {
+          "line": 157,
+          "text": "text.setAttribute('fill', color);"
+        },
+        {
+          "line": 190,
+          "text": "recolor(art, color);"
+        },
+        {
+          "line": 216,
+          "text": "circle.setAttribute('fill', options?.fill || '#fff');"
+        },
+        {
+          "line": 217,
+          "text": "circle.setAttribute('stroke', color);"
+        },
+        {
+          "line": 230,
+          "text": "window.RelphiGlyphComponent = Object.freeze({ draw, createBubble, fit, recolor });"
+        }
+      ],
+      "red_literal": [
+        {
+          "line": 180,
+          "text": "const color = options?.color || '#dc1f18';"
+        },
+        {
+          "line": 207,
+          "text": "const color = options?.color || '#dc1f18';"
+        }
+      ]
+    },
+    "relphi-glyph-registry-v1.js": {
+      "asset_paths": [
+        {
+          "line": 7,
+          "text": "['sun','Sun',['sun','☉','⊙'],'assets/planet-glyphs/sun.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 8,
+          "text": "['moon','Moon',['moon','☽','☾'],'assets/planet-glyphs/moon.svg',1.083,2.7,1,null,'circle'],"
+        },
+        {
+          "line": 9,
+          "text": "['mercury','Mercury',['mercury','☿'],'assets/planet-glyphs/mercury.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 10,
+          "text": "['venus','Venus',['venus','♀'],'assets/planet-glyphs/venus.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 11,
+          "text": "['mars','Mars',['mars','♂'],'assets/planet-glyphs/mars.svg',1,-0.95,0.9,null,'circle'],"
+        },
+        {
+          "line": 12,
+          "text": "['jupiter','Jupiter',['jupiter','♃'],'assets/planet-glyphs/jupiter.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 13,
+          "text": "['saturn','Saturn',['saturn','♄'],'assets/planet-glyphs/saturn.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 14,
+          "text": "['uranus','Uranus',['uranus','♅','⛢'],'assets/planet-glyphs/uranus.svg',1,0.05,0.8,null,'circle'],"
+        },
+        {
+          "line": 15,
+          "text": "['neptune','Neptune',['neptune','♆'],'assets/planet-glyphs/neptune.svg',1,0,1.3,null,'circle'],"
+        },
+        {
+          "line": 16,
+          "text": "['pluto','Pluto',['pluto','♇','⯓','pl'],'assets/planet-glyphs/pluto.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 18,
+          "text": "['aries','Aries',['aries','♈'],'assets/zodiac-glyphs/aries.svg',1,0,0.9,null,'circle'],"
+        },
+        {
+          "line": 19,
+          "text": "['taurus','Taurus',['taurus','♉'],'assets/zodiac-glyphs/taurus.svg',1,0,0.9,null,'circle'],"
+        },
+        {
+          "line": 20,
+          "text": "['gemini','Gemini',['gemini','♊'],'assets/zodiac-glyphs/gemini.svg',0.95,0,0,null,'circle'],"
+        },
+        {
+          "line": 21,
+          "text": "['cancer','Cancer',['cancer','♋'],'assets/zodiac-glyphs/cancer.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 22,
+          "text": "['leo','Leo',['leo','♌'],'assets/zodiac-glyphs/leo.svg',1,0,-0.9,null,'circle'],"
+        },
+        {
+          "line": 23,
+          "text": "['virgo','Virgo',['virgo','♍'],'assets/zodiac-glyphs/virgo.svg',1,0,0.45,null,'circle'],"
+        },
+        {
+          "line": 24,
+          "text": "['libra','Libra',['libra','♎'],'assets/zodiac-glyphs/libra.svg',1,0,-0.9,null,'circle'],"
+        },
+        {
+          "line": 25,
+          "text": "['scorpio','Scorpio',['scorpio','♏'],'assets/zodiac-glyphs/scorpio.svg',1,0,0.45,null,'circle'],"
+        },
+        {
+          "line": 26,
+          "text": "['sagittarius','Sagittarius',['sagittarius','♐'],'assets/zodiac-glyphs/sagittarius.svg',0.95,0,0,null,'circle'],"
+        },
+        {
+          "line": 27,
+          "text": "['capricorn','Capricorn',['capricorn','♑'],'assets/zodiac-glyphs/capricorn.svg',1,0,0.9,null,'circle'],"
+        },
+        {
+          "line": 28,
+          "text": "['aquarius','Aquarius',['aquarius','♒'],'assets/zodiac-glyphs/aquarius.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 29,
+          "text": "['pisces','Pisces',['pisces','♓'],'assets/zodiac-glyphs/pisces.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 30,
+          "text": "['fire','Fire',['fire','fire element','element fire','🜂'],'assets/element-glyphs/fire.svg',1,0,-2.2,null,'circle'],"
+        },
+        {
+          "line": 31,
+          "text": "['water','Water',['water','water element','element water','🜄'],'assets/element-glyphs/water.svg',1,0,2.2,null,'circle'],"
+        },
+        {
+          "line": 32,
+          "text": "['air','Air',['air','air element','element air','🜁'],'assets/element-glyphs/air.svg',1,0,-2.2,null,'circle'],"
+        },
+        {
+          "line": 33,
+          "text": "['earth','Earth',['earth','earth element','element earth','🜃'],'assets/element-glyphs/earth.svg',1,0,2.2,null,'circle'],"
+        },
+        {
+          "line": 34,
+          "text": "['conjunction','Conjunction',['conjunction','conjunct','☌'],'assets/aspect-glyphs/conjunction.svg',0.9,0,0,null,'circle'],"
+        },
+        {
+          "line": 35,
+          "text": "['opposition','Opposition',['opposition','opposite','☍'],'assets/aspect-glyphs/opposition.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 36,
+          "text": "['trine','Trine',['trine','△','▲'],'assets/element-glyphs/fire.svg',1,0,-2.2,null,'circle'],"
+        },
+        {
+          "line": 37,
+          "text": "['square','Square',['square','□','■'],'assets/aspect-glyphs/square.svg',0.9,0,0,null,'circle'],"
+        },
+        {
+          "line": 38,
+          "text": "['sextile','Sextile',['sextile','✶','⚹','*'],'assets/aspect-glyphs/sextile.svg',0.96,0,0,null,'circle'],"
+        },
+        {
+          "line": 39,
+          "text": "['semi-sextile','Semi-Sextile',['semi-sextile','semisextile','semi sextile','⚺'],'assets/aspect-glyphs/semi-sextile.svg',0.95,0,0,null,'circle'],"
+        },
+        {
+          "line": 40,
+          "text": "['quincunx','Quincunx',['quincunx','inconjunct','⚻'],'assets/aspect-glyphs/quincunx.svg',0.95,0,0,null,'circle'],"
+        },
+        {
+          "line": 41,
+          "text": "['octile','Octile',['octile','semi-square','semisquare','semi square','∠'],'assets/aspect-glyphs/octile.svg',0.95,0,0,null,'circle'],"
+        },
+        {
+          "line": 42,
+          "text": "['tri-octile','Tri-Octile',['tri-octile','trioctile','tri octile','sesquiquadrate','sesqui-square','sesquisquare','⚼','∡'],'assets/aspect-glyphs/tri-octile.svg',0.92,0,0,null,'circle'],"
+        },
+        {
+          "line": 43,
+          "text": "['quintile','Quintile',['quintile','Q','q'],'assets/aspect-glyphs/quintile.svg',0.96,0,-1.2,null,'circle'],"
+        },
+        {
+          "line": 44,
+          "text": "['bi-quintile','Bi-Quintile',['bi-quintile','biquintile','bi quintile','BQ','bQ','bq'],'assets/aspect-glyphs/bi-quintile.svg',0.92,0,0,null,'circle'],"
+        },
+        {
+          "line": 47,
+          "text": "['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],'assets/planet-glyphs/lilith.svg',1.05,0,0,null,'circle','400'],"
+        }
+      ],
+      "text_nodes": [],
+      "fallbacks": [
+        {
+          "line": 100,
+          "text": "].map(([id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight]) => ({ id,name,aliases,asset,scale,dx,dy,fallback,fitMode,fontWeight }));"
+        }
+      ],
+      "unicode_glyphs": [
+        {
+          "line": 7,
+          "text": "['sun','Sun',['sun','☉','⊙'],'assets/planet-glyphs/sun.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 8,
+          "text": "['moon','Moon',['moon','☽','☾'],'assets/planet-glyphs/moon.svg',1.083,2.7,1,null,'circle'],"
+        },
+        {
+          "line": 9,
+          "text": "['mercury','Mercury',['mercury','☿'],'assets/planet-glyphs/mercury.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 10,
+          "text": "['venus','Venus',['venus','♀'],'assets/planet-glyphs/venus.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 11,
+          "text": "['mars','Mars',['mars','♂'],'assets/planet-glyphs/mars.svg',1,-0.95,0.9,null,'circle'],"
+        },
+        {
+          "line": 12,
+          "text": "['jupiter','Jupiter',['jupiter','♃'],'assets/planet-glyphs/jupiter.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 13,
+          "text": "['saturn','Saturn',['saturn','♄'],'assets/planet-glyphs/saturn.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 14,
+          "text": "['uranus','Uranus',['uranus','♅','⛢'],'assets/planet-glyphs/uranus.svg',1,0.05,0.8,null,'circle'],"
+        },
+        {
+          "line": 15,
+          "text": "['neptune','Neptune',['neptune','♆'],'assets/planet-glyphs/neptune.svg',1,0,1.3,null,'circle'],"
+        },
+        {
+          "line": 16,
+          "text": "['pluto','Pluto',['pluto','♇','⯓','pl'],'assets/planet-glyphs/pluto.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 17,
+          "text": "['chiron','Chiron',['chiron','⚷'],null,1.242,0,0,'⚷','symbol','400'],"
+        },
+        {
+          "line": 18,
+          "text": "['aries','Aries',['aries','♈'],'assets/zodiac-glyphs/aries.svg',1,0,0.9,null,'circle'],"
+        },
+        {
+          "line": 19,
+          "text": "['taurus','Taurus',['taurus','♉'],'assets/zodiac-glyphs/taurus.svg',1,0,0.9,null,'circle'],"
+        },
+        {
+          "line": 20,
+          "text": "['gemini','Gemini',['gemini','♊'],'assets/zodiac-glyphs/gemini.svg',0.95,0,0,null,'circle'],"
+        },
+        {
+          "line": 21,
+          "text": "['cancer','Cancer',['cancer','♋'],'assets/zodiac-glyphs/cancer.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 22,
+          "text": "['leo','Leo',['leo','♌'],'assets/zodiac-glyphs/leo.svg',1,0,-0.9,null,'circle'],"
+        },
+        {
+          "line": 23,
+          "text": "['virgo','Virgo',['virgo','♍'],'assets/zodiac-glyphs/virgo.svg',1,0,0.45,null,'circle'],"
+        },
+        {
+          "line": 24,
+          "text": "['libra','Libra',['libra','♎'],'assets/zodiac-glyphs/libra.svg',1,0,-0.9,null,'circle'],"
+        },
+        {
+          "line": 25,
+          "text": "['scorpio','Scorpio',['scorpio','♏'],'assets/zodiac-glyphs/scorpio.svg',1,0,0.45,null,'circle'],"
+        },
+        {
+          "line": 26,
+          "text": "['sagittarius','Sagittarius',['sagittarius','♐'],'assets/zodiac-glyphs/sagittarius.svg',0.95,0,0,null,'circle'],"
+        },
+        {
+          "line": 27,
+          "text": "['capricorn','Capricorn',['capricorn','♑'],'assets/zodiac-glyphs/capricorn.svg',1,0,0.9,null,'circle'],"
+        },
+        {
+          "line": 28,
+          "text": "['aquarius','Aquarius',['aquarius','♒'],'assets/zodiac-glyphs/aquarius.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 29,
+          "text": "['pisces','Pisces',['pisces','♓'],'assets/zodiac-glyphs/pisces.svg',1,0,0,null,'circle'],"
+        },
+        {
+          "line": 45,
+          "text": "['north-node','North Node',['north node','true node','mean node','ascending node','node','☊','no'],null,1.18,0,-0.3,'☊','symbol','400'],"
+        },
+        {
+          "line": 46,
+          "text": "['south-node','South Node',['south node','descending node','☋','so'],null,1.18,0,0.3,'☋','symbol','400'],"
+        },
+        {
+          "line": 47,
+          "text": "['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],'assets/planet-glyphs/lilith.svg',1.05,0,0,null,'circle','400'],"
+        },
+        {
+          "line": 48,
+          "text": "['part-of-fortune','Part of Fortune',['part of fortune','fortune','pars fortunae','pof','⊗','pa'],null,.92,0,0,'fortune','circle'],"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-active-sky-controls.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 34,
+          "text": "if (element && element.textContent !== value) element.textContent = value;"
+        },
+        {
+          "line": 51,
+          "text": "if (eyebrow) eyebrow.textContent = 'Comparison sky';"
+        },
+        {
+          "line": 52,
+          "text": "if (heading) heading.textContent = 'Give the comparison sky an identity';"
+        },
+        {
+          "line": 54,
+          "text": "if (eyebrow) eyebrow.textContent = 'First sky';"
+        },
+        {
+          "line": 55,
+          "text": "if (heading) heading.textContent = 'Give this sky an identity';"
+        },
+        {
+          "line": 74,
+          "text": "if (status) status.textContent = slot + ' cleared. Saved skies were not deleted.';"
+        },
+        {
+          "line": 110,
+          "text": "byId('relphiActiveSkyStatus').textContent = 'Save is unavailable for “' + name + '”.';"
+        },
+        {
+          "line": 114,
+          "text": "byId('relphiActiveSkyStatus').textContent = 'Saved “' + name + '”. It remains assigned to ' + activeSlot() + ' until you clear or replace that slot.';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-builder-v4-defaults.js": {
+      "asset_paths": [],
+      "text_nodes": [],
+      "fallbacks": [
+        {
+          "line": 13,
+          "text": "function readJson(key, fallback) {"
+        },
+        {
+          "line": 16,
+          "text": "return raw ? JSON.parse(raw) : fallback;"
+        },
+        {
+          "line": 17,
+          "text": "} catch (_) { return fallback; }"
+        }
+      ],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-builder-v4.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 147,
+          "text": "node.textContent = message || '';"
+        },
+        {
+          "line": 541,
+          "text": "style.textContent = '.relphi-v4-root{margin:1.5rem auto;max-width:1400px}.relphi-v4-toolbar{display:flex;justify-content:flex-end;margin-bottom:1rem}.relphi-v4-toolbar button,.relphi-v4-root button{appearance:none;border:1px solid rgba(220,31,24,.42);border-radius:999px;background:#fff;color:#111;font:inherit;font-weight:700;padding:.8rem 1.25rem;min-height:48px}.relphi-v4-root button.primary{background:#e72018;color:#fff;border-color:#e72018;box-shadow:0 12px 24px rgba(231,32,24,.18)}.relphi-v4"
+        }
+      ],
+      "fallbacks": [
+        {
+          "line": 48,
+          "text": "function readJson(key, fallback) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }"
+        },
+        {
+          "line": 51,
+          "text": "function readSession(key, fallback) { try { const raw = sessionStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }"
+        }
+      ],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": [
+        {
+          "line": 541,
+          "text": "style.textContent = '.relphi-v4-root{margin:1.5rem auto;max-width:1400px}.relphi-v4-toolbar{display:flex;justify-content:flex-end;margin-bottom:1rem}.relphi-v4-toolbar button,.relphi-v4-root button{appearance:none;border:1px solid rgba(220,31,24,.42);border-radius:999px;background:#fff;color:#111;font:inherit;font-weight:700;padding:.8rem 1.25rem;min-height:48px}.relphi-v4-root button.primary{background:#e72018;color:#fff;border-color:#e72018;box-shadow:0 12px 24px rgba(231,32,24,.18)}.relphi-v4"
+        }
+      ]
+    },
+    "sky-chart-calculated-points-storage-bridge-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 180,
+          "text": "if (native) native.textContent = message;"
+        },
+        {
+          "line": 183,
+          "text": "builder.textContent = message;"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 129,
+          "text": "add(map, payload, 'North Node', node, { retrograde:true, glyph:'☊', calculation:'mean lunar node' }, ['Node','True North Node','Mean North Node','Ascending Node']);"
+        },
+        {
+          "line": 130,
+          "text": "add(map, payload, 'South Node', norm(node + 180), { retrograde:true, glyph:'☋', calculation:'opposite mean lunar node' }, ['Descending Node']);"
+        },
+        {
+          "line": 131,
+          "text": "add(map, payload, 'Lilith', meanLilith(jd), { glyph:'⚸', calculation:'mean lunar apogee' }, ['Black Moon Lilith','BML']);"
+        },
+        {
+          "line": 141,
+          "text": "add(map, payload, 'Part of Fortune', norm(isDay ? asc + moon - sun : asc + sun - moon), { glyph:'⊗', calculation:isDay ? 'day formula' : 'night formula' }, ['Fortune','POF','Pars Fortunae']);"
+        },
+        {
+          "line": 193,
+          "text": "add(map, payload, 'Chiron', chiron.longitude, { glyph:'⚷', retrograde:chiron.retrograde, calculation:'JPL Horizons geocentric ecliptic longitude' }, []);"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-calculated-points-storage-bridge-v2.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 72,
+          "text": "function status(message,error) { const a=document.getElementById('skyCalcStatus'), b=document.getElementById('relphiV4Status'); if(a)a.textContent=message; if(b){b.textContent=message;b.hidden=false;b.classList.toggle('is-error',Boolean(error));} }"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 66,
+          "text": "if (d) { const jd=d.getTime()/86400000+2440587.5, node=meanNode(jd); put(m,p,'North Node',node,{retrograde:true,glyph:'☊',calculation:'mean lunar node'},['Node','Mean North Node']); put(m,p,'South Node',norm(node+180),{retrograde:true,glyph:'☋',calculation:'opposite mean lunar node'}); put(m,p,'Lilith',meanLilith(jd),{glyph:'⚸',calculation:'mean lunar apogee'},['Black Moon Lilith','BML']); }"
+        },
+        {
+          "line": 69,
+          "text": "if ([asc,sun,moon].every(Number.isFinite)) { const h=Number(get(m,['Sun'])?.house), day=Number.isFinite(h)?h>=7&&h<=12:true; put(m,p,'Part of Fortune',norm(day?asc+moon-sun:asc+sun-moon),{glyph:'⊗',calculation:day?'day formula':'night formula'},['Fortune','POF']); }"
+        },
+        {
+          "line": 78,
+          "text": "put(m,p,'Chiron',c.longitude,{glyph:'⚷',retrograde:c.retrograde,calculation:c.source});"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-calculated-points-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 172,
+          "text": "add('North Node', north, { retrograde:true, glyph:'☊', calculation:'mean lunar node' }, ['Node','True North Node','Mean North Node','Ascending Node']);"
+        },
+        {
+          "line": 173,
+          "text": "add('South Node', norm(north + 180), { retrograde:true, glyph:'☋', calculation:'opposite mean lunar node' }, ['Descending Node']);"
+        },
+        {
+          "line": 174,
+          "text": "add('Lilith', meanLilith(jd), { glyph:'⚸', calculation:'mean lunar apogee' }, ['Black Moon Lilith','BML']);"
+        },
+        {
+          "line": 197,
+          "text": "add('Part of Fortune', norm(fortune), { glyph:'⊗', calculation:isDay ? 'day formula' : 'night formula' }, ['Fortune','POF','Pars Fortunae']);"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-canonical-glyph-correction-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 64,
+          "text": "button.textContent = fallback;"
+        }
+      ],
+      "fallbacks": [
+        {
+          "line": 63,
+          "text": "const fallback = entry.aliases?.find(function (value) { return /[^A-Za-z\\s-]/.test(value); }) || entry.fallback || entry.name;"
+        },
+        {
+          "line": 64,
+          "text": "button.textContent = fallback;"
+        }
+      ],
+      "unicode_glyphs": [],
+      "inline_svg": [
+        {
+          "line": 51,
+          "text": "const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');"
+        }
+      ],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-canonical-relationship-ui-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 132,
+          "text": "if (title) title.textContent = 'Enter birth details';"
+        },
+        {
+          "line": 133,
+          "text": "if (copy) copy.textContent = 'Enter your birth date, exact time, and birthplace.';"
+        },
+        {
+          "line": 149,
+          "text": "note.textContent = 'My birth chart is saved in your sky library. No Sky A or Sky B was selected.';"
+        },
+        {
+          "line": 181,
+          "text": "glyph.textContent = symbol;"
+        },
+        {
+          "line": 195,
+          "text": "nameButton.textContent = name;"
+        },
+        {
+          "line": 204,
+          "text": "meaningButton.textContent = (kind ? kind + ': ' : '') + meaning;"
+        },
+        {
+          "line": 269,
+          "text": "style.textContent = ["
+        }
+      ],
+      "fallbacks": [
+        {
+          "line": 65,
+          "text": "function readJson(key, fallback) {"
+        },
+        {
+          "line": 68,
+          "text": "return raw ? JSON.parse(raw) : fallback;"
+        },
+        {
+          "line": 69,
+          "text": "} catch (_) { return fallback; }"
+        }
+      ],
+      "unicode_glyphs": [
+        {
+          "line": 7,
+          "text": "'☉':['sun','Sun','identity, vitality, and conscious purpose'],"
+        },
+        {
+          "line": 8,
+          "text": "'☽':['moon','Moon','feelings, instincts, and emotional needs'],"
+        },
+        {
+          "line": 9,
+          "text": "'☿':['mercury','Mercury','thought, perception, and communication'],"
+        },
+        {
+          "line": 10,
+          "text": "'♀':['venus','Venus','values, attraction, affection, and relating'],"
+        },
+        {
+          "line": 11,
+          "text": "'♂':['mars','Mars','drive, assertion, desire, and action'],"
+        },
+        {
+          "line": 12,
+          "text": "'♃':['jupiter','Jupiter','growth, confidence, meaning, and expansion'],"
+        },
+        {
+          "line": 13,
+          "text": "'♄':['saturn','Saturn','structure, limits, responsibility, and commitment'],"
+        },
+        {
+          "line": 14,
+          "text": "'♅':['uranus','Uranus','freedom, disruption, originality, and change'],"
+        },
+        {
+          "line": 15,
+          "text": "'♆':['neptune','Neptune','imagination, sensitivity, surrender, and vision'],"
+        },
+        {
+          "line": 16,
+          "text": "'⯓':['pluto','Pluto','power, depth, transformation, and compulsion'],"
+        },
+        {
+          "line": 17,
+          "text": "'⚷':['chiron','Chiron','the wound, the healing intelligence developed around it, and the capacity to guide healing'],"
+        },
+        {
+          "line": 22,
+          "text": "'♈':['aries','Aries','initiative, directness, courage, impulse, and beginning'],"
+        },
+        {
+          "line": 23,
+          "text": "'♉':['taurus','Taurus','embodiment, value, pleasure, endurance, and material continuity'],"
+        },
+        {
+          "line": 24,
+          "text": "'♊':['gemini','Gemini','language, exchange, curiosity, movement, and multiplicity'],"
+        },
+        {
+          "line": 25,
+          "text": "'♋':['cancer','Cancer','care, protection, memory, belonging, and attachment'],"
+        },
+        {
+          "line": 26,
+          "text": "'♌':['leo','Leo','radiance, creativity, pride, loyalty, and recognition'],"
+        },
+        {
+          "line": 27,
+          "text": "'♍':['virgo','Virgo','discernment, service, refinement, repair, and usefulness'],"
+        },
+        {
+          "line": 28,
+          "text": "'♎':['libra','Libra','relationship, balance, fairness, dialogue, and mutual recognition'],"
+        },
+        {
+          "line": 29,
+          "text": "'♏':['scorpio','Scorpio','intensity, secrecy, survival, bonding, and emotional truth'],"
+        },
+        {
+          "line": 30,
+          "text": "'♐':['sagittarius','Sagittarius','meaning, faith, exploration, philosophy, and freedom'],"
+        },
+        {
+          "line": 31,
+          "text": "'♑':['capricorn','Capricorn','structure, responsibility, endurance, mastery, and worldly form'],"
+        },
+        {
+          "line": 32,
+          "text": "'♒':['aquarius','Aquarius','systems, reform, collective intelligence, detachment, and future orientation'],"
+        },
+        {
+          "line": 33,
+          "text": "'♓':['pisces','Pisces','surrender, imagination, compassion, permeability, and release']"
+        },
+        {
+          "line": 223,
+          "text": "const pattern = /^Between\\s+(.+?)\\s+and\\s+(.+?),\\s*(☉|☽|☿|♀|♂|♃|♄|♅|♆|⯓|⚷|ASC|MC)(?:\\s+\\w+)?\\s+in\\s+(♈|♉|♊|♋|♌|♍|♎|♏|♐|♑|♒|♓)(?:\\s+\\w+)?\\s+at\\s+([^\\s]+)\\s+connects with\\s+(☉|☽|☿|♀|♂|♃|♄|♅|♆|⯓|⚷|ASC|MC)(?:\\s+\\w+)?\\s+in\\s+(♈|♉|♊|♋|♌|♍|♎|♏|♐|♑|♒|♓)(?:\\s+\\w+)?\\s+at\\s+([^\\s.]+)\\s+through\\s+(☌|☍|□|△|✶|⚻|⚺|∠|⚼|Q|bQ)/i;"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-core-workspace-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 17,
+          "text": "function finishWizard(){const status=byId('skyCalcStatus')?.textContent.trim()||'';const heading=byId('relphiSkyCompleteHeading'),summary=byId('relphiSkyCompleteSummary');if(heading)heading.textContent=skyBName+' is now Sky B';if(summary)summary.textContent=status;['relphiSkyNameStage','relphiSkyMethodStage','relphiExistingStage','relphiCalculateStage'].forEach(function(id){const stage=byId(id);if(stage)stage.hidden=true;});const complete=byId('relphiSkyCompleteStage');if(complete){complete.hidd"
+        },
+        {
+          "line": 18,
+          "text": "async function rebuildBoth(){if(rebuilding||!buildingSkyB||!awaitingCalculation)return;const status=byId('skyCalcStatus')?.textContent.trim()||'',chart=byId('chartOutput');if(!/^Calculated Sky for\\b/i.test(status)||!hasPlacements(chart?.textContent||''))return;rebuilding=true;try{skyBName=skyBName||byId('skyCalcName')?.value.trim()||byId('relphiSkyNameInput')?.value.trim();await saveNative(skyBName,'chart');await loadNative(skyAName,'chart');await loadNative(skyBName,'currentSky');const current="
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-extra-points-support-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 9,
+          "text": "{ name:'Part of Fortune', aliases:['part of fortune','fortune','pars fortunae','pof'], glyph:'⊗' },"
+        },
+        {
+          "line": 10,
+          "text": "{ name:'Lilith', aliases:['black moon lilith','lilith','bml'], glyph:'⚸' },"
+        },
+        {
+          "line": 11,
+          "text": "{ name:'Chiron', aliases:['chiron'], glyph:'⚷' },"
+        },
+        {
+          "line": 12,
+          "text": "{ name:'North Node', aliases:['true north node','mean north node','north node','ascending node','node'], glyph:'☊' },"
+        },
+        {
+          "line": 13,
+          "text": "{ name:'South Node', aliases:['south node','descending node'], glyph:'☋' },"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-final-guard.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 15,
+          "text": "if (status) status.textContent = '';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-final-workflow.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 291,
+          "text": "if (heading) heading.textContent = bName + ' is now Sky B';"
+        },
+        {
+          "line": 292,
+          "text": "if (summary) summary.textContent = 'Sky A and Sky B are ready for comparison.';"
+        },
+        {
+          "line": 320,
+          "text": "if (status) status.textContent = 'Both skies could not be restored. Your saved records remain available.';"
+        },
+        {
+          "line": 337,
+          "text": "style.textContent = `"
+        }
+      ],
+      "fallbacks": [
+        {
+          "line": 18,
+          "text": "function readJson(key, fallback) {"
+        },
+        {
+          "line": 21,
+          "text": "return raw ? JSON.parse(raw) : fallback;"
+        },
+        {
+          "line": 22,
+          "text": "} catch (_) { return fallback; }"
+        },
+        {
+          "line": 28,
+          "text": "function readSession(key, fallback) {"
+        },
+        {
+          "line": 31,
+          "text": "return raw ? JSON.parse(raw) : fallback;"
+        },
+        {
+          "line": 32,
+          "text": "} catch (_) { return fallback; }"
+        }
+      ],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": [
+        {
+          "line": 342,
+          "text": "#relphiSkyWizard button:hover,.sky-calc-drawer button:hover,#skyCreatorDrawer button:hover{border-color:#dc1f18!important;transform:translateY(-1px)}"
+        }
+      ]
+    },
+    "sky-chart-glyph-kill-switch.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 13,
+          "text": "style.textContent = '.relphi-wheel-planet-glyph{display:none!important}.chart-wheel-markers text{visibility:visible!important}';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 6,
+          "text": "const SYMBOLS = new Set(['☉','☽','☿','♀','♂','♃','♄','♅','♆','♇','⯓']);"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-here-now-flow.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 12,
+          "text": "note.textContent = message;"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-isolation-final.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 23,
+          "text": "style.textContent = `"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-preview-state-fix.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 193,
+          "text": "style.textContent = `"
+        },
+        {
+          "line": 211,
+          "text": "status.textContent = '';"
+        }
+      ],
+      "fallbacks": [
+        {
+          "line": 13,
+          "text": "function readJson(key, fallback) {"
+        },
+        {
+          "line": 16,
+          "text": "return raw ? JSON.parse(raw) : fallback;"
+        },
+        {
+          "line": 17,
+          "text": "} catch (_) { return fallback; }"
+        }
+      ],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-progressive-wizard-fix.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 10,
+          "text": "style.textContent = `"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-r31-finalize-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 78,
+          "text": "text.textContent = glyph;"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 9,
+          "text": "'north node':'☊', 'no':'☊',"
+        },
+        {
+          "line": 10,
+          "text": "'south node':'☋', 'so':'☋',"
+        },
+        {
+          "line": 11,
+          "text": "'part of fortune':'⊗', 'fortune':'⊗', 'pof':'⊗', 'pa':'⊗',"
+        },
+        {
+          "line": 12,
+          "text": "'lilith':'⚸',"
+        },
+        {
+          "line": 37,
+          "text": "'North Node':'☊', 'South Node':'☋', 'Part of Fortune':'⊗', 'Lilith':'⚸',"
+        },
+        {
+          "line": 82,
+          "text": "text.style.setProperty('font-size', TEXT_POINTS.has(glyph) ? (glyph === 'DSC' ? '11.5px' : '12.5px') : (glyph === '⚸' ? '20px' : '19px'), 'important');"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [
+        {
+          "line": 176,
+          "text": "leader.style.strokeLinecap = 'round';"
+        }
+      ],
+      "red_literal": []
+    },
+    "sky-chart-related-relationships-v2.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 180,
+          "text": "more.textContent = expanded ? 'Show fewer' : 'Show all related (' + items.length + ')';"
+        },
+        {
+          "line": 193,
+          "text": "node.textContent = '.relphi-related-relationships{margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(0,0,0,.18)}.relphi-related-relationships h4{margin:0 0 .65rem}.relphi-related-controls{display:flex;flex-wrap:wrap;gap:.55rem 1rem;align-items:center;margin-bottom:.75rem;font-size:.92rem}.relphi-related-controls label{display:inline-flex;gap:.35rem;align-items:center}.relphi-related-orb input{width:4.5rem}.relphi-related-list{display:grid;gap:.45rem}.relphi-related-link{display:flex;flex"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 7,
+          "text": "const BODIES = '(☉|☽|☿|♀|♂|♃|♄|♅|♆|⯓|ASC|MC)';"
+        },
+        {
+          "line": 8,
+          "text": "const SIGNS = '([♈♉♊♋♌♍♎♏♐♑♒♓])';"
+        },
+        {
+          "line": 11,
+          "text": "const bodyNames = {'☉':'Sun','☽':'Moon','☿':'Mercury','♀':'Venus','♂':'Mars','♃':'Jupiter','♄':'Saturn','♅':'Uranus','♆':'Neptune','⯓':'Pluto','ASC':'Ascendant','MC':'Midheaven'};"
+        },
+        {
+          "line": 12,
+          "text": "const signNames = {'♈':'Aries','♉':'Taurus','♊':'Gemini','♋':'Cancer','♌':'Leo','♍':'Virgo','♎':'Libra','♏':'Scorpio','♐':'Sagittarius','♑':'Capricorn','♒':'Aquarius','♓':'Pisces'};"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": [
+        {
+          "line": 193,
+          "text": "node.textContent = '.relphi-related-relationships{margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(0,0,0,.18)}.relphi-related-relationships h4{margin:0 0 .65rem}.relphi-related-controls{display:flex;flex-wrap:wrap;gap:.55rem 1rem;align-items:center;margin-bottom:.75rem;font-size:.92rem}.relphi-related-controls label{display:inline-flex;gap:.35rem;align-items:center}.relphi-related-orb input{width:4.5rem}.relphi-related-list{display:grid;gap:.45rem}.relphi-related-link{display:flex;flex"
+        }
+      ]
+    },
+    "sky-chart-relationship-color-hints-pr22.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 113,
+          "text": "style.textContent = `"
+        },
+        {
+          "line": 218,
+          "text": "badge.textContent = 'Previewing PR #22 · Music Theory aspect colors';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [
+        {
+          "line": 188,
+          "text": "const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');"
+        }
+      ],
+      "recoloring": [],
+      "red_literal": [
+        {
+          "line": 7,
+          "text": "'#dc1f18', // C / root"
+        },
+        {
+          "line": 143,
+          "text": "border-color:#dc1f18 !important;"
+        },
+        {
+          "line": 144,
+          "text": "box-shadow:inset 0 0 0 1px #dc1f18, 0 0 0 2px rgba(220,31,24,.12) !important;"
+        },
+        {
+          "line": 219,
+          "text": "badge.style.cssText = 'position:fixed;right:.75rem;bottom:.75rem;z-index:99999;background:#111;color:#fff;border:2px solid #dc1f18;border-radius:999px;padding:.55rem .8rem;font:700 12px/1.2 Montserrat,Arial,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.2)';"
+        }
+      ]
+    },
+    "sky-chart-relationship-color-hints.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 112,
+          "text": "style.textContent = `"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [
+        {
+          "line": 192,
+          "text": "const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');"
+        }
+      ],
+      "recoloring": [],
+      "red_literal": [
+        {
+          "line": 145,
+          "text": "border-color:#dc1f18 !important;"
+        },
+        {
+          "line": 146,
+          "text": "box-shadow:inset 0 0 0 1px #dc1f18, 0 0 0 2px rgba(220,31,24,.12) !important;"
+        }
+      ]
+    },
+    "sky-chart-relationship-language.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 113,
+          "text": "glyphButton.textContent = glyph;"
+        },
+        {
+          "line": 125,
+          "text": "meaningButton.textContent = ' (' + meaning + ')';"
+        },
+        {
+          "line": 148,
+          "text": "nameButton.textContent = ' ' + name;"
+        },
+        {
+          "line": 172,
+          "text": "style.textContent = '.relphi-progressive-reading{line-height:1.75}.relphi-progressive-term{appearance:none;border:0;background:transparent;color:inherit;font:inherit;padding:0;cursor:pointer;text-align:left}.relphi-progressive-glyph{font-family:\"Segoe UI Symbol\",\"Noto Sans Symbols\",serif;font-size:1.14em;font-weight:900;text-decoration:underline dotted rgba(220,31,24,.52);text-underline-offset:.2em}.relphi-progressive-name,.relphi-progressive-meaning{margin-left:.22em}.relphi-progressive-name{fo"
+        },
+        {
+          "line": 247,
+          "text": "hint.textContent = 'Select symbols to unfold them; select revealed text to fold it back.';"
+        }
+      ],
+      "fallbacks": [
+        {
+          "line": 93,
+          "text": "function verifiedOwner(fallback, body, sign, degreeText) {"
+        },
+        {
+          "line": 101,
+          "text": "if (matches.length !== 1) return fallback;"
+        },
+        {
+          "line": 102,
+          "text": "return String(matches[0].name || fallback).trim() || fallback;"
+        }
+      ],
+      "unicode_glyphs": [
+        {
+          "line": 65,
+          "text": "Sun:'☉', Moon:'☽', Mercury:'☿', Venus:'♀', Mars:'♂', Jupiter:'♃', Saturn:'♄',"
+        },
+        {
+          "line": 66,
+          "text": "Uranus:'♅', Neptune:'♆', Pluto:'⯓', ASC:'ASC', MC:'MC'"
+        },
+        {
+          "line": 69,
+          "text": "Aries:'♈', Taurus:'♉', Gemini:'♊', Cancer:'♋', Leo:'♌', Virgo:'♍',"
+        },
+        {
+          "line": 70,
+          "text": "Libra:'♎', Scorpio:'♏', Sagittarius:'♐', Capricorn:'♑', Aquarius:'♒', Pisces:'♓'"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-relationship-sections-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 68,
+          "text": "style.textContent = '.relphi-structural-relationship-sections{display:grid;gap:1rem;margin:0 0 1.15rem}.relphi-relationship-subsection{display:grid;gap:.55rem}.relphi-relationship-subsection-heading{display:flex;align-items:center;justify-content:space-between;gap:.75rem}.relphi-relationship-subsection-heading h3{margin:0;font-size:1rem;line-height:1.2}.relphi-relationship-subsection-count{display:inline-flex;align-items:center;justify-content:center;min-width:2rem;min-height:2rem;padding:.2rem "
+        },
+        {
+          "line": 81,
+          "text": "badge.textContent = String(count);"
+        },
+        {
+          "line": 101,
+          "text": "badge.textContent = String(count);"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 38,
+          "text": "if (hasAny(value, ['☊', 'north node'])) found.add('NN');"
+        },
+        {
+          "line": 39,
+          "text": "if (hasAny(value, ['☋', 'south node'])) found.add('SN');"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-save-verification-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 27,
+          "text": "if (exists(record.name)) status.textContent = 'Saved \"' + record.name + '\" to your saved skies.';"
+        },
+        {
+          "line": 28,
+          "text": "else status.textContent = '\"' + record.name + '\" was not added to saved skies. Nothing was claimed as saved.';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-sign-cusps-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 58,
+          "text": "style.textContent = ["
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [
+        {
+          "line": 40,
+          "text": "const marker = document.createElementNS(SVG_NS, 'circle');"
+        }
+      ],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-special-point-polish-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 78,
+          "text": "if (POINT_GLYPHS[name]) text.textContent = POINT_GLYPHS[name];"
+        },
+        {
+          "line": 79,
+          "text": "else if (name === 'vertex') text.textContent = 'Vx';"
+        },
+        {
+          "line": 80,
+          "text": "else if (name === 'descendant') text.textContent = 'DSC';"
+        },
+        {
+          "line": 81,
+          "text": "else if (name === 'rising') text.textContent = 'ASC';"
+        },
+        {
+          "line": 96,
+          "text": "tooltip.textContent = degree ? name + ' · ' + (glyph ? glyph + ' ' : '') + degree : name;"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 8,
+          "text": "Aries:'♈', Taurus:'♉', Gemini:'♊', Cancer:'♋', Leo:'♌', Virgo:'♍',"
+        },
+        {
+          "line": 9,
+          "text": "Libra:'♎', Scorpio:'♏', Sagittarius:'♐', Capricorn:'♑', Aquarius:'♒', Pisces:'♓'"
+        },
+        {
+          "line": 12,
+          "text": "'north node':'☊',"
+        },
+        {
+          "line": 13,
+          "text": "'south node':'☋',"
+        },
+        {
+          "line": 14,
+          "text": "'lilith':'⚸',"
+        },
+        {
+          "line": 15,
+          "text": "'part of fortune':'⊗'"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-special-point-source-normalizer-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 11,
+          "text": "{ name:'North Node', aliases:['North Node','Node','No'], glyph:'☊' },"
+        },
+        {
+          "line": 12,
+          "text": "{ name:'South Node', aliases:['South Node','So'], glyph:'☋' },"
+        },
+        {
+          "line": 13,
+          "text": "{ name:'Part of Fortune', aliases:['Part of Fortune','Fortune','POF','Pa'], glyph:'⊗' },"
+        },
+        {
+          "line": 14,
+          "text": "{ name:'Lilith', aliases:['Lilith'], glyph:'⚸' },"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-special-point-static-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 46,
+          "text": "text.textContent = symbol;"
+        },
+        {
+          "line": 50,
+          "text": "text.textContent = TEXT_STYLE[key].text;"
+        },
+        {
+          "line": 55,
+          "text": "text.textContent = 'DSC';"
+        },
+        {
+          "line": 59,
+          "text": "text.textContent = 'Vx';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 8,
+          "text": "'north node':'☊',"
+        },
+        {
+          "line": 9,
+          "text": "'south node':'☋',"
+        },
+        {
+          "line": 10,
+          "text": "'part of fortune':'⊗',"
+        },
+        {
+          "line": 11,
+          "text": "'lilith':'⚸'"
+        },
+        {
+          "line": 14,
+          "text": "'no':'☊',"
+        },
+        {
+          "line": 15,
+          "text": "'so':'☋',"
+        },
+        {
+          "line": 16,
+          "text": "'pa':'⊗'"
+        },
+        {
+          "line": 47,
+          "text": "text.style.setProperty('font-size', symbol === '⚸' ? '20px' : '19px', 'important');"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-stability-hotfix.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 33,
+          "text": "style.textContent = `"
+        },
+        {
+          "line": 235,
+          "text": "status.textContent = message;"
+        },
+        {
+          "line": 281,
+          "text": "button.textContent = 'Create sky from pasted placements';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 133,
+          "text": "'sun':'Sun','☉':'Sun','moon':'Moon','☽':'Moon','mercury':'Mercury','☿':'Mercury',"
+        },
+        {
+          "line": 134,
+          "text": "'venus':'Venus','♀':'Venus','mars':'Mars','♂':'Mars','jupiter':'Jupiter','♃':'Jupiter',"
+        },
+        {
+          "line": 135,
+          "text": "'saturn':'Saturn','♄':'Saturn','uranus':'Uranus','♅':'Uranus','neptune':'Neptune','♆':'Neptune',"
+        },
+        {
+          "line": 136,
+          "text": "'pluto':'Pluto','⯓':'Pluto','♇':'Pluto','asc':'Ascendant','ascendant':'Ascendant',"
+        },
+        {
+          "line": 141,
+          "text": "'aries':'Aries','♈':'Aries','taurus':'Taurus','♉':'Taurus','gemini':'Gemini','♊':'Gemini',"
+        },
+        {
+          "line": 142,
+          "text": "'cancer':'Cancer','♋':'Cancer','leo':'Leo','♌':'Leo','virgo':'Virgo','♍':'Virgo',"
+        },
+        {
+          "line": 143,
+          "text": "'libra':'Libra','♎':'Libra','scorpio':'Scorpio','♏':'Scorpio','sagittarius':'Sagittarius','♐':'Sagittarius',"
+        },
+        {
+          "line": 144,
+          "text": "'capricorn':'Capricorn','♑':'Capricorn','aquarius':'Aquarius','♒':'Aquarius','pisces':'Pisces','♓':'Pisces'"
+        },
+        {
+          "line": 148,
+          "text": "return String(value || '').toLowerCase().replace(/[^a-z0-9♈-♓☉-♇⯓]+/g, ' ').trim();"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": [
+        {
+          "line": 64,
+          "text": "border-color:#dc1f18;"
+        },
+        {
+          "line": 65,
+          "text": "background:#dc1f18;"
+        }
+      ]
+    },
+    "sky-chart-static-dynamic.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 63,
+          "text": "style.textContent = `"
+        },
+        {
+          "line": 89,
+          "text": "if (cleaned && cleaned !== option.textContent) option.textContent = cleaned;"
+        },
+        {
+          "line": 102,
+          "text": "if (cleaned !== node.textContent) node.textContent = cleaned;"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-tooltip-close-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 37,
+          "text": "button.textContent = '×';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-wheel-canonical-component-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 233,
+          "text": "style.textContent = ["
+        }
+      ],
+      "fallbacks": [
+        {
+          "line": 14,
+          "text": "const FALLBACK_CLASS = 'relphi-canonical-fallback';"
+        },
+        {
+          "line": 329,
+          "text": "svg.classList.add(FALLBACK_CLASS);"
+        },
+        {
+          "line": 337,
+          "text": "svg.classList.remove(FALLBACK_CLASS);"
+        },
+        {
+          "line": 349,
+          "text": "svg.classList.add(FALLBACK_CLASS);"
+        },
+        {
+          "line": 365,
+          "text": "svg.classList.add(FALLBACK_CLASS);"
+        }
+      ],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": [
+        {
+          "line": 15,
+          "text": "const RED = '#dc1f18';"
+        }
+      ]
+    },
+    "sky-chart-wheel-center-anchored-leaders-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 103,
+          "text": "text.textContent = value;"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 11,
+          "text": "NO:'☊', SO:'☋', PA:'⊗',"
+        },
+        {
+          "line": 12,
+          "text": "'NORTH NODE':'☊', 'SOUTH NODE':'☋',"
+        },
+        {
+          "line": 13,
+          "text": "'PART OF FORTUNE':'⊗', FORTUNE:'⊗',"
+        },
+        {
+          "line": 14,
+          "text": "LILITH:'⚸', DS:'DSC', DSC:'DSC', V:'Vx', VX:'Vx', AC:'ASC'"
+        },
+        {
+          "line": 16,
+          "text": "const SYMBOLS = new Set(['☊','☋','⊗','⚸']);"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-wheel-dynamic-clusters-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 159,
+          "text": "const text = document.createElementNS(NS, 'text');"
+        },
+        {
+          "line": 160,
+          "text": "text.textContent = sourceText?.textContent || item.label;"
+        },
+        {
+          "line": 223,
+          "text": "const text = document.createElementNS(NS, 'text');"
+        },
+        {
+          "line": 224,
+          "text": "text.textContent = String(items.length);"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [
+        {
+          "line": 133,
+          "text": "const node = document.createElementNS(NS, 'circle');"
+        }
+      ],
+      "recoloring": [
+        {
+          "line": 125,
+          "text": "node.setAttribute('stroke', '#222');"
+        },
+        {
+          "line": 137,
+          "text": "node.setAttribute('fill', '#fff');"
+        },
+        {
+          "line": 138,
+          "text": "node.setAttribute('stroke', stroke);"
+        },
+        {
+          "line": 163,
+          "text": "text.setAttribute('fill', item.color);"
+        },
+        {
+          "line": 227,
+          "text": "text.setAttribute('fill', colors.length > 1 ? '#5b43b7' : colors[0]);"
+        }
+      ],
+      "red_literal": [
+        {
+          "line": 35,
+          "text": "return group.classList.contains('sky-b') ? '#3166e2' : '#dc1f18';"
+        }
+      ]
+    },
+    "sky-chart-wheel-e9344099-canonical-master-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [],
+      "fallbacks": [
+        {
+          "line": 33,
+          "text": "entry.fitMode === 'letter' ||"
+        }
+      ],
+      "unicode_glyphs": [],
+      "inline_svg": [
+        {
+          "line": 85,
+          "text": "const circle = document.createElementNS(NS, 'circle');"
+        }
+      ],
+      "recoloring": [
+        {
+          "line": 46,
+          "text": "node.setAttribute('stroke', color);"
+        },
+        {
+          "line": 49,
+          "text": "node.setAttribute('stroke', color);"
+        },
+        {
+          "line": 89,
+          "text": "circle.setAttribute('fill', settings.fill || '#fff');"
+        },
+        {
+          "line": 90,
+          "text": "circle.setAttribute('stroke', color);"
+        },
+        {
+          "line": 108,
+          "text": "recolor:base.recolor"
+        }
+      ],
+      "red_literal": [
+        {
+          "line": 63,
+          "text": "const color = settings.color || '#dc1f18';"
+        },
+        {
+          "line": 80,
+          "text": "const color = settings.color || '#dc1f18';"
+        }
+      ]
+    },
+    "sky-chart-wheel-final-leaders-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [
+        {
+          "line": 59,
+          "text": "leader.style.strokeLinecap = 'round';"
+        }
+      ],
+      "red_literal": []
+    },
+    "sky-chart-wheel-glyph-preview-tuning-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 86,
+          "text": "if (key === 'AC') text.textContent = 'ASC';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 14,
+          "text": "'☉':'M49.42,43.39 L46.31,44.56 L44.36,46.50 L43.58,51.17 L45.14,54.28 L46.69,55.44 L50.97,56.22 L53.69,55.06 L55.64,53.11 L56.42,48.83 L53.69,44.56 Z M46.69,15.00 L38.92,16.56 L33.47,18.89 L27.25,23.17 L23.36,27.06 L19.86,32.11 L16.36,40.67 L15.19,48.44 L15.58,55.44 L16.75,60.50 L19.86,67.50 L27.25,76.44 L32.31,79.94 L40.08,83.44 L45.92,84.61 L54.08,84.61 L62.25,82.67 L67.69,79.94 L71.58,77.22 L76.64,72.17 L82.47,62.06 L84.42,53.50 L84.42,46.50 L82.86,38.72 L80.53,33.28 L76.25,27.06 L72.36,23.17"
+        },
+        {
+          "line": 15,
+          "text": "'☽':'M29.11,14.75 L26.50,16.24 L26.50,17.73 L27.62,18.85 L33.59,21.09 L37.32,23.70 L41.42,27.80 L44.78,32.65 L48.51,42.73 L49.25,51.68 L46.64,62.87 L42.91,69.59 L35.82,76.67 L27.24,80.40 L26.50,81.15 L26.50,83.02 L29.48,84.51 L35.08,85.63 L41.79,85.63 L50.37,83.76 L55.22,81.52 L62.31,76.30 L67.53,69.96 L70.15,65.11 L73.13,54.29 L73.13,46.46 L71.64,38.99 L69.03,32.65 L65.67,27.43 L61.19,22.58 L55.60,18.48 L51.87,16.61 L44.03,14.37 L34.70,14.00 Z M36.20,17.73 L45.90,18.48 L53.73,21.83 L57.83,24.82"
+        },
+        {
+          "line": 16,
+          "text": "'☿':'M33.92,11.00 L32.44,12.48 L33.18,15.81 L35.40,19.13 L40.57,23.20 L37.99,24.68 L33.55,29.11 L30.96,33.92 L29.85,38.73 L30.59,46.86 L32.81,51.66 L37.99,57.21 L42.79,59.80 L48.34,61.27 L47.97,72.73 L37.99,73.10 L36.51,74.21 L36.51,76.06 L37.62,77.17 L47.60,77.17 L48.34,83.82 L47.97,87.15 L49.08,88.63 L50.92,88.63 L52.03,87.15 L52.03,77.54 L62.01,77.17 L63.49,76.06 L63.49,74.21 L61.64,73.10 L52.03,72.73 L52.03,61.27 L59.06,59.06 L62.01,57.21 L66.08,53.14 L69.41,46.12 L69.78,37.25 L68.67,33.55 L"
+        },
+        {
+          "line": 17,
+          "text": "'♀':'M47.91,12.00 L41.45,13.52 L36.89,15.80 L31.19,21.12 L27.39,28.34 L26.25,37.46 L27.77,44.30 L31.19,50.38 L38.41,56.46 L47.91,59.50 L47.91,71.28 L37.27,71.66 L36.13,72.42 L35.75,74.32 L37.27,75.84 L47.53,75.84 L47.91,86.48 L49.05,87.62 L50.57,87.62 L51.71,86.48 L52.09,75.84 L62.35,75.84 L63.87,74.70 L63.87,72.80 L62.35,71.66 L51.71,71.28 L51.71,59.50 L55.51,58.74 L61.97,56.08 L68.43,50.38 L72.61,42.02 L73.37,34.42 L71.09,25.30 L68.43,21.12 L63.87,16.56 L57.41,13.14 Z M47.91,15.80 L55.13,16.56"
+        },
+        {
+          "line": 18,
+          "text": "'♂':'M83.91,13.90 L62.37,13.90 L61.57,15.10 L62.37,17.49 L77.52,17.89 L60.77,35.04 L51.60,30.25 L45.61,29.06 L40.43,29.06 L30.45,31.85 L24.87,35.44 L19.28,41.82 L15.69,49.80 L14.90,53.79 L14.90,61.77 L18.09,71.34 L24.07,78.92 L33.64,84.51 L43.62,86.10 L49.60,85.30 L55.19,83.31 L60.37,80.12 L65.16,75.33 L67.15,72.54 L70.34,64.96 L71.14,54.59 L68.75,45.81 L63.56,37.83 L79.92,21.48 L80.72,21.88 L80.32,34.64 L81.51,36.24 L83.51,36.24 L84.31,35.44 L84.70,24.27 Z M38.43,33.45 L44.81,33.05 L49.20,33.84"
+        },
+        {
+          "line": 19,
+          "text": "'♃':'M26.04,14.49 L20.48,20.06 L18.34,25.62 L17.92,31.61 L20.06,38.45 L22.62,38.88 L23.91,37.59 L22.19,28.61 L24.33,22.62 L27.33,19.20 L33.74,16.21 L40.59,16.63 L43.16,17.92 L46.58,21.34 L48.72,26.04 L48.72,34.60 L46.58,42.30 L40.16,53.42 L29.89,63.26 L25.19,65.83 L21.34,66.68 L20.06,68.39 L20.48,70.11 L21.34,70.96 L62.41,70.96 L63.26,71.82 L63.26,86.79 L64.54,88.07 L66.26,88.07 L67.54,86.79 L67.54,71.39 L80.80,70.96 L81.66,70.11 L81.66,67.54 L80.80,66.68 L67.54,66.26 L67.54,14.92 L66.26,13.64 L"
+        },
+        {
+          "line": 20,
+          "text": "'♄':'M37.55,11.37 L36.82,12.46 L36.82,17.96 L36.08,18.69 L28.39,18.69 L27.66,19.79 L28.76,22.35 L36.82,22.72 L36.82,68.86 L37.55,69.96 L39.38,70.32 L40.85,68.49 L40.85,45.79 L43.41,40.66 L47.07,37.00 L51.83,35.17 L55.49,34.80 L61.35,36.63 L66.85,42.49 L68.31,47.25 L68.31,50.18 L67.21,54.58 L55.49,74.35 L54.76,76.92 L54.76,81.31 L56.23,84.97 L58.79,87.54 L61.72,88.63 L67.21,87.90 L70.51,84.97 L70.51,82.41 L68.31,81.68 L65.75,84.24 L62.45,84.97 L59.15,82.41 L58.42,78.01 L60.99,71.79 L70.14,57.51 L"
+        },
+        {
+          "line": 21,
+          "text": "'♅':'M21.91,11.00 L20.30,11.81 L20.30,14.23 L23.93,16.25 L27.17,19.49 L30.40,25.95 L31.21,30.40 L31.21,40.91 L30.40,45.76 L28.38,50.61 L24.34,55.46 L21.10,57.07 L19.89,59.09 L21.10,60.71 L23.53,60.71 L26.36,59.09 L30.80,54.65 L34.04,48.18 L35.65,38.48 L47.37,38.48 L47.78,63.54 L44.14,64.75 L40.10,67.98 L37.67,72.43 L37.27,77.68 L38.89,82.53 L42.52,86.58 L47.37,88.60 L52.22,88.60 L55.05,87.79 L60.31,83.34 L62.33,78.09 L62.33,74.05 L61.11,70.41 L58.69,67.18 L51.82,63.54 L51.82,38.89 L63.94,38.48 L"
+        },
+        {
+          "line": 22,
+          "text": "'♆':'M18.11,10.00 L13.58,15.28 L12.83,17.55 L15.85,18.68 L15.85,35.28 L18.49,44.34 L23.02,51.51 L30.57,57.92 L39.25,61.70 L47.92,63.21 L47.92,73.77 L35.47,74.15 L34.72,74.91 L34.72,76.79 L35.85,77.92 L47.55,77.92 L47.92,88.49 L48.68,89.62 L50.94,89.62 L51.70,88.87 L52.08,77.92 L63.77,77.92 L65.28,76.42 L65.28,75.28 L64.15,74.15 L52.45,74.15 L51.70,73.40 L51.70,63.58 L52.45,62.83 L60.75,61.70 L67.17,59.06 L73.21,54.91 L77.74,50.00 L81.51,43.21 L83.40,36.79 L83.40,18.68 L84.15,17.92 L86.04,18.30 L"
+        },
+        {
+          "line": 23,
+          "text": "'♇':'M19.91,31.31 L19.16,32.06 L19.16,35.05 L20.66,39.91 L25.89,48.50 L34.11,55.23 L39.72,57.85 L47.94,59.72 L47.94,70.93 L47.20,71.68 L35.24,71.68 L34.49,72.43 L34.49,74.30 L35.61,75.42 L47.57,75.42 L47.94,87.00 L49.07,88.13 L50.56,88.13 L51.68,87.00 L52.06,75.42 L63.64,75.42 L65.14,74.30 L65.14,72.43 L64.39,71.68 L52.43,71.68 L51.68,70.93 L51.68,59.72 L52.43,58.97 L57.66,58.60 L61.03,57.48 L69.62,52.62 L74.11,48.13 L77.47,43.27 L79.72,38.04 L80.46,32.06 L79.72,31.31 L77.85,31.31 L76.73,32.43 L"
+        },
+        {
+          "line": 25,
+          "text": "PATHS['⊙'] = PATHS['☉'];"
+        },
+        {
+          "line": 26,
+          "text": "PATHS['☾'] = PATHS['☽'];"
+        },
+        {
+          "line": 27,
+          "text": "PATHS['⛢'] = PATHS['♅'];"
+        },
+        {
+          "line": 28,
+          "text": "PATHS['⯓'] = PATHS['♇'];"
+        }
+      ],
+      "inline_svg": [
+        {
+          "line": 109,
+          "text": "inline = document.createElementNS(NS, 'svg');"
+        },
+        {
+          "line": 114,
+          "text": "const path = document.createElementNS(NS, 'path');"
+        }
+      ],
+      "recoloring": [
+        {
+          "line": 100,
+          "text": "text.setAttribute('fill', color(group));"
+        },
+        {
+          "line": 126,
+          "text": "path.setAttribute('fill', color(group));"
+        },
+        {
+          "line": 127,
+          "text": "path.setAttribute('stroke', color(group));"
+        }
+      ],
+      "red_literal": [
+        {
+          "line": 32,
+          "text": "function color(group) { return group.classList.contains('sky-b') ? '#3166e2' : '#dc1f18'; }"
+        }
+      ]
+    },
+    "sky-chart-wheel-glyph-preview-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 32,
+          "text": "badge.textContent = 'PRIVATE TEST PREVIEW · NOT PRODUCTION';"
+        },
+        {
+          "line": 47,
+          "text": "style.textContent = `"
+        },
+        {
+          "line": 143,
+          "text": "node.textContent = placementLabel(group);"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 8,
+          "text": "Aries:'♈', Taurus:'♉', Gemini:'♊', Cancer:'♋', Leo:'♌', Virgo:'♍',"
+        },
+        {
+          "line": 9,
+          "text": "Libra:'♎', Scorpio:'♏', Sagittarius:'♐', Capricorn:'♑', Aquarius:'♒', Pisces:'♓'"
+        },
+        {
+          "line": 68,
+          "text": "const signGlyph = SIGN_GLYPHS[signName] || (/^[♈-♓]$/.test(signName) ? signName : '');"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": [
+        {
+          "line": 19,
+          "text": "return group.classList.contains('sky-b') ? '#3166e2' : '#dc1f18';"
+        }
+      ]
+    },
+    "sky-chart-wheel-marker-interaction-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 25,
+          "text": "style.textContent = ["
+        },
+        {
+          "line": 122,
+          "text": "tooltip.querySelector('strong').textContent = host.dataset.markerName || host.getAttribute('aria-label') || 'Placement';"
+        },
+        {
+          "line": 123,
+          "text": "tooltip.querySelector('span').textContent = host.dataset.markerPlacement || '';"
+        }
+      ],
+      "fallbacks": [
+        {
+          "line": 62,
+          "text": "function detailFromGroup(group, fallbackName) {"
+        },
+        {
+          "line": 64,
+          "text": "const name = bare(nameNode && nameNode.textContent) || bare(fallbackName) || 'Placement';"
+        }
+      ],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-wheel-solid-hover-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [
+        {
+          "line": 19,
+          "text": "node.dataset.relphiBaseFillOpacity = node.style.fillOpacity || '';"
+        },
+        {
+          "line": 20,
+          "text": "node.dataset.relphiBaseStrokeOpacity = node.style.strokeOpacity || '';"
+        },
+        {
+          "line": 30,
+          "text": "if (fillOpacity) node.style.fillOpacity = fillOpacity; else node.style.removeProperty('fill-opacity');"
+        },
+        {
+          "line": 31,
+          "text": "if (strokeOpacity) node.style.strokeOpacity = strokeOpacity; else node.style.removeProperty('stroke-opacity');"
+        }
+      ],
+      "red_literal": []
+    },
+    "sky-chart-wheel-special-points-final-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 62,
+          "text": "if (glyph !== stale) text.textContent = glyph;"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 11,
+          "text": "'north node':'☊', 'node':'☊',"
+        },
+        {
+          "line": 12,
+          "text": "'south node':'☋',"
+        },
+        {
+          "line": 13,
+          "text": "'part of fortune':'⊗', 'fortune':'⊗', 'pof':'⊗',"
+        },
+        {
+          "line": 14,
+          "text": "'lilith':'⚸'"
+        },
+        {
+          "line": 16,
+          "text": "const SYMBOL_BY_STALE_TEXT = { 'No':'☊', 'So':'☋', 'Pa':'⊗' };"
+        },
+        {
+          "line": 29,
+          "text": "'☊':  { size:'18.5px', weight:'500', dx:0.0,  dy:0.45 },"
+        },
+        {
+          "line": 30,
+          "text": "'☋':  { size:'18.5px', weight:'500', dx:0.0,  dy:0.45 },"
+        },
+        {
+          "line": 31,
+          "text": "'⊗':  { size:'18px',   weight:'500', dx:0.0,  dy:0.10 },"
+        },
+        {
+          "line": 32,
+          "text": "'⚸':  { size:'19.5px', weight:'500', dx:0.15, dy:0.70 },"
+        }
+      ],
+      "inline_svg": [],
+      "recoloring": [
+        {
+          "line": 158,
+          "text": "leader.style.strokeLinecap = 'round';"
+        }
+      ],
+      "red_literal": []
+    },
+    "sky-chart-wheel-unified-marker-renderer-v1.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 112,
+          "text": "text = document.createElementNS(NS, 'text');"
+        },
+        {
+          "line": 114,
+          "text": "text.textContent = bare(group.dataset.glyph || group.dataset.symbol || group.getAttribute('data-glyph') || '');"
+        },
+        {
+          "line": 179,
+          "text": "text.textContent = '';"
+        },
+        {
+          "line": 186,
+          "text": "text.textContent = value;"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 15,
+          "text": "SUN:'☉', MOON:'☽', MERCURY:'☿', VENUS:'♀', MARS:'♂',"
+        },
+        {
+          "line": 16,
+          "text": "JUPITER:'♃', SATURN:'♄', URANUS:'♅', NEPTUNE:'♆', PLUTO:'PLUTO_VECTOR',"
+        },
+        {
+          "line": 17,
+          "text": "NO:'☊', SO:'☋', PA:'⊗',"
+        },
+        {
+          "line": 18,
+          "text": "'NORTH NODE':'☊', NODE:'☊', 'TRUE NODE':'☊', 'MEAN NODE':'☊',"
+        },
+        {
+          "line": 19,
+          "text": "'SOUTH NODE':'☋',"
+        },
+        {
+          "line": 20,
+          "text": "'PART OF FORTUNE':'⊗', FORTUNE:'⊗', POF:'⊗', 'HEART OF FORTUNE':'⊗',"
+        },
+        {
+          "line": 21,
+          "text": "LILITH:'⚸', 'BLACK MOON LILITH':'⚸',"
+        },
+        {
+          "line": 28,
+          "text": "const PLANETS = new Set(['☉','☽','☿','♀','♂','♃','♄','♅','♆']);"
+        },
+        {
+          "line": 29,
+          "text": "const SYMBOLS = new Set(['☊','☋','⊗','⚸']);"
+        },
+        {
+          "line": 33,
+          "text": "'☉':{ size:28.5, weight:500, offset:[0,1.2] },"
+        },
+        {
+          "line": 34,
+          "text": "'☽':{ size:28.5, weight:600, offset:[0.3,0] },"
+        },
+        {
+          "line": 35,
+          "text": "'☿':{ size:28, weight:500, offset:[0,0.3] },"
+        },
+        {
+          "line": 36,
+          "text": "'♀':{ size:25, weight:400, offset:[0,0.1] },"
+        },
+        {
+          "line": 37,
+          "text": "'♂':{ size:25, weight:400, offset:[-0.2,0.05] },"
+        },
+        {
+          "line": 38,
+          "text": "'♃':{ size:28, weight:500, offset:[1.0,0] },"
+        },
+        {
+          "line": 39,
+          "text": "'♄':{ size:28, weight:500, offset:[0.1,0.15] },"
+        },
+        {
+          "line": 40,
+          "text": "'♅':{ size:29.5, weight:500, offset:[0,0.2] },"
+        },
+        {
+          "line": 41,
+          "text": "'♆':{ size:27.5, weight:450, offset:[0,0.25] },"
+        },
+        {
+          "line": 42,
+          "text": "'☊':{ size:27.5, weight:500, offset:[0,-0.4] },"
+        },
+        {
+          "line": 43,
+          "text": "'☋':{ size:27.5, weight:500, offset:[0,0.2] },"
+        },
+        {
+          "line": 44,
+          "text": "'⊗':{ size:26, weight:400, offset:[0,0.45] },"
+        },
+        {
+          "line": 45,
+          "text": "'⚸':{ size:25.5, weight:400, offset:[0,-0.55] }"
+        }
+      ],
+      "inline_svg": [
+        {
+          "line": 144,
+          "text": "'<circle class=\"pluto-head\" r=\"3.15\"/>',"
+        },
+        {
+          "line": 145,
+          "text": "'<path class=\"pluto-crescent\" d=\"M -7 -1.5 Q 0 5.2 7 -1.5\"/>',"
+        }
+      ],
+      "recoloring": [
+        {
+          "line": 152,
+          "text": "vector.setAttribute('fill', 'none');"
+        },
+        {
+          "line": 153,
+          "text": "vector.setAttribute('stroke', markerColor);"
+        },
+        {
+          "line": 201,
+          "text": "text.setAttribute('fill', markerColor);"
+        }
+      ],
+      "red_literal": [
+        {
+          "line": 64,
+          "text": "return group.classList.contains('sky-b') ? '#3166e2' : '#dc1f18';"
+        }
+      ]
+    },
+    "sky-chart-wheel-unified-marker-renderer-v2.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 104,
+          "text": "text = document.createElementNS(NS, 'text');"
+        },
+        {
+          "line": 106,
+          "text": "text.textContent = bare(group.dataset.glyph || group.dataset.symbol || group.getAttribute('data-glyph') || '');"
+        },
+        {
+          "line": 133,
+          "text": "node.textContent = '';"
+        },
+        {
+          "line": 191,
+          "text": "text.textContent = '';"
+        },
+        {
+          "line": 198,
+          "text": "text.textContent = value;"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 15,
+          "text": "SUN:'☉', MOON:'☽', MERCURY:'☿', VENUS:'♀', MARS:'♂',"
+        },
+        {
+          "line": 16,
+          "text": "JUPITER:'♃', SATURN:'♄', URANUS:'♅', NEPTUNE:'♆', PLUTO:'PLUTO_VECTOR',"
+        },
+        {
+          "line": 17,
+          "text": "NO:'☊', SO:'☋', PA:'⊗',"
+        },
+        {
+          "line": 18,
+          "text": "'NORTH NODE':'☊', NODE:'☊', 'TRUE NODE':'☊', 'MEAN NODE':'☊',"
+        },
+        {
+          "line": 19,
+          "text": "'SOUTH NODE':'☋',"
+        },
+        {
+          "line": 20,
+          "text": "'PART OF FORTUNE':'⊗', FORTUNE:'⊗', POF:'⊗', 'HEART OF FORTUNE':'⊗',"
+        },
+        {
+          "line": 21,
+          "text": "LILITH:'⚸', 'BLACK MOON LILITH':'⚸',"
+        },
+        {
+          "line": 28,
+          "text": "const PLANETS = new Set(['☉','☽','☿','♀','♂','♃','♄','♅','♆']);"
+        },
+        {
+          "line": 29,
+          "text": "const SYMBOLS = new Set(['☊','☋','⊗','⚸']);"
+        },
+        {
+          "line": 33,
+          "text": "'☉':{ size:28.5, weight:500, offset:[0,1.2] },"
+        },
+        {
+          "line": 34,
+          "text": "'☽':{ size:28.5, weight:600, offset:[0.3,0] },"
+        },
+        {
+          "line": 35,
+          "text": "'☿':{ size:28, weight:500, offset:[0,0.3] },"
+        },
+        {
+          "line": 36,
+          "text": "'♀':{ size:25, weight:400, offset:[0,0.1] },"
+        },
+        {
+          "line": 37,
+          "text": "'♂':{ size:25, weight:400, offset:[-0.2,0.05] },"
+        },
+        {
+          "line": 38,
+          "text": "'♃':{ size:28, weight:500, offset:[1,0] },"
+        },
+        {
+          "line": 39,
+          "text": "'♄':{ size:28, weight:500, offset:[0.1,0.15] },"
+        },
+        {
+          "line": 40,
+          "text": "'♅':{ size:29.5, weight:500, offset:[0,0.2] },"
+        },
+        {
+          "line": 41,
+          "text": "'♆':{ size:29.5, weight:450, offset:[0,0.15] },"
+        },
+        {
+          "line": 42,
+          "text": "'☊':{ size:27.5, weight:500, offset:[0,-0.4] },"
+        },
+        {
+          "line": 43,
+          "text": "'☋':{ size:27.5, weight:500, offset:[0,0.2] },"
+        },
+        {
+          "line": 44,
+          "text": "'⊗':{ size:30, weight:400, offset:[0,0] },"
+        },
+        {
+          "line": 45,
+          "text": "'⚸':{ size:25.5, weight:400, offset:[0,-0.55] }"
+        }
+      ],
+      "inline_svg": [
+        {
+          "line": 150,
+          "text": "'<circle cx=\"0\" cy=\"-6\" r=\"3.1\"/>',"
+        },
+        {
+          "line": 151,
+          "text": "'<path d=\"M -7 -1.5 Q 0 5.2 7 -1.5\"/>',"
+        }
+      ],
+      "recoloring": [
+        {
+          "line": 159,
+          "text": "vector.setAttribute('fill', 'none');"
+        },
+        {
+          "line": 160,
+          "text": "vector.setAttribute('stroke', markerColor);"
+        },
+        {
+          "line": 166,
+          "text": "node.setAttribute('stroke', markerColor);"
+        },
+        {
+          "line": 167,
+          "text": "node.setAttribute('fill', 'none');"
+        },
+        {
+          "line": 213,
+          "text": "text.setAttribute('fill', markerColor);"
+        }
+      ],
+      "red_literal": [
+        {
+          "line": 62,
+          "text": "return group.classList.contains('sky-b') ? '#3166e2' : '#dc1f18';"
+        }
+      ]
+    },
+    "sky-chart-wheel-unified-marker-renderer-v3.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 71,
+          "text": "text = document.createElementNS(NS,'text');"
+        },
+        {
+          "line": 130,
+          "text": "text.textContent='';"
+        },
+        {
+          "line": 139,
+          "text": "text.textContent=value;"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 15,
+          "text": "SUN:'☉', MOON:'☽', MERCURY:'☿', VENUS:'♀', MARS:'♂', JUPITER:'♃', SATURN:'♄',"
+        },
+        {
+          "line": 16,
+          "text": "URANUS:'♅', NEPTUNE:'♆', PLUTO:'PLUTO_VECTOR',"
+        },
+        {
+          "line": 17,
+          "text": "NO:'☊', NODE:'☊', 'NORTH NODE':'☊', 'TRUE NODE':'☊', 'MEAN NODE':'☊',"
+        },
+        {
+          "line": 18,
+          "text": "SO:'☋', 'SOUTH NODE':'☋',"
+        },
+        {
+          "line": 21,
+          "text": "LILITH:'⚸', 'BLACK MOON LILITH':'⚸',"
+        },
+        {
+          "line": 28,
+          "text": "'☉':{size:28.5,weight:500,offset:[0,1.2]}, '☽':{size:28.5,weight:600,offset:[0.3,0]},"
+        },
+        {
+          "line": 29,
+          "text": "'☿':{size:28,weight:500,offset:[0,0.3]}, '♀':{size:25,weight:400,offset:[0,0.1]},"
+        },
+        {
+          "line": 30,
+          "text": "'♂':{size:25,weight:400,offset:[-0.2,0.05]}, '♃':{size:28,weight:500,offset:[1,0]},"
+        },
+        {
+          "line": 31,
+          "text": "'♄':{size:28,weight:500,offset:[0.1,0.15]}, '♅':{size:29.5,weight:500,offset:[0,0.2]},"
+        },
+        {
+          "line": 32,
+          "text": "'♆':{size:29.5,weight:450,offset:[0,0.15]}, '☊':{size:27.5,weight:500,offset:[0,-0.4]},"
+        },
+        {
+          "line": 33,
+          "text": "'☋':{size:27.5,weight:500,offset:[0,0.2]}, '⚸':{size:25.5,weight:400,offset:[0,-0.55]}"
+        }
+      ],
+      "inline_svg": [
+        {
+          "line": 112,
+          "text": "g.innerHTML = '<circle cx=\"0\" cy=\"-7\" r=\"3.2\"/><path d=\"M-8 -1.8 Q0 5.7 8 -1.8\"/><path d=\"M0 3.4 V11 M-5 8 H5\"/>';"
+        },
+        {
+          "line": 119,
+          "text": "g.innerHTML = '<circle cx=\"0\" cy=\"0\" r=\"10.8\"/><path d=\"M-7.6 -7.6 L7.6 7.6 M7.6 -7.6 L-7.6 7.6\"/>';"
+        }
+      ],
+      "recoloring": [
+        {
+          "line": 100,
+          "text": "g.setAttribute('fill','none');"
+        },
+        {
+          "line": 101,
+          "text": "g.setAttribute('stroke',color);"
+        },
+        {
+          "line": 113,
+          "text": "g.querySelectorAll('*').forEach(n=>{n.setAttribute('fill','none');n.setAttribute('stroke',color);});"
+        },
+        {
+          "line": 120,
+          "text": "g.querySelectorAll('*').forEach(n=>{n.setAttribute('fill','none');n.setAttribute('stroke',color);});"
+        },
+        {
+          "line": 145,
+          "text": "text.setAttribute('fill',color);"
+        }
+      ],
+      "red_literal": [
+        {
+          "line": 41,
+          "text": "function markerColor(group) { return group.classList.contains('sky-b') ? '#3166e2' : '#dc1f18'; }"
+        }
+      ]
+    },
+    "sky-chart-wheel-unified-marker-renderer-v5.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 20,
+          "text": "function ensureUnit(group){let unit=group.querySelector(':scope > g.relphi-marker-unit');if(!unit){unit=document.createElementNS(NS,'g');unit.classList.add('relphi-marker-unit');group.appendChild(unit);}const knob=group.querySelector(':scope > circle.chart-wheel-stick-knob, g.relphi-marker-unit > circle.chart-wheel-stick-knob');let text=group.querySelector(':scope > .chart-wheel-marker-glyph, g.relphi-marker-unit > .chart-wheel-marker-glyph');if(!text&&knob){text=document.createElementNS(NS,'tex"
+        },
+        {
+          "line": 26,
+          "text": "function styleMarker(group,unit,knob,text){if(!knob||!text)return false;const cx=num(knob.getAttribute('cx')),cy=num(knob.getAttribute('cy'));if(![cx,cy].every(Number.isFinite))return false;const value=identity(group,text),markerColor=color(group);clearLegacy(group,unit,knob,text);text.textContent='';text.style.setProperty('display','none','important');text.style.setProperty('visibility','hidden','important');if(value==='PLUTO_VECTOR')drawPluto(unit,cx,cy,markerColor);else if(value==='FORTUNE_VE"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 9,
+          "text": "const GLYPHS={SUN:'☉',MOON:'☽',MERCURY:'☿',VENUS:'♀',MARS:'♂',JUPITER:'♃',SATURN:'♄',URANUS:'♅',NEPTUNE:'♆',PLUTO:'PLUTO_VECTOR',NO:'☊',NODE:'☊','NORTH NODE':'☊','TRUE NODE':'☊','MEAN NODE':'☊',SO:'☋','SOUTH NODE':'☋',PA:'FORTUNE_VECTOR',POF:'FORTUNE_VECTOR',FORTUNE:'FORTUNE_VECTOR','PART OF FORTUNE':'FORTUNE_VECTOR','HEART OF FORTUNE':'FORTUNE_VECTOR',LILITH:'⚸','BLACK MOON LILITH':'⚸',DS:'DSC',DSC:'DSC',DESCENDANT:'DSC',V:'Vx',VX:'Vx',VERTEX:'Vx',AC:'ASC',ASC:'ASC',RISING:'ASC',ASCENDANT:'ASC'"
+        },
+        {
+          "line": 10,
+          "text": "const PROFILES={'☉':{size:28.5,weight:500,offset:[0,1.2]},'☽':{size:28.5,weight:600,offset:[0.3,0]},'☿':{size:28,weight:500,offset:[0,0.3]},'♀':{size:25,weight:400,offset:[0,0.1]},'♂':{size:25,weight:400,offset:[-0.2,0.05]},'♃':{size:28,weight:500,offset:[1,0]},'♄':{size:28,weight:500,offset:[0.1,0.15]},'♅':{size:29.5,weight:500,offset:[0,0.2]},'♆':{size:29.5,weight:450,offset:[0,0.15]},'☊':{size:27.5,weight:500,offset:[0,-0.4]},'☋':{size:27.5,weight:500,offset:[0,0.2]},'⚸':{size:25.5,weight:400"
+        }
+      ],
+      "inline_svg": [
+        {
+          "line": 24,
+          "text": "function drawPluto(unit,cx,cy,markerColor){const g=vectorGroup(unit,'relphi-pluto-vector',cx,cy+0.15,markerColor);g.setAttribute('stroke-width','1.85');g.innerHTML='<path d=\"M-3.2 -7 A3.2 3.2 0 1 0 3.2 -7 A3.2 3.2 0 1 0 -3.2 -7\"/><path d=\"M-8 -1.2 Q0 5.8 8 -1.2\"/><path d=\"M0 4.1 V11.2 M-5.1 8.1 H5.1\"/>';g.querySelectorAll('path').forEach(n=>{n.setAttribute('fill','none');n.setAttribute('stroke',markerColor);n.style.setProperty('stroke',markerColor,'important');});}"
+        },
+        {
+          "line": 25,
+          "text": "function drawFortune(unit,cx,cy,markerColor){const g=vectorGroup(unit,'relphi-fortune-vector',cx,cy,markerColor);g.setAttribute('stroke-width','1.8');g.innerHTML='<path d=\"M0 -10.25 A10.25 10.25 0 1 1 0 10.25 A10.25 10.25 0 1 1 0 -10.25\"/><path d=\"M-7.25 -7.25 L7.25 7.25 M7.25 -7.25 L-7.25 7.25\"/>';g.querySelectorAll('path').forEach(n=>{n.setAttribute('fill','none');n.setAttribute('stroke',markerColor);n.style.setProperty('stroke',markerColor,'important');});}"
+        }
+      ],
+      "recoloring": [
+        {
+          "line": 23,
+          "text": "function vectorGroup(unit,cls,cx,cy,markerColor){const g=document.createElementNS(NS,'g');g.classList.add(cls);g.setAttribute('transform',`translate(${cx.toFixed(2)} ${cy.toFixed(2)})`);g.setAttribute('fill','none');g.setAttribute('stroke',markerColor);g.setAttribute('color',markerColor);g.setAttribute('stroke-linecap','round');g.setAttribute('stroke-linejoin','round');g.style.setProperty('color',markerColor,'important');g.style.setProperty('stroke',markerColor,'important');unit.appendChild(g);r"
+        },
+        {
+          "line": 24,
+          "text": "function drawPluto(unit,cx,cy,markerColor){const g=vectorGroup(unit,'relphi-pluto-vector',cx,cy+0.15,markerColor);g.setAttribute('stroke-width','1.85');g.innerHTML='<path d=\"M-3.2 -7 A3.2 3.2 0 1 0 3.2 -7 A3.2 3.2 0 1 0 -3.2 -7\"/><path d=\"M-8 -1.2 Q0 5.8 8 -1.2\"/><path d=\"M0 4.1 V11.2 M-5.1 8.1 H5.1\"/>';g.querySelectorAll('path').forEach(n=>{n.setAttribute('fill','none');n.setAttribute('stroke',markerColor);n.style.setProperty('stroke',markerColor,'important');});}"
+        },
+        {
+          "line": 25,
+          "text": "function drawFortune(unit,cx,cy,markerColor){const g=vectorGroup(unit,'relphi-fortune-vector',cx,cy,markerColor);g.setAttribute('stroke-width','1.8');g.innerHTML='<path d=\"M0 -10.25 A10.25 10.25 0 1 1 0 10.25 A10.25 10.25 0 1 1 0 -10.25\"/><path d=\"M-7.25 -7.25 L7.25 7.25 M7.25 -7.25 L-7.25 7.25\"/>';g.querySelectorAll('path').forEach(n=>{n.setAttribute('fill','none');n.setAttribute('stroke',markerColor);n.style.setProperty('stroke',markerColor,'important');});}"
+        },
+        {
+          "line": 26,
+          "text": "function styleMarker(group,unit,knob,text){if(!knob||!text)return false;const cx=num(knob.getAttribute('cx')),cy=num(knob.getAttribute('cy'));if(![cx,cy].every(Number.isFinite))return false;const value=identity(group,text),markerColor=color(group);clearLegacy(group,unit,knob,text);text.textContent='';text.style.setProperty('display','none','important');text.style.setProperty('visibility','hidden','important');if(value==='PLUTO_VECTOR')drawPluto(unit,cx,cy,markerColor);else if(value==='FORTUNE_VE"
+        }
+      ],
+      "red_literal": [
+        {
+          "line": 16,
+          "text": "const color=g=>g.classList.contains('sky-b')?'#3166e2':'#dc1f18';"
+        }
+      ]
+    },
+    "sky-chart-wheel-unified-marker-renderer-v6.js": {
+      "asset_paths": [
+        {
+          "line": 69,
+          "text": "const promise=fetch(`assets/planet-glyphs/${name}.svg`).then(r=>{if(!r.ok)throw Error(name);return r.text()}).then(source=>{const svg=new DOMParser().parseFromString(source,'image/svg+xml').documentElement;sources.set(name,svg);return svg});"
+        }
+      ],
+      "text_nodes": [
+        {
+          "line": 40,
+          "text": "if(!text&&knob){text=document.createElementNS(NS,'text');text.classList.add('chart-wheel-marker-glyph')}"
+        },
+        {
+          "line": 123,
+          "text": "text.textContent='';text.style.setProperty('display','none','important');"
+        },
+        {
+          "line": 127,
+          "text": "text.textContent=value;text.setAttribute('x','0');text.setAttribute('y','0');text.setAttribute('text-anchor','middle');text.setAttribute('dominant-baseline','central');text.setAttribute('fill',color);"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [
+        {
+          "line": 10,
+          "text": "const MAP={NO:'☊',NODE:'☊','NORTH NODE':'☊','TRUE NODE':'☊','MEAN NODE':'☊',SO:'☋','SOUTH NODE':'☋',PA:'FORTUNE_VECTOR',POF:'FORTUNE_VECTOR',FORTUNE:'FORTUNE_VECTOR','PART OF FORTUNE':'FORTUNE_VECTOR','HEART OF FORTUNE':'FORTUNE_VECTOR',LILITH:'⚸','BLACK MOON LILITH':'⚸',DS:'DSC',DSC:'DSC',DESCENDANT:'DSC',V:'Vx',VX:'Vx',VERTEX:'Vx',AC:'ASC',ASC:'ASC',RISING:'ASC',ASCENDANT:'ASC',MC:'MC',MIDHEAVEN:'MC',IC:'IC',IMUMCOELI:'IC','IMUM COELI':'IC'};"
+        },
+        {
+          "line": 11,
+          "text": "const PROFILE={'☊':[28,600,0,-.45],'☋':[28,600,0,.15],'⚸':[26.5,550,0,-.45]};"
+        },
+        {
+          "line": 14,
+          "text": "const PLANET_TEXT=new Set(['☉','☽','☿','♀','♂','♃','♄','♅','♆','♇','⯓']);"
+        }
+      ],
+      "inline_svg": [
+        {
+          "line": 106,
+          "text": "if(!mark){mark=document.createElementNS(NS,'g');mark.classList.add('relphi-fortune-vector');mark.innerHTML='<path d=\"M0 -9.25 A9.25 9.25 0 1 1 0 9.25 A9.25 9.25 0 1 1 0 -9.25\"/><path d=\"M-6.54 -6.54 L6.54 6.54 M6.54 -6.54 L-6.54 6.54\"/>';unit.appendChild(mark)}"
+        }
+      ],
+      "recoloring": [
+        {
+          "line": 65,
+          "text": "function hostColor(g,knob){const color=g.classList.contains('sky-b')?BLUE:RED;knob.setAttribute('stroke',color);knob.style.setProperty('stroke',color,'important');return color}"
+        },
+        {
+          "line": 72,
+          "text": "function recolor(root,color){"
+        },
+        {
+          "line": 76,
+          "text": "el.setAttribute('fill',color);el.setAttribute('stroke',color);el.setAttribute('stroke-width','1.15');el.setAttribute('paint-order','stroke fill');el.setAttribute('stroke-linejoin','round');"
+        },
+        {
+          "line": 80,
+          "text": "el.setAttribute('stroke',color);el.setAttribute('stroke-width',width.toFixed(2));el.style.setProperty('stroke',color,'important');el.style.setProperty('stroke-width',width.toFixed(2),'important');"
+        },
+        {
+          "line": 101,
+          "text": "recolor(art,color);if(!fitArt(art,name)){art.remove();return false}"
+        },
+        {
+          "line": 107,
+          "text": "mark.removeAttribute('transform');mark.setAttribute('fill','none');mark.setAttribute('stroke',color);mark.setAttribute('stroke-width','2.1');mark.setAttribute('stroke-linecap','round');"
+        },
+        {
+          "line": 108,
+          "text": "mark.querySelectorAll('*').forEach(el=>{el.setAttribute('fill','none');el.setAttribute('stroke',color);el.style.setProperty('stroke',color,'important');el.style.setProperty('opacity','1','important')});"
+        },
+        {
+          "line": 127,
+          "text": "text.textContent=value;text.setAttribute('x','0');text.setAttribute('y','0');text.setAttribute('text-anchor','middle');text.setAttribute('dominant-baseline','central');text.setAttribute('fill',color);"
+        }
+      ],
+      "red_literal": [
+        {
+          "line": 8,
+          "text": "const OUTWARD=58,GAP=43,MAX_T=84,R=17.5,SAFE=30.25,RED='#dc1f18',BLUE='#3166e2';"
+        }
+      ]
+    },
+    "sky-chart-wizard-state-controller.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 43,
+          "text": "if (heading) heading.textContent = 'How will you create “' + name + '”?';"
+        },
+        {
+          "line": 59,
+          "text": "if (error) error.textContent = '';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    },
+    "sky-chart-wizard-ui-state-fix.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 66,
+          "text": "if (heading) heading.textContent = name + ' is now ' + slotLabel(kind);"
+        },
+        {
+          "line": 67,
+          "text": "if (summary) summary.textContent = placementSummary(outputFor(kind)) + ' Loaded from your saved skies.';"
+        },
+        {
+          "line": 108,
+          "text": "if (status) status.textContent = 'Loading “' + record.name + '” into ' + slotLabel(kind) + '…';"
+        },
+        {
+          "line": 114,
+          "text": "if (status) status.textContent = '';"
+        },
+        {
+          "line": 119,
+          "text": "if (status) status.textContent = '“' + record.name + '” did not load into ' + slotLabel(kind) + '. No placements were assigned.';"
+        },
+        {
+          "line": 135,
+          "text": "if (label) label.textContent = 'Choose a name for this sky:';"
+        },
+        {
+          "line": 156,
+          "text": "if (!input.value.trim()) error.textContent = 'Type a new name or choose a saved sky.';"
+        },
+        {
+          "line": 157,
+          "text": "else error.textContent = record ? 'Saved sky found. Continue will load it into ' + slotLabel(intendedKind()) + '.' : 'Continue will create a new sky with this name.';"
+        },
+        {
+          "line": 167,
+          "text": "if (error) error.textContent = 'Type a new name or choose a saved sky.';"
+        },
+        {
+          "line": 230,
+          "text": "style.textContent = `"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": [
+        {
+          "line": 236,
+          "text": "#relphiSkyNameInput:focus{outline:3px solid rgba(220,31,24,.16);border-color:#dc1f18}"
+        },
+        {
+          "line": 243,
+          "text": "#relphiSkyWizard .relphi-primary-action,#relphiAddComparison,#relphiSkyNameContinue,#skyCalcRun,#exportChart{background:#dc1f18!important;color:#fff!important;border-color:#dc1f18!important;box-shadow:0 7px 18px rgba(220,31,24,.18)!important}"
+        }
+      ]
+    },
+    "sky-chart-wizard-v2.js": {
+      "asset_paths": [],
+      "text_nodes": [
+        {
+          "line": 196,
+          "text": "byId('relphiSkyCompleteHeading').textContent = activeName + ' is now ' + (activeKind === 'chart' ? 'Sky A' : 'Sky B');"
+        },
+        {
+          "line": 197,
+          "text": "byId('relphiSkyCompleteSummary').textContent = text;"
+        },
+        {
+          "line": 210,
+          "text": "byId('relphiSkyNameError').textContent = 'Name this sky before continuing.';"
+        },
+        {
+          "line": 218,
+          "text": "byId('relphiSkyNameError').textContent = '';"
+        },
+        {
+          "line": 223,
+          "text": "byId('relphiSkyMethodHeading').textContent = 'How will you create “' + name + '”?';"
+        },
+        {
+          "line": 269,
+          "text": "byId('relphiSkyNameEyebrow').textContent = 'Comparison sky';"
+        },
+        {
+          "line": 270,
+          "text": "byId('relphiSkyNameHeading').textContent = 'Give the comparison sky an identity';"
+        }
+      ],
+      "fallbacks": [],
+      "unicode_glyphs": [],
+      "inline_svg": [],
+      "recoloring": [],
+      "red_literal": []
+    }
+  },
+  "registry_entries": {
+    "sun": "['sun','Sun',['sun','☉','⊙'],'assets/planet-glyphs/sun.svg',1,0,0,null,'circle'],",
+    "moon": "['moon','Moon',['moon','☽','☾'],'assets/planet-glyphs/moon.svg',1.083,2.7,1,null,'circle'],",
+    "mercury": "['mercury','Mercury',['mercury','☿'],'assets/planet-glyphs/mercury.svg',1,0,0,null,'circle'],",
+    "venus": "['venus','Venus',['venus','♀'],'assets/planet-glyphs/venus.svg',1,0,0,null,'circle'],",
+    "mars": "['mars','Mars',['mars','♂'],'assets/planet-glyphs/mars.svg',1,-0.95,0.9,null,'circle'],",
+    "jupiter": "['jupiter','Jupiter',['jupiter','♃'],'assets/planet-glyphs/jupiter.svg',1,0,0,null,'circle'],",
+    "saturn": "['saturn','Saturn',['saturn','♄'],'assets/planet-glyphs/saturn.svg',1,0,0,null,'circle'],",
+    "uranus": "['uranus','Uranus',['uranus','♅','⛢'],'assets/planet-glyphs/uranus.svg',1,0.05,0.8,null,'circle'],",
+    "neptune": "['neptune','Neptune',['neptune','♆'],'assets/planet-glyphs/neptune.svg',1,0,1.3,null,'circle'],",
+    "pluto": "['pluto','Pluto',['pluto','♇','⯓','pl'],'assets/planet-glyphs/pluto.svg',1,0,0,null,'circle'],",
+    "chiron": "['chiron','Chiron',['chiron','⚷'],null,1.242,0,0,'⚷','symbol','400'],",
+    "north-node": "['north-node','North Node',['north node','true node','mean node','ascending node','node','☊','no'],null,1.18,0,-0.3,'☊','symbol','400'],",
+    "south-node": "['south-node','South Node',['south node','descending node','☋','so'],null,1.18,0,0.3,'☋','symbol','400'],",
+    "lilith": "['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],'assets/planet-glyphs/lilith.svg',1.05,0,0,null,'circle','400'],",
+    "part-of-fortune": "['part-of-fortune','Part of Fortune',['part of fortune','fortune','pars fortunae','pof','⊗','pa'],null,.92,0,0,'fortune','circle'],",
+    "vertex": "['vertex','Vertex',['vertex','vx'],null,1,0,0,'Vx','letter','700'],",
+    "asc": "['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'Asc','letter','700'],",
+    "dsc": "['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'Dsc','letter','700'],",
+    "mc": "['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','letter','700'],",
+    "ic": "['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','letter','700'],"
+  }
+}

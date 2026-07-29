@@ -1,0 +1,43 @@
+name: Restore glyph renderer cache
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/restore-glyph-renderer-cache.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+      - name: Bust restored renderer caches
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          let nav = fs.readFileSync('navloader.js','utf8');
+          nav = nav.replace(/sky-chart-comparison-zodiac-inscribed-v1\.js\?v=[^']+/g, 'sky-chart-comparison-zodiac-inscribed-v1.js?v=stable-visible-2');
+          fs.writeFileSync('navloader.js', nav);
+          let html = fs.readFileSync('sky-chart.html','utf8');
+          html = html.replace(/navloader\.js\?v=\d+/, 'navloader.js?v=53');
+          fs.writeFileSync('sky-chart.html', html);
+          NODE
+      - name: Verify
+        run: |
+          grep -q "stable-visible-2" navloader.js
+          grep -q "navloader.js?v=53" sky-chart.html
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add navloader.js sky-chart.html
+          git commit -m "Restore visible glyph renderer and bust cache"
+          git push origin HEAD:feature/chart-axes-angular-frame

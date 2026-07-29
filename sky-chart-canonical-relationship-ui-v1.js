@@ -213,6 +213,7 @@
       wrap.appendChild(nameButton);
       glyph.setAttribute('aria-expanded', 'true');
     });
+    wrap.appendChild(glyph);
     return wrap;
   }
 

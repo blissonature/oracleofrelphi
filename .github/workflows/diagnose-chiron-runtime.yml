@@ -1,0 +1,89 @@
+name: Diagnose Chiron runtime
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/diagnose-chiron-runtime.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run local Chiron modules exactly as shipped
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const vm = require('vm');
+          global.window = global;
+          global.self = global;
+          const report = { generatedAt:new Date().toISOString(), astronomyLoaded:false, chironLoaded:false, tests:{} };
+          function capture(name, fn) {
+            try {
+              const value = fn();
+              report.tests[name] = { ok:true, value };
+              return value;
+            } catch (error) {
+              report.tests[name] = { ok:false, name:error?.name, message:error?.message, stack:error?.stack };
+              return null;
+            }
+          }
+          capture('loadAstronomy', () => {
+            vm.runInThisContext(fs.readFileSync('vendor/astronomy-engine/astronomy.browser.min.js','utf8'), { filename:'astronomy.browser.min.js' });
+            report.astronomyLoaded = !!global.Astronomy;
+            return {
+              hasAstronomy:!!global.Astronomy,
+              hasGravitySimulator:typeof global.Astronomy?.GravitySimulator,
+              hasStateVector:typeof global.Astronomy?.StateVector,
+              hasVector:typeof global.Astronomy?.Vector,
+              hasEcliptic:typeof global.Astronomy?.Ecliptic,
+              hasSiderealTime:typeof global.Astronomy?.SiderealTime
+            };
+          });
+          capture('loadHouseSystems', () => {
+            vm.runInThisContext(fs.readFileSync('relphi-house-systems.js','utf8'), { filename:'relphi-house-systems.js' });
+            return { hasHouseSystems:!!global.RelphiHouseSystems, hasCalculateCusps:typeof global.RelphiHouseSystems?.calculateCusps };
+          });
+          capture('loadChiron', () => {
+            vm.runInThisContext(fs.readFileSync('sky-chart-chiron-local-v1.js','utf8'), { filename:'sky-chart-chiron-local-v1.js' });
+            report.chironLoaded = !!global.RelphiChironLocal;
+            return { hasChiron:!!global.RelphiChironLocal, anchors:global.RelphiChironLocal?.anchors?.length, calculate:typeof global.RelphiChironLocal?.calculate };
+          });
+          const date = new Date('2026-07-26T04:12:00.000Z');
+          const chiron = capture('calculateChiron', () => global.RelphiChironLocal.calculate(date));
+          capture('siderealTime', () => global.Astronomy.SiderealTime(date));
+          capture('houseCusps', () => global.RelphiHouseSystems.calculateCusps({
+            system:'whole-sign', ascendant:330.2167, midheaven:253.6,
+            siderealDegrees:Number(global.Astronomy.SiderealTime(date))*15-111.891,
+            obliquityDegrees:23.436, latitude:40.7608
+          }));
+          if (chiron) {
+            capture('chironPlacementMath', () => {
+              const lon = ((Number(chiron.longitude)%360)+360)%360;
+              const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+              return { longitude:lon, sign:signs[Math.floor(lon/30)], degree:Math.floor(lon%30), minute:Math.round(((lon%30)-Math.floor(lon%30))*60), retrograde:!!chiron.retrograde };
+            });
+          }
+          fs.mkdirSync('data',{recursive:true});
+          fs.writeFileSync('data/chiron-runtime-diagnostic.json', JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report,null,2));
+          NODE
+      - name: Commit diagnostic report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/chiron-runtime-diagnostic.json
+          git commit -m "Record Chiron runtime diagnostic" || exit 0
+          git push origin HEAD:feature/chart-axes-angular-frame

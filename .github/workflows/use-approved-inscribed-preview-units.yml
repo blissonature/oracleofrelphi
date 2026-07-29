@@ -1,0 +1,115 @@
+name: Use approved inscribed preview units
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/use-approved-inscribed-preview-units.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+
+      - name: Preserve approved preview proportions as one atomic unit
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          wheel = Path('sky-chart-wheel-canonical-component-v1.js')
+          source = wheel.read_text()
+          old = """  function drawHost(layer, item, point, radius) {
+    const host = svgNode('g');
+    host.classList.add(HOST_CLASS);
+    host.dataset.glyphId = item.entry.id;
+    host.dataset.sky = item.sky;
+    host.dataset.glyphColor = item.color;
+    host.setAttribute('transform', 'translate(' + point.x.toFixed(3) + ' ' + point.y.toFixed(3) + ')');
+    host.setAttribute('aria-label', item.entry.name);
+    layer.appendChild(host);
+    const bubble = window.RelphiGlyphComponent.createBubble(host, item.entry.id, {
+      radius:radius,
+      padding:1.35,
+      color:item.color,
+      fill:'#fff',
+      strokeWidth:2.25
+    });
+    return bubble.ready.then(function () {
+      host.dataset.ready = 'true';
+      return host;
+    });
+  }
+"""
+          new = """  function drawHost(layer, item, point, radius) {
+    const PREVIEW_RADIUS = 19;
+    const PREVIEW_PADDING = 1;
+    const PREVIEW_STROKE = 2.35;
+    const scale = radius / PREVIEW_RADIUS;
+    const host = svgNode('g');
+    host.classList.add(HOST_CLASS);
+    host.dataset.glyphId = item.entry.id;
+    host.dataset.sky = item.sky;
+    host.dataset.glyphColor = item.color;
+    host.dataset.masterSource = 'glyphs-unified-preview@0d56ee7';
+    host.dataset.masterRadius = String(PREVIEW_RADIUS);
+    host.setAttribute('transform', 'translate(' + point.x.toFixed(3) + ' ' + point.y.toFixed(3) + ') scale(' + scale.toFixed(6) + ')');
+    host.setAttribute('aria-label', item.entry.name);
+    layer.appendChild(host);
+    const bubble = window.RelphiGlyphComponent.createBubble(host, item.entry.id, {
+      radius:PREVIEW_RADIUS,
+      padding:PREVIEW_PADDING,
+      color:item.color,
+      fill:'#fff',
+      strokeWidth:PREVIEW_STROKE
+    });
+    return bubble.ready.then(function () {
+      host.dataset.ready = 'true';
+      return host;
+    });
+  }
+"""
+          if old not in source:
+              raise SystemExit('Expected wheel drawHost block was not found; refusing to guess.')
+          wheel.write_text(source.replace(old, new))
+
+          nav = Path('navloader.js')
+          nav_source = nav.read_text()
+          old_loader = "sky-chart-wheel-canonical-component-v1.js?v=canon-0d56ee7-direct-1"
+          new_loader = "sky-chart-wheel-canonical-component-v1.js?v=approved-preview-master-unit-1"
+          if old_loader not in nav_source and new_loader not in nav_source:
+              raise SystemExit('Canonical wheel loader entry not found.')
+          nav.write_text(nav_source.replace(old_loader, new_loader))
+
+          html = Path('sky-chart.html')
+          html_source = html.read_text()
+          import re
+          match = re.search(r'navloader\.js\?v=(\d+)', html_source)
+          if match:
+              html_source = re.sub(r'navloader\.js\?v=\d+', 'navloader.js?v=' + str(int(match.group(1)) + 1), html_source, count=1)
+              html.write_text(html_source)
+          PY
+
+      - name: Verify approved master settings
+        run: |
+          grep -q "masterSource = 'glyphs-unified-preview@0d56ee7'" sky-chart-wheel-canonical-component-v1.js
+          grep -q "const PREVIEW_RADIUS = 19" sky-chart-wheel-canonical-component-v1.js
+          grep -q "const PREVIEW_PADDING = 1" sky-chart-wheel-canonical-component-v1.js
+          grep -q "const PREVIEW_STROKE = 2.35" sky-chart-wheel-canonical-component-v1.js
+          grep -q "approved-preview-master-unit-1" navloader.js
+
+      - name: Commit exact preview-unit rendering
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sky-chart-wheel-canonical-component-v1.js navloader.js sky-chart.html
+          git commit -m "Place approved inscribed preview units atomically" || exit 0
+          git push origin HEAD:feature/chart-axes-angular-frame

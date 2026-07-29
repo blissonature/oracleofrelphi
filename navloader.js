@@ -6,13 +6,19 @@
     const base = src.split('?')[0];
     const existing = document.querySelector('script[src^="' + base + '"]');
     if (existing) {
-      if (onload) setTimeout(onload, 0);
+      if (onload) {
+        if (existing.dataset.relphiLoaded === 'true') setTimeout(onload, 0);
+        else existing.addEventListener('load', onload, { once:true });
+      }
       return existing;
     }
     const script = document.createElement('script');
     script.async = false;
     script.src = src;
-    if (onload) script.addEventListener('load', onload, { once:true });
+    script.addEventListener('load', function () {
+      script.dataset.relphiLoaded = 'true';
+      if (onload) onload();
+    }, { once:true });
     if (onerror) script.addEventListener('error', onerror, { once:true });
     document.body.appendChild(script);
     return script;
@@ -94,6 +100,7 @@
     appendScript('sky-chart-builder-v4-defaults.js?v=1');
     appendScript('sky-chart-language-cleanup.js?v=6');
     appendScript('sky-chart-aspect-keyboard.js?v=1');
+    appendScript('sky-chart-workspace-v1.js?v=1');
     return true;
   }
 
@@ -139,21 +146,33 @@
 
   function loadCanonicalSkyWheel() {
     ensureCanonicalSkyBootStyle();
-    appendScript('relphi-glyph-registry-v1.js?v=19', function () {
-      appendScript('relphi-glyph-component-v1.js?v=20', function () {
-        appendScript('sky-chart-wheel-e9344099-canonical-master-v1.js?v=1', function () {
-          appendScript('sky-chart-wheel-canonical-component-v1.js?v=3', function () {
-            appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
-          });
+    appendScript('relphi-glyph-registry-v1.js?v=canon-approved-angle-assets-1', function () {
+      appendScript('relphi-glyph-component-v1.js?v=canon-approved-angle-assets-1', function () {
+        appendScript('sky-chart-wheel-canonical-component-v1.js?v=canon-0d56ee7-direct-1', function () {
+          appendScript('sky-chart-comparison-zodiac-inscribed-v1.js?v=stable-visible-2');
+          appendScript('sky-chart-wheel-marker-interaction-v1.js?v=3');
         });
       });
     });
   }
 
+  function loadChironPipeline() {
+    if (window.RelphiChironReady) return window.RelphiChironReady;
+    window.RelphiChironReady = new Promise(function (resolve, reject) {
+      appendScript('sky-chart-chiron-local-v1.js?v=direct-41-anchors-4', function () {
+        if (!window.RelphiChironLocal) return reject(new Error('Chiron module loaded without its API.'));
+        appendScript('sky-chart-calculated-points-storage-bridge-v2.js?v=direct-41-anchors-4', function () { resolve(window.RelphiChironLocal); }, reject);
+      }, reject);
+    });
+    return window.RelphiChironReady;
+  }
+
   function loadEnhancements() {
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
-      appendScript('drawing-board-workflow-v2.js?v=19');
+      appendScript('drawing-board-workflow-v2.js?v=24');
+      appendScript('drawing-board-interactions-v1.js?v=4');
+      appendScript('drawing-board-spread-prefabs-v1.js?v=10');
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
       appendScript('planetary-hours-location-prompt.js?v=4');
@@ -161,8 +180,8 @@
       appendScript('relphi-glyph-bubbles.js?v=2');
     }
     if (/(^|\/)glyphs\.html$/.test(location.pathname)) {
-      appendScript('relphi-glyph-registry-v1.js?v=19', function () {
-        appendScript('relphi-glyph-component-v1.js?v=20', function () {
+      appendScript('relphi-glyph-registry-v1.js?v=canon-approved-angle-assets-1', function () {
+        appendScript('relphi-glyph-component-v1.js?v=canon-approved-angle-assets-1', function () {
           appendScript('glyph-trainer-canonical-v1.js?v=1');
         });
       });
@@ -171,20 +190,22 @@
     if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
       const preview = new URLSearchParams(location.search).get('preview');
       [
+        'sky-chart-no-flash-boot-v1.js?v=1',
         'sky-chart-stability-hotfix.js?v=1',
         'sky-chart-static-dynamic.js?v=2',
         'sky-chart-aspect-duration-fix.js?v=2',
         'sky-chart-relationship-language.js?v=5',
-        'sky-chart-canonical-relationship-ui-v1.js?v=1',
-        'sky-chart-canonical-glyph-correction-v1.js?v=1',
+        'sky-chart-canonical-relationship-ui-v1.js?v=token-append-1',
+        'sky-chart-relationship-sections-v1.js?v=1',
         'sky-chart-related-relationships-v2.js?v=2',
         'sky-chart-sign-cusps-v1.js?v=1',
         'sky-chart-provenance-fix.js?v=1',
         'sky-chart-extra-points-support-v1.js?v=3',
         'sky-chart-calculated-points-v1.js?v=4',
-        'sky-chart-special-vector-color-v1.js?v=1'
+        'sky-chart-special-vector-color-v1.js?v=2'
       ].forEach(function (src) { appendScript(src); });
       loadCanonicalSkyWheel();
+      loadChironPipeline();
 
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);

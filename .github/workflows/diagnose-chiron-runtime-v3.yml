@@ -1,0 +1,57 @@
+name: Diagnose Chiron runtime v3
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/diagnose-chiron-runtime-v3.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Pinpoint simulator failure
+        run: |
+          node <<'NODE'
+          const fs=require('fs'), vm=require('vm');
+          const s={console,Date,Math,JSON,Number,String,Boolean,Array,Object,Error,TypeError,setTimeout,clearTimeout};
+          s.window=s;s.self=s;s.globalThis=s;vm.createContext(s);
+          vm.runInContext(fs.readFileSync('vendor/astronomy-engine/astronomy.browser.min.js','utf8'),s,{filename:'astronomy.browser.min.js'});
+          const report={generatedAt:new Date().toISOString(),tests:{}};
+          function errdata(e){
+            let own={};
+            try { for(const k of Object.getOwnPropertyNames(e||{})) own[k]=String(e[k]); } catch(_){}
+            return {type:typeof e,raw:String(e),name:e&&e.name,message:e&&e.message,constructor:e&&e.constructor&&e.constructor.name,own};
+          }
+          function test(name,code){try{const v=vm.runInContext(code,s,{filename:name});report.tests[name]={ok:true,value:v};return v;}catch(e){report.tests[name]={ok:false,error:errdata(e)};return null;}}
+          const anchor={epoch:'2025-01-01T00:00:00.000Z',x:17.27380717632477,y:6.173233043466561,z:3.003626288783316,vx:-0.001554320275016811,vy:0.002696070103114615,vz:0.0007485749228680151};
+          s.anchor=anchor;
+          test('stateVector',`window.initial=new Astronomy.StateVector(anchor.x,anchor.y,anchor.z,anchor.vx,anchor.vy,anchor.vz,new Date(anchor.epoch)); ({x:initial.x,t:String(initial.t)})`);
+          test('gravityConstructor',`window.sim=new Astronomy.GravitySimulator(Astronomy.Body.Sun,new Date(anchor.epoch),[initial]); ({origin:sim.originBody, time:String(sim.time)})`);
+          test('updateOneDay',`window.states=sim.Update(new Date('2025-01-02T00:00:00.000Z')); ({length:states.length,x:states[0].x,t:String(states[0].t)})`);
+          test('solarEarth',`window.earth=sim.SolarSystemBodyState(Astronomy.Body.Earth); ({x:earth.x,t:String(earth.t)})`);
+          test('geoVector',`window.geo=new Astronomy.Vector(states[0].x-earth.x,states[0].y-earth.y,states[0].z-earth.z,states[0].t); ({x:geo.x,t:String(geo.t)})`);
+          test('ecliptic',`Astronomy.Ecliptic(geo)`);
+          vm.runInContext(fs.readFileSync('sky-chart-chiron-local-v1.js','utf8'),s,{filename:'sky-chart-chiron-local-v1.js'});
+          test('fullCalculate',`window.RelphiChironLocal.calculate(new Date('2026-07-26T04:12:00.000Z'))`);
+          fs.mkdirSync('data',{recursive:true});fs.writeFileSync('data/chiron-runtime-diagnostic-v3.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+          NODE
+      - name: Commit diagnostic report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/chiron-runtime-diagnostic-v3.json
+          git commit -m "Record GravitySimulator call diagnostic" || exit 0
+          git push origin HEAD:feature/chart-axes-angular-frame

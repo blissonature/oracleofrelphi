@@ -1,0 +1,133 @@
+name: Freeze approved glyph library for Sky Chart
+
+on:
+  push:
+    branches: [feature/chart-axes-angular-frame]
+    paths: [.github/workflows/freeze-canonical-glyph-library.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  freeze:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install browser renderer
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.52.0 >/dev/null 2>&1
+          npx playwright install --with-deps chromium >/dev/null 2>&1
+      - name: Materialize exact approved glyph bubbles
+        run: |
+          rm -rf /tmp/relphi-canon
+          git worktree add --detach /tmp/relphi-canon 0d56ee7ec0ea0fc3e44debcb809afde09f3271ab
+          cat > /tmp/freeze-glyphs.js <<'NODE'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          const path = require('path');
+          const http = require('http');
+          const root = '/tmp/relphi-canon';
+          const mime = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png'};
+          const server = http.createServer((req,res)=>{
+            const clean = decodeURIComponent(req.url.split('?')[0]);
+            let file = path.join(root, clean === '/' ? 'glyphs-unified-preview.html' : clean);
+            if (!file.startsWith(root) || !fs.existsSync(file)) { res.writeHead(404); return res.end('not found'); }
+            res.setHeader('content-type', mime[path.extname(file)] || 'application/octet-stream');
+            fs.createReadStream(file).pipe(res);
+          });
+          server.listen(4173, '127.0.0.1', async () => {
+            const browser = await chromium.launch({headless:true});
+            const page = await browser.newPage({viewport:{width:1280,height:900}});
+            await page.goto('http://127.0.0.1:4173/glyphs-unified-preview.html', {waitUntil:'networkidle'});
+            await page.waitForFunction(() => document.querySelectorAll('.ug-stage svg .relphi-glyph-bubble').length === window.RelphiGlyphRegistry.entries.length);
+            await page.waitForTimeout(250);
+            const records = await page.evaluate(() => window.RelphiGlyphRegistry.entries.map((entry,index)=>{
+              const svg = document.querySelectorAll('.ug-stage svg')[index];
+              const clone = svg.cloneNode(true);
+              clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+              clone.setAttribute('viewBox','-32 -32 64 64');
+              clone.setAttribute('width','64');
+              clone.setAttribute('height','64');
+              clone.removeAttribute('aria-label');
+              return {id:entry.id,name:entry.name,svg:new XMLSerializer().serializeToString(clone)};
+            }));
+            const out = '/tmp/frozen-glyphs';
+            fs.rmSync(out,{recursive:true,force:true}); fs.mkdirSync(out,{recursive:true});
+            for (const r of records) fs.writeFileSync(path.join(out,r.id+'.svg'),r.svg+'\n');
+            fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify({sourceCommit:'0d56ee7ec0ea0fc3e44debcb809afde09f3271ab',presentation:'inscribed',count:records.length,entries:records.map(({id,name})=>({id,name}))},null,2)+'\n');
+            await browser.close(); server.close();
+          });
+          NODE
+          node /tmp/freeze-glyphs.js
+          mkdir -p assets/glyph-canon/0d56ee7/inscribed
+          cp /tmp/frozen-glyphs/* assets/glyph-canon/0d56ee7/inscribed/
+      - name: Install single-source wheel renderer
+        run: |
+          cat > sky-chart-canonical-frozen-wheel-v1.js <<'JS'
+          // Sole glyph-art owner for Sky Chart. Uses immutable complete SVG bubbles only.
+          (function(){
+            'use strict';
+            if(!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
+            const NS='http://www.w3.org/2000/svg';
+            const BASE='assets/glyph-canon/0d56ee7/inscribed/';
+            const WHEELS='.unified-sky-wheel svg,#chartOutput svg,#currentSkyOutput svg,.sky-output-box svg';
+            const LAYER='relphi-frozen-canonical-layer';
+            const ZODIAC=new Set(['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces']);
+            let queued=false, rendering=false;
+            function node(name){return document.createElementNS(NS,name)}
+            function norm(v){return String(v||'').replace(/[\uFE0E\uFE0F]/g,'').trim()}
+            function resolve(v){const r=window.RelphiGlyphRegistry;return r&&(r.resolve(norm(v))||r.get(norm(v))) }
+            function rootPoint(svg,target,x,y){try{const a=target.getScreenCTM(),b=svg.getScreenCTM();if(a&&b)return new DOMPoint(x,y).matrixTransform(a).matrixTransform(b.inverse())}catch(_){} return{x,y}}
+            function centerOf(svg,target){try{const b=target.getBBox();return rootPoint(svg,target,b.x+b.width/2,b.y+b.height/2)}catch(_){return null}}
+            function placementId(group){const values=[group.dataset?.relphiBodyId,group.dataset?.body,group.dataset?.planet,group.dataset?.name,group.dataset?.placement,group.getAttribute('data-body'),group.getAttribute('data-name'),group.getAttribute('aria-label'),group.querySelector('.chart-wheel-marker-name')?.textContent,group.querySelector('[data-glyph-id]')?.dataset?.glyphId,group.querySelector('.chart-wheel-marker-glyph')?.textContent];for(const v of values){const e=resolve(v);if(e)return e.id}return null}
+            function placementRecords(svg){return Array.from(svg.querySelectorAll('.chart-wheel-placement-stick')).map(g=>{const id=placementId(g);const anchor=g.querySelector('circle.chart-wheel-stick-knob')||g.querySelector('.chart-wheel-marker-glyph')||g;const p=centerOf(svg,anchor);return id&&p?{id,x:p.x,y:p.y,source:g}:null}).filter(Boolean)}
+            function zodiacRecords(svg){return Array.from(svg.querySelectorAll('text')).map(t=>{if(t.closest('.chart-wheel-placement-stick,.'+LAYER))return null;const e=resolve(t.textContent);if(!e||!ZODIAC.has(e.id))return null;const p=centerOf(svg,t);return p?{id:e.id,x:p.x,y:p.y,source:t}:null}).filter(Boolean).slice(0,12)}
+            function imageFor(rec){const image=node('image');image.setAttribute('href',BASE+rec.id+'.svg');image.setAttribute('x',String(rec.x-32));image.setAttribute('y',String(rec.y-32));image.setAttribute('width','64');image.setAttribute('height','64');image.dataset.glyphId=rec.id;return image}
+            function load(image){return new Promise((ok,bad)=>{image.addEventListener('load',ok,{once:true});image.addEventListener('error',bad,{once:true})})}
+            async function renderWheel(svg){const placements=placementRecords(svg),zodiac=zodiacRecords(svg);if(!placements.length||zodiac.length<12)return;const layer=node('g');layer.classList.add(LAYER);layer.style.visibility='hidden';layer.dataset.sourceCommit='0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';const records=zodiac.concat(placements);const images=records.map(r=>{const i=imageFor(r);layer.appendChild(i);return i});svg.appendChild(layer);try{await Promise.all(images.map(load));svg.querySelectorAll(':scope > .'+LAYER).forEach(old=>{if(old!==layer)old.remove()});zodiac.forEach(r=>{r.source.style.visibility='hidden'});placements.forEach(r=>{r.source.querySelectorAll('text,path,rect,ellipse,polygon,polyline,image,svg,circle.chart-wheel-stick-knob').forEach(n=>n.style.visibility='hidden')});layer.style.visibility='visible';svg.classList.add('relphi-canonical-ready');svg.dataset.relphiFrozenCanon=JSON.stringify({sourceCommit:layer.dataset.sourceCommit,count:images.length,noRuntimeDrawing:true})}catch(e){layer.remove();console.error('Frozen canonical glyph load failed',e)}}
+            function queue(){if(queued||rendering)return;queued=true;requestAnimationFrame(()=>requestAnimationFrame(async()=>{queued=false;rendering=true;try{for(const svg of document.querySelectorAll(WHEELS))await renderWheel(svg)}finally{rendering=false}}))}
+            new MutationObserver(rs=>{if(rs.every(r=>r.target?.closest?.('.'+LAYER)))return;queue()}).observe(document.body,{childList:true,subtree:true});
+            window.addEventListener('relphi:sky-builder-v4-loaded',queue);window.addEventListener('relphi:extra-points-updated',queue);window.addEventListener('resize',queue,{passive:true});
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',queue,{once:true});else queue();
+          })();
+          JS
+          node <<'NODE'
+          const fs=require('fs');
+          let nav=fs.readFileSync('navloader.js','utf8');
+          const start=nav.indexOf('  function loadCanonicalSkyWheel() {');
+          const end=nav.indexOf('\n  function loadChironPipeline()',start);
+          if(start<0||end<0) throw new Error('loadCanonicalSkyWheel block not found');
+          const replacement=`  function loadCanonicalSkyWheel() {\n    ensureCanonicalSkyBootStyle();\n    appendScript('relphi-glyph-registry-v1.js?v=frozen-source-map-1', function () {\n      appendScript('sky-chart-canonical-frozen-wheel-v1.js?v=1');\n      appendScript('sky-chart-wheel-marker-interaction-v1.js?v=3');\n    });\n  }\n`;
+          nav=nav.slice(0,start)+replacement+nav.slice(end);
+          fs.writeFileSync('navloader.js',nav);
+          let html=fs.readFileSync('sky-chart.html','utf8');
+          html=html.replace(/navloader\.js\?v=\d+/,'navloader.js?v=55');
+          fs.writeFileSync('sky-chart.html',html);
+          NODE
+      - name: Verify single source
+        run: |
+          test -f assets/glyph-canon/0d56ee7/inscribed/asc.svg
+          test -f assets/glyph-canon/0d56ee7/inscribed/dsc.svg
+          test -f assets/glyph-canon/0d56ee7/inscribed/mc.svg
+          test -f assets/glyph-canon/0d56ee7/inscribed/ic.svg
+          test -f assets/glyph-canon/0d56ee7/inscribed/vertex.svg
+          test -f assets/glyph-canon/0d56ee7/inscribed/chiron.svg
+          grep -q "sky-chart-canonical-frozen-wheel-v1.js?v=1" navloader.js
+          ! grep -q "sky-chart-wheel-canonical-component-v1.js?v=canon" navloader.js
+          ! grep -q "sky-chart-comparison-zodiac-inscribed-v1.js?v=canon" navloader.js
+      - name: Commit frozen canonical library
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add assets/glyph-canon/0d56ee7/inscribed sky-chart-canonical-frozen-wheel-v1.js navloader.js sky-chart.html
+          git commit -m "Use one frozen glyph library for Sky Chart"
+          git push origin HEAD:feature/chart-axes-angular-frame

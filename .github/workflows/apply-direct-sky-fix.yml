@@ -1,0 +1,215 @@
+name: Apply direct Sky Chart fix
+
+on:
+  push:
+    branches:
+      - feature/chart-axes-angular-frame
+    paths:
+      - .github/workflows/apply-direct-sky-fix.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/chart-axes-angular-frame
+          fetch-depth: 0
+
+      - name: Restore exact approved glyph canon
+        shell: bash
+        run: |
+          set -euo pipefail
+          CANON=0d56ee7ec0ea0fc3e44debcb809afde09f3271ab
+          git show "$CANON:relphi-glyph-registry-v1.js" > relphi-glyph-registry-v1.js
+          git show "$CANON:relphi-glyph-component-v1.js" > relphi-glyph-component-v1.js
+          while IFS= read -r path; do
+            mkdir -p "$(dirname "$path")"
+            git show "$CANON:$path" > "$path"
+          done < <(git ls-tree -r --name-only "$CANON" -- assets/planet-glyphs assets/zodiac-glyphs)
+
+      - name: Replace custom zodiac drawing with canonical component
+        shell: bash
+        run: |
+          cat > sky-chart-comparison-zodiac-inscribed-v1.js <<'EOF'
+          // Zodiac ring rendered only through the frozen approved canonical component.
+          (function () {
+            'use strict';
+            if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
+
+            const NS = 'http://www.w3.org/2000/svg';
+            const CANON_COMMIT = '0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
+            const WHEELS = '.unified-sky-wheel svg,#chartOutput svg,#currentSkyOutput svg,.sky-output-box svg';
+            const LAYER = 'relphi-canonical-zodiac-ring';
+            const ZODIAC = new Set(['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces']);
+            let queued = false;
+
+            function pointInRoot(svg, node, x, y) {
+              try {
+                const a = node.getScreenCTM && node.getScreenCTM();
+                const b = svg.getScreenCTM && svg.getScreenCTM();
+                if (a && b) return new DOMPoint(x, y).matrixTransform(a).matrixTransform(b.inverse());
+              } catch (_) {}
+              return { x:x, y:y };
+            }
+
+            function entryFor(node) {
+              const registry = window.RelphiGlyphRegistry;
+              if (!registry) return null;
+              const entry = registry.resolve(node.textContent || node.dataset?.sign || node.dataset?.glyphId || '');
+              return entry && ZODIAC.has(entry.id) ? entry : null;
+            }
+
+            function labelsFor(svg) {
+              return Array.from(svg.querySelectorAll('text')).filter(function (node) {
+                if (node.closest('.chart-wheel-placement-stick,.' + LAYER + ',.relphi-canonical-marker-layer')) return false;
+                return Boolean(entryFor(node));
+              });
+            }
+
+            function renderWheel(svg) {
+              const component = window.RelphiGlyphComponent;
+              const labels = labelsFor(svg);
+              if (!component || labels.length < 12) return;
+
+              svg.querySelectorAll(':scope > .' + LAYER).forEach(function (node) { node.remove(); });
+              const layer = document.createElementNS(NS, 'g');
+              layer.classList.add(LAYER);
+              layer.dataset.canonCommit = CANON_COMMIT;
+              layer.dataset.presentation = 'inscribed';
+              layer.setAttribute('aria-label', 'Canonical inscribed zodiac glyphs');
+              svg.appendChild(layer);
+
+              const view = svg.viewBox && svg.viewBox.baseVal;
+              const span = view && view.width ? Math.min(view.width, view.height) : Math.min(svg.clientWidth || 700, svg.clientHeight || 700);
+              const radius = Math.max(11.5, Math.min(15, span * 0.019));
+
+              const jobs = labels.slice(0, 12).map(function (label) {
+                const entry = entryFor(label);
+                const box = label.getBBox();
+                const local = pointInRoot(svg, label, box.x + box.width / 2, box.y + box.height / 2);
+                const host = document.createElementNS(NS, 'g');
+                host.classList.add('relphi-canonical-zodiac-host');
+                host.dataset.glyphId = entry.id;
+                host.dataset.canonCommit = CANON_COMMIT;
+                host.setAttribute('transform', 'translate(' + local.x.toFixed(3) + ' ' + local.y.toFixed(3) + ')');
+                host.setAttribute('aria-label', entry.name);
+                layer.appendChild(host);
+                label.style.display = 'none';
+                const bubble = component.createBubble(host, entry.id, {
+                  radius:radius,
+                  padding:1,
+                  color:'#111',
+                  fill:'#fff',
+                  strokeWidth:2.35
+                });
+                return bubble.ready;
+              });
+
+              Promise.allSettled(jobs).then(function (results) {
+                svg.dataset.relphiCanonicalZodiacAudit = JSON.stringify({
+                  canonCommit:CANON_COMMIT,
+                  component:'RelphiGlyphComponent.createBubble',
+                  count:jobs.length,
+                  failed:results.filter(function (r) { return r.status === 'rejected'; }).length
+                });
+              });
+            }
+
+            function render() {
+              queued = false;
+              document.querySelectorAll(WHEELS).forEach(renderWheel);
+            }
+
+            function queue() {
+              if (queued) return;
+              queued = true;
+              requestAnimationFrame(function () { requestAnimationFrame(render); });
+            }
+
+            function start() {
+              queue();
+              [120, 400, 900].forEach(function (delay) { setTimeout(queue, delay); });
+              new MutationObserver(queue).observe(document.body, { childList:true, subtree:true });
+              window.addEventListener('relphi:sky-builder-v4-loaded', queue);
+              window.addEventListener('relphi:extra-points-updated', queue);
+            }
+
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
+            else start();
+          })();
+          EOF
+
+      - name: Patch Chiron into the owning calculator
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'tarot-app.js';
+          let source = fs.readFileSync(path, 'utf8');
+          const needle = "      const calculatedPlacements = calculateSkyWithAstronomy(date, latitude, longitude, houseSystem);";
+          if (!source.includes(needle)) throw new Error('Could not find calculatedPlacements assignment.');
+          if (!source.includes('relphiChironDirectPlacementV1')) {
+            const replacement = `${needle}\n      // relphiChironDirectPlacementV1: Chiron enters the real placement array before state/render/save.\n      const relphiChironApi = window.RelphiChironLocal || (window.RelphiChironReady ? await window.RelphiChironReady : null);\n      if (!relphiChironApi || typeof relphiChironApi.calculate !== 'function') throw new Error('The local Chiron calculator did not load.');\n      const relphiChironState = relphiChironApi.calculate(date);\n      const relphiNorm = value => ((Number(value) % 360) + 360) % 360;\n      const relphiPlacementLongitude = placement => {\n        if (!placement) return NaN;\n        if (Number.isFinite(Number(placement.longitude))) return relphiNorm(placement.longitude);\n        const signIndex = SIGNS.findIndex(sign => sign.toLowerCase() === String(placement.sign || '').toLowerCase());\n        return signIndex < 0 ? NaN : relphiNorm(signIndex * 30 + Number(placement.degree || 0) + Number(placement.minute || 0) / 60 + Number(placement.second || 0) / 3600);\n      };\n      const relphiChironLongitude = relphiNorm(relphiChironState.longitude);\n      const relphiAscendant = relphiPlacementLongitude(calculatedPlacements.Rising || calculatedPlacements.ASC);\n      const relphiMidheaven = relphiPlacementLongitude(calculatedPlacements.MC);\n      const relphiJulianDay = date.getTime() / 86400000 + 2440587.5;\n      const relphiT = (relphiJulianDay - 2451545.0) / 36525;\n      const relphiObliquity = 23.43929111 - 0.0130041667 * relphiT - 1.63889e-7 * relphiT * relphiT + 5.03611e-7 * relphiT * relphiT * relphiT;\n      const relphiSidereal = relphiNorm(Number(window.Astronomy.SiderealTime(date)) * 15 + Number(longitude));\n      const relphiHouseResult = window.RelphiHouseSystems.calculateCusps({\n        system:houseSystem,\n        ascendant:relphiAscendant,\n        midheaven:relphiMidheaven,\n        siderealDegrees:relphiSidereal,\n        obliquityDegrees:relphiObliquity,\n        latitude:Number(latitude)\n      });\n      const relphiCusps = relphiHouseResult.cusps;\n      let relphiChironHouse = '';\n      for (let relphiIndex = 0; relphiIndex < 12; relphiIndex += 1) {\n        const relphiStart = relphiNorm(relphiCusps[relphiIndex]);\n        const relphiEnd = relphiNorm(relphiCusps[(relphiIndex + 1) % 12]);\n        if (relphiNorm(relphiChironLongitude - relphiStart) < relphiNorm(relphiEnd - relphiStart)) { relphiChironHouse = relphiIndex + 1; break; }\n      }\n      let relphiWithin = relphiChironLongitude % 30;\n      let relphiDegree = Math.floor(relphiWithin);\n      let relphiMinute = Math.round((relphiWithin - relphiDegree) * 60);\n      if (relphiMinute === 60) { relphiMinute = 0; relphiDegree += 1; }\n      if (relphiDegree === 30) relphiDegree = 0;\n      calculatedPlacements.Chiron = {\n        sign:SIGNS[Math.floor(relphiChironLongitude / 30)],\n        degree:relphiDegree,\n        minute:relphiMinute,\n        house:relphiChironHouse,\n        retrograde:Boolean(relphiChironState.retrograde),\n        longitude:relphiChironLongitude,\n        calculation:relphiChironState.source\n      };`;
+            source = source.replace(needle, replacement);
+          }
+          source = source.replace(
+            'Stored Rising, Midheaven, ${skyHouseSystemLabel(houseSystem)} houses, and planetary retrograde/station states.',
+            'Stored Rising, Midheaven, Chiron, ${skyHouseSystemLabel(houseSystem)} houses, and planetary retrograde/station states.'
+          );
+          fs.writeFileSync(path, source);
+          NODE
+
+      - name: Make Chiron loader awaitable and bust caches
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          let source = fs.readFileSync('navloader.js','utf8');
+          source = source.replace(/function loadChironPipeline\(\) \{[\s\S]*?\n  \}/, `function loadChironPipeline() {\n    if (window.RelphiChironReady) return window.RelphiChironReady;\n    window.RelphiChironReady = new Promise(function (resolve, reject) {\n      appendScript('sky-chart-chiron-local-v1.js?v=direct-41-anchors-2', function () {\n        if (!window.RelphiChironLocal) return reject(new Error('Chiron module loaded without its API.'));\n        appendScript('sky-chart-calculated-points-storage-bridge-v2.js?v=direct-41-anchors-2', function () { resolve(window.RelphiChironLocal); }, reject);\n      }, reject);\n    });\n    return window.RelphiChironReady;\n  }`);
+          source = source
+            .replace(/relphi-glyph-registry-v1\.js\?v=[^']+/g, 'relphi-glyph-registry-v1.js?v=canon-0d56ee7-direct-1')
+            .replace(/relphi-glyph-component-v1\.js\?v=[^']+/g, 'relphi-glyph-component-v1.js?v=canon-0d56ee7-direct-1')
+            .replace(/sky-chart-wheel-canonical-component-v1\.js\?v=[^']+/g, 'sky-chart-wheel-canonical-component-v1.js?v=canon-0d56ee7-direct-1')
+            .replace(/sky-chart-comparison-zodiac-inscribed-v1\.js\?v=[^']+/g, 'sky-chart-comparison-zodiac-inscribed-v1.js?v=canon-0d56ee7-direct-1');
+          fs.writeFileSync('navloader.js', source);
+          NODE
+
+      - name: Bump page application versions
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          let source = fs.readFileSync('sky-chart.html','utf8');
+          source = source.replace(/navloader\.js\?v=\d+/, 'navloader.js?v=51');
+          source = source.replace(/tarot-app\.js\?v=\d+/, 'tarot-app.js?v=367');
+          fs.writeFileSync('sky-chart.html', source);
+          NODE
+
+      - name: Verify direct changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "relphiChironDirectPlacementV1" tarot-app.js
+          grep -q "1.083,2.7,1" relphi-glyph-registry-v1.js
+          grep -q "RelphiGlyphComponent.createBubble" sky-chart-comparison-zodiac-inscribed-v1.js
+          grep -q "navloader.js?v=51" sky-chart.html
+          grep -q "tarot-app.js?v=367" sky-chart.html
+
+      - name: Commit direct fix
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tarot-app.js navloader.js sky-chart.html sky-chart-comparison-zodiac-inscribed-v1.js relphi-glyph-registry-v1.js relphi-glyph-component-v1.js assets/planet-glyphs assets/zodiac-glyphs
+          git commit -m "Apply direct Chiron and frozen glyph canon fix"
+          git push origin HEAD:feature/chart-axes-angular-frame

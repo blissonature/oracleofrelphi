@@ -282,13 +282,7 @@
         </div>
       </div>
       <div class="inline-form">
-        <label>Layout
-          <select id="spreadSelect">
-            <option value="pastPresentFuture">Past / Present / Future</option>
-            <option value="timeMindBodySpirit">3×3 Time · Mind / Body / Spirit</option>
-            <option value="celticCross">Celtic Cross</option>
-          </select>
-        </label>
+        <label>Layout <select id="spreadSelect"><option value="pastPresentFuture">Past / Present / Future</option><option value="timeMindBodySpirit">3×3 Time · Mind / Body / Spirit</option><option value="celticCross">Celtic Cross</option></select></label>
         <button id="drawSpread" type="button">Draw Cards</button>
         <button id="revealSpread" type="button">Reveal All</button>
         <button id="clearSpread" type="button">Clear Spread</button>
@@ -298,67 +292,37 @@
       </div>
       <div id="spreadOutput" class="spread-output"></div>
       <article id="spreadCardDetail" class="tarot-detail spread-card-detail" hidden aria-live="polite"></article>
-      <label class="notes-label">Notes
-        <textarea id="spreadNotes" rows="5" placeholder="Ex. Write your reading notes here."></textarea>
-      </label>
-      <div class="button-row">
-        <button id="downloadSpreadHtml" type="button">Download Reading</button>
-        <button id="downloadSpreadJson" type="button">Export Spread Data</button>
-      </div>
+      <label class="notes-label">Notes<textarea id="spreadNotes" rows="5" placeholder="Ex. Write your reading notes here."></textarea></label>
+      <div class="button-row"><button id="downloadSpreadHtml" type="button">Download Reading</button><button id="downloadSpreadJson" type="button">Export Spread Data</button></div>
       <p id="downloadStatus" class="download-status" aria-live="polite"></p>
       <div id="spreadAnalysis" class="ledger-output"></div>
     </section>
 
     <section id="browsePanel" class="tarot-layout" hidden>
-      <div class="tarot-list-panel">
-        <h2 class="cards-heading">Cards <span id="resultInlineCount" class="cards-heading-count">No cards shown</span></h2>
-        <div id="cardList" class="tarot-card-list" role="list"></div>
-      </div>
+      <div class="tarot-list-panel"><h2 class="cards-heading">Cards <span id="resultInlineCount" class="cards-heading-count">No cards shown</span></h2><div id="cardList" class="tarot-card-list" role="list"></div></div>
       <article id="cardDetail" class="tarot-detail" aria-live="polite"></article>
     </section>
   </main>
 
-  <script src="navloader.js?v=49"></script>
+  <script src="navloader.js?v=57"></script>
   <script src="tarot-cards.js"></script>
   <script src="relphi-locked-interpretations.js?v=207"></script>
   <script src="relphi-card-senses.js?v=1"></script>
   <script src="relphi-rising-sign-house-offset-effects.js?v=219"></script>
   <script src="vendor/astronomy-engine/astronomy.browser.min.js"></script>
   <script src="relphi-house-systems.js?v=318"></script>
-  <script src="tarot-app.js?v=366"></script>
+  <script src="tarot-app.js?v=368"></script>
   <script>
   window.addEventListener('load', function(){
     document.getElementById('chartMode')?.click();
     const params = new URLSearchParams(window.location.search);
-    const setValue = function(id, value) {
-      const el = document.getElementById(id);
-      if (el && value) {
-        el.value = value;
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    };
+    const setValue = function(id, value) { const el = document.getElementById(id); if (el && value) { el.value = value; el.dispatchEvent(new Event('change', { bubbles: true })); } };
     const dateTime = params.get('datetime') || (params.get('date') ? params.get('date') + 'T12:00' : '');
     if (dateTime || params.get('lat') || params.get('lon')) {
-      try {
-        localStorage.setItem('relphiPlanetaryHoursWhereWhen', JSON.stringify({
-          datetime: dateTime,
-          lat: params.get('lat') || '',
-          lon: params.get('lon') || '',
-          tz: params.get('tz') || '',
-          loc: params.get('loc') || '',
-          savedAt: new Date().toISOString()
-        }));
-      } catch (error) {}
+      try { localStorage.setItem('relphiPlanetaryHoursWhereWhen', JSON.stringify({ datetime: dateTime, lat: params.get('lat') || '', lon: params.get('lon') || '', tz: params.get('tz') || '', loc: params.get('loc') || '', savedAt: new Date().toISOString() })); } catch (error) {}
       document.getElementById('skyCreatorDrawer')?.setAttribute('open', '');
       document.querySelector('.sky-calc-drawer')?.setAttribute('open', '');
-      setValue('skyCalcTarget', 'chart');
-      setValue('skyCreatorTarget', 'chart');
-      setValue('skyCalcDateTime', dateTime);
-      setValue('skyCalcLatitude', params.get('lat'));
-      setValue('skyCalcLongitude', params.get('lon'));
-      setValue('skyCalcTimeZone', params.get('tz'));
-      setValue('skyCalcLocation', params.get('loc'));
-      setValue('skyCalcName', params.get('name') || 'Planetary Hours date');
+      setValue('skyCalcTarget', 'chart'); setValue('skyCreatorTarget', 'chart'); setValue('skyCalcDateTime', dateTime); setValue('skyCalcLatitude', params.get('lat')); setValue('skyCalcLongitude', params.get('lon')); setValue('skyCalcTimeZone', params.get('tz')); setValue('skyCalcLocation', params.get('loc')); setValue('skyCalcName', params.get('name') || 'Planetary Hours date');
       document.getElementById('skyCalcDateTime')?.scrollIntoView({ block: 'center' });
       if (params.get('calc') === '1') setTimeout(function(){ document.getElementById('skyCalcRun')?.click(); }, 250);
     }
