@@ -102,7 +102,7 @@ input[type=range]{accent-color:#d42624}
         <label for="swirlSizeRange">Swirl brush size</label>
         <div class="band-readout"><span>Brush diameter</span><output id="swirlSizeOut">88 px</output></div>
         <input id="swirlSizeRange" type="range" min="16" max="200" value="88" step="2"/>
-        <p class="hint">The cursor orb shows the selected brush diameter before and during each swirl stroke.</p>
+        <p class="hint">The maximum brush spans the full canvas corner-to-corner when centered. The cursor orb shows the selected diameter.</p>
       </div>
 
       <div class="control-group">
@@ -209,6 +209,7 @@ input[type=range]{accent-color:#d42624}
     dpr = Math.max(1, window.devicePixelRatio || 1);
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
+    updateSwirlSizeLimit();
     redrawCanvas();
   }
 
@@ -346,6 +347,21 @@ input[type=range]{accent-color:#d42624}
     return normalizeAnchor(anchorDegrees.value, anchorMinutes.value).decimal;
   }
 
+  function updateSwirlSizeLimit(){
+    const previousMax = Number(swirlSizeRange.max) || 200;
+    const wasAtMax = Number(swirlSizeRange.value) >= previousMax - 1;
+    const fullCanvasDiameter = Math.max(200, Math.ceil(Math.hypot(wrap.clientWidth, wrap.clientHeight)));
+    swirlSizeRange.max = String(fullCanvasDiameter);
+    if(wasAtMax || Number(swirlSizeRange.value) > fullCanvasDiameter){
+      swirlSizeRange.value = String(fullCanvasDiameter);
+    }
+    swirlSizeOut.textContent = swirlSizeRange.value + ' px';
+    if(toolMode === 'swirl' && !isSwirling){
+      previewRadius = getSwirlRadius();
+      updateOrb();
+    }
+  }
+
   function getSwirlRadius(){
     return (Number(swirlSizeRange.value) || 88) / 2;
   }
@@ -389,7 +405,7 @@ input[type=range]{accent-color:#d42624}
 
   function swirlAtLocal(xCss, yCss, radiusCss){
     const x = Math.round(xCss * dpr), y = Math.round(yCss * dpr);
-    const r = Math.round(Math.max(8, Math.min(100, radiusCss)) * dpr);
+    const r = Math.round(Math.max(8, radiusCss) * dpr);
     const left = Math.max(0, x-r), top = Math.max(0, y-r);
     const right = Math.min(canvas.width, x+r), bottom = Math.min(canvas.height, y+r);
     const w = right-left, h = bottom-top;
@@ -430,7 +446,8 @@ input[type=range]{accent-color:#d42624}
     if(!currentSwirl) return;
     const point = localPoint({clientX, clientY});
     const last = currentSwirl.points[currentSwirl.points.length - 1];
-    if(last && Math.hypot(point.x-last.x, point.y-last.y) < 1) return;
+    const minimumDistance = Math.max(1, currentSwirl.radius * 0.05);
+    if(last && Math.hypot(point.x-last.x, point.y-last.y) < minimumDistance) return;
     currentSwirl.points.push(point);
     swirlAtLocal(point.x, point.y, currentSwirl.radius);
   }
