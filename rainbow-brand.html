@@ -92,6 +92,14 @@ input[type=range]{accent-color:#d42624}
         </div>
         <p class="hint"><b>Brand</b> keeps the original hold-to-grow and release-to-Prang action. <b>Swirl</b> mixes already-stamped color by dragging over the canvas.</p>
       </div>
+
+      <div class="control-group" id="swirlControls" hidden>
+        <label for="swirlSizeRange">Swirl brush size</label>
+        <div class="band-readout"><span>Brush diameter</span><output id="swirlSizeOut">88 px</output></div>
+        <input id="swirlSizeRange" type="range" min="16" max="200" value="88" step="2"/>
+        <p class="hint">The cursor orb shows the selected brush diameter before and during each swirl stroke.</p>
+      </div>
+
       <div class="control-group">
         <label for="bandRange">Pack size</label>
         <div class="band-readout"><span>Frequency bands</span><output id="bandOut">7</output></div>
@@ -123,7 +131,7 @@ input[type=range]{accent-color:#d42624}
 
       <div class="tool-actions">
         <button type="button" id="saveCanvasBtn">Save image</button>
-        <button type="button" id="undoBtn">Undo last Prang</button>
+        <button type="button" id="undoBtn">Undo last action</button>
         <button type="button" id="clearBtn" class="danger">Clear canvas</button>
       </div>
 
@@ -151,6 +159,9 @@ input[type=range]{accent-color:#d42624}
   const anchorOut = document.getElementById('anchorOut');
   const randomPackToggle = document.getElementById('randomPackToggle');
   const randomAnchorToggle = document.getElementById('randomAnchorToggle');
+  const swirlControls = document.getElementById('swirlControls');
+  const swirlSizeRange = document.getElementById('swirlSizeRange');
+  const swirlSizeOut = document.getElementById('swirlSizeOut');
   const statusText = document.getElementById('statusText');
   const undoBtn = document.getElementById('undoBtn');
   const clearBtn = document.getElementById('clearBtn');
@@ -161,8 +172,9 @@ input[type=range]{accent-color:#d42624}
   const presets = [2,3,4,5,6,7,8,9,10,11,12,22,24,36,72,78,120,360,'∞'];
   const randomPackPool = [2,3,4,5,6,7,8,9,10,11,12,22,24,36,72,78,120,360];
   let bandSetting = 7;
-  let stamps = [];
-  let redoStamps = [];
+  let actions = [];
+  let redoActions = [];
+  let currentSwirl = null;
   let isHolding = false;
   let isSwirling = false;
   let toolMode = 'brand';
@@ -172,14 +184,21 @@ input[type=range]{accent-color:#d42624}
   let raf = null;
   let dpr = 1;
 
+  function redrawCanvas(){
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    actions.forEach(action => {
+      if(action.type === 'swirl') drawSwirlAction(action);
+      else drawStamp(action, false);
+    });
+  }
+
   function resizeCanvas(){
     const rect = wrap.getBoundingClientRect();
     dpr = Math.max(1, window.devicePixelRatio || 1);
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    stamps.forEach(s => drawStamp(s, false));
+    redrawCanvas();
   }
 
   function hsvToRgb(h,s,v){
@@ -248,8 +267,8 @@ input[type=range]{accent-color:#d42624}
     }
     ctx.putImageData(img, left, top);
     if(save){
-      stamps.push(stamp);
-      redoStamps = [];
+      actions.push(stamp);
+      redoActions = [];
     }
   }
 
@@ -280,6 +299,10 @@ input[type=range]{accent-color:#d42624}
     setBand(7);
   }
 
+  function getSwirlRadius(){
+    return (Number(swirlSizeRange.value) || 88) / 2;
+  }
+
   function updateOrb(){
     if(!pointer.inside){ orb.style.display = 'none'; return; }
     const size = previewRadius * 2;
@@ -305,19 +328,21 @@ input[type=range]{accent-color:#d42624}
     return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
   }
 
-
   function setToolMode(mode){
     toolMode = mode === 'swirl' ? 'swirl' : 'brand';
     brandToolBrand?.classList.toggle('is-active', toolMode === 'brand');
     brandToolSwirl?.classList.toggle('is-active', toolMode === 'swirl');
     brandToolBrand?.setAttribute('aria-pressed', toolMode === 'brand' ? 'true' : 'false');
     brandToolSwirl?.setAttribute('aria-pressed', toolMode === 'swirl' ? 'true' : 'false');
-    statusText.textContent = toolMode === 'swirl' ? 'Swirl mode: drag through existing color to mix it.' : 'Brand mode: hold to gather heat, release to Prang.';
+    swirlControls.hidden = toolMode !== 'swirl';
+    previewRadius = toolMode === 'swirl' ? getSwirlRadius() : 7;
+    updateOrb();
+    statusText.textContent = toolMode === 'swirl' ? 'Swirl mode: choose a brush size and drag through existing color.' : 'Brand mode: hold to gather heat, release to Prang.';
   }
-  function swirlAt(clientX, clientY){
-    const p = localPoint({clientX, clientY});
-    const x = Math.round(p.x * dpr), y = Math.round(p.y * dpr);
-    const r = Math.round(Math.max(18, Math.min(72, previewRadius || 44)) * dpr);
+
+  function swirlAtLocal(xCss, yCss, radiusCss){
+    const x = Math.round(xCss * dpr), y = Math.round(yCss * dpr);
+    const r = Math.round(Math.max(8, Math.min(100, radiusCss)) * dpr);
     const left = Math.max(0, x-r), top = Math.max(0, y-r);
     const right = Math.min(canvas.width, x+r), bottom = Math.min(canvas.height, y+r);
     const w = right-left, h = bottom-top;
@@ -350,9 +375,28 @@ input[type=range]{accent-color:#d42624}
     ctx.putImageData(target, left, top);
   }
 
+  function drawSwirlAction(action){
+    action.points.forEach(point => swirlAtLocal(point.x, point.y, action.radius));
+  }
+
+  function addSwirlPoint(clientX, clientY){
+    if(!currentSwirl) return;
+    const point = localPoint({clientX, clientY});
+    const last = currentSwirl.points[currentSwirl.points.length - 1];
+    if(last && Math.hypot(point.x-last.x, point.y-last.y) < 1) return;
+    currentSwirl.points.push(point);
+    swirlAtLocal(point.x, point.y, currentSwirl.radius);
+  }
+
   wrap.addEventListener('pointerenter', evt => { pointer.inside = true; pointer.x = evt.clientX; pointer.y = evt.clientY; updateOrb(); });
-  wrap.addEventListener('pointerleave', () => { if(!isHolding){ pointer.inside = false; updateOrb(); } });
-  wrap.addEventListener('pointermove', evt => { pointer.inside = true; pointer.x = evt.clientX; pointer.y = evt.clientY; updateOrb(); if(isSwirling) swirlAt(evt.clientX, evt.clientY); });
+  wrap.addEventListener('pointerleave', () => { if(!isHolding && !isSwirling){ pointer.inside = false; updateOrb(); } });
+  wrap.addEventListener('pointermove', evt => {
+    pointer.inside = true;
+    pointer.x = evt.clientX;
+    pointer.y = evt.clientY;
+    updateOrb();
+    if(isSwirling) addSwirlPoint(evt.clientX, evt.clientY);
+  });
   wrap.addEventListener('pointerdown', evt => {
     evt.preventDefault();
     wrap.setPointerCapture(evt.pointerId);
@@ -361,9 +405,10 @@ input[type=range]{accent-color:#d42624}
     pointer.y = evt.clientY;
     if(toolMode === 'swirl'){
       isSwirling = true;
-      previewRadius = 44;
+      previewRadius = getSwirlRadius();
+      currentSwirl = {type:'swirl', radius:previewRadius, points:[]};
       updateOrb();
-      swirlAt(evt.clientX, evt.clientY);
+      addSwirlPoint(evt.clientX, evt.clientY);
       statusText.textContent = 'Swirling existing color.';
       return;
     }
@@ -380,6 +425,13 @@ input[type=range]{accent-color:#d42624}
     if(isSwirling){
       evt.preventDefault();
       isSwirling = false;
+      if(currentSwirl && currentSwirl.points.length){
+        actions.push(currentSwirl);
+        redoActions = [];
+      }
+      currentSwirl = null;
+      previewRadius = getSwirlRadius();
+      updateOrb();
       statusText.textContent = 'Swirl complete.';
       return;
     }
@@ -397,6 +449,7 @@ input[type=range]{accent-color:#d42624}
       anchorOut.textContent = anchorRange.value + '°';
     }
     const stamp = {
+      type: 'stamp',
       x: p.x,
       y: p.y,
       r: previewRadius,
@@ -411,10 +464,27 @@ input[type=range]{accent-color:#d42624}
   }
 
   wrap.addEventListener('pointerup', finishPrang);
-  wrap.addEventListener('pointercancel', evt => { isHolding = false; isSwirling = false; if(raf) cancelAnimationFrame(raf); previewRadius = 7; updateOrb(); });
+  wrap.addEventListener('pointercancel', () => {
+    isHolding = false;
+    if(isSwirling){
+      isSwirling = false;
+      currentSwirl = null;
+      redrawCanvas();
+    }
+    if(raf) cancelAnimationFrame(raf);
+    previewRadius = toolMode === 'swirl' ? getSwirlRadius() : 7;
+    updateOrb();
+  });
 
   brandToolBrand?.addEventListener('click', () => setToolMode('brand'));
   brandToolSwirl?.addEventListener('click', () => setToolMode('swirl'));
+  swirlSizeRange.addEventListener('input', () => {
+    swirlSizeOut.textContent = swirlSizeRange.value + ' px';
+    if(toolMode === 'swirl' && !isSwirling){
+      previewRadius = getSwirlRadius();
+      updateOrb();
+    }
+  });
   bandRange.addEventListener('input', () => setBand(Number(bandRange.value)));
   anchorRange.addEventListener('input', () => { anchorOut.textContent = anchorRange.value + '°'; });
 
@@ -452,31 +522,34 @@ input[type=range]{accent-color:#d42624}
     statusText.textContent = 'Rainbow Brand image saved.';
   }
 
-  function undoPrang(){
-    if(!stamps.length) return;
-    redoStamps.push(stamps.pop());
-    resizeCanvas();
-    statusText.textContent = stamps.length ? 'Last Prang undone.' : 'Canvas clear.';
+  function undoAction(){
+    if(!actions.length) return;
+    const action = actions.pop();
+    redoActions.push(action);
+    redrawCanvas();
+    statusText.textContent = action.type === 'swirl' ? 'Last swirl undone.' : 'Last Prang undone.';
   }
-  function redoPrang(){
-    if(!redoStamps.length) return;
-    stamps.push(redoStamps.pop());
-    resizeCanvas();
-    statusText.textContent = 'Prang restored.';
+  function redoAction(){
+    if(!redoActions.length) return;
+    const action = redoActions.pop();
+    actions.push(action);
+    redrawCanvas();
+    statusText.textContent = action.type === 'swirl' ? 'Swirl restored.' : 'Prang restored.';
   }
   saveCanvasBtn.addEventListener('click', saveCanvasImage);
-  undoBtn.addEventListener('click', undoPrang);
-  clearBtn.addEventListener('click', () => { stamps = []; redoStamps = []; resizeCanvas(); statusText.textContent = 'Canvas clear.'; });
+  undoBtn.addEventListener('click', undoAction);
+  clearBtn.addEventListener('click', () => { actions = []; redoActions = []; currentSwirl = null; redrawCanvas(); statusText.textContent = 'Canvas clear.'; });
   window.addEventListener('keydown', evt => {
     const mod = evt.ctrlKey || evt.metaKey;
     if(!mod) return;
     const key = evt.key.toLowerCase();
-    if(key === 'z' && !evt.shiftKey){ evt.preventDefault(); undoPrang(); }
-    if(key === 'y' || (key === 'z' && evt.shiftKey)){ evt.preventDefault(); redoPrang(); }
+    if(key === 'z' && !evt.shiftKey){ evt.preventDefault(); undoAction(); }
+    if(key === 'y' || (key === 'z' && evt.shiftKey)){ evt.preventDefault(); redoAction(); }
   });
   window.addEventListener('resize', resizeCanvas);
 
   buildPresetButtons();
+  setToolMode('brand');
   resizeCanvas();
 })();
 </script>
