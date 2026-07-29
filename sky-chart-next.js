@@ -6,7 +6,7 @@
   const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const SKY_A='#c9211e',SKY_B='#2462d0';
   const C={x:600,y:600};
-  const R={bIn:165,bOut:300,bDegree:312,zIn:330,zOut:420,aDegree:438,aIn:450,aOut:575};
+  const R={bIn:165,bOut:330,bDegree:330,zIn:330,zOut:420,aDegree:420,aIn:420,aOut:575};
   const skies={
     A:{name:'Natal',color:SKY_A,asc:168.3833,placements:[['sun',195],['moon',118.4167],['mercury',206.1667],['venus',169.8833],['mars',167.8667],['jupiter',307.15],['saturn',235.5667],['uranus',254.85],['neptune',271.0167],['pluto',213.8833]]},
     B:{name:'Comparison',color:SKY_B,asc:284,placements:[['sun',126],['moon',302],['mercury',112],['venus',172],['mars',82],['jupiter',128],['saturn',14.7],['uranus',64.8],['neptune',4.4],['pluto',304.3]]}
@@ -60,10 +60,10 @@
       const start=i*30,end=start+30,p=svgEl('path');p.setAttribute('d',annularPath(R.zIn,R.zOut,start,end));p.setAttribute('fill',COLORS[i]);p.setAttribute('fill-opacity','.78');p.dataset.interactive='sign';p.dataset.sign=SIGNS[i];groups.zodiac.appendChild(p);line(groups.zodiac,R.zIn,R.zOut,start,'zodiac-cusp');
       const gp=polar((R.zIn+R.zOut)/2,start+15),g=svgEl('g');g.setAttribute('transform',`translate(${gp.x} ${gp.y})`);groups.zodiac.appendChild(g);glyphJobs.push(window.SkyChartNextGlyphs.draw(g,SIGNS[i],{radius:19,color:'#171717'}));
     }
-    [R.bIn,R.bOut,R.zIn,R.zOut,R.aIn,R.aOut].forEach(r=>{const c=svgEl('circle');c.setAttribute('cx',C.x);c.setAttribute('cy',C.y);c.setAttribute('r',r);c.setAttribute('class','ring-outline');svg.appendChild(c)});
+    [R.bIn,R.zIn,R.zOut,R.aOut].forEach(r=>{const c=svgEl('circle');c.setAttribute('cx',C.x);c.setAttribute('cy',C.y);c.setAttribute('r',r);c.setAttribute('class','ring-outline');svg.appendChild(c)});
     for(let d=0;d<360;d++){const major=d%10===0;line(groups.ticks,R.bDegree-(major?7:3),R.bDegree+(major?7:3),d,'degree-tick'+(major?' major':''));line(groups.ticks,R.aDegree-(major?7:3),R.aDegree+(major?7:3),d,'degree-tick'+(major?' major':''))}
 
-    const placeA=layoutPlacements(skies.A,cuspA,[468,505,542]);const placeB=layoutPlacements(skies.B,cuspB,[282,245,208]);
+    const placeA=layoutPlacements(skies.A,cuspA,[448,492,536]);const placeB=layoutPlacements(skies.B,cuspB,[310,260,210]);
     async function drawPlacement(item,skyId){const sky=skies[skyId],degreeR=skyId==='A'?R.aDegree:R.bDegree;const anchor=polar(degreeR,item.longitude),bubble=polar(item.lane,item.displayLongitude);const leader=svgEl('line');leader.setAttribute('x1',bubble.x);leader.setAttribute('y1',bubble.y);leader.setAttribute('x2',anchor.x);leader.setAttribute('y2',anchor.y);leader.setAttribute('stroke',sky.color);leader.setAttribute('class','placement-leader');groups.leaders.appendChild(leader);const dot=svgEl('circle');dot.setAttribute('cx',anchor.x);dot.setAttribute('cy',anchor.y);dot.setAttribute('r','4.3');dot.setAttribute('fill',sky.color);dot.setAttribute('class','placement-dot');groups.dots.appendChild(dot);const g=svgEl('g');g.setAttribute('transform',`translate(${bubble.x} ${bubble.y})`);g.dataset.interactive='placement';g.dataset.sky=skyId;g.dataset.placement=item.id;g.dataset.house=String(item.house);g.dataset.longitude=String(item.longitude);groups.glyphs.appendChild(g);await window.SkyChartNextGlyphs.bubble(g,item.id,{radius:item.id==='sun'||item.id==='moon'?19:16,color:sky.color})}
     placeA.forEach(item=>glyphJobs.push(drawPlacement(item,'A')));placeB.forEach(item=>glyphJobs.push(drawPlacement(item,'B')));
 
