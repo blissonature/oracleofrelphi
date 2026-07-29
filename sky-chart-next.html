@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Sky Chart Next · Oracle of Relphi</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="sky-chart-next.css?v=1">
+</head>
+<body>
+  <main class="scn-shell">
+    <header class="scn-header">
+      <div>
+        <p class="scn-eyebrow">Oracle of Relphi</p>
+        <h1>Sky <span>Chart</span></h1>
+        <p>One fixed zodiac. Two rainbow house wheels. Two skies in relationship.</p>
+      </div>
+      <div class="scn-controls" aria-label="Comparison controls">
+        <label>House system
+          <select id="houseSystem">
+            <option value="whole-sign">Whole Sign</option>
+            <option value="equal-house">Equal House</option>
+          </select>
+        </label>
+        <button id="resetSelection" type="button">Reset focus</button>
+      </div>
+    </header>
+
+    <section class="scn-workspace" aria-label="Sky comparison workspace">
+      <aside class="scn-sky-card scn-sky-a-card" aria-label="Sky A summary">
+        <div class="scn-card-heading"><span class="scn-sky-chip">Sky A</span><strong>Natal</strong></div>
+        <p>8 Oct 1985 · 4:37 AM<br>Malden, Massachusetts</p>
+        <div id="skyALedger" class="scn-ledger"></div>
+      </aside>
+
+      <section class="scn-wheel-panel" aria-label="Comparison wheel">
+        <div id="wheelStatus" class="scn-status" aria-live="polite">Preparing canonical chart…</div>
+        <div id="wheelMount" class="scn-wheel-mount"></div>
+        <div class="scn-legend" aria-label="Wheel legend">
+          <span><i class="sky-a-dot"></i>Sky A glyphs</span>
+          <span><i class="sky-b-dot"></i>Sky B glyphs</span>
+          <span><i class="rainbow-dot"></i>12-part zodiac and house sequence</span>
+        </div>
+      </section>
+
+      <aside class="scn-sky-card scn-sky-b-card" aria-label="Sky B summary">
+        <div class="scn-card-heading"><span class="scn-sky-chip">Sky B</span><strong>Comparison</strong></div>
+        <p>29 Jul 2026 · demonstration sky<br>Same fixed zodiac reference</p>
+        <div id="skyBLedger" class="scn-ledger"></div>
+      </aside>
+    </section>
+
+    <section id="inspector" class="scn-inspector" aria-live="polite">
+      <p class="scn-eyebrow">Walk-through</p>
+      <h2>Select a house, sign, or placement</h2>
+      <p>The wheel will preserve the fixed zodiac while revealing how each rotated house frame organizes the placements.</p>
+    </section>
+  </main>
+
+  <script src="sky-chart-next-glyphs.js?v=1"></script>
+  <script src="sky-chart-next.js?v=1"></script>
+</body>
+</html>
