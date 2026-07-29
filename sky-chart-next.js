@@ -13,7 +13,7 @@
   };
   const svgEl=name=>document.createElementNS(NS,name);
   const norm=n=>((n%360)+360)%360;
-  function polar(r,deg){const a=(deg-90)*Math.PI/180;return{x:C.x+r*Math.cos(a),y:C.y+r*Math.sin(a)}}
+  function polar(r,deg){const a=(deg-180)*Math.PI/180;return{x:C.x+r*Math.cos(a),y:C.y+r*Math.sin(a)}}
   function annularPath(r0,r1,start,end){
     const span=norm(end-start)||360,large=span>180?1:0,p1=polar(r1,start),p2=polar(r1,start+span),p3=polar(r0,start+span),p4=polar(r0,start);
     return`M${p1.x} ${p1.y} A${r1} ${r1} 0 ${large} 1 ${p2.x} ${p2.y} L${p3.x} ${p3.y} A${r0} ${r0} 0 ${large} 0 ${p4.x} ${p4.y} Z`;
