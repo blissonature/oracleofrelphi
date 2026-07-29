@@ -205,7 +205,7 @@ input[type=range]{accent-color:#d42624}
     let angle = Math.atan2(dy, dx);
     if(angle < 0) angle += Math.PI*2;
     let hue = angle / (Math.PI*2);
-    hue = (hue + (anchorDeg || 0) / 360) % 1;
+    hue = (hue + 0.5 + (anchorDeg || 0) / 360) % 1;
     if(bands === 4){
       const palette = [[229,57,53],[247,201,72],[87,200,59],[61,130,238]];
       return palette[Math.floor(hue * 4) % 4];
