@@ -1,4 +1,4 @@
-// Keeps the comparison wheel to one Sky A layer and one replaceable Sky B layer.
+// Keeps the comparison wheel to one full-size Sky A layer and one full-size Sky B layer.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -6,13 +6,6 @@
   const SKY_B_DRAFT_KEY = 'relphiSkyChartSkyBDraftV1';
   let applyQueued = false;
   let applying = false;
-
-  function skyKey(node) {
-    const owner = node.closest('.sky-b, [data-sky="b"], [data-sky-id="currentSky"], .sky-a, [data-sky="a"], [data-sky-id="chart"]');
-    if (owner?.matches('.sky-b, [data-sky="b"], [data-sky-id="currentSky"]')) return 'b';
-    if (owner?.matches('.sky-a, [data-sky="a"], [data-sky-id="chart"]')) return 'a';
-    return node.classList.contains('sky-b') ? 'b' : 'a';
-  }
 
   function renderedSize(node) {
     try {
@@ -23,24 +16,61 @@
     }
   }
 
-  function canonicalHosts(scope) {
-    return Array.from(scope.querySelectorAll('.unified-sky-wheel .relphi-comparison-candy[data-glyph-id]'));
+  function renderedCenter(node) {
+    try {
+      const box = node.getBoundingClientRect();
+      return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    } catch (error) {
+      return { x: 0, y: 0 };
+    }
   }
 
-  function canonicalReferenceSize(scope) {
-    const sizes = canonicalHosts(scope).map(renderedSize).filter(function (size) {
-      return Number.isFinite(size) && size > 4;
-    }).sort(function (a, b) { return a - b; });
-    if (!sizes.length) return 0;
-    return sizes[Math.floor(sizes.length / 2)];
+  function distance(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
   }
 
-  function dedupeCanonicalBubbles(root) {
+  function wheelFor(root) {
     const scope = root || document;
+    return scope.matches?.('.unified-sky-wheel')
+      ? scope
+      : scope.querySelector?.('.unified-sky-wheel') || document.querySelector('.unified-sky-wheel');
+  }
+
+  function canonicalHosts(wheel) {
+    return wheel
+      ? Array.from(wheel.querySelectorAll('.relphi-comparison-candy[data-glyph-id]'))
+      : [];
+  }
+
+  function placementOwner(node) {
+    return node.closest('.chart-wheel-placement-stick, .chart-wheel-placement, [data-placement-id], [data-object-id]');
+  }
+
+  function skyKey(node) {
+    const owner = node.closest('.sky-b, [data-sky="b"], [data-sky-id="currentSky"], .sky-a, [data-sky="a"], [data-sky-id="chart"]');
+    if (owner?.matches('.sky-b, [data-sky="b"], [data-sky-id="currentSky"]')) return 'b';
+    if (owner?.matches('.sky-a, [data-sky="a"], [data-sky-id="chart"]')) return 'a';
+
+    const stroke = String(node.getAttribute('stroke') || node.style?.stroke || '').toLowerCase();
+    const fill = String(node.getAttribute('fill') || node.style?.fill || '').toLowerCase();
+    const color = stroke + ' ' + fill;
+    if (/49\s*,\s*102\s*,\s*226|31\s*,\s*79\s*,\s*186|#3166e2|#1f4fba/.test(color)) return 'b';
+    if (/220\s*,\s*31\s*,\s*24|143\s*,\s*23\s*,\s*19|#dc1f18|#8f1713/.test(color)) return 'a';
+    return 'unknown';
+  }
+
+  function dedupeFullSizeBubbles(wheel) {
     const groups = new Map();
 
-    canonicalHosts(scope).forEach(function (host) {
-      const key = skyKey(host) + '|' + String(host.dataset.glyphId || '').toLowerCase();
+    canonicalHosts(wheel).forEach(function (host) {
+      const owner = placementOwner(host);
+      const ownerKey = owner?.dataset?.placementId || owner?.dataset?.objectId || '';
+      const glyphKey = String(host.dataset.glyphId || '').toLowerCase();
+      const center = renderedCenter(host);
+      const angleBucket = Math.round(Math.atan2(center.y, center.x) * 100) / 100;
+      const key = [skyKey(host), glyphKey, ownerKey || angleBucket].join('|');
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(host);
     });
@@ -48,64 +78,88 @@
     groups.forEach(function (hosts) {
       if (hosts.length < 2) return;
       hosts.sort(function (a, b) { return renderedSize(b) - renderedSize(a); });
-      hosts.slice(1).forEach(function (duplicate) { duplicate.remove(); });
+      const keeper = hosts[0];
+      const keeperCenter = renderedCenter(keeper);
+      const keeperSize = renderedSize(keeper);
+
+      hosts.slice(1).forEach(function (candidate) {
+        const samePlace = distance(keeperCenter, renderedCenter(candidate)) < Math.max(keeperSize, 18) * 1.5;
+        if (samePlace || renderedSize(candidate) <= keeperSize) candidate.remove();
+      });
     });
   }
 
-  function removeNamedLegacyMarkerLayer(root) {
-    const scope = root || document;
-    if (!canonicalHosts(scope).length) return;
+  function removeEveryTinyPlacementLayer(wheel) {
+    const full = canonicalHosts(wheel);
+    if (!full.length) return;
 
-    scope.querySelectorAll(
-      '.unified-sky-wheel .chart-wheel-marker-glyph, ' +
-      '.unified-sky-wheel .chart-wheel-marker-object, ' +
-      '.unified-sky-wheel .chart-wheel-marker-frame, ' +
-      '.unified-sky-wheel .chart-wheel-marker-planet, ' +
-      '.unified-sky-wheel .planet-thumb-glyph, ' +
-      '.unified-sky-wheel .chart-wheel-marker-disc, ' +
-      '.unified-sky-wheel .chart-wheel-stick-knob'
-    ).forEach(function (legacy) {
-      if (legacy.closest('.relphi-comparison-candy')) return;
-      legacy.remove();
+    const sizes = full.map(renderedSize).filter(function (size) { return size > 8; }).sort(function (a, b) { return a - b; });
+    const fullSize = sizes.length ? sizes[Math.floor(sizes.length / 2)] : 24;
+
+    // On the large wheel, canonical candy bubbles are the only placement symbols allowed.
+    // Preserve leader lines and labels, but remove every other glyph/circle/icon renderer.
+    wheel.querySelectorAll('.chart-wheel-placement-stick, .chart-wheel-placement, [data-placement-id], [data-object-id]').forEach(function (placement) {
+      placement.querySelectorAll('*').forEach(function (node) {
+        if (node.closest('.relphi-comparison-candy')) return;
+        if (node.matches('line, polyline')) return;
+        if (node.matches('.chart-wheel-marker-degree, .chart-wheel-marker-name')) return;
+        if (node.closest('.chart-wheel-marker-degree, .chart-wheel-marker-name')) return;
+
+        const tag = node.tagName?.toLowerCase();
+        const looksLikePlacementSymbol =
+          tag === 'circle' || tag === 'ellipse' || tag === 'text' || tag === 'use' ||
+          node.matches?.('.chart-wheel-marker-glyph, .chart-wheel-marker-object, .chart-wheel-marker-frame, .chart-wheel-marker-planet, .planet-thumb, .planet-thumb-glyph, .chart-wheel-marker-disc, .chart-wheel-stick-knob, .mini-wheel-marker, .mini-wheel-marker-glyph');
+
+        if (!looksLikePlacementSymbol) return;
+        if (renderedSize(node) <= fullSize * 1.15 || node.matches?.('.chart-wheel-marker-glyph, .chart-wheel-marker-object, .chart-wheel-marker-frame, .chart-wheel-marker-planet, .planet-thumb, .planet-thumb-glyph, .chart-wheel-marker-disc, .chart-wheel-stick-knob, .mini-wheel-marker, .mini-wheel-marker-glyph')) {
+          node.remove();
+        }
+      });
     });
-  }
 
-  function removeSmallRenderedBubbleLayer(root) {
-    const scope = root || document;
-    const wheel = scope.querySelector('.unified-sky-wheel') || document.querySelector('.unified-sky-wheel');
-    if (!wheel) return;
-
-    const reference = canonicalReferenceSize(wheel);
-    if (!reference) return;
-    const maximumLegacySize = reference * 0.72;
-    const candidates = new Set();
-
-    wheel.querySelectorAll('circle, ellipse').forEach(function (shape) {
-      if (shape.closest('.relphi-comparison-candy')) return;
-      if (shape.closest('.chart-wheel-sign-sector, .chart-wheel-aspect-ranges, .chart-wheel-all-aspects, .chart-wheel-selected-aspects')) return;
-
-      let group = shape.closest('g');
-      while (group && group !== wheel) {
-        if (group.querySelector('text, use, path')) break;
-        group = group.parentElement?.closest('g') || null;
-      }
-      if (!group || group === wheel || group.closest('.relphi-comparison-candy')) return;
+    // Catch detached mini marker groups that are not nested in a placement wrapper.
+    wheel.querySelectorAll('g').forEach(function (group) {
+      if (group.closest('.relphi-comparison-candy')) return;
       if (group.closest('.chart-wheel-sign-sector, .chart-wheel-aspect-ranges, .chart-wheel-all-aspects, .chart-wheel-selected-aspects')) return;
+      if (group.matches('.chart-wheel-placement-stick, .chart-wheel-placement')) return;
+
+      const hasBubble = group.querySelector(':scope > circle, :scope > ellipse');
+      const hasGlyph = group.querySelector(':scope > text, :scope > use');
+      if (!hasBubble || !hasGlyph) return;
 
       const size = renderedSize(group);
-      if (size >= 4 && size <= maximumLegacySize) candidates.add(group);
+      if (size > 3 && size < fullSize * 0.9) group.remove();
     });
+  }
 
-    candidates.forEach(function (group) { group.remove(); });
+  function installHardCssGuard() {
+    if (document.getElementById('sky-chart-no-mini-placement-layer')) return;
+    const style = document.createElement('style');
+    style.id = 'sky-chart-no-mini-placement-layer';
+    style.textContent = [
+      '.unified-sky-wheel .mini-wheel-marker,',
+      '.unified-sky-wheel .mini-wheel-marker-glyph,',
+      '.unified-sky-wheel .chart-wheel-marker-frame,',
+      '.unified-sky-wheel .chart-wheel-marker-object,',
+      '.unified-sky-wheel .chart-wheel-marker-planet,',
+      '.unified-sky-wheel .chart-wheel-marker-disc,',
+      '.unified-sky-wheel .planet-thumb:not(.relphi-comparison-candy .planet-thumb),',
+      '.unified-sky-wheel .planet-thumb-glyph:not(.relphi-comparison-candy .planet-thumb-glyph) {',
+      '  display: none !important;',
+      '}'
+    ].join('\n');
+    document.head.appendChild(style);
   }
 
   function apply(root) {
     if (applying) return;
     applying = true;
     try {
-      dedupeCanonicalBubbles(root);
-      removeNamedLegacyMarkerLayer(root);
-      removeSmallRenderedBubbleLayer(root);
+      installHardCssGuard();
+      const wheel = wheelFor(root);
+      if (!wheel) return;
+      dedupeFullSizeBubbles(wheel);
+      removeEveryTinyPlacementLayer(wheel);
     } finally {
       applying = false;
     }
@@ -161,7 +215,6 @@
     if (!calcTarget || calcTarget.value !== 'currentSky') return;
 
     saveSkyBDraft();
-
     const editorTarget = document.getElementById('skyCreatorTarget');
     const clearButton = document.getElementById('skyCreatorClear');
     if (editorTarget && clearButton) {
