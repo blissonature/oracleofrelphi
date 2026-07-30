@@ -46,6 +46,20 @@
     return stagingSvg;
   }
 
+  function recolorCompleteMaster(root,color){
+    [root,...root.querySelectorAll('*')].forEach(node=>{
+      if(!node||!node.getAttribute)return;
+      const fill=node.getAttribute('fill');
+      const stroke=node.getAttribute('stroke');
+      const styleFill=node.style&&node.style.fill;
+      const styleStroke=node.style&&node.style.stroke;
+      if(fill&&fill!=='none')node.setAttribute('fill',color);
+      if(stroke&&stroke!=='none')node.setAttribute('stroke',color);
+      if(styleFill&&styleFill!=='none')node.style.fill=color;
+      if(styleStroke&&styleStroke!=='none')node.style.stroke=color;
+    });
+  }
+
   async function buildMaster(id,kind){
     const entry=resolveEntry(id);
     const stage=ensureStagingSvg();
@@ -99,12 +113,12 @@
     instance.setAttribute('transform','scale('+scale.toFixed(6)+')');
 
     const master=source.cloneNode(true);
+    master.querySelectorAll('.scn-canonical-master-art').forEach(art=>recolorCompleteMaster(art,color));
     const circle=master.querySelector('.scn-canonical-inscription');
     if(circle){
       circle.setAttribute('stroke',color);
       circle.setAttribute('fill',fill);
     }
-    master.querySelectorAll('.scn-canonical-master-art').forEach(art=>component.recolor(art,color));
     instance.appendChild(master);
     parent.appendChild(instance);
     return instance;
