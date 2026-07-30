@@ -142,8 +142,10 @@
     appendScript('relphi-glyph-registry-v1.js?v=0d56ee7', function () {
       appendScript('relphi-glyph-component-v1.js?v=0d56ee7', function () {
         appendScript('relphi-moon-stroke-preservation-v1.js?v=1', function () {
-          appendScript('sky-chart-wheel-canonical-component-v1.js?v=4', function () {
-            appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
+          appendScript('relphi-neptune-cross-connection-v1.js?v=1', function () {
+            appendScript('sky-chart-wheel-canonical-component-v1.js?v=4', function () {
+              appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
+            });
           });
         });
       });
@@ -164,7 +166,9 @@
       appendScript('relphi-glyph-registry-v1.js?v=0d56ee7', function () {
         appendScript('relphi-glyph-component-v1.js?v=0d56ee7', function () {
           appendScript('relphi-moon-stroke-preservation-v1.js?v=1', function () {
-            appendScript('glyph-trainer-canonical-v1.js?v=1');
+            appendScript('relphi-neptune-cross-connection-v1.js?v=1', function () {
+              appendScript('glyph-trainer-canonical-v1.js?v=1');
+            });
           });
         });
       });
