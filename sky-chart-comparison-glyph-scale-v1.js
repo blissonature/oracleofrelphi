@@ -3,72 +3,79 @@
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
 
-  const GLYPH_FONT_SIZE = '13px';
   const SKY_B_DRAFT_KEY = 'relphiSkyChartSkyBDraftV1';
+  let applyQueued = false;
+  let applying = false;
 
-  function undoExperimentalHostScaling(root) {
-    (root || document).querySelectorAll('.relphi-comparison-candy[data-glyph-id]').forEach(function (host) {
-      const saved = host.dataset.uniformGlyphBaseTransform;
-      if (saved !== undefined) {
-        if (saved) host.setAttribute('transform', saved);
-        else host.removeAttribute('transform');
-      }
-      delete host.dataset.uniformGlyphBaseTransform;
-      delete host.dataset.visualScale;
+  function skyKey(node) {
+    const owner = node.closest('.sky-b, [data-sky="b"], [data-sky-id="currentSky"], .sky-a, [data-sky="a"], [data-sky-id="chart"]');
+    if (owner?.matches('.sky-b, [data-sky="b"], [data-sky-id="currentSky"]')) return 'b';
+    if (owner?.matches('.sky-a, [data-sky="a"], [data-sky-id="chart"]')) return 'a';
+    return node.classList.contains('sky-b') ? 'b' : 'a';
+  }
+
+  function canonicalSize(host) {
+    try {
+      const box = host.getBoundingClientRect();
+      return Math.max(box.width, box.height);
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  function dedupeCanonicalBubbles(root) {
+    const scope = root || document;
+    const groups = new Map();
+
+    scope.querySelectorAll('.unified-sky-wheel .relphi-comparison-candy[data-glyph-id]').forEach(function (host) {
+      const key = skyKey(host) + '|' + String(host.dataset.glyphId || '').toLowerCase();
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(host);
+    });
+
+    groups.forEach(function (hosts) {
+      if (hosts.length < 2) return;
+      hosts.sort(function (a, b) { return canonicalSize(b) - canonicalSize(a); });
+      hosts.slice(1).forEach(function (duplicate) { duplicate.remove(); });
     });
   }
 
-  function normalizeTextGlyphs(root) {
-    (root || document).querySelectorAll(
+  function removeLegacyMarkerLayer(root) {
+    const scope = root || document;
+    if (!scope.querySelector('.unified-sky-wheel .relphi-comparison-candy[data-glyph-id]')) return;
+
+    scope.querySelectorAll(
       '.unified-sky-wheel .chart-wheel-marker-glyph, ' +
-      '.unified-sky-wheel .planet-thumb-glyph'
-    ).forEach(function (glyph) {
-      glyph.setAttribute('font-size', GLYPH_FONT_SIZE);
-      glyph.style.setProperty('font-size', GLYPH_FONT_SIZE, 'important');
-      glyph.style.setProperty('line-height', '1', 'important');
-    });
-  }
-
-  function removeLegacyMiniGlyphs(root) {
-    const scope = root || document;
-    scope.querySelectorAll('.unified-sky-wheel .chart-wheel-placement, .unified-sky-wheel .chart-wheel-placement-stick').forEach(function (placement) {
-      const canonical = placement.querySelector('.relphi-comparison-candy[data-glyph-id]');
-      if (!canonical) return;
-
-      placement.querySelectorAll(
-        '.chart-wheel-marker-glyph, ' +
-        '.chart-wheel-marker-object, ' +
-        '.chart-wheel-marker-frame, ' +
-        '.chart-wheel-marker-planet, ' +
-        '.planet-thumb-glyph'
-      ).forEach(function (legacy) {
-        if (legacy.closest('.relphi-comparison-candy')) return;
-        legacy.style.setProperty('display', 'none', 'important');
-        legacy.setAttribute('aria-hidden', 'true');
-      });
-    });
-  }
-
-  function dedupeCanonicalGlyphs(root) {
-    const scope = root || document;
-    scope.querySelectorAll('.unified-sky-wheel .chart-wheel-placement, .unified-sky-wheel .chart-wheel-placement-stick').forEach(function (placement) {
-      const seen = new Set();
-      Array.from(placement.querySelectorAll('.relphi-comparison-candy[data-glyph-id]')).reverse().forEach(function (host) {
-        const key = [
-          host.dataset.glyphId || '',
-          placement.classList.contains('sky-b') ? 'sky-b' : 'sky-a'
-        ].join('|');
-        if (seen.has(key)) host.remove();
-        else seen.add(key);
-      });
+      '.unified-sky-wheel .chart-wheel-marker-object, ' +
+      '.unified-sky-wheel .chart-wheel-marker-frame, ' +
+      '.unified-sky-wheel .chart-wheel-marker-planet, ' +
+      '.unified-sky-wheel .planet-thumb-glyph, ' +
+      '.unified-sky-wheel .chart-wheel-marker-disc, ' +
+      '.unified-sky-wheel .chart-wheel-stick-knob'
+    ).forEach(function (legacy) {
+      if (legacy.closest('.relphi-comparison-candy')) return;
+      legacy.remove();
     });
   }
 
   function apply(root) {
-    undoExperimentalHostScaling(root);
-    dedupeCanonicalGlyphs(root);
-    removeLegacyMiniGlyphs(root);
-    normalizeTextGlyphs(root);
+    if (applying) return;
+    applying = true;
+    try {
+      dedupeCanonicalBubbles(root);
+      removeLegacyMarkerLayer(root);
+    } finally {
+      applying = false;
+    }
+  }
+
+  function queueApply(root) {
+    if (applyQueued) return;
+    applyQueued = true;
+    requestAnimationFrame(function () {
+      applyQueued = false;
+      apply(root || document);
+    });
   }
 
   function saveSkyBDraft() {
@@ -125,10 +132,10 @@
   }
 
   window.addEventListener('relphi:comparison-lollipop-ready', function (event) {
-    apply(event.detail?.svg || document);
+    queueApply(event.detail?.svg || document);
   });
   window.addEventListener('relphi:wheel-structure-ready', function () {
-    requestAnimationFrame(function () { apply(document); });
+    queueApply(document);
   });
 
   function start() {
@@ -138,8 +145,8 @@
       if (event.target.closest?.('.sky-calc-panel')) saveSkyBDraft();
     });
 
-    const observer = new MutationObserver(function () {
-      requestAnimationFrame(function () { apply(document); });
+    const observer = new MutationObserver(function (mutations) {
+      if (!applying && mutations.some(function (mutation) { return mutation.addedNodes.length; })) queueApply(document);
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
   }
