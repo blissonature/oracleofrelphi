@@ -9,6 +9,11 @@
   let queued = false;
   let applying = false;
 
+  function importantValue(node, property, value) {
+    if (node.style.getPropertyValue(property) === value && node.style.getPropertyPriority(property) === 'important') return;
+    node.style.setProperty(property, value, 'important');
+  }
+
   function suppressWheel(svg) {
     if (!svg || !svg.querySelector(OVERLAY_SELECTOR)) return;
 
@@ -19,18 +24,18 @@
 
     svg.querySelectorAll(NATIVE_SELECTOR).forEach(function (placement) {
       if (placement.closest('.relphi-comparison-lollipop-v1,.relphi-dual-house-rings')) return;
-      placement.style.setProperty('display', 'none', 'important');
-      placement.style.setProperty('visibility', 'hidden', 'important');
-      placement.style.setProperty('opacity', '0', 'important');
-      placement.setAttribute('aria-hidden', 'true');
-      placement.setAttribute('data-relphi-native-placement-suppressed', 'true');
+      importantValue(placement, 'display', 'none');
+      importantValue(placement, 'visibility', 'hidden');
+      importantValue(placement, 'opacity', '0');
+      if (placement.getAttribute('aria-hidden') !== 'true') placement.setAttribute('aria-hidden', 'true');
+      if (placement.dataset.relphiNativePlacementSuppressed !== 'true') placement.dataset.relphiNativePlacementSuppressed = 'true';
     });
 
-    overlay.style.setProperty('display', 'block', 'important');
-    overlay.style.setProperty('visibility', 'visible', 'important');
-    overlay.style.setProperty('opacity', '1', 'important');
+    importantValue(overlay, 'display', 'inline');
+    importantValue(overlay, 'visibility', 'visible');
+    importantValue(overlay, 'opacity', '1');
     overlay.removeAttribute('aria-hidden');
-    svg.dataset.relphiPlacementLayer = 'full-size-only';
+    if (svg.dataset.relphiPlacementLayer !== 'full-size-only') svg.dataset.relphiPlacementLayer = 'full-size-only';
   }
 
   function apply() {
@@ -70,8 +75,8 @@
         if (target && target.closest && target.closest(WHEEL_SELECTOR)) return true;
         return Array.from(record.addedNodes || []).some(function (node) {
           return node.nodeType === 1 &&
-            (node.matches && node.matches(WHEEL_SELECTOR + ',' + NATIVE_SELECTOR + ',.relphi-comparison-lollipop-v1') ||
-             node.querySelector && node.querySelector(WHEEL_SELECTOR + ',' + NATIVE_SELECTOR + ',.relphi-comparison-lollipop-v1'));
+            ((node.matches && node.matches(WHEEL_SELECTOR + ',' + NATIVE_SELECTOR + ',.relphi-comparison-lollipop-v1')) ||
+             (node.querySelector && node.querySelector(WHEEL_SELECTOR + ',' + NATIVE_SELECTOR + ',.relphi-comparison-lollipop-v1')));
         });
       });
       if (relevant) queue();
