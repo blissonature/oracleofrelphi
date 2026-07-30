@@ -8,7 +8,10 @@
     const base = src.split('?')[0];
     const existing = document.querySelector('script[src^="' + base + '"]');
     if (existing) {
-      if (done) setTimeout(done, 0);
+      if (done) {
+        if (existing.dataset.relphiLoaded === 'true') setTimeout(done, 0);
+        else existing.addEventListener('load', done, { once:true });
+      }
       return existing;
     }
     const script = document.createElement('script');
@@ -76,9 +79,10 @@
         load('sky-chart-skinny-heptagram-v1.js?v=1');
         load('sky-chart-skinny-aspect-anchor-v1.js?v=1');
       });
-      // Sky Chart now uses the Sky Chart Next rainbow house wheel as its sole comparison display.
-      load('sky-chart-glyph-draw-alias-v1.js?v=1', function () {
-        load('sky-chart-next-display-adapter-v1.js?v=1');
+
+      // Use the actual Sky Chart Next canonical-master module, then mount one stable live-data adapter.
+      load('sky-chart-next-glyphs.js?v=5', function () {
+        load('sky-chart-next-display-adapter-v1.js?v=2');
       });
     });
   });
