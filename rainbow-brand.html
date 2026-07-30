@@ -102,7 +102,7 @@ input[type=range]{accent-color:#d42624}
         <label for="swirlSizeRange">Swirl brush size</label>
         <div class="band-readout"><span>Brush diameter</span><output id="swirlSizeOut">88 px</output></div>
         <input id="swirlSizeRange" type="range" min="16" max="200" value="88" step="2"/>
-        <p class="hint">The maximum brush spans the full canvas corner-to-corner when centered. The cursor orb shows the selected diameter.</p>
+        <p class="hint">The maximum brush spans the full canvas corner-to-corner when centered. Use <b>[</b> and <b>]</b> to decrease or increase the brush.</p>
       </div>
 
       <div class="control-group">
@@ -355,15 +355,26 @@ input[type=range]{accent-color:#d42624}
     if(wasAtMax || Number(swirlSizeRange.value) > fullCanvasDiameter){
       swirlSizeRange.value = String(fullCanvasDiameter);
     }
-    swirlSizeOut.textContent = swirlSizeRange.value + ' px';
-    if(toolMode === 'swirl' && !isSwirling){
-      previewRadius = getSwirlRadius();
-      updateOrb();
-    }
+    setSwirlSize(swirlSizeRange.value);
   }
 
   function getSwirlRadius(){
     return (Number(swirlSizeRange.value) || 88) / 2;
+  }
+
+  function setSwirlSize(value){
+    const min = Number(swirlSizeRange.min) || 16;
+    const max = Number(swirlSizeRange.max) || 200;
+    const step = Number(swirlSizeRange.step) || 2;
+    const snapped = Math.round((Number(value) || min) / step) * step;
+    const next = Math.min(max, Math.max(min, snapped));
+    swirlSizeRange.value = String(next);
+    swirlSizeOut.textContent = next + ' px';
+    if(toolMode === 'swirl' && !isSwirling){
+      previewRadius = getSwirlRadius();
+      updateOrb();
+    }
+    return next;
   }
 
   function updateOrb(){
@@ -542,13 +553,7 @@ input[type=range]{accent-color:#d42624}
 
   brandToolBrand?.addEventListener('click', () => setToolMode('brand'));
   brandToolSwirl?.addEventListener('click', () => setToolMode('swirl'));
-  swirlSizeRange.addEventListener('input', () => {
-    swirlSizeOut.textContent = swirlSizeRange.value + ' px';
-    if(toolMode === 'swirl' && !isSwirling){
-      previewRadius = getSwirlRadius();
-      updateOrb();
-    }
-  });
+  swirlSizeRange.addEventListener('input', () => setSwirlSize(swirlSizeRange.value));
   bandRange.addEventListener('input', () => setBand(Number(bandRange.value)));
   anchorRange.addEventListener('input', () => setAnchor(anchorRange.value, 0));
   anchorDegrees.addEventListener('input', previewTypedAnchor);
@@ -604,15 +609,29 @@ input[type=range]{accent-color:#d42624}
     redrawCanvas();
     statusText.textContent = action.type === 'swirl' ? 'Swirl restored.' : 'Prang restored.';
   }
+  function isEditableTarget(target){
+    const tag = target?.tagName?.toLowerCase();
+    return target?.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select';
+  }
   saveCanvasBtn.addEventListener('click', saveCanvasImage);
   undoBtn.addEventListener('click', undoAction);
   clearBtn.addEventListener('click', () => { actions = []; redoActions = []; currentSwirl = null; redrawCanvas(); statusText.textContent = 'Canvas clear.'; });
   window.addEventListener('keydown', evt => {
     const mod = evt.ctrlKey || evt.metaKey;
-    if(!mod) return;
     const key = evt.key.toLowerCase();
-    if(key === 'z' && !evt.shiftKey){ evt.preventDefault(); undoAction(); }
-    if(key === 'y' || (key === 'z' && evt.shiftKey)){ evt.preventDefault(); redoAction(); }
+    if(mod){
+      if(key === 'z' && !evt.shiftKey){ evt.preventDefault(); undoAction(); }
+      if(key === 'y' || (key === 'z' && evt.shiftKey)){ evt.preventDefault(); redoAction(); }
+      return;
+    }
+    if(toolMode !== 'swirl' || isSwirling || isEditableTarget(evt.target)) return;
+    if(evt.key === '[' || evt.key === ']'){
+      evt.preventDefault();
+      const direction = evt.key === ']' ? 1 : -1;
+      const step = Number(swirlSizeRange.step) || 2;
+      const size = setSwirlSize(Number(swirlSizeRange.value) + direction * step);
+      statusText.textContent = 'Swirl brush: ' + size + ' px.';
+    }
   });
   window.addEventListener('resize', resizeCanvas);
 
