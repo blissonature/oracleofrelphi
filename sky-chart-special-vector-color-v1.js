@@ -77,7 +77,9 @@
         load('sky-chart-skinny-aspect-anchor-v1.js?v=1');
       });
       // Sky Chart now uses the Sky Chart Next rainbow house wheel as its sole comparison display.
-      load('sky-chart-next-display-adapter-v1.js?v=1');
+      load('sky-chart-glyph-draw-alias-v1.js?v=1', function () {
+        load('sky-chart-next-display-adapter-v1.js?v=1');
+      });
     });
   });
 })();
