@@ -29,8 +29,45 @@
     });
   }
 
+  function removeLegacyMiniGlyphs(root) {
+    const scope = root || document;
+    scope.querySelectorAll('.unified-sky-wheel .chart-wheel-placement, .unified-sky-wheel .chart-wheel-placement-stick').forEach(function (placement) {
+      const canonical = placement.querySelector('.relphi-comparison-candy[data-glyph-id]');
+      if (!canonical) return;
+
+      placement.querySelectorAll(
+        '.chart-wheel-marker-glyph, ' +
+        '.chart-wheel-marker-object, ' +
+        '.chart-wheel-marker-frame, ' +
+        '.chart-wheel-marker-planet, ' +
+        '.planet-thumb-glyph'
+      ).forEach(function (legacy) {
+        if (legacy.closest('.relphi-comparison-candy')) return;
+        legacy.style.setProperty('display', 'none', 'important');
+        legacy.setAttribute('aria-hidden', 'true');
+      });
+    });
+  }
+
+  function dedupeCanonicalGlyphs(root) {
+    const scope = root || document;
+    scope.querySelectorAll('.unified-sky-wheel .chart-wheel-placement, .unified-sky-wheel .chart-wheel-placement-stick').forEach(function (placement) {
+      const seen = new Set();
+      Array.from(placement.querySelectorAll('.relphi-comparison-candy[data-glyph-id]')).reverse().forEach(function (host) {
+        const key = [
+          host.dataset.glyphId || '',
+          placement.classList.contains('sky-b') ? 'sky-b' : 'sky-a'
+        ].join('|');
+        if (seen.has(key)) host.remove();
+        else seen.add(key);
+      });
+    });
+  }
+
   function apply(root) {
     undoExperimentalHostScaling(root);
+    dedupeCanonicalGlyphs(root);
+    removeLegacyMiniGlyphs(root);
     normalizeTextGlyphs(root);
   }
 
@@ -76,9 +113,6 @@
 
     saveSkyBDraft();
 
-    // The calculator formerly appended a newly calculated Sky B to the existing
-    // comparison state. Clear only Sky B immediately before the normal calculator
-    // handler runs, so the new birth data replaces the old comparison sky.
     const editorTarget = document.getElementById('skyCreatorTarget');
     const clearButton = document.getElementById('skyCreatorClear');
     if (editorTarget && clearButton) {
@@ -103,6 +137,11 @@
     document.addEventListener('change', function (event) {
       if (event.target.closest?.('.sky-calc-panel')) saveSkyBDraft();
     });
+
+    const observer = new MutationObserver(function () {
+      requestAnimationFrame(function () { apply(document); });
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
