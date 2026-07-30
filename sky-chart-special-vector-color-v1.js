@@ -76,7 +76,9 @@
       load('sky-chart-selected-relationship-layout-v1.js?v=4');
       load('sky-chart-skinny-cards-v1.js?v=4', function () {
         load('sky-chart-skinny-cluster-context-v1.js?v=1');
-        load('sky-chart-skinny-heptagram-v1.js?v=1');
+        load('sky-chart-skinny-heptagram-v1.js?v=1', function () {
+          load('sky-chart-skinny-graphic-hierarchy-v1.js?v=1');
+        });
         load('sky-chart-skinny-aspect-anchor-v1.js?v=1');
       });
 
