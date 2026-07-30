@@ -23,6 +23,7 @@
   };
   const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
   const signIndex=longitude=>Math.floor(((longitude%360)+360)%360/30);
+  const placementKey=(sky,id)=>sky+':'+id;
 
   function placementData(svg,sky){
     return Array.from(svg.querySelectorAll(`[data-interactive="placement"][data-sky="${sky}"]`)).map(node=>({id:node.dataset.placement,longitude:Number(node.dataset.longitude)})).filter(item=>Number.isFinite(item.longitude));
@@ -99,27 +100,51 @@
 
   function placementNode(svg,sky,id){return svg.querySelector(`[data-interactive="placement"][data-sky="${sky}"][data-placement="${id}"]`);}
   function placementLeader(svg,sky,id){return svg.querySelector(`[data-focusable-piece="placement-leader"][data-sky="${sky}"][data-placement="${id}"]`);}
-  function addPlacementPair(set,svg,sky,id){const node=placementNode(svg,sky,id),leader=placementLeader(svg,sky,id);if(node)set.add(node);if(leader)set.add(leader);}
+  function addSign(set,svg,sign){svg.querySelectorAll(`[data-focusable-piece="sign"][data-sign-index="${sign}"]`).forEach(node=>set.add(node));}
+  function addHouse(set,svg,sky,house){svg.querySelectorAll(`[data-focusable-piece="house"][data-sky="${sky}"][data-house="${house}"]`).forEach(node=>set.add(node));}
+
+  function addPlacementContext(set,svg,sky,id){
+    const node=placementNode(svg,sky,id),leader=placementLeader(svg,sky,id);
+    if(!node)return;
+    set.add(node);if(leader)set.add(leader);
+    addSign(set,svg,signIndex(Number(node.dataset.longitude)));
+    addHouse(set,svg,sky,node.dataset.house);
+  }
+
+  function addAspectContext(set,svg,line){
+    set.add(line);
+    addPlacementContext(set,svg,'A',line.dataset.skyAPlacement);
+    addPlacementContext(set,svg,'B',line.dataset.skyBPlacement);
+  }
+
+  function addDirectAspects(set,svg,seedKeys){
+    svg.querySelectorAll('[data-interactive="aspect"]').forEach(line=>{
+      const aKey=placementKey('A',line.dataset.skyAPlacement),bKey=placementKey('B',line.dataset.skyBPlacement);
+      if(seedKeys.has(aKey)||seedKeys.has(bKey))addAspectContext(set,svg,line);
+    });
+  }
 
   function relatedSet(svg,target,mode){
-    const keep=new Set(),type=target.dataset.interactive||target.dataset.focusablePiece;
+    const keep=new Set(),seedKeys=new Set(),type=target.dataset.interactive||target.dataset.focusablePiece;
     if(type==='sign'){
-      const sign=Number(target.dataset.signIndex);
-      svg.querySelectorAll(`[data-focusable-piece="sign"][data-sign-index="${sign}"]`).forEach(node=>keep.add(node));
-      svg.querySelectorAll('[data-interactive="placement"]').forEach(node=>{if(signIndex(Number(node.dataset.longitude))===sign)addPlacementPair(keep,svg,node.dataset.sky,node.dataset.placement);});
-    }else if(type==='house'){
-      const sky=target.dataset.sky,house=target.dataset.house;
-      svg.querySelectorAll(`[data-focusable-piece="house"][data-sky="${sky}"][data-house="${house}"]`).forEach(node=>keep.add(node));
-      svg.querySelectorAll(`[data-interactive="placement"][data-sky="${sky}"][data-house="${house}"]`).forEach(node=>addPlacementPair(keep,svg,sky,node.dataset.placement));
-    }else if(type==='placement'){
-      const sky=target.dataset.sky,id=target.dataset.placement;addPlacementPair(keep,svg,sky,id);
-      svg.querySelectorAll('[data-interactive="aspect"]').forEach(line=>{
-        const connected=sky==='A'?line.dataset.skyAPlacement===id:line.dataset.skyBPlacement===id;
-        if(!connected)return;keep.add(line);addPlacementPair(keep,svg,'A',line.dataset.skyAPlacement);addPlacementPair(keep,svg,'B',line.dataset.skyBPlacement);
+      const sign=Number(target.dataset.signIndex);addSign(keep,svg,sign);
+      svg.querySelectorAll('[data-interactive="placement"]').forEach(node=>{
+        if(signIndex(Number(node.dataset.longitude))!==sign)return;
+        seedKeys.add(placementKey(node.dataset.sky,node.dataset.placement));
+        addPlacementContext(keep,svg,node.dataset.sky,node.dataset.placement);
       });
-    }else if(type==='aspect'){
-      keep.add(target);addPlacementPair(keep,svg,'A',target.dataset.skyAPlacement);addPlacementPair(keep,svg,'B',target.dataset.skyBPlacement);
-    }else if(type==='placement-leader')addPlacementPair(keep,svg,target.dataset.sky,target.dataset.placement);
+      addDirectAspects(keep,svg,seedKeys);
+    }else if(type==='house'){
+      const sky=target.dataset.sky,house=target.dataset.house;addHouse(keep,svg,sky,house);
+      svg.querySelectorAll(`[data-interactive="placement"][data-sky="${sky}"][data-house="${house}"]`).forEach(node=>{
+        seedKeys.add(placementKey(sky,node.dataset.placement));
+        addPlacementContext(keep,svg,sky,node.dataset.placement);
+      });
+      addDirectAspects(keep,svg,seedKeys);
+    }else if(type==='placement'||type==='placement-leader'){
+      const sky=target.dataset.sky,id=target.dataset.placement;
+      seedKeys.add(placementKey(sky,id));addPlacementContext(keep,svg,sky,id);addDirectAspects(keep,svg,seedKeys);
+    }else if(type==='aspect')addAspectContext(keep,svg,target);
     if(mode==='hover'&&keep.size===0)keep.add(target);return keep;
   }
 
@@ -129,10 +154,10 @@
 
   function updateInspector(target){
     const inspector=document.getElementById('inspector');if(!inspector)return;const type=target.dataset.interactive;
-    if(type==='aspect')inspector.innerHTML=`<p class="scn-eyebrow">Aspect relationship</p><h2>${target.dataset.aspect}</h2><p>Sky A ${target.dataset.skyAPlacement} to Sky B ${target.dataset.skyBPlacement} · orb ${target.dataset.orb}°</p>`;
-    else if(type==='placement')inspector.innerHTML=`<p class="scn-eyebrow">Placement focus</p><h2>Sky ${target.dataset.sky} · ${target.dataset.placement}</h2><p>Only this placement, its connected aspect lines, and their counterpart placements remain emphasized.</p>`;
-    else if(type==='sign')inspector.innerHTML=`<p class="scn-eyebrow">Sign focus</p><h2>Selected sign</h2><p>The sign and every placement within its 30° span remain emphasized.</p>`;
-    else if(type==='house')inspector.innerHTML=`<p class="scn-eyebrow">House focus</p><h2>Sky ${target.dataset.sky} · House ${target.dataset.house}</h2><p>Only this house and the placements from the same sky within it remain emphasized.</p>`;
+    if(type==='aspect')inspector.innerHTML=`<p class="scn-eyebrow">Aspect relationship</p><h2>${target.dataset.aspect}</h2><p>Sky A ${target.dataset.skyAPlacement} to Sky B ${target.dataset.skyBPlacement} · orb ${target.dataset.orb}°. Both placements, signs, and sky-specific houses remain visible.</p>`;
+    else if(type==='placement')inspector.innerHTML=`<p class="scn-eyebrow">Placement focus</p><h2>Sky ${target.dataset.sky} · ${target.dataset.placement}</h2><p>The placement, its sign and house, its connected aspects, and each counterpart placement with its sign and house remain emphasized.</p>`;
+    else if(type==='sign')inspector.innerHTML=`<p class="scn-eyebrow">Sign focus</p><h2>Selected sign</h2><p>The sign, placements within it, their houses, and their directly connected cross-sky aspects remain emphasized.</p>`;
+    else if(type==='house')inspector.innerHTML=`<p class="scn-eyebrow">House focus</p><h2>Sky ${target.dataset.sky} · House ${target.dataset.house}</h2><p>The house, its placements, their signs, and their directly connected cross-sky aspects remain emphasized.</p>`;
   }
 
   function installInteractions(svg){
