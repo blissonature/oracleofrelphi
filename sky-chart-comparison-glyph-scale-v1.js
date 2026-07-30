@@ -14,20 +14,32 @@
     return node.classList.contains('sky-b') ? 'b' : 'a';
   }
 
-  function canonicalSize(host) {
+  function renderedSize(node) {
     try {
-      const box = host.getBoundingClientRect();
+      const box = node.getBoundingClientRect();
       return Math.max(box.width, box.height);
     } catch (error) {
       return 0;
     }
   }
 
+  function canonicalHosts(scope) {
+    return Array.from(scope.querySelectorAll('.unified-sky-wheel .relphi-comparison-candy[data-glyph-id]'));
+  }
+
+  function canonicalReferenceSize(scope) {
+    const sizes = canonicalHosts(scope).map(renderedSize).filter(function (size) {
+      return Number.isFinite(size) && size > 4;
+    }).sort(function (a, b) { return a - b; });
+    if (!sizes.length) return 0;
+    return sizes[Math.floor(sizes.length / 2)];
+  }
+
   function dedupeCanonicalBubbles(root) {
     const scope = root || document;
     const groups = new Map();
 
-    scope.querySelectorAll('.unified-sky-wheel .relphi-comparison-candy[data-glyph-id]').forEach(function (host) {
+    canonicalHosts(scope).forEach(function (host) {
       const key = skyKey(host) + '|' + String(host.dataset.glyphId || '').toLowerCase();
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(host);
@@ -35,14 +47,14 @@
 
     groups.forEach(function (hosts) {
       if (hosts.length < 2) return;
-      hosts.sort(function (a, b) { return canonicalSize(b) - canonicalSize(a); });
+      hosts.sort(function (a, b) { return renderedSize(b) - renderedSize(a); });
       hosts.slice(1).forEach(function (duplicate) { duplicate.remove(); });
     });
   }
 
-  function removeLegacyMarkerLayer(root) {
+  function removeNamedLegacyMarkerLayer(root) {
     const scope = root || document;
-    if (!scope.querySelector('.unified-sky-wheel .relphi-comparison-candy[data-glyph-id]')) return;
+    if (!canonicalHosts(scope).length) return;
 
     scope.querySelectorAll(
       '.unified-sky-wheel .chart-wheel-marker-glyph, ' +
@@ -58,12 +70,42 @@
     });
   }
 
+  function removeSmallRenderedBubbleLayer(root) {
+    const scope = root || document;
+    const wheel = scope.querySelector('.unified-sky-wheel') || document.querySelector('.unified-sky-wheel');
+    if (!wheel) return;
+
+    const reference = canonicalReferenceSize(wheel);
+    if (!reference) return;
+    const maximumLegacySize = reference * 0.72;
+    const candidates = new Set();
+
+    wheel.querySelectorAll('circle, ellipse').forEach(function (shape) {
+      if (shape.closest('.relphi-comparison-candy')) return;
+      if (shape.closest('.chart-wheel-sign-sector, .chart-wheel-aspect-ranges, .chart-wheel-all-aspects, .chart-wheel-selected-aspects')) return;
+
+      let group = shape.closest('g');
+      while (group && group !== wheel) {
+        if (group.querySelector('text, use, path')) break;
+        group = group.parentElement?.closest('g') || null;
+      }
+      if (!group || group === wheel || group.closest('.relphi-comparison-candy')) return;
+      if (group.closest('.chart-wheel-sign-sector, .chart-wheel-aspect-ranges, .chart-wheel-all-aspects, .chart-wheel-selected-aspects')) return;
+
+      const size = renderedSize(group);
+      if (size >= 4 && size <= maximumLegacySize) candidates.add(group);
+    });
+
+    candidates.forEach(function (group) { group.remove(); });
+  }
+
   function apply(root) {
     if (applying) return;
     applying = true;
     try {
       dedupeCanonicalBubbles(root);
-      removeLegacyMarkerLayer(root);
+      removeNamedLegacyMarkerLayer(root);
+      removeSmallRenderedBubbleLayer(root);
     } finally {
       applying = false;
     }
