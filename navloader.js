@@ -141,8 +141,10 @@
     ensureCanonicalSkyBootStyle();
     appendScript('relphi-glyph-registry-v1.js?v=0d56ee7', function () {
       appendScript('relphi-glyph-component-v1.js?v=0d56ee7', function () {
-        appendScript('sky-chart-wheel-canonical-component-v1.js?v=4', function () {
-          appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
+        appendScript('relphi-moon-stroke-preservation-v1.js?v=1', function () {
+          appendScript('sky-chart-wheel-canonical-component-v1.js?v=4', function () {
+            appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
+          });
         });
       });
     });
@@ -161,7 +163,9 @@
     if (/(^|\/)glyphs\.html$/.test(location.pathname)) {
       appendScript('relphi-glyph-registry-v1.js?v=0d56ee7', function () {
         appendScript('relphi-glyph-component-v1.js?v=0d56ee7', function () {
-          appendScript('glyph-trainer-canonical-v1.js?v=1');
+          appendScript('relphi-moon-stroke-preservation-v1.js?v=1', function () {
+            appendScript('glyph-trainer-canonical-v1.js?v=1');
+          });
         });
       });
     }
