@@ -80,9 +80,11 @@
         load('sky-chart-skinny-aspect-anchor-v1.js?v=1');
       });
 
-      // Use the actual Sky Chart Next canonical-master module, then mount one stable live-data adapter.
+      // Use the actual Sky Chart Next canonical-master module, then mount one stable live-data adapter and its focus graph.
       load('sky-chart-next-glyphs.js?v=5', function () {
-        load('sky-chart-next-display-adapter-v1.js?v=2');
+        load('sky-chart-next-display-adapter-v1.js?v=2', function () {
+          load('sky-chart-next-live-interactions-v1.js?v=1');
+        });
       });
     });
   });
