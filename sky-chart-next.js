@@ -7,15 +7,25 @@
   const SKY_A='#c9211e',SKY_B='#2462d0';
   const C={x:600,y:600};
   const R={bIn:165,bOut:330,bDegree:330,zIn:330,zOut:420,aDegree:420,aIn:420,aOut:575};
-  const PLACEMENT={size:16,minimumCenterDistance:38,minimumLeaderSeparation:1.35,maximumDefaultDisplacement:12,maximumGlobalPasses:12};
+  const DEGREE_TICK={one:5,five:8,ten:12,maximum:12};
+  const PLACEMENT={size:16,footprintRadius:19,notchGap:4,laneStep:38,minimumCenterDistance:38,minimumLeaderSeparation:1.35,maximumDefaultDisplacement:12,maximumGlobalPasses:12};
+  const outerDefaultLane=R.aDegree+DEGREE_TICK.maximum+PLACEMENT.footprintRadius+PLACEMENT.notchGap;
+  const innerDefaultLane=R.bDegree-DEGREE_TICK.maximum-PLACEMENT.footprintRadius-PLACEMENT.notchGap;
   const SKY_LAYOUT={
-    A:{degreeRadius:R.aDegree,defaultLane:448,lanes:[448,486,524]},
-    B:{degreeRadius:R.bDegree,defaultLane:310,lanes:[310,272,234]}
+    A:{degreeRadius:R.aDegree,defaultLane:outerDefaultLane,lanes:[outerDefaultLane,outerDefaultLane+PLACEMENT.laneStep,outerDefaultLane+PLACEMENT.laneStep*2]},
+    B:{degreeRadius:R.bDegree,defaultLane:innerDefaultLane,lanes:[innerDefaultLane,innerDefaultLane-PLACEMENT.laneStep,innerDefaultLane-PLACEMENT.laneStep*2]}
   };
   const skies={
     A:{name:'Natal',color:SKY_A,asc:168.3833,placements:[['sun',195],['moon',118.4167],['mercury',206.1667],['venus',169.8833],['mars',167.8667],['jupiter',307.15],['saturn',235.5667],['uranus',254.85],['neptune',271.0167],['pluto',213.8833]]},
     B:{name:'Comparison',color:SKY_B,asc:284,placements:[['sun',126],['moon',302],['mercury',112],['venus',172],['mars',82],['jupiter',128],['saturn',14.7],['uranus',64.8],['neptune',4.4],['pluto',304.3]]}
   };
+
+  Object.values(SKY_LAYOUT).forEach(layout=>{
+    const required=DEGREE_TICK.maximum+PLACEMENT.footprintRadius+PLACEMENT.notchGap;
+    layout.lanes.forEach(lane=>{
+      if(Math.abs(lane-layout.degreeRadius)<required)throw new Error('Placement lane violates degree-notch clearance.');
+    });
+  });
 
   const svgEl=name=>document.createElementNS(NS,name);
   const norm=n=>((n%360)+360)%360;
@@ -262,9 +272,9 @@
     });
 
     for(let degree=0;degree<360;degree++){
-      let halfLength=5,tickClass='degree-tick degree-tick-one';
-      if(degree%10===0){halfLength=12;tickClass='degree-tick degree-tick-ten';}
-      else if(degree%5===0){halfLength=8;tickClass='degree-tick degree-tick-five';}
+      let halfLength=DEGREE_TICK.one,tickClass='degree-tick degree-tick-one';
+      if(degree%10===0){halfLength=DEGREE_TICK.ten;tickClass='degree-tick degree-tick-ten';}
+      else if(degree%5===0){halfLength=DEGREE_TICK.five;tickClass='degree-tick degree-tick-five';}
       line(groups.ticks,R.bDegree-halfLength,R.bDegree+halfLength,degree,tickClass);
       line(groups.ticks,R.aDegree-halfLength,R.aDegree+halfLength,degree,tickClass);
     }
