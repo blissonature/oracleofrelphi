@@ -4,6 +4,36 @@
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
   document.getElementById('relphiSpecialVectorColorStyle')?.remove();
 
+  // First-paint contract: reserve the wheel area, but never expose the retired
+  // comparison SVG while the rainbow-house renderer is being assembled.
+  (function installRainbowFirstPaintGuard(){
+    if(document.getElementById('relphiRainbowFirstPaintGuard'))return;
+    const style=document.createElement('style');
+    style.id='relphiRainbowFirstPaintGuard';
+    style.textContent=`
+      .sky-chart-page .unified-sky-wheel{
+        position:relative!important;
+        aspect-ratio:1/1;
+        min-height:0!important;
+        overflow:hidden!important;
+        border-radius:1rem;
+        background:#fffdf8;
+      }
+      .sky-chart-page .unified-sky-wheel>svg:not(.scn-live-wheel[data-ready="true"]){
+        visibility:hidden!important;
+        opacity:0!important;
+        pointer-events:none!important;
+      }
+      .sky-chart-page .unified-sky-wheel>.scn-live-wheel[data-ready="true"]{
+        display:block!important;
+        visibility:visible!important;
+        opacity:1!important;
+        pointer-events:auto!important;
+      }
+    `;
+    (document.head||document.documentElement).appendChild(style);
+  })();
+
   function load(src, done) {
     const base = src.split('?')[0];
     const existing = document.querySelector('script[src^="' + base + '"]');
