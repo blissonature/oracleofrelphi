@@ -55,26 +55,26 @@
     const shell = document.createElement('div');
     shell.className = 'relphi-selected-closeup-shell';
 
-    const orbRow = document.createElement('div');
-    orbRow.className = 'relphi-selected-closeup-orb';
-    if (orb && orb !== cardA && orb !== cardB && !orb.contains(cardA) && !orb.contains(cardB)) orbRow.appendChild(orb);
-
     const cardsRow = document.createElement('div');
     cardsRow.className = 'relphi-selected-closeup-cards';
-    const aSlot = document.createElement('div');
-    const bSlot = document.createElement('div');
+    const aSlot = document.createElement('article');
+    const bSlot = document.createElement('article');
     aSlot.className = 'relphi-selected-closeup-card is-a';
     bSlot.className = 'relphi-selected-closeup-card is-b';
     aSlot.appendChild(cardA);
     bSlot.appendChild(cardB);
     cardsRow.append(aSlot, bSlot);
 
+    const orbRow = document.createElement('div');
+    orbRow.className = 'relphi-selected-closeup-orb';
+    if (orb && orb !== cardA && orb !== cardB && !orb.contains(cardA) && !orb.contains(cardB)) orbRow.appendChild(orb);
+
     const readingRow = document.createElement('section');
     readingRow.className = 'relphi-selected-closeup-reading';
     readingRow.appendChild(reading);
 
-    if (orbRow.childElementCount) shell.appendChild(orbRow);
     shell.appendChild(cardsRow);
+    if (orbRow.childElementCount) shell.appendChild(orbRow);
     shell.appendChild(readingRow);
     host.appendChild(shell);
 
@@ -111,26 +111,34 @@
     const style = document.createElement('style');
     style.id = 'relphi-selected-relationship-layout-style';
     style.textContent = `
-      .relphi-selected-relationship-reassembled{display:block!important;position:relative!important;height:auto!important;min-height:0!important;overflow:visible!important}
+      .relphi-selected-relationship-reassembled{display:block!important;position:relative!important;height:auto!important;min-height:0!important;overflow:visible!important;container-type:inline-size!important}
       .relphi-selected-relationship-reassembled,.relphi-selected-relationship-reassembled *{box-sizing:border-box}
       .relphi-selected-relationship-reassembled>.relphi-selected-closeup-legacy{display:none!important}
       .relphi-selected-closeup-shell{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:1rem!important;width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;position:relative!important;z-index:1!important}
-      .relphi-selected-closeup-orb{display:flex!important;justify-content:center!important;align-items:flex-start!important;width:100%!important;min-width:0!important;position:relative!important;inset:auto!important;transform:none!important;z-index:1!important}
-      .relphi-selected-closeup-orb>*{position:relative!important;inset:auto!important;transform:none!important;margin:0 auto!important;max-width:100%!important}
-      .relphi-selected-closeup-cards{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1rem!important;align-items:start!important;width:100%!important;min-width:0!important;position:relative!important;z-index:2!important}
-      .relphi-selected-closeup-card,.relphi-selected-closeup-card>*{width:100%!important;max-width:100%!important;min-width:0!important;position:relative!important;inset:auto!important;transform:none!important;margin:0!important}
-      .relphi-selected-closeup-card,.relphi-selected-closeup-card *{word-break:normal!important;overflow-wrap:break-word!important;white-space:normal!important;writing-mode:horizontal-tb!important}
-      .relphi-selected-closeup-reading{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:1rem!important;position:relative!important;inset:auto!important;transform:none!important;grid-column:1 / -1!important}
-      .relphi-selected-closeup-reading .relphi-progressive-reading,.relphi-selected-closeup-reading .relphi-canonical-relationship-reading{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;line-height:1.55!important;overflow-wrap:normal!important;word-break:normal!important;white-space:normal!important}
-      .relphi-selected-closeup-reading p{max-width:none!important;width:100%!important}
+      .relphi-selected-closeup-cards{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:1rem!important;align-items:start!important;width:100%!important;min-width:0!important;position:relative!important;z-index:2!important}
+      .relphi-selected-closeup-card{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:.85rem!important;position:relative!important;inset:auto!important;transform:none!important;border:1px solid rgba(35,31,27,.12)!important;border-radius:1rem!important;background:#fff!important;overflow:hidden!important}
+      .relphi-selected-closeup-card>*{width:100%!important;max-width:100%!important;min-width:0!important;position:relative!important;inset:auto!important;transform:none!important;margin:0!important}
+      .relphi-selected-closeup-card,.relphi-selected-closeup-card *{word-break:normal!important;overflow-wrap:normal!important;white-space:normal!important;writing-mode:horizontal-tb!important}
+      .relphi-selected-closeup-card .relphi-dual-card-item{display:grid!important;grid-template-columns:minmax(84px,108px) minmax(0,1fr)!important;grid-template-rows:auto!important;gap:.8rem!important;align-items:start!important;width:100%!important;max-width:100%!important;min-width:0!important;padding:0!important}
+      .relphi-selected-closeup-card .relphi-dual-card-item img,.relphi-selected-closeup-card .relphi-dual-card-item svg,.relphi-selected-closeup-card .relphi-dual-card-item canvas{grid-column:1!important;grid-row:1 / span 8!important;width:100%!important;max-width:108px!important;height:auto!important;margin:0 auto!important}
+      .relphi-selected-closeup-card .relphi-dual-card-item>:not(img):not(svg):not(canvas){grid-column:2!important;min-width:0!important;max-width:100%!important;text-align:left!important}
+      .relphi-selected-closeup-card h1,.relphi-selected-closeup-card h2,.relphi-selected-closeup-card h3,.relphi-selected-closeup-card h4,.relphi-selected-closeup-card p{width:auto!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;text-align:left!important;line-height:1.25!important}
+      .relphi-selected-closeup-orb{display:flex!important;justify-content:center!important;align-items:flex-start!important;width:100%!important;min-width:0!important;position:relative!important;inset:auto!important;transform:none!important;z-index:1!important;overflow:hidden!important}
+      .relphi-selected-closeup-orb>*{position:relative!important;inset:auto!important;transform:none!important;margin:0 auto!important;max-width:min(100%,260px)!important}
+      .relphi-selected-closeup-reading{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:1rem!important;position:relative!important;inset:auto!important;transform:none!important;grid-column:1 / -1!important;border-radius:1rem!important;background:#f3f0ea!important}
+      .relphi-selected-closeup-reading .relphi-progressive-reading,.relphi-selected-closeup-reading .relphi-canonical-relationship-reading{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;line-height:1.55!important;overflow-wrap:normal!important;word-break:normal!important;white-space:normal!important;text-align:left!important}
+      .relphi-selected-closeup-reading p{max-width:none!important;width:100%!important;text-align:left!important}
+      @container (min-width:620px){
+        .relphi-selected-closeup-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+        .relphi-selected-closeup-card .relphi-dual-card-item{grid-template-columns:minmax(72px,92px) minmax(0,1fr)!important}
+        .relphi-selected-closeup-card .relphi-dual-card-item img,.relphi-selected-closeup-card .relphi-dual-card-item svg,.relphi-selected-closeup-card .relphi-dual-card-item canvas{max-width:92px!important}
+      }
       @media(max-width:600px){
         .relphi-selected-closeup-shell{gap:.75rem!important}
-        .relphi-selected-closeup-cards{grid-template-columns:minmax(0,1fr)!important;gap:.85rem!important;width:100%!important}
-        .relphi-selected-closeup-card,.relphi-selected-closeup-card>*{grid-column:1!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;position:relative!important;inset:auto!important;transform:none!important}
-        .relphi-selected-closeup-card .relphi-mobile-dual-card-view,.relphi-selected-closeup-card [class*="dual-card"],.relphi-selected-closeup-card [class*="comparison"]{display:block!important;grid-template-columns:none!important;width:100%!important}
-        .relphi-selected-closeup-card img,.relphi-selected-closeup-card svg,.relphi-selected-closeup-card canvas{max-width:min(100%,240px)!important;height:auto!important}
-        .relphi-selected-closeup-reading{padding:.8rem!important}
-        .relphi-selected-closeup-reading .relphi-progressive-reading,.relphi-selected-closeup-reading .relphi-canonical-relationship-reading{max-width:none!important;line-height:1.5!important}
+        .relphi-selected-closeup-card{padding:.7rem!important}
+        .relphi-selected-closeup-card .relphi-dual-card-item{grid-template-columns:minmax(72px,92px) minmax(0,1fr)!important;gap:.65rem!important}
+        .relphi-selected-closeup-card .relphi-dual-card-item img,.relphi-selected-closeup-card .relphi-dual-card-item svg,.relphi-selected-closeup-card .relphi-dual-card-item canvas{max-width:92px!important}
+        .relphi-selected-closeup-reading{padding:.85rem!important}
       }
     `;
     document.head.appendChild(style);
