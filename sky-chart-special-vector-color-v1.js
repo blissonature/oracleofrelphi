@@ -82,12 +82,12 @@
         load('sky-chart-skinny-aspect-anchor-v1.js?v=1');
       });
 
-      // Use the current Sky Chart Next renderer, then apply focus, exact house boundaries, and synchronized results.
+      // Use the current Sky Chart Next renderer, then apply focus, exact house boundaries, and index-synchronized results.
       load('sky-chart-next-glyphs.js?v=5', function () {
         load('sky-chart-next-display-adapter-v1.js?v=2', function () {
           load('sky-chart-next-live-interactions-v1.js?v=1', function () {
             load('sky-chart-house-boundary-rule-v1.js', function () {
-              load('sky-chart-isolation-results-sync-v2.js');
+              load('sky-chart-isolation-results-index-v1.js');
             });
           });
         });
