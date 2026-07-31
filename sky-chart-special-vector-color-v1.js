@@ -4,32 +4,16 @@
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
   document.getElementById('relphiSpecialVectorColorStyle')?.remove();
 
-  // First-paint contract: reserve the wheel area, but never expose the retired
-  // comparison SVG while the rainbow-house renderer is being assembled.
+  // Secondary guard for pages that load this bootstrap outside navloader.
   (function installRainbowFirstPaintGuard(){
     if(document.getElementById('relphiRainbowFirstPaintGuard'))return;
     const style=document.createElement('style');
     style.id='relphiRainbowFirstPaintGuard';
     style.textContent=`
-      .sky-chart-page .unified-sky-wheel{
-        position:relative!important;
-        aspect-ratio:1/1;
-        min-height:0!important;
-        overflow:hidden!important;
-        border-radius:1rem;
-        background:#fffdf8;
-      }
-      .sky-chart-page .unified-sky-wheel>svg:not(.scn-live-wheel[data-ready="true"]){
-        visibility:hidden!important;
-        opacity:0!important;
-        pointer-events:none!important;
-      }
-      .sky-chart-page .unified-sky-wheel>.scn-live-wheel[data-ready="true"]{
-        display:block!important;
-        visibility:visible!important;
-        opacity:1!important;
-        pointer-events:auto!important;
-      }
+      .sky-chart-page .unified-sky-wheel{position:relative!important;min-height:0!important;overflow:hidden!important;border-radius:1rem;background:#fffdf8}
+      .sky-chart-page .unified-sky-wheel>*:not(.scn-live-wheel[data-ready="true"]){display:none!important}
+      .sky-chart-page .unified-sky-wheel:not(:has(>.scn-live-wheel[data-ready="true"]))::before{content:"";display:block;width:100%;aspect-ratio:1/1;background:#fffdf8}
+      .sky-chart-page .unified-sky-wheel>.scn-live-wheel[data-ready="true"]{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
     `;
     (document.head||document.documentElement).appendChild(style);
   })();
@@ -93,7 +77,7 @@
       load('sky-chart-workspace-mobile-order-v1.js?v=1');
       load('sky-chart-workspace-desktop-width-v1.js?v=3');
       load('sky-chart-inline-card-editor-v1.js?v=2');
-      load('sky-chart-selected-relationship-layout-v1.js?v=4');
+      load('sky-chart-selected-relationship-layout-v1.js?v=5');
       load('sky-chart-skinny-cards-v1.js?v=4', function () {
         load('sky-chart-skinny-cluster-context-v1.js?v=1');
         load('sky-chart-skinny-heptagram-v1.js?v=1', function () { load('sky-chart-skinny-graphic-hierarchy-v2.js'); });
@@ -101,7 +85,7 @@
       });
 
       load('sky-chart-next-glyphs.js?v=5', function () {
-        load('sky-chart-next-display-adapter-v2.js', function () {
+        load('sky-chart-next-display-adapter-v2.js?v=2', function () {
           load('sky-chart-next-live-interactions-v1.js?v=1', function () {
             load('sky-chart-house-boundary-rule-v1.js', function () {
               load('sky-chart-isolation-results-index-v1.js');
