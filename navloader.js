@@ -2,6 +2,10 @@
 (function () {
   'use strict';
 
+  // This script is parsed before tarot-app.js. Install the Sky Chart paint guard
+  // now, rather than waiting for DOMContentLoaded, so the legacy wheel can never flash.
+  if (/(^|\/)sky-chart\.html$/.test(location.pathname)) ensureCanonicalSkyBootStyle();
+
   function appendScript(src, onload, onerror) {
     const base = src.split('?')[0];
     const existing = document.querySelector('script[src^="' + base + '"]');
@@ -135,7 +139,10 @@
     const style = document.createElement('style');
     style.id = 'relphi-canonical-sky-boot-style';
     style.textContent = [
-      '.sky-chart-page .unified-sky-wheel svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
+      '.sky-chart-page .unified-sky-wheel{position:relative!important;min-height:0!important}',
+      '.sky-chart-page .unified-sky-wheel>*:not(.scn-live-wheel[data-ready="true"]){display:none!important}',
+      '.sky-chart-page .unified-sky-wheel:not(:has(>.scn-live-wheel[data-ready="true"]))::before{content:"";display:block;width:100%;aspect-ratio:1/1;background:#fffdf8;border-radius:1rem}',
+      '.sky-chart-page .unified-sky-wheel>.scn-live-wheel[data-ready="true"]{display:block!important;visibility:visible!important;opacity:1!important}',
       '.sky-chart-page #chartOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
       '.sky-chart-page #currentSkyOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
       '.sky-chart-page .sky-output-box svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback){visibility:hidden!important}',
@@ -202,7 +209,7 @@
         'sky-chart-provenance-fix.js?v=1',
         'sky-chart-extra-points-support-v1.js?v=3',
         'sky-chart-calculated-points-v1.js?v=4',
-        'sky-chart-special-vector-color-v1.js?v=2'
+        'sky-chart-special-vector-color-v1.js?v=3'
       ].forEach(function (src) { appendScript(src); });
       loadCanonicalSkyWheel();
       loadChironPipeline();
