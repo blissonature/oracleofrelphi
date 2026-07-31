@@ -112,16 +112,26 @@
     style.id = 'relphi-selected-relationship-layout-style';
     style.textContent = `
       .relphi-selected-relationship-reassembled{display:block!important;position:relative!important;height:auto!important;min-height:0!important;overflow:visible!important}
+      .relphi-selected-relationship-reassembled,.relphi-selected-relationship-reassembled *{box-sizing:border-box}
       .relphi-selected-relationship-reassembled>.relphi-selected-closeup-legacy{display:none!important}
       .relphi-selected-closeup-shell{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:1rem!important;width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;position:relative!important;z-index:1!important}
       .relphi-selected-closeup-orb{display:flex!important;justify-content:center!important;align-items:flex-start!important;width:100%!important;min-width:0!important;position:relative!important;inset:auto!important;transform:none!important;z-index:1!important}
       .relphi-selected-closeup-orb>*{position:relative!important;inset:auto!important;transform:none!important;margin:0 auto!important;max-width:100%!important}
       .relphi-selected-closeup-cards{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1rem!important;align-items:start!important;width:100%!important;min-width:0!important;position:relative!important;z-index:2!important}
       .relphi-selected-closeup-card,.relphi-selected-closeup-card>*{width:100%!important;max-width:100%!important;min-width:0!important;position:relative!important;inset:auto!important;transform:none!important;margin:0!important}
+      .relphi-selected-closeup-card,.relphi-selected-closeup-card *{word-break:normal!important;overflow-wrap:break-word!important;white-space:normal!important;writing-mode:horizontal-tb!important}
       .relphi-selected-closeup-reading{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:1rem!important;position:relative!important;inset:auto!important;transform:none!important;grid-column:1 / -1!important}
       .relphi-selected-closeup-reading .relphi-progressive-reading,.relphi-selected-closeup-reading .relphi-canonical-relationship-reading{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;line-height:1.55!important;overflow-wrap:normal!important;word-break:normal!important;white-space:normal!important}
       .relphi-selected-closeup-reading p{max-width:none!important;width:100%!important}
-      @media(max-width:600px){.relphi-selected-closeup-shell{gap:.75rem!important}.relphi-selected-closeup-cards{gap:.55rem!important}.relphi-selected-closeup-reading{padding:.8rem!important}.relphi-selected-closeup-reading .relphi-progressive-reading,.relphi-selected-closeup-reading .relphi-canonical-relationship-reading{max-width:none!important;line-height:1.5!important}}
+      @media(max-width:600px){
+        .relphi-selected-closeup-shell{gap:.75rem!important}
+        .relphi-selected-closeup-cards{grid-template-columns:minmax(0,1fr)!important;gap:.85rem!important;width:100%!important}
+        .relphi-selected-closeup-card,.relphi-selected-closeup-card>*{grid-column:1!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;position:relative!important;inset:auto!important;transform:none!important}
+        .relphi-selected-closeup-card .relphi-mobile-dual-card-view,.relphi-selected-closeup-card [class*="dual-card"],.relphi-selected-closeup-card [class*="comparison"]{display:block!important;grid-template-columns:none!important;width:100%!important}
+        .relphi-selected-closeup-card img,.relphi-selected-closeup-card svg,.relphi-selected-closeup-card canvas{max-width:min(100%,240px)!important;height:auto!important}
+        .relphi-selected-closeup-reading{padding:.8rem!important}
+        .relphi-selected-closeup-reading .relphi-progressive-reading,.relphi-selected-closeup-reading .relphi-canonical-relationship-reading{max-width:none!important;line-height:1.5!important}
+      }
     `;
     document.head.appendChild(style);
   }
