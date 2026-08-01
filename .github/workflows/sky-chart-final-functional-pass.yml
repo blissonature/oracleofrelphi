@@ -1,0 +1,207 @@
+name: Sky Chart final functional pass
+
+on:
+  push:
+    branches: [fix/sky-chart-part2-selected-relationship]
+    paths:
+      - .github/workflows/sky-chart-final-functional-pass.yml
+
+permissions:
+  contents: write
+
+jobs:
+  implement-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/sky-chart-part2-selected-relationship
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply final functional pass
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          major_foundation = """  const ASPECTS = [
+            { angle:0, orb:3, color:'#e53935' },
+            { angle:60, orb:3, color:'#d3b727' },
+            { angle:90, orb:3, color:'#d6534d' },
+            { angle:120, orb:3, color:'#4e9e69' },
+            { angle:180, orb:3, color:'#5961c8' }
+          ];"""
+          expanded_foundation = """  const ASPECTS = [
+            { id:'conjunction', angle:0, orb:3, color:'#e53935' },
+            { id:'semi-sextile', angle:30, orb:2, color:'#7c9b49' },
+            { id:'octile', angle:45, orb:2, color:'#b86d43' },
+            { id:'sextile', angle:60, orb:3, color:'#d3b727' },
+            { id:'quintile', angle:72, orb:2, color:'#8b6cc2' },
+            { id:'square', angle:90, orb:3, color:'#d6534d' },
+            { id:'trine', angle:120, orb:3, color:'#4e9e69' },
+            { id:'tri-octile', angle:135, orb:2, color:'#9f5944' },
+            { id:'bi-quintile', angle:144, orb:2, color:'#7655aa' },
+            { id:'quincunx', angle:150, orb:2, color:'#4b8e88' },
+            { id:'opposition', angle:180, orb:3, color:'#5961c8' }
+          ];"""
+
+          p = Path('sky-chart-foundation-v1.js')
+          s = p.read_text()
+          if major_foundation not in s:
+              raise SystemExit('foundation aspect block not found')
+          s = s.replace(major_foundation, expanded_foundation)
+          p.write_text(s)
+
+          p = Path('sky-chart-foundation-interactions-v1.js')
+          s = p.read_text()
+          major_interactions = """  const ASPECTS = [
+            { id:'conjunction', angle:0, orb:3, color:'#e53935' },
+            { id:'sextile', angle:60, orb:3, color:'#d3b727' },
+            { id:'square', angle:90, orb:3, color:'#d6534d' },
+            { id:'trine', angle:120, orb:3, color:'#4e9e69' },
+            { id:'opposition', angle:180, orb:3, color:'#5961c8' }
+          ];"""
+          expanded_interactions = expanded_foundation.replace("{ id:'conjunction'", "{ id:'conjunction'")
+          if major_interactions not in s:
+              raise SystemExit('interaction aspect block not found')
+          s = s.replace(major_interactions, expanded_interactions)
+          p.write_text(s)
+
+          p = Path('sky-chart-selected-relationship-v2.js')
+          s = p.read_text()
+          s = s.replace(
+            "const ASPECT_COLORS = { conjunction:'#e53935', sextile:'#d3b727', square:'#d6534d', trine:'#4e9e69', opposition:'#5961c8' };",
+            "const ASPECT_COLORS = { conjunction:'#e53935', 'semi-sextile':'#7c9b49', octile:'#b86d43', sextile:'#d3b727', quintile:'#8b6cc2', square:'#d6534d', trine:'#4e9e69', 'tri-octile':'#9f5944', 'bi-quintile':'#7655aa', quincunx:'#4b8e88', opposition:'#5961c8' };"
+          )
+          old_copy = """    sextile:['Sextile','Two placements offer a cooperative opening that becomes useful through deliberate participation.']
+          };"""
+          new_copy = """    sextile:['Sextile','Two placements offer a cooperative opening that becomes useful through deliberate participation.'],
+            'semi-sextile':['Semi-Sextile','Two neighboring signs make a subtle adjustment that becomes useful through attention and practice.'],
+            octile:['Octile','A forty-five-degree contact creates focused friction that asks for a precise change in approach.'],
+            quintile:['Quintile','A seventy-two-degree contact emphasizes creative patterning, craft, and intentional expression.'],
+            'tri-octile':['Tri-Octile','A one-hundred-thirty-five-degree contact intensifies a developing adjustment and asks for conscious action.'],
+            'bi-quintile':['Bi-Quintile','A one-hundred-forty-four-degree contact develops creative coordination between two distinct functions.'],
+            quincunx:['Quincunx','A one-hundred-fifty-degree contact joins unlike systems that require continuing calibration and translation.']
+          };"""
+          if old_copy not in s:
+              raise SystemExit('selected relationship copy block not found')
+          s = s.replace(old_copy, new_copy)
+
+          marker = "  function aspectLabel(relation) { return ASPECT_COPY[relation.aspect.id][0]; }\n"
+          helper = """  function diagramPoint(longitude, radius) {
+            const angle = (Number(longitude) - 90) * Math.PI / 180;
+            return { x:90 + radius * Math.cos(angle), y:90 + radius * Math.sin(angle) };
+          }
+          function aspectDiagramMarkup(relation, pA, pB) {
+            const a = diagramPoint(relation.left.value, 56), b = diagramPoint(relation.right.value, 56);
+            return `<div class="sky-selected-aspect-diagram" aria-label="Isolated aspect diagram">
+              <svg viewBox="0 0 180 180" role="img" aria-label="Sky A ${escapeHtml(name(relation.left))} and Sky B ${escapeHtml(name(relation.right))}">
+                <circle class="sky-selected-aspect-orbit" cx="90" cy="90" r="56"></circle>
+                <line class="sky-selected-aspect-radius" x1="90" y1="90" x2="${a.x.toFixed(2)}" y2="${a.y.toFixed(2)}"></line>
+                <line class="sky-selected-aspect-radius" x1="90" y1="90" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}"></line>
+                <circle class="sky-selected-aspect-center" cx="90" cy="90" r="4"></circle>
+                <circle class="sky-selected-aspect-point sky-a" cx="${a.x.toFixed(2)}" cy="${a.y.toFixed(2)}" r="7"></circle>
+                <circle class="sky-selected-aspect-point sky-b" cx="${b.x.toFixed(2)}" cy="${b.y.toFixed(2)}" r="7"></circle>
+              </svg>
+              <p class="sky-selected-aspect-label sky-a"><span></span>Sky A · ${escapeHtml(name(relation.left))} ${escapeHtml(pA.label)}</p>
+              <p class="sky-selected-aspect-label sky-b"><span></span>Sky B · ${escapeHtml(name(relation.right))} ${escapeHtml(pB.label)}</p>
+              <strong>Orb ${relation.orb.toFixed(2)}°</strong>
+            </div>`;
+          }
+"""
+          if marker not in s:
+              raise SystemExit('aspect helper marker not found')
+          s = s.replace(marker, marker + helper)
+          old_middle = '<div class="sky-selected-aspect-symbol"><svg viewBox="-22 -22 44 44" aria-label="${escapeHtml(label)}"></svg></div>'
+          if old_middle not in s:
+              raise SystemExit('old center aspect symbol not found')
+          s = s.replace(old_middle, '${aspectDiagramMarkup(relation,pA,pB)}')
+          s = s.replace("      draw(body.querySelector('.sky-selected-aspect-symbol svg'),relation.aspect.id,{radius:18,padding:1,color:'#171717',fill:'#fffdf8',strokeWidth:2.4},true),\n", '')
+          p.write_text(s)
+
+          p = Path('sky-chart-final-pass-v1.js')
+          s = p.read_text()
+          # House-system selection is removed from Where and When.
+          s = re.sub(r"\n    if\(advanced&&!advanced\.querySelector\('\[data-house-system\]'\)\)\{.*?\n    \}\n", "\n    advanced?.querySelector('[data-house-system]')?.remove();\n", s, flags=re.S)
+
+          start = s.index('  function addFilters(){')
+          end = s.index('  function refreshPlacementFilter(){', start)
+          replacement = """  function calculateHouseSystem(slot, system) {
+            const value=read(slot); if(!value)return;
+            const profile=value.calcProfile||{}, placements=placementMap(value);
+            const asc=find(placements,['Ascendant','ASC','Rising']);
+            const mc=find(placements,['Midheaven','MC']);
+            const instant=new Date(profile.instant||profile.dateTime||Date.now());
+            if(!asc||!mc||!window.RelphiHouseSystems||!window.Astronomy)throw new Error(`Sky ${slot} needs Ascendant, Midheaven, and a resolved instant before changing house system.`);
+            const longitude=Number(profile.longitude), latitude=Number(profile.latitude);
+            const siderealDegrees=((window.Astronomy.SiderealTime(instant)*15+longitude)%360+360)%360;
+            const obliquityDegrees=Number(window.Astronomy.e_tilt(instant).tobl);
+            const result=window.RelphiHouseSystems.calculateCusps({system,ascendant:Number(asc.longitude),midheaven:Number(mc.longitude),siderealDegrees,obliquityDegrees,latitude});
+            value.calcProfile={...profile,houseSystem:result.system,houseCusps:result.cusps,cusps:result.cusps,houseSystemNote:result.note};
+            value.houseCusps=result.cusps;
+            Object.values(value.placements||{}).forEach(item=>{if(!Number.isFinite(Number(item?.longitude)))return;item.house=houseForFinal(Number(item.longitude),result.cusps)});
+            save(slot,value,true);
+          }
+          function houseForFinal(value,cusps){
+            for(let index=0;index<12;index++){const start=cusps[index],span=norm(cusps[(index+1)%12]-start)||30;if(norm(value-start)<span)return index+1}return 12;
+          }
+          function setHouseSystem(system, select){
+            try{calculateHouseSystem('A',system);calculateHouseSystem('B',system);select?.setCustomValidity('')}
+            catch(error){console.error(error);select?.setCustomValidity(error.message);select?.reportValidity()}
+          }
+          function addFilters(){
+            const relationshipPanel=document.getElementById('skyFoundationRelationships');if(!relationshipPanel||relationshipPanel.querySelector('.sky-chart-filter-bar'))return;
+            const bar=document.createElement('div');bar.className='sky-chart-filter-bar';
+            const aspectOptions=[['all','All'],['conjunction','Conjunction'],['semi-sextile','Semi-Sextile'],['octile','Octile'],['sextile','Sextile'],['quintile','Quintile'],['square','Square'],['trine','Trine'],['tri-octile','Tri-Octile'],['bi-quintile','Bi-Quintile'],['quincunx','Quincunx'],['opposition','Opposition']];
+            const aspectMarkup=aspectOptions.map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
+            const houses=['all',...Array.from({length:12},(_,i)=>String(i+1))].map(value=>`<option value="${value}">${value==='all'?'All':value}</option>`).join('');
+            const current=read('A')?.calcProfile?.houseSystem||read('B')?.calcProfile?.houseSystem||'whole-sign';
+            const systems=Object.entries(HOUSE_SYSTEMS).map(([value,label])=>`<option value="${value}" ${value===current?'selected':''}>${label}</option>`).join('');
+            bar.innerHTML=`<label>Aspects<select data-filter="aspect">${aspectMarkup}</select></label><label>Placements<select data-filter="placement"><option value="all">All</option></select></label><label>Sky A House<select data-filter="houseA">${houses}</select></label><label>Sky B House<select data-filter="houseB">${houses}</select></label><label>House System<select data-house-system-filter>${systems}</select></label>`;
+            relationshipPanel.insertBefore(bar,relationshipPanel.querySelector('#skyFoundationRelationshipList'));
+            bar.addEventListener('change',event=>{if(event.target.matches('[data-house-system-filter]')){setHouseSystem(event.target.value,event.target);return}if(!event.target.dataset.filter)return;filters[event.target.dataset.filter]=event.target.value;applyFilters()});
+            refreshPlacementFilter();
+          }
+"""
+          s = s[:start] + replacement + s[end:]
+          p.write_text(s)
+
+          css = Path('sky-chart-final-pass-v1.css')
+          c = css.read_text()
+          c += """
+
+/* Final isolated-aspect diagram between the two cards. */
+.sky-selected-aspect-diagram{align-self:center;display:grid;justify-items:center;gap:.3rem;min-width:170px;padding:.7rem .45rem;border:1px solid rgba(31,27,24,.16);border-radius:18px;background:#fffdf8}
+.sky-selected-aspect-diagram svg{display:block;width:150px;height:150px;overflow:visible}
+.sky-selected-aspect-orbit{fill:none;stroke:rgba(31,27,24,.45);stroke-width:1.5}
+.sky-selected-aspect-radius{stroke:rgba(31,27,24,.52);stroke-width:1.6}
+.sky-selected-aspect-center{fill:#171717}
+.sky-selected-aspect-point{stroke:#fffdf8;stroke-width:2.5}
+.sky-selected-aspect-point.sky-a,.sky-selected-aspect-label.sky-a span{fill:#c9211e;background:#c9211e}
+.sky-selected-aspect-point.sky-b,.sky-selected-aspect-label.sky-b span{fill:#2462d0;background:#2462d0}
+.sky-selected-aspect-label{margin:0;font:700 .67rem/1.25 system-ui,sans-serif;text-align:center}
+.sky-selected-aspect-label span{display:inline-block;width:.62rem;height:.62rem;margin-right:.3rem;border-radius:50%}
+.sky-selected-aspect-diagram strong{font:800 .72rem/1.2 system-ui,sans-serif}
+@media(max-width:620px){.sky-selected-aspect-diagram{min-width:0;width:100%;grid-column:1/-1}.sky-selected-aspect-diagram svg{width:130px;height:130px}}
+"""
+          css.write_text(c)
+
+          html = Path('part2/sky-chart.html')
+          h = html.read_text().replace('sky-chart-final-pass-v1.css?v=3','sky-chart-final-pass-v1.css?v=4').replace('sky-chart-foundation-v1.js?v=1','sky-chart-foundation-v1.js?v=2').replace('sky-chart-foundation-interactions-v1.js?v=1','sky-chart-foundation-interactions-v1.js?v=2').replace('sky-chart-selected-relationship-v2.js?v=2','sky-chart-selected-relationship-v2.js?v=3').replace('sky-chart-final-pass-v1.js?v=2','sky-chart-final-pass-v1.js?v=3')
+          html.write_text(h)
+          PY
+      - name: Syntax checks
+        run: |
+          node --check sky-chart-foundation-v1.js
+          node --check sky-chart-foundation-interactions-v1.js
+          node --check sky-chart-selected-relationship-v2.js
+          node --check sky-chart-final-pass-v1.js
+      - name: Commit implementation
+        run: |
+          git config user.name "relphi-ci"
+          git config user.email "actions@users.noreply.github.com"
+          git add sky-chart-foundation-v1.js sky-chart-foundation-interactions-v1.js sky-chart-selected-relationship-v2.js sky-chart-final-pass-v1.js sky-chart-final-pass-v1.css part2/sky-chart.html
+          git commit -m "Complete Sky Chart aspects houses and filters"
+          git push origin HEAD:fix/sky-chart-part2-selected-relationship
