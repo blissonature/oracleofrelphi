@@ -26,6 +26,7 @@ jobs:
           node --check sky-chart-contract-renderer-v1.js
           node --check sky-chart-contract-controller-v1.js
           node --check sky-chart-contract-native-map-v1.js
+          node --check sky-chart-contract-editor-v1.js
           node --check relphi-canonical-angle-masters-v1.js
           node --check sky-chart-special-vector-color-v1.js
           node --check sky-chart-canonical-glyph-correction-v1.js
@@ -34,6 +35,7 @@ jobs:
           grep -q "sky-chart-contract-renderer-v1.js" sky-chart-special-vector-color-v1.js
           grep -q "sky-chart-contract-controller-v1.js" sky-chart-special-vector-color-v1.js
           grep -q "sky-chart-contract-native-map-v1.js" sky-chart-special-vector-color-v1.js
+          grep -q "sky-chart-contract-editor-v1.js" sky-chart-special-vector-color-v1.js
           grep -q "Retired on the Sky Chart contract branch" sky-chart-wheel-canonical-component-v1.js
           grep -q "Retired on the Sky Chart contract branch" sky-chart-wheel-marker-interaction-v1.js
       - name: Reject public glyph substitutions
@@ -46,3 +48,8 @@ jobs:
           grep -q "semantic identity" sky-chart-contract-native-map-v1.js
           grep -q "Index-only mismatches are blocked" sky-chart-contract-native-map-v1.js
           grep -q "event.stopImmediatePropagation" sky-chart-contract-native-map-v1.js
+      - name: Lock card editing to its originating sky
+        run: |
+          grep -q 'data-edit = slot' sky-chart-contract-editor-v1.js || grep -q 'command.dataset.edit = slot' sky-chart-contract-editor-v1.js
+          grep -q 'relphiContractLockedTarget' sky-chart-contract-editor-v1.js
+          grep -q 'label.hidden = true' sky-chart-contract-editor-v1.js
