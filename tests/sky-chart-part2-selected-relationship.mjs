@@ -67,7 +67,9 @@ const titleFromRow = (await panel.locator('.sky-selected-facts h3').textContent(
 const cardTitlesFromRow = await panel.locator('.sky-selected-card h4').allTextContents();
 
 const line = page.locator(`.sky-foundation-aspect[data-relation-index="${relationIndex}"]`);
-await line.click({force:true});
+const hit = page.locator(`.sky-foundation-aspect-hit[data-relation-index="${relationIndex}"]`);
+await hit.waitFor({state:'attached', timeout:10000});
+await hit.click({force:true});
 await page.waitForFunction(index => document.querySelector('#skySelectedRelationship')?.dataset.selectionSource === 'comparison-wheel' && Number(document.querySelector('#skySelectedRelationship')?.dataset.relationIndex) === index, relationIndex);
 assert.equal((await panel.locator('.sky-selected-facts h3').textContent()).trim(), titleFromRow);
 assert.deepEqual(await panel.locator('.sky-selected-card h4').allTextContents(), cardTitlesFromRow);
