@@ -1,0 +1,99 @@
+/* Data-driven Planetary Hours flap for canonical Sky cards. */
+.relphi-contract-card-header {
+  grid-template-columns:auto 72px minmax(0,1fr) auto;
+  padding-right:10px;
+}
+.relphi-contract-heptagram-link {
+  align-self:stretch;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  place-items:center;
+  min-width:72px;
+  padding:3px 4px 2px;
+  border:0;
+  border-left:1px solid rgba(30,27,23,.1);
+  border-right:1px solid rgba(30,27,23,.1);
+  background:color-mix(in srgb,var(--sky-color) 5%,#fff);
+  color:#171717;
+  text-decoration:none;
+  cursor:pointer;
+}
+.relphi-contract-heptagram-link:hover,
+.relphi-contract-heptagram-link:focus-visible {
+  background:color-mix(in srgb,var(--sky-color) 11%,#fff);
+  outline:2px solid color-mix(in srgb,var(--sky-color) 55%,transparent);
+  outline-offset:-2px;
+}
+.relphi-contract-heptagram-svg {
+  display:block;
+  width:58px;
+  height:58px;
+  overflow:visible;
+}
+.relphi-contract-heptagram-caption {
+  display:block;
+  max-width:68px;
+  margin-top:-2px;
+  color:#4f4943;
+  font:750 .52rem/1.05 system-ui,sans-serif;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.relphi-contract-heptagram-circle,
+.relphi-contract-heptagram-guide {
+  fill:none;
+  stroke:rgba(18,18,18,.2);
+  stroke-width:2;
+  vector-effect:non-scaling-stroke;
+}
+.relphi-contract-heptagram-guide { stroke-dasharray:4 5; }
+.relphi-contract-heptagram-star,
+.relphi-contract-heptagram-hour {
+  fill:none;
+  stroke-linecap:round;
+  vector-effect:non-scaling-stroke;
+}
+.relphi-contract-heptagram-star { stroke-width:4.8; }
+.relphi-contract-heptagram-star.past { stroke:var(--sky-color); opacity:.88; }
+.relphi-contract-heptagram-star.future { stroke:rgba(18,18,18,.1); }
+.relphi-contract-heptagram-star.current {
+  stroke:var(--sky-color);
+  stroke-width:6.4;
+  filter:drop-shadow(0 0 4px color-mix(in srgb,var(--sky-color) 45%,transparent));
+}
+.relphi-contract-heptagram-hour { stroke-width:1.8; }
+.relphi-contract-heptagram-hour.past { stroke:rgba(18,18,18,.36); }
+.relphi-contract-heptagram-hour.future { stroke:rgba(18,18,18,.1); }
+.relphi-contract-heptagram-hour.current { stroke:var(--sky-color); stroke-width:3.4; }
+.relphi-contract-heptagram-node {
+  fill:#fffdf8;
+  stroke:currentColor;
+  stroke-width:2.2;
+  vector-effect:non-scaling-stroke;
+}
+.relphi-contract-heptagram-node.day-ruler { stroke-width:4; }
+.relphi-contract-heptagram-node.current {
+  fill:color-mix(in srgb,currentColor 13%,#fffdf8);
+  stroke-width:4;
+  filter:drop-shadow(0 0 4px currentColor);
+}
+.relphi-contract-heptagram-glyph {
+  pointer-events:none;
+  overflow:visible;
+}
+.relphi-contract-heptagram-error {
+  display:grid;
+  place-items:center;
+  width:58px;
+  height:58px;
+  color:#765f58;
+  font:700 .56rem/1.15 system-ui,sans-serif;
+  text-align:center;
+}
+@media(max-width:620px) {
+  .relphi-contract-card-header { grid-template-columns:auto 82px minmax(0,1fr) auto; }
+  .relphi-contract-heptagram-link { min-width:82px; }
+  .relphi-contract-heptagram-svg { width:68px;height:68px; }
+  .relphi-contract-heptagram-caption { max-width:78px;font-size:.56rem; }
+}
