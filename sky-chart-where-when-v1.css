@@ -1,0 +1,396 @@
+/* Part 2 gate 1: compact Where and When editor and confirmed heptagram state. */
+.sky-foundation-heading {
+  flex-wrap:wrap;
+}
+
+.sky-where-when-actions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:5px;
+  width:100%;
+  padding:0 0 7px;
+}
+
+.sky-where-when-action {
+  appearance:none;
+  border:1px solid rgba(31,27,24,.2);
+  border-radius:999px;
+  background:#fff;
+  color:#241f1b;
+  padding:.38rem .62rem;
+  font:800 .64rem/1 system-ui,sans-serif;
+  cursor:pointer;
+}
+
+.sky-where-when-action:hover,
+.sky-where-when-action:focus-visible {
+  border-color:rgba(31,27,24,.52);
+  background:#f5efe7;
+  outline:none;
+}
+
+.sky-where-when-view[hidden],
+.sky-where-when-placement-view[hidden] {
+  display:none;
+}
+
+.sky-where-when-editor {
+  display:grid;
+  gap:12px;
+  padding:12px;
+}
+
+.sky-where-when-section {
+  display:grid;
+  gap:8px;
+  min-width:0;
+  margin:0;
+  padding:10px;
+  border:1px solid rgba(31,27,24,.13);
+  border-radius:12px;
+  background:#fffdfa;
+}
+
+.sky-where-when-section legend,
+.sky-where-when-section h3 {
+  margin:0;
+  padding:0 4px;
+  color:#201b17;
+  font:900 .78rem/1.2 system-ui,sans-serif;
+}
+
+.sky-where-when-section[disabled] {
+  opacity:.5;
+}
+
+.sky-where-when-label {
+  display:grid;
+  gap:4px;
+  min-width:0;
+  color:#49413a;
+  font:800 .65rem/1.25 system-ui,sans-serif;
+}
+
+.sky-where-when-input,
+.sky-where-when-select {
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  border:1px solid rgba(31,27,24,.23);
+  border-radius:9px;
+  background:#fff;
+  color:#181512;
+  padding:.62rem .68rem;
+  font:700 .76rem/1.2 system-ui,sans-serif;
+}
+
+.sky-where-when-input:focus,
+.sky-where-when-select:focus {
+  border-color:#8b1714;
+  outline:2px solid rgba(201,33,30,.16);
+  outline-offset:1px;
+}
+
+.sky-where-when-input[readonly] {
+  background:#f2eee8;
+  color:#514941;
+  cursor:default;
+}
+
+.sky-where-search-row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:6px;
+  align-items:end;
+}
+
+.sky-where-when-button {
+  appearance:none;
+  border:0;
+  border-radius:999px;
+  background:#202020;
+  color:#fff;
+  padding:.64rem .82rem;
+  font:900 .68rem/1 system-ui,sans-serif;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.sky-where-when-button.primary {
+  background:#c9211e;
+}
+
+.sky-where-when-button.secondary {
+  border:1px solid rgba(31,27,24,.24);
+  background:#fff;
+  color:#211d19;
+}
+
+.sky-where-when-button:hover,
+.sky-where-when-button:focus-visible {
+  filter:brightness(.94);
+  outline:3px solid rgba(201,33,30,.18);
+  outline-offset:2px;
+}
+
+.sky-where-when-button:disabled {
+  cursor:not-allowed;
+  opacity:.45;
+}
+
+.sky-location-results {
+  display:grid;
+  gap:5px;
+}
+
+.sky-location-result {
+  appearance:none;
+  display:grid;
+  gap:2px;
+  width:100%;
+  min-width:0;
+  border:1px solid rgba(31,27,24,.14);
+  border-radius:9px;
+  background:#fff;
+  color:#1d1916;
+  padding:.58rem .65rem;
+  text-align:left;
+  cursor:pointer;
+}
+
+.sky-location-result:hover,
+.sky-location-result:focus-visible {
+  border-color:#c9211e;
+  background:#fff9f7;
+  outline:none;
+}
+
+.sky-location-result strong {
+  overflow-wrap:anywhere;
+  font:850 .7rem/1.25 system-ui,sans-serif;
+}
+
+.sky-location-result span {
+  color:#645b53;
+  font:650 .61rem/1.25 system-ui,sans-serif;
+}
+
+.sky-location-confirmation {
+  display:grid;
+  gap:5px;
+  border-left:3px solid #c9211e;
+  padding:6px 8px;
+  background:#fff7f4;
+}
+
+.sky-location-confirmation[hidden] {
+  display:none;
+}
+
+.sky-location-confirmation p {
+  margin:0;
+  overflow-wrap:anywhere;
+  color:#332d28;
+  font:650 .65rem/1.35 system-ui,sans-serif;
+}
+
+.sky-location-confirmation strong {
+  color:#1e1a17;
+}
+
+.sky-where-when-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+}
+
+.sky-where-when-advanced {
+  border:1px solid rgba(31,27,24,.14);
+  border-radius:11px;
+  background:#faf7f2;
+  overflow:hidden;
+}
+
+.sky-where-when-advanced summary {
+  cursor:pointer;
+  padding:10px;
+  color:#29231e;
+  font:900 .68rem/1.2 system-ui,sans-serif;
+}
+
+.sky-where-when-advanced-body {
+  display:grid;
+  gap:8px;
+  padding:0 10px 10px;
+}
+
+.sky-where-when-coordinate-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+}
+
+.sky-where-when-inline-actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.sky-where-when-status {
+  min-height:1.3em;
+  margin:0;
+  color:#5c534b;
+  font:700 .64rem/1.35 system-ui,sans-serif;
+}
+
+.sky-where-when-status.is-error {
+  color:#a11c18;
+}
+
+.sky-inference-card {
+  display:grid;
+  gap:5px;
+  border:1px solid rgba(31,27,24,.14);
+  border-radius:9px;
+  background:#fff;
+  padding:8px;
+}
+
+.sky-inference-card[hidden] {
+  display:none;
+}
+
+.sky-inference-card p {
+  margin:0;
+  overflow-wrap:anywhere;
+  color:#4c443d;
+  font:650 .63rem/1.35 system-ui,sans-serif;
+}
+
+.sky-inference-card strong {
+  color:#201c18;
+}
+
+.sky-where-when-footer {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+}
+
+.sky-where-when-confirmed {
+  display:grid;
+  gap:8px;
+  padding:10px;
+}
+
+.sky-where-when-facts {
+  display:grid;
+  gap:4px;
+  padding:8px;
+  border:1px solid rgba(31,27,24,.12);
+  border-radius:10px;
+  background:#fffdfa;
+}
+
+.sky-where-when-facts p {
+  margin:0;
+  overflow-wrap:anywhere;
+  color:#554c44;
+  font:650 .63rem/1.35 system-ui,sans-serif;
+}
+
+.sky-where-when-facts strong {
+  color:#1f1b17;
+}
+
+.sky-ph-jump {
+  display:grid;
+  gap:5px;
+  border:1px solid rgba(31,27,24,.16);
+  border-radius:13px;
+  background:#fff;
+  color:#191512;
+  padding:8px;
+  text-decoration:none;
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+
+.sky-ph-jump:hover,
+.sky-ph-jump:focus-visible {
+  transform:translateY(-1px);
+  border-color:#c9211e;
+  box-shadow:0 8px 22px rgba(0,0,0,.08);
+  outline:none;
+}
+
+.sky-ph-jump-title {
+  display:block;
+  text-align:center;
+  font:900 .72rem/1.25 system-ui,sans-serif;
+}
+
+.sky-ph-heptagram {
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:330px;
+  overflow:visible;
+}
+
+.sky-ph-circle,
+.sky-ph-guide {
+  fill:none;
+  stroke:#2a2521;
+  vector-effect:non-scaling-stroke;
+}
+
+.sky-ph-circle { stroke-width:1.4; opacity:.55; }
+.sky-ph-guide { stroke-width:1; opacity:.2; }
+.sky-ph-week-segment { stroke:#d8d0c8; stroke-width:3; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+.sky-ph-week-segment.past { stroke:#c9211e; }
+.sky-ph-week-segment.current { stroke:#c9211e; stroke-width:6; filter:drop-shadow(0 0 5px rgba(201,33,30,.34)); }
+.sky-ph-hour-segment { stroke:#27221e; stroke-width:2.2; stroke-linecap:round; opacity:.28; vector-effect:non-scaling-stroke; }
+.sky-ph-hour-segment.past { opacity:.72; }
+.sky-ph-hour-segment.current { stroke:#c9211e; stroke-width:5; opacity:1; filter:drop-shadow(0 0 4px rgba(201,33,30,.3)); }
+.sky-ph-node { fill:#fff; stroke:currentColor; stroke-width:2.2; vector-effect:non-scaling-stroke; }
+.sky-ph-node.day { stroke-width:5; }
+.sky-ph-node.hour { fill:currentColor; filter:drop-shadow(0 0 5px rgba(0,0,0,.22)); }
+.sky-ph-node-glyph { pointer-events:none; }
+.sky-ph-node-label { fill:#24201c; font:800 13px/1 system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; }
+.sky-ph-center-label { fill:#29241f; font:850 12px/1.2 system-ui,sans-serif; text-anchor:middle; }
+
+.sky-ph-summary {
+  margin:0;
+  text-align:center;
+  color:#514840;
+  font:700 .63rem/1.35 system-ui,sans-serif;
+}
+
+@media(max-width:1120px) {
+  .sky-where-search-row { grid-template-columns:1fr; }
+  .sky-where-when-button { width:100%; }
+  .sky-where-when-inline-actions .sky-where-when-button { width:auto; flex:1 1 8rem; }
+}
+
+@media(max-width:900px) {
+  .sky-where-search-row { grid-template-columns:minmax(0,1fr) auto; }
+  .sky-where-search-row .sky-where-when-button { width:auto; }
+}
+
+@media(max-width:620px) {
+  .sky-where-when-grid,
+  .sky-where-when-coordinate-grid,
+  .sky-where-search-row {
+    grid-template-columns:1fr;
+  }
+  .sky-where-search-row .sky-where-when-button,
+  .sky-where-when-footer .sky-where-when-button {
+    width:100%;
+  }
+  .sky-where-when-footer {
+    display:grid;
+    grid-template-columns:1fr;
+  }
+}
