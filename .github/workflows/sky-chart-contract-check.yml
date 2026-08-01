@@ -12,6 +12,7 @@ on:
       - 'sky-chart-special-vector-color-v1.js'
       - 'sky-chart-wheel-canonical-component-v1.js'
       - 'sky-chart-wheel-marker-interaction-v1.js'
+      - '.github/fixtures/sky-chart-contract-cdp.mjs'
 
 jobs:
   contract:
@@ -30,6 +31,7 @@ jobs:
           node --check relphi-canonical-angle-masters-v1.js
           node --check sky-chart-special-vector-color-v1.js
           node --check sky-chart-canonical-glyph-correction-v1.js
+          node --check .github/fixtures/sky-chart-contract-cdp.mjs
       - name: Check single public ownership
         run: |
           grep -q "sky-chart-contract-renderer-v1.js" sky-chart-special-vector-color-v1.js
@@ -50,6 +52,27 @@ jobs:
           grep -q "event.stopImmediatePropagation" sky-chart-contract-native-map-v1.js
       - name: Lock card editing to its originating sky
         run: |
-          grep -q 'data-edit = slot' sky-chart-contract-editor-v1.js || grep -q 'command.dataset.edit = slot' sky-chart-contract-editor-v1.js
+          grep -q 'command.dataset.edit = slot' sky-chart-contract-editor-v1.js
           grep -q 'relphiContractLockedTarget' sky-chart-contract-editor-v1.js
           grep -q 'label.hidden = true' sky-chart-contract-editor-v1.js
+      - name: Run headless browser contract
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8000 >/tmp/sky-contract-server.log 2>&1 &
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME" ]; then
+            echo "No Chrome/Chromium binary is available on the runner." >&2
+            exit 1
+          fi
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --user-data-dir=/tmp/sky-contract-chrome about:blank >/tmp/sky-contract-chrome.log 2>&1 &
+          trap 'cat /tmp/sky-contract-server.log || true; cat /tmp/sky-contract-chrome.log || true' ERR
+          node .github/fixtures/sky-chart-contract-cdp.mjs
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sky-chart-contract-browser-evidence
+          path: |
+            sky-chart-contract-desktop.png
+            sky-chart-contract-browser-result.json
+          if-no-files-found: ignore
