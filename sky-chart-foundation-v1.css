@@ -1,0 +1,150 @@
+/* Part 1: stable three-panel Sky Chart foundation. */
+body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot) {
+  display:none !important;
+}
+
+#skyFoundationRoot {
+  --sky-a:#c9211e;
+  --sky-b:#2462d0;
+  display:grid;
+  grid-template-columns:minmax(220px,270px) minmax(520px,1fr) minmax(220px,270px);
+  grid-template-areas:"a comparison b";
+  align-items:start;
+  gap:14px;
+  width:100%;
+  min-width:0;
+  margin:0;
+}
+
+.sky-foundation-panel {
+  min-width:0;
+  overflow:hidden;
+  border:1px solid rgba(31,27,24,.18);
+  border-radius:16px;
+  background:#fffdf8;
+  box-shadow:0 6px 20px rgba(40,30,20,.06);
+}
+
+#skyFoundationA { grid-area:a; border-top:4px solid var(--sky-a); }
+#skyFoundationComparison { grid-area:comparison; }
+#skyFoundationB { grid-area:b; border-top:4px solid var(--sky-b); }
+
+.sky-foundation-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-height:43px;
+  margin:0;
+  padding:0 12px;
+  border-bottom:1px solid rgba(31,27,24,.11);
+  font:800 .82rem/1.2 system-ui,sans-serif;
+}
+
+.sky-foundation-slot {
+  display:grid;
+  place-items:center;
+  align-self:stretch;
+  min-width:58px;
+  min-height:43px;
+  margin-left:-12px;
+  padding:0 12px;
+  color:#fff;
+  background:var(--slot-color,#444);
+  font:800 .72rem/1 system-ui,sans-serif;
+}
+
+.sky-foundation-name {
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.sky-foundation-body { min-width:0; }
+.sky-foundation-empty {
+  margin:0;
+  padding:24px 16px;
+  color:#6d645c;
+  text-align:center;
+  font:650 .78rem/1.45 system-ui,sans-serif;
+}
+
+.sky-foundation-ledger { display:grid; padding:5px 0; }
+.sky-foundation-row {
+  display:grid;
+  grid-template-columns:26px minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:7px;
+  min-height:32px;
+  padding:4px 10px;
+  border-bottom:1px solid rgba(31,27,24,.075);
+}
+.sky-foundation-row:last-child { border-bottom:0; }
+.sky-foundation-row svg { display:block; width:23px; height:23px; overflow:visible; }
+.sky-foundation-row-name {
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font:700 .74rem/1.2 system-ui,sans-serif;
+}
+.sky-foundation-coordinate,.sky-foundation-house {
+  white-space:nowrap;
+  color:#5d554e;
+  font:650 .67rem/1.2 system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+
+#skyFoundationWheelMount {
+  display:grid;
+  place-items:center;
+  width:100%;
+  min-height:420px;
+  padding:8px;
+  contain:layout paint;
+}
+#skyFoundationWheelMount > svg {
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:min(78vh,900px);
+  overflow:visible;
+}
+
+.sky-foundation-ring { fill:none; stroke:#2d2824; stroke-width:1.15; vector-effect:non-scaling-stroke; }
+.sky-foundation-divider { stroke-width:2.15; vector-effect:non-scaling-stroke; }
+.sky-foundation-house-number {
+  fill:#29241f;
+  font:700 15px/1 Georgia,serif;
+  text-anchor:middle;
+  dominant-baseline:central;
+  pointer-events:none;
+}
+.sky-foundation-tick { stroke:rgba(30,27,24,.48); stroke-width:1; vector-effect:non-scaling-stroke; }
+.sky-foundation-tick-major { stroke:rgba(30,27,24,.82); stroke-width:1.7; }
+.sky-foundation-leader { fill:none; stroke-width:1.45; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+.sky-foundation-aspect { stroke-width:2.1; stroke-linecap:round; opacity:.62; vector-effect:non-scaling-stroke; }
+
+@media(max-width:1120px) {
+  #skyFoundationRoot {
+    grid-template-columns:minmax(195px,230px) minmax(460px,1fr) minmax(195px,230px);
+    gap:10px;
+  }
+}
+
+@media(max-width:900px) {
+  #skyFoundationRoot {
+    grid-template-columns:1fr 1fr;
+    grid-template-areas:"a b" "comparison comparison";
+  }
+  #skyFoundationWheelMount { min-height:360px; }
+}
+
+@media(max-width:620px) {
+  #skyFoundationRoot {
+    grid-template-columns:1fr;
+    grid-template-areas:"a" "b" "comparison";
+  }
+  #skyFoundationWheelMount { min-height:300px; padding:4px; }
+}
