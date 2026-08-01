@@ -20,6 +20,7 @@
     if (!row) return;
     bridgeBusy = true;
     pendingWheelIndex = index;
+    setWheelSource(index);
     row.click();
     queueMicrotask(function () { setWheelSource(index); });
     setTimeout(function () { setWheelSource(index); }, 50);
