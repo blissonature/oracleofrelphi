@@ -12,6 +12,7 @@ on:
       - 'sky-chart-foundation-v1.js'
       - 'sky-chart-foundation-interactions-v1.js'
       - 'tests/sky-chart-part2-where-when.mjs'
+      - 'tests/sky-chart-part2-confirmed-view.mjs'
       - '.github/workflows/sky-chart-part2-where-when-check.yml'
 
 permissions:
@@ -33,41 +34,40 @@ jobs:
           path = Path('sky-chart-where-when-v1.js')
           text = path.read_text().replace('\r\n', '\n')
 
-          new_busy = """  function setBusy(slot, busy) {
-            cardState[slot].busy = !!busy;
-            const editor = panel(slot)?.querySelector('.sky-where-when-editor');
-            if (!editor) return;
-            editor.querySelectorAll('button,input,select').forEach(node => {
-              if (node.classList.contains('sky-where-when-cancel')) return;
-              node.disabled = !!busy;
-            });
-          }
-          """
-          if "const editor = panel(slot)?.querySelector('.sky-where-when-editor');" not in text:
-              start = text.index('  function setBusy(slot, busy) {')
-              end_marker = '\n\n  function ensureCardStructure(slot) {'
-              end = text.index(end_marker, start)
-              text = text[:start] + new_busy.rstrip() + text[end:]
+          desired_busy = (
+              "  function setBusy(slot, busy) {\n"
+              "    cardState[slot].busy = !!busy;\n"
+              "    const editor = panel(slot)?.querySelector('.sky-where-when-editor');\n"
+              "    if (!editor) return;\n"
+              "    editor.querySelectorAll('button,input,select').forEach(node => {\n"
+              "      if (node.classList.contains('sky-where-when-cancel')) return;\n"
+              "      node.disabled = !!busy;\n"
+              "    });\n"
+              "  }"
+          )
+          busy_start = text.index('  function setBusy(slot, busy) {')
+          busy_end = text.index('\n\n  function ensureCardStructure(slot) {', busy_start)
+          text = text[:busy_start] + desired_busy + text[busy_end:]
 
-          function_marker = "  function planetaryHoursUrl(profile) {\n    const params = new URLSearchParams();\n"
-          inferred_block = """  function planetaryHoursUrl(profile) {
-            const params = new URLSearchParams();
-            const inferredInstant = !profile.instant && profile.dateTime && profile.timeZone && window.luxon?.DateTime
-              ? window.luxon.DateTime.fromISO(profile.dateTime, { zone:profile.timeZone, setZone:true }).toUTC().toISO()
-              : '';
-            const instant = profile.instant || inferredInstant;
-          """
-          if 'const inferredInstant = !profile.instant' not in text:
-              if function_marker not in text:
-                  raise SystemExit('Planetary Hours URL function was not recognized.')
-              text = text.replace(function_marker, inferred_block, 1)
-
-          direct = "    params.set('dt', profile.instant);"
-          normalized = "    params.set('dt', instant || '');"
-          if direct in text:
-              text = text.replace(direct, normalized, 1)
-          elif normalized not in text:
-              raise SystemExit('Planetary Hours instant assignment was not recognized.')
+          desired_url = (
+              "  function planetaryHoursUrl(profile) {\n"
+              "    const params = new URLSearchParams();\n"
+              "    const inferredInstant = !profile.instant && profile.dateTime && profile.timeZone && window.luxon?.DateTime\n"
+              "      ? window.luxon.DateTime.fromISO(profile.dateTime, { zone:profile.timeZone, setZone:true }).toUTC().toISO()\n"
+              "      : '';\n"
+              "    const instant = profile.instant || inferredInstant;\n"
+              "    params.set('phShare', '1');\n"
+              "    params.set('lat', String(profile.latitude));\n"
+              "    params.set('lon', String(profile.longitude));\n"
+              "    params.set('tz', profile.timeZone);\n"
+              "    params.set('loc', profile.location);\n"
+              "    params.set('dt', instant || '');\n"
+              "    return `planetaryhours.html#${params.toString()}`;\n"
+              "  }"
+          )
+          url_start = text.index('  function planetaryHoursUrl(profile) {')
+          url_end = text.index('\n\n  async function showConfirmed(slot) {', url_start)
+          text = text[:url_start] + desired_url + text[url_end:]
 
           path.write_text(text)
           patch_workflow = Path('.github/workflows/patch-sky-chart-part2-busy-scope.yml')
@@ -83,6 +83,7 @@ jobs:
           node --check sky-chart-foundation-interactions-v1.js
           node --check sky-chart-where-when-v1.js
           node --check tests/sky-chart-part2-where-when.mjs
+          node --check tests/sky-chart-part2-confirmed-view.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -91,6 +92,7 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-part2-server.log 2>&1 &
           node tests/sky-chart-part2-where-when.mjs
+          node tests/sky-chart-part2-confirmed-view.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -98,6 +100,8 @@ jobs:
           path: |
             sky-chart-part2-desktop.png
             sky-chart-part2-mobile.png
+            sky-chart-part2-confirmed-desktop.png
+            sky-chart-part2-confirmed-mobile.png
       - name: Commit verified source correction
         if: success()
         run: |
@@ -107,5 +111,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add sky-chart-where-when-v1.js .github/workflows/patch-sky-chart-part2-busy-scope.yml
-          git commit -m "Correct Where and When busy-state ownership"
+          git commit -m "Normalize Where and When ownership source"
           git push origin HEAD:fix/sky-chart-part2-where-when
