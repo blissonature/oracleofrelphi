@@ -5,11 +5,13 @@
   window.__relphiSelectedRelationshipWheelBridgeV1 = true;
 
   let bridgeBusy = false;
+  let pendingWheelIndex = null;
 
   function setWheelSource(index) {
     const panel = document.getElementById('skySelectedRelationship');
-    if (!panel || Number(panel.dataset.relationIndex) !== index) return;
+    if (!panel || Number(panel.dataset.relationIndex) !== index) return false;
     panel.dataset.selectionSource = 'comparison-wheel';
+    return true;
   }
 
   function activate(index) {
@@ -17,13 +19,23 @@
     const row = document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${index}"]`);
     if (!row) return;
     bridgeBusy = true;
+    pendingWheelIndex = index;
     row.click();
     queueMicrotask(function () { setWheelSource(index); });
+    setTimeout(function () { setWheelSource(index); }, 50);
     setTimeout(function () {
       setWheelSource(index);
       bridgeBusy = false;
-    }, 50);
+    }, 300);
   }
+
+  window.addEventListener('relphi:selected-relationship-rendered', function (event) {
+    const index = Number(event.detail?.index);
+    if (!Number.isInteger(index) || index !== pendingWheelIndex) return;
+    setWheelSource(index);
+    pendingWheelIndex = null;
+    bridgeBusy = false;
+  });
 
   function bind(node) {
     if (!node || node.dataset.selectedRelationshipBridgeBound === 'true') return;
