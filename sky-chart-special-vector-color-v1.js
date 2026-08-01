@@ -53,7 +53,9 @@
     loadScript('relphi-canonical-angle-masters-v1.js?v=1', function () {
       loadScript('sky-chart-contract-renderer-v1.js?v=1', function () {
         loadScript('sky-chart-contract-controller-v1.js?v=2', function () {
-          document.body.classList.remove('relphi-sky-contract-booting');
+          loadScript('sky-chart-contract-native-map-v1.js?v=1', function () {
+            document.body.classList.remove('relphi-sky-contract-booting');
+          });
         });
       });
     });
