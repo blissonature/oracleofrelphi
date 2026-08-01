@@ -1,21 +1,24 @@
 // Adds the Moon's current tropical zodiac position to the Planetary Hours Moon panel.
+// All zodiac marks are rendered from Relphi's approved canonical glyph source.
 (function () {
   'use strict';
 
+  const SVG_NS = 'http://www.w3.org/2000/svg';
   const SIGNS = [
-    { name:'Aries', glyph:'♈' },
-    { name:'Taurus', glyph:'♉' },
-    { name:'Gemini', glyph:'♊' },
-    { name:'Cancer', glyph:'♋' },
-    { name:'Leo', glyph:'♌' },
-    { name:'Virgo', glyph:'♍' },
-    { name:'Libra', glyph:'♎' },
-    { name:'Scorpio', glyph:'♏' },
-    { name:'Sagittarius', glyph:'♐' },
-    { name:'Capricorn', glyph:'♑' },
-    { name:'Aquarius', glyph:'♒' },
-    { name:'Pisces', glyph:'♓' }
+    { id:'aries', name:'Aries' },
+    { id:'taurus', name:'Taurus' },
+    { id:'gemini', name:'Gemini' },
+    { id:'cancer', name:'Cancer' },
+    { id:'leo', name:'Leo' },
+    { id:'virgo', name:'Virgo' },
+    { id:'libra', name:'Libra' },
+    { id:'scorpio', name:'Scorpio' },
+    { id:'sagittarius', name:'Sagittarius' },
+    { id:'capricorn', name:'Capricorn' },
+    { id:'aquarius', name:'Aquarius' },
+    { id:'pisces', name:'Pisces' }
   ];
+  let renderRequest = 0;
 
   function normalizeDegrees(value) {
     const degrees = Number(value) || 0;
@@ -50,14 +53,19 @@
     return normalizeDegrees(astronomy.Ecliptic(vector).elon);
   }
 
-  function formatPlacement(longitude) {
+  function placementFromLongitude(longitude) {
     const totalMinutes = Math.round(normalizeDegrees(longitude) * 60) % (360 * 60);
     const signIndex = Math.floor(totalMinutes / (30 * 60));
     const minutesInSign = totalMinutes % (30 * 60);
     const degree = Math.floor(minutesInSign / 60);
     const minute = minutesInSign % 60;
     const sign = SIGNS[signIndex];
-    return sign.glyph + ' ' + sign.name + ' ' + degree + '° ' + String(minute).padStart(2, '0') + '′';
+    return {
+      sign:sign,
+      degree:degree,
+      minute:minute,
+      text:sign.name + ' ' + degree + '° ' + String(minute).padStart(2, '0') + '′'
+    };
   }
 
   function ensurePositionElement() {
@@ -71,7 +79,13 @@
     position.id = 'moonZodiacPosition';
     position.className = 'ph-moon-position';
     position.setAttribute('aria-live', 'polite');
-    position.innerHTML = '<span class="ph-profile-label">Current zodiac position</span><strong>—</strong>';
+    position.innerHTML = [
+      '<span class="ph-profile-label">Current zodiac position</span>',
+      '<span class="ph-moon-placement-line">',
+      '<svg class="ph-moon-sign-glyph" viewBox="-18 -18 36 36" aria-hidden="true" focusable="false"></svg>',
+      '<strong>—</strong>',
+      '</span>'
+    ].join('');
 
     const phase = document.getElementById('moonPhase');
     if (phase && phase.parentNode === facts) phase.insertAdjacentElement('afterend', position);
@@ -85,20 +99,47 @@
     style.id = 'ph-moon-position-style';
     style.textContent = [
       '.ph-moon-position{margin:.3rem 0 .55rem;line-height:1.25}',
-      '.ph-moon-position strong{display:block;margin-top:.15rem;font-size:1.08rem;font-weight:900;color:#111}',
+      '.ph-moon-placement-line{display:flex;align-items:center;gap:.42rem;margin-top:.15rem}',
+      '.ph-moon-sign-glyph{display:block;width:1.72rem;height:1.72rem;flex:0 0 1.72rem;overflow:visible}',
+      '.ph-moon-position strong{display:block;font-size:1.08rem;font-weight:900;color:#111}',
       '.ph-moon-position .ph-profile-label{font-size:.68rem}'
     ].join('');
     document.head.appendChild(style);
   }
 
-  function renderMoonPosition() {
+  async function drawCanonicalSign(svgElement, signId, requestId) {
+    if (!svgElement) return;
+    if (!window.RelphiGlyphRegistry || !window.RelphiGlyphComponent) {
+      throw new Error('Relphi canonical glyph system is unavailable.');
+    }
+
+    svgElement.replaceChildren();
+    const group = document.createElementNS(SVG_NS, 'g');
+    svgElement.appendChild(group);
+    await window.RelphiGlyphComponent.draw(group, signId, {
+      radius:15,
+      padding:1.5,
+      color:'#111'
+    });
+    if (requestId !== renderRequest) group.remove();
+  }
+
+  async function renderMoonPosition() {
+    const requestId = ++renderRequest;
     const position = ensurePositionElement();
     if (!position) return;
     const value = position.querySelector('strong');
+    const glyph = position.querySelector('.ph-moon-sign-glyph');
+
     try {
-      value.textContent = formatPlacement(moonLongitude(selectedDate()));
+      const placement = placementFromLongitude(moonLongitude(selectedDate()));
+      value.textContent = placement.text;
+      position.setAttribute('aria-label', 'Current zodiac position: ' + placement.text);
       position.removeAttribute('title');
+      await drawCanonicalSign(glyph, placement.sign.id, requestId);
     } catch (error) {
+      if (requestId !== renderRequest) return;
+      if (glyph) glyph.replaceChildren();
       value.textContent = 'Position unavailable';
       position.title = String(error?.message || error);
     }
