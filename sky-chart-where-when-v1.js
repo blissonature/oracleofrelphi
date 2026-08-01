@@ -239,7 +239,7 @@
           <legend>Where</legend>
           <div class="sky-where-search-row">
             <label class="sky-where-when-label">Search for a location
-              <input class="sky-where-when-input" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(cardState[slot].query || selected?.query || '')}" placeholder="Ex. Malden, Massachusetts">
+              <input class="sky-where-when-input" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(cardState[slot].query || selected?.query || '')}" placeholder="Ex. City, State or Country">
             </label>
             <button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button>
           </div>
