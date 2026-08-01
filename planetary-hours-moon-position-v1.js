@@ -4,6 +4,7 @@
   'use strict';
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
+  const CANONICAL_VERSION = '0d56ee7';
   const SIGNS = [
     { id:'aries', name:'Aries' },
     { id:'taurus', name:'Taurus' },
@@ -19,6 +20,7 @@
     { id:'pisces', name:'Pisces' }
   ];
   let renderRequest = 0;
+  let canonicalPromise = null;
 
   function normalizeDegrees(value) {
     const degrees = Number(value) || 0;
@@ -68,6 +70,51 @@
     };
   }
 
+  function waitFor(test, label) {
+    return new Promise(function (resolve, reject) {
+      const started = Date.now();
+      (function check() {
+        if (test()) return resolve();
+        if (Date.now() - started > 6000) return reject(new Error(label + ' did not load.'));
+        setTimeout(check, 40);
+      })();
+    });
+  }
+
+  function loadDependency(src, test, label) {
+    if (test()) return Promise.resolve();
+    const base = src.split('?')[0];
+    const existing = document.querySelector('script[src^="' + base + '"]');
+    if (!existing) {
+      const script = document.createElement('script');
+      script.async = false;
+      script.src = src;
+      script.addEventListener('error', function () {
+        throw new Error(label + ' could not be downloaded.');
+      }, { once:true });
+      document.body.appendChild(script);
+    }
+    return waitFor(test, label);
+  }
+
+  function ensureCanonicalGlyphSystem() {
+    if (window.RelphiGlyphRegistry && window.RelphiGlyphComponent) return Promise.resolve();
+    if (!canonicalPromise) {
+      canonicalPromise = loadDependency(
+        'relphi-glyph-registry-v1.js?v=' + CANONICAL_VERSION,
+        function () { return Boolean(window.RelphiGlyphRegistry); },
+        'Relphi canonical glyph registry'
+      ).then(function () {
+        return loadDependency(
+          'relphi-glyph-component-v1.js?v=' + CANONICAL_VERSION,
+          function () { return Boolean(window.RelphiGlyphComponent); },
+          'Relphi canonical glyph component'
+        );
+      });
+    }
+    return canonicalPromise;
+  }
+
   function ensurePositionElement() {
     const facts = document.querySelector('.ph-moon-frame .ph-moon-facts');
     if (!facts) return null;
@@ -109,9 +156,7 @@
 
   async function drawCanonicalSign(svgElement, signId, requestId) {
     if (!svgElement) return;
-    if (!window.RelphiGlyphRegistry || !window.RelphiGlyphComponent) {
-      throw new Error('Relphi canonical glyph system is unavailable.');
-    }
+    await ensureCanonicalGlyphSystem();
 
     svgElement.replaceChildren();
     const group = document.createElementNS(SVG_NS, 'g');
@@ -148,6 +193,7 @@
   function start() {
     if (!document.querySelector('.ph-moon-frame')) return;
     ensureStyle();
+    ensurePositionElement();
     renderMoonPosition();
 
     ['useSystem','datePick','timePick','tzSelect','applyDT'].forEach(function (id) {
