@@ -69,9 +69,11 @@ assert.equal(await page.locator('[data-filter="aspect"] option[value="quincunx"]
 
 const row = page.locator('.sky-foundation-relationship-row[data-relation-index]').first();
 const relationIndex = Number(await row.getAttribute('data-relation-index'));
+const listCountBeforeSelection = await page.locator('.sky-foundation-relationship-row:visible').count();
 await row.click();
 const panel = page.locator('#skySelectedRelationship');
 await panel.waitFor({state:'visible', timeout:10000});
+assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), listCountBeforeSelection);
 assert.equal(Number(await panel.getAttribute('data-relation-index')), relationIndex);
 assert.equal(await panel.getAttribute('data-selection-source'), 'relationship-list');
 assert.equal(await panel.locator('.sky-selected-graphic').count(), 1);
@@ -102,6 +104,19 @@ await secondRow.hover();
 await page.waitForTimeout(250);
 assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleBeforeHover);
 assert.equal(Number(await panel.getAttribute('data-relation-index')), relationIndex);
+
+// Wheel hover owns dim/isolate and drives the relationship list.
+const leftPlacement = await row.getAttribute('data-left-placement');
+const wheelPlacement = page.locator(`[data-layer="placements"] > g[data-sky="A"][data-placement="${leftPlacement}"]`).first();
+await wheelPlacement.hover();
+await page.waitForTimeout(100);
+const visibleFromWheel = await page.locator('.sky-foundation-relationship-row:visible').count();
+const wheelState = await page.locator('.sky-foundation-wheel').evaluate(node => ({className:node.getAttribute('class'),hovered:node.querySelectorAll('.is-hovered').length,kept:node.querySelectorAll('.is-kept').length}));
+assert.ok(visibleFromWheel > 0 && visibleFromWheel < visibleBeforeHover, `Wheel hover showed ${visibleFromWheel} of ${visibleBeforeHover} relationships; state ${JSON.stringify(wheelState)}.`);
+assert.equal(await page.locator('.sky-foundation-wheel').getAttribute('class').then(value => value.includes('has-isolation')), true);
+await page.locator('.sky-foundation-relationships-heading h2').hover();
+await page.waitForTimeout(100);
+assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleBeforeHover);
 
 const line = page.locator(`.sky-foundation-aspect[data-relation-index="${relationIndex}"]`);
 const hit = page.locator(`.sky-foundation-aspect-hit[data-relation-index="${relationIndex}"]`);

@@ -1,4 +1,4 @@
-// Explicit numeric orb filter. Hover and selection never change list membership.
+// Explicit numeric orb filter combined with the wheel-owned relationship isolation.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
@@ -6,6 +6,7 @@
   window.__relphiSkyOrbControlV1=true;
 
   let queued=false;
+  let wheelIndexes=null;
 
   function orbFromRow(row){
     const explicit=Number(row.dataset.orb);
@@ -27,8 +28,9 @@
     document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
       const orb=orbFromRow(row);
       const hiddenByOrb=Number.isFinite(orb)&&orb>limit;
+      const hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
       row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);
-      row.hidden=row.classList.contains('sky-chart-filter-hidden')||hiddenByOrb;
+      row.hidden=row.classList.contains('sky-chart-filter-hidden')||hiddenByOrb||hiddenByWheel;
       row.setAttribute('aria-hidden',row.hidden?'true':'false');
       document.querySelectorAll(`[data-layer="aspects"] [data-relation-index="${row.dataset.relationIndex}"]`).forEach(node=>{
         node.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);
@@ -70,7 +72,10 @@
   function start(){
     install();
     window.addEventListener('relphi:sky-foundation-interactions-ready',()=>{install();schedule()});
-    window.addEventListener('relphi:sky-foundation-filter-changed',schedule);
+    window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
+      wheelIndexes=event.detail?.state?new Set((event.detail.relationshipIndexes||[]).map(String)):null;
+      schedule();
+    });
     window.addEventListener('relphi:selected-relationship-rendered',schedule);
     document.getElementById('skyFoundationRelationships')?.addEventListener('change',schedule);
   }
