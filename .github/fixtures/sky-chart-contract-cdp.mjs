@@ -180,6 +180,10 @@ const interaction = await evaluate(`(async () => {
   const nativeRow = document.createElement('button');
   nativeRow.type = 'button';
   nativeRow.className = 'relationship-row';
+  nativeRow.dataset.relphiAId = line.dataset.skyAPlacement;
+  nativeRow.dataset.relphiBId = line.dataset.skyBPlacement;
+  nativeRow.dataset.relphiAspectId = line.dataset.aspect;
+  nativeRow.dataset.relphiOrb = line.dataset.orb;
   nativeRow.textContent = aName + ' ' + aspectName + ' ' + bName + ' Orb: ' + line.dataset.orb + '°';
   nativeRow.addEventListener('click', () => {
     const old = nativeOutput.querySelector('[data-contract-native-selected]');
@@ -199,9 +203,13 @@ const interaction = await evaluate(`(async () => {
     nativeOutput.appendChild(selected);
   });
   nativeOutput.appendChild(nativeRow);
+  window.RelphiSkyContractNativeMap?.mapRows();
   window.dispatchEvent(new Event('relphi:relationships-rendered'));
   const mappedStarted = Date.now();
-  while (!nativeRow.dataset.relationshipIndex && Date.now() - mappedStarted < 2000) await delay(40);
+  while (!nativeRow.dataset.relationshipIndex && Date.now() - mappedStarted < 2000) {
+    window.RelphiSkyContractNativeMap?.mapRows();
+    await delay(40);
+  }
 
   line.dispatchEvent(new PointerEvent('pointerover', { bubbles:true }));
   await delay(100);
@@ -219,6 +227,7 @@ const interaction = await evaluate(`(async () => {
   const cardChildren = cardRow ? Array.from(cardRow.children).map(node => node.className) : [];
   return {
     total,
+    expectedIndex:line.dataset.aspectIndex,
     mappedIndex:nativeRow.dataset.relationshipIndex || null,
     hoverVisible,
     restoredVisible,
@@ -236,7 +245,7 @@ const interaction = await evaluate(`(async () => {
 if (!(interaction.hoverVisible >= 1 && interaction.hoverVisible < interaction.total)) throw new Error('Aspect hover did not filter the relationship list.');
 if (interaction.restoredVisible !== interaction.total) throw new Error('Pointer-out did not restore the unselected relationship list.');
 if (interaction.selectedVisible !== 1) throw new Error('Aspect isolation did not retain exactly one relationship row.');
-if (interaction.mappedIndex !== '0') throw new Error('The native relationship was not mapped semantically to the canonical relationship.');
+if (interaction.mappedIndex !== interaction.expectedIndex) throw new Error('The native relationship was not mapped semantically to the canonical relationship.');
 if (!interaction.selectedFacts || !interaction.selectedGraphic) throw new Error('Selected Relationship did not build its canonical graphic and facts hierarchy.');
 if (interaction.adoptedCards !== 2 || !interaction.adoptedReading || interaction.placeholderCount !== 0) throw new Error('The actual dual cards and progressive reading were not adopted.');
 if (!interaction.shellOrder[0]?.includes('graphic') || !interaction.shellOrder[1]?.includes('facts') || !interaction.shellOrder[2]?.includes('cards')) throw new Error('Selected Relationship top-level order is incorrect.');
