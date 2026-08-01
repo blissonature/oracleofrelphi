@@ -9,7 +9,8 @@ on:
       - 'part1/sky-chart.html'
       - 'sky-chart-foundation-v1.js'
       - 'sky-chart-foundation-v1.css'
-      - 'navloader.js'
+      - 'sky-chart-foundation-interactions-v1.js'
+      - 'sky-chart-foundation-interactions-v1.css'
       - '.github/workflows/sky-chart-part1-browser-check.yml'
 
 jobs:
@@ -23,7 +24,7 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check sky-chart-foundation-v1.js
-          node --check navloader.js
+          node --check sky-chart-foundation-interactions-v1.js
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.52.0
@@ -66,12 +67,14 @@ jobs:
 
           await page.goto('http://127.0.0.1:4173/part1/sky-chart.html', {waitUntil:'networkidle'});
           await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]', {timeout:15000});
+          await page.waitForSelector('.sky-foundation-relationship-row', {timeout:15000});
 
-          const result = await page.evaluate(() => {
+          const snapshot = () => page.evaluate(() => {
             const root=document.getElementById('skyFoundationRoot');
             const wheel=document.querySelector('#skyFoundationWheelMount > svg');
             const box=wheel?.getBoundingClientRect();
             const text=Array.from(document.querySelectorAll('#skyFoundationRoot text')).map(node=>node.textContent.trim());
+            const rows=Array.from(document.querySelectorAll('.sky-foundation-relationship-row'));
             return {
               children:root?.children.length,
               display:getComputedStyle(root).display,
@@ -80,32 +83,105 @@ jobs:
               wheelHeight:box?.height||0,
               skyA:document.querySelectorAll('[data-layer="placements"] [data-sky="A"]').length,
               skyB:document.querySelectorAll('[data-layer="placements"] [data-sky="B"]').length,
+              totalRows:rows.length,
+              visibleRows:rows.filter(row=>!row.hidden).length,
+              glyphsPerRow:rows[0]?.querySelectorAll('svg').length||0,
+              count:document.getElementById('skyFoundationRelationshipCount')?.textContent,
+              isolation:wheel?.classList.contains('has-isolation')||false,
+              keptAspects:document.querySelectorAll('[data-layer="aspects"] .is-kept').length,
+              selectedHouseB4:document.querySelector('[data-interactive="house"][data-sky="B"][data-house="4"]')?.classList.contains('is-selected')||false,
+              selectedRows:document.querySelectorAll('.sky-foundation-relationship-row.is-selected').length,
+              clearVisible:!document.getElementById('skyFoundationClearIsolation')?.hidden,
               hasCounterfeitAngle:text.some(value=>/^(Asc|ASC|Dsc|DSC|MC|IC|Vx)$/.test(value)),
               hasLegacy:!!document.querySelector('#chartOutput,.sky-output-box,.relphi-v4-complete,.comparison-wheel'),
-              hasPart2:Array.from(document.querySelectorAll('h1,h2,h3')).some(node=>/^(Relationships|Selected Relationship)$/i.test(node.textContent.trim()))
+              hasSelectedRelationship:Array.from(document.querySelectorAll('h1,h2,h3')).some(node=>/^Selected Relationship$/i.test(node.textContent.trim()))
             };
           });
 
-          assert.equal(result.children,3);
-          assert.equal(result.display,'grid');
-          assert.equal(result.columns,3);
-          assert.ok(result.wheelWidth>500 && result.wheelHeight>500);
-          assert.equal(result.skyA,10);
-          assert.equal(result.skyB,10);
-          assert.equal(result.hasCounterfeitAngle,false);
-          assert.equal(result.hasLegacy,false);
-          assert.equal(result.hasPart2,false);
-          assert.deepEqual(errors,[]);
+          const initial=await snapshot();
+          assert.equal(initial.children,3);
+          assert.equal(initial.display,'grid');
+          assert.equal(initial.columns,3);
+          assert.ok(initial.wheelWidth>500 && initial.wheelHeight>500);
+          assert.equal(initial.skyA,10);
+          assert.equal(initial.skyB,10);
+          assert.equal(initial.totalRows,10);
+          assert.equal(initial.visibleRows,10);
+          assert.equal(initial.glyphsPerRow,3);
+          assert.equal(initial.count,'10/10');
+          assert.equal(initial.isolation,false);
+          assert.equal(initial.hasCounterfeitAngle,false);
+          assert.equal(initial.hasLegacy,false);
+          assert.equal(initial.hasSelectedRelationship,false);
+
+          const houseB4=page.locator('[data-interactive="house"][data-sky="B"][data-house="4"]');
+          await houseB4.hover({force:true});
+          await page.waitForTimeout(80);
+          const hovered=await snapshot();
+          assert.equal(hovered.isolation,true);
+          assert.equal(hovered.visibleRows,1);
+          assert.equal(hovered.keptAspects,1);
+          assert.equal(hovered.count,'1/10');
+          assert.equal(hovered.clearVisible,false);
+
+          await page.locator('.tarot-hero').hover({force:true});
+          await page.waitForTimeout(80);
+          const hoverCleared=await snapshot();
+          assert.equal(hoverCleared.isolation,false);
+          assert.equal(hoverCleared.visibleRows,10);
+          assert.equal(hoverCleared.count,'10/10');
+
+          await houseB4.click({force:true});
+          await page.waitForTimeout(80);
+          const locked=await snapshot();
+          assert.equal(locked.isolation,true);
+          assert.equal(locked.visibleRows,1);
+          assert.equal(locked.keptAspects,1);
+          assert.equal(locked.count,'1/10');
+          assert.equal(locked.selectedHouseB4,true);
+          assert.equal(locked.clearVisible,true);
           await page.screenshot({path:'sky-chart-part1-desktop.png',fullPage:true});
 
+          await page.locator('[data-interactive="house"][data-sky="A"][data-house="1"]').hover({force:true});
+          await page.waitForTimeout(80);
+          const remainsLocked=await snapshot();
+          assert.equal(remainsLocked.count,'1/10');
+          assert.equal(remainsLocked.selectedHouseB4,true);
+
+          await houseB4.click({force:true});
+          await page.waitForTimeout(80);
+          const unlocked=await snapshot();
+          assert.equal(unlocked.isolation,false);
+          assert.equal(unlocked.visibleRows,10);
+          assert.equal(unlocked.count,'10/10');
+
+          await page.locator('.sky-foundation-relationship-row').first().click({force:true});
+          await page.waitForTimeout(80);
+          const exactRelationship=await snapshot();
+          assert.equal(exactRelationship.isolation,true);
+          assert.equal(exactRelationship.visibleRows,1);
+          assert.equal(exactRelationship.keptAspects,1);
+          assert.equal(exactRelationship.selectedRows,1);
+          assert.equal(exactRelationship.count,'1/10');
+
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(80);
+          const escaped=await snapshot();
+          assert.equal(escaped.isolation,false);
+          assert.equal(escaped.visibleRows,10);
+          assert.equal(escaped.count,'10/10');
+          assert.deepEqual(errors,[]);
+
           await page.setViewportSize({width:390,height:844});
-          await page.waitForTimeout(100);
+          await page.waitForTimeout(120);
           const mobile=await page.evaluate(() => ({
             columns:getComputedStyle(document.getElementById('skyFoundationRoot')).gridTemplateColumns.split(' ').filter(Boolean).length,
-            wheelWidth:document.querySelector('#skyFoundationWheelMount > svg')?.getBoundingClientRect().width||0
+            wheelWidth:document.querySelector('#skyFoundationWheelMount > svg')?.getBoundingClientRect().width||0,
+            relationships:document.querySelectorAll('.sky-foundation-relationship-row').length
           }));
           assert.equal(mobile.columns,1);
           assert.ok(mobile.wheelWidth>300);
+          assert.equal(mobile.relationships,10);
           await page.screenshot({path:'sky-chart-part1-mobile.png',fullPage:true});
           await browser.close();
           EOF
