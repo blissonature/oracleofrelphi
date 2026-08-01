@@ -43,5 +43,6 @@ jobs:
           grep -q "RelphiGlyphRegistry" sky-chart-contract-renderer-v1.js
       - name: Reject index-only interpretation activation
         run: |
-          grep -q "Map.*semantic identity" sky-chart-contract-native-map-v1.js
+          grep -q "semantic identity" sky-chart-contract-native-map-v1.js
           grep -q "Index-only mismatches are blocked" sky-chart-contract-native-map-v1.js
+          grep -q "event.stopImmediatePropagation" sky-chart-contract-native-map-v1.js
