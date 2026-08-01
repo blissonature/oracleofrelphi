@@ -31,7 +31,7 @@
 .sky-selected-aspect-diagram strong{font:850 .68rem/1.1 system-ui,sans-serif;color:#4b443e}
 .sky-selected-aspect-symbol{display:none!important}
 
-.sky-chart-filter-bar{grid-template-columns:repeat(5,minmax(0,1fr))}
+.sky-chart-filter-bar{grid-template-columns:minmax(52px,.55fr) minmax(72px,1fr) minmax(78px,1.05fr) minmax(66px,.85fr) minmax(66px,.85fr) minmax(82px,1.08fr)}
 .sky-chart-filter-bar label{text-transform:none;font-size:.66rem}
 .sky-chart-filter-bar select{text-transform:none}
 

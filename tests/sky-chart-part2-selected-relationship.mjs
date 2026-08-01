@@ -72,7 +72,12 @@ assert.ok(heptagramGlyphs.length >= 2);
 assert.ok(heptagramGlyphs.every(result => result.planets===7 && result.bubbles===7 && result.duplicateMounts===0 && result.oldNodes===0));
 
 const filterLabels = await page.locator('.sky-chart-filter-bar label').evaluateAll(nodes => nodes.map(node => node.childNodes[0].textContent.trim()));
-assert.deepEqual(filterLabels, ['Aspects','Placements','Sky A House','Sky B House','House System']);
+assert.deepEqual(filterLabels, ['Orb','Aspects','Placements','Sky A House','Sky B House','House System']);
+assert.equal(await page.locator('.sky-chart-filter-bar > :first-child input[data-filter="orb"]').count(), 1);
+const desktopFilterBoxes = await page.locator('.sky-chart-filter-bar > *').evaluateAll(nodes => nodes.map(node => {const box=node.getBoundingClientRect();return {top:Math.round(box.top),height:Math.round(box.height)}}));
+assert.equal(new Set(desktopFilterBoxes.map(box => box.top)).size, 1);
+assert.ok(Math.max(...desktopFilterBoxes.map(box => box.height))-Math.min(...desktopFilterBoxes.map(box => box.height)) <= 1);
+assert.equal(await page.locator('.sky-chart-filter-bar').evaluate(node => node.scrollWidth <= node.clientWidth), true);
 assert.equal(await page.locator('[data-filter="aspect"] option[value="semi-sextile"]').count(), 1);
 assert.equal(await page.locator('[data-filter="aspect"] option[value="quincunx"]').count(), 1);
 
