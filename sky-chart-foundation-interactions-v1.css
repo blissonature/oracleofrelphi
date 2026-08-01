@@ -127,7 +127,7 @@
 
 .sky-foundation-relationship-row {
   display:grid;
-  grid-template-columns:26px minmax(0,1fr) 26px minmax(0,1fr);
+  grid-template-columns:25px minmax(0,1fr) 25px 25px minmax(0,1fr);
   align-items:center;
   gap:5px;
   min-width:0;
