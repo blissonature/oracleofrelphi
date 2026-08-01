@@ -2,25 +2,42 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-const sample = (name, offset) => ({
-  name,
-  houseSystem:'whole-sign',
-  houseCusps:Array.from({length:12}, (_, index)=>(165 + offset + index * 30) % 360),
-  placements:{
-    Sun:{name:'Sun',longitude:(195+offset)%360},
-    Moon:{name:'Moon',longitude:(118.4+offset)%360},
-    Mercury:{name:'Mercury',longitude:(206.1+offset)%360},
-    Venus:{name:'Venus',longitude:(169.8+offset)%360},
-    Mars:{name:'Mars',longitude:(167.8+offset)%360},
-    Jupiter:{name:'Jupiter',longitude:(307.1+offset)%360},
-    Saturn:{name:'Saturn',longitude:(235.5+offset)%360},
-    Uranus:{name:'Uranus',longitude:(254.8+offset)%360},
-    Neptune:{name:'Neptune',longitude:(271+offset)%360},
-    Pluto:{name:'Pluto',longitude:(213.8+offset)%360},
-    Chiron:{name:'Chiron',longitude:(49+offset)%360},
-    'North Node':{name:'North Node',longitude:(10+offset)%360}
-  }
-});
+const sample = (name, offset) => {
+  const asc = (165 + offset) % 360;
+  const mc = (82 + offset) % 360;
+  const houseCusps = Array.from({length:12}, (_, index)=>(Math.floor(asc / 30) * 30 + index * 30) % 360);
+  return {
+    name,
+    houseSystem:'whole-sign',
+    houseCusps,
+    calcProfile:{
+      dateTime:'1985-10-08T12:15',
+      instant:'1985-10-08T16:15:00.000Z',
+      location:'Malden, Massachusetts, United States',
+      timeZone:'America/New_York',
+      latitude:42.4251,
+      longitude:-71.0662,
+      houseSystem:'whole-sign',
+      houseCusps
+    },
+    placements:{
+      Sun:{name:'Sun',longitude:(195+offset)%360},
+      Moon:{name:'Moon',longitude:(118.4+offset)%360},
+      Mercury:{name:'Mercury',longitude:(206.1+offset)%360},
+      Venus:{name:'Venus',longitude:(169.8+offset)%360},
+      Mars:{name:'Mars',longitude:(167.8+offset)%360},
+      Jupiter:{name:'Jupiter',longitude:(307.1+offset)%360},
+      Saturn:{name:'Saturn',longitude:(235.5+offset)%360},
+      Uranus:{name:'Uranus',longitude:(254.8+offset)%360},
+      Neptune:{name:'Neptune',longitude:(271+offset)%360},
+      Pluto:{name:'Pluto',longitude:(213.8+offset)%360},
+      Ascendant:{name:'Ascendant',longitude:asc},
+      Midheaven:{name:'Midheaven',longitude:mc},
+      Chiron:{name:'Chiron',longitude:(49+offset)%360},
+      'North Node':{name:'North Node',longitude:(10+offset)%360}
+    }
+  };
+};
 
 const browser = await chromium.launch({headless:true});
 const page = await browser.newPage({viewport:{width:1440,height:1300}});
@@ -43,6 +60,13 @@ await page.addInitScript(({a,b}) => {
 
 await page.goto('http://127.0.0.1:4173/part2/sky-chart.html', {waitUntil:'networkidle'});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]', {timeout:15000});
+await page.waitForSelector('.sky-chart-filter-bar [data-house-system-filter]', {timeout:10000});
+
+const filterLabels = await page.locator('.sky-chart-filter-bar label').evaluateAll(nodes => nodes.map(node => node.childNodes[0].textContent.trim()));
+assert.deepEqual(filterLabels, ['Aspects','Placements','Sky A House','Sky B House','House System']);
+assert.equal(await page.locator('[data-filter="aspect"] option[value="semi-sextile"]').count(), 1);
+assert.equal(await page.locator('[data-filter="aspect"] option[value="quincunx"]').count(), 1);
+
 const row = page.locator('.sky-foundation-relationship-row[data-relation-index]').first();
 const relationIndex = Number(await row.getAttribute('data-relation-index'));
 await row.click();
@@ -55,7 +79,12 @@ assert.equal(await panel.locator('.sky-selected-facts').count(), 1);
 assert.equal(await panel.locator('.sky-selected-cards').count(), 1);
 assert.equal(await panel.locator('.sky-selected-progressive').count(), 1);
 assert.equal(await panel.locator('.sky-selected-card').count(), 2);
-assert.equal(await panel.locator('.sky-selected-aspect-symbol').count(), 1);
+assert.equal(await panel.locator('.sky-selected-aspect-symbol').count(), 0);
+assert.equal(await panel.locator('.sky-selected-aspect-diagram').count(), 1);
+assert.equal(await panel.locator('.sky-selected-aspect-orbit').count(), 1);
+assert.equal(await panel.locator('.sky-selected-aspect-center').count(), 1);
+assert.equal(await panel.locator('.sky-selected-aspect-point.sky-a').count(), 1);
+assert.equal(await panel.locator('.sky-selected-aspect-point.sky-b').count(), 1);
 assert.equal(await panel.locator('.sky-selected-reveal').count(), 3);
 assert.equal(await panel.locator('[data-missing-canonical-glyph]').count(), 0);
 
@@ -65,6 +94,14 @@ const cardImagesLoaded = await panel.locator('.sky-selected-card img').evaluateA
 assert.equal(cardImagesLoaded, true);
 const titleFromRow = (await panel.locator('.sky-selected-facts h3').textContent()).trim();
 const cardTitlesFromRow = await panel.locator('.sky-selected-card h4').allTextContents();
+
+// Hovering another relationship must not mutate or blink the retained list.
+const visibleBeforeHover = await page.locator('.sky-foundation-relationship-row:visible').count();
+const secondRow = page.locator('.sky-foundation-relationship-row[data-relation-index]').nth(1);
+await secondRow.hover();
+await page.waitForTimeout(250);
+assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleBeforeHover);
+assert.equal(Number(await panel.getAttribute('data-relation-index')), relationIndex);
 
 const line = page.locator(`.sky-foundation-aspect[data-relation-index="${relationIndex}"]`);
 const hit = page.locator(`.sky-foundation-aspect-hit[data-relation-index="${relationIndex}"]`);
@@ -76,6 +113,27 @@ assert.equal((await panel.locator('.sky-selected-facts h3').textContent()).trim(
 assert.deepEqual(await panel.locator('.sky-selected-card h4').allTextContents(), cardTitlesFromRow);
 assert.equal(await page.locator(`.sky-foundation-relationship-row[data-relation-index="${relationIndex}"]`).getAttribute('aria-current'), 'true');
 assert.equal(await line.getAttribute('data-selected-relation'), 'true');
+
+// Derived points are completed and assigned houses.
+const completed = await page.evaluate(() => JSON.parse(localStorage.getItem('relphiSkyChartA')));
+for (const name of ['North Node','South Node','Lilith','Vertex','Part of Fortune']) {
+  assert.ok(completed.placements[name], `${name} should be present`);
+  assert.ok(Number.isFinite(Number(completed.placements[name].longitude)), `${name} should have longitude`);
+  assert.ok(Number(completed.placements[name].house) >= 1, `${name} should have a house`);
+}
+assert.ok(completed.placements.Chiron, 'provided Chiron should be preserved');
+
+// House-system changes recalculate both skies rather than changing only a label.
+const beforeCusps = completed.calcProfile.houseCusps.slice();
+await page.locator('[data-house-system-filter]').selectOption('equal-house');
+await page.waitForFunction(previous => {
+  const a=JSON.parse(localStorage.getItem('relphiSkyChartA'));
+  const b=JSON.parse(localStorage.getItem('relphiSkyChartB'));
+  return a?.calcProfile?.houseSystem==='equal-house' && b?.calcProfile?.houseSystem==='equal-house' && JSON.stringify(a.calcProfile.houseCusps)!==JSON.stringify(previous);
+}, beforeCusps, {timeout:10000});
+const afterHouseChange = await page.evaluate(() => JSON.parse(localStorage.getItem('relphiSkyChartA')));
+assert.notDeepEqual(afterHouseChange.calcProfile.houseCusps, beforeCusps);
+assert.ok(Object.values(afterHouseChange.placements).every(item => !Number.isFinite(Number(item.longitude)) || Number(item.house) >= 1));
 
 await panel.locator('[data-reveal-level="symbol"] summary').click();
 await panel.locator('[data-reveal-level="cards"] summary').click();
