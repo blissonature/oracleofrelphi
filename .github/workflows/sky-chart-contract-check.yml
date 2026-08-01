@@ -1,0 +1,41 @@
+name: Sky Chart contract check
+
+on:
+  push:
+    branches:
+      - fix/sky-chart-contract-rebuild
+  pull_request:
+    paths:
+      - 'sky-chart-contract-*.js'
+      - 'sky-chart-contract-*.css'
+      - 'relphi-canonical-angle-masters-v1.js'
+      - 'sky-chart-special-vector-color-v1.js'
+      - 'sky-chart-wheel-canonical-component-v1.js'
+      - 'sky-chart-wheel-marker-interaction-v1.js'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check sky-chart-contract-renderer-v1.js
+          node --check sky-chart-contract-controller-v1.js
+          node --check relphi-canonical-angle-masters-v1.js
+          node --check sky-chart-special-vector-color-v1.js
+          node --check sky-chart-canonical-glyph-correction-v1.js
+      - name: Check single public ownership
+        run: |
+          grep -q "sky-chart-contract-renderer-v1.js" sky-chart-special-vector-color-v1.js
+          grep -q "sky-chart-contract-controller-v1.js" sky-chart-special-vector-color-v1.js
+          grep -q "Retired on the Sky Chart contract branch" sky-chart-wheel-canonical-component-v1.js
+          grep -q "Retired on the Sky Chart contract branch" sky-chart-wheel-marker-interaction-v1.js
+      - name: Reject public glyph substitutions
+        run: |
+          ! grep -E "fallbackGlyph|BODY_GLYPHS|SIGN_GLYPHS|textContent = symbol|innerHTML.*[☉☽☿♀♂♃♄♅♆♇]" sky-chart-contract-renderer-v1.js
+          grep -q "RelphiGlyphComponent" sky-chart-contract-renderer-v1.js
+          grep -q "RelphiGlyphRegistry" sky-chart-contract-renderer-v1.js
