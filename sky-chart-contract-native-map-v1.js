@@ -36,6 +36,12 @@
     return (' ' + String(value || '').toLowerCase().replace(/[\s\u00a0]+/g, ' ').replace(/[–—]/g, '-') + ' ');
   }
 
+  function canonicalId(value) {
+    if (!value) return '';
+    const entry = window.RelphiGlyphRegistry?.get(value) || window.RelphiGlyphRegistry?.resolve(value);
+    return entry?.id || String(value).trim().toLowerCase().replace(/\s+/g, '-');
+  }
+
   function semanticText(node) {
     if (!node) return '';
     const values = [node.textContent, node.getAttribute?.('aria-label'), node.getAttribute?.('title')];
@@ -43,6 +49,24 @@
       values.push(child.getAttribute('aria-label'), child.getAttribute('title'), child.getAttribute('alt'));
     });
     return normalize(values.filter(Boolean).join(' | '));
+  }
+
+  function explicitIdentity(host) {
+    const source = host?.matches?.('button,summary,a,[role="button"]') ? host : host?.querySelector?.('button,summary,a,[role="button"]');
+    const read = names => {
+      for (const node of [host, source]) {
+        for (const name of names) {
+          const value = node?.dataset?.[name];
+          if (value) return value;
+        }
+      }
+      return '';
+    };
+    const aId = canonicalId(read(['relphiAId','skyAPlacement','aId','firstPlacement']));
+    const bId = canonicalId(read(['relphiBId','skyBPlacement','bId','secondPlacement']));
+    const aspectId = canonicalId(read(['relphiAspectId','aspect','aspectId']));
+    const orb = Number(read(['relphiOrb','orb']));
+    return { aId, bId, aspectId, orb };
   }
 
   function aliasesForBody(id) {
@@ -66,9 +90,9 @@
     if (!svg) return [];
     return Array.from(svg.querySelectorAll('[data-interactive="aspect"][data-aspect-index]')).map(line => ({
       index:Number(line.dataset.aspectIndex),
-      aId:line.dataset.skyAPlacement,
-      bId:line.dataset.skyBPlacement,
-      aspectId:line.dataset.aspect,
+      aId:canonicalId(line.dataset.skyAPlacement),
+      bId:canonicalId(line.dataset.skyBPlacement),
+      aspectId:canonicalId(line.dataset.aspect),
       orb:Number(line.dataset.orb),
       line
     })).filter(model => Number.isInteger(model.index) && model.aId && model.bId && model.aspectId);
@@ -85,12 +109,13 @@
     output.querySelectorAll('button,summary,a,[role="button"]').forEach(control => {
       let node = control;
       for (let depth = 0; node && node !== output && depth < 5; depth += 1, node = node.parentElement) {
+        const identity = explicitIdentity(node);
         const text = semanticText(node);
-        if (text.length >= 20 && text.length <= 2400 && /orb|°|conjunction|opposition|square|trine|sextile|quincunx|quintile|octile|☌|☍|□|△|✶|⚻/.test(text)) candidates.add(node);
+        if ((identity.aId && identity.bId && identity.aspectId) || (text.length >= 20 && text.length <= 2400 && /orb|°|conjunction|opposition|square|trine|sextile|quincunx|quintile|octile|☌|☍|□|△|✶|⚻/.test(text))) candidates.add(node);
       }
     });
     const list = Array.from(candidates).filter(node => clickable(node));
-    return list.filter(node => !list.some(other => other !== node && node.contains(other) && semanticText(other).length >= 20));
+    return list.filter(node => !list.some(other => other !== node && node.contains(other) && (explicitIdentity(other).aId || semanticText(other).length >= 20)));
   }
 
   function orbFromText(text) {
@@ -101,6 +126,18 @@
   }
 
   function score(model, host) {
+    const identity = explicitIdentity(host);
+    if (identity.aId || identity.bId || identity.aspectId) {
+      if (identity.aId !== model.aId || identity.bId !== model.bId || identity.aspectId !== model.aspectId) return -1;
+      let value = 30;
+      if (Number.isFinite(identity.orb) && Number.isFinite(model.orb)) {
+        const delta = Math.abs(identity.orb - model.orb);
+        if (delta <= .03) value += 5;
+        else if (delta > .5) value -= 8;
+      }
+      return value;
+    }
+
     const text = semanticText(host);
     const aAliases = aliasesForBody(model.aId);
     const bAliases = aliasesForBody(model.bId);
@@ -114,8 +151,7 @@
       else if (delta <= .12) value += 3;
       else if (delta > .5) value -= 4;
     }
-    const click = clickable(host);
-    if (click === host) value += 1;
+    if (clickable(host) === host) value += 1;
     return value;
   }
 
@@ -192,6 +228,7 @@
     window.addEventListener('relphi:sky-chart-next-display-ready', queueMap);
   }
 
+  window.RelphiSkyContractNativeMap = Object.freeze({ mapRows, relationModels, candidateHosts, score });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
   else start();
 })();
