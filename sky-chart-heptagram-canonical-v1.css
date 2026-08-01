@@ -1,9 +1,16 @@
 /* The Sky-card heptagram uses only canonical circled glyph components. */
 .sky-ph-jump{overflow:visible}
-.sky-ph-heptagram{overflow:visible;max-width:100%;box-sizing:border-box}
+.sky-ph-heptagram{overflow:visible!important;max-width:100%;box-sizing:border-box}
 .sky-ph-circle,.sky-ph-guide,.sky-ph-center-label,.sky-ph-node,.sky-ph-node-label{display:none!important}
 .sky-ph-canonical-bubble{pointer-events:none}
 .sky-ph-canonical-bubble.is-hour-ruler{filter:drop-shadow(0 0 4px rgba(0,0,0,.28))}
+.sky-ph-canonical-bubble.is-hour-ruler path,
+.sky-ph-canonical-bubble.is-hour-ruler circle,
+.sky-ph-canonical-bubble.is-hour-ruler ellipse,
+.sky-ph-canonical-bubble.is-hour-ruler rect,
+.sky-ph-canonical-bubble.is-hour-ruler polygon,
+.sky-ph-canonical-bubble.is-hour-ruler polyline,
+.sky-ph-canonical-bubble.is-hour-ruler line{vector-effect:non-scaling-stroke}
 @media(max-width:620px){
   .sky-ph-jump{padding:10px 12px 12px}
   .sky-ph-heptagram{width:100%;max-height:none;margin:0 auto}
