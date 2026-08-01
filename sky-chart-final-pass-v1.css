@@ -1,9 +1,7 @@
 /* Final Sky Chart functional pass. */
 .sky-foundation-aspect,
 .sky-foundation-aspect-hit,
-.sky-foundation-wheel [data-interactive="aspect"] {
-  outline:none !important;
-}
+.sky-foundation-wheel [data-interactive="aspect"] { outline:none !important; }
 .sky-foundation-aspect:focus,
 .sky-foundation-aspect:focus-visible,
 .sky-foundation-aspect-hit:focus,
@@ -19,6 +17,26 @@
   stroke:none !important;
 }
 
+/* Canonical sign glyphs remain legible over the rainbow rings. */
+.sky-foundation-wheel [data-layer="zodiac"] > g {
+  opacity:1 !important;
+  filter:drop-shadow(0 1px 0 rgba(255,253,248,.95)) drop-shadow(0 0 2px rgba(255,253,248,.9));
+}
+.sky-foundation-wheel [data-layer="zodiac"] > g path,
+.sky-foundation-wheel [data-layer="zodiac"] > g line,
+.sky-foundation-wheel [data-layer="zodiac"] > g circle,
+.sky-foundation-wheel [data-layer="zodiac"] > g polyline,
+.sky-foundation-wheel [data-layer="zodiac"] > g polygon {
+  stroke-width:1.22 !important;
+  opacity:1 !important;
+}
+.sky-foundation-wheel.has-isolation [data-layer="zodiac"] > g.is-kept,
+.sky-foundation-wheel.has-isolation [data-layer="placements"] > g.is-kept {
+  opacity:1 !important;
+  filter:drop-shadow(0 0 4px rgba(255,255,255,.95));
+}
+.sky-foundation-wheel.has-isolation [data-layer="zodiac"] > g:not(.is-kept) { opacity:.16 !important; }
+
 .sky-chart-filter-bar {
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -31,7 +49,7 @@
 .sky-chart-filter-bar select { width:100%; min-width:0; border:1px solid rgba(31,27,24,.2); border-radius:9px; background:#fff; padding:.52rem .58rem; font:700 .68rem/1.2 system-ui,sans-serif; }
 .sky-chart-filter-hidden { display:none !important; }
 
-.sky-where-when-action[data-ww-action="now"] { border-color:rgba(201,33,30,.38); color:#9e1b18; }
+.sky-where-when-action[data-final-now] { border-color:rgba(201,33,30,.38); color:#9e1b18; }
 .sky-house-system-note { margin:0; color:#625a53; font:650 .61rem/1.35 system-ui,sans-serif; }
 
 .sky-ph-heptagram { max-height:420px; min-height:270px; }
