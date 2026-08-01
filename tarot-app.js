@@ -309,7 +309,7 @@
   }
 
   const state = {
-    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: false, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, rowSenseSelections: {}, rowSenseNotes: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#fffaf0', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
+    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: false, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, rowSenseSelections: {}, rowSenseNotes: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#fffaf0', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, rowActiveLayout: null, rowPositionMeta: [], rowLayoutDesignMode: false, rowLayoutLocked: false, rowCenterOpen: false, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
   };
 
   function escapeHtml(value) {
@@ -947,6 +947,10 @@
       rowEnvelopeLayout: cloneBoardValue(state.rowEnvelopeLayout, {}),
       rowCardTransforms: cloneBoardValue(state.rowCardTransforms, {}),
       rowTransformTarget: Number(state.rowTransformTarget) || 0,
+      rowActiveLayout: cloneBoardValue(state.rowActiveLayout, null),
+      rowPositionMeta: cloneBoardValue(state.rowPositionMeta, []),
+      rowLayoutDesignMode: !!state.rowLayoutDesignMode,
+      rowLayoutLocked: !!state.rowLayoutLocked,
       rowEnvelopeColor: String(state.rowEnvelopeColor || '#f3f0ea'),
       rowEnvelopeArt: cloneBoardValue(state.rowEnvelopeArt, {}),
       rowTableColor: String(state.rowTableColor || '#fffaf0'),
@@ -981,6 +985,11 @@
     state.rowCardReversals = { ...(snapshot.rowCardReversals || {}) };
     state.rowEnvelopeLayout = cloneBoardValue(snapshot.rowEnvelopeLayout, {});
     state.rowCardTransforms = cloneBoardValue(snapshot.rowCardTransforms, {});
+    state.rowActiveLayout = cloneBoardValue(snapshot.rowActiveLayout, null);
+    state.rowPositionMeta = Array.isArray(snapshot.rowPositionMeta) ? cloneBoardValue(snapshot.rowPositionMeta, []) : [];
+    state.rowLayoutDesignMode = !!snapshot.rowLayoutDesignMode && !(state.shortList || []).length;
+    state.rowLayoutLocked = !!snapshot.rowLayoutLocked || !!(state.shortList || []).length;
+    state.rowCenterOpen = false;
     state.rowSenseSelections = { ...(snapshot.rowSenseSelections || {}) };
     state.rowSenseNotes = { ...(snapshot.rowSenseNotes || {}) };
     state.rowTransformTarget = Number(snapshot.rowTransformTarget) || 0;
@@ -1022,6 +1031,7 @@
       String(snapshot.shortListNotes || '').trim() ||
       Object.keys(snapshot.rowEnvelopeLayout || {}).length ||
       Object.keys(snapshot.rowCardTransforms || {}).length ||
+      !!snapshot.rowActiveLayout ||
       Object.keys(snapshot.rowSenseNotes || {}).length ||
       String(snapshot.rowTableImage || '') ||
       Object.keys(snapshot.rowEnvelopeArt || {}).length ||
@@ -1145,7 +1155,12 @@
   function commitShortList(next) {
     next = next.filter(Boolean);
     if (shortListSame(state.shortList, next)) return;
+    if (next.length && state.rowLayoutDesignMode) return;
     pushBoardUndo();
+    if (next.length) {
+      state.rowLayoutLocked = true;
+      state.rowLayoutDesignMode = false;
+    }
     state.shortList = next;
     state.shortListSelection = state.shortListSelection.filter(id => next.includes(id));
     setRowCardReversalArray(rowCardReversalArray(next.length));
@@ -1707,6 +1722,11 @@
   }
 
   function drawRandomRowCard() {
+    if (state.rowLayoutDesignMode) {
+      const status = $('downloadStatus');
+      if (status) status.textContent = 'Finish the layout design before drawing cards.';
+      return;
+    }
     let draw;
     if (state.rowAllowRepeats) {
       const pool = rowDrawPool(state.rowDrawScope);
@@ -1745,6 +1765,7 @@
     return String(event?.dataTransfer?.getData('application/x-relphi-card-id') || event?.dataTransfer?.getData('text/x-relphi-card-id') || '').trim();
   }
   function placeCardInRow(cardId, targetIndex) {
+    if (state.rowLayoutDesignMode) return;
     cardId = String(cardId || '').trim();
     if (!cardById(cardId)) return;
     const next = state.shortList.slice();
@@ -1863,7 +1884,8 @@
     const saved = state.rowCardTransforms?.[index] || {};
     const scale = Math.max(.45, Math.min(2.5, Number(saved.scale) || 1));
     const rotation = Math.max(-180, Math.min(180, Number(saved.rotation) || 0));
-    return { scale, rotation };
+    const zIndex = Math.max(0, Math.min(100, Number(saved.zIndex) || 1));
+    return { scale, rotation, zIndex };
   }
   function rowCardIsReversed(index) {
     return !!(state.rowCardReversals && state.rowCardReversals[Math.max(0, Number(index) || 0)]);
@@ -1894,18 +1916,21 @@
     return Math.max(0, Math.min(max, raw));
   }
   function setRowCardTransform(index, updates = {}) {
+    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
     const i = Math.max(0, Number(index) || 0);
     state.rowCardTransforms ||= {};
     const current = rowCardTransform(i);
     const next = {
       scale: updates.scale == null ? current.scale : Math.max(.45, Math.min(2.5, Number(updates.scale) || 1)),
-      rotation: updates.rotation == null ? current.rotation : Math.max(-180, Math.min(180, Number(updates.rotation) || 0))
+      rotation: updates.rotation == null ? current.rotation : Math.max(-180, Math.min(180, Number(updates.rotation) || 0)),
+      zIndex: updates.zIndex == null ? current.zIndex : Math.max(0, Math.min(100, Number(updates.zIndex) || 1))
     };
-    if (Math.abs(next.scale - 1) < .001 && Math.abs(next.rotation) < .001) delete state.rowCardTransforms[i];
+    if (Math.abs(next.scale - 1) < .001 && Math.abs(next.rotation) < .001 && next.zIndex === 1) delete state.rowCardTransforms[i];
     else state.rowCardTransforms[i] = next;
     state.rowTransformTarget = i;
   }
   function resetRowCardTransform(index) {
+    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
     state.rowCardTransforms ||= {};
     delete state.rowCardTransforms[Math.max(0, Number(index) || 0)];
   }
@@ -1916,6 +1941,7 @@
     return Math.max(0, Math.round(raw / logicalStep) * logicalStep);
   }
   function setRowEnvelopePosition(index, x, y) {
+    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
     state.rowEnvelopeLayout ||= {};
     state.rowEnvelopeLayout[index] = { x: snapRowCoord(x, 'x'), y: snapRowCoord(y, 'y') };
   }
@@ -1960,7 +1986,7 @@
   function cardRowItemStyle(index) {
     const pos = rowEnvelopePosition(index);
     const t = rowCardTransform(index);
-    return `left:${Math.round(pos.x)}px;top:${Math.round(pos.y)}px;--row-card-scale:${t.scale};--row-card-rotation:${t.rotation}deg;`;
+    return `left:${Math.round(pos.x)}px;top:${Math.round(pos.y)}px;z-index:${t.zIndex};--row-card-scale:${t.scale};--row-card-rotation:${t.rotation}deg;`;
   }
   function rowHasPositionSticker(index) {
     const label = String((state.shortListPositionLabels || [])[index] || '').trim();
@@ -1973,9 +1999,11 @@
     if (!position && !stickerCardId && !options.force) return '';
     const posClass = positionLengthClass(position);
     const stickerArt = positionStickerCardHtml(stickerCardId, index);
-    return `<div class="card-row-position-panel${position ? '' : ' is-empty'}${posClass ? ' ' + posClass : ''}" data-row-position-target="${index}">${stickerArt}<span class="card-row-position-editor" contenteditable="true" role="textbox" aria-label="Edit significance for position ${index + 1}" spellcheck="true" data-row-position-label-editor="${index}" data-placeholder="Position ${index + 1}">${position ? escapeHtml(position) : ''}</span></div>`;
+    const editable = !state.rowLayoutLocked || state.rowLayoutDesignMode;
+    return `<div class="card-row-position-panel${position ? '' : ' is-empty'}${posClass ? ' ' + posClass : ''}" data-row-position-target="${index}">${stickerArt}<span class="card-row-position-editor" contenteditable="${editable ? 'true' : 'false'}" role="textbox" aria-readonly="${editable ? 'false' : 'true'}" aria-label="${editable ? 'Edit' : 'Locked'} significance for position ${index + 1}" spellcheck="true" data-row-position-label-editor="${index}" data-placeholder="Position ${index + 1}">${position ? escapeHtml(position) : ''}</span></div>`;
   }
   function addCardPlaceholder() {
+    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
     pushBoardUndo();
     const labels = (state.shortListPositionLabels || []).slice();
     const stickers = (state.shortListPositionCardIds || []).slice();
@@ -1990,12 +2018,178 @@
     renderShortList();
   }
   function resetCardRowLayout() {
+    if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
     pushBoardUndo();
     state.rowEnvelopeLayout = {};
     state.rowCardTransforms = {};
     state.rowTransformTarget = 0;
     renderShortList();
   }
+  const PREFAB_CANVAS_WIDTH = 900;
+  const PREFAB_CANVAS_HEIGHT = 760;
+  function normalizedPrefabTransform(value = {}) {
+    return {
+      x: Math.max(0, Math.min(1, Number(value.x) || 0)),
+      y: Math.max(0, Math.min(1, Number(value.y) || 0)),
+      rotation: Math.max(-180, Math.min(180, Number(value.rotation) || 0)),
+      scale: Math.max(.45, Math.min(2.5, Number(value.scale) || 1)),
+      zIndex: Math.max(0, Math.min(100, Number(value.zIndex) || 1))
+    };
+  }
+  function prefabPositionId(position, index) {
+    const supplied = String(position?.id || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return supplied || `position-${index + 1}`;
+  }
+  function layoutSnapshotFromBoard(details = {}) {
+    const count = rowSlotCount();
+    const positions = Array.from({ length:count }, (_, index) => {
+      const meta = state.rowPositionMeta?.[index] || {};
+      const point = rowEnvelopePosition(index);
+      const transform = rowCardTransform(index);
+      const result = {
+        id: prefabPositionId(meta, index),
+        label: String(state.shortListPositionLabels?.[index] || `Position ${index + 1}`).trim().slice(0, 90),
+        drawOrder: index + 1,
+        transform: normalizedPrefabTransform({
+          x:point.x / PREFAB_CANVAS_WIDTH,
+          y:point.y / PREFAB_CANVAS_HEIGHT,
+          rotation:transform.rotation,
+          scale:transform.scale,
+          zIndex:transform.zIndex
+        })
+      };
+      ['role','covers','crosses'].forEach(key => { if (meta[key]) result[key] = String(meta[key]); });
+      if (meta.openTransform) result.openTransform = normalizedPrefabTransform(meta.openTransform);
+      return result;
+    });
+    return {
+      version:1,
+      id:String(details.id || state.rowActiveLayout?.id || 'active-layout'),
+      name:String(details.name || state.rowActiveLayout?.name || 'Custom spread').trim().slice(0, 60),
+      cardCount:positions.length,
+      source:String(details.source || state.rowActiveLayout?.source || 'custom'),
+      editable:details.editable !== false,
+      basedOn:details.basedOn || state.rowActiveLayout?.basedOn || null,
+      positions,
+      rules:{
+        allowReversals:!!state.rowAllowReversals,
+        allowRepeats:!!state.rowAllowRepeats,
+        drawScope:state.rowDrawScope || 'full'
+      }
+    };
+  }
+  function applyPrefabLayout(prefab, options = {}) {
+    if (!prefab || !Array.isArray(prefab.positions) || !prefab.positions.length) return false;
+    if ((state.shortList || []).length || (state.rowLayoutLocked && !state.rowLayoutDesignMode)) return false;
+    pushBoardUndo();
+    const positions = prefab.positions.slice().sort((a,b) => Number(a.drawOrder) - Number(b.drawOrder));
+    state.shortList = [];
+    state.shortListSelection = [];
+    state.shortListPositionLabels = positions.map((position, index) => String(position.label || `Position ${index + 1}`).slice(0, 90));
+    state.shortListPositionCardIds = positions.map(() => '');
+    state.rowEnvelopeLayout = {};
+    state.rowCardTransforms = {};
+    state.rowPositionMeta = positions.map((position, index) => {
+      const transform = normalizedPrefabTransform(position.canonicalTransform || position.transform);
+      state.rowEnvelopeLayout[index] = { x:transform.x * PREFAB_CANVAS_WIDTH, y:transform.y * PREFAB_CANVAS_HEIGHT };
+      state.rowCardTransforms[index] = { scale:transform.scale, rotation:transform.rotation, zIndex:transform.zIndex };
+      return {
+        id:prefabPositionId(position, index),
+        role:position.role || '',
+        covers:position.covers || '',
+        crosses:position.crosses || '',
+        openTransform:position.openTransform ? normalizedPrefabTransform(position.openTransform) : null
+      };
+    });
+    state.rowActiveLayout = cloneBoardValue({
+      ...prefab,
+      cardCount:positions.length,
+      positions:positions.map((position, index) => ({
+        ...cloneBoardValue(position, {}),
+        id:prefabPositionId(position, index),
+        drawOrder:index + 1,
+        transform:normalizedPrefabTransform(position.canonicalTransform || position.transform)
+      }))
+    }, null);
+    state.rowLayoutDesignMode = !!options.designMode;
+    state.rowLayoutLocked = !state.rowLayoutDesignMode;
+    state.rowCenterOpen = false;
+    state.rowTransformTarget = 0;
+    state.rowPanX = 0;
+    state.rowPanY = 0;
+    const rules = prefab.rules || {};
+    state.rowAllowReversals = !!rules.allowReversals;
+    state.rowAllowRepeats = !!rules.allowRepeats;
+    state.rowDrawScope = rules.drawScope || 'full';
+    resetRowDrawDeck();
+    const maxX = Math.max(...positions.map((position, index) => {
+      const transform = normalizedPrefabTransform(position.canonicalTransform || position.transform);
+      return transform.x * PREFAB_CANVAS_WIDTH + CARD_ROW_ENVELOPE_W * transform.scale;
+    }), CARD_ROW_ENVELOPE_W);
+    state.rowZoom = Math.max(.45, Math.min(1, (cardRowAvailableWidth() - 24) / Math.max(maxX, 1)));
+    renderShortList();
+    return true;
+  }
+  function finishPrefabDesign(details = {}) {
+    if (!state.rowLayoutDesignMode || (state.shortList || []).length) return null;
+    state.rowActiveLayout = layoutSnapshotFromBoard(details);
+    state.rowPositionMeta = state.rowActiveLayout.positions.map(position => ({
+      id:position.id,
+      role:position.role || '',
+      covers:position.covers || '',
+      crosses:position.crosses || '',
+      openTransform:position.openTransform || null
+    }));
+    state.rowLayoutDesignMode = false;
+    state.rowLayoutLocked = true;
+    state.rowCenterOpen = false;
+    renderShortList();
+    return cloneBoardValue(state.rowActiveLayout, null);
+  }
+  function removePrefabPosition(index) {
+    if (!state.rowLayoutDesignMode || (state.shortList || []).length) return false;
+    const target = Math.max(0, Math.min(rowSlotCount() - 1, Number(index) || 0));
+    pushBoardUndo();
+    state.shortListPositionLabels.splice(target, 1);
+    state.shortListPositionCardIds.splice(target, 1);
+    state.rowPositionMeta.splice(target, 1);
+    const shift = value => Object.fromEntries(Object.entries(value || {}).flatMap(([key, item]) => {
+      const numeric = Number(key);
+      if (numeric === target) return [];
+      return [[String(numeric > target ? numeric - 1 : numeric), item]];
+    }));
+    state.rowEnvelopeLayout = shift(state.rowEnvelopeLayout);
+    state.rowCardTransforms = shift(state.rowCardTransforms);
+    state.rowEnvelopeArt = shift(state.rowEnvelopeArt);
+    state.rowTransformTarget = Math.max(0, Math.min(target, rowSlotCount() - 1));
+    renderShortList();
+    return true;
+  }
+  function drawingBoardPrefabState() {
+    return cloneBoardValue({
+      designMode:!!state.rowLayoutDesignMode,
+      locked:!!state.rowLayoutLocked,
+      hasCards:!!(state.shortList || []).length,
+      slotCount:rowSlotCount(),
+      transformTarget:rowTransformTargetIndex(),
+      centerOpen:!!state.rowCenterOpen,
+      activeLayout:state.rowActiveLayout,
+      currentLayout:layoutSnapshotFromBoard()
+    }, {});
+  }
+  window.RelphiDrawingBoardPrefabsBridge = Object.freeze({
+    applyLayout:applyPrefabLayout,
+    captureLayout:layoutSnapshotFromBoard,
+    finishDesign:finishPrefabDesign,
+    removePosition:removePrefabPosition,
+    getState:drawingBoardPrefabState,
+    setCenterOpen(value) {
+      state.rowCenterOpen = !!value;
+      document.dispatchEvent(new CustomEvent('relphi:drawing-board-center-view', { detail:{ open:state.rowCenterOpen } }));
+      return state.rowCenterOpen;
+    },
+    refresh:renderShortList
+  });
   function rowEnvelopeArtFor(index) { return state.rowEnvelopeArt?.[index] || ''; }
   function setRowEnvelopeArt(index, dataUrl) {
     if (!Number.isInteger(Number(index)) || Number(index) < 0) return;
@@ -2305,6 +2499,11 @@
       state.rowSenseNotes = {};
       state.rowEnvelopeLayout = {};
       state.rowCardTransforms = {};
+      state.rowActiveLayout = null;
+      state.rowPositionMeta = [];
+      state.rowLayoutDesignMode = false;
+      state.rowLayoutLocked = false;
+      state.rowCenterOpen = false;
       state.rowEnvelopeArt = {};
       state.rowEnvelopeColor = '#f3f0ea';
       state.rowTableColor = '#fffaf0';
@@ -2440,20 +2639,22 @@
     const labels = $('rowPositionLabels');
     if (labels) {
       labels.addEventListener('input', () => {
+        if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
         const preset = stickerPresetForValue(labels.value);
         if (!preset) state.shortListPositionLabels = parsePositionLabels(labels.value);
       });
       labels.addEventListener('change', () => {
+        if (state.rowLayoutLocked && !state.rowLayoutDesignMode) { renderShortList(); return; }
         const preset = stickerPresetForValue(labels.value);
         pushBoardUndo();
         state.shortListPositionLabels = preset ? preset.labels.slice() : parsePositionLabels(labels.value);
         renderShortList();
       });
     }
-    const scope = $('rowDrawScope'); if (scope) scope.addEventListener('change', () => { state.rowDrawScope = scope.value; resetRowDrawDeck(); renderShortList(); });
-    const repeats = $('rowAllowRepeats'); if (repeats) repeats.addEventListener('change', () => { state.rowAllowRepeats = repeats.checked; resetRowDrawDeck(); renderShortList(); });
-    const reversals = $('rowAllowReversals'); if (reversals) reversals.addEventListener('change', () => { state.rowAllowReversals = reversals.checked; resetRowDrawDeck(); renderShortList(); });
-    const quickReversals = $('rowAllowReversalsQuick'); if (quickReversals) quickReversals.addEventListener('change', () => { state.rowAllowReversals = quickReversals.checked; resetRowDrawDeck(); renderShortList(); });
+    const scope = $('rowDrawScope'); if (scope) scope.addEventListener('change', () => { if (state.rowLayoutLocked && !state.rowLayoutDesignMode) { renderShortList(); return; } state.rowDrawScope = scope.value; resetRowDrawDeck(); renderShortList(); });
+    const repeats = $('rowAllowRepeats'); if (repeats) repeats.addEventListener('change', () => { if (state.rowLayoutLocked && !state.rowLayoutDesignMode) { renderShortList(); return; } state.rowAllowRepeats = repeats.checked; resetRowDrawDeck(); renderShortList(); });
+    const reversals = $('rowAllowReversals'); if (reversals) reversals.addEventListener('change', () => { if (state.rowLayoutLocked && !state.rowLayoutDesignMode) { renderShortList(); return; } state.rowAllowReversals = reversals.checked; resetRowDrawDeck(); renderShortList(); });
+    const quickReversals = $('rowAllowReversalsQuick'); if (quickReversals) quickReversals.addEventListener('change', () => { if (state.rowLayoutLocked && !state.rowLayoutDesignMode) { renderShortList(); return; } state.rowAllowReversals = quickReversals.checked; resetRowDrawDeck(); renderShortList(); });
     qsa('[data-row-reverse]', wrap).forEach(button => button.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); toggleRowCardReversal(button.dataset.rowReverse); }));
     qsa('[data-row-sense-input]', wrap).forEach(input => {
       const syncPhrase = () => {
@@ -2538,6 +2739,7 @@
         if (event.key === 'Escape') { event.preventDefault(); const index = Number(editor.dataset.rowPositionLabelEditor); const labelsNext = (state.shortListPositionLabels || []).slice(); labelsNext[index] = normalizeInlinePositionLabel(editor.dataset.originalValue || ''); state.shortListPositionLabels = labelsNext; renderShortList(); }
       });
       editor.addEventListener('input', () => {
+        if (state.rowLayoutLocked && !state.rowLayoutDesignMode) return;
         const index = Number(editor.dataset.rowPositionLabelEditor);
         if (!Number.isFinite(index)) return;
         const labelsNext = (state.shortListPositionLabels || []).slice();
@@ -2546,6 +2748,7 @@
         syncPositionLabelInput();
       });
       editor.addEventListener('blur', () => {
+        if (state.rowLayoutLocked && !state.rowLayoutDesignMode) { renderShortList(); return; }
         const index = Number(editor.dataset.rowPositionLabelEditor);
         if (!Number.isFinite(index)) return;
         const labelsNext = (state.shortListPositionLabels || []).slice();
@@ -2585,6 +2788,7 @@
         placeCardInRow(cardId, slotIndex);
       });
     });
+    document.dispatchEvent(new CustomEvent('relphi:drawing-board-rendered', { detail:drawingBoardPrefabState() }));
   }
   function toggleShortList(id) {
     if (!id) return;
