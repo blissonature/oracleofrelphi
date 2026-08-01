@@ -9,9 +9,14 @@
   border-bottom:1px solid rgba(31,27,24,.11);
 }
 
+.sky-foundation-interactive,
+.sky-foundation-focus-piece,
+.sky-foundation-sign-glyph {
+  transition:opacity .14s ease,filter .14s ease,stroke-width .14s ease;
+}
+
 .sky-foundation-interactive {
   cursor:pointer;
-  transition:opacity .14s ease,filter .14s ease,stroke-width .14s ease;
 }
 
 .sky-foundation-interactive:focus {
@@ -25,11 +30,11 @@
   filter:drop-shadow(0 0 6px rgba(20,17,14,.38));
 }
 
-.sky-foundation-wheel.has-isolation .sky-foundation-interactive {
+.sky-foundation-wheel.has-isolation [data-focus-piece] {
   opacity:.08;
 }
 
-.sky-foundation-wheel.has-isolation .sky-foundation-interactive.is-kept {
+.sky-foundation-wheel.has-isolation [data-focus-piece].is-kept {
   opacity:1;
 }
 
