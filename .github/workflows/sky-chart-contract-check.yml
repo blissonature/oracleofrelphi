@@ -25,6 +25,7 @@ jobs:
         run: |
           node --check sky-chart-contract-renderer-v1.js
           node --check sky-chart-contract-controller-v1.js
+          node --check sky-chart-contract-native-map-v1.js
           node --check relphi-canonical-angle-masters-v1.js
           node --check sky-chart-special-vector-color-v1.js
           node --check sky-chart-canonical-glyph-correction-v1.js
@@ -32,6 +33,7 @@ jobs:
         run: |
           grep -q "sky-chart-contract-renderer-v1.js" sky-chart-special-vector-color-v1.js
           grep -q "sky-chart-contract-controller-v1.js" sky-chart-special-vector-color-v1.js
+          grep -q "sky-chart-contract-native-map-v1.js" sky-chart-special-vector-color-v1.js
           grep -q "Retired on the Sky Chart contract branch" sky-chart-wheel-canonical-component-v1.js
           grep -q "Retired on the Sky Chart contract branch" sky-chart-wheel-marker-interaction-v1.js
       - name: Reject public glyph substitutions
@@ -39,3 +41,7 @@ jobs:
           ! grep -E "fallbackGlyph|BODY_GLYPHS|SIGN_GLYPHS|textContent = symbol|innerHTML.*[☉☽☿♀♂♃♄♅♆♇]" sky-chart-contract-renderer-v1.js
           grep -q "RelphiGlyphComponent" sky-chart-contract-renderer-v1.js
           grep -q "RelphiGlyphRegistry" sky-chart-contract-renderer-v1.js
+      - name: Reject index-only interpretation activation
+        run: |
+          grep -q "Map.*semantic identity" sky-chart-contract-native-map-v1.js
+          grep -q "Index-only mismatches are blocked" sky-chart-contract-native-map-v1.js
