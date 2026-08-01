@@ -1,0 +1,168 @@
+/* Oracle of Relphi Sky Chart contract layout: one public renderer, stable tracks. */
+body.sky-chart-page.relphi-sky-contract-active #chartPanel > :not(#relphiSkyChartContractRoot) {
+  display:none !important;
+}
+body.sky-chart-page.relphi-sky-contract-active.relphi-sky-editor-open #relphiSkyChartContractRoot {
+  display:none !important;
+}
+body.sky-chart-page.relphi-sky-contract-active.relphi-sky-editor-open #chartPanel > .sky-chart-hero-panel,
+body.sky-chart-page.relphi-sky-contract-active.relphi-sky-editor-open #chartPanel > #skyCreatorDrawer,
+body.sky-chart-page.relphi-sky-contract-active.relphi-sky-editor-open #chartPanel > #relphiSkyBuilderV4,
+body.sky-chart-page.relphi-sky-contract-active.relphi-sky-editor-open #chartPanel > #skyResultsToolbar {
+  display:block !important;
+}
+body.sky-chart-page.relphi-sky-contract-active.relphi-sky-editor-open #chartPanel > .sky-output-box {
+  display:none !important;
+}
+
+#relphiSkyChartContractRoot {
+  --sky-a:#c9211e;
+  --sky-b:#2462d0;
+  display:grid;
+  grid-template-columns:minmax(230px,280px) minmax(560px,1fr) minmax(230px,280px);
+  grid-template-areas:"skyA center skyB";
+  gap:16px;
+  align-items:start;
+  width:100%;
+  min-width:0;
+  margin:0;
+}
+.relphi-contract-sky-a{grid-area:skyA;--sky-color:var(--sky-a)}
+.relphi-contract-center{grid-area:center;min-width:0;display:grid;gap:16px}
+.relphi-contract-sky-b{grid-area:skyB;--sky-color:var(--sky-b)}
+.relphi-contract-card,
+.relphi-contract-wheel-panel,
+.relphi-contract-relationships,
+.relphi-contract-selected {
+  min-width:0;
+  border:1px solid rgba(30,27,23,.18);
+  border-radius:16px;
+  background:#fffdf8;
+  overflow:hidden;
+}
+.relphi-contract-card{border-top:4px solid var(--sky-color)}
+.relphi-contract-card-header{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+  min-height:44px;
+  padding:0 10px 0 0;
+  border-bottom:1px solid rgba(30,27,23,.12);
+}
+.relphi-contract-sky-chip{
+  align-self:stretch;
+  display:grid;
+  place-items:center;
+  min-width:62px;
+  padding:0 12px;
+  background:var(--sky-color);
+  color:#fff;
+  font:800 .76rem/1 system-ui,sans-serif;
+}
+.relphi-contract-card-title{min-width:0;margin:0;font:800 .86rem/1.2 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.relphi-contract-edit{
+  appearance:none;border:1px solid color-mix(in srgb,var(--sky-color) 45%,#bbb);border-radius:999px;background:#fff;color:#111;padding:.42rem .65rem;font:700 .72rem/1 system-ui,sans-serif;cursor:pointer
+}
+.relphi-contract-ledger{display:grid;padding:6px 0}
+.relphi-contract-placement-row{
+  display:grid;
+  grid-template-columns:24px minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:7px;
+  min-height:31px;
+  padding:3px 10px;
+  border:0;
+  border-bottom:1px solid rgba(30,27,23,.075);
+  background:transparent;
+  color:#171717;
+  text-align:left;
+  cursor:pointer;
+}
+.relphi-contract-placement-row:last-child{border-bottom:0}
+.relphi-contract-placement-row:hover,.relphi-contract-placement-row:focus-visible{background:color-mix(in srgb,var(--sky-color) 7%,#fff)}
+.relphi-contract-placement-glyph{display:block;width:22px;height:22px;overflow:visible;color:var(--sky-color)}
+.relphi-contract-placement-name{min-width:0;font:650 .76rem/1.2 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.relphi-contract-placement-degree,.relphi-contract-placement-house{font:650 .69rem/1.2 system-ui,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap;color:#5b554f}
+
+.relphi-contract-wheel-panel{position:relative;padding:8px;contain:layout paint}
+#relphiComparisonWheelMount{width:100%;min-height:360px;display:grid;place-items:center}
+#relphiComparisonWheelMount>.scn-live-wheel{display:block;width:100%;height:auto;max-height:min(76vh,900px);overflow:visible}
+.relphi-contract-wheel-status{margin:0;padding:2rem;text-align:center;color:#6e665f;font:700 .9rem/1.4 system-ui,sans-serif}
+.scn-live-wheel .relphi-contract-ring{fill:none;stroke:#28231f;stroke-width:1.1;vector-effect:non-scaling-stroke}
+.scn-live-wheel .relphi-contract-house-sector,.scn-live-wheel .relphi-contract-sign-sector{cursor:pointer;transition:opacity .14s ease,filter .14s ease}
+.scn-live-wheel .relphi-contract-house-sector:hover,.scn-live-wheel .relphi-contract-house-sector:focus,.scn-live-wheel .relphi-contract-sign-sector:hover,.scn-live-wheel .relphi-contract-sign-sector:focus{filter:saturate(1.35) brightness(1.04);outline:none}
+.scn-live-wheel .relphi-contract-house-divider{stroke-width:2.2;vector-effect:non-scaling-stroke;pointer-events:none}
+.scn-live-wheel .relphi-contract-house-number{font:700 15px/1 Georgia,serif;fill:#29241f;pointer-events:none}
+.scn-live-wheel .relphi-contract-tick{stroke:rgba(24,22,20,.48);stroke-width:1;vector-effect:non-scaling-stroke;pointer-events:none}
+.scn-live-wheel .relphi-contract-tick.major{stroke:rgba(24,22,20,.82);stroke-width:1.7}
+.scn-live-wheel .relphi-contract-leader{fill:none;stroke-width:1.45;stroke-linecap:round;vector-effect:non-scaling-stroke;pointer-events:none}
+.scn-live-wheel .relphi-contract-aspect{stroke-width:2.3;stroke-linecap:round;opacity:.67;vector-effect:non-scaling-stroke;cursor:pointer;pointer-events:stroke;transition:opacity .14s ease,stroke-width .14s ease}
+.scn-live-wheel [data-focusable-piece]{transition:opacity .14s ease,filter .14s ease,stroke-width .14s ease}
+.scn-live-wheel [data-focusable-piece].is-hovered{opacity:1!important;filter:drop-shadow(0 0 6px rgba(0,0,0,.32))}
+.scn-live-wheel .relphi-contract-aspect.is-hovered{stroke-width:4.5}
+.scn-live-wheel.has-isolation [data-focusable-piece]{opacity:.08}
+.scn-live-wheel.has-isolation [data-focusable-piece].is-kept{opacity:1}
+.scn-live-wheel [data-focusable-piece].is-selected{filter:drop-shadow(0 0 7px rgba(0,0,0,.42))}
+
+.relphi-contract-lower{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(320px,1.15fr);gap:16px;align-items:start;min-width:0}
+.relphi-contract-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:14px 16px;border-bottom:1px solid rgba(30,27,23,.12)}
+.relphi-contract-section-heading h2{margin:0;font:800 1rem/1.2 system-ui,sans-serif}
+.relphi-contract-count{display:inline-grid;place-items:center;min-width:30px;height:25px;padding:0 8px;border-radius:999px;background:#f1ece5;font:800 .72rem/1 system-ui,sans-serif}
+#relphiRelationshipList{display:grid;max-height:560px;overflow:auto;padding:7px}
+.relphi-contract-relationship-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 38px minmax(0,1fr);
+  align-items:center;
+  gap:7px;
+  width:100%;
+  min-width:0;
+  padding:8px;
+  border:0;
+  border-bottom:1px solid rgba(30,27,23,.09);
+  background:transparent;
+  color:#171717;
+  text-align:left;
+  cursor:pointer;
+}
+.relphi-contract-relationship-row:hover,.relphi-contract-relationship-row:focus-visible,.relphi-contract-relationship-row[aria-current="true"]{background:#f7f2eb}
+.relphi-contract-relationship-side{display:grid;grid-template-columns:30px minmax(0,1fr);align-items:center;gap:5px;min-width:0}
+.relphi-contract-relationship-side svg,.relphi-contract-aspect-glyph{display:block;width:28px;height:28px;overflow:visible}
+.relphi-contract-relationship-copy{min-width:0;font:650 .69rem/1.25 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.relphi-contract-relationship-orb{display:block;color:#6b625b;font-size:.63rem}
+.relphi-contract-filtered-out{display:none!important}
+
+#relphiSelectedRelationshipMount{min-height:280px;padding:14px}
+.relphi-contract-selected-empty{margin:0;padding:2rem .5rem;color:#6e665f;text-align:center;font:650 .84rem/1.45 system-ui,sans-serif}
+.relphi-contract-selected-shell{display:grid;gap:14px;min-width:0}
+.relphi-contract-selected-graphic{display:grid;place-items:center;min-height:104px}
+.relphi-contract-selected-graphic svg{display:block;width:min(100%,280px);height:auto;overflow:visible}
+.relphi-contract-selected-facts{text-align:center}
+.relphi-contract-selected-facts h3{margin:0;font:800 1.08rem/1.2 system-ui,sans-serif}
+.relphi-contract-selected-facts p{margin:.25rem 0 0;color:#645d56;font:650 .76rem/1.35 system-ui,sans-serif}
+.relphi-contract-selected-cards{display:grid;grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr);gap:10px;align-items:start;min-width:0}
+.relphi-contract-selected-card{min-width:0;width:100%;overflow:visible}
+.relphi-contract-selected-symbol{display:grid;place-items:center;align-self:center;width:52px;height:52px}
+.relphi-contract-selected-symbol svg{display:block;width:48px;height:48px;overflow:visible}
+.relphi-contract-selected-reveal{grid-column:1/-1;min-width:0;width:100%;padding-top:12px;border-top:1px solid rgba(30,27,23,.12);line-height:1.55;overflow-wrap:normal;word-break:normal;white-space:normal}
+.relphi-contract-selected-reveal *{max-width:100%;min-width:0;overflow-wrap:normal;word-break:normal;white-space:normal}
+.relphi-contract-selected-card img{display:block;width:min(100%,180px);height:auto;margin:0 auto 8px}
+
+@media(max-width:1180px){
+  #relphiSkyChartContractRoot{grid-template-columns:minmax(205px,235px) minmax(500px,1fr) minmax(205px,235px);gap:12px}
+  .relphi-contract-lower{grid-template-columns:minmax(230px,.8fr) minmax(300px,1.2fr);gap:12px}
+}
+@media(max-width:900px){
+  #relphiSkyChartContractRoot{grid-template-columns:1fr 1fr;grid-template-areas:"skyA skyB" "center center"}
+  .relphi-contract-card{min-height:0}
+  .relphi-contract-lower{grid-template-columns:1fr}
+  #relphiRelationshipList{max-height:440px}
+}
+@media(max-width:620px){
+  #relphiSkyChartContractRoot{grid-template-columns:1fr;grid-template-areas:"skyA" "skyB" "center";gap:10px}
+  .relphi-contract-card-header{grid-template-columns:auto minmax(0,1fr) auto}
+  #relphiComparisonWheelMount{min-height:300px}
+  .relphi-contract-selected-cards{grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr);gap:5px}
+  .relphi-contract-selected-symbol{width:40px;height:40px}.relphi-contract-selected-symbol svg{width:38px;height:38px}
+  .relphi-contract-selected-card img{max-width:130px}
+}
