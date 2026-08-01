@@ -34,14 +34,13 @@
   }
 
   function normalizeInactiveHourLines(hourLines) {
-    const seen = new Set();
-    hourLines.filter(line => !line.classList.contains('current')).forEach(line => {
-      const key = ['x1','y1','x2','y2'].map(name => Number(line.getAttribute(name)).toFixed(3)).join(':');
-      if (seen.has(key)) {
+    hourLines.filter(line => !line.classList.contains('current')).forEach((line, index) => {
+      // One seven-edge cycle defines the heptagon. Later 24-hour-cycle lines repeat
+      // those edges, and the final wraparound adds a spurious eighth connector.
+      if (index >= 7) {
         line.remove();
         return;
       }
-      seen.add(key);
       line.classList.remove('past');
       line.classList.add('future');
     });
