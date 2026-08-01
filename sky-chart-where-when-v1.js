@@ -637,6 +637,7 @@
   }
 
   async function drawHeptagram(svg, profile) {
+    svg.dataset.canonicalSourceReady = 'pending';
     const dt = window.luxon.DateTime.fromISO(profile.instant || profile.dateTime, {
       zone:profile.timeZone,
       setZone:true
@@ -719,6 +720,8 @@
     centerTime.textContent = `${localFormatter.format(current.start)}–${localFormatter.format(current.end)}`;
     svg.append(centerDay, centerHour, centerTime);
     await Promise.allSettled(glyphJobs);
+    svg.dataset.canonicalSourceReady = 'true';
+    window.dispatchEvent(new Event('relphi:sky-heptagram-source-ready'));
 
     return {
       dayKey,

@@ -60,6 +60,7 @@
   async function correct(svg) {
     if (!svg || svg.dataset.canonicalHeptagramV1 === 'true' || svg.dataset.canonicalHeptagramV1 === 'pending') return;
     if (!svg.querySelector('.sky-ph-planet')) return;
+    if (svg.dataset.canonicalSourceReady !== 'true') return;
     svg.dataset.canonicalHeptagramV1 = 'pending';
 
     try {
@@ -87,6 +88,7 @@
   function start() {
     scan();
     observer.observe(document.documentElement, { childList:true, subtree:true });
+    window.addEventListener('relphi:sky-heptagram-source-ready', scan);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });

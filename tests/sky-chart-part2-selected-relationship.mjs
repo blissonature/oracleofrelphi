@@ -61,6 +61,15 @@ await page.addInitScript(({a,b}) => {
 await page.goto('http://127.0.0.1:4173/part2/sky-chart.html', {waitUntil:'networkidle'});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]', {timeout:15000});
 await page.waitForSelector('.sky-chart-filter-bar [data-house-system-filter]', {timeout:10000});
+await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-v1="true"]', {timeout:10000});
+const heptagramGlyphs = await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.map(svg => ({
+  planets:svg.querySelectorAll('.sky-ph-planet').length,
+  bubbles:svg.querySelectorAll('.sky-ph-node-glyph > .relphi-glyph-bubble').length,
+  duplicateMounts:Array.from(svg.querySelectorAll('.sky-ph-node-glyph')).filter(mount => mount.children.length !== 1).length,
+  oldNodes:svg.querySelectorAll('.sky-ph-node,.sky-ph-node-label').length
+})));
+assert.ok(heptagramGlyphs.length >= 2);
+assert.ok(heptagramGlyphs.every(result => result.planets===7 && result.bubbles===7 && result.duplicateMounts===0 && result.oldNodes===0));
 
 const filterLabels = await page.locator('.sky-chart-filter-bar label').evaluateAll(nodes => nodes.map(node => node.childNodes[0].textContent.trim()));
 assert.deepEqual(filterLabels, ['Aspects','Placements','Sky A House','Sky B House','House System']);
@@ -115,9 +124,11 @@ const wheelState = await page.locator('.sky-foundation-wheel').evaluate(node => 
 assert.equal(visibleFromWheel, visibleBeforeHover);
 const hoveredStyle = await wheelPlacement.evaluate(node => ({opacity:getComputedStyle(node).opacity,filter:getComputedStyle(node).filter}));
 const dimmedOpacity = Number(await page.locator('.sky-foundation-wheel [data-focus-piece]:not(.is-kept)').first().evaluate(node => getComputedStyle(node).opacity));
+const dimmedSignOpacity = Number(await page.locator('.sky-foundation-wheel [data-layer="zodiac"] [data-focus-piece]:not(.is-kept)').first().evaluate(node => getComputedStyle(node).opacity));
 assert.equal(Number(hoveredStyle.opacity), 1);
 assert.notEqual(hoveredStyle.filter, 'none');
 assert.ok(dimmedOpacity <= .16, `Unrelated wheel opacity was ${dimmedOpacity}.`);
+assert.ok(dimmedSignOpacity >= .45, `Unrelated zodiac glyph opacity was ${dimmedSignOpacity}.`);
 const relatedFromWheel = await page.locator('.sky-foundation-relationship-row.is-wheel-related').count();
 assert.ok(relatedFromWheel > 0 && relatedFromWheel < visibleBeforeHover, `Wheel hover marked ${relatedFromWheel} of ${visibleBeforeHover} relationships; state ${JSON.stringify(wheelState)}.`);
 assert.equal(await page.locator('.sky-foundation-wheel').getAttribute('class').then(value => value.includes('has-isolation')), true);

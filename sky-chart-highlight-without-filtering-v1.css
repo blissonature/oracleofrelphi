@@ -1,5 +1,6 @@
 /* Wheel hover/tap visibly isolates the related geometry without changing the list on hover. */
 .sky-foundation-wheel.has-isolation [data-focus-piece]{opacity:.1!important;filter:saturate(.3) brightness(.82)!important}
+.sky-foundation-wheel.has-isolation [data-layer="zodiac"] [data-focus-piece]:not(.is-kept){opacity:.48!important;filter:saturate(.68) brightness(.92)!important}
 .sky-foundation-wheel.has-isolation [data-focus-piece].is-kept{opacity:1!important;filter:none!important}
 .sky-foundation-wheel.has-isolation [data-focus-piece].is-hovered,
 .sky-foundation-wheel.has-isolation [data-focus-piece].is-selected{opacity:1!important;filter:brightness(1.12) saturate(1.35) drop-shadow(0 0 4px rgba(255,255,255,.98)) drop-shadow(0 0 10px rgba(245,151,28,.92))!important}
