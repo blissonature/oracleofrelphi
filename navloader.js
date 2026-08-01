@@ -161,6 +161,7 @@
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
       appendScript('planetary-hours-location-prompt.js?v=4');
+      appendScript('planetary-hours-moon-position-v1.js?v=1');
       appendScript('standardize-zodiac-wheels.js?v=4');
       appendScript('relphi-glyph-bubbles.js?v=2');
     }
