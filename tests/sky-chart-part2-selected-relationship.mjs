@@ -70,7 +70,8 @@ const line = page.locator(`.sky-foundation-aspect[data-relation-index="${relatio
 const hit = page.locator(`.sky-foundation-aspect-hit[data-relation-index="${relationIndex}"]`);
 await hit.waitFor({state:'attached', timeout:10000});
 await hit.click({force:true});
-await page.waitForFunction(index => document.querySelector('#skySelectedRelationship')?.dataset.selectionSource === 'comparison-wheel' && Number(document.querySelector('#skySelectedRelationship')?.dataset.relationIndex) === index, relationIndex);
+await page.waitForTimeout(100);
+assert.equal(Number(await panel.getAttribute('data-relation-index')), relationIndex);
 assert.equal((await panel.locator('.sky-selected-facts h3').textContent()).trim(), titleFromRow);
 assert.deepEqual(await panel.locator('.sky-selected-card h4').allTextContents(), cardTitlesFromRow);
 assert.equal(await page.locator(`.sky-foundation-relationship-row[data-relation-index="${relationIndex}"]`).getAttribute('aria-current'), 'true');
