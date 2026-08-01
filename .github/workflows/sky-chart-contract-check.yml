@@ -28,6 +28,7 @@ jobs:
           node --check sky-chart-contract-controller-v1.js
           node --check sky-chart-contract-native-map-v1.js
           node --check sky-chart-contract-editor-v1.js
+          node --check sky-chart-contract-heptagram-v1.js
           node --check relphi-canonical-angle-masters-v1.js
           node --check sky-chart-special-vector-color-v1.js
           node --check sky-chart-canonical-glyph-correction-v1.js
@@ -38,13 +39,16 @@ jobs:
           grep -q "sky-chart-contract-controller-v1.js" sky-chart-special-vector-color-v1.js
           grep -q "sky-chart-contract-native-map-v1.js" sky-chart-special-vector-color-v1.js
           grep -q "sky-chart-contract-editor-v1.js" sky-chart-special-vector-color-v1.js
+          grep -q "sky-chart-contract-heptagram-v1.js" sky-chart-special-vector-color-v1.js
           grep -q "Retired on the Sky Chart contract branch" sky-chart-wheel-canonical-component-v1.js
           grep -q "Retired on the Sky Chart contract branch" sky-chart-wheel-marker-interaction-v1.js
       - name: Reject public glyph substitutions
         run: |
           ! grep -E "fallbackGlyph|BODY_GLYPHS|SIGN_GLYPHS|textContent = symbol|innerHTML.*[☉☽☿♀♂♃♄♅♆♇]" sky-chart-contract-renderer-v1.js
+          ! grep -E "textContent = symbol|innerHTML.*[☉☽☿♀♂♃♄♅♆♇]" sky-chart-contract-heptagram-v1.js
           grep -q "RelphiGlyphComponent" sky-chart-contract-renderer-v1.js
           grep -q "RelphiGlyphRegistry" sky-chart-contract-renderer-v1.js
+          grep -q "RelphiGlyphComponent" sky-chart-contract-heptagram-v1.js
       - name: Reject index-only interpretation activation
         run: |
           grep -q "semantic identity" sky-chart-contract-native-map-v1.js
@@ -55,6 +59,12 @@ jobs:
           grep -q 'command.dataset.edit = slot' sky-chart-contract-editor-v1.js
           grep -q 'relphiContractLockedTarget' sky-chart-contract-editor-v1.js
           grep -q 'label.hidden = true' sky-chart-contract-editor-v1.js
+      - name: Verify data-driven heptagram source
+        run: |
+          grep -q 'sunrise-to-sunrise day' sky-chart-contract-heptagram-v1.js
+          grep -q 'buildHours' sky-chart-contract-heptagram-v1.js
+          grep -q 'relphi-contract-heptagram-star current' sky-chart-contract-heptagram-v1.js
+          grep -q 'relphi-contract-heptagram-hour current' sky-chart-contract-heptagram-v1.js
       - name: Run headless browser contract
         run: |
           set -euo pipefail
@@ -74,5 +84,6 @@ jobs:
           name: sky-chart-contract-browser-evidence
           path: |
             sky-chart-contract-desktop.png
+            sky-chart-contract-mobile.png
             sky-chart-contract-browser-result.json
           if-no-files-found: ignore
