@@ -11,6 +11,15 @@
   guard.textContent = 'body.sky-chart-page #chartPanel>.sky-output-box{display:none!important}';
   document.head.appendChild(guard);
 
+  if (!window.CSS) window.CSS = {};
+  if (!window.CSS.escape) {
+    window.CSS.escape = function (value) {
+      return String(value).replace(/[^a-zA-Z0-9_-]/g, function (character) {
+        return '\\' + character.codePointAt(0).toString(16) + ' ';
+      });
+    };
+  }
+
   if (!document.querySelector('link[href^="sky-chart-contract-v1.css"]')) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
