@@ -1,0 +1,118 @@
+name: Sky Chart Part 1 browser check
+
+on:
+  push:
+    branches:
+      - fix/sky-chart-part1-foundation
+  pull_request:
+    paths:
+      - 'part1/sky-chart.html'
+      - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-foundation-v1.css'
+      - 'navloader.js'
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-foundation-v1.js
+          node --check navloader.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Run Part 1 browser assertions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-server.log 2>&1 &
+          cat > /tmp/sky-chart-part1-check.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          import assert from 'node:assert/strict';
+
+          const sample = (name, offset) => ({
+            name,
+            houseSystem:'whole-sign',
+            houseCusps:Array.from({length:12}, (_,i)=>(165 + offset + i*30)%360),
+            placements:{
+              Sun:{name:'Sun',longitude:(195+offset)%360},
+              Moon:{name:'Moon',longitude:(118.4+offset)%360},
+              Ascendant:{name:'Ascendant',longitude:(165+offset)%360},
+              Mercury:{name:'Mercury',longitude:(206.1+offset)%360},
+              Venus:{name:'Venus',longitude:(169.8+offset)%360},
+              Mars:{name:'Mars',longitude:(167.8+offset)%360},
+              Jupiter:{name:'Jupiter',longitude:(307.1+offset)%360},
+              Saturn:{name:'Saturn',longitude:(235.5+offset)%360},
+              Uranus:{name:'Uranus',longitude:(254.8+offset)%360},
+              Neptune:{name:'Neptune',longitude:(271+offset)%360},
+              Pluto:{name:'Pluto',longitude:(213.8+offset)%360}
+            }
+          });
+
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1440,height:1100}});
+          const errors=[];
+          page.on('pageerror', error => errors.push(error.message));
+          page.on('console', message => { if(message.type()==='error') errors.push(message.text()); });
+          await page.addInitScript(({a,b}) => {
+            localStorage.setItem('relphiSkyChartA', JSON.stringify(a));
+            localStorage.setItem('relphiSkyChartB', JSON.stringify(b));
+          }, {a:sample('Sky A test',0),b:sample('Sky B test',73)});
+
+          await page.goto('http://127.0.0.1:4173/part1/sky-chart.html', {waitUntil:'networkidle'});
+          await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]', {timeout:15000});
+
+          const result = await page.evaluate(() => {
+            const root=document.getElementById('skyFoundationRoot');
+            const wheel=document.querySelector('#skyFoundationWheelMount > svg');
+            const box=wheel?.getBoundingClientRect();
+            const text=Array.from(document.querySelectorAll('#skyFoundationRoot text')).map(node=>node.textContent.trim());
+            return {
+              children:root?.children.length,
+              display:getComputedStyle(root).display,
+              columns:getComputedStyle(root).gridTemplateColumns.split(' ').filter(Boolean).length,
+              wheelWidth:box?.width||0,
+              wheelHeight:box?.height||0,
+              skyA:document.querySelectorAll('[data-layer="placements"] [data-sky="A"]').length,
+              skyB:document.querySelectorAll('[data-layer="placements"] [data-sky="B"]').length,
+              hasCounterfeitAngle:text.some(value=>/^(Asc|ASC|Dsc|DSC|MC|IC|Vx)$/.test(value)),
+              hasLegacy:!!document.querySelector('#chartOutput,.sky-output-box,.relphi-v4-complete,.comparison-wheel'),
+              hasPart2:Array.from(document.querySelectorAll('h1,h2,h3')).some(node=>/^(Relationships|Selected Relationship)$/i.test(node.textContent.trim()))
+            };
+          });
+
+          assert.equal(result.children,3);
+          assert.equal(result.display,'grid');
+          assert.equal(result.columns,3);
+          assert.ok(result.wheelWidth>500 && result.wheelHeight>500);
+          assert.equal(result.skyA,10);
+          assert.equal(result.skyB,10);
+          assert.equal(result.hasCounterfeitAngle,false);
+          assert.equal(result.hasLegacy,false);
+          assert.equal(result.hasPart2,false);
+          assert.deepEqual(errors,[]);
+          await page.screenshot({path:'sky-chart-part1-desktop.png',fullPage:true});
+
+          await page.setViewportSize({width:390,height:844});
+          await page.waitForTimeout(100);
+          const mobile=await page.evaluate(() => ({
+            columns:getComputedStyle(document.getElementById('skyFoundationRoot')).gridTemplateColumns.split(' ').filter(Boolean).length,
+            wheelWidth:document.querySelector('#skyFoundationWheelMount > svg')?.getBoundingClientRect().width||0
+          }));
+          assert.equal(mobile.columns,1);
+          assert.ok(mobile.wheelWidth>300);
+          await page.screenshot({path:'sky-chart-part1-mobile.png',fullPage:true});
+          await browser.close();
+          EOF
+          node /tmp/sky-chart-part1-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-part1-screenshots
+          path: |
+            sky-chart-part1-desktop.png
+            sky-chart-part1-mobile.png
