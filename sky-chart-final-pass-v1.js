@@ -76,18 +76,52 @@
     const actions=panel(slot)?.querySelector('.sky-where-when-actions');if(!actions)return;
     if(!actions.querySelector('[data-final-now]')){
       const button=document.createElement('button');button.type='button';button.className='sky-where-when-action';button.dataset.finalNow=slot;button.textContent='Update to Now';
-      button.addEventListener('click',()=>updateToNow(slot));actions.prepend(button);
+      button.addEventListener('click',()=>updateToNow(slot,button));actions.prepend(button);
     }
   }
-  async function updateToNow(slot){
-    const value=read(slot),profile=value?.calcProfile||{};
-    if(!profile.location||!profile.timeZone){panel(slot)?.querySelector('[data-ww-action="edit"]')?.click();return}
-    remember(slot);panel(slot)?.querySelector('[data-ww-action="edit"]')?.click();
-    await new Promise(resolve=>setTimeout(resolve,0));
-    const now=window.luxon?.DateTime?.now().setZone(profile.timeZone);if(!now?.isValid)return;
-    const date=panel(slot)?.querySelector('[data-ww-field="date"]'),time=panel(slot)?.querySelector('[data-ww-field="time"]');
-    if(date)date.value=now.toFormat('yyyy-MM-dd');if(time)time.value=now.toFormat('HH:mm');
-    panel(slot)?.querySelector('.sky-where-when-editor')?.requestSubmit();
+  function currentPosition(){
+    return new Promise((resolve,reject)=>{
+      if(!navigator.geolocation)return reject(new Error('Current location is unavailable in this browser.'));
+      navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:12000,maximumAge:300000});
+    });
+  }
+  async function currentLocationPacket(){
+    const position=await currentPosition(),latitude=position.coords.latitude,longitude=position.coords.longitude;
+    const [placeResponse,zoneResponse]=await Promise.all([
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=10&addressdetails=1`,{headers:{Accept:'application/json'}}),
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&timezone=auto&current=temperature_2m`,{headers:{Accept:'application/json'}})
+    ]);
+    const place=placeResponse.ok?await placeResponse.json():{},zone=zoneResponse.ok?await zoneResponse.json():{},address=place.address||{};
+    const canonical=place.display_name||[address.city||address.town||address.village||address.county,address.state,address.country].filter(Boolean).join(', ')||`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+    const timezone=String(zone.timezone||'');
+    if(!timezone)throw new Error('The current location did not resolve to an IANA time zone.');
+    return{query:'My current location',canonical,latitude,longitude,timezone};
+  }
+  function selectCurrentLocation(slot,packet){
+    const results=panel(slot)?.querySelector('.sky-location-results');if(!results)return false;
+    const choice=document.createElement('button');choice.type='button';choice.className='sky-location-result';choice.dataset.wwAction='select-location';choice.innerHTML=`<strong>${packet.canonical}</strong><span>${packet.latitude.toFixed(5)}, ${packet.longitude.toFixed(5)} · ${packet.timezone}</span>`;choice.__locationPacket=packet;
+    results.replaceChildren(choice);choice.click();return true;
+  }
+  async function updateToNow(slot,button){
+    const originalLabel=button?.textContent||'Update to Now';
+    if(button){button.disabled=true;button.textContent='Finding Here and Now…'}
+    try{
+      remember(slot);panel(slot)?.querySelector('[data-ww-action="edit"]')?.click();
+      await new Promise(resolve=>setTimeout(resolve,0));
+      const packet=await currentLocationPacket();
+      if(!selectCurrentLocation(slot,packet))throw new Error('The Where and When editor is unavailable.');
+      const now=window.luxon?.DateTime?.now().setZone(packet.timezone);
+      if(!now?.isValid)throw new Error('The current local time could not be resolved.');
+      const card=panel(slot),date=card?.querySelector('[data-ww-field="date"]'),time=card?.querySelector('[data-ww-field="time"]');
+      if(date)date.value=now.toFormat('yyyy-MM-dd');if(time)time.value=now.toFormat('HH:mm');
+      card?.querySelector('.sky-where-when-editor')?.requestSubmit();
+    }catch(error){
+      console.error(error);
+      const statusNode=panel(slot)?.querySelector('.sky-where-when-status');
+      if(statusNode){statusNode.textContent=error?.code===1?'Location permission was denied.':error.message||'Here and Now could not be set.';statusNode.classList.add('is-error')}
+    }finally{
+      if(button?.isConnected){button.disabled=false;button.textContent=originalLabel}
+    }
   }
 
   function addEditorControls(slot){
@@ -99,23 +133,10 @@
     }
   }
   async function useCurrentLocation(slot,button){
-    if(!navigator.geolocation){button.textContent='Location unavailable';return}
     button.disabled=true;button.textContent='Requesting location…';
-    navigator.geolocation.getCurrentPosition(async position=>{
-      try{
-        const latitude=position.coords.latitude,longitude=position.coords.longitude;
-        const [placeResponse,zoneResponse]=await Promise.all([
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=10&addressdetails=1`,{headers:{Accept:'application/json'}}),
-          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&timezone=auto&current=temperature_2m`,{headers:{Accept:'application/json'}})
-        ]);
-        const place=placeResponse.ok?await placeResponse.json():{},zone=zoneResponse.ok?await zoneResponse.json():{},address=place.address||{};
-        const canonical=place.display_name||[address.city||address.town||address.village||address.county,address.state,address.country].filter(Boolean).join(', ')||`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-        const packet={query:'My current location',canonical,latitude,longitude,timezone:String(zone.timezone||'UTC')};
-        const results=panel(slot)?.querySelector('.sky-location-results');if(!results)return;
-        const choice=document.createElement('button');choice.type='button';choice.className='sky-location-result';choice.dataset.wwAction='select-location';choice.innerHTML=`<strong>${canonical}</strong><span>${latitude.toFixed(5)}, ${longitude.toFixed(5)} · ${packet.timezone}</span>`;choice.__locationPacket=packet;
-        results.replaceChildren(choice);choice.click();
-      }catch(error){console.error(error);button.disabled=false;button.textContent='My current location'}
-    },error=>{console.error(error);button.disabled=false;button.textContent=error.code===1?'Location permission denied':'My current location'},{enableHighAccuracy:false,timeout:12000,maximumAge:300000});
+    try{selectCurrentLocation(slot,await currentLocationPacket())}
+    catch(error){console.error(error);button.textContent=error?.code===1?'Location permission denied':'My current location'}
+    finally{button.disabled=false;if(button.textContent==='Requesting location…')button.textContent='My current location'}
   }
 
   function calculateHouseSystem(slot,system){
