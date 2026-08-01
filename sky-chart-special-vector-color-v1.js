@@ -25,6 +25,28 @@
     };
   }
 
+  let rootObserver = null;
+  function revealCanonicalRoot() {
+    const root = document.getElementById('relphiSkyChartContractRoot');
+    if (!root) return false;
+    rootObserver?.disconnect();
+    rootObserver = null;
+    document.body.classList.remove('relphi-sky-contract-booting');
+    return true;
+  }
+  function watchForCanonicalRoot() {
+    if (revealCanonicalRoot() || rootObserver) return;
+    const chartPanel = document.getElementById('chartPanel');
+    if (!chartPanel) {
+      requestAnimationFrame(watchForCanonicalRoot);
+      return;
+    }
+    rootObserver = new MutationObserver(revealCanonicalRoot);
+    rootObserver.observe(chartPanel, { childList:true });
+    document.addEventListener('DOMContentLoaded', revealCanonicalRoot, { once:true });
+  }
+  watchForCanonicalRoot();
+
   function loadScript(src, done) {
     const base = src.split('?')[0];
     const existing = document.querySelector('script[src^="' + base + '"]');
@@ -53,9 +75,7 @@
     loadScript('relphi-canonical-angle-masters-v1.js?v=1', function () {
       loadScript('sky-chart-contract-renderer-v1.js?v=1', function () {
         loadScript('sky-chart-contract-controller-v1.js?v=2', function () {
-          loadScript('sky-chart-contract-native-map-v1.js?v=1', function () {
-            document.body.classList.remove('relphi-sky-contract-booting');
-          });
+          loadScript('sky-chart-contract-native-map-v1.js?v=1');
         });
       });
     });
