@@ -1,0 +1,1 @@
+The contract branch is not a legacy-skin layer. The public wheel, panels, interaction state, relationship list, and selected relationship are owned by the contract renderer/controller. The native output remains hidden and is used only for calculation and card interpretation data.
