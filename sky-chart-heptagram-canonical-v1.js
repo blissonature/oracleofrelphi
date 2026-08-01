@@ -58,18 +58,25 @@
   }
 
   async function correct(svg) {
-    if (!svg || svg.dataset.canonicalHeptagramV1 === 'true') return;
+    if (!svg || svg.dataset.canonicalHeptagramV1 === 'true' || svg.dataset.canonicalHeptagramV1 === 'pending') return;
     if (!svg.querySelector('.sky-ph-planet')) return;
+    svg.dataset.canonicalHeptagramV1 = 'pending';
 
-    svg.setAttribute('viewBox', '-28 -28 416 416');
-    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    svg.style.overflow = 'visible';
+    try {
+      svg.setAttribute('viewBox', '-28 -28 416 416');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svg.style.overflow = 'visible';
 
-    markHourBeforeReplacement(svg);
-    svg.querySelectorAll('.sky-ph-circle,.sky-ph-guide,.sky-ph-center-label,.sky-ph-node-label').forEach(node => node.remove());
+      markHourBeforeReplacement(svg);
+      svg.querySelectorAll('.sky-ph-circle,.sky-ph-guide,.sky-ph-center-label,.sky-ph-node-label').forEach(node => node.remove());
 
-    const results = await Promise.all(Array.from(svg.querySelectorAll('.sky-ph-planet')).map(replacePlanet));
-    if (results.every(Boolean)) svg.dataset.canonicalHeptagramV1 = 'true';
+      const results = await Promise.all(Array.from(svg.querySelectorAll('.sky-ph-planet')).map(replacePlanet));
+      if (results.every(Boolean)) svg.dataset.canonicalHeptagramV1 = 'true';
+      else delete svg.dataset.canonicalHeptagramV1;
+    } catch (error) {
+      delete svg.dataset.canonicalHeptagramV1;
+      console.error('Sky Chart canonical heptagram correction failed:', error);
+    }
   }
 
   function scan() {

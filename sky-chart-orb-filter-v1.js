@@ -36,7 +36,8 @@
 
     const visible = rows.filter(row => !row.classList.contains('sky-chart-filter-hidden') && !row.classList.contains('sky-orb-filter-hidden'));
     const count = document.getElementById('skyFoundationRelationshipCount');
-    if (count) count.textContent = `${visible.length}/${rows.length}`;
+    const countLabel = `${visible.length}/${rows.length}`;
+    if (count && count.textContent !== countLabel) count.textContent = countLabel;
     const empty = document.getElementById('skyFoundationRelationshipEmpty');
     if (empty) empty.hidden = visible.length !== 0;
   }

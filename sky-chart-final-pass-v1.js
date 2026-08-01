@@ -180,7 +180,8 @@
     const values=new Map();document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
       [[row.dataset.leftPlacement,row.querySelector('.sky-foundation-relationship-copy')?.childNodes?.[0]?.textContent],[row.dataset.rightPlacement,row.querySelectorAll('.sky-foundation-relationship-copy')?.[1]?.childNodes?.[0]?.textContent]].forEach(([id,label])=>{if(id)values.set(id,String(label||id).trim())});
     });
-    const previous=select.value;select.innerHTML='<option value="all">All</option>';[...values.entries()].sort((a,b)=>a[1].localeCompare(b[1])).forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option)});select.value=[...select.options].some(option=>option.value===previous)?previous:'all';
+    const entries=[...values.entries()].sort((a,b)=>a[1].localeCompare(b[1])),signature=JSON.stringify(entries);if(select.dataset.finalPlacementOptions===signature)return;
+    const previous=select.value;select.innerHTML='<option value="all">All</option>';entries.forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option)});select.value=[...select.options].some(option=>option.value===previous)?previous:'all';select.dataset.finalPlacementOptions=signature;
   }
   function applyFilters(){
     document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
@@ -192,13 +193,14 @@
   }
   function labelAxes(){
     const svg=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');if(!svg)return;
-    svg.querySelectorAll('.sky-axis-label').forEach(node=>node.remove());
     const labels={asc:'Ascendant',dsc:'Descendant',mc:'MC · Midheaven',ic:'IC'};
-    svg.querySelectorAll('[data-layer="placements"] > g[data-placement]').forEach(group=>{
+    const desired=[];svg.querySelectorAll('[data-layer="placements"] > g[data-placement]').forEach(group=>{
       const id=String(group.dataset.placement||'').toLowerCase();if(!labels[id])return;
       const match=(group.getAttribute('transform')||'').match(/translate\(([-\d.]+)[ ,]([-\d.]+)\)/);if(!match)return;
-      const text=document.createElementNS('http://www.w3.org/2000/svg','text');text.setAttribute('x',String(Number(match[1])+20));text.setAttribute('y',String(Number(match[2])-18));text.setAttribute('class','sky-axis-label');text.setAttribute('fill',group.dataset.sky==='A'?'#c9211e':'#2462d0');text.textContent=labels[id];svg.appendChild(text);
+      desired.push({x:String(Number(match[1])+20),y:String(Number(match[2])-18),fill:group.dataset.sky==='A'?'#c9211e':'#2462d0',label:labels[id]});
     });
+    const signature=JSON.stringify(desired);if(svg.dataset.finalAxisLabels===signature)return;
+    svg.querySelectorAll('.sky-axis-label').forEach(node=>node.remove());desired.forEach(item=>{const text=document.createElementNS('http://www.w3.org/2000/svg','text');text.setAttribute('x',item.x);text.setAttribute('y',item.y);text.setAttribute('class','sky-axis-label');text.setAttribute('fill',item.fill);text.textContent=item.label;svg.appendChild(text)});svg.dataset.finalAxisLabels=signature;
   }
   function hideAspectBoxes(){document.querySelectorAll('.sky-foundation-aspect-hit,[data-layer="aspects"] rect').forEach(node=>{node.setAttribute('fill','transparent');node.setAttribute('stroke','transparent');node.style.outline='none'})}
   function refresh(){
