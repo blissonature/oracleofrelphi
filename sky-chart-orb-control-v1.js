@@ -1,4 +1,4 @@
-// Explicit numeric orb filter combined with the wheel-owned relationship isolation.
+// Explicit numeric orb filter. Wheel hover preserves the list; wheel click/tap filters it.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
@@ -73,7 +73,7 @@
     install();
     window.addEventListener('relphi:sky-foundation-interactions-ready',()=>{install();schedule()});
     window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
-      wheelIndexes=event.detail?.state?new Set((event.detail.relationshipIndexes||[]).map(String)):null;
+      wheelIndexes=event.detail?.state?.mode==='selected'?new Set((event.detail.relationshipIndexes||[]).map(String)):null;
       schedule();
     });
     window.addEventListener('relphi:selected-relationship-rendered',schedule);

@@ -105,16 +105,31 @@ await page.waitForTimeout(250);
 assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleBeforeHover);
 assert.equal(Number(await panel.getAttribute('data-relation-index')), relationIndex);
 
-// Wheel hover owns dim/isolate and drives the relationship list.
+// Wheel hover owns dim/isolate and marks related rows without reducing the list.
 const leftPlacement = await row.getAttribute('data-left-placement');
 const wheelPlacement = page.locator(`[data-layer="placements"] > g[data-sky="A"][data-placement="${leftPlacement}"]`).first();
 await wheelPlacement.hover();
 await page.waitForTimeout(100);
 const visibleFromWheel = await page.locator('.sky-foundation-relationship-row:visible').count();
 const wheelState = await page.locator('.sky-foundation-wheel').evaluate(node => ({className:node.getAttribute('class'),hovered:node.querySelectorAll('.is-hovered').length,kept:node.querySelectorAll('.is-kept').length}));
-assert.ok(visibleFromWheel > 0 && visibleFromWheel < visibleBeforeHover, `Wheel hover showed ${visibleFromWheel} of ${visibleBeforeHover} relationships; state ${JSON.stringify(wheelState)}.`);
+assert.equal(visibleFromWheel, visibleBeforeHover);
+const relatedFromWheel = await page.locator('.sky-foundation-relationship-row.is-wheel-related').count();
+assert.ok(relatedFromWheel > 0 && relatedFromWheel < visibleBeforeHover, `Wheel hover marked ${relatedFromWheel} of ${visibleBeforeHover} relationships; state ${JSON.stringify(wheelState)}.`);
 assert.equal(await page.locator('.sky-foundation-wheel').getAttribute('class').then(value => value.includes('has-isolation')), true);
 await page.locator('.sky-foundation-relationships-heading h2').hover();
+await page.waitForTimeout(100);
+assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleBeforeHover);
+assert.equal(await page.locator('.sky-foundation-relationship-row.is-wheel-related').count(), 0);
+
+// Wheel click/tap retains isolation and updates the list; a row click does not change it.
+await wheelPlacement.click({force:true});
+await page.waitForTimeout(100);
+const visibleFromWheelSelection = await page.locator('.sky-foundation-relationship-row:visible').count();
+assert.ok(visibleFromWheelSelection > 0 && visibleFromWheelSelection < visibleBeforeHover);
+await page.locator('.sky-foundation-relationship-row:visible').first().click();
+await page.waitForTimeout(100);
+assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleFromWheelSelection);
+await page.locator('#skyFoundationClearIsolation').click();
 await page.waitForTimeout(100);
 assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleBeforeHover);
 
