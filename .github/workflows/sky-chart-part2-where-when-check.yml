@@ -31,16 +31,8 @@ jobs:
           from pathlib import Path
 
           path = Path('sky-chart-where-when-v1.js')
-          text = path.read_text()
+          text = path.read_text().replace('\r\n', '\n')
 
-          old_busy = """  function setBusy(slot, busy) {
-            cardState[slot].busy = !!busy;
-            panel(slot)?.querySelectorAll('button,input,select').forEach(node => {
-              if (node.classList.contains('sky-where-when-cancel')) return;
-              node.disabled = !!busy;
-            });
-          }
-          """
           new_busy = """  function setBusy(slot, busy) {
             cardState[slot].busy = !!busy;
             const editor = panel(slot)?.querySelector('.sky-where-when-editor');
@@ -51,25 +43,24 @@ jobs:
             });
           }
           """
-          if old_busy in text:
-              text = text.replace(old_busy, new_busy, 1)
-          elif new_busy not in text:
-              raise SystemExit('Busy-state owner block was not recognized.')
+          if "const editor = panel(slot)?.querySelector('.sky-where-when-editor');" not in text:
+              start = text.index('  function setBusy(slot, busy) {')
+              end_marker = '\n\n  function ensureCardStructure(slot) {'
+              end = text.index(end_marker, start)
+              text = text[:start] + new_busy.rstrip() + text[end:]
 
-          old_url = """  function planetaryHoursUrl(profile) {
-            const params = new URLSearchParams();
-          """
-          new_url = """  function planetaryHoursUrl(profile) {
+          function_marker = "  function planetaryHoursUrl(profile) {\n    const params = new URLSearchParams();\n"
+          inferred_block = """  function planetaryHoursUrl(profile) {
             const params = new URLSearchParams();
             const inferredInstant = !profile.instant && profile.dateTime && profile.timeZone && window.luxon?.DateTime
               ? window.luxon.DateTime.fromISO(profile.dateTime, { zone:profile.timeZone, setZone:true }).toUTC().toISO()
               : '';
             const instant = profile.instant || inferredInstant;
           """
-          if old_url in text:
-              text = text.replace(old_url, new_url, 1)
-          elif new_url not in text:
-              raise SystemExit('Planetary Hours URL block was not recognized.')
+          if 'const inferredInstant = !profile.instant' not in text:
+              if function_marker not in text:
+                  raise SystemExit('Planetary Hours URL function was not recognized.')
+              text = text.replace(function_marker, inferred_block, 1)
 
           direct = "    params.set('dt', profile.instant);"
           normalized = "    params.set('dt', instant || '');"
