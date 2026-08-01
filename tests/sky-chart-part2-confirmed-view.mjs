@@ -69,6 +69,8 @@ await editor.locator('button[type="submit"]').click();
 const jump = page.locator('#skyFoundationA .sky-ph-jump');
 await jump.waitFor({timeout:15000});
 await page.waitForFunction(() => document.querySelectorAll('#skyFoundationA .sky-ph-node-glyph path').length > 0);
+assert.equal(await jump.evaluate(node => node.tagName), 'A');
+assert.equal(await jump.locator('a').count(), 0);
 assert.equal((await jump.locator('.sky-ph-jump-title').textContent()).trim(), 'Jump to this time in Planetary Hours');
 assert.equal(await jump.locator('.sky-ph-node').count(), 7);
 assert.equal(await jump.locator('.sky-ph-jump-title').count(), 1);
