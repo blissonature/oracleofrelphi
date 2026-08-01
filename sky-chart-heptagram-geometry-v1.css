@@ -1,5 +1,7 @@
 /* The weekly star reaches the planetary nodes; earlier traced days recede behind today. */
 .sky-ph-heptagram{max-height:none}
-.sky-ph-week-segment.future{stroke-width:2;opacity:.2}
+.sky-ph-week-segment.future,
+.sky-ph-hour-segment.future,
+.sky-ph-hour-segment.past{stroke:#8a837c;stroke-width:2;opacity:.58}
 .sky-ph-week-segment.past{stroke-width:2;opacity:.42}
 .sky-ph-week-segment.current{stroke-width:5.5;opacity:1}

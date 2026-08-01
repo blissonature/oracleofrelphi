@@ -74,10 +74,16 @@ assert.ok(heptagramGlyphs.every(result => result.planets===7 && result.bubbles==
 const filterLabels = await page.locator('.sky-chart-filter-bar label').evaluateAll(nodes => nodes.map(node => node.childNodes[0].textContent.trim()));
 assert.deepEqual(filterLabels, ['Orb','Aspects','Placements','Sky A House','Sky B House','House System']);
 assert.equal(await page.locator('.sky-chart-filter-bar > :first-child input[data-filter="orb"]').count(), 1);
+assert.deepEqual(await page.locator('input[data-filter="orb"]').evaluate(input => ({value:input.value,min:input.min,max:input.max})), {value:'3',min:'0',max:'360'});
 const desktopFilterBoxes = await page.locator('.sky-chart-filter-bar > *').evaluateAll(nodes => nodes.map(node => {const box=node.getBoundingClientRect();return {top:Math.round(box.top),height:Math.round(box.height)}}));
 assert.equal(new Set(desktopFilterBoxes.map(box => box.top)).size, 1);
 assert.ok(Math.max(...desktopFilterBoxes.map(box => box.height))-Math.min(...desktopFilterBoxes.map(box => box.height)) <= 1);
 assert.equal(await page.locator('.sky-chart-filter-bar').evaluate(node => node.scrollWidth <= node.clientWidth), true);
+const inactiveHourStyles = await page.locator('.sky-ph-hour-segment.future,.sky-ph-hour-segment.past').evaluateAll(nodes => nodes.map(node => ({opacity:getComputedStyle(node).opacity,strokeWidth:getComputedStyle(node).strokeWidth})));
+assert.ok(inactiveHourStyles.length > 0);
+assert.equal(new Set(inactiveHourStyles.map(style => style.opacity)).size, 1);
+assert.equal(new Set(inactiveHourStyles.map(style => style.strokeWidth)).size, 1);
+assert.ok(await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.every(svg => svg.querySelectorAll('.sky-ph-hour-segment:not(.current)').length === 7)));
 assert.equal(await page.locator('[data-filter="aspect"] option[value="semi-sextile"]').count(), 1);
 assert.equal(await page.locator('[data-filter="aspect"] option[value="quincunx"]').count(), 1);
 

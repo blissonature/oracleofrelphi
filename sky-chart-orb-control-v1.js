@@ -20,9 +20,9 @@
     const input=document.querySelector('[data-filter="orb"]');
     if(!input)return;
     const raw=input.value.trim();
-    const limit=raw===''?Infinity:Number(raw);
-    const valid=raw===''||(Number.isFinite(limit)&&limit>=0);
-    input.setCustomValidity(valid?'':'Enter an orb of 0 or greater.');
+    const limit=Number(raw);
+    const valid=raw!==''&&Number.isFinite(limit)&&limit>=0&&limit<=360;
+    input.setCustomValidity(valid?'':'Enter an orb from 0 to 360 degrees.');
     if(!valid)return;
 
     document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
@@ -57,9 +57,10 @@
     const input=document.createElement('input');
     input.type='number';
     input.min='0';
+    input.max='360';
     input.step='0.1';
     input.inputMode='decimal';
-    input.placeholder='All';
+    input.value='3';
     input.dataset.filter='orb';
     input.setAttribute('aria-label','Maximum orb in degrees');
     field.append(caption,input);

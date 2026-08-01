@@ -33,6 +33,20 @@
     line.setAttribute('y2', String(scaleCoordinate(line.getAttribute('y2'), sourceRadius, targetRadius)));
   }
 
+  function normalizeInactiveHourLines(hourLines) {
+    const seen = new Set();
+    hourLines.filter(line => !line.classList.contains('current')).forEach(line => {
+      const key = ['x1','y1','x2','y2'].map(name => Number(line.getAttribute(name)).toFixed(3)).join(':');
+      if (seen.has(key)) {
+        line.remove();
+        return;
+      }
+      seen.add(key);
+      line.classList.remove('past');
+      line.classList.add('future');
+    });
+  }
+
   function correct(svg) {
     if (!svg || svg.dataset.heptagramGeometryV3 === 'true') return;
     const weekLines = Array.from(svg.querySelectorAll('.sky-ph-week-segment'));
@@ -79,6 +93,7 @@
     // Scale every complete and partial hour segment from the original 78-unit geometry
     // to the exact outer-node radius so each heptagon vertex touches its heptagram vertex.
     hourLines.forEach(line => scaleLine(line, SOURCE_HEPTAGON_RADIUS, HEPTAGON_RADIUS));
+    normalizeInactiveHourLines(hourLines);
 
     ORDER.forEach(key => {
       const group = svg.querySelector(`.sky-ph-${key}`);
