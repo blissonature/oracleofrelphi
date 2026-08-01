@@ -122,3 +122,14 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
   else start();
 })();
+
+// Feature-branch loader for canonical heptagram glyphs and the Sky Chart rainbow mini wheel.
+(function () {
+  'use strict';
+  if (!/(^|\/)planetaryhours\.html$/.test(location.pathname)) return;
+  if (document.querySelector('script[src^="planetary-hours-canonical-rainbow-v1.js"]')) return;
+  const script = document.createElement('script');
+  script.async = false;
+  script.src = 'planetary-hours-canonical-rainbow-v1.js?v=1';
+  document.body.appendChild(script);
+})();
