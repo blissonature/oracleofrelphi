@@ -5,8 +5,7 @@
   if (window.__relphiSkyContractBootV1) return;
   window.__relphiSkyContractBootV1 = true;
 
-  // Hide the native result surface permanently. It remains available only as
-  // the nonvisual calculation/card-interpretation engine.
+  // The native result surface is calculation/card data only. It is never public UI.
   const guard = document.createElement('style');
   guard.id = 'relphi-sky-contract-first-paint';
   guard.textContent = 'body.sky-chart-page #chartPanel>.sky-output-box{display:none!important}';
@@ -39,7 +38,9 @@
     document.head.appendChild(script);
   }
 
-  load('sky-chart-contract-renderer-v1.js?v=1', function () {
-    load('sky-chart-contract-controller-v1.js?v=1');
+  load('relphi-canonical-angle-masters-v1.js?v=1', function () {
+    load('sky-chart-contract-renderer-v1.js?v=1', function () {
+      load('sky-chart-contract-controller-v1.js?v=2');
+    });
   });
 })();
