@@ -39,7 +39,8 @@
   }
 
   function installHitTargets() {
-    document.querySelectorAll('.sky-foundation-aspect[data-relation-index]').forEach(function (line) {
+    document.querySelectorAll('[data-layer="aspects"] > line[data-relation-index]:not(.sky-foundation-aspect-hit)').forEach(function (line) {
+      line.classList.add('sky-foundation-aspect');
       bind(line);
       if (line.dataset.hitTargetInstalled === 'true') return;
       line.dataset.hitTargetInstalled = 'true';
