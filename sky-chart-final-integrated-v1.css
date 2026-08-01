@@ -3,6 +3,9 @@
   grid-template-columns:minmax(0,1fr) minmax(130px,170px) minmax(0,1fr);
   align-items:center;
 }
+.sky-selected-card[data-selected-card="A"]{grid-column:1;grid-row:1}
+.sky-selected-aspect-diagram{grid-column:2;grid-row:1}
+.sky-selected-card[data-selected-card="B"]{grid-column:3;grid-row:1}
 .sky-selected-aspect-diagram{
   display:grid;
   justify-items:center;
@@ -46,8 +49,10 @@
 }
 @media(max-width:600px){
   .sky-chart-filter-bar{grid-template-columns:1fr 1fr}
-  .sky-selected-cards{grid-template-columns:minmax(0,1fr) 88px minmax(0,1fr);gap:5px;align-items:start}
-  .sky-selected-aspect-diagram{padding:7px 3px;margin-top:56px;border-radius:12px}
+  .sky-selected-cards{display:grid!important;grid-template-columns:minmax(0,1fr) 88px minmax(0,1fr)!important;gap:5px;align-items:start}
+  .sky-selected-card[data-selected-card="A"]{grid-column:1!important;grid-row:1!important}
+  .sky-selected-aspect-diagram{grid-column:2!important;grid-row:1!important;padding:7px 3px;margin-top:56px;border-radius:12px}
+  .sky-selected-card[data-selected-card="B"]{grid-column:3!important;grid-row:1!important}
   .sky-selected-aspect-diagram svg{width:82px}
   .sky-selected-aspect-label{font-size:.49rem;line-height:1.15}
   .sky-selected-aspect-label span{width:6px;height:6px;flex-basis:6px}
@@ -55,7 +60,7 @@
 }
 @media(max-width:390px){
   .sky-chart-filter-bar{grid-template-columns:1fr}
-  .sky-selected-cards{grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr)}
+  .sky-selected-cards{grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr)!important}
   .sky-selected-aspect-diagram{margin-top:50px}
   .sky-selected-aspect-diagram svg{width:68px}
   .sky-selected-aspect-label{font-size:.44rem}
