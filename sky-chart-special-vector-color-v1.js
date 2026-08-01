@@ -47,6 +47,24 @@
   }
   watchForCanonicalRoot();
 
+  function loadStyle(src, done) {
+    const base = src.split('?')[0];
+    const existing = document.querySelector('link[href^="' + base + '"]');
+    if (existing) {
+      if (done) queueMicrotask(done);
+      return;
+    }
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = src;
+    link.addEventListener('load', function () { if (done) done(); }, { once:true });
+    link.addEventListener('error', function () {
+      document.body.classList.remove('relphi-sky-contract-booting');
+      console.error('Sky Chart contract stylesheet failed to load:', src);
+    }, { once:true });
+    document.head.appendChild(link);
+  }
+
   function loadScript(src, done) {
     const base = src.split('?')[0];
     const existing = document.querySelector('script[src^="' + base + '"]');
@@ -76,24 +94,16 @@
       loadScript('sky-chart-contract-renderer-v1.js?v=1', function () {
         loadScript('sky-chart-contract-controller-v1.js?v=2', function () {
           loadScript('sky-chart-contract-native-map-v1.js?v=1', function () {
-            loadScript('sky-chart-contract-editor-v1.js?v=1');
+            loadScript('sky-chart-contract-editor-v1.js?v=1', function () {
+              loadScript('sky-chart-contract-heptagram-v1.js?v=1');
+            });
           });
         });
       });
     });
   }
 
-  const existingStyle = document.querySelector('link[href^="sky-chart-contract-v1.css"]');
-  if (existingStyle) startScripts();
-  else {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'sky-chart-contract-v1.css?v=1';
-    link.addEventListener('load', startScripts, { once:true });
-    link.addEventListener('error', function () {
-      document.body.classList.remove('relphi-sky-contract-booting');
-      console.error('Sky Chart contract stylesheet failed to load.');
-    }, { once:true });
-    document.head.appendChild(link);
-  }
+  loadStyle('sky-chart-contract-v1.css?v=1', function () {
+    loadStyle('sky-chart-contract-heptagram-v1.css?v=1', startScripts);
+  });
 })();
