@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <base href="../">
+  <title>Sky Chart · Part 2 Where and When · Oracle of Relphi</title>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="style.css?v=364">
+  <link rel="stylesheet" href="sky-chart-foundation-v1.css?v=1">
+  <link rel="stylesheet" href="sky-chart-foundation-interactions-v1.css?v=1">
+  <link rel="stylesheet" href="sky-chart-where-when-v1.css?v=1">
+  <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+</head>
+<body class="sky-chart-page sky-foundation-active sky-where-when-page">
+  <main class="tarot-app-shell">
+    <section class="tarot-hero compact">
+      <h1>Sky <span class="red">Chart</span></h1>
+      <p class="tarot-hero-subtitle">Part 2 · Where and When review</p>
+    </section>
+
+    <section id="chartPanel" class="tarot-tool-panel" aria-label="Sky Chart Part 2">
+      <section id="skyFoundationRoot" aria-label="Sky Chart foundation" aria-busy="true">
+        <aside id="skyFoundationA" class="sky-foundation-panel" aria-label="Sky A">
+          <header class="sky-foundation-heading">
+            <span class="sky-foundation-slot" style="--slot-color:#c9211e">Sky A</span>
+            <span class="sky-foundation-name">Sky A</span>
+          </header>
+          <div class="sky-foundation-body"></div>
+        </aside>
+
+        <section id="skyFoundationComparison" class="sky-foundation-panel" aria-label="Comparison zodiac wheel">
+          <header class="sky-foundation-heading"><span>Comparison</span></header>
+          <div id="skyFoundationWheelMount"></div>
+        </section>
+
+        <aside id="skyFoundationB" class="sky-foundation-panel" aria-label="Sky B">
+          <header class="sky-foundation-heading">
+            <span class="sky-foundation-slot" style="--slot-color:#2462d0">Sky B</span>
+            <span class="sky-foundation-name">Sky B</span>
+          </header>
+          <div class="sky-foundation-body"></div>
+        </aside>
+      </section>
+    </section>
+  </main>
+
+  <script src="vendor/astronomy-engine/astronomy.browser.min.js"></script>
+  <script src="relphi-house-systems.js?v=318"></script>
+  <script src="relphi-glyph-registry-v1.js?v=0d56ee7"></script>
+  <script src="relphi-glyph-component-v1.js?v=0d56ee7"></script>
+  <script src="relphi-moon-stroke-preservation-v1.js?v=1"></script>
+  <script src="relphi-neptune-cross-connection-v1.js?v=1"></script>
+  <script src="sky-chart-foundation-v1.js?v=1"></script>
+  <script src="sky-chart-foundation-interactions-v1.js?v=1"></script>
+  <script src="sky-chart-where-when-v1.js?v=1"></script>
+</body>
+</html>
