@@ -14,7 +14,8 @@
 .sky-foundation-aspect-hit,
 .sky-foundation-wheel rect.sky-foundation-aspect-hit {
   fill:transparent !important;
-  stroke:none !important;
+  stroke:transparent !important;
+  pointer-events:stroke !important;
 }
 
 /* Canonical sign glyphs remain legible over the rainbow rings. */
