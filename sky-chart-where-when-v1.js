@@ -167,14 +167,14 @@
   }
 
   function setBusy(slot, busy) {
-  cardState[slot].busy = !!busy;
-  const editor = panel(slot)?.querySelector('.sky-where-when-editor');
-  if (!editor) return;
-  editor.querySelectorAll('button,input,select').forEach(node => {
-    if (node.classList.contains('sky-where-when-cancel')) return;
-    node.disabled = !!busy;
-  });
-}
+    cardState[slot].busy = !!busy;
+    const editor = panel(slot)?.querySelector('.sky-where-when-editor');
+    if (!editor) return;
+    editor.querySelectorAll('button,input,select').forEach(node => {
+      if (node.classList.contains('sky-where-when-cancel')) return;
+      node.disabled = !!busy;
+    });
+  }
 
   function ensureCardStructure(slot) {
     const card = panel(slot);
@@ -730,11 +730,11 @@
   }
 
   function planetaryHoursUrl(profile) {
-  const params = new URLSearchParams();
-  const inferredInstant = !profile.instant && profile.dateTime && profile.timeZone && window.luxon?.DateTime
-    ? window.luxon.DateTime.fromISO(profile.dateTime, { zone:profile.timeZone, setZone:true }).toUTC().toISO()
-    : '';
-  const instant = profile.instant || inferredInstant;
+    const params = new URLSearchParams();
+    const inferredInstant = !profile.instant && profile.dateTime && profile.timeZone && window.luxon?.DateTime
+      ? window.luxon.DateTime.fromISO(profile.dateTime, { zone:profile.timeZone, setZone:true }).toUTC().toISO()
+      : '';
+    const instant = profile.instant || inferredInstant;
     params.set('phShare', '1');
     params.set('lat', String(profile.latitude));
     params.set('lon', String(profile.longitude));
