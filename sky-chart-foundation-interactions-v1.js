@@ -229,7 +229,7 @@
       const rightCopy = document.createElement('span');
       rightCopy.className = 'sky-foundation-relationship-copy';
       rightCopy.innerHTML = `${escapeHtml(relation.right.entry.name)}<small>${right.text} ${escapeHtml(SIGN_NAMES[right.sign])} · H${relation.right.house} · Orb ${relation.orb.toFixed(2)}°</small>`;
-      row.append(leftGlyph, leftCopy, aspectGlyph, rightCopy);
+      row.append(leftGlyph, leftCopy, aspectGlyph, rightGlyph, rightCopy);
       list.appendChild(row);
 
       jobs.push(drawCanonical(leftGlyph, relation.left.id, { radius:15, padding:1, color:SKY.A }).catch(error => { leftGlyph.remove(); console.error(error); }));
