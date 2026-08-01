@@ -7,7 +7,7 @@ on:
   pull_request:
     paths:
       - 'part2/sky-chart.html'
-      - 'sky-chart-selected-relationship-v1.js'
+      - 'sky-chart-selected-relationship-v2.js'
       - 'sky-chart-selected-relationship-v1.css'
       - 'tests/sky-chart-part2-selected-relationship.mjs'
       - '.github/workflows/sky-chart-part2-selected-relationship-check.yml'
@@ -24,7 +24,7 @@ jobs:
           node-version: '22'
       - name: JavaScript syntax
         run: |
-          node --check sky-chart-selected-relationship-v1.js
+          node --check sky-chart-selected-relationship-v2.js
           node --check tests/sky-chart-part2-selected-relationship.mjs
       - name: Install browser dependencies
         run: |
