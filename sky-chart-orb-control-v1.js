@@ -48,8 +48,10 @@
   function install(){
     const bar=document.querySelector('.sky-chart-filter-bar');
     if(!bar||bar.querySelector('[data-filter="orb"]'))return;
-    const label=document.createElement('label');
-    label.textContent='Maximum Orb';
+    const field=document.createElement('div');
+    field.className='sky-orb-number-field';
+    const caption=document.createElement('span');
+    caption.textContent='Maximum Orb';
     const input=document.createElement('input');
     input.type='number';
     input.min='0';
@@ -58,8 +60,8 @@
     input.placeholder='All';
     input.dataset.filter='orb';
     input.setAttribute('aria-label','Maximum orb in degrees');
-    label.appendChild(input);
-    bar.appendChild(label);
+    field.append(caption,input);
+    bar.appendChild(field);
     input.addEventListener('input',schedule);
     input.addEventListener('change',schedule);
     schedule();
