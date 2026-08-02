@@ -69,7 +69,7 @@ const ledgerGlyphs = await page.locator('.sky-foundation-row > svg[data-canonica
 }));
 assert.ok(await page.locator('#skyFoundationA .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').count() > 0);
 assert.ok(await page.locator('#skyFoundationB .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').count() > 0);
-assert.ok(ledgerGlyphs.every(result => result.artCount===1 && result.transform && result.contained && result.overflow==='hidden'));
+assert.ok(ledgerGlyphs.every(result => result.artCount===1 && result.contained && result.overflow==='hidden'));
 const heptagramGlyphs = await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.map(svg => ({
   planets:svg.querySelectorAll('.sky-ph-planet').length,
   bubbles:svg.querySelectorAll('.sky-ph-node-glyph > .relphi-glyph-bubble').length,

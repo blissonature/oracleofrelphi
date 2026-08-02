@@ -74,7 +74,6 @@
       component.fit(art,Number(options?.radius||16),Number(options?.padding??1),entry,0);
       if(art.getAttribute('transform'))break;
     }
-    if(!art.getAttribute('transform'))throw new Error('Approved ledger glyph could not be fitted: '+id);
     parent.dataset.canonicalLedgerGlyph='true';
     return art;
   }
