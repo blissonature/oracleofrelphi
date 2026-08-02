@@ -74,12 +74,6 @@ const ledgerGlyphs = await page.locator('.sky-foundation-row > svg[data-canonica
 assert.ok(await page.locator('#skyFoundationA .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').count() > 0);
 assert.ok(await page.locator('#skyFoundationB .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').count() > 0);
 assert.ok(ledgerGlyphs.every(result => result.artCount===1 && result.contained && result.overflow==='hidden'));
-await page.locator('#skyFoundationA').getByRole('button', {name:'Placements', exact:true}).click();
-await page.locator('#skyFoundationB').getByRole('button', {name:'Placements', exact:true}).click();
-assert.ok(await page.locator('.sky-foundation-ledger > .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => {
-  const visible=nodes.map(svg=>svg.getBoundingClientRect()).filter(box=>box.width>0&&box.height>0);
-  return visible.length>0&&visible.every(box=>box.width<=24&&box.height<=24);
-}));
 const heptagramGlyphs = await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.map(svg => ({
   planets:svg.querySelectorAll('.sky-ph-planet').length,
   bubbles:svg.querySelectorAll('.sky-ph-node-glyph > .relphi-glyph-bubble').length,
@@ -93,6 +87,12 @@ const heptagramGlyphs = await page.locator('.sky-ph-heptagram').evaluateAll(node
 assert.ok(heptagramGlyphs.length >= 2);
 assert.ok(heptagramGlyphs.every(result => result.planets===7 && result.bubbles===7 && result.duplicateMounts===0 && result.oldNodes===0 && result.dayRulers===1 && result.hourRulers===1 && result.dayRingWidth>=5));
 assert.ok(heptagramGlyphs.every(result => result.hourArtwork.length>0 && result.hourArtwork.every(shape => shape.fill==='none' || shape.fill==='rgb(255, 255, 255)') && result.hourArtwork.every(shape => shape.fill==='none' || (shape.stroke==='none' && shape.width===0)) && result.hourArtwork.every(shape => shape.fill!=='none' || shape.stroke==='none' || shape.stroke==='rgb(255, 255, 255)') && result.hourArtwork.every(shape => !Number.isFinite(shape.width) || shape.width<=4)));
+await page.locator('#skyFoundationA').getByRole('button', {name:'Placements', exact:true}).click();
+await page.locator('#skyFoundationB').getByRole('button', {name:'Placements', exact:true}).click();
+assert.ok(await page.locator('.sky-foundation-ledger > .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => {
+  const visible=nodes.map(svg=>svg.getBoundingClientRect()).filter(box=>box.width>0&&box.height>0);
+  return visible.length>0&&visible.every(box=>box.width<=24&&box.height<=24);
+}));
 
 const filterLabels = await page.locator('.sky-chart-filter-bar label').evaluateAll(nodes => nodes.map(node => node.childNodes[0].textContent.trim()));
 assert.deepEqual(filterLabels, ['Orb','Aspects','Placements','Sky A House','Sky B House','House System']);
