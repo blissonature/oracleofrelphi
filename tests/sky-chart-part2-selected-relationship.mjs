@@ -150,7 +150,14 @@ assert.equal(await panel.locator('.sky-selected-aspect-orbit').count(), 1);
 assert.equal(await panel.locator('.sky-selected-aspect-center').count(), 1);
 assert.equal(await panel.locator('.sky-selected-aspect-point.sky-a').count(), 1);
 assert.equal(await panel.locator('.sky-selected-aspect-point.sky-b').count(), 1);
-assert.equal(await panel.locator('.sky-selected-reveal').count(), 3);
+assert.equal(await panel.locator('.sky-progressive-comparison').count(), 1);
+assert.equal(await panel.locator('.sky-progressive-side').count(), 2);
+assert.equal(await panel.locator('.sky-progressive-relationship').count(), 1);
+assert.equal(await panel.locator('.sky-progressive-token').count(), 9);
+assert.deepEqual(await panel.locator('.sky-progressive-side dt,.sky-progressive-relationship dt').allTextContents(), ['Placement','Sign','House','Aspect','Orb','Transit length','Placement','Sign','House']);
+assert.equal(await panel.locator('.sky-progressive-token[data-progressive-stage="glyph"]').count(), 9);
+assert.equal(await panel.locator('.sky-progressive-name:visible,.sky-progressive-meaning:visible').count(), 0);
+assert.equal(await panel.locator('[data-progressive-glyph-id]').count(), 5);
 assert.equal(await panel.locator('[data-missing-canonical-glyph]').count(), 0);
 
 const order = await panel.locator('.sky-selected-body > *').evaluateAll(nodes => nodes.map(node => node.className));
@@ -251,10 +258,25 @@ const afterHouseChange = await page.evaluate(() => JSON.parse(localStorage.getIt
 assert.notDeepEqual(afterHouseChange.calcProfile.houseCusps, beforeCusps);
 assert.ok(Object.values(afterHouseChange.placements).every(item => !Number.isFinite(Number(item.longitude)) || Number(item.house) >= 1));
 
-await panel.locator('[data-reveal-level="symbol"] summary').click();
-await panel.locator('[data-reveal-level="cards"] summary').click();
-await panel.locator('[data-reveal-level="synthesis"] summary').click();
-assert.equal(await panel.locator('.sky-selected-reveal[open]').count(), 3);
+const progressivePlacement = panel.locator('[data-progressive-sky="A"] .sky-progressive-token').first();
+await progressivePlacement.locator('[data-progressive-level="glyph"]').click();
+assert.equal(await progressivePlacement.getAttribute('data-progressive-stage'), 'name');
+assert.equal(await progressivePlacement.locator('.sky-progressive-name').isVisible(), true);
+assert.equal(await progressivePlacement.locator('.sky-progressive-meaning').isVisible(), false);
+await progressivePlacement.locator('[data-progressive-level="name"]').click();
+assert.equal(await progressivePlacement.getAttribute('data-progressive-stage'), 'meaning');
+assert.equal(await progressivePlacement.locator('.sky-progressive-meaning').isVisible(), true);
+await progressivePlacement.locator('[data-progressive-level="name"]').click();
+assert.equal(await progressivePlacement.getAttribute('data-progressive-stage'), 'name');
+assert.equal(await progressivePlacement.locator('.sky-progressive-meaning').isVisible(), false);
+await progressivePlacement.locator('[data-progressive-level="glyph"]').click();
+assert.equal(await progressivePlacement.getAttribute('data-progressive-stage'), 'glyph');
+assert.equal(await progressivePlacement.locator('.sky-progressive-name').isVisible(), false);
+for (const token of await panel.locator('.sky-progressive-token').all()) {
+  await token.locator('[data-progressive-level="glyph"]').click();
+  await token.locator('[data-progressive-level="name"]').click();
+}
+assert.equal(await panel.locator('.sky-progressive-token[data-progressive-stage="meaning"]').count(), 9);
 await page.screenshot({path:'sky-chart-selected-relationship-desktop.png',fullPage:true});
 
 await page.setViewportSize({width:390,height:844});
