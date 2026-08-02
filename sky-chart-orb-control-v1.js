@@ -65,7 +65,7 @@
     input.max='360';
     input.step='0.1';
     input.inputMode='decimal';
-    input.value='3';
+    input.value='1';
     input.dataset.filter='orb';
     input.setAttribute('aria-label','Maximum orb in degrees');
     field.append(caption,input);

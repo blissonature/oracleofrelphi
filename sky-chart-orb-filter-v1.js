@@ -53,7 +53,7 @@
     if (!bar || bar.querySelector('[data-orb-filter]')) return false;
     const label = document.createElement('label');
     label.className = 'sky-orb-filter';
-    label.innerHTML = '<span>Orb <output data-orb-output>3.0°</output></span><input data-orb-filter type="range" min="0" max="3" step="0.1" value="3" aria-label="Maximum relationship orb in degrees">';
+    label.innerHTML = '<span>Orb <output data-orb-output>1.0°</output></span><input data-orb-filter type="range" min="0" max="360" step="0.1" value="1" aria-label="Maximum relationship orb in degrees">';
     bar.appendChild(label);
     const input = label.querySelector('[data-orb-filter]');
     input.addEventListener('input', () => {
