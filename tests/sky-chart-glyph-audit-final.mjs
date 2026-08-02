@@ -97,11 +97,12 @@ const issues=await page.evaluate(()=>{
       if(fill==='none'||fill==='rgba(0, 0, 0, 0)'||white(fill))issues.push(`hour-ruler ${index+1}: field is not a solid planetary color`);
     }
     art?.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text').forEach(node=>{
-      const tag=node.localName;
-      const fill=node.getAttribute('fill');
-      const stroke=node.getAttribute('stroke');
-      if((tag==='text'||(fill&&fill!=='none'))&&!white(getComputedStyle(node).fill))issues.push(`hour-ruler ${index+1}: visible fill is not white`);
-      if(stroke&&stroke!=='none'&&!white(getComputedStyle(node).stroke))issues.push(`hour-ruler ${index+1}: visible stroke is not white`);
+      const style=getComputedStyle(node);
+      const fillOpacity=Number.parseFloat(style.fillOpacity||'1');
+      const strokeOpacity=Number.parseFloat(style.strokeOpacity||'1');
+      const strokeWidth=Number.parseFloat(style.strokeWidth||'0');
+      if(style.fill!=='none'&&fillOpacity>0&&!white(style.fill))issues.push(`hour-ruler ${index+1}: rendered fill is not white`);
+      if(style.stroke!=='none'&&strokeOpacity>0&&strokeWidth>0&&!white(style.stroke))issues.push(`hour-ruler ${index+1}: rendered stroke is not white`);
     });
   });
 
@@ -136,4 +137,4 @@ assert.equal(await page.getAttribute('html','data-sky-glyph-audit'),'passed');
 await page.screenshot({path:'sky-chart-glyph-audit-mobile.png',fullPage:true});
 
 await browser.close();
-console.log('Sky Chart canonical glyph audit passed on desktop and mobile, including true white-on-color hour-ruler inversion.');
+console.log('Sky Chart canonical glyph audit passed on desktop and mobile, including inherited white-on-color hour-ruler paint.');
