@@ -1,0 +1,33 @@
+/* Final neutral treatment for placement and house filter controls. */
+html body #skyChartPlacementPopover.sky-chart-placement-filter-popover.is-portaled{
+  width:min(350px,calc(100vw - 20px))!important;
+  max-width:calc(100vw - 20px)!important;
+}
+.sky-chart-placement-list-header-choice-a,
+.sky-chart-placement-list-header-choice-b,
+.sky-chart-placement-summary-choices .sky-chart-placement-choice-a,
+.sky-chart-placement-summary-choices .sky-chart-placement-choice-b,
+.sky-chart-placement-choice-a,
+.sky-chart-placement-choice-b,
+.sky-chart-house-choice-a,
+.sky-chart-house-choice-b{
+  background:rgba(31,27,24,.018)!important;
+  color:#514a44!important;
+}
+.sky-chart-placement-filter input[type="checkbox"],
+.sky-chart-placement-filter-popover input[type="checkbox"],
+.sky-chart-house-filter input[type="checkbox"],
+.sky-chart-house-filter-popover input[type="checkbox"]{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  border:1px solid #211d19!important;
+  background:#fff!important;
+  color:#111!important;
+  accent-color:transparent!important;
+}
+@media(max-width:410px){
+  html body #skyChartPlacementPopover.sky-chart-placement-filter-popover.is-portaled{
+    width:min(330px,calc(100vw - 16px))!important;
+    max-width:calc(100vw - 16px)!important;
+  }
+}
