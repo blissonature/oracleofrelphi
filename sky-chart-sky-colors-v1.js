@@ -8,6 +8,7 @@
   const COLORS = Object.freeze({ A:'#c9211e', B:'#2462d0' });
   const PAINTED = '[fill],[stroke],text';
   let timer = 0;
+  let stabilityTimer = 0;
 
   function paintNode(node, color) {
     const tag = node.localName;
@@ -81,19 +82,44 @@
     return { passed, painted, expected };
   }
 
-  function schedule() {
-    clearTimeout(timer);
-    timer = setTimeout(() => requestAnimationFrame(scan), 40);
+  function runAfterLayout() {
+    requestAnimationFrame(() => requestAnimationFrame(scan));
   }
 
-  window.RelphiSkyColors = Object.freeze({ scan, colors:COLORS });
+  function schedule(delay = 40) {
+    clearTimeout(timer);
+    timer = setTimeout(runAfterLayout, delay);
+  }
 
-  const observer = new MutationObserver(schedule);
+  function scheduleStabilityPasses() {
+    clearTimeout(stabilityTimer);
+    [0, 80, 220, 500, 1000].forEach(delay => setTimeout(() => schedule(0), delay));
+    stabilityTimer = setTimeout(() => schedule(0), 1600);
+  }
+
+  window.RelphiSkyColors = Object.freeze({ scan, colors:COLORS, schedule:scheduleStabilityPasses });
+
+  const observer = new MutationObserver(records => {
+    const relevant = records.some(record => {
+      if (record.type !== 'childList') return false;
+      const target = record.target?.nodeType === 1 ? record.target : record.target?.parentElement;
+      return !!target?.closest?.(
+        '#skyFoundationA,#skyFoundationB,[data-layer="placements"],#skySelectedRelationship'
+      );
+    });
+    if (relevant) schedule(25);
+  });
+
   function start() {
     observer.observe(document.documentElement, { childList:true, subtree:true });
-    ['relphi:sky-foundation-ready','relphi:selected-relationship-rendered']
-      .forEach(name => window.addEventListener(name, schedule));
-    schedule();
+    [
+      'relphi:sky-foundation-ready',
+      'relphi:sky-foundation-interactions-ready',
+      'relphi:selected-relationship-rendered',
+      'relphi:sky-angle-placements-ready',
+      'relphi:sky-glyph-audit-complete'
+    ].forEach(name => window.addEventListener(name, scheduleStabilityPasses));
+    scheduleStabilityPasses();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
