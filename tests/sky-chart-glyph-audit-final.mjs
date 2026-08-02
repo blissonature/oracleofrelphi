@@ -102,7 +102,9 @@ const issues=await page.evaluate(()=>{
       const fill=getComputedStyle(field).fill;
       if(fill==='none'||fill==='rgba(0, 0, 0, 0)'||white(fill))issues.push(`hour-ruler ${index+1}: field is not a solid planetary color`);
     }
-    art?.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text').forEach(node=>{
+    const painted=art?.matches('path,circle,ellipse,rect,polygon,polyline,line,text')?[art]:[];
+    art?.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text').forEach(node=>painted.push(node));
+    painted.forEach(node=>{
       const style=getComputedStyle(node);
       const fillOpacity=Number.parseFloat(style.fillOpacity||'1');
       const strokeOpacity=Number.parseFloat(style.strokeOpacity||'1');
@@ -113,13 +115,13 @@ const issues=await page.evaluate(()=>{
   });
 
   document.querySelectorAll('.relphi-canonical-glyph.relphi-glyph-venus').forEach((art,index)=>{
-    const glyphPath=art.querySelector('path');
+    const glyphPath=art.matches('path')?art:art.querySelector('path');
     const data=glyphPath?.getAttribute('d')||'';
     if(!glyphPath||data.length<200)issues.push(`Venus ${index+1}: canonical compound path missing or incomplete`);
     if(glyphPath&&!visibleFill(glyphPath))issues.push(`Venus ${index+1}: canonical filled form is not visible`);
   });
   document.querySelectorAll('.relphi-canonical-glyph.relphi-glyph-moon').forEach((art,index)=>{
-    const glyphPath=art.querySelector('path');
+    const glyphPath=art.matches('path')?art:art.querySelector('path');
     const data=glyphPath?.getAttribute('d')||'';
     if(!glyphPath||data.length<200)issues.push(`Moon ${index+1}: canonical crescent path missing or incomplete`);
     if(glyphPath&&!visibleFill(glyphPath))issues.push(`Moon ${index+1}: canonical supportive crescent form is not visible`);
