@@ -6,6 +6,7 @@
   window.__relphiSkySingleSkyPresentationV1 = true;
 
   let queued = false;
+  let choiceSyncTimer = 0;
 
   function isSingleSkyMode() {
     return /^(A-A|B-B)$/.test(document.documentElement.dataset.skyRelationshipMode || '');
@@ -15,6 +16,19 @@
     return row.classList.contains('sky-chart-filter-hidden') ||
       row.classList.contains('sky-chart-orb-hidden') ||
       row.classList.contains('sky-orb-filter-hidden');
+  }
+
+  function selectedPlacements(slot) {
+    return Array.from(document.querySelectorAll(`[data-placement-option][data-slot="${slot}"]:checked`))
+      .map(input => input.value)
+      .filter(Boolean);
+  }
+
+  function syncChoiceState() {
+    choiceSyncTimer = 0;
+    window.dispatchEvent(new CustomEvent('relphi:sky-placement-multiselect-changed', {
+      detail:{ A:selectedPlacements('A'), B:selectedPlacements('B'), source:'single-sky-choice-sync' }
+    }));
   }
 
   function repair() {
@@ -58,6 +72,11 @@
         attributeFilter:['class','hidden']
       });
     }
+    document.addEventListener('change', event => {
+      if (!event.target.closest?.('[data-placement-choice]')) return;
+      clearTimeout(choiceSyncTimer);
+      choiceSyncTimer = setTimeout(syncChoiceState, 0);
+    });
     [
       'relphi:sky-single-sky-aspects-rendered',
       'relphi:sky-placement-multiselect-changed',
