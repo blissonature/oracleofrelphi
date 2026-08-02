@@ -114,6 +114,16 @@ const placementB=placementSummary.locator('[data-placement-choice="b"]');
 await placementB.check();
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='A-B',null,{timeout:10000});
 await placementB.uncheck();
+await page.waitForTimeout(600);
+console.log('HOUSE_SINGLE_DEBUG',JSON.stringify(await page.evaluate(()=>({
+  mode:document.documentElement.dataset.skyRelationshipMode,
+  summaryB:document.querySelector('[data-placement-filter="combined"] .sky-chart-placement-summary-choices [data-placement-choice="b"]')?.checked,
+  checkedB:document.querySelectorAll('[data-placement-option][data-slot="B"]:checked').length,
+  totalB:document.querySelectorAll('[data-placement-option][data-slot="B"]').length,
+  checkedA:document.querySelectorAll('[data-placement-option][data-slot="A"]:checked').length,
+  totalA:document.querySelectorAll('[data-placement-option][data-slot="A"]').length,
+  selfRows:document.querySelectorAll('.sky-foundation-single-sky-row[data-single-sky="A"]').length
+}))));
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='A-A',null,{timeout:10000});
 await page.waitForSelector('.sky-foundation-single-sky-row[data-single-sky="A"]',{timeout:10000});
 const firstSelf=page.locator('.sky-foundation-single-sky-row[data-single-sky="A"]').first();
