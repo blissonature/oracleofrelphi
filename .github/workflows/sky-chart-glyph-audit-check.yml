@@ -8,16 +8,23 @@ on:
       - 'sky-chart.html'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
+      - 'assets/angle-glyphs/**'
       - 'relphi-moon-stroke-preservation-v1.js'
       - 'relphi-neptune-cross-connection-v1.js'
       - 'sky-chart-glyph-framing-v1.js'
       - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-sky-colors-v1.js'
+      - 'sky-chart-angle-placements-v1.js'
+      - 'sky-chart-angle-placement-visibility-v1.js'
+      - 'sky-chart-angle-placement-visibility-v1.css'
+      - 'sky-chart-aspect-multiselect-v1.js'
+      - 'sky-chart-aspect-multiselect-v1.css'
+      - 'sky-chart-filter-event-stability-v1.js'
       - 'sky-chart-multiselect-filters-v1.js'
       - 'sky-chart-multiselect-filters-v1.css'
       - 'sky-chart-placement-compact-v1.js'
       - 'sky-chart-placement-compact-v1.css'
-      - 'sky-chart-house-and-angle-multiselect-v2.js'
+      - 'sky-chart-house-multiselect-v2.js'
       - 'sky-chart-house-multiselect-v1.css'
       - 'sky-chart-filter-neutral-final-v1.js'
       - 'sky-chart-filter-neutral-final-v1.css'
@@ -32,6 +39,7 @@ on:
       - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-heptagram-canonical-v1.css'
       - 'sky-chart-live-integrity-v1.js'
+      - 'tests/sky-chart-angles-and-aspects.mjs'
       - 'tests/sky-chart-glyph-audit-final.mjs'
       - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
       - 'tests/sky-chart-placement-ledger-colors.mjs'
@@ -46,16 +54,23 @@ on:
       - 'sky-chart.html'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
+      - 'assets/angle-glyphs/**'
       - 'relphi-moon-stroke-preservation-v1.js'
       - 'relphi-neptune-cross-connection-v1.js'
       - 'sky-chart-glyph-framing-v1.js'
       - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-sky-colors-v1.js'
+      - 'sky-chart-angle-placements-v1.js'
+      - 'sky-chart-angle-placement-visibility-v1.js'
+      - 'sky-chart-angle-placement-visibility-v1.css'
+      - 'sky-chart-aspect-multiselect-v1.js'
+      - 'sky-chart-aspect-multiselect-v1.css'
+      - 'sky-chart-filter-event-stability-v1.js'
       - 'sky-chart-multiselect-filters-v1.js'
       - 'sky-chart-multiselect-filters-v1.css'
       - 'sky-chart-placement-compact-v1.js'
       - 'sky-chart-placement-compact-v1.css'
-      - 'sky-chart-house-and-angle-multiselect-v2.js'
+      - 'sky-chart-house-multiselect-v2.js'
       - 'sky-chart-house-multiselect-v1.css'
       - 'sky-chart-filter-neutral-final-v1.js'
       - 'sky-chart-filter-neutral-final-v1.css'
@@ -70,6 +85,7 @@ on:
       - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-heptagram-canonical-v1.css'
       - 'sky-chart-live-integrity-v1.js'
+      - 'tests/sky-chart-angles-and-aspects.mjs'
       - 'tests/sky-chart-glyph-audit-final.mjs'
       - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
       - 'tests/sky-chart-placement-ledger-colors.mjs'
@@ -95,13 +111,18 @@ jobs:
           node --check sky-chart-glyph-framing-v1.js
           node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-sky-colors-v1.js
+          node --check sky-chart-angle-placements-v1.js
+          node --check sky-chart-angle-placement-visibility-v1.js
+          node --check sky-chart-aspect-multiselect-v1.js
+          node --check sky-chart-filter-event-stability-v1.js
           node --check sky-chart-multiselect-filters-v1.js
           node --check sky-chart-placement-compact-v1.js
-          node --check sky-chart-house-and-angle-multiselect-v2.js
+          node --check sky-chart-house-multiselect-v2.js
           node --check sky-chart-filter-neutral-final-v1.js
           node --check sky-chart-single-sky-aspects-v1.js
           node --check sky-chart-single-sky-presentation-v1.js
           node --check sky-chart-heptagram-canonical-v1.js
+          node --check tests/sky-chart-angles-and-aspects.mjs
           node --check tests/sky-chart-glyph-audit-final.mjs
           node --check tests/sky-chart-hour-ruler-and-sky-colors.mjs
           node --check tests/sky-chart-placement-ledger-colors.mjs
@@ -117,6 +138,7 @@ jobs:
       - name: Run complete Sky Chart browser audit
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-glyph-audit-server.log 2>&1 &
+          node tests/sky-chart-angles-and-aspects.mjs
           node tests/sky-chart-multiselect-filters.mjs
           node tests/sky-chart-placement-compact.mjs
           node tests/sky-chart-house-multiselect.mjs
@@ -130,6 +152,9 @@ jobs:
         with:
           name: sky-chart-glyph-audit-screenshots
           path: |
+            sky-chart-aspect-multiselect-desktop.png
+            sky-chart-aspect-multiselect-mobile.png
+            sky-chart-angle-placements-desktop.png
             sky-chart-multiselect-filters-desktop.png
             sky-chart-multiselect-filters-mobile.png
             sky-chart-placement-compact-desktop.png
