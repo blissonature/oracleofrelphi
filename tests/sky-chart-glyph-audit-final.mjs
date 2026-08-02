@@ -34,6 +34,7 @@ const issues=await page.evaluate(()=>{
   const rootFor=host=>host?.querySelector?.('.relphi-glyph-bubble')||null;
   const artFor=root=>Array.from(root?.children||[]).find(node=>node.classList?.contains('relphi-canonical-glyph'))||null;
   const circleFor=root=>root?.querySelector?.(':scope > circle')||null;
+  const white=value=>value==='rgb(255, 255, 255)'||value==='rgba(255, 255, 255, 1)'||value==='#fff'||value==='#ffffff'||value==='white';
   const isHidden=root=>{
     const circle=circleFor(root);if(!circle)return false;
     const attr=circle.getAttribute('opacity');
@@ -84,6 +85,26 @@ const issues=await page.evaluate(()=>{
 
   document.querySelectorAll('.sky-ph-heptagram[data-canonical-heptagram-v1="true"]').forEach((svg,chartIndex)=>chaldean.forEach(key=>check(svg.querySelector(`.sky-ph-${key} .sky-ph-node-glyph`),key,`heptagram ${chartIndex+1} ${key}`,false)));
 
+  const hourRulers=Array.from(document.querySelectorAll('.sky-ph-canonical-bubble.is-hour-ruler'));
+  if(hourRulers.length!==2)issues.push(`hour-ruler inversion: expected 2 rulers, received ${hourRulers.length}`);
+  hourRulers.forEach((root,index)=>{
+    const art=artFor(root),field=circleFor(root);
+    if(!art)issues.push(`hour-ruler ${index+1}: canonical artwork missing`);
+    if(art?.dataset.hourRulerInverse!=='true')issues.push(`hour-ruler ${index+1}: inverse pass was not applied`);
+    if(!field)issues.push(`hour-ruler ${index+1}: solid field missing`);
+    else{
+      const fill=getComputedStyle(field).fill;
+      if(fill==='none'||fill==='rgba(0, 0, 0, 0)'||white(fill))issues.push(`hour-ruler ${index+1}: field is not a solid planetary color`);
+    }
+    art?.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text').forEach(node=>{
+      const tag=node.localName;
+      const fill=node.getAttribute('fill');
+      const stroke=node.getAttribute('stroke');
+      if((tag==='text'||(fill&&fill!=='none'))&&!white(getComputedStyle(node).fill))issues.push(`hour-ruler ${index+1}: visible fill is not white`);
+      if(stroke&&stroke!=='none'&&!white(getComputedStyle(node).stroke))issues.push(`hour-ruler ${index+1}: visible stroke is not white`);
+    });
+  });
+
   document.querySelectorAll('.relphi-glyph-venus').forEach((art,index)=>{
     const circle=art.querySelector('circle'),cross=art.querySelector('path');
     if(!circle||!cross)issues.push(`Venus ${index+1}: canonical circle or cross missing`);
@@ -115,4 +136,4 @@ assert.equal(await page.getAttribute('html','data-sky-glyph-audit'),'passed');
 await page.screenshot({path:'sky-chart-glyph-audit-mobile.png',fullPage:true});
 
 await browser.close();
-console.log('Sky Chart canonical glyph audit passed on desktop and mobile.');
+console.log('Sky Chart canonical glyph audit passed on desktop and mobile, including true white-on-color hour-ruler inversion.');
