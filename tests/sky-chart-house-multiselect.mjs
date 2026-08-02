@@ -110,7 +110,10 @@ await page.screenshot({path:'sky-chart-house-multiselect-desktop.png',fullPage:t
 await combined.locator('[data-house-filter-toggle]').click();
 await page.waitForFunction(()=>document.getElementById('skyChartHousePopover')?.hidden===true,null,{timeout:10000});
 const placementSummary=page.locator('[data-placement-filter="combined"] .sky-chart-placement-summary-choices');
-await placementSummary.locator('[data-placement-choice="b"]').uncheck();
+const placementB=placementSummary.locator('[data-placement-choice="b"]');
+await placementB.check();
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='A-B',null,{timeout:10000});
+await placementB.uncheck();
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='A-A',null,{timeout:10000});
 await page.waitForSelector('.sky-foundation-single-sky-row[data-single-sky="A"]',{timeout:10000});
 const firstSelf=page.locator('.sky-foundation-single-sky-row[data-single-sky="A"]').first();
