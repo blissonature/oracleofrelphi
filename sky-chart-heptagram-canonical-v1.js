@@ -19,19 +19,24 @@
     artwork.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
       const fill = node.getAttribute('fill');
       const stroke = node.getAttribute('stroke');
-      if (fill && fill !== 'none') {
+      const hasFill = fill !== 'none';
+      if (hasFill) {
         node.setAttribute('fill', '#fff');
         node.style.setProperty('fill', '#fff', 'important');
+        node.setAttribute('stroke', background);
+        node.setAttribute('stroke-width', '1.15');
+        node.setAttribute('paint-order', 'fill stroke markers');
+        node.style.setProperty('stroke', background, 'important');
+        node.style.setProperty('stroke-width', '1.15', 'important');
+        node.style.setProperty('paint-order', 'fill stroke markers', 'important');
       }
-      if (stroke && stroke !== 'none') {
-        const strokeColor = fill && fill !== 'none' ? background : '#fff';
+      if (!hasFill && stroke && stroke !== 'none') {
+        const strokeColor = '#fff';
         node.setAttribute('stroke', strokeColor);
         node.style.setProperty('stroke', strokeColor, 'important');
         const current = parseFloat(node.getAttribute('stroke-width'));
         if (Number.isFinite(current)) {
-          // Filled canonical silhouettes receive a background-colored edge that
-          // gently restores their pre-thickening visual weight after inversion.
-          const width = fill && fill !== 'none' ? Math.min(current, 1.15) : Math.max(1, current - .9);
+          const width = Math.max(1, current - .9);
           node.setAttribute('stroke-width', String(width));
           node.style.setProperty('stroke-width', String(width), 'important');
         }
