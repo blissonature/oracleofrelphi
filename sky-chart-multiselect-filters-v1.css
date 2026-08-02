@@ -1,4 +1,4 @@
-/* One categorized checkbox placement filter for both skies. */
+/* One categorized placement list with All / A / B controls on every row. */
 #skyFoundationRelationships{overflow:visible!important}
 .sky-chart-filter-bar[data-multiselect-placement-filters="true"]{
   position:relative;
@@ -60,8 +60,8 @@
   position:absolute;
   top:calc(100% + 6px);
   left:50%;
-  width:min(620px,calc(100vw - 24px));
-  max-height:min(540px,78vh);
+  width:min(430px,calc(100vw - 24px));
+  max-height:min(560px,78vh);
   overflow:auto;
   box-sizing:border-box;
   padding:10px;
@@ -69,7 +69,7 @@
   border-radius:13px;
   background:#fffdf8;
   box-shadow:0 16px 38px rgba(31,27,24,.2);
-  transform:translateX(-34%);
+  transform:translateX(-32%);
   pointer-events:auto;
 }
 .sky-chart-placement-filter-popover[hidden]{display:none!important}
@@ -82,67 +82,51 @@
   transform:none;
   isolation:isolate;
 }
-.sky-chart-placement-filter-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.sky-chart-placement-filter-actions button{
-  min-height:28px;
-  padding:.25rem .4rem;
-  border:1px solid rgba(31,27,24,.18);
-  border-radius:7px;
-  background:#f8f4ee;
-  color:#211d19;
-  cursor:pointer;
-  font:800 .62rem/1 system-ui,sans-serif;
-}
-.sky-chart-placement-filter-actions button:hover,
-.sky-chart-placement-filter-actions button:focus-visible{border-color:rgba(31,27,24,.42);background:#fff;outline:none}
-.sky-chart-placement-global-actions{max-width:250px;margin:0 auto 9px}
-.sky-chart-placement-matrix{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:10px;background:#fff}
-.sky-chart-placement-matrix-header,
-.sky-chart-placement-matrix-group-heading,
-.sky-chart-placement-matrix-row{
+.sky-chart-placement-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:10px;background:#fff}
+.sky-chart-placement-list-item{
   display:grid;
-  grid-template-columns:minmax(145px,1.35fr) minmax(100px,.8fr) minmax(100px,.8fr);
+  grid-template-columns:minmax(0,1fr) auto;
   align-items:center;
+  min-height:35px;
+  border-top:1px solid rgba(31,27,24,.075);
 }
-.sky-chart-placement-matrix-header{background:#f4efe8;border-bottom:1px solid rgba(31,27,24,.16)}
-.sky-chart-placement-matrix-header>strong{padding:10px;font:900 .72rem/1.15 system-ui,sans-serif}
-.sky-chart-placement-matrix-sky{display:grid;gap:5px;min-width:0;padding:7px 8px;border-left:1px solid rgba(31,27,24,.12)}
-.sky-chart-placement-matrix-sky-a{background:rgba(201,33,30,.045)}
-.sky-chart-placement-matrix-sky-b{background:rgba(36,98,208,.05)}
-.sky-chart-placement-matrix-sky>label{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"check title" "check status";align-items:center;gap:1px 5px;cursor:pointer}
-.sky-chart-placement-matrix-sky>label>input{grid-area:check}
-.sky-chart-placement-matrix-sky>label>strong{grid-area:title;font:900 .69rem/1.1 system-ui,sans-serif}
-.sky-chart-placement-matrix-sky>label>span{grid-area:status;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#685f57;font:800 .56rem/1.1 system-ui,sans-serif}
-.sky-chart-placement-matrix-sky-a>label>strong,.sky-chart-placement-matrix-sky-a>label>span{color:#a21b18}
-.sky-chart-placement-matrix-sky-b>label>strong,.sky-chart-placement-matrix-sky-b>label>span{color:#1f55b4}
-.sky-chart-placement-matrix-group{border-bottom:1px solid rgba(31,27,24,.12)}
-.sky-chart-placement-matrix-group:last-child{border-bottom:0}
-.sky-chart-placement-matrix-group-heading{background:#eee8df}
-.sky-chart-placement-matrix-group-heading>strong{padding:7px 10px;color:#29231e;font:900 .68rem/1.15 system-ui,sans-serif}
-.sky-chart-placement-matrix-row{min-height:31px;border-top:1px solid rgba(31,27,24,.065)}
-.sky-chart-placement-matrix-label{min-width:0;padding:6px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#29231e;font:750 .66rem/1.15 system-ui,sans-serif}
-.sky-chart-placement-matrix-check{
+.sky-chart-placement-list-item:first-child{border-top:0}
+.sky-chart-placement-list-item-master{min-height:44px;background:#f4efe8;border-bottom:1px solid rgba(31,27,24,.15)}
+.sky-chart-placement-list-item-group{min-height:39px;background:#eee8df;border-top:1px solid rgba(31,27,24,.15)}
+.sky-chart-placement-list-label{
+  min-width:0;
+  padding:7px 10px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#29231e;
+  font:750 .67rem/1.15 system-ui,sans-serif;
+}
+.sky-chart-placement-list-item-master .sky-chart-placement-list-label{font-size:.72rem;font-weight:900}
+.sky-chart-placement-list-item-group .sky-chart-placement-list-label{font-size:.69rem;font-weight:900}
+.sky-chart-placement-list-choices{display:grid;grid-template-columns:repeat(3,minmax(47px,auto));align-self:stretch;border-left:1px solid rgba(31,27,24,.1)}
+.sky-chart-placement-choice{
   display:flex!important;
   align-items:center;
   justify-content:center;
-  gap:5px;
-  align-self:stretch;
+  gap:4px;
   min-width:0;
-  padding:5px 6px;
-  border-left:1px solid rgba(31,27,24,.1);
+  padding:6px 7px;
+  border-left:1px solid rgba(31,27,24,.08);
   cursor:pointer;
-  color:#5c544d;
-  font:750 .57rem/1 system-ui,sans-serif!important;
+  color:#514a44;
+  font:800 .59rem/1 system-ui,sans-serif!important;
 }
-.sky-chart-placement-matrix-check-a{background:rgba(201,33,30,.025)}
-.sky-chart-placement-matrix-check-b{background:rgba(36,98,208,.03)}
-.sky-chart-placement-matrix-group-heading .sky-chart-placement-matrix-check{font-weight:900!important}
-.sky-chart-placement-matrix-check.is-unavailable{cursor:default;color:#b1aaa3;font-size:.72rem!important}
+.sky-chart-placement-choice:first-child{border-left:0}
+.sky-chart-placement-choice-all{background:rgba(31,27,24,.025)}
+.sky-chart-placement-choice-a{background:rgba(201,33,30,.035);color:#a21b18}
+.sky-chart-placement-choice-b{background:rgba(36,98,208,.04);color:#1f55b4}
+.sky-chart-placement-list-item-master .sky-chart-placement-choice,
+.sky-chart-placement-list-item-group .sky-chart-placement-choice{font-weight:900!important}
+.sky-chart-placement-choice:has(input:disabled){cursor:default;opacity:.45}
 .sky-chart-placement-filter-popover input[type="checkbox"]{width:15px;height:15px;min-width:15px;margin:0;accent-color:#544c45}
-.sky-chart-placement-matrix-sky-a input[type="checkbox"],
-.sky-chart-placement-matrix-check-a input[type="checkbox"]{accent-color:#c9211e}
-.sky-chart-placement-matrix-sky-b input[type="checkbox"],
-.sky-chart-placement-matrix-check-b input[type="checkbox"]{accent-color:#2462d0}
+.sky-chart-placement-choice-a input[type="checkbox"]{accent-color:#c9211e}
+.sky-chart-placement-choice-b input[type="checkbox"]{accent-color:#2462d0}
 .sky-chart-multiselect-hidden{display:none!important}
 
 @media(max-width:840px){
@@ -154,10 +138,7 @@
   .sky-chart-filter-bar[data-multiselect-placement-filters="true"]{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sky-chart-placement-filter{grid-column:1/-1!important}
   .sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-filter-house-system{grid-column:1/-1}
-  .sky-chart-placement-matrix-header,
-  .sky-chart-placement-matrix-group-heading,
-  .sky-chart-placement-matrix-row{grid-template-columns:minmax(105px,1.2fr) minmax(76px,.8fr) minmax(76px,.8fr)}
-  .sky-chart-placement-matrix-check span{display:none}
-  .sky-chart-placement-matrix-sky{padding:6px}
-  .sky-chart-placement-matrix-label{padding:6px 8px;font-size:.62rem}
+  .sky-chart-placement-list-choices{grid-template-columns:repeat(3,minmax(43px,auto))}
+  .sky-chart-placement-choice{padding:6px 5px}
+  .sky-chart-placement-list-label{padding:7px 8px;font-size:.63rem}
 }
