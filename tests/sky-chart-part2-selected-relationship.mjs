@@ -167,15 +167,15 @@ assert.equal(await panel.locator('.sky-selected-aspect-point.sky-a').count(), 1)
 assert.equal(await panel.locator('.sky-selected-aspect-point.sky-b').count(), 1);
 assert.equal(await panel.locator('.sky-selected-aspect-diagram svg').getAttribute('data-zodiac-origin'), 'aries-0-at-9');
 assert.equal(await panel.locator('.sky-progressive-reading').count(), 1);
-assert.equal(await panel.locator('.sky-progressive-token').count(), 11);
-assert.deepEqual(await panel.locator('[data-progressive-field]').evaluateAll(nodes => nodes.map(node => node.dataset.progressiveField)), ['A-placement','A-sign','A-degree','A-house','B-placement','B-sign','B-degree','B-house','aspect','orb','transit-length']);
+assert.equal(await panel.locator('.sky-progressive-token').count(), 10);
+assert.deepEqual(await panel.locator('[data-progressive-field]').evaluateAll(nodes => nodes.map(node => node.dataset.progressiveField)), ['A-placement','A-sign','A-degree','A-house','B-placement','B-sign','B-degree','B-house','aspect','orb']);
 const progressiveText = (await panel.locator('.sky-progressive-reading').textContent()).trim();
 assert.ok(progressiveText.startsWith('Between Sky A and Sky B'));
 assert.ok(progressiveText.includes('forming'));
 assert.equal(await panel.locator('.sky-progressive-sky').count(), 2);
 assert.equal(await panel.locator('.sky-progressive-relation').count(), 1);
-assert.equal(await panel.locator('.sky-progressive-meta > p').count(), 2);
-assert.equal(await panel.locator('.sky-progressive-token[data-progressive-stage="glyph"]').count(), 11);
+assert.equal(await panel.locator('.sky-progressive-meta > p').count(), 1);
+assert.equal(await panel.locator('.sky-progressive-token[data-progressive-stage="glyph"]').count(), 10);
 assert.equal(await panel.locator('.sky-progressive-name:visible,.sky-progressive-meaning:visible').count(), 0);
 assert.equal(await panel.locator('[data-progressive-glyph-id]').count(), 5);
 assert.equal(await panel.locator('.sky-progressive-disclosures details').count(), 2);
@@ -183,7 +183,7 @@ assert.deepEqual(await panel.locator('.sky-progressive-disclosures summary').all
 assert.equal(await panel.locator('[data-missing-canonical-glyph]').count(), 0);
 const selectedOrbMinutes = Math.round(selectedOrb*60);
 assert.equal(await panel.locator('[data-progressive-field="orb"] [data-progressive-level="glyph"]').textContent(), `${Math.floor(selectedOrbMinutes/60)}°${String(selectedOrbMinutes%60).padStart(2,'0')}′`);
-assert.equal(await panel.locator('[data-progressive-field="transit-length"] [data-progressive-level="glyph"]').textContent().then(value => /±|Δt/.test(value)), false);
+assert.equal(await panel.locator('[data-transit-timeline]').count(), 1);
 assert.equal(await panel.locator('[data-progressive-field="A-placement"] .sky-progressive-glyph').evaluate(node => getComputedStyle(node).color), 'rgb(201, 33, 30)');
 assert.equal(await panel.locator('[data-progressive-field="B-placement"] .sky-progressive-glyph').evaluate(node => getComputedStyle(node).color), 'rgb(36, 98, 208)');
 
@@ -324,7 +324,7 @@ for (const token of await panel.locator('.sky-progressive-token').all()) {
   await token.locator('[data-progressive-level="glyph"]').click();
   await token.locator('[data-progressive-level="name"]').click();
 }
-assert.equal(await panel.locator('.sky-progressive-token[data-progressive-stage="meaning"]').count(), 11);
+assert.equal(await panel.locator('.sky-progressive-token[data-progressive-stage="meaning"]').count(), 10);
 await page.screenshot({path:'sky-chart-selected-relationship-desktop.png',fullPage:true});
 
 await page.setViewportSize({width:390,height:844});
