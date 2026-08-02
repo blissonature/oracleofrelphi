@@ -40,7 +40,9 @@ await placementControl.locator('[data-placement-filter-toggle]').click();
 await page.waitForSelector('#skyChartPlacementPopover.is-portaled:not([hidden])');
 const placementMenu=page.locator('#skyChartPlacementPopover');
 for(const id of ANGLES){
-  assert.equal(await placementMenu.locator(`[data-placement-scope="placement"][data-placement-target="${id}"]`).count(),3,`${id} must have All/A/B controls in Placements.`);
+  const angleRow=placementMenu.locator(`.sky-chart-placement-list-item-placement[data-placement-list-item="${id}"]`);
+  assert.equal(await angleRow.count(),1,`${id} must appear once in the Placements list.`);
+  assert.deepEqual(await angleRow.locator('[data-placement-choice]').evaluateAll(nodes=>nodes.map(node=>node.dataset.placementChoice)),['all','a','b'],`${id} must have All/A/B controls in Placements.`);
   for(const slot of ['A','B']){
     assert.equal(await page.locator(`#skyFoundation${slot} .sky-foundation-row[data-placement="${id}"]`).count(),1,`${id} must appear in Sky ${slot}'s placement ledger.`);
     assert.equal(await page.locator(`[data-layer="placements"] [data-sky="${slot}"][data-placement="${id}"]`).count(),1,`${id} must appear on the comparison wheel for Sky ${slot}.`);
