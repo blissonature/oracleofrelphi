@@ -96,7 +96,8 @@
     });
 
     const summary = root.querySelector(`[data-placement-sky-summary="${slot}"]`);
-    if (summary) summary.textContent = slotSummary(slot);
+    const nextSummary = slotSummary(slot);
+    if (summary && summary.textContent !== nextSummary) summary.textContent = nextSummary;
     const section = root.querySelector(`[data-placement-sky-section="${slot}"]`);
     if (section) {
       section.dataset.selectionCount = String(current.selected.size);
@@ -109,7 +110,8 @@
     if (!root) return;
     SLOTS.forEach(slot => updateSlotStates(slot, root));
     const summary = root.querySelector('[data-placement-filter-summary]');
-    if (summary) summary.textContent = combinedSummary();
+    const nextSummary = combinedSummary();
+    if (summary && summary.textContent !== nextSummary) summary.textContent = nextSummary;
     root.dataset.skyASelectionCount = String(state.A.selected.size);
     root.dataset.skyBSelectionCount = String(state.B.selected.size);
   }
@@ -375,7 +377,10 @@
 
   function start() {
     const root = document.getElementById('skyFoundationRoot');
-    if (root) new MutationObserver(schedule).observe(root, { childList:true, subtree:true });
+    if (root) new MutationObserver(records => {
+      if (records.every(record => record.target?.closest?.('.sky-chart-placement-filter'))) return;
+      schedule();
+    }).observe(root, { childList:true, subtree:true });
     ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed']
       .forEach(name => window.addEventListener(name, schedule));
     document.addEventListener('change', event => {
