@@ -11,7 +11,7 @@
     venus:'#b23b79', mercury:'#277390', moon:'#58628a'
   };
   const WHITE = '#fff';
-  const SHAPES = 'path,circle,ellipse,rect,polygon,polyline,line,text';
+  const PAINTED = '[fill],[stroke],text';
 
   function keyFor(group) {
     return KEYS.find(key => group.classList.contains(`sky-ph-${key}`)) || '';
@@ -20,7 +20,10 @@
   function forceHourRulerInverse(art) {
     if (!art) return;
     art.dataset.hourRulerInverse = 'true';
-    art.querySelectorAll(SHAPES).forEach(node => {
+
+    // Canonical assets often put fill/stroke on a parent <g>, so this must
+    // recolor every painted element, not only the visible leaf geometry.
+    art.querySelectorAll(PAINTED).forEach(node => {
       const tag = node.localName;
       const fill = node.getAttribute('fill');
       const stroke = node.getAttribute('stroke');
@@ -55,8 +58,6 @@
 
     // The hour ruler is a true inverse: the planetary color becomes the solid
     // field, while every visible part of the approved glyph becomes white.
-    // The explicit post-draw pass preserves fill="none" construction and wins
-    // over inherited page styles without flattening the glyph into a silhouette.
     const bubble = component.createBubble(mount, key, {
       radius:20,
       padding:3,
