@@ -67,7 +67,7 @@ const expectedPlanets=['jupiter','mars','mercury','neptune','pluto','saturn','ur
 assert.deepEqual((await skyBControl.locator('[data-placement-option]:checked').evaluateAll(nodes=>nodes.map(node=>node.value).sort())),expectedPlanets);
 assert.equal((await skyBControl.locator('[data-placement-filter-summary]').textContent())?.trim(),'Planets');
 const visiblePairings=await visibleRows().evaluateAll(rows=>rows.map(row=>[row.dataset.leftPlacement,row.dataset.rightPlacement]));
-assert.ok(visiblePairings.every(([left,right])=>(left==='sun'||left==='moon')&&['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'].includes(right))));
+assert.ok(visiblePairings.every(([left,right])=>(left==='sun'||left==='moon')&&['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'].includes(right)));
 
 await skyAControl.locator('[data-placement-option="mercury"]').check();
 await skyAControl.locator('[data-placement-option="sun"]').uncheck();
