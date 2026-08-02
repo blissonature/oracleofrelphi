@@ -114,16 +114,6 @@ const placementB=placementSummary.locator('[data-placement-choice="b"]');
 await placementB.check();
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='A-B',null,{timeout:10000});
 await placementB.uncheck();
-await page.waitForTimeout(600);
-console.log('HOUSE_SINGLE_DEBUG',JSON.stringify(await page.evaluate(()=>({
-  mode:document.documentElement.dataset.skyRelationshipMode,
-  summaryB:document.querySelector('[data-placement-filter="combined"] .sky-chart-placement-summary-choices [data-placement-choice="b"]')?.checked,
-  checkedB:document.querySelectorAll('[data-placement-option][data-slot="B"]:checked').length,
-  totalB:document.querySelectorAll('[data-placement-option][data-slot="B"]').length,
-  checkedA:document.querySelectorAll('[data-placement-option][data-slot="A"]:checked').length,
-  totalA:document.querySelectorAll('[data-placement-option][data-slot="A"]').length,
-  selfRows:document.querySelectorAll('.sky-foundation-single-sky-row[data-single-sky="A"]').length
-}))));
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='A-A',null,{timeout:10000});
 await page.waitForSelector('.sky-foundation-single-sky-row[data-single-sky="A"]',{timeout:10000});
 const firstSelf=page.locator('.sky-foundation-single-sky-row[data-single-sky="A"]').first();
@@ -134,10 +124,12 @@ await page.waitForSelector('#skyChartHousePopover.is-portaled:not([hidden])');
 for(const house of selfHouses){
   await list.locator(`[data-house-scope="house"][data-house-target="${house}"][data-house-choice="a"]`).check();
 }
-await page.waitForTimeout(150);
+await page.waitForFunction(houses=>{
+  const rows=Array.from(document.querySelectorAll('.sky-foundation-single-sky-row[data-single-sky="A"]:not(.sky-chart-house-multiselect-hidden)'));
+  return rows.length>0&&rows.every(row=>houses.includes(row.dataset.leftHouse)&&houses.includes(row.dataset.rightHouse));
+},selfHouses,{timeout:10000});
 const visibleSelf=page.locator('.sky-foundation-single-sky-row[data-single-sky="A"]:not(.sky-chart-house-multiselect-hidden)');
 assert.ok(await visibleSelf.count()>0,'House selections must continue working while viewing Sky A alone.');
-assert.equal(await visibleSelf.evaluateAll((rows,houses)=>rows.every(row=>houses.includes(row.dataset.leftHouse)&&houses.includes(row.dataset.rightHouse)),selfHouses),true);
 assert.ok(await page.locator('.sky-foundation-single-sky-aspect[data-single-sky="A"]:not(.sky-chart-house-multiselect-hidden)').count()>0);
 
 await masterA.check();
