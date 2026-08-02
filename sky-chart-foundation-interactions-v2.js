@@ -27,7 +27,7 @@
   ];
   const ALIASES={rising:'asc',ascendant:'asc',asc:'asc',ac:'asc',descendant:'dsc',dsc:'dsc',dc:'dsc',midheaven:'mc',mc:'mc','imum coeli':'ic',imumcoeli:'ic',ic:'ic',vertex:'vertex',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','mean node':'north-node','south node':'south-node',chiron:'chiron',lilith:'lilith','black moon lilith':'lilith',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 
-  let lockedState=null,hoverState=null,refreshQueued=false;
+  let lockedState=null,hoverState=null,refreshQueued=false,selectionClearObserver=null;
   let current={listA:[],listB:[],relations:[],cuspsA:[],cuspsB:[]};
 
   const norm=value=>((Number(value)%360)+360)%360;
@@ -78,7 +78,7 @@
   function makeSvg(label){const node=document.createElementNS(NS,'svg');node.setAttribute('viewBox','-20 -20 40 40');node.setAttribute('aria-label',label);return node}
   async function renderRows(relations){
     const list=document.getElementById('skyFoundationRelationshipList'),count=document.getElementById('skyFoundationRelationshipCount');if(!list||!count)return;
-    const selected=document.querySelector('.sky-foundation-relationship-row[aria-current="true"]');const selectedKey=selected?`${selected.dataset.leftPlacement}|${selected.dataset.aspect}|${selected.dataset.rightPlacement}|${selected.getAttribute('aria-label')}`:'';
+    const selectionCleared=document.getElementById('skyFoundationRoot')?.dataset.relationshipSelectionCleared==='true',selected=selectionCleared?null:document.querySelector('.sky-foundation-relationship-row[aria-current="true"]');const selectedKey=selected?`${selected.dataset.leftPlacement}|${selected.dataset.aspect}|${selected.dataset.rightPlacement}|${selected.getAttribute('aria-label')}`:'';
     list.replaceChildren();count.textContent=`${relations.length}/${relations.length}`;count.dataset.total=String(relations.length);const jobs=[];
     relations.forEach((relation,index)=>{
       const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.aspect=relation.aspect.id;row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.leftHouse=String(relation.left.house);row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(relation.left.sign);row.dataset.rightSign=String(relation.right.sign);row.setAttribute('aria-label',`${relation.left.entry.name} ${relation.aspect.id} ${relation.right.entry.name}, orb ${relation.orb.toFixed(2)} degrees`);
@@ -135,6 +135,17 @@
     return best<=9?nearest:null;
   }
   function interactive(event){const root=document.getElementById('skyFoundationRoot'),node=event.target.closest?.('[data-interactive]');if(!root?.contains(node))return null;if(node.dataset.interactive!=='aspect')return node;return nearestAspect(event)||node}
+  function clearableWhitespace(event){
+    const root=document.getElementById('skyFoundationRoot'),target=event.target;if(!root?.contains(target))return false;
+    if(target.closest?.('button,input,select,textarea,a,label,summary,details,.sky-foundation-relationship-row,#skySelectedRelationship,.sky-chart-filter-bar,.sky-foundation-relationships-heading'))return false;
+    return !!target.closest?.('#skyFoundationWheelMount,#skyFoundationA,#skyFoundationB,#skyFoundationComparison');
+  }
+  function clearSelectionMarks(){document.querySelectorAll('.sky-foundation-relationship-row[aria-current]').forEach(row=>row.removeAttribute('aria-current'));document.querySelectorAll('.sky-foundation-aspect[data-selected-relation]').forEach(line=>delete line.dataset.selectedRelation)}
+  function clearFromWhitespace(){
+    lockedState=null;hoverState=null;const root=document.getElementById('skyFoundationRoot');if(root)root.dataset.relationshipSelectionCleared='true';applyState();clearSelectionMarks();
+    selectionClearObserver?.disconnect();selectionClearObserver=new MutationObserver(()=>{if(root?.dataset.relationshipSelectionCleared==='true')clearSelectionMarks();else{selectionClearObserver.disconnect();selectionClearObserver=null}});if(root)selectionClearObserver.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-current','data-selected-relation']});
+    window.dispatchEvent(new CustomEvent('relphi:sky-foundation-clear-selection',{detail:{source:'white-space'}}));requestAnimationFrame(clearSelectionMarks)
+  }
   function bind(){
     const root=document.getElementById('skyFoundationRoot');if(!root||root.dataset.foundationInteractionsV2Bound==='true')return;root.dataset.foundationInteractionsV2Bound='true';
     root.addEventListener('pointerover',event=>{if(lockedState)return;const node=interactive(event);if(!node||node.closest('.sky-foundation-relationship-row')||node.contains(event.relatedTarget))return;hoverState=specFrom(node);applyState()});
@@ -142,8 +153,8 @@
     root.addEventListener('pointerout',event=>{if(lockedState)return;const node=interactive(event);if(!node||node.closest('.sky-foundation-relationship-row')||node.contains(event.relatedTarget))return;hoverState=null;applyState()});
     root.addEventListener('focusin',event=>{if(lockedState)return;const node=interactive(event);if(!node||node.closest('.sky-foundation-relationship-row'))return;hoverState=specFrom(node);applyState()});
     root.addEventListener('focusout',event=>{if(lockedState)return;const node=interactive(event);if(!node||node.closest('.sky-foundation-relationship-row')||node.contains(event.relatedTarget))return;hoverState=null;applyState()});
-    root.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row'))return;const node=interactive(event);if(node){event.preventDefault();const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState();return}if(lockedState&&event.target.closest?.('#skyFoundationWheelMount')){lockedState=null;hoverState=null;applyState()}});
-    root.addEventListener('keydown',event=>{if(event.key==='Escape'){lockedState=null;hoverState=null;applyState();return}if(!['Enter',' '].includes(event.key)||event.target.closest('.sky-foundation-relationship-row'))return;const node=interactive(event);if(!node)return;event.preventDefault();const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState()});
+    root.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row'))return;const node=interactive(event);if(node){event.preventDefault();const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState();return}if(clearableWhitespace(event))clearFromWhitespace()});
+    root.addEventListener('keydown',event=>{if(event.key==='Escape'){clearFromWhitespace();return}if(!['Enter',' '].includes(event.key)||event.target.closest('.sky-foundation-relationship-row'))return;const node=interactive(event);if(!node)return;event.preventDefault();const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState()});
   }
   async function refresh(){
     refreshQueued=false;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false')return;ensurePanel();

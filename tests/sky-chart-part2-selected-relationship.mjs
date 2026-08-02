@@ -339,5 +339,14 @@ assert.ok(Math.abs(firstCardBox.y - secondCardBox.y) < 20);
 assert.ok(cardsBox.width <= 390);
 await page.screenshot({path:'sky-chart-selected-relationship-mobile.png',fullPage:true});
 
+// Clicking/tapping unoccupied chart space clears both retained relationship and wheel isolation.
+await page.setViewportSize({width:1440,height:1300});
+await page.locator('#skyFoundationComparison > .sky-foundation-heading').click();
+await page.waitForTimeout(100);
+assert.equal(await panel.isVisible(), false);
+assert.equal(await page.locator('.sky-foundation-relationship-row[aria-current="true"]').count(), 0);
+assert.equal(await page.locator('.sky-foundation-aspect[data-selected-relation="true"]').count(), 0);
+assert.equal(await page.locator('.sky-foundation-wheel').getAttribute('class').then(value => value.includes('has-isolation')), false);
+
 assert.deepEqual(errors, []);
 await browser.close();
