@@ -15,6 +15,7 @@ on:
       - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-sky-colors-v1.js'
       - 'sky-chart-angle-placements-v1.js'
+      - 'sky-chart-angle-glyph-fit-v1.js'
       - 'sky-chart-angle-placement-visibility-v1.js'
       - 'sky-chart-angle-placement-visibility-v1.css'
       - 'sky-chart-aspect-multiselect-v1.js'
@@ -61,6 +62,7 @@ on:
       - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-sky-colors-v1.js'
       - 'sky-chart-angle-placements-v1.js'
+      - 'sky-chart-angle-glyph-fit-v1.js'
       - 'sky-chart-angle-placement-visibility-v1.js'
       - 'sky-chart-angle-placement-visibility-v1.css'
       - 'sky-chart-aspect-multiselect-v1.js'
@@ -112,6 +114,7 @@ jobs:
           node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-sky-colors-v1.js
           node --check sky-chart-angle-placements-v1.js
+          node --check sky-chart-angle-glyph-fit-v1.js
           node --check sky-chart-angle-placement-visibility-v1.js
           node --check sky-chart-aspect-multiselect-v1.js
           node --check sky-chart-filter-event-stability-v1.js
