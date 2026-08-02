@@ -10,9 +10,32 @@
     saturn:'#8c7a42', jupiter:'#41752f', mars:'#c9211e', sun:'#d08a00',
     venus:'#b23b79', mercury:'#277390', moon:'#58628a'
   };
+  const WHITE = '#fff';
+  const SHAPES = 'path,circle,ellipse,rect,polygon,polyline,line,text';
 
   function keyFor(group) {
     return KEYS.find(key => group.classList.contains(`sky-ph-${key}`)) || '';
+  }
+
+  function forceHourRulerInverse(art) {
+    if (!art) return;
+    art.dataset.hourRulerInverse = 'true';
+    art.querySelectorAll(SHAPES).forEach(node => {
+      const tag = node.localName;
+      const fill = node.getAttribute('fill');
+      const stroke = node.getAttribute('stroke');
+
+      if (tag === 'text' || (fill && fill !== 'none')) {
+        node.setAttribute('fill', WHITE);
+        node.style.setProperty('fill', WHITE, 'important');
+      }
+      if (stroke && stroke !== 'none') {
+        node.setAttribute('stroke', WHITE);
+        node.style.setProperty('stroke', WHITE, 'important');
+      }
+      node.setAttribute('opacity', '1');
+      node.style.setProperty('opacity', '1', 'important');
+    });
   }
 
   async function replacePlanet(group) {
@@ -30,20 +53,20 @@
     group.querySelector('.sky-ph-node-label')?.remove();
     mount.replaceChildren();
 
-    // The hour-ruler inversion is created at draw time rather than imposed on
-    // finished artwork. This preserves every canonical support stroke, scale,
-    // offset, and relationship between filled and stroked forms.
+    // The hour ruler is a true inverse: the planetary color becomes the solid
+    // field, while every visible part of the approved glyph becomes white.
+    // The explicit post-draw pass preserves fill="none" construction and wins
+    // over inherited page styles without flattening the glyph into a silhouette.
     const bubble = component.createBubble(mount, key, {
       radius:20,
       padding:3,
-      color:isHour ? '#fff' : COLORS[key],
-      fill:isHour ? COLORS[key] : '#fff'
+      color:isHour ? WHITE : COLORS[key],
+      fill:isHour ? COLORS[key] : WHITE
     });
     bubble.circle.setAttribute('stroke', COLORS[key]);
     bubble.root.classList.add('sky-ph-canonical-bubble');
     bubble.root.dataset.planet = key;
     bubble.root.dataset.presentation = isHour ? 'hour-ruler-inversion' : 'canonical-color';
-    await bubble.ready;
 
     if (isDay) {
       bubble.root.classList.add('is-day-ruler');
@@ -54,6 +77,9 @@
       bubble.root.classList.add('is-hour-ruler');
       group.classList.add('is-hour-ruler');
     }
+
+    const art = await bubble.ready;
+    if (isHour) forceHourRulerInverse(art);
 
     group.dataset.canonicalCircled = 'true';
     return true;
