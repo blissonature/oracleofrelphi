@@ -38,6 +38,23 @@ for(const slot of ['A','B']){
   assert.equal((await control.locator('[data-placement-filter-summary]').textContent())?.trim(),'All');
 }
 
+const desktopLayout=await page.locator('#skyFoundationRelationships .sky-chart-filter-bar').evaluate(bar=>{
+  const controls=Array.from(bar.children).filter(child=>child.matches('label,details'));
+  const boxes=controls.map(control=>control.getBoundingClientRect());
+  return{
+    count:controls.length,
+    tops:boxes.map(box=>Math.round(box.top)),
+    bottoms:boxes.map(box=>Math.round(box.bottom)),
+    clientWidth:bar.clientWidth,
+    scrollWidth:bar.scrollWidth,
+    height:Math.round(bar.getBoundingClientRect().height)
+  };
+});
+assert.equal(desktopLayout.count,7,'The desktop utility bar must contain seven controls.');
+assert.ok(Math.max(...desktopLayout.tops)-Math.min(...desktopLayout.tops)<=2,'All desktop filter controls must occupy one row.');
+assert.ok(desktopLayout.scrollWidth<=desktopLayout.clientWidth+1,'The one-line desktop filter bar must not overflow horizontally.');
+assert.ok(desktopLayout.height<90,'The desktop filter bar must remain compact.');
+
 const visibleRows=()=>page.locator('.sky-foundation-relationship-row:not(.sky-chart-filter-hidden):not(.sky-chart-orb-hidden):not(.sky-orb-filter-hidden):not(.sky-chart-multiselect-hidden):not([hidden])');
 const total=await page.locator('.sky-foundation-relationship-row').count();
 assert.ok(total>0);
@@ -94,4 +111,4 @@ if(!(await skyAControl.getAttribute('open'))) await skyAControl.locator('summary
 await page.screenshot({path:'sky-chart-multiselect-filters-mobile.png',fullPage:true});
 assert.deepEqual(errors,[]);
 await browser.close();
-console.log('Sky Chart per-sky checkbox placement filters passed.');
+console.log('Sky Chart per-sky checkbox placement filters passed with a single-line desktop utility bar.');
