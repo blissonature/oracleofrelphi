@@ -94,11 +94,11 @@
   function ensureAngleRows() {
     const matrix = list();
     if (!matrix) return false;
-    matrix.dataset.angleSupport = 'true';
+    if (matrix.dataset.angleSupport !== 'true') matrix.dataset.angleSupport = 'true';
     const header = matrix.querySelector('.sky-chart-house-list-header strong');
-    if (header) header.textContent = 'House / angle';
+    if (header && header.textContent !== 'House / angle') header.textContent = 'House / angle';
     const masterLabel = matrix.querySelector('.sky-chart-house-list-item-master .sky-chart-house-list-label');
-    if (masterLabel) masterLabel.textContent = 'All houses + angles';
+    if (masterLabel && masterLabel.textContent !== 'All houses + angles') masterLabel.textContent = 'All houses + angles';
     const group = matrix.querySelector('.sky-chart-house-list-item-angle-group');
     const angleRows = Array.from(matrix.querySelectorAll('.sky-chart-house-list-item-angle'));
     const complete = group && angleRows.length === ANGLES.length && angleRows.every((row, index) =>
@@ -113,9 +113,12 @@
     }
 
     const root = owner();
-    root?.querySelector('.sky-chart-house-summary-choices')?.setAttribute('aria-label', 'All houses and angles');
-    root?.querySelector('[data-house-filter-toggle]')?.setAttribute('aria-label', 'Open house and angle filters');
-    menu()?.setAttribute('aria-label', 'House and angle filters');
+    const summary = root?.querySelector('.sky-chart-house-summary-choices');
+    if (summary?.getAttribute('aria-label') !== 'All houses and angles') summary?.setAttribute('aria-label', 'All houses and angles');
+    const toggle = root?.querySelector('[data-house-filter-toggle]');
+    if (toggle?.getAttribute('aria-label') !== 'Open house and angle filters') toggle?.setAttribute('aria-label', 'Open house and angle filters');
+    const popover = menu();
+    if (popover?.getAttribute('aria-label') !== 'House and angle filters') popover?.setAttribute('aria-label', 'House and angle filters');
     return true;
   }
 
