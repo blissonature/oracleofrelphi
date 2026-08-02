@@ -115,6 +115,13 @@ const inactiveHourStyles = await page.locator('.sky-ph-hour-segment.future,.sky-
 assert.ok(inactiveHourStyles.length > 0);
 assert.equal(new Set(inactiveHourStyles.map(style => style.opacity)).size, 1);
 assert.equal(new Set(inactiveHourStyles.map(style => style.strokeWidth)).size, 1);
+  const heptagramLineTones = await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.map(svg => ({
+    neutrals: Array.from(svg.querySelectorAll('.sky-ph-week-segment.future')).map(node => Number(getComputedStyle(node).opacity)),
+    earlier: Array.from(svg.querySelectorAll('.sky-ph-week-segment.past')).map(node => Number(getComputedStyle(node).opacity))
+  })));
+  assert.ok(heptagramLineTones.every(tone => tone.neutrals.length > 0 && tone.neutrals.every(value => value === .52)));
+  assert.ok(heptagramLineTones.some(tone => tone.earlier.length > 0));
+  assert.ok(heptagramLineTones.every(tone => tone.earlier.every(value => value === .56 && value > .52)));
 assert.ok(await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.every(svg => svg.querySelectorAll('.sky-ph-hour-segment:not(.current)').length === 7)));
 assert.equal(await page.locator('[data-filter="aspect"] option[value="semi-sextile"]').count(), 1);
 assert.equal(await page.locator('[data-filter="aspect"] option[value="quincunx"]').count(), 1);
