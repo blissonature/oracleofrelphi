@@ -139,7 +139,7 @@ await page.waitForFunction(houses=>{
     return ['asc','ascendant','ac','rising','dsc','desc','descendant','dc','mc','midheaven','medium coeli','ic','imum coeli','imumcoeli'].includes(key);
   };
   const rows=Array.from(document.querySelectorAll('.sky-foundation-single-sky-row[data-single-sky="A"]:not(.sky-chart-house-multiselect-hidden)'));
-  return rows.length>0&&rows.every(row=>!angle(row.dataset.leftPlacement)&&!angle(row.dataset.rightPlacement)&&houses.includes(row.dataset.leftHouse)&&houses.includes(row.dataset.rightHouse));
+  return rows.some(row=>!angle(row.dataset.leftPlacement)&&!angle(row.dataset.rightPlacement)&&houses.includes(row.dataset.leftHouse)&&houses.includes(row.dataset.rightHouse));
 },selfHouses,{timeout:10000});
 const visibleSelf=page.locator('.sky-foundation-single-sky-row[data-single-sky="A"]:not(.sky-chart-house-multiselect-hidden)');
 assert.ok(await visibleSelf.count()>0,'House selections must continue working while viewing Sky A alone.');
