@@ -67,6 +67,7 @@ assert.notEqual((await page.locator('#skyFoundationRelationshipCount').textConte
 await page.screenshot({path:'sky-chart-single-sky-a-aspects-desktop.png',fullPage:true});
 
 await inlineB.check();
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='A-B',null,{timeout:10000});
 await inlineA.uncheck();
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='B-B',null,{timeout:10000});
 await page.waitForTimeout(100);
