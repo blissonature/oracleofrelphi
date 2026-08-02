@@ -24,10 +24,24 @@
       .filter(Boolean);
   }
 
+  function restoreComparisonNow() {
+    document.querySelectorAll('.sky-foundation-single-sky-aspect,.sky-foundation-single-sky-row').forEach(node => node.remove());
+    document.querySelectorAll('[data-layer="aspects"] > .sky-foundation-aspect').forEach(node => {
+      node.classList.remove('sky-foundation-single-sky-cross-hidden');
+    });
+    document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(node => {
+      node.classList.remove('sky-foundation-single-sky-cross-hidden');
+    });
+    document.documentElement.dataset.skyRelationshipMode = 'A-B';
+  }
+
   function syncChoiceState() {
     choiceSyncTimer = 0;
+    const A = selectedPlacements('A');
+    const B = selectedPlacements('B');
+    if (A.length && B.length) restoreComparisonNow();
     window.dispatchEvent(new CustomEvent('relphi:sky-placement-multiselect-changed', {
-      detail:{ A:selectedPlacements('A'), B:selectedPlacements('B'), source:'single-sky-choice-sync' }
+      detail:{ A, B, source:'single-sky-choice-sync' }
     }));
   }
 
