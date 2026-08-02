@@ -19,6 +19,7 @@ on:
       - 'sky-chart-placement-compact-v1.css'
       - 'sky-chart-house-multiselect-v1.js'
       - 'sky-chart-house-multiselect-v1.css'
+      - 'sky-chart-house-filter-enforcer-v1.js'
       - 'sky-chart-filter-neutral-final-v1.js'
       - 'sky-chart-filter-neutral-final-v1.css'
       - 'sky-chart-single-sky-aspects-v1.js'
@@ -56,6 +57,7 @@ on:
       - 'sky-chart-placement-compact-v1.css'
       - 'sky-chart-house-multiselect-v1.js'
       - 'sky-chart-house-multiselect-v1.css'
+      - 'sky-chart-house-filter-enforcer-v1.js'
       - 'sky-chart-filter-neutral-final-v1.js'
       - 'sky-chart-filter-neutral-final-v1.css'
       - 'sky-chart-single-sky-aspects-v1.js'
@@ -96,6 +98,7 @@ jobs:
           node --check sky-chart-multiselect-filters-v1.js
           node --check sky-chart-placement-compact-v1.js
           node --check sky-chart-house-multiselect-v1.js
+          node --check sky-chart-house-filter-enforcer-v1.js
           node --check sky-chart-filter-neutral-final-v1.js
           node --check sky-chart-single-sky-aspects-v1.js
           node --check sky-chart-single-sky-presentation-v1.js
