@@ -1,4 +1,4 @@
-// One categorized placement list for both skies, with All / A / B controls on every row.
+// One categorized placement list for both skies, with All / A / B controls visible in the filter bar and on every row.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -132,13 +132,14 @@
   }
 
   function updateControlStates() {
-    const root = popover();
     const owner = control();
-    if (!root || !owner) return;
-    root.querySelectorAll('[data-placement-choice]').forEach(updateChoiceState);
-    const summary = owner.querySelector('[data-placement-filter-summary]');
+    const menu = popover();
+    if (!owner || !menu) return;
+    owner.querySelectorAll('[data-placement-choice]').forEach(updateChoiceState);
+    if (!owner.contains(menu)) menu.querySelectorAll('[data-placement-choice]').forEach(updateChoiceState);
+    const status = owner.querySelector('[data-placement-filter-summary]');
     const nextSummary = combinedSummary();
-    if (summary && summary.textContent !== nextSummary) summary.textContent = nextSummary;
+    if (status && status.textContent !== nextSummary) status.textContent = nextSummary;
     owner.dataset.skyASelectionCount = String(state.A.selected.size);
     owner.dataset.skyBSelectionCount = String(state.B.selected.size);
   }
@@ -212,7 +213,7 @@
     updateControlStates();
   }
 
-  function handlePopoverChange(event) {
+  function handleChoiceChange(event) {
     const input = event.target.closest('[data-placement-choice]');
     if (!input) return;
     const scope = input.dataset.placementScope;
@@ -223,13 +224,17 @@
     syncControl();
   }
 
+  function isOpen(owner) {
+    return owner?.classList.contains('is-open');
+  }
+
   function positionPortal() {
     const owner = portalOwner;
     const menu = popover();
-    const summary = owner?.querySelector('summary');
-    if (!owner?.open || !menu?.classList.contains('is-portaled') || !summary) return;
+    const head = owner?.querySelector('.sky-chart-placement-filter-head');
+    if (!isOpen(owner) || !menu?.classList.contains('is-portaled') || !head) return;
 
-    const rect = summary.getBoundingClientRect();
+    const rect = head.getBoundingClientRect();
     const margin = 12;
     const width = Math.min(430, Math.max(300, window.innerWidth - margin * 2));
     const left = Math.min(
@@ -256,37 +261,77 @@
     const menu = owner.querySelector('.sky-chart-placement-filter-popover') || popover();
     if (!menu) return;
     portalOwner = owner;
+    owner.classList.add('is-open');
     menu.hidden = false;
     menu.classList.add('is-portaled');
     document.body.appendChild(menu);
-    owner.querySelector('summary')?.setAttribute('aria-expanded', 'true');
+    owner.querySelector('[data-placement-filter-toggle]')?.setAttribute('aria-expanded', 'true');
     requestAnimationFrame(positionPortal);
   }
 
   function portalClose(owner) {
     const menu = popover();
-    if (!menu) return;
+    if (!menu || !owner) return;
     menu.hidden = true;
     menu.classList.remove('is-portaled');
     menu.removeAttribute('style');
     owner.appendChild(menu);
-    menu.hidden = false;
-    owner.querySelector('summary')?.setAttribute('aria-expanded', 'false');
+    owner.classList.remove('is-open');
+    owner.querySelector('[data-placement-filter-toggle]')?.setAttribute('aria-expanded', 'false');
     portalOwner = null;
   }
 
+  function togglePortal(owner) {
+    if (isOpen(owner)) portalClose(owner);
+    else portalOpen(owner);
+  }
+
   function createControl() {
-    const details = document.createElement('details');
-    details.className = 'sky-chart-placement-filter sky-chart-placement-filter-combined';
-    details.dataset.placementFilter = 'combined';
-    details.innerHTML = '<summary aria-haspopup="dialog" aria-expanded="false" aria-controls="skyChartPlacementPopover"><span class="sky-chart-placement-filter-label">Placements</span><span class="sky-chart-placement-filter-value" data-placement-filter-summary>All</span></summary><div id="skyChartPlacementPopover" class="sky-chart-placement-filter-popover" role="dialog" aria-label="Placement filters"><div class="sky-chart-placement-filter-body"></div></div>';
-    const menu = details.querySelector('.sky-chart-placement-filter-popover');
-    menu.addEventListener('change', handlePopoverChange);
-    details.addEventListener('toggle', () => {
-      if (details.open) portalOpen(details);
-      else portalClose(details);
-    });
-    return details;
+    const root = document.createElement('div');
+    root.className = 'sky-chart-placement-filter sky-chart-placement-filter-combined';
+    root.dataset.placementFilter = 'combined';
+
+    const head = document.createElement('div');
+    head.className = 'sky-chart-placement-filter-head';
+
+    const title = document.createElement('span');
+    title.className = 'sky-chart-placement-filter-label';
+    title.textContent = 'Placements';
+
+    const choices = document.createElement('div');
+    choices.className = 'sky-chart-placement-summary-choices';
+    choices.setAttribute('role', 'group');
+    choices.setAttribute('aria-label', 'All placements');
+    ['all', 'a', 'b'].forEach(choice => choices.appendChild(choiceControl('all', 'all', choice, 'All placements')));
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'sky-chart-placement-filter-toggle';
+    toggle.dataset.placementFilterToggle = 'true';
+    toggle.setAttribute('aria-label', 'Open placement filters');
+    toggle.setAttribute('aria-haspopup', 'dialog');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', 'skyChartPlacementPopover');
+    toggle.textContent = '⌄';
+
+    const status = document.createElement('span');
+    status.className = 'sky-chart-placement-filter-status';
+    status.dataset.placementFilterSummary = 'true';
+    status.setAttribute('aria-live', 'polite');
+    status.textContent = 'All';
+
+    const menu = document.createElement('div');
+    menu.id = 'skyChartPlacementPopover';
+    menu.className = 'sky-chart-placement-filter-popover';
+    menu.setAttribute('role', 'dialog');
+    menu.setAttribute('aria-label', 'Placement filters');
+    menu.hidden = true;
+    menu.innerHTML = '<div class="sky-chart-placement-filter-body"></div>';
+
+    head.append(title, choices, toggle, status);
+    root.append(head, menu);
+    toggle.addEventListener('click', () => togglePortal(root));
+    return root;
   }
 
   function syncControl() {
@@ -397,9 +442,9 @@
   function closeFromOutside(event) {
     const owner = portalOwner;
     const menu = popover();
-    if (!owner?.open) return;
+    if (!isOpen(owner)) return;
     if (owner.contains(event.target) || menu?.contains(event.target)) return;
-    owner.open = false;
+    portalClose(owner);
   }
 
   function start() {
@@ -408,20 +453,27 @@
       if (records.every(record => record.target?.closest?.('.sky-chart-placement-filter'))) return;
       schedule();
     }).observe(root, { childList: true, subtree: true });
+
     ['relphi:sky-foundation-ready', 'relphi:sky-foundation-interactions-ready', 'relphi:sky-foundation-filter-changed']
       .forEach(name => window.addEventListener(name, schedule));
+
     document.addEventListener('change', event => {
+      if (event.target.closest('[data-placement-choice]')) {
+        handleChoiceChange(event);
+        return;
+      }
       if (event.target.closest('.sky-chart-filter-bar') && !event.target.closest('.sky-chart-placement-filter')) {
         setTimeout(updateVisibleCount, 0);
       }
     });
+
     document.addEventListener('pointerdown', closeFromOutside, true);
     document.addEventListener('keydown', event => {
       if (event.key !== 'Escape') return;
       const owner = portalOwner;
-      if (owner?.open) {
-        owner.open = false;
-        owner.querySelector('summary')?.focus();
+      if (isOpen(owner)) {
+        portalClose(owner);
+        owner.querySelector('[data-placement-filter-toggle]')?.focus();
       }
     });
     window.addEventListener('resize', positionPortal);
