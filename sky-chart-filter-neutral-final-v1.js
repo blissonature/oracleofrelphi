@@ -1,4 +1,4 @@
-// Final neutral filter behavior: keep the placement popover compact after its portal positioning runs.
+// Final neutral filter behavior: keep the placement popover compact and synchronize its settled selection state.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -7,6 +7,7 @@
 
   let queued = false;
   let fitting = false;
+  let placementSyncTimer = 0;
 
   function fitPlacementMenu() {
     queued = false;
@@ -43,6 +44,28 @@
     fitting = false;
   }
 
+  function selectedPlacements(slot) {
+    return Array.from(document.querySelectorAll(`[data-placement-option][data-slot="${slot}"]:checked`))
+      .map(input => input.value)
+      .filter(Boolean);
+  }
+
+  function dispatchSettledPlacementState() {
+    placementSyncTimer = 0;
+    window.dispatchEvent(new CustomEvent('relphi:sky-placement-multiselect-changed', {
+      detail: {
+        A: selectedPlacements('A'),
+        B: selectedPlacements('B'),
+        source: 'neutral-final-settled-sync'
+      }
+    }));
+  }
+
+  function schedulePlacementStateSync() {
+    clearTimeout(placementSyncTimer);
+    placementSyncTimer = setTimeout(dispatchSettledPlacementState, 250);
+  }
+
   function schedule() {
     if (queued) return;
     queued = true;
@@ -54,6 +77,10 @@
       if (!event.target.closest?.('[data-placement-filter-toggle]')) return;
       fitPlacementMenu();
       schedule();
+    });
+    document.addEventListener('change', event => {
+      if (!event.target.closest?.('[data-placement-choice]')) return;
+      schedulePlacementStateSync();
     });
 
     const observer = new MutationObserver(() => {
