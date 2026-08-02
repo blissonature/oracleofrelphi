@@ -182,9 +182,8 @@ assert.equal(await panel.locator('[data-progressive-glyph-id]').count(), 5);
 assert.equal(await panel.locator('[data-missing-canonical-glyph]').count(), 0);
 assert.equal(await panel.locator('[data-progressive-field="orb"] [data-progressive-level="glyph"]').textContent(), `${selectedOrb.toFixed(2)}°`);
 assert.equal(await panel.locator('[data-progressive-field="transit-length"] [data-progressive-level="glyph"]').textContent().then(value => /±|Δt/.test(value)), false);
-await page.waitForFunction(() => [['A-placement','rgb(201, 33, 30)'],['B-placement','rgb(36, 98, 208)']].every(([field,color]) => Array.from(document.querySelectorAll(`[data-progressive-field="${field}"] svg *`)).some(node => [getComputedStyle(node).fill,getComputedStyle(node).stroke].includes(color))), null, {timeout:5000});
-assert.equal(await panel.locator('[data-progressive-field="A-placement"] svg').evaluate(svg => Array.from(svg.querySelectorAll('*')).some(node => [getComputedStyle(node).fill,getComputedStyle(node).stroke].includes('rgb(201, 33, 30)'))), true);
-assert.equal(await panel.locator('[data-progressive-field="B-placement"] svg').evaluate(svg => Array.from(svg.querySelectorAll('*')).some(node => [getComputedStyle(node).fill,getComputedStyle(node).stroke].includes('rgb(36, 98, 208)'))), true);
+assert.equal(await panel.locator('[data-progressive-field="A-placement"] .sky-progressive-glyph').evaluate(node => getComputedStyle(node).color), 'rgb(201, 33, 30)');
+assert.equal(await panel.locator('[data-progressive-field="B-placement"] .sky-progressive-glyph').evaluate(node => getComputedStyle(node).color), 'rgb(36, 98, 208)');
 
 const order = await panel.locator('.sky-selected-body > *').evaluateAll(nodes => nodes.map(node => node.className));
 assert.deepEqual(order, ['sky-selected-graphic','sky-selected-facts','sky-selected-cards','sky-selected-progressive']);

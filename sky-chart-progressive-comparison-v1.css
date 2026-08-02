@@ -21,7 +21,9 @@
 .sky-progressive-glyph{display:inline-grid;place-items:center;width:1.55em;height:1.55em;margin:0 .08em;vertical-align:-.38em;border:1px solid rgba(48,43,39,.18);border-radius:999px;background:#fff;color:#171513;font:750 .92em/1 system-ui,sans-serif;box-shadow:0 1px 2px rgba(30,27,23,.06)}
 .sky-progressive-glyph>span{display:grid;place-items:center;line-height:1;white-space:nowrap}.sky-progressive-glyph svg{display:block;width:1.18em;height:1.18em;overflow:visible}
 .sky-progressive-glyph.is-text{width:auto;min-width:3.2em;padding:0 .62em;border-radius:999px;font-size:.78em;letter-spacing:.01em}
-[data-progressive-field="A-placement"] .sky-progressive-glyph{border-color:rgba(201,33,30,.32);color:#c9211e}[data-progressive-field="B-placement"] .sky-progressive-glyph{border-color:rgba(36,98,208,.32);color:#2462d0}
+[data-progressive-field="A-placement"]{--progressive-glyph-color:#c9211e}[data-progressive-field="B-placement"]{--progressive-glyph-color:#2462d0}
+[data-progressive-field="A-placement"] .sky-progressive-glyph{border-color:rgba(201,33,30,.32);color:var(--progressive-glyph-color)}[data-progressive-field="B-placement"] .sky-progressive-glyph{border-color:rgba(36,98,208,.32);color:var(--progressive-glyph-color)}
+[data-progressive-field$="-placement"] .sky-progressive-glyph svg{color:var(--progressive-glyph-color)}
 .sky-progressive-name,.sky-progressive-meaning{margin-left:.28em}
 .sky-progressive-name{font-weight:750;border-bottom:1px solid rgba(48,43,39,.3)}
 .sky-progressive-meaning{padding:.08em .38em;border-radius:5px;background:#f1ece5;color:#554d48;font-size:.9em;font-weight:480}
