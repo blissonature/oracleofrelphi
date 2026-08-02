@@ -99,10 +99,18 @@
     if (header) header.textContent = 'House / angle';
     const masterLabel = matrix.querySelector('.sky-chart-house-list-item-master .sky-chart-house-list-label');
     if (masterLabel) masterLabel.textContent = 'All houses + angles';
-    matrix.querySelector('.sky-chart-house-list-item-angle-group')?.remove();
-    matrix.querySelectorAll('.sky-chart-house-list-item-angle').forEach(node => node.remove());
-    matrix.appendChild(listItem('angles', 'angles', 'Angles', 'angle-group'));
-    ANGLES.forEach(angle => matrix.appendChild(listItem('angle', angle.id, angle.label, 'angle')));
+    const group = matrix.querySelector('.sky-chart-house-list-item-angle-group');
+    const angleRows = Array.from(matrix.querySelectorAll('.sky-chart-house-list-item-angle'));
+    const complete = group && angleRows.length === ANGLES.length && angleRows.every((row, index) =>
+      row.dataset.houseAngleListItem === ANGLES[index].id &&
+      row.querySelector('.sky-chart-house-list-label')?.textContent === ANGLES[index].label
+    );
+    if (!complete) {
+      group?.remove();
+      angleRows.forEach(node => node.remove());
+      matrix.appendChild(listItem('angles', 'angles', 'Angles', 'angle-group'));
+      ANGLES.forEach(angle => matrix.appendChild(listItem('angle', angle.id, angle.label, 'angle')));
+    }
 
     const root = owner();
     root?.querySelector('.sky-chart-house-summary-choices')?.setAttribute('aria-label', 'All houses and angles');
