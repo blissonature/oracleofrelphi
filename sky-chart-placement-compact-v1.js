@@ -49,9 +49,10 @@
     const head = document.querySelector('[data-placement-filter="combined"] .sky-chart-placement-filter-head');
     if (!menu?.classList.contains('is-portaled') || !head) return;
 
-    const margin = 10;
+    const margin = window.innerWidth <= 410 ? 8 : 10;
+    const maximum = window.innerWidth <= 410 ? 330 : 350;
     const rect = head.getBoundingClientRect();
-    const width = Math.min(350, window.innerWidth - margin * 2);
+    const width = Math.min(maximum, window.innerWidth - margin * 2);
     const left = Math.min(
       window.innerWidth - width - margin,
       Math.max(margin, rect.left + rect.width / 2 - width / 2)
