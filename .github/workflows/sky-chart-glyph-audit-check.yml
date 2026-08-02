@@ -20,6 +20,7 @@ on:
       - 'sky-chart-house-multiselect-v1.js'
       - 'sky-chart-house-multiselect-v1.css'
       - 'sky-chart-house-filter-enforcer-v1.js'
+      - 'sky-chart-house-angle-support-v1.js'
       - 'sky-chart-filter-neutral-final-v1.js'
       - 'sky-chart-filter-neutral-final-v1.css'
       - 'sky-chart-single-sky-aspects-v1.js'
@@ -39,6 +40,7 @@ on:
       - 'tests/sky-chart-multiselect-filters.mjs'
       - 'tests/sky-chart-placement-compact.mjs'
       - 'tests/sky-chart-house-multiselect.mjs'
+      - 'tests/sky-chart-house-angle-support.mjs'
       - 'tests/sky-chart-single-sky-aspects.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   pull_request:
@@ -58,6 +60,7 @@ on:
       - 'sky-chart-house-multiselect-v1.js'
       - 'sky-chart-house-multiselect-v1.css'
       - 'sky-chart-house-filter-enforcer-v1.js'
+      - 'sky-chart-house-angle-support-v1.js'
       - 'sky-chart-filter-neutral-final-v1.js'
       - 'sky-chart-filter-neutral-final-v1.css'
       - 'sky-chart-single-sky-aspects-v1.js'
@@ -77,6 +80,7 @@ on:
       - 'tests/sky-chart-multiselect-filters.mjs'
       - 'tests/sky-chart-placement-compact.mjs'
       - 'tests/sky-chart-house-multiselect.mjs'
+      - 'tests/sky-chart-house-angle-support.mjs'
       - 'tests/sky-chart-single-sky-aspects.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   workflow_dispatch:
@@ -99,6 +103,7 @@ jobs:
           node --check sky-chart-placement-compact-v1.js
           node --check sky-chart-house-multiselect-v1.js
           node --check sky-chart-house-filter-enforcer-v1.js
+          node --check sky-chart-house-angle-support-v1.js
           node --check sky-chart-filter-neutral-final-v1.js
           node --check sky-chart-single-sky-aspects-v1.js
           node --check sky-chart-single-sky-presentation-v1.js
@@ -109,6 +114,7 @@ jobs:
           node --check tests/sky-chart-multiselect-filters.mjs
           node --check tests/sky-chart-placement-compact.mjs
           node --check tests/sky-chart-house-multiselect.mjs
+          node --check tests/sky-chart-house-angle-support.mjs
           node --check tests/sky-chart-single-sky-aspects.mjs
       - name: Install browser dependencies
         run: |
@@ -120,6 +126,7 @@ jobs:
           node tests/sky-chart-multiselect-filters.mjs
           node tests/sky-chart-placement-compact.mjs
           node tests/sky-chart-house-multiselect.mjs
+          node tests/sky-chart-house-angle-support.mjs
           node tests/sky-chart-single-sky-aspects.mjs
           node tests/sky-chart-glyph-audit-final.mjs
           node tests/sky-chart-hour-ruler-and-sky-colors.mjs
@@ -135,6 +142,8 @@ jobs:
             sky-chart-placement-compact-mobile.png
             sky-chart-house-multiselect-desktop.png
             sky-chart-house-multiselect-mobile.png
+            sky-chart-house-angle-support-desktop.png
+            sky-chart-house-angle-support-mobile.png
             sky-chart-single-sky-a-aspects-desktop.png
             sky-chart-single-sky-a-aspects-mobile.png
             sky-chart-glyph-audit-desktop.png
