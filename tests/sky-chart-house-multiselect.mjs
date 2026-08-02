@@ -80,7 +80,9 @@ assert.equal(await list.locator('.sky-chart-house-list-header').count(),1);
 assert.equal(await list.locator('.sky-chart-house-list-item-master').count(),1);
 assert.equal(await list.locator('.sky-chart-house-list-item-house').count(),12);
 for(const item of await list.locator('.sky-chart-house-list-item').all()){
-  assert.deepEqual(await item.locator('[data-house-choice]').evaluateAll(nodes=>nodes.map(node=>node.dataset.houseChoice)),['all','a','b']);
+  const houseChoices=await item.locator('[data-house-choice]').evaluateAll(nodes=>nodes.map(node=>node.dataset.houseChoice));
+  const angleChoices=await item.locator('[data-house-angle-choice]').evaluateAll(nodes=>nodes.map(node=>node.dataset.houseAngleChoice));
+  assert.deepEqual(houseChoices.length?houseChoices:angleChoices,['all','a','b']);
 }
 
 const visibleRows=()=>page.locator('.sky-foundation-relationship-row:not(.sky-chart-filter-hidden):not(.sky-chart-orb-hidden):not(.sky-orb-filter-hidden):not(.sky-chart-multiselect-hidden):not(.sky-chart-house-multiselect-hidden):not([hidden])');
