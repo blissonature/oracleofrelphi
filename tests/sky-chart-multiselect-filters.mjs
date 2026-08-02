@@ -69,6 +69,7 @@ assert.equal((await skyBControl.locator('[data-placement-filter-summary]').textC
 const visiblePairings=await visibleRows().evaluateAll(rows=>rows.map(row=>[row.dataset.leftPlacement,row.dataset.rightPlacement]));
 assert.ok(visiblePairings.every(([left,right])=>(left==='sun'||left==='moon')&&['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'].includes(right)));
 
+await skyAControl.locator('summary').click();
 await skyAControl.locator('[data-placement-option="mercury"]').check();
 await skyAControl.locator('[data-placement-option="sun"]').uncheck();
 await page.waitForTimeout(100);
@@ -77,6 +78,7 @@ assert.equal((await skyAControl.locator('[data-placement-filter-summary]').textC
 assert.ok((await visibleRows().evaluateAll(rows=>rows.map(row=>row.dataset.leftPlacement))).every(id=>id==='mercury'||id==='moon'));
 
 await skyAControl.locator('[data-placement-preset="all"]').click();
+await skyBControl.locator('summary').click();
 await skyBControl.locator('[data-placement-preset="all"]').click();
 await page.waitForTimeout(100);
 assert.equal(await skyAControl.locator('[data-placement-option]:checked').count(),availableCounts.A);
