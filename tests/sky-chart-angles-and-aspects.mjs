@@ -33,7 +33,7 @@ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:2000
 await page.waitForSelector('html[data-sky-placement-multiselect="ready"]',{timeout:20000});
 await page.waitForSelector('html[data-sky-house-multiselect="ready"]',{timeout:20000});
 await page.waitForSelector('html[data-sky-aspect-multiselect="ready"]',{timeout:20000});
-await page.waitForSelector('.sky-foundation-ledger-angle-heading',{timeout:20000});
+await page.waitForFunction(()=>document.querySelectorAll('.sky-foundation-ledger-angle-heading').length===2,null,{timeout:20000});
 
 const angleIds=['asc','dsc','mc','ic'];
 const angleLabels={asc:'Asc.',dsc:'Desc.',mc:'MC',ic:'IC'};
