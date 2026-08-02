@@ -66,8 +66,6 @@ await page.waitForSelector('#skySelectedRelationship:not([hidden])', {timeout:10
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card').count(), 2);
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
 assert.equal(await page.locator('#skySelectedRelationship').getAttribute('data-selection-source'), 'initial-relationship');
-await page.locator('#skyFoundationA').getByRole('button', {name:'Placements', exact:true}).click();
-await page.locator('#skyFoundationB').getByRole('button', {name:'Placements', exact:true}).click();
 const ledgerGlyphs = await page.locator('.sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => nodes.map(svg => {
   const art=svg.querySelector('.relphi-canonical-glyph');
   const outer=svg.getBoundingClientRect(),inner=art?.getBoundingClientRect();
@@ -76,6 +74,8 @@ const ledgerGlyphs = await page.locator('.sky-foundation-row > svg[data-canonica
 assert.ok(await page.locator('#skyFoundationA .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').count() > 0);
 assert.ok(await page.locator('#skyFoundationB .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').count() > 0);
 assert.ok(ledgerGlyphs.every(result => result.artCount===1 && result.contained && result.overflow==='hidden'));
+await page.locator('#skyFoundationA').getByRole('button', {name:'Placements', exact:true}).click();
+await page.locator('#skyFoundationB').getByRole('button', {name:'Placements', exact:true}).click();
 assert.ok(await page.locator('.sky-foundation-ledger > .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => {
   const visible=nodes.map(svg=>svg.getBoundingClientRect()).filter(box=>box.width>0&&box.height>0);
   return visible.length>0&&visible.every(box=>box.width<=24&&box.height<=24);
