@@ -50,13 +50,15 @@ const desktopLayout=await page.locator('#skyFoundationRelationships .sky-chart-f
   return{
     count:controls.length,
     tops:boxes.map(box=>Math.round(box.top)),
+    bottoms:boxes.map(box=>Math.round(box.bottom)),
     clientWidth:bar.clientWidth,
     scrollWidth:bar.scrollWidth,
     height:Math.round(bar.getBoundingClientRect().height)
   };
 });
 assert.equal(desktopLayout.count,6,'The desktop utility bar must contain six controls.');
-assert.ok(Math.max(...desktopLayout.tops)-Math.min(...desktopLayout.tops)<=2,'All desktop filter controls must occupy one row.');
+assert.ok(Math.max(...desktopLayout.bottoms)-Math.min(...desktopLayout.bottoms)<=2,'All desktop filter controls must share one grid row.');
+assert.ok(Math.max(...desktopLayout.tops)-Math.min(...desktopLayout.tops)<35,'No desktop filter control may wrap to another row.');
 assert.ok(desktopLayout.scrollWidth<=desktopLayout.clientWidth+1,'The one-line desktop filter bar must not overflow horizontally.');
 assert.ok(desktopLayout.height<90,'The desktop filter bar must remain compact.');
 
