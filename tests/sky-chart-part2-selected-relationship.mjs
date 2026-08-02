@@ -252,14 +252,15 @@ const aspectTarget = await page.locator('[data-layer="aspects"]').evaluate(layer
 });
 const hit = page.locator(`.sky-foundation-aspect-hit[data-relation-index="${aspectTarget.index}"]`);
 await hit.waitFor({state:'attached', timeout:10000});
-await page.mouse.move(aspectTarget.x,aspectTarget.y);
+await hit.dispatchEvent('pointerover',{bubbles:true,clientX:aspectTarget.x,clientY:aspectTarget.y,pointerType:'mouse'});
+await hit.dispatchEvent('pointermove',{bubbles:true,clientX:aspectTarget.x,clientY:aspectTarget.y,pointerType:'mouse'});
 await page.waitForTimeout(100);
 assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleBeforeHover);
 const aspectIndex = Number(await page.locator('.sky-foundation-aspect.is-hovered:not(.sky-foundation-aspect-hit)').getAttribute('data-relation-index'));
 assert.ok(Number.isInteger(aspectIndex));
 assert.equal(await page.locator(`.sky-foundation-aspect[data-relation-index="${aspectIndex}"]:not(.sky-foundation-aspect-hit)`).getAttribute('class').then(value => value.includes('is-hovered')), true);
 assert.equal(await page.locator('.sky-foundation-placement.is-aspect-endpoint').count(), 2);
-await page.mouse.click(aspectTarget.x,aspectTarget.y);
+await hit.dispatchEvent('click',{bubbles:true,clientX:aspectTarget.x,clientY:aspectTarget.y});
 await page.waitForTimeout(100);
 assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), 1);
 assert.equal(await page.locator(`.sky-foundation-relationship-row[data-relation-index="${aspectIndex}"]`).isVisible(), true);
