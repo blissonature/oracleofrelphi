@@ -23,6 +23,7 @@ on:
       - 'sky-chart-live-integrity-v1.js'
       - 'tests/sky-chart-glyph-audit-final.mjs'
       - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
+      - 'tests/sky-chart-placement-ledger-colors.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   pull_request:
     paths:
@@ -44,6 +45,7 @@ on:
       - 'sky-chart-live-integrity-v1.js'
       - 'tests/sky-chart-glyph-audit-final.mjs'
       - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
+      - 'tests/sky-chart-placement-ledger-colors.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   workflow_dispatch:
 
@@ -64,6 +66,7 @@ jobs:
           node --check sky-chart-heptagram-canonical-v1.js
           node --check tests/sky-chart-glyph-audit-final.mjs
           node --check tests/sky-chart-hour-ruler-and-sky-colors.mjs
+          node --check tests/sky-chart-placement-ledger-colors.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -73,6 +76,7 @@ jobs:
           python3 -m http.server 4173 > /tmp/sky-chart-glyph-audit-server.log 2>&1 &
           node tests/sky-chart-glyph-audit-final.mjs
           node tests/sky-chart-hour-ruler-and-sky-colors.mjs
+          node tests/sky-chart-placement-ledger-colors.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -84,4 +88,7 @@ jobs:
             sky-chart-hour-ruler-and-sky-colors-mobile.png
             sky-chart-sky-a-card-colors.png
             sky-chart-sky-b-card-colors.png
+            sky-chart-sky-a-placement-ledger-red.png
+            sky-chart-sky-b-placement-ledger-blue.png
+            sky-chart-placement-ledgers-red-blue.png
           if-no-files-found: ignore
