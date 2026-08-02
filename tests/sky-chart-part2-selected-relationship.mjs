@@ -178,8 +178,14 @@ assert.equal(await panel.locator('.sky-progressive-meta > p').count(), 1);
 assert.equal(await panel.locator('.sky-progressive-token[data-progressive-stage="glyph"]').count(), 10);
 assert.equal(await panel.locator('.sky-progressive-name:visible,.sky-progressive-meaning:visible').count(), 0);
 assert.equal(await panel.locator('[data-progressive-glyph-id]').count(), 5);
-assert.equal(await panel.locator('.sky-progressive-disclosures details').count(), 2);
-assert.deepEqual(await panel.locator('.sky-progressive-disclosures summary').allTextContents(), ['How these cards were identified','What this relationship means']);
+const disclosureLabels = await panel.locator('.sky-progressive-disclosures summary').allTextContents();
+assert.ok(disclosureLabels.includes('How these cards were identified'));
+assert.ok(disclosureLabels.includes('What this relationship means'));
+if (disclosureLabels.includes('Stellium and cluster context')) {
+  assert.ok(await panel.locator('.sky-stellium-context').count() > 0);
+  assert.ok((await panel.locator('.sky-stellium-caution').textContent()).includes('three or more planets'));
+  assert.ok((await panel.locator('.sky-stellium-caution').textContent()).includes('does not mean every pair is conjunct'));
+}
 assert.equal(await panel.locator('[data-missing-canonical-glyph]').count(), 0);
 const selectedOrbMinutes = Math.round(selectedOrb*60);
 assert.equal(await panel.locator('[data-progressive-field="orb"] [data-progressive-level="glyph"]').textContent(), `${Math.floor(selectedOrbMinutes/60)}°${String(selectedOrbMinutes%60).padStart(2,'0')}′`);
