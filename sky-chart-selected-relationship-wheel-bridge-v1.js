@@ -1,60 +1,13 @@
-// Give each visible aspect line a wide invisible hit target and route it to the exact relationship row.
+// Give each visible aspect line a wide invisible hit target. Wheel activation is
+// handled by the foundation interaction layer and never selects the dual-card view.
 (function () {
   'use strict';
   if (window.__relphiSelectedRelationshipWheelBridgeV1) return;
   window.__relphiSelectedRelationshipWheelBridgeV1 = true;
 
-  let bridgeBusy = false;
-  let pendingWheelIndex = null;
-
-  function setWheelSource(index) {
-    const panel = document.getElementById('skySelectedRelationship');
-    if (!panel || Number(panel.dataset.relationIndex) !== index) return false;
-    panel.dataset.selectionSource = 'comparison-wheel';
-    return true;
-  }
-
-  function activate(index) {
-    if (bridgeBusy || !Number.isInteger(index)) return;
-    const row = document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${index}"]`);
-    if (!row) return;
-    bridgeBusy = true;
-    pendingWheelIndex = index;
-    setWheelSource(index);
-    row.click();
-    queueMicrotask(function () { setWheelSource(index); });
-    setTimeout(function () { setWheelSource(index); }, 50);
-    setTimeout(function () {
-      setWheelSource(index);
-      bridgeBusy = false;
-    }, 300);
-  }
-
-  window.addEventListener('relphi:selected-relationship-rendered', function (event) {
-    const index = Number(event.detail?.index);
-    if (!Number.isInteger(index) || index !== pendingWheelIndex) return;
-    setWheelSource(index);
-    pendingWheelIndex = null;
-    bridgeBusy = false;
-  });
-
-  function bind(node) {
-    if (!node || node.dataset.selectedRelationshipBridgeBound === 'true') return;
-    node.dataset.selectedRelationshipBridgeBound = 'true';
-    node.addEventListener('click', function () {
-      activate(Number(node.dataset.relationIndex));
-    });
-    node.addEventListener('keydown', function (event) {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      activate(Number(node.dataset.relationIndex));
-    });
-  }
-
   function installHitTargets() {
     document.querySelectorAll('[data-layer="aspects"] > line[data-relation-index]:not(.sky-foundation-aspect-hit)').forEach(function (line) {
       line.classList.add('sky-foundation-aspect');
-      bind(line);
       if (line.dataset.hitTargetInstalled === 'true') return;
       line.dataset.hitTargetInstalled = 'true';
       const hit = line.cloneNode(false);
@@ -68,7 +21,6 @@
       hit.dataset.interactive = 'aspect';
       hit.dataset.focusPiece = 'aspect';
       hit.dataset.relationIndex = line.dataset.relationIndex;
-      bind(hit);
       line.parentNode.insertBefore(hit, line.nextSibling);
     });
   }

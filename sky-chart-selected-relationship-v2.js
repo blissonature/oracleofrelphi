@@ -95,8 +95,7 @@
     panel.scrollIntoView({behavior:'smooth',block:'nearest'});window.dispatchEvent(new CustomEvent('relphi:selected-relationship-rendered',{detail:{index,relation,source:initiator}}));
   }
   function indexFrom(node){const value=Number(node?.dataset?.relationIndex);return Number.isInteger(value)?value:null}
-  document.addEventListener('click',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]'),line=event.target.closest?.('.sky-foundation-aspect[data-relation-index]');if(!row&&!line)return;const index=indexFrom(row||line);if(index==null)return;queueMicrotask(()=>render(index,row?'relationship-list':'comparison-wheel'))});
-  document.addEventListener('keydown',event=>{if(!['Enter',' '].includes(event.key))return;const line=event.target.closest?.('.sky-foundation-aspect[data-relation-index]');if(!line)return;const index=indexFrom(line);if(index==null)return;event.preventDefault();render(index,'comparison-wheel-keyboard')});
+  document.addEventListener('click',event=>{const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');if(!row)return;const index=indexFrom(row);if(index==null)return;queueMicrotask(()=>render(index,'relationship-list'))});
   function onReady(){ensureMount();if(selectedIndex!=null&&relationshipRow(selectedIndex))render(selectedIndex,'foundation-rerender')}
   window.addEventListener('relphi:sky-foundation-ready',onReady);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureMount,0),{once:true});else setTimeout(ensureMount,0);
 })();

@@ -26,6 +26,7 @@
 .sky-chart-filter-bar select,
 .sky-chart-filter-bar input[data-filter="orb"] { width:100%; min-width:0; min-height:35px; box-sizing:border-box; border:1px solid rgba(31,27,24,.2); border-radius:9px; background:#fff; padding:.52rem .58rem; color:#191613; font:700 .68rem/1.2 system-ui,sans-serif; }
 .sky-chart-filter-hidden { display:none !important; }
+.sky-foundation-wheel .sky-chart-orb-hidden { display:none !important; }
 .sky-where-when-action[data-final-now] { border-color:rgba(201,33,30,.38); color:#9e1b18; }
 .sky-house-system-note { display:none !important; }
 

@@ -84,6 +84,18 @@ const desktopFilterBoxes = await page.locator('.sky-chart-filter-bar > *').evalu
 assert.equal(new Set(desktopFilterBoxes.map(box => box.top)).size, 1);
 assert.ok(Math.max(...desktopFilterBoxes.map(box => box.height))-Math.min(...desktopFilterBoxes.map(box => box.height)) <= 1);
 assert.equal(await page.locator('.sky-chart-filter-bar').evaluate(node => node.scrollWidth <= node.clientWidth), true);
+await page.waitForTimeout(100);
+const defaultOrbState = await page.locator('.sky-foundation-relationship-row').evaluateAll(rows => rows.map(row => {
+  const nodes=Array.from(document.querySelectorAll(`[data-layer="aspects"] [data-relation-index="${row.dataset.relationIndex}"]`));
+  return {hidden:row.hidden,wheelHidden:nodes.length>0&&nodes.every(node=>getComputedStyle(node).display==='none')};
+}));
+assert.ok(defaultOrbState.some(state => state.hidden) && defaultOrbState.some(state => !state.hidden));
+assert.ok(defaultOrbState.every(state => state.hidden===state.wheelHidden));
+const orbInput = page.locator('input[data-filter="orb"]');
+await orbInput.fill('360');
+await page.waitForTimeout(100);
+assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), await page.locator('.sky-foundation-relationship-row').count());
+assert.ok(await page.locator('[data-layer="aspects"] [data-relation-index]').evaluateAll(nodes => nodes.every(node => getComputedStyle(node).display!=='none')));
 const inactiveHourStyles = await page.locator('.sky-ph-hour-segment.future,.sky-ph-hour-segment.past').evaluateAll(nodes => nodes.map(node => ({opacity:getComputedStyle(node).opacity,strokeWidth:getComputedStyle(node).strokeWidth})));
 assert.ok(inactiveHourStyles.length > 0);
 assert.equal(new Set(inactiveHourStyles.map(style => style.opacity)).size, 1);
@@ -92,7 +104,8 @@ assert.ok(await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.eve
 assert.equal(await page.locator('[data-filter="aspect"] option[value="semi-sextile"]').count(), 1);
 assert.equal(await page.locator('[data-filter="aspect"] option[value="quincunx"]').count(), 1);
 
-const row = page.locator('.sky-foundation-relationship-row[data-relation-index]').first();
+const relationIndexForLargestOrb = await page.locator('.sky-foundation-relationship-row[data-relation-index]').evaluateAll(rows => Number(rows.reduce((best,row) => Number(row.dataset.orb)>Number(best.dataset.orb)?row:best).dataset.relationIndex));
+const row = page.locator(`.sky-foundation-relationship-row[data-relation-index="${relationIndexForLargestOrb}"]`);
 const relationIndex = Number(await row.getAttribute('data-relation-index'));
 const listCountBeforeSelection = await page.locator('.sky-foundation-relationship-row:visible').count();
 await row.click();
@@ -120,7 +133,17 @@ assert.deepEqual(order, ['sky-selected-graphic','sky-selected-facts','sky-select
 const cardImagesLoaded = await panel.locator('.sky-selected-card img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0));
 assert.equal(cardImagesLoaded, true);
 const titleFromRow = (await panel.locator('.sky-selected-facts h3').textContent()).trim();
-const cardTitlesFromRow = await panel.locator('.sky-selected-card h4').allTextContents();
+const selectedOrb = Number(await row.getAttribute('data-orb'));
+await orbInput.fill(String(Math.max(0, selectedOrb-.01)));
+await page.waitForTimeout(100);
+assert.equal(await row.isVisible(), false);
+assert.ok(await page.locator(`.sky-foundation-aspect[data-relation-index="${relationIndex}"]`).evaluate(node => getComputedStyle(node).display==='none'));
+assert.equal(Number(await panel.getAttribute('data-relation-index')), relationIndex);
+assert.equal((await panel.locator('.sky-selected-facts h3').textContent()).trim(), titleFromRow);
+await orbInput.fill('360');
+await page.waitForTimeout(100);
+assert.equal(await row.isVisible(), true);
+assert.ok(await page.locator(`.sky-foundation-aspect[data-relation-index="${relationIndex}"]`).evaluate(node => getComputedStyle(node).display!=='none'));
 
 // Hovering another relationship must not mutate or blink the retained list.
 const visibleBeforeHover = await page.locator('.sky-foundation-relationship-row:visible').count();
@@ -158,23 +181,29 @@ await wheelPlacement.click({force:true});
 await page.waitForTimeout(100);
 const visibleFromWheelSelection = await page.locator('.sky-foundation-relationship-row:visible').count();
 assert.ok(visibleFromWheelSelection > 0 && visibleFromWheelSelection < visibleBeforeHover);
-await page.locator('.sky-foundation-relationship-row:visible').first().click();
+assert.equal(Number(await panel.getAttribute('data-relation-index')), relationIndex);
+const listControlledRow = page.locator('.sky-foundation-relationship-row:visible').first();
+const listControlledIndex = Number(await listControlledRow.getAttribute('data-relation-index'));
+await listControlledRow.click();
 await page.waitForTimeout(100);
 assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleFromWheelSelection);
+assert.equal(Number(await panel.getAttribute('data-relation-index')), listControlledIndex);
+assert.equal(await panel.getAttribute('data-selection-source'), 'relationship-list');
+const listControlledTitle = (await panel.locator('.sky-selected-facts h3').textContent()).trim();
+const listControlledCards = await panel.locator('.sky-selected-card h4').allTextContents();
 await page.locator('#skyFoundationClearIsolation').click();
 await page.waitForTimeout(100);
 assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleBeforeHover);
 
-const line = page.locator(`.sky-foundation-aspect[data-relation-index="${relationIndex}"]`);
 const hit = page.locator(`.sky-foundation-aspect-hit[data-relation-index="${relationIndex}"]`);
 await hit.waitFor({state:'attached', timeout:10000});
 await hit.click({force:true});
 await page.waitForTimeout(100);
-assert.equal(Number(await panel.getAttribute('data-relation-index')), relationIndex);
-assert.equal((await panel.locator('.sky-selected-facts h3').textContent()).trim(), titleFromRow);
-assert.deepEqual(await panel.locator('.sky-selected-card h4').allTextContents(), cardTitlesFromRow);
-assert.equal(await page.locator(`.sky-foundation-relationship-row[data-relation-index="${relationIndex}"]`).getAttribute('aria-current'), 'true');
-assert.equal(await line.getAttribute('data-selected-relation'), 'true');
+assert.equal(Number(await panel.getAttribute('data-relation-index')), listControlledIndex);
+assert.equal((await panel.locator('.sky-selected-facts h3').textContent()).trim(), listControlledTitle);
+assert.deepEqual(await panel.locator('.sky-selected-card h4').allTextContents(), listControlledCards);
+assert.equal(await page.locator(`.sky-foundation-relationship-row[data-relation-index="${listControlledIndex}"]`).getAttribute('aria-current'), 'true');
+assert.equal(await page.locator(`.sky-foundation-aspect[data-relation-index="${listControlledIndex}"]`).getAttribute('data-selected-relation'), 'true');
 
 // Derived points are completed and assigned houses.
 const completed = await page.evaluate(() => JSON.parse(localStorage.getItem('relphiSkyChartA')));

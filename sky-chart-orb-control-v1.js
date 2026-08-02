@@ -12,7 +12,10 @@
     const explicit=Number(row.dataset.orb);
     if(Number.isFinite(explicit))return explicit;
     const match=String(row.getAttribute('aria-label')||'').match(/orb\s+([0-9]+(?:\.[0-9]+)?)/i);
-    return match?Number(match[1]):NaN;
+    if(!match)return NaN;
+    const value=Number(match[1]);
+    row.dataset.orb=String(value);
+    return value;
   }
 
   function apply(){
