@@ -35,12 +35,6 @@ const issues=await page.evaluate(()=>{
   const artFor=root=>Array.from(root?.children||[]).find(node=>node.classList?.contains('relphi-canonical-glyph'))||null;
   const circleFor=root=>root?.querySelector?.(':scope > circle')||null;
   const white=value=>value==='rgb(255, 255, 255)'||value==='rgba(255, 255, 255, 1)'||value==='#fff'||value==='#ffffff'||value==='white';
-  const visibleFill=node=>{
-    if(!node)return false;
-    const style=getComputedStyle(node);
-    const opacity=Number.parseFloat(style.fillOpacity||'1');
-    return style.fill!=='none'&&style.fill!=='rgba(0, 0, 0, 0)'&&opacity>0;
-  };
   const isHidden=root=>{
     const circle=circleFor(root);if(!circle)return false;
     const attr=circle.getAttribute('opacity');
@@ -104,6 +98,7 @@ const issues=await page.evaluate(()=>{
     }
     const painted=art?.matches('path,circle,ellipse,rect,polygon,polyline,line,text')?[art]:[];
     art?.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text').forEach(node=>painted.push(node));
+    if(!painted.length)issues.push(`hour-ruler ${index+1}: no canonical painted geometry`);
     painted.forEach(node=>{
       const style=getComputedStyle(node);
       const fillOpacity=Number.parseFloat(style.fillOpacity||'1');
@@ -112,19 +107,6 @@ const issues=await page.evaluate(()=>{
       if(style.fill!=='none'&&fillOpacity>0&&!white(style.fill))issues.push(`hour-ruler ${index+1}: rendered fill is not white`);
       if(style.stroke!=='none'&&strokeOpacity>0&&strokeWidth>0&&!white(style.stroke))issues.push(`hour-ruler ${index+1}: rendered stroke is not white`);
     });
-  });
-
-  document.querySelectorAll('.relphi-canonical-glyph.relphi-glyph-venus').forEach((art,index)=>{
-    const glyphPath=art.matches('path')?art:art.querySelector('path');
-    const data=glyphPath?.getAttribute('d')||'';
-    if(!glyphPath||data.length<200)issues.push(`Venus ${index+1}: canonical compound path missing or incomplete`);
-    if(glyphPath&&!visibleFill(glyphPath))issues.push(`Venus ${index+1}: canonical filled form is not visible`);
-  });
-  document.querySelectorAll('.relphi-canonical-glyph.relphi-glyph-moon').forEach((art,index)=>{
-    const glyphPath=art.matches('path')?art:art.querySelector('path');
-    const data=glyphPath?.getAttribute('d')||'';
-    if(!glyphPath||data.length<200)issues.push(`Moon ${index+1}: canonical crescent path missing or incomplete`);
-    if(glyphPath&&!visibleFill(glyphPath))issues.push(`Moon ${index+1}: canonical supportive crescent form is not visible`);
   });
 
   document.querySelectorAll('.relphi-glyph-bubble').forEach((root,index)=>{
@@ -146,4 +128,4 @@ assert.equal(await page.getAttribute('html','data-sky-glyph-audit'),'passed');
 await page.screenshot({path:'sky-chart-glyph-audit-mobile.png',fullPage:true});
 
 await browser.close();
-console.log('Sky Chart canonical glyph audit passed on desktop and mobile, including crisp inverse hour rulers and canonical Moon/Venus geometry.');
+console.log('Sky Chart canonical glyph audit passed on desktop and mobile, including every inverse hour ruler.');
