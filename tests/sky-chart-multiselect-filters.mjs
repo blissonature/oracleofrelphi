@@ -26,23 +26,28 @@ await page.waitForSelector('html[data-sky-placement-multiselect="ready"]',{timeo
 
 assert.equal(await page.locator('[data-filter="placement"]').count(),0,'The old singular placement select must be removed.');
 assert.equal(await page.locator('[data-placement-filter-sky]').count(),0,'Separate Sky A and Sky B dropdowns must not remain.');
+assert.equal(await page.locator('[data-placement-sky-section]').count(),0,'The dropdown must not contain separate placement lists for each sky.');
 assert.equal(await page.locator('[data-placement-filter="combined"]').count(),1,'Both skies must share one categorized placement checklist.');
 
 const combined=page.locator('[data-placement-filter="combined"]');
 const menu=page.locator('#skyChartPlacementPopover');
+const matrix=menu.locator('[data-placement-matrix="combined"]');
+assert.equal(await matrix.count(),1,'The placement control must contain one shared A/B matrix.');
 const availableCounts={};
 for(const slot of ['A','B']){
-  const section=menu.locator(`[data-placement-sky-section="${slot}"]`);
-  assert.equal(await section.count(),1);
-  assert.equal(await section.locator(`[data-placement-sky-toggle="${slot}"]`).count(),1,'Each sky needs one whole-sky checkbox.');
-  assert.equal(await section.locator(`[data-placement-preset="all"][data-slot="${slot}"]`).count(),1);
-  assert.equal(await section.locator(`[data-placement-preset="none"][data-slot="${slot}"]`).count(),1);
-  for(const group of ['luminaries','planets','angles-points']) assert.equal(await section.locator(`[data-placement-group-toggle="${group}"][data-slot="${slot}"]`).count(),1);
-  availableCounts[slot]=await section.locator(`[data-placement-option][data-slot="${slot}"]`).count();
+  const header=matrix.locator(`[data-placement-sky-header="${slot}"]`);
+  assert.equal(await header.count(),1);
+  assert.equal(await header.locator(`[data-placement-sky-toggle="${slot}"]`).count(),1,'Each sky needs one whole-sky checkbox.');
+  assert.equal(await header.locator(`[data-placement-preset="all"][data-slot="${slot}"]`).count(),1);
+  assert.equal(await header.locator(`[data-placement-preset="none"][data-slot="${slot}"]`).count(),1);
+  for(const group of ['luminaries','planets','angles-points']) assert.equal(await matrix.locator(`[data-placement-group-toggle="${group}"][data-slot="${slot}"]`).count(),1);
+  availableCounts[slot]=await matrix.locator(`[data-placement-option][data-slot="${slot}"]`).count();
   assert.ok(availableCounts[slot]>=15,'Each chart should expose its available canonical placements.');
-  assert.equal(await section.locator(`[data-placement-option][data-slot="${slot}"]:checked`).count(),availableCounts[slot]);
-  assert.equal((await section.locator(`[data-placement-sky-summary="${slot}"]`).textContent())?.trim(),'All');
+  assert.equal(await matrix.locator(`[data-placement-option][data-slot="${slot}"]:checked`).count(),availableCounts[slot]);
+  assert.equal((await header.locator(`[data-placement-sky-summary="${slot}"]`).textContent())?.trim(),'All');
 }
+const rowIds=await matrix.locator('[data-placement-matrix-row]').evaluateAll(rows=>rows.map(row=>row.dataset.placementMatrixRow));
+assert.equal(new Set(rowIds).size,rowIds.length,'Each placement must appear once in the shared list.');
 assert.equal((await combined.locator('[data-placement-filter-summary]').textContent())?.trim(),'All');
 
 const desktopLayout=await page.locator('#skyFoundationRelationships .sky-chart-filter-bar').evaluate(bar=>{
@@ -73,14 +78,14 @@ assert.equal(await menu.evaluate(node=>node.parentElement===document.body),true,
 const skyAToggle=menu.locator('[data-placement-sky-toggle="A"]');
 await skyAToggle.uncheck();
 await page.waitForTimeout(100);
-assert.equal(await menu.locator('[data-placement-option][data-slot="A"]:checked').count(),0);
+assert.equal(await matrix.locator('[data-placement-option][data-slot="A"]:checked').count(),0);
 assert.equal((await menu.locator('[data-placement-sky-summary="A"]').textContent())?.trim(),'None');
 assert.equal((await combined.locator('[data-placement-filter-summary]').textContent())?.trim(),'Sky A off');
 assert.equal(await visibleRows().count(),0,'Unchecking Sky A must clear that entire sky in one action.');
 
-await menu.locator('[data-placement-group-toggle="luminaries"][data-slot="A"]').check();
+await matrix.locator('[data-placement-group-toggle="luminaries"][data-slot="A"]').check();
 await page.waitForTimeout(100);
-assert.deepEqual((await menu.locator('[data-placement-option][data-slot="A"]:checked').evaluateAll(nodes=>nodes.map(node=>node.value).sort())),['moon','sun']);
+assert.deepEqual((await matrix.locator('[data-placement-option][data-slot="A"]:checked').evaluateAll(nodes=>nodes.map(node=>node.value).sort())),['moon','sun']);
 assert.equal((await menu.locator('[data-placement-sky-summary="A"]').textContent())?.trim(),'Luminaries');
 const visibleAfterLuminaries=await visibleRows().evaluateAll(rows=>rows.map(row=>row.dataset.leftPlacement));
 assert.ok(visibleAfterLuminaries.length>0);
@@ -88,26 +93,26 @@ assert.ok(visibleAfterLuminaries.every(id=>id==='sun'||id==='moon'));
 
 const skyBToggle=menu.locator('[data-placement-sky-toggle="B"]');
 await skyBToggle.uncheck();
-await menu.locator('[data-placement-group-toggle="planets"][data-slot="B"]').check();
+await matrix.locator('[data-placement-group-toggle="planets"][data-slot="B"]').check();
 await page.waitForTimeout(100);
 const expectedPlanets=['jupiter','mars','mercury','neptune','pluto','saturn','uranus','venus'];
-assert.deepEqual((await menu.locator('[data-placement-option][data-slot="B"]:checked').evaluateAll(nodes=>nodes.map(node=>node.value).sort())),expectedPlanets);
+assert.deepEqual((await matrix.locator('[data-placement-option][data-slot="B"]:checked').evaluateAll(nodes=>nodes.map(node=>node.value).sort())),expectedPlanets);
 assert.equal((await menu.locator('[data-placement-sky-summary="B"]').textContent())?.trim(),'Planets');
 const visiblePairings=await visibleRows().evaluateAll(rows=>rows.map(row=>[row.dataset.leftPlacement,row.dataset.rightPlacement]));
 assert.ok(visiblePairings.every(([left,right])=>(left==='sun'||left==='moon')&&['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'].includes(right)));
 
-await menu.locator('[data-placement-option="mercury"][data-slot="A"]').check();
-await menu.locator('[data-placement-option="sun"][data-slot="A"]').uncheck();
+await matrix.locator('[data-placement-option="mercury"][data-slot="A"]').check();
+await matrix.locator('[data-placement-option="sun"][data-slot="A"]').uncheck();
 await page.waitForTimeout(100);
-assert.deepEqual((await menu.locator('[data-placement-option][data-slot="A"]:checked').evaluateAll(nodes=>nodes.map(node=>node.value).sort())),['mercury','moon']);
+assert.deepEqual((await matrix.locator('[data-placement-option][data-slot="A"]:checked').evaluateAll(nodes=>nodes.map(node=>node.value).sort())),['mercury','moon']);
 assert.equal((await menu.locator('[data-placement-sky-summary="A"]').textContent())?.trim(),`2 of ${availableCounts.A}`);
 assert.ok((await visibleRows().evaluateAll(rows=>rows.map(row=>row.dataset.leftPlacement))).every(id=>id==='mercury'||id==='moon'));
 
 await menu.locator('[data-placement-preset="all"][data-slot="A"]').click();
 await menu.locator('[data-placement-preset="all"][data-slot="B"]').click();
 await page.waitForTimeout(100);
-assert.equal(await menu.locator('[data-placement-option][data-slot="A"]:checked').count(),availableCounts.A);
-assert.equal(await menu.locator('[data-placement-option][data-slot="B"]:checked').count(),availableCounts.B);
+assert.equal(await matrix.locator('[data-placement-option][data-slot="A"]:checked').count(),availableCounts.A);
+assert.equal(await matrix.locator('[data-placement-option][data-slot="B"]:checked').count(),availableCounts.B);
 assert.equal((await combined.locator('[data-placement-filter-summary]').textContent())?.trim(),'All');
 
 await page.screenshot({path:'sky-chart-multiselect-filters-desktop.png',fullPage:true});
@@ -117,4 +122,4 @@ assert.equal(await menu.isVisible(),true);
 await page.screenshot({path:'sky-chart-multiselect-filters-mobile.png',fullPage:true});
 assert.deepEqual(errors,[]);
 await browser.close();
-console.log('Sky Chart combined placement checklist passed with a single-line desktop utility bar and whole-sky toggles.');
+console.log('Sky Chart one-list A/B placement matrix passed with whole-sky and category toggles.');
