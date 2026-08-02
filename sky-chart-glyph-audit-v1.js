@@ -24,7 +24,8 @@
   function circleIsHidden(root) {
     const circle = calibrationCircle(root);
     if (!circle) return false;
-    const opacity = Number(circle.getAttribute('opacity'));
+    const opacityAttribute = circle.getAttribute('opacity');
+    const opacity = opacityAttribute == null ? NaN : Number(opacityAttribute);
     const styleOpacity = Number.parseFloat(circle.style.opacity || '');
     return opacity === 0 || styleOpacity === 0 || circle.closest('svg')?.dataset?.canonicalCircle === 'hidden';
   }
