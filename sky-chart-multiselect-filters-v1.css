@@ -1,15 +1,14 @@
-/* Per-sky checkbox placement filters. */
+/* One categorized checkbox placement filter for both skies. */
 .sky-chart-filter-bar[data-multiselect-placement-filters="true"]{
   position:relative;
   display:grid;
   grid-template-columns:
     minmax(58px,.55fr)
-    minmax(92px,.95fr)
-    minmax(128px,1.45fr)
-    minmax(128px,1.45fr)
+    minmax(90px,.95fr)
+    minmax(145px,1.45fr)
     minmax(82px,.8fr)
     minmax(82px,.8fr)
-    minmax(125px,1.25fr);
+    minmax(130px,1.25fr);
   align-items:end;
   gap:6px;
 }
@@ -47,15 +46,13 @@
 .sky-chart-placement-filter[open]>summary{border-color:rgba(31,27,24,.42);box-shadow:0 0 0 2px rgba(31,27,24,.08)}
 .sky-chart-placement-filter-label{grid-area:label;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sky-chart-placement-filter-value{grid-area:value;justify-self:start;display:inline-flex;align-items:center;justify-content:center;max-width:100%;padding:.18rem .42rem;border-radius:999px;background:#f0ece6;color:#413a34;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.6rem}
-.sky-chart-placement-filter-a .sky-chart-placement-filter-value{background:rgba(201,33,30,.1);color:#a21b18}
-.sky-chart-placement-filter-b .sky-chart-placement-filter-value{background:rgba(36,98,208,.1);color:#1f55b4}
 .sky-chart-placement-filter-popover{
   position:absolute;
   z-index:80;
   top:calc(100% + 6px);
-  left:0;
-  width:min(330px,calc(100vw - 32px));
-  max-height:min(440px,70vh);
+  left:50%;
+  width:min(720px,calc(100vw - 32px));
+  max-height:min(520px,75vh);
   overflow:auto;
   box-sizing:border-box;
   padding:10px;
@@ -63,35 +60,58 @@
   border-radius:13px;
   background:#fffdf8;
   box-shadow:0 16px 38px rgba(31,27,24,.2);
+  transform:translateX(-38%);
 }
-.sky-chart-placement-filter-b .sky-chart-placement-filter-popover{left:auto;right:0}
-.sky-chart-placement-filter-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:9px}
+.sky-chart-placement-filter-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .sky-chart-placement-filter-actions button{
-  min-height:32px;
+  min-height:30px;
   border:1px solid rgba(31,27,24,.18);
   border-radius:8px;
   background:#f8f4ee;
   color:#211d19;
   cursor:pointer;
-  font:800 .66rem/1 system-ui,sans-serif;
+  font:800 .65rem/1 system-ui,sans-serif;
 }
 .sky-chart-placement-filter-actions button:hover,
 .sky-chart-placement-filter-actions button:focus-visible{border-color:rgba(31,27,24,.42);background:#fff;outline:none}
-.sky-chart-placement-filter-group{min-width:0;margin:0 0 9px;padding:0;border:0}
+.sky-chart-placement-global-actions{max-width:260px;margin:0 auto 10px}
+.sky-chart-placement-filter-skies{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.sky-chart-placement-sky{
+  min-width:0;
+  padding:9px;
+  border:1px solid rgba(31,27,24,.16);
+  border-radius:10px;
+  background:#fff;
+}
+.sky-chart-placement-sky-a{border-top:3px solid #c9211e}
+.sky-chart-placement-sky-b{border-top:3px solid #2462d0}
+.sky-chart-placement-sky-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:7px;
+}
+.sky-chart-placement-sky-heading label{display:flex;align-items:center;gap:.48rem;cursor:pointer;color:#211d19;font:900 .75rem/1.1 system-ui,sans-serif}
+.sky-chart-placement-sky-heading>span{max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#655c54;font:800 .61rem/1.1 system-ui,sans-serif}
+.sky-chart-placement-sky-a .sky-chart-placement-sky-heading>span{color:#a21b18}
+.sky-chart-placement-sky-b .sky-chart-placement-sky-heading>span{color:#1f55b4}
+.sky-chart-placement-sky-actions{margin-bottom:8px}
+.sky-chart-placement-filter-group{min-width:0;margin:0 0 8px;padding:0;border:0}
 .sky-chart-placement-filter-group:last-child{margin-bottom:0}
 .sky-chart-placement-filter-group legend{width:100%;margin:0 0 4px;padding:0}
 .sky-chart-placement-filter-group legend label{
   display:flex;
   align-items:center;
   gap:.48rem;
-  min-height:30px;
+  min-height:29px;
   box-sizing:border-box;
-  padding:.35rem .46rem;
+  padding:.34rem .44rem;
   border-radius:7px;
   background:#eee8df;
   color:#29231e;
   cursor:pointer;
-  font:900 .68rem/1.15 system-ui,sans-serif;
+  font:900 .66rem/1.15 system-ui,sans-serif;
 }
 .sky-chart-placement-filter-options{display:grid;grid-template-columns:1fr 1fr;gap:2px 6px;padding:2px 2px 0}
 .sky-chart-placement-option{
@@ -100,31 +120,33 @@
   align-items:center;
   gap:.44rem!important;
   min-width:0;
-  min-height:29px;
+  min-height:28px;
   box-sizing:border-box;
-  padding:.3rem .38rem;
+  padding:.28rem .36rem;
   border-radius:6px;
   color:#29231e!important;
   cursor:pointer;
-  font:700 .65rem/1.15 system-ui,sans-serif!important;
+  font:700 .64rem/1.15 system-ui,sans-serif!important;
 }
 .sky-chart-placement-option:hover{background:#f3eee7}
 .sky-chart-placement-option span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sky-chart-placement-filter input[type="checkbox"]{width:15px;height:15px;min-width:15px;margin:0;accent-color:#544c45}
-.sky-chart-placement-filter-a input[type="checkbox"]{accent-color:#c9211e}
-.sky-chart-placement-filter-b input[type="checkbox"]{accent-color:#2462d0}
+.sky-chart-placement-sky-a input[type="checkbox"]{accent-color:#c9211e}
+.sky-chart-placement-sky-b input[type="checkbox"]{accent-color:#2462d0}
 .sky-chart-multiselect-hidden{display:none!important}
 
 @media(max-width:840px){
   .sky-chart-filter-bar[data-multiselect-placement-filters="true"]{grid-template-columns:repeat(4,minmax(0,1fr))}
   .sky-chart-placement-filter{grid-column:span 2!important}
   .sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-filter-house-system{grid-column:span 2}
+  .sky-chart-placement-filter-popover{left:0;transform:none}
 }
 @media(max-width:620px){
   .sky-chart-filter-bar[data-multiselect-placement-filters="true"]{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sky-chart-placement-filter{grid-column:1/-1!important}
   .sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-filter-house-system{grid-column:1/-1}
-  .sky-chart-placement-filter-popover{left:0!important;right:auto!important;width:min(340px,calc(100vw - 28px))}
+  .sky-chart-placement-filter-popover{left:0!important;right:auto!important;width:min(360px,calc(100vw - 28px))}
+  .sky-chart-placement-filter-skies{grid-template-columns:1fr}
 }
 @media(max-width:410px){
   .sky-chart-placement-filter-options{grid-template-columns:1fr}
