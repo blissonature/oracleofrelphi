@@ -74,7 +74,7 @@ const heptagramGlyphs = await page.locator('.sky-ph-heptagram').evaluateAll(node
 })));
 assert.ok(heptagramGlyphs.length >= 2);
 assert.ok(heptagramGlyphs.every(result => result.planets===7 && result.bubbles===7 && result.duplicateMounts===0 && result.oldNodes===0 && result.dayRulers===1 && result.hourRulers===1 && result.dayRingWidth>=5));
-assert.ok(heptagramGlyphs.every(result => result.hourArtwork.length>0 && result.hourArtwork.every(shape => shape.fill==='none' || shape.fill==='rgb(255, 255, 255)') && result.hourArtwork.every(shape => shape.fill!=='none' || shape.stroke==='none' || shape.stroke==='rgb(255, 255, 255)') && result.hourArtwork.every(shape => !Number.isFinite(shape.width) || shape.width<=4)));
+assert.ok(heptagramGlyphs.every(result => result.hourArtwork.length>0 && result.hourArtwork.every(shape => shape.fill==='none' || shape.fill==='rgb(255, 255, 255)') && result.hourArtwork.every(shape => shape.fill==='none' || (shape.stroke==='none' && shape.width===0)) && result.hourArtwork.every(shape => shape.fill!=='none' || shape.stroke==='none' || shape.stroke==='rgb(255, 255, 255)') && result.hourArtwork.every(shape => !Number.isFinite(shape.width) || shape.width<=4)));
 
 const filterLabels = await page.locator('.sky-chart-filter-bar label').evaluateAll(nodes => nodes.map(node => node.childNodes[0].textContent.trim()));
 assert.deepEqual(filterLabels, ['Orb','Aspects','Placements','Sky A House','Sky B House','House System']);

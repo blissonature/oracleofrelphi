@@ -11,5 +11,5 @@ assert.match(source, /delete svg\.dataset\.canonicalHeptagramV1/,
   'A failed or incomplete correction must clear the in-progress marker so it can be retried.');
 assert.match(source, /oldNode\?\.classList\.contains\('day'\)/,
   'The canonical replacement must preserve the day-ruler state.');
-assert.match(source, /styleHourArtwork\(artwork, COLORS\[key\]\)/,
+assert.match(source, /styleHourArtwork\(artwork\)/,
   'The hour-ruler artwork must receive final inversion and weight correction.');

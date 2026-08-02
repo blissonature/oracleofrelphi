@@ -15,7 +15,7 @@
     return KEYS.find(key => group.classList.contains(`sky-ph-${key}`)) || '';
   }
 
-  function styleHourArtwork(artwork, background) {
+  function styleHourArtwork(artwork) {
     artwork.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
       const fill = node.getAttribute('fill');
       const stroke = node.getAttribute('stroke');
@@ -23,12 +23,15 @@
       if (hasFill) {
         node.setAttribute('fill', '#fff');
         node.style.setProperty('fill', '#fff', 'important');
-        node.setAttribute('stroke', background);
-        node.setAttribute('stroke-width', '1.15');
-        node.setAttribute('paint-order', 'fill stroke markers');
-        node.style.setProperty('stroke', background, 'important');
-        node.style.setProperty('stroke-width', '1.15', 'important');
-        node.style.setProperty('paint-order', 'fill stroke markers', 'important');
+        // The canonical master adds an outline to filled silhouettes for wheel
+        // nodes. Remove only that added outline here so inversion preserves the
+        // complete approved silhouette without making it heavier or eroding it.
+        node.setAttribute('stroke', 'none');
+        node.setAttribute('stroke-width', '0');
+        node.removeAttribute('paint-order');
+        node.style.setProperty('stroke', 'none', 'important');
+        node.style.setProperty('stroke-width', '0', 'important');
+        node.style.removeProperty('paint-order');
       }
       if (!hasFill && stroke && stroke !== 'none') {
         const strokeColor = '#fff';
@@ -80,7 +83,7 @@
     if (isHour) {
       bubble.circle.setAttribute('fill', COLORS[key]);
       const artwork = Array.from(bubble.root.children).find(node => node !== bubble.circle);
-      if (artwork) styleHourArtwork(artwork, COLORS[key]);
+      if (artwork) styleHourArtwork(artwork);
       bubble.root.classList.add('is-hour-ruler');
       group.classList.add('is-hour-ruler');
     }
