@@ -75,14 +75,18 @@
       if (apply(host, 'B')) painted += 1;
     });
 
-    document.documentElement.dataset.skyPlacementColors = expected && painted === expected ? 'passed' : 'pending';
+    const passed = expected > 0 && painted === expected;
+    document.documentElement.dataset.skyPlacementColors = passed ? 'passed' : 'pending';
     document.documentElement.dataset.skyPlacementColorCount = `${painted}/${expected}`;
+    return { passed, painted, expected };
   }
 
   function schedule() {
     clearTimeout(timer);
     timer = setTimeout(() => requestAnimationFrame(scan), 40);
   }
+
+  window.RelphiSkyColors = Object.freeze({ scan, colors:COLORS });
 
   const observer = new MutationObserver(schedule);
   function start() {
