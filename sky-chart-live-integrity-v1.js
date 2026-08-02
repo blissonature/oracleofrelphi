@@ -1,9 +1,10 @@
-// Live Sky Chart integrity repair: canonical ledger glyphs and completed-arcminute coordinates.
+// Live Sky Chart integrity repair: native-canvas ledger glyphs and completed arcminutes.
 (function () {
   'use strict';
   if (window.__relphiSkyChartLiveIntegrityV1) return;
   window.__relphiSkyChartLiveIntegrityV1 = true;
 
+  const NS = 'http://www.w3.org/2000/svg';
   const SIGN_NAMES = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const SIGN_IDS = SIGN_NAMES.map(name => name.toLowerCase());
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
@@ -17,11 +18,12 @@
     'south node':'south-node', fortune:'part-of-fortune',
     'part of fortune':'part-of-fortune', pof:'part-of-fortune'
   };
+  const assetCache = new Map();
   let repairSequence = 0;
   let ledgerMutationTimer = 0;
 
   const norm = value => ((Number(value) % 360) + 360) % 360;
-  const nextFrame = () => new Promise(resolve => requestAnimationFrame(resolve));
+  const svg = name => document.createElementNS(NS, name);
 
   function read(key) {
     try { return JSON.parse(localStorage.getItem(key) || 'null'); }
@@ -85,40 +87,79 @@
     const withinSign = total % 1800;
     const degree = Math.floor(withinSign / 60);
     const minute = withinSign % 60;
-    return {
-      sign,
-      degree,
-      minute,
-      text:`${degree}°${String(minute).padStart(2, '0')}′`
-    };
+    return { sign, degree, minute, text:`${degree}°${String(minute).padStart(2, '0')}′` };
   }
 
-  async function waitUntilVisible(target, sequence) {
-    for (let attempt = 0; attempt < 12; attempt += 1) {
-      if (sequence !== repairSequence || !target.isConnected) return false;
-      const rect = target.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0 && getComputedStyle(target).display !== 'none') return true;
-      await nextFrame();
+  async function loadAsset(path) {
+    const url = new URL(path, document.baseURI).href;
+    if (!assetCache.has(url)) {
+      assetCache.set(url, fetch(url, { cache:'force-cache' }).then(async response => {
+        if (!response.ok) throw new Error(`Could not load canonical glyph asset: ${path}`);
+        const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
+        if (!source || source.nodeName.toLowerCase() !== 'svg') throw new Error(`Invalid canonical glyph asset: ${path}`);
+        return source;
+      }));
     }
-    return false;
+    return (await assetCache.get(url)).cloneNode(true);
   }
 
-  async function drawLedgerGlyph(target, entry, color, sequence) {
-    if (!target || !entry || sequence !== repairSequence) return;
+  function recolor(root, color) {
+    const nodes = [root, ...root.querySelectorAll('[fill],[stroke],text')];
+    nodes.forEach(node => {
+      const tag = node.localName;
+      const fill = node.getAttribute?.('fill');
+      const stroke = node.getAttribute?.('stroke');
+      if (tag === 'text' || (fill && fill !== 'none' && !fill.startsWith('url('))) {
+        node.setAttribute('fill', color);
+        node.style.setProperty('fill', color, 'important');
+      }
+      if (stroke && stroke !== 'none' && !stroke.startsWith('url(')) {
+        node.setAttribute('stroke', color);
+        node.style.setProperty('stroke', color, 'important');
+      }
+    });
+  }
+
+  function hiddenFrame(target, entry) {
+    const root = svg('g');
+    root.classList.add('relphi-glyph-bubble', 'relphi-glyph-framed');
+    root.dataset.glyphId = entry.id;
+    root.dataset.canonicalFraming = 'hidden-bubble';
+    const circle = svg('circle');
+    circle.setAttribute('r', '19');
+    circle.setAttribute('fill', 'transparent');
+    circle.setAttribute('stroke', 'transparent');
+    circle.setAttribute('opacity', '0');
+    circle.setAttribute('aria-hidden', 'true');
+    root.appendChild(circle);
+    target.appendChild(root);
+    return { root, circle };
+  }
+
+  async function drawAssetOnNativeCanvas(target, entry, color) {
+    const source = await loadAsset(entry.asset);
+    const raw = String(source.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+    const [x, y, width, height] = raw.length === 4 && raw.every(Number.isFinite)
+      ? raw
+      : [0, 0, Number(source.getAttribute('width')) || 100, Number(source.getAttribute('height')) || 100];
+    const frame = hiddenFrame(target, entry);
+    const art = svg('g');
+    Array.from(source.children).forEach(child => art.appendChild(document.importNode(child, true)));
+    const scale = 38 / Math.max(width || 1, height || 1);
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+    art.setAttribute('transform', `matrix(${scale} 0 0 ${scale} ${-scale * cx} ${-scale * cy})`);
+    art.classList.add('relphi-canonical-glyph', `relphi-glyph-${entry.id}`);
+    art.dataset.relphiWhitespaceAware = 'true';
+    art.dataset.relphiCanonicalGlyphId = entry.id;
+    recolor(art, color);
+    frame.root.appendChild(art);
+    return art;
+  }
+
+  async function drawFallbackInFrame(target, entry, color) {
     const component = window.RelphiGlyphComponent;
-    if (!component?.createBubble || !component?.fit) throw new Error(`Canonical glyph component unavailable: ${entry.id}`);
-
-    target.replaceChildren();
-    target.setAttribute('viewBox', '-32 -32 64 64');
-    target.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    target.setAttribute('aria-label', entry.name);
-
-    // A ledger can be built while its Placements view is still display:none.
-    // Wait for layout before measuring the asset; otherwise 0–100 source art is
-    // never centered inside the hidden calibration frame and appears clipped.
-    await waitUntilVisible(target, sequence);
-    if (sequence !== repairSequence || !target.isConnected) return;
-
+    if (!component?.createBubble) throw new Error(`Canonical glyph component unavailable: ${entry.id}`);
     const bubble = component.createBubble(target, entry.id, {
       radius:19,
       padding:1,
@@ -126,24 +167,33 @@
       fill:'transparent',
       strokeWidth:2.35
     });
+    bubble.root.classList.add('relphi-glyph-framed');
+    bubble.root.dataset.canonicalFraming = 'hidden-bubble';
     bubble.circle.setAttribute('opacity', '0');
     bubble.circle.setAttribute('aria-hidden', 'true');
     bubble.circle.style.setProperty('opacity', '0', 'important');
     const art = await bubble.ready;
+    recolor(art, color);
+    art.dataset.relphiWhitespaceAware = 'true';
+    art.dataset.relphiCanonicalGlyphId = entry.id;
+    return art;
+  }
 
-    // Retry the canonical fit after visible layout. This is needed when the
-    // component's first animation-frame measurement happened before the view opened.
-    for (let attempt = 0; attempt < 6 && art && !art.getAttribute('transform'); attempt += 1) {
-      await nextFrame();
-      if (sequence !== repairSequence || !target.isConnected) return;
-      component.fit(art, 19, 1, entry, 2.35);
-    }
+  async function drawLedgerGlyph(target, entry, color, sequence) {
+    if (!target || !entry || sequence !== repairSequence) return;
+    target.replaceChildren();
+    target.setAttribute('viewBox', '-22 -22 44 44');
+    target.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    target.setAttribute('aria-label', entry.name);
+
+    if (entry.asset) await drawAssetOnNativeCanvas(target, entry, color);
+    else await drawFallbackInFrame(target, entry, color);
 
     if (sequence !== repairSequence || !target.isConnected) return;
     target.dataset.canonicalGlyphId = entry.id;
-    target.dataset.canonicalSource = component.canonicalSource || 'canonical-bubble-component';
+    target.dataset.canonicalSource = entry.asset || 'approved-registry-fallback';
     target.dataset.canonicalCircle = 'hidden';
-    target.dataset.canonicalFit = art?.getAttribute('transform') ? 'ready' : 'missing';
+    target.dataset.canonicalFit = entry.asset ? 'native-canvas' : 'fallback-frame';
   }
 
   async function repairLedger(slot, sequence) {
@@ -176,7 +226,7 @@
     const sequence = ++repairSequence;
     Promise.allSettled([repairLedger('A', sequence), repairLedger('B', sequence)])
       .then(() => {
-        if (sequence === repairSequence) document.documentElement.dataset.skyChartLiveIntegrity = 'v4';
+        if (sequence === repairSequence) document.documentElement.dataset.skyChartLiveIntegrity = 'v5';
       });
   }
 
