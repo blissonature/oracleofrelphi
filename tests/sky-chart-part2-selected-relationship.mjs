@@ -62,6 +62,13 @@ await page.goto('http://127.0.0.1:4173/part2/sky-chart.html', {waitUntil:'networ
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]', {timeout:15000});
 await page.waitForSelector('.sky-chart-filter-bar [data-house-system-filter]', {timeout:10000});
 await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-v1="true"]', {timeout:10000});
+const ledgerGlyphs = await page.locator('.sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => nodes.map(svg => {
+  const art=svg.querySelector('.relphi-canonical-glyph');
+  const outer=svg.getBoundingClientRect(),inner=art?.getBoundingClientRect();
+  return {artCount:svg.querySelectorAll('.relphi-canonical-glyph').length,transform:art?.getAttribute('transform')||'',contained:!!inner&&inner.left>=outer.left-1&&inner.top>=outer.top-1&&inner.right<=outer.right+1&&inner.bottom<=outer.bottom+1,overflow:getComputedStyle(svg).overflow};
+}));
+assert.ok(ledgerGlyphs.length >= 20);
+assert.ok(ledgerGlyphs.every(result => result.artCount===1 && result.transform && result.contained && result.overflow==='hidden'));
 const heptagramGlyphs = await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.map(svg => ({
   planets:svg.querySelectorAll('.sky-ph-planet').length,
   bubbles:svg.querySelectorAll('.sky-ph-node-glyph > .relphi-glyph-bubble').length,
