@@ -21,6 +21,24 @@ on:
       - 'sky-chart-live-integrity-v1.js'
       - 'tests/sky-chart-glyph-audit.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'relphi-moon-stroke-preservation-v1.js'
+      - 'relphi-neptune-cross-connection-v1.js'
+      - 'sky-chart-glyph-framing-v1.js'
+      - 'sky-chart-glyph-audit-v1.js'
+      - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-selected-relationship-v2.js'
+      - 'sky-chart-progressive-comparison-v1.js'
+      - 'sky-chart-where-when-v1.js'
+      - 'sky-chart-heptagram-canonical-v1.js'
+      - 'sky-chart-live-integrity-v1.js'
+      - 'tests/sky-chart-glyph-audit.mjs'
+      - '.github/workflows/sky-chart-glyph-audit-check.yml'
   workflow_dispatch:
 
 jobs:
