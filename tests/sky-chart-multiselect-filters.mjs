@@ -62,7 +62,7 @@ const desktopLayout=await page.locator('#skyFoundationRelationships .sky-chart-f
   const boxes=controls.map(control=>control.getBoundingClientRect());
   return{count:controls.length,tops:boxes.map(box=>Math.round(box.top)),bottoms:boxes.map(box=>Math.round(box.bottom)),clientWidth:bar.clientWidth,scrollWidth:bar.scrollWidth,height:Math.round(bar.getBoundingClientRect().height)};
 });
-assert.equal(desktopLayout.count,6);
+assert.equal(desktopLayout.count,4);
 assert.ok(Math.max(...desktopLayout.bottoms)-Math.min(...desktopLayout.bottoms)<=2);
 assert.ok(Math.max(...desktopLayout.tops)-Math.min(...desktopLayout.tops)<35);
 assert.ok(desktopLayout.scrollWidth<=desktopLayout.clientWidth+1);
