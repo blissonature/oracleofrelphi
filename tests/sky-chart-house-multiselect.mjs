@@ -118,8 +118,15 @@ await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipM
 await placementB.uncheck();
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='A-A',null,{timeout:10000});
 await page.waitForSelector('.sky-foundation-single-sky-row[data-single-sky="A"]',{timeout:10000});
-const firstSelf=page.locator('.sky-foundation-single-sky-row[data-single-sky="A"]').first();
-const selfHouses=Array.from(new Set([await firstSelf.getAttribute('data-left-house'),await firstSelf.getAttribute('data-right-house')]));
+const selfHouses=await page.locator('.sky-foundation-single-sky-row[data-single-sky="A"]').evaluateAll(rows=>{
+  const angle=value=>{
+    const key=String(value||'').trim().toLowerCase().replace(/[._]/g,' ').replace(/\s+/g,' ');
+    return ['asc','ascendant','ac','rising','dsc','desc','descendant','dc','mc','midheaven','medium coeli','ic','imum coeli','imumcoeli'].includes(key);
+  };
+  const row=rows.find(candidate=>!angle(candidate.dataset.leftPlacement)&&!angle(candidate.dataset.rightPlacement));
+  return row?Array.from(new Set([row.dataset.leftHouse,row.dataset.rightHouse])):[];
+});
+assert.ok(selfHouses.length>0,'A numeric-house-only single-sky relationship must be available for the house regression.');
 await summary.locator('[data-house-choice="a"]').uncheck();
 await combined.locator('[data-house-filter-toggle]').click();
 await page.waitForSelector('#skyChartHousePopover.is-portaled:not([hidden])');
@@ -127,8 +134,12 @@ for(const house of selfHouses){
   await list.locator(`[data-house-scope="house"][data-house-target="${house}"][data-house-choice="a"]`).check();
 }
 await page.waitForFunction(houses=>{
+  const angle=value=>{
+    const key=String(value||'').trim().toLowerCase().replace(/[._]/g,' ').replace(/\s+/g,' ');
+    return ['asc','ascendant','ac','rising','dsc','desc','descendant','dc','mc','midheaven','medium coeli','ic','imum coeli','imumcoeli'].includes(key);
+  };
   const rows=Array.from(document.querySelectorAll('.sky-foundation-single-sky-row[data-single-sky="A"]:not(.sky-chart-house-multiselect-hidden)'));
-  return rows.length>0&&rows.every(row=>houses.includes(row.dataset.leftHouse)&&houses.includes(row.dataset.rightHouse));
+  return rows.length>0&&rows.every(row=>!angle(row.dataset.leftPlacement)&&!angle(row.dataset.rightPlacement)&&houses.includes(row.dataset.leftHouse)&&houses.includes(row.dataset.rightHouse));
 },selfHouses,{timeout:10000});
 const visibleSelf=page.locator('.sky-foundation-single-sky-row[data-single-sky="A"]:not(.sky-chart-house-multiselect-hidden)');
 assert.ok(await visibleSelf.count()>0,'House selections must continue working while viewing Sky A alone.');
