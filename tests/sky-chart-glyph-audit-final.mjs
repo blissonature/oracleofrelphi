@@ -35,6 +35,18 @@ const issues=await page.evaluate(()=>{
   const artFor=root=>Array.from(root?.children||[]).find(node=>node.classList?.contains('relphi-canonical-glyph'))||null;
   const circleFor=root=>root?.querySelector?.(':scope > circle')||null;
   const white=value=>value==='rgb(255, 255, 255)'||value==='rgba(255, 255, 255, 1)'||value==='#fff'||value==='#ffffff'||value==='white';
+  const hasVisibleStroke=(node,art)=>{
+    let current=node;
+    while(current&&current.nodeType===1){
+      const style=getComputedStyle(current);
+      const opacity=Number.parseFloat(style.strokeOpacity||'1');
+      const width=Number.parseFloat(style.strokeWidth||'0');
+      if(style.stroke!=='none'&&style.stroke!=='rgba(0, 0, 0, 0)'&&opacity>0&&width>0)return true;
+      if(current===art)break;
+      current=current.parentElement;
+    }
+    return false;
+  };
   const isHidden=root=>{
     const circle=circleFor(root);if(!circle)return false;
     const attr=circle.getAttribute('opacity');
@@ -106,16 +118,16 @@ const issues=await page.evaluate(()=>{
     });
   });
 
-  document.querySelectorAll('.relphi-glyph-venus').forEach((art,index)=>{
+  document.querySelectorAll('.relphi-canonical-glyph.relphi-glyph-venus').forEach((art,index)=>{
     const circle=art.querySelector('circle'),cross=art.querySelector('path');
     if(!circle||!cross)issues.push(`Venus ${index+1}: canonical circle or cross missing`);
-    if(circle&&getComputedStyle(circle).stroke==='none')issues.push(`Venus ${index+1}: circle stroke missing`);
-    if(cross&&getComputedStyle(cross).stroke==='none')issues.push(`Venus ${index+1}: cross stroke missing`);
+    if(circle&&!hasVisibleStroke(circle,art))issues.push(`Venus ${index+1}: circle stroke missing`);
+    if(cross&&!hasVisibleStroke(cross,art))issues.push(`Venus ${index+1}: cross stroke missing`);
   });
-  document.querySelectorAll('.relphi-glyph-moon').forEach((art,index)=>{
+  document.querySelectorAll('.relphi-canonical-glyph.relphi-glyph-moon').forEach((art,index)=>{
     const path=art.querySelector('path');
     if(!path)issues.push(`Moon ${index+1}: canonical crescent missing`);
-    if(path&&getComputedStyle(path).stroke==='none')issues.push(`Moon ${index+1}: supportive stroke missing`);
+    if(path&&!hasVisibleStroke(path,art))issues.push(`Moon ${index+1}: supportive stroke missing`);
   });
 
   document.querySelectorAll('.relphi-glyph-bubble').forEach((root,index)=>{
