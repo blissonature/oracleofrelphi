@@ -5,18 +5,19 @@
   if (window.__relphiSkyMultiselectFiltersV1) return;
   window.__relphiSkyMultiselectFiltersV1 = true;
 
-  const SLOTS = ['A','B'];
+  const SLOTS = ['A', 'B'];
   const GROUPS = Object.freeze([
-    { id:'luminaries', label:'Luminaries', members:new Set(['sun','moon']) },
-    { id:'planets', label:'Planets', members:new Set(['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']) },
-    { id:'angles-points', label:'Angles and Points', members:null }
+    { id: 'luminaries', label: 'Luminaries', members: new Set(['sun', 'moon']) },
+    { id: 'planets', label: 'Planets', members: new Set(['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto']) },
+    { id: 'angles-points', label: 'Angles and Points', members: null }
   ]);
   const state = {
-    A:{ available:new Map(), selected:new Set(), initialized:false, signature:'' },
-    B:{ available:new Map(), selected:new Set(), initialized:false, signature:'' }
+    A: { available: new Map(), selected: new Set(), initialized: false, signature: '' },
+    B: { available: new Map(), selected: new Set(), initialized: false, signature: '' }
   };
   let queued = false;
   let counting = false;
+  let portalOwner = null;
 
   function filterBar() {
     return document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
@@ -24,6 +25,10 @@
 
   function control() {
     return document.querySelector('[data-placement-filter="combined"]');
+  }
+
+  function popover() {
+    return document.getElementById('skyChartPlacementPopover');
   }
 
   function categoryFor(id) {
@@ -40,7 +45,7 @@
       const label = String(row.querySelector('.sky-foundation-row-name')?.textContent || id).trim();
       if (!id || seen.has(id)) return null;
       seen.add(id);
-      return { id, label, group:categoryFor(id) };
+      return { id, label, group: categoryFor(id) };
     }).filter(Boolean);
   }
 
@@ -49,7 +54,9 @@
   }
 
   function groupIds(slot, groupId) {
-    return Array.from(state[slot].available.values()).filter(entry => entry.group === groupId).map(entry => entry.id);
+    return Array.from(state[slot].available.values())
+      .filter(entry => entry.group === groupId)
+      .map(entry => entry.id);
   }
 
   function slotSummary(slot) {
@@ -106,14 +113,15 @@
   }
 
   function updateControlStates() {
-    const root = control();
-    if (!root) return;
+    const root = popover() || control();
+    const owner = control();
+    if (!root || !owner) return;
     SLOTS.forEach(slot => updateSlotStates(slot, root));
-    const summary = root.querySelector('[data-placement-filter-summary]');
+    const summary = owner.querySelector('[data-placement-filter-summary]');
     const nextSummary = combinedSummary();
     if (summary && summary.textContent !== nextSummary) summary.textContent = nextSummary;
-    root.dataset.skyASelectionCount = String(state.A.selected.size);
-    root.dataset.skyBSelectionCount = String(state.B.selected.size);
+    owner.dataset.skyASelectionCount = String(state.A.selected.size);
+    owner.dataset.skyBSelectionCount = String(state.B.selected.size);
   }
 
   function checkboxRow(slot, entry) {
@@ -165,7 +173,7 @@
 
     const actions = document.createElement('div');
     actions.className = 'sky-chart-placement-filter-actions sky-chart-placement-sky-actions';
-    ['all','none'].forEach(preset => {
+    ['all', 'none'].forEach(preset => {
       const button = document.createElement('button');
       button.type = 'button';
       button.dataset.placementPreset = preset;
@@ -193,14 +201,13 @@
   }
 
   function renderControl() {
-    const root = control();
-    const body = root?.querySelector('.sky-chart-placement-filter-body');
-    if (!root || !body) return;
+    const body = popover()?.querySelector('.sky-chart-placement-filter-body');
+    if (!body) return;
     body.replaceChildren();
 
     const globalActions = document.createElement('div');
     globalActions.className = 'sky-chart-placement-filter-actions sky-chart-placement-global-actions';
-    ['all','none'].forEach(preset => {
+    ['all', 'none'].forEach(preset => {
       const button = document.createElement('button');
       button.type = 'button';
       button.dataset.placementPreset = preset;
@@ -216,59 +223,117 @@
     updateControlStates();
   }
 
+  function handlePopoverClick(event) {
+    const preset = event.target.closest('[data-placement-preset]');
+    if (!preset) return;
+    event.preventDefault();
+    const slots = preset.dataset.slot === 'both' ? SLOTS : [preset.dataset.slot];
+    slots.forEach(slot => {
+      if (preset.dataset.placementPreset === 'all') state[slot].selected = new Set(state[slot].available.keys());
+      else state[slot].selected.clear();
+    });
+    syncControl();
+  }
+
+  function handlePopoverChange(event) {
+    const option = event.target.closest('[data-placement-option]');
+    if (option) {
+      const slot = option.dataset.slot;
+      if (option.checked) state[slot].selected.add(option.value);
+      else state[slot].selected.delete(option.value);
+      syncControl();
+      return;
+    }
+
+    const groupToggle = event.target.closest('[data-placement-group-toggle]');
+    if (groupToggle) {
+      const slot = groupToggle.dataset.slot;
+      groupIds(slot, groupToggle.dataset.placementGroupToggle).forEach(id => {
+        if (groupToggle.checked) state[slot].selected.add(id);
+        else state[slot].selected.delete(id);
+      });
+      syncControl();
+      return;
+    }
+
+    const skyToggle = event.target.closest('[data-placement-sky-toggle]');
+    if (skyToggle) {
+      const slot = skyToggle.dataset.placementSkyToggle;
+      if (skyToggle.checked) state[slot].selected = new Set(state[slot].available.keys());
+      else state[slot].selected.clear();
+      syncControl();
+    }
+  }
+
+  function positionPortal() {
+    const owner = portalOwner;
+    const menu = popover();
+    const summary = owner?.querySelector('summary');
+    if (!owner?.open || !menu?.classList.contains('is-portaled') || !summary) return;
+
+    const rect = summary.getBoundingClientRect();
+    const margin = 12;
+    const width = Math.min(720, Math.max(300, window.innerWidth - margin * 2));
+    const left = Math.min(
+      window.innerWidth - width - margin,
+      Math.max(margin, rect.left + rect.width / 2 - width * 0.38)
+    );
+    const roomBelow = window.innerHeight - rect.bottom - margin;
+    const roomAbove = rect.top - margin;
+    const maxHeight = Math.max(220, Math.min(520, Math.max(roomBelow, roomAbove)));
+    const placeAbove = roomBelow < 280 && roomAbove > roomBelow;
+    const top = placeAbove
+      ? Math.max(margin, rect.top - maxHeight - 6)
+      : Math.min(window.innerHeight - maxHeight - margin, rect.bottom + 6);
+
+    Object.assign(menu.style, {
+      width: `${width}px`,
+      maxHeight: `${maxHeight}px`,
+      left: `${left}px`,
+      top: `${Math.max(margin, top)}px`
+    });
+  }
+
+  function portalOpen(owner) {
+    const menu = owner.querySelector('.sky-chart-placement-filter-popover') || popover();
+    if (!menu) return;
+    portalOwner = owner;
+    menu.hidden = false;
+    menu.classList.add('is-portaled');
+    document.body.appendChild(menu);
+    owner.querySelector('summary')?.setAttribute('aria-expanded', 'true');
+    requestAnimationFrame(positionPortal);
+  }
+
+  function portalClose(owner) {
+    const menu = popover();
+    if (!menu) return;
+    menu.hidden = true;
+    menu.classList.remove('is-portaled');
+    menu.removeAttribute('style');
+    owner.appendChild(menu);
+    menu.hidden = false;
+    owner.querySelector('summary')?.setAttribute('aria-expanded', 'false');
+    portalOwner = null;
+  }
+
   function createControl() {
     const details = document.createElement('details');
     details.className = 'sky-chart-placement-filter sky-chart-placement-filter-combined';
     details.dataset.placementFilter = 'combined';
-    details.innerHTML = '<summary><span class="sky-chart-placement-filter-label">Placements</span><span class="sky-chart-placement-filter-value" data-placement-filter-summary>All</span></summary><div class="sky-chart-placement-filter-popover"><div class="sky-chart-placement-filter-body"></div></div>';
-
-    details.addEventListener('click', event => {
-      const preset = event.target.closest('[data-placement-preset]');
-      if (!preset) return;
-      event.preventDefault();
-      const slots = preset.dataset.slot === 'both' ? SLOTS : [preset.dataset.slot];
-      slots.forEach(slot => {
-        if (preset.dataset.placementPreset === 'all') state[slot].selected = new Set(state[slot].available.keys());
-        else state[slot].selected.clear();
-      });
-      syncControl();
+    details.innerHTML = '<summary aria-haspopup="dialog" aria-expanded="false" aria-controls="skyChartPlacementPopover"><span class="sky-chart-placement-filter-label">Placements</span><span class="sky-chart-placement-filter-value" data-placement-filter-summary>All</span></summary><div id="skyChartPlacementPopover" class="sky-chart-placement-filter-popover" role="dialog" aria-label="Placement filters"><div class="sky-chart-placement-filter-body"></div></div>';
+    const menu = details.querySelector('.sky-chart-placement-filter-popover');
+    menu.addEventListener('click', handlePopoverClick);
+    menu.addEventListener('change', handlePopoverChange);
+    details.addEventListener('toggle', () => {
+      if (details.open) portalOpen(details);
+      else portalClose(details);
     });
-
-    details.addEventListener('change', event => {
-      const option = event.target.closest('[data-placement-option]');
-      if (option) {
-        const slot = option.dataset.slot;
-        if (option.checked) state[slot].selected.add(option.value);
-        else state[slot].selected.delete(option.value);
-        syncControl();
-        return;
-      }
-
-      const groupToggle = event.target.closest('[data-placement-group-toggle]');
-      if (groupToggle) {
-        const slot = groupToggle.dataset.slot;
-        groupIds(slot, groupToggle.dataset.placementGroupToggle).forEach(id => {
-          if (groupToggle.checked) state[slot].selected.add(id);
-          else state[slot].selected.delete(id);
-        });
-        syncControl();
-        return;
-      }
-
-      const skyToggle = event.target.closest('[data-placement-sky-toggle]');
-      if (skyToggle) {
-        const slot = skyToggle.dataset.placementSkyToggle;
-        if (skyToggle.checked) state[slot].selected = new Set(state[slot].available.keys());
-        else state[slot].selected.clear();
-        syncControl();
-      }
-    });
-
     return details;
   }
 
   function syncControl() {
-    const root = control();
+    const root = popover();
     if (!root) return;
     root.querySelectorAll('[data-placement-option][data-slot]').forEach(input => {
       input.checked = state[input.dataset.slot].selected.has(input.value);
@@ -294,11 +359,11 @@
 
   function decorateExistingControls(bar) {
     const map = [
-      ['[data-filter="orb"]','sky-chart-filter-orb'],
-      ['[data-filter="aspect"]','sky-chart-filter-aspect'],
-      ['[data-filter="houseA"]','sky-chart-filter-house-a'],
-      ['[data-filter="houseB"]','sky-chart-filter-house-b'],
-      ['[data-house-system-filter]','sky-chart-filter-house-system']
+      ['[data-filter="orb"]', 'sky-chart-filter-orb'],
+      ['[data-filter="aspect"]', 'sky-chart-filter-aspect'],
+      ['[data-filter="houseA"]', 'sky-chart-filter-house-a'],
+      ['[data-filter="houseB"]', 'sky-chart-filter-house-b'],
+      ['[data-house-system-filter]', 'sky-chart-filter-house-system']
     ];
     map.forEach(([selector, className]) => bar.querySelector(selector)?.closest('label')?.classList.add(className));
   }
@@ -355,7 +420,7 @@
     document.documentElement.dataset.skyBPlacementSelection = `${selectedB.size}/${state.B.available.size}`;
     updateVisibleCount();
     window.dispatchEvent(new CustomEvent('relphi:sky-placement-multiselect-changed', {
-      detail:{ A:Array.from(selectedA), B:Array.from(selectedB) }
+      detail: { A: Array.from(selectedA), B: Array.from(selectedB) }
     }));
   }
 
@@ -364,9 +429,11 @@
     if (!ensureControl()) return;
     const changedA = refreshAvailable('A');
     const changedB = refreshAvailable('B');
-    if (changedA || changedB || !control()?.querySelector('[data-placement-sky-section]')) renderControl();
+    const menu = popover();
+    if (changedA || changedB || !menu?.querySelector('[data-placement-sky-section]')) renderControl();
     else updateControlStates();
     applyPlacementFilters();
+    positionPortal();
   }
 
   function schedule() {
@@ -375,34 +442,41 @@
     requestAnimationFrame(refresh);
   }
 
+  function closeFromOutside(event) {
+    const owner = portalOwner;
+    const menu = popover();
+    if (!owner?.open) return;
+    if (owner.contains(event.target) || menu?.contains(event.target)) return;
+    owner.open = false;
+  }
+
   function start() {
     const root = document.getElementById('skyFoundationRoot');
     if (root) new MutationObserver(records => {
       if (records.every(record => record.target?.closest?.('.sky-chart-placement-filter'))) return;
       schedule();
-    }).observe(root, { childList:true, subtree:true });
-    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed']
+    }).observe(root, { childList: true, subtree: true });
+    ['relphi:sky-foundation-ready', 'relphi:sky-foundation-interactions-ready', 'relphi:sky-foundation-filter-changed']
       .forEach(name => window.addEventListener(name, schedule));
     document.addEventListener('change', event => {
       if (event.target.closest('.sky-chart-filter-bar') && !event.target.closest('.sky-chart-placement-filter')) {
         setTimeout(updateVisibleCount, 0);
       }
     });
-    document.addEventListener('pointerdown', event => {
-      const open = document.querySelector('.sky-chart-placement-filter[open]');
-      if (open && !open.contains(event.target)) open.open = false;
-    });
+    document.addEventListener('pointerdown', closeFromOutside, true);
     document.addEventListener('keydown', event => {
       if (event.key !== 'Escape') return;
-      const open = document.querySelector('.sky-chart-placement-filter[open]');
-      if (open) {
-        open.open = false;
-        open.querySelector('summary')?.focus();
+      const owner = portalOwner;
+      if (owner?.open) {
+        owner.open = false;
+        owner.querySelector('summary')?.focus();
       }
     });
+    window.addEventListener('resize', positionPortal);
+    window.addEventListener('scroll', positionPortal, true);
     schedule();
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
   else start();
 })();
