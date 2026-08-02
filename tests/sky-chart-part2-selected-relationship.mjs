@@ -85,16 +85,17 @@ assert.equal(new Set(desktopFilterBoxes.map(box => box.top)).size, 1);
 assert.ok(Math.max(...desktopFilterBoxes.map(box => box.height))-Math.min(...desktopFilterBoxes.map(box => box.height)) <= 1);
 assert.equal(await page.locator('.sky-chart-filter-bar').evaluate(node => node.scrollWidth <= node.clientWidth), true);
 await page.waitForTimeout(100);
-const fixtureOrbs = await page.locator('.sky-foundation-relationship-row').evaluateAll(rows => rows.map(row => Number(row.dataset.orb)));
+const fixtureOrbs = await page.locator('.sky-foundation-aspect[data-relation-index]:not(.sky-foundation-aspect-hit)').evaluateAll(lines => lines.map(line => Number(document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${line.dataset.relationIndex}"]`)?.dataset.orb)));
 const fixtureMinimumOrb = Math.min(...fixtureOrbs);
 const fixtureMaximumOrb = Math.max(...fixtureOrbs);
 assert.ok(Number.isFinite(fixtureMinimumOrb) && fixtureMaximumOrb > fixtureMinimumOrb);
 const orbInput = page.locator('input[data-filter="orb"]');
 await orbInput.fill(String((fixtureMinimumOrb+fixtureMaximumOrb)/2));
 await page.waitForTimeout(100);
-const orbDrivenState = await page.locator('.sky-foundation-relationship-row').evaluateAll(rows => rows.map(row => {
-  const nodes=Array.from(document.querySelectorAll(`[data-layer="aspects"] [data-relation-index="${row.dataset.relationIndex}"]`));
-  return {hidden:row.hidden,wheelHidden:nodes.length>0&&nodes.every(node=>getComputedStyle(node).display==='none')};
+const orbDrivenState = await page.locator('.sky-foundation-aspect[data-relation-index]:not(.sky-foundation-aspect-hit)').evaluateAll(lines => lines.map(line => {
+  const row=document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${line.dataset.relationIndex}"]`);
+  const nodes=Array.from(document.querySelectorAll(`[data-layer="aspects"] [data-relation-index="${line.dataset.relationIndex}"]`));
+  return {hidden:row?.hidden===true,wheelHidden:nodes.every(node=>getComputedStyle(node).display==='none')};
 }));
 assert.ok(orbDrivenState.some(state => state.hidden) && orbDrivenState.some(state => !state.hidden));
 assert.ok(orbDrivenState.every(state => state.hidden===state.wheelHidden));
@@ -110,7 +111,10 @@ assert.ok(await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.eve
 assert.equal(await page.locator('[data-filter="aspect"] option[value="semi-sextile"]').count(), 1);
 assert.equal(await page.locator('[data-filter="aspect"] option[value="quincunx"]').count(), 1);
 
-const relationIndexForLargestOrb = await page.locator('.sky-foundation-relationship-row[data-relation-index]').evaluateAll(rows => Number(rows.reduce((best,row) => Number(row.dataset.orb)>Number(best.dataset.orb)?row:best).dataset.relationIndex));
+const relationIndexForLargestOrb = await page.locator('.sky-foundation-aspect[data-relation-index]:not(.sky-foundation-aspect-hit)').evaluateAll(lines => Number(lines.reduce((best,line) => {
+  const orb=node=>Number(document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${node.dataset.relationIndex}"]`)?.dataset.orb);
+  return orb(line)>orb(best)?line:best;
+}).dataset.relationIndex));
 const row = page.locator(`.sky-foundation-relationship-row[data-relation-index="${relationIndexForLargestOrb}"]`);
 const relationIndex = Number(await row.getAttribute('data-relation-index'));
 const listCountBeforeSelection = await page.locator('.sky-foundation-relationship-row:visible').count();
