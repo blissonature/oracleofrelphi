@@ -1,4 +1,10 @@
 /* Reversible glyph -> name -> meaning reading for the selected dual-card view. */
+/* Keep ledger glyphs inside their measured icon cells even if a generic SVG rule wins elsewhere. */
+.sky-foundation-ledger{display:grid;padding:5px 0}
+.sky-foundation-ledger>.sky-foundation-row{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;align-items:center;gap:7px;min-height:32px;padding:4px 10px;border-bottom:1px solid rgba(31,27,24,.075)}
+.sky-foundation-ledger>.sky-foundation-row:last-child{border-bottom:0}
+.sky-foundation-ledger>.sky-foundation-row>svg[data-canonical-ledger-glyph="true"]{display:block!important;width:23px!important;height:23px!important;min-width:23px!important;max-width:23px!important;min-height:23px!important;max-height:23px!important;overflow:hidden!important}
+.sky-foundation-ledger>.sky-foundation-row>.sky-foundation-row-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sky-foundation-ledger>.sky-foundation-row>.sky-foundation-coordinate,.sky-foundation-ledger>.sky-foundation-row>.sky-foundation-house{white-space:nowrap}
 .sky-selected-progressive{display:grid;gap:10px;padding-top:14px;border-top:1px solid rgba(30,27,23,.12)}
 .sky-progressive-hint{margin:0;color:#68615b;text-align:center;font:650 .78rem/1.45 system-ui,sans-serif}
 .sky-progressive-comparison{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,.78fr) minmax(0,1fr);gap:10px;align-items:stretch}
