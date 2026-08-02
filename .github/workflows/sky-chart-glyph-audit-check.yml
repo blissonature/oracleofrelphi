@@ -15,6 +15,8 @@ on:
       - 'sky-chart-sky-colors-v1.js'
       - 'sky-chart-multiselect-filters-v1.js'
       - 'sky-chart-multiselect-filters-v1.css'
+      - 'sky-chart-placement-compact-v1.js'
+      - 'sky-chart-placement-compact-v1.css'
       - 'sky-chart-foundation-v1.js'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-selected-relationship-v2.js'
@@ -27,6 +29,7 @@ on:
       - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
       - 'tests/sky-chart-placement-ledger-colors.mjs'
       - 'tests/sky-chart-multiselect-filters.mjs'
+      - 'tests/sky-chart-placement-compact.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   pull_request:
     paths:
@@ -40,6 +43,8 @@ on:
       - 'sky-chart-sky-colors-v1.js'
       - 'sky-chart-multiselect-filters-v1.js'
       - 'sky-chart-multiselect-filters-v1.css'
+      - 'sky-chart-placement-compact-v1.js'
+      - 'sky-chart-placement-compact-v1.css'
       - 'sky-chart-foundation-v1.js'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-selected-relationship-v2.js'
@@ -52,6 +57,7 @@ on:
       - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
       - 'tests/sky-chart-placement-ledger-colors.mjs'
       - 'tests/sky-chart-multiselect-filters.mjs'
+      - 'tests/sky-chart-placement-compact.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   workflow_dispatch:
 
@@ -70,11 +76,13 @@ jobs:
           node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-sky-colors-v1.js
           node --check sky-chart-multiselect-filters-v1.js
+          node --check sky-chart-placement-compact-v1.js
           node --check sky-chart-heptagram-canonical-v1.js
           node --check tests/sky-chart-glyph-audit-final.mjs
           node --check tests/sky-chart-hour-ruler-and-sky-colors.mjs
           node --check tests/sky-chart-placement-ledger-colors.mjs
           node --check tests/sky-chart-multiselect-filters.mjs
+          node --check tests/sky-chart-placement-compact.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -83,6 +91,7 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-glyph-audit-server.log 2>&1 &
           node tests/sky-chart-multiselect-filters.mjs
+          node tests/sky-chart-placement-compact.mjs
           node tests/sky-chart-glyph-audit-final.mjs
           node tests/sky-chart-hour-ruler-and-sky-colors.mjs
           node tests/sky-chart-placement-ledger-colors.mjs
@@ -93,6 +102,8 @@ jobs:
           path: |
             sky-chart-multiselect-filters-desktop.png
             sky-chart-multiselect-filters-mobile.png
+            sky-chart-placement-compact-desktop.png
+            sky-chart-placement-compact-mobile.png
             sky-chart-glyph-audit-desktop.png
             sky-chart-glyph-audit-mobile.png
             sky-chart-hour-ruler-and-sky-colors-desktop.png
