@@ -1,4 +1,4 @@
-// One categorized placement checklist for both skies, with fast whole-sky clearing.
+// One categorized placement list for both skies, with All / A / B controls on every row.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -59,7 +59,7 @@
       .map(entry => entry.id);
   }
 
-  function matrixEntries(groupId) {
+  function listEntries(groupId) {
     const combined = new Map();
     SLOTS.forEach(slot => {
       state[slot].available.forEach(entry => {
@@ -68,6 +68,24 @@
       });
     });
     return Array.from(combined.values()).sort((left, right) => left.label.localeCompare(right.label));
+  }
+
+  function idsFor(scope, target, slot) {
+    if (scope === 'all') return Array.from(state[slot].available.keys());
+    if (scope === 'group') return groupIds(slot, target);
+    if (scope === 'placement' && state[slot].available.has(target)) return [target];
+    return [];
+  }
+
+  function selectedCount(ids, slot) {
+    return ids.filter(id => state[slot].selected.has(id)).length;
+  }
+
+  function setSelection(ids, slot, selected) {
+    ids.forEach(id => {
+      if (selected) state[slot].selected.add(id);
+      else state[slot].selected.delete(id);
+    });
   }
 
   function slotSummary(slot) {
@@ -94,35 +112,30 @@
     return `A: ${a} · B: ${b}`;
   }
 
-  function updateSlotStates(slot, root) {
-    const current = state[slot];
-    const skyToggle = root.querySelector(`[data-placement-sky-toggle="${slot}"]`);
-    if (skyToggle) {
-      skyToggle.checked = current.available.size > 0 && current.selected.size === current.available.size;
-      skyToggle.indeterminate = current.selected.size > 0 && current.selected.size < current.available.size;
-      skyToggle.disabled = current.available.size === 0;
-    }
+  function updateChoiceState(input) {
+    const scope = input.dataset.placementScope;
+    const target = input.dataset.placementTarget;
+    const choice = input.dataset.placementChoice;
+    const slots = choice === 'all' ? SLOTS : [choice.toUpperCase()];
+    let available = 0;
+    let selected = 0;
 
-    GROUPS.forEach(group => {
-      const toggle = root.querySelector(`[data-placement-group-toggle="${group.id}"][data-slot="${slot}"]`);
-      if (!toggle) return;
-      const ids = groupIds(slot, group.id);
-      const selectedCount = ids.filter(id => current.selected.has(id)).length;
-      toggle.checked = ids.length > 0 && selectedCount === ids.length;
-      toggle.indeterminate = selectedCount > 0 && selectedCount < ids.length;
-      toggle.disabled = ids.length === 0;
+    slots.forEach(slot => {
+      const ids = idsFor(scope, target, slot);
+      available += ids.length;
+      selected += selectedCount(ids, slot);
     });
 
-    const summary = root.querySelector(`[data-placement-sky-summary="${slot}"]`);
-    const nextSummary = slotSummary(slot);
-    if (summary && summary.textContent !== nextSummary) summary.textContent = nextSummary;
+    input.checked = available > 0 && selected === available;
+    input.indeterminate = selected > 0 && selected < available;
+    input.disabled = available === 0;
   }
 
   function updateControlStates() {
     const root = popover();
     const owner = control();
     if (!root || !owner) return;
-    SLOTS.forEach(slot => updateSlotStates(slot, root));
+    root.querySelectorAll('[data-placement-choice]').forEach(updateChoiceState);
     const summary = owner.querySelector('[data-placement-filter-summary]');
     const nextSummary = combinedSummary();
     if (summary && summary.textContent !== nextSummary) summary.textContent = nextSummary;
@@ -130,94 +143,52 @@
     owner.dataset.skyBSelectionCount = String(state.B.selected.size);
   }
 
-  function checkbox(slot, attributes) {
+  function choiceControl(scope, target, choice, rowLabel) {
+    const label = document.createElement('label');
+    label.className = `sky-chart-placement-choice sky-chart-placement-choice-${choice}`;
+
     const input = document.createElement('input');
     input.type = 'checkbox';
-    input.dataset.slot = slot;
-    Object.entries(attributes).forEach(([name, value]) => {
-      input.dataset[name] = value;
-    });
-    return input;
-  }
+    input.dataset.placementScope = scope;
+    input.dataset.placementTarget = target;
+    input.dataset.placementChoice = choice;
+    input.setAttribute('aria-label', `${rowLabel}: ${choice === 'all' ? 'All skies' : `Sky ${choice.toUpperCase()}`}`);
 
-  function skyHeaderCell(slot) {
-    const cell = document.createElement('div');
-    cell.className = `sky-chart-placement-matrix-sky sky-chart-placement-matrix-sky-${slot.toLowerCase()}`;
-    cell.dataset.placementSkyHeader = slot;
-
-    const label = document.createElement('label');
-    const toggle = checkbox(slot, { placementSkyToggle: slot });
-    const title = document.createElement('strong');
-    title.textContent = `Sky ${slot}`;
-    const status = document.createElement('span');
-    status.dataset.placementSkySummary = slot;
-    label.append(toggle, title, status);
-
-    const actions = document.createElement('div');
-    actions.className = 'sky-chart-placement-filter-actions sky-chart-placement-sky-actions';
-    ['all', 'none'].forEach(preset => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.dataset.placementPreset = preset;
-      button.dataset.slot = slot;
-      button.textContent = preset === 'all' ? 'All' : 'None';
-      actions.appendChild(button);
-    });
-    cell.append(label, actions);
-    return cell;
-  }
-
-  function groupToggleCell(slot, group) {
-    const cell = document.createElement('label');
-    cell.className = `sky-chart-placement-matrix-check sky-chart-placement-matrix-check-${slot.toLowerCase()}`;
-    const input = checkbox(slot, { placementGroupToggle: group.id });
-    const text = document.createElement('span');
-    text.textContent = `Sky ${slot}`;
-    cell.append(input, text);
-    return cell;
-  }
-
-  function placementCell(slot, entry) {
-    const cell = document.createElement('label');
-    cell.className = `sky-chart-placement-matrix-check sky-chart-placement-matrix-check-${slot.toLowerCase()}`;
-    if (!state[slot].available.has(entry.id)) {
-      cell.classList.add('is-unavailable');
-      cell.setAttribute('aria-label', `${entry.label} is not available in Sky ${slot}`);
-      cell.textContent = '—';
-      return cell;
+    if (choice === 'a' || choice === 'b') {
+      const slot = choice.toUpperCase();
+      input.dataset.slot = slot;
+      if (scope === 'all') input.dataset.placementSkyToggle = slot;
+      if (scope === 'group') input.dataset.placementGroupToggle = target;
+      if (scope === 'placement') {
+        input.dataset.placementOption = target;
+        input.value = target;
+      }
     }
-    const input = checkbox(slot, { placementOption: entry.id });
-    input.value = entry.id;
-    input.checked = state[slot].selected.has(entry.id);
+
     const text = document.createElement('span');
-    text.textContent = `Sky ${slot}`;
-    cell.append(input, text);
-    return cell;
+    text.textContent = choice === 'all' ? 'All' : choice.toUpperCase();
+    label.append(input, text);
+    return label;
   }
 
-  function groupSection(group) {
-    const section = document.createElement('section');
-    section.className = 'sky-chart-placement-matrix-group';
-    section.dataset.placementGroup = group.id;
+  function listItem(scope, target, labelText, kind) {
+    const item = document.createElement('div');
+    item.className = `sky-chart-placement-list-item sky-chart-placement-list-item-${kind}`;
+    item.dataset.placementListItem = target;
+    item.dataset.placementScope = scope;
+    item.dataset.placementTarget = target;
 
-    const heading = document.createElement('div');
-    heading.className = 'sky-chart-placement-matrix-group-heading';
-    const title = document.createElement('strong');
-    title.textContent = group.label;
-    heading.append(title, groupToggleCell('A', group), groupToggleCell('B', group));
-    section.appendChild(heading);
+    const label = document.createElement('strong');
+    label.className = 'sky-chart-placement-list-label';
+    label.textContent = labelText;
 
-    matrixEntries(group.id).forEach(entry => {
-      const row = document.createElement('div');
-      row.className = 'sky-chart-placement-matrix-row';
-      row.dataset.placementMatrixRow = entry.id;
-      const label = document.createElement('span');
-      label.className = 'sky-chart-placement-matrix-label';
-      label.textContent = entry.label;
-      row.append(label, placementCell('A', entry), placementCell('B', entry));
-      section.appendChild(row);
-    });
-    return section;
+    const choices = document.createElement('div');
+    choices.className = 'sky-chart-placement-list-choices';
+    choices.setAttribute('role', 'group');
+    choices.setAttribute('aria-label', labelText);
+    ['all', 'a', 'b'].forEach(choice => choices.appendChild(choiceControl(scope, target, choice, labelText)));
+    item.append(label, choices);
+    return item;
   }
 
   function renderControl() {
@@ -225,71 +196,31 @@
     if (!body) return;
     body.replaceChildren();
 
-    const globalActions = document.createElement('div');
-    globalActions.className = 'sky-chart-placement-filter-actions sky-chart-placement-global-actions';
-    ['all', 'none'].forEach(preset => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.dataset.placementPreset = preset;
-      button.dataset.slot = 'both';
-      button.textContent = preset === 'all' ? 'Select all' : 'Clear all';
-      globalActions.appendChild(button);
+    const list = document.createElement('div');
+    list.className = 'sky-chart-placement-list';
+    list.dataset.placementList = 'combined';
+    list.appendChild(listItem('all', 'all', 'All placements', 'master'));
+
+    GROUPS.forEach(group => {
+      list.appendChild(listItem('group', group.id, group.label, 'group'));
+      listEntries(group.id).forEach(entry => {
+        list.appendChild(listItem('placement', entry.id, entry.label, 'placement'));
+      });
     });
 
-    const matrix = document.createElement('div');
-    matrix.className = 'sky-chart-placement-matrix';
-    matrix.dataset.placementMatrix = 'combined';
-    const header = document.createElement('div');
-    header.className = 'sky-chart-placement-matrix-header';
-    const title = document.createElement('strong');
-    title.textContent = 'Placement';
-    header.append(title, skyHeaderCell('A'), skyHeaderCell('B'));
-    matrix.appendChild(header);
-    GROUPS.forEach(group => matrix.appendChild(groupSection(group)));
-    body.append(globalActions, matrix);
+    body.appendChild(list);
     updateControlStates();
   }
 
-  function handlePopoverClick(event) {
-    const preset = event.target.closest('[data-placement-preset]');
-    if (!preset) return;
-    event.preventDefault();
-    const slots = preset.dataset.slot === 'both' ? SLOTS : [preset.dataset.slot];
-    slots.forEach(slot => {
-      if (preset.dataset.placementPreset === 'all') state[slot].selected = new Set(state[slot].available.keys());
-      else state[slot].selected.clear();
-    });
-    syncControl();
-  }
-
   function handlePopoverChange(event) {
-    const option = event.target.closest('[data-placement-option]');
-    if (option) {
-      const slot = option.dataset.slot;
-      if (option.checked) state[slot].selected.add(option.value);
-      else state[slot].selected.delete(option.value);
-      syncControl();
-      return;
-    }
-
-    const groupToggle = event.target.closest('[data-placement-group-toggle]');
-    if (groupToggle) {
-      const slot = groupToggle.dataset.slot;
-      groupIds(slot, groupToggle.dataset.placementGroupToggle).forEach(id => {
-        if (groupToggle.checked) state[slot].selected.add(id);
-        else state[slot].selected.delete(id);
-      });
-      syncControl();
-      return;
-    }
-
-    const skyToggle = event.target.closest('[data-placement-sky-toggle]');
-    if (skyToggle) {
-      const slot = skyToggle.dataset.placementSkyToggle;
-      if (skyToggle.checked) state[slot].selected = new Set(state[slot].available.keys());
-      else state[slot].selected.clear();
-      syncControl();
-    }
+    const input = event.target.closest('[data-placement-choice]');
+    if (!input) return;
+    const scope = input.dataset.placementScope;
+    const target = input.dataset.placementTarget;
+    const choice = input.dataset.placementChoice;
+    const slots = choice === 'all' ? SLOTS : [choice.toUpperCase()];
+    slots.forEach(slot => setSelection(idsFor(scope, target, slot), slot, input.checked));
+    syncControl();
   }
 
   function positionPortal() {
@@ -300,14 +231,14 @@
 
     const rect = summary.getBoundingClientRect();
     const margin = 12;
-    const width = Math.min(620, Math.max(300, window.innerWidth - margin * 2));
+    const width = Math.min(430, Math.max(300, window.innerWidth - margin * 2));
     const left = Math.min(
       window.innerWidth - width - margin,
-      Math.max(margin, rect.left + rect.width / 2 - width * 0.34)
+      Math.max(margin, rect.left + rect.width / 2 - width * 0.32)
     );
     const roomBelow = window.innerHeight - rect.bottom - margin;
     const roomAbove = rect.top - margin;
-    const maxHeight = Math.max(220, Math.min(540, Math.max(roomBelow, roomAbove)));
+    const maxHeight = Math.max(220, Math.min(560, Math.max(roomBelow, roomAbove)));
     const placeAbove = roomBelow < 280 && roomAbove > roomBelow;
     const top = placeAbove
       ? Math.max(margin, rect.top - maxHeight - 6)
@@ -350,7 +281,6 @@
     details.dataset.placementFilter = 'combined';
     details.innerHTML = '<summary aria-haspopup="dialog" aria-expanded="false" aria-controls="skyChartPlacementPopover"><span class="sky-chart-placement-filter-label">Placements</span><span class="sky-chart-placement-filter-value" data-placement-filter-summary>All</span></summary><div id="skyChartPlacementPopover" class="sky-chart-placement-filter-popover" role="dialog" aria-label="Placement filters"><div class="sky-chart-placement-filter-body"></div></div>';
     const menu = details.querySelector('.sky-chart-placement-filter-popover');
-    menu.addEventListener('click', handlePopoverClick);
     menu.addEventListener('change', handlePopoverChange);
     details.addEventListener('toggle', () => {
       if (details.open) portalOpen(details);
@@ -360,11 +290,6 @@
   }
 
   function syncControl() {
-    const root = popover();
-    if (!root) return;
-    root.querySelectorAll('[data-placement-option][data-slot]').forEach(input => {
-      input.checked = state[input.dataset.slot].selected.has(input.value);
-    });
     updateControlStates();
     applyPlacementFilters();
   }
@@ -457,7 +382,7 @@
     const changedA = refreshAvailable('A');
     const changedB = refreshAvailable('B');
     const menu = popover();
-    if (changedA || changedB || !menu?.querySelector('[data-placement-matrix]')) renderControl();
+    if (changedA || changedB || !menu?.querySelector('[data-placement-list]')) renderControl();
     else updateControlStates();
     applyPlacementFilters();
     positionPortal();
