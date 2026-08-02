@@ -15,7 +15,8 @@
   function hiddenByOtherFilters(row) {
     return row.classList.contains('sky-chart-filter-hidden') ||
       row.classList.contains('sky-chart-orb-hidden') ||
-      row.classList.contains('sky-orb-filter-hidden');
+      row.classList.contains('sky-orb-filter-hidden') ||
+      row.classList.contains('sky-chart-house-multiselect-hidden');
   }
 
   function selectedPlacements(slot) {
@@ -94,6 +95,7 @@
     [
       'relphi:sky-single-sky-aspects-rendered',
       'relphi:sky-placement-multiselect-changed',
+      'relphi:sky-house-multiselect-changed',
       'relphi:sky-foundation-filter-changed'
     ].forEach(name => window.addEventListener(name, schedule));
     schedule();
