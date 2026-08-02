@@ -107,6 +107,8 @@ await page.waitForTimeout(120);
 
 await page.screenshot({path:'sky-chart-house-multiselect-desktop.png',fullPage:true});
 
+await combined.locator('[data-house-filter-toggle]').click();
+await page.waitForFunction(()=>document.getElementById('skyChartHousePopover')?.hidden===true,null,{timeout:10000});
 const placementSummary=page.locator('[data-placement-filter="combined"] .sky-chart-placement-summary-choices');
 await placementSummary.locator('[data-placement-choice="b"]').uncheck();
 await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='A-A',null,{timeout:10000});
