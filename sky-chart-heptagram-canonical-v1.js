@@ -15,6 +15,31 @@
     return KEYS.find(key => group.classList.contains(`sky-ph-${key}`)) || '';
   }
 
+  function styleHourArtwork(artwork, background) {
+    artwork.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
+      const fill = node.getAttribute('fill');
+      const stroke = node.getAttribute('stroke');
+      if (fill && fill !== 'none') {
+        node.setAttribute('fill', '#fff');
+        node.style.setProperty('fill', '#fff', 'important');
+      }
+      if (stroke && stroke !== 'none') {
+        const strokeColor = fill && fill !== 'none' ? background : '#fff';
+        node.setAttribute('stroke', strokeColor);
+        node.style.setProperty('stroke', strokeColor, 'important');
+        const current = parseFloat(node.getAttribute('stroke-width'));
+        if (Number.isFinite(current)) {
+          // Filled canonical silhouettes receive a background-colored edge that
+          // gently restores their pre-thickening visual weight after inversion.
+          const width = fill && fill !== 'none' ? Math.min(current, 1.15) : Math.max(1, current - .9);
+          node.setAttribute('stroke-width', String(width));
+          node.style.setProperty('stroke-width', String(width), 'important');
+        }
+      }
+      node.style.setProperty('opacity', '1', 'important');
+    });
+  }
+
   async function replacePlanet(group) {
     const key = keyFor(group);
     if (!key || group.dataset.canonicalCircled === 'true') return true;
@@ -23,6 +48,7 @@
     if (!mount || !component?.createBubble || !component?.recolor) return false;
 
     const oldNode = group.querySelector('.sky-ph-node');
+    const isDay = group.classList.contains('is-day-ruler') || oldNode?.classList.contains('day');
     const isHour = group.classList.contains('is-hour-ruler') || oldNode?.classList.contains('hour');
 
     oldNode?.remove();
@@ -41,10 +67,15 @@
     bubble.root.dataset.planet = key;
     await bubble.ready;
 
+    if (isDay) {
+      bubble.root.classList.add('is-day-ruler');
+      group.classList.add('is-day-ruler');
+    }
+
     if (isHour) {
       bubble.circle.setAttribute('fill', COLORS[key]);
       const artwork = Array.from(bubble.root.children).find(node => node !== bubble.circle);
-      if (artwork) component.recolor(artwork, '#fff');
+      if (artwork) styleHourArtwork(artwork, COLORS[key]);
       bubble.root.classList.add('is-hour-ruler');
       group.classList.add('is-hour-ruler');
     }
@@ -54,6 +85,7 @@
   }
 
   function markHourBeforeReplacement(svg) {
+    svg.querySelector('.sky-ph-node.day')?.closest('.sky-ph-planet')?.classList.add('is-day-ruler');
     svg.querySelector('.sky-ph-node.hour')?.closest('.sky-ph-planet')?.classList.add('is-hour-ruler');
   }
 

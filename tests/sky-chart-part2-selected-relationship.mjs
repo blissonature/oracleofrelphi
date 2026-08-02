@@ -66,10 +66,15 @@ const heptagramGlyphs = await page.locator('.sky-ph-heptagram').evaluateAll(node
   planets:svg.querySelectorAll('.sky-ph-planet').length,
   bubbles:svg.querySelectorAll('.sky-ph-node-glyph > .relphi-glyph-bubble').length,
   duplicateMounts:Array.from(svg.querySelectorAll('.sky-ph-node-glyph')).filter(mount => mount.children.length !== 1).length,
-  oldNodes:svg.querySelectorAll('.sky-ph-node,.sky-ph-node-label').length
+  oldNodes:svg.querySelectorAll('.sky-ph-node,.sky-ph-node-label').length,
+  dayRulers:svg.querySelectorAll('.sky-ph-canonical-bubble.is-day-ruler').length,
+  hourRulers:svg.querySelectorAll('.sky-ph-canonical-bubble.is-hour-ruler').length,
+  dayRingWidth:parseFloat(getComputedStyle(svg.querySelector('.sky-ph-canonical-bubble.is-day-ruler > circle')).strokeWidth),
+  hourArtwork:Array.from(svg.querySelectorAll('.sky-ph-canonical-bubble.is-hour-ruler > :not(circle) path,.sky-ph-canonical-bubble.is-hour-ruler > :not(circle) circle,.sky-ph-canonical-bubble.is-hour-ruler > :not(circle) ellipse,.sky-ph-canonical-bubble.is-hour-ruler > :not(circle) rect,.sky-ph-canonical-bubble.is-hour-ruler > :not(circle) polygon,.sky-ph-canonical-bubble.is-hour-ruler > :not(circle) polyline,.sky-ph-canonical-bubble.is-hour-ruler > :not(circle) line')).map(node => ({fill:getComputedStyle(node).fill,stroke:getComputedStyle(node).stroke,width:parseFloat(getComputedStyle(node).strokeWidth)}))
 })));
 assert.ok(heptagramGlyphs.length >= 2);
-assert.ok(heptagramGlyphs.every(result => result.planets===7 && result.bubbles===7 && result.duplicateMounts===0 && result.oldNodes===0));
+assert.ok(heptagramGlyphs.every(result => result.planets===7 && result.bubbles===7 && result.duplicateMounts===0 && result.oldNodes===0 && result.dayRulers===1 && result.hourRulers===1 && result.dayRingWidth>=5));
+assert.ok(heptagramGlyphs.every(result => result.hourArtwork.length>0 && result.hourArtwork.every(shape => shape.fill==='none' || shape.fill==='rgb(255, 255, 255)') && result.hourArtwork.every(shape => shape.fill!=='none' || shape.stroke==='none' || shape.stroke==='rgb(255, 255, 255)') && result.hourArtwork.every(shape => !Number.isFinite(shape.width) || shape.width<=4)));
 
 const filterLabels = await page.locator('.sky-chart-filter-bar label').evaluateAll(nodes => nodes.map(node => node.childNodes[0].textContent.trim()));
 assert.deepEqual(filterLabels, ['Orb','Aspects','Placements','Sky A House','Sky B House','House System']);
