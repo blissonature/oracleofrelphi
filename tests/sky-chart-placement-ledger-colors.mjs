@@ -24,6 +24,10 @@ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:2000
 await page.locator('#skyFoundationA button', {hasText:'Placements'}).click();
 await page.locator('#skyFoundationB button', {hasText:'Placements'}).click();
 await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationA .sky-foundation-row').length>10&&document.querySelectorAll('#skyFoundationB .sky-foundation-row').length>10,null,{timeout:20000});
+await page.waitForFunction(()=>{
+  const hosts=Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row > svg,#skyFoundationB .sky-foundation-row > svg'));
+  return hosts.length>20&&hosts.every(host=>host.dataset.canonicalCircle==='hidden'&&host.getAttribute('viewBox')==='-32 -32 64 64');
+},null,{timeout:20000});
 await page.waitForSelector('html[data-sky-placement-colors="passed"]',{timeout:20000});
 await page.waitForTimeout(400);
 
@@ -34,7 +38,10 @@ const issues=await page.evaluate(({colors})=>{
     const rows=Array.from(document.querySelectorAll(`${selector} .sky-foundation-row`));
     if(rows.length<10)issues.push(`${slot}: placement ledger did not render`);
     rows.forEach((row,index)=>{
-      const root=row.querySelector('.relphi-glyph-bubble');
+      const host=row.querySelector(':scope > svg');
+      if(host?.getAttribute('viewBox')!=='-32 -32 64 64')issues.push(`${slot} row ${index+1}: canonical frame viewBox missing`);
+      if(host?.dataset.canonicalCircle!=='hidden')issues.push(`${slot} row ${index+1}: calibration circle was not hidden through the canonical frame`);
+      const root=host?.querySelector('.relphi-glyph-bubble');
       const art=root&&Array.from(root.children).find(node=>node.classList?.contains('relphi-canonical-glyph'));
       if(!art){issues.push(`${slot} row ${index+1}: canonical art missing`);return}
       if(art.dataset.skyPlacementColor!==slot)issues.push(`${slot} row ${index+1}: color pass missing`);
@@ -55,4 +62,4 @@ await page.locator('#skyFoundationA').screenshot({path:'sky-chart-sky-a-placemen
 await page.locator('#skyFoundationB').screenshot({path:'sky-chart-sky-b-placement-ledger-blue.png'});
 await page.screenshot({path:'sky-chart-placement-ledgers-red-blue.png',fullPage:true});
 await browser.close();
-console.log('Sky A placement ledger is red and Sky B placement ledger is blue.');
+console.log('Sky A placement ledger is canonically framed and red; Sky B is canonically framed and blue.');
