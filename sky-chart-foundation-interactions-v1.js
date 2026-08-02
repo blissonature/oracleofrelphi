@@ -210,7 +210,7 @@
       const row = document.createElement('button');
       row.type = 'button';
       row.className = 'sky-foundation-relationship-row';
-      row.dataset.interactive = 'aspect';
+      row.dataset.relationshipSelection = 'true';
       row.dataset.relationIndex = String(index);
       row.dataset.leftPlacement = relation.left.id;
       row.dataset.rightPlacement = relation.right.id;

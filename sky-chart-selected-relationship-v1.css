@@ -1,0 +1,94 @@
+/* Selected relationship gate: one exact relationship object drives every region. */
+.sky-selected-relationship{
+  margin-top:16px;
+  border:1px solid rgba(30,27,23,.18);
+  border-radius:18px;
+  background:#fffdf8;
+  overflow:hidden;
+}
+.sky-selected-relationship[hidden]{display:none!important}
+.sky-selected-heading{
+  margin:0;
+  padding:14px 16px;
+  border-bottom:1px solid rgba(30,27,23,.12);
+  font:800 1rem/1.2 system-ui,sans-serif;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color:#68615b;
+}
+.sky-selected-body{display:grid;gap:16px;padding:16px;min-width:0}
+.sky-selected-graphic{display:grid;place-items:center;min-height:120px}
+.sky-selected-graphic svg{display:block;width:min(100%,360px);height:auto;overflow:visible}
+.sky-selected-graphic-line{stroke-width:3;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.sky-selected-facts{text-align:center;min-width:0}
+.sky-selected-facts h3{margin:0;font:800 clamp(1.05rem,2vw,1.35rem)/1.2 system-ui,sans-serif}
+.sky-selected-facts p{margin:.35rem 0 0;color:#625b54;font:650 .82rem/1.45 system-ui,sans-serif}
+.sky-selected-cards{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 108px minmax(0,1fr);
+  gap:14px;
+  align-items:center;
+  min-width:0;
+}
+.sky-selected-card{
+  display:grid;
+  justify-items:center;
+  min-width:0;
+  padding:12px;
+  border:1px solid rgba(30,27,23,.18);
+  border-radius:16px;
+  background:#fff;
+}
+.sky-selected-card-label{margin:0 0 8px;font:800 .7rem/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.08em;color:#6d655e}
+.sky-selected-card img{display:block;width:min(100%,190px);height:auto;aspect-ratio:0.58;object-fit:contain;border:1px solid #29231f;border-radius:10px;background:#f4efe7}
+.sky-selected-card h4{margin:.7rem 0 .2rem;text-align:center;font:800 1rem/1.2 system-ui,sans-serif}
+.sky-selected-card p{margin:0;text-align:center;color:#665e57;font:650 .75rem/1.35 system-ui,sans-serif}
+.sky-selected-aspect-symbol{display:grid;place-items:center;width:108px;min-height:92px;align-self:center}
+.sky-selected-aspect-symbol svg{display:block;width:108px;height:auto;overflow:visible}
+.sky-selected-aspect-isolate{border:1px solid rgba(30,27,23,.14);border-radius:16px;background:#fffdf8;padding:6px}
+.sky-selected-isolate-line{stroke-width:3.2;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.sky-selected-isolate-orb{fill:#514a44;font:800 12px/1 system-ui,sans-serif}
+.sky-selected-progressive{display:grid;gap:8px;padding-top:14px;border-top:1px solid rgba(30,27,23,.12)}
+.sky-selected-reveal{
+  border:1px solid rgba(30,27,23,.16);
+  border-radius:14px;
+  background:#fff;
+  overflow:hidden;
+}
+.sky-selected-reveal summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  cursor:pointer;
+  list-style:none;
+  font:800 .82rem/1.25 system-ui,sans-serif;
+}
+.sky-selected-reveal summary::-webkit-details-marker{display:none}
+.sky-selected-reveal summary::after{content:'+';font-size:1.2rem;line-height:1}
+.sky-selected-reveal[open] summary::after{content:'−'}
+.sky-selected-reveal-content{padding:0 14px 14px;color:#39342f;font:500 .88rem/1.58 system-ui,sans-serif}
+.sky-selected-reveal-content p{margin:.5rem 0 0}
+.sky-selected-reveal-glyph{display:inline-grid;place-items:center;vertical-align:middle;width:32px;height:32px;margin-right:6px}
+.sky-selected-reveal-glyph svg{display:block;width:30px;height:30px;overflow:visible}
+.sky-selected-canonical-error{min-height:32px;border:1px dashed #b7473f;border-radius:8px}
+.sky-foundation-relationship-row[aria-current="true"]{outline:2px solid currentColor;outline-offset:-2px;background:#fff7ec}
+.sky-foundation-aspect[data-selected-relation="true"]{opacity:1!important;stroke-width:5!important;filter:drop-shadow(0 0 5px rgba(0,0,0,.34))}
+@media(max-width:760px){
+  .sky-selected-body{padding:12px;gap:13px}
+  .sky-selected-cards{grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr);gap:6px;align-items:start}
+  .sky-selected-card{padding:7px;border-radius:12px}
+  .sky-selected-card img{width:min(100%,145px);border-radius:7px}
+  .sky-selected-card h4{font-size:.82rem;overflow-wrap:normal;word-break:normal}
+  .sky-selected-card p{font-size:.66rem}
+  .sky-selected-aspect-symbol{width:78px;min-height:68px;margin-top:72px}.sky-selected-aspect-symbol svg{width:76px}
+}
+@media(max-width:430px){
+  .sky-selected-heading{padding:12px;font-size:.84rem}
+  .sky-selected-cards{grid-template-columns:minmax(0,1fr) 62px minmax(0,1fr);gap:4px}
+  .sky-selected-aspect-symbol{width:62px;min-height:58px;margin-top:64px;padding:3px}.sky-selected-aspect-symbol svg{width:60px}
+  .sky-selected-card img{max-width:122px}
+  .sky-selected-card h4{font-size:.73rem}
+  .sky-selected-isolate-orb{font-size:10px}
+}

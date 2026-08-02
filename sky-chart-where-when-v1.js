@@ -239,7 +239,7 @@
           <legend>Where</legend>
           <div class="sky-where-search-row">
             <label class="sky-where-when-label">Search for a location
-              <input class="sky-where-when-input" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(cardState[slot].query || selected?.query || '')}" placeholder="Ex. Malden, Massachusetts">
+              <input class="sky-where-when-input" data-ww-field="location-query" type="search" autocomplete="off" value="${escapeHtml(cardState[slot].query || selected?.query || '')}" placeholder="Ex. City, State or Country">
             </label>
             <button class="sky-where-when-button secondary" type="button" data-ww-action="search-location">Search</button>
           </div>
@@ -637,6 +637,7 @@
   }
 
   async function drawHeptagram(svg, profile) {
+    svg.dataset.canonicalSourceReady = 'pending';
     const dt = window.luxon.DateTime.fromISO(profile.instant || profile.dateTime, {
       zone:profile.timeZone,
       setZone:true
@@ -719,6 +720,8 @@
     centerTime.textContent = `${localFormatter.format(current.start)}–${localFormatter.format(current.end)}`;
     svg.append(centerDay, centerHour, centerTime);
     await Promise.allSettled(glyphJobs);
+    svg.dataset.canonicalSourceReady = 'true';
+    window.dispatchEvent(new Event('relphi:sky-heptagram-source-ready'));
 
     return {
       dayKey,

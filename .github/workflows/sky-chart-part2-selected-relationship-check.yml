@@ -1,0 +1,43 @@
+name: Sky Chart Part 2 selected relationship check
+
+on:
+  push:
+    branches:
+      - fix/sky-chart-part2-selected-relationship
+  pull_request:
+    paths:
+      - 'part2/sky-chart.html'
+      - 'sky-chart-selected-relationship-v2.js'
+      - 'sky-chart-selected-relationship-v1.css'
+      - 'tests/sky-chart-part2-selected-relationship.mjs'
+      - '.github/workflows/sky-chart-part2-selected-relationship-check.yml'
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/sky-chart-part2-selected-relationship
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-selected-relationship-v2.js
+          node --check tests/sky-chart-part2-selected-relationship.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Run selected relationship assertions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-selected-server.log 2>&1 &
+          node tests/sky-chart-part2-selected-relationship.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-selected-relationship-screenshots
+          path: |
+            sky-chart-selected-relationship-desktop.png
+            sky-chart-selected-relationship-mobile.png
