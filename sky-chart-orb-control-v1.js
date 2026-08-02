@@ -37,6 +37,8 @@
       row.setAttribute('aria-hidden',row.hidden?'true':'false');
       document.querySelectorAll(`[data-layer="aspects"] [data-relation-index="${row.dataset.relationIndex}"]`).forEach(node=>{
         node.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);
+        node.hidden=hiddenByOrb;
+        node.setAttribute('aria-hidden',hiddenByOrb?'true':'false');
       });
     });
 
