@@ -58,11 +58,11 @@ assert.equal(new Set(placementIds).size,placementIds.length);
 assert.equal((await combined.locator('[data-placement-filter-summary]').textContent())?.trim(),'All');
 
 const desktopLayout=await page.locator('#skyFoundationRelationships .sky-chart-filter-bar').evaluate(bar=>{
-  const controls=Array.from(bar.children).filter(child=>child.matches('label,[data-placement-filter]'));
+  const controls=Array.from(bar.children).filter(child=>child.matches('label,[data-aspect-filter],[data-placement-filter],[data-house-filter]'));
   const boxes=controls.map(control=>control.getBoundingClientRect());
   return{count:controls.length,tops:boxes.map(box=>Math.round(box.top)),bottoms:boxes.map(box=>Math.round(box.bottom)),clientWidth:bar.clientWidth,scrollWidth:bar.scrollWidth,height:Math.round(bar.getBoundingClientRect().height)};
 });
-assert.equal(desktopLayout.count,4);
+assert.equal(desktopLayout.count,5);
 assert.ok(Math.max(...desktopLayout.bottoms)-Math.min(...desktopLayout.bottoms)<=2);
 assert.ok(Math.max(...desktopLayout.tops)-Math.min(...desktopLayout.tops)<35);
 assert.ok(desktopLayout.scrollWidth<=desktopLayout.clientWidth+1);
