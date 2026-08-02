@@ -1,4 +1,4 @@
-/* One categorized placement list with All / A / B controls on every row. */
+/* One categorized placement list with All / A / B controls visible in the filter bar and on every row. */
 #skyFoundationRelationships{overflow:visible!important}
 .sky-chart-filter-bar[data-multiselect-placement-filters="true"]{
   position:relative;
@@ -7,7 +7,7 @@
   grid-template-columns:
     minmax(0,.6fr)
     minmax(0,1fr)
-    minmax(0,1.3fr)
+    minmax(0,1.55fr)
     minmax(0,.9fr)
     minmax(0,.9fr)
     minmax(0,1.4fr);
@@ -32,30 +32,61 @@
   box-sizing:border-box;
 }
 .sky-chart-placement-filter{position:relative;min-width:0;color:#4e463f;font:800 .62rem/1.2 system-ui,sans-serif}
-.sky-chart-placement-filter>summary{
+.sky-chart-placement-filter-head{
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
   grid-template-areas:
-    "label label"
-    "value arrow";
+    "label toggle"
+    "choices toggle";
   align-items:center;
-  gap:.24rem .45rem;
+  gap:.22rem .38rem;
   min-height:55px;
   box-sizing:border-box;
-  padding:.38rem .58rem .46rem;
+  padding:.38rem .38rem .42rem .58rem;
   border:1px solid rgba(31,27,24,.2);
   border-radius:9px;
   background:#fff;
   color:#191613;
-  cursor:pointer;
-  list-style:none;
-  font:700 .68rem/1.2 system-ui,sans-serif;
 }
-.sky-chart-placement-filter>summary::-webkit-details-marker{display:none}
-.sky-chart-placement-filter>summary::after{content:'⌄';grid-area:arrow;justify-self:end;font-size:.82rem;line-height:1;transform:translateY(-1px)}
-.sky-chart-placement-filter[open]>summary{border-color:rgba(31,27,24,.42);box-shadow:0 0 0 2px rgba(31,27,24,.08)}
-.sky-chart-placement-filter-label{grid-area:label;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sky-chart-placement-filter-value{grid-area:value;justify-self:start;display:inline-flex;align-items:center;justify-content:center;max-width:100%;padding:.18rem .42rem;border-radius:999px;background:#f0ece6;color:#413a34;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.6rem}
+.sky-chart-placement-filter.is-open .sky-chart-placement-filter-head{border-color:rgba(31,27,24,.42);box-shadow:0 0 0 2px rgba(31,27,24,.08)}
+.sky-chart-placement-filter-label{grid-area:label;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 .68rem/1.1 system-ui,sans-serif}
+.sky-chart-placement-summary-choices{grid-area:choices;display:flex;align-items:center;gap:2px;min-width:0}
+.sky-chart-placement-filter-toggle{
+  grid-area:toggle;
+  align-self:stretch;
+  min-width:24px;
+  padding:0;
+  border:0;
+  border-left:1px solid rgba(31,27,24,.12);
+  background:transparent;
+  color:#191613;
+  cursor:pointer;
+  font:900 .84rem/1 system-ui,sans-serif;
+}
+.sky-chart-placement-filter-toggle:hover,
+.sky-chart-placement-filter-toggle:focus-visible{background:#f5f1eb;outline:none}
+.sky-chart-placement-filter-status{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:-1px!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;
+  border:0!important;
+}
+.sky-chart-placement-summary-choices .sky-chart-placement-choice{
+  min-height:0;
+  padding:0 3px;
+  border:0;
+  background:transparent;
+  font-size:.56rem!important;
+}
+.sky-chart-placement-summary-choices .sky-chart-placement-choice span{display:inline}
+.sky-chart-placement-summary-choices .sky-chart-placement-choice-all{color:#514a44}
+.sky-chart-placement-summary-choices .sky-chart-placement-choice-a{color:#a21b18}
+.sky-chart-placement-summary-choices .sky-chart-placement-choice-b{color:#1f55b4}
 .sky-chart-placement-filter-popover{
   position:absolute;
   top:calc(100% + 6px);
@@ -124,6 +155,7 @@
 .sky-chart-placement-list-item-master .sky-chart-placement-choice,
 .sky-chart-placement-list-item-group .sky-chart-placement-choice{font-weight:900!important}
 .sky-chart-placement-choice:has(input:disabled){cursor:default;opacity:.45}
+.sky-chart-placement-filter input[type="checkbox"],
 .sky-chart-placement-filter-popover input[type="checkbox"]{width:15px;height:15px;min-width:15px;margin:0;accent-color:#544c45}
 .sky-chart-placement-choice-a input[type="checkbox"]{accent-color:#c9211e}
 .sky-chart-placement-choice-b input[type="checkbox"]{accent-color:#2462d0}
