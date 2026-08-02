@@ -17,7 +17,6 @@
     'south node':'south-node', fortune:'part-of-fortune',
     'part of fortune':'part-of-fortune', pof:'part-of-fortune'
   };
-  const assetText = new Map();
   let repairSequence = 0;
 
   const norm = value => ((Number(value) % 360) + 360) % 360;
@@ -92,57 +91,33 @@
     };
   }
 
-  async function loadAsset(path) {
-    const url = new URL(path, document.baseURI).href;
-    if (!assetText.has(url)) {
-      assetText.set(url, fetch(url, { cache:'force-cache' }).then(response => {
-        if (!response.ok) throw new Error(`Could not load canonical glyph asset: ${path}`);
-        return response.text();
-      }));
-    }
-    const text = await assetText.get(url);
-    const source = new DOMParser().parseFromString(text, 'image/svg+xml').documentElement;
-    if (!source || source.nodeName.toLowerCase() !== 'svg') throw new Error(`Invalid canonical glyph asset: ${path}`);
-    return source;
-  }
-
-  function recolor(root, color) {
-    const component = window.RelphiGlyphComponent;
-    if (component?.recolor) {
-      component.recolor(root, color);
-      return;
-    }
-    root.querySelectorAll('[fill]').forEach(node => {
-      const fill = node.getAttribute('fill');
-      if (fill && fill !== 'none' && !fill.startsWith('url(')) node.setAttribute('fill', color);
-    });
-    root.querySelectorAll('[stroke]').forEach(node => {
-      const stroke = node.getAttribute('stroke');
-      if (stroke && stroke !== 'none' && !stroke.startsWith('url(')) node.setAttribute('stroke', color);
-    });
-  }
-
   async function drawLedgerGlyph(target, entry, color, sequence) {
     if (!target || !entry || sequence !== repairSequence) return;
+    const component = window.RelphiGlyphComponent;
+    if (!component?.createBubble) throw new Error(`Canonical glyph component unavailable: ${entry.id}`);
+
     target.replaceChildren();
+    target.setAttribute('viewBox', '-32 -32 64 64');
     target.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     target.setAttribute('aria-label', entry.name);
 
-    if (entry.asset) {
-      const source = await loadAsset(entry.asset);
-      if (sequence !== repairSequence || !target.isConnected) return;
-      target.setAttribute('viewBox', source.getAttribute('viewBox') || '0 0 100 100');
-      Array.from(source.children).forEach(child => target.appendChild(document.importNode(child, true)));
-      recolor(target, color);
-    } else {
-      const component = window.RelphiGlyphComponent;
-      if (!component?.draw) throw new Error(`Canonical fallback unavailable: ${entry.id}`);
-      target.setAttribute('viewBox', '-20 -20 40 40');
-      await component.draw(target, entry.id, { radius:16, padding:1, color });
-    }
+    // The canonical uncircled glyph is the canonical circled composition with only
+    // the calibration circle hidden. No visible-mark fitting or recentering occurs.
+    const bubble = component.createBubble(target, entry.id, {
+      radius:19,
+      padding:1,
+      color,
+      fill:'transparent',
+      strokeWidth:2.35
+    });
+    bubble.circle.style.opacity = '0';
+    bubble.circle.setAttribute('aria-hidden', 'true');
+    await bubble.ready;
 
+    if (sequence !== repairSequence || !target.isConnected) return;
     target.dataset.canonicalGlyphId = entry.id;
-    target.dataset.canonicalSource = entry.asset || 'approved-registry-fallback';
+    target.dataset.canonicalSource = component.canonicalSource || 'canonical-bubble-component';
+    target.dataset.canonicalCircle = 'hidden';
   }
 
   async function repairLedger(slot, sequence) {
@@ -175,7 +150,7 @@
     const sequence = ++repairSequence;
     Promise.allSettled([repairLedger('A', sequence), repairLedger('B', sequence)])
       .then(() => {
-        if (sequence === repairSequence) document.documentElement.dataset.skyChartLiveIntegrity = 'v1';
+        if (sequence === repairSequence) document.documentElement.dataset.skyChartLiveIntegrity = 'v2';
       });
   }
 
