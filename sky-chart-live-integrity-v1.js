@@ -21,6 +21,7 @@
   let ledgerMutationTimer = 0;
 
   const norm = value => ((Number(value) % 360) + 360) % 360;
+  const nextFrame = () => new Promise(resolve => requestAnimationFrame(resolve));
 
   function read(key) {
     try { return JSON.parse(localStorage.getItem(key) || 'null'); }
@@ -92,18 +93,32 @@
     };
   }
 
+  async function waitUntilVisible(target, sequence) {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      if (sequence !== repairSequence || !target.isConnected) return false;
+      const rect = target.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0 && getComputedStyle(target).display !== 'none') return true;
+      await nextFrame();
+    }
+    return false;
+  }
+
   async function drawLedgerGlyph(target, entry, color, sequence) {
     if (!target || !entry || sequence !== repairSequence) return;
     const component = window.RelphiGlyphComponent;
-    if (!component?.createBubble) throw new Error(`Canonical glyph component unavailable: ${entry.id}`);
+    if (!component?.createBubble || !component?.fit) throw new Error(`Canonical glyph component unavailable: ${entry.id}`);
 
     target.replaceChildren();
     target.setAttribute('viewBox', '-32 -32 64 64');
     target.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     target.setAttribute('aria-label', entry.name);
 
-    // The canonical uncircled glyph is the canonical circled composition with only
-    // the calibration circle hidden. No visible-mark fitting or recentering occurs.
+    // A ledger can be built while its Placements view is still display:none.
+    // Wait for layout before measuring the asset; otherwise 0–100 source art is
+    // never centered inside the hidden calibration frame and appears clipped.
+    await waitUntilVisible(target, sequence);
+    if (sequence !== repairSequence || !target.isConnected) return;
+
     const bubble = component.createBubble(target, entry.id, {
       radius:19,
       padding:1,
@@ -114,12 +129,21 @@
     bubble.circle.setAttribute('opacity', '0');
     bubble.circle.setAttribute('aria-hidden', 'true');
     bubble.circle.style.setProperty('opacity', '0', 'important');
-    await bubble.ready;
+    const art = await bubble.ready;
+
+    // Retry the canonical fit after visible layout. This is needed when the
+    // component's first animation-frame measurement happened before the view opened.
+    for (let attempt = 0; attempt < 6 && art && !art.getAttribute('transform'); attempt += 1) {
+      await nextFrame();
+      if (sequence !== repairSequence || !target.isConnected) return;
+      component.fit(art, 19, 1, entry, 2.35);
+    }
 
     if (sequence !== repairSequence || !target.isConnected) return;
     target.dataset.canonicalGlyphId = entry.id;
     target.dataset.canonicalSource = component.canonicalSource || 'canonical-bubble-component';
     target.dataset.canonicalCircle = 'hidden';
+    target.dataset.canonicalFit = art?.getAttribute('transform') ? 'ready' : 'missing';
   }
 
   async function repairLedger(slot, sequence) {
@@ -152,7 +176,7 @@
     const sequence = ++repairSequence;
     Promise.allSettled([repairLedger('A', sequence), repairLedger('B', sequence)])
       .then(() => {
-        if (sequence === repairSequence) document.documentElement.dataset.skyChartLiveIntegrity = 'v3';
+        if (sequence === repairSequence) document.documentElement.dataset.skyChartLiveIntegrity = 'v4';
       });
   }
 
