@@ -87,12 +87,6 @@ const heptagramGlyphs = await page.locator('.sky-ph-heptagram').evaluateAll(node
 assert.ok(heptagramGlyphs.length >= 2);
 assert.ok(heptagramGlyphs.every(result => result.planets===7 && result.bubbles===7 && result.duplicateMounts===0 && result.oldNodes===0 && result.dayRulers===1 && result.hourRulers===1 && result.dayRingWidth>=5));
 assert.ok(heptagramGlyphs.every(result => result.hourArtwork.length>0 && result.hourArtwork.every(shape => shape.fill==='none' || shape.fill==='rgb(255, 255, 255)') && result.hourArtwork.every(shape => shape.fill==='none' || (shape.stroke==='none' && shape.width===0)) && result.hourArtwork.every(shape => shape.fill!=='none' || shape.stroke==='none' || shape.stroke==='rgb(255, 255, 255)') && result.hourArtwork.every(shape => !Number.isFinite(shape.width) || shape.width<=4)));
-await page.locator('#skyFoundationA').getByRole('button', {name:'Placements', exact:true}).click();
-await page.locator('#skyFoundationB').getByRole('button', {name:'Placements', exact:true}).click();
-assert.ok(await page.locator('.sky-foundation-ledger > .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => {
-  const visible=nodes.map(svg=>svg.getBoundingClientRect()).filter(box=>box.width>0&&box.height>0);
-  return visible.length>0&&visible.every(box=>box.width<=24&&box.height<=24);
-}));
 
 const filterLabels = await page.locator('.sky-chart-filter-bar label').evaluateAll(nodes => nodes.map(node => node.childNodes[0].textContent.trim()));
 assert.deepEqual(filterLabels, ['Orb','Aspects','Placements','Sky A House','Sky B House','House System']);
@@ -130,9 +124,15 @@ assert.equal(new Set(inactiveHourStyles.map(style => style.strokeWidth)).size, 1
     earlier: Array.from(svg.querySelectorAll('.sky-ph-week-segment.past')).map(node => Number(getComputedStyle(node).opacity))
   })));
   assert.ok(heptagramLineTones.every(tone => tone.neutrals.length > 0 && tone.neutrals.every(value => value === .52)));
-  assert.ok(heptagramLineTones.some(tone => tone.earlier.length > 0));
-  assert.ok(heptagramLineTones.every(tone => tone.earlier.every(value => value === .56 && value > .52)));
+assert.ok(heptagramLineTones.some(tone => tone.earlier.length > 0));
+assert.ok(heptagramLineTones.every(tone => tone.earlier.every(value => value === .56 && value > .52)));
 assert.ok(await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.every(svg => svg.querySelectorAll('.sky-ph-hour-segment:not(.current)').length === 7)));
+await page.locator('#skyFoundationA').getByRole('button', {name:'Placements', exact:true}).click();
+await page.locator('#skyFoundationB').getByRole('button', {name:'Placements', exact:true}).click();
+assert.ok(await page.locator('.sky-foundation-ledger > .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => {
+  const visible=nodes.map(svg=>svg.getBoundingClientRect()).filter(box=>box.width>0&&box.height>0);
+  return visible.length>0&&visible.every(box=>box.width<=24&&box.height<=24);
+}));
 assert.equal(await page.locator('[data-filter="aspect"] option[value="semi-sextile"]').count(), 1);
 assert.equal(await page.locator('[data-filter="aspect"] option[value="quincunx"]').count(), 1);
 
