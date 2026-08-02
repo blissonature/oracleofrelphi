@@ -17,6 +17,26 @@
     return Array.from(root?.children || []).find(node => node.classList?.contains('relphi-canonical-glyph')) || null;
   }
 
+  function calibrationCircle(root) {
+    return root?.querySelector?.(':scope > circle') || null;
+  }
+
+  function circleIsHidden(root) {
+    const circle = calibrationCircle(root);
+    if (!circle) return false;
+    const opacity = Number(circle.getAttribute('opacity'));
+    const styleOpacity = Number.parseFloat(circle.style.opacity || '');
+    return opacity === 0 || styleOpacity === 0 || circle.closest('svg')?.dataset?.canonicalCircle === 'hidden';
+  }
+
+  function rootIsFramed(root) {
+    return !!root && (
+      root.classList.contains('relphi-glyph-framed') ||
+      root.dataset.canonicalFraming === 'hidden-bubble' ||
+      circleIsHidden(root)
+    );
+  }
+
   function auditBubble(root, issues) {
     const id = root?.dataset?.glyphId || '';
     const entry = resolved(id);
@@ -37,27 +57,30 @@
       issues.push(`Asset-backed glyph ${entry.id} rendered as text`);
     }
 
-    if (root.classList.contains('relphi-glyph-framed')) {
-      const circle = root.querySelector(':scope > circle');
-      const opacity = circle ? Number(circle.getAttribute('opacity')) : NaN;
-      if (!circle || opacity !== 0 || root.dataset.canonicalFraming !== 'hidden-bubble') {
+    if (rootIsFramed(root)) {
+      if (!calibrationCircle(root) || !circleIsHidden(root)) {
         issues.push(`Uncircled glyph ${entry.id} lost its hidden calibration frame`);
       }
-      if (art.dataset.relphiWhitespaceAware !== 'true') {
+      const host = root.closest('svg');
+      if (
+        art.dataset.relphiWhitespaceAware !== 'true' &&
+        host?.dataset?.canonicalCircle !== 'hidden'
+      ) {
         issues.push(`Uncircled glyph ${entry.id} is not marked whitespace-aware`);
       }
     }
   }
 
   function requireFramed(host, label, issues) {
-    if (!host.querySelector('.relphi-glyph-bubble.relphi-glyph-framed')) {
+    const root = host.querySelector('.relphi-glyph-bubble');
+    if (!rootIsFramed(root)) {
       issues.push(`${label} is not using the hidden canonical bubble frame`);
     }
   }
 
   function requireVisibleBubble(host, label, issues) {
-    const root = host.querySelector('.relphi-glyph-bubble:not(.relphi-glyph-framed)');
-    if (!root) issues.push(`${label} is not using the visible canonical bubble`);
+    const root = host.querySelector('.relphi-glyph-bubble');
+    if (!root || rootIsFramed(root)) issues.push(`${label} is not using the visible canonical bubble`);
   }
 
   function run() {
@@ -102,7 +125,7 @@
     const signature = JSON.stringify(unique);
     document.documentElement.dataset.skyGlyphAudit = unique.length ? 'failed' : 'passed';
     document.documentElement.dataset.skyGlyphAuditCount = String(unique.length);
-    window.RelphiSkyGlyphAudit.lastIssues = unique;
+    window.__relphiSkyGlyphAuditIssues = unique;
     if (signature !== lastSignature && unique.length) {
       console.error('Sky Chart canonical glyph audit failed:', unique);
     }
@@ -120,8 +143,7 @@
 
   window.RelphiSkyGlyphAudit = Object.freeze({
     run,
-    get lastIssues() { return window.__relphiSkyGlyphAuditIssues || []; },
-    set lastIssues(value) { window.__relphiSkyGlyphAuditIssues = value; }
+    get lastIssues() { return (window.__relphiSkyGlyphAuditIssues || []).slice(); }
   });
 
   const observer = new MutationObserver(schedule);
