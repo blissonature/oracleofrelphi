@@ -72,7 +72,8 @@
       toggle.disabled = ids.length === 0;
     });
     const summary = control.querySelector('[data-placement-filter-summary]');
-    if (summary) summary.textContent = selectionSummary(slot);
+    const nextSummary = selectionSummary(slot);
+    if (summary && summary.textContent !== nextSummary) summary.textContent = nextSummary;
     control.dataset.selectionCount = String(state[slot].selected.size);
     control.dataset.availableCount = String(state[slot].available.size);
   }
@@ -80,10 +81,28 @@
   function checkboxRow(slot, entry) {
     const label = document.createElement('label');
     label.className = 'sky-chart-placement-option';
-    label.innerHTML = `<input type="checkbox" value="${entry.id}" data-placement-option="${entry.id}"><span>${entry.label}</span>`;
-    const input = label.querySelector('input');
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = entry.id;
+    input.dataset.placementOption = entry.id;
     input.checked = state[slot].selected.has(entry.id);
+    const text = document.createElement('span');
+    text.textContent = entry.label;
+    label.append(input, text);
     return label;
+  }
+
+  function groupLegend(group) {
+    const legend = document.createElement('legend');
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.dataset.placementGroupToggle = group.id;
+    const text = document.createElement('span');
+    text.textContent = group.label;
+    label.append(input, text);
+    legend.appendChild(label);
+    return legend;
   }
 
   function renderControl(slot) {
@@ -95,7 +114,15 @@
 
     const actions = document.createElement('div');
     actions.className = 'sky-chart-placement-filter-actions';
-    actions.innerHTML = `<button type="button" data-placement-preset="all">All</button><button type="button" data-placement-preset="none">None</button>`;
+    const all = document.createElement('button');
+    all.type = 'button';
+    all.dataset.placementPreset = 'all';
+    all.textContent = 'All';
+    const none = document.createElement('button');
+    none.type = 'button';
+    none.dataset.placementPreset = 'none';
+    none.textContent = 'None';
+    actions.append(all, none);
     body.appendChild(actions);
 
     GROUPS.forEach(group => {
@@ -104,9 +131,7 @@
       const section = document.createElement('fieldset');
       section.className = 'sky-chart-placement-filter-group';
       section.dataset.placementGroup = group.id;
-      const legend = document.createElement('legend');
-      legend.innerHTML = `<label><input type="checkbox" data-placement-group-toggle="${group.id}"><span>${group.label}</span></label>`;
-      section.appendChild(legend);
+      section.appendChild(groupLegend(group));
       const options = document.createElement('div');
       options.className = 'sky-chart-placement-filter-options';
       entries.forEach(entry => options.appendChild(checkboxRow(slot, entry)));
@@ -132,12 +157,11 @@
 
     details.addEventListener('click', event => {
       const preset = event.target.closest('[data-placement-preset]');
-      if (preset) {
-        event.preventDefault();
-        if (preset.dataset.placementPreset === 'all') state[slot].selected = new Set(state[slot].available.keys());
-        else state[slot].selected.clear();
-        syncControl(slot);
-      }
+      if (!preset) return;
+      event.preventDefault();
+      if (preset.dataset.placementPreset === 'all') state[slot].selected = new Set(state[slot].available.keys());
+      else state[slot].selected.clear();
+      syncControl(slot);
     });
 
     details.addEventListener('change', event => {
@@ -149,13 +173,12 @@
         return;
       }
       const groupToggle = event.target.closest('[data-placement-group-toggle]');
-      if (groupToggle) {
-        groupIds(slot, groupToggle.dataset.placementGroupToggle).forEach(id => {
-          if (groupToggle.checked) state[slot].selected.add(id);
-          else state[slot].selected.delete(id);
-        });
-        syncControl(slot);
-      }
+      if (!groupToggle) return;
+      groupIds(slot, groupToggle.dataset.placementGroupToggle).forEach(id => {
+        if (groupToggle.checked) state[slot].selected.add(id);
+        else state[slot].selected.delete(id);
+      });
+      syncControl(slot);
     });
 
     return details;
@@ -202,8 +225,7 @@
     const bar = filterBar();
     if (!bar) return false;
     decorateExistingControls(bar);
-    const oldPlacement = bar.querySelector('[data-filter="placement"]')?.closest('label');
-    oldPlacement?.remove();
+    bar.querySelector('[data-filter="placement"]')?.closest('label')?.remove();
 
     let controlA = bar.querySelector('[data-placement-filter-sky="A"]');
     let controlB = bar.querySelector('[data-placement-filter-sky="B"]');
@@ -235,8 +257,9 @@
       const visible = rows.filter(row => !rowHiddenByOtherFilters(row) && !row.classList.contains('sky-chart-multiselect-hidden')).length;
       const count = document.getElementById('skyFoundationRelationshipCount');
       const empty = document.getElementById('skyFoundationRelationshipEmpty');
-      if (count) count.textContent = `${visible}/${rows.length}`;
-      if (empty) empty.hidden = visible !== 0;
+      const nextCount = `${visible}/${rows.length}`;
+      if (count && count.textContent !== nextCount) count.textContent = nextCount;
+      if (empty && empty.hidden === (visible === 0)) empty.hidden = visible !== 0;
       counting = false;
     });
   }
