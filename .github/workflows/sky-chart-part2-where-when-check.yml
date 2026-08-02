@@ -1,0 +1,50 @@
+name: Sky Chart Part 2 Where and When check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'part2/sky-chart.html'
+      - 'sky-chart-where-when-v1.js'
+      - 'sky-chart-where-when-v1.css'
+      - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-foundation-interactions-v1.js'
+      - 'tests/sky-chart-part2-where-when.mjs'
+      - 'tests/sky-chart-part2-confirmed-view.mjs'
+      - '.github/workflows/sky-chart-part2-where-when-check.yml'
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-foundation-v1.js
+          node --check sky-chart-foundation-interactions-v1.js
+          node --check sky-chart-where-when-v1.js
+          node --check tests/sky-chart-part2-where-when.mjs
+          node --check tests/sky-chart-part2-confirmed-view.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Run Where and When browser assertions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-part2-server.log 2>&1 &
+          node tests/sky-chart-part2-where-when.mjs
+          node tests/sky-chart-part2-confirmed-view.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-part2-screenshots
+          path: |
+            sky-chart-part2-desktop.png
+            sky-chart-part2-mobile.png
+            sky-chart-part2-confirmed-desktop.png
+            sky-chart-part2-confirmed-mobile.png

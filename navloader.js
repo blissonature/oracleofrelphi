@@ -177,7 +177,7 @@
       });
     }
 
-    if (/(^|\/)sky-chart\.html$/.test(location.pathname)) {
+    if (/(^|\/)sky-chart\.html$/.test(location.pathname) && !document.getElementById('skyFoundationRoot')) {
       const preview = new URLSearchParams(location.search).get('preview');
       [
         'sky-chart-stability-hotfix.js?v=1',

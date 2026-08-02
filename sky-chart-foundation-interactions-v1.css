@@ -1,0 +1,208 @@
+/* Part 1 interaction state and relationship filtering. */
+#skyFoundationComparison {
+  display:grid;
+  grid-template-rows:auto auto auto;
+  min-width:0;
+}
+
+#skyFoundationWheelMount {
+  border-bottom:1px solid rgba(31,27,24,.11);
+}
+
+.sky-foundation-interactive,
+.sky-foundation-focus-piece,
+.sky-foundation-sign-glyph {
+  transition:opacity .14s ease,filter .14s ease,stroke-width .14s ease;
+}
+
+.sky-foundation-interactive {
+  cursor:pointer;
+}
+
+.sky-foundation-interactive:focus {
+  outline:none;
+}
+
+.sky-foundation-wheel:not(.has-isolation) .sky-foundation-interactive.is-hovered,
+.sky-foundation-wheel .sky-foundation-interactive.is-selected,
+.sky-foundation-row.is-hovered,
+.sky-foundation-row.is-selected {
+  filter:drop-shadow(0 0 6px rgba(20,17,14,.38));
+}
+
+.sky-foundation-wheel.has-isolation [data-focus-piece] {
+  opacity:.08;
+}
+
+.sky-foundation-wheel.has-isolation [data-focus-piece].is-kept {
+  opacity:1;
+}
+
+.sky-foundation-wheel.has-isolation .sky-foundation-aspect.is-kept {
+  stroke-width:4.2;
+}
+
+.sky-foundation-wheel.has-isolation .sky-foundation-house-sector.is-selected,
+.sky-foundation-wheel.has-isolation .sky-foundation-sign-sector.is-selected {
+  filter:saturate(1.45) brightness(1.05) drop-shadow(0 0 5px rgba(20,17,14,.28));
+}
+
+.sky-foundation-row {
+  cursor:pointer;
+  transition:opacity .14s ease,background-color .14s ease,filter .14s ease;
+}
+
+.sky-foundation-row:hover,
+.sky-foundation-row:focus-visible,
+.sky-foundation-row.is-selected {
+  background:rgba(241,235,226,.68);
+  outline:none;
+}
+
+.sky-foundation-panel.has-ledger-isolation .sky-foundation-row {
+  opacity:.16;
+}
+
+.sky-foundation-panel.has-ledger-isolation .sky-foundation-row.is-kept {
+  opacity:1;
+}
+
+#skyFoundationRelationships {
+  min-width:0;
+  background:#fffdf8;
+}
+
+.sky-foundation-relationships-heading {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:8px;
+  min-height:44px;
+  padding:0 12px;
+  border-bottom:1px solid rgba(31,27,24,.11);
+}
+
+.sky-foundation-relationships-heading h2 {
+  min-width:0;
+  margin:0;
+  font:800 .82rem/1.2 system-ui,sans-serif;
+}
+
+#skyFoundationRelationshipCount {
+  display:grid;
+  place-items:center;
+  min-width:42px;
+  height:25px;
+  padding:0 8px;
+  border-radius:999px;
+  background:#f0ebe4;
+  color:#3f3934;
+  font:800 .69rem/1 system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+
+#skyFoundationClearIsolation {
+  appearance:none;
+  border:1px solid rgba(31,27,24,.2);
+  border-radius:999px;
+  background:#fff;
+  color:#241f1b;
+  padding:.4rem .68rem;
+  font:800 .68rem/1 system-ui,sans-serif;
+  cursor:pointer;
+}
+
+#skyFoundationClearIsolation[hidden] {
+  display:none;
+}
+
+#skyFoundationRelationshipList {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+  max-height:390px;
+  overflow:auto;
+  padding:8px;
+}
+
+.sky-foundation-relationship-row {
+  display:grid;
+  grid-template-columns:25px minmax(0,1fr) 25px 25px minmax(0,1fr);
+  align-items:center;
+  gap:5px;
+  min-width:0;
+  width:100%;
+  padding:7px 8px;
+  border:1px solid rgba(31,27,24,.13);
+  border-radius:9px;
+  background:#fffdfa;
+  color:#191613;
+  text-align:left;
+  cursor:pointer;
+  transition:opacity .14s ease,background-color .14s ease,border-color .14s ease,filter .14s ease;
+}
+
+.sky-foundation-relationship-row:hover,
+.sky-foundation-relationship-row:focus-visible,
+.sky-foundation-relationship-row.is-selected {
+  border-color:rgba(31,27,24,.4);
+  background:#f6f0e8;
+  outline:none;
+}
+
+.sky-foundation-relationship-row[hidden] {
+  display:none;
+}
+
+.sky-foundation-relationship-row svg {
+  display:block;
+  width:25px;
+  height:25px;
+  overflow:visible;
+}
+
+.sky-foundation-relationship-copy {
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font:700 .65rem/1.2 system-ui,sans-serif;
+}
+
+.sky-foundation-relationship-copy small {
+  display:block;
+  color:#625a53;
+  font:650 .59rem/1.2 system-ui,sans-serif;
+}
+
+#skyFoundationRelationshipEmpty {
+  margin:0;
+  padding:18px 12px;
+  color:#6d645c;
+  text-align:center;
+  font:650 .75rem/1.4 system-ui,sans-serif;
+}
+
+#skyFoundationRelationshipEmpty[hidden] {
+  display:none;
+}
+
+@media(max-width:1120px) {
+  #skyFoundationRelationshipList {
+    grid-template-columns:1fr;
+    max-height:360px;
+  }
+}
+
+@media(max-width:900px) {
+  #skyFoundationRelationshipList {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:620px) {
+  #skyFoundationRelationshipList {
+    grid-template-columns:1fr;
+    max-height:420px;
+  }
+}

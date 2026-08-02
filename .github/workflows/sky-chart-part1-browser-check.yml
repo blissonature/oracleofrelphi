@@ -1,0 +1,160 @@
+name: Sky Chart Part 1 browser check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'part1/sky-chart.html'
+      - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-foundation-v1.css'
+      - 'sky-chart-foundation-interactions-v1.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-foundation-interactions-v1.css'
+      - '.github/workflows/sky-chart-part1-browser-check.yml'
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-foundation-v1.js
+          node --check sky-chart-foundation-interactions-v1.js
+          node --check sky-chart-foundation-interactions-v2.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Run Part 1 browser assertions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-server.log 2>&1 &
+          cat > sky-chart-part1-check.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          import assert from 'node:assert/strict';
+
+          const sample = (name, offset) => ({
+            name,
+            houseSystem:'whole-sign',
+            houseCusps:Array.from({length:12}, (_,i)=>(165 + offset + i*30)%360),
+            placements:{
+              Sun:{name:'Sun',longitude:(195+offset)%360},
+              Moon:{name:'Moon',longitude:(118.4+offset)%360},
+              Ascendant:{name:'Ascendant',longitude:(165+offset)%360},
+              Mercury:{name:'Mercury',longitude:(206.1+offset)%360},
+              Venus:{name:'Venus',longitude:(169.8+offset)%360},
+              Mars:{name:'Mars',longitude:(167.8+offset)%360},
+              Jupiter:{name:'Jupiter',longitude:(307.1+offset)%360},
+              Saturn:{name:'Saturn',longitude:(235.5+offset)%360},
+              Uranus:{name:'Uranus',longitude:(254.8+offset)%360},
+              Neptune:{name:'Neptune',longitude:(271+offset)%360},
+              Pluto:{name:'Pluto',longitude:(213.8+offset)%360}
+            }
+          });
+
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1440,height:1100}});
+          const errors=[];
+          page.on('pageerror',error=>errors.push(error.message));
+          page.on('console',message=>{if(message.type()==='error')errors.push(message.text())});
+          await page.addInitScript(({a,b})=>{
+            localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+            localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+          },{a:sample('Sky A test',0),b:sample('Sky B test',73)});
+
+          await page.goto('http://127.0.0.1:4173/part1/sky-chart.html',{waitUntil:'networkidle'});
+          await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:15000});
+          await page.waitForSelector('.sky-foundation-relationship-row',{timeout:15000});
+
+          const snapshot=()=>page.evaluate(()=>{
+            const root=document.getElementById('skyFoundationRoot');
+            const wheel=document.querySelector('#skyFoundationWheelMount > svg');
+            const rows=[...document.querySelectorAll('.sky-foundation-relationship-row')];
+            return{
+              children:root?.children.length,
+              columns:getComputedStyle(root).gridTemplateColumns.split(' ').filter(Boolean).length,
+              wheelWidth:wheel?.getBoundingClientRect().width||0,
+              totalRows:rows.length,
+              visibleRows:rows.filter(row=>!row.hidden).length,
+              count:document.getElementById('skyFoundationRelationshipCount')?.textContent,
+              isolation:wheel?.classList.contains('has-isolation')||false,
+              selectedHouseB4:document.querySelector('[data-interactive="house"][data-sky="B"][data-house="4"]')?.classList.contains('is-selected')||false,
+              clearVisible:!document.getElementById('skyFoundationClearIsolation')?.hidden
+            };
+          });
+
+          const initial=await snapshot();
+          assert.equal(initial.children,3);
+          assert.equal(initial.columns,3);
+          assert.ok(initial.wheelWidth>500);
+          assert.ok(initial.totalRows>0);
+          assert.equal(initial.visibleRows,initial.totalRows);
+          assert.equal(initial.count,`${initial.totalRows}/${initial.totalRows}`);
+
+          const houseB4=page.locator('[data-interactive="house"][data-sky="B"][data-house="4"]');
+          await houseB4.hover({force:true});
+          await page.waitForTimeout(100);
+          const hovered=await snapshot();
+          assert.equal(hovered.isolation,true);
+          assert.ok(hovered.visibleRows<hovered.totalRows);
+          assert.equal(hovered.clearVisible,false);
+
+          await page.locator('.tarot-hero').hover({force:true});
+          await page.waitForTimeout(100);
+          const hoverCleared=await snapshot();
+          assert.equal(hoverCleared.isolation,false);
+          assert.equal(hoverCleared.visibleRows,hoverCleared.totalRows);
+
+          await houseB4.click({force:true});
+          await page.waitForTimeout(100);
+          const locked=await snapshot();
+          assert.equal(locked.isolation,true);
+          assert.equal(locked.selectedHouseB4,true);
+          assert.equal(locked.clearVisible,true);
+
+          await houseB4.click({force:true});
+          await page.waitForTimeout(100);
+          const unlocked=await snapshot();
+          assert.equal(unlocked.isolation,false);
+          assert.equal(unlocked.visibleRows,unlocked.totalRows);
+
+          // Relationship rows are reading-selection controls, not isolation controls.
+          const firstRow=page.locator('.sky-foundation-relationship-row').first();
+          await firstRow.click({force:true});
+          await page.waitForTimeout(100);
+          const afterRowClick=await snapshot();
+          assert.equal(afterRowClick.isolation,false);
+          assert.equal(afterRowClick.visibleRows,afterRowClick.totalRows);
+          assert.equal(afterRowClick.count,`${afterRowClick.totalRows}/${afterRowClick.totalRows}`);
+
+          // Hovering rows cannot mutate the list under the pointer.
+          const beforeHover=afterRowClick.visibleRows;
+          await page.locator('.sky-foundation-relationship-row').nth(1).hover({force:true});
+          await page.waitForTimeout(250);
+          const afterRowHover=await snapshot();
+          assert.equal(afterRowHover.visibleRows,beforeHover);
+          assert.equal(afterRowHover.isolation,false);
+          assert.deepEqual(errors,[]);
+
+          await page.screenshot({path:'sky-chart-part1-desktop.png',fullPage:true});
+          await page.setViewportSize({width:390,height:844});
+          await page.waitForTimeout(150);
+          const mobile=await snapshot();
+          assert.equal(mobile.columns,1);
+          assert.ok(mobile.wheelWidth>300);
+          await page.screenshot({path:'sky-chart-part1-mobile.png',fullPage:true});
+          await browser.close();
+          EOF
+          node sky-chart-part1-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-part1-screenshots
+          path: |
+            sky-chart-part1-desktop.png
+            sky-chart-part1-mobile.png

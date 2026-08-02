@@ -1,0 +1,67 @@
+/* Integrated Sky Chart final pass. */
+.sky-selected-cards{
+  grid-template-columns:minmax(0,1fr) minmax(130px,170px) minmax(0,1fr);
+  align-items:center;
+}
+.sky-selected-card[data-selected-card="A"]{grid-column:1;grid-row:1}
+.sky-selected-aspect-diagram{grid-column:2;grid-row:1}
+.sky-selected-card[data-selected-card="B"]{grid-column:3;grid-row:1}
+.sky-selected-aspect-diagram{
+  display:grid;
+  justify-items:center;
+  align-content:center;
+  gap:5px;
+  min-width:0;
+  padding:10px 6px;
+  border:1px solid rgba(31,27,24,.15);
+  border-radius:16px;
+  background:#fffdf8;
+}
+.sky-selected-aspect-diagram svg{display:block;width:min(100%,150px);height:auto;overflow:visible}
+.sky-selected-aspect-orbit{fill:none;stroke:rgba(31,27,24,.3);stroke-width:1.5;vector-effect:non-scaling-stroke}
+.sky-selected-aspect-radius{stroke:rgba(31,27,24,.45);stroke-width:1.5;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.sky-selected-aspect-center{fill:#24201d}
+.sky-selected-aspect-point{stroke:#fffdf8;stroke-width:2.5;vector-effect:non-scaling-stroke}
+.sky-selected-aspect-point.sky-a{fill:#c9211e}
+.sky-selected-aspect-point.sky-b{fill:#2462d0}
+.sky-selected-aspect-label{display:flex;align-items:flex-start;gap:5px;margin:0;width:100%;font:750 .62rem/1.25 system-ui,sans-serif;color:#403a35;overflow-wrap:anywhere}
+.sky-selected-aspect-label span{flex:0 0 8px;width:8px;height:8px;border-radius:50%;margin-top:2px}
+.sky-selected-aspect-label.sky-a span{background:#c9211e}
+.sky-selected-aspect-label.sky-b span{background:#2462d0}
+.sky-selected-aspect-diagram strong{font:850 .68rem/1.1 system-ui,sans-serif;color:#4b443e}
+.sky-selected-aspect-symbol{display:none!important}
+
+.sky-chart-filter-bar{grid-template-columns:minmax(52px,.55fr) minmax(72px,1fr) minmax(78px,1.05fr) minmax(66px,.85fr) minmax(66px,.85fr) minmax(82px,1.08fr)}
+.sky-chart-filter-bar label{text-transform:none;font-size:.66rem}
+.sky-chart-filter-bar select{text-transform:none}
+
+/* Aspect hit geometry stays easy to tap without drawing a box. */
+.sky-foundation-aspect-hit{fill:none!important;stroke:transparent!important;outline:none!important;box-shadow:none!important;pointer-events:stroke!important}
+.sky-foundation-aspect-hit:focus,.sky-foundation-aspect-hit:focus-visible{outline:none!important;box-shadow:none!important}
+
+/* Keep selected readings stable while the user explores the retained list. */
+.sky-foundation-relationship-row[aria-current="true"]{position:relative;z-index:1}
+.sky-foundation-relationship-row:hover{transform:none}
+
+@media(max-width:900px){
+  .sky-chart-filter-bar{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sky-selected-cards{grid-template-columns:minmax(0,1fr) 126px minmax(0,1fr);gap:8px}
+}
+@media(max-width:600px){
+  .sky-chart-filter-bar{grid-template-columns:1fr 1fr}
+  .sky-selected-cards{display:grid!important;grid-template-columns:minmax(0,1fr) 88px minmax(0,1fr)!important;gap:5px;align-items:start}
+  .sky-selected-card[data-selected-card="A"]{grid-column:1!important;grid-row:1!important}
+  .sky-selected-aspect-diagram{grid-column:2!important;grid-row:1!important;padding:7px 3px;margin-top:56px;border-radius:12px}
+  .sky-selected-card[data-selected-card="B"]{grid-column:3!important;grid-row:1!important}
+  .sky-selected-aspect-diagram svg{width:82px}
+  .sky-selected-aspect-label{font-size:.49rem;line-height:1.15}
+  .sky-selected-aspect-label span{width:6px;height:6px;flex-basis:6px}
+  .sky-selected-aspect-diagram strong{font-size:.55rem}
+}
+@media(max-width:390px){
+  .sky-chart-filter-bar{grid-template-columns:1fr}
+  .sky-selected-cards{grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr)!important}
+  .sky-selected-aspect-diagram{margin-top:50px}
+  .sky-selected-aspect-diagram svg{width:68px}
+  .sky-selected-aspect-label{font-size:.44rem}
+}

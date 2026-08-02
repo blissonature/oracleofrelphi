@@ -1,0 +1,9 @@
+.sky-chart-filter-bar{grid-template-columns:repeat(6,minmax(0,1fr))}
+.sky-orb-filter{display:grid;gap:5px;align-content:end}
+.sky-orb-filter>span{display:flex;justify-content:space-between;gap:8px}
+.sky-orb-filter output{font-variant-numeric:tabular-nums}
+.sky-orb-filter input{width:100%;accent-color:#c9211e}
+.sky-orb-filter-hidden{display:none!important}
+@media(max-width:900px){.sky-chart-filter-bar{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.sky-chart-filter-bar{grid-template-columns:1fr 1fr}}
+@media(max-width:390px){.sky-chart-filter-bar{grid-template-columns:1fr}}

@@ -1,0 +1,67 @@
+/* Final mobile heptagram layout: no planet-name labels and no overlapping text. */
+.sky-ph-jump {
+  position:relative;
+  overflow:hidden;
+  gap:10px;
+  padding:12px;
+}
+
+.sky-ph-jump-title {
+  position:relative;
+  z-index:2;
+  display:block;
+  min-height:1.5em;
+  margin:0;
+  padding:0 8px;
+  text-align:center;
+  white-space:normal;
+}
+
+.sky-ph-heptagram {
+  display:block;
+  width:min(100%, 560px);
+  height:auto;
+  max-height:none;
+  margin:0 auto;
+  overflow:hidden;
+}
+
+/* Planet names do not belong on the heptagram. */
+.sky-ph-node-label {
+  display:none!important;
+}
+
+.sky-ph-summary {
+  position:relative;
+  z-index:2;
+  margin:0;
+  padding:0 8px;
+  overflow-wrap:anywhere;
+}
+
+@media(max-width:620px) {
+  .sky-where-when-confirmed {
+    gap:10px;
+    padding:10px;
+  }
+
+  .sky-ph-jump {
+    gap:8px;
+    padding:10px;
+  }
+
+  .sky-ph-jump-title {
+    font-size:.74rem;
+    line-height:1.25;
+  }
+
+  .sky-ph-heptagram {
+    width:100%;
+    max-width:100%;
+  }
+
+  .sky-ph-summary {
+    font-size:.62rem;
+    line-height:1.3;
+  }
+}
