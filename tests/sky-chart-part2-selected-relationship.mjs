@@ -85,13 +85,19 @@ assert.equal(new Set(desktopFilterBoxes.map(box => box.top)).size, 1);
 assert.ok(Math.max(...desktopFilterBoxes.map(box => box.height))-Math.min(...desktopFilterBoxes.map(box => box.height)) <= 1);
 assert.equal(await page.locator('.sky-chart-filter-bar').evaluate(node => node.scrollWidth <= node.clientWidth), true);
 await page.waitForTimeout(100);
-const defaultOrbState = await page.locator('.sky-foundation-relationship-row').evaluateAll(rows => rows.map(row => {
+const fixtureOrbs = await page.locator('.sky-foundation-relationship-row').evaluateAll(rows => rows.map(row => Number(row.dataset.orb)));
+const fixtureMinimumOrb = Math.min(...fixtureOrbs);
+const fixtureMaximumOrb = Math.max(...fixtureOrbs);
+assert.ok(Number.isFinite(fixtureMinimumOrb) && fixtureMaximumOrb > fixtureMinimumOrb);
+const orbInput = page.locator('input[data-filter="orb"]');
+await orbInput.fill(String((fixtureMinimumOrb+fixtureMaximumOrb)/2));
+await page.waitForTimeout(100);
+const orbDrivenState = await page.locator('.sky-foundation-relationship-row').evaluateAll(rows => rows.map(row => {
   const nodes=Array.from(document.querySelectorAll(`[data-layer="aspects"] [data-relation-index="${row.dataset.relationIndex}"]`));
   return {hidden:row.hidden,wheelHidden:nodes.length>0&&nodes.every(node=>getComputedStyle(node).display==='none')};
 }));
-assert.ok(defaultOrbState.some(state => state.hidden) && defaultOrbState.some(state => !state.hidden));
-assert.ok(defaultOrbState.every(state => state.hidden===state.wheelHidden));
-const orbInput = page.locator('input[data-filter="orb"]');
+assert.ok(orbDrivenState.some(state => state.hidden) && orbDrivenState.some(state => !state.hidden));
+assert.ok(orbDrivenState.every(state => state.hidden===state.wheelHidden));
 await orbInput.fill('360');
 await page.waitForTimeout(100);
 assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), await page.locator('.sky-foundation-relationship-row').count());
