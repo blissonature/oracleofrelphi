@@ -47,11 +47,12 @@
     ).length;
     const count = document.getElementById('skyFoundationRelationshipCount');
     const empty = document.getElementById('skyFoundationRelationshipEmpty');
-    if (count) {
-      count.textContent = `${visible}/${rows.length}`;
+    const next = `${visible}/${rows.length}`;
+    if (count && count.textContent !== next) {
+      count.textContent = next;
       count.dataset.total = String(rows.length);
     }
-    if (empty) empty.hidden = visible !== 0;
+    if (empty && empty.hidden !== (visible !== 0)) empty.hidden = visible !== 0;
   }
 
   function apply() {
@@ -90,6 +91,20 @@
     setTimeout(apply, 260);
   }
 
+  function relationshipMutation(record) {
+    if (record.type === 'attributes') {
+      return record.target.matches?.('.sky-foundation-relationship-row,.sky-foundation-aspect');
+    }
+    if (record.type !== 'childList') return false;
+    if (record.target.closest?.('#skyFoundationRelationshipList,[data-layer="aspects"]')) return true;
+    return Array.from(record.addedNodes).some(node =>
+      node.nodeType === 1 && (
+        node.matches?.('.sky-foundation-relationship-row,.sky-foundation-aspect') ||
+        node.querySelector?.('.sky-foundation-relationship-row,.sky-foundation-aspect')
+      )
+    );
+  }
+
   function start() {
     document.addEventListener('change', event => {
       if (!event.target.closest?.('[data-house-choice]')) return;
@@ -107,15 +122,7 @@
     const root = document.getElementById('skyFoundationRoot');
     if (root) {
       new MutationObserver(records => {
-        if (applying) return;
-        const relevant = records.some(record => {
-          if (record.type === 'childList') return record.addedNodes.length || record.removedNodes.length;
-          if (record.type === 'attributes') {
-            return record.target.matches?.('.sky-foundation-relationship-row,.sky-foundation-aspect');
-          }
-          return false;
-        });
-        if (relevant) schedule();
+        if (!applying && records.some(relationshipMutation)) schedule();
       }).observe(root, {
         childList: true,
         subtree: true,
