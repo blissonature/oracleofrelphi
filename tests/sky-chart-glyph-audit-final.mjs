@@ -24,7 +24,12 @@ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:2000
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]',{timeout:20000});
 await page.waitForSelector('#skySelectedRelationship:not([hidden])',{timeout:20000});
 await page.waitForFunction(()=>document.querySelectorAll('.sky-ph-heptagram[data-canonical-heptagram-v1="true"]').length===2,null,{timeout:20000});
-await page.waitForSelector('html[data-sky-glyph-audit="passed"][data-sky-glyph-audit-count="0"]',{timeout:20000});
+await page.waitForFunction(()=>typeof window.RelphiSkyGlyphAudit?.run==='function',null,{timeout:20000});
+const forcedAudit=await page.evaluate(()=>window.RelphiSkyGlyphAudit.run());
+console.log('GLYPH_AUDIT_DEBUG',JSON.stringify({forcedAudit,state:document.documentElement.dataset.skyGlyphAudit,count:document.documentElement.dataset.skyGlyphAuditCount}));
+assert.deepEqual(forcedAudit,[]);
+assert.equal(await page.getAttribute('html','data-sky-glyph-audit'),'passed');
+assert.equal(await page.getAttribute('html','data-sky-glyph-audit-count'),'0');
 
 const issues=await page.evaluate(()=>{
   const issues=[];
