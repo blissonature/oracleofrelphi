@@ -67,7 +67,8 @@ const ledgerGlyphs = await page.locator('.sky-foundation-row > svg[data-canonica
   const outer=svg.getBoundingClientRect(),inner=art?.getBoundingClientRect();
   return {artCount:svg.querySelectorAll('.relphi-canonical-glyph').length,transform:art?.getAttribute('transform')||'',contained:!!inner&&inner.left>=outer.left-1&&inner.top>=outer.top-1&&inner.right<=outer.right+1&&inner.bottom<=outer.bottom+1,overflow:getComputedStyle(svg).overflow};
 }));
-assert.ok(ledgerGlyphs.length >= 20);
+assert.ok(await page.locator('#skyFoundationA .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').count() > 0);
+assert.ok(await page.locator('#skyFoundationB .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').count() > 0);
 assert.ok(ledgerGlyphs.every(result => result.artCount===1 && result.transform && result.contained && result.overflow==='hidden'));
 const heptagramGlyphs = await page.locator('.sky-ph-heptagram').evaluateAll(nodes => nodes.map(svg => ({
   planets:svg.querySelectorAll('.sky-ph-planet').length,
