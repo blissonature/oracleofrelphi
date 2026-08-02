@@ -12,6 +12,7 @@ on:
       - 'relphi-neptune-cross-connection-v1.js'
       - 'sky-chart-glyph-framing-v1.js'
       - 'sky-chart-glyph-audit-v1.js'
+      - 'sky-chart-sky-colors-v1.js'
       - 'sky-chart-foundation-v1.js'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-selected-relationship-v2.js'
@@ -21,6 +22,7 @@ on:
       - 'sky-chart-heptagram-canonical-v1.css'
       - 'sky-chart-live-integrity-v1.js'
       - 'tests/sky-chart-glyph-audit-final.mjs'
+      - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   pull_request:
     paths:
@@ -31,6 +33,7 @@ on:
       - 'relphi-neptune-cross-connection-v1.js'
       - 'sky-chart-glyph-framing-v1.js'
       - 'sky-chart-glyph-audit-v1.js'
+      - 'sky-chart-sky-colors-v1.js'
       - 'sky-chart-foundation-v1.js'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-selected-relationship-v2.js'
@@ -40,6 +43,7 @@ on:
       - 'sky-chart-heptagram-canonical-v1.css'
       - 'sky-chart-live-integrity-v1.js'
       - 'tests/sky-chart-glyph-audit-final.mjs'
+      - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   workflow_dispatch:
 
@@ -56,8 +60,10 @@ jobs:
         run: |
           node --check sky-chart-glyph-framing-v1.js
           node --check sky-chart-glyph-audit-v1.js
+          node --check sky-chart-sky-colors-v1.js
           node --check sky-chart-heptagram-canonical-v1.js
           node --check tests/sky-chart-glyph-audit-final.mjs
+          node --check tests/sky-chart-hour-ruler-and-sky-colors.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -66,6 +72,7 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-glyph-audit-server.log 2>&1 &
           node tests/sky-chart-glyph-audit-final.mjs
+          node tests/sky-chart-hour-ruler-and-sky-colors.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -73,4 +80,8 @@ jobs:
           path: |
             sky-chart-glyph-audit-desktop.png
             sky-chart-glyph-audit-mobile.png
+            sky-chart-hour-ruler-and-sky-colors-desktop.png
+            sky-chart-hour-ruler-and-sky-colors-mobile.png
+            sky-chart-sky-a-card-colors.png
+            sky-chart-sky-b-card-colors.png
           if-no-files-found: ignore
