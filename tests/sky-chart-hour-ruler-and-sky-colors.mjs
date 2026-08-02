@@ -6,7 +6,7 @@ const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio',
 const COLORS={A:'rgb(201, 33, 30)',B:'rgb(36, 98, 208)'};
 const placement=(name,longitude)=>{const value=((longitude%360)+360)%360,sign=Math.floor(value/30),within=value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60);return{name,longitude:value,sign:SIGNS[sign],degree,minute,second:0}};
 function sample(name,offset,profile){
-  const asc=(168.38+offset)%360,mc=(76.28+offset)%360,cusps=Array.from({length:12},(_,i)=>(asc+i*30)%360);
+  const asc=(168.38+offset)%360,cusps=Array.from({length:12},(_,index)=>(asc+index*30)%360);
   const raw={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Descendant:348.38,Midheaven:76.28,IC:256.28,Chiron:74.48,'North Node':40.3,'South Node':220.3,Lilith:44.23,'Part of Fortune':244.97,Vertex:330.33};
   return{name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{...profile,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(raw).map(([key,value])=>[key,placement(key,value+offset)]))};
 }
@@ -23,8 +23,11 @@ await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.s
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForFunction(()=>document.querySelectorAll('.sky-ph-canonical-bubble.is-hour-ruler').length===2,null,{timeout:20000});
-await page.waitForSelector('html[data-sky-placement-colors="passed"]',{timeout:20000});
-await page.waitForTimeout(500);
+await page.waitForFunction(()=>typeof window.RelphiSkyColors?.scan==='function',null,{timeout:20000});
+const colorScan=await page.evaluate(()=>window.RelphiSkyColors.scan());
+assert.equal(colorScan.passed,true,`Placement color scan painted ${colorScan.painted}/${colorScan.expected} hosts.`);
+assert.equal(await page.getAttribute('html','data-sky-placement-colors'),'passed');
+await page.waitForTimeout(100);
 
 const issues=await page.evaluate(({colors})=>{
   const issues=[];
