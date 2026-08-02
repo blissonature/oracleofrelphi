@@ -35,17 +35,11 @@ const issues=await page.evaluate(()=>{
   const artFor=root=>Array.from(root?.children||[]).find(node=>node.classList?.contains('relphi-canonical-glyph'))||null;
   const circleFor=root=>root?.querySelector?.(':scope > circle')||null;
   const white=value=>value==='rgb(255, 255, 255)'||value==='rgba(255, 255, 255, 1)'||value==='#fff'||value==='#ffffff'||value==='white';
-  const hasVisibleStroke=(node,art)=>{
-    let current=node;
-    while(current&&current.nodeType===1){
-      const style=getComputedStyle(current);
-      const opacity=Number.parseFloat(style.strokeOpacity||'1');
-      const width=Number.parseFloat(style.strokeWidth||'0');
-      if(style.stroke!=='none'&&style.stroke!=='rgba(0, 0, 0, 0)'&&opacity>0&&width>0)return true;
-      if(current===art)break;
-      current=current.parentElement;
-    }
-    return false;
+  const visibleFill=node=>{
+    if(!node)return false;
+    const style=getComputedStyle(node);
+    const opacity=Number.parseFloat(style.fillOpacity||'1');
+    return style.fill!=='none'&&style.fill!=='rgba(0, 0, 0, 0)'&&opacity>0;
   };
   const isHidden=root=>{
     const circle=circleFor(root);if(!circle)return false;
@@ -119,15 +113,16 @@ const issues=await page.evaluate(()=>{
   });
 
   document.querySelectorAll('.relphi-canonical-glyph.relphi-glyph-venus').forEach((art,index)=>{
-    const circle=art.querySelector('circle'),cross=art.querySelector('path');
-    if(!circle||!cross)issues.push(`Venus ${index+1}: canonical circle or cross missing`);
-    if(circle&&!hasVisibleStroke(circle,art))issues.push(`Venus ${index+1}: circle stroke missing`);
-    if(cross&&!hasVisibleStroke(cross,art))issues.push(`Venus ${index+1}: cross stroke missing`);
+    const glyphPath=art.querySelector('path');
+    const data=glyphPath?.getAttribute('d')||'';
+    if(!glyphPath||data.length<200)issues.push(`Venus ${index+1}: canonical compound path missing or incomplete`);
+    if(glyphPath&&!visibleFill(glyphPath))issues.push(`Venus ${index+1}: canonical filled form is not visible`);
   });
   document.querySelectorAll('.relphi-canonical-glyph.relphi-glyph-moon').forEach((art,index)=>{
-    const path=art.querySelector('path');
-    if(!path)issues.push(`Moon ${index+1}: canonical crescent missing`);
-    if(path&&!hasVisibleStroke(path,art))issues.push(`Moon ${index+1}: supportive stroke missing`);
+    const glyphPath=art.querySelector('path');
+    const data=glyphPath?.getAttribute('d')||'';
+    if(!glyphPath||data.length<200)issues.push(`Moon ${index+1}: canonical crescent path missing or incomplete`);
+    if(glyphPath&&!visibleFill(glyphPath))issues.push(`Moon ${index+1}: canonical supportive crescent form is not visible`);
   });
 
   document.querySelectorAll('.relphi-glyph-bubble').forEach((root,index)=>{
@@ -149,4 +144,4 @@ assert.equal(await page.getAttribute('html','data-sky-glyph-audit'),'passed');
 await page.screenshot({path:'sky-chart-glyph-audit-mobile.png',fullPage:true});
 
 await browser.close();
-console.log('Sky Chart canonical glyph audit passed on desktop and mobile, including inherited white-on-color hour-ruler paint.');
+console.log('Sky Chart canonical glyph audit passed on desktop and mobile, including crisp inverse hour rulers and canonical Moon/Venus geometry.');
