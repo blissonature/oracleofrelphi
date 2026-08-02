@@ -235,7 +235,7 @@
     const relations = relationships(chosen);
     const jobs = [];
 
-    relations.forEach((relation, index) => {
+    relations.forEach(relation => {
       const from = point(relation.left.value);
       const to = point(relation.right.value);
       const line = svg('line', {
@@ -333,7 +333,7 @@
     }
 
     const slot = hasA ? 'A' : 'B';
-    renderSingleSky(slot, hasA ? selectedA : selectedB, token);
+    void renderSingleSky(slot, hasA ? selectedA : selectedB, token);
   }
 
   function schedule(delay = 160) {
@@ -351,10 +351,11 @@
     return new Set(Array.from(document.querySelectorAll(`#skyFoundation${slot} .sky-foundation-row[data-placement]`)).map(row => row.dataset.placement));
   }
 
-  function syncFromControl() {
+  function syncFromControl(renderImmediately = false) {
     selection.A = selectionFromControl('A');
     selection.B = selectionFromControl('B');
-    schedule(0);
+    if (renderImmediately) renderFromSelection();
+    else schedule(0);
   }
 
   function restorePresentation() {
@@ -371,12 +372,16 @@
     window.addEventListener('relphi:sky-placement-multiselect-changed', event => {
       selection.A = new Set(event.detail?.A || []);
       selection.B = new Set(event.detail?.B || []);
-      schedule();
+      renderFromSelection();
     });
-    window.addEventListener('relphi:sky-foundation-ready', () => setTimeout(syncFromControl, 0));
+    document.addEventListener('change', event => {
+      if (!event.target.closest?.('[data-placement-choice],[data-placement-option]')) return;
+      setTimeout(() => syncFromControl(true), 0);
+    });
+    window.addEventListener('relphi:sky-foundation-ready', () => setTimeout(() => syncFromControl(true), 0));
     window.addEventListener('relphi:sky-foundation-filter-changed', () => setTimeout(restorePresentation, 0));
     window.addEventListener('resize', restorePresentation);
-    setTimeout(syncFromControl, 0);
+    setTimeout(() => syncFromControl(true), 0);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
