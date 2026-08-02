@@ -20,6 +20,7 @@ on:
       - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-live-integrity-v1.js'
       - 'tests/sky-chart-glyph-audit.mjs'
+      - 'tests/sky-chart-glyph-audit-debug.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   pull_request:
     paths:
@@ -38,6 +39,7 @@ on:
       - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-live-integrity-v1.js'
       - 'tests/sky-chart-glyph-audit.mjs'
+      - 'tests/sky-chart-glyph-audit-debug.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   workflow_dispatch:
 
@@ -56,6 +58,7 @@ jobs:
           node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-heptagram-canonical-v1.js
           node --check tests/sky-chart-glyph-audit.mjs
+          node --check tests/sky-chart-glyph-audit-debug.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -63,12 +66,14 @@ jobs:
       - name: Run complete Sky Chart glyph audit
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-glyph-audit-server.log 2>&1 &
+          node tests/sky-chart-glyph-audit-debug.mjs || true
           node tests/sky-chart-glyph-audit.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: sky-chart-glyph-audit-screenshots
           path: |
+            sky-chart-glyph-audit-debug.png
             sky-chart-glyph-audit-desktop.png
             sky-chart-glyph-audit-mobile.png
           if-no-files-found: ignore
