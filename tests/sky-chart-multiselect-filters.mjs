@@ -73,12 +73,13 @@ assert.ok(await page.locator('.sky-foundation-relationship-row').count()>0);
 
 const inlineA=summaryChoices.locator('[data-placement-choice="a"]');
 await inlineA.uncheck();
-await page.waitForTimeout(100);
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='B-B',null,{timeout:10000});
 assert.equal(await list.locator('[data-placement-option][data-slot="A"]:checked').count(),0);
 assert.equal((await combined.locator('[data-placement-filter-summary]').textContent())?.trim(),'Sky A off');
-assert.equal(await visibleRows().count(),0,'The visible A checkbox in the filter bar must clear Sky A.');
+assert.ok(await visibleRows().count()>0,'Turning off Sky A must show Sky B internal relationships.');
+assert.equal(await visibleRows().evaluateAll(rows=>rows.every(row=>row.dataset.leftSky==='B'&&row.dataset.rightSky==='B')),true);
 await inlineA.check();
-await page.waitForTimeout(100);
+await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipMode==='A-B',null,{timeout:10000});
 assert.equal(await list.locator('[data-placement-option][data-slot="A"]:checked').count(),availableCounts.A);
 
 await combined.locator('[data-placement-filter-toggle]').click();
