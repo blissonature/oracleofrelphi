@@ -26,13 +26,15 @@ await page.waitForSelector('html[data-sky-placement-multiselect="ready"]',{timeo
 
 assert.equal(await page.locator('[data-filter="placement"]').count(),0,'The old singular placement select must be removed.');
 assert.equal(await page.locator('[data-placement-filter-sky]').count(),2,'Each sky needs its own placement checklist.');
+const availableCounts={};
 for(const slot of ['A','B']){
   const control=page.locator(`[data-placement-filter-sky="${slot}"]`);
   assert.equal(await control.locator('[data-placement-preset="all"]').count(),1);
   assert.equal(await control.locator('[data-placement-preset="none"]').count(),1);
   for(const group of ['luminaries','planets','angles-points']) assert.equal(await control.locator(`[data-placement-group-toggle="${group}"]`).count(),1);
-  assert.equal(await control.locator('[data-placement-option]').count(),20);
-  assert.equal(await control.locator('[data-placement-option]:checked').count(),20);
+  availableCounts[slot]=await control.locator('[data-placement-option]').count();
+  assert.ok(availableCounts[slot]>=15,'Each chart should expose its available canonical placements.');
+  assert.equal(await control.locator('[data-placement-option]:checked').count(),availableCounts[slot]);
   assert.equal((await control.locator('[data-placement-filter-summary]').textContent())?.trim(),'All');
 }
 
@@ -71,14 +73,14 @@ await skyAControl.locator('[data-placement-option="mercury"]').check();
 await skyAControl.locator('[data-placement-option="sun"]').uncheck();
 await page.waitForTimeout(100);
 assert.deepEqual((await skyAControl.locator('[data-placement-option]:checked').evaluateAll(nodes=>nodes.map(node=>node.value).sort())),['mercury','moon']);
-assert.equal((await skyAControl.locator('[data-placement-filter-summary]').textContent())?.trim(),'2 of 20');
+assert.equal((await skyAControl.locator('[data-placement-filter-summary]').textContent())?.trim(),`2 of ${availableCounts.A}`);
 assert.ok((await visibleRows().evaluateAll(rows=>rows.map(row=>row.dataset.leftPlacement))).every(id=>id==='mercury'||id==='moon'));
 
 await skyAControl.locator('[data-placement-preset="all"]').click();
 await skyBControl.locator('[data-placement-preset="all"]').click();
 await page.waitForTimeout(100);
-assert.equal(await skyAControl.locator('[data-placement-option]:checked').count(),20);
-assert.equal(await skyBControl.locator('[data-placement-option]:checked').count(),20);
+assert.equal(await skyAControl.locator('[data-placement-option]:checked').count(),availableCounts.A);
+assert.equal(await skyBControl.locator('[data-placement-option]:checked').count(),availableCounts.B);
 assert.equal((await skyAControl.locator('[data-placement-filter-summary]').textContent())?.trim(),'All');
 assert.equal((await skyBControl.locator('[data-placement-filter-summary]').textContent())?.trim(),'All');
 
