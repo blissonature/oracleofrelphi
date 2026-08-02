@@ -135,6 +135,10 @@ assert.ok(await page.locator('.sky-foundation-ledger > .sky-foundation-row > svg
 }));
 assert.equal(await page.locator('[data-filter="aspect"] option[value="semi-sextile"]').count(), 1);
 assert.equal(await page.locator('[data-filter="aspect"] option[value="quincunx"]').count(), 1);
+assert.ok(await page.locator('.sky-foundation-aspect[data-relation-index]:not(.sky-foundation-aspect-hit)').evaluateAll(lines => lines.every(line => {
+  const row=document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${line.dataset.relationIndex}"]`);
+  return row?.dataset.leftPlacement===line.dataset.leftPlacement&&row?.dataset.aspect===line.dataset.aspect&&row?.dataset.rightPlacement===line.dataset.rightPlacement&&row?.dataset.sourceOrb===line.dataset.orb;
+})));
 
 const relationIndexForLargestOrb = await page.locator('.sky-foundation-aspect[data-relation-index]:not(.sky-foundation-aspect-hit)').evaluateAll(lines => Number(lines.reduce((best,line) => {
   const orb=node=>Number(document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${node.dataset.relationIndex}"]`)?.dataset.orb);
