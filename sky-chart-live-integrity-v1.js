@@ -18,6 +18,7 @@
     'part of fortune':'part-of-fortune', pof:'part-of-fortune'
   };
   let repairSequence = 0;
+  let ledgerMutationTimer = 0;
 
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
@@ -110,8 +111,9 @@
       fill:'transparent',
       strokeWidth:2.35
     });
-    bubble.circle.style.opacity = '0';
+    bubble.circle.setAttribute('opacity', '0');
     bubble.circle.setAttribute('aria-hidden', 'true');
+    bubble.circle.style.setProperty('opacity', '0', 'important');
     await bubble.ready;
 
     if (sequence !== repairSequence || !target.isConnected) return;
@@ -150,7 +152,7 @@
     const sequence = ++repairSequence;
     Promise.allSettled([repairLedger('A', sequence), repairLedger('B', sequence)])
       .then(() => {
-        if (sequence === repairSequence) document.documentElement.dataset.skyChartLiveIntegrity = 'v2';
+        if (sequence === repairSequence) document.documentElement.dataset.skyChartLiveIntegrity = 'v3';
       });
   }
 
@@ -185,12 +187,32 @@
     });
   }
 
+  function mutationAddsLedger(mutation) {
+    return Array.from(mutation.addedNodes || []).some(node =>
+      node.nodeType === 1 && (
+        node.matches?.('.sky-foundation-ledger,.sky-foundation-row') ||
+        node.querySelector?.('.sky-foundation-ledger,.sky-foundation-row')
+      )
+    );
+  }
+
+  const ledgerObserver = new MutationObserver(mutations => {
+    if (!mutations.some(mutationAddsLedger)) return;
+    clearTimeout(ledgerMutationTimer);
+    ledgerMutationTimer = setTimeout(scheduleRepair, 0);
+  });
+
+  function start() {
+    ledgerObserver.observe(document.documentElement, { childList:true, subtree:true });
+    scheduleRepair();
+  }
+
   window.addEventListener('relphi:sky-foundation-ready', scheduleRepair);
   window.addEventListener('relphi:selected-relationship-rendered', repairProgressive);
   window.addEventListener('storage', event => {
     if (!event.key || event.key === KEYS.A || event.key === KEYS.B) scheduleRepair();
   });
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scheduleRepair, { once:true });
-  else scheduleRepair();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
+  else start();
 })();
