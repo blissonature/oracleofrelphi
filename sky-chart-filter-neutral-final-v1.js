@@ -6,9 +6,11 @@
   window.__relphiSkyFilterNeutralFinalV1 = true;
 
   let queued = false;
+  let fitting = false;
 
   function fitPlacementMenu() {
     queued = false;
+    if (fitting) return;
     const menu = document.getElementById('skyChartPlacementPopover');
     const head = document.querySelector('[data-placement-filter="combined"] .sky-chart-placement-filter-head');
     if (!menu?.classList.contains('is-portaled') || menu.hidden || !head) return;
@@ -21,10 +23,24 @@
       window.innerWidth - width - margin,
       Math.max(margin, rect.left + rect.width / 2 - width / 2)
     );
+    const widthValue = `${width}px`;
+    const maximumValue = `${window.innerWidth - margin * 2}px`;
+    const leftValue = `${left}px`;
 
-    menu.style.setProperty('width', `${width}px`, 'important');
-    menu.style.setProperty('max-width', `${window.innerWidth - margin * 2}px`, 'important');
-    menu.style.setProperty('left', `${left}px`, 'important');
+    if (
+      menu.style.getPropertyValue('width') === widthValue &&
+      menu.style.getPropertyPriority('width') === 'important' &&
+      menu.style.getPropertyValue('max-width') === maximumValue &&
+      menu.style.getPropertyPriority('max-width') === 'important' &&
+      menu.style.getPropertyValue('left') === leftValue &&
+      menu.style.getPropertyPriority('left') === 'important'
+    ) return;
+
+    fitting = true;
+    menu.style.setProperty('width', widthValue, 'important');
+    menu.style.setProperty('max-width', maximumValue, 'important');
+    menu.style.setProperty('left', leftValue, 'important');
+    fitting = false;
   }
 
   function schedule() {
@@ -40,7 +56,9 @@
       schedule();
     });
 
-    const observer = new MutationObserver(schedule);
+    const observer = new MutationObserver(() => {
+      fitPlacementMenu();
+    });
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
@@ -50,7 +68,7 @@
 
     window.addEventListener('resize', schedule);
     window.addEventListener('scroll', schedule, true);
-    window.addEventListener('relphi:sky-placement-multiselect-changed', schedule);
+    window.addEventListener('relphi:sky-placement-multiselect-changed', fitPlacementMenu);
     window.addEventListener('relphi:sky-foundation-ready', schedule);
     schedule();
   }
