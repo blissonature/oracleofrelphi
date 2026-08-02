@@ -124,18 +124,6 @@ await page.waitForSelector('#skyChartHousePopover.is-portaled:not([hidden])');
 for(const house of selfHouses){
   await list.locator(`[data-house-scope="house"][data-house-target="${house}"][data-house-choice="a"]`).check();
 }
-await page.waitForTimeout(500);
-console.log('HOUSE_FILTER_DEBUG',JSON.stringify(await page.evaluate(houses=>({
-  houses,
-  stateA:document.documentElement.dataset.skyAHouseSelection,
-  stateB:document.documentElement.dataset.skyBHouseSelection,
-  checkedA:Array.from(document.querySelectorAll('[data-house-scope="house"][data-house-choice="a"]:checked')).map(input=>input.dataset.houseTarget),
-  rows:Array.from(document.querySelectorAll('.sky-foundation-single-sky-row[data-single-sky="A"]')).map(row=>({
-    left:row.dataset.leftHouse,
-    right:row.dataset.rightHouse,
-    hidden:row.classList.contains('sky-chart-house-multiselect-hidden')
-  }))
-}),selfHouses)));
 await page.waitForFunction(houses=>{
   const rows=Array.from(document.querySelectorAll('.sky-foundation-single-sky-row[data-single-sky="A"]:not(.sky-chart-house-multiselect-hidden)'));
   return rows.length>0&&rows.every(row=>houses.includes(row.dataset.leftHouse)&&houses.includes(row.dataset.rightHouse));
