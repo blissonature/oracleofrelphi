@@ -4,6 +4,7 @@
 .sky-foundation-wheel.has-isolation [data-focus-piece].is-kept{opacity:1!important;filter:none!important}
 .sky-foundation-wheel.has-isolation [data-focus-piece].is-hovered,
 .sky-foundation-wheel.has-isolation [data-focus-piece].is-selected{opacity:1!important;filter:brightness(1.12) saturate(1.35) drop-shadow(0 0 4px rgba(255,255,255,.98)) drop-shadow(0 0 10px rgba(245,151,28,.92))!important}
+.sky-foundation-wheel.has-isolation [data-focus-piece].is-aspect-endpoint{opacity:1!important;filter:brightness(1.1) saturate(1.28) drop-shadow(0 0 4px rgba(255,255,255,.98)) drop-shadow(0 0 9px rgba(245,151,28,.78))!important}
 .sky-foundation-wheel .sky-foundation-aspect.is-hovered,
 .sky-foundation-wheel .sky-foundation-aspect.is-selected{stroke-width:6!important}
 .sky-foundation-panel.has-ledger-isolation .sky-foundation-row{opacity:.16!important}

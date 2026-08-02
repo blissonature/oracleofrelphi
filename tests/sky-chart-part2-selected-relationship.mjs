@@ -244,8 +244,24 @@ assert.equal(await page.locator('.sky-foundation-relationship-row:visible').coun
 
 const hit = page.locator(`.sky-foundation-aspect-hit[data-relation-index="${relationIndex}"]`);
 await hit.waitFor({state:'attached', timeout:10000});
-await hit.click({force:true});
+const aspectClickPoint = await page.locator(`.sky-foundation-aspect[data-relation-index="${relationIndex}"]:not(.sky-foundation-aspect-hit)`).evaluate(line => {
+  const svg=line.ownerSVGElement,matrix=line.getScreenCTM(),start=svg.createSVGPoint(),end=svg.createSVGPoint();
+  start.x=Number(line.getAttribute('x1'));start.y=Number(line.getAttribute('y1'));end.x=Number(line.getAttribute('x2'));end.y=Number(line.getAttribute('y2'));
+  const a=start.matrixTransform(matrix),b=end.matrixTransform(matrix),t=.28;return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
+});
+await page.mouse.move(aspectClickPoint.x,aspectClickPoint.y);
 await page.waitForTimeout(100);
+assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), visibleBeforeHover);
+assert.equal(await page.locator(`.sky-foundation-aspect[data-relation-index="${relationIndex}"]:not(.sky-foundation-aspect-hit)`).getAttribute('class').then(value => value.includes('is-hovered')), true);
+assert.equal(await page.locator('.sky-foundation-placement.is-aspect-endpoint').count(), 2);
+await page.mouse.click(aspectClickPoint.x,aspectClickPoint.y);
+await page.waitForTimeout(100);
+assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(), 1);
+assert.equal(await page.locator(`.sky-foundation-relationship-row[data-relation-index="${relationIndex}"]`).isVisible(), true);
+assert.equal(await page.locator('#skyFoundationRelationshipCount').textContent(), `1/${visibleBeforeHover}`);
+assert.equal(await page.locator('.sky-foundation-wheel').getAttribute('class').then(value => value.includes('has-isolation')), true);
+assert.equal(await page.locator(`.sky-foundation-aspect[data-relation-index="${relationIndex}"]:not(.sky-foundation-aspect-hit)`).getAttribute('class').then(value => value.includes('is-selected')), true);
+assert.equal(await page.locator('.sky-foundation-placement.is-aspect-endpoint').count(), 2);
 assert.equal(Number(await panel.getAttribute('data-relation-index')), listControlledIndex);
 assert.equal((await panel.locator('.sky-selected-facts h3').textContent()).trim(), listControlledTitle);
 assert.deepEqual(await panel.locator('.sky-selected-card h4').allTextContents(), listControlledCards);
