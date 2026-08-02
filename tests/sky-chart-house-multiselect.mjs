@@ -113,7 +113,9 @@ await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipM
 await page.waitForSelector('.sky-foundation-single-sky-row[data-single-sky="A"]',{timeout:10000});
 const firstSelf=page.locator('.sky-foundation-single-sky-row[data-single-sky="A"]').first();
 const selfHouses=Array.from(new Set([await firstSelf.getAttribute('data-left-house'),await firstSelf.getAttribute('data-right-house')]));
-await masterA.uncheck();
+await summary.locator('[data-house-choice="a"]').uncheck();
+await combined.locator('[data-house-filter-toggle]').click();
+await page.waitForSelector('#skyChartHousePopover.is-portaled:not([hidden])');
 for(const house of selfHouses){
   await list.locator(`[data-house-scope="house"][data-house-target="${house}"][data-house-choice="a"]`).check();
 }
