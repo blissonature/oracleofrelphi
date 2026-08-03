@@ -2,14 +2,15 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramRefreshStabilityV1) return;
-  window.__relphiSkyHeptagramRefreshStabilityV1 = true;
+  if (window.__relphiSkyHeptagramRefreshStabilityV2) return;
+  window.__relphiSkyHeptagramRefreshStabilityV2 = true;
 
   const nativeAdd = window.addEventListener;
   let refreshCards = null;
   let frame = 0;
+  let running = false;
+  let queued = false;
   let lastSignature = '';
-  let lastRun = -Infinity;
 
   function signature() {
     return [
@@ -19,24 +20,59 @@
     ].join('\u241f');
   }
 
-  function cardShellMissing() {
-    return ['A', 'B'].some(slot => {
+  function cardsSettled() {
+    return ['A', 'B'].every(slot => {
       const body = document.querySelector(`#skyFoundation${slot} .sky-foundation-body`);
-      return !!body && (!body.querySelector('.sky-where-when-placement-view') || !body.querySelector('.sky-where-when-view'));
+      const heptagram = body?.querySelector('.sky-ph-heptagram');
+      const summary = body?.querySelector('.sky-ph-summary');
+      return !!(
+        body &&
+        body.querySelector('.sky-where-when-placement-view') &&
+        body.querySelector('.sky-where-when-view') &&
+        heptagram &&
+        summary &&
+        !/calculating/i.test(summary.textContent || '') &&
+        heptagram.dataset.canonicalHeptagramV2 !== 'pending'
+      );
     });
   }
 
+  function waitUntilSettled(started, done) {
+    if (cardsSettled() || performance.now() - started > 10000) return done();
+    setTimeout(() => waitUntilSettled(started, done), 40);
+  }
+
+  function finishRun() {
+    running = false;
+    if (!queued) return;
+    queued = false;
+    if (signature() !== lastSignature || !cardsSettled()) scheduleRefresh();
+  }
+
+  function runRefresh(next) {
+    frame = 0;
+    if (!refreshCards) return;
+    if (next === lastSignature && cardsSettled()) return;
+    if (running) {
+      if (next !== lastSignature) queued = true;
+      return;
+    }
+    running = true;
+    lastSignature = next;
+    refreshCards();
+    waitUntilSettled(performance.now(), finishRun);
+  }
+
   function scheduleRefresh() {
-    if (!refreshCards || frame) return;
-    frame = requestAnimationFrame(() => {
-      frame = 0;
-      const next = signature();
-      const now = performance.now();
-      if (next === lastSignature && now - lastRun < 450 && !cardShellMissing()) return;
-      lastSignature = next;
-      lastRun = now;
-      refreshCards();
-    });
+    if (!refreshCards) return;
+    const next = signature();
+    if (next === lastSignature && cardsSettled()) return;
+    if (running) {
+      if (next !== lastSignature) queued = true;
+      return;
+    }
+    if (frame) return;
+    frame = requestAnimationFrame(() => runRefresh(next));
   }
 
   window.addEventListener = function (type, listener, options) {
