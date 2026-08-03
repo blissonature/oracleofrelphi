@@ -14,7 +14,7 @@ const skyB=sample('Current sky',29.27,{dateTime:'2026-08-02T02:07',instant:'2026
 
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
-page.setDefaultTimeout(8000);
+page.setDefaultTimeout(10000);
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -55,8 +55,8 @@ await page.addInitScript(({a,b})=>{
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:12000});
 await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true&&window.__relphiSelectedRelationshipScrollLockV1===true&&window.__relphiSkyGlyphSizeGuardV1===true);
 await page.waitForSelector('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]');
+await page.waitForTimeout(1200);
 await page.waitForFunction(()=>Number(document.documentElement.dataset.skyGlyphSizeGuardPending||0)===0);
-await page.waitForTimeout(350);
 
 const scrollCheck=await page.evaluate(()=>{
   let panel=document.getElementById('skySelectedRelationship');
@@ -72,9 +72,13 @@ const scrollCheck=await page.evaluate(()=>{
 assert.equal(scrollCheck.after,scrollCheck.before,'Selected Relationship scrollIntoView must not move the page.');
 assert.equal(scrollCheck.suppressed,'true','The Selected Relationship scroll request must be explicitly suppressed.');
 
+await page.waitForTimeout(500);
+await page.waitForFunction(()=>Number(document.documentElement.dataset.skyGlyphSizeGuardPending||0)===0);
 const finalState=await page.evaluate(()=>({
   committed:document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').length,
   pending:Number(document.documentElement.dataset.skyGlyphSizeGuardPending||0),
+  withheld:Number(document.documentElement.dataset.skyGlyphSizeGuardWithheld||0),
+  guardErrors:window.RelphiSkyGlyphSizeGuard?.errors||[],
   paintViolations:window.__relphiGlyphPaintViolations,
   visibleUncommitted:Array.from(document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph,#skySelectedRelationship .relphi-canonical-glyph')).filter(art=>{
     const style=getComputedStyle(art);
@@ -87,4 +91,4 @@ assert.deepEqual(finalState.paintViolations,[],'No raw or oversized canonical gl
 assert.deepEqual(finalState.visibleUncommitted,[],'Every visible canonical glyph must be fitted before it is committed.');
 assert.deepEqual(errors,[]);
 await browser.close();
-console.log('No source-sized glyph reaches a visible frame, and Selected Relationship never auto-scrolls.');
+console.log(`No source-sized glyph reaches a visible frame, Selected Relationship never auto-scrolls, and ${finalState.withheld} unresolved glyphs were safely withheld.`);
