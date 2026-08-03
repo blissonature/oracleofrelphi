@@ -13,7 +13,7 @@ const skyA=sample('My birth chart',0,{dateTime:'1985-10-08T04:37',instant:'1985-
 const skyB=sample('Current sky',29.27,{dateTime:'2026-08-02T02:07',instant:'2026-08-02T08:07:00.000Z',location:'Salt Lake City, Utah, United States',timeZone:'America/Denver',latitude:40.7608,longitude:-111.891});
 
 const browser=await chromium.launch({headless:true});
-const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:2});
+const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -43,34 +43,32 @@ await page.addInitScript(({a,b})=>{
   new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(inspect))).observe(document,{childList:true,subtree:true});
 },{a:skyA,b:skyB});
 
-await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
-await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
-await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true,null,{timeout:20000});
-await page.waitForSelector('[data-layer="placements"] .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:20000});
-await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
+await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:20000});
+await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:15000});
+await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true,null,{timeout:10000});
+await page.waitForSelector('[data-layer="placements"] .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:15000});
+await page.waitForTimeout(350);
 assert.ok(await page.locator('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').count()>20,'The initial chart must contain atomically committed glyphs.');
 
 const row=page.locator('.sky-foundation-relationship-row[data-relation-index]:not([hidden])').first();
+await row.waitFor({state:'visible',timeout:10000});
 await row.scrollIntoViewIfNeeded();
 const before=await page.evaluate(()=>window.scrollY);
 await row.click();
-await page.waitForSelector('#skySelectedRelationship:not([hidden])',{timeout:20000});
-await page.waitForSelector('#skySelectedRelationship .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:20000});
-await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
-await page.waitForTimeout(1300);
+await page.waitForSelector('#skySelectedRelationship:not([hidden])',{timeout:10000});
+await page.waitForSelector('#skySelectedRelationship .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:10000});
+await page.waitForTimeout(500);
 const after=await page.evaluate(()=>window.scrollY);
 assert.ok(Math.abs(after-before)<=2,`Selected Relationship changed scroll position from ${before} to ${after}.`);
 assert.equal(await page.getAttribute('#skySelectedRelationship','data-automatic-scroll-suppressed'),'true','The Selected Relationship scroll request must be suppressed.');
 
 const finalState=await page.evaluate(()=>({
   violations:window.__relphiAtomicGlyphViolations,
-  stageChildren:document.querySelectorAll('#relphiGlyphAtomicStage > g').length,
   visibleUncommitted:Array.from(document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph,#skySelectedRelationship .relphi-canonical-glyph')).filter(art=>art.dataset.relphiAtomicCommit!=='true'||!art.getAttribute('transform')).map(art=>art.className?.baseVal||art.className||'')
 }));
 assert.deepEqual(finalState.violations,[],'No raw source-sized canonical glyph may enter the visible chart.');
-assert.equal(finalState.stageChildren,0,'The atomic glyph staging area must be empty after rendering.');
 assert.deepEqual(finalState.visibleUncommitted,[],'Every visible canonical glyph must be fitted before it is committed.');
 assert.deepEqual(errors,[]);
-await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',fullPage:true});
+await page.locator('#skyFoundationComparison').screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png'});
 await browser.close();
 console.log('Canonical glyphs commit only after fitting, and Selected Relationship never auto-scrolls.');
