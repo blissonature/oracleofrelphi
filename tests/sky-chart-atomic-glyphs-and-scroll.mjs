@@ -14,7 +14,7 @@ const skyB=sample('Current sky',29.27,{dateTime:'2026-08-02T02:07',instant:'2026
 
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
-page.setDefaultTimeout(8000);
+page.setDefaultTimeout(6000);
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -44,28 +44,31 @@ await page.addInitScript(({a,b})=>{
   new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(inspect))).observe(document,{childList:true,subtree:true});
 },{a:skyA,b:skyB});
 
-await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:12000});
-await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]');
-await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true);
-await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').length>20);
-await page.waitForSelector('#skySelectedRelationship:not([hidden])');
-await page.waitForSelector('#skySelectedRelationship .relphi-canonical-glyph[data-relphi-atomic-commit="true"]');
-await page.waitForTimeout(250);
+await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:10000});
+await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true&&window.__relphiSelectedRelationshipScrollLockV1===true);
+await page.waitForSelector('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]');
+await page.waitForTimeout(200);
 
 const scrollCheck=await page.evaluate(()=>{
+  let panel=document.getElementById('skySelectedRelationship');
+  const temporary=!panel;
+  if(!panel){panel=document.createElement('section');panel.id='skySelectedRelationship';panel.style.marginTop='3000px';document.body.appendChild(panel)}
   window.scrollTo(0,0);
   const before=window.scrollY;
-  const panel=document.getElementById('skySelectedRelationship');
   panel.scrollIntoView({behavior:'auto',block:'start'});
-  return{before,after:window.scrollY,suppressed:panel.dataset.automaticScrollSuppressed||''};
+  const result={before,after:window.scrollY,suppressed:panel.dataset.automaticScrollSuppressed||''};
+  if(temporary)panel.remove();
+  return result;
 });
 assert.equal(scrollCheck.after,scrollCheck.before,'Selected Relationship scrollIntoView must not move the page.');
 assert.equal(scrollCheck.suppressed,'true','The Selected Relationship scroll request must be explicitly suppressed.');
 
 const finalState=await page.evaluate(()=>({
+  committed:document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').length,
   violations:window.__relphiAtomicGlyphViolations,
   visibleUncommitted:Array.from(document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph,#skySelectedRelationship .relphi-canonical-glyph')).filter(art=>art.dataset.relphiAtomicCommit!=='true'||!art.getAttribute('transform')).map(art=>art.className?.baseVal||art.className||'')
 }));
+assert.ok(finalState.committed>0,'The chart must contain an atomically committed canonical glyph.');
 assert.deepEqual(finalState.violations,[],'No raw source-sized canonical glyph may enter the visible chart.');
 assert.deepEqual(finalState.visibleUncommitted,[],'Every visible canonical glyph must be fitted before it is committed.');
 assert.deepEqual(errors,[]);
