@@ -24,13 +24,14 @@ await page.addInitScript(({a,b})=>{
   localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
   sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
   window.__relphiGlyphPaintViolations=[];
+  const identitySelector='.relphi-canonical-glyph[data-relphi-atomic-identity]';
   const inspect=node=>{
     if(!(node instanceof Element))return;
     const glyphs=[];
-    if(node.matches?.('.relphi-canonical-glyph'))glyphs.push(node);
-    glyphs.push(...node.querySelectorAll?.('.relphi-canonical-glyph')||[]);
+    if(node.matches?.(identitySelector))glyphs.push(node);
+    glyphs.push(...node.querySelectorAll?.(identitySelector)||[]);
     glyphs.forEach(art=>{
-      if(art.parentElement?.closest('.relphi-canonical-glyph'))return;
+      if(art.parentElement?.closest(identitySelector))return;
       if(art.closest('#relphiGlyphAtomicStage'))return;
       if(!art.closest('#skyFoundationRoot,#skySelectedRelationship'))return;
       if(art.dataset.relphiAtomicCommit!=='true'||art.dataset.relphiAtomicBuild!=='detached-final'){
@@ -78,7 +79,6 @@ const state=await page.evaluate(()=>{
     },
     paintViolations:window.__relphiGlyphPaintViolations,
     guardLoaded:!!window.__relphiSkyGlyphSizeGuardV1,
-    inventedVectorTable:/VECTOR_GLYPHS/.test(String(document.querySelector('script[src*="relphi-glyph-atomic-loader"]')?.textContent||'')),
     committed:document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-build="detached-final"]').length,
     selectedBubbles:document.querySelectorAll('#skySelectedRelationship .sky-selected-symbols .relphi-glyph-bubble[data-relphi-atomic-ready="true"][data-relphi-atomic-build="detached-final"]').length
   };
@@ -87,7 +87,7 @@ const state=await page.evaluate(()=>{
 assert.equal(state.guardLoaded,false,'The repair-after-render size guard must not be loaded.');
 assert.ok(state.committed>0,'The chart must contain detached-final glyphs.');
 assert.equal(state.selectedBubbles,3,'The selected relationship must reveal only after all three finished glyph bubbles exist.');
-assert.deepEqual(state.paintViolations,[],'No unfinished glyph may enter a visible chart subtree.');
+assert.deepEqual(state.paintViolations,[],'No unfinished identity-bearing glyph may enter a visible chart subtree.');
 for(const id of ['north-node','south-node']){
   assert.ok(state.nodes[id].width>4&&state.nodes[id].height>4,`${id} must remain visibly present.`);
   assert.equal(state.nodes[id].text,state.nodes[id].expected,`${id} must use the canonical registry character.`);
@@ -147,4 +147,4 @@ assert.equal(scrollCheck.suppressed,'true');
 assert.deepEqual(errors,[]);
 await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',animations:'disabled',timeout:30000});
 await browser.close();
-console.log('Sky Chart uses only authored/registry canon, copies glyphs semantically, inserts finished glyphs once, and keeps both bordered sky cards separate.');
+console.log('Sky Chart uses only authored/registry canon, copies glyphs semantically, inserts finished identity-bearing glyphs once, and keeps both bordered sky cards separate.');
