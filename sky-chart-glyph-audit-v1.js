@@ -39,6 +39,7 @@
   }
 
   function auditBubble(root, issues) {
+    if (root?.dataset?.relphiAtomicPending === 'true') return;
     const id = root?.dataset?.glyphId || '';
     const entry = resolved(id);
     if (!entry) {
@@ -74,6 +75,7 @@
 
   function requireFramed(host, label, issues) {
     const root = host.querySelector('.relphi-glyph-bubble');
+    if (root?.dataset?.relphiAtomicPending === 'true') return;
     if (!rootIsFramed(root)) {
       issues.push(`${label} is not using the hidden canonical bubble frame`);
     }
@@ -81,6 +83,7 @@
 
   function requireVisibleBubble(host, label, issues) {
     const root = host.querySelector('.relphi-glyph-bubble');
+    if (root?.dataset?.relphiAtomicPending === 'true') return;
     if (!root || rootIsFramed(root)) issues.push(`${label} is not using the visible canonical bubble`);
   }
 
@@ -150,7 +153,7 @@
   const observer = new MutationObserver(schedule);
   function start() {
     observer.observe(document.documentElement, { childList:true, subtree:true });
-    ['relphi:sky-foundation-ready','relphi:selected-relationship-rendered','relphi:sky-heptagram-source-ready']
+    ['relphi:sky-foundation-ready','relphi:selected-relationship-rendered','relphi:sky-heptagram-source-ready','relphi:glyph-atomic-committed']
       .forEach(name => window.addEventListener(name, schedule));
     schedule();
   }
