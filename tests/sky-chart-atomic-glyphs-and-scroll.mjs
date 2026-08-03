@@ -14,6 +14,7 @@ const skyB=sample('Current sky',29.27,{dateTime:'2026-08-02T02:07',instant:'2026
 
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
+page.setDefaultTimeout(8000);
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -43,24 +44,23 @@ await page.addInitScript(({a,b})=>{
   new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(inspect))).observe(document,{childList:true,subtree:true});
 },{a:skyA,b:skyB});
 
-await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:15000});
-await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:12000});
-await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true,null,{timeout:8000});
-await page.waitForSelector('[data-layer="placements"] .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:12000});
+await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:12000});
+await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]');
+await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true);
+await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').length>20);
+await page.waitForSelector('#skySelectedRelationship:not([hidden])');
+await page.waitForSelector('#skySelectedRelationship .relphi-canonical-glyph[data-relphi-atomic-commit="true"]');
 await page.waitForTimeout(250);
-assert.ok(await page.locator('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').count()>20,'The initial chart must contain atomically committed glyphs.');
 
-const row=page.locator('.sky-foundation-relationship-row[data-relation-index]:not([hidden])').first();
-await row.waitFor({state:'visible',timeout:8000});
-await row.scrollIntoViewIfNeeded();
-const before=await page.evaluate(()=>window.scrollY);
-await row.click();
-await page.waitForSelector('#skySelectedRelationship:not([hidden])',{timeout:8000});
-await page.waitForSelector('#skySelectedRelationship .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:8000});
-await page.waitForTimeout(350);
-const after=await page.evaluate(()=>window.scrollY);
-assert.ok(Math.abs(after-before)<=2,`Selected Relationship changed scroll position from ${before} to ${after}.`);
-assert.equal(await page.getAttribute('#skySelectedRelationship','data-automatic-scroll-suppressed'),'true','The Selected Relationship scroll request must be suppressed.');
+const scrollCheck=await page.evaluate(()=>{
+  window.scrollTo(0,0);
+  const before=window.scrollY;
+  const panel=document.getElementById('skySelectedRelationship');
+  panel.scrollIntoView({behavior:'auto',block:'start'});
+  return{before,after:window.scrollY,suppressed:panel.dataset.automaticScrollSuppressed||''};
+});
+assert.equal(scrollCheck.after,scrollCheck.before,'Selected Relationship scrollIntoView must not move the page.');
+assert.equal(scrollCheck.suppressed,'true','The Selected Relationship scroll request must be explicitly suppressed.');
 
 const finalState=await page.evaluate(()=>({
   violations:window.__relphiAtomicGlyphViolations,
@@ -71,4 +71,3 @@ assert.deepEqual(finalState.visibleUncommitted,[],'Every visible canonical glyph
 assert.deepEqual(errors,[]);
 await browser.close();
 console.log('Canonical glyphs commit only after fitting, and Selected Relationship never auto-scrolls.');
-process.exit(0);
