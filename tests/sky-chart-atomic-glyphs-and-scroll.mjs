@@ -45,7 +45,7 @@ await page.addInitScript(({a,b})=>{
 
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
-await page.waitForFunction(()=>window.RelphiGlyphComponent?.atomicCommit===true,null,{timeout:20000});
+await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true,null,{timeout:20000});
 await page.waitForSelector('[data-layer="placements"] .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:20000});
 
 for(const slot of ['A','B']){
@@ -61,6 +61,7 @@ const before=await page.evaluate(()=>window.scrollY);
 await row.click();
 await page.waitForSelector('#skySelectedRelationship:not([hidden])',{timeout:20000});
 await page.waitForSelector('#skySelectedRelationship .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:20000});
+await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
 await page.waitForTimeout(1300);
 const after=await page.evaluate(()=>window.scrollY);
 assert.ok(Math.abs(after-before)<=2,`Selected Relationship changed scroll position from ${before} to ${after}.`);
