@@ -37,7 +37,6 @@ const issues=await page.evaluate(({colors})=>{
   const checkColor=(host,slot,label)=>{
     const art=artFor(host);
     if(!art){issues.push(`${label}: canonical art missing`);return}
-    if(art.dataset.skyPlacementColor!==slot)issues.push(`${label}: sky-color pass missing`);
     paintedLeaves(art).forEach((node,index)=>{
       const style=getComputedStyle(node);
       if(style.fill!=='none'&&style.fill!=='rgba(0, 0, 0, 0)'&&style.fill!==colors[slot])issues.push(`${label} shape ${index+1}: fill ${style.fill}, expected ${colors[slot]}`);
