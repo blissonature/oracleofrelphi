@@ -24,6 +24,9 @@ await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'}
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForFunction(()=>document.querySelectorAll('.sky-ph-canonical-bubble.is-hour-ruler').length===2,null,{timeout:20000});
 await page.waitForFunction(()=>typeof window.RelphiSkyColors?.scan==='function',null,{timeout:20000});
+await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
+await page.evaluate(()=>window.RelphiSkyColors.schedule());
+await page.waitForFunction(()=>document.documentElement.dataset.skyPlacementColors==='passed',null,{timeout:20000});
 const colorScan=await page.evaluate(()=>window.RelphiSkyColors.scan());
 assert.equal(colorScan.passed,true,`Placement color scan painted ${colorScan.painted}/${colorScan.expected} hosts.`);
 assert.equal(await page.getAttribute('html','data-sky-placement-colors'),'passed');
@@ -73,6 +76,7 @@ await page.locator('#skyFoundationA').screenshot({path:'sky-chart-sky-a-card-col
 await page.locator('#skyFoundationB').screenshot({path:'sky-chart-sky-b-card-colors.png'});
 
 await page.setViewportSize({width:390,height:844});
+await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
 await page.waitForTimeout(350);
 await page.screenshot({path:'sky-chart-hour-ruler-and-sky-colors-mobile.png',fullPage:true});
 await browser.close();
