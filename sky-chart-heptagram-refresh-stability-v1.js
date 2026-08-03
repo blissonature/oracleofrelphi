@@ -1,16 +1,29 @@
-// Coalesce the two foundation-ready callbacks that rebuild the same Sky-card heptagram.
+// Prevent redundant foundation renders and coalesce the two Sky-card refresh callbacks.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramRefreshStabilityV2) return;
-  window.__relphiSkyHeptagramRefreshStabilityV2 = true;
+  if (window.__relphiSkyHeptagramRefreshStabilityV3) return;
+  window.__relphiSkyHeptagramRefreshStabilityV3 = true;
 
   const nativeAdd = window.addEventListener;
+  const nativeSetInterval = window.setInterval;
   let refreshCards = null;
   let frame = 0;
   let running = false;
   let queued = false;
   let lastSignature = '';
+
+  // The foundation already receives explicit storage events. Its one-second
+  // signature poll can race that render and replace a heptagram while its
+  // canonical glyph promises are still completing.
+  window.setInterval = function (callback, delay, ...args) {
+    const source = typeof callback === 'function' ? Function.prototype.toString.call(callback) : '';
+    if (Number(delay) === 1000 && source.includes('lastSignature') && source.includes('signature(') && source.includes('render(true)')) {
+      window.__relphiSkyFoundationPollSuppressed = true;
+      return 0;
+    }
+    return nativeSetInterval.call(window, callback, delay, ...args);
+  };
 
   function signature() {
     return [
@@ -87,7 +100,8 @@
     return nativeAdd.call(window, type, listener, options);
   };
 
-  document.addEventListener('DOMContentLoaded', () => {
+  nativeAdd.call(window, 'load', () => {
     window.addEventListener = nativeAdd;
+    window.setInterval = nativeSetInterval;
   }, { once:true });
 })();
