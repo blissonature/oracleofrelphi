@@ -205,6 +205,10 @@ assert.deepEqual(finalStability, { same:true, summarySame:true, count:1, pending
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-axis-label').count(), 0);
 assert.deepEqual(errors, []);
 
-await page.locator('#skyFoundationRoot').screenshot({ path:'sky-chart-stability-now.png' });
+await page.screenshot({
+  path:'sky-chart-stability-now.png',
+  fullPage:true,
+  animations:'disabled'
+});
 await browser.close();
 console.log('Axis labels removed; heptagrams stable; ledger glyphs canonical; Now saves current location and complete placements atomically.');
