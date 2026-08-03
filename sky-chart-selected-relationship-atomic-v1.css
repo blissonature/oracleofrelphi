@@ -1,0 +1,71 @@
+/* Final-paint gate and collision-proof dual-card layout. */
+#skySelectedRelationship.sky-selected-simple:not([data-glyphs-ready="true"]) {
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+#skySelectedRelationship.sky-selected-simple[data-glyphs-ready="true"] {
+  visibility:visible !important;
+}
+
+#skySelectedRelationship.sky-selected-simple .sky-selected-cards {
+  position:relative !important;
+  inset:auto !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  grid-auto-flow:column !important;
+  align-items:start !important;
+  gap:18px !important;
+  width:min(100%,620px) !important;
+  max-width:620px !important;
+  min-height:0 !important;
+  margin:0 auto !important;
+  transform:none !important;
+}
+
+#skySelectedRelationship.sky-selected-simple .sky-selected-cards > .sky-selected-card {
+  position:relative !important;
+  inset:auto !important;
+  z-index:1 !important;
+  display:block !important;
+  grid-row:1 !important;
+  grid-column:auto !important;
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:auto !important;
+  margin:0 !important;
+  transform:none !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  overflow:hidden !important;
+  background:#fff !important;
+}
+
+#skySelectedRelationship.sky-selected-simple .sky-selected-cards > .sky-selected-card[data-selected-card="A"] {
+  border:3px solid var(--sky-a) !important;
+}
+
+#skySelectedRelationship.sky-selected-simple .sky-selected-cards > .sky-selected-card[data-selected-card="B"] {
+  border:3px solid var(--sky-b) !important;
+}
+
+#skySelectedRelationship.sky-selected-simple .sky-selected-card-button,
+#skySelectedRelationship.sky-selected-simple .sky-selected-card img {
+  position:relative !important;
+  inset:auto !important;
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  height:auto !important;
+  transform:none !important;
+}
+
+@media (max-width:620px) {
+  #skySelectedRelationship.sky-selected-simple .sky-selected-cards {
+    gap:10px !important;
+  }
+  #skySelectedRelationship.sky-selected-simple .sky-selected-cards > .sky-selected-card[data-selected-card] {
+    border-width:2px !important;
+  }
+}
