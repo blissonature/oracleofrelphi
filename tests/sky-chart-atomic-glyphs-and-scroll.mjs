@@ -43,21 +43,21 @@ await page.addInitScript(({a,b})=>{
   new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(inspect))).observe(document,{childList:true,subtree:true});
 },{a:skyA,b:skyB});
 
-await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:20000});
-await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:15000});
-await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true,null,{timeout:10000});
-await page.waitForSelector('[data-layer="placements"] .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:15000});
-await page.waitForTimeout(350);
+await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:15000});
+await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:12000});
+await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true,null,{timeout:8000});
+await page.waitForSelector('[data-layer="placements"] .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:12000});
+await page.waitForTimeout(250);
 assert.ok(await page.locator('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').count()>20,'The initial chart must contain atomically committed glyphs.');
 
 const row=page.locator('.sky-foundation-relationship-row[data-relation-index]:not([hidden])').first();
-await row.waitFor({state:'visible',timeout:10000});
+await row.waitFor({state:'visible',timeout:8000});
 await row.scrollIntoViewIfNeeded();
 const before=await page.evaluate(()=>window.scrollY);
 await row.click();
-await page.waitForSelector('#skySelectedRelationship:not([hidden])',{timeout:10000});
-await page.waitForSelector('#skySelectedRelationship .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:10000});
-await page.waitForTimeout(500);
+await page.waitForSelector('#skySelectedRelationship:not([hidden])',{timeout:8000});
+await page.waitForSelector('#skySelectedRelationship .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:8000});
+await page.waitForTimeout(350);
 const after=await page.evaluate(()=>window.scrollY);
 assert.ok(Math.abs(after-before)<=2,`Selected Relationship changed scroll position from ${before} to ${after}.`);
 assert.equal(await page.getAttribute('#skySelectedRelationship','data-automatic-scroll-suppressed'),'true','The Selected Relationship scroll request must be suppressed.');
@@ -69,6 +69,6 @@ const finalState=await page.evaluate(()=>({
 assert.deepEqual(finalState.violations,[],'No raw source-sized canonical glyph may enter the visible chart.');
 assert.deepEqual(finalState.visibleUncommitted,[],'Every visible canonical glyph must be fitted before it is committed.');
 assert.deepEqual(errors,[]);
-await page.locator('#skyFoundationComparison').screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png'});
 await browser.close();
 console.log('Canonical glyphs commit only after fitting, and Selected Relationship never auto-scrolls.');
+process.exit(0);
