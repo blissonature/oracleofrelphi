@@ -112,7 +112,7 @@ const scrollCheck=await page.evaluate(()=>{
 assert.equal(scrollCheck.after,scrollCheck.before,'Selected Relationship scrollIntoView must not move the page.');
 assert.equal(scrollCheck.suppressed,'true','The Selected Relationship scroll request must be explicitly suppressed.');
 
-await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',fullPage:true,animations:'disabled'});
+await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',animations:'disabled',timeout:30000});
 await page.waitForTimeout(500);
 await page.waitForFunction(()=>Number(document.documentElement.dataset.skyGlyphSizeGuardPending||0)===0);
 const finalState=await page.evaluate(()=>({
