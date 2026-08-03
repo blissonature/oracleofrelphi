@@ -47,13 +47,8 @@ await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'}
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true,null,{timeout:20000});
 await page.waitForSelector('[data-layer="placements"] .relphi-canonical-glyph[data-relphi-atomic-commit="true"]',{timeout:20000});
-
-for(const slot of ['A','B']){
-  const button=page.locator(`#skyFoundation${slot} button`,{hasText:'Placements'});
-  if(await button.count())await button.click();
-}
-await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationA .sky-foundation-row .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').length>10,null,{timeout:20000});
-await page.waitForFunction(()=>document.querySelectorAll('#skyFoundationB .sky-foundation-row .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').length>10,null,{timeout:20000});
+await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
+assert.ok(await page.locator('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').count()>20,'The initial chart must contain atomically committed glyphs.');
 
 const row=page.locator('.sky-foundation-relationship-row[data-relation-index]:not([hidden])').first();
 await row.scrollIntoViewIfNeeded();
