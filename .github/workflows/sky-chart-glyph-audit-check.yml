@@ -8,6 +8,7 @@ on:
       - 'sky-chart.html'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
+      - 'relphi-glyph-atomic-loader-v1.js'
       - 'assets/angle-glyphs/**'
       - 'relphi-moon-stroke-preservation-v1.js'
       - 'relphi-neptune-cross-connection-v1.js'
@@ -36,11 +37,13 @@ on:
       - 'sky-chart-foundation-v1.js'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-selected-relationship-v2.js'
+      - 'sky-chart-selected-relationship-scroll-lock-v1.js'
       - 'sky-chart-progressive-comparison-v1.js'
       - 'sky-chart-where-when-v1.js'
       - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-heptagram-canonical-v1.css'
       - 'sky-chart-live-integrity-v1.js'
+      - 'tests/sky-chart-atomic-glyphs-and-scroll.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-angles-and-aspects.mjs'
       - 'tests/sky-chart-glyph-audit-final.mjs'
@@ -57,6 +60,7 @@ on:
       - 'sky-chart.html'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
+      - 'relphi-glyph-atomic-loader-v1.js'
       - 'assets/angle-glyphs/**'
       - 'relphi-moon-stroke-preservation-v1.js'
       - 'relphi-neptune-cross-connection-v1.js'
@@ -85,11 +89,13 @@ on:
       - 'sky-chart-foundation-v1.js'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-selected-relationship-v2.js'
+      - 'sky-chart-selected-relationship-scroll-lock-v1.js'
       - 'sky-chart-progressive-comparison-v1.js'
       - 'sky-chart-where-when-v1.js'
       - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-heptagram-canonical-v1.css'
       - 'sky-chart-live-integrity-v1.js'
+      - 'tests/sky-chart-atomic-glyphs-and-scroll.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-angles-and-aspects.mjs'
       - 'tests/sky-chart-glyph-audit-final.mjs'
@@ -118,6 +124,8 @@ jobs:
           node-version: '22'
       - name: Check JavaScript syntax
         run: |
+          node --check relphi-glyph-atomic-loader-v1.js
+          node --check sky-chart-selected-relationship-scroll-lock-v1.js
           node --check sky-chart-glyph-framing-v1.js
           node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-sky-colors-v1.js
@@ -133,6 +141,7 @@ jobs:
           node --check sky-chart-single-sky-aspects-v1.js
           node --check sky-chart-single-sky-presentation-v1.js
           node --check sky-chart-heptagram-canonical-v1.js
+          node --check tests/sky-chart-atomic-glyphs-and-scroll.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-angles-and-aspects.mjs
           node --check tests/sky-chart-glyph-audit-final.mjs
@@ -152,6 +161,7 @@ jobs:
           python3 -m http.server 4173 > /tmp/sky-chart-glyph-audit-server.log 2>&1 &
           status=0
           (
+            node tests/sky-chart-atomic-glyphs-and-scroll.mjs
             node tests/sky-chart-filter-control-unified.mjs
             node tests/sky-chart-angles-and-aspects.mjs
             node tests/sky-chart-multiselect-filters.mjs
@@ -176,6 +186,7 @@ jobs:
         with:
           name: sky-chart-glyph-audit-screenshots
           path: |
+            sky-chart-atomic-glyphs-no-scroll.png
             sky-chart-filter-controls-unified.png
             sky-chart-aspect-multiselect-desktop.png
             sky-chart-aspect-multiselect-mobile.png
