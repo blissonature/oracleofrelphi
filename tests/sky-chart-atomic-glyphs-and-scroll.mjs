@@ -58,6 +58,47 @@ await page.waitForSelector('#skyFoundationRoot .relphi-canonical-glyph[data-relp
 await page.waitForTimeout(1200);
 await page.waitForFunction(()=>Number(document.documentElement.dataset.skyGlyphSizeGuardPending||0)===0);
 
+await page.waitForFunction(()=>['north-node','south-node'].every(id=>{
+  const host=document.querySelector(`[data-layer="placements"] > g[data-sky="A"][data-placement="${id}"]`);
+  const art=host?.querySelector(`.relphi-glyph-${id}[data-relphi-atomic-commit="true"]`);
+  const box=art?.getBoundingClientRect();
+  return !!art&&art.dataset.relphiAtomicRefit==='live-context'&&box.width>4&&box.height>4&&getComputedStyle(art).visibility!=='hidden';
+}));
+
+const initialNodes=await page.evaluate(()=>Object.fromEntries(['north-node','south-node'].map(id=>{
+  const host=document.querySelector(`[data-layer="placements"] > g[data-sky="A"][data-placement="${id}"]`);
+  const art=host.querySelector(`.relphi-glyph-${id}`);
+  const box=art.getBoundingClientRect();
+  return [id,{hostOpacity:Number(getComputedStyle(host).opacity),width:box.width,height:box.height,visibility:getComputedStyle(art).visibility,refit:art.dataset.relphiAtomicRefit||''}];
+})));
+for(const id of ['north-node','south-node']){
+  assert.ok(initialNodes[id].width>4&&initialNodes[id].height>4,`${id} must render visible artwork inside its wheel bubble.`);
+  assert.equal(initialNodes[id].visibility,'visible',`${id} wheel artwork must not be hidden.`);
+  assert.equal(initialNodes[id].refit,'live-context',`${id} must be refitted in its live wheel context.`);
+}
+
+const southNodeRow=page.locator('#skyFoundationA .sky-foundation-row[data-placement="south-node"]');
+await southNodeRow.waitFor();
+await southNodeRow.click();
+await page.waitForFunction(()=>{
+  const wheel=document.querySelector('.sky-foundation-wheel');
+  const selected=document.querySelector('[data-layer="placements"] > g[data-sky="A"][data-placement="south-node"]');
+  return wheel?.classList.contains('has-isolation')&&selected?.classList.contains('is-selected');
+});
+
+const isolatedNodes=await page.evaluate(()=>Object.fromEntries(['north-node','south-node'].map(id=>{
+  const host=document.querySelector(`[data-layer="placements"] > g[data-sky="A"][data-placement="${id}"]`);
+  const art=host.querySelector(`.relphi-glyph-${id}`);
+  const box=art.getBoundingClientRect();
+  return [id,{hostOpacity:Number(getComputedStyle(host).opacity),width:box.width,height:box.height,visibility:getComputedStyle(art).visibility,selected:host.classList.contains('is-selected')}];
+})));
+assert.equal(isolatedNodes['south-node'].selected,true,'South Node must remain selected on the wheel.');
+assert.ok(isolatedNodes['south-node'].hostOpacity>.95,'Selected South Node must remain fully visible.');
+assert.ok(isolatedNodes['south-node'].width>4&&isolatedNodes['south-node'].height>4,'Selected South Node must retain visible glyph artwork.');
+assert.ok(isolatedNodes['north-node'].hostOpacity>0&&isolatedNodes['north-node'].hostOpacity<.5,'North Node must remain present in the normal dimmed view.');
+assert.ok(isolatedNodes['north-node'].width>4&&isolatedNodes['north-node'].height>4,'Dimmed North Node must retain visible glyph artwork.');
+assert.equal(isolatedNodes['north-node'].visibility,'visible','Dimmed North Node artwork must not be hidden.');
+
 const scrollCheck=await page.evaluate(()=>{
   let panel=document.getElementById('skySelectedRelationship');
   const temporary=!panel;
@@ -72,6 +113,7 @@ const scrollCheck=await page.evaluate(()=>{
 assert.equal(scrollCheck.after,scrollCheck.before,'Selected Relationship scrollIntoView must not move the page.');
 assert.equal(scrollCheck.suppressed,'true','The Selected Relationship scroll request must be explicitly suppressed.');
 
+await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',fullPage:true,animations:'disabled'});
 await page.waitForTimeout(500);
 await page.waitForFunction(()=>Number(document.documentElement.dataset.skyGlyphSizeGuardPending||0)===0);
 const finalState=await page.evaluate(()=>({
@@ -91,4 +133,4 @@ assert.deepEqual(finalState.paintViolations,[],'No raw or oversized canonical gl
 assert.deepEqual(finalState.visibleUncommitted,[],'Every visible canonical glyph must be fitted before it is committed.');
 assert.deepEqual(errors,[]);
 await browser.close();
-console.log(`No source-sized glyph reaches a visible frame, Selected Relationship never auto-scrolls, and ${finalState.withheld} unresolved glyphs were safely withheld.`);
+console.log(`North and South Node stay visible when selected or dimmed, no source-sized glyph reaches a visible frame, Selected Relationship never auto-scrolls, and ${finalState.withheld} unresolved glyphs were safely withheld.`);
