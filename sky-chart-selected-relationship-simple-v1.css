@@ -1,0 +1,266 @@
+/* Compact progressive reveal for the selected dual-card relationship. */
+#skySelectedRelationship.sky-selected-simple {
+  --sky-a:#c9211e;
+  --sky-b:#2462d0;
+  margin:14px 0 0;
+  padding:18px;
+  border:1px solid rgba(45,40,36,.16);
+  border-radius:16px;
+  background:#fffdf8;
+  box-shadow:0 5px 18px rgba(45,40,36,.06);
+}
+
+#skySelectedRelationship.sky-selected-simple[hidden],
+#skySelectedRelationship.sky-selected-simple [hidden] {
+  display:none !important;
+}
+
+.sky-selected-simple .sky-selected-body {
+  display:grid;
+  gap:18px;
+}
+
+.sky-selected-simple .sky-selected-symbols {
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:start;
+  gap:12px;
+  max-width:650px;
+  width:100%;
+  margin:0 auto;
+}
+
+.sky-selected-simple .sky-selected-symbols::before {
+  content:"";
+  position:absolute;
+  z-index:0;
+  top:27px;
+  left:16.66%;
+  right:16.66%;
+  height:2px;
+  background:linear-gradient(90deg,var(--sky-a),rgba(45,40,36,.32) 50%,var(--sky-b));
+}
+
+.sky-selected-simple .sky-selected-symbol-item {
+  position:relative;
+  z-index:1;
+  display:grid;
+  justify-items:center;
+  align-content:start;
+  min-width:0;
+}
+
+.sky-selected-simple button {
+  font:inherit;
+}
+
+.sky-selected-simple .sky-selected-glyph-button,
+.sky-selected-simple .sky-selected-card-button,
+.sky-selected-simple .sky-selected-name-button,
+.sky-selected-simple .sky-selected-card-name-button {
+  border:0;
+  background:transparent;
+  cursor:pointer;
+}
+
+.sky-selected-simple .sky-selected-glyph-button {
+  display:grid;
+  place-items:center;
+  width:56px;
+  height:56px;
+  padding:0;
+  border-radius:50%;
+  background:#fffdf8;
+  box-shadow:0 0 0 2px var(--item-color),0 3px 10px rgba(45,40,36,.12);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+
+.sky-selected-simple .sky-selected-glyph-button:hover,
+.sky-selected-simple .sky-selected-glyph-button:focus-visible {
+  transform:translateY(-1px);
+  box-shadow:0 0 0 3px var(--item-color),0 5px 14px rgba(45,40,36,.16);
+  outline:none;
+}
+
+.sky-selected-simple .sky-selected-glyph-button svg {
+  display:block;
+  width:50px;
+  height:50px;
+  overflow:visible;
+}
+
+.sky-selected-simple .sky-selected-name-button,
+.sky-selected-simple .sky-selected-card-name-button {
+  margin-top:10px;
+  padding:4px 8px;
+  border-radius:8px;
+  color:#211d19;
+  font:800 .86rem/1.2 system-ui,sans-serif;
+  text-decoration:underline;
+  text-decoration-thickness:1px;
+  text-underline-offset:3px;
+}
+
+.sky-selected-simple .sky-selected-name-button:hover,
+.sky-selected-simple .sky-selected-name-button:focus-visible,
+.sky-selected-simple .sky-selected-card-name-button:hover,
+.sky-selected-simple .sky-selected-card-name-button:focus-visible {
+  background:#f6eee3;
+  outline:2px solid rgba(45,40,36,.18);
+}
+
+.sky-selected-simple .sky-selected-meaning {
+  width:min(100%,220px);
+  margin-top:7px;
+  padding:9px 10px;
+  border:1px solid rgba(45,40,36,.18);
+  border-radius:10px;
+  background:#fffaf2;
+  color:#403832;
+  text-align:left;
+  font:600 .74rem/1.42 system-ui,sans-serif;
+}
+
+.sky-selected-simple .sky-selected-meaning p {
+  margin:0;
+}
+
+.sky-selected-simple .sky-selected-meaning .sky-selected-meta {
+  margin-top:7px;
+  padding-top:7px;
+  border-top:1px solid rgba(45,40,36,.12);
+  color:#655b52;
+  font-size:.68rem;
+  font-variant-numeric:tabular-nums;
+}
+
+.sky-selected-simple .sky-selected-cards {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+  width:min(100%,620px);
+  margin:0 auto;
+}
+
+.sky-selected-simple .sky-selected-card {
+  position:relative;
+  min-width:0;
+  padding:7px;
+  border:3px solid transparent;
+  border-radius:14px;
+  background:#fff;
+}
+
+.sky-selected-simple .sky-selected-card.is-sky-a { border-color:var(--sky-a); }
+.sky-selected-simple .sky-selected-card.is-sky-b { border-color:var(--sky-b); }
+
+.sky-selected-simple .sky-selected-card-button {
+  position:relative;
+  display:block;
+  width:100%;
+  padding:0;
+  border-radius:8px;
+}
+
+.sky-selected-simple .sky-selected-card-button:focus-visible {
+  outline:3px solid rgba(45,40,36,.34);
+  outline-offset:4px;
+}
+
+.sky-selected-simple .sky-selected-card img {
+  display:block;
+  width:100%;
+  height:auto;
+  border-radius:7px;
+}
+
+.sky-selected-simple .sky-selected-card-sky {
+  position:absolute;
+  z-index:2;
+  top:7px;
+  left:7px;
+  display:grid;
+  place-items:center;
+  width:26px;
+  height:26px;
+  border:2px solid currentColor;
+  border-radius:50%;
+  background:#fffdf8;
+  color:var(--sky-a);
+  font:900 .72rem/1 system-ui,sans-serif;
+  box-shadow:0 2px 7px rgba(45,40,36,.16);
+}
+
+.sky-selected-simple .is-sky-b .sky-selected-card-sky { color:var(--sky-b); }
+
+.sky-selected-simple .sky-selected-card-disclosures {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  width:min(100%,620px);
+  margin:-4px auto 0;
+}
+
+.sky-selected-simple .sky-selected-card-disclosures > :only-child {
+  grid-column:1 / -1;
+  justify-self:center;
+  width:min(100%,360px);
+}
+
+.sky-selected-simple .sky-selected-card-disclosure {
+  padding:10px 12px;
+  border:1px solid rgba(45,40,36,.14);
+  border-radius:11px;
+  background:#fffaf2;
+  text-align:center;
+}
+
+.sky-selected-simple .sky-selected-card-disclosure p {
+  margin:7px 0 0;
+  color:#655b52;
+  font:600 .74rem/1.4 system-ui,sans-serif;
+}
+
+@media (max-width:620px) {
+  #skySelectedRelationship.sky-selected-simple {
+    padding:14px 10px;
+    border-radius:13px;
+  }
+  .sky-selected-simple .sky-selected-symbols {
+    gap:6px;
+  }
+  .sky-selected-simple .sky-selected-symbols::before {
+    top:24px;
+  }
+  .sky-selected-simple .sky-selected-glyph-button {
+    width:50px;
+    height:50px;
+  }
+  .sky-selected-simple .sky-selected-glyph-button svg {
+    width:46px;
+    height:46px;
+  }
+  .sky-selected-simple .sky-selected-name-button {
+    font-size:.78rem;
+  }
+  .sky-selected-simple .sky-selected-meaning {
+    width:100%;
+    padding:8px;
+    font-size:.68rem;
+  }
+  .sky-selected-simple .sky-selected-cards {
+    gap:10px;
+  }
+  .sky-selected-simple .sky-selected-card {
+    padding:5px;
+    border-width:2px;
+    border-radius:10px;
+  }
+  .sky-selected-simple .sky-selected-card-sky {
+    top:5px;
+    left:5px;
+    width:23px;
+    height:23px;
+  }
+}
