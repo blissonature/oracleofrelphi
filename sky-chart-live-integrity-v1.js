@@ -7,7 +7,6 @@
 
   const SIGN_NAMES = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
-  const SKY = { A:'#c9211e', B:'#2462d0' };
   const ALIASES = {
     rising:'asc', ascendant:'asc', asc:'asc', ac:'asc',
     descendant:'dsc', dsc:'dsc', dc:'dsc',
@@ -79,27 +78,25 @@
     return { sign, text:`${degree}°${String(minute).padStart(2, '0')}′` };
   }
 
-  async function ensureCanonicalGlyph(target, entry, color, currentSequence) {
-    if (!target || !entry || currentSequence !== sequence) return;
-    const existing = target.querySelector(`.relphi-glyph-${entry.id}[data-relphi-atomic-commit="true"]`);
-    if (!existing) {
-      target.replaceChildren();
-      target.setAttribute('viewBox', '-20 -20 40 40');
-      target.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-      target.setAttribute('aria-label', entry.name);
-      const component = window.RelphiGlyphComponent;
-      if (!component?.draw) throw new Error(`Canonical glyph component unavailable: ${entry.id}`);
-      await component.draw(target, entry.id, { radius:16, padding:1, color });
+  async function ensureCanonicalGlyph(target, entry, currentSequence) {
+    if (!target || !entry || currentSequence !== sequence) return true;
+    const selector = `.relphi-glyph-${entry.id}[data-relphi-atomic-commit="true"]`;
+    let art = target.querySelector(selector);
+    for (let attempt = 0; !art && attempt < 40; attempt += 1) {
+      await new Promise(resolve => setTimeout(resolve, 25));
+      if (currentSequence !== sequence || !target.isConnected) return true;
+      art = target.querySelector(selector);
     }
-    if (currentSequence !== sequence || !target.isConnected) return;
+    if (!art) return false;
     target.dataset.canonicalGlyphId = entry.id;
     target.dataset.canonicalSource = window.RelphiGlyphComponent?.canonicalSource || 'registry-component';
     target.dataset.canonicalFit = 'registry-component';
+    return true;
   }
 
   async function repairLedger(slot, currentSequence) {
     const panel = document.getElementById(slot === 'A' ? 'skyFoundationA' : 'skyFoundationB');
-    if (!panel) return;
+    if (!panel) return true;
     const byId = records(read(KEYS[slot]));
     const jobs = [];
     panel.querySelectorAll('.sky-foundation-row').forEach(row => {
@@ -114,16 +111,19 @@
       row.dataset.placement = record.entry.id;
       row.dataset.sign = String(position.sign);
       const target = row.querySelector('svg');
-      if (target) jobs.push(ensureCanonicalGlyph(target, record.entry, SKY[slot], currentSequence));
+      if (target) jobs.push(ensureCanonicalGlyph(target, record.entry, currentSequence));
     });
-    await Promise.allSettled(jobs);
+    const settled = await Promise.allSettled(jobs);
+    return settled.every(result => result.status === 'fulfilled' && result.value === true);
   }
 
   function repairLedgers() {
     const currentSequence = ++sequence;
-    Promise.allSettled([repairLedger('A', currentSequence), repairLedger('B', currentSequence)])
-      .then(() => {
-        if (currentSequence === sequence) document.documentElement.dataset.skyChartLiveIntegrity = 'v6';
+    Promise.all([repairLedger('A', currentSequence), repairLedger('B', currentSequence)])
+      .then(results => {
+        if (currentSequence !== sequence) return;
+        if (results.every(Boolean)) document.documentElement.dataset.skyChartLiveIntegrity = 'v6';
+        else setTimeout(schedule, 80);
       });
   }
 
