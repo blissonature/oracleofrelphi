@@ -30,6 +30,7 @@ await page.addInitScript(({a,b})=>{
     if(node.matches?.('.relphi-canonical-glyph'))glyphs.push(node);
     glyphs.push(...node.querySelectorAll?.('.relphi-canonical-glyph')||[]);
     glyphs.forEach(art=>{
+      if(art.parentElement?.closest('.relphi-canonical-glyph'))return;
       if(art.closest('#relphiGlyphAtomicStage'))return;
       if(!art.closest('#skyFoundationRoot,#skySelectedRelationship'))return;
       if(art.dataset.relphiAtomicCommit!=='true'||art.dataset.relphiAtomicBuild!=='detached-final'){
