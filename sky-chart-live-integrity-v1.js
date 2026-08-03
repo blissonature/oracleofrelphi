@@ -88,10 +88,17 @@
       art = target.querySelector(selector);
     }
     if (!art) return false;
+    target.querySelectorAll('.relphi-canonical-glyph').forEach(node => {
+      if (node !== art) node.remove();
+    });
+    if (!art.getAttribute('transform')) {
+      window.RelphiGlyphComponent?.fit?.(art, 16, 1, entry, 0);
+    }
+    art.dataset.relphiAtomicCommit = 'true';
     target.dataset.canonicalGlyphId = entry.id;
     target.dataset.canonicalSource = window.RelphiGlyphComponent?.canonicalSource || 'registry-component';
     target.dataset.canonicalFit = 'registry-component';
-    return true;
+    return !!art.getAttribute('transform');
   }
 
   async function repairLedger(slot, currentSequence) {
@@ -135,7 +142,9 @@
   function addsLedger(record) {
     return Array.from(record.addedNodes || []).some(node => node.nodeType === 1 && (
       node.matches?.('.sky-foundation-ledger,.sky-foundation-row') ||
-      node.querySelector?.('.sky-foundation-ledger,.sky-foundation-row')
+      node.querySelector?.('.sky-foundation-ledger,.sky-foundation-row') ||
+      (node.matches?.('.relphi-canonical-glyph') && node.closest?.('.sky-foundation-ledger')) ||
+      node.querySelector?.('.sky-foundation-ledger .relphi-canonical-glyph')
     ));
   }
 
