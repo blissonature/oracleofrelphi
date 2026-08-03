@@ -62,7 +62,15 @@
     const sourceStroke = /stroke-width=/.test(spec.markup) ? 6 : 0;
     const visibleWidth = width + sourceStroke;
     const visibleHeight = height + sourceStroke;
-    const maximumScale = usableRadius / (Math.hypot(visibleWidth / 2, visibleHeight / 2) || 1);
+    let maximumScale;
+    if (entry?.fitMode === 'symbol') {
+      maximumScale = Math.min((usableRadius * 2) / visibleWidth, (usableRadius * 2) / visibleHeight) * 0.9;
+    } else if (entry?.fitMode === 'box') {
+      const innerSquareSide = usableRadius * Math.SQRT2;
+      maximumScale = Math.min(innerSquareSide / visibleWidth, innerSquareSide / visibleHeight);
+    } else {
+      maximumScale = usableRadius / (Math.hypot(visibleWidth / 2, visibleHeight / 2) || 1);
+    }
     const scale = maximumScale * Math.max(0.1, Number(entry?.scale) || 1);
     const cx = x + width / 2;
     const cy = y + height / 2;
