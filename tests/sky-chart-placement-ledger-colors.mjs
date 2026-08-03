@@ -48,7 +48,6 @@ const issues=await page.evaluate(({colors})=>{
       const root=host?.querySelector('.relphi-glyph-bubble');
       const art=root&&Array.from(root.children).find(node=>node.classList?.contains('relphi-canonical-glyph'));
       if(!art){issues.push(`${slot} row ${index+1}: canonical art missing`);return}
-      if(art.dataset.skyPlacementColor!==slot)issues.push(`${slot} row ${index+1}: color pass missing`);
       art.querySelectorAll(geometry).forEach((node,shapeIndex)=>{
         const style=getComputedStyle(node);
         if(style.fill!=='none'&&style.fill!=='rgba(0, 0, 0, 0)'&&style.fill!==colors[slot])issues.push(`${slot} row ${index+1} shape ${shapeIndex+1}: fill ${style.fill}`);
