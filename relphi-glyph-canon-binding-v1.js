@@ -11,7 +11,7 @@
     if (!entry) throw new Error('Canonical glyph entry unavailable: ' + id);
     entry.canonicalUnicode = character;
     entry.copyUnicode = character;
-    entry.canonicalSource = 'registry-unicode';
+    entry.canonicalSource = `unicode:${character}`;
   }
 
   function bindAxis(id, asset, rotation) {
