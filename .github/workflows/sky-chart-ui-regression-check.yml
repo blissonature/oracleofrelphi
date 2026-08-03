@@ -6,11 +6,17 @@ on:
       - 'sky-chart.html'
       - 'relphi-glyph-component-v1.js'
       - 'relphi-glyph-atomic-loader-v1.js'
+      - 'sky-chart-live-integrity-v1.js'
+      - 'sky-chart-final-pass-v2.js'
+      - 'sky-chart-heptagram-refresh-stability-v1.js'
+      - 'sky-chart-heptagram-geometry-v1.js'
+      - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-selected-relationship-v2.js'
       - 'sky-chart-selected-relationship-scroll-lock-v1.js'
       - 'sky-chart-filter-control-unified-v1.css'
       - 'tests/sky-chart-atomic-glyphs-and-scroll.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
+      - 'tests/sky-chart-stability-now.mjs'
       - '.github/workflows/sky-chart-ui-regression-check.yml'
   workflow_dispatch:
 
@@ -30,9 +36,15 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check relphi-glyph-atomic-loader-v1.js
+          node --check sky-chart-live-integrity-v1.js
+          node --check sky-chart-final-pass-v2.js
+          node --check sky-chart-heptagram-refresh-stability-v1.js
+          node --check sky-chart-heptagram-geometry-v1.js
+          node --check sky-chart-heptagram-canonical-v1.js
           node --check sky-chart-selected-relationship-scroll-lock-v1.js
           node --check tests/sky-chart-atomic-glyphs-and-scroll.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
+          node --check tests/sky-chart-stability-now.mjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -42,6 +54,7 @@ jobs:
           python3 -m http.server 4173 > /tmp/sky-chart-ui-regression-server.log 2>&1 &
           node tests/sky-chart-filter-control-unified.mjs
           node tests/sky-chart-atomic-glyphs-and-scroll.mjs
+          node tests/sky-chart-stability-now.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -49,4 +62,5 @@ jobs:
           path: |
             sky-chart-filter-controls-unified.png
             sky-chart-atomic-glyphs-no-scroll.png
+            sky-chart-stability-now.png
           if-no-files-found: ignore
