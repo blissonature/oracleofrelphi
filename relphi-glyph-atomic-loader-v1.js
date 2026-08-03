@@ -5,6 +5,7 @@
   const base = window.RelphiGlyphComponent;
   if (!base?.draw || !base?.createBubble) return;
   window.__relphiGlyphAtomicLoaderV1 = true;
+  window.__relphiGlyphAtomicCommitActive = true;
 
   const NS = 'http://www.w3.org/2000/svg';
   const svg = name => document.createElementNS(NS, name);
@@ -26,7 +27,7 @@
       width: '1px',
       height: '1px',
       overflow: 'visible',
-      visibility: 'hidden',
+      opacity: '0',
       pointerEvents: 'none',
       contain: 'layout style paint',
       zIndex: '-1'
@@ -46,6 +47,9 @@
       art.dataset.relphiAtomicCommit = 'true';
       art.dataset.relphiAtomicIdentity = String(identity);
       parent.appendChild(art);
+      window.dispatchEvent(new CustomEvent('relphi:glyph-atomic-committed', {
+        detail:{ identity:String(identity), art }
+      }));
       return art;
     } finally {
       staging.remove();
@@ -64,6 +68,7 @@
     root.classList.add('relphi-glyph-bubble');
     root.dataset.glyphId = entry.id;
     root.dataset.relphiAtomicBubble = 'true';
+    root.dataset.relphiAtomicPending = 'true';
 
     const circle = svg('circle');
     circle.setAttribute('cx', '0');
@@ -80,6 +85,14 @@
       padding: options?.padding ?? 1,
       color,
       bubbleStrokeWidth: strokeWidth
+    }).then(art => {
+      delete root.dataset.relphiAtomicPending;
+      root.dataset.relphiAtomicReady = 'true';
+      return art;
+    }, error => {
+      delete root.dataset.relphiAtomicPending;
+      root.dataset.relphiAtomicError = 'true';
+      throw error;
     });
     return { root, circle, entry, ready };
   }
