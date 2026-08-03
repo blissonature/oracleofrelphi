@@ -5,7 +5,9 @@ on:
     paths:
       - 'sky-chart.html'
       - 'relphi-glyph-component-v1.js'
+      - 'relphi-glyph-canon-binding-v1.js'
       - 'relphi-glyph-atomic-loader-v1.js'
+      - 'relphi-glyph-copy-serializer-v1.js'
       - 'sky-chart-live-integrity-v1.js'
       - 'sky-chart-final-pass-v2.js'
       - 'sky-chart-heptagram-refresh-stability-v1.js'
@@ -39,7 +41,9 @@ jobs:
           node-version: '22'
       - name: Check JavaScript syntax
         run: |
+          node --check relphi-glyph-canon-binding-v1.js
           node --check relphi-glyph-atomic-loader-v1.js
+          node --check relphi-glyph-copy-serializer-v1.js
           node --check sky-chart-live-integrity-v1.js
           node --check sky-chart-final-pass-v2.js
           node --check sky-chart-heptagram-refresh-stability-v1.js
