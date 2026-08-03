@@ -103,9 +103,14 @@ await aspectControl.locator('[data-aspect-filter-toggle]').click();
 const placementControl=page.locator('[data-placement-filter="combined"]');
 await placementControl.locator('[data-placement-filter-toggle]').click();
 await page.waitForSelector('#skyChartPlacementPopover.is-portaled:not([hidden])');
-const ascA=page.locator('#skyChartPlacementPopover [data-placement-scope="placement"][data-placement-target="asc"][data-placement-choice="a"]');
-await ascA.uncheck();
-await page.waitForTimeout(180);
+const ascASelector='#skyChartPlacementPopover [data-placement-scope="placement"][data-placement-target="asc"][data-placement-choice="a"]';
+await page.locator(ascASelector).evaluate(input=>{if(input.checked)input.click()});
+await page.waitForFunction(selector=>{
+  const input=document.querySelector(selector);
+  const wheelVisible=document.querySelectorAll('[data-layer="placements"] [data-sky="A"][data-placement="asc"]:not(.sky-chart-angle-placement-hidden)').length;
+  const ledgerVisible=document.querySelectorAll('#skyFoundationA .sky-foundation-row[data-placement="asc"]:not(.sky-chart-angle-placement-hidden)').length;
+  return !!input&&!input.checked&&wheelVisible===0&&ledgerVisible===0;
+},ascASelector,{timeout:20000});
 assert.equal(await page.locator('[data-layer="placements"] [data-sky="A"][data-placement="asc"]:not(.sky-chart-angle-placement-hidden)').count(),0,'Turning off Sky A Asc. must hide its wheel bubble.');
 assert.equal(await page.locator('#skyFoundationA .sky-foundation-row[data-placement="asc"]:not(.sky-chart-angle-placement-hidden)').count(),0,'Turning off Sky A Asc. must hide its ledger row.');
 assert.equal(await visibleRows().evaluateAll(rows=>rows.every(row=>!(row.dataset.leftSky!=='B'&&row.dataset.leftPlacement==='asc'))),true,'Turning off Sky A Asc. must hide its relationships.');
