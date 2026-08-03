@@ -214,3 +214,10 @@
 #skyFoundationRelationships .sky-chart-house-filter.is-open .sky-chart-house-filter-toggle{
   box-shadow:none!important;
 }
+
+/* Give the three House checkboxes the room their shared Orb-sized typography requires. */
+@media(min-width:841px){
+  #skyFoundationRelationships .sky-chart-filter-bar[data-multiselect-placement-filters="true"][data-multiselect-house-filters="true"]{
+    grid-template-columns:minmax(0,.6fr) minmax(0,1fr) minmax(0,1.45fr) minmax(0,1.5fr) minmax(0,1.2fr)!important;
+  }
+}
