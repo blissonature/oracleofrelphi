@@ -1,19 +1,6 @@
 name: Sky Chart UI regression check
 
 on:
-  push:
-    branches:
-      - feature/sky-chart-canonical-glyph-coordinate-fix
-    paths:
-      - 'sky-chart.html'
-      - 'relphi-glyph-component-v1.js'
-      - 'relphi-glyph-atomic-loader-v1.js'
-      - 'sky-chart-selected-relationship-v2.js'
-      - 'sky-chart-selected-relationship-scroll-lock-v1.js'
-      - 'sky-chart-filter-control-unified-v1.css'
-      - 'tests/sky-chart-atomic-glyphs-and-scroll.mjs'
-      - 'tests/sky-chart-filter-control-unified.mjs'
-      - '.github/workflows/sky-chart-ui-regression-check.yml'
   pull_request:
     paths:
       - 'sky-chart.html'
@@ -28,8 +15,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: sky-chart-ui-regression-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: sky-chart-ui-regression-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   ui-regression:
