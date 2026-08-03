@@ -127,7 +127,9 @@
 #skyFoundationRelationships .sky-chart-house-summary-choices{
   display:flex!important;
   align-items:center!important;
+  justify-content:flex-start!important;
   gap:6px!important;
+  overflow:hidden!important;
 }
 
 /* One shared chevron, overlaid inside the same box exactly like a native select arrow. */
@@ -161,6 +163,11 @@
 /* The closed All / A / B labels use the same typeface and weight as the native field text. */
 #skyFoundationRelationships .sky-chart-placement-summary-choices .sky-chart-placement-choice,
 #skyFoundationRelationships .sky-chart-house-summary-choices .sky-chart-house-choice{
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:4px!important;
   min-width:0!important;
   min-height:0!important;
   margin:0!important;
@@ -169,12 +176,17 @@
   background:transparent!important;
   color:var(--sky-filter-control-color)!important;
   font:var(--sky-filter-control-font)!important;
+  white-space:nowrap!important;
 }
 #skyFoundationRelationships .sky-chart-placement-summary-choices .sky-chart-placement-choice span,
 #skyFoundationRelationships .sky-chart-house-summary-choices .sky-chart-house-choice span{
   display:inline!important;
   color:inherit!important;
   font:inherit!important;
+}
+#skyFoundationRelationships .sky-chart-placement-summary-choices input[type="checkbox"],
+#skyFoundationRelationships .sky-chart-house-summary-choices input[type="checkbox"]{
+  flex:0 0 15px!important;
 }
 
 /* Shared hover, focus, and open states. */
