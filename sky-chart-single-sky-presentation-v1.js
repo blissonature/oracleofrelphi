@@ -50,6 +50,14 @@
     queued = false;
     if (!isSingleSkyMode()) return;
 
+    const relationships = document.getElementById('skyFoundationRelationships');
+    const list = document.getElementById('skyFoundationRelationshipList');
+    if (relationships) relationships.hidden = false;
+    if (list) {
+      list.hidden = false;
+      list.style.removeProperty('display');
+    }
+
     const rows = Array.from(document.querySelectorAll('.sky-foundation-single-sky-row'));
     document.querySelectorAll('.sky-foundation-single-sky-aspect').forEach(line => {
       line.classList.remove('sky-chart-multiselect-hidden');
@@ -57,6 +65,7 @@
     rows.forEach(row => {
       row.classList.remove('sky-chart-multiselect-hidden');
       row.hidden = false;
+      row.style.removeProperty('display');
       row.setAttribute('aria-hidden', hiddenByOtherFilters(row) ? 'true' : 'false');
     });
 
@@ -84,7 +93,7 @@
         childList:true,
         subtree:true,
         attributes:true,
-        attributeFilter:['class','hidden']
+        attributeFilter:['class','hidden','style']
       });
     }
     document.addEventListener('change', event => {
