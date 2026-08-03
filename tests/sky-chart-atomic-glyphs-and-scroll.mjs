@@ -55,8 +55,13 @@ const state=await page.evaluate(()=>{
     const box=art?.getBoundingClientRect();
     return [id,{width:box?.width||0,height:box?.height||0,text:glyphText(art),fallback:window.RelphiGlyphRegistry.get(id)?.fallback||'',transform:art?.getAttribute('transform')||'',source:art?.dataset.relphiCanonicalSource||'',expected}];
   }));
-  const expectedAngles={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
-  const angles=Object.fromEntries(Object.entries(expectedAngles).map(([id,expected])=>{
+  const expectedAngles={
+    asc:'assets/angle-glyphs/asc.svg',
+    dsc:'assets/angle-glyphs/dsc.svg',
+    mc:'assets/angle-glyphs/mc.svg',
+    ic:'assets/angle-glyphs/ic.svg'
+  };
+  const angles=Object.fromEntries(Object.entries(expectedAngles).map(([id,source])=>{
     const instances=Array.from(document.querySelectorAll(`#skyFoundationRoot .relphi-glyph-${id},#skySelectedRelationship .relphi-glyph-${id}`)).map(art=>{
       const box=art.getBoundingClientRect();
       const host=art.closest('.relphi-glyph-bubble')||art.parentElement;
@@ -68,12 +73,32 @@ const state=await page.evaluate(()=>{
         hostHeight:hostBox?.height||0,
         text:glyphText(art),
         source:art.dataset.relphiCanonicalSource||'',
+        viewBox:art.dataset.relphiCanonicalViewBox||'',
         transform:art.getAttribute('transform')||'',
         rotation:art.dataset.relphiCanonicalRotation||''
       };
     });
-    return[id,{expected,instances}];
+    return[id,{source,instances}];
   }));
+  const wheelAngles=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')).map(host=>{
+    const id=host.dataset.placement;
+    const slot=host.dataset.sky;
+    const art=host.querySelector(`.relphi-glyph-${id}`);
+    const circle=host.querySelector('.relphi-glyph-bubble > circle');
+    const circleStyle=circle?getComputedStyle(circle):null;
+    const match=/translate\(([-\d.]+)\s+([-\d.]+)\)/.exec(host.getAttribute('transform')||'');
+    const x=match?Number(match[1]):NaN;
+    const y=match?Number(match[2]):NaN;
+    return{
+      id,
+      slot,
+      source:art?.dataset.relphiCanonicalSource||'',
+      uncircled:host.dataset.uncircledCanonical||'',
+      lineSegments:document.querySelectorAll(`[data-layer="leaders"] .sky-foundation-angle-axis[data-sky="${slot}"][data-angle="${id}"]`).length,
+      visibleCircleOpacity:circleStyle?Number(circleStyle.opacity):1,
+      radius:Number.isFinite(x)&&Number.isFinite(y)?Math.hypot(x-600,y-600):NaN
+    };
+  });
   const neptunes=Array.from(document.querySelectorAll('#skyFoundationRoot .relphi-glyph-neptune,#skySelectedRelationship .relphi-glyph-neptune')).map(art=>{
     const box=art.getBoundingClientRect();
     const host=art.closest('.relphi-glyph-bubble')||art.parentElement;
@@ -99,6 +124,7 @@ const state=await page.evaluate(()=>{
   return{
     nodes,
     angles,
+    wheelAngles,
     neptunes,
     cards,
     copy:{
@@ -131,15 +157,28 @@ for(const [id,record] of Object.entries(state.angles)){
   assert.ok(record.instances.length>=2,`${id} must render in more than one Sky Chart context.`);
   for(const instance of record.instances){
     assert.ok(instance.width>2&&instance.height>2,`${id} must remain visible.`);
-    assert.equal(instance.text,record.expected,`${id} must use its own upright canonical entry.`);
-    assert.equal(instance.source,`registry-letter:${record.expected}`,`${id} must identify its own registry source.`);
-    assert.equal(instance.rotation,'',`${id} must not carry a generated rotation.`);
+    assert.equal(instance.text,'',`${id} must use authored paths rather than browser lettering.`);
+    assert.equal(instance.source,record.source,`${id} must use its own authored upright asset.`);
+    assert.equal(instance.viewBox,'0 0 100 100',`${id} must preserve the canon's intentional whitespace.`);
+    assert.equal(instance.rotation,'0',`${id} must remain upright.`);
     assert.ok(!/rotate\s*\(\s*180/i.test(instance.transform),`${id} must not be upside down.`);
     if(instance.hostWidth>0&&instance.hostHeight>0){
       assert.ok(instance.width<=instance.hostWidth*1.1,`${id} must not overflow its canonical host width.`);
       assert.ok(instance.height<=instance.hostHeight*1.1,`${id} must not overflow its canonical host height.`);
     }
   }
+}
+assert.equal(state.wheelAngles.length,8,'The wheel must contain four axis labels for each sky.');
+for(const slot of ['A','B']){
+  assert.deepEqual(state.wheelAngles.filter(item=>item.slot===slot).map(item=>item.id).sort(),['asc','dsc','ic','mc'],`Sky ${slot} must contain all four axis labels.`);
+}
+for(const angle of state.wheelAngles){
+  assert.equal(angle.source,state.angles[angle.id].source,`${angle.id} must use its authored canon on the wheel.`);
+  assert.equal(angle.uncircled,'true',`${angle.id} must be committed as an uncircled wheel label.`);
+  assert.equal(angle.lineSegments,2,`${angle.id} must sit in the gap between two sky-colored axis-line segments.`);
+  assert.equal(angle.visibleCircleOpacity,0,`${angle.id} must not show a glyph bubble on the wheel.`);
+  const expectedRadius=angle.slot==='A'?494:244.5;
+  assert.ok(Math.abs(angle.radius-expectedRadius)<0.2,`${angle.id} must sit inside Sky ${angle.slot}'s own house band.`);
 }
 assert.ok(state.neptunes.length>=4,'Neptune must render in ledgers, wheel/relationship contexts, and selected detail when present.');
 for(const instance of state.neptunes){
@@ -191,4 +230,4 @@ assert.equal(scrollCheck.suppressed,'true');
 assert.deepEqual(errors,[]);
 await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',animations:'disabled',timeout:30000});
 await browser.close();
-console.log('Sky Chart uses upright canonical Angles, one atomic connected Neptune source, semantic copying, and two separate bordered sky cards.');
+console.log('Sky Chart uses authored upright Angles as uncircled axis labels, one atomic connected Neptune source, semantic copying, and two separate bordered sky cards.');
