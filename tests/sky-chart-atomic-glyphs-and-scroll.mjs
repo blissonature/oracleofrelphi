@@ -54,11 +54,39 @@ const state=await page.evaluate(()=>{
     const box=art?.getBoundingClientRect();
     return [id,{width:box?.width||0,height:box?.height||0,text:art?.querySelector('text')?.textContent||'',paths:art?.querySelectorAll('path').length||0,transform:art?.getAttribute('transform')||'',source:art?.dataset.relphiCanonicalSource||'',expected}];
   }));
-  const angles=Object.fromEntries(['asc','dsc','mc','ic'].map(id=>{
-    const art=document.querySelector(`#skyFoundationA .sky-foundation-row[data-placement="${id}"] .relphi-glyph-${id}`);
-    const box=art?.getBoundingClientRect();
-    return[id,{width:box?.width||0,height:box?.height||0,text:art?.querySelector('text')?.textContent||'',source:art?.dataset.relphiCanonicalSource||'',viewBox:art?.dataset.relphiCanonicalViewBox||'',rotation:art?.dataset.relphiCanonicalRotation||''}];
+  const expectedAngles={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
+  const angles=Object.fromEntries(Object.entries(expectedAngles).map(([id,expected])=>{
+    const instances=Array.from(document.querySelectorAll(`#skyFoundationRoot .relphi-glyph-${id},#skySelectedRelationship .relphi-glyph-${id}`)).map(art=>{
+      const box=art.getBoundingClientRect();
+      const host=art.closest('.relphi-glyph-bubble')||art.parentElement;
+      const hostBox=host?.getBoundingClientRect();
+      return{
+        width:box.width||0,
+        height:box.height||0,
+        hostWidth:hostBox?.width||0,
+        hostHeight:hostBox?.height||0,
+        text:art.querySelector('text')?.textContent||'',
+        source:art.dataset.relphiCanonicalSource||'',
+        transform:art.getAttribute('transform')||'',
+        rotation:art.dataset.relphiCanonicalRotation||''
+      };
+    });
+    return[id,{expected,instances}];
   }));
+  const neptunes=Array.from(document.querySelectorAll('#skyFoundationRoot .relphi-glyph-neptune,#skySelectedRelationship .relphi-glyph-neptune')).map(art=>{
+    const box=art.getBoundingClientRect();
+    const host=art.closest('.relphi-glyph-bubble')||art.parentElement;
+    const hostBox=host?.getBoundingClientRect();
+    return{
+      width:box.width||0,
+      height:box.height||0,
+      hostWidth:hostBox?.width||0,
+      hostHeight:hostBox?.height||0,
+      source:art.dataset.relphiCanonicalSource||'',
+      transform:art.getAttribute('transform')||'',
+      path:art.querySelector('path')?.getAttribute('d')||''
+    };
+  });
   const cards=Array.from(document.querySelectorAll('#skySelectedRelationship .sky-selected-cards > .sky-selected-card[data-selected-card]')).map(card=>{
     const box=card.getBoundingClientRect();
     return{slot:card.dataset.selectedCard,left:box.left,right:box.right,top:box.top,bottom:box.bottom,border:getComputedStyle(card).borderColor,image:!!card.querySelector('img')};
@@ -70,6 +98,7 @@ const state=await page.evaluate(()=>{
   return{
     nodes,
     angles,
+    neptunes,
     cards,
     copy:{
       node:window.RelphiGlyphCopySerializer.serializeGlyph('north-node'),
@@ -79,12 +108,14 @@ const state=await page.evaluate(()=>{
     },
     paintViolations:window.__relphiGlyphPaintViolations,
     guardLoaded:!!window.__relphiSkyGlyphSizeGuardV1,
+    lateNeptuneWrapperLoaded:!!window.__relphiNeptuneCrossConnectionInstalled,
     committed:document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-build="detached-final"]').length,
     selectedBubbles:document.querySelectorAll('#skySelectedRelationship .sky-selected-symbols .relphi-glyph-bubble[data-relphi-atomic-ready="true"][data-relphi-atomic-build="detached-final"]').length
   };
 });
 
 assert.equal(state.guardLoaded,false,'The repair-after-render size guard must not be loaded.');
+assert.equal(state.lateNeptuneWrapperLoaded,false,'The late Neptune redraw/refit wrapper must not load.');
 assert.ok(state.committed>0,'The chart must contain detached-final glyphs.');
 assert.equal(state.selectedBubbles,3,'The selected relationship must reveal only after all three finished glyph bubbles exist.');
 assert.deepEqual(state.paintViolations,[],'No unfinished identity-bearing glyph may enter a visible chart subtree.');
@@ -95,18 +126,30 @@ for(const id of ['north-node','south-node']){
   assert.equal(state.nodes[id].source,`unicode:${state.nodes[id].expected}`,`${id} must identify its canonical Unicode source.`);
   assert.ok(state.nodes[id].transform,`${id} must receive its final canonical fit before insertion.`);
 }
-assert.equal(state.angles.asc.source,'assets/planet-glyphs/ascendant.svg');
-assert.equal(state.angles.dsc.source,'assets/planet-glyphs/ascendant.svg');
-assert.equal(state.angles.mc.source,'assets/planet-glyphs/midheaven.svg');
-assert.equal(state.angles.ic.source,'assets/planet-glyphs/midheaven.svg');
-assert.equal(state.angles.asc.rotation,'0');
-assert.equal(state.angles.dsc.rotation,'180');
-assert.equal(state.angles.mc.rotation,'0');
-assert.equal(state.angles.ic.rotation,'180');
-for(const id of ['asc','dsc','mc','ic']){
-  assert.ok(state.angles[id].width>4&&state.angles[id].height>4,`${id} must render its authored asset.`);
-  assert.equal(state.angles[id].text,'',`${id} must not render substitute lettering.`);
-  assert.equal(state.angles[id].viewBox,'0 0 100 100',`${id} must preserve the authored viewBox and whitespace.`);
+for(const [id,record] of Object.entries(state.angles)){
+  assert.ok(record.instances.length>=2,`${id} must render in more than one Sky Chart context.`);
+  for(const instance of record.instances){
+    assert.ok(instance.width>2&&instance.height>2,`${id} must remain visible.`);
+    assert.equal(instance.text,record.expected,`${id} must use its own upright canonical entry.`);
+    assert.equal(instance.source,`registry-letter:${record.expected}`,`${id} must identify its own registry source.`);
+    assert.equal(instance.rotation,'',`${id} must not carry a generated rotation.`);
+    assert.ok(!/rotate\s*\(\s*180/i.test(instance.transform),`${id} must not be upside down.`);
+    if(instance.hostWidth>0&&instance.hostHeight>0){
+      assert.ok(instance.width<=instance.hostWidth*1.1,`${id} must not overflow its canonical host width.`);
+      assert.ok(instance.height<=instance.hostHeight*1.1,`${id} must not overflow its canonical host height.`);
+    }
+  }
+}
+assert.ok(state.neptunes.length>=4,'Neptune must render in ledgers, wheel/relationship contexts, and selected detail when present.');
+for(const instance of state.neptunes){
+  assert.ok(instance.width>2&&instance.height>2,'Every Neptune instance must remain visible.');
+  assert.equal(instance.source,'assets/planet-glyphs/neptune.svg','Every Neptune must come from the authored connected-trident asset.');
+  assert.ok(instance.path.includes('H56'),'Neptune must use the connected canonical trident path.');
+  assert.ok(instance.transform,'Neptune must receive its final transform before insertion.');
+  if(instance.hostWidth>0&&instance.hostHeight>0){
+    assert.ok(instance.width<=instance.hostWidth*1.1,'Neptune must not overflow its canonical host width.');
+    assert.ok(instance.height<=instance.hostHeight*1.1,'Neptune must not overflow its canonical host height.');
+  }
 }
 assert.deepEqual(state.copy,{node:'☊ North Node',angle:'Ascendant',aspect:'☌ Conjunction',row:'☊ North Node'});
 assert.equal(state.cards.length,2,'Both sky-owned tarot cards must exist.');
@@ -147,4 +190,4 @@ assert.equal(scrollCheck.suppressed,'true');
 assert.deepEqual(errors,[]);
 await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',animations:'disabled',timeout:30000});
 await browser.close();
-console.log('Sky Chart uses only authored/registry canon, copies glyphs semantically, inserts finished identity-bearing glyphs once, and keeps both bordered sky cards separate.');
+console.log('Sky Chart uses upright canonical Angles, one atomic connected Neptune source, semantic copying, and two separate bordered sky cards.');
