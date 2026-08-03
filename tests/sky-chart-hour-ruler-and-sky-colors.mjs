@@ -25,8 +25,7 @@ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:2000
 await page.waitForFunction(()=>document.querySelectorAll('.sky-ph-canonical-bubble.is-hour-ruler').length===2,null,{timeout:20000});
 await page.waitForFunction(()=>typeof window.RelphiSkyColors?.scan==='function',null,{timeout:20000});
 await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
-await page.evaluate(()=>window.RelphiSkyColors.schedule());
-await page.waitForFunction(()=>document.documentElement.dataset.skyPlacementColors==='passed',null,{timeout:20000});
+await page.waitForFunction(()=>window.RelphiSkyColors?.scan?.().passed===true,null,{timeout:20000});
 const colorScan=await page.evaluate(()=>window.RelphiSkyColors.scan());
 assert.equal(colorScan.passed,true,`Placement color scan painted ${colorScan.painted}/${colorScan.expected} hosts.`);
 assert.equal(await page.getAttribute('html','data-sky-placement-colors'),'passed');
