@@ -10,6 +10,7 @@
   const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
   const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const ORDER=['sun','moon','asc','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','north-node','south-node','chiron','lilith','part-of-fortune','vertex','mc','ic','dsc'];
+  const ANGLE_IDS=new Set(['asc','dsc','mc','ic']);
   const APPROVED_FALLBACKS=new Set(['chiron','north-node','south-node','part-of-fortune','vertex']);
   const ASPECTS=[
     {id:'conjunction',angle:0,orb:3,color:'#e53935'},
@@ -31,7 +32,7 @@
   const norm=value=>((Number(value)%360)+360)%360;
   const polar=(radius,degree)=>{const angle=(degree-180)*Math.PI/180;return{x:C.x+radius*Math.cos(angle),y:C.y+radius*Math.sin(angle)}};
   const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
-  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
   function read(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_){return null}}
   function placementSource(payload){
     if(!payload||typeof payload!=='object')return[];const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object'),source=known||payload;
@@ -93,7 +94,21 @@
     SIGNS.forEach((id,index)=>{const start=index*30;layers.zodiac.appendChild(svg('path',{d:annular(R.zIn,R.zOut,start,start+30),fill:COLORS[index],'fill-opacity':'.82'}));radialLine(layers.zodiac,R.zIn,R.zOut,start,{stroke:'#423b35','stroke-width':'1.35','vector-effect':'non-scaling-stroke'});const point=polar((R.zIn+R.zOut)/2,start+15),host=svg('g',{transform:`translate(${point.x} ${point.y})`});layers.zodiac.appendChild(host);jobs.push(drawCanonical(host,id,{radius:19,padding:1,color:'#171717'}).catch(error=>{host.remove();console.error(error)}))});
     [R.bIn,R.zIn,R.zOut,R.aOut].forEach(radius=>layers.outlines.appendChild(svg('circle',{cx:C.x,cy:C.y,r:radius,class:'sky-foundation-ring'})));for(let degree=0;degree<360;degree++){const length=degree%10===0?12:degree%5===0?8:5,className=degree%10===0?'sky-foundation-tick sky-foundation-tick-major':'sky-foundation-tick';radialLine(layers.ticks,R.bDegree-length,R.bDegree+length,degree,{class:className});radialLine(layers.ticks,R.aDegree-length,R.aDegree+length,degree,{class:className})}
     relationships(listA,listB).forEach(relation=>{const from=polar(R.bIn-1,relation.left.value),to=polar(R.bIn-1,relation.right.value);layers.aspects.appendChild(svg('line',{x1:from.x,y1:from.y,x2:to.x,y2:to.y,stroke:relation.aspect.color,class:'sky-foundation-aspect','data-aspect':relation.aspect.id,'data-left-placement':relation.left.id,'data-right-placement':relation.right.id,'data-orb':relation.orb.toFixed(6)}))});
-    function placements(list,slot,exactRadius,direction,cusps){spreadPlacements(list,exactRadius,direction).forEach(record=>{const exact=polar(exactRadius,record.value),display=polar(record.lane,record.display);layers.leaders.appendChild(svg('line',{x1:display.x,y1:display.y,x2:exact.x,y2:exact.y,stroke:SKY[slot],class:'sky-foundation-leader'}));const host=svg('g',{transform:`translate(${display.x} ${display.y})`,'data-sky':slot,'data-placement':record.id,'data-house':houseFor(record.value,cusps)});layers.placements.appendChild(host);jobs.push(drawBubble(host,record.id,{radius:16,padding:1,color:SKY[slot],fill:'#fffdf8',strokeWidth:2.35}).catch(error=>{host.remove();console.error(error)}))})}
+    function angleAxes(list,slot,inner,outer,cusps){
+      const labelRadius=(inner+outer)/2,gap=25;
+      list.filter(record=>ANGLE_IDS.has(record.id)).forEach(record=>{
+        const attrs={stroke:SKY[slot],class:'sky-foundation-angle-axis','stroke-width':'2.6','vector-effect':'non-scaling-stroke','data-sky':slot,'data-angle':record.id};
+        radialLine(layers.leaders,inner+4,labelRadius-gap,record.value,attrs);
+        radialLine(layers.leaders,labelRadius+gap,outer-4,record.value,attrs);
+        const point=polar(labelRadius,record.value),host=svg('g',{transform:`translate(${point.x} ${point.y})`,'data-sky':slot,'data-placement':record.id,'data-angle-axis':'true','data-house':houseFor(record.value,cusps)});
+        layers.placements.appendChild(host);
+        jobs.push(drawCanonical(host,record.id,{radius:21,padding:1,color:SKY[slot]}).then(()=>{host.dataset.uncircledCanonical='true'}).catch(error=>{host.remove();console.error(error)}));
+      });
+    }
+    function placements(list,slot,exactRadius,direction,cusps){
+      spreadPlacements(list.filter(record=>!ANGLE_IDS.has(record.id)),exactRadius,direction).forEach(record=>{const exact=polar(exactRadius,record.value),display=polar(record.lane,record.display);layers.leaders.appendChild(svg('line',{x1:display.x,y1:display.y,x2:exact.x,y2:exact.y,stroke:SKY[slot],class:'sky-foundation-leader'}));const host=svg('g',{transform:`translate(${display.x} ${display.y})`,'data-sky':slot,'data-placement':record.id,'data-house':houseFor(record.value,cusps)});layers.placements.appendChild(host);jobs.push(drawBubble(host,record.id,{radius:16,padding:1,color:SKY[slot],fill:'#fffdf8',strokeWidth:2.35}).catch(error=>{host.remove();console.error(error)}))});
+      angleAxes(list,slot,slot==='A'?R.aIn:R.bIn,slot==='A'?R.aOut:R.bOut,cusps);
+    }
     placements(listA,'A',R.aDegree,1,cuspsA);placements(listB,'B',R.bDegree,-1,cuspsB);return{chart,jobs};
   }
   function signature(a,b){try{return JSON.stringify([a,b])}catch(_){return String(Date.now())}}
