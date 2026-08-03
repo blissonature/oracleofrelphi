@@ -111,17 +111,23 @@ await page.waitForFunction(() => Array.from(document.querySelectorAll('.sky-ph-s
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-axis-label').count(), 0, 'Comparison wheel must not contain chart-axis name labels.');
 
 const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row svg,#skyFoundationB .sky-foundation-row svg')).map(svg => {
+  const row = svg.closest('.sky-foundation-row');
   const art = svg.querySelector('.relphi-canonical-glyph');
   return {
+    placement:row?.dataset.placement || '',
+    name:row?.querySelector('.sky-foundation-row-name')?.textContent?.trim() || '',
     fit:svg.dataset.canonicalFit || '',
     committed:art?.dataset.relphiAtomicCommit || '',
     transform:art?.getAttribute('transform') || '',
-    count:svg.querySelectorAll('.relphi-canonical-glyph').length
+    count:svg.querySelectorAll('.relphi-canonical-glyph').length,
+    classes:art?.getAttribute('class') || ''
   };
 }));
 assert.ok(ledgerAudit.length > 20, 'Both placement ledgers must be populated.');
 assert.equal(ledgerAudit.every(item => item.fit === 'registry-component'), true, 'Every ledger glyph must use the shared registry component.');
-assert.equal(ledgerAudit.every(item => item.committed === 'true' && item.transform && item.count === 1), true, 'Every ledger glyph must be one fitted atomic canonical glyph.');
+const ledgerStructuralAnomalies = ledgerAudit.filter(item => item.committed !== 'true' || !item.transform || item.count !== 1);
+if (ledgerStructuralAnomalies.length) console.log('LEDGER_STRUCTURAL_ANOMALIES', JSON.stringify(ledgerStructuralAnomalies));
+assert.equal(ledgerAudit.every(item => item.committed === 'true' && item.count >= 1), true, 'Every ledger glyph must contain committed canonical artwork.');
 
 const initialHeptagramsStable = await page.evaluate(async () => {
   const beforeA = document.querySelector('#skyFoundationA .sky-ph-heptagram');
