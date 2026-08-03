@@ -138,6 +138,15 @@
     return art;
   }
 
+  function fit(node, radius, padding, entry, bubbleStrokeWidth) {
+    if (
+      node?.dataset?.relphiAtomicBuild === 'detached-final' &&
+      node.isConnected &&
+      !node.closest?.('#relphiGlyphAtomicStage')
+    ) return node;
+    return base.fit?.(node, radius, padding, entry, bubbleStrokeWidth);
+  }
+
   function createBubble(parent, identity, options) {
     if (!parent) throw new Error('A glyph parent is required.');
     const registry = window.RelphiGlyphRegistry;
@@ -189,6 +198,7 @@
   window.RelphiGlyphComponent = Object.freeze({
     ...base,
     draw,
+    fit,
     createBubble,
     atomicCommit: true,
     atomicBuildMode: 'detached-final',
