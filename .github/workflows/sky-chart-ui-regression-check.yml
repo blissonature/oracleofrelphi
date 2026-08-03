@@ -12,6 +12,10 @@ on:
       - 'sky-chart-heptagram-geometry-v1.js'
       - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-selected-relationship-v2.js'
+      - 'sky-chart-selected-relationship-v3.js'
+      - 'sky-chart-selected-relationship-commit-v1.js'
+      - 'sky-chart-selected-relationship-simple-v1.css'
+      - 'sky-chart-selected-relationship-atomic-v1.css'
       - 'sky-chart-selected-relationship-scroll-lock-v1.js'
       - 'sky-chart-filter-control-unified-v1.css'
       - 'tests/sky-chart-atomic-glyphs-and-scroll.mjs'
@@ -41,6 +45,7 @@ jobs:
           node --check sky-chart-heptagram-refresh-stability-v1.js
           node --check sky-chart-heptagram-geometry-v1.js
           node --check sky-chart-heptagram-canonical-v1.js
+          node --check sky-chart-selected-relationship-commit-v1.js
           node --check sky-chart-selected-relationship-scroll-lock-v1.js
           node --check tests/sky-chart-atomic-glyphs-and-scroll.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
