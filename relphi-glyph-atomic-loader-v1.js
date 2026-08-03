@@ -36,6 +36,28 @@
     return stage;
   }
 
+  function nextFrame() {
+    return new Promise(resolve => requestAnimationFrame(resolve));
+  }
+
+  async function refitCommittedArt(art, identity, options) {
+    const registry = window.RelphiGlyphRegistry;
+    const entry = registry && (registry.get(identity) || registry.resolve(identity));
+    if (!entry || !base.fit) return;
+
+    const radius = Number(options?.radius || 18);
+    const padding = Number(options?.padding ?? 1);
+    const bubbleStrokeWidth = Number(options?.bubbleStrokeWidth || 0);
+
+    // Text-backed symbols can measure differently in the one-pixel staging SVG.
+    // Refit only after the finished art has moved into its real chart context.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      base.fit(art, radius, padding, entry, bubbleStrokeWidth);
+      if (attempt < 2) await nextFrame();
+    }
+    art.dataset.relphiAtomicRefit = 'live-context';
+  }
+
   async function draw(parent, identity, options) {
     if (!parent) throw new Error('A glyph parent is required.');
     const staging = svg('g');
@@ -46,7 +68,10 @@
       art = await base.draw(staging, identity, options);
       art.dataset.relphiAtomicCommit = 'true';
       art.dataset.relphiAtomicIdentity = String(identity);
+      art.style.setProperty('visibility', 'hidden');
       parent.appendChild(art);
+      await refitCommittedArt(art, identity, options);
+      art.style.removeProperty('visibility');
       window.dispatchEvent(new CustomEvent('relphi:glyph-atomic-committed', {
         detail:{ identity:String(identity), art }
       }));
