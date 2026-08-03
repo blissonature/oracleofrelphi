@@ -104,7 +104,11 @@
     art.style.setProperty('visibility', 'hidden', 'important');
     pending += 1;
     updateState();
-    requestAnimationFrame(() => fitAndReveal(art));
+
+    // Mutation observers run before the browser paints. Finishing the fit in the
+    // following microtask keeps the raw source geometry hidden and commits the
+    // canonical size before the next rendering opportunity.
+    queueMicrotask(() => fitAndReveal(art));
   }
 
   function inspect(node) {
