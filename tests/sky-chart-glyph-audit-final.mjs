@@ -25,6 +25,7 @@ await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index
 await page.waitForSelector('#skySelectedRelationship:not([hidden])',{timeout:20000});
 await page.waitForFunction(()=>document.querySelectorAll('.sky-ph-heptagram[data-canonical-heptagram-v1="true"]').length===2,null,{timeout:20000});
 await page.waitForFunction(()=>typeof window.RelphiSkyGlyphAudit?.run==='function',null,{timeout:20000});
+await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
 
 async function audit(){
   return page.evaluate(()=>{
@@ -65,6 +66,7 @@ assert.deepEqual(pageErrors,[]);
 await page.screenshot({path:'sky-chart-glyph-audit-desktop.png',fullPage:true});
 
 await page.setViewportSize({width:390,height:844});
+await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
 await page.waitForTimeout(350);
 const mobileAudit=await audit();
 assert.deepEqual(mobileAudit.issues,[]);
