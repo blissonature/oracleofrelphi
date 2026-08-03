@@ -21,6 +21,7 @@ on:
       - 'sky-chart-aspect-multiselect-v1.js'
       - 'sky-chart-aspect-multiselect-v1.css'
       - 'sky-chart-filter-event-stability-v1.js'
+      - 'sky-chart-filter-control-unified-v1.css'
       - 'sky-chart-multiselect-filters-v1.js'
       - 'sky-chart-multiselect-filters-v1.css'
       - 'sky-chart-placement-compact-v1.js'
@@ -40,6 +41,7 @@ on:
       - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-heptagram-canonical-v1.css'
       - 'sky-chart-live-integrity-v1.js'
+      - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-angles-and-aspects.mjs'
       - 'tests/sky-chart-glyph-audit-final.mjs'
       - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
@@ -68,6 +70,7 @@ on:
       - 'sky-chart-aspect-multiselect-v1.js'
       - 'sky-chart-aspect-multiselect-v1.css'
       - 'sky-chart-filter-event-stability-v1.js'
+      - 'sky-chart-filter-control-unified-v1.css'
       - 'sky-chart-multiselect-filters-v1.js'
       - 'sky-chart-multiselect-filters-v1.css'
       - 'sky-chart-placement-compact-v1.js'
@@ -87,6 +90,7 @@ on:
       - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-heptagram-canonical-v1.css'
       - 'sky-chart-live-integrity-v1.js'
+      - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-angles-and-aspects.mjs'
       - 'tests/sky-chart-glyph-audit-final.mjs'
       - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
@@ -129,6 +133,7 @@ jobs:
           node --check sky-chart-single-sky-aspects-v1.js
           node --check sky-chart-single-sky-presentation-v1.js
           node --check sky-chart-heptagram-canonical-v1.js
+          node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-angles-and-aspects.mjs
           node --check tests/sky-chart-glyph-audit-final.mjs
           node --check tests/sky-chart-hour-ruler-and-sky-colors.mjs
@@ -147,6 +152,7 @@ jobs:
           python3 -m http.server 4173 > /tmp/sky-chart-glyph-audit-server.log 2>&1 &
           status=0
           (
+            node tests/sky-chart-filter-control-unified.mjs
             node tests/sky-chart-angles-and-aspects.mjs
             node tests/sky-chart-multiselect-filters.mjs
             node tests/sky-chart-placement-compact.mjs
@@ -170,6 +176,7 @@ jobs:
         with:
           name: sky-chart-glyph-audit-screenshots
           path: |
+            sky-chart-filter-controls-unified.png
             sky-chart-aspect-multiselect-desktop.png
             sky-chart-aspect-multiselect-mobile.png
             sky-chart-angle-placements-desktop.png
