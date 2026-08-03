@@ -23,7 +23,7 @@ await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'}
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]',{timeout:20000});
 await page.waitForSelector('#skySelectedRelationship:not([hidden])',{timeout:20000});
-await page.waitForFunction(()=>document.querySelectorAll('.sky-ph-heptagram[data-canonical-heptagram-v1="true"]').length===2,null,{timeout:20000});
+await page.waitForFunction(()=>document.querySelectorAll('.sky-ph-heptagram[data-canonical-heptagram-v2="true"]').length===2,null,{timeout:20000});
 await page.waitForFunction(()=>typeof window.RelphiSkyGlyphAudit?.run==='function',null,{timeout:20000});
 await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
 
