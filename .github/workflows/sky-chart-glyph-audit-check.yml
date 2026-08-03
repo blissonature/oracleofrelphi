@@ -99,6 +99,10 @@ on:
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   workflow_dispatch:
 
+concurrency:
+  group: sky-chart-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   browser-audit:
     runs-on: ubuntu-latest
@@ -141,15 +145,26 @@ jobs:
       - name: Run complete Sky Chart browser audit
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-glyph-audit-server.log 2>&1 &
-          node tests/sky-chart-angles-and-aspects.mjs
-          node tests/sky-chart-multiselect-filters.mjs
-          node tests/sky-chart-placement-compact.mjs
-          node tests/sky-chart-house-multiselect.mjs
-          node tests/sky-chart-house-angle-support.mjs
-          node tests/sky-chart-single-sky-aspects.mjs
-          node tests/sky-chart-glyph-audit-final.mjs
-          node tests/sky-chart-hour-ruler-and-sky-colors.mjs
-          node tests/sky-chart-placement-ledger-colors.mjs
+          status=0
+          (
+            node tests/sky-chart-angles-and-aspects.mjs
+            node tests/sky-chart-multiselect-filters.mjs
+            node tests/sky-chart-placement-compact.mjs
+          ) & group_one=$!
+          (
+            node tests/sky-chart-house-multiselect.mjs
+            node tests/sky-chart-house-angle-support.mjs
+            node tests/sky-chart-single-sky-aspects.mjs
+          ) & group_two=$!
+          (
+            node tests/sky-chart-glyph-audit-final.mjs
+            node tests/sky-chart-hour-ruler-and-sky-colors.mjs
+            node tests/sky-chart-placement-ledger-colors.mjs
+          ) & group_three=$!
+          wait "$group_one" || status=1
+          wait "$group_two" || status=1
+          wait "$group_three" || status=1
+          exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
