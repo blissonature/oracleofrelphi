@@ -79,7 +79,7 @@ for(const id of ['north-node','south-node']){
 
 const southNodeRow=page.locator('#skyFoundationA .sky-foundation-row[data-placement="south-node"]');
 await southNodeRow.waitFor();
-await southNodeRow.click();
+await southNodeRow.evaluate(row=>row.click());
 await page.waitForFunction(()=>{
   const wheel=document.querySelector('.sky-foundation-wheel');
   const selected=document.querySelector('[data-layer="placements"] > g[data-sky="A"][data-placement="south-node"]');
