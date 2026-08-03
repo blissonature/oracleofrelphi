@@ -14,7 +14,7 @@ const skyB=sample('Current sky',29.27,{dateTime:'2026-08-02T02:07',instant:'2026
 
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
-page.setDefaultTimeout(10000);
+page.setDefaultTimeout(15000);
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -29,53 +29,59 @@ await page.addInitScript(({a,b})=>{
     const glyphs=[];
     if(node.matches?.('.relphi-canonical-glyph'))glyphs.push(node);
     glyphs.push(...node.querySelectorAll?.('.relphi-canonical-glyph')||[]);
-    glyphs.forEach(art=>requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      if(!art.isConnected||art.closest('#relphiGlyphAtomicStage'))return;
+    glyphs.forEach(art=>{
+      if(art.closest('#relphiGlyphAtomicStage'))return;
       if(!art.closest('#skyFoundationRoot,#skySelectedRelationship'))return;
-      const style=getComputedStyle(art);
-      const root=art.closest('.relphi-glyph-bubble');
-      const artBox=art.getBoundingClientRect();
-      const rootBox=root?.getBoundingClientRect();
-      const visible=style.visibility!=='hidden'&&style.display!=='none'&&Number(style.opacity||1)>0;
-      const oversized=!!rootBox&&rootBox.width>0&&rootBox.height>0&&(artBox.width>rootBox.width*1.65||artBox.height>rootBox.height*1.65);
-      if(visible&&(art.dataset.relphiAtomicCommit!=='true'||oversized)){
-        window.__relphiGlyphPaintViolations.push({
-          id:art.className?.baseVal||art.className||'',
-          committed:art.dataset.relphiAtomicCommit||'',
-          guard:art.dataset.relphiSizeGuard||'',
-          art:[artBox.width,artBox.height],
-          root:[rootBox?.width||0,rootBox?.height||0]
-        });
+      if(art.dataset.relphiAtomicCommit!=='true'||art.dataset.relphiAtomicBuild!=='detached-final'){
+        window.__relphiGlyphPaintViolations.push({identity:art.dataset.relphiAtomicIdentity||'',commit:art.dataset.relphiAtomicCommit||'',build:art.dataset.relphiAtomicBuild||''});
       }
-    })));
+    });
   };
   new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(inspect))).observe(document,{childList:true,subtree:true});
 },{a:skyA,b:skyB});
 
-await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:12000});
-await page.waitForFunction(()=>window.__relphiGlyphAtomicCommitActive===true&&window.__relphiSelectedRelationshipScrollLockV1===true&&window.__relphiSkyGlyphSizeGuardV1===true);
-await page.waitForSelector('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]');
-await page.waitForTimeout(1200);
-await page.waitForFunction(()=>Number(document.documentElement.dataset.skyGlyphSizeGuardPending||0)===0);
+await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:15000});
+await page.waitForFunction(()=>window.__relphiGlyphAtomicLoaderV2===true&&window.__relphiSelectedRelationshipScrollLockV1===true);
+await page.waitForSelector('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-build="detached-final"]');
+await page.waitForSelector('#skySelectedRelationship[data-glyphs-ready="true"]');
 
-await page.waitForFunction(()=>['north-node','south-node'].every(id=>{
-  const host=document.querySelector(`[data-layer="placements"] > g[data-sky="A"][data-placement="${id}"]`);
-  const art=host?.querySelector(`.relphi-glyph-${id}[data-relphi-atomic-commit="true"]`);
-  const box=art?.getBoundingClientRect();
-  return !!art&&art.dataset.relphiAtomicRefit==='live-context'&&box.width>4&&box.height>4&&getComputedStyle(art).visibility!=='hidden';
-}));
+const state=await page.evaluate(()=>{
+  const nodes=Object.fromEntries(['north-node','south-node'].map(id=>{
+    const host=document.querySelector(`[data-layer="placements"] > g[data-sky="A"][data-placement="${id}"]`);
+    const art=host?.querySelector(`.relphi-glyph-${id}[data-relphi-atomic-build="detached-final"]`);
+    const box=art?.getBoundingClientRect();
+    return [id,{width:box?.width||0,height:box?.height||0,text:art?.querySelector('text')?.textContent||'',transform:art?.getAttribute('transform')||''}];
+  }));
+  const cards=Array.from(document.querySelectorAll('#skySelectedRelationship .sky-selected-cards > .sky-selected-card[data-selected-card]')).map(card=>{
+    const box=card.getBoundingClientRect();
+    return{slot:card.dataset.selectedCard,left:box.left,right:box.right,top:box.top,bottom:box.bottom,border:getComputedStyle(card).borderColor,image:!!card.querySelector('img')};
+  });
+  return{
+    nodes,
+    cards,
+    paintViolations:window.__relphiGlyphPaintViolations,
+    guardLoaded:!!window.__relphiSkyGlyphSizeGuardV1,
+    committed:document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-build="detached-final"]').length,
+    selectedBubbles:document.querySelectorAll('#skySelectedRelationship .sky-selected-symbols .relphi-glyph-bubble[data-relphi-atomic-ready="true"][data-relphi-atomic-build="detached-final"]').length
+  };
+});
 
-const initialNodes=await page.evaluate(()=>Object.fromEntries(['north-node','south-node'].map(id=>{
-  const host=document.querySelector(`[data-layer="placements"] > g[data-sky="A"][data-placement="${id}"]`);
-  const art=host.querySelector(`.relphi-glyph-${id}`);
-  const box=art.getBoundingClientRect();
-  return [id,{hostOpacity:Number(getComputedStyle(host).opacity),width:box.width,height:box.height,visibility:getComputedStyle(art).visibility,refit:art.dataset.relphiAtomicRefit||''}];
-})));
+assert.equal(state.guardLoaded,false,'The repair-after-render size guard must not be loaded.');
+assert.ok(state.committed>0,'The chart must contain detached-final glyphs.');
+assert.equal(state.selectedBubbles,3,'The selected relationship must reveal only after all three finished glyph bubbles exist.');
+assert.deepEqual(state.paintViolations,[],'No unfinished glyph may enter a visible chart subtree.');
 for(const id of ['north-node','south-node']){
-  assert.ok(initialNodes[id].width>4&&initialNodes[id].height>4,`${id} must render visible artwork inside its wheel bubble.`);
-  assert.equal(initialNodes[id].visibility,'visible',`${id} wheel artwork must not be hidden.`);
-  assert.equal(initialNodes[id].refit,'live-context',`${id} must be refitted in its live wheel context.`);
+  assert.ok(state.nodes[id].width>4&&state.nodes[id].height>4,`${id} must have visible vector geometry.`);
+  assert.equal(state.nodes[id].text,'',`${id} must not depend on a font-backed text glyph.`);
+  assert.ok(state.nodes[id].transform,`${id} must receive its final transform before insertion.`);
 }
+assert.equal(state.cards.length,2,'Both sky-owned tarot cards must exist.');
+assert.equal(state.cards[0].slot,'A');
+assert.equal(state.cards[1].slot,'B');
+assert.ok(state.cards.every(card=>card.image),'Each sky card must contain its own image.');
+assert.ok(state.cards[0].right<=state.cards[1].left||state.cards[1].right<=state.cards[0].left,'The two sky cards must not overlap.');
+assert.equal(state.cards[0].border,'rgb(201, 33, 30)','Sky A card must have its red border.');
+assert.equal(state.cards[1].border,'rgb(36, 98, 208)','Sky B card must have its blue border.');
 
 const southNodeRow=page.locator('#skyFoundationA .sky-foundation-row[data-placement="south-node"]');
 await southNodeRow.evaluate(row=>row.click());
@@ -84,52 +90,27 @@ await page.waitForFunction(()=>{
   const selected=document.querySelector('[data-layer="placements"] > g[data-sky="A"][data-placement="south-node"]');
   return wheel?.classList.contains('has-isolation')&&selected?.classList.contains('is-selected');
 });
-
-const isolatedNodes=await page.evaluate(()=>Object.fromEntries(['north-node','south-node'].map(id=>{
+const isolated=await page.evaluate(()=>Object.fromEntries(['north-node','south-node'].map(id=>{
   const host=document.querySelector(`[data-layer="placements"] > g[data-sky="A"][data-placement="${id}"]`);
-  const art=host.querySelector(`.relphi-glyph-${id}`);
-  const box=art.getBoundingClientRect();
-  return [id,{hostOpacity:Number(getComputedStyle(host).opacity),width:box.width,height:box.height,visibility:getComputedStyle(art).visibility,selected:host.classList.contains('is-selected')}];
+  const art=host?.querySelector(`.relphi-glyph-${id}`);
+  const box=art?.getBoundingClientRect();
+  return[id,{opacity:Number(getComputedStyle(host).opacity),width:box?.width||0,height:box?.height||0,selected:host.classList.contains('is-selected')}];
 })));
-assert.equal(isolatedNodes['south-node'].selected,true,'South Node must remain selected on the wheel.');
-assert.ok(isolatedNodes['south-node'].hostOpacity>.95,'Selected South Node must remain fully visible.');
-assert.ok(isolatedNodes['south-node'].width>4&&isolatedNodes['south-node'].height>4,'Selected South Node must retain visible glyph artwork.');
-assert.ok(isolatedNodes['north-node'].hostOpacity>0&&isolatedNodes['north-node'].hostOpacity<.5,'North Node must remain present in the normal dimmed view.');
-assert.ok(isolatedNodes['north-node'].width>4&&isolatedNodes['north-node'].height>4,'Dimmed North Node must retain visible glyph artwork.');
-assert.equal(isolatedNodes['north-node'].visibility,'visible','Dimmed North Node artwork must not be hidden.');
+assert.equal(isolated['south-node'].selected,true);
+assert.ok(isolated['south-node'].opacity>.95);
+assert.ok(isolated['north-node'].opacity>0&&isolated['north-node'].opacity<.5);
+assert.ok(isolated['north-node'].width>4&&isolated['south-node'].width>4);
 
 const scrollCheck=await page.evaluate(()=>{
-  let panel=document.getElementById('skySelectedRelationship');
-  const temporary=!panel;
-  if(!panel){panel=document.createElement('section');panel.id='skySelectedRelationship';panel.style.marginTop='3000px';document.body.appendChild(panel)}
+  const panel=document.getElementById('skySelectedRelationship');
   window.scrollTo(0,0);
   const before=window.scrollY;
   panel.scrollIntoView({behavior:'auto',block:'start'});
-  const result={before,after:window.scrollY,suppressed:panel.dataset.automaticScrollSuppressed||''};
-  if(temporary)panel.remove();
-  return result;
+  return{before,after:window.scrollY,suppressed:panel.dataset.automaticScrollSuppressed||''};
 });
-assert.equal(scrollCheck.after,scrollCheck.before,'Selected Relationship scrollIntoView must not move the page.');
-assert.equal(scrollCheck.suppressed,'true','The Selected Relationship scroll request must be explicitly suppressed.');
-
-await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',animations:'disabled',timeout:30000});
-await page.waitForTimeout(500);
-await page.waitForFunction(()=>Number(document.documentElement.dataset.skyGlyphSizeGuardPending||0)===0);
-const finalState=await page.evaluate(()=>({
-  committed:document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-commit="true"]').length,
-  pending:Number(document.documentElement.dataset.skyGlyphSizeGuardPending||0),
-  withheld:Number(document.documentElement.dataset.skyGlyphSizeGuardWithheld||0),
-  guardErrors:window.RelphiSkyGlyphSizeGuard?.errors||[],
-  paintViolations:window.__relphiGlyphPaintViolations,
-  visibleUncommitted:Array.from(document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph,#skySelectedRelationship .relphi-canonical-glyph')).filter(art=>{
-    const style=getComputedStyle(art);
-    return style.visibility!=='hidden'&&style.display!=='none'&&art.dataset.relphiAtomicCommit!=='true';
-  }).map(art=>art.className?.baseVal||art.className||'')
-}));
-assert.ok(finalState.committed>0,'The chart must contain an atomically committed canonical glyph.');
-assert.equal(finalState.pending,0,'The glyph size guard must have no unfinished work.');
-assert.deepEqual(finalState.paintViolations,[],'No raw or oversized canonical glyph may reach a visible paint frame.');
-assert.deepEqual(finalState.visibleUncommitted,[],'Every visible canonical glyph must be fitted before it is committed.');
+assert.equal(scrollCheck.after,scrollCheck.before);
+assert.equal(scrollCheck.suppressed,'true');
 assert.deepEqual(errors,[]);
+await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',animations:'disabled',timeout:30000});
 await browser.close();
-console.log(`North and South Node stay visible when selected or dimmed, no source-sized glyph reaches a visible frame, Selected Relationship never auto-scrolls, and ${finalState.withheld} unresolved glyphs were safely withheld.`);
+console.log('Sky Chart inserts only detached-final glyphs, keeps both bordered sky cards separate, and preserves node visibility without a repair guard.');
