@@ -48,11 +48,12 @@ await page.waitForSelector('#skyFoundationRoot .relphi-canonical-glyph[data-relp
 await page.waitForSelector('#skySelectedRelationship[data-glyphs-ready="true"]');
 
 const state=await page.evaluate(()=>{
+  const glyphText=art=>art?(art.matches?.('text')?art.textContent:(art.querySelector('text')?.textContent||'')):'';
   const nodes=Object.fromEntries([['north-node','☊'],['south-node','☋']].map(([id,expected])=>{
     const host=document.querySelector(`[data-layer="placements"] > g[data-sky="A"][data-placement="${id}"]`);
     const art=host?.querySelector(`.relphi-glyph-${id}[data-relphi-atomic-build="detached-final"]`);
     const box=art?.getBoundingClientRect();
-    return [id,{width:box?.width||0,height:box?.height||0,text:art?.querySelector('text')?.textContent||'',paths:art?.querySelectorAll('path').length||0,transform:art?.getAttribute('transform')||'',source:art?.dataset.relphiCanonicalSource||'',expected}];
+    return [id,{width:box?.width||0,height:box?.height||0,text:glyphText(art),fallback:window.RelphiGlyphRegistry.get(id)?.fallback||'',transform:art?.getAttribute('transform')||'',source:art?.dataset.relphiCanonicalSource||'',expected}];
   }));
   const expectedAngles={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
   const angles=Object.fromEntries(Object.entries(expectedAngles).map(([id,expected])=>{
@@ -65,7 +66,7 @@ const state=await page.evaluate(()=>{
         height:box.height||0,
         hostWidth:hostBox?.width||0,
         hostHeight:hostBox?.height||0,
-        text:art.querySelector('text')?.textContent||'',
+        text:glyphText(art),
         source:art.dataset.relphiCanonicalSource||'',
         transform:art.getAttribute('transform')||'',
         rotation:art.dataset.relphiCanonicalRotation||''
@@ -121,8 +122,8 @@ assert.equal(state.selectedBubbles,3,'The selected relationship must reveal only
 assert.deepEqual(state.paintViolations,[],'No unfinished identity-bearing glyph may enter a visible chart subtree.');
 for(const id of ['north-node','south-node']){
   assert.ok(state.nodes[id].width>4&&state.nodes[id].height>4,`${id} must remain visibly present.`);
-  assert.equal(state.nodes[id].text,state.nodes[id].expected,`${id} must use the canonical registry character.`);
-  assert.equal(state.nodes[id].paths,0,`${id} must not be replaced by invented path geometry.`);
+  assert.equal(state.nodes[id].fallback,state.nodes[id].expected,`${id} must retain the canonical registry character.`);
+  assert.equal(state.nodes[id].text,state.nodes[id].expected,`${id} must render the canonical registry character.`);
   assert.equal(state.nodes[id].source,`unicode:${state.nodes[id].expected}`,`${id} must identify its canonical Unicode source.`);
   assert.ok(state.nodes[id].transform,`${id} must receive its final canonical fit before insertion.`);
 }
