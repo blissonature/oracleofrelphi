@@ -117,6 +117,7 @@
       'relphi:sky-foundation-interactions-ready',
       'relphi:selected-relationship-rendered',
       'relphi:sky-angle-placements-ready',
+      'relphi:glyph-atomic-committed',
       'relphi:sky-glyph-audit-complete'
     ].forEach(name => window.addEventListener(name, scheduleStabilityPasses));
     scheduleStabilityPasses();
