@@ -101,7 +101,9 @@
       totalLines += 1;
       const row = rows.get(line.dataset.relationIndex);
       const visible = relationshipRowVisible(row);
+      const nextDisplay = visible ? '' : 'none';
       if (line.hidden === visible) line.hidden = !visible;
+      if (line.style.display !== nextDisplay) line.style.display = nextDisplay;
       line.classList.toggle('sky-chart-relationship-filter-hidden', !visible);
       line.setAttribute('aria-hidden', visible ? 'false' : 'true');
       if (visible) visibleLines += 1;
