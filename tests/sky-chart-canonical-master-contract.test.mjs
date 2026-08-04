@@ -73,7 +73,19 @@ assert.match(foundation,/slot === 'A'[\s\S]*chosen\.radius \+ ANGLE_LAYOUT\.line
 assert.match(foundation,/radialLine\(layers\.leaders,lineStart,lineEnd,record\.value,attrs\)/);
 assert.match(foundation,/'data-axis-edge-radius':edge/);
 assert.doesNotMatch(foundation,/lineSegmentLength|lineBands|beforeEnd|afterStart/);
-assert.match(foundation,/id === 'gemini' \? 34 : 19/);
+
+// Zodiac signs must all use the same canonical hidden-circle composition.
+assert.match(foundation,/function preserveCanonicalStrokeWeight\(root\)/);
+assert.match(foundation,/const glyphRadius = 19/);
+assert.match(foundation,/class:'sky-foundation-sign-glyph'/);
+assert.match(foundation,/drawUncircledBubble\(host,id,\{/);
+assert.match(foundation,/root\.dataset\.wheelPresentation = 'without-circles'/);
+assert.match(foundation,/preserveCanonicalStrokeWeight\(root\)/);
+assert.match(foundation,/node\.dataset\.canonicalSourceStroke/);
+assert.match(foundation,/node\.dataset\.canonicalFittedStroke/);
+assert.match(foundation,/node\.setAttribute\('vector-effect', 'non-scaling-stroke'\)/);
+assert.match(foundation,/root\.dataset\.canonicalStrokePresentation = 'fitted-non-scaling'/);
+assert.doesNotMatch(foundation,/id === ['"]gemini['"]|gemini.*\?\s*\d+\s*:\s*\d+/i);
 assert.doesNotMatch(foundation,/data-angle-collision-error|ANGLE COLLISION|No legal canonical Angle lane/);
 assert.doesNotMatch(foundation,/assets\/angle-glyphs|VECTOR_GLYPHS|const\s+PATHS\s*=/);
 
@@ -88,4 +100,4 @@ assert.match(cardCss,/data-selected-card="A"[\s\S]*border:3px solid var\(--sky-a
 assert.match(cardCss,/data-selected-card="B"[\s\S]*border:3px solid var\(--sky-b\)/);
 assert.match(cardCss,/border-radius:0 !important/);
 
-console.log('Permanent canonical page untouched; Sky Chart points to it and uses only the approved runtime files.');
+console.log('Permanent canonical page untouched; Sky Chart uses one shared zodiac master composition and preserves authored stroke weight.');
