@@ -4,6 +4,7 @@
   if (window.__relphiGlyphSourceIntegrityV1) return;
   window.__relphiGlyphSourceIntegrityV1 = true;
 
+  const APPROVED_PAGE = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
   const APPROVED_COMMIT = '0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
   const registry = window.RelphiGlyphRegistry;
   const component = window.RelphiGlyphComponent;
@@ -23,14 +24,16 @@
     ));
     if (current !== snapshot) failures.push('approved registry entries were mutated');
     if (failures.length) {
-      throw new Error(`[Glyph source integrity · ${context}] ${failures.join('; ')}. Approved source: ${APPROVED_COMMIT}`);
+      throw new Error(`[Glyph source integrity · ${context}] ${failures.join('; ')}. Approved source: ${APPROVED_PAGE} (${APPROVED_COMMIT})`);
     }
+    document.documentElement.dataset.relphiGlyphSourcePage = APPROVED_PAGE;
     document.documentElement.dataset.relphiGlyphSourceCommit = APPROVED_COMMIT;
     document.documentElement.dataset.relphiGlyphSourceIntegrity = 'approved';
     return true;
   }
 
   window.RelphiGlyphSourceIntegrity = Object.freeze({
+    sourcePage:APPROVED_PAGE,
     sourceCommit:APPROVED_COMMIT,
     assert:assertIntegrity
   });
