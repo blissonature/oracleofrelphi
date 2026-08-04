@@ -2,8 +2,8 @@
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyWheelUncircledZodiacV4)return;
-  window.__relphiSkyWheelUncircledZodiacV4=true;
+  if(window.__relphiSkyWheelUncircledZodiacV5)return;
+  window.__relphiSkyWheelUncircledZodiacV5=true;
 
   const NS='http://www.w3.org/2000/svg';
   const MASTER_RADIUS=19;
@@ -11,19 +11,34 @@
   let queued=false;
 
   function installStyles(){
-    if(document.getElementById('skyWheelCanonLegibilityV4'))return;
+    if(document.getElementById('skyWheelCanonLegibilityV5'))return;
     const style=document.createElement('style');
-    style.id='skyWheelCanonLegibilityV4';
+    style.id='skyWheelCanonLegibilityV5';
     style.textContent=`
       #skyFoundationComparison .sky-foundation-house-number{
         font-size:24px!important;font-weight:900!important;fill:#171717!important;
         paint-order:stroke fill;stroke:#fffdf8;stroke-width:3px;stroke-linejoin:round
+      }
+      #skyFoundationComparison [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-glyph-bubble > circle{
+        opacity:0!important;
+        visibility:hidden!important;
+        pointer-events:none!important;
       }
       @media(max-width:620px){
         #skyFoundationComparison .sky-foundation-house-number{font-size:31px!important;stroke-width:4px}
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function hideCanonicalCircle(host){
+    host.querySelectorAll('.relphi-glyph-bubble > circle').forEach(circle=>{
+      circle.style.setProperty('opacity','0','important');
+      circle.style.setProperty('visibility','hidden','important');
+      circle.style.setProperty('pointer-events','none','important');
+      circle.setAttribute('aria-hidden','true');
+    });
+    host.dataset.circlePresentation='canonical-hidden';
   }
 
   async function replaceHost(host){
@@ -48,13 +63,11 @@
         padding:1,
         color:host.dataset.zodiacGlyphColor||'#171717'
       });
-      // Exact uncircled canon: preserve the complete composition and hide only its circle.
-      bubble.circle.style.opacity='0';
-      bubble.circle.setAttribute('aria-hidden','true');
+      hideCanonicalCircle(host);
       await bubble.ready;
+      hideCanonicalCircle(host);
       host.dataset.uncircledCanonicalZodiac='ready';
-      host.dataset.canonicalImport='master-glyph-list-direct';
-      host.dataset.circlePresentation='canonical-hidden';
+      host.dataset.canonicalImport='master-glyph-list-direct-uncircled';
     }catch(error){
       host.dataset.uncircledCanonicalZodiac='error';
       console.error(error);
@@ -64,7 +77,8 @@
   function apply(){
     queued=false;
     document.querySelectorAll('[data-layer="zodiac"] .sky-foundation-sign-glyph[data-zodiac-sign]').forEach(host=>{
-      if(host.dataset.canonicalImport!=='master-glyph-list-direct')void replaceHost(host);
+      if(host.dataset.canonicalImport!=='master-glyph-list-direct-uncircled')void replaceHost(host);
+      else hideCanonicalCircle(host);
     });
   }
 
@@ -72,7 +86,7 @@
   function start(){
     installStyles();
     ['relphi:sky-foundation-rendered','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,schedule));
-    new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(node=>node.nodeType===1)))schedule()}).observe(document.body,{childList:true,subtree:true});
+    new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']});
     schedule();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
