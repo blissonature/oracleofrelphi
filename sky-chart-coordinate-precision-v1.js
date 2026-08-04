@@ -87,14 +87,22 @@
     });
   }
 
+  function correctSelectedRelationship() {
+    const selected = document.getElementById('skySelectedRelationship');
+    if (!selected) return;
+    replaceCoordinateText(selected.querySelector('[data-selected-card="A"]'),'A');
+    replaceCoordinateText(selected.querySelector('[data-selected-card="B"]'),'B');
+    const facts = selected.querySelectorAll('.sky-selected-facts span');
+    replaceCoordinateText(facts[0],'A');
+    replaceCoordinateText(facts[1],'B');
+    selected.querySelectorAll('[data-progressive-sky="A"],[data-sky="A"]').forEach(node => replaceCoordinateText(node,'A'));
+    selected.querySelectorAll('[data-progressive-sky="B"],[data-sky="B"]').forEach(node => replaceCoordinateText(node,'B'));
+  }
+
   function apply() {
     correctLedger('A');
     correctLedger('B');
-    const selected = document.getElementById('skySelectedRelationship');
-    if (selected) {
-      replaceCoordinateText(selected,'A');
-      replaceCoordinateText(selected,'B');
-    }
+    correctSelectedRelationship();
     document.documentElement.dataset.skyCoordinatePrecision = 'stored-minute-fields';
   }
 
