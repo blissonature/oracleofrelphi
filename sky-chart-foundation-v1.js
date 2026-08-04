@@ -42,11 +42,14 @@
     frameRadius:19,
     frameStrokeWidth:2.35,
     minimumClearance:6,
-    boundaryInset:4,
-    lineClearance:3,
+    lineGap:15,
     lanes:Object.freeze({
-      A:Object.freeze([448,494,540]),
-      B:Object.freeze([202,244,286])
+      A:Object.freeze([540,522,504]),
+      B:Object.freeze([202,220,238])
+    }),
+    lineBands:Object.freeze({
+      A:Object.freeze({start:500,end:570,extreme:'outer'}),
+      B:Object.freeze({start:170,end:242,extreme:'inner'})
     })
   });
 
@@ -337,11 +340,6 @@
     return ANGLE_LAYOUT.frameRadius + ANGLE_LAYOUT.frameStrokeWidth / 2;
   }
 
-  function axisOpening(half, degree) {
-    const radians = (degree - 180) * Math.PI / 180;
-    return half * (Math.abs(Math.cos(radians)) + Math.abs(Math.sin(radians))) + ANGLE_LAYOUT.lineClearance;
-  }
-
   function buildWheel(listA, listB, cuspsA, cuspsB) {
     const chart = svg('svg', {
       viewBox:'0 0 1200 1200', role:'img',
@@ -375,10 +373,15 @@
       layers.zodiac.appendChild(svg('path',{d:annular(R.zIn,R.zOut,start,start+30),fill:COLORS[index],'fill-opacity':'.82'}));
       radialLine(layers.zodiac,R.zIn,R.zOut,start,{stroke:'#423b35','stroke-width':'1.35','vector-effect':'non-scaling-stroke'});
       const point = polar((R.zIn+R.zOut)/2,start+15);
-      const host = svg('g',{transform:`translate(${point.x} ${point.y})`});
+      const glyphRadius = id === 'gemini' ? 25 : 19;
+      const host = svg('g',{
+        transform:`translate(${point.x} ${point.y})`,
+        'data-zodiac-sign':id,
+        'data-wheel-glyph-radius':glyphRadius
+      });
       layers.zodiac.appendChild(host);
-      obstacles.push({kind:'circle',x:point.x,y:point.y,radius:20,role:'zodiac-glyph'});
-      jobs.push(drawCanonical(host,id,{radius:19,padding:1,color:'#171717'}).catch(error => glyphFailure(host,error)));
+      obstacles.push({kind:'circle',x:point.x,y:point.y,radius:Math.max(20,glyphRadius),role:'zodiac-glyph'});
+      jobs.push(drawCanonical(host,id,{radius:glyphRadius,padding:1,color:'#171717'}).catch(error => glyphFailure(host,error)));
     });
 
     [R.bIn,R.zIn,R.zOut,R.aOut].forEach(radius => layers.outlines.appendChild(svg('circle',{cx:C.x,cy:C.y,r:radius,class:'sky-foundation-ring'})));
@@ -433,20 +436,6 @@
       jobs.push(drawBubble(host,record.id,{radius:16,padding:1,color:SKY[record.slot],fill:'#fffdf8',strokeWidth:2.35}).catch(error => glyphFailure(host,error)));
     });
 
-    function reportAngleCollision(slot, record) {
-      chart.dataset.angleCollisionState = 'unresolved';
-      const errorCount = Number(chart.dataset.angleCollisionCount || 0) + 1;
-      chart.dataset.angleCollisionCount = String(errorCount);
-      const label = svg('text',{
-        x:C.x,y:32 + errorCount * 22,'text-anchor':'middle',fill:'#b00020',
-        'font-size':16,'font-weight':800,'data-angle-collision-error':'true',
-        'data-sky':slot,'data-angle':record.id
-      });
-      label.textContent = `ANGLE COLLISION: Sky ${slot} ${record.entry.name}`;
-      layers.placements.appendChild(label);
-      console.error(`No legal canonical Angle lane for Sky ${slot} ${record.entry.name} at ${record.value}°.`);
-    }
-
     function placeAngle(record, slot, inner, outer, cusps) {
       const half = angleHalfExtent();
       let chosen = null;
@@ -455,33 +444,35 @@
         const point = polar(radius,record.value);
         const candidate = {kind:'square',x:point.x,y:point.y,half,role:`angle-${slot}-${record.id}`};
         if (!collides(candidate,obstacles)) {
-          chosen = {radius,point,candidate};
+          chosen = {radius,point,candidate,fallback:false};
           break;
         }
       }
       if (!chosen) {
-        reportAngleCollision(slot,record);
-        return;
+        const radius = ANGLE_LAYOUT.lanes[slot][0];
+        const point = polar(radius,record.value);
+        chosen = {radius,point,candidate:{kind:'square',x:point.x,y:point.y,half,role:`angle-${slot}-${record.id}`},fallback:true};
+        console.warn(`Sky ${slot} ${record.entry.name} used its deterministic extreme lane at ${record.value}°.`);
       }
 
-      const opening = axisOpening(half,record.value);
-      const lineStart = inner + ANGLE_LAYOUT.boundaryInset;
-      const lineEnd = outer - ANGLE_LAYOUT.boundaryInset;
-      const beforeEnd = chosen.radius - opening;
-      const afterStart = chosen.radius + opening;
+      const lineBand = ANGLE_LAYOUT.lineBands[slot];
+      const beforeEnd = chosen.radius - ANGLE_LAYOUT.lineGap;
+      const afterStart = chosen.radius + ANGLE_LAYOUT.lineGap;
       const attrs = {
         stroke:SKY[slot],class:'sky-foundation-angle-axis','stroke-width':'2.6',
         'vector-effect':'non-scaling-stroke','data-sky':slot,'data-angle':record.id,
-        'data-exact-longitude':record.value.toFixed(8),'data-angle-lane':chosen.radius
+        'data-exact-longitude':record.value.toFixed(8),'data-angle-lane':chosen.radius,
+        'data-axis-extreme':lineBand.extreme
       };
-      if (beforeEnd > lineStart) radialLine(layers.leaders,lineStart,beforeEnd,record.value,attrs);
-      if (afterStart < lineEnd) radialLine(layers.leaders,afterStart,lineEnd,record.value,attrs);
+      if (beforeEnd > lineBand.start) radialLine(layers.leaders,lineBand.start,beforeEnd,record.value,attrs);
+      if (afterStart < lineBand.end) radialLine(layers.leaders,afterStart,lineBand.end,record.value,attrs);
 
       const host = svg('g',{
         transform:`translate(${chosen.point.x} ${chosen.point.y})`,
         'data-sky':slot,'data-placement':record.id,'data-angle-axis':'true',
         'data-house':houseFor(record.value,cusps),'data-angle-lane':chosen.radius,
-        'data-angle-longitude':record.value.toFixed(8),
+        'data-angle-longitude':record.value.toFixed(8),'data-angle-extreme':lineBand.extreme,
+        'data-angle-lane-fallback':chosen.fallback ? 'true' : 'false',
         'data-canonical-master':'glyphs-unified-preview.html',
         'data-canonical-viewbox':'-32 -32 64 64'
       });
