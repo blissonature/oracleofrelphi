@@ -72,8 +72,26 @@
     const chart=document.querySelector('.sky-foundation-wheel');
     if(chart){
       if(chart.dataset.angleCollisionState==='unresolved'||chart.querySelector('[data-angle-collision-error]'))issues.push('Comparison wheel reports an unresolved Angle collision');
-      const gemini=chart.querySelector('[data-layer="zodiac"] [data-zodiac-sign="gemini"]');
-      if(Number(gemini?.dataset.wheelGlyphRadius)!==34)issues.push('Gemini does not use the approved wheel presentation radius');
+
+      const zodiacHosts=Array.from(chart.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign]'));
+      if(zodiacHosts.length!==12)issues.push(`Comparison wheel has ${zodiacHosts.length} zodiac masters instead of 12`);
+      zodiacHosts.forEach(host=>{
+        const id=host.dataset.zodiacSign||'';
+        const root=host.querySelector(':scope > .relphi-glyph-bubble');
+        const circle=root?.querySelector(':scope > circle');
+        if(Number(host.dataset.wheelGlyphRadius)!==19)issues.push(`${id} has identity-specific wheel sizing`);
+        if(!root)issues.push(`${id} is not using the canonical master composition`);
+        if(!circle||Number(getComputedStyle(circle).opacity)!==0)issues.push(`${id} has a visible or missing canonical circle`);
+        if(root?.dataset.circlePresentation!=='hidden-only')issues.push(`${id} is not the approved Without circles presentation`);
+        if(root?.dataset.wheelPresentation!=='without-circles')issues.push(`${id} lacks the shared wheel presentation marker`);
+      });
+      const geminiPath=chart.querySelector('[data-zodiac-sign="gemini"] .relphi-glyph-gemini path');
+      const fittedStroke=Number(geminiPath?.dataset.canonicalFittedStroke);
+      if(geminiPath?.dataset.canonicalSourceStroke!=='7')issues.push('Gemini no longer reports the approved source stroke');
+      if(geminiPath?.getAttribute('vector-effect')!=='non-scaling-stroke')issues.push('Gemini fitted stroke is not protected from outer wheel scaling');
+      if(!(fittedStroke>2&&fittedStroke<2.3))issues.push(`Gemini fitted canonical stroke is ${fittedStroke||'missing'}`);
+      if(geminiPath?.closest('.relphi-glyph-bubble')?.dataset.canonicalStrokePresentation!=='fitted-non-scaling')issues.push('Gemini lacks the shared stroked-master presentation');
+
       const hosts=Array.from(chart.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]'));
       if(hosts.length!==8)issues.push(`Comparison wheel has ${hosts.length} Angle labels instead of 8`);
       const angleBoxes=[];
