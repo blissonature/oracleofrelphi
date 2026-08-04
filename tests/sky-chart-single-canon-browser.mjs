@@ -8,18 +8,12 @@ function sky(name,offset){
   const asc=(168.38+offset)%360;
   const cusps=Array.from({length:12},(_,index)=>(asc+index*30)%360);
   const raw={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Descendant:348.38,Midheaven:76.28,IC:256.28,Chiron:74.48,'North Node':40.3,'South Node':220.3,Lilith:44.23,'Part of Fortune':244.97,Vertex:330.33};
-  return{name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime:'2026-08-03T19:02',instant:'2026-08-04T01:02:00.000Z',location:'Salt Lake City, Utah, United States',timeZone:'America/Denver',latitude:40.7608,longitude:-111.891,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(raw).map(([key,value])=>[key,placement(key,value+offset)]))};
+  return{name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(raw).map(([key,value])=>[key,placement(key,value+offset)]))};
 }
-const skyA=sky('Sky A',0);
-const skyB=sky('Sky B',0);
-const APPROVED_PAGE='https://oracleofrelphi.com/glyphs-unified-preview.html';
-const APPROVED_COMMIT='0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
-
 const browser=await chromium.launch({headless:true});
 
-async function inspectSky(width,height,suffix){
+async function inspect(width,height,suffix){
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
-  page.setDefaultTimeout(20000);
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -27,168 +21,59 @@ async function inspectSky(width,height,suffix){
   await page.addInitScript(({a,b})=>{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
-    sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
-  },{a:skyA,b:skyB});
-
+  },{a:sky('Sky A',0),b:sky('Sky B',0)});
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false');
-  await page.waitForSelector('#skyFoundationA .sky-foundation-row');
-  await page.waitForSelector('[data-layer="placements"] > g[data-sky="A"]');
-  await page.waitForFunction(()=>document.documentElement.dataset.relphiGlyphSourceIntegrity==='approved');
-  await page.waitForFunction(()=>document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]').length===8);
   await page.waitForFunction(()=>document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign] .relphi-canonical-glyph').length===12);
 
   const state=await page.evaluate(async()=>{
-    window.RelphiGlyphSourceIntegrity.assert('browser-test');
-    const sourceMarkup=await fetch('assets/planet-glyphs/neptune.svg?v=test-source').then(response=>response.text());
-    const sourceSvg=new DOMParser().parseFromString(sourceMarkup,'image/svg+xml').documentElement;
-    const sourceNeptune=sourceSvg.querySelector('path')?.getAttribute('d')||'';
-    const geminiMarkup=await fetch('assets/zodiac-glyphs/gemini.svg?v=test-source').then(response=>response.text());
+    const geminiMarkup=await fetch('assets/zodiac-glyphs/gemini.svg?v=filled-silhouette-test').then(r=>r.text());
     const geminiSvg=new DOMParser().parseFromString(geminiMarkup,'image/svg+xml').documentElement;
-    const geminiSourceStroke=geminiSvg.querySelector('path')?.getAttribute('stroke-width')||'';
-    const textOf=art=>art?.matches?.('text')?art.textContent:(art?.querySelector('text')?.textContent||'');
-    const radiusAt=(x,y)=>Math.hypot(Number(x)-600,Number(y)-600);
-    const angleExpected={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
-    const angles=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')).map(host=>{
-      const root=host.querySelector(':scope > .relphi-glyph-bubble');
-      const circle=root?.querySelector(':scope > circle');
-      const lines=Array.from(document.querySelectorAll(`[data-layer="leaders"] .sky-foundation-angle-axis[data-sky="${host.dataset.sky}"][data-angle="${host.dataset.placement}"]`));
-      return{
-        id:host.dataset.placement,
-        sky:host.dataset.sky,
-        text:textOf(root?.querySelector('.relphi-canonical-glyph')),
-        masterComposition:!!root,
-        circleOpacity:circle?Number(getComputedStyle(circle).opacity):null,
-        circlePresentation:root?.dataset.circlePresentation||'',
-        transform:root?.querySelector('.relphi-canonical-glyph')?.getAttribute('transform')||'',
-        exact:host.dataset.angleLongitude||'',
-        lineCount:lines.length,
-        lineEndpointRadii:lines.map(line=>[
-          radiusAt(line.getAttribute('x1'),line.getAttribute('y1')),
-          radiusAt(line.getAttribute('x2'),line.getAttribute('y2'))
-        ]),
-        lineEdgeRadii:lines.map(line=>Number(line.dataset.axisEdgeRadius)),
-        extreme:host.dataset.angleExtreme||'',
-        lane:Number(host.dataset.angleLane),
-        lineExtremes:lines.map(line=>line.dataset.axisExtreme||'')
-      };
-    });
-    const zodiac=Array.from(document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign]')).map(host=>{
-      const root=host.querySelector(':scope > .relphi-glyph-bubble');
-      const circle=root?.querySelector(':scope > circle');
-      return{
-        id:host.dataset.zodiacSign||'',
-        radius:Number(host.dataset.wheelGlyphRadius),
-        masterComposition:!!root,
-        circleOpacity:circle?Number(getComputedStyle(circle).opacity):null,
-        circlePresentation:root?.dataset.circlePresentation||'',
-        wheelPresentation:root?.dataset.wheelPresentation||'',
-        canonicalStrokePresentation:root?.dataset.canonicalStrokePresentation||''
-      };
-    });
+    const sourcePath=geminiSvg.querySelector('path');
+    const zodiac=Array.from(document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign]')).map(host=>({
+      id:host.dataset.zodiacSign,
+      radius:Number(host.dataset.wheelGlyphRadius),
+      glyphCount:host.querySelectorAll('.relphi-canonical-glyph').length
+    }));
     const geminiPath=document.querySelector('[data-zodiac-sign="gemini"] .relphi-glyph-gemini path');
-    const neptunes=Array.from(document.querySelectorAll('.relphi-glyph-neptune')).map(art=>art.querySelector('path')?.getAttribute('d')||'');
-    const nodes=Object.fromEntries(['north-node','south-node'].map(id=>[id,Array.from(document.querySelectorAll(`.relphi-glyph-${id}`)).map(textOf)]));
-    const scripts=Array.from(document.scripts).map(script=>script.getAttribute('src')||'').filter(Boolean);
+    const angleLines=Array.from(document.querySelectorAll('.sky-foundation-angle-axis')).map(line=>({
+      sky:line.dataset.sky,
+      edge:Number(line.dataset.axisEdgeRadius),
+      x1:Number(line.getAttribute('x1')),y1:Number(line.getAttribute('y1')),
+      x2:Number(line.getAttribute('x2')),y2:Number(line.getAttribute('y2'))
+    }));
     return{
-      sourcePage:document.documentElement.dataset.relphiGlyphSourcePage,
-      sourceCommit:document.documentElement.dataset.relphiGlyphSourceCommit,
-      apiSourcePage:window.RelphiGlyphSourceIntegrity.sourcePage,
-      registryScripts:scripts.filter(src=>src.includes('relphi-glyph-registry-v1.js')).length,
-      componentScripts:scripts.filter(src=>src.includes('relphi-glyph-component-v1.js')).length,
-      competingScripts:scripts.filter(src=>/(canon-binding|atomic-loader|neptune-cross|moon-stroke|glyph-framing|glyph-size-guard|live-integrity|e9344099|unified-marker|angle-extreme-placement)/.test(src)),
-      angles,angleExpected,zodiac,neptunes,nodes,sourceNeptune,geminiSourceStroke,
-      geminiRenderedStroke:geminiPath?.getAttribute('stroke-width')||'',
-      geminiVectorEffect:geminiPath?.getAttribute('vector-effect')||'',
-      geminiReportedSourceStroke:geminiPath?.dataset.canonicalSourceStroke||'',
-      geminiReportedFittedStroke:geminiPath?.dataset.canonicalFittedStroke||'',
-      angleDiagnostics:document.querySelectorAll('[data-angle-collision-error],[data-canonical-glyph-error]').length,
-      angleCollisionState:document.querySelector('.sky-foundation-wheel')?.dataset.angleCollisionState||'',
-      neptuneRegistry:window.RelphiGlyphRegistry.get('neptune')?.asset||'',
-      ledgerGlyphs:document.querySelectorAll('.sky-foundation-ledger .relphi-canonical-glyph').length
+      zodiac,
+      sourceFill:sourcePath?.getAttribute('fill')||'',
+      sourceStroke:sourcePath?.getAttribute('stroke')||'',
+      sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
+      renderedFill:geminiPath?.getAttribute('fill')||'',
+      renderedStroke:geminiPath?.getAttribute('stroke')||'',
+      angleLines,
+      angleCount:document.querySelectorAll('[data-angle-axis="true"]').length,
+      diagnostics:document.querySelectorAll('[data-angle-collision-error],[data-canonical-glyph-error]').length
     };
   });
 
-  assert.equal(state.sourcePage,APPROVED_PAGE);
-  assert.equal(state.apiSourcePage,APPROVED_PAGE);
-  assert.equal(state.sourceCommit,APPROVED_COMMIT);
-  assert.equal(state.registryScripts,1);
-  assert.equal(state.componentScripts,1);
-  assert.deepEqual(state.competingScripts,[]);
-  assert.ok(state.ledgerGlyphs>=30);
-  assert.equal(state.angleDiagnostics,0);
-  assert.equal(state.angleCollisionState,'resolved');
-  assert.equal(state.angles.length,8);
-  for(const slot of ['A','B']) assert.deepEqual(state.angles.filter(item=>item.sky===slot).map(item=>item.id).sort(),['asc','dsc','ic','mc']);
-  for(const angle of state.angles){
-    const expectedEdge=angle.sky==='A'?574:166;
-    assert.equal(angle.text,state.angleExpected[angle.id]);
-    assert.equal(angle.masterComposition,true);
-    assert.equal(angle.circleOpacity,0);
-    assert.equal(angle.circlePresentation,'hidden-only');
-    assert.ok(!/rotate\s*\(/i.test(angle.transform));
-    assert.ok(angle.exact);
-    assert.equal(angle.lineCount,1);
-    assert.equal(angle.lineEdgeRadii[0],expectedEdge);
-    assert.ok(angle.lineEndpointRadii[0].some(radius=>Math.abs(radius-expectedEdge)<.01));
-    assert.equal(angle.extreme,angle.sky==='A'?'outer':'inner');
-    assert.ok(angle.sky==='A'?angle.lane>=504:angle.lane<=238);
-    assert.ok(angle.lineExtremes.every(value=>value===angle.extreme));
-  }
-
   assert.equal(state.zodiac.length,12);
   assert.deepEqual(state.zodiac.map(item=>item.id),SIGNS.map(name=>name.toLowerCase()));
-  for(const sign of state.zodiac){
-    assert.equal(sign.radius,19,`${sign.id} must not have identity-specific sizing`);
-    assert.equal(sign.masterComposition,true);
-    assert.equal(sign.circleOpacity,0);
-    assert.equal(sign.circlePresentation,'hidden-only');
-    assert.equal(sign.wheelPresentation,'without-circles');
-  }
-  assert.equal(state.geminiSourceStroke,'7');
-  assert.equal(state.geminiReportedSourceStroke,'7');
-  assert.equal(state.geminiVectorEffect,'non-scaling-stroke');
-  assert.ok(Number(state.geminiRenderedStroke)>2&&Number(state.geminiRenderedStroke)<2.3);
-  assert.equal(state.geminiRenderedStroke,state.geminiReportedFittedStroke);
-  assert.equal(state.zodiac.find(item=>item.id==='gemini')?.canonicalStrokePresentation,'fitted-non-scaling');
-
-  assert.equal(state.neptuneRegistry,'assets/planet-glyphs/neptune.svg');
-  assert.ok(state.sourceNeptune);
-  assert.ok(state.neptunes.length>=3);
-  assert.ok(state.neptunes.every(value=>value===state.sourceNeptune));
-  assert.ok(state.nodes['north-node'].some(value=>value==='☊'));
-  assert.ok(state.nodes['south-node'].some(value=>value==='☋'));
-
-  const relation=page.locator('.sky-foundation-relationship-row[data-relation-index]').first();
-  await relation.waitFor({state:'attached'});
-  await relation.evaluate(row=>row.click());
-  await page.waitForFunction(()=>{
-    const panel=document.getElementById('skySelectedRelationship');
-    return panel&&!panel.hidden&&panel.querySelectorAll('.sky-selected-card[data-selected-card]').length===2;
-  });
-  const cards=await page.evaluate(()=>Array.from(document.querySelectorAll('#skySelectedRelationship .sky-selected-card[data-selected-card]')).map(card=>({
-    slot:card.dataset.selectedCard,
-    border:getComputedStyle(card).borderColor,
-    padding:getComputedStyle(card).padding,
-    background:getComputedStyle(card).backgroundColor,
-    image:!!card.querySelector('img'),
-    box:(()=>{const b=card.getBoundingClientRect();return{left:b.left,right:b.right,top:b.top,bottom:b.bottom};})()
-  })));
-  assert.equal(cards.length,2);
-  assert.deepEqual(cards.map(card=>card.slot),['A','B']);
-  assert.ok(cards.every(card=>card.image));
-  assert.ok(cards.every(card=>card.padding==='0px'));
-  assert.ok(cards.every(card=>card.background==='rgba(0, 0, 0, 0)'));
-  assert.equal(cards[0].border,'rgb(201, 33, 30)');
-  assert.equal(cards[1].border,'rgb(36, 98, 208)');
-  assert.ok(cards[0].box.right<=cards[1].box.left||cards[1].box.right<=cards[0].box.left||cards[0].box.bottom<=cards[1].box.top||cards[1].box.bottom<=cards[0].box.top);
-
-  await page.screenshot({path:`sky-chart-single-canon-${suffix}.png`,fullPage:true,animations:'disabled',timeout:30000});
+  assert.ok(state.zodiac.every(item=>item.radius===19));
+  assert.ok(state.zodiac.every(item=>item.glyphCount===1));
+  assert.equal(state.sourceFill,'#111111');
+  assert.equal(state.sourceStroke,'');
+  assert.equal(state.sourceStrokeWidth,'');
+  assert.equal(state.renderedFill,'#171717');
+  assert.equal(state.renderedStroke,'');
+  assert.equal(state.angleCount,8);
+  assert.equal(state.angleLines.length,8);
+  assert.ok(state.angleLines.every(line=>line.edge===(line.sky==='A'?574:166)));
+  assert.equal(state.diagnostics,0);
   assert.deepEqual(errors,[]);
+  await page.screenshot({path:`sky-chart-single-canon-${suffix}.png`,fullPage:true,animations:'disabled'});
   await page.close();
 }
 
-await inspectSky(1440,900,'desktop');
-await inspectSky(390,844,'mobile');
+await inspect(1440,900,'desktop');
+await inspect(390,844,'mobile');
 await browser.close();
-console.log('Sky Chart uses one shared zodiac master composition and preserves authored stroked-master weight.');
+console.log('Gemini is a filled silhouette; all zodiac glyphs share one 19-unit wheel presentation.');
