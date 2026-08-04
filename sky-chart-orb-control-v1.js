@@ -9,13 +9,26 @@
   let wheelIndexes=null;
 
   function orbFromRow(row){
-    const explicit=Number(row.dataset.orb);
+    const explicit=Number(row.dataset.orb ?? row.dataset.sourceOrb);
     if(Number.isFinite(explicit))return explicit;
     const match=String(row.getAttribute('aria-label')||'').match(/orb\s+([0-9]+(?:\.[0-9]+)?)/i);
     if(!match)return NaN;
     const value=Number(match[1]);
     row.dataset.orb=String(value);
     return value;
+  }
+
+  function setSvgVisibility(node,visible){
+    node.hidden=!visible;
+    node.classList.toggle('sky-chart-orb-hidden',!visible);
+    node.setAttribute('aria-hidden',visible?'false':'true');
+    if(visible){
+      node.style.removeProperty('display');
+      node.style.removeProperty('pointer-events');
+    }else{
+      node.style.setProperty('display','none','important');
+      node.style.setProperty('pointer-events','none','important');
+    }
   }
 
   function apply(){
@@ -28,26 +41,38 @@
     input.setCustomValidity(valid?'':'Enter an orb from 0 to 360 degrees.');
     if(!valid)return;
 
-    document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{
+    const visibleIndexes=new Set();
+    const rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')];
+    rows.forEach(row=>{
       const orb=orbFromRow(row);
       const hiddenByOrb=Number.isFinite(orb)&&orb>limit;
       const hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
+      const hiddenByOther=row.classList.contains('sky-chart-filter-hidden')||
+        row.classList.contains('sky-chart-multiselect-hidden')||
+        row.classList.contains('sky-chart-house-multiselect-hidden')||
+        row.classList.contains('sky-chart-aspect-multiselect-hidden')||
+        row.classList.contains('sky-foundation-single-sky-cross-hidden');
+      const visible=!hiddenByOrb&&!hiddenByWheel&&!hiddenByOther;
       row.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);
-      row.hidden=row.classList.contains('sky-chart-filter-hidden')||hiddenByOrb||hiddenByWheel;
-      row.setAttribute('aria-hidden',row.hidden?'true':'false');
-      document.querySelectorAll(`[data-layer="aspects"] [data-relation-index="${row.dataset.relationIndex}"]`).forEach(node=>{
-        node.classList.toggle('sky-chart-orb-hidden',hiddenByOrb);
-        node.hidden=hiddenByOrb;
-        node.setAttribute('aria-hidden',hiddenByOrb?'true':'false');
-      });
+      row.hidden=!visible;
+      row.setAttribute('aria-hidden',visible?'false':'true');
+      if(visible)visibleIndexes.add(String(row.dataset.relationIndex));
     });
 
-    const rows=[...document.querySelectorAll('.sky-foundation-relationship-row')];
-    const visible=rows.filter(row=>!row.hidden).length;
+    document.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect[data-relation-index]').forEach(line=>{
+      setSvgVisibility(line,visibleIndexes.has(String(line.dataset.relationIndex)));
+    });
+
+    const visible=visibleIndexes.size;
     const count=document.getElementById('skyFoundationRelationshipCount');
     if(count)count.textContent=`${visible}/${rows.length}`;
     const empty=document.getElementById('skyFoundationRelationshipEmpty');
     if(empty)empty.hidden=visible!==0;
+
+    document.documentElement.dataset.skyOrbVisibleRows=String(visible);
+    document.documentElement.dataset.skyOrbVisibleLines=String(
+      document.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect[data-relation-index]:not([aria-hidden="true"])').length
+    );
   }
 
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(apply)}
@@ -82,7 +107,12 @@
       wheelIndexes=event.detail?.state?.mode==='selected'?new Set((event.detail.relationshipIndexes||[]).map(String)):null;
       schedule();
     });
-    window.addEventListener('relphi:selected-relationship-rendered',schedule);
+    [
+      'relphi:sky-placement-multiselect-changed',
+      'relphi:sky-house-multiselect-changed',
+      'relphi:sky-aspect-multiselect-changed',
+      'relphi:selected-relationship-rendered'
+    ].forEach(name=>window.addEventListener(name,schedule));
     document.getElementById('skyFoundationRelationships')?.addEventListener('change',schedule);
   }
 
