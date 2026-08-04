@@ -155,9 +155,6 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   }
   #skyFoundationWheelMount { min-height:300px; padding:4px; }
 
-  /* Mobile compensates for the whole 1200-unit wheel being reduced to a narrow
-     viewport. Each finished canonical object is scaled atomically; its authored
-     internal geometry and whitespace are not refitted. */
   #skyFoundationWheelMount .sky-foundation-aspect {
     stroke-width:1.05;
     opacity:.52;
@@ -166,14 +163,16 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
     font-size:22px;
     font-weight:800;
   }
-  #skyFoundationWheelMount [data-layer="placements"] > g[data-placement]:not([data-angle-axis="true"]) {
-    transform-box:fill-box;
-    transform-origin:center;
-    scale:1.34;
+
+  /* Scale only the finished canonical object at its local origin. Never scale
+     the positioned host group: doing so multiplies its translate coordinates
+     and pushes the glyph outside the wheel. */
+  #skyFoundationWheelMount [data-layer="placements"] > g[data-placement]:not([data-angle-axis="true"]) > .relphi-glyph-bubble {
+    transform:scale(1.28);
+    transform-origin:0 0;
   }
-  #skyFoundationWheelMount .sky-foundation-sign-glyph {
-    transform-box:fill-box;
-    transform-origin:center;
-    scale:1.32;
+  #skyFoundationWheelMount .sky-foundation-sign-glyph > .relphi-glyph-bubble {
+    transform:scale(1.24);
+    transform-origin:0 0;
   }
 }
