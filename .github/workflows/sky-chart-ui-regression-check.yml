@@ -17,6 +17,7 @@ on:
       - 'assets/element-glyphs/**'
       - 'assets/aspect-glyphs/**'
       - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-angle-extreme-placement-v1.js'
       - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-selected-relationship-v3.js'
       - 'tests/sky-chart-canonical-master-contract.test.mjs'
@@ -48,6 +49,7 @@ jobs:
           node --check relphi-glyph-source-integrity-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
           node --check sky-chart-foundation-v1.js
+          node --check sky-chart-angle-extreme-placement-v1.js
           node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-selected-relationship-v3.js
           node --check tests/sky-chart-canonical-master-contract.test.mjs
