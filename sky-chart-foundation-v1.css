@@ -126,6 +126,13 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-leader { fill:none; stroke-width:1.45; stroke-linecap:round; vector-effect:non-scaling-stroke; }
 .sky-foundation-aspect { stroke-width:2.1; stroke-linecap:round; opacity:.62; vector-effect:non-scaling-stroke; }
 
+/* Zodiac signs use the canonical Without circles presentation. The circle is
+   excluded from paint while the canonical master frame, whitespace, fitting,
+   centering, and glyph geometry remain unchanged. */
+[data-layer="zodiac"] .sky-foundation-sign-glyph > .relphi-glyph-bubble > circle {
+  display:none !important;
+}
+
 @media(max-width:1120px) {
   #skyFoundationRoot {
     grid-template-columns:minmax(195px,230px) minmax(460px,1fr) minmax(195px,230px);
