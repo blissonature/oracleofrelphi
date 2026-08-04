@@ -3,8 +3,7 @@
     "page": "https://oracleofrelphi.com/glyphs-unified-preview.html",
     "commit": "0d56ee7ec0ea0fc3e44debcb809afde09f3271ab"
   },
-  "files": {
-    "glyphs-unified-preview.html": "2a4b13d51a3bf20e384065501982f6f4074724cc",
+  "runtime_files": {
     "relphi-glyph-registry-v1.js": "da015a6e1a220ec468bba3b168461029e3a2ecd2",
     "relphi-glyph-component-v1.js": "829e6e560e9755d1fca4c7387cf92c3090856a61",
     "assets/planet-glyphs/sun.svg": "12b9c00c84ec33167455d629965aa87ec9cc9542",
