@@ -5,28 +5,18 @@ on:
     paths:
       - 'glyphs-unified-preview.html'
       - 'sky-chart.html'
-      - 'assets/planet-glyphs/neptune.svg'
+      - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
-      - 'relphi-glyph-canon-binding-v1.js'
-      - 'relphi-glyph-atomic-loader-v1.js'
+      - 'relphi-glyph-source-integrity-v1.js'
       - 'relphi-glyph-copy-serializer-v1.js'
-      - 'sky-chart-angle-placements-v1.js'
+      - 'assets/planet-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'assets/aspect-glyphs/**'
       - 'sky-chart-foundation-v1.js'
-      - 'sky-chart-glyph-audit-v1.js'
-      - 'sky-chart-live-integrity-v1.js'
-      - 'sky-chart-final-pass-v2.js'
-      - 'sky-chart-heptagram-refresh-stability-v1.js'
-      - 'sky-chart-heptagram-geometry-v1.js'
-      - 'sky-chart-heptagram-canonical-v1.js'
-      - 'sky-chart-selected-relationship-v2.js'
       - 'sky-chart-selected-relationship-v3.js'
-      - 'sky-chart-selected-relationship-commit-v1.js'
-      - 'sky-chart-selected-relationship-simple-v1.css'
-      - 'sky-chart-selected-relationship-atomic-v1.css'
-      - 'sky-chart-selected-relationship-scroll-lock-v1.js'
-      - 'sky-chart-filter-control-unified-v1.css'
       - 'tests/sky-chart-canonical-master-contract.test.mjs'
-      - 'tests/sky-chart-atomic-glyphs-and-scroll.mjs'
+      - 'tests/sky-chart-single-canon-browser.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-stability-now.mjs'
       - '.github/workflows/sky-chart-ui-regression-check.yml'
@@ -39,29 +29,24 @@ concurrency:
 jobs:
   ui-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check canonical contract and JavaScript syntax
+      - name: Check approved source and JavaScript syntax
         run: |
-          node --check relphi-glyph-canon-binding-v1.js
-          node --check relphi-glyph-atomic-loader-v1.js
+          node --check relphi-glyph-registry-v1.js
+          node --check relphi-glyph-component-v1.js
+          node --check relphi-glyph-source-integrity-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
-          node --check sky-chart-angle-placements-v1.js
           node --check sky-chart-foundation-v1.js
-          node --check sky-chart-glyph-audit-v1.js
-          node --check sky-chart-live-integrity-v1.js
-          node --check sky-chart-final-pass-v2.js
-          node --check sky-chart-heptagram-refresh-stability-v1.js
-          node --check sky-chart-heptagram-geometry-v1.js
-          node --check sky-chart-heptagram-canonical-v1.js
-          node --check sky-chart-selected-relationship-commit-v1.js
-          node --check sky-chart-selected-relationship-scroll-lock-v1.js
+          node --check sky-chart-selected-relationship-v3.js
           node --check tests/sky-chart-canonical-master-contract.test.mjs
-          node --check tests/sky-chart-atomic-glyphs-and-scroll.mjs
+          node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-stability-now.mjs
           node tests/sky-chart-canonical-master-contract.test.mjs
@@ -72,15 +57,19 @@ jobs:
       - name: Run focused browser regressions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-ui-regression-server.log 2>&1 &
+          node tests/sky-chart-single-canon-browser.mjs
           node tests/sky-chart-filter-control-unified.mjs
-          node tests/sky-chart-atomic-glyphs-and-scroll.mjs
           node tests/sky-chart-stability-now.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: sky-chart-ui-regression-screenshots
           path: |
+            glyph-canon-source-audit.json
+            master-glyph-list-desktop.png
+            master-glyph-list-mobile.png
+            sky-chart-single-canon-desktop.png
+            sky-chart-single-canon-mobile.png
             sky-chart-filter-controls-unified.png
-            sky-chart-atomic-glyphs-no-scroll.png
             sky-chart-stability-now.png
           if-no-files-found: ignore
