@@ -1,9 +1,11 @@
-// Normalize Asc., Desc., MC, and IC as first-class Sky Chart placements before rendering.
+// Normalize Ascendant, Descendant, Midheaven, and Imum Coeli as first-class
+// Sky Chart placements without replacing the Master Glyph List entries.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyAnglePlacementsV1) return;
+  if (window.__relphiSkyAnglePlacementsV2) return;
   window.__relphiSkyAnglePlacementsV1 = true;
+  window.__relphiSkyAnglePlacementsV2 = true;
 
   const KEYS = new Set(['relphiSkyChartA', 'relphiSkyChartB']);
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -13,26 +15,11 @@
     { id:'mc', key:'Midheaven', label:'MC', registry:'mc', aliases:['mc','midheaven','medium coeli'] },
     { id:'ic', key:'IC', label:'IC', registry:'ic', aliases:['ic','imum coeli','imumcoeli'] }
   ]);
-  const ASSETS = Object.freeze({
-    asc:'assets/angle-glyphs/asc.svg',
-    dsc:'assets/angle-glyphs/dsc.svg',
-    mc:'assets/angle-glyphs/mc.svg',
-    ic:'assets/angle-glyphs/ic.svg'
-  });
   const originalSetItem = Storage.prototype.setItem;
   let decorating = false;
 
   const norm = value => ((Number(value) % 360) + 360) % 360;
   const normalizeKey = value => String(value || '').trim().toLowerCase().replace(/[._-]+/g, ' ').replace(/\s+/g, ' ');
-
-  function patchRegistryAssets() {
-    const registry = window.RelphiGlyphRegistry;
-    if (!registry) return;
-    Object.entries(ASSETS).forEach(([id, asset]) => {
-      const entry = registry.get(id);
-      if (entry) entry.asset = asset;
-    });
-  }
 
   function longitude(value) {
     if (Number.isFinite(Number(value))) return norm(value);
@@ -69,8 +56,7 @@
 
   function directNumber(payload, names) {
     const profile = payload?.calcProfile && typeof payload.calcProfile === 'object' ? payload.calcProfile : {};
-    const sources = [profile, payload?.profile, payload?.angles, payload];
-    for (const source of sources) {
+    for (const source of [profile, payload?.profile, payload?.angles, payload]) {
       if (!source || typeof source !== 'object') continue;
       for (const name of names) {
         const result = longitude(source[name]);
@@ -117,11 +103,11 @@
       const index = payload.placements.findIndex(item => angle.aliases.includes(normalizeKey(item?.name || item?.label || item?.id || item?.glyphId)));
       if (index >= 0) payload.placements[index] = Object.assign({}, payload.placements[index], placement);
       else payload.placements.push(placement);
-    } else {
-      const matchingKey = Object.keys(payload.placements).find(key => angle.aliases.includes(normalizeKey(key)));
-      const key = matchingKey || angle.key;
-      payload.placements[key] = Object.assign({}, payload.placements[key] || {}, placement);
+      return;
     }
+    const matchingKey = Object.keys(payload.placements).find(key => angle.aliases.includes(normalizeKey(key)));
+    const key = matchingKey || angle.key;
+    payload.placements[key] = Object.assign({}, payload.placements[key] || {}, placement);
   }
 
   function normalizePayload(payload) {
@@ -151,18 +137,14 @@
     return payload;
   }
 
-  function normalizeStored(key, raw) {
-    try {
-      const parsed = JSON.parse(raw);
-      return JSON.stringify(normalizePayload(parsed));
-    } catch (_) {
-      return raw;
-    }
+  function normalizeStored(raw) {
+    try { return JSON.stringify(normalizePayload(JSON.parse(raw))); }
+    catch (_) { return raw; }
   }
 
   Storage.prototype.setItem = function (key, value) {
     if (this === localStorage && KEYS.has(String(key))) {
-      return originalSetItem.call(this, key, normalizeStored(String(key), String(value)));
+      return originalSetItem.call(this, key, normalizeStored(String(value)));
     }
     return originalSetItem.call(this, key, value);
   };
@@ -171,7 +153,7 @@
     KEYS.forEach(key => {
       const raw = localStorage.getItem(key);
       if (!raw) return;
-      const normalized = normalizeStored(key, raw);
+      const normalized = normalizeStored(raw);
       if (normalized !== raw) originalSetItem.call(localStorage, key, normalized);
     });
   }
@@ -217,7 +199,6 @@
     }
   }
 
-  patchRegistryAssets();
   normalizeExistingStorage();
 
   function start() {
