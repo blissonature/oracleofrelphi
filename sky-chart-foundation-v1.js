@@ -42,14 +42,15 @@
     frameRadius:19,
     frameStrokeWidth:2.35,
     minimumClearance:6,
-    lineGap:15,
+    lineGap:17,
+    lineSegmentLength:12,
     lanes:Object.freeze({
       A:Object.freeze([540,522,504]),
       B:Object.freeze([202,220,238])
     }),
     lineBands:Object.freeze({
-      A:Object.freeze({start:500,end:570,extreme:'outer'}),
-      B:Object.freeze({start:170,end:242,extreme:'inner'})
+      A:Object.freeze({start:516,end:568,extreme:'outer'}),
+      B:Object.freeze({start:174,end:228,extreme:'inner'})
     })
   });
 
@@ -457,15 +458,17 @@
 
       const lineBand = ANGLE_LAYOUT.lineBands[slot];
       const beforeEnd = chosen.radius - ANGLE_LAYOUT.lineGap;
+      const beforeStart = Math.max(lineBand.start,beforeEnd - ANGLE_LAYOUT.lineSegmentLength);
       const afterStart = chosen.radius + ANGLE_LAYOUT.lineGap;
+      const afterEnd = Math.min(lineBand.end,afterStart + ANGLE_LAYOUT.lineSegmentLength);
       const attrs = {
         stroke:SKY[slot],class:'sky-foundation-angle-axis','stroke-width':'2.6',
         'vector-effect':'non-scaling-stroke','data-sky':slot,'data-angle':record.id,
         'data-exact-longitude':record.value.toFixed(8),'data-angle-lane':chosen.radius,
         'data-axis-extreme':lineBand.extreme
       };
-      if (beforeEnd > lineBand.start) radialLine(layers.leaders,lineBand.start,beforeEnd,record.value,attrs);
-      if (afterStart < lineBand.end) radialLine(layers.leaders,afterStart,lineBand.end,record.value,attrs);
+      if (beforeEnd > beforeStart) radialLine(layers.leaders,beforeStart,beforeEnd,record.value,attrs);
+      if (afterEnd > afterStart) radialLine(layers.leaders,afterStart,afterEnd,record.value,attrs);
 
       const host = svg('g',{
         transform:`translate(${chosen.point.x} ${chosen.point.y})`,
