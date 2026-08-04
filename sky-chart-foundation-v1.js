@@ -158,10 +158,19 @@
   }
 
   function coordinate(record) {
+    const item = record.item || {};
+    const explicitSign = SIGNS.indexOf(String(item.sign || item.zodiac || '').trim().toLowerCase());
+    const explicitDegree = Number(item.degree ?? item.degrees);
+    const explicitMinute = Number(item.minute ?? item.minutes);
+    if (explicitSign >= 0 && Number.isFinite(explicitDegree) && Number.isFinite(explicitMinute)) {
+      const degree = Math.max(0, Math.min(29, Math.trunc(explicitDegree)));
+      const minute = Math.max(0, Math.min(59, Math.trunc(explicitMinute)));
+      return { sign:explicitSign, text:`${degree}°${String(minute).padStart(2,'0')}′` };
+    }
     const sign = Math.floor(record.value / 30);
     const within = record.value - sign * 30;
     const degree = Math.floor(within);
-    const minute = Math.round((within - degree) * 60) % 60;
+    const minute = Math.floor((within - degree) * 60 + 1e-9);
     return { sign, text:`${degree}°${String(minute).padStart(2,'0')}′` };
   }
 
