@@ -35,6 +35,7 @@ async function inspectSky(width,height,suffix){
   await page.waitForSelector('#skyFoundationA .sky-foundation-row');
   await page.waitForSelector('[data-layer="placements"] > g[data-sky="A"]');
   await page.waitForFunction(()=>document.documentElement.dataset.relphiGlyphSourceIntegrity==='approved');
+  await page.waitForFunction(()=>document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]').length===8);
 
   const state=await page.evaluate(async()=>{
     window.RelphiGlyphSourceIntegrity.assert('browser-test');
@@ -46,6 +47,7 @@ async function inspectSky(width,height,suffix){
     const angles=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')).map(host=>{
       const root=host.querySelector(':scope > .relphi-glyph-bubble');
       const circle=root?.querySelector(':scope > circle');
+      const lines=Array.from(document.querySelectorAll(`[data-layer="leaders"] .sky-foundation-angle-axis[data-sky="${host.dataset.sky}"][data-angle="${host.dataset.placement}"]`));
       return{
         id:host.dataset.placement,
         sky:host.dataset.sky,
@@ -55,9 +57,14 @@ async function inspectSky(width,height,suffix){
         circlePresentation:root?.dataset.circlePresentation||'',
         transform:root?.querySelector('.relphi-canonical-glyph')?.getAttribute('transform')||'',
         exact:host.dataset.angleLongitude||'',
-        lineCount:document.querySelectorAll(`[data-layer="leaders"] .sky-foundation-angle-axis[data-sky="${host.dataset.sky}"][data-angle="${host.dataset.placement}"]`).length
+        lineCount:lines.length,
+        extreme:host.dataset.angleExtreme||'',
+        lane:Number(host.dataset.angleLane),
+        lineExtremes:lines.map(line=>line.dataset.axisExtreme||'')
       };
     });
+    const geminiArt=document.querySelector('[data-layer="zodiac"] .relphi-glyph-gemini');
+    const geminiHost=geminiArt?.parentElement;
     const neptunes=Array.from(document.querySelectorAll('.relphi-glyph-neptune')).map(art=>art.querySelector('path')?.getAttribute('d')||'');
     const nodes=Object.fromEntries(['north-node','south-node'].map(id=>[id,Array.from(document.querySelectorAll(`.relphi-glyph-${id}`)).map(textOf)]));
     const scripts=Array.from(document.scripts).map(script=>script.getAttribute('src')||'').filter(Boolean);
@@ -67,8 +74,13 @@ async function inspectSky(width,height,suffix){
       apiSourcePage:window.RelphiGlyphSourceIntegrity.sourcePage,
       registryScripts:scripts.filter(src=>src.includes('relphi-glyph-registry-v1.js')).length,
       componentScripts:scripts.filter(src=>src.includes('relphi-glyph-component-v1.js')).length,
+      extremePlacementScripts:scripts.filter(src=>src.includes('sky-chart-angle-extreme-placement-v1.js')).length,
       competingScripts:scripts.filter(src=>/(canon-binding|atomic-loader|neptune-cross|moon-stroke|glyph-framing|glyph-size-guard|live-integrity|e9344099|unified-marker)/.test(src)),
       angles,angleExpected,neptunes,nodes,sourceNeptune,
+      angleDiagnostics:document.querySelectorAll('[data-angle-collision-error],[data-canonical-glyph-error]').length,
+      angleCollisionState:document.querySelector('.sky-foundation-wheel')?.dataset.angleCollisionState||'',
+      geminiTransform:geminiHost?.getAttribute('transform')||'',
+      geminiPresentation:geminiHost?.dataset.geminiPresentation||'',
       neptuneRegistry:window.RelphiGlyphRegistry.get('neptune')?.asset||'',
       ledgerGlyphs:document.querySelectorAll('.sky-foundation-ledger .relphi-canonical-glyph').length
     };
@@ -79,8 +91,11 @@ async function inspectSky(width,height,suffix){
   assert.equal(state.sourceCommit,APPROVED_COMMIT);
   assert.equal(state.registryScripts,1);
   assert.equal(state.componentScripts,1);
+  assert.equal(state.extremePlacementScripts,1);
   assert.deepEqual(state.competingScripts,[]);
   assert.ok(state.ledgerGlyphs>=30);
+  assert.equal(state.angleDiagnostics,0);
+  assert.equal(state.angleCollisionState,'resolved');
   assert.equal(state.angles.length,8);
   for(const slot of ['A','B']) assert.deepEqual(state.angles.filter(item=>item.sky===slot).map(item=>item.id).sort(),['asc','dsc','ic','mc']);
   for(const angle of state.angles){
@@ -91,7 +106,12 @@ async function inspectSky(width,height,suffix){
     assert.ok(!/rotate\s*\(/i.test(angle.transform));
     assert.ok(angle.exact);
     assert.equal(angle.lineCount,2);
+    assert.equal(angle.extreme,angle.sky==='A'?'outer':'inner');
+    assert.ok(angle.sky==='A'?angle.lane>=504:angle.lane<=238);
+    assert.ok(angle.lineExtremes.every(value=>value===angle.extreme));
   }
+  assert.match(state.geminiTransform,/scale\(1\.32\)/);
+  assert.equal(state.geminiPresentation,'enlarged-for-wheel-legibility');
   assert.equal(state.neptuneRegistry,'assets/planet-glyphs/neptune.svg');
   assert.ok(state.sourceNeptune);
   assert.ok(state.neptunes.length>=3);
