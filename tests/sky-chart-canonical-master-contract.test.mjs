@@ -50,7 +50,7 @@ const integrity=read('relphi-glyph-source-integrity-v1.js');
 assert.equal((sky.match(/relphi-glyph-registry-v1\.js/g)||[]).length,1);
 assert.equal((sky.match(/relphi-glyph-component-v1\.js/g)||[]).length,1);
 assert.match(sky,/relphi-glyph-source-integrity-v1\.js/);
-assert.doesNotMatch(sky,/canon-binding|atomic-loader|neptune-cross|moon-stroke-preservation|glyph-framing|glyph-size-guard|live-integrity/i);
+assert.doesNotMatch(sky,/canon-binding|atomic-loader|neptune-cross|moon-stroke-preservation|glyph-framing|glyph-size-guard|live-integrity|angle-extreme-placement/i);
 
 assert.match(integrity,/https:\/\/oracleofrelphi\.com\/glyphs-unified-preview\.html/);
 assert.match(integrity,/0d56ee7ec0ea0fc3e44debcb809afde09f3271ab/);
@@ -62,8 +62,13 @@ assert.match(foundation,/frameRadius:19/);
 assert.match(foundation,/bubble\.circle\.style\.opacity\s*=\s*['"]0['"]/);
 assert.match(foundation,/bubble\.root\.dataset\.circlePresentation\s*=\s*['"]hidden-only['"]/);
 assert.match(foundation,/drawUncircledBubble\(host,record\.id/);
-assert.match(foundation,/data-angle-collision-error/);
-assert.match(foundation,/No legal canonical Angle lane/);
+assert.match(foundation,/A:Object\.freeze\(\[540,522,504\]\)/);
+assert.match(foundation,/B:Object\.freeze\(\[202,220,238\]\)/);
+assert.match(foundation,/extreme:'outer'/);
+assert.match(foundation,/extreme:'inner'/);
+assert.match(foundation,/data-axis-extreme/);
+assert.match(foundation,/id === 'gemini' \? 25 : 19/);
+assert.doesNotMatch(foundation,/data-angle-collision-error|ANGLE COLLISION|No legal canonical Angle lane/);
 assert.doesNotMatch(foundation,/assets\/angle-glyphs|VECTOR_GLYPHS|const\s+PATHS\s*=/);
 
 console.log('Permanent canonical page untouched; Sky Chart points to it and uses only the approved runtime files.');
