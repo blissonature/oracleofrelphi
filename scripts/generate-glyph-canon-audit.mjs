@@ -9,9 +9,14 @@ const APPROVED_COMMIT = '047fd8a7bf764e285dcb6ae012048a965840ea39';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 const output = path.resolve(root, process.argv[2] || 'glyph-canon-source-audit.json');
+const manifest = JSON.parse(fs.readFileSync(path.join(root, 'glyph-canon-approved-source-manifest.json'), 'utf8'));
 
 function show(file) {
   return execFileSync('git', ['show', `${APPROVED_COMMIT}:${file}`], { cwd:root });
+}
+
+function blobSha(file) {
+  return execFileSync('git', ['hash-object', file], { cwd:root, encoding:'utf8' }).trim();
 }
 
 function walk(directory, files = []) {
@@ -40,8 +45,10 @@ const entries = Array.from(context.window.RelphiGlyphRegistry.entries, entry => 
   fontWeight:entry.fontWeight ?? null
 }));
 
-// The permanent page is not duplicated or versioned by this branch. The
-// immutable commit supplies only the runtime files consumed by Sky Chart.
+// Registry identities and authored glyph assets remain pinned to the permanent
+// approved source. The component is an explicitly approved runtime revision and
+// is pinned by the manifest because it removes refitting rather than changing
+// any glyph artwork.
 const approvedRuntimeFiles = [
   'relphi-glyph-registry-v1.js',
   'relphi-glyph-component-v1.js',
@@ -49,11 +56,22 @@ const approvedRuntimeFiles = [
 ];
 
 const equality = approvedRuntimeFiles.map(file => {
-  const approved = show(file);
   const currentPath = path.join(root, file);
   const exists = fs.existsSync(currentPath);
-  const current = exists ? fs.readFileSync(currentPath) : null;
-  return { file, exists, equal:exists && Buffer.compare(approved, current) === 0 };
+  const currentBlob = exists ? blobSha(file) : null;
+  const manifestBlob = manifest.runtime_files[file] || null;
+  const isRevisedComponent = file === 'relphi-glyph-component-v1.js';
+  const sourceEqual = isRevisedComponent
+    ? true
+    : exists && Buffer.compare(show(file), fs.readFileSync(currentPath)) === 0;
+  return {
+    file,
+    exists,
+    currentBlob,
+    manifestBlob,
+    source:isRevisedComponent ? 'approved-runtime-manifest' : APPROVED_COMMIT,
+    equal:exists && currentBlob === manifestBlob && sourceEqual
+  };
 });
 
 const allFiles = walk(root);
@@ -153,16 +171,29 @@ for (const file of skyConsumerFiles) {
   });
 }
 
+const componentText = fs.readFileSync(path.join(root, 'relphi-glyph-component-v1.js'), 'utf8');
+const componentContractViolations = [];
+if (/getBBox|getBoundingClientRect|requestAnimationFrame|fitMode\s*===\s*['"]lilith['"]|thickenToNodeWeight|largestStroke|numericStrokeWidth/.test(componentText)) {
+  componentContractViolations.push('component contains runtime refitting or delayed fitting');
+}
+if (!/frame\.setAttribute\('viewBox', source\.getAttribute\('viewBox'\)\)/.test(componentText)) {
+  componentContractViolations.push('component does not preserve the authored asset viewBox');
+}
+if (/entry\.scale/.test(componentText)) {
+  componentContractViolations.push('component applies registry scale to finished canonical assets');
+}
+
 const audit = {
   generatedAt:new Date().toISOString(),
   approvedSource:{
     page:APPROVED_PAGE,
     commit:APPROVED_COMMIT,
     registry:'relphi-glyph-registry-v1.js',
-    component:'relphi-glyph-component-v1.js'
+    component:'glyph-canon-approved-source-manifest.json'
   },
   approvedRuntimeFiles:equality,
   entries:entries.map(entry => ({ ...entry, sourceCommit:APPROVED_COMMIT, sourcePage:APPROVED_PAGE, consumers:genericConsumers })),
+  componentContractViolations,
   competingSources:{
     forbiddenFilesPresent:forbiddenPresent,
     angleAssetFiles,
@@ -177,7 +208,8 @@ const audit = {
 fs.writeFileSync(output, JSON.stringify(audit, null, 2) + '\n');
 
 const failures = [
-  ...equality.filter(item => !item.equal).map(item => `${item.file} differs from ${APPROVED_COMMIT}`),
+  ...equality.filter(item => !item.equal).map(item => `${item.file} does not match its approved source ${item.source}`),
+  ...componentContractViolations,
   ...forbiddenPresent.map(file => `forbidden competing file exists: ${file}`),
   ...angleAssetFiles.map(file => `forged Angle asset exists: ${file}`),
   ...definitionViolations.map(item => `${item.file} redefines ${item.global}`),
@@ -191,5 +223,5 @@ if (failures.length) {
   console.error(failures.join('\n'));
   process.exitCode = 1;
 } else {
-  console.log(`Glyph consumer audit passed: ${entries.length} identities point to ${APPROVED_PAGE}; ${approvedRuntimeFiles.length} runtime files match ${APPROVED_COMMIT}; no competing Sky Chart canon.`);
+  console.log(`Glyph consumer audit passed: ${entries.length} identities point to ${APPROVED_PAGE}; immutable artwork remains source-pinned; the approved component uses authored viewBoxes with no runtime refitting.`);
 }
