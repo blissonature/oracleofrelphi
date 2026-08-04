@@ -55,7 +55,7 @@ assert.match(master,/relphi-glyph-canon-binding-v1\.js\?v=4/);
 assert.match(master,/relphi-glyph-atomic-loader-v1\.js\?v=7/);
 for(const file of [
   'assets/angle-glyphs/asc.svg','assets/angle-glyphs/dsc.svg','assets/angle-glyphs/mc.svg','assets/angle-glyphs/ic.svg',
-  'sky-chart-angle-glyph-fit-v1.js','relphi-neptune-cross-connection-v1.js'
+  'sky-chart-angle-glyph-fit-v1.js','relphi-neptune-cross-connection-v1.js','sky-chart-glyph-size-guard-v1.js'
 ]){
   assert.equal(fs.existsSync(path.join(root,file)),false,`${file} must not exist.`);
 }
