@@ -59,8 +59,9 @@
       if(visible)visibleIndexes.add(String(row.dataset.relationIndex));
     });
 
-    document.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect[data-relation-index]').forEach(line=>{
-      setSvgVisibility(line,visibleIndexes.has(String(line.dataset.relationIndex)));
+    document.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect').forEach(line=>{
+      const relationIndex=String(line.dataset.relationIndex||'');
+      setSvgVisibility(line,relationIndex!==''&&visibleIndexes.has(relationIndex));
     });
 
     const visible=visibleIndexes.size;
