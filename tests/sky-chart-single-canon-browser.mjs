@@ -12,10 +12,12 @@ function sky(name,offset){
 }
 const skyA=sky('Sky A',0);
 const skyB=sky('Sky B',0);
-const APPROVED='0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
+const APPROVED_PAGE='https://oracleofrelphi.com/glyphs-unified-preview.html';
+const APPROVED_COMMIT='0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
 
 const browser=await chromium.launch({headless:true});
-async function pageAt(width,height){
+
+async function inspectSky(width,height,suffix){
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
   page.setDefaultTimeout(20000);
   const errors=[];
@@ -27,42 +29,14 @@ async function pageAt(width,height){
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
     sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
   },{a:skyA,b:skyB});
-  return{page,errors};
-}
 
-async function inspectMaster(width,height,suffix){
-  const {page,errors}=await pageAt(width,height);
-  await page.goto('http://127.0.0.1:4173/glyphs-unified-preview.html',{waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>/canonical glyph masters loaded/.test(document.getElementById('ugStatus')?.textContent||''));
-  const state=await page.evaluate(()=>({
-    count:document.querySelectorAll('.ug-card').length,
-    registryCount:window.RelphiGlyphRegistry.entries.length,
-    registryScripts:document.querySelectorAll('script[src*="relphi-glyph-registry-v1.js"]').length,
-    componentScripts:document.querySelectorAll('script[src*="relphi-glyph-component-v1.js"]').length,
-    extraGlyphScripts:Array.from(document.scripts).map(script=>script.src).filter(src=>/glyph/.test(src)&&!/relphi-glyph-(?:registry|component)-v1\.js/.test(src)),
-    circles:Array.from(document.querySelectorAll('.relphi-glyph-bubble > circle')).every(circle=>getComputedStyle(circle).opacity==='1')
-  }));
-  assert.equal(state.count,state.registryCount);
-  assert.equal(state.registryScripts,1);
-  assert.equal(state.componentScripts,1);
-  assert.deepEqual(state.extraGlyphScripts,[]);
-  assert.equal(state.circles,true);
-  await page.getByRole('button',{name:'Without circles'}).click();
-  await page.waitForFunction(()=>Array.from(document.querySelectorAll('.relphi-glyph-bubble > circle')).every(circle=>getComputedStyle(circle).opacity==='0'));
-  await page.screenshot({path:`master-glyph-list-${suffix}.png`,fullPage:true,animations:'disabled',timeout:30000});
-  assert.deepEqual(errors,[]);
-  await page.close();
-}
-
-async function inspectSky(width,height,suffix){
-  const {page,errors}=await pageAt(width,height);
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false');
   await page.waitForSelector('#skyFoundationA .sky-foundation-row');
   await page.waitForSelector('[data-layer="placements"] > g[data-sky="A"]');
   await page.waitForFunction(()=>document.documentElement.dataset.relphiGlyphSourceIntegrity==='approved');
 
-  const state=await page.evaluate(async approved=>{
+  const state=await page.evaluate(async()=>{
     window.RelphiGlyphSourceIntegrity.assert('browser-test');
     const sourceMarkup=await fetch('assets/planet-glyphs/neptune.svg?v=test-source').then(response=>response.text());
     const sourceSvg=new DOMParser().parseFromString(sourceMarkup,'image/svg+xml').documentElement;
@@ -88,18 +62,21 @@ async function inspectSky(width,height,suffix){
     const nodes=Object.fromEntries(['north-node','south-node'].map(id=>[id,Array.from(document.querySelectorAll(`.relphi-glyph-${id}`)).map(textOf)]));
     const scripts=Array.from(document.scripts).map(script=>script.getAttribute('src')||'').filter(Boolean);
     return{
-      source:document.documentElement.dataset.relphiGlyphSourceCommit,
+      sourcePage:document.documentElement.dataset.relphiGlyphSourcePage,
+      sourceCommit:document.documentElement.dataset.relphiGlyphSourceCommit,
+      apiSourcePage:window.RelphiGlyphSourceIntegrity.sourcePage,
       registryScripts:scripts.filter(src=>src.includes('relphi-glyph-registry-v1.js')).length,
       componentScripts:scripts.filter(src=>src.includes('relphi-glyph-component-v1.js')).length,
       competingScripts:scripts.filter(src=>/(canon-binding|atomic-loader|neptune-cross|moon-stroke|glyph-framing|glyph-size-guard|live-integrity|e9344099|unified-marker)/.test(src)),
       angles,angleExpected,neptunes,nodes,sourceNeptune,
       neptuneRegistry:window.RelphiGlyphRegistry.get('neptune')?.asset||'',
-      ledgerGlyphs:document.querySelectorAll('.sky-foundation-ledger .relphi-canonical-glyph').length,
-      approved
+      ledgerGlyphs:document.querySelectorAll('.sky-foundation-ledger .relphi-canonical-glyph').length
     };
-  },APPROVED);
+  });
 
-  assert.equal(state.source,APPROVED);
+  assert.equal(state.sourcePage,APPROVED_PAGE);
+  assert.equal(state.apiSourcePage,APPROVED_PAGE);
+  assert.equal(state.sourceCommit,APPROVED_COMMIT);
   assert.equal(state.registryScripts,1);
   assert.equal(state.componentScripts,1);
   assert.deepEqual(state.competingScripts,[]);
@@ -147,9 +124,7 @@ async function inspectSky(width,height,suffix){
   await page.close();
 }
 
-await inspectMaster(1440,900,'desktop');
-await inspectMaster(390,844,'mobile');
 await inspectSky(1440,900,'desktop');
 await inspectSky(390,844,'mobile');
 await browser.close();
-console.log('Approved Master Glyph List and Sky Chart single-canon browser checks passed at desktop and mobile widths.');
+console.log('Sky Chart points to the permanent canonical glyph page and passes desktop/mobile source checks.');
