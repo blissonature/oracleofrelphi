@@ -6,7 +6,11 @@ on:
       - feature/sky-chart-canonical-glyph-coordinate-fix
     paths:
       - 'glyphs-unified-preview.html'
+      - 'glyphs.html'
+      - 'part1/sky-chart.html'
+      - 'part2/sky-chart.html'
       - 'sky-chart.html'
+      - 'glyph-canon-approved-source-manifest.json'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
       - 'relphi-glyph-source-integrity-v1.js'
@@ -16,6 +20,7 @@ on:
       - 'assets/element-glyphs/**'
       - 'assets/aspect-glyphs/**'
       - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-selected-relationship-v3.js'
       - 'scripts/generate-glyph-canon-audit.mjs'
       - 'tests/sky-chart-canonical-master-contract.test.mjs'
@@ -24,7 +29,11 @@ on:
   pull_request:
     paths:
       - 'glyphs-unified-preview.html'
+      - 'glyphs.html'
+      - 'part1/sky-chart.html'
+      - 'part2/sky-chart.html'
       - 'sky-chart.html'
+      - 'glyph-canon-approved-source-manifest.json'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
       - 'relphi-glyph-source-integrity-v1.js'
@@ -34,6 +43,7 @@ on:
       - 'assets/element-glyphs/**'
       - 'assets/aspect-glyphs/**'
       - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-selected-relationship-v3.js'
       - 'scripts/generate-glyph-canon-audit.mjs'
       - 'tests/sky-chart-canonical-master-contract.test.mjs'
@@ -63,6 +73,7 @@ jobs:
           node --check relphi-glyph-source-integrity-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
           node --check sky-chart-foundation-v1.js
+          node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-selected-relationship-v3.js
           node --check scripts/generate-glyph-canon-audit.mjs
           node --check tests/sky-chart-canonical-master-contract.test.mjs
