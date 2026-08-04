@@ -1,45 +1,64 @@
-// Sky Chart bindings to the authored Relphi glyph canon.
+// Bind consuming tools to the exact Master Glyph List contract.
 (function () {
   'use strict';
-  if (window.__relphiGlyphCanonBindingV1) return;
+  if (window.__relphiGlyphCanonBindingV4) return;
+
   const registry = window.RelphiGlyphRegistry;
   if (!registry) throw new Error('Relphi glyph registry must load before canon bindings.');
+
   window.__relphiGlyphCanonBindingV1 = true;
+  window.__relphiGlyphCanonBindingV2 = true;
+  window.__relphiGlyphCanonBindingV3 = true;
+  window.__relphiGlyphCanonBindingV4 = true;
 
-  function bindUnicode(id, character) {
-    const entry = registry.get(id);
-    if (!entry) throw new Error('Canonical glyph entry unavailable: ' + id);
-    entry.canonicalUnicode = character;
-    entry.copyUnicode = character;
-    entry.canonicalSource = `unicode:${character}`;
-  }
+  const MASTER_PAGE = 'glyphs-unified-preview.html';
+  const MASTER_STAGE_VIEW_BOX = '-32 -32 64 64';
 
-  function bindAuthoredAsset(id, asset) {
-    const entry = registry.get(id);
-    if (!entry) throw new Error('Canonical authored entry unavailable: ' + id);
-    entry.asset = asset;
-    entry.fallback = null;
-    entry.fitMode = 'canonical-viewbox';
-    entry.scale = 1;
-    entry.dx = 0;
-    entry.dy = 0;
-    entry.canonicalPreserveViewBox = true;
-    entry.canonicalRotation = 0;
-    entry.canonicalSource = asset;
-    entry.copyUnicode = '';
-  }
+  registry.entries.forEach(entry => {
+    // Do not replace or reinterpret the registry's identity, asset, fallback,
+    // fitting mode, scale, offset, weight, or orientation.
+    entry.canonicalMasterPage = MASTER_PAGE;
+    entry.canonicalCirclePresentation = 'same-master-opacity-toggle';
+    entry.canonicalIntentionalWhitespace = true;
 
-  bindUnicode('north-node', '☊');
-  bindUnicode('south-node', '☋');
+    if (entry.asset) {
+      // Asset-backed masters always load the one repository file named by the
+      // registry. Embedded copies and identity-specific rendering branches are
+      // not canonical sources.
+      entry.canonicalSource = entry.asset;
+      entry.canonicalSourceType = 'registry-asset-file';
+      entry.canonicalPreserveViewBox = true;
+    } else {
+      // Font/symbol entries are the exact component masters displayed by the
+      // Master Glyph List. Their 64x64 stage is part of the composition.
+      entry.canonicalSource = `${MASTER_PAGE}#${entry.id}`;
+      entry.canonicalSourceType = 'master-component-entry';
+      entry.canonicalMasterViewBox = MASTER_STAGE_VIEW_BOX;
+    }
+  });
 
-  // Four independent, upright, authored angle glyphs. Never synthesize one
-  // angle from another and never replace them with browser text.
-  bindAuthoredAsset('asc', 'assets/angle-glyphs/asc.svg');
-  bindAuthoredAsset('dsc', 'assets/angle-glyphs/dsc.svg');
-  bindAuthoredAsset('mc', 'assets/angle-glyphs/mc.svg');
-  bindAuthoredAsset('ic', 'assets/angle-glyphs/ic.svg');
+  const north = registry.get('north-node');
+  const south = registry.get('south-node');
+  if (north) north.copyUnicode = '☊';
+  if (south) south.copyUnicode = '☋';
 
-  // Use the current authored connected-trident asset directly in the atomic
-  // construction stage. No late Neptune wrapper may redraw or refit it.
-  bindAuthoredAsset('neptune', 'assets/planet-glyphs/neptune.svg');
+  const required = Object.freeze(Object.fromEntries(
+    ['neptune','asc','dsc','mc','ic','north-node','south-node'].map(id => {
+      const entry = registry.get(id);
+      if (!entry) throw new Error('Canonical Master Glyph List entry unavailable: ' + id);
+      return [id, Object.freeze({
+        source:entry.canonicalSource,
+        sourceType:entry.canonicalSourceType,
+        viewBox:entry.asset ? null : MASTER_STAGE_VIEW_BOX,
+        circlePresentation:'same-master-opacity-toggle',
+        intentionalWhitespace:true
+      })];
+    })
+  ));
+
+  window.RelphiCanonicalMasterContract = Object.freeze({
+    page:MASTER_PAGE,
+    stageViewBox:MASTER_STAGE_VIEW_BOX,
+    required
+  });
 })();
