@@ -3,11 +3,16 @@ name: Sky Chart UI regression check
 on:
   pull_request:
     paths:
+      - 'glyphs-unified-preview.html'
       - 'sky-chart.html'
+      - 'assets/planet-glyphs/neptune.svg'
       - 'relphi-glyph-component-v1.js'
       - 'relphi-glyph-canon-binding-v1.js'
       - 'relphi-glyph-atomic-loader-v1.js'
       - 'relphi-glyph-copy-serializer-v1.js'
+      - 'sky-chart-angle-placements-v1.js'
+      - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-live-integrity-v1.js'
       - 'sky-chart-final-pass-v2.js'
       - 'sky-chart-heptagram-refresh-stability-v1.js'
@@ -20,6 +25,7 @@ on:
       - 'sky-chart-selected-relationship-atomic-v1.css'
       - 'sky-chart-selected-relationship-scroll-lock-v1.js'
       - 'sky-chart-filter-control-unified-v1.css'
+      - 'tests/sky-chart-canonical-master-contract.test.mjs'
       - 'tests/sky-chart-atomic-glyphs-and-scroll.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-stability-now.mjs'
@@ -39,11 +45,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check JavaScript syntax
+      - name: Check canonical contract and JavaScript syntax
         run: |
           node --check relphi-glyph-canon-binding-v1.js
           node --check relphi-glyph-atomic-loader-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
+          node --check sky-chart-angle-placements-v1.js
+          node --check sky-chart-foundation-v1.js
+          node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-live-integrity-v1.js
           node --check sky-chart-final-pass-v2.js
           node --check sky-chart-heptagram-refresh-stability-v1.js
@@ -51,9 +60,11 @@ jobs:
           node --check sky-chart-heptagram-canonical-v1.js
           node --check sky-chart-selected-relationship-commit-v1.js
           node --check sky-chart-selected-relationship-scroll-lock-v1.js
+          node --check tests/sky-chart-canonical-master-contract.test.mjs
           node --check tests/sky-chart-atomic-glyphs-and-scroll.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-stability-now.mjs
+          node tests/sky-chart-canonical-master-contract.test.mjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
