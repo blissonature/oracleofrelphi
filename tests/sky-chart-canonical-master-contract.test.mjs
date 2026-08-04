@@ -52,8 +52,13 @@ assert.match(integrity,/0d56ee7ec0ea0fc3e44debcb809afde09f3271ab/);
 assert.doesNotMatch(integrity,/window\.RelphiGlyphComponent\s*=|window\.RelphiGlyphRegistry\s*=/);
 assert.match(foundation,/component\.draw\(parent, entry\.id, options\)/);
 assert.match(foundation,/component\.createBubble\(parent, entry\.id, options\)/);
+assert.match(foundation,/function drawUncircledBubble/);
+assert.match(foundation,/frameRadius:19/);
+assert.match(foundation,/bubble\.circle\.style\.opacity\s*=\s*['"]0['"]/);
+assert.match(foundation,/bubble\.root\.dataset\.circlePresentation\s*=\s*['"]hidden-only['"]/);
+assert.match(foundation,/drawUncircledBubble\(host,record\.id/);
 assert.match(foundation,/data-angle-collision-error/);
 assert.match(foundation,/No legal canonical Angle lane/);
 assert.doesNotMatch(foundation,/assets\/angle-glyphs|VECTOR_GLYPHS|const\s+PATHS\s*=/);
 
-console.log('Exact approved glyph sources, one registry, one component, no competing canon, and Sky Chart direct consumption passed.');
+console.log('Exact approved glyph sources, one registry, one component, approved hidden-circle Angle masters, no competing canon, and Sky Chart direct consumption passed.');
