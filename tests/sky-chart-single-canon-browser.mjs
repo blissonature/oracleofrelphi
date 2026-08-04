@@ -69,15 +69,21 @@ async function inspectSky(width,height,suffix){
     const sourceNeptune=sourceSvg.querySelector('path')?.getAttribute('d')||'';
     const textOf=art=>art?.matches?.('text')?art.textContent:(art?.querySelector('text')?.textContent||'');
     const angleExpected={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
-    const angles=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')).map(host=>({
-      id:host.dataset.placement,
-      sky:host.dataset.sky,
-      text:textOf(host.querySelector('.relphi-canonical-glyph')),
-      bubble:!!host.querySelector('.relphi-glyph-bubble'),
-      transform:host.querySelector('.relphi-canonical-glyph')?.getAttribute('transform')||'',
-      exact:host.dataset.angleLongitude||'',
-      lineCount:document.querySelectorAll(`[data-layer="leaders"] .sky-foundation-angle-axis[data-sky="${host.dataset.sky}"][data-angle="${host.dataset.placement}"]`).length
-    }));
+    const angles=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')).map(host=>{
+      const root=host.querySelector(':scope > .relphi-glyph-bubble');
+      const circle=root?.querySelector(':scope > circle');
+      return{
+        id:host.dataset.placement,
+        sky:host.dataset.sky,
+        text:textOf(root?.querySelector('.relphi-canonical-glyph')),
+        masterComposition:!!root,
+        circleOpacity:circle?Number(getComputedStyle(circle).opacity):null,
+        circlePresentation:root?.dataset.circlePresentation||'',
+        transform:root?.querySelector('.relphi-canonical-glyph')?.getAttribute('transform')||'',
+        exact:host.dataset.angleLongitude||'',
+        lineCount:document.querySelectorAll(`[data-layer="leaders"] .sky-foundation-angle-axis[data-sky="${host.dataset.sky}"][data-angle="${host.dataset.placement}"]`).length
+      };
+    });
     const neptunes=Array.from(document.querySelectorAll('.relphi-glyph-neptune')).map(art=>art.querySelector('path')?.getAttribute('d')||'');
     const nodes=Object.fromEntries(['north-node','south-node'].map(id=>[id,Array.from(document.querySelectorAll(`.relphi-glyph-${id}`)).map(textOf)]));
     const scripts=Array.from(document.scripts).map(script=>script.getAttribute('src')||'').filter(Boolean);
@@ -102,7 +108,9 @@ async function inspectSky(width,height,suffix){
   for(const slot of ['A','B']) assert.deepEqual(state.angles.filter(item=>item.sky===slot).map(item=>item.id).sort(),['asc','dsc','ic','mc']);
   for(const angle of state.angles){
     assert.equal(angle.text,state.angleExpected[angle.id]);
-    assert.equal(angle.bubble,false);
+    assert.equal(angle.masterComposition,true);
+    assert.equal(angle.circleOpacity,0);
+    assert.equal(angle.circlePresentation,'hidden-only');
     assert.ok(!/rotate\s*\(/i.test(angle.transform));
     assert.ok(angle.exact);
     assert.equal(angle.lineCount,2);
