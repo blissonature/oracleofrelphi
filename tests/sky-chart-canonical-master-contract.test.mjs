@@ -35,7 +35,7 @@ assert.deepEqual(audit.competingSources,{
 // changed by this PR.
 execFileSync('git',['diff','--quiet','origin/main','--','glyphs-unified-preview.html'],{cwd:root});
 
-for(const file of ['relphi-glyph-registry-v1.js','relphi-glyph-component-v1.js']){
+for(const file of ['relphi-glyph-registry-v1.js','relphi-glyph-component-v1.js','assets/zodiac-glyphs/gemini.svg']){
   assert.equal(Buffer.compare(fs.readFileSync(path.join(root,file)),show(file)),0,`${file} must exactly match ${APPROVED_COMMIT}.`);
 }
 for(const item of audit.approvedRuntimeFiles){
@@ -66,13 +66,14 @@ assert.match(foundation,/bubble\.root\.dataset\.circlePresentation\s*=\s*['"]hid
 assert.match(foundation,/drawUncircledBubble\(host,record\.id/);
 assert.match(foundation,/A:Object\.freeze\(\[540,522,504\]\)/);
 assert.match(foundation,/B:Object\.freeze\(\[202,220,238\]\)/);
-assert.match(foundation,/lineSegmentLength:12/);
-assert.match(foundation,/A:Object\.freeze\(\{start:516,end:568,extreme:'outer'\}\)/);
-assert.match(foundation,/B:Object\.freeze\(\{start:174,end:228,extreme:'inner'\}\)/);
-assert.match(foundation,/beforeEnd - ANGLE_LAYOUT\.lineSegmentLength/);
-assert.match(foundation,/afterStart \+ ANGLE_LAYOUT\.lineSegmentLength/);
-assert.match(foundation,/data-axis-extreme/);
-assert.match(foundation,/id === 'gemini' \? 25 : 19/);
+assert.match(foundation,/edgeRadius:Object\.freeze\(\{A:R\.aOut,B:R\.bIn\}\)/);
+assert.match(foundation,/extreme:Object\.freeze\(\{A:'outer',B:'inner'\}\)/);
+assert.match(foundation,/const edge = ANGLE_LAYOUT\.edgeRadius\[slot\]/);
+assert.match(foundation,/slot === 'A'[\s\S]*chosen\.radius \+ ANGLE_LAYOUT\.lineGap[\s\S]*chosen\.radius - ANGLE_LAYOUT\.lineGap/);
+assert.match(foundation,/radialLine\(layers\.leaders,lineStart,lineEnd,record\.value,attrs\)/);
+assert.match(foundation,/'data-axis-edge-radius':edge/);
+assert.doesNotMatch(foundation,/lineSegmentLength|lineBands|beforeEnd|afterStart/);
+assert.match(foundation,/id === 'gemini' \? 34 : 19/);
 assert.doesNotMatch(foundation,/data-angle-collision-error|ANGLE COLLISION|No legal canonical Angle lane/);
 assert.doesNotMatch(foundation,/assets\/angle-glyphs|VECTOR_GLYPHS|const\s+PATHS\s*=/);
 
