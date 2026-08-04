@@ -39,7 +39,7 @@
     'part of fortune':'part-of-fortune', pof:'part-of-fortune'
   };
   const ANGLE_LAYOUT = Object.freeze({
-    frameRadius:21,
+    frameRadius:19,
     frameStrokeWidth:2.35,
     minimumClearance:6,
     boundaryInset:4,
@@ -227,6 +227,19 @@
     const entry = registry?.get(id) || registry?.resolve(id);
     if (!masterAvailable(entry) || !component?.createBubble) throw new Error('Canonical Master Glyph List entry unavailable: ' + id);
     const bubble = component.createBubble(parent, entry.id, options);
+    await bubble.ready;
+    return bubble.root;
+  }
+
+  async function drawUncircledBubble(parent, id, options) {
+    const registry = window.RelphiGlyphRegistry;
+    const component = window.RelphiGlyphComponent;
+    const entry = registry?.get(id) || registry?.resolve(id);
+    if (!masterAvailable(entry) || !component?.createBubble) throw new Error('Canonical Master Glyph List entry unavailable: ' + id);
+    const bubble = component.createBubble(parent, entry.id, options);
+    bubble.circle.style.opacity = '0';
+    bubble.circle.setAttribute('aria-hidden','true');
+    bubble.root.dataset.circlePresentation = 'hidden-only';
     await bubble.ready;
     return bubble.root;
   }
@@ -474,9 +487,15 @@
       });
       layers.placements.appendChild(host);
       obstacles.push(chosen.candidate);
-      jobs.push(drawCanonical(host,record.id,{radius:ANGLE_LAYOUT.frameRadius,padding:1,color:SKY[slot],frameStrokeWidth:ANGLE_LAYOUT.frameStrokeWidth})
-        .then(() => { host.dataset.uncircledCanonical = 'true'; })
-        .catch(error => glyphFailure(host,error)));
+      jobs.push(drawUncircledBubble(host,record.id,{
+        radius:ANGLE_LAYOUT.frameRadius,
+        padding:1,
+        color:SKY[slot],
+        strokeWidth:ANGLE_LAYOUT.frameStrokeWidth
+      }).then(root => {
+        root.dataset.canonicalMaster = 'glyphs-unified-preview.html';
+        host.dataset.uncircledCanonical = 'true';
+      }).catch(error => glyphFailure(host,error)));
     }
 
     listA.filter(record => ANGLE_IDS.has(record.id)).forEach(record => placeAngle(record,'A',R.aIn,R.aOut,cuspsA));
