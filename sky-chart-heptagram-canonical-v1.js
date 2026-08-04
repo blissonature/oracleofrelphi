@@ -11,6 +11,7 @@
     venus:'#b23b79', mercury:'#277390', moon:'#58628a'
   };
   const WHITE = '#fff';
+  const DAY_RULER_STROKE = 5;
   const PAINTED = '[fill],[stroke],text';
 
   function keyFor(group) {
@@ -59,13 +60,15 @@
       fill:isHour ? COLORS[key] : WHITE
     });
     bubble.circle.setAttribute('stroke', COLORS[key]);
+    bubble.circle.setAttribute('stroke-width', String(isDay ? DAY_RULER_STROKE : 2.35));
     bubble.root.classList.add('sky-ph-canonical-bubble');
     bubble.root.dataset.planet = key;
-    bubble.root.dataset.presentation = isHour ? 'hour-ruler-inversion' : 'canonical-color';
+    bubble.root.dataset.presentation = isHour ? 'hour-ruler-inversion' : isDay ? 'day-ruler-emphasis' : 'canonical-color';
 
     if (isDay) {
       bubble.root.classList.add('is-day-ruler');
       group.classList.add('is-day-ruler');
+      bubble.circle.dataset.dayRuler = 'true';
     }
     if (isHour) {
       bubble.root.classList.add('is-hour-ruler');
