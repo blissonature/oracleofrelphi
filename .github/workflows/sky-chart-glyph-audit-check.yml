@@ -7,212 +7,83 @@ on:
     paths:
       - 'glyphs-unified-preview.html'
       - 'sky-chart.html'
-      - 'assets/planet-glyphs/neptune.svg'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
-      - 'relphi-glyph-canon-binding-v1.js'
-      - 'relphi-glyph-atomic-loader-v1.js'
-      - 'relphi-moon-stroke-preservation-v1.js'
-      - 'sky-chart-glyph-framing-v1.js'
-      - 'sky-chart-glyph-audit-v1.js'
-      - 'sky-chart-sky-colors-v1.js'
-      - 'sky-chart-angle-placements-v1.js'
-      - 'sky-chart-angle-placement-visibility-v1.js'
-      - 'sky-chart-angle-placement-visibility-v1.css'
-      - 'sky-chart-aspect-multiselect-v1.js'
-      - 'sky-chart-aspect-multiselect-v1.css'
-      - 'sky-chart-filter-event-stability-v1.js'
-      - 'sky-chart-filter-control-unified-v1.css'
-      - 'sky-chart-multiselect-filters-v1.js'
-      - 'sky-chart-multiselect-filters-v1.css'
-      - 'sky-chart-placement-compact-v1.js'
-      - 'sky-chart-placement-compact-v1.css'
-      - 'sky-chart-house-multiselect-v2.js'
-      - 'sky-chart-house-multiselect-v1.css'
-      - 'sky-chart-filter-neutral-final-v1.js'
-      - 'sky-chart-filter-neutral-final-v1.css'
-      - 'sky-chart-single-sky-aspects-v1.js'
-      - 'sky-chart-single-sky-aspects-v1.css'
-      - 'sky-chart-single-sky-presentation-v1.js'
+      - 'relphi-glyph-source-integrity-v1.js'
+      - 'relphi-glyph-copy-serializer-v1.js'
+      - 'assets/planet-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'assets/aspect-glyphs/**'
       - 'sky-chart-foundation-v1.js'
-      - 'sky-chart-foundation-interactions-v2.js'
-      - 'sky-chart-selected-relationship-v2.js'
       - 'sky-chart-selected-relationship-v3.js'
-      - 'sky-chart-selected-relationship-scroll-lock-v1.js'
-      - 'sky-chart-where-when-v1.js'
-      - 'sky-chart-heptagram-canonical-v1.js'
-      - 'sky-chart-heptagram-canonical-v1.css'
-      - 'sky-chart-live-integrity-v1.js'
+      - 'scripts/generate-glyph-canon-audit.mjs'
       - 'tests/sky-chart-canonical-master-contract.test.mjs'
-      - 'tests/sky-chart-atomic-glyphs-and-scroll.mjs'
-      - 'tests/sky-chart-filter-control-unified.mjs'
-      - 'tests/sky-chart-angles-and-aspects.mjs'
-      - 'tests/sky-chart-glyph-audit-final.mjs'
-      - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
-      - 'tests/sky-chart-placement-ledger-colors.mjs'
-      - 'tests/sky-chart-multiselect-filters.mjs'
-      - 'tests/sky-chart-placement-compact.mjs'
-      - 'tests/sky-chart-house-multiselect.mjs'
-      - 'tests/sky-chart-house-angle-support.mjs'
-      - 'tests/sky-chart-single-sky-aspects.mjs'
+      - 'tests/sky-chart-single-canon-browser.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   pull_request:
     paths:
       - 'glyphs-unified-preview.html'
       - 'sky-chart.html'
-      - 'assets/planet-glyphs/neptune.svg'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
-      - 'relphi-glyph-canon-binding-v1.js'
-      - 'relphi-glyph-atomic-loader-v1.js'
-      - 'relphi-moon-stroke-preservation-v1.js'
-      - 'sky-chart-glyph-framing-v1.js'
-      - 'sky-chart-glyph-audit-v1.js'
-      - 'sky-chart-sky-colors-v1.js'
-      - 'sky-chart-angle-placements-v1.js'
-      - 'sky-chart-angle-placement-visibility-v1.js'
-      - 'sky-chart-angle-placement-visibility-v1.css'
-      - 'sky-chart-aspect-multiselect-v1.js'
-      - 'sky-chart-aspect-multiselect-v1.css'
-      - 'sky-chart-filter-event-stability-v1.js'
-      - 'sky-chart-filter-control-unified-v1.css'
-      - 'sky-chart-multiselect-filters-v1.js'
-      - 'sky-chart-multiselect-filters-v1.css'
-      - 'sky-chart-placement-compact-v1.js'
-      - 'sky-chart-placement-compact-v1.css'
-      - 'sky-chart-house-multiselect-v2.js'
-      - 'sky-chart-house-multiselect-v1.css'
-      - 'sky-chart-filter-neutral-final-v1.js'
-      - 'sky-chart-filter-neutral-final-v1.css'
-      - 'sky-chart-single-sky-aspects-v1.js'
-      - 'sky-chart-single-sky-aspects-v1.css'
-      - 'sky-chart-single-sky-presentation-v1.js'
+      - 'relphi-glyph-source-integrity-v1.js'
+      - 'relphi-glyph-copy-serializer-v1.js'
+      - 'assets/planet-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'assets/aspect-glyphs/**'
       - 'sky-chart-foundation-v1.js'
-      - 'sky-chart-foundation-interactions-v2.js'
-      - 'sky-chart-selected-relationship-v2.js'
       - 'sky-chart-selected-relationship-v3.js'
-      - 'sky-chart-selected-relationship-scroll-lock-v1.js'
-      - 'sky-chart-where-when-v1.js'
-      - 'sky-chart-heptagram-canonical-v1.js'
-      - 'sky-chart-heptagram-canonical-v1.css'
-      - 'sky-chart-live-integrity-v1.js'
+      - 'scripts/generate-glyph-canon-audit.mjs'
       - 'tests/sky-chart-canonical-master-contract.test.mjs'
-      - 'tests/sky-chart-atomic-glyphs-and-scroll.mjs'
-      - 'tests/sky-chart-filter-control-unified.mjs'
-      - 'tests/sky-chart-angles-and-aspects.mjs'
-      - 'tests/sky-chart-glyph-audit-final.mjs'
-      - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
-      - 'tests/sky-chart-placement-ledger-colors.mjs'
-      - 'tests/sky-chart-multiselect-filters.mjs'
-      - 'tests/sky-chart-placement-compact.mjs'
-      - 'tests/sky-chart-house-multiselect.mjs'
-      - 'tests/sky-chart-house-angle-support.mjs'
-      - 'tests/sky-chart-single-sky-aspects.mjs'
+      - 'tests/sky-chart-single-canon-browser.mjs'
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   workflow_dispatch:
 
 concurrency:
-  group: sky-chart-audit-${{ github.event.pull_request.number || github.ref }}
+  group: sky-chart-single-canon-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  browser-audit:
+  single-canon-audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check canonical contract and JavaScript syntax
+      - name: Check exact approved source and syntax
         run: |
-          node --check relphi-glyph-canon-binding-v1.js
-          node --check relphi-glyph-atomic-loader-v1.js
-          node --check sky-chart-selected-relationship-scroll-lock-v1.js
-          node --check sky-chart-glyph-framing-v1.js
-          node --check sky-chart-glyph-audit-v1.js
-          node --check sky-chart-sky-colors-v1.js
-          node --check sky-chart-angle-placements-v1.js
-          node --check sky-chart-angle-placement-visibility-v1.js
+          node --check relphi-glyph-registry-v1.js
+          node --check relphi-glyph-component-v1.js
+          node --check relphi-glyph-source-integrity-v1.js
+          node --check relphi-glyph-copy-serializer-v1.js
           node --check sky-chart-foundation-v1.js
-          node --check sky-chart-aspect-multiselect-v1.js
-          node --check sky-chart-filter-event-stability-v1.js
-          node --check sky-chart-multiselect-filters-v1.js
-          node --check sky-chart-placement-compact-v1.js
-          node --check sky-chart-house-multiselect-v2.js
-          node --check sky-chart-filter-neutral-final-v1.js
-          node --check sky-chart-single-sky-aspects-v1.js
-          node --check sky-chart-single-sky-presentation-v1.js
-          node --check sky-chart-heptagram-canonical-v1.js
+          node --check sky-chart-selected-relationship-v3.js
+          node --check scripts/generate-glyph-canon-audit.mjs
           node --check tests/sky-chart-canonical-master-contract.test.mjs
-          node --check tests/sky-chart-atomic-glyphs-and-scroll.mjs
-          node --check tests/sky-chart-filter-control-unified.mjs
-          node --check tests/sky-chart-angles-and-aspects.mjs
-          node --check tests/sky-chart-glyph-audit-final.mjs
-          node --check tests/sky-chart-hour-ruler-and-sky-colors.mjs
-          node --check tests/sky-chart-placement-ledger-colors.mjs
-          node --check tests/sky-chart-multiselect-filters.mjs
-          node --check tests/sky-chart-placement-compact.mjs
-          node --check tests/sky-chart-house-multiselect.mjs
-          node --check tests/sky-chart-house-angle-support.mjs
-          node --check tests/sky-chart-single-sky-aspects.mjs
+          node --check tests/sky-chart-single-canon-browser.mjs
           node tests/sky-chart-canonical-master-contract.test.mjs
-      - name: Install browser dependencies
+      - name: Install Chromium
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
           npx playwright install --with-deps chromium
-      - name: Run complete Sky Chart browser audit
+      - name: Render and inspect approved canon
         run: |
-          python3 -m http.server 4173 > /tmp/sky-chart-glyph-audit-server.log 2>&1 &
-          status=0
-          (
-            node tests/sky-chart-atomic-glyphs-and-scroll.mjs
-            node tests/sky-chart-filter-control-unified.mjs
-            node tests/sky-chart-angles-and-aspects.mjs
-            node tests/sky-chart-multiselect-filters.mjs
-            node tests/sky-chart-placement-compact.mjs
-          ) & group_one=$!
-          (
-            node tests/sky-chart-house-multiselect.mjs
-            node tests/sky-chart-house-angle-support.mjs
-            node tests/sky-chart-single-sky-aspects.mjs
-          ) & group_two=$!
-          (
-            node tests/sky-chart-glyph-audit-final.mjs
-            node tests/sky-chart-hour-ruler-and-sky-colors.mjs
-            node tests/sky-chart-placement-ledger-colors.mjs
-          ) & group_three=$!
-          wait "$group_one" || status=1
-          wait "$group_two" || status=1
-          wait "$group_three" || status=1
-          exit "$status"
+          python3 -m http.server 4173 > /tmp/sky-chart-single-canon-server.log 2>&1 &
+          node tests/sky-chart-single-canon-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: sky-chart-glyph-audit-screenshots
+          name: sky-chart-single-canon-audit
           path: |
-            sky-chart-atomic-glyphs-no-scroll.png
-            sky-chart-filter-controls-unified.png
-            sky-chart-aspect-multiselect-desktop.png
-            sky-chart-aspect-multiselect-mobile.png
-            sky-chart-angle-placements-desktop.png
-            sky-chart-multiselect-filters-desktop.png
-            sky-chart-multiselect-filters-mobile.png
-            sky-chart-placement-compact-desktop.png
-            sky-chart-placement-compact-mobile.png
-            sky-chart-house-multiselect-desktop.png
-            sky-chart-house-multiselect-mobile.png
-            sky-chart-house-angle-support-desktop.png
-            sky-chart-house-angle-support-mobile.png
-            sky-chart-single-sky-a-aspects-desktop.png
-            sky-chart-single-sky-a-aspects-mobile.png
-            sky-chart-glyph-audit-desktop.png
-            sky-chart-glyph-audit-mobile.png
-            sky-chart-hour-ruler-and-sky-colors-desktop.png
-            sky-chart-hour-ruler-and-sky-colors-mobile.png
-            sky-chart-sky-a-card-colors.png
-            sky-chart-sky-b-card-colors.png
-            sky-chart-sky-a-placement-ledger-red.png
-            sky-chart-sky-b-placement-ledger-blue.png
-            sky-chart-placement-ledgers-red-blue.png
-          if-no-files-found: ignore
+            glyph-canon-source-audit.json
+            master-glyph-list-desktop.png
+            master-glyph-list-mobile.png
+            sky-chart-single-canon-desktop.png
+            sky-chart-single-canon-mobile.png
+          if-no-files-found: error
