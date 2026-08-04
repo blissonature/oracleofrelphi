@@ -13,7 +13,6 @@ function sky(name,offset){
 const skyA=sky('Sky A',0);
 const skyB=sky('Sky B',0);
 const APPROVED='0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
-const NEPTUNE='M12 17L17 11L22 17M17 11V34C17 49 29 60 44 62M78 17L83 11L88 17M83 11V34C83 49 71 60 56 62M45 17L50 11L55 17M50 11V88M37 75H63';
 
 const browser=await chromium.launch({headless:true});
 async function pageAt(width,height){
@@ -63,8 +62,11 @@ async function inspectSky(width,height,suffix){
   await page.waitForSelector('[data-layer="placements"] > g[data-sky="A"]');
   await page.waitForFunction(()=>document.documentElement.dataset.relphiGlyphSourceIntegrity==='approved');
 
-  const state=await page.evaluate(({approved,neptune})=>{
+  const state=await page.evaluate(async approved=>{
     window.RelphiGlyphSourceIntegrity.assert('browser-test');
+    const sourceMarkup=await fetch('assets/planet-glyphs/neptune.svg?v=test-source').then(response=>response.text());
+    const sourceSvg=new DOMParser().parseFromString(sourceMarkup,'image/svg+xml').documentElement;
+    const sourceNeptune=sourceSvg.querySelector('path')?.getAttribute('d')||'';
     const textOf=art=>art?.matches?.('text')?art.textContent:(art?.querySelector('text')?.textContent||'');
     const angleExpected={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
     const angles=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')).map(host=>({
@@ -84,11 +86,12 @@ async function inspectSky(width,height,suffix){
       registryScripts:scripts.filter(src=>src.includes('relphi-glyph-registry-v1.js')).length,
       componentScripts:scripts.filter(src=>src.includes('relphi-glyph-component-v1.js')).length,
       competingScripts:scripts.filter(src=>/(canon-binding|atomic-loader|neptune-cross|moon-stroke|glyph-framing|glyph-size-guard|live-integrity|e9344099|unified-marker)/.test(src)),
-      angles,angleExpected,neptunes,nodes,neptune,
+      angles,angleExpected,neptunes,nodes,sourceNeptune,
+      neptuneRegistry:window.RelphiGlyphRegistry.get('neptune')?.asset||'',
       ledgerGlyphs:document.querySelectorAll('.sky-foundation-ledger .relphi-canonical-glyph').length,
       approved
     };
-  },{approved:APPROVED,neptune:NEPTUNE});
+  },APPROVED);
 
   assert.equal(state.source,APPROVED);
   assert.equal(state.registryScripts,1);
@@ -104,8 +107,10 @@ async function inspectSky(width,height,suffix){
     assert.ok(angle.exact);
     assert.equal(angle.lineCount,2);
   }
+  assert.equal(state.neptuneRegistry,'assets/planet-glyphs/neptune.svg');
+  assert.ok(state.sourceNeptune);
   assert.ok(state.neptunes.length>=3);
-  assert.ok(state.neptunes.every(value=>value===NEPTUNE));
+  assert.ok(state.neptunes.every(value=>value===state.sourceNeptune));
   assert.ok(state.nodes['north-node'].some(value=>value==='☊'));
   assert.ok(state.nodes['south-node'].some(value=>value==='☋'));
 
