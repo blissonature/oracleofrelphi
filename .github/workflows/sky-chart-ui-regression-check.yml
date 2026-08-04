@@ -3,7 +3,6 @@ name: Sky Chart UI regression check
 on:
   pull_request:
     paths:
-      - 'glyphs-unified-preview.html'
       - 'glyphs.html'
       - 'part1/sky-chart.html'
       - 'part2/sky-chart.html'
@@ -42,7 +41,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check approved source and JavaScript syntax
+      - name: Check permanent source and JavaScript syntax
         run: |
           node --check relphi-glyph-registry-v1.js
           node --check relphi-glyph-component-v1.js
@@ -72,8 +71,6 @@ jobs:
           name: sky-chart-ui-regression-screenshots
           path: |
             glyph-canon-source-audit.json
-            master-glyph-list-desktop.png
-            master-glyph-list-mobile.png
             sky-chart-single-canon-desktop.png
             sky-chart-single-canon-mobile.png
             sky-chart-filter-controls-unified.png
