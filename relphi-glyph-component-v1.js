@@ -5,6 +5,9 @@
   if (window.RelphiGlyphComponent) return;
 
   const NS = 'http://www.w3.org/2000/svg';
+  const CANONICAL_BUBBLE_RADIUS = 19;
+  const CANONICAL_BUBBLE_STROKE = 2.35;
+  const CANONICAL_BUBBLE_PADDING = 1;
   const cache = new Map();
   const svg = name => document.createElementNS(NS, name);
 
@@ -51,7 +54,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=canonical-20260804');
+    const response = await fetch(path + '?v=canonical-20260804b');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     if (source.nodeName.toLowerCase() !== 'svg') throw new Error('Glyph asset is not an SVG: ' + path);
@@ -202,9 +205,6 @@
 
     art.classList.add('relphi-canonical-glyph', 'relphi-glyph-' + entry.id);
     thickenToNodeWeight(art, entry, color);
-
-    // The canonical geometry is fitted while hidden, then enters the visible
-    // document once at its final size. No incorrect intermediate object paints.
     art.setAttribute('visibility', 'hidden');
     parent.appendChild(art);
     fit(art, radius, padding, entry, bubbleStrokeWidth);
@@ -218,27 +218,41 @@
     const entry = registry && (registry.get(identity) || registry.resolve(identity));
     if (!entry) throw new Error('Unknown glyph identity: ' + identity);
 
-    const radius = Number(options?.radius || 19);
+    const requestedRadius = Number(options?.radius || CANONICAL_BUBBLE_RADIUS);
     const color = options?.color || '#dc1f18';
-    const strokeWidth = Number(options?.strokeWidth || 2.35);
+    const scale = requestedRadius / CANONICAL_BUBBLE_RADIUS;
     const root = svg('g');
     root.classList.add('relphi-glyph-bubble');
     root.dataset.glyphId = entry.id;
+    root.dataset.canonicalBubbleRadius = String(CANONICAL_BUBBLE_RADIUS);
+    root.dataset.requestedDisplayRadius = String(requestedRadius);
+    root.dataset.canonicalBubblePresentation = 'uniform-master-scale';
+    root.setAttribute('transform', `scale(${scale})`);
+    root.setAttribute('visibility', 'hidden');
+
     const circle = svg('circle');
     circle.setAttribute('cx', '0');
     circle.setAttribute('cy', '0');
-    circle.setAttribute('r', String(radius));
+    circle.setAttribute('r', String(CANONICAL_BUBBLE_RADIUS));
     circle.setAttribute('fill', options?.fill || '#fff');
     circle.setAttribute('stroke', color);
-    circle.setAttribute('stroke-width', String(strokeWidth));
+    circle.setAttribute('stroke-width', String(CANONICAL_BUBBLE_STROKE));
     root.appendChild(circle);
     parent.appendChild(root);
+
     const ready = draw(root, entry.id, {
-      radius,
-      padding: options?.padding ?? 1,
+      radius: CANONICAL_BUBBLE_RADIUS,
+      padding: CANONICAL_BUBBLE_PADDING,
       color,
-      bubbleStrokeWidth: strokeWidth
+      bubbleStrokeWidth: CANONICAL_BUBBLE_STROKE
+    }).then(art => {
+      root.removeAttribute('visibility');
+      return art;
+    }).catch(error => {
+      root.removeAttribute('visibility');
+      throw error;
     });
+
     return { root, circle, entry, ready };
   }
 
@@ -247,6 +261,7 @@
     createBubble,
     fit,
     recolor,
+    canonicalBubbleRadius: CANONICAL_BUBBLE_RADIUS,
     canonicalSource: 'https://oracleofrelphi.com/glyphs-unified-preview.html'
   });
 })();
