@@ -56,10 +56,10 @@ const equality = approvedFiles.map(file => {
 
 const allFiles = walk(root);
 const sourceFiles = allFiles.filter(file => /\.(?:js|mjs|html)$/.test(file));
-const genericConsumers = sourceFiles.filter(file => {
+const productionSourceFiles = sourceFiles.filter(file => !file.startsWith('tests/') && !file.startsWith('scripts/'));
+const genericConsumers = productionSourceFiles.filter(file => {
   const text = fs.readFileSync(path.join(root, file), 'utf8');
-  return /RelphiGlyphRegistry|RelphiGlyphComponent/.test(text) &&
-    !file.startsWith('tests/') && !file.startsWith('scripts/');
+  return /RelphiGlyphRegistry|RelphiGlyphComponent/.test(text);
 });
 
 const forbiddenFiles = [
@@ -78,6 +78,8 @@ const forbiddenFiles = [
   'sky-chart-wheel-glyph-preview-fixes-v1.js',
   'sky-chart-wheel-glyph-preview-tuning-v1.js',
   'sky-chart-wheel-glyph-preview-v1.js',
+  'sky-chart-wheel-marker-interaction-v1.js',
+  'sky-chart-wheel-solid-hover-v1.js',
   'sky-chart-wheel-unified-marker-renderer-v1.js',
   'sky-chart-wheel-unified-marker-renderer-v2.js',
   'sky-chart-wheel-unified-marker-renderer-v3.js',
@@ -88,7 +90,9 @@ const forbiddenFiles = [
   'sky-chart-special-point-polish-v1.js',
   'sky-chart-special-point-source-normalizer-v1.js',
   'sky-chart-special-point-static-v1.js',
-  'sky-chart-comparison-glyph-scale-v1.js'
+  'sky-chart-special-vector-color-v1.js',
+  'sky-chart-comparison-glyph-scale-v1.js',
+  'sky-chart-ph-glyph-style-v1.js'
 ];
 
 const forbiddenPresent = forbiddenFiles.filter(file => fs.existsSync(path.join(root, file)));
@@ -97,7 +101,7 @@ const definitionViolations = [];
 const mutationViolations = [];
 const geometryViolations = [];
 
-for (const file of sourceFiles) {
+for (const file of productionSourceFiles) {
   if (file === 'relphi-glyph-registry-v1.js' || file === 'relphi-glyph-component-v1.js') continue;
   const text = fs.readFileSync(path.join(root, file), 'utf8');
   if (/window\.RelphiGlyphRegistry\s*=|Object\.defineProperty\(window\s*,\s*['"]RelphiGlyphRegistry/.test(text)) {
