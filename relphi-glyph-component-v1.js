@@ -193,8 +193,16 @@
 
     art.classList.add('relphi-canonical-glyph', 'relphi-glyph-' + entry.id);
     thickenToNodeWeight(art, entry, color);
+
+    // The raw source geometry can be much larger than its final presentation.
+    // Keep it out of the paint tree until the browser has supplied a measurable
+    // bounding box and the final fitting transform has been installed.
+    art.setAttribute('visibility', 'hidden');
+    art.dataset.glyphPresentation = 'measuring';
     await new Promise(resolve => requestAnimationFrame(resolve));
     fit(art, radius, padding, entry, bubbleStrokeWidth);
+    art.dataset.glyphPresentation = 'fitted';
+    art.removeAttribute('visibility');
     return art;
   }
 
