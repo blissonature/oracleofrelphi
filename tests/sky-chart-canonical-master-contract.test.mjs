@@ -37,6 +37,7 @@ for(const item of audit.approvedRuntimeFiles){
 assert.equal(Object.hasOwn(manifest.runtime_files,'glyphs-unified-preview.html'),false);
 
 const sky=read('sky-chart.html');
+const component=read('relphi-glyph-component-v1.js');
 const foundation=read('sky-chart-foundation-v1.js');
 const filters=read('sky-chart-multiselect-filters-v1.js');
 const cardCss=read('sky-chart-selected-relationship-atomic-v1.css');
@@ -45,11 +46,24 @@ const gemini=read('assets/zodiac-glyphs/gemini.svg');
 
 assert.equal((sky.match(/relphi-glyph-registry-v1\.js/g)||[]).length,1);
 assert.equal((sky.match(/relphi-glyph-component-v1\.js/g)||[]).length,1);
+assert.match(sky,/relphi-glyph-component-v1\.js\?v=20/);
 assert.match(sky,/relphi-glyph-source-integrity-v1\.js/);
 assert.doesNotMatch(sky,/canon-binding|atomic-loader|neptune-cross|moon-stroke-preservation|glyph-framing|glyph-size-guard|live-integrity|angle-extreme-placement/i);
 assert.match(integrity,/https:\/\/oracleofrelphi\.com\/glyphs-unified-preview\.html/);
 assert.match(integrity,/047fd8a7bf764e285dcb6ae012048a965840ea39/);
 assert.doesNotMatch(integrity,/window\.RelphiGlyphComponent\s*=|window\.RelphiGlyphRegistry\s*=/);
+
+// Canonical asset-backed glyphs are finished artwork. The component must place
+// each authored SVG viewBox directly into one fixed presentation frame and must
+// never measure, refit, thicken, or mutate it after insertion.
+assert.match(component,/function canonicalAssetFrame/);
+assert.match(component,/frame\.setAttribute\('viewBox', source\.getAttribute\('viewBox'\)\)/);
+assert.match(component,/frame\.setAttribute\('preserveAspectRatio', source\.getAttribute\('preserveAspectRatio'\) \|\| 'xMidYMid meet'\)/);
+assert.match(component,/frame\.dataset\.glyphPresentation = 'authored-viewbox'/);
+assert.match(component,/art = canonicalAssetFrame\(parent, source, radius, padding, bubbleStrokeWidth, color, entry\)/);
+assert.doesNotMatch(component,/getBBox|getBoundingClientRect|requestAnimationFrame|fitMode\s*===\s*['"]lilith['"]|thickenToNodeWeight|largestStroke|numericStrokeWidth/);
+assert.doesNotMatch(component,/entry\.scale|scale\(\$\{scale\}\)|dataset\.glyphPresentation\s*=\s*['"]measuring['"]|visibility['"],?\s*['"]hidden['"]/);
+assert.match(component,/function fit\(node\)\s*\{\s*return node;\s*\}/);
 
 assert.match(gemini,/viewBox="0 0 100 100"/);
 assert.match(gemini,/fill="#111111"/);
@@ -77,4 +91,4 @@ assert.match(cardCss,/background:transparent !important/);
 assert.match(cardCss,/data-selected-card="A"[\s\S]*border:3px solid var\(--sky-a\)/);
 assert.match(cardCss,/data-selected-card="B"[\s\S]*border:3px solid var\(--sky-b\)/);
 
-console.log('Gemini is a filled canonical silhouette and all zodiac signs share one wheel presentation size.');
+console.log('Canonical SVG glyphs render once from their authored viewBoxes with no runtime refitting.');
