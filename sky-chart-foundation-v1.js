@@ -43,15 +43,12 @@
     frameStrokeWidth:2.35,
     minimumClearance:6,
     lineGap:17,
-    lineSegmentLength:12,
     lanes:Object.freeze({
       A:Object.freeze([540,522,504]),
       B:Object.freeze([202,220,238])
     }),
-    lineBands:Object.freeze({
-      A:Object.freeze({start:516,end:568,extreme:'outer'}),
-      B:Object.freeze({start:174,end:228,extreme:'inner'})
-    })
+    edgeRadius:Object.freeze({A:R.aOut,B:R.bIn}),
+    extreme:Object.freeze({A:'outer',B:'inner'})
   });
 
   let lastSignature = '';
@@ -374,7 +371,7 @@
       layers.zodiac.appendChild(svg('path',{d:annular(R.zIn,R.zOut,start,start+30),fill:COLORS[index],'fill-opacity':'.82'}));
       radialLine(layers.zodiac,R.zIn,R.zOut,start,{stroke:'#423b35','stroke-width':'1.35','vector-effect':'non-scaling-stroke'});
       const point = polar((R.zIn+R.zOut)/2,start+15);
-      const glyphRadius = id === 'gemini' ? 25 : 19;
+      const glyphRadius = id === 'gemini' ? 34 : 19;
       const host = svg('g',{
         transform:`translate(${point.x} ${point.y})`,
         'data-zodiac-sign':id,
@@ -456,25 +453,26 @@
         console.warn(`Sky ${slot} ${record.entry.name} used its deterministic extreme lane at ${record.value}°.`);
       }
 
-      const lineBand = ANGLE_LAYOUT.lineBands[slot];
-      const beforeEnd = chosen.radius - ANGLE_LAYOUT.lineGap;
-      const beforeStart = Math.max(lineBand.start,beforeEnd - ANGLE_LAYOUT.lineSegmentLength);
-      const afterStart = chosen.radius + ANGLE_LAYOUT.lineGap;
-      const afterEnd = Math.min(lineBand.end,afterStart + ANGLE_LAYOUT.lineSegmentLength);
+      const edge = ANGLE_LAYOUT.edgeRadius[slot];
+      const labelSide = slot === 'A'
+        ? chosen.radius + ANGLE_LAYOUT.lineGap
+        : chosen.radius - ANGLE_LAYOUT.lineGap;
+      const lineStart = Math.min(edge,labelSide);
+      const lineEnd = Math.max(edge,labelSide);
       const attrs = {
         stroke:SKY[slot],class:'sky-foundation-angle-axis','stroke-width':'2.6',
         'vector-effect':'non-scaling-stroke','data-sky':slot,'data-angle':record.id,
         'data-exact-longitude':record.value.toFixed(8),'data-angle-lane':chosen.radius,
-        'data-axis-extreme':lineBand.extreme
+        'data-axis-extreme':ANGLE_LAYOUT.extreme[slot],
+        'data-axis-edge-radius':edge
       };
-      if (beforeEnd > beforeStart) radialLine(layers.leaders,beforeStart,beforeEnd,record.value,attrs);
-      if (afterEnd > afterStart) radialLine(layers.leaders,afterStart,afterEnd,record.value,attrs);
+      if (lineEnd > lineStart) radialLine(layers.leaders,lineStart,lineEnd,record.value,attrs);
 
       const host = svg('g',{
         transform:`translate(${chosen.point.x} ${chosen.point.y})`,
         'data-sky':slot,'data-placement':record.id,'data-angle-axis':'true',
         'data-house':houseFor(record.value,cusps),'data-angle-lane':chosen.radius,
-        'data-angle-longitude':record.value.toFixed(8),'data-angle-extreme':lineBand.extreme,
+        'data-angle-longitude':record.value.toFixed(8),'data-angle-extreme':ANGLE_LAYOUT.extreme[slot],
         'data-angle-lane-fallback':chosen.fallback ? 'true' : 'false',
         'data-canonical-master':'glyphs-unified-preview.html',
         'data-canonical-viewbox':'-32 -32 64 64'
