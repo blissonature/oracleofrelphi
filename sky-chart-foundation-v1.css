@@ -126,42 +126,6 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-leader { fill:none; stroke-width:1.45; stroke-linecap:round; vector-effect:non-scaling-stroke; }
 .sky-foundation-aspect { stroke-width:2.1; stroke-linecap:round; opacity:.62; vector-effect:non-scaling-stroke; }
 
-/* Zodiac signs are structural labels, not placement bubbles. Keep the exact
-   canonical master composition and authored whitespace; hide only its circle. */
-[data-layer="zodiac"] .sky-foundation-sign-glyph > .relphi-glyph-bubble > circle {
-  display:none !important;
-}
-
-/* Placement ownership is categorical and must never fall back to black.
-   Recolor only authored painted geometry; preserve all explicit fill="none"
-   and stroke="none" geometry so canonical shapes cannot be altered. */
-[data-layer="placements"] > [data-sky="A"] .relphi-canonical-glyph,
-[data-layer="placements"] > [data-sky="A"] .relphi-canonical-glyph text {
-  color:var(--sky-a) !important;
-  fill:var(--sky-a) !important;
-}
-[data-layer="placements"] > [data-sky="B"] .relphi-canonical-glyph,
-[data-layer="placements"] > [data-sky="B"] .relphi-canonical-glyph text {
-  color:var(--sky-b) !important;
-  fill:var(--sky-b) !important;
-}
-[data-layer="placements"] > [data-sky="A"] .relphi-canonical-glyph [fill]:not([fill="none"]),
-[data-layer="placements"] > [data-sky="A"] .relphi-canonical-glyph[fill]:not([fill="none"]) {
-  fill:var(--sky-a) !important;
-}
-[data-layer="placements"] > [data-sky="B"] .relphi-canonical-glyph [fill]:not([fill="none"]),
-[data-layer="placements"] > [data-sky="B"] .relphi-canonical-glyph[fill]:not([fill="none"]) {
-  fill:var(--sky-b) !important;
-}
-[data-layer="placements"] > [data-sky="A"] .relphi-canonical-glyph [stroke]:not([stroke="none"]),
-[data-layer="placements"] > [data-sky="A"] .relphi-canonical-glyph[stroke]:not([stroke="none"]) {
-  stroke:var(--sky-a) !important;
-}
-[data-layer="placements"] > [data-sky="B"] .relphi-canonical-glyph [stroke]:not([stroke="none"]),
-[data-layer="placements"] > [data-sky="B"] .relphi-canonical-glyph[stroke]:not([stroke="none"]) {
-  stroke:var(--sky-b) !important;
-}
-
 @media(max-width:1120px) {
   #skyFoundationRoot {
     grid-template-columns:minmax(195px,230px) minmax(460px,1fr) minmax(195px,230px);
