@@ -11,6 +11,7 @@
   const ANGLES=new Set(['asc','dsc','mc','ic']);
   const ANGLE_TEXT={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
   const CENTER={x:600,y:600};
+  const MAX_AXIS_SEGMENT=12.01;
   let timer=0;
   let lastSignature='';
 
@@ -29,6 +30,13 @@
 
   function angleDifference(a,b){
     return Math.abs(((a-b+180)%360+360)%360-180);
+  }
+
+  function lineLength(line){
+    return Math.hypot(
+      Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')),
+      Number(line.getAttribute('y2'))-Number(line.getAttribute('y1'))
+    );
   }
 
   function run(){
@@ -86,7 +94,10 @@
         const match=/translate\(([-\d.]+)\s+([-\d.]+)\)/.exec(host.getAttribute('transform')||'');
         if(!match||!Number.isFinite(longitude)||angleDifference(angleAt(Number(match[1]),Number(match[2])),longitude)>.01)issues.push(`Sky ${slot} ${id} moved off its longitude`);
         const lines=Array.from(chart.querySelectorAll(`[data-layer="leaders"] .sky-foundation-angle-axis[data-sky="${slot}"][data-angle="${id}"]`));
-        if(lines.length!==2)issues.push(`Sky ${slot} ${id} has ${lines.length} axis segments instead of 2`);
+        if(lines.length<1||lines.length>2)issues.push(`Sky ${slot} ${id} has ${lines.length} axis segments instead of 1 or 2 short stubs`);
+        lines.forEach((line,index)=>{
+          if(lineLength(line)>MAX_AXIS_SEGMENT)issues.push(`Sky ${slot} ${id} axis segment ${index+1} is too long`);
+        });
         angleBoxes.push({slot,id,box:host.getBoundingClientRect()});
       });
       for(let i=0;i<angleBoxes.length;i+=1)for(let j=i+1;j<angleBoxes.length;j+=1){
