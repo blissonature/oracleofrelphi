@@ -45,6 +45,8 @@ assert.equal(Object.hasOwn(manifest.runtime_files,'glyphs-unified-preview.html')
 
 const sky=read('sky-chart.html');
 const foundation=read('sky-chart-foundation-v1.js');
+const filters=read('sky-chart-multiselect-filters-v1.js');
+const cardCss=read('sky-chart-selected-relationship-atomic-v1.css');
 const integrity=read('relphi-glyph-source-integrity-v1.js');
 
 assert.equal((sky.match(/relphi-glyph-registry-v1\.js/g)||[]).length,1);
@@ -64,11 +66,25 @@ assert.match(foundation,/bubble\.root\.dataset\.circlePresentation\s*=\s*['"]hid
 assert.match(foundation,/drawUncircledBubble\(host,record\.id/);
 assert.match(foundation,/A:Object\.freeze\(\[540,522,504\]\)/);
 assert.match(foundation,/B:Object\.freeze\(\[202,220,238\]\)/);
-assert.match(foundation,/extreme:'outer'/);
-assert.match(foundation,/extreme:'inner'/);
+assert.match(foundation,/lineSegmentLength:12/);
+assert.match(foundation,/A:Object\.freeze\(\{start:516,end:568,extreme:'outer'\}\)/);
+assert.match(foundation,/B:Object\.freeze\(\{start:174,end:228,extreme:'inner'\}\)/);
+assert.match(foundation,/beforeEnd - ANGLE_LAYOUT\.lineSegmentLength/);
+assert.match(foundation,/afterStart \+ ANGLE_LAYOUT\.lineSegmentLength/);
 assert.match(foundation,/data-axis-extreme/);
 assert.match(foundation,/id === 'gemini' \? 25 : 19/);
 assert.doesNotMatch(foundation,/data-angle-collision-error|ANGLE COLLISION|No legal canonical Angle lane/);
 assert.doesNotMatch(foundation,/assets\/angle-glyphs|VECTOR_GLYPHS|const\s+PATHS\s*=/);
+
+assert.match(filters,/ascendant:'asc', 'asc\.':'asc'/);
+assert.match(filters,/planets:Object\.freeze\(\['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'\]\)/);
+assert.match(filters,/'angles-points':Object\.freeze\(\['asc','dsc','mc','ic'/);
+assert.match(filters,/const id = canonicalId\(row\.dataset\.placement \|\| label\)/);
+
+assert.match(cardCss,/padding:0 !important/);
+assert.match(cardCss,/background:transparent !important/);
+assert.match(cardCss,/data-selected-card="A"[\s\S]*border:3px solid var\(--sky-a\)/);
+assert.match(cardCss,/data-selected-card="B"[\s\S]*border:3px solid var\(--sky-b\)/);
+assert.match(cardCss,/border-radius:0 !important/);
 
 console.log('Permanent canonical page untouched; Sky Chart points to it and uses only the approved runtime files.');
