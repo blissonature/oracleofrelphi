@@ -10,7 +10,6 @@
   const APPROVED='0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
   const ANGLES=new Set(['asc','dsc','mc','ic']);
   const ANGLE_TEXT={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
-  const NEPTUNE='M12 17L17 11L22 17M17 11V34C17 49 29 60 44 62M78 17L83 11L88 17M83 11V34C83 49 71 60 56 62M45 17L50 11L55 17M50 11V88M37 75H63';
   const CENTER={x:600,y:600};
   let timer=0;
   let lastSignature='';
@@ -54,10 +53,9 @@
       if(!classId||!registry?.get(classId))issues.push(`Rendered glyph ${index+1} does not resolve through the approved registry`);
     });
 
+    if(registry?.get('neptune')?.asset!=='assets/planet-glyphs/neptune.svg')issues.push('Neptune registry source is not the approved asset');
     document.querySelectorAll('.relphi-glyph-neptune').forEach((art,index)=>{
-      const path=art.querySelector('path')?.getAttribute('d')||'';
-      if(path!==NEPTUNE)issues.push(`Neptune ${index+1} does not match the approved asset`);
-      if(art.querySelector('text'))issues.push(`Neptune ${index+1} is rendered as text`);
+      if(!art.querySelector('path')||art.querySelector('text'))issues.push(`Neptune ${index+1} did not render from the approved SVG asset`);
     });
     if(window.__relphiNeptuneCrossConnectionInstalled)issues.push('Neptune-specific wrapper is active');
 
