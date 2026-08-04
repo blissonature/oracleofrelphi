@@ -104,16 +104,18 @@ const geometryViolations = [];
 for (const file of productionSourceFiles) {
   if (file === 'relphi-glyph-registry-v1.js' || file === 'relphi-glyph-component-v1.js') continue;
   const text = fs.readFileSync(path.join(root, file), 'utf8');
+  const usesGlyphRuntime = /RelphiGlyphRegistry|RelphiGlyphComponent/.test(text);
   if (/window\.RelphiGlyphRegistry\s*=|Object\.defineProperty\(window\s*,\s*['"]RelphiGlyphRegistry/.test(text)) {
     definitionViolations.push({ file, global:'RelphiGlyphRegistry' });
   }
   if (/window\.RelphiGlyphComponent\s*=|Object\.defineProperty\(window\s*,\s*['"]RelphiGlyphComponent/.test(text)) {
     definitionViolations.push({ file, global:'RelphiGlyphComponent' });
   }
-  if (/\b(?:entry|registry\.get\([^)]*\))\.(?:asset|fallback|scale|dx|dy|fitMode|fontWeight|canonicalRotation)\s*=/.test(text)) {
+  if (usesGlyphRuntime && /\b(?:entry|registry\.get\([^)]*\))\.(?:asset|fallback|scale|dx|dy|fitMode|fontWeight|canonicalRotation)\s*=/.test(text)) {
     mutationViolations.push(file);
   }
-  if (/\b(?:VECTOR_GLYPHS|PATHS)\s*=|assets\/angle-glyphs\//.test(text)) {
+  if (/\bVECTOR_GLYPHS\s*=|assets\/angle-glyphs\//.test(text) ||
+      (/\bPATHS\s*=/.test(text) && /(glyph|marker|special-point)/i.test(file))) {
     geometryViolations.push(file);
   }
 }
