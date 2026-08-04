@@ -3,9 +3,10 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyAnglePlacementsV2) return;
+  if (window.__relphiSkyAnglePlacementsV3) return;
   window.__relphiSkyAnglePlacementsV1 = true;
   window.__relphiSkyAnglePlacementsV2 = true;
+  window.__relphiSkyAnglePlacementsV3 = true;
 
   const KEYS = new Set(['relphiSkyChartA', 'relphiSkyChartB']);
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -19,7 +20,12 @@
   let decorating = false;
 
   const norm = value => ((Number(value) % 360) + 360) % 360;
-  const normalizeKey = value => String(value || '').trim().toLowerCase().replace(/[._-]+/g, ' ').replace(/\s+/g, ' ');
+  const normalizeKey = value => String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[._-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   function longitude(value) {
     if (Number.isFinite(Number(value))) return norm(value);
@@ -164,7 +170,7 @@
     return ANGLES.find(angle => angle.aliases.includes(existing) || angle.aliases.includes(name)) || null;
   }
 
-  function decorateLedgers(reorder) {
+  function decorateLedgers() {
     if (decorating) return;
     decorating = true;
     try {
@@ -183,11 +189,12 @@
           if (name) name.textContent = angle.label;
           angleRows.push([angle, row]);
         });
-        const annotated = rows.length > 0 && rows.every(row => row.dataset.interactive === 'placement');
-        if (!angleRows.length || !reorder || !annotated) return;
+        if (!angleRows.length) return;
+
         const heading = document.createElement('div');
         heading.className = 'sky-foundation-ledger-angle-heading';
-        heading.textContent = 'Angles';
+        heading.dataset.placementSection = 'chart-angles';
+        heading.textContent = 'Chart Angles';
         ledger.appendChild(heading);
         ANGLES.forEach(angle => {
           const match = angleRows.find(([entry]) => entry.id === angle.id);
@@ -203,11 +210,11 @@
 
   function start() {
     const root = document.getElementById('skyFoundationRoot') || document.documentElement;
-    new MutationObserver(() => requestAnimationFrame(() => decorateLedgers(true)))
+    new MutationObserver(() => requestAnimationFrame(decorateLedgers))
       .observe(root, { childList:true, subtree:true });
-    window.addEventListener('relphi:sky-foundation-ready', () => requestAnimationFrame(() => decorateLedgers(false)));
-    window.addEventListener('relphi:sky-foundation-interactions-ready', () => requestAnimationFrame(() => decorateLedgers(true)));
-    requestAnimationFrame(() => decorateLedgers(true));
+    window.addEventListener('relphi:sky-foundation-ready', () => requestAnimationFrame(decorateLedgers));
+    window.addEventListener('relphi:sky-foundation-interactions-ready', () => requestAnimationFrame(decorateLedgers));
+    requestAnimationFrame(decorateLedgers);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
