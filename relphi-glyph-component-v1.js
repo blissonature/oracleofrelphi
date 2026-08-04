@@ -50,7 +50,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=23');
+    const response = await fetch(path + '?v=24');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
