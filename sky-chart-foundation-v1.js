@@ -245,6 +245,29 @@
     return bubble.root;
   }
 
+  function preserveCanonicalStrokeWeight(root) {
+    const art = root?.querySelector?.('.relphi-canonical-glyph');
+    if (!art) return root;
+    const transform = art.getAttribute('transform') || '';
+    const match = /scale\(\s*([-\d.]+)(?:[\s,]+[-\d.]+)?\s*\)/.exec(transform);
+    const fitScale = match ? Math.abs(Number(match[1])) : 1;
+    if (!Number.isFinite(fitScale) || fitScale <= 0) return root;
+    let preserved = 0;
+    art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
+      const stroke = node.getAttribute('stroke');
+      const sourceStroke = Number(node.getAttribute('stroke-width'));
+      if (!stroke || stroke === 'none' || !Number.isFinite(sourceStroke) || sourceStroke <= 0) return;
+      const fittedStroke = sourceStroke * fitScale;
+      node.dataset.canonicalSourceStroke = String(sourceStroke);
+      node.dataset.canonicalFittedStroke = fittedStroke.toFixed(6);
+      node.setAttribute('stroke-width', fittedStroke.toFixed(6));
+      node.setAttribute('vector-effect', 'non-scaling-stroke');
+      preserved += 1;
+    });
+    if (preserved) root.dataset.canonicalStrokePresentation = 'fitted-non-scaling';
+    return root;
+  }
+
   function glyphFailure(host, error) {
     host.dataset.relphiGlyphError = error?.message || 'canonical-glyph-failed';
     const mark = svg('g', {'data-canonical-glyph-error':'true'});
@@ -371,15 +394,25 @@
       layers.zodiac.appendChild(svg('path',{d:annular(R.zIn,R.zOut,start,start+30),fill:COLORS[index],'fill-opacity':'.82'}));
       radialLine(layers.zodiac,R.zIn,R.zOut,start,{stroke:'#423b35','stroke-width':'1.35','vector-effect':'non-scaling-stroke'});
       const point = polar((R.zIn+R.zOut)/2,start+15);
-      const glyphRadius = id === 'gemini' ? 34 : 19;
+      const glyphRadius = 19;
       const host = svg('g',{
         transform:`translate(${point.x} ${point.y})`,
+        class:'sky-foundation-sign-glyph',
         'data-zodiac-sign':id,
         'data-wheel-glyph-radius':glyphRadius
       });
       layers.zodiac.appendChild(host);
-      obstacles.push({kind:'circle',x:point.x,y:point.y,radius:Math.max(20,glyphRadius),role:'zodiac-glyph'});
-      jobs.push(drawCanonical(host,id,{radius:glyphRadius,padding:1,color:'#171717'}).catch(error => glyphFailure(host,error)));
+      obstacles.push({kind:'circle',x:point.x,y:point.y,radius:20,role:'zodiac-glyph'});
+      jobs.push(drawUncircledBubble(host,id,{
+        radius:glyphRadius,
+        padding:1,
+        color:'#171717',
+        strokeWidth:2.35
+      }).then(root => {
+        root.dataset.canonicalMaster = 'glyphs-unified-preview.html';
+        root.dataset.wheelPresentation = 'without-circles';
+        preserveCanonicalStrokeWeight(root);
+      }).catch(error => glyphFailure(host,error)));
     });
 
     [R.bIn,R.zIn,R.zOut,R.aOut].forEach(radius => layers.outlines.appendChild(svg('circle',{cx:C.x,cy:C.y,r:radius,class:'sky-foundation-ring'})));
