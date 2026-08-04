@@ -115,7 +115,7 @@ for (const file of productionSourceFiles) {
   if (/window\.RelphiGlyphComponent\s*=|Object\.defineProperty\(window\s*,\s*['"]RelphiGlyphComponent/.test(text)) {
     definitionViolations.push({ file, global:'RelphiGlyphComponent' });
   }
-  if (usesGlyphRuntime && /\b(?:entry|registry\.get\([^)]*\))\.(?:asset|fallback|scale|dx|dy|fitMode|fontWeight|canonicalRotation)\s*=/.test(text)) {
+  if (usesGlyphRuntime && /\b(?:entry|registry\.get\([^)]*\))\.(?:asset|fallback|scale|dx|dy|fitMode|fontWeight|canonicalRotation)\s*=(?!=)/.test(text)) {
     mutationViolations.push(file);
   }
   if (/\bVECTOR_GLYPHS\s*=|assets\/angle-glyphs\//.test(text) ||
