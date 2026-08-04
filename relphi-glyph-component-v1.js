@@ -12,7 +12,7 @@
   const svg = name => document.createElementNS(NS, name);
 
   function recolor(root, color) {
-    root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
+    root.querySelectorAll('g,path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
       const fill = node.getAttribute('fill');
       const stroke = node.getAttribute('stroke');
       if (fill && fill !== 'none') node.setAttribute('fill', color);
@@ -54,7 +54,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=canonical-20260804b');
+    const response = await fetch(path + '?v=canonical-20260804c');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     if (source.nodeName.toLowerCase() !== 'svg') throw new Error('Glyph asset is not an SVG: ' + path);
