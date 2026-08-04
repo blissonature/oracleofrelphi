@@ -74,9 +74,13 @@
         const id=host.dataset.placement||'';
         const slot=host.dataset.sky||'';
         if(!ANGLES.has(id))issues.push(`Invalid Angle identity: ${id}`);
-        const art=host.querySelector('.relphi-canonical-glyph');
+        const root=host.querySelector(':scope > .relphi-glyph-bubble');
+        const art=root?.querySelector('.relphi-canonical-glyph');
+        const circle=root?.querySelector(':scope > circle');
+        if(!root)issues.push(`Sky ${slot} ${id} is not using the approved master composition`);
+        if(!circle||Number(getComputedStyle(circle).opacity)!==0)issues.push(`Sky ${slot} ${id} has a visible or missing canonical circle`);
+        if(root?.dataset.circlePresentation!=='hidden-only')issues.push(`Sky ${slot} ${id} is not the approved Without circles presentation`);
         if(textOf(art)!==ANGLE_TEXT[id])issues.push(`Sky ${slot} ${id} does not use the approved label`);
-        if(host.querySelector('.relphi-glyph-bubble'))issues.push(`Sky ${slot} ${id} is inside a bubble`);
         if(/rotate\s*\(/i.test(art?.getAttribute('transform')||''))issues.push(`Sky ${slot} ${id} is rotated`);
         const longitude=Number(host.dataset.angleLongitude);
         const match=/translate\(([-\d.]+)\s+([-\d.]+)\)/.exec(host.getAttribute('transform')||'');
