@@ -27,6 +27,7 @@
   const CLEARANCE = 5;
   const LINE_GAP = 15;
   let scheduled = false;
+  let observer = null;
 
   const svg = (name, attrs) => {
     const node = document.createElementNS(NS, name);
@@ -250,13 +251,23 @@
     host.dataset.geminiPresentation='enlarged-for-wheel-legibility';
   }
 
+  function observe() {
+    const target=document.getElementById('skyFoundationWheelMount') || document.body;
+    if (observer && target) observer.observe(target,{childList:true,subtree:true});
+  }
+
   function repair() {
     scheduled=false;
-    const chart=document.querySelector('.sky-foundation-wheel');
-    if (!chart) return;
-    removeDiagnostics(chart);
-    repairAngles(chart);
-    repairGemini(chart);
+    observer?.disconnect();
+    try {
+      const chart=document.querySelector('.sky-foundation-wheel');
+      if (!chart) return;
+      removeDiagnostics(chart);
+      repairAngles(chart);
+      repairGemini(chart);
+    } finally {
+      observe();
+    }
   }
 
   function schedule() {
@@ -266,7 +277,8 @@
   }
 
   function start() {
-    new MutationObserver(schedule).observe(document.getElementById('skyFoundationWheelMount') || document.body,{childList:true,subtree:true});
+    observer=new MutationObserver(schedule);
+    observe();
     window.addEventListener('relphi:sky-foundation-ready',schedule);
     schedule();
   }
