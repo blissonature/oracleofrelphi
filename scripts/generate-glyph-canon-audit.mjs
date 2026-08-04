@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const APPROVED_PAGE = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
-const APPROVED_COMMIT = '0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
+const APPROVED_COMMIT = '047fd8a7bf764e285dcb6ae012048a965840ea39';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 const output = path.resolve(root, process.argv[2] || 'glyph-canon-source-audit.json');
