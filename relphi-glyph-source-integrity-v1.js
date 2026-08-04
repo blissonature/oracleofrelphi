@@ -5,7 +5,7 @@
   window.__relphiGlyphSourceIntegrityV1 = true;
 
   const APPROVED_PAGE = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
-  const APPROVED_COMMIT = '0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
+  const APPROVED_COMMIT = '047fd8a7bf764e285dcb6ae012048a965840ea39';
   const registry = window.RelphiGlyphRegistry;
   const component = window.RelphiGlyphComponent;
   if (!registry || !component) throw new Error('Approved glyph registry/component did not load.');
