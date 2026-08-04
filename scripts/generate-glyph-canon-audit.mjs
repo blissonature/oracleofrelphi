@@ -103,6 +103,7 @@ const angleAssetFiles = allFiles.filter(file => file.startsWith('assets/angle-gl
 const definitionViolations = [];
 const mutationViolations = [];
 const geometryViolations = [];
+const staleReferences = [];
 
 for (const file of productionSourceFiles) {
   if (file === 'relphi-glyph-registry-v1.js' || file === 'relphi-glyph-component-v1.js') continue;
@@ -121,6 +122,9 @@ for (const file of productionSourceFiles) {
       (/\bPATHS\s*=/.test(text) && /(glyph|marker|special-point)/i.test(file))) {
     geometryViolations.push(file);
   }
+  forbiddenFiles.forEach(forbidden => {
+    if (text.includes(forbidden)) staleReferences.push({ file, forbidden });
+  });
 }
 
 const audit = {
@@ -138,7 +142,8 @@ const audit = {
     angleAssetFiles,
     definitionViolations,
     mutationViolations,
-    geometryViolations
+    geometryViolations,
+    staleReferences
   }
 };
 
@@ -150,7 +155,8 @@ const failures = [
   ...angleAssetFiles.map(file => `forged Angle asset exists: ${file}`),
   ...definitionViolations.map(item => `${item.file} redefines ${item.global}`),
   ...mutationViolations.map(file => `${file} mutates approved registry fields`),
-  ...geometryViolations.map(file => `${file} contains substitute glyph geometry`)
+  ...geometryViolations.map(file => `${file} contains substitute glyph geometry`),
+  ...staleReferences.map(item => `${item.file} still references deleted competing source ${item.forbidden}`)
 ];
 
 if (failures.length) {
