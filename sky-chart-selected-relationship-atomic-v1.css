@@ -35,11 +35,12 @@
   max-width:none !important;
   height:auto !important;
   margin:0 !important;
+  padding:0 !important;
   transform:none !important;
   opacity:1 !important;
   visibility:visible !important;
   overflow:hidden !important;
-  background:#fff !important;
+  background:transparent !important;
 }
 
 #skySelectedRelationship.sky-selected-simple .sky-selected-cards > .sky-selected-card[data-selected-card="A"] {
@@ -58,6 +59,7 @@
   width:100% !important;
   max-width:none !important;
   height:auto !important;
+  border-radius:0 !important;
   transform:none !important;
 }
 
