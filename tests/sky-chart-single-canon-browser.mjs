@@ -42,11 +42,11 @@ async function inspectSky(width,height,suffix){
     const sourceMarkup=await fetch('assets/planet-glyphs/neptune.svg?v=test-source').then(response=>response.text());
     const sourceSvg=new DOMParser().parseFromString(sourceMarkup,'image/svg+xml').documentElement;
     const sourceNeptune=sourceSvg.querySelector('path')?.getAttribute('d')||'';
+    const geminiMarkup=await fetch('assets/zodiac-glyphs/gemini.svg?v=test-source').then(response=>response.text());
+    const geminiSvg=new DOMParser().parseFromString(geminiMarkup,'image/svg+xml').documentElement;
+    const geminiSourceStroke=geminiSvg.querySelector('path')?.getAttribute('stroke-width')||'';
     const textOf=art=>art?.matches?.('text')?art.textContent:(art?.querySelector('text')?.textContent||'');
-    const lineLength=line=>Math.hypot(
-      Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')),
-      Number(line.getAttribute('y2'))-Number(line.getAttribute('y1'))
-    );
+    const radiusAt=(x,y)=>Math.hypot(Number(x)-600,Number(y)-600);
     const angleExpected={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
     const angles=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')).map(host=>{
       const root=host.querySelector(':scope > .relphi-glyph-bubble');
@@ -62,7 +62,11 @@ async function inspectSky(width,height,suffix){
         transform:root?.querySelector('.relphi-canonical-glyph')?.getAttribute('transform')||'',
         exact:host.dataset.angleLongitude||'',
         lineCount:lines.length,
-        lineLengths:lines.map(lineLength),
+        lineEndpointRadii:lines.map(line=>[
+          radiusAt(line.getAttribute('x1'),line.getAttribute('y1')),
+          radiusAt(line.getAttribute('x2'),line.getAttribute('y2'))
+        ]),
+        lineEdgeRadii:lines.map(line=>Number(line.dataset.axisEdgeRadius)),
         extreme:host.dataset.angleExtreme||'',
         lane:Number(host.dataset.angleLane),
         lineExtremes:lines.map(line=>line.dataset.axisExtreme||'')
@@ -79,7 +83,7 @@ async function inspectSky(width,height,suffix){
       registryScripts:scripts.filter(src=>src.includes('relphi-glyph-registry-v1.js')).length,
       componentScripts:scripts.filter(src=>src.includes('relphi-glyph-component-v1.js')).length,
       competingScripts:scripts.filter(src=>/(canon-binding|atomic-loader|neptune-cross|moon-stroke|glyph-framing|glyph-size-guard|live-integrity|e9344099|unified-marker|angle-extreme-placement)/.test(src)),
-      angles,angleExpected,neptunes,nodes,sourceNeptune,
+      angles,angleExpected,neptunes,nodes,sourceNeptune,geminiSourceStroke,
       angleDiagnostics:document.querySelectorAll('[data-angle-collision-error],[data-canonical-glyph-error]').length,
       angleCollisionState:document.querySelector('.sky-foundation-wheel')?.dataset.angleCollisionState||'',
       geminiRadius:Number(geminiHost?.dataset.wheelGlyphRadius),
@@ -101,19 +105,22 @@ async function inspectSky(width,height,suffix){
   assert.equal(state.angles.length,8);
   for(const slot of ['A','B']) assert.deepEqual(state.angles.filter(item=>item.sky===slot).map(item=>item.id).sort(),['asc','dsc','ic','mc']);
   for(const angle of state.angles){
+    const expectedEdge=angle.sky==='A'?574:166;
     assert.equal(angle.text,state.angleExpected[angle.id]);
     assert.equal(angle.masterComposition,true);
     assert.equal(angle.circleOpacity,0);
     assert.equal(angle.circlePresentation,'hidden-only');
     assert.ok(!/rotate\s*\(/i.test(angle.transform));
     assert.ok(angle.exact);
-    assert.ok(angle.lineCount>=1&&angle.lineCount<=2);
-    assert.ok(angle.lineLengths.every(length=>length<=12.01));
+    assert.equal(angle.lineCount,1);
+    assert.equal(angle.lineEdgeRadii[0],expectedEdge);
+    assert.ok(angle.lineEndpointRadii[0].some(radius=>Math.abs(radius-expectedEdge)<.01));
     assert.equal(angle.extreme,angle.sky==='A'?'outer':'inner');
     assert.ok(angle.sky==='A'?angle.lane>=504:angle.lane<=238);
     assert.ok(angle.lineExtremes.every(value=>value===angle.extreme));
   }
-  assert.equal(state.geminiRadius,25);
+  assert.equal(state.geminiSourceStroke,'7');
+  assert.equal(state.geminiRadius,34);
   assert.equal(state.geminiGlyphs,1);
   assert.equal(state.neptuneRegistry,'assets/planet-glyphs/neptune.svg');
   assert.ok(state.sourceNeptune);
