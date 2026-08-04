@@ -5,7 +5,6 @@ on:
     branches:
       - feature/sky-chart-canonical-glyph-coordinate-fix
     paths:
-      - 'glyphs-unified-preview.html'
       - 'glyphs.html'
       - 'part1/sky-chart.html'
       - 'part2/sky-chart.html'
@@ -28,7 +27,6 @@ on:
       - '.github/workflows/sky-chart-glyph-audit-check.yml'
   pull_request:
     paths:
-      - 'glyphs-unified-preview.html'
       - 'glyphs.html'
       - 'part1/sky-chart.html'
       - 'part2/sky-chart.html'
@@ -66,7 +64,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check exact approved source and syntax
+      - name: Check permanent source and syntax
         run: |
           node --check relphi-glyph-registry-v1.js
           node --check relphi-glyph-component-v1.js
@@ -83,7 +81,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
           npx playwright install --with-deps chromium
-      - name: Render and inspect approved canon
+      - name: Render and inspect Sky Chart consumer
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-single-canon-server.log 2>&1 &
           node tests/sky-chart-single-canon-browser.mjs
@@ -93,8 +91,6 @@ jobs:
           name: sky-chart-single-canon-audit
           path: |
             glyph-canon-source-audit.json
-            master-glyph-list-desktop.png
-            master-glyph-list-mobile.png
             sky-chart-single-canon-desktop.png
             sky-chart-single-canon-mobile.png
           if-no-files-found: error
