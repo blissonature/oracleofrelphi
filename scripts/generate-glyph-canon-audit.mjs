@@ -108,9 +108,13 @@ for(const file of skyConsumers){
 
 const componentText=fs.readFileSync(path.join(root,'relphi-glyph-component-v1.js'),'utf8');
 const componentContractViolations=[];
-if(/getBBox|getBoundingClientRect|requestAnimationFrame|fitMode\s*===\s*['"]lilith['"]|thickenToNodeWeight|largestStroke|numericStrokeWidth/.test(componentText))componentContractViolations.push('component contains runtime refitting or delayed fitting');
-if(!/frame\.setAttribute\('viewBox', source\.getAttribute\('viewBox'\)\)/.test(componentText))componentContractViolations.push('component does not preserve the authored asset viewBox');
-if(/entry\.scale/.test(componentText))componentContractViolations.push('component applies registry scale to finished canonical assets');
+if(!/const CANONICAL_BUBBLE_RADIUS = 19/.test(componentText))componentContractViolations.push('component does not define the approved 19-unit circled master');
+if(!/const CANONICAL_BUBBLE_STROKE = 2\.35/.test(componentText))componentContractViolations.push('component does not define the approved circle stroke');
+if(!/const scale = requestedRadius \/ CANONICAL_BUBBLE_RADIUS/.test(componentText))componentContractViolations.push('component does not uniformly scale the finished circled master');
+if(!/circle\.setAttribute\('r', String\(CANONICAL_BUBBLE_RADIUS\)\)/.test(componentText))componentContractViolations.push('component constructs a noncanonical circle radius');
+if(!/radius: CANONICAL_BUBBLE_RADIUS/.test(componentText)||!/bubbleStrokeWidth: CANONICAL_BUBBLE_STROKE/.test(componentText))componentContractViolations.push('component refits circled glyphs at the requested display radius');
+if(/circle\.setAttribute\('r', String\(requestedRadius\)\)/.test(componentText))componentContractViolations.push('component substitutes requested radius for canonical bubble geometry');
+if(!/canonicalBubblePresentation = 'uniform-master-scale'/.test(componentText))componentContractViolations.push('component does not mark uniform canonical master scaling');
 
 const audit={
   generatedAt:new Date().toISOString(),
@@ -134,4 +138,4 @@ const failures=[
   ...consumerReferenceViolations.map(item=>`${item.file} loads non-Sky-Chart support script ${item.forbidden}`)
 ];
 if(failures.length){console.error(failures.join('\n'));process.exitCode=1;}
-else console.log(`Glyph consumer audit passed: ${entries.length} identities point to ${APPROVED_PAGE}; source-pinned files remain exact; manifest-pinned revisions are explicit; canonical SVGs are never runtime-refitted.`);
+else console.log(`Glyph consumer audit passed: ${entries.length} identities point to ${APPROVED_PAGE}; circled consumers uniformly scale the exact 19-unit canonical master.`);
