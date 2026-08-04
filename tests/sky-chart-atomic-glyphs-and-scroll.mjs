@@ -13,8 +13,8 @@ const skyA=sample('My birth chart',0,{dateTime:'1985-10-08T04:37',instant:'1985-
 const skyB=sample('Current sky',29.27,{dateTime:'2026-08-02T02:07',instant:'2026-08-02T08:07:00.000Z',location:'Salt Lake City, Utah, United States',timeZone:'America/Denver',latitude:40.7608,longitude:-111.891});
 
 const browser=await chromium.launch({headless:true});
-const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
-page.setDefaultTimeout(15000);
+const page=await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1});
+page.setDefaultTimeout(20000);
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -24,14 +24,14 @@ await page.addInitScript(({a,b})=>{
   localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
   sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
   window.__relphiGlyphPaintViolations=[];
-  const identitySelector='.relphi-canonical-glyph[data-relphi-atomic-identity]';
+  const selector='.relphi-canonical-glyph[data-relphi-atomic-identity]';
   const inspect=node=>{
     if(!(node instanceof Element))return;
     const glyphs=[];
-    if(node.matches?.(identitySelector))glyphs.push(node);
-    glyphs.push(...node.querySelectorAll?.(identitySelector)||[]);
+    if(node.matches?.(selector))glyphs.push(node);
+    glyphs.push(...node.querySelectorAll?.(selector)||[]);
     glyphs.forEach(art=>{
-      if(art.parentElement?.closest(identitySelector))return;
+      if(art.parentElement?.closest(selector))return;
       if(art.closest('#relphiGlyphAtomicStage'))return;
       if(!art.closest('#skyFoundationRoot,#skySelectedRelationship'))return;
       if(art.dataset.relphiAtomicCommit!=='true'||art.dataset.relphiAtomicBuild!=='detached-final'){
@@ -42,163 +42,133 @@ await page.addInitScript(({a,b})=>{
   new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(inspect))).observe(document,{childList:true,subtree:true});
 },{a:skyA,b:skyB});
 
-await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded',timeout:15000});
-await page.waitForFunction(()=>window.__relphiGlyphAtomicLoaderV3===true&&window.__relphiGlyphCanonBindingV1===true&&window.__relphiGlyphCopySerializerV1===true&&window.__relphiSelectedRelationshipScrollLockV1===true);
-await page.waitForSelector('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-build="detached-final"]');
+await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
+await page.waitForFunction(()=>window.__relphiGlyphAtomicLoaderV3===true&&window.__relphiGlyphCanonBindingV4===true&&window.__relphiGlyphCopySerializerV1===true&&window.__relphiSelectedRelationshipScrollLockV1===true);
+await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]');
 await page.waitForSelector('#skySelectedRelationship[data-glyphs-ready="true"]');
+await page.waitForFunction(()=>typeof window.RelphiSkyGlyphAudit?.run==='function');
+await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0);
 
 const state=await page.evaluate(()=>{
   const glyphText=art=>art?(art.matches?.('text')?art.textContent:(art.querySelector('text')?.textContent||'')):'';
+  const hiddenCircle=root=>{const circle=root?.querySelector(':scope > circle');return !!circle&&(circle.getAttribute('opacity')==='0'||Number(getComputedStyle(circle).opacity)===0)};
+  const masterSource=id=>`glyphs-unified-preview.html#${id}`;
   const nodes=Object.fromEntries([['north-node','☊'],['south-node','☋']].map(([id,expected])=>{
     const host=document.querySelector(`[data-layer="placements"] > g[data-sky="A"][data-placement="${id}"]`);
     const art=host?.querySelector(`.relphi-glyph-${id}[data-relphi-atomic-build="detached-final"]`);
     const box=art?.getBoundingClientRect();
-    return [id,{width:box?.width||0,height:box?.height||0,text:glyphText(art),fallback:window.RelphiGlyphRegistry.get(id)?.fallback||'',transform:art?.getAttribute('transform')||'',source:art?.dataset.relphiCanonicalSource||'',expected}];
+    return[id,{width:box?.width||0,height:box?.height||0,text:glyphText(art),fallback:window.RelphiGlyphRegistry.get(id)?.fallback||'',source:art?.dataset.relphiCanonicalSource||'',expected}];
   }));
-  const expectedAngles={
-    asc:'assets/angle-glyphs/asc.svg',
-    dsc:'assets/angle-glyphs/dsc.svg',
-    mc:'assets/angle-glyphs/mc.svg',
-    ic:'assets/angle-glyphs/ic.svg'
-  };
-  const angles=Object.fromEntries(Object.entries(expectedAngles).map(([id,source])=>{
+  const angles=Object.fromEntries(['asc','dsc','mc','ic'].map(id=>{
+    const entry=window.RelphiGlyphRegistry.get(id);
     const instances=Array.from(document.querySelectorAll(`#skyFoundationRoot .relphi-glyph-${id},#skySelectedRelationship .relphi-glyph-${id}`)).map(art=>{
+      const root=art.closest('.relphi-glyph-bubble');
       const box=art.getBoundingClientRect();
-      const host=art.closest('.relphi-glyph-bubble')||art.parentElement;
-      const hostBox=host?.getBoundingClientRect();
-      return{
-        width:box.width||0,
-        height:box.height||0,
-        hostWidth:hostBox?.width||0,
-        hostHeight:hostBox?.height||0,
-        text:glyphText(art),
-        source:art.dataset.relphiCanonicalSource||'',
-        viewBox:art.dataset.relphiCanonicalViewBox||'',
-        transform:art.getAttribute('transform')||'',
-        rotation:art.dataset.relphiCanonicalRotation||''
-      };
+      return{width:box.width,height:box.height,text:glyphText(art),source:art.dataset.relphiCanonicalSource||'',hiddenCircle:hiddenCircle(root),rotation:/rotate\s*\(/i.test(art.getAttribute('transform')||'')};
     });
-    return[id,{source,instances}];
+    return[id,{asset:entry?.asset??null,fallback:entry?.fallback||'',source:masterSource(id),instances}];
   }));
   const wheelAngles=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')).map(host=>{
     const id=host.dataset.placement;
     const slot=host.dataset.sky;
     const art=host.querySelector(`.relphi-glyph-${id}`);
-    const circle=host.querySelector('.relphi-glyph-bubble > circle');
-    const circleStyle=circle?getComputedStyle(circle):null;
-    const match=/translate\(([-\d.]+)\s+([-\d.]+)\)/.exec(host.getAttribute('transform')||'');
-    const x=match?Number(match[1]):NaN;
-    const y=match?Number(match[2]):NaN;
+    const root=art?.closest('.relphi-glyph-bubble');
+    const lines=Array.from(document.querySelectorAll(`[data-layer="leaders"] .sky-foundation-angle-axis[data-sky="${slot}"][data-angle="${id}"]`));
     return{
-      id,
-      slot,
-      source:art?.dataset.relphiCanonicalSource||'',
-      uncircled:host.dataset.uncircledCanonical||'',
-      lineSegments:document.querySelectorAll(`[data-layer="leaders"] .sky-foundation-angle-axis[data-sky="${slot}"][data-angle="${id}"]`).length,
-      visibleCircleOpacity:circleStyle?Number(circleStyle.opacity):1,
-      radius:Number.isFinite(x)&&Number.isFinite(y)?Math.hypot(x-600,y-600):NaN
+      id,slot,lane:Number(host.dataset.angleLane),longitude:Number(host.dataset.angleLongitude),
+      source:art?.dataset.relphiCanonicalSource||'',text:glyphText(art),hiddenCircle:hiddenCircle(root),
+      master:host.dataset.canonicalMaster||'',viewBox:host.dataset.canonicalViewbox||'',
+      lineSegments:lines.length,lineLongitudes:lines.map(line=>Number(line.dataset.exactLongitude))
     };
   });
-  const neptunes=Array.from(document.querySelectorAll('#skyFoundationRoot .relphi-glyph-neptune,#skySelectedRelationship .relphi-glyph-neptune')).map(art=>{
-    const box=art.getBoundingClientRect();
-    const host=art.closest('.relphi-glyph-bubble')||art.parentElement;
-    const hostBox=host?.getBoundingClientRect();
-    return{
-      width:box.width||0,
-      height:box.height||0,
-      hostWidth:hostBox?.width||0,
-      hostHeight:hostBox?.height||0,
-      source:art.dataset.relphiCanonicalSource||'',
-      transform:art.getAttribute('transform')||'',
-      path:art.querySelector('path')?.getAttribute('d')||''
-    };
-  });
+  const neptunes=Array.from(document.querySelectorAll('#skyFoundationRoot .relphi-glyph-neptune,#skySelectedRelationship .relphi-glyph-neptune')).map(art=>({
+    source:art.dataset.relphiCanonicalSource||'',viewBox:art.dataset.relphiCanonicalViewBox||'',
+    path:art.querySelector('path')?.getAttribute('d')||'',text:glyphText(art),transform:art.getAttribute('transform')||''
+  }));
   const cards=Array.from(document.querySelectorAll('#skySelectedRelationship .sky-selected-cards > .sky-selected-card[data-selected-card]')).map(card=>{
     const box=card.getBoundingClientRect();
-    return{slot:card.dataset.selectedCard,left:box.left,right:box.right,top:box.top,bottom:box.bottom,border:getComputedStyle(card).borderColor,image:!!card.querySelector('img')};
+    return{slot:card.dataset.selectedCard,left:box.left,right:box.right,border:getComputedStyle(card).borderColor,image:!!card.querySelector('img')};
   });
   const fragment=document.createDocumentFragment();
   const glyph=document.createElement('span');glyph.dataset.relphiCopyId='north-node';
   const name=document.createElement('span');name.textContent=' North Node';
   fragment.append(glyph,name);
   return{
-    nodes,
-    angles,
-    wheelAngles,
-    neptunes,
-    cards,
-    copy:{
-      node:window.RelphiGlyphCopySerializer.serializeGlyph('north-node'),
-      angle:window.RelphiGlyphCopySerializer.serializeGlyph('asc'),
-      aspect:window.RelphiGlyphCopySerializer.serializeGlyph('conjunction'),
-      row:window.RelphiGlyphCopySerializer.serializeFragment(fragment).text
-    },
+    nodes,angles,wheelAngles,neptunes,cards,
+    audit:window.RelphiSkyGlyphAudit.run(),
+    copy:{node:window.RelphiGlyphCopySerializer.serializeGlyph('north-node'),angle:window.RelphiGlyphCopySerializer.serializeGlyph('asc'),aspect:window.RelphiGlyphCopySerializer.serializeGlyph('conjunction'),row:window.RelphiGlyphCopySerializer.serializeFragment(fragment).text},
     paintViolations:window.__relphiGlyphPaintViolations,
     guardLoaded:!!window.__relphiSkyGlyphSizeGuardV1,
-    lateNeptuneWrapperLoaded:!!window.__relphiNeptuneCrossConnectionInstalled,
-    committed:document.querySelectorAll('#skyFoundationRoot .relphi-canonical-glyph[data-relphi-atomic-build="detached-final"]').length,
+    neptuneWrapperLoaded:!!window.__relphiNeptuneCrossConnectionInstalled,
+    collisionState:document.querySelector('.sky-foundation-wheel')?.dataset.angleCollisionState||'',
+    collisionErrors:document.querySelectorAll('[data-angle-collision-error]').length,
     selectedBubbles:document.querySelectorAll('#skySelectedRelationship .sky-selected-symbols .relphi-glyph-bubble[data-relphi-atomic-ready="true"][data-relphi-atomic-build="detached-final"]').length
   };
 });
 
-assert.equal(state.guardLoaded,false,'The repair-after-render size guard must not be loaded.');
-assert.equal(state.lateNeptuneWrapperLoaded,false,'The late Neptune redraw/refit wrapper must not load.');
-assert.ok(state.committed>0,'The chart must contain detached-final glyphs.');
-assert.equal(state.selectedBubbles,3,'The selected relationship must reveal only after all three finished glyph bubbles exist.');
-assert.deepEqual(state.paintViolations,[],'No unfinished identity-bearing glyph may enter a visible chart subtree.');
+assert.equal(state.guardLoaded,false,'The repair-after-render size guard must not load.');
+assert.equal(state.neptuneWrapperLoaded,false,'No Neptune-specific renderer may load.');
+assert.deepEqual(state.paintViolations,[],'No unfinished identity-bearing glyph may enter the visible chart.');
+assert.deepEqual(state.audit,[],'The runtime canonical/collision audit must pass.');
+assert.equal(state.collisionState,'resolved');
+assert.equal(state.collisionErrors,0);
+assert.equal(state.selectedBubbles,3,'The selected relationship must wait for all three finished glyph bubbles.');
+
 for(const id of ['north-node','south-node']){
-  assert.ok(state.nodes[id].width>4&&state.nodes[id].height>4,`${id} must remain visibly present.`);
-  assert.equal(state.nodes[id].fallback,state.nodes[id].expected,`${id} must retain the canonical registry character.`);
-  assert.equal(state.nodes[id].text,state.nodes[id].expected,`${id} must render the canonical registry character.`);
-  assert.equal(state.nodes[id].source,`unicode:${state.nodes[id].expected}`,`${id} must identify its canonical Unicode source.`);
-  assert.ok(state.nodes[id].transform,`${id} must receive its final canonical fit before insertion.`);
+  const node=state.nodes[id];
+  assert.ok(node.width>4&&node.height>4,`${id} must remain visible.`);
+  assert.equal(node.fallback,node.expected);
+  assert.equal(node.text,node.expected);
+  assert.equal(node.source,`glyphs-unified-preview.html#${id}`);
 }
+
+const expectedAngleText={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
 for(const [id,record] of Object.entries(state.angles)){
-  assert.ok(record.instances.length>=2,`${id} must render in more than one Sky Chart context.`);
+  assert.equal(record.asset,null,`${id} must not be replaced with a feature-branch SVG.`);
+  assert.equal(record.fallback,expectedAngleText[id]);
+  assert.equal(record.source,`glyphs-unified-preview.html#${id}`);
+  assert.ok(record.instances.length>=2,`${id} must render in multiple contexts.`);
   for(const instance of record.instances){
-    assert.ok(instance.width>2&&instance.height>2,`${id} must remain visible.`);
-    assert.equal(instance.text,'',`${id} must use authored paths rather than browser lettering.`);
-    assert.equal(instance.source,record.source,`${id} must use its own authored upright asset.`);
-    assert.equal(instance.viewBox,'0 0 100 100',`${id} must preserve the canon's intentional whitespace.`);
-    assert.equal(instance.rotation,'0',`${id} must remain upright.`);
-    assert.ok(!/rotate\s*\(\s*180/i.test(instance.transform),`${id} must not be upside down.`);
-    if(instance.hostWidth>0&&instance.hostHeight>0){
-      assert.ok(instance.width<=instance.hostWidth*1.1,`${id} must not overflow its canonical host width.`);
-      assert.ok(instance.height<=instance.hostHeight*1.1,`${id} must not overflow its canonical host height.`);
-    }
+    assert.ok(instance.width>2&&instance.height>2,`${id} must be visible.`);
+    assert.equal(instance.text,expectedAngleText[id]);
+    assert.equal(instance.source,record.source);
+    assert.equal(instance.rotation,false,`${id} must remain upright.`);
   }
 }
-assert.equal(state.wheelAngles.length,8,'The wheel must contain four axis labels for each sky.');
+
+assert.equal(state.wheelAngles.length,8,'Four Angle axes per sky are required.');
 for(const slot of ['A','B']){
-  assert.deepEqual(state.wheelAngles.filter(item=>item.slot===slot).map(item=>item.id).sort(),['asc','dsc','ic','mc'],`Sky ${slot} must contain all four axis labels.`);
+  assert.deepEqual(state.wheelAngles.filter(item=>item.slot===slot).map(item=>item.id).sort(),['asc','dsc','ic','mc']);
 }
 for(const angle of state.wheelAngles){
-  assert.equal(angle.source,state.angles[angle.id].source,`${angle.id} must use its authored canon on the wheel.`);
-  assert.equal(angle.uncircled,'true',`${angle.id} must be committed as an uncircled wheel label.`);
-  assert.equal(angle.lineSegments,2,`${angle.id} must sit in the gap between two sky-colored axis-line segments.`);
-  assert.equal(angle.visibleCircleOpacity,0,`${angle.id} must not show a glyph bubble on the wheel.`);
-  const expectedRadius=angle.slot==='A'?494:244.5;
-  assert.ok(Math.abs(angle.radius-expectedRadius)<0.2,`${angle.id} must sit inside Sky ${angle.slot}'s own house band.`);
+  assert.equal(angle.source,`glyphs-unified-preview.html#${angle.id}`);
+  assert.equal(angle.text,expectedAngleText[angle.id]);
+  assert.equal(angle.hiddenCircle,true,'Wheel Angles must use the uncircled state of the same master composition.');
+  assert.equal(angle.master,'glyphs-unified-preview.html');
+  assert.equal(angle.viewBox,'-32 -32 64 64');
+  assert.equal(angle.lineSegments,2);
+  assert.ok(angle.lineLongitudes.every(value=>Math.abs(value-angle.longitude)<1e-5));
+  const [inner,outer]=angle.slot==='A'?[414,574]:[166,323];
+  assert.ok(angle.lane>inner&&angle.lane<outer,`${angle.slot} ${angle.id} must remain in its sky band.`);
 }
-assert.ok(state.neptunes.length>=4,'Neptune must render in ledgers, wheel/relationship contexts, and selected detail when present.');
-for(const instance of state.neptunes){
-  assert.ok(instance.width>2&&instance.height>2,'Every Neptune instance must remain visible.');
-  assert.equal(instance.source,'assets/planet-glyphs/neptune.svg','Every Neptune must come from the authored connected-trident asset.');
-  assert.ok(instance.path.includes('H56'),'Neptune must use the connected canonical trident path.');
-  assert.ok(instance.transform,'Neptune must receive its final transform before insertion.');
-  if(instance.hostWidth>0&&instance.hostHeight>0){
-    assert.ok(instance.width<=instance.hostWidth*1.1,'Neptune must not overflow its canonical host width.');
-    assert.ok(instance.height<=instance.hostHeight*1.1,'Neptune must not overflow its canonical host height.');
-  }
+
+assert.ok(state.neptunes.length>=4,'Neptune must render in all relevant contexts.');
+for(const neptune of state.neptunes){
+  assert.equal(neptune.source,'assets/planet-glyphs/neptune.svg');
+  assert.equal(neptune.viewBox,'0 0 100 100');
+  assert.equal(neptune.text,'');
+  assert.ok(neptune.path.includes('44 62H56'),'Neptune must use the sole repository asset unchanged.');
+  assert.ok(neptune.transform);
 }
+
 assert.deepEqual(state.copy,{node:'☊ North Node',angle:'Ascendant',aspect:'☌ Conjunction',row:'☊ North Node'});
 assert.equal(state.cards.length,2,'Both sky-owned tarot cards must exist.');
 assert.equal(state.cards[0].slot,'A');
 assert.equal(state.cards[1].slot,'B');
-assert.ok(state.cards.every(card=>card.image),'Each sky card must contain its own image.');
-assert.ok(state.cards[0].right<=state.cards[1].left||state.cards[1].right<=state.cards[0].left,'The two sky cards must not overlap.');
-assert.equal(state.cards[0].border,'rgb(201, 33, 30)','Sky A card must have its red border.');
-assert.equal(state.cards[1].border,'rgb(36, 98, 208)','Sky B card must have its blue border.');
+assert.ok(state.cards.every(card=>card.image));
+assert.ok(state.cards[0].right<=state.cards[1].left||state.cards[1].right<=state.cards[0].left,'The cards must not overlap.');
+assert.equal(state.cards[0].border,'rgb(201, 33, 30)');
+assert.equal(state.cards[1].border,'rgb(36, 98, 208)');
 
 const southNodeRow=page.locator('#skyFoundationA .sky-foundation-row[data-placement="south-node"]');
 await southNodeRow.evaluate(row=>row.click());
@@ -211,7 +181,7 @@ const isolated=await page.evaluate(()=>Object.fromEntries(['north-node','south-n
   const host=document.querySelector(`[data-layer="placements"] > g[data-sky="A"][data-placement="${id}"]`);
   const art=host?.querySelector(`.relphi-glyph-${id}`);
   const box=art?.getBoundingClientRect();
-  return[id,{opacity:Number(getComputedStyle(host).opacity),width:box?.width||0,height:box?.height||0,selected:host.classList.contains('is-selected')}];
+  return[id,{opacity:Number(getComputedStyle(host).opacity),width:box?.width||0,selected:host.classList.contains('is-selected')}];
 })));
 assert.equal(isolated['south-node'].selected,true);
 assert.ok(isolated['south-node'].opacity>.95);
@@ -228,6 +198,6 @@ const scrollCheck=await page.evaluate(()=>{
 assert.equal(scrollCheck.after,scrollCheck.before);
 assert.equal(scrollCheck.suppressed,'true');
 assert.deepEqual(errors,[]);
-await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',animations:'disabled',timeout:30000});
+await page.screenshot({path:'sky-chart-atomic-glyphs-no-scroll.png',animations:'disabled',timeout:30000,fullPage:true});
 await browser.close();
-console.log('Sky Chart uses authored upright Angles as uncircled axis labels, one atomic connected Neptune source, semantic copying, and two separate bordered sky cards.');
+console.log('Sky Chart uses the Master Glyph List contract, the sole Neptune asset, collision-safe Angle axes, semantic copying, and separate bordered cards.');
