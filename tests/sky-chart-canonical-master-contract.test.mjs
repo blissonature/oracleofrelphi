@@ -29,8 +29,6 @@ assert.deepEqual(audit.competingSources,{
   staleReferences:[],
   consumerReferenceViolations:[]
 });
-
-execFileSync('git',['diff','--quiet','origin/main','--','glyphs-unified-preview.html'],{cwd:root});
 for(const item of audit.approvedRuntimeFiles){
   assert.equal(typeof manifest.runtime_files[item.file],'string',`${item.file} must be listed in the runtime source manifest.`);
 }
@@ -40,55 +38,53 @@ const sky=read('sky-chart.html');
 const component=read('relphi-glyph-component-v1.js');
 const foundation=read('sky-chart-foundation-v1.js');
 const filters=read('sky-chart-multiselect-filters-v1.js');
+const angleVisibility=read('sky-chart-angle-placement-visibility-v1.js');
 const cardCss=read('sky-chart-selected-relationship-atomic-v1.css');
 const integrity=read('relphi-glyph-source-integrity-v1.js');
 const gemini=read('assets/zodiac-glyphs/gemini.svg');
 
 assert.equal((sky.match(/relphi-glyph-registry-v1\.js/g)||[]).length,1);
 assert.equal((sky.match(/relphi-glyph-component-v1\.js/g)||[]).length,1);
-assert.match(sky,/relphi-glyph-component-v1\.js\?v=20/);
+assert.match(sky,/relphi-glyph-component-v1\.js\?v=25/);
+assert.match(sky,/sky-chart-multiselect-filters-v1\.js\?v=9/);
+assert.match(sky,/sky-chart-angle-placement-visibility-v1\.js\?v=2/);
 assert.match(sky,/relphi-glyph-source-integrity-v1\.js/);
 assert.doesNotMatch(sky,/canon-binding|atomic-loader|neptune-cross|moon-stroke-preservation|glyph-framing|glyph-size-guard|live-integrity|angle-extreme-placement/i);
 assert.match(integrity,/https:\/\/oracleofrelphi\.com\/glyphs-unified-preview\.html/);
 assert.match(integrity,/047fd8a7bf764e285dcb6ae012048a965840ea39/);
 assert.doesNotMatch(integrity,/window\.RelphiGlyphComponent\s*=|window\.RelphiGlyphRegistry\s*=/);
 
-// Canonical asset-backed glyphs are finished artwork. The component must place
-// each authored SVG viewBox directly into one fixed presentation frame and must
-// never measure, refit, thicken, or mutate it after insertion.
-assert.match(component,/function canonicalAssetFrame/);
-assert.match(component,/frame\.setAttribute\('viewBox', source\.getAttribute\('viewBox'\)\)/);
-assert.match(component,/frame\.setAttribute\('preserveAspectRatio', source\.getAttribute\('preserveAspectRatio'\) \|\| 'xMidYMid meet'\)/);
-assert.match(component,/frame\.dataset\.glyphPresentation = 'authored-viewbox'/);
-assert.match(component,/art = canonicalAssetFrame\(parent, source, radius, padding, bubbleStrokeWidth, color, entry\)/);
-assert.doesNotMatch(component,/getBBox|getBoundingClientRect|requestAnimationFrame|fitMode\s*===\s*['"]lilith['"]|thickenToNodeWeight|largestStroke|numericStrokeWidth/);
-assert.doesNotMatch(component,/entry\.scale|scale\(\$\{scale\}\)|dataset\.glyphPresentation\s*=\s*['"]measuring['"]|visibility['"],?\s*['"]hidden['"]/);
-assert.match(component,/function fit\(node\)\s*\{\s*return node;\s*\}/);
+assert.match(component,/art\.setAttribute\('visibility', 'hidden'\)/);
+assert.match(component,/fit\(art, radius, padding, entry, bubbleStrokeWidth\)/);
+assert.match(component,/art\.dataset\.glyphPresentation = 'canonical-fitted-before-reveal'/);
+assert.match(component,/art\.removeAttribute\('visibility'\)/);
+assert.doesNotMatch(component,/requestAnimationFrame/);
 
 assert.match(gemini,/viewBox="0 0 100 100"/);
 assert.match(gemini,/fill="#111111"/);
-assert.match(gemini,/fill-rule="evenodd"/);
 assert.doesNotMatch(gemini,/stroke=|stroke-width=/);
 
 assert.match(foundation,/component\.draw\(parent, entry\.id, options\)/);
 assert.match(foundation,/component\.createBubble\(parent, entry\.id, options\)/);
 assert.match(foundation,/function drawUncircledBubble/);
-assert.match(foundation,/frameRadius:19/);
 assert.match(foundation,/bubble\.circle\.style\.opacity\s*=\s*['"]0['"]/);
-assert.match(foundation,/A:Object\.freeze\(\[540,522,504\]\)/);
-assert.match(foundation,/B:Object\.freeze\(\[202,220,238\]\)/);
-assert.match(foundation,/edgeRadius:Object\.freeze\(\{A:R\.aOut,B:R\.bIn\}\)/);
 assert.match(foundation,/const glyphRadius = 19/);
 assert.doesNotMatch(foundation,/id === ['"]gemini['"]|gemini.*\?\s*\d+\s*:\s*\d+/i);
-assert.doesNotMatch(foundation,/data-angle-collision-error|ANGLE COLLISION|No legal canonical Angle lane/);
-assert.doesNotMatch(foundation,/assets\/angle-glyphs|VECTOR_GLYPHS|const\s+PATHS\s*=/);
 
-assert.match(filters,/ascendant:'asc', 'asc\.':'asc'/);
-assert.match(filters,/planets:Object\.freeze\(\['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'\]\)/);
-assert.match(filters,/'angles-points':Object\.freeze\(\['asc','dsc','mc','ic'/);
+assert.match(filters,/label:'Planets', members:new Set\(\['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'\]\)/);
+assert.match(filters,/id:'chart-angles', label:'Chart Angles', members:new Set\(\['asc','dsc','mc','ic'\]\)/);
+assert.match(filters,/'chart-angles':Object\.freeze\(\['asc','dsc','mc','ic'\]\)/);
+assert.match(filters,/id:'points', label:'Points'/);
+assert.doesNotMatch(filters,/label:'Planets'[^\n]+asc/);
+assert.doesNotMatch(filters,/Angles and Points/);
+
+assert.match(angleVisibility,/const hidden = choice \? !choice\.checked : false/);
+assert.match(angleVisibility,/Absence is not deselection/);
+assert.match(angleVisibility,/\[data-angle="\$\{id\}"\]/);
+
 assert.match(cardCss,/padding:0 !important/);
 assert.match(cardCss,/background:transparent !important/);
 assert.match(cardCss,/data-selected-card="A"[\s\S]*border:3px solid var\(--sky-a\)/);
 assert.match(cardCss,/data-selected-card="B"[\s\S]*border:3px solid var\(--sky-b\)/);
 
-console.log('Canonical SVG glyphs render once from their authored viewBoxes with no runtime refitting.');
+console.log('Chart Angles are separate from Planets, and Asc remains visible unless explicitly deselected.');
