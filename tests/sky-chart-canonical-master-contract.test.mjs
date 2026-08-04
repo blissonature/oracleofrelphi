@@ -12,8 +12,10 @@ const show=file=>execFileSync('git',['show',`${APPROVED}:${file}`],{cwd:root});
 
 execFileSync(process.execPath,['scripts/generate-glyph-canon-audit.mjs','glyph-canon-source-audit.json'],{cwd:root,stdio:'inherit'});
 const audit=JSON.parse(read('glyph-canon-source-audit.json'));
+const manifest=JSON.parse(read('glyph-canon-approved-source-manifest.json'));
 
 assert.equal(audit.approvedSource.commit,APPROVED);
+assert.equal(manifest.authority.commit,APPROVED);
 assert.ok(audit.entries.length>80,'The complete approved Master Glyph List must be audited.');
 assert.ok(audit.approvedFiles.every(item=>item.equal),'Every approved glyph source must be byte-identical.');
 assert.deepEqual(audit.competingSources,{
@@ -21,11 +23,15 @@ assert.deepEqual(audit.competingSources,{
   angleAssetFiles:[],
   definitionViolations:[],
   mutationViolations:[],
-  geometryViolations:[]
+  geometryViolations:[],
+  staleReferences:[]
 });
 
 for(const file of ['glyphs-unified-preview.html','relphi-glyph-registry-v1.js','relphi-glyph-component-v1.js']){
   assert.equal(Buffer.compare(fs.readFileSync(path.join(root,file)),show(file)),0,`${file} must exactly match ${APPROVED}.`);
+}
+for(const item of audit.approvedFiles){
+  assert.equal(typeof manifest.files[item.file],'string',`${item.file} must be listed in the immutable source manifest.`);
 }
 
 const master=read('glyphs-unified-preview.html');
