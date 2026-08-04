@@ -154,4 +154,26 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
     grid-template-areas:"a" "b" "comparison";
   }
   #skyFoundationWheelMount { min-height:300px; padding:4px; }
+
+  /* Mobile compensates for the whole 1200-unit wheel being reduced to a narrow
+     viewport. Each finished canonical object is scaled atomically; its authored
+     internal geometry and whitespace are not refitted. */
+  #skyFoundationWheelMount .sky-foundation-aspect {
+    stroke-width:1.05;
+    opacity:.52;
+  }
+  #skyFoundationWheelMount .sky-foundation-house-number {
+    font-size:22px;
+    font-weight:800;
+  }
+  #skyFoundationWheelMount [data-layer="placements"] > g[data-placement]:not([data-angle-axis="true"]) {
+    transform-box:fill-box;
+    transform-origin:center;
+    scale:1.34;
+  }
+  #skyFoundationWheelMount .sky-foundation-sign-glyph {
+    transform-box:fill-box;
+    transform-origin:center;
+    scale:1.32;
+  }
 }
