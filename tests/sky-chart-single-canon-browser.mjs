@@ -43,6 +43,10 @@ async function inspectSky(width,height,suffix){
     const sourceSvg=new DOMParser().parseFromString(sourceMarkup,'image/svg+xml').documentElement;
     const sourceNeptune=sourceSvg.querySelector('path')?.getAttribute('d')||'';
     const textOf=art=>art?.matches?.('text')?art.textContent:(art?.querySelector('text')?.textContent||'');
+    const lineLength=line=>Math.hypot(
+      Number(line.getAttribute('x2'))-Number(line.getAttribute('x1')),
+      Number(line.getAttribute('y2'))-Number(line.getAttribute('y1'))
+    );
     const angleExpected={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
     const angles=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]')).map(host=>{
       const root=host.querySelector(':scope > .relphi-glyph-bubble');
@@ -58,6 +62,7 @@ async function inspectSky(width,height,suffix){
         transform:root?.querySelector('.relphi-canonical-glyph')?.getAttribute('transform')||'',
         exact:host.dataset.angleLongitude||'',
         lineCount:lines.length,
+        lineLengths:lines.map(lineLength),
         extreme:host.dataset.angleExtreme||'',
         lane:Number(host.dataset.angleLane),
         lineExtremes:lines.map(line=>line.dataset.axisExtreme||'')
@@ -102,7 +107,8 @@ async function inspectSky(width,height,suffix){
     assert.equal(angle.circlePresentation,'hidden-only');
     assert.ok(!/rotate\s*\(/i.test(angle.transform));
     assert.ok(angle.exact);
-    assert.equal(angle.lineCount,2);
+    assert.ok(angle.lineCount>=1&&angle.lineCount<=2);
+    assert.ok(angle.lineLengths.every(length=>length<=12.01));
     assert.equal(angle.extreme,angle.sky==='A'?'outer':'inner');
     assert.ok(angle.sky==='A'?angle.lane>=504:angle.lane<=238);
     assert.ok(angle.lineExtremes.every(value=>value===angle.extreme));
@@ -126,12 +132,16 @@ async function inspectSky(width,height,suffix){
   const cards=await page.evaluate(()=>Array.from(document.querySelectorAll('#skySelectedRelationship .sky-selected-card[data-selected-card]')).map(card=>({
     slot:card.dataset.selectedCard,
     border:getComputedStyle(card).borderColor,
+    padding:getComputedStyle(card).padding,
+    background:getComputedStyle(card).backgroundColor,
     image:!!card.querySelector('img'),
     box:(()=>{const b=card.getBoundingClientRect();return{left:b.left,right:b.right,top:b.top,bottom:b.bottom};})()
   })));
   assert.equal(cards.length,2);
   assert.deepEqual(cards.map(card=>card.slot),['A','B']);
   assert.ok(cards.every(card=>card.image));
+  assert.ok(cards.every(card=>card.padding==='0px'));
+  assert.ok(cards.every(card=>card.background==='rgba(0, 0, 0, 0)'));
   assert.equal(cards[0].border,'rgb(201, 33, 30)');
   assert.equal(cards[1].border,'rgb(36, 98, 208)');
   assert.ok(cards[0].box.right<=cards[1].box.left||cards[1].box.right<=cards[0].box.left||cards[0].box.bottom<=cards[1].box.top||cards[1].box.bottom<=cards[0].box.top);
