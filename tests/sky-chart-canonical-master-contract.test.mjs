@@ -43,6 +43,7 @@ assert.match(audit,/a house number/);
 assert.match(audit,/a placement bubble/);
 assert.match(audit,/outside its sky-owned band/);
 assert.match(audit,/wrong sky color/);
+assert.match(audit,/Neptune-specific rendering wrapper is active/);
 
 assert.doesNotMatch(html,/relphi-neptune-cross-connection-v1\.js/);
 assert.match(html,/relphi-glyph-canon-binding-v1\.js\?v=4/);
@@ -52,7 +53,10 @@ assert.match(html,/sky-chart-glyph-audit-v1\.js\?v=4/);
 assert.doesNotMatch(master,/relphi-neptune-cross-connection-v1\.js/);
 assert.match(master,/relphi-glyph-canon-binding-v1\.js\?v=4/);
 assert.match(master,/relphi-glyph-atomic-loader-v1\.js\?v=7/);
-for(const file of ['assets/angle-glyphs/asc.svg','assets/angle-glyphs/dsc.svg','assets/angle-glyphs/mc.svg','assets/angle-glyphs/ic.svg','sky-chart-angle-glyph-fit-v1.js']){
+for(const file of [
+  'assets/angle-glyphs/asc.svg','assets/angle-glyphs/dsc.svg','assets/angle-glyphs/mc.svg','assets/angle-glyphs/ic.svg',
+  'sky-chart-angle-glyph-fit-v1.js','relphi-neptune-cross-connection-v1.js'
+]){
   assert.equal(fs.existsSync(path.join(root,file)),false,`${file} must not exist.`);
 }
 
