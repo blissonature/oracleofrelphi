@@ -11,6 +11,19 @@
     { id: 'planets', label: 'Planets', members: new Set(['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto']) },
     { id: 'angles-points', label: 'Angles and Points', members: null }
   ]);
+  const ID_ALIASES = Object.freeze({
+    ascendant:'asc', 'asc.':'asc', rising:'asc', ac:'asc',
+    descendant:'dsc', 'desc.':'dsc', desc:'dsc', dc:'dsc',
+    midheaven:'mc', 'medium coeli':'mc',
+    'imum coeli':'ic', imumcoeli:'ic',
+    'north node':'north-node', 'south node':'south-node',
+    'part of fortune':'part-of-fortune', fortune:'part-of-fortune'
+  });
+  const GROUP_ORDER = Object.freeze({
+    luminaries:Object.freeze(['sun','moon']),
+    planets:Object.freeze(['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']),
+    'angles-points':Object.freeze(['asc','dsc','mc','ic','north-node','south-node','chiron','lilith','part-of-fortune','vertex'])
+  });
   const state = {
     A: { available: new Map(), selected: new Set(), initialized: false, signature: '' },
     B: { available: new Map(), selected: new Set(), initialized: false, signature: '' }
@@ -31,9 +44,15 @@
     return document.getElementById('skyChartPlacementPopover');
   }
 
+  function canonicalId(value) {
+    const raw = String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    return ID_ALIASES[raw] || raw;
+  }
+
   function categoryFor(id) {
-    if (GROUPS[0].members.has(id)) return GROUPS[0].id;
-    if (GROUPS[1].members.has(id)) return GROUPS[1].id;
+    const canonical = canonicalId(id);
+    if (GROUPS[0].members.has(canonical)) return GROUPS[0].id;
+    if (GROUPS[1].members.has(canonical)) return GROUPS[1].id;
     return GROUPS[2].id;
   }
 
@@ -41,8 +60,8 @@
     const panel = document.getElementById(slot === 'A' ? 'skyFoundationA' : 'skyFoundationB');
     const seen = new Set();
     return Array.from(panel?.querySelectorAll('.sky-foundation-row[data-placement]') || []).map(row => {
-      const id = String(row.dataset.placement || '').trim();
-      const label = String(row.querySelector('.sky-foundation-row-name')?.textContent || id).trim();
+      const label = String(row.querySelector('.sky-foundation-row-name')?.textContent || row.dataset.placement || '').trim();
+      const id = canonicalId(row.dataset.placement || label);
       if (!id || seen.has(id)) return null;
       seen.add(id);
       return { id, label, group: categoryFor(id) };
@@ -67,7 +86,14 @@
         if (!combined.has(entry.id)) combined.set(entry.id, { id: entry.id, label: entry.label });
       });
     });
-    return Array.from(combined.values()).sort((left, right) => left.label.localeCompare(right.label));
+    const order = GROUP_ORDER[groupId] || [];
+    const rank = id => {
+      const index = order.indexOf(id);
+      return index < 0 ? Number.MAX_SAFE_INTEGER : index;
+    };
+    return Array.from(combined.values()).sort((left, right) =>
+      rank(left.id) - rank(right.id) || left.label.localeCompare(right.label)
+    );
   }
 
   function idsFor(scope, target, slot) {
