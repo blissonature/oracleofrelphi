@@ -81,7 +81,12 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   border-bottom:1px solid rgba(31,27,24,.075);
 }
 .sky-foundation-row:last-child { border-bottom:0; }
-.sky-foundation-row > svg { display:block; width:23px; height:23px; overflow:hidden; }
+.sky-foundation-row > svg {
+  display:block;
+  width:23px;
+  height:23px;
+  overflow:hidden;
+}
 .sky-foundation-row-name {
   min-width:0;
   overflow:hidden;
@@ -126,9 +131,8 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-leader { fill:none; stroke-width:1.45; stroke-linecap:round; vector-effect:non-scaling-stroke; }
 .sky-foundation-aspect { stroke-width:2.1; stroke-linecap:round; opacity:.62; vector-effect:non-scaling-stroke; }
 
-/* Zodiac signs use the canonical Without circles presentation. The circle is
-   excluded from paint while the canonical master frame, whitespace, fitting,
-   centering, and glyph geometry remain unchanged. */
+/* Zodiac signs use the canonical Without circles presentation. The complete
+   canonical artboard remains intact; only the circle is omitted from paint. */
 [data-layer="zodiac"] .sky-foundation-sign-glyph > .relphi-glyph-bubble > circle {
   display:none !important;
 }
@@ -154,7 +158,6 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
     grid-template-areas:"a" "b" "comparison";
   }
   #skyFoundationWheelMount { min-height:300px; padding:4px; }
-
   #skyFoundationWheelMount .sky-foundation-aspect {
     stroke-width:1.05;
     opacity:.52;
@@ -162,17 +165,5 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   #skyFoundationWheelMount .sky-foundation-house-number {
     font-size:22px;
     font-weight:800;
-  }
-
-  /* Scale only the finished canonical object at its local origin. Never scale
-     the positioned host group: doing so multiplies its translate coordinates
-     and pushes the glyph outside the wheel. */
-  #skyFoundationWheelMount [data-layer="placements"] > g[data-placement]:not([data-angle-axis="true"]) > .relphi-glyph-bubble {
-    transform:scale(1.28);
-    transform-origin:0 0;
-  }
-  #skyFoundationWheelMount .sky-foundation-sign-glyph > .relphi-glyph-bubble {
-    transform:scale(1.24);
-    transform-origin:0 0;
   }
 }
