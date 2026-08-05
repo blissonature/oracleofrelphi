@@ -1,11 +1,18 @@
-// Relationship-list composition: two placements, centered aspect, dedicated orb.
+// Canonical relationship-list composition: two placements, aspect, and dedicated orb.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV1) return;
-  window.__relphiSkyRelationshipListLayoutV1 = true;
+  if (window.__relphiSkyRelationshipListLayoutV2) return;
+  window.__relphiSkyRelationshipListLayoutV2 = true;
 
-  const STYLE_ID = 'skyRelationshipListLayoutV1';
+  const NS = 'http://www.w3.org/2000/svg';
+  const STYLE_ID = 'skyRelationshipListLayoutV2';
+  const SKY = { A:'#c9211e', B:'#2462d0' };
+  const ASPECT_COLORS = Object.freeze({
+    conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',
+    quintile:'#8b6cc2',square:'#d6534d',trine:'#4e9e69','tri-octile':'#9f5944',
+    'bi-quintile':'#7655aa',quincunx:'#4b8e88',opposition:'#5961c8'
+  });
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
@@ -15,7 +22,7 @@
       .sky-foundation-relationship-row {
         --relationship-stripe: var(--aspect-color, #777);
         position: relative;
-        grid-template-columns: 25px minmax(0,1fr) 29px 25px minmax(0,1fr) auto;
+        grid-template-columns: 30px minmax(0,1fr) 32px 30px minmax(0,1fr) auto;
         grid-template-areas: "left-glyph left-copy aspect right-glyph right-copy orb";
         column-gap: 6px;
         row-gap: 4px;
@@ -29,10 +36,16 @@
         width: 5px;
         background: var(--relationship-stripe);
       }
-      .sky-foundation-relationship-row > svg:nth-of-type(1) { grid-area: left-glyph; }
+      .sky-relationship-canonical-glyph {
+        display:block;
+        width:30px;
+        height:30px;
+        overflow:visible;
+      }
+      .sky-relationship-canonical-glyph[data-role="left"] { grid-area:left-glyph; }
+      .sky-relationship-canonical-glyph[data-role="aspect"] { grid-area:aspect; justify-self:center; }
+      .sky-relationship-canonical-glyph[data-role="right"] { grid-area:right-glyph; }
       .sky-foundation-relationship-row > .sky-foundation-relationship-copy:nth-of-type(1) { grid-area: left-copy; }
-      .sky-foundation-relationship-row > svg:nth-of-type(2) { grid-area: aspect; justify-self: center; }
-      .sky-foundation-relationship-row > svg:nth-of-type(3) { grid-area: right-glyph; }
       .sky-foundation-relationship-row > .sky-foundation-relationship-copy:nth-of-type(2) { grid-area: right-copy; }
       .sky-foundation-relationship-orb {
         grid-area: orb;
@@ -53,12 +66,10 @@
         white-space: normal;
         line-height: 1.15;
       }
-      .sky-foundation-relationship-copy small {
-        white-space: normal;
-      }
+      .sky-foundation-relationship-copy small { white-space: normal; }
       @media (max-width: 620px) {
         .sky-foundation-relationship-row {
-          grid-template-columns: 25px minmax(0,1fr) 32px minmax(0,1fr) 25px;
+          grid-template-columns: 30px minmax(0,1fr) 34px minmax(0,1fr) 30px;
           grid-template-areas:
             "left-glyph left-copy aspect right-copy right-glyph"
             ". orb orb orb .";
@@ -69,19 +80,78 @@
           min-width: 74px;
           margin-top: 2px;
         }
-        .sky-foundation-relationship-row > .sky-foundation-relationship-copy:nth-of-type(2) {
-          text-align: right;
-        }
-        .sky-foundation-relationship-row > svg:nth-of-type(3) {
-          justify-self: end;
-        }
+        .sky-foundation-relationship-row > .sky-foundation-relationship-copy:nth-of-type(2) { text-align: right; }
+        .sky-relationship-canonical-glyph[data-role="right"] { justify-self:end; }
       }
     `;
     document.head.appendChild(style);
   }
 
+  function canonicalSvg(role, label) {
+    const node = document.createElementNS(NS, 'svg');
+    node.classList.add('sky-relationship-canonical-glyph');
+    node.dataset.role = role;
+    node.setAttribute('viewBox', '-20 -20 40 40');
+    node.setAttribute('aria-label', label);
+    return node;
+  }
+
+  function renderCanonical(node, identity, color) {
+    const registry = window.RelphiGlyphRegistry;
+    const component = window.RelphiGlyphComponent;
+    const entry = registry && (registry.get(identity) || registry.resolve(identity));
+    if (!entry || !component?.createBubble) {
+      node.remove();
+      console.error('Canonical relationship glyph unavailable:', identity);
+      return;
+    }
+    const bubble = component.createBubble(node, entry.id, {
+      radius:14,
+      padding:1.25,
+      color,
+      strokeWidth:1.65,
+      fill:'#fffdfa'
+    });
+    bubble.root.dataset.relationshipCanonical = 'true';
+    Promise.resolve(bubble.ready).catch(error => {
+      node.remove();
+      console.error(error);
+    });
+  }
+
+  function replaceGenericGlyphs(row, aspectColor) {
+    if (row.dataset.relationshipCanonicalGlyphs === 'true') return;
+    const generic = Array.from(row.querySelectorAll(':scope > svg'));
+    if (generic.length < 3) return;
+
+    const leftId = row.dataset.leftPlacement;
+    const aspectId = row.dataset.aspect;
+    const rightId = row.dataset.rightPlacement;
+    if (!leftId || !aspectId || !rightId) return;
+
+    const left = canonicalSvg('left', leftId);
+    const aspect = canonicalSvg('aspect', aspectId);
+    const right = canonicalSvg('right', rightId);
+
+    generic[0].replaceWith(left);
+    generic[1].replaceWith(aspect);
+    generic[2].replaceWith(right);
+
+    renderCanonical(left, leftId, SKY.A);
+    renderCanonical(aspect, aspectId, aspectColor);
+    renderCanonical(right, rightId, SKY.B);
+    row.dataset.relationshipCanonicalGlyphs = 'true';
+  }
+
   function compose(row) {
-    if (!(row instanceof HTMLElement) || row.dataset.relationshipLayout === 'v1') return;
+    if (!(row instanceof HTMLElement)) return;
+    const aspect = String(row.dataset.aspect || '').toLowerCase();
+    const aspectColor = ASPECT_COLORS[aspect] || '#777';
+    row.style.setProperty('--relationship-stripe', aspectColor);
+
+    replaceGenericGlyphs(row, aspectColor);
+
+    if (row.dataset.relationshipLayout === 'v2') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
@@ -89,20 +159,14 @@
 
     rightSmall.textContent = rightSmall.textContent.replace(/\s*·\s*Orb\s+[\d.]+°?\s*$/i, '').trim();
 
+    const oldBadge = row.querySelector(':scope > .sky-foundation-relationship-orb');
+    if (oldBadge) oldBadge.remove();
     const badge = document.createElement('span');
     badge.className = 'sky-foundation-relationship-orb';
     badge.textContent = `Orb ${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-
-    const aspect = String(row.dataset.aspect || '').toLowerCase();
-    const colors = {
-      conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',
-      quintile:'#8b6cc2',square:'#d6534d',trine:'#4e9e69','tri-octile':'#9f5944',
-      'bi-quintile':'#7655aa',quincunx:'#4b8e88',opposition:'#5961c8'
-    };
-    row.style.setProperty('--relationship-stripe', colors[aspect] || '#777');
-    row.dataset.relationshipLayout = 'v1';
+    row.dataset.relationshipLayout = 'v2';
   }
 
   function refresh(root) {
