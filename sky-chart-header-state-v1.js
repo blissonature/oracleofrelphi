@@ -15,11 +15,12 @@
       #skyFoundationA>.sky-foundation-heading,
       #skyFoundationB>.sky-foundation-heading{
         display:grid!important;
-        grid-template-columns:auto minmax(0,1fr)!important;
+        grid-template-columns:68px minmax(0,1fr)!important;
         grid-template-rows:44px auto!important;
         align-items:center!important;
         min-height:92px!important;
         padding:0!important;
+        overflow:visible!important;
       }
       #skyFoundationA>.sky-foundation-heading>.sky-foundation-slot,
       #skyFoundationB>.sky-foundation-heading>.sky-foundation-slot{
@@ -28,6 +29,17 @@
         align-self:stretch!important;
         display:flex!important;
         align-items:center!important;
+        justify-content:center!important;
+        width:68px!important;
+        min-width:68px!important;
+        max-width:68px!important;
+        box-sizing:border-box!important;
+        padding:0 .35rem!important;
+        margin:0!important;
+        white-space:nowrap!important;
+        overflow:visible!important;
+        text-align:center!important;
+        line-height:1!important;
       }
       #skyFoundationA>.sky-foundation-heading>.sky-foundation-name,
       #skyFoundationB>.sky-foundation-heading>.sky-foundation-name{
@@ -38,7 +50,8 @@
         text-overflow:ellipsis!important;
         white-space:nowrap!important;
         line-height:1.2!important;
-        padding-inline:.65rem!important;
+        padding:0 .8rem!important;
+        margin:0!important;
       }
       #skyFoundationA>.sky-foundation-heading>.sky-where-when-actions,
       #skyFoundationB>.sky-foundation-heading>.sky-where-when-actions{
