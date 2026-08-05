@@ -1,0 +1,149 @@
+/* One authoritative selected-relationship layout. No post-render composition passes. */
+#skySelectedRelationship{
+  --sky-a:#c9211e;
+  --sky-b:#2462d0;
+  margin:1rem 0;
+  padding:clamp(.8rem,2vw,1.25rem);
+  border:1px solid rgba(45,39,34,.15);
+  border-radius:22px;
+  background:#fffdfa;
+  color:#211d1a;
+  overflow:hidden;
+}
+#skySelectedRelationship[hidden]{display:none!important}
+#skySelectedRelationship .sky-selected-heading{
+  margin:0 0 1rem;
+  padding:0 0 .75rem;
+  border-bottom:1px solid rgba(45,39,34,.12);
+  font-size:clamp(.9rem,2vw,1.05rem);
+  letter-spacing:.045em;
+  text-transform:uppercase;
+}
+#skySelectedRelationship .sky-selected-body{display:grid;gap:1rem;min-width:0}
+#skySelectedRelationship .sky-selected-card-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:clamp(.65rem,3vw,1.5rem)!important;
+  align-items:start!important;
+  width:100%!important;
+  min-width:0!important;
+}
+#skySelectedRelationship .sky-selected-card{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:clamp(.35rem,1vw,.55rem)!important;
+  border:4px solid var(--card-color)!important;
+  border-radius:18px!important;
+  background:#fff!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  cursor:pointer;
+}
+#skySelectedRelationship .sky-selected-card img{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  max-width:none!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+  object-fit:contain!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:11px!important;
+  box-shadow:none!important;
+}
+#skySelectedRelationship .sky-selected-card:focus-visible{outline:3px solid currentColor;outline-offset:3px}
+#skySelectedRelationship .sky-selected-context{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(92px,.62fr) minmax(0,1fr)!important;
+  gap:clamp(.45rem,2vw,1rem)!important;
+  align-items:stretch!important;
+  width:100%!important;
+  min-width:0!important;
+  padding:clamp(.65rem,2vw,1rem)!important;
+  border:1px solid rgba(45,39,34,.13)!important;
+  border-radius:18px!important;
+  background:#fbf8f4!important;
+  box-sizing:border-box!important;
+}
+#skySelectedRelationship .sky-selected-context-column{
+  display:grid!important;
+  align-content:start!important;
+  justify-items:center!important;
+  gap:.45rem!important;
+  min-width:0!important;
+  padding:.25rem!important;
+  color:var(--context-color,#211d1a)!important;
+}
+#skySelectedRelationship .sky-selected-context-column.aspect{
+  border-inline:1px solid rgba(45,39,34,.11);
+  color:var(--aspect-color,#6e655e)!important;
+}
+#skySelectedRelationship .sky-progressive-token{
+  display:grid!important;
+  justify-items:center!important;
+  gap:.2rem!important;
+  width:100%!important;
+  min-width:0!important;
+  padding:.2rem!important;
+  border:0!important;
+  border-radius:10px!important;
+  background:transparent!important;
+  color:inherit!important;
+  font:inherit!important;
+  text-align:center!important;
+  cursor:pointer!important;
+}
+#skySelectedRelationship .sky-progressive-token:hover{background:rgba(45,39,34,.055)!important}
+#skySelectedRelationship .sky-progressive-glyph{display:grid;place-items:center;width:46px;height:46px;max-width:100%}
+#skySelectedRelationship .sky-progressive-glyph svg{display:block;width:100%;height:100%;overflow:visible}
+#skySelectedRelationship .sky-progressive-name{font-size:.9rem;font-weight:750;line-height:1.2;overflow-wrap:anywhere}
+#skySelectedRelationship .sky-progressive-referent{font-size:.77rem;line-height:1.35;color:#5e5650;overflow-wrap:anywhere}
+#skySelectedRelationship .sky-progressive-token[data-stage="0"] .sky-progressive-name,
+#skySelectedRelationship .sky-progressive-token[data-stage="0"] .sky-progressive-referent,
+#skySelectedRelationship .sky-progressive-token[data-stage="1"] .sky-progressive-referent{display:none!important}
+#skySelectedRelationship .sky-selected-coordinate{font-size:.82rem;font-weight:750;line-height:1.2;text-align:center}
+#skySelectedRelationship .sky-selected-house{font-size:.92rem;font-weight:850;line-height:1}
+#skySelectedRelationship .sky-selected-orb{font-size:.75rem;font-weight:800;white-space:nowrap}
+#skySelectedRelationship .sky-selected-aspect-diagram{
+  display:grid!important;
+  justify-items:center!important;
+  gap:.5rem!important;
+  width:100%!important;
+  min-width:0!important;
+  padding:clamp(.75rem,2vw,1rem)!important;
+  border:1px solid rgba(45,39,34,.13)!important;
+  border-radius:18px!important;
+  background:#fff!important;
+  box-sizing:border-box!important;
+}
+#skySelectedRelationship .sky-selected-aspect-diagram svg{display:block!important;width:min(100%,250px)!important;height:auto!important;aspect-ratio:1!important}
+#skySelectedRelationship .sky-selected-aspect-orbit{fill:none;stroke:#c8c4bf;stroke-width:3}
+#skySelectedRelationship .sky-selected-aspect-radius{stroke:#77716b;stroke-width:3}
+#skySelectedRelationship .sky-selected-aspect-center{fill:#211d1a}
+#skySelectedRelationship .sky-selected-aspect-point.sky-a{fill:var(--sky-a)}
+#skySelectedRelationship .sky-selected-aspect-point.sky-b{fill:var(--sky-b)}
+#skySelectedRelationship .sky-selected-aspect-diagram h4{margin:0;font-size:1rem}
+#skySelectedRelationship .sky-selected-aspect-angle{margin:0;color:#625a54;font-weight:750}
+#skySelectedRelationship .sky-selected-progressive{display:grid;gap:.55rem}
+#skySelectedRelationship .sky-selected-reveal{border:1px solid rgba(45,39,34,.13);border-radius:12px;background:#fff;overflow:hidden}
+#skySelectedRelationship .sky-selected-reveal summary{padding:.75rem .85rem;font-weight:750;cursor:pointer}
+#skySelectedRelationship .sky-selected-reveal-content{padding:0 .85rem .85rem;line-height:1.48}
+#skySelectedRelationship .sky-selected-reveal-content p{margin:.3rem 0 0}
+@media(max-width:520px){
+  #skySelectedRelationship{padding:.7rem;border-radius:17px}
+  #skySelectedRelationship .sky-selected-card-row{gap:.55rem!important}
+  #skySelectedRelationship .sky-selected-card{padding:.28rem!important;border-width:3px!important;border-radius:14px!important}
+  #skySelectedRelationship .sky-selected-card img{border-radius:9px!important}
+  #skySelectedRelationship .sky-selected-context{grid-template-columns:minmax(0,1fr) 74px minmax(0,1fr)!important;gap:.25rem!important;padding:.55rem .3rem!important}
+  #skySelectedRelationship .sky-selected-context-column{gap:.3rem!important;padding:.1rem!important}
+  #skySelectedRelationship .sky-progressive-glyph{width:38px;height:38px}
+  #skySelectedRelationship .sky-progressive-name{font-size:.76rem}
+  #skySelectedRelationship .sky-progressive-referent{font-size:.68rem}
+  #skySelectedRelationship .sky-selected-coordinate{font-size:.72rem}
+  #skySelectedRelationship .sky-selected-house{font-size:.8rem}
+  #skySelectedRelationship .sky-selected-orb{font-size:.64rem}
+}
