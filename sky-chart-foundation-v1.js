@@ -66,7 +66,7 @@
     return { x:C.x + radius * Math.cos(angle), y:C.y + radius * Math.sin(angle) };
   };
   const separation = (a, b) => Math.abs(((a - b + 180) % 360 + 360) % 360 - 180);
-  const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[character]));
 
   function read(key) {
     try { return JSON.parse(localStorage.getItem(key) || 'null'); }
@@ -254,29 +254,6 @@
     return bubble.root;
   }
 
-  function preserveCanonicalStrokeWeight(root) {
-    const art = root?.querySelector?.('.relphi-canonical-glyph');
-    if (!art) return root;
-    const transform = art.getAttribute('transform') || '';
-    const match = /scale\(\s*([-\d.]+)(?:[\s,]+[-\d.]+)?\s*\)/.exec(transform);
-    const fitScale = match ? Math.abs(Number(match[1])) : 1;
-    if (!Number.isFinite(fitScale) || fitScale <= 0) return root;
-    let preserved = 0;
-    art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
-      const stroke = node.getAttribute('stroke');
-      const sourceStroke = Number(node.getAttribute('stroke-width'));
-      if (!stroke || stroke === 'none' || !Number.isFinite(sourceStroke) || sourceStroke <= 0) return;
-      const fittedStroke = sourceStroke * fitScale;
-      node.dataset.canonicalSourceStroke = String(sourceStroke);
-      node.dataset.canonicalFittedStroke = fittedStroke.toFixed(6);
-      node.setAttribute('stroke-width', fittedStroke.toFixed(6));
-      node.setAttribute('vector-effect', 'non-scaling-stroke');
-      preserved += 1;
-    });
-    if (preserved) root.dataset.canonicalStrokePresentation = 'fitted-non-scaling';
-    return root;
-  }
-
   function glyphFailure(host, error) {
     host.dataset.relphiGlyphError = error?.message || 'canonical-glyph-failed';
     const mark = svg('g', {'data-canonical-glyph-error':'true'});
@@ -420,7 +397,6 @@
       }).then(root => {
         root.dataset.canonicalMaster = 'glyphs-unified-preview.html';
         root.dataset.wheelPresentation = 'without-circles';
-        preserveCanonicalStrokeWeight(root);
       }).catch(error => glyphFailure(host,error)));
     });
 
