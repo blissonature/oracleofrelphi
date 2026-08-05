@@ -1,13 +1,11 @@
-// Canonical relationship-list composition: two circled placements, one uncircled aspect, and dedicated orb.
+// Relationship-list layout: aspect stripe and dedicated orb without replacing glyph renderers.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV3) return;
-  window.__relphiSkyRelationshipListLayoutV3 = true;
+  if (window.__relphiSkyRelationshipListLayoutV4) return;
+  window.__relphiSkyRelationshipListLayoutV4 = true;
 
-  const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV3';
-  const SKY = { A:'#c9211e', B:'#2462d0' };
+  const STYLE_ID = 'skyRelationshipListLayoutV4';
   const ASPECT_COLORS = Object.freeze({
     conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',
     quintile:'#8b6cc2',square:'#d6534d',trine:'#4e9e69','tri-octile':'#9f5944',
@@ -36,141 +34,61 @@
         width: 5px;
         background: var(--relationship-stripe);
       }
-      .sky-relationship-canonical-glyph {
+      .sky-foundation-relationship-row > svg:nth-of-type(1){grid-area:left-glyph}
+      .sky-foundation-relationship-row > svg:nth-of-type(2){grid-area:aspect;justify-self:center}
+      .sky-foundation-relationship-row > svg:nth-of-type(3){grid-area:right-glyph}
+      .sky-foundation-relationship-row > svg{
         display:block;
-        width:30px;
-        height:30px;
+        width:30px!important;
+        height:30px!important;
+        max-width:30px!important;
+        max-height:30px!important;
         overflow:visible;
+        align-self:center;
       }
-      .sky-relationship-canonical-glyph[data-role="left"] { grid-area:left-glyph; }
-      .sky-relationship-canonical-glyph[data-role="aspect"] { grid-area:aspect; justify-self:center; }
-      .sky-relationship-canonical-glyph[data-role="right"] { grid-area:right-glyph; }
-      .sky-foundation-relationship-row > .sky-foundation-relationship-copy:nth-of-type(1) { grid-area: left-copy; }
-      .sky-foundation-relationship-row > .sky-foundation-relationship-copy:nth-of-type(2) { grid-area: right-copy; }
-      .sky-foundation-relationship-orb {
-        grid-area: orb;
-        align-self: center;
-        justify-self: end;
-        min-width: 48px;
-        padding: 5px 7px;
-        border: 1px solid color-mix(in srgb, var(--relationship-stripe) 42%, transparent);
-        border-radius: 999px;
-        background: color-mix(in srgb, var(--relationship-stripe) 9%, #fffdfa);
-        color: #403a35;
-        text-align: center;
-        white-space: nowrap;
-        font: 800 .6rem/1 system-ui,sans-serif;
-        font-variant-numeric: tabular-nums;
+      .sky-foundation-relationship-row > .sky-foundation-relationship-copy:nth-of-type(1){grid-area:left-copy}
+      .sky-foundation-relationship-row > .sky-foundation-relationship-copy:nth-of-type(2){grid-area:right-copy}
+      .sky-foundation-relationship-orb{
+        grid-area:orb;align-self:center;justify-self:end;min-width:48px;padding:5px 7px;
+        border:1px solid color-mix(in srgb,var(--relationship-stripe) 42%,transparent);
+        border-radius:999px;background:color-mix(in srgb,var(--relationship-stripe) 9%,#fffdfa);
+        color:#403a35;text-align:center;white-space:nowrap;font:800 .6rem/1 system-ui,sans-serif;
+        font-variant-numeric:tabular-nums;
       }
-      .sky-foundation-relationship-copy {
-        white-space: normal;
-        line-height: 1.15;
-      }
-      .sky-foundation-relationship-copy small { white-space: normal; }
-      @media (max-width: 620px) {
-        .sky-foundation-relationship-row {
-          grid-template-columns: 30px minmax(0,1fr) 34px minmax(0,1fr) 30px;
-          grid-template-areas:
-            "left-glyph left-copy aspect right-copy right-glyph"
-            ". orb orb orb .";
-          padding: 9px 10px 8px 13px;
+      .sky-foundation-relationship-copy{white-space:normal;line-height:1.15}
+      .sky-foundation-relationship-copy small{white-space:normal}
+      @media(max-width:620px){
+        .sky-foundation-relationship-row{
+          grid-template-columns:30px minmax(0,1fr) 34px minmax(0,1fr) 30px;
+          grid-template-areas:"left-glyph left-copy aspect right-copy right-glyph" ". orb orb orb .";
+          padding:9px 10px 8px 13px;
         }
-        .sky-foundation-relationship-orb {
-          justify-self: center;
-          min-width: 74px;
-          margin-top: 2px;
-        }
-        .sky-foundation-relationship-row > .sky-foundation-relationship-copy:nth-of-type(2) { text-align: right; }
-        .sky-relationship-canonical-glyph[data-role="right"] { justify-self:end; }
+        .sky-foundation-relationship-orb{justify-self:center;min-width:74px;margin-top:2px}
+        .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(2){text-align:right}
+        .sky-foundation-relationship-row>svg:nth-of-type(3){justify-self:end}
       }
     `;
     document.head.appendChild(style);
   }
 
-  function canonicalSvg(role, label) {
-    const node = document.createElementNS(NS, 'svg');
-    node.classList.add('sky-relationship-canonical-glyph');
-    node.dataset.role = role;
-    node.setAttribute('viewBox', '-20 -20 40 40');
-    node.setAttribute('aria-label', label);
-    return node;
-  }
-
-  function renderCanonical(node, identity, color, circled) {
-    const registry = window.RelphiGlyphRegistry;
-    const component = window.RelphiGlyphComponent;
-    const entry = registry && (registry.get(identity) || registry.resolve(identity));
-    if (!entry || !component?.createBubble) {
-      node.remove();
-      console.error('Canonical relationship glyph unavailable:', identity);
-      return;
-    }
-
-    const master = component.createBubble(node, entry.id, {
-      radius:14,
-      padding:1.25,
-      color,
-      strokeWidth:1.65,
-      fill:'#fffdfa'
-    });
-    master.root.dataset.relationshipCanonical = 'true';
-    master.root.dataset.circlePresentation = circled ? 'circled' : 'uncircled';
-    master.circle.style.opacity = circled ? '1' : '0';
-    master.circle.setAttribute('aria-hidden', 'true');
-
-    Promise.resolve(master.ready).catch(error => {
-      node.remove();
-      console.error(error);
-    });
-  }
-
-  function replaceGenericGlyphs(row, aspectColor) {
-    if (row.dataset.relationshipCanonicalGlyphs === 'v3') return;
-    const generic = Array.from(row.querySelectorAll(':scope > svg'));
-    if (generic.length < 3) return;
-
-    const leftId = row.dataset.leftPlacement;
-    const aspectId = row.dataset.aspect;
-    const rightId = row.dataset.rightPlacement;
-    if (!leftId || !aspectId || !rightId) return;
-
-    const left = canonicalSvg('left', leftId);
-    const aspect = canonicalSvg('aspect', aspectId);
-    const right = canonicalSvg('right', rightId);
-
-    generic[0].replaceWith(left);
-    generic[1].replaceWith(aspect);
-    generic[2].replaceWith(right);
-
-    renderCanonical(left, leftId, SKY.A, true);
-    renderCanonical(aspect, aspectId, aspectColor, false);
-    renderCanonical(right, rightId, SKY.B, true);
-    row.dataset.relationshipCanonicalGlyphs = 'v3';
-  }
-
   function compose(row) {
     if (!(row instanceof HTMLElement)) return;
     const aspect = String(row.dataset.aspect || '').toLowerCase();
-    const aspectColor = ASPECT_COLORS[aspect] || '#777';
-    row.style.setProperty('--relationship-stripe', aspectColor);
+    row.style.setProperty('--relationship-stripe', ASPECT_COLORS[aspect] || '#777');
+    if (row.dataset.relationshipLayout === 'v4') return;
 
-    replaceGenericGlyphs(row, aspectColor);
-
-    if (row.dataset.relationshipLayout === 'v3') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
     if (!rightSmall || !Number.isFinite(orb)) return;
-
     rightSmall.textContent = rightSmall.textContent.replace(/\s*·\s*Orb\s+[\d.]+°?\s*$/i, '').trim();
-
     row.querySelector(':scope > .sky-foundation-relationship-orb')?.remove();
     const badge = document.createElement('span');
     badge.className = 'sky-foundation-relationship-orb';
     badge.textContent = `Orb ${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-    row.dataset.relationshipLayout = 'v3';
+    row.dataset.relationshipLayout = 'v4';
   }
 
   function refresh(root) {
@@ -180,15 +98,12 @@
   function start() {
     installStyle();
     refresh(document);
-    new MutationObserver(records => {
-      records.forEach(record => record.addedNodes.forEach(node => {
-        if (node.nodeType !== 1) return;
-        if (node.matches?.('.sky-foundation-relationship-row')) compose(node);
-        refresh(node);
-      }));
-    }).observe(document.documentElement, { childList:true, subtree:true });
+    new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
+      if (node.nodeType !== 1) return;
+      if (node.matches?.('.sky-foundation-relationship-row')) compose(node);
+      refresh(node);
+    }))).observe(document.documentElement,{childList:true,subtree:true});
   }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
 })();
