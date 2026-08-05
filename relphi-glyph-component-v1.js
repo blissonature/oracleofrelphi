@@ -8,7 +8,6 @@
   const CANONICAL_BUBBLE_RADIUS = 19;
   const CANONICAL_BUBBLE_STROKE = 2.35;
   const CANONICAL_BUBBLE_PADDING = 1;
-  const CANONICAL_STAGE_SIZE = 64;
   const cache = new Map();
   const svg = name => document.createElementNS(NS, name);
 
@@ -55,7 +54,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=canonical-20260804d');
+    const response = await fetch(path + '?v=canonical-20260804e');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     if (source.nodeName.toLowerCase() !== 'svg') throw new Error('Glyph asset is not an SVG: ' + path);
@@ -85,12 +84,11 @@
   function fit(node, radius, padding, entry, bubbleStrokeWidth) {
     node.removeAttribute('transform');
 
-    if (entry.asset) {
-      const authoredViewBox = node.dataset.authoredViewBox;
-      if (authoredViewBox) {
-        node.dataset.glyphPresentation = 'authored-viewbox-preserved';
-        return;
-      }
+    // Asset-backed canon is normalized by its complete authored frame in draw().
+    // Never use visible bounds to recenter or resize it.
+    if (entry.asset && node.dataset.authoredViewBox) {
+      node.dataset.glyphPresentation = 'authored-frame-normalized';
+      return;
     }
 
     if (entry.fitMode === 'letter' || entry.fitMode === 'hebrew-letter' || entry.fitMode === 'greek-letter') {
@@ -200,11 +198,13 @@
     else if (entry.asset) {
       const source = await loadAsset(entry.asset);
       const authoredViewBox = source.getAttribute('viewBox');
+      const usable = availableRadius(radius, padding, bubbleStrokeWidth);
+      const diameter = usable * 2;
       const nested = svg('svg');
-      nested.setAttribute('x', String(-CANONICAL_STAGE_SIZE / 2));
-      nested.setAttribute('y', String(-CANONICAL_STAGE_SIZE / 2));
-      nested.setAttribute('width', String(CANONICAL_STAGE_SIZE));
-      nested.setAttribute('height', String(CANONICAL_STAGE_SIZE));
+      nested.setAttribute('x', String(-usable));
+      nested.setAttribute('y', String(-usable));
+      nested.setAttribute('width', String(diameter));
+      nested.setAttribute('height', String(diameter));
       nested.setAttribute('viewBox', authoredViewBox);
       nested.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       nested.setAttribute('overflow', 'visible');
@@ -212,6 +212,7 @@
       recolor(nested, color);
       art = nested;
       art.dataset.authoredViewBox = authoredViewBox;
+      art.dataset.canonicalFrameDiameter = String(diameter);
     } else if (entry.fallback === 'fortune') {
       const staging = svg('g');
       art = fortune(staging, color);
@@ -227,7 +228,7 @@
     art.setAttribute('visibility', 'hidden');
     parent.appendChild(art);
     fit(art, radius, padding, entry, bubbleStrokeWidth);
-    art.dataset.glyphPresentation = entry.asset ? 'authored-viewbox-preserved' : 'canonical-fitted-before-reveal';
+    art.dataset.glyphPresentation = entry.asset ? 'authored-frame-normalized' : 'canonical-fitted-before-reveal';
     art.removeAttribute('visibility');
     return art;
   }
