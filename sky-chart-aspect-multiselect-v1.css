@@ -1,0 +1,235 @@
+/* Multi-select Aspects, first-class angle rows, and one shared dropdown chevron. */
+:root{
+  --sky-chart-filter-chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 5.75 8 10.25l4.5-4.5' fill='none' stroke='%23191613' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.sky-chart-filter-bar[data-multiselect-aspect-filters="true"]>.sky-chart-aspect-filter{
+  grid-column:auto;
+  width:auto;
+  min-width:0;
+}
+.sky-chart-aspect-filter{
+  position:relative;
+  min-width:0;
+  color:#4e463f;
+  font:800 .62rem/1.2 system-ui,sans-serif;
+}
+.sky-chart-aspect-filter-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 28px;
+  grid-template-areas:"label label" "value toggle";
+  align-items:center;
+  gap:5px 0;
+  min-height:55px;
+  box-sizing:border-box;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.sky-chart-aspect-filter-label{
+  grid-area:label;
+  align-self:end;
+  padding:0 2px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font:700 .68rem/1.1 system-ui,sans-serif;
+}
+.sky-chart-aspect-filter-value{
+  grid-area:value;
+  min-width:0;
+  min-height:38px;
+  box-sizing:border-box;
+  padding:0 10px;
+  border:1px solid rgba(31,27,24,.2);
+  border-right:0;
+  border-radius:9px 0 0 9px;
+  background:#fff;
+  color:#191613;
+  cursor:pointer;
+  overflow:hidden;
+  text-align:left;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font:700 .68rem/1 system-ui,sans-serif;
+}
+.sky-chart-aspect-filter-toggle,
+.sky-chart-placement-filter-toggle,
+.sky-chart-house-filter-toggle{
+  font-size:0!important;
+  color:transparent!important;
+  background-color:#fff!important;
+  background-image:var(--sky-chart-filter-chevron)!important;
+  background-repeat:no-repeat!important;
+  background-position:center!important;
+  background-size:15px 15px!important;
+}
+.sky-chart-aspect-filter-toggle{
+  grid-area:toggle;
+  align-self:stretch;
+  min-width:28px;
+  min-height:38px;
+  box-sizing:border-box;
+  padding:0;
+  border:1px solid rgba(31,27,24,.2);
+  border-left:1px solid rgba(31,27,24,.12);
+  border-radius:0 9px 9px 0;
+  cursor:pointer;
+}
+.sky-chart-aspect-filter-value:hover,
+.sky-chart-aspect-filter-value:focus-visible,
+.sky-chart-aspect-filter-toggle:hover,
+.sky-chart-aspect-filter-toggle:focus-visible{
+  background-color:#f5f1eb!important;
+  outline:none;
+}
+.sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-value,
+.sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-toggle{border-color:rgba(31,27,24,.42)}
+.sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-value{
+  box-shadow:-2px 0 0 0 rgba(31,27,24,.08),0 2px 0 0 rgba(31,27,24,.08),0 -2px 0 0 rgba(31,27,24,.08)
+}
+.sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-toggle{
+  box-shadow:2px 0 0 0 rgba(31,27,24,.08),0 2px 0 0 rgba(31,27,24,.08),0 -2px 0 0 rgba(31,27,24,.08)
+}
+.sky-chart-aspect-filter-popover{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:50%;
+  width:min(270px,calc(100vw - 24px));
+  max-height:min(520px,78vh);
+  overflow:auto;
+  box-sizing:border-box;
+  padding:7px;
+  border:1px solid rgba(31,27,24,.22);
+  border-radius:13px;
+  background:#fffdf8;
+  box-shadow:0 16px 38px rgba(31,27,24,.2);
+  transform:translateX(-50%);
+  pointer-events:auto;
+}
+.sky-chart-aspect-filter-popover[hidden]{display:none!important}
+.sky-chart-aspect-filter-popover.is-portaled{
+  position:fixed;
+  z-index:10000;
+  right:auto;
+  bottom:auto;
+  margin:0;
+  transform:none;
+  isolation:isolate;
+}
+.sky-chart-aspect-list{
+  overflow:hidden;
+  border:1px solid rgba(31,27,24,.17);
+  border-radius:9px;
+  background:#fff;
+}
+.sky-chart-aspect-list-header,
+.sky-chart-aspect-list-item{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 48px;
+  align-items:center;
+}
+.sky-chart-aspect-list-header{
+  position:sticky;
+  z-index:2;
+  top:-7px;
+  min-height:31px;
+  border-bottom:1px solid rgba(31,27,24,.16);
+  background:#e9e3da;
+  color:#29231e;
+  font:900 .61rem/1 system-ui,sans-serif;
+}
+.sky-chart-aspect-list-header strong{padding:7px 10px;text-align:left}
+.sky-chart-aspect-list-header span{
+  align-self:stretch;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-left:1px solid rgba(31,27,24,.1);
+}
+.sky-chart-aspect-list-item{
+  min-height:34px;
+  border-top:1px solid rgba(31,27,24,.075);
+  cursor:pointer;
+}
+.sky-chart-aspect-list-item:first-of-type{border-top:0}
+.sky-chart-aspect-list-item-master{
+  min-height:39px;
+  background:#f4efe8;
+  font-weight:900;
+}
+.sky-chart-aspect-list-label{
+  min-width:0;
+  padding:7px 10px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#29231e;
+  font:750 .67rem/1.15 system-ui,sans-serif;
+}
+.sky-chart-aspect-list-item input[type="checkbox"]{
+  justify-self:center;
+}
+.sky-chart-aspect-filter input[type="checkbox"],
+.sky-chart-aspect-filter-popover input[type="checkbox"]{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  position:relative;
+  width:15px;
+  height:15px;
+  min-width:15px;
+  margin:0;
+  border:1px solid #211d19!important;
+  border-radius:3px;
+  background:#fff!important;
+  color:#111!important;
+  cursor:pointer;
+  accent-color:transparent!important;
+}
+.sky-chart-aspect-filter input[type="checkbox"]::after,
+.sky-chart-aspect-filter-popover input[type="checkbox"]::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#111;
+  font:900 13px/13px Arial,sans-serif;
+}
+.sky-chart-aspect-filter input[type="checkbox"]:checked::after,
+.sky-chart-aspect-filter-popover input[type="checkbox"]:checked::after{content:"✓"}
+.sky-chart-aspect-filter input[type="checkbox"]:indeterminate::after,
+.sky-chart-aspect-filter-popover input[type="checkbox"]:indeterminate::after{content:"−";font-size:14px}
+.sky-chart-aspect-filter input[type="checkbox"]:focus-visible,
+.sky-chart-aspect-filter-popover input[type="checkbox"]:focus-visible{outline:2px solid #625a52;outline-offset:2px}
+.sky-chart-aspect-multiselect-hidden{display:none!important}
+
+/* Native House System and custom menus use the same chevron artwork. */
+.sky-chart-filter-house-system select,
+[data-house-system-filter]{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  padding-right:32px!important;
+  background-color:#fff!important;
+  background-image:var(--sky-chart-filter-chevron)!important;
+  background-repeat:no-repeat!important;
+  background-position:right 10px center!important;
+  background-size:15px 15px!important;
+}
+
+/* Present the four primary angles together in each placement ledger. */
+.sky-foundation-ledger-angle-heading{
+  padding:8px 12px 6px;
+  border-top:1px solid rgba(31,27,24,.14);
+  border-bottom:1px solid rgba(31,27,24,.08);
+  background:#f1ece4;
+  color:#4a433d;
+  font:900 .62rem/1 system-ui,sans-serif;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.sky-foundation-row[data-angle-placement]{background:rgba(31,27,24,.018)}
+
+@media(max-width:620px){
+  .sky-chart-aspect-filter{grid-column:span 1!important}
+}

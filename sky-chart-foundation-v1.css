@@ -126,6 +126,13 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-leader { fill:none; stroke-width:1.45; stroke-linecap:round; vector-effect:non-scaling-stroke; }
 .sky-foundation-aspect { stroke-width:2.1; stroke-linecap:round; opacity:.62; vector-effect:non-scaling-stroke; }
 
+/* Zodiac signs use the canonical Without circles presentation. The circle is
+   excluded from paint while the canonical master frame, whitespace, fitting,
+   centering, and glyph geometry remain unchanged. */
+[data-layer="zodiac"] .sky-foundation-sign-glyph > .relphi-glyph-bubble > circle {
+  display:none !important;
+}
+
 @media(max-width:1120px) {
   #skyFoundationRoot {
     grid-template-columns:minmax(195px,230px) minmax(460px,1fr) minmax(195px,230px);
@@ -147,4 +154,25 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
     grid-template-areas:"a" "b" "comparison";
   }
   #skyFoundationWheelMount { min-height:300px; padding:4px; }
+
+  #skyFoundationWheelMount .sky-foundation-aspect {
+    stroke-width:1.05;
+    opacity:.52;
+  }
+  #skyFoundationWheelMount .sky-foundation-house-number {
+    font-size:22px;
+    font-weight:800;
+  }
+
+  /* Scale only the finished canonical object at its local origin. Never scale
+     the positioned host group: doing so multiplies its translate coordinates
+     and pushes the glyph outside the wheel. */
+  #skyFoundationWheelMount [data-layer="placements"] > g[data-placement]:not([data-angle-axis="true"]) > .relphi-glyph-bubble {
+    transform:scale(1.28);
+    transform-origin:0 0;
+  }
+  #skyFoundationWheelMount .sky-foundation-sign-glyph > .relphi-glyph-bubble {
+    transform:scale(1.24);
+    transform-origin:0 0;
+  }
 }

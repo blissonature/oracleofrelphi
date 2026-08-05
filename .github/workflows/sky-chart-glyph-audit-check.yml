@@ -1,0 +1,96 @@
+name: Sky Chart canonical glyph audit
+
+on:
+  push:
+    branches:
+      - feature/sky-chart-canonical-glyph-coordinate-fix
+    paths:
+      - 'glyphs.html'
+      - 'part1/sky-chart.html'
+      - 'part2/sky-chart.html'
+      - 'sky-chart.html'
+      - 'glyph-canon-approved-source-manifest.json'
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'relphi-glyph-source-integrity-v1.js'
+      - 'relphi-glyph-copy-serializer-v1.js'
+      - 'assets/planet-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'assets/aspect-glyphs/**'
+      - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-glyph-audit-v1.js'
+      - 'sky-chart-selected-relationship-v3.js'
+      - 'scripts/generate-glyph-canon-audit.mjs'
+      - 'tests/sky-chart-canonical-master-contract.test.mjs'
+      - 'tests/sky-chart-single-canon-browser.mjs'
+      - '.github/workflows/sky-chart-glyph-audit-check.yml'
+  pull_request:
+    paths:
+      - 'glyphs.html'
+      - 'part1/sky-chart.html'
+      - 'part2/sky-chart.html'
+      - 'sky-chart.html'
+      - 'glyph-canon-approved-source-manifest.json'
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'relphi-glyph-source-integrity-v1.js'
+      - 'relphi-glyph-copy-serializer-v1.js'
+      - 'assets/planet-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'assets/aspect-glyphs/**'
+      - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-glyph-audit-v1.js'
+      - 'sky-chart-selected-relationship-v3.js'
+      - 'scripts/generate-glyph-canon-audit.mjs'
+      - 'tests/sky-chart-canonical-master-contract.test.mjs'
+      - 'tests/sky-chart-single-canon-browser.mjs'
+      - '.github/workflows/sky-chart-glyph-audit-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: sky-chart-single-canon-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  single-canon-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check permanent source and syntax
+        run: |
+          node --check relphi-glyph-registry-v1.js
+          node --check relphi-glyph-component-v1.js
+          node --check relphi-glyph-source-integrity-v1.js
+          node --check relphi-glyph-copy-serializer-v1.js
+          node --check sky-chart-foundation-v1.js
+          node --check sky-chart-glyph-audit-v1.js
+          node --check sky-chart-selected-relationship-v3.js
+          node --check scripts/generate-glyph-canon-audit.mjs
+          node --check tests/sky-chart-canonical-master-contract.test.mjs
+          node --check tests/sky-chart-single-canon-browser.mjs
+          node tests/sky-chart-canonical-master-contract.test.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Render and inspect Sky Chart consumer
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-single-canon-server.log 2>&1 &
+          node tests/sky-chart-single-canon-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-single-canon-audit
+          path: |
+            glyph-canon-source-audit.json
+            sky-chart-single-canon-desktop.png
+            sky-chart-single-canon-mobile.png
+          if-no-files-found: error

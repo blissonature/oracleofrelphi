@@ -20,8 +20,9 @@
   const closeness=value=>value<=.25?'very close':value<=1?'close':value<=3?'moderate':value<=6?'wide':'very wide';
 
   function movingSlot(){
-    const a=String(read('A')?.name||''),b=String(read('B')?.name||''),dynamic=/planetary hours|transit|current sky|\bnow\b/i;
+    const a=String(read('A')?.name||''),b=String(read('B')?.name||''),dynamic=/planetary hours|transit|current sky|\bnow\b/i,staticSky=/birth|natal|static|fixed/i;
     if(dynamic.test(a)!==dynamic.test(b))return dynamic.test(a)?'A':'B';
+    if(staticSky.test(a)!==staticSky.test(b))return staticSky.test(a)?'B':'A';
     try{const roles=window.RelphiSkyRoles||JSON.parse(localStorage.getItem('relphiSkyChartRoles')||'null');if(roles?.chart==='dynamic'&&roles?.currentSky!=='dynamic')return'A';if(roles?.currentSky==='dynamic'&&roles?.chart!=='dynamic')return'B'}catch(_){}
     return null;
   }

@@ -2,8 +2,8 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramGeometryV3) return;
-  window.__relphiSkyHeptagramGeometryV3 = true;
+  if (window.__relphiSkyHeptagramGeometryV4) return;
+  window.__relphiSkyHeptagramGeometryV4 = true;
 
   const ORDER = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
   const WEEK_PATH = ['sun','moon','mars','mercury','jupiter','venus','saturn','sun'];
@@ -35,8 +35,6 @@
 
   function normalizeInactiveHourLines(hourLines) {
     hourLines.filter(line => !line.classList.contains('current')).forEach((line, index) => {
-      // One seven-edge cycle defines the heptagon. Later 24-hour-cycle lines repeat
-      // those edges, and the final wraparound adds a spurious eighth connector.
       if (index >= 7) {
         line.remove();
         return;
@@ -47,13 +45,13 @@
   }
 
   function correct(svg) {
-    if (!svg || svg.dataset.heptagramGeometryV3 === 'true') return;
+    if (!svg || svg.dataset.heptagramGeometryV4 === 'true') return;
     const weekLines = Array.from(svg.querySelectorAll('.sky-ph-week-segment'));
     const baseLines = weekLines.filter(line => !line.classList.contains('current'));
     const hourLines = Array.from(svg.querySelectorAll('.sky-ph-hour-segment'));
     if (baseLines.length < 7 || !hourLines.length || !svg.querySelector('.sky-ph-planet')) return;
 
-    svg.dataset.heptagramGeometryV3 = 'true';
+    svg.dataset.heptagramGeometryV4 = 'true';
 
     const outer = svg.querySelector('.sky-ph-circle');
     if (outer) outer.setAttribute('r', String(STAR_RADIUS));
@@ -88,9 +86,6 @@
       currentWeek.setAttribute('y2', String(from.y + (to.y - from.y) * fraction));
     }
 
-    // The planetary-hour heptagon and weekday heptagram share the same seven nodes.
-    // Scale every complete and partial hour segment from the original 78-unit geometry
-    // to the exact outer-node radius so each heptagon vertex touches its heptagram vertex.
     hourLines.forEach(line => scaleLine(line, SOURCE_HEPTAGON_RADIUS, HEPTAGON_RADIUS));
     normalizeInactiveHourLines(hourLines);
 
@@ -108,14 +103,24 @@
     });
   }
 
+  function inspect(node) {
+    if (!(node instanceof Element)) return;
+    if (node.matches?.('.sky-ph-heptagram')) correct(node);
+    node.querySelectorAll?.('.sky-ph-heptagram').forEach(correct);
+  }
+
   function scan() {
     document.querySelectorAll('.sky-ph-heptagram').forEach(correct);
   }
 
-  const observer = new MutationObserver(scan);
+  const observer = new MutationObserver(records => {
+    records.forEach(record => record.addedNodes.forEach(inspect));
+  });
+
   function start() {
     scan();
     observer.observe(document.documentElement, { childList:true, subtree:true });
+    window.addEventListener('relphi:sky-heptagram-source-ready', scan);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });

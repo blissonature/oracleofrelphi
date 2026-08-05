@@ -1,0 +1,223 @@
+/* One visual system for every relationship-filter heading and closed control. */
+#skyFoundationRelationships .sky-chart-filter-bar{
+  --sky-filter-label-color:#4e463f;
+  --sky-filter-control-color:#191613;
+  --sky-filter-border:1px solid rgba(31,27,24,.2);
+  --sky-filter-radius:9px;
+  --sky-filter-height:35px;
+  --sky-filter-label-font:800 .62rem/1.2 system-ui,sans-serif;
+  --sky-filter-control-font:700 .68rem/1.2 system-ui,sans-serif;
+  --sky-filter-control-padding:.52rem .58rem;
+}
+
+/* Every item uses the native Orb / House System rhythm: label, 4px gap, 35px field. */
+#skyFoundationRelationships .sky-chart-filter-bar>label,
+#skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-aspect-filter,
+#skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-placement-filter,
+#skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-house-filter{
+  align-self:end!important;
+  min-width:0!important;
+  color:var(--sky-filter-label-color)!important;
+  font:var(--sky-filter-label-font)!important;
+}
+#skyFoundationRelationships .sky-chart-filter-bar>label{
+  display:grid!important;
+  grid-template-rows:auto var(--sky-filter-height)!important;
+  gap:4px!important;
+}
+
+/* Custom controls use the same two-row structure as the native labels. */
+#skyFoundationRelationships .sky-chart-aspect-filter-head,
+#skyFoundationRelationships .sky-chart-placement-filter-head,
+#skyFoundationRelationships .sky-chart-house-filter-head{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 32px!important;
+  grid-template-rows:auto var(--sky-filter-height)!important;
+  grid-template-areas:
+    "label label"
+    "field field"!important;
+  align-items:center!important;
+  gap:4px 0!important;
+  min-height:0!important;
+  height:auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--sky-filter-label-color)!important;
+  font:var(--sky-filter-label-font)!important;
+}
+
+/* Identical label typography. */
+#skyFoundationRelationships .sky-chart-aspect-filter-label,
+#skyFoundationRelationships .sky-chart-placement-filter-label,
+#skyFoundationRelationships .sky-chart-house-filter-label{
+  grid-area:label!important;
+  align-self:end!important;
+  min-width:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  background:transparent!important;
+  color:var(--sky-filter-label-color)!important;
+  font:var(--sky-filter-label-font)!important;
+  letter-spacing:normal!important;
+  text-transform:none!important;
+}
+
+/* Native Orb and House System establish the field specification. */
+#skyFoundationRelationships .sky-chart-filter-bar input[data-filter="orb"],
+#skyFoundationRelationships .sky-chart-filter-bar select,
+#skyFoundationRelationships .sky-chart-filter-bar [data-house-system-filter]{
+  width:100%!important;
+  min-width:0!important;
+  height:var(--sky-filter-height)!important;
+  min-height:var(--sky-filter-height)!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:var(--sky-filter-control-padding)!important;
+  border:var(--sky-filter-border)!important;
+  border-radius:var(--sky-filter-radius)!important;
+  background-color:#fff!important;
+  color:var(--sky-filter-control-color)!important;
+  font:var(--sky-filter-control-font)!important;
+  letter-spacing:normal!important;
+}
+#skyFoundationRelationships .sky-chart-filter-bar select,
+#skyFoundationRelationships .sky-chart-filter-bar [data-house-system-filter]{
+  padding-right:32px!important;
+}
+
+/* The three custom fields are one continuous rounded box, not a differently styled split control. */
+#skyFoundationRelationships .sky-chart-aspect-filter-value,
+#skyFoundationRelationships .sky-chart-placement-summary-choices,
+#skyFoundationRelationships .sky-chart-house-summary-choices{
+  grid-area:field!important;
+  grid-column:1 / 3!important;
+  grid-row:2!important;
+  align-self:stretch!important;
+  width:100%!important;
+  min-width:0!important;
+  height:var(--sky-filter-height)!important;
+  min-height:var(--sky-filter-height)!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:var(--sky-filter-control-padding)!important;
+  padding-right:36px!important;
+  border:var(--sky-filter-border)!important;
+  border-radius:var(--sky-filter-radius)!important;
+  background:#fff!important;
+  box-shadow:none!important;
+  color:var(--sky-filter-control-color)!important;
+  font:var(--sky-filter-control-font)!important;
+  line-height:1.2!important;
+  letter-spacing:normal!important;
+}
+#skyFoundationRelationships .sky-chart-aspect-filter-value{
+  display:flex!important;
+  align-items:center!important;
+  overflow:hidden!important;
+  text-align:left!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#skyFoundationRelationships .sky-chart-placement-summary-choices,
+#skyFoundationRelationships .sky-chart-house-summary-choices{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:6px!important;
+  overflow:hidden!important;
+}
+
+/* One shared chevron, overlaid inside the same box exactly like a native select arrow. */
+#skyFoundationRelationships .sky-chart-aspect-filter-toggle,
+#skyFoundationRelationships .sky-chart-placement-filter-toggle,
+#skyFoundationRelationships .sky-chart-house-filter-toggle{
+  grid-column:2!important;
+  grid-row:2!important;
+  align-self:stretch!important;
+  justify-self:stretch!important;
+  z-index:2!important;
+  width:32px!important;
+  min-width:32px!important;
+  height:var(--sky-filter-height)!important;
+  min-height:var(--sky-filter-height)!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0 var(--sky-filter-radius) var(--sky-filter-radius) 0!important;
+  background-color:transparent!important;
+  background-image:var(--sky-chart-filter-chevron)!important;
+  background-repeat:no-repeat!important;
+  background-position:center!important;
+  background-size:15px 15px!important;
+  box-shadow:none!important;
+  color:transparent!important;
+  font-size:0!important;
+}
+
+/* The closed All / A / B labels use the same typeface and weight as the native field text. */
+#skyFoundationRelationships .sky-chart-placement-summary-choices .sky-chart-placement-choice,
+#skyFoundationRelationships .sky-chart-house-summary-choices .sky-chart-house-choice{
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:4px!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:var(--sky-filter-control-color)!important;
+  font:var(--sky-filter-control-font)!important;
+  white-space:nowrap!important;
+}
+#skyFoundationRelationships .sky-chart-placement-summary-choices .sky-chart-placement-choice span,
+#skyFoundationRelationships .sky-chart-house-summary-choices .sky-chart-house-choice span{
+  display:inline!important;
+  color:inherit!important;
+  font:inherit!important;
+}
+#skyFoundationRelationships .sky-chart-placement-summary-choices input[type="checkbox"],
+#skyFoundationRelationships .sky-chart-house-summary-choices input[type="checkbox"]{
+  flex:0 0 15px!important;
+}
+
+/* Shared hover, focus, and open states. */
+#skyFoundationRelationships .sky-chart-aspect-filter-value:hover,
+#skyFoundationRelationships .sky-chart-aspect-filter-value:focus-visible,
+#skyFoundationRelationships .sky-chart-placement-summary-choices:hover,
+#skyFoundationRelationships .sky-chart-house-summary-choices:hover,
+#skyFoundationRelationships .sky-chart-aspect-filter-toggle:hover,
+#skyFoundationRelationships .sky-chart-aspect-filter-toggle:focus-visible,
+#skyFoundationRelationships .sky-chart-placement-filter-toggle:hover,
+#skyFoundationRelationships .sky-chart-placement-filter-toggle:focus-visible,
+#skyFoundationRelationships .sky-chart-house-filter-toggle:hover,
+#skyFoundationRelationships .sky-chart-house-filter-toggle:focus-visible{
+  background-color:#f5f1eb!important;
+  outline:none!important;
+}
+#skyFoundationRelationships .sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-value,
+#skyFoundationRelationships .sky-chart-placement-filter.is-open .sky-chart-placement-summary-choices,
+#skyFoundationRelationships .sky-chart-house-filter.is-open .sky-chart-house-summary-choices{
+  border-color:rgba(31,27,24,.42)!important;
+  box-shadow:0 0 0 2px rgba(31,27,24,.08)!important;
+}
+#skyFoundationRelationships .sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-toggle,
+#skyFoundationRelationships .sky-chart-placement-filter.is-open .sky-chart-placement-filter-toggle,
+#skyFoundationRelationships .sky-chart-house-filter.is-open .sky-chart-house-filter-toggle{
+  box-shadow:none!important;
+}
+
+/* Give the three House checkboxes the room their shared Orb-sized typography requires. */
+@media(min-width:841px){
+  #skyFoundationRelationships .sky-chart-filter-bar[data-multiselect-placement-filters="true"][data-multiselect-house-filters="true"]{
+    grid-template-columns:minmax(0,.6fr) minmax(0,1fr) minmax(0,1.45fr) minmax(0,1.5fr) minmax(0,1.2fr)!important;
+  }
+}

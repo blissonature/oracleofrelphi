@@ -2,48 +2,38 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramCanonicalV1) return;
-  window.__relphiSkyHeptagramCanonicalV1 = true;
+  if (window.__relphiSkyHeptagramCanonicalV2) return;
+  window.__relphiSkyHeptagramCanonicalV2 = true;
 
   const KEYS = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
   const COLORS = {
     saturn:'#8c7a42', jupiter:'#41752f', mars:'#c9211e', sun:'#d08a00',
     venus:'#b23b79', mercury:'#277390', moon:'#58628a'
   };
+  const WHITE = '#fff';
+  const DAY_RULER_STROKE = 5;
+  const PAINTED = '[fill],[stroke],text';
 
   function keyFor(group) {
     return KEYS.find(key => group.classList.contains(`sky-ph-${key}`)) || '';
   }
 
-  function styleHourArtwork(artwork) {
-    artwork.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
+  function forceHourRulerInverse(art) {
+    if (!art) return;
+    art.dataset.hourRulerInverse = 'true';
+    art.querySelectorAll(PAINTED).forEach(node => {
+      const tag = node.localName;
       const fill = node.getAttribute('fill');
       const stroke = node.getAttribute('stroke');
-      const hasFill = fill !== 'none';
-      if (hasFill) {
-        node.setAttribute('fill', '#fff');
-        node.style.setProperty('fill', '#fff', 'important');
-        // The canonical master adds an outline to filled silhouettes for wheel
-        // nodes. Remove only that added outline here so inversion preserves the
-        // complete approved silhouette without making it heavier or eroding it.
-        node.setAttribute('stroke', 'none');
-        node.setAttribute('stroke-width', '0');
-        node.removeAttribute('paint-order');
-        node.style.setProperty('stroke', 'none', 'important');
-        node.style.setProperty('stroke-width', '0', 'important');
-        node.style.removeProperty('paint-order');
+      if (tag === 'text' || (fill && fill !== 'none')) {
+        node.setAttribute('fill', WHITE);
+        node.style.setProperty('fill', WHITE, 'important');
       }
-      if (!hasFill && stroke && stroke !== 'none') {
-        const strokeColor = '#fff';
-        node.setAttribute('stroke', strokeColor);
-        node.style.setProperty('stroke', strokeColor, 'important');
-        const current = parseFloat(node.getAttribute('stroke-width'));
-        if (Number.isFinite(current)) {
-          const width = Math.max(1, current - .9);
-          node.setAttribute('stroke-width', String(width));
-          node.style.setProperty('stroke-width', String(width), 'important');
-        }
+      if (stroke && stroke !== 'none') {
+        node.setAttribute('stroke', WHITE);
+        node.style.setProperty('stroke', WHITE, 'important');
       }
+      node.setAttribute('opacity', '1');
       node.style.setProperty('opacity', '1', 'important');
     });
   }
@@ -53,7 +43,7 @@
     if (!key || group.dataset.canonicalCircled === 'true') return true;
     const mount = group.querySelector('.sky-ph-node-glyph');
     const component = window.RelphiGlyphComponent;
-    if (!mount || !component?.createBubble || !component?.recolor) return false;
+    if (!mount || !component?.createBubble) return false;
 
     const oldNode = group.querySelector('.sky-ph-node');
     const isDay = group.classList.contains('is-day-ruler') || oldNode?.classList.contains('day');
@@ -63,31 +53,30 @@
     group.querySelector('.sky-ph-node-label')?.remove();
     mount.replaceChildren();
 
-    // The approved component supplies both the canonical artwork and its canonical circle.
-    // No SVG ring is drawn or substituted in this renderer.
     const bubble = component.createBubble(mount, key, {
       radius:20,
       padding:3,
-      color:COLORS[key],
-      fill:'#fff'
+      color:isHour ? WHITE : COLORS[key],
+      fill:isHour ? COLORS[key] : WHITE
     });
+    bubble.circle.setAttribute('stroke', COLORS[key]);
+    bubble.circle.setAttribute('stroke-width', String(isDay ? DAY_RULER_STROKE : 2.35));
     bubble.root.classList.add('sky-ph-canonical-bubble');
     bubble.root.dataset.planet = key;
-    await bubble.ready;
+    bubble.root.dataset.presentation = isHour ? 'hour-ruler-inversion' : isDay ? 'day-ruler-emphasis' : 'canonical-color';
 
     if (isDay) {
       bubble.root.classList.add('is-day-ruler');
       group.classList.add('is-day-ruler');
+      bubble.circle.dataset.dayRuler = 'true';
     }
-
     if (isHour) {
-      bubble.circle.setAttribute('fill', COLORS[key]);
-      const artwork = Array.from(bubble.root.children).find(node => node !== bubble.circle);
-      if (artwork) styleHourArtwork(artwork);
       bubble.root.classList.add('is-hour-ruler');
       group.classList.add('is-hour-ruler');
     }
 
+    const art = await bubble.ready;
+    if (isHour) forceHourRulerInverse(art);
     group.dataset.canonicalCircled = 'true';
     return true;
   }
@@ -98,10 +87,10 @@
   }
 
   async function correct(svg) {
-    if (!svg || svg.dataset.canonicalHeptagramV1 === 'true' || svg.dataset.canonicalHeptagramV1 === 'pending') return;
+    if (!svg || svg.dataset.canonicalHeptagramV2 === 'true' || svg.dataset.canonicalHeptagramV2 === 'pending') return;
     if (!svg.querySelector('.sky-ph-planet')) return;
     if (svg.dataset.canonicalSourceReady !== 'true') return;
-    svg.dataset.canonicalHeptagramV1 = 'pending';
+    svg.dataset.canonicalHeptagramV2 = 'pending';
 
     try {
       svg.setAttribute('viewBox', '-28 -28 416 416');
@@ -112,19 +101,28 @@
       svg.querySelectorAll('.sky-ph-circle,.sky-ph-guide,.sky-ph-center-label,.sky-ph-node-label').forEach(node => node.remove());
 
       const results = await Promise.all(Array.from(svg.querySelectorAll('.sky-ph-planet')).map(replacePlanet));
-      if (results.every(Boolean)) svg.dataset.canonicalHeptagramV1 = 'true';
-      else delete svg.dataset.canonicalHeptagramV1;
+      if (results.every(Boolean)) svg.dataset.canonicalHeptagramV2 = 'true';
+      else delete svg.dataset.canonicalHeptagramV2;
     } catch (error) {
-      delete svg.dataset.canonicalHeptagramV1;
+      delete svg.dataset.canonicalHeptagramV2;
       console.error('Sky Chart canonical heptagram correction failed:', error);
     }
+  }
+
+  function inspect(node) {
+    if (!(node instanceof Element)) return;
+    if (node.matches?.('.sky-ph-heptagram')) void correct(node);
+    node.querySelectorAll?.('.sky-ph-heptagram').forEach(svg => void correct(svg));
   }
 
   function scan() {
     document.querySelectorAll('.sky-ph-heptagram').forEach(svg => void correct(svg));
   }
 
-  const observer = new MutationObserver(scan);
+  const observer = new MutationObserver(records => {
+    records.forEach(record => record.addedNodes.forEach(inspect));
+  });
+
   function start() {
     scan();
     observer.observe(document.documentElement, { childList:true, subtree:true });

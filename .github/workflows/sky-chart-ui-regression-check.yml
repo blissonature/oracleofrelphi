@@ -1,0 +1,78 @@
+name: Sky Chart UI regression check
+
+on:
+  pull_request:
+    paths:
+      - 'glyphs.html'
+      - 'part1/sky-chart.html'
+      - 'part2/sky-chart.html'
+      - 'sky-chart.html'
+      - 'glyph-canon-approved-source-manifest.json'
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'relphi-glyph-source-integrity-v1.js'
+      - 'relphi-glyph-copy-serializer-v1.js'
+      - 'assets/planet-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'assets/aspect-glyphs/**'
+      - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-glyph-audit-v1.js'
+      - 'sky-chart-selected-relationship-v3.js'
+      - 'tests/sky-chart-canonical-master-contract.test.mjs'
+      - 'tests/sky-chart-single-canon-browser.mjs'
+      - 'tests/sky-chart-filter-control-unified.mjs'
+      - 'tests/sky-chart-stability-now.mjs'
+      - '.github/workflows/sky-chart-ui-regression-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: sky-chart-ui-regression-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  ui-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check permanent source and JavaScript syntax
+        run: |
+          node --check relphi-glyph-registry-v1.js
+          node --check relphi-glyph-component-v1.js
+          node --check relphi-glyph-source-integrity-v1.js
+          node --check relphi-glyph-copy-serializer-v1.js
+          node --check sky-chart-foundation-v1.js
+          node --check sky-chart-glyph-audit-v1.js
+          node --check sky-chart-selected-relationship-v3.js
+          node --check tests/sky-chart-canonical-master-contract.test.mjs
+          node --check tests/sky-chart-single-canon-browser.mjs
+          node --check tests/sky-chart-filter-control-unified.mjs
+          node --check tests/sky-chart-stability-now.mjs
+          node tests/sky-chart-canonical-master-contract.test.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Run focused browser regressions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-ui-regression-server.log 2>&1 &
+          node tests/sky-chart-single-canon-browser.mjs
+          node tests/sky-chart-filter-control-unified.mjs
+          node tests/sky-chart-stability-now.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-ui-regression-screenshots
+          path: |
+            glyph-canon-source-audit.json
+            sky-chart-single-canon-desktop.png
+            sky-chart-single-canon-mobile.png
+            sky-chart-filter-controls-unified.png
+            sky-chart-stability-now.png
+          if-no-files-found: ignore
