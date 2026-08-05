@@ -8,6 +8,7 @@
   const CANONICAL_BUBBLE_RADIUS = 19;
   const CANONICAL_BUBBLE_STROKE = 2.35;
   const CANONICAL_BUBBLE_PADDING = 1;
+  const CANONICAL_STAGE_SIZE = 64;
   const cache = new Map();
   const svg = name => document.createElementNS(NS, name);
 
@@ -54,7 +55,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=canonical-20260804c');
+    const response = await fetch(path + '?v=canonical-20260804d');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     if (source.nodeName.toLowerCase() !== 'svg') throw new Error('Glyph asset is not an SVG: ' + path);
@@ -83,6 +84,14 @@
 
   function fit(node, radius, padding, entry, bubbleStrokeWidth) {
     node.removeAttribute('transform');
+
+    if (entry.asset) {
+      const authoredViewBox = node.dataset.authoredViewBox;
+      if (authoredViewBox) {
+        node.dataset.glyphPresentation = 'authored-viewbox-preserved';
+        return;
+      }
+    }
 
     if (entry.fitMode === 'letter' || entry.fitMode === 'hebrew-letter' || entry.fitMode === 'greek-letter') {
       node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0})`);
@@ -190,9 +199,19 @@
     if (entry.id === 'sun') art = sun(parent, color);
     else if (entry.asset) {
       const source = await loadAsset(entry.asset);
-      art = svg('g');
-      Array.from(source.children).forEach(child => art.appendChild(document.importNode(child, true)));
-      recolor(art, color);
+      const authoredViewBox = source.getAttribute('viewBox');
+      const nested = svg('svg');
+      nested.setAttribute('x', String(-CANONICAL_STAGE_SIZE / 2));
+      nested.setAttribute('y', String(-CANONICAL_STAGE_SIZE / 2));
+      nested.setAttribute('width', String(CANONICAL_STAGE_SIZE));
+      nested.setAttribute('height', String(CANONICAL_STAGE_SIZE));
+      nested.setAttribute('viewBox', authoredViewBox);
+      nested.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      nested.setAttribute('overflow', 'visible');
+      Array.from(source.children).forEach(child => nested.appendChild(document.importNode(child, true)));
+      recolor(nested, color);
+      art = nested;
+      art.dataset.authoredViewBox = authoredViewBox;
     } else if (entry.fallback === 'fortune') {
       const staging = svg('g');
       art = fortune(staging, color);
@@ -208,7 +227,7 @@
     art.setAttribute('visibility', 'hidden');
     parent.appendChild(art);
     fit(art, radius, padding, entry, bubbleStrokeWidth);
-    art.dataset.glyphPresentation = 'canonical-fitted-before-reveal';
+    art.dataset.glyphPresentation = entry.asset ? 'authored-viewbox-preserved' : 'canonical-fitted-before-reveal';
     art.removeAttribute('visibility');
     return art;
   }
