@@ -1,4 +1,4 @@
-// Canonical glyph artwork and atomic bubble component.
+// Canonical glyph artwork and uniform whole-artboard presentation.
 // Visual authority: https://oracleofrelphi.com/glyphs-unified-preview.html
 (function () {
   'use strict';
@@ -11,232 +11,62 @@
   const cache = new Map();
   const svg = name => document.createElementNS(NS, name);
 
-  function recolor(root, color) {
-    root.querySelectorAll('g,path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
-      const fill = node.getAttribute('fill');
-      const stroke = node.getAttribute('stroke');
-      if (fill && fill !== 'none') node.setAttribute('fill', color);
-      if (stroke && stroke !== 'none') node.setAttribute('stroke', color);
-      node.style.opacity = '1';
-    });
-  }
-
-  function thickenToNodeWeight(root, entry, color) {
-    if (
-      entry.id === 'north-node' ||
-      entry.id === 'south-node' ||
-      entry.id === 'lilith' ||
-      entry.id === 'part-of-fortune' ||
-      entry.fitMode === 'letter' ||
-      entry.fitMode === 'hebrew-letter' ||
-      entry.fitMode === 'greek-letter' ||
-      String(entry.asset || '').startsWith('assets/zodiac-glyphs/') ||
-      String(entry.asset || '').startsWith('assets/element-glyphs/') ||
-      String(entry.asset || '').startsWith('assets/aspect-glyphs/')
-    ) return;
-
-    root.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
-      const fill = node.getAttribute('fill');
-      const stroke = node.getAttribute('stroke');
-      const current = parseFloat(node.getAttribute('stroke-width')) || 0;
-      if (stroke && stroke !== 'none') {
-        node.setAttribute('stroke', color);
-        node.setAttribute('stroke-width', String(current + 0.9));
-      } else if (fill && fill !== 'none') {
-        node.setAttribute('stroke', color);
-        node.setAttribute('stroke-width', '1.15');
-        node.setAttribute('paint-order', 'stroke fill');
-      }
-      node.setAttribute('stroke-linecap', 'round');
-      node.setAttribute('stroke-linejoin', 'round');
-    });
-  }
-
   async function loadAsset(path) {
+    if (!path) throw new Error('Canonical glyph asset is missing.');
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=canonical-20260804e');
-    if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
+    const response = await fetch(path + '?v=canonical-20260805');
+    if (!response.ok) throw new Error('Could not load canonical glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
-    if (source.nodeName.toLowerCase() !== 'svg') throw new Error('Glyph asset is not an SVG: ' + path);
-    if (!source.getAttribute('viewBox')) throw new Error('Glyph asset has no authored viewBox: ' + path);
+    if (source.nodeName.toLowerCase() !== 'svg') throw new Error('Canonical glyph asset is not SVG: ' + path);
+    if (!source.getAttribute('viewBox')) throw new Error('Canonical glyph asset has no authored viewBox: ' + path);
     cache.set(path, source);
     return source.cloneNode(true);
   }
 
-  function numericStrokeWidth(node) {
-    const direct = parseFloat(node.getAttribute('stroke-width'));
-    if (Number.isFinite(direct)) return direct;
-    const computed = parseFloat(getComputedStyle(node).strokeWidth);
-    return Number.isFinite(computed) ? computed : 0;
+  function tintAsUnit(root, color) {
+    root.style.color = color;
+    root.setAttribute('color', color);
+    root.classList.add('relphi-canonical-tint');
   }
 
-  function largestStroke(root) {
-    let max = numericStrokeWidth(root);
-    root.querySelectorAll('*').forEach(node => { max = Math.max(max, numericStrokeWidth(node)); });
-    return max;
-  }
-
-  function availableRadius(radius, padding, bubbleStrokeWidth) {
-    const gap = Math.max(1, Number(padding) || 1);
-    return Math.max(1, radius - Math.max(0, Number(bubbleStrokeWidth) || 0) / 2 - gap);
-  }
-
-  function fit(node, radius, padding, entry, bubbleStrokeWidth) {
-    node.removeAttribute('transform');
-
-    // Asset-backed canon is normalized by its complete authored frame in draw().
-    // Never use visible bounds to recenter or resize it.
-    if (entry.asset && node.dataset.authoredViewBox) {
-      node.dataset.glyphPresentation = 'authored-frame-normalized';
-      return;
-    }
-
-    if (entry.fitMode === 'letter' || entry.fitMode === 'hebrew-letter' || entry.fitMode === 'greek-letter') {
-      node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0})`);
-      return;
-    }
-
-    if (entry.fitMode === 'lilith') {
-      const referenceAvailableRadius = 16.825;
-      const scale = availableRadius(radius, padding, bubbleStrokeWidth) / referenceAvailableRadius * (Number(entry.scale) || 1);
-      node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0}) scale(${scale})`);
-      return;
-    }
-
-    let box;
-    try { box = node.getBBox(); } catch (_) { return; }
-    if (!box || !box.width || !box.height) return;
-
-    const usableRadius = availableRadius(radius, padding, bubbleStrokeWidth);
-    const sourceStroke = largestStroke(node);
-    const visibleWidth = box.width + sourceStroke;
-    const visibleHeight = box.height + sourceStroke;
-    let maximumScale;
-
-    if (entry.fitMode === 'symbol') {
-      maximumScale = Math.min((usableRadius * 2) / visibleWidth, (usableRadius * 2) / visibleHeight) * 0.9;
-    } else if (entry.fitMode === 'box') {
-      const innerSquareSide = usableRadius * Math.SQRT2;
-      maximumScale = Math.min(innerSquareSide / visibleWidth, innerSquareSide / visibleHeight);
-    } else {
-      maximumScale = usableRadius / (Math.hypot(visibleWidth / 2, visibleHeight / 2) || 1);
-    }
-
-    const scale = maximumScale * Math.max(0.1, Number(entry.scale) || 1);
-    const cx = box.x + box.width / 2;
-    const cy = box.y + box.height / 2;
-    node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0}) scale(${scale}) translate(${-cx} ${-cy})`);
-  }
-
-  function sun(parent, color) {
-    const group = svg('g');
-    const ring = svg('circle');
-    ring.setAttribute('r', '10');
-    ring.setAttribute('fill', 'none');
-    ring.setAttribute('stroke', color);
-    ring.setAttribute('stroke-width', '1.45');
-    const dot = svg('circle');
-    dot.setAttribute('r', '2.15');
-    dot.setAttribute('fill', color);
-    group.append(ring, dot);
-    parent.appendChild(group);
-    return group;
-  }
-
-  function fortune(parent, color) {
-    const group = svg('g');
-    group.innerHTML = '<circle cx="0" cy="0" r="9" fill="none"/><path d="M-6.35-6.35L6.35 6.35M6.35-6.35L-6.35 6.35" fill="none"/>';
-    group.querySelectorAll('*').forEach(node => {
-      node.setAttribute('stroke', color);
-      node.setAttribute('stroke-width', '1.45');
-      node.setAttribute('stroke-linecap', 'round');
-      node.setAttribute('stroke-linejoin', 'round');
-    });
-    parent.appendChild(group);
-    return group;
-  }
-
-  function textGlyph(parent, entry, color) {
-    const text = svg('text');
-    const aspectLetter = entry.fitMode === 'aspect-letter';
-    const hebrewLetter = entry.fitMode === 'hebrew-letter';
-    const greekLetter = entry.fitMode === 'greek-letter';
-    const lettered = entry.fitMode === 'letter' || aspectLetter || hebrewLetter || greekLetter;
-    text.textContent = entry.fallback;
-    text.setAttribute('x', '0');
-    text.setAttribute('y', hebrewLetter ? '-2' : '0');
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('dominant-baseline', 'central');
-    text.setAttribute('fill', color);
-    if (hebrewLetter) {
-      text.setAttribute('direction', 'rtl');
-      text.style.fontFamily = 'Noto Serif Hebrew,SBL Hebrew,Ezra SIL,David Libre,Times New Roman,serif';
-    } else if (greekLetter) {
-      text.style.fontFamily = 'Noto Serif,Times New Roman,Georgia,serif';
-    } else {
-      text.style.fontFamily = lettered ? 'Arial,Helvetica,sans-serif' : 'Apple Symbols,Segoe UI Symbol,Noto Sans Symbols 2,serif';
-    }
-    text.style.fontWeight = entry.fontWeight || (lettered ? '700' : '600');
-    text.style.fontSize = hebrewLetter ? '31px' : greekLetter ? '30px' : aspectLetter ? '24px' : lettered ? '16px' : '34px';
-    if (entry.id === 'asc' || entry.id === 'dsc') text.style.letterSpacing = '-0.35px';
-    parent.appendChild(text);
-    return text;
+  function authoredFrame(parent, source, entry, options) {
+    const radius = Number(options?.radius || 18);
+    const padding = Number(options?.padding ?? 1);
+    const bubbleStrokeWidth = Number(options?.bubbleStrokeWidth || 0);
+    const gap = Math.max(1, padding);
+    const usable = Math.max(1, radius - Math.max(0, bubbleStrokeWidth) / 2 - gap);
+    const diameter = usable * 2;
+    const nested = svg('svg');
+    nested.setAttribute('x', String(-usable));
+    nested.setAttribute('y', String(-usable));
+    nested.setAttribute('width', String(diameter));
+    nested.setAttribute('height', String(diameter));
+    nested.setAttribute('viewBox', source.getAttribute('viewBox'));
+    nested.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    nested.setAttribute('overflow', 'visible');
+    Array.from(source.children).forEach(child => nested.appendChild(document.importNode(child, true)));
+    nested.classList.add('relphi-canonical-glyph', 'relphi-glyph-' + entry.id);
+    nested.dataset.authoredViewBox = source.getAttribute('viewBox');
+    nested.dataset.glyphPresentation = 'authored-frame-uniform-scale';
+    tintAsUnit(nested, options?.color || '#dc1f18');
+    parent.appendChild(nested);
+    return nested;
   }
 
   async function draw(parent, identity, options) {
     const registry = window.RelphiGlyphRegistry;
     const entry = registry && (registry.get(identity) || registry.resolve(identity));
     if (!entry) throw new Error('Unknown glyph identity: ' + identity);
-
-    const radius = Number(options?.radius || 18);
-    const padding = Number(options?.padding ?? 1);
-    const color = options?.color || '#dc1f18';
-    const bubbleStrokeWidth = Number(options?.bubbleStrokeWidth || 0);
-    let art;
-
-    if (entry.id === 'sun') art = sun(parent, color);
-    else if (entry.asset) {
-      const source = await loadAsset(entry.asset);
-      const authoredViewBox = source.getAttribute('viewBox');
-      const usable = availableRadius(radius, padding, bubbleStrokeWidth);
-      const diameter = usable * 2;
-      const nested = svg('svg');
-      nested.setAttribute('x', String(-usable));
-      nested.setAttribute('y', String(-usable));
-      nested.setAttribute('width', String(diameter));
-      nested.setAttribute('height', String(diameter));
-      nested.setAttribute('viewBox', authoredViewBox);
-      nested.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-      nested.setAttribute('overflow', 'visible');
-      Array.from(source.children).forEach(child => nested.appendChild(document.importNode(child, true)));
-      recolor(nested, color);
-      art = nested;
-      art.dataset.authoredViewBox = authoredViewBox;
-      art.dataset.canonicalFrameDiameter = String(diameter);
-    } else if (entry.fallback === 'fortune') {
-      const staging = svg('g');
-      art = fortune(staging, color);
-      staging.removeChild(art);
-    } else {
-      const staging = svg('g');
-      art = textGlyph(staging, entry, color);
-      staging.removeChild(art);
-    }
-
-    art.classList.add('relphi-canonical-glyph', 'relphi-glyph-' + entry.id);
-    thickenToNodeWeight(art, entry, color);
-    art.setAttribute('visibility', 'hidden');
-    parent.appendChild(art);
-    fit(art, radius, padding, entry, bubbleStrokeWidth);
-    art.dataset.glyphPresentation = entry.asset ? 'authored-frame-normalized' : 'canonical-fitted-before-reveal';
-    art.removeAttribute('visibility');
-    return art;
+    if (!entry.asset) throw new Error('No authored canonical asset for glyph identity: ' + entry.id);
+    const source = await loadAsset(entry.asset);
+    return authoredFrame(parent, source, entry, options);
   }
 
   function createBubble(parent, identity, options) {
     const registry = window.RelphiGlyphRegistry;
     const entry = registry && (registry.get(identity) || registry.resolve(identity));
     if (!entry) throw new Error('Unknown glyph identity: ' + identity);
+    if (!entry.asset) throw new Error('No authored canonical asset for glyph identity: ' + entry.id);
 
     const requestedRadius = Number(options?.radius || CANONICAL_BUBBLE_RADIUS);
     const color = options?.color || '#dc1f18';
@@ -279,8 +109,8 @@
   window.RelphiGlyphComponent = Object.freeze({
     draw,
     createBubble,
-    fit,
-    recolor,
+    fit: node => node,
+    recolor: tintAsUnit,
     canonicalBubbleRadius: CANONICAL_BUBBLE_RADIUS,
     canonicalSource: 'https://oracleofrelphi.com/glyphs-unified-preview.html'
   });
