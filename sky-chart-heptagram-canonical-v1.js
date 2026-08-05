@@ -12,7 +12,7 @@
     venus:'#b23b79', mercury:'#277390', moon:'#58628a'
   };
   const WHITE = '#fff';
-  const GLYPH_RING_STROKE = 2.35;
+  const CANONICAL_RADIUS = 19;
   const DAY_RULER_RING_RADIUS = 25;
   const DAY_RULER_RING_STROKE = 2.35;
 
@@ -32,7 +32,6 @@
     ring.classList.add('sky-ph-day-ruler-ring');
     ring.dataset.dayRuler = 'true';
     bubble.root.insertBefore(ring, bubble.root.firstChild);
-    return ring;
   }
 
   async function replacePlanet(group) {
@@ -51,13 +50,11 @@
     mount.replaceChildren();
 
     const bubble = component.createBubble(mount, key, {
-      radius:20,
-      padding:3,
+      radius:CANONICAL_RADIUS,
+      padding:1,
       color:isHour ? WHITE : COLORS[key],
       fill:isHour ? COLORS[key] : WHITE
     });
-    bubble.circle.setAttribute('stroke', COLORS[key]);
-    bubble.circle.setAttribute('stroke-width', String(GLYPH_RING_STROKE));
     bubble.root.classList.add('sky-ph-canonical-bubble');
     bubble.root.dataset.planet = key;
     bubble.root.dataset.presentation = isHour ? 'hour-ruler-inversion' : isDay ? 'day-ruler-outline' : 'canonical-color';
@@ -92,10 +89,8 @@
       svg.setAttribute('viewBox', '-28 -28 416 416');
       svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       svg.style.overflow = 'visible';
-
       markHourBeforeReplacement(svg);
       svg.querySelectorAll('.sky-ph-circle,.sky-ph-guide,.sky-ph-center-label,.sky-ph-node-label').forEach(node => node.remove());
-
       const results = await Promise.all(Array.from(svg.querySelectorAll('.sky-ph-planet')).map(replacePlanet));
       if (results.every(Boolean)) svg.dataset.canonicalHeptagramV2 = 'true';
       else delete svg.dataset.canonicalHeptagramV2;
@@ -115,16 +110,12 @@
     document.querySelectorAll('.sky-ph-heptagram').forEach(svg => void correct(svg));
   }
 
-  const observer = new MutationObserver(records => {
-    records.forEach(record => record.addedNodes.forEach(inspect));
-  });
-
+  const observer = new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(inspect)));
   function start() {
     scan();
     observer.observe(document.documentElement, { childList:true, subtree:true });
     window.addEventListener('relphi:sky-heptagram-source-ready', scan);
   }
-
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
   else start();
 })();
