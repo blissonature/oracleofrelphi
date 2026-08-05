@@ -5,13 +5,16 @@
   if (window.__relphiSkyHeptagramCanonicalV2) return;
   window.__relphiSkyHeptagramCanonicalV2 = true;
 
+  const NS = 'http://www.w3.org/2000/svg';
   const KEYS = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
   const COLORS = {
     saturn:'#8c7a42', jupiter:'#41752f', mars:'#c9211e', sun:'#d08a00',
     venus:'#b23b79', mercury:'#277390', moon:'#58628a'
   };
   const WHITE = '#fff';
-  const DAY_RULER_STROKE = 5;
+  const GLYPH_RING_STROKE = 2.35;
+  const DAY_RULER_RING_RADIUS = 25;
+  const DAY_RULER_RING_STROKE = 2.35;
   const PAINTED = '[fill],[stroke],text';
 
   function keyFor(group) {
@@ -38,6 +41,21 @@
     });
   }
 
+  function addDayRulerRing(bubble, color) {
+    const ring = document.createElementNS(NS, 'circle');
+    ring.setAttribute('cx', '0');
+    ring.setAttribute('cy', '0');
+    ring.setAttribute('r', String(DAY_RULER_RING_RADIUS));
+    ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', color);
+    ring.setAttribute('stroke-width', String(DAY_RULER_RING_STROKE));
+    ring.setAttribute('aria-hidden', 'true');
+    ring.classList.add('sky-ph-day-ruler-ring');
+    ring.dataset.dayRuler = 'true';
+    bubble.root.insertBefore(ring, bubble.root.firstChild);
+    return ring;
+  }
+
   async function replacePlanet(group) {
     const key = keyFor(group);
     if (!key || group.dataset.canonicalCircled === 'true') return true;
@@ -60,15 +78,15 @@
       fill:isHour ? COLORS[key] : WHITE
     });
     bubble.circle.setAttribute('stroke', COLORS[key]);
-    bubble.circle.setAttribute('stroke-width', String(isDay ? DAY_RULER_STROKE : 2.35));
+    bubble.circle.setAttribute('stroke-width', String(GLYPH_RING_STROKE));
     bubble.root.classList.add('sky-ph-canonical-bubble');
     bubble.root.dataset.planet = key;
-    bubble.root.dataset.presentation = isHour ? 'hour-ruler-inversion' : isDay ? 'day-ruler-emphasis' : 'canonical-color';
+    bubble.root.dataset.presentation = isHour ? 'hour-ruler-inversion' : isDay ? 'day-ruler-outline' : 'canonical-color';
 
     if (isDay) {
       bubble.root.classList.add('is-day-ruler');
       group.classList.add('is-day-ruler');
-      bubble.circle.dataset.dayRuler = 'true';
+      addDayRulerRing(bubble, COLORS[key]);
     }
     if (isHour) {
       bubble.root.classList.add('is-hour-ruler');
