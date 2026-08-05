@@ -1,12 +1,12 @@
-// Canonical relationship-list composition: two placements, aspect, and dedicated orb.
+// Canonical relationship-list composition: two circled placements, one uncircled aspect, and dedicated orb.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV2) return;
-  window.__relphiSkyRelationshipListLayoutV2 = true;
+  if (window.__relphiSkyRelationshipListLayoutV3) return;
+  window.__relphiSkyRelationshipListLayoutV3 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV2';
+  const STYLE_ID = 'skyRelationshipListLayoutV3';
   const SKY = { A:'#c9211e', B:'#2462d0' };
   const ASPECT_COLORS = Object.freeze({
     conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',
@@ -96,7 +96,7 @@
     return node;
   }
 
-  function renderCanonical(node, identity, color) {
+  function renderCanonical(node, identity, color, circled) {
     const registry = window.RelphiGlyphRegistry;
     const component = window.RelphiGlyphComponent;
     const entry = registry && (registry.get(identity) || registry.resolve(identity));
@@ -105,22 +105,27 @@
       console.error('Canonical relationship glyph unavailable:', identity);
       return;
     }
-    const bubble = component.createBubble(node, entry.id, {
+
+    const master = component.createBubble(node, entry.id, {
       radius:14,
       padding:1.25,
       color,
       strokeWidth:1.65,
       fill:'#fffdfa'
     });
-    bubble.root.dataset.relationshipCanonical = 'true';
-    Promise.resolve(bubble.ready).catch(error => {
+    master.root.dataset.relationshipCanonical = 'true';
+    master.root.dataset.circlePresentation = circled ? 'circled' : 'uncircled';
+    master.circle.style.opacity = circled ? '1' : '0';
+    master.circle.setAttribute('aria-hidden', 'true');
+
+    Promise.resolve(master.ready).catch(error => {
       node.remove();
       console.error(error);
     });
   }
 
   function replaceGenericGlyphs(row, aspectColor) {
-    if (row.dataset.relationshipCanonicalGlyphs === 'true') return;
+    if (row.dataset.relationshipCanonicalGlyphs === 'v3') return;
     const generic = Array.from(row.querySelectorAll(':scope > svg'));
     if (generic.length < 3) return;
 
@@ -137,10 +142,10 @@
     generic[1].replaceWith(aspect);
     generic[2].replaceWith(right);
 
-    renderCanonical(left, leftId, SKY.A);
-    renderCanonical(aspect, aspectId, aspectColor);
-    renderCanonical(right, rightId, SKY.B);
-    row.dataset.relationshipCanonicalGlyphs = 'true';
+    renderCanonical(left, leftId, SKY.A, true);
+    renderCanonical(aspect, aspectId, aspectColor, false);
+    renderCanonical(right, rightId, SKY.B, true);
+    row.dataset.relationshipCanonicalGlyphs = 'v3';
   }
 
   function compose(row) {
@@ -151,7 +156,7 @@
 
     replaceGenericGlyphs(row, aspectColor);
 
-    if (row.dataset.relationshipLayout === 'v2') return;
+    if (row.dataset.relationshipLayout === 'v3') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
@@ -159,14 +164,13 @@
 
     rightSmall.textContent = rightSmall.textContent.replace(/\s*·\s*Orb\s+[\d.]+°?\s*$/i, '').trim();
 
-    const oldBadge = row.querySelector(':scope > .sky-foundation-relationship-orb');
-    if (oldBadge) oldBadge.remove();
+    row.querySelector(':scope > .sky-foundation-relationship-orb')?.remove();
     const badge = document.createElement('span');
     badge.className = 'sky-foundation-relationship-orb';
     badge.textContent = `Orb ${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-    row.dataset.relationshipLayout = 'v2';
+    row.dataset.relationshipLayout = 'v3';
   }
 
   function refresh(root) {
