@@ -15,30 +15,9 @@
   const GLYPH_RING_STROKE = 2.35;
   const DAY_RULER_RING_RADIUS = 25;
   const DAY_RULER_RING_STROKE = 2.35;
-  const PAINTED = '[fill],[stroke],text';
 
   function keyFor(group) {
     return KEYS.find(key => group.classList.contains(`sky-ph-${key}`)) || '';
-  }
-
-  function forceHourRulerInverse(art) {
-    if (!art) return;
-    art.dataset.hourRulerInverse = 'true';
-    art.querySelectorAll(PAINTED).forEach(node => {
-      const tag = node.localName;
-      const fill = node.getAttribute('fill');
-      const stroke = node.getAttribute('stroke');
-      if (tag === 'text' || (fill && fill !== 'none')) {
-        node.setAttribute('fill', WHITE);
-        node.style.setProperty('fill', WHITE, 'important');
-      }
-      if (stroke && stroke !== 'none') {
-        node.setAttribute('stroke', WHITE);
-        node.style.setProperty('stroke', WHITE, 'important');
-      }
-      node.setAttribute('opacity', '1');
-      node.style.setProperty('opacity', '1', 'important');
-    });
   }
 
   function addDayRulerRing(bubble, color) {
@@ -93,8 +72,7 @@
       group.classList.add('is-hour-ruler');
     }
 
-    const art = await bubble.ready;
-    if (isHour) forceHourRulerInverse(art);
+    await bubble.ready;
     group.dataset.canonicalCircled = 'true';
     return true;
   }
