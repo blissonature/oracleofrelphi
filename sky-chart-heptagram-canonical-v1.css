@@ -4,16 +4,14 @@
 .sky-ph-circle,.sky-ph-guide,.sky-ph-center-label,.sky-ph-node,.sky-ph-node-label{display:none!important}
 .sky-ph-canonical-bubble{pointer-events:none;shape-rendering:geometricPrecision}
 .sky-ph-day-ruler-ring{fill:none!important;vector-effect:none;shape-rendering:geometricPrecision}
-/* The inverse hour ruler must stay crisp. No shadow and no non-scaling stroke:
-   both effects made the canonical line work look heavy and fuzzy after scaling. */
+/* Invert the complete authored glyph unit, not its individual paths. The colored
+   canonical circle remains outside this selector and therefore remains colored. */
+.sky-ph-canonical-bubble.is-hour-ruler>.relphi-canonical-glyph,
+.sky-ph-canonical-bubble.is-hour-ruler>svg.relphi-canonical-glyph,
+.sky-ph-canonical-bubble.is-hour-ruler>g.relphi-canonical-glyph{
+  filter:brightness(0) invert(1)!important;
+}
 .sky-ph-canonical-bubble.is-hour-ruler{filter:none!important}
-.sky-ph-canonical-bubble.is-hour-ruler path,
-.sky-ph-canonical-bubble.is-hour-ruler circle:not(.sky-ph-day-ruler-ring),
-.sky-ph-canonical-bubble.is-hour-ruler ellipse,
-.sky-ph-canonical-bubble.is-hour-ruler rect,
-.sky-ph-canonical-bubble.is-hour-ruler polygon,
-.sky-ph-canonical-bubble.is-hour-ruler polyline,
-.sky-ph-canonical-bubble.is-hour-ruler line{vector-effect:none!important;shape-rendering:geometricPrecision}
 @media(max-width:620px){
   .sky-ph-jump{padding:10px 12px 12px}
   .sky-ph-heptagram{width:100%;max-height:none;margin:0 auto}
