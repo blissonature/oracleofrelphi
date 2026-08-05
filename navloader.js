@@ -6,17 +6,45 @@
     const base = src.split('?')[0];
     const existing = document.querySelector('script[src^="' + base + '"]');
     if (existing) {
-      if (onload) setTimeout(onload, 0);
+      if (onload) {
+        if (existing.dataset.relphiLoaded === 'true') queueMicrotask(onload);
+        else existing.addEventListener('load', onload, { once:true });
+      }
       return existing;
     }
     const script = document.createElement('script');
     script.async = false;
     script.src = src;
-    if (onload) script.addEventListener('load', onload, { once:true });
+    script.addEventListener('load', function () {
+      script.dataset.relphiLoaded = 'true';
+      if (onload) onload();
+    }, { once:true });
     if (onerror) script.addEventListener('error', onerror, { once:true });
     document.body.appendChild(script);
     return script;
   }
+
+  // sky-chart.html loads navloader after its markup and before tarot-app.js.
+  // Reserve the public chart surface immediately, before DOMContentLoaded and
+  // before any builder or deprecated result renderer can become visible.
+  function bootSkyContractEarly() {
+    if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
+    document.body.classList.add('relphi-sky-contract-booting');
+    if (!document.getElementById('relphi-sky-contract-early-guard')) {
+      const style = document.createElement('style');
+      style.id = 'relphi-sky-contract-early-guard';
+      style.textContent = [
+        'body.sky-chart-page #chartPanel>.sky-output-box{display:none!important}',
+        'body.relphi-sky-contract-booting #chartPanel>*{visibility:hidden!important}',
+        'body.relphi-sky-contract-booting #chartPanel>#relphiSkyChartContractRoot{visibility:visible!important}',
+        'body.relphi-sky-contract-booting #chartPanel::before{content:"Loading the canonical chart…";display:grid;place-items:center;min-height:420px;border:1px solid rgba(30,27,23,.16);border-radius:16px;background:#fffdf8;color:#6e665f;font:700 .9rem/1.4 system-ui,sans-serif}'
+      ].join('');
+      document.head.appendChild(style);
+    }
+    appendScript('sky-chart-special-vector-color-v1.js?v=contract-1');
+  }
+
+  bootSkyContractEarly();
 
   function initAnalytics() {
     const id = 'G-PNWZP2MW64';
@@ -123,30 +151,11 @@
     }, retryOrFail);
   }
 
-  function ensureCanonicalSkyBootStyle() {
-    if (document.getElementById('relphi-canonical-sky-boot-style')) return;
-    const style = document.createElement('style');
-    style.id = 'relphi-canonical-sky-boot-style';
-    style.textContent = [
-      '.sky-chart-page .unified-sky-wheel svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
-      '.sky-chart-page #chartOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
-      '.sky-chart-page #currentSkyOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
-      '.sky-chart-page .sky-output-box svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback){visibility:hidden!important}',
-      '.sky-chart-page svg.relphi-canonical-ready,.sky-chart-page svg.relphi-canonical-fallback{visibility:visible!important}'
-    ].join('');
-    document.head.appendChild(style);
-  }
-
-  function loadCanonicalSkyWheel() {
-    ensureCanonicalSkyBootStyle();
+  function loadCanonicalGlyphSystem() {
     appendScript('relphi-glyph-registry-v1.js?v=0d56ee7', function () {
       appendScript('relphi-glyph-component-v1.js?v=0d56ee7', function () {
         appendScript('relphi-moon-stroke-preservation-v1.js?v=1', function () {
-          appendScript('relphi-neptune-cross-connection-v1.js?v=1', function () {
-            appendScript('sky-chart-wheel-canonical-component-v1.js?v=4', function () {
-              appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
-            });
-          });
+          appendScript('relphi-neptune-cross-connection-v1.js?v=1');
         });
       });
     });
@@ -185,16 +194,14 @@
         'sky-chart-aspect-duration-fix.js?v=2',
         'sky-chart-relationship-language.js?v=5',
         'sky-chart-canonical-relationship-ui-v1.js?v=1',
-        'sky-chart-canonical-glyph-correction-v1.js?v=2',
+        'sky-chart-canonical-glyph-correction-v1.js?v=contract-1',
         'sky-chart-related-relationships-v2.js?v=2',
         'sky-chart-sign-cusps-v1.js?v=1',
         'sky-chart-provenance-fix.js?v=1',
         'sky-chart-extra-points-support-v1.js?v=3',
-        'sky-chart-calculated-points-v1.js?v=4',
-        'sky-chart-special-vector-color-v1.js?v=1'
+        'sky-chart-calculated-points-v1.js?v=4'
       ].forEach(function (src) { appendScript(src); });
-      loadCanonicalSkyWheel();
-
+      loadCanonicalGlyphSystem();
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);
       appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
@@ -212,6 +219,6 @@
       .catch(fallbackNav);
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
   else start();
 })();

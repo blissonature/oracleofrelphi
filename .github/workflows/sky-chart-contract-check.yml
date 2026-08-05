@@ -1,0 +1,89 @@
+name: Sky Chart contract check
+
+on:
+  push:
+    branches:
+      - fix/sky-chart-contract-rebuild
+  pull_request:
+    paths:
+      - 'sky-chart-contract-*.js'
+      - 'sky-chart-contract-*.css'
+      - 'relphi-canonical-angle-masters-v1.js'
+      - 'sky-chart-special-vector-color-v1.js'
+      - 'sky-chart-wheel-canonical-component-v1.js'
+      - 'sky-chart-wheel-marker-interaction-v1.js'
+      - '.github/fixtures/sky-chart-contract-cdp.mjs'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check sky-chart-contract-renderer-v1.js
+          node --check sky-chart-contract-controller-v1.js
+          node --check sky-chart-contract-native-map-v1.js
+          node --check sky-chart-contract-editor-v1.js
+          node --check sky-chart-contract-heptagram-v1.js
+          node --check relphi-canonical-angle-masters-v1.js
+          node --check sky-chart-special-vector-color-v1.js
+          node --check sky-chart-canonical-glyph-correction-v1.js
+          node --check .github/fixtures/sky-chart-contract-cdp.mjs
+      - name: Check single public ownership
+        run: |
+          grep -q "sky-chart-contract-renderer-v1.js" sky-chart-special-vector-color-v1.js
+          grep -q "sky-chart-contract-controller-v1.js" sky-chart-special-vector-color-v1.js
+          grep -q "sky-chart-contract-native-map-v1.js" sky-chart-special-vector-color-v1.js
+          grep -q "sky-chart-contract-editor-v1.js" sky-chart-special-vector-color-v1.js
+          grep -q "sky-chart-contract-heptagram-v1.js" sky-chart-special-vector-color-v1.js
+          grep -q "Retired on the Sky Chart contract branch" sky-chart-wheel-canonical-component-v1.js
+          grep -q "Retired on the Sky Chart contract branch" sky-chart-wheel-marker-interaction-v1.js
+      - name: Reject public glyph substitutions
+        run: |
+          ! grep -E "fallbackGlyph|BODY_GLYPHS|SIGN_GLYPHS|textContent = symbol|innerHTML.*[☉☽☿♀♂♃♄♅♆♇]" sky-chart-contract-renderer-v1.js
+          ! grep -E "textContent = symbol|innerHTML.*[☉☽☿♀♂♃♄♅♆♇]" sky-chart-contract-heptagram-v1.js
+          grep -q "RelphiGlyphComponent" sky-chart-contract-renderer-v1.js
+          grep -q "RelphiGlyphRegistry" sky-chart-contract-renderer-v1.js
+          grep -q "RelphiGlyphComponent" sky-chart-contract-heptagram-v1.js
+      - name: Reject index-only interpretation activation
+        run: |
+          grep -q "semantic identity" sky-chart-contract-native-map-v1.js
+          grep -q "Index-only mismatches are blocked" sky-chart-contract-native-map-v1.js
+          grep -q "event.stopImmediatePropagation" sky-chart-contract-native-map-v1.js
+      - name: Lock card editing to its originating sky
+        run: |
+          grep -q 'command.dataset.edit = slot' sky-chart-contract-editor-v1.js
+          grep -q 'relphiContractLockedTarget' sky-chart-contract-editor-v1.js
+          grep -q 'label.hidden = true' sky-chart-contract-editor-v1.js
+      - name: Verify data-driven heptagram source
+        run: |
+          grep -q 'sunrise-to-sunrise day' sky-chart-contract-heptagram-v1.js
+          grep -q 'buildHours' sky-chart-contract-heptagram-v1.js
+          grep -q 'relphi-contract-heptagram-star current' sky-chart-contract-heptagram-v1.js
+          grep -q 'relphi-contract-heptagram-hour current' sky-chart-contract-heptagram-v1.js
+      - name: Run headless browser contract
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8000 >/tmp/sky-contract-server.log 2>&1 &
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME" ]; then
+            echo "No Chrome/Chromium binary is available on the runner." >&2
+            exit 1
+          fi
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --user-data-dir=/tmp/sky-contract-chrome about:blank >/tmp/sky-contract-chrome.log 2>&1 &
+          trap 'cat /tmp/sky-contract-server.log || true; cat /tmp/sky-contract-chrome.log || true' ERR
+          node .github/fixtures/sky-chart-contract-cdp.mjs
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sky-chart-contract-browser-evidence
+          path: |
+            sky-chart-contract-desktop.png
+            sky-chart-contract-mobile.png
+            sky-chart-contract-browser-result.json
+          if-no-files-found: ignore
