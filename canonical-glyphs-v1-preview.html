@@ -29,6 +29,7 @@
     .identity{font:12px ui-monospace,monospace;color:var(--muted);margin:3px 0 0}
     .status.available{color:var(--good)}
     .status.unavailable{color:var(--bad)}
+    .provenance-badge{display:block;margin-top:6px;color:#6a4a00;font-size:11px;font-weight:750;max-width:150px}
     .artwork-box{width:190px;height:190px;margin:6px auto 12px;position:relative;background:#fff;border:1px solid var(--line)}
     .artwork-box img{position:absolute;inset:0;width:100%;height:100%;display:block}
     .artwork-box .master{z-index:2}
@@ -116,11 +117,12 @@
     card.dataset.identity=record.canonical_identity;
     card.dataset.availability='available';
     card.dataset.status=record.status;
-    card.innerHTML=`<div class="card-head"><div><h2></h2><p class="identity"></p></div><span class="status available">AVAILABLE</span></div><div class="artwork-box"><img class="overlay" alt="" aria-hidden="true" hidden><img class="master" alt=""></div><div class="details"><p><strong>SHA-256</strong><br><code></code></p><p class="provenance"></p></div><div class="card-controls"><button type="button" data-card-state="plain" aria-pressed="true">Plain</button><button type="button" data-card-state="circled" aria-pressed="false">Circled</button></div>`;
+    card.innerHTML=`<div class="card-head"><div><h2></h2><p class="identity"></p></div><div><span class="status available">AVAILABLE</span><span class="provenance-badge" hidden>Approved with documented raster difference</span></div></div><div class="artwork-box"><img class="overlay" alt="" aria-hidden="true" hidden><img class="master" alt=""></div><div class="details"><p><strong>SHA-256</strong><br><code></code></p><p class="provenance"></p></div><div class="card-controls"><button type="button" data-card-state="plain" aria-pressed="true">Plain</button><button type="button" data-card-state="circled" aria-pressed="false">Circled</button></div>`;
     card.querySelector('h2').textContent=record.display_name;
     card.querySelector('.identity').textContent=record.canonical_identity;
     card.querySelector('code').textContent=record.candidate_sha256;
     card.querySelector('.provenance').textContent=`Provenance: ${record.source_provenance.kind}; authority ${record.source_provenance.authority_commit}`;
+    card.querySelector('.provenance-badge').hidden=record.status!=='approved-with-documented-raster-difference';
     const master=card.querySelector('img.master');
     const overlay=card.querySelector('img.overlay');
     master.alt=`${record.display_name} canonical master`;
@@ -156,11 +158,12 @@
       const circled=manifest.states?.find(state=>state.state==='circled');
       if(!circled || circled.status!=='exact-static-candidate' || !circled.overlay_path) throw new Error('Static Circled overlay is unavailable.');
       circledPath=circled.overlay_path;
-      const available=manifest.identities.filter(record=>record.status==='exact-static-candidate');
-      const unavailable=manifest.identities.filter(record=>record.status!=='exact-static-candidate');
-      if(available.length!==33 || unavailable.length!==60) throw new Error('Manifest availability counts do not equal 33/60.');
+      const availableStatuses=new Set(['exact-static-candidate','approved-with-documented-raster-difference']);
+      const available=manifest.identities.filter(record=>availableStatuses.has(record.status));
+      const unavailable=manifest.identities.filter(record=>!availableStatuses.has(record.status));
+      if(available.length!==38 || unavailable.length!==55) throw new Error('Manifest availability counts do not equal 38/55.');
       const fragment=document.createDocumentFragment();
-      manifest.identities.forEach(record=>fragment.append(record.status==='exact-static-candidate'?availableCard(record):unavailableCard(record)));
+      manifest.identities.forEach(record=>fragment.append(availableStatuses.has(record.status)?availableCard(record):unavailableCard(record)));
       grid.append(fragment);
       document.getElementById('available-count').textContent=`${available.length} available`;
       document.getElementById('unavailable-count').textContent=`${unavailable.length} unavailable`;

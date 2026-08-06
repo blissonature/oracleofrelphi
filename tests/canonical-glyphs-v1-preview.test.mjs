@@ -37,7 +37,7 @@ test('static preview source excludes every competing renderer and geometry repai
   assert.match(source,/assets\/canonical-glyphs\/v1\/manifest\.json/);
 });
 
-test('static preview renders 33 exact sources and 60 explicit failures only',async t=>{
+test('static preview renders 38 approved sources and 55 explicit failures only',async t=>{
   const origin=await serverFixture(t);
   const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE||chromium.executablePath()});
   t.after(()=>browser.close());
@@ -47,13 +47,16 @@ test('static preview renders 33 exact sources and 60 explicit failures only',asy
   await page.locator('.card').first().waitFor();
   const manifest=JSON.parse(await readFile(manifestFile,'utf8'));
   assert.equal(await page.locator('.card').count(),93);
-  assert.equal(await page.locator('.card[data-availability="available"] img.master').count(),33);
-  assert.equal(await page.locator('.card[data-availability="unavailable"]').count(),60);
+  assert.equal(await page.locator('.card[data-availability="available"] img.master').count(),38);
+  assert.equal(await page.locator('.card[data-availability="unavailable"]').count(),55);
   assert.equal(await page.locator('.card[data-availability="unavailable"] img').count(),0);
-  assert.equal(await page.locator('.unavailable-box',{hasText:'SOURCE UNAVAILABLE'}).count(),60);
+  assert.equal(await page.locator('.unavailable-box',{hasText:'SOURCE UNAVAILABLE'}).count(),55);
+  assert.equal(await page.locator('.card[data-status="approved-with-documented-raster-difference"] .provenance-badge:not([hidden])').count(),5);
+  assert.equal(await page.locator('.card[data-status="exact-static-candidate"]').count(),33);
+  assert.equal(await page.locator('.card[data-identity="moon"][data-availability="unavailable"] .unavailable-box',{hasText:'SOURCE UNAVAILABLE'}).count(),1);
   assert.deepEqual(await page.locator('.card').evaluateAll(cards=>cards.map(card=>card.dataset.identity)),manifest.identities.map(record=>record.canonical_identity));
-  assert.equal(await page.locator('#available-count').textContent(),'33 available');
-  assert.equal(await page.locator('#unavailable-count').textContent(),'60 unavailable');
+  assert.equal(await page.locator('#available-count').textContent(),'38 available');
+  assert.equal(await page.locator('#unavailable-count').textContent(),'55 unavailable');
   assert.equal(await page.locator('#total-count').textContent(),'93 total');
   const sourceUrls=await page.locator('img.master').evaluateAll(images=>images.map(image=>new URL(image.src).pathname));
   const expectedUrls=manifest.identities.filter(record=>record.candidate_path).map(record=>`/assets/canonical-glyphs/v1/${record.candidate_path}`);
@@ -66,7 +69,7 @@ test('static preview renders 33 exact sources and 60 explicit failures only',asy
   }
   for(const state of ['day-ruler','hour-ruler','day-and-hour-ruler']) assert.equal(await page.locator(`[data-unavailable-state="${state}"]`).isDisabled(),true);
   await page.locator('[data-global-state="circled"]').click();
-  assert.equal(await page.locator('.card[data-availability="available"] img.overlay:not([hidden])').count(),33);
+  assert.equal(await page.locator('.card[data-availability="available"] img.overlay:not([hidden])').count(),38);
   assert.equal(requests.includes('/assets/canonical-glyphs/v1/overlays/circled.svg'),true);
   const first=page.locator('.card[data-availability="available"]').first();
   await first.locator('[data-card-state="plain"]').click();

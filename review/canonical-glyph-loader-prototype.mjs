@@ -34,13 +34,15 @@ export function createCanonicalGlyphLoader({manifestUrl='../assets/canonical-gly
     ]);
     const master=parseSvg(masterSource,`Master ${identity}`,documentImpl);
     const overlay=overlaySource?parseSvg(overlaySource,`Overlay ${state}`,documentImpl):null;
-    const host=documentImpl.createElement('span');host.className='canonical-glyph-prototype';host.dataset.identity=identity;host.dataset.state=state;host.setAttribute('role','img');host.setAttribute('aria-label',entry.display_name||identity);
+    const host=documentImpl.createElement('span');host.className='canonical-glyph-prototype';host.dataset.identity=identity;host.dataset.state=state;host.dataset.sourceStatus=entry.status;host.setAttribute('role','img');host.setAttribute('aria-label',entry.display_name||identity);if(entry.status==='approved-with-documented-raster-difference')host.setAttribute('aria-description','Approved with documented raster difference');
     if(overlay){overlay.classList.add('canonical-glyph-prototype__overlay');overlay.setAttribute('aria-hidden','true');host.append(overlay);}
     master.classList.add('canonical-glyph-prototype__master');master.setAttribute('aria-hidden','true');host.append(master);
     return host;
   }
-  return Object.freeze({loadCanonicalGlyph});
+  async function getCanonicalPackageSummary(){const data=await manifest();const available=data.identities.filter(entry=>entry.status==='exact-static-candidate'||entry.status==='approved-with-documented-raster-difference').length;return Object.freeze({available,unavailable:data.identities.length-available,total:data.identities.length});}
+  return Object.freeze({loadCanonicalGlyph,getCanonicalPackageSummary});
 }
 
 const defaultLoader=typeof document!=='undefined'?createCanonicalGlyphLoader():null;
 export const loadCanonicalGlyph=(identity,options)=>{if(!defaultLoader)fail('DOM_UNAVAILABLE','The review loader requires a browser DOM.');return defaultLoader.loadCanonicalGlyph(identity,options);};
+export const getCanonicalPackageSummary=()=>{if(!defaultLoader)fail('DOM_UNAVAILABLE','The review loader requires a browser DOM.');return defaultLoader.getCanonicalPackageSummary();};
