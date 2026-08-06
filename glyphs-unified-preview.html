@@ -7,7 +7,7 @@
 <title>Master Glyph List · Oracle of Relphi</title>
 <link rel="stylesheet" href="style.css?v=364">
 <style>
-  :root{--preview-color:#111111}.ug-page{max-width:1080px;margin:3.5rem auto 2rem;padding:0 1rem}.ug-panel{background:#faf8f7;border:2px solid var(--preview-color);border-radius:1.25rem;padding:1rem}.ug-controls{display:flex;justify-content:center;gap:.55rem;flex-wrap:wrap;margin:.7rem 0 1rem}.ug-controls button{font:800 .9rem system-ui,sans-serif;border:2px solid #111;border-radius:999px;padding:.55rem .9rem;background:#fff;cursor:pointer}.ug-controls button[aria-pressed="true"]{background:#111;border-color:#111;color:#fff}.ug-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem}.ug-card{display:grid;justify-items:center;gap:.55rem;background:#fff;border:1px solid rgba(17,17,17,.14);border-radius:1rem;padding:.9rem}.ug-stage{width:64px;height:64px}.ug-stage svg{display:block;width:100%;height:100%;overflow:visible}.ug-name{font:850 .9rem/1.15 system-ui,sans-serif;text-align:center}.ug-id{font:650 .7rem/1.1 ui-monospace,monospace;color:#666}.ug-note{max-width:790px;margin:.4rem auto 1rem;line-height:1.45;color:#333}.ug-status{font:750 .8rem system-ui,sans-serif;margin:.7rem 0;color:#444}
+  :root{--preview-color:#111111}.ug-page{max-width:1080px;margin:3.5rem auto 2rem;padding:0 1rem}.ug-panel{background:#faf8f7;border:2px solid var(--preview-color);border-radius:1.25rem;padding:1rem}.ug-controls{display:flex;justify-content:center;gap:.55rem;flex-wrap:wrap;margin:.7rem 0 1rem}.ug-controls button{font:800 .9rem system-ui,sans-serif;border:2px solid #111;border-radius:999px;padding:.55rem .9rem;background:#fff;cursor:pointer}.ug-controls button[aria-pressed="true"]{background:#111;border-color:#111;color:#fff}.ug-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem}.ug-card{display:grid;justify-items:center;gap:.55rem;background:#fff;border:1px solid rgba(17,17,17,.14);border-radius:1rem;padding:.9rem}.ug-stage{width:64px;height:64px}.ug-stage>.relphi-glyph-instance{display:block}.ug-name{font:850 .9rem/1.15 system-ui,sans-serif;text-align:center}.ug-id{font:650 .7rem/1.1 ui-monospace,monospace;color:#666}.ug-note{max-width:790px;margin:.4rem auto 1rem;line-height:1.45;color:#333}.ug-status{font:750 .8rem system-ui,sans-serif;margin:.7rem 0;color:#444}
 </style>
 </head>
 <body>
@@ -24,10 +24,9 @@
     <div id="ugGrid" class="ug-grid"></div>
   </section>
 </main>
-<script src="relphi-glyph-registry-v1.js?v=0d56ee7"></script>
-<script src="relphi-glyph-component-v1.js?v=0d56ee7"></script>
-<script src="relphi-moon-stroke-preservation-v1.js?v=1"></script>
-<script src="relphi-neptune-cross-connection-v1.js?v=1"></script>
+<script src="relphi-glyph-masters-v1.js?v=1"></script>
+<script src="relphi-glyph-registry-v1.js?v=1"></script>
+<script src="relphi-glyph-component-v1.js?v=5"></script>
 <script>
 (function(){
   'use strict';
@@ -35,23 +34,19 @@
   const status=document.getElementById('ugStatus');
   const color='#111111';
   let showCircle=true;
-  async function render(){
+  function render(){
     grid.replaceChildren();
-    const jobs=window.RelphiGlyphRegistry.entries.map(entry=>{
+    let failed=0;
+    window.RelphiGlyphRegistry.entries.forEach(entry=>{
       const card=document.createElement('article');card.className='ug-card';
       const stage=document.createElement('div');stage.className='ug-stage';
-      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-32 -32 64 64');svg.setAttribute('aria-label',entry.name);stage.appendChild(svg);
       const name=document.createElement('div');name.className='ug-name';name.textContent=entry.name;
       const id=document.createElement('div');id.className='ug-id';id.textContent=entry.id;
       card.append(stage,name,id);grid.appendChild(card);
-      const bubble=window.RelphiGlyphComponent.createBubble(svg,entry.id,{radius:19,padding:1,color});
-      bubble.circle.style.opacity=showCircle?'1':'0';
-      bubble.circle.setAttribute('aria-hidden','true');
-      return bubble.ready;
+      try{window.RelphiGlyphComponent.mount(stage,entry.id,{size:64,circle:showCircle,color})}catch(error){failed+=1;stage.classList.add('relphi-glyph-missing');stage.textContent=error.message}
     });
-    const results=await Promise.allSettled(jobs);
-    const failed=results.filter(result=>result.status==='rejected').length;
-    status.textContent=failed?`${results.length-failed} masters loaded; ${failed} failed.`:`${results.length} canonical glyph masters loaded.`;
+    const total=window.RelphiGlyphRegistry.entries.length;
+    status.textContent=failed?`${total-failed} masters loaded; ${failed} failed.`:`${total} canonical glyph masters loaded.`;
   }
   document.querySelectorAll('[data-circle]').forEach(button=>button.addEventListener('click',()=>{
     showCircle=button.dataset.circle==='true';

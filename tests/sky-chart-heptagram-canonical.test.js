@@ -9,7 +9,7 @@ assert.match(source, /canonicalHeptagramV1 = 'pending'/,
   'The correction must mark the SVG before it begins mutating the heptagram.');
 assert.match(source, /delete svg\.dataset\.canonicalHeptagramV1/,
   'A failed or incomplete correction must clear the in-progress marker so it can be retried.');
-assert.match(source, /oldNode\?\.classList\.contains\('day'\)/,
-  'The canonical replacement must preserve the day-ruler state.');
-assert.match(source, /styleHourArtwork\(artwork\)/,
-  'The hour-ruler artwork must receive final inversion and weight correction.');
+assert.match(source, /component\.mount\(mount,key,\{size:40,circle:true/,
+  'Heptagram planets must mount the immutable canonical canvas.');
+assert.doesNotMatch(source, /stroke-width|styleHourArtwork|createBubble|getBBox/,
+  'Heptagram semantic states must not edit master geometry.');

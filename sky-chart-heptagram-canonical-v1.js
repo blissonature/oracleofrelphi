@@ -15,45 +15,12 @@
     return KEYS.find(key => group.classList.contains(`sky-ph-${key}`)) || '';
   }
 
-  function styleHourArtwork(artwork) {
-    artwork.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line').forEach(node => {
-      const fill = node.getAttribute('fill');
-      const stroke = node.getAttribute('stroke');
-      const hasFill = fill !== 'none';
-      if (hasFill) {
-        node.setAttribute('fill', '#fff');
-        node.style.setProperty('fill', '#fff', 'important');
-        // The canonical master adds an outline to filled silhouettes for wheel
-        // nodes. Remove only that added outline here so inversion preserves the
-        // complete approved silhouette without making it heavier or eroding it.
-        node.setAttribute('stroke', 'none');
-        node.setAttribute('stroke-width', '0');
-        node.removeAttribute('paint-order');
-        node.style.setProperty('stroke', 'none', 'important');
-        node.style.setProperty('stroke-width', '0', 'important');
-        node.style.removeProperty('paint-order');
-      }
-      if (!hasFill && stroke && stroke !== 'none') {
-        const strokeColor = '#fff';
-        node.setAttribute('stroke', strokeColor);
-        node.style.setProperty('stroke', strokeColor, 'important');
-        const current = parseFloat(node.getAttribute('stroke-width'));
-        if (Number.isFinite(current)) {
-          const width = Math.max(1, current - .9);
-          node.setAttribute('stroke-width', String(width));
-          node.style.setProperty('stroke-width', String(width), 'important');
-        }
-      }
-      node.style.setProperty('opacity', '1', 'important');
-    });
-  }
-
-  async function replacePlanet(group) {
+  function replacePlanet(group) {
     const key = keyFor(group);
     if (!key || group.dataset.canonicalCircled === 'true') return true;
     const mount = group.querySelector('.sky-ph-node-glyph');
     const component = window.RelphiGlyphComponent;
-    if (!mount || !component?.createBubble || !component?.recolor) return false;
+    if (!mount || !component?.mount) return false;
 
     const oldNode = group.querySelector('.sky-ph-node');
     const isDay = group.classList.contains('is-day-ruler') || oldNode?.classList.contains('day');
@@ -63,28 +30,19 @@
     group.querySelector('.sky-ph-node-label')?.remove();
     mount.replaceChildren();
 
-    // The approved component supplies both the canonical artwork and its canonical circle.
-    // No SVG ring is drawn or substituted in this renderer.
-    const bubble = component.createBubble(mount, key, {
-      radius:20,
-      padding:3,
-      color:COLORS[key],
-      fill:'#fff'
-    });
-    bubble.root.classList.add('sky-ph-canonical-bubble');
-    bubble.root.dataset.planet = key;
-    await bubble.ready;
+    const root=component.mount(mount,key,{size:40,circle:true,color:isHour?'#fff':COLORS[key]});
+    root.classList.add('sky-ph-canonical-bubble');
+    root.dataset.planet=key;
 
     if (isDay) {
-      bubble.root.classList.add('is-day-ruler');
+      root.classList.add('is-day-ruler');
       group.classList.add('is-day-ruler');
     }
 
     if (isHour) {
-      bubble.circle.setAttribute('fill', COLORS[key]);
-      const artwork = Array.from(bubble.root.children).find(node => node !== bubble.circle);
-      if (artwork) styleHourArtwork(artwork);
-      bubble.root.classList.add('is-hour-ruler');
+      const circle=root.querySelector('.relphi-glyph-bubble > circle[aria-hidden="true"]');
+      if(circle){circle.setAttribute('fill',COLORS[key]);circle.setAttribute('stroke',COLORS[key])}
+      root.classList.add('is-hour-ruler');
       group.classList.add('is-hour-ruler');
     }
 

@@ -139,15 +139,9 @@
 
   function loadCanonicalSkyWheel() {
     ensureCanonicalSkyBootStyle();
-    appendScript('relphi-glyph-registry-v1.js?v=0d56ee7', function () {
-      appendScript('relphi-glyph-component-v1.js?v=0d56ee7', function () {
-        appendScript('relphi-moon-stroke-preservation-v1.js?v=1', function () {
-          appendScript('relphi-neptune-cross-connection-v1.js?v=1', function () {
-            appendScript('sky-chart-wheel-canonical-component-v1.js?v=4', function () {
-              appendScript('sky-chart-wheel-marker-interaction-v1.js?v=2');
-            });
-          });
-        });
+    appendScript('relphi-glyph-masters-v1.js?v=1', function () {
+      appendScript('relphi-glyph-registry-v1.js?v=1', function () {
+        appendScript('relphi-glyph-component-v1.js?v=5');
       });
     });
   }
@@ -162,17 +156,16 @@
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('planetary-hours-moon-position-v1.js?v=1');
-      appendScript('standardize-zodiac-wheels.js?v=4');
-      appendScript('relphi-glyph-bubbles.js?v=2');
+      appendScript('relphi-glyph-masters-v1.js?v=1', function () {
+        appendScript('relphi-glyph-registry-v1.js?v=1', function () {
+          appendScript('relphi-glyph-component-v1.js?v=5');
+        });
+      });
     }
     if (/(^|\/)glyphs\.html$/.test(location.pathname)) {
-      appendScript('relphi-glyph-registry-v1.js?v=0d56ee7', function () {
-        appendScript('relphi-glyph-component-v1.js?v=0d56ee7', function () {
-          appendScript('relphi-moon-stroke-preservation-v1.js?v=1', function () {
-            appendScript('relphi-neptune-cross-connection-v1.js?v=1', function () {
-              appendScript('glyph-trainer-canonical-v1.js?v=1');
-            });
-          });
+      appendScript('relphi-glyph-masters-v1.js?v=1', function () {
+        appendScript('relphi-glyph-registry-v1.js?v=1', function () {
+          appendScript('relphi-glyph-component-v1.js?v=5');
         });
       });
     }
@@ -184,8 +177,6 @@
         'sky-chart-static-dynamic.js?v=2',
         'sky-chart-aspect-duration-fix.js?v=2',
         'sky-chart-relationship-language.js?v=5',
-        'sky-chart-canonical-relationship-ui-v1.js?v=1',
-        'sky-chart-canonical-glyph-correction-v1.js?v=2',
         'sky-chart-related-relationships-v2.js?v=2',
         'sky-chart-sign-cusps-v1.js?v=1',
         'sky-chart-provenance-fix.js?v=1',

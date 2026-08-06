@@ -3,8 +3,6 @@
 (function () {
   'use strict';
 
-  const SVG_NS = 'http://www.w3.org/2000/svg';
-  const CANONICAL_VERSION = '0d56ee7';
   const SIGNS = [
     { id:'aries', name:'Aries' },
     { id:'taurus', name:'Taurus' },
@@ -98,15 +96,21 @@
   }
 
   function ensureCanonicalGlyphSystem() {
-    if (window.RelphiGlyphRegistry && window.RelphiGlyphComponent) return Promise.resolve();
+    if (window.RelphiGlyphMasters && window.RelphiGlyphRegistry && window.RelphiGlyphComponent) return Promise.resolve();
     if (!canonicalPromise) {
       canonicalPromise = loadDependency(
-        'relphi-glyph-registry-v1.js?v=' + CANONICAL_VERSION,
-        function () { return Boolean(window.RelphiGlyphRegistry); },
-        'Relphi canonical glyph registry'
+        'relphi-glyph-masters-v1.js?v=1',
+        function () { return Boolean(window.RelphiGlyphMasters); },
+        'Relphi canonical glyph masters'
       ).then(function () {
         return loadDependency(
-          'relphi-glyph-component-v1.js?v=' + CANONICAL_VERSION,
+        'relphi-glyph-registry-v1.js?v=1',
+        function () { return Boolean(window.RelphiGlyphRegistry); },
+        'Relphi canonical glyph registry'
+        );
+      }).then(function () {
+        return loadDependency(
+          'relphi-glyph-component-v1.js?v=5',
           function () { return Boolean(window.RelphiGlyphComponent); },
           'Relphi canonical glyph component'
         );
@@ -129,7 +133,7 @@
     position.innerHTML = [
       '<span class="ph-profile-label">Current zodiac position</span>',
       '<span class="ph-moon-placement-line">',
-      '<svg class="ph-moon-sign-glyph" viewBox="-18 -18 36 36" aria-hidden="true" focusable="false"></svg>',
+      '<span class="ph-moon-sign-glyph" aria-hidden="true"></span>',
       '<strong>—</strong>',
       '</span>'
     ].join('');
@@ -154,19 +158,11 @@
     document.head.appendChild(style);
   }
 
-  async function drawCanonicalSign(svgElement, signId, requestId) {
-    if (!svgElement) return;
+  async function drawCanonicalSign(host, signId, requestId) {
+    if (!host) return;
     await ensureCanonicalGlyphSystem();
-
-    svgElement.replaceChildren();
-    const group = document.createElementNS(SVG_NS, 'g');
-    svgElement.appendChild(group);
-    await window.RelphiGlyphComponent.draw(group, signId, {
-      radius:15,
-      padding:1.5,
-      color:'#111'
-    });
-    if (requestId !== renderRequest) group.remove();
+    if (requestId !== renderRequest) return;
+    window.RelphiGlyphComponent.mount(host, signId, { size:28, circle:false, color:'#111' });
   }
 
   async function renderMoonPosition() {

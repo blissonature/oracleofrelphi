@@ -35,7 +35,6 @@
   const DURATION={
     moon:['Several hours','The Moon moves quickly, so its closest transit passage is usually contained within part of a day.'],mercury:['Several days','Mercury moves quickly; the closest passage is usually strongest for hours to a day.'],venus:['Several days','Venus moves quickly; the closest passage is usually strongest for about a day.'],sun:['Several days','The Sun moves steadily; the closest passage is usually strongest for about a day.'],mars:['One to several weeks','Mars develops a transit over days and can keep the closest passage active for several days.'],jupiter:['Several weeks to a few months','Jupiter develops a transit slowly, and the closest passage can remain active for weeks.'],saturn:['Several months','Saturn develops a structural transit slowly, and the closest passage can remain active for weeks.'],uranus:['Many months','Uranus moves slowly; repeated exact passages may extend the story beyond a year.'],neptune:['Many months','Neptune moves slowly; repeated exact passages may extend the story beyond a year.'],pluto:['Many months','Pluto moves slowly; repeated exact passages may extend the story beyond a year.']
   };
-  const APPROVED_FALLBACKS=new Set(['chiron','north-node','south-node','part-of-fortune','vertex']);
   const STELLIUM_PLANETS=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const norm=value=>((Number(value)%360)+360)%360;
@@ -58,7 +57,7 @@
     return{name:'Variable timing',meaning:`${record.entry.name} in Sky ${slot} is the moving point. Its timing depends on the chart time, location, or cycle used to calculate it.`};
   }
   function token(spec){
-    const glyph=spec.glyphId?'<svg viewBox="-20 -20 40 40" aria-hidden="true"></svg>':`<span aria-hidden="true">${esc(spec.symbol)}</span>`;
+    const glyph=spec.glyphId?'<span class="sky-progressive-canonical-glyph" aria-hidden="true"></span>':`<span aria-hidden="true">${esc(spec.symbol)}</span>`;
     return `<span class="sky-progressive-token" data-progressive-stage="glyph"${spec.field?` data-progressive-field="${esc(spec.field)}"`:''}${spec.glyphId?` data-progressive-glyph-id="${esc(spec.glyphId)}"`:''}><button type="button" class="sky-progressive-level sky-progressive-glyph${spec.wide?' is-text':''}" data-progressive-level="glyph" aria-label="Reveal ${esc(spec.name)}" aria-expanded="false">${glyph}</button><button type="button" class="sky-progressive-level sky-progressive-name" data-progressive-level="name" aria-label="Reveal what ${esc(spec.name)} stands for" aria-expanded="false" hidden>${esc(spec.name)}</button><button type="button" class="sky-progressive-level sky-progressive-meaning" data-progressive-level="meaning" aria-label="Meaning of ${esc(spec.name)}" hidden>(${esc(spec.meaning)})</button></span>`;
   }
   function placementPhrase(slot,record){
@@ -105,7 +104,7 @@
   }
   async function draw(section){
     const component=window.RelphiGlyphComponent,registry=window.RelphiGlyphRegistry;
-    await Promise.allSettled(Array.from(section.querySelectorAll('[data-progressive-glyph-id]')).map(async host=>{const id=host.dataset.progressiveGlyphId,entry=registry?.get?.(id)||registry?.resolve?.(id),svg=host.querySelector('svg'),field=host.dataset.progressiveField,color=field==='A-placement'?'#c9211e':field==='B-placement'?'#2462d0':'#191714';if((!entry?.asset&&!APPROVED_FALLBACKS.has(entry?.id))||!component?.draw){host.dataset.missingCanonicalGlyph=id;return}try{await component.draw(svg,entry.id,{radius:14,padding:1,color})}catch(_){host.dataset.missingCanonicalGlyph=id}}));
+    Array.from(section.querySelectorAll('[data-progressive-glyph-id]')).forEach(host=>{const id=host.dataset.progressiveGlyphId,entry=registry?.get?.(id)||registry?.resolve?.(id),target=host.querySelector('.sky-progressive-canonical-glyph'),field=host.dataset.progressiveField,color=field==='A-placement'?'#c9211e':field==='B-placement'?'#2462d0':'#191714';if(!entry||!component?.mount){host.dataset.missingCanonicalGlyph=id;return}try{component.mount(target,entry.id,{size:28,circle:false,color,label:false})}catch(_){host.dataset.missingCanonicalGlyph=id}});
   }
   async function render(event){
     const relation=event.detail?.relation,panel=document.getElementById('skySelectedRelationship'),old=panel?.querySelector('.sky-selected-progressive');if(!relation||!old)return;

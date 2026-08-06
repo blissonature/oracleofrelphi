@@ -9,7 +9,7 @@ assert.ok(Buffer.byteLength(page, 'utf8') > 150000,
   'Planetary Hours HTML is unexpectedly short and may have been truncated.');
 assert.ok(Buffer.byteLength(inline, 'utf8') > 80000,
   'The extracted Planetary Hours script is unexpectedly short and may have been truncated.');
-assert.match(page, /<\/script>\s*<script src="navloader\.js"><\/script>\s*<\/body>\s*<\/html>\s*$/,
+assert.match(page, /<\/script>\s*<script src="navloader\.js(?:\?v=49)?"><\/script>\s*<\/body>\s*<\/html>\s*$/,
   'Planetary Hours must retain its complete closing script, body, and document tags.');
 assert.match(page, /ph-summary-grid-consolidated > \.ph-living-heptagram-frame \{ order: 1; \}/,
   'The living heptagram must lead the mobile summary.');

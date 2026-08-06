@@ -3,7 +3,6 @@
 .sky-foundation-ledger{display:grid;padding:5px 0}
 .sky-foundation-ledger>.sky-foundation-row{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;align-items:center;gap:7px;min-height:32px;padding:4px 10px;border-bottom:1px solid rgba(31,27,24,.075)}
 .sky-foundation-ledger>.sky-foundation-row:last-child{border-bottom:0}
-.sky-foundation-ledger>.sky-foundation-row>svg[data-canonical-ledger-glyph="true"]{display:block!important;width:23px!important;height:23px!important;min-width:23px!important;max-width:23px!important;min-height:23px!important;max-height:23px!important;overflow:hidden!important}
 .sky-foundation-ledger>.sky-foundation-row>.sky-foundation-row-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sky-foundation-ledger>.sky-foundation-row>.sky-foundation-coordinate,.sky-foundation-ledger>.sky-foundation-row>.sky-foundation-house{white-space:nowrap}
 .sky-selected-progressive{display:grid;gap:12px;padding-top:16px;border-top:1px solid rgba(30,27,23,.12)}
 .sky-progressive-reading{display:grid;gap:9px;margin:0;padding:16px 18px;border:1px solid rgba(48,43,39,.13);border-radius:14px;background:linear-gradient(180deg,#fffdfa,#faf7f2);color:#302b27;font:500 .92rem/1.7 system-ui,sans-serif;overflow-wrap:anywhere}
@@ -20,11 +19,11 @@
 .sky-progressive-level{appearance:none;border:0;background:transparent;color:inherit;font:inherit;padding:0;cursor:pointer;text-align:left;border-radius:5px}
 .sky-progressive-level[hidden]{display:none!important}
 .sky-progressive-glyph{display:inline-grid;place-items:center;width:1.55em;height:1.55em;margin:0 .08em;vertical-align:-.38em;border:1px solid rgba(48,43,39,.18);border-radius:999px;background:#fff;color:#171513;font:750 .92em/1 system-ui,sans-serif;box-shadow:0 1px 2px rgba(30,27,23,.06)}
-.sky-progressive-glyph>span{display:grid;place-items:center;line-height:1;white-space:nowrap}.sky-progressive-glyph svg{display:block;width:1.18em;height:1.18em;overflow:visible}
+.sky-progressive-glyph>span{display:grid;place-items:center;line-height:1;white-space:nowrap}.sky-progressive-canonical-glyph>svg{display:block;width:1.18em;height:1.18em}
 .sky-progressive-glyph.is-text{width:auto;min-width:3.2em;padding:0 .62em;border-radius:999px;font-size:.78em;letter-spacing:.01em}
 [data-progressive-field="A-placement"]{--progressive-glyph-color:#c9211e}[data-progressive-field="B-placement"]{--progressive-glyph-color:#2462d0}
 [data-progressive-field="A-placement"] .sky-progressive-glyph{border-color:rgba(201,33,30,.32);color:var(--progressive-glyph-color)}[data-progressive-field="B-placement"] .sky-progressive-glyph{border-color:rgba(36,98,208,.32);color:var(--progressive-glyph-color)}
-[data-progressive-field$="-placement"] .sky-progressive-glyph svg{color:var(--progressive-glyph-color)}
+[data-progressive-field$="-placement"] .sky-progressive-canonical-glyph{color:var(--progressive-glyph-color)}
 .sky-progressive-name,.sky-progressive-meaning{margin-left:.28em}
 .sky-progressive-name{font-weight:750;border-bottom:1px solid rgba(48,43,39,.3)}
 .sky-progressive-meaning{padding:.08em .38em;border-radius:5px;background:#f1ece5;color:#554d48;font-size:.9em;font-weight:480}

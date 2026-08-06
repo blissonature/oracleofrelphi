@@ -37,9 +37,7 @@
 
   function loadAstrologyFoundationEnhancements() {
     if (!/(^|\/)astrology-foundations\.html$/.test(window.location.pathname)) return;
-    appendScript('planet-glyph-loader.js?v=5');
     appendScript('astrology-foundations-mobile-signs.js?v=2');
-    appendScript('astrology-foundations-consistency.js?v=1');
   }
 
   document.addEventListener('click', function (event) {

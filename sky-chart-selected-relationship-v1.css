@@ -71,7 +71,7 @@
 .sky-selected-reveal-content{padding:0 14px 14px;color:#39342f;font:500 .88rem/1.58 system-ui,sans-serif}
 .sky-selected-reveal-content p{margin:.5rem 0 0}
 .sky-selected-reveal-glyph{display:inline-grid;place-items:center;vertical-align:middle;width:32px;height:32px;margin-right:6px}
-.sky-selected-reveal-glyph svg{display:block;width:30px;height:30px;overflow:visible}
+.sky-selected-reveal-glyph [data-selected-reveal-glyph]{display:block;width:30px;height:30px}.sky-selected-reveal-glyph [data-selected-reveal-glyph]>svg{display:block;width:100%;height:100%}
 .sky-selected-canonical-error{min-height:32px;border:1px dashed #b7473f;border-radius:8px}
 .sky-foundation-relationship-row[aria-current="true"]{outline:2px solid currentColor;outline-offset:-2px;background:#fff7ec}
 .sky-foundation-aspect[data-selected-relation="true"]{opacity:1!important;stroke-width:5!important;filter:drop-shadow(0 0 5px rgba(0,0,0,.34))}

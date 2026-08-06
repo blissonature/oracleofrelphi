@@ -1,28 +1,23 @@
 (function(){
 'use strict';
-const NS='http://www.w3.org/2000/svg';
 const state={entries:[],filtered:[],flashIndex:0};
 const $=selector=>document.querySelector(selector);
 function category(entry){
- const asset=String(entry.asset||'');
- if(asset.includes('/planet-glyphs/')) return 'planet';
- if(asset.includes('/zodiac-glyphs/')) return 'sign';
- if(asset.includes('/element-glyphs/')) return 'element';
- if(asset.includes('/aspect-glyphs/')) return 'aspect';
- if(entry.fitMode==='hebrew-letter') return 'hebrew';
- if(entry.fitMode==='greek-letter') return 'greek';
- if(entry.fitMode==='letter') return 'angle';
- if(['north-node','south-node','part-of-fortune','chiron'].includes(entry.id)) return 'point';
+ if(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','lilith'].includes(entry.id))return 'planet';
+ if(['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'].includes(entry.id))return 'sign';
+ if(['fire','water','air','earth'].includes(entry.id))return 'element';
+ if(['conjunction','opposition','trine','square','sextile','semi-sextile','quincunx','octile','tri-octile','quintile','bi-quintile'].includes(entry.id))return 'aspect';
+ if(entry.id.startsWith('hebrew-'))return 'hebrew';
+ if(entry.id.startsWith('greek-'))return 'greek';
+ if(['vertex','asc','dsc','mc','ic'].includes(entry.id))return 'angle';
+ if(['north-node','south-node','part-of-fortune'].includes(entry.id))return 'point';
  return 'other';
 }
 function labelFor(kind){return({planet:'Planet or planetary point',sign:'Zodiac sign',element:'Element',aspect:'Aspect',angle:'Angle or calculated position',point:'Calculated or symbolic point',hebrew:'Hebrew letter',greek:'Greek letter',other:'Glyph'})[kind]||'Glyph';}
 function makeSvg(entry,flash){
- const svg=document.createElementNS(NS,'svg');
- svg.setAttribute('viewBox','-32 -32 64 64');
- svg.setAttribute('role','img');
- svg.setAttribute('aria-label',entry.name);
- window.RelphiGlyphComponent.draw(svg,entry.id,{radius:flash?27:25,padding:2,color:'currentColor'}).catch(()=>{svg.replaceChildren();});
- return svg;
+ const holder=document.createElement('span');
+ try{return window.RelphiGlyphComponent.mount(holder,entry.id,{size:flash?64:56,circle:false,color:'currentColor'})}
+ catch(_){return holder}
 }
 function card(entry){
  const article=document.createElement('article');article.className='glyph-card';

@@ -154,12 +154,12 @@
   display:none;
 }
 
-.sky-foundation-relationship-row svg {
+.sky-foundation-relationship-glyph {
   display:block;
   width:25px;
   height:25px;
-  overflow:visible;
 }
+.sky-foundation-relationship-glyph > svg { display:block; width:100%; height:100%; }
 
 .sky-foundation-relationship-copy {
   min-width:0;

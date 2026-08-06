@@ -81,7 +81,8 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   border-bottom:1px solid rgba(31,27,24,.075);
 }
 .sky-foundation-row:last-child { border-bottom:0; }
-.sky-foundation-row > svg { display:block; width:23px; height:23px; overflow:hidden; }
+.sky-foundation-row-glyph { display:block; width:23px; height:23px; }
+.sky-foundation-row-glyph > svg { display:block; width:100%; height:100%; }
 .sky-foundation-row-name {
   min-width:0;
   overflow:hidden;

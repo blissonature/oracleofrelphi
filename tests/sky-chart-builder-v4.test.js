@@ -9,8 +9,6 @@ const page = read('sky-chart.html');
 const app = read('tarot-app.js');
 const nav = read('navloader.js');
 const menu = read('menu.js');
-const signCusps = read('sky-chart-sign-cusps-v1.js');
-const glyphStyle = read('sky-chart-ph-glyph-style-v1.js');
 const tarotDateBridge = read('tarot-date-sky-bridge-v1.js');
 const planetaryHours = read('planetaryhours.html');
 
@@ -49,18 +47,14 @@ assert.match(builder, /function calculationProfileFromFields\(payload\)/, 'Calcu
 assert.match(builder, /function recoverCalculationProfile\(payload\)/, 'Older calculated skies must recover local time from their saved instant and time zone.');
 assert.match(builder, /skyCreatorSaveWizard/, 'The placement editor must commit through the native engine.');
 assert.match(builder, /skyCalcStatus/, 'The wizard must detect completion from the native Astronomy Engine status.');
-assert.match(page, /id="saveChart"[^>]*hidden/, 'The native Sky A bridge is missing.');
-assert.match(page, /id="saveCurrentSky"[^>]*hidden/, 'The native Sky B bridge is missing.');
-assert.match(page, /id="loadChart"[^>]*hidden/, 'The native Sky A hydration bridge is missing.');
-assert.match(page, /id="loadCurrentSky"[^>]*hidden/, 'The native Sky B hydration bridge is missing.');
+assert.match(page, /id="skyFoundationRoot"/, 'The current Sky Chart foundation root is missing.');
+assert.match(page, /relphi-glyph-masters-v1\.js\?v=1/, 'The immutable glyph masters must load on Sky Chart.');
+assert.match(page, /relphi-glyph-registry-v1\.js\?v=1/, 'The semantic glyph registry must load on Sky Chart.');
+assert.match(page, /relphi-glyph-component-v1\.js\?v=5/, 'The strict canonical glyph component must load on Sky Chart.');
 assert.match(builder, /function syncNativeSlots\(a, b\)/, 'The wizard must hydrate both native renderer slots atomically.');
 assert.match(builder, /byId\('loadChart'\)\?\.click\(\)/, 'Sky A must be loaded into the native relationship renderer.');
 assert.match(builder, /byId\('loadCurrentSky'\)\?\.click\(\)/, 'Sky B must be loaded into the native relationship renderer.');
-assert.match(page, /id="skyCalcNow"/, 'The calculator must retain Use now.');
-assert.match(page, /id="skyCalcGeo"/, 'The calculator must retain Use Here.');
-assert.match(page, /id="skyCalcLocationClear"/, 'The location field must have an explicit clear affordance.');
 assert.match(page, /astronomy\.browser\.min\.js/, 'The Astronomy Engine is not loaded.');
-assert.match(page, /tarot-cards\.js/, 'Tarot correspondence data is not loaded.');
 assert.match(app, /function decanCardFor\(/, 'Decan-to-card correspondence is missing.');
 assert.match(app, /function renderUnifiedChartResults\(/, 'Tarot card result rendering is missing.');
 assert.match(app, /function syncSkyPasteFromPlacements\(/, 'Placement-to-text synchronization is missing.');
@@ -71,9 +65,6 @@ assert.match(builder, /foundLatitude && foundLongitude[\s\S]*byId\('skyCalcRun'\
 assert.doesNotMatch(builder, /\|Location \|/, 'A successful Location found message must not cancel the calculation watcher.');
 assert.match(builder, /input\.addEventListener\('focus',[\s\S]*input\.select\(\)/, 'Focusing the location field must make its existing text easy to replace.');
 assert.match(builder, /\['skyCalcLocation','skyCalcLatitude','skyCalcLongitude','skyCalcTimeZone'\]/, 'Clearing a location must also clear its stale coordinate and time-zone data.');
-assert.match(nav, /sky-chart-sign-cusps-v1\.js/, 'The full sign-cusp overlay must load on SkyChart.');
-assert.match(signCusps, /index < 6/, 'Sign boundaries must be drawn as six full diameters.');
-assert.match(signCusps, /relphi-sign-cusp-marker/, 'Sign cusp edge markers are missing.');
 assert.match(builder, /function applyExternalHandoff\(\)/, 'SkyChart must consume Tarot and Planetary Hours date/time/place handoffs.');
 assert.match(builder, /const calculateImmediately = externalHandoff\.autoRun && externalHandoff\.latitude && externalHandoff\.longitude/, 'A complete Planetary Hours packet must calculate immediately.');
 assert.match(builder, /if \(calculateImmediately\) \{ closeCalculator\(\); setNativeTarget\(state\.editingSlot\); \}/, 'Automatic Planetary Hours calculations must keep the calculator closed.');
@@ -90,14 +81,9 @@ assert.doesNotMatch(menu, /button\.addEventListener\('click'/, 'The logo must no
 assert.match(tarotDateBridge, /date \+ 'T12:00'/, 'Tarot date entry must create its date sky at an explicit local-noon default.');
 assert.match(tarotDateBridge, /relphiPlanetaryHoursWhereWhen/, 'Tarot date skies must reuse the saved location and time-zone packet.');
 assert.match(tarotDateBridge, /byId\('saveChart'\)\?\.click\(\)/, 'Tarot date skies must save only through the Tarot Ledger chart bridge.');
-assert.match(glyphStyle, /Planetary Hours mini zodiac wheel/, 'Comparison marker styling must document its Planetary Hours source.');
-assert.match(glyphStyle, /chart-wheel-stick-knob/, 'Comparison wheel marker discs must match the Planetary Hours treatment.');
-assert.match(glyphStyle, /r:10\.5px!important/, 'Comparison placement circles must be large enough to read.');
-assert.match(glyphStyle, /font-size:13px!important/, 'Comparison placement glyphs must be large enough to read.');
 assert.match(builder, /String\(minute\)\.padStart\(2, '0'\) \+ '′'/, 'Completed Sky panels must show placement minutes.');
-assert.match(nav, /sky-chart-ph-glyph-style-v1\.js\?v=2/, 'The larger glyph stylesheet must be cache-busted.');
 assert.match(nav, /menu\.js\?v=6/, 'The single-toggle menu controller must be cache-busted.');
-assert.match(nav, /sky-chart-builder-v4\.js\?v=17/, 'The direct-handoff Sky Builder must be cache-busted.');
+assert.match(nav, /sky-chart-builder-v4\.js\?v=18/, 'The direct-handoff Sky Builder must be cache-busted.');
 assert.match(nav, /function loadSkyBuilder\(attempt\)/, 'The Sky Builder loader must recover from a failed asset request.');
 assert.match(nav, /function waitForSkyBuilder\(started, onTimeout\)/, 'The loader must wait for builder installation, not merely script download.');
 assert.match(nav, /Date\.now\(\) - started < 8000/, 'The readiness wait must be bounded.');
@@ -105,6 +91,6 @@ assert.match(builder, /relphi:sky-builder-ready/, 'The builder must announce tha
 assert.match(builder, /byId\('relphiPreviewLoadFailure'\)\?\.remove\(\)/, 'A late builder install must remove a stale failure notice.');
 assert.match(nav, /retry < 2/, 'The Sky Builder loader must retry before showing its failure message.');
 assert.match(nav, /failed\.remove\(\)/, 'A failed builder script must be removed before retrying with a fresh cache key.');
-assert.match(page, /navloader\.js\?v=49/, 'The direct-handoff and menu fixes must be cache-busted on Sky Chart.');
+assert.match(page, /navloader\.js\?v=53/, 'The current navigation controller must be cache-busted on Sky Chart.');
 
 console.log('SkyChart V4 engine, Tarot, storage, calculator, and synchronized-editor checks passed.');

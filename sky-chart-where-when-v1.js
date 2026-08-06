@@ -674,17 +674,10 @@
       if (index === currentIndex) partialLine(svg, entry.base, entry.next, hourFraction, 'sky-ph-hour-segment current');
     });
 
-    const glyphJobs = [];
     CHALDEAN.forEach(key => {
       const point = heptagramPoint(key, 118);
       const labelPoint = heptagramPoint(key, 151);
-      const group = svgElement('g', { class:`sky-ph-planet sky-ph-${key}`, style:`color:${PLANETS[key].color}` });
-      const circle = svgElement('circle', {
-        cx:point.x,
-        cy:point.y,
-        r:18,
-        class:`sky-ph-node${key === dayKey ? ' day' : ''}${key === current.ruler ? ' hour' : ''}`
-      });
+      const group = svgElement('g', { class:`sky-ph-planet sky-ph-${key}${key === dayKey ? ' is-day-ruler' : ''}${key === current.ruler ? ' is-hour-ruler' : ''}`, style:`color:${PLANETS[key].color}` });
       const glyph = svgElement('g', {
         transform:`translate(${point.x} ${point.y})`,
         class:'sky-ph-node-glyph'
@@ -695,15 +688,15 @@
         class:'sky-ph-node-label'
       });
       label.textContent = PLANETS[key].name;
-      group.append(circle, glyph, label);
+      group.append(glyph, label);
       svg.appendChild(group);
       const entry = window.RelphiGlyphRegistry?.resolve(key);
-      if (entry?.asset && window.RelphiGlyphComponent?.draw) {
-        glyphJobs.push(window.RelphiGlyphComponent.draw(glyph, entry.id, {
-          radius:13,
-          padding:1,
-          color:key === current.ruler ? '#fff' : PLANETS[key].color
-        }).catch(error => console.error(error)));
+      if (entry && window.RelphiGlyphComponent?.mount) {
+        try {
+          const root=window.RelphiGlyphComponent.mount(glyph,entry.id,{size:36,circle:true,color:key===current.ruler?'#fff':PLANETS[key].color});
+          if(key===current.ruler){const circle=root.querySelector('.relphi-glyph-bubble > circle[aria-hidden="true"]');if(circle){circle.setAttribute('fill',PLANETS[key].color);circle.setAttribute('stroke',PLANETS[key].color)}}
+          group.dataset.canonicalCircled='true';
+        } catch(error) { console.error(error); }
       }
     });
 
@@ -719,7 +712,6 @@
     const centerTime = svgElement('text', { x:180, y:207, class:'sky-ph-center-label' });
     centerTime.textContent = `${localFormatter.format(current.start)}–${localFormatter.format(current.end)}`;
     svg.append(centerDay, centerHour, centerTime);
-    await Promise.allSettled(glyphJobs);
     svg.dataset.canonicalSourceReady = 'true';
     window.dispatchEvent(new Event('relphi:sky-heptagram-source-ready'));
 
