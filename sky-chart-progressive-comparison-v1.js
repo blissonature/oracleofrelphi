@@ -35,9 +35,8 @@
   const DURATION={
     moon:['Several hours','The Moon moves quickly, so its closest transit passage is usually contained within part of a day.'],mercury:['Several days','Mercury moves quickly; the closest passage is usually strongest for hours to a day.'],venus:['Several days','Venus moves quickly; the closest passage is usually strongest for about a day.'],sun:['Several days','The Sun moves steadily; the closest passage is usually strongest for about a day.'],mars:['One to several weeks','Mars develops a transit over days and can keep the closest passage active for several days.'],jupiter:['Several weeks to a few months','Jupiter develops a transit slowly, and the closest passage can remain active for weeks.'],saturn:['Several months','Saturn develops a structural transit slowly, and the closest passage can remain active for weeks.'],uranus:['Many months','Uranus moves slowly; repeated exact passages may extend the story beyond a year.'],neptune:['Many months','Neptune moves slowly; repeated exact passages may extend the story beyond a year.'],pluto:['Many months','Pluto moves slowly; repeated exact passages may extend the story beyond a year.']
   };
-  const APPROVED_FALLBACKS=new Set(['chiron','north-node','south-node','part-of-fortune','vertex']);
   const STELLIUM_PLANETS=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']);
-  const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[char]));
   const norm=value=>((Number(value)%360)+360)%360;
   const position=record=>{const value=norm(record.value),within=value-Math.floor(value/30)*30,degree=Math.floor(within),minute=Math.round((within-degree)*60)%60;return`${degree}°${String(minute).padStart(2,'0')}′`};
   const orbLabel=value=>{let total=Math.round(Number(value)*60),degree=Math.floor(total/60);total%=60;return`${degree}°${String(total).padStart(2,'0')}′`};
@@ -58,7 +57,7 @@
     return{name:'Variable timing',meaning:`${record.entry.name} in Sky ${slot} is the moving point. Its timing depends on the chart time, location, or cycle used to calculate it.`};
   }
   function token(spec){
-    const glyph=spec.glyphId?'<svg viewBox="-20 -20 40 40" aria-hidden="true"></svg>':`<span aria-hidden="true">${esc(spec.symbol)}</span>`;
+    const glyph=spec.glyphId?'<span class="sky-progressive-canonical-slot" aria-hidden="true"></span>':`<span aria-hidden="true">${esc(spec.symbol)}</span>`;
     return `<span class="sky-progressive-token" data-progressive-stage="glyph"${spec.field?` data-progressive-field="${esc(spec.field)}"`:''}${spec.glyphId?` data-progressive-glyph-id="${esc(spec.glyphId)}"`:''}><button type="button" class="sky-progressive-level sky-progressive-glyph${spec.wide?' is-text':''}" data-progressive-level="glyph" aria-label="Reveal ${esc(spec.name)}" aria-expanded="false">${glyph}</button><button type="button" class="sky-progressive-level sky-progressive-name" data-progressive-level="name" aria-label="Reveal what ${esc(spec.name)} stands for" aria-expanded="false" hidden>${esc(spec.name)}</button><button type="button" class="sky-progressive-level sky-progressive-meaning" data-progressive-level="meaning" aria-label="Meaning of ${esc(spec.name)}" hidden>(${esc(spec.meaning)})</button></span>`;
   }
   function placementPhrase(slot,record){
@@ -104,8 +103,8 @@
     section.addEventListener('click',event=>{const button=event.target.closest?.('[data-progressive-level]');if(!button)return;event.stopPropagation();const host=button.closest('.sky-progressive-token'),rank={glyph:0,name:1,meaning:2},current=rank[host.dataset.progressiveStage]??0,clicked=rank[button.dataset.progressiveLevel]??0;setStage(host,clicked<current?button.dataset.progressiveLevel:(clicked<2?['name','meaning'][clicked]: 'meaning'))});
   }
   async function draw(section){
-    const component=window.RelphiGlyphComponent,registry=window.RelphiGlyphRegistry;
-    await Promise.allSettled(Array.from(section.querySelectorAll('[data-progressive-glyph-id]')).map(async host=>{const id=host.dataset.progressiveGlyphId,entry=registry?.get?.(id)||registry?.resolve?.(id),svg=host.querySelector('svg'),field=host.dataset.progressiveField,color=field==='A-placement'?'#c9211e':field==='B-placement'?'#2462d0':'#191714';if((!entry?.asset&&!APPROVED_FALLBACKS.has(entry?.id))||!component?.draw){host.dataset.missingCanonicalGlyph=id;return}try{await component.draw(svg,entry.id,{radius:14,padding:1,color})}catch(_){host.dataset.missingCanonicalGlyph=id}}));
+    const placer=window.RelphiCanonicalGlyphState;
+    await Promise.allSettled(Array.from(section.querySelectorAll('[data-progressive-glyph-id]')).map(async host=>{const id=host.dataset.progressiveGlyphId,slot=host.querySelector('.sky-progressive-canonical-slot'),field=host.dataset.progressiveField,color=field==='A-placement'?'#c9211e':field==='B-placement'?'#2462d0':'#191714';if(!slot||!placer||placer.supportedStates().length===0){host.dataset.glyphUnavailable='true';return}placer.place(slot,id,{state:'plain',color,size:'100%',label:id})}));
   }
   async function render(event){
     const relation=event.detail?.relation,panel=document.getElementById('skySelectedRelationship'),old=panel?.querySelector('.sky-selected-progressive');if(!relation||!old)return;
