@@ -1,12 +1,12 @@
-// Relationship-list presentation only: aspect stripe, layout, orb badge, containment, and scrollbar.
-// Glyph geometry and internal transforms are owned exclusively by the Sky Chart foundation renderer.
+// Relationship-list presentation only: stripe, semantic slot layout, orb badge, and scrollbar.
+// Glyph geometry, canvas, whitespace, and state overlays are immutable canonical assets.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV13) return;
-  window.__relphiSkyRelationshipListLayoutV13 = true;
+  if (window.__relphiSkyRelationshipListLayoutV14) return;
+  window.__relphiSkyRelationshipListLayoutV14 = true;
 
-  const STYLE_ID = 'skyRelationshipListLayoutV13';
+  const STYLE_ID = 'skyRelationshipListLayoutV14';
   const ASPECT_COLORS = Object.freeze({
     conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',
     quintile:'#8b6cc2',square:'#d6534d',trine:'#4e9e69','tri-octile':'#9f5944',
@@ -35,21 +35,20 @@
         width:5px;
         background:var(--relationship-stripe);
       }
-      .sky-foundation-relationship-row>:scope:nth-child(1){grid-area:left-glyph}
-      .sky-foundation-relationship-row>:scope:nth-child(2){grid-area:left-copy}
-      .sky-foundation-relationship-row>:scope:nth-child(3){grid-area:aspect;justify-self:center}
-      .sky-foundation-relationship-row>:scope:nth-child(4){grid-area:right-glyph}
-      .sky-foundation-relationship-row>:scope:nth-child(5){grid-area:right-copy}
-      .sky-foundation-relationship-row>svg{
+      .sky-foundation-relationship-glyph{
         display:block;
-        width:28px!important;
-        height:28px!important;
-        max-width:28px!important;
-        max-height:28px!important;
+        width:28px;
+        height:28px;
+        min-width:28px;
+        min-height:28px;
         align-self:center;
-        overflow:hidden!important;
-        contain:paint;
+        overflow:visible;
       }
+      .sky-foundation-relationship-glyph--left{grid-area:left-glyph}
+      .sky-foundation-relationship-glyph--aspect{grid-area:aspect;justify-self:center}
+      .sky-foundation-relationship-glyph--right{grid-area:right-glyph}
+      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(1){grid-area:left-copy}
+      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(2){grid-area:right-copy}
       .sky-foundation-relationship-copy{white-space:normal;line-height:1.15;min-width:0}
       .sky-foundation-relationship-copy small{white-space:normal}
       .sky-foundation-relationship-orb{
@@ -88,8 +87,8 @@
           padding:9px 10px 8px 13px;
         }
         .sky-foundation-relationship-orb{justify-self:center;min-width:74px;margin-top:2px}
-        .sky-foundation-relationship-row>:scope:nth-child(5){text-align:right}
-        .sky-foundation-relationship-row>:scope:nth-child(4){justify-self:end}
+        .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(2){text-align:right}
+        .sky-foundation-relationship-glyph--right{justify-self:end}
       }
     `;
     document.head.appendChild(style);
@@ -101,12 +100,7 @@
     const color = ASPECT_COLORS[aspect] || '#777';
     row.style.setProperty('--relationship-stripe', color);
 
-    row.querySelectorAll(':scope > .sky-relationship-canonical-stage, :scope > .sky-relationship-master-stage, :scope > .sky-relationship-master-slot').forEach(function (node) {
-      node.remove();
-    });
-    delete row.dataset.relationshipMasterGlyphs;
-
-    if (row.dataset.relationshipLayout === 'v13') return;
+    if (row.dataset.relationshipLayout === 'v14') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
@@ -119,7 +113,7 @@
     badge.textContent = `Orb ${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-    row.dataset.relationshipLayout = 'v13';
+    row.dataset.relationshipLayout = 'v14';
   }
 
   function refresh(root) {
