@@ -5,13 +5,11 @@
   if(window.__relphiSkyFoundationInteractionsV2)return;
   window.__relphiSkyFoundationInteractionsV2=true;
 
-  const NS='http://www.w3.org/2000/svg';
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const SKY={A:'#c9211e',B:'#2462d0'};
   const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
   const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const ORDER=['sun','moon','asc','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','north-node','south-node','chiron','lilith','part-of-fortune','vertex','mc','ic','dsc'];
-  const APPROVED_FALLBACKS=new Set(['chiron','north-node','south-node','part-of-fortune','vertex']);
   const ASPECTS=[
     {id:'conjunction',angle:0,orb:3,color:'#e53935'},
     {id:'semi-sextile',angle:30,orb:2,color:'#7c9b49'},
@@ -48,7 +46,7 @@
   function canonical(key,item){
     const registry=window.RelphiGlyphRegistry;if(!registry)return null;
     for(const candidate of [item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){
-      if(candidate==null)continue;const raw=String(candidate).trim(),entry=registry.resolve(ALIASES[raw.toLowerCase()]||raw)||registry.get(ALIASES[raw.toLowerCase()]||raw);if(entry?.asset||APPROVED_FALLBACKS.has(entry?.id))return entry;
+      if(candidate==null)continue;const raw=String(candidate).trim(),entry=registry.resolve(ALIASES[raw.toLowerCase()]||raw)||registry.get(ALIASES[raw.toLowerCase()]||raw);if(entry)return entry;
     }
     return null;
   }
@@ -72,19 +70,31 @@
     panel=document.createElement('section');panel.id='skyFoundationRelationships';panel.setAttribute('aria-label','Filtered relationships');panel.innerHTML='<header class="sky-foundation-relationships-heading"><h2>Relationships</h2><span id="skyFoundationRelationshipCount">0/0</span><button id="skyFoundationClearIsolation" type="button" hidden>Clear</button></header><div id="skyFoundationRelationshipList"></div><p id="skyFoundationRelationshipEmpty" hidden>No relationships involve this selection.</p>';comparison.appendChild(panel);
     panel.querySelector('#skyFoundationClearIsolation').addEventListener('click',event=>{event.preventDefault();event.stopPropagation();lockedState=null;hoverState=null;applyState()});return panel;
   }
-  async function draw(parent,id,options){
-    const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=registry?.get(id)||registry?.resolve(id);if(!entry||!component?.draw)throw new Error('Approved registry glyph unavailable: '+id);return component.draw(parent,entry.id,options);
+  function glyphSlot(role,label){
+    const slot=document.createElement('span');
+    slot.className='sky-foundation-relationship-glyph sky-foundation-relationship-glyph--'+role;
+    slot.dataset.glyphRole=role;
+    slot.setAttribute('aria-label',label);
+    return slot;
   }
-  function makeSvg(label){const node=document.createElementNS(NS,'svg');node.setAttribute('viewBox','-20 -20 40 40');node.setAttribute('aria-label',label);return node}
+  function placeCanonicalGlyph(slot,id,state,color,label){
+    const placer=window.RelphiCanonicalGlyphState;
+    if(!placer||placer.supportedStates().length===0){slot.dataset.glyphUnavailable='true';return null}
+    return placer.place(slot,id,{state,color,size:28,label});
+  }
   async function renderRows(relations){
     const list=document.getElementById('skyFoundationRelationshipList'),count=document.getElementById('skyFoundationRelationshipCount');if(!list||!count)return;
-    const selectionCleared=document.getElementById('skyFoundationRoot')?.dataset.relationshipSelectionCleared==='true',selected=selectionCleared?null:document.querySelector('.sky-foundation-relationship-row[aria-current="true"]');const selectedKey=selected?`${selected.dataset.leftPlacement}|${selected.dataset.aspect}|${selected.dataset.rightPlacement}|${selected.getAttribute('aria-label')}`:'';
-    list.replaceChildren();count.textContent=`${relations.length}/${relations.length}`;count.dataset.total=String(relations.length);const jobs=[];
+    const selectionCleared=document.getElementById('skyFoundationRoot')?.dataset.relationshipSelectionCleared==='true',selected=selectionCleared?null:document.querySelector('.sky-foundation-relationship-row[aria-current="true"]');const selectedKey=selected?[selected.dataset.leftPlacement,selected.dataset.aspect,selected.dataset.rightPlacement,selected.getAttribute('aria-label')].join('|'):'';
+    list.replaceChildren();count.textContent=relations.length+'/'+relations.length;count.dataset.total=String(relations.length);const jobs=[];
     relations.forEach((relation,index)=>{
-      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.aspect=relation.aspect.id;row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.leftHouse=String(relation.left.house);row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(relation.left.sign);row.dataset.rightSign=String(relation.right.sign);row.setAttribute('aria-label',`${relation.left.entry.name} ${relation.aspect.id} ${relation.right.entry.name}, orb ${relation.orb.toFixed(2)} degrees`);
-      const leftGlyph=makeSvg(relation.left.entry.name),aspectGlyph=makeSvg(relation.aspect.id),rightGlyph=makeSvg(relation.right.entry.name),leftCopy=document.createElement('span'),rightCopy=document.createElement('span');leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';leftCopy.innerHTML=`${esc(relation.left.entry.name)}<small>${left.text} ${esc(SIGN_NAMES[left.sign])} · H${relation.left.house}</small>`;rightCopy.innerHTML=`${esc(relation.right.entry.name)}<small>${right.text} ${esc(SIGN_NAMES[right.sign])} · H${relation.right.house} · Orb ${relation.orb.toFixed(2)}°</small>`;row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);
-      const key=`${row.dataset.leftPlacement}|${row.dataset.aspect}|${row.dataset.rightPlacement}|${row.getAttribute('aria-label')}`;if(key===selectedKey)row.setAttribute('aria-current','true');
-      jobs.push(draw(leftGlyph,relation.left.id,{radius:15,padding:1,color:SKY.A}).catch(error=>{leftGlyph.remove();console.error(error)}),draw(aspectGlyph,relation.aspect.id,{radius:15,padding:1,color:relation.aspect.color}).catch(error=>{aspectGlyph.remove();console.error(error)}),draw(rightGlyph,relation.right.id,{radius:15,padding:1,color:SKY.B}).catch(error=>{rightGlyph.remove();console.error(error)}));
+      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.aspect=relation.aspect.id;row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.leftHouse=String(relation.left.house);row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(relation.left.sign);row.dataset.rightSign=String(relation.right.sign);row.setAttribute('aria-label',relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+', orb '+relation.orb.toFixed(2)+' degrees');
+      const leftGlyph=glyphSlot('left',relation.left.entry.name),aspectGlyph=glyphSlot('aspect',relation.aspect.id),rightGlyph=glyphSlot('right',relation.right.entry.name),leftCopy=document.createElement('span'),rightCopy=document.createElement('span');leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';leftCopy.innerHTML=esc(relation.left.entry.name)+'<small>'+left.text+' '+esc(SIGN_NAMES[left.sign])+' · H'+relation.left.house+'</small>';rightCopy.innerHTML=esc(relation.right.entry.name)+'<small>'+right.text+' '+esc(SIGN_NAMES[right.sign])+' · H'+relation.right.house+' · Orb '+relation.orb.toFixed(2)+'°</small>';row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);
+      const key=[row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement,row.getAttribute('aria-label')].join('|');if(key===selectedKey)row.setAttribute('aria-current','true');
+      jobs.push(
+        Promise.resolve().then(()=>placeCanonicalGlyph(leftGlyph,relation.left.id,'circled',SKY.A,relation.left.entry.name)),
+        Promise.resolve().then(()=>placeCanonicalGlyph(aspectGlyph,relation.aspect.id,'plain',relation.aspect.color,relation.aspect.id)),
+        Promise.resolve().then(()=>placeCanonicalGlyph(rightGlyph,relation.right.id,'circled',SKY.B,relation.right.entry.name))
+      );
     });
     await Promise.allSettled(jobs);
   }
