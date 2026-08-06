@@ -5,6 +5,7 @@
   'use strict';
   if (window.RelphiCanonicalGlyphState) return;
 
+  const SVG_NS = 'http://www.w3.org/2000/svg';
   const EXPECTED_GLYPH_COUNT = 93;
   const REQUIRED_STATES = Object.freeze(['plain', 'circled']);
   const FORBIDDEN_NODES = new Set(['script', 'foreignobject', 'iframe', 'object', 'embed']);
@@ -87,6 +88,35 @@
     return document.importNode(svg, true);
   }
 
+  function numericSize(value) {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value;
+    const parsed = Number.parseFloat(String(value || ''));
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  }
+
+  function applyLayerPaint(node, options, layerId) {
+    const layerColors = options && options.layerColors;
+    const color = layerColors && layerColors[layerId] || options && options.overlayColor || options && options.color;
+    if (color) node.style.color = color;
+    const fills = options && options.layerFills;
+    const strokes = options && options.layerStrokes;
+    const fill = fills && fills[layerId] || options && options.overlayFill;
+    const stroke = strokes && strokes[layerId] || options && options.overlayStroke;
+    if (fill) node.style.setProperty('--relphi-state-fill', fill);
+    if (stroke) node.style.setProperty('--relphi-state-stroke', stroke);
+  }
+
+  function configureSvgBox(node, size) {
+    const value = numericSize(size);
+    if (!value) return;
+    const half = value / 2;
+    node.setAttribute('x', String(-half));
+    node.setAttribute('y', String(-half));
+    node.setAttribute('width', String(value));
+    node.setAttribute('height', String(value));
+    node.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  }
+
   function place(target, identity, options) {
     invariant(target instanceof Element, 'A DOM target is required.');
     invariant(manifest, 'Canonical manifest has not been registered.');
@@ -94,25 +124,21 @@
     invariant(Object.prototype.hasOwnProperty.call(manifest.states, state), 'Illegal or unregistered glyph state: ' + state + '.');
     const glyph = resolve(identity);
     const stateLayers = manifest.states[state];
+    const svgTarget = target.namespaceURI === SVG_NS;
+    const host = svgTarget ? document.createElementNS(SVG_NS, 'g') : document.createElement('span');
 
-    const host = document.createElement('span');
-    host.className = 'relphi-canonical-glyph-state';
+    host.classList.add('relphi-canonical-glyph-state');
     host.dataset.glyphId = glyph.id;
     host.dataset.glyphState = state;
     host.dataset.canonicalSource = manifest.source;
     host.setAttribute('role', 'img');
     host.setAttribute('aria-label', options && options.label || glyph.name || glyph.id);
-    if (options && options.color) host.style.color = options.color;
-    if (options && options.size) {
+
+    if (!svgTarget && options && options.size) {
       const size = typeof options.size === 'number' ? options.size + 'px' : String(options.size);
       host.style.width = size;
       host.style.height = size;
     }
-
-    const base = cloneMarkup(glyph.markup, 'Glyph "' + glyph.id + '"');
-    base.classList.add('relphi-canonical-glyph-state__base');
-    base.setAttribute('aria-hidden', 'true');
-    host.appendChild(base);
 
     stateLayers.forEach(function (layerId) {
       const layerEntry = manifest.layers[layerId];
@@ -120,8 +146,18 @@
       layer.classList.add('relphi-canonical-glyph-state__overlay');
       layer.dataset.overlayId = layerId;
       layer.setAttribute('aria-hidden', 'true');
+      applyLayerPaint(layer, options, layerId);
+      if (svgTarget) configureSvgBox(layer, options && options.size);
       host.appendChild(layer);
     });
+
+    const base = cloneMarkup(glyph.markup, 'Glyph "' + glyph.id + '"');
+    base.classList.add('relphi-canonical-glyph-state__base');
+    base.setAttribute('aria-hidden', 'true');
+    const baseColor = options && options.baseColor || options && options.color;
+    if (baseColor) base.style.color = baseColor;
+    if (svgTarget) configureSvgBox(base, options && options.size);
+    host.appendChild(base);
 
     target.replaceChildren(host);
     return host;
@@ -132,9 +168,8 @@
     const style = document.createElement('style');
     style.id = 'relphiCanonicalGlyphStateStyles';
     style.textContent = [
-      '.relphi-canonical-glyph-state{position:relative;display:inline-block;inline-size:1em;block-size:1em;overflow:visible;color:currentColor;vertical-align:middle}',
-      '.relphi-canonical-glyph-state>svg{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible}',
-      '.relphi-canonical-glyph-state__base,.relphi-canonical-glyph-state__overlay{transform:none!important;clip-path:none!important;mask:none!important}'
+      'span.relphi-canonical-glyph-state{position:relative;display:inline-block;inline-size:1em;block-size:1em;overflow:visible;color:currentColor;vertical-align:middle}',
+      'span.relphi-canonical-glyph-state>svg{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible}'
     ].join('');
     document.head.appendChild(style);
   }
