@@ -3,9 +3,11 @@ import fs from 'node:fs';
 
 const controller = fs.readFileSync('sky-chart-foundation-interactions-v2.js', 'utf8');
 const layout = fs.readFileSync('sky-chart-relationship-list-layout-v1.js', 'utf8');
+const selected = fs.readFileSync('sky-chart-selected-relationship-v4.js', 'utf8');
+const selectedCss = fs.readFileSync('sky-chart-selected-understanding-v1.css', 'utf8');
 const state = fs.readFileSync('relphi-canonical-glyph-state-v1.js', 'utf8');
 
-const forbiddenController = [
+const forbiddenRelationshipCode = [
   ['createBubble', /createBubble/],
   ['component draw', /RelphiGlyphComponent|\.draw\s*\(/],
   ['SVG construction', /createElementNS\s*\(/],
@@ -13,13 +15,15 @@ const forbiddenController = [
   ['relationship radius option', /radius\s*:/],
   ['relationship padding option', /padding\s*:/],
   ['visible-bounds fitting', /getBBox\s*\(/],
-  ['custom relationship glyph viewBox', /-20\s+-20\s+40\s+40/],
+  ['custom relationship glyph viewBox', /viewBox\s*=|setAttribute\s*\(\s*['"]viewBox['"]|-20\s+-20\s+40\s+40|-28\s+-28\s+56\s+56/],
   ['relationship fallback set', /APPROVED_FALLBACKS/],
-  ['procedural circle creation', /createElement(?:NS)?\s*\([^\n]*['"]circle['"]/]
+  ['procedural circle creation', /createElement(?:NS)?\s*\([^\n]*['"]circle['"]/],
+  ['circle visibility manipulation', /circle\.style|circle\.setAttribute/]
 ];
 
-for (const [label, pattern] of forbiddenController) {
-  assert.equal(pattern.test(controller), false, `Relationships still contains ${label}.`);
+for (const [label, pattern] of forbiddenRelationshipCode) {
+  assert.equal(pattern.test(controller), false, `Relationship list still contains ${label}.`);
+  assert.equal(pattern.test(selected), false, `Selected relationship still contains ${label}.`);
 }
 
 assert.match(controller, /RelphiCanonicalGlyphState/);
@@ -30,6 +34,13 @@ assert.match(controller, /relation\.left\.id,'circled'/);
 assert.match(controller, /relation\.aspect\.id,'plain'/);
 assert.match(controller, /relation\.right\.id,'circled'/);
 assert.match(controller, /dataset\.glyphUnavailable/);
+
+assert.match(selected, /RelphiCanonicalGlyphState/);
+assert.match(selected, /r\.left\.id,COLORS\.A,'circled'/);
+assert.match(selected, /r\.aspect\.id,r\.aspect\.color,'plain'/);
+assert.match(selected, /r\.right\.id,COLORS\.B,'circled'/);
+assert.match(selected, /class="token-glyph" data-glyph=/);
+assert.equal(/querySelectorAll\(['"]svg['"]\)/.test(selected), false, 'Selected relationship may not infer identity from SVG structure.');
 
 const forbiddenLayout = [
   ['SVG descendant styling', />svg|svg>|svg\s*\{/],
@@ -49,6 +60,9 @@ assert.match(layout, /sky-foundation-relationship-glyph--left/);
 assert.match(layout, /sky-foundation-relationship-glyph--aspect/);
 assert.match(layout, /sky-foundation-relationship-glyph--right/);
 assert.match(layout, /overflow\s*:\s*visible/);
+
+assert.equal(/\.token-glyph\s+svg|\.token-glyph,\.token-glyph\s+svg/.test(selectedCss), false, 'Selected relationship CSS may not style canonical SVG descendants.');
+assert.match(selectedCss, /\.token-glyph>\.relphi-canonical-glyph-state\{width:100%!important;height:100%!important\}/);
 
 assert.match(state, /EXPECTED_GLYPH_COUNT\s*=\s*93/);
 assert.match(state, /glyphs-unified-preview\.html/);
