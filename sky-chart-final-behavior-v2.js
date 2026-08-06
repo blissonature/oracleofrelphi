@@ -29,18 +29,6 @@
     });
   }
 
-  function expandHeptagrams(){
-    document.querySelectorAll('.sky-ph-heptagram').forEach(svg=>{
-      if(svg.dataset.finalExpanded==='true'||!svg.querySelector('.sky-ph-planet'))return;
-      svg.dataset.finalExpanded='true';
-      const transform='translate(180 180) scale(1.16) translate(-180 -180)';
-      svg.querySelectorAll('.sky-ph-week-segment,.sky-ph-planet').forEach(node=>{
-        const existing=node.getAttribute('transform');
-        node.setAttribute('transform',existing?`${transform} ${existing}`:transform);
-      });
-    });
-  }
-
   function removeAspectBoxes(){
     document.querySelectorAll('.sky-foundation-aspect-hit,[data-layer="aspects"] rect').forEach(node=>{
       node.setAttribute('fill','transparent');
@@ -51,7 +39,7 @@
     });
   }
 
-  function run(){queued=false;expandHeptagrams();removeAspectBoxes();restoreSelectedMarker()}
+  function run(){queued=false;removeAspectBoxes();restoreSelectedMarker()}
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(run)}
 
   function start(){
