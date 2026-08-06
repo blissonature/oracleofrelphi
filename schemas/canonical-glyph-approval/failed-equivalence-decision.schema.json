@@ -14,8 +14,10 @@
     "approval_date": {"type":"string","format":"date"},
     "baseline_commit": {"type":"string","pattern":"^[a-f0-9]{40}$"},
     "reference_package_hash": {"type":"string","pattern":"^[a-f0-9]{64}$"},
-    "decision_type": {"enum":["keep-unavailable","approve-named-baked-candidate","approve-named-existing-repository-source","supply-another-static-master"]},
+    "decision_type": {"enum":["keep-unavailable","approve-named-baked-candidate","approve-named-existing-repository-source","approve-named-baked-candidate-with-documented-raster-difference","supply-another-static-master"]},
     "notes": {"type":"string"},
+    "documented_raster_difference": {"type":"object","additionalProperties":false,"required":["size","density","differing_pixels","bounding_box","cause","finding"],"properties":{"size":{"enum":[100,400,1000]},"density":{"enum":[1,2]},"differing_pixels":{"type":"integer","minimum":1},"bounding_box":{"type":"object","additionalProperties":false,"required":["x","y","width","height"],"properties":{"x":{"type":"integer","minimum":0},"y":{"type":"integer","minimum":0},"width":{"type":"integer","minimum":1},"height":{"type":"integer","minimum":1}}},"cause":{"type":"string","minLength":1},"finding":{"type":"string","minLength":1}}},
+    "no_geometry_value_changed_to_force_equivalence": {"const":true},
     "geometry_confirmation": {"type":"object","additionalProperties":false,"required":["geometry","whitespace","scale","position","proportions","strokes"],"properties":{"geometry":{"type":"boolean"},"whitespace":{"type":"boolean"},"scale":{"type":"boolean"},"position":{"type":"boolean"},"proportions":{"type":"boolean"},"strokes":{"type":"boolean"}}},
     "no_fallback_or_runtime_fitting_authorized": {"const":true},
     "signature": {"type":"object","additionalProperties":false,"required":["algorithm","key_id","signed_payload_sha256","value"],"properties":{"algorithm":{"type":"string","minLength":1},"key_id":{"type":"string","minLength":1},"signed_payload_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},"value":{"type":"string","minLength":1}}}

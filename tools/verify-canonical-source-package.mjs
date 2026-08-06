@@ -15,7 +15,9 @@ export const CANONICAL_IDENTITIES = [
 
 export const LEGAL_STATES = ['plain','circled','day-ruler','hour-ruler','day-and-hour-ruler'];
 const EXACT_STATUS = 'exact-static-candidate';
-const ALLOWED_STATUSES = new Set([EXACT_STATUS,'blocked-font-or-text','blocked-unsupported-vector-feature','blocked-missing-or-invalid-capture','failed-pixel-equivalence']);
+const APPROVED_DIFFERENCE_STATUS = 'approved-with-documented-raster-difference';
+const AVAILABLE_STATUSES = new Set([EXACT_STATUS,APPROVED_DIFFERENCE_STATUS]);
+const ALLOWED_STATUSES = new Set([...AVAILABLE_STATUSES,'blocked-font-or-text','blocked-unsupported-vector-feature','blocked-missing-or-invalid-capture','failed-pixel-equivalence']);
 const PROHIBITED_TAG = /<(?:text|script|foreignObject|image|use|filter|mask|clipPath|iframe|object|embed|style|symbol|pattern|linearGradient|radialGradient|marker)\b/i;
 const PROHIBITED_ATTRIBUTE = /\s(?:transform|href|xlink:href|filter|mask|clip-path|on[a-z]+|font-family|font-size|font-weight|vector-effect)\s*=/i;
 const EXTERNAL_REFERENCE = /url\s*\(|(?:https?:|data:|javascript:)/i;
@@ -83,25 +85,30 @@ export async function verifyCanonicalSourcePackage(packageRoot) {
   }
 
   const paths = new Set();
-  let exactCount = 0;
+  let exactCount = 0, approvedDifferenceCount = 0, fontTextBlockedCount = 0, failedEquivalenceCount = 0;
   for (const record of identities) {
     const label = `identity ${record.canonical_identity}`;
     assert(ALLOWED_STATUSES.has(record.status), `${label} has an invalid status.`, errors);
     assert(Array.isArray(record.permitted_states) && JSON.stringify(record.permitted_states) === JSON.stringify(LEGAL_STATES), `${label} has invalid legal-state declarations.`, errors);
     assert(typeof record.captured_authority_sha256 === 'string' && HASH.test(record.captured_authority_sha256), `${label} lacks a valid captured-authority SHA-256.`, errors);
     assert(typeof record.proposed_canonical_filename === 'string' && record.proposed_canonical_filename.endsWith('.svg'), `${label} lacks a proposed canonical filename.`, errors);
-    if (record.status !== EXACT_STATUS) {
+    if (!AVAILABLE_STATUSES.has(record.status)) {
+      if(record.status==='blocked-font-or-text')fontTextBlockedCount++;
+      if(record.status==='failed-pixel-equivalence')failedEquivalenceCount++;
       assert(record.candidate_path === null, `${label} must fail closed with candidate_path null.`, errors);
       assert(record.candidate_sha256 === null, `${label} must not carry a substitute candidate hash.`, errors);
       assert(record.viewBox === null, `${label} must not claim a candidate viewBox.`, errors);
       assert(Boolean(record.blocker), `${label} must state its blocker.`, errors);
       continue;
     }
-    exactCount += 1;
-    assert(record.approval_status === 'awaiting-approval', `${label} must remain awaiting approval.`, errors);
+    const approvedDifference=record.status===APPROVED_DIFFERENCE_STATUS;
+    if(approvedDifference)approvedDifferenceCount++;else exactCount++;
+    assert(record.approval_status === (approvedDifference?'approved':'awaiting-approval'), `${label} has an invalid approval status.`, errors);
     assert(record.viewBox === '0 0 100 100', `${label} has an invalid viewBox declaration.`, errors);
     assert(typeof record.candidate_sha256 === 'string' && HASH.test(record.candidate_sha256), `${label} lacks a valid candidate SHA-256.`, errors);
-    assert(Array.isArray(record.validation_matrix) && record.validation_matrix.length === 6 && record.validation_matrix.every(item => item.differing_pixels === 0 && item.bounds_identical === true), `${label} lacks six exact validation results.`, errors);
+    assert(Array.isArray(record.validation_matrix) && record.validation_matrix.length === 6, `${label} lacks six validation results.`, errors);
+    if(approvedDifference)assert(record.validation_matrix?.some(item=>item.differing_pixels>0)&&record.validation_matrix?.every(item=>Number.isInteger(item.differing_pixels)&&item.differing_pixels>=0),`${label} must retain its documented non-zero raster difference.`,errors);
+    else assert(record.validation_matrix?.every(item => item.differing_pixels === 0 && item.bounds_identical === true), `${label} incorrectly claims exact equivalence.`, errors);
     assert(typeof record.candidate_path === 'string' && record.candidate_path.startsWith('masters/'), `${label} must use an identity-specific masters path.`, errors);
     assert(!paths.has(record.candidate_path), `${label} reuses candidate path ${record.candidate_path}.`, errors);
     paths.add(record.candidate_path);
@@ -112,7 +119,30 @@ export async function verifyCanonicalSourcePackage(packageRoot) {
       assert(sha256(bytes) === record.candidate_sha256, `${label} candidate SHA-256 mismatch.`, errors);
       inspectSvg(bytes.toString('utf8'),label,record.display_name,errors);
     } catch (error) { errors.push(`${label} candidate cannot be read: ${error.message}`); }
+    if(approvedDifference){
+      const approvalRelative=record.source_provenance?.approval_record;
+      assert(typeof approvalRelative==='string'&&approvalRelative.startsWith('approvals/'),`${label} lacks a package approval record.`,errors);
+      const approvalFile=approvalRelative?safePackagePath(root,approvalRelative,`${label} approval record`,errors):null;
+      if(approvalFile)try{
+        const approval=JSON.parse(await readFile(approvalFile,'utf8'));
+        const expectedSource=`assets/canonical-glyphs/v1/${record.candidate_path}`;
+        assert(approval.record_type==='failed-equivalence-decision'&&approval.identity===record.canonical_identity,`${label} approval identity or type mismatch.`,errors);
+        assert(approval.decision_type==='approve-named-baked-candidate-with-documented-raster-difference',`${label} approval decision mismatch.`,errors);
+        assert(approval.candidate_sha256===record.candidate_sha256&&approval.source_path===expectedSource,`${label} approval hash or path mismatch.`,errors);
+        assert(approval.reference_package_hash===manifest.approval_reference_package_sha256,`${label} approval reference package mismatch.`,errors);
+        assert(approval.no_geometry_value_changed_to_force_equivalence===true&&approval.no_fallback_or_runtime_fitting_authorized===true,`${label} approval authorizes geometry changes or fallback.`,errors);
+        assert(['geometry','whitespace','scale','position','proportions','strokes'].every(key=>approval.geometry_confirmation?.[key]===true),`${label} approval lacks preservation confirmation.`,errors);
+        assert(Array.isArray(record.documented_raster_difference)&&record.documented_raster_difference.length===1&&JSON.stringify(record.documented_raster_difference[0])===JSON.stringify(approval.documented_raster_difference),`${label} documented difference evidence changed.`,errors);
+        const unsigned={...approval};delete unsigned.signature;
+        assert(approval.signature?.signed_payload_sha256===sha256(Buffer.from(JSON.stringify(unsigned)))&&Boolean(approval.signature?.value),`${label} approval signature payload is stale.`,errors);
+      }catch(error){errors.push(`${label} approval record cannot be read or validated: ${error.message}`);}
+    }
   }
+
+  const availableCount=exactCount+approvedDifferenceCount,blockedCount=identities.length-availableCount;
+  const actualCounts={identity_total:identities.length,available_masters:availableCount,unavailable_masters:blockedCount,exact_static_masters:exactCount,approved_with_documented_raster_difference:approvedDifferenceCount,failed_equivalence_identities:failedEquivalenceCount,font_or_text_blocked_identities:fontTextBlockedCount};
+  assert(JSON.stringify(manifest.counts)===JSON.stringify(actualCounts),'Manifest counts do not match independently verified status totals.',errors);
+  assert(identities.find(record=>record.canonical_identity==='moon')?.status==='failed-pixel-equivalence','Moon must remain the sole failed-equivalence identity.',errors);
 
   if (circled?.overlay_path) {
     const file = safePackagePath(root,circled.overlay_path,'circled overlay_path',errors);
@@ -126,7 +156,7 @@ export async function verifyCanonicalSourcePackage(packageRoot) {
   }
 
   for (const forbidden of ['fallback','unicode','font','substitute_path','alternate_source']) assert(!(forbidden in manifest), `Manifest contains prohibited fallback field ${forbidden}.`, errors);
-  return { valid:errors.length === 0, errors, identityCount:identities.length, exactCount, blockedCount:identities.length-exactCount, stateCount:states.length };
+  return { valid:errors.length === 0, errors, identityCount:identities.length, availableCount, blockedCount, exactCount, approvedDifferenceCount, failedEquivalenceCount, fontTextBlockedCount, stateCount:states.length };
 }
 
 function usage() {
