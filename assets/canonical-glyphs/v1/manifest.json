@@ -1,0 +1,3472 @@
+{
+  "schema": "relphi-canonical-source-package/v1",
+  "package_status": "incomplete",
+  "authority": {
+    "page": "https://oracleofrelphi.com/glyphs-unified-preview.html",
+    "commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+    "capture": "live-authority-resolution/live-circled-evidence.json"
+  },
+  "construction_contract": {
+    "source_viewBox": "-32 -32 64 64",
+    "target_viewBox": "0 0 100 100",
+    "outer_matrix": [
+      1.5625,
+      0,
+      0,
+      1.5625,
+      50,
+      50
+    ],
+    "zero_pixel_difference_required": true,
+    "missing_assets_fail_closed": true
+  },
+  "identities": [
+    {
+      "canonical_identity": "air",
+      "display_name": "Air",
+      "proposed_canonical_filename": "assets/element-glyphs/air.svg",
+      "candidate_path": "masters/assets/element-glyphs/air.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "14b799ffb3d609165fa71fa850338af554b09ef3a4024412c851236b64c6a603",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "14b799ffb3d609165fa71fa850338af554b09ef3a4024412c851236b64c6a603",
+      "candidate_sha256": "b538b0c440f899883912c1b035d3bdb651402947653a962e5648798b750eefdb",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "aquarius",
+      "display_name": "Aquarius",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/aquarius.svg",
+      "candidate_path": "masters/assets/zodiac-glyphs/aquarius.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "e1ce1d6be8a8a81e6d06bbea9dba82c6ad02c59bc776eaee812fd21c4c792c2f",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "e1ce1d6be8a8a81e6d06bbea9dba82c6ad02c59bc776eaee812fd21c4c792c2f",
+      "candidate_sha256": "174fdce0eaee27afc455061deda1857361285b4a57194ad74af8f9c5177a68b2",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "aries",
+      "display_name": "Aries",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/aries.svg",
+      "candidate_path": "masters/assets/zodiac-glyphs/aries.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "3f17669f626f92b2158690a49178ac582aa06f79bf20a5df4cd5b77cd1b5efd3",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "3f17669f626f92b2158690a49178ac582aa06f79bf20a5df4cd5b77cd1b5efd3",
+      "candidate_sha256": "3f877b0d0aea3021c23ffdb49e53321fd6009b9543c9b9eb90dafb7a32477e00",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "asc",
+      "display_name": "Ascendant",
+      "proposed_canonical_filename": "assets/planet-glyphs/ascendant.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "786aaa426200170b3ea7c00c5c127e74f0d089249363b46ed794c75f4c2fa18e",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "bi-quintile",
+      "display_name": "Bi-Quintile",
+      "proposed_canonical_filename": "assets/aspect-glyphs/bi-quintile.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/bi-quintile.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "a059f7a6a44db958f6d6032a9526edefb690b46959e4dc3ec7973e7876bf5334",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "a059f7a6a44db958f6d6032a9526edefb690b46959e4dc3ec7973e7876bf5334",
+      "candidate_sha256": "b30892eea19ad3d22352ecd0ff61c729c11f3496124657a4df5962d178116b23",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "cancer",
+      "display_name": "Cancer",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/cancer.svg",
+      "candidate_path": "masters/assets/zodiac-glyphs/cancer.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "bb1bbb0822dcdede659a08bb09203b92e085a00126863ae75843f2c3eed97971",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "bb1bbb0822dcdede659a08bb09203b92e085a00126863ae75843f2c3eed97971",
+      "candidate_sha256": "4cf261fb1680a6201982431a9679b17fee4bc867b9158eb697a553d4d2b4ce0a",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "capricorn",
+      "display_name": "Capricorn",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/capricorn.svg",
+      "candidate_path": null,
+      "status": "failed-pixel-equivalence",
+      "source_provenance": null,
+      "captured_authority_sha256": "d6afed1dcc7a045acf47998d9017cab0eaaf0c37ee15a15c53bfb46de2c94823",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "canonical_identity": "chiron",
+      "display_name": "Chiron",
+      "proposed_canonical_filename": "assets/planet-glyphs/chiron.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "1be721ab0fbfae507ee6b89eaf56d68bfad924ee8ea6a66260f1b154c369b5d5",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "conjunction",
+      "display_name": "Conjunction",
+      "proposed_canonical_filename": "assets/aspect-glyphs/conjunction.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/conjunction.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "2232d74ac847c0d3b6a3056a2c19950513fab7703d977656a75dfc6df25b1f71",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "2232d74ac847c0d3b6a3056a2c19950513fab7703d977656a75dfc6df25b1f71",
+      "candidate_sha256": "f78845c0604759059150ffe8b8e1aa81a5ae7d7ef1190921941b48b049f764f2",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "dsc",
+      "display_name": "Descendant",
+      "proposed_canonical_filename": "assets/planet-glyphs/descendant.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "3d5fa2f7da046a9d01f85bf19e483a0052e793a21f15e08fc83f4ee41a601ef1",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "earth",
+      "display_name": "Earth",
+      "proposed_canonical_filename": "assets/element-glyphs/earth.svg",
+      "candidate_path": "masters/assets/element-glyphs/earth.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "37dfffe4a21b3c58a4a1e33b15acccd5d269cb974148633c5d9c6925d79c63c0",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "37dfffe4a21b3c58a4a1e33b15acccd5d269cb974148633c5d9c6925d79c63c0",
+      "candidate_sha256": "a721c4a244db0540ffe67b6be61f5015aad653e7e1f987193e549b5ffc19e33b",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "fire",
+      "display_name": "Fire",
+      "proposed_canonical_filename": "assets/element-glyphs/fire.svg",
+      "candidate_path": "masters/assets/element-glyphs/fire.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "1c14d8fe375a39c86783036bbd51255f7097c962a2c010157d6fc95924361663",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "1c14d8fe375a39c86783036bbd51255f7097c962a2c010157d6fc95924361663",
+      "candidate_sha256": "7534c938be3ba11c55898ed1ad2cdae6fd18ecb3bae4676caffe6954b51ed437",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "gemini",
+      "display_name": "Gemini",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/gemini.svg",
+      "candidate_path": "masters/assets/zodiac-glyphs/gemini.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "569c2e5fede662d149fda5ded4c5afcd08542b1b9bb6ec5f0401c80a10c41568",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "569c2e5fede662d149fda5ded4c5afcd08542b1b9bb6ec5f0401c80a10c41568",
+      "candidate_sha256": "7080b494c04b02c77aa543bb92c24609c59d82f3be6eadc15b3b7505b599f74b",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "greek-alpha",
+      "display_name": "Alpha",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-alpha.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "0fc7ddf0c4d2b8a5bbe9a95cb9389b04c2dc1631f0db77a8627326c40a8005d0",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-beta",
+      "display_name": "Beta",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-beta.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "d1ed2862780b5e0803ab4c17d7986ba90f010929846ae3f75844a791892332d0",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-chi",
+      "display_name": "Chi",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-chi.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "5714c190417d933827f12841d28edc84d30fb3aee264bb5a1d859adf11ef7daa",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-delta",
+      "display_name": "Delta",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-delta.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "b1ae8a8976e97b1d76c87744769fbcf7818257968569376eca9e07c3c4bafdb6",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-epsilon",
+      "display_name": "Epsilon",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-epsilon.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "7bbdc34dd41a2d8666839c786560275d95fc7261dd85c7bda40e1952cb0f1ca6",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-eta",
+      "display_name": "Eta",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-eta.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "b7a1d6ba31f9cf80039197f44aa09e4cf093c7b9b9e4f0bbc2813734e5736663",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-gamma",
+      "display_name": "Gamma",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-gamma.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "9e909dad727c76e1abb77eb9d30ea31681c5f8550aa810d88e097f2a3a0f376d",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-iota",
+      "display_name": "Iota",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-iota.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "714c9dff4b3d7c814863fb5359639f5179439ef4b1218be14e50fd9533860b32",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-kappa",
+      "display_name": "Kappa",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-kappa.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "efaaf99ed6cf03bd7914bf570393cd9ee645a13eb9b20d2ccb150970f870fe23",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-lambda",
+      "display_name": "Lambda",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-lambda.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "dc710a805874fddafc58335097c9d72ed5a5f8b24a9a66918d4d9a38ae0140ac",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-mu",
+      "display_name": "Mu",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-mu.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "16eba55a41d2df3f865f40eb84f38a7b679ef8cf00e4be83d75ddb7917fe123c",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-nu",
+      "display_name": "Nu",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-nu.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "780c8569088d28e7316b970c7f81426ed936c1ebd160caf2cad8d612ced1facd",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-omega",
+      "display_name": "Omega",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-omega.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "09e23201ae42f0080c2e225f43ed60bb2c238cbeef53ea65ee7d9c9606b0d771",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-omicron",
+      "display_name": "Omicron",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-omicron.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "0cb48bd21dc9b5ec0f53cca7a95d5e20ab91d44295640642a527a5fb52bd393e",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-phi",
+      "display_name": "Phi",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-phi.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "a5994f5d68f9ef05ec21d2d7a50e27f8178100f0552d13524302785b03c82cf1",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-pi",
+      "display_name": "Pi",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-pi.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "c06d5eff6d8857759c0ae6083ac23b7502eb5c3ddd6d842fbb9281e3ed1dd51d",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-psi",
+      "display_name": "Psi",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-psi.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "7ff7a531b6eb69339b8bc77f5e49c6bfedbff4ab2327b2f2c32d53fdab814575",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-rho",
+      "display_name": "Rho",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-rho.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "5c6edbba51d295f96e38902e85932868f1f2186a124accfbb33d12b754058fe8",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-sigma",
+      "display_name": "Sigma",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-sigma.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "dba99f75ffaf33506748fbcdd59c9132cb0581389796bc31b897544b879fbe84",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-tau",
+      "display_name": "Tau",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-tau.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "b29524220527b8248d09aad81e83beadb4fd482c2fecf712fadcfad96cb00d12",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-theta",
+      "display_name": "Theta",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-theta.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "5fe992bcc875fda9bbd3816bba5bdd9cae4ef56a22699bb9dde9709f9d2a8c70",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-upsilon",
+      "display_name": "Upsilon",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-upsilon.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "8c44255e0f568a4506aef0ff9b0648ca33a9118995515a3a020d59e0a0caea99",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-xi",
+      "display_name": "Xi",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-xi.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "6d635baba6ca252feb8fc89182e91d04ae7270b6d1ed684e1f51a484afc1754b",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "greek-zeta",
+      "display_name": "Zeta",
+      "proposed_canonical_filename": "assets/greek-glyphs/greek-zeta.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "cbe69123d4657ce1284e936caca003628320efcb7b1d0e77fe9dc7c3cbc0f217",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-aleph",
+      "display_name": "Aleph",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-aleph.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "3c64e2f3bf69a594f77cc7a1eeebc6caa85a9d0600ca9373940609955ae9ed26",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-ayin",
+      "display_name": "Ayin",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-ayin.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "dc0363c39ff92f2b613b2068e078b652cc367346fc43134067f9553bbf84292f",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-beth",
+      "display_name": "Beth",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-beth.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "4a48406925ce61c7d14bace4f7ce7b27ba487b3e32beb422c7cb81eff9dfd4f3",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-cheth",
+      "display_name": "Cheth",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-cheth.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "dbfaaf0891383d913aa9b41ef74bc940c36ad66d0a0277e846f7707708b85d1e",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-daleth",
+      "display_name": "Daleth",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-daleth.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "3eb38fcb967fad050dd011c8be04495067faadf01cdfdec29b7e8799201dc098",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-gimel",
+      "display_name": "Gimel",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-gimel.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "330274c4f8375caca6d1330ecd5598e36ecf376433b6b575e9cd8006dbac4bf0",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-heh",
+      "display_name": "Heh",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-heh.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "053a0d959795005c8039ef1f9a4e3d63ad75bad3209a67c45ad51bd3a27ed73a",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-kaph",
+      "display_name": "Kaph",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-kaph.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "fbd1d918220caeecfad4eb7ad6965517891b4f76a6ffb10b68cb31163c0cbf68",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-lamed",
+      "display_name": "Lamed",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-lamed.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "07e0150f70e10a344e9093b3bfd87cd33773bb0d5ad9c3052fdad29edb4a98d5",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-mem",
+      "display_name": "Mem",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-mem.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "2d637d850bd17d233ad8e02a64ed82b9677d4897c218dd454aa463bf87bd2743",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-nun",
+      "display_name": "Nun",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-nun.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "5c72c8726044524d98344eb4ce4acc548b531932d82b895120db0d8b17e4aa2a",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-peh",
+      "display_name": "Peh",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-peh.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "339963173e5732e69a32c4825bbdd149c36ee2476abbee36c8870d966f28093a",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-qoph",
+      "display_name": "Qoph",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-qoph.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "9d955c03759d8dd84fc04fe0bbdb926aa8af752de6b09db6b4b16f68096600f8",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-resh",
+      "display_name": "Resh",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-resh.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "012f8c571bfb0520ff2690a32ff3108f52c2e4886e0e290bd467085bb12eec42",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-samekh",
+      "display_name": "Samekh",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-samekh.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "8324c8e402426a79cc2100a22070b4c7012c7428e3a7b5f05cb919e7897f6eb5",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-shin",
+      "display_name": "Shin",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-shin.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "96af9eeb75e376926133b76fe2426340b4aaeeda707c375b2be88bca9bcd653a",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-tav",
+      "display_name": "Tav",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-tav.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "3e92ac03474f4745e7bebe4a55e6cbd2d8330da31f94798c8ff795053c948393",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-teth",
+      "display_name": "Teth",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-teth.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "c25f9994d140abbac82d42860fb515f69e15391476b4b0207cd0b9f879b4e175",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-tzaddi",
+      "display_name": "Tzaddi",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-tzaddi.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "9d6f0d3fd8d960e731b6ca9d5fcc5d997409b43d7e69c6d83929d1a708f83632",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-vav",
+      "display_name": "Vav",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-vav.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "1d42187d05634081ba50179a5197e027d9afd5e6e24c264078fecbef23266131",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-yod",
+      "display_name": "Yod",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-yod.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "ccb84353d0775cc4dbe8a0382a93011aad8bda815b82847f330a228da341d572",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "hebrew-zayin",
+      "display_name": "Zayin",
+      "proposed_canonical_filename": "assets/hebrew-glyphs/hebrew-zayin.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "281acaf1bbef87a9985053251c7b3b7f6973290c7913d95fc4dc2b86b57bd2e5",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "ic",
+      "display_name": "Imum Coeli",
+      "proposed_canonical_filename": "assets/planet-glyphs/imum-coeli.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "431c9471d26cad3353d93bae8e1ed11b3e1d54dac6e012ff0bbb06c1067db79f",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "jupiter",
+      "display_name": "Jupiter",
+      "proposed_canonical_filename": "assets/planet-glyphs/jupiter.svg",
+      "candidate_path": null,
+      "status": "failed-pixel-equivalence",
+      "source_provenance": null,
+      "captured_authority_sha256": "5f3e3da09577904f77ac5f2397cacd73fe4c5e61faae7253b0eb2c8db43adfa2",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "canonical_identity": "leo",
+      "display_name": "Leo",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/leo.svg",
+      "candidate_path": "masters/assets/zodiac-glyphs/leo.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "6ded71809116a873deffe2fb14b93d50e2c603c79f7ad831491dc15b605e2f9a",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "6ded71809116a873deffe2fb14b93d50e2c603c79f7ad831491dc15b605e2f9a",
+      "candidate_sha256": "5d5a902a7a8ef3d46de318c2f6923312a39ecf0a5b3d340bbb14f5c39b6d51ab",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "libra",
+      "display_name": "Libra",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/libra.svg",
+      "candidate_path": "masters/assets/zodiac-glyphs/libra.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "5080080ff80432aadf3552e5d66a9a234657b67878fbee23e9d4932d079637a7",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "5080080ff80432aadf3552e5d66a9a234657b67878fbee23e9d4932d079637a7",
+      "candidate_sha256": "9cb606b0645b0a83b257388307adf198f19b1efdb8776483051d68676a8d55d9",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "lilith",
+      "display_name": "Lilith",
+      "proposed_canonical_filename": "assets/planet-glyphs/lilith.svg",
+      "candidate_path": "masters/assets/planet-glyphs/lilith.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "71bd7acf472c3fb02712eb8416f010049f3e9fbebc71e1393534d6c2d7455be8",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "71bd7acf472c3fb02712eb8416f010049f3e9fbebc71e1393534d6c2d7455be8",
+      "candidate_sha256": "86692ca6539aea68a971133ea23bcc9e26ec29d91b849fae98aa81edddee974a",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "mars",
+      "display_name": "Mars",
+      "proposed_canonical_filename": "assets/planet-glyphs/mars.svg",
+      "candidate_path": "masters/assets/planet-glyphs/mars.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "fd2486004ed20e95497e957634145d0cac1d1d8a94d6a8a9a837637e63a77b57",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "fd2486004ed20e95497e957634145d0cac1d1d8a94d6a8a9a837637e63a77b57",
+      "candidate_sha256": "2cfea818f93cae8217d29c6a4ee35ff4c20d447e74ffc3cbf5888d351e6d476b",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "mc",
+      "display_name": "Midheaven",
+      "proposed_canonical_filename": "assets/planet-glyphs/midheaven.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "0729c9d95f4e41eb2a25dacfe9e59712f17778af949fe3aa540116c6416a7742",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "mercury",
+      "display_name": "Mercury",
+      "proposed_canonical_filename": "assets/planet-glyphs/mercury.svg",
+      "candidate_path": "masters/assets/planet-glyphs/mercury.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "687dc20e1f62e7b11c2607df55d494d45a379b6c4394e0a2888e31ec4f850193",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "687dc20e1f62e7b11c2607df55d494d45a379b6c4394e0a2888e31ec4f850193",
+      "candidate_sha256": "7afa2abefb10d4c84a23352fcda9cba4951b63f67fda48f58a64506ed31d010a",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "moon",
+      "display_name": "Moon",
+      "proposed_canonical_filename": "assets/planet-glyphs/moon.svg",
+      "candidate_path": null,
+      "status": "failed-pixel-equivalence",
+      "source_provenance": null,
+      "captured_authority_sha256": "2048e20370255d8673c26d536863a15d544c0269d66ba82b8aee38ba1b33fd8f",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "canonical_identity": "neptune",
+      "display_name": "Neptune",
+      "proposed_canonical_filename": "assets/planet-glyphs/neptune.svg",
+      "candidate_path": "masters/assets/planet-glyphs/neptune.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "089791215ca4490238ee482021999f3ff26a359ce6bb389fb9cf8d25ae38e427",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "089791215ca4490238ee482021999f3ff26a359ce6bb389fb9cf8d25ae38e427",
+      "candidate_sha256": "f2fef7a8e8bd45087e175effd7e9d468d0a13d4a655580a52dda034f95906941",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "north-node",
+      "display_name": "North Node",
+      "proposed_canonical_filename": "assets/planet-glyphs/north-node.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "43477490919d40d38404c79efc382b7153de94d5c11c657a02e8f9ec97679474",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "octile",
+      "display_name": "Octile",
+      "proposed_canonical_filename": "assets/aspect-glyphs/octile.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/octile.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "e5619fec778071718f8e42b93c6fd43b48fdb9c5c0ae191a111abb84bf7b7dc6",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "e5619fec778071718f8e42b93c6fd43b48fdb9c5c0ae191a111abb84bf7b7dc6",
+      "candidate_sha256": "30f524c1c53f656f765be2d7cd45f3c901963bcf148e2998ff01ce59a194715f",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "opposition",
+      "display_name": "Opposition",
+      "proposed_canonical_filename": "assets/aspect-glyphs/opposition.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/opposition.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "69a33204d4d2edf6356483eff96d3c9b0be3f3b03ac8286f42002f9afaf9c9e0",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "69a33204d4d2edf6356483eff96d3c9b0be3f3b03ac8286f42002f9afaf9c9e0",
+      "candidate_sha256": "d7a3130e2f5c42d08fce3039612daff29a5791cdb20988033c8011b534dc7e13",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "part-of-fortune",
+      "display_name": "Part of Fortune",
+      "proposed_canonical_filename": "assets/planet-glyphs/part-of-fortune.svg",
+      "candidate_path": "masters/assets/planet-glyphs/part-of-fortune.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "7620868d7e739d06ca58fdf0aaa1b3c1ca0f4f57dea62874a7e6e5971e05d0e4",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "7620868d7e739d06ca58fdf0aaa1b3c1ca0f4f57dea62874a7e6e5971e05d0e4",
+      "candidate_sha256": "6aeefbf7fcfcf3e6126ca393341b60d6823d11082dc0ef54123573bb42a46128",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "pisces",
+      "display_name": "Pisces",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/pisces.svg",
+      "candidate_path": "masters/assets/zodiac-glyphs/pisces.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "3274d37c28f2325dddb261a4fe3874b8d8ef24f829c5e0b71d4d0c792ae723d9",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "3274d37c28f2325dddb261a4fe3874b8d8ef24f829c5e0b71d4d0c792ae723d9",
+      "candidate_sha256": "99d39d8d84c3993ea37496222f16b5f424b2587d95b529083ac907c8efebfc6e",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "pluto",
+      "display_name": "Pluto",
+      "proposed_canonical_filename": "assets/planet-glyphs/pluto.svg",
+      "candidate_path": null,
+      "status": "failed-pixel-equivalence",
+      "source_provenance": null,
+      "captured_authority_sha256": "2710cd93d76e65275d47f8f748b9f0d892a7174799035562760ebb0a449cb89e",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "canonical_identity": "quincunx",
+      "display_name": "Quincunx",
+      "proposed_canonical_filename": "assets/aspect-glyphs/quincunx.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/quincunx.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "4f0976f51ee9d7d862eefc07f632be12ef1ea51cf46217eecdfd5cdba3bceba5",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "4f0976f51ee9d7d862eefc07f632be12ef1ea51cf46217eecdfd5cdba3bceba5",
+      "candidate_sha256": "18a43fd1450d7ea9e4c9917be117cfec554bb9c16e73b081defef3a30267c6ca",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "quintile",
+      "display_name": "Quintile",
+      "proposed_canonical_filename": "assets/aspect-glyphs/quintile.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/quintile.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "79090368d2795fea256495171a7bf2eb05d8e58a17cd7122980aa80257ae3711",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "79090368d2795fea256495171a7bf2eb05d8e58a17cd7122980aa80257ae3711",
+      "candidate_sha256": "c4c9251673ad9dce92c97ad9155975864f3646d97f1d36bc4f0680f901c40129",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "sagittarius",
+      "display_name": "Sagittarius",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/sagittarius.svg",
+      "candidate_path": "masters/assets/zodiac-glyphs/sagittarius.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "d4a141f5d421c4e3af50d52b37b12755e901f501a6a40de2349097522cbe26cd",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "d4a141f5d421c4e3af50d52b37b12755e901f501a6a40de2349097522cbe26cd",
+      "candidate_sha256": "d1a16b63ba6a3cba7e08eae2d3b73a2d2b31af21d209ae524d4d54a57838d30c",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "saturn",
+      "display_name": "Saturn",
+      "proposed_canonical_filename": "assets/planet-glyphs/saturn.svg",
+      "candidate_path": "masters/assets/planet-glyphs/saturn.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "df228c7520755b40ea42f7c00b50b8846d4e3dc4dfe72ac739efba443241d76f",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "df228c7520755b40ea42f7c00b50b8846d4e3dc4dfe72ac739efba443241d76f",
+      "candidate_sha256": "feaf045eb90a52a59e741651a82bd477dac0947aa6c86908a8a92efec33f9016",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "scorpio",
+      "display_name": "Scorpio",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/scorpio.svg",
+      "candidate_path": "masters/assets/zodiac-glyphs/scorpio.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "38b3487d8a29d0736361a89dd2ab13bf27dbf4c1e4f029c89460b612d2a4581d",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "38b3487d8a29d0736361a89dd2ab13bf27dbf4c1e4f029c89460b612d2a4581d",
+      "candidate_sha256": "e688f20b0702e0c482918e77222bfcf8cd2847528e6f546c480781d2aeaa5272",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "semi-sextile",
+      "display_name": "Semi-Sextile",
+      "proposed_canonical_filename": "assets/aspect-glyphs/semi-sextile.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/semi-sextile.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "73230018bce43968adad6bdc25239b5b2bcf5a7ed80e76a02d0629c07b35999f",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "73230018bce43968adad6bdc25239b5b2bcf5a7ed80e76a02d0629c07b35999f",
+      "candidate_sha256": "fa453e82189f3a4832218a319c204577eafdc236f1b52cf465c9101898327edf",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "sextile",
+      "display_name": "Sextile",
+      "proposed_canonical_filename": "assets/aspect-glyphs/sextile.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/sextile.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "fd112a29c58c84460c6ecc03c89e93a08bdabf5022250059a0d7ecf650893771",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "fd112a29c58c84460c6ecc03c89e93a08bdabf5022250059a0d7ecf650893771",
+      "candidate_sha256": "62cb66b9a66ae0cc680cac5a2c1c49a45d0363f2606a5df36009c4b7533dff67",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "south-node",
+      "display_name": "South Node",
+      "proposed_canonical_filename": "assets/planet-glyphs/south-node.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "cdc6f4ae9c63e10ec924b006ba0238f1c5845563d20ca30ed6fe06284a65b3d4",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "square",
+      "display_name": "Square",
+      "proposed_canonical_filename": "assets/aspect-glyphs/square.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/square.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "91c466f9b94754b3886bfa141ffa9fe91f7495a3fc0909d6dafec91e94fb6c0b",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "91c466f9b94754b3886bfa141ffa9fe91f7495a3fc0909d6dafec91e94fb6c0b",
+      "candidate_sha256": "d121560c7615321a89a195a06ccf6c0e3ecefd0114655d4b13ff684f2c3ee568",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "sun",
+      "display_name": "Sun",
+      "proposed_canonical_filename": "assets/planet-glyphs/sun.svg",
+      "candidate_path": null,
+      "status": "failed-pixel-equivalence",
+      "source_provenance": null,
+      "captured_authority_sha256": "c03c700aafc5c64969152d0269b0e8ca12dd599c0148eaa85a62a5ace0929aa1",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "canonical_identity": "taurus",
+      "display_name": "Taurus",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/taurus.svg",
+      "candidate_path": "masters/assets/zodiac-glyphs/taurus.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "f72198f2c7e82019b159439e66b561f660d92526c950ef50be7ae9d4e16e1c78",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "f72198f2c7e82019b159439e66b561f660d92526c950ef50be7ae9d4e16e1c78",
+      "candidate_sha256": "66829488415a3414a2498e4faf55a3d3cbed57990b8fbf40e1bb0861d8d0f646",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "tri-octile",
+      "display_name": "Tri-Octile",
+      "proposed_canonical_filename": "assets/aspect-glyphs/tri-octile.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/tri-octile.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "5d9763ec65ea4dfbf3362c6c6adce85fb6e5afdece4d2e434a88a4c75c8cfd28",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "5d9763ec65ea4dfbf3362c6c6adce85fb6e5afdece4d2e434a88a4c75c8cfd28",
+      "candidate_sha256": "9f220a8307d66fea87fddcdc6b1bdf91d7475e48fe3232a48ae1902d634f3ad4",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "trine",
+      "display_name": "Trine",
+      "proposed_canonical_filename": "assets/aspect-glyphs/trine.svg",
+      "candidate_path": "masters/assets/aspect-glyphs/trine.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "eab60cccdaefafd78cdd8035a6e4c907293c5ec9640108103f17552a9f6b5647",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "eab60cccdaefafd78cdd8035a6e4c907293c5ec9640108103f17552a9f6b5647",
+      "candidate_sha256": "87e31a6289d4a30db943261e44dff57fe071d6e8c294333a6e317eb62015fb97",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "uranus",
+      "display_name": "Uranus",
+      "proposed_canonical_filename": "assets/planet-glyphs/uranus.svg",
+      "candidate_path": "masters/assets/planet-glyphs/uranus.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "c0ecaf7676ff10e6a9f55152fc0692c763312dab4c1e5cc1048941082f4d519c",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "c0ecaf7676ff10e6a9f55152fc0692c763312dab4c1e5cc1048941082f4d519c",
+      "candidate_sha256": "56df9a86bdc6e599eb4f4ca2158f952ad0a4a03aee7dd7e665f3073dc0e31d7c",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "venus",
+      "display_name": "Venus",
+      "proposed_canonical_filename": "assets/planet-glyphs/venus.svg",
+      "candidate_path": "masters/assets/planet-glyphs/venus.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "c1d3ea1ba52487b2f9458fcd959c785f1fdc107fe129ab367f4669d7aeb205fd",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "c1d3ea1ba52487b2f9458fcd959c785f1fdc107fe129ab367f4669d7aeb205fd",
+      "candidate_sha256": "9a3bd1fcf580c717e0c7b52aef535db5e3e0b9e1834458e99734850cb802af9a",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    },
+    {
+      "canonical_identity": "vertex",
+      "display_name": "Vertex",
+      "proposed_canonical_filename": "assets/planet-glyphs/vertex.svg",
+      "candidate_path": null,
+      "status": "blocked-font-or-text",
+      "source_provenance": null,
+      "captured_authority_sha256": "3615285f484f93bffae445d4ddbe526ffa59f2862dc0cfc0fef9d7231751e363",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "canonical_identity": "virgo",
+      "display_name": "Virgo",
+      "proposed_canonical_filename": "assets/zodiac-glyphs/virgo.svg",
+      "candidate_path": null,
+      "status": "failed-pixel-equivalence",
+      "source_provenance": null,
+      "captured_authority_sha256": "8779e33d465c68cf5f2e9826b206a34980447c1ca389b3aa3a9aa7d92d41700a",
+      "candidate_sha256": null,
+      "viewBox": null,
+      "validation_matrix": [],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "blocked",
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "canonical_identity": "water",
+      "display_name": "Water",
+      "proposed_canonical_filename": "assets/element-glyphs/water.svg",
+      "candidate_path": "masters/assets/element-glyphs/water.svg",
+      "status": "exact-static-candidate",
+      "source_provenance": {
+        "kind": "captured-post-render-vector-dom",
+        "authority_page": "glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "6c7be0c4bd9d3929577ee6c7c95c09e04fcf8a53e14a3e43f7ab765b7acdd486",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385"
+      },
+      "captured_authority_sha256": "6c7be0c4bd9d3929577ee6c7c95c09e04fcf8a53e14a3e43f7ab765b7acdd486",
+      "candidate_sha256": "8174330030aa6096c653e1ced0fab31061ae417da15412e3a62951a6f7a77536",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "permitted_states": [
+        "plain",
+        "circled",
+        "day-ruler",
+        "hour-ruler",
+        "day-and-hour-ruler"
+      ],
+      "approval_status": "awaiting-approval",
+      "blocker": null
+    }
+  ],
+  "states": [
+    {
+      "state": "plain",
+      "status": "intrinsic",
+      "overlay_path": null,
+      "sha256": null,
+      "blocker": null
+    },
+    {
+      "state": "circled",
+      "status": "exact-static-candidate",
+      "overlay_path": "overlays/circled.svg",
+      "sha256": "d168391cea9c0d662209221f34cdf39e43b1eddc8f3fb3a350b10ec5bc8e0f06",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
+      "blocker": null
+    },
+    {
+      "state": "day-ruler",
+      "status": "blocked-missing-or-invalid-capture",
+      "overlay_path": null,
+      "sha256": null,
+      "blocker": "No approved static day-ruler overlay is available."
+    },
+    {
+      "state": "hour-ruler",
+      "status": "blocked-missing-or-invalid-capture",
+      "overlay_path": null,
+      "sha256": null,
+      "blocker": "No approved static hour-ruler overlay is available."
+    },
+    {
+      "state": "day-and-hour-ruler",
+      "status": "blocked-missing-or-invalid-capture",
+      "overlay_path": null,
+      "sha256": null,
+      "blocker": "No approved static combined day-and-hour overlay is available."
+    }
+  ]
+}

@@ -1,0 +1,689 @@
+{
+  "schema": "relphi-canonical-approval-ledger/v1",
+  "package_status": "incomplete",
+  "identities": [
+    {
+      "identity": "air",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/element-glyphs/air.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "aquarius",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/zodiac-glyphs/aquarius.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "aries",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/zodiac-glyphs/aries.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "asc",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "bi-quintile",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/bi-quintile.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "cancer",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/zodiac-glyphs/cancer.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "capricorn",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "identity": "chiron",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "conjunction",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/conjunction.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "dsc",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "earth",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/element-glyphs/earth.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "fire",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/element-glyphs/fire.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "gemini",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/zodiac-glyphs/gemini.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "greek-alpha",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-beta",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-chi",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-delta",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-epsilon",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-eta",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-gamma",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-iota",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-kappa",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-lambda",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-mu",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-nu",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-omega",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-omicron",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-phi",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-pi",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-psi",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-rho",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-sigma",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-tau",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-theta",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-upsilon",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-xi",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "greek-zeta",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-aleph",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-ayin",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-beth",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-cheth",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-daleth",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-gimel",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-heh",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-kaph",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-lamed",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-mem",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-nun",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-peh",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-qoph",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-resh",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-samekh",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-shin",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-tav",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-teth",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-tzaddi",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-vav",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-yod",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "hebrew-zayin",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "ic",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "jupiter",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "identity": "leo",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/zodiac-glyphs/leo.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "libra",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/zodiac-glyphs/libra.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "lilith",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/planet-glyphs/lilith.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "mars",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/planet-glyphs/mars.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "mc",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "mercury",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/planet-glyphs/mercury.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "moon",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "identity": "neptune",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/planet-glyphs/neptune.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "north-node",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "octile",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/octile.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "opposition",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/opposition.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "part-of-fortune",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/planet-glyphs/part-of-fortune.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "pisces",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/zodiac-glyphs/pisces.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "pluto",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "identity": "quincunx",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/quincunx.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "quintile",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/quintile.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "sagittarius",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/zodiac-glyphs/sagittarius.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "saturn",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/planet-glyphs/saturn.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "scorpio",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/zodiac-glyphs/scorpio.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "semi-sextile",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/semi-sextile.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "sextile",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/sextile.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "south-node",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "square",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/square.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "sun",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "identity": "taurus",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/zodiac-glyphs/taurus.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "tri-octile",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/tri-octile.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "trine",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/aspect-glyphs/trine.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "uranus",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/planet-glyphs/uranus.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "venus",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/planet-glyphs/venus.svg",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "identity": "vertex",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Visible artwork depends on <text> or font styling."
+    },
+    {
+      "identity": "virgo",
+      "status": "blocked",
+      "candidate_path": null,
+      "decision": null,
+      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+    },
+    {
+      "identity": "water",
+      "status": "awaiting-approval",
+      "candidate_path": "masters/assets/element-glyphs/water.svg",
+      "decision": null,
+      "blocker": null
+    }
+  ],
+  "states": [
+    {
+      "state": "plain",
+      "status": "intrinsic",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "state": "circled",
+      "status": "exact-static-candidate",
+      "decision": null,
+      "blocker": null
+    },
+    {
+      "state": "day-ruler",
+      "status": "blocked-missing-or-invalid-capture",
+      "decision": null,
+      "blocker": "No approved static day-ruler overlay is available."
+    },
+    {
+      "state": "hour-ruler",
+      "status": "blocked-missing-or-invalid-capture",
+      "decision": null,
+      "blocker": "No approved static hour-ruler overlay is available."
+    },
+    {
+      "state": "day-and-hour-ruler",
+      "status": "blocked-missing-or-invalid-capture",
+      "decision": null,
+      "blocker": "No approved static combined day-and-hour overlay is available."
+    }
+  ]
+}
