@@ -7,12 +7,14 @@ const selected = fs.readFileSync('sky-chart-selected-relationship-v4.js', 'utf8'
 const selectedCss = fs.readFileSync('sky-chart-selected-understanding-v1.css', 'utf8');
 const progressive = fs.readFileSync('sky-chart-progressive-comparison-v1.js', 'utf8');
 const progressiveCss = fs.readFileSync('sky-chart-progressive-comparison-v1.css', 'utf8');
+const signHouseCorrection = fs.readFileSync('sky-chart-sign-house-and-aspect-isolate-v1.js', 'utf8');
 const state = fs.readFileSync('relphi-canonical-glyph-state-v1.js', 'utf8');
 
 const relationshipSources = [
   ['Relationship list', controller],
   ['Selected relationship', selected],
-  ['Progressive relationship', progressive]
+  ['Progressive relationship', progressive],
+  ['Sign and house correction', signHouseCorrection]
 ];
 const forbiddenRelationshipCode = [
   ['createBubble', /createBubble/],
@@ -25,7 +27,8 @@ const forbiddenRelationshipCode = [
   ['custom relationship glyph viewBox', /viewBox\s*=|setAttribute\s*\(\s*['"]viewBox['"]|-20\s+-20\s+40\s+40|-28\s+-28\s+56\s+56/],
   ['relationship fallback set', /APPROVED_FALLBACKS/],
   ['procedural circle creation', /createElement(?:NS)?\s*\([^\n]*['"]circle['"]/],
-  ['circle visibility manipulation', /circle\.style|circle\.setAttribute/]
+  ['circle visibility manipulation', /circle\.style|circle\.setAttribute/],
+  ['relationship SVG identity inference', /querySelectorAll\s*\(\s*['"]svg['"]\s*\)/]
 ];
 
 for (const [surface, source] of relationshipSources) {
@@ -48,12 +51,14 @@ assert.match(selected, /r\.left\.id,COLORS\.A,'circled'/);
 assert.match(selected, /r\.aspect\.id,r\.aspect\.color,'plain'/);
 assert.match(selected, /r\.right\.id,COLORS\.B,'circled'/);
 assert.match(selected, /class="token-glyph" data-glyph=/);
-assert.equal(/querySelectorAll\(['"]svg['"]\)/.test(selected), false, 'Selected relationship may not infer identity from SVG structure.');
 
 assert.match(progressive, /RelphiCanonicalGlyphState/);
 assert.match(progressive, /sky-progressive-canonical-slot/);
 assert.match(progressive, /state:'plain'/);
 assert.equal(/<svg/.test(progressive), false, 'Progressive relationship may not author SVG hosts.');
+
+assert.equal(/selectedRelationData|replaceMiddleAspect|drawBubble|data-isolate/.test(signHouseCorrection), false, 'Sign and house correction may not render selected-relationship glyphs.');
+assert.match(signHouseCorrection, /contains no glyph or selected-relationship rendering/);
 
 const forbiddenLayout = [
   ['SVG descendant styling', />svg|svg>|svg\s*\{/],
