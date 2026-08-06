@@ -6,12 +6,16 @@ on:
       - feature/sky-chart-canonical-glyph-coordinate-fix
     paths:
       - 'tools/export-canonical-glyph-state-manifest.mjs'
+      - 'tools/rewrite-relationship-glyph-renderer.mjs'
       - 'relphi-canonical-glyph-state-v1.js'
+      - 'sky-chart-foundation-interactions-v2.js'
       - '.github/workflows/canonical-glyph-state-export.yml'
   pull_request:
     paths:
       - 'tools/export-canonical-glyph-state-manifest.mjs'
+      - 'tools/rewrite-relationship-glyph-renderer.mjs'
       - 'relphi-canonical-glyph-state-v1.js'
+      - 'sky-chart-foundation-interactions-v2.js'
       - '.github/workflows/canonical-glyph-state-export.yml'
   workflow_dispatch:
 
@@ -32,12 +36,17 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Export exact canonical state assets
         run: node tools/export-canonical-glyph-state-manifest.mjs relphi-canonical-glyph-manifest-v1.js
+      - name: Strip the relationship-specific glyph renderer
+        run: node tools/rewrite-relationship-glyph-renderer.mjs sky-chart-foundation-interactions-v2.js sky-chart-foundation-interactions-v2.clean.js
       - name: Contract syntax check
         run: |
           node --check relphi-canonical-glyph-state-v1.js
           node --check relphi-canonical-glyph-manifest-v1.js
+          node --check sky-chart-foundation-interactions-v2.clean.js
       - uses: actions/upload-artifact@v4
         with:
-          name: canonical-glyph-state-manifest
-          path: relphi-canonical-glyph-manifest-v1.js
+          name: canonical-glyph-clean-migration
+          path: |
+            relphi-canonical-glyph-manifest-v1.js
+            sky-chart-foundation-interactions-v2.clean.js
           if-no-files-found: error
