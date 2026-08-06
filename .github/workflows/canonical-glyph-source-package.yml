@@ -14,6 +14,9 @@ on:
       - 'tests/canonical-glyphs-v1-preview.test.mjs'
       - 'tools/intake-canonical-glyph-source.mjs'
       - 'tools/verify-canonical-glyph-approvals.mjs'
+      - 'tools/check-canonical-cutover-readiness.mjs'
+      - 'tools/trace-canonical-glyph-runtime.mjs'
+      - 'tools/run-canonical-shadow-acceptance.mjs'
       - 'schemas/canonical-glyph-approval/**'
       - 'review/canonical-glyph-loader-prototype.*'
       - 'tests/canonical-glyph-*.test.mjs'
@@ -34,6 +37,9 @@ on:
       - 'tests/canonical-glyphs-v1-preview.test.mjs'
       - 'tools/intake-canonical-glyph-source.mjs'
       - 'tools/verify-canonical-glyph-approvals.mjs'
+      - 'tools/check-canonical-cutover-readiness.mjs'
+      - 'tools/trace-canonical-glyph-runtime.mjs'
+      - 'tools/run-canonical-shadow-acceptance.mjs'
       - 'schemas/canonical-glyph-approval/**'
       - 'review/canonical-glyph-loader-prototype.*'
       - 'tests/canonical-glyph-*.test.mjs'
@@ -87,6 +93,10 @@ jobs:
           tests/canonical-glyph-readiness-audit.test.mjs
           tests/sky-chart-combined-ruler-state.test.mjs
           tests/canonical-glyph-migration-phase-audit.test.mjs
+          tests/check-canonical-cutover-readiness.test.mjs
+          tests/canonical-glyph-loader-v1.test.mjs
+          tests/canonical-glyph-element-v1.test.mjs
+          tests/canonical-shadow-tooling.test.mjs
 
       - name: Confirm deterministic metadata and reviewed hash lock
         env:
