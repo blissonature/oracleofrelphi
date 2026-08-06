@@ -8,6 +8,11 @@ on:
       - 'tools/export-canonical-glyph-state-manifest.mjs'
       - 'relphi-canonical-glyph-state-v1.js'
       - '.github/workflows/canonical-glyph-state-export.yml'
+  pull_request:
+    paths:
+      - 'tools/export-canonical-glyph-state-manifest.mjs'
+      - 'relphi-canonical-glyph-state-v1.js'
+      - '.github/workflows/canonical-glyph-state-export.yml'
   workflow_dispatch:
 
 permissions:
