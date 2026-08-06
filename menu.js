@@ -15,29 +15,46 @@
   function initRelphiMenu() {
     document.querySelectorAll('.menu-container').forEach(function (container) {
       if (container.dataset.menuReady === 'true') return;
-
       const button = container.querySelector('.logo-btn, #menuButton');
       const menu = container.querySelector('.dropdown-menu, #dropdownMenu');
       if (!button || !menu) return;
-
       container.dataset.menuReady = 'true';
       button.setAttribute('type', 'button');
       button.setAttribute('aria-controls', menu.id || 'dropdownMenu');
       button.setAttribute('aria-expanded', 'false');
-
     });
   }
 
-  function appendScript(src) {
-    if (document.querySelector(`script[src^="${src.split('?')[0]}"]`)) return;
+  function appendScript(src, onload) {
+    const base = src.split('?')[0];
+    const existing = document.querySelector('script[src^="' + base + '"]');
+    if (existing) {
+      if (onload) setTimeout(onload, 0);
+      return existing;
+    }
     const script = document.createElement('script');
+    script.async = false;
     script.src = src;
+    if (onload) script.addEventListener('load', onload, { once:true });
     document.body.appendChild(script);
+    return script;
+  }
+
+  function loadCanonicalGlyphRuntime(onReady) {
+    appendScript('https://oracleofrelphi.com/relphi-glyph-registry-v1.js?v=24', function () {
+      appendScript('https://oracleofrelphi.com/relphi-glyph-component-v1.js?v=27', function () {
+        appendScript('https://oracleofrelphi.com/relphi-moon-stroke-preservation-v1.js?v=1', function () {
+          appendScript('https://oracleofrelphi.com/relphi-neptune-cross-connection-v1.js?v=1', onReady);
+        });
+      });
+    });
   }
 
   function loadAstrologyFoundationEnhancements() {
     if (!/(^|\/)astrology-foundations\.html$/.test(window.location.pathname)) return;
-    appendScript('planet-glyph-loader.js?v=5');
+    loadCanonicalGlyphRuntime(function () {
+      appendScript('astrology-foundations-canonical-glyphs-v1.js?v=1');
+    });
     appendScript('astrology-foundations-mobile-signs.js?v=2');
     appendScript('astrology-foundations-consistency.js?v=1');
   }
@@ -57,9 +74,7 @@
       return;
     }
     document.querySelectorAll('.menu-container.active').forEach(function (container) {
-      if (!container.contains(event.target)) {
-        setOpen(container, container.querySelector('.logo-btn, #menuButton'), false);
-      }
+      if (!container.contains(event.target)) setOpen(container, container.querySelector('.logo-btn, #menuButton'), false);
     });
   });
 
