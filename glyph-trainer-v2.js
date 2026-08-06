@@ -16,17 +16,24 @@ function category(entry){
  return 'other';
 }
 function labelFor(kind){return({planet:'Planet or planetary point',sign:'Zodiac sign',element:'Element',aspect:'Aspect',angle:'Angle or calculated position',point:'Calculated or symbolic point',hebrew:'Hebrew letter',greek:'Greek letter',other:'Glyph'})[kind]||'Glyph';}
-function makeSvg(entry,flash){
+function makeSvg(entry){
  const svg=document.createElementNS(NS,'svg');
- svg.setAttribute('viewBox','-32 -32 64 64');
+ svg.setAttribute('viewBox','-19 -19 38 38');
+ svg.setAttribute('preserveAspectRatio','xMidYMid meet');
  svg.setAttribute('role','img');
  svg.setAttribute('aria-label',entry.name);
- window.RelphiGlyphComponent.draw(svg,entry.id,{radius:flash?27:25,padding:2,color:'currentColor'}).catch(()=>{svg.replaceChildren();});
+ const component=window.RelphiGlyphComponent;
+ try{
+   const bubble=component.createBubble(svg,entry.id,{radius:19,padding:1,color:'currentColor'});
+   bubble.circle.setAttribute('aria-hidden','true');
+   bubble.root.dataset.masterGlyphSource='https://oracleofrelphi.com/glyphs-unified-preview.html';
+   Promise.resolve(bubble.ready).catch(()=>svg.replaceChildren());
+ }catch(_){svg.replaceChildren();}
  return svg;
 }
 function card(entry){
  const article=document.createElement('article');article.className='glyph-card';
- const art=document.createElement('div');art.className='glyph-art';art.appendChild(makeSvg(entry,false));
+ const art=document.createElement('div');art.className='glyph-art';art.appendChild(makeSvg(entry));
  const copy=document.createElement('div');
  const kind=document.createElement('p');kind.className='glyph-kind';kind.textContent=labelFor(category(entry));
  const name=document.createElement('h3');name.textContent=entry.name;
@@ -47,7 +54,7 @@ function renderGrid(){
 function renderFlash(){
  const entry=state.filtered[state.flashIndex];const art=$('#flashArt');art.replaceChildren();
  if(!entry){$('#flashName').textContent='No glyph selected';$('#flashKind').textContent='';return;}
- art.appendChild(makeSvg(entry,true));$('#flashName').textContent=entry.name;$('#flashKind').textContent=labelFor(category(entry));
+ art.appendChild(makeSvg(entry));$('#flashName').textContent=entry.name;$('#flashKind').textContent=labelFor(category(entry));
 }
 function show(mode){$('#browsePanel').hidden=mode!=='browse';$('#flashPanel').hidden=mode!=='flash';}
 function start(){
