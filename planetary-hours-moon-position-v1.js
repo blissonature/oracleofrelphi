@@ -1,26 +1,17 @@
 // Adds the Moon's current tropical zodiac position to the Planetary Hours Moon panel.
-// All zodiac marks are rendered from Relphi's approved canonical glyph source.
+// Glyph geometry comes only from https://oracleofrelphi.com/glyphs-unified-preview.html.
 (function () {
   'use strict';
 
-  const SVG_NS = 'http://www.w3.org/2000/svg';
-  const CANONICAL_VERSION = '0d56ee7';
   const SIGNS = [
-    { id:'aries', name:'Aries' },
-    { id:'taurus', name:'Taurus' },
-    { id:'gemini', name:'Gemini' },
-    { id:'cancer', name:'Cancer' },
-    { id:'leo', name:'Leo' },
-    { id:'virgo', name:'Virgo' },
-    { id:'libra', name:'Libra' },
-    { id:'scorpio', name:'Scorpio' },
-    { id:'sagittarius', name:'Sagittarius' },
-    { id:'capricorn', name:'Capricorn' },
-    { id:'aquarius', name:'Aquarius' },
-    { id:'pisces', name:'Pisces' }
+    { id:'aries', name:'Aries' }, { id:'taurus', name:'Taurus' },
+    { id:'gemini', name:'Gemini' }, { id:'cancer', name:'Cancer' },
+    { id:'leo', name:'Leo' }, { id:'virgo', name:'Virgo' },
+    { id:'libra', name:'Libra' }, { id:'scorpio', name:'Scorpio' },
+    { id:'sagittarius', name:'Sagittarius' }, { id:'capricorn', name:'Capricorn' },
+    { id:'aquarius', name:'Aquarius' }, { id:'pisces', name:'Pisces' }
   ];
   let renderRequest = 0;
-  let canonicalPromise = null;
 
   function normalizeDegrees(value) {
     const degrees = Number(value) || 0;
@@ -30,17 +21,14 @@
   function selectedDate() {
     const useSystem = document.getElementById('useSystem');
     if (!useSystem || useSystem.checked) return new Date();
-
     const dateValue = document.getElementById('datePick')?.value;
     const timeValue = document.getElementById('timePick')?.value || '00:00';
     const zone = document.getElementById('tzSelect')?.value || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
     if (!dateValue) return new Date();
-
     if (window.luxon?.DateTime) {
       const zoned = window.luxon.DateTime.fromISO(dateValue + 'T' + timeValue, { zone:zone });
       if (zoned.isValid) return zoned.toJSDate();
     }
-
     const fallback = new Date(dateValue + 'T' + timeValue);
     return Number.isNaN(fallback.getTime()) ? new Date() : fallback;
   }
@@ -48,9 +36,7 @@
   function moonLongitude(date) {
     const astronomy = window.Astronomy;
     if (!astronomy) throw new Error('Astronomy Engine is unavailable.');
-    if (typeof astronomy.EclipticGeoMoon === 'function') {
-      return normalizeDegrees(astronomy.EclipticGeoMoon(date).lon);
-    }
+    if (typeof astronomy.EclipticGeoMoon === 'function') return normalizeDegrees(astronomy.EclipticGeoMoon(date).lon);
     const vector = astronomy.GeoVector('Moon', date, true);
     return normalizeDegrees(astronomy.Ecliptic(vector).elon);
   }
@@ -62,66 +48,25 @@
     const degree = Math.floor(minutesInSign / 60);
     const minute = minutesInSign % 60;
     const sign = SIGNS[signIndex];
-    return {
-      sign:sign,
-      degree:degree,
-      minute:minute,
-      text:sign.name + ' ' + degree + '° ' + String(minute).padStart(2, '0') + '′'
-    };
+    return { sign, degree, minute, text:sign.name + ' ' + degree + '° ' + String(minute).padStart(2, '0') + '′' };
   }
 
-  function waitFor(test, label) {
-    return new Promise(function (resolve, reject) {
+  function waitForCanonicalRuntime() {
+    return new Promise((resolve, reject) => {
       const started = Date.now();
       (function check() {
-        if (test()) return resolve();
-        if (Date.now() - started > 6000) return reject(new Error(label + ' did not load.'));
+        if (window.RelphiGlyphRegistry && window.RelphiGlyphComponent?.createBubble) return resolve();
+        if (Date.now() - started > 6000) return reject(new Error('The canonical glyph runtime did not load.'));
         setTimeout(check, 40);
       })();
     });
   }
 
-  function loadDependency(src, test, label) {
-    if (test()) return Promise.resolve();
-    const base = src.split('?')[0];
-    const existing = document.querySelector('script[src^="' + base + '"]');
-    if (!existing) {
-      const script = document.createElement('script');
-      script.async = false;
-      script.src = src;
-      script.addEventListener('error', function () {
-        throw new Error(label + ' could not be downloaded.');
-      }, { once:true });
-      document.body.appendChild(script);
-    }
-    return waitFor(test, label);
-  }
-
-  function ensureCanonicalGlyphSystem() {
-    if (window.RelphiGlyphRegistry && window.RelphiGlyphComponent) return Promise.resolve();
-    if (!canonicalPromise) {
-      canonicalPromise = loadDependency(
-        'relphi-glyph-registry-v1.js?v=' + CANONICAL_VERSION,
-        function () { return Boolean(window.RelphiGlyphRegistry); },
-        'Relphi canonical glyph registry'
-      ).then(function () {
-        return loadDependency(
-          'relphi-glyph-component-v1.js?v=' + CANONICAL_VERSION,
-          function () { return Boolean(window.RelphiGlyphComponent); },
-          'Relphi canonical glyph component'
-        );
-      });
-    }
-    return canonicalPromise;
-  }
-
   function ensurePositionElement() {
     const facts = document.querySelector('.ph-moon-frame .ph-moon-facts');
     if (!facts) return null;
-
     let position = document.getElementById('moonZodiacPosition');
     if (position) return position;
-
     position = document.createElement('p');
     position.id = 'moonZodiacPosition';
     position.className = 'ph-moon-position';
@@ -129,11 +74,10 @@
     position.innerHTML = [
       '<span class="ph-profile-label">Current zodiac position</span>',
       '<span class="ph-moon-placement-line">',
-      '<svg class="ph-moon-sign-glyph" viewBox="-18 -18 36 36" aria-hidden="true" focusable="false"></svg>',
+      '<svg class="ph-moon-sign-glyph" viewBox="-19 -19 38 38" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"></svg>',
       '<strong>—</strong>',
       '</span>'
     ].join('');
-
     const phase = document.getElementById('moonPhase');
     if (phase && phase.parentNode === facts) phase.insertAdjacentElement('afterend', position);
     else facts.insertBefore(position, facts.firstChild);
@@ -156,17 +100,19 @@
 
   async function drawCanonicalSign(svgElement, signId, requestId) {
     if (!svgElement) return;
-    await ensureCanonicalGlyphSystem();
-
+    await waitForCanonicalRuntime();
+    if (requestId !== renderRequest) return;
     svgElement.replaceChildren();
-    const group = document.createElementNS(SVG_NS, 'g');
-    svgElement.appendChild(group);
-    await window.RelphiGlyphComponent.draw(group, signId, {
-      radius:15,
-      padding:1.5,
-      color:'#111'
-    });
-    if (requestId !== renderRequest) group.remove();
+    const registry = window.RelphiGlyphRegistry;
+    const component = window.RelphiGlyphComponent;
+    const entry = registry.get(signId) || registry.resolve(signId);
+    if (!entry) throw new Error('Canonical sign unavailable: ' + signId);
+    const bubble = component.createBubble(svgElement, entry.id, { radius:19, padding:1, color:'#111' });
+    bubble.circle.style.opacity = '0';
+    bubble.circle.setAttribute('aria-hidden', 'true');
+    bubble.root.dataset.masterGlyphSource = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
+    await bubble.ready;
+    if (requestId !== renderRequest) svgElement.replaceChildren();
   }
 
   async function renderMoonPosition() {
@@ -175,7 +121,6 @@
     if (!position) return;
     const value = position.querySelector('strong');
     const glyph = position.querySelector('.ph-moon-sign-glyph');
-
     try {
       const placement = placementFromLongitude(moonLongitude(selectedDate()));
       value.textContent = placement.text;
@@ -195,18 +140,13 @@
     ensureStyle();
     ensurePositionElement();
     renderMoonPosition();
-
-    ['useSystem','datePick','timePick','tzSelect','applyDT'].forEach(function (id) {
+    ['useSystem','datePick','timePick','tzSelect','applyDT'].forEach(id => {
       document.getElementById(id)?.addEventListener('change', renderMoonPosition);
-      document.getElementById(id)?.addEventListener('click', function () { setTimeout(renderMoonPosition, 0); });
+      document.getElementById(id)?.addEventListener('click', () => setTimeout(renderMoonPosition, 0));
     });
-
     const phase = document.getElementById('moonPhase');
-    if (phase && window.MutationObserver) {
-      new MutationObserver(renderMoonPosition).observe(phase, { childList:true, characterData:true, subtree:true });
-    }
-
-    window.setInterval(function () {
+    if (phase && window.MutationObserver) new MutationObserver(renderMoonPosition).observe(phase, { childList:true, characterData:true, subtree:true });
+    window.setInterval(() => {
       const useSystem = document.getElementById('useSystem');
       if (!useSystem || useSystem.checked) renderMoonPosition();
     }, 30000);
