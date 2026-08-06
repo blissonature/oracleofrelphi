@@ -1,0 +1,38 @@
+name: Canonical glyph state export
+
+on:
+  push:
+    branches:
+      - feature/sky-chart-canonical-glyph-coordinate-fix
+    paths:
+      - 'tools/export-canonical-glyph-state-manifest.mjs'
+      - 'relphi-canonical-glyph-state-v1.js'
+      - '.github/workflows/canonical-glyph-state-export.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Export exact canonical state assets
+        run: node tools/export-canonical-glyph-state-manifest.mjs relphi-canonical-glyph-manifest-v1.js
+      - name: Contract syntax check
+        run: |
+          node --check relphi-canonical-glyph-state-v1.js
+          node --check relphi-canonical-glyph-manifest-v1.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: canonical-glyph-state-manifest
+          path: relphi-canonical-glyph-manifest-v1.js
+          if-no-files-found: error
