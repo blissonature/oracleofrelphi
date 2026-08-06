@@ -1,0 +1,30 @@
+name: Canonical glyph integrity
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feature/sky-chart-canonical-glyph-coordinate-fix
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-glyph-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Audit canonical source
+        run: node tests/canonical-glyph-source-audit.mjs
+
+      - name: Audit glyph consumers
+        run: node tests/canonical-glyph-consumer-audit.mjs
