@@ -137,27 +137,30 @@
     document.head.appendChild(style);
   }
 
-  function loadApprovedGlyphSources() {
+  function loadCanonicalGlyphRuntime() {
     ensureCanonicalSkyBootStyle();
-    appendScript('relphi-glyph-registry-v1.js?v=19', function () {
-      appendScript('relphi-glyph-component-v1.js?v=19', function () {
-        appendScript('relphi-glyph-source-integrity-v1.js?v=1');
+    appendScript('https://oracleofrelphi.com/relphi-glyph-registry-v1.js?v=24', function () {
+      appendScript('https://oracleofrelphi.com/relphi-glyph-component-v1.js?v=27', function () {
+        appendScript('https://oracleofrelphi.com/relphi-moon-stroke-preservation-v1.js?v=1', function () {
+          appendScript('https://oracleofrelphi.com/relphi-neptune-cross-connection-v1.js?v=1');
+        });
       });
     });
   }
 
   function loadEnhancements() {
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
+      loadCanonicalGlyphRuntime();
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
       appendScript('drawing-board-workflow-v2.js?v=24');
       appendScript('drawing-board-interactions-v1.js?v=4');
       appendScript('drawing-board-spread-prefabs-v1.js?v=10');
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
+      loadCanonicalGlyphRuntime();
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('planetary-hours-moon-position-v1.js?v=1');
       appendScript('standardize-zodiac-wheels.js?v=4');
-      appendScript('relphi-glyph-bubbles.js?v=2');
     }
 
     if (/(^|\/)sky-chart\.html$/.test(location.pathname) && !document.getElementById('skyFoundationRoot')) {
@@ -172,7 +175,7 @@
         'sky-chart-provenance-fix.js?v=1',
         'sky-chart-calculated-points-v1.js?v=4'
       ].forEach(function (src) { appendScript(src); });
-      loadApprovedGlyphSources();
+      loadCanonicalGlyphRuntime();
 
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);
