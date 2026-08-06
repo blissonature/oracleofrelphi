@@ -1,12 +1,12 @@
-// Relationship-list presentation only: aspect stripe, layout, orb badge, glyph containment, and scrollbar.
-// Glyph geometry is owned exclusively by the Sky Chart foundation renderer.
+// Relationship-list presentation only: aspect stripe, layout, orb badge, containment, and scrollbar.
+// Glyph geometry and internal transforms are owned exclusively by the Sky Chart foundation renderer.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV12) return;
-  window.__relphiSkyRelationshipListLayoutV12 = true;
+  if (window.__relphiSkyRelationshipListLayoutV13) return;
+  window.__relphiSkyRelationshipListLayoutV13 = true;
 
-  const STYLE_ID = 'skyRelationshipListLayoutV12';
+  const STYLE_ID = 'skyRelationshipListLayoutV13';
   const ASPECT_COLORS = Object.freeze({
     conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',
     quintile:'#8b6cc2',square:'#d6534d',trine:'#4e9e69','tri-octile':'#9f5944',
@@ -49,11 +49,6 @@
         align-self:center;
         overflow:hidden!important;
         contain:paint;
-      }
-      .sky-foundation-relationship-row>svg>g{
-        transform:scale(.56);
-        transform-origin:center;
-        transform-box:view-box;
       }
       .sky-foundation-relationship-copy{white-space:normal;line-height:1.15;min-width:0}
       .sky-foundation-relationship-copy small{white-space:normal}
@@ -111,7 +106,7 @@
     });
     delete row.dataset.relationshipMasterGlyphs;
 
-    if (row.dataset.relationshipLayout === 'v12') return;
+    if (row.dataset.relationshipLayout === 'v13') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
@@ -124,7 +119,7 @@
     badge.textContent = `Orb ${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-    row.dataset.relationshipLayout = 'v12';
+    row.dataset.relationshipLayout = 'v13';
   }
 
   function refresh(root) {
