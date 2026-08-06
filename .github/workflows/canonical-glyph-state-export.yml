@@ -13,6 +13,7 @@ on:
       - 'sky-chart-selected-understanding-v1.css'
       - 'sky-chart-progressive-comparison-v1.js'
       - 'sky-chart-progressive-comparison-v1.css'
+      - 'sky-chart-sign-house-and-aspect-isolate-v1.js'
       - 'sky-chart.html'
       - 'tests/relationship-canonical-state-contract.mjs'
       - '.github/workflows/canonical-glyph-state-export.yml'
@@ -26,6 +27,7 @@ on:
       - 'sky-chart-selected-understanding-v1.css'
       - 'sky-chart-progressive-comparison-v1.js'
       - 'sky-chart-progressive-comparison-v1.css'
+      - 'sky-chart-sign-house-and-aspect-isolate-v1.js'
       - 'sky-chart.html'
       - 'tests/relationship-canonical-state-contract.mjs'
       - '.github/workflows/canonical-glyph-state-export.yml'
@@ -52,6 +54,7 @@ jobs:
           node --check sky-chart-relationship-list-layout-v1.js
           node --check sky-chart-selected-relationship-v4.js
           node --check sky-chart-progressive-comparison-v1.js
+          node --check sky-chart-sign-house-and-aspect-isolate-v1.js
           node --check tests/relationship-canonical-state-contract.mjs
           node tests/relationship-canonical-state-contract.mjs
       - name: Install Chromium
