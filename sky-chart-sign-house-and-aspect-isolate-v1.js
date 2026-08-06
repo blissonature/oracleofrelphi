@@ -1,13 +1,11 @@
-// Correct sign-to-house highlighting in both skies and replace the card-pair
-// aspect token with an isolated rendering of the actual selected relationship.
+// Correct sign-to-house highlighting in both skies.
+// This module contains no glyph or selected-relationship rendering.
 (function () {
   'use strict';
   if (window.__relphiSignHouseAndAspectIsolateV1) return;
   window.__relphiSignHouseAndAspectIsolateV1 = true;
 
-  const NS = 'http://www.w3.org/2000/svg';
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
-  const COLORS = { A:'#c9211e', B:'#2462d0' };
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function read(key) {
@@ -82,58 +80,9 @@
       B:housesForSign(read(KEYS.B),sign)
     };
     document.querySelectorAll('.sky-foundation-house-sector[data-sky][data-house]').forEach(node => {
-      const kept = bySky[node.dataset.sky]?.has(Number(node.dataset.house));
-      if (kept) node.classList.add('is-kept');
+      if (bySky[node.dataset.sky]?.has(Number(node.dataset.house))) node.classList.add('is-kept');
     });
   }
 
-  async function drawBubble(target,id,color,radius) {
-    const registry = window.RelphiGlyphRegistry;
-    const component = window.RelphiGlyphComponent;
-    const entry = registry?.get?.(id) || registry?.resolve?.(id);
-    if (!entry?.asset || !component?.createBubble) {
-      target.dataset.missingCanonicalGlyph = id || 'unknown';
-      return;
-    }
-    const bubble = component.createBubble(target,entry.id,{radius,padding:1,color,fill:'#fffdf8',strokeWidth:2.2});
-    await bubble.ready;
-  }
-
-  function selectedRelationData(panel) {
-    const index = Number(panel?.dataset?.relationIndex);
-    const row = document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${index}"]`);
-    if (!row) return null;
-    const svgs = row.querySelectorAll('svg');
-    const orb = Number(row.getAttribute('aria-label')?.match(/orb\s+([\d.]+)/i)?.[1] || 0);
-    return {
-      index,
-      left:row.dataset.leftPlacement,
-      right:row.dataset.rightPlacement,
-      aspect:svgs[1]?.getAttribute('aria-label') || '',
-      orb
-    };
-  }
-
-  async function replaceMiddleAspect() {
-    const panel = document.getElementById('skySelectedRelationship');
-    const relation = selectedRelationData(panel);
-    const slot = panel?.querySelector('.sky-selected-aspect-symbol');
-    if (!relation || !slot) return;
-
-    slot.classList.add('sky-selected-aspect-isolate');
-    slot.innerHTML = `<svg viewBox="0 0 132 92" role="img" aria-label="Isolated ${relation.aspect} aspect, orb ${relation.orb.toFixed(2)} degrees"><line x1="32" y1="38" x2="100" y2="54" class="sky-selected-isolate-line"></line><g data-isolate-a transform="translate(32 38)"></g><g data-isolate-b transform="translate(100 54)"></g><text x="66" y="84" text-anchor="middle" class="sky-selected-isolate-orb">${relation.orb.toFixed(2)}°</text></svg>`;
-    const svg = slot.querySelector('svg');
-    const line = svg.querySelector('.sky-selected-isolate-line');
-    const sourceLine = document.querySelector(`.sky-foundation-aspect[data-relation-index="${relation.index}"]`);
-    line.setAttribute('stroke',sourceLine?.getAttribute('stroke') || '#5961c8');
-    await Promise.allSettled([
-      drawBubble(svg.querySelector('[data-isolate-a]'),relation.left,COLORS.A,14),
-      drawBubble(svg.querySelector('[data-isolate-b]'),relation.right,COLORS.B,14)
-    ]);
-  }
-
   window.addEventListener('relphi:sky-foundation-filter-changed',applySignHouseCorrection);
-  window.addEventListener('relphi:selected-relationship-rendered',function () {
-    requestAnimationFrame(replaceMiddleAspect);
-  });
 })();
