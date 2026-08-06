@@ -5,8 +5,15 @@ const controller = fs.readFileSync('sky-chart-foundation-interactions-v2.js', 'u
 const layout = fs.readFileSync('sky-chart-relationship-list-layout-v1.js', 'utf8');
 const selected = fs.readFileSync('sky-chart-selected-relationship-v4.js', 'utf8');
 const selectedCss = fs.readFileSync('sky-chart-selected-understanding-v1.css', 'utf8');
+const progressive = fs.readFileSync('sky-chart-progressive-comparison-v1.js', 'utf8');
+const progressiveCss = fs.readFileSync('sky-chart-progressive-comparison-v1.css', 'utf8');
 const state = fs.readFileSync('relphi-canonical-glyph-state-v1.js', 'utf8');
 
+const relationshipSources = [
+  ['Relationship list', controller],
+  ['Selected relationship', selected],
+  ['Progressive relationship', progressive]
+];
 const forbiddenRelationshipCode = [
   ['createBubble', /createBubble/],
   ['component draw', /RelphiGlyphComponent|\.draw\s*\(/],
@@ -21,9 +28,10 @@ const forbiddenRelationshipCode = [
   ['circle visibility manipulation', /circle\.style|circle\.setAttribute/]
 ];
 
-for (const [label, pattern] of forbiddenRelationshipCode) {
-  assert.equal(pattern.test(controller), false, `Relationship list still contains ${label}.`);
-  assert.equal(pattern.test(selected), false, `Selected relationship still contains ${label}.`);
+for (const [surface, source] of relationshipSources) {
+  for (const [label, pattern] of forbiddenRelationshipCode) {
+    assert.equal(pattern.test(source), false, `${surface} still contains ${label}.`);
+  }
 }
 
 assert.match(controller, /RelphiCanonicalGlyphState/);
@@ -41,6 +49,11 @@ assert.match(selected, /r\.aspect\.id,r\.aspect\.color,'plain'/);
 assert.match(selected, /r\.right\.id,COLORS\.B,'circled'/);
 assert.match(selected, /class="token-glyph" data-glyph=/);
 assert.equal(/querySelectorAll\(['"]svg['"]\)/.test(selected), false, 'Selected relationship may not infer identity from SVG structure.');
+
+assert.match(progressive, /RelphiCanonicalGlyphState/);
+assert.match(progressive, /sky-progressive-canonical-slot/);
+assert.match(progressive, /state:'plain'/);
+assert.equal(/<svg/.test(progressive), false, 'Progressive relationship may not author SVG hosts.');
 
 const forbiddenLayout = [
   ['SVG descendant styling', />svg|svg>|svg\s*\{/],
@@ -63,6 +76,9 @@ assert.match(layout, /overflow\s*:\s*visible/);
 
 assert.equal(/\.token-glyph\s+svg|\.token-glyph,\.token-glyph\s+svg/.test(selectedCss), false, 'Selected relationship CSS may not style canonical SVG descendants.');
 assert.match(selectedCss, /\.token-glyph>\.relphi-canonical-glyph-state\{width:100%!important;height:100%!important\}/);
+assert.equal(/sky-progressive-glyph\s+svg|sky-progressive-glyph>svg/.test(progressiveCss), false, 'Progressive relationship CSS may not style canonical SVG descendants.');
+assert.equal(/data-canonical-ledger-glyph/.test(progressiveCss), false, 'Progressive CSS may not clip or repair ledger glyphs.');
+assert.match(progressiveCss, /sky-progressive-canonical-slot>\.relphi-canonical-glyph-state\{width:100%!important;height:100%!important\}/);
 
 assert.match(state, /EXPECTED_GLYPH_COUNT\s*=\s*93/);
 assert.match(state, /glyphs-unified-preview\.html/);
