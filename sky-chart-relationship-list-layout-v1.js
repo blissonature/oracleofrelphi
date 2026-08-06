@@ -26,7 +26,7 @@
         column-gap:6px;
         row-gap:4px;
         padding:8px 9px 8px 12px;
-        overflow:hidden;
+        overflow:visible;
       }
       .sky-foundation-relationship-row::before{
         content:"";
