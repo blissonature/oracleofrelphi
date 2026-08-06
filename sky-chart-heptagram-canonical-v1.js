@@ -26,7 +26,7 @@
   }
 
   function stateName(state) {
-    if (state.day && state.hour) return 'day-hour-ruler';
+    if (state.day && state.hour) return 'day-and-hour-ruler';
     if (state.day) return 'day-ruler';
     if (state.hour) return 'hour-ruler';
     return 'plain';
