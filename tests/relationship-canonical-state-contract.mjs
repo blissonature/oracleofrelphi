@@ -29,13 +29,13 @@ assert.match(controller, /glyphSlot\('right'/);
 assert.match(controller, /relation\.left\.id,'circled'/);
 assert.match(controller, /relation\.aspect\.id,'plain'/);
 assert.match(controller, /relation\.right\.id,'circled'/);
-assert.match(controller, /data(?:set)?\.glyphUnavailable|dataset\.glyphUnavailable/);
+assert.match(controller, /dataset\.glyphUnavailable/);
 
 const forbiddenLayout = [
   ['SVG descendant styling', />svg|svg>|svg\s*\{/],
   ['inner group styling', />g|g>|g\s*\{/],
   ['paint containment', /contain\s*:\s*paint/],
-  ['glyph clipping', /overflow\s*:\s*hidden\s*!important/],
+  ['any clipping', /overflow\s*:\s*hidden/],
   ['glyph transform', /transform\s*:/],
   ['retired stage cleanup', /sky-relationship-(?:canonical|master)/],
   ['retired master dataset cleanup', /relationshipMasterGlyphs/]
