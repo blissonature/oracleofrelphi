@@ -1,0 +1,101 @@
+name: Canonical glyph source package
+
+on:
+  push:
+    paths:
+      - 'assets/canonical-glyphs/v1/**'
+      - 'tools/bake-rendered-canonical-vectors.mjs'
+      - 'tools/verify-canonical-source-package.mjs'
+      - 'tests/bake-rendered-canonical-*.test.mjs'
+      - 'tests/verify-canonical-source-package.test.mjs'
+      - 'tests/fixtures/bake-rendered-canonical-failures.json'
+      - 'tests/fixtures/canonical-source-package-fixtures.mjs'
+      - '.github/workflows/canonical-glyph-source-package.yml'
+  pull_request:
+    paths:
+      - 'assets/canonical-glyphs/v1/**'
+      - 'tools/bake-rendered-canonical-vectors.mjs'
+      - 'tools/verify-canonical-source-package.mjs'
+      - 'tests/bake-rendered-canonical-*.test.mjs'
+      - 'tests/verify-canonical-source-package.test.mjs'
+      - 'tests/fixtures/bake-rendered-canonical-failures.json'
+      - 'tests/fixtures/canonical-source-package-fixtures.mjs'
+      - '.github/workflows/canonical-glyph-source-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install raster verifier dependency outside checkout
+        run: npm install --prefix "$RUNNER_TEMP/canonical-glyph-deps" --no-save --no-package-lock sharp@0.34.3
+
+      - name: Verify installed fail-closed package
+        run: node tools/verify-canonical-source-package.mjs assets/canonical-glyphs/v1
+
+      - name: Run baker and verifier tests
+        env:
+          NODE_PATH: ${{ runner.temp }}/canonical-glyph-deps/node_modules
+        run: >-
+          node --test
+          tests/bake-rendered-canonical-vectors.test.mjs
+          tests/bake-rendered-canonical-failures.test.mjs
+          tests/verify-canonical-source-package.test.mjs
+
+      - name: Confirm deterministic metadata and reviewed hash lock
+        env:
+          REPORT_PATH: ${{ runner.temp }}/canonical-glyph-source-package-report.json
+        run: |
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFile, writeFile } from 'node:fs/promises';
+
+          const root = 'assets/canonical-glyphs/v1';
+          const readJson = async name => {
+            const raw = await readFile(`${root}/${name}`, 'utf8');
+            const value = JSON.parse(raw);
+            if (raw !== `${JSON.stringify(value, null, 2)}\n`) throw new Error(`${name} is not deterministically serialized.`);
+            return value;
+          };
+          const manifest = await readJson('manifest.json');
+          const sourceMap = await readJson('source-map.json');
+          await readJson('approval-ledger.json');
+          const sourceRows = new Map(sourceMap.identities.map(row => [row.identity, row]));
+          const rows = [];
+          for (const identity of manifest.identities) {
+            const mapped = sourceRows.get(identity.canonical_identity);
+            if (!mapped) throw new Error(`Missing source-map row for ${identity.canonical_identity}.`);
+            if (mapped.staged_candidate_path !== identity.candidate_path || mapped.candidate_sha256 !== identity.candidate_sha256) {
+              throw new Error(`Reviewed staging lock drift for ${identity.canonical_identity}.`);
+            }
+            if (!identity.candidate_path) continue;
+            const bytes = await readFile(`${root}/${identity.candidate_path}`);
+            const actual = createHash('sha256').update(bytes).digest('hex');
+            rows.push({ identity:identity.canonical_identity, path:identity.candidate_path, expected:identity.candidate_sha256, actual, matches:actual===identity.candidate_sha256 });
+          }
+          const report = { identityCount:manifest.identities.length, availableCount:rows.length, unavailableCount:manifest.identities.length-rows.length, rows };
+          await writeFile(process.env.REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+          if (rows.some(row => !row.matches)) throw new Error('Installed package differs from reviewed staging hashes.');
+          NODE
+
+      - name: Prove workflow left checkout unchanged
+        run: |
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
+
+      - name: Upload diagnostic report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-glyph-source-package-diagnostics
+          path: ${{ runner.temp }}/canonical-glyph-source-package-report.json
+          if-no-files-found: warn
