@@ -1,0 +1,92 @@
+[
+    {
+        "id":  "sun",
+        "name":  "Sun",
+        "svgViewBox":  "-32 -32 64 64",
+        "bubbleOuterHTML":  "\u003cg class=\"relphi-glyph-bubble\" data-glyph-id=\"sun\"\u003e\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e\u003cg class=\"relphi-canonical-glyph relphi-glyph-sun\" transform=\"translate(0 0) scale(1.0646149076924976) translate(0 0)\"\u003e\u003ccircle r=\"10\" fill=\"none\" stroke=\"#111111\" stroke-width=\"2.35\" stroke-linecap=\"round\" stroke-linejoin=\"round\"\u003e\u003c/circle\u003e\u003ccircle r=\"2.15\" fill=\"#111111\" stroke=\"#111111\" stroke-width=\"1.15\" paint-order=\"stroke fill\" stroke-linecap=\"round\" stroke-linejoin=\"round\"\u003e\u003c/circle\u003e\u003c/g\u003e\u003c/g\u003e",
+        "ringOuterHTML":  "\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e",
+        "expectedDifferingPixels":  [
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        57,
+                                        0
+                                    ]
+    },
+    {
+        "id":  "moon",
+        "name":  "Moon",
+        "svgViewBox":  "-32 -32 64 64",
+        "bubbleOuterHTML":  "\u003cg class=\"relphi-glyph-bubble\" data-glyph-id=\"moon\"\u003e\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e\u003cg class=\"relphi-canonical-glyph relphi-glyph-moon\" transform=\"translate(2.7 1) scale(0.4173120245758501) translate(-59.17629432678223 -52.458784103393555)\" data-relphi-moon-stroke-preserved=\"true\"\u003e\u003cg transform=\"rotate(15 50 50)\" fill=\"none\" stroke=\"#111111\" stroke-width=\"5.078485687903971\" stroke-linecap=\"round\" stroke-linejoin=\"round\"\u003e\u003cpath d=\"M42 22C63 21 77 33 77 50C77 67 63 79 42 78C52 71 57 61 57 50C57 39 52 29 42 22Z\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"opacity: 1;\"\u003e\u003c/path\u003e\u003c/g\u003e\u003c/g\u003e\u003c/g\u003e",
+        "ringOuterHTML":  "\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e",
+        "expectedDifferingPixels":  [
+                                        7,
+                                        6,
+                                        22,
+                                        66,
+                                        131,
+                                        314
+                                    ]
+    },
+    {
+        "id":  "jupiter",
+        "name":  "Jupiter",
+        "svgViewBox":  "-32 -32 64 64",
+        "bubbleOuterHTML":  "\u003cg class=\"relphi-glyph-bubble\" data-glyph-id=\"jupiter\"\u003e\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e\u003cg class=\"relphi-canonical-glyph relphi-glyph-jupiter\" transform=\"translate(0 0) scale(0.3160261439268775) translate(-50.160715103149414 -50.27777671813965)\"\u003e\u003cg fill=\"none\" stroke=\"#111111\" stroke-width=\"5.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"\u003e\u003cpath d=\"M21 37C16 29 18 20 27 15C36 10 47 13 51 21C56 31 51 43 44 53C39 60 33 65 27 69\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"opacity: 1;\"\u003e\u003c/path\u003e\u003cpath d=\"M20 69H82M66 14V88\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"opacity: 1;\"\u003e\u003c/path\u003e\u003c/g\u003e\u003c/g\u003e\u003c/g\u003e",
+        "ringOuterHTML":  "\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e",
+        "expectedDifferingPixels":  [
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        25,
+                                        0
+                                    ]
+    },
+    {
+        "id":  "pluto",
+        "name":  "Pluto",
+        "svgViewBox":  "-32 -32 64 64",
+        "bubbleOuterHTML":  "\u003cg class=\"relphi-glyph-bubble\" data-glyph-id=\"pluto\"\u003e\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e\u003cg class=\"relphi-canonical-glyph relphi-glyph-pluto\" transform=\"translate(0 0) scale(0.3281950784403769) translate(-50 -50.5)\"\u003e\u003cg fill=\"none\" stroke=\"#111111\" stroke-width=\"5.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"\u003e\u003ccircle cx=\"50\" cy=\"29\" r=\"16\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e\u003cpath d=\"M21 32C23 48 35 59 50 59C65 59 77 48 79 32M50 59V88M36 74H64\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"opacity: 1;\"\u003e\u003c/path\u003e\u003c/g\u003e\u003c/g\u003e\u003c/g\u003e",
+        "ringOuterHTML":  "\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e",
+        "expectedDifferingPixels":  [
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        10
+                                    ]
+    },
+    {
+        "id":  "virgo",
+        "name":  "Virgo",
+        "svgViewBox":  "-32 -32 64 64",
+        "bubbleOuterHTML":  "\u003cg class=\"relphi-glyph-bubble\" data-glyph-id=\"virgo\"\u003e\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e\u003cg class=\"relphi-canonical-glyph relphi-glyph-virgo\" transform=\"translate(0 0.45) scale(0.290403203987718) translate(-49.99999809265137 -50)\"\u003e\u003cpath d=\"M67.29 94Q63.47 90.94 61.75 82.92Q54.3 86.93 47.13 88.08V81.96Q54.3 80.81 60.8 76.99Q60.51 73.93 60.51 70.59V23.39Q60.51 19.95 59.75 16.46Q58.98 12.98 57.64 10.87Q56.31 12.02 54.4 14.55Q52.48 17.08 50.62 20.14Q48.76 23.2 47.37 25.92Q45.99 28.64 45.8 30.08V74.22H39.11V24.82Q39.11 21.29 38.44 17.75Q37.77 14.22 36.24 10.87Q34.9 12.02 32.99 14.55Q31.08 17.08 29.22 20.14Q27.36 23.2 25.97 25.92Q24.58 28.64 24.39 30.08V74.22H17.7V24.06Q17.7 17.27 13.4 6H18.47Q19.81 8.1 21.19 11.4Q22.58 14.69 23.82 19.28Q24.68 17.66 26.45 15.17Q28.21 12.69 30.22 10.16Q32.23 7.62 33.95 6H39.59Q41.31 8.48 42.88 12.35Q44.46 16.22 45.03 19.28Q45.89 17.56 47.71 15.12Q49.52 12.69 51.67 10.2Q53.82 7.72 55.54 6H61.18Q64.43 10.4 65.81 14.69Q67.2 18.99 67.2 23.77V31.7Q68.44 29.22 70.73 26.45Q73.03 23.68 74.94 22.15H80.48Q83.25 25.4 84.92 31.27Q86.6 37.15 86.6 44.31Q86.6 54.73 81.82 63.71Q77.04 72.69 67.87 79.19Q68.54 83.49 70.07 87.07Q71.59 90.66 74.46 94ZM67.2 72.31Q73.31 66.96 76.61 59.75Q79.91 52.53 79.91 44.31Q79.91 33.33 76.85 27.02Q75.32 28.55 73.31 31.37Q71.31 34.19 69.64 37.1Q67.96 40.02 67.2 41.83Z\" fill=\"#111111\" style=\"opacity: 1;\"\u003e\u003c/path\u003e\u003c/g\u003e\u003c/g\u003e",
+        "ringOuterHTML":  "\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e",
+        "expectedDifferingPixels":  [
+                                        0,
+                                        0,
+                                        0,
+                                        3,
+                                        0,
+                                        0
+                                    ]
+    },
+    {
+        "id":  "capricorn",
+        "name":  "Capricorn",
+        "svgViewBox":  "-32 -32 64 64",
+        "bubbleOuterHTML":  "\u003cg class=\"relphi-glyph-bubble\" data-glyph-id=\"capricorn\"\u003e\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e\u003cg class=\"relphi-canonical-glyph relphi-glyph-capricorn\" transform=\"translate(0 0.9) scale(0.2735464448706035) translate(-49.999999046325684 -50)\"\u003e\u003cpath d=\"M34.65 94V88.66Q41.16 88.66 46.26 84.68Q51.36 80.69 55.83 71.56Q53.3 67.68 52.43 62.72Q51.55 57.77 51.55 51.94V25.13Q51.55 20.57 50.49 17.56Q49.42 14.55 46.89 10.95Q45.53 12.22 43.69 15.32Q41.84 18.43 39.7 22.61Q37.57 26.79 35.58 31.5Q33.58 36.21 31.89 40.77Q30.19 45.34 29.21 49.08Q28.24 52.82 28.24 55.15V75.35H21.44V40.09Q21.44 33.97 21.15 29.6Q20.86 25.23 20.08 22.51Q18.63 17.07 15.66 14.64Q12.7 12.22 8.04 12.22V6Q18.24 6 23.05 13.04Q27.85 20.08 27.95 35.72V36.01Q28.83 32.52 30.77 27.85Q32.71 23.19 35.14 18.63Q37.57 14.06 39.75 10.61Q41.94 7.17 43.2 6H51.75Q53.5 8.04 55 11.1Q56.51 14.16 57.43 17.36Q58.35 20.57 58.35 23.39V51.65Q58.35 61.27 60.2 65.06Q64.28 59.32 68.26 57.14Q72.24 54.95 77 54.95Q83.8 54.95 87.88 58.4Q91.96 61.85 91.96 67.87Q91.96 74.57 87.44 78.36Q82.93 82.15 75.06 82.15Q70.88 82.15 67.53 80.94Q64.18 79.72 60.3 76.52Q56.51 84.77 49.71 89.39Q42.91 94 34.65 94ZM75.06 76.13Q80.01 76.13 82.88 73.85Q85.74 71.56 85.74 67.87Q85.74 64.96 83.36 62.87Q80.98 60.78 77.1 60.78Q73.41 60.78 70.01 63.06Q66.61 65.35 63.31 70.59Q65.06 72.83 68.5 74.48Q71.95 76.13 75.06 76.13Z\" fill=\"#111111\" style=\"opacity: 1;\"\u003e\u003c/path\u003e\u003c/g\u003e\u003c/g\u003e",
+        "ringOuterHTML":  "\u003ccircle cx=\"0\" cy=\"0\" r=\"19\" fill=\"#fff\" stroke=\"#111111\" stroke-width=\"2.35\" aria-hidden=\"true\" style=\"opacity: 1;\"\u003e\u003c/circle\u003e",
+        "expectedDifferingPixels":  [
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        3,
+                                        0
+                                    ]
+    }
+]
