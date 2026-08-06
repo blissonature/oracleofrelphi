@@ -45,6 +45,13 @@ try {
       });
     }
 
+    function prepareApprovedRingPaint(ring) {
+      ring.style?.removeProperty('fill');
+      ring.style?.removeProperty('stroke');
+      ring.setAttribute('fill', 'var(--relphi-state-fill, #fff)');
+      ring.setAttribute('stroke', 'var(--relphi-state-stroke, currentColor)');
+    }
+
     function serializeSvg(svg) {
       svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       svg.removeAttribute('width');
@@ -80,7 +87,9 @@ try {
       overlaySvg.removeAttribute('aria-label');
       const overlayRoot = bubble.cloneNode(false);
       overlayRoot.removeAttribute('data-glyph-id');
-      overlayRoot.appendChild(ring.cloneNode(true));
+      const approvedRing = ring.cloneNode(true);
+      prepareApprovedRingPaint(approvedRing);
+      overlayRoot.appendChild(approvedRing);
       overlaySvg.appendChild(overlayRoot);
       canonicalizePaint(overlaySvg);
       const candidateRingMarkup = serializeSvg(overlaySvg);
@@ -90,7 +99,7 @@ try {
         ringMarkup = candidateRingMarkup;
         ringViewBox = candidateRingViewBox;
       } else if (candidateRingMarkup !== ringMarkup || candidateRingViewBox !== ringViewBox) {
-        throw new Error(`Outer-ring geometry differs for ${id}; export stopped.`);
+        throw new Error(`Canonical ring geometry differs for ${id}; export stopped.`);
       }
 
       ring.remove();
@@ -128,7 +137,9 @@ try {
       },
       states: {
         plain: [],
-        circled: ['ring']
+        circled: ['ring'],
+        'day-ruler': ['ring'],
+        'hour-ruler': ['ring']
       }
     };
   }, { sourceUrl: SOURCE_URL, expectedGlyphs: EXPECTED_GLYPHS });
