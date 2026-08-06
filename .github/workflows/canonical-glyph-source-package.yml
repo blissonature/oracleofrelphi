@@ -10,6 +10,8 @@ on:
       - 'tests/verify-canonical-source-package.test.mjs'
       - 'tests/fixtures/bake-rendered-canonical-failures.json'
       - 'tests/fixtures/canonical-source-package-fixtures.mjs'
+      - 'canonical-glyphs-v1-preview.html'
+      - 'tests/canonical-glyphs-v1-preview.test.mjs'
       - '.github/workflows/canonical-glyph-source-package.yml'
   pull_request:
     paths:
@@ -20,6 +22,8 @@ on:
       - 'tests/verify-canonical-source-package.test.mjs'
       - 'tests/fixtures/bake-rendered-canonical-failures.json'
       - 'tests/fixtures/canonical-source-package-fixtures.mjs'
+      - 'canonical-glyphs-v1-preview.html'
+      - 'tests/canonical-glyphs-v1-preview.test.mjs'
       - '.github/workflows/canonical-glyph-source-package.yml'
   workflow_dispatch:
 
@@ -36,8 +40,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install raster verifier dependency outside checkout
-        run: npm install --prefix "$RUNNER_TEMP/canonical-glyph-deps" --no-save --no-package-lock sharp@0.34.3
+      - name: Install verification dependencies outside checkout
+        run: |
+          npm install --prefix "$RUNNER_TEMP/canonical-glyph-deps" --no-save --no-package-lock sharp@0.34.3 playwright@1.52.0
+          npx --prefix "$RUNNER_TEMP/canonical-glyph-deps" playwright install --with-deps chromium
 
       - name: Verify installed fail-closed package
         run: node tools/verify-canonical-source-package.mjs assets/canonical-glyphs/v1
@@ -50,6 +56,7 @@ jobs:
           tests/bake-rendered-canonical-vectors.test.mjs
           tests/bake-rendered-canonical-failures.test.mjs
           tests/verify-canonical-source-package.test.mjs
+          tests/canonical-glyphs-v1-preview.test.mjs
 
       - name: Confirm deterministic metadata and reviewed hash lock
         env:
