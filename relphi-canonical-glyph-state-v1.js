@@ -6,13 +6,7 @@
   if (window.RelphiCanonicalGlyphState) return;
 
   const EXPECTED_GLYPH_COUNT = 93;
-  const ALLOWED_STATES = Object.freeze([
-    'plain',
-    'circled',
-    'day-ruler',
-    'hour-ruler',
-    'day-hour-ruler'
-  ]);
+  const REQUIRED_STATES = Object.freeze(['plain', 'circled']);
   const FORBIDDEN_NODES = new Set(['script', 'foreignobject', 'iframe', 'object', 'embed']);
   let manifest = null;
 
@@ -65,9 +59,12 @@
       invariant(!entry.crop && !entry.fit && !entry.transform, 'Glyph "' + id + '" contains prohibited fitting metadata.');
     });
 
-    ALLOWED_STATES.forEach(function (state) {
-      invariant(Array.isArray(candidate.states[state]), 'Missing canonical state definition: ' + state + '.');
-      candidate.states[state].forEach(function (layerId) {
+    REQUIRED_STATES.forEach(function (state) {
+      invariant(Array.isArray(candidate.states[state]), 'Missing required canonical state definition: ' + state + '.');
+    });
+    Object.entries(candidate.states).forEach(function ([state, layers]) {
+      invariant(Array.isArray(layers), 'Canonical state "' + state + '" must be an array of approved overlays.');
+      layers.forEach(function (layerId) {
         validateLayer(layerId, candidate.layers);
       });
     });
@@ -92,8 +89,9 @@
 
   function place(target, identity, options) {
     invariant(target instanceof Element, 'A DOM target is required.');
+    invariant(manifest, 'Canonical manifest has not been registered.');
     const state = String(options && options.state || 'plain');
-    invariant(ALLOWED_STATES.includes(state), 'Illegal glyph state: ' + state + '.');
+    invariant(Object.prototype.hasOwnProperty.call(manifest.states, state), 'Illegal or unregistered glyph state: ' + state + '.');
     const glyph = resolve(identity);
     const stateLayers = manifest.states[state];
 
@@ -144,10 +142,11 @@
   installStyles();
   window.RelphiCanonicalGlyphState = Object.freeze({
     expectedGlyphCount: EXPECTED_GLYPH_COUNT,
-    allowedStates: ALLOWED_STATES,
+    requiredStates: REQUIRED_STATES,
     registerManifest,
     resolve,
     place,
-    source: 'https://oracleofrelphi.com/glyphs-unified-preview.html'
+    source: 'https://oracleofrelphi.com/glyphs-unified-preview.html',
+    supportedStates: function () { return manifest ? Object.freeze(Object.keys(manifest.states)) : Object.freeze([]); }
   });
 })();
