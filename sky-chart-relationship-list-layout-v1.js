@@ -1,15 +1,12 @@
-// Relationship-list owner: exact Master Glyph List glyph presentation, aspect stripe, and orb badge.
+// Relationship-list owner: direct 38-unit canonical glyph presentation, aspect stripe, and orb badge.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV8) return;
-  window.__relphiSkyRelationshipListLayoutV8 = true;
+  if (window.__relphiSkyRelationshipListLayoutV9) return;
+  window.__relphiSkyRelationshipListLayoutV9 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV8';
-  const MASTER_STAGE = 64;
-  const DISPLAY_STAGE = 34;
-  const MASTER_SCALE = DISPLAY_STAGE / MASTER_STAGE;
+  const STYLE_ID = 'skyRelationshipListLayoutV9';
   const SKY = { A:'#c9211e', B:'#2462d0' };
   const ASPECT_COLORS = Object.freeze({
     conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',
@@ -24,33 +21,29 @@
     style.textContent = `
       .sky-foundation-relationship-row{--relationship-stripe:var(--aspect-color,#777);position:relative;grid-template-columns:34px minmax(0,1fr) 34px 34px minmax(0,1fr) auto;grid-template-areas:"left-glyph left-copy aspect right-glyph right-copy orb";column-gap:6px;row-gap:4px;padding:8px 9px 8px 12px;overflow:hidden}
       .sky-foundation-relationship-row::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--relationship-stripe)}
-      .sky-relationship-master-slot{position:relative;display:block;width:34px;height:34px;overflow:hidden;align-self:center;contain:layout paint}
-      .sky-relationship-master-slot[data-role="left"]{grid-area:left-glyph}.sky-relationship-master-slot[data-role="aspect"]{grid-area:aspect;justify-self:center}.sky-relationship-master-slot[data-role="right"]{grid-area:right-glyph}
-      .sky-relationship-master-stage{position:absolute;left:50%;top:50%;display:block;width:64px!important;height:64px!important;max-width:none!important;max-height:none!important;overflow:visible;transform:translate(-50%,-50%) scale(${MASTER_SCALE});transform-origin:center;color:inherit}
+      .sky-relationship-master-stage{display:block;width:34px!important;height:34px!important;max-width:34px!important;max-height:34px!important;overflow:hidden;align-self:center;color:inherit}
+      .sky-relationship-master-stage[data-role="left"]{grid-area:left-glyph}.sky-relationship-master-stage[data-role="aspect"]{grid-area:aspect;justify-self:center}.sky-relationship-master-stage[data-role="right"]{grid-area:right-glyph}
       .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(1){grid-area:left-copy}.sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(2){grid-area:right-copy}
       .sky-foundation-relationship-orb{grid-area:orb;align-self:center;justify-self:end;min-width:48px;padding:5px 7px;border:1px solid color-mix(in srgb,var(--relationship-stripe) 42%,transparent);border-radius:999px;background:color-mix(in srgb,var(--relationship-stripe) 9%,#fffdfa);color:#403a35;text-align:center;white-space:nowrap;font:800 .6rem/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
       .sky-foundation-relationship-copy{white-space:normal;line-height:1.15}.sky-foundation-relationship-copy small{white-space:normal}
       #skyFoundationRelationshipList{scrollbar-width:thin;scrollbar-color:#8d8d8d transparent;scrollbar-gutter:stable}
-      #skyFoundationRelationshipList::-webkit-scrollbar{width:10px;height:10px}
+      #skyFoundationRelationshipList::-webkit-scrollbar{width:8px;height:8px}
       #skyFoundationRelationshipList::-webkit-scrollbar-track{background:transparent}
-      #skyFoundationRelationshipList::-webkit-scrollbar-thumb{min-height:28px;border:2px solid transparent;border-radius:999px;background:#8d8d8d;background-clip:padding-box}
+      #skyFoundationRelationshipList::-webkit-scrollbar-thumb{border:2px solid transparent;border-radius:999px;background:#8d8d8d;background-clip:padding-box}
       #skyFoundationRelationshipList::-webkit-scrollbar-button{display:none;width:0;height:0}
-      @media(max-width:620px){.sky-foundation-relationship-row{grid-template-columns:34px minmax(0,1fr) 34px minmax(0,1fr) 34px;grid-template-areas:"left-glyph left-copy aspect right-copy right-glyph" ". orb orb orb .";padding:9px 10px 8px 13px}.sky-foundation-relationship-orb{justify-self:center;min-width:74px;margin-top:2px}.sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(2){text-align:right}.sky-relationship-master-slot[data-role="right"]{justify-self:end}}
+      @media(max-width:620px){.sky-foundation-relationship-row{grid-template-columns:34px minmax(0,1fr) 34px minmax(0,1fr) 34px;grid-template-areas:"left-glyph left-copy aspect right-copy right-glyph" ". orb orb orb .";padding:9px 10px 8px 13px}.sky-foundation-relationship-orb{justify-self:center;min-width:74px;margin-top:2px}.sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(2){text-align:right}.sky-relationship-master-stage[data-role="right"]{justify-self:end}}
     `;
     document.head.appendChild(style);
   }
 
   function stage(role, label) {
-    const slot = document.createElement('span');
-    slot.className = 'sky-relationship-master-slot';
-    slot.dataset.role = role;
     const node = document.createElementNS(NS, 'svg');
     node.classList.add('sky-relationship-master-stage');
-    node.setAttribute('viewBox', '-32 -32 64 64');
+    node.dataset.role = role;
+    node.setAttribute('viewBox', '-19 -19 38 38');
     node.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     node.setAttribute('aria-label', label);
-    slot.appendChild(node);
-    return { slot, node };
+    return node;
   }
 
   async function renderMaster(node, id, color, circled) {
@@ -62,11 +55,12 @@
     bubble.circle.style.opacity = circled ? '1' : '0';
     bubble.circle.setAttribute('aria-hidden', 'true');
     bubble.root.dataset.masterGlyphSource = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
+    bubble.root.dataset.presentationFrame = '38x38';
     await bubble.ready;
   }
 
   function replaceWithMasterGlyphs(row, color) {
-    if (row.dataset.relationshipMasterGlyphs === 'v8') return;
+    if (row.dataset.relationshipMasterGlyphs === 'v9') return;
     const current = Array.from(row.querySelectorAll(':scope > svg, :scope > .sky-relationship-master-slot'));
     if (current.length < 3) return;
     const leftId = row.dataset.leftPlacement;
@@ -77,21 +71,21 @@
     const left = stage('left', leftId);
     const aspect = stage('aspect', aspectId);
     const right = stage('right', rightId);
-    current[0].replaceWith(left.slot);
-    current[1].replaceWith(aspect.slot);
-    current[2].replaceWith(right.slot);
+    current[0].replaceWith(left);
+    current[1].replaceWith(aspect);
+    current[2].replaceWith(right);
 
     Promise.allSettled([
-      renderMaster(left.node, leftId, SKY.A, true),
-      renderMaster(aspect.node, aspectId, color, false),
-      renderMaster(right.node, rightId, SKY.B, true)
+      renderMaster(left, leftId, SKY.A, true),
+      renderMaster(aspect, aspectId, color, false),
+      renderMaster(right, rightId, SKY.B, true)
     ]).then(results => results.forEach((result, index) => {
       if (result.status === 'rejected') {
-        [left.node, aspect.node, right.node][index].replaceChildren();
+        [left, aspect, right][index].replaceChildren();
         console.error(result.reason);
       }
     }));
-    row.dataset.relationshipMasterGlyphs = 'v8';
+    row.dataset.relationshipMasterGlyphs = 'v9';
   }
 
   function compose(row) {
@@ -101,7 +95,7 @@
     row.style.setProperty('--relationship-stripe', color);
     replaceWithMasterGlyphs(row, color);
 
-    if (row.dataset.relationshipLayout === 'v8') return;
+    if (row.dataset.relationshipLayout === 'v9') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
@@ -113,7 +107,7 @@
     badge.textContent = `Orb ${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-    row.dataset.relationshipLayout = 'v8';
+    row.dataset.relationshipLayout = 'v9';
   }
 
   function refresh(root) {
