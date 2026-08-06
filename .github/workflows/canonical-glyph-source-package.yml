@@ -17,6 +17,7 @@ on:
       - 'schemas/canonical-glyph-approval/**'
       - 'review/canonical-glyph-loader-prototype.*'
       - 'tests/canonical-glyph-*.test.mjs'
+      - 'tests/canonical-glyph-migration-phase-audit.mjs'
       - 'tests/intake-canonical-glyph-source.test.mjs'
       - 'tests/verify-canonical-glyph-approvals.test.mjs'
       - '.github/workflows/canonical-glyph-source-package.yml'
@@ -36,6 +37,7 @@ on:
       - 'schemas/canonical-glyph-approval/**'
       - 'review/canonical-glyph-loader-prototype.*'
       - 'tests/canonical-glyph-*.test.mjs'
+      - 'tests/canonical-glyph-migration-phase-audit.mjs'
       - 'tests/intake-canonical-glyph-source.test.mjs'
       - 'tests/verify-canonical-glyph-approvals.test.mjs'
       - '.github/workflows/canonical-glyph-source-package.yml'
@@ -65,6 +67,11 @@ jobs:
       - name: Verify immutable approval records
         run: node tools/verify-canonical-glyph-approvals.mjs --package assets/canonical-glyphs/v1 --records assets/canonical-glyphs/v1/approvals
 
+      - name: Verify current migration phases
+        run: |
+          node tests/canonical-glyph-migration-phase-audit.mjs --phase=source-package
+          node tests/canonical-glyph-migration-phase-audit.mjs --phase=shadow-cutover
+
       - name: Run baker and verifier tests
         env:
           NODE_PATH: ${{ runner.temp }}/canonical-glyph-deps/node_modules
@@ -79,6 +86,7 @@ jobs:
           tests/canonical-glyph-loader-prototype.test.mjs
           tests/canonical-glyph-readiness-audit.test.mjs
           tests/sky-chart-combined-ruler-state.test.mjs
+          tests/canonical-glyph-migration-phase-audit.test.mjs
 
       - name: Confirm deterministic metadata and reviewed hash lock
         env:

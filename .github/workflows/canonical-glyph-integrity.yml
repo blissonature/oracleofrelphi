@@ -23,8 +23,13 @@ jobs:
         with:
           node-version: 22
 
-      - name: Audit canonical source
-        run: node tests/canonical-glyph-source-audit.mjs
+      - name: Verify source-package migration phase
+        run: node tests/canonical-glyph-migration-phase-audit.mjs --phase=source-package
 
-      - name: Audit glyph consumers
-        run: node tests/canonical-glyph-consumer-audit.mjs
+      - name: Verify shadow-cutover migration phase
+        run: node tests/canonical-glyph-migration-phase-audit.mjs --phase=shadow-cutover
+
+      - name: Prove migration audit is read-only
+        run: |
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
