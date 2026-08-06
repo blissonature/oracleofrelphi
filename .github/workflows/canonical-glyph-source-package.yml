@@ -62,6 +62,9 @@ jobs:
       - name: Verify installed fail-closed package
         run: node tools/verify-canonical-source-package.mjs assets/canonical-glyphs/v1
 
+      - name: Verify immutable approval records
+        run: node tools/verify-canonical-glyph-approvals.mjs --package assets/canonical-glyphs/v1 --records assets/canonical-glyphs/v1/approvals
+
       - name: Run baker and verifier tests
         env:
           NODE_PATH: ${{ runner.temp }}/canonical-glyph-deps/node_modules
@@ -75,6 +78,7 @@ jobs:
           tests/verify-canonical-glyph-approvals.test.mjs
           tests/canonical-glyph-loader-prototype.test.mjs
           tests/canonical-glyph-readiness-audit.test.mjs
+          tests/sky-chart-combined-ruler-state.test.mjs
 
       - name: Confirm deterministic metadata and reviewed hash lock
         env:
