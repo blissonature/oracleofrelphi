@@ -12,6 +12,13 @@ on:
       - 'tests/fixtures/canonical-source-package-fixtures.mjs'
       - 'canonical-glyphs-v1-preview.html'
       - 'tests/canonical-glyphs-v1-preview.test.mjs'
+      - 'tools/intake-canonical-glyph-source.mjs'
+      - 'tools/verify-canonical-glyph-approvals.mjs'
+      - 'schemas/canonical-glyph-approval/**'
+      - 'review/canonical-glyph-loader-prototype.*'
+      - 'tests/canonical-glyph-*.test.mjs'
+      - 'tests/intake-canonical-glyph-source.test.mjs'
+      - 'tests/verify-canonical-glyph-approvals.test.mjs'
       - '.github/workflows/canonical-glyph-source-package.yml'
   pull_request:
     paths:
@@ -24,6 +31,13 @@ on:
       - 'tests/fixtures/canonical-source-package-fixtures.mjs'
       - 'canonical-glyphs-v1-preview.html'
       - 'tests/canonical-glyphs-v1-preview.test.mjs'
+      - 'tools/intake-canonical-glyph-source.mjs'
+      - 'tools/verify-canonical-glyph-approvals.mjs'
+      - 'schemas/canonical-glyph-approval/**'
+      - 'review/canonical-glyph-loader-prototype.*'
+      - 'tests/canonical-glyph-*.test.mjs'
+      - 'tests/intake-canonical-glyph-source.test.mjs'
+      - 'tests/verify-canonical-glyph-approvals.test.mjs'
       - '.github/workflows/canonical-glyph-source-package.yml'
   workflow_dispatch:
 
@@ -57,6 +71,10 @@ jobs:
           tests/bake-rendered-canonical-failures.test.mjs
           tests/verify-canonical-source-package.test.mjs
           tests/canonical-glyphs-v1-preview.test.mjs
+          tests/intake-canonical-glyph-source.test.mjs
+          tests/verify-canonical-glyph-approvals.test.mjs
+          tests/canonical-glyph-loader-prototype.test.mjs
+          tests/canonical-glyph-readiness-audit.test.mjs
 
       - name: Confirm deterministic metadata and reviewed hash lock
         env:
