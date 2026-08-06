@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 const BASIC_SHAPES = new Set(['path', 'circle', 'rect']);
 const CONTAINER_TAGS = new Set(['svg', 'g']);
 const FORBIDDEN_TAGS = new Set(['text', 'script', 'foreignobject', 'image', 'use', 'filter', 'mask', 'clippath', 'iframe', 'object', 'embed', 'style', 'symbol', 'pattern', 'lineargradient', 'radialgradient', 'marker']);
-const PAINT_ATTRIBUTES = ['fill', 'fill-rule', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-dasharray', 'stroke-dashoffset', 'opacity', 'fill-opacity', 'stroke-opacity'];
+const PAINT_ATTRIBUTES = ['fill', 'fill-rule', 'clip-rule', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-dasharray', 'stroke-dashoffset', 'opacity', 'fill-opacity', 'stroke-opacity', 'paint-order'];
 const PATH_ARGUMENTS = { M:2, L:2, H:1, V:1, C:6, S:4, Q:4, A:7, Z:0 };
 const VALID_STATUSES = new Set(['exact-static-candidate', 'blocked-font-or-text', 'blocked-unsupported-vector-feature', 'blocked-missing-or-invalid-capture', 'failed-pixel-equivalence']);
 const IDENTITY_NAMES = new Map();
@@ -355,6 +355,17 @@ function flattenNode(node, parentMatrix, inheritedPaint, state) {
     const width = Number(node.attributes.width);
     const height = Number(node.attributes.height);
     if (![x,y,width,height].every(Number.isFinite)) throw new Error('Rectangle has invalid dimensions.');
+    if (Math.abs(matrix[1]) < 1e-15 && Math.abs(matrix[2]) < 1e-15) {
+      const first = applyMatrix(matrix, x, y);
+      const second = applyMatrix(matrix, x + width, y + height);
+      return [serializeShape('rect', {
+        x:formatNumber(Math.min(first.x, second.x)),
+        y:formatNumber(Math.min(first.y, second.y)),
+        width:formatNumber(Math.abs(second.x - first.x)),
+        height:formatNumber(Math.abs(second.y - first.y)),
+        ...finalPaint
+      })];
+    }
     const d = `M${formatNumber(x)} ${formatNumber(y)}L${formatNumber(x+width)} ${formatNumber(y)}L${formatNumber(x+width)} ${formatNumber(y+height)}L${formatNumber(x)} ${formatNumber(y+height)}Z`;
     return [serializeShape('path', { d:transformPathData(d, matrix), ...finalPaint })];
   }
