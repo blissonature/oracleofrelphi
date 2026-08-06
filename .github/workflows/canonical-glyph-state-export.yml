@@ -34,16 +34,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   export:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: feature/sky-chart-canonical-glyph-coordinate-fix
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -59,26 +56,69 @@ jobs:
           node tests/relationship-canonical-state-contract.mjs
       - name: Install Chromium
         run: |
-          npm install --no-save playwright@1.52.0
-          npx playwright install --with-deps chromium
-      - name: Export exact canonical state assets
-        run: node tools/export-canonical-glyph-state-manifest.mjs relphi-canonical-glyph-manifest-v1.js
-      - name: Validate generated manifest
-        run: node --check relphi-canonical-glyph-manifest-v1.js
-      - uses: actions/upload-artifact@v4
-        with:
-          name: canonical-glyph-state-manifest
-          path: relphi-canonical-glyph-manifest-v1.js
-          if-no-files-found: error
-      - name: Commit verified static manifest
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+          mkdir -p "$RUNNER_TEMP/canonical-glyph-verification"
+          cp tools/export-canonical-glyph-state-manifest.mjs "$RUNNER_TEMP/canonical-glyph-verification/export.mjs"
+          npm install --prefix "$RUNNER_TEMP/canonical-glyph-verification" --no-save --no-package-lock playwright@1.52.0
+          npx --prefix "$RUNNER_TEMP/canonical-glyph-verification" playwright install --with-deps chromium
+      - name: Export temporary comparison output
+        id: export
+        continue-on-error: true
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add relphi-canonical-glyph-manifest-v1.js
-          if git diff --cached --quiet; then
-            echo 'Canonical manifest is already current.'
-          else
-            git commit -m 'Export verified canonical glyph state manifest'
-            git push origin HEAD:feature/sky-chart-canonical-glyph-coordinate-fix
+          node "$RUNNER_TEMP/canonical-glyph-verification/export.mjs" \
+            "$RUNNER_TEMP/canonical-glyph-verification/relphi-canonical-glyph-manifest-v1.js" \
+            > "$RUNNER_TEMP/canonical-glyph-verification/export.log" 2>&1
+          node --check "$RUNNER_TEMP/canonical-glyph-verification/relphi-canonical-glyph-manifest-v1.js"
+      - name: Compare checked-in sources with approved pins
+        id: integrity
+        continue-on-error: true
+        env:
+          REPORT_PATH: ${{ runner.temp }}/canonical-glyph-verification/source-integrity.json
+        run: |
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { readFile, writeFile } from 'node:fs/promises';
+
+          const manifest = JSON.parse(await readFile('glyph-canon-approved-source-manifest.json', 'utf8'));
+          const rows = [];
+          for (const [file, expectedBlob] of Object.entries(manifest.runtime_files)) {
+            let actualBlob = null;
+            try {
+              actualBlob = execFileSync('git', ['rev-parse', `HEAD:${file}`], { encoding: 'utf8' }).trim();
+            } catch {}
+            rows.push({ file, expectedBlob, actualBlob, matches: actualBlob === expectedBlob });
+          }
+          const report = {
+            authority: manifest.authority,
+            head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+            checked: rows.length,
+            mismatches: rows.filter(row => !row.matches).length,
+            rows
+          };
+          await writeFile(process.env.REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+          if (report.mismatches) {
+            console.error(`${report.mismatches} checked-in canonical sources differ from approved pins.`);
+            process.exitCode = 1;
+          }
+          NODE
+      - name: Prove checkout remained unchanged
+        id: checkout
+        continue-on-error: true
+        run: |
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
+      - name: Upload canonical glyph verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-glyph-verification
+          path: ${{ runner.temp }}/canonical-glyph-verification
+          if-no-files-found: warn
+      - name: Enforce verification result
+        if: always()
+        run: |
+          if [[ "${{ steps.export.outcome }}" != "success" || \
+                "${{ steps.integrity.outcome }}" != "success" || \
+                "${{ steps.checkout.outcome }}" != "success" ]]; then
+            echo 'Canonical glyph verification failed. Inspect the uploaded report.'
+            exit 1
           fi
