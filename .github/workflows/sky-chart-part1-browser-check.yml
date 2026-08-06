@@ -12,6 +12,10 @@ on:
       - 'sky-chart-foundation-interactions-v1.js'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-foundation-interactions-v1.css'
+      - 'sky-chart-relationship-list-layout-v1.js'
+      - 'relphi-canonical-glyph-state-v1.js'
+      - 'tools/export-canonical-glyph-state-manifest.mjs'
+      - 'tests/relationship-canonical-state-contract.mjs'
       - '.github/workflows/sky-chart-part1-browser-check.yml'
 
 jobs:
@@ -158,3 +162,31 @@ jobs:
           path: |
             sky-chart-part1-desktop.png
             sky-chart-part1-mobile.png
+
+  canonical-glyph-state-export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate clean Relationships source
+        run: |
+          node --check relphi-canonical-glyph-state-v1.js
+          node --check sky-chart-foundation-interactions-v2.js
+          node --check sky-chart-relationship-list-layout-v1.js
+          node --check tests/relationship-canonical-state-contract.mjs
+          node tests/relationship-canonical-state-contract.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Export exact canonical state assets
+        run: node tools/export-canonical-glyph-state-manifest.mjs relphi-canonical-glyph-manifest-v1.js
+      - name: Validate generated manifest
+        run: node --check relphi-canonical-glyph-manifest-v1.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: canonical-glyph-state-manifest
+          path: relphi-canonical-glyph-manifest-v1.js
+          if-no-files-found: error
