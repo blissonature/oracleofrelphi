@@ -46,10 +46,11 @@
     },
     {
       "identity": "capricorn",
-      "status": "blocked",
-      "candidate_path": null,
-      "decision": null,
-      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+      "status": "approved-with-documented-raster-difference",
+      "candidate_path": "masters/assets/zodiac-glyphs/capricorn.svg",
+      "decision": "approve-named-baked-candidate-with-documented-raster-difference",
+      "blocker": null,
+      "approval_record": "approvals/capricorn-approved-difference.json"
     },
     {
       "identity": "chiron",
@@ -424,10 +425,11 @@
     },
     {
       "identity": "jupiter",
-      "status": "blocked",
-      "candidate_path": null,
-      "decision": null,
-      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+      "status": "approved-with-documented-raster-difference",
+      "candidate_path": "masters/assets/planet-glyphs/jupiter.svg",
+      "decision": "approve-named-baked-candidate-with-documented-raster-difference",
+      "blocker": null,
+      "approval_record": "approvals/jupiter-approved-difference.json"
     },
     {
       "identity": "leo",
@@ -522,10 +524,11 @@
     },
     {
       "identity": "pluto",
-      "status": "blocked",
-      "candidate_path": null,
-      "decision": null,
-      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+      "status": "approved-with-documented-raster-difference",
+      "candidate_path": "masters/assets/planet-glyphs/pluto.svg",
+      "decision": "approve-named-baked-candidate-with-documented-raster-difference",
+      "blocker": null,
+      "approval_record": "approvals/pluto-approved-difference.json"
     },
     {
       "identity": "quincunx",
@@ -592,10 +595,11 @@
     },
     {
       "identity": "sun",
-      "status": "blocked",
-      "candidate_path": null,
-      "decision": null,
-      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+      "status": "approved-with-documented-raster-difference",
+      "candidate_path": "masters/assets/planet-glyphs/sun.svg",
+      "decision": "approve-named-baked-candidate-with-documented-raster-difference",
+      "blocker": null,
+      "approval_record": "approvals/sun-approved-difference.json"
     },
     {
       "identity": "taurus",
@@ -641,10 +645,11 @@
     },
     {
       "identity": "virgo",
-      "status": "blocked",
-      "candidate_path": null,
-      "decision": null,
-      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+      "status": "approved-with-documented-raster-difference",
+      "candidate_path": "masters/assets/zodiac-glyphs/virgo.svg",
+      "decision": "approve-named-baked-candidate-with-documented-raster-difference",
+      "blocker": null,
+      "approval_record": "approvals/virgo-approved-difference.json"
     },
     {
       "identity": "water",
@@ -685,5 +690,15 @@
       "decision": null,
       "blocker": "No approved static combined day-and-hour overlay is available."
     }
-  ]
+  ],
+  "approval_reference_package_sha256": "e42113ce38f58af0eee2650043a3575c392f16061996bb4b7cf76982f9061ae7",
+  "counts": {
+    "identity_total": 93,
+    "available_masters": 38,
+    "unavailable_masters": 55,
+    "exact_static_masters": 33,
+    "approved_with_documented_raster_difference": 5,
+    "failed_equivalence_identities": 1,
+    "font_or_text_blocked_identities": 54
+  }
 }

@@ -366,13 +366,57 @@
       "canonical_identity": "capricorn",
       "display_name": "Capricorn",
       "proposed_canonical_filename": "assets/zodiac-glyphs/capricorn.svg",
-      "candidate_path": null,
-      "status": "failed-pixel-equivalence",
-      "source_provenance": null,
+      "candidate_path": "masters/assets/zodiac-glyphs/capricorn.svg",
+      "status": "approved-with-documented-raster-difference",
+      "source_provenance": {
+        "kind": "approved-baked-static-with-documented-raster-difference",
+        "authority_page": "https://oracleofrelphi.com/glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "d6afed1dcc7a045acf47998d9017cab0eaaf0c37ee15a15c53bfb46de2c94823",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385",
+        "approval_record": "approvals/capricorn-approved-difference.json"
+      },
       "captured_authority_sha256": "d6afed1dcc7a045acf47998d9017cab0eaaf0c37ee15a15c53bfb46de2c94823",
-      "candidate_sha256": null,
-      "viewBox": null,
-      "validation_matrix": [],
+      "candidate_sha256": "586bdfd10ebbdef3fd97bcc1cba94c9662c8bc5cf95454c90e3374fbe468d27b",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 3,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
       "permitted_states": [
         "plain",
         "circled",
@@ -380,8 +424,23 @@
         "hour-ruler",
         "day-and-hour-ruler"
       ],
-      "approval_status": "blocked",
-      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+      "approval_status": "approved",
+      "blocker": null,
+      "documented_raster_difference": [
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 3,
+          "bounding_box": {
+            "x": 514,
+            "y": 585,
+            "width": 3,
+            "height": 5
+          },
+          "cause": "filled-path edge",
+          "finding": "Three pixels occur at 1000/DPR 1 on the filled path edge. Seven-significant-digit truncation removes those pixels but creates 59 at 1000/DPR 2, so it is rejected."
+        }
+      ]
     },
     {
       "canonical_identity": "chiron",
@@ -1672,13 +1731,57 @@
       "canonical_identity": "jupiter",
       "display_name": "Jupiter",
       "proposed_canonical_filename": "assets/planet-glyphs/jupiter.svg",
-      "candidate_path": null,
-      "status": "failed-pixel-equivalence",
-      "source_provenance": null,
+      "candidate_path": "masters/assets/planet-glyphs/jupiter.svg",
+      "status": "approved-with-documented-raster-difference",
+      "source_provenance": {
+        "kind": "approved-baked-static-with-documented-raster-difference",
+        "authority_page": "https://oracleofrelphi.com/glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "5f3e3da09577904f77ac5f2397cacd73fe4c5e61faae7253b0eb2c8db43adfa2",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385",
+        "approval_record": "approvals/jupiter-approved-difference.json"
+      },
       "captured_authority_sha256": "5f3e3da09577904f77ac5f2397cacd73fe4c5e61faae7253b0eb2c8db43adfa2",
-      "candidate_sha256": null,
-      "viewBox": null,
-      "validation_matrix": [],
+      "candidate_sha256": "c2b4f5741619ab5b90671bf60a63f0a8b239df45b1a02debc3f03d1405d0065f",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 25,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
       "permitted_states": [
         "plain",
         "circled",
@@ -1686,8 +1789,23 @@
         "hour-ruler",
         "day-and-hour-ruler"
       ],
-      "approval_status": "blocked",
-      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+      "approval_status": "approved",
+      "blocker": null,
+      "documented_raster_difference": [
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 25,
+          "bounding_box": {
+            "x": 343,
+            "y": 426,
+            "width": 26,
+            "height": 22
+          },
+          "cause": "transformed-path antialiasing",
+          "finding": "The 25 pixels occur on transformed path antialiasing at 1000/DPR 1. Float32 path-coordinate truncation removes them, but is a geometry precision reduction and is rejected."
+        }
+      ]
     },
     {
       "canonical_identity": "leo",
@@ -2396,13 +2514,57 @@
       "canonical_identity": "pluto",
       "display_name": "Pluto",
       "proposed_canonical_filename": "assets/planet-glyphs/pluto.svg",
-      "candidate_path": null,
-      "status": "failed-pixel-equivalence",
-      "source_provenance": null,
+      "candidate_path": "masters/assets/planet-glyphs/pluto.svg",
+      "status": "approved-with-documented-raster-difference",
+      "source_provenance": {
+        "kind": "approved-baked-static-with-documented-raster-difference",
+        "authority_page": "https://oracleofrelphi.com/glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "2710cd93d76e65275d47f8f748b9f0d892a7174799035562760ebb0a449cb89e",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385",
+        "approval_record": "approvals/pluto-approved-difference.json"
+      },
       "captured_authority_sha256": "2710cd93d76e65275d47f8f748b9f0d892a7174799035562760ebb0a449cb89e",
-      "candidate_sha256": null,
-      "viewBox": null,
-      "validation_matrix": [],
+      "candidate_sha256": "f464449635a1430a4ac0bf9b6c38c6f9f4f9bab38e2ee0ec9ae295d591181661",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 10,
+          "bounds_identical": true
+        }
+      ],
       "permitted_states": [
         "plain",
         "circled",
@@ -2410,8 +2572,23 @@
         "hour-ruler",
         "day-and-hour-ruler"
       ],
-      "approval_status": "blocked",
-      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+      "approval_status": "approved",
+      "blocker": null,
+      "documented_raster_difference": [
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 10,
+          "bounding_box": {
+            "x": 1236,
+            "y": 910,
+            "width": 51,
+            "height": 38
+          },
+          "cause": "circle/path stroke boundary",
+          "finding": "The 10 pixels occur at 1000/DPR 2 on the scaled circle/path stroke boundary. Seven-significant-digit circle or stroke truncation removes them, but changes geometry/paint and is rejected."
+        }
+      ]
     },
     {
       "canonical_identity": "quincunx",
@@ -2950,13 +3127,57 @@
       "canonical_identity": "sun",
       "display_name": "Sun",
       "proposed_canonical_filename": "assets/planet-glyphs/sun.svg",
-      "candidate_path": null,
-      "status": "failed-pixel-equivalence",
-      "source_provenance": null,
+      "candidate_path": "masters/assets/planet-glyphs/sun.svg",
+      "status": "approved-with-documented-raster-difference",
+      "source_provenance": {
+        "kind": "approved-baked-static-with-documented-raster-difference",
+        "authority_page": "https://oracleofrelphi.com/glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "c03c700aafc5c64969152d0269b0e8ca12dd599c0148eaa85a62a5ace0929aa1",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385",
+        "approval_record": "approvals/sun-approved-difference.json"
+      },
       "captured_authority_sha256": "c03c700aafc5c64969152d0269b0e8ca12dd599c0148eaa85a62a5ace0929aa1",
-      "candidate_sha256": null,
-      "viewBox": null,
-      "validation_matrix": [],
+      "candidate_sha256": "3b5a9e9aa90a42e5632996219771f7a6bd1f5d92cadf52ee734797c55fc10620",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 57,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
       "permitted_states": [
         "plain",
         "circled",
@@ -2964,8 +3185,23 @@
         "hour-ruler",
         "day-and-hour-ruler"
       ],
-      "approval_status": "blocked",
-      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+      "approval_status": "approved",
+      "blocker": null,
+      "documented_raster_difference": [
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 57,
+          "bounding_box": {
+            "x": 335,
+            "y": 335,
+            "width": 331,
+            "height": 332
+          },
+          "cause": "transformed outer-circle stroke boundary",
+          "finding": "The 57 pixels are on the transformed outer-circle stroke boundary at 1000/DPR 1. Six-significant-digit stroke truncation removes them, but changes the proportional value and is rejected."
+        }
+      ]
     },
     {
       "canonical_identity": "taurus",
@@ -3312,13 +3548,57 @@
       "canonical_identity": "virgo",
       "display_name": "Virgo",
       "proposed_canonical_filename": "assets/zodiac-glyphs/virgo.svg",
-      "candidate_path": null,
-      "status": "failed-pixel-equivalence",
-      "source_provenance": null,
+      "candidate_path": "masters/assets/zodiac-glyphs/virgo.svg",
+      "status": "approved-with-documented-raster-difference",
+      "source_provenance": {
+        "kind": "approved-baked-static-with-documented-raster-difference",
+        "authority_page": "https://oracleofrelphi.com/glyphs-unified-preview.html",
+        "authority_commit": "047fd8a7bf764e285dcb6ae012048a965840ea39",
+        "capture_sha256": "8779e33d465c68cf5f2e9826b206a34980447c1ca389b3aa3a9aa7d92d41700a",
+        "baker_commit": "a42d480ee963b3d4cb0ba183021219585f626385",
+        "approval_record": "approvals/virgo-approved-difference.json"
+      },
       "captured_authority_sha256": "8779e33d465c68cf5f2e9826b206a34980447c1ca389b3aa3a9aa7d92d41700a",
-      "candidate_sha256": null,
-      "viewBox": null,
-      "validation_matrix": [],
+      "candidate_sha256": "46f1136ce90c1fa8b89b78fbb3ab61a286183ddc57207c227e4a8262df3a7ed6",
+      "viewBox": "0 0 100 100",
+      "validation_matrix": [
+        {
+          "size": 100,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 100,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 3,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 1,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        },
+        {
+          "size": 1000,
+          "density": 2,
+          "differing_pixels": 0,
+          "bounds_identical": true
+        }
+      ],
       "permitted_states": [
         "plain",
         "circled",
@@ -3326,8 +3606,23 @@
         "hour-ruler",
         "day-and-hour-ruler"
       ],
-      "approval_status": "blocked",
-      "blocker": "Baked candidate did not produce zero differing pixels and identical visible bounds at every required size and density."
+      "approval_status": "approved",
+      "blocker": null,
+      "documented_raster_difference": [
+        {
+          "size": 400,
+          "density": 2,
+          "differing_pixels": 3,
+          "bounding_box": {
+            "x": 488,
+            "y": 304,
+            "width": 3,
+            "height": 3
+          },
+          "cause": "filled-path edge",
+          "finding": "Three pixels occur at 400/DPR 2 on the filled path edge. Float32 serialization merely moves the mismatch to another scale; no faithful serialization is zero at all six checks."
+        }
+      ]
     },
     {
       "canonical_identity": "water",
@@ -3468,5 +3763,15 @@
       "sha256": null,
       "blocker": "No approved static combined day-and-hour overlay is available."
     }
-  ]
+  ],
+  "approval_reference_package_sha256": "e42113ce38f58af0eee2650043a3575c392f16061996bb4b7cf76982f9061ae7",
+  "counts": {
+    "identity_total": 93,
+    "available_masters": 38,
+    "unavailable_masters": 55,
+    "exact_static_masters": 33,
+    "approved_with_documented_raster_difference": 5,
+    "failed_equivalence_identities": 1,
+    "font_or_text_blocked_identities": 54
+  }
 }
