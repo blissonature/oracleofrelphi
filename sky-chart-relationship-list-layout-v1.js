@@ -115,7 +115,8 @@
 
   function canonicalHostIsIntact(slot, entry) {
     const host = slot?.firstElementChild;
-    return slot?.dataset.relationshipGlyphOwner === OWNER &&
+    return slot?.childElementCount === 1 &&
+      slot?.dataset.relationshipGlyphOwner === OWNER &&
       host?.matches?.(`svg[data-relationship-canonical-host="${OWNER}"]`) &&
       host.dataset.canonicalGlyphId === entry?.id &&
       host.getAttribute('viewBox') === MASTER_VIEWBOX;
