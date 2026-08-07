@@ -3,13 +3,15 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV16) return;
-  window.__relphiSkyRelationshipListLayoutV16 = true;
+  if (window.__relphiSkyRelationshipListLayoutV17) return;
+  window.__relphiSkyRelationshipListLayoutV17 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV16';
+  const STYLE_ID = 'skyRelationshipListLayoutV17';
+  const OWNER = 'relationship-layout-v17';
   const MASTER_VIEWBOX = '-32 -32 64 64';
   const MASTER_RADIUS = 19;
+  const DISPLAY_SIZE = 28;
   const SKY_COLORS = Object.freeze({ A:'#c9211e', B:'#2462d0' });
   const ASPECT_COLORS = Object.freeze({
     conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',
@@ -19,6 +21,7 @@
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
+    document.getElementById('skyRelationshipListLayoutV16')?.remove();
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
@@ -40,19 +43,25 @@
         background:var(--relationship-stripe);
       }
       .sky-foundation-relationship-glyph{
-        display:block;
-        width:28px;
-        height:28px;
-        min-width:28px;
-        min-height:28px;
+        display:grid;
+        place-items:center;
+        width:${DISPLAY_SIZE}px;
+        height:${DISPLAY_SIZE}px;
+        min-width:${DISPLAY_SIZE}px;
+        min-height:${DISPLAY_SIZE}px;
         align-self:center;
         overflow:visible;
       }
-      .sky-foundation-relationship-glyph>svg{
+      .sky-foundation-relationship-glyph>svg[data-relationship-canonical-host="${OWNER}"]{
         display:block;
-        width:28px;
-        height:28px;
+        width:${DISPLAY_SIZE}px!important;
+        height:${DISPLAY_SIZE}px!important;
+        min-width:${DISPLAY_SIZE}px;
+        min-height:${DISPLAY_SIZE}px;
+        max-width:${DISPLAY_SIZE}px;
+        max-height:${DISPLAY_SIZE}px;
         overflow:visible;
+        transform:none!important;
       }
       .sky-foundation-relationship-glyph--left{grid-area:left-glyph}
       .sky-foundation-relationship-glyph--aspect{grid-area:aspect;justify-self:center}
@@ -104,8 +113,16 @@
     document.head.appendChild(style);
   }
 
+  function canonicalHostIsIntact(slot, entry) {
+    const host = slot?.firstElementChild;
+    return slot?.dataset.relationshipGlyphOwner === OWNER &&
+      host?.matches?.(`svg[data-relationship-canonical-host="${OWNER}"]`) &&
+      host.dataset.canonicalGlyphId === entry?.id &&
+      host.getAttribute('viewBox') === MASTER_VIEWBOX;
+  }
+
   function paintGlyph(slot, identity, mode, color, label) {
-    if (!slot || slot.dataset.canonicalGlyphReady === 'true' || slot.dataset.canonicalGlyphReady === 'loading') return;
+    if (!slot) return;
     const registry = window.RelphiGlyphRegistry;
     const component = window.RelphiGlyphComponent;
     const entry = registry && (registry.get(identity) || registry.resolve(identity));
@@ -114,14 +131,21 @@
       return;
     }
 
+    if (canonicalHostIsIntact(slot, entry) &&
+        (slot.dataset.canonicalGlyphReady === 'true' || slot.dataset.canonicalGlyphReady === 'loading')) return;
+
     const host = document.createElementNS(NS, 'svg');
     host.setAttribute('viewBox', MASTER_VIEWBOX);
     host.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     host.setAttribute('aria-hidden', 'true');
     host.setAttribute('focusable', 'false');
+    host.dataset.relationshipCanonicalHost = OWNER;
     host.dataset.canonicalGlyphId = entry.id;
     host.dataset.masterGlyphViewBox = MASTER_VIEWBOX;
+
     slot.replaceChildren(host);
+    slot.dataset.relationshipGlyphOwner = OWNER;
+    slot.dataset.relationshipGlyphIdentity = entry.id;
     slot.dataset.canonicalGlyphReady = 'loading';
     slot.setAttribute('title', label || entry.name || entry.id);
     delete slot.dataset.glyphUnavailable;
@@ -146,11 +170,11 @@
     }
 
     Promise.resolve(bubble.ready).then(() => {
-      slot.dataset.canonicalGlyphReady = 'true';
+      if (canonicalHostIsIntact(slot, entry)) slot.dataset.canonicalGlyphReady = 'true';
     }).catch(error => {
       slot.dataset.canonicalGlyphReady = 'error';
       slot.dataset.glyphUnavailable = 'true';
-      host.remove();
+      if (host.isConnected) host.remove();
       console.error('[Sky Chart relationship glyph]', error);
     });
   }
@@ -169,7 +193,7 @@
     row.style.setProperty('--relationship-stripe', color);
     paintRowGlyphs(row);
 
-    if (row.dataset.relationshipLayout === 'v16') return;
+    if (row.dataset.relationshipLayout === 'v17') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
@@ -182,7 +206,7 @@
     badge.textContent = `Orb ${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-    row.dataset.relationshipLayout = 'v16';
+    row.dataset.relationshipLayout = 'v17';
   }
 
   function refresh(root) {
@@ -193,13 +217,19 @@
     installStyle();
     refresh(document);
     new MutationObserver(function (records) {
+      const rows = new Set();
       records.forEach(function (record) {
+        const targetRow = record.target instanceof Element ? record.target.closest('.sky-foundation-relationship-row') : null;
+        if (targetRow) rows.add(targetRow);
         record.addedNodes.forEach(function (node) {
           if (node.nodeType !== 1) return;
-          if (node.matches?.('.sky-foundation-relationship-row')) compose(node);
-          refresh(node);
+          if (node.matches?.('.sky-foundation-relationship-row')) rows.add(node);
+          const parentRow = node.closest?.('.sky-foundation-relationship-row');
+          if (parentRow) rows.add(parentRow);
+          node.querySelectorAll?.('.sky-foundation-relationship-row').forEach(row => rows.add(row));
         });
       });
+      rows.forEach(compose);
     }).observe(document.documentElement, { childList:true, subtree:true });
     window.addEventListener('relphi:sky-foundation-interactions-ready', () => refresh(document));
   }
