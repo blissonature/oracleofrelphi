@@ -1,12 +1,14 @@
-// Relationship-list presentation only: stripe, semantic slot layout, orb badge, and scrollbar.
-// Glyph geometry, canvas, whitespace, and state overlays are immutable canonical assets.
+// Relationship-list presentation only: stripe, semantic slot layout, orb badge, scrollbar,
+// and canonical relationship glyph mounts. Glyph artwork remains owned by RelphiGlyphComponent.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV14) return;
-  window.__relphiSkyRelationshipListLayoutV14 = true;
+  if (window.__relphiSkyRelationshipListLayoutV15) return;
+  window.__relphiSkyRelationshipListLayoutV15 = true;
 
-  const STYLE_ID = 'skyRelationshipListLayoutV14';
+  const NS = 'http://www.w3.org/2000/svg';
+  const STYLE_ID = 'skyRelationshipListLayoutV15';
+  const SKY_COLORS = Object.freeze({ A:'#c9211e', B:'#2462d0' });
   const ASPECT_COLORS = Object.freeze({
     conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',
     quintile:'#8b6cc2',square:'#d6534d',trine:'#4e9e69','tri-octile':'#9f5944',
@@ -42,6 +44,12 @@
         min-width:28px;
         min-height:28px;
         align-self:center;
+        overflow:visible;
+      }
+      .sky-foundation-relationship-glyph>svg{
+        display:block;
+        width:28px;
+        height:28px;
         overflow:visible;
       }
       .sky-foundation-relationship-glyph--left{grid-area:left-glyph}
@@ -94,13 +102,74 @@
     document.head.appendChild(style);
   }
 
+  function paintGlyph(slot, identity, mode, color, label) {
+    if (!slot || slot.dataset.canonicalGlyphReady === 'true' || slot.dataset.canonicalGlyphReady === 'loading') return;
+    const registry = window.RelphiGlyphRegistry;
+    const component = window.RelphiGlyphComponent;
+    const entry = registry && (registry.get(identity) || registry.resolve(identity));
+    if (!entry || !component?.draw || !component?.createBubble) {
+      slot.dataset.glyphUnavailable = 'true';
+      return;
+    }
+
+    const host = document.createElementNS(NS, 'svg');
+    host.setAttribute('viewBox', '-16 -16 32 32');
+    host.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    host.setAttribute('aria-hidden', 'true');
+    host.setAttribute('focusable', 'false');
+    host.dataset.canonicalGlyphId = entry.id;
+    slot.replaceChildren(host);
+    slot.dataset.canonicalGlyphReady = 'loading';
+    slot.setAttribute('title', label || entry.name || entry.id);
+    delete slot.dataset.glyphUnavailable;
+
+    let ready;
+    try {
+      if (mode === 'circled') {
+        const bubble = component.createBubble(host, entry.id, {
+          radius:13,
+          padding:1,
+          color,
+          fill:'#fffdfa',
+          strokeWidth:1.75
+        });
+        ready = bubble.ready;
+      } else {
+        ready = component.draw(host, entry.id, { radius:13, padding:1, color });
+      }
+    } catch (error) {
+      slot.dataset.canonicalGlyphReady = 'error';
+      slot.dataset.glyphUnavailable = 'true';
+      host.remove();
+      console.error('[Sky Chart relationship glyph]', error);
+      return;
+    }
+
+    Promise.resolve(ready).then(() => {
+      slot.dataset.canonicalGlyphReady = 'true';
+    }).catch(error => {
+      slot.dataset.canonicalGlyphReady = 'error';
+      slot.dataset.glyphUnavailable = 'true';
+      host.remove();
+      console.error('[Sky Chart relationship glyph]', error);
+    });
+  }
+
+  function paintRowGlyphs(row) {
+    const aspect = String(row.dataset.aspect || '').toLowerCase();
+    paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--left'), row.dataset.leftPlacement, 'circled', SKY_COLORS.A, row.dataset.leftPlacement);
+    paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--aspect'), aspect, 'plain', ASPECT_COLORS[aspect] || '#777', aspect);
+    paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--right'), row.dataset.rightPlacement, 'circled', SKY_COLORS.B, row.dataset.rightPlacement);
+  }
+
   function compose(row) {
     if (!(row instanceof HTMLElement)) return;
     const aspect = String(row.dataset.aspect || '').toLowerCase();
     const color = ASPECT_COLORS[aspect] || '#777';
     row.style.setProperty('--relationship-stripe', color);
+    paintRowGlyphs(row);
 
-    if (row.dataset.relationshipLayout === 'v14') return;
+    if (row.dataset.relationshipLayout === 'v15') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
@@ -113,7 +182,7 @@
     badge.textContent = `Orb ${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-    row.dataset.relationshipLayout = 'v14';
+    row.dataset.relationshipLayout = 'v15';
   }
 
   function refresh(root) {
@@ -132,6 +201,7 @@
         });
       });
     }).observe(document.documentElement, { childList:true, subtree:true });
+    window.addEventListener('relphi:sky-foundation-interactions-ready', () => refresh(document));
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
