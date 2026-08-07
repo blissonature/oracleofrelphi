@@ -156,6 +156,8 @@ if (fs.existsSync(componentPath)) {
   if (!component.includes("if (entry.fitMode === 'static-master') return staticMaster")) fail('Static-master draw path is missing.');
   if (component.includes("entry.id === 'lilith'")) fail('Lilith-specific component logic returned; Lilith must use the shared static-master path.');
   if (component.includes("entry.fitMode === 'lilith'")) fail('Lilith-specific fitting returned; Lilith must not have a bespoke fit mode.');
+  if (component.includes("entry.id === 'part-of-fortune'")) fail('Part of Fortune-specific component logic returned; it must use the shared static-master path.');
+  if (component.includes('function fortune(')) fail('Procedural Part of Fortune renderer returned; it must come from its static master asset.');
   if (component.includes('function sun(')) fail('Procedural Sun renderer returned; Sun must come from the shared asset source.');
 }
 
@@ -168,8 +170,8 @@ if (fs.existsSync(integrityPath)) {
 if (fs.existsSync(navloaderPath)) {
   const nav = text(navloaderPath);
   for (const snippet of [
-    "appendScript('relphi-glyph-registry-v1.js?v=26'",
-    "appendScript('relphi-glyph-component-v1.js?v=29'",
+    "appendScript('relphi-glyph-registry-v1.js?v=28'",
+    "appendScript('relphi-glyph-component-v1.js?v=31'",
     "appendScript('relphi-glyph-source-integrity-v1.js?v=2'",
     "appendScript('relphi-inline-glyph-consumer-v1.js?v=2'",
     "appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2'"
