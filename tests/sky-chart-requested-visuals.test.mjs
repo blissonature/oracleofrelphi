@@ -5,6 +5,7 @@ import test from 'node:test';
 
 const root = path.resolve(import.meta.dirname, '..');
 const css = fs.readFileSync(path.join(root, 'sky-chart-foundation-v1.css'), 'utf8');
+const interactionCss = fs.readFileSync(path.join(root, 'sky-chart-foundation-interactions-v1.css'), 'utf8');
 const relationships = fs.readFileSync(path.join(root, 'sky-chart-relationship-list-layout-v1.js'), 'utf8');
 const heptagram = fs.readFileSync(path.join(root, 'sky-chart-heptagram-canonical-v1.js'), 'utf8');
 const registry = fs.readFileSync(path.join(root, 'relphi-glyph-registry-v1.js'), 'utf8');
@@ -14,9 +15,19 @@ const angles = fs.readFileSync(path.join(root, 'sky-chart-angle-placements-v1.js
 const hits = fs.readFileSync(path.join(root, 'sky-chart-card-hits-v2.js'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'sky-chart.html'), 'utf8');
 
-test('wheel house numbers use the enlarged desktop treatment', () => {
-  assert.match(css, /\.sky-foundation-house-number\s*\{[\s\S]*font:800 22px\/1 Georgia,serif;/);
+test('wheel house numbers use the enlarged desktop treatment and shared silver glow', () => {
+  assert.match(css, /--sky-silver-glow:drop-shadow/);
+  assert.match(css, /\.sky-foundation-house-number\s*\{[\s\S]*font:800 22px\/1 Georgia,serif;[\s\S]*filter:var\(--sky-silver-glow\)/);
+  assert.match(css, /\[data-layer="zodiac"\] \.sky-foundation-sign-glyph\s*\{\s*filter:var\(--sky-silver-glow\)/);
   assert.match(css, /#skyFoundationWheelMount \.sky-foundation-house-number\s*\{[\s\S]*font-size:24px;/);
+});
+
+test('wheel hover has immediate direct feedback instead of relying only on delayed interaction state', () => {
+  assert.match(interactionCss, /transition:opacity \.07s ease-out,filter \.07s ease-out,stroke-width \.07s ease-out/);
+  assert.match(interactionCss, /\.sky-foundation-wheel:not\(\.has-isolation\) \.sky-foundation-house-sector:hover/);
+  assert.match(interactionCss, /\.sky-foundation-wheel:not\(\.has-isolation\) \.sky-foundation-placement:hover/);
+  assert.match(interactionCss, /\.sky-foundation-wheel:not\(\.has-isolation\) \.sky-foundation-aspect:hover/);
+  assert.match(interactionCss, /drop-shadow\(0 0 7px rgba\(126,143,164/);
 });
 
 test('relationship glyphs preserve the exact uncircled Master Glyph List artboard', () => {
@@ -30,6 +41,17 @@ test('relationship glyphs preserve the exact uncircled Master Glyph List artboar
   assert.match(relationships, /sky-foundation-relationship-glyph--left'\), row\.dataset\.leftPlacement, 'plain'/);
   assert.match(relationships, /sky-foundation-relationship-glyph--aspect'\), aspect, 'plain'/);
   assert.match(relationships, /sky-foundation-relationship-glyph--right'\), row\.dataset\.rightPlacement, 'plain'/);
+});
+
+test('relationship glyph slots have one renderer owner and one fixed display box', () => {
+  assert.match(relationships, /const OWNER = 'relationship-layout-v17';/);
+  assert.match(relationships, /const DISPLAY_SIZE = 28;/);
+  assert.match(relationships, /data-relationship-canonical-host/);
+  assert.match(relationships, /slot\.replaceChildren\(host\)/);
+  assert.match(relationships, /slot\.dataset\.relationshipGlyphOwner = OWNER/);
+  assert.match(relationships, /width:\$\{DISPLAY_SIZE\}px!important/);
+  assert.match(relationships, /height:\$\{DISPLAY_SIZE\}px!important/);
+  assert.match(relationships, /record\.target instanceof Element \? record\.target\.closest\('\.sky-foundation-relationship-row'\)/);
 });
 
 test('relationship labels stay paired with their own glyph slots', () => {
@@ -94,9 +116,10 @@ test('dynamic SVG glyphs stay invisible until their fitted transform exists', ()
 test('Sky Chart cache keys point at the corrected consumers', () => {
   assert.match(html, /relphi-glyph-registry-v1\.js\?v=28/);
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
-  assert.match(html, /sky-chart-foundation-v1\.css\?v=7/);
+  assert.match(html, /sky-chart-foundation-v1\.css\?v=8/);
+  assert.match(html, /sky-chart-foundation-interactions-v1\.css\?v=2/);
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
-  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=16/);
+  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=17/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=11/);
   assert.match(html, /sky-chart-card-hits-v2\.js\?v=3/);
 });
