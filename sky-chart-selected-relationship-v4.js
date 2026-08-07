@@ -13,7 +13,7 @@ const MEANINGS={sun:'Identity, vitality, and conscious purpose.',moon:'Feelings,
 const DECANS=[[['two_of_wands','Two of Wands'],['three_of_wands','Three of Wands'],['four_of_wands','Four of Wands']],[['five_of_pentacles','Five of Pentacles'],['six_of_pentacles','Six of Pentacles'],['seven_of_pentacles','Seven of Pentacles']],[['eight_of_swords','Eight of Swords'],['nine_of_swords','Nine of Swords'],['ten_of_swords','Ten of Swords']],[['two_of_cups','Two of Cups'],['three_of_cups','Three of Cups'],['four_of_cups','Four of Cups']],[['five_of_wands','Five of Wands'],['six_of_wands','Six of Wands'],['seven_of_wands','Seven of Wands']],[['eight_of_pentacles','Eight of Pentacles'],['nine_of_pentacles','Nine of Pentacles'],['ten_of_pentacles','Ten of Pentacles']],[['two_of_swords','Two of Swords'],['three_of_swords','Three of Swords'],['four_of_swords','Four of Swords']],[['five_of_cups','Five of Cups'],['six_of_cups','Six of Cups'],['seven_of_cups','Seven of Cups']],[['eight_of_wands','Eight of Wands'],['nine_of_wands','Nine of Wands'],['ten_of_wands','Ten of Wands']],[['two_of_pentacles','Two of Pentacles'],['three_of_pentacles','Three of Pentacles'],['four_of_pentacles','Four of Pentacles']],[['five_of_swords','Five of Swords'],['six_of_swords','Six of Swords'],['seven_of_swords','Seven of Swords']],[['eight_of_cups','Eight of Cups'],['nine_of_cups','Nine of Cups'],['ten_of_cups','Ten of Cups']]];
 const ALIASES={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 let mount,selectedIndex=null,token=0;
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const norm=v=>((Number(v)%360)+360)%360;
 function read(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_){return null}}
 function source(p){const x=[p?.placements,p?.positions,p?.points,p?.bodies].find(v=>v&&typeof v==='object')||p||{};return Array.isArray(x)?x.map((v,i)=>[String(v?.name||v?.id||i),v]):Object.entries(x)}
@@ -28,11 +28,18 @@ function card(r){const p=pos(r),di=Math.min(2,Math.floor(p.degree/10)),[id,title
 function duration(r){const id=r.right.id;const map={moon:[1,'Short term','Hours to a few days'],sun:[1,'Short term','Several days'],mercury:[1,'Short term','Days to several weeks'],venus:[1,'Short term','Days to several weeks'],mars:[1,'Short term','Several days to weeks'],jupiter:[2,'Medium term','Several weeks to months'],saturn:[2,'Medium term','Several months'],uranus:[3,'Long term','Many months to years'],neptune:[3,'Long term','Years'],pluto:[3,'Long term','Years'],chiron:[3,'Long term','Many months to years'],'north-node':[3,'Long term','Many months'],'south-node':[3,'Long term','Many months']};return map[id]||[2,'Variable duration','Duration depends on the moving point and exact orb']}
 function ensure(){if(mount?.isConnected)return mount;const rel=document.getElementById('skyFoundationRelationships');if(!rel)return null;mount=document.createElement('section');mount.id='skySelectedRelationship';mount.className='sky-selected-relationship sky-selected-understanding';mount.hidden=true;mount.innerHTML='<div class="sky-selected-body"></div>';rel.insertAdjacentElement('afterend',mount);return mount}
 function renderGlyph(host,id,color,state,label){
-  const placer=window.RelphiCanonicalGlyphState;
   if(!host)return null;
-  if(!placer||placer.supportedStates().length===0){host.replaceChildren();host.dataset.glyphUnavailable='true';return null}
+  const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=registry&&(registry.get(id)||registry.resolve(id));
+  if(!entry||!component?.createBubble){host.replaceChildren();host.dataset.glyphUnavailable='true';return null}
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','-32 -32 64 64');
+  svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  svg.setAttribute('aria-label',label||entry.name||entry.id);
+  host.replaceChildren(svg);
   delete host.dataset.glyphUnavailable;
-  return placer.place(host,id,{state,color,size:56,label});
+  const bubble=component.createBubble(svg,entry.id,{radius:19,padding:1,color});
+  if(state==='plain'){bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true')}
+  return bubble.ready;
 }
 function tokenMarkup(k,r,color){const p=pos(r);return`<article class="understanding-token" style="--token:${color}"><button data-token="${k}" data-stage="0" aria-label="Reveal ${esc(r.entry.name)}"><span class="token-glyph" data-glyph="${k}"></span><strong>${esc(r.entry.name)}</strong><span class="token-referent">${esc(MEANINGS[r.id]||'A calculated placement in this sky.')}</span><span class="token-facts">${esc(p.label)} · House ${r.house}</span></button></article>`}
 function aspectMarkup(r){const a=ASPECTS[r.aspect.id];return`<article class="understanding-token aspect" style="--token:${r.aspect.color}"><button data-token="aspect" data-stage="0" aria-label="Reveal ${esc(a[0])}"><span class="token-glyph" data-glyph="aspect"></span><strong>${esc(a[0])}</strong><span class="token-referent">${esc(a[2])}</span><span class="token-facts">${a[1]}° relationship · ${orb(r.orb)} orb</span></button></article>`}
