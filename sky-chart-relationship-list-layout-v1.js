@@ -157,9 +157,9 @@
 
   function paintRowGlyphs(row) {
     const aspect = String(row.dataset.aspect || '').toLowerCase();
-    paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--left'), row.dataset.leftPlacement, 'circled', SKY_COLORS.A, row.dataset.leftPlacement);
+    paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--left'), row.dataset.leftPlacement, 'plain', SKY_COLORS.A, row.dataset.leftPlacement);
     paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--aspect'), aspect, 'plain', ASPECT_COLORS[aspect] || '#777', aspect);
-    paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--right'), row.dataset.rightPlacement, 'circled', SKY_COLORS.B, row.dataset.rightPlacement);
+    paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--right'), row.dataset.rightPlacement, 'plain', SKY_COLORS.B, row.dataset.rightPlacement);
   }
 
   function compose(row) {
