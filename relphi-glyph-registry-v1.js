@@ -44,7 +44,7 @@
     ['bi-quintile','Bi-Quintile',['bi-quintile','biquintile','bi quintile','BQ','bQ','bq'],'assets/aspect-glyphs/bi-quintile.svg',0.92,0,0,null,'circle'],
     ['north-node','North Node',['north node','true node','mean node','ascending node','node','☊','no'],null,1.18,0,-0.3,'☊','symbol','400'],
     ['south-node','South Node',['south node','descending node','☋','so'],null,1.18,0,0.3,'☋','symbol','400'],
-    ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],'assets/planet-glyphs/lilith.svg',1.05,0,0,null,'circle','400'],
+    ['lilith','Lilith',['lilith','black moon lilith','bml','⚸'],'assets/planet-glyphs/lilith.svg',1,0,0,null,'static-master'],
     ['part-of-fortune','Part of Fortune',['part of fortune','fortune','pars fortunae','pof','⊗','pa'],null,.92,0,0,'fortune','circle'],
     ['vertex','Vertex',['vertex','vx'],null,1,0,0,'Vx','letter','700'],
     ['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'Asc','letter','700'],
