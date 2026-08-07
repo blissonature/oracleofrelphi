@@ -6,6 +6,7 @@ const SELF = 'tools/check-single-glyph-canon.mjs';
 const failures = [];
 const productionExt = /\.(?:html|js|mjs|css|json|yml|yaml)$/i;
 const skipDirs = new Set(['.git', 'node_modules', 'coverage', 'tests', 'test']);
+const staticPlanetIds = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
 
 function rel(file) {
   return path.relative(ROOT, file).split(path.sep).join('/');
@@ -99,7 +100,6 @@ const integrityPath = path.join(ROOT, 'relphi-glyph-source-integrity-v1.js');
 const inlineConsumerPath = path.join(ROOT, 'relphi-inline-glyph-consumer-v1.js');
 const foundationsConsumerPath = path.join(ROOT, 'astrology-foundations-canonical-glyphs-v1.js');
 const navloaderPath = path.join(ROOT, 'navloader.js');
-const marsPath = path.join(ROOT, 'assets/planet-glyphs/mars.svg');
 const moonPath = path.join(ROOT, 'assets/planet-glyphs/moon.svg');
 for (const [file, label] of [
   [registryPath,'relphi-glyph-registry-v1.js'],
@@ -108,7 +108,6 @@ for (const [file, label] of [
   [inlineConsumerPath,'relphi-inline-glyph-consumer-v1.js'],
   [foundationsConsumerPath,'astrology-foundations-canonical-glyphs-v1.js'],
   [navloaderPath,'navloader.js'],
-  [marsPath,'approved Mars asset'],
   [moonPath,'approved Moon asset']
 ]) {
   if (!fs.existsSync(file)) fail(`Missing ${label}`);
@@ -126,12 +125,9 @@ if (fs.existsSync(registryPath)) {
   for (const [snippet, label] of angleRules) {
     if (!registry.includes(snippet)) fail(`${label} no longer uses the approved Master Glyph List text treatment.`);
   }
-  for (const id of ['sun','moon','mercury','venus','jupiter','saturn','uranus','neptune','pluto']) {
-    const pattern = new RegExp(`\\['${id}'[^\\n]+?'static-master'\\]`);
-    if (!pattern.test(registry)) fail(`${id} is not pinned to the recovered static-master path.`);
-  }
-  if (!registry.includes("['mars','Mars',['mars','♂'],'assets/planet-glyphs/mars.svg',1,-0.95,0.9,null,'circle']")) {
-    fail('Mars registry treatment changed from the explicitly approved corrected source path.');
+  for (const id of staticPlanetIds) {
+    const pattern = new RegExp(`\\['${id}'[^\\n]+?,1,0,0,null,'static-master'\\]`);
+    if (!pattern.test(registry)) fail(`${id} is not pinned to the shared static-master planet treatment.`);
   }
 }
 
@@ -142,6 +138,19 @@ if (fs.existsSync(planetDir) && registry) {
     if (!entry.isFile() || !entry.name.endsWith('.svg')) continue;
     const assetPath = `assets/planet-glyphs/${entry.name}`;
     if (!registry.includes(`'${assetPath}'`)) fail(`Unregistered planet-glyph SVG can masquerade as authority: ${assetPath}`);
+  }
+
+  // Static planet masters are flattened so paint is carried by the shapes themselves.
+  // This makes every planet inherit caller color through the exact same component path.
+  for (const id of staticPlanetIds) {
+    const file = path.join(planetDir, `${id}.svg`);
+    if (!fs.existsSync(file)) {
+      fail(`Missing shared static planet master: ${id}`);
+      continue;
+    }
+    const source = text(file);
+    if (/<g\b/i.test(source)) fail(`${id} static master contains a group-level paint exception.`);
+    if (!/<(?:path|circle|rect)\b[^>]*(?:fill|stroke)="/i.test(source)) fail(`${id} static master has no directly paintable shape.`);
   }
 }
 
@@ -171,9 +180,6 @@ if (fs.existsSync(navloaderPath)) {
   }
 }
 
-const expectedMars = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Mars"><g fill="none" stroke="#111111" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="42" cy="60" r="25"/><path d="M60.5 41.5L84 17M69 17H84V32"/></g></svg>';
-if (fs.existsSync(marsPath) && text(marsPath).trim() !== expectedMars) fail('Approved corrected Mars bytes changed.');
-
 if (fs.existsSync(moonPath)) {
   const moon = text(moonPath);
   if (!moon.includes('M47.9220542672045 30.973850765136838')) fail('Approved thin Moon geometry changed.');
@@ -187,4 +193,4 @@ if (failures.length) {
 }
 
 console.log('Single glyph canon check passed.');
-console.log('One registry, one component, approved angle treatments, approved Mars/Moon, no unregistered planet SVGs, and no known competing production source paths.');
+console.log('One registry, one component, one shared static treatment for all ten planets, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
