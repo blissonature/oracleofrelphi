@@ -19,6 +19,7 @@
 
   function thickenToNodeWeight(root, entry, color) {
     if (
+      entry.fitMode === 'static-master' ||
       entry.id === 'north-node' ||
       entry.id === 'south-node' ||
       entry.id === 'lilith' ||
@@ -50,7 +51,7 @@
 
   async function loadAsset(path) {
     if (cache.has(path)) return cache.get(path).cloneNode(true);
-    const response = await fetch(path + '?v=23');
+    const response = await fetch(path + '?v=24');
     if (!response.ok) throw new Error('Could not load glyph asset: ' + path);
     const source = new DOMParser().parseFromString(await response.text(), 'image/svg+xml').documentElement;
     cache.set(path, source);
@@ -76,6 +77,7 @@
   }
 
   function fit(node, radius, padding, entry, bubbleStrokeWidth) {
+    if (entry.fitMode === 'static-master') return;
     node.removeAttribute('transform');
 
     if (entry.fitMode === 'letter' || entry.fitMode === 'hebrew-letter' || entry.fitMode === 'greek-letter') {
@@ -113,21 +115,6 @@
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
     node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0}) scale(${scale}) translate(${-cx} ${-cy})`);
-  }
-
-  function sun(parent, color) {
-    const group = svg('g');
-    const ring = svg('circle');
-    ring.setAttribute('r', '10');
-    ring.setAttribute('fill', 'none');
-    ring.setAttribute('stroke', color);
-    ring.setAttribute('stroke-width', '1.45');
-    const dot = svg('circle');
-    dot.setAttribute('r', '2.15');
-    dot.setAttribute('fill', color);
-    group.append(ring, dot);
-    parent.appendChild(group);
-    return group;
   }
 
   function fortune(parent, color) {
@@ -170,6 +157,18 @@
     return text;
   }
 
+  function staticMaster(parent, source, entry, color, radius) {
+    const art = svg('g');
+    Array.from(source.children).forEach(child => art.appendChild(document.importNode(child, true)));
+    const scale = 0.64 * Math.max(0.1, Number(radius) || 19) / 19;
+    art.setAttribute('transform', `matrix(${scale} 0 0 ${scale} ${-50 * scale} ${-50 * scale})`);
+    art.dataset.staticMaster = 'true';
+    parent.appendChild(art);
+    recolor(art, color);
+    art.classList.add('relphi-canonical-glyph', 'relphi-glyph-' + entry.id);
+    return art;
+  }
+
   async function draw(parent, identity, options) {
     const registry = window.RelphiGlyphRegistry;
     const entry = registry && (registry.get(identity) || registry.resolve(identity));
@@ -181,9 +180,9 @@
     const bubbleStrokeWidth = Number(options?.bubbleStrokeWidth || 0);
     let art;
 
-    if (entry.id === 'sun') art = sun(parent, color);
-    else if (entry.asset) {
+    if (entry.asset) {
       const source = await loadAsset(entry.asset);
+      if (entry.fitMode === 'static-master') return staticMaster(parent, source, entry, color, radius);
       art = svg('g');
       Array.from(source.children).forEach(child => art.appendChild(document.importNode(child, true)));
       parent.appendChild(art);
