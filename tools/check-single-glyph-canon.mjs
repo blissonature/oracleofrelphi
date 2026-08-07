@@ -87,6 +87,7 @@ for (const file of sourceFiles) {
 // and it must populate them through RelphiGlyphComponent.createBubble().
 const relationshipLayoutPath = path.join(ROOT, 'sky-chart-relationship-list-layout-v1.js');
 const relationshipInteractionPath = path.join(ROOT, 'sky-chart-foundation-interactions-v2.js');
+const selectedRelationshipPath = path.join(ROOT, 'sky-chart-selected-relationship-v4.js');
 if (!fs.existsSync(relationshipLayoutPath)) {
   fail('Missing sole relationship glyph painter: sky-chart-relationship-list-layout-v1.js');
 } else {
@@ -94,12 +95,22 @@ if (!fs.existsSync(relationshipLayoutPath)) {
   if (!relationshipLayout.includes('RelphiGlyphComponent')) fail('Relationship glyph painter no longer resolves the shared RelphiGlyphComponent.');
   if (!relationshipLayout.includes('component.createBubble(')) fail('Relationship glyph painter no longer uses the shared createBubble method.');
   if (!relationshipLayout.includes('data-relationship-canonical-host')) fail('Relationship glyph painter no longer marks exclusive canonical ownership of its SVG hosts.');
+  if (!relationshipLayout.includes('host.childElementCount !== 1')) fail('Relationship glyph painter no longer validates its canonical SVG subtree.');
+  if (!relationshipLayout.includes('arts.length !== 1')) fail('Relationship glyph painter no longer rejects duplicate canonical art inside one slot.');
 }
 if (fs.existsSync(relationshipInteractionPath)) {
   const interaction = text(relationshipInteractionPath);
   for (const token of ['RelphiCanonicalGlyphState','placeCanonicalGlyph(','component.createBubble(','RelphiGlyphComponent.createBubble(']) {
     if (interaction.includes(token)) fail(`Interaction controller is rendering relationship glyphs instead of leaving painting to the sole relationship renderer: ${token}`);
   }
+}
+if (!fs.existsSync(selectedRelationshipPath)) {
+  fail('Missing selected relationship consumer: sky-chart-selected-relationship-v4.js');
+} else {
+  const selectedRelationship = text(selectedRelationshipPath);
+  if (!selectedRelationship.includes('window.RelphiGlyphComponent')) fail('Selected relationship consumer no longer resolves the shared RelphiGlyphComponent.');
+  if (!selectedRelationship.includes('component.createBubble(')) fail('Selected relationship consumer no longer uses the shared createBubble method.');
+  if (selectedRelationship.includes('RelphiCanonicalGlyphState')) fail('Selected relationship consumer restored a competing glyph rendering API.');
 }
 
 const forbiddenFiles = [
@@ -224,4 +235,4 @@ if (failures.length) {
 }
 
 console.log('Single glyph canon check passed.');
-console.log('One registry, one component, registry-only asset addressing, one relationship glyph painter, shared static-master treatment, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
+console.log('One registry, one component, registry-only asset addressing, one relationship glyph painter, shared createBubble consumers, atomic relationship glyph ownership, shared static-master treatment, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
