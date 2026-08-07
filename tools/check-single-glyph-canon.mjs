@@ -30,16 +30,25 @@ function fail(message) {
 }
 
 const files = walk(ROOT);
-const sourceFiles = files.filter(file => rel(file) !== SELF && !rel(file).startsWith('assets/canonical-glyphs/v1/'));
+// Production/runtime source only. Diagnostic tooling may discuss old paths, but it cannot be loaded by the site.
+const sourceFiles = files.filter(file => {
+  const name = rel(file);
+  return name !== SELF &&
+    !name.startsWith('tools/') &&
+    !name.startsWith('.github/') &&
+    !name.startsWith('schemas/') &&
+    !name.startsWith('assets/canonical-glyphs/v1/');
+});
 
 const forbiddenRefs = [
   'relphi-moon-stroke-preservation-v1.js',
   'relphi-neptune-cross-connection-v1.js',
   'relphi-canonical-glyph-state-v1.js',
+  'RelphiCanonicalGlyphState',
   'assets/planet-glyphs/ascendant.svg',
   'assets/planet-glyphs/midheaven.svg',
   'assets/planet-glyphs/earth.svg',
-  'assets/canonical-glyphs/v1/masters/assets/planet-glyphs/',
+  'assets/canonical-glyphs/v1/',
   'https://oracleofrelphi.com/relphi-glyph-registry-v1.js',
   'https://oracleofrelphi.com/relphi-glyph-component-v1.js'
 ];
@@ -74,7 +83,8 @@ const forbiddenFiles = [
   'assets/planet-glyphs/midheaven.svg',
   'assets/planet-glyphs/earth.svg',
   'assets/canonical-glyphs/v1/manifest.json',
-  'canonical-glyphs-v1-preview.html'
+  'canonical-glyphs-v1-preview.html',
+  'glyph-canon-approved-source-manifest.json'
 ];
 for (const name of forbiddenFiles) {
   if (fs.existsSync(path.join(ROOT, name))) fail(`Forbidden competing glyph source still exists: ${name}`);
@@ -82,10 +92,12 @@ for (const name of forbiddenFiles) {
 
 const registryPath = path.join(ROOT, 'relphi-glyph-registry-v1.js');
 const componentPath = path.join(ROOT, 'relphi-glyph-component-v1.js');
+const integrityPath = path.join(ROOT, 'relphi-glyph-source-integrity-v1.js');
 const marsPath = path.join(ROOT, 'assets/planet-glyphs/mars.svg');
 const moonPath = path.join(ROOT, 'assets/planet-glyphs/moon.svg');
 if (!fs.existsSync(registryPath)) fail('Missing relphi-glyph-registry-v1.js');
 if (!fs.existsSync(componentPath)) fail('Missing relphi-glyph-component-v1.js');
+if (!fs.existsSync(integrityPath)) fail('Missing relphi-glyph-source-integrity-v1.js');
 if (!fs.existsSync(marsPath)) fail('Missing approved Mars asset');
 if (!fs.existsSync(moonPath)) fail('Missing approved Moon asset');
 
@@ -114,6 +126,12 @@ if (fs.existsSync(componentPath)) {
   if (!component.includes("if (entry.fitMode === 'static-master') return;")) fail('Static masters are no longer protected from runtime fitting.');
   if (!component.includes("if (entry.fitMode === 'static-master') return staticMaster")) fail('Static-master draw path is missing.');
   if (component.includes('function sun(')) fail('Procedural Sun renderer returned; Sun must come from the shared asset source.');
+}
+
+if (fs.existsSync(integrityPath)) {
+  const integrity = text(integrityPath);
+  if (!integrity.includes("Object.defineProperty(window, 'RelphiGlyphRegistry'")) fail('Registry global is no longer locked.');
+  if (!integrity.includes("Object.defineProperty(window, 'RelphiGlyphComponent'")) fail('Component global is no longer locked.');
 }
 
 const expectedMars = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Mars"><g fill="none" stroke="#111111" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="42" cy="60" r="25"/><path d="M60.5 41.5L84 17M69 17H84V32"/></g></svg>';
