@@ -155,12 +155,18 @@
       appendScript('drawing-board-spread-prefabs-v1.js?v=10');
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
-      loadCanonicalGlyphRuntime(function () { appendScript('standardize-zodiac-wheels.js?v=5'); });
+      loadCanonicalGlyphRuntime(function () {
+        appendScript('standardize-zodiac-wheels.js?v=5');
+        appendScript('relphi-inline-glyph-consumer-v1.js?v=1');
+      });
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('planetary-hours-moon-position-v1.js?v=1');
     }
     if (/(^|\/)astrology-foundations\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () { appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2'); });
+    }
+    if (/(^|\/)(mythic-atlas|constellations)\.html$/.test(location.pathname)) {
+      loadCanonicalGlyphRuntime(function () { appendScript('relphi-inline-glyph-consumer-v1.js?v=1'); });
     }
 
     if (/(^|\/)sky-chart\.html$/.test(location.pathname) && !document.getElementById('skyFoundationRoot')) {
