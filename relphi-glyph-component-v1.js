@@ -22,7 +22,6 @@
       entry.fitMode === 'static-master' ||
       entry.id === 'north-node' ||
       entry.id === 'south-node' ||
-      entry.id === 'lilith' ||
       entry.id === 'part-of-fortune' ||
       entry.fitMode === 'letter' ||
       entry.fitMode === 'hebrew-letter' ||
@@ -82,13 +81,6 @@
 
     if (entry.fitMode === 'letter' || entry.fitMode === 'hebrew-letter' || entry.fitMode === 'greek-letter') {
       node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0})`);
-      return;
-    }
-
-    if (entry.fitMode === 'lilith') {
-      const referenceAvailableRadius = 16.825;
-      const scale = availableRadius(radius, padding, bubbleStrokeWidth) / referenceAvailableRadius * (Number(entry.scale) || 1);
-      node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0}) scale(${scale})`);
       return;
     }
 
