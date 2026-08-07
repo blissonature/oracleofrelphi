@@ -3,8 +3,8 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramCanonicalV4) return;
-  window.__relphiSkyHeptagramCanonicalV4 = true;
+  if (window.__relphiSkyHeptagramCanonicalV5) return;
+  window.__relphiSkyHeptagramCanonicalV5 = true;
 
   const KEYS = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
   const COLORS = Object.freeze({
@@ -44,7 +44,7 @@
     const registry = window.RelphiGlyphRegistry;
     const component = window.RelphiGlyphComponent;
     const entry = registry && (registry.get(key) || registry.resolve(key));
-    if (!entry || !component?.draw) {
+    if (!entry || !component?.createBubble) {
       mount.replaceChildren();
       mount.dataset.glyphUnavailable = 'true';
       return;
@@ -59,14 +59,19 @@
     mount.replaceChildren();
     delete mount.dataset.glyphUnavailable;
     mount.dataset.canonicalGlyphId = entry.id;
+    mount.dataset.canonicalGlyphPresentation = 'circled';
     mount.dataset.masterGlyphSource = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
 
     try {
-      await component.draw(mount, entry.id, {
-        radius:18,
+      const bubble = component.createBubble(mount, entry.id, {
+        radius:17,
         padding:1,
-        color:COLORS[key]
+        color:COLORS[key],
+        fill:'#fffdfa',
+        strokeWidth:2.2
       });
+      await bubble.ready;
+      bubble.root.dataset.heptagramCircledGlyph = 'true';
     } catch (error) {
       mount.replaceChildren();
       mount.dataset.glyphUnavailable = 'true';
@@ -78,6 +83,7 @@
     if (!svg || !svg.querySelector('.sky-ph-planet')) return;
     svg.querySelectorAll('.sky-ph-planet').forEach(group => { void placePlanet(group); });
     svg.dataset.canonicalHeptagramConsumer = 'true';
+    svg.dataset.glyphPresentation = 'circled';
   }
 
   function inspect(node) {
