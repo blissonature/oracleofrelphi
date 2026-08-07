@@ -1,11 +1,15 @@
 // Planetary Hours heptagram consumer for the single Master Glyph List runtime.
-// This module never owns or repairs glyph artwork. It only asks RelphiGlyphComponent to draw an identity.
+// Glyphs are rendered at the canonical 64×64 master size, then the complete circled unit is scaled uniformly.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramCanonicalV5) return;
-  window.__relphiSkyHeptagramCanonicalV5 = true;
+  if (window.__relphiSkyHeptagramCanonicalV6) return;
+  window.__relphiSkyHeptagramCanonicalV6 = true;
 
+  const NS = 'http://www.w3.org/2000/svg';
+  const MASTER_RADIUS = 19;
+  const DISPLAY_RADIUS = 17;
+  const MASTER_SCALE = DISPLAY_RADIUS / MASTER_RADIUS;
   const KEYS = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
   const COLORS = Object.freeze({
     saturn:'#8c7a42', jupiter:'#41752f', mars:'#c9211e', sun:'#d08a00',
@@ -60,15 +64,20 @@
     delete mount.dataset.glyphUnavailable;
     mount.dataset.canonicalGlyphId = entry.id;
     mount.dataset.canonicalGlyphPresentation = 'circled';
+    mount.dataset.masterGlyphViewBox = '-32 -32 64 64';
+    mount.dataset.masterGlyphScale = String(MASTER_SCALE);
     mount.dataset.masterGlyphSource = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
 
+    const master = document.createElementNS(NS, 'g');
+    master.setAttribute('transform', `scale(${MASTER_SCALE})`);
+    master.dataset.masterGlyphUnit = 'true';
+    mount.appendChild(master);
+
     try {
-      const bubble = component.createBubble(mount, entry.id, {
-        radius:17,
+      const bubble = component.createBubble(master, entry.id, {
+        radius:MASTER_RADIUS,
         padding:1,
-        color:COLORS[key],
-        fill:'#fffdfa',
-        strokeWidth:2.2
+        color:COLORS[key]
       });
       await bubble.ready;
       bubble.root.dataset.heptagramCircledGlyph = 'true';
