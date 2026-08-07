@@ -3,12 +3,12 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV17) return;
-  window.__relphiSkyRelationshipListLayoutV17 = true;
+  if (window.__relphiSkyRelationshipListLayoutV18) return;
+  window.__relphiSkyRelationshipListLayoutV18 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV17';
-  const OWNER = 'relationship-layout-v17';
+  const STYLE_ID = 'skyRelationshipListLayoutV18';
+  const OWNER = 'relationship-layout-v18';
   const MASTER_VIEWBOX = '-32 -32 64 64';
   const MASTER_RADIUS = 19;
   const DISPLAY_SIZE = 28;
@@ -21,6 +21,7 @@
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
+    document.getElementById('skyRelationshipListLayoutV17')?.remove();
     document.getElementById('skyRelationshipListLayoutV16')?.remove();
     const style = document.createElement('style');
     style.id = STYLE_ID;
@@ -113,13 +114,26 @@
     document.head.appendChild(style);
   }
 
-  function canonicalHostIsIntact(slot, entry) {
+  function outerHostIsIntact(slot, entry) {
     const host = slot?.firstElementChild;
     return slot?.childElementCount === 1 &&
       slot?.dataset.relationshipGlyphOwner === OWNER &&
       host?.matches?.(`svg[data-relationship-canonical-host="${OWNER}"]`) &&
       host.dataset.canonicalGlyphId === entry?.id &&
       host.getAttribute('viewBox') === MASTER_VIEWBOX;
+  }
+
+  function canonicalHostIsIntact(slot, entry, mode) {
+    if (!outerHostIsIntact(slot, entry)) return false;
+    const host = slot.firstElementChild;
+    if (host.childElementCount !== 1) return false;
+    const bubble = host.firstElementChild;
+    if (!bubble?.matches?.('g.relphi-glyph-bubble') || bubble.dataset.glyphId !== entry.id) return false;
+    const circles = Array.from(bubble.children).filter(node => node.tagName?.toLowerCase() === 'circle');
+    const arts = Array.from(bubble.children).filter(node => node.classList?.contains('relphi-canonical-glyph'));
+    if (circles.length !== 1 || arts.length !== 1 || !arts[0].classList.contains('relphi-glyph-' + entry.id)) return false;
+    if (mode === 'plain' && circles[0].style.opacity !== '0') return false;
+    return true;
   }
 
   function paintGlyph(slot, identity, mode, color, label) {
@@ -132,8 +146,8 @@
       return;
     }
 
-    if (canonicalHostIsIntact(slot, entry) &&
-        (slot.dataset.canonicalGlyphReady === 'true' || slot.dataset.canonicalGlyphReady === 'loading')) return;
+    if (slot.dataset.canonicalGlyphReady === 'loading' && outerHostIsIntact(slot, entry)) return;
+    if (slot.dataset.canonicalGlyphReady === 'true' && canonicalHostIsIntact(slot, entry, mode)) return;
 
     const host = document.createElementNS(NS, 'svg');
     host.setAttribute('viewBox', MASTER_VIEWBOX);
@@ -147,6 +161,7 @@
     slot.replaceChildren(host);
     slot.dataset.relationshipGlyphOwner = OWNER;
     slot.dataset.relationshipGlyphIdentity = entry.id;
+    slot.dataset.relationshipGlyphMode = mode;
     slot.dataset.canonicalGlyphReady = 'loading';
     slot.setAttribute('title', label || entry.name || entry.id);
     delete slot.dataset.glyphUnavailable;
@@ -171,7 +186,12 @@
     }
 
     Promise.resolve(bubble.ready).then(() => {
-      if (canonicalHostIsIntact(slot, entry)) slot.dataset.canonicalGlyphReady = 'true';
+      if (canonicalHostIsIntact(slot, entry, mode)) {
+        slot.dataset.canonicalGlyphReady = 'true';
+        return;
+      }
+      slot.dataset.canonicalGlyphReady = 'corrupt';
+      queueMicrotask(() => paintGlyph(slot, identity, mode, color, label));
     }).catch(error => {
       slot.dataset.canonicalGlyphReady = 'error';
       slot.dataset.glyphUnavailable = 'true';
@@ -194,7 +214,7 @@
     row.style.setProperty('--relationship-stripe', color);
     paintRowGlyphs(row);
 
-    if (row.dataset.relationshipLayout === 'v17') return;
+    if (row.dataset.relationshipLayout === 'v18') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
@@ -207,7 +227,7 @@
     badge.textContent = `Orb ${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-    row.dataset.relationshipLayout = 'v17';
+    row.dataset.relationshipLayout = 'v18';
   }
 
   function refresh(root) {
