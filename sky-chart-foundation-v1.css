@@ -121,7 +121,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-divider { stroke-width:2.15; vector-effect:non-scaling-stroke; }
 .sky-foundation-house-number {
   fill:#29241f;
-  font:700 15px/1 Georgia,serif;
+  font:800 22px/1 Georgia,serif;
   text-anchor:middle;
   dominant-baseline:central;
   pointer-events:none;
@@ -163,7 +163,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
     opacity:.52;
   }
   #skyFoundationWheelMount .sky-foundation-house-number {
-    font-size:22px;
+    font-size:24px;
     font-weight:800;
   }
 }
