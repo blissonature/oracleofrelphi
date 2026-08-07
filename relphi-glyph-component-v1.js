@@ -157,12 +157,17 @@
     const color = options?.color || '#dc1f18';
     const bubbleStrokeWidth = Number(options?.bubbleStrokeWidth || 0);
     let art;
+    let needsFittedReveal = false;
 
     if (entry.asset) {
       const source = await loadAsset(entry.asset);
       if (entry.fitMode === 'static-master') return staticMaster(parent, source, entry, color, radius);
       art = svg('g');
       Array.from(source.children).forEach(child => art.appendChild(document.importNode(child, true)));
+      // Dynamic SVG masters need one mounted frame for getBBox()-based fitting. Keep
+      // that raw 0–100 source geometry invisible until its canonical transform exists.
+      art.style.visibility = 'hidden';
+      needsFittedReveal = true;
       parent.appendChild(art);
       recolor(art, color);
     } else art = textGlyph(parent, entry, color);
@@ -171,6 +176,7 @@
     thickenToNodeWeight(art, entry, color);
     await new Promise(resolve => requestAnimationFrame(resolve));
     fit(art, radius, padding, entry, bubbleStrokeWidth);
+    if (needsFittedReveal) art.style.visibility = '';
     return art;
   }
 
