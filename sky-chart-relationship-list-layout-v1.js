@@ -57,8 +57,8 @@
       .sky-foundation-relationship-glyph--left{grid-area:left-glyph}
       .sky-foundation-relationship-glyph--aspect{grid-area:aspect;justify-self:center}
       .sky-foundation-relationship-glyph--right{grid-area:right-glyph}
-      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(1){grid-area:left-copy}
-      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(2){grid-area:right-copy}
+      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(2){grid-area:left-copy}
+      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5){grid-area:right-copy}
       .sky-foundation-relationship-copy{white-space:normal;line-height:1.15;min-width:0}
       .sky-foundation-relationship-copy small{white-space:normal}
       .sky-foundation-relationship-orb{
@@ -97,7 +97,7 @@
           padding:9px 10px 8px 13px;
         }
         .sky-foundation-relationship-orb{justify-self:center;min-width:74px;margin-top:2px}
-        .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-of-type(2){text-align:right}
+        .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5){text-align:right}
         .sky-foundation-relationship-glyph--right{justify-self:end}
       }
     `;
