@@ -22,7 +22,6 @@
       entry.fitMode === 'static-master' ||
       entry.id === 'north-node' ||
       entry.id === 'south-node' ||
-      entry.id === 'part-of-fortune' ||
       entry.fitMode === 'letter' ||
       entry.fitMode === 'hebrew-letter' ||
       entry.fitMode === 'greek-letter' ||
@@ -109,19 +108,6 @@
     node.setAttribute('transform', `translate(${entry.dx || 0} ${entry.dy || 0}) scale(${scale}) translate(${-cx} ${-cy})`);
   }
 
-  function fortune(parent, color) {
-    const group = svg('g');
-    group.innerHTML = '<circle cx="0" cy="0" r="9" fill="none"/><path d="M-6.35-6.35L6.35 6.35M6.35-6.35L-6.35 6.35" fill="none"/>';
-    group.querySelectorAll('*').forEach(node => {
-      node.setAttribute('stroke', color);
-      node.setAttribute('stroke-width', '1.45');
-      node.setAttribute('stroke-linecap', 'round');
-      node.setAttribute('stroke-linejoin', 'round');
-    });
-    parent.appendChild(group);
-    return group;
-  }
-
   function textGlyph(parent, entry, color) {
     const text = svg('text');
     const aspectLetter = entry.fitMode === 'aspect-letter';
@@ -179,8 +165,7 @@
       Array.from(source.children).forEach(child => art.appendChild(document.importNode(child, true)));
       parent.appendChild(art);
       recolor(art, color);
-    } else if (entry.fallback === 'fortune') art = fortune(parent, color);
-    else art = textGlyph(parent, entry, color);
+    } else art = textGlyph(parent, entry, color);
 
     art.classList.add('relphi-canonical-glyph', 'relphi-glyph-' + entry.id);
     thickenToNodeWeight(art, entry, color);
