@@ -8,6 +8,7 @@ const css = fs.readFileSync(path.join(root, 'sky-chart-foundation-v1.css'), 'utf
 const interactionCss = fs.readFileSync(path.join(root, 'sky-chart-foundation-interactions-v1.css'), 'utf8');
 const interactions = fs.readFileSync(path.join(root, 'sky-chart-foundation-interactions-v2.js'), 'utf8');
 const relationships = fs.readFileSync(path.join(root, 'sky-chart-relationship-list-layout-v1.js'), 'utf8');
+const selectedRelationship = fs.readFileSync(path.join(root, 'sky-chart-selected-relationship-v4.js'), 'utf8');
 const heptagram = fs.readFileSync(path.join(root, 'sky-chart-heptagram-canonical-v1.js'), 'utf8');
 const registry = fs.readFileSync(path.join(root, 'relphi-glyph-registry-v1.js'), 'utf8');
 const component = fs.readFileSync(path.join(root, 'relphi-glyph-component-v1.js'), 'utf8');
@@ -45,12 +46,16 @@ test('relationship glyphs preserve the exact uncircled Master Glyph List artboar
   assert.match(relationships, /sky-foundation-relationship-glyph--right'\), row\.dataset\.rightPlacement, 'plain'/);
 });
 
-test('relationship glyph slots have one renderer owner and one fixed display box', () => {
-  assert.match(relationships, /const OWNER = 'relationship-layout-v17';/);
+test('relationship glyph slots have one renderer owner, one canonical subtree, and one fixed display box', () => {
+  assert.match(relationships, /const OWNER = 'relationship-layout-v18';/);
   assert.match(relationships, /const DISPLAY_SIZE = 28;/);
   assert.match(relationships, /data-relationship-canonical-host/);
   assert.match(relationships, /slot\.replaceChildren\(host\)/);
   assert.match(relationships, /slot\.dataset\.relationshipGlyphOwner = OWNER/);
+  assert.match(relationships, /host\.childElementCount !== 1/);
+  assert.match(relationships, /g\.relphi-glyph-bubble/);
+  assert.match(relationships, /arts\.length !== 1/);
+  assert.match(relationships, /relphi-glyph-' \+ entry\.id/);
   assert.match(relationships, /width:\$\{DISPLAY_SIZE\}px!important/);
   assert.match(relationships, /height:\$\{DISPLAY_SIZE\}px!important/);
   assert.match(relationships, /record\.target instanceof Element \? record\.target\.closest\('\.sky-foundation-relationship-row'\)/);
@@ -62,6 +67,13 @@ test('interaction controller creates relationship slots but never paints glyphs'
   assert.doesNotMatch(interactions, /placeCanonicalGlyph\(/);
   assert.doesNotMatch(interactions, /createBubble\(/);
   assert.doesNotMatch(interactions, /RelphiGlyphComponent/);
+});
+
+test('selected relationship tokens use the same shared component method', () => {
+  assert.doesNotMatch(selectedRelationship, /RelphiCanonicalGlyphState/);
+  assert.match(selectedRelationship, /window\.RelphiGlyphComponent/);
+  assert.match(selectedRelationship, /component\.createBubble\(svg,entry\.id,\{radius:19,padding:1,color\}\)/);
+  assert.match(selectedRelationship, /svg\.setAttribute\('viewBox','-32 -32 64 64'\)/);
 });
 
 test('relationship labels stay paired with their own glyph slots', () => {
@@ -136,7 +148,8 @@ test('Sky Chart cache keys point at the corrected consumers', () => {
   assert.match(html, /sky-chart-foundation-interactions-v1\.css\?v=2/);
   assert.match(html, /sky-chart-foundation-interactions-v2\.js\?v=9/);
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
-  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=17/);
+  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=18/);
+  assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=4/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=11/);
   assert.match(html, /sky-chart-card-hits-v2\.js\?v=3/);
 });
