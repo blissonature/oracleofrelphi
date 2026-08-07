@@ -71,6 +71,37 @@ if (componentDefinitions.length !== 1 || rel(componentDefinitions[0] || '') !== 
   fail(`Expected exactly one RelphiGlyphComponent definition in relphi-glyph-component-v1.js; found: ${componentDefinitions.map(rel).join(', ') || 'none'}`);
 }
 
+// The registry is the sole production file allowed to name concrete glyph SVG assets.
+// Consumers choose identities and presentation states; they never bypass the registry
+// by importing a planet/zodiac/aspect/element SVG directly.
+const directGlyphAssetPattern = /assets\/(?:planet|zodiac|aspect|element)-glyphs\/[a-z0-9._/-]+\.svg/gi;
+for (const file of sourceFiles) {
+  const name = rel(file);
+  if (name === 'relphi-glyph-registry-v1.js') continue;
+  const matches = Array.from(new Set(text(file).match(directGlyphAssetPattern) || []));
+  if (matches.length) fail(`${name} bypasses the registry with direct glyph asset reference(s): ${matches.join(', ')}`);
+}
+
+// Relationship rows have exactly one glyph painter. The interaction controller may
+// create semantic slots, but only the relationship layout module may populate them,
+// and it must populate them through RelphiGlyphComponent.createBubble().
+const relationshipLayoutPath = path.join(ROOT, 'sky-chart-relationship-list-layout-v1.js');
+const relationshipInteractionPath = path.join(ROOT, 'sky-chart-foundation-interactions-v2.js');
+if (!fs.existsSync(relationshipLayoutPath)) {
+  fail('Missing sole relationship glyph painter: sky-chart-relationship-list-layout-v1.js');
+} else {
+  const relationshipLayout = text(relationshipLayoutPath);
+  if (!relationshipLayout.includes('RelphiGlyphComponent')) fail('Relationship glyph painter no longer resolves the shared RelphiGlyphComponent.');
+  if (!relationshipLayout.includes('component.createBubble(')) fail('Relationship glyph painter no longer uses the shared createBubble method.');
+  if (!relationshipLayout.includes('data-relationship-canonical-host')) fail('Relationship glyph painter no longer marks exclusive canonical ownership of its SVG hosts.');
+}
+if (fs.existsSync(relationshipInteractionPath)) {
+  const interaction = text(relationshipInteractionPath);
+  for (const token of ['RelphiCanonicalGlyphState','placeCanonicalGlyph(','component.createBubble(','RelphiGlyphComponent.createBubble(']) {
+    if (interaction.includes(token)) fail(`Interaction controller is rendering relationship glyphs instead of leaving painting to the sole relationship renderer: ${token}`);
+  }
+}
+
 const forbiddenFiles = [
   'relphi-moon-stroke-preservation-v1.js',
   'relphi-neptune-cross-connection-v1.js',
@@ -171,7 +202,7 @@ if (fs.existsSync(navloaderPath)) {
   const nav = text(navloaderPath);
   for (const snippet of [
     "appendScript('relphi-glyph-registry-v1.js?v=28'",
-    "appendScript('relphi-glyph-component-v1.js?v=31'",
+    "appendScript('relphi-glyph-component-v1.js?v=32'",
     "appendScript('relphi-glyph-source-integrity-v1.js?v=2'",
     "appendScript('relphi-inline-glyph-consumer-v1.js?v=2'",
     "appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2'"
@@ -193,4 +224,4 @@ if (failures.length) {
 }
 
 console.log('Single glyph canon check passed.');
-console.log('One registry, one component, one shared static-master treatment for all ten planets plus Lilith and Part of Fortune, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
+console.log('One registry, one component, registry-only asset addressing, one relationship glyph painter, shared static-master treatment, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
