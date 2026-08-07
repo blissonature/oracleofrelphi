@@ -10,6 +10,7 @@ on:
       - 'assets/**/*.svg'
       - 'tools/check-single-glyph-canon.mjs'
       - 'tools/check-planet-glyph-hashes.mjs'
+      - 'tools/check-sky-chart-glyph-readiness.mjs'
       - '.github/workflows/single-glyph-canon.yml'
   pull_request:
     paths:
@@ -20,6 +21,7 @@ on:
       - 'assets/**/*.svg'
       - 'tools/check-single-glyph-canon.mjs'
       - 'tools/check-planet-glyph-hashes.mjs'
+      - 'tools/check-sky-chart-glyph-readiness.mjs'
       - '.github/workflows/single-glyph-canon.yml'
 
 permissions:
@@ -35,3 +37,4 @@ jobs:
           node-version: 22
       - run: node tools/check-single-glyph-canon.mjs
       - run: node tools/check-planet-glyph-hashes.mjs
+      - run: node tools/check-sky-chart-glyph-readiness.mjs
