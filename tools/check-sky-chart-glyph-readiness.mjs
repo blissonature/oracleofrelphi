@@ -50,17 +50,12 @@ if (registry) {
     if (!entry) fail(`Sky Chart identity missing from the one registry: ${id}`);
   }
 
-  const staticPlanets = ['sun','moon','mercury','venus','jupiter','saturn','uranus','neptune','pluto'];
+  const staticPlanets = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
   for (const id of staticPlanets) {
     const entry = registry.get(id);
-    if (!entry?.asset || entry.fitMode !== 'static-master') {
-      fail(`${id} must use its recovered static Master Glyph List vector.`);
+    if (!entry?.asset || entry.fitMode !== 'static-master' || entry.scale !== 1 || entry.dx !== 0 || entry.dy !== 0) {
+      fail(`${id} must use the shared recovered static Master Glyph List treatment.`);
     }
-  }
-
-  const mars = registry.get('mars');
-  if (mars?.asset !== 'assets/planet-glyphs/mars.svg' || mars?.fitMode !== 'circle') {
-    fail('Mars no longer uses the explicitly approved corrected smooth source treatment.');
   }
 
   const exactTreatments = {
