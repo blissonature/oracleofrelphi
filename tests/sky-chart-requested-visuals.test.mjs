@@ -9,6 +9,9 @@ const relationships = fs.readFileSync(path.join(root, 'sky-chart-relationship-li
 const heptagram = fs.readFileSync(path.join(root, 'sky-chart-heptagram-canonical-v1.js'), 'utf8');
 const registry = fs.readFileSync(path.join(root, 'relphi-glyph-registry-v1.js'), 'utf8');
 const component = fs.readFileSync(path.join(root, 'relphi-glyph-component-v1.js'), 'utf8');
+const fortune = fs.readFileSync(path.join(root, 'assets/planet-glyphs/part-of-fortune.svg'), 'utf8');
+const angles = fs.readFileSync(path.join(root, 'sky-chart-angle-placements-v1.js'), 'utf8');
+const hits = fs.readFileSync(path.join(root, 'sky-chart-card-hits-v2.js'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'sky-chart.html'), 'utf8');
 
 test('wheel house numbers use the enlarged desktop treatment', () => {
@@ -51,10 +54,34 @@ test('Lilith uses the same static-master path as the planetary SVG masters', () 
   assert.doesNotMatch(component, /entry\.fitMode === 'lilith'/);
 });
 
-test('Sky Chart cache keys point at the corrected glyph consumers', () => {
-  assert.match(html, /relphi-glyph-registry-v1\.js\?v=27/);
+test('Part of Fortune is a full-sized static master rather than a small procedural insert', () => {
+  assert.match(registry, /\['part-of-fortune','Part of Fortune',[^\n]+assets\/planet-glyphs\/part-of-fortune\.svg',1,0,0,null,'static-master'\]/);
+  assert.match(fortune, /<circle cx="50" cy="50" r="20"/);
+  assert.match(fortune, /stroke-width="3\.3"/);
+});
+
+test('Chart Hit cards isolate their primary chart correspondence instead of opening static detail text', () => {
+  assert.match(hits, /judgement:Object\.freeze\(\{kind:'placement',value:'pluto',label:'Pluto'\}\)/);
+  assert.match(hits, /kind:'sign',value:SIGNS\.indexOf\(sign\),label:sign/);
+  assert.match(hits, /dispatchEvent\(new MouseEvent\('click'/);
+  assert.doesNotMatch(hits, /sky-card-hit-detail/);
+  assert.doesNotMatch(hits, /detailMarkup/);
+});
+
+test('Chart Angles are grouped visually without reordering ledger row identity', () => {
+  assert.match(angles, /function renderedAngle\(row\)/);
+  assert.match(angles, /row\.querySelector\(`\.relphi-glyph-\$\{angle\.id\}`\)/);
+  assert.match(angles, /row\.style\.order = String\(1001 \+ position\)/);
+  assert.match(angles, /heading\.style\.order = '1000'/);
+  assert.doesNotMatch(angles, /ledger\.appendChild\(match\[1\]\)/);
+});
+
+test('Sky Chart cache keys point at the corrected consumers', () => {
+  assert.match(html, /relphi-glyph-registry-v1\.js\?v=28/);
   assert.match(html, /relphi-glyph-component-v1\.js\?v=30/);
   assert.match(html, /sky-chart-foundation-v1\.css\?v=7/);
+  assert.match(html, /sky-chart-angle-placements-v1\.js\?v=5/);
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=16/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=11/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=2/);
 });
