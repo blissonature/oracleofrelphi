@@ -6,22 +6,28 @@ on:
       - '**/*.html'
       - '**/*.js'
       - '**/*.mjs'
+      - '**/*.css'
       - '**/*.json'
       - 'assets/**/*.svg'
       - 'tools/check-single-glyph-canon.mjs'
       - 'tools/check-planet-glyph-hashes.mjs'
       - 'tools/check-sky-chart-glyph-readiness.mjs'
+      - 'tests/sky-chart-requested-visuals.test.mjs'
+      - 'tests/sky-chart-angle-lane-isolation.test.mjs'
       - '.github/workflows/single-glyph-canon.yml'
   pull_request:
     paths:
       - '**/*.html'
       - '**/*.js'
       - '**/*.mjs'
+      - '**/*.css'
       - '**/*.json'
       - 'assets/**/*.svg'
       - 'tools/check-single-glyph-canon.mjs'
       - 'tools/check-planet-glyph-hashes.mjs'
       - 'tools/check-sky-chart-glyph-readiness.mjs'
+      - 'tests/sky-chart-requested-visuals.test.mjs'
+      - 'tests/sky-chart-angle-lane-isolation.test.mjs'
       - '.github/workflows/single-glyph-canon.yml'
 
 permissions:
@@ -35,6 +41,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node tools/check-single-glyph-canon.mjs
-      - run: node tools/check-planet-glyph-hashes.mjs
-      - run: node tools/check-sky-chart-glyph-readiness.mjs
+      - name: Enforce one registry, one component, one rendering route
+        run: node tools/check-single-glyph-canon.mjs
+      - name: Pin approved planetary master bytes
+        run: node tools/check-planet-glyph-hashes.mjs
+      - name: Check Sky Chart glyph readiness
+        run: node tools/check-sky-chart-glyph-readiness.mjs
+      - name: Run glyph-facing Sky Chart regression tests
+        run: node --test tests/sky-chart-requested-visuals.test.mjs tests/sky-chart-angle-lane-isolation.test.mjs
