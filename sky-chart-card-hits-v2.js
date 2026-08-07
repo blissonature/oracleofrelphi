@@ -1,9 +1,11 @@
 // Stable Chart Card Hits tally beneath each independent sky.
+// Card clicks now isolate the card's primary sky correspondence instead of opening static text.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyChartCardHitsV2) return;
+  if (window.__relphiSkyChartCardHitsV3) return;
   window.__relphiSkyChartCardHitsV2 = true;
+  window.__relphiSkyChartCardHitsV3 = true;
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -30,7 +32,13 @@
     ['eight_of_cups','nine_of_cups','ten_of_cups']
   ];
   const PLANET_NAMES = new Set(['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto']);
+  const PLANET_IDS = Object.freeze({Sun:'sun',Moon:'moon',Mercury:'mercury',Venus:'venus',Mars:'mars',Jupiter:'jupiter',Saturn:'saturn',Uranus:'uranus',Neptune:'neptune',Pluto:'pluto'});
   const OUTER_PLANET_CARDS = { Uranus:'the_fool', Neptune:'the_hanged_man', Pluto:'judgement' };
+  const CARD_TARGET_OVERRIDES = Object.freeze({
+    judgement:Object.freeze({kind:'placement',value:'pluto',label:'Pluto'}),
+    the_hanged_man:Object.freeze({kind:'placement',value:'neptune',label:'Neptune'}),
+    the_fool:Object.freeze({kind:'placement',value:'uranus',label:'Uranus'})
+  });
   const BODY_ALIASES = {
     sun:'Sun', moon:'Moon', mercury:'Mercury', venus:'Venus', mars:'Mars', jupiter:'Jupiter', saturn:'Saturn',
     uranus:'Uranus', neptune:'Neptune', pluto:'Pluto', asc:'Ascendant', rising:'Ascendant', ascendant:'Ascendant',
@@ -51,9 +59,10 @@
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function installStyles() {
-    if (document.getElementById('skyChartCardHitsStylesV2')) return;
+    if (document.getElementById('skyChartCardHitsStylesV3')) return;
+    document.getElementById('skyChartCardHitsStylesV2')?.remove();
     const style = document.createElement('style');
-    style.id = 'skyChartCardHitsStylesV2';
+    style.id = 'skyChartCardHitsStylesV3';
     style.textContent = `
       .sky-card-hits{--sky-hit-color:#555;margin:1rem 0 0;padding:.9rem;border:1px solid rgba(31,27,24,.16);border-top:5px solid var(--sky-hit-color);border-radius:1rem;background:#fffdfa;min-width:0;box-sizing:border-box}
       #skyFoundationA>.sky-card-hits{--sky-hit-color:#c9211e}#skyFoundationB>.sky-card-hits{--sky-hit-color:#2462d0}
@@ -68,11 +77,8 @@
       .sky-card-hit-art img{display:block;width:100%;height:100%;object-fit:cover}
       .sky-card-hit-chip{position:absolute;right:-.25rem;top:-.35rem;display:grid;place-items:center;min-width:1.75rem;height:1.75rem;padding:0 .32rem;border:2px solid #fff;border-radius:999px;background:var(--sky-hit-color);color:#fff;font:900 .73rem/1 system-ui,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.22)}
       .sky-card-hit-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font:750 .68rem/1.12 system-ui,sans-serif;text-align:center}
-      .sky-card-hit-detail{margin:.75rem 0 0;padding:.75rem;border-radius:.75rem;background:#f3f0ec;text-align:left}
-      .sky-card-hit-detail[hidden]{display:none!important}.sky-card-hit-detail h4{margin:0 0 .45rem;font:850 .95rem/1.2 system-ui,sans-serif}
-      .sky-card-hit-reasons{margin:0;padding-left:1.25rem;font:500 .79rem/1.38 system-ui,sans-serif;color:#35312e}.sky-card-hit-reasons li+li{margin-top:.3rem}
       .sky-card-hits-empty{margin:0;font:600 .8rem/1.4 system-ui,sans-serif;color:#625d58}
-      @media(max-width:620px){.sky-card-hits{padding:.75rem}.sky-card-hits-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:.42rem}.sky-card-hit{padding:.2rem}.sky-card-hit-name{font-size:.64rem}.sky-card-hit-detail{padding:.7rem}.sky-card-hit-reasons{font-size:.78rem}}
+      @media(max-width:620px){.sky-card-hits{padding:.75rem}.sky-card-hits-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:.42rem}.sky-card-hit{padding:.2rem}.sky-card-hit-name{font-size:.64rem}}
       @media(max-width:390px){.sky-card-hits-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
     `;
     document.head.appendChild(style);
@@ -142,7 +148,7 @@
 
   function cardForDecan(record) { return cardById(DECAN_CARDS[record.signIndex]?.[record.decan]); }
   function displayName(card) { return card?.systems?.golden_dawn_rws?.display_name || card?.name || String(card?.card_id || '').replace(/_/g,' '); }
-  function imageFor(card) { return `assets/tarot/rws/${encodeURIComponent(card.card_id)}.webp?v=chart-card-hits-v2`; }
+  function imageFor(card) { return `assets/tarot/rws/${encodeURIComponent(card.card_id)}.webp?v=chart-card-hits-v3`; }
   function positionLabel(record) { return `${record.body} at ${record.degree}°${String(record.minute).padStart(2,'0')}′ ${record.sign}`; }
 
   function addHit(tally,card,reason,key) {
@@ -237,6 +243,38 @@
     );
   }
 
+  function primaryCorrespondence(card,slot) {
+    if (!card) return null;
+    const id = card.card_id || card.stable_symbol_id || '';
+    const override = CARD_TARGET_OVERRIDES[id];
+    if (override && records(slot).some(record => PLANET_IDS[record.body] === override.value)) return override;
+
+    const planets = splitValues(card.astrology?.planet);
+    const signs = splitValues(card.astrology?.sign);
+    const planet = planets.find(name => PLANET_IDS[name] && records(slot).some(record => record.body === name));
+    const sign = signs.find(name => SIGNS.includes(name));
+
+    if (card.arcana === 'Major') {
+      if (planet) return {kind:'placement',value:PLANET_IDS[planet],label:planet};
+      if (sign) return {kind:'sign',value:SIGNS.indexOf(sign),label:sign};
+    } else {
+      if (sign) return {kind:'sign',value:SIGNS.indexOf(sign),label:sign};
+      if (planet) return {kind:'placement',value:PLANET_IDS[planet],label:planet};
+    }
+    return null;
+  }
+
+  function activateCorrespondence(slot,target) {
+    if (!target) return false;
+    const selector = target.kind === 'placement'
+      ? `[data-layer="placements"] [data-sky="${slot}"][data-placement="${target.value}"][data-interactive="placement"]`
+      : `[data-layer="zodiac"] [data-interactive="sign"][data-sign="${target.value}"]`;
+    const node = document.querySelector(selector);
+    if (!node) return false;
+    node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
+    return true;
+  }
+
   function ensureSection(slot) {
     const panel = document.getElementById(`skyFoundation${slot}`);
     if (!panel) return null;
@@ -253,31 +291,14 @@
     return section;
   }
 
-  function detailMarkup(hit) {
-    if (!hit) return '';
-    return `<h4>${esc(displayName(hit.card))} ×${hit.count}</h4><ol class="sky-card-hit-reasons">${hit.reasons.map(reason => `<li>${esc(reason)}</li>`).join('')}</ol>`;
-  }
-
   function tallySignature(hits) {
     return JSON.stringify(hits.map(hit => [hit.id,hit.count,hit.reasons]));
   }
 
-  function syncSelection(slot,section,hits) {
-    const selected = hits.find(hit => hit.id === selectedCard[slot]) || null;
-    if (!selected) selectedCard[slot] = '';
+  function syncSelection(slot,section) {
     section.querySelectorAll('.sky-card-hit[data-card-hit-id]').forEach(button => {
       button.setAttribute('aria-pressed',button.dataset.cardHitId === selectedCard[slot] ? 'true' : 'false');
     });
-    const detail = section.querySelector('.sky-card-hit-detail');
-    if (!detail) return;
-    if (!selected) {
-      detail.hidden = true;
-      if (detail.innerHTML) detail.innerHTML = '';
-      return;
-    }
-    const markup = detailMarkup(selected);
-    detail.hidden = false;
-    if (detail.innerHTML !== markup) detail.innerHTML = markup;
   }
 
   function renderSlot(slot) {
@@ -287,13 +308,16 @@
     const activationCount = hits.reduce((sum,hit) => sum + hit.count,0);
     const signature = tallySignature(hits);
     if (renderSignature[slot] === signature && section.firstElementChild) {
-      syncSelection(slot,section,hits);
+      syncSelection(slot,section);
       return;
     }
-    const selected = hits.find(hit => hit.id === selectedCard[slot]) || null;
-    if (!selected) selectedCard[slot] = '';
+    if (!hits.some(hit => hit.id === selectedCard[slot])) selectedCard[slot] = '';
     section.innerHTML = `<header class="sky-card-hits-header"><h3 class="sky-card-hits-title">Chart Card Hits</h3><span class="sky-card-hits-total">${activationCount} activation${activationCount === 1 ? '' : 's'} · ${hits.length} card${hits.length === 1 ? '' : 's'}</span></header>` +
-      (hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-pressed="${selectedCard[slot] === hit.id ? 'true' : 'false'}" aria-label="${esc(displayName(hit.card))}, ${hit.count} hits. Show sources."><span class="sky-card-hit-art"><img src="${esc(imageFor(hit.card))}" alt="" loading="lazy"><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`).join('')}</div><div class="sky-card-hit-detail" ${selected ? '' : 'hidden'} aria-live="polite">${detailMarkup(selected)}</div>` : '<p class="sky-card-hits-empty">Add placements to see which cards the sky activates.</p>');
+      (hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => {
+        const target = primaryCorrespondence(hit.card,slot);
+        const action = target ? `Isolate ${target.label}.` : 'No direct wheel isolation.';
+        return `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-pressed="${selectedCard[slot] === hit.id ? 'true' : 'false'}" aria-label="${esc(displayName(hit.card))}, ${hit.count} hits. ${esc(action)}"><span class="sky-card-hit-art"><img src="${esc(imageFor(hit.card))}" alt="" loading="lazy"><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`;
+      }).join('')}</div>` : '<p class="sky-card-hits-empty">Add placements to see which cards the sky activates.</p>');
     renderSignature[slot] = signature;
     section.dataset.hitCount = String(activationCount);
     section.dataset.cardCount = String(hits.length);
@@ -319,14 +343,25 @@
     const slot = section?.dataset.skySlot;
     if (!slot) return;
     const id = button.dataset.cardHitId || '';
+    const hit = buildTally(slot).find(item => item.id === id);
+    const target = primaryCorrespondence(hit?.card,slot);
+    if (!target) return;
     selectedCard[slot] = selectedCard[slot] === id ? '' : id;
-    renderSlot(slot);
+    syncSelection(slot,section);
+    activateCorrespondence(slot,target);
     button.focus({preventScroll:true});
+  }
+
+  function clearCardSelection() {
+    selectedCard.A = '';
+    selectedCard.B = '';
+    document.querySelectorAll('.sky-card-hits').forEach(section => syncSelection(section.dataset.skySlot,section));
   }
 
   function start() {
     installStyles();
     document.addEventListener('click',handleClick);
+    window.addEventListener('relphi:sky-foundation-clear-selection',clearCardSelection);
     ['relphi:sky-foundation-rendered','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed','relphi:sky-heptagram-source-ready'].forEach(name => window.addEventListener(name,schedule));
     window.addEventListener('storage',event => { if (Object.values(KEYS).includes(event.key)) schedule(); });
     observer = new MutationObserver(mutations => {
