@@ -42,6 +42,7 @@
   };
   const PLANET_CLASS = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
   const selectedCard = { A:'', B:'' };
+  const renderSignature = { A:'', B:'' };
   let scheduled = false;
   let observer = null;
 
@@ -268,16 +269,45 @@
     return `<h4>${esc(displayName(hit.card))} ×${hit.count}</h4><ol class="sky-card-hit-reasons">${hit.reasons.map(reason => `<li>${esc(reason)}</li>`).join('')}</ol>`;
   }
 
+  function syncSelection(slot,section,hits) {
+    const selected = hits.find(hit => hit.id === selectedCard[slot]) || null;
+    if (!selected) selectedCard[slot] = '';
+    section.querySelectorAll('.sky-card-hit[data-card-hit-id]').forEach(button => {
+      button.setAttribute('aria-pressed',button.dataset.cardHitId === selectedCard[slot] ? 'true' : 'false');
+    });
+    const detail = section.querySelector('.sky-card-hit-detail');
+    if (!detail) return;
+    if (!selected) {
+      detail.hidden = true;
+      if (detail.innerHTML) detail.innerHTML = '';
+      return;
+    }
+    const markup = detailMarkup(selected);
+    detail.hidden = false;
+    if (detail.innerHTML !== markup) detail.innerHTML = markup;
+  }
+
+  function tallySignature(hits) {
+    return JSON.stringify(hits.map(hit => [hit.id,hit.count,hit.reasons]));
+  }
+
   function renderSlot(slot) {
     const section = ensureSection(slot);
     if (!section) return;
     const hits = buildTally(slot);
     const activationCount = hits.reduce((sum,hit) => sum + hit.count,0);
+    const signature = tallySignature(hits);
+
+    if (renderSignature[slot] === signature && section.firstElementChild) {
+      syncSelection(slot,section,hits);
+      return;
+    }
+
     const selected = hits.find(hit => hit.id === selectedCard[slot]) || null;
     if (!selected) selectedCard[slot] = '';
-
     section.innerHTML = `<header class="sky-card-hits-header"><h3 class="sky-card-hits-title">Chart Card Hits</h3><span class="sky-card-hits-total">${activationCount} activation${activationCount === 1 ? '' : 's'} · ${hits.length} card${hits.length === 1 ? '' : 's'}</span></header>` +
       (hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-pressed="${selectedCard[slot] === hit.id ? 'true' : 'false'}" aria-label="${esc(displayName(hit.card))}, ${hit.count} hits. Show sources."><span class="sky-card-hit-art"><img src="${esc(imageFor(hit.card))}" alt="" loading="lazy"><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`).join('')}</div><div class="sky-card-hit-detail" ${selected ? '' : 'hidden'} aria-live="polite">${detailMarkup(selected)}</div>` : '<p class="sky-card-hits-empty">Add placements to see which cards the sky activates.</p>');
+    renderSignature[slot] = signature;
     section.dataset.hitCount = String(activationCount);
     section.dataset.cardCount = String(hits.length);
   }
@@ -304,7 +334,7 @@
     const id = button.dataset.cardHitId || '';
     selectedCard[slot] = selectedCard[slot] === id ? '' : id;
     renderSlot(slot);
-    section.querySelector(`[data-card-hit-id="${CSS.escape(selectedCard[slot] || id)}"]`)?.focus({preventScroll:true});
+    button.focus({preventScroll:true});
   }
 
   function start() {
