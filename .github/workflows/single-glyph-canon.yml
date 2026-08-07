@@ -6,7 +6,8 @@ on:
       - '**/*.html'
       - '**/*.js'
       - '**/*.mjs'
-      - 'assets/**/*glyph*.svg'
+      - '**/*.json'
+      - 'assets/**/*.svg'
       - 'tools/check-single-glyph-canon.mjs'
       - '.github/workflows/single-glyph-canon.yml'
   pull_request:
@@ -14,7 +15,8 @@ on:
       - '**/*.html'
       - '**/*.js'
       - '**/*.mjs'
-      - 'assets/**/*glyph*.svg'
+      - '**/*.json'
+      - 'assets/**/*.svg'
       - 'tools/check-single-glyph-canon.mjs'
       - '.github/workflows/single-glyph-canon.yml'
 
