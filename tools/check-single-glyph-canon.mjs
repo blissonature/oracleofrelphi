@@ -6,7 +6,7 @@ const SELF = 'tools/check-single-glyph-canon.mjs';
 const failures = [];
 const productionExt = /\.(?:html|js|mjs|css|json|yml|yaml)$/i;
 const skipDirs = new Set(['.git', 'node_modules', 'coverage', 'tests', 'test']);
-const staticPlanetIds = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
+const staticMasterIds = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith'];
 
 function rel(file) {
   return path.relative(ROOT, file).split(path.sep).join('/');
@@ -32,7 +32,6 @@ function fail(message) {
 }
 
 const files = walk(ROOT);
-// Production/runtime source only. Diagnostic tooling may discuss old paths, but it cannot be loaded by the site.
 const sourceFiles = files.filter(file => {
   const name = rel(file);
   return name !== SELF &&
@@ -125,13 +124,12 @@ if (fs.existsSync(registryPath)) {
   for (const [snippet, label] of angleRules) {
     if (!registry.includes(snippet)) fail(`${label} no longer uses the approved Master Glyph List text treatment.`);
   }
-  for (const id of staticPlanetIds) {
+  for (const id of staticMasterIds) {
     const pattern = new RegExp(`\\['${id}'[^\\n]+?,1,0,0,null,'static-master'\\]`);
-    if (!pattern.test(registry)) fail(`${id} is not pinned to the shared static-master planet treatment.`);
+    if (!pattern.test(registry)) fail(`${id} is not pinned to the shared static-master treatment.`);
   }
 }
 
-// Every SVG in the planet-glyph folder must be explicitly referenced by the one registry.
 const planetDir = path.join(ROOT, 'assets/planet-glyphs');
 if (fs.existsSync(planetDir) && registry) {
   for (const entry of fs.readdirSync(planetDir, { withFileTypes:true })) {
@@ -140,12 +138,10 @@ if (fs.existsSync(planetDir) && registry) {
     if (!registry.includes(`'${assetPath}'`)) fail(`Unregistered planet-glyph SVG can masquerade as authority: ${assetPath}`);
   }
 
-  // Static planet masters are flattened so paint is carried by the shapes themselves.
-  // This makes every planet inherit caller color through the exact same component path.
-  for (const id of staticPlanetIds) {
+  for (const id of staticMasterIds) {
     const file = path.join(planetDir, `${id}.svg`);
     if (!fs.existsSync(file)) {
-      fail(`Missing shared static planet master: ${id}`);
+      fail(`Missing shared static master: ${id}`);
       continue;
     }
     const source = text(file);
@@ -158,6 +154,8 @@ if (fs.existsSync(componentPath)) {
   const component = text(componentPath);
   if (!component.includes("if (entry.fitMode === 'static-master') return;")) fail('Static masters are no longer protected from runtime fitting.');
   if (!component.includes("if (entry.fitMode === 'static-master') return staticMaster")) fail('Static-master draw path is missing.');
+  if (component.includes("entry.id === 'lilith'")) fail('Lilith-specific component logic returned; Lilith must use the shared static-master path.');
+  if (component.includes("entry.fitMode === 'lilith'")) fail('Lilith-specific fitting returned; Lilith must not have a bespoke fit mode.');
   if (component.includes('function sun(')) fail('Procedural Sun renderer returned; Sun must come from the shared asset source.');
 }
 
@@ -193,4 +191,4 @@ if (failures.length) {
 }
 
 console.log('Single glyph canon check passed.');
-console.log('One registry, one component, one shared static treatment for all ten planets, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
+console.log('One registry, one component, one shared static-master treatment for all ten planets plus Lilith, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
