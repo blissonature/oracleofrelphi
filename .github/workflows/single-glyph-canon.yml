@@ -1,0 +1,32 @@
+name: Single glyph canon
+
+on:
+  push:
+    paths:
+      - '**/*.html'
+      - '**/*.js'
+      - '**/*.mjs'
+      - 'assets/**/*glyph*.svg'
+      - 'tools/check-single-glyph-canon.mjs'
+      - '.github/workflows/single-glyph-canon.yml'
+  pull_request:
+    paths:
+      - '**/*.html'
+      - '**/*.js'
+      - '**/*.mjs'
+      - 'assets/**/*glyph*.svg'
+      - 'tools/check-single-glyph-canon.mjs'
+      - '.github/workflows/single-glyph-canon.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  single-canon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/check-single-glyph-canon.mjs
