@@ -6,7 +6,7 @@ const SELF = 'tools/check-single-glyph-canon.mjs';
 const failures = [];
 const productionExt = /\.(?:html|js|mjs|css|json|yml|yaml)$/i;
 const skipDirs = new Set(['.git', 'node_modules', 'coverage', 'tests', 'test']);
-const staticMasterIds = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith'];
+const staticMasterIds = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith','part-of-fortune'];
 
 function rel(file) {
   return path.relative(ROOT, file).split(path.sep).join('/');
@@ -191,4 +191,4 @@ if (failures.length) {
 }
 
 console.log('Single glyph canon check passed.');
-console.log('One registry, one component, one shared static-master treatment for all ten planets plus Lilith, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
+console.log('One registry, one component, one shared static-master treatment for all ten planets plus Lilith and Part of Fortune, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
