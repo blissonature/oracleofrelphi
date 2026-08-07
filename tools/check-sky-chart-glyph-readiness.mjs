@@ -20,7 +20,8 @@ const requiredFiles = [
   'sky-chart.html',
   'sky-chart-foundation-v1.js',
   'sky-chart-calculated-points-v1.js',
-  'sky-chart-heptagram-canonical-v1.js'
+  'sky-chart-heptagram-canonical-v1.js',
+  'sky-chart-relationship-list-layout-v1.js'
 ];
 requiredFiles.forEach(requireFile);
 
@@ -50,8 +51,8 @@ if (registry) {
     if (!entry) fail(`Sky Chart identity missing from the one registry: ${id}`);
   }
 
-  const staticPlanets = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
-  for (const id of staticPlanets) {
+  const staticMasters = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith'];
+  for (const id of staticMasters) {
     const entry = registry.get(id);
     if (!entry?.asset || entry.fitMode !== 'static-master' || entry.scale !== 1 || entry.dx !== 0 || entry.dy !== 0) {
       fail(`${id} must use the shared recovered static Master Glyph List treatment.`);
@@ -75,9 +76,6 @@ if (registry) {
       fail(`${id} drifted from the Master Glyph List treatment.`);
     }
   }
-
-  const lilith = registry.get('lilith');
-  if (lilith?.asset !== 'assets/planet-glyphs/lilith.svg') fail('Lilith no longer uses the shared authored asset.');
 }
 
 if (fs.existsSync(required('sky-chart.html'))) {
@@ -145,8 +143,17 @@ if (fs.existsSync(required('sky-chart-calculated-points-v1.js'))) {
 
 if (fs.existsSync(required('sky-chart-heptagram-canonical-v1.js'))) {
   const heptagram = read('sky-chart-heptagram-canonical-v1.js');
-  if (!heptagram.includes('component.draw')) fail('Planetary heptagram no longer consumes the one glyph component.');
+  if (!heptagram.includes('component.createBubble')) fail('Planetary heptagram no longer consumes the canonical circled glyph component path.');
+  if (!heptagram.includes('MASTER_RADIUS = 19')) fail('Planetary heptagram no longer starts from the exact Master Glyph List radius.');
+  if (!heptagram.includes('MASTER_SCALE = DISPLAY_RADIUS / MASTER_RADIUS')) fail('Planetary heptagram no longer scales the complete master as one unit.');
   if (heptagram.includes('RelphiCanonicalGlyphState')) fail('Removed alternate glyph-state renderer returned to the heptagram.');
+}
+
+if (fs.existsSync(required('sky-chart-relationship-list-layout-v1.js'))) {
+  const relationships = read('sky-chart-relationship-list-layout-v1.js');
+  if (!relationships.includes("MASTER_VIEWBOX = '-32 -32 64 64'")) fail('Relationship glyphs no longer preserve the exact Master Glyph List artboard.');
+  if (!relationships.includes('MASTER_RADIUS = 19')) fail('Relationship glyphs no longer render at the canonical master radius before CSS scaling.');
+  if (relationships.includes("viewBox', '-16 -16 32 32'") || relationships.includes('radius:13')) fail('Relationship glyphs returned to a cropped or refitted mini-artboard.');
 }
 
 if (fs.existsSync(required('relphi-glyph-source-integrity-v1.js'))) {
@@ -163,4 +170,4 @@ if (failures.length) {
 }
 
 console.log('Sky Chart glyph readiness passed.');
-console.log('Sky Chart is cleared for feature work with glyph rendering frozen to the single Master Glyph List authority.');
+console.log('Sky Chart is cleared for feature work with glyph rendering frozen to the single Master Glyph List authority, exact master artboards in miniature consumers, and no Lilith-specific rendering exception.');
