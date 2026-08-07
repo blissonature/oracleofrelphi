@@ -54,10 +54,12 @@ test('Lilith uses the same static-master path as the planetary SVG masters', () 
   assert.doesNotMatch(component, /entry\.fitMode === 'lilith'/);
 });
 
-test('Part of Fortune is a full-sized static master rather than a small procedural insert', () => {
+test('Part of Fortune is a full-sized static master rather than a procedural insert', () => {
   assert.match(registry, /\['part-of-fortune','Part of Fortune',[^\n]+assets\/planet-glyphs\/part-of-fortune\.svg',1,0,0,null,'static-master'\]/);
   assert.match(fortune, /<circle cx="50" cy="50" r="20"/);
   assert.match(fortune, /stroke-width="3\.3"/);
+  assert.doesNotMatch(component, /entry\.id === 'part-of-fortune'/);
+  assert.doesNotMatch(component, /function fortune\(/);
 });
 
 test('Chart Hit cards isolate their primary chart correspondence instead of opening static detail text', () => {
@@ -78,7 +80,7 @@ test('Chart Angles are grouped visually without reordering ledger row identity',
 
 test('Sky Chart cache keys point at the corrected consumers', () => {
   assert.match(html, /relphi-glyph-registry-v1\.js\?v=28/);
-  assert.match(html, /relphi-glyph-component-v1\.js\?v=30/);
+  assert.match(html, /relphi-glyph-component-v1\.js\?v=31/);
   assert.match(html, /sky-chart-foundation-v1\.css\?v=7/);
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=5/);
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=16/);
