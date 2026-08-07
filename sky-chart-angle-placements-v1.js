@@ -3,10 +3,11 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyAnglePlacementsV3) return;
+  if (window.__relphiSkyAnglePlacementsV4) return;
   window.__relphiSkyAnglePlacementsV1 = true;
   window.__relphiSkyAnglePlacementsV2 = true;
   window.__relphiSkyAnglePlacementsV3 = true;
+  window.__relphiSkyAnglePlacementsV4 = true;
 
   const KEYS = new Set(['relphiSkyChartA', 'relphiSkyChartB']);
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -164,10 +165,8 @@
     });
   }
 
-  function angleFromRow(row) {
-    const existing = normalizeKey(row.dataset.placement);
-    const name = normalizeKey(row.querySelector('.sky-foundation-row-name')?.textContent);
-    return ANGLES.find(angle => angle.aliases.includes(existing) || angle.aliases.includes(name)) || null;
+  function renderedAngle(row) {
+    return ANGLES.find(angle => row.querySelector(`.relphi-glyph-${angle.id}`)) || null;
   }
 
   function decorateLedgers() {
@@ -179,26 +178,32 @@
         if (!ledger) return;
         ledger.querySelectorAll('.sky-foundation-ledger-angle-heading').forEach(node => node.remove());
         const rows = Array.from(ledger.querySelectorAll('.sky-foundation-row'));
-        const angleRows = [];
+        const byAngle = new Map();
+
         rows.forEach(row => {
-          const angle = angleFromRow(row);
+          const angle = renderedAngle(row);
           if (!angle) return;
+          if (byAngle.has(angle.id)) {
+            row.remove();
+            return;
+          }
+          byAngle.set(angle.id, row);
           row.dataset.placement = angle.id;
           row.dataset.anglePlacement = angle.id;
+          row.dataset.canonicalLedgerIdentity = angle.id;
           const name = row.querySelector('.sky-foundation-row-name');
           if (name) name.textContent = angle.label;
-          angleRows.push([angle, row]);
         });
-        if (!angleRows.length) return;
 
+        if (!byAngle.size) return;
         const heading = document.createElement('div');
         heading.className = 'sky-foundation-ledger-angle-heading';
         heading.dataset.placementSection = 'chart-angles';
         heading.textContent = 'Chart Angles';
         ledger.appendChild(heading);
         ANGLES.forEach(angle => {
-          const match = angleRows.find(([entry]) => entry.id === angle.id);
-          if (match) ledger.appendChild(match[1]);
+          const row = byAngle.get(angle.id);
+          if (row) ledger.appendChild(row);
         });
       });
     } finally {
