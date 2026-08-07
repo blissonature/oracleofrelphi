@@ -1,11 +1,12 @@
 // Stable Chart Card Hits tally beneath each independent sky.
-// Card clicks now isolate the card's primary sky correspondence instead of opening static text.
+// Card clicks isolate the card's primary sky correspondence while the tally remains a property of the full chart.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyChartCardHitsV3) return;
+  if (window.__relphiSkyChartCardHitsV4) return;
   window.__relphiSkyChartCardHitsV2 = true;
   window.__relphiSkyChartCardHitsV3 = true;
+  window.__relphiSkyChartCardHitsV4 = true;
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -148,7 +149,7 @@
 
   function cardForDecan(record) { return cardById(DECAN_CARDS[record.signIndex]?.[record.decan]); }
   function displayName(card) { return card?.systems?.golden_dawn_rws?.display_name || card?.name || String(card?.card_id || '').replace(/_/g,' '); }
-  function imageFor(card) { return `assets/tarot/rws/${encodeURIComponent(card.card_id)}.webp?v=chart-card-hits-v3`; }
+  function imageFor(card) { return `assets/tarot/rws/${encodeURIComponent(card.card_id)}.webp?v=chart-card-hits-v4`; }
   function positionLabel(record) { return `${record.body} at ${record.degree}°${String(record.minute).padStart(2,'0')}′ ${record.sign}`; }
 
   function addHit(tally,card,reason,key) {
@@ -201,13 +202,6 @@
     if (hour) addHit(tally,cardForPlanet(capitalize(hour)),`${capitalize(hour)} is the planetary hour ruler.`,`planetary-hour|${capitalize(hour)}`);
   }
 
-  function rowIncluded(row) {
-    if (!row || row.hidden || row.getAttribute('aria-hidden') === 'true') return false;
-    if (row.dataset.filteredOut === 'true' || row.dataset.relationshipVisible === 'false') return false;
-    const style = getComputedStyle(row);
-    return style.display !== 'none' && style.visibility !== 'hidden';
-  }
-
   function endpointName(row,side) {
     const data = side === 'left' ? row.dataset.leftPlacement : row.dataset.rightPlacement;
     const normalized = String(data || '').toLowerCase().replace(/_/g,'-');
@@ -220,8 +214,10 @@
   }
 
   function addAspectHits(tally,slot) {
+    // Chart Card Hits describe the sky itself. Relationship isolation/filtering is
+    // presentation state, so every computed relationship contributes whether its row
+    // is currently visible, hidden, filtered, or isolated.
     document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row => {
-      if (!rowIncluded(row)) return;
       const leftSlot = row.dataset.leftSky || row.dataset.skyA || 'A';
       const rightSlot = row.dataset.rightSky || row.dataset.skyB || 'B';
       const left = endpointName(row,'left');
