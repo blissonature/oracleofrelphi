@@ -3,12 +3,13 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyAnglePlacementsV5) return;
+  if (window.__relphiSkyAnglePlacementsV6) return;
   window.__relphiSkyAnglePlacementsV1 = true;
   window.__relphiSkyAnglePlacementsV2 = true;
   window.__relphiSkyAnglePlacementsV3 = true;
   window.__relphiSkyAnglePlacementsV4 = true;
   window.__relphiSkyAnglePlacementsV5 = true;
+  window.__relphiSkyAnglePlacementsV6 = true;
 
   const KEYS = new Set(['relphiSkyChartA', 'relphiSkyChartB']);
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -179,20 +180,13 @@
         if (!ledger) return;
         ledger.querySelectorAll('.sky-foundation-ledger-angle-heading').forEach(node => node.remove());
         const rows = Array.from(ledger.querySelectorAll('.sky-foundation-row'));
-        const seen = new Set();
         let found = false;
 
         rows.forEach(row => {
           row.style.order = '0';
-          row.hidden = false;
           const angle = renderedAngle(row);
           if (!angle) return;
           found = true;
-          if (seen.has(angle.id)) {
-            row.hidden = true;
-            return;
-          }
-          seen.add(angle.id);
           const position = ANGLES.findIndex(entry => entry.id === angle.id);
           row.style.order = String(1001 + position);
           row.dataset.placement = angle.id;
