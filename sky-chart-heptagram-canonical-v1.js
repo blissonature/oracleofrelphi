@@ -1,17 +1,16 @@
-// Planetary Hours heptagram canonical-state consumer.
-// This module places immutable canonical assets; it never draws or repairs glyph geometry.
+// Planetary Hours heptagram consumer for the single Master Glyph List runtime.
+// This module never owns or repairs glyph artwork. It only asks RelphiGlyphComponent to draw an identity.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramCanonicalV3) return;
-  window.__relphiSkyHeptagramCanonicalV3 = true;
+  if (window.__relphiSkyHeptagramCanonicalV4) return;
+  window.__relphiSkyHeptagramCanonicalV4 = true;
 
   const KEYS = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
   const COLORS = Object.freeze({
     saturn:'#8c7a42', jupiter:'#41752f', mars:'#c9211e', sun:'#d08a00',
     venus:'#b23b79', mercury:'#277390', moon:'#58628a'
   });
-  const DISPLAY_SIZE = 38;
 
   function keyFor(group) {
     return KEYS.find(key => group.classList.contains(`sky-ph-${key}`)) || '';
@@ -32,52 +31,53 @@
     return 'plain';
   }
 
-  function clearLegacyPresentation(group) {
+  function clearCompetingPresentation(group) {
     group.querySelector(':scope > .sky-ph-node')?.remove();
     group.querySelector(':scope > .sky-ph-node-label')?.remove();
-    group.classList.remove('is-day-ruler','is-hour-ruler');
   }
 
-  function placePlanet(group) {
+  async function placePlanet(group) {
     const key = keyFor(group);
     const mount = group.querySelector(':scope > .sky-ph-node-glyph');
     if (!key || !mount) return;
 
-    const state = legacyState(group);
-    const requestedState = stateName(state);
-    clearLegacyPresentation(group);
-    group.dataset.glyphState = requestedState;
-    group.classList.toggle('is-day-ruler', state.day);
-    group.classList.toggle('is-hour-ruler', state.hour);
-
-    const placer = window.RelphiCanonicalGlyphState;
-    const supported = new Set(placer?.supportedStates?.() || []);
-    if (!placer || !supported.has(requestedState)) {
+    const registry = window.RelphiGlyphRegistry;
+    const component = window.RelphiGlyphComponent;
+    const entry = registry && (registry.get(key) || registry.resolve(key));
+    if (!entry || !component?.draw) {
       mount.replaceChildren();
       mount.dataset.glyphUnavailable = 'true';
-      mount.dataset.requestedGlyphState = requestedState;
       return;
     }
 
+    const state = legacyState(group);
+    clearCompetingPresentation(group);
+    group.dataset.glyphState = stateName(state);
+    group.classList.toggle('is-day-ruler', state.day);
+    group.classList.toggle('is-hour-ruler', state.hour);
+
+    mount.replaceChildren();
     delete mount.dataset.glyphUnavailable;
-    delete mount.dataset.requestedGlyphState;
-    const color = COLORS[key];
-    const hourPresentation = state.hour;
-    placer.place(mount,key,{
-      state:requestedState,
-      size:DISPLAY_SIZE,
-      label:key,
-      baseColor:hourPresentation ? '#fff' : color,
-      overlayColor:color,
-      overlayFill:hourPresentation ? color : '#fff',
-      overlayStroke:color
-    });
+    mount.dataset.canonicalGlyphId = entry.id;
+    mount.dataset.masterGlyphSource = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
+
+    try {
+      await component.draw(mount, entry.id, {
+        radius:18,
+        padding:1,
+        color:COLORS[key]
+      });
+    } catch (error) {
+      mount.replaceChildren();
+      mount.dataset.glyphUnavailable = 'true';
+      console.error('[Relphi heptagram glyph]', error);
+    }
   }
 
   function correct(svg) {
     if (!svg || !svg.querySelector('.sky-ph-planet')) return;
-    svg.querySelectorAll('.sky-ph-planet').forEach(placePlanet);
-    svg.dataset.canonicalHeptagramStateConsumer = 'true';
+    svg.querySelectorAll('.sky-ph-planet').forEach(group => { void placePlanet(group); });
+    svg.dataset.canonicalHeptagramConsumer = 'true';
   }
 
   function inspect(node) {
