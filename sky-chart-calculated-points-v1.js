@@ -124,7 +124,7 @@
 
   function sameMetadata(old, next) {
     if (!old || !next) return false;
-    return String(old.glyph || '') === String(next.glyph || '') &&
+    return String(old.glyph || old.glyphId || '') === String(next.glyph || next.glyphId || '') &&
       Boolean(old.angle) === Boolean(next.angle) &&
       Boolean(old.retrograde) === Boolean(next.retrograde) &&
       String(old.calculation || '') === String(next.calculation || '');
@@ -169,32 +169,32 @@
     if (date) {
       const jd = julianDay(date);
       const north = meanNorthNode(jd);
-      add('North Node', north, { retrograde:true, glyph:'☊', calculation:'mean lunar node' }, ['Node','True North Node','Mean North Node','Ascending Node']);
-      add('South Node', norm(north + 180), { retrograde:true, glyph:'☋', calculation:'opposite mean lunar node' }, ['Descending Node']);
-      add('Lilith', meanLilith(jd), { glyph:'⚸', calculation:'mean lunar apogee' }, ['Black Moon Lilith','BML']);
+      add('North Node', north, { retrograde:true, glyph:'north-node', glyphId:'north-node', calculation:'mean lunar node' }, ['Node','True North Node','Mean North Node','Ascending Node']);
+      add('South Node', norm(north + 180), { retrograde:true, glyph:'south-node', glyphId:'south-node', calculation:'opposite mean lunar node' }, ['Descending Node']);
+      add('Lilith', meanLilith(jd), { glyph:'lilith', glyphId:'lilith', calculation:'mean lunar apogee' }, ['Black Moon Lilith','BML']);
     }
 
     if (Number.isFinite(asc)) {
-      add('Rising', asc, { glyph:'ASC', angle:true, calculation:'ascendant' }, ['Ascendant','ASC','AC']);
-      add('Dsc', norm(asc + 180), { glyph:'DSC', angle:true, calculation:'opposite ascendant' }, ['Descendant','DSC','DC']);
+      add('Rising', asc, { glyph:'asc', glyphId:'asc', angle:true, calculation:'ascendant' }, ['Ascendant','ASC','AC']);
+      add('Dsc', norm(asc + 180), { glyph:'dsc', glyphId:'dsc', angle:true, calculation:'opposite ascendant' }, ['Descendant','DSC','DC']);
     }
     if (Number.isFinite(mc)) {
-      add('MC', mc, { glyph:'MC', angle:true, calculation:'midheaven' }, ['Midheaven']);
-      add('IC', norm(mc + 180), { glyph:'IC', angle:true, calculation:'opposite midheaven' }, ['Imum Coeli']);
+      add('MC', mc, { glyph:'mc', glyphId:'mc', angle:true, calculation:'midheaven' }, ['Midheaven']);
+      add('IC', norm(mc + 180), { glyph:'ic', glyphId:'ic', angle:true, calculation:'opposite midheaven' }, ['Imum Coeli']);
     }
 
     const obliquity = Number(profile.obliquityDegrees ?? profile.obliquity ?? 23.4392911);
     const latitude = Number(profile.latitude ?? profile.lat ?? profile.coordinates?.latitude);
     let lst = Number(profile.siderealDegrees ?? profile.localSiderealDegrees ?? profile.lstDegrees ?? profile.localSiderealTimeDegrees);
     if (!Number.isFinite(lst) && Number.isFinite(mc)) lst = rightAscensionFromEcliptic(mc, obliquity);
-    add('Vertex', vertexLongitude(lst, latitude, obliquity), { glyph:'Vx', calculation:'prime vertical intersection' }, ['Vx']);
+    add('Vertex', vertexLongitude(lst, latitude, obliquity), { glyph:'vertex', glyphId:'vertex', calculation:'prime vertical intersection' }, ['Vx']);
 
     if ([asc, sun, moon].every(Number.isFinite)) {
       const sunPlacement = findPlacement(map, ['Sun']);
       const sunHouse = Number(sunPlacement && sunPlacement.house);
       const isDay = Number.isFinite(sunHouse) ? sunHouse >= 7 && sunHouse <= 12 : true;
       const fortune = isDay ? asc + moon - sun : asc + sun - moon;
-      add('Part of Fortune', norm(fortune), { glyph:'⊗', calculation:isDay ? 'day formula' : 'night formula' }, ['Fortune','POF','Pars Fortunae']);
+      add('Part of Fortune', norm(fortune), { glyph:'part-of-fortune', glyphId:'part-of-fortune', calculation:isDay ? 'day formula' : 'night formula' }, ['Fortune','POF','Pars Fortunae']);
     }
 
     if (payload.placements && payload.placements !== map) payload.placements = map;
