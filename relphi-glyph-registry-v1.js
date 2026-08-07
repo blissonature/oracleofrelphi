@@ -8,7 +8,7 @@
     ['moon','Moon',['moon','☽','☾'],'assets/planet-glyphs/moon.svg',1,0,0,null,'static-master'],
     ['mercury','Mercury',['mercury','☿'],'assets/planet-glyphs/mercury.svg',1,0,0,null,'static-master'],
     ['venus','Venus',['venus','♀'],'assets/planet-glyphs/venus.svg',1,0,0,null,'static-master'],
-    ['mars','Mars',['mars','♂'],'assets/planet-glyphs/mars.svg',1,-0.95,0.9,null,'circle'],
+    ['mars','Mars',['mars','♂'],'assets/planet-glyphs/mars.svg',1,0,0,null,'static-master'],
     ['jupiter','Jupiter',['jupiter','♃'],'assets/planet-glyphs/jupiter.svg',1,0,0,null,'static-master'],
     ['saturn','Saturn',['saturn','♄'],'assets/planet-glyphs/saturn.svg',1,0,0,null,'static-master'],
     ['uranus','Uranus',['uranus','♅','⛢'],'assets/planet-glyphs/uranus.svg',1,0,0,null,'static-master'],
