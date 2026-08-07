@@ -12,7 +12,12 @@
 .sky-foundation-interactive,
 .sky-foundation-focus-piece,
 .sky-foundation-sign-glyph {
-  transition:opacity .14s ease,filter .14s ease,stroke-width .14s ease;
+  transition:opacity .07s ease-out,filter .07s ease-out,stroke-width .07s ease-out;
+}
+
+.sky-foundation-interactive,
+.sky-foundation-focus-piece {
+  will-change:opacity,filter;
 }
 
 .sky-foundation-interactive {
@@ -21,6 +26,27 @@
 
 .sky-foundation-interactive:focus {
   outline:none;
+}
+
+/* Give pointer/focus feedback immediately, before the relationship-preview
+   controller finishes applying its broader kept/dimmed state. */
+.sky-foundation-wheel:not(.has-isolation) .sky-foundation-house-sector:hover,
+.sky-foundation-wheel:not(.has-isolation) .sky-foundation-house-sector:focus-visible,
+.sky-foundation-wheel:not(.has-isolation) .sky-foundation-sign-sector:hover,
+.sky-foundation-wheel:not(.has-isolation) .sky-foundation-sign-sector:focus-visible {
+  filter:brightness(1.09) saturate(1.18) drop-shadow(0 0 3px rgba(255,255,255,.98)) drop-shadow(0 0 7px rgba(126,143,164,.56));
+}
+
+.sky-foundation-wheel:not(.has-isolation) .sky-foundation-placement:hover,
+.sky-foundation-wheel:not(.has-isolation) .sky-foundation-placement:focus-visible {
+  filter:brightness(1.12) saturate(1.22) drop-shadow(0 0 3px rgba(255,255,255,.98)) drop-shadow(0 0 7px rgba(126,143,164,.64));
+}
+
+.sky-foundation-wheel:not(.has-isolation) .sky-foundation-aspect:hover,
+.sky-foundation-wheel:not(.has-isolation) .sky-foundation-aspect:focus-visible {
+  opacity:1;
+  stroke-width:4.4;
+  filter:drop-shadow(0 0 2px rgba(255,255,255,.96)) drop-shadow(0 0 5px rgba(85,98,116,.52));
 }
 
 .sky-foundation-wheel:not(.has-isolation) .sky-foundation-interactive.is-hovered,
@@ -49,7 +75,7 @@
 
 .sky-foundation-row {
   cursor:pointer;
-  transition:opacity .14s ease,background-color .14s ease,filter .14s ease;
+  transition:opacity .07s ease-out,background-color .07s ease-out,filter .07s ease-out;
 }
 
 .sky-foundation-row:hover,
@@ -142,7 +168,7 @@
   color:#191613;
   text-align:left;
   cursor:pointer;
-  transition:opacity .14s ease,background-color .14s ease,border-color .14s ease,filter .14s ease;
+  transition:opacity .07s ease-out,background-color .07s ease-out,border-color .07s ease-out,filter .07s ease-out;
 }
 
 .sky-foundation-relationship-row::before {
@@ -209,6 +235,14 @@
 
 #skyFoundationRelationshipEmpty[hidden] {
   display:none;
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .sky-foundation-interactive,
+  .sky-foundation-focus-piece,
+  .sky-foundation-sign-glyph,
+  .sky-foundation-row,
+  .sky-foundation-relationship-row { transition:none; }
 }
 
 @media(max-width:1120px) {
