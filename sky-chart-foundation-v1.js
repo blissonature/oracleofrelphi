@@ -50,6 +50,16 @@
     edgeRadius:Object.freeze({A:R.aOut,B:R.bIn}),
     extreme:Object.freeze({A:'outer',B:'inner'})
   });
+  const PLACEMENT_LAYOUT = Object.freeze({
+    bubbleRadius:17.2,
+    minimumClearance:6,
+    tangentialStep:0.75,
+    tangentialLimit:15,
+    lanes:Object.freeze({
+      A:Object.freeze([450,440,460]),
+      B:Object.freeze([287,299,283])
+    })
+  });
 
   let lastSignature = '';
   let rendering = false;
@@ -291,26 +301,47 @@
     return jobs;
   }
 
-  function spreadPlacements(list, exactRadius, direction) {
-    const laneA = exactRadius + direction * 36;
-    const laneB = laneA + direction * 38;
-    const result = list.slice().sort((a,b) => a.value - b.value)
-      .map((record,index) => ({...record,display:record.value,lane:index % 4 === 3 ? laneB : laneA}));
-    const gap = 7.5;
-    for (let pass = 0; pass < 10; pass += 1) {
-      let changed = false;
-      for (let index = 1; index < result.length; index += 1) {
-        if (result[index].lane !== result[index - 1].lane) continue;
-        const difference = result[index].display - result[index - 1].display;
-        if (difference >= gap) continue;
-        const push = (gap - difference) / 2;
-        result[index - 1].display -= push;
-        result[index].display += push;
-        changed = true;
+  function circleCircleCollision(left, right, clearance) {
+    return Math.hypot(left.x - right.x, left.y - right.y) < left.radius + right.radius + clearance;
+  }
+
+  function ordinaryCandidate(lane, display) {
+    const point = polar(lane,display);
+    return {kind:'circle',x:point.x,y:point.y,radius:PLACEMENT_LAYOUT.bubbleRadius};
+  }
+
+  function ordinaryCollides(candidate, placed) {
+    return placed.some(obstacle => circleCircleCollision(candidate, obstacle, PLACEMENT_LAYOUT.minimumClearance));
+  }
+
+  function spreadPlacements(list, slot) {
+    const lanes = PLACEMENT_LAYOUT.lanes[slot];
+    const placed = [];
+    const result = [];
+    const sorted = list.slice().sort((a,b) => a.value - b.value);
+    const steps = Math.floor(PLACEMENT_LAYOUT.tangentialLimit / PLACEMENT_LAYOUT.tangentialStep);
+    for (const record of sorted) {
+      let chosen = null;
+      for (let step = 0; step <= steps && !chosen; step += 1) {
+        const magnitude = step * PLACEMENT_LAYOUT.tangentialStep;
+        const offsets = step === 0 ? [0] : [magnitude,-magnitude];
+        for (const offset of offsets) {
+          for (const lane of lanes) {
+            const display = norm(record.value + offset);
+            const candidate = ordinaryCandidate(lane,display);
+            if (ordinaryCollides(candidate,placed)) continue;
+            chosen = {...record,display,lane};
+            placed.push(candidate);
+            break;
+          }
+          if (chosen) break;
+        }
       }
-      if (!changed) break;
+      if (!chosen) {
+        throw new Error(`[Sky Chart placement layout] No legal ordinary-placement lane for Sky ${slot} ${record.entry.name} at ${record.value.toFixed(8)}°.`);
+      }
+      result.push(chosen);
     }
-    result.forEach(record => { record.display = norm(record.display); });
     return result;
   }
 
@@ -347,7 +378,28 @@
     return ANGLE_LAYOUT.frameRadius + ANGLE_LAYOUT.frameStrokeWidth / 2;
   }
 
+  function validateRadialLaneIsolation() {
+    const angleHalf = angleHalfExtent();
+    for (const slot of ['A','B']) {
+      const inner = slot === 'A' ? R.aIn : R.bIn;
+      const outer = slot === 'A' ? R.aOut : R.bOut;
+      for (const lane of PLACEMENT_LAYOUT.lanes[slot]) {
+        if (lane - PLACEMENT_LAYOUT.bubbleRadius - PLACEMENT_LAYOUT.minimumClearance <= inner ||
+            lane + PLACEMENT_LAYOUT.bubbleRadius + PLACEMENT_LAYOUT.minimumClearance >= outer) {
+          throw new Error(`[Sky Chart placement layout] Sky ${slot} ordinary lane ${lane} violates its ring boundary.`);
+        }
+        for (const angleLane of ANGLE_LAYOUT.lanes[slot]) {
+          const required = PLACEMENT_LAYOUT.bubbleRadius + angleHalf + ANGLE_LAYOUT.minimumClearance;
+          if (Math.abs(lane - angleLane) < required) {
+            throw new Error(`[Sky Chart placement layout] Sky ${slot} ordinary lane ${lane} intrudes into reserved Angle lane ${angleLane}.`);
+          }
+        }
+      }
+    }
+  }
+
   function buildWheel(listA, listB, cuspsA, cuspsB) {
+    validateRadialLaneIsolation();
     const chart = svg('svg', {
       viewBox:'0 0 1200 1200', role:'img',
       'aria-label':'Sky A and Sky B rainbow comparison wheel',
@@ -429,14 +481,14 @@
     addHouseNumberObstacles(cuspsA,R.aIn,R.aOut,'A');
     addHouseNumberObstacles(cuspsB,R.bIn,R.bOut,'B');
 
-    function ordinaryLayout(list,slot,exactRadius,direction,cusps) {
-      return spreadPlacements(list.filter(record => !ANGLE_IDS.has(record.id)),exactRadius,direction)
+    function ordinaryLayout(list,slot,exactRadius,cusps) {
+      return spreadPlacements(list.filter(record => !ANGLE_IDS.has(record.id)),slot)
         .map(record => ({...record,slot,cusps,exactRadius}));
     }
 
     const ordinary = [
-      ...ordinaryLayout(listA,'A',R.aDegree,1,cuspsA),
-      ...ordinaryLayout(listB,'B',R.bDegree,-1,cuspsB)
+      ...ordinaryLayout(listA,'A',R.aDegree,cuspsA),
+      ...ordinaryLayout(listB,'B',R.bDegree,cuspsB)
     ];
 
     ordinary.forEach(record => {
@@ -445,10 +497,11 @@
       layers.leaders.appendChild(svg('line',{x1:display.x,y1:display.y,x2:exact.x,y2:exact.y,stroke:SKY[record.slot],class:'sky-foundation-leader'}));
       const host = svg('g',{
         transform:`translate(${display.x} ${display.y})`,
-        'data-sky':record.slot,'data-placement':record.id,'data-house':houseFor(record.value,record.cusps)
+        'data-sky':record.slot,'data-placement':record.id,'data-house':houseFor(record.value,record.cusps),
+        'data-placement-lane':record.lane,'data-display-longitude':record.display.toFixed(8)
       });
       layers.placements.appendChild(host);
-      obstacles.push({kind:'circle',x:display.x,y:display.y,radius:17.2,role:`placement-${record.slot}-${record.id}`});
+      obstacles.push({kind:'circle',x:display.x,y:display.y,radius:PLACEMENT_LAYOUT.bubbleRadius,role:`placement-${record.slot}-${record.id}`});
       jobs.push(drawBubble(host,record.id,{radius:16,padding:1,color:SKY[record.slot],fill:'#fffdf8',strokeWidth:2.35}).catch(error => glyphFailure(host,error)));
     });
 
@@ -460,15 +513,13 @@
         const point = polar(radius,record.value);
         const candidate = {kind:'square',x:point.x,y:point.y,half,role:`angle-${slot}-${record.id}`};
         if (!collides(candidate,obstacles)) {
-          chosen = {radius,point,candidate,fallback:false};
+          chosen = {radius,point,candidate};
           break;
         }
       }
       if (!chosen) {
-        const radius = ANGLE_LAYOUT.lanes[slot][0];
-        const point = polar(radius,record.value);
-        chosen = {radius,point,candidate:{kind:'square',x:point.x,y:point.y,half,role:`angle-${slot}-${record.id}`},fallback:true};
-        console.warn(`Sky ${slot} ${record.entry.name} used its deterministic extreme lane at ${record.value}°.`);
+        chart.dataset.angleCollisionState = 'error';
+        throw new Error(`[Sky Chart Angle layout] No legal radial lane for Sky ${slot} ${record.entry.name} at ${record.value.toFixed(8)}°.`);
       }
 
       const edge = ANGLE_LAYOUT.edgeRadius[slot];
@@ -491,7 +542,7 @@
         'data-sky':slot,'data-placement':record.id,'data-angle-axis':'true',
         'data-house':houseFor(record.value,cusps),'data-angle-lane':chosen.radius,
         'data-angle-longitude':record.value.toFixed(8),'data-angle-extreme':ANGLE_LAYOUT.extreme[slot],
-        'data-angle-lane-fallback':chosen.fallback ? 'true' : 'false',
+        'data-angle-lane-fallback':'false',
         'data-canonical-master':'glyphs-unified-preview.html',
         'data-canonical-viewbox':'-32 -32 64 64'
       });
