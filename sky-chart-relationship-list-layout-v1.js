@@ -1,13 +1,15 @@
 // Relationship-list presentation only: stripe, semantic slot layout, orb badge, scrollbar,
-// and canonical relationship glyph mounts. Glyph artwork remains owned by RelphiGlyphComponent.
+// and canonical relationship glyph mounts. Every glyph uses the exact 64×64 Master Glyph List artboard.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV15) return;
-  window.__relphiSkyRelationshipListLayoutV15 = true;
+  if (window.__relphiSkyRelationshipListLayoutV16) return;
+  window.__relphiSkyRelationshipListLayoutV16 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV15';
+  const STYLE_ID = 'skyRelationshipListLayoutV16';
+  const MASTER_VIEWBOX = '-32 -32 64 64';
+  const MASTER_RADIUS = 19;
   const SKY_COLORS = Object.freeze({ A:'#c9211e', B:'#2462d0' });
   const ASPECT_COLORS = Object.freeze({
     conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',
@@ -107,35 +109,33 @@
     const registry = window.RelphiGlyphRegistry;
     const component = window.RelphiGlyphComponent;
     const entry = registry && (registry.get(identity) || registry.resolve(identity));
-    if (!entry || !component?.draw || !component?.createBubble) {
+    if (!entry || !component?.createBubble) {
       slot.dataset.glyphUnavailable = 'true';
       return;
     }
 
     const host = document.createElementNS(NS, 'svg');
-    host.setAttribute('viewBox', '-16 -16 32 32');
+    host.setAttribute('viewBox', MASTER_VIEWBOX);
     host.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     host.setAttribute('aria-hidden', 'true');
     host.setAttribute('focusable', 'false');
     host.dataset.canonicalGlyphId = entry.id;
+    host.dataset.masterGlyphViewBox = MASTER_VIEWBOX;
     slot.replaceChildren(host);
     slot.dataset.canonicalGlyphReady = 'loading';
     slot.setAttribute('title', label || entry.name || entry.id);
     delete slot.dataset.glyphUnavailable;
 
-    let ready;
+    let bubble;
     try {
-      if (mode === 'circled') {
-        const bubble = component.createBubble(host, entry.id, {
-          radius:13,
-          padding:1,
-          color,
-          fill:'#fffdfa',
-          strokeWidth:1.75
-        });
-        ready = bubble.ready;
-      } else {
-        ready = component.draw(host, entry.id, { radius:13, padding:1, color });
+      bubble = component.createBubble(host, entry.id, {
+        radius:MASTER_RADIUS,
+        padding:1,
+        color
+      });
+      if (mode === 'plain') {
+        bubble.circle.style.opacity = '0';
+        bubble.circle.setAttribute('aria-hidden', 'true');
       }
     } catch (error) {
       slot.dataset.canonicalGlyphReady = 'error';
@@ -145,7 +145,7 @@
       return;
     }
 
-    Promise.resolve(ready).then(() => {
+    Promise.resolve(bubble.ready).then(() => {
       slot.dataset.canonicalGlyphReady = 'true';
     }).catch(error => {
       slot.dataset.canonicalGlyphReady = 'error';
@@ -169,7 +169,7 @@
     row.style.setProperty('--relationship-stripe', color);
     paintRowGlyphs(row);
 
-    if (row.dataset.relationshipLayout === 'v15') return;
+    if (row.dataset.relationshipLayout === 'v16') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
@@ -182,7 +182,7 @@
     badge.textContent = `Orb ${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-    row.dataset.relationshipLayout = 'v15';
+    row.dataset.relationshipLayout = 'v16';
   }
 
   function refresh(root) {
