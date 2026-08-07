@@ -70,6 +70,13 @@ test('Chart Hit cards isolate their primary chart correspondence instead of open
   assert.doesNotMatch(hits, /detailMarkup/);
 });
 
+test('Chart Card Hits remain invariant under relationship filtering and isolation', () => {
+  assert.match(hits, /Chart Card Hits describe the sky itself/);
+  assert.match(hits, /document\.querySelectorAll\('\.sky-foundation-relationship-row\[data-relation-index\]'\)\.forEach/);
+  assert.doesNotMatch(hits, /function rowIncluded\(/);
+  assert.doesNotMatch(hits, /if \(!rowIncluded\(row\)\) return/);
+});
+
 test('Chart Angles are grouped visually without reordering ledger row identity', () => {
   assert.match(angles, /function renderedAngle\(row\)/);
   assert.match(angles, /row\.querySelector\(`\.relphi-glyph-\$\{angle\.id\}`\)/);
@@ -91,5 +98,5 @@ test('Sky Chart cache keys point at the corrected consumers', () => {
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=16/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=11/);
-  assert.match(html, /sky-chart-card-hits-v2\.js\?v=2/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=3/);
 });
