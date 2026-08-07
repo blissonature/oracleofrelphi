@@ -3,11 +3,12 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyAnglePlacementsV4) return;
+  if (window.__relphiSkyAnglePlacementsV5) return;
   window.__relphiSkyAnglePlacementsV1 = true;
   window.__relphiSkyAnglePlacementsV2 = true;
   window.__relphiSkyAnglePlacementsV3 = true;
   window.__relphiSkyAnglePlacementsV4 = true;
+  window.__relphiSkyAnglePlacementsV5 = true;
 
   const KEYS = new Set(['relphiSkyChartA', 'relphiSkyChartB']);
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -178,16 +179,22 @@
         if (!ledger) return;
         ledger.querySelectorAll('.sky-foundation-ledger-angle-heading').forEach(node => node.remove());
         const rows = Array.from(ledger.querySelectorAll('.sky-foundation-row'));
-        const byAngle = new Map();
+        const seen = new Set();
+        let found = false;
 
         rows.forEach(row => {
+          row.style.order = '0';
+          row.hidden = false;
           const angle = renderedAngle(row);
           if (!angle) return;
-          if (byAngle.has(angle.id)) {
-            row.remove();
+          found = true;
+          if (seen.has(angle.id)) {
+            row.hidden = true;
             return;
           }
-          byAngle.set(angle.id, row);
+          seen.add(angle.id);
+          const position = ANGLES.findIndex(entry => entry.id === angle.id);
+          row.style.order = String(1001 + position);
           row.dataset.placement = angle.id;
           row.dataset.anglePlacement = angle.id;
           row.dataset.canonicalLedgerIdentity = angle.id;
@@ -195,16 +202,13 @@
           if (name) name.textContent = angle.label;
         });
 
-        if (!byAngle.size) return;
+        if (!found) return;
         const heading = document.createElement('div');
         heading.className = 'sky-foundation-ledger-angle-heading';
         heading.dataset.placementSection = 'chart-angles';
+        heading.style.order = '1000';
         heading.textContent = 'Chart Angles';
         ledger.appendChild(heading);
-        ANGLES.forEach(angle => {
-          const row = byAngle.get(angle.id);
-          if (row) ledger.appendChild(row);
-        });
       });
     } finally {
       decorating = false;
