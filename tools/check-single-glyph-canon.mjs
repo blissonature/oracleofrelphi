@@ -12,6 +12,7 @@ function rel(file) {
 }
 
 function walk(dir, out = []) {
+  if (!fs.existsSync(dir)) return out;
   for (const entry of fs.readdirSync(dir, { withFileTypes:true })) {
     if (skipDirs.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
@@ -49,6 +50,7 @@ const forbiddenRefs = [
   'assets/planet-glyphs/midheaven.svg',
   'assets/planet-glyphs/earth.svg',
   'assets/canonical-glyphs/v1/',
+  'assets/angle-glyphs/',
   'https://oracleofrelphi.com/relphi-glyph-registry-v1.js',
   'https://oracleofrelphi.com/relphi-glyph-component-v1.js'
 ];
@@ -89,20 +91,32 @@ const forbiddenFiles = [
 for (const name of forbiddenFiles) {
   if (fs.existsSync(path.join(ROOT, name))) fail(`Forbidden competing glyph source still exists: ${name}`);
 }
+if (fs.existsSync(path.join(ROOT, 'assets/angle-glyphs'))) fail('assets/angle-glyphs/ is forbidden; angles come from the Master Glyph List registry treatment.');
 
 const registryPath = path.join(ROOT, 'relphi-glyph-registry-v1.js');
 const componentPath = path.join(ROOT, 'relphi-glyph-component-v1.js');
 const integrityPath = path.join(ROOT, 'relphi-glyph-source-integrity-v1.js');
+const inlineConsumerPath = path.join(ROOT, 'relphi-inline-glyph-consumer-v1.js');
+const foundationsConsumerPath = path.join(ROOT, 'astrology-foundations-canonical-glyphs-v1.js');
+const navloaderPath = path.join(ROOT, 'navloader.js');
 const marsPath = path.join(ROOT, 'assets/planet-glyphs/mars.svg');
 const moonPath = path.join(ROOT, 'assets/planet-glyphs/moon.svg');
-if (!fs.existsSync(registryPath)) fail('Missing relphi-glyph-registry-v1.js');
-if (!fs.existsSync(componentPath)) fail('Missing relphi-glyph-component-v1.js');
-if (!fs.existsSync(integrityPath)) fail('Missing relphi-glyph-source-integrity-v1.js');
-if (!fs.existsSync(marsPath)) fail('Missing approved Mars asset');
-if (!fs.existsSync(moonPath)) fail('Missing approved Moon asset');
+for (const [file, label] of [
+  [registryPath,'relphi-glyph-registry-v1.js'],
+  [componentPath,'relphi-glyph-component-v1.js'],
+  [integrityPath,'relphi-glyph-source-integrity-v1.js'],
+  [inlineConsumerPath,'relphi-inline-glyph-consumer-v1.js'],
+  [foundationsConsumerPath,'astrology-foundations-canonical-glyphs-v1.js'],
+  [navloaderPath,'navloader.js'],
+  [marsPath,'approved Mars asset'],
+  [moonPath,'approved Moon asset']
+]) {
+  if (!fs.existsSync(file)) fail(`Missing ${label}`);
+}
 
+let registry = '';
 if (fs.existsSync(registryPath)) {
-  const registry = text(registryPath);
+  registry = text(registryPath);
   const angleRules = [
     ["['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'Asc','letter','700']", 'Ascendant'],
     ["['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'Dsc','letter','700']", 'Descendant'],
@@ -121,6 +135,16 @@ if (fs.existsSync(registryPath)) {
   }
 }
 
+// Every SVG in the planet-glyph folder must be explicitly referenced by the one registry.
+const planetDir = path.join(ROOT, 'assets/planet-glyphs');
+if (fs.existsSync(planetDir) && registry) {
+  for (const entry of fs.readdirSync(planetDir, { withFileTypes:true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.svg')) continue;
+    const assetPath = `assets/planet-glyphs/${entry.name}`;
+    if (!registry.includes(`'${assetPath}'`)) fail(`Unregistered planet-glyph SVG can masquerade as authority: ${assetPath}`);
+  }
+}
+
 if (fs.existsSync(componentPath)) {
   const component = text(componentPath);
   if (!component.includes("if (entry.fitMode === 'static-master') return;")) fail('Static masters are no longer protected from runtime fitting.');
@@ -132,6 +156,19 @@ if (fs.existsSync(integrityPath)) {
   const integrity = text(integrityPath);
   if (!integrity.includes("Object.defineProperty(window, 'RelphiGlyphRegistry'")) fail('Registry global is no longer locked.');
   if (!integrity.includes("Object.defineProperty(window, 'RelphiGlyphComponent'")) fail('Component global is no longer locked.');
+}
+
+if (fs.existsSync(navloaderPath)) {
+  const nav = text(navloaderPath);
+  for (const snippet of [
+    "appendScript('relphi-glyph-registry-v1.js?v=26'",
+    "appendScript('relphi-glyph-component-v1.js?v=29'",
+    "appendScript('relphi-glyph-source-integrity-v1.js?v=2'",
+    "appendScript('relphi-inline-glyph-consumer-v1.js?v=2'",
+    "appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2'"
+  ]) {
+    if (!nav.includes(snippet)) fail(`navloader lost required single-canon route: ${snippet}`);
+  }
 }
 
 const expectedMars = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Mars"><g fill="none" stroke="#111111" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="42" cy="60" r="25"/><path d="M60.5 41.5L84 17M69 17H84V32"/></g></svg>';
@@ -150,4 +187,4 @@ if (failures.length) {
 }
 
 console.log('Single glyph canon check passed.');
-console.log('One registry, one component, approved angle treatments, approved Mars/Moon, and no known competing production source paths.');
+console.log('One registry, one component, approved angle treatments, approved Mars/Moon, no unregistered planet SVGs, and no known competing production source paths.');
