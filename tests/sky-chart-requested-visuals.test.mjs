@@ -16,7 +16,7 @@ test('wheel house numbers use the enlarged desktop treatment', () => {
   assert.match(css, /#skyFoundationWheelMount \.sky-foundation-house-number\s*\{[\s\S]*font-size:24px;/);
 });
 
-test('relationship glyphs preserve the exact Master Glyph List artboard', () => {
+test('relationship glyphs preserve the exact uncircled Master Glyph List artboard', () => {
   assert.match(relationships, /const MASTER_VIEWBOX = '-32 -32 64 64';/);
   assert.match(relationships, /const MASTER_RADIUS = 19;/);
   assert.match(relationships, /host\.setAttribute\('viewBox', MASTER_VIEWBOX\)/);
@@ -24,9 +24,15 @@ test('relationship glyphs preserve the exact Master Glyph List artboard', () => 
   assert.match(relationships, /bubble\.circle\.style\.opacity = '0'/);
   assert.doesNotMatch(relationships, /-16 -16 32 32/);
   assert.doesNotMatch(relationships, /radius:13/);
-  assert.match(relationships, /sky-foundation-relationship-glyph--left/);
-  assert.match(relationships, /sky-foundation-relationship-glyph--aspect/);
-  assert.match(relationships, /sky-foundation-relationship-glyph--right/);
+  assert.match(relationships, /sky-foundation-relationship-glyph--left'\), row\.dataset\.leftPlacement, 'plain'/);
+  assert.match(relationships, /sky-foundation-relationship-glyph--aspect'\), aspect, 'plain'/);
+  assert.match(relationships, /sky-foundation-relationship-glyph--right'\), row\.dataset\.rightPlacement, 'plain'/);
+});
+
+test('relationship labels stay paired with their own glyph slots', () => {
+  assert.match(relationships, /relationship-copy:nth-child\(2\)\{grid-area:left-copy\}/);
+  assert.match(relationships, /relationship-copy:nth-child\(5\)\{grid-area:right-copy\}/);
+  assert.doesNotMatch(relationships, /relationship-copy:nth-of-type/);
 });
 
 test('Planetary Hours heptagram scales the complete circled master as one unit', () => {
