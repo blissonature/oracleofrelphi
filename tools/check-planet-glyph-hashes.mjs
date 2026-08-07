@@ -6,7 +6,7 @@ const expected = Object.freeze({
   'assets/planet-glyphs/moon.svg':'f61f2a28f17e093d861d72cc01665a19ba1a8e8c',
   'assets/planet-glyphs/mercury.svg':'4d506fcbfefe2738227f80d5e4908df308c293c8',
   'assets/planet-glyphs/venus.svg':'a26c815dba50d2531eec90ec6efa58da15651139',
-  'assets/planet-glyphs/mars.svg':'73ea0d1076872e0d24caf8f5c1f973f7203ac400',
+  'assets/planet-glyphs/mars.svg':'cdb55a3611fd8db68ac1190692d8b194fa8de8d2',
   'assets/planet-glyphs/jupiter.svg':'b6c2c3e381828ebb6726cb9913142161dff53f49',
   'assets/planet-glyphs/saturn.svg':'75356b0a6d2749c43bd717bf384a5fb357cce18b',
   'assets/planet-glyphs/uranus.svg':'ae90688f3deb7342391bb4bf2238a8e71a920d70',
