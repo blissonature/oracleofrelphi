@@ -78,9 +78,15 @@ test('Chart Angles are grouped visually without reordering ledger row identity',
   assert.doesNotMatch(angles, /ledger\.appendChild\(match\[1\]\)/);
 });
 
+test('dynamic SVG glyphs stay invisible until their fitted transform exists', () => {
+  assert.match(component, /art\.style\.visibility = 'hidden';/);
+  assert.match(component, /needsFittedReveal = true;/);
+  assert.match(component, /fit\(art, radius, padding, entry, bubbleStrokeWidth\);\n    if \(needsFittedReveal\) art\.style\.visibility = '';/);
+});
+
 test('Sky Chart cache keys point at the corrected consumers', () => {
   assert.match(html, /relphi-glyph-registry-v1\.js\?v=28/);
-  assert.match(html, /relphi-glyph-component-v1\.js\?v=31/);
+  assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
   assert.match(html, /sky-chart-foundation-v1\.css\?v=7/);
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=16/);
