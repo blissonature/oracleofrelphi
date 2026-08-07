@@ -6,6 +6,7 @@ import test from 'node:test';
 const root = path.resolve(import.meta.dirname, '..');
 const css = fs.readFileSync(path.join(root, 'sky-chart-foundation-v1.css'), 'utf8');
 const interactionCss = fs.readFileSync(path.join(root, 'sky-chart-foundation-interactions-v1.css'), 'utf8');
+const interactions = fs.readFileSync(path.join(root, 'sky-chart-foundation-interactions-v2.js'), 'utf8');
 const relationships = fs.readFileSync(path.join(root, 'sky-chart-relationship-list-layout-v1.js'), 'utf8');
 const heptagram = fs.readFileSync(path.join(root, 'sky-chart-heptagram-canonical-v1.js'), 'utf8');
 const registry = fs.readFileSync(path.join(root, 'relphi-glyph-registry-v1.js'), 'utf8');
@@ -13,6 +14,7 @@ const component = fs.readFileSync(path.join(root, 'relphi-glyph-component-v1.js'
 const fortune = fs.readFileSync(path.join(root, 'assets/planet-glyphs/part-of-fortune.svg'), 'utf8');
 const angles = fs.readFileSync(path.join(root, 'sky-chart-angle-placements-v1.js'), 'utf8');
 const hits = fs.readFileSync(path.join(root, 'sky-chart-card-hits-v2.js'), 'utf8');
+const navloader = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'sky-chart.html'), 'utf8');
 
 test('wheel house numbers use the enlarged desktop treatment and shared silver glow', () => {
@@ -52,6 +54,14 @@ test('relationship glyph slots have one renderer owner and one fixed display box
   assert.match(relationships, /width:\$\{DISPLAY_SIZE\}px!important/);
   assert.match(relationships, /height:\$\{DISPLAY_SIZE\}px!important/);
   assert.match(relationships, /record\.target instanceof Element \? record\.target\.closest\('\.sky-foundation-relationship-row'\)/);
+});
+
+test('interaction controller creates relationship slots but never paints glyphs', () => {
+  assert.match(interactions, /function glyphSlot\(role,label\)/);
+  assert.doesNotMatch(interactions, /RelphiCanonicalGlyphState/);
+  assert.doesNotMatch(interactions, /placeCanonicalGlyph\(/);
+  assert.doesNotMatch(interactions, /createBubble\(/);
+  assert.doesNotMatch(interactions, /RelphiGlyphComponent/);
 });
 
 test('relationship labels stay paired with their own glyph slots', () => {
@@ -113,11 +123,18 @@ test('dynamic SVG glyphs stay invisible until their fitted transform exists', ()
   assert.match(component, /fit\(art, radius, padding, entry, bubbleStrokeWidth\);\n    if \(needsFittedReveal\) art\.style\.visibility = '';/);
 });
 
+test('shared pages and Sky Chart use the same component version', () => {
+  assert.match(navloader, /appendScript\('relphi-glyph-component-v1\.js\?v=32'/);
+  assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
+});
+
 test('Sky Chart cache keys point at the corrected consumers', () => {
+  assert.match(html, /navloader\.js\?v=54/);
   assert.match(html, /relphi-glyph-registry-v1\.js\?v=28/);
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
   assert.match(html, /sky-chart-foundation-v1\.css\?v=8/);
   assert.match(html, /sky-chart-foundation-interactions-v1\.css\?v=2/);
+  assert.match(html, /sky-chart-foundation-interactions-v2\.js\?v=9/);
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=17/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=11/);
