@@ -6,6 +6,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 #skyFoundationRoot {
   --sky-a:#c9211e;
   --sky-b:#2462d0;
+  --sky-silver-glow:drop-shadow(0 0 2px rgba(255,255,255,.98)) drop-shadow(0 1px 2.2px rgba(80,88,98,.42));
   display:grid;
   grid-template-columns:minmax(220px,270px) minmax(520px,1fr) minmax(220px,270px);
   grid-template-areas:"a comparison b";
@@ -125,6 +126,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   text-anchor:middle;
   dominant-baseline:central;
   pointer-events:none;
+  filter:var(--sky-silver-glow);
 }
 .sky-foundation-tick { stroke:rgba(30,27,24,.48); stroke-width:1; vector-effect:non-scaling-stroke; }
 .sky-foundation-tick-major { stroke:rgba(30,27,24,.82); stroke-width:1.7; }
@@ -133,6 +135,9 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 
 /* Zodiac signs use the canonical Without circles presentation. The complete
    canonical artboard remains intact; only the circle is omitted from paint. */
+[data-layer="zodiac"] .sky-foundation-sign-glyph {
+  filter:var(--sky-silver-glow);
+}
 [data-layer="zodiac"] .sky-foundation-sign-glyph > .relphi-glyph-bubble > circle {
   display:none !important;
 }
