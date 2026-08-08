@@ -1,13 +1,16 @@
-// Selected Relationship v5: astrology-first relationship inspection with supporting Tarot correspondences.
+// Selected Relationship v6: astrology-first inspection with an exact isolated mini zodiac wheel.
 (function(){
 'use strict';
-if(window.__relphiSkySelectedRelationshipV5)return;
+if(window.__relphiSkySelectedRelationshipV6)return;
+window.__relphiSkySelectedRelationshipV6=true;
 window.__relphiSkySelectedRelationshipV5=true;
 window.__relphiSkySelectedRelationshipV4=true;
 window.__relphiSkySelectedRelationshipV3=true;
 window.__relphiSkySelectedRelationshipV2=true;
+const NS='http://www.w3.org/2000/svg';
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'}, COLORS={A:'#c9211e',B:'#2462d0'};
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const SIGN_IDS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
 const ASPECTS={conjunction:['Conjunction',0,'Two placements occupy nearly the same zodiac degree, concentrating their functions in one field.'],'semi-sextile':['Semi-Sextile',30,'Neighboring functions make a subtle adjustment through continued attention.'],octile:['Octile',45,'Focused friction presses for a precise adjustment.'],sextile:['Sextile',60,'A cooperative opening connects the two functions.'],quintile:['Quintile',72,'A creative relationship supports specialized patterning and craft.'],square:['Square',90,'Different modes of action create sustained pressure and adjustment.'],trine:['Trine',120,'Compatible pathways allow a fluent exchange.'],'tri-octile':['Tri-Octile',135,'Accumulated friction intensifies a developing adjustment.'],'bi-quintile':['Bi-Quintile',144,'Creative coordination develops through refinement.'],quincunx:['Quincunx',150,'Unlike systems require continuing calibration and translation.'],opposition:['Opposition',180,'The placements face one another as a polarity, creating awareness through contrast and exchange.']};
 const ASPECT_COLORS={conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',quintile:'#8b6cc2',square:'#d6534d',trine:'#4e9e69','tri-octile':'#9f5944','bi-quintile':'#7655aa',quincunx:'#4b8e88',opposition:'#5961c8'};
 const MEANINGS={sun:'Identity, vitality, and conscious purpose.',moon:'Feelings, instincts, memory, and emotional needs.',mercury:'Thought, perception, language, and communication.',venus:'Values, attraction, affection, pleasure, and relating.',mars:'Drive, assertion, desire, conflict, and action.',jupiter:'Growth, confidence, meaning, opportunity, and expansion.',saturn:'Structure, limits, responsibility, time, and commitment.',uranus:'Freedom, disruption, originality, awakening, and change.',neptune:'Imagination, sensitivity, surrender, ideals, and vision.',pluto:'Power, depth, compulsion, elimination, and transformation.',chiron:'Wounding, the intelligence developed around it, and the capacity to guide healing.','north-node':'Growth through unfamiliar experience and developing capacity.','south-node':'Familiar patterns, inherited capacity, and the known path.',lilith:'Instinctive autonomy, refusal, exile, and uncompromised desire.','part-of-fortune':'The meeting place of body, feeling, circumstance, and ease.',vertex:'Encounters that feel consequential or outside ordinary control.',asc:'The way a person enters life and is immediately perceived.',dsc:'The way a person meets partners and encounters the other.',mc:'Public direction, vocation, visibility, and the role a person grows toward.',ic:'Roots, home, private foundations, and inherited belonging.'};
@@ -32,7 +35,7 @@ function renderGlyph(host,id,color,state,label){
   if(!host)return null;
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=registry&&(registry.get(id)||registry.resolve(id));
   if(!entry||!component?.createBubble){host.replaceChildren();host.dataset.glyphUnavailable='true';return null}
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  const svg=document.createElementNS(NS,'svg');
   svg.setAttribute('viewBox','-32 -32 64 64');
   svg.setAttribute('preserveAspectRatio','xMidYMid meet');
   svg.setAttribute('aria-label',label||entry.name||entry.id);
@@ -42,12 +45,45 @@ function renderGlyph(host,id,color,state,label){
   if(state==='plain'){bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true')}
   return bubble.ready;
 }
+function renderSvgGroup(host,id,color,state,radius,strokeWidth=2.1){
+  if(!host)return null;
+  const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=registry&&(registry.get(id)||registry.resolve(id));
+  if(!entry||!component?.createBubble){host.replaceChildren();host.dataset.glyphUnavailable='true';return null}
+  host.replaceChildren();
+  delete host.dataset.glyphUnavailable;
+  const bubble=component.createBubble(host,entry.id,{radius,padding:.7,color,fill:'#fffdfa',strokeWidth});
+  if(state==='plain'){bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true')}
+  return bubble.ready;
+}
+function miniPoint(degree,radius){const angle=(norm(degree)-180)*Math.PI/180;return{x:120+radius*Math.cos(angle),y:120+radius*Math.sin(angle)}}
+function miniWheelMarkup(r){
+  const a=ASPECTS[r.aspect.id], chordA=miniPoint(r.left.value,67), chordB=miniPoint(r.right.value,67), markA=miniPoint(r.left.value,103), markB=miniPoint(r.right.value,103);
+  const boundaries=Array.from({length:12},(_,i)=>{const p1=miniPoint(i*30,68),p2=miniPoint(i*30,94);return`<line class="sky-selected-zodiac-boundary" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}"></line>`}).join('');
+  const signs=SIGN_IDS.map((id,i)=>{const p=miniPoint(i*30+15,81);return`<g class="sky-selected-mini-sign" data-mini-sign="${id}" transform="translate(${p.x} ${p.y})"></g>`}).join('');
+  const tickA1=miniPoint(r.left.value,65),tickA2=miniPoint(r.left.value,98),tickB1=miniPoint(r.right.value,65),tickB2=miniPoint(r.right.value,98);
+  return`<article class="sky-selected-aspect-diagram relationship-mini-wheel" style="--aspect-color:${r.aspect.color}"><svg viewBox="0 0 240 240" role="img" aria-label="Isolated ${esc(a[0])}: Sky A ${esc(r.left.entry.name)} to Sky B ${esc(r.right.entry.name)}" data-zodiac-origin="aries-0-at-9" data-left-longitude="${r.left.value.toFixed(8)}" data-right-longitude="${r.right.value.toFixed(8)}"><circle class="sky-selected-aspect-orbit sky-selected-zodiac-outer" cx="120" cy="120" r="94"></circle><circle class="sky-selected-zodiac-inner" cx="120" cy="120" r="68"></circle>${boundaries}${signs}<line class="sky-selected-exact-radius sky-a" x1="${tickA1.x}" y1="${tickA1.y}" x2="${tickA2.x}" y2="${tickA2.y}"></line><line class="sky-selected-exact-radius sky-b" x1="${tickB1.x}" y1="${tickB1.y}" x2="${tickB2.x}" y2="${tickB2.y}"></line><line class="sky-selected-isolated-aspect" x1="${chordA.x}" y1="${chordA.y}" x2="${chordB.x}" y2="${chordB.y}" stroke="${r.aspect.color}"></line><circle class="sky-selected-aspect-center" cx="120" cy="120" r="25"></circle><g class="sky-selected-mini-aspect" data-mini-aspect="${r.aspect.id}" transform="translate(120 120)"></g><g class="sky-selected-aspect-point sky-a" data-mini-placement="left" transform="translate(${markA.x} ${markA.y})"></g><g class="sky-selected-aspect-point sky-b" data-mini-placement="right" transform="translate(${markB.x} ${markB.y})"></g></svg><div class="relationship-mini-wheel-meta"><strong>${esc(a[0])}</strong><span>${orb(r.orb)} orb</span></div></article>`
+}
 function placementHeroMarkup(k,r,color,slot){const p=pos(r);return`<article class="relationship-hero-placement sky-${slot.toLowerCase()}" style="--token:${color}"><span class="relationship-hero-sky">Sky ${slot}</span><span class="relationship-hero-glyph" data-glyph="${k}"></span><div class="relationship-hero-copy"><strong>${esc(r.entry.name)}</strong><span class="relationship-hero-facts">${esc(p.label)} · House ${r.house}</span><p>${esc(MEANINGS[r.id]||'A calculated placement in this sky.')}</p></div></article>`}
-function aspectHeroMarkup(r){const a=ASPECTS[r.aspect.id];return`<article class="relationship-hero-aspect" style="--token:${r.aspect.color}"><span class="relationship-hero-aspect-glyph" data-glyph="aspect"></span><strong>${esc(a[0])}</strong><span class="relationship-hero-orb">${orb(r.orb)}</span><small>${a[1]}° aspect</small><p>${esc(a[2])}</p></article>`}
 function cardMarkup(slot,c,r){const p=pos(r);return`<article class="understanding-card sky-${slot.toLowerCase()}" data-card="${slot}"><span class="correspondence-label">Sky ${slot} decan correspondence</span><button class="card-flip" data-flip="${slot}" aria-pressed="false"><span class="card-inner"><span class="card-front"><img src="${esc(c.image)}" alt="${esc(c.title)}"></span><span class="card-back"><span class="card-back-label">Sky ${slot} decan</span><h3>${esc(c.title)}</h3><p>${esc(r.entry.name)} at ${esc(p.label)}</p><p>House ${r.house} · ${esc(c.sign)} decan ${c.decan}</p><p class="card-back-instruction">Tap again to return to the image.</p></span></span></button><strong class="correspondence-card-title">${esc(c.title)}</strong><button class="ledger-entry" data-ledger-card="${esc(c.id)}">Open Tarot Ledger entry</button></article>`}
 function durationMarkup(r){const d=duration(r),bars='<i></i>'.repeat(d[0]);return`<section class="duration-band"><button data-duration aria-expanded="false"><span class="duration-bars" aria-hidden="true">${bars}</span><strong>${esc(d[1])}</strong><span class="duration-detail" hidden>${esc(d[2])}. This classification follows the typical apparent speed of Sky B’s ${esc(r.right.entry.name)}. Exact active and return dates appear here when the transit timeline calculation is available.</span></button></section>`}
 function mark(i){document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(x=>x.setAttribute('aria-current',Number(x.dataset.relationIndex)===i?'true':'false'))}
-async function render(i,source){const r=relation(i),panel=ensure();if(!r||!panel)return;const t=++token;selectedIndex=i;mark(i);panel.hidden=false;panel.dataset.relationIndex=i;const a=card(r.left),b=card(r.right),body=panel.querySelector('.sky-selected-body');body.innerHTML=`<header class="understanding-header"><div><span>Selected relationship</span><small>Astrology first · Tarot correspondence below</small></div></header><div class="relationship-hero">${placementHeroMarkup('left',r.left,COLORS.A,'A')}${aspectHeroMarkup(r)}${placementHeroMarkup('right',r.right,COLORS.B,'B')}</div><section class="decan-correspondences"><header><strong>Decan correspondences</strong><span>Supporting Tarot layer</span></header><div class="understanding-cards">${cardMarkup('A',a,r.left)}${cardMarkup('B',b,r.right)}</div></section>${durationMarkup(r)}`;await Promise.allSettled([Promise.resolve().then(()=>renderGlyph(body.querySelector('[data-glyph="left"]'),r.left.id,COLORS.A,'circled',r.left.entry.name)),Promise.resolve().then(()=>renderGlyph(body.querySelector('[data-glyph="aspect"]'),r.aspect.id,r.aspect.color,'plain',ASPECTS[r.aspect.id][0])),Promise.resolve().then(()=>renderGlyph(body.querySelector('[data-glyph="right"]'),r.right.id,COLORS.B,'circled',r.right.entry.name))]);if(t!==token)return;window.dispatchEvent(new CustomEvent('relphi:selected-relationship-rendered',{detail:{index:i,relation:r,source,version:'understanding-v2'}}))}
+async function render(i,source){
+  const r=relation(i),panel=ensure();if(!r||!panel)return;
+  const t=++token;selectedIndex=i;mark(i);panel.hidden=false;panel.dataset.relationIndex=i;
+  const a=card(r.left),b=card(r.right),body=panel.querySelector('.sky-selected-body');
+  body.innerHTML=`<header class="understanding-header"><div><span>Selected relationship</span><small>Exact zodiac geometry · Tarot correspondence below</small></div></header><div class="relationship-hero">${placementHeroMarkup('left',r.left,COLORS.A,'A')}${miniWheelMarkup(r)}${placementHeroMarkup('right',r.right,COLORS.B,'B')}</div><section class="decan-correspondences"><header><strong>Decan correspondences</strong><span>Supporting Tarot layer</span></header><div class="understanding-cards">${cardMarkup('A',a,r.left)}${cardMarkup('B',b,r.right)}</div></section>${durationMarkup(r)}`;
+  const jobs=[
+    renderGlyph(body.querySelector('[data-glyph="left"]'),r.left.id,COLORS.A,'circled',r.left.entry.name),
+    renderGlyph(body.querySelector('[data-glyph="right"]'),r.right.id,COLORS.B,'circled',r.right.entry.name),
+    renderSvgGroup(body.querySelector('[data-mini-aspect]'),r.aspect.id,r.aspect.color,'plain',19,2.2),
+    renderSvgGroup(body.querySelector('[data-mini-placement="left"]'),r.left.id,COLORS.A,'circled',13.5,2.2),
+    renderSvgGroup(body.querySelector('[data-mini-placement="right"]'),r.right.id,COLORS.B,'circled',13.5,2.2)
+  ];
+  body.querySelectorAll('[data-mini-sign]').forEach(node=>jobs.push(renderSvgGroup(node,node.dataset.miniSign,'#514b45','plain',8.4,1.5)));
+  await Promise.allSettled(jobs);
+  if(t!==token)return;
+  window.dispatchEvent(new CustomEvent('relphi:selected-relationship-rendered',{detail:{index:i,relation:r,source,version:'understanding-v3-mini-wheel'}}));
+}
 document.addEventListener('click',e=>{const panel=e.target.closest('#skySelectedRelationship');const flip=e.target.closest('[data-flip]');if(panel&&flip){const card=flip.closest('.understanding-card'),on=!card.classList.contains('is-flipped');card.classList.toggle('is-flipped',on);flip.setAttribute('aria-pressed',on?'true':'false');return}const dur=e.target.closest('[data-duration]');if(panel&&dur){const open=dur.getAttribute('aria-expanded')!=='true';dur.setAttribute('aria-expanded',open?'true':'false');dur.querySelector('.duration-detail').hidden=!open;return}const ledger=e.target.closest('[data-ledger-card]');if(panel&&ledger){window.dispatchEvent(new CustomEvent('relphi:open-ledger-card',{detail:{cardId:ledger.dataset.ledgerCard,source:'selected-relationship'}}));return}const row=e.target.closest('.sky-foundation-relationship-row[data-relation-index]');if(row)queueMicrotask(()=>render(Number(row.dataset.relationIndex),'relationship-list'))});
 window.addEventListener('relphi:sky-foundation-clear-selection',()=>{selectedIndex=null;if(ensure())mount.hidden=true});
 function ready(force=false){const panel=ensure();if(!panel)return;if(selectedIndex!=null&&rowFor(selectedIndex)){if(force)render(selectedIndex,'foundation-rerender');return}const first=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')].find(x=>!x.hidden);if(first)render(Number(first.dataset.relationIndex),'initial-relationship')}
