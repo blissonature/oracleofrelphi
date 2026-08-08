@@ -48,9 +48,9 @@ test('relationship glyphs preserve the exact uncircled Master Glyph List artboar
   assert.match(relationships, /sky-foundation-relationship-glyph--right'\), row\.dataset\.rightPlacement, 'plain'/);
 });
 
-test('relationship glyph slots have one renderer owner, one canonical subtree, and one display scale', () => {
-  assert.match(relationships, /const OWNER = 'relationship-layout-v21';/);
-  assert.match(relationships, /const GLYPH_DISPLAY_SIZE = 26;/);
+test('relationship glyph slots have one renderer owner, one canonical subtree, and one enlarged display scale', () => {
+  assert.match(relationships, /const OWNER = 'relationship-layout-v22';/);
+  assert.match(relationships, /const GLYPH_DISPLAY_SIZE = 34;/);
   assert.doesNotMatch(relationships, /ASPECT_DISPLAY_SIZE/);
   assert.doesNotMatch(relationships, /SIGN_DISPLAY_SIZE/);
   assert.match(relationships, /data-relationship-canonical-host/);
@@ -62,6 +62,7 @@ test('relationship glyph slots have one renderer owner, one canonical subtree, a
   assert.match(relationships, /relphi-glyph-' \+ entry\.id/);
   assert.match(relationships, /\.sky-foundation-relationship-glyph,\s*\n\s*\.sky-foundation-relationship-sign\{/);
   assert.match(relationships, /width:\$\{GLYPH_DISPLAY_SIZE\}px!important/);
+  assert.match(relationships, /align-items:center;/);
   assert.match(relationships, /record\.target instanceof Element \? record\.target\.closest\('\.sky-foundation-relationship-row'\)/);
 });
 
@@ -94,17 +95,16 @@ test('selected relationship inspection restores the exact isolated zodiac wheel 
   assert.match(selectedRelationshipCss, /\.understanding-cards\{display:grid;grid-template-columns:repeat\(2,minmax\(0,170px\)\)/);
 });
 
-test('relationship labels stay paired with their own glyph slots', () => {
-  assert.match(relationships, /relationship-copy:nth-child\(2\)\{grid-area:left-copy\}/);
-  assert.match(relationships, /relationship-copy:nth-child\(5\)\{grid-area:right-copy\}/);
-  assert.doesNotMatch(relationships, /relationship-copy:nth-of-type/);
+test('relationship rows are glyph-first and leave names for progressive reveal', () => {
+  assert.match(relationships, /small\.replaceChildren\(document\.createTextNode\(coordinate\), signSlot\)/);
+  assert.match(relationships, /Array\.from\(copy\.childNodes\)\.forEach\(node => \{ if \(node !== small\) node\.remove\(\); \}\)/);
+  assert.doesNotMatch(relationships, /document\.createTextNode\(` · H\$\{house\}`\)/);
 });
 
 test('relationship aspect is the visual hinge and the orb sits directly beneath it without a separate aspect scale', () => {
   assert.match(relationships, /"left-glyph left-copy aspect right-glyph right-copy"/);
   assert.match(relationships, /"\. \. orb \. \."/);
-  assert.match(relationships, /\.sky-foundation-relationship-glyph--aspect\{[\s\S]*grid-area:aspect;[\s\S]*justify-self:center;/);
-  assert.doesNotMatch(relationships, /\.sky-foundation-relationship-glyph--aspect\{[^}]*width:/);
+  assert.match(relationships, /\.sky-foundation-relationship-glyph--aspect\{grid-area:aspect\}/);
   assert.match(relationships, /\.sky-foundation-relationship-orb\{[\s\S]*grid-area:orb;[\s\S]*justify-self:center;/);
   assert.match(relationships, /badge\.textContent = `\$\{orb\.toFixed\(2\)\}°`/);
   assert.doesNotMatch(relationships, /badge\.textContent = `Orb /);
@@ -146,6 +146,13 @@ test('Planetary Hours heptagram keeps day and hour states visibly distinct witho
   assert.match(heptagramCss, /\.sky-ph-planet\.is-day-ruler\.is-hour-ruler \.sky-ph-day-ruler-ring--outer/);
 });
 
+test('Planetary Hours heptagram is glyph-only inside the SVG', () => {
+  assert.match(heptagram, /function clearHeptagramWords\(svg\)/);
+  assert.match(heptagram, /svg\.querySelectorAll\('text'\)\.forEach\(node => node\.remove\(\)\)/);
+  assert.match(heptagram, /wordPresentation = 'glyph-only'/);
+  assert.match(heptagramCss, /\.sky-ph-heptagram text\{display:none!important\}/);
+});
+
 test('Lilith uses the same static-master path as the planetary SVG masters', () => {
   assert.match(registry, /\['lilith','Lilith',[^\n]+,1,0,0,null,'static-master'\]/);
   assert.doesNotMatch(component, /entry\.id === 'lilith'/);
@@ -164,6 +171,7 @@ test('Chart Card Hits explain their evidence instead of acting as relationship f
   assert.match(hits, /Card clicks explain the accumulated hit evidence; they never filter the Sky Chart/);
   assert.match(hits, /function detailMarkup\(hit\)/);
   assert.match(hits, /sky-card-hit-detail-note/);
+  assert.match(hits, /aspect relationships are not part of the tally/);
   assert.match(hits, /nothing on the wheel or in Relationships is filtered/);
   assert.match(hits, /hit\.reasons\.map\(reason =>/);
   assert.doesNotMatch(hits, /function primaryCorrespondence\(/);
@@ -171,11 +179,10 @@ test('Chart Card Hits explain their evidence instead of acting as relationship f
   assert.doesNotMatch(hits, /dispatchEvent\(new MouseEvent\('click'/);
 });
 
-test('Chart Card Hits remain invariant under relationship filtering and isolation', () => {
-  assert.match(hits, /Chart Card Hits describe the sky itself/);
-  assert.match(hits, /document\.querySelectorAll\('\.sky-foundation-relationship-row\[data-relation-index\]'\)\.forEach/);
-  assert.doesNotMatch(hits, /function rowIncluded\(/);
-  assert.doesNotMatch(hits, /if \(!rowIncluded\(row\)\) return/);
+test('Chart Card Hits never count relationship aspects as activations', () => {
+  assert.doesNotMatch(hits, /function addAspectHits\(/);
+  assert.doesNotMatch(hits, /addAspectHits\(tally,slot\)/);
+  assert.doesNotMatch(hits, /sky-foundation-relationship-row\[data-relation-index\]/);
 });
 
 test('Chart Angles are grouped visually without reordering ledger row identity', () => {
@@ -203,7 +210,7 @@ test('shared pages and Sky Chart use the same component version', () => {
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
 });
 
-test('Sky Chart cache keys point at the mini-wheel relationship preview', () => {
+test('Sky Chart cache keys point at the glyph-first relationship preview', () => {
   assert.match(html, /navloader\.js\?v=54/);
   assert.match(html, /relphi-glyph-registry-v1\.js\?v=28/);
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
@@ -211,10 +218,10 @@ test('Sky Chart cache keys point at the mini-wheel relationship preview', () => 
   assert.match(html, /sky-chart-foundation-interactions-v1\.css\?v=2/);
   assert.match(html, /sky-chart-foundation-interactions-v2\.js\?v=9/);
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
-  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=21/);
+  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=22/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=6/);
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=6/);
-  assert.match(html, /sky-chart-heptagram-canonical-v1\.css\?v=8/);
-  assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=13/);
-  assert.match(html, /sky-chart-card-hits-v2\.js\?v=5/);
+  assert.match(html, /sky-chart-heptagram-canonical-v1\.css\?v=9/);
+  assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=14/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=6/);
 });
