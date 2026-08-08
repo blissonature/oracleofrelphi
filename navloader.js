@@ -161,6 +161,7 @@
       });
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('planetary-hours-moon-position-v1.js?v=1');
+      appendScript('planetary-hours-active-time-integrity-v1.js?v=1');
     }
     if (/(^|\/)astrology-foundations\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () {
