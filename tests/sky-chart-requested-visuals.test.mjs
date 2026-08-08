@@ -9,6 +9,7 @@ const interactionCss = fs.readFileSync(path.join(root, 'sky-chart-foundation-int
 const interactions = fs.readFileSync(path.join(root, 'sky-chart-foundation-interactions-v2.js'), 'utf8');
 const relationships = fs.readFileSync(path.join(root, 'sky-chart-relationship-list-layout-v1.js'), 'utf8');
 const relationshipCopy = fs.readFileSync(path.join(root, 'sky-chart-relationship-copy-v1.js'), 'utf8');
+const coordinatePrecision = fs.readFileSync(path.join(root, 'sky-chart-coordinate-precision-v1.js'), 'utf8');
 const selectedRelationship = fs.readFileSync(path.join(root, 'sky-chart-selected-relationship-v4.js'), 'utf8');
 const selectedRelationshipCss = fs.readFileSync(path.join(root, 'sky-chart-selected-understanding-v1.css'), 'utf8');
 const progressive = fs.readFileSync(path.join(root, 'sky-chart-progressive-comparison-v1.js'), 'utf8');
@@ -193,6 +194,19 @@ test('relationship copying serializes semantic rows with explicit planet-in-sign
   assert.doesNotMatch(relationshipCopy, /sourceOrb|Orb /);
 });
 
+test('stored coordinate fields override rounded longitude text throughout relationship presentation without a global mutation observer', () => {
+  assert.match(coordinatePrecision, /function exactCoordinate\(item\)/);
+  assert.match(coordinatePrecision, /Math\.trunc\(Number\(item\.minute \?\? item\.minutes\)\)/);
+  assert.match(coordinatePrecision, /function correctRelationships\(mapsA,mapsB\)/);
+  assert.match(coordinatePrecision, /mapsA\.byIdentity\.get\(row\.dataset\.leftPlacement/);
+  assert.match(coordinatePrecision, /small\.dataset\.relationshipCoordinate = left\.text/);
+  assert.match(coordinatePrecision, /row\.dataset\.leftSign = String\(left\.signIndex\)/);
+  assert.match(coordinatePrecision, /relphi:sky-foundation-interactions-ready/);
+  assert.doesNotMatch(coordinatePrecision, /new MutationObserver/);
+  assert.doesNotMatch(coordinatePrecision, /observe\(document\.documentElement/);
+  assert.match(html, /sky-chart-coordinate-precision-v1\.js\?v=3/);
+});
+
 test('Planetary Hours heptagram scales the complete circled master as one unit', () => {
   assert.match(heptagram, /const MASTER_RADIUS = 19;/);
   assert.match(heptagram, /const MASTER_SCALE = DISPLAY_RADIUS \/ MASTER_RADIUS;/);
@@ -263,7 +277,18 @@ test('Chart Card Hits keep real art while requesting only very low-resolution th
   assert.doesNotMatch(hits, /src="assets\/tarot\/rws\//);
   assert.doesNotMatch(hits, /new MutationObserver/);
   assert.doesNotMatch(html, /sky-chart-card-image-budget-v1\.js/);
-  assert.match(html, /sky-chart-card-hits-v2\.js\?v=9/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=10/);
+});
+
+test('Chart Card Hit detail remains open until explicit close or another card selection and avoids redundant render events', () => {
+  assert.match(hits, /Detail selection is independent from wheel\/relationship clearing and remains open until the user closes it or selects another card/);
+  assert.match(hits, /const explicitDegree = Number\(item\?\.degree \?\? item\?\.degrees\)/);
+  assert.match(hits, /const explicitMinute = Number\(item\?\.minute \?\? item\?\.minutes\)/);
+  assert.doesNotMatch(hits, /clearCardSelection/);
+  assert.doesNotMatch(hits, /relphi:sky-foundation-clear-selection/);
+  assert.doesNotMatch(hits, /relphi:sky-foundation-rendered/);
+  assert.doesNotMatch(hits, /relphi:sky-foundation-interactions-ready/);
+  assert.match(hits, /\['relphi:sky-foundation-ready','relphi:sky-heptagram-source-ready'\]/);
 });
 
 test('Chart Angles are grouped visually without reordering ledger row identity', () => {
@@ -288,14 +313,15 @@ test('shared pages and Sky Chart use the same component version', () => {
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
 });
 
-test('Sky Chart cache keys point at the compact relationship, copy, and thumbnail preview', () => {
+test('Sky Chart cache keys point at the compact relationship, copy, coordinate, and thumbnail preview', () => {
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=28/);
   assert.match(html, /sky-chart-relationship-copy-v1\.js\?v=2/);
+  assert.match(html, /sky-chart-coordinate-precision-v1\.js\?v=3/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.css\?v=11/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=8/);
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=9/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.js\?v=10/);
   assert.match(html, /sky-chart-progressive-reveal-contract-v1\.js\?v=2/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=14/);
-  assert.match(html, /sky-chart-card-hits-v2\.js\?v=9/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=10/);
 });
