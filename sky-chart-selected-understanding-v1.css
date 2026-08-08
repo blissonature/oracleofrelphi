@@ -1,21 +1,13 @@
 #skySelectedRelationship{margin:1rem 0;padding:clamp(.75rem,2vw,1rem);border:1px solid rgba(45,39,34,.14);border-radius:22px;background:#fffdfa;color:#211d1a;overflow:hidden}
 #skySelectedRelationship[hidden]{display:none!important}
-.sky-selected-body{display:grid;gap:.9rem}
+.sky-selected-body{display:grid;gap:.85rem}
 .understanding-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
 .understanding-header>div{display:grid;gap:.18rem}
 .understanding-header>div>span{font-weight:900;letter-spacing:.055em;text-transform:uppercase}
 .understanding-header small{color:#6a625b;font:700 .72rem/1.25 system-ui,sans-serif}
-.relationship-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,230px) minmax(0,1fr);gap:.7rem;align-items:center;padding:.75rem;border:1px solid rgba(45,39,34,.12);border-radius:18px;background:linear-gradient(180deg,#fbf8f3,#f8f4ee)}
-.relationship-hero-placement{display:grid;grid-template-columns:58px minmax(0,1fr);grid-template-areas:"sky sky" "glyph copy";column-gap:.6rem;align-items:center;min-width:0;padding:.45rem .5rem;border-radius:15px;background:#fff;color:var(--token);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--token) 18%,transparent)}
-.relationship-hero-sky{grid-area:sky;font:900 .63rem/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;opacity:.82}
-.relationship-hero-glyph{grid-area:glyph;display:block;width:58px;height:58px;overflow:visible}
-.relationship-hero-glyph>svg{display:block;width:100%;height:100%;overflow:visible}
-.relationship-hero-copy{grid-area:copy;display:grid;gap:.2rem;min-width:0;color:#211d1a}
-.relationship-hero-copy strong{font:900 .95rem/1.08 system-ui,sans-serif}
-.relationship-hero-facts{font:800 .72rem/1.25 system-ui,sans-serif;color:#514943}
-.relationship-hero-copy p{margin:.15rem 0 0;color:#625b55;font:600 .69rem/1.32 system-ui,sans-serif}
-.relationship-mini-wheel.sky-selected-aspect-diagram{display:grid;justify-items:center;align-content:center;gap:.22rem;min-width:0;width:100%;padding:.35rem .25rem .5rem;border:0;border-radius:16px;background:rgba(255,255,255,.76);box-shadow:inset 0 0 0 1px rgba(45,39,34,.1)}
-.relationship-mini-wheel.sky-selected-aspect-diagram svg{display:block;width:min(100%,218px);height:auto;aspect-ratio:1;overflow:visible}
+.relationship-visual{display:grid;grid-template-columns:minmax(112px,150px) minmax(220px,270px) minmax(112px,150px);grid-template-areas:"card-a wheel card-b";justify-content:center;align-items:center;gap:clamp(.65rem,2vw,1rem);padding:.8rem;border:1px solid rgba(45,39,34,.12);border-radius:18px;background:linear-gradient(180deg,#fbf8f3,#f8f4ee)}
+.relationship-mini-wheel.sky-selected-aspect-diagram{grid-area:wheel;display:grid;justify-items:center;align-content:center;gap:.25rem;min-width:0;width:100%;padding:.35rem .25rem .45rem;border:0;border-radius:16px;background:rgba(255,255,255,.76);box-shadow:inset 0 0 0 1px rgba(45,39,34,.1)}
+.relationship-mini-wheel.sky-selected-aspect-diagram svg{display:block;width:min(100%,240px);height:auto;aspect-ratio:1;overflow:visible}
 .relationship-mini-wheel .sky-selected-aspect-orbit{fill:none;stroke:rgba(45,39,34,.5);stroke-width:1.4}
 .relationship-mini-wheel .sky-selected-zodiac-inner{fill:#fffdfa;stroke:rgba(45,39,34,.2);stroke-width:1.05}
 .relationship-mini-wheel .sky-selected-zodiac-boundary{stroke:rgba(45,39,34,.2);stroke-width:.95}
@@ -27,35 +19,15 @@
 .relationship-mini-wheel .sky-selected-isolated-aspect{stroke-width:4.2;stroke-linecap:round;opacity:.92;filter:drop-shadow(0 1px 1px rgba(45,39,34,.12))}
 .relationship-mini-wheel .sky-selected-aspect-center{fill:#211d1a;stroke:#fffdfa;stroke-width:1.5}
 .relationship-mini-wheel .sky-selected-aspect-point{pointer-events:none;filter:drop-shadow(0 1px 2px rgba(45,39,34,.16))}
-.relationship-mini-wheel-meta{display:grid;grid-template-columns:30px auto;grid-template-areas:"glyph copy";align-items:center;justify-content:center;gap:.28rem;text-align:left}
-.relationship-mini-wheel-aspect{grid-area:glyph;display:block;width:30px;height:30px;overflow:visible;color:var(--aspect-color)}
-.relationship-mini-wheel-copy{grid-area:copy;display:grid;gap:1px;min-width:0}
-.relationship-mini-wheel-copy strong{color:var(--aspect-color);font:900 .76rem/1.05 system-ui,sans-serif}
-.relationship-mini-wheel-copy span{color:#514943;font:850 .66rem/1.05 system-ui,sans-serif;font-variant-numeric:tabular-nums}
-.decan-correspondences{display:grid;gap:.55rem;padding:.65rem .75rem .75rem;border:1px solid rgba(45,39,34,.1);border-radius:18px;background:#faf7f2}
-.decan-correspondences>header{display:flex;align-items:baseline;justify-content:space-between;gap:.75rem}
-.decan-correspondences>header strong{font:900 .82rem/1.1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.045em}
-.decan-correspondences>header span{color:#6a625b;font:700 .68rem/1.2 system-ui,sans-serif}
-.understanding-cards{display:grid;grid-template-columns:repeat(2,minmax(0,170px));justify-content:center;gap:clamp(.8rem,5vw,1.5rem);width:100%;min-width:0;align-items:start}
-.understanding-card{display:grid;justify-items:stretch;gap:.32rem;width:100%;min-width:0;perspective:1200px}
-.correspondence-label{min-height:1.8em;color:#655d56;font:850 .62rem/1.2 system-ui,sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.04em}
-.card-flip{display:block;width:100%;min-width:0;padding:0;border:0;background:transparent;color:inherit;cursor:pointer}
-.card-inner{position:relative;display:block;width:100%;min-width:0;aspect-ratio:352/600;transform-style:preserve-3d;transition:transform .42s cubic-bezier(.2,.7,.2,1)}
-.understanding-card.is-flipped .card-inner{transform:rotateY(180deg)}
-.card-front,.card-back{position:absolute;inset:0;display:block;width:100%;min-width:0;height:100%;margin:0;backface-visibility:hidden;border:3px solid currentColor;border-radius:14px;background:#fff;overflow:hidden;box-sizing:border-box;transform-origin:50% 50%}
-.sky-a{color:#c9211e}.sky-b{color:#2462d0}
-.card-front{padding:.2rem;transform:rotateY(0deg)}
-.card-front img{display:block;width:100%;height:100%;object-fit:cover;border-radius:9px}
-.card-back{display:grid;align-content:center;justify-items:center;gap:.45rem;padding:.7rem .6rem;transform:rotateY(180deg);text-align:center;overflow-wrap:anywhere}
-.card-back h3,.card-back p{width:100%;max-width:100%;margin:0}
-.card-back h3{font-size:.92rem}.card-back p{font-size:.68rem}
-.card-back-label{font-size:.62rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-.card-back-instruction{font-size:.62rem!important;opacity:.66}
-.correspondence-card-title{color:#211d1a;font:850 .72rem/1.15 system-ui,sans-serif;text-align:center}
-.ledger-entry{width:100%;margin:0;padding:.45rem .5rem;border:1px solid currentColor;border-radius:10px;background:#fff;color:inherit;font:750 .66rem/1.15 system-ui,sans-serif;cursor:pointer}
-.duration-band button{display:grid;grid-template-columns:auto auto;justify-content:start;align-items:center;gap:.55rem;width:100%;padding:.7rem .8rem;border:1px solid rgba(45,39,34,.13);border-radius:15px;background:#fff;color:#211d1a;text-align:left;cursor:pointer;font:inherit}
-.duration-bars{display:inline-flex;gap:3px}.duration-bars i{display:block;width:6px;height:18px;border-radius:999px;background:#211d1a}
-.duration-detail{grid-column:1/-1;color:#5a524c;font-size:.8rem;line-height:1.42}.duration-band strong{font-size:.86rem}
-@media(max-width:760px){.relationship-hero{grid-template-columns:1fr;gap:.5rem}.relationship-mini-wheel.sky-selected-aspect-diagram{width:min(100%,270px);justify-self:center}.understanding-cards{grid-template-columns:repeat(2,minmax(0,145px));gap:.7rem}}
-@media(max-width:420px){#skySelectedRelationship{padding:.62rem;border-radius:17px}.relationship-hero{padding:.55rem}.relationship-hero-placement{grid-template-columns:50px minmax(0,1fr)}.relationship-hero-glyph{width:50px;height:50px}.relationship-hero-copy p{display:none}.relationship-mini-wheel.sky-selected-aspect-diagram{width:min(100%,240px)}.decan-correspondences{padding:.55rem}.decan-correspondences>header{display:grid;gap:.1rem}.understanding-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}.correspondence-label{font-size:.56rem}.ledger-entry{font-size:.6rem;padding:.4rem .3rem}.duration-band button{padding:.62rem .68rem}}
-@media(prefers-reduced-motion:reduce){.card-inner{transition:none}}
+.relationship-mini-wheel-meta{display:flex;align-items:center;justify-content:center;gap:.35rem;color:var(--aspect-color)}
+.relationship-mini-wheel-aspect{display:block;width:32px;height:32px;overflow:visible}
+.relationship-mini-wheel-orb{color:#514943;font:850 .68rem/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.understanding-card{display:grid;justify-items:stretch;gap:.35rem;width:100%;min-width:0;color:#211d1a}
+.understanding-card.sky-a{grid-area:card-a;color:#c9211e}.understanding-card.sky-b{grid-area:card-b;color:#2462d0}
+.correspondence-label{color:currentColor;font:900 .62rem/1 system-ui,sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}
+.correspondence-card-art{display:block;width:100%;margin:0;padding:.18rem;border:3px solid currentColor;border-radius:13px;background:#fff;box-sizing:border-box;overflow:hidden}
+.correspondence-card-art img{display:block;width:100%;height:auto;aspect-ratio:352/600;object-fit:cover;border-radius:8px}
+.ledger-entry{width:100%;margin:0;padding:.42rem .45rem;border:1px solid currentColor;border-radius:9px;background:#fff;color:currentColor;font:750 .63rem/1.15 system-ui,sans-serif;cursor:pointer}
+.ledger-entry:hover,.ledger-entry:focus-visible{background:#fffdfa;outline:2px solid color-mix(in srgb,currentColor 35%,transparent);outline-offset:1px}
+@media(max-width:760px){.relationship-visual{grid-template-columns:repeat(2,minmax(0,145px));grid-template-areas:"wheel wheel" "card-a card-b"}.relationship-mini-wheel.sky-selected-aspect-diagram{width:min(100%,280px);justify-self:center}}
+@media(max-width:420px){#skySelectedRelationship{padding:.62rem;border-radius:17px}.relationship-visual{grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;padding:.55rem}.relationship-mini-wheel.sky-selected-aspect-diagram{width:min(100%,250px)}.correspondence-label{font-size:.56rem}.ledger-entry{font-size:.59rem;padding:.38rem .3rem}}
