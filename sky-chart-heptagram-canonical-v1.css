@@ -1,6 +1,7 @@
 /* Planetary Hours canonical state presentation. Glyph geometry remains untouched. */
 .sky-ph-jump{overflow:visible}
 .sky-ph-heptagram{overflow:visible!important;max-width:100%;box-sizing:border-box}
+.sky-ph-heptagram text{display:none!important}
 .sky-ph-node-glyph{overflow:visible}
 .sky-ph-node-glyph>.relphi-canonical-glyph-state{pointer-events:none}
 .sky-ph-day-ruler-halo{pointer-events:none}
