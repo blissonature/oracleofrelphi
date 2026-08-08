@@ -49,7 +49,7 @@ test('relationship glyphs preserve the exact uncircled Master Glyph List artboar
 });
 
 test('relationship glyph slots have one renderer owner, one canonical subtree, and one enlarged display scale', () => {
-  assert.match(relationships, /const OWNER = 'relationship-layout-v22';/);
+  assert.match(relationships, /const OWNER = 'relationship-layout-v23';/);
   assert.match(relationships, /const GLYPH_DISPLAY_SIZE = 34;/);
   assert.doesNotMatch(relationships, /ASPECT_DISPLAY_SIZE/);
   assert.doesNotMatch(relationships, /SIGN_DISPLAY_SIZE/);
@@ -64,6 +64,15 @@ test('relationship glyph slots have one renderer owner, one canonical subtree, a
   assert.match(relationships, /width:\$\{GLYPH_DISPLAY_SIZE\}px!important/);
   assert.match(relationships, /align-items:center;/);
   assert.match(relationships, /record\.target instanceof Element \? record\.target\.closest\('\.sky-foundation-relationship-row'\)/);
+});
+
+test('relationship renderer is idempotent under its own MutationObserver', () => {
+  assert.match(relationships, /const alreadyComposed =/);
+  assert.match(relationships, /if \(!alreadyComposed\) \{/);
+  assert.match(relationships, /const extras = Array\.from\(copy\.childNodes\)\.filter\(node => node !== small\)/);
+  assert.match(relationships, /if \(extras\.length\) extras\.forEach\(node => node\.remove\(\)\)/);
+  assert.match(relationships, /const orbText = `\$\{orb\.toFixed\(2\)\}°`/);
+  assert.match(relationships, /if \(badge\.textContent !== orbText\) badge\.textContent = orbText/);
 });
 
 test('interaction controller creates relationship slots but never paints glyphs', () => {
@@ -97,7 +106,8 @@ test('selected relationship inspection restores the exact isolated zodiac wheel 
 
 test('relationship rows are glyph-first and leave names for progressive reveal', () => {
   assert.match(relationships, /small\.replaceChildren\(document\.createTextNode\(coordinate\), signSlot\)/);
-  assert.match(relationships, /Array\.from\(copy\.childNodes\)\.forEach\(node => \{ if \(node !== small\) node\.remove\(\); \}\)/);
+  assert.match(relationships, /const extras = Array\.from\(copy\.childNodes\)\.filter\(node => node !== small\)/);
+  assert.match(relationships, /if \(extras\.length\) extras\.forEach\(node => node\.remove\(\)\)/);
   assert.doesNotMatch(relationships, /document\.createTextNode\(` · H\$\{house\}`\)/);
 });
 
@@ -106,7 +116,7 @@ test('relationship aspect is the visual hinge and the orb sits directly beneath 
   assert.match(relationships, /"\. \. orb \. \."/);
   assert.match(relationships, /\.sky-foundation-relationship-glyph--aspect\{grid-area:aspect\}/);
   assert.match(relationships, /\.sky-foundation-relationship-orb\{[\s\S]*grid-area:orb;[\s\S]*justify-self:center;/);
-  assert.match(relationships, /badge\.textContent = `\$\{orb\.toFixed\(2\)\}°`/);
+  assert.match(relationships, /const orbText = `\$\{orb\.toFixed\(2\)\}°`/);
   assert.doesNotMatch(relationships, /badge\.textContent = `Orb /);
 });
 
@@ -210,7 +220,7 @@ test('shared pages and Sky Chart use the same component version', () => {
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
 });
 
-test('Sky Chart cache keys point at the glyph-first relationship preview', () => {
+test('Sky Chart cache keys point at the responsive glyph-first relationship preview', () => {
   assert.match(html, /navloader\.js\?v=54/);
   assert.match(html, /relphi-glyph-registry-v1\.js\?v=28/);
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
@@ -218,7 +228,7 @@ test('Sky Chart cache keys point at the glyph-first relationship preview', () =>
   assert.match(html, /sky-chart-foundation-interactions-v1\.css\?v=2/);
   assert.match(html, /sky-chart-foundation-interactions-v2\.js\?v=9/);
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
-  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=22/);
+  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=23/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=6/);
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=6/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.css\?v=9/);
