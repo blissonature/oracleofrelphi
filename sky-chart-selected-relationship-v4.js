@@ -1,7 +1,8 @@
-// Selected Relationship v8: exact isolated zodiac geometry, persistent Tarot art, and glyph-first progressive reveal.
+// Selected Relationship v9: exact isolated zodiac geometry, persistent Tarot art, and glyph-first progressive reveal.
 (function(){
 'use strict';
-if(window.__relphiSkySelectedRelationshipV8)return;
+if(window.__relphiSkySelectedRelationshipV9)return;
+window.__relphiSkySelectedRelationshipV9=true;
 window.__relphiSkySelectedRelationshipV8=true;
 window.__relphiSkySelectedRelationshipV7=true;
 window.__relphiSkySelectedRelationshipV6=true;
@@ -27,7 +28,6 @@ function record(slot,id,row){for(const [k,x] of source(read(KEYS[slot]))){if(!x|
 function rowFor(i){return document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${i}"]`)}
 function relation(i){const row=rowFor(i);if(!row)return null;const left=record('A',row.dataset.leftPlacement,row),right=record('B',row.dataset.rightPlacement,row),id=row.dataset.aspect,m=row.getAttribute('aria-label')?.match(/orb\s+([\d.]+)/i);if(!left||!right||!ASPECTS[id])return null;return{index:i,row,left,right,aspect:{id,color:ASPECT_COLORS[id]},orb:Number(row.dataset.sourceOrb||m?.[1]||0)}}
 function pos(r){const v=norm(r.value),s=Math.floor(v/30),w=v-s*30,d=Math.floor(w),m=Math.round((w-d)*60)%60;return{sign:s,degree:d,minute:m,label:`${d}°${String(m).padStart(2,'0')}′ ${SIGNS[s]}`}}
-function orb(v){let m=Math.round(Number(v)*60),d=Math.floor(m/60);return`${d}°${String(m%60).padStart(2,'0')}′`}
 function card(r){const p=pos(r),di=Math.min(2,Math.floor(p.degree/10)),[id,title]=DECANS[p.sign][di];return{id,title,sign:SIGNS[p.sign],decan:di+1,image:`assets/tarot/rws/${id}.webp?v=border-preserving-crop-352`}}
 function ensure(){if(mount?.isConnected)return mount;const rel=document.getElementById('skyFoundationRelationships');if(!rel)return null;mount=document.createElement('section');mount.id='skySelectedRelationship';mount.className='sky-selected-relationship sky-selected-understanding';mount.hidden=true;mount.innerHTML='<div class="sky-selected-body"></div>';rel.insertAdjacentElement('afterend',mount);return mount}
 function renderSvgGroup(host,id,color,state,radius,strokeWidth=2.1){
@@ -44,7 +44,7 @@ function miniWheelMarkup(r){
   const a=ASPECTS[r.aspect.id],pointA=miniPoint(r.left.value,MINI.aspectRadius),pointB=miniPoint(r.right.value,MINI.aspectRadius);
   const boundaries=Array.from({length:12},(_,i)=>{const p1=miniPoint(i*30,MINI.zodiacInner),p2=miniPoint(i*30,MINI.zodiacOuter);return`<line class="sky-selected-zodiac-boundary" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}"></line>`}).join('');
   const signs=SIGN_IDS.map((id,i)=>{const p=miniPoint(i*30+15,MINI.signRadius);return`<g class="sky-selected-mini-sign" data-mini-sign="${id}" transform="translate(${p.x} ${p.y})"></g>`}).join('');
-  return`<article class="sky-selected-aspect-diagram relationship-mini-wheel" style="--aspect-color:${r.aspect.color}"><svg viewBox="0 0 240 240" role="img" aria-label="Isolated ${esc(a[0])}: Sky A ${esc(r.left.entry.name)} to Sky B ${esc(r.right.entry.name)}" data-zodiac-origin="aries-0-at-9" data-left-longitude="${r.left.value.toFixed(8)}" data-right-longitude="${r.right.value.toFixed(8)}" data-aspect-radius="${MINI.aspectRadius}"><circle class="sky-selected-aspect-orbit sky-selected-zodiac-outer" cx="${MINI.cx}" cy="${MINI.cy}" r="${MINI.zodiacOuter}"></circle><circle class="sky-selected-zodiac-inner" cx="${MINI.cx}" cy="${MINI.cy}" r="${MINI.zodiacInner}"></circle>${boundaries}${signs}<circle class="sky-selected-aspect-track" cx="${MINI.cx}" cy="${MINI.cy}" r="${MINI.aspectRadius}"></circle><line class="sky-selected-aspect-radius sky-a" x1="${MINI.cx}" y1="${MINI.cy}" x2="${pointA.x}" y2="${pointA.y}"></line><line class="sky-selected-aspect-radius sky-b" x1="${MINI.cx}" y1="${MINI.cy}" x2="${pointB.x}" y2="${pointB.y}"></line><line class="sky-selected-isolated-aspect" x1="${pointA.x}" y1="${pointA.y}" x2="${pointB.x}" y2="${pointB.y}" stroke="${r.aspect.color}"></line><circle class="sky-selected-aspect-center" cx="${MINI.cx}" cy="${MINI.cy}" r="3.5"></circle><g class="sky-selected-aspect-point sky-a" data-mini-placement="left" transform="translate(${pointA.x} ${pointA.y})"></g><g class="sky-selected-aspect-point sky-b" data-mini-placement="right" transform="translate(${pointB.x} ${pointB.y})"></g></svg><div class="relationship-mini-wheel-meta"><span class="relationship-mini-wheel-aspect" data-mini-aspect="${r.aspect.id}"></span><span class="relationship-mini-wheel-orb">${orb(r.orb)}</span></div></article>`
+  return`<article class="sky-selected-aspect-diagram relationship-mini-wheel" style="--aspect-color:${r.aspect.color}"><svg viewBox="0 0 240 240" role="img" aria-label="Isolated ${esc(a[0])}: Sky A ${esc(r.left.entry.name)} to Sky B ${esc(r.right.entry.name)}" data-zodiac-origin="aries-0-at-9" data-left-longitude="${r.left.value.toFixed(8)}" data-right-longitude="${r.right.value.toFixed(8)}" data-aspect-radius="${MINI.aspectRadius}"><circle class="sky-selected-aspect-orbit sky-selected-zodiac-outer" cx="${MINI.cx}" cy="${MINI.cy}" r="${MINI.zodiacOuter}"></circle><circle class="sky-selected-zodiac-inner" cx="${MINI.cx}" cy="${MINI.cy}" r="${MINI.zodiacInner}"></circle>${boundaries}${signs}<circle class="sky-selected-aspect-track" cx="${MINI.cx}" cy="${MINI.cy}" r="${MINI.aspectRadius}"></circle><line class="sky-selected-aspect-radius sky-a" x1="${MINI.cx}" y1="${MINI.cy}" x2="${pointA.x}" y2="${pointA.y}"></line><line class="sky-selected-aspect-radius sky-b" x1="${MINI.cx}" y1="${MINI.cy}" x2="${pointB.x}" y2="${pointB.y}"></line><line class="sky-selected-isolated-aspect" x1="${pointA.x}" y1="${pointA.y}" x2="${pointB.x}" y2="${pointB.y}" stroke="${r.aspect.color}"></line><circle class="sky-selected-aspect-center" cx="${MINI.cx}" cy="${MINI.cy}" r="3.5"></circle><g class="sky-selected-aspect-point sky-a" data-mini-placement="left" transform="translate(${pointA.x} ${pointA.y})"></g><g class="sky-selected-aspect-point sky-b" data-mini-placement="right" transform="translate(${pointB.x} ${pointB.y})"></g></svg></article>`
 }
 function cardMarkup(slot,c){return`<article class="understanding-card sky-${slot.toLowerCase()}" data-selected-card="${slot}" data-card-title="${esc(c.title)}" data-card-decan="${c.decan}"><span class="correspondence-label">Sky ${slot}</span><figure class="correspondence-card-art"><img src="${esc(c.image)}" alt="${esc(c.title)}"></figure><button class="ledger-entry" data-ledger-card="${esc(c.id)}">Tarot Ledger</button></article>`}
 function mark(i){document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(x=>x.setAttribute('aria-current',Number(x.dataset.relationIndex)===i?'true':'false'))}
@@ -54,14 +54,13 @@ async function render(i,source){
   const a=card(r.left),b=card(r.right),body=panel.querySelector('.sky-selected-body');
   body.innerHTML=`<header class="understanding-header"><div><span>Selected relationship</span><small>Glyph → name → referent</small></div></header><div class="relationship-visual">${cardMarkup('A',a)}${miniWheelMarkup(r)}${cardMarkup('B',b)}</div><section class="sky-selected-progressive" aria-label="Progressive comparison reading"></section>`;
   const jobs=[
-    renderSvgGroup(body.querySelector('[data-mini-aspect]'),r.aspect.id,r.aspect.color,'plain',12.5,1.8),
     renderSvgGroup(body.querySelector('[data-mini-placement="left"]'),r.left.id,COLORS.A,'circled',11.5,2.05),
     renderSvgGroup(body.querySelector('[data-mini-placement="right"]'),r.right.id,COLORS.B,'circled',11.5,2.05)
   ];
   body.querySelectorAll('[data-mini-sign]').forEach(node=>jobs.push(renderSvgGroup(node,node.dataset.miniSign,'#514b45','plain',8.4,1.5)));
   await Promise.allSettled(jobs);
   if(t!==token)return;
-  window.dispatchEvent(new CustomEvent('relphi:selected-relationship-rendered',{detail:{index:i,relation:r,source,version:'understanding-v5-persistent-art'}}));
+  window.dispatchEvent(new CustomEvent('relphi:selected-relationship-rendered',{detail:{index:i,relation:r,source,version:'understanding-v6-persistent-art'}}));
 }
 document.addEventListener('click',e=>{const panel=e.target.closest('#skySelectedRelationship');const ledger=e.target.closest('[data-ledger-card]');if(panel&&ledger){window.dispatchEvent(new CustomEvent('relphi:open-ledger-card',{detail:{cardId:ledger.dataset.ledgerCard,source:'selected-relationship'}}));return}const row=e.target.closest('.sky-foundation-relationship-row[data-relation-index]');if(row)queueMicrotask(()=>render(Number(row.dataset.relationIndex),'relationship-list'))});
 window.addEventListener('relphi:sky-foundation-clear-selection',()=>{selectedIndex=null;if(ensure())mount.hidden=true});
