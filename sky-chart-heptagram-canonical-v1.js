@@ -3,8 +3,8 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramCanonicalV8) return;
-  window.__relphiSkyHeptagramCanonicalV8 = true;
+  if (window.__relphiSkyHeptagramCanonicalV9) return;
+  window.__relphiSkyHeptagramCanonicalV9 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
   const MASTER_RADIUS = 19;
@@ -40,6 +40,11 @@
   function clearCompetingPresentation(group) {
     group.querySelector(':scope > .sky-ph-node')?.remove();
     group.querySelector(':scope > .sky-ph-node-label')?.remove();
+  }
+
+  function clearHeptagramWords(svg) {
+    svg.querySelectorAll('text').forEach(node => node.remove());
+    svg.dataset.wordPresentation = 'glyph-only';
   }
 
   function dayRulerRing(radius, color, role) {
@@ -133,7 +138,9 @@
 
   function correct(svg) {
     if (!svg || !svg.querySelector('.sky-ph-planet')) return;
+    clearHeptagramWords(svg);
     svg.querySelectorAll('.sky-ph-planet').forEach(group => { void placePlanet(group); });
+    clearHeptagramWords(svg);
     svg.dataset.canonicalHeptagramConsumer = 'true';
     svg.dataset.glyphPresentation = 'circled';
     svg.dataset.rulerStates = 'day-double-ring-hour-fill';
@@ -142,6 +149,8 @@
   function inspect(node) {
     if (!(node instanceof Element)) return;
     if (node.matches?.('.sky-ph-heptagram')) correct(node);
+    const owner = node.closest?.('.sky-ph-heptagram');
+    if (owner) clearHeptagramWords(owner);
     node.querySelectorAll?.('.sky-ph-heptagram').forEach(correct);
   }
 
