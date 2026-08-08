@@ -21,7 +21,9 @@
 .sky-selected-aspect-orbit{fill:none;stroke:rgba(31,27,24,.3);stroke-width:1.5;vector-effect:non-scaling-stroke}
 .sky-selected-aspect-radius{stroke:rgba(31,27,24,.45);stroke-width:1.5;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .sky-selected-aspect-center{fill:#24201d}
-.sky-selected-aspect-point{stroke:#fffdf8;stroke-width:2.5;vector-effect:non-scaling-stroke}
+/* Never place presentation stroke on the placement group: SVG stroke inherits into
+   fill-only canonical masters (Lilith's crescent was acquiring a fraudulent white outline). */
+.sky-selected-aspect-point{stroke:none;filter:drop-shadow(0 1px 2px rgba(45,39,34,.16))}
 .sky-selected-aspect-point.sky-a{fill:#c9211e}
 .sky-selected-aspect-point.sky-b{fill:#2462d0}
 .sky-selected-aspect-label{display:flex;align-items:flex-start;gap:5px;margin:0;width:100%;font:750 .62rem/1.25 system-ui,sans-serif;color:#403a35;overflow-wrap:anywhere}
