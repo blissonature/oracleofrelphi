@@ -2,8 +2,9 @@
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyRelationshipCopyV1)return;
+  if(window.__relphiSkyRelationshipCopyV2)return;
   window.__relphiSkyRelationshipCopyV1=true;
+  window.__relphiSkyRelationshipCopyV2=true;
 
   const PLACEMENT_SYMBOLS=Object.freeze({
     sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',
@@ -16,9 +17,10 @@
   let feedbackTimer=0;
 
   function installStyles(){
-    if(document.getElementById('skyRelationshipCopyStylesV1'))return;
+    if(document.getElementById('skyRelationshipCopyStylesV2'))return;
+    document.getElementById('skyRelationshipCopyStylesV1')?.remove();
     const style=document.createElement('style');
-    style.id='skyRelationshipCopyStylesV1';
+    style.id='skyRelationshipCopyStylesV2';
     style.textContent=`
       .sky-relationship-copy-button{margin-left:auto;padding:.38rem .68rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}
       .sky-relationship-copy-button:hover,.sky-relationship-copy-button:focus-visible{border-color:#6b625a;outline:0;background:#fffdfa}
@@ -83,7 +85,7 @@
     const leftCoordinate=coordinate(row,'left'),rightCoordinate=coordinate(row,'right');
     const aspectSymbol=ASPECT_SYMBOLS[aspect]||aspect;
     if(!leftId||!rightId||!leftCoordinate||!rightCoordinate)return'';
-    return `${placementSymbol(leftId)} ${leftSign} ${leftCoordinate}  ${aspectSymbol}  ${placementSymbol(rightId)} ${rightSign} ${rightCoordinate}`.replace(/\s+/g,' ').trim();
+    return `${placementSymbol(leftId)} in ${leftSign} ${leftCoordinate}  ${aspectSymbol}  ${placementSymbol(rightId)} in ${rightSign} ${rightCoordinate}`.replace(/\s+/g,' ').trim();
   }
 
   async function writeClipboard(text){
