@@ -179,11 +179,13 @@ test('relationship placement signs are canonical glyphs rather than sign-name te
   assert.match(relationships, /paintGlyph\(rightSign\.signSlot, rightSign\.signId, 'plain', SKY_COLORS\.B/);
 });
 
-test('relationship copying serializes semantic rows instead of raw SVG DOM text', () => {
+test('relationship copying serializes semantic rows with explicit planet-in-sign grammar', () => {
   assert.match(relationshipCopy, /const PLACEMENT_SYMBOLS=Object\.freeze/);
   assert.match(relationshipCopy, /const SIGN_SYMBOLS=Object\.freeze/);
   assert.match(relationshipCopy, /const ASPECT_SYMBOLS=Object\.freeze/);
   assert.match(relationshipCopy, /function serializeRow\(row\)/);
+  assert.match(relationshipCopy, /placementSymbol\(leftId\)\} in \$\{leftSign\} \$\{leftCoordinate\}/);
+  assert.match(relationshipCopy, /placementSymbol\(rightId\)\} in \$\{rightSign\} \$\{rightCoordinate\}/);
   assert.match(relationshipCopy, /rows\.map\(serializeRow\).*join\('\\n'\)/);
   assert.match(relationshipCopy, /document\.addEventListener\('copy'/);
   assert.match(relationshipCopy, /range\.intersectsNode\(row\)/);
@@ -246,15 +248,20 @@ test('Chart Card Hits never count relationship aspects as activations', () => {
   assert.doesNotMatch(hits, /sky-foundation-relationship-row\[data-relation-index\]/);
 });
 
-test('Chart Card Hits request no large raster card files and use no document-wide mutation observer', () => {
-  assert.match(hits, /Chart Card Hits intentionally request no raster card art/);
-  assert.match(hits, /section\.dataset\.cardMedia = 'none'/);
-  assert.match(hits, /class="sky-card-hit-code"/);
-  assert.doesNotMatch(hits, /assets\/tarot\/rws\//);
-  assert.doesNotMatch(hits, /<img\s/);
+test('Chart Card Hits keep real art while requesting only very low-resolution thumbnails', () => {
+  assert.match(hits, /tiny 48x83 WebP thumbnails/);
+  assert.match(hits, /const THUMB = Object\.freeze\(\{ width:48, height:83, quality:30 \}\)/);
+  assert.match(hits, /function thumbnailFor\(card\)/);
+  assert.match(hits, /new URL\('https:\/\/wsrv\.nl\/'\)/);
+  assert.match(hits, /thumb\.searchParams\.set\('w', String\(THUMB\.width\)\)/);
+  assert.match(hits, /thumb\.searchParams\.set\('h', String\(THUMB\.height\)\)/);
+  assert.match(hits, /thumb\.searchParams\.set\('q', String\(THUMB\.quality\)\)/);
+  assert.match(hits, /loading="lazy" decoding="async" fetchpriority="low"/);
+  assert.match(hits, /section\.dataset\.cardMedia = `thumbnail-\$\{THUMB\.width\}x\$\{THUMB\.height\}`/);
+  assert.doesNotMatch(hits, /src="assets\/tarot\/rws\//);
   assert.doesNotMatch(hits, /new MutationObserver/);
   assert.doesNotMatch(html, /sky-chart-card-image-budget-v1\.js/);
-  assert.match(html, /sky-chart-card-hits-v2\.js\?v=7/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=8/);
 });
 
 test('Chart Angles are grouped visually without reordering ledger row identity', () => {
@@ -279,14 +286,14 @@ test('shared pages and Sky Chart use the same component version', () => {
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
 });
 
-test('Sky Chart cache keys point at the compact relationship and clipboard preview', () => {
+test('Sky Chart cache keys point at the compact relationship, copy, and thumbnail preview', () => {
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=28/);
-  assert.match(html, /sky-chart-relationship-copy-v1\.js\?v=1/);
+  assert.match(html, /sky-chart-relationship-copy-v1\.js\?v=2/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.css\?v=11/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=8/);
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=9/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.js\?v=10/);
   assert.match(html, /sky-chart-progressive-reveal-contract-v1\.js\?v=2/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=14/);
-  assert.match(html, /sky-chart-card-hits-v2\.js\?v=7/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=8/);
 });
