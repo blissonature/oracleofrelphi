@@ -1,10 +1,11 @@
 // Stable Chart Card Hits tally beneath each independent sky.
 // Card clicks explain accumulated hit evidence; they never filter the Sky Chart.
 // Card art is requested only as tiny 48x83 WebP thumbnails; the browser never requests full card files here.
+// Detail selection is independent from wheel/relationship clearing and remains open until the user closes it or selects another card.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyChartCardHitsV9) return;
+  if (window.__relphiSkyChartCardHitsV10) return;
   window.__relphiSkyChartCardHitsV2 = true;
   window.__relphiSkyChartCardHitsV3 = true;
   window.__relphiSkyChartCardHitsV4 = true;
@@ -13,6 +14,7 @@
   window.__relphiSkyChartCardHitsV7 = true;
   window.__relphiSkyChartCardHitsV8 = true;
   window.__relphiSkyChartCardHitsV9 = true;
+  window.__relphiSkyChartCardHitsV10 = true;
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -65,10 +67,10 @@
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function installStyles() {
-    if (document.getElementById('skyChartCardHitsStylesV9')) return;
-    ['skyChartCardHitsStylesV8','skyChartCardHitsStylesV7','skyChartCardHitsStylesV6','skyChartCardHitsStylesV5','skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
+    if (document.getElementById('skyChartCardHitsStylesV10')) return;
+    ['skyChartCardHitsStylesV9','skyChartCardHitsStylesV8','skyChartCardHitsStylesV7','skyChartCardHitsStylesV6','skyChartCardHitsStylesV5','skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
-    style.id = 'skyChartCardHitsStylesV9';
+    style.id = 'skyChartCardHitsStylesV10';
     style.textContent = `
       .sky-card-hits{--sky-hit-color:#555;margin:1rem 0 0;padding:.9rem;border:1px solid rgba(31,27,24,.16);border-top:5px solid var(--sky-hit-color);border-radius:1rem;background:#fffdfa;min-width:0;box-sizing:border-box}
       #skyFoundationA>.sky-card-hits{--sky-hit-color:#c9211e}#skyFoundationB>.sky-card-hits{--sky-hit-color:#2462d0}
@@ -139,10 +141,14 @@
     return placementSource(readPayload(slot)).map(([key,item]) => {
       const value = longitude(item);
       if (!Number.isFinite(value)) return null;
-      const signIndex = Math.floor(value / 30);
-      const within = value - signIndex * 30;
-      const degree = Math.floor(within);
-      const minute = Math.floor((within - degree) * 60 + 1e-8);
+      const longitudeSignIndex = Math.floor(value / 30);
+      const explicitSignIndex = SIGNS.findIndex(name => name.toLowerCase() === String(item?.sign || item?.zodiac || '').trim().toLowerCase());
+      const explicitDegree = Number(item?.degree ?? item?.degrees);
+      const explicitMinute = Number(item?.minute ?? item?.minutes);
+      const signIndex = explicitSignIndex >= 0 ? explicitSignIndex : longitudeSignIndex;
+      const within = value - longitudeSignIndex * 30;
+      const degree = Number.isFinite(explicitDegree) ? Math.max(0,Math.min(29,Math.trunc(explicitDegree))) : Math.floor(within);
+      const minute = Number.isFinite(explicitMinute) ? Math.max(0,Math.min(59,Math.trunc(explicitMinute))) : Math.floor((within - Math.floor(within)) * 60 + 1e-8);
       return { key,item,body:bodyName(key,item),value,signIndex,sign:SIGNS[signIndex],degree,minute,decan:Math.min(2,Math.floor(degree / 10)) };
     }).filter(Boolean);
   }
@@ -298,14 +304,16 @@
     if (!window.RELPHI_TAROT_CARDS) return;
     renderSlot('A'); renderSlot('B');
   }
-  function schedule() { if (scheduled) return; scheduled = true; requestAnimationFrame(() => requestAnimationFrame(render)); }
+  function schedule() { if (scheduled) return; scheduled = true; requestAnimationFrame(render); }
 
   function handleClick(event) {
     const close = event.target.closest('[data-card-hit-close]');
     if (close) {
       const section = close.closest('.sky-card-hits'),slot = section?.dataset.skySlot;
       if (!slot) return;
-      selectedCard[slot] = ''; syncSelection(slot,section,buildTally(slot)); return;
+      selectedCard[slot] = '';
+      syncSelection(slot,section,buildTally(slot));
+      return;
     }
     const button = event.target.closest('.sky-card-hit');
     if (!button) return;
@@ -317,16 +325,10 @@
     button.focus({preventScroll:true});
   }
 
-  function clearCardSelection() {
-    selectedCard.A = ''; selectedCard.B = '';
-    document.querySelectorAll('.sky-card-hits').forEach(section => syncSelection(section.dataset.skySlot,section,buildTally(section.dataset.skySlot)));
-  }
-
   function start() {
     installStyles();
     document.addEventListener('click',handleClick);
-    window.addEventListener('relphi:sky-foundation-clear-selection',clearCardSelection);
-    ['relphi:sky-foundation-ready','relphi:sky-foundation-rendered','relphi:sky-foundation-interactions-ready','relphi:sky-heptagram-source-ready'].forEach(name => window.addEventListener(name,schedule));
+    ['relphi:sky-foundation-ready','relphi:sky-heptagram-source-ready'].forEach(name => window.addEventListener(name,schedule));
     window.addEventListener('storage',event => { if (Object.values(KEYS).includes(event.key)) schedule(); });
     schedule();
   }
