@@ -1,7 +1,8 @@
-/* The weekly star reaches the planetary nodes; earlier traced days recede behind today. */
+/* The weekly star reaches the planetary nodes; traced time is solid and the undrawn week is dotted. */
 .sky-ph-heptagram{max-height:none}
 .sky-ph-week-segment.future,
 .sky-ph-hour-segment.future,
 .sky-ph-hour-segment.past{stroke:#9a948e;stroke-width:2;opacity:.52}
-.sky-ph-week-segment.past{stroke-width:2;opacity:.56}
-.sky-ph-week-segment.current{stroke-width:5.5;opacity:1}
+.sky-ph-week-segment.future{stroke-dasharray:2.5 6;stroke-linecap:round}
+.sky-ph-week-segment.past{stroke-width:2;opacity:.56;stroke-dasharray:none}
+.sky-ph-week-segment.current{stroke-width:5.5;opacity:1;stroke-dasharray:none;stroke-linecap:round}
