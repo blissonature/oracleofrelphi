@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyChartCardHitsV8) return;
+  if (window.__relphiSkyChartCardHitsV9) return;
   window.__relphiSkyChartCardHitsV2 = true;
   window.__relphiSkyChartCardHitsV3 = true;
   window.__relphiSkyChartCardHitsV4 = true;
@@ -12,6 +12,7 @@
   window.__relphiSkyChartCardHitsV6 = true;
   window.__relphiSkyChartCardHitsV7 = true;
   window.__relphiSkyChartCardHitsV8 = true;
+  window.__relphiSkyChartCardHitsV9 = true;
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -53,7 +54,7 @@
   });
   const RANK_CODES = Object.freeze({two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9',ten:'10'});
   const SUIT_CODES = Object.freeze({wands:'W',cups:'C',swords:'S',pentacles:'P'});
-  const THUMB = Object.freeze({ width:48, height:83, quality:30 });
+  const THUMB = Object.freeze({ width:48, height:83, quality:50 });
   const selectedCard = { A:'', B:'' };
   const renderSignature = { A:'', B:'' };
   let scheduled = false;
@@ -64,23 +65,23 @@
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function installStyles() {
-    if (document.getElementById('skyChartCardHitsStylesV8')) return;
-    ['skyChartCardHitsStylesV7','skyChartCardHitsStylesV6','skyChartCardHitsStylesV5','skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
+    if (document.getElementById('skyChartCardHitsStylesV9')) return;
+    ['skyChartCardHitsStylesV8','skyChartCardHitsStylesV7','skyChartCardHitsStylesV6','skyChartCardHitsStylesV5','skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
-    style.id = 'skyChartCardHitsStylesV8';
+    style.id = 'skyChartCardHitsStylesV9';
     style.textContent = `
       .sky-card-hits{--sky-hit-color:#555;margin:1rem 0 0;padding:.9rem;border:1px solid rgba(31,27,24,.16);border-top:5px solid var(--sky-hit-color);border-radius:1rem;background:#fffdfa;min-width:0;box-sizing:border-box}
       #skyFoundationA>.sky-card-hits{--sky-hit-color:#c9211e}#skyFoundationB>.sky-card-hits{--sky-hit-color:#2462d0}
       .sky-card-hits-header{display:flex;align-items:baseline;justify-content:space-between;gap:.7rem;margin:0 0 .7rem}
       .sky-card-hits-title{margin:0;font:850 1rem/1.1 system-ui,sans-serif;letter-spacing:.02em}
       .sky-card-hits-total{font:700 .72rem/1.2 system-ui,sans-serif;color:#625d58;text-align:right}
-      .sky-card-hits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:.48rem;align-items:start}
-      .sky-card-hit{position:relative;display:grid;grid-template-rows:auto auto;justify-items:center;gap:.28rem;width:100%;min-width:0;margin:0;padding:.22rem;border:2px solid transparent;border-radius:.7rem;background:transparent;color:#171717;cursor:pointer;box-sizing:border-box}
+      .sky-card-hits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:.48rem;align-items:start;overflow:visible}
+      .sky-card-hit{position:relative;display:grid;grid-template-rows:auto auto;justify-items:center;gap:.28rem;width:100%;min-width:0;margin:0;padding:.22rem;border:2px solid transparent;border-radius:.7rem;background:transparent;color:#171717;cursor:pointer;box-sizing:border-box;overflow:visible}
       .sky-card-hit:hover,.sky-card-hit:focus-visible{border-color:var(--sky-hit-color);outline:0;background:#fff}
       .sky-card-hit[aria-pressed="true"]{border-color:var(--sky-hit-color);background:#fff;box-shadow:0 0 0 2px color-mix(in srgb,var(--sky-hit-color) 16%,transparent)}
-      .sky-card-hit-art{position:relative;display:grid;place-items:center;width:${THUMB.width}px;height:${THUMB.height}px;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.3rem;overflow:hidden;background:linear-gradient(180deg,#fffdf8,#eee8df);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+      .sky-card-hit-art{position:relative;display:grid;place-items:center;width:${THUMB.width}px;height:${THUMB.height}px;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.3rem;overflow:visible;background:linear-gradient(180deg,#fffdf8,#eee8df);box-shadow:0 1px 3px rgba(0,0,0,.1)}
       .sky-card-hit-code{padding:.15rem;color:#4d4640;font:900 .72rem/1 Georgia,serif;text-align:center}
-      .sky-card-hit-art img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;image-rendering:auto}
+      .sky-card-hit-art img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;border-radius:.26rem;image-rendering:auto}
       .sky-card-hit-chip{position:absolute;z-index:2;right:-.5rem;top:-.45rem;display:grid;place-items:center;min-width:1.65rem;height:1.65rem;padding:0 .28rem;border:2px solid #fff;border-radius:999px;background:var(--sky-hit-color);color:#fff;font:900 .7rem/1 system-ui,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.2)}
       .sky-card-hit-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font:750 .66rem/1.1 system-ui,sans-serif;text-align:center}
       .sky-card-hits-empty{margin:0;font:600 .8rem/1.4 system-ui,sans-serif;color:#625d58}
