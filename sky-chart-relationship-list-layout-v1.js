@@ -3,15 +3,15 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV23) return;
-  window.__relphiSkyRelationshipListLayoutV23 = true;
+  if (window.__relphiSkyRelationshipListLayoutV24) return;
+  window.__relphiSkyRelationshipListLayoutV24 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV23';
-  const OWNER = 'relationship-layout-v23';
+  const STYLE_ID = 'skyRelationshipListLayoutV24';
+  const OWNER = 'relationship-layout-v24';
   const MASTER_VIEWBOX = '-32 -32 64 64';
   const MASTER_RADIUS = 19;
-  const GLYPH_DISPLAY_SIZE = 34;
+  const GLYPH_DISPLAY_SIZE = 42;
   const SIGN_IDS = Object.freeze(['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces']);
   const SIGN_NAMES = Object.freeze(['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']);
   const SKY_COLORS = Object.freeze({ A:'#c9211e', B:'#2462d0' });
@@ -23,7 +23,7 @@
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
-    ['skyRelationshipListLayoutV22','skyRelationshipListLayoutV21','skyRelationshipListLayoutV20','skyRelationshipListLayoutV19','skyRelationshipListLayoutV18','skyRelationshipListLayoutV17','skyRelationshipListLayoutV16']
+    ['skyRelationshipListLayoutV23','skyRelationshipListLayoutV22','skyRelationshipListLayoutV21','skyRelationshipListLayoutV20','skyRelationshipListLayoutV19','skyRelationshipListLayoutV18','skyRelationshipListLayoutV17','skyRelationshipListLayoutV16']
       .forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
     style.id = STYLE_ID;
@@ -32,16 +32,17 @@
         --relationship-stripe:var(--aspect-color,#777);
         position:relative;
         display:grid;
-        grid-template-columns:${GLYPH_DISPLAY_SIZE}px minmax(76px,1fr) 52px ${GLYPH_DISPLAY_SIZE}px minmax(76px,1fr);
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr) 52px minmax(0,1fr) minmax(0,1fr);
         grid-template-areas:
-          "left-glyph left-copy aspect right-glyph right-copy"
-          ". . orb . .";
+          "left-glyph left-glyph aspect right-glyph right-glyph"
+          "left-copy left-copy orb right-copy right-copy";
         align-items:center;
-        column-gap:9px;
-        row-gap:2px;
-        min-height:74px;
-        padding:9px 10px 8px 13px;
-        overflow:visible;
+        justify-items:center;
+        column-gap:4px;
+        row-gap:1px;
+        min-height:101px;
+        padding:7px 10px 8px 13px;
+        overflow:hidden;
       }
       .sky-foundation-relationship-row::before{
         content:"";
@@ -58,6 +59,8 @@
         height:${GLYPH_DISPLAY_SIZE}px;
         min-width:${GLYPH_DISPLAY_SIZE}px;
         min-height:${GLYPH_DISPLAY_SIZE}px;
+        max-width:${GLYPH_DISPLAY_SIZE}px;
+        max-height:${GLYPH_DISPLAY_SIZE}px;
         overflow:visible;
       }
       .sky-foundation-relationship-glyph{
@@ -83,20 +86,22 @@
       .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5){grid-area:right-copy}
       .sky-foundation-relationship-copy{
         display:grid;
-        align-items:center;
+        place-items:center;
         min-width:0;
+        width:100%;
         color:#625b55;
       }
       .sky-foundation-relationship-copy small{
         display:grid;
         grid-template-columns:auto ${GLYPH_DISPLAY_SIZE}px;
         align-items:center;
-        justify-content:start;
-        gap:5px;
+        justify-content:center;
+        gap:7px;
+        min-width:0;
         min-height:${GLYPH_DISPLAY_SIZE}px;
         white-space:nowrap;
         color:#625b55;
-        font:800 .72rem/1 system-ui,sans-serif;
+        font:850 .72rem/1 system-ui,sans-serif;
         font-variant-numeric:tabular-nums;
       }
       .sky-foundation-relationship-sign{
@@ -106,14 +111,13 @@
       }
       .sky-foundation-relationship-orb{
         grid-area:orb;
-        align-self:start;
+        align-self:center;
         justify-self:center;
-        margin-top:-2px;
         min-width:42px;
         color:var(--relationship-stripe);
         text-align:center;
         white-space:nowrap;
-        font:900 .64rem/1 system-ui,sans-serif;
+        font:900 .65rem/1 system-ui,sans-serif;
         font-variant-numeric:tabular-nums;
         letter-spacing:.01em;
       }
@@ -131,19 +135,17 @@
         background-clip:padding-box;
       }
       #skyFoundationRelationshipList::-webkit-scrollbar-button{display:none;width:0;height:0}
+      @media(max-width:1120px){
+        .sky-foundation-relationship-row{min-height:96px}
+      }
       @media(max-width:620px){
         .sky-foundation-relationship-row{
-          grid-template-columns:${GLYPH_DISPLAY_SIZE}px minmax(68px,1fr) 48px minmax(68px,1fr) ${GLYPH_DISPLAY_SIZE}px;
-          grid-template-areas:
-            "left-glyph left-copy aspect right-copy right-glyph"
-            ". . orb . .";
-          column-gap:6px;
-          min-height:76px;
-          padding:9px 8px 8px 13px;
+          grid-template-columns:minmax(0,1fr) minmax(0,1fr) 50px minmax(0,1fr) minmax(0,1fr);
+          column-gap:3px;
+          min-height:98px;
+          padding:7px 8px 8px 13px;
         }
-        .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5){justify-items:end}
-        .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5) small{justify-content:end;grid-template-columns:${GLYPH_DISPLAY_SIZE}px auto}
-        .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5) small>.sky-foundation-relationship-sign{order:-1}
+        .sky-foundation-relationship-copy small{gap:6px}
       }
     `;
     document.head.appendChild(style);
@@ -297,7 +299,7 @@
     const orbText = `${orb.toFixed(2)}°`;
     if (badge.textContent !== orbText) badge.textContent = orbText;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
-    row.dataset.relationshipLayout = 'v23';
+    row.dataset.relationshipLayout = 'v24';
   }
 
   function refresh(root) {
