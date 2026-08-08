@@ -1,12 +1,13 @@
 // Stable Chart Card Hits tally beneath each independent sky.
-// Card clicks isolate the card's primary sky correspondence while the tally remains a property of the full chart.
+// Card clicks explain the accumulated hit evidence; they never filter the Sky Chart.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyChartCardHitsV4) return;
+  if (window.__relphiSkyChartCardHitsV5) return;
   window.__relphiSkyChartCardHitsV2 = true;
   window.__relphiSkyChartCardHitsV3 = true;
   window.__relphiSkyChartCardHitsV4 = true;
+  window.__relphiSkyChartCardHitsV5 = true;
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -33,13 +34,7 @@
     ['eight_of_cups','nine_of_cups','ten_of_cups']
   ];
   const PLANET_NAMES = new Set(['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto']);
-  const PLANET_IDS = Object.freeze({Sun:'sun',Moon:'moon',Mercury:'mercury',Venus:'venus',Mars:'mars',Jupiter:'jupiter',Saturn:'saturn',Uranus:'uranus',Neptune:'neptune',Pluto:'pluto'});
   const OUTER_PLANET_CARDS = { Uranus:'the_fool', Neptune:'the_hanged_man', Pluto:'judgement' };
-  const CARD_TARGET_OVERRIDES = Object.freeze({
-    judgement:Object.freeze({kind:'placement',value:'pluto',label:'Pluto'}),
-    the_hanged_man:Object.freeze({kind:'placement',value:'neptune',label:'Neptune'}),
-    the_fool:Object.freeze({kind:'placement',value:'uranus',label:'Uranus'})
-  });
   const BODY_ALIASES = {
     sun:'Sun', moon:'Moon', mercury:'Mercury', venus:'Venus', mars:'Mars', jupiter:'Jupiter', saturn:'Saturn',
     uranus:'Uranus', neptune:'Neptune', pluto:'Pluto', asc:'Ascendant', rising:'Ascendant', ascendant:'Ascendant',
@@ -60,10 +55,10 @@
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function installStyles() {
-    if (document.getElementById('skyChartCardHitsStylesV3')) return;
-    document.getElementById('skyChartCardHitsStylesV2')?.remove();
+    if (document.getElementById('skyChartCardHitsStylesV5')) return;
+    ['skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
-    style.id = 'skyChartCardHitsStylesV3';
+    style.id = 'skyChartCardHitsStylesV5';
     style.textContent = `
       .sky-card-hits{--sky-hit-color:#555;margin:1rem 0 0;padding:.9rem;border:1px solid rgba(31,27,24,.16);border-top:5px solid var(--sky-hit-color);border-radius:1rem;background:#fffdfa;min-width:0;box-sizing:border-box}
       #skyFoundationA>.sky-card-hits{--sky-hit-color:#c9211e}#skyFoundationB>.sky-card-hits{--sky-hit-color:#2462d0}
@@ -79,7 +74,15 @@
       .sky-card-hit-chip{position:absolute;right:-.25rem;top:-.35rem;display:grid;place-items:center;min-width:1.75rem;height:1.75rem;padding:0 .32rem;border:2px solid #fff;border-radius:999px;background:var(--sky-hit-color);color:#fff;font:900 .73rem/1 system-ui,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.22)}
       .sky-card-hit-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font:750 .68rem/1.12 system-ui,sans-serif;text-align:center}
       .sky-card-hits-empty{margin:0;font:600 .8rem/1.4 system-ui,sans-serif;color:#625d58}
-      @media(max-width:620px){.sky-card-hits{padding:.75rem}.sky-card-hits-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:.42rem}.sky-card-hit{padding:.2rem}.sky-card-hit-name{font-size:.64rem}}
+      .sky-card-hit-detail{margin-top:.8rem;padding:.75rem;border:1px solid color-mix(in srgb,var(--sky-hit-color) 28%,#d9d4ce);border-radius:.85rem;background:#fff;box-shadow:0 6px 18px rgba(31,27,24,.06)}
+      .sky-card-hit-detail[hidden]{display:none!important}
+      .sky-card-hit-detail-header{display:flex;align-items:start;justify-content:space-between;gap:.65rem;margin-bottom:.35rem}
+      .sky-card-hit-detail-title{display:grid;gap:.1rem;min-width:0}.sky-card-hit-detail-title strong{font:900 .82rem/1.15 system-ui,sans-serif}.sky-card-hit-detail-title span{font:800 .68rem/1.2 system-ui,sans-serif;color:var(--sky-hit-color)}
+      .sky-card-hit-detail-close{display:grid;place-items:center;width:1.8rem;height:1.8rem;padding:0;border:1px solid rgba(31,27,24,.16);border-radius:999px;background:#fff;color:#403a35;font:900 1rem/1 system-ui,sans-serif;cursor:pointer}
+      .sky-card-hit-detail-note{margin:.2rem 0 .5rem;color:#625d58;font:650 .68rem/1.35 system-ui,sans-serif}
+      .sky-card-hit-reasons{display:grid;gap:.35rem;max-height:220px;margin:0;padding:.15rem .2rem .1rem 1.15rem;overflow:auto;color:#403a35;font:650 .67rem/1.35 system-ui,sans-serif;scrollbar-width:thin}
+      .sky-card-hit-reasons li::marker{color:var(--sky-hit-color);font-weight:900}
+      @media(max-width:620px){.sky-card-hits{padding:.75rem}.sky-card-hits-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:.42rem}.sky-card-hit{padding:.2rem}.sky-card-hit-name{font-size:.64rem}.sky-card-hit-detail{padding:.65rem}}
       @media(max-width:390px){.sky-card-hits-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
     `;
     document.head.appendChild(style);
@@ -149,7 +152,7 @@
 
   function cardForDecan(record) { return cardById(DECAN_CARDS[record.signIndex]?.[record.decan]); }
   function displayName(card) { return card?.systems?.golden_dawn_rws?.display_name || card?.name || String(card?.card_id || '').replace(/_/g,' '); }
-  function imageFor(card) { return `assets/tarot/rws/${encodeURIComponent(card.card_id)}.webp?v=chart-card-hits-v4`; }
+  function imageFor(card) { return `assets/tarot/rws/${encodeURIComponent(card.card_id)}.webp?v=chart-card-hits-v5`; }
   function positionLabel(record) { return `${record.body} at ${record.degree}°${String(record.minute).padStart(2,'0')}′ ${record.sign}`; }
 
   function addHit(tally,card,reason,key) {
@@ -239,38 +242,6 @@
     );
   }
 
-  function primaryCorrespondence(card,slot) {
-    if (!card) return null;
-    const id = card.card_id || card.stable_symbol_id || '';
-    const override = CARD_TARGET_OVERRIDES[id];
-    if (override && records(slot).some(record => PLANET_IDS[record.body] === override.value)) return override;
-
-    const planets = splitValues(card.astrology?.planet);
-    const signs = splitValues(card.astrology?.sign);
-    const planet = planets.find(name => PLANET_IDS[name] && records(slot).some(record => record.body === name));
-    const sign = signs.find(name => SIGNS.includes(name));
-
-    if (card.arcana === 'Major') {
-      if (planet) return {kind:'placement',value:PLANET_IDS[planet],label:planet};
-      if (sign) return {kind:'sign',value:SIGNS.indexOf(sign),label:sign};
-    } else {
-      if (sign) return {kind:'sign',value:SIGNS.indexOf(sign),label:sign};
-      if (planet) return {kind:'placement',value:PLANET_IDS[planet],label:planet};
-    }
-    return null;
-  }
-
-  function activateCorrespondence(slot,target) {
-    if (!target) return false;
-    const selector = target.kind === 'placement'
-      ? `[data-layer="placements"] [data-sky="${slot}"][data-placement="${target.value}"][data-interactive="placement"]`
-      : `[data-layer="zodiac"] [data-interactive="sign"][data-sign="${target.value}"]`;
-    const node = document.querySelector(selector);
-    if (!node) return false;
-    node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
-    return true;
-  }
-
   function ensureSection(slot) {
     const panel = document.getElementById(`skyFoundation${slot}`);
     if (!panel) return null;
@@ -291,10 +262,30 @@
     return JSON.stringify(hits.map(hit => [hit.id,hit.count,hit.reasons]));
   }
 
-  function syncSelection(slot,section) {
+  function detailMarkup(hit) {
+    return `<div class="sky-card-hit-detail-header"><div class="sky-card-hit-detail-title"><strong>${esc(displayName(hit.card))}</strong><span>${hit.count} activation${hit.count === 1 ? '' : 's'}</span></div><button class="sky-card-hit-detail-close" type="button" data-card-hit-close aria-label="Close card-hit explanation">×</button></div><p class="sky-card-hit-detail-note">Why this card appears in this sky. These are contributing chart facts; nothing on the wheel or in Relationships is filtered.</p><ol class="sky-card-hit-reasons">${hit.reasons.map(reason => `<li>${esc(reason)}</li>`).join('')}</ol>`;
+  }
+
+  function syncSelection(slot,section,hits) {
     section.querySelectorAll('.sky-card-hit[data-card-hit-id]').forEach(button => {
       button.setAttribute('aria-pressed',button.dataset.cardHitId === selectedCard[slot] ? 'true' : 'false');
     });
+    const detail = section.querySelector('.sky-card-hit-detail');
+    if (!detail) return;
+    const hit = (hits || buildTally(slot)).find(item => item.id === selectedCard[slot]);
+    if (!hit) {
+      detail.hidden = true;
+      detail.replaceChildren();
+      delete detail.dataset.cardHitId;
+      return;
+    }
+    const signature = JSON.stringify([hit.id,hit.count,hit.reasons]);
+    if (detail.dataset.detailSignature !== signature) {
+      detail.innerHTML = detailMarkup(hit);
+      detail.dataset.detailSignature = signature;
+      detail.dataset.cardHitId = hit.id;
+    }
+    detail.hidden = false;
   }
 
   function renderSlot(slot) {
@@ -304,19 +295,16 @@
     const activationCount = hits.reduce((sum,hit) => sum + hit.count,0);
     const signature = tallySignature(hits);
     if (renderSignature[slot] === signature && section.firstElementChild) {
-      syncSelection(slot,section);
+      syncSelection(slot,section,hits);
       return;
     }
     if (!hits.some(hit => hit.id === selectedCard[slot])) selectedCard[slot] = '';
     section.innerHTML = `<header class="sky-card-hits-header"><h3 class="sky-card-hits-title">Chart Card Hits</h3><span class="sky-card-hits-total">${activationCount} activation${activationCount === 1 ? '' : 's'} · ${hits.length} card${hits.length === 1 ? '' : 's'}</span></header>` +
-      (hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => {
-        const target = primaryCorrespondence(hit.card,slot);
-        const action = target ? `Isolate ${target.label}.` : 'No direct wheel isolation.';
-        return `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-pressed="${selectedCard[slot] === hit.id ? 'true' : 'false'}" aria-label="${esc(displayName(hit.card))}, ${hit.count} hits. ${esc(action)}"><span class="sky-card-hit-art"><img src="${esc(imageFor(hit.card))}" alt="" loading="lazy"><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`;
-      }).join('')}</div>` : '<p class="sky-card-hits-empty">Add placements to see which cards the sky activates.</p>');
+      (hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-pressed="${selectedCard[slot] === hit.id ? 'true' : 'false'}" aria-label="${esc(displayName(hit.card))}, ${hit.count} hits. Show why this card appears."><span class="sky-card-hit-art"><img src="${esc(imageFor(hit.card))}" alt="" loading="lazy"><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`).join('')}</div><div class="sky-card-hit-detail" hidden></div>` : '<p class="sky-card-hits-empty">Add placements to see which cards the sky activates.</p>');
     renderSignature[slot] = signature;
     section.dataset.hitCount = String(activationCount);
     section.dataset.cardCount = String(hits.length);
+    syncSelection(slot,section,hits);
   }
 
   function render() {
@@ -333,25 +321,30 @@
   }
 
   function handleClick(event) {
+    const close = event.target.closest('[data-card-hit-close]');
+    if (close) {
+      const section = close.closest('.sky-card-hits');
+      const slot = section?.dataset.skySlot;
+      if (!slot) return;
+      selectedCard[slot] = '';
+      syncSelection(slot,section,buildTally(slot));
+      return;
+    }
     const button = event.target.closest('.sky-card-hit');
     if (!button) return;
     const section = button.closest('.sky-card-hits');
     const slot = section?.dataset.skySlot;
     if (!slot) return;
     const id = button.dataset.cardHitId || '';
-    const hit = buildTally(slot).find(item => item.id === id);
-    const target = primaryCorrespondence(hit?.card,slot);
-    if (!target) return;
     selectedCard[slot] = selectedCard[slot] === id ? '' : id;
-    syncSelection(slot,section);
-    activateCorrespondence(slot,target);
+    syncSelection(slot,section,buildTally(slot));
     button.focus({preventScroll:true});
   }
 
   function clearCardSelection() {
     selectedCard.A = '';
     selectedCard.B = '';
-    document.querySelectorAll('.sky-card-hits').forEach(section => syncSelection(section.dataset.skySlot,section));
+    document.querySelectorAll('.sky-card-hits').forEach(section => syncSelection(section.dataset.skySlot,section,buildTally(section.dataset.skySlot)));
   }
 
   function start() {
