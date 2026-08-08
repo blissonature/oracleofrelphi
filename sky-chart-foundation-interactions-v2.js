@@ -61,7 +61,15 @@
   function houseFor(value,houseCusps){for(let index=0;index<12;index++){const start=houseCusps[index],span=norm(houseCusps[(index+1)%12]-start)||30;if(norm(value-start)<span)return index+1}return 12}
   function prepare(payload,slot){const list=records(payload),houseCusps=cusps(payload,list);list.forEach(record=>{record.sky=slot;record.sign=Math.floor(record.value/30);record.house=houseFor(record.value,houseCusps)});return{list,houseCusps}}
   function relationships(listA,listB){const result=[];listA.forEach(left=>listB.forEach(right=>{const distance=separation(left.value,right.value);ASPECTS.forEach(aspect=>{const orb=Math.abs(distance-aspect.angle);if(orb<=aspect.orb)result.push({left,right,aspect,orb,distance})})}));return result.sort((a,b)=>a.orb-b.orb)}
-  function coordinate(record){const sign=Math.floor(record.value/30),within=record.value-sign*30,degree=Math.floor(within),minute=Math.round((within-degree)*60)%60;return{sign,text:`${degree}°${String(minute).padStart(2,'0')}′`}}
+  function coordinate(record){
+    const item=record.item||{},explicitSign=SIGNS.indexOf(String(item.sign||item.zodiac||'').trim().toLowerCase()),explicitDegree=Number(item.degree??item.degrees),explicitMinute=Number(item.minute??item.minutes);
+    if(explicitSign>=0&&Number.isFinite(explicitDegree)&&Number.isFinite(explicitMinute)){
+      const degree=Math.max(0,Math.min(29,Math.trunc(explicitDegree))),minute=Math.max(0,Math.min(59,Math.trunc(explicitMinute)));
+      return{sign:explicitSign,text:`${degree}°${String(minute).padStart(2,'0')}′`};
+    }
+    const sign=Math.floor(record.value/30),within=record.value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-9);
+    return{sign,text:`${degree}°${String(minute).padStart(2,'0')}′`};
+  }
 
   function ensurePanel(){
     let panel=document.getElementById('skyFoundationRelationships');if(panel)return panel;
@@ -81,7 +89,7 @@
     const selectionCleared=document.getElementById('skyFoundationRoot')?.dataset.relationshipSelectionCleared==='true',selected=selectionCleared?null:document.querySelector('.sky-foundation-relationship-row[aria-current="true"]');const selectedKey=selected?[selected.dataset.leftPlacement,selected.dataset.aspect,selected.dataset.rightPlacement,selected.getAttribute('aria-label')].join('|'):'';
     list.replaceChildren();count.textContent=relations.length+'/'+relations.length;count.dataset.total=String(relations.length);
     relations.forEach((relation,index)=>{
-      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.aspect=relation.aspect.id;row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.leftHouse=String(relation.left.house);row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(relation.left.sign);row.dataset.rightSign=String(relation.right.sign);row.setAttribute('aria-label',relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+', orb '+relation.orb.toFixed(2)+' degrees');
+      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.aspect=relation.aspect.id;row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.leftHouse=String(relation.left.house);row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);row.setAttribute('aria-label',relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+', orb '+relation.orb.toFixed(2)+' degrees');
       const leftGlyph=glyphSlot('left',relation.left.entry.name),aspectGlyph=glyphSlot('aspect',relation.aspect.id),rightGlyph=glyphSlot('right',relation.right.entry.name),leftCopy=document.createElement('span'),rightCopy=document.createElement('span');leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';leftCopy.innerHTML=esc(relation.left.entry.name)+'<small>'+left.text+' '+esc(SIGN_NAMES[left.sign])+' · H'+relation.left.house+'</small>';rightCopy.innerHTML=esc(relation.right.entry.name)+'<small>'+right.text+' '+esc(SIGN_NAMES[right.sign])+' · H'+relation.right.house+' · Orb '+relation.orb.toFixed(2)+'°</small>';row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);
       const key=[row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement,row.getAttribute('aria-label')].join('|');if(key===selectedKey)row.setAttribute('aria-current','true');
     });
