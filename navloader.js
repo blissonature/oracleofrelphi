@@ -73,11 +73,7 @@
     hero.insertAdjacentElement('afterend', note);
     const retryButton = document.getElementById('relphiRetryPreview');
     if (retryButton) {
-      Object.assign(retryButton.style, {
-        appearance:'none', border:'1px solid rgba(220,31,24,.45)', borderRadius:'999px',
-        background:'#fff', color:'#111', font:'inherit', fontWeight:'800',
-        marginLeft:'.5rem', padding:'.55rem .9rem', cursor:'pointer'
-      });
+      Object.assign(retryButton.style, {appearance:'none',border:'1px solid rgba(220,31,24,.45)',borderRadius:'999px',background:'#fff',color:'#111',font:'inherit',fontWeight:'800',marginLeft:'.5rem',padding:'.55rem .9rem',cursor:'pointer'});
     }
     retryButton?.addEventListener('click', function () {
       const url = new URL(location.href);
@@ -99,10 +95,7 @@
 
   function waitForSkyBuilder(started, onTimeout) {
     if (finishSkyBuilderLoad()) return;
-    if (Date.now() - started < 8000) {
-      setTimeout(function () { waitForSkyBuilder(started, onTimeout); }, 50);
-      return;
-    }
+    if (Date.now() - started < 8000) { setTimeout(function () { waitForSkyBuilder(started, onTimeout); }, 50); return; }
     onTimeout();
   }
 
@@ -112,28 +105,17 @@
     const retryOrFail = function () {
       const failed = document.querySelector('script[src^="sky-chart-builder-v4.js"]');
       if (failed) failed.remove();
-      if (retry < 2) {
-        setTimeout(function () { loadSkyBuilder(retry + 1); }, 250);
-        return;
-      }
+      if (retry < 2) { setTimeout(function () { loadSkyBuilder(retry + 1); }, 250); return; }
       showPreviewLoadFailure();
     };
-    appendScript('sky-chart-builder-v4.js?v=18' + suffix, function () {
-      waitForSkyBuilder(Date.now(), retryOrFail);
-    }, retryOrFail);
+    appendScript('sky-chart-builder-v4.js?v=18' + suffix, function () { waitForSkyBuilder(Date.now(), retryOrFail); }, retryOrFail);
   }
 
   function ensureCanonicalSkyBootStyle() {
     if (document.getElementById('relphi-canonical-sky-boot-style')) return;
     const style = document.createElement('style');
     style.id = 'relphi-canonical-sky-boot-style';
-    style.textContent = [
-      '.sky-chart-page .unified-sky-wheel svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
-      '.sky-chart-page #chartOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
-      '.sky-chart-page #currentSkyOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),',
-      '.sky-chart-page .sky-output-box svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback){visibility:hidden!important}',
-      '.sky-chart-page svg.relphi-canonical-ready,.sky-chart-page svg.relphi-canonical-fallback{visibility:visible!important}'
-    ].join('');
+    style.textContent = ['.sky-chart-page .unified-sky-wheel svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),','.sky-chart-page #chartOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),','.sky-chart-page #currentSkyOutput svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback),','.sky-chart-page .sky-output-box svg:not(.relphi-canonical-ready):not(.relphi-canonical-fallback){visibility:hidden!important}','.sky-chart-page svg.relphi-canonical-ready,.sky-chart-page svg.relphi-canonical-fallback{visibility:visible!important}'].join('');
     document.head.appendChild(style);
   }
 
@@ -161,7 +143,7 @@
       });
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('planetary-hours-moon-position-v1.js?v=1');
-      appendScript('planetary-hours-active-time-integrity-v1.js?v=1');
+      appendScript('planetary-hours-active-time-integrity-v1.js?v=2');
     }
     if (/(^|\/)astrology-foundations\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () {
@@ -172,21 +154,10 @@
     if (/(^|\/)(mythic-atlas|constellations)\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () { appendScript('relphi-inline-glyph-consumer-v1.js?v=2'); });
     }
-
     if (/(^|\/)sky-chart\.html$/.test(location.pathname) && !document.getElementById('skyFoundationRoot')) {
       const preview = new URLSearchParams(location.search).get('preview');
-      [
-        'sky-chart-stability-hotfix.js?v=1',
-        'sky-chart-static-dynamic.js?v=2',
-        'sky-chart-aspect-duration-fix.js?v=2',
-        'sky-chart-relationship-language.js?v=5',
-        'sky-chart-related-relationships-v2.js?v=2',
-        'sky-chart-sign-cusps-v1.js?v=1',
-        'sky-chart-provenance-fix.js?v=1',
-        'sky-chart-calculated-points-v1.js?v=4'
-      ].forEach(function (src) { appendScript(src); });
+      ['sky-chart-stability-hotfix.js?v=1','sky-chart-static-dynamic.js?v=2','sky-chart-aspect-duration-fix.js?v=2','sky-chart-relationship-language.js?v=5','sky-chart-related-relationships-v2.js?v=2','sky-chart-sign-cusps-v1.js?v=1','sky-chart-provenance-fix.js?v=1','sky-chart-calculated-points-v1.js?v=4'].forEach(function (src) { appendScript(src); });
       loadCanonicalGlyphRuntime();
-
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);
       appendScript(preview === 'pr22' ? 'sky-chart-relationship-color-hints-pr22.js?v=1' : 'sky-chart-relationship-color-hints.js?v=3');
@@ -198,10 +169,7 @@
     ensureNavStyles();
     loadEnhancements();
     if (document.querySelector('.menu-container')) return initMenu();
-    fetch('nav.html?v=14')
-      .then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); })
-      .then(injectNav)
-      .catch(fallbackNav);
+    fetch('nav.html?v=14').then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); }).then(injectNav).catch(fallbackNav);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
