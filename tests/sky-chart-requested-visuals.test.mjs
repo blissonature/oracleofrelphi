@@ -104,7 +104,7 @@ test('relationship aspect is the visual hinge and the orb sits directly beneath 
   assert.match(relationships, /"left-glyph left-copy aspect right-glyph right-copy"/);
   assert.match(relationships, /"\. \. orb \. \."/);
   assert.match(relationships, /\.sky-foundation-relationship-glyph--aspect\{[\s\S]*grid-area:aspect;[\s\S]*justify-self:center;/);
-  assert.doesNotMatch(relationships, /\.sky-foundation-relationship-glyph--aspect\{[\s\S]*width:/);
+  assert.doesNotMatch(relationships, /\.sky-foundation-relationship-glyph--aspect\{[^}]*width:/);
   assert.match(relationships, /\.sky-foundation-relationship-orb\{[\s\S]*grid-area:orb;[\s\S]*justify-self:center;/);
   assert.match(relationships, /badge\.textContent = `\$\{orb\.toFixed\(2\)\}°`/);
   assert.doesNotMatch(relationships, /badge\.textContent = `Orb /);
