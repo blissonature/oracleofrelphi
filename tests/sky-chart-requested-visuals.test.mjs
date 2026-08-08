@@ -109,15 +109,21 @@ test('Planetary Hours heptagram scales the complete circled master as one unit',
   assert.doesNotMatch(heptagram, /radius:17/);
 });
 
-test('Planetary Hours heptagram has distinct day-ruler and hour-ruler states without altering master geometry', () => {
-  assert.match(heptagram, /if \(state\.day\) addDayRulerRing\(master, planetColor\)/);
+test('Planetary Hours heptagram keeps day and hour states visibly distinct without altering master glyph geometry', () => {
+  assert.match(heptagram, /const DAY_RING_INNER_RADIUS = 23;/);
+  assert.match(heptagram, /const DAY_RING_OUTER_RADIUS = 27;/);
+  assert.match(heptagram, /if \(state\.day\) addDayRulerHalo\(master, planetColor\)/);
+  assert.match(heptagram, /dayRulerRing\(DAY_RING_INNER_RADIUS, color, 'inner'\)/);
+  assert.match(heptagram, /dayRulerRing\(DAY_RING_OUTER_RADIUS, color, 'outer'\)/);
   assert.match(heptagram, /color:state\.hour \? '#ffffff' : planetColor/);
   assert.match(heptagram, /fill:state\.hour \? planetColor : '#ffffff'/);
   assert.match(heptagram, /bubble\.circle\.setAttribute\('stroke', planetColor\)/);
   assert.match(heptagram, /day-and-hour-ruler/);
-  assert.match(heptagramCss, /\.sky-ph-day-ruler-ring/);
+  assert.match(heptagram, /day-double-ring-hour-fill/);
+  assert.match(heptagramCss, /\.sky-ph-day-ruler-ring--inner/);
+  assert.match(heptagramCss, /\.sky-ph-day-ruler-ring--outer/);
   assert.match(heptagramCss, /\.sky-ph-planet\.is-hour-ruler \.relphi-glyph-bubble>circle/);
-  assert.match(heptagramCss, /\.sky-ph-planet\.is-day-ruler\.is-hour-ruler \.sky-ph-day-ruler-ring/);
+  assert.match(heptagramCss, /\.sky-ph-planet\.is-day-ruler\.is-hour-ruler \.sky-ph-day-ruler-ring--outer/);
 });
 
 test('Lilith uses the same static-master path as the planetary SVG masters', () => {
@@ -178,7 +184,7 @@ test('Sky Chart cache keys point at the corrected consumers', () => {
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=19/);
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=4/);
-  assert.match(html, /sky-chart-heptagram-canonical-v1\.css\?v=7/);
-  assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=12/);
+  assert.match(html, /sky-chart-heptagram-canonical-v1\.css\?v=8/);
+  assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=13/);
   assert.match(html, /sky-chart-card-hits-v2\.js\?v=3/);
 });
