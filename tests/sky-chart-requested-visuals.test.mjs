@@ -48,9 +48,9 @@ test('relationship glyphs preserve the exact uncircled Master Glyph List artboar
   assert.match(relationships, /sky-foundation-relationship-glyph--right'\), row\.dataset\.rightPlacement, 'plain'/);
 });
 
-test('relationship glyph slots have one renderer owner, one canonical subtree, and one enlarged display scale', () => {
-  assert.match(relationships, /const OWNER = 'relationship-layout-v23';/);
-  assert.match(relationships, /const GLYPH_DISPLAY_SIZE = 34;/);
+test('relationship glyph slots have one renderer owner, one canonical subtree, and a wheel-scale display box', () => {
+  assert.match(relationships, /const OWNER = 'relationship-layout-v24';/);
+  assert.match(relationships, /const GLYPH_DISPLAY_SIZE = 42;/);
   assert.doesNotMatch(relationships, /ASPECT_DISPLAY_SIZE/);
   assert.doesNotMatch(relationships, /SIGN_DISPLAY_SIZE/);
   assert.match(relationships, /data-relationship-canonical-host/);
@@ -62,7 +62,7 @@ test('relationship glyph slots have one renderer owner, one canonical subtree, a
   assert.match(relationships, /relphi-glyph-' \+ entry\.id/);
   assert.match(relationships, /\.sky-foundation-relationship-glyph,\s*\n\s*\.sky-foundation-relationship-sign\{/);
   assert.match(relationships, /width:\$\{GLYPH_DISPLAY_SIZE\}px!important/);
-  assert.match(relationships, /align-items:center;/);
+  assert.match(relationships, /max-width:\$\{GLYPH_DISPLAY_SIZE\}px/);
   assert.match(relationships, /record\.target instanceof Element \? record\.target\.closest\('\.sky-foundation-relationship-row'\)/);
 });
 
@@ -111,12 +111,17 @@ test('relationship rows are glyph-first and leave names for progressive reveal',
   assert.doesNotMatch(relationships, /document\.createTextNode\(` · H\$\{house\}`\)/);
 });
 
+test('relationship row reads as a symmetric two-tier equation rather than cramped inline tiles', () => {
+  assert.match(relationships, /"left-glyph left-glyph aspect right-glyph right-glyph"/);
+  assert.match(relationships, /"left-copy left-copy orb right-copy right-copy"/);
+  assert.match(relationships, /grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\) 52px minmax\(0,1fr\) minmax\(0,1fr\)/);
+  assert.match(relationships, /\.sky-foundation-relationship-copy small\{[\s\S]*grid-template-columns:auto \$\{GLYPH_DISPLAY_SIZE\}px;[\s\S]*justify-content:center;/);
+});
+
 test('relationship aspect is the visual hinge and the orb sits directly beneath it without a separate aspect scale', () => {
-  assert.match(relationships, /"left-glyph left-copy aspect right-glyph right-copy"/);
-  assert.match(relationships, /"\. \. orb \. \."/);
   assert.match(relationships, /\.sky-foundation-relationship-glyph--aspect\{grid-area:aspect\}/);
   assert.match(relationships, /\.sky-foundation-relationship-orb\{[\s\S]*grid-area:orb;[\s\S]*justify-self:center;/);
-  assert.match(relationships, /const orbText = `\$\{orb\.toFixed\(2\)\}°`/);
+  assert.match(relationships, /if \(badge\.textContent !== orbText\) badge\.textContent = orbText/);
   assert.doesNotMatch(relationships, /badge\.textContent = `Orb /);
 });
 
@@ -220,7 +225,7 @@ test('shared pages and Sky Chart use the same component version', () => {
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
 });
 
-test('Sky Chart cache keys point at the responsive glyph-first relationship preview', () => {
+test('Sky Chart cache keys point at the glyph-first relationship preview', () => {
   assert.match(html, /navloader\.js\?v=54/);
   assert.match(html, /relphi-glyph-registry-v1\.js\?v=28/);
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
@@ -228,7 +233,7 @@ test('Sky Chart cache keys point at the responsive glyph-first relationship prev
   assert.match(html, /sky-chart-foundation-interactions-v1\.css\?v=2/);
   assert.match(html, /sky-chart-foundation-interactions-v2\.js\?v=9/);
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
-  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=23/);
+  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=24/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=6/);
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=6/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.css\?v=9/);
