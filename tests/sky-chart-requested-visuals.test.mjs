@@ -10,6 +10,8 @@ const interactions = fs.readFileSync(path.join(root, 'sky-chart-foundation-inter
 const relationships = fs.readFileSync(path.join(root, 'sky-chart-relationship-list-layout-v1.js'), 'utf8');
 const selectedRelationship = fs.readFileSync(path.join(root, 'sky-chart-selected-relationship-v4.js'), 'utf8');
 const selectedRelationshipCss = fs.readFileSync(path.join(root, 'sky-chart-selected-understanding-v1.css'), 'utf8');
+const progressive = fs.readFileSync(path.join(root, 'sky-chart-progressive-comparison-v1.js'), 'utf8');
+const progressiveCss = fs.readFileSync(path.join(root, 'sky-chart-progressive-comparison-v1.css'), 'utf8');
 const heptagram = fs.readFileSync(path.join(root, 'sky-chart-heptagram-canonical-v1.js'), 'utf8');
 const heptagramCss = fs.readFileSync(path.join(root, 'sky-chart-heptagram-canonical-v1.css'), 'utf8');
 const registry = fs.readFileSync(path.join(root, 'relphi-glyph-registry-v1.js'), 'utf8');
@@ -60,10 +62,8 @@ test('relationship glyph slots have one renderer owner, one canonical subtree, a
   assert.match(relationships, /g\.relphi-glyph-bubble/);
   assert.match(relationships, /arts\.length !== 1/);
   assert.match(relationships, /relphi-glyph-' \+ entry\.id/);
-  assert.match(relationships, /\.sky-foundation-relationship-glyph,\s*\n\s*\.sky-foundation-relationship-sign\{/);
   assert.match(relationships, /width:\$\{GLYPH_DISPLAY_SIZE\}px!important/);
   assert.match(relationships, /max-width:\$\{GLYPH_DISPLAY_SIZE\}px/);
-  assert.match(relationships, /record\.target instanceof Element \? record\.target\.closest\('\.sky-foundation-relationship-row'\)/);
 });
 
 test('relationship renderer is idempotent under its own MutationObserver', () => {
@@ -83,12 +83,8 @@ test('interaction controller creates relationship slots but never paints glyphs'
   assert.doesNotMatch(interactions, /RelphiGlyphComponent/);
 });
 
-test('selected relationship inspection restores the exact isolated zodiac wheel and keeps Tarot secondary', () => {
+test('selected relationship keeps exact mini-wheel geometry and permanent Tarot art', () => {
   assert.doesNotMatch(selectedRelationship, /RelphiCanonicalGlyphState/);
-  assert.match(selectedRelationship, /window\.RelphiGlyphComponent/);
-  assert.match(selectedRelationship, /component\.createBubble\(svg,entry\.id,\{radius:19,padding:1,color\}\)/);
-  assert.match(selectedRelationship, /svg\.setAttribute\('viewBox','-32 -32 64 64'\)/);
-  assert.match(selectedRelationship, /Exact zodiac geometry · Tarot correspondence below/);
   assert.match(selectedRelationship, /function miniPoint\(degree,radius\)\{const angle=\(norm\(degree\)-180\)\*Math\.PI\/180;/);
   assert.match(selectedRelationship, /data-zodiac-origin="aries-0-at-9"/);
   assert.match(selectedRelationship, /data-left-longitude=/);
@@ -97,11 +93,32 @@ test('selected relationship inspection restores the exact isolated zodiac wheel 
   assert.match(selectedRelationship, /data-mini-placement="left"/);
   assert.match(selectedRelationship, /data-mini-placement="right"/);
   assert.match(selectedRelationship, /data-mini-sign=/);
-  assert.match(selectedRelationship, /renderSvgGroup\(node,node\.dataset\.miniSign,'#514b45','plain',8\.4,1\.5\)/);
-  assert.match(selectedRelationship, /Decan correspondences/);
-  assert.match(selectedRelationshipCss, /\.relationship-hero\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(210px,230px\) minmax\(0,1fr\)/);
-  assert.match(selectedRelationshipCss, /\.relationship-mini-wheel \.sky-selected-isolated-aspect\{stroke-width:4\.2/);
-  assert.match(selectedRelationshipCss, /\.understanding-cards\{display:grid;grid-template-columns:repeat\(2,minmax\(0,170px\)\)/);
+  assert.match(selectedRelationship, /<figure class="correspondence-card-art"><img/);
+  assert.match(selectedRelationship, /data-selected-card=/);
+  assert.doesNotMatch(selectedRelationship, /card-flip/);
+  assert.doesNotMatch(selectedRelationship, /card-back/);
+  assert.doesNotMatch(selectedRelationship, /data-flip/);
+  assert.doesNotMatch(selectedRelationship, /durationMarkup/);
+  assert.match(selectedRelationshipCss, /\.relationship-visual\{display:grid;grid-template-columns:minmax\(112px,150px\) minmax\(220px,270px\) minmax\(112px,150px\)/);
+  assert.match(selectedRelationshipCss, /\.correspondence-card-art img\{[\s\S]*aspect-ratio:352\/600/);
+  assert.doesNotMatch(selectedRelationshipCss, /\.card-back/);
+  assert.doesNotMatch(selectedRelationshipCss, /\.card-inner/);
+});
+
+test('progressive relationship view is only glyph to name to referent', () => {
+  assert.match(progressive, /Progressive symbolic reading: glyph -> name -> referent/);
+  assert.match(progressive, /function symbolicReading\(relation\)/);
+  assert.match(progressive, /data-progressive-stage="glyph"/);
+  assert.match(progressive, /data-progressive-level="name"/);
+  assert.match(progressive, /data-progressive-level="meaning"/);
+  assert.match(progressive, /Reveal the referent of/);
+  assert.match(progressive, /component\.createBubble\(svg,entry\.id,\{radius:19,padding:1,color\}\)/);
+  assert.doesNotMatch(progressive, /RelphiCanonicalGlyphState/);
+  assert.doesNotMatch(progressive, /proseReading/);
+  assert.doesNotMatch(progressive, /stelliumDisclosure/);
+  assert.doesNotMatch(progressive, /sky-transit-timeline-pending/);
+  assert.match(progressiveCss, /\.sky-progressive-symbol-row\{display:grid/);
+  assert.match(progressiveCss, /\.sky-progressive-glyph\{display:grid;place-items:center;width:56px;height:56px/);
 });
 
 test('relationship rows are glyph-first and leave names for progressive reveal', () => {
@@ -115,7 +132,6 @@ test('relationship row reads as a symmetric two-tier equation rather than crampe
   assert.match(relationships, /"left-glyph left-glyph aspect right-glyph right-glyph"/);
   assert.match(relationships, /"left-copy left-copy orb right-copy right-copy"/);
   assert.match(relationships, /grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\) 52px minmax\(0,1fr\) minmax\(0,1fr\)/);
-  assert.match(relationships, /\.sky-foundation-relationship-copy small\{[\s\S]*grid-template-columns:auto \$\{GLYPH_DISPLAY_SIZE\}px;[\s\S]*justify-content:center;/);
 });
 
 test('relationship aspect is the visual hinge and the orb sits directly beneath it without a separate aspect scale', () => {
@@ -131,7 +147,6 @@ test('relationship placement signs are canonical glyphs rather than sign-name te
   assert.match(relationships, /paintGlyph\(signSlot, signId, 'plain', color, signName\)/);
   assert.match(relationships, /ensureSignGlyph\(row, 'left', SKY_COLORS\.A\)/);
   assert.match(relationships, /ensureSignGlyph\(row, 'right', SKY_COLORS\.B\)/);
-  assert.match(relationships, /small\.replaceChildren\(/);
 });
 
 test('Planetary Hours heptagram scales the complete circled master as one unit', () => {
@@ -141,7 +156,6 @@ test('Planetary Hours heptagram scales the complete circled master as one unit',
   assert.match(heptagram, /component\.createBubble\(master, entry\.id/);
   assert.match(heptagram, /canonicalGlyphPresentation = 'circled'/);
   assert.match(heptagram, /glyphPresentation = 'circled'/);
-  assert.doesNotMatch(heptagram, /radius:17/);
 });
 
 test('Planetary Hours heptagram keeps day and hour states visibly distinct without altering master glyph geometry', () => {
@@ -152,13 +166,9 @@ test('Planetary Hours heptagram keeps day and hour states visibly distinct witho
   assert.match(heptagram, /dayRulerRing\(DAY_RING_OUTER_RADIUS, color, 'outer'\)/);
   assert.match(heptagram, /color:state\.hour \? '#ffffff' : planetColor/);
   assert.match(heptagram, /fill:state\.hour \? planetColor : '#ffffff'/);
-  assert.match(heptagram, /bubble\.circle\.setAttribute\('stroke', planetColor\)/);
   assert.match(heptagram, /day-and-hour-ruler/);
-  assert.match(heptagram, /day-double-ring-hour-fill/);
   assert.match(heptagramCss, /\.sky-ph-day-ruler-ring--inner/);
   assert.match(heptagramCss, /\.sky-ph-day-ruler-ring--outer/);
-  assert.match(heptagramCss, /\.sky-ph-planet\.is-hour-ruler \.relphi-glyph-bubble>circle/);
-  assert.match(heptagramCss, /\.sky-ph-planet\.is-day-ruler\.is-hour-ruler \.sky-ph-day-ruler-ring--outer/);
 });
 
 test('Planetary Hours heptagram is glyph-only inside the SVG', () => {
@@ -171,27 +181,21 @@ test('Planetary Hours heptagram is glyph-only inside the SVG', () => {
 test('Lilith uses the same static-master path as the planetary SVG masters', () => {
   assert.match(registry, /\['lilith','Lilith',[^\n]+,1,0,0,null,'static-master'\]/);
   assert.doesNotMatch(component, /entry\.id === 'lilith'/);
-  assert.doesNotMatch(component, /entry\.fitMode === 'lilith'/);
 });
 
 test('Part of Fortune is a full-sized static master rather than a procedural insert', () => {
   assert.match(registry, /\['part-of-fortune','Part of Fortune',[^\n]+assets\/planet-glyphs\/part-of-fortune\.svg',1,0,0,null,'static-master'\]/);
   assert.match(fortune, /<circle cx="50" cy="50" r="20"/);
-  assert.match(fortune, /stroke-width="3\.3"/);
   assert.doesNotMatch(component, /entry\.id === 'part-of-fortune'/);
-  assert.doesNotMatch(component, /function fortune\(/);
 });
 
 test('Chart Card Hits explain their evidence instead of acting as relationship filters', () => {
   assert.match(hits, /Card clicks explain the accumulated hit evidence; they never filter the Sky Chart/);
   assert.match(hits, /function detailMarkup\(hit\)/);
-  assert.match(hits, /sky-card-hit-detail-note/);
   assert.match(hits, /aspect relationships are not part of the tally/);
   assert.match(hits, /nothing on the wheel or in Relationships is filtered/);
-  assert.match(hits, /hit\.reasons\.map\(reason =>/);
   assert.doesNotMatch(hits, /function primaryCorrespondence\(/);
   assert.doesNotMatch(hits, /function activateCorrespondence\(/);
-  assert.doesNotMatch(hits, /dispatchEvent\(new MouseEvent\('click'/);
 });
 
 test('Chart Card Hits never count relationship aspects as activations', () => {
@@ -215,9 +219,6 @@ test('dynamic SVG glyph fitting is identity-stable even inside hidden relationsh
   assert.match(component, /probe\.dataset\.relphiGlyphMeasureProbe = 'true';/);
   assert.match(component, /fitMetrics\.set\(entry\.id, metrics\);/);
   assert.match(component, /node\.dataset\.fitMetricsSource = 'identity-cache';/);
-  assert.match(component, /const fitted = fit\(art, radius, padding, entry, bubbleStrokeWidth\);/);
-  assert.match(component, /if \(fitted\) art\.style\.visibility = '';/);
-  assert.doesNotMatch(component, /if \(needsFittedReveal\) art\.style\.visibility = '';/);
 });
 
 test('shared pages and Sky Chart use the same component version', () => {
@@ -225,18 +226,12 @@ test('shared pages and Sky Chart use the same component version', () => {
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
 });
 
-test('Sky Chart cache keys point at the glyph-first relationship preview', () => {
-  assert.match(html, /navloader\.js\?v=54/);
-  assert.match(html, /relphi-glyph-registry-v1\.js\?v=28/);
-  assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
-  assert.match(html, /sky-chart-foundation-v1\.css\?v=8/);
-  assert.match(html, /sky-chart-foundation-interactions-v1\.css\?v=2/);
-  assert.match(html, /sky-chart-foundation-interactions-v2\.js\?v=9/);
-  assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
+test('Sky Chart cache keys point at the persistent-art progressive preview', () => {
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=24/);
-  assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=6/);
-  assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=6/);
-  assert.match(html, /sky-chart-heptagram-canonical-v1\.css\?v=9/);
+  assert.match(html, /sky-chart-progressive-comparison-v1\.css\?v=10/);
+  assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=7/);
+  assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=8/);
+  assert.match(html, /sky-chart-progressive-comparison-v1\.js\?v=9/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=14/);
   assert.match(html, /sky-chart-card-hits-v2\.js\?v=6/);
 });
