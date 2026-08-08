@@ -50,7 +50,7 @@ test('relationship glyphs preserve the exact uncircled Master Glyph List artboar
 });
 
 test('relationship glyph slots have one renderer owner and one comparison-wheel nominal scale', () => {
-  assert.match(relationships, /const OWNER = 'relationship-layout-v26';/);
+  assert.match(relationships, /const OWNER = 'relationship-layout-v27';/);
   assert.match(relationships, /const GLYPH_DISPLAY_SIZE = 38;/);
   assert.doesNotMatch(relationships, /ASPECT_DISPLAY_SIZE/);
   assert.doesNotMatch(relationships, /SIGN_DISPLAY_SIZE/);
@@ -65,14 +65,16 @@ test('relationship glyph slots have one renderer owner and one comparison-wheel 
   assert.match(relationships, /max-width:\$\{GLYPH_DISPLAY_SIZE\}px/);
 });
 
-test('relationship rows stay compact while reserving enough width for complete zodiac glyphs', () => {
-  assert.match(relationships, /"left-glyph left-copy aspect right-glyph right-copy"/);
-  assert.match(relationships, /"\. \. orb \. \."/);
-  assert.match(relationships, /grid-template-rows:\$\{GLYPH_DISPLAY_SIZE\}px 11px/);
+test('relationship rows are three equal centered thirds: placement in sign, aspect, placement in sign', () => {
+  assert.match(relationships, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(relationships, /"left aspect right"/);
+  assert.match(relationships, /"left orb right"/);
+  assert.match(relationships, /grid-template-rows:\$\{GLYPH_DISPLAY_SIZE\}px 12px/);
   assert.match(relationships, /min-height:58px/);
-  assert.match(relationships, /minmax\(96px,1fr\)/);
-  assert.match(relationships, /grid-template-columns:minmax\(50px,auto\) \$\{GLYPH_DISPLAY_SIZE\}px/);
-  assert.match(relationships, /overflow:visible/);
+  assert.match(relationships, /\.sky-foundation-relationship-placement--left\{grid-area:left\}/);
+  assert.match(relationships, /\.sky-foundation-relationship-placement--right\{grid-area:right\}/);
+  assert.match(relationships, /\.sky-foundation-relationship-symbol-pair\{[\s\S]*display:flex;[\s\S]*justify-content:center;[\s\S]*gap:6px/);
+  assert.match(relationships, /\.sky-foundation-relationship-copy small\{[\s\S]*text-align:center/);
   assert.doesNotMatch(relationships, /min-height:101px/);
 });
 
@@ -86,8 +88,10 @@ test('relationship renderer paints only rows near the relationship viewport', ()
 });
 
 test('relationship structure updates remain idempotent', () => {
+  assert.match(relationships, /function ensurePlacementGroup\(row, side\)/);
   assert.match(relationships, /const alreadyComposed =/);
   assert.match(relationships, /if \(!alreadyComposed\) \{/);
+  assert.match(relationships, /if \(copy\.parentElement !== group\) group\.appendChild\(copy\)/);
   assert.match(relationships, /const extras = Array\.from\(copy\.childNodes\)\.filter\(node => node !== small\)/);
   assert.match(relationships, /if \(extras\.length\) extras\.forEach\(node => node\.remove\(\)\)/);
   assert.match(relationships, /if \(badge\.textContent !== orbText\) badge\.textContent = orbText/);
@@ -151,14 +155,14 @@ test('progressive reveal contract is event-driven rather than watching the entir
 });
 
 test('relationship rows are glyph-first and leave names for progressive reveal', () => {
-  assert.match(relationships, /small\.replaceChildren\(document\.createTextNode\(coordinate\), signSlot\)/);
-  assert.match(relationships, /const extras = Array\.from\(copy\.childNodes\)\.filter\(node => node !== small\)/);
-  assert.match(relationships, /if \(extras\.length\) extras\.forEach\(node => node\.remove\(\)\)/);
+  assert.match(relationships, /small\.replaceChildren\(document\.createTextNode\(coordinate\)\)/);
+  assert.match(relationships, /if \(glyph\.parentElement !== pair\) pair\.appendChild\(glyph\)/);
+  assert.match(relationships, /if \(signSlot\.parentElement !== pair\) pair\.appendChild\(signSlot\)/);
   assert.doesNotMatch(relationships, /document\.createTextNode\(` · H\$\{house\}`\)/);
 });
 
 test('relationship aspect is the visual hinge and the orb sits directly beneath it without a separate aspect scale', () => {
-  assert.match(relationships, /\.sky-foundation-relationship-glyph--aspect\{grid-area:aspect\}/);
+  assert.match(relationships, /\.sky-foundation-relationship-glyph--aspect\{grid-area:aspect/);
   assert.match(relationships, /\.sky-foundation-relationship-orb\{[\s\S]*grid-area:orb;[\s\S]*justify-self:center;/);
   assert.match(relationships, /if \(badge\.textContent !== orbText\) badge\.textContent = orbText/);
   assert.doesNotMatch(relationships, /badge\.textContent = `Orb /);
@@ -166,8 +170,8 @@ test('relationship aspect is the visual hinge and the orb sits directly beneath 
 
 test('relationship placement signs are canonical glyphs rather than sign-name text', () => {
   assert.match(relationships, /const SIGN_IDS = Object\.freeze\(\['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'\]\)/);
-  assert.match(relationships, /className = 'sky-foundation-relationship-sign'/);
-  assert.match(relationships, /function ensureSignSlot\(row, side\)/);
+  assert.match(relationships, /signSlot\.className = 'sky-foundation-relationship-sign'/);
+  assert.match(relationships, /function ensurePlacementGroup\(row, side\)/);
   assert.match(relationships, /paintGlyph\(leftSign\.signSlot, leftSign\.signId, 'plain', SKY_COLORS\.A/);
   assert.match(relationships, /paintGlyph\(rightSign\.signSlot, rightSign\.signId, 'plain', SKY_COLORS\.B/);
 });
@@ -261,7 +265,7 @@ test('shared pages and Sky Chart use the same component version', () => {
 });
 
 test('Sky Chart cache keys point at the compact lazy relationship preview', () => {
-  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=26/);
+  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=27/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.css\?v=11/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=8/);
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=9/);
