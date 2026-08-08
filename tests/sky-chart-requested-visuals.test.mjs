@@ -50,7 +50,7 @@ test('relationship glyphs preserve the exact uncircled Master Glyph List artboar
 });
 
 test('relationship glyph slots have one renderer owner and one comparison-wheel nominal scale', () => {
-  assert.match(relationships, /const OWNER = 'relationship-layout-v27';/);
+  assert.match(relationships, /const OWNER = 'relationship-layout-v28';/);
   assert.match(relationships, /const GLYPH_DISPLAY_SIZE = 38;/);
   assert.doesNotMatch(relationships, /ASPECT_DISPLAY_SIZE/);
   assert.doesNotMatch(relationships, /SIGN_DISPLAY_SIZE/);
@@ -78,12 +78,15 @@ test('relationship rows are three equal centered thirds: placement in sign, aspe
   assert.doesNotMatch(relationships, /min-height:101px/);
 });
 
-test('relationship renderer paints only rows near the relationship viewport', () => {
+test('relationship renderer virtualizes canonical glyph DOM around the relationship viewport', () => {
   assert.match(relationships, /new IntersectionObserver\(entries =>/);
-  assert.match(relationships, /\{ root:list, rootMargin:'160px 0px', threshold:0\.01 \}/);
-  assert.match(relationships, /visibleRows\.unobserve\(entry\.target\)/);
-  assert.match(relationships, /paintRowGlyphs\(entry\.target\)/);
-  assert.match(relationships, /listMutations\.observe\(list, \{ childList:true, subtree:true \}\)/);
+  assert.match(relationships, /\{ root:list, rootMargin:'80px 0px', threshold:0\.01 \}/);
+  assert.match(relationships, /row\.dataset\.relationshipInViewport = 'true'/);
+  assert.match(relationships, /row\.dataset\.relationshipInViewport = 'false'/);
+  assert.match(relationships, /function unpaintRowGlyphs\(row\)/);
+  assert.match(relationships, /clearGlyphSlot\(row\.querySelector\('\.sky-foundation-relationship-glyph--aspect'\)\)/);
+  assert.match(relationships, /listMutations\.observe\(list, \{ childList:true, subtree:false \}\)/);
+  assert.doesNotMatch(relationships, /visibleRows\.unobserve/);
   assert.doesNotMatch(relationships, /observe\(document\.documentElement/);
 });
 
@@ -246,7 +249,7 @@ test('Chart Card Hits never count relationship aspects as activations', () => {
 test('Chart Card Hits request no large raster card files and use no document-wide mutation observer', () => {
   assert.match(hits, /Chart Card Hits intentionally request no raster card art/);
   assert.match(hits, /section\.dataset\.cardMedia = 'none'/);
-  assert.match(hits, /class=\\"sky-card-hit-code\\"/);
+  assert.match(hits, /class="sky-card-hit-code"/);
   assert.doesNotMatch(hits, /assets\/tarot\/rws\//);
   assert.doesNotMatch(hits, /<img\s/);
   assert.doesNotMatch(hits, /new MutationObserver/);
@@ -277,7 +280,7 @@ test('shared pages and Sky Chart use the same component version', () => {
 });
 
 test('Sky Chart cache keys point at the compact relationship and clipboard preview', () => {
-  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=27/);
+  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=28/);
   assert.match(html, /sky-chart-relationship-copy-v1\.js\?v=1/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.css\?v=11/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=8/);
