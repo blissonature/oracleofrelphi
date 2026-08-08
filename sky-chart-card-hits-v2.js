@@ -3,11 +3,12 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyChartCardHitsV5) return;
+  if (window.__relphiSkyChartCardHitsV6) return;
   window.__relphiSkyChartCardHitsV2 = true;
   window.__relphiSkyChartCardHitsV3 = true;
   window.__relphiSkyChartCardHitsV4 = true;
   window.__relphiSkyChartCardHitsV5 = true;
+  window.__relphiSkyChartCardHitsV6 = true;
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -55,10 +56,10 @@
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function installStyles() {
-    if (document.getElementById('skyChartCardHitsStylesV5')) return;
-    ['skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
+    if (document.getElementById('skyChartCardHitsStylesV6')) return;
+    ['skyChartCardHitsStylesV5','skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
-    style.id = 'skyChartCardHitsStylesV5';
+    style.id = 'skyChartCardHitsStylesV6';
     style.textContent = `
       .sky-card-hits{--sky-hit-color:#555;margin:1rem 0 0;padding:.9rem;border:1px solid rgba(31,27,24,.16);border-top:5px solid var(--sky-hit-color);border-radius:1rem;background:#fffdfa;min-width:0;box-sizing:border-box}
       #skyFoundationA>.sky-card-hits{--sky-hit-color:#c9211e}#skyFoundationB>.sky-card-hits{--sky-hit-color:#2462d0}
@@ -152,7 +153,7 @@
 
   function cardForDecan(record) { return cardById(DECAN_CARDS[record.signIndex]?.[record.decan]); }
   function displayName(card) { return card?.systems?.golden_dawn_rws?.display_name || card?.name || String(card?.card_id || '').replace(/_/g,' '); }
-  function imageFor(card) { return `assets/tarot/rws/${encodeURIComponent(card.card_id)}.webp?v=chart-card-hits-v5`; }
+  function imageFor(card) { return `assets/tarot/rws/${encodeURIComponent(card.card_id)}.webp?v=chart-card-hits-v6`; }
   function positionLabel(record) { return `${record.body} at ${record.degree}°${String(record.minute).padStart(2,'0')}′ ${record.sign}`; }
 
   function addHit(tally,card,reason,key) {
@@ -205,38 +206,10 @@
     if (hour) addHit(tally,cardForPlanet(capitalize(hour)),`${capitalize(hour)} is the planetary hour ruler.`,`planetary-hour|${capitalize(hour)}`);
   }
 
-  function endpointName(row,side) {
-    const data = side === 'left' ? row.dataset.leftPlacement : row.dataset.rightPlacement;
-    const normalized = String(data || '').toLowerCase().replace(/_/g,'-');
-    return BODY_ALIASES[normalized] || data || '';
-  }
-
-  function aspectName(row) {
-    const raw = String(row.dataset.aspect || '').replace(/-/g,' ');
-    return raw ? raw.replace(/\b\w/g,letter => letter.toUpperCase()) : 'Aspect';
-  }
-
-  function addAspectHits(tally,slot) {
-    // Chart Card Hits describe the sky itself. Relationship isolation/filtering is
-    // presentation state, so every computed relationship contributes whether its row
-    // is currently visible, hidden, filtered, or isolated.
-    document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row => {
-      const leftSlot = row.dataset.leftSky || row.dataset.skyA || 'A';
-      const rightSlot = row.dataset.rightSky || row.dataset.skyB || 'B';
-      const left = endpointName(row,'left');
-      const right = endpointName(row,'right');
-      const aspect = aspectName(row);
-      const relation = row.dataset.relationIndex || `${left}|${aspect}|${right}`;
-      if (leftSlot === slot && PLANET_NAMES.has(left)) addHit(tally,cardForPlanet(left),`${left} participates in the ${aspect.toLowerCase()} with ${right || 'the other placement'}.`,`aspect|${relation}|${slot}|left`);
-      if (rightSlot === slot && PLANET_NAMES.has(right)) addHit(tally,cardForPlanet(right),`${right} participates in the ${aspect.toLowerCase()} with ${left || 'the other placement'}.`,`aspect|${relation}|${slot}|right`);
-    });
-  }
-
   function buildTally(slot) {
     const tally = new Map();
     records(slot).forEach((record,index) => addPlacementHits(tally,record,index));
     addPlanetaryHourHits(tally,slot);
-    addAspectHits(tally,slot);
     return Array.from(tally.values()).map(hit => ({ ...hit,count:hit.reasons.length })).sort((a,b) =>
       b.count - a.count || (a.card.arcana === b.card.arcana ? 0 : a.card.arcana === 'Major' ? -1 : 1) || displayName(a.card).localeCompare(displayName(b.card))
     );
@@ -263,7 +236,7 @@
   }
 
   function detailMarkup(hit) {
-    return `<div class="sky-card-hit-detail-header"><div class="sky-card-hit-detail-title"><strong>${esc(displayName(hit.card))}</strong><span>${hit.count} activation${hit.count === 1 ? '' : 's'}</span></div><button class="sky-card-hit-detail-close" type="button" data-card-hit-close aria-label="Close card-hit explanation">×</button></div><p class="sky-card-hit-detail-note">Why this card appears in this sky. These are contributing chart facts; nothing on the wheel or in Relationships is filtered.</p><ol class="sky-card-hit-reasons">${hit.reasons.map(reason => `<li>${esc(reason)}</li>`).join('')}</ol>`;
+    return `<div class="sky-card-hit-detail-header"><div class="sky-card-hit-detail-title"><strong>${esc(displayName(hit.card))}</strong><span>${hit.count} activation${hit.count === 1 ? '' : 's'}</span></div><button class="sky-card-hit-detail-close" type="button" data-card-hit-close aria-label="Close card-hit explanation">×</button></div><p class="sky-card-hit-detail-note">Why this card appears in this sky. These are contributing chart facts; aspect relationships are not part of the tally and nothing on the wheel or in Relationships is filtered.</p><ol class="sky-card-hit-reasons">${hit.reasons.map(reason => `<li>${esc(reason)}</li>`).join('')}</ol>`;
   }
 
   function syncSelection(slot,section,hits) {
