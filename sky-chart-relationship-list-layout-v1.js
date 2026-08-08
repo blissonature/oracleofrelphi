@@ -3,12 +3,12 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV22) return;
-  window.__relphiSkyRelationshipListLayoutV22 = true;
+  if (window.__relphiSkyRelationshipListLayoutV23) return;
+  window.__relphiSkyRelationshipListLayoutV23 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV22';
-  const OWNER = 'relationship-layout-v22';
+  const STYLE_ID = 'skyRelationshipListLayoutV23';
+  const OWNER = 'relationship-layout-v23';
   const MASTER_VIEWBOX = '-32 -32 64 64';
   const MASTER_RADIUS = 19;
   const GLYPH_DISPLAY_SIZE = 34;
@@ -23,7 +23,7 @@
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
-    ['skyRelationshipListLayoutV21','skyRelationshipListLayoutV20','skyRelationshipListLayoutV19','skyRelationshipListLayoutV18','skyRelationshipListLayoutV17','skyRelationshipListLayoutV16']
+    ['skyRelationshipListLayoutV22','skyRelationshipListLayoutV21','skyRelationshipListLayoutV20','skyRelationshipListLayoutV19','skyRelationshipListLayoutV18','skyRelationshipListLayoutV17','skyRelationshipListLayoutV16']
       .forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
     style.id = STYLE_ID;
@@ -246,17 +246,27 @@
     const signName = SIGN_NAMES[signIndex];
     if (!copy || !small || !signId || !signName) return;
 
-    const source = small.textContent.trim();
-    const coordinate = (source.match(/\d{1,2}°\d{2}′/) || [source.split('·')[0].trim()])[0] || '';
+    const source = small.dataset.relationshipCoordinate || small.textContent.trim();
+    const coordinate = small.dataset.relationshipCoordinate || (source.match(/\d{1,2}°\d{2}′/) || [source.split('·')[0].trim()])[0] || '';
     let signSlot = small.querySelector(':scope > .sky-foundation-relationship-sign');
     if (!signSlot) {
       signSlot = document.createElement('span');
       signSlot.className = 'sky-foundation-relationship-sign';
-      signSlot.dataset.signGlyph = signId;
       signSlot.setAttribute('aria-label', signName);
     }
-    small.replaceChildren(document.createTextNode(coordinate), signSlot);
-    Array.from(copy.childNodes).forEach(node => { if (node !== small) node.remove(); });
+    signSlot.dataset.signGlyph = signId;
+    const alreadyComposed =
+      small.dataset.relationshipCoordinate === coordinate &&
+      small.childNodes.length === 2 &&
+      small.firstChild?.nodeType === Node.TEXT_NODE &&
+      small.firstChild.nodeValue === coordinate &&
+      small.lastChild === signSlot;
+    if (!alreadyComposed) {
+      small.dataset.relationshipCoordinate = coordinate;
+      small.replaceChildren(document.createTextNode(coordinate), signSlot);
+    }
+    const extras = Array.from(copy.childNodes).filter(node => node !== small);
+    if (extras.length) extras.forEach(node => node.remove());
     paintGlyph(signSlot, signId, 'plain', color, signName);
   }
 
@@ -284,9 +294,10 @@
       badge.className = 'sky-foundation-relationship-orb';
       row.appendChild(badge);
     }
-    badge.textContent = `${orb.toFixed(2)}°`;
+    const orbText = `${orb.toFixed(2)}°`;
+    if (badge.textContent !== orbText) badge.textContent = orbText;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
-    row.dataset.relationshipLayout = 'v22';
+    row.dataset.relationshipLayout = 'v23';
   }
 
   function refresh(root) {
