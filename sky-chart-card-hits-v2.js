@@ -1,14 +1,16 @@
 // Stable Chart Card Hits tally beneath each independent sky.
-// Card clicks explain the accumulated hit evidence; they never filter the Sky Chart.
+// Card clicks explain accumulated hit evidence; they never filter the Sky Chart.
+// Chart Card Hits intentionally request no raster card art: full card files belong in deep views, not the tally.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyChartCardHitsV6) return;
+  if (window.__relphiSkyChartCardHitsV7) return;
   window.__relphiSkyChartCardHitsV2 = true;
   window.__relphiSkyChartCardHitsV3 = true;
   window.__relphiSkyChartCardHitsV4 = true;
   window.__relphiSkyChartCardHitsV5 = true;
   window.__relphiSkyChartCardHitsV6 = true;
+  window.__relphiSkyChartCardHitsV7 = true;
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -45,10 +47,14 @@
     'part-of-fortune':'Part of Fortune', 'part of fortune':'Part of Fortune', fortune:'Part of Fortune'
   };
   const PLANET_CLASS = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
+  const MAJOR_CODES = Object.freeze({
+    the_fool:'0',the_magician:'I',the_high_priestess:'II',the_empress:'III',the_emperor:'IV',the_hierophant:'V',the_lovers:'VI',the_chariot:'VII',strength:'VIII',the_hermit:'IX',wheel_of_fortune:'X',justice:'XI',the_hanged_man:'XII',death:'XIII',temperance:'XIV',the_devil:'XV',the_tower:'XVI',the_star:'XVII',the_moon:'XVIII',the_sun:'XIX',judgement:'XX',the_world:'XXI'
+  });
+  const RANK_CODES = Object.freeze({two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9',ten:'10'});
+  const SUIT_CODES = Object.freeze({wands:'W',cups:'C',swords:'S',pentacles:'P'});
   const selectedCard = { A:'', B:'' };
   const renderSignature = { A:'', B:'' };
   let scheduled = false;
-  let observer = null;
 
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, character => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -56,24 +62,24 @@
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function installStyles() {
-    if (document.getElementById('skyChartCardHitsStylesV6')) return;
-    ['skyChartCardHitsStylesV5','skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
+    if (document.getElementById('skyChartCardHitsStylesV7')) return;
+    ['skyChartCardHitsStylesV6','skyChartCardHitsStylesV5','skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
-    style.id = 'skyChartCardHitsStylesV6';
+    style.id = 'skyChartCardHitsStylesV7';
     style.textContent = `
       .sky-card-hits{--sky-hit-color:#555;margin:1rem 0 0;padding:.9rem;border:1px solid rgba(31,27,24,.16);border-top:5px solid var(--sky-hit-color);border-radius:1rem;background:#fffdfa;min-width:0;box-sizing:border-box}
       #skyFoundationA>.sky-card-hits{--sky-hit-color:#c9211e}#skyFoundationB>.sky-card-hits{--sky-hit-color:#2462d0}
       .sky-card-hits-header{display:flex;align-items:baseline;justify-content:space-between;gap:.7rem;margin:0 0 .7rem}
       .sky-card-hits-title{margin:0;font:850 1rem/1.1 system-ui,sans-serif;letter-spacing:.02em}
       .sky-card-hits-total{font:700 .72rem/1.2 system-ui,sans-serif;color:#625d58;text-align:right}
-      .sky-card-hits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:.55rem;align-items:start}
-      .sky-card-hit{position:relative;display:grid;grid-template-rows:auto auto;justify-items:center;gap:.3rem;width:100%;min-width:0;margin:0;padding:.25rem;border:2px solid transparent;border-radius:.7rem;background:transparent;color:#171717;cursor:pointer;box-sizing:border-box}
+      .sky-card-hits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:.48rem;align-items:start}
+      .sky-card-hit{position:relative;display:grid;grid-template-rows:auto auto;justify-items:center;gap:.28rem;width:100%;min-width:0;margin:0;padding:.22rem;border:2px solid transparent;border-radius:.7rem;background:transparent;color:#171717;cursor:pointer;box-sizing:border-box}
       .sky-card-hit:hover,.sky-card-hit:focus-visible{border-color:var(--sky-hit-color);outline:0;background:#fff}
       .sky-card-hit[aria-pressed="true"]{border-color:var(--sky-hit-color);background:#fff;box-shadow:0 0 0 2px color-mix(in srgb,var(--sky-hit-color) 16%,transparent)}
-      .sky-card-hit-art{position:relative;display:block;width:min(100%,68px);aspect-ratio:352/608;border-radius:.3rem;overflow:hidden;background:#eee9e3;box-shadow:0 1px 4px rgba(0,0,0,.14)}
-      .sky-card-hit-art img{display:block;width:100%;height:100%;object-fit:cover}
-      .sky-card-hit-chip{position:absolute;right:-.25rem;top:-.35rem;display:grid;place-items:center;min-width:1.75rem;height:1.75rem;padding:0 .32rem;border:2px solid #fff;border-radius:999px;background:var(--sky-hit-color);color:#fff;font:900 .73rem/1 system-ui,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.22)}
-      .sky-card-hit-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font:750 .68rem/1.12 system-ui,sans-serif;text-align:center}
+      .sky-card-hit-art{position:relative;display:grid;place-items:center;width:min(100%,48px);aspect-ratio:352/608;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.3rem;overflow:visible;background:linear-gradient(180deg,#fffdf8,#eee8df);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+      .sky-card-hit-code{padding:.15rem;color:#4d4640;font:900 .72rem/1 Georgia,serif;text-align:center}
+      .sky-card-hit-chip{position:absolute;right:-.5rem;top:-.45rem;display:grid;place-items:center;min-width:1.65rem;height:1.65rem;padding:0 .28rem;border:2px solid #fff;border-radius:999px;background:var(--sky-hit-color);color:#fff;font:900 .7rem/1 system-ui,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+      .sky-card-hit-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font:750 .66rem/1.1 system-ui,sans-serif;text-align:center}
       .sky-card-hits-empty{margin:0;font:600 .8rem/1.4 system-ui,sans-serif;color:#625d58}
       .sky-card-hit-detail{margin-top:.8rem;padding:.75rem;border:1px solid color-mix(in srgb,var(--sky-hit-color) 28%,#d9d4ce);border-radius:.85rem;background:#fff;box-shadow:0 6px 18px rgba(31,27,24,.06)}
       .sky-card-hit-detail[hidden]{display:none!important}
@@ -83,7 +89,7 @@
       .sky-card-hit-detail-note{margin:.2rem 0 .5rem;color:#625d58;font:650 .68rem/1.35 system-ui,sans-serif}
       .sky-card-hit-reasons{display:grid;gap:.35rem;max-height:220px;margin:0;padding:.15rem .2rem .1rem 1.15rem;overflow:auto;color:#403a35;font:650 .67rem/1.35 system-ui,sans-serif;scrollbar-width:thin}
       .sky-card-hit-reasons li::marker{color:var(--sky-hit-color);font-weight:900}
-      @media(max-width:620px){.sky-card-hits{padding:.75rem}.sky-card-hits-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:.42rem}.sky-card-hit{padding:.2rem}.sky-card-hit-name{font-size:.64rem}.sky-card-hit-detail{padding:.65rem}}
+      @media(max-width:620px){.sky-card-hits{padding:.75rem}.sky-card-hits-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:.38rem}.sky-card-hit{padding:.18rem}.sky-card-hit-name{font-size:.62rem}.sky-card-hit-detail{padding:.65rem}}
       @media(max-width:390px){.sky-card-hits-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
     `;
     document.head.appendChild(style);
@@ -153,7 +159,13 @@
 
   function cardForDecan(record) { return cardById(DECAN_CARDS[record.signIndex]?.[record.decan]); }
   function displayName(card) { return card?.systems?.golden_dawn_rws?.display_name || card?.name || String(card?.card_id || '').replace(/_/g,' '); }
-  function imageFor(card) { return `assets/tarot/rws/${encodeURIComponent(card.card_id)}.webp?v=chart-card-hits-v6`; }
+  function cardCode(card) {
+    const id=String(card?.card_id||card?.stable_symbol_id||'');
+    if (MAJOR_CODES[id]) return MAJOR_CODES[id];
+    const parts=id.split('_of_');
+    if (parts.length===2) return `${RANK_CODES[parts[0]]||parts[0].slice(0,2).toUpperCase()}${SUIT_CODES[parts[1]]||parts[1].slice(0,1).toUpperCase()}`;
+    return 'RWS';
+  }
   function positionLabel(record) { return `${record.body} at ${record.degree}°${String(record.minute).padStart(2,'0')}′ ${record.sign}`; }
 
   function addHit(tally,card,reason,key) {
@@ -161,10 +173,7 @@
     const id = card.card_id || card.stable_symbol_id;
     if (!id) return;
     let hit = tally.get(id);
-    if (!hit) {
-      hit = { id,card,reasons:[],keys:new Set() };
-      tally.set(id,hit);
-    }
+    if (!hit) { hit = { id,card,reasons:[],keys:new Set() }; tally.set(id,hit); }
     const unique = key || `${id}|${reason}`;
     if (hit.keys.has(unique)) return;
     hit.keys.add(unique);
@@ -191,7 +200,6 @@
     const key = PLANET_CLASS.find(planet => className.includes(`sky-ph-${planet}`));
     return key ? key[0].toUpperCase() + key.slice(1) : '';
   }
-
   function capitalize(value) { const text = String(value || '').toLowerCase(); return text ? text[0].toUpperCase() + text.slice(1) : ''; }
 
   function addPlanetaryHourHits(tally,slot) {
@@ -231,27 +239,18 @@
     return section;
   }
 
-  function tallySignature(hits) {
-    return JSON.stringify(hits.map(hit => [hit.id,hit.count,hit.reasons]));
-  }
+  function tallySignature(hits) { return JSON.stringify(hits.map(hit => [hit.id,hit.count,hit.reasons])); }
 
   function detailMarkup(hit) {
     return `<div class="sky-card-hit-detail-header"><div class="sky-card-hit-detail-title"><strong>${esc(displayName(hit.card))}</strong><span>${hit.count} activation${hit.count === 1 ? '' : 's'}</span></div><button class="sky-card-hit-detail-close" type="button" data-card-hit-close aria-label="Close card-hit explanation">×</button></div><p class="sky-card-hit-detail-note">Why this card appears in this sky. These are contributing chart facts; aspect relationships are not part of the tally and nothing on the wheel or in Relationships is filtered.</p><ol class="sky-card-hit-reasons">${hit.reasons.map(reason => `<li>${esc(reason)}</li>`).join('')}</ol>`;
   }
 
   function syncSelection(slot,section,hits) {
-    section.querySelectorAll('.sky-card-hit[data-card-hit-id]').forEach(button => {
-      button.setAttribute('aria-pressed',button.dataset.cardHitId === selectedCard[slot] ? 'true' : 'false');
-    });
+    section.querySelectorAll('.sky-card-hit[data-card-hit-id]').forEach(button => button.setAttribute('aria-pressed',button.dataset.cardHitId === selectedCard[slot] ? 'true' : 'false'));
     const detail = section.querySelector('.sky-card-hit-detail');
     if (!detail) return;
     const hit = (hits || buildTally(slot)).find(item => item.id === selectedCard[slot]);
-    if (!hit) {
-      detail.hidden = true;
-      detail.replaceChildren();
-      delete detail.dataset.cardHitId;
-      return;
-    }
+    if (!hit) { detail.hidden = true; detail.replaceChildren(); delete detail.dataset.cardHitId; return; }
     const signature = JSON.stringify([hit.id,hit.count,hit.reasons]);
     if (detail.dataset.detailSignature !== signature) {
       detail.innerHTML = detailMarkup(hit);
@@ -267,46 +266,34 @@
     const hits = buildTally(slot);
     const activationCount = hits.reduce((sum,hit) => sum + hit.count,0);
     const signature = tallySignature(hits);
-    if (renderSignature[slot] === signature && section.firstElementChild) {
-      syncSelection(slot,section,hits);
-      return;
-    }
+    if (renderSignature[slot] === signature && section.firstElementChild) { syncSelection(slot,section,hits); return; }
     if (!hits.some(hit => hit.id === selectedCard[slot])) selectedCard[slot] = '';
     section.innerHTML = `<header class="sky-card-hits-header"><h3 class="sky-card-hits-title">Chart Card Hits</h3><span class="sky-card-hits-total">${activationCount} activation${activationCount === 1 ? '' : 's'} · ${hits.length} card${hits.length === 1 ? '' : 's'}</span></header>` +
-      (hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-pressed="${selectedCard[slot] === hit.id ? 'true' : 'false'}" aria-label="${esc(displayName(hit.card))}, ${hit.count} hits. Show why this card appears."><span class="sky-card-hit-art"><img src="${esc(imageFor(hit.card))}" alt="" loading="lazy"><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`).join('')}</div><div class="sky-card-hit-detail" hidden></div>` : '<p class="sky-card-hits-empty">Add placements to see which cards the sky activates.</p>');
+      (hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-pressed="${selectedCard[slot] === hit.id ? 'true' : 'false'}" aria-label="${esc(displayName(hit.card))}, ${hit.count} hits. Show why this card appears."><span class="sky-card-hit-art" aria-hidden="true"><span class="sky-card-hit-code">${esc(cardCode(hit.card))}</span><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`).join('')}</div><div class="sky-card-hit-detail" hidden></div>` : '<p class="sky-card-hits-empty">Add placements to see which cards the sky activates.</p>');
     renderSignature[slot] = signature;
     section.dataset.hitCount = String(activationCount);
     section.dataset.cardCount = String(hits.length);
+    section.dataset.cardMedia = 'none';
     syncSelection(slot,section,hits);
   }
 
   function render() {
     scheduled = false;
     if (!window.RELPHI_TAROT_CARDS) return;
-    renderSlot('A');
-    renderSlot('B');
+    renderSlot('A'); renderSlot('B');
   }
-
-  function schedule() {
-    if (scheduled) return;
-    scheduled = true;
-    requestAnimationFrame(() => requestAnimationFrame(render));
-  }
+  function schedule() { if (scheduled) return; scheduled = true; requestAnimationFrame(() => requestAnimationFrame(render)); }
 
   function handleClick(event) {
     const close = event.target.closest('[data-card-hit-close]');
     if (close) {
-      const section = close.closest('.sky-card-hits');
-      const slot = section?.dataset.skySlot;
+      const section = close.closest('.sky-card-hits'),slot = section?.dataset.skySlot;
       if (!slot) return;
-      selectedCard[slot] = '';
-      syncSelection(slot,section,buildTally(slot));
-      return;
+      selectedCard[slot] = ''; syncSelection(slot,section,buildTally(slot)); return;
     }
     const button = event.target.closest('.sky-card-hit');
     if (!button) return;
-    const section = button.closest('.sky-card-hits');
-    const slot = section?.dataset.skySlot;
+    const section = button.closest('.sky-card-hits'),slot = section?.dataset.skySlot;
     if (!slot) return;
     const id = button.dataset.cardHitId || '';
     selectedCard[slot] = selectedCard[slot] === id ? '' : id;
@@ -315,8 +302,7 @@
   }
 
   function clearCardSelection() {
-    selectedCard.A = '';
-    selectedCard.B = '';
+    selectedCard.A = ''; selectedCard.B = '';
     document.querySelectorAll('.sky-card-hits').forEach(section => syncSelection(section.dataset.skySlot,section,buildTally(section.dataset.skySlot)));
   }
 
@@ -324,16 +310,8 @@
     installStyles();
     document.addEventListener('click',handleClick);
     window.addEventListener('relphi:sky-foundation-clear-selection',clearCardSelection);
-    ['relphi:sky-foundation-rendered','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed','relphi:sky-heptagram-source-ready'].forEach(name => window.addEventListener(name,schedule));
+    ['relphi:sky-foundation-ready','relphi:sky-foundation-rendered','relphi:sky-foundation-interactions-ready','relphi:sky-heptagram-source-ready'].forEach(name => window.addEventListener(name,schedule));
     window.addEventListener('storage',event => { if (Object.values(KEYS).includes(event.key)) schedule(); });
-    observer = new MutationObserver(mutations => {
-      if (mutations.some(mutation => {
-        const target = mutation.target instanceof Element ? mutation.target : mutation.target.parentElement;
-        if (target?.closest?.('.sky-card-hits')) return false;
-        return mutation.addedNodes.length || mutation.removedNodes.length || mutation.type === 'attributes';
-      })) schedule();
-    });
-    observer.observe(document.getElementById('skyFoundationRoot') || document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','style','class','aria-hidden']});
     schedule();
   }
 
