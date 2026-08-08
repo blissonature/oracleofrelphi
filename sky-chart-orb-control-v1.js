@@ -2,11 +2,13 @@
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyOrbControlV1)return;
+  if(window.__relphiSkyOrbControlV2)return;
+  window.__relphiSkyOrbControlV2=true;
   window.__relphiSkyOrbControlV1=true;
 
   let queued=false;
   let wheelIndexes=null;
+  let wheelState=null;
 
   function orbFromRow(row){
     const explicit=Number(row.dataset.orb ?? row.dataset.sourceOrb);
@@ -29,6 +31,27 @@
       node.style.setProperty('display','none','important');
       node.style.setProperty('pointer-events','none','important');
     }
+  }
+
+  function reconcilePlacementIsolation(rows,visibleIndexes){
+    if(wheelState?.kind!=='placement')return;
+    const keptPlacements=new Set([`${wheelState.sky}:${wheelState.value}`]);
+    rows.forEach(row=>{
+      if(!visibleIndexes.has(String(row.dataset.relationIndex)))return;
+      keptPlacements.add(`A:${row.dataset.leftPlacement}`);
+      keptPlacements.add(`B:${row.dataset.rightPlacement}`);
+    });
+
+    document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"],#skyFoundationWheelMount [data-focus-piece="leader"]').forEach(node=>{
+      const key=`${node.dataset.sky}:${node.dataset.placement}`;
+      node.classList.toggle('is-kept',keptPlacements.has(key));
+    });
+    ['A','B'].forEach(slot=>{
+      const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');
+      panel?.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{
+        row.classList.toggle('is-kept',keptPlacements.has(`${slot}:${row.dataset.placement}`));
+      });
+    });
   }
 
   function apply(){
@@ -63,6 +86,11 @@
       const relationIndex=String(line.dataset.relationIndex||'');
       setSvgVisibility(line,relationIndex!==''&&visibleIndexes.has(relationIndex));
     });
+
+    // The wheel interaction controller starts from the complete calculated relationship set.
+    // Reconcile placement isolation against the active Orb/list filters so an endpoint cannot
+    // remain illuminated when its relationship is absent from the visible Relationships list.
+    reconcilePlacementIsolation(rows,visibleIndexes);
 
     const visible=visibleIndexes.size;
     const count=document.getElementById('skyFoundationRelationshipCount');
@@ -105,7 +133,8 @@
     install();
     window.addEventListener('relphi:sky-foundation-interactions-ready',()=>{install();schedule()});
     window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
-      wheelIndexes=event.detail?.state?.mode==='selected'?new Set((event.detail.relationshipIndexes||[]).map(String)):null;
+      wheelState=event.detail?.state||null;
+      wheelIndexes=wheelState?.mode==='selected'?new Set((event.detail.relationshipIndexes||[]).map(String)):null;
       schedule();
     });
     [
