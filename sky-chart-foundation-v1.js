@@ -330,7 +330,7 @@
             const display = norm(record.value + offset);
             const candidate = ordinaryCandidate(lane,display);
             if (ordinaryCollides(candidate,placed)) continue;
-            chosen = {...record,display,lane};
+            chosen = {...record,display,lane,layoutFallback:false};
             placed.push(candidate);
             break;
           }
@@ -338,7 +338,11 @@
         }
       }
       if (!chosen) {
-        throw new Error(`[Sky Chart placement layout] No legal ordinary-placement lane for Sky ${slot} ${record.entry.name} at ${record.value.toFixed(8)}°.`);
+        const lane = lanes[0];
+        const display = norm(record.value);
+        chosen = {...record,display,lane,layoutFallback:true};
+        placed.push(ordinaryCandidate(lane,display));
+        console.warn(`[Sky Chart placement layout] Crowded Sky ${slot} placement fallback for ${record.entry.name} at ${record.value.toFixed(8)}°.`);
       }
       result.push(chosen);
     }
@@ -380,31 +384,35 @@
 
   function validateRadialLaneIsolation() {
     const angleHalf = angleHalfExtent();
+    let valid = true;
     for (const slot of ['A','B']) {
       const inner = slot === 'A' ? R.aIn : R.bIn;
       const outer = slot === 'A' ? R.aOut : R.bOut;
       for (const lane of PLACEMENT_LAYOUT.lanes[slot]) {
         if (lane - PLACEMENT_LAYOUT.bubbleRadius - PLACEMENT_LAYOUT.minimumClearance <= inner ||
             lane + PLACEMENT_LAYOUT.bubbleRadius + PLACEMENT_LAYOUT.minimumClearance >= outer) {
-          throw new Error(`[Sky Chart placement layout] Sky ${slot} ordinary lane ${lane} violates its ring boundary.`);
+          valid = false;
+          console.warn(`[Sky Chart placement layout] Sky ${slot} ordinary lane ${lane} violates its ring boundary.`);
         }
         for (const angleLane of ANGLE_LAYOUT.lanes[slot]) {
           const required = PLACEMENT_LAYOUT.bubbleRadius + angleHalf + ANGLE_LAYOUT.minimumClearance;
           if (Math.abs(lane - angleLane) < required) {
-            throw new Error(`[Sky Chart placement layout] Sky ${slot} ordinary lane ${lane} intrudes into reserved Angle lane ${angleLane}.`);
+            valid = false;
+            console.warn(`[Sky Chart placement layout] Sky ${slot} ordinary lane ${lane} intrudes into reserved Angle lane ${angleLane}.`);
           }
         }
       }
     }
+    return valid;
   }
 
   function buildWheel(listA, listB, cuspsA, cuspsB) {
-    validateRadialLaneIsolation();
+    const laneConfigValid = validateRadialLaneIsolation();
     const chart = svg('svg', {
       viewBox:'0 0 1200 1200', role:'img',
       'aria-label':'Sky A and Sky B rainbow comparison wheel',
       class:'sky-foundation-wheel relphi-canonical-ready',
-      'data-angle-collision-state':'resolved'
+      'data-angle-collision-state':laneConfigValid ? 'resolved' : 'degraded'
     });
     chart.appendChild(svg('circle',{cx:C.x,cy:C.y,r:R.aOut+8,fill:'#fffdf8',stroke:'rgba(31,27,24,.14)'}));
     const layers = {};
@@ -498,7 +506,8 @@
       const host = svg('g',{
         transform:`translate(${display.x} ${display.y})`,
         'data-sky':record.slot,'data-placement':record.id,'data-house':houseFor(record.value,record.cusps),
-        'data-placement-lane':record.lane,'data-display-longitude':record.display.toFixed(8)
+        'data-placement-lane':record.lane,'data-display-longitude':record.display.toFixed(8),
+        'data-placement-lane-fallback':record.layoutFallback ? 'true' : 'false'
       });
       layers.placements.appendChild(host);
       obstacles.push({kind:'circle',x:display.x,y:display.y,radius:PLACEMENT_LAYOUT.bubbleRadius,role:`placement-${record.slot}-${record.id}`});
@@ -513,13 +522,43 @@
         const point = polar(radius,record.value);
         const candidate = {kind:'square',x:point.x,y:point.y,half,role:`angle-${slot}-${record.id}`};
         if (!collides(candidate,obstacles)) {
-          chosen = {radius,point,candidate};
+          chosen = {radius,point,candidate,fallback:false};
           break;
         }
       }
       if (!chosen) {
-        chart.dataset.angleCollisionState = 'error';
-        throw new Error(`[Sky Chart Angle layout] No legal radial lane for Sky ${slot} ${record.entry.name} at ${record.value.toFixed(8)}°.`);
+        const minimum = Math.ceil(inner + half + ANGLE_LAYOUT.minimumClearance + 1);
+        const maximum = Math.floor(outer - half - ANGLE_LAYOUT.minimumClearance - 1);
+        const radii = [];
+        if (slot === 'A') {
+          for (let radius = maximum; radius >= minimum; radius -= 2) radii.push(radius);
+        } else {
+          for (let radius = minimum; radius <= maximum; radius += 2) radii.push(radius);
+        }
+        for (const radius of radii) {
+          const point = polar(radius,record.value);
+          const candidate = {kind:'square',x:point.x,y:point.y,half,role:`angle-${slot}-${record.id}`};
+          if (!collides(candidate,obstacles)) {
+            chosen = {radius,point,candidate,fallback:true};
+            chart.dataset.angleCollisionState = 'radial-fallback';
+            break;
+          }
+        }
+      }
+      if (!chosen) {
+        const radius = slot === 'A'
+          ? Math.floor(outer - half - ANGLE_LAYOUT.minimumClearance - 1)
+          : Math.ceil(inner + half + ANGLE_LAYOUT.minimumClearance + 1);
+        const point = polar(radius,record.value);
+        chosen = {
+          radius,
+          point,
+          candidate:{kind:'square',x:point.x,y:point.y,half,role:`angle-${slot}-${record.id}`},
+          fallback:true,
+          crowded:true
+        };
+        chart.dataset.angleCollisionState = 'crowded-fallback';
+        console.warn(`[Sky Chart Angle layout] Crowded radial fallback for Sky ${slot} ${record.entry.name} at ${record.value.toFixed(8)}°.`);
       }
 
       const edge = ANGLE_LAYOUT.edgeRadius[slot];
@@ -542,7 +581,8 @@
         'data-sky':slot,'data-placement':record.id,'data-angle-axis':'true',
         'data-house':houseFor(record.value,cusps),'data-angle-lane':chosen.radius,
         'data-angle-longitude':record.value.toFixed(8),'data-angle-extreme':ANGLE_LAYOUT.extreme[slot],
-        'data-angle-lane-fallback':'false',
+        'data-angle-lane-fallback':chosen.fallback ? 'true' : 'false',
+        'data-angle-crowded-fallback':chosen.crowded ? 'true' : 'false',
         'data-canonical-master':'glyphs-unified-preview.html',
         'data-canonical-viewbox':'-32 -32 64 64'
       });
