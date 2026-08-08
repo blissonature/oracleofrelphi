@@ -1,16 +1,17 @@
 // Stable Chart Card Hits tally beneath each independent sky.
 // Card clicks explain accumulated hit evidence; they never filter the Sky Chart.
-// Chart Card Hits intentionally request no raster card art: full card files belong in deep views, not the tally.
+// Card art is requested only as tiny 48x83 WebP thumbnails; the browser never requests full card files here.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyChartCardHitsV7) return;
+  if (window.__relphiSkyChartCardHitsV8) return;
   window.__relphiSkyChartCardHitsV2 = true;
   window.__relphiSkyChartCardHitsV3 = true;
   window.__relphiSkyChartCardHitsV4 = true;
   window.__relphiSkyChartCardHitsV5 = true;
   window.__relphiSkyChartCardHitsV6 = true;
   window.__relphiSkyChartCardHitsV7 = true;
+  window.__relphiSkyChartCardHitsV8 = true;
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -52,6 +53,7 @@
   });
   const RANK_CODES = Object.freeze({two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9',ten:'10'});
   const SUIT_CODES = Object.freeze({wands:'W',cups:'C',swords:'S',pentacles:'P'});
+  const THUMB = Object.freeze({ width:48, height:83, quality:30 });
   const selectedCard = { A:'', B:'' };
   const renderSignature = { A:'', B:'' };
   let scheduled = false;
@@ -62,10 +64,10 @@
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function installStyles() {
-    if (document.getElementById('skyChartCardHitsStylesV7')) return;
-    ['skyChartCardHitsStylesV6','skyChartCardHitsStylesV5','skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
+    if (document.getElementById('skyChartCardHitsStylesV8')) return;
+    ['skyChartCardHitsStylesV7','skyChartCardHitsStylesV6','skyChartCardHitsStylesV5','skyChartCardHitsStylesV4','skyChartCardHitsStylesV3','skyChartCardHitsStylesV2'].forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
-    style.id = 'skyChartCardHitsStylesV7';
+    style.id = 'skyChartCardHitsStylesV8';
     style.textContent = `
       .sky-card-hits{--sky-hit-color:#555;margin:1rem 0 0;padding:.9rem;border:1px solid rgba(31,27,24,.16);border-top:5px solid var(--sky-hit-color);border-radius:1rem;background:#fffdfa;min-width:0;box-sizing:border-box}
       #skyFoundationA>.sky-card-hits{--sky-hit-color:#c9211e}#skyFoundationB>.sky-card-hits{--sky-hit-color:#2462d0}
@@ -76,9 +78,10 @@
       .sky-card-hit{position:relative;display:grid;grid-template-rows:auto auto;justify-items:center;gap:.28rem;width:100%;min-width:0;margin:0;padding:.22rem;border:2px solid transparent;border-radius:.7rem;background:transparent;color:#171717;cursor:pointer;box-sizing:border-box}
       .sky-card-hit:hover,.sky-card-hit:focus-visible{border-color:var(--sky-hit-color);outline:0;background:#fff}
       .sky-card-hit[aria-pressed="true"]{border-color:var(--sky-hit-color);background:#fff;box-shadow:0 0 0 2px color-mix(in srgb,var(--sky-hit-color) 16%,transparent)}
-      .sky-card-hit-art{position:relative;display:grid;place-items:center;width:min(100%,48px);aspect-ratio:352/608;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.3rem;overflow:visible;background:linear-gradient(180deg,#fffdf8,#eee8df);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+      .sky-card-hit-art{position:relative;display:grid;place-items:center;width:${THUMB.width}px;height:${THUMB.height}px;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.3rem;overflow:hidden;background:linear-gradient(180deg,#fffdf8,#eee8df);box-shadow:0 1px 3px rgba(0,0,0,.1)}
       .sky-card-hit-code{padding:.15rem;color:#4d4640;font:900 .72rem/1 Georgia,serif;text-align:center}
-      .sky-card-hit-chip{position:absolute;right:-.5rem;top:-.45rem;display:grid;place-items:center;min-width:1.65rem;height:1.65rem;padding:0 .28rem;border:2px solid #fff;border-radius:999px;background:var(--sky-hit-color);color:#fff;font:900 .7rem/1 system-ui,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+      .sky-card-hit-art img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;image-rendering:auto}
+      .sky-card-hit-chip{position:absolute;z-index:2;right:-.5rem;top:-.45rem;display:grid;place-items:center;min-width:1.65rem;height:1.65rem;padding:0 .28rem;border:2px solid #fff;border-radius:999px;background:var(--sky-hit-color);color:#fff;font:900 .7rem/1 system-ui,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.2)}
       .sky-card-hit-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font:750 .66rem/1.1 system-ui,sans-serif;text-align:center}
       .sky-card-hits-empty{margin:0;font:600 .8rem/1.4 system-ui,sans-serif;color:#625d58}
       .sky-card-hit-detail{margin-top:.8rem;padding:.75rem;border:1px solid color-mix(in srgb,var(--sky-hit-color) 28%,#d9d4ce);border-radius:.85rem;background:#fff;box-shadow:0 6px 18px rgba(31,27,24,.06)}
@@ -165,6 +168,18 @@
     const parts=id.split('_of_');
     if (parts.length===2) return `${RANK_CODES[parts[0]]||parts[0].slice(0,2).toUpperCase()}${SUIT_CODES[parts[1]]||parts[1].slice(0,1).toUpperCase()}`;
     return 'RWS';
+  }
+  function thumbnailFor(card) {
+    const id = encodeURIComponent(card?.card_id || card?.stable_symbol_id || '');
+    const source = new URL(`assets/tarot/rws/${id}.webp`, document.baseURI).href;
+    const thumb = new URL('https://wsrv.nl/');
+    thumb.searchParams.set('url', source);
+    thumb.searchParams.set('w', String(THUMB.width));
+    thumb.searchParams.set('h', String(THUMB.height));
+    thumb.searchParams.set('fit', 'cover');
+    thumb.searchParams.set('output', 'webp');
+    thumb.searchParams.set('q', String(THUMB.quality));
+    return thumb.href;
   }
   function positionLabel(record) { return `${record.body} at ${record.degree}°${String(record.minute).padStart(2,'0')}′ ${record.sign}`; }
 
@@ -269,11 +284,11 @@
     if (renderSignature[slot] === signature && section.firstElementChild) { syncSelection(slot,section,hits); return; }
     if (!hits.some(hit => hit.id === selectedCard[slot])) selectedCard[slot] = '';
     section.innerHTML = `<header class="sky-card-hits-header"><h3 class="sky-card-hits-title">Chart Card Hits</h3><span class="sky-card-hits-total">${activationCount} activation${activationCount === 1 ? '' : 's'} · ${hits.length} card${hits.length === 1 ? '' : 's'}</span></header>` +
-      (hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-pressed="${selectedCard[slot] === hit.id ? 'true' : 'false'}" aria-label="${esc(displayName(hit.card))}, ${hit.count} hits. Show why this card appears."><span class="sky-card-hit-art" aria-hidden="true"><span class="sky-card-hit-code">${esc(cardCode(hit.card))}</span><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`).join('')}</div><div class="sky-card-hit-detail" hidden></div>` : '<p class="sky-card-hits-empty">Add placements to see which cards the sky activates.</p>');
+      (hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-pressed="${selectedCard[slot] === hit.id ? 'true' : 'false'}" aria-label="${esc(displayName(hit.card))}, ${hit.count} hits. Show why this card appears."><span class="sky-card-hit-art"><span class="sky-card-hit-code" aria-hidden="true">${esc(cardCode(hit.card))}</span><img src="${esc(thumbnailFor(hit.card))}" alt="" width="${THUMB.width}" height="${THUMB.height}" loading="lazy" decoding="async" fetchpriority="low"><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`).join('')}</div><div class="sky-card-hit-detail" hidden></div>` : '<p class="sky-card-hits-empty">Add placements to see which cards the sky activates.</p>');
     renderSignature[slot] = signature;
     section.dataset.hitCount = String(activationCount);
     section.dataset.cardCount = String(hits.length);
-    section.dataset.cardMedia = 'none';
+    section.dataset.cardMedia = `thumbnail-${THUMB.width}x${THUMB.height}`;
     syncSelection(slot,section,hits);
   }
 
