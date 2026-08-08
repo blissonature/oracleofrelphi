@@ -19,6 +19,7 @@
 .relationship-mini-wheel .sky-selected-isolated-aspect{stroke-width:4.2;stroke-linecap:round;opacity:.92;filter:drop-shadow(0 1px 1px rgba(45,39,34,.12))}
 .relationship-mini-wheel .sky-selected-aspect-center{fill:#211d1a;stroke:#fffdfa;stroke-width:1.5}
 .relationship-mini-wheel .sky-selected-aspect-point{pointer-events:none;filter:drop-shadow(0 1px 2px rgba(45,39,34,.16))}
+.relationship-mini-wheel .sky-selected-aspect-point>.relphi-glyph-bubble>circle{opacity:0!important}
 .relationship-mini-wheel-meta{display:flex;align-items:center;justify-content:center;gap:.35rem;color:var(--aspect-color)}
 .relationship-mini-wheel-aspect{display:block;width:32px;height:32px;overflow:visible}
 .relationship-mini-wheel-orb{color:#514943;font:850 .68rem/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
