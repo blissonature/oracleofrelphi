@@ -20,6 +20,7 @@ const component = fs.readFileSync(path.join(root, 'relphi-glyph-component-v1.js'
 const fortune = fs.readFileSync(path.join(root, 'assets/planet-glyphs/part-of-fortune.svg'), 'utf8');
 const angles = fs.readFileSync(path.join(root, 'sky-chart-angle-placements-v1.js'), 'utf8');
 const hits = fs.readFileSync(path.join(root, 'sky-chart-card-hits-v2.js'), 'utf8');
+const cardImageBudget = fs.readFileSync(path.join(root, 'sky-chart-card-image-budget-v1.js'), 'utf8');
 const navloader = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'sky-chart.html'), 'utf8');
 
@@ -49,9 +50,8 @@ test('relationship glyphs preserve the exact uncircled Master Glyph List artboar
 });
 
 test('relationship glyph slots have one renderer owner and one comparison-wheel nominal scale', () => {
-  assert.match(relationships, /const OWNER = 'relationship-layout-v25';/);
+  assert.match(relationships, /const OWNER = 'relationship-layout-v26';/);
   assert.match(relationships, /const GLYPH_DISPLAY_SIZE = 38;/);
-  assert.match(relationships, /comparison wheel uses radius 19/);
   assert.doesNotMatch(relationships, /ASPECT_DISPLAY_SIZE/);
   assert.doesNotMatch(relationships, /SIGN_DISPLAY_SIZE/);
   assert.doesNotMatch(relationships, /part-of-fortune.*scale|scale.*part-of-fortune/i);
@@ -65,11 +65,14 @@ test('relationship glyph slots have one renderer owner and one comparison-wheel 
   assert.match(relationships, /max-width:\$\{GLYPH_DISPLAY_SIZE\}px/);
 });
 
-test('relationship rows return to a compact single-line equation with only the orb below', () => {
+test('relationship rows stay compact while reserving enough width for complete zodiac glyphs', () => {
   assert.match(relationships, /"left-glyph left-copy aspect right-glyph right-copy"/);
   assert.match(relationships, /"\. \. orb \. \."/);
   assert.match(relationships, /grid-template-rows:\$\{GLYPH_DISPLAY_SIZE\}px 11px/);
   assert.match(relationships, /min-height:58px/);
+  assert.match(relationships, /minmax\(96px,1fr\)/);
+  assert.match(relationships, /grid-template-columns:minmax\(50px,auto\) \$\{GLYPH_DISPLAY_SIZE\}px/);
+  assert.match(relationships, /overflow:visible/);
   assert.doesNotMatch(relationships, /min-height:101px/);
 });
 
@@ -98,7 +101,7 @@ test('interaction controller creates relationship slots but never paints glyphs'
   assert.doesNotMatch(interactions, /RelphiGlyphComponent/);
 });
 
-test('selected relationship keeps exact mini-wheel geometry and permanent Tarot art', () => {
+test('selected relationship keeps exact mini-wheel geometry, permanent Tarot art, and uncircled identity glyphs', () => {
   assert.doesNotMatch(selectedRelationship, /RelphiCanonicalGlyphState/);
   assert.match(selectedRelationship, /function miniPoint\(degree,radius\)\{const angle=\(norm\(degree\)-180\)\*Math\.PI\/180;/);
   assert.match(selectedRelationship, /data-zodiac-origin="aries-0-at-9"/);
@@ -117,6 +120,7 @@ test('selected relationship keeps exact mini-wheel geometry and permanent Tarot 
   assert.doesNotMatch(selectedRelationship, /relationship-mini-wheel-meta/);
   assert.match(selectedRelationshipCss, /\.relationship-visual\{display:grid;grid-template-columns:minmax\(112px,150px\) minmax\(220px,270px\) minmax\(112px,150px\)/);
   assert.match(selectedRelationshipCss, /\.correspondence-card-art img\{[\s\S]*aspect-ratio:352\/600/);
+  assert.match(selectedRelationshipCss, /\.sky-selected-aspect-point>\.relphi-glyph-bubble>circle\{opacity:0!important\}/);
   assert.doesNotMatch(selectedRelationshipCss, /\.card-back/);
   assert.doesNotMatch(selectedRelationshipCss, /\.card-inner/);
 });
@@ -223,6 +227,17 @@ test('Chart Card Hits never count relationship aspects as activations', () => {
   assert.doesNotMatch(hits, /sky-foundation-relationship-row\[data-relation-index\]/);
 });
 
+test('Chart Card Hits keep full-resolution images outside the DOM fetch path until near the viewport', () => {
+  assert.match(cardImageBudget, /function dehydrate\(img\)/);
+  assert.match(cardImageBudget, /img\.dataset\.cardHitFullSrc=src/);
+  assert.match(cardImageBudget, /img\.removeAttribute\('src'\)/);
+  assert.match(cardImageBudget, /fetchpriority','low'/);
+  assert.match(cardImageBudget, /new IntersectionObserver\(entries=>/);
+  assert.match(cardImageBudget, /rootMargin:'600px 0px'/);
+  assert.match(cardImageBudget, /if\(entry\.isIntersecting\)hydrate\(entry\.target\)/);
+  assert.match(html, /sky-chart-card-image-budget-v1\.js\?v=1[\s\S]*sky-chart-card-hits-v2\.js\?v=6/);
+});
+
 test('Chart Angles are grouped visually without reordering ledger row identity', () => {
   assert.match(angles, /function renderedAngle\(row\)/);
   assert.match(angles, /row\.querySelector\(`\.relphi-glyph-\$\{angle\.id\}`\)/);
@@ -246,12 +261,13 @@ test('shared pages and Sky Chart use the same component version', () => {
 });
 
 test('Sky Chart cache keys point at the compact lazy relationship preview', () => {
-  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=25/);
+  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=26/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.css\?v=11/);
-  assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=7/);
+  assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=8/);
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=9/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.js\?v=10/);
   assert.match(html, /sky-chart-progressive-reveal-contract-v1\.js\?v=2/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=14/);
+  assert.match(html, /sky-chart-card-image-budget-v1\.js\?v=1/);
   assert.match(html, /sky-chart-card-hits-v2\.js\?v=6/);
 });
