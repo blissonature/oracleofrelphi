@@ -1,10 +1,12 @@
 // Relationships clipboard serializer: copy the semantic relationship list, never raw SVG/DOM text.
+// Filter context is emitted once per copied block, never redundantly on every relationship.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyRelationshipCopyV2)return;
+  if(window.__relphiSkyRelationshipCopyV3)return;
   window.__relphiSkyRelationshipCopyV1=true;
   window.__relphiSkyRelationshipCopyV2=true;
+  window.__relphiSkyRelationshipCopyV3=true;
 
   const PLACEMENT_SYMBOLS=Object.freeze({
     sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',
@@ -14,13 +16,17 @@
   const ASPECT_SYMBOLS=Object.freeze({
     conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'
   });
+  const ALL_HOUSES=Object.freeze(Array.from({length:12},(_,index)=>String(index+1)));
   let feedbackTimer=0;
+  let selectedIsolation=null;
+  let houseSelections={A:[...ALL_HOUSES],B:[...ALL_HOUSES]};
 
   function installStyles(){
-    if(document.getElementById('skyRelationshipCopyStylesV2'))return;
+    if(document.getElementById('skyRelationshipCopyStylesV3'))return;
+    document.getElementById('skyRelationshipCopyStylesV2')?.remove();
     document.getElementById('skyRelationshipCopyStylesV1')?.remove();
     const style=document.createElement('style');
-    style.id='skyRelationshipCopyStylesV2';
+    style.id='skyRelationshipCopyStylesV3';
     style.textContent=`
       .sky-relationship-copy-button{margin-left:auto;padding:.38rem .68rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}
       .sky-relationship-copy-button:hover,.sky-relationship-copy-button:focus-visible{border-color:#6b625a;outline:0;background:#fffdfa}
@@ -40,7 +46,7 @@
     button.type='button';
     button.className='sky-relationship-copy-button';
     button.textContent='Copy';
-    button.setAttribute('aria-label','Copy visible relationships as glyph notation');
+    button.setAttribute('aria-label','Copy visible relationships with active filter context');
     button.title='Copy visible relationships';
     const clear=heading.querySelector('#skyFoundationClearIsolation');
     heading.insertBefore(button,clear||null);
@@ -48,7 +54,7 @@
       event.preventDefault();event.stopPropagation();
       const rows=visibleRows();
       if(!rows.length)return;
-      const text=rows.map(serializeRow).filter(Boolean).join('\n');
+      const text=serializeBlock(rows);
       if(!text)return;
       const copied=await writeClipboard(text);
       if(!copied)return;
@@ -88,6 +94,27 @@
     return `${placementSymbol(leftId)} in ${leftSign} ${leftCoordinate}  ${aspectSymbol}  ${placementSymbol(rightId)} in ${rightSign} ${rightCoordinate}`.replace(/\s+/g,' ').trim();
   }
 
+  function normalizedHouses(values){
+    return Array.from(new Set((Array.isArray(values)?values:[]).map(String).filter(value=>ALL_HOUSES.includes(value)))).sort((a,b)=>Number(a)-Number(b));
+  }
+  function housePhrase(slot,houses){
+    if(!houses.length||houses.length===ALL_HOUSES.length)return'';
+    return houses.length===1?`Sky ${slot} · House ${houses[0]}`:`Sky ${slot} · Houses ${houses.join(', ')}`;
+  }
+  function copyContext(){
+    if(selectedIsolation?.kind==='house'&&selectedIsolation?.mode==='selected'&&['A','B'].includes(selectedIsolation.sky)){
+      return `Sky ${selectedIsolation.sky} · House ${selectedIsolation.value}`;
+    }
+    const a=normalizedHouses(houseSelections.A),b=normalizedHouses(houseSelections.B);
+    return [housePhrase('A',a),housePhrase('B',b)].filter(Boolean).join(' · ');
+  }
+  function serializeBlock(rows){
+    const lines=rows.map(serializeRow).filter(Boolean);
+    if(!lines.length)return'';
+    const context=copyContext();
+    return context?`Relationships — ${context}\n${lines.join('\n')}`:lines.join('\n');
+  }
+
   async function writeClipboard(text){
     try{
       if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return true}
@@ -112,13 +139,24 @@
   document.addEventListener('copy',event=>{
     const rows=rowsIntersectingSelection();
     if(!rows.length||!event.clipboardData)return;
-    const text=rows.map(serializeRow).filter(Boolean).join('\n');
+    const text=serializeBlock(rows);
     if(!text)return;
     event.preventDefault();
     event.clipboardData.setData('text/plain',text);
   });
 
+  window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
+    const state=event.detail?.state;
+    selectedIsolation=state?.mode==='selected'?state:null;
+    requestAnimationFrame(ensureButton);
+  });
+  window.addEventListener('relphi:sky-house-multiselect-changed',event=>{
+    const detail=event.detail||{};
+    houseSelections={A:normalizedHouses(detail.A),B:normalizedHouses(detail.B)};
+    requestAnimationFrame(ensureButton);
+  });
+
   function schedule(){requestAnimationFrame(ensureButton)}
-  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed'].forEach(name=>window.addEventListener(name,schedule));
+  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,schedule));
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 })();
