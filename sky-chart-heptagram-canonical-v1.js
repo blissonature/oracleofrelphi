@@ -3,14 +3,15 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramCanonicalV7) return;
-  window.__relphiSkyHeptagramCanonicalV7 = true;
+  if (window.__relphiSkyHeptagramCanonicalV8) return;
+  window.__relphiSkyHeptagramCanonicalV8 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
   const MASTER_RADIUS = 19;
   const DISPLAY_RADIUS = 17;
   const MASTER_SCALE = DISPLAY_RADIUS / MASTER_RADIUS;
-  const DAY_RING_RADIUS = 23;
+  const DAY_RING_INNER_RADIUS = 23;
+  const DAY_RING_OUTER_RADIUS = 27;
   const KEYS = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
   const COLORS = Object.freeze({
     saturn:'#8c7a42', jupiter:'#41752f', mars:'#c9211e', sun:'#d08a00',
@@ -41,19 +42,30 @@
     group.querySelector(':scope > .sky-ph-node-label')?.remove();
   }
 
-  function addDayRulerRing(master, color) {
+  function dayRulerRing(radius, color, role) {
     const ring = document.createElementNS(NS, 'circle');
     ring.setAttribute('cx', '0');
     ring.setAttribute('cy', '0');
-    ring.setAttribute('r', String(DAY_RING_RADIUS));
+    ring.setAttribute('r', String(radius));
     ring.setAttribute('fill', 'none');
     ring.setAttribute('stroke', color);
-    ring.setAttribute('stroke-width', '1.7');
     ring.setAttribute('vector-effect', 'non-scaling-stroke');
-    ring.classList.add('sky-ph-day-ruler-ring');
+    ring.classList.add('sky-ph-day-ruler-ring', `sky-ph-day-ruler-ring--${role}`);
+    ring.dataset.dayRulerRing = role;
     ring.setAttribute('aria-hidden', 'true');
-    master.appendChild(ring);
     return ring;
+  }
+
+  function addDayRulerHalo(master, color) {
+    const halo = document.createElementNS(NS, 'g');
+    halo.classList.add('sky-ph-day-ruler-halo');
+    halo.dataset.dayRulerState = 'true';
+    halo.append(
+      dayRulerRing(DAY_RING_INNER_RADIUS, color, 'inner'),
+      dayRulerRing(DAY_RING_OUTER_RADIUS, color, 'outer')
+    );
+    master.appendChild(halo);
+    return halo;
   }
 
   async function placePlanet(group) {
@@ -93,12 +105,13 @@
     master.dataset.planetaryHourState = stateId;
     mount.appendChild(master);
 
-    if (state.day) addDayRulerRing(master, planetColor);
+    if (state.day) addDayRulerHalo(master, planetColor);
 
     try {
       // Hour-ruler state is a solid planetary-color disc with a white canonical glyph.
-      // Day-ruler state is the same circled master plus a second outer ring. When the
-      // same planet rules both, both state treatments appear together.
+      // Day-ruler state is represented independently by a separated double-ring halo.
+      // When one planet rules both, the filled hour disc remains inside both day rings,
+      // so the combined state cannot be mistaken for an hour-only ruler.
       const bubble = component.createBubble(master, entry.id, {
         radius:MASTER_RADIUS,
         padding:1,
@@ -123,7 +136,7 @@
     svg.querySelectorAll('.sky-ph-planet').forEach(group => { void placePlanet(group); });
     svg.dataset.canonicalHeptagramConsumer = 'true';
     svg.dataset.glyphPresentation = 'circled';
-    svg.dataset.rulerStates = 'day-ring-hour-fill';
+    svg.dataset.rulerStates = 'day-double-ring-hour-fill';
   }
 
   function inspect(node) {
