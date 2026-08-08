@@ -1,9 +1,10 @@
-// Keep the Sky-card heptagram and heptagon on the same seven vertices.
+// Keep the Sky-card weekly star and planetary-hour path on the same seven vertices.
+// Weekly sequence may cut across as a heptagram; planetary hours always advance around the perimeter in Chaldean order.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramGeometryV4) return;
-  window.__relphiSkyHeptagramGeometryV4 = true;
+  if (window.__relphiSkyHeptagramGeometryV5) return;
+  window.__relphiSkyHeptagramGeometryV5 = true;
 
   const ORDER = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
   const WEEK_PATH = ['sun','moon','mars','mercury','jupiter','venus','saturn','sun'];
@@ -22,36 +23,84 @@
     };
   }
 
-  function scaleCoordinate(value, sourceRadius, targetRadius) {
-    return CENTER + (Number(value) - CENTER) * (targetRadius / sourceRadius);
+  function setLine(line, fromKey, toKey, radius=HEPTAGON_RADIUS, fraction=1) {
+    const from = point(fromKey, radius);
+    const to = point(toKey, radius);
+    const f = Math.max(0, Math.min(1, Number(fraction) || 0));
+    line.setAttribute('x1', String(from.x));
+    line.setAttribute('y1', String(from.y));
+    line.setAttribute('x2', String(from.x + (to.x - from.x) * f));
+    line.setAttribute('y2', String(from.y + (to.y - from.y) * f));
   }
 
-  function scaleLine(line, sourceRadius, targetRadius) {
-    line.setAttribute('x1', String(scaleCoordinate(line.getAttribute('x1'), sourceRadius, targetRadius)));
-    line.setAttribute('y1', String(scaleCoordinate(line.getAttribute('y1'), sourceRadius, targetRadius)));
-    line.setAttribute('x2', String(scaleCoordinate(line.getAttribute('x2'), sourceRadius, targetRadius)));
-    line.setAttribute('y2', String(scaleCoordinate(line.getAttribute('y2'), sourceRadius, targetRadius)));
+  function sourceFraction(line, fromKey, toKey, sourceRadius) {
+    const x1 = Number(line.getAttribute('x1'));
+    const y1 = Number(line.getAttribute('y1'));
+    const x2 = Number(line.getAttribute('x2'));
+    const y2 = Number(line.getAttribute('y2'));
+    const drawn = Math.hypot(x2 - x1, y2 - y1);
+    const a = point(fromKey, sourceRadius);
+    const b = point(toKey, sourceRadius);
+    const full = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    return Math.max(0, Math.min(1, drawn / full));
   }
 
-  function normalizeInactiveHourLines(hourLines) {
-    hourLines.filter(line => !line.classList.contains('current')).forEach((line, index) => {
-      if (index >= 7) {
+  function hourRuler(svg) {
+    return ORDER.find(key => {
+      const group = svg.querySelector(`.sky-ph-${key}`);
+      const node = group?.querySelector(':scope > .sky-ph-node');
+      return group?.classList.contains('is-hour-ruler') || node?.classList.contains('hour');
+    }) || '';
+  }
+
+  function previousHour(key) {
+    const index = ORDER.indexOf(key);
+    return index < 0 ? '' : ORDER[(index + ORDER.length - 1) % ORDER.length];
+  }
+
+  function normalizeHourPath(svg, hourLines) {
+    const current = hourLines.find(line => line.classList.contains('current')) || null;
+    const base = hourLines.filter(line => line !== current);
+
+    // The seven reusable hour edges are the perimeter itself:
+    // Saturn → Jupiter → Mars → Sun → Venus → Mercury → Moon → Saturn.
+    base.forEach((line, index) => {
+      if (index >= ORDER.length) {
         line.remove();
         return;
       }
+      const from = ORDER[index];
+      const to = ORDER[(index + 1) % ORDER.length];
+      setLine(line, from, to);
       line.classList.remove('past');
       line.classList.add('future');
+      line.dataset.hourFrom = from;
+      line.dataset.hourTo = to;
     });
+
+    if (!current) return;
+    const ruler = hourRuler(svg);
+    const prior = previousHour(ruler);
+    if (!ruler || !prior) return;
+
+    // Current-hour progress belongs only on the immediately preceding perimeter edge.
+    // Example: a Moon hour progresses Mercury → Moon, never Moon → Venus or across the figure.
+    const fraction = sourceFraction(current, prior, ruler, SOURCE_HEPTAGON_RADIUS);
+    setLine(current, prior, ruler, HEPTAGON_RADIUS, fraction);
+    current.dataset.hourFrom = prior;
+    current.dataset.hourTo = ruler;
+    current.dataset.hourPath = 'perimeter';
   }
 
   function correct(svg) {
-    if (!svg || svg.dataset.heptagramGeometryV4 === 'true') return;
+    if (!svg || svg.dataset.heptagramGeometryV5 === 'true') return;
     const weekLines = Array.from(svg.querySelectorAll('.sky-ph-week-segment'));
     const baseLines = weekLines.filter(line => !line.classList.contains('current'));
     const hourLines = Array.from(svg.querySelectorAll('.sky-ph-hour-segment'));
     if (baseLines.length < 7 || !hourLines.length || !svg.querySelector('.sky-ph-planet')) return;
 
-    svg.dataset.heptagramGeometryV4 = 'true';
+    svg.dataset.heptagramGeometryV5 = 'true';
+    svg.dataset.planetaryHourPath = 'chaldean-perimeter';
 
     const outer = svg.querySelector('.sky-ph-circle');
     if (outer) outer.setAttribute('r', String(STAR_RADIUS));
@@ -71,23 +120,13 @@
     if (currentWeek) {
       const activeIndex = baseLines.findIndex(line => line.classList.contains('future'));
       const index = activeIndex < 0 ? 6 : activeIndex;
-      const from = point(WEEK_PATH[index], STAR_RADIUS);
-      const to = point(WEEK_PATH[index + 1], STAR_RADIUS);
-      const oldFrom = { x:Number(currentWeek.getAttribute('x1')), y:Number(currentWeek.getAttribute('y1')) };
-      const oldTo = { x:Number(currentWeek.getAttribute('x2')), y:Number(currentWeek.getAttribute('y2')) };
-      const oldFullFrom = point(WEEK_PATH[index], SOURCE_STAR_RADIUS);
-      const oldFullTo = point(WEEK_PATH[index + 1], SOURCE_STAR_RADIUS);
-      const oldLength = Math.hypot(oldFullTo.x - oldFullFrom.x, oldFullTo.y - oldFullFrom.y) || 1;
-      const drawnLength = Math.hypot(oldTo.x - oldFrom.x, oldTo.y - oldFrom.y);
-      const fraction = Math.max(0, Math.min(1, drawnLength / oldLength));
-      currentWeek.setAttribute('x1', String(from.x));
-      currentWeek.setAttribute('y1', String(from.y));
-      currentWeek.setAttribute('x2', String(from.x + (to.x - from.x) * fraction));
-      currentWeek.setAttribute('y2', String(from.y + (to.y - from.y) * fraction));
+      const fromKey = WEEK_PATH[index];
+      const toKey = WEEK_PATH[index + 1];
+      const fraction = sourceFraction(currentWeek, fromKey, toKey, SOURCE_STAR_RADIUS);
+      setLine(currentWeek, fromKey, toKey, STAR_RADIUS, fraction);
     }
 
-    hourLines.forEach(line => scaleLine(line, SOURCE_HEPTAGON_RADIUS, HEPTAGON_RADIUS));
-    normalizeInactiveHourLines(hourLines);
+    normalizeHourPath(svg, hourLines);
 
     ORDER.forEach(key => {
       const group = svg.querySelector(`.sky-ph-${key}`);
@@ -103,23 +142,16 @@
     });
   }
 
-  function inspect(node) {
-    if (!(node instanceof Element)) return;
-    if (node.matches?.('.sky-ph-heptagram')) correct(node);
-    node.querySelectorAll?.('.sky-ph-heptagram').forEach(correct);
-  }
-
   function scan() {
-    document.querySelectorAll('.sky-ph-heptagram').forEach(correct);
+    document.querySelectorAll('.sky-ph-heptagram').forEach(svg => {
+      delete svg.dataset.heptagramGeometryV4;
+      correct(svg);
+    });
   }
-
-  const observer = new MutationObserver(records => {
-    records.forEach(record => record.addedNodes.forEach(inspect));
-  });
 
   function start() {
     scan();
-    observer.observe(document.documentElement, { childList:true, subtree:true });
+    // The heptagram source already announces when it is ready; no document-wide observer is needed.
     window.addEventListener('relphi:sky-heptagram-source-ready', scan);
   }
 
