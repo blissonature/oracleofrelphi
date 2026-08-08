@@ -3,8 +3,8 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramGeometryV5) return;
-  window.__relphiSkyHeptagramGeometryV5 = true;
+  if (window.__relphiSkyHeptagramGeometryV6) return;
+  window.__relphiSkyHeptagramGeometryV6 = true;
 
   const ORDER = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
   const WEEK_PATH = ['sun','moon','mars','mercury','jupiter','venus','saturn','sun'];
@@ -53,9 +53,9 @@
     }) || '';
   }
 
-  function previousHour(key) {
+  function nextHour(key) {
     const index = ORDER.indexOf(key);
-    return index < 0 ? '' : ORDER[(index + ORDER.length - 1) % ORDER.length];
+    return index < 0 ? '' : ORDER[(index + 1) % ORDER.length];
   }
 
   function normalizeHourPath(svg, hourLines) {
@@ -80,26 +80,26 @@
 
     if (!current) return;
     const ruler = hourRuler(svg);
-    const prior = previousHour(ruler);
-    if (!ruler || !prior) return;
+    const next = nextHour(ruler);
+    if (!ruler || !next) return;
 
-    // Current-hour progress belongs only on the immediately preceding perimeter edge.
-    // Example: a Moon hour progresses Mercury → Moon, never Moon → Venus or across the figure.
-    const fraction = sourceFraction(current, prior, ruler, SOURCE_HEPTAGON_RADIUS);
-    setLine(current, prior, ruler, HEPTAGON_RADIUS, fraction);
-    current.dataset.hourFrom = prior;
-    current.dataset.hourTo = ruler;
+    // Current-hour progress begins at the current ruler and advances toward the next ruler.
+    // Example: during a Moon hour, progress is Moon → Saturn.
+    const fraction = sourceFraction(current, ruler, next, SOURCE_HEPTAGON_RADIUS);
+    setLine(current, ruler, next, HEPTAGON_RADIUS, fraction);
+    current.dataset.hourFrom = ruler;
+    current.dataset.hourTo = next;
     current.dataset.hourPath = 'perimeter';
   }
 
   function correct(svg) {
-    if (!svg || svg.dataset.heptagramGeometryV5 === 'true') return;
+    if (!svg || svg.dataset.heptagramGeometryV6 === 'true') return;
     const weekLines = Array.from(svg.querySelectorAll('.sky-ph-week-segment'));
     const baseLines = weekLines.filter(line => !line.classList.contains('current'));
     const hourLines = Array.from(svg.querySelectorAll('.sky-ph-hour-segment'));
     if (baseLines.length < 7 || !hourLines.length || !svg.querySelector('.sky-ph-planet')) return;
 
-    svg.dataset.heptagramGeometryV5 = 'true';
+    svg.dataset.heptagramGeometryV6 = 'true';
     svg.dataset.planetaryHourPath = 'chaldean-perimeter';
 
     const outer = svg.querySelector('.sky-ph-circle');
@@ -145,6 +145,7 @@
   function scan() {
     document.querySelectorAll('.sky-ph-heptagram').forEach(svg => {
       delete svg.dataset.heptagramGeometryV4;
+      delete svg.dataset.heptagramGeometryV5;
       correct(svg);
     });
   }
