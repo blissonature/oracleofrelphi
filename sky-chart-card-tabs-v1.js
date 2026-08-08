@@ -1,0 +1,269 @@
+// Sky-card tab contract: Where and When, Placements, and Card Hits are sibling views.
+// Card Hits is placement-derived only. Selecting a card reuses the same tab space to reveal
+// the placements that associate with that card; it never opens a second panel or filters the chart.
+(function () {
+  'use strict';
+  if (!/(^|\/)sky-chart\.html$/.test(location.pathname) || window.__relphiSkyCardTabsV1) return;
+  window.__relphiSkyCardTabsV1 = true;
+
+  const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
+  const VIEW_KEY = 'relphiSkyWhereWhenViewV1';
+  const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  const SIGN_RULERS = ['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+  const EXALTATIONS = ['Sun','Moon','','Jupiter','','Mercury','Saturn','','','Mars','','Venus'];
+  const DECAN_RULERS = [
+    ['Mars','Sun','Venus'], ['Mercury','Moon','Saturn'], ['Jupiter','Mars','Sun'],
+    ['Venus','Mercury','Moon'], ['Saturn','Jupiter','Mars'], ['Sun','Venus','Mercury'],
+    ['Moon','Saturn','Jupiter'], ['Mars','Sun','Venus'], ['Mercury','Moon','Saturn'],
+    ['Jupiter','Mars','Sun'], ['Venus','Mercury','Moon'], ['Saturn','Jupiter','Mars']
+  ];
+  const DECAN_CARDS = [
+    ['two_of_wands','three_of_wands','four_of_wands'],
+    ['five_of_pentacles','six_of_pentacles','seven_of_pentacles'],
+    ['eight_of_swords','nine_of_swords','ten_of_swords'],
+    ['two_of_cups','three_of_cups','four_of_cups'],
+    ['five_of_wands','six_of_wands','seven_of_wands'],
+    ['eight_of_pentacles','nine_of_pentacles','ten_of_pentacles'],
+    ['two_of_swords','three_of_swords','four_of_swords'],
+    ['five_of_cups','six_of_cups','seven_of_cups'],
+    ['eight_of_wands','nine_of_wands','ten_of_wands'],
+    ['two_of_pentacles','three_of_pentacles','four_of_pentacles'],
+    ['five_of_swords','six_of_swords','seven_of_swords'],
+    ['eight_of_cups','nine_of_cups','ten_of_cups']
+  ];
+  const PLANET_NAMES = new Set(['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto']);
+  const OUTER_PLANET_CARDS = { Uranus:'the_fool', Neptune:'the_hanged_man', Pluto:'judgement' };
+  const BODY_ALIASES = {
+    sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',
+    uranus:'Uranus',neptune:'Neptune',pluto:'Pluto',asc:'Ascendant',rising:'Ascendant',ascendant:'Ascendant',
+    dsc:'Descendant',descendant:'Descendant',mc:'Midheaven',midheaven:'Midheaven',ic:'Imum Coeli',
+    'north-node':'North Node','north node':'North Node',node:'North Node','south-node':'South Node',
+    'south node':'South Node',chiron:'Chiron',lilith:'Lilith',vertex:'Vertex',
+    'part-of-fortune':'Part of Fortune','part of fortune':'Part of Fortune',fortune:'Part of Fortune'
+  };
+  const THUMB = Object.freeze({ width:48, height:83, quality:50 });
+  const selectedCard = { A:'', B:'' };
+  const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const norm = value => ((Number(value) % 360) + 360) % 360;
+
+  function installStyles() {
+    if (document.getElementById('skyCardTabsV1Styles')) return;
+    const style = document.createElement('style');
+    style.id = 'skyCardTabsV1Styles';
+    style.textContent = `
+      .sky-where-when-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px!important}
+      .sky-where-when-action{width:100%;min-width:0;text-align:center}
+      .sky-where-when-action[aria-pressed="true"]{border-color:var(--slot-color,#8b1714);box-shadow:inset 0 -2px 0 var(--slot-color,#8b1714);background:#fffaf7}
+      .sky-card-hits-tab{--sky-hit-color:var(--slot-color,#555);display:grid;gap:.7rem;padding:10px;min-width:0}
+      .sky-card-hits-tab-header{display:flex;align-items:baseline;justify-content:space-between;gap:.65rem}
+      .sky-card-hits-tab-title{margin:0;font:900 .84rem/1.1 system-ui,sans-serif}
+      .sky-card-hits-tab-total{color:#625d58;font:750 .62rem/1.2 system-ui,sans-serif;text-align:right}
+      .sky-card-hits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:.45rem;align-items:start;overflow:visible}
+      .sky-card-hit{position:relative;display:grid;grid-template-rows:auto auto;justify-items:center;gap:.25rem;width:100%;min-width:0;padding:.2rem;border:2px solid transparent;border-radius:.68rem;background:transparent;color:#171717;cursor:pointer;box-sizing:border-box;overflow:visible}
+      .sky-card-hit:hover,.sky-card-hit:focus-visible{border-color:var(--sky-hit-color);outline:0;background:#fff}
+      .sky-card-hit-art{position:relative;display:grid;place-items:center;width:${THUMB.width}px;height:${THUMB.height}px;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.3rem;overflow:visible;background:#f1ebe4}
+      .sky-card-hit-art img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;border-radius:.26rem}
+      .sky-card-hit-code{font:900 .72rem/1 Georgia,serif;color:#4d4640}
+      .sky-card-hit-chip{position:absolute;z-index:2;right:-.5rem;top:-.45rem;display:grid;place-items:center;min-width:1.65rem;height:1.65rem;padding:0 .28rem;border:2px solid #fff;border-radius:999px;background:var(--sky-hit-color);color:#fff;font:900 .7rem/1 system-ui,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+      .sky-card-hit-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font:750 .62rem/1.1 system-ui,sans-serif;text-align:center}
+      .sky-card-hit-detail-view{display:grid;gap:.7rem;min-width:0}
+      .sky-card-hit-detail-head{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:center}
+      .sky-card-hit-detail-art{position:relative;width:58px;height:100px;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.35rem;background:#f1ebe4;overflow:hidden}
+      .sky-card-hit-detail-art img{width:100%;height:100%;display:block;object-fit:cover}
+      .sky-card-hit-detail-copy{display:grid;gap:.2rem;min-width:0}.sky-card-hit-detail-copy h3{margin:0;font:900 .9rem/1.15 system-ui,sans-serif}.sky-card-hit-detail-copy p{margin:0;color:#625d58;font:700 .65rem/1.3 system-ui,sans-serif}
+      .sky-card-hit-back{appearance:none;justify-self:start;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#241f1b;padding:.45rem .65rem;font:850 .64rem/1 system-ui,sans-serif;cursor:pointer}
+      .sky-card-hit-placements{display:grid;gap:.42rem;margin:0;padding:0;list-style:none}
+      .sky-card-hit-placement{display:grid;gap:.16rem;padding:.6rem .65rem;border:1px solid rgba(31,27,24,.13);border-radius:.72rem;background:#fffdfa}
+      .sky-card-hit-placement-main{font:850 .72rem/1.2 system-ui,sans-serif;color:#201c18}.sky-card-hit-placement-meta{font:750 .64rem/1.2 system-ui,sans-serif;color:#5b524b}.sky-card-hit-placement-why{font:650 .6rem/1.3 system-ui,sans-serif;color:#736961}
+      .sky-card-hits-empty{margin:0;color:#625d58;font:650 .72rem/1.4 system-ui,sans-serif}
+      @media(max-width:620px){.sky-card-hits-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:.34rem}.sky-card-hit{padding:.14rem}.sky-card-hit-name{font-size:.58rem}}
+      @media(max-width:390px){.sky-card-hits-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function readPayload(slot) {
+    try { return JSON.parse(localStorage.getItem(KEYS[slot]) || 'null'); }
+    catch (_) { return null; }
+  }
+  function placementSource(payload) {
+    if (!payload || typeof payload !== 'object') return [];
+    const known = [payload.placements,payload.positions,payload.points,payload.bodies].find(value => value && typeof value === 'object');
+    const source = known || payload;
+    if (Array.isArray(source)) return source.map((item,index) => [String(item?.name || item?.label || item?.id || index),item]);
+    return Object.entries(source).filter(([key,value]) => value && typeof value === 'object' && !Array.isArray(value) && !/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key));
+  }
+  function longitude(item) {
+    if (Number.isFinite(Number(item?.longitude))) return norm(item.longitude);
+    const sign = SIGNS.findIndex(name => name.toLowerCase() === String(item?.sign || item?.zodiac || '').trim().toLowerCase());
+    if (sign < 0) return NaN;
+    return norm(sign * 30 + Number(item?.degree || item?.degrees || 0) + Number(item?.minute || item?.minutes || 0)/60 + Number(item?.second || item?.seconds || 0)/3600);
+  }
+  function bodyName(key,item) {
+    const candidates = [item?.name,item?.label,item?.body,item?.planet,item?.point,item?.id,item?.glyphId,key];
+    for (const candidate of candidates) {
+      if (candidate == null) continue;
+      const raw = String(candidate).trim();
+      const normalized = raw.toLowerCase().replace(/_/g,'-');
+      if (BODY_ALIASES[normalized]) return BODY_ALIASES[normalized];
+      const entry = window.RelphiGlyphRegistry?.resolve?.(raw) || window.RelphiGlyphRegistry?.get?.(raw);
+      if (entry?.name) return entry.name;
+    }
+    return String(key || 'Placement');
+  }
+  function houseNumber(item) {
+    const value = Number(item?.house ?? item?.houseNumber ?? item?.house_number);
+    return Number.isFinite(value) && value >= 1 && value <= 12 ? Math.trunc(value) : null;
+  }
+  function records(slot) {
+    return placementSource(readPayload(slot)).map(([key,item],index) => {
+      const value = longitude(item);
+      if (!Number.isFinite(value)) return null;
+      const longSign = Math.floor(value/30);
+      const explicitSign = SIGNS.findIndex(name => name.toLowerCase() === String(item?.sign || item?.zodiac || '').trim().toLowerCase());
+      const signIndex = explicitSign >= 0 ? explicitSign : longSign;
+      const within = value - longSign*30;
+      const explicitDegree = Number(item?.degree ?? item?.degrees);
+      const explicitMinute = Number(item?.minute ?? item?.minutes);
+      const degree = Number.isFinite(explicitDegree) ? Math.max(0,Math.min(29,Math.trunc(explicitDegree))) : Math.floor(within);
+      const minute = Number.isFinite(explicitMinute) ? Math.max(0,Math.min(59,Math.trunc(explicitMinute))) : Math.floor((within-Math.floor(within))*60 + 1e-8);
+      return { id:`${index}:${key}`,key,item,body:bodyName(key,item),value,signIndex,sign:SIGNS[signIndex],degree,minute,house:houseNumber(item),decan:Math.min(2,Math.floor(degree/10)) };
+    }).filter(Boolean);
+  }
+
+  function cards() { return Array.isArray(window.RELPHI_TAROT_CARDS) ? window.RELPHI_TAROT_CARDS : []; }
+  function cardById(id) { return cards().find(card => card.card_id === id || card.stable_symbol_id === id) || null; }
+  function splitValues(value) { return String(value || '').split(',').map(item => item.trim()).filter(Boolean); }
+  function cardForPlanet(planet) {
+    return cards().find(card => card.arcana === 'Major' && splitValues(card.astrology?.planet).includes(planet)) || cardById(OUTER_PLANET_CARDS[planet]);
+  }
+  function cardForSign(sign) { return cards().find(card => card.arcana === 'Major' && splitValues(card.astrology?.sign).includes(sign)) || null; }
+  function cardForDecan(record) { return cardById(DECAN_CARDS[record.signIndex]?.[record.decan]); }
+  function displayName(card) { return String(card?.name || card?.title || card?.card_name || card?.card_id || 'Card').replace(/_/g,' '); }
+  function cardCode(card) {
+    const id = String(card?.card_id || card?.stable_symbol_id || '');
+    if (card?.arcana === 'Major') return String(card?.number ?? card?.roman ?? '').trim() || 'M';
+    return id.split('_').map(part => part[0]?.toUpperCase() || '').join('').slice(0,3) || 'T';
+  }
+  function thumbnailFor(card,w=THUMB.width,h=THUMB.height) {
+    const id = encodeURIComponent(card?.card_id || card?.stable_symbol_id || '');
+    const source = new URL(`assets/tarot/rws/${id}.webp`, document.baseURI).href;
+    const thumb = new URL('https://wsrv.nl/');
+    thumb.searchParams.set('url',source); thumb.searchParams.set('w',String(w)); thumb.searchParams.set('h',String(h));
+    thumb.searchParams.set('fit','cover'); thumb.searchParams.set('output','webp'); thumb.searchParams.set('q',String(THUMB.quality));
+    return thumb.href;
+  }
+
+  function associationEntries(record) {
+    const entries = [];
+    if (PLANET_NAMES.has(record.body)) entries.push([cardForPlanet(record.body),`${record.body} is the placed planetary power`]);
+    entries.push([cardForSign(record.sign),`${record.sign} supplies the zodiacal archetype`]);
+    entries.push([cardForDecan(record),`${record.sign} decan ${record.decan+1}`]);
+    const signRuler = SIGN_RULERS[record.signIndex];
+    entries.push([cardForPlanet(signRuler),`${signRuler} rules ${record.sign}`]);
+    const exalted = EXALTATIONS[record.signIndex];
+    if (exalted) entries.push([cardForPlanet(exalted),`${exalted} is exalted in ${record.sign}`]);
+    const decanRuler = DECAN_RULERS[record.signIndex]?.[record.decan];
+    if (decanRuler) entries.push([cardForPlanet(decanRuler),`${record.sign} decan ${record.decan+1} is ruled by ${decanRuler}`]);
+    return entries.filter(([card]) => card);
+  }
+  function buildTally(slot) {
+    const tally = new Map();
+    records(slot).forEach(record => {
+      associationEntries(record).forEach(([card,why]) => {
+        const id = card.card_id || card.stable_symbol_id;
+        if (!id) return;
+        let hit = tally.get(id);
+        if (!hit) { hit = { id,card,placements:new Map() }; tally.set(id,hit); }
+        let placement = hit.placements.get(record.id);
+        if (!placement) { placement = { record,associations:new Set() }; hit.placements.set(record.id,placement); }
+        placement.associations.add(why);
+      });
+    });
+    return Array.from(tally.values()).map(hit => ({...hit,placements:Array.from(hit.placements.values()),count:hit.placements.size})).sort((a,b) => b.count-a.count || displayName(a.card).localeCompare(displayName(b.card)));
+  }
+
+  function readViewState() {
+    try { const value=JSON.parse(sessionStorage.getItem(VIEW_KEY)||'{}'); return value&&typeof value==='object'?value:{}; }
+    catch (_) { return {}; }
+  }
+  function writeViewState(slot,mode) {
+    const value=readViewState(); value[slot]=mode;
+    try { sessionStorage.setItem(VIEW_KEY,JSON.stringify(value)); } catch (_) {}
+  }
+  function panel(slot) { return document.getElementById(`skyFoundation${slot}`); }
+  function ensureTab(slot) {
+    const actions = panel(slot)?.querySelector('.sky-where-when-actions');
+    if (!actions) return null;
+    let button = actions.querySelector('[data-ww-action="card-hits"]');
+    if (!button) {
+      button=document.createElement('button'); button.type='button'; button.className='sky-where-when-action';
+      button.dataset.wwAction='card-hits'; button.textContent='Card Hits'; button.setAttribute('aria-label',`Show Card Hits for Sky ${slot}`);
+      actions.appendChild(button);
+    }
+    return button;
+  }
+  function syncTabs(slot) {
+    const actions=panel(slot)?.querySelector('.sky-where-when-actions'); if(!actions)return;
+    const mode=readViewState()[slot] || (panel(slot)?.querySelector('.sky-where-when-confirmed') ? 'confirmed' : 'placements');
+    actions.querySelectorAll('.sky-where-when-action').forEach(button => {
+      const action=button.dataset.wwAction;
+      const active=action==='card-hits' ? mode==='card-hits' : action==='placements' ? mode==='placements' : action==='edit' ? (mode==='confirmed'||mode==='edit') : false;
+      button.setAttribute('aria-pressed',active?'true':'false');
+    });
+  }
+  function viewNodes(slot) {
+    const card=panel(slot), body=card?.querySelector(':scope > .sky-foundation-body');
+    return { card,body,placement:body?.querySelector('.sky-where-when-placement-view'),view:body?.querySelector('.sky-where-when-view') };
+  }
+  function placementText(record) {
+    const coordinate=`${record.degree}°${String(record.minute).padStart(2,'0')}′`;
+    return { main:`${record.body} in ${record.sign}`, meta:`${coordinate}${record.house ? ` · H${record.house}` : ''}` };
+  }
+  function gridMarkup(slot,hits) {
+    const placementCount=records(slot).length;
+    return `<section class="sky-card-hits-tab" data-card-hits-slot="${slot}"><header class="sky-card-hits-tab-header"><h3 class="sky-card-hits-tab-title">Card Hits</h3><span class="sky-card-hits-tab-total">${hits.length} card${hits.length===1?'':'s'} · ${placementCount} placement${placementCount===1?'':'s'}</span></header>${hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-label="${esc(displayName(hit.card))}, ${hit.count} associated placement${hit.count===1?'':'s'}. Show placements."><span class="sky-card-hit-art"><span class="sky-card-hit-code" aria-hidden="true">${esc(cardCode(hit.card))}</span><img src="${esc(thumbnailFor(hit.card))}" alt="" width="${THUMB.width}" height="${THUMB.height}" loading="lazy" decoding="async" fetchpriority="low"><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`).join('')}</div>` : '<p class="sky-card-hits-empty">Add placements to see their Tarot correspondences.</p>'}</section>`;
+  }
+  function detailMarkup(slot,hit) {
+    return `<section class="sky-card-hits-tab" data-card-hits-slot="${slot}"><button class="sky-card-hit-back" type="button" data-card-hit-back>← All Card Hits</button><div class="sky-card-hit-detail-view"><div class="sky-card-hit-detail-head"><div class="sky-card-hit-detail-art"><img src="${esc(thumbnailFor(hit.card,58,100))}" alt="" width="58" height="100"></div><div class="sky-card-hit-detail-copy"><h3>${esc(displayName(hit.card))} ×${hit.count}</h3><p>${hit.count} placement${hit.count===1?'':'s'} in this sky associate with this card.</p></div></div><ul class="sky-card-hit-placements">${hit.placements.map(entry => { const text=placementText(entry.record); return `<li class="sky-card-hit-placement"><span class="sky-card-hit-placement-main">${esc(text.main)}</span><span class="sky-card-hit-placement-meta">${esc(text.meta)}</span><span class="sky-card-hit-placement-why">${esc(Array.from(entry.associations).join(' · '))}</span></li>`; }).join('')}</ul></div></section>`;
+  }
+  function renderCardHits(slot) {
+    const {placement,view}=viewNodes(slot); if(!view||!placement)return;
+    placement.hidden=true; view.hidden=false;
+    const hits=buildTally(slot);
+    const selected=hits.find(hit=>hit.id===selectedCard[slot]);
+    view.innerHTML=selected ? detailMarkup(slot,selected) : gridMarkup(slot,hits);
+    writeViewState(slot,'card-hits'); syncTabs(slot);
+  }
+  function showCardHits(slot) { selectedCard[slot]=''; renderCardHits(slot); }
+
+  function hydrate() {
+    ['A','B'].forEach(slot => { ensureTab(slot); syncTabs(slot); if(readViewState()[slot]==='card-hits') renderCardHits(slot); });
+  }
+
+  document.addEventListener('click',event => {
+    const tab=event.target.closest('.sky-where-when-actions [data-ww-action]');
+    if (tab) {
+      const slot=tab.closest('#skyFoundationA')?'A':tab.closest('#skyFoundationB')?'B':'';
+      if(!slot)return;
+      if(tab.dataset.wwAction==='card-hits') {
+        event.preventDefault(); event.stopImmediatePropagation(); showCardHits(slot); return;
+      }
+      requestAnimationFrame(()=>syncTabs(slot));
+      return;
+    }
+    const cardButton=event.target.closest('.sky-card-hit[data-card-hit-id]');
+    if(cardButton) {
+      const section=cardButton.closest('[data-card-hits-slot]'); const slot=section?.dataset.cardHitsSlot;
+      if(!slot)return; selectedCard[slot]=cardButton.dataset.cardHitId||''; renderCardHits(slot); return;
+    }
+    const back=event.target.closest('[data-card-hit-back]');
+    if(back) { const slot=back.closest('[data-card-hits-slot]')?.dataset.cardHitsSlot; if(slot){selectedCard[slot]='';renderCardHits(slot);} }
+  },true);
+
+  window.addEventListener('storage',event => { if(Object.values(KEYS).includes(event.key)) requestAnimationFrame(hydrate); });
+  window.addEventListener('relphi:sky-foundation-ready',()=>requestAnimationFrame(hydrate));
+  window.addEventListener('relphi:sky-foundation-interactions-ready',()=>requestAnimationFrame(hydrate));
+  function start(){installStyles();requestAnimationFrame(hydrate)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
