@@ -71,15 +71,24 @@ test('interaction controller creates relationship slots but never paints glyphs'
   assert.doesNotMatch(interactions, /RelphiGlyphComponent/);
 });
 
-test('selected relationship inspection uses the shared glyph component and leads with astrology', () => {
+test('selected relationship inspection restores the exact isolated zodiac wheel and keeps Tarot secondary', () => {
   assert.doesNotMatch(selectedRelationship, /RelphiCanonicalGlyphState/);
   assert.match(selectedRelationship, /window\.RelphiGlyphComponent/);
   assert.match(selectedRelationship, /component\.createBubble\(svg,entry\.id,\{radius:19,padding:1,color\}\)/);
   assert.match(selectedRelationship, /svg\.setAttribute\('viewBox','-32 -32 64 64'\)/);
-  assert.match(selectedRelationship, /Astrology first · Tarot correspondence below/);
-  assert.match(selectedRelationship, /relationship-hero/);
+  assert.match(selectedRelationship, /Exact zodiac geometry · Tarot correspondence below/);
+  assert.match(selectedRelationship, /function miniPoint\(degree,radius\)\{const angle=\(norm\(degree\)-180\)\*Math\.PI\/180;/);
+  assert.match(selectedRelationship, /data-zodiac-origin="aries-0-at-9"/);
+  assert.match(selectedRelationship, /data-left-longitude=/);
+  assert.match(selectedRelationship, /data-right-longitude=/);
+  assert.match(selectedRelationship, /sky-selected-isolated-aspect/);
+  assert.match(selectedRelationship, /data-mini-placement="left"/);
+  assert.match(selectedRelationship, /data-mini-placement="right"/);
+  assert.match(selectedRelationship, /data-mini-sign=/);
+  assert.match(selectedRelationship, /renderSvgGroup\(node,node\.dataset\.miniSign,'#514b45','plain',8\.4,1\.5\)/);
   assert.match(selectedRelationship, /Decan correspondences/);
-  assert.match(selectedRelationshipCss, /\.relationship-hero\{display:grid;grid-template-columns:minmax\(0,1fr\) 132px minmax\(0,1fr\)/);
+  assert.match(selectedRelationshipCss, /\.relationship-hero\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(210px,230px\) minmax\(0,1fr\)/);
+  assert.match(selectedRelationshipCss, /\.relationship-mini-wheel \.sky-selected-isolated-aspect\{stroke-width:4\.2/);
   assert.match(selectedRelationshipCss, /\.understanding-cards\{display:grid;grid-template-columns:repeat\(2,minmax\(0,170px\)\)/);
 });
 
@@ -191,7 +200,7 @@ test('shared pages and Sky Chart use the same component version', () => {
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
 });
 
-test('Sky Chart cache keys point at the relationship hierarchy preview', () => {
+test('Sky Chart cache keys point at the mini-wheel relationship preview', () => {
   assert.match(html, /navloader\.js\?v=54/);
   assert.match(html, /relphi-glyph-registry-v1\.js\?v=28/);
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
@@ -200,8 +209,8 @@ test('Sky Chart cache keys point at the relationship hierarchy preview', () => {
   assert.match(html, /sky-chart-foundation-interactions-v2\.js\?v=9/);
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=20/);
-  assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=5/);
-  assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=5/);
+  assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=6/);
+  assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=6/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.css\?v=8/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=13/);
   assert.match(html, /sky-chart-card-hits-v2\.js\?v=5/);
