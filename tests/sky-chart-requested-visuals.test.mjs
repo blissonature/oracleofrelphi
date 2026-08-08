@@ -163,10 +163,16 @@ test('Chart Angles are grouped visually without reordering ledger row identity',
   assert.doesNotMatch(angles, /ledger\.appendChild\(match\[1\]\)/);
 });
 
-test('dynamic SVG glyphs stay invisible until their fitted transform exists', () => {
-  assert.match(component, /art\.style\.visibility = 'hidden';/);
-  assert.match(component, /needsFittedReveal = true;/);
-  assert.match(component, /fit\(art, radius, padding, entry, bubbleStrokeWidth\);\n    if \(needsFittedReveal\) art\.style\.visibility = '';/);
+test('dynamic SVG glyph fitting is identity-stable even inside hidden relationship rows', () => {
+  assert.match(component, /const fitMetrics = new Map\(\);/);
+  assert.match(component, /const cached = fitMetrics\.get\(entry\.id\);/);
+  assert.match(component, /const box = mountedBox\(node\) \|\| probeBox\(node\);/);
+  assert.match(component, /probe\.dataset\.relphiGlyphMeasureProbe = 'true';/);
+  assert.match(component, /fitMetrics\.set\(entry\.id, metrics\);/);
+  assert.match(component, /node\.dataset\.fitMetricsSource = 'identity-cache';/);
+  assert.match(component, /const fitted = fit\(art, radius, padding, entry, bubbleStrokeWidth\);/);
+  assert.match(component, /if \(fitted\) art\.style\.visibility = '';/);
+  assert.doesNotMatch(component, /if \(needsFittedReveal\) art\.style\.visibility = '';/);
 });
 
 test('shared pages and Sky Chart use the same component version', () => {
