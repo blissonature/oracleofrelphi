@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyLedgerModernV1)return;
-window.__relphiSkyLedgerModernV1=true;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyLedgerModernV2)return;
+window.__relphiSkyLedgerModernV1=true;window.__relphiSkyLedgerModernV2=true;
 const css=`
 .sky-ruler-caption-one-line{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;margin-inline:auto!important;white-space:nowrap!important;overflow:visible!important;text-align:center!important;line-height:1.15!important;letter-spacing:-.015em!important}
 .sky-chart-hit{border-radius:.7rem!important;padding:.2rem!important;transition:background .16s ease,transform .16s ease!important}.sky-chart-hit:hover{background:rgba(31,27,24,.055)!important}.sky-chart-hit:active{transform:scale(.98)!important}.sky-chart-hit img{border-radius:.55rem!important;box-shadow:0 1px 2px rgba(31,27,24,.16),0 7px 18px rgba(31,27,24,.09)!important}.sky-chart-hit-count{border:2px solid #fffdfa!important;box-shadow:0 2px 8px rgba(31,27,24,.2)!important}
@@ -19,5 +19,7 @@ const css=`
 function install(){if(document.getElementById('skyLedgerModernStyles'))return;const s=document.createElement('style');s.id='skyLedgerModernStyles';s.textContent=css;document.head.appendChild(s)}
 function fit(){document.querySelectorAll('#skyFoundationA *,#skyFoundationB *').forEach(n=>{if(n.children.length)return;const t=(n.textContent||'').replace(/\s+/g,' ').trim();if(!/\bday\b.*\bplanetary hour\b/i.test(t))return;n.classList.add('sky-ruler-caption-one-line');n.style.fontSize='';const w=n.clientWidth||n.parentElement?.clientWidth||0;if(!w)return;let z=Math.min(12,parseFloat(getComputedStyle(n).fontSize)||12);n.style.fontSize=z+'px';while(n.scrollWidth>w&&z>7.5){z-=.25;n.style.fontSize=z+'px'}})}
 function dialog(){const d=document.querySelector('.sky-ledger-dialog');if(!d)return;const h=d.querySelector('.sky-ledger-header');if(h){const c=h.style.borderTopColor||getComputedStyle(h).borderTopColor;if(c&&c!=='rgba(0, 0, 0, 0)')h.style.setProperty('--ledger-accent',c);h.style.borderTop='0';h.querySelector('[data-close-ledger]')?.setAttribute('title','Close card inspector')}d.querySelector('.sky-ledger-shell')?.style.setProperty('--ledger-accent',h?.style.getPropertyValue('--ledger-accent')||'#7b716a')}
-let q=false;function refresh(){fit();dialog()}function schedule(){if(q)return;q=true;requestAnimationFrame(()=>{q=false;refresh()})}function start(){install();refresh();new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true,characterData:true});window.addEventListener('resize',schedule,{passive:true})}document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
+let q=false;function refresh(){fit();dialog()}function schedule(){if(q)return;q=true;requestAnimationFrame(()=>{q=false;refresh()})}
+function start(){install();refresh();['relphi:sky-foundation-ready','relphi:sky-card-hits-rendered','relphi:open-ledger-card'].forEach(name=>window.addEventListener(name,schedule));window.addEventListener('resize',schedule,{passive:true})}
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
