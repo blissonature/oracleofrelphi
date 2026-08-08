@@ -1,7 +1,8 @@
 // Progressive symbolic reading: glyph -> name -> referent. No duplicate prose layer.
 (function(){
   'use strict';
-  if(window.__relphiSkyProgressiveComparisonV2)return;
+  if(window.__relphiSkyProgressiveComparisonV3)return;
+  window.__relphiSkyProgressiveComparisonV3=true;
   window.__relphiSkyProgressiveComparisonV2=true;
   window.__relphiSkyProgressiveComparisonV1=true;
 
@@ -40,6 +41,7 @@
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[char]));
   const norm=value=>((Number(value)%360)+360)%360;
   const signFor=record=>SIGNS[Math.floor(norm(record.value)/30)];
+  const orbLabel=value=>{let total=Math.round(Number(value)*60),degree=Math.floor(total/60);total%=60;return`${degree}°${String(total).padStart(2,'0')}′`};
 
   function token(spec){
     return `<span class="sky-progressive-token" data-progressive-stage="glyph" data-progressive-field="${esc(spec.field)}" data-progressive-glyph-id="${esc(spec.glyphId)}"><button type="button" class="sky-progressive-level sky-progressive-glyph" data-progressive-level="glyph" aria-label="Reveal ${esc(spec.name)}" aria-expanded="false"><span class="sky-progressive-canonical-slot" aria-hidden="true"></span></button><button type="button" class="sky-progressive-level sky-progressive-name" data-progressive-level="name" aria-label="Reveal the referent of ${esc(spec.name)}" aria-expanded="false" hidden>${esc(spec.name)}</button><button type="button" class="sky-progressive-level sky-progressive-meaning" data-progressive-level="meaning" aria-label="Referent of ${esc(spec.name)}" hidden>${esc(spec.referent)}</button></span>`;
@@ -47,7 +49,7 @@
 
   function symbolicReading(relation){
     const signA=signFor(relation.left),signB=signFor(relation.right),aspect=ASPECTS[relation.aspect.id]||[relation.aspect.id,'a measured relationship between the two placements'];
-    return `<div class="sky-progressive-reading sky-progressive-symbolic"><div class="sky-progressive-symbol-row"><div class="sky-progressive-symbol-side sky-a" aria-label="Sky A symbols">${token({field:'A-placement',glyphId:relation.left.id,name:relation.left.entry.name,referent:PLACEMENT_REFERENTS[relation.left.id]||'a calculated point in Sky A'})}${token({field:'A-sign',glyphId:signA.toLowerCase(),name:signA,referent:SIGN_REFERENTS[signA]})}</div><div class="sky-progressive-symbol-aspect" aria-label="Relationship symbol">${token({field:'aspect',glyphId:relation.aspect.id,name:aspect[0],referent:aspect[1]})}</div><div class="sky-progressive-symbol-side sky-b" aria-label="Sky B symbols">${token({field:'B-placement',glyphId:relation.right.id,name:relation.right.entry.name,referent:PLACEMENT_REFERENTS[relation.right.id]||'a calculated point in Sky B'})}${token({field:'B-sign',glyphId:signB.toLowerCase(),name:signB,referent:SIGN_REFERENTS[signB]})}</div></div></div>`;
+    return `<div class="sky-progressive-reading sky-progressive-symbolic"><div class="sky-progressive-symbol-row"><div class="sky-progressive-symbol-side sky-a" aria-label="Sky A symbols">${token({field:'A-placement',glyphId:relation.left.id,name:relation.left.entry.name,referent:PLACEMENT_REFERENTS[relation.left.id]||'a calculated point in Sky A'})}${token({field:'A-sign',glyphId:signA.toLowerCase(),name:signA,referent:SIGN_REFERENTS[signA]})}</div><div class="sky-progressive-symbol-aspect" aria-label="Relationship symbol">${token({field:'aspect',glyphId:relation.aspect.id,name:aspect[0],referent:aspect[1]})}<span class="sky-progressive-orb" aria-label="Orb ${orbLabel(relation.orb)}">${orbLabel(relation.orb)}</span></div><div class="sky-progressive-symbol-side sky-b" aria-label="Sky B symbols">${token({field:'B-placement',glyphId:relation.right.id,name:relation.right.entry.name,referent:PLACEMENT_REFERENTS[relation.right.id]||'a calculated point in Sky B'})}${token({field:'B-sign',glyphId:signB.toLowerCase(),name:signB,referent:SIGN_REFERENTS[signB]})}</div></div></div>`;
   }
 
   async function drawGlyph(host){
