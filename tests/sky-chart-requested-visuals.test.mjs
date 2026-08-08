@@ -250,7 +250,7 @@ test('Chart Card Hits never count relationship aspects as activations', () => {
 
 test('Chart Card Hits keep real art while requesting only very low-resolution thumbnails', () => {
   assert.match(hits, /tiny 48x83 WebP thumbnails/);
-  assert.match(hits, /const THUMB = Object\.freeze\(\{ width:48, height:83, quality:30 \}\)/);
+  assert.match(hits, /const THUMB = Object\.freeze\(\{ width:48, height:83, quality:50 \}\)/);
   assert.match(hits, /function thumbnailFor\(card\)/);
   assert.match(hits, /new URL\('https:\/\/wsrv\.nl\/'\)/);
   assert.match(hits, /thumb\.searchParams\.set\('w', String\(THUMB\.width\)\)/);
@@ -258,10 +258,12 @@ test('Chart Card Hits keep real art while requesting only very low-resolution th
   assert.match(hits, /thumb\.searchParams\.set\('q', String\(THUMB\.quality\)\)/);
   assert.match(hits, /loading="lazy" decoding="async" fetchpriority="low"/);
   assert.match(hits, /section\.dataset\.cardMedia = `thumbnail-\$\{THUMB\.width\}x\$\{THUMB\.height\}`/);
+  assert.match(hits, /\.sky-card-hit-art\{[^}]*overflow:visible/);
+  assert.match(hits, /\.sky-card-hit-art img\{[^}]*border-radius:\.26rem/);
   assert.doesNotMatch(hits, /src="assets\/tarot\/rws\//);
   assert.doesNotMatch(hits, /new MutationObserver/);
   assert.doesNotMatch(html, /sky-chart-card-image-budget-v1\.js/);
-  assert.match(html, /sky-chart-card-hits-v2\.js\?v=8/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=9/);
 });
 
 test('Chart Angles are grouped visually without reordering ledger row identity', () => {
@@ -295,5 +297,5 @@ test('Sky Chart cache keys point at the compact relationship, copy, and thumbnai
   assert.match(html, /sky-chart-progressive-comparison-v1\.js\?v=10/);
   assert.match(html, /sky-chart-progressive-reveal-contract-v1\.js\?v=2/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=14/);
-  assert.match(html, /sky-chart-card-hits-v2\.js\?v=8/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=9/);
 });
