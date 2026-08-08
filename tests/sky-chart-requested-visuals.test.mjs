@@ -85,7 +85,7 @@ test('relationship labels stay paired with their own glyph slots', () => {
 
 test('relationship Orb badge is centered directly beneath the aspect glyph', () => {
   assert.match(relationships, /"left-glyph left-copy aspect right-glyph right-copy"/);
-  assert.match(relationships, /"\. \. orb \. \.”|"\. \. orb \. \.”/u);
+  assert.match(relationships, /"\. \. orb \. \."/);
   assert.match(relationships, /\.sky-foundation-relationship-glyph--aspect\{grid-area:aspect;justify-self:center;align-self:end\}/);
   assert.match(relationships, /\.sky-foundation-relationship-orb\{[\s\S]*grid-area:orb;[\s\S]*justify-self:center;/);
 });
