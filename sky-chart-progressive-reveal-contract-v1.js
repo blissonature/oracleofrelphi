@@ -1,14 +1,14 @@
-// Cumulative progressive reveal: glyph -> name -> referent, with collapse to any chosen level.
+// Cumulative progressive reveal: glyph -> name -> referent, event-driven only.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyProgressiveRevealContractV1)return;
+  if(window.__relphiSkyProgressiveRevealContractV2)return;
+  window.__relphiSkyProgressiveRevealContractV2=true;
   window.__relphiSkyProgressiveRevealContractV1=true;
 
   const levels={glyph:0,name:1,meaning:2};
   const names=['glyph','name','meaning'];
   const remembered=new Map();
-  let observer=null;
   let queued=false;
 
   function keyFor(token,index){
@@ -51,12 +51,12 @@
     root.querySelectorAll?.('.sky-progressive-token').forEach(prepareToken);
   }
 
-  function schedule(root=document){
+  function schedule(){
     if(queued)return;
     queued=true;
     requestAnimationFrame(()=>{
       queued=false;
-      prepare(root);
+      prepare(document.getElementById('skySelectedRelationship')||document);
     });
   }
 
@@ -102,9 +102,6 @@
       .sky-progressive-token[data-progressive-reveal-contract="cumulative"] > .sky-progressive-level[hidden]{
         display:none !important;
       }
-      .sky-progressive-token[data-progressive-reveal-contract="cumulative"] > .sky-progressive-name::before{
-        content:"";
-      }
       .sky-progressive-token[data-progressive-reveal-contract="cumulative"] > .sky-progressive-meaning{
         white-space:normal;
       }
@@ -120,15 +117,8 @@
     installStyles();
     prepare();
     document.addEventListener('click',handleClick,true);
-    [
-      'relphi:selected-relationship-rendered',
-      'relphi:sky-foundation-interactions-ready',
-      'relphi:sky-foundation-filter-changed'
-    ].forEach(name=>window.addEventListener(name,()=>schedule()));
-    observer=new MutationObserver(mutations=>{
-      if(mutations.some(mutation=>mutation.addedNodes.length))schedule();
-    });
-    observer.observe(document.body,{childList:true,subtree:true});
+    window.addEventListener('relphi:selected-relationship-rendered',schedule);
+    window.addEventListener('relphi:sky-progressive-symbols-ready',schedule);
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
