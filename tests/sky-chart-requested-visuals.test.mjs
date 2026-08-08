@@ -99,6 +99,7 @@ test('selected relationship keeps exact mini-wheel geometry and permanent Tarot 
   assert.doesNotMatch(selectedRelationship, /card-back/);
   assert.doesNotMatch(selectedRelationship, /data-flip/);
   assert.doesNotMatch(selectedRelationship, /durationMarkup/);
+  assert.doesNotMatch(selectedRelationship, /relationship-mini-wheel-meta/);
   assert.match(selectedRelationshipCss, /\.relationship-visual\{display:grid;grid-template-columns:minmax\(112px,150px\) minmax\(220px,270px\) minmax\(112px,150px\)/);
   assert.match(selectedRelationshipCss, /\.correspondence-card-art img\{[\s\S]*aspect-ratio:352\/600/);
   assert.doesNotMatch(selectedRelationshipCss, /\.card-back/);
@@ -113,6 +114,7 @@ test('progressive relationship view is only glyph to name to referent', () => {
   assert.match(progressive, /data-progressive-level="meaning"/);
   assert.match(progressive, /Reveal the referent of/);
   assert.match(progressive, /component\.createBubble\(svg,entry\.id,\{radius:19,padding:1,color\}\)/);
+  assert.match(progressive, /class="sky-progressive-orb"/);
   assert.doesNotMatch(progressive, /RelphiCanonicalGlyphState/);
   assert.doesNotMatch(progressive, /proseReading/);
   assert.doesNotMatch(progressive, /stelliumDisclosure/);
@@ -228,10 +230,10 @@ test('shared pages and Sky Chart use the same component version', () => {
 
 test('Sky Chart cache keys point at the persistent-art progressive preview', () => {
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=24/);
-  assert.match(html, /sky-chart-progressive-comparison-v1\.css\?v=10/);
+  assert.match(html, /sky-chart-progressive-comparison-v1\.css\?v=11/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=7/);
-  assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=8/);
-  assert.match(html, /sky-chart-progressive-comparison-v1\.js\?v=9/);
+  assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=9/);
+  assert.match(html, /sky-chart-progressive-comparison-v1\.js\?v=10/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=14/);
   assert.match(html, /sky-chart-card-hits-v2\.js\?v=6/);
 });
