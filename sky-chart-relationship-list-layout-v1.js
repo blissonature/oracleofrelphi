@@ -2,12 +2,12 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV26) return;
-  window.__relphiSkyRelationshipListLayoutV26 = true;
+  if (window.__relphiSkyRelationshipListLayoutV27) return;
+  window.__relphiSkyRelationshipListLayoutV27 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV26';
-  const OWNER = 'relationship-layout-v26';
+  const STYLE_ID = 'skyRelationshipListLayoutV27';
+  const OWNER = 'relationship-layout-v27';
   const MASTER_VIEWBOX = '-32 -32 64 64';
   const MASTER_RADIUS = 19;
   const GLYPH_DISPLAY_SIZE = 38;
@@ -27,7 +27,7 @@
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
-    ['skyRelationshipListLayoutV25','skyRelationshipListLayoutV24','skyRelationshipListLayoutV23','skyRelationshipListLayoutV22','skyRelationshipListLayoutV21','skyRelationshipListLayoutV20','skyRelationshipListLayoutV19','skyRelationshipListLayoutV18','skyRelationshipListLayoutV17','skyRelationshipListLayoutV16']
+    ['skyRelationshipListLayoutV26','skyRelationshipListLayoutV25','skyRelationshipListLayoutV24','skyRelationshipListLayoutV23','skyRelationshipListLayoutV22','skyRelationshipListLayoutV21','skyRelationshipListLayoutV20','skyRelationshipListLayoutV19','skyRelationshipListLayoutV18','skyRelationshipListLayoutV17','skyRelationshipListLayoutV16']
       .forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
     style.id = STYLE_ID;
@@ -36,13 +36,13 @@
         --relationship-stripe:var(--aspect-color,#777);
         position:relative;
         display:grid;
-        grid-template-columns:${GLYPH_DISPLAY_SIZE}px minmax(96px,1fr) 46px ${GLYPH_DISPLAY_SIZE}px minmax(96px,1fr);
+        grid-template-columns:repeat(3,minmax(0,1fr));
         grid-template-areas:
-          "left-glyph left-copy aspect right-glyph right-copy"
-          ". . orb . .";
-        grid-template-rows:${GLYPH_DISPLAY_SIZE}px 11px;
+          "left aspect right"
+          "left orb right";
+        grid-template-rows:${GLYPH_DISPLAY_SIZE}px 12px;
         align-items:center;
-        column-gap:5px;
+        column-gap:4px;
         row-gap:0;
         min-height:58px;
         padding:4px 8px 3px 12px;
@@ -54,6 +54,28 @@
         inset:0 auto 0 0;
         width:5px;
         background:var(--relationship-stripe);
+      }
+      .sky-foundation-relationship-placement{
+        display:grid;
+        grid-template-rows:${GLYPH_DISPLAY_SIZE}px 12px;
+        align-items:center;
+        justify-items:center;
+        align-self:stretch;
+        min-width:0;
+        width:100%;
+        overflow:visible;
+      }
+      .sky-foundation-relationship-placement--left{grid-area:left}
+      .sky-foundation-relationship-placement--right{grid-area:right}
+      .sky-foundation-relationship-symbol-pair{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:6px;
+        width:100%;
+        min-width:0;
+        height:${GLYPH_DISPLAY_SIZE}px;
+        overflow:visible;
       }
       .sky-foundation-relationship-glyph,
       .sky-foundation-relationship-sign{
@@ -67,7 +89,6 @@
         max-height:${GLYPH_DISPLAY_SIZE}px;
         overflow:visible;
       }
-      .sky-foundation-relationship-glyph{align-self:center;justify-self:center}
       .sky-foundation-relationship-glyph>svg[data-relationship-canonical-host="${OWNER}"],
       .sky-foundation-relationship-sign>svg[data-relationship-canonical-host="${OWNER}"]{
         display:block;
@@ -80,37 +101,27 @@
         overflow:visible;
         transform:none!important;
       }
-      .sky-foundation-relationship-glyph--left{grid-area:left-glyph}
-      .sky-foundation-relationship-glyph--right{grid-area:right-glyph}
-      .sky-foundation-relationship-glyph--aspect{grid-area:aspect}
-      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(2){grid-area:left-copy}
-      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5){grid-area:right-copy}
+      .sky-foundation-relationship-glyph--aspect{grid-area:aspect;align-self:center;justify-self:center}
       .sky-foundation-relationship-copy{
         display:grid;
-        align-items:center;
-        justify-items:center;
+        place-items:center;
         min-width:0;
         width:100%;
+        height:12px;
         overflow:visible;
         color:#625b55;
       }
       .sky-foundation-relationship-copy small{
-        display:grid;
-        grid-template-columns:minmax(50px,auto) ${GLYPH_DISPLAY_SIZE}px;
-        align-items:center;
-        justify-content:center;
-        gap:4px;
+        display:block;
         width:100%;
         min-width:0;
-        max-width:100%;
-        min-height:${GLYPH_DISPLAY_SIZE}px;
         overflow:visible;
-        white-space:nowrap;
         color:#625b55;
         font:850 .69rem/1 system-ui,sans-serif;
         font-variant-numeric:tabular-nums;
+        text-align:center;
+        white-space:nowrap;
       }
-      .sky-foundation-relationship-sign{display:inline-grid;margin:0;vertical-align:middle}
       .sky-foundation-relationship-orb{
         grid-area:orb;
         align-self:center;
@@ -129,13 +140,9 @@
       #skyFoundationRelationshipList::-webkit-scrollbar-thumb{border:2px solid transparent;border-radius:999px;background:#8d8d8d;background-clip:padding-box}
       #skyFoundationRelationshipList::-webkit-scrollbar-button{display:none;width:0;height:0}
       @media(max-width:620px){
-        .sky-foundation-relationship-row{
-          grid-template-columns:${GLYPH_DISPLAY_SIZE}px minmax(90px,1fr) 44px ${GLYPH_DISPLAY_SIZE}px minmax(90px,1fr);
-          column-gap:4px;
-          min-height:58px;
-          padding:4px 7px 3px 12px;
-        }
-        .sky-foundation-relationship-copy small{grid-template-columns:minmax(48px,auto) ${GLYPH_DISPLAY_SIZE}px;gap:3px;font-size:.66rem}
+        .sky-foundation-relationship-row{column-gap:2px;padding:4px 6px 3px 12px}
+        .sky-foundation-relationship-symbol-pair{gap:3px}
+        .sky-foundation-relationship-copy small{font-size:.66rem}
       }
     `;
     document.head.appendChild(style);
@@ -211,32 +218,60 @@
     });
   }
 
-  function ensureSignSlot(row, side) {
+  function ensurePlacementGroup(row, side) {
     const left = side === 'left';
-    const copy = row.querySelector(left ? ':scope > .sky-foundation-relationship-copy:nth-child(2)' : ':scope > .sky-foundation-relationship-copy:nth-child(5)');
+    const sideClass = left ? 'left' : 'right';
+    let group = row.querySelector(`:scope > .sky-foundation-relationship-placement--${sideClass}`);
+    const glyph = group?.querySelector(`.sky-foundation-relationship-glyph--${sideClass}`) || row.querySelector(`:scope > .sky-foundation-relationship-glyph--${sideClass}`);
+    let copy = group?.querySelector('.sky-foundation-relationship-copy');
+    if (!copy) {
+      const copies = Array.from(row.children).filter(node => node.classList?.contains('sky-foundation-relationship-copy'));
+      copy = left ? copies[0] : copies[copies.length - 1];
+    }
     const small = copy?.querySelector('small');
     const signIndex = Number(row.dataset[left ? 'leftSign' : 'rightSign']);
     const signId = SIGN_IDS[signIndex];
     const signName = SIGN_NAMES[signIndex];
-    if (!copy || !small || !signId || !signName) return null;
+    if (!glyph || !copy || !small || !signId || !signName) return null;
 
     const source = small.dataset.relationshipCoordinate || small.textContent.trim();
     const coordinate = small.dataset.relationshipCoordinate || (source.match(/\d{1,2}°\d{2}′/) || [source.split('·')[0].trim()])[0] || '';
-    let signSlot = small.querySelector(':scope > .sky-foundation-relationship-sign');
+    let signSlot = group?.querySelector('.sky-foundation-relationship-sign') || small.querySelector('.sky-foundation-relationship-sign');
     if (!signSlot) {
       signSlot = document.createElement('span');
       signSlot.className = 'sky-foundation-relationship-sign';
       signSlot.setAttribute('aria-label', signName);
     }
     signSlot.dataset.signGlyph = signId;
-    const alreadyComposed = small.dataset.relationshipCoordinate === coordinate && small.childNodes.length === 2 &&
-      small.firstChild?.nodeType === Node.TEXT_NODE && small.firstChild.nodeValue === coordinate && small.lastChild === signSlot;
+
+    if (!group) {
+      group = document.createElement('span');
+      group.className = `sky-foundation-relationship-placement sky-foundation-relationship-placement--${sideClass}`;
+      group.dataset.relationshipPlacementSide = sideClass;
+      row.insertBefore(group, glyph);
+    }
+    let pair = group.querySelector(':scope > .sky-foundation-relationship-symbol-pair');
+    if (!pair) {
+      pair = document.createElement('span');
+      pair.className = 'sky-foundation-relationship-symbol-pair';
+      group.prepend(pair);
+    }
+
+    const alreadyComposed = small.dataset.relationshipCoordinate === coordinate && small.childNodes.length === 1 &&
+      small.firstChild?.nodeType === Node.TEXT_NODE && small.firstChild.nodeValue === coordinate &&
+      pair.firstElementChild === glyph && pair.lastElementChild === signSlot && copy.parentElement === group;
     if (!alreadyComposed) {
       small.dataset.relationshipCoordinate = coordinate;
-      small.replaceChildren(document.createTextNode(coordinate), signSlot);
+      if (small.childNodes.length !== 1 || small.firstChild?.nodeType !== Node.TEXT_NODE || small.firstChild.nodeValue !== coordinate) {
+        small.replaceChildren(document.createTextNode(coordinate));
+      }
+      if (glyph.parentElement !== pair) pair.appendChild(glyph);
+      if (signSlot.parentElement !== pair) pair.appendChild(signSlot);
+      if (copy.parentElement !== group) group.appendChild(copy);
     }
     const extras = Array.from(copy.childNodes).filter(node => node !== small);
     if (extras.length) extras.forEach(node => node.remove());
+    group.setAttribute('aria-label', `${row.dataset[left ? 'leftPlacement' : 'rightPlacement']} in ${signName}, ${coordinate}`);
     return { signSlot, signId, signName };
   }
 
@@ -244,8 +279,8 @@
     if (!(row instanceof HTMLElement)) return;
     const aspect = String(row.dataset.aspect || '').toLowerCase();
     row.style.setProperty('--relationship-stripe', ASPECT_COLORS[aspect] || '#777');
-    ensureSignSlot(row, 'left');
-    ensureSignSlot(row, 'right');
+    ensurePlacementGroup(row, 'left');
+    ensurePlacementGroup(row, 'right');
 
     const orb = Number(row.dataset.sourceOrb);
     if (Number.isFinite(orb)) {
@@ -255,26 +290,26 @@
       if (badge.textContent !== orbText) badge.textContent = orbText;
       badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     }
-    row.dataset.relationshipLayout = 'v26';
+    row.dataset.relationshipLayout = 'v27';
   }
 
   function paintRowGlyphs(row) {
-    if (!(row instanceof HTMLElement) || row.dataset.relationshipPainted === 'v26') return;
+    if (!(row instanceof HTMLElement) || row.dataset.relationshipPainted === 'v27') return;
     const aspect = String(row.dataset.aspect || '').toLowerCase();
-    const leftSign = ensureSignSlot(row, 'left');
-    const rightSign = ensureSignSlot(row, 'right');
+    const leftSign = ensurePlacementGroup(row, 'left');
+    const rightSign = ensurePlacementGroup(row, 'right');
     paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--left'), row.dataset.leftPlacement, 'plain', SKY_COLORS.A, row.dataset.leftPlacement);
     paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--aspect'), aspect, 'plain', ASPECT_COLORS[aspect] || '#777', aspect);
     paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--right'), row.dataset.rightPlacement, 'plain', SKY_COLORS.B, row.dataset.rightPlacement);
     if (leftSign) paintGlyph(leftSign.signSlot, leftSign.signId, 'plain', SKY_COLORS.A, leftSign.signName);
     if (rightSign) paintGlyph(rightSign.signSlot, rightSign.signId, 'plain', SKY_COLORS.B, rightSign.signName);
-    row.dataset.relationshipPainted = 'v26';
+    row.dataset.relationshipPainted = 'v27';
   }
 
   function registerRow(row) {
     if (!(row instanceof HTMLElement)) return;
     composeStructure(row);
-    if (row.dataset.relationshipPainted === 'v26') return;
+    if (row.dataset.relationshipPainted === 'v27') return;
     if (visibleRows) visibleRows.observe(row);
     else paintRowGlyphs(row);
   }
