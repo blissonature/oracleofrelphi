@@ -1,13 +1,13 @@
-// Relationship-list presentation only: compact glyph-first equations with lazy canonical painting.
+// Relationship-list presentation only: compact glyph-first equations with viewport-virtualized canonical painting.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV27) return;
-  window.__relphiSkyRelationshipListLayoutV27 = true;
+  if (window.__relphiSkyRelationshipListLayoutV28) return;
+  window.__relphiSkyRelationshipListLayoutV28 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV27';
-  const OWNER = 'relationship-layout-v27';
+  const STYLE_ID = 'skyRelationshipListLayoutV28';
+  const OWNER = 'relationship-layout-v28';
   const MASTER_VIEWBOX = '-32 -32 64 64';
   const MASTER_RADIUS = 19;
   const GLYPH_DISPLAY_SIZE = 38;
@@ -27,7 +27,7 @@
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
-    ['skyRelationshipListLayoutV26','skyRelationshipListLayoutV25','skyRelationshipListLayoutV24','skyRelationshipListLayoutV23','skyRelationshipListLayoutV22','skyRelationshipListLayoutV21','skyRelationshipListLayoutV20','skyRelationshipListLayoutV19','skyRelationshipListLayoutV18','skyRelationshipListLayoutV17','skyRelationshipListLayoutV16']
+    ['skyRelationshipListLayoutV27','skyRelationshipListLayoutV26','skyRelationshipListLayoutV25','skyRelationshipListLayoutV24','skyRelationshipListLayoutV23','skyRelationshipListLayoutV22','skyRelationshipListLayoutV21','skyRelationshipListLayoutV20','skyRelationshipListLayoutV19','skyRelationshipListLayoutV18','skyRelationshipListLayoutV17','skyRelationshipListLayoutV16']
       .forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
     style.id = STYLE_ID;
@@ -47,6 +47,7 @@
         min-height:58px;
         padding:4px 8px 3px 12px;
         overflow:hidden;
+        contain:layout style;
       }
       .sky-foundation-relationship-row::before{
         content:"";
@@ -168,8 +169,12 @@
     return true;
   }
 
+  function rowWantsGlyphs(slot) {
+    return slot?.closest?.('.sky-foundation-relationship-row')?.dataset.relationshipInViewport === 'true';
+  }
+
   function paintGlyph(slot, identity, mode, color, label) {
-    if (!slot) return;
+    if (!slot || !rowWantsGlyphs(slot)) return;
     const registry = window.RelphiGlyphRegistry;
     const component = window.RelphiGlyphComponent;
     const entry = registry && (registry.get(identity) || registry.resolve(identity));
@@ -207,10 +212,12 @@
     }
 
     Promise.resolve(bubble.ready).then(() => {
+      if (!rowWantsGlyphs(slot)) return;
       if (canonicalHostIsIntact(slot, entry, mode)) { slot.dataset.canonicalGlyphReady = 'true'; return; }
       slot.dataset.canonicalGlyphReady = 'corrupt';
-      queueMicrotask(() => paintGlyph(slot, identity, mode, color, label));
+      queueMicrotask(() => { if (rowWantsGlyphs(slot)) paintGlyph(slot, identity, mode, color, label); });
     }).catch(error => {
+      if (!rowWantsGlyphs(slot)) return;
       slot.dataset.canonicalGlyphReady = 'error';
       slot.dataset.glyphUnavailable = 'true';
       if (host.isConnected) host.remove();
@@ -290,11 +297,11 @@
       if (badge.textContent !== orbText) badge.textContent = orbText;
       badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     }
-    row.dataset.relationshipLayout = 'v27';
+    row.dataset.relationshipLayout = 'v28';
   }
 
   function paintRowGlyphs(row) {
-    if (!(row instanceof HTMLElement) || row.dataset.relationshipPainted === 'v27') return;
+    if (!(row instanceof HTMLElement) || row.dataset.relationshipPainted === 'v28' || row.dataset.relationshipInViewport !== 'true') return;
     const aspect = String(row.dataset.aspect || '').toLowerCase();
     const leftSign = ensurePlacementGroup(row, 'left');
     const rightSign = ensurePlacementGroup(row, 'right');
@@ -303,15 +310,37 @@
     paintGlyph(row.querySelector('.sky-foundation-relationship-glyph--right'), row.dataset.rightPlacement, 'plain', SKY_COLORS.B, row.dataset.rightPlacement);
     if (leftSign) paintGlyph(leftSign.signSlot, leftSign.signId, 'plain', SKY_COLORS.A, leftSign.signName);
     if (rightSign) paintGlyph(rightSign.signSlot, rightSign.signId, 'plain', SKY_COLORS.B, rightSign.signName);
-    row.dataset.relationshipPainted = 'v27';
+    row.dataset.relationshipPainted = 'v28';
+  }
+
+  function clearGlyphSlot(slot) {
+    if (!slot) return;
+    slot.replaceChildren();
+    delete slot.dataset.relationshipGlyphOwner;
+    delete slot.dataset.relationshipGlyphIdentity;
+    delete slot.dataset.relationshipGlyphMode;
+    delete slot.dataset.canonicalGlyphReady;
+    delete slot.dataset.glyphUnavailable;
+  }
+
+  function unpaintRowGlyphs(row) {
+    if (!(row instanceof HTMLElement) || !row.dataset.relationshipPainted) return;
+    clearGlyphSlot(row.querySelector('.sky-foundation-relationship-glyph--left'));
+    clearGlyphSlot(row.querySelector('.sky-foundation-relationship-glyph--aspect'));
+    clearGlyphSlot(row.querySelector('.sky-foundation-relationship-glyph--right'));
+    clearGlyphSlot(row.querySelector('.sky-foundation-relationship-placement--left .sky-foundation-relationship-sign'));
+    clearGlyphSlot(row.querySelector('.sky-foundation-relationship-placement--right .sky-foundation-relationship-sign'));
+    delete row.dataset.relationshipPainted;
   }
 
   function registerRow(row) {
     if (!(row instanceof HTMLElement)) return;
     composeStructure(row);
-    if (row.dataset.relationshipPainted === 'v27') return;
     if (visibleRows) visibleRows.observe(row);
-    else paintRowGlyphs(row);
+    else {
+      row.dataset.relationshipInViewport = 'true';
+      paintRowGlyphs(row);
+    }
   }
   function registerRows(root) { root?.querySelectorAll?.('.sky-foundation-relationship-row').forEach(registerRow); }
 
@@ -327,11 +356,16 @@
     if ('IntersectionObserver' in window) {
       visibleRows = new IntersectionObserver(entries => {
         entries.forEach(entry => {
-          if (!entry.isIntersecting) return;
-          visibleRows.unobserve(entry.target);
-          paintRowGlyphs(entry.target);
+          const row = entry.target;
+          if (entry.isIntersecting) {
+            row.dataset.relationshipInViewport = 'true';
+            paintRowGlyphs(row);
+          } else {
+            row.dataset.relationshipInViewport = 'false';
+            unpaintRowGlyphs(row);
+          }
         });
-      }, { root:list, rootMargin:'160px 0px', threshold:0.01 });
+      }, { root:list, rootMargin:'80px 0px', threshold:0.01 });
     } else visibleRows = null;
 
     listMutations = new MutationObserver(records => {
@@ -339,11 +373,10 @@
         record.addedNodes.forEach(node => {
           if (node.nodeType !== 1) return;
           if (node.matches?.('.sky-foundation-relationship-row')) registerRow(node);
-          node.querySelectorAll?.('.sky-foundation-relationship-row').forEach(registerRow);
         });
       });
     });
-    listMutations.observe(list, { childList:true, subtree:true });
+    listMutations.observe(list, { childList:true, subtree:false });
     registerRows(list);
   }
 
