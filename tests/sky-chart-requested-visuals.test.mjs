@@ -180,17 +180,20 @@ test('relationship placement signs are canonical glyphs rather than sign-name te
   assert.match(relationships, /paintGlyph\(rightSign\.signSlot, rightSign\.signId, 'plain', SKY_COLORS\.B/);
 });
 
-test('relationship copying serializes semantic rows with explicit planet-in-sign grammar', () => {
+test('relationship copying serializes semantic rows with explicit planet-in-sign grammar and one block-level house context', () => {
   assert.match(relationshipCopy, /const PLACEMENT_SYMBOLS=Object\.freeze/);
   assert.match(relationshipCopy, /const SIGN_SYMBOLS=Object\.freeze/);
   assert.match(relationshipCopy, /const ASPECT_SYMBOLS=Object\.freeze/);
   assert.match(relationshipCopy, /function serializeRow\(row\)/);
   assert.match(relationshipCopy, /placementSymbol\(leftId\)\} in \$\{leftSign\} \$\{leftCoordinate\}/);
   assert.match(relationshipCopy, /placementSymbol\(rightId\)\} in \$\{rightSign\} \$\{rightCoordinate\}/);
-  assert.match(relationshipCopy, /rows\.map\(serializeRow\).*join\('\\n'\)/);
+  assert.match(relationshipCopy, /function copyContext\(\)/);
+  assert.match(relationshipCopy, /Sky \$\{selectedIsolation\.sky\} · House \$\{selectedIsolation\.value\}/);
+  assert.match(relationshipCopy, /relphi:sky-house-multiselect-changed/);
+  assert.match(relationshipCopy, /return context\?`Relationships — \$\{context\}\\n\$\{lines\.join\('\\n'\)\}`:lines\.join\('\\n'\)/);
   assert.match(relationshipCopy, /document\.addEventListener\('copy'/);
   assert.match(relationshipCopy, /range\.intersectsNode\(row\)/);
-  assert.match(relationshipCopy, /Copy visible relationships as glyph notation/);
+  assert.match(relationshipCopy, /Copy visible relationships with active filter context/);
   assert.doesNotMatch(relationshipCopy, /sourceOrb|Orb /);
 });
 
@@ -315,7 +318,7 @@ test('shared pages and Sky Chart use the same component version', () => {
 
 test('Sky Chart cache keys point at the compact relationship, copy, coordinate, and thumbnail preview', () => {
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=28/);
-  assert.match(html, /sky-chart-relationship-copy-v1\.js\?v=2/);
+  assert.match(html, /sky-chart-relationship-copy-v1\.js\?v=3/);
   assert.match(html, /sky-chart-coordinate-precision-v1\.js\?v=3/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.css\?v=11/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=8/);
