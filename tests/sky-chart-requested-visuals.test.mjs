@@ -8,6 +8,7 @@ const css = fs.readFileSync(path.join(root, 'sky-chart-foundation-v1.css'), 'utf
 const interactionCss = fs.readFileSync(path.join(root, 'sky-chart-foundation-interactions-v1.css'), 'utf8');
 const interactions = fs.readFileSync(path.join(root, 'sky-chart-foundation-interactions-v2.js'), 'utf8');
 const relationships = fs.readFileSync(path.join(root, 'sky-chart-relationship-list-layout-v1.js'), 'utf8');
+const relationshipCopy = fs.readFileSync(path.join(root, 'sky-chart-relationship-copy-v1.js'), 'utf8');
 const selectedRelationship = fs.readFileSync(path.join(root, 'sky-chart-selected-relationship-v4.js'), 'utf8');
 const selectedRelationshipCss = fs.readFileSync(path.join(root, 'sky-chart-selected-understanding-v1.css'), 'utf8');
 const progressive = fs.readFileSync(path.join(root, 'sky-chart-progressive-comparison-v1.js'), 'utf8');
@@ -20,7 +21,6 @@ const component = fs.readFileSync(path.join(root, 'relphi-glyph-component-v1.js'
 const fortune = fs.readFileSync(path.join(root, 'assets/planet-glyphs/part-of-fortune.svg'), 'utf8');
 const angles = fs.readFileSync(path.join(root, 'sky-chart-angle-placements-v1.js'), 'utf8');
 const hits = fs.readFileSync(path.join(root, 'sky-chart-card-hits-v2.js'), 'utf8');
-const cardImageBudget = fs.readFileSync(path.join(root, 'sky-chart-card-image-budget-v1.js'), 'utf8');
 const navloader = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'sky-chart.html'), 'utf8');
 
@@ -176,6 +176,18 @@ test('relationship placement signs are canonical glyphs rather than sign-name te
   assert.match(relationships, /paintGlyph\(rightSign\.signSlot, rightSign\.signId, 'plain', SKY_COLORS\.B/);
 });
 
+test('relationship copying serializes semantic rows instead of raw SVG DOM text', () => {
+  assert.match(relationshipCopy, /const PLACEMENT_SYMBOLS=Object\.freeze/);
+  assert.match(relationshipCopy, /const SIGN_SYMBOLS=Object\.freeze/);
+  assert.match(relationshipCopy, /const ASPECT_SYMBOLS=Object\.freeze/);
+  assert.match(relationshipCopy, /function serializeRow\(row\)/);
+  assert.match(relationshipCopy, /rows\.map\(serializeRow\).*join\('\\n'\)/);
+  assert.match(relationshipCopy, /document\.addEventListener\('copy'/);
+  assert.match(relationshipCopy, /range\.intersectsNode\(row\)/);
+  assert.match(relationshipCopy, /Copy visible relationships as glyph notation/);
+  assert.doesNotMatch(relationshipCopy, /sourceOrb|Orb /);
+});
+
 test('Planetary Hours heptagram scales the complete circled master as one unit', () => {
   assert.match(heptagram, /const MASTER_RADIUS = 19;/);
   assert.match(heptagram, /const MASTER_SCALE = DISPLAY_RADIUS \/ MASTER_RADIUS;/);
@@ -217,7 +229,7 @@ test('Part of Fortune is a full-sized static master rather than a procedural ins
 });
 
 test('Chart Card Hits explain their evidence instead of acting as relationship filters', () => {
-  assert.match(hits, /Card clicks explain the accumulated hit evidence; they never filter the Sky Chart/);
+  assert.match(hits, /Card clicks explain accumulated hit evidence; they never filter the Sky Chart/);
   assert.match(hits, /function detailMarkup\(hit\)/);
   assert.match(hits, /aspect relationships are not part of the tally/);
   assert.match(hits, /nothing on the wheel or in Relationships is filtered/);
@@ -231,15 +243,15 @@ test('Chart Card Hits never count relationship aspects as activations', () => {
   assert.doesNotMatch(hits, /sky-foundation-relationship-row\[data-relation-index\]/);
 });
 
-test('Chart Card Hits keep full-resolution images outside the DOM fetch path until near the viewport', () => {
-  assert.match(cardImageBudget, /function dehydrate\(img\)/);
-  assert.match(cardImageBudget, /img\.dataset\.cardHitFullSrc=src/);
-  assert.match(cardImageBudget, /img\.removeAttribute\('src'\)/);
-  assert.match(cardImageBudget, /fetchpriority','low'/);
-  assert.match(cardImageBudget, /new IntersectionObserver\(entries=>/);
-  assert.match(cardImageBudget, /rootMargin:'600px 0px'/);
-  assert.match(cardImageBudget, /if\(entry\.isIntersecting\)hydrate\(entry\.target\)/);
-  assert.match(html, /sky-chart-card-image-budget-v1\.js\?v=1[\s\S]*sky-chart-card-hits-v2\.js\?v=6/);
+test('Chart Card Hits request no large raster card files and use no document-wide mutation observer', () => {
+  assert.match(hits, /Chart Card Hits intentionally request no raster card art/);
+  assert.match(hits, /section\.dataset\.cardMedia = 'none'/);
+  assert.match(hits, /class=\\"sky-card-hit-code\\"/);
+  assert.doesNotMatch(hits, /assets\/tarot\/rws\//);
+  assert.doesNotMatch(hits, /<img\s/);
+  assert.doesNotMatch(hits, /new MutationObserver/);
+  assert.doesNotMatch(html, /sky-chart-card-image-budget-v1\.js/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=7/);
 });
 
 test('Chart Angles are grouped visually without reordering ledger row identity', () => {
@@ -264,14 +276,14 @@ test('shared pages and Sky Chart use the same component version', () => {
   assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
 });
 
-test('Sky Chart cache keys point at the compact lazy relationship preview', () => {
+test('Sky Chart cache keys point at the compact relationship and clipboard preview', () => {
   assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=27/);
+  assert.match(html, /sky-chart-relationship-copy-v1\.js\?v=1/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.css\?v=11/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=8/);
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=9/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.js\?v=10/);
   assert.match(html, /sky-chart-progressive-reveal-contract-v1\.js\?v=2/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=14/);
-  assert.match(html, /sky-chart-card-image-budget-v1\.js\?v=1/);
-  assert.match(html, /sky-chart-card-hits-v2\.js\?v=6/);
+  assert.match(html, /sky-chart-card-hits-v2\.js\?v=7/);
 });
