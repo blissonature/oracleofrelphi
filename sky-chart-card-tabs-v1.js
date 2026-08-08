@@ -43,7 +43,7 @@
   };
   const THUMB = Object.freeze({ width:48, height:83, quality:50 });
   const selectedCard = { A:'', B:'' };
-  const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function installStyles() {
@@ -61,14 +61,13 @@
       .sky-card-hits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:.45rem;align-items:start;overflow:visible}
       .sky-card-hit{position:relative;display:grid;grid-template-rows:auto auto;justify-items:center;gap:.25rem;width:100%;min-width:0;padding:.2rem;border:2px solid transparent;border-radius:.68rem;background:transparent;color:#171717;cursor:pointer;box-sizing:border-box;overflow:visible}
       .sky-card-hit:hover,.sky-card-hit:focus-visible{border-color:var(--sky-hit-color);outline:0;background:#fff}
-      .sky-card-hit-art{position:relative;display:grid;place-items:center;width:${THUMB.width}px;height:${THUMB.height}px;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.3rem;overflow:visible;background:#f1ebe4}
+      .sky-card-hit-art{position:relative;display:grid;place-items:center;width:${THUMB.width}px;height:${THUMB.height}px;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.3rem;overflow:visible;background:transparent}
       .sky-card-hit-art img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;border-radius:.26rem}
-      .sky-card-hit-code{font:900 .72rem/1 Georgia,serif;color:#4d4640}
       .sky-card-hit-chip{position:absolute;z-index:2;right:-.5rem;top:-.45rem;display:grid;place-items:center;min-width:1.65rem;height:1.65rem;padding:0 .28rem;border:2px solid #fff;border-radius:999px;background:var(--sky-hit-color);color:#fff;font:900 .7rem/1 system-ui,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.2)}
       .sky-card-hit-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;font:750 .62rem/1.1 system-ui,sans-serif;text-align:center}
       .sky-card-hit-detail-view{display:grid;gap:.7rem;min-width:0}
       .sky-card-hit-detail-head{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:center}
-      .sky-card-hit-detail-art{position:relative;width:58px;height:100px;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.35rem;background:#f1ebe4;overflow:hidden}
+      .sky-card-hit-detail-art{position:relative;width:58px;height:100px;border:1px solid color-mix(in srgb,var(--sky-hit-color) 45%,#8d837b);border-radius:.35rem;background:transparent;overflow:hidden}
       .sky-card-hit-detail-art img{width:100%;height:100%;display:block;object-fit:cover}
       .sky-card-hit-detail-copy{display:grid;gap:.2rem;min-width:0}.sky-card-hit-detail-copy h3{margin:0;font:900 .9rem/1.15 system-ui,sans-serif}.sky-card-hit-detail-copy p{margin:0;color:#625d58;font:700 .65rem/1.3 system-ui,sans-serif}
       .sky-card-hit-back{appearance:none;justify-self:start;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#241f1b;padding:.45rem .65rem;font:850 .64rem/1 system-ui,sans-serif;cursor:pointer}
@@ -140,11 +139,6 @@
   function cardForSign(sign) { return cards().find(card => card.arcana === 'Major' && splitValues(card.astrology?.sign).includes(sign)) || null; }
   function cardForDecan(record) { return cardById(DECAN_CARDS[record.signIndex]?.[record.decan]); }
   function displayName(card) { return String(card?.name || card?.title || card?.card_name || card?.card_id || 'Card').replace(/_/g,' '); }
-  function cardCode(card) {
-    const id = String(card?.card_id || card?.stable_symbol_id || '');
-    if (card?.arcana === 'Major') return String(card?.number ?? card?.roman ?? '').trim() || 'M';
-    return id.split('_').map(part => part[0]?.toUpperCase() || '').join('').slice(0,3) || 'T';
-  }
   function thumbnailFor(card,w=THUMB.width,h=THUMB.height) {
     const id = encodeURIComponent(card?.card_id || card?.stable_symbol_id || '');
     const source = new URL(`assets/tarot/rws/${id}.webp`, document.baseURI).href;
@@ -222,7 +216,7 @@
   }
   function gridMarkup(slot,hits) {
     const placementCount=records(slot).length;
-    return `<section class="sky-card-hits-tab" data-card-hits-slot="${slot}"><header class="sky-card-hits-tab-header"><h3 class="sky-card-hits-tab-title">Card Hits</h3><span class="sky-card-hits-tab-total">${hits.length} card${hits.length===1?'':'s'} · ${placementCount} placement${placementCount===1?'':'s'}</span></header>${hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-label="${esc(displayName(hit.card))}, ${hit.count} associated placement${hit.count===1?'':'s'}. Show placements."><span class="sky-card-hit-art"><span class="sky-card-hit-code" aria-hidden="true">${esc(cardCode(hit.card))}</span><img src="${esc(thumbnailFor(hit.card))}" alt="" width="${THUMB.width}" height="${THUMB.height}" loading="lazy" decoding="async" fetchpriority="low"><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`).join('')}</div>` : '<p class="sky-card-hits-empty">Add placements to see their Tarot correspondences.</p>'}</section>`;
+    return `<section class="sky-card-hits-tab" data-card-hits-slot="${slot}"><header class="sky-card-hits-tab-header"><h3 class="sky-card-hits-tab-title">Card Hits</h3><span class="sky-card-hits-tab-total">${hits.length} card${hits.length===1?'':'s'} · ${placementCount} placement${placementCount===1?'':'s'}</span></header>${hits.length ? `<div class="sky-card-hits-grid">${hits.map(hit => `<button class="sky-card-hit" type="button" data-card-hit-id="${esc(hit.id)}" aria-label="${esc(displayName(hit.card))}, ${hit.count} associated placement${hit.count===1?'':'s'}. Show placements."><span class="sky-card-hit-art"><img src="${esc(thumbnailFor(hit.card))}" alt="" width="${THUMB.width}" height="${THUMB.height}" loading="lazy" decoding="async" fetchpriority="low"><span class="sky-card-hit-chip">×${hit.count}</span></span><span class="sky-card-hit-name">${esc(displayName(hit.card))}</span></button>`).join('')}</div>` : '<p class="sky-card-hits-empty">Add placements to see their Tarot correspondences.</p>'}</section>`;
   }
   function detailMarkup(slot,hit) {
     return `<section class="sky-card-hits-tab" data-card-hits-slot="${slot}"><button class="sky-card-hit-back" type="button" data-card-hit-back>← All Card Hits</button><div class="sky-card-hit-detail-view"><div class="sky-card-hit-detail-head"><div class="sky-card-hit-detail-art"><img src="${esc(thumbnailFor(hit.card,58,100))}" alt="" width="58" height="100"></div><div class="sky-card-hit-detail-copy"><h3>${esc(displayName(hit.card))} ×${hit.count}</h3><p>${hit.count} placement${hit.count===1?'':'s'} in this sky associate with this card.</p></div></div><ul class="sky-card-hit-placements">${hit.placements.map(entry => { const text=placementText(entry.record); return `<li class="sky-card-hit-placement"><span class="sky-card-hit-placement-main">${esc(text.main)}</span><span class="sky-card-hit-placement-meta">${esc(text.meta)}</span><span class="sky-card-hit-placement-why">${esc(Array.from(entry.associations).join(' · '))}</span></li>`; }).join('')}</ul></div></section>`;
