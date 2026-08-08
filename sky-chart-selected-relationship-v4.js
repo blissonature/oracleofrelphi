@@ -1,7 +1,8 @@
-// Selected Relationship v6: astrology-first inspection with an exact isolated mini zodiac wheel.
+// Selected Relationship v7: exact isolated zodiac geometry, progressive reveal, and supporting Tarot correspondences.
 (function(){
 'use strict';
-if(window.__relphiSkySelectedRelationshipV6)return;
+if(window.__relphiSkySelectedRelationshipV7)return;
+window.__relphiSkySelectedRelationshipV7=true;
 window.__relphiSkySelectedRelationshipV6=true;
 window.__relphiSkySelectedRelationshipV5=true;
 window.__relphiSkySelectedRelationshipV4=true;
@@ -16,6 +17,7 @@ const ASPECT_COLORS={conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86
 const MEANINGS={sun:'Identity, vitality, and conscious purpose.',moon:'Feelings, instincts, memory, and emotional needs.',mercury:'Thought, perception, language, and communication.',venus:'Values, attraction, affection, pleasure, and relating.',mars:'Drive, assertion, desire, conflict, and action.',jupiter:'Growth, confidence, meaning, opportunity, and expansion.',saturn:'Structure, limits, responsibility, time, and commitment.',uranus:'Freedom, disruption, originality, awakening, and change.',neptune:'Imagination, sensitivity, surrender, ideals, and vision.',pluto:'Power, depth, compulsion, elimination, and transformation.',chiron:'Wounding, the intelligence developed around it, and the capacity to guide healing.','north-node':'Growth through unfamiliar experience and developing capacity.','south-node':'Familiar patterns, inherited capacity, and the known path.',lilith:'Instinctive autonomy, refusal, exile, and uncompromised desire.','part-of-fortune':'The meeting place of body, feeling, circumstance, and ease.',vertex:'Encounters that feel consequential or outside ordinary control.',asc:'The way a person enters life and is immediately perceived.',dsc:'The way a person meets partners and encounters the other.',mc:'Public direction, vocation, visibility, and the role a person grows toward.',ic:'Roots, home, private foundations, and inherited belonging.'};
 const DECANS=[[['two_of_wands','Two of Wands'],['three_of_wands','Three of Wands'],['four_of_wands','Four of Wands']],[['five_of_pentacles','Five of Pentacles'],['six_of_pentacles','Six of Pentacles'],['seven_of_pentacles','Seven of Pentacles']],[['eight_of_swords','Eight of Swords'],['nine_of_swords','Nine of Swords'],['ten_of_swords','Ten of Swords']],[['two_of_cups','Two of Cups'],['three_of_cups','Three of Cups'],['four_of_cups','Four of Cups']],[['five_of_wands','Five of Wands'],['six_of_wands','Six of Wands'],['seven_of_wands','Seven of Wands']],[['eight_of_pentacles','Eight of Pentacles'],['nine_of_pentacles','Nine of Pentacles'],['ten_of_pentacles','Ten of Pentacles']],[['two_of_swords','Two of Swords'],['three_of_swords','Three of Swords'],['four_of_swords','Four of Swords']],[['five_of_cups','Five of Cups'],['six_of_cups','Six of Cups'],['seven_of_cups','Seven of Cups']],[['eight_of_wands','Eight of Wands'],['nine_of_wands','Nine of Wands'],['ten_of_wands','Ten of Wands']],[['two_of_pentacles','Two of Pentacles'],['three_of_pentacles','Three of Pentacles'],['four_of_pentacles','Four of Pentacles']],[['five_of_swords','Five of Swords'],['six_of_swords','Six of Swords'],['seven_of_swords','Seven of Swords']],[['eight_of_cups','Eight of Cups'],['nine_of_cups','Nine of Cups'],['ten_of_cups','Ten of Cups']]];
 const ALIASES={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
+const MINI={cx:120,cy:120,aspectRadius:66,zodiacInner:76,zodiacOuter:99,signRadius:87};
 let mount,selectedIndex=null,token=0;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const norm=v=>((Number(v)%360)+360)%360;
@@ -39,8 +41,7 @@ function renderGlyph(host,id,color,state,label){
   svg.setAttribute('viewBox','-32 -32 64 64');
   svg.setAttribute('preserveAspectRatio','xMidYMid meet');
   svg.setAttribute('aria-label',label||entry.name||entry.id);
-  host.replaceChildren(svg);
-  delete host.dataset.glyphUnavailable;
+  host.replaceChildren(svg);delete host.dataset.glyphUnavailable;
   const bubble=component.createBubble(svg,entry.id,{radius:19,padding:1,color});
   if(state==='plain'){bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true')}
   return bubble.ready;
@@ -49,19 +50,19 @@ function renderSvgGroup(host,id,color,state,radius,strokeWidth=2.1){
   if(!host)return null;
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=registry&&(registry.get(id)||registry.resolve(id));
   if(!entry||!component?.createBubble){host.replaceChildren();host.dataset.glyphUnavailable='true';return null}
-  host.replaceChildren();
-  delete host.dataset.glyphUnavailable;
+  host.replaceChildren();delete host.dataset.glyphUnavailable;
   const bubble=component.createBubble(host,entry.id,{radius,padding:.7,color,fill:'#fffdfa',strokeWidth});
   if(state==='plain'){bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true')}
   return bubble.ready;
 }
-function miniPoint(degree,radius){const angle=(norm(degree)-180)*Math.PI/180;return{x:120+radius*Math.cos(angle),y:120+radius*Math.sin(angle)}}
+// Historical exact-aspect method: every geometric mark is derived from the same absolute
+// longitude coordinate system. 0° Aries is fixed at 9 o'clock, matching the comparison wheel.
+function miniPoint(degree,radius){const angle=(norm(degree)-180)*Math.PI/180;return{x:MINI.cx+radius*Math.cos(angle),y:MINI.cy+radius*Math.sin(angle)}}
 function miniWheelMarkup(r){
-  const a=ASPECTS[r.aspect.id], chordA=miniPoint(r.left.value,67), chordB=miniPoint(r.right.value,67), markA=miniPoint(r.left.value,103), markB=miniPoint(r.right.value,103);
-  const boundaries=Array.from({length:12},(_,i)=>{const p1=miniPoint(i*30,68),p2=miniPoint(i*30,94);return`<line class="sky-selected-zodiac-boundary" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}"></line>`}).join('');
-  const signs=SIGN_IDS.map((id,i)=>{const p=miniPoint(i*30+15,81);return`<g class="sky-selected-mini-sign" data-mini-sign="${id}" transform="translate(${p.x} ${p.y})"></g>`}).join('');
-  const tickA1=miniPoint(r.left.value,65),tickA2=miniPoint(r.left.value,98),tickB1=miniPoint(r.right.value,65),tickB2=miniPoint(r.right.value,98);
-  return`<article class="sky-selected-aspect-diagram relationship-mini-wheel" style="--aspect-color:${r.aspect.color}"><svg viewBox="0 0 240 240" role="img" aria-label="Isolated ${esc(a[0])}: Sky A ${esc(r.left.entry.name)} to Sky B ${esc(r.right.entry.name)}" data-zodiac-origin="aries-0-at-9" data-left-longitude="${r.left.value.toFixed(8)}" data-right-longitude="${r.right.value.toFixed(8)}"><circle class="sky-selected-aspect-orbit sky-selected-zodiac-outer" cx="120" cy="120" r="94"></circle><circle class="sky-selected-zodiac-inner" cx="120" cy="120" r="68"></circle>${boundaries}${signs}<line class="sky-selected-exact-radius sky-a" x1="${tickA1.x}" y1="${tickA1.y}" x2="${tickA2.x}" y2="${tickA2.y}"></line><line class="sky-selected-exact-radius sky-b" x1="${tickB1.x}" y1="${tickB1.y}" x2="${tickB2.x}" y2="${tickB2.y}"></line><line class="sky-selected-isolated-aspect" x1="${chordA.x}" y1="${chordA.y}" x2="${chordB.x}" y2="${chordB.y}" stroke="${r.aspect.color}"></line><circle class="sky-selected-aspect-center" cx="120" cy="120" r="25"></circle><g class="sky-selected-mini-aspect" data-mini-aspect="${r.aspect.id}" transform="translate(120 120)"></g><g class="sky-selected-aspect-point sky-a" data-mini-placement="left" transform="translate(${markA.x} ${markA.y})"></g><g class="sky-selected-aspect-point sky-b" data-mini-placement="right" transform="translate(${markB.x} ${markB.y})"></g></svg><div class="relationship-mini-wheel-meta"><strong>${esc(a[0])}</strong><span>${orb(r.orb)} orb</span></div></article>`
+  const a=ASPECTS[r.aspect.id],pointA=miniPoint(r.left.value,MINI.aspectRadius),pointB=miniPoint(r.right.value,MINI.aspectRadius);
+  const boundaries=Array.from({length:12},(_,i)=>{const p1=miniPoint(i*30,MINI.zodiacInner),p2=miniPoint(i*30,MINI.zodiacOuter);return`<line class="sky-selected-zodiac-boundary" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}"></line>`}).join('');
+  const signs=SIGN_IDS.map((id,i)=>{const p=miniPoint(i*30+15,MINI.signRadius);return`<g class="sky-selected-mini-sign" data-mini-sign="${id}" transform="translate(${p.x} ${p.y})"></g>`}).join('');
+  return`<article class="sky-selected-aspect-diagram relationship-mini-wheel" style="--aspect-color:${r.aspect.color}"><svg viewBox="0 0 240 240" role="img" aria-label="Isolated ${esc(a[0])}: Sky A ${esc(r.left.entry.name)} to Sky B ${esc(r.right.entry.name)}" data-zodiac-origin="aries-0-at-9" data-left-longitude="${r.left.value.toFixed(8)}" data-right-longitude="${r.right.value.toFixed(8)}" data-aspect-radius="${MINI.aspectRadius}"><circle class="sky-selected-aspect-orbit sky-selected-zodiac-outer" cx="${MINI.cx}" cy="${MINI.cy}" r="${MINI.zodiacOuter}"></circle><circle class="sky-selected-zodiac-inner" cx="${MINI.cx}" cy="${MINI.cy}" r="${MINI.zodiacInner}"></circle>${boundaries}${signs}<circle class="sky-selected-aspect-track" cx="${MINI.cx}" cy="${MINI.cy}" r="${MINI.aspectRadius}"></circle><line class="sky-selected-aspect-radius sky-a" x1="${MINI.cx}" y1="${MINI.cy}" x2="${pointA.x}" y2="${pointA.y}"></line><line class="sky-selected-aspect-radius sky-b" x1="${MINI.cx}" y1="${MINI.cy}" x2="${pointB.x}" y2="${pointB.y}"></line><line class="sky-selected-isolated-aspect" x1="${pointA.x}" y1="${pointA.y}" x2="${pointB.x}" y2="${pointB.y}" stroke="${r.aspect.color}"></line><circle class="sky-selected-aspect-center" cx="${MINI.cx}" cy="${MINI.cy}" r="3.5"></circle><g class="sky-selected-aspect-point sky-a" data-mini-placement="left" transform="translate(${pointA.x} ${pointA.y})"></g><g class="sky-selected-aspect-point sky-b" data-mini-placement="right" transform="translate(${pointB.x} ${pointB.y})"></g></svg><div class="relationship-mini-wheel-meta"><span class="relationship-mini-wheel-aspect" data-mini-aspect="${r.aspect.id}"></span><span class="relationship-mini-wheel-copy"><strong>${esc(a[0])}</strong><span>${orb(r.orb)} orb</span></span></div></article>`
 }
 function placementHeroMarkup(k,r,color,slot){const p=pos(r);return`<article class="relationship-hero-placement sky-${slot.toLowerCase()}" style="--token:${color}"><span class="relationship-hero-sky">Sky ${slot}</span><span class="relationship-hero-glyph" data-glyph="${k}"></span><div class="relationship-hero-copy"><strong>${esc(r.entry.name)}</strong><span class="relationship-hero-facts">${esc(p.label)} · House ${r.house}</span><p>${esc(MEANINGS[r.id]||'A calculated placement in this sky.')}</p></div></article>`}
 function cardMarkup(slot,c,r){const p=pos(r);return`<article class="understanding-card sky-${slot.toLowerCase()}" data-card="${slot}"><span class="correspondence-label">Sky ${slot} decan correspondence</span><button class="card-flip" data-flip="${slot}" aria-pressed="false"><span class="card-inner"><span class="card-front"><img src="${esc(c.image)}" alt="${esc(c.title)}"></span><span class="card-back"><span class="card-back-label">Sky ${slot} decan</span><h3>${esc(c.title)}</h3><p>${esc(r.entry.name)} at ${esc(p.label)}</p><p>House ${r.house} · ${esc(c.sign)} decan ${c.decan}</p><p class="card-back-instruction">Tap again to return to the image.</p></span></span></button><strong class="correspondence-card-title">${esc(c.title)}</strong><button class="ledger-entry" data-ledger-card="${esc(c.id)}">Open Tarot Ledger entry</button></article>`}
@@ -71,18 +72,18 @@ async function render(i,source){
   const r=relation(i),panel=ensure();if(!r||!panel)return;
   const t=++token;selectedIndex=i;mark(i);panel.hidden=false;panel.dataset.relationIndex=i;
   const a=card(r.left),b=card(r.right),body=panel.querySelector('.sky-selected-body');
-  body.innerHTML=`<header class="understanding-header"><div><span>Selected relationship</span><small>Exact zodiac geometry · Tarot correspondence below</small></div></header><div class="relationship-hero">${placementHeroMarkup('left',r.left,COLORS.A,'A')}${miniWheelMarkup(r)}${placementHeroMarkup('right',r.right,COLORS.B,'B')}</div><section class="decan-correspondences"><header><strong>Decan correspondences</strong><span>Supporting Tarot layer</span></header><div class="understanding-cards">${cardMarkup('A',a,r.left)}${cardMarkup('B',b,r.right)}</div></section>${durationMarkup(r)}`;
+  body.innerHTML=`<header class="understanding-header"><div><span>Selected relationship</span><small>Exact zodiac geometry · Tarot correspondence below</small></div></header><div class="relationship-hero">${placementHeroMarkup('left',r.left,COLORS.A,'A')}${miniWheelMarkup(r)}${placementHeroMarkup('right',r.right,COLORS.B,'B')}</div><section class="sky-selected-progressive" aria-label="Progressive comparison reading"></section><section class="decan-correspondences"><header><strong>Decan correspondences</strong><span>Supporting Tarot layer</span></header><div class="understanding-cards">${cardMarkup('A',a,r.left)}${cardMarkup('B',b,r.right)}</div></section>${durationMarkup(r)}`;
   const jobs=[
     renderGlyph(body.querySelector('[data-glyph="left"]'),r.left.id,COLORS.A,'circled',r.left.entry.name),
     renderGlyph(body.querySelector('[data-glyph="right"]'),r.right.id,COLORS.B,'circled',r.right.entry.name),
-    renderSvgGroup(body.querySelector('[data-mini-aspect]'),r.aspect.id,r.aspect.color,'plain',19,2.2),
-    renderSvgGroup(body.querySelector('[data-mini-placement="left"]'),r.left.id,COLORS.A,'circled',13.5,2.2),
-    renderSvgGroup(body.querySelector('[data-mini-placement="right"]'),r.right.id,COLORS.B,'circled',13.5,2.2)
+    renderSvgGroup(body.querySelector('[data-mini-aspect]'),r.aspect.id,r.aspect.color,'plain',12.5,1.8),
+    renderSvgGroup(body.querySelector('[data-mini-placement="left"]'),r.left.id,COLORS.A,'circled',11.5,2.05),
+    renderSvgGroup(body.querySelector('[data-mini-placement="right"]'),r.right.id,COLORS.B,'circled',11.5,2.05)
   ];
   body.querySelectorAll('[data-mini-sign]').forEach(node=>jobs.push(renderSvgGroup(node,node.dataset.miniSign,'#514b45','plain',8.4,1.5)));
   await Promise.allSettled(jobs);
   if(t!==token)return;
-  window.dispatchEvent(new CustomEvent('relphi:selected-relationship-rendered',{detail:{index:i,relation:r,source,version:'understanding-v3-mini-wheel'}}));
+  window.dispatchEvent(new CustomEvent('relphi:selected-relationship-rendered',{detail:{index:i,relation:r,source,version:'understanding-v4-historical-mini-wheel'}}));
 }
 document.addEventListener('click',e=>{const panel=e.target.closest('#skySelectedRelationship');const flip=e.target.closest('[data-flip]');if(panel&&flip){const card=flip.closest('.understanding-card'),on=!card.classList.contains('is-flipped');card.classList.toggle('is-flipped',on);flip.setAttribute('aria-pressed',on?'true':'false');return}const dur=e.target.closest('[data-duration]');if(panel&&dur){const open=dur.getAttribute('aria-expanded')!=='true';dur.setAttribute('aria-expanded',open?'true':'false');dur.querySelector('.duration-detail').hidden=!open;return}const ledger=e.target.closest('[data-ledger-card]');if(panel&&ledger){window.dispatchEvent(new CustomEvent('relphi:open-ledger-card',{detail:{cardId:ledger.dataset.ledgerCard,source:'selected-relationship'}}));return}const row=e.target.closest('.sky-foundation-relationship-row[data-relation-index]');if(row)queueMicrotask(()=>render(Number(row.dataset.relationIndex),'relationship-list'))});
 window.addEventListener('relphi:sky-foundation-clear-selection',()=>{selectedIndex=null;if(ensure())mount.hidden=true});
