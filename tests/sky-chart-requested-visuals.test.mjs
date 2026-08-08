@@ -48,10 +48,11 @@ test('relationship glyphs preserve the exact uncircled Master Glyph List artboar
   assert.match(relationships, /sky-foundation-relationship-glyph--right'\), row\.dataset\.rightPlacement, 'plain'/);
 });
 
-test('relationship glyph slots have one renderer owner, one canonical subtree, and role-stable display boxes', () => {
-  assert.match(relationships, /const OWNER = 'relationship-layout-v20';/);
-  assert.match(relationships, /const DISPLAY_SIZE = 26;/);
-  assert.match(relationships, /const ASPECT_DISPLAY_SIZE = 38;/);
+test('relationship glyph slots have one renderer owner, one canonical subtree, and one display scale', () => {
+  assert.match(relationships, /const OWNER = 'relationship-layout-v21';/);
+  assert.match(relationships, /const GLYPH_DISPLAY_SIZE = 26;/);
+  assert.doesNotMatch(relationships, /ASPECT_DISPLAY_SIZE/);
+  assert.doesNotMatch(relationships, /SIGN_DISPLAY_SIZE/);
   assert.match(relationships, /data-relationship-canonical-host/);
   assert.match(relationships, /slot\.replaceChildren\(host\)/);
   assert.match(relationships, /slot\.dataset\.relationshipGlyphOwner = OWNER/);
@@ -59,7 +60,8 @@ test('relationship glyph slots have one renderer owner, one canonical subtree, a
   assert.match(relationships, /g\.relphi-glyph-bubble/);
   assert.match(relationships, /arts\.length !== 1/);
   assert.match(relationships, /relphi-glyph-' \+ entry\.id/);
-  assert.match(relationships, /width:\$\{ASPECT_DISPLAY_SIZE\}px!important/);
+  assert.match(relationships, /\.sky-foundation-relationship-glyph,\s*\n\s*\.sky-foundation-relationship-sign\{/);
+  assert.match(relationships, /width:\$\{GLYPH_DISPLAY_SIZE\}px!important/);
   assert.match(relationships, /record\.target instanceof Element \? record\.target\.closest\('\.sky-foundation-relationship-row'\)/);
 });
 
@@ -98,10 +100,11 @@ test('relationship labels stay paired with their own glyph slots', () => {
   assert.doesNotMatch(relationships, /relationship-copy:nth-of-type/);
 });
 
-test('relationship aspect is the visual hinge and the orb sits directly beneath it', () => {
+test('relationship aspect is the visual hinge and the orb sits directly beneath it without a separate aspect scale', () => {
   assert.match(relationships, /"left-glyph left-copy aspect right-glyph right-copy"/);
   assert.match(relationships, /"\. \. orb \. \."/);
-  assert.match(relationships, /\.sky-foundation-relationship-glyph--aspect\{[\s\S]*grid-area:aspect;[\s\S]*width:\$\{ASPECT_DISPLAY_SIZE\}px/);
+  assert.match(relationships, /\.sky-foundation-relationship-glyph--aspect\{[\s\S]*grid-area:aspect;[\s\S]*justify-self:center;/);
+  assert.doesNotMatch(relationships, /\.sky-foundation-relationship-glyph--aspect\{[\s\S]*width:/);
   assert.match(relationships, /\.sky-foundation-relationship-orb\{[\s\S]*grid-area:orb;[\s\S]*justify-self:center;/);
   assert.match(relationships, /badge\.textContent = `\$\{orb\.toFixed\(2\)\}°`/);
   assert.doesNotMatch(relationships, /badge\.textContent = `Orb /);
@@ -208,7 +211,7 @@ test('Sky Chart cache keys point at the mini-wheel relationship preview', () => 
   assert.match(html, /sky-chart-foundation-interactions-v1\.css\?v=2/);
   assert.match(html, /sky-chart-foundation-interactions-v2\.js\?v=9/);
   assert.match(html, /sky-chart-angle-placements-v1\.js\?v=6/);
-  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=20/);
+  assert.match(html, /sky-chart-relationship-list-layout-v1\.js\?v=21/);
   assert.match(html, /sky-chart-selected-understanding-v1\.css\?v=6/);
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=6/);
   assert.match(html, /sky-chart-heptagram-canonical-v1\.css\?v=8/);
