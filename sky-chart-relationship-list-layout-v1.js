@@ -1,18 +1,19 @@
-// Relationship-list presentation only: stripe, semantic slot layout, orb badge, scrollbar,
+// Relationship-list presentation only: stripe, semantic slot layout, orb, scrollbar,
 // and canonical relationship glyph mounts. Every glyph uses the exact 64×64 Master Glyph List artboard.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyRelationshipListLayoutV19) return;
-  window.__relphiSkyRelationshipListLayoutV19 = true;
+  if (window.__relphiSkyRelationshipListLayoutV20) return;
+  window.__relphiSkyRelationshipListLayoutV20 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
-  const STYLE_ID = 'skyRelationshipListLayoutV19';
-  const OWNER = 'relationship-layout-v19';
+  const STYLE_ID = 'skyRelationshipListLayoutV20';
+  const OWNER = 'relationship-layout-v20';
   const MASTER_VIEWBOX = '-32 -32 64 64';
   const MASTER_RADIUS = 19;
-  const DISPLAY_SIZE = 28;
-  const SIGN_DISPLAY_SIZE = 17;
+  const DISPLAY_SIZE = 26;
+  const ASPECT_DISPLAY_SIZE = 38;
+  const SIGN_DISPLAY_SIZE = 18;
   const SIGN_IDS = Object.freeze(['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces']);
   const SIGN_NAMES = Object.freeze(['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']);
   const SKY_COLORS = Object.freeze({ A:'#c9211e', B:'#2462d0' });
@@ -24,22 +25,22 @@
 
   function installStyle() {
     if (document.getElementById(STYLE_ID)) return;
-    document.getElementById('skyRelationshipListLayoutV18')?.remove();
-    document.getElementById('skyRelationshipListLayoutV17')?.remove();
-    document.getElementById('skyRelationshipListLayoutV16')?.remove();
+    ['skyRelationshipListLayoutV19','skyRelationshipListLayoutV18','skyRelationshipListLayoutV17','skyRelationshipListLayoutV16']
+      .forEach(id => document.getElementById(id)?.remove());
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
       .sky-foundation-relationship-row{
         --relationship-stripe:var(--aspect-color,#777);
         position:relative;
-        grid-template-columns:28px minmax(0,1fr) 58px 28px minmax(0,1fr);
+        grid-template-columns:${DISPLAY_SIZE}px minmax(0,1fr) 68px ${DISPLAY_SIZE}px minmax(0,1fr);
         grid-template-areas:
           "left-glyph left-copy aspect right-glyph right-copy"
           ". . orb . .";
-        column-gap:6px;
-        row-gap:1px;
-        padding:8px 9px 8px 12px;
+        column-gap:7px;
+        row-gap:0;
+        min-height:82px;
+        padding:10px 10px 9px 13px;
         overflow:visible;
       }
       .sky-foundation-relationship-row::before{
@@ -70,13 +71,55 @@
         overflow:visible;
         transform:none!important;
       }
+      .sky-foundation-relationship-glyph--left{grid-area:left-glyph}
+      .sky-foundation-relationship-glyph--right{grid-area:right-glyph}
+      .sky-foundation-relationship-glyph--aspect{
+        grid-area:aspect;
+        justify-self:center;
+        align-self:end;
+        width:${ASPECT_DISPLAY_SIZE}px;
+        height:${ASPECT_DISPLAY_SIZE}px;
+        min-width:${ASPECT_DISPLAY_SIZE}px;
+        min-height:${ASPECT_DISPLAY_SIZE}px;
+      }
+      .sky-foundation-relationship-glyph--aspect>svg[data-relationship-canonical-host="${OWNER}"]{
+        width:${ASPECT_DISPLAY_SIZE}px!important;
+        height:${ASPECT_DISPLAY_SIZE}px!important;
+        min-width:${ASPECT_DISPLAY_SIZE}px;
+        min-height:${ASPECT_DISPLAY_SIZE}px;
+        max-width:${ASPECT_DISPLAY_SIZE}px;
+        max-height:${ASPECT_DISPLAY_SIZE}px;
+      }
+      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(2){grid-area:left-copy}
+      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5){grid-area:right-copy}
+      .sky-foundation-relationship-copy{
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        gap:2px;
+        min-width:0;
+        white-space:normal;
+        line-height:1.08;
+        font-weight:800;
+      }
+      .sky-foundation-relationship-copy small{
+        display:flex;
+        align-items:center;
+        flex-wrap:wrap;
+        gap:2px;
+        min-height:${SIGN_DISPLAY_SIZE}px;
+        white-space:normal;
+        color:#625b55;
+        font-weight:700;
+        line-height:1.05;
+      }
       .sky-foundation-relationship-sign{
         display:inline-grid;
         place-items:center;
         width:${SIGN_DISPLAY_SIZE}px;
         height:${SIGN_DISPLAY_SIZE}px;
         margin:0 1px;
-        vertical-align:-4px;
+        vertical-align:middle;
         overflow:visible;
       }
       .sky-foundation-relationship-sign>svg[data-relationship-canonical-host="${OWNER}"]{
@@ -90,27 +133,18 @@
         overflow:visible;
         transform:none!important;
       }
-      .sky-foundation-relationship-glyph--left{grid-area:left-glyph}
-      .sky-foundation-relationship-glyph--aspect{grid-area:aspect;justify-self:center;align-self:end}
-      .sky-foundation-relationship-glyph--right{grid-area:right-glyph}
-      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(2){grid-area:left-copy}
-      .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5){grid-area:right-copy}
-      .sky-foundation-relationship-copy{white-space:normal;line-height:1.15;min-width:0}
-      .sky-foundation-relationship-copy small{white-space:normal}
       .sky-foundation-relationship-orb{
         grid-area:orb;
         align-self:start;
         justify-self:center;
-        min-width:48px;
-        padding:4px 7px;
-        border:1px solid color-mix(in srgb,var(--relationship-stripe) 42%,transparent);
-        border-radius:999px;
-        background:color-mix(in srgb,var(--relationship-stripe) 9%,#fffdfa);
-        color:#403a35;
+        margin-top:-2px;
+        min-width:42px;
+        color:var(--relationship-stripe);
         text-align:center;
         white-space:nowrap;
-        font:800 .58rem/1 system-ui,sans-serif;
+        font:900 .63rem/1 system-ui,sans-serif;
         font-variant-numeric:tabular-nums;
+        letter-spacing:.01em;
       }
       #skyFoundationRelationshipList{
         scrollbar-width:thin;
@@ -128,14 +162,18 @@
       #skyFoundationRelationshipList::-webkit-scrollbar-button{display:none;width:0;height:0}
       @media(max-width:620px){
         .sky-foundation-relationship-row{
-          grid-template-columns:28px minmax(0,1fr) 54px minmax(0,1fr) 28px;
+          grid-template-columns:${DISPLAY_SIZE}px minmax(0,1fr) 60px minmax(0,1fr) ${DISPLAY_SIZE}px;
           grid-template-areas:
             "left-glyph left-copy aspect right-copy right-glyph"
             ". . orb . .";
-          padding:9px 10px 8px 13px;
+          column-gap:5px;
+          min-height:86px;
+          padding:10px 9px 9px 13px;
         }
-        .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5){text-align:right}
+        .sky-foundation-relationship-row>.sky-foundation-relationship-copy:nth-child(5){text-align:right;align-items:flex-end}
         .sky-foundation-relationship-glyph--right{justify-self:end}
+        .sky-foundation-relationship-glyph--aspect{width:34px;height:34px;min-width:34px;min-height:34px}
+        .sky-foundation-relationship-glyph--aspect>svg[data-relationship-canonical-host="${OWNER}"]{width:34px!important;height:34px!important;min-width:34px;min-height:34px;max-width:34px;max-height:34px}
       }
     `;
     document.head.appendChild(style);
@@ -273,22 +311,21 @@
     row.style.setProperty('--relationship-stripe', color);
     paintRowGlyphs(row);
 
-    if (row.dataset.relationshipLayout === 'v19') return;
+    if (row.dataset.relationshipLayout === 'v20') return;
     const copies = row.querySelectorAll('.sky-foundation-relationship-copy');
     const rightSmall = copies[1]?.querySelector('small');
     const orb = Number(row.dataset.sourceOrb);
     if (!rightSmall || !Number.isFinite(orb)) return;
 
     rightSmall.textContent = rightSmall.textContent.replace(/\s*·\s*Orb\s+[\d.]+°?\s*$/i, '').trim();
-    // Reconstitute the right-side sign glyph after removing the legacy inline Orb text.
     ensureSignGlyph(row, 'right', SKY_COLORS.B);
     row.querySelector(':scope > .sky-foundation-relationship-orb')?.remove();
     const badge = document.createElement('span');
     badge.className = 'sky-foundation-relationship-orb';
-    badge.textContent = `Orb ${orb.toFixed(2)}°`;
+    badge.textContent = `${orb.toFixed(2)}°`;
     badge.setAttribute('aria-label', `Orb ${orb.toFixed(2)} degrees`);
     row.appendChild(badge);
-    row.dataset.relationshipLayout = 'v19';
+    row.dataset.relationshipLayout = 'v20';
   }
 
   function refresh(root) {
