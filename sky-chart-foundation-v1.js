@@ -16,17 +16,17 @@
   const ANGLE_IDS = new Set(['asc','dsc','mc','ic']);
   const APPROVED_COMPONENT_MASTERS = new Set(['chiron','north-node','south-node','part-of-fortune','vertex','asc','dsc','mc','ic']);
   const ASPECTS = [
-    {id:'conjunction',angle:0,orb:3,color:'#e53935'},
-    {id:'semi-sextile',angle:30,orb:2,color:'#7c9b49'},
-    {id:'octile',angle:45,orb:2,color:'#b86d43'},
-    {id:'sextile',angle:60,orb:3,color:'#d3b727'},
-    {id:'quintile',angle:72,orb:2,color:'#8b6cc2'},
-    {id:'square',angle:90,orb:3,color:'#d6534d'},
-    {id:'trine',angle:120,orb:3,color:'#4e9e69'},
-    {id:'tri-octile',angle:135,orb:2,color:'#9f5944'},
-    {id:'bi-quintile',angle:144,orb:2,color:'#7655aa'},
-    {id:'quincunx',angle:150,orb:2,color:'#4b8e88'},
-    {id:'opposition',angle:180,orb:3,color:'#5961c8'}
+    {id:'conjunction',angle:0,color:'#e53935'},
+    {id:'semi-sextile',angle:30,color:'#7c9b49'},
+    {id:'octile',angle:45,color:'#b86d43'},
+    {id:'sextile',angle:60,color:'#d3b727'},
+    {id:'quintile',angle:72,color:'#8b6cc2'},
+    {id:'square',angle:90,color:'#d6534d'},
+    {id:'trine',angle:120,color:'#4e9e69'},
+    {id:'tri-octile',angle:135,color:'#9f5944'},
+    {id:'bi-quintile',angle:144,color:'#7655aa'},
+    {id:'quincunx',angle:150,color:'#4b8e88'},
+    {id:'opposition',angle:180,color:'#5961c8'}
   ];
   const C = { x:600, y:600 };
   const R = { bIn:166, bOut:323, zIn:323, zOut:414, aIn:414, aOut:574, bDegree:323, aDegree:414 };
@@ -77,6 +77,13 @@
   };
   const separation = (a, b) => Math.abs(((a - b + 180) % 360 + 360) % 360 - 180);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[character]));
+
+  function requestedOrb() {
+    const input = document.querySelector('[data-filter="orb"]');
+    const value = Number(input?.value);
+    if (!Number.isFinite(value) || value < 0) return 1;
+    return Math.min(360, value);
+  }
 
   function read(key) {
     try { return JSON.parse(localStorage.getItem(key) || 'null'); }
@@ -351,11 +358,15 @@
 
   function relationships(a, b) {
     const result = [];
+    // Angular separation and every supported aspect angle live on 0°..180°.
+    // A UI value above 180° therefore means "include every candidate" without
+    // requiring any artificial astrological ceiling in the foundation.
+    const limit = Math.min(180, requestedOrb());
     a.forEach(left => b.forEach(right => {
       const distance = separation(left.value, right.value);
       ASPECTS.forEach(aspect => {
         const orb = Math.abs(distance - aspect.angle);
-        if (orb <= aspect.orb) result.push({left,right,aspect,orb});
+        if (orb <= limit) result.push({left,right,aspect,orb});
       });
     }));
     return result.sort((x,y) => x.orb - y.orb);
@@ -606,7 +617,7 @@
   }
 
   function signature(a,b) {
-    try { return JSON.stringify([a,b]); }
+    try { return JSON.stringify([a,b,requestedOrb()]); }
     catch (_) { return String(Date.now()); }
   }
 
@@ -661,6 +672,7 @@
     window.addEventListener('storage',event => {
       if (!event.key || event.key === KEYS.A || event.key === KEYS.B) render(true);
     });
+    window.addEventListener('relphi:sky-orb-limit-changed',() => render(true));
     setInterval(() => {
       const next = signature(read(KEYS.A),read(KEYS.B));
       if (next !== lastSignature) render(true);
