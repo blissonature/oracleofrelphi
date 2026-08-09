@@ -1,18 +1,28 @@
 // Visual glyph cues for Sky Chart relationship filter menus.
+// Canonical artwork only: every glyph is resolved and drawn through the Relphi registry/component.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyFilterGlyphsV1)return;
 window.__relphiSkyFilterGlyphsV1=true;
-const ASPECT={conjunction:['☌','#e53935'],'semi-sextile':['⚺','#7c9b49'],octile:['∠','#b86d43'],sextile:['⚹','#d3b727'],quintile:['Q','#8b6cc2'],square:['□','#d6534d'],trine:['△','#4e9e69'],'tri-octile':['⚼','#9f5944'],'bi-quintile':['bQ','#7655aa'],quincunx:['⚻','#4b8e88'],opposition:['☍','#5961c8']};
-const SIGN={aries:'♈',taurus:'♉',gemini:'♊',cancer:'♋',leo:'♌',virgo:'♍',libra:'♎',scorpio:'♏',sagittarius:'♐',capricorn:'♑',aquarius:'♒',pisces:'♓'};
-const PLACEMENT={sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC','north-node':'☊','south-node':'☋',chiron:'⚷',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx'};
-const COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
-function badge(text,color,kind){const n=document.createElement('span');n.className='sky-filter-symbol sky-filter-symbol-'+kind;n.textContent=text;n.style.setProperty('--filter-symbol-color',color||'currentColor');n.setAttribute('aria-hidden','true');return n}
-function prepend(label,symbol,color,kind){if(!label||label.querySelector(':scope > .sky-filter-symbol'))return;label.prepend(badge(symbol,color,kind))}
-function decorateAspects(){document.querySelectorAll('.sky-chart-aspect-list-item[data-aspect-list-item]').forEach(row=>{const id=row.dataset.aspectListItem;if(id==='all')return;const meta=ASPECT[id];if(meta)prepend(row.querySelector('.sky-chart-aspect-list-label'),meta[0],meta[1],'aspect')})}
-function decoratePlacements(){document.querySelectorAll('.sky-chart-placement-list-item-placement[data-placement-list-item]').forEach(row=>{const id=row.dataset.placementListItem,symbol=PLACEMENT[id];if(symbol)prepend(row.querySelector('.sky-chart-placement-list-label'),symbol,'currentColor','placement')})}
-function decorateSigns(){document.querySelectorAll('select[data-filter="sign"] option,select[data-sign-filter] option').forEach(option=>{const raw=String(option.value||option.textContent||'').trim().toLowerCase(),key=raw.replace(/^.*?:\s*/,'').replace(/\s+/g,'-'),symbol=SIGN[key];if(symbol&&!option.textContent.trim().startsWith(symbol))option.textContent=symbol+'  '+option.textContent});document.querySelectorAll('[data-sign-list-item]').forEach(row=>{const raw=String(row.dataset.signListItem||'').toLowerCase(),symbol=SIGN[raw],index=Object.keys(SIGN).indexOf(raw);if(symbol)prepend(row.querySelector('.sky-chart-sign-list-label,[data-sign-label],strong,span'),symbol,COLORS[index],'sign')})}
-function decorate(){decorateAspects();decoratePlacements();decorateSigns();document.documentElement.dataset.skyFilterGlyphs='ready'}
+const ASPECT_COLORS={conjunction:'#e53935','semi-sextile':'#7c9b49',octile:'#b86d43',sextile:'#d3b727',quintile:'#8b6cc2',square:'#d6534d',trine:'#4e9e69','tri-octile':'#9f5944','bi-quintile':'#7655aa',quincunx:'#4b8e88',opposition:'#5961c8'};
+const SIGN_COLORS={aries:'#ef5350',taurus:'#ff7043',gemini:'#ffa726',cancer:'#ffca28',leo:'#d4e157',virgo:'#9ccc65',libra:'#66bb6a',scorpio:'#26a69a',sagittarius:'#42a5f5',capricorn:'#5c6bc0',aquarius:'#7e57c2',pisces:'#ab47bc'};
+const SIGN_IDS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
+function canonicalHost(identity,color,kind){
+ const host=document.createElement('span');host.className='sky-filter-symbol sky-filter-symbol-'+kind;host.dataset.canonicalGlyph=identity;host.setAttribute('aria-hidden','true');
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-18 -18 36 36');svg.setAttribute('width','22');svg.setAttribute('height','22');svg.style.overflow='visible';host.appendChild(svg);
+ const component=window.RelphiGlyphComponent,registry=window.RelphiGlyphRegistry,entry=registry&&(registry.get(identity)||registry.resolve(identity));
+ if(!component||!entry){host.remove();return null}
+ component.draw(svg,entry.id,{radius:14,padding:1,color:color||'currentColor'}).catch(error=>{console.error('[Sky filter canonical glyph]',identity,error);host.remove()});
+ return host;
+}
+function prepend(label,identity,color,kind){if(!label||label.querySelector(':scope > [data-canonical-glyph]'))return;const host=canonicalHost(identity,color,kind);if(host)label.prepend(host)}
+function decorateAspects(){document.querySelectorAll('.sky-chart-aspect-list-item[data-aspect-list-item]').forEach(row=>{const id=row.dataset.aspectListItem;if(id!=='all'&&ASPECT_COLORS[id])prepend(row.querySelector('.sky-chart-aspect-list-label'),id,ASPECT_COLORS[id],'aspect')})}
+function decoratePlacements(){document.querySelectorAll('.sky-chart-placement-list-item-placement[data-placement-list-item]').forEach(row=>{const id=row.dataset.placementListItem;prepend(row.querySelector('.sky-chart-placement-list-label'),id,'currentColor','placement')})}
+function decorateSigns(){
+ document.querySelectorAll('[data-sign-list-item]').forEach(row=>{const id=String(row.dataset.signListItem||'').trim().toLowerCase();if(SIGN_IDS.includes(id))prepend(row.querySelector('.sky-chart-sign-list-label,[data-sign-label],strong,span'),id,SIGN_COLORS[id],'sign')});
+ // Native <option> elements cannot contain canonical SVG artwork. Do not substitute Unicode/text glyphs there.
+}
+function decorate(){if(!window.RelphiGlyphRegistry||!window.RelphiGlyphComponent)return;decorateAspects();decoratePlacements();decorateSigns();document.documentElement.dataset.skyFilterGlyphs='canonical'}
 let queued=false;function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;decorate()})}
 ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed','relphi:sky-aspect-multiselect-changed'].forEach(name=>window.addEventListener(name,schedule));
 const root=document.getElementById('skyFoundationRelationships')||document.getElementById('skyFoundationRoot');if(root)new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
