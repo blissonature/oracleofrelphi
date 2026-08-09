@@ -113,10 +113,6 @@
     if (state.day) addDayRulerHalo(master, planetColor);
 
     try {
-      // Hour-ruler state is a solid planetary-color disc with a white canonical glyph.
-      // Day-ruler state is represented independently by a separated double-ring halo.
-      // When one planet rules both, the filled hour disc remains inside both day rings,
-      // so the combined state cannot be mistaken for an hour-only ruler.
       const bubble = component.createBubble(master, entry.id, {
         radius:MASTER_RADIUS,
         padding:1,
@@ -146,23 +142,14 @@
     svg.dataset.rulerStates = 'day-double-ring-hour-fill';
   }
 
-  function inspect(node) {
-    if (!(node instanceof Element)) return;
-    if (node.matches?.('.sky-ph-heptagram')) correct(node);
-    const owner = node.closest?.('.sky-ph-heptagram');
-    if (owner) clearHeptagramWords(owner);
-    node.querySelectorAll?.('.sky-ph-heptagram').forEach(correct);
-  }
-
   function scan() {
     document.querySelectorAll('.sky-ph-heptagram').forEach(correct);
   }
 
   function start() {
     scan();
-    new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(inspect)))
-      .observe(document.documentElement,{childList:true,subtree:true});
-    window.addEventListener('relphi:sky-heptagram-source-ready',scan);
+    window.addEventListener('relphi:sky-heptagram-source-ready', scan);
+    window.addEventListener('relphi:sky-foundation-ready', scan);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',start,{once:true});
