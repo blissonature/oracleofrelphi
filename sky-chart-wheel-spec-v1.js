@@ -16,11 +16,13 @@ const comparison=Object.freeze({
 });
 const mini=Object.freeze({
   scale:.5,viewBox:Object.freeze([0,0,600,600]),center:Object.freeze({x:300,y:300}),
-  zodiac:Object.freeze({inner:161.5,outer:207,fillOpacity:.82,glyphRadius:25,strokeWidth:2.35}),
-  A:Object.freeze({role:'inner',house:Object.freeze({inner:83,outer:161.5,numberRadius:126}),degree:161.5,placement:Object.freeze([145,151,139]),angle:Object.freeze([101,110,119]),edge:83,side:'inner'}),
-  B:Object.freeze({role:'outer',house:Object.freeze({inner:207,outer:287,numberRadius:229}),degree:207,placement:Object.freeze([252,261,270]),angle:Object.freeze([279,270,261]),edge:287,side:'outer'}),
-  houseFillOpacity:.5,houseNumberFont:20,angleGap:17,placementRadius:16,placementBubbleRadius:17.2,
-  placementClearance:6,tangentialStep:.75,tangentialLimit:15
+  // At the card's rendered width these values match the apparent scale of the comparison wheel.
+  zodiac:Object.freeze({inner:161.5,outer:207,fillOpacity:.82,glyphRadius:14,strokeWidth:1.8}),
+  A:Object.freeze({role:'inner',house:Object.freeze({inner:83,outer:161.5,numberRadius:112}),degree:161.5,placement:Object.freeze([145,151,139]),angle:Object.freeze([101,110,119]),edge:83,side:'inner'}),
+  B:Object.freeze({role:'outer',house:Object.freeze({inner:207,outer:287,numberRadius:222}),degree:207,placement:Object.freeze([252,261,270]),angle:Object.freeze([279,270,261]),edge:287,side:'outer'}),
+  houseFillOpacity:.5,houseNumberFont:16,angleGap:12,angleRadius:14,angleStrokeWidth:1.8,
+  placementRadius:12,placementBubbleRadius:13,placementStrokeWidth:1.8,
+  placementClearance:5,tangentialStep:.75,tangentialLimit:18
 });
 function role(slot){return slot==='A'?comparison.inner:comparison.outer}
 function miniRole(slot){return mini[slot==='A'?'A':'B']}
