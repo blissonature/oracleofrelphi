@@ -15,13 +15,13 @@ const comparison=Object.freeze({
   placementClearance:6,tangentialStep:.75,tangentialLimit:15
 });
 const standaloneInner=Object.freeze({
-  role:'inner',house:Object.freeze({inner:83,outer:161.5,numberRadius:112}),degree:161.5,
-  placement:Object.freeze([145,151,139]),angle:Object.freeze([101,110,119]),edge:83,side:'inner'
+  role:'inner',house:Object.freeze({inner:128.5,outer:207,numberRadius:167.75}),degree:128.5,
+  placement:Object.freeze([172,178,166]),angle:Object.freeze([188,179,197]),edge:207,side:'outer'
 });
 const mini=Object.freeze({
   scale:.5,viewBox:Object.freeze([0,0,600,600]),center:Object.freeze({x:300,y:300}),
-  // Both standalone Sky cards use the compact inner-ring topology. Sky identity is carried by color/data, not ring side.
-  zodiac:Object.freeze({inner:161.5,outer:207,fillOpacity:.82,glyphRadius:14,strokeWidth:1.8}),
+  // Standalone wheels keep the same compact outer radius, with zodiac inside and houses outside.
+  zodiac:Object.freeze({inner:83,outer:128.5,fillOpacity:.82,glyphRadius:14,strokeWidth:1.8}),
   standalone:standaloneInner,A:standaloneInner,B:standaloneInner,
   houseFillOpacity:.5,houseNumberFont:16,angleGap:12,angleRadius:14,angleStrokeWidth:1.8,
   placementRadius:12,placementBubbleRadius:13,placementStrokeWidth:1.8,
