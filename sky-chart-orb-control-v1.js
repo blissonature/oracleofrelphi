@@ -2,7 +2,8 @@
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyOrbControlV2)return;
+  if(window.__relphiSkyOrbControlV3)return;
+  window.__relphiSkyOrbControlV3=true;
   window.__relphiSkyOrbControlV2=true;
   window.__relphiSkyOrbControlV1=true;
 
@@ -87,9 +88,6 @@
       setSvgVisibility(line,relationIndex!==''&&visibleIndexes.has(relationIndex));
     });
 
-    // The wheel interaction controller starts from the complete calculated relationship set.
-    // Reconcile placement isolation against the active Orb/list filters so an endpoint cannot
-    // remain illuminated when its relationship is absent from the visible Relationships list.
     reconcilePlacementIsolation(rows,visibleIndexes);
 
     const visible=visibleIndexes.size;
@@ -105,6 +103,11 @@
   }
 
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(apply)}
+  function announceLimit(input){
+    const value=Number(input.value);
+    if(!Number.isFinite(value)||value<0||value>360)return;
+    window.dispatchEvent(new CustomEvent('relphi:sky-orb-limit-changed',{detail:{orb:value}}));
+  }
 
   function install(){
     const bar=document.querySelector('.sky-chart-filter-bar');
@@ -124,8 +127,8 @@
     input.setAttribute('aria-label','Maximum orb in degrees');
     field.append(caption,input);
     bar.prepend(field);
-    input.addEventListener('input',schedule);
-    input.addEventListener('change',schedule);
+    input.addEventListener('input',()=>{announceLimit(input);schedule()});
+    input.addEventListener('change',()=>{announceLimit(input);schedule()});
     schedule();
   }
 
@@ -141,7 +144,8 @@
       'relphi:sky-placement-multiselect-changed',
       'relphi:sky-house-multiselect-changed',
       'relphi:sky-aspect-multiselect-changed',
-      'relphi:selected-relationship-rendered'
+      'relphi:selected-relationship-rendered',
+      'relphi:sky-foundation-ready'
     ].forEach(name=>window.addEventListener(name,schedule));
     document.getElementById('skyFoundationRelationships')?.addEventListener('change',schedule);
   }
