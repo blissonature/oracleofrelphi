@@ -1,8 +1,9 @@
-// Explicit numeric orb filter. Wheel hover preserves the list; wheel click/tap filters it.
+// Harmonic phase-window control. The visible number is the master harmonic window, not a raw aspect orb.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyOrbControlV3)return;
+  if(window.__relphiSkyOrbControlV4)return;
+  window.__relphiSkyOrbControlV4=true;
   window.__relphiSkyOrbControlV3=true;
   window.__relphiSkyOrbControlV2=true;
   window.__relphiSkyOrbControlV1=true;
@@ -11,14 +12,13 @@
   let wheelIndexes=null;
   let wheelState=null;
 
-  function orbFromRow(row){
-    const explicit=Number(row.dataset.orb ?? row.dataset.sourceOrb);
+  function phaseFromRow(row){
+    const explicit=Number(row.dataset.phaseError);
     if(Number.isFinite(explicit))return explicit;
-    const match=String(row.getAttribute('aria-label')||'').match(/orb\s+([0-9]+(?:\.[0-9]+)?)/i);
-    if(!match)return NaN;
-    const value=Number(match[1]);
-    row.dataset.orb=String(value);
-    return value;
+    const orb=Number(row.dataset.sourceOrb ?? row.dataset.orb);
+    const harmonic=Number(row.dataset.harmonicOrder);
+    if(Number.isFinite(orb)&&Number.isFinite(harmonic)&&harmonic>0)return Math.abs((((orb*harmonic)+180)%360+360)%360-180);
+    return NaN;
   }
 
   function setSvgVisibility(node,visible){
@@ -62,14 +62,14 @@
     const raw=input.value.trim();
     const limit=Number(raw);
     const valid=raw!==''&&Number.isFinite(limit)&&limit>=0&&limit<=360;
-    input.setCustomValidity(valid?'':'Enter an orb from 0 to 360 degrees.');
+    input.setCustomValidity(valid?'':'Enter a harmonic phase window from 0 to 360 degrees.');
     if(!valid)return;
 
     const visibleIndexes=new Set();
     const rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')];
     rows.forEach(row=>{
-      const orb=orbFromRow(row);
-      const hiddenByOrb=Number.isFinite(orb)&&orb>limit;
+      const phase=phaseFromRow(row);
+      const hiddenByOrb=Number.isFinite(phase)&&phase>limit;
       const hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
       const hiddenByOther=row.classList.contains('sky-chart-filter-hidden')||
         row.classList.contains('sky-chart-multiselect-hidden')||
@@ -100,13 +100,14 @@
     document.documentElement.dataset.skyOrbVisibleLines=String(
       document.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect[data-relation-index]:not([aria-hidden="true"])').length
     );
+    document.documentElement.dataset.skyHarmonicWindow=String(limit);
   }
 
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(apply)}
   function announceLimit(input){
     const value=Number(input.value);
     if(!Number.isFinite(value)||value<0||value>360)return;
-    window.dispatchEvent(new CustomEvent('relphi:sky-orb-limit-changed',{detail:{orb:value}}));
+    window.dispatchEvent(new CustomEvent('relphi:sky-orb-limit-changed',{detail:{orb:value,harmonicWindow:value,mode:'harmonic-phase'}}));
   }
 
   function install(){
@@ -115,16 +116,17 @@
     const field=document.createElement('label');
     field.className='sky-orb-number-field';
     const caption=document.createElement('span');
-    caption.textContent='Orb';
+    caption.textContent='Harmonic window';
     const input=document.createElement('input');
     input.type='number';
     input.min='0';
     input.max='360';
     input.step='0.1';
     input.inputMode='decimal';
-    input.value='1';
+    input.value=String(window.RelphiHarmonicOrb?.defaultWindow??10);
     input.dataset.filter='orb';
-    input.setAttribute('aria-label','Maximum orb in degrees');
+    input.dataset.orbMode='harmonic-phase';
+    input.setAttribute('aria-label','Master harmonic phase window in degrees');
     field.append(caption,input);
     bar.prepend(field);
     input.addEventListener('input',()=>{announceLimit(input);schedule()});
