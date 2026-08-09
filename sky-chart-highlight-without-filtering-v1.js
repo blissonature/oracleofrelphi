@@ -93,9 +93,8 @@
 
   function start() {
     bind();
-    if (!document.getElementById('skyFoundationRoot')) return;
-    const observer = new MutationObserver(() => bind());
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+    window.addEventListener('relphi:sky-foundation-ready', bind);
+    window.addEventListener('relphi:sky-foundation-interactions-ready', bind);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
