@@ -1,10 +1,11 @@
 // Comparison-wheel ring contract: Sky A inner, Sky B outer, using the shared wheel specification.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyRingOrderV3)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyRingOrderV4)return;
 window.__relphiSkyRingOrderV1=true;
 window.__relphiSkyRingOrderV2=true;
 window.__relphiSkyRingOrderV3=true;
+window.__relphiSkyRingOrderV4=true;
 const NS='http://www.w3.org/2000/svg';
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const ALIASES={rising:'asc',ascendant:'asc',asc:'asc',ac:'asc',descendant:'dsc',dsc:'dsc',dc:'dsc',midheaven:'mc',mc:'mc','imum coeli':'ic',imumcoeli:'ic',ic:'ic',vertex:'vertex',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
@@ -23,13 +24,13 @@ function ascendant(payload,map){if(map.has('asc'))return map.get('asc');const p=
 function cusps(slot){const payload=read(slot),map=recordMap(slot),p=payload?.calcProfile||{};for(const raw of [p.houseCusps,p.cusps,payload?.houseCusps,payload?.cusps,payload?.houses]){if(!raw)continue;const values=(Array.isArray(raw)?raw:Object.values(raw)).map(item=>typeof item==='object'?Number(item.longitude??item.value??item.cusp):Number(item)).slice(0,12);if(values.length===12&&values.every(Number.isFinite))return values.map(norm)}const asc=ascendant(payload,map),system=String(p.houseSystem||payload?.houseSystem||'whole-sign').toLowerCase(),start=system.includes('whole')?Math.floor(asc/30)*30:asc;return Array.from({length:12},(_,i)=>norm(start+i*30))}
 function transformPoint(node,center){const match=String(node.getAttribute('transform')||'').match(/translate\(\s*([-+\d.eE]+)[ ,]+([-+\d.eE]+)/);if(!match)return null;const x=Number(match[1]),y=Number(match[2]);if(!Number.isFinite(x)||!Number.isFinite(y))return null;return{x,y,radius:Math.hypot(x-center.x,y-center.y),degree:norm(Math.atan2(y-center.y,x-center.x)*180/Math.PI+180)}}
 function closestIndex(value,values){let best=0,distance=Infinity;values.forEach((candidate,index)=>{const d=Math.abs(Number(value)-candidate);if(d<distance){distance=d;best=index}});return best}
+function sameSignDisplay(exact,display){const e=norm(exact),d=norm(display),sign=Math.floor(e/30);if(Math.floor(d/30)===sign)return d;const start=sign*30,end=start+30,delta=((d-e+540)%360)-180,candidate=e+delta,epsilon=.001;return norm(Math.max(start+epsilon,Math.min(end-epsilon,candidate)))}
 function fillHouses(layer,slot,geometry){const shared=spec(),center=shared.comparison.center,values=cusps(slot);layer.replaceChildren();values.forEach((start,index)=>{const end=values[(index+1)%12],mid=start+(norm(end-start)||30)/2;layer.appendChild(svg('path',{d:annular(center,geometry.inner,geometry.outer,start,end),fill:shared.COLORS[index],'fill-opacity':shared.comparison.houseFillOpacity}));radialLine(layer,center,geometry.inner,geometry.outer,end,{stroke:shared.SKY[slot],class:'sky-foundation-divider'});const p=point(center,(geometry.inner+geometry.outer)/2,mid),text=svg('text',{x:p.x,y:p.y,class:'sky-foundation-house-number'});text.textContent=String(index+1);layer.appendChild(text)})}
 function uniquePlacements(layer){const seen=new Set();Array.from(layer.querySelectorAll('g[data-sky][data-placement]')).forEach(group=>{const key=`${group.dataset.sky}|${group.dataset.placement}`;if(seen.has(key))group.remove();else seen.add(key)})}
 function adapt(){
   const shared=spec(),wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');if(!shared||!wheel)return;
   const center=shared.comparison.center,inner=shared.comparison.inner,outer=shared.comparison.outer;
   const aLayer=wheel.querySelector('[data-layer="a-houses"]'),bLayer=wheel.querySelector('[data-layer="b-houses"]');if(!aLayer||!bLayer)return;
-  // Never rename or exchange the layers. Their identity is stable; only their geometry is authoritative.
   fillHouses(aLayer,'A',inner);
   fillHouses(bLayer,'B',outer);
   const placements=wheel.querySelector('[data-layer="placements"]'),leaders=wheel.querySelector('[data-layer="leaders"]');if(!placements||!leaders)return;
@@ -39,12 +40,13 @@ function adapt(){
     const slot=group.dataset.sky,geometry=shared.role(slot),id=group.dataset.placement,exact=maps[slot]?.get(id);if(!geometry||!Number.isFinite(exact))return;
     const isAngle=group.dataset.angleAxis==='true';
     if(isAngle){const lane=geometry.angle[0],p=point(center,lane,exact),labelSide=geometry.side==='inner'?lane-shared.comparison.angleGap:lane+shared.comparison.angleGap;group.setAttribute('transform',`translate(${p.x} ${p.y})`);group.dataset.angleLane=String(lane);group.dataset.angleLongitude=exact.toFixed(8);group.dataset.angleExtreme=geometry.side;radialLine(leaders,center,Math.min(geometry.edge,labelSide),Math.max(geometry.edge,labelSide),exact,{stroke:shared.SKY[slot],class:'sky-foundation-angle-axis','stroke-width':'2.6','vector-effect':'non-scaling-stroke','data-sky':slot,'data-angle':id,'data-exact-longitude':exact.toFixed(8),'data-angle-lane':lane,'data-axis-extreme':geometry.side,'data-axis-edge-radius':geometry.edge});return}
-    const current=transformPoint(group,center),display=Number(group.dataset.displayLongitude);if(!current||!Number.isFinite(display))return;
+    const current=transformPoint(group,center),requestedDisplay=Number(group.dataset.displayLongitude);if(!current||!Number.isFinite(requestedDisplay))return;
+    const display=sameSignDisplay(exact,requestedDisplay);
     const candidateLanes=[...inner.placement,...outer.placement],nearest=candidateLanes.reduce((best,lane)=>Math.abs(current.radius-lane)<Math.abs(current.radius-best)?lane:best,candidateLanes[0]);
     const oldIndex=closestIndex(nearest,nearest<400?inner.placement:outer.placement),lane=geometry.placement[oldIndex],p=point(center,lane,display),target=point(center,geometry.degree,exact);
-    group.setAttribute('transform',`translate(${p.x} ${p.y})`);group.dataset.placementLane=String(lane);leaders.appendChild(svg('line',{x1:p.x,y1:p.y,x2:target.x,y2:target.y,stroke:shared.SKY[slot],class:'sky-foundation-leader'}))
+    group.setAttribute('transform',`translate(${p.x} ${p.y})`);group.dataset.displayLongitude=display.toFixed(8);group.dataset.placementLane=String(lane);group.dataset.signGuard='true';leaders.appendChild(svg('line',{x1:p.x,y1:p.y,x2:target.x,y2:target.y,stroke:shared.SKY[slot],class:'sky-foundation-leader'}))
   });
-  wheel.dataset.ringOrder='A-inner-B-outer';wheel.dataset.innerSky='A';wheel.dataset.outerSky='B';wheel.dataset.wheelSpec='relphi-sky-wheel-v1';
+  wheel.dataset.ringOrder='A-inner-B-outer';wheel.dataset.innerSky='A';wheel.dataset.outerSky='B';wheel.dataset.wheelSpec='relphi-sky-wheel-v1';wheel.dataset.crossSignDisplacement='forbidden';
 }
 function adaptNow(){adapt()}
 window.addEventListener('relphi:sky-foundation-ready',adaptNow);
