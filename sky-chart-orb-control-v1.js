@@ -131,6 +131,7 @@
     bar.prepend(field);
     input.addEventListener('input',()=>{announceLimit(input);schedule()});
     input.addEventListener('change',()=>{announceLimit(input);schedule()});
+    announceLimit(input);
     schedule();
   }
 
