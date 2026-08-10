@@ -1,1 +1,23 @@
-#skyFoundationRelationships .sky-chart-zodiac-filter{position:relative;display:grid;grid-template-rows:auto 35px;gap:4px;align-self:end;min-width:0;color:#4e463f;font:800 .62rem/1.2 system-ui,sans-serif}#skyFoundationRelationships .sky-chart-zodiac-filter-label{align-self:end}.sky-chart-zodiac-filter-toggle{width:100%;height:35px;box-sizing:border-box;margin:0;padding:.52rem 2rem .52rem .58rem;border:1px solid rgba(31,27,24,.2);border-radius:9px;background:#fff;color:#191613;font:700 .68rem/1.2 system-ui,sans-serif;text-align:left;cursor:pointer}.sky-chart-zodiac-filter-menu{position:absolute;z-index:70;top:calc(100% + 5px);left:0;min-width:190px;max-height:360px;overflow:auto;padding:6px;border:1px solid rgba(31,27,24,.18);border-radius:10px;background:#fffdf8;box-shadow:0 12px 28px rgba(31,27,24,.18)}.sky-chart-zodiac-filter-row{display:grid;grid-template-columns:18px 28px 1fr;align-items:center;gap:7px;padding:5px 6px;border-radius:7px;color:#28221e;font:700 .72rem/1.2 system-ui,sans-serif}.sky-chart-zodiac-filter-row:hover{background:#f4efe8}.sky-chart-zodiac-filter-glyph{display:grid;place-items:center;width:26px;height:26px}.sky-chart-zodiac-filter-glyph>svg{display:block;width:24px;height:24px;overflow:visible}.sky-chart-sign-filter-hidden{display:none!important}
+#skyFoundationRelationships .sky-chart-zodiac-filter{position:relative;display:grid;grid-template-rows:auto 35px;gap:4px;align-self:end;min-width:0;color:#4e463f;font:800 .62rem/1.2 system-ui,sans-serif}
+#skyFoundationRelationships .sky-chart-zodiac-filter-label{align-self:end}
+.sky-chart-zodiac-filter-toggle{width:100%;height:35px;box-sizing:border-box;margin:0;padding:.52rem 2rem .52rem .58rem;border:1px solid rgba(31,27,24,.2);border-radius:9px;background:#fff var(--sky-chart-filter-chevron) no-repeat right 9px center/15px 15px;color:#191613;font:700 .68rem/1.2 system-ui,sans-serif;text-align:left;cursor:pointer}
+.sky-chart-zodiac-filter-menu{position:absolute;z-index:70;top:calc(100% + 5px);left:0;width:min(330px,calc(100vw - 24px));max-height:min(560px,78vh);overflow:auto;box-sizing:border-box;padding:10px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2)}
+.sky-chart-zodiac-filter-menu[hidden]{display:none!important}
+.sky-chart-zodiac-filter-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:10px;background:#fff}
+.sky-chart-zodiac-filter-header,.sky-chart-zodiac-filter-row{display:grid;grid-template-columns:minmax(0,1fr) 40px;align-items:center}
+.sky-chart-zodiac-filter-header{position:sticky;top:-10px;z-index:2;min-height:34px;border-bottom:1px solid rgba(31,27,24,.16);background:#e9e3da;color:#29231e;font:900 .61rem/1 system-ui,sans-serif}
+.sky-chart-zodiac-filter-header strong{padding:7px 10px;text-align:left}
+.sky-chart-zodiac-filter-header span{align-self:stretch;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(31,27,24,.1)}
+.sky-chart-zodiac-filter-row{min-height:42px;border-top:1px solid rgba(31,27,24,.075);color:#29231e;cursor:pointer}
+.sky-chart-zodiac-filter-row:first-of-type{border-top:0}
+.sky-chart-zodiac-filter-row:hover{background:#f4efe8}
+.sky-chart-zodiac-filter-name{display:flex;align-items:center;justify-content:flex-start;gap:9px;min-width:0;padding:7px 10px;font:750 .67rem/1.15 system-ui,sans-serif;text-align:left}
+.sky-chart-zodiac-filter-glyph{display:grid;place-items:center;width:26px;height:26px;flex:0 0 26px}
+.sky-chart-zodiac-filter-glyph>svg{display:block;width:24px;height:24px;overflow:visible}
+.sky-chart-zodiac-filter-check{display:flex;align-self:stretch;align-items:center;justify-content:center;border-left:1px solid rgba(31,27,24,.08);background:rgba(31,27,24,.018)}
+.sky-chart-zodiac-filter-row input[type="checkbox"]{appearance:none;-webkit-appearance:none;position:relative;width:15px;height:15px;min-width:15px;margin:0;border:1px solid #211d19;border-radius:3px;background:#fff!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);color:#111;cursor:pointer;accent-color:transparent!important}
+.sky-chart-zodiac-filter-row input[type="checkbox"]::after{content:"";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#111;font:900 13px/13px Arial,sans-serif}
+.sky-chart-zodiac-filter-row input[type="checkbox"]:checked::after{content:"✓"}
+.sky-chart-zodiac-filter-row input[type="checkbox"]:focus-visible{outline:2px solid #625a52;outline-offset:2px}
+.sky-chart-sign-filter-hidden{display:none!important}
+@media(max-width:620px){.sky-chart-zodiac-filter-menu{width:min(330px,calc(100vw - 24px))}.sky-chart-zodiac-filter-name{padding:7px 8px;font-size:.63rem}}
