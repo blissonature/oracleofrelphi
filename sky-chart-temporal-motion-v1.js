@@ -1,0 +1,25 @@
+// Harmonic temporal layer: applying/separating, ordinary relative velocity,
+// harmonic-phase velocity, and time to exactitude where ephemeris motion is available.
+(function(){
+'use strict';
+if(window.__relphiSkyTemporalMotionV1)return;window.__relphiSkyTemporalMotionV1=true;
+const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+const BODY={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',pluto:'Pluto'};
+const ALIAS={ascendant:'asc',descendant:'dsc',midheaven:'mc','imum coeli':'ic','north node':'north-node','south node':'south-node','part of fortune':'part-of-fortune'};
+const norm=x=>((Number(x)%360)+360)%360,short=x=>((Number(x)+180)%360+360)%360-180,separation=(a,b)=>Math.abs(short(Number(a)-Number(b)));
+function read(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_){return null}}
+function source(p){const x=[p?.placements,p?.positions,p?.points,p?.bodies].find(v=>v&&typeof v==='object')||p||{};return Array.isArray(x)?x.map((v,i)=>[String(v?.name||v?.id||i),v]):Object.entries(x)}
+function cid(k,x){const r=window.RelphiGlyphRegistry;for(const c of [x?.glyphId,x?.id,x?.name,x?.label,x?.body,x?.planet,x?.point,k]){if(!c)continue;const raw=String(c).trim(),e=r?.resolve?.(ALIAS[raw.toLowerCase()]||raw)||r?.get?.(ALIAS[raw.toLowerCase()]||raw);if(e)return e.id}return''}
+function longitude(x){if(Number.isFinite(Number(x?.longitude)))return norm(x.longitude);return NaN}
+function records(payload){const m=new Map();for(const[k,x]of source(payload)){if(!x||typeof x!=='object')continue;const id=cid(k,x),value=longitude(x);if(id&&Number.isFinite(value)&&!m.has(id))m.set(id,{id,value,item:x})}return m}
+function instant(payload){const p=payload?.calcProfile||{};const raw=p.instant||p.dateTime||payload?.instant||payload?.dateTime;const d=new Date(raw||Date.now());return Number.isNaN(d.getTime())?new Date():d}
+function planetLongitude(id,date){const A=window.Astronomy;if(!A)return NaN;if(id==='moon'&&typeof A.EclipticGeoMoon==='function')return norm(A.EclipticGeoMoon(date).lon);const body=BODY[id];if(!body||typeof A.GeoVector!=='function'||typeof A.Ecliptic!=='function')return NaN;try{return norm(A.Ecliptic(A.GeoVector(body,date,true)).elon)}catch(_){return NaN}}
+function julianCenturies(date){return((date.getTime()/86400000+2440587.5)-2451545)/36525}
+function meanNode(date){const T=julianCenturies(date);return norm(125.04452-1934.136261*T+0.0020708*T*T+(T*T*T)/450000)}
+function meanLilith(date){const T=julianCenturies(date),perigee=83.3532465+4069.0137287*T-0.01032*T*T-(T*T*T)/80053+(T*T*T*T)/18999000;return norm(perigee+180)}
+function ephemerisLongitude(id,date){if(BODY[id])return planetLongitude(id,date);if(id==='north-node')return meanNode(date);if(id==='south-node')return norm(meanNode(date)+180);if(id==='lilith')return meanLilith(date);return NaN}
+function velocity(id,date){const halfHours=3,ms=halfHours*3600000,a=new Date(date.getTime()-ms),b=new Date(date.getTime()+ms),la=ephemerisLongitude(id,a),lb=ephemerisLongitude(id,b);if(!Number.isFinite(la)||!Number.isFinite(lb))return NaN;return short(lb-la)/(2*halfHours/24)}
+function annotate(){const A=read(KEYS.A),B=read(KEYS.B),ra=records(A),rb=records(B),ta=instant(A),tb=instant(B),H=window.RelphiHarmonicOrb;if(!H)return;document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{const l=ra.get(row.dataset.leftPlacement),r=rb.get(row.dataset.rightPlacement),aspect=H.byId(row.dataset.aspect);if(!l||!r||!aspect)return;const lv=velocity(l.id,ta),rv=velocity(r.id,tb);if(!Number.isFinite(lv)||!Number.isFinite(rv)){row.dataset.temporalMotion='unavailable';return}const dt=1/24,currentDistance=separation(l.value,r.value),nextDistance=separation(l.value+lv*dt,r.value+rv*dt),m0=H.metrics(currentDistance,aspect,Number(row.dataset.harmonicWindow)||H.windowFromControl()),m1=H.metrics(nextDistance,aspect,Number(row.dataset.harmonicWindow)||H.windowFromControl());if(!m0||!m1)return;const ordinaryRelativeVelocity=rv-lv,harmonicPhaseVelocity=(m1.signedPhaseError-m0.signedPhaseError)/dt,applying=m1.phaseError<m0.phaseError,timeDays=applying&&Math.abs(harmonicPhaseVelocity)>1e-9?m0.phaseError/Math.abs(harmonicPhaseVelocity):NaN;row.dataset.temporalMotion='available';row.dataset.leftAngularVelocity=lv.toFixed(8);row.dataset.rightAngularVelocity=rv.toFixed(8);row.dataset.relativeAngularVelocity=ordinaryRelativeVelocity.toFixed(8);row.dataset.harmonicPhaseVelocity=harmonicPhaseVelocity.toFixed(8);row.dataset.applying=applying?'true':'false';row.dataset.timeToExactitudeDays=Number.isFinite(timeDays)?timeDays.toFixed(8):'';row.setAttribute('data-motion-state',applying?'applying':'separating')});document.documentElement.dataset.skyTemporalMotion='ready'}
+let q=false;function schedule(){if(q)return;q=true;requestAnimationFrame(()=>{q=false;annotate()})}
+['relphi:sky-foundation-interactions-ready','relphi:sky-orb-limit-changed','storage'].forEach(n=>window.addEventListener(n,schedule));document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
+})();
