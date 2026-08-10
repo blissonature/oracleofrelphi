@@ -9,19 +9,8 @@
   const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
   const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const ORDER=['sun','moon','asc','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','north-node','south-node','chiron','lilith','part-of-fortune','vertex','mc','ic','dsc'];
-  const ASPECTS=[
-    {id:'conjunction',angle:0,orb:3,color:'#e53935'},
-    {id:'semi-sextile',angle:30,orb:2,color:'#7c9b49'},
-    {id:'octile',angle:45,orb:2,color:'#b86d43'},
-    {id:'sextile',angle:60,orb:3,color:'#d3b727'},
-    {id:'quintile',angle:72,orb:2,color:'#8b6cc2'},
-    {id:'square',angle:90,orb:3,color:'#d6534d'},
-    {id:'trine',angle:120,orb:3,color:'#4e9e69'},
-    {id:'tri-octile',angle:135,orb:2,color:'#9f5944'},
-    {id:'bi-quintile',angle:144,orb:2,color:'#7655aa'},
-    {id:'quincunx',angle:150,orb:2,color:'#4b8e88'},
-    {id:'opposition',angle:180,orb:3,color:'#5961c8'}
-  ];
+  const HARMONIC=window.RelphiHarmonicOrb;
+  const ASPECTS=HARMONIC?.aspects||[];
   const ALIASES={rising:'asc',ascendant:'asc',asc:'asc',ac:'asc',descendant:'dsc',dsc:'dsc',dc:'dsc',midheaven:'mc',mc:'mc','imum coeli':'ic',imumcoeli:'ic',ic:'ic',vertex:'vertex',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','mean node':'north-node','south node':'south-node',chiron:'chiron',lilith:'lilith','black moon lilith':'lilith',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 
   let lockedState=null,hoverState=null,refreshQueued=false,selectionClearObserver=null;
@@ -60,7 +49,14 @@
   }
   function houseFor(value,houseCusps){for(let index=0;index<12;index++){const start=houseCusps[index],span=norm(houseCusps[(index+1)%12]-start)||30;if(norm(value-start)<span)return index+1}return 12}
   function prepare(payload,slot){const list=records(payload),houseCusps=cusps(payload,list);list.forEach(record=>{record.sky=slot;record.sign=Math.floor(record.value/30);record.house=houseFor(record.value,houseCusps)});return{list,houseCusps}}
-  function relationships(listA,listB){const result=[];listA.forEach(left=>listB.forEach(right=>{const distance=separation(left.value,right.value);ASPECTS.forEach(aspect=>{const orb=Math.abs(distance-aspect.angle);if(orb<=aspect.orb)result.push({left,right,aspect,orb,distance})})}));return result.sort((a,b)=>a.orb-b.orb)}
+  function relationships(listA,listB){
+    const result=[],windowValue=HARMONIC?.windowFromControl?.()??10;
+    listA.forEach(left=>listB.forEach(right=>{
+      const distance=separation(left.value,right.value);
+      ASPECTS.forEach(aspect=>{const relation=HARMONIC?.relation?.(left,right,aspect,distance,windowValue);if(relation)result.push(relation)})
+    }));
+    return result.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.orb-b.orb);
+  }
   function coordinate(record){
     const item=record.item||{},explicitSign=SIGNS.indexOf(String(item.sign||item.zodiac||'').trim().toLowerCase()),explicitDegree=Number(item.degree??item.degrees),explicitMinute=Number(item.minute??item.minutes);
     if(explicitSign>=0&&Number.isFinite(explicitDegree)&&Number.isFinite(explicitMinute)){
@@ -89,7 +85,7 @@
     const selectionCleared=document.getElementById('skyFoundationRoot')?.dataset.relationshipSelectionCleared==='true',selected=selectionCleared?null:document.querySelector('.sky-foundation-relationship-row[aria-current="true"]');const selectedKey=selected?[selected.dataset.leftPlacement,selected.dataset.aspect,selected.dataset.rightPlacement,selected.getAttribute('aria-label')].join('|'):'';
     list.replaceChildren();count.textContent=relations.length+'/'+relations.length;count.dataset.total=String(relations.length);
     relations.forEach((relation,index)=>{
-      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.aspect=relation.aspect.id;row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.leftHouse=String(relation.left.house);row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);row.setAttribute('aria-label',relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+', orb '+relation.orb.toFixed(2)+' degrees');
+      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.aspect=relation.aspect.id;row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.harmonicOrder=String(relation.harmonicOrder);row.dataset.harmonicNumerator=String(relation.harmonicNumerator);row.dataset.phaseError=relation.phaseError.toFixed(6);row.dataset.signedPhaseError=relation.signedPhaseError.toFixed(6);row.dataset.harmonicWindow=relation.masterWindow.toFixed(6);row.dataset.windowFraction=Number.isFinite(relation.windowFraction)?relation.windowFraction.toFixed(6):String(relation.windowFraction);row.dataset.harmonicCoherence=relation.coherence.toFixed(8);row.dataset.leftHouse=String(relation.left.house);row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);row.setAttribute('aria-label',relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+', orb '+relation.orb.toFixed(2)+' degrees, harmonic '+relation.harmonicOrder+', phase error '+relation.phaseError.toFixed(2)+' degrees, coherence '+relation.coherencePercent.toFixed(0)+' percent');
       const leftGlyph=glyphSlot('left',relation.left.entry.name),aspectGlyph=glyphSlot('aspect',relation.aspect.id),rightGlyph=glyphSlot('right',relation.right.entry.name),leftCopy=document.createElement('span'),rightCopy=document.createElement('span');leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';leftCopy.innerHTML=esc(relation.left.entry.name)+'<small>'+left.text+' '+esc(SIGN_NAMES[left.sign])+' · H'+relation.left.house+'</small>';rightCopy.innerHTML=esc(relation.right.entry.name)+'<small>'+right.text+' '+esc(SIGN_NAMES[right.sign])+' · H'+relation.right.house+' · Orb '+relation.orb.toFixed(2)+'°</small>';row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);
       const key=[row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement,row.getAttribute('aria-label')].join('|');if(key===selectedKey)row.setAttribute('aria-current','true');
     });
@@ -103,7 +99,7 @@
   function relationKey(left,aspect,right,orb){return`${left}|${aspect}|${right}|${Number(orb).toFixed(6)}`}
   function annotateAspects(relations){
     const indexes=new Map();relations.forEach((relation,index)=>indexes.set(relationKey(relation.left.id,relation.aspect.id,relation.right.id,relation.orb),index));
-    Array.from(document.querySelectorAll('[data-layer="aspects"] > line:not(.sky-foundation-aspect-hit)')).forEach(line=>{const index=indexes.get(relationKey(line.dataset.leftPlacement,line.dataset.aspect,line.dataset.rightPlacement,line.dataset.orb)),relation=relations[index];if(!relation)return;line.classList.add('sky-foundation-interactive','sky-foundation-aspect');Object.assign(line.dataset,{interactive:'aspect',focusPiece:'aspect',relationIndex:String(index),aspect:relation.aspect.id,leftPlacement:relation.left.id,rightPlacement:relation.right.id,leftHouse:String(relation.left.house),rightHouse:String(relation.right.house),leftSign:String(relation.left.sign),rightSign:String(relation.right.sign)});line.setAttribute('tabindex','0');line.setAttribute('role','button');line.setAttribute('aria-label',`Sky A ${relation.left.entry.name} ${relation.aspect.id} Sky B ${relation.right.entry.name}`);line.style.pointerEvents='stroke'})
+    Array.from(document.querySelectorAll('[data-layer="aspects"] > line:not(.sky-foundation-aspect-hit)')).forEach(line=>{const index=indexes.get(relationKey(line.dataset.leftPlacement,line.dataset.aspect,line.dataset.rightPlacement,line.dataset.orb)),relation=relations[index];if(!relation){delete line.dataset.relationIndex;return}line.classList.add('sky-foundation-interactive','sky-foundation-aspect');Object.assign(line.dataset,{interactive:'aspect',focusPiece:'aspect',relationIndex:String(index),aspect:relation.aspect.id,leftPlacement:relation.left.id,rightPlacement:relation.right.id,leftHouse:String(relation.left.house),rightHouse:String(relation.right.house),leftSign:String(relation.left.sign),rightSign:String(relation.right.sign),harmonicOrder:String(relation.harmonicOrder),harmonicNumerator:String(relation.harmonicNumerator),phaseError:relation.phaseError.toFixed(6),harmonicCoherence:relation.coherence.toFixed(8)});line.setAttribute('tabindex','0');line.setAttribute('role','button');line.setAttribute('aria-label',`Sky A ${relation.left.entry.name} ${relation.aspect.id} Sky B ${relation.right.entry.name}, harmonic ${relation.harmonicOrder}, phase error ${relation.phaseError.toFixed(2)} degrees`);line.style.pointerEvents='stroke'})
   }
   function annotateLedger(slot,list){const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;Array.from(panel.querySelectorAll('.sky-foundation-row')).forEach((row,index)=>{const record=list[index];if(!record)return;Object.assign(row.dataset,{interactive:'placement',sky:slot,placement:record.id,house:String(record.house),sign:String(record.sign)});row.setAttribute('tabindex','0');row.setAttribute('role','button');row.setAttribute('aria-label',`Sky ${slot} ${record.entry.name}, house ${record.house}`)})}
 
@@ -163,11 +159,11 @@
     root.addEventListener('keydown',event=>{if(event.key==='Escape'){clearFromWhitespace();return}if(!['Enter',' '].includes(event.key)||event.target.closest('.sky-foundation-relationship-row'))return;const node=interactive(event);if(!node)return;event.preventDefault();const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState()});
   }
   async function refresh(){
-    refreshQueued=false;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false')return;ensurePanel();
+    refreshQueued=false;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
     const preparedA=prepare(read(KEYS.A),'A'),preparedB=prepare(read(KEYS.B),'B'),relations=relationships(preparedA.list,preparedB.list);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
     annotateHouseLayer('a-houses','A');annotateHouseLayer('b-houses','B');annotateSigns();annotatePlacements(current.listA,current.listB);annotateAspects(relations);annotateLedger('A',current.listA);annotateLedger('B',current.listB);await renderRows(relations);bind();applyState();window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
   }
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
-  function start(){window.addEventListener('relphi:sky-foundation-ready',schedule);if(document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false')schedule()}
+  function start(){window.addEventListener('relphi:sky-foundation-ready',schedule);window.addEventListener('relphi:sky-orb-limit-changed',schedule);if(document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false')schedule()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
