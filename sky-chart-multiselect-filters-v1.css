@@ -1,176 +1,51 @@
-/* One categorized placement list with All / A / B controls visible in the filter bar and on every row. */
+/* Categorized Placement checklist. Deliberately mirrors the Houses control. */
 #skyFoundationRelationships{overflow:visible!important}
-.sky-chart-filter-bar[data-multiselect-placement-filters="true"]{
-  position:relative;
-  z-index:2;
-  display:grid;
-  grid-template-columns:
-    minmax(0,.6fr)
-    minmax(0,1fr)
-    minmax(0,1.55fr)
-    minmax(0,.9fr)
-    minmax(0,.9fr)
-    minmax(0,1.4fr);
-  align-items:end;
-  gap:6px;
-  overflow:visible;
-}
-.sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-filter-orb,
-.sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-filter-aspect,
-.sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-placement-filter,
-.sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-filter-house-a,
-.sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-filter-house-b,
-.sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-filter-house-system{
-  grid-column:auto;
-  width:auto;
-  min-width:0;
-}
-.sky-chart-filter-bar[data-multiselect-placement-filters="true"]>label>select,
-.sky-chart-filter-bar[data-multiselect-placement-filters="true"]>label>input{
-  width:100%;
-  min-width:0;
-  box-sizing:border-box;
-}
+.sky-chart-filter-bar[data-multiselect-placement-filters="true"]{position:relative;z-index:2;display:grid;align-items:end;gap:6px;overflow:visible}
+.sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-placement-filter{grid-column:auto;width:auto;min-width:0}
 .sky-chart-placement-filter{position:relative;min-width:0;color:#4e463f;font:800 .62rem/1.2 system-ui,sans-serif}
-.sky-chart-placement-filter-head{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  grid-template-areas:
-    "label toggle"
-    "choices toggle";
-  align-items:center;
-  gap:.22rem .38rem;
-  min-height:55px;
-  box-sizing:border-box;
-  padding:.38rem .38rem .42rem .58rem;
-  border:1px solid rgba(31,27,24,.2);
-  border-radius:9px;
-  background:#fff;
-  color:#191613;
-}
-.sky-chart-placement-filter.is-open .sky-chart-placement-filter-head{border-color:rgba(31,27,24,.42);box-shadow:0 0 0 2px rgba(31,27,24,.08)}
-.sky-chart-placement-filter-label{grid-area:label;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 .68rem/1.1 system-ui,sans-serif}
-.sky-chart-placement-summary-choices{grid-area:choices;display:flex;align-items:center;gap:2px;min-width:0}
-.sky-chart-placement-filter-toggle{
-  grid-area:toggle;
-  align-self:stretch;
-  min-width:24px;
-  padding:0;
-  border:0;
-  border-left:1px solid rgba(31,27,24,.12);
-  background:transparent;
-  color:#191613;
-  cursor:pointer;
-  font:900 .84rem/1 system-ui,sans-serif;
-}
-.sky-chart-placement-filter-toggle:hover,
-.sky-chart-placement-filter-toggle:focus-visible{background:#f5f1eb;outline:none}
-.sky-chart-placement-filter-status{
-  position:absolute!important;
-  width:1px!important;
-  height:1px!important;
-  padding:0!important;
-  margin:-1px!important;
-  overflow:hidden!important;
-  clip:rect(0,0,0,0)!important;
-  white-space:nowrap!important;
-  border:0!important;
-}
-.sky-chart-placement-summary-choices .sky-chart-placement-choice{
-  min-height:0;
-  padding:0 3px;
-  border:0;
-  background:transparent;
-  font-size:.56rem!important;
-}
+.sky-chart-placement-filter-head{display:grid;grid-template-columns:minmax(0,1fr) 28px;grid-template-areas:"label label" "choices toggle";align-items:center;gap:5px 0;min-height:55px;box-sizing:border-box;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;color:#191613}
+.sky-chart-placement-filter-label{grid-area:label;align-self:end;padding:0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:transparent;font:700 .68rem/1.1 system-ui,sans-serif}
+.sky-chart-placement-summary-choices{grid-area:choices;display:flex;align-items:center;gap:2px;min-width:0;min-height:38px;box-sizing:border-box;padding:0 9px 0 7px;border:1px solid rgba(31,27,24,.2);border-right:0;border-radius:9px 0 0 9px;background:#fff;overflow:hidden}
+.sky-chart-placement-filter-toggle{grid-area:toggle;align-self:stretch;display:grid;place-items:center;min-width:28px;min-height:38px;box-sizing:border-box;padding:0;border:1px solid rgba(31,27,24,.2);border-left:1px solid rgba(31,27,24,.12);border-radius:0 9px 9px 0;background:#fff;color:#191613;cursor:pointer;font:900 .84rem/1 system-ui,sans-serif}
+.sky-chart-placement-filter-toggle:hover,.sky-chart-placement-filter-toggle:focus-visible{background:#f5f1eb;outline:none}
+.sky-chart-placement-filter.is-open .sky-chart-placement-summary-choices,.sky-chart-placement-filter.is-open .sky-chart-placement-filter-toggle{border-color:rgba(31,27,24,.42)}
+.sky-chart-placement-filter-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.sky-chart-placement-summary-choices .sky-chart-placement-choice{min-height:0;padding:0 3px;border:0;background:transparent;font-size:.56rem!important}
 .sky-chart-placement-summary-choices .sky-chart-placement-choice span{display:inline}
-.sky-chart-placement-summary-choices .sky-chart-placement-choice-all{color:#514a44}
-.sky-chart-placement-summary-choices .sky-chart-placement-choice-a{color:#a21b18}
-.sky-chart-placement-summary-choices .sky-chart-placement-choice-b{color:#1f55b4}
-.sky-chart-placement-filter-popover{
-  position:absolute;
-  top:calc(100% + 6px);
-  left:50%;
-  width:min(430px,calc(100vw - 24px));
-  max-height:min(560px,78vh);
-  overflow:auto;
-  box-sizing:border-box;
-  padding:10px;
-  border:1px solid rgba(31,27,24,.22);
-  border-radius:13px;
-  background:#fffdf8;
-  box-shadow:0 16px 38px rgba(31,27,24,.2);
-  transform:translateX(-32%);
-  pointer-events:auto;
-}
+.sky-chart-placement-filter-popover{position:absolute;top:calc(100% + 6px);left:50%;width:min(410px,calc(100vw - 24px));max-height:min(560px,78vh);overflow:auto;box-sizing:border-box;padding:10px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2);transform:translateX(-50%);pointer-events:auto}
 .sky-chart-placement-filter-popover[hidden]{display:none!important}
-.sky-chart-placement-filter-popover.is-portaled{
-  position:fixed;
-  z-index:10000;
-  right:auto;
-  bottom:auto;
-  margin:0;
-  transform:none;
-  isolation:isolate;
-}
+.sky-chart-placement-filter-popover.is-portaled{position:fixed;z-index:10000;right:auto;bottom:auto;margin:0;transform:none;isolation:isolate}
 .sky-chart-placement-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:10px;background:#fff}
-.sky-chart-placement-list-item{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  align-items:center;
-  min-height:35px;
-  border-top:1px solid rgba(31,27,24,.075);
-}
-.sky-chart-placement-list-item:first-child{border-top:0}
-.sky-chart-placement-list-item-master{min-height:44px;background:#f4efe8;border-bottom:1px solid rgba(31,27,24,.15)}
-.sky-chart-placement-list-item-group{min-height:39px;background:#eee8df;border-top:1px solid rgba(31,27,24,.15)}
-.sky-chart-placement-list-label{
-  min-width:0;
-  padding:7px 10px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  color:#29231e;
-  font:750 .67rem/1.15 system-ui,sans-serif;
-}
+.sky-chart-placement-list-header,.sky-chart-placement-list-item{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,40px);align-items:center}
+.sky-chart-placement-list-header{position:sticky;top:-10px;z-index:2;min-height:34px;border-bottom:1px solid rgba(31,27,24,.16);background:#e9e3da;color:#29231e;font:900 .61rem/1 system-ui,sans-serif;text-align:center}
+.sky-chart-placement-list-header strong{padding:7px 10px;text-align:left}
+.sky-chart-placement-list-header span{align-self:stretch;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(31,27,24,.1)}
+.sky-chart-placement-list-item{min-height:35px;border-top:1px solid rgba(31,27,24,.075)}
+.sky-chart-placement-list-item-master{min-height:42px;border-top:0;border-bottom:1px solid rgba(31,27,24,.15);background:#f4efe8}
+.sky-chart-placement-list-item-group{min-height:39px;border-top:1px solid rgba(31,27,24,.15);background:#eee8df}
+.sky-chart-placement-list-label{display:flex;align-items:center;justify-content:flex-start;min-width:0;padding:7px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#29231e;font:750 .67rem/1.15 system-ui,sans-serif;text-align:left!important}
 .sky-chart-placement-list-item-master .sky-chart-placement-list-label{font-size:.72rem;font-weight:900}
 .sky-chart-placement-list-item-group .sky-chart-placement-list-label{font-size:.69rem;font-weight:900}
-.sky-chart-placement-list-choices{display:grid;grid-template-columns:repeat(3,minmax(47px,auto));align-self:stretch;border-left:1px solid rgba(31,27,24,.1)}
-.sky-chart-placement-choice{
-  display:flex!important;
-  align-items:center;
-  justify-content:center;
-  gap:4px;
-  min-width:0;
-  padding:6px 7px;
-  border-left:1px solid rgba(31,27,24,.08);
-  cursor:pointer;
-  color:#514a44;
-  font:800 .59rem/1 system-ui,sans-serif!important;
-}
-.sky-chart-placement-choice:first-child{border-left:0}
-.sky-chart-placement-choice-all{background:rgba(31,27,24,.025)}
-.sky-chart-placement-choice-a{background:rgba(201,33,30,.035);color:#a21b18}
-.sky-chart-placement-choice-b{background:rgba(36,98,208,.04);color:#1f55b4}
-.sky-chart-placement-list-item-master .sky-chart-placement-choice,
-.sky-chart-placement-list-item-group .sky-chart-placement-choice{font-weight:900!important}
+.sky-chart-placement-list-choices{display:contents}
+.sky-chart-placement-choice{display:flex!important;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:35px;box-sizing:border-box;padding:6px;border-left:1px solid rgba(31,27,24,.08);background:rgba(31,27,24,.018)!important;color:#514a44!important;cursor:pointer;font:800 .59rem/1 system-ui,sans-serif!important}
+.sky-chart-placement-list-item-master .sky-chart-placement-choice{min-height:42px;font-weight:900!important}
+.sky-chart-placement-list-item-group .sky-chart-placement-choice{min-height:39px;font-weight:900!important}
+.sky-chart-placement-list-choices .sky-chart-placement-choice span{display:none}
 .sky-chart-placement-choice:has(input:disabled){cursor:default;opacity:.45}
-.sky-chart-placement-filter input[type="checkbox"],
-.sky-chart-placement-filter-popover input[type="checkbox"]{width:15px;height:15px;min-width:15px;margin:0;accent-color:#544c45}
-.sky-chart-placement-choice-a input[type="checkbox"]{accent-color:#c9211e}
-.sky-chart-placement-choice-b input[type="checkbox"]{accent-color:#2462d0}
+.sky-chart-placement-filter input[type="checkbox"],.sky-chart-placement-filter-popover input[type="checkbox"]{appearance:none;-webkit-appearance:none;position:relative;width:15px;height:15px;min-width:15px;margin:0;border:1px solid #211d19;border-radius:3px;background:#fff!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);color:#111;cursor:pointer;accent-color:transparent!important}
+.sky-chart-placement-filter input[type="checkbox"]::after,.sky-chart-placement-filter-popover input[type="checkbox"]::after{content:"";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#111;font:900 13px/13px Arial,sans-serif}
+.sky-chart-placement-filter input[type="checkbox"]:checked::after,.sky-chart-placement-filter-popover input[type="checkbox"]:checked::after{content:"✓"}
+.sky-chart-placement-filter input[type="checkbox"]:indeterminate::after,.sky-chart-placement-filter-popover input[type="checkbox"]:indeterminate::after{content:"−";font-size:14px}
+.sky-chart-placement-filter input[type="checkbox"]:focus-visible,.sky-chart-placement-filter-popover input[type="checkbox"]:focus-visible{outline:2px solid #625a52;outline-offset:2px}
+.sky-chart-placement-filter input[type="checkbox"]:disabled,.sky-chart-placement-filter-popover input[type="checkbox"]:disabled{cursor:default;opacity:.45}
 .sky-chart-multiselect-hidden{display:none!important}
-
-@media(max-width:840px){
-  .sky-chart-filter-bar[data-multiselect-placement-filters="true"]{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .sky-chart-placement-filter{grid-column:span 2!important}
-  .sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-filter-house-system{grid-column:span 2}
-}
-@media(max-width:620px){
-  .sky-chart-filter-bar[data-multiselect-placement-filters="true"]{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .sky-chart-placement-filter{grid-column:1/-1!important}
-  .sky-chart-filter-bar[data-multiselect-placement-filters="true"]>.sky-chart-filter-house-system{grid-column:1/-1}
-  .sky-chart-placement-list-choices{grid-template-columns:repeat(3,minmax(43px,auto))}
-  .sky-chart-placement-choice{padding:6px 5px}
-  .sky-chart-placement-list-label{padding:7px 8px;font-size:.63rem}
-}
+/* Native select controls reserve explicit arrow room. This also protects the neighboring filters. */
+.sky-chart-filter-bar select{box-sizing:border-box;padding-right:2.15rem!important;text-overflow:ellipsis}
+/* In single-sky mode the B column is not applicable, so the placement table collapses to All + A. */
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-summary-choices .sky-chart-placement-choice-b,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list .sky-chart-placement-choice-b,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-header span:last-child{display:none!important}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-header,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,40px)}
+@media(max-width:840px){.sky-chart-placement-filter{grid-column:span 2!important}}
+@media(max-width:620px){.sky-chart-placement-filter{grid-column:1/-1!important}.sky-chart-placement-list-header,.sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(3,38px)}html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-header,html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,38px)}.sky-chart-placement-list-label{padding:7px 8px;font-size:.63rem}}
