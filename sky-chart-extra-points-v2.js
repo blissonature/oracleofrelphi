@@ -11,7 +11,7 @@
   const norm=value=>((Number(value)%360)+360)%360;
   const rad=value=>Number(value)*Math.PI/180;
   const deg=value=>Number(value)*180/Math.PI;
-  const distance=(a,b)=>Math.abs(((Number(a)-Number(b)+180)%360+360)%360-180);
+  const signedDifference=(a,b)=>((Number(a)-Number(b)+540)%360)-180;
   function read(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_){return null}}
   function write(key,value){localStorage.setItem(key,JSON.stringify(value))}
   function placement(name,longitude,source){
@@ -35,24 +35,33 @@
     const perigee=83.3532465+4069.0137287*T-0.01032*T*T-(T*T*T)/80053+(T*T*T*T)/18999000;
     return norm(perigee+180);
   }
-  function vectorToLongitude(vector,obliquity){
-    const yEcliptic=vector.y*Math.cos(rad(obliquity))+vector.z*Math.sin(rad(obliquity));
-    return norm(deg(Math.atan2(yEcliptic,vector.x)));
-  }
-  function vertexLongitude(date,latitude,longitude,ascendant){
+
+  // Standard tropical Vertex geometry, equivalent to Swiss Ephemeris' Vertex construction:
+  // use local ARMC minus 90 degrees with the complementary geographic latitude.
+  // The earlier implementation intersected the local-north plane with the ecliptic and
+  // selected the intersection nearest the Descendant; that produced the wrong point.
+  function vertexLongitude(date,latitude,longitude){
     if(!window.Astronomy)return NaN;
-    const lst=norm(window.Astronomy.SiderealTime(date)*15+Number(longitude));
-    const obliquity=Number(window.Astronomy.e_tilt(date).tobl);
-    if(!Number.isFinite(lst)||!Number.isFinite(obliquity)||!Number.isFinite(Number(latitude)))return NaN;
-    const L=rad(lst),phi=rad(Math.max(-89.999,Math.min(89.999,Number(latitude))));
-    const north={x:-Math.sin(phi)*Math.cos(L),y:-Math.sin(phi)*Math.sin(L),z:Math.cos(phi)};
-    const eclipticNormal={x:0,y:-Math.sin(rad(obliquity)),z:Math.cos(rad(obliquity))};
-    const line={x:north.y*eclipticNormal.z-north.z*eclipticNormal.y,y:north.z*eclipticNormal.x-north.x*eclipticNormal.z,z:north.x*eclipticNormal.y-north.y*eclipticNormal.x};
-    const magnitude=Math.hypot(line.x,line.y,line.z);if(magnitude<1e-9)return NaN;
-    const unit={x:line.x/magnitude,y:line.y/magnitude,z:line.z/magnitude};
-    const first=vectorToLongitude(unit,obliquity),second=norm(first+180),descendant=norm(Number(ascendant)+180);
-    return distance(first,descendant)<=distance(second,descendant)?first:second;
+    const lat=Number(latitude),lon=Number(longitude);
+    if(!Number.isFinite(lat)||!Number.isFinite(lon))return NaN;
+    const armc=norm(window.Astronomy.SiderealTime(date)*15+lon);
+    const epsilon=Number(window.Astronomy.e_tilt(date).tobl);
+    if(!Number.isFinite(armc)||!Number.isFinite(epsilon))return NaN;
+
+    const x=norm(armc-90);
+    const poleLatitude=lat>=0?90-lat:-90-lat;
+    const numerator=Math.sin(rad(x));
+    const denominator=Math.cos(rad(epsilon))*Math.cos(rad(x))-Math.sin(rad(epsilon))*Math.tan(rad(poleLatitude));
+    let vertex=norm(deg(Math.atan2(numerator,denominator)));
+
+    // At tropical latitudes Swiss Ephemeris keeps the Vertex on the western hemisphere.
+    if(Math.abs(lat)<=epsilon){
+      const mc=norm(deg(Math.atan2(Math.sin(rad(armc)),Math.cos(rad(armc))*Math.cos(rad(epsilon)))));
+      if(signedDifference(vertex,mc)>0)vertex=norm(vertex+180);
+    }
+    return vertex;
   }
+
   function houseFor(value,cusps){for(let index=0;index<12;index++){const start=norm(cusps[index]),span=norm(cusps[(index+1)%12]-start)||30;if(norm(Number(value)-start)<span)return index+1}return 12}
   function enrich(payload){
     if(!payload)return false;
@@ -79,14 +88,39 @@
       delete placements[lilithEntry[0]];
     }
 
-    if(!find(placements,['Vertex'])&&asc&&Number.isFinite(Number(profile.latitude))&&Number.isFinite(Number(profile.longitude))){const value=vertexLongitude(instant,Number(profile.latitude),Number(profile.longitude),Number(asc.longitude));if(Number.isFinite(value))placements.Vertex=placement('Vertex',value,'prime-vertical')}
+    // Vertex is fully determined by the chart instant and geographic coordinates.
+    // Recalculate it whenever those inputs are available so an old derived Vertex cannot survive
+    // a change of date/location. If the required inputs disappear, remove only our own derived value.
+    const vertexEntry=findEntry(placements,['Vertex']);
+    const vertex=vertexEntry?.[1]||null;
+    const vertexWasDerived=!!(vertex&&['prime-vertical','prime-vertical-swiss'].includes(vertex.source));
+    const latitude=Number(profile.latitude),longitude=Number(profile.longitude);
+    const hasVertexInputs=hasExplicitInstant&&Number.isFinite(latitude)&&Number.isFinite(longitude)&&!!window.Astronomy;
+    if(hasVertexInputs){
+      const value=vertexLongitude(explicitInstant,latitude,longitude);
+      if(Number.isFinite(value)){
+        const key=vertexEntry?.[0]||'Vertex';
+        placements[key]=placement('Vertex',value,'prime-vertical-swiss');
+      }
+    }else if(vertexWasDerived&&vertexEntry){
+      delete placements[vertexEntry[0]];
+    }
+
     if(!find(placements,['Part of Fortune'])&&asc&&sun&&moon){
       let day=true;try{if(window.SunCalc&&Number.isFinite(Number(profile.latitude))&&Number.isFinite(Number(profile.longitude)))day=window.SunCalc.getPosition(instant,Number(profile.latitude),Number(profile.longitude)).altitude>0}catch(_){}
       placements['Part of Fortune']=placement('Part of Fortune',day?Number(asc.longitude)+Number(moon.longitude)-Number(sun.longitude):Number(asc.longitude)+Number(sun.longitude)-Number(moon.longitude),day?'day-fortune':'night-fortune');
     }
     const cusps=profile.houseCusps||profile.cusps||payload.houseCusps;if(Array.isArray(cusps)&&cusps.length===12)Object.values(placements).forEach(item=>{if(Number.isFinite(Number(item?.longitude)))item.house=houseFor(Number(item.longitude),cusps)});
     const finalLilith=find(placements,['Lilith','Black Moon Lilith']);
-    profile.extraPoints={nodes:'mean',lilith:finalLilith?(finalLilith.source==='mean-lunar-apogee'?'mean':'provided'):'not-provided',vertex:'calculated',partOfFortune:'calculated',chiron:find(placements,['Chiron'])?'provided':'not-provided'};payload.calcProfile=profile;
+    const finalVertex=find(placements,['Vertex']);
+    profile.extraPoints={
+      nodes:'mean',
+      lilith:finalLilith?(finalLilith.source==='mean-lunar-apogee'?'mean':'provided'):'not-provided',
+      vertex:finalVertex?(finalVertex.source==='prime-vertical-swiss'?'calculated':'provided'):'not-provided',
+      partOfFortune:'calculated',
+      chiron:find(placements,['Chiron'])?'provided':'not-provided'
+    };
+    payload.calcProfile=profile;
     return before!==JSON.stringify(payload);
   }
   function run(){
