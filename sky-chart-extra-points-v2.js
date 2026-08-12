@@ -23,10 +23,11 @@
     if(payload.placements&&typeof payload.placements==='object'&&!Array.isArray(payload.placements))return payload.placements;
     payload.placements={};return payload.placements;
   }
-  function find(source,names){
+  function findEntry(source,names){
     const wanted=names.map(name=>String(name).toLowerCase().replace(/[^a-z0-9]/g,''));
-    return Object.entries(source).find(([key,item])=>wanted.includes(String(item?.name||item?.label||key).toLowerCase().replace(/[^a-z0-9]/g,'')))?.[1]||null;
+    return Object.entries(source).find(([key,item])=>wanted.includes(String(item?.name||item?.label||key).toLowerCase().replace(/[^a-z0-9]/g,'')))||null;
   }
+  function find(source,names){return findEntry(source,names)?.[1]||null}
   function julianCenturies(date){return((date.getTime()/86400000+2440587.5)-2451545)/36525}
   function meanNode(date){const T=julianCenturies(date);return norm(125.04452-1934.136261*T+0.0020708*T*T+(T*T*T)/450000)}
   function meanLilith(date){
@@ -57,19 +58,35 @@
     if(!payload)return false;
     const before=JSON.stringify(payload),placements=sourceOf(payload),profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
     const asc=find(placements,['Ascendant','ASC','Rising']),mc=find(placements,['Midheaven','Medium Coeli','MC']),sun=find(placements,['Sun']),moon=find(placements,['Moon']);
-    const instant=new Date(profile.instant||profile.dateTime||Date.now());
+    const explicitInstantRaw=profile.instant||profile.dateTime||payload.instant||payload.dateTime;
+    const explicitInstant=explicitInstantRaw?new Date(explicitInstantRaw):null;
+    const hasExplicitInstant=!!(explicitInstant&&!Number.isNaN(explicitInstant.getTime()));
+    const instant=hasExplicitInstant?explicitInstant:new Date();
     if(asc&&Number.isFinite(Number(asc.longitude))&&!find(placements,['Descendant','DSC']))placements.Descendant=placement('Descendant',Number(asc.longitude)+180,'derived-angle');
     if(mc&&Number.isFinite(Number(mc.longitude))&&!find(placements,['IC','Imum Coeli']))placements['Imum Coeli']=placement('Imum Coeli',Number(mc.longitude)+180,'derived-angle');
     if(!find(placements,['North Node','True Node','Mean Node']))placements['North Node']=placement('North Node',meanNode(instant),'mean-node');
     if(!find(placements,['South Node']))placements['South Node']=placement('South Node',Number(find(placements,['North Node']).longitude)+180,'mean-node-opposition');
-    if(!find(placements,['Lilith','Black Moon Lilith']))placements.Lilith=placement('Lilith',meanLilith(instant),'mean-lunar-apogee');
+
+    // Lilith is time-dependent. Never silently use Date.now() for a sky that has no chart instant,
+    // and always refresh values that this module previously derived as the mean lunar apogee.
+    const lilithEntry=findEntry(placements,['Lilith','Black Moon Lilith']);
+    const lilith=lilithEntry?.[1]||null;
+    const lilithWasDerived=!!(lilith&&(lilith.source==='mean-lunar-apogee'||profile.extraPoints?.lilith==='mean'));
+    if(hasExplicitInstant&&(!lilith||lilithWasDerived)){
+      const key=lilithEntry?.[0]||'Lilith';
+      placements[key]=placement('Lilith',meanLilith(explicitInstant),'mean-lunar-apogee');
+    }else if(!hasExplicitInstant&&lilithWasDerived&&lilithEntry){
+      delete placements[lilithEntry[0]];
+    }
+
     if(!find(placements,['Vertex'])&&asc&&Number.isFinite(Number(profile.latitude))&&Number.isFinite(Number(profile.longitude))){const value=vertexLongitude(instant,Number(profile.latitude),Number(profile.longitude),Number(asc.longitude));if(Number.isFinite(value))placements.Vertex=placement('Vertex',value,'prime-vertical')}
     if(!find(placements,['Part of Fortune'])&&asc&&sun&&moon){
       let day=true;try{if(window.SunCalc&&Number.isFinite(Number(profile.latitude))&&Number.isFinite(Number(profile.longitude)))day=window.SunCalc.getPosition(instant,Number(profile.latitude),Number(profile.longitude)).altitude>0}catch(_){}
       placements['Part of Fortune']=placement('Part of Fortune',day?Number(asc.longitude)+Number(moon.longitude)-Number(sun.longitude):Number(asc.longitude)+Number(sun.longitude)-Number(moon.longitude),day?'day-fortune':'night-fortune');
     }
     const cusps=profile.houseCusps||profile.cusps||payload.houseCusps;if(Array.isArray(cusps)&&cusps.length===12)Object.values(placements).forEach(item=>{if(Number.isFinite(Number(item?.longitude)))item.house=houseFor(Number(item.longitude),cusps)});
-    profile.extraPoints={nodes:'mean',lilith:'mean',vertex:'calculated',partOfFortune:'calculated',chiron:find(placements,['Chiron'])?'provided':'not-provided'};payload.calcProfile=profile;
+    const finalLilith=find(placements,['Lilith','Black Moon Lilith']);
+    profile.extraPoints={nodes:'mean',lilith:finalLilith?(finalLilith.source==='mean-lunar-apogee'?'mean':'provided'):'not-provided',vertex:'calculated',partOfFortune:'calculated',chiron:find(placements,['Chiron'])?'provided':'not-provided'};payload.calcProfile=profile;
     return before!==JSON.stringify(payload);
   }
   function run(){
