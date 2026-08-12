@@ -1,0 +1,5 @@
+.sky-foundation-relationship-row.sky-chart-semantic-hidden{display:none!important}
+[data-layer="aspects"] .sky-chart-semantic-hidden{display:none!important}
+[data-layer="aspects"] .sky-chart-constitutive-line{display:none!important}
+.sky-foundation-relationship-row[data-relationship-kind="constitutive"]{position:relative;border-color:rgba(124,83,33,.28);background:linear-gradient(90deg,rgba(245,235,214,.62),rgba(255,253,248,.96) 34%)}
+.sky-chart-structure-badge{position:absolute;top:.28rem;right:.42rem;z-index:1;padding:.18rem .38rem;border:1px solid rgba(124,83,33,.24);border-radius:999px;background:#fff8e8;color:#725020;font:850 .52rem/1 system-ui,sans-serif;letter-spacing:.035em;text-transform:uppercase;pointer-events:none}
