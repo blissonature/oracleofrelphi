@@ -14,9 +14,13 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundation
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph>g{transform:scale(.72);transform-box:fill-box;transform-origin:center}
 .sky-foundation-single-wheel [data-layer="placements"]>g:not([data-angle-axis="true"])>g{transform:scale(.84);transform-box:fill-box;transform-origin:center}
 .sky-foundation-single-wheel [data-layer="placements"]>g[data-angle-axis="true"]>g{transform:scale(.76);transform-box:fill-box;transform-origin:center}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-choice-b{display:none!important}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-choice-b,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) [data-placement-choice="b"],
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) label:has(>input[data-placement-choice="b"]){display:none!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-choices{grid-template-columns:repeat(2,minmax(47px,auto))!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-choice-b{display:none!important}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-choice-b,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) [data-house-choice="b"],
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) label:has(>input[data-house-choice="b"]){display:none!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header,
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) repeat(2,40px)!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header>span:last-child{display:none!important}
