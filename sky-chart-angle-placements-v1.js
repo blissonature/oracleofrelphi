@@ -1,4 +1,4 @@
-// Normalize Ascendant, Descendant, Midheaven, and Imum Coeli as first-class
+// Normalize Ascendant, Descendant, Medium Coeli, and Imum Coeli as first-class
 // Sky Chart placements without replacing the Master Glyph List entries.
 (function () {
   'use strict';
@@ -14,10 +14,10 @@
   const KEYS = new Set(['relphiSkyChartA', 'relphiSkyChartB']);
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const ANGLES = Object.freeze([
-    { id:'asc', key:'Ascendant', label:'Asc.', registry:'asc', aliases:['asc','ascendant','ac','rising'] },
-    { id:'dsc', key:'Descendant', label:'Desc.', registry:'dsc', aliases:['dsc','desc','descendant','dc'] },
-    { id:'mc', key:'Midheaven', label:'MC', registry:'mc', aliases:['mc','midheaven','medium coeli'] },
-    { id:'ic', key:'IC', label:'IC', registry:'ic', aliases:['ic','imum coeli','imumcoeli'] }
+    { id:'asc', key:'Ascendant', label:'Ascendant', registry:'asc', aliases:['asc','ascendant','ac','rising'] },
+    { id:'dsc', key:'Descendant', label:'Descendant', registry:'dsc', aliases:['dsc','desc','descendant','dc'] },
+    { id:'mc', key:'Medium Coeli', label:'Medium Coeli', registry:'mc', aliases:['mc','midheaven','medium coeli'] },
+    { id:'ic', key:'Imum Coeli', label:'Imum Coeli', registry:'ic', aliases:['ic','imum coeli','imumcoeli'] }
   ]);
   const originalSetItem = Storage.prototype.setItem;
   let decorating = false;
