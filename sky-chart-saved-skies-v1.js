@@ -192,7 +192,7 @@
       container.replaceChildren();button=document.createElement('button');button.type='button';button.className='sky-saved-name-trigger';button.dataset.savedSkyTrigger=slot;button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');
       const label=document.createElement('span');label.className='sky-saved-name-label';const chevron=document.createElement('span');chevron.className='sky-saved-name-chevron';chevron.textContent='⌄';chevron.setAttribute('aria-hidden','true');button.append(label,chevron);container.appendChild(button);
     }
-    const label=button.querySelector('.sky-saved-name-label');if(label)label.textContent=state.name;
+    const label=button.querySelector('.sky-saved-name-label');if(label&&label.textContent!==state.name)label.textContent=state.name;
     button.title=state.saved?(state.dirty?`${state.name} · unsaved changes`:state.name):`${state.name} · open Saved skies`;
     button.classList.toggle('is-saved',state.saved);button.classList.toggle('is-dirty',state.dirty);
     button.setAttribute('aria-label',`${state.name}. Open Saved skies for Sky ${slot}.`);
@@ -233,7 +233,7 @@
     ensurePopover();schedule();
     const root=document.getElementById('skyFoundationRoot')||document.body;
     observer=new MutationObserver(records=>{if(records.every(record=>record.target?.closest?.('.sky-saved-skies-popover')))return;schedule()});
-    observer.observe(root,{childList:true,subtree:true,characterData:true});
+    observer.observe(root,{childList:true,subtree:true});
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
