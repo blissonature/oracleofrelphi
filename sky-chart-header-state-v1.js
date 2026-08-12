@@ -1,4 +1,4 @@
-// Keep Sky A and Sky B headers aligned and make "Update to Now" names truthful.
+// Keep Sky A and Sky B headers aligned and make "Update to Now" detach from saved-sky identity.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
@@ -14,8 +14,9 @@
     style.textContent=`
       #skyFoundationA>.sky-foundation-heading,
       #skyFoundationB>.sky-foundation-heading{
+        position:relative!important;
         display:grid!important;
-        grid-template-columns:68px minmax(0,1fr)!important;
+        grid-template-columns:68px minmax(0,1fr) auto!important;
         grid-template-rows:44px auto!important;
         align-items:center!important;
         min-height:92px!important;
@@ -46,12 +47,16 @@
         grid-column:2!important;
         grid-row:1!important;
         min-width:0!important;
-        overflow:hidden!important;
-        text-overflow:ellipsis!important;
-        white-space:nowrap!important;
+        overflow:visible!important;
         line-height:1.2!important;
-        padding:0 .8rem!important;
+        padding:0 .45rem 0 .8rem!important;
         margin:0!important;
+      }
+      #skyFoundationA>.sky-foundation-heading>.sky-slot-card-control,
+      #skyFoundationB>.sky-foundation-heading>.sky-slot-card-control{
+        grid-column:3!important;
+        grid-row:1!important;
+        margin:0 .45rem 0 .15rem!important;
       }
       #skyFoundationA>.sky-foundation-heading>.sky-where-when-actions,
       #skyFoundationB>.sky-foundation-heading>.sky-where-when-actions{
@@ -77,7 +82,7 @@
   function isUpdateNow(button){
     return /update\s+to\s+now/i.test(String(button?.textContent||'').replace(/\s+/g,' ').trim());
   }
-  function currentName(){return 'Current sky'}
+  function currentName(){return 'Now'}
   function applyDisplay(slot){
     const panel=document.getElementById(`skyFoundation${slot}`);
     const name=panel?.querySelector(':scope > .sky-foundation-heading .sky-foundation-name');
@@ -91,6 +96,9 @@
     value.displayName=name;
     value.skyName=name;
     value.metadata=value.metadata&&typeof value.metadata==='object'?value.metadata:{};
+    delete value.metadata.savedSkyId;
+    delete value.metadata.savedSkyName;
+    delete value.metadata.savedSkyLoadedAt;
     value.metadata.name=name;
     value.metadata.title=name;
     value.calcProfile=value.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
