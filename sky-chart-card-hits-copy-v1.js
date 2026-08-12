@@ -82,6 +82,7 @@
   }
 
   function setCopied(button){
+    if(!button)return;
     button.dataset.copyState='done';button.textContent='Copied';
     window.setTimeout(()=>{if(!button.isConnected)return;button.dataset.copyState='';button.textContent=COPY_LABEL},1400);
   }
@@ -89,10 +90,19 @@
   async function copyAll(button){
     const section=button.closest('[data-card-hits-slot]');
     if(!section)return;
+    const slot=slotFor(section);
     const markdown=markdownForAll(section);
     if(!markdown)return;
-    try{await writeClipboard(markdown);setCopied(button)}
-    catch(error){console.error('[Sky Chart] Card Hits copy failed',error);button.textContent='Copy failed';window.setTimeout(()=>{if(button.isConnected)button.textContent=COPY_LABEL},1600)}
+    try{
+      await writeClipboard(markdown);
+      hydrate();
+      setCopied(document.querySelector(`[data-card-hits-slot="${slot}"] [data-copy-all-card-hits]`)||button);
+    }catch(error){
+      console.error('[Sky Chart] Card Hits copy failed',error);
+      hydrate();
+      const visible=document.querySelector(`[data-card-hits-slot="${slot}"] [data-copy-all-card-hits]`)||button;
+      visible.textContent='Copy failed';window.setTimeout(()=>{if(visible.isConnected)visible.textContent=COPY_LABEL},1600);
+    }
   }
 
   function installButton(section){
