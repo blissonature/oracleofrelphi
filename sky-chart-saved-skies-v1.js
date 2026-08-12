@@ -8,6 +8,7 @@
   const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky']);
   let openSlot=null,queued=false,popover=null,observer=null;
+  let namingMode=false,nameDraft='';
 
   const normalize=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const clone=value=>JSON.parse(JSON.stringify(value));
@@ -163,7 +164,8 @@
       return `<button type="button" class="sky-saved-list-item${current?' is-active':''}" data-saved-sky-ref="${escapeHtml(ref)}"><span class="sky-saved-list-name">${escapeHtml(record.name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button>`;
     }).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
     const status=active.saved?(active.dirty?'Unsaved changes':'Saved'):'Not saved';
-    menu.innerHTML=`<div class="sky-saved-popover-head"><strong>Saved skies</strong><button type="button" data-saved-close aria-label="Close saved skies">×</button></div><div class="sky-saved-list">${items}</div><div class="sky-saved-popover-foot"><div class="sky-saved-active-status"><span>${escapeHtml(active.name)}</span><small>${status}</small></div><div class="sky-saved-actions">${active.saved&&active.dirty?'<button type="button" data-saved-update>Save changes</button>':''}<button type="button" data-saved-as>${active.saved?'Save as…':'Save this sky…'}</button></div><form class="sky-saved-name-form" data-saved-name-form hidden><label><span>Name this sky</span><input type="text" maxlength="80" autocomplete="off" data-saved-name-input></label><div><button type="button" data-saved-name-cancel>Cancel</button><button type="submit">Save</button></div><p data-saved-form-status aria-live="polite"></p></form></div>`;
+    const formHidden=namingMode?'':' hidden';
+    menu.innerHTML=`<div class="sky-saved-popover-head"><strong>Saved skies</strong><button type="button" data-saved-close aria-label="Close saved skies">×</button></div><div class="sky-saved-list">${items}</div><div class="sky-saved-popover-foot"><div class="sky-saved-active-status"><span>${escapeHtml(active.name)}</span><small>${status}</small></div><div class="sky-saved-actions">${active.saved&&active.dirty?'<button type="button" data-saved-update>Save changes</button>':''}<button type="button" data-saved-as>${active.saved?'Save as…':'Save this sky…'}</button></div><form class="sky-saved-name-form" data-saved-name-form${formHidden}><label><span>Name this sky</span><input type="text" maxlength="80" autocomplete="off" data-saved-name-input value="${escapeHtml(nameDraft)}"></label><div><button type="button" data-saved-name-cancel>Cancel</button><button type="submit">Save</button></div><p data-saved-form-status aria-live="polite"></p></form></div>`;
     positionPopover();
   }
   function triggerFor(slot){return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`)}
@@ -178,10 +180,11 @@
     Object.assign(popover.style,{width:`${width}px`,maxHeight:`${maxHeight}px`,left:`${left}px`,top:openAbove?'auto':`${rect.bottom+gap}px`,bottom:openAbove?`${window.innerHeight-rect.top+gap}px`:'auto'});
   }
   function open(slot){
-    openSlot=slot;const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true');
+    openSlot=slot;namingMode=false;nameDraft='';
+    const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true');
   }
   function close(){
-    if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;
+    if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;namingMode=false;nameDraft='';
   }
 
   function renderIdentity(slot){
@@ -190,7 +193,7 @@
     const state=identity(slot);let button=container.querySelector('[data-saved-sky-trigger]');
     if(!button){
       container.replaceChildren();button=document.createElement('button');button.type='button';button.className='sky-saved-name-trigger';button.dataset.savedSkyTrigger=slot;button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');
-      const label=document.createElement('span');label.className='sky-saved-name-label';const chevron=document.createElement('span');chevron.className='sky-saved-name-chevron';chevron.textContent='⌄';chevron.setAttribute('aria-hidden','true');button.append(label,chevron);container.appendChild(button);
+      const label=document.createElement('span');label.className='sky-saved-name-label';const chevron=document.createElement('span');chevron.className='sky-saved-name-chevron';chevron.setAttribute('aria-hidden','true');button.append(label,chevron);container.appendChild(button);
     }
     const label=button.querySelector('.sky-saved-name-label');if(label&&label.textContent!==state.name)label.textContent=state.name;
     button.title=state.saved?(state.dirty?`${state.name} · unsaved changes`:state.name):`${state.name} · open Saved skies`;
@@ -199,6 +202,18 @@
   }
   function sync(){queued=false;renderIdentity('A');renderIdentity('B');if(openSlot)renderPopover()}
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
+  function beginNaming(){
+    if(!openSlot)return;
+    const active=identity(openSlot);
+    namingMode=true;
+    nameDraft=active.saved?'':candidateName(payload(openSlot));
+    renderPopover();
+    requestAnimationFrame(()=>{
+      const input=popover?.querySelector('[data-saved-name-input]');
+      if(!input)return;
+      input.focus();input.select();input.scrollIntoView({block:'nearest'});positionPopover();
+    });
+  }
 
   document.addEventListener('click',event=>{
     const trigger=event.target.closest?.('[data-saved-sky-trigger]');
@@ -207,15 +222,22 @@
     const item=event.target.closest?.('[data-saved-sky-ref]');
     if(item&&openSlot){const record=library().find(entry=>recordRef(entry)===item.dataset.savedSkyRef);if(record&&loadRecord(openSlot,record)){close();schedule()}return}
     if(event.target.closest?.('[data-saved-update]')&&openSlot){const state=identity(openSlot);if(state.record){const result=saveActive(openSlot,state.record.name,state.record);renderPopover();const node=popover.querySelector('[data-saved-form-status]');if(node)node.textContent=result.message}return}
-    if(event.target.closest?.('[data-saved-as]')&&openSlot){const form=popover.querySelector('[data-saved-name-form]');if(form){form.hidden=false;const input=form.querySelector('[data-saved-name-input]');input.value=identity(openSlot).saved?'':candidateName(payload(openSlot));input.focus()}return}
-    if(event.target.closest?.('[data-saved-name-cancel]')){const form=popover.querySelector('[data-saved-name-form]');if(form)form.hidden=true;return}
+    if(event.target.closest?.('[data-saved-as]')&&openSlot){event.preventDefault();event.stopPropagation();beginNaming();return}
+    if(event.target.closest?.('[data-saved-name-cancel]')){event.preventDefault();namingMode=false;nameDraft='';renderPopover();return}
   },true);
+
+  document.addEventListener('input',event=>{
+    const input=event.target.closest?.('[data-saved-name-input]');
+    if(input&&openSlot&&namingMode)nameDraft=input.value;
+  });
 
   document.addEventListener('submit',event=>{
     const form=event.target.closest?.('[data-saved-name-form]');if(!form||!openSlot)return;
     event.preventDefault();const input=form.querySelector('[data-saved-name-input]'),status=form.querySelector('[data-saved-form-status]');
-    const result=saveActive(openSlot,input?.value||'');if(status)status.textContent=result.message;
-    if(result.ok){form.hidden=true;renderPopover();schedule()}
+    nameDraft=input?.value||'';
+    const result=saveActive(openSlot,nameDraft);if(status)status.textContent=result.message;
+    if(result.ok){namingMode=false;nameDraft='';renderPopover();schedule()}
+    else input?.focus();
   });
 
   document.addEventListener('pointerdown',event=>{
@@ -223,7 +245,7 @@
     if(popover.contains(event.target)||triggerFor(openSlot)?.contains(event.target))return;
     close();
   },true);
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&openSlot){const trigger=triggerFor(openSlot);close();trigger?.focus()}});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&openSlot){if(namingMode){namingMode=false;nameDraft='';renderPopover();triggerFor(openSlot)?.focus();return}const trigger=triggerFor(openSlot);close();trigger?.focus()}});
   window.addEventListener('resize',positionPopover,{passive:true});
   window.addEventListener('scroll',positionPopover,{passive:true,capture:true});
   window.addEventListener('storage',event=>{if(!event.key||event.key===LIBRARY_KEY||Object.values(SLOT_KEYS).includes(event.key))schedule()});
