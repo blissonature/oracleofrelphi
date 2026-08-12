@@ -9,9 +9,10 @@ html[data-sky-b-present="false"] #skyFoundationWheelMount>.sky-foundation-wheel:
 #skyFoundationWheelMount[data-single-sky-pending="true"]>*{visibility:hidden!important}
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph{filter:var(--sky-silver-glow)}
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-glyph-bubble>circle{display:none!important}
-/* In true one-sky mode the A/B slot language is internal, not page copy. Keep one
-   plain sky name in the card, remove the slot badge and the redundant wheel title. */
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA>.sky-foundation-heading .sky-foundation-slot{display:none!important}
+/* In true one-sky mode keep the authored red slot-tab identity and remove the
+   duplicate plain name plus the redundant title over the main wheel. */
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA>.sky-foundation-heading .sky-foundation-slot{display:inline-flex!important}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA>.sky-foundation-heading .sky-foundation-name{display:none!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison>.sky-foundation-heading>span:first-child{display:none!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison>.sky-foundation-heading{justify-content:flex-end}
 /* The main wheel already is the standalone chart. Keep the house-system control in
