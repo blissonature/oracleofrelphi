@@ -7,7 +7,6 @@
   window.__relphiSkyMultiselectFiltersV2 = true;
 
   const SLOTS = ['A','B'];
-  const QUIET_BY_DEFAULT = new Set(['asc','dsc','mc','ic']);
   const GROUPS = Object.freeze([
     { id:'luminaries', label:'Luminaries', members:new Set(['sun','moon']) },
     { id:'planets', label:'Planets', members:new Set(['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']) },
@@ -223,7 +222,7 @@
     choices.className = 'sky-chart-placement-summary-choices';
     choices.setAttribute('role','group');
     choices.setAttribute('aria-label','All placements');
-    ['all','a','b'].forEach(choice => choices.appendChild(choiceControl('all','all',choice,'All placements')));
+    ['all','a','b'].forEach(choice => choices.appendChild(choiceControl('all','all',choice,'All placements'));
     const toggle = document.createElement('button');
     toggle.type = 'button';
     toggle.className = 'sky-chart-placement-filter-toggle';
@@ -317,12 +316,9 @@
     const previouslyAll = current.initialized && current.selected.size === current.available.size;
     const previous = new Set(current.selected);
     current.available = new Map(entries.map(entry => [entry.id,entry]));
-    const defaultSelection = new Set(Array.from(current.available.keys()).filter(id => !QUIET_BY_DEFAULT.has(id)));
-    current.selected = !current.initialized
-      ? defaultSelection
-      : previouslyAll
-        ? new Set(current.available.keys())
-        : new Set(Array.from(previous).filter(id => current.available.has(id)));
+    current.selected = !current.initialized || previouslyAll
+      ? new Set(current.available.keys())
+      : new Set(Array.from(previous).filter(id => current.available.has(id)));
     current.initialized = true;
     current.signature = signature;
     return true;
