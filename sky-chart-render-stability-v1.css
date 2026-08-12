@@ -1,1 +1,1 @@
-html:not([data-sky-wheel-stable="true"]) #skyFoundationWheelMount{visibility:hidden}html[data-sky-wheel-stable="true"] #skyFoundationWheelMount{visibility:visible}
+html:not([data-sky-wheel-stable="true"]) #skyFoundationWheelMount{visibility:hidden}html[data-sky-wheel-stable="true"] #skyFoundationWheelMount{visibility:visible}.sky-foundation-wheel.has-isolation .sky-foundation-leader,.sky-foundation-wheel.has-isolation .sky-foundation-angle-axis{opacity:1!important;visibility:visible!important}
