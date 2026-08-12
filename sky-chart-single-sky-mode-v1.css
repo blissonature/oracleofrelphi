@@ -6,7 +6,14 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundation
 .sky-slot-add{margin-left:auto;color:#1f55b4}
 #skyFoundationWheelMount>.sky-foundation-single-wheel{display:block;width:100%;height:auto;max-height:min(78vh,900px);overflow:visible}
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph{filter:var(--sky-silver-glow)}
-.sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph>.relphi-glyph-bubble>circle{display:none!important}
+/* The single-sky renderer nests the canonical clone one level deeper than the
+   comparison wheel. Hide only the presentation circle; preserve the canonical
+   glyph geometry itself. */
+.sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-glyph-bubble>circle{display:none!important}
+/* Scale complete canonical objects uniformly; never alter their internal geometry. */
+.sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph>g{transform:scale(.72);transform-box:fill-box;transform-origin:center}
+.sky-foundation-single-wheel [data-layer="placements"]>g:not([data-angle-axis="true"])>g{transform:scale(.84);transform-box:fill-box;transform-origin:center}
+.sky-foundation-single-wheel [data-layer="placements"]>g[data-angle-axis="true"]>g{transform:scale(.76);transform-box:fill-box;transform-origin:center}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-choice-b{display:none!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-choices{grid-template-columns:repeat(2,minmax(47px,auto))!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-choice-b{display:none!important}
