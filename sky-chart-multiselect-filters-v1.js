@@ -7,6 +7,7 @@
   window.__relphiSkyMultiselectFiltersV2 = true;
 
   const SLOTS = ['A','B'];
+  const QUIET_BY_DEFAULT = new Set(['asc','dsc','mc','ic']);
   const GROUPS = Object.freeze([
     { id:'luminaries', label:'Luminaries', members:new Set(['sun','moon']) },
     { id:'planets', label:'Planets', members:new Set(['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']) },
@@ -316,9 +317,12 @@
     const previouslyAll = current.initialized && current.selected.size === current.available.size;
     const previous = new Set(current.selected);
     current.available = new Map(entries.map(entry => [entry.id,entry]));
-    current.selected = !current.initialized || previouslyAll
-      ? new Set(current.available.keys())
-      : new Set(Array.from(previous).filter(id => current.available.has(id)));
+    const defaultSelection = new Set(Array.from(current.available.keys()).filter(id => !QUIET_BY_DEFAULT.has(id)));
+    current.selected = !current.initialized
+      ? defaultSelection
+      : previouslyAll
+        ? new Set(current.available.keys())
+        : new Set(Array.from(previous).filter(id => current.available.has(id)));
     current.initialized = true;
     current.signature = signature;
     return true;
@@ -326,10 +330,11 @@
 
   function updateVisibleCount() {
     const rows = Array.from(document.querySelectorAll('.sky-foundation-relationship-row'));
-    const visible = rows.filter(row => !row.hidden && !row.classList.contains('sky-chart-filter-hidden') && !row.classList.contains('sky-chart-multiselect-hidden')).length;
+    const visible = rows.filter(row => !row.hidden && !row.classList.contains('sky-chart-filter-hidden') && !row.classList.contains('sky-chart-multiselect-hidden') && !row.classList.contains('sky-chart-semantic-hidden')).length;
+    const eligible = rows.filter(row => !row.classList.contains('sky-chart-semantic-hidden')).length;
     const count = document.getElementById('skyFoundationRelationshipCount');
     const empty = document.getElementById('skyFoundationRelationshipEmpty');
-    if (count) count.textContent = `${visible}/${rows.length}`;
+    if (count) count.textContent = `${visible}/${eligible}`;
     if (empty) empty.hidden = visible !== 0;
   }
 
