@@ -5,38 +5,48 @@ if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyRelation
 window.__relphiSkyRelationshipSemanticsV1=true;
 
 const ANGLES=new Set(['asc','dsc','mc','ic']);
-const STRUCTURAL_IDS=new Set(['asc','dsc','mc','ic','north-node','south-node']);
+const NODES=new Set(['north-node','south-node']);
+const STRUCTURAL_IDS=new Set([...ANGLES,...NODES]);
 const CONSTITUTIVE=new Map([
-  ['asc|dsc',{name:'Horizon axis',members:new Set(['asc','dsc'])}],
-  ['ic|mc',{name:'Meridian axis',members:new Set(['ic','mc'])}],
-  ['north-node|south-node',{name:'Nodal axis',members:new Set(['north-node','south-node'])}]
+  ['asc|dsc',{name:'Horizon axis',type:'angle'}],
+  ['ic|mc',{name:'Meridian axis',type:'angle'}],
+  ['north-node|south-node',{name:'Nodal axis',type:'node'}]
 ]);
-let intent=null;
+let interactionIntent=null;
 let queued=false;
 let observer=null;
+let observedList=null;
+let syncingFilter=false;
+const autoSelected=new Set();
+const explicitNodeFilters=new Set();
 
 const canonical=value=>String(value||'').trim().toLowerCase();
 const pairKey=(a,b)=>[canonical(a),canonical(b)].sort().join('|');
+const selectionKey=(slot,id)=>`${slot}:${canonical(id)}`;
 function isSingleSkyRow(row){return row?.dataset.relationshipMode==='A-A'||document.documentElement.dataset.skyRelationshipMode==='A-A'}
 function endpointSlots(row){return isSingleSkyRow(row)?{left:'A',right:'A'}:{left:'A',right:'B'}}
 function constitutiveMeta(row){if(!isSingleSkyRow(row))return null;return CONSTITUTIVE.get(pairKey(row.dataset.leftPlacement,row.dataset.rightPlacement))||null}
 function rowHasAngle(row){return ANGLES.has(canonical(row.dataset.leftPlacement))||ANGLES.has(canonical(row.dataset.rightPlacement))}
-function intentMatchesEndpoint(slot,id){
-  if(!intent)return false;
-  const target=canonical(id);
-  if(intent.kind==='angles')return ANGLES.has(target)&&intent.slots.has(slot);
-  if(intent.kind==='placement')return intent.id===target&&intent.slots.has(slot);
-  return false;
-}
-function intentMatchesRow(row){
-  if(!intent)return false;
+function placementInput(slot,id){return document.querySelector(`[data-placement-option="${canonical(id)}"][data-slot="${slot}"]`)}
+function filterSelected(slot,id){const input=placementInput(slot,id);return input?input.checked:true}
+function interactionMatchesEndpoint(slot,id){return!!interactionIntent&&interactionIntent.slot===slot&&interactionIntent.id===canonical(id)}
+function interactionMatchesRow(row){
+  if(!interactionIntent)return false;
   const slots=endpointSlots(row);
-  return intentMatchesEndpoint(slots.left,row.dataset.leftPlacement)||intentMatchesEndpoint(slots.right,row.dataset.rightPlacement);
+  return interactionMatchesEndpoint(slots.left,row.dataset.leftPlacement)||interactionMatchesEndpoint(slots.right,row.dataset.rightPlacement);
+}
+function angleFilterMatchesRow(row){
+  const slots=endpointSlots(row),left=canonical(row.dataset.leftPlacement),right=canonical(row.dataset.rightPlacement);
+  return(ANGLES.has(left)&&filterSelected(slots.left,left))||(ANGLES.has(right)&&filterSelected(slots.right,right));
+}
+function nodeFilterMatchesRow(row){
+  const slots=endpointSlots(row),left=canonical(row.dataset.leftPlacement),right=canonical(row.dataset.rightPlacement);
+  return(NODES.has(left)&&explicitNodeFilters.has(selectionKey(slots.left,left)))||(NODES.has(right)&&explicitNodeFilters.has(selectionKey(slots.right,right)));
 }
 function semanticVisible(row){
-  const constitutive=constitutiveMeta(row);
-  if(constitutive)return intentMatchesRow(row);
-  if(rowHasAngle(row))return intentMatchesRow(row);
+  const meta=constitutiveMeta(row);
+  if(meta)return interactionMatchesRow(row)||(meta.type==='angle'?angleFilterMatchesRow(row):nodeFilterMatchesRow(row));
+  if(rowHasAngle(row))return interactionMatchesRow(row)||angleFilterMatchesRow(row);
   return true;
 }
 function ensureBadge(row,meta){
@@ -45,6 +55,19 @@ function ensureBadge(row,meta){
   if(!badge){badge=document.createElement('span');badge.className='sky-chart-structure-badge';badge.setAttribute('aria-hidden','true');row.appendChild(badge)}
   badge.textContent=meta.name;
   row.dataset.axisName=meta.name;
+}
+function missingPlacementEndpoints(row){
+  const slots=endpointSlots(row),endpoints=[{slot:slots.left,id:canonical(row.dataset.leftPlacement)},{slot:slots.right,id:canonical(row.dataset.rightPlacement)}];
+  return endpoints.filter(endpoint=>!filterSelected(endpoint.slot,endpoint.id));
+}
+function reconcilePlacementFilter(row,meta){
+  if(!row.classList.contains('sky-chart-multiselect-hidden'))return;
+  if(meta&&semanticVisible(row)){row.classList.remove('sky-chart-multiselect-hidden');return}
+  if(!interactionMatchesRow(row))return;
+  const missing=missingPlacementEndpoints(row);
+  // Intentional axis focus may open another quiet chart angle, but it must not override
+  // an ordinary placement the user deliberately filtered out.
+  if(missing.length&&missing.every(endpoint=>ANGLES.has(endpoint.id)))row.classList.remove('sky-chart-multiselect-hidden');
 }
 function annotateRow(row){
   const meta=constitutiveMeta(row);
@@ -58,6 +81,7 @@ function annotateRow(row){
     delete row.dataset.axisName;
   }
   row.classList.toggle('sky-chart-semantic-hidden',!semanticVisible(row));
+  reconcilePlacementFilter(row,meta);
 }
 function matchingLineForRow(line,row){
   return canonical(line.dataset.leftPlacement)===canonical(row.dataset.leftPlacement)&&canonical(line.dataset.rightPlacement)===canonical(row.dataset.rightPlacement)&&canonical(line.dataset.aspect)===canonical(row.dataset.aspect);
@@ -72,11 +96,12 @@ function annotateLines(rows){
     // The constitutive axis is already drawn as chart structure; do not duplicate it as an aspect chord.
     line.classList.toggle('sky-chart-constitutive-line',kind==='constitutive');
     line.classList.toggle('sky-chart-semantic-hidden',kind!=='constitutive'&&!semanticVisible(row));
+    line.classList.toggle('sky-chart-multiselect-hidden',row.classList.contains('sky-chart-multiselect-hidden'));
   });
 }
 function isDisplayed(row){
   if(row.hidden||row.classList.contains('sky-chart-semantic-hidden'))return false;
-  return getComputedStyle(row).display!=='none'&&getComputedStyle(row).visibility!=='hidden';
+  const style=getComputedStyle(row);return style.display!=='none'&&style.visibility!=='hidden';
 }
 function updateCount(rows){
   const eligible=rows.filter(row=>!row.classList.contains('sky-chart-semantic-hidden'));
@@ -88,11 +113,16 @@ function updateCount(rows){
 }
 function exposeState(){
   const root=document.documentElement;
-  if(!intent){delete root.dataset.skyStructuralFocus;return}
-  root.dataset.skyStructuralFocus=intent.kind==='angles'?`angles:${[...intent.slots].join('')}`:`${[...intent.slots].join('')}:${intent.id}`;
+  if(!interactionIntent){delete root.dataset.skyStructuralFocus;return}
+  root.dataset.skyStructuralFocus=`${interactionIntent.slot}:${interactionIntent.id}`;
+}
+function ensureObserver(){
+  const list=document.getElementById('skyFoundationRelationshipList');
+  if(!list||list===observedList)return;
+  observer?.disconnect();observedList=list;observer=new MutationObserver(schedule);observer.observe(list,{childList:true,subtree:false});
 }
 function apply(){
-  queued=false;
+  queued=false;ensureObserver();
   const rows=[...document.querySelectorAll('.sky-foundation-relationship-row')];
   rows.forEach(annotateRow);
   annotateLines(rows);
@@ -101,15 +131,27 @@ function apply(){
   document.documentElement.dataset.skyRelationshipSemantics='ready';
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>requestAnimationFrame(apply))}
-function slotsFromChoice(input){
-  const choice=canonical(input?.dataset.placementChoice);
-  if(choice==='a')return new Set(['A']);
-  if(choice==='b')return new Set(['B']);
-  return new Set(document.documentElement.dataset.skyBPresent==='false'?['A']:['A','B']);
+function dispatchPlacementChange(input,checked,remember){
+  if(!input||input.checked===checked)return;
+  input.checked=checked;
+  if(remember)autoSelected.add(selectionKey(input.dataset.slot,input.value||input.dataset.placementTarget));
+  syncingFilter=true;
+  try{input.dispatchEvent(new Event('change',{bubbles:true}))}finally{syncingFilter=false}
 }
-function setPlacementIntent(id,slots){intent={kind:'placement',id:canonical(id),slots};schedule()}
-function setAngleGroupIntent(slots){intent={kind:'angles',slots};schedule()}
-function clearIntent(){if(!intent)return;intent=null;schedule()}
+function clearAutoSelections(){
+  const keys=[...autoSelected];autoSelected.clear();
+  keys.forEach(key=>{const split=key.indexOf(':'),slot=key.slice(0,split),id=key.slice(split+1),input=placementInput(slot,id);dispatchPlacementChange(input,false,false)});
+}
+function setInteractionIntent(slot,id){
+  clearAutoSelections();
+  const target=canonical(id),input=placementInput(slot,target);
+  if(input&&!input.checked)dispatchPlacementChange(input,true,true);
+  interactionIntent={slot,id:target};schedule();
+}
+function clearInteractionIntent(){
+  if(!interactionIntent&&!autoSelected.size)return;
+  interactionIntent=null;clearAutoSelections();schedule();
+}
 function placementFromInteractive(target){
   const node=target?.closest?.('[data-interactive="placement"][data-placement], [data-layer="placements"] [data-placement], .sky-foundation-row[data-placement]');
   if(!node)return null;
@@ -118,11 +160,13 @@ function placementFromInteractive(target){
 function handlePlacementActivation(target){
   const hit=placementFromInteractive(target);
   if(!hit)return;
-  if(STRUCTURAL_IDS.has(hit.id))setPlacementIntent(hit.id,new Set([hit.slot]));
-  else clearIntent();
+  if(STRUCTURAL_IDS.has(hit.id)){
+    if(interactionIntent?.slot===hit.slot&&interactionIntent?.id===hit.id)clearInteractionIntent();
+    else setInteractionIntent(hit.slot,hit.id);
+  }else clearInteractionIntent();
 }
 document.addEventListener('click',event=>{
-  if(event.target.closest('#skyFoundationClearIsolation')){clearIntent();return}
+  if(event.target.closest('#skyFoundationClearIsolation')){clearInteractionIntent();return}
   handlePlacementActivation(event.target);
 });
 document.addEventListener('keydown',event=>{
@@ -130,15 +174,19 @@ document.addEventListener('keydown',event=>{
   handlePlacementActivation(event.target);
 });
 document.addEventListener('change',event=>{
+  if(syncingFilter)return;
   const input=event.target.closest('[data-placement-choice]');
   if(!input)return;
-  const scope=canonical(input.dataset.placementScope),target=canonical(input.dataset.placementTarget),slots=slotsFromChoice(input);
+  const scope=canonical(input.dataset.placementScope),target=canonical(input.dataset.placementTarget),choice=canonical(input.dataset.placementChoice);
   if(scope==='group'&&target==='chart-angles'){
-    if(input.checked)setAngleGroupIntent(slots);else if(intent?.kind==='angles')clearIntent();
-    return;
+    // A direct filter gesture takes ownership from any temporary wheel/card selection.
+    autoSelected.clear();interactionIntent=null;schedule();return;
   }
   if(scope==='placement'&&STRUCTURAL_IDS.has(target)){
-    if(input.checked)setPlacementIntent(target,slots);else if(intent?.kind==='placement'&&intent.id===target)clearIntent();
+    const slots=choice==='all'?(document.documentElement.dataset.skyBPresent==='false'?['A']:['A','B']):[choice.toUpperCase()];
+    autoSelected.clear();interactionIntent=null;
+    if(NODES.has(target))slots.forEach(slot=>{const key=selectionKey(slot,target);input.checked?explicitNodeFilters.add(key):explicitNodeFilters.delete(key)});
+    schedule();
   }
 });
 [
@@ -151,10 +199,6 @@ document.addEventListener('change',event=>{
   'relphi:sky-aspect-multiselect-changed',
   'relphi:sky-zodiac-filter-changed'
 ].forEach(name=>window.addEventListener(name,schedule));
-function start(){
-  const list=document.getElementById('skyFoundationRelationshipList');
-  if(list){observer=new MutationObserver(schedule);observer.observe(list,{childList:true,subtree:false,attributes:true,attributeFilter:['hidden','class']})}
-  schedule();
-}
+function start(){ensureObserver();schedule()}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
