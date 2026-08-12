@@ -5,6 +5,7 @@
   window.__relphiSkyHouseIntegrityV1=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+  const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
   const SYSTEMS_WITHOUT_TIME=new Set(['whole-sign','equal-house','porphyry']);
   let running=false;
 
@@ -29,6 +30,28 @@
       if(wanted.has(normalizedName(item?.name||item?.label||key)))return item;
     }
     return null;
+  }
+
+  function longitudeOf(item){
+    if(!item||typeof item!=='object')return NaN;
+    const explicit=item.longitude;
+    if(explicit!==null&&explicit!==''&&Number.isFinite(Number(explicit)))return norm(Number(explicit));
+    const signName=String(item.sign||item.zodiac||'').trim().toLowerCase();
+    const sign=SIGNS.indexOf(signName);
+    if(sign<0)return NaN;
+    const degree=Number(item.degree??item.degrees??0);
+    const minute=Number(item.minute??item.minutes??0);
+    const second=Number(item.second??item.seconds??0);
+    if(![degree,minute,second].every(Number.isFinite))return NaN;
+    return norm(sign*30+degree+minute/60+second/3600);
+  }
+
+  function profileAngle(profile,names){
+    for(const name of names){
+      const value=profile?.[name];
+      if(value!==null&&value!==''&&Number.isFinite(Number(value)))return norm(Number(value));
+    }
+    return NaN;
   }
 
   function houseFor(value,cusps){
@@ -62,14 +85,25 @@
     const engine=window.RelphiHouseSystems;
     if(!engine?.calculateCusps)return null;
     const source=placementSource(payload);
-    const asc=find(source,['Ascendant','ASC','Rising']);
-    const mc=find(source,['Midheaven','Medium Coeli','MC']);
-    const ascendant=Number(asc?.longitude);
-    const midheaven=Number(mc?.longitude);
-    if(!Number.isFinite(ascendant)||!Number.isFinite(midheaven))return null;
-
-    const system=systemFor(payload);
     const profile=payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
+    const system=systemFor(payload);
+
+    const ascRecord=find(source,['Ascendant','ASC','Rising']);
+    const mcRecord=find(source,['Midheaven','Medium Coeli','MC']);
+    const ascendantValue=longitudeOf(ascRecord);
+    const midheavenValue=longitudeOf(mcRecord);
+    const ascendant=Number.isFinite(ascendantValue)?ascendantValue:profileAngle(profile,['ascendant','asc','rising']);
+    let midheaven=Number.isFinite(midheavenValue)?midheavenValue:profileAngle(profile,['midheaven','mediumCoeli','mc']);
+
+    if(!Number.isFinite(ascendant))return null;
+    if(!Number.isFinite(midheaven)){
+      // Whole Sign and Equal House do not geometrically depend on the MC, but the
+      // shared house engine accepts one common option shape. Use a harmless finite
+      // placeholder only for those two systems; every quadrant system still requires MC.
+      if(system==='whole-sign'||system==='equal-house')midheaven=0;
+      else return null;
+    }
+
     const options={system,ascendant,midheaven};
 
     if(!SYSTEMS_WITHOUT_TIME.has(system)){
@@ -105,8 +139,11 @@
     let changed=materiallyDifferent(stored,expected);
 
     Object.values(source).forEach(item=>{
-      const longitude=Number(item?.longitude);
+      const longitude=longitudeOf(item);
       if(!Number.isFinite(longitude))return;
+      // Normalize imported sign/degree-only placements to a numeric longitude so every
+      // downstream house consumer sees the same coordinate authority.
+      if(item.longitude===null||item.longitude===''||!Number.isFinite(Number(item.longitude))){item.longitude=longitude;changed=true}
       const house=houseFor(longitude,expected);
       if(Number(item.house)!==house){item.house=house;changed=true}
     });
@@ -125,7 +162,7 @@
       houseCusps:expected,
       cusps:expected,
       houseSystemNote:result.note,
-      houseIntegrity:'recalculated-v1'
+      houseIntegrity:'recalculated-v2'
     };
 
     localStorage.setItem(KEYS[slot],JSON.stringify(payload));
@@ -151,7 +188,7 @@
     finally{running=false}
   }
 
-  window.RelphiSkyHouseIntegrity={repair,repairAll,calculate,houseFor,storedCusps};
+  window.RelphiSkyHouseIntegrity={repair,repairAll,calculate,houseFor,storedCusps,longitudeOf};
 
   // Run synchronously before the foundation/wheel scripts read persisted chart state.
   repairAll(false);
