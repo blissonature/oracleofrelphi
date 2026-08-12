@@ -63,7 +63,7 @@ async function drawWheel(slot,mount){
 
   const outlineRadii=slot==='A'?[geometry.house.inner,mini.zodiac.inner,mini.zodiac.outer]:[mini.zodiac.inner,mini.zodiac.outer,geometry.house.outer];
   outlineRadii.forEach(radius=>layers.outlines.appendChild(svg('circle',{cx:mini.center.x,cy:mini.center.y,r:radius,class:'sky-foundation-ring'})));
-  for(let degree=0;degree<360;degree++){const length=degree%10===0?12:degree%5===0?8:5,className=degree%10===0?'sky-foundation-tick sky-foundation-tick-major':'sky-foundation-tick';radialLine(layers.ticks,mini.center,geometry.degree-length,geometry.degree+length,degree,{class:className})}
+  for(let degree=0;degree<360;degree++){const length=degree%10===0?12:degree%5===0?8:5,className=degree%10===0?'sky-foundation-tick sky-foundation-tick-major':'sky-foundation-tick';radialLine(layers.ticks,mini.center,geometry.degree,geometry.degree+length,degree,{class:className})}
 
   spread(ordinary,geometry,mini).forEach(record=>{
     const exact=point(mini.center,geometry.degree,record.value),display=point(mini.center,record.lane,record.display);
