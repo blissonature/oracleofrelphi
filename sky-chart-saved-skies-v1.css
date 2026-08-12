@@ -25,7 +25,21 @@
   background:rgba(31,27,24,.035);
 }
 .sky-saved-name-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sky-saved-name-chevron{flex:0 0 auto;color:#81766c;font:900 .76rem/1 system-ui,sans-serif;transform:translateY(-1px)}
+/* Draw the dropdown indicator as a true stroked chevron rather than a text caret. */
+.sky-saved-name-chevron{
+  flex:0 0 auto;
+  display:block;
+  width:7px;
+  height:7px;
+  margin:-3px 2px 0 4px;
+  border-right:1.6px solid currentColor;
+  border-bottom:1.6px solid currentColor;
+  color:#81766c;
+  transform:rotate(45deg);
+  transform-origin:center;
+  transition:transform .12s ease;
+}
+.sky-saved-name-trigger[aria-expanded="true"] .sky-saved-name-chevron{transform:translateY(4px) rotate(225deg)}
 .sky-saved-name-trigger.is-saved .sky-saved-name-label::before{
   content:"";
   display:inline-block;
@@ -98,7 +112,14 @@
 .sky-saved-list-meta{grid-area:meta;min-width:0;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#756c64;font:600 .57rem/1.2 system-ui,sans-serif}
 .sky-saved-list-check{grid-area:check;align-self:center;justify-self:center;color:#575049;font:900 .72rem/1 system-ui,sans-serif}
 
-.sky-saved-popover-foot{padding:9px 10px 10px;border-top:1px solid rgba(31,27,24,.11);background:#fffdf8}
+.sky-saved-popover-foot{
+  max-height:min(55vh,360px);
+  overflow:auto;
+  overscroll-behavior:contain;
+  padding:9px 10px 10px;
+  border-top:1px solid rgba(31,27,24,.11);
+  background:#fffdf8;
+}
 .sky-saved-active-status{display:flex;align-items:baseline;justify-content:space-between;gap:8px;min-width:0;margin:0 1px 7px}
 .sky-saved-active-status>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 .63rem/1.2 system-ui,sans-serif}
 .sky-saved-active-status>small{flex:0 0 auto;color:#776e66;font:700 .55rem/1.2 system-ui,sans-serif}
