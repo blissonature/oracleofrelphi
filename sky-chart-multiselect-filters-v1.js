@@ -115,6 +115,7 @@
 
   function combinedSummary() {
     const a = slotSummary('A');
+    if (document.documentElement.dataset.skyBPresent === 'false') return a;
     const b = slotSummary('B');
     if (a === 'All' && b === 'All') return 'All';
     if (a === 'None' && b === 'None') return 'None';
@@ -173,6 +174,7 @@
     let available = 0;
     let selected = 0;
     slots.forEach(slot => {
+      if (slot === 'B' && document.documentElement.dataset.skyBPresent === 'false') return;
       const ids = idsFor(scope,target,slot);
       available += ids.length;
       selected += ids.filter(id => state[slot].selected.has(id)).length;
@@ -331,17 +333,24 @@
     if (empty) empty.hidden = visible !== 0;
   }
 
+  function relationshipSlots(row) {
+    const mode = row.dataset.relationshipMode || document.documentElement.dataset.skyRelationshipMode || 'A-B';
+    if (mode === 'A-A') return ['A','A'];
+    if (mode === 'B-B') return ['B','B'];
+    return [row.dataset.leftSky || 'A',row.dataset.rightSky || 'B'];
+  }
+
   function applyPlacementFilters() {
-    const selectedA = state.A.selected;
-    const selectedB = state.B.selected;
+    const selected = {A:state.A.selected,B:state.B.selected};
     document.querySelectorAll('.sky-foundation-relationship-row').forEach(row => {
-      const visible = selectedA.has(row.dataset.leftPlacement) && selectedB.has(row.dataset.rightPlacement);
+      const [leftSlot,rightSlot] = relationshipSlots(row);
+      const visible = selected[leftSlot].has(row.dataset.leftPlacement) && selected[rightSlot].has(row.dataset.rightPlacement);
       row.classList.toggle('sky-chart-multiselect-hidden',!visible);
       document.querySelectorAll(`[data-layer="aspects"] [data-relation-index="${row.dataset.relationIndex}"]`).forEach(node => node.classList.toggle('sky-chart-multiselect-hidden',!visible));
     });
     document.documentElement.dataset.skyPlacementMultiselect = 'ready';
     updateVisibleCount();
-    window.dispatchEvent(new CustomEvent('relphi:sky-placement-multiselect-changed',{detail:{A:Array.from(selectedA),B:Array.from(selectedB)}}));
+    window.dispatchEvent(new CustomEvent('relphi:sky-placement-multiselect-changed',{detail:{A:Array.from(state.A.selected),B:Array.from(state.B.selected)}}));
   }
 
   function refresh() {
@@ -364,7 +373,9 @@
   function handleChoiceChange(event) {
     const input = event.target.closest('[data-placement-choice]');
     if (!input) return;
-    const slots = input.dataset.placementChoice === 'all' ? SLOTS : [input.dataset.placementChoice.toUpperCase()];
+    const slots = input.dataset.placementChoice === 'all'
+      ? (document.documentElement.dataset.skyBPresent === 'false' ? ['A'] : SLOTS)
+      : [input.dataset.placementChoice.toUpperCase()];
     slots.forEach(slot => setSelection(idsFor(input.dataset.placementScope,input.dataset.placementTarget,slot),slot,input.checked));
     updateControlStates();
     applyPlacementFilters();
@@ -376,7 +387,7 @@
       if (records.every(record => record.target?.closest?.('.sky-chart-placement-filter'))) return;
       schedule();
     }).observe(root,{childList:true,subtree:true});
-    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed'].forEach(name => window.addEventListener(name,schedule));
+    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed','relphi:sky-single-sky-aspects-rendered'].forEach(name => window.addEventListener(name,schedule));
     document.addEventListener('change',event => {
       if (event.target.closest('[data-placement-choice]')) handleChoiceChange(event);
       else if (event.target.closest('.sky-chart-filter-bar')) requestAnimationFrame(updateVisibleCount);
