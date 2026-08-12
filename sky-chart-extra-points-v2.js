@@ -56,10 +56,10 @@
   function enrich(payload){
     if(!payload)return false;
     const before=JSON.stringify(payload),placements=sourceOf(payload),profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
-    const asc=find(placements,['Ascendant','ASC','Rising']),mc=find(placements,['Midheaven','MC']),sun=find(placements,['Sun']),moon=find(placements,['Moon']);
+    const asc=find(placements,['Ascendant','ASC','Rising']),mc=find(placements,['Midheaven','Medium Coeli','MC']),sun=find(placements,['Sun']),moon=find(placements,['Moon']);
     const instant=new Date(profile.instant||profile.dateTime||Date.now());
     if(asc&&Number.isFinite(Number(asc.longitude))&&!find(placements,['Descendant','DSC']))placements.Descendant=placement('Descendant',Number(asc.longitude)+180,'derived-angle');
-    if(mc&&Number.isFinite(Number(mc.longitude))&&!find(placements,['IC','Imum Coeli']))placements.IC=placement('IC',Number(mc.longitude)+180,'derived-angle');
+    if(mc&&Number.isFinite(Number(mc.longitude))&&!find(placements,['IC','Imum Coeli']))placements['Imum Coeli']=placement('Imum Coeli',Number(mc.longitude)+180,'derived-angle');
     if(!find(placements,['North Node','True Node','Mean Node']))placements['North Node']=placement('North Node',meanNode(instant),'mean-node');
     if(!find(placements,['South Node']))placements['South Node']=placement('South Node',Number(find(placements,['North Node']).longitude)+180,'mean-node-opposition');
     if(!find(placements,['Lilith','Black Moon Lilith']))placements.Lilith=placement('Lilith',meanLilith(instant),'mean-lunar-apogee');
