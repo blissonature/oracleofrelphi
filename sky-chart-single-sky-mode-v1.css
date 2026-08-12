@@ -4,6 +4,10 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundation
 .sky-slot-presence-button:hover,.sky-slot-presence-button:focus-visible{background:#f4efe8;border-color:rgba(31,27,24,.4);outline:none}
 .sky-slot-remove{color:#8f1f1b}
 .sky-slot-add{margin-left:auto;color:#1f55b4}
+/* Comparison presence is a working-mode fact, not a count of renderable Sky B placements. */
+html[data-sky-last-mode="comparison"] [data-add-sky-b],html[data-sky-b-editing="true"] [data-add-sky-b]{display:none!important}
+/* Keep the authored blue slot tab as Sky B's identity; suppress the redundant plain heading beside it. */
+#skyFoundationB>.sky-foundation-heading .sky-foundation-name{display:none!important}
 #skyFoundationWheelMount>.sky-foundation-single-wheel{display:block;width:100%;height:auto;max-height:min(78vh,900px);overflow:visible}
 html[data-sky-b-present="false"] #skyFoundationWheelMount>.sky-foundation-wheel:not([data-single-sky="A"]){visibility:hidden!important}
 #skyFoundationWheelMount[data-single-sky-pending="true"]>*{visibility:hidden!important}
