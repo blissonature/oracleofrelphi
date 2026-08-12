@@ -1,0 +1,74 @@
+/* Paired comparison-presence controls live on the sky cards themselves. */
+.sky-slot-internal-add{display:none!important}
+.sky-slot-card-control{
+  appearance:none;
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  margin-left:auto;
+  padding:0;
+  border:1px solid color-mix(in srgb,currentColor 30%,transparent);
+  border-radius:999px;
+  background:#fffdf8;
+  color:#5d5550;
+  cursor:pointer;
+  box-shadow:0 1px 0 rgba(31,27,24,.04);
+  transition:background-color .12s ease,border-color .12s ease,transform .12s ease,box-shadow .12s ease;
+}
+.sky-slot-card-control:hover,
+.sky-slot-card-control:focus-visible{
+  outline:none;
+  background:#fff;
+  border-color:currentColor;
+  box-shadow:0 2px 8px rgba(31,27,24,.12);
+  transform:translateY(-1px);
+}
+.sky-slot-card-control:active{transform:translateY(0)}
+.sky-slot-card-control--add{color:#c9211e}
+.sky-slot-card-control--remove{color:#2462d0}
+.sky-slot-card-control[hidden]{display:none!important}
+
+.sky-slot-card-icon{
+  position:relative;
+  display:block;
+  width:14px;
+  height:14px;
+}
+.sky-slot-card-icon::before,
+.sky-slot-card-icon::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:12px;
+  height:2px;
+  border-radius:2px;
+  background:currentColor;
+  transform:translate(-50%,-50%);
+}
+.sky-slot-card-icon--plus::after{transform:translate(-50%,-50%) rotate(90deg)}
+.sky-slot-card-icon--minus::after{display:none}
+
+/* The legacy presence button supplies behavior; the icon treatment owns appearance. */
+#skyFoundationB>.sky-foundation-heading [data-remove-sky-b].sky-slot-card-control{
+  width:30px;
+  height:30px;
+  min-width:30px;
+  padding:0;
+  margin-left:auto;
+  font-size:0;
+  line-height:0;
+  color:#2462d0;
+}
+
+@media(max-width:620px){
+  .sky-slot-card-control,
+  #skyFoundationB>.sky-foundation-heading [data-remove-sky-b].sky-slot-card-control{
+    width:28px;
+    height:28px;
+    min-width:28px;
+    flex-basis:28px;
+  }
+}
