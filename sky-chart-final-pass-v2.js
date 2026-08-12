@@ -7,7 +7,9 @@
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-  const PRESERVE = ['Chiron','Lilith','Vertex'];
+  // Only preserve points that this layer cannot safely recalculate. Lilith is intentionally excluded:
+  // carrying an old Lilith into a newly dated sky makes the new sky inherit the prior sky-state's apogee.
+  const PRESERVE = ['Chiron','Vertex'];
   const HOUSE_SYSTEMS = {
     'whole-sign':'Whole Sign', 'equal-house':'Equal House', porphyry:'Porphyry', placidus:'Placidus',
     alcabitius:'Alcabitius', regiomontanus:'Regiomontanus', campanus:'Campanus', koch:'Koch'
@@ -469,23 +471,15 @@
     const changedB = completeStored('B', false);
     if (changedA) dispatch('A');
     if (changedB) dispatch('B');
-
     const root = document.getElementById('skyFoundationRoot');
-    if (root) {
-      new MutationObserver(records => {
-        if (!records.some(relevantMutation)) return;
-        clearTimeout(mutationTimer);
-        mutationTimer = setTimeout(schedule, 0);
-      }).observe(root, { childList:true, subtree:true });
-    }
-    document.addEventListener('click', event => {
-      if (event.target.closest?.('[data-ww-action="edit"]')) requestAnimationFrame(schedule);
-    }, true);
+    if (root) new MutationObserver(records => {
+      clearTimeout(mutationTimer);
+      if (!records.some(relevantMutation)) return;
+      mutationTimer = setTimeout(schedule, 0);
+    }).observe(root, { childList:true, subtree:true });
     window.addEventListener('relphi:sky-foundation-ready', schedule);
     window.addEventListener('relphi:sky-foundation-interactions-ready', schedule);
-    window.addEventListener('storage', event => {
-      if (!event.key || event.key === KEYS.A || event.key === KEYS.B) schedule();
-    });
+    window.addEventListener('storage', schedule);
     schedule();
   }
 
