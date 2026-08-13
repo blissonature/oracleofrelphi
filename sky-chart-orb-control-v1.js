@@ -3,20 +3,19 @@
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyOrbControlV10)return;
-  window.__relphiSkyOrbControlV10=true;
-  window.__relphiSkyOrbControlV9=true;window.__relphiSkyOrbControlV8=true;window.__relphiSkyOrbControlV7=true;window.__relphiSkyOrbControlV6=true;window.__relphiSkyOrbControlV5=true;window.__relphiSkyOrbControlV4=true;window.__relphiSkyOrbControlV3=true;window.__relphiSkyOrbControlV2=true;window.__relphiSkyOrbControlV1=true;
+  if(window.__relphiSkyOrbControlV11)return;
+  window.__relphiSkyOrbControlV11=true;
+  window.__relphiSkyOrbControlV10=true;window.__relphiSkyOrbControlV9=true;window.__relphiSkyOrbControlV8=true;window.__relphiSkyOrbControlV7=true;window.__relphiSkyOrbControlV6=true;window.__relphiSkyOrbControlV5=true;window.__relphiSkyOrbControlV4=true;window.__relphiSkyOrbControlV3=true;window.__relphiSkyOrbControlV2=true;window.__relphiSkyOrbControlV1=true;
 
-  const STORAGE_KEY='relphiSkyHarmonicWindowV1';
   let queued=false,wheelIndexes=null,wheelState=null,installQueued=false,filterObserver=null,lastApplied=null;
+  let activeWindow=null;
   const model=()=>window.RelphiHarmonicOrb;
   const visibleInput=()=>document.querySelector('[data-harmonic-window-input]');
 
-  function storedWindow(){
-    const fallback=model()?.defaultWindow??6,max=model()?.maxWindow??12;
-    try{const value=Number(sessionStorage.getItem(STORAGE_KEY));return Number.isFinite(value)&&value>=0&&value<=max?value:fallback}catch(_){return fallback}
+  function initialWindow(){
+    const fallback=model()?.defaultWindow??6;
+    return activeWindow==null?fallback:activeWindow;
   }
-  function rememberWindow(value){try{sessionStorage.setItem(STORAGE_KEY,String(value))}catch(_){}}
 
   function phaseFromRow(row){
     const explicit=Number(row.dataset.phaseError);
@@ -58,7 +57,8 @@
     input.setAttribute('aria-invalid',valid?'false':'true');
     if(!valid)return;
 
-    rememberWindow(limit);model()?.setWindow?.(limit);
+    activeWindow=limit;
+    model()?.setWindow?.(limit);
     const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')];
     rows.forEach(row=>{
       const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
@@ -107,7 +107,7 @@
     const field=document.createElement('label');field.className='sky-orb-number-field';field.dataset.orbField='true';
     const caption=document.createElement('span');caption.textContent='Harmonic Window';
     const input=document.createElement('input'),m=model();
-    input.type='text';input.inputMode='decimal';input.autocomplete='off';input.value=String(storedWindow());
+    input.type='text';input.inputMode='decimal';input.autocomplete='off';input.value=String(initialWindow());
     input.dataset.harmonicWindowInput='true';input.dataset.orbMode='harmonic-phase';
     input.setAttribute('role','spinbutton');input.setAttribute('aria-valuemin','0');input.setAttribute('aria-valuemax',String(m?.maxWindow??12));input.setAttribute('aria-valuenow',input.value);
     input.setAttribute('aria-label',`Master harmonic phase window in degrees, maximum ${m?.maxWindow??12}`);
@@ -128,6 +128,10 @@
   }
 
   function start(){
+    // Deliberately start a new page load at the canonical default. The previous
+    // session-storage behavior preserved accidental zeroes caused by the old
+    // scroll-sensitive number input.
+    activeWindow=model()?.defaultWindow??6;
     ensureInstalled();observeFilterBay();
     window.addEventListener('relphi:sky-foundation-filter-changed',event=>{wheelState=event.detail?.state||null;wheelIndexes=wheelState?.mode==='selected'?new Set((event.detail.relationshipIndexes||[]).map(String)):null;schedule()});
     ['relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:selected-relationship-rendered','relphi:sky-foundation-ready'].forEach(name=>window.addEventListener(name,ensureInstalled));
