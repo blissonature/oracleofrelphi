@@ -6,19 +6,23 @@
 .sky-chart-placement-filter-head{display:grid;grid-template-columns:minmax(0,1fr) 28px;grid-template-areas:"label label" "choices toggle";align-items:center;gap:5px 0;min-height:55px;box-sizing:border-box;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;color:#191613}
 .sky-chart-placement-filter-label{grid-area:label;align-self:end;padding:0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:transparent;font:700 .68rem/1.1 system-ui,sans-serif}
 .sky-chart-placement-summary-choices{grid-area:choices;display:flex;align-items:center;gap:2px;min-width:0;min-height:38px;box-sizing:border-box;padding:0 9px 0 7px;border:1px solid rgba(31,27,24,.2);border-right:0;border-radius:9px 0 0 9px;background:#fff;overflow:hidden}
-.sky-chart-placement-filter-toggle{grid-area:toggle;align-self:stretch;display:grid;place-items:center;min-width:28px;min-height:38px;box-sizing:border-box;padding:0;border:1px solid rgba(31,27,24,.2);border-left:1px solid rgba(31,27,24,.12);border-radius:0 9px 9px 0;background:#fff;color:#191613;cursor:pointer;font:900 .84rem/1 system-ui,sans-serif}
+.sky-chart-placement-filter-toggle{grid-area:toggle;align-self:stretch;display:grid;place-items:center;min-width:28px;min-height:38px;box-sizing:border-box;padding:0;border:1px solid rgba(31,27,24,.2);border-left:1px solid rgba(31,27,24,.12);border-radius:0 9px 9px 0;background:#fff;color:#191613;cursor:pointer}
+.sky-chart-placement-filter-toggle::before{content:"";display:block;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translate(-1px,-1px);transform-origin:center;transition:transform .08s ease-out}
+.sky-chart-placement-filter.is-open .sky-chart-placement-filter-toggle::before{transform:rotate(225deg) translate(-1px,-1px)}
 .sky-chart-placement-filter-toggle:hover,.sky-chart-placement-filter-toggle:focus-visible{background:#f5f1eb;outline:none}
 .sky-chart-placement-filter.is-open .sky-chart-placement-summary-choices,.sky-chart-placement-filter.is-open .sky-chart-placement-filter-toggle{border-color:rgba(31,27,24,.42)}
 .sky-chart-placement-filter-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .sky-chart-placement-summary-choices .sky-chart-placement-choice{min-height:0;padding:0 3px;border:0;background:transparent;font-size:.56rem!important}
 .sky-chart-placement-summary-choices .sky-chart-placement-choice span{display:inline}
-.sky-chart-placement-filter-popover{position:absolute;top:calc(100% + 6px);left:50%;width:min(410px,calc(100vw - 24px));max-height:min(560px,78vh);overflow:auto;box-sizing:border-box;padding:10px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2);transform:translateX(-50%);pointer-events:auto}
+
+.sky-chart-placement-filter-popover{position:absolute;top:calc(100% + 6px);left:50%;width:min(360px,calc(100vw - 24px));max-height:min(560px,78vh);overflow-x:hidden;overflow-y:auto;box-sizing:border-box;padding:10px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2);transform:translateX(-50%);pointer-events:auto;scrollbar-gutter:stable;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
 .sky-chart-placement-filter-popover[hidden]{display:none!important}
 .sky-chart-placement-filter-popover.is-portaled{position:fixed;z-index:10000;right:auto;bottom:auto;margin:0;transform:none;isolation:isolate}
-.sky-chart-placement-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:10px;background:#fff}
-.sky-chart-placement-list-header,.sky-chart-placement-list-item{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,40px);align-items:center}
+.sky-chart-placement-filter-body{width:100%;min-width:0}
+.sky-chart-placement-list{width:100%;min-width:0;overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:10px;background:#fff}
+.sky-chart-placement-list-header,.sky-chart-placement-list-item{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,38px);align-items:center;width:100%;min-width:0;box-sizing:border-box}
 .sky-chart-placement-list-header{position:sticky;top:-10px;z-index:2;min-height:34px;border-bottom:1px solid rgba(31,27,24,.16);background:#e9e3da;color:#29231e;font:900 .61rem/1 system-ui,sans-serif;text-align:center}
-.sky-chart-placement-list-header strong{padding:7px 10px;text-align:left}
+.sky-chart-placement-list-header strong{min-width:0;padding:7px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 .sky-chart-placement-list-header span{align-self:stretch;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(31,27,24,.1)}
 .sky-chart-placement-list-item{min-height:35px;border-top:1px solid rgba(31,27,24,.075)}
 .sky-chart-placement-list-item-master{min-height:42px;border-top:0;border-bottom:1px solid rgba(31,27,24,.15);background:#f4efe8}
@@ -46,6 +50,7 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list .sky-chart-placement-choice-b,
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-header span:last-child{display:none!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-header,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,40px)}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,38px)}
+@media(prefers-reduced-motion:reduce){.sky-chart-placement-filter-toggle::before{transition:none}}
 @media(max-width:840px){.sky-chart-placement-filter{grid-column:span 2!important}}
-@media(max-width:620px){.sky-chart-placement-filter{grid-column:1/-1!important}.sky-chart-placement-list-header,.sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(3,38px)}html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-header,html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,38px)}.sky-chart-placement-list-label{padding:7px 8px;font-size:.63rem}}
+@media(max-width:620px){.sky-chart-placement-filter{grid-column:1/-1!important}.sky-chart-placement-filter-popover{width:calc(100vw - 16px);padding:8px}.sky-chart-placement-list-header,.sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(3,36px)}html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-header,html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,36px)}.sky-chart-placement-list-label{padding:7px 8px;font-size:.63rem}}
