@@ -4,6 +4,7 @@
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySlotCardControlsV1)return;
   window.__relphiSkySlotCardControlsV1=true;
 
+  const SKY_B_KEY='relphiSkyChartB';
   let queued=false;
 
   function icon(kind){
@@ -12,7 +13,24 @@
     span.setAttribute('aria-hidden','true');
     return span;
   }
+  function hasStoredSkyB(){
+    try{
+      const value=JSON.parse(localStorage.getItem(SKY_B_KEY)||'null');
+      if(!value||typeof value!=='object')return false;
+      const source=[value.placements,value.positions,value.points,value.bodies].find(candidate=>candidate&&typeof candidate==='object')||value;
+      return Object.entries(source).some(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac));
+    }catch(_){return false}
+  }
 
+  function startAddSkyB(){
+    const internal=document.querySelector('#skyFoundationComparison [data-add-sky-b]');
+    if(internal){internal.click();return}
+    // Fail visibly into the established editing state rather than silently doing nothing.
+    document.documentElement.dataset.skyBEditing='true';
+    document.documentElement.dataset.skyLastMode='comparison';
+    try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
+    window.dispatchEvent(new CustomEvent('relphi:sky-b-add-requested'));
+  }
   function ensureAddProxy(){
     const heading=document.querySelector('#skyFoundationA > .sky-foundation-heading');
     if(!heading)return;
@@ -26,15 +44,12 @@
       button.title='Add Sky B';
       button.appendChild(icon('plus'));
       button.addEventListener('click',event=>{
-        event.preventDefault();
-        event.stopPropagation();
-        document.querySelector('#skyFoundationComparison [data-add-sky-b]')?.click();
+        event.preventDefault();event.stopPropagation();startAddSkyB();
       });
       heading.appendChild(button);
     }
-    const present=document.documentElement.dataset.skyBPresent==='true';
     const editing=document.documentElement.dataset.skyBEditing==='true';
-    button.hidden=present||editing;
+    button.hidden=hasStoredSkyB()||editing;
   }
 
   function styleRemove(){
@@ -57,19 +72,8 @@
     }
   }
 
-  function sync(){
-    queued=false;
-    suppressInternalAdd();
-    ensureAddProxy();
-    styleRemove();
-  }
-
-  function schedule(){
-    if(queued)return;
-    queued=true;
-    requestAnimationFrame(sync);
-  }
-
+  function sync(){queued=false;suppressInternalAdd();ensureAddProxy();styleRemove()}
+  function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
   function start(){
     sync();
     const root=document.getElementById('skyFoundationRoot')||document.body;
@@ -78,6 +82,5 @@
     window.addEventListener('storage',schedule);
     window.addEventListener('relphi:sky-foundation-ready',schedule);
   }
-
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
