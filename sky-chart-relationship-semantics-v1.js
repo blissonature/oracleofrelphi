@@ -13,6 +13,8 @@ const CONSTITUTIVE=new Map([
   ['north-node|south-node',{name:'Nodal axis',type:'node'}]
 ]);
 let interactionIntent=null;
+let wheelSelectionIndexes=null;
+let wheelSelectionState=null;
 let queued=false;
 let observer=null;
 let observedList=null;
@@ -103,18 +105,52 @@ function isDisplayed(row){
   if(row.hidden||row.classList.contains('sky-chart-semantic-hidden'))return false;
   const style=getComputedStyle(row);return style.display!=='none'&&style.visibility!=='hidden';
 }
+function harmonicWindowLabel(){
+  const raw=document.querySelector('[data-harmonic-window-input]')?.value??document.documentElement.dataset.skyHarmonicWindow??'';
+  const numeric=Number(String(raw).trim().replace(',','.'));
+  return Number.isFinite(numeric)?String(numeric):String(raw||'').trim();
+}
 function updateCount(rows){
-  const eligible=rows.filter(row=>!row.classList.contains('sky-chart-semantic-hidden'));
-  const visible=eligible.filter(isDisplayed).length;
+  const semanticallyEligible=rows.filter(row=>!row.classList.contains('sky-chart-semantic-hidden'));
+  const scoped=wheelSelectionIndexes
+    ?semanticallyEligible.filter(row=>wheelSelectionIndexes.has(String(row.dataset.relationIndex||'')))
+    :semanticallyEligible;
+  const visible=scoped.filter(isDisplayed).length;
   const count=document.getElementById('skyFoundationRelationshipCount');
   const empty=document.getElementById('skyFoundationRelationshipEmpty');
-  if(count){count.textContent=`${visible}/${eligible.length}`;count.dataset.total=String(eligible.length);count.dataset.semanticTotal=String(eligible.length)}
-  if(empty)empty.hidden=visible!==0;
+  if(count){
+    count.textContent=`${visible}/${scoped.length}`;
+    count.dataset.total=String(scoped.length);
+    count.dataset.semanticTotal=String(semanticallyEligible.length);
+    count.dataset.scope=wheelSelectionIndexes?'wheel-selection':'all-relationships';
+  }
+  if(empty){
+    empty.hidden=visible!==0;
+    if(!empty.hidden){
+      if(wheelSelectionIndexes&&scoped.length){
+        const allOutsideWindow=scoped.every(row=>row.classList.contains('sky-chart-orb-hidden'));
+        const windowLabel=harmonicWindowLabel();
+        empty.textContent=allOutsideWindow&&windowLabel
+          ?`No relationships involving this selection fall within Harmonic Window ${windowLabel}.`
+          :'No relationships involving this selection match the current filters.';
+      }else if(wheelSelectionIndexes){
+        empty.textContent='No candidate relationships involve this selection.';
+      }else{
+        empty.textContent='No relationships match the current filters.';
+      }
+    }
+  }
 }
 function exposeState(){
   const root=document.documentElement;
-  if(!interactionIntent){delete root.dataset.skyStructuralFocus;return}
-  root.dataset.skyStructuralFocus=`${interactionIntent.slot}:${interactionIntent.id}`;
+  if(!interactionIntent){delete root.dataset.skyStructuralFocus}else root.dataset.skyStructuralFocus=`${interactionIntent.slot}:${interactionIntent.id}`;
+  if(wheelSelectionState){
+    root.dataset.skyWheelRelationshipScope=`${wheelSelectionState.kind}:${wheelSelectionState.sky??''}:${wheelSelectionState.value}`;
+    root.dataset.skyWheelRelationshipCandidates=String(wheelSelectionIndexes?.size||0);
+  }else{
+    delete root.dataset.skyWheelRelationshipScope;
+    delete root.dataset.skyWheelRelationshipCandidates;
+  }
 }
 function ensureObserver(){
   const list=document.getElementById('skyFoundationRelationshipList');
@@ -189,11 +225,23 @@ document.addEventListener('change',event=>{
     schedule();
   }
 });
+window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
+  const state=event.detail?.state||null;
+  if(state?.mode==='selected'){
+    wheelSelectionState=state;
+    wheelSelectionIndexes=new Set((event.detail?.relationshipIndexes||[]).map(String));
+  }else{
+    wheelSelectionState=null;
+    wheelSelectionIndexes=null;
+  }
+  schedule();
+});
 [
   'relphi:sky-foundation-ready',
   'relphi:sky-foundation-interactions-ready',
   'relphi:sky-single-sky-aspects-rendered',
   'relphi:sky-orb-limit-changed',
+  'relphi:sky-harmonic-window-visibility-changed',
   'relphi:sky-placement-multiselect-changed',
   'relphi:sky-house-multiselect-changed',
   'relphi:sky-aspect-multiselect-changed',
