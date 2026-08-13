@@ -24,7 +24,8 @@
 .sky-chart-filter-bar { display:grid; grid-template-columns:minmax(52px,.55fr) minmax(72px,1fr) minmax(78px,1.05fr) minmax(66px,.85fr) minmax(66px,.85fr) minmax(82px,1.08fr); gap:7px; padding:10px; border-bottom:1px solid rgba(31,27,24,.12); background:#faf7f2; }
 .sky-chart-filter-bar label { display:grid; gap:4px; min-width:0; color:#4e463f; font:800 .62rem/1.2 system-ui,sans-serif; }
 .sky-chart-filter-bar select,
-.sky-chart-filter-bar input[data-filter="orb"] { width:100%; min-width:0; min-height:35px; box-sizing:border-box; border:1px solid rgba(31,27,24,.2); border-radius:9px; background:#fff; padding:.52rem .58rem; color:#191613; font:700 .68rem/1.2 system-ui,sans-serif; }
+.sky-chart-filter-bar input[data-filter="orb"],
+.sky-chart-filter-bar input[data-harmonic-window-input] { width:100%; min-width:0; min-height:35px; box-sizing:border-box; border:1px solid rgba(31,27,24,.2); border-radius:9px; background:#fff; padding:.52rem .58rem; color:#191613; font:700 .68rem/1.2 system-ui,sans-serif; }
 .sky-chart-filter-hidden { display:none !important; }
 .sky-foundation-wheel .sky-chart-orb-hidden { display:none !important; }
 .sky-where-when-action[data-final-now] { border-color:rgba(201,33,30,.38); color:#9e1b18; }
