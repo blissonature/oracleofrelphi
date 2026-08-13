@@ -200,7 +200,14 @@
     button.classList.toggle('is-saved',state.saved);button.classList.toggle('is-dirty',state.dirty);
     button.setAttribute('aria-label',`${state.name}. Open Saved skies for Sky ${slot}.`);
   }
-  function sync(){queued=false;renderIdentity('A');renderIdentity('B');if(openSlot)renderPopover()}
+  function sync(){
+    queued=false;
+    renderIdentity('A');
+    renderIdentity('B');
+    // Never rebuild the active naming form. Replacing a focused input dismisses
+    // the software keyboard on mobile browsers. While naming, only reposition it.
+    if(openSlot){if(namingMode)positionPopover();else renderPopover()}
+  }
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
   function beginNaming(){
     if(!openSlot)return;
@@ -211,7 +218,7 @@
     requestAnimationFrame(()=>{
       const input=popover?.querySelector('[data-saved-name-input]');
       if(!input)return;
-      input.focus();input.select();input.scrollIntoView({block:'nearest'});positionPopover();
+      input.focus({preventScroll:true});input.select();input.scrollIntoView({block:'nearest'});positionPopover();
     });
   }
 
@@ -237,7 +244,7 @@
     nameDraft=input?.value||'';
     const result=saveActive(openSlot,nameDraft);if(status)status.textContent=result.message;
     if(result.ok){namingMode=false;nameDraft='';renderPopover();schedule()}
-    else input?.focus();
+    else input?.focus({preventScroll:true});
   });
 
   document.addEventListener('pointerdown',event=>{
@@ -247,6 +254,8 @@
   },true);
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&openSlot){if(namingMode){namingMode=false;nameDraft='';renderPopover();triggerFor(openSlot)?.focus();return}const trigger=triggerFor(openSlot);close();trigger?.focus()}});
   window.addEventListener('resize',positionPopover,{passive:true});
+  window.visualViewport?.addEventListener('resize',positionPopover,{passive:true});
+  window.visualViewport?.addEventListener('scroll',positionPopover,{passive:true});
   window.addEventListener('scroll',positionPopover,{passive:true,capture:true});
   window.addEventListener('storage',event=>{if(!event.key||event.key===LIBRARY_KEY||Object.values(SLOT_KEYS).includes(event.key))schedule()});
   ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed'].forEach(name=>window.addEventListener(name,schedule));
