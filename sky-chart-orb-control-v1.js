@@ -7,9 +7,16 @@
   window.__relphiSkyOrbControlV10=true;
   window.__relphiSkyOrbControlV9=true;window.__relphiSkyOrbControlV8=true;window.__relphiSkyOrbControlV7=true;window.__relphiSkyOrbControlV6=true;window.__relphiSkyOrbControlV5=true;window.__relphiSkyOrbControlV4=true;window.__relphiSkyOrbControlV3=true;window.__relphiSkyOrbControlV2=true;window.__relphiSkyOrbControlV1=true;
 
+  const STORAGE_KEY='relphiSkyHarmonicWindowV1';
   let queued=false,wheelIndexes=null,wheelState=null,installQueued=false,filterObserver=null,lastApplied=null;
   const model=()=>window.RelphiHarmonicOrb;
   const visibleInput=()=>document.querySelector('[data-harmonic-window-input]');
+
+  function storedWindow(){
+    const fallback=model()?.defaultWindow??6,max=model()?.maxWindow??12;
+    try{const value=Number(sessionStorage.getItem(STORAGE_KEY));return Number.isFinite(value)&&value>=0&&value<=max?value:fallback}catch(_){return fallback}
+  }
+  function rememberWindow(value){try{sessionStorage.setItem(STORAGE_KEY,String(value))}catch(_){}}
 
   function phaseFromRow(row){
     const explicit=Number(row.dataset.phaseError);
@@ -51,7 +58,7 @@
     input.setAttribute('aria-invalid',valid?'false':'true');
     if(!valid)return;
 
-    model()?.setWindow?.(limit);
+    rememberWindow(limit);model()?.setWindow?.(limit);
     const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')];
     rows.forEach(row=>{
       const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
@@ -70,7 +77,7 @@
     document.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect').forEach(line=>{
       const index=String(line.dataset.relationIndex||'');
       setSvgVisibility(line,index!==''&&visibleIndexes.has(index));
-      const row=index?document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${CSS.escape(index)}"]`):null;
+      const row=index?document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${index}"]`):null;
       if(row){line.dataset.harmonicWindow=row.dataset.harmonicWindow||'';line.dataset.harmonicCoherence=row.dataset.harmonicCoherence||''}
     });
 
@@ -100,7 +107,7 @@
     const field=document.createElement('label');field.className='sky-orb-number-field';field.dataset.orbField='true';
     const caption=document.createElement('span');caption.textContent='Harmonic Window';
     const input=document.createElement('input'),m=model();
-    input.type='text';input.inputMode='decimal';input.autocomplete='off';input.value=String(m?.defaultWindow??6);
+    input.type='text';input.inputMode='decimal';input.autocomplete='off';input.value=String(storedWindow());
     input.dataset.harmonicWindowInput='true';input.dataset.orbMode='harmonic-phase';
     input.setAttribute('role','spinbutton');input.setAttribute('aria-valuemin','0');input.setAttribute('aria-valuemax',String(m?.maxWindow??12));input.setAttribute('aria-valuenow',input.value);
     input.setAttribute('aria-label',`Master harmonic phase window in degrees, maximum ${m?.maxWindow??12}`);
