@@ -2,10 +2,11 @@
 // The hidden canonical data-ww-field="time" input remains the HH:MM calculation authority.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyTimeControlV3)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyTimeControlV4)return;
   window.__relphiSkyTimeControlV1=true;
   window.__relphiSkyTimeControlV2=true;
   window.__relphiSkyTimeControlV3=true;
+  window.__relphiSkyTimeControlV4=true;
 
   const TIME_SELECTOR='.sky-where-when-editor [data-ww-field="time"]';
   let observer=null;
@@ -41,9 +42,7 @@
         if(hour<1||hour>12)return null;
         return{hour:String(hour),minute:pad(minute),period};
       }
-      if(hour>=0&&hour<=23){
-        return parseCanonical(`${pad(hour)}:${pad(minute)}`);
-      }
+      if(hour>=0&&hour<=23)return parseCanonical(`${pad(hour)}:${pad(minute)}`);
       return null;
     }
 
@@ -61,8 +60,6 @@
       return{hour:String(hour),minute:pad(minute),period:`${match[3]}M`};
     }
 
-    // If the user edits only the hour while an AM/PM state already exists, preserve
-    // the current minute/period rather than forcing an ambiguous new interpretation.
     match=text.match(/^(\d{1,2})$/);
     if(match&&currentState?.period){
       const hour=Number(match[1]);
@@ -123,20 +120,8 @@
     const attr=kind==='hour'?'data-sky-time-hour':'data-sky-time-minute';
     return value?control.querySelector(`[${attr}="${CSS.escape(value)}"]`):null;
   }
-  function updateScrollButtons(control,kind){
-    const list=control.querySelector(`[data-sky-time-list="${kind}"]`);
-    if(!list)return;
-    const atStart=list.scrollTop<=1;
-    const atEnd=list.scrollTop+list.clientHeight>=list.scrollHeight-1;
-    control.querySelectorAll(`[data-sky-time-scroll="${kind}"]`).forEach(button=>{
-      const direction=Number(button.dataset.direction||0);
-      button.disabled=direction<0?atStart:atEnd;
-    });
-  }
-  function centerSelection(control,kind,behavior='auto'){
-    const selected=selectedButton(control,kind);
-    selected?.scrollIntoView({block:'center',inline:'nearest',behavior});
-    requestAnimationFrame(()=>updateScrollButtons(control,kind));
+  function centerSelection(control,kind){
+    selectedButton(control,kind)?.scrollIntoView({block:'center',inline:'nearest',behavior:'auto'});
   }
   function open(control){
     document.querySelectorAll('.sky-time-control.is-open').forEach(other=>{if(other!==control)close(other)});
@@ -159,13 +144,6 @@
     if(!control)return;
     setState(control,parseCanonical(input.value));
     syncVisual(control);
-  }
-  function scrollList(control,kind,direction){
-    const list=control.querySelector(`[data-sky-time-list="${kind}"]`);
-    if(!list)return;
-    const sample=list.querySelector('.sky-time-list-option');
-    const step=(sample?.getBoundingClientRect().height||30)+4;
-    list.scrollBy({top:step*direction,behavior:'smooth'});
   }
 
   function enhance(input){
@@ -195,15 +173,11 @@
       <div class="sky-time-panel" data-sky-time-panel role="dialog" aria-label="Choose local time" hidden>
         <div class="sky-time-wheel-column" data-kind="hour">
           <span class="sky-time-column-label">Hour</span>
-          <button type="button" class="sky-time-scroll-arrow sky-time-scroll-arrow--up" data-sky-time-scroll="hour" data-direction="-1" aria-label="Scroll hours up"><i aria-hidden="true"></i></button>
           <div class="sky-time-scroll-list" data-sky-time-list="hour" role="listbox" aria-label="Hour">${hours}</div>
-          <button type="button" class="sky-time-scroll-arrow sky-time-scroll-arrow--down" data-sky-time-scroll="hour" data-direction="1" aria-label="Scroll hours down"><i aria-hidden="true"></i></button>
         </div>
         <div class="sky-time-wheel-column" data-kind="minute">
           <span class="sky-time-column-label">Minute</span>
-          <button type="button" class="sky-time-scroll-arrow sky-time-scroll-arrow--up" data-sky-time-scroll="minute" data-direction="-1" aria-label="Scroll minutes up"><i aria-hidden="true"></i></button>
           <div class="sky-time-scroll-list" data-sky-time-list="minute" role="listbox" aria-label="Minute">${minutes}</div>
-          <button type="button" class="sky-time-scroll-arrow sky-time-scroll-arrow--down" data-sky-time-scroll="minute" data-direction="1" aria-label="Scroll minutes down"><i aria-hidden="true"></i></button>
         </div>
         <div class="sky-time-wheel-column sky-time-period-column" data-kind="period">
           <span class="sky-time-column-label">Period</span>
@@ -224,13 +198,6 @@
       event.preventDefault();
       const control=toggle.closest('.sky-time-control');
       if(control?.classList.contains('is-open'))close(control);else if(control)open(control);
-      return;
-    }
-    const arrow=event.target.closest?.('[data-sky-time-scroll]');
-    if(arrow){
-      event.preventDefault();
-      const control=arrow.closest('.sky-time-control');
-      scrollList(control,arrow.dataset.skyTimeScroll,Number(arrow.dataset.direction||0));
       return;
     }
     const hour=event.target.closest?.('[data-sky-time-hour]');
@@ -289,13 +256,6 @@
       event.preventDefault();
       if(commitTyped(control))close(control);
     }
-  },true);
-
-  document.addEventListener('scroll',event=>{
-    const list=event.target.closest?.('[data-sky-time-list]');
-    if(!list)return;
-    const control=list.closest('.sky-time-control');
-    updateScrollButtons(control,list.dataset.skyTimeList);
   },true);
 
   function start(){
