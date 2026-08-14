@@ -136,8 +136,7 @@
 
   async function update(slot,button){
     if(button.dataset.updateNowBusy==='true')return;
-    const originalLabel=button.textContent||'Update to Now';
-    button.dataset.updateNowBusy='true';button.disabled=true;button.textContent='Finding Here and Now…';
+    button.dataset.updateNowBusy='true';button.disabled=true;button.setAttribute('aria-busy','true');
     try{
       const packet=await currentLocationPacket();
       const now=window.luxon?.DateTime?.now().setZone(packet.timezone);
@@ -150,7 +149,7 @@
     }catch(error){console.error(error);announceError(slot,error)}
     finally{
       delete button.dataset.updateNowBusy;
-      if(button.isConnected){button.disabled=false;button.textContent=originalLabel}
+      if(button.isConnected){button.disabled=false;button.removeAttribute('aria-busy')}
     }
   }
 
