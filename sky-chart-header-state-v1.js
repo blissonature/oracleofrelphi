@@ -1,4 +1,5 @@
-// Keep Sky A and Sky B headers aligned and make "Update to Now" detach from saved-sky identity.
+// Keep Sky A and Sky B headers aligned, make "Update to Now" detach from saved-sky identity,
+// and keep a deliberate active Sky name authoritative over heuristic Saved-Sky matching.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
@@ -6,6 +7,8 @@
   window.__relphiSkyHeaderStateV1=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+  const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','unsaved sky','now']);
+  let nameQueued=false;
 
   function installStyles(){
     if(document.getElementById('skyHeaderStateStyles'))return;
@@ -83,6 +86,40 @@
     return /update\s+to\s+now/i.test(String(button?.textContent||'').replace(/\s+/g,' ').trim());
   }
   function currentName(){return 'Now'}
+  function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
+  function deliberateName(slot){
+    const value=read(slot);if(!value||typeof value!=='object')return'';
+    const metadata=value.metadata&&typeof value.metadata==='object'?value.metadata:{};
+    const profile=value.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
+    for(const candidate of [metadata.savedSkyName,value.name,value.displayName,value.skyName,value.title,profile.name,profile.title]){
+      const name=String(candidate||'').trim();
+      if(name&&!GENERIC_NAMES.has(normalize(name)))return name;
+    }
+    return'';
+  }
+  function applyAuthoritativeName(slot){
+    const name=deliberateName(slot);if(!name)return;
+    const panel=document.getElementById(`skyFoundation${slot}`);
+    const container=panel?.querySelector(':scope > .sky-foundation-heading > .sky-foundation-name');
+    const button=container?.querySelector('[data-saved-sky-trigger]');
+    const label=button?.querySelector('.sky-saved-name-label');
+    if(!button||!label)return;
+    if(label.textContent!==name)label.textContent=name;
+    button.title=button.classList.contains('is-saved')?name:`${name} · open Saved skies`;
+    button.setAttribute('aria-label',`${name}. Open Saved skies for Sky ${slot}.`);
+    button.dataset.activeNameAuthority='payload';
+  }
+  function applyAllAuthoritativeNames(){
+    nameQueued=false;
+    applyAuthoritativeName('A');
+    applyAuthoritativeName('B');
+  }
+  function scheduleAuthoritativeNames(){
+    if(nameQueued)return;nameQueued=true;
+    // Saved Skies also schedules its identity render in requestAnimationFrame. Apply the
+    // active-payload authority one frame later so deliberate naming wins the refresh race.
+    requestAnimationFrame(()=>requestAnimationFrame(applyAllAuthoritativeNames));
+  }
   function applyDisplay(slot){
     const panel=document.getElementById(`skyFoundation${slot}`);
     const name=panel?.querySelector(':scope > .sky-foundation-heading .sky-foundation-name');
@@ -120,7 +157,12 @@
     setTimeout(()=>reconcile(slot,0),0);
   },true);
 
-  function align(){installStyles()}
+  window.addEventListener('storage',event=>{
+    if(!event.key||Object.values(KEYS).includes(event.key))scheduleAuthoritativeNames();
+  });
+  ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed'].forEach(name=>window.addEventListener(name,scheduleAuthoritativeNames));
+
+  function align(){installStyles();scheduleAuthoritativeNames()}
   new MutationObserver(align).observe(document.documentElement,{childList:true,subtree:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',align,{once:true});else align();
 })();
