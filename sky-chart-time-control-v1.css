@@ -1,0 +1,31 @@
+/* No-scroll local-time control for Where and When. */
+.sky-time-grid-enhanced{grid-template-columns:1fr}
+.sky-time-enhanced-label{grid-column:1/-1}
+.sky-time-control{display:grid;gap:6px;min-width:0}
+.sky-time-display{appearance:none;width:100%;min-height:42px;box-sizing:border-box;border:1px solid rgba(31,27,24,.23);border-radius:9px;background:#fff;color:#181512;padding:.62rem .68rem;text-align:left;font:800 .8rem/1.2 system-ui,sans-serif;cursor:pointer}
+.sky-time-display::after{content:'▾';float:right;color:#625b55;font-size:.78rem}
+.sky-time-control.is-open .sky-time-display::after{content:'▴'}
+.sky-time-display:focus-visible{border-color:#8b1714;outline:2px solid rgba(201,33,30,.16);outline-offset:1px}
+.sky-time-panel{display:grid;gap:10px;padding:10px;border:1px solid rgba(31,27,24,.16);border-radius:10px;background:#fffaf4;box-shadow:0 5px 14px rgba(31,27,24,.08)}
+.sky-time-panel[hidden]{display:none!important}
+.sky-time-group{display:grid;gap:5px}
+.sky-time-group-label,.sky-time-minute-label>span,.sky-time-period-group>span{color:#49413a;font:850 .62rem/1.2 system-ui,sans-serif}
+.sky-time-hour-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.sky-time-choice{appearance:none;min-height:34px;border:1px solid rgba(31,27,24,.2);border-radius:8px;background:#fff;color:#211d19;font:850 .72rem/1 system-ui,sans-serif;cursor:pointer}
+.sky-time-choice:hover,.sky-time-choice:focus-visible{border-color:#8b1714;background:#fff7f4;outline:2px solid rgba(201,33,30,.14);outline-offset:1px}
+.sky-time-choice.is-selected{border-color:#c9211e;background:#c9211e;color:#fff}
+.sky-time-lower-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:end}
+.sky-time-minute-label{display:grid;gap:4px;min-width:0}
+.sky-time-minute-label input{width:100%;min-width:0;box-sizing:border-box;min-height:38px;border:1px solid rgba(31,27,24,.23);border-radius:8px;background:#fff;color:#181512;padding:.5rem .58rem;font:800 16px/1.1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.sky-time-minute-label input:focus{border-color:#8b1714;outline:2px solid rgba(201,33,30,.16);outline-offset:1px}
+.sky-time-minute-label small{color:#70675f;font:650 .56rem/1.15 system-ui,sans-serif}
+.sky-time-period-group{display:grid;gap:4px}
+.sky-time-period-group>div{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.sky-time-period-group .sky-time-choice{min-width:48px;padding:0 9px}
+.sky-time-panel-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.sky-time-status{min-width:0;color:#625b55;font:650 .57rem/1.25 system-ui,sans-serif}
+.sky-time-done{appearance:none;min-height:34px;padding:0 13px;border:0;border-radius:999px;background:#202020;color:#fff;font:850 .64rem/1 system-ui,sans-serif;cursor:pointer}
+.sky-time-done:disabled{opacity:.35;cursor:not-allowed}
+.sky-time-done:focus-visible{outline:3px solid rgba(201,33,30,.18);outline-offset:2px}
+.sky-where-when-section[disabled] .sky-time-control{opacity:.55}
+@media(max-width:620px){.sky-time-hour-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.sky-time-panel{padding:9px}.sky-time-lower-row{grid-template-columns:minmax(0,1fr) auto}}
