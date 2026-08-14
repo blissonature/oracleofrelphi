@@ -1,0 +1,110 @@
+// Inline relationship reveal v4: canonical glyphs are rendered only through final-size hosts.
+// No canonical glyph SVG is nested inside the relationship geometry SVG, resized after insertion,
+// or supplemented with replacement glyph artwork. The approved Relphi registry/component remain authoritative.
+(function(){
+'use strict';
+if(window.__relphiInlineRelationshipV4)return;
+window.__relphiInlineRelationshipV1=true;
+window.__relphiInlineRelationshipV2=true;
+window.__relphiInlineRelationshipV3=true;
+window.__relphiInlineRelationshipV4=true;
+
+const NS='http://www.w3.org/2000/svg';
+const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+const COLORS={A:'#c9211e',B:'#2462d0'};
+const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const ASPECT_NAMES={conjunction:'Conjunction','semi-sextile':'Semi-Sextile',octile:'Octile',sextile:'Sextile',quintile:'Quintile',square:'Square',trine:'Trine','tri-octile':'Tri-Octile','bi-quintile':'Bi-Quintile',quincunx:'Quincunx',opposition:'Opposition'};
+const PLACEMENT_REFERENTS={sun:'identity, vitality, and conscious purpose',moon:'feelings, instincts, memory, and emotional needs',mercury:'thought, perception, language, and communication',venus:'values, attraction, affection, pleasure, and relating',mars:'drive, assertion, desire, conflict, and action',jupiter:'growth, confidence, meaning, opportunity, and expansion',saturn:'structure, limits, responsibility, time, and commitment',uranus:'freedom, disruption, originality, awakening, and change',neptune:'imagination, sensitivity, surrender, ideals, and vision',pluto:'power, depth, compulsion, elimination, and transformation',chiron:'wounding, healing intelligence, and the capacity to guide healing',asc:'the way a person enters life and is immediately perceived',dsc:'the way a person meets partners and encounters the other',mc:'public direction, vocation, visibility, and the role a person grows toward',ic:'roots, home, private foundations, and inherited belonging','north-node':'growth through unfamiliar experience and developing capacity','south-node':'familiar patterns, inherited capacity, and the known path',lilith:'instinctive autonomy, refusal, exile, and uncompromised desire','part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',vertex:'encounters that feel consequential or outside ordinary control'};
+const ASPECT_REFERENTS={conjunction:'the two functions operate together','semi-sextile':'neighboring functions accommodate one another',octile:'focused friction and adjustment',sextile:'a cooperative opening activated through participation',quintile:'creative pattern-making and specialized skill',square:'activating pressure and development',trine:'low-resistance exchange','tri-octile':'accumulated friction and redirection','bi-quintile':'refined creative pattern-making',quincunx:'continuing adjustment and translation',opposition:'awareness through polarity, contrast, and exchange'};
+const DECANS=[[['two_of_wands','Two of Wands'],['three_of_wands','Three of Wands'],['four_of_wands','Four of Wands']],[['five_of_pentacles','Five of Pentacles'],['six_of_pentacles','Six of Pentacles'],['seven_of_pentacles','Seven of Pentacles']],[['eight_of_swords','Eight of Swords'],['nine_of_swords','Nine of Swords'],['ten_of_swords','Ten of Swords']],[['two_of_cups','Two of Cups'],['three_of_cups','Three of Cups'],['four_of_cups','Four of Cups']],[['five_of_wands','Five of Wands'],['six_of_wands','Six of Wands'],['seven_of_wands','Seven of Wands']],[['eight_of_pentacles','Eight of Pentacles'],['nine_of_pentacles','Nine of Pentacles'],['ten_of_pentacles','Ten of Pentacles']],[['two_of_swords','Two of Swords'],['three_of_swords','Three of Swords'],['four_of_swords','Four of Swords']],[['five_of_cups','Five of Cups'],['six_of_cups','Six of Cups'],['seven_of_cups','Seven of Cups']],[['eight_of_wands','Eight of Wands'],['nine_of_wands','Nine of Wands'],['ten_of_wands','Ten of Wands']],[['two_of_pentacles','Two of Pentacles'],['three_of_pentacles','Three of Pentacles'],['four_of_pentacles','Four of Pentacles']],[['five_of_swords','Five of Swords'],['six_of_swords','Six of Swords'],['seven_of_swords','Seven of Swords']],[['eight_of_cups','Eight of Cups'],['nine_of_cups','Nine of Cups'],['ten_of_cups','Ten of Cups']]];
+const ALIAS={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
+let openRow=null;
+
+const norm=n=>((Number(n)%360)+360)%360;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+function read(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_){return null}}
+function source(p){const x=[p?.placements,p?.positions,p?.points,p?.bodies].find(v=>v&&typeof v==='object')||p||{};return Array.isArray(x)?x.map((v,i)=>[String(v?.name||v?.id||i),v]):Object.entries(x)}
+function lon(x){if(Number.isFinite(Number(x?.longitude)))return norm(x.longitude);const s=SIGNS.findIndex(n=>n.toLowerCase()===String(x?.sign||x?.zodiac||'').toLowerCase());return s<0?NaN:norm(s*30+Number(x.degree||x.degrees||0)+Number(x.minute||x.minutes||0)/60)}
+function canonical(k,x){const r=window.RelphiGlyphRegistry;for(const c of [x?.glyphId,x?.id,x?.name,x?.label,x?.body,x?.planet,x?.point,k]){if(!c)continue;const raw=String(c).trim(),e=r?.resolve?.(ALIAS[raw.toLowerCase()]||raw)||r?.get?.(ALIAS[raw.toLowerCase()]||raw);if(e)return e}return null}
+function find(slot,id,row){for(const[k,x]of source(read(KEYS[slot]))){if(!x||typeof x!=='object'||Array.isArray(x))continue;const e=canonical(k,x),v=lon(x);if(e?.id===id&&Number.isFinite(v)){const h=Number(row.dataset[slot==='A'?'leftHouse':'rightHouse']);return{id:e.id,entry:e,value:v,sky:slot,house:Number.isFinite(h)&&h>0?h:null}}}return null}
+function relation(row){const l=find('A',row.dataset.leftPlacement,row),r=find('B',row.dataset.rightPlacement,row);if(!l||!r)return null;return{left:l,right:r,aspect:String(row.dataset.aspect||''),orb:Number(row.dataset.sourceOrb||0)}}
+function card(rec){const v=norm(rec.value),s=Math.floor(v/30),d=Math.floor(v-s*30),[id,title]=DECANS[s][Math.min(2,Math.floor(d/10))];return{id,title,image:`assets/tarot/rws/${id}.webp?v=border-preserving-crop-352`}}
+function point(v,r=48){const a=(norm(v)-180)*Math.PI/180;return{x:60+r*Math.cos(a),y:60+r*Math.sin(a)}}
+function position(rec){const v=norm(rec.value),si=Math.floor(v/30),within=v-si*30,d=Math.floor(within),m=Math.floor((within-d)*60+1e-7);return{sign:SIGNS[si],degree:d,minute:m,label:`${d}°${String(m).padStart(2,'0')}′`}}
+
+function wheelMarkup(rel){
+  const a=point(rel.left.value),b=point(rel.right.value);
+  const ax=(a.x/120*100).toFixed(6),ay=(a.y/120*100).toFixed(6),bx=(b.x/120*100).toFixed(6),by=(b.y/120*100).toFixed(6);
+  return `<div class="inline-rel-wheel"><div class="inline-rel-wheel-stage"><svg viewBox="0 0 120 120" aria-label="Isolated relationship"><circle cx="60" cy="60" r="48" class="inline-rel-ring"/><line x1="60" y1="60" x2="${a.x}" y2="${a.y}" class="inline-rel-radius a"/><line x1="60" y1="60" x2="${b.x}" y2="${b.y}" class="inline-rel-radius b"/><line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="inline-rel-aspect"/></svg><span class="inline-rel-endpoint inline-rel-endpoint-a" data-inline-endpoint="left" style="--endpoint-x:${ax}%;--endpoint-y:${ay}%"></span><span class="inline-rel-endpoint inline-rel-endpoint-b" data-inline-endpoint="right" style="--endpoint-x:${bx}%;--endpoint-y:${by}%"></span></div><div class="inline-rel-orb"><span style="--orb:${Math.min(1,rel.orb)}"></span><strong>${rel.orb.toFixed(2)}°</strong></div></div>`;
+}
+function cardMarkup(slot,c){return `<button type="button" class="inline-rel-card sky-${slot.toLowerCase()}" data-inline-ledger="${esc(c.id)}" aria-label="Open ${esc(c.title)} in Tarot Ledger"><small>Sky ${slot}</small><img loading="lazy" decoding="async" src="${esc(c.image)}" alt="${esc(c.title)}"><b>${esc(c.title)}</b></button>`}
+
+async function buildCanonicalSvg(id,color,bubble,size){
+  window.RelphiGlyphIntegrity?.assert?.();
+  const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;
+  const entry=registry&&(registry.get(id)||registry.resolve(id));
+  if(!entry||!component?.createBubble)return null;
+  const svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox','-32 -32 64 64');
+  svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  svg.setAttribute('width',String(size));
+  svg.setAttribute('height',String(size));
+  svg.setAttribute('aria-hidden','true');
+  svg.setAttribute('focusable','false');
+  svg.style.width=`${size}px`;
+  svg.style.height=`${size}px`;
+  svg.style.display='block';
+  svg.style.overflow='visible';
+  svg.dataset.inlineCanonicalFinalSize=String(size);
+  svg.dataset.canonicalGlyphId=entry.id;
+  const rendered=component.createBubble(svg,entry.id,{radius:19,padding:1,color,fill:'#fffdfa',strokeWidth:2.35});
+  if(!bubble){rendered.circle.style.opacity='0';rendered.circle.setAttribute('aria-hidden','true')}
+  await Promise.resolve(rendered.ready);
+  window.RelphiGlyphIntegrity?.assert?.();
+  return svg;
+}
+async function mountCanonical(host,id,color,bubble,size){
+  if(!host)return;
+  const svg=await buildCanonicalSvg(id,color,bubble,size);
+  if(!svg)return;
+  host.replaceChildren(svg);
+  host.dataset.canonicalGlyph=id;
+}
+
+function progressiveToken(field,id,name,referent,color){return `<span class="inline-rel-progressive-token" data-inline-stage="glyph" data-inline-field="${esc(field)}" data-inline-id="${esc(id)}" data-inline-color="${esc(color)}"><button type="button" class="inline-rel-stage inline-rel-stage-glyph" data-inline-level="glyph" aria-label="Reveal ${esc(name)}"><span class="inline-rel-progressive-glyph"></span></button><button type="button" class="inline-rel-stage inline-rel-stage-name" data-inline-level="name" hidden>${esc(name)}</button><button type="button" class="inline-rel-stage inline-rel-stage-referent" data-inline-level="referent" hidden>${esc(referent)}</button></span>`}
+function progressiveMarkup(rel){const lp=position(rel.left),rp=position(rel.right),aspectName=ASPECT_NAMES[rel.aspect]||rel.aspect;return `<div class="inline-rel-progressive" aria-label="Glyph to name to referent">${progressiveToken('left',rel.left.id,rel.left.entry.name,PLACEMENT_REFERENTS[rel.left.id]||'a calculated placement in Sky A',COLORS.A)}${progressiveToken('aspect',rel.aspect,aspectName,ASPECT_REFERENTS[rel.aspect]||'a measured relationship between the two placements','var(--relationship-stripe,#777)')}${progressiveToken('right',rel.right.id,rel.right.entry.name,PLACEMENT_REFERENTS[rel.right.id]||'a calculated placement in Sky B',COLORS.B)}<div class="inline-rel-house-context"><span>Sky A · ${esc(lp.sign)} ${esc(lp.label)}${rel.left.house?` · H${rel.left.house}`:''}</span><span>Sky B · ${esc(rp.sign)} ${esc(rp.label)}${rel.right.house?` · H${rel.right.house}`:''}</span></div></div>`}
+async function mountProgressive(detail){await Promise.allSettled([...detail.querySelectorAll('.inline-rel-progressive-token')].map(token=>mountCanonical(token.querySelector('.inline-rel-progressive-glyph'),token.dataset.inlineId,token.dataset.inlineColor,false,28)))}
+function setStage(token,level){const levels=['glyph','name','referent'],i=levels.indexOf(level);token.dataset.inlineStage=level;token.querySelectorAll(':scope>.inline-rel-stage').forEach((b,j)=>b.hidden=j>i)}
+function close(row){row?.querySelector(':scope>.inline-rel-detail')?.remove();row?.classList.remove('is-inline-expanded');row?.setAttribute('aria-expanded','false')}
+
+async function open(row){
+  if(openRow&&openRow!==row)close(openRow);
+  if(row===openRow&&row.classList.contains('is-inline-expanded')){close(row);openRow=null;return}
+  const rel=relation(row);if(!rel)return;
+  openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');
+  const detail=document.createElement('div');detail.className='inline-rel-detail';
+  const ca=card(rel.left),cb=card(rel.right);
+  detail.innerHTML=`<div class="inline-rel-visual">${cardMarkup('A',ca)}${wheelMarkup(rel)}${cardMarkup('B',cb)}</div>${progressiveMarkup(rel)}`;
+  row.appendChild(detail);
+  await Promise.allSettled([
+    mountCanonical(detail.querySelector('[data-inline-endpoint="left"]'),rel.left.id,COLORS.A,true,38),
+    mountCanonical(detail.querySelector('[data-inline-endpoint="right"]'),rel.right.id,COLORS.B,true,38),
+    mountProgressive(detail)
+  ]);
+  document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');
+}
+function openLedger(cardId){window.dispatchEvent(new CustomEvent('relphi:open-ledger-card',{detail:{cardId,source:'inline-relationship'}}));requestAnimationFrame(()=>{const d=document.querySelector('.sky-ledger-dialog');if(d&&!d.open&&typeof d.showModal==='function')d.showModal()})}
+
+document.addEventListener('click',e=>{
+  const ledger=e.target.closest('[data-inline-ledger]');
+  if(ledger){e.preventDefault();e.stopImmediatePropagation();openLedger(ledger.dataset.inlineLedger);return}
+  const stage=e.target.closest('.inline-rel-stage');
+  if(stage){e.preventDefault();e.stopImmediatePropagation();const token=stage.closest('.inline-rel-progressive-token'),current=token.dataset.inlineStage||'glyph';if(stage.dataset.inlineLevel==='glyph')setStage(token,current==='glyph'?'name':'glyph');else if(stage.dataset.inlineLevel==='name')setStage(token,current==='name'?'referent':'name');return}
+  const row=e.target.closest('.sky-foundation-relationship-row[data-relation-index]');
+  if(row)requestAnimationFrame(()=>open(row));
+},true);
+function suppress(){const p=document.getElementById('skySelectedRelationship');if(p)p.hidden=true}
+window.addEventListener('relphi:selected-relationship-rendered',suppress);
+window.addEventListener('relphi:sky-foundation-ready',()=>{if(openRow&&!openRow.isConnected)openRow=null;suppress()});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',suppress,{once:true});else suppress();
+})();
