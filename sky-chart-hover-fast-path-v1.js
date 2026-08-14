@@ -6,8 +6,8 @@
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHoverFastPathV1)return;
   window.__relphiSkyHoverFastPathV1=true;
 
-  const GRID=48;
-  const ASPECT_RADIUS=9;
+  const GRID=64;
+  const ASPECT_RADIUS_PX=9;
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   let cache=null;
   let hoverState=null;
@@ -46,11 +46,10 @@
   }
 
   function addMap(map,name,node){if(name==null)return;let set=map.get(name);if(!set){set=new Set();map.set(name,set)}set.add(node)}
-  function transform(matrix,x,y){return{x:matrix.a*x+matrix.c*y+matrix.e,y:matrix.b*x+matrix.d*y+matrix.f}}
   function gridKey(x,y){return`${Math.floor(x/GRID)},${Math.floor(y/GRID)}`}
   function addSegmentToGrid(grid,segment){
-    const minX=Math.min(segment.a.x,segment.b.x)-ASPECT_RADIUS,maxX=Math.max(segment.a.x,segment.b.x)+ASPECT_RADIUS;
-    const minY=Math.min(segment.a.y,segment.b.y)-ASPECT_RADIUS,maxY=Math.max(segment.a.y,segment.b.y)+ASPECT_RADIUS;
+    const minX=Math.min(segment.a.x,segment.b.x),maxX=Math.max(segment.a.x,segment.b.x);
+    const minY=Math.min(segment.a.y,segment.b.y),maxY=Math.max(segment.a.y,segment.b.y);
     for(let gx=Math.floor(minX/GRID);gx<=Math.floor(maxX/GRID);gx++)for(let gy=Math.floor(minY/GRID);gy<=Math.floor(maxY/GRID);gy++){
       const id=`${gx},${gy}`;let list=grid.get(id);if(!list){list=[];grid.set(id,list)}list.push(segment);
     }
@@ -60,14 +59,35 @@
     const t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/length));
     return Math.hypot(x-(a.x+t*dx),y-(a.y+t*dy));
   }
+  function clientToWheel(wheel,x,y){
+    const matrix=wheel.getScreenCTM?.();if(!matrix)return null;
+    const det=matrix.a*matrix.d-matrix.b*matrix.c;if(!Number.isFinite(det)||Math.abs(det)<1e-9)return null;
+    const dx=x-matrix.e,dy=y-matrix.f;
+    return{x:(matrix.d*dx-matrix.c*dy)/det,y:(-matrix.b*dx+matrix.a*dy)/det,scale:Math.max(.0001,Math.hypot(matrix.a,matrix.b))};
+  }
   function relationshipSlots(row){
     const mode=row.dataset.relationshipMode||document.documentElement.dataset.skyRelationshipMode||'A-B';
     return{left:row.dataset.leftSky||(mode==='B-B'?'B':'A'),right:row.dataset.rightSky||(mode==='A-A'?'A':'B')};
   }
 
+  function locked(){const clear=document.getElementById('skyFoundationClearIsolation');return!!clear&&!clear.hidden}
+  function clearClasses(){
+    keptNodes.forEach(node=>node.classList.remove('is-kept'));keptNodes.clear();
+    endpointNodes.forEach(node=>node.classList.remove('is-aspect-endpoint'));endpointNodes.clear();
+    hoveredNodes.forEach(node=>node.classList.remove('is-hovered'));hoveredNodes.clear();
+  }
+  function clearFast(dispatch=true,preserveIsolation=false){
+    cancelAnimationFrame(syncFrame);syncFrame=0;
+    clearClasses();
+    if(!preserveIsolation)cache?.wheel?.classList.remove('has-isolation');
+    hoverState=null;
+    if(dispatch)queueSecondary(null,new Set());
+  }
+
   function rebuild(){
     const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
     if(!wheel)return;
+    cancelAnimationFrame(syncFrame);syncFrame=0;clearClasses();hoverState=null;
     const focus={aspect:new Map(),placement:new Map(),house:new Map(),sign:new Map()};
     const interactive={aspect:new Map(),placement:new Map(),house:new Map(),sign:new Map()};
     const placements=[];
@@ -95,16 +115,13 @@
     }).filter(item=>Number.isInteger(item.index));
 
     const grid=new Map(),segments=[];
-    const matrix=wheel.getScreenCTM?.();
-    if(matrix){
-      wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
-        const index=Number(line.dataset.relationIndex),x1=num(line.getAttribute('x1')),y1=num(line.getAttribute('y1')),x2=num(line.getAttribute('x2')),y2=num(line.getAttribute('y2'));
-        if(!Number.isInteger(index)||![x1,y1,x2,y2].every(Number.isFinite))return;
-        const segment={line,index,a:transform(matrix,x1,y1),b:transform(matrix,x2,y2)};segments.push(segment);addSegmentToGrid(grid,segment);
-      });
-    }
+    wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
+      const index=Number(line.dataset.relationIndex),x1=num(line.getAttribute('x1')),y1=num(line.getAttribute('y1')),x2=num(line.getAttribute('x2')),y2=num(line.getAttribute('y2'));
+      if(!Number.isInteger(index)||![x1,y1,x2,y2].every(Number.isFinite))return;
+      const segment={line,index,a:{x:x1,y:y1},b:{x:x2,y:y2}};segments.push(segment);addSegmentToGrid(grid,segment);
+    });
     cache={wheel,focus,interactive,placements,relations,cusps:{A:houseCusps('A'),B:houseCusps('B')},grid,segments};
-    clearFast(false);
+    if(!locked())wheel.classList.remove('has-isolation');
   }
 
   function relationMatches(relation,state){
@@ -152,29 +169,14 @@
     return result;
   }
 
-  function clearClasses(){
-    keptNodes.forEach(node=>node.classList.remove('is-kept'));keptNodes.clear();
-    endpointNodes.forEach(node=>node.classList.remove('is-aspect-endpoint'));endpointNodes.clear();
-    hoveredNodes.forEach(node=>node.classList.remove('is-hovered'));hoveredNodes.clear();
-  }
-  function clearFast(dispatch=true){
-    cancelAnimationFrame(syncFrame);syncFrame=0;
-    clearClasses();
-    cache?.wheel?.classList.remove('has-isolation');
-    hoverState=null;
-    if(dispatch)queueSecondary(null,new Set());
-  }
-  function locked(){const clear=document.getElementById('skyFoundationClearIsolation');return!!clear&&!clear.hidden}
-
   function immediate(state){
     if(!cache||same(hoverState,state)||(!hoverState&&!state))return;
     clearClasses();hoverState=state;
-    const keep=keepSets(state);cache.wheel.classList.toggle('has-isolation',!!state);
+    if(!state){cache.wheel.classList.remove('has-isolation');queueSecondary(null,new Set());return}
+    const keep=keepSets(state);cache.wheel.classList.add('has-isolation');
     keptNodes=nodesForKeep(keep);keptNodes.forEach(node=>node.classList.add('is-kept'));
     hoveredNodes=exactNodes(state);hoveredNodes.forEach(node=>node.classList.add('is-hovered'));
-    if(state?.kind==='aspect'){
-      keep.placements.forEach(value=>cache.focus.placement.get(value)?.forEach(node=>{endpointNodes.add(node);node.classList.add('is-aspect-endpoint')}));
-    }
+    if(state.kind==='aspect')keep.placements.forEach(value=>cache.focus.placement.get(value)?.forEach(node=>{endpointNodes.add(node);node.classList.add('is-aspect-endpoint')}));
     queueSecondary(state,keep.matched,keep);
   }
 
@@ -207,12 +209,16 @@
   function directNode(target){return target instanceof Element?target.closest('[data-interactive]'):null}
   function nearestAspect(event){
     if(!cache||!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return null;
-    const candidates=cache.grid.get(gridKey(event.clientX,event.clientY))||[];let best=null,bestDistance=Infinity;
+    const local=clientToWheel(cache.wheel,event.clientX,event.clientY);if(!local)return null;
+    const radius=ASPECT_RADIUS_PX/local.scale,baseX=Math.floor(local.x/GRID),baseY=Math.floor(local.y/GRID),range=Math.max(1,Math.ceil(radius/GRID));
+    const candidates=new Set();
+    for(let gx=baseX-range;gx<=baseX+range;gx++)for(let gy=baseY-range;gy<=baseY+range;gy++)(cache.grid.get(`${gx},${gy}`)||[]).forEach(segment=>candidates.add(segment));
+    let best=null,bestDistance=Infinity;
     for(const segment of candidates){
       const line=segment.line;if(!line.isConnected||line.hidden||line.style.display==='none'||line.classList.contains('sky-chart-filter-hidden')||line.classList.contains('sky-chart-orb-hidden')||line.classList.contains('sky-orb-filter-hidden'))continue;
-      const distance=distanceToSegment(event.clientX,event.clientY,segment.a,segment.b);if(distance<bestDistance){bestDistance=distance;best=segment}
+      const distance=distanceToSegment(local.x,local.y,segment.a,segment.b);if(distance<bestDistance){bestDistance=distance;best=segment}
     }
-    return bestDistance<=ASPECT_RADIUS?best:null;
+    return bestDistance<=radius?best:null;
   }
   function stateAt(event){
     const node=directNode(event.target);
@@ -223,13 +229,13 @@
   function captureMove(event){
     if(!event.target.closest?.('#skyFoundationWheelMount'))return;
     event.stopImmediatePropagation();
-    if(locked()){clearFast(false);return}
+    if(locked()){clearFast(false,true);return}
     immediate(stateAt(event));
   }
   function captureOut(event){
     if(!event.target.closest?.('#skyFoundationWheelMount'))return;
     event.stopImmediatePropagation();
-    if(locked()){clearFast(false);return}
+    if(locked()){clearFast(false,true);return}
     const related=event.relatedTarget instanceof Element?event.relatedTarget:null;
     if(related?.closest('#skyFoundationWheelMount'))return;
     immediate(null);
@@ -253,9 +259,8 @@
   function start(){
     bind();
     window.addEventListener('relphi:sky-foundation-interactions-ready',refresh);
-    window.addEventListener('relphi:sky-foundation-ready',()=>{clearFast(false);cache=null});
-    window.addEventListener('resize',()=>{if(cache)requestAnimationFrame(rebuild)},{passive:true});
-    window.addEventListener('storage',()=>{clearFast(false);cache=null});
+    window.addEventListener('relphi:sky-foundation-ready',()=>{clearFast(false,true);cache=null});
+    window.addEventListener('storage',()=>{clearFast(false,true);cache=null});
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
