@@ -29,6 +29,7 @@
     style.id='skyRelationshipCopyStylesV3';
     style.textContent=`
       .sky-relationship-copy-button{margin-left:auto;padding:.38rem .68rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+      .sky-relationship-heading-actions .sky-relationship-copy-button{margin-left:0}
       .sky-relationship-copy-button:hover,.sky-relationship-copy-button:focus-visible{border-color:#6b625a;outline:0;background:#fffdfa}
       .sky-foundation-relationship-row svg,.sky-foundation-relationship-glyph,.sky-foundation-relationship-sign{-webkit-user-select:none;user-select:none}
       .sky-foundation-relationship-copy,.sky-foundation-relationship-orb{-webkit-user-select:text;user-select:text}
@@ -40,16 +41,23 @@
     installStyles();
     const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
     if(!heading)return null;
+    const actions=heading.querySelector('.sky-relationship-heading-actions');
     let button=heading.querySelector('.sky-relationship-copy-button');
-    if(button)return button;
+    if(button){
+      if(actions&&button.parentElement!==actions)actions.insertBefore(button,actions.querySelector('#skyChartRelationshipsExport')||null);
+      return button;
+    }
     button=document.createElement('button');
     button.type='button';
     button.className='sky-relationship-copy-button';
     button.textContent='Copy';
     button.setAttribute('aria-label','Copy visible relationships with active filter context');
     button.title='Copy visible relationships';
-    const clear=heading.querySelector('#skyFoundationClearIsolation');
-    heading.insertBefore(button,clear||null);
+    if(actions)actions.insertBefore(button,actions.querySelector('#skyChartRelationshipsExport')||null);
+    else{
+      const clear=heading.querySelector('#skyFoundationClearIsolation');
+      heading.insertBefore(button,clear||null);
+    }
     button.addEventListener('click',async event=>{
       event.preventDefault();event.stopPropagation();
       const rows=visibleRows();
