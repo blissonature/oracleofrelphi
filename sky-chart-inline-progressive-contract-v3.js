@@ -77,7 +77,7 @@ function installStyles(){
   `;document.head.appendChild(style);
 }
 function decorateExisting(){document.querySelectorAll('.sky-foundation-relationship-row.is-inline-expanded').forEach(ensureStrip)}
-function ensureObserver(){const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;observer?.disconnect();observedList=list;observer=new MutationObserver(()=>requestAnimationFrame(decorateExisting));observer.observe(list,{childList:true,subtree:true})}
+function ensureObserver(){const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;observer?.disconnect();observedList=list;observer=new MutationObserver(decorateExisting);observer.observe(list,{childList:true,subtree:true})}
 function reconcile(){installStyles();ensureObserver();requestAnimationFrame(decorateExisting)}
 function start(){reconcile();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,reconcile))}
 // Reveal ownership is installed before the inline row-toggle renderer.
