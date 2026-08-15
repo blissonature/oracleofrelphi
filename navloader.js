@@ -135,6 +135,7 @@
       appendScript('drawing-board-workflow-v2.js?v=24');
       appendScript('drawing-board-interactions-v1.js?v=4');
       appendScript('drawing-board-spread-prefabs-v1.js?v=10');
+      appendScript('tarot-card-deep-link-v1.js?v=1');
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () {
@@ -153,6 +154,9 @@
     }
     if (/(^|\/)(mythic-atlas|constellations)\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () { appendScript('relphi-inline-glyph-consumer-v1.js?v=2'); });
+    }
+    if (/(^|\/)sky-chart\.html$/.test(location.pathname) && document.getElementById('skyFoundationRoot')) {
+      appendScript('sky-chart-page-stability-v1.js?v=1');
     }
     if (/(^|\/)sky-chart\.html$/.test(location.pathname) && !document.getElementById('skyFoundationRoot')) {
       const preview = new URLSearchParams(location.search).get('preview');
