@@ -10,6 +10,10 @@ let observer=null,observedList=null,queued=false;
 function installStyle(){
   if(document.getElementById(STYLE_ID))return;
   const style=document.createElement('style');style.id=STYLE_ID;style.textContent=`
+    #skyFoundationRelationshipList{
+      overscroll-behavior-y:contain;
+      -webkit-overflow-scrolling:touch;
+    }
     .sky-foundation-relationship-row.is-inline-expanded{
       grid-template-columns:repeat(3,minmax(0,1fr))!important;
       grid-template-areas:"left aspect right" "left orb right" "detail detail detail"!important;
@@ -79,6 +83,9 @@ function installStyle(){
       line-height:18px!important;
     }
     @media(max-width:620px){
+      #skyFoundationRelationshipList:has(> .sky-foundation-relationship-row.is-inline-expanded){
+        max-height:min(720px,calc(100dvh - 84px))!important;
+      }
       .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-symbol-pair{gap:2px!important}
     }
   `;document.head.appendChild(style);
