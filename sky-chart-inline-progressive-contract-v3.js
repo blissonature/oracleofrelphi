@@ -56,7 +56,12 @@ function levelActivate(levelNode){const token=levelNode.closest('[data-inline-pr
 function expandedRowFor(target){return target?.closest?.('.sky-foundation-relationship-row.is-inline-expanded')||null}
 function fieldFromBase(target,row){const direct=target.closest?.('[data-inline-progressive-glyph]');if(direct?.dataset.inlineProgressiveGlyph)return direct.dataset.inlineProgressiveGlyph;for(const [field,selector] of GLYPH_FIELDS){const glyph=target.closest?.(selector);if(glyph&&row.contains(glyph))return field}return''}
 function ownRevealEvent(event){const row=expandedRowFor(event.target);if(!row)return false;ensureStrip(row);const level=event.target.closest?.('[data-inline-progressive-level]');if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return true}const field=fieldFromBase(event.target,row);if(field){event.preventDefault();event.stopImmediatePropagation();baseActivate(row,field);return true}return false}
-function handleClick(event){ownRevealEvent(event)}
+function handleClick(event){
+  if(ownRevealEvent(event))return;
+  const row=expandedRowFor(event.target);if(!row)return;
+  if(event.target.closest?.('[data-inline-card-link]'))return;
+  event.preventDefault();event.stopImmediatePropagation();
+}
 function handleKey(event){if(event.key!=='Enter'&&event.key!==' ')return;ownRevealEvent(event)}
 function installStyles(){
   if(document.getElementById('skyInlineProgressiveContractV3Styles'))return;document.getElementById('skyInlineProgressiveContractV2Styles')?.remove();document.getElementById('skyInlineProgressiveContractStyles')?.remove();
@@ -80,7 +85,8 @@ function decorateExisting(){document.querySelectorAll('.sky-foundation-relations
 function ensureObserver(){const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;observer?.disconnect();observedList=list;observer=new MutationObserver(decorateExisting);observer.observe(list,{childList:true,subtree:true})}
 function reconcile(){installStyles();ensureObserver();requestAnimationFrame(decorateExisting)}
 function start(){reconcile();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,reconcile))}
-// Reveal ownership is installed before the inline row-toggle renderer.
+// Reveal ownership is installed before the inline row-toggle renderer. Once a relationship is open,
+// reveal controls and explicit card links own their clicks; generic taps cannot collapse the row.
 document.addEventListener('click',handleClick,true);document.addEventListener('keydown',handleKey,true);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
