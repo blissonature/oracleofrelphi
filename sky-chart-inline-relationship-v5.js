@@ -79,7 +79,7 @@ function close(row){clearReveal(row);row?.querySelector(':scope>.inline-rel-deta
 
 function open(row){
   if(openRow&&openRow!==row)close(openRow);
-  if(row===openRow&&row.classList.contains('is-inline-expanded')){close(row);openRow=null;return}
+  if(row===openRow&&row.classList.contains('is-inline-expanded'))return;
   const rel=relation(row);if(!rel)return;
   openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');decorateTopReveal(row);
   const detail=document.createElement('div');detail.className='inline-rel-detail';
