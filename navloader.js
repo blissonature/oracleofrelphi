@@ -132,6 +132,7 @@
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime();
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
+      appendScript('tarot-card-deep-link-v1.js?v=1');
       appendScript('drawing-board-workflow-v2.js?v=24');
       appendScript('drawing-board-interactions-v1.js?v=4');
       appendScript('drawing-board-spread-prefabs-v1.js?v=10');
