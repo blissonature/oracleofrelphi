@@ -64,14 +64,14 @@ function installStyles(){
 function validHouse(value){const n=Number(value);return Number.isFinite(n)&&n>=1&&n<=12?Math.trunc(n):0}
 function medallion(house,field,interactive=false,existing=null){
   const n=validHouse(house);if(!n)return null;
-  const node=existing instanceof HTMLElement?existing:document.createElement('span');
-  node.className='relphi-house-medallion';
-  node.dataset.house=String(n);
-  node.textContent=String(n);
-  node.style.setProperty('--house-color',HOUSE_COLORS[n-1]);
-  node.setAttribute('aria-label',HOUSE_NAMES[n]);
-  node.setAttribute('title',interactive?`Reveal ${HOUSE_NAMES[n]}`:HOUSE_NAMES[n]);
-  if(interactive&&field)node.dataset.inlineProgressiveGlyph=field;else delete node.dataset.inlineProgressiveGlyph;
+  const node=existing instanceof HTMLElement?existing:document.createElement('span'),label=String(n);
+  if(node.className!=='relphi-house-medallion')node.className='relphi-house-medallion';
+  if(node.dataset.house!==label)node.dataset.house=label;
+  if(node.textContent!==label)node.textContent=label;
+  if(node.style.getPropertyValue('--house-color')!==HOUSE_COLORS[n-1])node.style.setProperty('--house-color',HOUSE_COLORS[n-1]);
+  if(node.getAttribute('aria-label')!==HOUSE_NAMES[n])node.setAttribute('aria-label',HOUSE_NAMES[n]);
+  const title=interactive?`Reveal ${HOUSE_NAMES[n]}`:HOUSE_NAMES[n];if(node.getAttribute('title')!==title)node.setAttribute('title',title);
+  if(interactive&&field){if(node.dataset.inlineProgressiveGlyph!==field)node.dataset.inlineProgressiveGlyph=field}else if(node.dataset.inlineProgressiveGlyph)delete node.dataset.inlineProgressiveGlyph;
   return node;
 }
 function decorateCoordinate(small,coordinate,house,field,interactive=false){
@@ -80,8 +80,8 @@ function decorateCoordinate(small,coordinate,house,field,interactive=false){
   const existing=small.querySelector('.relphi-house-medallion');
   const marker=medallion(n,field,interactive,existing);
   const text=String(coordinate||'').trim();
-  small.dataset.relationshipCoordinate=text;
-  small.classList.add('relphi-house-coordinate');
+  if(small.dataset.relationshipCoordinate!==text)small.dataset.relationshipCoordinate=text;
+  if(!small.classList.contains('relphi-house-coordinate'))small.classList.add('relphi-house-coordinate');
   const correct=small.childNodes.length===2&&small.firstChild?.nodeType===Node.TEXT_NODE&&small.firstChild.textContent===text&&small.lastChild===marker;
   if(!correct)small.replaceChildren(document.createTextNode(text),marker);
   return marker;
