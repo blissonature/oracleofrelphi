@@ -72,8 +72,14 @@ function installStyles(){
     .inline-rel-progressive-token[data-tone="a"]{border-top:2px solid #c9211e}.inline-rel-progressive-token[data-tone="b"]{border-top:2px solid #2462d0}.inline-rel-progressive-token[data-tone="aspect"]{border-top:2px solid var(--relationship-stripe,#777)}
     .inline-rel-progressive-token[hidden],.inline-rel-progressive-level[hidden]{display:none!important}
     .inline-rel-progressive-level{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center}
-    .inline-rel-progressive-name{font-size:.6rem;font-weight:900;line-height:1.15}.inline-rel-progressive-referent{font-size:.55rem;font-weight:680;line-height:1.28;color:#625a53;white-space:normal;overflow-wrap:anywhere}
-    @media(max-width:620px){.inline-rel-progressive-strip{grid-template-columns:minmax(0,1fr) minmax(68px,.64fr) minmax(0,1fr);gap:4px}.inline-rel-progressive-side{gap:3px}.inline-rel-progressive-token{padding:3px}.inline-rel-progressive-name{font-size:.54rem}.inline-rel-progressive-referent{font-size:.49rem}}
+    .inline-rel-progressive-name{font-size:.6rem;font-weight:900;line-height:1.15;overflow-wrap:normal;word-break:normal;hyphens:none}.inline-rel-progressive-referent{font-size:.55rem;font-weight:680;line-height:1.28;color:#625a53;white-space:normal;overflow-wrap:normal;word-break:normal;hyphens:none}
+    @media(max-width:620px){
+      .inline-rel-progressive-strip{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;gap:6px}
+      .inline-rel-progressive-side-a{grid-column:1;grid-row:1}.inline-rel-progressive-strip>[data-inline-progressive-token="aspect"]{grid-column:1;grid-row:2;justify-self:center;width:min(180px,100%)}.inline-rel-progressive-side-b{grid-column:1;grid-row:3}
+      .inline-rel-progressive-side{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;width:100%}
+      .inline-rel-progressive-token{padding:4px 6px}
+      .inline-rel-progressive-name{font-size:.58rem}.inline-rel-progressive-referent{font-size:.54rem}
+    }
   `;document.head.appendChild(style);
 }
 function decorateExisting(){document.querySelectorAll('.sky-foundation-relationship-row.is-inline-expanded').forEach(ensureStrip)}
