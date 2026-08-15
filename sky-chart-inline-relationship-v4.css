@@ -25,9 +25,9 @@
 .inline-rel-ring{fill:#fffdfa;stroke:rgba(45,39,34,.28);stroke-width:1}
 .inline-rel-radius{stroke-width:1.2;opacity:.62}.inline-rel-radius.a{stroke:#c9211e}.inline-rel-radius.b{stroke:#2462d0}
 .inline-rel-aspect{stroke:var(--relationship-stripe,#777);stroke-width:3;stroke-linecap:round}
-.inline-rel-overlap-leader{fill:none;stroke-width:1.35;stroke-linecap:round;opacity:.82}.inline-rel-overlap-leader.sky-a{stroke:#c9211e}.inline-rel-overlap-leader.sky-b{stroke:#2462d0}
-.inline-rel-conjunction-anchor{fill:#774277;stroke:#fffdfa;stroke-width:1.5}
-.inline-rel-endpoint{position:absolute;left:var(--endpoint-x);top:var(--endpoint-y);width:38px;height:38px;transform:translate(-50%,-50%);display:grid;place-items:center;pointer-events:none;z-index:2}
+.inline-rel-endpoint-layer{position:absolute;inset:0;isolation:isolate;pointer-events:none;z-index:2}
+.inline-rel-endpoint{position:absolute;left:var(--endpoint-x);top:var(--endpoint-y);width:38px;height:38px;transform:translate(-50%,-50%);display:grid;place-items:center;pointer-events:none}
+.inline-rel-wheel-stage[data-inline-overlap="true"] .inline-rel-endpoint{mix-blend-mode:screen}
 .inline-rel-endpoint>svg{display:block;width:38px!important;height:38px!important;min-width:38px;min-height:38px;max-width:38px;max-height:38px;overflow:visible}
 .inline-rel-orb{display:flex;align-items:center;justify-content:center;gap:5px;width:min(100%,130px);margin-top:2px}
 .inline-rel-orb>span{position:relative;display:block;width:64px;height:5px;border-radius:999px;background:rgba(45,39,34,.12);overflow:hidden}
