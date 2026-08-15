@@ -22,20 +22,29 @@ function installStyles(){
   style.id=STYLE_ID;
   style.textContent=`
     .sky-foundation-relationship-copy small.relphi-house-coordinate{
-      display:flex!important;
+      display:grid!important;
+      grid-template-columns:50px 18px!important;
       align-items:center!important;
       justify-content:center!important;
-      gap:4px!important;
+      column-gap:4px!important;
       height:18px!important;
       line-height:18px!important;
       overflow:visible!important;
+    }
+    .relphi-house-coordinate-value{
+      display:block;
+      width:50px;
+      min-width:50px;
+      text-align:right;
+      white-space:nowrap;
+      line-height:18px;
     }
     .relphi-house-medallion{
       --house-color:#777;
       --house-ink:#fff;
       display:inline-grid;
       place-items:center;
-      flex:0 0 18px;
+      justify-self:start;
       width:18px;
       height:18px;
       box-sizing:border-box;
@@ -58,7 +67,10 @@ function installStyles(){
       filter:brightness(.92);
       box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px var(--house-color);
     }
-    @media(max-width:620px){.sky-foundation-relationship-copy small.relphi-house-coordinate{gap:3px!important}}
+    @media(max-width:620px){
+      .sky-foundation-relationship-copy small.relphi-house-coordinate{grid-template-columns:48px 18px!important;column-gap:3px!important}
+      .relphi-house-coordinate-value{width:48px;min-width:48px}
+    }
   `;
   document.head.appendChild(style);
 }
@@ -82,13 +94,16 @@ function medallion(house,field,interactive=false,existing=null){
 function decorateCoordinate(small,coordinate,house,field,interactive=false){
   if(!(small instanceof HTMLElement))return null;
   const n=validHouse(house);if(!n)return null;
-  const existing=small.querySelector('.relphi-house-medallion');
-  const marker=medallion(n,field,interactive,existing);
+  const existingMarker=small.querySelector('.relphi-house-medallion');
+  const marker=medallion(n,field,interactive,existingMarker);
   const text=String(coordinate||'').trim();
   if(small.dataset.relationshipCoordinate!==text)small.dataset.relationshipCoordinate=text;
   if(!small.classList.contains('relphi-house-coordinate'))small.classList.add('relphi-house-coordinate');
-  const correct=small.childNodes.length===2&&small.firstChild?.nodeType===Node.TEXT_NODE&&small.firstChild.textContent===text&&small.lastChild===marker;
-  if(!correct)small.replaceChildren(document.createTextNode(text),marker);
+  let value=small.querySelector('.relphi-house-coordinate-value');
+  if(!value){value=document.createElement('span');value.className='relphi-house-coordinate-value'}
+  if(value.textContent!==text)value.textContent=text;
+  const correct=small.children.length===2&&small.firstElementChild===value&&small.lastElementChild===marker;
+  if(!correct)small.replaceChildren(value,marker);
   return marker;
 }
 function coordinateText(small){
