@@ -14,6 +14,7 @@ const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46',
 let observer=null,observedList=null,raf=0;
 const pendingRows=new Set();
 
+function houseInk(hex){const value=String(hex||'').replace('#','');if(value.length!==6)return'#fff';const r=parseInt(value.slice(0,2),16),g=parseInt(value.slice(2,4),16),b=parseInt(value.slice(4,6),16),luma=.299*r+.587*g+.114*b;return luma>160?'#211d1a':'#fff'}
 function installStyles(){
   ['skyHouseMedallionV1Styles','skyHouseMedallionV2Styles','skyHouseMedallionV3Styles'].forEach(id=>document.getElementById(id)?.remove());
   if(document.getElementById(STYLE_ID))return;
@@ -25,37 +26,37 @@ function installStyles(){
       align-items:center!important;
       justify-content:center!important;
       gap:4px!important;
+      height:18px!important;
+      line-height:18px!important;
+      overflow:visible!important;
     }
     .relphi-house-medallion{
       --house-color:#777;
+      --house-ink:#fff;
       display:inline-grid;
       place-items:center;
-      flex:0 0 14px;
-      width:14px;
-      height:14px;
+      flex:0 0 18px;
+      width:18px;
+      height:18px;
       box-sizing:border-box;
       padding:0!important;
-      border:1.4px solid var(--house-color)!important;
+      border:0!important;
       border-radius:50%!important;
-      background:color-mix(in srgb,var(--house-color) 18%,#fffdfa)!important;
-      color:#2f2a26!important;
-      font:900 .52rem/1 system-ui,sans-serif!important;
+      background:var(--house-color)!important;
+      color:var(--house-ink)!important;
+      font:900 .58rem/1 system-ui,sans-serif!important;
       font-variant-numeric:tabular-nums;
       text-align:center;
       vertical-align:middle;
-      box-shadow:inset 0 0 0 1px rgba(255,255,255,.48);
+      box-shadow:0 1px 2px rgba(0,0,0,.16);
     }
     .relphi-house-medallion[data-house="10"],
     .relphi-house-medallion[data-house="11"],
-    .relphi-house-medallion[data-house="12"]{font-size:.44rem!important;letter-spacing:-.035em}
-    .sky-foundation-relationship-row.is-inline-expanded .relphi-house-medallion{
-      flex-basis:16px;
-      width:16px;
-      height:16px;
-      cursor:pointer;
-    }
+    .relphi-house-medallion[data-house="12"]{font-size:.49rem!important;letter-spacing:-.035em}
+    .sky-foundation-relationship-row.is-inline-expanded .relphi-house-medallion{cursor:pointer}
     .sky-foundation-relationship-row.is-inline-expanded .relphi-house-medallion:hover{
-      background:color-mix(in srgb,var(--house-color) 28%,#fffdfa)!important;
+      filter:brightness(.92);
+      box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px var(--house-color);
     }
     @media(max-width:620px){.sky-foundation-relationship-copy small.relphi-house-coordinate{gap:3px!important}}
   `;
@@ -65,11 +66,12 @@ function installStyles(){
 function validHouse(value){const n=Number(value);return Number.isFinite(n)&&n>=1&&n<=12?Math.trunc(n):0}
 function medallion(house,field,interactive=false,existing=null){
   const n=validHouse(house);if(!n)return null;
-  const node=existing instanceof HTMLElement?existing:document.createElement('span'),label=String(n);
+  const node=existing instanceof HTMLElement?existing:document.createElement('span'),label=String(n),color=HOUSE_COLORS[n-1];
   if(node.className!=='relphi-house-medallion')node.className='relphi-house-medallion';
   if(node.dataset.house!==label)node.dataset.house=label;
   if(node.textContent!==label)node.textContent=label;
-  if(node.style.getPropertyValue('--house-color')!==HOUSE_COLORS[n-1])node.style.setProperty('--house-color',HOUSE_COLORS[n-1]);
+  if(node.style.getPropertyValue('--house-color')!==color)node.style.setProperty('--house-color',color);
+  const ink=houseInk(color);if(node.style.getPropertyValue('--house-ink')!==ink)node.style.setProperty('--house-ink',ink);
   if(node.getAttribute('aria-label')!==HOUSE_NAMES[n])node.setAttribute('aria-label',HOUSE_NAMES[n]);
   const title=interactive?`Reveal ${HOUSE_NAMES[n]}`:HOUSE_NAMES[n];
   if(node.getAttribute('title')!==title)node.setAttribute('title',title);
