@@ -1,31 +1,41 @@
-// Tarot Ledger card deep link v2: route ?card=<card_id> through the Ledger's real browse/full-entry UI.
+// Tarot Ledger card deep link v3: wait for the real Ledger browse UI, then open ?card=<card_id>.
 (function(){
 'use strict';
-if(!/(^|\/)tarot\.html$/.test(location.pathname)||window.__relphiTarotCardDeepLinkV2)return;
+if(!/(^|\/)tarot\.html$/.test(location.pathname)||window.__relphiTarotCardDeepLinkV3)return;
+window.__relphiTarotCardDeepLinkV3=true;
 window.__relphiTarotCardDeepLinkV2=true;
 window.__relphiTarotCardDeepLinkV1=true;
 
-function requestedCard(){
-  return String(new URLSearchParams(location.search).get('card')||'').trim();
-}
+const CARD_ID=String(new URLSearchParams(location.search).get('card')||'').trim();
+let attempts=0,opened=false,timer=0;
+const MAX_ATTEMPTS=100;
+
 function cardSelector(cardId){
   if(window.CSS?.escape)return `.or-card[data-id="${CSS.escape(cardId)}"]`;
   return `.or-card[data-id="${cardId.replace(/["\\]/g,'\\$&')}"]`;
 }
-function openRequestedCard(){
-  const cardId=requestedCard();if(!cardId)return;
-  const browse=document.getElementById('browsePanel'),landing=document.getElementById('landingShowLedger'),showAll=document.getElementById('showAllCards');
-  if(!browse||(!landing&&!showAll))return;
-  const trigger=landing||showAll;
-  trigger.click();
-  let attempts=0;
-  const seek=()=>{
-    const card=document.querySelector(cardSelector(cardId));
-    if(card){card.click();return}
-    if(++attempts<12)requestAnimationFrame(seek);
-  };
-  requestAnimationFrame(seek);
+function schedule(delay=40){
+  if(opened||timer||!CARD_ID)return;
+  timer=setTimeout(()=>{timer=0;seek()},delay);
 }
-function afterLedgerInit(){requestAnimationFrame(openRequestedCard)}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',afterLedgerInit,{once:true});else afterLedgerInit();
+function seek(){
+  if(opened||!CARD_ID)return;
+  const card=document.querySelector(cardSelector(CARD_ID));
+  if(card){
+    opened=true;
+    card.click();
+    requestAnimationFrame(()=>card.scrollIntoView?.({block:'nearest',inline:'nearest'}));
+    return;
+  }
+  const browse=document.getElementById('browsePanel');
+  const cardList=document.getElementById('cardList');
+  const trigger=document.getElementById('landingShowLedger')||document.getElementById('showAllCards');
+  if(trigger&&(browse?.hidden||!cardList?.children?.length))trigger.click();
+  attempts+=1;
+  if(attempts<MAX_ATTEMPTS)schedule();
+  else console.warn('[Oracle of Relphi] Tarot Ledger deep link could not open card:',CARD_ID);
+}
+function start(){if(CARD_ID)schedule(0)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+window.addEventListener('load',()=>{if(!opened&&CARD_ID)schedule(0)},{once:true});
 })();
