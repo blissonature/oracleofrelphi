@@ -1,18 +1,20 @@
-// House medallion v2: one rainbow-wheel-derived house marker for compact relationship tiles
-// and the expanded dual-card header, without observing descendant DOM mutations.
+// House medallion v3: shared house-number marker for relationship tiles and expanded dual-card headers.
+// This module owns presentation and construction only. Row builders call it directly; it observes no DOM.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHouseMedallionV2)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHouseMedallionV3)return;
+window.__relphiSkyHouseMedallionV3=true;
 window.__relphiSkyHouseMedallionV2=true;
 window.__relphiSkyHouseMedallionV1=true;
 
-const STYLE_ID='skyHouseMedallionV2Styles';
+const STYLE_ID='skyHouseMedallionV3Styles';
 const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
-const FALLBACK_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
-let houseColors=FALLBACK_COLORS.slice(),observer=null,observedList=null;
+// Canonical twelve-hue sequence used by the rainbow comparison wheel.
+const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 
 function installStyles(){
   document.getElementById('skyHouseMedallionV1Styles')?.remove();
+  document.getElementById('skyHouseMedallionV2Styles')?.remove();
   if(document.getElementById(STYLE_ID))return;
   const style=document.createElement('style');
   style.id=STYLE_ID;
@@ -59,60 +61,32 @@ function installStyles(){
   document.head.appendChild(style);
 }
 
-function readRainbowPalette(){
-  for(const layerName of ['a-houses','b-houses']){
-    const paths=[...document.querySelectorAll(`[data-layer="${layerName}"] > path`)];
-    if(paths.length<12)continue;
-    const colors=paths.slice(0,12).map(path=>path.getAttribute('fill')||'').filter(Boolean);
-    if(colors.length===12)return colors;
-  }
-  return null;
+function validHouse(value){const n=Number(value);return Number.isFinite(n)&&n>=1&&n<=12?Math.trunc(n):0}
+function medallion(house,field,interactive=false,existing=null){
+  const n=validHouse(house);if(!n)return null;
+  const node=existing instanceof HTMLElement?existing:document.createElement('span');
+  node.className='relphi-house-medallion';
+  node.dataset.house=String(n);
+  node.textContent=String(n);
+  node.style.setProperty('--house-color',HOUSE_COLORS[n-1]);
+  node.setAttribute('aria-label',HOUSE_NAMES[n]);
+  node.setAttribute('title',interactive?`Reveal ${HOUSE_NAMES[n]}`:HOUSE_NAMES[n]);
+  if(interactive&&field)node.dataset.inlineProgressiveGlyph=field;else delete node.dataset.inlineProgressiveGlyph;
+  return node;
 }
-function refreshPalette(){const colors=readRainbowPalette();if(colors)houseColors=colors}
-function rowHouse(row,side){const value=Number(row.dataset[side==='left'?'leftHouse':'rightHouse']);return Number.isFinite(value)&&value>=1&&value<=12?value:0}
-function coordinateText(small){
-  const stored=String(small?.dataset?.relationshipCoordinate||'').trim();
-  if(stored)return stored;
-  const match=String(small?.textContent||'').match(/\d{1,2}°\d{2}′/);
-  return match?.[0]||String(small?.textContent||'').split('·')[0].trim();
-}
-function sideSmall(row,side){return row.querySelector(`.sky-foundation-relationship-placement--${side} .sky-foundation-relationship-copy small`)}
-function decorateSide(row,side){
-  const small=sideSmall(row,side),house=rowHouse(row,side);if(!small||!house)return;
-  const field=`${side}-house`,coordinate=coordinateText(small);
-  let medallion=small.querySelector('.relphi-house-medallion');
-  if(!medallion){medallion=document.createElement('span');medallion.className='relphi-house-medallion'}
-  medallion.dataset.house=String(house);
-  medallion.dataset.inlineProgressiveGlyph=field;
-  medallion.textContent=String(house);
-  medallion.style.setProperty('--house-color',houseColors[house-1]||FALLBACK_COLORS[house-1]);
-  medallion.setAttribute('aria-label',HOUSE_NAMES[house]);
-  medallion.setAttribute('title',HOUSE_NAMES[house]);
-  small.dataset.relationshipCoordinate=coordinate;
+function decorateCoordinate(small,coordinate,house,field,interactive=false){
+  if(!(small instanceof HTMLElement))return null;
+  const n=validHouse(house);if(!n)return null;
+  const existing=small.querySelector('.relphi-house-medallion');
+  const marker=medallion(n,field,interactive,existing);
+  const text=String(coordinate||'').trim();
+  small.dataset.relationshipCoordinate=text;
   small.classList.add('relphi-house-coordinate');
-  const correct=small.childNodes.length===2&&small.firstChild?.nodeType===Node.TEXT_NODE&&small.firstChild.textContent===coordinate&&small.lastChild===medallion;
-  if(!correct)small.replaceChildren(document.createTextNode(coordinate),medallion);
+  const correct=small.childNodes.length===2&&small.firstChild?.nodeType===Node.TEXT_NODE&&small.firstChild.textContent===text&&small.lastChild===marker;
+  if(!correct)small.replaceChildren(document.createTextNode(text),marker);
+  return marker;
 }
-function decorateRow(row){if(!(row instanceof HTMLElement)||!row.matches('.sky-foundation-relationship-row'))return;decorateSide(row,'left');decorateSide(row,'right')}
-function decorateAll(){document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(decorateRow)}
-function repaintColors(){document.querySelectorAll('#skyFoundationRelationshipList .relphi-house-medallion').forEach(node=>{const house=Number(node.dataset.house);if(house>=1&&house<=12)node.style.setProperty('--house-color',houseColors[house-1]||FALLBACK_COLORS[house-1])})}
-function ensureObserver(){
-  const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;
-  observer?.disconnect();observedList=list;
-  observer=new MutationObserver(records=>{
-    for(const record of records){
-      for(const node of record.addedNodes){
-        if(node instanceof HTMLElement&&node.matches('.sky-foundation-relationship-row'))decorateRow(node);
-      }
-    }
-  });
-  observer.observe(list,{childList:true,subtree:false});
-  decorateAll();
-}
-function sync(){refreshPalette();ensureObserver();decorateAll();repaintColors()}
-function start(){
-  installStyles();sync();
-  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,sync));
-}
-document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
+
+installStyles();
+window.RelphiHouseMedallion=Object.freeze({colors:Object.freeze(HOUSE_COLORS.slice()),names:Object.freeze(HOUSE_NAMES.slice()),create:medallion,decorateCoordinate});
 })();
