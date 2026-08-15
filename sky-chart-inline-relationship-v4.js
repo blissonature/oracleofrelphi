@@ -11,7 +11,7 @@ window.__relphiInlineRelationshipV4=true;
 
 const NS='http://www.w3.org/2000/svg';
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-const COLORS={A:'#c9211e',B:'#2462d0',MIXED:'#774277'};
+const COLORS={A:'#c9211e',B:'#2462d0'};
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const ASPECT_NAMES={conjunction:'Conjunction','semi-sextile':'Semi-Sextile',octile:'Octile',sextile:'Sextile',quintile:'Quintile',square:'Square',trine:'Trine','tri-octile':'Tri-Octile','bi-quintile':'Bi-Quintile',quincunx:'Quincunx',opposition:'Opposition'};
 const PLACEMENT_REFERENTS={sun:'identity, vitality, and conscious purpose',moon:'feelings, instincts, memory, and emotional needs',mercury:'thought, perception, language, and communication',venus:'values, attraction, affection, pleasure, and relating',mars:'drive, assertion, desire, conflict, and action',jupiter:'growth, confidence, meaning, opportunity, and expansion',saturn:'structure, limits, responsibility, time, and commitment',uranus:'freedom, disruption, originality, awakening, and change',neptune:'imagination, sensitivity, surrender, ideals, and vision',pluto:'power, depth, compulsion, elimination, and transformation',chiron:'wounding, healing intelligence, and the capacity to guide healing',asc:'the way a person enters life and is immediately perceived',dsc:'the way a person meets partners and encounters the other',mc:'public direction, vocation, visibility, and the role a person grows toward',ic:'roots, home, private foundations, and inherited belonging','north-node':'growth through unfamiliar experience and developing capacity','south-node':'familiar patterns, inherited capacity, and the known path',lilith:'instinctive autonomy, refusal, exile, and uncompromised desire','part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',vertex:'encounters that feel consequential or outside ordinary control'};
@@ -19,7 +19,6 @@ const ASPECT_REFERENTS={conjunction:'the two functions operate together','semi-s
 const DECANS=[[['two_of_wands','Two of Wands'],['three_of_wands','Three of Wands'],['four_of_wands','Four of Wands']],[['five_of_pentacles','Five of Pentacles'],['six_of_pentacles','Six of Pentacles'],['seven_of_pentacles','Seven of Pentacles']],[['eight_of_swords','Eight of Swords'],['nine_of_swords','Nine of Swords'],['ten_of_swords','Ten of Swords']],[['two_of_cups','Two of Cups'],['three_of_cups','Three of Cups'],['four_of_cups','Four of Cups']],[['five_of_wands','Five of Wands'],['six_of_wands','Six of Wands'],['seven_of_wands','Seven of Wands']],[['eight_of_pentacles','Eight of Pentacles'],['nine_of_pentacles','Nine of Pentacles'],['ten_of_pentacles','Ten of Pentacles']],[['two_of_swords','Two of Swords'],['three_of_swords','Three of Swords'],['four_of_swords','Four of Swords']],[['five_of_cups','Five of Cups'],['six_of_cups','Six of Cups'],['seven_of_cups','Seven of Cups']],[['eight_of_wands','Eight of Wands'],['nine_of_wands','Nine of Wands'],['ten_of_wands','Ten of Wands']],[['two_of_pentacles','Two of Pentacles'],['three_of_pentacles','Three of Pentacles'],['four_of_pentacles','Four of Pentacles']],[['five_of_swords','Five of Swords'],['six_of_swords','Six of Swords'],['seven_of_swords','Seven of Swords']],[['eight_of_cups','Eight of Cups'],['nine_of_cups','Nine of Cups'],['ten_of_cups','Ten of Cups']]];
 const ALIAS={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 const OVERLAP_DISTANCE=30;
-const OVERLAP_OFFSET=17;
 let openRow=null;
 
 const norm=n=>((Number(n)%360)+360)%360;
@@ -34,29 +33,18 @@ function card(rec){const v=norm(rec.value),s=Math.floor(v/30),d=Math.floor(v-s*3
 function point(v,r=48){const a=(norm(v)-180)*Math.PI/180;return{x:60+r*Math.cos(a),y:60+r*Math.sin(a)}}
 function position(rec){const v=norm(rec.value),si=Math.floor(v/30),within=v-si*30,d=Math.floor(within),m=Math.floor((within-d)*60+1e-7);return{sign:SIGNS[si],degree:d,minute:m,label:`${d}°${String(m).padStart(2,'0')}′`}}
 function overlapGeometry(rel,a,b){
-  const distance=Math.hypot(a.x-b.x,a.y-b.y);
-  if(rel.aspect!=='conjunction'||distance>=OVERLAP_DISTANCE)return{overlap:false,aDisplay:a,bDisplay:b,anchor:null};
-  const anchor={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
-  let rx=anchor.x-60,ry=anchor.y-60,length=Math.hypot(rx,ry);
-  if(length<.001){rx=1;ry=0;length=1}
-  const tangent={x:-ry/length,y:rx/length};
-  return{
-    overlap:true,
-    anchor,
-    aDisplay:{x:a.x-tangent.x*OVERLAP_OFFSET,y:a.y-tangent.y*OVERLAP_OFFSET},
-    bDisplay:{x:b.x+tangent.x*OVERLAP_OFFSET,y:b.y+tangent.y*OVERLAP_OFFSET}
-  };
+  const overlap=rel.aspect==='conjunction'&&Math.hypot(a.x-b.x,a.y-b.y)<OVERLAP_DISTANCE;
+  return{overlap,aDisplay:a,bDisplay:b};
 }
 
 function wheelMarkup(rel){
   const a=point(rel.left.value),b=point(rel.right.value),layout=overlapGeometry(rel,a,b),ad=layout.aDisplay,bd=layout.bDisplay;
   const ax=(ad.x/120*100).toFixed(6),ay=(ad.y/120*100).toFixed(6),bx=(bd.x/120*100).toFixed(6),by=(bd.y/120*100).toFixed(6);
-  const overlapMarkup=layout.overlap?`<line x1="${a.x}" y1="${a.y}" x2="${ad.x}" y2="${ad.y}" class="inline-rel-overlap-leader sky-a"/><line x1="${b.x}" y1="${b.y}" x2="${bd.x}" y2="${bd.y}" class="inline-rel-overlap-leader sky-b"/><circle cx="${layout.anchor.x}" cy="${layout.anchor.y}" r="4" class="inline-rel-conjunction-anchor"/>`:'';
-  return `<div class="inline-rel-wheel"><div class="inline-rel-wheel-stage" data-inline-overlap="${layout.overlap?'true':'false'}"><svg viewBox="0 0 120 120" aria-label="Isolated relationship"><circle cx="60" cy="60" r="48" class="inline-rel-ring"/><line x1="60" y1="60" x2="${a.x}" y2="${a.y}" class="inline-rel-radius a"/><line x1="60" y1="60" x2="${b.x}" y2="${b.y}" class="inline-rel-radius b"/><line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="inline-rel-aspect"/>${overlapMarkup}</svg><span class="inline-rel-endpoint inline-rel-endpoint-a" data-inline-endpoint="left" style="--endpoint-x:${ax}%;--endpoint-y:${ay}%"></span><span class="inline-rel-endpoint inline-rel-endpoint-b" data-inline-endpoint="right" style="--endpoint-x:${bx}%;--endpoint-y:${by}%"></span></div><div class="inline-rel-orb"><span style="--orb:${Math.min(1,rel.orb)}"></span><strong>${rel.orb.toFixed(2)}°</strong></div></div>`;
+  return `<div class="inline-rel-wheel"><div class="inline-rel-wheel-stage" data-inline-overlap="${layout.overlap?'true':'false'}"><svg viewBox="0 0 120 120" aria-label="Isolated relationship"><circle cx="60" cy="60" r="48" class="inline-rel-ring"/><line x1="60" y1="60" x2="${a.x}" y2="${a.y}" class="inline-rel-radius a"/><line x1="60" y1="60" x2="${b.x}" y2="${b.y}" class="inline-rel-radius b"/><line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="inline-rel-aspect"/></svg><span class="inline-rel-endpoint-layer"><span class="inline-rel-endpoint inline-rel-endpoint-a" data-inline-endpoint="left" style="--endpoint-x:${ax}%;--endpoint-y:${ay}%"></span><span class="inline-rel-endpoint inline-rel-endpoint-b" data-inline-endpoint="right" style="--endpoint-x:${bx}%;--endpoint-y:${by}%"></span></span></div><div class="inline-rel-orb"><span style="--orb:${Math.min(1,rel.orb)}"></span><strong>${rel.orb.toFixed(2)}°</strong></div></div>`;
 }
 function cardMarkup(slot,c){return `<button type="button" class="inline-rel-card sky-${slot.toLowerCase()}" data-inline-ledger="${esc(c.id)}" aria-label="Open ${esc(c.title)} in Tarot Ledger"><small>Sky ${slot}</small><img loading="lazy" decoding="async" src="${esc(c.image)}" alt="${esc(c.title)}"><b>${esc(c.title)}</b></button>`}
 
-async function buildCanonicalSvg(id,color,bubble,size){
+async function buildCanonicalSvg(id,color,bubble,size,transparentBubble=false){
   window.RelphiGlyphIntegrity?.assert?.();
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;
   const entry=registry&&(registry.get(id)||registry.resolve(id));
@@ -74,15 +62,15 @@ async function buildCanonicalSvg(id,color,bubble,size){
   svg.style.overflow='visible';
   svg.dataset.inlineCanonicalFinalSize=String(size);
   svg.dataset.canonicalGlyphId=entry.id;
-  const rendered=component.createBubble(svg,entry.id,{radius:19,padding:1,color,fill:'#fffdfa',strokeWidth:2.35});
+  const rendered=component.createBubble(svg,entry.id,{radius:19,padding:1,color,fill:transparentBubble?'rgba(255,253,250,0)':'#fffdfa',strokeWidth:2.35});
   if(!bubble){rendered.circle.style.opacity='0';rendered.circle.setAttribute('aria-hidden','true')}
   await Promise.resolve(rendered.ready);
   window.RelphiGlyphIntegrity?.assert?.();
   return svg;
 }
-async function mountCanonical(host,id,color,bubble,size){
+async function mountCanonical(host,id,color,bubble,size,transparentBubble=false){
   if(!host)return;
-  const svg=await buildCanonicalSvg(id,color,bubble,size);
+  const svg=await buildCanonicalSvg(id,color,bubble,size,transparentBubble);
   if(!svg)return;
   host.replaceChildren(svg);
   host.dataset.canonicalGlyph=id;
@@ -137,9 +125,10 @@ async function open(row){
   const ca=card(rel.left),cb=card(rel.right);
   detail.innerHTML=`<div class="inline-rel-top-reveal" role="status" aria-live="polite" hidden></div><div class="inline-rel-visual">${cardMarkup('A',ca)}${wheelMarkup(rel)}${cardMarkup('B',cb)}</div>${contextMarkup(rel)}`;
   row.appendChild(detail);
+  const overlap=detail.querySelector('.inline-rel-wheel-stage')?.dataset.inlineOverlap==='true';
   await Promise.allSettled([
-    mountCanonical(detail.querySelector('[data-inline-endpoint="left"]'),rel.left.id,COLORS.A,true,38),
-    mountCanonical(detail.querySelector('[data-inline-endpoint="right"]'),rel.right.id,COLORS.B,true,38)
+    mountCanonical(detail.querySelector('[data-inline-endpoint="left"]'),rel.left.id,COLORS.A,true,38,overlap),
+    mountCanonical(detail.querySelector('[data-inline-endpoint="right"]'),rel.right.id,COLORS.B,true,38,overlap)
   ]);
   document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');
 }
