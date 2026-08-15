@@ -35,7 +35,10 @@ function wheelMarkup(rel){
   const a=point(rel.left.value),b=point(rel.right.value);
   return `<div class="inline-rel-wheel"><div class="inline-rel-wheel-stage"><svg viewBox="0 0 120 120" aria-label="Isolated relationship"><circle cx="60" cy="60" r="48" class="inline-rel-ring"/><line x1="60" y1="60" x2="${a.x}" y2="${a.y}" class="inline-rel-radius a"/><line x1="60" y1="60" x2="${b.x}" y2="${b.y}" class="inline-rel-radius b"/><line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="inline-rel-aspect"/><g class="inline-rel-point-layer" aria-hidden="true"><circle cx="${a.x}" cy="${a.y}" r="5.4" class="inline-rel-point inline-rel-point-a"/><circle cx="${b.x}" cy="${b.y}" r="5.4" class="inline-rel-point inline-rel-point-b"/></g></svg></div><div class="inline-rel-orb"><span style="--orb:${Math.min(1,rel.orb)}"></span><strong>${rel.orb.toFixed(2)}°</strong></div></div>`;
 }
-function cardMarkup(slot,c){return `<button type="button" class="inline-rel-card sky-${slot.toLowerCase()}" data-inline-ledger="${esc(c.id)}" aria-label="Open ${esc(c.title)} in Tarot Ledger"><small>Sky ${slot}</small><img loading="lazy" decoding="async" src="${esc(c.image)}" alt="${esc(c.title)}"><b>${esc(c.title)}</b></button>`}
+function cardMarkup(slot,c){
+  const href=`tarot.html?card=${encodeURIComponent(c.id)}`;
+  return `<a class="inline-rel-card sky-${slot.toLowerCase()}" data-inline-card-link="${esc(c.id)}" href="${esc(href)}" aria-label="Open full ${esc(c.title)} Tarot Ledger entry"><small>Sky ${slot}</small><img loading="lazy" decoding="async" src="${esc(c.image)}" alt="${esc(c.title)}"><b>${esc(c.title)}</b></a>`;
+}
 
 function contextMarkup(rel){
   const lp=position(rel.left),rp=position(rel.right);
@@ -88,11 +91,10 @@ function open(row){
   row.appendChild(detail);
   document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');
 }
-function openLedger(cardId){window.dispatchEvent(new CustomEvent('relphi:open-ledger-card',{detail:{cardId,source:'inline-relationship'}}));requestAnimationFrame(()=>{const d=document.querySelector('.sky-ledger-dialog');if(d&&!d.open&&typeof d.showModal==='function')d.showModal()})}
 
 document.addEventListener('click',e=>{
-  const ledger=e.target.closest('[data-inline-ledger]');
-  if(ledger){e.preventDefault();e.stopImmediatePropagation();openLedger(ledger.dataset.inlineLedger);return}
+  const cardLink=e.target.closest('[data-inline-card-link]');
+  if(cardLink)return;
   const topGlyph=e.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right');
   const revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');
   if(revealRow){const field=topGlyph.dataset.inlineTopReveal||fieldFromTopGlyph(topGlyph);if(field){e.preventDefault();e.stopImmediatePropagation();cycleReveal(revealRow,field);return}}
