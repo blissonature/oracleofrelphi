@@ -52,23 +52,38 @@ function ensureStrip(row){
 function tokenFor(row,field){return ensureStrip(row)?.querySelector(`[data-inline-progressive-token="${field}"]`)||null}
 function setStage(token,stage){if(!token)return;const next=Math.max(0,Math.min(2,Number(stage)||0)),name=token.querySelector('[data-inline-progressive-level="name"]'),referent=token.querySelector('[data-inline-progressive-level="referent"]');token.dataset.inlineProgressiveStage=String(next);token.hidden=next===0;if(name)name.hidden=next===0;if(referent)referent.hidden=next<2}
 function baseActivate(row,field){const token=tokenFor(row,field);if(!token)return;const stage=Number(token.dataset.inlineProgressiveStage||0);setStage(token,stage===0?1:0)}
-function levelActivate(levelNode){const token=levelNode.closest('[data-inline-progressive-token]');if(!token)return;const stage=Number(token.dataset.inlineProgressiveStage||0),level=levelNode.dataset.inlineProgressiveLevel;if(level==='name'){if(stage===1)setStage(token,2);else if(stage===2)setStage(token,1)}else if(level==='referent'&&stage===2)setStage(token,2)}
+function tokenActivate(token){const stage=Number(token?.dataset.inlineProgressiveStage||0);if(stage===1)setStage(token,2);else if(stage===2)setStage(token,1)}
+function levelActivate(levelNode){const token=levelNode.closest('[data-inline-progressive-token]');if(!token)return;const stage=Number(token.dataset.inlineProgressiveStage||0),level=levelNode.dataset.inlineProgressiveLevel;if(level==='name'){if(stage===1)setStage(token,2);else if(stage===2)setStage(token,1)}else if(level==='referent'&&stage===2)setStage(token,1)}
 function expandedRowFor(target){return target?.closest?.('.sky-foundation-relationship-row.is-inline-expanded')||null}
 function fieldFromBase(target,row){const direct=target.closest?.('[data-inline-progressive-glyph]');if(direct?.dataset.inlineProgressiveGlyph)return direct.dataset.inlineProgressiveGlyph;for(const [field,selector] of GLYPH_FIELDS){const glyph=target.closest?.(selector);if(glyph&&row.contains(glyph))return field}return''}
-function ownRevealEvent(event){const row=expandedRowFor(event.target);if(!row)return false;ensureStrip(row);const level=event.target.closest?.('[data-inline-progressive-level]');if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return true}const field=fieldFromBase(event.target,row);if(field){event.preventDefault();event.stopImmediatePropagation();baseActivate(row,field);return true}return false}
-function handleClick(event){ownRevealEvent(event)}
+function ownRevealEvent(event){
+  const row=expandedRowFor(event.target);if(!row)return false;ensureStrip(row);
+  const level=event.target.closest?.('[data-inline-progressive-level]');
+  if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return true}
+  const token=event.target.closest?.('[data-inline-progressive-token]');
+  if(token&&row.contains(token)){event.preventDefault();event.stopImmediatePropagation();tokenActivate(token);return true}
+  const field=fieldFromBase(event.target,row);
+  if(field){event.preventDefault();event.stopImmediatePropagation();baseActivate(row,field);return true}
+  return false;
+}
+function handleClick(event){
+  if(ownRevealEvent(event))return;
+  const row=expandedRowFor(event.target);if(!row)return;
+  if(event.target.closest?.('[data-inline-ledger]'))return;
+  event.preventDefault();event.stopImmediatePropagation();
+}
 function handleKey(event){if(event.key!=='Enter'&&event.key!==' ')return;ownRevealEvent(event)}
 function installStyles(){
   if(document.getElementById('skyInlineProgressiveContractV3Styles'))return;document.getElementById('skyInlineProgressiveContractV2Styles')?.remove();document.getElementById('skyInlineProgressiveContractStyles')?.remove();
   const style=document.createElement('style');style.id='skyInlineProgressiveContractV3Styles';style.textContent=`
-    .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]{cursor:pointer;border-radius:6px}
+    .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]{cursor:pointer;border-radius:6px;touch-action:manipulation}
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]:hover{background:rgba(45,39,34,.055)}
     .inline-rel-progressive-strip{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(86px,.72fr) minmax(0,1fr);align-items:start;gap:8px;min-width:0}
     .inline-rel-progressive-side-a{grid-column:1}.inline-rel-progressive-side-b{grid-column:3}
     .inline-rel-progressive-side{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:5px;min-width:0}
     .inline-rel-progressive-side>[data-inline-progressive-token$="-placement"]{grid-column:1}.inline-rel-progressive-side>[data-inline-progressive-token$="-sign"]{grid-column:2}.inline-rel-progressive-side>[data-inline-progressive-token$="-house"]{grid-column:3}
     .inline-rel-progressive-strip>[data-inline-progressive-token="aspect"]{grid-column:2}
-    .inline-rel-progressive-token{grid-row:1;display:grid;justify-items:center;gap:4px;min-width:0;padding:4px 5px;border-radius:7px;background:rgba(45,39,34,.04)}
+    .inline-rel-progressive-token{grid-row:1;display:grid;justify-items:center;gap:4px;min-width:0;padding:4px 5px;border-radius:7px;background:rgba(45,39,34,.04);cursor:pointer;touch-action:manipulation}
     .inline-rel-progressive-token[data-tone="a"]{border-top:2px solid #c9211e}.inline-rel-progressive-token[data-tone="b"]{border-top:2px solid #2462d0}.inline-rel-progressive-token[data-tone="aspect"]{border-top:2px solid var(--relationship-stripe,#777)}
     .inline-rel-progressive-token[hidden],.inline-rel-progressive-level[hidden]{display:none!important}
     .inline-rel-progressive-level{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center}
