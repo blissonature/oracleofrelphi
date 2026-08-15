@@ -1,7 +1,8 @@
-// House medallion v6: one real rainbow house marker in compact tiles and expanded headers.
+// House medallion v7: one real rainbow house marker, fixed to a stable coordinate column.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHouseMedallionV6)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHouseMedallionV7)return;
+window.__relphiSkyHouseMedallionV7=true;
 window.__relphiSkyHouseMedallionV6=true;
 window.__relphiSkyHouseMedallionV5=true;
 window.__relphiSkyHouseMedallionV4=true;
@@ -9,30 +10,43 @@ window.__relphiSkyHouseMedallionV3=true;
 window.__relphiSkyHouseMedallionV2=true;
 window.__relphiSkyHouseMedallionV1=true;
 
-const STYLE_ID='skyHouseMedallionV6Styles';
+const STYLE_ID='skyHouseMedallionV7Styles';
 const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 
 function installStyles(){
-  ['skyHouseMedallionV1Styles','skyHouseMedallionV2Styles','skyHouseMedallionV3Styles','skyHouseMedallionV4Styles','skyHouseMedallionV5Styles'].forEach(id=>document.getElementById(id)?.remove());
+  ['skyHouseMedallionV1Styles','skyHouseMedallionV2Styles','skyHouseMedallionV3Styles','skyHouseMedallionV4Styles','skyHouseMedallionV5Styles','skyHouseMedallionV6Styles'].forEach(id=>document.getElementById(id)?.remove());
   if(document.getElementById(STYLE_ID))return;
   const style=document.createElement('style');
   style.id=STYLE_ID;
   style.textContent=`
     .sky-foundation-relationship-copy small.relphi-house-coordinate{
-      display:flex!important;
+      display:grid!important;
+      grid-template-columns:3.15rem 14px!important;
+      grid-auto-flow:column!important;
+      grid-auto-columns:max-content!important;
       align-items:center!important;
       justify-content:center!important;
-      gap:4px!important;
+      column-gap:4px!important;
+      row-gap:0!important;
+      width:100%!important;
+      height:16px!important;
+      margin:0!important;
+      padding:0!important;
+      text-align:center!important;
+      white-space:nowrap!important;
     }
     .relphi-house-medallion{
       --house-color:#777;
       display:inline-grid!important;
       place-items:center;
+      align-self:center!important;
+      justify-self:center!important;
       flex:0 0 14px;
       width:14px;
       height:14px;
       box-sizing:border-box;
+      margin:0!important;
       padding:0!important;
       border:1.4px solid var(--house-color)!important;
       border-radius:50%!important;
@@ -42,11 +56,15 @@ function installStyles(){
       font-variant-numeric:tabular-nums;
       text-align:center;
       vertical-align:middle;
+      transform:none!important;
       box-shadow:inset 0 0 0 1px rgba(255,255,255,.48);
     }
     .relphi-house-medallion[data-house="10"],
     .relphi-house-medallion[data-house="11"],
     .relphi-house-medallion[data-house="12"]{font-size:.44rem!important;letter-spacing:-.035em}
+    .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-copy small.relphi-house-coordinate{
+      grid-template-columns:3.15rem 16px!important;
+    }
     .sky-foundation-relationship-row.is-inline-expanded .relphi-house-medallion{
       flex-basis:16px;
       width:16px;
@@ -56,7 +74,15 @@ function installStyles(){
     .sky-foundation-relationship-row.is-inline-expanded .relphi-house-medallion:hover{
       background:color-mix(in srgb,var(--house-color) 28%,#fffdfa)!important;
     }
-    @media(max-width:620px){.sky-foundation-relationship-copy small.relphi-house-coordinate{gap:3px!important}}
+    @media(max-width:620px){
+      .sky-foundation-relationship-copy small.relphi-house-coordinate{
+        grid-template-columns:3rem 14px!important;
+        column-gap:3px!important;
+      }
+      .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-copy small.relphi-house-coordinate{
+        grid-template-columns:3rem 16px!important;
+      }
+    }
   `;
   document.head.appendChild(style);
 }
