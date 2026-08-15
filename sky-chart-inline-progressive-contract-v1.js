@@ -52,7 +52,7 @@ function infoFor(row,field){
 }
 function tokenMarkup(row,field){
   const info=infoFor(row,field);
-  return `<span class="inline-rel-progressive-token" data-inline-progressive-token="${field}" data-inline-progressive-stage="0" data-tone="${info.tone}" hidden><button type="button" class="inline-rel-progressive-level inline-rel-progressive-name" data-inline-progressive-level="name" aria-expanded="false">${esc(info.name)}</button><button type="button" class="inline-rel-progressive-level inline-rel-progressive-referent" data-inline-progressive-level="referent" hidden>${esc(info.referent)}</button></span>`;
+  return `<span class="inline-rel-progressive-token" data-inline-progressive-token="${field}" data-inline-progressive-stage="0" data-tone="${info.tone}" hidden><span class="inline-rel-progressive-level inline-rel-progressive-name" data-inline-progressive-level="name" role="button" tabindex="0" aria-expanded="false">${esc(info.name)}</span><span class="inline-rel-progressive-level inline-rel-progressive-referent" data-inline-progressive-level="referent" role="button" tabindex="0" hidden>${esc(info.referent)}</span></span>`;
 }
 function stripMarkup(row){
   return `<div class="inline-rel-progressive-strip" aria-label="Progressive symbolic reveal"><div class="inline-rel-progressive-side inline-rel-progressive-side-a">${tokenMarkup(row,'left-placement')}${tokenMarkup(row,'left-sign')}</div>${tokenMarkup(row,'aspect')}<div class="inline-rel-progressive-side inline-rel-progressive-side-b">${tokenMarkup(row,'right-placement')}${tokenMarkup(row,'right-sign')}</div></div>`;
@@ -87,12 +87,12 @@ function glyphActivate(row,field){
   setStage(token,stage===0?1:0);
   if(stage===0)token.querySelector('[data-inline-progressive-level="name"]')?.focus({preventScroll:true});
 }
-function levelActivate(button){
-  const token=button.closest('[data-inline-progressive-token]');if(!token)return;
-  const stage=Number(token.dataset.inlineProgressiveStage||0),level=button.dataset.inlineProgressiveLevel;
+function levelActivate(levelNode){
+  const token=levelNode.closest('[data-inline-progressive-token]');if(!token)return;
+  const stage=Number(token.dataset.inlineProgressiveStage||0),level=levelNode.dataset.inlineProgressiveLevel;
   if(level==='name'){
     if(stage===1){setStage(token,2);token.querySelector('[data-inline-progressive-level="referent"]')?.focus({preventScroll:true})}
-    else if(stage===2){setStage(token,1);button.focus({preventScroll:true})}
+    else if(stage===2){setStage(token,1);levelNode.focus({preventScroll:true})}
   }
 }
 function expandedRowFor(target){return target?.closest?.('.sky-foundation-relationship-row.is-inline-expanded')||null}
@@ -111,6 +111,8 @@ function handleClick(event){
 function handleKey(event){
   if(event.key!=='Enter'&&event.key!==' ')return;
   const row=expandedRowFor(event.target);if(!row)return;
+  const level=event.target.closest?.('[data-inline-progressive-level]');
+  if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return}
   const field=fieldFromGlyph(event.target,row);if(!field)return;
   event.preventDefault();event.stopImmediatePropagation();glyphActivate(row,field);
 }
@@ -125,21 +127,24 @@ function installStyles(){
     .inline-rel-progressive-token{display:grid;justify-items:center;gap:4px;min-width:0;padding:4px 5px;border-radius:7px;background:rgba(45,39,34,.04)}
     .inline-rel-progressive-token[data-tone="a"]{border-top:2px solid #c9211e}.inline-rel-progressive-token[data-tone="b"]{border-top:2px solid #2462d0}.inline-rel-progressive-token[data-tone="aspect"]{border-top:2px solid var(--relationship-stripe,#777)}
     .inline-rel-progressive-token[hidden],.inline-rel-progressive-level[hidden]{display:none!important}
-    .inline-rel-progressive-level{appearance:none;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center}
+    .inline-rel-progressive-level{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center}
     .inline-rel-progressive-name{font-size:.6rem;font-weight:900;line-height:1.15}.inline-rel-progressive-referent{font-size:.55rem;font-weight:680;line-height:1.28;color:#625a53;white-space:normal;overflow-wrap:anywhere}
     .inline-rel-progressive-level:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:3px}
     @media(max-width:620px){.inline-rel-progressive-strip{grid-template-columns:minmax(0,1fr) minmax(68px,.64fr) minmax(0,1fr);gap:4px}.inline-rel-progressive-side{gap:3px}.inline-rel-progressive-token{padding:3px}.inline-rel-progressive-name{font-size:.54rem}.inline-rel-progressive-referent{font-size:.49rem}}
   `;document.head.appendChild(style);
 }
 function decorateExisting(){document.querySelectorAll('.sky-foundation-relationship-row.is-inline-expanded').forEach(ensureStrip)}
-function start(){
+function observeWhenReady(){
   installStyles();
-  document.addEventListener('click',handleClick,true);
-  document.addEventListener('keydown',handleKey,true);
   const list=document.getElementById('skyFoundationRelationshipList');
   if(list)new MutationObserver(()=>requestAnimationFrame(decorateExisting)).observe(list,{childList:true,subtree:true});
   window.addEventListener('relphi:sky-foundation-ready',()=>requestAnimationFrame(decorateExisting));
   requestAnimationFrame(decorateExisting);
 }
-document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
+// Capture ownership is installed immediately, before sky-chart-inline-relationship-v4.js
+// registers its expanded-row toggle listener. This is the semantic boundary that keeps
+// progressive reveal gestures from being mistaken for a request to close the relationship.
+document.addEventListener('click',handleClick,true);
+document.addEventListener('keydown',handleKey,true);
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',observeWhenReady,{once:true}):observeWhenReady();
 })();
