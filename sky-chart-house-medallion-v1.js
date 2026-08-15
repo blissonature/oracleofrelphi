@@ -1,5 +1,5 @@
 // House medallion v4: shared house-number marker for relationship tiles and expanded dual-card headers.
-// Compact rows are decorated one frame after row layout; only top-level row additions are observed.
+// Compact rows are observed through their full lifecycle so filter and harmonic-window refreshes cannot strip markers.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHouseMedallionV4)return;
@@ -133,21 +133,33 @@ function queueCompactRow(row){
 function queueAllCompactRows(){
   document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(queueCompactRow);
 }
+function rowForNode(node){
+  if(!(node instanceof Element))return null;
+  return node.matches('.sky-foundation-relationship-row')?node:node.closest('.sky-foundation-relationship-row');
+}
+function queueMutationRows(records){
+  for(const record of records){
+    const targetRow=rowForNode(record.target);if(targetRow)queueCompactRow(targetRow);
+    for(const node of record.addedNodes){const row=rowForNode(node);if(row)queueCompactRow(row)}
+  }
+}
 function ensureObserver(){
   const list=document.getElementById('skyFoundationRelationshipList');if(!list)return;
   if(list!==observedList){
     observer?.disconnect();observedList=list;
-    observer=new MutationObserver(records=>{
-      for(const record of records)for(const node of record.addedNodes)queueCompactRow(node);
-    });
-    observer.observe(list,{childList:true,subtree:false});
+    observer=new MutationObserver(queueMutationRows);
+    observer.observe(list,{childList:true,subtree:true});
   }
   queueAllCompactRows();
+}
+function refreshAfterHarmonicWindow(){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ensureObserver();queueAllCompactRows()}));
 }
 function sync(){installStyles();ensureObserver()}
 
 installStyles();
 window.RelphiHouseMedallion=Object.freeze({colors:Object.freeze(HOUSE_COLORS.slice()),names:Object.freeze(HOUSE_NAMES.slice()),create:medallion,decorateCoordinate,refreshCompact:queueAllCompactRows});
 ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed'].forEach(name=>window.addEventListener(name,sync));
+window.addEventListener('relphi:sky-harmonic-window-visibility-changed',refreshAfterHarmonicWindow);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();
 })();
