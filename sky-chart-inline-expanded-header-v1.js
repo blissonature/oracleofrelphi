@@ -1,5 +1,5 @@
-// Expanded relationship header v1: preserve the original two-tier compact tiles,
-// but make only the open dual-card relationship header a single-line symbolic sentence.
+// Expanded relationship header v1: keep the compact two-tier relationship grammar when the dual-card view opens.
+// Placement/signs remain above coordinate/house and orb; the comparison detail is added below.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiInlineExpandedHeaderV1)return;
@@ -12,99 +12,93 @@ function installStyle(){
   const style=document.createElement('style');style.id=STYLE_ID;style.textContent=`
     .sky-foundation-relationship-row.is-inline-expanded{
       grid-template-columns:repeat(3,minmax(0,1fr))!important;
-      grid-template-areas:"left aspect right" "detail detail detail"!important;
-      grid-template-rows:38px auto!important;
-      min-height:46px!important;
+      grid-template-areas:"left aspect right" "left orb right" "detail detail detail"!important;
+      grid-template-rows:38px 18px auto!important;
+      min-height:64px!important;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded>.inline-rel-detail{
+      grid-area:detail!important;
+      grid-column:1/-1!important;
+      grid-row:3!important;
+      min-width:0!important;
+      width:100%!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-placement{
-      display:flex!important;
+      display:grid!important;
+      grid-template-rows:38px 18px!important;
       align-items:center!important;
-      justify-content:center!important;
-      align-self:center!important;
+      justify-items:center!important;
+      align-self:stretch!important;
       width:100%!important;
-      height:38px!important;
+      height:auto!important;
       min-width:0!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-symbol-pair{
       display:flex!important;
       align-items:center!important;
       justify-content:center!important;
-      width:auto!important;
+      width:100%!important;
       max-width:100%!important;
       height:38px!important;
       min-width:0!important;
       gap:4px!important;
-      white-space:nowrap;
+      white-space:nowrap!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-copy{
-      display:inline-grid!important;
+      display:grid!important;
       place-items:center!important;
-      flex:0 0 auto!important;
-      width:auto!important;
-      height:38px!important;
+      width:100%!important;
+      height:18px!important;
       margin:0!important;
       overflow:visible!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-copy small{
-      display:inline-flex!important;
+      display:flex!important;
       align-items:center!important;
-      width:auto!important;
-      height:auto!important;
+      justify-content:center!important;
+      width:100%!important;
+      height:18px!important;
       min-width:0!important;
+      line-height:18px!important;
       white-space:nowrap!important;
+      overflow:visible!important;
     }
-    .sky-inline-expanded-aspect-pair{
-      grid-area:aspect;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:4px;
-      min-width:0;
-      height:38px;
-      white-space:nowrap;
-    }
-    .sky-foundation-relationship-row.is-inline-expanded .sky-inline-expanded-aspect-pair .sky-foundation-relationship-glyph--aspect,
-    .sky-foundation-relationship-row.is-inline-expanded .sky-inline-expanded-aspect-pair .sky-foundation-relationship-orb{
-      grid-area:auto!important;
+    .sky-foundation-relationship-row.is-inline-expanded>.sky-foundation-relationship-glyph--aspect{
+      grid-area:aspect!important;
       align-self:center!important;
-      justify-self:auto!important;
+      justify-self:center!important;
     }
-    .sky-foundation-relationship-row.is-inline-expanded .sky-inline-expanded-aspect-pair .sky-foundation-relationship-orb{min-width:0!important}
+    .sky-foundation-relationship-row.is-inline-expanded>.sky-foundation-relationship-orb{
+      grid-area:orb!important;
+      display:grid!important;
+      place-items:center!important;
+      align-self:center!important;
+      justify-self:center!important;
+      height:18px!important;
+      min-width:40px!important;
+      line-height:18px!important;
+    }
     @media(max-width:620px){
-      .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-symbol-pair,
-      .sky-inline-expanded-aspect-pair{gap:2px!important}
+      .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-symbol-pair{gap:2px!important}
     }
   `;document.head.appendChild(style);
 }
-function moveSideInline(row,side){
+function normalizeSide(row,side){
   const group=row.querySelector(`:scope>.sky-foundation-relationship-placement--${side}`);if(!group)return;
   const pair=group.querySelector(':scope>.sky-foundation-relationship-symbol-pair');
-  const copy=group.querySelector(':scope>.sky-foundation-relationship-copy')||pair?.querySelector(':scope>.sky-foundation-relationship-copy');
-  if(pair&&copy&&copy.parentElement!==pair)pair.appendChild(copy);
-}
-function moveAspectInline(row){
-  let pair=row.querySelector(':scope>.sky-inline-expanded-aspect-pair');
-  const glyph=row.querySelector(':scope>.sky-foundation-relationship-glyph--aspect, :scope>.sky-inline-expanded-aspect-pair>.sky-foundation-relationship-glyph--aspect');
-  const orb=row.querySelector(':scope>.sky-foundation-relationship-orb, :scope>.sky-inline-expanded-aspect-pair>.sky-foundation-relationship-orb');
-  if(!glyph||!orb)return;
-  if(!pair){pair=document.createElement('span');pair.className='sky-inline-expanded-aspect-pair';row.appendChild(pair)}
-  if(glyph.parentElement!==pair)pair.appendChild(glyph);
-  if(orb.parentElement!==pair)pair.appendChild(orb);
-}
-function apply(row){
-  if(!row.classList.contains('is-inline-expanded'))return restore(row);
-  moveSideInline(row,'left');moveSideInline(row,'right');moveAspectInline(row);row.dataset.inlineExpandedHeader='true';
-}
-function restoreSide(row,side){
-  const group=row.querySelector(`:scope>.sky-foundation-relationship-placement--${side}`);if(!group)return;
-  const pair=group.querySelector(':scope>.sky-foundation-relationship-symbol-pair');const copy=pair?.querySelector(':scope>.sky-foundation-relationship-copy');
+  const copy=pair?.querySelector(':scope>.sky-foundation-relationship-copy');
   if(copy)group.appendChild(copy);
 }
-function restore(row){
-  if(row.dataset.inlineExpandedHeader!=='true'&&!row.querySelector(':scope>.sky-inline-expanded-aspect-pair'))return;
-  restoreSide(row,'left');restoreSide(row,'right');
-  const pair=row.querySelector(':scope>.sky-inline-expanded-aspect-pair');if(pair){const glyph=pair.querySelector(':scope>.sky-foundation-relationship-glyph--aspect'),orb=pair.querySelector(':scope>.sky-foundation-relationship-orb');if(glyph)row.appendChild(glyph);if(orb)row.appendChild(orb);pair.remove()}
-  delete row.dataset.inlineExpandedHeader;
+function normalizeAspect(row){
+  const pair=row.querySelector(':scope>.sky-inline-expanded-aspect-pair');if(!pair)return;
+  const glyph=pair.querySelector(':scope>.sky-foundation-relationship-glyph--aspect');
+  const orb=pair.querySelector(':scope>.sky-foundation-relationship-orb');
+  if(glyph)row.appendChild(glyph);if(orb)row.appendChild(orb);pair.remove();
+}
+function apply(row){
+  normalizeSide(row,'left');normalizeSide(row,'right');normalizeAspect(row);
+  if(row.classList.contains('is-inline-expanded'))row.dataset.inlineExpandedHeader='two-tier';
+  else delete row.dataset.inlineExpandedHeader;
 }
 function reconcile(){queued=false;document.querySelectorAll('.sky-foundation-relationship-row').forEach(apply)}
 function schedule(){if(queued)return;queued=true;queueMicrotask(reconcile)}
