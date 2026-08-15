@@ -61,6 +61,25 @@ function installStyle(){
       min-width:0!important;
       white-space:nowrap!important;
     }
+    .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-copy small.relphi-house-coordinate{
+      display:grid!important;
+      grid-template-columns:3.15rem 16px!important;
+      grid-auto-flow:column!important;
+      grid-auto-columns:max-content!important;
+      align-items:center!important;
+      justify-content:center!important;
+      column-gap:4px!important;
+      row-gap:0!important;
+      margin:0!important;
+      padding:0!important;
+      text-align:center!important;
+    }
+    .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-copy small.relphi-house-coordinate>.relphi-house-medallion{
+      align-self:center!important;
+      justify-self:center!important;
+      margin:0!important;
+      transform:none!important;
+    }
     .sky-foundation-relationship-row.is-inline-expanded>.sky-foundation-relationship-glyph--aspect{
       grid-area:aspect!important;
       align-self:center!important;
@@ -78,6 +97,10 @@ function installStyle(){
     }
     @media(max-width:620px){
       .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-symbol-pair{gap:2px!important}
+      .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-copy small.relphi-house-coordinate{
+        grid-template-columns:3rem 16px!important;
+        column-gap:3px!important;
+      }
     }
   `;document.head.appendChild(style);
 }
