@@ -8,47 +8,14 @@ window.__relphiInlineProgressiveContractV2=true;
 window.__relphiInlineProgressiveContractV1=true;
 
 const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-const SIGN_REFERENTS={
-  Aries:'initiative, directness, courage, impulse, and beginning',
-  Taurus:'embodiment, value, pleasure, endurance, and material continuity',
-  Gemini:'language, exchange, curiosity, movement, and multiplicity',
-  Cancer:'care, protection, memory, belonging, and attachment',
-  Leo:'radiance, creativity, pride, loyalty, and recognition',
-  Virgo:'discernment, service, refinement, repair, and usefulness',
-  Libra:'relationship, balance, fairness, dialogue, and mutual recognition',
-  Scorpio:'intensity, secrecy, survival, bonding, and emotional truth',
-  Sagittarius:'meaning, faith, exploration, philosophy, and freedom',
-  Capricorn:'structure, responsibility, endurance, mastery, and worldly form',
-  Aquarius:'systems, reform, collective intelligence, detachment, and future orientation',
-  Pisces:'surrender, imagination, compassion, permeability, and release'
-};
-const PLACEMENT_REFERENTS={
-  sun:'identity, vitality, and conscious purpose',moon:'feelings, instincts, memory, and emotional needs',mercury:'thought, perception, language, and communication',venus:'values, attraction, affection, pleasure, and relating',mars:'drive, assertion, desire, conflict, and action',jupiter:'growth, confidence, meaning, opportunity, and expansion',saturn:'structure, limits, responsibility, time, and commitment',uranus:'freedom, disruption, originality, awakening, and change',neptune:'imagination, sensitivity, surrender, ideals, and vision',pluto:'power, depth, compulsion, elimination, and transformation',chiron:'wounding, healing intelligence, and the capacity to guide healing',asc:'the way a person enters life and is immediately perceived',dsc:'the way a person meets partners and encounters the other',mc:'public direction, vocation, visibility, and the role a person grows toward',ic:'roots, home, private foundations, and inherited belonging','north-node':'growth through unfamiliar experience and developing capacity','south-node':'familiar patterns, inherited capacity, and the known path',lilith:'instinctive autonomy, refusal, exile, and uncompromised desire','part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',vertex:'encounters that feel consequential or outside ordinary control'
-};
+const SIGN_REFERENTS={Aries:'initiative, directness, courage, impulse, and beginning',Taurus:'embodiment, value, pleasure, endurance, and material continuity',Gemini:'language, exchange, curiosity, movement, and multiplicity',Cancer:'care, protection, memory, belonging, and attachment',Leo:'radiance, creativity, pride, loyalty, and recognition',Virgo:'discernment, service, refinement, repair, and usefulness',Libra:'relationship, balance, fairness, dialogue, and mutual recognition',Scorpio:'intensity, secrecy, survival, bonding, and emotional truth',Sagittarius:'meaning, faith, exploration, philosophy, and freedom',Capricorn:'structure, responsibility, endurance, mastery, and worldly form',Aquarius:'systems, reform, collective intelligence, detachment, and future orientation',Pisces:'surrender, imagination, compassion, permeability, and release'};
+const PLACEMENT_REFERENTS={sun:'identity, vitality, and conscious purpose',moon:'feelings, instincts, memory, and emotional needs',mercury:'thought, perception, language, and communication',venus:'values, attraction, affection, pleasure, and relating',mars:'drive, assertion, desire, conflict, and action',jupiter:'growth, confidence, meaning, opportunity, and expansion',saturn:'structure, limits, responsibility, time, and commitment',uranus:'freedom, disruption, originality, awakening, and change',neptune:'imagination, sensitivity, surrender, ideals, and vision',pluto:'power, depth, compulsion, elimination, and transformation',chiron:'wounding, healing intelligence, and the capacity to guide healing',asc:'the way a person enters life and is immediately perceived',dsc:'the way a person meets partners and encounters the other',mc:'public direction, vocation, visibility, and the role a person grows toward',ic:'roots, home, private foundations, and inherited belonging','north-node':'growth through unfamiliar experience and developing capacity','south-node':'familiar patterns, inherited capacity, and the known path',lilith:'instinctive autonomy, refusal, exile, and uncompromised desire','part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',vertex:'encounters that feel consequential or outside ordinary control'};
 const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
-const HOUSE_REFERENTS=['',
-  'self, embodiment, appearance, approach, and the immediate way life is entered',
-  'resources, possessions, money, personal values, and what is held as one’s own',
-  'communication, learning, siblings, neighbors, short journeys, and the local environment',
-  'home, roots, family, ancestry, privacy, and the foundations of life',
-  'creativity, pleasure, romance, children, play, and personal self-expression',
-  'work, service, routines, health practices, maintenance, and practical obligations',
-  'partnership, contracts, one-to-one relationship, and encounters with the other',
-  'shared resources, intimacy, debt, inheritance, vulnerability, and transformation',
-  'worldview, religion, philosophy, higher learning, long journeys, and the search for meaning',
-  'vocation, public standing, reputation, authority, achievement, and visible responsibility',
-  'friends, networks, groups, alliances, hopes, and participation in a larger collective',
-  'retreat, hidden processes, solitude, confinement, surrender, spirituality, and closure'
-];
+const HOUSE_REFERENTS=['','self, embodiment, appearance, approach, and the immediate way life is entered','resources, possessions, money, personal values, and what is held as one’s own','communication, learning, siblings, neighbors, short journeys, and the local environment','home, roots, family, ancestry, privacy, and the foundations of life','creativity, pleasure, romance, children, play, and personal self-expression','work, service, routines, health practices, maintenance, and practical obligations','partnership, contracts, one-to-one relationship, and encounters with the other','shared resources, intimacy, debt, inheritance, vulnerability, and transformation','worldview, religion, philosophy, higher learning, long journeys, and the search for meaning','vocation, public standing, reputation, authority, achievement, and visible responsibility','friends, networks, groups, alliances, hopes, and participation in a larger collective','retreat, hidden processes, solitude, confinement, surrender, spirituality, and closure'];
 const ASPECT_NAMES={conjunction:'Conjunction','semi-sextile':'Semi-Sextile',octile:'Octile',sextile:'Sextile',quintile:'Quintile',square:'Square',trine:'Trine','tri-octile':'Tri-Octile','bi-quintile':'Bi-Quintile',quincunx:'Quincunx',opposition:'Opposition'};
 const ASPECT_REFERENTS={conjunction:'the two functions operate together','semi-sextile':'neighboring functions accommodate one another',octile:'focused friction and adjustment',sextile:'a cooperative opening activated through participation',quintile:'creative pattern-making and specialized skill',square:'activating pressure and development',trine:'low-resistance exchange','tri-octile':'accumulated friction and redirection','bi-quintile':'refined creative pattern-making',quincunx:'continuing adjustment and translation',opposition:'awareness through polarity, contrast, and exchange'};
-const GLYPH_FIELDS=[
-  ['left-placement','.sky-foundation-relationship-glyph--left'],
-  ['left-sign','.sky-foundation-relationship-placement--left .sky-foundation-relationship-sign'],
-  ['aspect','.sky-foundation-relationship-glyph--aspect'],
-  ['right-placement','.sky-foundation-relationship-glyph--right'],
-  ['right-sign','.sky-foundation-relationship-placement--right .sky-foundation-relationship-sign']
-];
+const GLYPH_FIELDS=[['left-placement','.sky-foundation-relationship-glyph--left'],['left-sign','.sky-foundation-relationship-placement--left .sky-foundation-relationship-sign'],['aspect','.sky-foundation-relationship-glyph--aspect'],['right-placement','.sky-foundation-relationship-glyph--right'],['right-sign','.sky-foundation-relationship-placement--right .sky-foundation-relationship-sign']];
+let observer=null,observedList=null;
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 function placementName(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||String(id||'').replace(/-/g,' ')}
@@ -68,8 +35,7 @@ function decorateHouseTrigger(row,side){
   const context=row.querySelector(':scope>.inline-rel-detail>.inline-rel-house-context');if(!context)return;
   const index=side==='left'?0:1,span=context.children[index],house=houseNumber(row,side);if(!span||!house)return;
   const field=`${side}-house`,existing=span.querySelector(`[data-inline-progressive-glyph="${field}"]`);if(existing)return;
-  const suffix=` · H${house}`,text=span.textContent||'';if(text.endsWith(suffix))span.textContent=text.slice(0,-suffix.length)+' · ';
-  else span.appendChild(document.createTextNode(' · '));
+  const suffix=` · H${house}`,text=span.textContent||'';if(text.endsWith(suffix))span.textContent=text.slice(0,-suffix.length)+' · ';else span.appendChild(document.createTextNode(' · '));
   const trigger=document.createElement('span');trigger.className='inline-rel-house-trigger';trigger.dataset.inlineProgressiveGlyph=field;trigger.setAttribute('role','button');trigger.setAttribute('tabindex','0');trigger.setAttribute('title',`Reveal ${HOUSE_NAMES[house]}`);trigger.textContent=`H${house}`;span.appendChild(trigger);
 }
 function ensureStrip(row){
@@ -78,43 +44,25 @@ function ensureStrip(row){
   detail.querySelector(':scope>.inline-rel-top-reveal')?.remove();
   let strip=detail.querySelector(':scope>.inline-rel-progressive-strip');if(!strip){detail.insertAdjacentHTML('afterbegin',stripMarkup(row));strip=detail.querySelector(':scope>.inline-rel-progressive-strip')}
   GLYPH_FIELDS.forEach(([field,selector])=>{const glyph=row.querySelector(selector);if(!glyph)return;glyph.dataset.inlineProgressiveGlyph=field;glyph.setAttribute('title','Reveal name');glyph.setAttribute('role','button');glyph.setAttribute('tabindex','0')});
-  decorateHouseTrigger(row,'left');decorateHouseTrigger(row,'right');
-  return strip;
+  decorateHouseTrigger(row,'left');decorateHouseTrigger(row,'right');return strip;
 }
 function tokenFor(row,field){return ensureStrip(row)?.querySelector(`[data-inline-progressive-token="${field}"]`)||null}
-function setStage(token,stage){
-  if(!token)return;const next=Math.max(0,Math.min(2,Number(stage)||0)),name=token.querySelector('[data-inline-progressive-level="name"]'),referent=token.querySelector('[data-inline-progressive-level="referent"]');
-  token.dataset.inlineProgressiveStage=String(next);token.hidden=next===0;
-  if(name){name.hidden=next===0;name.setAttribute('aria-expanded',next===2?'true':'false')}
-  if(referent)referent.hidden=next<2;
-}
+function setStage(token,stage){if(!token)return;const next=Math.max(0,Math.min(2,Number(stage)||0)),name=token.querySelector('[data-inline-progressive-level="name"]'),referent=token.querySelector('[data-inline-progressive-level="referent"]');token.dataset.inlineProgressiveStage=String(next);token.hidden=next===0;if(name){name.hidden=next===0;name.setAttribute('aria-expanded',next===2?'true':'false')}if(referent)referent.hidden=next<2}
 function baseActivate(row,field){const token=tokenFor(row,field);if(!token)return;const stage=Number(token.dataset.inlineProgressiveStage||0);setStage(token,stage===0?1:0);if(stage===0)token.querySelector('[data-inline-progressive-level="name"]')?.focus({preventScroll:true})}
-function levelActivate(levelNode){
-  const token=levelNode.closest('[data-inline-progressive-token]');if(!token)return;const stage=Number(token.dataset.inlineProgressiveStage||0),level=levelNode.dataset.inlineProgressiveLevel;
-  if(level==='name'){if(stage===1){setStage(token,2);token.querySelector('[data-inline-progressive-level="referent"]')?.focus({preventScroll:true})}else if(stage===2){setStage(token,1);levelNode.focus({preventScroll:true})}}
-}
+function levelActivate(levelNode){const token=levelNode.closest('[data-inline-progressive-token]');if(!token)return;const stage=Number(token.dataset.inlineProgressiveStage||0),level=levelNode.dataset.inlineProgressiveLevel;if(level==='name'){if(stage===1){setStage(token,2);token.querySelector('[data-inline-progressive-level="referent"]')?.focus({preventScroll:true})}else if(stage===2){setStage(token,1);levelNode.focus({preventScroll:true})}}}
 function expandedRowFor(target){return target?.closest?.('.sky-foundation-relationship-row.is-inline-expanded')||null}
-function fieldFromBase(target,row){
-  const direct=target.closest?.('[data-inline-progressive-glyph]');if(direct?.dataset.inlineProgressiveGlyph)return direct.dataset.inlineProgressiveGlyph;
-  for(const [field,selector] of GLYPH_FIELDS){const glyph=target.closest?.(selector);if(glyph&&row.contains(glyph))return field}
-  return'';
-}
-function ownRevealEvent(event){
-  const row=expandedRowFor(event.target);if(!row)return false;ensureStrip(row);
-  const level=event.target.closest?.('[data-inline-progressive-level]');if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return true}
-  const field=fieldFromBase(event.target,row);if(field){event.preventDefault();event.stopImmediatePropagation();baseActivate(row,field);return true}
-  return false;
-}
+function fieldFromBase(target,row){const direct=target.closest?.('[data-inline-progressive-glyph]');if(direct?.dataset.inlineProgressiveGlyph)return direct.dataset.inlineProgressiveGlyph;for(const [field,selector] of GLYPH_FIELDS){const glyph=target.closest?.(selector);if(glyph&&row.contains(glyph))return field}return''}
+function ownRevealEvent(event){const row=expandedRowFor(event.target);if(!row)return false;ensureStrip(row);const level=event.target.closest?.('[data-inline-progressive-level]');if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return true}const field=fieldFromBase(event.target,row);if(field){event.preventDefault();event.stopImmediatePropagation();baseActivate(row,field);return true}return false}
 function handleClick(event){ownRevealEvent(event)}
 function handleKey(event){if(event.key!=='Enter'&&event.key!==' ')return;ownRevealEvent(event)}
 function installStyles(){
-  if(document.getElementById('skyInlineProgressiveContractV2Styles'))return;
-  document.getElementById('skyInlineProgressiveContractStyles')?.remove();
+  if(document.getElementById('skyInlineProgressiveContractV2Styles'))return;document.getElementById('skyInlineProgressiveContractStyles')?.remove();
   const style=document.createElement('style');style.id='skyInlineProgressiveContractV2Styles';style.textContent=`
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]{cursor:pointer;border-radius:7px}
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]:hover{background:rgba(45,39,34,.055)}
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]:focus-visible{outline:2px solid currentColor;outline-offset:2px}
     .inline-rel-progressive-strip{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(86px,.72fr) minmax(0,1fr);align-items:start;gap:8px;min-width:0}
+    .inline-rel-progressive-side-a{grid-column:1}.inline-rel-progressive-side-b{grid-column:3}
     .inline-rel-progressive-side{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:5px;min-width:0}
     .inline-rel-progressive-side>[data-inline-progressive-token$="-placement"]{grid-column:1}.inline-rel-progressive-side>[data-inline-progressive-token$="-sign"]{grid-column:2}.inline-rel-progressive-side>[data-inline-progressive-token$="-house"]{grid-column:3}
     .inline-rel-progressive-strip>[data-inline-progressive-token="aspect"]{grid-column:2}
@@ -129,12 +77,10 @@ function installStyles(){
   `;document.head.appendChild(style);
 }
 function decorateExisting(){document.querySelectorAll('.sky-foundation-relationship-row.is-inline-expanded').forEach(ensureStrip)}
-function startObserver(){
-  installStyles();const list=document.getElementById('skyFoundationRelationshipList');
-  if(list)new MutationObserver(()=>requestAnimationFrame(decorateExisting)).observe(list,{childList:true,subtree:true});
-  window.addEventListener('relphi:sky-foundation-ready',()=>requestAnimationFrame(decorateExisting));requestAnimationFrame(decorateExisting);
-}
+function ensureObserver(){const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;observer?.disconnect();observedList=list;observer=new MutationObserver(()=>requestAnimationFrame(decorateExisting));observer.observe(list,{childList:true,subtree:true})}
+function reconcile(){installStyles();ensureObserver();requestAnimationFrame(decorateExisting)}
+function start(){reconcile();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,reconcile))}
 // Capture ownership is installed immediately, before the inline row-toggle renderer.
 document.addEventListener('click',handleClick,true);document.addEventListener('keydown',handleKey,true);
-document.readyState==='loading'?document.addEventListener('DOMContentLoaded',startObserver,{once:true}):startObserver();
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
