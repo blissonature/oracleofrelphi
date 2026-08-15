@@ -1,5 +1,5 @@
 // House medallion v4: shared house-number marker for relationship tiles and expanded dual-card headers.
-// Compact rows are observed through their full lifecycle so filter and harmonic-window refreshes cannot strip markers.
+// Coordinate fields are watched directly so unrelated reveal/detail mutations do not trigger tile-wide repair work.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHouseMedallionV4)return;
@@ -13,6 +13,7 @@ const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House',
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 let observer=null,observedList=null,raf=0;
 const pendingRows=new Set();
+const coordinateObservers=new WeakMap();
 
 function houseInk(hex){const value=String(hex||'').replace('#','');if(value.length!==6)return'#fff';const r=parseInt(value.slice(0,2),16),g=parseInt(value.slice(2,4),16),b=parseInt(value.slice(4,6),16),luma=.299*r+.587*g+.114*b;return luma>160?'#211d1a':'#fff'}
 function installStyles(){
@@ -110,15 +111,26 @@ function coordinateText(small){
   const stored=String(small?.dataset?.relationshipCoordinate||'').trim();if(stored)return stored;
   const match=String(small?.textContent||'').match(/\d{1,2}°\d{2}′/);return match?.[0]||'';
 }
+function coordinateSmall(row,side){return row.querySelector(`.sky-foundation-relationship-placement--${side} .sky-foundation-relationship-copy small`)}
 function decorateCompactSide(row,side){
   const house=validHouse(row.dataset[side==='left'?'leftHouse':'rightHouse']);if(!house)return;
-  const small=row.querySelector(`.sky-foundation-relationship-placement--${side} .sky-foundation-relationship-copy small`);if(!small)return;
+  const small=coordinateSmall(row,side);if(!small)return;
   const coordinate=coordinateText(small);if(!coordinate)return;
   decorateCoordinate(small,coordinate,house,`${side}-house`,false);
 }
+function watchCoordinate(small,row){
+  if(!(small instanceof HTMLElement)||coordinateObservers.has(small))return;
+  const watcher=new MutationObserver(()=>{if(row.isConnected&&!row.classList.contains('is-inline-expanded'))queueCompactRow(row)});
+  watcher.observe(small,{childList:true});
+  coordinateObservers.set(small,watcher);
+}
+function watchRow(row){
+  if(!(row instanceof HTMLElement)||!row.matches('.sky-foundation-relationship-row'))return;
+  ['left','right'].forEach(side=>{const small=coordinateSmall(row,side);if(small)watchCoordinate(small,row)});
+}
 function decorateCompactRow(row){
   if(!(row instanceof HTMLElement)||!row.matches('.sky-foundation-relationship-row')||row.classList.contains('is-inline-expanded'))return;
-  decorateCompactSide(row,'left');decorateCompactSide(row,'right');
+  decorateCompactSide(row,'left');decorateCompactSide(row,'right');watchRow(row);
 }
 function flushCompactRows(){
   raf=0;
@@ -131,30 +143,25 @@ function queueCompactRow(row){
   if(!raf)raf=requestAnimationFrame(flushCompactRows);
 }
 function queueAllCompactRows(){
-  document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(queueCompactRow);
-}
-function rowForNode(node){
-  if(!(node instanceof Element))return null;
-  return node.matches('.sky-foundation-relationship-row')?node:node.closest('.sky-foundation-relationship-row');
-}
-function queueMutationRows(records){
-  for(const record of records){
-    const targetRow=rowForNode(record.target);if(targetRow)queueCompactRow(targetRow);
-    for(const node of record.addedNodes){const row=rowForNode(node);if(row)queueCompactRow(row)}
-  }
+  document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(row=>{queueCompactRow(row);watchRow(row)});
 }
 function ensureObserver(){
   const list=document.getElementById('skyFoundationRelationshipList');if(!list)return;
   if(list!==observedList){
     observer?.disconnect();observedList=list;
-    observer=new MutationObserver(queueMutationRows);
-    observer.observe(list,{childList:true,subtree:true});
+    observer=new MutationObserver(records=>{
+      for(const record of records){
+        for(const node of record.addedNodes){
+          if(!(node instanceof Element)||!node.matches('.sky-foundation-relationship-row'))continue;
+          queueCompactRow(node);requestAnimationFrame(()=>watchRow(node));
+        }
+      }
+    });
+    observer.observe(list,{childList:true,subtree:false});
   }
   queueAllCompactRows();
 }
-function refreshAfterHarmonicWindow(){
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{ensureObserver();queueAllCompactRows()}));
-}
+function refreshAfterHarmonicWindow(){requestAnimationFrame(()=>{ensureObserver();queueAllCompactRows()})}
 function sync(){installStyles();ensureObserver()}
 
 installStyles();
