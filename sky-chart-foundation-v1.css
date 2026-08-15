@@ -134,9 +134,11 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-aspect { stroke-width:2.1; stroke-linecap:round; opacity:.62; vector-effect:non-scaling-stroke; }
 
 /* Zodiac signs use the canonical Without circles presentation. The complete
-   canonical artboard remains intact; only the circle is omitted from paint. */
+   canonical artboard remains intact; only the circle is omitted from paint.
+   Their wheel-only halo is deliberately stronger than the shared silver glow
+   so the sign ring remains legible over saturated wedges at the larger size. */
 [data-layer="zodiac"] .sky-foundation-sign-glyph {
-  filter:var(--sky-silver-glow);
+  filter:drop-shadow(0 0 3px rgba(255,255,255,1)) drop-shadow(0 0 7px rgba(255,255,255,.96)) drop-shadow(0 2px 3.4px rgba(31,27,24,.58));
 }
 [data-layer="zodiac"] .sky-foundation-sign-glyph > .relphi-glyph-bubble > circle {
   display:none !important;
