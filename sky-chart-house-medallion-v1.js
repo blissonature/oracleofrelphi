@@ -27,13 +27,12 @@ function installStyles(){
     }
     .sky-foundation-relationship-row:not(.is-inline-expanded) .sky-foundation-relationship-copy small.relphi-house-coordinate[data-house]::after,
     .relphi-house-medallion{
-      --house-color:#777;
       place-items:center;
       box-sizing:border-box;
       padding:0!important;
-      border:1.4px solid var(--house-color)!important;
+      border:1.4px solid var(--house-color,#777)!important;
       border-radius:50%!important;
-      background:color-mix(in srgb,var(--house-color) 18%,#fffdfa)!important;
+      background:color-mix(in srgb,var(--house-color,#777) 18%,#fffdfa)!important;
       color:#2f2a26!important;
       font:900 .52rem/1 system-ui,sans-serif!important;
       font-variant-numeric:tabular-nums;
@@ -64,7 +63,7 @@ function installStyles(){
       cursor:pointer;
     }
     .sky-foundation-relationship-row.is-inline-expanded .relphi-house-medallion:hover{
-      background:color-mix(in srgb,var(--house-color) 28%,#fffdfa)!important;
+      background:color-mix(in srgb,var(--house-color,#777) 28%,#fffdfa)!important;
     }
     @media(max-width:620px){.sky-foundation-relationship-copy small.relphi-house-coordinate{gap:3px!important}}
   `;
