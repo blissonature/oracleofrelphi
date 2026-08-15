@@ -1,36 +1,124 @@
 // Export every filtered relationship, 30 rows per column, without changing live-list laziness.
-// The current Relationships PNG is prepared during idle time so the download click is normally immediate.
+// PNG rasterization is intentionally click-driven so export work never competes with Sky Chart interaction.
 (function(){
 'use strict';
-if(window.__relphiRelationshipExportColumnsV1)return;window.__relphiRelationshipExportColumnsV1=true;
-const ID='skyChartRelationshipsExport',ROWS=30,W=430,GAP=8,PAD=16,LIB='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js',SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
-let busy=false,pending=null,libPromise=null,prepared=null,job=null,generation=0,warmTimer=0,idleHandle=0;
+if(window.__relphiRelationshipExportColumnsV2)return;
+window.__relphiRelationshipExportColumnsV2=true;
+window.__relphiRelationshipExportColumnsV1=true;
+
+const ID='skyChartRelationshipsExport';
+const ROWS=30;
+const W=430;
+const GAP=8;
+const PAD=16;
+const LIB='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
+const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
+let busy=false,pending=null,libPromise=null;
+
 const ios=()=>/iPad|iPhone|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-const status=t=>{const n=document.getElementById('skyChartExportStatus');if(n)n.textContent=t||''};
-const button=()=>document.getElementById(ID);
-const read=s=>{try{return JSON.parse(localStorage.getItem(s==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}};
-const name=s=>{const v=read(s)||{},m=v.metadata||{};return m.savedSkyName||v.name||v.displayName||v.skyName||v.title||`Sky ${s}`};
-const safe=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'sky';
+const status=text=>{const node=document.getElementById('skyChartExportStatus');if(node)node.textContent=text||''};
+const read=slot=>{try{return JSON.parse(localStorage.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}};
+const name=slot=>{const value=read(slot)||{},meta=value.metadata||{};return meta.savedSkyName||value.name||value.displayName||value.skyName||value.title||`Sky ${slot}`};
+const safe=value=>String(value).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'sky';
 const fileName=()=>`${safe(name('A'))}-vs-${safe(name('B'))}-relationships-${new Date().toISOString().slice(0,16).replace(/[-:T]/g,'')}.png`;
-function visible(r){const s=getComputedStyle(r);return!r.hidden&&s.display!=='none'&&s.visibility!=='hidden'}
+
+function visible(row){const style=getComputedStyle(row);return!row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}
 function currentRows(){return[...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row')].filter(visible)}
-function summary(){const b=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');if(!b)return'';const p=[],h=b.querySelector('[data-harmonic-window-input]');if(h?.value)p.push(`Harmonic window ${h.value}°`);for(const [sel,label] of [['[data-placement-filter-summary]','Placements'],['[data-house-filter-summary]','Houses'],['[data-aspect-filter-summary]','Aspects']]){const t=(b.querySelector(sel)?.textContent||'').replace(/\s+/g,' ').trim();if(t&&!/^all$/i.test(t))p.push(`${label}: ${t}`)}for(const s of b.querySelectorAll('select')){const t=(s.selectedOptions?.[0]?.textContent||'').trim();if(!t||/^all$/i.test(t)||/^none$/i.test(t))continue;const d=String(s.dataset.filter||s.dataset.zodiacFilter||s.name||'').toLowerCase(),label=d.includes('zodiac')||d.includes('sign')?'Zodiac signs':d.includes('aspect')?'Aspects':d.includes('house')?'Houses':'Filter',item=`${label}: ${t}`;if(!p.includes(item))p.push(item)}return p.join(' · ')}
-function signature(rows=currentRows()){return[name('A'),name('B'),summary(),rows.length,...rows.map(r=>[r.dataset.relationIndex,r.dataset.leftPlacement,r.dataset.leftSign,r.dataset.aspect,r.dataset.rightPlacement,r.dataset.rightSign,r.dataset.sourceOrb].join(':'))].join('|')}
-function load(){if(window.htmlToImage?.toPng)return Promise.resolve(window.htmlToImage);if(libPromise)return libPromise;libPromise=new Promise((ok,no)=>{let s=document.querySelector(`script[src="${LIB}"]`);if(!s){s=document.createElement('script');s.src=LIB;s.async=true;s.crossOrigin='anonymous';document.head.appendChild(s)}const ready=()=>window.htmlToImage?.toPng?ok(window.htmlToImage):no(Error('PNG exporter unavailable.'));s.addEventListener('load',ready,{once:true});s.addEventListener('error',()=>no(Error('PNG exporter did not load.')),{once:true});if(window.htmlToImage?.toPng)ok(window.htmlToImage)});return libPromise}
-function styles(){if(document.getElementById('relExportColumnStyle'))return;const s=document.createElement('style');s.id='relExportColumnStyle';s.textContent=`.rel-export-sheet{box-sizing:border-box;padding:${PAD}px;border:1px solid #ded9d2;border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,sans-serif}.rel-export-head{display:flex;justify-content:space-between;align-items:center;padding:0 2px 10px;font-size:22px;font-weight:800}.rel-export-head span{padding:6px 10px;border-radius:999px;background:#f0ebe4;font-size:13px}.rel-export-summary{margin:0 0 12px;padding:10px;border-radius:9px;background:#f6f0e8;color:#5d554e;text-align:center;font-weight:750}.rel-export-cols{display:flex;align-items:flex-start;gap:${GAP}px}.rel-export-col{display:grid;gap:6px;width:${W}px;min-width:${W}px}.rel-export-col>.sky-foundation-relationship-row{box-sizing:border-box;width:${W}px!important;min-width:${W}px!important;max-width:${W}px!important;margin:0!important}`;document.head.appendChild(s)}
-function cleanClone(row){const c=row.cloneNode(true);c.classList.remove('is-inline-expanded','is-wheel-related','is-row-hovered');c.removeAttribute('aria-current');c.querySelector(':scope>.inline-rel-detail')?.remove();return c}
-async function hydrate(c,r){const t=window.RelphiRelationshipGlyphTemplates;if(!t?.clone)return;const a=String(r.dataset.aspect||''),ls=SIGNS[+r.dataset.leftSign],rs=SIGNS[+r.dataset.rightSign],spec=[[c.querySelector('.sky-foundation-relationship-glyph--left'),r.dataset.leftPlacement,t.colors.A],[c.querySelector('.sky-foundation-relationship-placement--left .sky-foundation-relationship-sign'),ls,t.colors.A],[c.querySelector('.sky-foundation-relationship-glyph--aspect'),a,t.colors.aspects[a]],[c.querySelector('.sky-foundation-relationship-glyph--right'),r.dataset.rightPlacement,t.colors.B],[c.querySelector('.sky-foundation-relationship-placement--right .sky-foundation-relationship-sign'),rs,t.colors.B]];await Promise.all(spec.map(async([h,id,color])=>{if(!h||!id)return;if(h.firstElementChild?.tagName?.toLowerCase()==='svg')return;const svg=await t.clone(id,color||'#777');if(svg)h.replaceChildren(svg)}))}
-async function build(rows=currentRows()){styles();if(!rows.length)throw Error('No relationships match the current filters.');const cols=Math.ceil(rows.length/ROWS),width=PAD*2+cols*W+(cols-1)*GAP,host=document.createElement('div'),sheet=document.createElement('div');Object.assign(host.style,{position:'fixed',left:'-100000px',top:'0',width:`${width}px`,background:'#fffdf8',zIndex:'-1'});sheet.className='rel-export-sheet';sheet.style.width=`${width}px`;sheet.innerHTML=`<div class="rel-export-head">Relationships <span>${document.getElementById('skyFoundationRelationshipCount')?.textContent||rows.length}</span></div>`;const sum=summary();if(sum){const d=document.createElement('div');d.className='rel-export-summary';d.textContent=`Showing only: ${sum}`;sheet.appendChild(d)}const wrap=document.createElement('div');wrap.className='rel-export-cols';sheet.appendChild(wrap);host.appendChild(sheet);document.body.appendChild(host);const jobs=[];for(let i=0;i<cols;i++){const col=document.createElement('div');col.className='rel-export-col';wrap.appendChild(col);for(const r of rows.slice(i*ROWS,(i+1)*ROWS)){const c=cleanClone(r);col.appendChild(c);jobs.push(hydrate(c,r))}}await Promise.allSettled(jobs);await new Promise(q=>requestAnimationFrame(()=>requestAnimationFrame(q)));return{host,sheet,width,height:Math.ceil(sheet.scrollHeight),count:rows.length,cols}}
-async function png(b){if(document.fonts?.ready)await document.fonts.ready.catch(()=>{});const h=await load(),ratio=Math.min(2,12000/b.width),url=await h.toPng(b.sheet,{backgroundColor:'#fffdf8',width:b.width,height:b.height,pixelRatio:ratio,canvasWidth:Math.ceil(b.width*ratio),canvasHeight:Math.ceil(b.height*ratio),skipAutoScale:true});const blob=await(await fetch(url)).blob();return new File([blob],fileName(),{type:'image/png'})}
-function download(f){const u=URL.createObjectURL(f),a=document.createElement('a');a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)}
-async function prepare(){const rows=currentRows();if(!rows.length)return null;const sig=signature(rows);if(prepared?.signature===sig)return prepared;if(job){await job.catch(()=>{});if(prepared?.signature===sig)return prepared}const epoch=generation;job=(async()=>{let b;try{await load();b=await build(rows);const f=await png(b);if(epoch!==generation||sig!==signature())return null;prepared={signature:sig,file:f,count:b.count,cols:b.cols};pending=ios()?f:null;const btn=button();if(btn){btn.dataset.exportPrepared='true';if(ios())btn.dataset.exportReady='true'}return prepared}finally{b?.host.remove()}})();try{return await job}finally{job=null;if(epoch!==generation)scheduleWarm(250)}}
-function cancelWarm(){clearTimeout(warmTimer);warmTimer=0;if(idleHandle&&'cancelIdleCallback'in window)cancelIdleCallback(idleHandle);idleHandle=0}
-function scheduleWarm(delay=350){cancelWarm();warmTimer=setTimeout(()=>{warmTimer=0;const start=()=>{idleHandle=0;prepare().catch(()=>{})};if('requestIdleCallback'in window)idleHandle=requestIdleCallback(start,{timeout:900});else setTimeout(start,0)},delay)}
-function invalidate(){generation+=1;prepared=null;pending=null;const btn=button();if(btn){delete btn.dataset.exportPrepared;delete btn.dataset.exportReady}scheduleWarm()}
-async function run(btn){if(busy)return;const sig=signature();if(prepared?.signature===sig){if(ios()){try{if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[prepared.file]})))await navigator.share({files:[prepared.file]});else download(prepared.file)}catch(e){if(e?.name!=='AbortError')console.error(e)}return}download(prepared.file);status(`PNG download started — ${prepared.count} relationships in ${prepared.cols} columns.`);return}if(ios()&&pending){try{await navigator.share({files:[pending]})}catch(e){if(e?.name!=='AbortError')console.error(e)}return}busy=true;btn.disabled=true;status('Finishing Relationships PNG…');try{const ready=await prepare();if(!ready)throw Error('Relationships changed while the PNG was being prepared. Please tap again.');if(ios()){pending=ready.file;btn.dataset.exportReady='true';status(`PNG ready — ${ready.count} relationships in ${ready.cols} columns. Tap again to share.`)}else{download(ready.file);status(`PNG download started — ${ready.count} relationships in ${ready.cols} columns.`)}}catch(e){console.error(e);status(`Export failed: ${e.message||e}`)}finally{busy=false;btn.disabled=false}}
-document.addEventListener('click',e=>{const b=e.target.closest?.(`#${ID}`);if(!b)return;e.preventDefault();e.stopImmediatePropagation();run(b)},true);
-document.addEventListener('pointerenter',e=>{if(e.target.closest?.(`#${ID}`))prepare().catch(()=>{})},true);
-document.addEventListener('focusin',e=>{if(e.target.closest?.(`#${ID}`))prepare().catch(()=>{})},true);
-['relphi:sky-foundation-ready','relphi:sky-orb-limit-changed','relphi:sky-harmonic-window-visibility-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed'].forEach(n=>window.addEventListener(n,invalidate));window.addEventListener('storage',invalidate);
-load().catch(()=>{});scheduleWarm(500);
+function summary(){
+  const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');if(!bar)return'';
+  const parts=[],harmonic=bar.querySelector('[data-harmonic-window-input]');
+  if(harmonic?.value)parts.push(`Harmonic window ${harmonic.value}°`);
+  for(const [selector,label] of [['[data-placement-filter-summary]','Placements'],['[data-house-filter-summary]','Houses'],['[data-aspect-filter-summary]','Aspects']]){
+    const text=(bar.querySelector(selector)?.textContent||'').replace(/\s+/g,' ').trim();
+    if(text&&!/^all$/i.test(text))parts.push(`${label}: ${text}`);
+  }
+  for(const select of bar.querySelectorAll('select')){
+    const text=(select.selectedOptions?.[0]?.textContent||'').trim();if(!text||/^all$/i.test(text)||/^none$/i.test(text))continue;
+    const data=String(select.dataset.filter||select.dataset.zodiacFilter||select.name||'').toLowerCase();
+    const label=data.includes('zodiac')||data.includes('sign')?'Zodiac signs':data.includes('aspect')?'Aspects':data.includes('house')?'Houses':'Filter';
+    const item=`${label}: ${text}`;if(!parts.includes(item))parts.push(item);
+  }
+  return parts.join(' · ');
+}
+function load(){
+  if(window.htmlToImage?.toBlob)return Promise.resolve(window.htmlToImage);
+  if(libPromise)return libPromise;
+  libPromise=new Promise((resolve,reject)=>{
+    let script=document.querySelector(`script[src="${LIB}"]`);
+    if(!script){script=document.createElement('script');script.src=LIB;script.async=true;script.crossOrigin='anonymous';document.head.appendChild(script)}
+    const ready=()=>window.htmlToImage?.toBlob?resolve(window.htmlToImage):reject(Error('PNG exporter unavailable.'));
+    script.addEventListener('load',ready,{once:true});script.addEventListener('error',()=>reject(Error('PNG exporter did not load.')),{once:true});
+    if(window.htmlToImage?.toBlob)resolve(window.htmlToImage);
+  });
+  return libPromise;
+}
+function styles(){
+  if(document.getElementById('relExportColumnStyle'))return;
+  const style=document.createElement('style');style.id='relExportColumnStyle';style.textContent=`
+    .rel-export-sheet{box-sizing:border-box;padding:${PAD}px;border:1px solid #ded9d2;border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,sans-serif}
+    .rel-export-head{display:flex;justify-content:space-between;align-items:center;padding:0 2px 10px;font-size:22px;font-weight:800}
+    .rel-export-head span{padding:6px 10px;border-radius:999px;background:#f0ebe4;font-size:13px}
+    .rel-export-summary{margin:0 0 12px;padding:10px;border-radius:9px;background:#f6f0e8;color:#5d554e;text-align:center;font-weight:750}
+    .rel-export-cols{display:flex;align-items:flex-start;gap:${GAP}px}
+    .rel-export-col{display:grid;gap:6px;width:${W}px;min-width:${W}px}
+    .rel-export-col>.sky-foundation-relationship-row{box-sizing:border-box;width:${W}px!important;min-width:${W}px!important;max-width:${W}px!important;margin:0!important}`;
+  document.head.appendChild(style);
+}
+function cleanClone(row){
+  const clone=row.cloneNode(true);clone.dataset.relationshipExportClone='true';
+  clone.classList.remove('is-inline-expanded','is-wheel-related','is-row-hovered');clone.removeAttribute('aria-current');clone.querySelector(':scope>.inline-rel-detail')?.remove();return clone;
+}
+async function hydrate(clone,row){
+  const templates=window.RelphiRelationshipGlyphTemplates;if(!templates?.clone)return;
+  const aspect=String(row.dataset.aspect||''),leftSign=SIGNS[+row.dataset.leftSign],rightSign=SIGNS[+row.dataset.rightSign];
+  const specs=[
+    [clone.querySelector('.sky-foundation-relationship-glyph--left'),row.dataset.leftPlacement,templates.colors.A],
+    [clone.querySelector('.sky-foundation-relationship-placement--left .sky-foundation-relationship-sign'),leftSign,templates.colors.A],
+    [clone.querySelector('.sky-foundation-relationship-glyph--aspect'),aspect,templates.colors.aspects[aspect]],
+    [clone.querySelector('.sky-foundation-relationship-glyph--right'),row.dataset.rightPlacement,templates.colors.B],
+    [clone.querySelector('.sky-foundation-relationship-placement--right .sky-foundation-relationship-sign'),rightSign,templates.colors.B]
+  ];
+  await Promise.all(specs.map(async([host,id,color])=>{if(!host||!id||host.firstElementChild?.tagName?.toLowerCase()==='svg')return;const svg=await templates.clone(id,color||'#777');if(svg)host.replaceChildren(svg)}));
+}
+async function build(){
+  styles();const rows=currentRows();if(!rows.length)throw Error('No relationships match the current filters.');
+  const cols=Math.ceil(rows.length/ROWS),width=PAD*2+cols*W+(cols-1)*GAP;
+  const host=document.createElement('div'),sheet=document.createElement('div');
+  host.dataset.relationshipExportHost='true';
+  Object.assign(host.style,{position:'fixed',left:'-100000px',top:'0',width:`${width}px`,background:'#fffdf8',zIndex:'-1'});
+  sheet.className='rel-export-sheet';sheet.style.width=`${width}px`;sheet.innerHTML=`<div class="rel-export-head">Relationships <span>${document.getElementById('skyFoundationRelationshipCount')?.textContent||rows.length}</span></div>`;
+  const filter=summary();if(filter){const line=document.createElement('div');line.className='rel-export-summary';line.textContent=`Showing only: ${filter}`;sheet.appendChild(line)}
+  const wrap=document.createElement('div');wrap.className='rel-export-cols';sheet.appendChild(wrap);host.appendChild(sheet);document.body.appendChild(host);
+  const jobs=[];
+  for(let index=0;index<cols;index++){
+    const column=document.createElement('div');column.className='rel-export-col';wrap.appendChild(column);
+    for(const row of rows.slice(index*ROWS,(index+1)*ROWS)){const clone=cleanClone(row);column.appendChild(clone);jobs.push(hydrate(clone,row))}
+  }
+  await Promise.allSettled(jobs);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  return{host,sheet,width,height:Math.ceil(sheet.scrollHeight),count:rows.length,cols};
+}
+async function png(built){
+  if(document.fonts?.ready)await document.fonts.ready.catch(()=>{});
+  const exporter=await load();
+  const ratio=built.count>80?1:built.count>40?1.2:1.5;
+  const blob=await exporter.toBlob(built.sheet,{backgroundColor:'#fffdf8',width:built.width,height:built.height,pixelRatio:ratio,canvasWidth:Math.ceil(built.width*ratio),canvasHeight:Math.ceil(built.height*ratio),skipAutoScale:true});
+  if(!blob)throw Error('PNG exporter returned no image.');
+  return new File([blob],fileName(),{type:'image/png'});
+}
+function download(file){const url=URL.createObjectURL(file),anchor=document.createElement('a');anchor.href=url;anchor.download=file.name;document.body.appendChild(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+async function run(button){
+  if(busy)return;
+  if(ios()&&pending){try{await navigator.share({files:[pending]})}catch(error){if(error?.name!=='AbortError')console.error(error)}return}
+  busy=true;button.disabled=true;status('Preparing complete Relationships PNG…');let built;
+  try{
+    built=await build();const file=await png(built);
+    if(ios()){pending=file;button.dataset.exportReady='true';status(`PNG ready — ${built.count} relationships in ${built.cols} columns. Tap again to share.`)}
+    else{download(file);status(`PNG download started — ${built.count} relationships in ${built.cols} columns.`)}
+  }catch(error){console.error(error);status(`Export failed: ${error.message||error}`)}
+  finally{built?.host.remove();busy=false;button.disabled=false}
+}
+document.addEventListener('click',event=>{const button=event.target.closest?.(`#${ID}`);if(!button)return;event.preventDefault();event.stopImmediatePropagation();run(button)},true);
+['relphi:sky-foundation-ready','relphi:sky-orb-limit-changed','relphi:sky-harmonic-window-visibility-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed'].forEach(name=>window.addEventListener(name,()=>{pending=null;const button=document.getElementById(ID);if(button)delete button.dataset.exportReady}));
+// Loading the small exporter library in advance is cheap; rendering the PNG is not.
+load().catch(()=>{});
 })();
