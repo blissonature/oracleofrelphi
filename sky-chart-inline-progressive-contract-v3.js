@@ -35,18 +35,20 @@ function stripMarkup(row){return `<div class="inline-rel-progressive-strip" aria
 function coordinateText(small){const stored=String(small?.dataset?.relationshipCoordinate||'').trim();if(stored)return stored;const match=String(small?.textContent||'').match(/\d{1,2}°\d{2}′/);return match?.[0]||String(small?.textContent||'').split('·')[0].trim()}
 function decorateTopHouseTrigger(row,side){
   const group=row.querySelector(`.sky-foundation-relationship-placement--${side}`),small=group?.querySelector('.sky-foundation-relationship-copy small'),house=houseNumber(row,side);if(!small||!house)return;
-  const field=`${side}-house`;if(small.querySelector(`[data-inline-progressive-glyph="${field}"]`))return;
-  const coordinate=coordinateText(small);small.dataset.relationshipCoordinate=coordinate;small.replaceChildren(document.createTextNode(coordinate+' · '));
-  const trigger=document.createElement('span');trigger.className='inline-rel-house-trigger';trigger.dataset.inlineProgressiveGlyph=field;trigger.setAttribute('title',`Reveal ${HOUSE_NAMES[house]}`);trigger.textContent=`H${house}`;small.appendChild(trigger);
+  const field=`${side}-house`;if(small.querySelector(`[data-inline-progressive-glyph="${field}"]`)){small.classList.add('has-inline-house-trigger');return}
+  const coordinate=coordinateText(small);small.dataset.relationshipCoordinate=coordinate;small.replaceChildren(document.createTextNode(coordinate+' '));
+  const trigger=document.createElement('span');trigger.className=`inline-rel-house-trigger inline-rel-house-trigger--${side}`;trigger.dataset.inlineProgressiveGlyph=field;trigger.setAttribute('aria-label',`${HOUSE_NAMES[house]}, house ${house}`);trigger.setAttribute('title',HOUSE_NAMES[house]);trigger.textContent=String(house);small.appendChild(trigger);small.classList.add('has-inline-house-trigger');
 }
 function ensureStrip(row){
-  if(!row?.classList.contains('is-inline-expanded'))return null;
+  if(!row)return null;
+  decorateTopHouseTrigger(row,'left');decorateTopHouseTrigger(row,'right');
+  if(!row.classList.contains('is-inline-expanded'))return null;
   const detail=row.querySelector(':scope>.inline-rel-detail');if(!detail)return null;
   detail.querySelector(':scope>.inline-rel-top-reveal')?.remove();
   detail.querySelector(':scope>.inline-rel-house-context')?.remove();
   let strip=detail.querySelector(':scope>.inline-rel-progressive-strip');if(!strip){detail.insertAdjacentHTML('afterbegin',stripMarkup(row));strip=detail.querySelector(':scope>.inline-rel-progressive-strip')}
   GLYPH_FIELDS.forEach(([field,selector])=>{const glyph=row.querySelector(selector);if(!glyph)return;glyph.dataset.inlineProgressiveGlyph=field;glyph.setAttribute('title','Reveal name')});
-  decorateTopHouseTrigger(row,'left');decorateTopHouseTrigger(row,'right');return strip;
+  return strip;
 }
 function tokenFor(row,field){return ensureStrip(row)?.querySelector(`[data-inline-progressive-token="${field}"]`)||null}
 function setStage(token,stage){if(!token)return;const next=Math.max(0,Math.min(2,Number(stage)||0)),name=token.querySelector('[data-inline-progressive-level="name"]'),referent=token.querySelector('[data-inline-progressive-level="referent"]');token.dataset.inlineProgressiveStage=String(next);token.hidden=next===0;if(name)name.hidden=next===0;if(referent)referent.hidden=next<2}
@@ -55,13 +57,22 @@ function levelActivate(levelNode){const token=levelNode.closest('[data-inline-pr
 function expandedRowFor(target){return target?.closest?.('.sky-foundation-relationship-row.is-inline-expanded')||null}
 function fieldFromBase(target,row){const direct=target.closest?.('[data-inline-progressive-glyph]');if(direct?.dataset.inlineProgressiveGlyph)return direct.dataset.inlineProgressiveGlyph;for(const [field,selector] of GLYPH_FIELDS){const glyph=target.closest?.(selector);if(glyph&&row.contains(glyph))return field}return''}
 function ownRevealEvent(event){const row=expandedRowFor(event.target);if(!row)return false;ensureStrip(row);const level=event.target.closest?.('[data-inline-progressive-level]');if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return true}const field=fieldFromBase(event.target,row);if(field){event.preventDefault();event.stopImmediatePropagation();baseActivate(row,field);return true}return false}
-function handleClick(event){ownRevealEvent(event)}
+function handleClick(event){
+  if(ownRevealEvent(event))return;
+  const row=expandedRowFor(event.target);if(!row)return;
+  if(event.target.closest?.('[data-inline-ledger]'))return;
+  event.preventDefault();event.stopImmediatePropagation();
+}
 function handleKey(event){if(event.key!=='Enter'&&event.key!==' ')return;ownRevealEvent(event)}
 function installStyles(){
   if(document.getElementById('skyInlineProgressiveContractV3Styles'))return;document.getElementById('skyInlineProgressiveContractV2Styles')?.remove();document.getElementById('skyInlineProgressiveContractStyles')?.remove();
   const style=document.createElement('style');style.id='skyInlineProgressiveContractV3Styles';style.textContent=`
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]{cursor:pointer;border-radius:6px}
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]:hover{background:rgba(45,39,34,.055)}
+    .sky-foundation-relationship-copy small.has-inline-house-trigger{display:inline-flex!important;align-items:center;justify-content:center;gap:3px;overflow:visible!important}
+    .inline-rel-house-trigger{display:inline-grid;place-items:center;width:18px;height:18px;min-width:18px;min-height:18px;padding:0;border-radius:50%;color:#fff!important;font:900 .58rem/1 system-ui,sans-serif;cursor:pointer;vertical-align:middle;box-shadow:0 1px 2px rgba(0,0,0,.16)}
+    .inline-rel-house-trigger--left{background:#c9211e}.inline-rel-house-trigger--right{background:#2462d0}
+    .inline-rel-house-trigger:hover{filter:brightness(.92);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px currentColor}
     .inline-rel-progressive-strip{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(86px,.72fr) minmax(0,1fr);align-items:start;gap:8px;min-width:0}
     .inline-rel-progressive-side-a{grid-column:1}.inline-rel-progressive-side-b{grid-column:3}
     .inline-rel-progressive-side{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:5px;min-width:0}
@@ -72,15 +83,15 @@ function installStyles(){
     .inline-rel-progressive-token[hidden],.inline-rel-progressive-level[hidden]{display:none!important}
     .inline-rel-progressive-level{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center}
     .inline-rel-progressive-name{font-size:.6rem;font-weight:900;line-height:1.15}.inline-rel-progressive-referent{font-size:.55rem;font-weight:680;line-height:1.28;color:#625a53;white-space:normal;overflow-wrap:anywhere}
-    .inline-rel-house-trigger{display:inline-block;padding:0 3px;border-radius:4px;font-weight:900;cursor:pointer;color:inherit}.inline-rel-house-trigger:hover{background:rgba(45,39,34,.08)}
-    @media(max-width:620px){.inline-rel-progressive-strip{grid-template-columns:minmax(0,1fr) minmax(68px,.64fr) minmax(0,1fr);gap:4px}.inline-rel-progressive-side{gap:3px}.inline-rel-progressive-token{padding:3px}.inline-rel-progressive-name{font-size:.54rem}.inline-rel-progressive-referent{font-size:.49rem}}
+    @media(max-width:620px){.inline-rel-progressive-strip{grid-template-columns:minmax(0,1fr) minmax(68px,.64fr) minmax(0,1fr);gap:4px}.inline-rel-progressive-side{gap:3px}.inline-rel-progressive-token{padding:3px}.inline-rel-progressive-name{font-size:.54rem}.inline-rel-progressive-referent{font-size:.49rem}.inline-rel-house-trigger{width:17px;height:17px;min-width:17px;min-height:17px;font-size:.55rem}}
   `;document.head.appendChild(style);
 }
-function decorateExisting(){document.querySelectorAll('.sky-foundation-relationship-row.is-inline-expanded').forEach(ensureStrip)}
+function decorateExisting(){document.querySelectorAll('.sky-foundation-relationship-row').forEach(ensureStrip)}
 function ensureObserver(){const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;observer?.disconnect();observedList=list;observer=new MutationObserver(decorateExisting);observer.observe(list,{childList:true,subtree:true})}
 function reconcile(){installStyles();ensureObserver();requestAnimationFrame(decorateExisting)}
 function start(){reconcile();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,reconcile))}
-// Reveal ownership is installed before the inline row-toggle renderer.
+// Reveal ownership is installed before the inline row-toggle renderer. Once a relationship is open,
+// only its reveal controls and explicit child actions own clicks; generic row clicks cannot collapse it.
 document.addEventListener('click',handleClick,true);document.addEventListener('keydown',handleKey,true);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
