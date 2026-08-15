@@ -1,20 +1,21 @@
-// House medallion v3: shared house-number marker for relationship tiles and expanded dual-card headers.
-// This module owns presentation and construction only. Row builders call it directly; it observes no DOM.
+// House medallion v4: shared house-number marker for relationship tiles and expanded dual-card headers.
+// Compact rows are decorated one frame after row layout; only top-level row additions are observed.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHouseMedallionV3)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHouseMedallionV4)return;
+window.__relphiSkyHouseMedallionV4=true;
 window.__relphiSkyHouseMedallionV3=true;
 window.__relphiSkyHouseMedallionV2=true;
 window.__relphiSkyHouseMedallionV1=true;
 
-const STYLE_ID='skyHouseMedallionV3Styles';
+const STYLE_ID='skyHouseMedallionV4Styles';
 const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
-// Canonical twelve-hue sequence used by the rainbow comparison wheel.
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+let observer=null,observedList=null,raf=0;
+const pendingRows=new Set();
 
 function installStyles(){
-  document.getElementById('skyHouseMedallionV1Styles')?.remove();
-  document.getElementById('skyHouseMedallionV2Styles')?.remove();
+  ['skyHouseMedallionV1Styles','skyHouseMedallionV2Styles','skyHouseMedallionV3Styles'].forEach(id=>document.getElementById(id)?.remove());
   if(document.getElementById(STYLE_ID))return;
   const style=document.createElement('style');
   style.id=STYLE_ID;
@@ -70,8 +71,10 @@ function medallion(house,field,interactive=false,existing=null){
   if(node.textContent!==label)node.textContent=label;
   if(node.style.getPropertyValue('--house-color')!==HOUSE_COLORS[n-1])node.style.setProperty('--house-color',HOUSE_COLORS[n-1]);
   if(node.getAttribute('aria-label')!==HOUSE_NAMES[n])node.setAttribute('aria-label',HOUSE_NAMES[n]);
-  const title=interactive?`Reveal ${HOUSE_NAMES[n]}`:HOUSE_NAMES[n];if(node.getAttribute('title')!==title)node.setAttribute('title',title);
-  if(interactive&&field){if(node.dataset.inlineProgressiveGlyph!==field)node.dataset.inlineProgressiveGlyph=field}else if(node.dataset.inlineProgressiveGlyph)delete node.dataset.inlineProgressiveGlyph;
+  const title=interactive?`Reveal ${HOUSE_NAMES[n]}`:HOUSE_NAMES[n];
+  if(node.getAttribute('title')!==title)node.setAttribute('title',title);
+  if(interactive&&field){if(node.dataset.inlineProgressiveGlyph!==field)node.dataset.inlineProgressiveGlyph=field}
+  else if(node.dataset.inlineProgressiveGlyph)delete node.dataset.inlineProgressiveGlyph;
   return node;
 }
 function decorateCoordinate(small,coordinate,house,field,interactive=false){
@@ -86,7 +89,48 @@ function decorateCoordinate(small,coordinate,house,field,interactive=false){
   if(!correct)small.replaceChildren(document.createTextNode(text),marker);
   return marker;
 }
+function coordinateText(small){
+  const stored=String(small?.dataset?.relationshipCoordinate||'').trim();if(stored)return stored;
+  const match=String(small?.textContent||'').match(/\d{1,2}°\d{2}′/);return match?.[0]||'';
+}
+function decorateCompactSide(row,side){
+  const house=validHouse(row.dataset[side==='left'?'leftHouse':'rightHouse']);if(!house)return;
+  const small=row.querySelector(`.sky-foundation-relationship-placement--${side} .sky-foundation-relationship-copy small`);if(!small)return;
+  const coordinate=coordinateText(small);if(!coordinate)return;
+  decorateCoordinate(small,coordinate,house,`${side}-house`,false);
+}
+function decorateCompactRow(row){
+  if(!(row instanceof HTMLElement)||!row.matches('.sky-foundation-relationship-row')||row.classList.contains('is-inline-expanded'))return;
+  decorateCompactSide(row,'left');decorateCompactSide(row,'right');
+}
+function flushCompactRows(){
+  raf=0;
+  const rows=[...pendingRows];pendingRows.clear();
+  rows.forEach(row=>{if(row.isConnected)decorateCompactRow(row)});
+}
+function queueCompactRow(row){
+  if(!(row instanceof HTMLElement)||!row.matches('.sky-foundation-relationship-row'))return;
+  pendingRows.add(row);
+  if(!raf)raf=requestAnimationFrame(flushCompactRows);
+}
+function queueAllCompactRows(){
+  document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row').forEach(queueCompactRow);
+}
+function ensureObserver(){
+  const list=document.getElementById('skyFoundationRelationshipList');if(!list)return;
+  if(list!==observedList){
+    observer?.disconnect();observedList=list;
+    observer=new MutationObserver(records=>{
+      for(const record of records)for(const node of record.addedNodes)queueCompactRow(node);
+    });
+    observer.observe(list,{childList:true,subtree:false});
+  }
+  queueAllCompactRows();
+}
+function sync(){installStyles();ensureObserver()}
 
 installStyles();
-window.RelphiHouseMedallion=Object.freeze({colors:Object.freeze(HOUSE_COLORS.slice()),names:Object.freeze(HOUSE_NAMES.slice()),create:medallion,decorateCoordinate});
+window.RelphiHouseMedallion=Object.freeze({colors:Object.freeze(HOUSE_COLORS.slice()),names:Object.freeze(HOUSE_NAMES.slice()),create:medallion,decorateCoordinate,refreshCompact:queueAllCompactRows});
+['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed'].forEach(name=>window.addEventListener(name,sync));
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();
 })();
