@@ -1,4 +1,4 @@
-// Sky Chart comparison-wheel snapshot export with iPhone-safe two-step save/share.
+// Sky Chart comparison-wheel snapshot export: one-click desktop download, iOS-safe two-step share.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySnapshotV1)return;
@@ -12,6 +12,11 @@
   let pendingFile=null;
   let pendingUrl='';
   let preparing=false;
+
+  function isIOS(){
+    const ua=String(navigator.userAgent||'');
+    return /iPad|iPhone|iPod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  }
 
   function loadLibrary(){
     if(window.htmlToImage?.toPng)return Promise.resolve(window.htmlToImage);
@@ -31,6 +36,12 @@
       document.head.appendChild(script);
     });
     return libraryPromise;
+  }
+
+  function prewarmLibrary(){
+    const warm=()=>loadLibrary().catch(()=>{});
+    if('requestIdleCallback'in window)requestIdleCallback(warm,{timeout:2500});
+    else setTimeout(warm,900);
   }
 
   function safeName(value,fallback){
@@ -62,6 +73,12 @@
     return new File([blob],name,{type:'image/png',lastModified:Date.now()});
   }
 
+  function downloadFile(file){
+    const url=URL.createObjectURL(file),a=document.createElement('a');
+    a.href=url;a.download=file.name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+  }
+
   async function prepare(){
     if(preparing)return;
     const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');
@@ -69,7 +86,7 @@
     preparing=true;invalidate();
     const button=document.getElementById(PREPARE_ID);
     if(button){button.disabled=true;button.setAttribute('aria-busy','true')}
-    status('Preparing PNG…',false);
+    status(isIOS()?'Preparing PNG…':'Preparing download…',false);
     try{
       window.RelphiPlacementCollisionOrder?.arrangeCurrent?.();
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
@@ -90,8 +107,14 @@
         style:{width:`${width}px`,height:`${height}px`,maxHeight:'none',overflow:'visible'}
       });
       pendingFile=await dataUrlToFile(dataUrl,filename());
-      const save=document.getElementById(SAVE_ID);if(save)save.hidden=false;
-      status('Snapshot ready.',false);
+      if(isIOS()){
+        const save=document.getElementById(SAVE_ID);if(save)save.hidden=false;
+        status('Snapshot ready to share.',false);
+      }else{
+        downloadFile(pendingFile);
+        status('PNG download started.',false);
+        pendingFile=null;
+      }
     }catch(error){
       console.error('Sky Chart snapshot failed:',error);
       status(`Snapshot failed: ${String(error?.message||error||'unknown error').replace(/\s+/g,' ').slice(0,150)}`,true);
@@ -107,7 +130,7 @@
     if(!opened)location.href=pendingUrl;
   }
 
-  async function save(){
+  async function saveIOS(){
     if(!pendingFile){status('Prepare a snapshot first.',true);return}
     const button=document.getElementById(SAVE_ID);if(button)button.disabled=true;
     try{
@@ -115,16 +138,13 @@
         await navigator.share({files:[pendingFile],title:'Sky Chart snapshot'});
         status('Snapshot sent to the share sheet.',false);
       }else{
-        const a=document.createElement('a');
-        const url=URL.createObjectURL(pendingFile);
-        a.href=url;a.download=pendingFile.name;document.body.appendChild(a);a.click();a.remove();
-        setTimeout(()=>URL.revokeObjectURL(url),30000);
-        status('PNG download started.',false);
+        fallbackOpen(pendingFile);
+        status('The PNG opened separately so it can be saved.',false);
       }
     }catch(error){
-      if(error?.name==='AbortError')status('Save canceled. The snapshot is still ready.',false);
+      if(error?.name==='AbortError')status('Share canceled. The snapshot is still ready.',false);
       else{
-        console.error('Sky Chart snapshot save failed:',error);
+        console.error('Sky Chart snapshot share failed:',error);
         fallbackOpen(pendingFile);
         status('The PNG opened separately so it can be saved.',false);
       }
@@ -155,16 +175,16 @@
     let actions=heading.querySelector('.sky-snapshot-actions');
     if(!actions){
       actions=document.createElement('span');actions.className='sky-snapshot-actions';
-      const prepareButton=document.createElement('button');prepareButton.type='button';prepareButton.id=PREPARE_ID;prepareButton.className='sky-snapshot-button';prepareButton.textContent='Save Snapshot';prepareButton.title='Prepare a PNG snapshot of the current comparison wheel';
-      const saveButton=document.createElement('button');saveButton.type='button';saveButton.id=SAVE_ID;saveButton.className='sky-snapshot-button';saveButton.textContent='Save PNG';saveButton.title='Save or share the prepared PNG';saveButton.hidden=true;
-      prepareButton.addEventListener('click',prepare);saveButton.addEventListener('click',save);
+      const prepareButton=document.createElement('button');prepareButton.type='button';prepareButton.id=PREPARE_ID;prepareButton.className='sky-snapshot-button';prepareButton.textContent='Save Snapshot';prepareButton.title=isIOS()?'Prepare a PNG snapshot of the current comparison wheel':'Download a PNG snapshot of the current comparison wheel';
+      const saveButton=document.createElement('button');saveButton.type='button';saveButton.id=SAVE_ID;saveButton.className='sky-snapshot-button';saveButton.textContent='Share PNG';saveButton.title='Share or save the prepared PNG';saveButton.hidden=true;
+      prepareButton.addEventListener('click',prepare);saveButton.addEventListener('click',saveIOS);
       actions.append(prepareButton,saveButton);heading.appendChild(actions);
       const state=document.createElement('span');state.id=STATUS_ID;state.setAttribute('role','status');state.setAttribute('aria-live','polite');heading.appendChild(state);
     }
   }
 
   function start(){
-    ensureControls();
+    ensureControls();prewarmLibrary();
     new MutationObserver(ensureControls).observe(document.getElementById('skyFoundationComparison')||document.body,{childList:true,subtree:true});
     ['relphi:sky-foundation-ready','relphi:sky-orb-limit-changed','relphi:sky-foundation-filter-changed'].forEach(name=>window.addEventListener(name,()=>{ensureControls();invalidate()}));
     window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartA'||event.key==='relphiSkyChartB')invalidate()});
