@@ -13,12 +13,12 @@
   const ASPECTS=HARMONIC?.aspects||[];
   const ALIASES={rising:'asc',ascendant:'asc',asc:'asc',ac:'asc',descendant:'dsc',dsc:'dsc',dc:'dsc',midheaven:'mc',mc:'mc','imum coeli':'ic',imumcoeli:'ic',ic:'ic',vertex:'vertex',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','mean node':'north-node','south node':'south-node',chiron:'chiron',lilith:'lilith','black moon lilith':'lilith',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 
-  let lockedState=null,hoverState=null,refreshQueued=false,selectionClearObserver=null;
+  let lockedState=null,hoverState=null,refreshQueued=false,selectionClearObserver=null,renderedRelationshipSignature=null;
   let current={listA:[],listB:[],relations:[],cuspsA:[],cuspsB:[]};
 
   const norm=value=>((Number(value)%360)+360)%360;
   const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
-  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
   function read(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_){return null}}
   function source(payload){
     if(!payload||typeof payload!=='object')return[];
@@ -56,6 +56,24 @@
       ASPECTS.forEach(aspect=>{const relation=HARMONIC?.relation?.(left,right,aspect,distance,windowValue);if(relation)result.push(relation)})
     }));
     return result.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.orb-b.orb);
+  }
+  function relationshipSignature(relations){
+    return relations.map(relation=>[
+      relation.left.id,relation.aspect.id,relation.right.id,relation.orb.toFixed(6),
+      relation.harmonicOrder,relation.harmonicNumerator,relation.phaseError.toFixed(6),
+      relation.signedPhaseError.toFixed(6),relation.masterWindow.toFixed(6),
+      Number.isFinite(relation.windowFraction)?relation.windowFraction.toFixed(6):String(relation.windowFraction),
+      relation.coherence.toFixed(8),relation.left.house,relation.right.house,relation.left.sign,relation.right.sign
+    ].join('|')).join(';');
+  }
+  function relationshipRowsIntact(relations){
+    const list=document.getElementById('skyFoundationRelationshipList');if(!list)return false;
+    const rows=Array.from(list.children).filter(node=>node.classList?.contains('sky-foundation-relationship-row'));
+    if(rows.length!==relations.length)return false;
+    return rows.every((row,index)=>{
+      const relation=relations[index];
+      return row.dataset.leftPlacement===relation.left.id&&row.dataset.aspect===relation.aspect.id&&row.dataset.rightPlacement===relation.right.id&&Number(row.dataset.sourceOrb).toFixed(6)===relation.orb.toFixed(6)&&Number(row.dataset.leftHouse)===relation.left.house&&Number(row.dataset.rightHouse)===relation.right.house;
+    });
   }
   function coordinate(record){
     const item=record.item||{},explicitSign=SIGNS.indexOf(String(item.sign||item.zodiac||'').trim().toLowerCase()),explicitDegree=Number(item.degree??item.degrees),explicitMinute=Number(item.minute??item.minutes);
@@ -160,8 +178,10 @@
   }
   async function refresh(){
     refreshQueued=false;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
-    const preparedA=prepare(read(KEYS.A),'A'),preparedB=prepare(read(KEYS.B),'B'),relations=relationships(preparedA.list,preparedB.list);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
-    annotateHouseLayer('a-houses','A');annotateHouseLayer('b-houses','B');annotateSigns();annotatePlacements(current.listA,current.listB);annotateAspects(relations);annotateLedger('A',current.listA);annotateLedger('B',current.listB);await renderRows(relations);bind();applyState();window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
+    const preparedA=prepare(read(KEYS.A),'A'),preparedB=prepare(read(KEYS.B),'B'),relations=relationships(preparedA.list,preparedB.list),nextSignature=relationshipSignature(relations);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
+    annotateHouseLayer('a-houses','A');annotateHouseLayer('b-houses','B');annotateSigns();annotatePlacements(current.listA,current.listB);annotateAspects(relations);annotateLedger('A',current.listA);annotateLedger('B',current.listB);
+    if(renderedRelationshipSignature!==nextSignature||!relationshipRowsIntact(relations)){await renderRows(relations);renderedRelationshipSignature=nextSignature}
+    bind();applyState();window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
   }
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
   function start(){window.addEventListener('relphi:sky-foundation-ready',schedule);window.addEventListener('relphi:sky-orb-limit-changed',schedule);if(document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false')schedule()}
