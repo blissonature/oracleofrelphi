@@ -35,9 +35,10 @@ function stripMarkup(row){return `<div class="inline-rel-progressive-strip" aria
 function coordinateText(small){const stored=String(small?.dataset?.relationshipCoordinate||'').trim();if(stored)return stored;const match=String(small?.textContent||'').match(/\d{1,2}°\d{2}′/);return match?.[0]||String(small?.textContent||'').split('·')[0].trim()}
 function decorateTopHouseTrigger(row,side){
   const group=row.querySelector(`.sky-foundation-relationship-placement--${side}`),small=group?.querySelector('.sky-foundation-relationship-copy small'),house=houseNumber(row,side);if(!small||!house)return;
-  const field=`${side}-house`;if(small.querySelector(`[data-inline-progressive-glyph="${field}"]`))return;
-  const coordinate=coordinateText(small);small.dataset.relationshipCoordinate=coordinate;small.replaceChildren(document.createTextNode(coordinate+' · '));
-  const trigger=document.createElement('span');trigger.className='inline-rel-house-trigger';trigger.dataset.inlineProgressiveGlyph=field;trigger.setAttribute('title',`Reveal ${HOUSE_NAMES[house]}`);trigger.textContent=`H${house}`;small.appendChild(trigger);
+  const field=`${side}-house`,coordinate=coordinateText(small),helper=window.RelphiHouseMedallion;
+  if(helper?.decorateCoordinate){helper.decorateCoordinate(small,coordinate,house,field,true);return}
+  small.dataset.relationshipCoordinate=coordinate;small.replaceChildren(document.createTextNode(coordinate));
+  const trigger=document.createElement('span');trigger.className='relphi-house-medallion';trigger.dataset.house=String(house);trigger.dataset.inlineProgressiveGlyph=field;trigger.setAttribute('aria-label',HOUSE_NAMES[house]);trigger.setAttribute('title',`Reveal ${HOUSE_NAMES[house]}`);trigger.textContent=String(house);small.appendChild(trigger);
 }
 function ensureStrip(row){
   if(!row?.classList.contains('is-inline-expanded'))return null;
@@ -72,7 +73,6 @@ function installStyles(){
     .inline-rel-progressive-token[hidden],.inline-rel-progressive-level[hidden]{display:none!important}
     .inline-rel-progressive-level{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center}
     .inline-rel-progressive-name{font-size:.6rem;font-weight:900;line-height:1.15}.inline-rel-progressive-referent{font-size:.55rem;font-weight:680;line-height:1.28;color:#625a53;white-space:normal;overflow-wrap:anywhere}
-    .inline-rel-house-trigger{display:inline-block;padding:0 3px;border-radius:4px;font-weight:900;cursor:pointer;color:inherit}.inline-rel-house-trigger:hover{background:rgba(45,39,34,.08)}
     @media(max-width:620px){.inline-rel-progressive-strip{grid-template-columns:minmax(0,1fr) minmax(68px,.64fr) minmax(0,1fr);gap:4px}.inline-rel-progressive-side{gap:3px}.inline-rel-progressive-token{padding:3px}.inline-rel-progressive-name{font-size:.54rem}.inline-rel-progressive-referent{font-size:.49rem}}
   `;document.head.appendChild(style);
 }
