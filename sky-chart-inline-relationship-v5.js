@@ -30,14 +30,15 @@ function relation(row){const l=find('A',row.dataset.leftPlacement,row),r=find('B
 function card(rec){const v=norm(rec.value),s=Math.floor(v/30),d=Math.floor(v-s*30),[id,title]=DECANS[s][Math.min(2,Math.floor(d/10))];return{id,title,image:`assets/tarot/rws/${id}.webp?v=border-preserving-crop-352`}}
 function point(v,r=48){const a=(norm(v)-180)*Math.PI/180;return{x:60+r*Math.cos(a),y:60+r*Math.sin(a)}}
 function position(rec){const v=norm(rec.value),si=Math.floor(v/30),within=v-si*30,d=Math.floor(within),m=Math.floor((within-d)*60+1e-7);return{sign:SIGNS[si],degree:d,minute:m,label:`${d}°${String(m).padStart(2,'0')}′`}}
+function tarotHref(cardId){const params=new URLSearchParams();params.set('card',cardId);const ref=new URLSearchParams(location.search).get('ref');if(ref)params.set('ref',ref);return`tarot.html?${params.toString()}`}
 
 function wheelMarkup(rel){
   const a=point(rel.left.value),b=point(rel.right.value);
   return `<div class="inline-rel-wheel"><div class="inline-rel-wheel-stage"><svg viewBox="0 0 120 120" aria-label="Isolated relationship"><circle cx="60" cy="60" r="48" class="inline-rel-ring"/><line x1="60" y1="60" x2="${a.x}" y2="${a.y}" class="inline-rel-radius a"/><line x1="60" y1="60" x2="${b.x}" y2="${b.y}" class="inline-rel-radius b"/><line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="inline-rel-aspect"/><g class="inline-rel-point-layer" aria-hidden="true"><circle cx="${a.x}" cy="${a.y}" r="5.4" class="inline-rel-point inline-rel-point-a"/><circle cx="${b.x}" cy="${b.y}" r="5.4" class="inline-rel-point inline-rel-point-b"/></g></svg></div><div class="inline-rel-orb"><span style="--orb:${Math.min(1,rel.orb)}"></span><strong>${rel.orb.toFixed(2)}°</strong></div></div>`;
 }
 function cardMarkup(slot,c){
-  const href=`tarot.html?card=${encodeURIComponent(c.id)}`;
-  return `<a class="inline-rel-card sky-${slot.toLowerCase()}" data-inline-card-link="${esc(c.id)}" href="${esc(href)}" aria-label="Open full ${esc(c.title)} Tarot Ledger entry"><small>Sky ${slot}</small><img loading="lazy" decoding="async" src="${esc(c.image)}" alt="${esc(c.title)}"><b>${esc(c.title)}</b></a>`;
+  const href=tarotHref(c.id);
+  return `<a class="inline-rel-card sky-${slot.toLowerCase()}" data-inline-card-link="${esc(c.id)}" href="${esc(href)}" style="text-decoration:none" aria-label="Open full ${esc(c.title)} Tarot Ledger entry"><small>Sky ${slot}</small><img loading="lazy" decoding="async" src="${esc(c.image)}" alt="${esc(c.title)}"><b>${esc(c.title)}</b></a>`;
 }
 
 function contextMarkup(rel){
@@ -94,7 +95,7 @@ function open(row){
 
 document.addEventListener('click',e=>{
   const cardLink=e.target.closest('[data-inline-card-link]');
-  if(cardLink)return;
+  if(cardLink){e.preventDefault();e.stopImmediatePropagation();location.assign(cardLink.href);return}
   const topGlyph=e.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right');
   const revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');
   if(revealRow){const field=topGlyph.dataset.inlineTopReveal||fieldFromTopGlyph(topGlyph);if(field){e.preventDefault();e.stopImmediatePropagation();cycleReveal(revealRow,field);return}}
