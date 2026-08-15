@@ -18,6 +18,18 @@
     return script;
   }
 
+  function isTarotPreviewDocument() {
+    return window.__relphiTarotPreviewDocument === true && new URLSearchParams(location.search).get('view') === 'tarot';
+  }
+
+  function isTarotContext() {
+    return /(^|\/)tarot\.html$/.test(location.pathname) || isTarotPreviewDocument();
+  }
+
+  function isSkyChartContext() {
+    return /(^|\/)sky-chart\.html$/.test(location.pathname) && !isTarotPreviewDocument();
+  }
+
   function initAnalytics() {
     const id = 'G-PNWZP2MW64';
     if (!/(^|\.)oracleofrelphi\.com$/i.test(location.hostname) || document.getElementById('relphi-google-tag')) return;
@@ -129,7 +141,7 @@
   }
 
   function loadEnhancements() {
-    if (/(^|\/)tarot\.html$/.test(location.pathname)) {
+    if (isTarotContext()) {
       loadCanonicalGlyphRuntime();
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
       appendScript('drawing-board-workflow-v2.js?v=24');
@@ -155,10 +167,10 @@
     if (/(^|\/)(mythic-atlas|constellations)\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () { appendScript('relphi-inline-glyph-consumer-v1.js?v=2'); });
     }
-    if (/(^|\/)sky-chart\.html$/.test(location.pathname) && document.getElementById('skyFoundationRoot')) {
+    if (isSkyChartContext() && document.getElementById('skyFoundationRoot')) {
       appendScript('sky-chart-page-stability-v1.js?v=1');
     }
-    if (/(^|\/)sky-chart\.html$/.test(location.pathname) && !document.getElementById('skyFoundationRoot')) {
+    if (isSkyChartContext() && !document.getElementById('skyFoundationRoot')) {
       const preview = new URLSearchParams(location.search).get('preview');
       ['sky-chart-stability-hotfix.js?v=1','sky-chart-static-dynamic.js?v=2','sky-chart-aspect-duration-fix.js?v=2','sky-chart-relationship-language.js?v=5','sky-chart-related-relationships-v2.js?v=2','sky-chart-sign-cusps-v1.js?v=1','sky-chart-provenance-fix.js?v=1','sky-chart-calculated-points-v1.js?v=4'].forEach(function (src) { appendScript(src); });
       loadCanonicalGlyphRuntime();
@@ -169,6 +181,7 @@
   }
 
   function start() {
+    if (window.__relphiTarotPreviewPending && !window.__relphiTarotPreviewDocument) return;
     initAnalytics();
     ensureNavStyles();
     loadEnhancements();
