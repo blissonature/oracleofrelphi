@@ -1,0 +1,146 @@
+// Sky Chart export v2: contextual wheel PNGs and formatted relationship-view PNGs.
+(function(){
+  'use strict';
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyExportV2)return;
+  window.__relphiSkyExportV2=true;
+
+  const LIB_URL='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
+  const WHEEL_ID='skyChartWheelExport';
+  const REL_ID='skyChartRelationshipsExport';
+  const STATUS_ID='skyChartExportStatus';
+  const ICON='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v11m0 0-4-4m4 4 4-4M5 15v4h14v-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  let libraryPromise=null,preparing=false,pendingIOS=null;
+
+  const isIOS=()=>/iPad|iPhone|iPod/i.test(String(navigator.userAgent||''))||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+  function read(slot){try{return JSON.parse(localStorage.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}}
+  function safeName(value,fallback){return String(value||fallback).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48)||fallback}
+  function skyName(slot){const value=read(slot)||{},m=value.metadata&&typeof value.metadata==='object'?value.metadata:{};return m.savedSkyName||value.name||value.displayName||value.skyName||value.title||`Sky ${slot}`}
+  function stamp(){return new Date().toISOString().replace(/[-:]/g,'').replace(/T(\d{4}).*/, '-$1')}
+  function filename(kind){return `${safeName(skyName('A'),'sky-a')}-vs-${safeName(skyName('B'),'sky-b')}-${kind}-${stamp()}.png`}
+
+  function loadLibrary(){
+    if(window.htmlToImage?.toPng)return Promise.resolve(window.htmlToImage);
+    if(libraryPromise)return libraryPromise;
+    libraryPromise=new Promise((resolve,reject)=>{
+      const existing=document.querySelector(`script[src="${LIB_URL}"]`);
+      if(existing){
+        if(window.htmlToImage?.toPng)return resolve(window.htmlToImage);
+        existing.addEventListener('load',()=>window.htmlToImage?.toPng?resolve(window.htmlToImage):reject(new Error('PNG exporter unavailable.')),{once:true});
+        existing.addEventListener('error',()=>reject(new Error('PNG exporter did not load.')),{once:true});
+        return;
+      }
+      const script=document.createElement('script');script.src=LIB_URL;script.async=true;script.crossOrigin='anonymous';
+      script.addEventListener('load',()=>window.htmlToImage?.toPng?resolve(window.htmlToImage):reject(new Error('PNG exporter unavailable.')),{once:true});
+      script.addEventListener('error',()=>reject(new Error('PNG exporter did not load.')),{once:true});document.head.appendChild(script);
+    });
+    return libraryPromise;
+  }
+  function prewarm(){const warm=()=>loadLibrary().catch(()=>{});if('requestIdleCallback'in window)requestIdleCallback(warm,{timeout:2500});else setTimeout(warm,800)}
+
+  function status(text,error=false){const node=document.getElementById(STATUS_ID);if(!node)return;node.textContent=text||'';node.dataset.error=error?'true':'false'}
+  function facts(slot){
+    const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');
+    const lines=[...panel?.querySelectorAll('.sky-where-when-facts p')||[]].map(node=>node.textContent.trim());
+    const profile=read(slot)?.calcProfile||{};
+    const where=(lines.find(line=>/^Where:/i.test(line))||'').replace(/^Where:\s*/i,'')||profile.location||'';
+    const when=(lines.find(line=>/^When:/i.test(line))||'').replace(/^When:\s*/i,'')||profile.dateTime||'';
+    return{name:skyName(slot),where,when};
+  }
+
+  function cleanLabel(label){return String(label||'').replace(/\s+/g,' ').trim()}
+  function selectCaption(select){
+    const data=String(select.dataset.filter||select.dataset.zodiacFilter||select.name||'').toLowerCase();
+    if(data.includes('aspect'))return'Aspects';if(data.includes('zodiac')||data.includes('sign'))return'Zodiac signs';if(data.includes('house'))return'Houses';
+    const label=select.closest('label');if(!label)return'';
+    const clone=label.cloneNode(true);clone.querySelectorAll('select,input,button').forEach(node=>node.remove());return cleanLabel(clone.textContent);
+  }
+  function filterSummary(){
+    const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
+    if(!bar)return'';
+    const parts=[];
+    const harmonic=bar.querySelector('[data-harmonic-window-input]');if(harmonic?.value.trim())parts.push(`Harmonic window ${harmonic.value.trim()}°`);
+    const custom=[['[data-placement-filter-summary]','Placements'],['[data-house-filter-summary]','Houses'],['[data-aspect-filter-summary]','Aspects']];
+    custom.forEach(([selector,label])=>{const text=cleanLabel(bar.querySelector(selector)?.textContent);if(text&&text!=='All')parts.push(`${label}: ${text}`)});
+    [...bar.querySelectorAll('select')].forEach(select=>{const text=cleanLabel(select.selectedOptions?.[0]?.textContent||select.value);if(!text||/^all$/i.test(text)||/^none$/i.test(text))return;const caption=selectCaption(select)||'Filter';const item=`${caption}: ${text}`;if(!parts.includes(item))parts.push(item)});
+    return parts.join(' · ');
+  }
+
+  function infoBox(info,side){
+    const box=document.createElement('div');box.className=`sky-export-info sky-export-info-${side}`;
+    box.innerHTML=`<strong>${esc(info.name)}</strong>${info.where?`<span>${esc(info.where)}</span>`:''}${info.when?`<span>${esc(info.when)}</span>`:''}`;
+    return box;
+  }
+  function exportHost(width,height){
+    const host=document.createElement('div');host.className='sky-export-host';
+    Object.assign(host.style,{position:'fixed',left:'-100000px',top:'0',width:`${width}px`,height:`${height}px`,background:'#fffdf8',overflow:'hidden',zIndex:'-1'});document.body.appendChild(host);return host;
+  }
+  function buildWheelStage(){
+    const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');if(!wheel)throw new Error('The comparison wheel is not ready.');
+    const box=wheel.viewBox?.baseVal,width=Math.max(1,Math.ceil(box?.width||1200)),height=Math.max(1,Math.ceil(box?.height||1200));
+    const host=exportHost(width,height),stage=document.createElement('div');stage.className='sky-wheel-export-stage';stage.style.width=`${width}px`;stage.style.height=`${height}px`;
+    const clone=wheel.cloneNode(true);clone.removeAttribute('style');Object.assign(clone.style,{display:'block',width:'100%',height:'100%',maxHeight:'none',overflow:'visible'});stage.appendChild(clone);
+    stage.append(infoBox(facts('A'),'a'),infoBox(facts('B'),'b'));
+    const summary=filterSummary();if(summary){const line=document.createElement('div');line.className='sky-export-filter-summary';line.textContent=`Showing only: ${summary}`;stage.appendChild(line)}
+    host.appendChild(stage);return{host,stage,width,height};
+  }
+  function rowVisible(row){const style=getComputedStyle(row);return!row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}
+  function buildRelationshipStage(){
+    const source=document.getElementById('skyFoundationRelationships'),list=document.getElementById('skyFoundationRelationshipList');if(!source||!list)throw new Error('The relationship list is not ready.');
+    const width=Math.max(620,Math.min(900,Math.ceil(source.getBoundingClientRect().width||760))),listHeight=Math.max(180,Math.ceil(list.getBoundingClientRect().height||390));
+    const host=exportHost(width,2000),stage=document.createElement('div');stage.className='sky-relationships-export-stage';stage.style.width=`${width}px`;
+    const head=document.createElement('div');head.className='sky-relationships-export-head';head.innerHTML=`<strong>Relationships</strong><span>${esc(document.getElementById('skyFoundationRelationshipCount')?.textContent||'')}</span>`;stage.appendChild(head);
+    const summary=filterSummary();if(summary){const line=document.createElement('div');line.className='sky-relationships-export-summary';line.textContent=`Showing only: ${summary}`;stage.appendChild(line)}
+    const frame=document.createElement('div');frame.className='sky-relationships-export-frame';frame.style.height=`${listHeight}px`;
+    const grid=document.createElement('div');grid.className='sky-relationships-export-grid';
+    const listRect=list.getBoundingClientRect();[...list.querySelectorAll('.sky-foundation-relationship-row')].forEach(row=>{if(!rowVisible(row))return;const rect=row.getBoundingClientRect();if(rect.bottom<listRect.top||rect.top>listRect.bottom)return;grid.appendChild(row.cloneNode(true))});
+    frame.appendChild(grid);stage.appendChild(frame);host.style.height='auto';host.style.overflow='visible';host.appendChild(stage);return{host,stage,width,height:Math.ceil(stage.scrollHeight||600)};
+  }
+
+  async function nodeToFile(stage,width,height,name){
+    if(document.fonts?.ready)await document.fonts.ready.catch(()=>{});const htmlToImage=await loadLibrary(),pixelRatio=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+    const dataUrl=await htmlToImage.toPng(stage,{cacheBust:false,backgroundColor:'#fffdf8',width,height,pixelRatio,canvasWidth:Math.ceil(width*pixelRatio),canvasHeight:Math.ceil(height*pixelRatio),skipAutoScale:true,includeQueryParams:false});
+    const response=await fetch(dataUrl),blob=await response.blob();return new File([blob],name,{type:'image/png',lastModified:Date.now()});
+  }
+  function download(file){const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+  async function shareIOS(file){if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:'Sky Chart snapshot'});return}const url=URL.createObjectURL(file);window.open(url,'_blank','noopener')||location.assign(url)}
+
+  async function exportKind(kind,button){
+    if(preparing)return;
+    if(isIOS()&&pendingIOS?.kind===kind){try{await shareIOS(pendingIOS.file);status('Snapshot sent to the share sheet.')}catch(error){if(error?.name!=='AbortError')status('Unable to open the share sheet.',true)}return}
+    preparing=true;button.disabled=true;button.setAttribute('aria-busy','true');status(kind==='wheel'?'Preparing wheel PNG…':'Preparing Relationships PNG…');
+    let built=null;
+    try{
+      if(kind==='wheel'){window.RelphiPlacementCollisionOrder?.arrangeCurrent?.();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));built=buildWheelStage()}
+      else built=buildRelationshipStage();
+      await new Promise(resolve=>requestAnimationFrame(resolve));built.height=Math.max(1,Math.ceil(built.stage.scrollHeight||built.height));built.host.style.height=`${built.height}px`;
+      const file=await nodeToFile(built.stage,built.width,built.height,filename(kind==='wheel'?'wheel':'relationships'));
+      if(isIOS()){pendingIOS={kind,file};button.dataset.exportReady='true';status('PNG ready — tap the download icon again to share.')}else{download(file);status('PNG download started.')}
+    }catch(error){console.error('Sky Chart export failed:',error);status(`Export failed: ${String(error?.message||error).replace(/\s+/g,' ').slice(0,140)}`,true)}
+    finally{built?.host?.remove();preparing=false;if(button?.isConnected){button.disabled=false;button.removeAttribute('aria-busy')}}
+  }
+
+  function installStyles(){if(document.getElementById('skyChartExportV2Styles'))return;const style=document.createElement('style');style.id='skyChartExportV2Styles';style.textContent=`
+    .sky-export-icon-button{appearance:none;display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#2d2824;cursor:pointer}.sky-export-icon-button svg{width:17px;height:17px}.sky-export-icon-button:hover,.sky-export-icon-button:focus-visible{outline:none;border-color:#2462d0;box-shadow:0 0 0 2px rgba(36,98,208,.12)}.sky-export-icon-button:disabled{opacity:.5}.sky-export-icon-button[data-export-ready="true"]{border-color:#2462d0;color:#2462d0}
+    #skyFoundationComparison>.sky-foundation-heading{flex-wrap:wrap}#skyFoundationComparison .sky-export-wheel-slot{display:flex;align-items:center;justify-content:flex-end;margin-left:auto}.sky-relationship-heading-actions{display:flex;align-items:center;gap:6px}.sky-relationship-heading-actions button{margin:0}
+    #${STATUS_ID}{flex:1 0 100%;color:#665e57;text-align:right;font:650 .58rem/1.2 system-ui,sans-serif}#${STATUS_ID}:empty{display:none}#${STATUS_ID}[data-error="true"]{color:#b81712}
+    .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>svg{position:absolute;inset:0}.sky-export-info{position:absolute;top:28px;z-index:3;width:300px;display:grid;gap:5px;padding:12px 14px;border-radius:12px;background:rgba(255,253,248,.90);box-shadow:0 1px 8px rgba(31,27,24,.08);font-size:15px;line-height:1.28}.sky-export-info strong{font-size:19px}.sky-export-info span{color:#5d554e}.sky-export-info-a{left:28px;border-left:5px solid #c9211e}.sky-export-info-b{right:28px;text-align:right;border-right:5px solid #2462d0}.sky-export-filter-summary{position:absolute;left:50%;bottom:24px;z-index:3;transform:translateX(-50%);max-width:82%;padding:8px 14px;border-radius:999px;background:rgba(255,253,248,.92);box-shadow:0 1px 7px rgba(31,27,24,.08);font:750 14px/1.25 system-ui,sans-serif;text-align:center;color:#554e48}
+    .sky-relationships-export-stage{box-sizing:border-box;padding:16px;border:1px solid rgba(31,27,24,.13);border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-relationships-export-head{display:flex;align-items:center;justify-content:space-between;padding:0 2px 10px;font-size:16px}.sky-relationships-export-head>span{padding:5px 9px;border-radius:999px;background:#f0ebe4;font-size:12px;font-weight:800}.sky-relationships-export-summary{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#f6f0e8;color:#5d554e;font-size:12px;font-weight:700}.sky-relationships-export-frame{overflow:hidden}.sky-relationships-export-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.sky-relationships-export-grid>.sky-foundation-relationship-row{margin:0!important}
+  `;document.head.appendChild(style)}
+
+  function button(id,label){const b=document.createElement('button');b.type='button';b.id=id;b.className='sky-export-icon-button';b.innerHTML=ICON;b.setAttribute('aria-label',label);b.title=label;return b}
+  function ensureWheelControl(){
+    const heading=document.querySelector('#skyFoundationComparison>.sky-foundation-heading');if(!heading)return;
+    heading.querySelector('.sky-snapshot-actions')?.remove();heading.querySelector(`#${STATUS_ID}`)?.remove();
+    let slot=heading.querySelector('.sky-export-wheel-slot');if(!slot){slot=document.createElement('span');slot.className='sky-export-wheel-slot';const b=button(WHEEL_ID,'Download wheel snapshot');b.addEventListener('click',()=>exportKind('wheel',b));slot.appendChild(b);heading.appendChild(slot);const s=document.createElement('span');s.id=STATUS_ID;s.setAttribute('role','status');s.setAttribute('aria-live','polite');heading.appendChild(s)}
+  }
+  function ensureRelationshipControl(){
+    const heading=document.querySelector('#skyFoundationRelationships>.sky-foundation-relationships-heading');if(!heading)return;
+    let actions=heading.querySelector('.sky-relationship-heading-actions');if(!actions){actions=document.createElement('span');actions.className='sky-relationship-heading-actions';const copy=[...heading.querySelectorAll('button')].find(b=>/^copy$/i.test(b.textContent.trim()));if(copy){heading.insertBefore(actions,copy);actions.appendChild(copy)}else heading.appendChild(actions)}
+    if(!actions.querySelector(`#${REL_ID}`)){const b=button(REL_ID,'Download Relationships snapshot');b.addEventListener('click',()=>exportKind('relationships',b));actions.appendChild(b)}
+  }
+  function invalidate(){pendingIOS=null;document.querySelectorAll('.sky-export-icon-button[data-export-ready]').forEach(b=>delete b.dataset.exportReady)}
+  function ensure(){installStyles();ensureWheelControl();ensureRelationshipControl()}
+  function start(){ensure();prewarm();new MutationObserver(ensure).observe(document.getElementById('skyFoundationComparison')||document.body,{childList:true,subtree:true});['relphi:sky-foundation-ready','relphi:sky-orb-limit-changed','relphi:sky-harmonic-window-visibility-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed'].forEach(name=>window.addEventListener(name,()=>{invalidate();ensure()}));window.addEventListener('storage',invalidate)}
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
+})();
