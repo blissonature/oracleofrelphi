@@ -9,6 +9,7 @@
   const QUIET_MS=90;
   const REPLAY='motionPriorityReplay';
   let lastPointerMove=0;
+  let pointerInside=false;
   let pendingDetail=null;
   let timer=0;
 
@@ -32,7 +33,9 @@
   }
 
   function markMotion(event){
-    if(overWheel(event))lastPointerMove=performance.now();
+    if(!overWheel(event))return;
+    pointerInside=true;
+    lastPointerMove=performance.now();
   }
 
   function scheduleFlush(){
@@ -43,6 +46,9 @@
   function flush(){
     timer=0;
     if(!pendingDetail)return;
+    // A hover state is valid only while the pointer is still physically over the wheel.
+    // Never replay a state that survived longer than the pointer itself.
+    if(!pointerInside){pendingDetail=null;return}
     const quietFor=performance.now()-lastPointerMove;
     if(quietFor<QUIET_MS){
       timer=setTimeout(flush,Math.max(8,QUIET_MS-quietFor));
@@ -53,10 +59,20 @@
     window.dispatchEvent(new CustomEvent(EVENT,{detail}));
   }
 
+  function clearPending(){
+    clearTimeout(timer);timer=0;pendingDetail=null;
+  }
+
   function intercept(event){
     const detail=event.detail||{};
     if(detail[REPLAY])return;
-    if(detail.state?.mode!=='hover')return;
+    const mode=detail.state?.mode;
+    if(mode!=='hover'){
+      // A clear or selected state supersedes every deferred hover. Without this,
+      // an older hover can replay after the clear and strand highlighted rows.
+      clearPending();
+      return;
+    }
     // This listener is installed before the downstream list/filter controllers. Stop
     // the per-hover broadcast here, remember only the newest state, and replay it once
     // the pointer is quiet. The wheel has already painted from the fast-path cache.
@@ -65,17 +81,30 @@
     scheduleFlush();
   }
 
-  function clearPending(){
-    clearTimeout(timer);timer=0;pendingDetail=null;
+  function leaveWheel(event){
+    if(!overWheel(event))return;
+    const related=event.relatedTarget instanceof Element?event.relatedTarget:null;
+    if(related?.closest('#skyFoundationWheelMount'))return;
+    pointerInside=false;
+    clearPending();
+  }
+
+  function cancelPointer(){
+    pointerInside=false;
+    clearPending();
   }
 
   function start(){
     installImmediatePaintStyle();
+    document.addEventListener('pointerover',markMotion,true);
     document.addEventListener('pointermove',markMotion,true);
+    document.addEventListener('pointerout',leaveWheel,true);
+    document.addEventListener('pointercancel',cancelPointer,true);
+    window.addEventListener('blur',cancelPointer);
     window.addEventListener(EVENT,intercept);
     window.addEventListener('relphi:sky-foundation-ready',clearPending);
     window.addEventListener('storage',clearPending);
-    window.addEventListener('pagehide',clearPending);
+    window.addEventListener('pagehide',cancelPointer);
   }
 
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
