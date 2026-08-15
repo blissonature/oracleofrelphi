@@ -1,12 +1,15 @@
-// Tarot Ledger card deep link v3: wait for the real Ledger browse UI, then open ?card=<card_id>.
+// Tarot Ledger card deep link v4: wait for the real Ledger browse UI, then open ?card=<card_id>.
 (function(){
 'use strict';
-if(!/(^|\/)tarot\.html$/.test(location.pathname)||window.__relphiTarotCardDeepLinkV3)return;
+const params=new URLSearchParams(location.search);
+const tarotContext=/(^|\/)tarot\.html$/.test(location.pathname)||(window.__relphiTarotPreviewDocument===true&&params.get('view')==='tarot');
+if(!tarotContext||window.__relphiTarotCardDeepLinkV4)return;
+window.__relphiTarotCardDeepLinkV4=true;
 window.__relphiTarotCardDeepLinkV3=true;
 window.__relphiTarotCardDeepLinkV2=true;
 window.__relphiTarotCardDeepLinkV1=true;
 
-const CARD_ID=String(new URLSearchParams(location.search).get('card')||'').trim();
+const CARD_ID=String(params.get('card')||'').trim();
 let attempts=0,opened=false,timer=0;
 const MAX_ATTEMPTS=100;
 
