@@ -27,7 +27,7 @@ function lon(x){if(Number.isFinite(Number(x?.longitude)))return norm(x.longitude
 function canonical(k,x){const r=window.RelphiGlyphRegistry;for(const c of [x?.glyphId,x?.id,x?.name,x?.label,x?.body,x?.planet,x?.point,k]){if(!c)continue;const raw=String(c).trim(),e=r?.resolve?.(ALIAS[raw.toLowerCase()]||raw)||r?.get?.(ALIAS[raw.toLowerCase()]||raw);if(e)return e}return null}
 function find(slot,id,row){for(const[k,x]of source(read(KEYS[slot]))){if(!x||typeof x!=='object'||Array.isArray(x))continue;const e=canonical(k,x),v=lon(x);if(e?.id===id&&Number.isFinite(v)){const h=Number(row.dataset[slot==='A'?'leftHouse':'rightHouse']);return{id:e.id,entry:e,value:v,sky:slot,house:Number.isFinite(h)&&h>0?h:null}}}return null}
 function relation(row){const l=find('A',row.dataset.leftPlacement,row),r=find('B',row.dataset.rightPlacement,row);if(!l||!r)return null;return{left:l,right:r,aspect:String(row.dataset.aspect||''),orb:Number(row.dataset.sourceOrb||0)}}
-function card(rec){const v=norm(rec.value),s=Math.floor(v/30),d=Math.floor(v-s*30),[id,title]=DECANS[s][Math.min(2,Math.floor(d/10))];return{id,title,image:`assets/tarot/rws/${id}.webp?v=border-preserving-crop-352`}}
+function card(rec){const v=norm(rec.value),s=Math.floor(v/30),d=Math.floor(v-s*30),[id,title]=DECANS[s][Math.min(2,Math.floor(d/10))];return{id,title,image:`assets/tarot/rws-export/${id}.webp`}}
 function point(v,r=48){const a=(norm(v)-180)*Math.PI/180;return{x:60+r*Math.cos(a),y:60+r*Math.sin(a)}}
 function position(rec){const v=norm(rec.value),si=Math.floor(v/30),within=v-si*30,d=Math.floor(within),m=Math.floor((within-d)*60+1e-7);return{sign:SIGNS[si],degree:d,minute:m,label:`${d}°${String(m).padStart(2,'0')}′`}}
 
@@ -35,7 +35,7 @@ function wheelMarkup(rel){
   const a=point(rel.left.value),b=point(rel.right.value);
   return `<div class="inline-rel-wheel"><div class="inline-rel-wheel-stage"><svg viewBox="0 0 120 120" aria-label="Isolated relationship"><circle cx="60" cy="60" r="48" class="inline-rel-ring"/><line x1="60" y1="60" x2="${a.x}" y2="${a.y}" class="inline-rel-radius a"/><line x1="60" y1="60" x2="${b.x}" y2="${b.y}" class="inline-rel-radius b"/><line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="inline-rel-aspect"/><g class="inline-rel-point-layer" aria-hidden="true"><circle cx="${a.x}" cy="${a.y}" r="5.4" class="inline-rel-point inline-rel-point-a"/><circle cx="${b.x}" cy="${b.y}" r="5.4" class="inline-rel-point inline-rel-point-b"/></g></svg></div><div class="inline-rel-orb"><span style="--orb:${Math.min(1,rel.orb)}"></span><strong>${rel.orb.toFixed(2)}°</strong></div></div>`;
 }
-function cardMarkup(slot,c){return `<button type="button" class="inline-rel-card sky-${slot.toLowerCase()}" data-inline-ledger="${esc(c.id)}" aria-label="Open ${esc(c.title)} in Tarot Ledger"><small>Sky ${slot}</small><img loading="lazy" decoding="async" src="${esc(c.image)}" alt="${esc(c.title)}"><b>${esc(c.title)}</b></button>`}
+function cardMarkup(slot,c){return `<button type="button" class="inline-rel-card sky-${slot.toLowerCase()}" data-inline-ledger="${esc(c.id)}" aria-label="Open ${esc(c.title)} in Tarot Ledger"><small>Sky ${slot}</small><img loading="lazy" decoding="async" width="320" height="554" src="${esc(c.image)}" alt="${esc(c.title)}"><b>${esc(c.title)}</b></button>`}
 
 function contextMarkup(rel){
   const lp=position(rel.left),rp=position(rel.right);
