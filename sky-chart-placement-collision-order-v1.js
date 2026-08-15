@@ -1,74 +1,124 @@
-// Preserve circular placement order after collision spacing so leaders cannot cross.
+// Preserve circular placement order without ever assigning one placement another placement's position.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementCollisionOrderV1)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementCollisionOrderV2)return;
+  window.__relphiSkyPlacementCollisionOrderV2=true;
   window.__relphiSkyPlacementCollisionOrderV1=true;
 
   const C={x:600,y:600};
   const EXACT_RADIUS={A:414,B:323};
+  const LANES={A:[450,440,460],B:[287,299,283]};
+  const BUBBLE_RADIUS=17.2;
+  const CLEARANCE=6;
+  const STEP=.75;
+  const LIMIT=15;
+  const ORDER_EPS=.0001;
   const PLACEMENTS='[data-layer="placements"]';
   const LEADERS='[data-layer="leaders"]';
   let arranging=false;
 
   const num=value=>{const n=Number(value);return Number.isFinite(n)?n:NaN};
   const norm=value=>((Number(value)%360)+360)%360;
-  const separation=(a,b)=>Math.abs(((Number(a)-Number(b)+180)%360+360)%360-180);
-  const polar=(radius,degree)=>{const angle=(degree-180)*Math.PI/180;return{x:C.x+radius*Math.cos(angle),y:C.y+radius*Math.sin(angle)}};
+  const polar=(radius,degree)=>{const angle=(norm(degree)-180)*Math.PI/180;return{x:C.x+radius*Math.cos(angle),y:C.y+radius*Math.sin(angle)}};
 
   function ordinaryItems(wheel,slot){
-    const layer=wheel.querySelector(PLACEMENTS);
-    const leaderLayer=wheel.querySelector(LEADERS);
+    const layer=wheel.querySelector(PLACEMENTS),leaderLayer=wheel.querySelector(LEADERS);
     if(!layer||!leaderLayer)return[];
+    const leaders=Array.from(leaderLayer.querySelectorAll(`line[data-sky="${slot}"]`));
     return Array.from(layer.children).map((group,index)=>{
       if(!(group instanceof SVGGElement)||group.dataset.sky!==slot||group.dataset.angleAxis==='true')return null;
       const exact=num(group.dataset.exactLongitude),display=num(group.dataset.displayLongitude),lane=num(group.dataset.placementLane);
       if(![exact,display,lane].every(Number.isFinite))return null;
       const placement=String(group.dataset.placement||'');
-      const leader=Array.from(leaderLayer.querySelectorAll(`line[data-sky="${slot}"]`)).find(line=>line.dataset.placement===placement&&num(line.dataset.exactLongitude)===exact);
+      const leader=leaders.find(line=>line.dataset.placement===placement&&Math.abs(num(line.dataset.exactLongitude)-exact)<1e-6);
       if(!leader)return null;
-      return{group,leader,index,placement,exact:norm(exact),display:norm(display),lane};
+      return{group,leader,index,placement,exact:norm(exact),authoredDisplay:norm(display),authoredLane:lane};
     }).filter(Boolean);
   }
 
-  function bestRotation(exactOrder,positions){
-    if(!exactOrder.length)return 0;
-    let best=0,bestCost=Infinity;
-    for(let rotation=0;rotation<positions.length;rotation+=1){
-      let cost=0;
-      for(let index=0;index<exactOrder.length;index+=1){
-        const position=positions[(index+rotation)%positions.length];
-        const distance=separation(exactOrder[index].exact,position.display);
-        cost+=distance*distance;
-      }
-      if(cost<bestCost){bestCost=cost;best=rotation}
+  function circularOrder(items){
+    const sorted=items.slice().sort((a,b)=>a.exact-b.exact||a.index-b.index);
+    if(sorted.length<2)return sorted.map(item=>({...item,exactU:item.exact}));
+    let seam=0,largest=-1;
+    for(let index=0;index<sorted.length;index+=1){
+      const next=(index+1)%sorted.length;
+      const nextValue=sorted[next].exact+(next===0?360:0);
+      const gap=nextValue-sorted[index].exact;
+      if(gap>largest){largest=gap;seam=next}
     }
-    return best;
+    const ordered=[];let previous=-Infinity;
+    for(let offset=0;offset<sorted.length;offset+=1){
+      const item=sorted[(seam+offset)%sorted.length];
+      let exactU=item.exact;
+      while(exactU+ORDER_EPS<previous)exactU+=360;
+      ordered.push({...item,exactU});previous=exactU;
+    }
+    return ordered;
+  }
+
+  function candidate(lane,displayU,offset){
+    const point=polar(lane,displayU);
+    return{lane,displayU,display:norm(displayU),offset,point};
+  }
+  function collisionPenalty(option,placed){
+    let penalty=0;
+    for(const prior of placed){
+      const distance=Math.hypot(option.point.x-prior.point.x,option.point.y-prior.point.y);
+      const deficit=BUBBLE_RADIUS*2+CLEARANCE-distance;
+      if(deficit>0)penalty+=deficit*deficit;
+    }
+    return penalty;
+  }
+  function optionsFor(item){
+    const result=[],steps=Math.floor(LIMIT/STEP);
+    for(let step=0;step<=steps;step+=1){
+      const magnitude=step*STEP,offsets=step===0?[0]:[magnitude,-magnitude];
+      for(const offset of offsets)for(const lane of LANES[item.group.dataset.sky]||[item.authoredLane])result.push(candidate(lane,item.exactU+offset,offset));
+    }
+    return result;
+  }
+
+  function solve(slot,items){
+    const ordered=circularOrder(items),placed=[],result=[];
+    let firstDisplayU=NaN,previousDisplayU=-Infinity;
+    for(let index=0;index<ordered.length;index+=1){
+      const item=ordered[index],all=optionsFor(item);
+      const maxCircular=Number.isFinite(firstDisplayU)?firstDisplayU+360-ORDER_EPS:Infinity;
+      const orderSafe=all.filter(option=>option.displayU>previousDisplayU+ORDER_EPS&&option.displayU<maxCircular);
+      let chosen=orderSafe.find(option=>collisionPenalty(option,placed)===0);
+      let fallback=false;
+      if(!chosen){
+        fallback=true;
+        const pool=orderSafe.length?orderSafe:all;
+        chosen=pool.slice().sort((a,b)=>collisionPenalty(a,placed)-collisionPenalty(b,placed)||Math.abs(a.offset)-Math.abs(b.offset)||LANES[slot].indexOf(a.lane)-LANES[slot].indexOf(b.lane))[0];
+      }
+      if(!chosen)continue;
+      if(!Number.isFinite(firstDisplayU))firstDisplayU=chosen.displayU;
+      previousDisplayU=chosen.displayU;
+      placed.push(chosen);
+      result.push({item,position:chosen,fallback});
+    }
+    return result;
   }
 
   function setLeader(item,position,slot){
-    const displayPoint=polar(position.lane,position.display);
     const exactPoint=polar(EXACT_RADIUS[slot],item.exact);
-    // Foundation authors ordinary leaders as display -> exact. Keep that contract intact.
-    item.leader.setAttribute('x1',displayPoint.x.toFixed(2));
-    item.leader.setAttribute('y1',displayPoint.y.toFixed(2));
+    item.leader.setAttribute('x1',position.point.x.toFixed(2));
+    item.leader.setAttribute('y1',position.point.y.toFixed(2));
     item.leader.setAttribute('x2',exactPoint.x.toFixed(2));
     item.leader.setAttribute('y2',exactPoint.y.toFixed(2));
     item.leader.dataset.displayLongitude=position.display.toFixed(8);
   }
 
-  function assign(slot,items){
-    if(items.length<2)return;
-    const exactOrder=items.slice().sort((a,b)=>a.exact-b.exact||a.index-b.index);
-    const positions=items.map(item=>({display:item.display,lane:item.lane,source:item})).sort((a,b)=>a.display-b.display||a.lane-b.lane);
-    const rotation=bestRotation(exactOrder,positions);
-
-    exactOrder.forEach((item,index)=>{
-      const position=positions[(index+rotation)%positions.length];
-      const point=polar(position.lane,position.display);
-      item.group.setAttribute('transform',`translate(${point.x} ${point.y})`);
+  function apply(slot,items){
+    const solved=solve(slot,items);
+    solved.forEach(({item,position,fallback})=>{
+      item.group.setAttribute('transform',`translate(${position.point.x} ${position.point.y})`);
       item.group.dataset.displayLongitude=position.display.toFixed(8);
       item.group.dataset.placementLane=String(position.lane);
-      item.group.dataset.placementOrderCorrected=position.source===item?'false':'true';
+      item.group.dataset.placementOrderCorrected=(Math.abs(position.display-item.authoredDisplay)>1e-6||position.lane!==item.authoredLane)?'true':'false';
+      item.group.dataset.placementOrderFallback=fallback?'true':'false';
+      item.group.dataset.placementTangentialOffset=position.offset.toFixed(2);
       setLeader(item,position,slot);
     });
   }
@@ -98,11 +148,11 @@
       let crossings=0;
       for(const slot of ['A','B']){
         const items=ordinaryItems(wheel,slot);
-        assign(slot,items);
+        apply(slot,items);
         crossings+=crossingCount(items);
       }
       wheel.dataset.placementLeaderCrossings=String(crossings);
-      wheel.dataset.placementCollisionOrder='circular-order-preserved';
+      wheel.dataset.placementCollisionOrder='identity-preserving-circular-order';
     }finally{arranging=false}
   }
 
