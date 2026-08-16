@@ -12,6 +12,7 @@
   const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const SIGN_REFERENTS={Aries:'initiative, directness, courage, impulse, and beginning',Taurus:'embodiment, value, pleasure, endurance, and material continuity',Gemini:'language, exchange, curiosity, movement, and multiplicity',Cancer:'care, protection, memory, belonging, and attachment',Leo:'radiance, creativity, pride, loyalty, and recognition',Virgo:'discernment, service, refinement, repair, and usefulness',Libra:'relationship, balance, fairness, dialogue, and mutual recognition',Scorpio:'intensity, secrecy, survival, bonding, and emotional truth',Sagittarius:'meaning, faith, exploration, philosophy, and freedom',Capricorn:'structure, responsibility, endurance, mastery, and worldly form',Aquarius:'systems, reform, collective intelligence, detachment, and future orientation',Pisces:'surrender, imagination, compassion, permeability, and release'};
   const ORDER=['sun','moon','asc','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','north-node','south-node','chiron','lilith','part-of-fortune','vertex','mc','ic','dsc'];
+  const ANGLE_IDS=new Set(['asc','dsc','mc','ic']);
   const ALIASES={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','mean node':'north-node','south node':'south-node','black moon lilith':'lilith',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
   const PLACEMENT_REFERENTS={sun:'identity, vitality, and conscious purpose',moon:'feelings, instincts, memory, and emotional needs',mercury:'thought, perception, language, and communication',venus:'values, attraction, affection, pleasure, and relating',mars:'drive, assertion, desire, conflict, and action',jupiter:'growth, confidence, meaning, opportunity, and expansion',saturn:'structure, limits, responsibility, time, and commitment',uranus:'freedom, disruption, originality, awakening, and change',neptune:'imagination, sensitivity, surrender, ideals, and vision',pluto:'power, depth, compulsion, elimination, and transformation',chiron:'wounding, healing intelligence, and the capacity to guide healing',asc:'the way a person enters life and is immediately perceived',dsc:'the way a person meets partners and encounters the other',mc:'public direction, vocation, visibility, and the role a person grows toward',ic:'roots, home, private foundations, and inherited belonging','north-node':'growth through unfamiliar experience and developing capacity','south-node':'familiar patterns, inherited capacity, and the known path',lilith:'instinctive autonomy, refusal, exile, and uncompromised desire','part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',vertex:'encounters that feel consequential or outside ordinary control'};
   const ASPECT_REFERENTS={conjunction:'the two functions operate together','semi-sextile':'neighboring functions accommodate one another',octile:'focused friction and adjustment',sextile:'a cooperative opening activated through participation',quintile:'creative pattern-making and specialized skill',square:'activating pressure and development',trine:'low-resistance exchange','tri-octile':'accumulated friction and redirection','bi-quintile':'refined creative pattern-making',quincunx:'continuing adjustment and translation',opposition:'awareness through polarity, contrast, and exchange'};
@@ -78,7 +79,8 @@
   }
   function buildModel(){
     const preparedA=records(read(KEYS.A),'A'),preparedB=records(read(KEYS.B),'B');
-    const next=modelApi.build({leftPlacements:preparedA.items,rightPlacements:preparedB.items,phaseWindow:harmonic.defaultWindow});
+    const internal=document.documentElement.dataset.skyLastMode==='single'||document.documentElement.dataset.skyBPresent==='false';
+    const next=modelApi.build({leftPlacements:preparedA.items,rightPlacements:internal?preparedA.items:preparedB.items,phaseWindow:harmonic.defaultWindow,mode:internal?'internal':'cross',leftSky:'A',rightSky:internal?'A':'B',pairFilter:(left,right)=>!internal||!(ANGLE_IDS.has(left.id)&&ANGLE_IDS.has(right.id))});
     metrics.modelBuilds++;
     return next;
   }
@@ -100,12 +102,12 @@
   }
   function medallionMarkup(house,field){const color=HOUSE_COLORS[house-1]||'#777',ink=houseInk(color);return`<button type="button" class="relphi-house-medallion" data-house="${house}" data-reveal-field="${field}" style="--house-color:${color};--house-ink:${ink}" title="${esc(HOUSE_NAMES[house])}" aria-label="Reveal ${esc(HOUSE_NAMES[house])}">${house}</button>`}
   function placementMarkup(relation,side){
-    const endpoint=side==='left'?relation.left:relation.right,position=coordinate(endpoint),tone=side==='left'?'A':'B',sign=SIGNS[position.sign],signName=SIGN_NAMES[position.sign];
+    const endpoint=side==='left'?relation.left:relation.right,position=coordinate(endpoint),tone=endpoint.sky,sign=SIGNS[position.sign],signName=SIGN_NAMES[position.sign];
     return`<span class="sky-foundation-relationship-placement sky-foundation-relationship-placement--${side}"><span class="sky-foundation-relationship-symbol-pair"><button type="button" class="sky-progressive-trigger sky-foundation-relationship-glyph sky-foundation-relationship-glyph--${side}" data-glyph-id="${esc(endpoint.id)}" data-glyph-color="${COLORS[tone]}" data-reveal-field="${side}-placement" tabindex="-1" aria-label="Reveal ${esc(endpoint.name)}"></button><span class="sky-foundation-relationship-in" aria-hidden="true">in</span><button type="button" class="sky-progressive-trigger sky-foundation-relationship-sign" data-glyph-id="${sign}" data-glyph-color="${COLORS[tone]}" data-reveal-field="${side}-sign" tabindex="-1" aria-label="Reveal ${signName}"></button></span><span class="sky-foundation-relationship-copy"><small class="relphi-house-coordinate" data-relationship-coordinate="${position.text}"><span class="relphi-house-coordinate-value">${position.text}</span>${medallionMarkup(endpoint.house,`${side}-house`)}</small></span></span>`;
   }
   function rowMarkup(relation,index){
     const aria=`${relation.left.name} ${relation.aspect.label} ${relation.right.name}, orb ${relation.ordinaryOrb.toFixed(2)} degrees, harmonic ${relation.harmonicOrder}, phase error ${relation.phaseError.toFixed(2)} degrees, coherence ${relation.coherencePercent.toFixed(0)} percent`;
-    return`<article class="sky-foundation-relationship-row" role="button" tabindex="0" aria-expanded="false" aria-label="${esc(aria)}" data-interactive="relationship" data-interaction-key="${esc(relation.id)}" data-relationship-id="${esc(relation.id)}" data-relation-index="${index}" data-aspect="${relation.aspect.id}" data-left-placement="${esc(relation.left.id)}" data-right-placement="${esc(relation.right.id)}" data-source-orb="${relation.ordinaryOrb.toFixed(6)}" data-orb="${relation.ordinaryOrb.toFixed(6)}" data-harmonic-order="${relation.harmonicOrder}" data-harmonic-numerator="${relation.harmonicNumerator}" data-phase-error="${relation.phaseError.toFixed(6)}" data-signed-phase-error="${relation.signedPhaseError.toFixed(6)}" data-harmonic-window="${relation.masterWindow.toFixed(6)}" data-window-fraction="${relation.normalizedPhaseError.toFixed(6)}" data-harmonic-coherence="${relation.coherence.toFixed(8)}" data-left-house="${relation.left.house}" data-right-house="${relation.right.house}" data-left-sign="${relation.left.sign}" data-right-sign="${relation.right.sign}" style="--relationship-stripe:${relation.aspect.color};--aspect-color:${relation.aspect.color}">${placementMarkup(relation,'left')}<button type="button" class="sky-progressive-trigger sky-foundation-relationship-glyph sky-foundation-relationship-glyph--aspect" data-glyph-id="${relation.aspect.id}" data-glyph-color="${relation.aspect.color}" data-reveal-field="aspect" tabindex="-1" aria-label="Reveal ${esc(relation.aspect.label)}"></button><span class="sky-foundation-relationship-orb" aria-label="Orb ${relation.ordinaryOrb.toFixed(2)} degrees">${relation.ordinaryOrb.toFixed(2)}°</span>${placementMarkup(relation,'right')}</article>`;
+    return`<article class="sky-foundation-relationship-row" role="button" tabindex="0" aria-expanded="false" aria-label="${esc(aria)}" data-interactive="relationship" data-interaction-key="${esc(relation.id)}" data-relationship-id="${esc(relation.id)}" data-relation-index="${index}" data-aspect="${relation.aspect.id}" data-left-placement="${esc(relation.left.id)}" data-right-placement="${esc(relation.right.id)}" data-left-sky="${relation.left.sky}" data-right-sky="${relation.right.sky}" data-source-orb="${relation.ordinaryOrb.toFixed(6)}" data-orb="${relation.ordinaryOrb.toFixed(6)}" data-harmonic-order="${relation.harmonicOrder}" data-harmonic-numerator="${relation.harmonicNumerator}" data-phase-error="${relation.phaseError.toFixed(6)}" data-signed-phase-error="${relation.signedPhaseError.toFixed(6)}" data-harmonic-window="${relation.masterWindow.toFixed(6)}" data-window-fraction="${relation.normalizedPhaseError.toFixed(6)}" data-harmonic-coherence="${relation.coherence.toFixed(8)}" data-left-house="${relation.left.house}" data-right-house="${relation.right.house}" data-left-sign="${relation.left.sign}" data-right-sign="${relation.right.sign}" style="--relationship-stripe:${relation.aspect.color};--aspect-color:${relation.aspect.color}">${placementMarkup(relation,'left')}<button type="button" class="sky-progressive-trigger sky-foundation-relationship-glyph sky-foundation-relationship-glyph--aspect" data-glyph-id="${relation.aspect.id}" data-glyph-color="${relation.aspect.color}" data-reveal-field="aspect" tabindex="-1" aria-label="Reveal ${esc(relation.aspect.label)}"></button><span class="sky-foundation-relationship-orb" aria-label="Orb ${relation.ordinaryOrb.toFixed(2)} degrees">${relation.ordinaryOrb.toFixed(2)}°</span>${placementMarkup(relation,'right')}</article>`;
   }
   function resetIndexes(){
     Object.values(relationIndex).forEach(index=>index.clear());
@@ -113,8 +115,8 @@
   }
   function indexRelationships(){
     model.relationships.forEach(relation=>{
-      addToIndex(relationIndex.placement,`A:${relation.left.id}`,relation.id);addToIndex(relationIndex.placement,`B:${relation.right.id}`,relation.id);
-      addToIndex(relationIndex.house,`A:${relation.left.house}`,relation.id);addToIndex(relationIndex.house,`B:${relation.right.house}`,relation.id);
+      addToIndex(relationIndex.placement,`${relation.left.sky}:${relation.left.id}`,relation.id);addToIndex(relationIndex.placement,`${relation.right.sky}:${relation.right.id}`,relation.id);
+      addToIndex(relationIndex.house,`${relation.left.sky}:${relation.left.house}`,relation.id);addToIndex(relationIndex.house,`${relation.right.sky}:${relation.right.house}`,relation.id);
       addToIndex(relationIndex.sign,String(relation.left.sign),relation.id);addToIndex(relationIndex.sign,String(relation.right.sign),relation.id);
       addToIndex(relationIndex.aspect,relation.aspect.id,relation.id);
     });
@@ -160,7 +162,8 @@
     const raw=[...document.querySelectorAll('[data-layer="aspects"]>line.sky-foundation-aspect')];
     const positions=new Map(model.relationships.map((relation,index)=>[relation.id,index]));
     raw.forEach(line=>{
-      const id=modelApi.stableId({sky:'A',id:line.dataset.leftPlacement},{id:line.dataset.aspect},{sky:'B',id:line.dataset.rightPlacement}),relation=model.byId.get(id);
+      const left={sky:line.dataset.leftSky||'A',id:line.dataset.leftPlacement},right={sky:line.dataset.rightSky||(model.mode==='internal'?'A':'B'),id:line.dataset.rightPlacement},aspect={id:line.dataset.aspect};
+      const directId=modelApi.stableId(left,aspect,right),reverseId=modelApi.stableId(right,aspect,left),relation=model.byId.get(directId)||model.byId.get(reverseId)||model.relationships[Number(line.dataset.relationIndex)],id=relation?.id||directId;
       if(!relation){line.remove();return}
       const index=positions.get(id);
       Object.assign(line.dataset,{relationshipId:id,relationIndex:String(index),harmonicOrder:String(relation.harmonicOrder),harmonicNumerator:String(relation.harmonicNumerator),phaseError:relation.phaseError.toFixed(6),harmonicCoherence:relation.coherence.toFixed(8)});
@@ -223,7 +226,7 @@
     const row=view.rows.get(id),relation=model.byId.get(id);if(!row||!relation)return null;
     let detail=row.querySelector(':scope>.inline-rel-detail');if(detail)return detail;
     detail=document.createElement('div');detail.className='inline-rel-detail';detail.hidden=true;
-    detail.innerHTML=`<div class="inline-rel-progressive-strip" aria-label="Progressive symbolic reveal">${REVEAL_FIELDS.map(field=>`<div class="inline-rel-progressive-token" data-field="${field}" style="--token-color:${field.startsWith('left')?COLORS.A:field.startsWith('right')?COLORS.B:relation.aspect.color}" hidden><strong></strong><span hidden></span></div>`).join('')}</div><div class="inline-rel-visual">${cardMarkup('A',card(relation.left))}${wheelMarkup(relation)}${cardMarkup('B',card(relation.right))}</div>`;
+    detail.innerHTML=`<div class="inline-rel-progressive-strip" aria-label="Progressive symbolic reveal">${REVEAL_FIELDS.map(field=>`<div class="inline-rel-progressive-token" data-field="${field}" style="--token-color:${field.startsWith('left')?COLORS[relation.left.sky]:field.startsWith('right')?COLORS[relation.right.sky]:relation.aspect.color}" hidden><strong></strong><span hidden></span></div>`).join('')}</div><div class="inline-rel-visual">${cardMarkup(relation.left.sky,card(relation.left))}${wheelMarkup(relation)}${cardMarkup(relation.right.sky,card(relation.right))}</div>`;
     row.appendChild(detail);return detail;
   }
   function setExpanded(id,open){
@@ -275,7 +278,7 @@
   }
   function refresh(){
     root=document.getElementById('skyFoundationRoot');if(!root||root.getAttribute('aria-busy')!=='false')return;
-    const next=buildModel(),nextFingerprint=fingerprint(next),structuralChange=nextFingerprint!==modelFingerprint||!list?.isConnected;
+    const next=buildModel(),nextFingerprint=fingerprint(next),ownedRows=list?.querySelectorAll('.sky-foundation-relationship-row[data-relationship-id]').length===next.relationships.length,structuralChange=nextFingerprint!==modelFingerprint||!list?.isConnected||!ownedRows;
     model=next;window.RelphiSkyChartModel=model;resetIndexes();indexRelationships();
     if(structuralChange){modelFingerprint=nextFingerprint;renderRows()}else{model.relationships.forEach(relation=>{const row=list.querySelector(`[data-relationship-id="${CSS.escape(relation.id)}"]`);if(row){view.rows.set(relation.id,row);view.relationNodes.set(relation.id,new Set([row]))}})}
     installWheelIndex();bind();applyLockedVisibility();
@@ -284,7 +287,7 @@
     document.documentElement.dataset.skyApplicationCore='v1';
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-interactions-ready',{detail:{modelVersion:model.version,relationshipCount:model.relationships.length}}));
   }
-  function start(){window.addEventListener('relphi:sky-foundation-ready',refresh);metrics.boundListeners++;if(document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false')refresh()}
+  function start(){['relphi:sky-foundation-ready','relphi:sky-single-sky-aspects-rendered'].forEach(name=>{window.addEventListener(name,refresh);metrics.boundListeners++});if(document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false')refresh()}
 
   window.RelphiSkyChartApplication=Object.freeze({state,metrics,refresh,get model(){return model},get view(){return view}});
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();

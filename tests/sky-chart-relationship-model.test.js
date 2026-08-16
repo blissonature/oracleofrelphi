@@ -32,4 +32,20 @@ assert.ok(model.constitution.aspectIds.length>0);
 assert.ok(Object.isFrozen(square));
 assert.ok(Object.isFrozen(square.harmonic));
 
+const internal=modelApi.build({
+  leftPlacements:[placement('mars',0,0,1,1),placement('saturn',90,3,7,0),placement('mc',180,6,10,0)],
+  mode:'internal',
+  leftSky:'A',
+  rightSky:'A',
+  phaseWindow:engine.maxWindow,
+  pairFilter:(left,right)=>left.id!=='mc'&&right.id!=='mc'
+});
+const internalSquare=internal.relationships.find(relationship=>relationship.aspect.id==='square');
+assert.equal(internal.mode,'internal');
+assert.equal(internalSquare.id,'A:mars|square|A:saturn');
+assert.equal(internalSquare.left.sky,'A');
+assert.equal(internalSquare.right.sky,'A');
+assert.ok(internal.relationships.every(relationship=>relationship.left.id!==relationship.right.id));
+assert.ok(internal.relationships.every(relationship=>relationship.left.id!=='mc'&&relationship.right.id!=='mc'));
+
 console.log('Sky Chart relationship model contract passed.');

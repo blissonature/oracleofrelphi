@@ -1,0 +1,29 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Sky Chart single-sky application core</title>
+<pre id="result">Running single-sky core test…</pre>
+<iframe id="chart" title="Single-Sky core test" style="width:1200px;height:900px;border:0"></iframe>
+<script>
+(async()=>{
+  const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  const placement=(name,longitude)=>{const value=((longitude%360)+360)%360,index=Math.floor(value/30),within=value-index*30,degree=Math.floor(within);return{name,longitude:value,sign:signs[index],degree,minute:Math.floor((within-degree)*60),second:0}};
+  const values={Sun:0,Moon:30,Mercury:90,Venus:120,Mars:150,Jupiter:180,Saturn:210,Uranus:240,Neptune:270,Pluto:300,Chiron:49,'North Node':45,'South Node':225,Lilith:75,'Part of Fortune':135,Vertex:315};
+  const houseCusps=Array.from({length:12},(_,index)=>index*30);
+  localStorage.setItem('relphiSkyChartA',JSON.stringify({name:'Single Sky fixture',houseSystem:'equal-house',houseCusps,calcProfile:{houseCusps,houseSystem:'equal-house',ascendant:0},placements:Object.fromEntries(Object.entries(values).map(([key,value])=>[key,placement(key,value)]))}));
+  localStorage.removeItem('relphiSkyChartB');
+  localStorage.setItem('relphiSkyChartLastModeV1','single');
+  const frame=document.getElementById('chart'),loaded=new Promise(resolve=>frame.addEventListener('load',resolve,{once:true})),wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  frame.src='../sky-chart.html?audit=single-sky-application-core';await loaded;
+  const win=frame.contentWindow,doc=frame.contentDocument;
+  let stable=0,last='';
+  for(let attempt=0;attempt<300;attempt++){
+    const rows=doc.querySelectorAll('.sky-foundation-relationship-row').length,hits=doc.querySelectorAll('.sky-foundation-aspect-hit').length,signature=`${rows}:${hits}`;
+    stable=doc.documentElement.dataset.skyApplicationCore==='v1'&&doc.documentElement.dataset.skyBPresent==='false'&&rows>1&&signature===last?stable+1:0;last=signature;
+    if(stable>=6)break;await wait(50);
+  }
+  const row=doc.querySelector('.sky-foundation-relationship-row');row?.click();await new Promise(resolve=>win.requestAnimationFrame(resolve));
+  const result={core:doc.documentElement.dataset.skyApplicationCore,mode:win.RelphiSkyChartModel?.mode,rows:doc.querySelectorAll('.sky-foundation-relationship-row').length,hits:doc.querySelectorAll('.sky-foundation-aspect-hit').length,expanded:doc.querySelectorAll('.is-inline-expanded').length,details:doc.querySelectorAll('.inline-rel-detail').length,cards:doc.querySelectorAll('.is-inline-expanded [data-ledger-card]').length};
+  result.ok=result.core==='v1'&&result.mode==='internal'&&result.rows>1&&result.expanded===1&&result.details===1&&result.cards===2;
+  const output=document.getElementById('result');output.dataset.complete=result.ok?'true':'failed';output.textContent=JSON.stringify(result,null,2);
+})().catch(error=>{const output=document.getElementById('result');output.dataset.complete='error';output.textContent=error.stack||String(error)});
+</script>

@@ -37,8 +37,8 @@
   function stableId(left,aspect,right){
     return`${left.sky}:${left.id}|${aspect.id}|${right.sky}:${right.id}`;
   }
-  function buildRelationship(leftRecord,rightRecord,aspect,phaseWindow){
-    const left=endpoint(leftRecord,'A'),right=endpoint(rightRecord,'B');
+  function buildRelationship(leftRecord,rightRecord,aspect,phaseWindow,leftSky='A',rightSky='B'){
+    const left=endpoint(leftRecord,leftSky),right=endpoint(rightRecord,rightSky);
     const directedSeparation=HarmonicEngine.normalizeAngle(right.longitude-left.longitude);
     const angularSeparation=HarmonicEngine.smallestCircularSeparation(right.longitude,left.longitude);
     const derived=HarmonicEngine.metrics(angularSeparation,aspect,phaseWindow);
@@ -77,22 +77,26 @@
       evidence:EVIDENCE
     });
   }
-  function build({leftPlacements=[],rightPlacements=[],phaseWindow=HarmonicEngine.defaultWindow,aspects=HarmonicEngine.aspects}={}){
+  function build({leftPlacements=[],rightPlacements=[],phaseWindow=HarmonicEngine.defaultWindow,aspects=HarmonicEngine.aspects,mode='cross',leftSky='A',rightSky='B',pairFilter=()=>true}={}){
     const relationships=[];
-    for(const left of leftPlacements){
-      for(const right of rightPlacements){
+    const pairs=[];
+    if(mode==='internal'){
+      for(let leftIndex=0;leftIndex<leftPlacements.length;leftIndex++)for(let rightIndex=leftIndex+1;rightIndex<leftPlacements.length;rightIndex++)pairs.push([leftPlacements[leftIndex],leftPlacements[rightIndex]]);
+    }else for(const left of leftPlacements)for(const right of rightPlacements)pairs.push([left,right]);
+    for(const [left,right] of pairs){
+        if(!pairFilter(left,right))continue;
         for(const aspect of aspects){
-          const relationship=buildRelationship(left,right,aspect,phaseWindow);
+          const relationship=buildRelationship(left,right,aspect,phaseWindow,leftSky,rightSky);
           if(relationship)relationships.push(relationship);
         }
-      }
     }
     relationships.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.ordinaryOrb-b.ordinaryOrb||a.id.localeCompare(b.id));
     const byId=new Map(relationships.map(relationship=>[relationship.id,relationship]));
     return freeze({
       version:MODEL_VERSION,
       constitution:freeze({finite:true,maxHarmonicOrder:Math.max(...aspects.map(aspect=>aspect.denominator)),phaseWindow:HarmonicEngine.clampWindow(phaseWindow),aspectIds:freeze(aspects.map(aspect=>aspect.id))}),
-      placements:freeze({A:freeze(leftPlacements.slice()),B:freeze(rightPlacements.slice())}),
+      mode,
+      placements:freeze({A:freeze(leftPlacements.slice()),B:freeze(mode==='internal'?[]:rightPlacements.slice())}),
       relationships:freeze(relationships),
       byId,
       evidence:EVIDENCE
