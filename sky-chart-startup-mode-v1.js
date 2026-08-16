@@ -11,18 +11,51 @@ const tarotPreviewRequested=previewPath&&exactPreview&&params.get('view')==='tar
 function previewAssetBase(){
   return `https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@${previewRef}/`;
 }
-function exactTarotPreviewUrl(cardId){
-  const url=new URL('tarot.html',previewAssetBase());
-  const id=String(cardId||'').trim();
-  if(id)url.searchParams.set('card',id);
-  return url.toString();
+function injectPreviewBase(html){
+  const base=`<base href="${previewAssetBase()}">`;
+  const marker='<script>window.__relphiTarotPreviewDocument=true;window.__relphiTarotPreviewPending=false;<\/script>';
+  if(/<head[^>]*>/i.test(html))return html.replace(/<head([^>]*)>/i,`<head$1>${base}${marker}`);
+  return base+marker+html;
+}
+function showTarotPreviewFailure(error){
+  window.__relphiTarotPreviewPending=false;
+  const message=String(error?.message||error||'Unknown preview error');
+  document.open();
+  document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tarot Ledger preview unavailable</title></head><body><main style="max-width:42rem;margin:12vh auto;padding:1.25rem;font:16px/1.45 system-ui,sans-serif"><h1>Tarot Ledger preview could not open.</h1><p></p></main></body></html>`);
+  document.close();
+  const note=document.querySelector('main p');
+  if(note)note.textContent=message;
+}
+function openExactTarotPreview(){
+  window.__relphiTarotPreviewPending=true;
+
+  // Clear the Sky Chart document immediately, while this first head script is
+  // running, so none of the Sky Chart CSS or JavaScript can continue loading
+  // underneath the Tarot preview. The prior implementation waited for the
+  // network response before replacing the document, which let both apps share
+  // one lifecycle and produced dead/search-misdirected controls.
+  document.open();
+  document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Opening Tarot Ledger…</title></head><body><main style="max-width:42rem;margin:12vh auto;padding:1.25rem;font:16px/1.45 system-ui,sans-serif">Opening Tarot Ledger…</main></body></html>');
+  document.close();
+
+  fetch(previewAssetBase()+'tarot.html',{cache:'no-store'})
+    .then(response=>{
+      if(!response.ok)throw new Error(`Exact Tarot Ledger revision returned ${response.status}.`);
+      return response.text();
+    })
+    .then(html=>{
+      document.open();
+      document.write(injectPreviewBase(html));
+      document.close();
+    })
+    .catch(showTarotPreviewFailure);
 }
 
-// Do not transplant Tarot Ledger into the Sky Chart preview document. That left
-// the Ledger running inside the wrong document lifecycle and pathname. Navigate
-// to the exact revision as its own real tarot.html document instead.
+// Keep the address on oracleofrelphi.com. jsDelivr intentionally serves the
+// repository HTML as a download/plain-text resource when navigated to directly;
+// it is only our exact-revision asset source here.
 if(tarotPreviewRequested){
-  location.replace(exactTarotPreviewUrl(params.get('card')));
+  openExactTarotPreview();
   return;
 }
 
@@ -57,7 +90,13 @@ function syncRoot(){
   html.dataset.skyBPresent=mode==='comparison'&&hasStoredSkyB()?'true':'false';
 }
 function previewTarotHref(cardId){
-  return exactTarotPreviewUrl(cardId);
+  const url=new URL(location.href);
+  url.search='';
+  url.hash='';
+  url.searchParams.set('ref',previewRef);
+  url.searchParams.set('view','tarot');
+  url.searchParams.set('card',String(cardId||'').trim());
+  return url.toString();
 }
 function rewritePreviewTarotLinks(root){
   if(!previewPath||!exactPreview)return;
