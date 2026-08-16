@@ -13,9 +13,16 @@ function previewAssetBase(){
 }
 function injectPreviewBase(html){
   const base=`<base href="${previewAssetBase()}">`;
-  const marker='<script>window.__relphiTarotPreviewDocument=true;window.__relphiTarotPreviewPending=false;<\/script>';
-  if(/<head[^>]*>/i.test(html))return html.replace(/<head([^>]*)>/i,`<head$1>${base}${marker}`);
-  return base+marker+html;
+  // Suppress navloader's early deep-link controller. It used to start before
+  // Tarot Ledger's own DOMContentLoaded initialization had finished, which
+  // left the preview at the general Ledger landing page. We load the same
+  // controller explicitly at the end of the document instead.
+  const marker='<script>window.__relphiTarotPreviewDocument=true;window.__relphiTarotPreviewPending=false;window.__relphiTarotCardDeepLinkV9=true;<\/script>';
+  const lateDeepLink=`<script>window.__relphiTarotCardDeepLinkV9=false;<\/script><script src="${previewAssetBase()}tarot-card-deep-link-v1.js?v=preview-late"><\/script>`;
+  let out=/<head[^>]*>/i.test(html)?html.replace(/<head([^>]*)>/i,`<head$1>${base}${marker}`):base+marker+html;
+  if(/<\/body>/i.test(out))out=out.replace(/<\/body>/i,`${lateDeepLink}</body>`);
+  else out+=lateDeepLink;
+  return out;
 }
 function showTarotPreviewFailure(error){
   window.__relphiTarotPreviewPending=false;
