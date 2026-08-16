@@ -11,10 +11,17 @@ const tarotPreviewRequested=previewPath&&exactPreview&&params.get('view')==='tar
 function previewAssetBase(){
   return `https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@${previewRef}/`;
 }
+function previewCardBridgeScript(){
+  return '<script>(function(){\'use strict\';var cardId=String(new URLSearchParams(location.search).get(\'card\')||\'\').trim();if(!cardId)return;function finish(){var detail=document.getElementById(\'cardDetail\');var browse=document.getElementById(\'browsePanel\');var alreadyOpen=!!(browse&&!browse.hidden&&detail&&detail.textContent.trim());if(!alreadyOpen)window.RelphiTarotLedger?.openFromLocation?.();window.RelphiTarotCardSelectionScroll?.scrollFromLocation?.();}if(document.readyState===\'loading\')document.addEventListener(\'DOMContentLoaded\',finish,{once:true});else finish();})();<\/script>';
+}
 function injectPreviewBase(html){
   const base=`<base href="${previewAssetBase()}">`;
   const marker='<script>window.__relphiTarotPreviewDocument=true;window.__relphiTarotPreviewPending=false;<\/script>';
-  return /<head[^>]*>/i.test(html)?html.replace(/<head([^>]*)>/i,`<head$1>${base}${marker}`):base+marker+html;
+  const bridge=previewCardBridgeScript();
+  let out=/<head[^>]*>/i.test(html)?html.replace(/<head([^>]*)>/i,`<head$1>${base}${marker}`):base+marker+html;
+  if(/<\/body>/i.test(out))out=out.replace(/<\/body>/i,`${bridge}</body>`);
+  else out+=bridge;
+  return out;
 }
 function showTarotPreviewFailure(error){
   window.__relphiTarotPreviewPending=false;
