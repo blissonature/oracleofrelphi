@@ -1,9 +1,10 @@
-// Tarot Ledger card deep link v8: use the real Ledger controls only; never commandeer the search field.
+// Tarot Ledger card deep link v9: open the requested card and make its full Ledger entry the visible destination.
 (function(){
 'use strict';
 const params=new URLSearchParams(location.search);
 const tarotContext=/(^|\/)tarot\.html$/.test(location.pathname)||(window.__relphiTarotPreviewDocument===true&&params.get('view')==='tarot');
-if(!tarotContext||window.__relphiTarotCardDeepLinkV8)return;
+if(!tarotContext||window.__relphiTarotCardDeepLinkV9)return;
+window.__relphiTarotCardDeepLinkV9=true;
 window.__relphiTarotCardDeepLinkV8=true;
 window.__relphiTarotCardDeepLinkV7=true;
 window.__relphiTarotCardDeepLinkV6=true;
@@ -38,10 +39,29 @@ function detailMatches(){
   const text=normalize(detail.textContent);
   return names.some(name=>text.includes(name));
 }
+function installFocusedEntryStyle(){
+  if(document.getElementById('relphi-deep-linked-card-style'))return;
+  const style=document.createElement('style');
+  style.id='relphi-deep-linked-card-style';
+  style.textContent=[
+    'body.relphi-deep-linked-card .tarot-entry-panel,',
+    'body.relphi-deep-linked-card .tarot-mode-bar,',
+    'body.relphi-deep-linked-card .tarot-command-panel,',
+    'body.relphi-deep-linked-card #tarotSummary,',
+    'body.relphi-deep-linked-card #visibilityPanel,',
+    'body.relphi-deep-linked-card #browsePanel>.tarot-list-panel{display:none!important}',
+    'body.relphi-deep-linked-card #browsePanel{display:block!important}',
+    'body.relphi-deep-linked-card #cardDetail{display:block!important;max-width:72rem;margin:0 auto!important}'
+  ].join('');
+  document.head.appendChild(style);
+}
 function landOnDetail(){
   const detail=document.getElementById('cardDetail');
   if(!detail)return;
-  const land=()=>detail.scrollIntoView?.({behavior:'auto',block:'start',inline:'nearest'});
+  const land=()=>{
+    detail.scrollIntoView?.({behavior:'auto',block:'start',inline:'nearest'});
+    if(window.scrollY>4)window.scrollTo({top:Math.max(0,detail.getBoundingClientRect().top+window.scrollY-12),behavior:'auto'});
+  };
   land();
   requestAnimationFrame(land);
   setTimeout(land,120);
@@ -51,15 +71,16 @@ function finish(){
   if(!detailMatches())return false;
   opened=true;
   document.getElementById('browsePanel')?.removeAttribute('hidden');
+  installFocusedEntryStyle();
+  document.body?.classList.add('relphi-deep-linked-card');
   landOnDetail();
   return true;
 }
-function targetControl(){
+function targetCard(){
   const list=document.getElementById('cardList');
   if(!list)return null;
   const id=cssEscape(CARD_ID);
-  const card=list.querySelector(`.or-card[data-id="${id}"]`);
-  return card?.querySelector(`[data-card-id="${id}"]`)||list.querySelector(`[data-card-id="${id}"]`)||card||null;
+  return list.querySelector(`.or-card[data-id="${id}"]`);
 }
 function ledgerReady(){
   const browse=document.getElementById('browsePanel');
@@ -89,11 +110,13 @@ function seek(){
   if(opened||!CARD_ID)return;
   if(finish())return;
   prepareLedger();
-  const control=targetControl();
+  const card=targetCard();
   const now=Date.now();
-  if(control&&now-lastCardClickAt>300){
+  if(card&&now-lastCardClickAt>300){
     lastCardClickAt=now;
-    control.click();
+    // Click the card surface itself. Tarot Ledger's delegated result handler
+    // treats that as an ordinary request for this card's full detail entry.
+    card.click();
     if(finish())return;
   }
   attempts+=1;
