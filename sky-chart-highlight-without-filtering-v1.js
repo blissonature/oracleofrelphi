@@ -6,7 +6,13 @@
   if (window.__relphiSkyHighlightWithoutFilteringV1) return;
   window.__relphiSkyHighlightWithoutFilteringV1 = true;
 
-  let restoreQueued = false;
+  let visibilityQueued = false;
+  let rowsByIndex = new Map();
+  let linesByIdentity = new Map();
+  let linesByIndex = new Map();
+  let wheelRelatedRows = new Set();
+  let hoveredRow = null;
+  let hoveredLines = new Set();
 
   function relationshipIdentity(node) {
     if (!node) return '';
@@ -16,18 +22,34 @@
     return left && aspect && right ? `${left}|${aspect}|${right}` : '';
   }
 
+  function addMappedLine(map, key, line) {
+    if (!key) return;
+    let set = map.get(key);
+    if (!set) {
+      set = new Set();
+      map.set(key, set);
+    }
+    set.add(line);
+  }
+
   // relationIndex is a render address, not relationship identity. Foundation wheel
-  // lines already carry the same stable endpoint/aspect identity as relationship rows.
-  // Rebind the render address from that identity after every interactions pass so
-  // the fast wheel hover path, row hover, orb visibility, and filters all address
-  // the same line even when row order or ordinary-orb formatting changes.
+  // lines already carry the same endpoint/aspect identity as relationship rows.
+  // Rebind once after each interactions pass, then use cached identity/index maps on
+  // the hot hover path instead of scanning the relationship DOM on every pointer move.
   function synchronizeLineIdentity() {
+    clearRowHover();
     const rowsByIdentity = new Map();
+    rowsByIndex = new Map();
+
     document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row => {
+      const index = String(row.dataset.relationIndex || '');
       const identity = relationshipIdentity(row);
-      if (identity) rowsByIdentity.set(identity, String(row.dataset.relationIndex));
+      if (index) rowsByIndex.set(index, row);
+      if (identity) rowsByIdentity.set(identity, index);
     });
 
+    const nextByIdentity = new Map();
+    const nextByIndex = new Map();
     document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line => {
       const identity = relationshipIdentity(line);
       const index = identity ? rowsByIdentity.get(identity) : undefined;
@@ -40,53 +62,76 @@
       line.dataset.focusPiece = 'aspect';
       line.classList.add('sky-foundation-interactive', 'sky-foundation-aspect');
       line.style.pointerEvents = 'stroke';
+      addMappedLine(nextByIdentity, identity, line);
+      addMappedLine(nextByIndex, index, line);
     });
+    linesByIdentity = nextByIdentity;
+    linesByIndex = nextByIndex;
+    wheelRelatedRows.clear();
   }
 
-  function restoreList(highlightIndexes) {
-    const rows = Array.from(document.querySelectorAll('.sky-foundation-relationship-row'));
-    const highlighted = new Set((highlightIndexes || []).map(String));
+  function restoreVisibility() {
+    visibilityQueued = false;
     let visible = 0;
-    rows.forEach(row => {
+    rowsByIndex.forEach(row => {
       const show = !row.classList.contains('sky-chart-filter-hidden') &&
         !row.classList.contains('sky-chart-orb-hidden') &&
         !row.classList.contains('sky-orb-filter-hidden');
       row.hidden = !show;
       row.setAttribute('aria-hidden', show ? 'false' : 'true');
-      row.classList.toggle('is-wheel-related', show && highlighted.has(row.dataset.relationIndex));
+      if (!show && row.classList.contains('is-wheel-related')) {
+        row.classList.remove('is-wheel-related');
+        wheelRelatedRows.delete(row);
+      }
       if (show) visible += 1;
     });
     const count = document.getElementById('skyFoundationRelationshipCount');
-    if (count) count.textContent = `${visible}/${rows.length}`;
+    if (count) count.textContent = `${visible}/${rowsByIndex.size}`;
     const empty = document.getElementById('skyFoundationRelationshipEmpty');
     if (empty) empty.hidden = visible !== 0;
   }
 
-  function queueRestore(indexes) {
-    if (restoreQueued) return;
-    restoreQueued = true;
-    queueMicrotask(() => {
-      restoreQueued = false;
-      restoreList(indexes);
+  function queueVisibilityRestore() {
+    if (visibilityQueued) return;
+    visibilityQueued = true;
+    queueMicrotask(restoreVisibility);
+  }
+
+  function setWheelRelated(indexes) {
+    const next = new Set();
+    (indexes || []).forEach(value => {
+      const row = rowsByIndex.get(String(value));
+      if (row && !row.hidden) next.add(row);
     });
+
+    wheelRelatedRows.forEach(row => {
+      if (!next.has(row)) row.classList.remove('is-wheel-related');
+    });
+    next.forEach(row => {
+      if (!wheelRelatedRows.has(row)) row.classList.add('is-wheel-related');
+    });
+    wheelRelatedRows = next;
   }
 
   function clearRowHover() {
-    document.querySelectorAll('.sky-foundation-relationship-row.is-row-hovered').forEach(row => row.classList.remove('is-row-hovered'));
-    document.querySelectorAll('.sky-foundation-aspect.is-row-hovered').forEach(line => line.classList.remove('is-row-hovered'));
+    if (hoveredRow) hoveredRow.classList.remove('is-row-hovered');
+    hoveredLines.forEach(line => line.classList.remove('is-row-hovered'));
+    hoveredRow = null;
+    hoveredLines = new Set();
   }
 
   function setRowHover(row) {
+    if (row === hoveredRow) return;
     clearRowHover();
     if (!row) return;
+
     row.classList.add('is-row-hovered');
+    hoveredRow = row;
     const identity = relationshipIdentity(row);
     const index = String(row.dataset.relationIndex || '');
-    document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line => {
-      if ((identity && relationshipIdentity(line) === identity) || (index && String(line.dataset.relationIndex || '') === index)) {
-        line.classList.add('is-row-hovered');
-      }
-    });
+    const lines = (identity && linesByIdentity.get(identity)) || (index && linesByIndex.get(index)) || new Set();
+    hoveredLines = new Set(lines);
+    hoveredLines.forEach(line => line.classList.add('is-row-hovered'));
   }
 
   function bind() {
@@ -95,12 +140,13 @@
     root.dataset.highlightWithoutFilteringBound = 'true';
 
     window.addEventListener('relphi:sky-foundation-filter-changed', event => {
-      const mode=event.detail?.state?.mode;
-      if(mode==='selected'){
-        document.querySelectorAll('.sky-foundation-relationship-row.is-wheel-related').forEach(row=>row.classList.remove('is-wheel-related'));
+      const mode = event.detail?.state?.mode;
+      if (mode === 'selected') {
+        setWheelRelated([]);
         return;
       }
-      queueRestore(mode==='hover' ? event.detail.relationshipIndexes || [] : []);
+      setWheelRelated(mode === 'hover' ? event.detail.relationshipIndexes || [] : []);
+      queueVisibilityRestore();
     });
 
     root.addEventListener('pointerover', event => {
@@ -127,8 +173,8 @@
 
     window.addEventListener('relphi:sky-foundation-interactions-ready', () => {
       synchronizeLineIdentity();
-      clearRowHover();
-      restoreList([]);
+      setWheelRelated([]);
+      restoreVisibility();
     });
   }
 
