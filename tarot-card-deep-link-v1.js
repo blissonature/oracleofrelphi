@@ -1,9 +1,10 @@
-// Tarot Ledger card deep link v7: wait until the real Ledger controls are live, then open the exact full card entry.
+// Tarot Ledger card deep link v8: use the real Ledger controls only; never commandeer the search field.
 (function(){
 'use strict';
 const params=new URLSearchParams(location.search);
 const tarotContext=/(^|\/)tarot\.html$/.test(location.pathname)||(window.__relphiTarotPreviewDocument===true&&params.get('view')==='tarot');
-if(!tarotContext||window.__relphiTarotCardDeepLinkV7)return;
+if(!tarotContext||window.__relphiTarotCardDeepLinkV8)return;
+window.__relphiTarotCardDeepLinkV8=true;
 window.__relphiTarotCardDeepLinkV7=true;
 window.__relphiTarotCardDeepLinkV6=true;
 window.__relphiTarotCardDeepLinkV5=true;
@@ -13,7 +14,7 @@ window.__relphiTarotCardDeepLinkV2=true;
 window.__relphiTarotCardDeepLinkV1=true;
 
 const CARD_ID=String(params.get('card')||'').trim();
-let attempts=0,opened=false,timer=0,lastLedgerClickAt=0,lastCardClickAt=0,fallbackUsed=false;
+let attempts=0,opened=false,timer=0,lastLedgerClickAt=0,lastCardClickAt=0;
 const MAX_ATTEMPTS=300;
 
 function normalize(value){return String(value||'').replace(/\s+/g,' ').trim().toLowerCase()}
@@ -58,7 +59,7 @@ function targetControl(){
   if(!list)return null;
   const id=cssEscape(CARD_ID);
   const card=list.querySelector(`.or-card[data-id="${id}"]`);
-  return card?.querySelector(`[data-card-id="${id}"]`)||list.querySelector(`[data-card-id="${id}"]`)||card||list.querySelector(`[data-id="${id}"]`);
+  return card?.querySelector(`[data-card-id="${id}"]`)||list.querySelector(`[data-card-id="${id}"]`)||card||null;
 }
 function ledgerReady(){
   const browse=document.getElementById('browsePanel');
@@ -70,12 +71,8 @@ function prepareLedger(){
   const browse=document.getElementById('browsePanel');
   const list=document.getElementById('cardList');
   if(!browse||!list)return false;
-
-  // navloader runs before tarot-app.js. A one-shot click can therefore happen
-  // before Tarot Ledger has attached its handlers. Keep trying until the list
-  // itself proves that the real Ledger controller is live.
   const now=Date.now();
-  if(now-lastLedgerClickAt>280){
+  if(now-lastLedgerClickAt>300){
     const trigger=document.getElementById('showAllCards')||document.getElementById('landingShowLedger');
     if(trigger){
       lastLedgerClickAt=now;
@@ -83,15 +80,6 @@ function prepareLedger(){
     }
   }
   return ledgerReady();
-}
-function useSearchFallback(){
-  if(fallbackUsed)return;
-  const card=cardRecord(),command=document.getElementById('oracleCommand'),run=document.getElementById('runCommand');
-  if(!card||!command||!run)return;
-  fallbackUsed=true;
-  command.value=card.name||CARD_ID;
-  command.dispatchEvent(new Event('input',{bubbles:true}));
-  run.click();
 }
 function schedule(delay=50){
   if(opened||timer||!CARD_ID)return;
@@ -103,13 +91,12 @@ function seek(){
   prepareLedger();
   const control=targetControl();
   const now=Date.now();
-  if(control&&now-lastCardClickAt>280){
+  if(control&&now-lastCardClickAt>300){
     lastCardClickAt=now;
     control.click();
     if(finish())return;
   }
   attempts+=1;
-  if(attempts===160)useSearchFallback();
   if(attempts<MAX_ATTEMPTS)schedule();
   else console.warn('[Oracle of Relphi] Tarot Ledger deep link could not confirm full card detail:',CARD_ID);
 }
