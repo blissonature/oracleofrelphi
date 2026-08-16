@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const visual=fs.readFileSync(path.join(root,'sky-chart-interaction-visual-state-v1.js'),'utf8');
+const html=fs.readFileSync(path.join(root,'sky-chart.html'),'utf8');
+assert.match(visual,/application core remains the sole owner/i);
+assert.match(visual,/sky-foundation-house-sector/);
+assert.match(visual,/dataset\.focusPiece='house'/);
+assert.match(visual,/classList\.toggle\('has-isolation'/);
+assert.match(visual,/placementsByHouse/);
+assert.doesNotMatch(visual,/getScreenCTM|querySelectorAll|MutationObserver|setTimeout/);
+assert.match(html,/sky-chart-application-core-v1\.js\?v=8[\s\S]*sky-chart-interaction-visual-state-v1\.js\?v=1/);
+console.log('Sky Chart indexed visual-isolation contract passed');

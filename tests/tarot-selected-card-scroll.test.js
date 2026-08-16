@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const helper=fs.readFileSync(path.join(root,'tarot-selected-card-scroll-v1.js'),'utf8');
+const html=fs.readFileSync(path.join(root,'tarot.html'),'utf8');
+assert.match(helper,/ledger-card-button\[data-card-id=/);
+assert.match(helper,/CSS\.escape\(id\)/);
+assert.match(helper,/scrollTo\(\{top:/);
+assert.doesNotMatch(helper,/oracleCommand|runCommand|MutationObserver|setTimeout|\.click\(/);
+assert.match(html,/tarot-app\.js\?v=366[\s\S]*tarot-selected-card-scroll-v1\.js\?v=1/);
+console.log('Tarot selected-card scroll contract passed');
