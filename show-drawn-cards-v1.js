@@ -6,6 +6,7 @@
   const BUTTON_ID = 'showDrawnCards';
   const PANEL_ID = 'shortListPanel';
   const LIST_ID = 'cardList';
+  const RESULT_SELECTOR = '.tarot-list-card';
   let active = false;
   let internalRefresh = false;
   let boardRefreshTimer = 0;
@@ -41,9 +42,12 @@
     return cards.map(function (card) { return card.key; }).join('|');
   }
 
+  // Tarot Ledger's list contains controls as well as cards. Only actual
+  // .tarot-list-card nodes belong to the result set. Filtering the list's
+  // direct children also hides the Zoom and glyph controls, so never do that.
   function resultItems() {
     const list = document.getElementById(LIST_ID);
-    return list ? Array.from(list.children).filter(function (node) { return node.nodeType === 1; }) : [];
+    return list ? Array.from(list.querySelectorAll(RESULT_SELECTOR)) : [];
   }
 
   function itemIdentity(item) {
@@ -81,15 +85,18 @@
   function clearFilterClasses() {
     const list = document.getElementById(LIST_ID);
     if (!list) return;
+
     delete list.dataset.relphiDrawnCards;
     resultItems().forEach(function (item) {
-      item.classList.remove('relphi-drawn-card-result');
+      item.classList.remove('relphi-drawn-card-result', 'relphi-drawn-card-hidden');
+      item.style.removeProperty('--relphi-drawn-order');
     });
   }
 
   function updateButton() {
     const button = document.getElementById(BUTTON_ID);
     if (!button) return;
+
     const count = drawnCards().length;
     button.disabled = count === 0;
     button.classList.toggle('is-active', active);
@@ -117,41 +124,70 @@
     }
   }
 
-  function applyFilter(cards) {
-    const list = document.getElementById(LIST_ID);
-    if (!list) return 0;
-
-    const items = resultItems();
+  function findMatches(cards, items) {
     const used = new Set();
     const matches = [];
 
-    items.forEach(function (item) {
-      item.classList.remove('relphi-drawn-card-result');
-    });
-
-    cards.forEach(function (card) {
+    cards.forEach(function (card, boardIndex) {
       const match = items.find(function (item) {
         return !used.has(item) && itemMatchesCard(item, card);
       });
       if (!match) return;
       used.add(match);
-      match.classList.add('relphi-drawn-card-result');
-      matches.push(match);
+      matches.push({ item:match, boardIndex:boardIndex });
     });
 
-    // The data state plus CSS is the actual filter. This deliberately does not
-    // rely on the HTML hidden attribute, because Tarot Ledger card styles can
-    // override the browser's default [hidden] display rule.
+    return matches;
+  }
+
+  function applyFilter(cards) {
+    const list = document.getElementById(LIST_ID);
+    if (!list) return false;
+
+    const items = resultItems();
+    if (!items.length) return false;
+
+    const matches = findMatches(cards, items);
+
+    // Do not enter the filtered state until every drawn card has a real result
+    // node. This avoids briefly treating an enclosing controls/results wrapper
+    // as a card while the normal Show All Cards render is still settling.
+    if (matches.length !== cards.length) return false;
+
+    clearFilterClasses();
     list.dataset.relphiDrawnCards = 'true';
 
-    // Preserve Drawing Board order in the result list.
-    const fragment = document.createDocumentFragment();
-    matches.forEach(function (item) { fragment.appendChild(item); });
-    list.appendChild(fragment);
+    const matchedItems = new Set(matches.map(function (entry) { return entry.item; }));
+    items.forEach(function (item) {
+      const isMatch = matchedItems.has(item);
+      item.classList.toggle('relphi-drawn-card-result', isMatch);
+      item.classList.toggle('relphi-drawn-card-hidden', !isMatch);
+    });
+
+    // Preserve Drawing Board order without moving DOM nodes. Moving list
+    // children can dislodge the Cards toolbar and its Zoom/glyph controls.
+    matches.forEach(function (entry) {
+      entry.item.style.setProperty('--relphi-drawn-order', String(entry.boardIndex));
+    });
 
     document.getElementById('browsePanel')?.removeAttribute('hidden');
     updateSummary(matches.length);
-    return matches.length;
+    return true;
+  }
+
+  function applyEmptyFilter() {
+    const list = document.getElementById(LIST_ID);
+    if (!list) return;
+
+    clearFilterClasses();
+    list.dataset.relphiDrawnCards = 'true';
+    resultItems().forEach(function (item) {
+      item.classList.add('relphi-drawn-card-hidden');
+    });
+
+    const detail = document.getElementById('cardDetail');
+    if (detail) detail.innerHTML = '';
+    updateSummary(0);
   }
 
   function refreshDrawnResults() {
@@ -162,14 +198,7 @@
     updateButton();
 
     if (!cards.length) {
-      const list = document.getElementById(LIST_ID);
-      if (list) {
-        resultItems().forEach(function (item) { item.classList.remove('relphi-drawn-card-result'); });
-        list.dataset.relphiDrawnCards = 'true';
-      }
-      const detail = document.getElementById('cardDetail');
-      if (detail) detail.innerHTML = '';
-      updateSummary(0);
+      applyEmptyFilter();
       return;
     }
 
@@ -185,8 +214,7 @@
     const started = Date.now();
     (function waitForCards() {
       if (!active) return;
-      const matched = applyFilter(cards);
-      if (matched === cards.length) return;
+      if (applyFilter(cards)) return;
       if (Date.now() - started < 2000) requestAnimationFrame(waitForCards);
     })();
   }
@@ -227,7 +255,8 @@
     style.textContent = [
       '#showDrawnCards.is-active{box-shadow:inset 0 -3px 0 #dc1f18!important}',
       '#showDrawnCards:disabled{opacity:.45!important;cursor:default!important}',
-      '#cardList[data-relphi-drawn-cards="true"] > :not(.relphi-drawn-card-result){display:none!important}'
+      '#cardList[data-relphi-drawn-cards="true"] .tarot-list-card.relphi-drawn-card-hidden{display:none!important}',
+      '#cardList[data-relphi-drawn-cards="true"] .tarot-list-card.relphi-drawn-card-result{order:var(--relphi-drawn-order,0)}'
     ].join('');
     document.head.appendChild(style);
   }
