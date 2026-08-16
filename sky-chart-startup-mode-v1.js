@@ -121,6 +121,21 @@ syncRoot();
 
 if(previewPath&&exactPreview)document.addEventListener('DOMContentLoaded',()=>rewritePreviewTarotLinks(document),{once:true});
 
+// Inline relationship cards are created after DOMContentLoaded. In an exact
+// revision preview, own their navigation at click time so the browser stays on
+// oracleofrelphi.com instead of resolving the relative Tarot URL against the
+// injected jsDelivr <base>. This transmits the canonical card ID unchanged.
+document.addEventListener('click',event=>{
+  if(!previewPath||!exactPreview)return;
+  const link=event.target?.closest?.('[data-inline-ledger]');
+  if(!link)return;
+  const cardId=String(link.dataset.inlineLedger||'').trim();
+  if(!cardId)return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  location.assign(previewTarotHref(cardId));
+},true);
+
 document.addEventListener('click',event=>{
   const target=event.target?.closest?.('[data-add-sky-b],[data-remove-sky-b]');
   if(!target)return;
