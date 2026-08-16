@@ -7,23 +7,66 @@ const previewRef=String(params.get('ref')||'').trim();
 const previewPath=/(^|\/)sky-chart-preview\/sky-chart\.html$/.test(location.pathname);
 const exactPreview=/^[0-9a-f]{40}$/i.test(previewRef);
 const tarotPreviewRequested=previewPath&&exactPreview&&params.get('view')==='tarot';
+let tarotPreviewHtmlPromise=null;
+let tarotPreviewOpening=false;
+let tarotWarmStarted=false;
 
 function previewAssetBase(){
   return `https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@${previewRef}/`;
 }
+function loadExactTarotHtml(){
+  if(tarotPreviewHtmlPromise)return tarotPreviewHtmlPromise;
+  tarotPreviewHtmlPromise=fetch(previewAssetBase()+'tarot.html',{cache:'force-cache'}).then(response=>{
+    if(!response.ok)throw new Error(`Exact Tarot Ledger revision returned ${response.status}.`);
+    return response.text();
+  });
+  return tarotPreviewHtmlPromise;
+}
+function warmExactTarotPreview(){
+  if(!previewPath||!exactPreview)return;
+  loadExactTarotHtml().catch(()=>{});
+  if(tarotWarmStarted)return;
+  tarotWarmStarted=true;
+  [
+    'style.css?v=346',
+    'navloader.js?v=56',
+    'tarot-cards.js',
+    'relphi-locked-interpretations.js?v=207',
+    'relphi-card-senses.js?v=321',
+    'relphi-rising-sign-house-offset-effects.js?v=219',
+    'vendor/astronomy-engine/astronomy.browser.min.js',
+    'relphi-house-systems.js?v=317',
+    'tarot-app.js?v=366'
+  ].forEach(path=>{
+    const href=new URL(path,previewAssetBase()).href;
+    if(document.querySelector(`link[data-relphi-tarot-warm="${CSS.escape(href)}"]`))return;
+    const link=document.createElement('link');
+    link.rel='prefetch';
+    link.href=href;
+    link.dataset.relphiTarotWarm=href;
+    document.head.appendChild(link);
+  });
+}
+function requestedPreviewCardId(){
+  return String(new URLSearchParams(location.search).get('card')||'').trim();
+}
 function previewCardBridgeScript(){
-  return '<script>(function(){\'use strict\';var cardId=String(new URLSearchParams(location.search).get(\'card\')||\'\').trim();if(!cardId)return;function finish(){var detail=document.getElementById(\'cardDetail\');var browse=document.getElementById(\'browsePanel\');var alreadyOpen=!!(browse&&!browse.hidden&&detail&&detail.textContent.trim());if(!alreadyOpen)window.RelphiTarotLedger?.openFromLocation?.();window.RelphiTarotCardSelectionScroll?.scrollFromLocation?.();}if(document.readyState===\'loading\')document.addEventListener(\'DOMContentLoaded\',finish,{once:true});else finish();})();<\/script>';
+  return '<script>(function(){\'use strict\';var cardId=String(window.__relphiTarotRequestedCard||new URLSearchParams(location.search).get(\'card\')||\'\').trim();if(!cardId)return;function esc(value){if(window.CSS&&CSS.escape)return CSS.escape(value);return String(value).replace(/["\\\\]/g,\'\\\\$&\')}function alignList(){var browse=document.getElementById(\'browsePanel\'),list=document.getElementById(\'cardList\');if(!browse||!list)return;var target=list.querySelector(\'.or-card[data-id="\'+esc(cardId)+\'"]\')||list.querySelector(\'[data-card-id="\'+esc(cardId)+\'"]\');if(!target)return;var scroller=null;for(var node=target.parentElement;node&&browse.contains(node);node=node.parentElement){var style=getComputedStyle(node),overflow=style.overflowY;if((overflow===\'auto\'||overflow===\'scroll\')&&node.scrollHeight>node.clientHeight+1){scroller=node;break}if(node===browse)break}if(!scroller){var panel=browse.querySelector(\'.tarot-list-panel\');if(panel&&panel.scrollHeight>panel.clientHeight+1)scroller=panel}if(scroller){var nr=target.getBoundingClientRect(),sr=scroller.getBoundingClientRect(),top=scroller.scrollTop+(nr.top-sr.top)-(scroller.clientHeight-nr.height)/2;scroller.scrollTop=Math.max(0,Math.min(Math.max(0,scroller.scrollHeight-scroller.clientHeight),top))}}function finish(){var detail=document.getElementById(\'cardDetail\'),browse=document.getElementById(\'browsePanel\');var ready=!!(browse&&!browse.hidden&&detail&&detail.textContent.trim());if(!ready&&window.RelphiTarotLedger&&window.RelphiTarotLedger.openFullEntry)window.RelphiTarotLedger.openFullEntry(cardId,\'ledger\');requestAnimationFrame(function(){requestAnimationFrame(function(){alignList();detail=document.getElementById(\'cardDetail\');if(detail&&detail.textContent.trim()){var top=Math.max(0,detail.getBoundingClientRect().top+window.scrollY-12);window.scrollTo({top:top,behavior:\'auto\'})}if(window.__relphiPreviewOriginalScrollIntoView){Element.prototype.scrollIntoView=window.__relphiPreviewOriginalScrollIntoView;delete window.__relphiPreviewOriginalScrollIntoView}document.getElementById(\'relphi-exact-tarot-gate\')?.remove();document.documentElement.style.visibility=\'visible\'})})}if(document.readyState===\'loading\')document.addEventListener(\'DOMContentLoaded\',finish,{once:true});else finish()})();<\/script>';
 }
 function injectPreviewBase(html){
+  const cardId=requestedPreviewCardId();
+  const safeCard=JSON.stringify(cardId).replace(/</g,'\\u003c');
   const base=`<base href="${previewAssetBase()}">`;
-  const marker='<script>window.__relphiTarotPreviewDocument=true;window.__relphiTarotPreviewPending=false;<\/script>';
+  const gate='<style id="relphi-exact-tarot-gate">html{visibility:hidden!important}</style>';
+  const marker=`<script>window.__relphiTarotPreviewDocument=true;window.__relphiTarotPreviewPending=false;window.__relphiTarotRequestedCard=${safeCard};window.__relphiPreviewOriginalScrollIntoView=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(arg){if(window.__relphiTarotRequestedCard&&arg&&typeof arg==='object')arg=Object.assign({},arg,{behavior:'auto'});return window.__relphiPreviewOriginalScrollIntoView.call(this,arg)};<\/script>`;
   const bridge=previewCardBridgeScript();
-  let out=/<head[^>]*>/i.test(html)?html.replace(/<head([^>]*)>/i,`<head$1>${base}${marker}`):base+marker+html;
+  let out=/<head[^>]*>/i.test(html)?html.replace(/<head([^>]*)>/i,`<head$1>${base}${gate}${marker}`):base+gate+marker+html;
   if(/<\/body>/i.test(out))out=out.replace(/<\/body>/i,`${bridge}</body>`);
   else out+=bridge;
   return out;
 }
 function showTarotPreviewFailure(error){
+  tarotPreviewOpening=false;
   window.__relphiTarotPreviewPending=false;
   const message=String(error?.message||error||'Unknown preview error');
   document.open();
@@ -32,36 +75,27 @@ function showTarotPreviewFailure(error){
   const note=document.querySelector('main p');
   if(note)note.textContent=message;
 }
-function openExactTarotPreview(){
-  window.__relphiTarotPreviewPending=true;
-
-  // Clear the Sky Chart document immediately, while this first head script is
-  // running, so none of the Sky Chart CSS or JavaScript can continue loading
-  // underneath the Tarot preview. The prior implementation waited for the
-  // network response before replacing the document, which let both apps share
-  // one lifecycle and produced dead/search-misdirected controls.
+function replaceWithExactTarot(html){
   document.open();
-  document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Opening Tarot Ledger…</title></head><body><main style="max-width:42rem;margin:12vh auto;padding:1.25rem;font:16px/1.45 system-ui,sans-serif">Opening Tarot Ledger…</main></body></html>');
+  document.write(injectPreviewBase(html));
   document.close();
-
-  fetch(previewAssetBase()+'tarot.html',{cache:'no-store'})
-    .then(response=>{
-      if(!response.ok)throw new Error(`Exact Tarot Ledger revision returned ${response.status}.`);
-      return response.text();
-    })
-    .then(html=>{
-      document.open();
-      document.write(injectPreviewBase(html));
-      document.close();
-    })
-    .catch(showTarotPreviewFailure);
+}
+function openExactTarotPreview(options={}){
+  if(tarotPreviewOpening)return;
+  tarotPreviewOpening=true;
+  window.__relphiTarotPreviewPending=true;
+  const showLoading=options.showLoading===true;
+  if(showLoading){
+    document.open();
+    document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Opening Tarot Ledger…</title></head><body><main style="max-width:42rem;margin:12vh auto;padding:1.25rem;font:16px/1.45 system-ui,sans-serif">Opening Tarot Ledger…</main></body></html>');
+    document.close();
+  }
+  loadExactTarotHtml().then(replaceWithExactTarot).catch(showTarotPreviewFailure);
 }
 
-// Keep the address on oracleofrelphi.com. jsDelivr intentionally serves the
-// repository HTML as a download/plain-text resource when navigated to directly;
-// it is only our exact-revision asset source here.
+// A directly opened exact Tarot preview has no live Sky Chart to preserve.
 if(tarotPreviewRequested){
-  openExactTarotPreview();
+  openExactTarotPreview({showLoading:true});
   return;
 }
 
@@ -128,10 +162,20 @@ syncRoot();
 
 if(previewPath&&exactPreview)document.addEventListener('DOMContentLoaded',()=>rewritePreviewTarotLinks(document),{once:true});
 
-// Inline relationship cards are created after DOMContentLoaded. In an exact
-// revision preview, own their navigation at click time so the browser stays on
-// oracleofrelphi.com instead of resolving the relative Tarot URL against the
-// injected jsDelivr <base>. This transmits the canonical card ID unchanged.
+// Warm the exact Tarot document and its heavy first-paint dependencies as soon
+// as the user shows intent to open one of the inline cards.
+document.addEventListener('pointerover',event=>{
+  if(!previewPath||!exactPreview)return;
+  if(event.target?.closest?.('[data-inline-ledger]'))warmExactTarotPreview();
+},true);
+document.addEventListener('focusin',event=>{
+  if(!previewPath||!exactPreview)return;
+  if(event.target?.closest?.('[data-inline-ledger]'))warmExactTarotPreview();
+},true);
+
+// Exact-preview card clicks stay in this document lifecycle. Keep the current
+// Sky visible while Tarot Ledger prepares, update the address without reloading,
+// and replace the document only once the exact Tarot HTML is ready.
 document.addEventListener('click',event=>{
   if(!previewPath||!exactPreview)return;
   const link=event.target?.closest?.('[data-inline-ledger]');
@@ -140,7 +184,10 @@ document.addEventListener('click',event=>{
   if(!cardId)return;
   event.preventDefault();
   event.stopImmediatePropagation();
-  location.assign(previewTarotHref(cardId));
+  const next=previewTarotHref(cardId);
+  warmExactTarotPreview();
+  history.pushState({relphiView:'tarot',cardId},'',next);
+  openExactTarotPreview({showLoading:false});
 },true);
 
 document.addEventListener('click',event=>{
