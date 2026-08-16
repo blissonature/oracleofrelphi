@@ -144,10 +144,16 @@
     if (isTarotContext()) {
       loadCanonicalGlyphRuntime();
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
-      appendScript('drawing-board-workflow-v2.js?v=24');
-      appendScript('drawing-board-interactions-v1.js?v=4');
-      appendScript('drawing-board-spread-prefabs-v1.js?v=10');
-      appendScript('tarot-card-deep-link-v1.js?v=1');
+      appendScript('drawing-board-workflow-v2.js?v=24', function () {
+        appendScript('drawing-board-interactions-v1.js?v=5', function () {
+          appendScript('drawing-board-spread-prefabs-v1.js?v=10', function () {
+            window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+            requestAnimationFrame(function () {
+              requestAnimationFrame(function () { window.RelphiTarotLedger?.openFromLocation(); });
+            });
+          });
+        });
+      });
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () {

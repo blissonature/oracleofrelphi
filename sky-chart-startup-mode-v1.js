@@ -13,16 +13,8 @@ function previewAssetBase(){
 }
 function injectPreviewBase(html){
   const base=`<base href="${previewAssetBase()}">`;
-  // Suppress navloader's early deep-link controller. It used to start before
-  // Tarot Ledger's own DOMContentLoaded initialization had finished, which
-  // left the preview at the general Ledger landing page. We load the same
-  // controller explicitly at the end of the document instead.
-  const marker='<script>window.__relphiTarotPreviewDocument=true;window.__relphiTarotPreviewPending=false;window.__relphiTarotCardDeepLinkV9=true;<\/script>';
-  const lateDeepLink=`<script>window.__relphiTarotCardDeepLinkV9=false;<\/script><script src="${previewAssetBase()}tarot-card-deep-link-v1.js?v=preview-late"><\/script>`;
-  let out=/<head[^>]*>/i.test(html)?html.replace(/<head([^>]*)>/i,`<head$1>${base}${marker}`):base+marker+html;
-  if(/<\/body>/i.test(out))out=out.replace(/<\/body>/i,`${lateDeepLink}</body>`);
-  else out+=lateDeepLink;
-  return out;
+  const marker='<script>window.__relphiTarotPreviewDocument=true;window.__relphiTarotPreviewPending=false;<\/script>';
+  return /<head[^>]*>/i.test(html)?html.replace(/<head([^>]*)>/i,`<head$1>${base}${marker}`):base+marker+html;
 }
 function showTarotPreviewFailure(error){
   window.__relphiTarotPreviewPending=false;
@@ -118,22 +110,16 @@ function rewritePreviewTarotLinks(root){
 }
 
 // Stored Sky B data is not itself permission to enter comparison mode.
-Storage.prototype.getItem=function(key){
-  if(this===localStorage&&key===SKY_B_KEY&&readMode()!=='comparison'&&html.dataset.skyBEditing!=='true')return null;
-  return nativeGetItem.call(this,key);
-};
+function read(key){
+  if(key===SKY_B_KEY&&readMode()!=='comparison'&&html.dataset.skyBEditing!=='true')return null;
+  return rawGet(key);
+}
+window.RelphiSkyStartupMode=Object.freeze({read,readMode,writeMode,syncRoot});
 
 // Fail closed into the ordinary single-sky view before the body can paint.
 syncRoot();
 
-if(previewPath&&exactPreview){
-  new MutationObserver(records=>{
-    records.forEach(record=>record.addedNodes.forEach(node=>{
-      if(node.nodeType===1)rewritePreviewTarotLinks(node);
-    }));
-  }).observe(html,{childList:true,subtree:true});
-  document.addEventListener('DOMContentLoaded',()=>rewritePreviewTarotLinks(document),{once:true});
-}
+if(previewPath&&exactPreview)document.addEventListener('DOMContentLoaded',()=>rewritePreviewTarotLinks(document),{once:true});
 
 document.addEventListener('click',event=>{
   const target=event.target?.closest?.('[data-add-sky-b],[data-remove-sky-b]');
@@ -149,7 +135,4 @@ window.addEventListener('storage',event=>{
   if(event.key===SKY_B_KEY||event.key===MODE_KEY)syncRoot();
 });
 
-new MutationObserver(records=>{
-  if(records.some(record=>record.attributeName==='data-sky-b-editing'))syncRoot();
-}).observe(html,{attributes:true,attributeFilter:['data-sky-b-editing']});
 })();

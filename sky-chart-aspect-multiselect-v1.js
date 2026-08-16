@@ -24,6 +24,7 @@
   let portalOwner = null;
   let queued = false;
   let countTimer = 0;
+  let announcedSelection = '';
 
   function filterBar() {
     return document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
@@ -156,9 +157,12 @@
     document.documentElement.dataset.skyAspectMultiselect = 'ready';
     document.documentElement.dataset.skyAspectSelection = `${selected.size}/${IDS.length}`;
     updateVisibleCount();
-    window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed', {
-      detail:{ selected:Array.from(selected) }
-    }));
+    const detail = { selected:Array.from(selected) };
+    const signature = detail.selected.join(',');
+    if (signature !== announcedSelection) {
+      announcedSelection = signature;
+      window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed', { detail }));
+    }
   }
 
   function handleChange(event) {

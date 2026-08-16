@@ -1101,7 +1101,7 @@
     drawingBoardRestoring = false;
     drawingBoardPersistenceReady = true;
     if (drawingBoardHasContent(snapshot)) {
-      setTimeout(openRestoredDrawingBoard, 0);
+      if (!new URL(location.href).searchParams.has('card')) setTimeout(openRestoredDrawingBoard, 0);
       queueDrawingBoardSave();
       return true;
     }
@@ -9412,11 +9412,27 @@ ${notes || ''}`;
     setVisible('visibilityPanel', false);
     renderBrowse();
     renderDetail(card);
+    setVisible('browsePanel', true);
     const detail = $('cardDetail');
     if (detail) detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
     updateClearKeywordButtons();
     pushHistory();
   }
+
+  window.RelphiTarotLedger = Object.freeze({
+    hasCard:id => !!cardById(String(id || '').trim()),
+    openFullEntry(cardId,presentationMode='ledger') {
+      const card = cardById(String(cardId || '').trim());
+      if (!card) return false;
+      if (presentationMode === 'inspector') openDedicatedSkyCardInspector(card);
+      else openFullEntryById(card.card_id);
+      return true;
+    },
+    openFromLocation() {
+      const cardId = new URL(location.href).searchParams.get('card');
+      return cardId ? this.openFullEntry(cardId,'ledger') : false;
+    }
+  });
 
 
   function prepareExamplePlaceholders(root = document) {
@@ -9627,6 +9643,7 @@ ${notes || ''}`;
     updateClearKeywordButtons();
     if (isDedicatedSkyChartPage()) requestAnimationFrame(restoreDedicatedSkyChartView);
     else if (!openDateFromHash(initialHash)) updateSummary([]);
+    window.RelphiTarotLedger.openFromLocation();
   }
   document.addEventListener('DOMContentLoaded', init);
 })();

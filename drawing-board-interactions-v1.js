@@ -8,7 +8,6 @@
   let restoreTimer = 0;
 
   function root() { return document.querySelector(PANEL); }
-  function normalize(value) { return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase(); }
   function isEmptyItem(item) {
     return !!item && !item.querySelector('[data-row-card]') &&
       (item.classList.contains('card-row-placeholder-item') || item.classList.contains('relphi-target-draw-proxy'));
@@ -121,35 +120,9 @@
     const card = title.closest('[data-row-card]');
     return { id: card?.dataset.rowCard || '', title: title.textContent.trim() };
   }
-  function findLedgerCard(identity) {
-    const list = document.getElementById('cardList');
-    if (!list) return null;
-    const wanted = normalize(identity.title);
-    return Array.from(list.querySelectorAll('button,[role="listitem"],li,article,[data-card-id],[data-card]')).find(function (node) {
-      const id = node.getAttribute('data-card-id') || node.getAttribute('data-card') || node.getAttribute('data-id') || '';
-      return (identity.id && id === identity.id) || normalize(node.textContent).includes(wanted);
-    }) || null;
-  }
   function revealFullCard(identity) {
-    (document.getElementById('showAllCards') || document.getElementById('landingShowLedger'))?.click();
-    const started = Date.now();
-    (function tryOpen() {
-      const match = findLedgerCard(identity);
-      if (match) {
-        (match.closest('button,[role="button"],[role="listitem"],li,article') || match).click();
-        document.getElementById('browsePanel')?.removeAttribute('hidden');
-        document.getElementById('cardDetail')?.scrollIntoView({ behavior:'smooth', block:'start' });
-        return;
-      }
-      if (Date.now() - started < 1800) return requestAnimationFrame(tryOpen);
-      const command = document.getElementById('oracleCommand');
-      const run = document.getElementById('runCommand');
-      if (command && run) {
-        command.value = identity.title;
-        command.dispatchEvent(new Event('input', { bubbles:true }));
-        run.click();
-      }
-    })();
+    if (!identity.id) return false;
+    return window.RelphiTarotLedger?.openFullEntry(identity.id, 'ledger') === true;
   }
 
   function installPositionStickerEditor(panel) {

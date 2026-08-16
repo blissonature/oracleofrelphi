@@ -100,6 +100,16 @@
     return (side === 'left' ? copies[0] : copies[copies.length - 1])?.querySelector('small') || null;
   }
 
+  function setRelationshipCoordinate(small,value) {
+    small.dataset.relationshipCoordinate = value;
+    const coordinate = small.querySelector('.relphi-house-coordinate-value');
+    if (coordinate) {
+      if (coordinate.textContent !== value) coordinate.textContent = value;
+      return;
+    }
+    if (small.textContent !== value) small.textContent = value;
+  }
+
   function correctRelationships(mapsA,mapsB) {
     document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row => {
       const left = mapsA.byIdentity.get(row.dataset.leftPlacement || '');
@@ -108,16 +118,14 @@
         row.dataset.leftSign = String(left.signIndex);
         const small = relationshipCopy(row,'left');
         if (small) {
-          small.dataset.relationshipCoordinate = left.text;
-          if (small.textContent !== left.text) small.textContent = left.text;
+          setRelationshipCoordinate(small,left.text);
         }
       }
       if (right) {
         row.dataset.rightSign = String(right.signIndex);
         const small = relationshipCopy(row,'right');
         if (small) {
-          small.dataset.relationshipCoordinate = right.text;
-          if (small.textContent !== right.text) small.textContent = right.text;
+          setRelationshipCoordinate(small,right.text);
         }
       }
     });

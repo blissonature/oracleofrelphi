@@ -1,0 +1,54 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Sky Chart architecture audit fixture</title>
+<script>
+(() => {
+  const signs = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  const positions = {
+    Sun: 0, Moon: 30, Mercury: 90, Venus: 120, Mars: 150,
+    Jupiter: 180, Saturn: 210, Uranus: 240, Neptune: 270, Pluto: 300,
+    Chiron: 49, 'North Node': 45, 'South Node': 225, Lilith: 75,
+    'Part of Fortune': 135, Vertex: 315
+  };
+  const placement = (name, longitude) => {
+    const value = ((longitude % 360) + 360) % 360;
+    const signIndex = Math.floor(value / 30);
+    const withinSign = value - signIndex * 30;
+    const degree = Math.floor(withinSign);
+    return {
+      name,
+      longitude: value,
+      sign: signs[signIndex],
+      degree,
+      minute: Math.floor((withinSign - degree) * 60),
+      second: 0
+    };
+  };
+  const sky = (name, offset, ascendant) => {
+    const houseCusps = Array.from({length: 12}, (_, index) => (ascendant + index * 30) % 360);
+    return {
+      name,
+      houseSystem: 'equal-house',
+      houseCusps,
+      calcProfile: {
+        dateTime: '2026-08-02T12:00',
+        instant: '2026-08-02T18:00:00.000Z',
+        location: 'Salt Lake City, Utah, United States',
+        timeZone: 'America/Denver',
+        latitude: 40.7608,
+        longitude: -111.891,
+        houseCusps,
+        houseSystem: 'equal-house',
+        ascendant,
+        midheaven: (ascendant + 90) % 360
+      },
+      placements: Object.fromEntries(Object.entries(positions).map(([key, value]) => [key, placement(key, value + offset)]))
+    };
+  };
+  localStorage.setItem('relphiSkyChartA', JSON.stringify(sky('Audit Sky A', 0, 0)));
+  localStorage.setItem('relphiSkyChartB', JSON.stringify(sky('Audit Sky B', 13, 15)));
+  localStorage.setItem('relphiSkyChartLastModeV1', 'comparison');
+  sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
+  location.replace('../sky-chart.html?audit=baseline');
+})();
+</script>

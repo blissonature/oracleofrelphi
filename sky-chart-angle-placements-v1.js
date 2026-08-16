@@ -19,7 +19,7 @@
     { id:'mc', key:'Medium Coeli', label:'Medium Coeli', registry:'mc', aliases:['mc','midheaven','medium coeli'] },
     { id:'ic', key:'Imum Coeli', label:'Imum Coeli', registry:'ic', aliases:['ic','imum coeli','imumcoeli'] }
   ]);
-  const originalSetItem = Storage.prototype.setItem;
+  const nativeSetItem = Storage.prototype.setItem;
   let decorating = false;
 
   const norm = value => ((Number(value) % 360) + 360) % 360;
@@ -151,19 +151,12 @@
     catch (_) { return raw; }
   }
 
-  Storage.prototype.setItem = function (key, value) {
-    if (this === localStorage && KEYS.has(String(key))) {
-      return originalSetItem.call(this, key, normalizeStored(String(value)));
-    }
-    return originalSetItem.call(this, key, value);
-  };
-
   function normalizeExistingStorage() {
     KEYS.forEach(key => {
       const raw = localStorage.getItem(key);
       if (!raw) return;
       const normalized = normalizeStored(raw);
-      if (normalized !== raw) originalSetItem.call(localStorage, key, normalized);
+      if (normalized !== raw) nativeSetItem.call(localStorage, key, normalized);
     });
   }
 

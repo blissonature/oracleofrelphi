@@ -20,8 +20,6 @@
     'bi-quintile':'Bi-Quintile', quincunx:'Quincunx', opposition:'Opposition'
   };
   const filters = { aspect:'all', placement:'all', houseA:'all', houseB:'all' };
-  const baseSetItem = Storage.prototype.setItem;
-  let enriching = false;
   let queued = false;
   let mutationTimer = 0;
 
@@ -129,21 +127,7 @@
     return value;
   }
 
-  Storage.prototype.setItem = function (key, raw) {
-    if (!enriching && this === localStorage && Object.values(KEYS).includes(String(key))) {
-      try {
-        const next = JSON.parse(String(raw));
-        const previous = JSON.parse(localStorage.getItem(String(key)) || 'null');
-        enriching = true;
-        return baseSetItem.call(this, key, JSON.stringify(enrichPayload(next, previous)));
-      } catch (_) {
-        // Fall through to the existing storage pipeline for non-JSON values.
-      } finally {
-        enriching = false;
-      }
-    }
-    return baseSetItem.call(this, key, raw);
-  };
+  window.RelphiSkyDataPreparation=Object.freeze({prepare:enrichPayload});
 
   function dispatch(slot) {
     try {

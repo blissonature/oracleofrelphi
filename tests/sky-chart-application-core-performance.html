@@ -1,0 +1,61 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sky Chart application core performance</title>
+<pre id="result">Running application-core stress test…</pre>
+<iframe id="chart" title="Sky Chart application core stress test" style="width:1440px;height:1100px;border:0"></iframe>
+<script>
+(async()=>{
+  const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  const positions={Sun:0,Moon:30,Mercury:90,Venus:120,Mars:150,Jupiter:180,Saturn:210,Uranus:240,Neptune:270,Pluto:300,Chiron:49,'North Node':45,'South Node':225,Lilith:75,'Part of Fortune':135,Vertex:315};
+  const placement=(name,longitude)=>{const value=((longitude%360)+360)%360,index=Math.floor(value/30),within=value-index*30,degree=Math.floor(within);return{name,longitude:value,sign:signs[index],degree,minute:Math.floor((within-degree)*60),second:0}};
+  const sky=(name,offset,ascendant)=>{const houseCusps=Array.from({length:12},(_,index)=>(ascendant+index*30)%360);return{name,houseSystem:'equal-house',houseCusps,calcProfile:{dateTime:'2026-08-02T12:00',instant:'2026-08-02T18:00:00.000Z',location:'Salt Lake City, Utah, United States',timeZone:'America/Denver',latitude:40.7608,longitude:-111.891,houseCusps,houseSystem:'equal-house',ascendant,midheaven:(ascendant+90)%360},placements:Object.fromEntries(Object.entries(positions).map(([key,value])=>[key,placement(key,value+offset)]))}};
+  localStorage.setItem('relphiSkyChartA',JSON.stringify(sky('Stress Sky A',0,0)));
+  localStorage.setItem('relphiSkyChartB',JSON.stringify(sky('Stress Sky B',13,15)));
+  localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+  const frame=document.getElementById('chart'),wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  const frameLoaded=new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
+  frame.src='../sky-chart.html?audit=application-core-performance';
+  await frameLoaded;
+  document.getElementById('result').textContent='Frame loaded…';
+  const win=frame.contentWindow,doc=frame.contentDocument,errors=[];
+  win.addEventListener('error',event=>errors.push(event.message||'error'));
+  win.addEventListener('unhandledrejection',event=>errors.push(String(event.reason||'unhandled rejection')));
+  let stablePasses=0,lastReadySignature='';
+  for(let attempt=0;attempt<300;attempt++){
+    const readyApp=win.RelphiSkyChartApplication,total=readyApp?.model?.relationships?.length||0;
+    const readySignature=`${total}:${doc.querySelectorAll('.sky-foundation-relationship-row').length}:${doc.querySelectorAll('.sky-foundation-aspect-hit').length}`;
+    stablePasses=doc.documentElement.dataset.skyApplicationCore==='v1'&&total>1&&readySignature===`${total}:${total}:${total}`&&readySignature===lastReadySignature?stablePasses+1:0;
+    lastReadySignature=readySignature;
+    if(stablePasses>=8)break;
+    await wait(50);
+  }
+  const app=win.RelphiSkyChartApplication,hits=[...doc.querySelectorAll('.sky-foundation-aspect-hit')],rows=[...doc.querySelectorAll('.sky-foundation-relationship-row')];
+  if(!app||hits.length<2||rows.length<2)throw new Error('Application core did not become ready.');
+  document.getElementById('result').textContent='Core ready…';
+  const raf=()=>new Promise(resolve=>win.requestAnimationFrame(resolve)),hoverBatches=[];
+  for(let batch=0;batch<10;batch++){
+    document.getElementById('result').textContent=`Hover batch ${batch+1}/10…`;
+    const started=win.performance.now();
+    for(let index=0;index<100;index++){
+      const hit=hits[index%hits.length],next=hits[(index+1)%hits.length];
+      hit.dispatchEvent(new win.PointerEvent('pointerover',{bubbles:true,relatedTarget:null,pointerType:'mouse'}));
+      hit.dispatchEvent(new win.PointerEvent('pointerout',{bubbles:true,relatedTarget:next,pointerType:'mouse'}));
+    }
+    hoverBatches.push(win.performance.now()-started);await raf();
+  }
+  const expansionTimes=[];
+  for(let index=0;index<100;index++){
+    document.getElementById('result').textContent=`Expansion ${index+1}/100…`;
+    const started=win.performance.now();rows[index%2].click();expansionTimes.push(win.performance.now()-started);
+  }
+  await raf();
+  await wait(100);
+  const mean=values=>values.reduce((sum,value)=>sum+value,0)/values.length;
+  const result={
+    ok:errors.length===0&&hoverBatches.every(value=>value<34)&&expansionTimes.every(value=>value<100)&&app.metrics.fullScansInPointerPath===0,
+    relationshipCount:rows.length,hitTargetCount:hits.length,hoverTransitions:1000,hoverBatchMs:hoverBatches.map(value=>+value.toFixed(2)),averageHoverMs:+(mean(hoverBatches)/100).toFixed(4),expansionCycles:100,averageExpansionMs:+mean(expansionTimes).toFixed(2),worstExpansionMs:+Math.max(...expansionTimes).toFixed(2),expandedRows:doc.querySelectorAll('.is-inline-expanded').length,persistentDetails:doc.querySelectorAll('.inline-rel-detail').length,fullScansInPointerPath:app.metrics.fullScansInPointerPath,coreObserverCount:app.metrics.observerCount,errors
+  };
+  const output=document.getElementById('result');output.dataset.complete=result.ok?'true':'failed';output.textContent=JSON.stringify(result,null,2);
+})().catch(error=>{const output=document.getElementById('result');output.dataset.complete='error';output.textContent=error.stack||String(error)});
+</script>

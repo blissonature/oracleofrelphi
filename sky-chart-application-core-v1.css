@@ -1,0 +1,108 @@
+.sky-foundation-aspect{
+  transition:none!important;
+}
+.sky-foundation-aspect-hit{
+  fill:none;
+  stroke:transparent!important;
+  stroke-width:22;
+  pointer-events:stroke;
+  vector-effect:non-scaling-stroke;
+  cursor:pointer;
+}
+.sky-foundation-aspect.is-related-hover,
+.sky-foundation-aspect.is-selected-target{
+  opacity:1!important;
+  stroke-width:5!important;
+}
+.sky-foundation-aspect.is-interaction-hidden{
+  display:none!important;
+  pointer-events:none!important;
+}
+.sky-foundation-interactive:focus-visible,
+.sky-foundation-relationship-row:focus-visible,
+.sky-progressive-trigger:focus-visible,
+.inline-rel-card:focus-visible{
+  outline:3px solid #171717;
+  outline-offset:3px;
+}
+#skyFoundationRelationshipList{
+  scrollbar-width:thin;
+  scrollbar-color:#8d8d8d transparent;
+  scrollbar-gutter:stable;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+}
+#skyFoundationRelationshipList::-webkit-scrollbar{width:8px;height:8px}
+#skyFoundationRelationshipList::-webkit-scrollbar-track{background:transparent}
+#skyFoundationRelationshipList::-webkit-scrollbar-thumb{border:2px solid transparent;border-radius:999px;background:#8d8d8d;background-clip:padding-box}
+#skyFoundationRelationshipList::-webkit-scrollbar-button{display:none;width:0;height:0}
+.sky-foundation-relationship-row{
+  --relationship-stripe:var(--aspect-color,#777);
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-areas:"left aspect right" "left orb right" "detail detail detail";
+  grid-template-rows:38px 18px auto;
+  align-items:center;
+  column-gap:4px;
+  row-gap:0;
+  min-height:64px;
+  padding:4px 8px 3px 12px;
+  border:0;
+  overflow:hidden;
+  contain:layout style;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.sky-foundation-relationship-row[hidden]{display:none!important}
+.sky-foundation-relationship-row::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--relationship-stripe)}
+.sky-foundation-relationship-row.is-related-hover{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--relationship-stripe),transparent 30%)}
+.sky-foundation-relationship-placement{display:grid;grid-template-rows:38px 18px;align-items:center;justify-items:center;align-self:stretch;min-width:0;width:100%;overflow:visible}
+.sky-foundation-relationship-placement--left{grid-area:left}
+.sky-foundation-relationship-placement--right{grid-area:right}
+.sky-foundation-relationship-symbol-pair{display:flex;align-items:center;justify-content:center;gap:4px;width:100%;min-width:0;height:38px;overflow:visible}
+.sky-foundation-relationship-in{flex:0 0 auto;color:#625b55;font:750 .64rem/1 system-ui,sans-serif}
+.sky-progressive-trigger{display:grid;place-items:center;width:38px;height:38px;min-width:38px;min-height:38px;padding:0;border:0;border-radius:7px;background:transparent;cursor:inherit;touch-action:manipulation}
+.is-inline-expanded .sky-progressive-trigger{cursor:pointer}
+.is-inline-expanded .sky-progressive-trigger:hover{background:rgba(45,39,34,.055)}
+.sky-progressive-trigger>svg{display:block;width:38px!important;height:38px!important;overflow:visible;transform:none!important}
+.sky-foundation-relationship-glyph--aspect{grid-area:aspect;align-self:center;justify-self:center}
+.sky-foundation-relationship-copy{display:grid;place-items:center;min-width:0;width:100%;height:18px;overflow:visible;color:#625b55}
+.sky-foundation-relationship-copy small.relphi-house-coordinate{display:grid!important;grid-template-columns:50px 18px!important;align-items:center!important;justify-content:center!important;column-gap:4px!important;height:18px!important;line-height:18px!important;overflow:visible!important}
+.relphi-house-coordinate-value{display:block;width:50px;min-width:50px;text-align:right;white-space:nowrap;line-height:18px}
+.relphi-house-medallion{--house-color:#777;--house-ink:#fff;display:inline-grid;place-items:center;justify-self:start;width:18px;height:18px;box-sizing:border-box;padding:0!important;border:0!important;border-radius:50%!important;background:var(--house-color)!important;color:var(--house-ink)!important;font:900 .58rem/1 system-ui,sans-serif!important;font-variant-numeric:tabular-nums;text-align:center;vertical-align:middle;box-shadow:0 1px 2px rgba(0,0,0,.16);touch-action:manipulation}
+.relphi-house-medallion[data-house="10"],.relphi-house-medallion[data-house="11"],.relphi-house-medallion[data-house="12"]{font-size:.49rem!important;letter-spacing:-.035em}
+.sky-foundation-relationship-orb{grid-area:orb;align-self:center;justify-self:center;display:grid;place-items:center;height:18px;min-width:40px;color:var(--relationship-stripe);text-align:center;white-space:nowrap;font:900 .61rem/18px system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.inline-rel-detail{grid-area:detail;grid-column:1/-1;grid-row:3;min-width:0;width:100%;padding-top:8px;cursor:default;touch-action:pan-y}
+.inline-rel-detail[hidden]{display:none!important}
+.inline-rel-visual{display:grid;grid-template-columns:minmax(72px,1fr) minmax(110px,1.1fr) minmax(72px,1fr);align-items:center;gap:10px;min-width:0}
+.inline-rel-card{display:grid;justify-items:center;gap:3px;min-width:0;color:#2f2925;text-decoration:none!important;touch-action:manipulation}
+.inline-rel-card small{font-size:.56rem;font-weight:900;text-transform:uppercase}
+.inline-rel-card img{display:block;width:min(86px,100%);height:auto;aspect-ratio:500/864;object-fit:contain;border-radius:4px;box-shadow:0 2px 5px rgba(0,0,0,.18)}
+.inline-rel-card b{font-size:.61rem;line-height:1.15;text-align:center}
+.inline-rel-wheel{display:grid;justify-items:center;gap:3px;min-width:0}
+.inline-rel-wheel-stage{width:min(145px,100%);aspect-ratio:1}
+.inline-rel-wheel-stage svg{display:block;width:100%;height:100%}
+.inline-rel-ring{fill:#fffdf8;stroke:rgba(31,27,24,.22);stroke-width:1.5}
+.inline-rel-radius{stroke-width:1.8}.inline-rel-radius.a{stroke:#c9211e}.inline-rel-radius.b{stroke:#2462d0}
+.inline-rel-aspect{stroke:var(--relationship-stripe,#777);stroke-width:2.4}
+.inline-rel-point{stroke:#fff;stroke-width:1.4}.inline-rel-point-a{fill:#c9211e}.inline-rel-point-b{fill:#2462d0}
+.inline-rel-orb{display:flex;align-items:center;gap:5px;font-size:.6rem}.inline-rel-orb span{display:block;width:48px;height:4px;border-radius:999px;background:linear-gradient(90deg,var(--relationship-stripe,#777) calc((1 - var(--orb)) * 100%),rgba(31,27,24,.12) 0)}
+.inline-rel-progressive-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-bottom:8px;min-width:0}
+.inline-rel-progressive-token{display:grid;justify-items:center;min-width:0;padding:4px 5px;border-radius:7px;border-top:2px solid var(--token-color,#777);background:rgba(45,39,34,.04);color:#352f2a;text-align:center;touch-action:manipulation}
+.inline-rel-progressive-token[hidden]{display:none!important}
+.inline-rel-progressive-token strong{font-size:.6rem;line-height:1.15}.inline-rel-progressive-token span{font-size:.55rem;font-weight:680;line-height:1.28;color:#625a53}
+@media(max-width:620px){
+  #skyFoundationRelationshipList:has(>.sky-foundation-relationship-row.is-inline-expanded){max-height:min(720px,calc(100dvh - 84px))!important}
+  .sky-foundation-relationship-row{column-gap:2px;padding:4px 6px 3px 12px}
+  .sky-foundation-relationship-symbol-pair{gap:2px}
+  .sky-foundation-relationship-in{font-size:.6rem}
+  .sky-foundation-relationship-copy small.relphi-house-coordinate{grid-template-columns:48px 18px!important;column-gap:3px!important}
+  .relphi-house-coordinate-value{width:48px;min-width:48px}
+  .inline-rel-visual{grid-template-columns:minmax(62px,1fr) minmax(92px,1.05fr) minmax(62px,1fr);gap:6px}
+  .inline-rel-card img{width:min(72px,100%)}
+  .inline-rel-card b{font-size:.56rem}
+  .inline-rel-progressive-strip{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"lp ls lh" "as as as" "rp rs rh"}
+  .inline-rel-progressive-token[data-field="left-placement"]{grid-area:lp}.inline-rel-progressive-token[data-field="left-sign"]{grid-area:ls}.inline-rel-progressive-token[data-field="left-house"]{grid-area:lh}.inline-rel-progressive-token[data-field="aspect"]{grid-area:as;justify-self:center;width:min(180px,100%)}.inline-rel-progressive-token[data-field="right-placement"]{grid-area:rp}.inline-rel-progressive-token[data-field="right-sign"]{grid-area:rs}.inline-rel-progressive-token[data-field="right-house"]{grid-area:rh}
+}

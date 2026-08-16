@@ -11,6 +11,7 @@
   let queued = false;
   let portalOwner = null;
   let countTimer = 0;
+  let announcedSelection = '';
 
   const angleId = value => {
     const key = String(value || '').trim().toLowerCase().replace(/[._-]+/g, ' ').replace(/\s+/g, ' ');
@@ -158,7 +159,12 @@
     document.documentElement.dataset.skyAHouseSelection = `${state.A.size}/${HOUSES.length}`;
     document.documentElement.dataset.skyBHouseSelection = `${state.B.size}/${HOUSES.length}`;
     updateCount();
-    window.dispatchEvent(new CustomEvent('relphi:sky-house-multiselect-changed', { detail:{ A:Array.from(state.A), B:Array.from(state.B) } }));
+    const detail = { A:Array.from(state.A), B:Array.from(state.B) };
+    const signature = `${detail.A.join(',')}|${detail.B.join(',')}`;
+    if (signature !== announcedSelection) {
+      announcedSelection = signature;
+      window.dispatchEvent(new CustomEvent('relphi:sky-house-multiselect-changed', { detail }));
+    }
   }
 
   function handleChange(event) {
