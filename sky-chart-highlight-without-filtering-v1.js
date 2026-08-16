@@ -8,6 +8,41 @@
 
   let restoreQueued = false;
 
+  function relationshipIdentity(node) {
+    if (!node) return '';
+    const left = String(node.dataset.leftPlacement || '').trim();
+    const aspect = String(node.dataset.aspect || '').trim();
+    const right = String(node.dataset.rightPlacement || '').trim();
+    return left && aspect && right ? `${left}|${aspect}|${right}` : '';
+  }
+
+  // relationIndex is a render address, not relationship identity. Foundation wheel
+  // lines already carry the same stable endpoint/aspect identity as relationship rows.
+  // Rebind the render address from that identity after every interactions pass so
+  // the fast wheel hover path, row hover, orb visibility, and filters all address
+  // the same line even when row order or ordinary-orb formatting changes.
+  function synchronizeLineIdentity() {
+    const rowsByIdentity = new Map();
+    document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row => {
+      const identity = relationshipIdentity(row);
+      if (identity) rowsByIdentity.set(identity, String(row.dataset.relationIndex));
+    });
+
+    document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line => {
+      const identity = relationshipIdentity(line);
+      const index = identity ? rowsByIdentity.get(identity) : undefined;
+      if (index === undefined) {
+        delete line.dataset.relationIndex;
+        return;
+      }
+      line.dataset.relationIndex = index;
+      line.dataset.interactive = 'aspect';
+      line.dataset.focusPiece = 'aspect';
+      line.classList.add('sky-foundation-interactive', 'sky-foundation-aspect');
+      line.style.pointerEvents = 'stroke';
+    });
+  }
+
   function restoreList(highlightIndexes) {
     const rows = Array.from(document.querySelectorAll('.sky-foundation-relationship-row'));
     const highlighted = new Set((highlightIndexes || []).map(String));
@@ -45,8 +80,13 @@
     clearRowHover();
     if (!row) return;
     row.classList.add('is-row-hovered');
-    const index = CSS.escape(row.dataset.relationIndex || '');
-    document.querySelectorAll(`.sky-foundation-aspect[data-relation-index="${index}"]`).forEach(line => line.classList.add('is-row-hovered'));
+    const identity = relationshipIdentity(row);
+    const index = String(row.dataset.relationIndex || '');
+    document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line => {
+      if ((identity && relationshipIdentity(line) === identity) || (index && String(line.dataset.relationIndex || '') === index)) {
+        line.classList.add('is-row-hovered');
+      }
+    });
   }
 
   function bind() {
@@ -86,6 +126,7 @@
     });
 
     window.addEventListener('relphi:sky-foundation-interactions-ready', () => {
+      synchronizeLineIdentity();
       clearRowHover();
       restoreList([]);
     });
@@ -93,6 +134,7 @@
 
   function start() {
     bind();
+    synchronizeLineIdentity();
     window.addEventListener('relphi:sky-foundation-ready', bind);
     window.addEventListener('relphi:sky-foundation-interactions-ready', bind);
   }
