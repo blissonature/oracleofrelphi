@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Sky Chart interaction fixture</title>
+<script>
+  const signs=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  function placement(name,longitude){
+    const value=((longitude%360)+360)%360,sign=Math.floor(value/30),within=value-sign*30;
+    return{name,longitude:value,sign:signs[sign],degree:Math.floor(within),minute:Math.floor((within%1)*60),second:0};
+  }
+  function sky(name,offset){
+    const asc=(165+offset)%360,houseCusps=Array.from({length:12},(_,index)=>(Math.floor(asc/30)*30+index*30)%360);
+    const points={Sun:195,Moon:118.4,Mercury:206.1,Venus:169.8,Mars:167.8,Jupiter:307.1,Saturn:235.5,Uranus:254.8,Neptune:271,Pluto:213.8,Ascendant:asc-offset,Descendant:asc-offset+180,Midheaven:82,'Imum Coeli':262,Chiron:49,'North Node':10,'South Node':190,Lilith:140,'Part of Fortune':225,Vertex:315};
+    const placements=Object.fromEntries(Object.entries(points).map(([key,value])=>[key,placement(key,value+offset)]));
+    const houseFor=value=>{for(let index=0;index<12;index+=1){const start=houseCusps[index],span=((houseCusps[(index+1)%12]-start)%360+360)%360||30;if(((value-start)%360+360)%360<span)return index+1}return 12};
+    Object.values(placements).forEach(item=>{item.house=houseFor(item.longitude)});
+    return{name,houseSystem:'whole-sign',houseCusps,calcProfile:{dateTime:'1985-10-08T12:15',instant:'1985-10-08T16:15:00.000Z',location:'Test fixture',timeZone:'America/New_York',latitude:42.4251,longitude:-71.0662,houseSystem:'whole-sign',houseCusps,extraPoints:{nodes:'mean',lilith:'provided',vertex:'provided',partOfFortune:'calculated',chiron:'provided'}},placements};
+  }
+  localStorage.setItem('relphiSkyChartA',JSON.stringify(sky('Interaction fixture A',0)));
+  localStorage.setItem('relphiSkyChartB',JSON.stringify(sky('Interaction fixture B',73)));
+  localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+  sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
+  location.replace('../sky-chart.html?interaction-fixture=1');
+</script>
