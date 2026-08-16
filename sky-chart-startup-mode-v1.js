@@ -11,39 +11,18 @@ const tarotPreviewRequested=previewPath&&exactPreview&&params.get('view')==='tar
 function previewAssetBase(){
   return `https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@${previewRef}/`;
 }
-function injectPreviewBase(html){
-  const base=`<base href="${previewAssetBase()}">`;
-  const marker='<script>window.__relphiTarotPreviewDocument=true;<\/script>';
-  if(/<head[^>]*>/i.test(html))return html.replace(/<head([^>]*)>/i,`<head$1>${base}${marker}`);
-  return base+marker+html;
-}
-function showTarotPreviewFailure(error){
-  window.__relphiTarotPreviewPending=false;
-  document.documentElement.style.visibility='';
-  const render=()=>{
-    document.body.innerHTML='<main style="max-width:42rem;margin:12vh auto;padding:1.25rem;font:16px/1.45 system-ui,sans-serif"><h1>Tarot Ledger preview could not open.</h1><p id="relphiTarotPreviewError"></p></main>';
-    const note=document.getElementById('relphiTarotPreviewError');
-    if(note)note.textContent=error?.message||String(error||'Unknown preview error');
-  };
-  if(document.body)render();else document.addEventListener('DOMContentLoaded',render,{once:true});
-}
-async function openExactTarotPreview(){
-  window.__relphiTarotPreviewPending=true;
-  document.documentElement.style.visibility='hidden';
-  try{
-    const response=await fetch(previewAssetBase()+'tarot.html',{cache:'no-store'});
-    if(!response.ok)throw new Error(`Exact Tarot Ledger revision returned ${response.status}.`);
-    const html=injectPreviewBase(await response.text());
-    document.open();
-    document.write(html);
-    document.close();
-  }catch(error){
-    showTarotPreviewFailure(error);
-  }
+function exactTarotPreviewUrl(cardId){
+  const url=new URL('tarot.html',previewAssetBase());
+  const id=String(cardId||'').trim();
+  if(id)url.searchParams.set('card',id);
+  return url.toString();
 }
 
+// Do not transplant Tarot Ledger into the Sky Chart preview document. That left
+// the Ledger running inside the wrong document lifecycle and pathname. Navigate
+// to the exact revision as its own real tarot.html document instead.
 if(tarotPreviewRequested){
-  openExactTarotPreview();
+  location.replace(exactTarotPreviewUrl(params.get('card')));
   return;
 }
 
@@ -78,13 +57,7 @@ function syncRoot(){
   html.dataset.skyBPresent=mode==='comparison'&&hasStoredSkyB()?'true':'false';
 }
 function previewTarotHref(cardId){
-  const url=new URL(location.href);
-  url.search='';
-  url.hash='';
-  url.searchParams.set('ref',previewRef);
-  url.searchParams.set('view','tarot');
-  url.searchParams.set('card',cardId);
-  return url.toString();
+  return exactTarotPreviewUrl(cardId);
 }
 function rewritePreviewTarotLinks(root){
   if(!previewPath||!exactPreview)return;
