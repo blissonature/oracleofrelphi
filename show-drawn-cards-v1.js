@@ -7,80 +7,87 @@
   const PANEL_ID = 'shortListPanel';
   const LIST_ID = 'cardList';
   let active = false;
-  let internalShowAll = false;
-  let refreshTimer = 0;
-  let lastSignature = '';
+  let internalRefresh = false;
+  let boardRefreshTimer = 0;
+  let lastBoardSignature = '';
 
   function normalize(value) {
-    return String(value || '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+    return String(value || '')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
   }
 
   function drawnCards() {
     const panel = document.getElementById(PANEL_ID);
     if (!panel) return [];
+
     const seen = new Set();
-    return Array.from(panel.querySelectorAll('.card-row-item [data-row-card]')).map(function (card, index) {
-      const id = String(card.dataset.rowCard || '').trim();
-      const title = card.querySelector('.or-card-title-banner')?.textContent.trim() || id.replace(/_/g, ' ');
-      const key = id || normalize(title);
-      return { id:id, title:title, key:key, index:index };
-    }).filter(function (card) {
-      if (!card.key || seen.has(card.key)) return false;
-      seen.add(card.key);
-      return true;
-    });
+    return Array.from(panel.querySelectorAll('.card-row-item [data-row-card]'))
+      .map(function (card) {
+        const id = String(card.dataset.rowCard || '').trim();
+        const title = card.querySelector('.or-card-title-banner')?.textContent.trim() || id.replace(/_/g, ' ');
+        return { id:id, title:title, key:id || normalize(title) };
+      })
+      .filter(function (card) {
+        if (!card.key || seen.has(card.key)) return false;
+        seen.add(card.key);
+        return true;
+      });
   }
 
-  function signature(cards) {
-    return cards.map(function (card) { return card.id || normalize(card.title); }).join('|');
+  function boardSignature(cards) {
+    return cards.map(function (card) { return card.key; }).join('|');
   }
 
-  function resultItems(list) {
-    return Array.from(list?.children || []).filter(function (node) { return node.nodeType === 1; });
+  function resultItems() {
+    const list = document.getElementById(LIST_ID);
+    return list ? Array.from(list.children).filter(function (node) { return node.nodeType === 1; }) : [];
   }
 
   function itemIdentity(item) {
     const identityNode = item.matches('[data-card-id],[data-card],[data-id]')
       ? item
       : item.querySelector('[data-card-id],[data-card],[data-id]');
-    const id = identityNode?.getAttribute('data-card-id') || identityNode?.getAttribute('data-card') || identityNode?.getAttribute('data-id') || '';
-    const titleNode = item.querySelector('.card-name,.tarot-card-name,.or-card-title-banner,[data-card-name],h3,h4,strong');
-    const title = titleNode?.getAttribute('data-card-name') || titleNode?.textContent || item.textContent || '';
-    return { id:String(id).trim(), title:normalize(title) };
+
+    const id = identityNode?.getAttribute('data-card-id') ||
+      identityNode?.getAttribute('data-card') ||
+      identityNode?.getAttribute('data-id') || '';
+
+    const titleNode = item.querySelector('[data-card-name],.card-name,.tarot-card-name,.or-card-title-banner,h3,h4,strong');
+    const title = titleNode?.getAttribute('data-card-name') || titleNode?.textContent || '';
+
+    return {
+      id:String(id).trim(),
+      title:normalize(title),
+      text:normalize(item.textContent)
+    };
   }
 
-  function matchesCard(item, card) {
+  function itemMatchesCard(item, card) {
     const identity = itemIdentity(item);
     if (card.id && identity.id === card.id) return true;
+
     const wanted = normalize(card.title || card.id);
     if (!wanted) return false;
     if (identity.title === wanted) return true;
-    const text = normalize(item.textContent);
-    return text === wanted || text.startsWith(wanted + ' ') || text.includes(' ' + wanted + ' ');
+
+    return identity.text === wanted ||
+      identity.text.startsWith(wanted + ' ') ||
+      identity.text.includes(' ' + wanted + ' ');
   }
 
-  function clearResultDecorations() {
+  function clearFilterClasses() {
     const list = document.getElementById(LIST_ID);
     if (!list) return;
-    const items = resultItems(list);
-    const originalOrder = items
-      .filter(function (item) { return item.dataset.relphiDrawnIndex !== undefined; })
-      .sort(function (a, b) { return Number(a.dataset.relphiDrawnIndex) - Number(b.dataset.relphiDrawnIndex); });
-    if (originalOrder.length === items.length) {
-      const fragment = document.createDocumentFragment();
-      originalOrder.forEach(function (item) { fragment.appendChild(item); });
-      list.appendChild(fragment);
-    }
     delete list.dataset.relphiDrawnCards;
-    resultItems(list).forEach(function (item) {
-      if (item.dataset.relphiDrawnHidden === 'true') item.hidden = false;
-      delete item.dataset.relphiDrawnHidden;
-      delete item.dataset.relphiDrawnIndex;
+    resultItems().forEach(function (item) {
       item.classList.remove('relphi-drawn-card-result');
     });
   }
 
-  function setButtonState() {
+  function updateButton() {
     const button = document.getElementById(BUTTON_ID);
     if (!button) return;
     const count = drawnCards().length;
@@ -92,91 +99,95 @@
       : 'Draw cards on the Drawing Board to use this view';
   }
 
-  function setSummary(count) {
+  function updateSummary(count) {
     const summaryCount = document.querySelector('#tarotSummary .tarot-summary-count');
-    if (summaryCount) summaryCount.hidden = false;
     const resultCount = document.getElementById('resultCount');
     const resultNoun = document.getElementById('resultNoun');
     const inlineCount = document.getElementById('resultInlineCount');
     const activeSummary = document.getElementById('activeSummary');
+
+    if (summaryCount) summaryCount.hidden = false;
     if (resultCount) resultCount.textContent = String(count);
     if (resultNoun) resultNoun.textContent = count === 1 ? ' card shown' : ' cards shown';
     if (inlineCount) inlineCount.textContent = count === 1 ? '1 card shown' : count + ' cards shown';
-    if (activeSummary) activeSummary.textContent = count
-      ? 'Showing ' + count + ' drawn card' + (count === 1 ? '' : 's') + ' from the Drawing Board.'
-      : 'No cards are currently drawn on the Drawing Board.';
+    if (activeSummary) {
+      activeSummary.textContent = count
+        ? 'Showing ' + count + ' drawn card' + (count === 1 ? '' : 's') + ' from the Drawing Board.'
+        : 'No cards are currently drawn on the Drawing Board.';
+    }
   }
 
-  function applyDrawnResults(cards) {
+  function applyFilter(cards) {
     const list = document.getElementById(LIST_ID);
-    const browse = document.getElementById('browsePanel');
-    if (!list) return false;
+    if (!list) return 0;
 
-    clearResultDecorations();
-    list.dataset.relphiDrawnCards = 'true';
-    const items = resultItems(list);
-    items.forEach(function (item, index) { item.dataset.relphiDrawnIndex = String(index); });
-    const matched = new Set();
-    const orderedMatches = [];
-
-    cards.forEach(function (card) {
-      const match = items.find(function (item) { return !matched.has(item) && matchesCard(item, card); });
-      if (!match) return;
-      matched.add(match);
-      orderedMatches.push(match);
-      match.hidden = false;
-      match.classList.add('relphi-drawn-card-result');
-    });
+    const items = resultItems();
+    const used = new Set();
+    const matches = [];
 
     items.forEach(function (item) {
-      if (matched.has(item)) return;
-      item.hidden = true;
-      item.dataset.relphiDrawnHidden = 'true';
+      item.classList.remove('relphi-drawn-card-result');
     });
 
+    cards.forEach(function (card) {
+      const match = items.find(function (item) {
+        return !used.has(item) && itemMatchesCard(item, card);
+      });
+      if (!match) return;
+      used.add(match);
+      match.classList.add('relphi-drawn-card-result');
+      matches.push(match);
+    });
+
+    // The data state plus CSS is the actual filter. This deliberately does not
+    // rely on the HTML hidden attribute, because Tarot Ledger card styles can
+    // override the browser's default [hidden] display rule.
+    list.dataset.relphiDrawnCards = 'true';
+
+    // Preserve Drawing Board order in the result list.
     const fragment = document.createDocumentFragment();
-    orderedMatches.forEach(function (item) { fragment.appendChild(item); });
+    matches.forEach(function (item) { fragment.appendChild(item); });
     list.appendChild(fragment);
 
-    if (browse) browse.hidden = false;
-    setSummary(matched.size);
-    return matched.size === cards.length;
+    document.getElementById('browsePanel')?.removeAttribute('hidden');
+    updateSummary(matches.length);
+    return matches.length;
   }
 
   function refreshDrawnResults() {
     if (!active) return;
+
     const cards = drawnCards();
-    lastSignature = signature(cards);
-    setButtonState();
+    lastBoardSignature = boardSignature(cards);
+    updateButton();
 
     if (!cards.length) {
-      clearResultDecorations();
       const list = document.getElementById(LIST_ID);
       if (list) {
-        resultItems(list).forEach(function (item) {
-          item.hidden = true;
-          item.dataset.relphiDrawnHidden = 'true';
-        });
+        resultItems().forEach(function (item) { item.classList.remove('relphi-drawn-card-result'); });
         list.dataset.relphiDrawnCards = 'true';
       }
       const detail = document.getElementById('cardDetail');
       if (detail) detail.innerHTML = '';
-      setSummary(0);
+      updateSummary(0);
       return;
     }
 
+    clearFilterClasses();
+
     const showAll = document.getElementById('showAllCards') || document.getElementById('landingShowLedger');
     if (!showAll) return;
-    clearResultDecorations();
-    internalShowAll = true;
+
+    internalRefresh = true;
     showAll.click();
-    internalShowAll = false;
+    internalRefresh = false;
 
     const started = Date.now();
-    (function tryApply() {
+    (function waitForCards() {
       if (!active) return;
-      if (applyDrawnResults(cards)) return;
-      if (Date.now() - started < 1800) requestAnimationFrame(tryApply);
+      const matched = applyFilter(cards);
+      if (matched === cards.length) return;
+      if (Date.now() - started < 2000) requestAnimationFrame(waitForCards);
     })();
   }
 
@@ -189,14 +200,15 @@
   function deactivate() {
     if (!active) return;
     active = false;
-    lastSignature = '';
-    clearResultDecorations();
-    setButtonState();
+    lastBoardSignature = '';
+    clearFilterClasses();
+    updateButton();
   }
 
   function installButton() {
     const showAll = document.getElementById('showAllCards');
     if (!showAll || document.getElementById(BUTTON_ID)) return;
+
     const button = document.createElement('button');
     button.id = BUTTON_ID;
     button.type = 'button';
@@ -204,44 +216,46 @@
     button.setAttribute('aria-pressed', 'false');
     showAll.insertAdjacentElement('afterend', button);
     button.addEventListener('click', activate);
-    setButtonState();
+    updateButton();
   }
 
   function installStyles() {
     if (document.getElementById('relphi-show-drawn-cards-style')) return;
+
     const style = document.createElement('style');
     style.id = 'relphi-show-drawn-cards-style';
     style.textContent = [
       '#showDrawnCards.is-active{box-shadow:inset 0 -3px 0 #dc1f18!important}',
-      '#showDrawnCards:disabled{opacity:.45!important;cursor:default!important}'
+      '#showDrawnCards:disabled{opacity:.45!important;cursor:default!important}',
+      '#cardList[data-relphi-drawn-cards="true"] > :not(.relphi-drawn-card-result){display:none!important}'
     ].join('');
     document.head.appendChild(style);
   }
 
-  function scheduleBoardRefresh() {
-    clearTimeout(refreshTimer);
-    refreshTimer = window.setTimeout(function () {
-      const cards = drawnCards();
-      const nextSignature = signature(cards);
-      setButtonState();
-      if (active && nextSignature !== lastSignature) refreshDrawnResults();
-    }, 60);
-  }
-
   function installExitHooks() {
-    ['showAllCards', 'landingShowLedger', 'runCommand', 'clearSearch', 'drawMode', 'dateMode', 'chartMode', 'currentSkyMode'].forEach(function (id) {
-      document.getElementById(id)?.addEventListener('click', function () {
-        if (id === 'showAllCards' && internalShowAll) return;
-        deactivate();
-      }, true);
-    });
+    ['showAllCards', 'landingShowLedger', 'runCommand', 'clearSearch', 'drawMode', 'dateMode', 'chartMode', 'currentSkyMode']
+      .forEach(function (id) {
+        document.getElementById(id)?.addEventListener('click', function () {
+          if ((id === 'showAllCards' || id === 'landingShowLedger') && internalRefresh) return;
+          deactivate();
+        }, true);
+      });
   }
 
   function observeBoard() {
     const panel = document.getElementById(PANEL_ID);
     if (!panel || panel.dataset.relphiShowDrawnObserved === 'true') return;
+
     panel.dataset.relphiShowDrawnObserved = 'true';
-    new MutationObserver(scheduleBoardRefresh).observe(panel, {
+    new MutationObserver(function () {
+      clearTimeout(boardRefreshTimer);
+      boardRefreshTimer = window.setTimeout(function () {
+        const cards = drawnCards();
+        const nextSignature = boardSignature(cards);
+        updateButton();
+        if (active && nextSignature !== lastBoardSignature) refreshDrawnResults();
+      }, 80);
+    }).observe(panel, {
       childList:true,
       subtree:true,
       attributes:true,
@@ -254,16 +268,18 @@
     installButton();
     installExitHooks();
     observeBoard();
-    setButtonState();
+    updateButton();
 
-    const bodyObserver = new MutationObserver(function () {
+    new MutationObserver(function () {
       if (!document.getElementById(BUTTON_ID)) installButton();
       observeBoard();
-      setButtonState();
-    });
-    bodyObserver.observe(document.body, { childList:true, subtree:true });
+      updateButton();
+    }).observe(document.body, { childList:true, subtree:true });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
-  else start();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once:true });
+  } else {
+    start();
+  }
 })();
