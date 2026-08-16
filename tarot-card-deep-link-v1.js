@@ -1,9 +1,10 @@
-// Tarot Ledger card deep link v6: open the requested card's full Ledger detail without a competing Ledger-entry scroll.
+// Tarot Ledger card deep link v7: wait until the real Ledger controls are live, then open the exact full card entry.
 (function(){
 'use strict';
 const params=new URLSearchParams(location.search);
 const tarotContext=/(^|\/)tarot\.html$/.test(location.pathname)||(window.__relphiTarotPreviewDocument===true&&params.get('view')==='tarot');
-if(!tarotContext||window.__relphiTarotCardDeepLinkV6)return;
+if(!tarotContext||window.__relphiTarotCardDeepLinkV7)return;
+window.__relphiTarotCardDeepLinkV7=true;
 window.__relphiTarotCardDeepLinkV6=true;
 window.__relphiTarotCardDeepLinkV5=true;
 window.__relphiTarotCardDeepLinkV4=true;
@@ -12,8 +13,8 @@ window.__relphiTarotCardDeepLinkV2=true;
 window.__relphiTarotCardDeepLinkV1=true;
 
 const CARD_ID=String(params.get('card')||'').trim();
-let attempts=0,opened=false,timer=0,lastClickAt=0,fallbackUsed=false,ledgerPrepared=false;
-const MAX_ATTEMPTS=200;
+let attempts=0,opened=false,timer=0,lastLedgerClickAt=0,lastCardClickAt=0,fallbackUsed=false;
+const MAX_ATTEMPTS=300;
 
 function normalize(value){return String(value||'').replace(/\s+/g,' ').trim().toLowerCase()}
 function cssEscape(value){
@@ -36,41 +37,52 @@ function detailMatches(){
   const text=normalize(detail.textContent);
   return names.some(name=>text.includes(name));
 }
-function finish(){
+function landOnDetail(){
   const detail=document.getElementById('cardDetail');
-  if(!detail||!detailMatches())return false;
+  if(!detail)return;
+  const land=()=>detail.scrollIntoView?.({behavior:'auto',block:'start',inline:'nearest'});
+  land();
+  requestAnimationFrame(land);
+  setTimeout(land,120);
+  setTimeout(land,420);
+}
+function finish(){
+  if(!detailMatches())return false;
   opened=true;
   document.getElementById('browsePanel')?.removeAttribute('hidden');
-  const land=()=>detail.scrollIntoView?.({behavior:'auto',block:'start',inline:'nearest'});
-  requestAnimationFrame(()=>{land();setTimeout(land,120)});
+  landOnDetail();
   return true;
 }
 function targetControl(){
   const list=document.getElementById('cardList');
   if(!list)return null;
   const id=cssEscape(CARD_ID);
-  return list.querySelector(`[data-card-id="${id}"]`)||list.querySelector(`.or-card[data-id="${id}"]`)||list.querySelector(`[data-id="${id}"]`);
+  const card=list.querySelector(`.or-card[data-id="${id}"]`);
+  return card?.querySelector(`[data-card-id="${id}"]`)||list.querySelector(`[data-card-id="${id}"]`)||card||list.querySelector(`[data-id="${id}"]`);
 }
-function prepareLedger(){
-  if(ledgerPrepared)return;
+function ledgerReady(){
   const browse=document.getElementById('browsePanel');
   const list=document.getElementById('cardList');
-  if(!browse||!list)return;
+  return !!(browse&&list&&!browse.hidden&&list.children.length);
+}
+function prepareLedger(){
+  if(ledgerReady())return true;
+  const browse=document.getElementById('browsePanel');
+  const list=document.getElementById('cardList');
+  if(!browse||!list)return false;
 
-  // Prefer the ordinary Show All control. It renders the complete Ledger without
-  // starting the landing page's smooth scroll back to the top of browsePanel.
-  const showAll=document.getElementById('showAllCards');
-  if(showAll){
-    showAll.click();
-    ledgerPrepared=true;
-    return;
+  // navloader runs before tarot-app.js. A one-shot click can therefore happen
+  // before Tarot Ledger has attached its handlers. Keep trying until the list
+  // itself proves that the real Ledger controller is live.
+  const now=Date.now();
+  if(now-lastLedgerClickAt>280){
+    const trigger=document.getElementById('showAllCards')||document.getElementById('landingShowLedger');
+    if(trigger){
+      lastLedgerClickAt=now;
+      trigger.click();
+    }
   }
-
-  const landing=document.getElementById('landingShowLedger');
-  if(landing){
-    landing.click();
-    ledgerPrepared=true;
-  }
+  return ledgerReady();
 }
 function useSearchFallback(){
   if(fallbackUsed)return;
@@ -81,7 +93,7 @@ function useSearchFallback(){
   command.dispatchEvent(new Event('input',{bubbles:true}));
   run.click();
 }
-function schedule(delay=40){
+function schedule(delay=50){
   if(opened||timer||!CARD_ID)return;
   timer=setTimeout(()=>{timer=0;seek()},delay);
 }
@@ -91,12 +103,13 @@ function seek(){
   prepareLedger();
   const control=targetControl();
   const now=Date.now();
-  if(control&&now-lastClickAt>240){
-    lastClickAt=now;
+  if(control&&now-lastCardClickAt>280){
+    lastCardClickAt=now;
     control.click();
+    if(finish())return;
   }
   attempts+=1;
-  if(attempts===75)useSearchFallback();
+  if(attempts===160)useSearchFallback();
   if(attempts<MAX_ATTEMPTS)schedule();
   else console.warn('[Oracle of Relphi] Tarot Ledger deep link could not confirm full card detail:',CARD_ID);
 }
