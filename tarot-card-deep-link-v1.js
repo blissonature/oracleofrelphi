@@ -1,9 +1,10 @@
-// Tarot Ledger card deep link v5: open the requested card's full Ledger detail and leave the viewport on that detail.
+// Tarot Ledger card deep link v6: open the requested card's full Ledger detail without a competing Ledger-entry scroll.
 (function(){
 'use strict';
 const params=new URLSearchParams(location.search);
 const tarotContext=/(^|\/)tarot\.html$/.test(location.pathname)||(window.__relphiTarotPreviewDocument===true&&params.get('view')==='tarot');
-if(!tarotContext||window.__relphiTarotCardDeepLinkV5)return;
+if(!tarotContext||window.__relphiTarotCardDeepLinkV6)return;
+window.__relphiTarotCardDeepLinkV6=true;
 window.__relphiTarotCardDeepLinkV5=true;
 window.__relphiTarotCardDeepLinkV4=true;
 window.__relphiTarotCardDeepLinkV3=true;
@@ -11,7 +12,7 @@ window.__relphiTarotCardDeepLinkV2=true;
 window.__relphiTarotCardDeepLinkV1=true;
 
 const CARD_ID=String(params.get('card')||'').trim();
-let attempts=0,opened=false,timer=0,lastClickAt=0,fallbackUsed=false;
+let attempts=0,opened=false,timer=0,lastClickAt=0,fallbackUsed=false,ledgerPrepared=false;
 const MAX_ATTEMPTS=200;
 
 function normalize(value){return String(value||'').replace(/\s+/g,' ').trim().toLowerCase()}
@@ -50,13 +51,26 @@ function targetControl(){
   const id=cssEscape(CARD_ID);
   return list.querySelector(`[data-card-id="${id}"]`)||list.querySelector(`.or-card[data-id="${id}"]`)||list.querySelector(`[data-id="${id}"]`);
 }
-function showLedger(){
+function prepareLedger(){
+  if(ledgerPrepared)return;
   const browse=document.getElementById('browsePanel');
   const list=document.getElementById('cardList');
   if(!browse||!list)return;
-  if(!browse.hidden&&list.children.length)return;
-  const trigger=document.getElementById('landingShowLedger')||document.getElementById('showAllCards');
-  trigger?.click();
+
+  // Prefer the ordinary Show All control. It renders the complete Ledger without
+  // starting the landing page's smooth scroll back to the top of browsePanel.
+  const showAll=document.getElementById('showAllCards');
+  if(showAll){
+    showAll.click();
+    ledgerPrepared=true;
+    return;
+  }
+
+  const landing=document.getElementById('landingShowLedger');
+  if(landing){
+    landing.click();
+    ledgerPrepared=true;
+  }
 }
 function useSearchFallback(){
   if(fallbackUsed)return;
@@ -74,7 +88,7 @@ function schedule(delay=40){
 function seek(){
   if(opened||!CARD_ID)return;
   if(finish())return;
-  showLedger();
+  prepareLedger();
   const control=targetControl();
   const now=Date.now();
   if(control&&now-lastClickAt>240){
