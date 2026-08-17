@@ -35,19 +35,6 @@
     const legacy=kind==='day'?'.sky-ph-node.day':'.sky-ph-node.hour';
     return planetKey(svg?.querySelector(`.sky-ph-planet.${className}`)||svg?.querySelector(legacy)?.closest('.sky-ph-planet'));
   }
-  function rulerCard(kind){
-    const node=document.createElement('span');
-    node.className=`sky-moment-ruler sky-moment-ruler--${kind}`;
-    const label=document.createElement('span');
-    label.className='sky-moment-ruler-label';
-    label.textContent=kind==='day'?'Day ruler':'Hour ruler';
-    const value=document.createElement('strong');
-    value.className='sky-moment-ruler-value';
-    value.dataset.momentRulerValue=kind;
-    value.textContent='Calculating…';
-    node.append(label,value);
-    return node;
-  }
   function advancedSettings(slot){
     const p=profile(slot);
     const details=document.createElement('details');
@@ -93,15 +80,13 @@
     if(!svg)return;
     const dayKey=rulerKey(svg,'day');
     const hourKey=rulerKey(svg,'hour');
-    [['day',dayKey],['hour',hourKey]].forEach(([kind,key])=>{
-      if(!key||!PLANETS[key])return;
-      const block=section.querySelector(`.sky-moment-ruler--${kind}`);
-      const value=block?.querySelector(`[data-moment-ruler-value="${kind}"]`);
-      if(value)value.textContent=PLANETS[key].name;
-      if(block){block.dataset.rulerKey=key;block.style.setProperty('--ruler-color',PLANETS[key].color)}
-    });
     const trigger=section.querySelector('[data-moment-toggle]');
-    if(trigger&&dayKey&&hourKey){
+    if(!trigger)return;
+    if(dayKey)trigger.dataset.dayRuler=dayKey;
+    else delete trigger.dataset.dayRuler;
+    if(hourKey)trigger.dataset.hourRuler=hourKey;
+    else delete trigger.dataset.hourRuler;
+    if(dayKey&&hourKey){
       trigger.setAttribute('aria-label',`${PLANETS[dayKey].name} day ruler. ${PLANETS[hourKey].name} hour ruler. Show exact Where and When.`);
       trigger.title='Show exact Where and When';
     }
@@ -135,18 +120,12 @@
 
     jump.querySelector('.sky-ph-jump-title')?.remove();
     trigger.appendChild(svg);
-    const rulers=document.createElement('span');
-    rulers.className='sky-moment-rulers';
-    rulers.append(rulerCard('day'),rulerCard('hour'));
-    trigger.appendChild(rulers);
-    if(sourceSummary){sourceSummary.remove();sourceSummary.classList.add('sky-moment-source-summary')}
     const hint=document.createElement('span');
     hint.className='sky-moment-disclosure-hint';
     hint.dataset.momentDisclosureHint='true';
     hint.textContent='Show exact where & when';
     trigger.appendChild(hint);
     jump.replaceWith(trigger);
-    if(sourceSummary)trigger.insertAdjacentElement('afterend',sourceSummary);
 
     const details=document.createElement('div');
     details.id=panelId;
@@ -156,6 +135,12 @@
     facts.classList.add('sky-moment-exact-facts');
     const edit=ensureEditButton(facts);
     details.appendChild(facts);
+
+    if(sourceSummary){
+      sourceSummary.remove();
+      sourceSummary.classList.add('sky-moment-source-summary');
+      details.appendChild(sourceSummary);
+    }
 
     const actions=document.createElement('div');
     actions.className='sky-moment-actions';
