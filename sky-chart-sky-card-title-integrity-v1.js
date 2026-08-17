@@ -1,13 +1,17 @@
 // Keep the visible interactive Sky-card title outside the foundation renderer's owned name node.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardTitleIntegrityV1)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardTitleIntegrityV2)return;
   window.__relphiSkyCardTitleIntegrityV1=true;
+  window.__relphiSkyCardTitleIntegrityV2=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-  const GENERIC=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','unsaved sky']);
+  const GENERIC=new Set(['','now','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','unsaved sky']);
   const STYLE_ID='skyCardStableTitleV2';
+  const FIVE_MINUTES=5*60*1000;
+  const NOW_CREATION_TOLERANCE=2*60*1000;
   let queued=false;
+  let ageTimer=0;
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -38,19 +42,44 @@
   }
   function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
   function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
+  function time(value){const date=new Date(value);return Number.isNaN(date.getTime())?NaN:date.getTime()}
+  function saved(value){
+    const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
+    return!!String(metadata.savedSkyId||metadata.savedSkyName||'').trim();
+  }
+  function instantFor(value){
+    const profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
+    return time(profile.instant||profile.dateTime||value?.instant||value?.dateTime);
+  }
+  function wasCreatedAsNow(value){
+    if(!value||saved(value))return false;
+    const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
+    const profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
+    const instant=instantFor(value),created=time(value?.savedAt||metadata.savedAt||metadata.createdAt);
+    if(!Number.isFinite(instant)||!Number.isFinite(created)||Math.abs(created-instant)>NOW_CREATION_TOLERANCE)return false;
+    const names=[metadata.name,metadata.title,value?.name,value?.displayName,value?.skyName,value?.title,profile.name,profile.title].map(normalize).filter(Boolean);
+    return names.includes('now')||names.every(name=>GENERIC.has(name));
+  }
+  function nowAgeLabel(value){
+    const instant=instantFor(value);
+    if(!Number.isFinite(instant))return'Now';
+    const age=Math.max(0,Date.now()-instant);
+    if(age<FIVE_MINUTES)return'Now';
+    const minutes=Math.floor(age/60000);
+    return`${Math.floor(minutes/5)*5} minutes ago`;
+  }
   function nameFor(slot){
     const value=read(slot),metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{},profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
+    if(saved(value)){
+      const savedName=String(metadata.savedSkyName||'').trim();
+      if(savedName)return savedName;
+    }
+    if(wasCreatedAsNow(value))return nowAgeLabel(value);
     for(const candidate of [metadata.savedSkyName,value?.name,value?.displayName,value?.skyName,value?.title,profile.name,profile.title]){
       const name=String(candidate||'').trim();
       if(name&&!GENERIC.has(normalize(name)))return name;
     }
-    const raw=profile.instant||profile.dateTime||value?.instant||value?.dateTime;
-    if(raw){const date=new Date(raw);if(!Number.isNaN(date.getTime())&&Math.abs(Date.now()-date.getTime())<10*60*1000)return'Now'}
     return'Unsaved sky';
-  }
-  function saved(value){
-    const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
-    return!!String(metadata.savedSkyId||metadata.savedSkyName||'').trim();
   }
   function ensure(slot){
     const panel=document.getElementById(`skyFoundation${slot}`),heading=panel?.querySelector(':scope > .sky-foundation-heading');
@@ -88,8 +117,12 @@
   }
   function run(){queued=false;ensure('A');ensure('B')}
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(run)}
+  function startAgeTimer(){
+    if(ageTimer)return;
+    ageTimer=window.setInterval(schedule,30000);
+  }
   function start(){
-    installStyle();run();
+    installStyle();run();startAgeTimer();
     const root=document.getElementById('skyFoundationRoot')||document.body;
     new MutationObserver(records=>{
       if(records.some(record=>{
