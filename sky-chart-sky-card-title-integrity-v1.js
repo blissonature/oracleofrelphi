@@ -117,12 +117,27 @@
   }
   function run(){queued=false;ensure('A');ensure('B')}
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(run)}
-  function startAgeTimer(){
-    if(ageTimer)return;
-    ageTimer=window.setInterval(schedule,30000);
+  function nextAgeDelay(){
+    const now=Date.now();
+    let delay=FIVE_MINUTES;
+    Object.keys(KEYS).forEach(slot=>{
+      const value=read(slot);
+      if(!wasCreatedAsNow(value))return;
+      const instant=instantFor(value);
+      if(!Number.isFinite(instant))return;
+      const age=Math.max(0,now-instant);
+      const nextBoundary=age<FIVE_MINUTES?FIVE_MINUTES:(Math.floor(age/FIVE_MINUTES)+1)*FIVE_MINUTES;
+      delay=Math.min(delay,Math.max(0,nextBoundary-age));
+    });
+    return Math.max(50,delay+25);
   }
+  function armAgeTimer(){
+    if(ageTimer)clearTimeout(ageTimer);
+    ageTimer=window.setTimeout(()=>{ageTimer=0;run();armAgeTimer()},nextAgeDelay());
+  }
+  function refresh(){schedule();armAgeTimer()}
   function start(){
-    installStyle();run();startAgeTimer();
+    installStyle();run();armAgeTimer();
     const root=document.getElementById('skyFoundationRoot')||document.body;
     new MutationObserver(records=>{
       if(records.some(record=>{
@@ -131,8 +146,8 @@
         return[...record.addedNodes,...record.removedNodes].some(node=>node.nodeType===1&&node.closest?.('#skyFoundationA > .sky-foundation-heading,#skyFoundationB > .sky-foundation-heading'));
       }))schedule();
     }).observe(root,{childList:true,subtree:true});
-    window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key))schedule()});
-    ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed'].forEach(name=>window.addEventListener(name,schedule));
+    window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key))refresh()});
+    ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed'].forEach(name=>window.addEventListener(name,refresh));
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
