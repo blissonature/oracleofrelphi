@@ -38,16 +38,9 @@
       inWindow:phaseDistance<=window+EPS
     });
   }
-  function metric(records,order,windowValue){
-    const points=validRecords(records),n=Math.max(1,Math.trunc(Number(order)||1)),window=clampWindow(windowValue),N=points.length;
-    if(N<2)return Object.freeze({order:n,count:N,pairCount:0,window,phaseLockPower:0,support:0,resistance:0,net:0,primitiveWindowHits:0,inheritedWindowHits:0,pairs:Object.freeze([])});
-    let cx=0,sy=0;
-    points.forEach(point=>{const phase=n*point.longitude*RAD;cx+=Math.cos(phase);sy+=Math.sin(phase)});
-    cx/=N;sy/=N;
-    const phaseLockPower=Math.max(0,Math.min(1,cx*cx+sy*sy));
-    const pairs=[];
-    for(let i=0;i<N;i+=1)for(let j=i+1;j<N;j+=1)pairs.push(pairPhase(points[i],points[j],n,window));
+  function summarizePairs(pairs){
     const pairCount=pairs.length;
+    if(!pairCount)return Object.freeze({pairCount:0,support:0,resistance:0,net:0,primitiveWindowHits:0,inheritedWindowHits:0,topSupport:Object.freeze([]),topResistance:Object.freeze([])});
     let support=0,resistance=0,net=0,primitiveWindowHits=0,inheritedWindowHits=0;
     pairs.forEach(pair=>{
       const c=pair.contribution;
@@ -56,20 +49,51 @@
       if(pair.inWindow){if(pair.primitive)primitiveWindowHits+=1;else inheritedWindowHits+=1}
     });
     support/=pairCount;resistance/=pairCount;net/=pairCount;
-    const identityNet=(N*phaseLockPower-1)/(N-1);
-    const identityError=Math.abs(net-identityNet);
     const rankedSupport=pairs.slice().sort((a,b)=>b.contribution-a.contribution||a.phaseDistance-b.phaseDistance);
     const rankedResistance=pairs.slice().sort((a,b)=>a.contribution-b.contribution||b.phaseDistance-a.phaseDistance);
+    return Object.freeze({pairCount,support,resistance,net,primitiveWindowHits,inheritedWindowHits,topSupport:Object.freeze(rankedSupport.slice(0,3)),topResistance:Object.freeze(rankedResistance.slice(0,3))});
+  }
+  function phaseVector(points,order){
+    const n=Math.max(1,Math.trunc(Number(order)||1)),N=points.length;
+    if(!N)return Object.freeze({x:0,y:0,power:0,magnitude:0,angle:0});
+    let x=0,y=0;
+    points.forEach(point=>{const phase=n*point.longitude*RAD;x+=Math.cos(phase);y+=Math.sin(phase)});
+    x/=N;y/=N;
+    const power=Math.max(0,Math.min(1,x*x+y*y));
+    return Object.freeze({x,y,power,magnitude:Math.sqrt(power),angle:Math.atan2(y,x)/RAD});
+  }
+  function metric(records,order,windowValue){
+    const points=validRecords(records),n=Math.max(1,Math.trunc(Number(order)||1)),window=clampWindow(windowValue),N=points.length;
+    if(N<2)return Object.freeze({order:n,count:N,pairCount:0,window,phaseLockPower:0,support:0,resistance:0,net:0,identityNet:0,identityError:0,primitiveWindowHits:0,inheritedWindowHits:0,topSupport:Object.freeze([]),topResistance:Object.freeze([]),pairs:Object.freeze([])});
+    const vector=phaseVector(points,n),pairs=[];
+    for(let i=0;i<N;i+=1)for(let j=i+1;j<N;j+=1)pairs.push(pairPhase(points[i],points[j],n,window));
+    const summary=summarizePairs(pairs);
+    const identityNet=(N*vector.power-1)/(N-1);
+    const identityError=Math.abs(summary.net-identityNet);
     return Object.freeze({
-      order:n,count:N,pairCount,window,phaseLockPower,support,resistance,net,identityNet,identityError,
-      primitiveWindowHits,inheritedWindowHits,
-      topSupport:Object.freeze(rankedSupport.slice(0,3)),topResistance:Object.freeze(rankedResistance.slice(0,3)),
-      pairs:Object.freeze(pairs)
+      order:n,count:N,window,phaseLockPower:vector.power,phaseAngle:vector.angle,
+      ...summary,identityNet,identityError,pairs:Object.freeze(pairs)
     });
   }
-  function spectrum(records,windowValue,maxOrder=12){
-    const points=validRecords(records),max=Math.max(2,Math.trunc(Number(maxOrder)||12)),base=new Map();
-    for(let n=1;n<=max;n+=1)base.set(n,metric(points,n,windowValue));
+  function crossMetric(leftRecords,rightRecords,order,windowValue){
+    const left=validRecords(leftRecords),right=validRecords(rightRecords),n=Math.max(1,Math.trunc(Number(order)||1)),window=clampWindow(windowValue);
+    if(!left.length||!right.length)return Object.freeze({order:n,leftCount:left.length,rightCount:right.length,pairCount:0,window,support:0,resistance:0,net:0,fieldCoupling:0,phaseAgreement:0,phaseOffset:0,identityNet:0,identityError:0,primitiveWindowHits:0,inheritedWindowHits:0,topSupport:Object.freeze([]),topResistance:Object.freeze([]),pairs:Object.freeze([])});
+    const pairs=[];
+    left.forEach(a=>right.forEach(b=>pairs.push(pairPhase(a,b,n,window))));
+    const summary=summarizePairs(pairs),a=phaseVector(left,n),b=phaseVector(right,n);
+    const identityNet=b.x*a.x+b.y*a.y;
+    const crossImag=b.y*a.x-b.x*a.y;
+    const fieldCoupling=Math.max(0,Math.min(1,a.magnitude*b.magnitude));
+    const phaseAgreement=fieldCoupling>EPS?Math.max(-1,Math.min(1,identityNet/fieldCoupling)):0;
+    const phaseOffset=fieldCoupling>EPS?Math.atan2(crossImag,identityNet)/RAD:0;
+    return Object.freeze({
+      order:n,leftCount:left.length,rightCount:right.length,window,
+      ...summary,fieldCoupling,phaseAgreement,phaseOffset,
+      leftPhaseLockPower:a.power,rightPhaseLockPower:b.power,
+      identityNet,identityError:Math.abs(summary.net-identityNet),pairs:Object.freeze(pairs)
+    });
+  }
+  function decorateSpectrum(base,max,counterbalanceScale){
     const result=[];
     for(let n=2;n<=max;n+=1){
       const current=base.get(n),divisors=properDivisors(n);
@@ -77,10 +101,23 @@
       divisors.forEach(d=>{const candidate=Math.max(0,base.get(d)?.net||0);if(candidate>inheritedAlignment+EPS){inheritedAlignment=candidate;inheritedFrom=d}});
       const alignment=Math.max(0,current.net);
       const distinctive=Math.max(0,alignment-inheritedAlignment);
-      const counterbalance=current.net<0?Math.min(1,-current.net*Math.max(1,current.count-1)):0;
+      const counterbalance=current.net<0?Math.min(1,-current.net*counterbalanceScale(current)):0;
       result.push(Object.freeze({...current,alignment,distinctive,inheritedFrom,inheritedAlignment,counterbalance}));
     }
     return Object.freeze(result);
   }
-  return Object.freeze({theorem:'all-pairs harmonic phase balance with lower-order inheritance control',norm,wrap180,gcd,properDivisors,clampWindow,pairPhase,metric,spectrum});
+  function spectrum(records,windowValue,maxOrder=12){
+    const points=validRecords(records),max=Math.max(2,Math.trunc(Number(maxOrder)||12)),base=new Map();
+    for(let n=1;n<=max;n+=1)base.set(n,metric(points,n,windowValue));
+    return decorateSpectrum(base,max,current=>Math.max(1,current.count-1));
+  }
+  function crossSpectrum(leftRecords,rightRecords,windowValue,maxOrder=12){
+    const left=validRecords(leftRecords),right=validRecords(rightRecords),max=Math.max(2,Math.trunc(Number(maxOrder)||12)),base=new Map();
+    for(let n=1;n<=max;n+=1)base.set(n,crossMetric(left,right,n,windowValue));
+    return decorateSpectrum(base,max,()=>1);
+  }
+  return Object.freeze({
+    theorem:'all-pairs harmonic phase balance with lower-order inheritance control',
+    norm,wrap180,gcd,properDivisors,clampWindow,pairPhase,phaseVector,metric,crossMetric,spectrum,crossSpectrum
+  });
 });
