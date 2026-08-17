@@ -13,18 +13,22 @@ html[data-sky-b-present="false"] #skyFoundationWheelMount>.sky-foundation-wheel:
 #skyFoundationWheelMount[data-single-sky-pending="true"]>*{visibility:hidden!important}
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph{filter:var(--sky-silver-glow)}
 .sky-foundation-single-wheel [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-glyph-bubble>circle{display:none!important}
+/* The center wheel is the chart. Sky Cards keep the house-system control but do not
+   repeat the chart as a standalone miniature wheel in either single or comparison mode. */
+#skyFoundationA .sky-placement-mini-head>strong,
+#skyFoundationB .sky-placement-mini-head>strong,
+#skyFoundationA .sky-placement-mini-wheel-mount,
+#skyFoundationB .sky-placement-mini-wheel-mount{display:none!important}
+#skyFoundationA .sky-placement-mini-shell,
+#skyFoundationB .sky-placement-mini-shell{display:flex!important;justify-content:flex-end;gap:0;margin:0 0 .55rem;padding:0;border:0;background:transparent}
+#skyFoundationA .sky-placement-mini-head,
+#skyFoundationB .sky-placement-mini-head{width:100%;justify-content:flex-end;align-items:end}
 /* In true one-sky mode keep the authored red slot-tab identity and remove the
    duplicate plain name plus the redundant title over the main wheel. */
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA>.sky-foundation-heading .sky-foundation-slot{display:inline-flex!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA>.sky-foundation-heading .sky-foundation-name{display:none!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison>.sky-foundation-heading>span:first-child{display:none!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationComparison>.sky-foundation-heading{justify-content:flex-end}
-/* The main wheel already is the standalone chart. Keep the house-system control in
-   Placements, but suppress the duplicate miniature wheel and its Standalone Sky label. */
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-head>strong,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-wheel-mount{display:none!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-shell{display:flex!important;justify-content:flex-end;gap:0;margin:0 0 .55rem;padding:0;border:0;background:transparent}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationA .sky-placement-mini-head{width:100%;justify-content:flex-end;align-items:end}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-choice-b,
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) [data-placement-choice="b"],
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) label:has(>input[data-placement-choice="b"]){display:none!important}
