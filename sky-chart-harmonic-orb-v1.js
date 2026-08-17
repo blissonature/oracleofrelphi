@@ -60,8 +60,8 @@ function loadCollectiveHarmonics(){
   }
   append('relphi-collective-harmonics-core-v1.js?v=3',()=>{
     append('relphi-harmonic-provenance-v1.js?v=1',()=>{
-      append('sky-chart-collective-harmonics-v1.js?v=3');
-      append('sky-chart-collective-comparison-v1.js?v=3');
+      append('sky-chart-collective-harmonics-v1.js?v=4');
+      append('sky-chart-collective-comparison-v1.js?v=4');
     });
   });
 }
