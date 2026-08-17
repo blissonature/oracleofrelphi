@@ -5,7 +5,7 @@
 .sky-foundation-relationship-row.is-inline-expanded [data-inline-top-reveal]{cursor:pointer;border-radius:7px}
 .sky-foundation-relationship-row.is-inline-expanded [data-inline-top-reveal]:hover{background:rgba(45,39,34,.055)}
 .inline-rel-detail{grid-area:detail;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;padding:10px 2px 8px;box-sizing:border-box;border-top:1px solid rgba(45,39,34,.1);margin-top:6px}
-.inline-rel-top-reveal{align-self:start;justify-self:center;min-width:0;max-width:calc(100% - 8px);padding:5px 9px;border-left:4px solid var(--reveal-color,#777);border-radius:7px;background:rgba(45,39,34,.045);color:#4f4842;font:750 .58rem/1.3 system-ui,sans-serif;text-align:center;overflow-wrap:anywhere}
+.inline-rel-top-reveal{align-self:start;justify-self:center;min-width:0;max-width:calc(100% - 8px);padding:5px 9px;border-left:4px solid var(--reveal-color,#777);border-radius:7px;background:rgba(45,39,34,.045);color:#4f4842;font:750 .58rem/1.3 'Montserrat',sans-serif;text-align:center;overflow-wrap:anywhere}
 .inline-rel-top-reveal[data-field="left"]{grid-column:1}
 .inline-rel-top-reveal[data-field="aspect"]{grid-column:2}
 .inline-rel-top-reveal[data-field="right"]{grid-column:3}
@@ -13,11 +13,11 @@
 .inline-rel-top-reveal[hidden]{display:none!important}
 .inline-rel-visual{grid-column:1/-1;display:grid;grid-template-columns:minmax(62px,88px) minmax(118px,1fr) minmax(62px,88px);align-items:center;justify-content:center;gap:12px;width:100%;max-width:460px;margin-inline:auto}
 .inline-rel-card{appearance:none;display:grid;gap:3px;justify-items:center;min-width:0;margin:0;padding:0;border:0;background:transparent;color:#211d1a;cursor:pointer}
-.inline-rel-card small{font:850 .52rem/1 system-ui,sans-serif;text-transform:uppercase}
+.inline-rel-card small{font:850 .52rem/1 'Montserrat',sans-serif;text-transform:uppercase}
 .inline-rel-card.sky-a small{color:#c9211e}.inline-rel-card.sky-b small{color:#2462d0}
 .inline-rel-card img{display:block;width:100%;max-width:76px;aspect-ratio:352/600;object-fit:cover;border-radius:6px;border:2px solid currentColor;background:#eee}
 .inline-rel-card.sky-a img{color:#c9211e}.inline-rel-card.sky-b img{color:#2462d0}
-.inline-rel-card b{max-width:80px;font:750 .52rem/1.05 system-ui,sans-serif;text-align:center}
+.inline-rel-card b{max-width:80px;font:750 .52rem/1.05 'Montserrat',sans-serif;text-align:center}
 .inline-rel-card:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:7px}
 .inline-rel-wheel{display:grid;justify-items:center;min-width:0}
 .inline-rel-wheel-stage{position:relative;width:min(100%,150px);aspect-ratio:1;overflow:visible}
@@ -32,7 +32,7 @@
 .inline-rel-orb{display:flex;align-items:center;justify-content:center;gap:5px;width:min(100%,130px);margin-top:2px}
 .inline-rel-orb>span{position:relative;display:block;width:64px;height:5px;border-radius:999px;background:rgba(45,39,34,.12);overflow:hidden}
 .inline-rel-orb>span::after{content:"";position:absolute;inset:0 auto 0 0;width:calc(var(--orb)*100%);background:var(--relationship-stripe,#777);border-radius:inherit}
-.inline-rel-orb strong{color:var(--relationship-stripe,#777);font:900 .56rem/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
-.inline-rel-house-context{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:2px;color:#665e57;font:750 .54rem/1.25 system-ui,sans-serif;text-align:center}
+.inline-rel-orb strong{color:var(--relationship-stripe,#777);font:900 .56rem/1 'Montserrat',sans-serif;font-variant-numeric:tabular-nums}
+.inline-rel-house-context{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:2px;color:#665e57;font:750 .54rem/1.25 'Montserrat',sans-serif;text-align:center}
 .inline-rel-house-context span{padding:5px;border-radius:7px;background:rgba(45,39,34,.045)}
 @media(max-width:620px){.sky-foundation-relationship-row.is-inline-expanded{grid-column:auto}.inline-rel-visual{grid-template-columns:minmax(56px,72px) minmax(108px,1fr) minmax(56px,72px);gap:5px;max-width:none}.inline-rel-detail{padding-left:0;padding-right:0}.inline-rel-top-reveal{font-size:.54rem;padding-inline:5px}.inline-rel-card img{max-width:66px}.inline-rel-card b{font-size:.48rem}.inline-rel-wheel-stage{width:min(100%,132px)}.inline-rel-house-context{font-size:.5rem}}
