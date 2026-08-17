@@ -62,6 +62,7 @@ function loadCollectiveHarmonics(){
     append('relphi-harmonic-provenance-v1.js?v=1',()=>{
       append('sky-chart-collective-harmonics-v1.js?v=4');
       append('sky-chart-collective-comparison-v1.js?v=4');
+      append('sky-chart-harmonic-side-summary-v1.js?v=1');
     });
   });
 }
