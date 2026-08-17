@@ -59,9 +59,8 @@ function loadCollectiveHarmonics(){
     (document.head||document.documentElement).appendChild(script);
   }
   append('relphi-collective-harmonics-core-v1.js?v=2',()=>{
-    append('sky-chart-collective-harmonics-v1.js?v=1');
-    append('sky-chart-collective-comparison-v1.js?v=1');
-    append('sky-chart-collective-label-polish-v1.js?v=1');
+    append('sky-chart-collective-harmonics-v1.js?v=2');
+    append('sky-chart-collective-comparison-v1.js?v=2');
   });
 }
 window.addEventListener('relphi:sky-orb-limit-changed',event=>{const value=event.detail?.harmonicWindow??event.detail?.orb;if(value!=null)setWindow(value)});
