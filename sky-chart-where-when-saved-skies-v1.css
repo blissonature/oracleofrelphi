@@ -21,7 +21,7 @@
   color:#3c352f;
   cursor:pointer;
   white-space:nowrap;
-  font:800 .6rem/1.15 system-ui,sans-serif;
+  font:800 .6rem/1.15 'Montserrat',sans-serif;
 }
 .sky-where-when-save-choice:hover{border-color:rgba(31,27,24,.34);background:#fff}
 .sky-where-when-save-choice input{
