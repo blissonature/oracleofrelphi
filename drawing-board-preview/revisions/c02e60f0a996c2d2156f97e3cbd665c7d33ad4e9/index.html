@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="/favicon.ico" rel="icon" type="image/x-icon"/>
+  <title>Drawing Board Preview · Oracle of Relphi</title>
+  <meta name="robots" content="noindex,nofollow,noarchive"/>
+  <link href="/style.css?v=346" rel="stylesheet"/>
+  <style>
+    .standalone-board-host{position:relative;width:100%;margin:0 auto;overflow:hidden}
+    #drawingBoardFrame{display:block;width:100%;height:calc(100vh - 9.5rem);min-height:680px;border:0;background:#fff}
+    .standalone-board-loading{margin:.75rem auto 1rem;text-align:center;color:#555;font-size:.95rem}
+    .is-ready .standalone-board-loading{display:none}
+    @media(max-width:640px){#drawingBoardFrame{height:calc(100vh - 8rem);min-height:620px}.standalone-board-loading{font-size:.9rem}}
+  </style>
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <main class="tarot-app-shell" id="standaloneShell">
+    <section class="tarot-hero compact">
+      <h1>Drawing <span class="red">Board</span></h1>
+    </section>
+
+    <div class="standalone-board-host" aria-label="Drawing Board workspace">
+      <p class="standalone-board-loading" id="loadingNote">Opening Drawing Board…</p>
+      <iframe id="drawingBoardFrame" title="Drawing Board workspace" src="/tarot.html?board=workflow-v2&amp;standaloneDrawingBoard=1#tarot"></iframe>
+    </div>
+  </main>
+  <script src="/navloader.js"></script>
+  <script>
+    (function(){
+      'use strict';
+      const frame=document.getElementById('drawingBoardFrame');
+      const shell=document.getElementById('standaloneShell');
+      function installStandaloneEnhancements(doc){
+        if(!doc||!doc.body||doc.getElementById('relphiStandaloneDrawingBoardV1Script'))return;
+        const script=doc.createElement('script');
+        script.id='relphiStandaloneDrawingBoardV1Script';
+        script.src='/drawing-board-preview/revisions/c02e60f0a996c2d2156f97e3cbd665c7d33ad4e9/drawing-board-standalone-v1.js?v=1';
+        script.async=false;
+        doc.body.appendChild(script);
+      }
+      function isolateBoard(){
+        let doc;
+        try{doc=frame.contentDocument||frame.contentWindow.document;}catch(_){return;}
+        if(!doc)return;
+        installStandaloneEnhancements(doc);
+        const board=doc.getElementById('shortListPanel');
+        const openBoard=doc.getElementById('landingOpenBoard');
+        const boardTab=doc.getElementById('viewBoard');
+        if(openBoard)openBoard.click();
+        else if(boardTab)boardTab.click();
+        if(!board){return setTimeout(isolateBoard,80);}
+        board.hidden=false;
+        const style=doc.createElement('style');
+        style.id='relphi-standalone-board-isolation';
+        style.textContent='html,body{background:#fff!important} body{padding-top:0!important} #nav-placeholder,.menu-container,.tarot-landing,.tarot-view-toggle,.tarot-view-tabs,#landingOpenBoard,#viewBoard{display:none!important} #shortListPanel{display:block!important;margin:0 auto!important;max-width:none!important;width:100%!important}';
+        if(!doc.getElementById(style.id))doc.head.appendChild(style);
+        let node=board;
+        while(node&&node.parentElement&&node.parentElement!==doc.body){
+          const parent=node.parentElement;
+          Array.from(parent.children).forEach(function(sibling){if(sibling!==node)sibling.style.setProperty('display','none','important');});
+          node=parent;
+        }
+        if(node&&node.parentElement===doc.body){
+          Array.from(doc.body.children).forEach(function(sibling){
+            if(sibling!==node&&sibling.tagName!=='SCRIPT')sibling.style.setProperty('display','none','important');
+          });
+        }
+        board.style.setProperty('display','block','important');
+        shell.classList.add('is-ready');
+        frame.contentWindow.dispatchEvent(new Event('resize'));
+      }
+      frame.addEventListener('load',function(){
+        let doc;
+        try{doc=frame.contentDocument||frame.contentWindow.document;}catch(_){doc=null;}
+        installStandaloneEnhancements(doc);
+        setTimeout(isolateBoard,80);
+      });
+    })();
+  </script>
+</body>
+</html>
