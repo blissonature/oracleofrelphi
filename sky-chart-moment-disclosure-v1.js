@@ -139,13 +139,14 @@
     rulers.className='sky-moment-rulers';
     rulers.append(rulerCard('day'),rulerCard('hour'));
     trigger.appendChild(rulers);
-    if(sourceSummary)trigger.appendChild(sourceSummary);
+    if(sourceSummary){sourceSummary.remove();sourceSummary.classList.add('sky-moment-source-summary')}
     const hint=document.createElement('span');
     hint.className='sky-moment-disclosure-hint';
     hint.dataset.momentDisclosureHint='true';
     hint.textContent='Show exact where & when';
     trigger.appendChild(hint);
     jump.replaceWith(trigger);
+    if(sourceSummary)trigger.insertAdjacentElement('afterend',sourceSummary);
 
     const details=document.createElement('div');
     details.id=panelId;
