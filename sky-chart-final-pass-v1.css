@@ -22,10 +22,10 @@
 .sky-foundation-wheel.has-isolation [data-layer="zodiac"] > g:not(.is-kept) { opacity:.16 !important; }
 
 .sky-chart-filter-bar { display:grid; grid-template-columns:minmax(52px,.55fr) minmax(72px,1fr) minmax(78px,1.05fr) minmax(66px,.85fr) minmax(66px,.85fr) minmax(82px,1.08fr); gap:7px; padding:10px; border-bottom:1px solid rgba(31,27,24,.12); background:#faf7f2; }
-.sky-chart-filter-bar label { display:grid; gap:4px; min-width:0; color:#4e463f; font:800 .62rem/1.2 system-ui,sans-serif; }
+.sky-chart-filter-bar label { display:grid; gap:4px; min-width:0; color:#4e463f; font:800 .62rem/1.2 'Montserrat',sans-serif; }
 .sky-chart-filter-bar select,
 .sky-chart-filter-bar input[data-filter="orb"],
-.sky-chart-filter-bar input[data-harmonic-window-input] { width:100%; min-width:0; min-height:35px; box-sizing:border-box; border:1px solid rgba(31,27,24,.2); border-radius:9px; background:#fff; padding:.52rem .58rem; color:#191613; font:700 .68rem/1.2 system-ui,sans-serif; }
+.sky-chart-filter-bar input[data-harmonic-window-input] { width:100%; min-width:0; min-height:35px; box-sizing:border-box; border:1px solid rgba(31,27,24,.2); border-radius:9px; background:#fff; padding:.52rem .58rem; color:#191613; font:700 .68rem/1.2 'Montserrat',sans-serif; }
 .sky-chart-filter-hidden { display:none !important; }
 .sky-foundation-wheel .sky-chart-orb-hidden { display:none !important; }
 .sky-where-when-action[data-final-now] { border-color:rgba(201,33,30,.38); color:#9e1b18; }
@@ -37,7 +37,7 @@
 .sky-ph-week-segment.past { stroke:#c9211e; stroke-width:2; opacity:.38; }
 .sky-ph-week-segment.current { stroke:#c9211e; stroke-width:5.5; opacity:1; filter:drop-shadow(0 0 4px rgba(201,33,30,.28)); }
 
-.sky-axis-label { pointer-events:none; font:900 12px/1 system-ui,sans-serif; letter-spacing:.02em; paint-order:stroke; stroke:#fffdf8; stroke-width:4px; stroke-linejoin:round; }
+.sky-axis-label { pointer-events:none; font:900 12px/1 'Montserrat',sans-serif; letter-spacing:.02em; paint-order:stroke; stroke:#fffdf8; stroke-width:4px; stroke-linejoin:round; }
 
 .sky-selected-aspect-diagram { align-self:center; display:grid; justify-items:center; gap:.3rem; min-width:170px; padding:.7rem .45rem; border:1px solid rgba(31,27,24,.16); border-radius:18px; background:#fffdf8; }
 .sky-selected-aspect-diagram svg { display:block; width:150px; height:150px; overflow:visible; }
@@ -47,11 +47,11 @@
 .sky-selected-aspect-point { stroke:#fffdf8; stroke-width:2.5; }
 .sky-selected-aspect-point.sky-a { fill:#c9211e; }
 .sky-selected-aspect-point.sky-b { fill:#2462d0; }
-.sky-selected-aspect-label { margin:0; font:700 .67rem/1.25 system-ui,sans-serif; text-align:center; }
+.sky-selected-aspect-label { margin:0; font:700 .67rem/1.25 'Montserrat',sans-serif; text-align:center; }
 .sky-selected-aspect-label span { display:inline-block; width:.62rem; height:.62rem; margin-right:.3rem; border-radius:50%; }
 .sky-selected-aspect-label.sky-a span { background:#c9211e; }
 .sky-selected-aspect-label.sky-b span { background:#2462d0; }
-.sky-selected-aspect-diagram strong { font:800 .72rem/1.2 system-ui,sans-serif; }
+.sky-selected-aspect-diagram strong { font:800 .72rem/1.2 'Montserrat',sans-serif; }
 
 @media(max-width:900px){ .sky-chart-filter-bar{grid-template-columns:repeat(3,1fr)} }
 @media(max-width:760px){ .sky-chart-filter-bar{grid-template-columns:1fr 1fr}.sky-ph-heptagram{min-height:245px;max-height:360px} }
