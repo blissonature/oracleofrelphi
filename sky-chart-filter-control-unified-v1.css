@@ -5,8 +5,8 @@
   --sky-filter-border:1px solid rgba(31,27,24,.2);
   --sky-filter-radius:9px;
   --sky-filter-height:35px;
-  --sky-filter-label-font:800 .62rem/1.2 system-ui,sans-serif;
-  --sky-filter-control-font:700 .68rem/1.2 system-ui,sans-serif;
+  --sky-filter-label-font:800 .62rem/1.2 'Montserrat',sans-serif;
+  --sky-filter-control-font:700 .68rem/1.2 'Montserrat',sans-serif;
   --sky-filter-control-padding:.52rem .58rem;
 }
 
