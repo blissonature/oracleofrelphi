@@ -1,7 +1,7 @@
 /* Hybrid direct-entry + scroll-list local-time popover for Where and When. */
 .sky-time-control{position:relative;display:block;min-width:0}
 .sky-time-entry-shell{display:grid;grid-template-columns:minmax(0,1fr) 34px;min-width:0;border:1px solid rgba(31,27,24,.23);border-radius:9px;background:#fff;overflow:hidden}
-.sky-time-entry{appearance:none;width:100%;min-width:0;min-height:40px;box-sizing:border-box;border:0;background:#fff;color:#181512;padding:.58rem .62rem;font:800 16px/1.2 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.sky-time-entry{appearance:none;width:100%;min-width:0;min-height:40px;box-sizing:border-box;border:0;background:#fff;color:#181512;padding:.58rem .62rem;font:800 16px/1.2 'Montserrat',sans-serif;font-variant-numeric:tabular-nums}
 .sky-time-entry:focus{outline:none;box-shadow:inset 0 0 0 2px rgba(201,33,30,.13)}
 .sky-time-entry.is-invalid{box-shadow:inset 0 0 0 2px rgba(201,33,30,.32)}
 .sky-time-entry::placeholder{color:#9a9189;opacity:1}
@@ -14,13 +14,13 @@
 .sky-time-panel[hidden]{display:none!important}
 .sky-time-wheel-column{display:grid;grid-template-rows:auto 128px;gap:3px;min-width:0}
 .sky-time-period-column{grid-template-rows:auto 1fr}
-.sky-time-column-label{display:block;color:#5b534c;text-align:center;font:800 .57rem/1.1 system-ui,sans-serif}
+.sky-time-column-label{display:block;color:#5b534c;text-align:center;font:800 .57rem/1.1 'Montserrat',sans-serif}
 
 .sky-time-scroll-list{height:128px;min-height:0;overflow-y:scroll;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;scroll-snap-type:y proximity;padding:1px;border:1px solid rgba(31,27,24,.12);border-radius:7px;background:#fff}
 .sky-time-scroll-list::-webkit-scrollbar{width:6px}
 .sky-time-scroll-list::-webkit-scrollbar-thumb{background:rgba(31,27,24,.23);border-radius:999px}
 .sky-time-scroll-list::-webkit-scrollbar-track{background:rgba(31,27,24,.05);border-radius:999px}
-.sky-time-list-option{appearance:none;display:block;width:100%;min-height:28px;margin:0 0 3px;padding:0 3px;border:1px solid transparent;border-radius:5px;background:transparent;color:#211d19;text-align:center;font:800 .68rem/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;scroll-snap-align:center}
+.sky-time-list-option{appearance:none;display:block;width:100%;min-height:28px;margin:0 0 3px;padding:0 3px;border:1px solid transparent;border-radius:5px;background:transparent;color:#211d19;text-align:center;font:800 .68rem/1 'Montserrat',sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;scroll-snap-align:center}
 .sky-time-list-option:last-child{margin-bottom:0}
 .sky-time-list-option:hover,.sky-time-list-option:focus-visible{outline:none;border-color:rgba(31,27,24,.22);background:#f8f3ed}
 .sky-time-list-option.is-selected{border-color:#c9211e;background:#c9211e;color:#fff}
