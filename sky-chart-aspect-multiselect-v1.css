@@ -11,7 +11,7 @@
   position:relative;
   min-width:0;
   color:#4e463f;
-  font:800 .62rem/1.2 system-ui,sans-serif;
+  font:800 .62rem/1.2 'Montserrat',sans-serif;
 }
 .sky-chart-aspect-filter-head{
   display:grid;
@@ -32,7 +32,7 @@
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
-  font:700 .68rem/1.1 system-ui,sans-serif;
+  font:700 .68rem/1.1 'Montserrat',sans-serif;
 }
 .sky-chart-aspect-filter-value{
   grid-area:value;
@@ -50,7 +50,7 @@
   text-align:left;
   text-overflow:ellipsis;
   white-space:nowrap;
-  font:700 .68rem/1 system-ui,sans-serif;
+  font:700 .68rem/1 'Montserrat',sans-serif;
 }
 .sky-chart-aspect-filter-toggle,
 .sky-chart-placement-filter-toggle,
@@ -136,7 +136,7 @@
   border-bottom:1px solid rgba(31,27,24,.16);
   background:#e9e3da;
   color:#29231e;
-  font:900 .61rem/1 system-ui,sans-serif;
+  font:900 .61rem/1 'Montserrat',sans-serif;
 }
 .sky-chart-aspect-list-header strong{padding:7px 10px;text-align:left}
 .sky-chart-aspect-list-header span{
@@ -164,7 +164,7 @@
   text-overflow:ellipsis;
   white-space:nowrap;
   color:#29231e;
-  font:750 .67rem/1.15 system-ui,sans-serif;
+  font:750 .67rem/1.15 'Montserrat',sans-serif;
 }
 .sky-chart-aspect-list-item input[type="checkbox"]{
   justify-self:center;
@@ -224,7 +224,7 @@
   border-bottom:1px solid rgba(31,27,24,.08);
   background:#f1ece4;
   color:#4a433d;
-  font:900 .62rem/1 system-ui,sans-serif;
+  font:900 .62rem/1 'Montserrat',sans-serif;
   letter-spacing:.04em;
   text-transform:uppercase;
 }
