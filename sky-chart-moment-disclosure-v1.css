@@ -66,8 +66,8 @@
   font:950 .82rem/1.08 system-ui,sans-serif;
   white-space:nowrap;
 }
-.sky-moment-trigger .sky-ph-summary{
-  margin-top:1px;
+.sky-moment-source-summary{
+  margin:1px 0 0;
   opacity:.78;
   font-size:.59rem;
 }
