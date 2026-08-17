@@ -4,7 +4,7 @@
 .understanding-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
 .understanding-header>div{display:grid;gap:.18rem}
 .understanding-header>div>span{font-weight:900;letter-spacing:.055em;text-transform:uppercase}
-.understanding-header small{color:#6a625b;font:700 .72rem/1.25 system-ui,sans-serif}
+.understanding-header small{color:#6a625b;font:700 .72rem/1.25 'Montserrat',sans-serif}
 .relationship-visual{display:grid;grid-template-columns:minmax(112px,150px) minmax(220px,270px) minmax(112px,150px);grid-template-areas:"card-a wheel card-b";justify-content:center;align-items:center;gap:clamp(.65rem,2vw,1rem);padding:.8rem;border:1px solid rgba(45,39,34,.12);border-radius:18px;background:linear-gradient(180deg,#fbf8f3,#f8f4ee)}
 .relationship-mini-wheel.sky-selected-aspect-diagram{grid-area:wheel;display:grid;justify-items:center;align-content:center;gap:.25rem;min-width:0;width:100%;padding:.35rem .25rem .45rem;border:0;border-radius:16px;background:rgba(255,255,255,.76);box-shadow:inset 0 0 0 1px rgba(45,39,34,.1)}
 .relationship-mini-wheel.sky-selected-aspect-diagram svg{display:block;width:min(100%,240px);height:auto;aspect-ratio:1;overflow:visible}
@@ -22,13 +22,13 @@
 .relationship-mini-wheel .sky-selected-aspect-point>.relphi-glyph-bubble>circle{opacity:0!important}
 .relationship-mini-wheel-meta{display:flex;align-items:center;justify-content:center;gap:.35rem;color:var(--aspect-color)}
 .relationship-mini-wheel-aspect{display:block;width:32px;height:32px;overflow:visible}
-.relationship-mini-wheel-orb{color:#514943;font:850 .68rem/1 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.relationship-mini-wheel-orb{color:#514943;font:850 .68rem/1 'Montserrat',sans-serif;font-variant-numeric:tabular-nums}
 .understanding-card{display:grid;justify-items:stretch;gap:.35rem;width:100%;min-width:0;color:#211d1a}
 .understanding-card.sky-a{grid-area:card-a;color:#c9211e}.understanding-card.sky-b{grid-area:card-b;color:#2462d0}
-.correspondence-label{color:currentColor;font:900 .62rem/1 system-ui,sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}
+.correspondence-label{color:currentColor;font:900 .62rem/1 'Montserrat',sans-serif;text-align:center;text-transform:uppercase;letter-spacing:.08em}
 .correspondence-card-art{display:block;width:100%;margin:0;padding:.18rem;border:3px solid currentColor;border-radius:13px;background:#fff;box-sizing:border-box;overflow:hidden}
 .correspondence-card-art img{display:block;width:100%;height:auto;aspect-ratio:352/600;object-fit:cover;border-radius:8px}
-.ledger-entry{width:100%;margin:0;padding:.42rem .45rem;border:1px solid currentColor;border-radius:9px;background:#fff;color:currentColor;font:750 .63rem/1.15 system-ui,sans-serif;cursor:pointer}
+.ledger-entry{width:100%;margin:0;padding:.42rem .45rem;border:1px solid currentColor;border-radius:9px;background:#fff;color:currentColor;font:750 .63rem/1.15 'Montserrat',sans-serif;cursor:pointer}
 .ledger-entry:hover,.ledger-entry:focus-visible{background:#fffdfa;outline:2px solid color-mix(in srgb,currentColor 35%,transparent);outline-offset:1px}
 @media(max-width:760px){.relationship-visual{grid-template-columns:repeat(2,minmax(0,145px));grid-template-areas:"wheel wheel" "card-a card-b"}.relationship-mini-wheel.sky-selected-aspect-diagram{width:min(100%,280px);justify-self:center}}
 @media(max-width:420px){#skySelectedRelationship{padding:.62rem;border-radius:17px}.relationship-visual{grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;padding:.55rem}.relationship-mini-wheel.sky-selected-aspect-diagram{width:min(100%,250px)}.correspondence-label{font-size:.56rem}.ledger-entry{font-size:.59rem;padding:.38rem .3rem}}
