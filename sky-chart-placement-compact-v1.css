@@ -24,7 +24,7 @@
   padding:6px 9px;
   text-align:left;
   color:#4a433d;
-  font:900 .62rem/1 system-ui,sans-serif;
+  font:900 .62rem/1 'Montserrat',sans-serif;
   letter-spacing:.02em;
   text-transform:uppercase;
 }
@@ -40,7 +40,7 @@
   align-items:center;
   justify-content:center;
   border-left:1px solid rgba(31,27,24,.08);
-  font:900 .6rem/1 system-ui,sans-serif;
+  font:900 .6rem/1 'Montserrat',sans-serif;
 }
 .sky-chart-placement-list-header-choice:first-child{border-left:0}
 .sky-chart-placement-list-header-choice-all{color:#514a44;background:rgba(31,27,24,.025)}
