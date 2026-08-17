@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <title>Drawing Board · Oracle of Relphi</title>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="stylesheet" href="style.css?v=346">
+  <style>
+    .drawing-board-page{
+      background:#fff;
+      color:#111;
+      text-align:center;
+      padding:1rem 1rem 2rem;
+    }
+    .drawing-board-shell{
+      max-width:1200px;
+      margin:4.5rem auto 0;
+      padding:1.25rem;
+      text-align:left;
+    }
+    .drawing-board-hero{
+      max-width:820px;
+      margin:1rem auto 1.25rem;
+      text-align:center;
+    }
+    .drawing-board-hero h1{
+      margin:.25rem 0 .6rem;
+      color:#111;
+      font-size:clamp(2.1rem,5vw,3.4rem);
+      font-weight:700;
+      line-height:1;
+      letter-spacing:.02em;
+    }
+    .drawing-board-hero h1 .red{color:#dc1f18}
+    .drawing-board-hero p{
+      max-width:720px;
+      margin:.45rem auto;
+      color:#555;
+      font-size:1.05rem;
+      line-height:1.55;
+    }
+    .board-frame-wrap{
+      position:relative;
+      width:100%;
+      min-height:0;
+      padding:.55rem;
+      overflow:hidden;
+      background:#faf8f7;
+      border:2px solid #dc1f18;
+      border-radius:1.5em;
+      box-shadow:0 4px 24px rgba(0,0,0,.05);
+    }
+    #drawingBoardFrame{
+      display:block;
+      width:100%;
+      height:calc(100vh - 235px);
+      min-height:680px;
+      border:0;
+      border-radius:1rem;
+      background:#fff;
+    }
+    .loading-note{
+      position:absolute;
+      top:1.25rem;
+      left:50%;
+      z-index:2;
+      transform:translateX(-50%);
+      margin:0;
+      padding:.55em .95em;
+      border:1px solid #dc1f18;
+      border-radius:2em;
+      background:#fff;
+      color:#111;
+      font-size:.9rem;
+      font-weight:700;
+      box-shadow:0 4px 16px rgba(220,31,24,.08);
+    }
+    .is-ready .loading-note{display:none}
+    @media(max-width:640px){
+      .drawing-board-page{padding:.65rem .55rem 1rem}
+      .drawing-board-shell{margin-top:4rem;padding:.5rem}
+      .drawing-board-hero{margin:.5rem auto 1rem}
+      .drawing-board-hero h1{font-size:clamp(2rem,11vw,2.8rem)}
+      .drawing-board-hero p{font-size:.95rem}
+      .board-frame-wrap{padding:.35rem;border-radius:1.15rem}
+      #drawingBoardFrame{height:calc(100vh - 210px);min-height:620px;border-radius:.85rem}
+    }
+  </style>
+</head>
+<body class="drawing-board-page">
+  <div id="nav-placeholder"></div>
+  <main class="drawing-board-shell" id="standaloneShell">
+    <section class="drawing-board-hero">
+      <h1>Drawing <span class="red">Board</span></h1>
+      <p>Draw or search for a card directly in each position, then arrange the reading on the board.</p>
+    </section>
+    <section class="board-frame-wrap" aria-label="Drawing Board workspace">
+      <p class="loading-note" id="loadingNote">Opening Drawing Board…</p>
+      <iframe id="drawingBoardFrame" title="Drawing Board workspace" src="tarot.html?board=workflow-v2&amp;standaloneDrawingBoard=1#tarot"></iframe>
+    </section>
+  </main>
+  <script src="navloader.js"></script>
+  <script>
+    (function(){
+      'use strict';
+      const frame=document.getElementById('drawingBoardFrame');
+      const shell=document.getElementById('standaloneShell');
+      function installStandaloneEnhancements(doc){
+        if(!doc||!doc.body||doc.getElementById('relphiStandaloneDrawingBoardV1Script'))return;
+        const script=doc.createElement('script');
+        script.id='relphiStandaloneDrawingBoardV1Script';
+        script.src='drawing-board-standalone-v1.js?v=1';
+        script.async=false;
+        doc.body.appendChild(script);
+      }
+      function isolateBoard(){
+        let doc;
+        try{doc=frame.contentDocument||frame.contentWindow.document;}catch(_){return;}
+        if(!doc)return;
+        installStandaloneEnhancements(doc);
+        const board=doc.getElementById('shortListPanel');
+        const openBoard=doc.getElementById('landingOpenBoard');
+        const boardTab=doc.getElementById('viewBoard');
+        if(openBoard)openBoard.click();
+        else if(boardTab)boardTab.click();
+        if(!board){return setTimeout(isolateBoard,80);}
+        board.hidden=false;
+        const style=doc.createElement('style');
+        style.id='relphi-standalone-board-isolation';
+        style.textContent='html,body{background:#fff!important} body{padding-top:0!important} #nav-placeholder,.menu-container,.tarot-landing,.tarot-view-toggle,.tarot-view-tabs,#landingOpenBoard,#viewBoard{display:none!important} #shortListPanel{display:block!important;margin:0 auto!important;max-width:none!important;width:100%!important}';
+        if(!doc.getElementById(style.id))doc.head.appendChild(style);
+        let node=board;
+        while(node&&node.parentElement&&node.parentElement!==doc.body){
+          const parent=node.parentElement;
+          Array.from(parent.children).forEach(function(sibling){if(sibling!==node)sibling.style.setProperty('display','none','important');});
+          node=parent;
+        }
+        if(node&&node.parentElement===doc.body){
+          Array.from(doc.body.children).forEach(function(sibling){
+            if(sibling!==node&&sibling.tagName!=='SCRIPT')sibling.style.setProperty('display','none','important');
+          });
+        }
+        board.style.setProperty('display','block','important');
+        shell.classList.add('is-ready');
+        frame.contentWindow.dispatchEvent(new Event('resize'));
+      }
+      frame.addEventListener('load',function(){
+        let doc;
+        try{doc=frame.contentDocument||frame.contentWindow.document;}catch(_){doc=null;}
+        installStandaloneEnhancements(doc);
+        setTimeout(isolateBoard,80);
+      });
+    })();
+  </script>
+</body>
+</html>
