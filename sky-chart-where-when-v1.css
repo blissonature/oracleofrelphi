@@ -19,7 +19,7 @@
   background:#fff;
   color:#241f1b;
   padding:.38rem .62rem;
-  font:800 .64rem/1 system-ui,sans-serif;
+  font:800 .64rem/1 'Montserrat',sans-serif;
   cursor:pointer;
 }
 
@@ -57,7 +57,7 @@
   margin:0;
   padding:0 4px;
   color:#201b17;
-  font:900 .78rem/1.2 system-ui,sans-serif;
+  font:900 .78rem/1.2 'Montserrat',sans-serif;
 }
 
 .sky-where-when-section[disabled] {
@@ -69,7 +69,7 @@
   gap:4px;
   min-width:0;
   color:#49413a;
-  font:800 .65rem/1.25 system-ui,sans-serif;
+  font:800 .65rem/1.25 'Montserrat',sans-serif;
 }
 
 .sky-where-when-input,
@@ -82,7 +82,7 @@
   background:#fff;
   color:#181512;
   padding:.62rem .68rem;
-  font:700 .76rem/1.2 system-ui,sans-serif;
+  font:700 .76rem/1.2 'Montserrat',sans-serif;
 }
 
 .sky-where-when-input:focus,
@@ -112,7 +112,7 @@
   background:#202020;
   color:#fff;
   padding:.64rem .82rem;
-  font:900 .68rem/1 system-ui,sans-serif;
+  font:900 .68rem/1 'Montserrat',sans-serif;
   cursor:pointer;
   white-space:nowrap;
 }
@@ -168,12 +168,12 @@
 
 .sky-location-result strong {
   overflow-wrap:anywhere;
-  font:850 .7rem/1.25 system-ui,sans-serif;
+  font:850 .7rem/1.25 'Montserrat',sans-serif;
 }
 
 .sky-location-result span {
   color:#645b53;
-  font:650 .61rem/1.25 system-ui,sans-serif;
+  font:650 .61rem/1.25 'Montserrat',sans-serif;
 }
 
 .sky-location-confirmation {
@@ -192,7 +192,7 @@
   margin:0;
   overflow-wrap:anywhere;
   color:#332d28;
-  font:650 .65rem/1.35 system-ui,sans-serif;
+  font:650 .65rem/1.35 'Montserrat',sans-serif;
 }
 
 .sky-location-confirmation strong {
@@ -216,7 +216,7 @@
   cursor:pointer;
   padding:10px;
   color:#29231e;
-  font:900 .68rem/1.2 system-ui,sans-serif;
+  font:900 .68rem/1.2 'Montserrat',sans-serif;
 }
 
 .sky-where-when-advanced-body {
@@ -241,7 +241,7 @@
   min-height:1.3em;
   margin:0;
   color:#5c534b;
-  font:700 .64rem/1.35 system-ui,sans-serif;
+  font:700 .64rem/1.35 'Montserrat',sans-serif;
 }
 
 .sky-where-when-status.is-error {
@@ -265,7 +265,7 @@
   margin:0;
   overflow-wrap:anywhere;
   color:#4c443d;
-  font:650 .63rem/1.35 system-ui,sans-serif;
+  font:650 .63rem/1.35 'Montserrat',sans-serif;
 }
 
 .sky-inference-card strong {
@@ -298,7 +298,7 @@
   margin:0;
   overflow-wrap:anywhere;
   color:#554c44;
-  font:650 .63rem/1.35 system-ui,sans-serif;
+  font:650 .63rem/1.35 'Montserrat',sans-serif;
 }
 
 .sky-where-when-facts strong {
@@ -328,7 +328,7 @@
 .sky-ph-jump-title {
   display:block;
   text-align:center;
-  font:900 .72rem/1.25 system-ui,sans-serif;
+  font:900 .72rem/1.25 'Montserrat',sans-serif;
 }
 
 .sky-ph-heptagram {
@@ -358,14 +358,14 @@
 .sky-ph-node.day { stroke-width:5; }
 .sky-ph-node.hour { fill:currentColor; filter:drop-shadow(0 0 5px rgba(0,0,0,.22)); }
 .sky-ph-node-glyph { pointer-events:none; }
-.sky-ph-node-label { fill:#24201c; font:800 13px/1 system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; }
-.sky-ph-center-label { fill:#29241f; font:850 12px/1.2 system-ui,sans-serif; text-anchor:middle; }
+.sky-ph-node-label { fill:#24201c; font:800 13px/1 'Montserrat',sans-serif; text-anchor:middle; dominant-baseline:middle; }
+.sky-ph-center-label { fill:#29241f; font:850 12px/1.2 'Montserrat',sans-serif; text-anchor:middle; }
 
 .sky-ph-summary {
   margin:0;
   text-align:center;
   color:#514840;
-  font:700 .63rem/1.35 system-ui,sans-serif;
+  font:700 .63rem/1.35 'Montserrat',sans-serif;
 }
 
 @media(max-width:1120px) {
