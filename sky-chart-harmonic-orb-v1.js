@@ -49,6 +49,18 @@ function motion(metricsLike,leftVelocity,rightVelocity){
   return Object.freeze({available:true,relativeVelocity,harmonicVelocity,applying,timeToExactitudeDays});
 }
 function relation(left,right,aspect,distance,windowValue){const m=metrics(distance,aspect,windowValue);if(!m||!m.active)return null;const temporal=motion(m,left?.angularVelocity??left?.velocity??left?.item?.angularVelocity??left?.item?.velocity??left?.item?.speed,right?.angularVelocity??right?.velocity??right?.item?.angularVelocity??right?.item?.velocity??right?.item?.speed);return{left,right,aspect,distance,orb:m.ordinaryOrb,...m,temporal}}
+function loadCollectiveHarmonics(){
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiCollectiveHarmonicsLoadStarted)return;
+  window.__relphiCollectiveHarmonicsLoadStarted=true;
+  function append(src,done){
+    const script=document.createElement('script');script.src=src;script.async=false;
+    if(done)script.addEventListener('load',done,{once:true});
+    script.addEventListener('error',()=>console.error('[Oracle of Relphi] Could not load collective harmonic layer:',src),{once:true});
+    (document.head||document.documentElement).appendChild(script);
+  }
+  append('relphi-collective-harmonics-core-v1.js?v=1',()=>append('sky-chart-collective-harmonics-v1.js?v=1'));
+}
 window.addEventListener('relphi:sky-orb-limit-changed',event=>{const value=event.detail?.harmonicWindow??event.detail?.orb;if(value!=null)setWindow(value)});
 window.RelphiHarmonicOrb=Object.freeze({theorem:'ordinary orb × fundamental harmonic order = harmonic phase error',defaultWindow:DEFAULT_WINDOW,maxWindow:MAX_WINDOW,aspects:ASPECTS,byId:id=>BY_ID.get(String(id||''))||null,clampWindow,setWindow,windowFromControl,metrics,motion,relation});
+loadCollectiveHarmonics();
 })();
