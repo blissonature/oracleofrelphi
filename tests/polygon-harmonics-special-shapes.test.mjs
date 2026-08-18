@@ -27,19 +27,35 @@ test('golden rectangle produces alternating 3.435 and 26.565 degree strike gaps'
   assert.ok(Math.abs(gaps[1]-26.565051177077976)<1e-9);
 });
 
-test('21-55-64 triangle circumcircle offsets reproduce all three side ratios',()=>{
+test('canonical 21-55-64 construction puts Neptune/C in Quadrant II',()=>{
+  const A=[0,0];
+  const B=[55,0];
+  const C=[-63/11,84*Math.sqrt(7)/11];
+  assert.ok(C[0]<0);
+  assert.ok(C[1]>0);
+  const dist=(p,q)=>Math.hypot(p[0]-q[0],p[1]-q[1]);
+  assert.ok(Math.abs(dist(A,B)-55)<1e-12);
+  assert.ok(Math.abs(dist(A,C)-21)<1e-12);
+  assert.ok(Math.abs(dist(B,C)-64)<1e-12);
+});
+
+test('21-55-64 sound-wheel offsets preserve the canonical orientation',()=>{
+  // The SVG wheel is clockwise-positive, so canonical Cartesian circumcircle
+  // offsets are sign-reversed: B is counterclockwise, Neptune/C clockwise.
   const A=0;
-  const B=rad(111.54226734437484);
-  const C=rad(-36.80449239188047);
+  const B=rad(-111.54226734437484);
+  const C=rad(36.80449239188047);
   const AB=chord(A,B), AC=chord(A,C), BC=chord(B,C);
   const k=55/AB;
+  assert.ok(B<0);
+  assert.ok(C>0);
   assert.ok(Math.abs(AB*k-55)<1e-9);
   assert.ok(Math.abs(AC*k-21)<1e-9);
   assert.ok(Math.abs(BC*k-64)<1e-9);
 });
 
 test('21-55-64 triangle has 36 distinct crossings and A is zero-phase root stream',()=>{
-  const offsets=[0,111.54226734437484,-36.80449239188047];
+  const offsets=[0,-111.54226734437484,36.80449239188047];
   const residues=offsets.map(v=>(((-v)%30)+30)%30).sort((a,b)=>a-b);
   assert.equal(new Set(residues.map(v=>v.toFixed(9))).size,3);
   assert.ok(residues.some(v=>Math.abs(v)<1e-9));
