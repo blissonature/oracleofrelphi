@@ -18,13 +18,13 @@
   filter:saturate(.08)!important;
 }
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-endpoint,
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line,
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .sky-orb-bridge-selected-line{
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="aspects"]>.sky-foundation-aspect.is-relationship-line,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="aspects"]>.sky-foundation-aspect.sky-orb-bridge-selected-line{
   opacity:1!important;
   filter:none!important;
 }
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line,
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .sky-orb-bridge-selected-line{
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="aspects"]>.sky-foundation-aspect.is-relationship-line,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="aspects"]>.sky-foundation-aspect.sky-orb-bridge-selected-line{
   display:inline!important;
   visibility:visible!important;
   stroke-opacity:1!important;
