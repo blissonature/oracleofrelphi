@@ -87,8 +87,8 @@
     if(hourKey)trigger.dataset.hourRuler=hourKey;
     else delete trigger.dataset.hourRuler;
     if(dayKey&&hourKey){
-      trigger.setAttribute('aria-label',`${PLANETS[dayKey].name} day ruler. ${PLANETS[hourKey].name} hour ruler. Show exact Where and When.`);
-      trigger.title='Show exact Where and When';
+      trigger.setAttribute('aria-label',`${PLANETS[dayKey].name} day ruler. ${PLANETS[hourKey].name} hour ruler. Show exactly where and when.`);
+      trigger.title='Show exactly where and when';
     }
   }
   function transform(section){
@@ -115,15 +115,15 @@
     trigger.dataset.momentToggle=slot;
     trigger.setAttribute('aria-expanded','false');
     trigger.setAttribute('aria-controls',panelId);
-    trigger.setAttribute('aria-label','Show exact Where and When');
-    trigger.title='Show exact Where and When';
+    trigger.setAttribute('aria-label','Show exactly where and when');
+    trigger.title='Show exactly where and when';
 
     jump.querySelector('.sky-ph-jump-title')?.remove();
     trigger.appendChild(svg);
     const hint=document.createElement('span');
     hint.className='sky-moment-disclosure-hint';
     hint.dataset.momentDisclosureHint='true';
-    hint.textContent='Show exact where & when';
+    hint.textContent='Show exactly where and when';
     trigger.appendChild(hint);
     jump.replaceWith(trigger);
 
@@ -185,7 +185,7 @@
     details.hidden=!opening;
     button.setAttribute('aria-expanded',opening?'true':'false');
     const hint=button.querySelector('[data-moment-disclosure-hint]');
-    if(hint)hint.textContent=opening?'Hide exact where & when':'Show exact where & when';
+    if(hint)hint.textContent=opening?'Hide exactly where and when':'Show exactly where and when';
   }
   function start(){
     scan();
@@ -212,7 +212,7 @@
     details.hidden=true;
     trigger?.setAttribute('aria-expanded','false');
     const hint=trigger?.querySelector('[data-moment-disclosure-hint]');
-    if(hint)hint.textContent='Show exact where & when';
+    if(hint)hint.textContent='Show exactly where and when';
     trigger?.focus({preventScroll:true});
   },true);
 
