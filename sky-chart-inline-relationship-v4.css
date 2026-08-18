@@ -18,13 +18,18 @@
   filter:saturate(.08)!important;
 }
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-endpoint,
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line{
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .sky-orb-bridge-selected-line{
   opacity:1!important;
   filter:none!important;
 }
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line{
-  stroke-width:4.5!important;
-  filter:drop-shadow(0 0 2px rgba(31,27,24,.2))!important;
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .sky-orb-bridge-selected-line{
+  display:inline!important;
+  visibility:visible!important;
+  stroke-opacity:1!important;
+  stroke-width:5.5!important;
+  filter:drop-shadow(0 0 2.5px rgba(31,27,24,.28))!important;
 }
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-endpoint{
   filter:drop-shadow(0 0 4px rgba(31,27,24,.25))!important;
@@ -37,10 +42,10 @@
    opening from the aspect line's orb; opacity is synchronized to the line itself. */
 .sky-relationship-orb-aperture{
   fill:var(--orb-aspect-color,#777);
-  fill-opacity:.13;
+  fill-opacity:.11;
   stroke:var(--orb-aspect-color,#777);
-  stroke-opacity:.24;
-  stroke-width:1.15;
+  stroke-opacity:.3;
+  stroke-width:1.25;
   vector-effect:non-scaling-stroke;
   pointer-events:none;
   transition:opacity .1s ease;
