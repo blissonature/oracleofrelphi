@@ -6,22 +6,32 @@
 .sky-foundation-relationship-row.is-relationship-dimmed{opacity:.16;filter:saturate(.25)}
 .sky-relationship-mode-hidden{display:none!important}
 
-/* Exact relationship semantics override broader Card Hit/placement keep sets while a
-   relationship is selected. Houses and the zodiac remain as orientation context. */
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="placements"]>[data-sky][data-placement],
+/* One selected relationship is one exact geometry. Any sky-specific wheel mark from a
+   broader placement/Card Hit lens yields to the two endpoints and their one aspect line.
+   Zodiac and house structure remain visible as orientation context. */
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-focus-piece],
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-placement],
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-angle],
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="leaders"]>[data-sky],
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="aspects"]>.sky-foundation-aspect{
-  opacity:.055!important;
-  filter:saturate(.18)!important;
+  opacity:.025!important;
+  filter:saturate(.08)!important;
 }
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-endpoint,
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line{
   opacity:1!important;
   filter:none!important;
 }
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line{stroke-width:4.5!important;filter:drop-shadow(0 0 2px rgba(31,27,24,.2))!important}
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-endpoint{filter:drop-shadow(0 0 4px rgba(31,27,24,.25))!important}
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-perspective{filter:saturate(1.25) brightness(1.08) drop-shadow(0 0 7px rgba(31,27,24,.36))!important}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line{
+  stroke-width:4.5!important;
+  filter:drop-shadow(0 0 2px rgba(31,27,24,.2))!important;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-endpoint{
+  filter:drop-shadow(0 0 4px rgba(31,27,24,.25))!important;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-perspective{
+  filter:saturate(1.25) brightness(1.08) drop-shadow(0 0 7px rgba(31,27,24,.36))!important;
+}
 
 /* The Placements drawer becomes the literal endpoint list for an exact relationship. */
 #skyFoundationA.has-relationship-exact-ledger .sky-foundation-row.is-relationship-unrelated-row,
