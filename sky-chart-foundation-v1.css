@@ -42,6 +42,41 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   font:800 .82rem/1.2 'Montserrat',sans-serif;
 }
 
+/* The comparison heading owns one compact row. Export is an action on that row, not a
+   second toolbar row that pushes the wheel downward. */
+#skyFoundationComparison > .sky-foundation-heading {
+  position:relative;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  align-content:center!important;
+  gap:2px!important;
+  min-height:48px!important;
+  box-sizing:border-box;
+  padding:5px 44px 5px 12px!important;
+  flex-wrap:nowrap!important;
+}
+#skyFoundationComparison > .sky-foundation-heading > span:first-child {
+  display:block;
+  min-width:0;
+}
+#skyFoundationComparison > .sky-foundation-heading > .sky-wheel-explore-copy {
+  display:block;
+  min-width:0;
+  margin:0;
+  color:#514a44;
+  font:650 .62rem/1.2 'Montserrat',sans-serif;
+}
+#skyFoundationComparison > .sky-foundation-heading > .sky-export-wheel-slot {
+  position:absolute!important;
+  right:7px!important;
+  top:50%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0!important;
+  transform:translateY(-50%)!important;
+}
+
 .sky-foundation-slot {
   display:grid;
   place-items:center;
@@ -62,7 +97,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   white-space:nowrap;
 }
 
-.sky-foundation-body { min-width:0; }
+.sky-foundation-body { min-width:0; margin:0; padding:0; }
 .sky-foundation-empty {
   margin:0;
   padding:24px 16px;
@@ -107,7 +142,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   place-items:center;
   width:100%;
   min-height:420px;
-  padding:8px;
+  padding:2px 8px 8px;
   contain:layout paint;
 }
 #skyFoundationWheelMount > svg {
@@ -164,7 +199,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
     grid-template-columns:1fr;
     grid-template-areas:"a" "b" "comparison";
   }
-  #skyFoundationWheelMount { min-height:300px; padding:4px; }
+  #skyFoundationWheelMount { min-height:300px; padding:2px 4px 4px; }
   #skyFoundationWheelMount .sky-foundation-aspect {
     stroke-width:1.05;
     opacity:.52;
