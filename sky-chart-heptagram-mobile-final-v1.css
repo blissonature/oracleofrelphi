@@ -22,17 +22,18 @@
   white-space:normal;
 }
 
-/* The source SVG has generous artboard margins. Scale that artboard up while reducing its
-   layout footprint so the visible heptagram keeps its size without paying for the blank rim. */
+/* Keep the SVG entirely inside the trigger's layout box. The previous transform enlarged
+   paint without enlarging layout, which let the outer planetary nodes escape the card. */
 .sky-ph-heptagram {
   display:block;
-  width:min(100%, 252px);
+  width:min(100%, 264px);
   height:auto;
+  max-width:100%;
   max-height:none;
   min-height:0;
-  margin:-20px auto -18px;
-  overflow:visible;
-  transform:scale(1.16);
+  margin:0 auto;
+  overflow:hidden;
+  transform:none;
   transform-origin:center;
 }
 
@@ -66,9 +67,9 @@
   }
 
   .sky-ph-heptagram {
-    width:min(100%, 246px);
+    width:100%;
     max-width:100%;
-    margin:-18px auto -16px;
+    margin:0 auto;
   }
 
   .sky-ph-summary {
