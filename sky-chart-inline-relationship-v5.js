@@ -1,5 +1,7 @@
-// Inline relationship reveal v5: the isolated mini-wheel is pure geometry.
-// Sky A and Sky B endpoints are plain color points at their true longitudes; overlap is allowed.
+// Relationship focus controller: relationship tiles select the shared chart workspace.
+// The old inline expansion is deprecated. Card art is projected into the Placements
+// drawer of the sky that owns each endpoint; same-sky relationships show both cards
+// on the same Sky card. Relationship source slots are explicit: A-A, B-B, or A-B.
 (function(){
 'use strict';
 if(window.__relphiInlineRelationshipV5)return;
@@ -10,130 +12,62 @@ window.__relphiInlineRelationshipV4=true;
 window.__relphiInlineRelationshipV5=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+const DRAWER_KEY='relphiSkyCardDrawersV1';
 const COLORS={A:'#c9211e',B:'#2462d0'};
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-const ASPECT_NAMES={conjunction:'Conjunction','semi-sextile':'Semi-Sextile',octile:'Octile',sextile:'Sextile',quintile:'Quintile',square:'Square',trine:'Trine','tri-octile':'Tri-Octile','bi-quintile':'Bi-Quintile',quincunx:'Quincunx',opposition:'Opposition'};
-const PLACEMENT_REFERENTS={sun:'identity, vitality, and conscious purpose',moon:'feelings, instincts, memory, and emotional needs',mercury:'thought, perception, language, and communication',venus:'values, attraction, affection, pleasure, and relating',mars:'drive, assertion, desire, conflict, and action',jupiter:'growth, confidence, meaning, opportunity, and expansion',saturn:'structure, limits, responsibility, time, and commitment',uranus:'freedom, disruption, originality, awakening, and change',neptune:'imagination, sensitivity, surrender, ideals, and vision',pluto:'power, depth, compulsion, elimination, and transformation',chiron:'wounding, healing intelligence, and the capacity to guide healing',asc:'the way a person enters life and is immediately perceived',dsc:'the way a person meets partners and encounters the other',mc:'public direction, vocation, visibility, and the role a person grows toward',ic:'roots, home, private foundations, and inherited belonging','north-node':'growth through unfamiliar experience and developing capacity','south-node':'familiar patterns, inherited capacity, and the known path',lilith:'instinctive autonomy, refusal, exile, and uncompromised desire','part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',vertex:'encounters that feel consequential or outside ordinary control'};
-const ASPECT_REFERENTS={conjunction:'the two functions operate together','semi-sextile':'neighboring functions accommodate one another',octile:'focused friction and adjustment',sextile:'a cooperative opening activated through participation',quintile:'creative pattern-making and specialized skill',square:'activating pressure and development',trine:'low-resistance exchange','tri-octile':'accumulated friction and redirection','bi-quintile':'refined creative pattern-making',quincunx:'continuing adjustment and translation',opposition:'awareness through polarity, contrast, and exchange'};
 const DECANS=[[['two_of_wands','Two of Wands'],['three_of_wands','Three of Wands'],['four_of_wands','Four of Wands']],[['five_of_pentacles','Five of Pentacles'],['six_of_pentacles','Six of Pentacles'],['seven_of_pentacles','Seven of Pentacles']],[['eight_of_swords','Eight of Swords'],['nine_of_swords','Nine of Swords'],['ten_of_swords','Ten of Swords']],[['two_of_cups','Two of Cups'],['three_of_cups','Three of Cups'],['four_of_cups','Four of Cups']],[['five_of_wands','Five of Wands'],['six_of_wands','Six of Wands'],['seven_of_wands','Seven of Wands']],[['eight_of_pentacles','Eight of Pentacles'],['nine_of_pentacles','Nine of Pentacles'],['ten_of_pentacles','Ten of Pentacles']],[['two_of_swords','Two of Swords'],['three_of_swords','Three of Swords'],['four_of_swords','Four of Swords']],[['five_of_cups','Five of Cups'],['six_of_cups','Six of Cups'],['seven_of_cups','Seven of Cups']],[['eight_of_wands','Eight of Wands'],['nine_of_wands','Nine of Wands'],['ten_of_wands','Ten of Wands']],[['two_of_pentacles','Two of Pentacles'],['three_of_pentacles','Three of Pentacles'],['four_of_pentacles','Four of Pentacles']],[['five_of_swords','Five of Swords'],['six_of_swords','Six of Swords'],['seven_of_swords','Seven of Swords']],[['eight_of_cups','Eight of Cups'],['nine_of_cups','Nine of Cups'],['ten_of_cups','Ten of Cups']]];
 const ALIAS={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
-let openRow=null;
-const cardArtWarmups=new Map();
+const ASPECT_NAMES={conjunction:'Conjunction','semi-sextile':'Semi-Sextile',octile:'Octile',sextile:'Sextile',quintile:'Quintile',square:'Square',trine:'Trine','tri-octile':'Tri-Octile','bi-quintile':'Bi-Quintile',quincunx:'Quincunx',opposition:'Opposition'};
+const generated={rows:[],lines:[]};
+let selectedRow=null;
+let lastPlacementSelection={A:null,B:null};
 
 const norm=n=>((Number(n)%360)+360)%360;
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
-function read(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_){return null}}
-function source(p){const x=[p?.placements,p?.positions,p?.points,p?.bodies].find(v=>v&&typeof v==='object')||p||{};return Array.isArray(x)?x.map((v,i)=>[String(v?.name||v?.id||i),v]):Object.entries(x)}
-function lon(x){if(Number.isFinite(Number(x?.longitude)))return norm(x.longitude);const s=SIGNS.findIndex(n=>n.toLowerCase()===String(x?.sign||x?.zodiac||'').toLowerCase());return s<0?NaN:norm(s*30+Number(x.degree||x.degrees||0)+Number(x.minute||x.minutes||0)/60)}
-function canonical(k,x){const r=window.RelphiGlyphRegistry;for(const c of [x?.glyphId,x?.id,x?.name,x?.label,x?.body,x?.planet,x?.point,k]){if(!c)continue;const raw=String(c).trim(),e=r?.resolve?.(ALIAS[raw.toLowerCase()]||raw)||r?.get?.(ALIAS[raw.toLowerCase()]||raw);if(e)return e}return null}
-function find(slot,id,row){for(const[k,x]of source(read(KEYS[slot]))){if(!x||typeof x!=='object'||Array.isArray(x))continue;const e=canonical(k,x),v=lon(x);if(e?.id===id&&Number.isFinite(v)){const h=Number(row.dataset[slot==='A'?'leftHouse':'rightHouse']);return{id:e.id,entry:e,value:v,sky:slot,house:Number.isFinite(h)&&h>0?h:null}}}return null}
-function relation(row){const l=find('A',row.dataset.leftPlacement,row),r=find('B',row.dataset.rightPlacement,row);if(!l||!r)return null;return{left:l,right:r,aspect:String(row.dataset.aspect||''),orb:Number(row.dataset.sourceOrb||0)}}
-function card(rec){const v=norm(rec.value),s=Math.floor(v/30),d=Math.floor(v-s*30),[id,title]=DECANS[s][Math.min(2,Math.floor(d/10))];return{id,title,image:`assets/tarot/rws-export/${id}.webp`}}
-function emitCardFocus(active,a='',b='',row=null){
-  window.dispatchEvent(new CustomEvent('relphi:sky-relationship-card-focus',{detail:{active:!!active,A:String(a||''),B:String(b||''),relationIndex:row?.dataset?.relationIndex??''}}));
-}
-function warmCardArt(src){
-  const key=String(src||'');if(!key)return Promise.resolve();
-  const existing=cardArtWarmups.get(key);if(existing)return existing.ready;
-  const image=new Image();image.decoding='async';
-  let settle;const loaded=new Promise(resolve=>{settle=resolve});
-  image.addEventListener('load',settle,{once:true});image.addEventListener('error',settle,{once:true});image.src=key;
-  const ready=typeof image.decode==='function'?image.decode().catch(()=>loaded):loaded;
-  cardArtWarmups.set(key,{image,ready});return ready;
-}
-function warmCurrentCardArt(){
-  const paths=new Set();
-  ['A','B'].forEach(slot=>{for(const[,x]of source(read(KEYS[slot]))){if(!x||typeof x!=='object'||Array.isArray(x))continue;const v=lon(x);if(Number.isFinite(v))paths.add(card({value:v}).image)}});
-  paths.forEach(warmCardArt);
-}
-function point(v,r=48){const a=(norm(v)-180)*Math.PI/180;return{x:60+r*Math.cos(a),y:60+r*Math.sin(a)}}
-function position(rec){const v=norm(rec.value),si=Math.floor(v/30),within=v-si*30,d=Math.floor(within),m=Math.floor((within-d)*60+1e-7);return{sign:SIGNS[si],degree:d,minute:m,label:`${d}°${String(m).padStart(2,'0')}′`}}
+const sep=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
+function source(payload){const value=[payload?.placements,payload?.positions,payload?.points,payload?.bodies].find(v=>v&&typeof v==='object')||payload||{};return Array.isArray(value)?value.map((v,i)=>[String(v?.name||v?.id||i),v]):Object.entries(value).filter(([,v])=>v&&typeof v==='object'&&!Array.isArray(v))}
+function lon(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const s=SIGNS.findIndex(n=>n.toLowerCase()===String(item?.sign||item?.zodiac||'').toLowerCase());return s<0?NaN:norm(s*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}
+function canonical(key,item){const r=window.RelphiGlyphRegistry;for(const candidate of [item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){if(!candidate)continue;const raw=String(candidate).trim(),entry=r?.resolve?.(ALIAS[raw.toLowerCase()]||raw)||r?.get?.(ALIAS[raw.toLowerCase()]||raw);if(entry)return entry}return null}
+function records(slot){const seen=new Set();return source(read(slot)).map(([key,item])=>{const entry=canonical(key,item),value=lon(item);if(!entry||!Number.isFinite(value)||seen.has(entry.id))return null;seen.add(entry.id);return{id:entry.id,entry,item,value,sky:slot,house:Number(item?.house??item?.houseNumber)||null,sign:Math.floor(value/30)}}).filter(Boolean)}
+function endpoint(slot,id,row,side){const found=records(slot).find(record=>record.id===id);if(!found)return null;const house=Number(row?.dataset?.[side==='left'?'leftHouse':'rightHouse']);if(Number.isFinite(house)&&house>0)found.house=house;return found}
+function rowSlots(row){const mode=row?.dataset?.relationshipMode||document.documentElement.dataset.skyRelationshipMode||'';if(mode==='A-A')return['A','A'];if(mode==='B-B')return['B','B'];return[row?.dataset?.leftSky||'A',row?.dataset?.rightSky||'B']}
+function relation(row){if(!row)return null;const [leftSky,rightSky]=rowSlots(row),left=endpoint(leftSky,row.dataset.leftPlacement,row,'left'),right=endpoint(rightSky,row.dataset.rightPlacement,row,'right');if(!left||!right)return null;return{row,left,right,leftSky,rightSky,aspect:String(row.dataset.aspect||''),orb:Number(row.dataset.sourceOrb||0),mode:`${leftSky}-${rightSky}`}}
+function position(record){const value=norm(record.value),sign=Math.floor(value/30),within=value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-7);return{sign:SIGNS[sign],degree,minute,label:`${degree}°${String(minute).padStart(2,'0')}′ ${SIGNS[sign]}`}}
+function card(record){const p=position(record),sign=SIGNS.indexOf(p.sign),decan=Math.min(2,Math.floor(p.degree/10)),[id,title]=DECANS[sign][decan];return{id,title,image:`assets/tarot/rws-export/${id}.webp`,decan:decan+1}}
 function tarotHref(cardId){const params=new URLSearchParams();params.set('card',cardId);const ref=new URLSearchParams(location.search).get('ref');if(ref)params.set('ref',ref);return`tarot.html?${params.toString()}`}
 
-function wheelMarkup(rel){
-  const a=point(rel.left.value),b=point(rel.right.value);
-  return `<div class="inline-rel-wheel"><div class="inline-rel-wheel-stage"><svg viewBox="0 0 120 120" aria-label="Isolated relationship"><circle cx="60" cy="60" r="48" class="inline-rel-ring"/><line x1="60" y1="60" x2="${a.x}" y2="${a.y}" class="inline-rel-radius a"/><line x1="60" y1="60" x2="${b.x}" y2="${b.y}" class="inline-rel-radius b"/><line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="inline-rel-aspect"/><g class="inline-rel-point-layer" aria-hidden="true"><circle cx="${a.x}" cy="${a.y}" r="5.4" class="inline-rel-point inline-rel-point-a"/><circle cx="${b.x}" cy="${b.y}" r="5.4" class="inline-rel-point inline-rel-point-b"/></g></svg></div><div class="inline-rel-orb"><span style="--orb:${Math.min(1,rel.orb)}"></span><strong>${rel.orb.toFixed(2)}°</strong></div></div>`;
-}
-function cardMarkup(slot,c){
-  const href=tarotHref(c.id);
-  return `<a class="inline-rel-card sky-${slot.toLowerCase()}" data-inline-ledger="${esc(c.id)}" href="${esc(href)}" style="text-decoration:none" aria-label="Open full ${esc(c.title)} Tarot Ledger entry"><small>Sky ${slot}</small><img loading="eager" decoding="async" src="${esc(c.image)}" alt="${esc(c.title)}"><b>${esc(c.title)}</b></a>`;
-}
+function drawerState(){try{const value=JSON.parse(sessionStorage.getItem(DRAWER_KEY)||'{}');return value&&typeof value==='object'?value:{}}catch(_){return{}}}
+function openPlacementsDrawer(slot){const state=drawerState();state[slot]={...(state[slot]||{}),placements:true};try{sessionStorage.setItem(DRAWER_KEY,JSON.stringify(state))}catch(_){}const panel=document.getElementById(`skyFoundation${slot}`),section=panel?.querySelector('[data-sky-drawer="placements"]'),toggle=section?.querySelector('[data-sky-drawer-toggle="placements"]'),body=section?.querySelector('[data-sky-drawer-body="placements"]');section?.classList.add('is-open');toggle?.setAttribute('aria-expanded','true');if(body)body.hidden=false;const placement=body?.querySelector('.sky-where-when-placement-view');if(placement)placement.hidden=false}
+function focusHost(slot){const body=document.querySelector(`#skyFoundation${slot} [data-sky-drawer-body="placements"]`);if(!body)return null;let host=body.querySelector(':scope > .sky-relationship-focus-host');if(!host){host=document.createElement('div');host.className='sky-relationship-focus-host';host.dataset.relationshipFocusSlot=slot;body.prepend(host)}return host}
+function clearFocusHosts(){document.querySelectorAll('.sky-relationship-focus-host').forEach(host=>host.remove())}
+function endpointCardMarkup(record,side){const c=card(record),p=position(record),href=tarotHref(c.id);return `<a class="sky-relationship-focus-card sky-${record.sky.toLowerCase()}" href="${esc(href)}" aria-label="Open ${esc(c.title)} in Tarot Ledger"><span class="sky-relationship-focus-source">Sky ${record.sky} · ${esc(record.entry.name)}</span><img src="${esc(c.image)}" alt="${esc(c.title)} card art"><strong>${esc(c.title)}</strong><small>${esc(p.label)}${record.house?` · H${record.house}`:''}</small></a>`}
+function projectCards(rel){clearFocusHosts();const bySlot={A:[],B:[]};bySlot[rel.leftSky].push(rel.left);bySlot[rel.rightSky].push(rel.right);['A','B'].forEach(slot=>{if(!bySlot[slot].length)return;openPlacementsDrawer(slot);const host=focusHost(slot);if(!host)return;host.innerHTML=`<div class="sky-relationship-focus-heading"><span>Relationship focus</span><small>${esc(ASPECT_NAMES[rel.aspect]||rel.aspect)}</small></div><div class="sky-relationship-focus-cards">${bySlot[slot].map((record,index)=>endpointCardMarkup(record,index?'right':'left')).join('')}</div>`})}
 
-function contextMarkup(rel){
-  const lp=position(rel.left),rp=position(rel.right);
-  return `<div class="inline-rel-house-context"><span>Sky A · ${esc(lp.sign)} ${esc(lp.label)}${rel.left.house?` · H${rel.left.house}`:''}</span><span>Sky B · ${esc(rp.sign)} ${esc(rp.label)}${rel.right.house?` · H${rel.right.house}`:''}</span></div>`;
-}
-function revealInfo(rel,field){
-  if(field==='left')return{name:rel.left.entry.name,referent:PLACEMENT_REFERENTS[rel.left.id]||'a calculated placement in Sky A',color:COLORS.A};
-  if(field==='right')return{name:rel.right.entry.name,referent:PLACEMENT_REFERENTS[rel.right.id]||'a calculated placement in Sky B',color:COLORS.B};
-  const name=ASPECT_NAMES[rel.aspect]||rel.aspect;
-  return{name,referent:ASPECT_REFERENTS[rel.aspect]||'a measured relationship between the two placements',color:'var(--relationship-stripe,#777)'};
-}
-function clearReveal(row){
-  if(!row)return;
-  delete row.dataset.inlineRevealField;delete row.dataset.inlineRevealLevel;
-  const reveal=row.querySelector(':scope>.inline-rel-detail>.inline-rel-top-reveal');
-  if(reveal){reveal.hidden=true;reveal.textContent='';reveal.removeAttribute('style');delete reveal.dataset.level;delete reveal.dataset.field}
-}
-function cycleReveal(row,field){
-  const rel=relation(row),reveal=row.querySelector(':scope>.inline-rel-detail>.inline-rel-top-reveal');
-  if(!rel||!reveal)return;
-  const sameField=row.dataset.inlineRevealField===field,current=sameField?row.dataset.inlineRevealLevel:'';
-  const next=current===''?'name':current==='name'?'referent':'';
-  if(!next){clearReveal(row);return}
-  const info=revealInfo(rel,field);
-  row.dataset.inlineRevealField=field;row.dataset.inlineRevealLevel=next;
-  reveal.dataset.field=field;reveal.dataset.level=next;reveal.style.setProperty('--reveal-color',info.color);
-  reveal.textContent=next==='name'?info.name:info.referent;
-  reveal.hidden=false;
-}
-function fieldFromTopGlyph(node){
-  if(node?.classList.contains('sky-foundation-relationship-glyph--left'))return'left';
-  if(node?.classList.contains('sky-foundation-relationship-glyph--right'))return'right';
-  if(node?.classList.contains('sky-foundation-relationship-glyph--aspect'))return'aspect';
-  return'';
-}
-function decorateTopReveal(row){
-  const fields=[['left','.sky-foundation-relationship-glyph--left'],['aspect','.sky-foundation-relationship-glyph--aspect'],['right','.sky-foundation-relationship-glyph--right']];
-  fields.forEach(([field,selector])=>{const node=row.querySelector(selector);if(!node)return;node.dataset.inlineTopReveal=field;node.setAttribute('title','Tap to reveal name, then meaning')});
-}
-function close(row){
-  const wasFocused=!!row&&row===openRow&&row.classList.contains('is-inline-expanded');
-  clearReveal(row);
-  const detail=row?.querySelector(':scope>.inline-rel-detail');if(detail)detail.hidden=true;
-  row?.classList.remove('is-inline-expanded');row?.setAttribute('aria-expanded','false');
-  if(wasFocused)emitCardFocus(false);
-}
+function rowMode(row){const [a,b]=rowSlots(row);return`${a}-${b}`}
+function lineMatches(line,rel){const mode=line.dataset.relationshipMode||`${line.dataset.leftSky||'A'}-${line.dataset.rightSky||'B'}`;return mode===rel.mode&&line.dataset.aspect===rel.aspect&&line.dataset.leftPlacement===rel.left.id&&line.dataset.rightPlacement===rel.right.id}
+function clearWheelFocus(){const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(wheel){wheel.classList.remove('has-isolation');wheel.querySelectorAll('.is-kept,.is-selected,.is-aspect-endpoint').forEach(node=>node.classList.remove('is-kept','is-selected','is-aspect-endpoint'))}document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{row.classList.remove('is-relationship-dimmed','is-relationship-selected');row.removeAttribute('aria-current')});document.querySelectorAll('.sky-foundation-aspect[data-selected-relation]').forEach(line=>delete line.dataset.selectedRelation)}
+function applyWheelFocus(rel){const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!wheel)return;wheel.classList.add('has-isolation');wheel.querySelectorAll('[data-focus-piece], [data-layer="placements"]>[data-sky][data-placement], [data-layer="leaders"]>[data-sky][data-placement], [data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.remove('is-kept','is-selected','is-aspect-endpoint'));const keepEndpoint=record=>{wheel.querySelectorAll(`[data-sky="${record.sky}"][data-placement="${CSS.escape(record.id)}"]`).forEach(node=>node.classList.add('is-kept','is-aspect-endpoint'))};keepEndpoint(rel.left);keepEndpoint(rel.right);wheel.querySelectorAll('[data-layer="aspects"]>.sky-foundation-aspect').forEach(line=>{if(lineMatches(line,rel)){line.classList.add('is-kept','is-selected');line.dataset.selectedRelation='true'}else delete line.dataset.selectedRelation});document.querySelectorAll('.sky-foundation-relationship-row').forEach(row=>{const same=row===rel.row;row.classList.toggle('is-relationship-selected',same);row.classList.toggle('is-relationship-dimmed',!same);if(same)row.setAttribute('aria-current','true');else row.removeAttribute('aria-current')})}
+function emitFocus(rel,active){const endpoints=active?[rel.left,rel.right].map(record=>{const c=card(record);return{sky:record.sky,placementId:record.id,placementName:record.entry.name,cardId:c.id,cardTitle:c.title,longitude:record.value}}):[];const firstA=endpoints.find(e=>e.sky==='A'),firstB=endpoints.find(e=>e.sky==='B');window.dispatchEvent(new CustomEvent('relphi:sky-relationship-card-focus',{detail:{active:!!active,A:firstA?.cardId||'',B:firstB?.cardId||'',endpoints,mode:active?rel.mode:''}}));window.dispatchEvent(new CustomEvent('relphi:sky-relationship-selected',{detail:{active:!!active,relation:active?rel:null,endpoints,mode:active?rel.mode:'',row:active?rel.row:null}}))}
+function clearSelection(){const rel=selectedRow?relation(selectedRow):null;selectedRow=null;clearWheelFocus();clearFocusHosts();if(rel)emitFocus(rel,false)}
+function selectRow(row){const rel=relation(row);if(!rel)return;if(selectedRow===row&&row.getAttribute('aria-current')==='true'){clearSelection();return}selectedRow=row;clearWheelFocus();applyWheelFocus(rel);projectCards(rel);emitFocus(rel,true)}
 
-function open(row){
-  if(openRow&&openRow!==row)close(openRow);
-  if(row===openRow&&row.classList.contains('is-inline-expanded'))return;
-  const rel=relation(row);if(!rel)return;
-  const ca=card(rel.left),cb=card(rel.right);
-  openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');decorateTopReveal(row);
-  emitCardFocus(true,ca.id,cb.id,row);
-  const signature=`${rel.left.id}@${rel.left.value.toFixed(7)}|${rel.aspect}|${rel.right.id}@${rel.right.value.toFixed(7)}`;
-  let detail=row.querySelector(':scope>.inline-rel-detail');
-  if(detail&&detail.dataset.inlineRelationshipSignature===signature){detail.hidden=false;document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');return}
-  detail?.remove();detail=document.createElement('div');detail.className='inline-rel-detail';detail.dataset.inlineRelationshipSignature=signature;
-  warmCardArt(ca.image);warmCardArt(cb.image);
-  detail.innerHTML=`<div class="inline-rel-top-reveal" role="status" aria-live="polite" hidden></div><div class="inline-rel-visual">${cardMarkup('A',ca)}${wheelMarkup(rel)}${cardMarkup('B',cb)}</div>${contextMarkup(rel)}`;
-  row.appendChild(detail);
-  document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');
-}
+function glyphHost(role,label){const span=document.createElement('span');span.className=`sky-foundation-relationship-glyph sky-foundation-relationship-glyph--${role}`;span.dataset.glyphRole=role;span.setAttribute('aria-label',label);return span}
+async function drawGlyph(host,id,color){const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=registry?.get?.(id)||registry?.resolve?.(id);if(!entry||!component?.createBubble)return;try{const bubble=component.createBubble(host,entry.id,{radius:15,padding:1,color,fill:'#fffdf8',strokeWidth:2});await bubble.ready}catch(_){}}
+function intraRelations(slot,selectedIds){const H=window.RelphiHarmonicOrb,list=records(slot).filter(record=>!selectedIds||selectedIds.has(record.id)),result=[],windowValue=H?.windowFromControl?.()??H?.defaultWindow??6,aspects=H?.aspects||[];for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){const left=list[i],right=list[j],distance=sep(left.value,right.value);aspects.forEach(aspect=>{const r=H?.relation?.(left,right,aspect,distance,windowValue);if(r)result.push(r)})}return result.sort((a,b)=>(a.phaseError??a.orb)-(b.phaseError??b.orb)||a.orb-b.orb)}
+function point(value,radius=165){const a=(norm(value)-180)*Math.PI/180;return{x:600+radius*Math.cos(a),y:600+radius*Math.sin(a)}}
+function clearGenerated(){generated.rows.forEach(node=>node.remove());generated.lines.forEach(node=>node.remove());generated.rows=[];generated.lines=[];document.querySelectorAll('.sky-relationship-mode-hidden').forEach(node=>node.classList.remove('sky-relationship-mode-hidden'))}
+function renderSameSky(slot,ids){const list=document.getElementById('skyFoundationRelationshipList'),layer=document.querySelector('#skyFoundationWheelMount [data-layer="aspects"]');if(!list||!layer)return;clearSelection();clearGenerated();document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.add('sky-relationship-mode-hidden'));const relations=intraRelations(slot,ids),jobs=[];relations.forEach((r,index)=>{const relationIndex=-1000-index,from=point(r.left.value),to=point(r.right.value),line=document.createElementNS('http://www.w3.org/2000/svg','line');Object.entries({x1:from.x,y1:from.y,x2:to.x,y2:to.y,stroke:r.aspect.color,class:'sky-foundation-aspect sky-foundation-single-sky-aspect','data-relation-index':relationIndex,'data-relationship-mode':`${slot}-${slot}`,'data-left-sky':slot,'data-right-sky':slot,'data-aspect':r.aspect.id,'data-left-placement':r.left.id,'data-right-placement':r.right.id,'data-orb':r.orb.toFixed(6)}).forEach(([k,v])=>line.setAttribute(k,String(v)));line.dataset.focusPiece='aspect';layer.appendChild(line);generated.lines.push(line);const row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row sky-foundation-single-sky-row';Object.assign(row.dataset,{relationshipSelection:'true',relationIndex:String(relationIndex),relationshipMode:`${slot}-${slot}`,leftSky:slot,rightSky:slot,aspect:r.aspect.id,leftPlacement:r.left.id,rightPlacement:r.right.id,sourceOrb:r.orb.toFixed(6),leftSign:String(r.left.sign),rightSign:String(r.right.sign)});row.setAttribute('aria-label',`Sky ${slot} ${r.left.entry.name} ${r.aspect.id} Sky ${slot} ${r.right.entry.name}, orb ${r.orb.toFixed(2)} degrees`);const leftGlyph=glyphHost('left',r.left.entry.name),aspectGlyph=glyphHost('aspect',r.aspect.id),rightGlyph=glyphHost('right',r.right.entry.name),leftCopy=document.createElement('span'),rightCopy=document.createElement('span'),lp=position(r.left),rp=position(r.right);leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';leftCopy.innerHTML=`${esc(r.left.entry.name)}<small>Sky ${slot} · ${esc(lp.label)}</small>`;rightCopy.innerHTML=`${esc(r.right.entry.name)}<small>Sky ${slot} · ${esc(rp.label)} · Orb ${r.orb.toFixed(2)}°</small>`;row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);generated.rows.push(row);jobs.push(drawGlyph(leftGlyph,r.left.id,COLORS[slot]),drawGlyph(aspectGlyph,r.aspect.id,r.aspect.color),drawGlyph(rightGlyph,r.right.id,COLORS[slot]))});document.documentElement.dataset.skyRelationshipMode=`${slot}-${slot}`;const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');if(count){count.textContent=`${relations.length}/${relations.length}`;count.dataset.total=String(relations.length)}if(empty)empty.hidden=relations.length!==0;Promise.allSettled(jobs).then(()=>window.dispatchEvent(new CustomEvent('relphi:sky-single-sky-aspects-rendered',{detail:{slot,mode:`${slot}-${slot}`,count:relations.length}})))}
+function restoreCrossSky(){if(!generated.rows.length&&!generated.lines.length)return;clearSelection();clearGenerated();document.documentElement.dataset.skyRelationshipMode='A-B';const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row:not(.sky-foundation-single-sky-row)')],count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');const visible=rows.filter(row=>!row.hidden&&getComputedStyle(row).display!=='none').length;if(count)count.textContent=`${visible}/${rows.length}`;if(empty)empty.hidden=visible!==0}
+function handlePlacementMode(detail){lastPlacementSelection={A:new Set((detail?.A||[]).map(String)),B:new Set((detail?.B||[]).map(String))};if(document.documentElement.dataset.skyBPresent!=='true')return;const a=lastPlacementSelection.A,b=lastPlacementSelection.B;if(a.size===0&&b.size>0)renderSameSky('B',b);else if(b.size===0&&a.size>0)renderSameSky('A',a);else restoreCrossSky()}
 
-document.addEventListener('click',e=>{
-  const ledger=e.target.closest('[data-inline-ledger]');
-  if(ledger){e.stopImmediatePropagation();return}
-  const topGlyph=e.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right');
-  const revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');
-  if(revealRow){const field=topGlyph.dataset.inlineTopReveal||fieldFromTopGlyph(topGlyph);if(field){e.preventDefault();e.stopImmediatePropagation();cycleReveal(revealRow,field);return}}
-  const row=e.target.closest('.sky-foundation-relationship-row[data-relation-index]');
-  if(row)requestAnimationFrame(()=>open(row));
-},true);
-function suppress(){const p=document.getElementById('skySelectedRelationship');if(p)p.hidden=true}
-window.addEventListener('relphi:selected-relationship-rendered',suppress);
-window.addEventListener('relphi:sky-foundation-ready',()=>{if(openRow&&!openRow.isConnected){emitCardFocus(false);openRow=null}warmCurrentCardArt();suppress()});
-function start(){warmCurrentCardArt();suppress()}
+function ensureExploreHeader(){const heading=document.querySelector('#skyFoundationComparison>.sky-foundation-heading');if(!heading)return;let title=heading.querySelector(':scope>span:first-child');if(!title){title=document.createElement('span');heading.prepend(title)}title.textContent='Explore the chart';let copy=heading.querySelector('.sky-wheel-explore-copy');if(!copy){copy=document.createElement('small');copy.className='sky-wheel-explore-copy';heading.appendChild(copy)}copy.textContent='Tap a relationship to focus its placements and cards. Use placement and Card Hit controls to isolate what you want to investigate.';document.getElementById('skyFoundationComparison')?.setAttribute('aria-label','Interactive zodiac chart')}
+
+document.addEventListener('click',event=>{const row=event.target.closest('.sky-foundation-relationship-row[data-relation-index]');if(row){event.preventDefault();event.stopPropagation();selectRow(row);return}if(event.target.closest('#skyFoundationClearIsolation'))clearSelection()},true);
+window.addEventListener('relphi:sky-foundation-clear-selection',clearSelection);
+window.addEventListener('relphi:sky-placement-multiselect-changed',event=>handlePlacementMode(event.detail||{}));
+['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-single-sky-aspects-rendered'].forEach(name=>window.addEventListener(name,()=>requestAnimationFrame(ensureExploreHeader)));
+window.addEventListener('storage',event=>{if(Object.values(KEYS).includes(event.key)){clearSelection();requestAnimationFrame(ensureExploreHeader)}});
+function start(){ensureExploreHeader();document.getElementById('skySelectedRelationship')?.setAttribute('hidden','')}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
