@@ -1,4 +1,9 @@
 /* Final compact heptagram layout: preserve the instrument and stop surrounding it with empty card space. */
+.sky-where-when-confirmed {
+  gap:3px;
+  padding:4px;
+}
+
 .sky-ph-jump {
   position:relative;
   overflow:hidden;
