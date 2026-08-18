@@ -6,7 +6,7 @@
 
   const LIBRARY_KEY='relphiSkyLibraryV1';
   const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-  const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky']);
+  const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','unsaved sky']);
   let openSlot=null,queued=false,popover=null,observer=null;
   let namingMode=false,nameDraft='';
 
@@ -64,6 +64,8 @@
   }
   function matchingRecord(value,records){
     if(!value||!hasPlacements(value))return null;
+    const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
+    if(metadata.savedSkyDetached===true)return null;
     const explicit=explicitRecord(value,records);if(explicit)return explicit;
     const exact=skySignature(value),exactHits=records.filter(record=>skySignature(record)===exact);
     if(exactHits.length===1)return exactHits[0];
@@ -97,6 +99,7 @@
     const next=clone(value||{});
     next.name=name;next.title=name;next.displayName=name;next.skyName=name;
     next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};
+    delete next.metadata.savedSkyDetached;
     next.metadata.savedSkyId=id;next.metadata.savedSkyName=name;next.metadata.savedSkyLoadedAt=new Date().toISOString();
     next.calcProfile=next.calcProfile&&typeof next.calcProfile==='object'?next.calcProfile:{};
     next.calcProfile.name=name;next.calcProfile.title=name;
@@ -204,8 +207,6 @@
     queued=false;
     renderIdentity('A');
     renderIdentity('B');
-    // Never rebuild the active naming form. Replacing a focused input dismisses
-    // the software keyboard on mobile browsers. While naming, only reposition it.
     if(openSlot){if(namingMode)positionPopover();else renderPopover()}
   }
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
