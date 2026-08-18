@@ -311,7 +311,11 @@
   function start(){
     hydrate();
     const root=document.getElementById('skyFoundationRoot')||document.body;
-    observer=new MutationObserver(schedule);observer.observe(root,{childList:true,subtree:true});
+    observer=new MutationObserver(records=>{
+      if(records.every(record=>record.target?.closest?.('[data-ww-saved-sky-selector]')))return;
+      schedule();
+    });
+    observer.observe(root,{childList:true,subtree:true});
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
