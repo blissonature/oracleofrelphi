@@ -13,7 +13,7 @@
 .sky-card-hits-tab-total{display:none!important}
 .sky-card-hits-grid{
   display:grid!important;
-  grid-template-columns:repeat(auto-fill,minmax(42px,1fr))!important;
+  grid-template-columns:repeat(auto-fit,minmax(42px,1fr))!important;
   gap:0!important;
   align-items:stretch!important;
   overflow:hidden!important;
@@ -108,6 +108,6 @@
 
 @media(prefers-reduced-motion:reduce){.sky-card-hit{transition:none!important}}
 @media(max-width:620px){
-  .sky-card-hits-grid{grid-template-columns:repeat(auto-fill,minmax(40px,1fr))!important}
+  .sky-card-hits-grid{grid-template-columns:repeat(auto-fit,minmax(40px,1fr))!important}
   .sky-card-hit-chip{min-width:12px!important;height:12px!important;font-size:.34rem!important}
 }
