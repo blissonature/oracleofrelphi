@@ -221,3 +221,12 @@
     grid-template-columns:minmax(0,.6fr) minmax(0,1fr) minmax(0,1.45fr) minmax(0,1.5fr) minmax(0,1.2fr)!important;
   }
 }
+
+/* iOS zooms the page when a focused text field is smaller than 16px. Keep the compact
+   desktop typography, but make the Harmonic Window a native-size editor on touch/mobile. */
+@media(max-width:760px),(pointer:coarse){
+  #skyFoundationRelationships .sky-chart-filter-bar input[data-harmonic-window-input]{
+    font-size:16px!important;
+    line-height:1.2!important;
+  }
+}
