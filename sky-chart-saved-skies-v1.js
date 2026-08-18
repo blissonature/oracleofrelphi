@@ -1,5 +1,5 @@
-// Saved sky identity is display-only in the Sky header. The header toggles the existing
-// moment drawer; loading, searching, naming, and saving skies live inside that drawer.
+// Sky header identity is display-only. It toggles the existing moment drawer; saved-sky
+// search, selection, naming, and saving live inside that drawer.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesV1)return;
@@ -45,46 +45,48 @@
   }
   function drawer(slot){return document.querySelector(`#skyFoundation${slot} [data-sky-drawer="where"]`)}
   function drawerToggle(slot){return drawer(slot)?.querySelector('[data-sky-drawer-toggle="where"]')||null}
+  function applyInitialState(slot,state){
+    const root=document.documentElement,key=`sky${slot}HasIdentity`,cssName=`--sky-${slot.toLowerCase()}-header-name`;
+    root.dataset[key]=state.hasIdentity?'true':'false';
+    root.style.setProperty(cssName,JSON.stringify(state.name));
+  }
   function syncWhereLabel(slot,state){
     const toggle=drawerToggle(slot);if(!toggle)return;
     const label=toggle.querySelector('span:first-child');if(label)label.textContent='Where and When';
-    // Once a sky has an identity, the header itself is the disclosure control. The empty
-    // state keeps Where and When visible as the invitation to define or choose a moment.
     toggle.hidden=!!state.hasIdentity;
     toggle.setAttribute('aria-hidden',state.hasIdentity?'true':'false');
     toggle.tabIndex=state.hasIdentity?-1:0;
   }
   function renderIdentity(slot){
     const panel=document.getElementById(`skyFoundation${slot}`),container=panel?.querySelector(':scope > .sky-foundation-heading > .sky-foundation-name');
-    if(!container)return;
-    const state=identity(slot);
-    let button=container.querySelector('[data-saved-sky-trigger]');
-    if(!button){
-      container.replaceChildren();
-      button=document.createElement('button');button.type='button';button.className='sky-saved-name-trigger';button.dataset.savedSkyTrigger=slot;
-      const label=document.createElement('span');label.className='sky-saved-name-label';button.appendChild(label);container.appendChild(button);
-    }
-    button.classList.toggle('is-saved',state.saved);
-    button.classList.remove('is-dirty');
-    const label=button.querySelector('.sky-saved-name-label');if(label&&label.textContent!==state.name)label.textContent=state.name;
+    const state=identity(slot);applyInitialState(slot,state);if(!container)return;
+    container.dataset.savedSkyTrigger=slot;
+    container.classList.toggle('is-saved',state.saved);
+    container.setAttribute('role','button');container.tabIndex=0;
     const open=drawer(slot)?.classList.contains('is-open')||drawerToggle(slot)?.getAttribute('aria-expanded')==='true';
-    button.setAttribute('aria-expanded',open?'true':'false');
-    button.setAttribute('aria-label',`${state.name}. ${open?'Hide':'Show'} where and when for Sky ${slot}.`);
-    button.title=open?'Hide where and when':'Show where and when';
+    container.setAttribute('aria-expanded',open?'true':'false');
+    container.setAttribute('aria-label',`${state.name}. ${open?'Hide':'Show'} where and when for Sky ${slot}.`);
+    container.title=open?'Hide where and when':'Show where and when';
     syncWhereLabel(slot,state);
   }
   function sync(){queued=false;renderIdentity('A');renderIdentity('B')}
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
+  function activate(trigger){
+    const slot=trigger?.dataset?.savedSkyTrigger,toggle=drawerToggle(slot);if(!toggle)return;
+    toggle.click();requestAnimationFrame(()=>renderIdentity(slot));
+  }
 
   document.addEventListener('click',event=>{
-    const trigger=event.target.closest?.('[data-saved-sky-trigger]');
-    if(!trigger)return;
-    const slot=trigger.dataset.savedSkyTrigger,toggle=drawerToggle(slot);if(!toggle)return;
-    event.preventDefault();event.stopPropagation();toggle.click();requestAnimationFrame(()=>renderIdentity(slot));
+    const trigger=event.target.closest?.('[data-saved-sky-trigger]');if(!trigger)return;
+    event.preventDefault();event.stopPropagation();activate(trigger);
+  },true);
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Enter'&&event.key!==' ')return;
+    const trigger=event.target.closest?.('[data-saved-sky-trigger]');if(!trigger)return;
+    event.preventDefault();activate(trigger);
   },true);
 
   window.addEventListener('storage',event=>{if(!event.key||event.key===LIBRARY_KEY||Object.values(SLOT_KEYS).includes(event.key))schedule()});
-  ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed'].forEach(name=>window.addEventListener(name,schedule));
-  new MutationObserver(records=>{if(records.some(record=>record.addedNodes.length||record.removedNodes.length))schedule()}).observe(document.documentElement,{childList:true,subtree:true});
+  ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed','relphi:sky-drawers-ready'].forEach(name=>window.addEventListener(name,schedule));
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
 })();
