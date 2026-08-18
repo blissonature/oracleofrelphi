@@ -1,13 +1,35 @@
-/* Relationship selection now drives the shared wheel and Sky-card Placements drawers.
-   The former inline expanded relationship view is intentionally retired. */
+/* Relationship tiles select the existing analysis workspace; no second wheel is created. */
 #skySelectedRelationship{display:none!important}
 #skyFoundationRelationshipList{align-items:start}
 .sky-foundation-relationship-row{align-self:start}
-.sky-foundation-relationship-row.is-relationship-selected{border-color:rgba(31,27,24,.48);background:#f6f0e8;box-shadow:0 0 0 2px color-mix(in srgb,var(--relationship-aspect-color,#777) 18%,transparent)}
-.sky-foundation-relationship-row.is-relationship-dimmed{opacity:.18;filter:saturate(.28)}
+.sky-foundation-relationship-row.is-relationship-selected{border-color:rgba(31,27,24,.5);background:#f6f0e8;box-shadow:0 0 0 2px color-mix(in srgb,var(--relationship-aspect-color,#777) 18%,transparent)}
+.sky-foundation-relationship-row.is-relationship-dimmed{opacity:.16;filter:saturate(.25)}
 .sky-relationship-mode-hidden{display:none!important}
 
-.sky-wheel-explore-copy{display:block;max-width:560px;color:#655d56;font:650 .61rem/1.3 'Montserrat',sans-serif;text-align:left}
+/* Exact relationship semantics override broader Card Hit/placement keep sets while a
+   relationship is selected. Houses and the zodiac remain as orientation context. */
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="placements"]>[data-sky][data-placement],
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="leaders"]>[data-sky],
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="aspects"]>.sky-foundation-aspect{
+  opacity:.055!important;
+  filter:saturate(.18)!important;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-endpoint,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line{
+  opacity:1!important;
+  filter:none!important;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-line{stroke-width:4.5!important;filter:drop-shadow(0 0 2px rgba(31,27,24,.2))!important}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-endpoint{filter:drop-shadow(0 0 4px rgba(31,27,24,.25))!important}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-perspective{filter:saturate(1.25) brightness(1.08) drop-shadow(0 0 7px rgba(31,27,24,.36))!important}
+
+/* The Placements drawer becomes the literal endpoint list for an exact relationship. */
+#skyFoundationA.has-relationship-exact-ledger .sky-foundation-row.is-relationship-unrelated-row,
+#skyFoundationB.has-relationship-exact-ledger .sky-foundation-row.is-relationship-unrelated-row{display:none!important}
+#skyFoundationA.has-relationship-exact-ledger .sky-foundation-row.is-relationship-endpoint-row,
+#skyFoundationB.has-relationship-exact-ledger .sky-foundation-row.is-relationship-endpoint-row{opacity:1!important;background:rgba(241,235,226,.72)}
+
+.sky-wheel-explore-copy{display:block;max-width:590px;color:#655d56;font:650 .61rem/1.3 'Montserrat',sans-serif;text-align:left}
 #skyFoundationComparison>.sky-foundation-heading{align-items:start;gap:4px}
 #skyFoundationComparison>.sky-foundation-heading>span:first-child{font-weight:900}
 
@@ -15,25 +37,34 @@
 .sky-relationship-focus-heading{display:flex;align-items:baseline;justify-content:space-between;gap:8px;color:#2b2622}
 .sky-relationship-focus-heading>span{font:900 .7rem/1.15 'Montserrat',sans-serif}
 .sky-relationship-focus-heading>small{color:#6a625b;font:750 .58rem/1.15 'Montserrat',sans-serif}
-.sky-relationship-focus-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;align-items:start}
-.sky-relationship-focus-card{display:grid;justify-items:center;gap:5px;min-width:0;padding:8px;border:1px solid rgba(31,27,24,.13);border-radius:10px;background:#fffdfa;color:#211d19;text-decoration:none}
-.sky-relationship-focus-card:hover,.sky-relationship-focus-card:focus-visible{border-color:currentColor;outline:2px solid color-mix(in srgb,currentColor 22%,transparent);outline-offset:2px}
-.sky-relationship-focus-card.sky-a{color:#9f1b18}.sky-relationship-focus-card.sky-b{color:#1f57bb}
-.sky-relationship-focus-source{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font:850 .58rem/1.15 'Montserrat',sans-serif}
-.sky-relationship-focus-card img{display:block;width:min(100%,150px);height:auto;aspect-ratio:352/600;object-fit:cover;border:2px solid currentColor;border-radius:7px;background:#eee}
-.sky-relationship-focus-card strong{max-width:100%;color:#211d19;font:850 .68rem/1.15 'Montserrat',sans-serif;text-align:center}
-.sky-relationship-focus-card small{max-width:100%;color:#665e57;font:700 .56rem/1.25 'Montserrat',sans-serif;text-align:center}
+.sky-relationship-focus-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;align-items:start}
+.sky-relationship-focus-card{display:grid;justify-items:center;gap:5px;min-width:0;padding:8px;border:1px solid rgba(31,27,24,.13);border-radius:10px;background:#fffdfa;color:#211d19;transition:opacity .1s ease,border-color .1s ease,box-shadow .1s ease}
+.sky-relationship-focus-card.sky-a{--endpoint-color:#c9211e}.sky-relationship-focus-card.sky-b{--endpoint-color:#2462d0}
+.sky-relationship-focus-card.is-perspective{border-color:var(--endpoint-color);box-shadow:0 0 0 2px color-mix(in srgb,var(--endpoint-color) 17%,transparent)}
+.sky-relationship-focus-source{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--endpoint-color);text-align:center;font:850 .58rem/1.15 'Montserrat',sans-serif}
+.sky-relationship-focus-art{display:grid;justify-items:center;gap:5px;width:100%;color:#211d19;text-decoration:none}
+.sky-relationship-focus-art:hover,.sky-relationship-focus-art:focus-visible{outline:none}.sky-relationship-focus-art:focus-visible img{outline:2px solid var(--endpoint-color);outline-offset:2px}
+.sky-relationship-focus-art img{display:block;width:min(100%,156px);height:auto;aspect-ratio:352/600;object-fit:cover;border:2px solid var(--endpoint-color);border-radius:7px;background:#eee}
+.sky-relationship-focus-art strong{max-width:100%;font:850 .68rem/1.15 'Montserrat',sans-serif;text-align:center}
+.sky-relationship-focus-card>small{max-width:100%;color:#665e57;font:700 .56rem/1.25 'Montserrat',sans-serif;text-align:center}
+.sky-relationship-perspective{appearance:none;border:1px solid color-mix(in srgb,var(--endpoint-color) 38%,rgba(31,27,24,.14));border-radius:999px;background:#fff;color:#3c352f;padding:.38rem .58rem;font:800 .54rem/1 'Montserrat',sans-serif;cursor:pointer}
+.sky-relationship-perspective:hover,.sky-relationship-perspective:focus-visible{border-color:var(--endpoint-color);color:var(--endpoint-color);outline:none}
+.sky-relationship-focus-card.is-perspective .sky-relationship-perspective{background:color-mix(in srgb,var(--endpoint-color) 8%,#fff);color:var(--endpoint-color)}
 
+/* Transit timing belongs to the relationship tile: geometry stays one object while
+   duration, motion, and phase describe the moving endpoint when one exists. */
 .sky-relationship-transit-meta{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:1px;padding-top:5px;border-top:1px solid rgba(31,27,24,.08);color:#5c544d;font:750 .56rem/1.25 'Montserrat',sans-serif;font-variant-numeric:tabular-nums}
 .sky-relationship-transit-meta strong{color:#26211d;font-weight:900}
 .sky-relationship-transit-meta .is-rx{color:#8b1714}
 .sky-relationship-transit-meta[hidden]{display:none!important}
 
+@media(prefers-reduced-motion:reduce){.sky-relationship-focus-card{transition:none}}
 @media(max-width:620px){
   .sky-wheel-explore-copy{font-size:.57rem}
   .sky-relationship-focus-host{padding:8px}
   .sky-relationship-focus-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .sky-relationship-focus-card{padding:6px}
-  .sky-relationship-focus-card img{width:min(100%,132px)}
+  .sky-relationship-focus-art img{width:min(100%,136px)}
   .sky-relationship-transit-meta{font-size:.53rem}
+  .sky-relationship-perspective{font-size:.51rem;padding:.35rem .48rem}
 }
