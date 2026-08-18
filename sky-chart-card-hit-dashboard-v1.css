@@ -1,46 +1,237 @@
-/* Card Hits compressed view: composition wedges inside, literal zodiac bars outside. */
+/* Card Hits collapsed provenance view: composition wedges inside, literal zodiac bars outside. */
 .sky-card-hit-dashboard{
   --dashboard-slot-color:var(--slot-color,#555);
+  --active-hit-color:var(--dashboard-slot-color);
   display:grid;
-  grid-template-columns:minmax(0,1fr) 142px;
-  align-items:center;
-  gap:10px;
+  place-items:center;
+  width:100%;
   min-width:0;
-  padding:9px 10px;
-  border-top:1px solid rgba(31,27,24,.08);
-  border-bottom:1px solid rgba(31,27,24,.11);
+  box-sizing:border-box;
+  padding:4px 6px 5px;
+  border-top:1px solid rgba(31,27,24,.06);
+  border-bottom:1px solid rgba(31,27,24,.1);
   background:#fffdfa;
 }
-.sky-card-hit-dashboard-copy{display:grid;gap:4px;min-width:0}
-.sky-card-hit-dashboard-copy strong{color:#24201c;font:900 .69rem/1.15 'Montserrat',sans-serif}
-.sky-card-hit-dashboard-copy span{color:#655d56;font:700 .57rem/1.3 'Montserrat',sans-serif}
-.sky-card-hit-dashboard-copy::after{content:'Highlight a wedge to inspect its card. Select the card art to isolate its placements.';max-width:34ch;color:#80766d;font:650 .53rem/1.3 'Montserrat',sans-serif}
-.sky-card-hit-dashboard-instrument{position:relative;display:grid;place-items:center;width:142px;height:142px;min-width:142px;overflow:visible}
-.sky-card-hit-dashboard-svg,.sky-card-hit-dashboard-chart{display:block;width:136px;height:136px;overflow:visible}
-.sky-card-hit-dashboard-ring-track{fill:none;stroke:rgba(31,27,24,.09);stroke-width:16;vector-effect:non-scaling-stroke}
-.sky-card-hit-dashboard-wedge{fill:none;stroke-width:15.5;stroke-linecap:butt;vector-effect:non-scaling-stroke;cursor:pointer;opacity:.78;transition:opacity .1s ease,stroke-width .1s ease,filter .1s ease}
-.sky-card-hit-dashboard-wedge:hover,.sky-card-hit-dashboard-wedge:focus-visible,.sky-card-hit-dashboard-wedge.is-active{opacity:1;stroke-width:18;filter:drop-shadow(0 0 2px rgba(31,27,24,.22));outline:none}
-.sky-card-hit-dashboard-wedge.is-relationship-derived:not(.is-active){opacity:1;filter:drop-shadow(0 0 2px rgba(31,27,24,.34))}
-.sky-card-hit-dashboard-bar{stroke:var(--dashboard-slot-color);stroke-width:var(--bar-width,1.25);stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:.16;transition:opacity .1s ease,filter .1s ease}
-.sky-card-hit-dashboard-bar.is-active{opacity:1;filter:drop-shadow(0 0 1.5px color-mix(in srgb,var(--dashboard-slot-color) 58%,transparent))}
-.sky-card-hit-dashboard-center-host{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
-.sky-card-hit-dashboard-center{appearance:none;pointer-events:auto;display:grid;justify-items:center;align-content:center;gap:1px;width:40px;min-width:40px;height:52px;padding:1px;border:0;border-radius:7px;background:rgba(255,253,250,.94);color:#241f1b;cursor:pointer;box-shadow:0 0 0 1px rgba(31,27,24,.08)}
-.sky-card-hit-dashboard-center:hover,.sky-card-hit-dashboard-center:focus-visible{outline:2px solid var(--dashboard-slot-color);outline-offset:2px;background:#fff}
-.sky-card-hit-dashboard-center img{display:block;width:18px;height:31px;object-fit:cover;border-radius:2px;border:1px solid rgba(31,27,24,.18)}
-.sky-card-hit-dashboard-center span{display:block;width:36px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 .39rem/1 'Montserrat',sans-serif;text-align:center}
-.sky-card-hit-dashboard-center small{font:900 .4rem/1 'Montserrat',sans-serif;font-variant-numeric:tabular-nums}
+.sky-card-hit-dashboard-sr{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:-1px!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;
+  border:0!important;
+}
+.sky-card-hit-dashboard-instrument{
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:min(100%,160px);
+  aspect-ratio:1;
+  overflow:visible;
+}
+.sky-card-hit-dashboard-svg,
+.sky-card-hit-dashboard-chart{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+.sky-card-hit-dashboard-ring-track{
+  fill:none;
+  stroke:rgba(31,27,24,.09);
+  stroke-width:15.5;
+  vector-effect:non-scaling-stroke;
+}
+.sky-card-hit-dashboard-wedge{
+  fill:none;
+  stroke-width:15.5;
+  stroke-linecap:butt;
+  vector-effect:non-scaling-stroke;
+  cursor:pointer;
+  opacity:.66;
+  transition:opacity .1s ease,filter .1s ease;
+}
+.sky-card-hit-dashboard-wedge:hover,
+.sky-card-hit-dashboard-wedge:focus-visible,
+.sky-card-hit-dashboard-wedge.is-active{
+  opacity:1;
+  filter:drop-shadow(0 0 2px rgba(31,27,24,.24));
+  outline:none;
+}
+.sky-card-hit-dashboard-wedge.is-relationship-derived:not(.is-active){
+  opacity:.96;
+  filter:drop-shadow(0 0 2px rgba(31,27,24,.32));
+}
+.sky-card-hit-dashboard-bar{
+  stroke:color-mix(in srgb,var(--dashboard-slot-color) 42%,#777);
+  stroke-width:var(--bar-width,1.25);
+  stroke-linecap:butt;
+  vector-effect:non-scaling-stroke;
+  opacity:.16;
+  transition:opacity .1s ease,stroke .1s ease,filter .1s ease;
+}
+.sky-card-hit-dashboard-bar.is-active{
+  stroke:var(--active-hit-color,var(--dashboard-slot-color));
+  opacity:1;
+  filter:drop-shadow(0 0 1.5px color-mix(in srgb,var(--active-hit-color,var(--dashboard-slot-color)) 58%,transparent));
+}
+.sky-card-hit-dashboard-center-host{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  pointer-events:none;
+}
+.sky-card-hit-dashboard-center{
+  appearance:none;
+  position:relative;
+  pointer-events:auto;
+  display:grid;
+  place-items:center;
+  width:34px;
+  min-width:34px;
+  height:56px;
+  padding:0;
+  border:0;
+  border-radius:3px;
+  background:#fffdfa;
+  color:#241f1b;
+  cursor:pointer;
+  box-shadow:0 0 0 1px rgba(31,27,24,.12),0 2px 7px rgba(31,27,24,.12);
+  overflow:visible;
+}
+.sky-card-hit-dashboard-center:hover,
+.sky-card-hit-dashboard-center:focus-visible{
+  outline:2px solid var(--active-hit-color,var(--dashboard-slot-color));
+  outline-offset:2px;
+  background:#fff;
+}
+.sky-card-hit-dashboard-center img{
+  display:block;
+  width:32px;
+  height:54px;
+  object-fit:cover;
+  border-radius:2px;
+}
+.sky-card-hit-dashboard-center span{display:none}
+.sky-card-hit-dashboard-center small{
+  position:absolute;
+  right:-7px;
+  top:-7px;
+  display:grid;
+  place-items:center;
+  min-width:19px;
+  height:19px;
+  padding:0 3px;
+  border:2px solid #fffdfa;
+  border-radius:999px;
+  background:var(--active-hit-color,var(--dashboard-slot-color));
+  color:#fff;
+  font:900 .5rem/1 'Montserrat',sans-serif;
+  font-variant-numeric:tabular-nums;
+  box-shadow:0 1px 4px rgba(0,0,0,.18);
+}
 .sky-card-hit-dashboard-center-empty{color:#766d65;font:750 .48rem/1.15 'Montserrat',sans-serif;text-align:center}
-.sky-card-hit-dashboard-empty{grid-column:1/-1;margin:0;padding:8px;color:#766d65;font:650 .62rem/1.3 'Montserrat',sans-serif}
+.sky-card-hit-dashboard-empty{margin:0;padding:8px;color:#766d65;font:650 .62rem/1.3 'Montserrat',sans-serif}
 
-/* The ordinary Card Hit tiles keep their literal count chips. The composition
-   instrument, not each tile, owns the ring/pie metaphor. */
-.sky-card-hit-chip{background:var(--sky-hit-color)!important;color:#fff!important;border:2px solid #fff!important;width:auto!important;min-width:1.65rem!important;height:1.65rem!important;padding:0 .28rem!important;box-shadow:0 1px 4px rgba(0,0,0,.2)!important}
+/* The open drawer is a packed visual legend for the wedges. Card names and count chips
+   move to the featured/detail state instead of consuming space under every thumbnail. */
+.sky-card-hits-tab{
+  gap:0!important;
+  padding:0 0 6px!important;
+}
+.sky-card-hits-tab-header{
+  min-height:0!important;
+  padding:2px 4px!important;
+}
+.sky-card-hits-tab-total{display:none!important}
+.sky-card-hits-grid{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fill,minmax(30px,1fr))!important;
+  gap:0!important;
+  align-items:stretch!important;
+  overflow:hidden!important;
+}
+.sky-card-hit{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  aspect-ratio:48/83;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  overflow:hidden!important;
+  opacity:1;
+  filter:none;
+  transition:opacity .1s ease,filter .1s ease,outline-color .1s ease!important;
+}
+.sky-card-hit:hover,
+.sky-card-hit:focus-visible{
+  z-index:3;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  outline:2px solid var(--sky-hit-color)!important;
+  outline-offset:-2px!important;
+}
+.sky-card-hit.is-selected{
+  z-index:2;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  outline:3px solid var(--sky-hit-color)!important;
+  outline-offset:-3px!important;
+  box-shadow:none!important;
+}
+.sky-card-hit.is-relationship-match:not(.is-selected){
+  border:0!important;
+  background:transparent!important;
+  outline:2px solid var(--sky-hit-color)!important;
+  outline-offset:-2px!important;
+}
+.sky-card-hit.is-dimmed,
+.sky-card-hit.is-dashboard-dimmed{
+  opacity:.18!important;
+  filter:grayscale(1) saturate(0)!important;
+}
+.sky-card-hit.is-dashboard-active,
+.sky-card-hit.is-dashboard-derived,
+.sky-card-hit.is-selected,
+.sky-card-hit.is-relationship-match{
+  opacity:1!important;
+  filter:none!important;
+}
+.sky-card-hit-art{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  border:0!important;
+  border-radius:0!important;
+  overflow:hidden!important;
+  background:transparent!important;
+}
+.sky-card-hit-art img{
+  position:static!important;
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  border-radius:0!important;
+}
+.sky-card-hit-name,
+.sky-card-hit-chip{display:none!important}
+.sky-card-hit-detail-view{margin-top:6px}
 
-@media(prefers-reduced-motion:reduce){.sky-card-hit-dashboard-wedge,.sky-card-hit-dashboard-bar{transition:none}}
+@media(prefers-reduced-motion:reduce){
+  .sky-card-hit-dashboard-wedge,
+  .sky-card-hit-dashboard-bar,
+  .sky-card-hit{transition:none!important}
+}
 @media(max-width:620px){
-  .sky-card-hit-dashboard{grid-template-columns:minmax(0,1fr) 112px;gap:6px;padding:7px 8px}
-  .sky-card-hit-dashboard-instrument{width:112px;height:112px;min-width:112px}
-  .sky-card-hit-dashboard-svg,.sky-card-hit-dashboard-chart{width:108px;height:108px}
-  .sky-card-hit-dashboard-copy strong{font-size:.64rem}.sky-card-hit-dashboard-copy span{font-size:.53rem}.sky-card-hit-dashboard-copy::after{font-size:.5rem}
-  .sky-card-hit-dashboard-center{transform:scale(.86)}
+  .sky-card-hit-dashboard{padding:4px 6px}
+  .sky-card-hit-dashboard-instrument{width:min(100%,172px)}
+  .sky-card-hits-grid{grid-template-columns:repeat(auto-fill,minmax(34px,1fr))!important}
 }
