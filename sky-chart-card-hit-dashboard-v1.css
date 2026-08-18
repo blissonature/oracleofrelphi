@@ -13,7 +13,7 @@
 .sky-card-hits-tab-total{display:none!important}
 .sky-card-hits-grid{
   display:grid!important;
-  grid-template-columns:repeat(auto-fill,minmax(32px,1fr))!important;
+  grid-template-columns:repeat(auto-fill,minmax(42px,1fr))!important;
   gap:0!important;
   align-items:stretch!important;
   overflow:hidden!important;
@@ -83,6 +83,7 @@
   border-radius:0!important;
 }
 .sky-card-hit-name{display:none!important}
+/* Multiplier remains readable but is deliberately subordinate to the card art. */
 .sky-card-hit-chip{
   position:absolute!important;
   z-index:5!important;
@@ -91,22 +92,22 @@
   display:grid!important;
   place-items:center!important;
   width:auto!important;
-  min-width:18px!important;
-  height:18px!important;
-  padding:0 3px!important;
-  border:1.5px solid rgba(255,255,255,.94)!important;
+  min-width:13px!important;
+  height:13px!important;
+  padding:0 2px!important;
+  border:1px solid rgba(255,255,255,.92)!important;
   border-radius:999px!important;
-  background:var(--sky-hit-color)!important;
+  background:color-mix(in srgb,var(--sky-hit-color) 88%,transparent)!important;
   color:#fff!important;
-  font:900 .5rem/1 'Montserrat',sans-serif!important;
+  font:900 .36rem/1 'Montserrat',sans-serif!important;
   font-variant-numeric:tabular-nums;
-  box-shadow:0 1px 3px rgba(0,0,0,.24)!important;
+  box-shadow:0 1px 2px rgba(0,0,0,.18)!important;
   pointer-events:none;
 }
 .sky-card-hit-detail-view{margin-top:6px}
 
 @media(prefers-reduced-motion:reduce){.sky-card-hit{transition:none!important}}
 @media(max-width:620px){
-  .sky-card-hits-grid{grid-template-columns:repeat(auto-fill,minmax(35px,1fr))!important}
-  .sky-card-hit-chip{min-width:17px!important;height:17px!important;font-size:.47rem!important}
+  .sky-card-hits-grid{grid-template-columns:repeat(auto-fill,minmax(40px,1fr))!important}
+  .sky-card-hit-chip{min-width:12px!important;height:12px!important;font-size:.34rem!important}
 }
