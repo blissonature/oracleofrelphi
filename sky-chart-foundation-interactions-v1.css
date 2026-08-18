@@ -68,6 +68,10 @@
   stroke-width:4.2;
 }
 
+.sky-foundation-wheel.has-isolation .sky-foundation-placement.is-card-hit-source {
+  filter:saturate(1.18) brightness(1.06) drop-shadow(0 0 6px rgba(20,17,14,.3));
+}
+
 .sky-foundation-wheel.has-isolation .sky-foundation-house-sector.is-selected,
 .sky-foundation-wheel.has-isolation .sky-foundation-sign-sector.is-selected {
   filter:saturate(1.45) brightness(1.05) drop-shadow(0 0 5px rgba(20,17,14,.28));
@@ -91,6 +95,11 @@
 
 .sky-foundation-panel.has-ledger-isolation .sky-foundation-row.is-kept {
   opacity:1;
+}
+
+.sky-foundation-panel.has-ledger-isolation .sky-foundation-row.is-card-hit-source {
+  background:rgba(241,235,226,.68);
+  filter:drop-shadow(0 0 4px rgba(20,17,14,.18));
 }
 
 #skyFoundationRelationships {
@@ -198,6 +207,15 @@
   border-color:rgba(31,27,24,.4);
   background:#f6f0e8;
   outline:none;
+}
+
+.sky-foundation-relationship-row.is-card-hit-dimmed {
+  opacity:.14;
+  filter:saturate(.22);
+}
+
+.sky-foundation-relationship-row.is-card-hit-kept {
+  opacity:1;
 }
 
 .sky-foundation-relationship-row[hidden] {
