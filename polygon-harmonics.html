@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link href="favicon.ico" rel="icon" type="image/x-icon"/>
+<title>Polygon Harmonics · Oracle of Relphi</title>
+<link href="style.css?v=346" rel="stylesheet"/>
+<style>
+:root{
+  --ph-red:#dc1f18;
+  --ph-ink:#241815;
+  --ph-muted:#705955;
+  --ph-paper:#fffaf6;
+  --ph-soft:#f7ede7;
+  --ph-line:#e7d2cc;
+  --ph-night:#100b14;
+  --ph-night-2:#1b1020;
+  --ph-gold:#f7c948;
+}
+*{box-sizing:border-box}
+body.polygon-harmonics-page{margin:0;background:#fff;color:#111;font-family:'Montserrat',Arial,sans-serif;line-height:1.5;text-align:center;padding:1rem 1rem 2rem}
+.ph-main{max-width:1180px;margin:4.5rem auto 0;text-align:left}
+.ph-hero{text-align:center;max-width:880px;margin:0 auto 1.25rem}
+.ph-kicker{margin:0 0 .35rem;color:#9f1d1b;font-size:.78rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.ph-hero h1{margin:.15rem 0 .65rem;font-size:clamp(2.2rem,5vw,3.65rem);line-height:1;font-weight:700;letter-spacing:.01em}
+.ph-hero h1 .red{color:var(--ph-red)}
+.ph-hero p{max-width:760px;margin:.45rem auto;color:var(--ph-muted);font-size:1.03rem}
+.ph-back{display:inline-block;margin-top:.45rem;color:#9f1d1b;text-decoration:none;font-size:.9rem;font-weight:700}
+.ph-back:hover,.ph-back:focus{text-decoration:underline}
+.ph-shell{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:1rem;align-items:start}
+.ph-stage-card,.ph-panel,.ph-explain{border:2px solid var(--ph-red);border-radius:1.25rem;background:#faf8f7;box-shadow:0 4px 18px rgba(0,0,0,.05)}
+.ph-stage-card{padding:.8rem;min-width:0}
+.ph-stage-head{display:flex;align-items:center;justify-content:space-between;gap:.85rem;padding:.2rem .3rem .75rem;color:var(--ph-muted);font-size:.92rem}
+.ph-stage-head strong{color:var(--ph-ink)}
+.ph-stage-head span:last-child{text-align:right}
+.ph-stage-wrap{position:relative;aspect-ratio:1/1;min-height:460px;border-radius:1rem;overflow:hidden;background:
+  radial-gradient(circle at 50% 50%,rgba(220,31,24,.08),transparent 34%),
+  radial-gradient(circle at 28% 20%,rgba(255,255,255,.08),transparent 24%),
+  linear-gradient(135deg,var(--ph-night),var(--ph-night-2) 55%,#09070c);
+  border:1px solid rgba(255,255,255,.16);
+  touch-action:none;
+  cursor:grab;
+  user-select:none;
+}
+.ph-stage-wrap.is-dragging{cursor:grabbing}
+#phWheel{display:block;width:100%;height:100%;touch-action:none}
+.ph-orbit{fill:none;stroke:rgba(255,255,255,.12);stroke-width:1.4}
+.ph-orbit-inner{fill:none;stroke:rgba(247,201,72,.16);stroke-width:1;stroke-dasharray:3 8}
+.ph-tick{stroke:rgba(255,255,255,.23);stroke-width:1.5}
+.ph-note-dot{fill:#171019;stroke:rgba(255,255,255,.55);stroke-width:2;transition:fill .08s,stroke .08s,filter .08s,transform .08s;transform-box:fill-box;transform-origin:center}
+.ph-note-node.is-hit .ph-note-dot{fill:var(--ph-red);stroke:#fff;filter:drop-shadow(0 0 9px rgba(255,255,255,.75));transform:scale(1.22)}
+.ph-note-label{fill:#fff;font-size:16px;font-weight:700;text-anchor:middle;dominant-baseline:middle;pointer-events:none}
+.ph-polygon{fill:rgba(220,31,24,.055);stroke:#fff;stroke-width:3;stroke-linejoin:round;filter:drop-shadow(0 0 8px rgba(220,31,24,.28));pointer-events:none}
+.ph-vertex{fill:var(--ph-gold);stroke:#fff;stroke-width:2;filter:drop-shadow(0 0 5px rgba(247,201,72,.5));pointer-events:none}
+.ph-center-ring{fill:rgba(8,6,10,.78);stroke:rgba(255,255,255,.25);stroke-width:1.5}
+.ph-center-number{fill:#fff;font-size:64px;font-weight:300;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.ph-center-caption{fill:rgba(255,255,255,.7);font-size:10px;font-weight:700;letter-spacing:.12em;text-anchor:middle;text-transform:uppercase;pointer-events:none}
+.ph-direction-arrow{fill:none;stroke:rgba(247,201,72,.85);stroke-width:3;stroke-linecap:round;pointer-events:none}
+.ph-direction-head{fill:rgba(247,201,72,.9);pointer-events:none}
+.ph-stage-status{position:absolute;left:1rem;right:1rem;bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:.6rem;pointer-events:none}
+.ph-event-pill,.ph-mode-pill{display:inline-flex;align-items:center;gap:.38rem;min-height:34px;padding:.4rem .68rem;border-radius:999px;background:rgba(0,0,0,.52);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(5px);color:#fff;font-size:.82rem}
+.ph-event-pill strong{color:#fff}
+.ph-mode-dot{width:8px;height:8px;border-radius:50%;background:#8f858d}
+.ph-mode-pill.is-playing .ph-mode-dot{background:var(--ph-gold);box-shadow:0 0 8px rgba(247,201,72,.7)}
+.ph-panel{padding:1rem;position:sticky;top:1rem}
+.ph-panel h2{font-size:1.06rem;margin:.1rem 0 .7rem;color:var(--ph-red);text-transform:uppercase;letter-spacing:.08em}
+.ph-control{border-top:1px solid var(--ph-line);padding-top:.82rem;margin-top:.82rem}
+.ph-control:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.ph-control label,.ph-label{display:block;margin:0 0 .32rem;font-weight:700;color:#382520;font-size:.92rem}
+.ph-shape-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.36rem}
+.ph-shape-btn,.ph-segment button,.ph-actions button{appearance:none;border:1px solid #d9b7af;background:#fffaf6;color:#5b241f;border-radius:.72rem;font:inherit;cursor:pointer;transition:background .15s,color .15s,border .15s,transform .15s}
+.ph-shape-btn{padding:.5rem .15rem;font-weight:700;min-width:0}
+.ph-shape-btn:hover,.ph-shape-btn:focus-visible,.ph-actions button:hover,.ph-actions button:focus-visible{border-color:var(--ph-red);outline:none}
+.ph-shape-btn[aria-pressed="true"]{background:var(--ph-red);color:#fff;border-color:var(--ph-red)}
+.ph-segment{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+.ph-segment button{padding:.52rem .4rem;font-weight:700}
+.ph-segment button[aria-pressed="true"]{background:#5b241f;color:#fff8f2;border-color:#5b241f}
+.ph-readout{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin:.18rem 0 .35rem;color:var(--ph-muted);font-size:.86rem}
+.ph-readout output{color:#9f1d1b;font-weight:700}
+input[type=range]{width:100%;accent-color:var(--ph-red)}
+select{width:100%;border:1px solid #d7b8b1;border-radius:.72rem;background:#fffaf6;padding:.52rem;font:inherit;color:var(--ph-ink)}
+.ph-actions{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;margin-top:.9rem}
+.ph-actions button{padding:.62rem .5rem;font-weight:700}
+.ph-actions .primary{grid-column:1/-1;background:var(--ph-red);border-color:var(--ph-red);color:#fff}
+.ph-actions .primary:hover,.ph-actions .primary:focus-visible{background:#b91918}
+.ph-actions .muted[aria-pressed="true"]{background:#282027;color:#fff;border-color:#282027}
+.ph-hint{margin:.4rem 0 0;color:var(--ph-muted);font-size:.82rem;line-height:1.45}
+.ph-pattern{margin-top:.95rem;padding:.85rem;border-radius:1rem;background:#fff;border:1px solid #ead7d2}
+.ph-pattern-kicker{margin:0 0 .15rem;color:#9f1d1b;font-size:.72rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
+.ph-pattern h3{margin:.1rem 0 .35rem;font-size:1.15rem;color:#261b18}
+.ph-pattern p{margin:.28rem 0;color:#57423d;font-size:.9rem}
+.ph-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin-top:.72rem}
+.ph-metric{padding:.55rem .35rem;border-radius:.75rem;background:var(--ph-soft);text-align:center}
+.ph-metric b{display:block;color:#9f1d1b;font-size:1.05rem}
+.ph-metric span{display:block;margin-top:.12rem;color:#6b514b;font-size:.68rem;line-height:1.25}
+.ph-explain{margin-top:1rem;padding:1.1rem 1.2rem}
+.ph-explain-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(240px,.65fr);gap:1.2rem;align-items:start}
+.ph-explain h2{margin:.05rem 0 .45rem;font-size:1.4rem}
+.ph-explain p{margin:.45rem 0;color:#5d4842}
+.ph-law{padding:.85rem 1rem;border-radius:1rem;background:#fff;border:1px solid var(--ph-line)}
+.ph-law strong{color:var(--ph-red)}
+.ph-family-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin-top:.75rem}
+.ph-family-list div{padding:.6rem .7rem;border-radius:.8rem;background:var(--ph-soft);font-size:.82rem;color:#5c4640}
+.ph-family-list b{color:#392621}
+.ph-footnote{margin-top:.75rem!important;font-size:.8rem;color:#806862!important}
+@media(max-width:900px){
+  .ph-shell{grid-template-columns:1fr}
+  .ph-panel{position:static}
+  .ph-stage-wrap{min-height:0}
+  .ph-shape-grid{grid-template-columns:repeat(10,1fr)}
+  .ph-explain-grid{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  body.polygon-harmonics-page{padding:.75rem .55rem 1.5rem}
+  .ph-main{margin-top:4.2rem}
+  .ph-stage-card{padding:.55rem}
+  .ph-stage-head{display:block;padding:.15rem .2rem .55rem}
+  .ph-stage-head span{display:block;margin-top:.2rem;text-align:left!important}
+  .ph-stage-status{left:.55rem;right:.55rem;bottom:.55rem;align-items:flex-end;flex-direction:column}
+  .ph-event-pill,.ph-mode-pill{font-size:.72rem;min-height:30px;padding:.32rem .52rem}
+  .ph-note-label{font-size:13px}
+  .ph-center-number{font-size:54px}
+  .ph-shape-grid{grid-template-columns:repeat(5,1fr)}
+  .ph-family-list{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .ph-note-dot,.ph-shape-btn,.ph-actions button{transition:none}
+}
+</style>
+</head>
+<body class="polygon-harmonics-page">
+<div id="nav-placeholder"></div>
+<main class="ph-main">
+  <section class="ph-hero" aria-labelledby="phTitle">
+    <p class="ph-kicker">Circle of Fifths · Geometry · Sound</p>
+    <h1 id="phTitle">Polygon <span class="red">Harmonics</span></h1>
+    <p>Rotate a regular polygon through the circle of fifths. Every time one of its vertices crosses a note, that note sounds. Change the number of sides and hear geometry reorganize the twelve-note field.</p>
+    <a class="ph-back" href="tools.html">← Back to Relphi Tools</a>
+  </section>
+
+  <section class="ph-shell" aria-label="Polygon Harmonics interactive instrument">
+    <div class="ph-stage-card">
+      <div class="ph-stage-head">
+        <strong id="phStageTitle">Pentagon · chromatic scale</strong>
+        <span>Drag the wheel by hand, or start a continuous rotation.</span>
+      </div>
+      <div class="ph-stage-wrap" id="phStageWrap">
+        <svg id="phWheel" viewBox="0 0 720 720" role="img" aria-labelledby="phWheelTitle phWheelDesc">
+          <title id="phWheelTitle">A rotating regular polygon on the circle of fifths</title>
+          <desc id="phWheelDesc">Twelve note targets are arranged around a circle in circle-of-fifths order. Polygon vertices trigger notes as they cross those targets.</desc>
+          <circle class="ph-orbit" cx="360" cy="360" r="284"></circle>
+          <circle class="ph-orbit-inner" cx="360" cy="360" r="235"></circle>
+          <g id="phTickLayer" aria-hidden="true"></g>
+          <g id="phNoteLayer"></g>
+          <polygon class="ph-polygon" id="phPolygon" points=""></polygon>
+          <g id="phVertexLayer" aria-hidden="true"></g>
+          <circle class="ph-center-ring" cx="360" cy="360" r="72"></circle>
+          <text class="ph-center-number" id="phCenterNumber" x="360" y="349">5</text>
+          <text class="ph-center-caption" x="360" y="398">SIDES</text>
+          <path class="ph-direction-arrow" id="phDirectionArc" d="M 310 327 A 60 60 0 0 1 410 327"></path>
+          <path class="ph-direction-head" id="phDirectionHead" d="M 410 327 L 396 322 L 401 338 Z"></path>
+        </svg>
+        <div class="ph-stage-status" aria-hidden="true">
+          <div class="ph-event-pill"><span>Crossing</span><strong id="phEventVisual">—</strong></div>
+          <div class="ph-mode-pill" id="phModePill"><span class="ph-mode-dot"></span><span id="phModeText">Paused</span></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="ph-panel" aria-label="Polygon Harmonics controls">
+      <h2>Rotation Console</h2>
+
+      <div class="ph-control">
+        <span class="ph-label">Regular polygon</span>
+        <div class="ph-shape-grid" id="phShapeGrid" role="group" aria-label="Choose number of polygon sides"></div>
+      </div>
+
+      <div class="ph-control">
+        <span class="ph-label">Rotation direction</span>
+        <div class="ph-segment" role="group" aria-label="Rotation direction">
+          <button type="button" id="phCounterBtn" aria-pressed="true">↺ Counterclockwise</button>
+          <button type="button" id="phClockBtn" aria-pressed="false">↻ Clockwise</button>
+        </div>
+        <p class="ph-hint">Direction changes the order of the same geometric events.</p>
+      </div>
+
+      <div class="ph-control">
+        <label for="phSpeed">Rotation speed</label>
+        <div class="ph-readout"><span>Physical wheel speed</span><output id="phSpeedOut">3.0 rpm</output></div>
+        <input id="phSpeed" type="range" min="0.5" max="8" value="3" step="0.1"/>
+      </div>
+
+      <div class="ph-control">
+        <label for="phTone">Tone</label>
+        <select id="phTone">
+          <option value="bell">Bell</option>
+          <option value="pure">Pure sine</option>
+          <option value="soft">Soft triangle</option>
+        </select>
+      </div>
+
+      <div class="ph-control">
+        <label for="phLength">Note length</label>
+        <div class="ph-readout"><span>Envelope</span><output id="phLengthOut">320 ms</output></div>
+        <input id="phLength" type="range" min="90" max="900" value="320" step="10"/>
+      </div>
+
+      <div class="ph-control">
+        <label for="phVolume">Volume</label>
+        <div class="ph-readout"><span>Master</span><output id="phVolumeOut">42%</output></div>
+        <input id="phVolume" type="range" min="0" max="100" value="42" step="1"/>
+      </div>
+
+      <div class="ph-actions">
+        <button type="button" class="primary" id="phPlayBtn">Start rotation</button>
+        <button type="button" id="phResetBtn">Reset angle</button>
+        <button type="button" class="muted" id="phMuteBtn" aria-pressed="false">Mute sound</button>
+      </div>
+
+      <div class="ph-pattern" aria-live="polite">
+        <p class="ph-pattern-kicker">What this shape plays</p>
+        <h3 id="phPatternTitle">Chromatic scale</h3>
+        <p id="phPatternDetail">Single notes step chromatically. Counterclockwise rises; clockwise falls.</p>
+        <div class="ph-metrics" aria-label="Geometric event metrics">
+          <div class="ph-metric"><b id="phTogether">1</b><span>notes together</span></div>
+          <div class="ph-metric"><b id="phStrikes">60</b><span>strike moments / turn</span></div>
+          <div class="ph-metric"><b id="phContacts">60</b><span>vertex-note contacts / turn</span></div>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="ph-explain" aria-labelledby="phWhyTitle">
+    <div class="ph-explain-grid">
+      <div>
+        <p class="ph-kicker">The hidden rule</p>
+        <h2 id="phWhyTitle">The chord size is encoded in the common factors.</h2>
+        <p>A twelve-note circle and a regular polygon repeatedly line up according to the numbers they share. The greatest common divisor of the side count and twelve is the number of notes that arrive at the same instant. The least common multiple is the number of distinct strike moments in one complete turn.</p>
+        <div class="ph-family-list" aria-label="Polygon families">
+          <div><b>3 and 9 sides:</b> three notes together → augmented triads.</div>
+          <div><b>4 and 8 sides:</b> four notes together → diminished sevenths.</div>
+          <div><b>6 sides:</b> six notes together → alternating whole-tone collections.</div>
+          <div><b>5, 7, and 11 sides:</b> one note at a time → ordered note streams.</div>
+          <div><b>10 sides:</b> two notes together → tritone-separated chromatic pairs.</div>
+          <div><b>12 sides:</b> twelve notes together → the full chromatic cluster.</div>
+        </div>
+      </div>
+      <div class="ph-law">
+        <strong id="phLawTitle">For the pentagon</strong>
+        <p id="phLawText">Five and twelve share no factor greater than one, so only one vertex reaches a note at each strike. Their least common multiple is sixty, producing sixty evenly spaced single-note events per wheel turn.</p>
+        <p class="ph-footnote">Pitch classes are voiced inside one octave so the order is easy to hear. The circle itself remains in conventional fifths order: C, G, D, A, E, B, F♯, D♭, A♭, E♭, B♭, F.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  const TAU = Math.PI * 2;
+  const CX = 360;
+  const CY = 360;
+  const NOTE_RADIUS = 284;
+  const POLY_RADIUS = 284;
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  const circleNotes = [
+    {name:'C', pc:0},
+    {name:'G', pc:7},
+    {name:'D', pc:2},
+    {name:'A', pc:9},
+    {name:'E', pc:4},
+    {name:'B', pc:11},
+    {name:'F♯', pc:6},
+    {name:'D♭', pc:1},
+    {name:'A♭', pc:8},
+    {name:'E♭', pc:3},
+    {name:'B♭', pc:10},
+    {name:'F', pc:5}
+  ];
+
+  const pitchNames = ['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+
+  const polygonInfo = {
+    3:{name:'Triangle', title:'Augmented triads', detail:'Three notes arrive together, spaced by major thirds. Four augmented-triad pitch collections cycle as the triangle turns.'},
+    4:{name:'Square', title:'Diminished seventh chords', detail:'Four notes arrive together as stacked minor thirds. Three diminished-seventh pitch collections cycle around the wheel.'},
+    5:{name:'Pentagon', title:'Chromatic scale', detail:'Single notes step chromatically. Counterclockwise rises; clockwise falls.'},
+    6:{name:'Hexagon', title:'Two whole-tone scales', detail:'Six-note whole-tone collections alternate as successive vertex groups cross the note ring.'},
+    7:{name:'Heptagon', title:'Chromatic scale, reversed', detail:'Single notes traverse the chromatic scale in the opposite order from the pentagon at the same rotation direction, with more strikes per turn.'},
+    8:{name:'Octagon', title:'Diminished sevenths ×2', detail:'The same diminished-seventh families as the square recur twice as often per wheel turn and cycle in the opposite order.'},
+    9:{name:'Nonagon', title:'Augmented triads ×3', detail:'The same augmented-triad families as the triangle recur three times as often per wheel turn and cycle in the opposite order.'},
+    10:{name:'Decagon', title:'Paired chromatic scales', detail:'Two notes sound at every strike, always a tritone apart. The strike rate matches the pentagon: two chromatic streams run simultaneously.'},
+    11:{name:'Hendecagon', title:'Circle of fifths / fourths', detail:'One note sounds at a time. The heard sequence runs around the circle in the direction opposite the polygon rotation.'},
+    12:{name:'Dodecagon', title:'Twelve-note cluster', detail:'All twelve pitch classes arrive together at every strike: the complete chromatic field sounded at once.'}
+  };
+
+  const stageWrap = document.getElementById('phStageWrap');
+  const wheel = document.getElementById('phWheel');
+  const tickLayer = document.getElementById('phTickLayer');
+  const noteLayer = document.getElementById('phNoteLayer');
+  const polygon = document.getElementById('phPolygon');
+  const vertexLayer = document.getElementById('phVertexLayer');
+  const centerNumber = document.getElementById('phCenterNumber');
+  const stageTitle = document.getElementById('phStageTitle');
+  const eventVisual = document.getElementById('phEventVisual');
+  const modePill = document.getElementById('phModePill');
+  const modeText = document.getElementById('phModeText');
+  const directionArc = document.getElementById('phDirectionArc');
+  const directionHead = document.getElementById('phDirectionHead');
+  const shapeGrid = document.getElementById('phShapeGrid');
+  const counterBtn = document.getElementById('phCounterBtn');
+  const clockBtn = document.getElementById('phClockBtn');
+  const speedInput = document.getElementById('phSpeed');
+  const speedOut = document.getElementById('phSpeedOut');
+  const toneInput = document.getElementById('phTone');
+  const lengthInput = document.getElementById('phLength');
+  const lengthOut = document.getElementById('phLengthOut');
+  const volumeInput = document.getElementById('phVolume');
+  const volumeOut = document.getElementById('phVolumeOut');
+  const playBtn = document.getElementById('phPlayBtn');
+  const resetBtn = document.getElementById('phResetBtn');
+  const muteBtn = document.getElementById('phMuteBtn');
+  const patternTitle = document.getElementById('phPatternTitle');
+  const patternDetail = document.getElementById('phPatternDetail');
+  const togetherOut = document.getElementById('phTogether');
+  const strikesOut = document.getElementById('phStrikes');
+  const contactsOut = document.getElementById('phContacts');
+  const lawTitle = document.getElementById('phLawTitle');
+  const lawText = document.getElementById('phLawText');
+
+  const noteNodes = [];
+  const state = {
+    sides:5,
+    phase:0,
+    direction:-1,
+    rpm:3,
+    playing:false,
+    muted:false,
+    lastFrame:null,
+    raf:null,
+    drag:null
+  };
+
+  let audioContext = null;
+  let masterGain = null;
+  let compressor = null;
+  const flashTimers = new Map();
+
+  function mod(value, modulus){
+    return ((value % modulus) + modulus) % modulus;
+  }
+
+  function gcd(a,b){
+    while(b){
+      const t = b;
+      b = a % b;
+      a = t;
+    }
+    return Math.abs(a);
+  }
+
+  function lcm(a,b){
+    return Math.abs(a * b) / gcd(a,b);
+  }
+
+  function pointAt(angle, radius){
+    return {
+      x: CX + Math.sin(angle) * radius,
+      y: CY - Math.cos(angle) * radius
+    };
+  }
+
+  function svgEl(name, attrs){
+    const el = document.createElementNS(SVG_NS, name);
+    Object.keys(attrs || {}).forEach(key => el.setAttribute(key, attrs[key]));
+    return el;
+  }
+
+  function buildWheel(){
+    circleNotes.forEach((note,index) => {
+      const angle = index * TAU / 12;
+      const inner = pointAt(angle, 252);
+      const outer = pointAt(angle, 268);
+      tickLayer.appendChild(svgEl('line', {
+        class:'ph-tick', x1:inner.x, y1:inner.y, x2:outer.x, y2:outer.y
+      }));
+
+      const p = pointAt(angle, NOTE_RADIUS);
+      const group = svgEl('g', {class:'ph-note-node', 'data-note-index':index});
+      const dot = svgEl('circle', {class:'ph-note-dot', cx:p.x, cy:p.y, r:23});
+      const label = svgEl('text', {class:'ph-note-label', x:p.x, y:p.y + 1});
+      label.textContent = note.name;
+      group.appendChild(dot);
+      group.appendChild(label);
+      noteLayer.appendChild(group);
+      noteNodes.push(group);
+    });
+
+    for(let sides=3;sides<=12;sides++){
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ph-shape-btn';
+      button.textContent = sides;
+      button.setAttribute('aria-label', polygonInfo[sides].name + ', ' + sides + ' sides');
+      button.setAttribute('aria-pressed', sides === state.sides ? 'true' : 'false');
+      button.dataset.sides = String(sides);
+      button.addEventListener('click', () => setSides(sides));
+      shapeGrid.appendChild(button);
+    }
+  }
+
+  function renderPolygon(){
+    const points = [];
+    vertexLayer.replaceChildren();
+    for(let i=0;i<state.sides;i++){
+      const angle = state.phase + i * TAU / state.sides;
+      const p = pointAt(angle, POLY_RADIUS);
+      points.push(p.x.toFixed(2) + ',' + p.y.toFixed(2));
+      vertexLayer.appendChild(svgEl('circle', {
+        class:'ph-vertex', cx:p.x.toFixed(2), cy:p.y.toFixed(2), r:7
+      }));
+    }
+    polygon.setAttribute('points', points.join(' '));
+    centerNumber.textContent = state.sides;
+
+    if(state.direction < 0){
+      directionArc.setAttribute('d','M 410 327 A 60 60 0 0 0 310 327');
+      directionHead.setAttribute('d','M 310 327 L 324 322 L 319 338 Z');
+    }else{
+      directionArc.setAttribute('d','M 310 327 A 60 60 0 0 1 410 327');
+      directionHead.setAttribute('d','M 410 327 L 396 322 L 401 338 Z');
+    }
+  }
+
+  function setSides(sides){
+    state.sides = sides;
+    state.phase = 0;
+    eventVisual.textContent = '—';
+    shapeGrid.querySelectorAll('.ph-shape-btn').forEach(btn => {
+      btn.setAttribute('aria-pressed', Number(btn.dataset.sides) === sides ? 'true' : 'false');
+    });
+    updatePatternCopy();
+    renderPolygon();
+  }
+
+  function setDirection(direction){
+    state.direction = direction;
+    counterBtn.setAttribute('aria-pressed', direction < 0 ? 'true' : 'false');
+    clockBtn.setAttribute('aria-pressed', direction > 0 ? 'true' : 'false');
+    renderPolygon();
+  }
+
+  function numberWord(n){
+    const words = {1:'one',2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine',10:'ten',11:'eleven',12:'twelve',20:'twenty',24:'twenty-four',36:'thirty-six',60:'sixty',84:'eighty-four',132:'one hundred thirty-two'};
+    return words[n] || String(n);
+  }
+
+  function updatePatternCopy(){
+    const info = polygonInfo[state.sides];
+    const common = gcd(state.sides,12);
+    const strikes = lcm(state.sides,12);
+    const contacts = state.sides * 12;
+    stageTitle.textContent = info.name + ' · ' + info.title.toLowerCase();
+    patternTitle.textContent = info.title;
+    patternDetail.textContent = info.detail;
+    togetherOut.textContent = common;
+    strikesOut.textContent = strikes;
+    contactsOut.textContent = contacts;
+    lawTitle.textContent = 'For the ' + info.name.toLowerCase();
+
+    const sharedPhrase = common === 1
+      ? numberWord(state.sides) + ' and twelve share no factor greater than one, so only one vertex reaches a note at each strike.'
+      : numberWord(state.sides) + ' and twelve have a greatest common divisor of ' + numberWord(common) + ', so ' + numberWord(common) + ' notes arrive together at each strike.';
+    lawText.textContent = sharedPhrase + ' Their least common multiple is ' + numberWord(strikes) + ', producing ' + numberWord(strikes) + ' distinct strike moments per complete wheel turn.';
+  }
+
+  function ensureAudio(){
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if(!AudioCtor) return Promise.resolve(false);
+    if(!audioContext){
+      audioContext = new AudioCtor();
+      masterGain = audioContext.createGain();
+      compressor = audioContext.createDynamicsCompressor();
+      compressor.threshold.value = -18;
+      compressor.knee.value = 16;
+      compressor.ratio.value = 4;
+      compressor.attack.value = 0.004;
+      compressor.release.value = 0.18;
+      masterGain.connect(compressor);
+      compressor.connect(audioContext.destination);
+      updateMasterGain();
+    }
+    if(audioContext.state === 'suspended'){
+      return audioContext.resume().then(() => true).catch(() => false);
+    }
+    return Promise.resolve(true);
+  }
+
+  function updateMasterGain(){
+    if(!masterGain) return;
+    const normalized = Number(volumeInput.value) / 100;
+    const target = state.muted ? 0 : normalized * 0.38;
+    masterGain.gain.setTargetAtTime(target, audioContext.currentTime, 0.015);
+  }
+
+  function frequencyForPc(pc){
+    const midi = 60 + pc;
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  function voice(pc, when){
+    if(!audioContext || !masterGain || state.muted) return;
+    const duration = Number(lengthInput.value) / 1000;
+    const tone = toneInput.value;
+    const frequency = frequencyForPc(pc);
+    const end = when + duration;
+
+    if(tone === 'bell'){
+      const partials = [
+        {ratio:1, gain:.19, type:'sine'},
+        {ratio:2.01, gain:.07, type:'sine'},
+        {ratio:3.98, gain:.025, type:'sine'}
+      ];
+      partials.forEach((part,index) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = part.type;
+        osc.frequency.setValueAtTime(frequency * part.ratio, when);
+        gain.gain.setValueAtTime(0.0001, when);
+        gain.gain.exponentialRampToValueAtTime(part.gain, when + .008 + index * .002);
+        gain.gain.exponentialRampToValueAtTime(0.0001, end * 1 + index * .035);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(when);
+        osc.stop(end + .08 + index * .035);
+      });
+      return;
+    }
+
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = tone === 'soft' ? 'triangle' : 'sine';
+    osc.frequency.setValueAtTime(frequency, when);
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(tone === 'soft' ? .16 : .14, when + .012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, end);
+    osc.connect(gain);
+    gain.connect(masterGain);
+    osc.start(when);
+    osc.stop(end + .04);
+  }
+
+  function playEvent(pcs, delaySeconds){
+    if(!audioContext || state.muted) return;
+    const when = audioContext.currentTime + Math.max(0.004, delaySeconds || 0);
+    pcs.forEach(pc => voice(pc, when));
+  }
+
+  function flashEvent(noteIndexes, delayMs){
+    const notes = noteIndexes.map(index => circleNotes[index]);
+    const pcs = Array.from(new Set(notes.map(note => note.pc))).sort((a,b) => a-b);
+    const text = pcs.map(pc => pitchNames[pc]).join(' · ');
+
+    window.setTimeout(() => {
+      eventVisual.textContent = text || '—';
+      noteIndexes.forEach(index => {
+        const node = noteNodes[index];
+        if(!node) return;
+        node.classList.add('is-hit');
+        if(flashTimers.has(index)) window.clearTimeout(flashTimers.get(index));
+        const timer = window.setTimeout(() => {
+          node.classList.remove('is-hit');
+          flashTimers.delete(index);
+        }, 150);
+        flashTimers.set(index,timer);
+      });
+    }, Math.max(0,delayMs || 0));
+  }
+
+  function collectCrossings(previousPhase, nextPhase){
+    const delta = nextPhase - previousPhase;
+    if(Math.abs(delta) < 1e-10) return [];
+    const events = [];
+    const positive = delta > 0;
+
+    for(let vertex=0;vertex<state.sides;vertex++){
+      const offset = vertex * TAU / state.sides;
+      const oldAngle = previousPhase + offset;
+      const newAngle = nextPhase + offset;
+
+      for(let noteIndex=0;noteIndex<12;noteIndex++){
+        const target = noteIndex * TAU / 12;
+        let crossing;
+        if(positive){
+          const turn = Math.floor((oldAngle - target) / TAU) + 1;
+          crossing = target + turn * TAU;
+          if(crossing > newAngle + 1e-9) continue;
+        }else{
+          const turn = Math.ceil((oldAngle - target) / TAU) - 1;
+          crossing = target + turn * TAU;
+          if(crossing < newAngle - 1e-9) continue;
+        }
+        const fraction = (crossing - oldAngle) / delta;
+        if(fraction < -1e-8 || fraction > 1 + 1e-8) continue;
+        events.push({fraction:Math.max(0,Math.min(1,fraction)), noteIndex, pc:circleNotes[noteIndex].pc});
+      }
+    }
+
+    events.sort((a,b) => a.fraction - b.fraction || a.noteIndex - b.noteIndex);
+    return events;
+  }
+
+  function triggerCrossings(previousPhase, nextPhase, spanSeconds){
+    const events = collectCrossings(previousPhase,nextPhase);
+    if(!events.length) return;
+
+    const groups = [];
+    events.forEach(event => {
+      const last = groups[groups.length - 1];
+      if(!last || Math.abs(last.fraction - event.fraction) > 1e-5){
+        groups.push({fraction:event.fraction, noteIndexes:[event.noteIndex], pcs:[event.pc]});
+      }else{
+        last.noteIndexes.push(event.noteIndex);
+        last.pcs.push(event.pc);
+      }
+    });
+
+    groups.forEach(group => {
+      const uniquePcs = Array.from(new Set(group.pcs));
+      const delaySeconds = Math.max(0, spanSeconds || 0) * group.fraction;
+      playEvent(uniquePcs, delaySeconds);
+      flashEvent(group.noteIndexes, delaySeconds * 1000);
+    });
+  }
+
+  function frame(timestamp){
+    if(!state.playing){
+      state.raf = null;
+      return;
+    }
+    if(state.lastFrame == null) state.lastFrame = timestamp;
+    const elapsed = Math.min(.05, Math.max(0,(timestamp - state.lastFrame) / 1000));
+    state.lastFrame = timestamp;
+    if(elapsed > 0){
+      const radiansPerSecond = state.rpm * TAU / 60;
+      const previous = state.phase;
+      const next = previous + radiansPerSecond * elapsed * state.direction;
+      triggerCrossings(previous,next,elapsed);
+      state.phase = next;
+      renderPolygon();
+    }
+    state.raf = window.requestAnimationFrame(frame);
+  }
+
+  function updatePlayUI(){
+    playBtn.textContent = state.playing ? 'Pause rotation' : 'Start rotation';
+    modeText.textContent = state.playing ? 'Rotating' : (state.drag ? 'Dragging' : 'Paused');
+    modePill.classList.toggle('is-playing', state.playing);
+  }
+
+  async function startPlaying(){
+    await ensureAudio();
+    state.playing = true;
+    state.lastFrame = null;
+    updatePlayUI();
+    if(!state.raf) state.raf = window.requestAnimationFrame(frame);
+  }
+
+  function pausePlaying(){
+    state.playing = false;
+    state.lastFrame = null;
+    updatePlayUI();
+  }
+
+  function pointerAngle(event){
+    const rect = wheel.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width * 720;
+    const y = (event.clientY - rect.top) / rect.height * 720;
+    return Math.atan2(x - CX, -(y - CY));
+  }
+
+  function normalizeDelta(delta){
+    if(delta > Math.PI) return delta - TAU;
+    if(delta < -Math.PI) return delta + TAU;
+    return delta;
+  }
+
+  stageWrap.addEventListener('pointerdown', async event => {
+    if(event.button != null && event.button !== 0) return;
+    await ensureAudio();
+    const wasPlaying = state.playing;
+    if(wasPlaying) pausePlaying();
+    state.drag = {pointerId:event.pointerId, angle:pointerAngle(event), resume:wasPlaying};
+    stageWrap.classList.add('is-dragging');
+    stageWrap.setPointerCapture(event.pointerId);
+    updatePlayUI();
+  });
+
+  stageWrap.addEventListener('pointermove', event => {
+    if(!state.drag || state.drag.pointerId !== event.pointerId) return;
+    const nextPointer = pointerAngle(event);
+    const movement = normalizeDelta(nextPointer - state.drag.angle);
+    state.drag.angle = nextPointer;
+    if(Math.abs(movement) < 1e-8) return;
+    const previous = state.phase;
+    const next = previous + movement;
+    triggerCrossings(previous,next,0);
+    state.phase = next;
+    renderPolygon();
+  });
+
+  function finishDrag(event){
+    if(!state.drag || state.drag.pointerId !== event.pointerId) return;
+    const resume = state.drag.resume;
+    state.drag = null;
+    stageWrap.classList.remove('is-dragging');
+    try{ stageWrap.releasePointerCapture(event.pointerId); }catch(_error){}
+    if(resume) startPlaying();
+    else updatePlayUI();
+  }
+
+  stageWrap.addEventListener('pointerup',finishDrag);
+  stageWrap.addEventListener('pointercancel',finishDrag);
+
+  counterBtn.addEventListener('click',() => setDirection(-1));
+  clockBtn.addEventListener('click',() => setDirection(1));
+
+  speedInput.addEventListener('input',() => {
+    state.rpm = Number(speedInput.value);
+    speedOut.textContent = state.rpm.toFixed(1) + ' rpm';
+  });
+
+  lengthInput.addEventListener('input',() => {
+    lengthOut.textContent = lengthInput.value + ' ms';
+  });
+
+  volumeInput.addEventListener('input',() => {
+    volumeOut.textContent = volumeInput.value + '%';
+    if(audioContext) updateMasterGain();
+  });
+
+  playBtn.addEventListener('click',() => {
+    if(state.playing) pausePlaying();
+    else startPlaying();
+  });
+
+  resetBtn.addEventListener('click',() => {
+    state.phase = 0;
+    eventVisual.textContent = '—';
+    renderPolygon();
+  });
+
+  muteBtn.addEventListener('click',() => {
+    state.muted = !state.muted;
+    muteBtn.setAttribute('aria-pressed', state.muted ? 'true' : 'false');
+    muteBtn.textContent = state.muted ? 'Unmute sound' : 'Mute sound';
+    if(audioContext) updateMasterGain();
+  });
+
+  document.addEventListener('keydown',event => {
+    const target = event.target;
+    const isField = target && /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(target.tagName);
+    if(event.code === 'Space' && !isField){
+      event.preventDefault();
+      if(state.playing) pausePlaying();
+      else startPlaying();
+    }
+  });
+
+  document.addEventListener('visibilitychange',() => {
+    if(document.hidden) state.lastFrame = null;
+  });
+
+  buildWheel();
+  updatePatternCopy();
+  renderPolygon();
+  updatePlayUI();
+})();
+</script>
+<script src="navloader.js"></script>
+</body>
+</html>
