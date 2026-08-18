@@ -169,6 +169,7 @@
         appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2');
         appendScript('relphi-inline-glyph-consumer-v1.js?v=2');
       });
+      appendScript('astrology-foundations-harmonic-bridge-v1.js?v=1');
     }
     if (/(^|\/)(mythic-atlas|constellations)\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () { appendScript('relphi-inline-glyph-consumer-v1.js?v=2'); });
