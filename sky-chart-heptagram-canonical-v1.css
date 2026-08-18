@@ -1,5 +1,5 @@
 /* Planetary Hours canonical state presentation. Glyph geometry remains untouched. */
-.sky-ph-jump{overflow:visible}
+.sky-ph-jump{overflow:hidden}
 .sky-ph-heptagram{overflow:visible!important;max-width:100%;box-sizing:border-box}
 .sky-ph-heptagram text{display:none!important}
 .sky-ph-node-glyph{overflow:visible}
@@ -13,6 +13,6 @@
 .sky-ph-planet.is-day-ruler.is-hour-ruler .sky-ph-day-ruler-ring--inner{opacity:1;stroke-width:2.25}
 .sky-ph-planet.is-day-ruler.is-hour-ruler .sky-ph-day-ruler-ring--outer{opacity:1;stroke-width:2.05;filter:drop-shadow(0 0 2px rgba(255,255,255,1)) drop-shadow(0 0 5px currentColor)}
 @media(max-width:620px){
-  .sky-ph-jump{padding:10px 12px 12px}
-  .sky-ph-heptagram{width:100%;max-height:none;margin:0 auto}
+  .sky-ph-jump{padding:4px}
+  .sky-ph-heptagram{width:min(100%,246px);max-height:none;margin:-18px auto -16px}
 }
