@@ -17,7 +17,20 @@
   opacity:.025!important;
   filter:saturate(.08)!important;
 }
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-endpoint,
+
+/* Match the specificity of the exact-focus dimming rule so the actual endpoints cannot
+   disappear underneath it. The bridge classes are a second, timing-safe projection of
+   the selected row onto the existing wheel nodes. */
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-focus-piece].is-relationship-endpoint,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-placement].is-relationship-endpoint,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-angle].is-relationship-endpoint,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-focus-piece].sky-orb-bridge-endpoint,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-placement].sky-orb-bridge-endpoint,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-angle].sky-orb-bridge-endpoint{
+  opacity:1!important;
+  visibility:visible!important;
+  filter:drop-shadow(0 0 4px rgba(31,27,24,.25))!important;
+}
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="aspects"]>.sky-foundation-aspect.is-relationship-line,
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="aspects"]>.sky-foundation-aspect.sky-orb-bridge-selected-line{
   opacity:1!important;
@@ -31,21 +44,37 @@
   stroke-width:5.5!important;
   filter:drop-shadow(0 0 2.5px rgba(31,27,24,.28))!important;
 }
-#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-endpoint{
-  filter:drop-shadow(0 0 4px rgba(31,27,24,.25))!important;
+
+/* A relationship keeps only the two houses that actually contain its endpoints in color.
+   The sector remains contextual and therefore quieter than the placement glyph or aspect. */
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-focus-piece].sky-orb-bridge-house,
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-interactive="house"].sky-orb-bridge-house{
+  opacity:.82!important;
+  visibility:visible!important;
+  fill-opacity:.62!important;
+  filter:saturate(.78) brightness(1.03)!important;
+  stroke-width:2.2!important;
+  vector-effect:non-scaling-stroke;
 }
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky="A"].sky-orb-bridge-house{stroke:#c9211e!important}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky="B"].sky-orb-bridge-house{stroke:#2462d0!important}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="a-houses"]>.sky-orb-bridge-house-number{fill:#c9211e!important;font-weight:900!important}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="b-houses"]>.sky-orb-bridge-house-number{fill:#2462d0!important;font-weight:900!important}
+
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus .is-relationship-perspective{
   filter:saturate(1.25) brightness(1.08) drop-shadow(0 0 7px rgba(31,27,24,.36))!important;
 }
 
-/* The selected aspect owns its orb aperture. The bridge computes the literal angular
-   opening from the aspect line's orb; opacity is synchronized to the line itself. */
+/* The selected aspect owns its orb aperture. The bridge centers the fan on exactitude and
+   uses this aspect's allowed ordinary orb (harmonic window / harmonic order) as its width;
+   the strong line shows where the actual relationship sits inside that opening. */
 .sky-relationship-orb-aperture{
   fill:var(--orb-aspect-color,#777);
-  fill-opacity:.11;
+  fill-opacity:.16;
   stroke:var(--orb-aspect-color,#777);
-  stroke-opacity:.3;
-  stroke-width:1.25;
+  stroke-opacity:.48;
+  stroke-width:1.35;
+  stroke-linejoin:round;
   vector-effect:non-scaling-stroke;
   pointer-events:none;
   transition:opacity .1s ease;
