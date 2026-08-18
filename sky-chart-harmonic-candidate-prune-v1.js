@@ -1,6 +1,6 @@
 // Keep the foundation aspect web inside the canonical maximum harmonic phase window.
-// The legacy foundation renderer uses one ordinary-orb ceiling for every aspect; this
-// removes candidates that exceed maxWindow once the aspect's harmonic order is applied.
+// The foundation builds one stable ordinary-orb candidate set; prune it synchronously when
+// the wheel already exists so an overbroad aspect web never gets a visible first paint.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiHarmonicCandidatePruneV1)return;
@@ -8,9 +8,9 @@ window.__relphiHarmonicCandidatePruneV1=true;
 
 function prune(){
   const model=window.RelphiHarmonicOrb,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
-  if(!model||!wheel)return;
+  if(!model||!wheel)return false;
   const max=Number(model.maxWindow)||12,layer=wheel.querySelector('[data-layer="aspects"]');
-  if(!layer)return;
+  if(!layer)return false;
   const lines=[...layer.querySelectorAll(':scope > line[data-aspect][data-orb]')];
   let removed=0;
   for(const line of lines){
@@ -25,8 +25,11 @@ function prune(){
   layer.dataset.harmonicCandidatesRemoved=String(removed);
   layer.dataset.harmonicCandidatesKept=String(lines.length-removed);
   wheel.dataset.harmonicCandidatePrune='ready';
+  return true;
 }
 window.RelphiHarmonicCandidatePrune=Object.freeze({prune});
 window.addEventListener('relphi:sky-foundation-ready',prune);
-if(document.readyState!=='loading')requestAnimationFrame(prune);
+// Foundation is evaluated immediately before this script. Its wheel is inserted synchronously
+// before glyph promises settle, so prune now rather than waiting for requestAnimationFrame.
+prune();
 })();
