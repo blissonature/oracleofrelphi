@@ -70,7 +70,8 @@
 /* Retire the earlier duplicate Sky-name + Save-to-library editor controls. */
 .sky-where-when-identity{display:none!important}
 
-@media(max-width:620px){
-  .sky-moment-saved-input{font-size:.68rem}
+/* iOS zooms the viewport when a focused text input is under 16px. */
+@media(max-width:760px),(pointer:coarse){
+  .sky-moment-saved-input{font-size:16px;line-height:1.2}
   .sky-moment-saved-list{max-height:190px}
 }
