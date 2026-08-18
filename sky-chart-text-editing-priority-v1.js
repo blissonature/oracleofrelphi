@@ -1,6 +1,6 @@
 // Give native Sky Chart form editing priority over chart rendering, especially on mobile.
 // Keyboard and picker viewport changes must not wake chart/layout controllers while an editable
-// Where and When or Saved Sky field owns focus.
+// Where and When, Saved Sky, or Harmonic Window field owns focus.
 (function(){
   'use strict';
   if(window.__relphiSkyTextEditingPriorityV1)return;
@@ -11,9 +11,11 @@
     '.sky-where-when-editor textarea:not([readonly]):not([disabled])',
     '.sky-where-when-editor select:not([disabled])',
     '[data-save-sky-name-input]:not([disabled])',
-    '[data-saved-name-input]:not([disabled])'
+    '[data-saved-name-input]:not([disabled])',
+    '[data-ww-saved-sky-input]:not([disabled])',
+    '[data-harmonic-window-input]:not([disabled])'
   ].join(',');
-  const NAME_SELECTOR='[data-ww-sky-name],[data-save-sky-name-input],[data-saved-name-input]';
+  const NAME_SELECTOR='[data-ww-sky-name],[data-save-sky-name-input],[data-saved-name-input],[data-ww-saved-sky-input]';
   const root=document.documentElement;
   const deferred=new Set();
   let active=null;
@@ -25,8 +27,6 @@
   function begin(control){
     clearTimeout(releaseTimer);
     active=control;
-    // Name fields get ordinary prose editing. Other Where and When controls keep their native
-    // input semantics (search, date, time, number, select, etc.).
     if(control.matches(NAME_SELECTOR)){
       control.removeAttribute('maxlength');
       control.setAttribute('spellcheck','true');
@@ -35,7 +35,7 @@
     }
     root.dataset.skyTextEditing='true';
     root.dataset.skyTextEditingField=control.getAttribute('data-ww-field')||
-      (control.matches(NAME_SELECTOR)?'sky-name':control.tagName.toLowerCase());
+      (control.matches(NAME_SELECTOR)?'sky-name':control.hasAttribute('data-harmonic-window-input')?'harmonic-window':control.tagName.toLowerCase());
   }
 
   function finish(){
@@ -45,7 +45,6 @@
     root.removeAttribute('data-sky-text-editing-field');
     const needsFoundation=deferred.size>0;
     deferred.clear();
-    // Let the keyboard/native picker and visual viewport finish settling before one catch-up pass.
     if(needsFoundation)requestAnimationFrame(()=>requestAnimationFrame(()=>{
       if(root.dataset.skyTextEditing==='true')return;
       window.dispatchEvent(new CustomEvent('relphi:sky-text-editing-ended'));
@@ -61,9 +60,6 @@
     releaseTimer=window.setTimeout(finish,0);
   },true);
 
-  // These application-level events can fan out into wheel/list recomposition. Suppress only
-  // while a native editor owns focus; do not prevent input, change, pointer, selection, or
-  // keyboard events belonging to the control itself.
   const expensive=['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed','relphi:sky-orb-limit-changed'];
   expensive.forEach(name=>window.addEventListener(name,event=>{
     if(!editing())return;
