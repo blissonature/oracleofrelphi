@@ -20,9 +20,9 @@
         position:relative!important;
         display:grid!important;
         grid-template-columns:68px minmax(0,1fr) auto!important;
-        grid-template-rows:44px auto!important;
+        grid-template-rows:44px!important;
         align-items:center!important;
-        min-height:92px!important;
+        min-height:44px!important;
         padding:0!important;
         overflow:visible!important;
       }
@@ -63,10 +63,8 @@
       }
       #skyFoundationA>.sky-foundation-heading>.sky-where-when-actions,
       #skyFoundationB>.sky-foundation-heading>.sky-where-when-actions{
-        grid-column:1/-1!important;
-        grid-row:2!important;
-        min-height:48px!important;
-        align-self:stretch!important;
+        display:none!important;
+        min-height:0!important;
       }
     `;
     document.head.appendChild(style);
