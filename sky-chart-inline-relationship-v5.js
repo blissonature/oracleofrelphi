@@ -29,6 +29,9 @@ function canonical(k,x){const r=window.RelphiGlyphRegistry;for(const c of [x?.gl
 function find(slot,id,row){for(const[k,x]of source(read(KEYS[slot]))){if(!x||typeof x!=='object'||Array.isArray(x))continue;const e=canonical(k,x),v=lon(x);if(e?.id===id&&Number.isFinite(v)){const h=Number(row.dataset[slot==='A'?'leftHouse':'rightHouse']);return{id:e.id,entry:e,value:v,sky:slot,house:Number.isFinite(h)&&h>0?h:null}}}return null}
 function relation(row){const l=find('A',row.dataset.leftPlacement,row),r=find('B',row.dataset.rightPlacement,row);if(!l||!r)return null;return{left:l,right:r,aspect:String(row.dataset.aspect||''),orb:Number(row.dataset.sourceOrb||0)}}
 function card(rec){const v=norm(rec.value),s=Math.floor(v/30),d=Math.floor(v-s*30),[id,title]=DECANS[s][Math.min(2,Math.floor(d/10))];return{id,title,image:`assets/tarot/rws-export/${id}.webp`}}
+function emitCardFocus(active,a='',b='',row=null){
+  window.dispatchEvent(new CustomEvent('relphi:sky-relationship-card-focus',{detail:{active:!!active,A:String(a||''),B:String(b||''),relationIndex:row?.dataset?.relationIndex??''}}));
+}
 function warmCardArt(src){
   const key=String(src||'');if(!key)return Promise.resolve();
   const existing=cardArtWarmups.get(key);if(existing)return existing.ready;
@@ -95,21 +98,25 @@ function decorateTopReveal(row){
   fields.forEach(([field,selector])=>{const node=row.querySelector(selector);if(!node)return;node.dataset.inlineTopReveal=field;node.setAttribute('title','Tap to reveal name, then meaning')});
 }
 function close(row){
+  const wasFocused=!!row&&row===openRow&&row.classList.contains('is-inline-expanded');
   clearReveal(row);
   const detail=row?.querySelector(':scope>.inline-rel-detail');if(detail)detail.hidden=true;
   row?.classList.remove('is-inline-expanded');row?.setAttribute('aria-expanded','false');
+  if(wasFocused)emitCardFocus(false);
 }
 
 function open(row){
   if(openRow&&openRow!==row)close(openRow);
   if(row===openRow&&row.classList.contains('is-inline-expanded'))return;
   const rel=relation(row);if(!rel)return;
+  const ca=card(rel.left),cb=card(rel.right);
   openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');decorateTopReveal(row);
+  emitCardFocus(true,ca.id,cb.id,row);
   const signature=`${rel.left.id}@${rel.left.value.toFixed(7)}|${rel.aspect}|${rel.right.id}@${rel.right.value.toFixed(7)}`;
   let detail=row.querySelector(':scope>.inline-rel-detail');
   if(detail&&detail.dataset.inlineRelationshipSignature===signature){detail.hidden=false;document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');return}
   detail?.remove();detail=document.createElement('div');detail.className='inline-rel-detail';detail.dataset.inlineRelationshipSignature=signature;
-  const ca=card(rel.left),cb=card(rel.right);warmCardArt(ca.image);warmCardArt(cb.image);
+  warmCardArt(ca.image);warmCardArt(cb.image);
   detail.innerHTML=`<div class="inline-rel-top-reveal" role="status" aria-live="polite" hidden></div><div class="inline-rel-visual">${cardMarkup('A',ca)}${wheelMarkup(rel)}${cardMarkup('B',cb)}</div>${contextMarkup(rel)}`;
   row.appendChild(detail);
   document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');
@@ -126,7 +133,7 @@ document.addEventListener('click',e=>{
 },true);
 function suppress(){const p=document.getElementById('skySelectedRelationship');if(p)p.hidden=true}
 window.addEventListener('relphi:selected-relationship-rendered',suppress);
-window.addEventListener('relphi:sky-foundation-ready',()=>{if(openRow&&!openRow.isConnected)openRow=null;warmCurrentCardArt();suppress()});
+window.addEventListener('relphi:sky-foundation-ready',()=>{if(openRow&&!openRow.isConnected){emitCardFocus(false);openRow=null}warmCurrentCardArt();suppress()});
 function start(){warmCurrentCardArt();suppress()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
