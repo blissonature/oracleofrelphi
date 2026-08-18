@@ -4,7 +4,7 @@
   window.__relphiSelectedRelationshipWheelBridgeV1 = true;
 
   const NS='http://www.w3.org/2000/svg';
-  let aperture=null,linkedLine=null,queued=false,observer=null;
+  let aperture=null,linkedLine=null,forcedLine=null,queued=false,observer=null;
 
   function installHitTargets() {
     document.querySelectorAll('[data-layer="aspects"] > line[data-relation-index]:not(.sky-foundation-aspect-hit)').forEach(function (line) {
@@ -26,10 +26,33 @@
     });
   }
 
+  function selectedRow(){
+    return document.querySelector('#skyFoundationRelationshipList > .sky-foundation-relationship-row[aria-current="true"]') ||
+      document.querySelector('#skyFoundationRelationshipList > .sky-foundation-relationship-row.is-relationship-selected');
+  }
+
+  function lineForSelectedRow(){
+    const row=selectedRow();
+    if(!row||row.hidden||getComputedStyle(row).display==='none')return null;
+    const index=String(row.dataset.relationIndex||'');
+    if(!index)return null;
+    return Array.from(document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)'))
+      .find(line=>String(line.dataset.relationIndex||'')===index)||null;
+  }
+
   function selectedLine(){
-    return document.querySelector('[data-layer="aspects"] > line.sky-foundation-aspect.is-relationship-line') ||
-      document.querySelector('[data-layer="aspects"] > line.sky-foundation-aspect[data-selected-relation="true"]') ||
-      document.querySelector('[data-layer="aspects"] > line.sky-foundation-aspect.is-selected');
+    return lineForSelectedRow() ||
+      document.querySelector('[data-layer="aspects"] > line.sky-foundation-aspect.is-relationship-line:not(.sky-foundation-aspect-hit)') ||
+      document.querySelector('[data-layer="aspects"] > line.sky-foundation-aspect[data-selected-relation="true"]:not(.sky-foundation-aspect-hit)') ||
+      document.querySelector('[data-layer="aspects"] > line.sky-foundation-aspect.is-selected:not(.sky-foundation-aspect-hit)');
+  }
+
+  function forceLine(line){
+    if(forcedLine&&forcedLine!==line)forcedLine.classList.remove('sky-orb-bridge-selected-line');
+    forcedLine=line||null;
+    if(!line)return;
+    line.classList.add('sky-orb-bridge-selected-line');
+    line.removeAttribute('hidden');
   }
 
   function chartCenter(svg){
@@ -76,6 +99,7 @@
   function syncSelection(){
     queued=false;installHitTargets();
     const line=selectedLine();
+    forceLine(line);
     if(!line){removeAperture();return}
     const orb=Math.abs(Number(line.dataset.orb||line.dataset.sourceOrb));
     if(line!==linkedLine||!aperture||Number(aperture.dataset.orb)!==orb)buildAperture(line);else syncVisual();
