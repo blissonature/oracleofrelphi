@@ -33,6 +33,20 @@
   filter:saturate(1.25) brightness(1.08) drop-shadow(0 0 7px rgba(31,27,24,.36))!important;
 }
 
+/* The selected aspect owns its orb aperture. The bridge computes the literal angular
+   opening from the aspect line's orb; opacity is synchronized to the line itself. */
+.sky-relationship-orb-aperture{
+  fill:var(--orb-aspect-color,#777);
+  fill-opacity:.13;
+  stroke:var(--orb-aspect-color,#777);
+  stroke-opacity:.24;
+  stroke-width:1.15;
+  vector-effect:non-scaling-stroke;
+  pointer-events:none;
+  transition:opacity .1s ease;
+}
+.sky-relationship-orb-aperture[hidden]{display:none!important}
+
 /* The Placements drawer becomes the literal endpoint list for an exact relationship. */
 #skyFoundationA.has-relationship-exact-ledger .sky-foundation-row.is-relationship-unrelated-row,
 #skyFoundationB.has-relationship-exact-ledger .sky-foundation-row.is-relationship-unrelated-row{display:none!important}
@@ -68,7 +82,7 @@
 .sky-relationship-transit-meta .is-rx{color:#8b1714}
 .sky-relationship-transit-meta[hidden]{display:none!important}
 
-@media(prefers-reduced-motion:reduce){.sky-relationship-focus-card{transition:none}}
+@media(prefers-reduced-motion:reduce){.sky-relationship-focus-card,.sky-relationship-orb-aperture{transition:none}}
 @media(max-width:620px){
   .sky-wheel-explore-copy{font-size:.57rem}
   .sky-relationship-focus-host{padding:8px}
