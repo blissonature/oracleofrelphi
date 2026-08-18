@@ -25,34 +25,27 @@
     const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
     const id=String(metadata.savedSkyId||'');
     if(id){const hit=records.find(record=>recordRef(record)===id||String(record.id||'')===id);if(hit)return hit}
-    const name=normalize(metadata.savedSkyName);
-    return name?records.find(record=>normalize(record?.name)===name)||null:null;
+    const name=normalize(metadata.savedSkyName);return name?records.find(record=>normalize(record?.name)===name)||null:null;
   }
   function candidateName(value){
     for(const candidate of [value?.name,value?.displayName,value?.skyName,value?.title,value?.calcProfile?.name,value?.calcProfile?.title]){
-      const name=String(candidate||'').trim();
-      if(name&&!GENERIC_NAMES.has(normalize(name)))return name;
+      const name=String(candidate||'').trim();if(name&&!GENERIC_NAMES.has(normalize(name)))return name;
     }
     return '';
   }
   function applyName(value,name){
     const next=clone(value||{}),clean=String(name||'').trim();
     next.name=clean||'Unsaved sky';next.title=next.name;next.displayName=next.name;next.skyName=next.name;
-    next.calcProfile=next.calcProfile&&typeof next.calcProfile==='object'?next.calcProfile:{};
-    next.calcProfile.name=next.name;next.calcProfile.title=next.name;
-    next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};
-    next.metadata.name=next.name;next.metadata.title=next.name;
-    return next;
+    next.calcProfile=next.calcProfile&&typeof next.calcProfile==='object'?next.calcProfile:{};next.calcProfile.name=next.name;next.calcProfile.title=next.name;
+    next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};next.metadata.name=next.name;next.metadata.title=next.name;return next;
   }
   function detachSavedIdentity(value){
     const next=clone(value||{});next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};
-    delete next.metadata.savedSkyId;delete next.metadata.savedSkyName;delete next.metadata.savedSkyLoadedAt;delete next.metadata.savedSkyDetached;
-    return next;
+    delete next.metadata.savedSkyId;delete next.metadata.savedSkyName;delete next.metadata.savedSkyLoadedAt;delete next.metadata.savedSkyDetached;return next;
   }
   function applySavedIdentity(value,name,id){
     const next=applyName(value,name);next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};
-    next.metadata.savedSkyId=id;next.metadata.savedSkyName=name;next.metadata.savedSkyLoadedAt=new Date().toISOString();
-    return next;
+    next.metadata.savedSkyId=id;next.metadata.savedSkyName=name;next.metadata.savedSkyLoadedAt=new Date().toISOString();return next;
   }
   function dispatchSlot(slot){
     try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:localStorage.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}
@@ -62,10 +55,8 @@
   function activeRecord(slot){return explicitRecord(payload(slot),library())}
   function activeName(slot){const record=activeRecord(slot);return record?String(record.name||'').trim():state[slot].draftName||candidateName(payload(slot))}
   function shortMeta(record){
-    const profile=record?.calcProfile&&typeof record.calcProfile==='object'?record.calcProfile:{};
-    const raw=String(profile.dateTime||record?.dateTime||'');
-    const date=raw.slice(0,10),time=/T(\d{2}:\d{2})/.exec(raw)?.[1]||'';
-    const location=String(profile.location||record?.location||'').trim();
+    const profile=record?.calcProfile&&typeof record.calcProfile==='object'?record.calcProfile:{},raw=String(profile.dateTime||record?.dateTime||'');
+    const date=raw.slice(0,10),time=/T(\d{2}:\d{2})/.exec(raw)?.[1]||'',location=String(profile.location||record?.location||'').trim();
     return [[date,time].filter(Boolean).join(' · '),location].filter(Boolean).join(' · ');
   }
   function host(slot){return document.getElementById(`skyMomentDetails${slot}`)}
@@ -80,21 +71,18 @@
   }
   function renderList(slot){
     const section=ensureSelector(slot);if(!section)return;
-    const input=section.querySelector('[data-ww-saved-sky-input]'),list=section.querySelector('[data-ww-saved-sky-list]');
-    const open=state[slot].open;input?.setAttribute('aria-expanded',open?'true':'false');if(!list)return;
-    list.hidden=!open;if(!open){list.replaceChildren();return}
-    const query=String(state[slot].query||'').trim(),normalized=normalize(query),records=library().filter(record=>!normalized||normalize(record.name).includes(normalized));
+    const input=section.querySelector('[data-ww-saved-sky-input]'),list=section.querySelector('[data-ww-saved-sky-list]'),open=state[slot].open;
+    input?.setAttribute('aria-expanded',open?'true':'false');if(!list)return;list.hidden=!open;if(!open){list.replaceChildren();return}
+    const query=String(state[slot].query||'').trim(),normalized=normalize(query),all=library(),records=all.filter(record=>!normalized||normalize(record.name).includes(normalized));
     const current=activeRecord(slot),currentRef=current?recordRef(current):'';
     const savedMarkup=records.map(record=>{const ref=recordRef(record),meta=shortMeta(record),selected=ref===currentRef;return `<button type="button" class="sky-moment-saved-option${selected?' is-active':''}" role="option" aria-selected="${selected?'true':'false'}" data-ww-saved-sky-option="${escapeHtml(ref)}"><span>${escapeHtml(record.name)}</span>${meta?`<small>${escapeHtml(meta)}</small>`:''}</button>`}).join('');
-    const exact=normalized&&library().some(record=>normalize(record.name)===normalized);
+    const exact=normalized&&all.some(record=>normalize(record.name)===normalized);
     const newMarkup=query&&!exact?`<button type="button" class="sky-moment-saved-option is-new" role="option" aria-selected="false" data-ww-new-sky-name="${escapeHtml(query)}"><span>New sky · ${escapeHtml(query)}</span><small>Use this name and edit its where and when</small></button>`:'';
     list.innerHTML=savedMarkup+newMarkup||'<p class="sky-moment-saved-empty">Type a saved-sky name or a new name.</p>';
   }
   function syncSelector(slot){
-    const section=ensureSelector(slot);if(!section)return;
-    const input=section.querySelector('[data-ww-saved-sky-input]');
-    if(input&&document.activeElement!==input)input.value=activeName(slot)||'';
-    renderList(slot);
+    const section=ensureSelector(slot);if(!section)return;const input=section.querySelector('[data-ww-saved-sky-input]');
+    if(input&&document.activeElement!==input)input.value=activeName(slot)||'';renderList(slot);
   }
   function closeList(slot){state[slot].open=false;state[slot].query='';syncSelector(slot)}
   function loadRecord(slot,record){
@@ -105,8 +93,7 @@
     dispatchSlot(slot);window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name,source:'saved-sky-field'}}));return true;
   }
   function beginNewSky(slot,name){
-    const clean=String(name||'').trim();if(!clean)return false;
-    if(library().some(record=>normalize(record.name)===normalize(clean)))return false;
+    const clean=String(name||'').trim();if(!clean||library().some(record=>normalize(record.name)===normalize(clean)))return false;
     const current=payload(slot);if(!current||typeof current!=='object')return false;
     const next=applyName(detachSavedIdentity(current),clean);if(!writeJson(SLOT_KEYS[slot],next))return false;
     state[slot].draftName=clean;state[slot].open=false;state[slot].query='';dispatchSlot(slot);
@@ -130,18 +117,15 @@
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(hydrate)}
 
   document.addEventListener('focusin',event=>{
-    const input=event.target.closest?.('[data-ww-saved-sky-input]');if(!input)return;
-    const slot=input.dataset.wwSavedSkyInput;if(!SLOT_KEYS[slot])return;
+    const input=event.target.closest?.('[data-ww-saved-sky-input]');if(!input)return;const slot=input.dataset.wwSavedSkyInput;if(!SLOT_KEYS[slot])return;
     state[slot].open=true;state[slot].query='';renderList(slot);requestAnimationFrame(()=>input.select());
   });
   document.addEventListener('input',event=>{
-    const input=event.target.closest?.('[data-ww-saved-sky-input]');if(!input)return;
-    const slot=input.dataset.wwSavedSkyInput;if(!SLOT_KEYS[slot])return;
+    const input=event.target.closest?.('[data-ww-saved-sky-input]');if(!input)return;const slot=input.dataset.wwSavedSkyInput;if(!SLOT_KEYS[slot])return;
     state[slot].open=true;state[slot].query=input.value;renderList(slot);
   });
   document.addEventListener('keydown',event=>{
-    const input=event.target.closest?.('[data-ww-saved-sky-input]');if(!input)return;
-    const slot=input.dataset.wwSavedSkyInput;if(!SLOT_KEYS[slot])return;
+    const input=event.target.closest?.('[data-ww-saved-sky-input]');if(!input)return;const slot=input.dataset.wwSavedSkyInput;if(!SLOT_KEYS[slot])return;
     if(event.key==='Escape'){event.preventDefault();closeList(slot);input.blur();return}
     if(event.key==='ArrowDown'){event.preventDefault();state[slot].open=true;renderList(slot);selector(slot)?.querySelector('.sky-moment-saved-option')?.focus();return}
     if(event.key==='Enter'&&state[slot].open){const first=selector(slot)?.querySelector('.sky-moment-saved-option');if(first){event.preventDefault();first.click()}}
@@ -155,8 +139,7 @@
   document.addEventListener('pointerdown',event=>{['A','B'].forEach(slot=>{const section=selector(slot);if(state[slot].open&&section&&!section.contains(event.target))closeList(slot)})},true);
 
   document.addEventListener('submit',event=>{
-    const form=event.target.closest?.('.sky-where-when-editor');if(!form)return;
-    const slot=form.dataset.slot;if(!SLOT_KEYS[slot])return;
+    const form=event.target.closest?.('.sky-where-when-editor');if(!form)return;const slot=form.dataset.slot;if(!SLOT_KEYS[slot])return;
     const current=activeRecord(slot),name=current?String(current.name||'').trim():state[slot].draftName||candidateName(payload(slot));
     pending[slot]={name,save:!!name,previousRef:current?recordRef(current):'',created:Date.now()};
     window.setTimeout(()=>{if(pending[slot]&&Date.now()-pending[slot].created>=4500)pending[slot]=null},4700);
@@ -167,7 +150,6 @@
     if(slot&&pending[slot]){const request=pending[slot];pending[slot]=null;const value=payload(slot),source=String(value?.calcProfile?.source||'');if(source==='where-when-v1')saveAfterCalculation(slot,request)}
     if(!event.key||event.key===LIBRARY_KEY||Object.values(SLOT_KEYS).includes(event.key))schedule();
   });
-  ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed'].forEach(name=>window.addEventListener(name,schedule));
-  new MutationObserver(records=>{if(records.some(record=>record.addedNodes.length||record.removedNodes.length))schedule()}).observe(document.documentElement,{childList:true,subtree:true});
+  ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed','relphi:sky-moment-disclosure-ready'].forEach(name=>window.addEventListener(name,schedule));
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
 })();
