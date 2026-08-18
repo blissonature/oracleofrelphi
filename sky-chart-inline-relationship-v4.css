@@ -1,38 +1,39 @@
+/* Relationship selection now drives the shared wheel and Sky-card Placements drawers.
+   The former inline expanded relationship view is intentionally retired. */
 #skySelectedRelationship{display:none!important}
 #skyFoundationRelationshipList{align-items:start}
 .sky-foundation-relationship-row{align-self:start}
-.sky-foundation-relationship-row.is-inline-expanded{grid-column:1/-1;grid-template-rows:38px 13px auto;grid-template-areas:"left aspect right" "left orb right" "detail detail detail";min-height:59px;height:auto!important;overflow:visible;contain:layout style}
-.sky-foundation-relationship-row.is-inline-expanded [data-inline-top-reveal]{cursor:pointer;border-radius:7px}
-.sky-foundation-relationship-row.is-inline-expanded [data-inline-top-reveal]:hover{background:rgba(45,39,34,.055)}
-.inline-rel-detail{grid-area:detail;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;padding:10px 2px 8px;box-sizing:border-box;border-top:1px solid rgba(45,39,34,.1);margin-top:6px}
-.inline-rel-top-reveal{align-self:start;justify-self:center;min-width:0;max-width:calc(100% - 8px);padding:5px 9px;border-left:4px solid var(--reveal-color,#777);border-radius:7px;background:rgba(45,39,34,.045);color:#4f4842;font:750 .58rem/1.3 'Montserrat',sans-serif;text-align:center;overflow-wrap:anywhere}
-.inline-rel-top-reveal[data-field="left"]{grid-column:1}
-.inline-rel-top-reveal[data-field="aspect"]{grid-column:2}
-.inline-rel-top-reveal[data-field="right"]{grid-column:3}
-.inline-rel-top-reveal[data-level="name"]{font-weight:900;color:#2f2a26}
-.inline-rel-top-reveal[hidden]{display:none!important}
-.inline-rel-visual{grid-column:1/-1;display:grid;grid-template-columns:minmax(62px,88px) minmax(118px,1fr) minmax(62px,88px);align-items:center;justify-content:center;gap:12px;width:100%;max-width:460px;margin-inline:auto}
-.inline-rel-card{appearance:none;display:grid;gap:3px;justify-items:center;min-width:0;margin:0;padding:0;border:0;background:transparent;color:#211d1a;cursor:pointer}
-.inline-rel-card small{font:850 .52rem/1 'Montserrat',sans-serif;text-transform:uppercase}
-.inline-rel-card.sky-a small{color:#c9211e}.inline-rel-card.sky-b small{color:#2462d0}
-.inline-rel-card img{display:block;width:100%;max-width:76px;aspect-ratio:352/600;object-fit:cover;border-radius:6px;border:2px solid currentColor;background:#eee}
-.inline-rel-card.sky-a img{color:#c9211e}.inline-rel-card.sky-b img{color:#2462d0}
-.inline-rel-card b{max-width:80px;font:750 .52rem/1.05 'Montserrat',sans-serif;text-align:center}
-.inline-rel-card:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:7px}
-.inline-rel-wheel{display:grid;justify-items:center;min-width:0}
-.inline-rel-wheel-stage{position:relative;width:min(100%,150px);aspect-ratio:1;overflow:visible}
-.inline-rel-wheel-stage>svg{display:block;width:100%;height:100%;overflow:visible}
-.inline-rel-ring{fill:#fffdfa;stroke:rgba(45,39,34,.28);stroke-width:1}
-.inline-rel-radius{stroke-width:1.2;opacity:.62}.inline-rel-radius.a{stroke:#c9211e}.inline-rel-radius.b{stroke:#2462d0}
-.inline-rel-aspect{stroke:var(--relationship-stripe,#777);stroke-width:3;stroke-linecap:round}
-.inline-rel-endpoint-layer{position:absolute;inset:0;isolation:isolate;pointer-events:none;z-index:2}
-.inline-rel-endpoint{position:absolute;left:var(--endpoint-x);top:var(--endpoint-y);width:38px;height:38px;transform:translate(-50%,-50%);display:grid;place-items:center;pointer-events:none}
-.inline-rel-wheel-stage[data-inline-overlap="true"] .inline-rel-endpoint{mix-blend-mode:screen}
-.inline-rel-endpoint>svg{display:block;width:38px!important;height:38px!important;min-width:38px;min-height:38px;max-width:38px;max-height:38px;overflow:visible}
-.inline-rel-orb{display:flex;align-items:center;justify-content:center;gap:5px;width:min(100%,130px);margin-top:2px}
-.inline-rel-orb>span{position:relative;display:block;width:64px;height:5px;border-radius:999px;background:rgba(45,39,34,.12);overflow:hidden}
-.inline-rel-orb>span::after{content:"";position:absolute;inset:0 auto 0 0;width:calc(var(--orb)*100%);background:var(--relationship-stripe,#777);border-radius:inherit}
-.inline-rel-orb strong{color:var(--relationship-stripe,#777);font:900 .56rem/1 'Montserrat',sans-serif;font-variant-numeric:tabular-nums}
-.inline-rel-house-context{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:2px;color:#665e57;font:750 .54rem/1.25 'Montserrat',sans-serif;text-align:center}
-.inline-rel-house-context span{padding:5px;border-radius:7px;background:rgba(45,39,34,.045)}
-@media(max-width:620px){.sky-foundation-relationship-row.is-inline-expanded{grid-column:auto}.inline-rel-visual{grid-template-columns:minmax(56px,72px) minmax(108px,1fr) minmax(56px,72px);gap:5px;max-width:none}.inline-rel-detail{padding-left:0;padding-right:0}.inline-rel-top-reveal{font-size:.54rem;padding-inline:5px}.inline-rel-card img{max-width:66px}.inline-rel-card b{font-size:.48rem}.inline-rel-wheel-stage{width:min(100%,132px)}.inline-rel-house-context{font-size:.5rem}}
+.sky-foundation-relationship-row.is-relationship-selected{border-color:rgba(31,27,24,.48);background:#f6f0e8;box-shadow:0 0 0 2px color-mix(in srgb,var(--relationship-aspect-color,#777) 18%,transparent)}
+.sky-foundation-relationship-row.is-relationship-dimmed{opacity:.18;filter:saturate(.28)}
+.sky-relationship-mode-hidden{display:none!important}
+
+.sky-wheel-explore-copy{display:block;max-width:560px;color:#655d56;font:650 .61rem/1.3 'Montserrat',sans-serif;text-align:left}
+#skyFoundationComparison>.sky-foundation-heading{align-items:start;gap:4px}
+#skyFoundationComparison>.sky-foundation-heading>span:first-child{font-weight:900}
+
+.sky-relationship-focus-host{display:grid;gap:8px;padding:10px;border-bottom:1px solid rgba(31,27,24,.11);background:#f8f4ee}
+.sky-relationship-focus-heading{display:flex;align-items:baseline;justify-content:space-between;gap:8px;color:#2b2622}
+.sky-relationship-focus-heading>span{font:900 .7rem/1.15 'Montserrat',sans-serif}
+.sky-relationship-focus-heading>small{color:#6a625b;font:750 .58rem/1.15 'Montserrat',sans-serif}
+.sky-relationship-focus-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;align-items:start}
+.sky-relationship-focus-card{display:grid;justify-items:center;gap:5px;min-width:0;padding:8px;border:1px solid rgba(31,27,24,.13);border-radius:10px;background:#fffdfa;color:#211d19;text-decoration:none}
+.sky-relationship-focus-card:hover,.sky-relationship-focus-card:focus-visible{border-color:currentColor;outline:2px solid color-mix(in srgb,currentColor 22%,transparent);outline-offset:2px}
+.sky-relationship-focus-card.sky-a{color:#9f1b18}.sky-relationship-focus-card.sky-b{color:#1f57bb}
+.sky-relationship-focus-source{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font:850 .58rem/1.15 'Montserrat',sans-serif}
+.sky-relationship-focus-card img{display:block;width:min(100%,150px);height:auto;aspect-ratio:352/600;object-fit:cover;border:2px solid currentColor;border-radius:7px;background:#eee}
+.sky-relationship-focus-card strong{max-width:100%;color:#211d19;font:850 .68rem/1.15 'Montserrat',sans-serif;text-align:center}
+.sky-relationship-focus-card small{max-width:100%;color:#665e57;font:700 .56rem/1.25 'Montserrat',sans-serif;text-align:center}
+
+.sky-relationship-transit-meta{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:1px;padding-top:5px;border-top:1px solid rgba(31,27,24,.08);color:#5c544d;font:750 .56rem/1.25 'Montserrat',sans-serif;font-variant-numeric:tabular-nums}
+.sky-relationship-transit-meta strong{color:#26211d;font-weight:900}
+.sky-relationship-transit-meta .is-rx{color:#8b1714}
+.sky-relationship-transit-meta[hidden]{display:none!important}
+
+@media(max-width:620px){
+  .sky-wheel-explore-copy{font-size:.57rem}
+  .sky-relationship-focus-host{padding:8px}
+  .sky-relationship-focus-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .sky-relationship-focus-card{padding:6px}
+  .sky-relationship-focus-card img{width:min(100%,132px)}
+  .sky-relationship-transit-meta{font-size:.53rem}
+}
