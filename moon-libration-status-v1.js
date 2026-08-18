@@ -246,14 +246,16 @@
       if (token !== foundationRenderToken) return;
       const referenceDate = nearestDateForPhase(phaseFraction, new Date());
       const info = calculate(referenceDate);
-      value.textContent = statusText(info);
-      reference.textContent = 'Reference date: ' + foundationDateLabel(referenceDate);
+      const nextValue = statusText(info);
+      const nextReference = 'Reference date: ' + foundationDateLabel(referenceDate);
+      if (value.textContent !== nextValue) value.textContent = nextValue;
+      if (reference.textContent !== nextReference) reference.textContent = nextReference;
       row.setAttribute('aria-label', statusAria(info) + ' Reference date ' + foundationDateLabel(referenceDate) + '.');
       row.title = 'The reference date is the nearest real occurrence of the phase selected in this teaching tool.';
     } catch (error) {
       if (token !== foundationRenderToken) return;
-      value.textContent = 'Libration unavailable';
-      reference.textContent = '';
+      if (value.textContent !== 'Libration unavailable') value.textContent = 'Libration unavailable';
+      if (reference.textContent) reference.textContent = '';
       row.removeAttribute('aria-label');
       row.title = String(error?.message || error);
     }
@@ -276,7 +278,13 @@
       if (['moonPhaseSlider','moonMonthSelect','moonYearInput'].includes(event.target?.id)) scheduleFoundationLibration();
     }, true);
     if (window.MutationObserver) {
-      new MutationObserver(scheduleFoundationLibration).observe(grid, { childList:true, subtree:true });
+      new MutationObserver(mutations => {
+        const meaningful = mutations.some(mutation => {
+          const target = mutation.target instanceof Element ? mutation.target : mutation.target.parentElement;
+          return !target?.closest?.('[data-relphi-moon-libration-row]');
+        });
+        if (meaningful) scheduleFoundationLibration();
+      }).observe(grid, { childList:true, subtree:true });
     }
   }
 
