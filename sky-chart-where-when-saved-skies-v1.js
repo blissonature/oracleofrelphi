@@ -1,4 +1,5 @@
-// Saved-sky controls for the literal Where and When layer, sharing the canonical Saved Skies library.
+// One Saved Sky field inside the expanded moment panel. The same field finds existing skies
+// or names a new one; choosing a saved sky loads its Where and When preview in this panel.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiWhereWhenSavedSkiesV1)return;
@@ -8,20 +9,18 @@
   const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','unsaved sky','now']);
   const pending={A:null,B:null};
-  const selectorState={A:{open:false,query:''},B:{open:false,query:''}};
-  let observer=null,queued=false;
+  const state={A:{open:false,query:'',draftName:''},B:{open:false,query:'',draftName:''}};
+  let queued=false;
 
   const normalize=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const clone=value=>JSON.parse(JSON.stringify(value));
-  const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-
+  const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[ch]));
   function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
   function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
   function library(){const list=readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list.filter(record=>record&&String(record.name||'').trim()):[]}
   function payload(slot){return readJson(SLOT_KEYS[slot],null)}
   function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalize(record?.name)}`)}
   function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
-
   function explicitRecord(value,records){
     const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
     const id=String(metadata.savedSkyId||'');
@@ -30,9 +29,7 @@
     return name?records.find(record=>normalize(record?.name)===name)||null:null;
   }
   function candidateName(value){
-    const record=explicitRecord(value,library());
-    if(record)return String(record.name||'').trim();
-    for(const candidate of [value?.name,value?.displayName,value?.skyName,value?.title]){
+    for(const candidate of [value?.name,value?.displayName,value?.skyName,value?.title,value?.calcProfile?.name,value?.calcProfile?.title]){
       const name=String(candidate||'').trim();
       if(name&&!GENERIC_NAMES.has(normalize(name)))return name;
     }
@@ -49,13 +46,11 @@
   }
   function detachSavedIdentity(value){
     const next=clone(value||{});next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};
-    delete next.metadata.savedSkyId;delete next.metadata.savedSkyName;delete next.metadata.savedSkyLoadedAt;
-    next.metadata.savedSkyDetached=true;
+    delete next.metadata.savedSkyId;delete next.metadata.savedSkyName;delete next.metadata.savedSkyLoadedAt;delete next.metadata.savedSkyDetached;
     return next;
   }
   function applySavedIdentity(value,name,id){
     const next=applyName(value,name);next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};
-    delete next.metadata.savedSkyDetached;
     next.metadata.savedSkyId=id;next.metadata.savedSkyName=name;next.metadata.savedSkyLoadedAt=new Date().toISOString();
     return next;
   }
@@ -64,258 +59,115 @@
     catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:SLOT_KEYS[slot]});window.dispatchEvent(event)}
     window.dispatchEvent(new CustomEvent('relphi:saved-sky-active-changed',{detail:{slot}}));
   }
-  function formStatus(form,message,error){
-    const node=form?.querySelector('.sky-where-when-status');if(!node)return;
-    node.textContent=message||'';node.classList.toggle('is-error',!!error);
-  }
-
-  function saveCalculatedSky(slot,request){
-    let value=payload(slot);if(!value||typeof value!=='object')return;
-    const records=library(),previous=explicitRecord(value,records),clean=String(request.name||'').trim();
-
-    if(request.save){
-      value=clean?applyName(value,clean):applyName(value,previous?.name||'');
-      const current=previous||records.find(record=>request.previousRef&&recordRef(record)===request.previousRef)||null;
-      const duplicate=records.find(record=>normalize(record?.name)===normalize(clean)&&(!current||recordRef(record)!==recordRef(current)));
-      if(duplicate){
-        value=detachSavedIdentity(applyName(value,''));writeJson(SLOT_KEYS[slot],value);dispatchSlot(slot);
-        window.dispatchEvent(new CustomEvent('relphi:saved-sky-save-error',{detail:{slot,message:'That name is already in Saved skies.'}}));
-        return;
-      }
-      const id=current?recordRef(current):newId(),record=applySavedIdentity(value,clean,id);
-      record.id=id;record.savedAt=current?.savedAt||record.savedAt||new Date().toISOString();record.updatedAt=new Date().toISOString();
-      const index=current?records.findIndex(item=>recordRef(item)===recordRef(current)):-1;
-      if(index>=0)records[index]=record;else records.push(record);
-      if(writeJson(LIBRARY_KEY,records)){
-        value=applySavedIdentity(value,clean,id);
-        writeJson(SLOT_KEYS[slot],value);dispatchSlot(slot);
-        window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{slot,name:clean,id,action:index>=0?'update':'create'}}));
-        window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:clean,source:'where-when'}}));
-      }
-      return;
-    }
-
-    value=detachSavedIdentity(applyName(value,''));
-    writeJson(SLOT_KEYS[slot],value);dispatchSlot(slot);
-    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Unsaved sky',source:'where-when'}}));
-  }
-
-  function loadRecord(slot,record){
-    if(!SLOT_KEYS[slot]||!record)return false;
-    const id=recordRef(record),name=String(record.name||'Saved sky').trim(),active=applySavedIdentity(record,name,id);
-    delete active.savedAt;delete active.updatedAt;
-    if(!writeJson(SLOT_KEYS[slot],active))return false;
-    if(slot==='B'){
-      try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
-      document.documentElement.dataset.skyLastMode='comparison';
-    }
-    dispatchSlot(slot);
-    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name,source:'saved-sky-selector'}}));
-    return true;
-  }
-  function detachCurrent(slot){
-    const value=payload(slot);if(!value||typeof value!=='object')return false;
-    const detached=detachSavedIdentity(applyName(value,''));
-    if(!writeJson(SLOT_KEYS[slot],detached))return false;
-    dispatchSlot(slot);
-    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Unsaved sky',source:'saved-sky-selector'}}));
-    return true;
-  }
-
+  function activeRecord(slot){return explicitRecord(payload(slot),library())}
+  function activeName(slot){const record=activeRecord(slot);return record?String(record.name||'').trim():state[slot].draftName||candidateName(payload(slot))}
   function shortMeta(record){
     const profile=record?.calcProfile&&typeof record.calcProfile==='object'?record.calcProfile:{};
-    const date=String(profile.dateTime||record?.dateTime||'').slice(0,10);
+    const raw=String(profile.dateTime||record?.dateTime||'');
+    const date=raw.slice(0,10),time=/T(\d{2}:\d{2})/.exec(raw)?.[1]||'';
     const location=String(profile.location||record?.location||'').trim();
-    return [date,location].filter(Boolean).join(' · ');
+    return [[date,time].filter(Boolean).join(' · '),location].filter(Boolean).join(' · ');
   }
-  function selectorHost(slot){return document.getElementById(`skyMomentDetails${slot}`)}
-  function selectorNode(slot){return selectorHost(slot)?.querySelector(`[data-ww-saved-sky-selector="${slot}"]`)||null}
-  function activeSavedRecord(slot){return explicitRecord(payload(slot),library())}
-
+  function host(slot){return document.getElementById(`skyMomentDetails${slot}`)}
+  function selector(slot){return host(slot)?.querySelector(`[data-ww-saved-sky-selector="${slot}"]`)||null}
   function ensureSelector(slot){
-    const host=selectorHost(slot);if(!host)return null;
-    let section=selectorNode(slot);if(section)return section;
+    const target=host(slot);if(!target)return null;
+    let section=selector(slot);if(section)return section;
     const listId=`skyMomentSavedSkyList${slot}`;
-    section=document.createElement('section');
-    section.className='sky-moment-saved-sky';section.dataset.wwSavedSkySelector=slot;
-    section.innerHTML=`
-      <span class="sky-moment-saved-label">Saved sky</span>
-      <div class="sky-moment-saved-combobox">
-        <input class="sky-moment-saved-input" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${listId}" data-ww-saved-sky-input="${slot}" placeholder="Search My Saved Skies">
-        <button class="sky-moment-saved-clear" type="button" data-ww-saved-sky-clear="${slot}" aria-label="Keep this sky as an unsaved copy" title="Keep this sky as an unsaved copy">×</button>
-        <button class="sky-moment-saved-toggle" type="button" data-ww-saved-sky-toggle="${slot}" aria-label="Show My Saved Skies" aria-expanded="false"><span aria-hidden="true"></span></button>
-      </div>
-      <div class="sky-moment-saved-list" id="${listId}" role="listbox" data-ww-saved-sky-list="${slot}" hidden></div>`;
-    const facts=host.querySelector('.sky-moment-exact-facts');
-    host.insertBefore(section,facts||host.firstChild);
-    return section;
+    section=document.createElement('section');section.className='sky-moment-saved-sky';section.dataset.wwSavedSkySelector=slot;
+    section.innerHTML=`<div class="sky-moment-saved-combobox"><input class="sky-moment-saved-input" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${listId}" data-ww-saved-sky-input="${slot}" placeholder="Find a saved sky or name a new sky"></div><div class="sky-moment-saved-list" id="${listId}" role="listbox" data-ww-saved-sky-list="${slot}" hidden></div>`;
+    const facts=target.querySelector('.sky-moment-exact-facts');target.insertBefore(section,facts||target.firstChild);return section;
   }
-  function filteredLibrary(slot){
-    const query=normalize(selectorState[slot].query);
-    const records=library();
-    if(!query)return records;
-    return records.filter(record=>normalize(record.name).includes(query));
-  }
-  function renderSelectorList(slot){
+  function renderList(slot){
     const section=ensureSelector(slot);if(!section)return;
-    const list=section.querySelector('[data-ww-saved-sky-list]');
-    const input=section.querySelector('[data-ww-saved-sky-input]');
-    const toggle=section.querySelector('[data-ww-saved-sky-toggle]');
-    const open=selectorState[slot].open;
-    input?.setAttribute('aria-expanded',open?'true':'false');toggle?.setAttribute('aria-expanded',open?'true':'false');
-    if(!list)return;
-    list.hidden=!open;
-    if(!open){list.replaceChildren();return}
-    const active=activeSavedRecord(slot),activeRef=active?recordRef(active):'',records=filteredLibrary(slot);
-    if(!records.length){list.innerHTML='<p class="sky-moment-saved-empty">No saved skies match.</p>';return}
-    list.innerHTML=records.map(record=>{
-      const ref=recordRef(record),current=ref===activeRef,meta=shortMeta(record);
-      return `<button type="button" class="sky-moment-saved-option${current?' is-active':''}" role="option" aria-selected="${current?'true':'false'}" data-ww-saved-sky-option="${escapeHtml(ref)}"><span>${escapeHtml(record.name)}</span>${meta?`<small>${escapeHtml(meta)}</small>`:''}</button>`;
-    }).join('');
+    const input=section.querySelector('[data-ww-saved-sky-input]'),list=section.querySelector('[data-ww-saved-sky-list]');
+    const open=state[slot].open;input?.setAttribute('aria-expanded',open?'true':'false');if(!list)return;
+    list.hidden=!open;if(!open){list.replaceChildren();return}
+    const query=String(state[slot].query||'').trim(),normalized=normalize(query),records=library().filter(record=>!normalized||normalize(record.name).includes(normalized));
+    const current=activeRecord(slot),currentRef=current?recordRef(current):'';
+    const savedMarkup=records.map(record=>{const ref=recordRef(record),meta=shortMeta(record),selected=ref===currentRef;return `<button type="button" class="sky-moment-saved-option${selected?' is-active':''}" role="option" aria-selected="${selected?'true':'false'}" data-ww-saved-sky-option="${escapeHtml(ref)}"><span>${escapeHtml(record.name)}</span>${meta?`<small>${escapeHtml(meta)}</small>`:''}</button>`}).join('');
+    const exact=normalized&&library().some(record=>normalize(record.name)===normalized);
+    const newMarkup=query&&!exact?`<button type="button" class="sky-moment-saved-option is-new" role="option" aria-selected="false" data-ww-new-sky-name="${escapeHtml(query)}"><span>New sky · ${escapeHtml(query)}</span><small>Use this name and edit its where and when</small></button>`:'';
+    list.innerHTML=savedMarkup+newMarkup||'<p class="sky-moment-saved-empty">Type a saved-sky name or a new name.</p>';
   }
   function syncSelector(slot){
     const section=ensureSelector(slot);if(!section)return;
     const input=section.querySelector('[data-ww-saved-sky-input]');
-    const clear=section.querySelector('[data-ww-saved-sky-clear]');
-    const record=activeSavedRecord(slot),name=record?String(record.name||'').trim():'Unsaved sky';
-    if(input&&document.activeElement!==input)input.value=name;
-    if(clear)clear.hidden=!record;
-    section.classList.toggle('is-saved',!!record);
-    renderSelectorList(slot);
+    if(input&&document.activeElement!==input)input.value=activeName(slot)||'';
+    renderList(slot);
   }
-  function openSelector(slot,focusInput){
-    selectorState[slot].open=true;selectorState[slot].query='';
-    syncSelector(slot);
-    if(focusInput){
-      requestAnimationFrame(()=>{
-        const input=selectorNode(slot)?.querySelector('[data-ww-saved-sky-input]');
-        input?.focus({preventScroll:true});input?.select();
-      });
-    }
+  function closeList(slot){state[slot].open=false;state[slot].query='';syncSelector(slot)}
+  function loadRecord(slot,record){
+    const id=recordRef(record),name=String(record.name||'Saved sky').trim(),active=applySavedIdentity(record,name,id);delete active.savedAt;delete active.updatedAt;
+    if(!writeJson(SLOT_KEYS[slot],active))return false;
+    state[slot].draftName='';state[slot].open=false;state[slot].query='';
+    if(slot==='B'){try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}document.documentElement.dataset.skyLastMode='comparison'}
+    dispatchSlot(slot);window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name,source:'saved-sky-field'}}));return true;
   }
-  function closeSelector(slot){
-    selectorState[slot].open=false;selectorState[slot].query='';syncSelector(slot);
+  function beginNewSky(slot,name){
+    const clean=String(name||'').trim();if(!clean)return false;
+    if(library().some(record=>normalize(record.name)===normalize(clean)))return false;
+    const current=payload(slot);if(!current||typeof current!=='object')return false;
+    const next=applyName(detachSavedIdentity(current),clean);if(!writeJson(SLOT_KEYS[slot],next))return false;
+    state[slot].draftName=clean;state[slot].open=false;state[slot].query='';dispatchSlot(slot);
+    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:clean,source:'new-sky-field'}}));
+    requestAnimationFrame(()=>document.querySelector(`#skyFoundation${slot} [data-ww-action="edit"]`)?.click());return true;
   }
-
-  function inject(form){
-    if(!form||form.dataset.savedSkiesControls==='true')return;
-    const slot=form.dataset.slot;if(!SLOT_KEYS[slot])return;
-    form.dataset.savedSkiesControls='true';
-    const value=payload(slot),records=library(),record=explicitRecord(value,records),name=record?String(record.name||'').trim():candidateName(value);
-    const section=document.createElement('section');section.className='sky-where-when-identity';section.dataset.wwSavedSkies='true';
-    section.innerHTML=`
-      <label class="sky-where-when-label sky-where-when-name-label">Sky name
-        <input class="sky-where-when-input" data-ww-sky-name type="text" maxlength="80" autocomplete="off" placeholder="Optional" value="${escapeHtml(name)}">
-      </label>
-      <label class="sky-where-when-save-choice">
-        <input type="checkbox" data-ww-save-library${record?' checked':''}>
-        <span>${record?'Save changes to Saved Skies':'Save to Saved Skies'}</span>
-      </label>`;
-    form.insertBefore(section,form.firstElementChild);
+  function saveAfterCalculation(slot,request){
+    let value=payload(slot);if(!value||typeof value!=='object'||!request?.save)return;
+    const records=library(),previous=request.previousRef?records.find(record=>recordRef(record)===request.previousRef):null;
+    const clean=String(request.name||previous?.name||'').trim();if(!clean)return;
+    const duplicate=records.find(record=>normalize(record.name)===normalize(clean)&&(!previous||recordRef(record)!==recordRef(previous)));if(duplicate)return;
+    const id=previous?recordRef(previous):newId(),record=applySavedIdentity(value,clean,id);record.id=id;record.savedAt=previous?.savedAt||new Date().toISOString();record.updatedAt=new Date().toISOString();
+    const index=previous?records.findIndex(item=>recordRef(item)===recordRef(previous)):-1;if(index>=0)records[index]=record;else records.push(record);
+    if(!writeJson(LIBRARY_KEY,records))return;
+    value=applySavedIdentity(value,clean,id);writeJson(SLOT_KEYS[slot],value);state[slot].draftName='';dispatchSlot(slot);
+    window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{slot,name:clean,id,action:index>=0?'update':'create'}}));
+    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:clean,source:'where-when'}}));
   }
-  function hydrate(){
-    queued=false;
-    document.querySelectorAll('.sky-where-when-editor').forEach(inject);
-    ['A','B'].forEach(syncSelector);
-  }
+  function removeLegacyEditorControls(){document.querySelectorAll('.sky-where-when-identity').forEach(node=>node.remove())}
+  function hydrate(){queued=false;removeLegacyEditorControls();['A','B'].forEach(syncSelector)}
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(hydrate)}
-
-  document.addEventListener('submit',event=>{
-    const form=event.target.closest?.('.sky-where-when-editor');if(!form)return;
-    const slot=form.dataset.slot;if(!SLOT_KEYS[slot])return;
-    const name=String(form.querySelector('[data-ww-sky-name]')?.value||'').trim(),save=!!form.querySelector('[data-ww-save-library]')?.checked;
-    const records=library(),current=explicitRecord(payload(slot),records),duplicate=save&&name?records.find(record=>normalize(record?.name)===normalize(name)&&(!current||recordRef(record)!==recordRef(current))):null;
-    if(save&&!name){
-      event.preventDefault();event.stopImmediatePropagation();formStatus(form,'Name the sky before saving it to Saved Skies.',true);
-      const input=form.querySelector('[data-ww-sky-name]');input?.setAttribute('aria-invalid','true');input?.focus();return;
-    }
-    if(duplicate){
-      event.preventDefault();event.stopImmediatePropagation();formStatus(form,'That name is already in Saved Skies.',true);
-      const input=form.querySelector('[data-ww-sky-name]');input?.setAttribute('aria-invalid','true');input?.focus();return;
-    }
-    form.querySelector('[data-ww-sky-name]')?.removeAttribute('aria-invalid');
-    pending[slot]={name,save,previousRef:current?recordRef(current):'',created:Date.now()};
-    window.setTimeout(()=>{if(pending[slot]&&Date.now()-pending[slot].created>=4500)pending[slot]=null},4700);
-  },true);
-
-  document.addEventListener('click',event=>{
-    const toggle=event.target.closest?.('[data-ww-saved-sky-toggle]');
-    if(toggle){
-      event.preventDefault();event.stopPropagation();
-      const slot=toggle.dataset.wwSavedSkyToggle;
-      if(!SLOT_KEYS[slot])return;
-      selectorState[slot].open?closeSelector(slot):openSelector(slot,true);
-      return;
-    }
-    const clear=event.target.closest?.('[data-ww-saved-sky-clear]');
-    if(clear){
-      event.preventDefault();event.stopPropagation();
-      const slot=clear.dataset.wwSavedSkyClear;
-      if(SLOT_KEYS[slot]&&detachCurrent(slot)){selectorState[slot].open=false;selectorState[slot].query='';schedule()}
-      return;
-    }
-    const option=event.target.closest?.('[data-ww-saved-sky-option]');
-    if(option){
-      event.preventDefault();event.stopPropagation();
-      const section=option.closest?.('[data-ww-saved-sky-selector]'),slot=section?.dataset.wwSavedSkySelector;
-      const record=library().find(item=>recordRef(item)===option.dataset.wwSavedSkyOption);
-      if(slot&&record&&loadRecord(slot,record)){selectorState[slot].open=false;selectorState[slot].query='';schedule()}
-    }
-  },true);
 
   document.addEventListener('focusin',event=>{
     const input=event.target.closest?.('[data-ww-saved-sky-input]');if(!input)return;
     const slot=input.dataset.wwSavedSkyInput;if(!SLOT_KEYS[slot])return;
-    if(!selectorState[slot].open)openSelector(slot,false);
-    requestAnimationFrame(()=>input.select());
+    state[slot].open=true;state[slot].query='';renderList(slot);requestAnimationFrame(()=>input.select());
   });
   document.addEventListener('input',event=>{
-    const input=event.target.closest?.('[data-ww-saved-sky-input]');
-    if(input){
-      const slot=input.dataset.wwSavedSkyInput;if(!SLOT_KEYS[slot])return;
-      selectorState[slot].open=true;selectorState[slot].query=input.value;renderSelectorList(slot);return;
-    }
+    const input=event.target.closest?.('[data-ww-saved-sky-input]');if(!input)return;
+    const slot=input.dataset.wwSavedSkyInput;if(!SLOT_KEYS[slot])return;
+    state[slot].open=true;state[slot].query=input.value;renderList(slot);
   });
   document.addEventListener('keydown',event=>{
     const input=event.target.closest?.('[data-ww-saved-sky-input]');if(!input)return;
     const slot=input.dataset.wwSavedSkyInput;if(!SLOT_KEYS[slot])return;
-    if(event.key==='Escape'){event.preventDefault();closeSelector(slot);input.blur();return}
-    if(event.key==='ArrowDown'){
-      event.preventDefault();selectorState[slot].open=true;renderSelectorList(slot);
-      selectorNode(slot)?.querySelector('[data-ww-saved-sky-option]')?.focus();return;
-    }
-    if(event.key==='Enter'&&selectorState[slot].open){
-      const first=selectorNode(slot)?.querySelector('[data-ww-saved-sky-option]');
-      if(first){event.preventDefault();first.click()}
-    }
+    if(event.key==='Escape'){event.preventDefault();closeList(slot);input.blur();return}
+    if(event.key==='ArrowDown'){event.preventDefault();state[slot].open=true;renderList(slot);selector(slot)?.querySelector('.sky-moment-saved-option')?.focus();return}
+    if(event.key==='Enter'&&state[slot].open){const first=selector(slot)?.querySelector('.sky-moment-saved-option');if(first){event.preventDefault();first.click()}}
   });
-  document.addEventListener('pointerdown',event=>{
-    ['A','B'].forEach(slot=>{
-      if(!selectorState[slot].open)return;
-      const section=selectorNode(slot);if(section?.contains(event.target))return;
-      closeSelector(slot);
-    });
+  document.addEventListener('click',event=>{
+    const option=event.target.closest?.('[data-ww-saved-sky-option]');
+    if(option){event.preventDefault();event.stopPropagation();const section=option.closest('[data-ww-saved-sky-selector]'),slot=section?.dataset.wwSavedSkySelector,record=library().find(item=>recordRef(item)===option.dataset.wwSavedSkyOption);if(slot&&record&&loadRecord(slot,record))schedule();return}
+    const create=event.target.closest?.('[data-ww-new-sky-name]');
+    if(create){event.preventDefault();event.stopPropagation();const slot=create.closest('[data-ww-saved-sky-selector]')?.dataset.wwSavedSkySelector;if(slot&&beginNewSky(slot,create.dataset.wwNewSkyName))schedule();return}
+  },true);
+  document.addEventListener('pointerdown',event=>{['A','B'].forEach(slot=>{const section=selector(slot);if(state[slot].open&&section&&!section.contains(event.target))closeList(slot)})},true);
+
+  document.addEventListener('submit',event=>{
+    const form=event.target.closest?.('.sky-where-when-editor');if(!form)return;
+    const slot=form.dataset.slot;if(!SLOT_KEYS[slot])return;
+    const current=activeRecord(slot),name=current?String(current.name||'').trim():state[slot].draftName||candidateName(payload(slot));
+    pending[slot]={name,save:!!name,previousRef:current?recordRef(current):'',created:Date.now()};
+    window.setTimeout(()=>{if(pending[slot]&&Date.now()-pending[slot].created>=4500)pending[slot]=null},4700);
   },true);
 
   window.addEventListener('storage',event=>{
     const slot=event.key===SLOT_KEYS.A?'A':event.key===SLOT_KEYS.B?'B':null;
-    if(slot&&pending[slot]){
-      const request=pending[slot];pending[slot]=null;
-      const value=payload(slot),source=String(value?.calcProfile?.source||'');
-      if(source==='where-when-v1')saveCalculatedSky(slot,request);
-    }
+    if(slot&&pending[slot]){const request=pending[slot];pending[slot]=null;const value=payload(slot),source=String(value?.calcProfile?.source||'');if(source==='where-when-v1')saveAfterCalculation(slot,request)}
     if(!event.key||event.key===LIBRARY_KEY||Object.values(SLOT_KEYS).includes(event.key))schedule();
   });
   ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed'].forEach(name=>window.addEventListener(name,schedule));
-
-  function start(){
-    hydrate();
-    const root=document.getElementById('skyFoundationRoot')||document.body;
-    observer=new MutationObserver(records=>{
-      if(records.every(record=>record.target?.closest?.('[data-ww-saved-sky-selector]')))return;
-      schedule();
-    });
-    observer.observe(root,{childList:true,subtree:true});
-  }
-  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
+  new MutationObserver(records=>{if(records.some(record=>record.addedNodes.length||record.removedNodes.length))schedule()}).observe(document.documentElement,{childList:true,subtree:true});
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
 })();
