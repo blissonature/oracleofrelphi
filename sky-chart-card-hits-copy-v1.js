@@ -12,8 +12,8 @@
     const style=document.createElement('style');
     style.id='skyCardHitsCopyV1Styles';
     style.textContent=`
-      .sky-card-hits-tab-header{flex-wrap:wrap!important}
-      .sky-card-hits-copy-all{appearance:none;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#241f1b;padding:.4rem .62rem;font:850 .62rem/1 system-ui,sans-serif;white-space:nowrap;cursor:pointer}
+      .sky-card-hits-tab-header{flex-wrap:wrap!important;align-items:center;gap:.5rem}
+      .sky-card-hits-copy-all{appearance:none;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#241f1b;padding:.4rem .62rem;font:850 .62rem/1 'Montserrat',sans-serif;white-space:nowrap;cursor:pointer}
       .sky-card-hits-copy-all:hover,.sky-card-hits-copy-all:focus-visible{background:#f4efe8;border-color:rgba(31,27,24,.38);outline:none}
       .sky-card-hits-copy-all[data-copy-state="done"]{border-color:color-mix(in srgb,var(--sky-hit-color,#555) 42%,rgba(31,27,24,.18));background:color-mix(in srgb,var(--sky-hit-color,#555) 8%,#fff);color:var(--sky-hit-color,#555)}
       @media(max-width:620px){.sky-card-hits-copy-all{padding:.38rem .55rem;font-size:.6rem}}
@@ -25,6 +25,7 @@
     return section?.dataset.cardHitsSlot || (section?.closest('#skyFoundationA')?'A':section?.closest('#skyFoundationB')?'B':'');
   }
 
+  function currentSection(slot){return document.querySelector(`[data-card-hits-slot="${slot}"]`)}
   function cardGrid(section){return section?.querySelector('.sky-card-hits-grid')||null}
 
   function snapshotCards(section){
@@ -56,21 +57,30 @@
     return [`### ${name} ×${count}`,'',`**${count} ${noun} in this sky ${verb} with this card.**`,'',...lines].join('\n');
   }
 
+  function selectedId(section){return section?.querySelector('.sky-card-hit[aria-pressed="true"]')?.dataset.cardHitId||''}
+
+  function clickCard(section,id){
+    const button=section?.querySelector(`.sky-card-hit[data-card-hit-id="${escapeSelector(id)}"]`);
+    if(!button)return false;
+    button.click();
+    return true;
+  }
+
   function markdownForAll(section){
-    const cards=snapshotCards(section);
-    if(!cards.length)return '';
-    const chunks=[];
+    const slot=slotFor(section),cards=snapshotCards(section);
+    if(!slot||!cards.length)return '';
+    const original=selectedId(section),chunks=[];
+
     for(const card of cards){
-      const button=section.querySelector(`.sky-card-hit[data-card-hit-id="${escapeSelector(card.id)}"]`);
-      if(!button)continue;
-      button.click();
-      const current=document.querySelector(`[data-card-hits-slot="${slotFor(section)}"]`);
-      if(!current)continue;
+      let current=currentSection(slot);if(!current)break;
+      if(selectedId(current)!==card.id&&!clickCard(current,card.id))continue;
+      current=currentSection(slot);if(!current)break;
       chunks.push(sectionMarkdown(card.name,card.count,detailLines(current)));
-      current.querySelector('[data-card-hit-back]')?.click();
-      section=document.querySelector(`[data-card-hits-slot="${slotFor(current)}"]`);
-      if(!section)break;
+      if(selectedId(current)===card.id)clickCard(current,card.id);
     }
+
+    const final=currentSection(slot);
+    if(original&&final&&selectedId(final)!==original)clickCard(final,original);
     return chunks.join('\n\n\n');
   }
 
@@ -90,17 +100,16 @@
   async function copyAll(button){
     const section=button.closest('[data-card-hits-slot]');
     if(!section)return;
-    const slot=slotFor(section);
-    const markdown=markdownForAll(section);
+    const slot=slotFor(section),markdown=markdownForAll(section);
     if(!markdown)return;
     try{
       await writeClipboard(markdown);
       hydrate();
-      setCopied(document.querySelector(`[data-card-hits-slot="${slot}"] [data-copy-all-card-hits]`)||button);
+      setCopied(currentSection(slot)?.querySelector('[data-copy-all-card-hits]')||button);
     }catch(error){
       console.error('[Sky Chart] Card Hits copy failed',error);
       hydrate();
-      const visible=document.querySelector(`[data-card-hits-slot="${slot}"] [data-copy-all-card-hits]`)||button;
+      const visible=currentSection(slot)?.querySelector('[data-copy-all-card-hits]')||button;
       visible.textContent='Copy failed';window.setTimeout(()=>{if(visible.isConnected)visible.textContent=COPY_LABEL},1600);
     }
   }
