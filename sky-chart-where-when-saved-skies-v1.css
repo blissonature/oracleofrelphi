@@ -1,23 +1,14 @@
-/* Saved-sky controls for the literal Where and When layer and its editor. */
+/* One field owns saved-sky search, selection, and naming inside the expanded moment panel. */
 .sky-moment-saved-sky{
   display:grid;
-  grid-template-columns:auto minmax(0,1fr);
-  gap:6px 9px;
-  align-items:center;
+  gap:5px;
   min-width:0;
-  padding:8px;
-  border:1px solid rgba(31,27,24,.12);
-  border-radius:10px;
-  background:#fffdfa;
-}
-.sky-moment-saved-label{
-  color:#4d453e;
-  font:800 .62rem/1.2 'Montserrat',sans-serif;
-  white-space:nowrap;
+  padding:0;
+  border:0;
+  background:transparent;
 }
 .sky-moment-saved-combobox{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto auto;
+  display:block;
   min-width:0;
   overflow:hidden;
   border:1px solid rgba(31,27,24,.22);
@@ -32,50 +23,20 @@
 .sky-moment-saved-input{
   width:100%;
   min-width:0;
+  min-height:40px;
   box-sizing:border-box;
   border:0;
   outline:0;
   background:transparent;
   color:#201c18;
-  padding:.57rem .62rem;
-  font:750 .68rem/1.2 'Montserrat',sans-serif;
+  padding:.62rem .7rem;
+  font:750 .7rem/1.2 'Montserrat',sans-serif;
 }
 .sky-moment-saved-input::placeholder{color:#867c73}
-.sky-moment-saved-clear,
-.sky-moment-saved-toggle{
-  appearance:none;
-  display:grid;
-  place-items:center;
-  width:31px;
-  min-width:31px;
-  border:0;
-  border-left:1px solid rgba(31,27,24,.1);
-  background:transparent;
-  color:#71675f;
-  cursor:pointer;
-}
-.sky-moment-saved-clear{font:650 1rem/1 'Montserrat',sans-serif}
-.sky-moment-saved-clear[hidden]{display:none!important}
-.sky-moment-saved-clear:hover,
-.sky-moment-saved-clear:focus-visible,
-.sky-moment-saved-toggle:hover,
-.sky-moment-saved-toggle:focus-visible{outline:none;background:#f3eee7;color:#211d19}
-.sky-moment-saved-toggle>span{
-  display:block;
-  width:7px;
-  height:7px;
-  margin-top:-3px;
-  border-right:1.6px solid currentColor;
-  border-bottom:1.6px solid currentColor;
-  transform:rotate(45deg);
-  transition:transform .12s ease;
-}
-.sky-moment-saved-toggle[aria-expanded="true"]>span{margin-top:3px;transform:rotate(225deg)}
 .sky-moment-saved-list{
-  grid-column:2;
   display:grid;
   gap:3px;
-  max-height:190px;
+  max-height:210px;
   overflow:auto;
   overscroll-behavior:contain;
   padding:5px;
@@ -91,7 +52,7 @@
   gap:2px;
   width:100%;
   min-width:0;
-  padding:7px 8px;
+  padding:8px 9px;
   border:1px solid transparent;
   border-radius:7px;
   background:transparent;
@@ -99,48 +60,17 @@
   cursor:pointer;
   text-align:left;
 }
-.sky-moment-saved-option:hover,
-.sky-moment-saved-option:focus-visible{outline:none;border-color:rgba(31,27,24,.14);background:#f6f1ea}
+.sky-moment-saved-option:hover,.sky-moment-saved-option:focus-visible{outline:none;border-color:rgba(31,27,24,.14);background:#f6f1ea}
 .sky-moment-saved-option.is-active{background:#f1ece5}
-.sky-moment-saved-option>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 .66rem/1.2 'Montserrat',sans-serif}
-.sky-moment-saved-option>small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#756c64;font:600 .56rem/1.2 'Montserrat',sans-serif}
+.sky-moment-saved-option.is-new{border-style:dashed;background:#fffdfa}
+.sky-moment-saved-option>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 .67rem/1.2 'Montserrat',sans-serif}
+.sky-moment-saved-option>small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#756c64;font:600 .56rem/1.25 'Montserrat',sans-serif}
 .sky-moment-saved-empty{margin:0;padding:12px 8px;color:#756c64;text-align:center;font:650 .62rem/1.3 'Montserrat',sans-serif}
 
-.sky-where-when-identity{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  gap:8px;
-  align-items:end;
-  min-width:0;
-  padding:1px 1px 2px;
-}
-.sky-where-when-name-label{min-width:0}
-.sky-where-when-save-choice{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  min-height:38px;
-  box-sizing:border-box;
-  padding:0 10px;
-  border:1px solid rgba(31,27,24,.16);
-  border-radius:999px;
-  background:#fffdfa;
-  color:#3c352f;
-  cursor:pointer;
-  white-space:nowrap;
-  font:800 .6rem/1.15 'Montserrat',sans-serif;
-}
-.sky-where-when-save-choice:hover{border-color:rgba(31,27,24,.34);background:#fff}
-.sky-where-when-save-choice input{
-  width:16px;
-  height:16px;
-  margin:0;
-  accent-color:#c9211e;
-  flex:0 0 auto;
-}
+/* Retire the earlier duplicate Sky-name + Save-to-library editor controls. */
+.sky-where-when-identity{display:none!important}
+
 @media(max-width:620px){
-  .sky-moment-saved-sky{grid-template-columns:1fr;gap:5px}
-  .sky-moment-saved-list{grid-column:1}
-  .sky-where-when-identity{grid-template-columns:1fr;align-items:stretch}
-  .sky-where-when-save-choice{justify-content:flex-start;width:100%;min-height:40px;border-radius:10px;white-space:normal}
+  .sky-moment-saved-input{font-size:.68rem}
+  .sky-moment-saved-list{max-height:190px}
 }
