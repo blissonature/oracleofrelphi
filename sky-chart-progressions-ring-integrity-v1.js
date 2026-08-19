@@ -83,3 +83,44 @@
   setInterval(observeMount,1000);
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',()=>{observeMount();schedule()},{once:true}):(()=>{observeMount();schedule()})();
 })();
+
+// Live-refresh bridge: if Sky A or B is replaced while Progressions is selected,
+// keep the tab selected and rebind to the newly rendered Comparison wheel.
+(function(){
+  'use strict';
+  if(window.__relphiSkyProgressionsLiveRefreshV1)return;
+  window.__relphiSkyProgressionsLiveRefreshV1=true;
+  const SKY_KEYS=new Set(['relphiSkyChartA','relphiSkyChartB']);
+  let pending=false,token=0,lastBaseWheel=null,baseObserver=null,observedBaseMount=null,retryTimer=0;
+
+  function middle(){return document.getElementById('skyFoundationComparison')}
+  function panel(){return document.getElementById('skyProgressionsPanel')}
+  function baseMount(){return document.getElementById('skyFoundationWheelMount')}
+  function baseWheel(){return baseMount()?.querySelector('.sky-foundation-wheel')||null}
+  function active(){const host=middle(),view=panel();return!!host&&!!view&&host.dataset.progressionsActive==='true'&&!view.hidden}
+  function preserve(){const host=middle(),view=panel();if(!host||!view)return false;host.dataset.progressionsActive='true';view.hidden=false;host.querySelectorAll('[data-sky-middle-tab]').forEach(button=>button.setAttribute('aria-selected',button.dataset.skyMiddleTab==='progressions'?'true':'false'));return true}
+  function stopRetry(){if(retryTimer){clearTimeout(retryTimer);retryTimer=0}}
+  function rebind(current,attempt=0){
+    if(current!==token||!pending)return;
+    if(!active()){pending=false;stopRetry();return}
+    preserve();
+    const fresh=baseWheel();
+    if(!fresh||fresh===lastBaseWheel){if(attempt<50)retryTimer=setTimeout(()=>rebind(current,attempt+1),40);return}
+    stopRetry();lastBaseWheel=fresh;
+    window.dispatchEvent(new Event('relphi:sky-foundation-ready'));
+    requestAnimationFrame(()=>{preserve();window.dispatchEvent(new Event('relphi:progressions-ring-enforce'));pending=false});
+  }
+  function queue(){if(!pending||!active())return;const current=token;requestAnimationFrame(()=>requestAnimationFrame(()=>rebind(current)))}
+  function observeBase(){
+    const mount=baseMount();if(!mount||mount===observedBaseMount)return;
+    baseObserver?.disconnect();observedBaseMount=mount;lastBaseWheel=baseWheel();baseObserver=new MutationObserver(queue);baseObserver.observe(mount,{childList:true});
+  }
+  window.addEventListener('storage',event=>{
+    if(!SKY_KEYS.has(event.key)||!active())return;
+    pending=true;token+=1;preserve();queue();
+  });
+  document.addEventListener('click',event=>{if(event.target.closest?.('[data-final-now]')&&active())preserve()},true);
+  const structural=new MutationObserver(()=>{observeBase();if(pending)queue()});
+  function start(){observeBase();structural.observe(document.body,{childList:true,subtree:true})}
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
+})();
