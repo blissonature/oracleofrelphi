@@ -1,126 +1,24 @@
-// Progressions ring geometry: Sky A/red occupies the more central placement ring;
-// Sky B/blue occupies the farther-out placement ring. The two bubble systems never share a lane.
-// This guard is event-driven so it never fights the sixty-frame-per-second playback loop.
+// Progressions visual integrity: Sky A/red is fixed natal; blue is the progressed copy.
+// This guard never changes planetary longitude or radial position.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyProgressionsRingIntegrityV1)return;
   window.__relphiSkyProgressionsRingIntegrityV1=true;
 
-  const C={x:600,y:600};
-  const LANES={A:[287,299,283],B:[450,440,460]};
-  const EXACT={A:323,B:414};
-  const BUBBLE_RADIUS=17.2;
-  const CLEARANCE=6;
-  let queued=false,applying=false,observer=null,observedMount=null;
-
-  const norm=value=>((Number(value)%360)+360)%360;
-  const polar=(radius,degree)=>{const angle=(degree-180)*Math.PI/180;return{x:C.x+radius*Math.cos(angle),y:C.y+radius*Math.sin(angle)}};
-  const sourceSlot=()=>document.querySelector('[data-progression-source]')?.value==='B'?'B':'A';
-
-  function comparisonWheel(){return document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')}
-  function progressionWheel(){return document.querySelector('[data-progression-shared-wheel]')}
-  function ordinaryRecords(wheel,slot){
-    if(!wheel)return[];
-    return[...wheel.querySelectorAll(`[data-layer="placements"] [data-sky="${slot}"][data-placement]:not([data-angle-axis="true"])`)]
-      .filter(node=>!node.hidden&&Number.isFinite(Number(node.dataset.exactLongitude)))
-      .map(node=>({id:node.dataset.placement,value:Number(node.dataset.exactLongitude)}));
+  const DERIVED=new Set(['asc','ascendant','dsc','descendant','mc','midheaven','ic','imum-coeli','imumcoeli','part-of-fortune','fortune','pof']);
+  const canonical=value=>String(value||'').trim().toLowerCase().replace(/[_\s]+/g,'-');
+  function progressionWheel(){return document.querySelector('[data-progression-shared-wheel="true"]')}
+  function suppressDerived(){
+    const wheel=progressionWheel();if(!wheel)return;
+    wheel.querySelectorAll('[data-placement]').forEach(node=>{if(DERIVED.has(canonical(node.dataset.placement))||node.dataset.angleAxis==='true')node.hidden=true});
+    wheel.querySelectorAll('.sky-foundation-angle-axis').forEach(node=>{node.hidden=true});
+    wheel.dataset.progressionRingIntegrity='red-natal-fixed-blue-progressed';
+    wheel.setAttribute('aria-label','Progressions wheel. Sky A red placements are fixed natal positions; blue placements are the secondary-progressed copy of Sky A.');
+    const label=document.querySelector('[data-progression-ring-label]');if(label&&!label.textContent.trim())label.textContent='Red: Sky A natal (fixed) · Blue: secondary progressed Sky A';
   }
-  function spread(records,slot){
-    const lanes=LANES[slot],placed=[],result=[];
-    for(const record of records.slice().sort((a,b)=>a.value-b.value)){
-      let chosen=null;
-      for(let step=0;step<=20&&!chosen;step+=1){
-        const magnitude=step*.75,offsets=step===0?[0]:[magnitude,-magnitude];
-        for(const offset of offsets){
-          for(const lane of lanes){
-            const display=norm(record.value+offset),point=polar(lane,display),collision=placed.some(other=>Math.hypot(point.x-other.x,point.y-other.y)<BUBBLE_RADIUS*2+CLEARANCE);
-            if(collision)continue;chosen={...record,lane,display};placed.push(point);break;
-          }
-          if(chosen)break;
-        }
-      }
-      result.push(chosen||{...record,lane:lanes[0],display:record.value});
-    }
-    return result;
-  }
-  function placeSlot(wheel,slot,records){
-    const allowed=new Set(records.map(record=>record.id));
-    const hosts=[...wheel.querySelectorAll(`[data-layer="placements"] [data-sky="${slot}"][data-placement]:not([data-angle-axis="true"])`)];
-    const leaders=[...wheel.querySelectorAll(`[data-layer="leaders"] .sky-foundation-leader[data-sky="${slot}"][data-placement]`)];
-    hosts.forEach(host=>{host.hidden=!allowed.has(host.dataset.placement)});
-    leaders.forEach(leader=>{leader.hidden=!allowed.has(leader.dataset.placement)});
-    for(const record of spread(records,slot)){
-      const host=wheel.querySelector(`[data-layer="placements"] [data-sky="${slot}"][data-placement="${CSS.escape(record.id)}"]:not([data-angle-axis="true"])`),leader=wheel.querySelector(`[data-layer="leaders"] .sky-foundation-leader[data-sky="${slot}"][data-placement="${CSS.escape(record.id)}"]`);if(!host)continue;
-      const display=polar(record.lane,record.display),exact=polar(EXACT[slot],record.value);
-      host.hidden=false;host.setAttribute('transform',`translate(${display.x} ${display.y})`);host.dataset.placementLane=String(record.lane);host.dataset.displayLongitude=record.display.toFixed(8);host.dataset.exactLongitude=record.value.toFixed(8);host.dataset.progressionVisualRing=slot==='A'?'central-red':'outer-blue';
-      if(leader){leader.hidden=false;leader.setAttribute('x1',display.x);leader.setAttribute('y1',display.y);leader.setAttribute('x2',exact.x);leader.setAttribute('y2',exact.y);leader.dataset.exactLongitude=record.value.toFixed(8)}
-    }
-  }
-  function updateLabel(slot){const label=document.querySelector('[data-progression-ring-label]');if(!label)return;label.textContent=slot==='A'?'Sky A (red): progressed on central ring · Sky B (blue): fixed on outer ring':'Sky A (red): fixed on central ring · Sky B (blue): progressed on outer ring'}
-  function enforce(){
-    queued=false;if(applying)return;
-    const wheel=progressionWheel(),source=comparisonWheel();if(!wheel||!source)return;
-    applying=true;
-    try{
-      const slot=sourceSlot(),progressed=ordinaryRecords(wheel,'B'),fixedA=ordinaryRecords(source,'A'),fixedB=ordinaryRecords(source,'B');
-      if(slot==='A'){placeSlot(wheel,'A',progressed);placeSlot(wheel,'B',fixedB)}else{placeSlot(wheel,'A',fixedA);placeSlot(wheel,'B',progressed)}
-      wheel.dataset.progressionRingIntegrity='red-central-blue-outer';
-      wheel.setAttribute('aria-label','Progressions comparison wheel. Sky A red glyph bubbles occupy the central placement ring; Sky B blue glyph bubbles occupy the outer placement ring.');
-      updateLabel(slot);
-    }finally{applying=false}
-  }
-  function schedule(){if(queued||applying)return;queued=true;requestAnimationFrame(enforce)}
-  function observeMount(){
-    const mount=document.querySelector('[data-progression-wheel-mount]');if(!mount||mount===observedMount)return;
-    observer?.disconnect();observedMount=mount;observer=new MutationObserver(()=>schedule());observer.observe(mount,{childList:true});
-  }
-
-  document.addEventListener('input',event=>{if(event.target.matches?.('[data-progression-scrubber]')&&!document.documentElement.hasAttribute('data-progression-live-playing'))schedule()});
-  document.addEventListener('change',event=>{if(event.target.matches?.('[data-progression-source], [data-progression-reference]'))schedule()});
+  function schedule(){requestAnimationFrame(suppressDerived)}
   document.addEventListener('click',event=>{if(event.target.closest?.('[data-sky-middle-tab="progressions"], [data-progression-now]'))schedule()});
-  window.addEventListener('relphi:sky-foundation-ready',()=>{observeMount();schedule()});
-  window.addEventListener('relphi:progressions-ring-enforce',schedule);
-  setInterval(observeMount,1000);
-  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',()=>{observeMount();schedule()},{once:true}):(()=>{observeMount();schedule()})();
-})();
-
-// Live-refresh bridge: if Sky A or B is replaced while Progressions is selected,
-// keep the tab selected and rebind to the newly rendered Comparison wheel.
-(function(){
-  'use strict';
-  if(window.__relphiSkyProgressionsLiveRefreshV1)return;
-  window.__relphiSkyProgressionsLiveRefreshV1=true;
-  const SKY_KEYS=new Set(['relphiSkyChartA','relphiSkyChartB']);
-  let pending=false,token=0,lastBaseWheel=null,baseObserver=null,observedBaseMount=null,retryTimer=0;
-
-  function middle(){return document.getElementById('skyFoundationComparison')}
-  function panel(){return document.getElementById('skyProgressionsPanel')}
-  function baseMount(){return document.getElementById('skyFoundationWheelMount')}
-  function baseWheel(){return baseMount()?.querySelector('.sky-foundation-wheel')||null}
-  function active(){const host=middle(),view=panel();return!!host&&!!view&&host.dataset.progressionsActive==='true'&&!view.hidden}
-  function preserve(){const host=middle(),view=panel();if(!host||!view)return false;host.dataset.progressionsActive='true';view.hidden=false;host.querySelectorAll('[data-sky-middle-tab]').forEach(button=>button.setAttribute('aria-selected',button.dataset.skyMiddleTab==='progressions'?'true':'false'));return true}
-  function stopRetry(){if(retryTimer){clearTimeout(retryTimer);retryTimer=0}}
-  function rebind(current,attempt=0){
-    if(current!==token||!pending)return;
-    if(!active()){pending=false;stopRetry();return}
-    preserve();
-    const fresh=baseWheel();
-    if(!fresh||fresh===lastBaseWheel){if(attempt<50)retryTimer=setTimeout(()=>rebind(current,attempt+1),40);return}
-    stopRetry();lastBaseWheel=fresh;
-    window.dispatchEvent(new Event('relphi:sky-foundation-ready'));
-    requestAnimationFrame(()=>{preserve();window.dispatchEvent(new Event('relphi:progressions-ring-enforce'));pending=false});
-  }
-  function queue(){if(!pending||!active())return;const current=token;requestAnimationFrame(()=>requestAnimationFrame(()=>rebind(current)))}
-  function observeBase(){
-    const mount=baseMount();if(!mount||mount===observedBaseMount)return;
-    baseObserver?.disconnect();observedBaseMount=mount;lastBaseWheel=baseWheel();baseObserver=new MutationObserver(queue);baseObserver.observe(mount,{childList:true});
-  }
-  window.addEventListener('storage',event=>{
-    if(!SKY_KEYS.has(event.key)||!active())return;
-    pending=true;token+=1;preserve();queue();
-  });
-  document.addEventListener('click',event=>{if(event.target.closest?.('[data-final-now]')&&active())preserve()},true);
-  const structural=new MutationObserver(()=>{observeBase();if(pending)queue()});
-  function start(){observeBase();structural.observe(document.body,{childList:true,subtree:true})}
-  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
+  document.addEventListener('input',event=>{if(event.target.matches?.('[data-progression-scrubber]')&&!document.documentElement.hasAttribute('data-progression-live-playing'))schedule()});
+  window.addEventListener('relphi:sky-foundation-ready',schedule);
+  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
 })();
