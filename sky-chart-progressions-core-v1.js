@@ -1,4 +1,4 @@
-// Pure timing and relationship helpers for Sky Chart secondary progressions.
+// Pure timing and relationship helpers for Sky Chart calendar-time Progressions.
 (function(root,factory){
   const api=factory();
   if(typeof module==='object'&&module.exports)module.exports=api;
@@ -27,16 +27,23 @@
   const separation=(a,b)=>Math.abs(wrap(norm(a)-norm(b)));
   const aspectError=(a,b,angle)=>Math.abs(separation(a,b)-Number(angle));
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+
+  // Compatibility names retained because the first Progressions controller shipped with
+  // secondary-progression terminology. The interaction model is now literal calendar time:
+  // a target date is the ephemeris date that is drawn.
   function secondaryProgressedMs(epochMs,targetMs){
-    const epoch=Number(epochMs),target=Number(targetMs);
-    if(!Number.isFinite(epoch)||!Number.isFinite(target))return NaN;
-    return epoch+((target-epoch)/YEAR)*DAY;
+    const target=Number(targetMs);
+    return Number.isFinite(target)?target:NaN;
   }
   function targetMsFromProgressedMs(epochMs,progressedMs){
-    const epoch=Number(epochMs),progressed=Number(progressedMs);
-    if(!Number.isFinite(epoch)||!Number.isFinite(progressed))return NaN;
-    return epoch+((progressed-epoch)/DAY)*YEAR;
+    const value=Number(progressedMs);
+    return Number.isFinite(value)?value:NaN;
   }
+  function calendarSkyMs(targetMs){
+    const value=Number(targetMs);
+    return Number.isFinite(value)?value:NaN;
+  }
+
   function signState(longitude,speed,corridor=1){
     const value=norm(longitude),index=Math.floor(value/30),degree=value-index*30,window=Math.max(0.01,Math.min(15,Number(corridor)||1)),retrograde=Number(speed)<0;
     let kind=null,progress=null;
@@ -65,5 +72,5 @@
     }
     return rows;
   }
-  return{DAY,YEAR,TROPICAL_YEAR_DAYS,SIGNS,ASPECTS,norm,wrap,separation,aspectError,secondaryProgressedMs,targetMsFromProgressedMs,signState,classifyMotion,activeRelationships};
+  return{DAY,YEAR,TROPICAL_YEAR_DAYS,SIGNS,ASPECTS,norm,wrap,separation,aspectError,secondaryProgressedMs,targetMsFromProgressedMs,calendarSkyMs,signState,classifyMotion,activeRelationships};
 });
