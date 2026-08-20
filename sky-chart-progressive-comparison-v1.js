@@ -1,12 +1,14 @@
-// Progressive symbolic reading: glyph -> name -> referent. No duplicate prose layer.
+// Progressive symbolic reading: glyph -> name -> referent. No duplicate wheel or prose layer.
 (function(){
   'use strict';
-  if(window.__relphiSkyProgressiveComparisonV3)return;
+  if(window.__relphiSkyProgressiveComparisonV4)return;
+  window.__relphiSkyProgressiveComparisonV4=true;
   window.__relphiSkyProgressiveComparisonV3=true;
   window.__relphiSkyProgressiveComparisonV2=true;
   window.__relphiSkyProgressiveComparisonV1=true;
 
   const NS='http://www.w3.org/2000/svg';
+  const MOUNT_ID='skyCurrentProgressiveRelationship';
   const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const SIGN_REFERENTS={
     Aries:'initiative, directness, courage, impulse, and beginning',
@@ -47,9 +49,38 @@
     return `<span class="sky-progressive-token" data-progressive-stage="glyph" data-progressive-field="${esc(spec.field)}" data-progressive-glyph-id="${esc(spec.glyphId)}"><button type="button" class="sky-progressive-level sky-progressive-glyph" data-progressive-level="glyph" aria-label="Reveal ${esc(spec.name)}" aria-expanded="false"><span class="sky-progressive-canonical-slot" aria-hidden="true"></span></button><button type="button" class="sky-progressive-level sky-progressive-name" data-progressive-level="name" aria-label="Reveal the referent of ${esc(spec.name)}" aria-expanded="false" hidden>${esc(spec.name)}</button><button type="button" class="sky-progressive-level sky-progressive-meaning" data-progressive-level="meaning" aria-label="Referent of ${esc(spec.name)}" hidden>${esc(spec.referent)}</button></span>`;
   }
 
+  function normalizeRelation(raw){
+    if(!raw?.left||!raw?.right)return null;
+    const aspectId=typeof raw.aspect==='string'?raw.aspect:String(raw.aspect?.id||'');
+    if(!aspectId)return null;
+    return{...raw,aspect:{id:aspectId}};
+  }
+
   function symbolicReading(relation){
     const signA=signFor(relation.left),signB=signFor(relation.right),aspect=ASPECTS[relation.aspect.id]||[relation.aspect.id,'a measured relationship between the two placements'];
     return `<div class="sky-progressive-reading sky-progressive-symbolic"><div class="sky-progressive-symbol-row"><div class="sky-progressive-symbol-side sky-a" aria-label="Sky A symbols">${token({field:'A-placement',glyphId:relation.left.id,name:relation.left.entry.name,referent:PLACEMENT_REFERENTS[relation.left.id]||'a calculated point in Sky A'})}${token({field:'A-sign',glyphId:signA.toLowerCase(),name:signA,referent:SIGN_REFERENTS[signA]})}</div><div class="sky-progressive-symbol-aspect" aria-label="Relationship symbol">${token({field:'aspect',glyphId:relation.aspect.id,name:aspect[0],referent:aspect[1]})}<span class="sky-progressive-orb" aria-label="Orb ${orbLabel(relation.orb)}">${orbLabel(relation.orb)}</span></div><div class="sky-progressive-symbol-side sky-b" aria-label="Sky B symbols">${token({field:'B-placement',glyphId:relation.right.id,name:relation.right.entry.name,referent:PLACEMENT_REFERENTS[relation.right.id]||'a calculated point in Sky B'})}${token({field:'B-sign',glyphId:signB.toLowerCase(),name:signB,referent:SIGN_REFERENTS[signB]})}</div></div></div>`;
+  }
+
+  function ensureMount(){
+    let mount=document.getElementById(MOUNT_ID);
+    if(mount)return mount;
+    const relationships=document.getElementById('skyFoundationRelationships');
+    if(!relationships)return null;
+    mount=document.createElement('section');
+    mount.id=MOUNT_ID;
+    mount.className='sky-selected-progressive sky-current-progressive';
+    mount.hidden=true;
+    mount.setAttribute('aria-label','Progressive relationship reveal');
+    relationships.insertAdjacentElement('afterend',mount);
+    return mount;
+  }
+
+  function clear(){
+    const mount=document.getElementById(MOUNT_ID);
+    if(!mount)return;
+    mount.hidden=true;
+    mount.removeAttribute('data-relation-index');
+    mount.replaceChildren();
   }
 
   async function drawGlyph(host){
@@ -70,17 +101,26 @@
     host.dataset.canonicalProgressiveGlyph='true';
   }
 
-  async function render(event){
-    const relation=event.detail?.relation,panel=document.getElementById('skySelectedRelationship'),old=panel?.querySelector('.sky-selected-progressive');
-    if(!relation||!old)return;
-    const section=document.createElement('section');
-    section.className='sky-selected-progressive';
-    section.setAttribute('aria-label','Progressive comparison reading');
-    section.innerHTML=symbolicReading(relation);
-    old.replaceWith(section);
-    await Promise.allSettled(Array.from(section.querySelectorAll('[data-progressive-glyph-id]')).map(drawGlyph));
-    window.dispatchEvent(new CustomEvent('relphi:sky-progressive-symbols-ready',{detail:{relation}}));
+  async function renderRelation(raw){
+    const relation=normalizeRelation(raw),mount=ensureMount();
+    if(!relation||!mount){clear();return}
+    mount.hidden=false;
+    mount.dataset.relationIndex=String(relation.row?.dataset?.relationIndex||'');
+    mount.innerHTML=symbolicReading(relation);
+    await Promise.allSettled(Array.from(mount.querySelectorAll('[data-progressive-glyph-id]')).map(drawGlyph));
+    window.dispatchEvent(new CustomEvent('relphi:sky-progressive-symbols-ready',{detail:{relation,mount}}));
   }
 
-  window.addEventListener('relphi:selected-relationship-rendered',render);
+  window.addEventListener('relphi:sky-relationship-selected',event=>{
+    const detail=event.detail||{};
+    if(!detail.active){clear();return}
+    renderRelation(detail.relation);
+  });
+  window.addEventListener('relphi:selected-relationship-rendered',event=>renderRelation(event.detail?.relation));
+  window.addEventListener('relphi:selected-relationship-cleared',clear);
+  window.addEventListener('relphi:sky-foundation-clear-selection',clear);
+
+  function start(){ensureMount()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
