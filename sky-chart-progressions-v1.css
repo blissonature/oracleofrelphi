@@ -22,7 +22,7 @@
 .sky-progression-annotation-time{font-size:.6rem;font-weight:820;letter-spacing:.04em;text-transform:uppercase;color:#8a8178}.sky-progression-annotation strong{font-size:.76rem;line-height:1.2;color:#191714}.sky-progression-annotation span{font-size:.66rem;line-height:1.28;color:#70685f}.sky-progression-annotation-progress{height:3px;margin-top:.25rem;border-radius:4px;background:rgba(25,23,20,.08);overflow:hidden}.sky-progression-annotation-progress i{display:block;width:var(--progress);height:100%;background:#191714}.sky-progression-no-events{grid-column:1/-1;margin:0;padding:1rem .75rem;font-size:.72rem;line-height:1.4;color:#7b736a;text-align:center}
 .sky-progression-filters{display:flex;flex-wrap:wrap;gap:.35rem;margin:.65rem 0 .55rem}.sky-progression-filter{appearance:none;border:1px solid rgba(25,23,20,.16);background:#fff;color:#6c645c;border-radius:999px;padding:.36rem .56rem;font:inherit;font-size:.68rem;font-weight:760;cursor:pointer}.sky-progression-filter.is-on{background:rgba(25,23,20,.085);border-color:rgba(25,23,20,.28);color:#191714}
 .sky-progression-playback{border-top:1px solid rgba(25,23,20,.08);padding-top:.55rem}.sky-progression-range{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.45rem}.sky-progression-scrub-row{display:grid;grid-template-columns:auto minmax(8rem,1fr) auto auto;gap:.45rem;align-items:center}.sky-progression-scrub-row button{appearance:none;border:1px solid rgba(25,23,20,.18);border-radius:.55rem;background:#fff;color:#191714;padding:.4rem .58rem;font:inherit;font-size:.72rem;font-weight:780;cursor:pointer}.sky-progression-scrub-row [data-progression-play][data-playing="true"]{background:#191714;color:#fff}.sky-progression-scrub-row input[type="range"]{width:100%;accent-color:#191714}.sky-progression-rule{margin:.45rem 0 0;font-size:.63rem;line-height:1.35;color:#81786f}
-/* Angles and derived Fortune are intentionally omitted from the Progressions animation until a progressed-angle/point method is chosen. */
+/* Angles and derived Fortune are intentionally omitted from Progressions until a progressed-angle/point method is chosen. */
 [data-progression-shared-wheel="true"] [data-angle-axis="true"],
 [data-progression-shared-wheel="true"] .sky-foundation-angle-axis,
 [data-progression-shared-wheel="true"] [data-placement="asc"],
@@ -37,6 +37,9 @@
 [data-progression-shared-wheel="true"] [data-placement="part-of-fortune"],
 [data-progression-shared-wheel="true"] [data-placement="fortune"],
 [data-progression-shared-wheel="true"] [data-placement="pof"]{display:none!important}
+/* Blue in Progressions is the progressed copy, never the loaded Sky B. */
+[data-progression-shared-wheel="true"] [data-layer="placements"] [data-sky="B"][data-placement]:not([data-placement="sun"]):not([data-placement="moon"]):not([data-placement="mercury"]):not([data-placement="venus"]):not([data-placement="mars"]):not([data-placement="jupiter"]):not([data-placement="saturn"]):not([data-placement="uranus"]):not([data-placement="neptune"]):not([data-placement="pluto"]),
+[data-progression-shared-wheel="true"] [data-layer="leaders"] [data-sky="B"][data-placement]:not([data-placement="sun"]):not([data-placement="moon"]):not([data-placement="mercury"]):not([data-placement="venus"]):not([data-placement="mars"]):not([data-placement="jupiter"]):not([data-placement="saturn"]):not([data-placement="uranus"]):not([data-placement="neptune"]):not([data-placement="pluto"]){display:none!important}
 /* No leader survives without a visible endpoint in Progressions. */
 [data-progression-shared-wheel="true"] [data-layer="leaders"] [hidden]{display:none!important}
 @keyframes skyProgressionCommentIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
