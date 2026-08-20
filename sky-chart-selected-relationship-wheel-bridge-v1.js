@@ -8,7 +8,7 @@
     conjunction:0,'semi-sextile':30,octile:45,sextile:60,quintile:72,square:90,
     trine:120,'tri-octile':135,'bi-quintile':144,quincunx:150,opposition:180
   });
-  let aperture=null,linkedLine=null,forcedLine=null,queued=false,observer=null;
+  let aperture=null,linkedLine=null,forcedLine=null,conjunctionRay=null,queued=false,observer=null;
 
   function installHitTargets() {
     document.querySelectorAll('[data-layer="aspects"] > line[data-relation-index]:not(.sky-foundation-aspect-hit)').forEach(function (line) {
@@ -88,6 +88,11 @@
     const numbers=layer?Array.from(layer.querySelectorAll('.sky-foundation-house-number')).filter((_,index)=>index===Number(h)-1):[];
     return{sectors,numbers};
   }
+  function signNodes(wheel,sign){
+    if(!wheel||!Number.isFinite(Number(sign)))return[];
+    const value=String(Math.trunc(Number(sign)));
+    return Array.from(wheel.querySelectorAll(`[data-layer="zodiac"] [data-sign="${value}"]`));
+  }
   function syncClass(wheel,className,desired){
     wheel?.querySelectorAll(`.${className}`).forEach(node=>{if(!desired.has(node))node.classList.remove(className)});
     desired.forEach(node=>{if(!node.classList.contains(className))node.classList.add(className)});
@@ -95,7 +100,7 @@
   function syncContext(row){
     const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(!wheel)return;
-    const endpoints=new Set(),houses=new Set(),houseNumbers=new Set();
+    const endpoints=new Set(),houses=new Set(),houseNumbers=new Set(),signs=new Set();
     if(row){
       const[leftSky,rightSky]=rowSkies(row);
       addAll(endpoints,endpointNodes(wheel,leftSky,row.dataset.leftPlacement));
@@ -103,13 +108,17 @@
       const leftHouse=houseNodes(wheel,leftSky,row.dataset.leftHouse),rightHouse=houseNodes(wheel,rightSky,row.dataset.rightHouse);
       addAll(houses,leftHouse.sectors);addAll(houses,rightHouse.sectors);
       addAll(houseNumbers,leftHouse.numbers);addAll(houseNumbers,rightHouse.numbers);
+      addAll(signs,signNodes(wheel,row.dataset.leftSign));
+      addAll(signs,signNodes(wheel,row.dataset.rightSign));
     }
     syncClass(wheel,'sky-orb-bridge-endpoint',endpoints);
     syncClass(wheel,'sky-orb-bridge-house',houses);
     syncClass(wheel,'sky-orb-bridge-house-number',houseNumbers);
+    syncClass(wheel,'sky-orb-bridge-sign',signs);
   }
 
   function removeAperture(){aperture?.remove();aperture=null;linkedLine=null}
+  function removeConjunctionRay(){conjunctionRay?.remove();conjunctionRay=null}
 
   function syncVisual(){
     if(!aperture||!linkedLine||!linkedLine.isConnected){removeAperture();return}
@@ -139,6 +148,31 @@
     const allowedOrb=definition.harmonic>0?masterWindow/definition.harmonic:0;
     const currentOrb=Math.abs(Number(row?.dataset?.sourceOrb||line?.dataset?.orb||line?.dataset?.sourceOrb||0));
     return{...definition,masterWindow,allowedOrb,currentOrb:Number.isFinite(currentOrb)?currentOrb:0};
+  }
+
+  function syncConjunctionRay(line,row){
+    const definition=aspectDefinition(row,line);
+    if(!line||definition.id!=='conjunction'){removeConjunctionRay();return}
+    const x1=Number(line.getAttribute('x1')),y1=Number(line.getAttribute('y1')),x2=Number(line.getAttribute('x2')),y2=Number(line.getAttribute('y2'));
+    if(![x1,y1,x2,y2].every(Number.isFinite)){removeConjunctionRay();return}
+    const svg=line.ownerSVGElement,c=chartCenter(svg),r1=Math.hypot(x1-c.x,y1-c.y),r2=Math.hypot(x2-c.x,y2-c.y),radius=Math.min(r1,r2);
+    if(!radius){removeConjunctionRay();return}
+    let ux=(x1-c.x)/r1+(x2-c.x)/r2,uy=(y1-c.y)/r1+(y2-c.y)/r2,length=Math.hypot(ux,uy);
+    if(!length){ux=(x1-c.x)/r1;uy=(y1-c.y)/r1;length=1}
+    ux/=length;uy/=length;
+    const endRadius=Math.max(0,radius-3),index=String(line.dataset.relationIndex||'');
+    if(!conjunctionRay||!conjunctionRay.isConnected||String(conjunctionRay.dataset.relationIndex||'')!==index){
+      removeConjunctionRay();
+      conjunctionRay=document.createElementNS(NS,'line');
+      conjunctionRay.classList.add('sky-relationship-conjunction-ray');
+      conjunctionRay.setAttribute('pointer-events','none');
+      conjunctionRay.setAttribute('aria-hidden','true');
+      conjunctionRay.dataset.relationIndex=index;
+      line.parentNode.appendChild(conjunctionRay);
+    }
+    conjunctionRay.setAttribute('x1',String(c.x));conjunctionRay.setAttribute('y1',String(c.y));
+    conjunctionRay.setAttribute('x2',String(c.x+ux*endRadius));conjunctionRay.setAttribute('y2',String(c.y+uy*endRadius));
+    conjunctionRay.setAttribute('stroke',line.getAttribute('stroke')||'#e53935');
   }
 
   function buildAperture(line,row){
@@ -175,7 +209,8 @@
     const row=selectedRow(),line=selectedLine(row);
     syncContext(row);
     forceLine(line);
-    if(!line){removeAperture();return}
+    if(!line){removeAperture();removeConjunctionRay();return}
+    syncConjunctionRay(line,row);
     const metrics=apertureMetrics(row,line),allowed=metrics.allowedOrb;
     if(line!==linkedLine||!aperture||Number(aperture.dataset.allowedOrb)!==allowed||String(aperture.dataset.relationIndex||'')!==String(line.dataset.relationIndex||''))buildAperture(line,row);else syncVisual();
   }
