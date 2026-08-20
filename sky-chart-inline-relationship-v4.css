@@ -8,7 +8,7 @@
 
 /* One selected relationship is one exact geometry. Any sky-specific wheel mark from a
    broader placement/Card Hit lens yields to the two endpoints and their one aspect line.
-   Zodiac and house structure remain visible as orientation context. */
+   The zodiac remains present for orientation, but only the endpoint signs stay fully lit. */
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-focus-piece],
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-placement],
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-sky][data-angle],
@@ -16,6 +16,16 @@
 #skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="aspects"]>.sky-foundation-aspect{
   opacity:.025!important;
   filter:saturate(.08)!important;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="zodiac"]>[data-focus-piece="sign"],
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="zodiac"]>[data-interactive="sign"]{
+  opacity:.18!important;
+  filter:saturate(.28) brightness(1.08)!important;
+}
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="zodiac"]>.sky-orb-bridge-sign{
+  opacity:1!important;
+  visibility:visible!important;
+  filter:saturate(1) brightness(1.01)!important;
 }
 
 /* Match the specificity of the exact-focus dimming rule so the actual endpoints cannot
@@ -42,7 +52,23 @@
   visibility:visible!important;
   stroke-opacity:1!important;
   stroke-width:5.5!important;
+  stroke-linecap:round!important;
   filter:drop-shadow(0 0 2.5px rgba(31,27,24,.28))!important;
+}
+
+/* A conjunction collapses to an almost zero-length chord when both endpoints sit on the
+   same aspect radius. The selected relationship therefore gets the conventional radial
+   conjunction ray through the central aspect field so the geometry remains visible. */
+#skyFoundationWheelMount>.sky-foundation-wheel.is-relationship-exact-focus [data-layer="aspects"]>.sky-relationship-conjunction-ray{
+  display:inline!important;
+  opacity:1!important;
+  visibility:visible!important;
+  stroke-opacity:1!important;
+  stroke-width:5.5!important;
+  stroke-linecap:round!important;
+  vector-effect:non-scaling-stroke;
+  filter:drop-shadow(0 0 2.5px rgba(31,27,24,.28))!important;
+  pointer-events:none;
 }
 
 /* A relationship keeps only the two houses that actually contain its endpoints in color.
