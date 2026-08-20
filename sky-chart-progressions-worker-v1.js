@@ -1,27 +1,24 @@
-// Background ephemeris sampler for Sky Chart secondary-progressions playback.
+// Background ephemeris sampler for Sky Chart calendar-time Progressions playback.
 // Astronomy Engine runs in this worker so the visible wheel never waits on ephemeris work.
 'use strict';
 
 importScripts('vendor/astronomy-engine/astronomy.browser.min.js');
 
-const DAY=86400000;
-const YEAR=365.2422*DAY;
 const BODIES=['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
 const BODY_NAME={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',pluto:'Pluto'};
 let generation=0;
 
 const norm=value=>((Number(value)%360)+360)%360;
 
-function longitude(id,progressedMs){
+function longitude(id,targetMs){
   const body=self.Astronomy?.Body?.[BODY_NAME[id]]||BODY_NAME[id];
-  const vector=self.Astronomy.GeoVector(body,new Date(progressedMs),true);
+  const vector=self.Astronomy.GeoVector(body,new Date(targetMs),true);
   return norm(self.Astronomy.Ecliptic(vector).elon);
 }
 
-function sample(epochMs,targetMs){
-  const progressedMs=epochMs+((targetMs-epochMs)/YEAR)*DAY;
+function sample(targetMs){
   const values={};
-  for(const id of BODIES)values[id]=longitude(id,progressedMs);
+  for(const id of BODIES)values[id]=longitude(id,targetMs);
   return values;
 }
 
@@ -35,7 +32,6 @@ self.onmessage=event=>{
 
   const token=++generation;
   const requestId=String(data.requestId||'');
-  const epochMs=Number(data.epochMs);
   const startTargetMs=Number(data.startTargetMs);
   const stepTargetMs=Math.max(1,Number(data.stepTargetMs)||1);
   const maxTargetMs=Number(data.maxTargetMs);
@@ -44,15 +40,15 @@ self.onmessage=event=>{
 
   function next(){
     if(token!==generation)return;
-    if(!Number.isFinite(epochMs)||!Number.isFinite(startTargetMs)||!Number.isFinite(maxTargetMs)){
-      self.postMessage({type:'error',requestId,message:'Invalid progression worker request.'});
+    if(!Number.isFinite(startTargetMs)||!Number.isFinite(maxTargetMs)){
+      self.postMessage({type:'error',requestId,message:'Invalid calendar-sky worker request.'});
       return;
     }
     const targetMs=Math.min(maxTargetMs,startTargetMs+index*stepTargetMs);
     try{
-      self.postMessage({type:'sample',requestId,targetMs,values:sample(epochMs,targetMs)});
+      self.postMessage({type:'sample',requestId,targetMs,values:sample(targetMs)});
     }catch(error){
-      self.postMessage({type:'error',requestId,message:String(error?.message||error||'Progression worker failed.')});
+      self.postMessage({type:'error',requestId,message:String(error?.message||error||'Calendar-sky worker failed.')});
       return;
     }
     index+=1;
