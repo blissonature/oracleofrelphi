@@ -189,6 +189,40 @@
   flex:0 0 15px!important;
 }
 
+/* Transit timing is an interpretation model switch, not a chart-motion switch. */
+#skyFoundationRelationships .sky-transit-moving-b-choice{
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  width:100%!important;
+  min-width:0!important;
+  height:var(--sky-filter-height)!important;
+  min-height:var(--sky-filter-height)!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:0 .58rem!important;
+  border:var(--sky-filter-border)!important;
+  border-radius:var(--sky-filter-radius)!important;
+  background:#fff!important;
+  color:var(--sky-filter-control-color)!important;
+  font:var(--sky-filter-control-font)!important;
+  white-space:nowrap!important;
+}
+#skyFoundationRelationships .sky-transit-moving-b-choice:hover{background:#f5f1eb!important}
+#skyFoundationRelationships .sky-transit-moving-b-choice input{
+  flex:0 0 16px!important;
+  width:16px!important;
+  height:16px!important;
+  margin:0!important;
+  accent-color:#2462d0;
+}
+#skyFoundationRelationships .sky-transit-moving-b-choice>span{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
 /* Shared hover, focus, and open states. */
 #skyFoundationRelationships .sky-chart-aspect-filter-value:hover,
 #skyFoundationRelationships .sky-chart-aspect-filter-value:focus-visible,
@@ -220,6 +254,7 @@
   #skyFoundationRelationships .sky-chart-filter-bar[data-multiselect-placement-filters="true"][data-multiselect-house-filters="true"]{
     grid-template-columns:minmax(0,.6fr) minmax(0,1fr) minmax(0,1.45fr) minmax(0,1.5fr) minmax(0,1.2fr)!important;
   }
+  #skyFoundationRelationships .sky-transit-moving-b-control{grid-column:span 2!important}
 }
 
 /* iOS zooms the page when a focused text field is smaller than 16px. Keep the compact
