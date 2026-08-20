@@ -2,7 +2,8 @@
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyProgressiveRevealContractV2)return;
+  if(window.__relphiSkyProgressiveRevealContractV3)return;
+  window.__relphiSkyProgressiveRevealContractV3=true;
   window.__relphiSkyProgressiveRevealContractV2=true;
   window.__relphiSkyProgressiveRevealContractV1=true;
 
@@ -12,7 +13,8 @@
   let queued=false;
 
   function keyFor(token,index){
-    return token.dataset.progressiveField||token.dataset.progressiveGlyphId||`token-${index}`;
+    const relation=token.closest('[data-relation-index]')?.dataset?.relationIndex||'current';
+    return `${relation}:${token.dataset.progressiveField||token.dataset.progressiveGlyphId||`token-${index}`}`;
   }
 
   function setStage(token,stage,remember=true){
@@ -56,7 +58,7 @@
     queued=true;
     requestAnimationFrame(()=>{
       queued=false;
-      prepare(document.getElementById('skySelectedRelationship')||document);
+      prepare(document);
     });
   }
 
@@ -115,9 +117,10 @@
 
   function start(){
     installStyles();
-    prepare();
+    prepare(document);
     document.addEventListener('click',handleClick,true);
     window.addEventListener('relphi:selected-relationship-rendered',schedule);
+    window.addEventListener('relphi:sky-relationship-selected',schedule);
     window.addEventListener('relphi:sky-progressive-symbols-ready',schedule);
   }
 
