@@ -7,6 +7,7 @@ if(window.__relphiSkyTransitTimelineV1)return;
 window.__relphiSkyTransitTimelineV1=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+const MOVING_B_KEY='relphiSkyTransitTimingMovingB';
 const BODY={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',pluto:'Pluto'};
 const ANGLE={conjunction:0,'semi-sextile':30,octile:45,sextile:60,quintile:72,square:90,trine:120,'tri-octile':135,'bi-quintile':144,quincunx:150,opposition:180};
 const SETTINGS={moon:[.035,520],mercury:[.12,520],venus:[.18,520],mars:[.3,520],sun:[.18,520],jupiter:[.6,520],saturn:[.9,520],uranus:[1.2,520],neptune:[1.2,520],pluto:[1.2,520]};
@@ -18,6 +19,12 @@ let queued=false,runId=0;
 const norm=value=>((Number(value)%360)+360)%360;
 const wrap=value=>((Number(value)+540)%360)-180;
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
+function movingBOverride(){try{return localStorage.getItem(MOVING_B_KEY)==='true'}catch(_){return false}}
+function writeMovingBOverride(value){
+  const enabled=!!value;
+  try{localStorage.setItem(MOVING_B_KEY,enabled?'true':'false')}catch(_){}
+  document.documentElement.dataset.skyTransitTimingMovingB=enabled?'true':'false';
+}
 function source(payload){const value=[payload?.placements,payload?.positions,payload?.points,payload?.bodies].find(v=>v&&typeof v==='object')||payload||{};return Array.isArray(value)?value.map((v,i)=>[String(v?.name||v?.id||i),v]):Object.entries(value).filter(([,v])=>v&&typeof v==='object'&&!Array.isArray(v))}
 function longitudeFromItem(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const sign=SIGNS.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:norm(sign*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}
 function canonical(key,item){const registry=window.RelphiGlyphRegistry;for(const candidate of [item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){if(!candidate)continue;const raw=String(candidate).trim(),entry=registry?.resolve?.(ALIAS[raw.toLowerCase()]||raw)||registry?.get?.(ALIAS[raw.toLowerCase()]||raw);if(entry)return entry}return null}
@@ -26,7 +33,14 @@ function rowSlots(row){const mode=row.dataset.relationshipMode||document.documen
 function relation(row){const[leftSky,rightSky]=rowSlots(row),left=endpoint(leftSky,row.dataset.leftPlacement),right=endpoint(rightSky,row.dataset.rightPlacement);if(!left||!right)return null;return{row,left,right,leftSky,rightSky,aspect:{id:String(row.dataset.aspect||'')},orb:Number(row.dataset.sourceOrb||0)}}
 function profileDate(payload){const source=payload?.calcProfile||payload,raw=source?.instant||source?.dateTime;if(!raw)return null;const date=new Date(raw);return Number.isFinite(date.getTime())?date:null}
 function textSignals(slot){const value=read(slot)||{},profile=value.calcProfile||{},metadata=value.metadata||{};return[value.name,value.title,value.displayName,value.skyName,profile.name,profile.title,profile.role,profile.type,metadata.role,metadata.type].filter(Boolean).join(' ')}
-function movingSlot(){const a=textSignals('A'),b=textSignals('B'),dynamic=/planetary hours|transit|current sky|\bnow\b|dynamic/i,staticSky=/birth|natal|radix|static|fixed/i;if(dynamic.test(a)!==dynamic.test(b))return dynamic.test(a)?'A':'B';if(staticSky.test(a)!==staticSky.test(b))return staticSky.test(a)?'B':'A';try{const roles=window.RelphiSkyRoles||JSON.parse(localStorage.getItem('relphiSkyChartRoles')||'null');if(roles?.chart==='dynamic'&&roles?.currentSky!=='dynamic')return'A';if(roles?.currentSky==='dynamic'&&roles?.chart!=='dynamic')return'B'}catch(_){}return null}
+function movingSlot(){
+  if(movingBOverride())return'B';
+  const a=textSignals('A'),b=textSignals('B'),dynamic=/planetary hours|transit|current sky|\bnow\b|dynamic/i,staticSky=/birth|natal|radix|static|fixed/i;
+  if(dynamic.test(a)!==dynamic.test(b))return dynamic.test(a)?'A':'B';
+  if(staticSky.test(a)!==staticSky.test(b))return staticSky.test(a)?'B':'A';
+  try{const roles=window.RelphiSkyRoles||JSON.parse(localStorage.getItem('relphiSkyChartRoles')||'null');if(roles?.chart==='dynamic'&&roles?.currentSky!=='dynamic')return'A';if(roles?.currentSky==='dynamic'&&roles?.chart!=='dynamic')return'B'}catch(_){}
+  return null;
+}
 function astronomyLongitude(body,date){const astronomy=window.Astronomy,bodyValue=astronomy?.Body?.[BODY[body]]||BODY[body];if(!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;const vector=astronomy.GeoVector(bodyValue,date,true);return astronomy.Ecliptic(vector).elon}
 function root(a,b,fn){let fa=fn(a),fb=fn(b);if(!Number.isFinite(fa)||!Number.isFinite(fb))return null;for(let i=0;i<36;i++){const mid=(a+b)/2,fm=fn(mid);if(!Number.isFinite(fm))return null;if(Math.sign(fa)===Math.sign(fm)){a=mid;fa=fm}else{b=mid;fb=fm}}return(a+b)/2}
 function modelFor(rel){const moving=movingSlot();if(!moving||rel.leftSky===rel.rightSky||!window.Astronomy)return null;const movingRecord=rel.leftSky===moving?rel.left:rel.rightSky===moving?rel.right:null,fixedRecord=movingRecord===rel.left?rel.right:rel.left;if(!movingRecord||!fixedRecord||!BODY[movingRecord.id])return null;const date=profileDate(read(moving)),angle=ANGLE[rel.aspect.id];if(!date||!Number.isFinite(angle))return null;const orbInput=Number(document.querySelector('[data-filter="orb"]')?.value),limit=Number.isFinite(orbInput)&&orbInput>0?orbInput:Math.max(1,rel.orb||1),settings=SETTINGS[movingRecord.id];if(!settings)return null;return{moving,movingRecord,fixedRecord,date,angle,limit,settings}}
@@ -40,6 +54,44 @@ function renderMeta(row,model,data){let host=row.querySelector(':scope>.sky-rela
 async function annotate(row,id){const rel=relation(row),model=rel?modelFor(rel):null;if(!model){renderMeta(row,null,null);delete row.dataset.transitSignature;return}const sig=signature(row,model);if(row.dataset.transitSignature===sig&&row.querySelector(':scope>.sky-relationship-transit-meta'))return;row.dataset.transitSignature=sig;let data=cache.get(sig);if(data===undefined){try{data=timing(model)}catch(_){data=null}cache.set(sig,data)}if(id!==runId||!row.isConnected)return;renderMeta(row,model,data)}
 async function run(){queued=false;const id=++runId,rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row:not(.sky-relationship-mode-hidden)')];for(const row of rows){if(id!==runId)return;await annotate(row,id);await new Promise(resolve=>setTimeout(resolve,0))}}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(run)}
-function start(){['relphi:sky-foundation-interactions-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-orb-limit-changed','relphi:sky-relationship-selected'].forEach(name=>window.addEventListener(name,schedule));window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)){cache.clear();schedule()}});const list=document.getElementById('skyFoundationRelationshipList');if(list)new MutationObserver(records=>{if(records.some(record=>record.type==='childList'))schedule()}).observe(list,{childList:true,subtree:false});schedule()}
+function invalidateTiming(){
+  cache.clear();
+  document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row').forEach(row=>delete row.dataset.transitSignature);
+  schedule();
+}
+function ensureMovingBControl(){
+  const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
+  if(!bar)return false;
+  let label=bar.querySelector('[data-transit-moving-b-control]');
+  if(!label){
+    label=document.createElement('label');
+    label.className='sky-transit-moving-b-control';
+    label.dataset.transitMovingBControl='true';
+    const caption=document.createElement('span');caption.textContent='Transit timing';
+    const choice=document.createElement('span');choice.className='sky-transit-moving-b-choice';
+    const input=document.createElement('input');input.type='checkbox';input.dataset.transitMovingB='true';
+    const text=document.createElement('span');text.textContent='Treat Sky B as moving';
+    choice.append(input,text);label.append(caption,choice);
+    label.title='Use Sky B as the moving side for transit length, motion, and applying/separating calculations only. This does not move Sky B on the wheel.';
+    const harmonic=bar.querySelector('[data-orb-field]');
+    if(harmonic)harmonic.insertAdjacentElement('afterend',label);else bar.prepend(label);
+    input.addEventListener('change',()=>{writeMovingBOverride(input.checked);invalidateTiming()});
+  }
+  const input=label.querySelector('[data-transit-moving-b]');
+  const checked=movingBOverride();
+  if(input&&input.checked!==checked)input.checked=checked;
+  document.documentElement.dataset.skyTransitTimingMovingB=checked?'true':'false';
+  return true;
+}
+function start(){
+  ensureMovingBControl();
+  ['relphi:sky-foundation-interactions-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-orb-limit-changed','relphi:sky-relationship-selected'].forEach(name=>window.addEventListener(name,()=>{ensureMovingBControl();schedule()}));
+  window.addEventListener('storage',event=>{
+    if(event.key===MOVING_B_KEY){ensureMovingBControl();invalidateTiming();return}
+    if(!event.key||Object.values(KEYS).includes(event.key)){cache.clear();schedule()}
+  });
+  const list=document.getElementById('skyFoundationRelationshipList');if(list)new MutationObserver(records=>{if(records.some(record=>record.type==='childList')){ensureMovingBControl();schedule()}}).observe(list,{childList:true,subtree:false});
+  schedule();
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
