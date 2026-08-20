@@ -2,14 +2,16 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const core=require('../sky-chart-progressions-core-v1.js');
 
-test('secondary progression maps one tropical year of life to one ephemeris day',()=>{
-  const epoch=Date.UTC(2000,0,1,12),target=epoch+core.YEAR;
-  assert.ok(Math.abs(core.secondaryProgressedMs(epoch,target)-(epoch+core.DAY))<1);
+test('Progressions calendar model draws the selected target date directly',()=>{
+  const epoch=Date.UTC(1985,9,8,10,37),target=Date.UTC(1985,10,8,10,37);
+  assert.equal(core.secondaryProgressedMs(epoch,target),target);
+  assert.equal(core.calendarSkyMs(target),target);
 });
 
-test('secondary progression maps thirty years to thirty ephemeris days',()=>{
-  const epoch=Date.UTC(1990,5,1,0),target=epoch+30*core.YEAR;
-  assert.ok(Math.abs(core.secondaryProgressedMs(epoch,target)-(epoch+30*core.DAY))<1);
+test('calendar target conversion is reversible without day-for-year scaling',()=>{
+  const epoch=Date.UTC(1985,9,8,10,37),target=Date.UTC(2026,7,20,8,0);
+  const ephemeris=core.secondaryProgressedMs(epoch,target);
+  assert.equal(core.targetMsFromProgressedMs(epoch,ephemeris),target);
 });
 
 test('ingress and egress windows respect direction of motion',()=>{
