@@ -1,5 +1,6 @@
 // Continuous Progressions playback: Sky A/red is immutable; only the blue progressed copy moves.
-// Astronomy Engine sampling lives in a Web Worker. The main thread only interpolates and paints.
+// Worker keyframes are authoritative. The display clock is sample-paced and may never outrun
+// the next keyframe, so every visible interval is interpolated on requestAnimationFrame.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyProgressionsSmoothPlaybackV1)return;
@@ -8,39 +9,22 @@
   const core=window.RelphiSkyProgressionsCore;
   const DAY=86400000;
   const YEAR=365.2422*DAY;
-  const KEYFRAME_REAL_MS=120;
-  const CHUNK_SAMPLES=48;
-  const REFILL_SECONDS=2.5;
+  const KEYFRAME_REAL_MS=1500;
+  const CHUNK_SAMPLES=24;
+  const REFILL_AT_SAMPLES=7;
   const UI_MS=140;
-  const ASPECT_MS=260;
+  const ASPECT_MS=500;
   const C={x:600,y:600};
   const LANES=[450,440,460];
   const EXACT=414;
   const BODIES=['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
   const BODY_NAME={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',pluto:'Pluto'};
 
-  let playing=false;
-  let raf=0;
-  let worker=null;
-  let workerBusy=false;
-  let workerFailed=false;
-  let requestSerial=0;
-  let activeRequestId='';
-  let playbackToken=0;
-  let startPerf=0;
-  let startDays=0;
-  let playbackSpeed=365.2422;
-  let samples=[];
-  let lastUi=0;
-  let lastAspect=0;
-  let lastAnnotationHTML='';
-  let synthetic=false;
-  let laneMap=new Map();
-  let redPoints=new Map();
-  let blueHosts=new Map();
-  let blueLeaders=new Map();
-  let aspectLines=[];
-  let activeRelations=[];
+  let playing=false,visualRunning=false,raf=0,worker=null,workerBusy=false,workerFailed=false;
+  let requestSerial=0,activeRequestId='',playbackToken=0,playbackSpeed=365.2422;
+  let samples=[],segmentStartPerf=0,lastVisualDays=0,lastVisualSnapshot=new Map();
+  let lastUi=0,lastAspect=0,lastAnnotationHTML='',synthetic=false;
+  let laneMap=new Map(),redPoints=new Map(),blueHosts=new Map(),blueLeaders=new Map(),aspectLines=[],activeRelations=[];
 
   const norm=value=>((Number(value)%360)+360)%360;
   const wrap=value=>((Number(value)+540)%360)-180;
@@ -91,37 +75,21 @@
   }
 
   function parseTranslate(node){const match=String(node?.getAttribute('transform')||'').match(/translate\(\s*([-+\d.eE]+)[,\s]+([-+\d.eE]+)/);return match?{x:Number(match[1]),y:Number(match[2])}:null}
-  function isActuallyVisible(node){return!!node&&!node.hidden&&node.style.display!=='none'&&node.style.visibility!=='hidden'}
+  function visible(node){return!!node&&!node.hidden&&node.style.display!=='none'&&node.style.visibility!=='hidden'}
   function captureGeometry(){
     const view=wheel();laneMap=new Map();redPoints=new Map();blueHosts=new Map();blueLeaders=new Map();if(!view)return false;
-
-    // The blue lane in Progressions is not Sky B. It is reserved exclusively for the ten progressed bodies.
-    view.querySelectorAll('[data-layer="placements"] [data-sky="B"][data-placement]').forEach(node=>{
-      const id=canonicalId(node.dataset.placement);
-      if(!BODIES.includes(id)){node.style.setProperty('display','none','important');node.setAttribute('aria-hidden','true')}
-    });
-    view.querySelectorAll('[data-layer="leaders"] [data-sky="B"][data-placement]').forEach(node=>{
-      const id=canonicalId(node.dataset.placement);
-      if(!BODIES.includes(id)){node.style.setProperty('display','none','important');node.setAttribute('aria-hidden','true')}
-    });
-
+    view.querySelectorAll('[data-layer="placements"] [data-sky="B"][data-placement]').forEach(node=>{const id=canonicalId(node.dataset.placement);if(!BODIES.includes(id)){node.style.setProperty('display','none','important');node.setAttribute('aria-hidden','true')}});
+    view.querySelectorAll('[data-layer="leaders"] [data-sky="B"][data-placement]').forEach(node=>{const id=canonicalId(node.dataset.placement);if(!BODIES.includes(id)){node.style.setProperty('display','none','important');node.setAttribute('aria-hidden','true')}});
     BODIES.forEach((id,index)=>{
-      const blue=view.querySelector(`[data-layer="placements"] [data-sky="B"][data-placement="${CSS.escape(id)}"]:not([data-angle-axis="true"])`);
-      const leader=view.querySelector(`[data-layer="leaders"] .sky-foundation-leader[data-sky="B"][data-placement="${CSS.escape(id)}"]`);
-      const raw=Number(blue?.dataset.placementLane),nearest=LANES.reduce((best,lane)=>Math.abs(lane-raw)<Math.abs(best-raw)?lane:best,LANES[0]);
-      laneMap.set(id,Number.isFinite(raw)&&Math.abs(nearest-raw)<12?raw:LANES[index%LANES.length]);
+      const blue=view.querySelector(`[data-layer="placements"] [data-sky="B"][data-placement="${CSS.escape(id)}"]:not([data-angle-axis="true"])`),leader=view.querySelector(`[data-layer="leaders"] .sky-foundation-leader[data-sky="B"][data-placement="${CSS.escape(id)}"]`);
+      const raw=Number(blue?.dataset.placementLane),nearest=LANES.reduce((best,lane)=>Math.abs(lane-raw)<Math.abs(best-raw)?lane:best,LANES[0]);laneMap.set(id,Number.isFinite(raw)&&Math.abs(nearest-raw)<12?raw:LANES[index%LANES.length]);
       if(blue){blue.style.removeProperty('display');blue.removeAttribute('aria-hidden');blueHosts.set(id,blue)}
       if(leader){leader.style.removeProperty('display');leader.removeAttribute('aria-hidden');blueLeaders.set(id,leader)}
-      const red=view.querySelector(`[data-layer="placements"] [data-sky="A"][data-placement="${CSS.escape(id)}"]:not([data-angle-axis="true"])`),point=parseTranslate(red);
-      if(point&&isActuallyVisible(red))redPoints.set(id,point);
+      const red=view.querySelector(`[data-layer="placements"] [data-sky="A"][data-placement="${CSS.escape(id)}"]:not([data-angle-axis="true"])`),point=parseTranslate(red);if(point&&visible(red))redPoints.set(id,point);
     });
     return blueHosts.size>0;
   }
-  function snapshotFromWheel(){
-    const result=new Map();
-    for(const [id,host] of blueHosts){const value=Number(host.dataset.exactLongitude);if(Number.isFinite(value))result.set(id,norm(value))}
-    return result;
-  }
+  function snapshotFromWheel(){const result=new Map();for(const [id,host] of blueHosts){const value=Number(host.dataset.exactLongitude);if(Number.isFinite(value))result.set(id,norm(value))}return result}
   function drawBlue(snapshot){
     const points=new Map();
     for(const id of BODIES){
@@ -132,44 +100,16 @@
     }
     return points;
   }
-
-  function rebuildAspectLines(snapshot){
-    const layer=wheel()?.querySelector('[data-layer="aspects"]');if(!layer)return;
-    layer.replaceChildren();activeRelations=relationRows(snapshot);aspectLines=[];
-    for(const relation of activeRelations){
-      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-      line.setAttribute('stroke',relation.aspect.color);line.setAttribute('class',`sky-foundation-aspect sky-progression-aspect is-${relation.mode}`);
-      layer.appendChild(line);aspectLines.push({line,relation});
-    }
-  }
-  function moveAspectLines(bluePoints){
-    for(const item of aspectLines){
-      const relation=item.relation,line=item.line,from=bluePoints.get(relation.left.id),to=relation.mode==='intra'?bluePoints.get(relation.right.id):redPoints.get(relation.right.id);
-      if(!from||!to){line.style.display='none';continue}
-      line.style.removeProperty('display');line.setAttribute('x1',from.x);line.setAttribute('y1',from.y);line.setAttribute('x2',to.x);line.setAttribute('y2',to.y);
-    }
-  }
+  function rebuildAspectLines(snapshot){const layer=wheel()?.querySelector('[data-layer="aspects"]');if(!layer)return;layer.replaceChildren();activeRelations=relationRows(snapshot);aspectLines=[];for(const relation of activeRelations){const line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('stroke',relation.aspect.color);line.setAttribute('class',`sky-foundation-aspect sky-progression-aspect is-${relation.mode}`);layer.appendChild(line);aspectLines.push({line,relation})}}
+  function moveAspectLines(bluePoints){for(const item of aspectLines){const relation=item.relation,line=item.line,from=bluePoints.get(relation.left.id),to=relation.mode==='intra'?bluePoints.get(relation.right.id):redPoints.get(relation.right.id);if(!from||!to){line.style.display='none';continue}line.style.removeProperty('display');line.setAttribute('x1',from.x);line.setAttribute('y1',from.y);line.setAttribute('x2',to.x);line.setAttribute('y2',to.y)}}
 
   function snapshotFromValues(values){const result=new Map();for(const id of BODIES){const value=Number(values?.[id]);if(Number.isFinite(value))result.set(id,norm(value))}return result}
-  function interpolateSnapshot(from,to,fraction){
-    const result=new Map();
-    for(const id of BODIES){const a=from?.get(id),b=to?.get(id);if(Number.isFinite(a)&&Number.isFinite(b))result.set(id,norm(a+wrap(b-a)*fraction))}
-    return result;
-  }
+  function interpolateSnapshot(from,to,fraction){const result=new Map();for(const id of BODIES){const a=from?.get(id),b=to?.get(id);if(Number.isFinite(a)&&Number.isFinite(b))result.set(id,norm(a+wrap(b-a)*fraction))}return result}
   function insertSample(sample){
     if(!sample||!Number.isFinite(sample.days)||!(sample.snapshot instanceof Map))return;
-    const last=samples[samples.length-1];
-    if(last&&Math.abs(last.days-sample.days)<1e-8){samples[samples.length-1]=sample;return}
+    if(samples.some(item=>Math.abs(item.days-sample.days)<1e-8))return;
     samples.push(sample);samples.sort((a,b)=>a.days-b.days);
-  }
-  function visualForDays(days){
-    if(!samples.length)return{snapshot:new Map(),nextSnapshot:null};
-    while(samples.length>3&&samples[1].days<days)samples.shift();
-    let before=samples[0],after=samples[1]||samples[0];
-    for(let i=1;i<samples.length;i+=1){if(samples[i].days>=days){after=samples[i];before=samples[i-1]||samples[i];break}before=samples[i];after=samples[i]}
-    if(before===after||Math.abs(after.days-before.days)<1e-9)return{snapshot:before.snapshot,nextSnapshot:after.snapshot};
-    const fraction=clamp((days-before.days)/(after.days-before.days),0,1);
-    return{snapshot:interpolateSnapshot(before.snapshot,after.snapshot,fraction),nextSnapshot:after.snapshot};
+    if(playing&&!visualRunning&&samples.length>=2)beginVisualPlayback();
   }
 
   function ensureWorker(){
@@ -178,53 +118,70 @@
       worker=new Worker(new URL('sky-chart-progressions-worker-v1.js',document.baseURI));
       worker.onmessage=event=>{
         const data=event.data||{};if(!playing||data.requestId!==activeRequestId)return;
-        if(data.type==='sample'){
-          const days=daysFromTarget(Number(data.targetMs));insertSample({days,snapshot:snapshotFromValues(data.values)});return;
-        }
-        if(data.type==='done'){workerBusy=false;return}
+        if(data.type==='sample'){insertSample({days:daysFromTarget(Number(data.targetMs)),snapshot:snapshotFromValues(data.values)});return}
+        if(data.type==='done'){workerBusy=false;maybeRefill();return}
         if(data.type==='error'){workerBusy=false;workerFailed=true;stopPlayback({sync:false});const host=panel()?.querySelector('[data-progression-annotations]');if(host)host.innerHTML='<p class="sky-progression-no-events">Continuous playback could not start because the background ephemeris worker failed.</p>'}
       };
-      worker.onerror=()=>{workerBusy=false;workerFailed=true;if(playing)stopPlayback({sync:false})};
-      return true;
+      worker.onerror=()=>{workerBusy=false;workerFailed=true;if(playing)stopPlayback({sync:false})};return true;
     }catch(_){workerFailed=true;return false}
   }
   function requestChunk(fromDays){
     if(!playing||workerBusy||!ensureWorker())return;
-    const range=slider(),max=Number(range?.max)||0;if(fromDays>=max)return;
-    const stepDays=playbackSpeed*KEYFRAME_REAL_MS/1000,start=Math.min(max,fromDays),requestId=`${playbackToken}-${++requestSerial}`;
+    const max=Number(slider()?.max)||0;if(fromDays>=max)return;
+    const stepDays=playbackSpeed*KEYFRAME_REAL_MS/1000,requestId=`${playbackToken}-${++requestSerial}`;
     workerBusy=true;activeRequestId=requestId;
-    worker.postMessage({type:'stream',requestId,epochMs:natalEpoch(),startTargetMs:targetMs(start),stepTargetMs:stepDays*DAY,maxTargetMs:targetMs(max),count:CHUNK_SAMPLES});
+    worker.postMessage({type:'stream',requestId,epochMs:natalEpoch(),startTargetMs:targetMs(Math.min(max,fromDays)),stepTargetMs:stepDays*DAY,maxTargetMs:targetMs(max),count:CHUNK_SAMPLES});
   }
-  function maybeRefill(days){
-    if(workerBusy||!playing)return;
-    const last=samples[samples.length-1],max=Number(slider()?.max)||0;if(!last||last.days>=max)return;
-    const aheadSeconds=(last.days-days)/Math.max(1,playbackSpeed);
-    if(aheadSeconds<=REFILL_SECONDS){const stepDays=playbackSpeed*KEYFRAME_REAL_MS/1000;requestChunk(Math.min(max,last.days+stepDays))}
+  function maybeRefill(){
+    if(!playing||workerBusy)return;
+    const max=Number(slider()?.max)||0,last=samples[samples.length-1];if(!last||last.days>=max)return;
+    if(samples.length<=REFILL_AT_SAMPLES){const stepDays=playbackSpeed*KEYFRAME_REAL_MS/1000;requestChunk(Math.min(max,last.days+stepDays))}
   }
 
   function renderAnnotations(snapshot,nextSnapshot,target){
     const items=[];
-    for(const [id,value] of snapshot){
-      if(!core?.signState)break;const future=nextSnapshot?.get(id),delta=Number.isFinite(future)?wrap(future-value):0,status=core.signState(value,delta,1);
-      if(status.kind&&filterEnabled(status.kind))items.push({category:status.kind,title:`${BODY_NAME[id]} ${status.kind==='ingress'?'entering':'leaving'} ${status.sign}`,meta:`${status.kind[0].toUpperCase()+status.kind.slice(1)} · ${status.degree.toFixed(2)}° ${status.sign}${delta<0?' · retrograde':''}`});
-    }
+    for(const [id,value] of snapshot){if(!core?.signState)break;const future=nextSnapshot?.get(id),delta=Number.isFinite(future)?wrap(future-value):0,status=core.signState(value,delta,1);if(status.kind&&filterEnabled(status.kind))items.push({category:status.kind,title:`${BODY_NAME[id]} ${status.kind==='ingress'?'entering':'leaving'} ${status.sign}`,meta:`${status.kind[0].toUpperCase()+status.kind.slice(1)} · ${status.degree.toFixed(2)}° ${status.sign}${delta<0?' · retrograde':''}`})}
     for(const relation of activeRelations){const right=relation.mode==='intra'?`progressed ${relation.right.name}`:`natal ${relation.right.name}`;items.push({category:relation.mode,title:`Progressed ${relation.left.name} ${relation.aspect.name.toLowerCase()} ${right}`,meta:`${relation.mode==='intra'?'Intra':'Inter'} · orb ${degreeLabel(relation.error)}`})}
     const html=items.slice(0,24).map(item=>`<article class="sky-progression-annotation is-${item.category}"><div class="sky-progression-annotation-time">${fmtDate(target)}</div><strong>${item.title}</strong><span>${item.meta}</span></article>`).join('')||'<p class="sky-progression-no-events">No enabled temporal conditions are active at this point on the timeline.</p>';
     if(html!==lastAnnotationHTML){lastAnnotationHTML=html;const host=panel()?.querySelector('[data-progression-annotations]');if(host)host.innerHTML=html}
   }
-  function updateUi(days,visual,now){
-    const range=slider();if(range)range.value=String(days);if(now-lastUi<UI_MS)return;lastUi=now;
+  function updateUi(days,snapshot,nextSnapshot,now){
+    if(slider())slider().value=String(days);if(now-lastUi<UI_MS)return;lastUi=now;
     const target=targetMs(days),root=panel(),date=root?.querySelector('[data-progression-date-label]'),age=root?.querySelector('[data-progression-age-label]'),epoch=natalEpoch();
-    if(date)date.textContent=fmtDate(target);if(age&&Number.isFinite(epoch))age.textContent=`Secondary progression · ${((target-epoch)/YEAR).toFixed(2)} years after epoch`;
-    renderAnnotations(visual.snapshot,visual.nextSnapshot,target);
+    if(date)date.textContent=fmtDate(target);if(age&&Number.isFinite(epoch))age.textContent=`Secondary progression · ${((target-epoch)/YEAR).toFixed(2)} years after epoch`;renderAnnotations(snapshot,nextSnapshot,target);
   }
-  function syncButton(){const button=playButton();if(!button)return;button.dataset.playing=playing?'true':'false';button.textContent=playing?'Pause':'Play';button.setAttribute('aria-label',playing?'Pause progressions':'Play progressions')}
+  function syncButton(mode=visualRunning?'playing':'buffering'){
+    const button=playButton();if(!button)return;button.dataset.playing=playing?'true':'false';
+    if(!playing){button.textContent='Play';button.setAttribute('aria-label','Play progressions');return}
+    button.textContent=mode==='buffering'?'Buffering…':'Pause';button.setAttribute('aria-label',mode==='buffering'?'Buffering progressions playback':'Pause progressions');
+  }
+
+  function beginVisualPlayback(){
+    if(!playing||visualRunning||samples.length<2)return;
+    visualRunning=true;segmentStartPerf=performance.now();syncButton('playing');
+    lastVisualDays=samples[0].days;lastVisualSnapshot=samples[0].snapshot;
+    function frame(now){
+      if(!playing||!visualRunning)return;
+      while(samples.length>=2&&now-segmentStartPerf>=KEYFRAME_REAL_MS){
+        const completed=samples.shift();lastVisualDays=samples[0]?.days??completed.days;lastVisualSnapshot=samples[0]?.snapshot??completed.snapshot;segmentStartPerf+=KEYFRAME_REAL_MS;maybeRefill();
+        if(samples.length<2){visualRunning=false;const points=drawBlue(lastVisualSnapshot);moveAspectLines(points);updateUi(lastVisualDays,lastVisualSnapshot,null,now);syncButton('buffering');return}
+      }
+      if(samples.length<2){visualRunning=false;syncButton('buffering');return}
+      const from=samples[0],to=samples[1],fraction=clamp((now-segmentStartPerf)/KEYFRAME_REAL_MS,0,1),snapshot=interpolateSnapshot(from.snapshot,to.snapshot,fraction),days=from.days+(to.days-from.days)*fraction;
+      lastVisualDays=days;lastVisualSnapshot=snapshot;
+      const bluePoints=drawBlue(snapshot);moveAspectLines(bluePoints);
+      if(now-lastAspect>=ASPECT_MS){lastAspect=now;rebuildAspectLines(snapshot);moveAspectLines(bluePoints)}
+      updateUi(days,snapshot,to.snapshot,now);maybeRefill();
+      const max=Number(slider()?.max)||0;if(days>=max-.000001){stopPlayback({sync:true});return}
+      raf=requestAnimationFrame(frame);
+    }
+    raf=requestAnimationFrame(frame);
+  }
 
   function stopPlayback({sync=true}={}){
     if(!playing)return;
-    const elapsed=(performance.now()-startPerf)/1000,max=Number(slider()?.max)||0,days=clamp(startDays+elapsed*playbackSpeed,0,max),visual=visualForDays(days);
-    playing=false;playbackToken+=1;workerBusy=false;activeRequestId='';worker?.postMessage({type:'cancel'});if(raf)cancelAnimationFrame(raf);raf=0;document.documentElement.removeAttribute('data-progression-live-playing');
-    const bluePoints=drawBlue(visual.snapshot);moveAspectLines(bluePoints);if(slider())slider().value=String(days);syncButton();samples=[];
+    playing=false;visualRunning=false;playbackToken+=1;workerBusy=false;activeRequestId='';worker?.postMessage({type:'cancel'});if(raf)cancelAnimationFrame(raf);raf=0;document.documentElement.removeAttribute('data-progression-live-playing');
+    const bluePoints=drawBlue(lastVisualSnapshot);moveAspectLines(bluePoints);if(slider())slider().value=String(lastVisualDays);syncButton();samples=[];
     if(sync&&slider()){synthetic=true;try{slider().dispatchEvent(new Event('input',{bubbles:true}))}finally{synthetic=false}}
   }
   function startPlayback(){
@@ -232,41 +189,20 @@
     if(!ensureWorker()){const host=panel()?.querySelector('[data-progression-annotations]');if(host)host.innerHTML='<p class="sky-progression-no-events">This browser could not start the continuous playback worker.</p>';return}
     if(!captureGeometry())return;
     const initialSnapshot=snapshotFromWheel();if(initialSnapshot.size<2)return;
-    startDays=Number(range.value)||0;playbackSpeed=Math.max(1,Number(speedControl()?.value)||365.2422);startPerf=performance.now();samples=[{days:startDays,snapshot:initialSnapshot}];playbackToken+=1;requestSerial=0;workerBusy=false;lastUi=0;lastAspect=0;lastAnnotationHTML='';
-    playing=true;document.documentElement.setAttribute('data-progression-live-playing','true');syncButton();rebuildAspectLines(initialSnapshot);
+    const startDays=Number(range.value)||0;playbackSpeed=Math.max(1,Number(speedControl()?.value)||365.2422);samples=[{days:startDays,snapshot:initialSnapshot}];lastVisualDays=startDays;lastVisualSnapshot=initialSnapshot;
+    playbackToken+=1;requestSerial=0;workerBusy=false;lastUi=0;lastAspect=0;lastAnnotationHTML='';playing=true;visualRunning=false;document.documentElement.setAttribute('data-progression-live-playing','true');syncButton('buffering');rebuildAspectLines(initialSnapshot);drawBlue(initialSnapshot);
     const stepDays=playbackSpeed*KEYFRAME_REAL_MS/1000;requestChunk(startDays+stepDays);
-
-    function frame(now){
-      if(!playing)return;
-      const max=Number(slider()?.max)||0,elapsed=(now-startPerf)/1000,days=clamp(startDays+elapsed*playbackSpeed,0,max),visual=visualForDays(days),bluePoints=drawBlue(visual.snapshot);
-      moveAspectLines(bluePoints);
-      if(now-lastAspect>=ASPECT_MS){lastAspect=now;rebuildAspectLines(visual.snapshot);moveAspectLines(bluePoints)}
-      updateUi(days,visual,now);maybeRefill(days);
-      if(days>=max-.000001){stopPlayback({sync:true});return}
-      raf=requestAnimationFrame(frame);
-    }
-    raf=requestAnimationFrame(frame);
   }
 
-  function installTransport(){
-    const root=panel();if(!root)return false;const row=root.querySelector('.sky-progression-scrub-row'),view=root.querySelector('.sky-progressions-wheel-shell');if(!row||!view)return false;
-    let transport=root.querySelector('.sky-progression-transport');if(!transport){transport=document.createElement('div');transport.className='sky-progression-transport';view.before(transport)}
-    if(row.parentElement!==transport)transport.appendChild(row);if(slider())slider().step='any';return true;
-  }
-  function injectStyle(){
-    if(document.getElementById('skyProgressionsSmoothPlaybackStyle'))return;
-    const style=document.createElement('style');style.id='skyProgressionsSmoothPlaybackStyle';style.textContent=`
-      .sky-progression-transport{position:sticky;top:.3rem;z-index:8;margin:.35rem 0 .45rem;padding:.45rem .5rem;border:1px solid rgba(25,23,20,.11);border-radius:.75rem;background:rgba(255,255,255,.96);backdrop-filter:blur(8px)}
-      .sky-progression-transport .sky-progression-scrub-row{margin:0}
-      [data-progression-shared-wheel="true"] [data-layer="placements"] [data-sky="B"][data-placement]:not([data-placement="sun"]):not([data-placement="moon"]):not([data-placement="mercury"]):not([data-placement="venus"]):not([data-placement="mars"]):not([data-placement="jupiter"]):not([data-placement="saturn"]):not([data-placement="uranus"]):not([data-placement="neptune"]):not([data-placement="pluto"]),
-      [data-progression-shared-wheel="true"] [data-layer="leaders"] [data-sky="B"][data-placement]:not([data-placement="sun"]):not([data-placement="moon"]):not([data-placement="mercury"]):not([data-placement="venus"]):not([data-placement="mars"]):not([data-placement="jupiter"]):not([data-placement="saturn"]):not([data-placement="uranus"]):not([data-placement="neptune"]):not([data-placement="pluto"]){display:none!important}
-    `;document.head.appendChild(style);
-  }
+  function installTransport(){const root=panel();if(!root)return false;const row=root.querySelector('.sky-progression-scrub-row'),view=root.querySelector('.sky-progressions-wheel-shell');if(!row||!view)return false;let transport=root.querySelector('.sky-progression-transport');if(!transport){transport=document.createElement('div');transport.className='sky-progression-transport';view.before(transport)}if(row.parentElement!==transport)transport.appendChild(row);if(slider())slider().step='any';return true}
+  function injectStyle(){if(document.getElementById('skyProgressionsSmoothPlaybackStyle'))return;const style=document.createElement('style');style.id='skyProgressionsSmoothPlaybackStyle';style.textContent=`
+    .sky-progression-transport{position:sticky;top:.3rem;z-index:8;margin:.35rem 0 .45rem;padding:.45rem .5rem;border:1px solid rgba(25,23,20,.11);border-radius:.75rem;background:rgba(255,255,255,.96);backdrop-filter:blur(8px)}
+    .sky-progression-transport .sky-progression-scrub-row{margin:0}
+    [data-progression-shared-wheel="true"] [data-layer="placements"] [data-sky="B"][data-placement]:not([data-placement="sun"]):not([data-placement="moon"]):not([data-placement="mercury"]):not([data-placement="venus"]):not([data-placement="mars"]):not([data-placement="jupiter"]):not([data-placement="saturn"]):not([data-placement="uranus"]):not([data-placement="neptune"]):not([data-placement="pluto"]),
+    [data-progression-shared-wheel="true"] [data-layer="leaders"] [data-sky="B"][data-placement]:not([data-placement="sun"]):not([data-placement="moon"]):not([data-placement="mercury"]):not([data-placement="venus"]):not([data-placement="mars"]):not([data-placement="jupiter"]):not([data-placement="saturn"]):not([data-placement="uranus"]):not([data-placement="neptune"]):not([data-placement="pluto"]){display:none!important}
+  `;document.head.appendChild(style)}
 
-  document.addEventListener('click',event=>{
-    const button=event.target.closest?.('[data-progression-play]');if(button){event.preventDefault();event.stopImmediatePropagation();playing?stopPlayback({sync:true}):startPlayback();return}
-    if(playing&&event.target.closest?.('[data-sky-middle-tab="comparison"], [data-progression-now], [data-final-now]'))stopPlayback({sync:false});
-  },true);
+  document.addEventListener('click',event=>{const button=event.target.closest?.('[data-progression-play]');if(button){event.preventDefault();event.stopImmediatePropagation();playing?stopPlayback({sync:true}):startPlayback();return}if(playing&&event.target.closest?.('[data-sky-middle-tab="comparison"], [data-progression-now], [data-final-now]'))stopPlayback({sync:false})},true);
   document.addEventListener('input',event=>{if(event.target.matches?.('[data-progression-scrubber]')&&!synthetic&&playing)stopPlayback({sync:false})},true);
   document.addEventListener('change',event=>{if(playing&&event.target.matches?.('[data-progression-range-start], [data-progression-range-end], [data-progression-speed]'))stopPlayback({sync:false})},true);
   window.addEventListener('relphi:sky-foundation-ready',()=>{if(playing)stopPlayback({sync:false});requestAnimationFrame(installTransport)});
