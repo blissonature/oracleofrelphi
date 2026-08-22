@@ -90,23 +90,40 @@ export function calculateSky({name='Unsaved sky',instant,localDateTime='',latitu
   };
 }
 
-let luxonPromise=null;
-async function ensureLuxon(){
-  if(window.luxon?.DateTime)return window.luxon;
-  if(!luxonPromise)luxonPromise=new Promise((resolve,reject)=>{
-    const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js';script.async=true;
-    script.onload=()=>window.luxon?.DateTime?resolve(window.luxon):reject(new Error('Date-time library did not initialize.'));
-    script.onerror=()=>reject(new Error('Date-time library could not be loaded.'));document.head.appendChild(script);
-  });
-  return luxonPromise;
+function parseLocalDateTime(value){
+  const match=String(value||'').trim().match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if(!match)throw new Error('Choose an exact date and time.');
+  const parts={year:Number(match[1]),month:Number(match[2]),day:Number(match[3]),hour:Number(match[4]),minute:Number(match[5]),second:Number(match[6]||0)};
+  const stamp=Date.UTC(parts.year,parts.month-1,parts.day,parts.hour,parts.minute,parts.second);
+  const check=new Date(stamp);
+  if(check.getUTCFullYear()!==parts.year||check.getUTCMonth()+1!==parts.month||check.getUTCDate()!==parts.day||check.getUTCHours()!==parts.hour||check.getUTCMinutes()!==parts.minute||check.getUTCSeconds()!==parts.second)throw new Error('The date and time are invalid.');
+  return{...parts,stamp};
 }
-export async function exactInstant(localDateTime,timeZone){
-  const raw=String(localDateTime||'').trim(),zone=String(timeZone||'').trim();
-  if(!raw)throw new Error('Choose an exact date and time.');
+function zoneFormatter(timeZone){
+  try{return new Intl.DateTimeFormat('en-US-u-ca-gregory',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'})}
+  catch{throw new Error('Enter a valid IANA time zone, such as America/Denver.')}
+}
+function zonedParts(formatter,date){
+  const values={};
+  for(const part of formatter.formatToParts(date))if(part.type!=='literal')values[part.type]=Number(part.value);
+  return{year:values.year,month:values.month,day:values.day,hour:values.hour,minute:values.minute,second:values.second};
+}
+function sameLocal(left,right){return left.year===right.year&&left.month===right.month&&left.day===right.day&&left.hour===right.hour&&left.minute===right.minute&&left.second===right.second}
+export function exactInstant(localDateTime,timeZone){
+  const desired=parseLocalDateTime(localDateTime),zone=String(timeZone||'').trim();
   if(!zone)throw new Error('Enter an IANA time zone, such as America/Denver.');
-  const{DateTime}=await ensureLuxon(),value=DateTime.fromISO(raw,{zone,setZone:true});
-  if(!value.isValid)throw new Error(value.invalidExplanation||'The date, time, or time zone is invalid.');
-  return value.toUTC().toJSDate();
+  const formatter=zoneFormatter(zone),target=desired.stamp;
+  let instant=target;
+  for(let pass=0;pass<4;pass++){
+    const shown=zonedParts(formatter,new Date(instant));
+    const shownStamp=Date.UTC(shown.year,shown.month-1,shown.day,shown.hour,shown.minute,shown.second);
+    const delta=target-shownStamp;
+    if(delta===0)break;
+    instant+=delta;
+  }
+  const result=new Date(instant),verified=zonedParts(formatter,result);
+  if(!sameLocal(desired,verified))throw new Error('That local clock time does not exist in the selected time zone because of a daylight-saving transition.');
+  return result;
 }
 
 function currentPosition(){
