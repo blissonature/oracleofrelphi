@@ -25,7 +25,6 @@ function appendOnce(src,guard,onload){
   const existing=document.querySelector(`script[src^="${base}"]`);
   if(existing){
     existing.addEventListener('load',()=>onload?.(),{once:true});
-    // If an earlier parser script already loaded, its global guard is available now.
     if(window[guard])onload?.();
     return;
   }
@@ -36,13 +35,14 @@ function appendOnce(src,guard,onload){
   document.body.appendChild(script);
 }
 function installLiveSkyState(){
-  // Migration must run before the first staleness/header render so a persisted legacy
-  // Now sky is already classified when its visible header is built.
   appendOnce('sky-chart-live-origin-migration-v1.js?v=2','__relphiSkyLiveOriginMigrationV1',()=>{
     appendOnce('sky-chart-staleness-v1.js?v=1','__relphiSkyStalenessV1',()=>{
       appendOnce('sky-chart-live-header-v1.js?v=1','__relphiSkyLiveHeaderV1');
     });
   });
+}
+function installRelationshipDisplay(){
+  appendOnce('sky-chart-relationship-display-v1.js?v=1','__relphiSkyRelationshipDisplayV1');
 }
 function scrollableAncestor(target){
   let node=target instanceof Element?target:null;
@@ -74,6 +74,7 @@ function onTouchMove(event){
 function install(){
   installStyles();
   installLiveSkyState();
+  installRelationshipDisplay();
   document.addEventListener('touchstart',onTouchStart,{capture:true,passive:true});
   document.addEventListener('touchmove',onTouchMove,{capture:true,passive:false});
 }
