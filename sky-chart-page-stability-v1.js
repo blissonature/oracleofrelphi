@@ -19,6 +19,13 @@ function installStyles(){
   `;
   document.head.appendChild(style);
 }
+function installStaleness(){
+  if(window.__relphiSkyStalenessV1||document.querySelector('script[src^="sky-chart-staleness-v1.js"]'))return;
+  const script=document.createElement('script');
+  script.async=false;
+  script.src='sky-chart-staleness-v1.js?v=1';
+  document.body.appendChild(script);
+}
 function scrollableAncestor(target){
   let node=target instanceof Element?target:null;
   while(node&&node!==document.body&&node!==document.documentElement){
@@ -48,6 +55,7 @@ function onTouchMove(event){
 }
 function install(){
   installStyles();
+  installStaleness();
   document.addEventListener('touchstart',onTouchStart,{capture:true,passive:true});
   document.addEventListener('touchmove',onTouchMove,{capture:true,passive:false});
 }
