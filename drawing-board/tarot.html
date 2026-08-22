@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="robots" content="noindex,nofollow,noarchive"/>
+  <link href="../favicon.ico" rel="icon" type="image/x-icon"/>
+  <link href="../style.css?v=346" rel="stylesheet"/>
+  <title>Drawing Board · Oracle of Relphi</title>
+</head>
+<body>
+  <main class="tarot-app-shell">
+    <section class="tarot-hero compact">
+      <h1>Drawing <span class="red">Board</span></h1>
+    </section>
+    <section class="tarot-entry-panel" aria-live="polite">
+      <article>
+        <p class="eyebrow">Oracle of Relphi</p>
+        <h2>Loading Drawing Board…</h2>
+      </article>
+    </section>
+  </main>
+  <script>
+    (async function () {
+      'use strict';
+      try {
+        const response = await fetch('../tarot.html', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Tarot Ledger template returned ' + response.status);
+        let html = await response.text();
+        const base = '<base href="../">';
+        if (/<head[^>]*>/i.test(html)) html = html.replace(/<head([^>]*)>/i, '<head$1>' + base);
+        else html = base + html;
+        document.open();
+        document.write(html);
+        document.close();
+      } catch (error) {
+        const panel = document.querySelector('.tarot-entry-panel article');
+        if (panel) panel.innerHTML = '<p class="eyebrow">Drawing Board</p><h2>Could not load the shared Tarot Ledger shell.</h2><p>' + String(error.message || error) + '</p>';
+      }
+    })();
+  </script>
+</body>
+</html>
