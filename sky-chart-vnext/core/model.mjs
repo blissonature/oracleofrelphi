@@ -142,7 +142,8 @@ export function aspectBetween(left,right,orbLimit=3){
 }
 
 function relation(leftSlot,left,rightSlot,right,aspect,scope){
-  return{id:`${leftSlot}:${left.id}|${rightSlot}:${right.id}|${aspect.id}`,scope,left:{slot:leftSlot,...left},right:{slot:rightSlot,...right},...aspect};
+  const aspectId=aspect.id;
+  return{...aspect,aspectId,id:`${leftSlot}:${left.id}|${rightSlot}:${right.id}|${aspectId}`,scope,left:{slot:leftSlot,...left},right:{slot:rightSlot,...right}};
 }
 function withinRelationships(sky,slot,orbLimit){
   const entries=placementEntries(sky),result=[];
