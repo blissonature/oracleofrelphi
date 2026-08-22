@@ -15,8 +15,7 @@
     <section class="tarot-hero compact">
       <h1>Drawing <span class="red">Board</span></h1>
     </section>
-
-    <section class="tarot-mode-bar" hidden aria-label="Shared card controls">
+<section class="tarot-mode-bar" hidden aria-label="Shared card controls">
       <button id="showAllCards" type="button">Show All Cards</button>
       <button id="drawMode" type="button" hidden>Draw Cards</button>
       <button id="dateMode" type="button" hidden>Date Field</button>
@@ -38,9 +37,7 @@
         </div>
         <div id="commandMenu" class="command-menu" hidden></div>
       </details>
-      <section id="shortListPanel" class="short-list-panel" aria-label="Drawing Board">
-        <div id="drawingBoardBootStatus" class="generated-note" role="status">Loading Drawing Board…</div>
-      </section>
+      <section id="shortListPanel" class="short-list-panel" aria-label="Drawing Board"><div id="drawingBoardBootStatus" class="generated-note" role="status">Loading Drawing Board…</div></section>
     </section>
 
     <section id="tarotSummary" hidden class="tarot-summary" aria-live="polite">
@@ -48,12 +45,298 @@
       <div id="activeSummary">Begin with a search, a spread, a date, a chart placement, or show the full deck.</div>
     </section>
 
-    <section id="visibilityPanel" hidden class="tarot-visibility-panel" aria-label="Show and hide card groups"></section>
-    <section id="datePanel" hidden class="tarot-tool-panel" aria-label="Date field"></section>
-    <section id="chartPanel" hidden class="tarot-tool-panel" aria-label="Sky creator and chart comparison"></section>
-    <section id="spreadPanel" hidden class="tarot-tool-panel" aria-label="Spread engine"></section>
+    <section id="visibilityPanel" hidden class="tarot-visibility-panel" hidden aria-label="Show and hide card groups">
+      <div class="panel-heading-row">
+        <div>
+          <p class="eyebrow">Browse visibility</p>
+          <h2>Show / Hide</h2>
+          <p>All categories start checked. Uncheck a group to hide those cards from the full deck view.</p>
+        </div>
+        <div class="button-row">
+          <button id="resetVisibility" type="button">Reset Visibility</button>
+          <button id="showDecansOnly" type="button">Show Decans Only</button>
+          <button id="hideAllCards" type="button">Hide All</button>
+        </div>
+      </div>
+      <div class="visibility-grid">
+        <fieldset>
+          <legend>Card Type</legend>
+          <label><input type="checkbox" data-filter-group="type" value="Major" checked/> Majors</label>
+          <label><input type="checkbox" data-filter-group="type" value="Ace" checked/> Aces</label>
+          <label><input type="checkbox" data-filter-group="type" value="Pip" checked/> Pips</label>
+          <label><input type="checkbox" data-filter-group="type" value="Court" checked/> Courts</label>
+        </fieldset>
+        <fieldset>
+          <legend>Suit</legend>
+          <label><input type="checkbox" data-filter-group="suit" value="Wands" checked/> Wands</label>
+          <label><input type="checkbox" data-filter-group="suit" value="Cups" checked/> Cups</label>
+          <label><input type="checkbox" data-filter-group="suit" value="Swords" checked/> Swords</label>
+          <label><input type="checkbox" data-filter-group="suit" value="Pentacles" checked/> Pentacles / Disks</label>
+        </fieldset>
+        <fieldset>
+          <legend>Value / Rank</legend>
+          <div class="rank-mode-toggles" aria-label="Pip mode groups">
+            <label><input type="checkbox" data-rank-mode="cardinal" checked/> Cardinal pips: Twos, Threes, Fours</label>
+            <label><input type="checkbox" data-rank-mode="fixed" checked/> Fixed pips: Fives, Sixes, Sevens</label>
+            <label><input type="checkbox" data-rank-mode="mutable" checked/> Mutable pips: Eights, Nines, Tens</label>
+          </div>
+          <label><input type="checkbox" data-filter-group="rank" value="Ace" checked/> Aces</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Two" checked/> Twos</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Three" checked/> Threes</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Four" checked/> Fours</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Five" checked/> Fives</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Six" checked/> Sixes</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Seven" checked/> Sevens</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Eight" checked/> Eights</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Nine" checked/> Nines</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Ten" checked/> Tens</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Princess" checked/> Pages / Princesses</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Prince" checked/> Knights / Princes</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Queen" checked/> Queens</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Knight" checked/> Kings / Knights</label>
+          <label><input type="checkbox" data-filter-group="rank" value="Major" checked/> Majors</label>
+        </fieldset>
+        <fieldset>
+          <legend>Element</legend>
+          <label><input type="checkbox" data-filter-group="element" value="Fire" checked/> Fire</label>
+          <label><input type="checkbox" data-filter-group="element" value="Water" checked/> Water</label>
+          <label><input type="checkbox" data-filter-group="element" value="Air" checked/> Air</label>
+          <label><input type="checkbox" data-filter-group="element" value="Earth" checked/> Earth</label>
+          <label><input type="checkbox" data-filter-group="element" value="Mixed" checked/> Mixed / Spirit / none</label>
+        </fieldset>
+      </div>
+    </section>
 
-    <section id="browsePanel" hidden class="tarot-layout">
+    <section id="datePanel" hidden class="tarot-tool-panel" hidden aria-label="Date field">
+      <div class="panel-heading-row compact-panel-heading">
+        <div>
+          <h2>Date Field</h2>
+        </div>
+      </div>
+      <div class="inline-form">
+        <label>Date <input id="dateInput" type="date"/></label>
+        <button id="readDate" type="button">Read Date</button>
+      </div>
+      <div id="dateOutput" class="ledger-output"></div>
+    </section>
+
+            <section id="chartPanel" hidden class="tarot-tool-panel" hidden aria-label="Sky creator and chart comparison">
+      <div class="panel-heading-row sky-chart-hero-panel sky-chart-hero-redesign">
+        <div>
+          <p class="eyebrow">Sky Chart</p>
+          <h2>Build the sky intentionally</h2>
+          <p class="sky-chart-hero-copy">Choose a guided path, then enter only the skies that path needs. Advanced mode keeps the direct editor available when you already know what you want.</p>
+        </div>
+        <div class="sky-builder-mode-switch" role="group" aria-label="Sky Builder interface mode">
+          <button id="skyBuilderWizardMode" class="sky-builder-mode-button is-active" type="button" data-sky-builder-ui="wizard" aria-pressed="true">Wizard</button>
+          <button id="skyBuilderAdvancedMode" class="sky-builder-mode-button" type="button" data-sky-builder-ui="advanced" aria-pressed="false">Advanced</button>
+        </div>
+      </div>
+
+      <section class="sky-wizard-shell" aria-label="Guided Sky Builder">
+        <div class="sky-wizard-step sky-wizard-step-intention">
+          <div class="sky-wizard-step-label">Step 1</div>
+          <div class="sky-wizard-step-copy">
+            <p class="eyebrow">Intention</p>
+            <h3>What are you building?</h3>
+            <p>Pick the reading shape first. The builder will reveal the minimum sky fields needed for that choice.</p>
+          </div>
+          <div class="sky-mode-card-row sky-wizard-mode-grid" role="group" aria-label="Sky Chart working mode">
+            <button type="button" class="sky-mode-card is-active" data-sky-chart-mode="single" aria-pressed="true"><span class="sky-mode-card-kicker">One sky</span><strong>Build one chart</strong><span>Natal, event, current sky, or manual sky.</span></button>
+            <button type="button" class="sky-mode-card" data-sky-chart-mode="transit" aria-pressed="false"><span class="sky-mode-card-kicker">Transits</span><strong>Base + moving sky</strong><span>Compare a chart with now, a date, or Planetary Hours.</span></button>
+            <button type="button" class="sky-mode-card" data-sky-chart-mode="synastry" aria-pressed="false"><span class="sky-mode-card-kicker">Synastry</span><strong>Two peer charts</strong><span>For two people or two equal symbolic subjects.</span></button>
+            <button type="button" class="sky-mode-card" data-sky-chart-mode="compare" aria-pressed="false"><span class="sky-mode-card-kicker">Compare</span><strong>Two neutral skies</strong><span>Event-to-event or chart-to-chart without relationship language.</span></button>
+          </div>
+        </div>
+
+        <div class="sky-wizard-step sky-wizard-step-build">
+          <div class="sky-wizard-step-label">Step 2</div>
+          <div class="sky-wizard-step-copy">
+            <p class="eyebrow">Build</p>
+            <h3>Enter the needed sky</h3>
+            <p id="skyWizardBuildHelp">Use calculation for date, time, and place, or paste/build placements manually.</p>
+          </div>
+          <div class="sky-wizard-targets" role="group" aria-label="Choose which sky to edit">
+            <button type="button" class="sky-wizard-target is-active" data-sky-wizard-target="chart" aria-pressed="true"><span id="skyWizardTargetALabel">Sky</span><small id="skyWizardTargetAStatus">Primary sky</small></button>
+            <button type="button" class="sky-wizard-target" data-sky-wizard-target="currentSky" aria-pressed="false"><span id="skyWizardTargetBLabel">Sky B</span><small id="skyWizardTargetBStatus">Choose a comparison mode first</small></button>
+          </div>
+          <div class="sky-wizard-action-grid" aria-label="Sky entry methods">
+            <button type="button" class="sky-wizard-action sky-wizard-action-primary" data-open-sky-calc><span>Calculate placements</span><small>Date · time · place · house system</small></button>
+            <button type="button" class="sky-wizard-action" data-use-ph-settings><span>Use Planetary Hours settings</span><small>Bring over current Where and When</small></button>
+            <button type="button" class="sky-wizard-action" data-focus-sky-paste><span>Paste placements</span><small>Astro-Seek, saved text, or copied chart rows</small></button>
+            <button type="button" class="sky-wizard-action" data-focus-sky-manual><span>Add manually</span><small>One placement at a time</small></button>
+          </div>
+        </div>
+
+        <div class="sky-wizard-step sky-wizard-step-review">
+          <div class="sky-wizard-step-label">Step 3</div>
+          <div class="sky-wizard-step-copy">
+            <p class="eyebrow">Read</p>
+            <h3>Review the wheel and relationships</h3>
+            <p id="skyWizardReadHelp">The aspect relationships and chart cards follow the intention selected above.</p>
+          </div>
+          <div class="sky-wizard-utility-row">
+            <button id="exportChart" type="button" class="sky-wizard-utility">Export sky data</button>
+            <button id="skyCreatorSaveWizard" type="button" class="sky-wizard-utility">Save current sky</button>
+          </div>
+        </div>
+      </section>
+
+      <details id="skyCreatorDrawer" class="sky-creator-drawer sky-builder-advanced-panel">
+        <summary><span>Advanced editor</span><span id="skyCreatorDrawerStatus" class="sky-creator-drawer-status">Direct controls for saved skies, calculation, paste, and manual placements</span></summary>
+        <section class="sky-creator-tool" aria-label="Sky creator">
+        <div class="sky-creator-toolbar">
+          <label>Editing sky
+            <select id="skyCreatorTarget">
+              <option value="chart">Sky A · primary</option>
+              <option value="currentSky">Sky B · comparison</option>
+            </select>
+          </label>
+          <div class="sky-creator-actions">
+            <button id="skyCreatorSave" type="button">Save Sky</button>
+            <button id="skyCreatorLoad" type="button">Load Saved</button>
+            <button id="skyCreatorClear" type="button">Clear Sky</button>
+            <button id="skyCreatorExportText" type="button">Export Sky Text</button>
+            <button id="skyCreatorImportText" type="button">Import Sky Text</button>
+            <input id="skyCreatorTextFile" type="file" accept=".txt,text/plain" hidden>
+          </div>
+        </div>
+
+        <div class="sky-workbench sky-creator-meta" aria-label="Sky files and notes">
+          <label class="sky-creator-name-label">Sky name <span class="sky-creator-name-control"><input id="skyCreatorName" type="text" autocomplete="off" placeholder="Untitled sky will be auto-named on save"><button id="skyCreatorNameClear" class="sky-creator-name-clear" type="button" aria-label="Clear sky name" title="Clear sky name" hidden>×</button></span><div id="skyCreatorSuggestions" class="sky-creator-suggestions" hidden></div></label>
+          <select id="skyCreatorLibrary" class="visually-hidden" tabindex="-1" aria-hidden="true"><option value="">Choose saved sky…</option></select>
+          <label class="sky-notes-label">Notes <textarea id="skyCreatorNotes" rows="3" placeholder="Notes for this sky"></textarea></label>
+        </div>
+
+        <details class="sky-calc-drawer">
+          <summary><span>Calculate placements</span><small>Astronomy Engine · date · time · typed location · house system</small></summary>
+          <div class="sky-calc-panel">
+            <div class="sky-calc-setup">
+              <label>Target sky
+                <select id="skyCalcTarget">
+                  <option value="chart">Sky A · primary</option>
+                  <option value="currentSky">Sky B · comparison</option>
+                </select>
+              </label>
+              <label>Sky name
+                <input id="skyCalcName" type="text" placeholder="Auto-named if left blank">
+              </label>
+              <label>House system
+                <select id="skyCalcHouseSystem">
+                  <option value="whole-sign">Whole Sign</option>
+                  <option value="equal-house">Equal House</option>
+                  <option value="porphyry">Porphyry</option>
+                  <option value="placidus">Placidus</option>
+                  <option value="alcabitius">Alcabitius</option>
+                  <option value="regiomontanus">Regiomontanus</option>
+                  <option value="campanus">Campanus</option>
+                  <option value="koch">Koch</option>
+                </select>
+              </label>
+            </div>
+            <div class="sky-calc-columns">
+              <section class="sky-calc-column" aria-label="When">
+                <h3>When</h3>
+                <label>Date and time
+                  <input id="skyCalcDateTime" type="datetime-local">
+                </label>
+                <label>Time zone
+                  <input id="skyCalcTimeZone" type="text" placeholder="Ex. Europe/London">
+                </label>
+                <button id="skyCalcNow" type="button">Use now</button>
+              </section>
+              <section class="sky-calc-column sky-calc-where-column" aria-label="Where">
+                <h3>Where</h3>
+                <label class="sky-location-search-label">Type a location
+                  <input id="skyCalcLocation" type="text" placeholder="Ex. London, Cairo, Salem MA, or an address">
+                </label>
+                <div class="sky-calc-button-row sky-location-button-row">
+                  <button id="skyCalcSearchLocation" class="relphi-secondary-action" type="button">Search location</button>
+                  <button id="skyCalcGeo" type="button">Use my location</button>
+                </div>
+                <div class="sky-coordinate-grid" aria-label="Coordinates">
+                  <label>Latitude
+                    <input id="skyCalcLatitude" type="number" step="0.0001" min="-90" max="90" inputmode="decimal" placeholder="Ex. 51.4769">
+                  </label>
+                  <label>Longitude
+                    <input id="skyCalcLongitude" type="number" step="0.0001" min="-180" max="180" inputmode="decimal" placeholder="Ex. -0.0005">
+                  </label>
+                </div>
+                <button id="skyCalcResolveCoords" type="button" title="Fill in the place name and time zone from the latitude and longitude.">Resolve coordinates</button>
+              </section>
+            </div>
+            <div class="sky-calc-shared-actions">
+              <label class="sky-ph-settings-toggle">
+                <input id="skyCalcUsePlanetaryHours" type="checkbox">
+                Use Planetary Hours settings
+              </label>
+              <button id="skyCalcSeed" type="button">Use editing sky metadata</button>
+              <button id="skyCalcReverseSolve" type="button">Infer date/place from placements</button>
+              <button id="skyCalcAttach" type="button">Attach to sky</button>
+            </div>
+            <div class="sky-calc-run-box">
+              <button id="skyCalcRun" class="relphi-primary-action" type="button">Calculate Placements</button>
+            </div>
+            <p id="skyCalcStatus" class="generated-note" aria-live="polite">Calculates geocentric ecliptic longitude for planets, plus Rising, Midheaven, and the selected house system from the chosen date, time, and location. Coordinates can resolve location label and IANA time zone; calculated date/time is interpreted in that coordinate time zone when available. Saved/imported metadata can restore date, time, and location; no private birth data is hard-coded.</p>
+          </div>
+        </details>
+
+        <div class="sky-creator-side-by-side">
+          <label class="sky-paste-panel" for="skyCreatorPaste">
+            <span>Paste placements</span>
+            <textarea id="skyCreatorPaste" rows="12" placeholder="Ex. Sun Libra 15°00’, in 2nd House&#10;Moon Cancer 28°25’, in 11th House"></textarea>
+          </label>
+          <details class="placement-entry-drawer compact-placement-builder sky-creator-builder" open>
+            <summary>Manual placement builder</summary>
+            <div id="skyCreatorForm" class="chart-form"></div>
+          </details>
+        </div>
+        </section>
+      </details>
+
+      <section class="sky-output-box sky-output-unified" aria-label="Sky chart results">
+        <div id="chartOutput" class="ledger-output"></div>
+        <div id="currentSkyOutput" class="ledger-output" hidden></div>
+      </section>
+      <p id="chartDownloadStatus" class="download-status" aria-live="polite"></p>
+    </section>
+    <section id="spreadPanel" hidden class="tarot-tool-panel" hidden aria-label="Spread engine">
+      <div class="panel-heading-row">
+        <div>
+          <p class="eyebrow">Spread Engine</p>
+          <h2>Draw Cards</h2>
+          <p>Choose a layout, draw a card series, reveal the positions, write notes, and download the reading.</p>
+        </div>
+      </div>
+      <div class="inline-form">
+        <label>Layout
+          <select id="spreadSelect">
+            <option value="pastPresentFuture">Past / Present / Future</option>
+            <option value="timeMindBodySpirit">3×3 Time · Mind / Body / Spirit</option>
+            <option value="celticCross">Celtic Cross</option>
+          </select>
+        </label>
+        <button id="drawSpread" type="button">Draw Cards</button>
+        <button id="revealSpread" type="button">Reveal All</button>
+        <button id="clearSpread" type="button">Clear Spread</button>
+        <label class="spread-toggle"><input id="crossedLayoutToggle" type="checkbox" checked/> Crossed layout</label>
+        <label class="spread-toggle"><input id="positionStickerToggle" type="checkbox" checked/> Position stickers</label>
+        <label class="spread-toggle"><input id="tutorialOrderToggle" type="checkbox" checked/> Tutorial order</label>
+      </div>
+      <div id="spreadOutput" class="spread-output"></div>
+      <article id="spreadCardDetail" class="tarot-detail spread-card-detail" hidden aria-live="polite"></article>
+      <label class="notes-label">Notes
+        <textarea id="spreadNotes" rows="5" placeholder="Ex. Write your reading notes here."></textarea>
+      </label>
+      <div class="button-row">
+        <button id="downloadSpreadHtml" type="button">Download Reading</button>
+        <button id="downloadSpreadJson" type="button">Export Spread Data</button>
+      </div>
+      <p id="downloadStatus" class="download-status" aria-live="polite"></p>
+      <div id="spreadAnalysis" class="ledger-output"></div>
+    </section>
+
+    <section id="browsePanel" hidden class="tarot-layout" hidden>
       <div class="tarot-list-panel">
         <h2 class="cards-heading">Cards <span id="resultInlineCount" class="cards-heading-count">No cards shown</span></h2>
         <div id="cardList" class="tarot-card-list" role="list"></div>
