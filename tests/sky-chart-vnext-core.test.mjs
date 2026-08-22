@@ -1,0 +1,51 @@
+import assert from'node:assert/strict';
+import{placement,calculateRelationships,normalizeName}from'../sky-chart-vnext/core/model.mjs';
+import{layoutWheel,assertLayoutInvariant}from'../sky-chart-vnext/core/layout.mjs';
+import{initialState,reducer,modeOf}from'../sky-chart-vnext/core/store.mjs';
+import{nameExists,suggestUniqueName,saveNewSky,readLibrary}from'../sky-chart-vnext/core/storage.mjs';
+
+function sample(name,offset=0){
+  const raw={Sun:29.7,Moon:29.9,Mercury:30.1,Venus:30.3,Mars:31.0,Jupiter:58.9,Saturn:59.2,Uranus:59.7,Neptune:60.2,Pluto:61.0,Ascendant:168.38,Midheaven:76.28};
+  const placements=Object.fromEntries(Object.entries(raw).map(([key,value])=>[key,placement(key,value+offset)]));
+  const cusps=Array.from({length:12},(_,i)=>(150+i*30)%360);
+  return{name,placements,houseCusps:cusps,calcProfile:{instant:'2026-08-21T18:00:00.000Z',latitude:'40.7608',longitude:'-111.891',timeZone:'America/Denver',location:'Salt Lake City, Utah',houseSystem:'whole-sign',houseCusps:cusps}};
+}
+
+const a=sample('A'),b=sample('B',15);
+let state=initialState();
+assert.equal(modeOf(state),'empty');
+state=reducer(state,{type:'SET_SLOT',slot:'A',sky:a});
+assert.equal(modeOf(state),'single');
+state=reducer(state,{type:'SET_SLOT',slot:'B',sky:b});
+assert.equal(modeOf(state),'comparison');
+state=reducer(state,{type:'CLEAR_SLOT',slot:'A'});
+assert.equal(modeOf(state),'empty');
+assert.equal(state.slots.B,null,'Clearing Sky A must also clear dependent Sky B.');
+
+const model=layoutWheel(a,b,3);
+assert.equal(assertLayoutInvariant(model.placements),true);
+for(const item of model.placements){
+  assert.equal(Math.floor(item.longitude/30),Math.floor(item.displayLongitude/30),`${item.name} crossed a sign boundary.`);
+  assert.equal(item.leader.placementId,item.id,'Leader identity must come from its placement.');
+  assert.equal(item.leader.slot,item.slot,'Leader slot must come from its placement.');
+}
+assert.ok(calculateRelationships(a,b,3).length>0,'Comparison must derive relationships directly from the two skies.');
+
+const records=[{id:'1',name:'Marisa Natal'},{id:'2',name:'Marisa Natal 2'}];
+assert.equal(normalizeName('  MARISA   Natal '),'marisa natal');
+assert.equal(nameExists('marisa natal',records),true,'Saved-sky names are case-insensitively unique.');
+assert.equal(suggestUniqueName('Marisa Natal',records),'Marisa Natal 3');
+
+class MemoryStorage{
+  constructor(){this.map=new Map()}
+  getItem(key){return this.map.has(key)?this.map.get(key):null}
+  setItem(key,value){this.map.set(key,String(value))}
+  removeItem(key){this.map.delete(key)}
+}
+const storage=new MemoryStorage(),first=saveNewSky(a,'My Sky',storage),duplicate=saveNewSky(b,'my sky',storage);
+assert.equal(first.ok,true);
+assert.equal(duplicate.ok,false,'A duplicate name must never overwrite an existing saved sky.');
+assert.equal(duplicate.suggestion,'my sky 2');
+assert.equal(readLibrary(storage).length,1,'Duplicate save must leave the original library intact.');
+
+console.log('Sky Chart vNext core invariants passed.');
