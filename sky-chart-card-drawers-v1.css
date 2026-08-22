@@ -1,1 +1,21 @@
-/* Native Sky-card drawer styles. */
+/* Native Sky-card drawers. The card is rendered in this structure from its first state. */
+.sky-card-drawers{display:grid;width:100%;min-width:0;border-top:1px solid rgba(31,27,24,.11)}
+.sky-card-drawer{min-width:0;margin:0;border:0;border-bottom:1px solid rgba(31,27,24,.11);background:#fffdfa}
+.sky-card-drawer>.sky-card-drawer-summary{display:grid;grid-template-columns:minmax(0,1fr) 18px;align-items:center;gap:.7rem;min-height:44px;box-sizing:border-box;padding:.7rem .82rem;list-style:none;color:#29231e;cursor:pointer;font:850 .72rem/1.2 system-ui,sans-serif;user-select:none;touch-action:manipulation}
+.sky-card-drawer>.sky-card-drawer-summary::-webkit-details-marker{display:none}
+.sky-card-drawer>.sky-card-drawer-summary:hover,.sky-card-drawer>.sky-card-drawer-summary:focus-visible{background:#f8f3ed;outline:none}
+.sky-card-drawer-chevron{display:block;width:16px;height:16px;justify-self:end;fill:none;stroke:#696058;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:rotate(0deg);transition:transform .14s ease}
+.sky-card-drawer[open]>.sky-card-drawer-summary .sky-card-drawer-chevron{transform:rotate(90deg)}
+.sky-card-drawer-body{min-width:0;min-height:0;height:auto}
+.sky-where-when-summary{display:grid;grid-auto-rows:max-content;justify-items:center;align-content:start;gap:3px;width:100%;min-height:0;box-sizing:border-box;padding:3px 8px 8px}
+.sky-where-when-summary[hidden],.sky-where-when-editor-mount[hidden]{display:none}
+.sky-card-drawer[data-sky-drawer="where"] .sky-ph-jump{display:grid;place-items:center;width:188px;max-width:100%;min-width:0;min-height:0;height:auto;box-sizing:border-box;margin:0;padding:2px 0 0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible;transform:none;pointer-events:none}
+.sky-card-drawer[data-sky-drawer="where"] .sky-ph-heptagram{display:block;width:184px;max-width:100%;height:auto;max-height:none;margin:0 auto;overflow:visible;visibility:hidden}
+.sky-card-drawer[data-sky-drawer="where"] .sky-ph-heptagram[data-canonical-source-ready="true"][data-canonical-heptagram-ready="true"]{visibility:visible}
+.sky-where-when-disclosure{display:grid;place-items:center;width:min(210px,76%);height:28px;min-height:28px;margin:0 auto;padding:0;border:1px solid rgba(31,27,24,.19);border-radius:4px;background:#f6f1eb;color:#615850;cursor:pointer;touch-action:manipulation}
+.sky-where-when-disclosure:hover,.sky-where-when-disclosure:focus-visible{border-color:rgba(31,27,24,.38);background:#eee7df;outline:2px solid rgba(201,33,30,.12);outline-offset:1px}
+.sky-where-when-disclosure-chevron{display:block;width:18px;height:12px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .14s ease}
+.sky-where-when-disclosure[aria-expanded="true"] .sky-where-when-disclosure-chevron{transform:rotate(180deg)}
+.sky-where-when-editor-mount{min-width:0;border-top:1px solid rgba(31,27,24,.09)}
+.sky-where-when-editor-mount>.sky-where-when-editor{width:100%;box-sizing:border-box}
+@media(max-width:620px){.sky-card-drawer>.sky-card-drawer-summary{min-height:46px;padding:.75rem .85rem;font-size:.74rem}.sky-where-when-summary{gap:2px;padding:6px 7px 7px}.sky-card-drawer[data-sky-drawer="where"] .sky-ph-jump{width:180px;padding:4px 0 0}.sky-card-drawer[data-sky-drawer="where"] .sky-ph-heptagram{width:176px}.sky-where-when-disclosure{width:min(204px,78%);height:30px;min-height:30px}}
