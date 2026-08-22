@@ -38,13 +38,24 @@
         }, true);
       }
 
+      function prepareDrawingBoardDocument(html) {
+        const base = '<base href="../">';
+        const firstPaintStyle = '<style id="relphiDrawingBoardFirstPaint">body.relphi-drawing-board-preboot #nav-placeholder,body.relphi-drawing-board-preboot .tarot-app-shell>:not(.tarot-hero){visibility:hidden!important}body.relphi-drawing-board-preboot .tarot-hero{visibility:visible!important}</style>';
+
+        if (/<head[^>]*>/i.test(html)) html = html.replace(/<head([^>]*)>/i, '<head$1>' + base + firstPaintStyle);
+        else html = base + firstPaintStyle + html;
+
+        html = html.replace(/<title>Tarot Ledger · Oracle of Relphi<\/title>/i, '<title>Drawing Board · Oracle of Relphi</title>');
+        html = html.replace(/<h1>Tarot <span class="red">Ledger<\/span><\/h1>/i, '<h1>Drawing <span class="red">Board</span></h1>');
+        html = html.replace(/<body>/i, '<body class="relphi-drawing-board-preboot">');
+        html = html.replace(/<\/body>/i, '<script src="drawing-board-first-paint-v1.js?v=1"><\\/script></body>');
+        return html;
+      }
+
       try {
         const response = await fetch('../tarot.html', { cache: 'no-store' });
         if (!response.ok) throw new Error('Tarot Ledger template returned ' + response.status);
-        let html = await response.text();
-        const base = '<base href="../">';
-        if (/<head[^>]*>/i.test(html)) html = html.replace(/<head([^>]*)>/i, '<head$1>' + base);
-        else html = base + html;
+        const html = prepareDrawingBoardDocument(await response.text());
         document.open();
         document.write(html);
         document.close();
