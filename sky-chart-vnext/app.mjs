@@ -15,6 +15,7 @@ import {
   relationshipMode,
   relationshipPassesFilters
 } from './core/filters.mjs';
+import { freshnessText, isLiveSky } from './core/freshness.mjs';
 import {
   isSavedSky,
   loadSavedSky,
@@ -77,7 +78,20 @@ const excludedSet = (state, kind, slot) => new Set(
 function slotStatus(sky) {
   const saved = isSavedSky(sky);
   if (saved.saved) return saved.dirty ? 'Saved · unsaved changes' : 'Saved';
-  return sky?.name === 'Now' ? 'Temporary · Now' : 'Not saved';
+  return isLiveSky(sky) ? 'Temporary · Now' : 'Not saved';
+}
+
+function freshnessHtml(slot, sky) {
+  if (!isLiveSky(sky)) return '';
+  return `<span class="sky-freshness"><span class="sky-freshness-age" data-freshness-slot="${slot}">${escapeHtml(freshnessText(sky))}</span><button class="sky-icon-button sky-refresh-button" type="button" data-update-now="${slot}" aria-label="Update Sky ${slot} to Now" title="Update to Now">↻</button></span>`;
+}
+
+function syncFreshness(state) {
+  root.querySelectorAll('[data-freshness-slot]').forEach(node => {
+    const slot = node.dataset.freshnessSlot === 'B' ? 'B' : 'A';
+    const sky = state.slots[slot];
+    node.textContent = isLiveSky(sky) ? freshnessText(sky) : '';
+  });
 }
 
 function glyphId(name) {
@@ -116,8 +130,8 @@ function slotHtml(slot, sky, state) {
       <div class="sky-slot-title"><span class="sky-slot-dot"></span><span class="sky-slot-name" title="${escapeHtml(sky.name)}">${escapeHtml(sky.name)}</span></div>
       <div class="sky-slot-actions">
         ${(!saved.saved || saved.dirty) ? `<button class="sky-text-button" type="button" data-save-slot="${slot}">${saved.dirty ? 'Save changes' : 'Save'}</button>` : ''}
-        <button class="sky-text-button" type="button" data-update-now="${slot}">Now</button>
-        <button class="sky-icon-button" type="button" data-replace-slot="${slot}" aria-label="Replace Sky ${slot}" title="Replace">↻</button>
+        ${freshnessHtml(slot, sky)}
+        <button class="sky-icon-button" type="button" data-replace-slot="${slot}" aria-label="Replace Sky ${slot}" title="Replace">⇄</button>
         <button class="sky-icon-button" type="button" data-clear-slot="${slot}" aria-label="Clear Sky ${slot}" title="Clear">×</button>
       </div>
     </div>
@@ -353,6 +367,7 @@ function renderWorkspace(state) {
   hydrateGlyphs(root);
   syncFilters(state);
   syncSelection(state);
+  syncFreshness(state);
 }
 
 function render(state) {
@@ -363,6 +378,7 @@ function render(state) {
   } else {
     syncFilters(state);
     syncSelection(state);
+    syncFreshness(state);
   }
   renderDialog(state.dialog);
 }
@@ -436,7 +452,7 @@ function validateSaveName(input) {
 async function createNow(slot) {
   setDialog(`New Sky ${slot}`, '<p class="sky-dialog-note"><span class="sky-spinner"></span>Resolving your current place and calculating the sky…</p>');
   try {
-    const sky = await calculateHereNow('whole-sign');
+    const sky = await calculateHereNow('whole-sign', 'here-now-vnext');
     store.dispatch({ type: 'SET_SLOT', slot, sky });
     store.dispatch({ type: 'CLOSE_DIALOG' });
   } catch (error) {
@@ -449,7 +465,7 @@ async function updateSlotToNow(slot, button) {
   if (button) { button.dataset.busy = 'true'; button.disabled = true; button.setAttribute('aria-busy', 'true'); }
   try {
     const system = store.getState().slots[slot]?.calcProfile?.houseSystem || 'whole-sign';
-    const sky = await calculateHereNow(system);
+    const sky = await calculateHereNow(system, 'update-now-vnext');
     store.dispatch({ type: 'SET_SLOT', slot, sky });
   } catch (error) {
     window.alert(error?.code === 1 ? 'Location permission was denied.' : error?.message || 'Here and Now could not be created.');
@@ -570,4 +586,6 @@ dialog.addEventListener('submit', async event => {
 });
 
 store.subscribe(state => { saveWorkspace(state); render(state); });
+window.setInterval(() => syncFreshness(store.getState()), 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) syncFreshness(store.getState()); });
 render(store.getState());
