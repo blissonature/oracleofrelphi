@@ -3,6 +3,7 @@ import{canonicalId,placement,placementEntries,calculateRelationships,calculateRe
 import{layoutWheel,assertLayoutInvariant}from'../sky-chart-vnext/core/layout.mjs';
 import{initialState,reducer,modeOf}from'../sky-chart-vnext/core/store.mjs';
 import{placementPassesFilters,relationshipMode,relationshipPassesFilters}from'../sky-chart-vnext/core/filters.mjs';
+import{freshnessText,isLiveSky}from'../sky-chart-vnext/core/freshness.mjs';
 import{nameExists,suggestUniqueName,saveNewSky,readLibrary}from'../sky-chart-vnext/core/storage.mjs';
 import{exactInstant,solarAltitudeFromGeometry}from'../sky-chart-vnext/core/astronomy.mjs';
 
@@ -56,6 +57,17 @@ filtered=reducer(filtered,{type:'RESET_FILTERS'});
 const cross=pool.find(relation=>relation.scope==='A-B');
 filtered=reducer(filtered,{type:'SET_FILTER_EXCLUDED',kind:'aspects',values:[cross.aspectId]});
 assert.equal(relationshipPassesFilters(filtered,cross),false,'Aspect filtering must derive from store state without event rebroadcasting.');
+
+const hereNow={calcProfile:{source:'here-now-vnext',instant:'2026-08-22T02:00:00.000Z'}};
+const updatedNow={calcProfile:{source:'update-now-vnext',instant:'2026-08-22T02:00:00.000Z'}};
+const exactSky={calcProfile:{source:'exact-vnext',instant:'2026-08-22T02:00:00.000Z'}};
+assert.equal(isLiveSky(hereNow),true,'Here and Now skies must carry live freshness provenance.');
+assert.equal(isLiveSky(updatedNow),true,'Update to Now skies must carry live freshness provenance.');
+assert.equal(isLiveSky(exactSky),false,'Exact/manual skies must not be treated as live merely because they have a timestamp.');
+assert.equal(freshnessText(hereNow,Date.parse('2026-08-22T02:00:30.000Z')),'Now');
+assert.equal(freshnessText(hereNow,Date.parse('2026-08-22T02:05:00.000Z')),'5 minutes ago');
+assert.equal(freshnessText(updatedNow,Date.parse('2026-08-22T02:01:00.000Z')),'1 minute ago');
+assert.equal(freshnessText(exactSky,Date.parse('2026-08-22T02:05:00.000Z')),'','Exact/manual skies must have no freshness readout.');
 
 assert.ok(Math.abs(solarAltitudeFromGeometry(0,0,0,0)-90)<1e-9,'A Sun on the equatorial meridian at the equator must be overhead.');
 assert.ok(Math.abs(solarAltitudeFromGeometry(0,0,180,0)+90)<1e-9,'The opposite meridian must put that Sun directly below the horizon.');
