@@ -6,6 +6,7 @@ on:
       - 'drawing-board/**'
       - 'drawing-board-standalone-v2.js'
       - 'drawing-board-first-paint-v1.js'
+      - 'drawing-board-direct-boot-v1.js'
       - 'tarot-ledger-no-board-v1.js'
       - 'navloader.js'
       - 'nav.html'
@@ -14,12 +15,14 @@ on:
       - 'scripts/materialize-drawing-board.py'
       - 'tests/drawing-board-standalone-v2.test.js'
       - 'tests/drawing-board-navigation.browser.js'
+      - 'tests/drawing-board-no-ledger-flash.browser.js'
       - '.github/workflows/drawing-board-standalone-check.yml'
   pull_request:
     paths:
       - 'drawing-board/**'
       - 'drawing-board-standalone-v2.js'
       - 'drawing-board-first-paint-v1.js'
+      - 'drawing-board-direct-boot-v1.js'
       - 'tarot-ledger-no-board-v1.js'
       - 'navloader.js'
       - 'nav.html'
@@ -28,6 +31,7 @@ on:
       - 'scripts/materialize-drawing-board.py'
       - 'tests/drawing-board-standalone-v2.test.js'
       - 'tests/drawing-board-navigation.browser.js'
+      - 'tests/drawing-board-no-ledger-flash.browser.js'
       - '.github/workflows/drawing-board-standalone-check.yml'
   workflow_dispatch:
 
@@ -50,10 +54,12 @@ jobs:
         run: |
           node --check drawing-board-standalone-v2.js
           node --check drawing-board-first-paint-v1.js
+          node --check drawing-board-direct-boot-v1.js
           node --check tarot-ledger-no-board-v1.js
           node --check navloader.js
           node --check tests/drawing-board-standalone-v2.test.js
           node --check tests/drawing-board-navigation.browser.js
+          node --check tests/drawing-board-no-ledger-flash.browser.js
           node tests/drawing-board-standalone-v2.test.js
       - name: Install Playwright driver only
         env:
@@ -64,4 +70,5 @@ jobs:
       - name: Run standalone Drawing Board browser regression
         run: |
           python3 -m http.server 8000 > /tmp/drawing-board-standalone-server.log 2>&1 &
+          RELPHI_BROWSER_EXECUTABLE="$(command -v google-chrome)" node tests/drawing-board-no-ledger-flash.browser.js
           RELPHI_BROWSER_EXECUTABLE="$(command -v google-chrome)" node tests/drawing-board-navigation.browser.js
