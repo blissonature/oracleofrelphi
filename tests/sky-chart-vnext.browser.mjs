@@ -16,7 +16,7 @@ await page.addInitScript(lib=>{
   localStorage.setItem('relphiSkyLibraryV1',JSON.stringify(lib));sessionStorage.removeItem('relphiSkyVNextWorkspaceV1');
   window.__nativeDispatchEvent=Function.prototype.toString.call(EventTarget.prototype.dispatchEvent);
 },library);
-await page.goto('http://127.0.0.1:4173/sky-chart-vnext/',{waitUntil:'networkidle'});
+await page.goto('http://127.0.0.1:4173/sky-chart-vnext.html',{waitUntil:'networkidle'});
 assert.equal(await page.locator('[data-add-sky="A"]').count(),1,'Sky A must start as an explicit empty slot.');
 assert.equal(await page.locator('[data-add-sky="B"]').count(),0,'Sky B is unavailable until Sky A exists.');
 await page.locator('[data-add-sky="A"]').click();
