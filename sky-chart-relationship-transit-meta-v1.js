@@ -8,9 +8,10 @@ window.__relphiRelationshipTransitMetaV1=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const BODY={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',pluto:'Pluto'};
+const NODE_IDS=new Set(['north-node','south-node']);
 const ANGLE={conjunction:0,'semi-sextile':30,octile:45,sextile:60,quintile:72,square:90,trine:120,'tri-octile':135,'bi-quintile':144,quincunx:150,opposition:180};
-const STEP={moon:.03,mercury:.12,venus:.18,mars:.3,sun:.2,jupiter:.6,saturn:.9,uranus:1.25,neptune:1.5,pluto:1.75};
-const HORIZON={moon:24,mercury:300,venus:520,mars:900,sun:450,jupiter:1600,saturn:2200,uranus:3000,neptune:3400,pluto:3800};
+const STEP={moon:.03,mercury:.12,venus:.18,mars:.3,sun:.2,jupiter:.6,saturn:.9,uranus:1.25,neptune:1.5,pluto:1.75,'north-node':1,'south-node':1};
+const HORIZON={moon:24,mercury:300,venus:520,mars:900,sun:450,jupiter:1600,saturn:2200,uranus:3000,neptune:3400,pluto:3800,'north-node':1800,'south-node':1800};
 const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
 const ALIAS={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 const DAY=86400000;
@@ -39,18 +40,24 @@ function angularLimit(row){
   const safePhase=Number.isFinite(phase)&&phase>=0?phase:Number(model?.defaultWindow)||6;
   return Math.max(.0001,safePhase/harmonic);
 }
-function astronomyLongitude(body,date){const astronomy=window.Astronomy,bodyValue=astronomy?.Body?.[BODY[body]]||BODY[body];if(!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;return astronomy.Ecliptic(astronomy.GeoVector(bodyValue,date,true)).elon}
+function meanNodeLongitude(date){const jd=date.getTime()/DAY+2440587.5,T=(jd-2451545.0)/36525;return norm(125.04452-1934.136261*T+0.0020708*T*T+(T*T*T)/450000)}
+function movingLongitude(id,date){
+  if(id==='north-node')return meanNodeLongitude(date);
+  if(id==='south-node')return norm(meanNodeLongitude(date)+180);
+  const astronomy=window.Astronomy,bodyValue=astronomy?.Body?.[BODY[id]]||BODY[id];if(!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;return astronomy.Ecliptic(astronomy.GeoVector(bodyValue,date,true)).elon;
+}
 function modelFor(row){
-  const moving=movingSlot();if(!moving||!window.Astronomy)return null;
+  const moving=movingSlot();if(!moving)return null;
   const movingId=String(row.dataset[moving==='A'?'leftPlacement':'rightPlacement']||''),fixedId=String(row.dataset[moving==='A'?'rightPlacement':'leftPlacement']||''),angle=ANGLE[String(row.dataset.aspect||'')],date=profileDate(moving);
-  if(!BODY[movingId]||!fixedId||!Number.isFinite(angle)||!date)return null;
+  if((!BODY[movingId]&&!NODE_IDS.has(movingId))||!fixedId||!Number.isFinite(angle)||!date)return null;
+  if(BODY[movingId]&&!window.Astronomy)return null;
   const fixed=findRecord(moving==='A'?'B':'A',fixedId);if(!fixed)return null;
   return{moving,movingId,fixedId,fixedLongitude:fixed.value,angle,date,limit:angularLimit(row),step:STEP[movingId]||.5,horizon:HORIZON[movingId]||1200};
 }
 function analyzer(model){
   const targetA=model.fixedLongitude+model.angle,targetB=model.fixedLongitude-model.angle;
-  const errorAt=ms=>{const value=astronomyLongitude(model.movingId,new Date(ms));if(!Number.isFinite(value))return Infinity;const a=Math.abs(wrap(value-targetA)),b=Math.abs(wrap(value-targetB));return Math.min(a,b)};
-  const speedAt=ms=>wrap(astronomyLongitude(model.movingId,new Date(ms+.06*DAY))-astronomyLongitude(model.movingId,new Date(ms-.06*DAY)))/.12;
+  const errorAt=ms=>{const value=movingLongitude(model.movingId,new Date(ms));if(!Number.isFinite(value))return Infinity;const a=Math.abs(wrap(value-targetA)),b=Math.abs(wrap(value-targetB));return Math.min(a,b)};
+  const speedAt=ms=>wrap(movingLongitude(model.movingId,new Date(ms+.06*DAY))-movingLongitude(model.movingId,new Date(ms-.06*DAY)))/.12;
   return{errorAt,speedAt};
 }
 function refineEdge(insideMs,outsideMs,inside){let yes=insideMs,no=outsideMs;for(let index=0;index<28;index+=1){const mid=(yes+no)/2;if(inside(mid))yes=mid;else no=mid}return(yes+no)/2}
@@ -93,7 +100,7 @@ function decorate(){
   meta.dataset.transitSignature=signature;meta.dataset.transitReady='false';
   const token=++generation;meta.hidden=false;meta.textContent='· …';meta.removeAttribute('title');
   const run=()=>calculate(row,token);
-  if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:120});else setTimeout(run,0);
+  if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:120});else setTimeout(run,35);
 }
 function schedule(){requestAnimationFrame(()=>requestAnimationFrame(decorate))}
 function relevantMutation(record){
