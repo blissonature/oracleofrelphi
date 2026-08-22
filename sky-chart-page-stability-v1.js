@@ -19,12 +19,30 @@ function installStyles(){
   `;
   document.head.appendChild(style);
 }
-function installStaleness(){
-  if(window.__relphiSkyStalenessV1||document.querySelector('script[src^="sky-chart-staleness-v1.js"]'))return;
+function appendOnce(src,guard,onload){
+  if(window[guard]){onload?.();return}
+  const base=src.split('?')[0];
+  const existing=document.querySelector(`script[src^="${base}"]`);
+  if(existing){
+    existing.addEventListener('load',()=>onload?.(),{once:true});
+    // If an earlier parser script already loaded, its global guard is available now.
+    if(window[guard])onload?.();
+    return;
+  }
   const script=document.createElement('script');
   script.async=false;
-  script.src='sky-chart-staleness-v1.js?v=1';
+  script.src=src;
+  if(onload)script.addEventListener('load',onload,{once:true});
   document.body.appendChild(script);
+}
+function installLiveSkyState(){
+  // Migration must run before the first staleness/header render so a persisted legacy
+  // Now sky is already classified when its visible header is built.
+  appendOnce('sky-chart-live-origin-migration-v1.js?v=2','__relphiSkyLiveOriginMigrationV1',()=>{
+    appendOnce('sky-chart-staleness-v1.js?v=1','__relphiSkyStalenessV1',()=>{
+      appendOnce('sky-chart-live-header-v1.js?v=1','__relphiSkyLiveHeaderV1');
+    });
+  });
 }
 function scrollableAncestor(target){
   let node=target instanceof Element?target:null;
@@ -55,7 +73,7 @@ function onTouchMove(event){
 }
 function install(){
   installStyles();
-  installStaleness();
+  installLiveSkyState();
   document.addEventListener('touchstart',onTouchStart,{capture:true,passive:true});
   document.addEventListener('touchmove',onTouchMove,{capture:true,passive:false});
 }
