@@ -83,18 +83,18 @@ function setStage(token,stage){
   if(name){name.hidden=next===0;name.setAttribute('aria-expanded',next===2?'true':'false')}
   if(referent)referent.hidden=next<2;
 }
-function glyphActivate(row,field){
+function glyphActivate(row,field,focus=true){
   const token=tokenFor(row,field);if(!token)return;
   const stage=Number(token.dataset.inlineProgressiveStage||0);
   setStage(token,stage===0?1:0);
-  if(stage===0)token.querySelector('[data-inline-progressive-level="name"]')?.focus({preventScroll:true});
+  if(focus&&stage===0)token.querySelector('[data-inline-progressive-level="name"]')?.focus({preventScroll:true});
 }
-function levelActivate(levelNode){
+function levelActivate(levelNode,focus=true){
   const token=levelNode.closest('[data-inline-progressive-token]');if(!token)return;
   const stage=Number(token.dataset.inlineProgressiveStage||0),level=levelNode.dataset.inlineProgressiveLevel;
   if(level==='name'){
-    if(stage===1){setStage(token,2);token.querySelector('[data-inline-progressive-level="referent"]')?.focus({preventScroll:true})}
-    else if(stage===2){setStage(token,1);levelNode.focus({preventScroll:true})}
+    if(stage===1){setStage(token,2);if(focus)token.querySelector('[data-inline-progressive-level="referent"]')?.focus({preventScroll:true})}
+    else if(stage===2){setStage(token,1);if(focus)levelNode.focus({preventScroll:true})}
   }
 }
 function expandedRowFor(target){return target?.closest?.('.sky-foundation-relationship-row.is-inline-expanded')||null}
@@ -103,17 +103,17 @@ function fieldFromGlyph(target,row){
   for(const [field,selector] of FIELDS){const glyph=target.closest?.(selector);if(glyph&&row.contains(glyph))return field}
   return'';
 }
-function activateTarget(event){
+function activateTarget(event,focus=true){
   const row=expandedRowFor(event.target);if(!row)return null;
   const level=event.target.closest?.('[data-inline-progressive-level]');
-  if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return level}
+  if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level,focus);return level}
   const field=fieldFromGlyph(event.target,row);
-  if(field){event.preventDefault();event.stopImmediatePropagation();glyphActivate(row,field);return event.target.closest?.('[data-inline-progressive-glyph]')||event.target}
+  if(field){event.preventDefault();event.stopImmediatePropagation();glyphActivate(row,field,focus);return event.target.closest?.('[data-inline-progressive-glyph]')||event.target}
   return null;
 }
 function handlePointerUp(event){
   if(event.pointerType!=='touch'&&event.pointerType!=='pen')return;
-  const target=activateTarget(event);if(!target)return;
+  const target=activateTarget(event,false);if(!target)return;
   fastPointerTarget=target;
   fastPointerAt=performance.now();
 }
@@ -122,15 +122,15 @@ function handleClick(event){
     const same=event.target===fastPointerTarget||fastPointerTarget.contains?.(event.target)||event.target.contains?.(fastPointerTarget);
     if(same){event.preventDefault();event.stopImmediatePropagation();fastPointerTarget=null;return}
   }
-  activateTarget(event);
+  activateTarget(event,true);
 }
 function handleKey(event){
   if(event.key!=='Enter'&&event.key!==' ')return;
   const row=expandedRowFor(event.target);if(!row)return;
   const level=event.target.closest?.('[data-inline-progressive-level]');
-  if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return}
+  if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level,true);return}
   const field=fieldFromGlyph(event.target,row);if(!field)return;
-  event.preventDefault();event.stopImmediatePropagation();glyphActivate(row,field);
+  event.preventDefault();event.stopImmediatePropagation();glyphActivate(row,field,true);
 }
 function installStyles(){
   if(document.getElementById('skyInlineProgressiveContractStyles'))return;
