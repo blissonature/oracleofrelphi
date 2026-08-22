@@ -6,7 +6,6 @@ window.__relphiSkyLiveOriginMigrationV1=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const LIVE_ORIGINS=new Set(['here-and-now','update-to-now']);
-const MAX_CREATION_DRIFT=15*60*1000;
 
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
 function write(slot,value){try{localStorage.setItem(KEYS[slot],JSON.stringify(value));return true}catch(_){return false}}
@@ -41,20 +40,18 @@ function isNamedNow(value){
     .some(candidate=>norm(candidate)==='now');
 }
 
-function createdAtSkyMoment(value,timestamp){
-  const candidates=[value?.savedAt,value?.updatedAt,value?.metadata?.createdAt,value?.metadata?.updatedAt];
-  const times=candidates.map(candidate=>Date.parse(candidate||'')).filter(Number.isFinite);
-  return times.some(time=>Math.abs(time-timestamp)<=MAX_CREATION_DRIFT);
-}
-
 function legacyOrigin(value){
   if(!value||typeof value!=='object'||hasSavedIdentity(value)||!isNamedNow(value))return'';
   const metadata=value.metadata&&typeof value.metadata==='object'?value.metadata:{};
   if(LIVE_ORIGINS.has(String(metadata.liveNowOrigin||'')))return'';
   const data=profile(value);
   const timestamp=instantMs(value);
-  if(!Number.isFinite(timestamp)||!createdAtSkyMoment(value,timestamp))return'';
+  if(!Number.isFinite(timestamp))return'';
 
+  // Old live flows did not persist an explicit origin marker. Their reliable surviving
+  // signature is an unsaved sky named Now whose calculation profile says it used the
+  // device's current location. Do not use savedAt/updatedAt here: other Sky Chart layers
+  // legitimately rewrite those bookkeeping timestamps long after the sky was calculated.
   const query=norm(data.locationQuery);
   const location=norm(data.location);
   const source=norm(data.source);
@@ -76,7 +73,7 @@ function migrate(slot){
   metadata.liveNowAt=new Date(timestamp).toISOString();
   metadata.liveNowLatitude=String(data.latitude??'');
   metadata.liveNowLongitude=String(data.longitude??'');
-  metadata.liveNowMigrated='legacy-v1';
+  metadata.liveNowMigrated='legacy-v2';
   value.metadata=metadata;
   if(!write(slot,value))return false;
   window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin,migrated:true}}));
