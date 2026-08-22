@@ -1,4 +1,4 @@
-// Standalone Drawing Board: reuse the shared card engine, isolate board UI, add mini card search, and show full card entries below the board.
+// Standalone Drawing Board: use the real Tarot Ledger browse layout below the board.
 (function () {
   'use strict';
   if (!/(^|\/)drawing-board\/tarot\.html$/.test(location.pathname)) return;
@@ -8,13 +8,13 @@
   const PANEL = '#shortListPanel';
   const CHOICE = '[data-relphi-placeholder-choice]';
   let activeDraw = false;
-  let selectedCardId = '';
   let pendingCardId = '';
+  let selectedCardId = '';
   let dragGesture = null;
-  let movedDetailNodes = [];
-  let movedDetailSource = null;
-  let bootAttempts = 0;
   let renderQueued = false;
+  let boardObserver = null;
+  let ledgerObserver = null;
+  let seededLedger = false;
 
   function root() { return document.querySelector(PANEL); }
   function cards() { return Array.isArray(window.RELPHI_TAROT_CARDS) ? window.RELPHI_TAROT_CARDS : []; }
@@ -57,10 +57,10 @@
       body.relphi-drawing-board-page #datePanel,
       body.relphi-drawing-board-page #chartPanel,
       body.relphi-drawing-board-page #spreadPanel,
-      body.relphi-drawing-board-page #browsePanel,
       body.relphi-drawing-board-page .tarot-command-drawer>details{display:none!important}
       body.relphi-drawing-board-page .tarot-command-panel{display:block!important}
       body.relphi-drawing-board-page #shortListPanel{display:block!important}
+      body.relphi-drawing-board-page #browsePanel{display:grid!important}
       #shortListPanel .card-row-board .or-card-layer.relphi-info-layer,
       #shortListPanel .card-row-board .or-layer-scroll{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}
       #shortListPanel .card-row-board [data-row-card]{cursor:pointer}
@@ -83,15 +83,8 @@
       #shortListPanel .relphi-placeholder-search-results button span{display:block;font-size:.72rem;line-height:1.15}
       #shortListPanel .relphi-placeholder-search-results button small{display:block;margin-top:.08rem;color:#6d6259;font-size:.62rem;line-height:1.1}
       #shortListPanel .relphi-placeholder-search-status{margin:auto .15rem;color:#6d6259;font:700 .67rem/1.25 Inter,Montserrat,"Segoe UI",Arial,sans-serif;text-align:center}
-      #drawingBoardInspector{margin-top:1.2rem}
-      #drawingBoardInspector .drawing-board-list-button{appearance:none;width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.35rem .65rem;align-items:center;text-align:left;border:1px solid rgba(17,17,17,.16);border-radius:.8rem;background:#fff;color:#171412;padding:.72rem .8rem;font:inherit;cursor:pointer}
-      #drawingBoardInspector .drawing-board-list-button+.drawing-board-list-button{margin-top:.45rem}
-      #drawingBoardInspector .drawing-board-list-button:hover,#drawingBoardInspector .drawing-board-list-button:focus-visible{border-color:#dc1f18;outline:2px solid rgba(220,31,24,.14);outline-offset:1px}
-      #drawingBoardInspector .drawing-board-list-button[aria-current="true"]{border-color:#dc1f18;box-shadow:inset 4px 0 0 #dc1f18;background:#fff8f6}
-      #drawingBoardInspector .drawing-board-list-title{font-weight:900}
-      #drawingBoardInspector .drawing-board-list-position{grid-column:1/-1;color:#6d6259;font-size:.78rem}
-      #drawingBoardInspector .drawing-board-list-orientation{font-size:.72rem;font-weight:800;color:#6d6259}
-      #drawingBoardSelectedCardEntry:empty::before{content:'Select a card from the board or the list to reveal its complete card entry.';display:block;color:#6d6259}
+      #browsePanel .or-card[hidden]{display:none!important}
+      #browsePanel .or-card.is-detail-selected{outline:3px solid rgba(220,31,24,.28);outline-offset:3px}
       @media(max-width:640px){#shortListPanel .relphi-placeholder-choice{padding:.35rem}#shortListPanel .relphi-placeholder-choice button{font-size:.68rem;padding:.38rem .56rem}}
     `;
     document.head.appendChild(style);
@@ -102,22 +95,29 @@
     document.title = 'Drawing Board · Oracle of Relphi';
     const hero = document.querySelector('.tarot-hero h1');
     if (hero) hero.innerHTML = 'Drawing <span class="red">Board</span>';
+
     const panel = root();
     if (panel) {
       panel.hidden = false;
       panel.setAttribute('aria-label', 'Drawing Board');
     }
-    ['tarotSummary','visibilityPanel','datePanel','chartPanel','spreadPanel','browsePanel'].forEach(id => {
+
+    ['tarotSummary','visibilityPanel','datePanel','chartPanel','spreadPanel'].forEach(id => {
       const node = document.getElementById(id);
       if (node) node.hidden = true;
     });
-  }
 
-  function ensureBoardBooted() {
-    configureShell();
-    const panel = root();
-    if (!panel || !panel.querySelector('.card-row-drawing-board,.card-row-composer,.card-row-workspace')) {
-      if (bootAttempts++ < 30) setTimeout(ensureBoardBooted, 100);
+    const browse = document.getElementById('browsePanel');
+    if (browse) {
+      browse.hidden = false;
+      browse.setAttribute('aria-label', 'Cards in this Drawing');
+      const heading = browse.querySelector('.cards-heading');
+      if (heading && !heading.dataset.drawingBoardHeading) {
+        heading.dataset.drawingBoardHeading = 'true';
+        const count = document.getElementById('resultInlineCount');
+        heading.replaceChildren(document.createTextNode('Cards in this Drawing '));
+        if (count) heading.appendChild(count);
+      }
     }
   }
 
@@ -205,7 +205,10 @@
       if (rowCards.length > beforeCount) {
         const added = rowCards.find(node => !before.has(node.dataset.rowCard + ':' + node.closest('.card-row-item')?.dataset.rowIndex)) || rowCards[rowCards.length - 1];
         activeDraw = false;
-        if (added?.dataset.rowCard) selectCard(added.dataset.rowCard, false);
+        if (added?.dataset.rowCard) {
+          pendingCardId = added.dataset.rowCard;
+          queueEnhance();
+        }
         return;
       }
       if (Date.now() - started > 1800) { activeDraw = false; return; }
@@ -234,162 +237,103 @@
     renderSearch(choice);
   }
 
-  function ensureInspector(panel) {
-    let inspector = document.getElementById('drawingBoardInspector');
-    if (inspector) return inspector;
-    inspector = document.createElement('section');
-    inspector.id = 'drawingBoardInspector';
-    inspector.className = 'tarot-layout';
-    inspector.setAttribute('aria-label', 'Cards in this Drawing');
-    inspector.innerHTML = `
-      <div class="tarot-list-panel">
-        <h2 class="cards-heading">Cards in this Drawing <span id="drawingBoardCardCount" class="cards-heading-count"></span></h2>
-        <div id="drawingBoardCardList" class="tarot-card-list" role="list"></div>
-      </div>
-      <article id="drawingBoardSelectedCardEntry" class="tarot-detail" aria-live="polite"></article>`;
-    panel.appendChild(inspector);
-    return inspector;
-  }
-
   function boardEntries() {
     const panel = root();
     if (!panel) return [];
     return Array.from(panel.querySelectorAll('.card-row-item')).map((item, index) => {
       const node = item.querySelector('[data-row-card]');
       if (!node) return null;
-      const id = node.dataset.rowCard || '';
-      const data = cardById(id);
-      const title = node.querySelector('.or-card-title-banner')?.textContent.trim() || cardName(data) || id.replace(/_/g, ' ');
-      const position = item.querySelector('.card-row-position-editor')?.textContent.trim() || item.querySelector('.card-row-position-label')?.textContent.trim() || '';
-      const reversed = item.classList.contains('is-row-reversed') || node.dataset.rowReversed === 'true';
-      return { id, title, position, reversed, index };
-    }).filter(Boolean);
+      return { id: node.dataset.rowCard || '', index };
+    }).filter(entry => entry?.id);
   }
 
-  function renderBoardList() {
-    const panel = root();
-    if (!panel) return;
-    ensureInspector(panel);
-    const list = document.getElementById('drawingBoardCardList');
-    const count = document.getElementById('drawingBoardCardCount');
-    const entries = boardEntries();
-    if (count) count.textContent = entries.length ? entries.length + (entries.length === 1 ? ' card' : ' cards') : 'No cards';
-    if (!list) return;
-    list.replaceChildren();
-    entries.forEach(entry => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'drawing-board-list-button';
-      button.dataset.boardCardId = entry.id;
-      button.dataset.boardCardIndex = String(entry.index);
-      button.setAttribute('role', 'listitem');
-      button.setAttribute('aria-current', selectedCardId === entry.id ? 'true' : 'false');
-      const title = document.createElement('span');
-      title.className = 'drawing-board-list-title';
-      title.textContent = entry.title;
-      const orientation = document.createElement('span');
-      orientation.className = 'drawing-board-list-orientation';
-      orientation.textContent = entry.reversed ? 'Reversed' : 'Upright';
-      button.append(title, orientation);
-      if (entry.position) {
-        const position = document.createElement('span');
-        position.className = 'drawing-board-list-position';
-        position.textContent = entry.position;
-        button.appendChild(position);
-      }
-      list.appendChild(button);
+  function detailMatches(cardId) {
+    const detail = document.getElementById('cardDetail');
+    return !!detail?.querySelector('[data-shortlist="' + cssEscape(cardId) + '"]');
+  }
+
+  function markLedgerSelection(cardId) {
+    document.querySelectorAll('#cardList .or-card[data-id]').forEach(surface => {
+      surface.classList.toggle('is-detail-selected', surface.dataset.id === cardId);
     });
-
-    const hasSelected = entries.some(entry => entry.id === selectedCardId);
-    if (!hasSelected) {
-      selectedCardId = pendingCardId && entries.some(entry => entry.id === pendingCardId) ? pendingCardId : (entries[0]?.id || '');
-      pendingCardId = '';
-      if (selectedCardId) requestAnimationFrame(() => revealFullEntry(selectedCardId));
-      else clearSelectedEntry();
-    } else if (pendingCardId && entries.some(entry => entry.id === pendingCardId)) {
-      const next = pendingCardId;
-      pendingCardId = '';
-      if (next !== selectedCardId) selectCard(next, false);
-    }
   }
 
-  function restoreMovedDetail() {
-    const source = movedDetailSource;
-    if (source && source.isConnected && movedDetailNodes.length) movedDetailNodes.forEach(node => source.appendChild(node));
-    movedDetailNodes = [];
-    movedDetailSource = null;
-  }
-
-  function clearSelectedEntry() {
-    restoreMovedDetail();
-    const host = document.getElementById('drawingBoardSelectedCardEntry');
-    if (host) host.replaceChildren();
-  }
-
-  function findLedgerCard(cardId) {
+  function activateLedgerCard(cardId, scroll) {
+    if (!cardId) return false;
     const list = document.getElementById('cardList');
-    if (!list || !cardId) return null;
-    return list.querySelector('.or-card[data-id="' + cssEscape(cardId) + '"]');
-  }
-
-  function moveRenderedDetail(cardId) {
-    const source = document.getElementById('cardDetail');
-    const host = document.getElementById('drawingBoardSelectedCardEntry');
-    if (!source || !host || !source.querySelector('[data-shortlist="' + cssEscape(cardId) + '"]')) return false;
-    host.replaceChildren();
-    movedDetailNodes = Array.from(source.childNodes);
-    movedDetailSource = source;
-    movedDetailNodes.forEach(node => host.appendChild(node));
+    const surface = list?.querySelector('.or-card[data-id="' + cssEscape(cardId) + '"]');
+    if (!surface) return false;
+    selectedCardId = cardId;
+    markLedgerSelection(cardId);
+    surface.click();
+    requestAnimationFrame(() => {
+      configureShell();
+      markLedgerSelection(cardId);
+      if (scroll !== false) document.getElementById('cardDetail')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    });
     return true;
   }
 
-  function revealFullEntry(cardId) {
-    if (!cardId) return;
-    restoreMovedDetail();
-    configureShell();
-    document.getElementById('showAllCards')?.click();
-    configureShell();
-    const started = Date.now();
-    let clicked = false;
-    (function tryOpen() {
+  function seedNativeLedger() {
+    const list = document.getElementById('cardList');
+    if (!list || list.querySelector('.or-card[data-id]')) return true;
+    const showAll = document.getElementById('showAllCards');
+    if (!showAll || showAll.disabled) return false;
+    if (!seededLedger) {
+      seededLedger = true;
+      showAll.click();
       configureShell();
-      if (moveRenderedDetail(cardId)) return;
-      const match = findLedgerCard(cardId);
-      if (match && !clicked) {
-        clicked = true;
-        match.click();
-      }
-      if (moveRenderedDetail(cardId)) return;
-      if (Date.now() - started < 2200) {
-        requestAnimationFrame(tryOpen);
-        return;
-      }
-      const host = document.getElementById('drawingBoardSelectedCardEntry');
-      const data = cardById(cardId);
-      if (host) {
-        host.replaceChildren();
-        const heading = document.createElement('h2');
-        heading.textContent = cardName(data) || cardId.replace(/_/g, ' ');
-        const note = document.createElement('p');
-        note.textContent = 'The full card entry could not be rendered.';
-        host.append(heading, note);
-      }
-    })();
+    }
+    return !!list.querySelector('.or-card[data-id]');
   }
 
-  function updateSelectionUi() {
-    document.querySelectorAll('#drawingBoardCardList [data-board-card-id]').forEach(button => {
-      button.setAttribute('aria-current', button.dataset.boardCardId === selectedCardId ? 'true' : 'false');
-    });
-  }
+  function syncNativeLedgerBottom() {
+    configureShell();
+    const browse = document.getElementById('browsePanel');
+    const list = document.getElementById('cardList');
+    const detail = document.getElementById('cardDetail');
+    if (!browse || !list || !detail) return;
 
-  function selectCard(cardId, scroll) {
-    if (!cardId) return;
-    selectedCardId = cardId;
-    pendingCardId = '';
-    updateSelectionUi();
-    revealFullEntry(cardId);
-    if (scroll !== false) document.getElementById('drawingBoardSelectedCardEntry')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    const entries = boardEntries();
+    const ids = entries.map(entry => entry.id);
+    const idSet = new Set(ids);
+    const count = document.getElementById('resultInlineCount');
+    if (count) count.textContent = ids.length ? ids.length + (ids.length === 1 ? ' card' : ' cards') : 'No cards';
+
+    if (!ids.length) {
+      selectedCardId = '';
+      detail.replaceChildren();
+      list.querySelectorAll('.or-card[data-id]').forEach(surface => { surface.hidden = true; });
+      return;
+    }
+
+    if (!seedNativeLedger()) {
+      requestAnimationFrame(queueEnhance);
+      return;
+    }
+
+    const surfaces = Array.from(list.querySelectorAll('.or-card[data-id]'));
+    surfaces.forEach(surface => { surface.hidden = !idSet.has(surface.dataset.id); });
+
+    const grid = list.querySelector('.tarot-result-grid');
+    if (grid) {
+      const visibleOrder = Array.from(grid.querySelectorAll(':scope > .or-card[data-id]:not([hidden])')).map(node => node.dataset.id);
+      if (visibleOrder.join('|') !== ids.join('|')) {
+        ids.forEach(id => {
+          const surface = grid.querySelector(':scope > .or-card[data-id="' + cssEscape(id) + '"]');
+          if (surface) grid.appendChild(surface);
+        });
+      }
+    }
+
+    if (pendingCardId && idSet.has(pendingCardId)) {
+      selectedCardId = pendingCardId;
+      pendingCardId = '';
+    }
+    if (!idSet.has(selectedCardId)) selectedCardId = ids[0];
+
+    markLedgerSelection(selectedCardId);
+    if (!detailMatches(selectedCardId)) activateLedgerCard(selectedCardId, false);
   }
 
   function cardFromEvent(event) {
@@ -410,7 +354,7 @@
       const data = cardById(node.dataset.rowCard);
       node.setAttribute('aria-label', 'Show full entry for ' + (cardName(data) || node.dataset.rowCard.replace(/_/g, ' ')));
     });
-    renderBoardList();
+    syncNativeLedgerBottom();
   }
 
   function queueEnhance() {
@@ -420,6 +364,19 @@
       renderQueued = false;
       enhanceBoard();
     });
+  }
+
+  function installObservers() {
+    const panel = root();
+    if (panel && !boardObserver) {
+      boardObserver = new MutationObserver(queueEnhance);
+      boardObserver.observe(panel, { childList:true, subtree:true, attributes:true, attributeFilter:['class','data-row-card','data-row-reversed'] });
+    }
+    const browse = document.getElementById('browsePanel');
+    if (browse && !ledgerObserver) {
+      ledgerObserver = new MutationObserver(queueEnhance);
+      ledgerObserver.observe(browse, { childList:true, subtree:true });
+    }
   }
 
   window.addEventListener('pointerdown', event => {
@@ -472,20 +429,20 @@
       return;
     }
 
-    const listButton = event.target.closest?.('#drawingBoardCardList [data-board-card-id]');
-    if (listButton) {
+    const boardCard = cardFromEvent(event);
+    if (boardCard) {
+      if (dragGesture?.card === boardCard && dragGesture.moved) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      selectCard(listButton.dataset.boardCardId, true);
+      selectedCardId = boardCard.dataset.rowCard || '';
+      activateLedgerCard(selectedCardId, true);
       return;
     }
 
-    const card = cardFromEvent(event);
-    if (card) {
-      if (dragGesture?.card === card && dragGesture.moved) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      selectCard(card.dataset.rowCard, true);
+    const ledgerCard = event.target.closest?.('#cardList .or-card[data-id]');
+    if (ledgerCard && usedCardIds().has(ledgerCard.dataset.id)) {
+      selectedCardId = ledgerCard.dataset.id;
+      requestAnimationFrame(() => markLedgerSelection(selectedCardId));
     }
   }, true);
 
@@ -510,14 +467,15 @@
     if (card && (event.key === 'Enter' || event.key === ' ')) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      selectCard(card.dataset.rowCard, true);
+      selectedCardId = card.dataset.rowCard || '';
+      activateLedgerCard(selectedCardId, true);
     }
   }, true);
 
   installStyle();
   configureShell();
-  ensureBoardBooted();
+  installObservers();
   queueEnhance();
-  new MutationObserver(queueEnhance).observe(document.documentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['hidden','class','data-row-card','data-row-reversed'] });
   document.addEventListener('relphi:drawing-board-rendered', queueEnhance);
+  window.addEventListener('relphi:tarot-enhancements-ready', queueEnhance);
 })();
