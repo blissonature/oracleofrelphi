@@ -3,6 +3,7 @@ import{placement,calculateRelationships,normalizeName}from'../sky-chart-vnext/co
 import{layoutWheel,assertLayoutInvariant}from'../sky-chart-vnext/core/layout.mjs';
 import{initialState,reducer,modeOf}from'../sky-chart-vnext/core/store.mjs';
 import{nameExists,suggestUniqueName,saveNewSky,readLibrary}from'../sky-chart-vnext/core/storage.mjs';
+import{solarAltitudeFromGeometry}from'../sky-chart-vnext/core/astronomy.mjs';
 
 function sample(name,offset=0){
   const raw={Sun:29.7,Moon:29.9,Mercury:30.1,Venus:30.3,Mars:31.0,Jupiter:58.9,Saturn:59.2,Uranus:59.7,Neptune:60.2,Pluto:61.0,Ascendant:168.38,Midheaven:76.28};
@@ -30,6 +31,10 @@ for(const item of model.placements){
   assert.equal(item.leader.slot,item.slot,'Leader slot must come from its placement.');
 }
 assert.ok(calculateRelationships(a,b,3).length>0,'Comparison must derive relationships directly from the two skies.');
+
+assert.ok(Math.abs(solarAltitudeFromGeometry(0,0,0,0)-90)<1e-9,'A Sun on the equatorial meridian at the equator must be overhead.');
+assert.ok(Math.abs(solarAltitudeFromGeometry(0,0,180,0)+90)<1e-9,'The opposite meridian must put that Sun directly below the horizon.');
+assert.ok(Math.abs(solarAltitudeFromGeometry(0,0,0,45)-45)<1e-9,'Meridian altitude must respond to geographic latitude rather than house numbering.');
 
 const records=[{id:'1',name:'Marisa Natal'},{id:'2',name:'Marisa Natal 2'}];
 assert.equal(normalizeName('  MARISA   Natal '),'marisa natal');
