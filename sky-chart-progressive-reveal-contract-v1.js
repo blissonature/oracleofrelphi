@@ -62,7 +62,7 @@
     });
   }
 
-  function activateButton(button,event){
+  function activateButton(button,event,focus=true){
     if(!button)return false;
     const token=button.closest('.sky-progressive-token');
     if(!token)return false;
@@ -79,8 +79,10 @@
     else if(clicked===2)next=2;
 
     setStage(token,next,true);
-    const focusTarget=token.querySelector(`:scope > [data-progressive-level="${names[next]}"]`);
-    focusTarget?.focus({preventScroll:true});
+    if(focus){
+      const focusTarget=token.querySelector(`:scope > [data-progressive-level="${names[next]}"]`);
+      focusTarget?.focus({preventScroll:true});
+    }
     return true;
   }
 
@@ -88,7 +90,7 @@
     if(event.pointerType!=='touch'&&event.pointerType!=='pen')return;
     const button=event.target.closest?.('.sky-progressive-level');
     if(!button)return;
-    if(!activateButton(button,event))return;
+    if(!activateButton(button,event,false))return;
     fastPointerTarget=button;
     fastPointerAt=performance.now();
   }
@@ -102,7 +104,7 @@
       fastPointerTarget=null;
       return;
     }
-    activateButton(button,event);
+    activateButton(button,event,true);
   }
 
   function installStyles(){
