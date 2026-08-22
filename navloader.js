@@ -26,6 +26,24 @@
     return /(^|\/)drawing-board\/tarot\.html$/.test(location.pathname);
   }
 
+  function preserveStandaloneDrawingBoardHistoryRoute() {
+    if (!isStandaloneDrawingBoardContext() || window.__relphiDrawingBoardHistoryRouteV1) return;
+    window.__relphiDrawingBoardHistoryRouteV1 = true;
+    const normalize = value => {
+      if (typeof value !== 'string' || !value.startsWith('#')) return value;
+      return location.pathname + location.search + value;
+    };
+    const push = history.pushState.bind(history);
+    const replace = history.replaceState.bind(history);
+    history.pushState = function (state, title, url) { return push(state, title, normalize(url)); };
+    history.replaceState = function (state, title, url) { return replace(state, title, normalize(url)); };
+  }
+
+  // This must run synchronously, before tarot-app.js can write relative hash history.
+  // The standalone page uses <base href="../"> for shared assets; without this guard,
+  // a relative #tarot-* history entry resolves to the site root and refresh opens Home.
+  preserveStandaloneDrawingBoardHistoryRoute();
+
   function isTarotLedgerContext() {
     return ((/(^|\/)tarot\.html$/.test(location.pathname) && !isStandaloneDrawingBoardContext()) || isTarotPreviewDocument());
   }
