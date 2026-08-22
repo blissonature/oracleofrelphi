@@ -4,7 +4,8 @@ const { chromium } = require('playwright');
 let browser;
 
 (async () => {
-  browser = await chromium.launch({ headless: true });
+  const executablePath = process.env.RELPHI_BROWSER_EXECUTABLE || undefined;
+  browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.setDefaultTimeout(15000);
   page.setDefaultNavigationTimeout(30000);
