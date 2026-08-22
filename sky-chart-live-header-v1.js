@@ -7,7 +7,7 @@ window.__relphiSkyLiveHeaderV1=true;
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const STEP_MS=5*60*1000;
 const LIVE_ORIGINS=new Set(['here-and-now','update-to-now']);
-const STYLE_ID='skyLiveHeaderV2Styles';
+const STYLE_ID='skyLiveHeaderV3Styles';
 let queued=false,timer=0;
 
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
@@ -58,29 +58,101 @@ function installStyles(){
   const style=document.createElement('style');style.id=STYLE_ID;
   style.textContent=`
     .sky-card-title-stable[data-live-header-owned="true"]{
-      display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:2px!important;
-      min-width:0!important;overflow:visible!important;padding-left:.8rem!important;
+      display:grid!important;
+      grid-template-columns:minmax(0,1fr) 44px!important;
+      align-items:center!important;
+      column-gap:6px!important;
+      width:100%!important;
+      height:44px!important;
+      min-width:0!important;
+      box-sizing:border-box!important;
+      overflow:visible!important;
+      padding:0 .45rem 0 .8rem!important;
+      margin:0!important;
     }
     .sky-live-age{
-      display:inline!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
-      padding:0!important;margin:0!important;border:0!important;background:none!important;box-shadow:none!important;
-      color:#171411!important;font:800 .72rem/1.15 system-ui,sans-serif!important;
+      display:block!important;
+      min-width:0!important;
+      overflow:hidden!important;
+      text-overflow:ellipsis!important;
+      white-space:nowrap!important;
+      padding:0!important;
+      margin:0!important;
+      border:0!important;
+      background:none!important;
+      box-shadow:none!important;
+      color:#171411!important;
+      font:800 .72rem/1.15 system-ui,sans-serif!important;
+      text-align:left!important;
     }
     .sky-live-header-refresh{
-      position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
-      flex:0 0 44px!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
-      padding:0!important;margin:0!important;border:0!important;border-radius:999px!important;background:transparent!important;box-shadow:none!important;
-      color:#544d46!important;cursor:pointer!important;touch-action:manipulation!important;-webkit-tap-highlight-color:transparent!important;
+      position:relative!important;
+      display:grid!important;
+      place-items:center!important;
+      justify-self:end!important;
+      width:44px!important;
+      height:44px!important;
+      min-width:44px!important;
+      min-height:44px!important;
+      box-sizing:border-box!important;
+      padding:0!important;
+      margin:0!important;
+      border:0!important;
+      border-radius:999px!important;
+      background:transparent!important;
+      box-shadow:none!important;
+      color:#4f4943!important;
+      cursor:pointer!important;
+      touch-action:manipulation!important;
+      -webkit-tap-highlight-color:transparent!important;
     }
-    .sky-live-header-refresh svg{width:21px!important;height:21px!important;display:block!important;pointer-events:none!important}
-    .sky-live-header-refresh:hover,.sky-live-header-refresh:focus-visible{background:rgba(31,27,24,.07)!important;outline:none!important}
-    .sky-live-header-refresh:focus-visible{box-shadow:0 0 0 2px currentColor!important}
+    .sky-live-header-refresh svg{
+      display:block!important;
+      width:32px!important;
+      height:32px!important;
+      box-sizing:border-box!important;
+      padding:5px!important;
+      overflow:visible!important;
+      border:1px solid rgba(31,27,24,.18)!important;
+      border-radius:999px!important;
+      background:#fffdf8!important;
+      pointer-events:none!important;
+    }
+    .sky-live-header-refresh:hover,.sky-live-header-refresh:focus-visible{outline:none!important}
+    .sky-live-header-refresh:hover svg,.sky-live-header-refresh:focus-visible svg{
+      border-color:rgba(31,27,24,.34)!important;
+      background:#f5f0e9!important;
+    }
+    .sky-live-header-refresh:focus-visible{box-shadow:0 0 0 2px rgba(31,27,24,.24)!important}
     .sky-live-header-refresh:disabled{cursor:progress!important;opacity:.5!important}
     @media(hover:hover){
-      .sky-live-header-refresh::after{content:attr(data-tooltip);position:absolute;left:50%;bottom:calc(100% + 5px);z-index:90;transform:translateX(-50%) translateY(2px);padding:.38rem .52rem;border-radius:.42rem;background:#111;color:#fff;font:700 .76rem/1 system-ui,sans-serif;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s ease,transform .12s ease}
+      .sky-live-header-refresh::after{
+        content:attr(data-tooltip);
+        position:absolute;
+        left:50%;
+        bottom:calc(100% + 5px);
+        z-index:90;
+        transform:translateX(-50%) translateY(2px);
+        padding:.38rem .52rem;
+        border-radius:.42rem;
+        background:#111;
+        color:#fff;
+        font:700 .76rem/1 system-ui,sans-serif;
+        white-space:nowrap;
+        opacity:0;
+        pointer-events:none;
+        transition:opacity .12s ease,transform .12s ease;
+      }
       .sky-live-header-refresh:hover::after,.sky-live-header-refresh:focus-visible::after{opacity:1;transform:translateX(-50%) translateY(0)}
     }
-    @media(max-width:620px){.sky-card-title-stable[data-live-header-owned="true"]{gap:0!important;padding-left:.55rem!important;padding-right:.1rem!important}.sky-live-age{font-size:.66rem!important}}
+    @media(max-width:620px){
+      .sky-card-title-stable[data-live-header-owned="true"]{
+        grid-template-columns:minmax(0,1fr) 44px!important;
+        column-gap:4px!important;
+        padding:0 .45rem 0 .8rem!important;
+      }
+      .sky-live-age{font-size:.68rem!important}
+    }
   `;
   document.head.appendChild(style);
 }
@@ -88,7 +160,7 @@ function host(slot){return document.querySelector(`#skyFoundation${slot}>.sky-fo
 function refreshButton(slot){
   const button=document.createElement('button');button.type='button';button.className='sky-live-header-refresh';
   button.dataset.finalNow=slot;button.dataset.liveHeaderRefresh=slot;button.dataset.tooltip='Update to Now';button.title='Update to Now';button.setAttribute('aria-label','Update to Now');
-  button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11a8.1 8.1 0 1 0 2 5.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 4v7h-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 0 0-15.22-6.22L3 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12a9 9 0 0 0 15.22 6.22L21 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 16h5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   return button;
 }
 function renderLive(slot,container,value){
