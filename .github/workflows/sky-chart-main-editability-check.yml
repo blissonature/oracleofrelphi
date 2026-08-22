@@ -1,0 +1,35 @@
+name: Current Sky Chart editability check
+
+on:
+  push:
+    branches:
+      - fix/sky-chart-editability
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-where-when-v1.js'
+      - 'sky-chart-card-tabs-v1.js'
+      - 'sky-chart-final-pass-v1.js'
+      - 'sky-chart-final-pass-v2.js'
+      - 'sky-chart-text-editing-priority-v1.js'
+      - 'tests/sky-chart-main-editability.mjs'
+      - '.github/workflows/sky-chart-main-editability-check.yml'
+
+jobs:
+  editability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: node --check tests/sky-chart-main-editability.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Exercise current editor
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-main-editability-server.log 2>&1 &
+          node tests/sky-chart-main-editability.mjs
