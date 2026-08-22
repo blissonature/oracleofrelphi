@@ -43,7 +43,7 @@ assert.match(standalone, /hero\.innerHTML = 'Drawing <span class="red">Board<\/s
 assert.match(standalone, /or-card-layer\.relphi-info-layer/);
 assert.match(standalone, /data-relphi-placeholder-search/);
 assert.match(standalone, /placeholder="Search a card…"/);
-assert.match(standalone, /id="drawingBoardInspector"/);
+assert.match(standalone, /inspector\.id = 'drawingBoardInspector'/);
 assert.match(standalone, /inspector\.className = 'tarot-layout'/);
 assert.match(standalone, /class="tarot-list-panel"/);
 assert.match(standalone, /id="drawingBoardSelectedCardEntry" class="tarot-detail"/);
