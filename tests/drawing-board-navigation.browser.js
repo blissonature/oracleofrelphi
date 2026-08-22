@@ -46,6 +46,7 @@ let browser;
   await page.waitForFunction(() => document.documentElement.dataset.relphiTarotLedgerNoBoard === 'true');
   assert.equal(await page.locator('#shortListPanel').isVisible(), false);
   assert.equal(await page.locator('#landingOpenBoard').count(), 0);
+  assert.equal(await page.locator('[data-shortlist]').count(), 0);
 
   console.log('Opening standalone Drawing Board and restoring the saved board');
   await page.goto('http://127.0.0.1:8000/drawing-board/tarot.html', { waitUntil: 'domcontentloaded' });
@@ -54,27 +55,61 @@ let browser;
   await page.locator('#drawingBoardInspector').waitFor({ state: 'visible' });
   await page.locator('#drawingBoardCardList [data-board-card-id="ace_of_wands"]').waitFor({ state: 'visible' });
 
+  console.log('Confirming the board description layer is suppressed and full Ledger entry is below the board');
+  const boardInfoLayers = page.locator('#shortListPanel .card-row-board .or-card-layer.relphi-info-layer, #shortListPanel .card-row-board .or-layer-scroll');
+  const infoLayerCount = await boardInfoLayers.count();
+  for (let index = 0; index < infoLayerCount; index += 1) {
+    assert.equal(await boardInfoLayers.nth(index).evaluate(node => getComputedStyle(node).display), 'none');
+  }
+  await page.locator('#drawingBoardSelectedCardEntry [data-shortlist="ace_of_wands"]').waitFor({ state: 'attached' });
+
+  console.log('Using mini search to select The Fool into a new position');
+  await page.locator('#addCardPlaceholder').waitFor({ state: 'attached' });
+  await page.locator('#addCardPlaceholder').click({ force: true });
+  const placeholder = page.locator('#shortListPanel .card-row-item.card-row-placeholder-item').last();
+  await placeholder.waitFor({ state: 'visible' });
+  const searchToggle = placeholder.locator('[data-relphi-placeholder-search]');
+  await searchToggle.waitFor({ state: 'visible' });
+  await searchToggle.click();
+  const searchInput = placeholder.locator('[data-relphi-placeholder-query]');
+  await searchInput.fill('The Fool');
+  const foolResult = placeholder.locator('[data-relphi-placeholder-result="the_fool"]');
+  await foolResult.waitFor({ state: 'visible' });
+  await foolResult.click();
+  await page.locator('#shortListPanel [data-row-card="the_fool"]').first().waitFor({ state: 'visible' });
+  await page.locator('#drawingBoardCardList [data-board-card-id="the_fool"]').waitFor({ state: 'visible' });
+
+  console.log('Selecting a board card and confirming synchronized list and full entry');
+  await page.locator('#shortListPanel [data-row-card="the_fool"]').first().click();
+  await page.locator('#drawingBoardCardList [data-board-card-id="the_fool"][aria-current="true"]').waitFor({ state: 'visible' });
+  await page.locator('#drawingBoardSelectedCardEntry [data-shortlist="the_fool"]').waitFor({ state: 'attached' });
+
   const savedBeforeNavigation = await page.evaluate(storageKey => JSON.parse(localStorage.getItem(storageKey)), key);
-  assert.deepEqual(savedBeforeNavigation.shortList, ['ace_of_wands']);
+  assert.ok(savedBeforeNavigation.shortList.includes('ace_of_wands'));
+  assert.ok(savedBeforeNavigation.shortList.includes('the_fool'));
   assert.equal(savedBeforeNavigation.shortListName, 'Navigation persistence test');
 
   console.log('Navigating away to Sky Chart');
   await page.goto('http://127.0.0.1:8000/sky-chart.html', { waitUntil: 'domcontentloaded' });
   const savedWhileAway = await page.evaluate(storageKey => JSON.parse(localStorage.getItem(storageKey)), key);
-  assert.deepEqual(savedWhileAway.shortList, ['ace_of_wands']);
+  assert.ok(savedWhileAway.shortList.includes('ace_of_wands'));
+  assert.ok(savedWhileAway.shortList.includes('the_fool'));
 
   console.log('Returning to standalone Drawing Board');
   await page.goto('http://127.0.0.1:8000/drawing-board/tarot.html', { waitUntil: 'domcontentloaded' });
   await page.locator('#shortListPanel').waitFor({ state: 'visible' });
   await page.locator('#shortListPanel [data-row-card="ace_of_wands"]').first().waitFor({ state: 'visible' });
+  await page.locator('#shortListPanel [data-row-card="the_fool"]').first().waitFor({ state: 'visible' });
   await page.locator('#drawingBoardCardList [data-board-card-id="ace_of_wands"]').waitFor({ state: 'visible' });
+  await page.locator('#drawingBoardCardList [data-board-card-id="the_fool"]').waitFor({ state: 'visible' });
 
   const savedAfterReturn = await page.evaluate(storageKey => JSON.parse(localStorage.getItem(storageKey)), key);
-  assert.deepEqual(savedAfterReturn.shortList, ['ace_of_wands']);
+  assert.ok(savedAfterReturn.shortList.includes('ace_of_wands'));
+  assert.ok(savedAfterReturn.shortList.includes('the_fool'));
   assert.equal(savedAfterReturn.shortListNotes, 'This editable board should survive a trip to Sky Chart.');
   assert.deepEqual(pageErrors, []);
 
-  console.log('Standalone Drawing Board navigation persistence browser test passed');
+  console.log('Standalone Drawing Board navigation and interaction browser test passed');
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;
