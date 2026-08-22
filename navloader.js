@@ -22,8 +22,16 @@
     return window.__relphiTarotPreviewDocument === true && new URLSearchParams(location.search).get('view') === 'tarot';
   }
 
+  function isStandaloneDrawingBoardContext() {
+    return /(^|\/)drawing-board\/tarot\.html$/.test(location.pathname);
+  }
+
+  function isTarotLedgerContext() {
+    return ((/(^|\/)tarot\.html$/.test(location.pathname) && !isStandaloneDrawingBoardContext()) || isTarotPreviewDocument());
+  }
+
   function isTarotContext() {
-    return /(^|\/)tarot\.html$/.test(location.pathname) || isTarotPreviewDocument();
+    return isTarotLedgerContext() || isStandaloneDrawingBoardContext();
   }
 
   function isSkyChartContext() {
@@ -70,7 +78,7 @@
   }
 
   function fallbackNav() {
-    injectNav('<div class="menu-container" id="menuContainer"><button class="logo-btn" id="menuButton" type="button" aria-label="Open navigation menu" aria-controls="dropdownMenu" aria-expanded="false"><img src="logo.png" alt="Oracle of Relphi logo"></button><nav class="dropdown-menu" id="dropdownMenu" aria-label="Main navigation"><a href="index.html">Home</a><a href="tarot.html">Tarot Ledger</a><a href="sky-chart.html">Sky Chart</a><a href="planetaryhours.html">Planetary Hours</a><a href="glyphs.html">Glyph Trainer</a><details class="nav-tool-group"><summary>Study</summary><a href="astrology-foundations.html">Astrology Foundations</a><a href="constellations.html">Constellation Trainer</a><a href="mythic-atlas.html">Mythic Atlas</a><a href="ancient-measures.html">Ancient Measures</a><a href="rainbow-brand.html">Rainbow Brand</a></details><a href="guide.html">Guide</a><a href="about.html">About</a><a href="services.html">Services</a><a href="forsacreduseonly.html">For Sacred Use Only</a><a href="https://ko-fi.com/oracleofrelphi" target="_blank" rel="noopener">Support</a></nav></div>');
+    injectNav('<div class="menu-container" id="menuContainer"><button class="logo-btn" id="menuButton" type="button" aria-label="Open navigation menu" aria-controls="dropdownMenu" aria-expanded="false"><img src="logo.png" alt="Oracle of Relphi logo"></button><nav class="dropdown-menu" id="dropdownMenu" aria-label="Main navigation"><a href="index.html">Home</a><a href="tarot.html">Tarot Ledger</a><a href="drawing-board/tarot.html">Drawing Board</a><a href="sky-chart.html">Sky Chart</a><a href="planetaryhours.html">Planetary Hours</a><a href="glyphs.html">Glyph Trainer</a><details class="nav-tool-group"><summary>Study</summary><a href="astrology-foundations.html">Astrology Foundations</a><a href="constellations.html">Constellation Trainer</a><a href="mythic-atlas.html">Mythic Atlas</a><a href="ancient-measures.html">Ancient Measures</a><a href="rainbow-brand.html">Rainbow Brand</a></details><a href="guide.html">Guide</a><a href="about.html">About</a><a href="services.html">Services</a><a href="forsacreduseonly.html">For Sacred Use Only</a><a href="https://ko-fi.com/oracleofrelphi" target="_blank" rel="noopener">Support</a></nav></div>');
   }
 
   function showPreviewLoadFailure() {
@@ -143,17 +151,26 @@
   function loadEnhancements() {
     if (isTarotContext()) {
       loadCanonicalGlyphRuntime();
-      appendScript('tarot-date-sky-bridge-v1.js?v=1');
       appendScript('tarot-card-selection-scroll-v1.js?v=1', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
-      appendScript('drawing-board-workflow-v2.js?v=24', function () {
-        appendScript('drawing-board-interactions-v1.js?v=5', function () {
-          appendScript('drawing-board-spread-prefabs-v1.js?v=10', function () {
-            window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+
+      if (isTarotLedgerContext()) {
+        appendScript('tarot-date-sky-bridge-v1.js?v=1');
+        appendScript('tarot-ledger-no-board-v1.js?v=1');
+      }
+
+      if (isStandaloneDrawingBoardContext()) {
+        appendScript('drawing-board-standalone-v2.js?v=1', function () {
+          appendScript('drawing-board-workflow-v2.js?v=24', function () {
+            appendScript('drawing-board-interactions-v1.js?v=5', function () {
+              appendScript('drawing-board-spread-prefabs-v1.js?v=10', function () {
+                window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+              });
+            });
           });
         });
-      });
+      }
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () {
@@ -192,7 +209,7 @@
     ensureNavStyles();
     loadEnhancements();
     if (document.querySelector('.menu-container')) return initMenu();
-    fetch('nav.html?v=14').then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); }).then(injectNav).catch(fallbackNav);
+    fetch('nav.html?v=15').then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); }).then(injectNav).catch(fallbackNav);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
