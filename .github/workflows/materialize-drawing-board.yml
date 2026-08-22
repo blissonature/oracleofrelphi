@@ -1,0 +1,36 @@
+name: Materialize Drawing Board
+
+on:
+  push:
+    branches: [drawing-board-standalone]
+    paths:
+      - tarot.html
+      - scripts/materialize-drawing-board.py
+      - .github/workflows/materialize-drawing-board.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: drawing-board-standalone
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build standalone document
+        run: python scripts/materialize-drawing-board.py
+      - name: Commit generated Drawing Board
+        run: |
+          if git diff --quiet -- drawing-board/tarot.html; then
+            echo "Drawing Board document is current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add drawing-board/tarot.html
+          git commit -m "Generate standalone Drawing Board document"
+          git push origin HEAD:drawing-board-standalone
