@@ -1,4 +1,4 @@
-// Standalone Drawing Board: preserve the Tarot Ledger shell, isolate board UI, add mini card search, and show full entries below the board.
+// Standalone Drawing Board: reuse the shared card engine, isolate board UI, add mini card search, and show full card entries below the board.
 (function () {
   'use strict';
   if (!/(^|\/)drawing-board\/tarot\.html$/.test(location.pathname)) return;
@@ -91,7 +91,7 @@
       #drawingBoardInspector .drawing-board-list-title{font-weight:900}
       #drawingBoardInspector .drawing-board-list-position{grid-column:1/-1;color:#6d6259;font-size:.78rem}
       #drawingBoardInspector .drawing-board-list-orientation{font-size:.72rem;font-weight:800;color:#6d6259}
-      #drawingBoardSelectedCardEntry:empty::before{content:'Select a card from the board or the list to reveal its complete Tarot Ledger entry.';display:block;color:#6d6259}
+      #drawingBoardSelectedCardEntry:empty::before{content:'Select a card from the board or the list to reveal its complete card entry.';display:block;color:#6d6259}
       @media(max-width:640px){#shortListPanel .relphi-placeholder-choice{padding:.35rem}#shortListPanel .relphi-placeholder-choice button{font-size:.68rem;padding:.38rem .56rem}}
     `;
     document.head.appendChild(style);
@@ -116,15 +116,8 @@
   function ensureBoardBooted() {
     configureShell();
     const panel = root();
-    if (!panel) {
+    if (!panel || !panel.querySelector('.card-row-drawing-board,.card-row-composer,.card-row-workspace')) {
       if (bootAttempts++ < 30) setTimeout(ensureBoardBooted, 100);
-      return;
-    }
-    if (panel.querySelector('.card-row-drawing-board,.card-row-composer,.card-row-workspace')) return;
-    const open = document.getElementById('landingOpenBoard');
-    if (open && bootAttempts++ < 30) {
-      open.click();
-      setTimeout(ensureBoardBooted, 100);
     }
   }
 
@@ -335,8 +328,8 @@
 
   function findLedgerCard(cardId) {
     const list = document.getElementById('cardList');
-    if (!list) return null;
-    return Array.from(list.querySelectorAll('[data-card-id],[data-id]')).find(node => node.dataset.cardId === cardId || node.dataset.id === cardId) || null;
+    if (!list || !cardId) return null;
+    return list.querySelector('.or-card[data-id="' + cssEscape(cardId) + '"]');
   }
 
   function moveRenderedDetail(cardId) {
@@ -354,7 +347,7 @@
     if (!cardId) return;
     restoreMovedDetail();
     configureShell();
-    (document.getElementById('showAllCards') || document.getElementById('landingShowLedger'))?.click();
+    document.getElementById('showAllCards')?.click();
     configureShell();
     const started = Date.now();
     let clicked = false;
@@ -364,7 +357,7 @@
       const match = findLedgerCard(cardId);
       if (match && !clicked) {
         clicked = true;
-        (match.closest('button,[role="button"],[data-card-id],[data-id],li,article') || match).click();
+        match.click();
       }
       if (moveRenderedDetail(cardId)) return;
       if (Date.now() - started < 2200) {
@@ -378,7 +371,7 @@
         const heading = document.createElement('h2');
         heading.textContent = cardName(data) || cardId.replace(/_/g, ' ');
         const note = document.createElement('p');
-        note.textContent = 'The full Tarot Ledger entry could not be rendered.';
+        note.textContent = 'The full card entry could not be rendered.';
         host.append(heading, note);
       }
     })();
