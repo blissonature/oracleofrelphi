@@ -5,6 +5,7 @@ const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '..', 'sky-chart-staleness-v1.js'), 'utf8');
 const migration = fs.readFileSync(path.join(__dirname, '..', 'sky-chart-live-origin-migration-v1.js'), 'utf8');
 const header = fs.readFileSync(path.join(__dirname, '..', 'sky-chart-live-header-v1.js'), 'utf8');
+const titleIntegrity = fs.readFileSync(path.join(__dirname, '..', 'sky-chart-sky-card-title-integrity-v1.js'), 'utf8');
 const loader = fs.readFileSync(path.join(__dirname, '..', 'sky-chart-page-stability-v1.js'), 'utf8');
 
 const ageFunction = source.match(/function ageLabel\(timestamp,now=Date\.now\(\)\)\{[\s\S]*?\n\}/);
@@ -19,19 +20,16 @@ assert.equal(ageLabel(base, base + 9 * 60 * 1000 + 59_999), '5 minutes ago');
 assert.equal(ageLabel(base, base + 10 * 60 * 1000), '10 minutes ago');
 assert.equal(ageLabel(base, base + 65 * 60 * 1000), '65 minutes ago');
 
+// The staleness module tracks live-origin state only. It must never render a second
+// age/refresh row in Where and When; the header owns the visible control exclusively.
 assert.match(source, /LIVE_ORIGINS=new Set\(\['here-and-now','update-to-now'\]\)/);
-assert.match(source, /dataset\.finalNow=slot/);
-assert.match(source, /dataset\.stalenessRefresh=slot/);
-assert.match(source, /refresh\.title='Update to Now'/);
-assert.match(source, /refresh\.setAttribute\('aria-label','Update to Now'\)/);
-assert.match(source, /width:44px!important/);
-assert.match(source, /height:44px!important/);
-assert.match(source, /data-final-now\]:not\(\[data-staleness-refresh\]\)/);
 assert.match(source, /clearLive\(slot,'loaded-sky'\)/);
 assert.match(source, /clearLive\(slot,'custom-where-when'\)/);
 assert.match(source, /markLive\(detail\.slot,'update-to-now'\)/);
 assert.match(source, /markLive\(slot,'here-and-now'\)/);
 assert.match(source, /Math\.abs\(marker-current\)>90\*1000/);
+assert.doesNotMatch(source, /sky-staleness-control|sky-staleness-age|sky-staleness-refresh/);
+assert.doesNotMatch(source, /dataset\.finalNow|dataset\.stalenessRefresh|buildControl\(/);
 
 // Persisted legacy live skies must be recognized from their surviving semantic signature,
 // not from savedAt/updatedAt timestamps that other Sky Chart layers may rewrite later.
@@ -41,17 +39,17 @@ assert.match(migration, /query==='current location'\|\|location==='current locat
 assert.doesNotMatch(migration, /MAX_CREATION_DRIFT|createdAtSkyMoment/);
 assert.match(migration, /liveNowMigrated='legacy-v2'/);
 
-// The visible card title is a stable sibling; live age must render there, not in the hidden
-// foundation-owned name node. The Saved-skies trigger is replaced while the sky is live.
-assert.match(header, /\.sky-card-title-stable\.is-live-now/);
-assert.match(header, /function visibleHost\(slot\)/);
-assert.match(header, /\.sky-card-title-stable`\)/);
-assert.match(header, /host\.replaceChildren\(\)/);
-assert.match(header, /className='sky-live-age-label'/);
+// The visible stable title host is the one and only UI owner for a live sky.
+assert.match(header, /\.sky-card-title-stable\[data-live-header-owned="true"\]/);
+assert.match(header, /function host\(slot\)/);
+assert.match(header, /className='sky-live-age'/);
+assert.match(header, /container\.replaceChildren\(age,refresh\)/);
 assert.match(header, /dataset\.finalNow=slot/);
 assert.match(header, /title='Update to Now'/);
+assert.match(header, /width:44px!important/);
+assert.match(header, /height:44px!important/);
 assert.match(header, /legacyLive\(value\)/);
-assert.doesNotMatch(header, /querySelector\(`#skyFoundation\$\{slot\}>\.sky-foundation-heading>\.sky-foundation-name`\)/);
+assert.match(titleIntegrity, /if\(host\.dataset\.liveHeaderOwned==='true'\)return/);
 
 // Startup order must classify legacy state before staleness/header rendering.
 const migrationIndex = loader.indexOf("sky-chart-live-origin-migration-v1.js?v=2");
