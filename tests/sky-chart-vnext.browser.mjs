@@ -29,8 +29,19 @@ await page.locator('[data-add-existing="B"]').click();
 await page.locator('[data-load-saved="sky-b"]').click();
 await page.waitForSelector('.sky-slot[data-slot="B"] .sky-ledger-row');
 assert.ok(await page.locator('.aspect-line').count()>0,'Comparison relationships must be rendered from one relationship calculation.');
-const dispatchUnchanged=await page.evaluate(()=>window.__nativeDispatchEvent===Function.prototype.toString.call(EventTarget.prototype.dispatchEvent));
-assert.equal(dispatchUnchanged,true,'Sky Chart vNext must not monkey-patch EventTarget.dispatchEvent.');
+
+const contract=await page.evaluate(()=>{
+  window.__vnextWheel=document.querySelector('.sky-wheel');
+  const resources=performance.getEntriesByType('resource').map(entry=>new URL(entry.name).pathname);
+  const legacy=resources.filter(path=>/\/sky-chart-(?!vnext\/).+\.js$/.test(path));
+  return{dispatchUnchanged:window.__nativeDispatchEvent===Function.prototype.toString.call(EventTarget.prototype.dispatchEvent),legacy};
+});
+assert.equal(contract.dispatchUnchanged,true,'Sky Chart vNext must not monkey-patch EventTarget.dispatchEvent.');
+assert.deepEqual(contract.legacy,[],'Sky Chart vNext must not load the legacy Sky Chart runtime chain.');
+
+await page.locator('.sky-slot[data-slot="A"] .sky-ledger-row').first().hover();
+await page.waitForTimeout(80);
+assert.equal(await page.evaluate(()=>window.__vnextWheel===document.querySelector('.sky-wheel')),true,'Hover must not rebuild the wheel.');
 assert.deepEqual(errors,[]);
 await browser.close();
 console.log('Sky Chart vNext browser smoke test passed.');
