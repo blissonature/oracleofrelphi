@@ -61,11 +61,11 @@ export function loadSavedSky(record){
   return applyIdentity(record,name,id);
 }
 export function saveWorkspace(state,storage=sessionStorage){
-  const compact={slots:{A:state?.slots?.A||null,B:state?.slots?.B||null},orb:Number(state?.orb||3)};
+  const compact={slots:{A:state?.slots?.A||null,B:state?.slots?.B||null},orb:Number(state?.orb||3),filters:state?.filters||null};
   return writeJson(storage,WORKSPACE_KEY,compact);
 }
 export function readWorkspace(storage=sessionStorage){
   const value=readJson(storage,WORKSPACE_KEY,null);if(!value||typeof value!=='object')return null;
-  return{slots:{A:normalizeSky(value.slots?.A),B:normalizeSky(value.slots?.B)},orb:Number.isFinite(Number(value.orb))?Number(value.orb):3};
+  return{slots:{A:normalizeSky(value.slots?.A),B:normalizeSky(value.slots?.B)},orb:Number.isFinite(Number(value.orb))?Number(value.orb):3,filters:value.filters||null};
 }
 export function clearWorkspace(storage=sessionStorage){try{storage.removeItem(WORKSPACE_KEY)}catch{}}
