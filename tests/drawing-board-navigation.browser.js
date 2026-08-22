@@ -55,6 +55,7 @@ let browser;
   assert.equal(await page.title(), 'Drawing Board · Oracle of Relphi');
   assert.equal((await page.locator('.tarot-hero h1').innerText()).trim(), 'Drawing Board');
   assert.equal(await page.locator('.tarot-entry-panel').isVisible(), false);
+  await page.waitForFunction(() => document.documentElement.dataset.relphiStandaloneDrawingBoardV2 === 'true');
   assert.equal(await page.locator('.tarot-mode-bar').isVisible(), false);
   assert.equal(drawingBoardPath(), '/drawing-board/tarot.html');
   await page.locator('#shortListPanel').waitFor({ state: 'visible' });
