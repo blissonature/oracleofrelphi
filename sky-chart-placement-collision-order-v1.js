@@ -1,9 +1,10 @@
 // Preserve exact circular order while resolving dense Sky Chart placement collisions.
-// v4 solves each sky's ordinary placements as one ordered circular label problem.
-// Leader crossings are a hard failure: no fallback is allowed to accept crossed leaders.
+// v5 solves each sky's ordinary placements as one ordered circular label problem.
+// Crossed leaders and leaders crossing house-cusp dividers are hard failures.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementCollisionOrderV4)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementCollisionOrderV5)return;
+window.__relphiSkyPlacementCollisionOrderV5=true;
 window.__relphiSkyPlacementCollisionOrderV4=true;
 window.__relphiSkyPlacementCollisionOrderV3=true;
 window.__relphiSkyPlacementCollisionOrderV2=true;
@@ -11,9 +12,8 @@ window.__relphiSkyPlacementCollisionOrderV1=true;
 
 const C={x:600,y:600};
 const EXACT_RADIUS={A:414,B:323};
-// These are the ordinary-placement lanes already safely separated from the angle lanes.
-// Collision solving stays on this radius and spreads tangentially, so glyph order and
-// leader routing remain one-dimensional and visually legible.
+// Keep ordinary placement bubbles on one stable lane per sky. Angular spreading alone
+// preserves visible circular order; radial lane hopping made dense clusters look scrambled.
 const LANE={A:450,B:287};
 const BUBBLE_RADIUS=17.2;
 const CLEARANCE=6;
@@ -26,8 +26,8 @@ const PRIORITY={
   lilith:3,'part-of-fortune':3,vertex:3
 };
 const WEIGHT=[12,8,4,2];
-const SEP_MULTIPLIERS=[1,1.06,1.12,1.2,1.3,1.42,1.55];
-const GLOBAL_SHIFTS=[0,.35,-.35,.7,-.7,1.4,-1.4,2.1,-2.1,3,-3];
+const SEP_MULTIPLIERS=[1,1.06,1.12,1.2,1.3,1.42,1.55,1.7];
+const GLOBAL_SHIFTS=[0,.2,-.2,.35,-.35,.55,-.55,.8,-.8,1.15,-1.15,1.6,-1.6,2.1,-2.1,2.8,-2.8,3.6,-3.6];
 let arranging=false;
 
 const num=value=>{const n=Number(value);return Number.isFinite(n)?n:NaN};
@@ -48,6 +48,17 @@ function ordinaryItems(wheel,slot){
     if(!leader)return null;
     return{group,leader,index,placement,priority:priorityOf(placement),exact:norm(exact)};
   }).filter(Boolean);
+}
+function lineSegment(line){
+  const a={x:num(line.getAttribute('x1')),y:num(line.getAttribute('y1'))},b={x:num(line.getAttribute('x2')),y:num(line.getAttribute('y2'))};
+  return[a.x,a.y,b.x,b.y].every(Number.isFinite)?{a,b,line}:null;
+}
+function houseDividerSegments(wheel,slot){
+  const layer=slot==='A'?'a-houses':'b-houses';
+  return Array.from(wheel.querySelectorAll(`[data-layer="${layer}"] line.sky-foundation-divider`)).map(lineSegment).filter(Boolean);
+}
+function fixedLeaderSegments(wheel,slot){
+  return Array.from(wheel.querySelectorAll(`[data-layer="leaders"] line[data-sky="${slot}"][data-angle]`)).map(lineSegment).filter(Boolean);
 }
 
 function sortedItems(items){return items.slice().sort((a,b)=>a.exact-b.exact||a.priority-b.priority||a.index-b.index)}
@@ -86,8 +97,7 @@ function minimumSeparation(lane){
   return 2*Math.asin(ratio)*180/Math.PI+.08;
 }
 function solveSequence(ordered,lane,separation,shift){
-  const target=ordered.map((item,index)=>item.exactU-index*separation);
-  const fitted=isotonic(target,ordered.map(weightOf));
+  const target=ordered.map((item,index)=>item.exactU-index*separation),fitted=isotonic(target,ordered.map(weightOf));
   return ordered.map((item,index)=>{
     const displayU=fitted[index]+index*separation+shift;
     return{item,lane,displayU,display:norm(displayU),point:polar(lane,displayU),offset:displayU-item.exactU};
@@ -109,6 +119,14 @@ function crossingCount(solution,slot){
   let count=0;
   for(let a=0;a<solution.length;a++)for(let b=a+1;b<solution.length;b++){
     if(properIntersection(solution[a].point,exactPoint(solution[a],slot),solution[b].point,exactPoint(solution[b],slot)))count+=1;
+  }
+  return count;
+}
+function fixedSegmentCrossings(solution,slot,segments){
+  let count=0;
+  for(const record of solution){
+    const start=record.point,end=exactPoint(record,slot);
+    for(const segment of segments)if(properIntersection(start,end,segment.a,segment.b))count+=1;
   }
   return count;
 }
@@ -135,9 +153,9 @@ function circularOrderValid(solution,separation){
 function movement(solution){
   let weighted=0,max=0;solution.forEach(record=>{const amount=Math.abs(record.offset);weighted+=amount*amount*weightOf(record.item);max=Math.max(max,amount)});return{weighted,max};
 }
-function evaluate(solution,slot,separation,shift,multiplier){
-  // Crossing lines are not scored; they are disqualified.
-  if(crossingCount(solution,slot)!==0||!circularOrderValid(solution,separation))return null;
+function evaluate(solution,slot,separation,shift,multiplier,dividers,fixedLeaders){
+  // All visible line crossings are disqualifying, not just expensive.
+  if(crossingCount(solution,slot)!==0||fixedSegmentCrossings(solution,slot,dividers)!==0||fixedSegmentCrossings(solution,slot,fixedLeaders)!==0||!circularOrderValid(solution,separation))return null;
   const move=movement(solution);
   return{solution,bubbles:bubbleCollisionCount(solution),hits:leaderGlyphHits(solution,slot),weighted:move.weighted,max:move.max,shift,multiplier};
 }
@@ -146,15 +164,16 @@ function compareCandidate(a,b){
   for(let i=0;i<av.length;i++){const delta=av[i]-bv[i];if(Math.abs(delta)>1e-9)return delta}return 0;
 }
 
-function bestSolution(slot,items){
+function bestSolution(slot,items,wheel){
   if(!items.length)return{solution:[],fallback:false,bubbles:0,hits:0};
-  const sorted=sortedItems(items),seams=seamCandidates(sorted),lane=LANE[slot],baseSeparation=minimumSeparation(lane),candidates=[];
+  const sorted=sortedItems(items),seams=seamCandidates(sorted),lane=LANE[slot],baseSeparation=minimumSeparation(lane),candidates=[],dividers=houseDividerSegments(wheel,slot),fixedLeaders=fixedLeaderSegments(wheel,slot);
   for(const seam of seams){
     const ordered=unwrap(sorted,seam);
     for(const multiplier of SEP_MULTIPLIERS){
       const separation=baseSeparation*multiplier;if(separation*ordered.length>=360-EPS)continue;
       for(const shift of GLOBAL_SHIFTS){
-        const solution=solveSequence(ordered,lane,separation,shift),candidate=evaluate(solution,slot,separation,shift,multiplier);if(candidate)candidates.push(candidate);
+        const solution=solveSequence(ordered,lane,separation,shift),candidate=evaluate(solution,slot,separation,shift,multiplier,dividers,fixedLeaders);
+        if(candidate)candidates.push(candidate);
       }
     }
   }
@@ -162,10 +181,9 @@ function bestSolution(slot,items){
     candidates.sort(compareCandidate);const best=candidates[0];
     return{...best,fallback:best.bubbles>0||best.hits>0};
   }
-  // Impossible-layout fallback: stay exactly radial. This may leave overlapping glyphs,
-  // but cannot invert zodiac order or create a crossing leader.
-  const ordered=unwrap(sorted,seams[0]||0);
-  const solution=ordered.map(item=>({item,lane,displayU:item.exactU,display:item.exact,point:polar(lane,item.exact),offset:0}));
+  // Exact radial fallback cannot cross another ordered leader or a radial house divider.
+  // Overlap is preferable to visually lying about which exact longitude a leader belongs to.
+  const ordered=unwrap(sorted,seams[0]||0),solution=ordered.map(item=>({item,lane,displayU:item.exactU,display:item.exact,point:polar(lane,item.exact),offset:0}));
   return{solution,fallback:true,bubbles:bubbleCollisionCount(solution),hits:leaderGlyphHits(solution,slot)};
 }
 
@@ -173,10 +191,10 @@ function setLeader(record,slot){
   const exact=polar(EXACT_RADIUS[slot],record.item.exact),line=record.item.leader;
   line.setAttribute('x1',record.point.x.toFixed(2));line.setAttribute('y1',record.point.y.toFixed(2));
   line.setAttribute('x2',exact.x.toFixed(2));line.setAttribute('y2',exact.y.toFixed(2));
-  line.dataset.displayLongitude=record.display.toFixed(8);line.dataset.leaderRouting='ordered-zero-cross';
+  line.dataset.displayLongitude=record.display.toFixed(8);line.dataset.leaderRouting='ordered-zero-cross-v5';
 }
-function apply(slot,items){
-  const result=bestSolution(slot,items);
+function apply(slot,items,wheel){
+  const result=bestSolution(slot,items,wheel);
   result.solution.forEach((record,index)=>{
     const item=record.item;item.group.setAttribute('transform',`translate(${record.point.x} ${record.point.y})`);
     item.group.dataset.displayLongitude=record.display.toFixed(8);item.group.dataset.placementLane=String(record.lane);
@@ -196,6 +214,15 @@ function actualCrossings(items){
   }
   return count;
 }
+function actualFixedCrossings(items,segments){
+  let count=0;
+  for(const item of items){
+    const a=endpoint(item.leader,1),b=endpoint(item.leader,2);
+    if(![a.x,a.y,b.x,b.y].every(Number.isFinite))continue;
+    for(const segment of segments)if(properIntersection(a,b,segment.a,segment.b))count+=1;
+  }
+  return count;
+}
 function forceRadial(slot,items){
   const lane=LANE[slot];sortedItems(items).forEach((item,index)=>{
     const point=polar(lane,item.exact),record={item,lane,display:item.exact,displayU:item.exact,point,offset:0};
@@ -210,14 +237,18 @@ function arrange(wheel){
   try{
     let bubbleFallbacks=0,leaderHits=0;
     for(const slot of ['A','B']){
-      const items=ordinaryItems(wheel,slot),result=apply(slot,items);bubbleFallbacks+=result.bubbles||0;leaderHits+=result.hits||0;
-      if(actualCrossings(items)!==0)forceRadial(slot,items);
+      const items=ordinaryItems(wheel,slot),result=apply(slot,items,wheel);bubbleFallbacks+=result.bubbles||0;leaderHits+=result.hits||0;
+      const dividers=houseDividerSegments(wheel,slot),fixedLeaders=fixedLeaderSegments(wheel,slot);
+      if(actualCrossings(items)!==0||actualFixedCrossings(items,dividers)!==0||actualFixedCrossings(items,fixedLeaders)!==0)forceRadial(slot,items);
     }
-    const crossings=actualCrossings(ordinaryItems(wheel,'A'))+actualCrossings(ordinaryItems(wheel,'B'));
-    wheel.dataset.placementLeaderCrossings=String(crossings);wheel.dataset.placementCircularOrder='preserved';
-    wheel.dataset.placementLeaderGlyphHits=String(leaderHits);wheel.dataset.placementCollisionFallbacks=String(bubbleFallbacks);
-    wheel.dataset.placementCollisionOrder='cluster-isotonic-v4';
-    if(crossings!==0)console.error('[Sky Chart placement layout] Zero-cross contract failed after exact-radial fallback.',{crossings});
+    const a=ordinaryItems(wheel,'A'),b=ordinaryItems(wheel,'B');
+    const crossings=actualCrossings(a)+actualCrossings(b);
+    const dividerCrossings=actualFixedCrossings(a,houseDividerSegments(wheel,'A'))+actualFixedCrossings(b,houseDividerSegments(wheel,'B'));
+    const fixedLeaderCrossings=actualFixedCrossings(a,fixedLeaderSegments(wheel,'A'))+actualFixedCrossings(b,fixedLeaderSegments(wheel,'B'));
+    wheel.dataset.placementLeaderCrossings=String(crossings);wheel.dataset.placementLeaderDividerCrossings=String(dividerCrossings);wheel.dataset.placementLeaderFixedCrossings=String(fixedLeaderCrossings);
+    wheel.dataset.placementCircularOrder='preserved';wheel.dataset.placementLeaderGlyphHits=String(leaderHits);wheel.dataset.placementCollisionFallbacks=String(bubbleFallbacks);
+    wheel.dataset.placementCollisionOrder='cluster-isotonic-v5';
+    if(crossings||dividerCrossings||fixedLeaderCrossings)console.error('[Sky Chart placement layout] Zero-cross contract failed after exact-radial fallback.',{crossings,dividerCrossings,fixedLeaderCrossings});
   }finally{arranging=false}
 }
 function currentWheel(){return document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel')}
