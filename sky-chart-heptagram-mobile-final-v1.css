@@ -1,4 +1,23 @@
-/* Final mobile heptagram layout: no planet-name labels and no overlapping text. */
+/* Sky-card first-paint guard and mobile heptagram layout. */
+
+/* The legacy action row remains as an internal controller surface only. Never paint it. */
+.sky-where-when-actions {
+  display:none!important;
+}
+
+/* Before the drawer owner reparents the legacy views, keep them out of first paint. */
+#skyFoundationA > .sky-foundation-body > .sky-where-when-view,
+#skyFoundationA > .sky-foundation-body > .sky-where-when-placement-view,
+#skyFoundationB > .sky-foundation-body > .sky-where-when-view,
+#skyFoundationB > .sky-foundation-body > .sky-where-when-placement-view {
+  visibility:hidden!important;
+}
+
+.sky-card-drawer-body > .sky-where-when-view,
+.sky-card-drawer-body > .sky-where-when-placement-view {
+  visibility:visible!important;
+}
+
 .sky-ph-jump {
   position:relative;
   overflow:hidden;
@@ -23,10 +42,10 @@
   height:auto;
   max-height:none;
   margin:0 auto;
-  overflow:hidden;
+  overflow:visible;
 }
 
-/* Planet names do not belong on the heptagram. */
+/* Planet names do not belong on the encrypted heptagram thumbnail. */
 .sky-ph-node-label {
   display:none!important;
 }
@@ -47,7 +66,8 @@
 
   .sky-ph-jump {
     gap:8px;
-    padding:10px;
+    padding:14px 10px 10px;
+    overflow:visible;
   }
 
   .sky-ph-jump-title {
@@ -58,6 +78,7 @@
   .sky-ph-heptagram {
     width:100%;
     max-width:100%;
+    overflow:visible;
   }
 
   .sky-ph-summary {
