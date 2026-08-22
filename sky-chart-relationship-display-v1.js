@@ -20,8 +20,9 @@ function writeMode(value){
 }
 function modeLevel(mode){return mode==='referents'?2:mode==='names'?1:0}
 
-function applyProgressiveToken(token,level){
+function applyProgressiveToken(token,level,force=false){
   if(!(token instanceof HTMLElement))return;
+  if(!force&&token.dataset.relationshipDisplayDefault!==undefined)return;
   const levels={glyph:0,name:1,meaning:2};
   const names=['glyph','name','meaning'];
   token.dataset.progressiveStage=names[level];
@@ -36,8 +37,9 @@ function applyProgressiveToken(token,level){
     button.tabIndex=visible?0:-1;
   });
 }
-function applyInlineToken(token,level){
+function applyInlineToken(token,level,force=false){
   if(!(token instanceof HTMLElement))return;
+  if(!force&&token.dataset.relationshipDisplayDefault!==undefined)return;
   const name=token.querySelector(':scope > [data-inline-progressive-level="name"]');
   const referent=token.querySelector(':scope > [data-inline-progressive-level="referent"]');
   token.dataset.inlineProgressiveStage=String(level);
@@ -46,11 +48,11 @@ function applyInlineToken(token,level){
   if(name){name.hidden=level===0;name.setAttribute('aria-expanded',level===2?'true':'false')}
   if(referent)referent.hidden=level<2;
 }
-function applyMode(root=document){
+function applyMode(root=document,force=false){
   const mode=readMode(),level=modeLevel(mode);
   document.documentElement.dataset.relationshipDisplay=mode;
-  root.querySelectorAll?.('.sky-progressive-token').forEach(token=>applyProgressiveToken(token,level));
-  root.querySelectorAll?.('.inline-rel-progressive-token').forEach(token=>applyInlineToken(token,level));
+  root.querySelectorAll?.('.sky-progressive-token').forEach(token=>applyProgressiveToken(token,level,force));
+  root.querySelectorAll?.('.inline-rel-progressive-token').forEach(token=>applyInlineToken(token,level,force));
   const select=document.querySelector('[data-relationship-display-select]');
   if(select&&select.value!==mode)select.value=mode;
 }
@@ -62,6 +64,12 @@ function installStyles(){
   style.textContent=`
     #skyFoundationRelationships .sky-relationship-display-control{min-width:0!important}
     #skyFoundationRelationships .sky-relationship-display-control select{touch-action:manipulation!important}
+    @media(min-width:901px){
+      #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-display-control{
+        grid-column:1 / span 2!important;
+        max-width:280px!important;
+      }
+    }
     @media(max-width:620px){
       #skyFoundationRelationships{overflow:visible!important}
       #skyFoundationRelationships #skyFoundationRelationshipList,
@@ -99,7 +107,7 @@ function ensureControl(){
     select.value=readMode();
     select.addEventListener('change',()=>{
       writeMode(select.value);
-      applyMode();
+      applyMode(document,true);
       window.dispatchEvent(new CustomEvent('relphi:relationship-display-changed',{detail:{mode:select.value}}));
     });
     label.append(caption,select);
@@ -112,7 +120,7 @@ function reconcile(){
   queued=false;
   installStyles();
   ensureControl();
-  applyMode();
+  applyMode(document,false);
 }
 function schedule(){
   if(queued)return;
@@ -132,5 +140,5 @@ function start(){
 }
 
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
-window.RelphiSkyRelationshipDisplay={getMode:readMode,setMode:mode=>{writeMode(mode);applyMode();},apply:applyMode};
+window.RelphiSkyRelationshipDisplay={getMode:readMode,setMode:mode=>{writeMode(mode);applyMode(document,true);},apply:root=>applyMode(root||document,false)};
 })();
