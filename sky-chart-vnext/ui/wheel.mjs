@@ -67,5 +67,6 @@ export function applyTransientFocus(root,key=''){
   const wheel=root?.querySelector?.('.sky-wheel');if(!wheel)return;
   const active=String(key||'');
   wheel.querySelectorAll('.placement').forEach(node=>node.classList.toggle('is-muted',!!active&&node.dataset.placementKey!==active));
+  wheel.querySelectorAll('.leader').forEach(node=>node.classList.toggle('is-muted',!!active&&node.dataset.placementKey!==active));
   wheel.querySelectorAll('.aspect-line').forEach(node=>node.classList.toggle('is-muted',!!active&&node.dataset.left!==active&&node.dataset.right!==active));
 }
