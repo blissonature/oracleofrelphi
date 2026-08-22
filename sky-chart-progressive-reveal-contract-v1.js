@@ -10,6 +10,8 @@
   const names=['glyph','name','meaning'];
   const remembered=new Map();
   let queued=false;
+  let fastPointerTarget=null;
+  let fastPointerAt=0;
 
   function keyFor(token,index){
     return token.dataset.progressiveField||token.dataset.progressiveGlyphId||`token-${index}`;
@@ -60,14 +62,13 @@
     });
   }
 
-  function handleClick(event){
-    const button=event.target.closest('.sky-progressive-level');
-    if(!button)return;
+  function activateButton(button,event){
+    if(!button)return false;
     const token=button.closest('.sky-progressive-token');
-    if(!token)return;
+    if(!token)return false;
 
-    event.preventDefault();
-    event.stopImmediatePropagation();
+    event?.preventDefault?.();
+    event?.stopImmediatePropagation?.();
 
     const clicked=levels[button.dataset.progressiveLevel];
     const current=levels[token.dataset.progressiveStage]??0;
@@ -80,6 +81,28 @@
     setStage(token,next,true);
     const focusTarget=token.querySelector(`:scope > [data-progressive-level="${names[next]}"]`);
     focusTarget?.focus({preventScroll:true});
+    return true;
+  }
+
+  function handlePointerUp(event){
+    if(event.pointerType!=='touch'&&event.pointerType!=='pen')return;
+    const button=event.target.closest?.('.sky-progressive-level');
+    if(!button)return;
+    if(!activateButton(button,event))return;
+    fastPointerTarget=button;
+    fastPointerAt=performance.now();
+  }
+
+  function handleClick(event){
+    const button=event.target.closest('.sky-progressive-level');
+    if(!button)return;
+    if(button===fastPointerTarget&&performance.now()-fastPointerAt<800){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      fastPointerTarget=null;
+      return;
+    }
+    activateButton(button,event);
   }
 
   function installStyles(){
@@ -98,6 +121,8 @@
         display:inline-flex;
         align-items:center;
         min-width:0;
+        touch-action:manipulation;
+        -webkit-tap-highlight-color:transparent;
       }
       .sky-progressive-token[data-progressive-reveal-contract="cumulative"] > .sky-progressive-level[hidden]{
         display:none !important;
@@ -116,6 +141,7 @@
   function start(){
     installStyles();
     prepare();
+    document.addEventListener('pointerup',handlePointerUp,true);
     document.addEventListener('click',handleClick,true);
     window.addEventListener('relphi:selected-relationship-rendered',schedule);
     window.addEventListener('relphi:sky-progressive-symbols-ready',schedule);
