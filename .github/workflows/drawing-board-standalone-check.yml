@@ -5,7 +5,6 @@ on:
     paths:
       - 'drawing-board/**'
       - 'drawing-board-standalone-v2.js'
-      - 'drawing-board-ledger-selection-bridge-v1.js'
       - 'tarot-ledger-no-board-v1.js'
       - 'navloader.js'
       - 'nav.html'
@@ -18,7 +17,6 @@ on:
     paths:
       - 'drawing-board/**'
       - 'drawing-board-standalone-v2.js'
-      - 'drawing-board-ledger-selection-bridge-v1.js'
       - 'tarot-ledger-no-board-v1.js'
       - 'navloader.js'
       - 'nav.html'
@@ -47,7 +45,6 @@ jobs:
       - name: Check JavaScript syntax and structural contracts
         run: |
           node --check drawing-board-standalone-v2.js
-          node --check drawing-board-ledger-selection-bridge-v1.js
           node --check tarot-ledger-no-board-v1.js
           node --check navloader.js
           node --check tests/drawing-board-standalone-v2.test.js
