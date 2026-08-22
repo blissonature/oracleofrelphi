@@ -1,38 +1,90 @@
-// Compact ephemeris timing for fully expanded relationship tiles.
-// Adds current transit-window length and direct/retrograde state to the existing orb line
-// without increasing the expanded tile's vertical structure.
+// Transit-window length and retrograde state for fully expanded relationship tiles.
+// Live skies are identified by Here and Now / Update to Now provenance, not by which
+// slot they occupy. Intrasky live relationships move both endpoints together through time.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipTransitMetaV1)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipTransitMetaV2)return;
+window.__relphiRelationshipTransitMetaV2=true;
 window.__relphiRelationshipTransitMetaV1=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const BODY={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',pluto:'Pluto'};
+const PLANET_IDS=new Set(Object.keys(BODY));
 const NODE_IDS=new Set(['north-node','south-node']);
+const ANGLE_IDS=new Set(['asc','dsc','mc','ic']);
+const MOTION_IDS=new Set([...PLANET_IDS,...NODE_IDS,'lilith']);
 const ANGLE={conjunction:0,'semi-sextile':30,octile:45,sextile:60,quintile:72,square:90,trine:120,'tri-octile':135,'bi-quintile':144,quincunx:150,opposition:180};
-const STEP={moon:.03,mercury:.12,venus:.18,mars:.3,sun:.2,jupiter:.6,saturn:.9,uranus:1.25,neptune:1.5,pluto:1.75,'north-node':1,'south-node':1};
-const HORIZON={moon:24,mercury:300,venus:520,mars:900,sun:450,jupiter:1600,saturn:2200,uranus:3000,neptune:3400,pluto:3800,'north-node':1800,'south-node':1800};
 const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
-const ALIAS={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
+const ALIAS={rising:'asc',ascendant:'asc',asc:'asc',ac:'asc',descendant:'dsc',dsc:'dsc',dc:'dsc',midheaven:'mc',mc:'mc','imum coeli':'ic',imumcoeli:'ic',ic:'ic',vx:'vertex',vertex:'vertex','north node':'north-node',node:'north-node','true node':'north-node','mean node':'north-node','south node':'south-node',chiron:'chiron',lilith:'lilith','black moon lilith':'lilith',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
+const LIVE_ORIGINS=new Set(['here-and-now','update-to-now']);
 const DAY=86400000;
+const MIN_STEP={asc:.0007,dsc:.0007,mc:.0007,ic:.0007,moon:.01,mercury:.03,venus:.04,mars:.06,sun:.06,jupiter:.12,saturn:.18,uranus:.25,neptune:.3,pluto:.35,'north-node':.15,'south-node':.15,lilith:.15};
+const MAX_STEP={asc:.01,dsc:.01,mc:.01,ic:.01,moon:.2,mercury:.5,venus:.7,mars:1,sun:1,jupiter:4,saturn:7,uranus:10,neptune:12,pluto:14,'north-node':5,'south-node':5,lilith:5};
+const MIN_HORIZON={asc:2,dsc:2,mc:2,ic:2,moon:45,mercury:400,venus:700,mars:1200,sun:800,jupiter:3000,saturn:4500,uranus:6000,neptune:7000,pluto:8000,'north-node':4000,'south-node':4000,lilith:2500};
+const MAX_HORIZON=12000;
 let generation=0,observer=null,observedList=null;
 
 const norm=value=>((Number(value)%360)+360)%360;
 const wrap=value=>((Number(value)+540)%360)-180;
+const separation=(a,b)=>Math.abs(wrap(Number(a)-Number(b)));
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
-function source(payload){const raw=[payload?.placements,payload?.positions,payload?.points,payload?.bodies].find(value=>value&&typeof value==='object')||payload||{};return Array.isArray(raw)?raw.map((value,index)=>[String(value?.name||value?.id||index),value]):Object.entries(raw)}
-function longitudeValue(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const sign=SIGNS.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:norm(sign*30+Number(item.degree||item.degrees||0)+Number(item.minute||item.minutes||0)/60+Number(item.second||item.seconds||0)/3600)}
-function canonicalId(key,item){const registry=window.RelphiGlyphRegistry;for(const candidate of [item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){if(candidate==null)continue;const raw=String(candidate).trim(),id=ALIAS[raw.toLowerCase()]||raw,entry=registry?.resolve?.(id)||registry?.get?.(id);if(entry?.id)return entry.id}return''}
-function findRecord(slot,id){for(const[key,item]of source(read(slot))){if(!item||typeof item!=='object'||Array.isArray(item))continue;if(canonicalId(key,item)!==id)continue;const value=longitudeValue(item);if(Number.isFinite(value))return{id,value}}return null}
-function profileDate(slot){const payload=read(slot),profile=payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:payload,raw=profile?.instant||profile?.dateTime;if(!raw)return null;const date=new Date(raw);return Number.isFinite(date.getTime())?date:null}
-function movingSlot(){
-  const a=read('A'),b=read('B'),an=String(a?.name||''),bn=String(b?.name||''),dynamic=/planetary hours|transit|current sky|\bnow\b/i,staticSky=/birth|natal|static|fixed/i;
-  try{const roles=window.RelphiSkyRoles||JSON.parse(localStorage.getItem('relphiSkyChartRoles')||'null');if(roles?.chart==='dynamic'&&roles?.currentSky!=='dynamic')return'A';if(roles?.currentSky==='dynamic'&&roles?.chart!=='dynamic')return'B'}catch(_){}
-  if(dynamic.test(an)!==dynamic.test(bn))return dynamic.test(an)?'A':'B';
-  if(staticSky.test(an)!==staticSky.test(bn))return staticSky.test(an)?'B':'A';
-  const ad=profileDate('A'),bd=profileDate('B');
-  if(ad&&bd&&Math.abs(ad-bd)>DAY)return ad>bd?'A':'B';
+function source(payload){
+  const raw=[payload?.placements,payload?.positions,payload?.points,payload?.bodies].find(value=>value&&typeof value==='object')||payload||{};
+  return Array.isArray(raw)?raw.map((value,index)=>[String(value?.name||value?.id||index),value]):Object.entries(raw);
+}
+function longitudeValue(item){
+  if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);
+  const sign=SIGNS.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());
+  return sign<0?NaN:norm(sign*30+Number(item.degree||item.degrees||0)+Number(item.minute||item.minutes||0)/60+Number(item.second||item.seconds||0)/3600);
+}
+function canonicalId(key,item){
+  const registry=window.RelphiGlyphRegistry;
+  for(const candidate of [item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){
+    if(candidate==null)continue;
+    const raw=String(candidate).trim(),id=ALIAS[raw.toLowerCase()]||raw,entry=registry?.resolve?.(id)||registry?.get?.(id);
+    if(entry?.id)return entry.id;
+  }
+  return'';
+}
+function findRecord(slot,id){
+  for(const[key,item]of source(read(slot))){
+    if(!item||typeof item!=='object'||Array.isArray(item))continue;
+    if(canonicalId(key,item)!==id)continue;
+    const value=longitudeValue(item);if(Number.isFinite(value))return{id,value};
+  }
   return null;
+}
+function profile(slot){
+  const payload=read(slot);return payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
+}
+function profileDate(slot){
+  const p=profile(slot),raw=p.instant||p.dateTime||read(slot)?.instant||read(slot)?.dateTime;if(!raw)return null;
+  if(p.instant){const date=new Date(p.instant);if(Number.isFinite(date.getTime()))return date}
+  try{
+    if(window.luxon?.DateTime&&p.timeZone){
+      const dt=window.luxon.DateTime.fromISO(String(p.dateTime||raw),{zone:String(p.timeZone),setZone:true});
+      if(dt?.isValid)return dt.toUTC().toJSDate();
+    }
+  }catch(_){}
+  const date=new Date(raw);return Number.isFinite(date.getTime())?date:null;
+}
+function liveOrigin(slot){
+  const payload=read(slot);if(!payload||typeof payload!=='object')return'';
+  const metadata=payload.metadata&&typeof payload.metadata==='object'?payload.metadata:{},explicit=String(metadata.liveNowOrigin||'');
+  if(LIVE_ORIGINS.has(explicit))return explicit;
+  // Legacy fallback used before live-origin migration runs on this page.
+  const p=profile(slot),name=String(payload.name||payload.title||'').trim().toLowerCase(),query=String(p.locationQuery||'').trim().toLowerCase(),location=String(p.location||'').trim().toLowerCase();
+  const saved=!!(metadata.savedSkyId||metadata.savedSkyName||metadata.savedSkyLoadedAt);
+  if(saved||name!=='now')return'';
+  if(query==='my current location')return'update-to-now';
+  if(query==='current location'||location==='current location')return'here-and-now';
+  return'';
+}
+function isLive(slot){return LIVE_ORIGINS.has(liveOrigin(slot))}
+function rowSky(row,side){
+  const explicit=row.dataset[side==='left'?'leftSky':'rightSky'];if(explicit==='A'||explicit==='B')return explicit;
+  const mode=String(row.dataset.relationshipMode||'A-B');if(mode==='A-A')return'A';if(mode==='B-B')return'B';
+  return side==='left'?'A':'B';
 }
 function angularLimit(row){
   const aspect=String(row.dataset.aspect||''),model=window.RelphiHarmonicOrb,entry=model?.byId?.(aspect),harmonic=Number(row.dataset.harmonicOrder||entry?.harmonic||1)||1;
@@ -40,72 +92,194 @@ function angularLimit(row){
   const safePhase=Number.isFinite(phase)&&phase>=0?phase:Number(model?.defaultWindow)||6;
   return Math.max(.0001,safePhase/harmonic);
 }
-function meanNodeLongitude(date){const jd=date.getTime()/DAY+2440587.5,T=(jd-2451545.0)/36525;return norm(125.04452-1934.136261*T+0.0020708*T*T+(T*T*T)/450000)}
-function movingLongitude(id,date){
+function julianCenturies(date){return((date.getTime()/DAY+2440587.5)-2451545)/36525}
+function meanNodeLongitude(date){const T=julianCenturies(date);return norm(125.04452-1934.136261*T+0.0020708*T*T+(T*T*T)/450000)}
+function meanLilithLongitude(date){
+  const T=julianCenturies(date),perigee=83.3532465+4069.0137287*T-0.01032*T*T-(T*T*T)/80053+(T*T*T*T)/18999000;
+  return norm(perigee+180);
+}
+function siderealDegrees(date,longitude){
+  const A=window.Astronomy;if(!A?.SiderealTime)return NaN;
+  return norm(A.SiderealTime(date)*15+Number(longitude||0));
+}
+function obliquity(date){
+  const A=window.Astronomy;if(!A?.e_tilt)return NaN;
+  return Number(A.e_tilt(date).tobl);
+}
+function ascendantLongitude(date,slot){
+  const p=profile(slot),latitude=Number(p.latitude),longitude=Number(p.longitude);
+  if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return NaN;
+  const theta=siderealDegrees(date,longitude)*Math.PI/180,phi=latitude*Math.PI/180,epsilon=obliquity(date)*Math.PI/180;
+  if(![theta,phi,epsilon].every(Number.isFinite))return NaN;
+  return norm(Math.atan2(-Math.cos(theta),Math.sin(theta)*Math.cos(epsilon)+Math.tan(phi)*Math.sin(epsilon))*180/Math.PI+180);
+}
+function midheavenLongitude(date,slot){
+  const p=profile(slot),longitude=Number(p.longitude);if(!Number.isFinite(longitude))return NaN;
+  const theta=siderealDegrees(date,longitude)*Math.PI/180,epsilon=obliquity(date)*Math.PI/180;if(![theta,epsilon].every(Number.isFinite))return NaN;
+  return norm(Math.atan2(Math.sin(theta),Math.cos(theta)*Math.cos(epsilon))*180/Math.PI);
+}
+function ephemerisLongitude(id,date,slot){
   if(id==='north-node')return meanNodeLongitude(date);
   if(id==='south-node')return norm(meanNodeLongitude(date)+180);
-  const astronomy=window.Astronomy,bodyValue=astronomy?.Body?.[BODY[id]]||BODY[id];if(!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;return astronomy.Ecliptic(astronomy.GeoVector(bodyValue,date,true)).elon;
+  if(id==='lilith')return meanLilithLongitude(date);
+  if(id==='asc')return ascendantLongitude(date,slot);
+  if(id==='dsc'){const value=ascendantLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}
+  if(id==='mc')return midheavenLongitude(date,slot);
+  if(id==='ic'){const value=midheavenLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}
+  const astronomy=window.Astronomy,bodyName=BODY[id],bodyValue=astronomy?.Body?.[bodyName]||bodyName;
+  if(!bodyName||!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;
+  try{
+    if(id==='moon'&&typeof astronomy.EclipticGeoMoon==='function')return norm(astronomy.EclipticGeoMoon(date).lon);
+    return norm(astronomy.Ecliptic(astronomy.GeoVector(bodyValue,date,true)).elon);
+  }catch(_){return NaN}
+}
+function endpoint(row,side){
+  const sky=rowSky(row,side),id=String(row.dataset[side==='left'?'leftPlacement':'rightPlacement']||''),record=findRecord(sky,id),date=profileDate(sky);
+  return{side,sky,id,record,date,live:isLive(sky)};
+}
+function endpointCanMove(ep){
+  if(!ep.live||!ep.date)return false;
+  return Number.isFinite(ephemerisLongitude(ep.id,ep.date,ep.sky));
+}
+function bodyName(id){
+  const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||id;
 }
 function modelFor(row){
-  const leftSky=row.dataset.leftSky||(row.dataset.relationshipMode==='B-B'?'B':'A');
-  const rightSky=row.dataset.rightSky||(row.dataset.relationshipMode==='A-A'?'A':'B');
-  // The current timing model deliberately describes a moving-sky placement against a
-  // fixed placement in the other sky. Do not manufacture a false inter-sky model for A-A/B-B.
-  if(leftSky===rightSky)return null;
-  const moving=movingSlot();if(!moving)return null;
-  const movingId=String(row.dataset[moving==='A'?'leftPlacement':'rightPlacement']||''),fixedId=String(row.dataset[moving==='A'?'rightPlacement':'leftPlacement']||''),angle=ANGLE[String(row.dataset.aspect||'')],date=profileDate(moving);
-  if((!BODY[movingId]&&!NODE_IDS.has(movingId))||!fixedId||!Number.isFinite(angle)||!date)return null;
-  if(BODY[movingId]&&!window.Astronomy)return null;
-  const fixed=findRecord(moving==='A'?'B':'A',fixedId);if(!fixed)return null;
-  return{moving,movingId,fixedId,fixedLongitude:fixed.value,angle,date,limit:angularLimit(row),step:STEP[movingId]||.5,horizon:HORIZON[movingId]||1200};
+  const aspect=String(row.dataset.aspect||''),angle=ANGLE[aspect];if(!Number.isFinite(angle))return{kind:'unavailable',reason:'Aspect timing is unavailable.'};
+  const left=endpoint(row,'left'),right=endpoint(row,'right'),limit=angularLimit(row);
+  if(!left.record||!right.record)return{kind:'unavailable',reason:'Placement timing data is unavailable.'};
+  const liveEndpoints=[left,right].filter(ep=>ep.live);
+  if(!liveEndpoints.length)return{kind:'static',left,right};
+  if(liveEndpoints.some(ep=>!endpointCanMove(ep))){
+    return{kind:'unavailable',left,right,reason:'Transit length is not available for this moving calculated point.'};
+  }
+  // A single live sky can appear on both sides of an intrasky relation. Use one
+  // center instant and advance both endpoints by the same elapsed time.
+  const centerDate=liveEndpoints[0].date,center=centerDate.getTime();
+  const valueAt=(ep,ms)=>{
+    if(!ep.live)return ep.record.value;
+    const base=ep.date.getTime(),date=new Date(base+(ms-center));
+    return ephemerisLongitude(ep.id,date,ep.sky);
+  };
+  const errorAt=ms=>{
+    const a=valueAt(left,ms),b=valueAt(right,ms);if(!Number.isFinite(a)||!Number.isFinite(b))return Infinity;
+    return Math.abs(separation(a,b)-angle);
+  };
+  return{kind:'dynamic',left,right,angle,limit,center,errorAt,valueAt};
 }
-function analyzer(model){
-  const targetA=model.fixedLongitude+model.angle,targetB=model.fixedLongitude-model.angle;
-  const errorAt=ms=>{const value=movingLongitude(model.movingId,new Date(ms));if(!Number.isFinite(value))return Infinity;const a=Math.abs(wrap(value-targetA)),b=Math.abs(wrap(value-targetB));return Math.min(a,b)};
-  const speedAt=ms=>wrap(movingLongitude(model.movingId,new Date(ms+.06*DAY))-movingLongitude(model.movingId,new Date(ms-.06*DAY)))/.12;
-  return{errorAt,speedAt};
+function angularVelocity(ep,centerMs,valueAt){
+  if(!ep.live||!MOTION_IDS.has(ep.id))return NaN;
+  const half=ep.id==='moon'?.02:.06,a=valueAt(ep,centerMs-half*DAY),b=valueAt(ep,centerMs+half*DAY);
+  return Number.isFinite(a)&&Number.isFinite(b)?wrap(b-a)/(2*half):NaN;
 }
-function refineEdge(insideMs,outsideMs,inside){let yes=insideMs,no=outsideMs;for(let index=0;index<28;index+=1){const mid=(yes+no)/2;if(inside(mid))yes=mid;else no=mid}return(yes+no)/2}
-function findEdge(center,direction,stepDays,horizonDays,inside){let lastInside=center;for(let elapsed=stepDays;elapsed<=horizonDays;elapsed+=stepDays){const candidate=center+direction*elapsed*DAY;if(!inside(candidate))return refineEdge(lastInside,candidate,inside);lastInside=candidate}return null}
+function motionSummary(model){
+  const states=[];
+  for(const ep of [model.left,model.right]){
+    if(!ep.live||!MOTION_IDS.has(ep.id))continue;
+    const speed=angularVelocity(ep,model.center,model.valueAt);if(!Number.isFinite(speed))continue;
+    states.push({id:ep.id,name:bodyName(ep.id),retrograde:speed<0,speed});
+  }
+  return states;
+}
+function estimatedRelativeSpeed(model){
+  const half=.04,a=model.errorAt(model.center-half*DAY),b=model.errorAt(model.center+half*DAY);
+  if(Number.isFinite(a)&&Number.isFinite(b))return Math.abs(b-a)/(2*half);
+  return NaN;
+}
+function searchSettings(model){
+  const ids=[model.left,model.right].filter(ep=>ep.live).map(ep=>ep.id),minStep=Math.min(...ids.map(id=>MIN_STEP[id]??.05)),maxStep=Math.min(...ids.map(id=>MAX_STEP[id]??2)),minHorizon=Math.max(...ids.map(id=>MIN_HORIZON[id]??1200));
+  const speed=estimatedRelativeSpeed(model),estimate=Number.isFinite(speed)&&speed>1e-5?model.limit/speed:NaN;
+  const step=Number.isFinite(estimate)?Math.max(minStep,Math.min(maxStep,estimate/5)):maxStep;
+  const horizon=Math.min(MAX_HORIZON,Math.max(minHorizon,Number.isFinite(estimate)?estimate*12:0));
+  return{step,horizon};
+}
+function refineEdge(insideMs,outsideMs,inside){
+  let yes=insideMs,no=outsideMs;
+  for(let index=0;index<30;index+=1){const mid=(yes+no)/2;if(inside(mid))yes=mid;else no=mid}
+  return(yes+no)/2;
+}
+function findEdge(center,direction,stepDays,horizonDays,inside){
+  let lastInside=center;
+  for(let elapsed=stepDays;elapsed<=horizonDays;elapsed+=stepDays){
+    const candidate=center+direction*elapsed*DAY;
+    if(!inside(candidate))return refineEdge(lastInside,candidate,inside);
+    lastInside=candidate;
+  }
+  return null;
+}
 function durationLabel(days){
-  if(days<1)return`${Math.max(1,Math.round(days*24))}h`;
+  if(days<1){
+    const minutes=days*24*60;
+    if(minutes<90)return`${Math.max(1,Math.round(minutes))}m`;
+    return`${Math.max(1,Math.round(days*24))}h`;
+  }
   if(days<14)return`${Math.round(days*10)/10}d`;
   if(days<75)return`${Math.round(days)}d`;
   if(days<730)return`${Math.round(days/30.4375*10)/10}mo`;
   return`${Math.round(days/365.25*10)/10}y`;
 }
-function bodyName(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||id}
+function staticRetrogradeSummary(model){
+  const states=[];
+  for(const ep of [model.left,model.right]){
+    if(!ep.date||!MOTION_IDS.has(ep.id))continue;
+    const valueAt=(target,ms)=>ephemerisLongitude(target.id,new Date(ms),target.sky),center=ep.date.getTime();
+    const speed=angularVelocity({...ep,live:true},center,valueAt);
+    if(Number.isFinite(speed))states.push({name:bodyName(ep.id),retrograde:speed<0});
+  }
+  return states;
+}
 function ensureMeta(row){
   const orb=row.querySelector(':scope>.inline-rel-detail .inline-rel-orb');if(!orb)return null;
-  let meta=orb.querySelector(':scope>.inline-rel-transit-meta');if(!meta){meta=document.createElement('small');meta.className='inline-rel-transit-meta';meta.hidden=true;orb.appendChild(meta)}return meta;
+  let meta=orb.querySelector(':scope>.inline-rel-transit-meta');
+  if(!meta){meta=document.createElement('small');meta.className='inline-rel-transit-meta';orb.appendChild(meta)}
+  return meta;
 }
 function finish(row,result){
   const meta=ensureMeta(row);if(!meta)return;
-  meta.dataset.transitReady='true';
-  if(!result){meta.hidden=true;meta.textContent='';meta.removeAttribute('title');return}
-  meta.hidden=false;meta.classList.toggle('is-retrograde',result.retrograde);meta.textContent=`· ${result.duration} · ${result.retrograde?'Rx':'Dir'}`;
-  const motion=result.retrograde?'retrograde':'direct';meta.title=`Transit window ${result.duration} at the current Harmonic Window; ${result.name} is ${motion}.`;meta.setAttribute('aria-label',`Transit length ${result.duration}; ${result.name} ${motion}`);
+  meta.dataset.transitReady='true';meta.hidden=false;meta.classList.remove('is-retrograde','is-unavailable');
+  if(result.kind==='dynamic'){
+    const rx=result.states.filter(state=>state.retrograde),motion=rx.length?'Rx':'Dir';
+    meta.classList.toggle('is-retrograde',rx.length>0);meta.textContent=`· ${result.duration} · ${motion}`;
+    const detail=result.states.length?result.states.map(state=>`${state.name} ${state.retrograde?'retrograde':'direct'}`).join('; '):'no moving planet retrograde state applies';
+    meta.title=`Transit window ${result.duration} within the current Harmonic Window; ${detail}.`;
+    meta.setAttribute('aria-label',`Transit length ${result.duration}; ${detail}`);
+    return;
+  }
+  if(result.kind==='static'){
+    const rx=result.states.filter(state=>state.retrograde);meta.classList.toggle('is-retrograde',rx.length>0);
+    meta.textContent=rx.length?'· Static · Rx':'· Static';
+    const detail=result.states.length?result.states.map(state=>`${state.name} ${state.retrograde?'retrograde':'direct'}`).join('; '):'no live transit';
+    meta.title=`No transit duration because neither endpoint belongs to a live Now sky; ${detail}.`;
+    meta.setAttribute('aria-label',`No transit duration; ${detail}`);
+    return;
+  }
+  meta.classList.add('is-unavailable');meta.textContent='· n/a';meta.title=result.reason||'Transit timing is unavailable for this relationship.';meta.setAttribute('aria-label',meta.title);
 }
 function calculate(row,token){
   if(!row?.isConnected||!row.classList.contains('is-inline-expanded'))return;
-  const model=modelFor(row);if(!model){finish(row,null);return}
-  const {errorAt,speedAt}=analyzer(model),center=model.date.getTime(),inside=ms=>errorAt(ms)<=model.limit;
-  if(!inside(center)){finish(row,null);return}
-  const start=findEdge(center,-1,model.step,model.horizon,inside),end=findEdge(center,1,model.step,model.horizon,inside);
+  const model=modelFor(row);
+  if(model.kind==='static'){
+    finish(row,{kind:'static',states:staticRetrogradeSummary(model)});return;
+  }
+  if(model.kind!=='dynamic'){finish(row,model);return}
+  const inside=ms=>model.errorAt(ms)<=model.limit+1e-8;
+  if(!inside(model.center)){finish(row,{kind:'unavailable',reason:'The current relationship is outside the timing window.'});return}
+  const {step,horizon}=searchSettings(model),start=findEdge(model.center,-1,step,horizon,inside),end=findEdge(model.center,1,step,horizon,inside);
   if(token!==generation||!row.isConnected||!row.classList.contains('is-inline-expanded'))return;
-  if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start){finish(row,null);return}
-  const days=(end-start)/DAY,speed=speedAt(center);
-  finish(row,{duration:durationLabel(days),retrograde:Number.isFinite(speed)&&speed<0,name:bodyName(model.movingId)});
+  if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start){
+    finish(row,{kind:'unavailable',reason:'The complete transit window extends beyond the supported search horizon.'});return;
+  }
+  finish(row,{kind:'dynamic',duration:durationLabel((end-start)/DAY),states:motionSummary(model)});
 }
 function decorate(){
   const row=document.querySelector('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded');if(!row)return;
   const meta=ensureMeta(row);if(!meta)return;
-  const signature=[row.dataset.relationIndex,row.dataset.aspect,row.dataset.leftPlacement,row.dataset.rightPlacement,document.querySelector('[data-harmonic-window-input]')?.value||''].join('|');
+  const liveSignature=['A','B'].map(slot=>`${slot}:${liveOrigin(slot)}:${profileDate(slot)?.toISOString()||''}`).join('|');
+  const signature=[row.dataset.relationIndex,row.dataset.aspect,row.dataset.leftPlacement,row.dataset.rightPlacement,document.querySelector('[data-harmonic-window-input]')?.value||'',liveSignature].join('|');
   if(meta.dataset.transitSignature===signature&&meta.dataset.transitReady==='true')return;
-  meta.dataset.transitSignature=signature;meta.dataset.transitReady='false';
-  const token=++generation;meta.hidden=false;meta.textContent='· …';meta.removeAttribute('title');
-  const run=()=>calculate(row,token);
-  if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:120});else setTimeout(run,35);
+  meta.dataset.transitSignature=signature;meta.dataset.transitReady='false';meta.hidden=false;meta.classList.remove('is-retrograde','is-unavailable');meta.textContent='· …';meta.removeAttribute('title');
+  const token=++generation,run=()=>calculate(row,token);
+  if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:90});else setTimeout(run,20);
 }
 function schedule(){requestAnimationFrame(()=>requestAnimationFrame(decorate))}
 function relevantMutation(record){
@@ -115,15 +289,24 @@ function relevantMutation(record){
 }
 function attach(){
   const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;
-  observer?.disconnect();observedList=list;observer=new MutationObserver(records=>{if(records.some(relevantMutation))schedule()});observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});schedule();
+  observer?.disconnect();observedList=list;observer=new MutationObserver(records=>{if(records.some(relevantMutation))schedule()});
+  observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});schedule();
 }
-function installStyles(){if(document.getElementById('skyRelationshipTransitMetaV1Styles'))return;const style=document.createElement('style');style.id='skyRelationshipTransitMetaV1Styles';style.textContent=`
-  .inline-rel-orb{width:min(100%,168px)!important;gap:4px!important;white-space:nowrap!important}
-  .inline-rel-transit-meta{display:inline!important;flex:0 0 auto!important;margin:0!important;padding:0!important;background:none!important;color:#655d56!important;font:850 .5rem/1 system-ui,sans-serif!important;font-variant-numeric:tabular-nums!important;white-space:nowrap!important;overflow:visible!important}
-  .inline-rel-transit-meta.is-retrograde{color:#8f312b!important}
-  .inline-rel-transit-meta[hidden]{display:none!important}
-  @media(max-width:620px){.inline-rel-orb{width:100%!important;gap:3px!important}.inline-rel-orb>span{width:46px!important}.inline-rel-transit-meta{font-size:.47rem!important}}
-`;document.head.appendChild(style)}
-function start(){installStyles();attach();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
+function installStyles(){
+  if(document.getElementById('skyRelationshipTransitMetaV2Styles'))return;
+  const style=document.createElement('style');style.id='skyRelationshipTransitMetaV2Styles';style.textContent=`
+    .inline-rel-orb{width:min(100%,178px)!important;gap:4px!important;white-space:nowrap!important}
+    .inline-rel-transit-meta{display:inline!important;flex:0 0 auto!important;margin:0!important;padding:0!important;background:none!important;color:#655d56!important;font:850 .5rem/1 system-ui,sans-serif!important;font-variant-numeric:tabular-nums!important;white-space:nowrap!important;overflow:visible!important}
+    .inline-rel-transit-meta.is-retrograde{color:#8f312b!important}
+    .inline-rel-transit-meta.is-unavailable{color:#777!important}
+    .inline-rel-transit-meta[hidden]{display:none!important}
+    @media(max-width:620px){.inline-rel-orb{width:100%!important;gap:3px!important}.inline-rel-orb>span{width:40px!important}.inline-rel-transit-meta{font-size:.47rem!important}}
+  `;document.head.appendChild(style);
+}
+function start(){
+  installStyles();attach();
+  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:sky-intrasky-relationships-ready'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));
+  document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true);
+}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
