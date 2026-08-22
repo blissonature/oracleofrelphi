@@ -71,7 +71,7 @@ let browser;
   await page.locator('#shortListPanel [data-row-card="ace_of_wands"]').first().waitFor({ state: 'visible' });
   await page.locator('#drawingBoardInspector').waitFor({ state: 'visible' });
 
-  console.log('Confirming the board description layer is suppressed and full Ledger entry is below the board');
+  console.log('Confirming the board description layer is suppressed and full card entry is below the board');
   const boardInfoLayers = page.locator('#shortListPanel .card-row-board .or-card-layer.relphi-info-layer, #shortListPanel .card-row-board .or-layer-scroll');
   const infoLayerCount = await boardInfoLayers.count();
   for (let index = 0; index < infoLayerCount; index += 1) {
@@ -93,9 +93,41 @@ let browser;
   await page.locator('#shortListPanel [data-row-card="the_fool"]').first().waitFor({ state: 'visible' });
   await page.locator('#drawingBoardCardList [data-board-card-id="the_fool"]').waitFor({ state: 'visible' });
 
+  await page.evaluate(() => {
+    window.__drawingBoardDetailDebug = [];
+    const panel = document.getElementById('cardList');
+    if (!panel) return;
+    const record = phase => event => {
+      const target = event.target;
+      window.__drawingBoardDetailDebug.push({
+        phase,
+        target: target?.tagName || '',
+        id: target?.id || '',
+        cls: typeof target?.className === 'string' ? target.className : '',
+        cardId: target?.dataset?.cardId || '',
+        dataId: target?.dataset?.id || '',
+        prevented: event.defaultPrevented
+      });
+    };
+    panel.addEventListener('click', record('capture'), true);
+    panel.addEventListener('click', record('bubble'), false);
+  });
+
   console.log('Selecting a board card and confirming synchronized list and full entry');
   await page.locator('#shortListPanel [data-row-card="the_fool"]').first().click();
   await page.locator('#drawingBoardCardList [data-board-card-id="the_fool"][aria-current="true"]').waitFor({ state: 'visible' });
+  await page.waitForTimeout(500);
+  const detailDebug = await page.evaluate(() => ({
+    events: window.__drawingBoardDetailDebug || [],
+    foolCardExists: !!document.querySelector('#cardList .or-card[data-id="the_fool"]'),
+    aceCardExists: !!document.querySelector('#cardList .or-card[data-id="ace_of_wands"]'),
+    sourceText: document.getElementById('cardDetail')?.textContent?.replace(/\s+/g, ' ').trim().slice(0, 300) || '',
+    sourceShortlists: Array.from(document.querySelectorAll('#cardDetail [data-shortlist]')).map(node => node.dataset.shortlist),
+    hostText: document.getElementById('drawingBoardSelectedCardEntry')?.textContent?.replace(/\s+/g, ' ').trim().slice(0, 300) || '',
+    hostShortlists: Array.from(document.querySelectorAll('#drawingBoardSelectedCardEntry [data-shortlist]')).map(node => node.dataset.shortlist),
+    currentListSelection: Array.from(document.querySelectorAll('#drawingBoardCardList [aria-current="true"]')).map(node => node.dataset.boardCardId)
+  }));
+  console.log('Full-entry switch diagnostic:', JSON.stringify(detailDebug, null, 2));
   await page.locator('#drawingBoardSelectedCardEntry [data-shortlist="the_fool"]').waitFor({ state: 'attached' });
 
   const savedBeforeNavigation = await page.evaluate(storageKey => JSON.parse(localStorage.getItem(storageKey)), key);
