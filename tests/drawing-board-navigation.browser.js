@@ -13,6 +13,7 @@ let browser;
     if (page.url().includes('/tarot.html')) pageErrors.push(String(error));
   });
 
+  const drawingBoardPath = () => new URL(page.url()).pathname;
   const key = 'relphiDrawingBoardSessionV1';
   const snapshot = {
     version: 1,
@@ -54,7 +55,7 @@ let browser;
   assert.equal((await page.locator('.tarot-hero h1').innerText()).trim(), 'Drawing Board');
   assert.equal(await page.locator('.tarot-entry-panel').isVisible(), false);
   assert.equal(await page.locator('.tarot-mode-bar').isVisible(), false);
-  assert.match(page.url(), /\/drawing-board\/tarot\.html$/);
+  assert.equal(drawingBoardPath(), '/drawing-board/tarot.html');
   await page.locator('#shortListPanel').waitFor({ state: 'visible' });
   await page.locator('#shortListPanel [data-row-card="ace_of_wands"]').first().waitFor({ state: 'visible' });
   await page.locator('#drawingBoardInspector').waitFor({ state: 'visible' });
@@ -65,7 +66,7 @@ let browser;
   await page.reload({ waitUntil: 'domcontentloaded' });
   assert.equal(await page.title(), 'Drawing Board · Oracle of Relphi');
   assert.equal((await page.locator('.tarot-hero h1').innerText()).trim(), 'Drawing Board');
-  assert.match(page.url(), /\/drawing-board\/tarot\.html$/);
+  assert.equal(drawingBoardPath(), '/drawing-board/tarot.html');
   await page.locator('#shortListPanel [data-row-card="ace_of_wands"]').first().waitFor({ state: 'visible' });
   await page.locator('#drawingBoardInspector').waitFor({ state: 'visible' });
 
