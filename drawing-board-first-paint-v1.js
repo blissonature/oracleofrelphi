@@ -7,11 +7,17 @@
   if (!body) return;
 
   function revealWhenBoardExists() {
-    const board = document.querySelector('#shortListPanel .card-row-drawing-board, #shortListPanel .card-row-composer, #shortListPanel .card-row-workspace');
-    if (!board) {
+    const panel = document.getElementById('shortListPanel');
+    const board = panel?.querySelector('.card-row-drawing-board, .card-row-composer, .card-row-workspace');
+    if (!panel || !board) {
       requestAnimationFrame(revealWhenBoardExists);
       return;
     }
+
+    // The inherited Ledger markup owns this panel's initial hidden state.
+    // Drawing Board becomes visible only after its real workspace exists.
+    panel.hidden = false;
+    panel.removeAttribute('hidden');
     body.classList.remove('relphi-drawing-board-preboot');
     document.documentElement.classList.add('relphi-drawing-board-ready');
   }
