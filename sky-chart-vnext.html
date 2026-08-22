@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sky Chart vNext · Oracle of Relphi</title>
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="style.css?v=364">
+  <link rel="stylesheet" href="sky-chart-vnext/sky-chart.css?v=1">
+  <script src="vendor/astronomy-engine/astronomy.browser.min.js"></script>
+  <script src="relphi-house-systems.js?v=318"></script>
+  <script src="relphi-glyph-registry-v1.js?v=28"></script>
+  <script src="relphi-glyph-component-v1.js?v=32"></script>
+</head>
+<body class="sky-vnext-page">
+  <div id="nav-placeholder"></div>
+  <main class="sky-vnext-main">
+    <header class="sky-vnext-hero">
+      <h1>Sky <span>Chart</span></h1>
+      <p>Build · compare · reveal relationships.</p>
+    </header>
+    <section id="skyChartApp" class="sky-vnext-app" aria-live="polite"></section>
+  </main>
+
+  <dialog id="skyChartDialog" class="sky-vnext-dialog" aria-labelledby="skyDialogTitle">
+    <div class="sky-dialog-frame">
+      <header class="sky-dialog-head">
+        <h2 id="skyDialogTitle">Sky Chart</h2>
+        <button type="button" class="sky-icon-button" data-dialog-close aria-label="Close">×</button>
+      </header>
+      <div id="skyDialogBody"></div>
+    </div>
+  </dialog>
+
+  <script src="navloader.js?v=54" defer></script>
+  <script type="module" src="sky-chart-vnext/app.mjs?v=1"></script>
+</body>
+</html>
