@@ -66,6 +66,11 @@
       host.className='sky-card-title-stable';
       heading.insertBefore(host,source);
     }
+
+    // A live-origin sky temporarily gives this host to the staleness renderer.
+    // Do not recreate the Saved-skies dropdown while that renderer owns it.
+    if(host.dataset.liveHeaderOwned==='true')return;
+
     let button=host.querySelector(':scope > [data-saved-sky-trigger]');
     if(!button){
       host.replaceChildren();
@@ -99,7 +104,7 @@
       }))schedule();
     }).observe(root,{childList:true,subtree:true});
     window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key))schedule()});
-    ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed'].forEach(name=>window.addEventListener(name,schedule));
+    ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed','relphi:sky-live-header-released'].forEach(name=>window.addEventListener(name,schedule));
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
