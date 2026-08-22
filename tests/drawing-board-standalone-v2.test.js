@@ -7,7 +7,6 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 const host = read('drawing-board/tarot.html');
 const standalone = read('drawing-board-standalone-v2.js');
-const firstPaint = read('drawing-board-first-paint-v1.js');
 const noBoard = read('tarot-ledger-no-board-v1.js');
 const navloader = read('navloader.js');
 const nav = read('nav.html');
@@ -17,12 +16,11 @@ const materializer = read('scripts/materialize-drawing-board.py');
 
 // Page-specific scripts must parse before browser integration work happens.
 assert.doesNotThrow(() => new Function(standalone));
-assert.doesNotThrow(() => new Function(firstPaint));
 assert.doesNotThrow(() => new Function(noBoard));
 assert.doesNotThrow(() => new Function(navloader));
 
 // Drawing Board is a real, generated document derived from Tarot Ledger's shell.
-// It must identify as Drawing Board in the source itself and never runtime-fetch Tarot Ledger.
+// It must identify as Drawing Board in the source itself and never runtime-fetch or launch Tarot Ledger.
 assert.doesNotMatch(host, /fetch\('\.\.\/tarot\.html'/);
 assert.match(host, /<base href="\.\.\/">/);
 assert.match(host, /<title>Drawing Board · Oracle of Relphi<\/title>/);
@@ -32,10 +30,15 @@ assert.match(host, /class="tarot-app-shell"/);
 assert.match(host, /class="tarot-hero compact"/);
 assert.match(host, /id="shortListPanel" class="short-list-panel" aria-label="Drawing Board"/);
 assert.match(host, /id="drawingBoardBootStatus"/);
-assert.match(host, /class="tarot-entry-panel" hidden/);
 assert.match(host, /class="tarot-mode-bar" hidden/);
+assert.doesNotMatch(host, /class="tarot-entry-panel"/);
+assert.doesNotMatch(host, /id="landingOpenBoard"/);
+assert.doesNotMatch(host, /drawing-board-direct-boot-v1\.js/);
+assert.doesNotMatch(host, /drawing-board-first-paint-v1\.js/);
 assert.match(materializer, /Path\('tarot\.html'\)/);
 assert.match(materializer, /Path\('drawing-board\/tarot\.html'\)/);
+assert.match(materializer, /Remove the Ledger landing surface entirely/);
+assert.doesNotMatch(materializer, /drawing-board-first-paint-v1/);
 
 // The two routes must boot different feature layers.
 assert.match(navloader, /function isStandaloneDrawingBoardContext/);
@@ -65,7 +68,6 @@ assert.match(standalone, /function selectCard\(cardId, scroll\)/);
 assert.match(standalone, /function revealFullEntry\(cardId\)/);
 assert.match(standalone, /event\.target\.closest\?\.\(PANEL \+ ' \.card-row-board \[data-row-card\]'\)/);
 assert.match(standalone, /event\.stopImmediatePropagation\(\)/);
-assert.match(firstPaint, /drawingBoardBootStatus/);
 
 // Navigation and the public tool index must present Drawing Board as its own instrument.
 assert.match(nav, /href="drawing-board\/tarot\.html"><span>Drawing Board<\/span>/);
