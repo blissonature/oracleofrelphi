@@ -36,6 +36,12 @@ jobs:
           node --check sky-chart-vnext/core/layout.mjs
           node --check sky-chart-vnext/ui/wheel.mjs
           node tests/sky-chart-vnext-core.test.mjs
+      - name: Architectural guardrails
+        run: |
+          ! grep -R "EventTarget\.prototype\.dispatchEvent" sky-chart-vnext
+          ! grep -R "new MutationObserver" sky-chart-vnext
+          ! grep -R "StorageEvent" sky-chart-vnext
+          ! grep -E "<script[^>]+src=\"sky-chart-[^v]" sky-chart-vnext.html
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.52.0
