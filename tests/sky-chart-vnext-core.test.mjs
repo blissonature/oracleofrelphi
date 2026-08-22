@@ -4,7 +4,7 @@ import{layoutWheel,assertLayoutInvariant}from'../sky-chart-vnext/core/layout.mjs
 import{initialState,reducer,modeOf}from'../sky-chart-vnext/core/store.mjs';
 import{placementPassesFilters,relationshipMode,relationshipPassesFilters}from'../sky-chart-vnext/core/filters.mjs';
 import{nameExists,suggestUniqueName,saveNewSky,readLibrary}from'../sky-chart-vnext/core/storage.mjs';
-import{solarAltitudeFromGeometry}from'../sky-chart-vnext/core/astronomy.mjs';
+import{exactInstant,solarAltitudeFromGeometry}from'../sky-chart-vnext/core/astronomy.mjs';
 
 function sample(name,offset=0){
   const raw={Sun:29.7,Moon:29.9,Mercury:30.1,Venus:30.3,Mars:31.0,Jupiter:58.9,Saturn:59.2,Uranus:59.7,Neptune:60.2,Pluto:61.0,Ascendant:168.38,Midheaven:76.28};
@@ -60,6 +60,9 @@ assert.equal(relationshipPassesFilters(filtered,cross),false,'Aspect filtering m
 assert.ok(Math.abs(solarAltitudeFromGeometry(0,0,0,0)-90)<1e-9,'A Sun on the equatorial meridian at the equator must be overhead.');
 assert.ok(Math.abs(solarAltitudeFromGeometry(0,0,180,0)+90)<1e-9,'The opposite meridian must put that Sun directly below the horizon.');
 assert.ok(Math.abs(solarAltitudeFromGeometry(0,0,0,45)-45)<1e-9,'Meridian altitude must respond to geographic latitude rather than house numbering.');
+assert.equal(exactInstant('2026-08-21T18:00','America/Denver').toISOString(),'2026-08-22T00:00:00.000Z','Summer Mountain Time must resolve without a downloaded date-time library.');
+assert.equal(exactInstant('2026-01-21T18:00','America/Denver').toISOString(),'2026-01-22T01:00:00.000Z','Winter Mountain Time must resolve the seasonal UTC offset.');
+assert.throws(()=>exactInstant('2026-03-08T02:30','America/Denver'),/does not exist/,'A skipped DST clock time must be rejected rather than silently changed.');
 
 const records=[{id:'1',name:'Marisa Natal'},{id:'2',name:'Marisa Natal 2'}];
 assert.equal(normalizeName('  MARISA   Natal '),'marisa natal');
