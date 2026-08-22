@@ -1,6 +1,6 @@
 # Sky Chart vNext
 
-This directory is an isolated rebuild of Sky Chart. It deliberately does not load the existing `sky-chart-*.js` repair/runtime chain.
+The executable preview is `sky-chart-vnext.html` at the repository root. This directory contains the isolated implementation. It deliberately does not load the existing `sky-chart-*.js` repair/runtime chain. Keeping the document at the repository root preserves the canonical glyph component's existing asset-path contract.
 
 ## Architectural contract
 
