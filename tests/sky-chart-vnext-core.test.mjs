@@ -1,7 +1,8 @@
 import assert from'node:assert/strict';
-import{placement,calculateRelationships,normalizeName}from'../sky-chart-vnext/core/model.mjs';
+import{canonicalId,placement,placementEntries,calculateRelationships,calculateRelationshipPool,normalizeName}from'../sky-chart-vnext/core/model.mjs';
 import{layoutWheel,assertLayoutInvariant}from'../sky-chart-vnext/core/layout.mjs';
 import{initialState,reducer,modeOf}from'../sky-chart-vnext/core/store.mjs';
+import{placementPassesFilters,relationshipMode,relationshipPassesFilters}from'../sky-chart-vnext/core/filters.mjs';
 import{nameExists,suggestUniqueName,saveNewSky,readLibrary}from'../sky-chart-vnext/core/storage.mjs';
 import{solarAltitudeFromGeometry}from'../sky-chart-vnext/core/astronomy.mjs';
 
@@ -31,6 +32,30 @@ for(const item of model.placements){
   assert.equal(item.leader.slot,item.slot,'Leader slot must come from its placement.');
 }
 assert.ok(calculateRelationships(a,b,3).length>0,'Comparison must derive relationships directly from the two skies.');
+const pool=calculateRelationshipPool(a,b,3);
+assert.ok(pool.some(relation=>relation.scope==='A-A'));
+assert.ok(pool.some(relation=>relation.scope==='A-B'));
+assert.ok(pool.some(relation=>relation.scope==='B-B'));
+assert.equal(new Set(pool.map(relation=>relation.id)).size,pool.length,'Every relationship must have a stable unique endpoint-and-aspect ID.');
+
+let filtered=initialState({slots:{A:a,B:b},orb:3});
+assert.equal(relationshipMode(filtered),'A-B');
+filtered=reducer(filtered,{type:'SET_FILTER_EXCLUDED',kind:'placements',slot:'A',values:placementEntries(filtered.slots.A).map(item=>item.id)});
+assert.equal(relationshipMode(filtered),'B-B','Disabling all Sky A placements must derive the Sky B internal relationship mode.');
+assert.ok(pool.filter(relation=>relationshipPassesFilters(filtered,relation)).every(relation=>relation.scope==='B-B'));
+filtered=reducer(filtered,{type:'RESET_FILTERS'});
+filtered=reducer(filtered,{type:'SET_FILTER_EXCLUDED',kind:'placements',slot:'B',values:placementEntries(filtered.slots.B).map(item=>item.id)});
+assert.equal(relationshipMode(filtered),'A-A','Disabling all Sky B placements must derive the Sky A internal relationship mode.');
+filtered=reducer(filtered,{type:'RESET_FILTERS'});
+const ascendant=placementEntries(filtered.slots.A).find(item=>item.name==='Ascendant');
+filtered=reducer(filtered,{type:'SET_FILTER_EXCLUDED',kind:'houses',slot:'A',values:Array.from({length:12},(_,index)=>String(index+1))});
+assert.equal(placementPassesFilters(filtered,'A',ascendant),true,'House filters must not capture chart angles.');
+filtered=reducer(filtered,{type:'SET_FILTER_EXCLUDED',kind:'signs',slot:'A',values:[canonicalId(ascendant.sign)]});
+assert.equal(placementPassesFilters(filtered,'A',ascendant),false,'Sign filters must still apply to chart angles.');
+filtered=reducer(filtered,{type:'RESET_FILTERS'});
+const cross=pool.find(relation=>relation.scope==='A-B');
+filtered=reducer(filtered,{type:'SET_FILTER_EXCLUDED',kind:'aspects',values:[cross.aspectId]});
+assert.equal(relationshipPassesFilters(filtered,cross),false,'Aspect filtering must derive from store state without event rebroadcasting.');
 
 assert.ok(Math.abs(solarAltitudeFromGeometry(0,0,0,0)-90)<1e-9,'A Sun on the equatorial meridian at the equator must be overhead.');
 assert.ok(Math.abs(solarAltitudeFromGeometry(0,0,180,0)+90)<1e-9,'The opposite meridian must put that Sun directly below the horizon.');
