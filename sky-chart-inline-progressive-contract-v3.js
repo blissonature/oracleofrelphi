@@ -17,6 +17,7 @@ const ASPECT_NAMES={conjunction:'Conjunction','semi-sextile':'Semi-Sextile',octi
 const ASPECT_REFERENTS={conjunction:'the two functions operate together','semi-sextile':'neighboring functions accommodate one another',octile:'focused friction and adjustment',sextile:'a cooperative opening activated through participation',quintile:'creative pattern-making and specialized skill',square:'activating pressure and development',trine:'low-resistance exchange','tri-octile':'accumulated friction and redirection','bi-quintile':'refined creative pattern-making',quincunx:'continuing adjustment and translation',opposition:'awareness through polarity, contrast, and exchange'};
 const GLYPH_FIELDS=[['left-placement','.sky-foundation-relationship-glyph--left'],['left-sign','.sky-foundation-relationship-placement--left .sky-foundation-relationship-sign'],['aspect','.sky-foundation-relationship-glyph--aspect'],['right-placement','.sky-foundation-relationship-glyph--right'],['right-sign','.sky-foundation-relationship-placement--right .sky-foundation-relationship-sign']];
 let observer=null,observedList=null;
+let fastPointerTarget=null,fastPointerAt=0;
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 function placementName(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||String(id||'').replace(/-/g,' ')}
@@ -66,7 +67,17 @@ function ownRevealEvent(event){
   if(field){event.preventDefault();event.stopImmediatePropagation();baseActivate(row,field);return true}
   return false;
 }
+function handlePointerUp(event){
+  if(event.pointerType!=='touch'&&event.pointerType!=='pen')return;
+  if(!ownRevealEvent(event))return;
+  fastPointerTarget=event.target;
+  fastPointerAt=performance.now();
+}
 function handleClick(event){
+  if(fastPointerTarget&&performance.now()-fastPointerAt<800){
+    const same=event.target===fastPointerTarget||fastPointerTarget.contains?.(event.target)||event.target.contains?.(fastPointerTarget);
+    if(same){event.preventDefault();event.stopImmediatePropagation();fastPointerTarget=null;return}
+  }
   if(ownRevealEvent(event))return;
   const row=expandedRowFor(event.target);if(!row)return;
   if(event.target.closest?.('[data-inline-ledger]'))return;
@@ -76,17 +87,17 @@ function handleKey(event){if(event.key!=='Enter'&&event.key!==' ')return;ownReve
 function installStyles(){
   if(document.getElementById('skyInlineProgressiveContractV3Styles'))return;document.getElementById('skyInlineProgressiveContractV2Styles')?.remove();document.getElementById('skyInlineProgressiveContractStyles')?.remove();
   const style=document.createElement('style');style.id='skyInlineProgressiveContractV3Styles';style.textContent=`
-    .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]{cursor:pointer;border-radius:6px;touch-action:manipulation}
+    .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]{cursor:pointer;border-radius:6px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]:hover{background:rgba(45,39,34,.055)}
     .inline-rel-progressive-strip{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(86px,.72fr) minmax(0,1fr);align-items:start;gap:8px;min-width:0}
     .inline-rel-progressive-side-a{grid-column:1}.inline-rel-progressive-side-b{grid-column:3}
     .inline-rel-progressive-side{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:5px;min-width:0}
     .inline-rel-progressive-side>[data-inline-progressive-token$="-placement"]{grid-column:1}.inline-rel-progressive-side>[data-inline-progressive-token$="-sign"]{grid-column:2}.inline-rel-progressive-side>[data-inline-progressive-token$="-house"]{grid-column:3}
     .inline-rel-progressive-strip>[data-inline-progressive-token="aspect"]{grid-column:2}
-    .inline-rel-progressive-token{grid-row:1;display:grid;justify-items:center;gap:4px;min-width:0;padding:4px 5px;border-radius:7px;background:rgba(45,39,34,.04);cursor:pointer;touch-action:manipulation}
+    .inline-rel-progressive-token{grid-row:1;display:grid;justify-items:center;gap:4px;min-width:0;padding:4px 5px;border-radius:7px;background:rgba(45,39,34,.04);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .inline-rel-progressive-token[data-tone="a"]{border-top:2px solid #c9211e}.inline-rel-progressive-token[data-tone="b"]{border-top:2px solid #2462d0}.inline-rel-progressive-token[data-tone="aspect"]{border-top:2px solid var(--relationship-stripe,#777)}
     .inline-rel-progressive-token[hidden],.inline-rel-progressive-level[hidden]{display:none!important}
-    .inline-rel-progressive-level{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center}
+    .inline-rel-progressive-level{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .inline-rel-progressive-name{font-size:.6rem;font-weight:900;line-height:1.15;overflow-wrap:normal;word-break:normal;hyphens:none}.inline-rel-progressive-referent{font-size:.55rem;font-weight:680;line-height:1.28;color:#625a53;white-space:normal;overflow-wrap:normal;word-break:normal;hyphens:none}
     @media(max-width:620px){
       .inline-rel-progressive-strip{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;gap:6px}
@@ -101,7 +112,8 @@ function decorateExisting(){document.querySelectorAll('.sky-foundation-relations
 function ensureObserver(){const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;observer?.disconnect();observedList=list;observer=new MutationObserver(decorateExisting);observer.observe(list,{childList:true,subtree:true})}
 function reconcile(){installStyles();ensureObserver();requestAnimationFrame(decorateExisting)}
 function start(){reconcile();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,reconcile))}
-// Reveal ownership is installed before the inline row-toggle renderer.
-document.addEventListener('click',handleClick,true);document.addEventListener('keydown',handleKey,true);
+// Reveal ownership is installed before the inline row-toggle renderer. Touch/pen use pointer-up;
+// the browser's later synthesized click is suppressed so a tap advances exactly one stage.
+document.addEventListener('pointerup',handlePointerUp,true);document.addEventListener('click',handleClick,true);document.addEventListener('keydown',handleKey,true);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
