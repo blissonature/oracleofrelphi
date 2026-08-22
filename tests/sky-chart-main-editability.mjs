@@ -31,7 +31,7 @@ await page.addInitScript(value=>{
 },sky);
 
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
-const edit=page.locator('#skyFoundationA [data-ww-action="edit"]');
+const edit=page.locator('#skyFoundationA .sky-where-when-actions .sky-where-when-action[data-ww-action="edit"]');
 await edit.waitFor({state:'visible',timeout:15000});
 assert.equal(await edit.isEnabled(),true,'Where and When must remain an enabled edit affordance on the current Sky Chart.');
 await edit.click();
