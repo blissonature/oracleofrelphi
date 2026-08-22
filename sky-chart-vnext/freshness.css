@@ -1,0 +1,5 @@
+.sky-freshness{display:inline-flex;align-items:center;gap:.08rem;white-space:nowrap}
+.sky-freshness-age{font-size:.74rem;font-weight:600;color:var(--sky-muted);font-variant-numeric:tabular-nums;cursor:default;user-select:text}
+.sky-refresh-button{min-width:32px;min-height:32px;font-size:1.16rem;color:#6f5752}
+.sky-refresh-button[aria-busy="true"]{opacity:.5;cursor:progress}
+@media(max-width:760px){.sky-freshness-age{font-size:.72rem}.sky-refresh-button{min-width:36px;min-height:36px}}
