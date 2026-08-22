@@ -18,8 +18,8 @@ let browser;
     version: 1,
     savedAt: new Date().toISOString(),
     shortList: ['ace_of_wands'],
-    shortListPositionLabels: ['Message'],
-    shortListPositionCardIds: [],
+    shortListPositionLabels: ['Message', 'Choice'],
+    shortListPositionCardIds: ['ace_of_wands', ''],
     shortListSelection: [],
     shortListSelectMode: false,
     shortListName: 'Navigation persistence test',
@@ -63,9 +63,7 @@ let browser;
   }
   await page.locator('#drawingBoardSelectedCardEntry [data-shortlist="ace_of_wands"]').waitFor({ state: 'attached' });
 
-  console.log('Using mini search to select The Fool into a new position');
-  await page.locator('#addCardPlaceholder').waitFor({ state: 'attached' });
-  await page.locator('#addCardPlaceholder').click({ force: true });
+  console.log('Using mini search to select The Fool into an empty position');
   const placeholder = page.locator('#shortListPanel .card-row-item.card-row-placeholder-item').last();
   await placeholder.waitFor({ state: 'visible' });
   const searchToggle = placeholder.locator('[data-relphi-placeholder-search]');
