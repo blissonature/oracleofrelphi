@@ -47,6 +47,11 @@ function movingLongitude(id,date){
   const astronomy=window.Astronomy,bodyValue=astronomy?.Body?.[BODY[id]]||BODY[id];if(!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;return astronomy.Ecliptic(astronomy.GeoVector(bodyValue,date,true)).elon;
 }
 function modelFor(row){
+  const leftSky=row.dataset.leftSky||(row.dataset.relationshipMode==='B-B'?'B':'A');
+  const rightSky=row.dataset.rightSky||(row.dataset.relationshipMode==='A-A'?'A':'B');
+  // The current timing model deliberately describes a moving-sky placement against a
+  // fixed placement in the other sky. Do not manufacture a false inter-sky model for A-A/B-B.
+  if(leftSky===rightSky)return null;
   const moving=movingSlot();if(!moving)return null;
   const movingId=String(row.dataset[moving==='A'?'leftPlacement':'rightPlacement']||''),fixedId=String(row.dataset[moving==='A'?'rightPlacement':'leftPlacement']||''),angle=ANGLE[String(row.dataset.aspect||'')],date=profileDate(moving);
   if((!BODY[movingId]&&!NODE_IDS.has(movingId))||!fixedId||!Number.isFinite(angle)||!date)return null;
