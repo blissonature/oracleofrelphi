@@ -4,6 +4,7 @@ const path = require('node:path');
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'sky-chart-staleness-v1.js'), 'utf8');
 const migration = fs.readFileSync(path.join(__dirname, '..', 'sky-chart-live-origin-migration-v1.js'), 'utf8');
+const header = fs.readFileSync(path.join(__dirname, '..', 'sky-chart-live-header-v1.js'), 'utf8');
 const loader = fs.readFileSync(path.join(__dirname, '..', 'sky-chart-page-stability-v1.js'), 'utf8');
 
 const ageFunction = source.match(/function ageLabel\(timestamp,now=Date\.now\(\)\)\{[\s\S]*?\n\}/);
@@ -39,6 +40,18 @@ assert.match(migration, /source==='where-when-v1'&&query==='my current location'
 assert.match(migration, /query==='current location'\|\|location==='current location'/);
 assert.doesNotMatch(migration, /MAX_CREATION_DRIFT|createdAtSkyMoment/);
 assert.match(migration, /liveNowMigrated='legacy-v2'/);
+
+// The visible card title is a stable sibling; live age must render there, not in the hidden
+// foundation-owned name node. The Saved-skies trigger is replaced while the sky is live.
+assert.match(header, /\.sky-card-title-stable\.is-live-now/);
+assert.match(header, /function visibleHost\(slot\)/);
+assert.match(header, /\.sky-card-title-stable`\)/);
+assert.match(header, /host\.replaceChildren\(\)/);
+assert.match(header, /className='sky-live-age-label'/);
+assert.match(header, /dataset\.finalNow=slot/);
+assert.match(header, /title='Update to Now'/);
+assert.match(header, /legacyLive\(value\)/);
+assert.doesNotMatch(header, /querySelector\(`#skyFoundation\$\{slot\}>\.sky-foundation-heading>\.sky-foundation-name`\)/);
 
 // Startup order must classify legacy state before staleness/header rendering.
 const migrationIndex = loader.indexOf("sky-chart-live-origin-migration-v1.js?v=2");
