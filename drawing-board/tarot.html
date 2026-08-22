@@ -23,6 +23,21 @@
   <script>
     (async function () {
       'use strict';
+
+      function installLedgerSelectionBridge() {
+        if (window.__relphiDrawingBoardLedgerSelectionBridge) return;
+        window.__relphiDrawingBoardLedgerSelectionBridge = true;
+        window.addEventListener('click', function (event) {
+          const inner = event.target.closest?.('#cardList [data-card-id]');
+          if (!inner) return;
+          const container = inner.closest('button,[role="button"],[role="listitem"],li,article');
+          if (!container || container === inner) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          container.click();
+        }, true);
+      }
+
       try {
         const response = await fetch('../tarot.html', { cache: 'no-store' });
         if (!response.ok) throw new Error('Tarot Ledger template returned ' + response.status);
@@ -30,10 +45,10 @@
         const base = '<base href="../">';
         if (/<head[^>]*>/i.test(html)) html = html.replace(/<head([^>]*)>/i, '<head$1>' + base);
         else html = base + html;
-        html = html.replace(/<\/body>/i, '<script src="drawing-board-ledger-selection-bridge-v1.js?v=1"><\/script></body>');
         document.open();
         document.write(html);
         document.close();
+        installLedgerSelectionBridge();
       } catch (error) {
         const panel = document.querySelector('.tarot-entry-panel article');
         if (panel) panel.innerHTML = '<p class="eyebrow">Drawing Board</p><h2>Could not load the shared Tarot Ledger shell.</h2><p>' + String(error.message || error) + '</p>';
