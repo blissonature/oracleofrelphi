@@ -144,8 +144,8 @@ export async function currentLocationPacket(){
   if(!timeZone)throw new Error('The current location did not resolve to a time zone.');
   return{latitude,longitude,location,timeZone};
 }
-export async function calculateHereNow(houseSystem='whole-sign'){
+export async function calculateHereNow(houseSystem='whole-sign',source='here-now-vnext'){
   const packet=await currentLocationPacket(),instant=new Date(),formatter=new Intl.DateTimeFormat('sv-SE',{timeZone:packet.timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
   const localDateTime=formatter.format(instant).replace(' ','T');
-  return calculateSky({name:'Now',instant,localDateTime,...packet,houseSystem,source:'here-now-vnext'});
+  return calculateSky({name:'Now',instant,localDateTime,...packet,houseSystem,source});
 }
