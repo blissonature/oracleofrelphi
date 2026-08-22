@@ -40,7 +40,12 @@ assert.doesNotMatch(migration, /MAX_CREATION_DRIFT|createdAtSkyMoment/);
 assert.match(migration, /liveNowMigrated='legacy-v2'/);
 
 // The visible stable title host is the one and only UI owner for a live sky.
+// It must mirror the normal title geometry: text fills the middle column and the
+// refresh control sits at the far right in a dedicated 44px touch target.
 assert.match(header, /\.sky-card-title-stable\[data-live-header-owned="true"\]/);
+assert.match(header, /grid-template-columns:minmax\(0,1fr\) 44px!important/);
+assert.match(header, /padding:0 \.45rem 0 \.8rem!important/);
+assert.match(header, /justify-self:end!important/);
 assert.match(header, /function host\(slot\)/);
 assert.match(header, /className='sky-live-age'/);
 assert.match(header, /container\.replaceChildren\(age,refresh\)/);
@@ -48,6 +53,10 @@ assert.match(header, /dataset\.finalNow=slot/);
 assert.match(header, /title='Update to Now'/);
 assert.match(header, /width:44px!important/);
 assert.match(header, /height:44px!important/);
+assert.match(header, /width:32px!important/);
+assert.match(header, /border:1px solid rgba\(31,27,24,\.18\)!important/);
+assert.match(header, /M21 12a9 9 0 0 0-15\.22-6\.22L3 8/);
+assert.match(header, /M3 12a9 9 0 0 0 15\.22 6\.22L21 16/);
 assert.match(header, /legacyLive\(value\)/);
 assert.match(titleIntegrity, /if\(host\.dataset\.liveHeaderOwned==='true'\)return/);
 
