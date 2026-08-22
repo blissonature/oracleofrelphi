@@ -1,6 +1,13 @@
 export const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 export const SIGN_IDS=SIGNS.map(value=>value.toLowerCase());
 export const BODY_ORDER=['Sun','Moon','Ascendant','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','North Node','South Node','Lilith','Part of Fortune','Vertex','Midheaven','Descendant','Imum Coeli','Chiron'];
+export const ANGLES=new Set(['Ascendant','Descendant','Midheaven','Imum Coeli']);
+export const PLACEMENT_GROUPS=Object.freeze({
+  luminaries:['Sun','Moon'],
+  planets:['Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'],
+  angles:['Ascendant','Descendant','Midheaven','Imum Coeli'],
+  points:['North Node','South Node','Lilith','Part of Fortune','Vertex','Chiron']
+});
 export const ASPECTS=[
   {id:'conjunction',label:'Conjunction',angle:0},
   {id:'semi-sextile',label:'Semi-sextile',angle:30},
@@ -17,9 +24,9 @@ export const ASPECTS=[
 
 const CANONICAL_ALIASES=new Map([
   ['asc','Ascendant'],['ascendant','Ascendant'],['rising','Ascendant'],
-  ['dsc','Descendant'],['descendant','Descendant'],
+  ['dsc','Descendant'],['desc','Descendant'],['descendant','Descendant'],
   ['mc','Midheaven'],['midheaven','Midheaven'],['medium coeli','Midheaven'],
-  ['ic','Imum Coeli'],['imum coeli','Imum Coeli'],
+  ['ic','Imum Coeli'],['imum coeli','Imum Coeli'],['imumcoeli','Imum Coeli'],
   ['north node','North Node'],['true node','North Node'],['mean node','North Node'],['node','North Node'],
   ['south node','South Node'],['black moon lilith','Lilith'],['lilith','Lilith'],
   ['fortune','Part of Fortune'],['part of fortune','Part of Fortune'],['pof','Part of Fortune'],['vertex','Vertex']
@@ -39,6 +46,8 @@ export function canonicalName(value){
 export function canonicalId(value){
   return canonicalName(value).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
+
+export function isAngle(value){return ANGLES.has(canonicalName(typeof value==='string'?value:value?.name||value?.id||''))}
 
 export function longitudeOf(item){
   if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);
@@ -132,17 +141,31 @@ export function aspectBetween(left,right,orbLimit=3){
   return best;
 }
 
-export function calculateRelationships(skyA,skyB,orbLimit=3){
-  const a=placementEntries(skyA),b=skyB?placementEntries(skyB):a;
-  const comparison=!!skyB,result=[];
-  if(comparison){
-    for(const left of a)for(const right of b){
-      const aspect=aspectBetween(left,right,orbLimit);if(aspect)result.push({id:`A:${left.id}|B:${right.id}|${aspect.id}`,scope:'inter',left:{slot:'A',...left},right:{slot:'B',...right},...aspect});
-    }
-  }else{
-    for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++){
-      const aspect=aspectBetween(a[i],a[j],orbLimit);if(aspect)result.push({id:`A:${a[i].id}|A:${a[j].id}|${aspect.id}`,scope:'intra',left:{slot:'A',...a[i]},right:{slot:'A',...a[j]},...aspect});
-    }
+function relation(leftSlot,left,rightSlot,right,aspect,scope){
+  return{id:`${leftSlot}:${left.id}|${rightSlot}:${right.id}|${aspect.id}`,scope,left:{slot:leftSlot,...left},right:{slot:rightSlot,...right},...aspect};
+}
+function withinRelationships(sky,slot,orbLimit){
+  const entries=placementEntries(sky),result=[];
+  for(let i=0;i<entries.length;i++)for(let j=i+1;j<entries.length;j++){
+    const aspect=aspectBetween(entries[i],entries[j],orbLimit);if(aspect)result.push(relation(slot,entries[i],slot,entries[j],aspect,`${slot}-${slot}`));
   }
-  return result.sort((x,y)=>x.orb-y.orb||x.angle-y.angle||x.left.name.localeCompare(y.left.name));
+  return result;
+}
+function betweenRelationships(skyA,skyB,orbLimit){
+  const a=placementEntries(skyA),b=placementEntries(skyB),result=[];
+  for(const left of a)for(const right of b){const aspect=aspectBetween(left,right,orbLimit);if(aspect)result.push(relation('A',left,'B',right,aspect,'A-B'))}
+  return result;
+}
+const sortRelationships=result=>result.sort((x,y)=>x.orb-y.orb||x.angle-y.angle||x.left.name.localeCompare(y.left.name)||x.right.name.localeCompare(y.right.name));
+
+export function calculateRelationshipPool(skyA,skyB,orbLimit=3){
+  if(!skyA)return[];
+  const result=[...withinRelationships(skyA,'A',orbLimit)];
+  if(skyB)result.push(...betweenRelationships(skyA,skyB,orbLimit),...withinRelationships(skyB,'B',orbLimit));
+  return sortRelationships(result);
+}
+
+export function calculateRelationships(skyA,skyB,orbLimit=3){
+  if(!skyA)return[];
+  return sortRelationships(skyB?betweenRelationships(skyA,skyB,orbLimit):withinRelationships(skyA,'A',orbLimit));
 }
