@@ -3,8 +3,9 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramGeometryV6) return;
+  if (window.__relphiSkyHeptagramGeometryV7) return;
   window.__relphiSkyHeptagramGeometryV6 = true;
+  window.__relphiSkyHeptagramGeometryV7 = true;
 
   const ORDER = ['saturn','jupiter','mars','sun','venus','mercury','moon'];
   const WEEK_PATH = ['sun','moon','mars','mercury','jupiter','venus','saturn','sun'];
@@ -62,8 +63,6 @@
     const current = hourLines.find(line => line.classList.contains('current')) || null;
     const base = hourLines.filter(line => line !== current);
 
-    // The seven reusable hour edges are the perimeter itself:
-    // Saturn → Jupiter → Mars → Sun → Venus → Mercury → Moon → Saturn.
     base.forEach((line, index) => {
       if (index >= ORDER.length) {
         line.remove();
@@ -82,9 +81,6 @@
     const ruler = hourRuler(svg);
     const next = nextHour(ruler);
     if (!ruler || !next) return;
-
-    // Current-hour progress begins at the current ruler and advances toward the next ruler.
-    // Example: during a Moon hour, progress is Moon → Saturn.
     const fraction = sourceFraction(current, ruler, next, SOURCE_HEPTAGON_RADIUS);
     setLine(current, ruler, next, HEPTAGON_RADIUS, fraction);
     current.dataset.hourFrom = ruler;
@@ -93,13 +89,14 @@
   }
 
   function correct(svg) {
-    if (!svg || svg.dataset.heptagramGeometryV6 === 'true') return;
+    if (!svg || svg.dataset.heptagramGeometryV7 === 'true') return false;
     const weekLines = Array.from(svg.querySelectorAll('.sky-ph-week-segment'));
     const baseLines = weekLines.filter(line => !line.classList.contains('current'));
     const hourLines = Array.from(svg.querySelectorAll('.sky-ph-hour-segment'));
-    if (baseLines.length < 7 || !hourLines.length || !svg.querySelector('.sky-ph-planet')) return;
+    if (baseLines.length < 7 || !hourLines.length || !svg.querySelector('.sky-ph-planet')) return false;
 
     svg.dataset.heptagramGeometryV6 = 'true';
+    svg.dataset.heptagramGeometryV7 = 'true';
     svg.dataset.planetaryHourPath = 'chaldean-perimeter';
 
     const outer = svg.querySelector('.sky-ph-circle');
@@ -140,6 +137,7 @@
       }
       if (glyph) glyph.setAttribute('transform', `translate(${nodePoint.x} ${nodePoint.y})`);
     });
+    return true;
   }
 
   function scan() {
@@ -150,9 +148,10 @@
     });
   }
 
+  window.RelphiSkyHeptagramGeometry = Object.freeze({ correct, scan });
+
   function start() {
     scan();
-    // The heptagram source already announces when it is ready; no document-wide observer is needed.
     window.addEventListener('relphi:sky-heptagram-source-ready', scan);
   }
 
