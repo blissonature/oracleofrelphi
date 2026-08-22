@@ -1,0 +1,36 @@
+name: Drawing Board standalone check
+
+on:
+  push:
+    paths:
+      - 'drawing-board/**'
+      - 'drawing-board-standalone-v2.js'
+      - 'tarot-ledger-no-board-v1.js'
+      - 'navloader.js'
+      - 'nav.html'
+      - 'tools.html'
+      - 'index.html'
+      - 'tests/drawing-board-standalone-v2.test.js'
+      - '.github/workflows/drawing-board-standalone-check.yml'
+  pull_request:
+    paths:
+      - 'drawing-board/**'
+      - 'drawing-board-standalone-v2.js'
+      - 'tarot-ledger-no-board-v1.js'
+      - 'navloader.js'
+      - 'nav.html'
+      - 'tools.html'
+      - 'index.html'
+      - 'tests/drawing-board-standalone-v2.test.js'
+      - '.github/workflows/drawing-board-standalone-check.yml'
+
+jobs:
+  separation-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run standalone Drawing Board regression checks
+        run: node tests/drawing-board-standalone-v2.test.js
