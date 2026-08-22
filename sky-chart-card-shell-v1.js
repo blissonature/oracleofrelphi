@@ -1,0 +1,103 @@
+// Native Sky-card structure. This module owns the stable drawer DOM; feature modules render only into its mounts.
+(function(){
+'use strict';
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardShellV1)return;
+window.__relphiSkyCardShellV1=true;
+
+const PANELS={A:'skyFoundationA',B:'skyFoundationB'};
+
+function profile(payload){return payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{}}
+function complete(payload){const p=profile(payload);return!!(p&&p.dateTime&&p.location&&p.timeZone&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude)))}
+function panel(slot){return document.getElementById(PANELS[slot]||'')}
+function body(slot){return panel(slot)?.querySelector(':scope > .sky-foundation-body')||null}
+function chevron(className='sky-card-drawer-chevron'){
+  return `<svg class="${className}" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5 3.5 10 8l-5 4.5"/></svg>`;
+}
+function disclosureChevron(){
+  return '<svg class="sky-where-when-disclosure-chevron" viewBox="0 0 18 12" aria-hidden="true" focusable="false"><path d="m3 3 6 6 6-6"/></svg>';
+}
+function markup(slot,hasProfile){
+  const initial=hasProfile?'where':'placements';
+  return `
+    <div class="sky-card-drawers" data-sky-card-drawers="${slot}" data-sky-initial-drawer="${initial}">
+      <details class="sky-card-drawer" data-sky-drawer="where"${initial==='where'?' open':''}>
+        <summary class="sky-card-drawer-summary"><span>Where and When</span>${chevron()}</summary>
+        <div class="sky-card-drawer-body" data-sky-drawer-mount="where">
+          <section class="sky-where-when-summary" data-sky-where-summary="${slot}"${hasProfile?'':' hidden'}>
+            <div class="sky-ph-jump" data-sky-heptagram-frame="${slot}">
+              <svg class="sky-ph-heptagram" data-sky-heptagram="${slot}" data-canonical-source-ready="pending" viewBox="0 0 360 360" role="img" aria-label="Planetary Hours heptagram for Sky ${slot}"></svg>
+            </div>
+            <button class="sky-where-when-disclosure" type="button" data-ww-disclosure="${slot}" aria-expanded="false" aria-controls="skyWhereWhenEditor${slot}" aria-label="Show exactly where and when" title="Show exactly where and when">${disclosureChevron()}</button>
+          </section>
+          <div class="sky-where-when-editor-mount" id="skyWhereWhenEditor${slot}" data-ww-editor-mount="${slot}" hidden></div>
+        </div>
+      </details>
+      <details class="sky-card-drawer" data-sky-drawer="placements"${initial==='placements'?' open':''}>
+        <summary class="sky-card-drawer-summary"><span>Placements</span>${chevron()}</summary>
+        <div class="sky-card-drawer-body sky-where-when-placement-view" data-sky-drawer-mount="placements"></div>
+      </details>
+      <details class="sky-card-drawer" data-sky-drawer="card-hits">
+        <summary class="sky-card-drawer-summary"><span>Card Hits</span>${chevron()}</summary>
+        <div class="sky-card-drawer-body" data-sky-drawer-mount="card-hits"></div>
+      </details>
+    </div>`;
+}
+function refs(slot){
+  const root=body(slot)?.querySelector(':scope > .sky-card-drawers');
+  if(!root)return null;
+  return{
+    root,
+    where:root.querySelector('[data-sky-drawer-mount="where"]'),
+    placements:root.querySelector('[data-sky-drawer-mount="placements"]'),
+    cardHits:root.querySelector('[data-sky-drawer-mount="card-hits"]'),
+    summary:root.querySelector('[data-sky-where-summary]'),
+    heptagram:root.querySelector('[data-sky-heptagram]'),
+    disclosure:root.querySelector('[data-ww-disclosure]'),
+    editor:root.querySelector('[data-ww-editor-mount]')
+  };
+}
+function installDrawerBehavior(slot,root){
+  root.querySelectorAll(':scope > .sky-card-drawer').forEach(details=>{
+    details.addEventListener('toggle',()=>{
+      if(!details.open)return;
+      root.querySelectorAll(':scope > .sky-card-drawer[open]').forEach(other=>{if(other!==details)other.open=false});
+      window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot,drawer:details.dataset.skyDrawer||''}}));
+    });
+  });
+}
+function sync(slot,payload){
+  const current=refs(slot);if(!current)return null;
+  const hasProfile=complete(payload);
+  current.summary.hidden=!hasProfile;
+  current.root.dataset.whereWhenAvailable=hasProfile?'true':'false';
+  return current;
+}
+function ensure(slot,payload){
+  const host=body(slot);if(!host)return null;
+  let current=refs(slot);
+  if(!current){
+    const holder=document.createElement('div');
+    holder.innerHTML=markup(slot,complete(payload)).trim();
+    const root=holder.firstElementChild;
+    host.replaceChildren(root);
+    installDrawerBehavior(slot,root);
+    current=refs(slot);
+  }
+  return sync(slot,payload);
+}
+function setEditorExpanded(slot,expanded){
+  const current=refs(slot);if(!current)return;
+  current.editor.hidden=!expanded;
+  current.disclosure.setAttribute('aria-expanded',expanded?'true':'false');
+  current.disclosure.setAttribute('aria-label',expanded?'Hide exact where and when':'Show exactly where and when');
+  current.disclosure.title=expanded?'Hide exact where and when':'Show exactly where and when';
+  current.summary?.classList.toggle('is-editor-expanded',!!expanded);
+}
+function openDrawer(slot,name){
+  const current=refs(slot);if(!current)return;
+  const details=current.root.querySelector(`:scope > .sky-card-drawer[data-sky-drawer="${name}"]`);
+  if(details&&!details.open)details.open=true;
+}
+
+window.RelphiSkyCardShell=Object.freeze({ensure,get:refs,sync,setEditorExpanded,openDrawer,complete});
+})();
