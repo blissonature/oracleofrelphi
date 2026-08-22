@@ -1,10 +1,11 @@
 // Planetary Hours heptagram consumer for the single Master Glyph List runtime.
-// Glyphs are rendered at the canonical 64×64 master size, then the complete circled unit is scaled uniformly.
+// The complete canonical glyph pass is awaitable so Sky cards reveal only the final heptagram state.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHeptagramCanonicalV9) return;
+  if (window.__relphiSkyHeptagramCanonicalV10) return;
   window.__relphiSkyHeptagramCanonicalV9 = true;
+  window.__relphiSkyHeptagramCanonicalV10 = true;
 
   const NS = 'http://www.w3.org/2000/svg';
   const MASTER_RADIUS = 19;
@@ -17,6 +18,7 @@
     saturn:'#8c7a42', jupiter:'#41752f', mars:'#c9211e', sun:'#d08a00',
     venus:'#b23b79', mercury:'#277390', moon:'#58628a'
   });
+  const pending = new WeakMap();
 
   function keyFor(group) {
     return KEYS.find(key => group.classList.contains(`sky-ph-${key}`)) || '';
@@ -132,24 +134,40 @@
     }
   }
 
-  function correct(svg) {
-    if (!svg || !svg.querySelector('.sky-ph-planet')) return;
-    clearHeptagramWords(svg);
-    svg.querySelectorAll('.sky-ph-planet').forEach(group => { void placePlanet(group); });
-    clearHeptagramWords(svg);
-    svg.dataset.canonicalHeptagramConsumer = 'true';
-    svg.dataset.glyphPresentation = 'circled';
-    svg.dataset.rulerStates = 'day-double-ring-hour-fill';
+  async function correct(svg) {
+    if (!svg || !svg.querySelector('.sky-ph-planet')) return false;
+    if (svg.dataset.canonicalHeptagramReady === 'true') return true;
+    if (pending.has(svg)) return pending.get(svg);
+
+    const job = (async () => {
+      svg.dataset.canonicalHeptagramBusy = 'true';
+      clearHeptagramWords(svg);
+      await Promise.all(Array.from(svg.querySelectorAll('.sky-ph-planet')).map(placePlanet));
+      clearHeptagramWords(svg);
+      svg.dataset.canonicalHeptagramConsumer = 'true';
+      svg.dataset.glyphPresentation = 'circled';
+      svg.dataset.rulerStates = 'day-double-ring-hour-fill';
+      svg.dataset.canonicalHeptagramReady = 'true';
+      delete svg.dataset.canonicalHeptagramBusy;
+      window.dispatchEvent(new CustomEvent('relphi:sky-heptagram-canonical-ready',{detail:{svg}}));
+      return true;
+    })();
+
+    pending.set(svg, job);
+    try { return await job; }
+    finally { pending.delete(svg); }
   }
 
-  function scan() {
-    document.querySelectorAll('.sky-ph-heptagram').forEach(correct);
+  async function scan() {
+    await Promise.allSettled(Array.from(document.querySelectorAll('.sky-ph-heptagram')).map(correct));
   }
+
+  window.RelphiSkyHeptagramCanonical = Object.freeze({ correct, scan });
 
   function start() {
-    scan();
-    window.addEventListener('relphi:sky-heptagram-source-ready', scan);
-    window.addEventListener('relphi:sky-foundation-ready', scan);
+    void scan();
+    window.addEventListener('relphi:sky-heptagram-source-ready', () => { void scan(); });
+    window.addEventListener('relphi:sky-foundation-ready', () => { void scan(); });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',start,{once:true});
