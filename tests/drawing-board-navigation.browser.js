@@ -36,11 +36,13 @@ let browser;
     cardRowSettingsOpen: false
   };
 
+  const visibleLedgerIds = () => page.locator('#cardList .or-card[data-id]').evaluateAll(nodes => nodes
+    .filter(node => !node.hidden && getComputedStyle(node).display !== 'none' && getComputedStyle(node).visibility !== 'hidden')
+    .map(node => node.dataset.id));
+
   console.log('Seeding Drawing Board storage from Sky Chart');
   await page.goto('http://127.0.0.1:8000/sky-chart.html', { waitUntil: 'domcontentloaded' });
-  await page.evaluate(({ storageKey, value }) => {
-    localStorage.setItem(storageKey, JSON.stringify(value));
-  }, { storageKey: key, value: snapshot });
+  await page.evaluate(({ storageKey, value }) => localStorage.setItem(storageKey, JSON.stringify(value)), { storageKey: key, value: snapshot });
 
   console.log('Confirming Tarot Ledger no longer exposes Drawing Board');
   await page.goto('http://127.0.0.1:8000/tarot.html', { waitUntil: 'domcontentloaded' });
@@ -52,84 +54,55 @@ let browser;
 
   console.log('Opening standalone Drawing Board with Drawing Board identity from first DOM paint');
   await page.goto('http://127.0.0.1:8000/drawing-board/tarot.html', { waitUntil: 'domcontentloaded' });
-  assert.equal(await page.title(), 'Drawing Board · Oracle of Relphi');
-  assert.equal((await page.locator('.tarot-hero h1').innerText()).trim(), 'Drawing Board');
-  assert.equal(await page.locator('.tarot-entry-panel').isVisible(), false);
   await page.waitForFunction(() => document.documentElement.dataset.relphiStandaloneDrawingBoardV2 === 'true');
-  assert.equal(await page.locator('.tarot-mode-bar').isVisible(), false);
+  assert.equal(await page.title(), 'Drawing Board · Oracle of Relphi');
+  assert.equal((await page.locator('.tarot-hero h1').innerText()).trim(), 'Drawing Board');
   assert.equal(drawingBoardPath(), '/drawing-board/tarot.html');
-  await page.locator('#shortListPanel').waitFor({ state: 'visible' });
+  assert.equal(await page.locator('.tarot-mode-bar').isVisible(), false);
   await page.locator('#shortListPanel [data-row-card="ace_of_wands"]').first().waitFor({ state: 'visible' });
-  await page.locator('#drawingBoardInspector').waitFor({ state: 'visible' });
-  await page.locator('#drawingBoardCardList [data-board-card-id="ace_of_wands"]').waitFor({ state: 'visible' });
-  assert.equal(await page.locator('#drawingBoardBootStatus').count(), 0);
+  await page.locator('#browsePanel').waitFor({ state: 'visible' });
+  await page.locator('#cardList .or-card[data-id="ace_of_wands"]').waitFor({ state: 'visible' });
+  await page.locator('#cardDetail [data-shortlist="ace_of_wands"]').waitFor({ state: 'attached' });
+  assert.match((await page.locator('#browsePanel .cards-heading').innerText()).trim(), /^Cards in this Drawing/);
+  assert.deepEqual(await visibleLedgerIds(), ['ace_of_wands']);
 
-  console.log('Refreshing Drawing Board and confirming the route and workspace remain Drawing Board');
+  console.log('Refreshing Drawing Board and confirming the route and native Ledger bottom remain Drawing Board');
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.documentElement.dataset.relphiStandaloneDrawingBoardV2 === 'true');
   assert.equal(await page.title(), 'Drawing Board · Oracle of Relphi');
   assert.equal((await page.locator('.tarot-hero h1').innerText()).trim(), 'Drawing Board');
   assert.equal(drawingBoardPath(), '/drawing-board/tarot.html');
   await page.locator('#shortListPanel [data-row-card="ace_of_wands"]').first().waitFor({ state: 'visible' });
-  await page.locator('#drawingBoardInspector').waitFor({ state: 'visible' });
+  await page.locator('#browsePanel').waitFor({ state: 'visible' });
+  await page.locator('#cardDetail [data-shortlist="ace_of_wands"]').waitFor({ state: 'attached' });
 
-  console.log('Confirming the board description layer is suppressed and full card entry is below the board');
+  console.log('Confirming board description layers are suppressed while the native Ledger entry remains intact below');
   const boardInfoLayers = page.locator('#shortListPanel .card-row-board .or-card-layer.relphi-info-layer, #shortListPanel .card-row-board .or-layer-scroll');
   const infoLayerCount = await boardInfoLayers.count();
   for (let index = 0; index < infoLayerCount; index += 1) {
     assert.equal(await boardInfoLayers.nth(index).evaluate(node => getComputedStyle(node).display), 'none');
   }
-  await page.locator('#drawingBoardSelectedCardEntry [data-shortlist="ace_of_wands"]').waitFor({ state: 'attached' });
+  assert.equal(await page.locator('#drawingBoardInspector').count(), 0);
+  assert.equal(await page.locator('#drawingBoardSelectedCardEntry').count(), 0);
 
   console.log('Using mini search to select The Fool into an empty position');
   const placeholder = page.locator('#shortListPanel .card-row-item.card-row-placeholder-item').last();
   await placeholder.waitFor({ state: 'visible' });
-  const searchToggle = placeholder.locator('[data-relphi-placeholder-search]');
-  await searchToggle.waitFor({ state: 'visible' });
-  await searchToggle.click();
-  const searchInput = placeholder.locator('[data-relphi-placeholder-query]');
-  await searchInput.fill('The Fool');
+  await placeholder.locator('[data-relphi-placeholder-search]').click();
+  await placeholder.locator('[data-relphi-placeholder-query]').fill('The Fool');
   const foolResult = placeholder.locator('[data-relphi-placeholder-result="the_fool"]');
   await foolResult.waitFor({ state: 'visible' });
   await foolResult.click();
   await page.locator('#shortListPanel [data-row-card="the_fool"]').first().waitFor({ state: 'visible' });
-  await page.locator('#drawingBoardCardList [data-board-card-id="the_fool"]').waitFor({ state: 'visible' });
+  await page.locator('#cardList .or-card[data-id="the_fool"]').waitFor({ state: 'visible' });
+  await page.waitForFunction(() => document.getElementById('resultInlineCount')?.textContent?.includes('2 cards'));
+  assert.deepEqual(await visibleLedgerIds(), ['ace_of_wands', 'the_fool']);
 
-  await page.evaluate(() => {
-    window.__drawingBoardDetailDebug = [];
-    const panel = document.getElementById('cardList');
-    if (!panel) return;
-    const record = phase => event => {
-      const target = event.target;
-      window.__drawingBoardDetailDebug.push({
-        phase,
-        target: target?.tagName || '',
-        id: target?.id || '',
-        cls: typeof target?.className === 'string' ? target.className : '',
-        cardId: target?.dataset?.cardId || '',
-        dataId: target?.dataset?.id || '',
-        prevented: event.defaultPrevented
-      });
-    };
-    panel.addEventListener('click', record('capture'), true);
-    panel.addEventListener('click', record('bubble'), false);
-  });
-
-  console.log('Selecting a board card and confirming synchronized list and full entry');
+  console.log('Selecting The Fool on the board and confirming the real Tarot Ledger detail switches below');
   await page.locator('#shortListPanel [data-row-card="the_fool"]').first().click();
-  await page.locator('#drawingBoardCardList [data-board-card-id="the_fool"][aria-current="true"]').waitFor({ state: 'visible' });
-  await page.waitForTimeout(500);
-  const detailDebug = await page.evaluate(() => ({
-    events: window.__drawingBoardDetailDebug || [],
-    foolCardExists: !!document.querySelector('#cardList .or-card[data-id="the_fool"]'),
-    aceCardExists: !!document.querySelector('#cardList .or-card[data-id="ace_of_wands"]'),
-    sourceText: document.getElementById('cardDetail')?.textContent?.replace(/\s+/g, ' ').trim().slice(0, 300) || '',
-    sourceShortlists: Array.from(document.querySelectorAll('#cardDetail [data-shortlist]')).map(node => node.dataset.shortlist),
-    hostText: document.getElementById('drawingBoardSelectedCardEntry')?.textContent?.replace(/\s+/g, ' ').trim().slice(0, 300) || '',
-    hostShortlists: Array.from(document.querySelectorAll('#drawingBoardSelectedCardEntry [data-shortlist]')).map(node => node.dataset.shortlist),
-    currentListSelection: Array.from(document.querySelectorAll('#drawingBoardCardList [aria-current="true"]')).map(node => node.dataset.boardCardId)
-  }));
-  console.log('Full-entry switch diagnostic:', JSON.stringify(detailDebug, null, 2));
-  await page.locator('#drawingBoardSelectedCardEntry [data-shortlist="the_fool"]').waitFor({ state: 'attached' });
+  await page.locator('#cardDetail [data-shortlist="the_fool"]').waitFor({ state: 'attached' });
+  assert.equal(await page.locator('#cardList .or-card[data-id="the_fool"]').evaluate(node => node.classList.contains('is-detail-selected')), true);
+  assert.doesNotMatch((await page.locator('#cardDetail').innerText()).trim(), /could not be rendered/i);
 
   const savedBeforeNavigation = await page.evaluate(storageKey => JSON.parse(localStorage.getItem(storageKey)), key);
   assert.ok(savedBeforeNavigation.shortList.includes('ace_of_wands'));
@@ -144,11 +117,12 @@ let browser;
 
   console.log('Returning to standalone Drawing Board');
   await page.goto('http://127.0.0.1:8000/drawing-board/tarot.html', { waitUntil: 'domcontentloaded' });
-  await page.locator('#shortListPanel').waitFor({ state: 'visible' });
+  await page.waitForFunction(() => document.documentElement.dataset.relphiStandaloneDrawingBoardV2 === 'true');
   await page.locator('#shortListPanel [data-row-card="ace_of_wands"]').first().waitFor({ state: 'visible' });
   await page.locator('#shortListPanel [data-row-card="the_fool"]').first().waitFor({ state: 'visible' });
-  await page.locator('#drawingBoardCardList [data-board-card-id="ace_of_wands"]').waitFor({ state: 'visible' });
-  await page.locator('#drawingBoardCardList [data-board-card-id="the_fool"]').waitFor({ state: 'visible' });
+  await page.locator('#cardList .or-card[data-id="ace_of_wands"]').waitFor({ state: 'visible' });
+  await page.locator('#cardList .or-card[data-id="the_fool"]').waitFor({ state: 'visible' });
+  assert.deepEqual(await visibleLedgerIds(), ['ace_of_wands', 'the_fool']);
 
   const savedAfterReturn = await page.evaluate(storageKey => JSON.parse(localStorage.getItem(storageKey)), key);
   assert.ok(savedAfterReturn.shortList.includes('ace_of_wands'));
@@ -156,7 +130,7 @@ let browser;
   assert.equal(savedAfterReturn.shortListNotes, 'This editable board should survive a trip to Sky Chart.');
   assert.deepEqual(pageErrors, []);
 
-  console.log('Standalone Drawing Board navigation and interaction browser test passed');
+  console.log('Standalone Drawing Board native Ledger browser test passed');
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;
