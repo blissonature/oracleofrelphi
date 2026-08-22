@@ -80,6 +80,28 @@ let browser;
   console.log('Selecting a board card and confirming synchronized list and full entry');
   await page.locator('#shortListPanel [data-row-card="the_fool"]').first().click();
   await page.locator('#drawingBoardCardList [data-board-card-id="the_fool"][aria-current="true"]').waitFor({ state: 'visible' });
+  await page.waitForTimeout(700);
+  console.log('Full-entry transition diagnostic:', JSON.stringify(await page.evaluate(() => {
+    const detail = document.getElementById('cardDetail');
+    const host = document.getElementById('drawingBoardSelectedCardEntry');
+    const list = document.getElementById('cardList');
+    const candidates = list ? Array.from(list.querySelectorAll('[data-card-id],[data-card],[data-id],button,[role="listitem"],li,article')).filter(node => /fool/i.test(node.textContent || '')).slice(0, 6).map(node => ({
+      tag: node.tagName,
+      cardId: node.getAttribute('data-card-id'),
+      card: node.getAttribute('data-card'),
+      id: node.getAttribute('data-id'),
+      text: (node.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120)
+    })) : [];
+    return {
+      detailConnected: !!detail?.isConnected,
+      detailParent: detail?.parentElement?.id || detail?.parentElement?.className || '',
+      detailShortlists: detail ? Array.from(detail.querySelectorAll('[data-shortlist]')).map(node => node.getAttribute('data-shortlist')) : [],
+      detailText: (detail?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 180),
+      hostShortlists: host ? Array.from(host.querySelectorAll('[data-shortlist]')).map(node => node.getAttribute('data-shortlist')) : [],
+      hostText: (host?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 180),
+      candidates
+    };
+  })));
   await page.locator('#drawingBoardSelectedCardEntry [data-shortlist="the_fool"]').waitFor({ state: 'attached' });
 
   const savedBeforeNavigation = await page.evaluate(storageKey => JSON.parse(localStorage.getItem(storageKey)), key);
