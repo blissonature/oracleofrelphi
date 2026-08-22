@@ -37,11 +37,16 @@ assert.equal(await edit.isEnabled(),true,'Where and When must remain an enabled 
 await edit.click();
 const editor=page.locator('#skyFoundationA .sky-where-when-editor');
 await editor.waitFor({state:'visible',timeout:5000});
-const date=editor.locator('[data-ww-field="date"]'),time=editor.locator('[data-ww-field="time"]');
+const date=editor.locator('[data-ww-field="date"]');
+const canonicalTime=editor.locator('[data-ww-field="time"]');
+const visibleTime=editor.locator('[data-sky-time-entry]');
 assert.equal(await date.isEnabled(),true,'Existing saved sky date must be editable.');
-assert.equal(await time.isEnabled(),true,'Existing saved sky time must be editable.');
+await visibleTime.waitFor({state:'visible',timeout:5000});
+assert.equal(await visibleTime.isEnabled(),true,'Enhanced local-time control must be editable.');
 await date.fill('1990-04-16');
-await time.fill('14:45');
+await visibleTime.fill('2:45 PM');
+await visibleTime.press('Enter');
+assert.equal(await canonicalTime.inputValue(),'14:45','Visible time editing must update the canonical calculation value.');
 await editor.locator('button[type="submit"]').click();
 await page.waitForFunction(()=>{
   try{return JSON.parse(localStorage.getItem('relphiSkyChartA')||'null')?.calcProfile?.dateTime?.startsWith('1990-04-16T14:45')}catch{return false}
