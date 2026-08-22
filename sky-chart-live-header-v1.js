@@ -7,7 +7,7 @@ window.__relphiSkyLiveHeaderV1=true;
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const STEP_MS=5*60*1000;
 const LIVE_ORIGINS=new Set(['here-and-now','update-to-now']);
-const STYLE_ID='skyLiveHeaderV3Styles';
+const STYLE_ID='skyLiveHeaderV4Styles';
 let queued=false,timer=0;
 
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
@@ -41,8 +41,6 @@ function markedLive(value){
 }
 function legacyLive(value){
   if(!value||typeof value!=='object'||savedIdentity(value)||metadata(value).liveNowDisabled===true)return false;
-  // Before live-origin metadata existed, Here and Now / Update to Now persisted the active sky as "Now".
-  // That surviving unsaved identity is the migration signature for legacy live skies.
   return namedNow(value)&&Number.isFinite(profileMs(value));
 }
 function isLive(value){return markedLive(value)||legacyLive(value)}
@@ -57,12 +55,17 @@ function installStyles(){
   if(document.getElementById(STYLE_ID))return;
   const style=document.createElement('style');style.id=STYLE_ID;
   style.textContent=`
-    .sky-card-title-stable[data-live-header-owned="true"]{
+    #skyFoundationA>.sky-foundation-heading>.sky-card-title-stable[data-live-header-owned="true"],
+    #skyFoundationB>.sky-foundation-heading>.sky-card-title-stable[data-live-header-owned="true"]{
+      grid-column:2!important;
+      grid-row:1!important;
+      align-self:stretch!important;
       display:grid!important;
       grid-template-columns:minmax(0,1fr) 44px!important;
+      grid-template-rows:44px!important;
       align-items:center!important;
-      column-gap:6px!important;
-      width:100%!important;
+      column-gap:4px!important;
+      width:auto!important;
       height:44px!important;
       min-width:0!important;
       box-sizing:border-box!important;
@@ -70,7 +73,11 @@ function installStyles(){
       padding:0 .45rem 0 .8rem!important;
       margin:0!important;
     }
-    .sky-live-age{
+    #skyFoundationA>.sky-foundation-heading>.sky-card-title-stable[data-live-header-owned="true"]>.sky-live-age,
+    #skyFoundationB>.sky-foundation-heading>.sky-card-title-stable[data-live-header-owned="true"]>.sky-live-age{
+      grid-column:1!important;
+      grid-row:1!important;
+      align-self:center!important;
       display:block!important;
       min-width:0!important;
       overflow:hidden!important;
@@ -85,11 +92,15 @@ function installStyles(){
       font:800 .72rem/1.15 system-ui,sans-serif!important;
       text-align:left!important;
     }
-    .sky-live-header-refresh{
+    #skyFoundationA>.sky-foundation-heading>.sky-card-title-stable[data-live-header-owned="true"]>.sky-live-header-refresh,
+    #skyFoundationB>.sky-foundation-heading>.sky-card-title-stable[data-live-header-owned="true"]>.sky-live-header-refresh{
+      grid-column:2!important;
+      grid-row:1!important;
+      align-self:center!important;
+      justify-self:end!important;
       position:relative!important;
       display:grid!important;
       place-items:center!important;
-      justify-self:end!important;
       width:44px!important;
       height:44px!important;
       min-width:44px!important;
@@ -101,29 +112,24 @@ function installStyles(){
       border-radius:999px!important;
       background:transparent!important;
       box-shadow:none!important;
-      color:#4f4943!important;
+      color:#6f665e!important;
       cursor:pointer!important;
       touch-action:manipulation!important;
       -webkit-tap-highlight-color:transparent!important;
     }
     .sky-live-header-refresh svg{
       display:block!important;
-      width:32px!important;
-      height:32px!important;
-      box-sizing:border-box!important;
-      padding:5px!important;
+      width:22px!important;
+      height:22px!important;
       overflow:visible!important;
-      border:1px solid rgba(31,27,24,.18)!important;
-      border-radius:999px!important;
-      background:#fffdf8!important;
       pointer-events:none!important;
     }
-    .sky-live-header-refresh:hover,.sky-live-header-refresh:focus-visible{outline:none!important}
-    .sky-live-header-refresh:hover svg,.sky-live-header-refresh:focus-visible svg{
-      border-color:rgba(31,27,24,.34)!important;
-      background:#f5f0e9!important;
+    .sky-live-header-refresh:hover,.sky-live-header-refresh:focus-visible{
+      outline:none!important;
+      background:rgba(31,27,24,.055)!important;
+      color:#2f2a26!important;
     }
-    .sky-live-header-refresh:focus-visible{box-shadow:0 0 0 2px rgba(31,27,24,.24)!important}
+    .sky-live-header-refresh:focus-visible{box-shadow:0 0 0 2px rgba(31,27,24,.22)!important}
     .sky-live-header-refresh:disabled{cursor:progress!important;opacity:.5!important}
     @media(hover:hover){
       .sky-live-header-refresh::after{
@@ -146,9 +152,11 @@ function installStyles(){
       .sky-live-header-refresh:hover::after,.sky-live-header-refresh:focus-visible::after{opacity:1;transform:translateX(-50%) translateY(0)}
     }
     @media(max-width:620px){
-      .sky-card-title-stable[data-live-header-owned="true"]{
+      #skyFoundationA>.sky-foundation-heading>.sky-card-title-stable[data-live-header-owned="true"],
+      #skyFoundationB>.sky-foundation-heading>.sky-card-title-stable[data-live-header-owned="true"]{
         grid-template-columns:minmax(0,1fr) 44px!important;
-        column-gap:4px!important;
+        grid-template-rows:44px!important;
+        column-gap:2px!important;
         padding:0 .45rem 0 .8rem!important;
       }
       .sky-live-age{font-size:.68rem!important}
@@ -160,7 +168,7 @@ function host(slot){return document.querySelector(`#skyFoundation${slot}>.sky-fo
 function refreshButton(slot){
   const button=document.createElement('button');button.type='button';button.className='sky-live-header-refresh';
   button.dataset.finalNow=slot;button.dataset.liveHeaderRefresh=slot;button.dataset.tooltip='Update to Now';button.title='Update to Now';button.setAttribute('aria-label','Update to Now');
-  button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 0 0-15.22-6.22L3 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12a9 9 0 0 0 15.22 6.22L21 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 16h5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polyline points="23 4 23 10 17 10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="1 20 1 14 7 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   return button;
 }
 function renderLive(slot,container,value){
@@ -215,7 +223,6 @@ window.addEventListener('relphi:sky-name-updated',event=>{
 });
 ['storage','relphi:sky-foundation-ready','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed'].forEach(name=>window.addEventListener(name,schedule));
 new MutationObserver(records=>{
-  // Ignore our own text changes; react when header hosts/panels are actually rebuilt.
   if(records.some(r=>[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&n.closest?.('#skyFoundationA,#skyFoundationB'))))schedule();
 }).observe(document.documentElement,{childList:true,subtree:true});
 
