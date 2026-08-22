@@ -28,7 +28,11 @@ await page.locator('[data-add-sky="B"]').click();
 await page.locator('[data-add-existing="B"]').click();
 await page.locator('[data-load-saved="sky-b"]').click();
 await page.waitForSelector('.sky-slot[data-slot="B"] .sky-ledger-row');
-assert.ok(await page.locator('.aspect-line').count()>0,'Comparison relationships must be rendered from one relationship calculation.');
+assert.ok(await page.locator('.aspect-line').count()>0,'All relationship scopes must be derived by the one wheel model.');
+assert.equal((await page.locator('[data-relationship-heading]').textContent()).trim(),'Sky A ↔ Sky B');
+
+const relationshipIds=await page.locator('.sky-rel[data-relationship-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.relationshipId));
+assert.equal(new Set(relationshipIds).size,relationshipIds.length,'Relationship DOM identity must be unique.');
 
 const contract=await page.evaluate(()=>{
   window.__vnextWheel=document.querySelector('.sky-wheel');
@@ -42,6 +46,37 @@ assert.deepEqual(contract.legacy,[],'Sky Chart vNext must not load the legacy Sk
 await page.locator('.sky-slot[data-slot="A"] .sky-ledger-row').first().hover();
 await page.waitForTimeout(80);
 assert.equal(await page.evaluate(()=>window.__vnextWheel===document.querySelector('.sky-wheel')),true,'Hover must not rebuild the wheel.');
+
+const placementFilter=page.locator('[data-filter-panel="placements"]');
+await placementFilter.locator('summary').click();
+assert.equal(await placementFilter.getAttribute('open'),'');
+await page.evaluate(()=>{window.__filterWheel=document.querySelector('.sky-wheel')});
+const masterA=placementFilter.locator('[data-filter-master="placements"][data-filter-slot="A"]');
+const masterB=placementFilter.locator('[data-filter-master="placements"][data-filter-slot="B"]');
+await masterA.uncheck();
+await page.waitForFunction(()=>document.querySelector('[data-relationship-heading]')?.textContent==='Relationships within Sky B');
+assert.ok(await page.locator('.sky-rel:not([hidden])').count()>0,'Turning off all Sky A placements must reveal Sky B internal relationships.');
+assert.ok(await page.locator('.sky-wheel .placement[data-slot="A"].is-filter-hidden').count()>0);
+assert.ok(await page.locator('.sky-wheel .leader[data-placement-key^="A:"].is-filter-hidden').count()>0);
+assert.equal(await page.evaluate(()=>window.__filterWheel===document.querySelector('.sky-wheel')),true,'Filtering must update the existing wheel rather than rebuild it.');
+assert.equal(await placementFilter.getAttribute('open'),'','An open filter control must remain open through state changes.');
+
+await masterA.check();
+await masterB.uncheck();
+await page.waitForFunction(()=>document.querySelector('[data-relationship-heading]')?.textContent==='Relationships within Sky A');
+assert.ok(await page.locator('.sky-rel:not([hidden])').count()>0,'Turning off all Sky B placements must reveal Sky A internal relationships.');
+assert.equal(await page.evaluate(()=>window.__filterWheel===document.querySelector('.sky-wheel')),true);
+
+await masterB.check();
+await page.waitForFunction(()=>document.querySelector('[data-relationship-heading]')?.textContent==='Sky A ↔ Sky B');
+assert.ok(await page.locator('.sky-rel:not([hidden])').count()>0);
+assert.equal(await page.evaluate(()=>window.__filterWheel===document.querySelector('.sky-wheel')),true);
+
+const firstVisible=page.locator('.sky-rel:not([hidden])').first();
+await firstVisible.click();
+assert.equal(await page.locator('[data-rel-detail]').isVisible(),true,'A selected relationship must expose its derived details without rebuilding the wheel.');
+assert.equal(await page.evaluate(()=>window.__filterWheel===document.querySelector('.sky-wheel')),true);
+
 assert.deepEqual(errors,[]);
 await browser.close();
 console.log('Sky Chart vNext browser smoke test passed.');
