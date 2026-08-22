@@ -1,4 +1,4 @@
-// Render a live-origin sky's age in the header itself, with an adjacent refresh control.
+// Render a live-origin sky's age in the visible Sky-card title, with an adjacent refresh control.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyLiveHeaderV1)return;
@@ -13,6 +13,7 @@ let timer=0;
 
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
 function profile(value){return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}
+function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
 function markerMs(value){const parsed=Date.parse(value?.metadata?.liveNowAt||'');return Number.isFinite(parsed)?parsed:NaN}
 function finiteCoordinate(value){const number=Number(value);return Number.isFinite(number)?number:null}
 
@@ -32,8 +33,24 @@ function profileMs(value){
   return Number.isFinite(fallback)?fallback:NaN;
 }
 
-function isLive(value){
-  if(window.RelphiSkyStaleness?.isLiveOrigin)return window.RelphiSkyStaleness.isLiveOrigin(value);
+function saved(value){
+  const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
+  return!!String(metadata.savedSkyId||metadata.savedSkyName||metadata.savedSkyLoadedAt||'').trim();
+}
+function namedNow(value){
+  const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
+  const data=profile(value);
+  return[value?.name,value?.title,value?.displayName,value?.skyName,data.name,data.title,metadata.name,metadata.title]
+    .some(candidate=>normalize(candidate)==='now');
+}
+function legacyLive(value){
+  if(!value||typeof value!=='object'||saved(value)||!namedNow(value))return false;
+  const data=profile(value),query=normalize(data.locationQuery),location=normalize(data.location),source=normalize(data.source);
+  const updateSignature=source==='where-when-v1'&&query==='my current location';
+  const hereNowSignature=query==='current location'||location==='current location';
+  return(updateSignature||hereNowSignature)&&Number.isFinite(profileMs(value));
+}
+function explicitLive(value){
   if(!value||typeof value!=='object')return false;
   const metadata=value.metadata&&typeof value.metadata==='object'?value.metadata:{};
   if(!LIVE_ORIGINS.has(String(metadata.liveNowOrigin||'')))return false;
@@ -46,7 +63,14 @@ function isLive(value){
   if(markerLon!==null&&currentLon!==null&&Math.abs(markerLon-currentLon)>0.00001)return false;
   return true;
 }
-
+function isLive(value){
+  if(window.RelphiSkyStaleness?.isLiveOrigin?.(value))return true;
+  return explicitLive(value)||legacyLive(value);
+}
+function liveTimestamp(value){
+  const marker=markerMs(value);
+  return Number.isFinite(marker)?marker:profileMs(value);
+}
 function ageLabel(timestamp,now=Date.now()){
   if(window.RelphiSkyStaleness?.ageLabel)return window.RelphiSkyStaleness.ageLabel(timestamp,now);
   const elapsed=Math.max(0,Number(now)-Number(timestamp));
@@ -59,7 +83,7 @@ function installStyles(){
   const style=document.createElement('style');
   style.id=STYLE_ID;
   style.textContent=`
-    .sky-foundation-name.is-live-now{
+    .sky-card-title-stable.is-live-now{
       display:flex!important;
       align-items:center!important;
       justify-content:flex-start!important;
@@ -67,40 +91,13 @@ function installStyles(){
       min-width:0!important;
       overflow:visible!important;
     }
-    .sky-foundation-name.is-live-now .sky-saved-name-trigger{
-      flex:0 1 auto!important;
-      width:auto!important;
+    .sky-card-title-stable.is-live-now>.sky-live-age-label{
       min-width:0!important;
-      min-height:30px!important;
-      padding:0 .18rem!important;
-      border:0!important;
-      border-radius:0!important;
-      background:transparent!important;
-      box-shadow:none!important;
-      color:inherit!important;
-      opacity:1!important;
-      cursor:default!important;
-      pointer-events:none!important;
-    }
-    .sky-foundation-name.is-live-now .sky-saved-name-trigger:hover,
-    .sky-foundation-name.is-live-now .sky-saved-name-trigger:focus-visible{
-      border:0!important;
-      background:transparent!important;
-      box-shadow:none!important;
-      outline:none!important;
-    }
-    .sky-foundation-name.is-live-now .sky-saved-name-trigger[data-live-age] .sky-saved-name-label,
-    .sky-foundation-name.is-live-now .sky-saved-name-trigger .sky-saved-name-chevron{
-      display:none!important;
-    }
-    .sky-foundation-name.is-live-now .sky-saved-name-trigger[data-live-age]::before{
-      content:attr(data-live-age);
-      display:block;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      color:#171411;
-      font:800 .72rem/1.15 system-ui,sans-serif;
+      overflow:hidden!important;
+      text-overflow:ellipsis!important;
+      white-space:nowrap!important;
+      color:#171411!important;
+      font:800 .72rem/1.15 system-ui,sans-serif!important;
     }
     .sky-live-header-refresh{
       position:relative!important;
@@ -149,66 +146,63 @@ function installStyles(){
       .sky-live-header-refresh:hover::after,.sky-live-header-refresh:focus-visible::after{opacity:1;transform:translateX(-50%) translateY(0)}
     }
     @media(max-width:620px){
-      .sky-foundation-name.is-live-now{gap:0!important;padding-left:.55rem!important;padding-right:.1rem!important}
-      .sky-foundation-name.is-live-now .sky-saved-name-trigger[data-live-age]::before{font-size:.66rem!important}
+      .sky-card-title-stable.is-live-now{gap:0!important;padding-left:.55rem!important;padding-right:.1rem!important}
+      .sky-card-title-stable.is-live-now>.sky-live-age-label{font-size:.66rem!important}
     }
   `;
   document.head.appendChild(style);
 }
 
-function refreshButton(slot,container){
-  let button=container.querySelector(`[data-live-header-refresh="${slot}"]`);
-  if(button)return button;
-  button=document.createElement('button');
-  button.type='button';
-  button.className='sky-live-header-refresh';
-  button.dataset.finalNow=slot;
-  button.dataset.stalenessRefresh=slot;
-  button.dataset.liveHeaderRefresh=slot;
-  button.dataset.tooltip='Update to Now';
-  button.title='Update to Now';
-  button.setAttribute('aria-label','Update to Now');
-  button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11a8.1 8.1 0 1 0 2 5.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 4v7h-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  container.appendChild(button);
-  return button;
-}
-
-function restore(slot,container){
-  if(!container)return;
-  container.classList.remove('is-live-now');
-  container.querySelector(`[data-live-header-refresh="${slot}"]`)?.remove();
-  const trigger=container.querySelector('[data-saved-sky-trigger]');
-  if(trigger){
-    trigger.disabled=false;
-    trigger.removeAttribute('data-live-age');
-    trigger.removeAttribute('aria-disabled');
+function ensureLiveMarkup(slot,host,label){
+  if(!host.classList.contains('is-live-now')){
+    const openTrigger=host.querySelector('[data-saved-sky-trigger][aria-expanded="true"]');
+    if(openTrigger)document.querySelector('#skySavedSkiesPopover:not([hidden]) [data-saved-close]')?.click();
+    host.replaceChildren();
+    host.classList.add('is-live-now');
+    const age=document.createElement('span');
+    age.className='sky-live-age-label';
+    age.dataset.liveAgeLabel=slot;
+    const refresh=document.createElement('button');
+    refresh.type='button';
+    refresh.className='sky-live-header-refresh';
+    refresh.dataset.finalNow=slot;
+    refresh.dataset.stalenessRefresh=slot;
+    refresh.dataset.liveHeaderRefresh=slot;
+    refresh.dataset.tooltip='Update to Now';
+    refresh.title='Update to Now';
+    refresh.setAttribute('aria-label','Update to Now');
+    refresh.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11a8.1 8.1 0 1 0 2 5.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 4v7h-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    host.append(age,refresh);
   }
+  const age=host.querySelector(`[data-live-age-label="${slot}"]`);
+  if(age&&age.textContent!==label)age.textContent=label;
+  if(age)age.setAttribute('aria-label',`Sky age: ${label}`);
 }
-
+function restore(slot,host){
+  if(!host?.classList.contains('is-live-now'))return;
+  host.classList.remove('is-live-now');
+  host.replaceChildren();
+  window.dispatchEvent(new CustomEvent('relphi:saved-sky-active-changed',{detail:{slot,source:'live-header-restore'}}));
+}
+function visibleHost(slot){
+  return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading>.sky-card-title-stable`);
+}
 function renderSlot(slot){
-  const container=document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading>.sky-foundation-name`);
-  if(!container)return;
+  const host=visibleHost(slot);
+  if(!host)return;
   const value=read(slot);
-  if(!isLive(value)){restore(slot,container);return}
-  const trigger=container.querySelector('[data-saved-sky-trigger]');
-  if(!trigger)return;
-  const label=ageLabel(markerMs(value));
-  container.classList.add('is-live-now');
-  trigger.disabled=true;
-  trigger.dataset.liveAge=label;
-  trigger.setAttribute('aria-disabled','true');
-  trigger.title='';
-  trigger.setAttribute('aria-label',`Sky age: ${label}`);
-  refreshButton(slot,container);
+  if(!isLive(value)){restore(slot,host);return}
+  const timestamp=liveTimestamp(value);
+  if(!Number.isFinite(timestamp)){restore(slot,host);return}
+  ensureLiveMarkup(slot,host,ageLabel(timestamp));
 }
-
 function nextBoundaryDelay(){
   const now=Date.now();
   let soonest=Infinity;
   for(const slot of ['A','B']){
     const value=read(slot);
     if(!isLive(value))continue;
-    const timestamp=markerMs(value);
+    const timestamp=liveTimestamp(value);
     if(!Number.isFinite(timestamp))continue;
     const elapsed=Math.max(0,now-timestamp);
     const next=(Math.floor(elapsed/STEP_MS)+1)*STEP_MS;
@@ -216,13 +210,13 @@ function nextBoundaryDelay(){
   }
   return Number.isFinite(soonest)?Math.max(1000,Math.min(STEP_MS,soonest)):0;
 }
-
 function plan(){clearTimeout(timer);const delay=nextBoundaryDelay();if(delay)timer=setTimeout(schedule,delay)}
 function render(){queued=false;installStyles();renderSlot('A');renderSlot('B');plan()}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 
 installStyles();
 ['storage','relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed','relphi:sky-live-origin-changed'].forEach(name=>window.addEventListener(name,schedule));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
 new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
 schedule();
 })();
