@@ -179,11 +179,13 @@
       }
 
       if (isStandaloneDrawingBoardContext()) {
-        appendScript('drawing-board-standalone-v2.js?v=1', function () {
-          appendScript('drawing-board-workflow-v2.js?v=24', function () {
-            appendScript('drawing-board-interactions-v1.js?v=5', function () {
-              appendScript('drawing-board-spread-prefabs-v1.js?v=10', function () {
-                window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+        appendScript('drawing-board-ledger-selection-bridge-v1.js?v=1', function () {
+          appendScript('drawing-board-standalone-v2.js?v=1', function () {
+            appendScript('drawing-board-workflow-v2.js?v=24', function () {
+              appendScript('drawing-board-interactions-v1.js?v=5', function () {
+                appendScript('drawing-board-spread-prefabs-v1.js?v=10', function () {
+                  window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+                });
               });
             });
           });
