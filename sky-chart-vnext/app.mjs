@@ -398,9 +398,9 @@ function renderDialog(spec) {
     setDialog(`Exact Sky ${slot}`, `<form class="sky-form" data-exact-form data-slot="${slot}">
       <label>Optional working name<input name="name" maxlength="80" placeholder="Unsaved sky"></label>
       <label>Date and time<input name="dateTime" type="datetime-local" value="${nowLocalValue()}" required></label>
-      <label>Location name<input name="location" autocomplete="off" placeholder="Salt Lake City, Utah"></label>
+      <label>Location name<input name="location" autocomplete="off" placeholder="Ex. City, State or Country"></label>
       <div class="sky-form-row"><label>Latitude<input name="latitude" type="number" step="any" min="-90" max="90" required></label><label>Longitude<input name="longitude" type="number" step="any" min="-180" max="180" required></label></div>
-      <label>Time zone<input name="timeZone" value="${escapeHtml(Intl.DateTimeFormat().resolvedOptions().timeZone || '')}" placeholder="America/Denver" required></label>
+      <label>Time zone<input name="timeZone" value="${escapeHtml(Intl.DateTimeFormat().resolvedOptions().timeZone || '')}" placeholder="Ex. America/New_York" required></label>
       <label>House system<select name="houseSystem">${systems}</select></label>
       <div><button type="button" class="sky-text-button" data-fill-current-location>Use my current location</button></div>
       <p class="sky-dialog-note">This creates the sky first. Saving it is a separate action.</p><p class="sky-dialog-error" data-form-status></p>
