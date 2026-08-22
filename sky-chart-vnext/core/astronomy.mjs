@@ -1,4 +1,4 @@
-import{SIGNS,norm,placement,houseFor}from'./model.mjs';
+import{norm,placement,houseFor}from'./model.mjs';
 
 const BODIES=['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
 const rad=value=>Number(value)*Math.PI/180;
@@ -18,6 +18,17 @@ export function ascendantLongitude(A,date,latitude,longitude){
 export function midheavenLongitude(A,date,longitude){
   const theta=rad(siderealDegrees(A,date,longitude)),epsilon=rad(obliquity(A,date));
   return norm(deg(Math.atan2(Math.sin(theta),Math.cos(theta)*Math.cos(epsilon))));
+}
+export function solarAltitudeFromGeometry(sunLongitude,obliquityDegrees,localSiderealDegrees,latitude){
+  const lambda=rad(sunLongitude),epsilon=rad(obliquityDegrees),phi=rad(latitude);
+  const rightAscension=norm(deg(Math.atan2(Math.sin(lambda)*Math.cos(epsilon),Math.cos(lambda))));
+  const declination=Math.asin(Math.sin(epsilon)*Math.sin(lambda));
+  const hourAngle=rad(signedDifference(localSiderealDegrees,rightAscension));
+  const sineAltitude=Math.sin(phi)*Math.sin(declination)+Math.cos(phi)*Math.cos(declination)*Math.cos(hourAngle);
+  return deg(Math.asin(Math.max(-1,Math.min(1,sineAltitude))));
+}
+export function solarAltitudeDegrees(A,date,latitude,longitude,sunLongitude){
+  return solarAltitudeFromGeometry(sunLongitude,obliquity(A,date),siderealDegrees(A,date,longitude),latitude);
 }
 export function julianCenturies(date){return((date.getTime()/86400000+2440587.5)-2451545)/36525}
 export function meanNode(date){const T=julianCenturies(date);return norm(125.04452-1934.136261*T+0.0020708*T*T+(T*T*T)/450000)}
@@ -63,7 +74,7 @@ export function calculateSky({name='Unsaved sky',instant,localDateTime='',latitu
 
   const houses=H.calculateCusps({system:houseSystem,ascendant:asc,midheaven:mc,siderealDegrees:siderealDegrees(A,date,lon),obliquityDegrees:obliquity(A,date),latitude:lat});
   const cusps=Array.isArray(houses?.cusps)&&houses.cusps.length===12?houses.cusps.map(norm):Array.from({length:12},(_,i)=>norm(Math.floor(asc/30)*30+i*30));
-  const sunHouse=houseFor(placements.Sun.longitude,cusps),day=Number(sunHouse)>=7;
+  const day=solarAltitudeDegrees(A,date,lat,lon,placements.Sun.longitude)>0;
   placements['Part of Fortune']=placement('Part of Fortune',day?asc+placements.Moon.longitude-placements.Sun.longitude:asc+placements.Sun.longitude-placements.Moon.longitude,{source:day?'day-fortune':'night-fortune'});
   for(const item of Object.values(placements))item.house=houseFor(item.longitude,cusps);
 
