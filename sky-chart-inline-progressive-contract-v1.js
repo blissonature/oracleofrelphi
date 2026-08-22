@@ -32,6 +32,8 @@ const FIELDS=[
   ['right-placement','.sky-foundation-relationship-glyph--right'],
   ['right-sign','.sky-foundation-relationship-placement--right .sky-foundation-relationship-sign']
 ];
+let fastPointerTarget=null;
+let fastPointerAt=0;
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 function placementName(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||String(id||'').replace(/-/g,' ')}
@@ -101,12 +103,26 @@ function fieldFromGlyph(target,row){
   for(const [field,selector] of FIELDS){const glyph=target.closest?.(selector);if(glyph&&row.contains(glyph))return field}
   return'';
 }
-function handleClick(event){
-  const row=expandedRowFor(event.target);if(!row)return;
+function activateTarget(event){
+  const row=expandedRowFor(event.target);if(!row)return null;
   const level=event.target.closest?.('[data-inline-progressive-level]');
-  if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return}
+  if(level){event.preventDefault();event.stopImmediatePropagation();levelActivate(level);return level}
   const field=fieldFromGlyph(event.target,row);
-  if(field){event.preventDefault();event.stopImmediatePropagation();glyphActivate(row,field)}
+  if(field){event.preventDefault();event.stopImmediatePropagation();glyphActivate(row,field);return event.target.closest?.('[data-inline-progressive-glyph]')||event.target}
+  return null;
+}
+function handlePointerUp(event){
+  if(event.pointerType!=='touch'&&event.pointerType!=='pen')return;
+  const target=activateTarget(event);if(!target)return;
+  fastPointerTarget=target;
+  fastPointerAt=performance.now();
+}
+function handleClick(event){
+  if(fastPointerTarget&&performance.now()-fastPointerAt<800){
+    const same=event.target===fastPointerTarget||fastPointerTarget.contains?.(event.target)||event.target.contains?.(fastPointerTarget);
+    if(same){event.preventDefault();event.stopImmediatePropagation();fastPointerTarget=null;return}
+  }
+  activateTarget(event);
 }
 function handleKey(event){
   if(event.key!=='Enter'&&event.key!==' ')return;
@@ -119,7 +135,7 @@ function handleKey(event){
 function installStyles(){
   if(document.getElementById('skyInlineProgressiveContractStyles'))return;
   const style=document.createElement('style');style.id='skyInlineProgressiveContractStyles';style.textContent=`
-    .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]{cursor:pointer;border-radius:7px}
+    .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]{cursor:pointer;border-radius:7px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]:hover{background:rgba(45,39,34,.055)}
     .sky-foundation-relationship-row.is-inline-expanded [data-inline-progressive-glyph]:focus-visible{outline:2px solid currentColor;outline-offset:2px}
     .inline-rel-progressive-strip{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(86px,.72fr) minmax(0,1fr);align-items:start;gap:8px;min-width:0}
@@ -127,7 +143,7 @@ function installStyles(){
     .inline-rel-progressive-token{display:grid;justify-items:center;gap:4px;min-width:0;padding:4px 5px;border-radius:7px;background:rgba(45,39,34,.04)}
     .inline-rel-progressive-token[data-tone="a"]{border-top:2px solid #c9211e}.inline-rel-progressive-token[data-tone="b"]{border-top:2px solid #2462d0}.inline-rel-progressive-token[data-tone="aspect"]{border-top:2px solid var(--relationship-stripe,#777)}
     .inline-rel-progressive-token[hidden],.inline-rel-progressive-level[hidden]{display:none!important}
-    .inline-rel-progressive-level{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center}
+    .inline-rel-progressive-level{display:inline-block;max-width:100%;padding:0;border:0;background:transparent;color:#352f2a;cursor:pointer;font-family:system-ui,sans-serif;text-align:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .inline-rel-progressive-name{font-size:.6rem;font-weight:900;line-height:1.15}.inline-rel-progressive-referent{font-size:.55rem;font-weight:680;line-height:1.28;color:#625a53;white-space:normal;overflow-wrap:anywhere}
     .inline-rel-progressive-level:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:3px}
     @media(max-width:620px){.inline-rel-progressive-strip{grid-template-columns:minmax(0,1fr) minmax(68px,.64fr) minmax(0,1fr);gap:4px}.inline-rel-progressive-side{gap:3px}.inline-rel-progressive-token{padding:3px}.inline-rel-progressive-name{font-size:.54rem}.inline-rel-progressive-referent{font-size:.49rem}}
@@ -142,8 +158,9 @@ function observeWhenReady(){
   requestAnimationFrame(decorateExisting);
 }
 // Capture ownership is installed immediately, before sky-chart-inline-relationship-v4.js
-// registers its expanded-row toggle listener. This is the semantic boundary that keeps
-// progressive reveal gestures from being mistaken for a request to close the relationship.
+// registers its expanded-row toggle listener. Touch/pen activate on pointer-up so mobile
+// does not wait for the browser's synthesized click; the later click is suppressed.
+document.addEventListener('pointerup',handlePointerUp,true);
 document.addEventListener('click',handleClick,true);
 document.addEventListener('keydown',handleKey,true);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',observeWhenReady,{once:true}):observeWhenReady();
