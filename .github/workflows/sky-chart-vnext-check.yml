@@ -34,6 +34,7 @@ jobs:
           node --check sky-chart-vnext/core/store.mjs
           node --check sky-chart-vnext/core/astronomy.mjs
           node --check sky-chart-vnext/core/layout.mjs
+          node --check sky-chart-vnext/core/filters.mjs
           node --check sky-chart-vnext/ui/wheel.mjs
           node tests/sky-chart-vnext-core.test.mjs
       - name: Architectural guardrails
