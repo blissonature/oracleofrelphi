@@ -1,4 +1,4 @@
-import{norm,placementEntries,calculateRelationships,skyCusps}from'./model.mjs';
+import{norm,placementEntries,calculateRelationshipPool,skyCusps}from'./model.mjs';
 
 export const GEOMETRY=Object.freeze({cx:500,cy:500,zodiacInner:292,zodiacOuter:365,outerDegree:365,innerDegree:292,placementRadius:17,clearance:5,lanes:{A:[406,426,446],B:[251,231,211]}});
 const rad=value=>(Number(value)-180)*Math.PI/180;
@@ -48,7 +48,7 @@ export function layoutWheel(skyA,skyB,orb=3){
   const occupied=[],a=layoutSlot(skyA,'A',occupied),b=layoutSlot(skyB,'B',occupied),placements=[...a,...b];
   assertLayoutInvariant(placements);
   const byKey=new Map(placements.map(item=>[`${item.slot}:${item.id}`,item]));
-  const relationships=calculateRelationships(skyA,skyB,orb).map(relation=>{
+  const relationships=calculateRelationshipPool(skyA,skyB,orb).map(relation=>{
     const left=byKey.get(`${relation.left.slot}:${relation.left.id}`),right=byKey.get(`${relation.right.slot}:${relation.right.id}`);
     return{...relation,leftLayout:left,rightLayout:right};
   }).filter(item=>item.leftLayout&&item.rightLayout);
