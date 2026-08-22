@@ -82,14 +82,22 @@ function calculate(row,token){
 function decorate(){
   const row=document.querySelector('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded');if(!row)return;
   const meta=ensureMeta(row);if(!meta)return;
+  const signature=[row.dataset.relationIndex,row.dataset.aspect,row.dataset.leftPlacement,row.dataset.rightPlacement,document.querySelector('[data-harmonic-window-input]')?.value||''].join('|');
+  if(meta.dataset.transitSignature===signature&&meta.dataset.transitReady==='true')return;
+  meta.dataset.transitSignature=signature;meta.dataset.transitReady='false';
   const token=++generation;meta.hidden=false;meta.textContent='· …';meta.removeAttribute('title');
   const run=()=>calculate(row,token);
   if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:120});else setTimeout(run,0);
 }
 function schedule(){requestAnimationFrame(()=>requestAnimationFrame(decorate))}
+function relevantMutation(record){
+  if(record.type==='attributes'&&record.attributeName==='class'&&record.target?.classList?.contains('sky-foundation-relationship-row'))return true;
+  if(record.type!=='childList')return false;
+  return Array.from(record.addedNodes||[]).some(node=>node.nodeType===1&&(node.matches?.('.inline-rel-detail,.sky-foundation-relationship-row')||node.querySelector?.('.inline-rel-detail')));
+}
 function attach(){
   const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;
-  observer?.disconnect();observedList=list;observer=new MutationObserver(records=>{if(records.some(record=>record.type==='childList'||(record.type==='attributes'&&record.attributeName==='class')))schedule()});observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});schedule();
+  observer?.disconnect();observedList=list;observer=new MutationObserver(records=>{if(records.some(relevantMutation))schedule()});observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});schedule();
 }
 function installStyles(){if(document.getElementById('skyRelationshipTransitMetaV1Styles'))return;const style=document.createElement('style');style.id='skyRelationshipTransitMetaV1Styles';style.textContent=`
   .inline-rel-orb{width:min(100%,168px)!important;gap:4px!important;white-space:nowrap!important}
@@ -98,6 +106,9 @@ function installStyles(){if(document.getElementById('skyRelationshipTransitMetaV
   .inline-rel-transit-meta[hidden]{display:none!important}
   @media(max-width:620px){.inline-rel-orb{width:100%!important;gap:3px!important}.inline-rel-orb>span{width:46px!important}.inline-rel-transit-meta{font-size:.47rem!important}}
 `;document.head.appendChild(style)}
+function markReady(){const row=document.querySelector('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded'),meta=row?.querySelector('.inline-rel-transit-meta');if(meta)meta.dataset.transitReady='true'}
+const originalRender=render;
+render=function(row,result){originalRender(row,result);markReady()};
 function start(){installStyles();attach();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
