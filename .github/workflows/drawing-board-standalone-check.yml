@@ -5,11 +5,13 @@ on:
     paths:
       - 'drawing-board/**'
       - 'drawing-board-standalone-v2.js'
+      - 'drawing-board-first-paint-v1.js'
       - 'tarot-ledger-no-board-v1.js'
       - 'navloader.js'
       - 'nav.html'
       - 'tools.html'
       - 'index.html'
+      - 'scripts/materialize-drawing-board.py'
       - 'tests/drawing-board-standalone-v2.test.js'
       - 'tests/drawing-board-navigation.browser.js'
       - '.github/workflows/drawing-board-standalone-check.yml'
@@ -17,11 +19,13 @@ on:
     paths:
       - 'drawing-board/**'
       - 'drawing-board-standalone-v2.js'
+      - 'drawing-board-first-paint-v1.js'
       - 'tarot-ledger-no-board-v1.js'
       - 'navloader.js'
       - 'nav.html'
       - 'tools.html'
       - 'index.html'
+      - 'scripts/materialize-drawing-board.py'
       - 'tests/drawing-board-standalone-v2.test.js'
       - 'tests/drawing-board-navigation.browser.js'
       - '.github/workflows/drawing-board-standalone-check.yml'
@@ -29,12 +33,12 @@ on:
 
 concurrency:
   group: drawing-board-standalone-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   separation-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,16 +49,19 @@ jobs:
       - name: Check JavaScript syntax and structural contracts
         run: |
           node --check drawing-board-standalone-v2.js
+          node --check drawing-board-first-paint-v1.js
           node --check tarot-ledger-no-board-v1.js
           node --check navloader.js
           node --check tests/drawing-board-standalone-v2.test.js
           node --check tests/drawing-board-navigation.browser.js
           node tests/drawing-board-standalone-v2.test.js
-      - name: Install Chromium
+      - name: Install Playwright driver only
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
         run: |
           npm install --no-save playwright@1.52.0
-          npx playwright install --with-deps chromium
+          command -v google-chrome
       - name: Run standalone Drawing Board browser regression
         run: |
           python3 -m http.server 8000 > /tmp/drawing-board-standalone-server.log 2>&1 &
-          node tests/drawing-board-navigation.browser.js
+          RELPHI_BROWSER_EXECUTABLE="$(command -v google-chrome)" node tests/drawing-board-navigation.browser.js
