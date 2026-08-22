@@ -56,28 +56,34 @@ function analyzer(model){
 function refineEdge(insideMs,outsideMs,inside){let yes=insideMs,no=outsideMs;for(let index=0;index<28;index+=1){const mid=(yes+no)/2;if(inside(mid))yes=mid;else no=mid}return(yes+no)/2}
 function findEdge(center,direction,stepDays,horizonDays,inside){let lastInside=center;for(let elapsed=stepDays;elapsed<=horizonDays;elapsed+=stepDays){const candidate=center+direction*elapsed*DAY;if(!inside(candidate))return refineEdge(lastInside,candidate,inside);lastInside=candidate}return null}
 function durationLabel(days){
-  if(days<1){const hours=Math.max(1,Math.round(days*24));return`${hours}h`}
-  if(days<14){const rounded=Math.round(days*10)/10;return`${rounded}d`}
+  if(days<1)return`${Math.max(1,Math.round(days*24))}h`;
+  if(days<14)return`${Math.round(days*10)/10}d`;
   if(days<75)return`${Math.round(days)}d`;
-  if(days<730){const months=Math.round(days/30.4375*10)/10;return`${months}mo`}
-  const years=Math.round(days/365.25*10)/10;return`${years}y`;
+  if(days<730)return`${Math.round(days/30.4375*10)/10}mo`;
+  return`${Math.round(days/365.25*10)/10}y`;
 }
 function bodyName(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||id}
 function ensureMeta(row){
   const orb=row.querySelector(':scope>.inline-rel-detail .inline-rel-orb');if(!orb)return null;
   let meta=orb.querySelector(':scope>.inline-rel-transit-meta');if(!meta){meta=document.createElement('small');meta.className='inline-rel-transit-meta';meta.hidden=true;orb.appendChild(meta)}return meta;
 }
-function render(row,result){const meta=ensureMeta(row);if(!meta)return;if(!result){meta.hidden=true;meta.textContent='';return}meta.hidden=false;meta.classList.toggle('is-retrograde',result.retrograde);meta.textContent=`· ${result.duration} · ${result.retrograde?'Rx':'D'}`;const motion=result.retrograde?'retrograde':'direct';meta.title=`Transit window ${result.duration} at the current Harmonic Window; ${result.name} is ${motion}.`;meta.setAttribute('aria-label',`Transit length ${result.duration}; ${result.name} ${motion}`)}
+function finish(row,result){
+  const meta=ensureMeta(row);if(!meta)return;
+  meta.dataset.transitReady='true';
+  if(!result){meta.hidden=true;meta.textContent='';meta.removeAttribute('title');return}
+  meta.hidden=false;meta.classList.toggle('is-retrograde',result.retrograde);meta.textContent=`· ${result.duration} · ${result.retrograde?'Rx':'Dir'}`;
+  const motion=result.retrograde?'retrograde':'direct';meta.title=`Transit window ${result.duration} at the current Harmonic Window; ${result.name} is ${motion}.`;meta.setAttribute('aria-label',`Transit length ${result.duration}; ${result.name} ${motion}`);
+}
 function calculate(row,token){
   if(!row?.isConnected||!row.classList.contains('is-inline-expanded'))return;
-  const model=modelFor(row);if(!model){render(row,null);return}
+  const model=modelFor(row);if(!model){finish(row,null);return}
   const {errorAt,speedAt}=analyzer(model),center=model.date.getTime(),inside=ms=>errorAt(ms)<=model.limit;
-  if(!inside(center)){render(row,null);return}
+  if(!inside(center)){finish(row,null);return}
   const start=findEdge(center,-1,model.step,model.horizon,inside),end=findEdge(center,1,model.step,model.horizon,inside);
   if(token!==generation||!row.isConnected||!row.classList.contains('is-inline-expanded'))return;
-  if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start){render(row,null);return}
+  if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start){finish(row,null);return}
   const days=(end-start)/DAY,speed=speedAt(center);
-  render(row,{duration:durationLabel(days),retrograde:Number.isFinite(speed)&&speed<0,name:bodyName(model.movingId)});
+  finish(row,{duration:durationLabel(days),retrograde:Number.isFinite(speed)&&speed<0,name:bodyName(model.movingId)});
 }
 function decorate(){
   const row=document.querySelector('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded');if(!row)return;
@@ -106,9 +112,6 @@ function installStyles(){if(document.getElementById('skyRelationshipTransitMetaV
   .inline-rel-transit-meta[hidden]{display:none!important}
   @media(max-width:620px){.inline-rel-orb{width:100%!important;gap:3px!important}.inline-rel-orb>span{width:46px!important}.inline-rel-transit-meta{font-size:.47rem!important}}
 `;document.head.appendChild(style)}
-function markReady(){const row=document.querySelector('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded'),meta=row?.querySelector('.inline-rel-transit-meta');if(meta)meta.dataset.transitReady='true'}
-const originalRender=render;
-render=function(row,result){originalRender(row,result);markReady()};
 function start(){installStyles();attach();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
