@@ -11,6 +11,7 @@ on:
       - 'tools.html'
       - 'index.html'
       - 'tests/drawing-board-standalone-v2.test.js'
+      - 'tests/drawing-board-navigation.browser.js'
       - '.github/workflows/drawing-board-standalone-check.yml'
   pull_request:
     paths:
@@ -22,15 +23,38 @@ on:
       - 'tools.html'
       - 'index.html'
       - 'tests/drawing-board-standalone-v2.test.js'
+      - 'tests/drawing-board-navigation.browser.js'
       - '.github/workflows/drawing-board-standalone-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: drawing-board-standalone-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   separation-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run standalone Drawing Board regression checks
-        run: node tests/drawing-board-standalone-v2.test.js
+      - name: Check JavaScript syntax and structural contracts
+        run: |
+          node --check drawing-board-standalone-v2.js
+          node --check tarot-ledger-no-board-v1.js
+          node --check navloader.js
+          node --check tests/drawing-board-standalone-v2.test.js
+          node --check tests/drawing-board-navigation.browser.js
+          node tests/drawing-board-standalone-v2.test.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Run standalone Drawing Board browser regression
+        run: |
+          python3 -m http.server 8000 > /tmp/drawing-board-standalone-server.log 2>&1 &
+          node tests/drawing-board-navigation.browser.js
