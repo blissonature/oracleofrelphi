@@ -1,18 +1,21 @@
-// Expanded relationship header v1: keep the compact two-tier relationship grammar when the dual-card view opens.
-// Placement/signs remain above coordinate/house and orb; the comparison detail is added below.
+// Expanded relationship header v2: keep the compact two-tier relationship grammar when the dual-card view opens.
+// Only the relationship row that changed is normalized; expansion no longer rescans the whole list.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiInlineExpandedHeaderV1)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiInlineExpandedHeaderV2)return;
 window.__relphiInlineExpandedHeaderV1=true;
-const STYLE_ID='skyInlineExpandedHeaderV1';
-let observer=null,observedList=null,queued=false;
+window.__relphiInlineExpandedHeaderV2=true;
+const STYLE_ID='skyInlineExpandedHeaderV2';
+let observer=null,observedList=null,queued=false;const dirtyRows=new Set();
 
 function installStyle(){
   if(document.getElementById(STYLE_ID))return;
+  document.getElementById('skyInlineExpandedHeaderV1')?.remove();
   const style=document.createElement('style');style.id=STYLE_ID;style.textContent=`
     #skyFoundationRelationshipList{
       overscroll-behavior-y:contain;
       -webkit-overflow-scrolling:touch;
+      scroll-behavior:auto!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded{
       grid-template-columns:repeat(3,minmax(0,1fr))!important;
@@ -84,7 +87,7 @@ function installStyle(){
     }
     @media(max-width:620px){
       #skyFoundationRelationshipList:has(> .sky-foundation-relationship-row.is-inline-expanded){
-        max-height:min(720px,calc(100dvh - 84px))!important;
+        max-height:none!important;
       }
       .sky-foundation-relationship-row.is-inline-expanded .sky-foundation-relationship-symbol-pair{gap:2px!important}
     }
@@ -103,16 +106,18 @@ function normalizeAspect(row){
   if(glyph)row.appendChild(glyph);if(orb)row.appendChild(orb);pair.remove();
 }
 function apply(row){
+  if(!row?.matches?.('.sky-foundation-relationship-row'))return;
   normalizeSide(row,'left');normalizeSide(row,'right');normalizeAspect(row);
   if(row.classList.contains('is-inline-expanded'))row.dataset.inlineExpandedHeader='two-tier';
   else delete row.dataset.inlineExpandedHeader;
 }
-function reconcile(){queued=false;document.querySelectorAll('.sky-foundation-relationship-row').forEach(apply)}
-function schedule(){if(queued)return;queued=true;queueMicrotask(reconcile)}
+function flush(){queued=false;const rows=[...dirtyRows];dirtyRows.clear();rows.forEach(apply)}
+function queue(row){if(row?.matches?.('.sky-foundation-relationship-row'))dirtyRows.add(row);if(queued)return;queued=true;queueMicrotask(flush)}
+function queueFromRecord(record){const targetRow=record.target?.closest?.('.sky-foundation-relationship-row');if(targetRow)queue(targetRow);if(record.type==='childList')record.addedNodes.forEach(node=>{if(node.nodeType!==1)return;if(node.matches?.('.sky-foundation-relationship-row'))queue(node);node.querySelectorAll?.('.sky-foundation-relationship-row').forEach(queue)})}
 function ensureObserver(){
   const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;
-  observer?.disconnect();observedList=list;observer=new MutationObserver(schedule);observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});schedule();
+  observer?.disconnect();observedList=list;observer=new MutationObserver(records=>records.forEach(queueFromRecord));observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});list.querySelectorAll('.sky-foundation-relationship-row').forEach(queue);
 }
-function start(){installStyle();ensureObserver();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed'].forEach(name=>window.addEventListener(name,()=>{ensureObserver();schedule()}));}
+function start(){installStyle();ensureObserver();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed'].forEach(name=>window.addEventListener(name,ensureObserver));}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
