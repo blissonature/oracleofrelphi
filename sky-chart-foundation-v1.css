@@ -133,18 +133,21 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-leader { fill:none; stroke-width:1.45; stroke-linecap:round; vector-effect:non-scaling-stroke; }
 .sky-foundation-aspect { stroke-width:2.1; stroke-linecap:round; opacity:.62; vector-effect:non-scaling-stroke; }
 
-/* Zodiac signs use the canonical Without circles presentation. The complete
-   canonical artboard remains intact; only the circle is omitted from paint.
-   The layered white halo is deliberately broad enough to isolate the black
-   sign strokes from the saturated zodiac wedges without reintroducing a disc. */
+/* Zodiac signs keep the canonical Without-circles presentation. Instead of a
+   blurred glow, eight tight white shadows form a crisp knockout around the
+   actual glyph silhouette. This creates a readable black-on-white edge on
+   every saturated wedge without restoring the canonical circle. */
 [data-layer="zodiac"] .sky-foundation-sign-glyph {
   filter:
-    drop-shadow(0 0 1.2px rgba(255,255,255,1))
-    drop-shadow(0 0 3px rgba(255,255,255,1))
-    drop-shadow(0 0 5.5px rgba(255,255,255,1))
-    drop-shadow(0 0 9px rgba(255,255,255,.98))
-    drop-shadow(0 0 13px rgba(255,255,255,.82))
-    drop-shadow(0 2px 3px rgba(31,27,24,.45));
+    drop-shadow(2px 0 0 #fff)
+    drop-shadow(-2px 0 0 #fff)
+    drop-shadow(0 2px 0 #fff)
+    drop-shadow(0 -2px 0 #fff)
+    drop-shadow(1.45px 1.45px 0 #fff)
+    drop-shadow(-1.45px 1.45px 0 #fff)
+    drop-shadow(1.45px -1.45px 0 #fff)
+    drop-shadow(-1.45px -1.45px 0 #fff)
+    drop-shadow(0 1.5px 1.5px rgba(31,27,24,.34));
 }
 [data-layer="zodiac"] .sky-foundation-sign-glyph > .relphi-glyph-bubble > circle {
   display:none !important;
