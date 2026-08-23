@@ -82,8 +82,8 @@
       return;
     }
 
-    const board = panel.querySelector('.card-row-board');
-    if (!board) return;
+    const drawer = panel.querySelector('.card-row-drawing-board');
+    if (!drawer) return;
     if (existing?.isConnected) return;
 
     const empty = document.createElement('section');
@@ -105,7 +105,7 @@
           <button type="button" data-relphi-empty-choose>Choose a tarot card</button>
         </div>
       </div>`;
-    board.insertAdjacentElement('beforebegin', empty);
+    drawer.insertAdjacentElement('afterend', empty);
   }
 
   function clarifyControls(panel) {
