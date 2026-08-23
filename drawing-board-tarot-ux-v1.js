@@ -164,5 +164,8 @@
 
   installStyle();
   enhance();
-  new MutationObserver(schedule).observe(document.documentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['class','data-row-card','hidden'] });
+  new MutationObserver(() => {
+    removeLegacyTip(document);
+    schedule();
+  }).observe(document.documentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['class','data-row-card','hidden'] });
 })();
