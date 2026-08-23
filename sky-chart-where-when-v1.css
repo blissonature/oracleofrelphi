@@ -38,13 +38,36 @@
 .sky-where-when-editor {
   display:grid;
   gap:12px;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
   padding:12px;
+}
+
+/* The editor lives inside a narrow Sky card even on wide desktop viewports.
+   Reset intrinsic fieldset/grid sizing so no editor child can create hidden
+   horizontal scroll width and shift the card when an input receives focus. */
+.sky-where-when-editor > *,
+.sky-where-when-section,
+.sky-where-when-advanced,
+.sky-where-search-row,
+.sky-location-results,
+.sky-location-confirmation,
+.sky-where-when-grid,
+.sky-where-when-coordinate-grid,
+.sky-where-when-inline-actions,
+.sky-where-when-footer {
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
 }
 
 .sky-where-when-section {
   display:grid;
   gap:8px;
-  min-width:0;
+  width:100%;
+  min-inline-size:0;
   margin:0;
   padding:10px;
   border:1px solid rgba(31,27,24,.13);
@@ -68,6 +91,7 @@
   display:grid;
   gap:4px;
   min-width:0;
+  max-width:100%;
   color:#49413a;
   font:800 .65rem/1.25 system-ui,sans-serif;
 }
@@ -75,6 +99,7 @@
 .sky-where-when-input,
 .sky-where-when-select {
   width:100%;
+  max-width:100%;
   min-width:0;
   box-sizing:border-box;
   border:1px solid rgba(31,27,24,.23);
@@ -103,10 +128,14 @@
   grid-template-columns:minmax(0,1fr) auto;
   gap:6px;
   align-items:end;
+  width:100%;
 }
 
 .sky-where-when-button {
   appearance:none;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
   border:0;
   border-radius:999px;
   background:#202020;
@@ -142,6 +171,7 @@
 .sky-location-results {
   display:grid;
   gap:5px;
+  width:100%;
 }
 
 .sky-location-result {
@@ -150,6 +180,7 @@
   gap:2px;
   width:100%;
   min-width:0;
+  box-sizing:border-box;
   border:1px solid rgba(31,27,24,.14);
   border-radius:9px;
   background:#fff;
@@ -179,6 +210,7 @@
 .sky-location-confirmation {
   display:grid;
   gap:5px;
+  width:100%;
   border-left:3px solid #c9211e;
   padding:6px 8px;
   background:#fff7f4;
@@ -201,11 +233,13 @@
 
 .sky-where-when-grid {
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:repeat(2,minmax(0,1fr));
   gap:7px;
+  width:100%;
 }
 
 .sky-where-when-advanced {
+  width:100%;
   border:1px solid rgba(31,27,24,.14);
   border-radius:11px;
   background:#faf7f2;
@@ -222,19 +256,24 @@
 .sky-where-when-advanced-body {
   display:grid;
   gap:8px;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
   padding:0 10px 10px;
 }
 
 .sky-where-when-coordinate-grid {
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:repeat(2,minmax(0,1fr));
   gap:7px;
+  width:100%;
 }
 
 .sky-where-when-inline-actions {
   display:flex;
   flex-wrap:wrap;
   gap:6px;
+  width:100%;
 }
 
 .sky-where-when-status {
@@ -251,6 +290,9 @@
 .sky-inference-card {
   display:grid;
   gap:5px;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
   border:1px solid rgba(31,27,24,.14);
   border-radius:9px;
   background:#fff;
@@ -274,9 +316,11 @@
 
 .sky-where-when-footer {
   display:flex;
+  flex-wrap:wrap;
   align-items:center;
   justify-content:flex-end;
   gap:7px;
+  width:100%;
 }
 
 .sky-where-when-confirmed {
