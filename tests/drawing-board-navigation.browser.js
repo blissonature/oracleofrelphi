@@ -42,10 +42,11 @@ let browser;
   const visibleHelpfulTipCount = () => page.locator('.drawing-board-helpful-tip').evaluateAll(nodes => nodes
     .filter(node => !node.hidden && getComputedStyle(node).display !== 'none' && getComputedStyle(node).visibility !== 'hidden')
     .length);
+  const waitForTarotFirstUi = () => page.waitForFunction(() => window.__relphiDrawingBoardTarotUxV1 === true);
 
   console.log('Confirming an empty mobile Drawing Board immediately reads as a tarot tool');
   await page.goto('http://127.0.0.1:8000/drawing-board/tarot.html', { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.__relphiDrawingBoardTarotUxV1 === true);
+  await waitForTarotFirstUi();
   const emptyState = page.locator('#drawingBoardTarotEmptyState');
   await emptyState.waitFor({ state: 'visible' });
   assert.match((await emptyState.innerText()).trim(), /Tarot card workspace/i);
@@ -73,6 +74,7 @@ let browser;
   console.log('Opening standalone Drawing Board with Drawing Board identity from first DOM paint');
   await page.goto('http://127.0.0.1:8000/drawing-board/tarot.html', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.documentElement.dataset.relphiStandaloneDrawingBoardV2 === 'true');
+  await waitForTarotFirstUi();
   assert.equal(await page.title(), 'Drawing Board · Oracle of Relphi');
   assert.equal((await page.locator('.tarot-hero h1').innerText()).trim(), 'Drawing Board');
   assert.equal(drawingBoardPath(), '/drawing-board/tarot.html');
@@ -89,6 +91,7 @@ let browser;
   console.log('Refreshing Drawing Board and confirming the route and native Ledger bottom remain Drawing Board');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.documentElement.dataset.relphiStandaloneDrawingBoardV2 === 'true');
+  await waitForTarotFirstUi();
   assert.equal(await page.title(), 'Drawing Board · Oracle of Relphi');
   assert.equal((await page.locator('.tarot-hero h1').innerText()).trim(), 'Drawing Board');
   assert.equal(drawingBoardPath(), '/drawing-board/tarot.html');
@@ -139,6 +142,7 @@ let browser;
   console.log('Returning to standalone Drawing Board');
   await page.goto('http://127.0.0.1:8000/drawing-board/tarot.html', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.documentElement.dataset.relphiStandaloneDrawingBoardV2 === 'true');
+  await waitForTarotFirstUi();
   await page.locator('#shortListPanel [data-row-card="ace_of_wands"]').first().waitFor({ state: 'visible' });
   await page.locator('#shortListPanel [data-row-card="the_fool"]').first().waitFor({ state: 'visible' });
   await page.locator('#cardList .or-card[data-id="ace_of_wands"]').waitFor({ state: 'visible' });
