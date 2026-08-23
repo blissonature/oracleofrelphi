@@ -1,7 +1,20 @@
-/* Final neutral treatment for placement and house filter controls. */
+/* Final neutral treatment for relationship filter controls. */
 html body #skyChartPlacementPopover.sky-chart-placement-filter-popover.is-portaled{
   width:min(350px,calc(100vw - 20px))!important;
   max-width:calc(100vw - 20px)!important;
+}
+html body #skyRelationshipDisplayPopover.sky-relationship-display-popover.is-portaled{
+  width:min(280px,calc(100vw - 24px))!important;
+  max-width:calc(100vw - 24px)!important;
+  max-height:min(220px,78vh)!important;
+  overflow:auto!important;
+  box-sizing:border-box!important;
+  padding:7px!important;
+  border:1px solid rgba(31,27,24,.22)!important;
+  border-radius:13px!important;
+  background:#fffdf8!important;
+  box-shadow:0 16px 38px rgba(31,27,24,.2)!important;
+  pointer-events:auto!important;
 }
 .sky-chart-placement-list-header-choice-a,
 .sky-chart-placement-list-header-choice-b,
@@ -28,6 +41,10 @@ html body #skyChartPlacementPopover.sky-chart-placement-filter-popover.is-portal
 @media(max-width:410px){
   html body #skyChartPlacementPopover.sky-chart-placement-filter-popover.is-portaled{
     width:min(330px,calc(100vw - 16px))!important;
+    max-width:calc(100vw - 16px)!important;
+  }
+  html body #skyRelationshipDisplayPopover.sky-relationship-display-popover.is-portaled{
+    width:min(280px,calc(100vw - 16px))!important;
     max-width:calc(100vw - 16px)!important;
   }
 }
