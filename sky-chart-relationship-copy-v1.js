@@ -1,12 +1,13 @@
 // Relationships clipboard serializer: copy the semantic relationship list, never raw SVG/DOM text.
-// Filter context is emitted once per copied block, never redundantly on every relationship.
+// Filter context is emitted once per copied block; relationships are grouped by sky scope.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyRelationshipCopyV3)return;
+  if(window.__relphiSkyRelationshipCopyV4)return;
   window.__relphiSkyRelationshipCopyV1=true;
   window.__relphiSkyRelationshipCopyV2=true;
   window.__relphiSkyRelationshipCopyV3=true;
+  window.__relphiSkyRelationshipCopyV4=true;
 
   const PLACEMENT_SYMBOLS=Object.freeze({
     sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',
@@ -17,16 +18,20 @@
     conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'
   });
   const ALL_HOUSES=Object.freeze(Array.from({length:12},(_,index)=>String(index+1)));
+  const GROUPS=Object.freeze([
+    Object.freeze({mode:'A-A',title:'Sky A — Intrasky'}),
+    Object.freeze({mode:'B-B',title:'Sky B — Intrasky'}),
+    Object.freeze({mode:'A-B',title:'Sky A ↔ Sky B — Intersky'})
+  ]);
   let feedbackTimer=0;
   let selectedIsolation=null;
   let houseSelections={A:[...ALL_HOUSES],B:[...ALL_HOUSES]};
 
   function installStyles(){
-    if(document.getElementById('skyRelationshipCopyStylesV3'))return;
-    document.getElementById('skyRelationshipCopyStylesV2')?.remove();
-    document.getElementById('skyRelationshipCopyStylesV1')?.remove();
+    if(document.getElementById('skyRelationshipCopyStylesV4'))return;
+    document.querySelectorAll('[id^="skyRelationshipCopyStylesV"]').forEach(node=>node.remove());
     const style=document.createElement('style');
-    style.id='skyRelationshipCopyStylesV3';
+    style.id='skyRelationshipCopyStylesV4';
     style.textContent=`
       .sky-relationship-copy-button{margin-left:auto;padding:.38rem .68rem;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .68rem/1 system-ui,sans-serif;cursor:pointer;white-space:nowrap}
       .sky-relationship-heading-actions .sky-relationship-copy-button{margin-left:0}
@@ -51,7 +56,7 @@
     button.type='button';
     button.className='sky-relationship-copy-button';
     button.textContent='Copy';
-    button.setAttribute('aria-label','Copy visible relationships with active filter context');
+    button.setAttribute('aria-label','Copy visible relationships grouped by sky scope with active filter context');
     button.title='Copy visible relationships';
     if(actions)actions.insertBefore(button,actions.querySelector('#skyChartRelationshipsExport')||null);
     else{
@@ -102,6 +107,20 @@
     return `${placementSymbol(leftId)} in ${leftSign} ${leftCoordinate}  ${aspectSymbol}  ${placementSymbol(rightId)} in ${rightSign} ${rightCoordinate}`.replace(/\s+/g,' ').trim();
   }
 
+  function relationshipMode(row){
+    const explicit=String(row?.dataset?.relationshipMode||'').toUpperCase();
+    if(explicit==='A-A'||explicit==='B-B'||explicit==='A-B'||explicit==='B-A')return explicit==='B-A'?'A-B':explicit;
+    const left=String(row?.dataset?.leftSky||'A').toUpperCase(),right=String(row?.dataset?.rightSky||'B').toUpperCase();
+    if(left===right&&left==='A')return'A-A';
+    if(left===right&&left==='B')return'B-B';
+    return'A-B';
+  }
+  function groupedRows(rows){
+    const map=new Map(GROUPS.map(group=>[group.mode,[]]));
+    rows.forEach(row=>map.get(relationshipMode(row))?.push(row));
+    return GROUPS.map(group=>({group,rows:map.get(group.mode)||[]})).filter(section=>section.rows.length);
+  }
+
   function normalizedHouses(values){
     return Array.from(new Set((Array.isArray(values)?values:[]).map(String).filter(value=>ALL_HOUSES.includes(value)))).sort((a,b)=>Number(a)-Number(b));
   }
@@ -117,10 +136,13 @@
     return [housePhrase('A',a),housePhrase('B',b)].filter(Boolean).join(' · ');
   }
   function serializeBlock(rows){
-    const lines=rows.map(serializeRow).filter(Boolean);
-    if(!lines.length)return'';
-    const context=copyContext();
-    return context?`Relationships — ${context}\n${lines.join('\n')}`:lines.join('\n');
+    const sections=groupedRows(rows).map(({group,rows:sectionRows})=>{
+      const lines=sectionRows.map(serializeRow).filter(Boolean);
+      return lines.length?`${group.title}\n${lines.join('\n')}`:'';
+    }).filter(Boolean);
+    if(!sections.length)return'';
+    const context=copyContext(),heading=context?`Relationships — ${context}`:'Relationships';
+    return `${heading}\n\n${sections.join('\n\n')}`;
   }
 
   async function writeClipboard(text){
