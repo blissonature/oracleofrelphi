@@ -133,11 +133,9 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-leader { fill:none; stroke-width:1.45; stroke-linecap:round; vector-effect:non-scaling-stroke; }
 .sky-foundation-aspect { stroke-width:2.1; stroke-linecap:round; opacity:.62; vector-effect:non-scaling-stroke; }
 
-/* Zodiac signs retain the canonical glyph artwork without the inscription
-   circle. Filled canonical paths stay black and receive a real white SVG
-   outline. With paint-order:stroke fill, the black fill covers the inward
-   half of the centered SVG stroke, leaving the white edge visually outside.
-   No halo or backing shape. */
+/* Zodiac signs use the canonical glyph artwork uninscribed and unadorned.
+   The canonical silhouette remains solid opaque black: no stroke, halo,
+   medallion, inscription circle, or backing shape. */
 [data-layer="zodiac"] .sky-foundation-sign-glyph {
   filter:none !important;
 }
@@ -147,29 +145,19 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 }
 [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-canonical-glyph [fill]:not([fill="none"]) {
   fill:#111 !important;
-  stroke:#fff !important;
-  stroke-width:1 !important;
-  paint-order:stroke fill !important;
-  stroke-linecap:round !important;
-  stroke-linejoin:round !important;
-  vector-effect:non-scaling-stroke;
+  stroke:none !important;
+  opacity:1 !important;
 }
 [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-canonical-glyph [fill="none"][stroke]:not([stroke="none"]),
 [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-canonical-glyph :not([fill])[stroke]:not([stroke="none"]) {
   stroke:#111 !important;
-  stroke-linecap:round !important;
-  stroke-linejoin:round !important;
-  vector-effect:non-scaling-stroke;
+  opacity:1 !important;
 }
 [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-canonical-glyph text,
 [data-layer="zodiac"] .sky-foundation-sign-glyph text.relphi-canonical-glyph {
   fill:#111 !important;
-  stroke:#fff !important;
-  stroke-width:1 !important;
-  paint-order:stroke fill !important;
-  stroke-linecap:round !important;
-  stroke-linejoin:round !important;
-  vector-effect:non-scaling-stroke;
+  stroke:none !important;
+  opacity:1 !important;
 }
 
 @media(max-width:1120px) {
