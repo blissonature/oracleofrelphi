@@ -16,7 +16,7 @@
     const style = document.createElement('style');
     style.id = 'drawing-board-tarot-ux-v1-style';
     style.textContent = `
-      html body.relphi-drawing-board-page #shortListPanel .drawing-board-helpful-tip{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;max-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;position:absolute!important;pointer-events:none!important}
+      html body #shortListPanel .drawing-board-helpful-tip{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;max-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;position:absolute!important;pointer-events:none!important}
       .relphi-drawing-board-page .drawing-board-tarot-empty{display:grid;grid-template-columns:118px minmax(0,1fr);gap:1.15rem;align-items:center;margin:.9rem 0 1rem;padding:1rem 1.05rem;border:1px solid rgba(220,31,24,.24);border-radius:1.35rem;background:linear-gradient(135deg,rgba(220,31,24,.045),rgba(255,255,255,.92));box-shadow:0 10px 28px rgba(33,24,18,.055)}
       .relphi-drawing-board-page .drawing-board-tarot-empty-art{position:relative;width:108px;height:132px;margin:auto}
       .relphi-drawing-board-page .drawing-board-tarot-empty-art img{position:absolute;left:50%;top:50%;width:62px;height:107px;object-fit:cover;border-radius:5px;border:1px solid rgba(17,17,17,.28);box-shadow:0 7px 18px rgba(17,17,17,.18);transform-origin:50% 88%;background:#eee}
