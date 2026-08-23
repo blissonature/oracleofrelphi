@@ -31,7 +31,13 @@ let browser;
     }
   });
   await page.waitForFunction(() => window.RelphiDrawingBoardPrefabsBridge.getState().activeLayout?.id === 'celtic-cross-11');
+  await page.locator('#shortListPanel .card-row-item[data-row-index="10"]').waitFor({ state: 'attached' });
+
+  console.log('Drawing one card so the real board viewport is visible for measurement');
+  await page.locator('#drawRandomRowCard').click();
+  await page.locator('#shortListPanel [data-row-card]').first().waitFor({ state: 'visible' });
   await page.locator('#shortListPanel .card-row-item[data-row-index="10"]').waitFor({ state: 'visible' });
+
   const control = page.locator('#shortListPanel .relphi-celtic-view-control');
   await control.waitFor({ state: 'visible' });
 
