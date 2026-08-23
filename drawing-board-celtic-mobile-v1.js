@@ -59,6 +59,7 @@
     const style = document.createElement('style');
     style.id = 'relphi-celtic-mobile-v1-style';
     style.textContent = `
+      html body #shortListPanel .drawing-board-helpful-tip{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;max-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;position:absolute!important;pointer-events:none!important}
       #shortListPanel .card-row-board>.relphi-center-helper{display:none!important}
       #shortListPanel .relphi-celtic-view-control{position:absolute;top:.55rem;right:.55rem;z-index:1700;display:inline-flex;align-items:center;gap:.35rem;min-height:2.35rem;padding:.35rem .7rem;border:1px solid rgba(23,20,18,.35);border-radius:999px;background:rgba(255,250,244,.96);color:#171412;font:inherit;font-size:.74rem;font-weight:900;line-height:1;box-shadow:0 4px 12px rgba(30,20,15,.12);backdrop-filter:blur(4px);touch-action:manipulation}
       #shortListPanel .relphi-celtic-view-control::before{content:'Center';color:#756b64;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
