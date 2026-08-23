@@ -11,13 +11,15 @@
 .sky-foundation-aspect-hit,
 .sky-foundation-wheel rect.sky-foundation-aspect-hit { fill:transparent !important; stroke:transparent !important; pointer-events:stroke !important; }
 
-.sky-foundation-wheel [data-layer="zodiac"] > g { opacity:1 !important; filter:drop-shadow(0 1px 0 rgba(255,253,248,.95)) drop-shadow(0 0 2px rgba(255,253,248,.9)); }
+/* Zodiac glyph presentation is owned by sky-chart-foundation-v1.css. This pass
+   preserves interaction-state opacity only; it must not add glyph strokes or glow. */
+.sky-foundation-wheel [data-layer="zodiac"] > g { opacity:1 !important; filter:none !important; }
 .sky-foundation-wheel [data-layer="zodiac"] > g path,
 .sky-foundation-wheel [data-layer="zodiac"] > g line,
 .sky-foundation-wheel [data-layer="zodiac"] > g circle,
 .sky-foundation-wheel [data-layer="zodiac"] > g polyline,
-.sky-foundation-wheel [data-layer="zodiac"] > g polygon { stroke-width:1.22 !important; opacity:1 !important; }
-.sky-foundation-wheel.has-isolation [data-layer="zodiac"] > g.is-kept,
+.sky-foundation-wheel [data-layer="zodiac"] > g polygon { opacity:1 !important; }
+.sky-foundation-wheel.has-isolation [data-layer="zodiac"] > g.is-kept { opacity:1 !important; filter:none !important; }
 .sky-foundation-wheel.has-isolation [data-layer="placements"] > g.is-kept { opacity:1 !important; filter:drop-shadow(0 0 4px rgba(255,255,255,.95)); }
 .sky-foundation-wheel.has-isolation [data-layer="zodiac"] > g:not(.is-kept) { opacity:.16 !important; }
 
