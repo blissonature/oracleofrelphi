@@ -134,28 +134,41 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-aspect { stroke-width:2.1; stroke-linecap:round; opacity:.62; vector-effect:non-scaling-stroke; }
 
 /* Zodiac signs retain the canonical glyph artwork without the inscription
-   circle. The glyph artwork itself is white, with only a narrow dark keyline
-   for contrast on the light zodiac wedges. No medallion or backing shape. */
+   circle. Filled canonical paths stay black and receive a real white SVG
+   outline. The outline is non-scaling so its visual weight remains useful
+   when the comparison wheel or page is reduced. No halo or backing shape. */
 [data-layer="zodiac"] .sky-foundation-sign-glyph {
-  filter:
-    drop-shadow(1px 0 0 rgba(35,31,28,.88))
-    drop-shadow(-1px 0 0 rgba(35,31,28,.88))
-    drop-shadow(0 1px 0 rgba(35,31,28,.88))
-    drop-shadow(0 -1px 0 rgba(35,31,28,.88));
+  filter:none !important;
 }
 [data-layer="zodiac"] .sky-foundation-sign-glyph > .relphi-glyph-bubble > circle {
   display:none !important;
   opacity:0 !important;
 }
 [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-canonical-glyph [fill]:not([fill="none"]) {
-  fill:#fffdf8 !important;
+  fill:#111 !important;
+  stroke:#fff !important;
+  stroke-width:4 !important;
+  paint-order:stroke fill !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+  vector-effect:non-scaling-stroke;
 }
-[data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-canonical-glyph [stroke]:not([stroke="none"]) {
-  stroke:#fffdf8 !important;
+[data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-canonical-glyph [fill="none"][stroke]:not([stroke="none"]),
+[data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-canonical-glyph :not([fill])[stroke]:not([stroke="none"]) {
+  stroke:#111 !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+  vector-effect:non-scaling-stroke;
 }
 [data-layer="zodiac"] .sky-foundation-sign-glyph .relphi-canonical-glyph text,
 [data-layer="zodiac"] .sky-foundation-sign-glyph text.relphi-canonical-glyph {
-  fill:#fffdf8 !important;
+  fill:#111 !important;
+  stroke:#fff !important;
+  stroke-width:4 !important;
+  paint-order:stroke fill !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+  vector-effect:non-scaling-stroke;
 }
 
 @media(max-width:1120px) {
