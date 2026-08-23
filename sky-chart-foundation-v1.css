@@ -135,10 +135,16 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 
 /* Zodiac signs use the canonical Without circles presentation. The complete
    canonical artboard remains intact; only the circle is omitted from paint.
-   Their wheel-only halo is deliberately stronger than the shared silver glow
-   so the sign ring remains legible over saturated wedges at the larger size. */
+   The layered white halo is deliberately broad enough to isolate the black
+   sign strokes from the saturated zodiac wedges without reintroducing a disc. */
 [data-layer="zodiac"] .sky-foundation-sign-glyph {
-  filter:drop-shadow(0 0 3px rgba(255,255,255,1)) drop-shadow(0 0 7px rgba(255,255,255,.96)) drop-shadow(0 2px 3.4px rgba(31,27,24,.58));
+  filter:
+    drop-shadow(0 0 1.2px rgba(255,255,255,1))
+    drop-shadow(0 0 3px rgba(255,255,255,1))
+    drop-shadow(0 0 5.5px rgba(255,255,255,1))
+    drop-shadow(0 0 9px rgba(255,255,255,.98))
+    drop-shadow(0 0 13px rgba(255,255,255,.82))
+    drop-shadow(0 2px 3px rgba(31,27,24,.45));
 }
 [data-layer="zodiac"] .sky-foundation-sign-glyph > .relphi-glyph-bubble > circle {
   display:none !important;
