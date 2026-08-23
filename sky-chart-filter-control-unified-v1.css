@@ -215,9 +215,36 @@
   box-shadow:none!important;
 }
 
-/* Give the three House checkboxes the room their shared Orb-sized typography requires. */
-@media(min-width:841px){
-  #skyFoundationRelationships .sky-chart-filter-bar[data-multiselect-placement-filters="true"][data-multiselect-house-filters="true"]{
-    grid-template-columns:minmax(0,.6fr) minmax(0,1fr) minmax(0,1.45fr) minmax(0,1.5fr) minmax(0,1.2fr)!important;
+/* Desktop/tablet comparison layout: all six relationship controls are one row.
+   Every column may compress; summaries and Display already ellipsize rather than forcing a wrap. */
+@media(min-width:621px){
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar{
+    grid-template-columns:minmax(0,.56fr) minmax(0,.78fr) minmax(0,1.28fr) minmax(0,1.28fr) minmax(0,.9fr) minmax(0,1.3fr)!important;
+    gap:5px!important;
+    padding:7px 8px!important;
+  }
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar[data-multiselect-placement-filters="true"][data-multiselect-house-filters="true"]{
+    grid-template-columns:minmax(0,.56fr) minmax(0,.78fr) minmax(0,1.28fr) minmax(0,1.28fr) minmax(0,.9fr) minmax(0,1.3fr)!important;
+  }
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-display-control{
+    grid-column:auto!important;
+    max-width:none!important;
+    min-width:0!important;
+  }
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-placement-summary-choices,
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-house-summary-choices{
+    gap:3px!important;
+    padding-left:.4rem!important;
+    padding-right:30px!important;
+  }
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-placement-summary-choices .sky-chart-placement-choice,
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-house-summary-choices .sky-chart-house-choice{
+    gap:2px!important;
+  }
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-placement-summary-choices input[type="checkbox"],
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-house-summary-choices input[type="checkbox"]{
+    flex-basis:13px!important;
+    width:13px!important;
+    height:13px!important;
   }
 }
