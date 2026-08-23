@@ -7,9 +7,9 @@ window.__relphiSkyRelationshipDisplayV1=true;
 
 const STORAGE_KEY='relphiSkyRelationshipDisplayV1';
 const MODES=Object.freeze([
-  {id:'glyphs',label:'Glyphs only',level:0},
-  {id:'names',label:'Glyphs + names',level:1},
-  {id:'referents',label:'Glyphs + names + referents',level:2}
+  {id:'glyphs',label:'Glyphs',level:0},
+  {id:'names',label:'Names',level:1},
+  {id:'referents',label:'Referents',level:2}
 ]);
 const BY_ID=new Map(MODES.map(mode=>[mode.id,mode]));
 const STYLE_ID='skyRelationshipDisplayV2Styles';
