@@ -9,7 +9,7 @@ const ANGLES=Object.freeze(['asc','dsc','mc','ic']);
 const comparison=Object.freeze({
   viewBox:Object.freeze([0,0,1200,1200]),center:Object.freeze({x:600,y:600}),
   inner:Object.freeze({inner:166,outer:323,degree:323,placement:Object.freeze([287,299,283]),angle:Object.freeze([202,220,238]),edge:166,side:'inner'}),
-  zodiac:Object.freeze({inner:323,outer:414,fillOpacity:.82,glyphRadius:19,strokeWidth:2.35}),
+  zodiac:Object.freeze({inner:323,outer:414,fillOpacity:.82,glyphRadius:22,strokeWidth:2.55}),
   outer:Object.freeze({inner:414,outer:574,degree:414,placement:Object.freeze([450,440,460]),angle:Object.freeze([540,522,504]),edge:574,side:'outer'}),
   houseFillOpacity:.5,houseNumberFont:22,angleGap:17,placementRadius:18.5,placementBubbleRadius:19.7,
   placementClearance:6,tangentialStep:.75,tangentialLimit:15
