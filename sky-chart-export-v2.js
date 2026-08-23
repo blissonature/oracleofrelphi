@@ -1,14 +1,20 @@
-// Sky Chart export v2: contextual wheel PNGs and formatted relationship-view PNGs.
+// Sky Chart export v3: contextual wheel PNGs and relationship-view PNGs grouped by sky scope.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyExportV2)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyExportV3)return;
   window.__relphiSkyExportV2=true;
+  window.__relphiSkyExportV3=true;
 
   const LIB_URL='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
   const WHEEL_ID='skyChartWheelExport';
   const REL_ID='skyChartRelationshipsExport';
   const STATUS_ID='skyChartExportStatus';
   const WHEEL_EXPORT_FRAME=Object.freeze({side:64,top:150,bottom:74});
+  const REL_GROUPS=Object.freeze([
+    Object.freeze({mode:'A-A',title:'Sky A — Intrasky',className:'sky-a'}),
+    Object.freeze({mode:'B-B',title:'Sky B — Intrasky',className:'sky-b'}),
+    Object.freeze({mode:'A-B',title:'Sky A ↔ Sky B — Intersky',className:'sky-ab'})
+  ]);
   const ICON='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v11m0 0-4-4m4 4 4-4M5 15v4h14v-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   let libraryPromise=null,preparing=false,pendingIOS=null;
 
@@ -87,16 +93,40 @@
     host.appendChild(stage);return{host,stage,width,height};
   }
   function rowVisible(row){const style=getComputedStyle(row);return!row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}
+  function relationshipMode(row){
+    const explicit=String(row?.dataset?.relationshipMode||'').toUpperCase();
+    if(explicit==='A-A'||explicit==='B-B'||explicit==='A-B'||explicit==='B-A')return explicit==='B-A'?'A-B':explicit;
+    const left=String(row?.dataset?.leftSky||'A').toUpperCase(),right=String(row?.dataset?.rightSky||'B').toUpperCase();
+    if(left===right&&left==='A')return'A-A';
+    if(left===right&&left==='B')return'B-B';
+    return'A-B';
+  }
+  function visibleViewportRows(list){
+    const rect=list.getBoundingClientRect();
+    return [...list.querySelectorAll('.sky-foundation-relationship-row')].filter(row=>{
+      if(!rowVisible(row))return false;
+      const box=row.getBoundingClientRect();return box.bottom>=rect.top&&box.top<=rect.bottom;
+    });
+  }
+  function groupedRelationshipRows(rows){
+    const map=new Map(REL_GROUPS.map(group=>[group.mode,[]]));
+    rows.forEach(row=>map.get(relationshipMode(row))?.push(row));
+    return REL_GROUPS.map(group=>({group,rows:map.get(group.mode)||[]})).filter(section=>section.rows.length);
+  }
   function buildRelationshipStage(){
     const source=document.getElementById('skyFoundationRelationships'),list=document.getElementById('skyFoundationRelationshipList');if(!source||!list)throw new Error('The relationship list is not ready.');
-    const width=Math.max(620,Math.min(900,Math.ceil(source.getBoundingClientRect().width||760))),listHeight=Math.max(180,Math.ceil(list.getBoundingClientRect().height||390));
-    const host=exportHost(width,2000),stage=document.createElement('div');stage.className='sky-relationships-export-stage';stage.style.width=`${width}px`;
+    const width=Math.max(620,Math.min(900,Math.ceil(source.getBoundingClientRect().width||760))),host=exportHost(width,2000),stage=document.createElement('div');stage.className='sky-relationships-export-stage';stage.style.width=`${width}px`;
     const head=document.createElement('div');head.className='sky-relationships-export-head';head.innerHTML=`<strong>Relationships</strong><span>${esc(document.getElementById('skyFoundationRelationshipCount')?.textContent||'')}</span>`;stage.appendChild(head);
     const summary=filterSummary();if(summary){const line=document.createElement('div');line.className='sky-relationships-export-summary';line.textContent=`Showing only: ${summary}`;stage.appendChild(line)}
-    const frame=document.createElement('div');frame.className='sky-relationships-export-frame';frame.style.height=`${listHeight}px`;
-    const grid=document.createElement('div');grid.className='sky-relationships-export-grid';
-    const listRect=list.getBoundingClientRect();[...list.querySelectorAll('.sky-foundation-relationship-row')].forEach(row=>{if(!rowVisible(row))return;const rect=row.getBoundingClientRect();if(rect.bottom<listRect.top||rect.top>listRect.bottom)return;grid.appendChild(row.cloneNode(true))});
-    frame.appendChild(grid);stage.appendChild(frame);host.style.height='auto';host.style.overflow='visible';host.appendChild(stage);return{host,stage,width,height:Math.ceil(stage.scrollHeight||600)};
+    const frame=document.createElement('div');frame.className='sky-relationships-export-frame';
+    const groups=document.createElement('div');groups.className='sky-relationships-export-groups';
+    groupedRelationshipRows(visibleViewportRows(list)).forEach(({group,rows})=>{
+      const section=document.createElement('section');section.className=`sky-relationships-export-group ${group.className}`;
+      const title=document.createElement('div');title.className='sky-relationships-export-group-title';title.textContent=group.title;
+      const grid=document.createElement('div');grid.className='sky-relationships-export-grid';rows.forEach(row=>grid.appendChild(row.cloneNode(true)));
+      section.append(title,grid);groups.appendChild(section);
+    });
+    frame.appendChild(groups);stage.appendChild(frame);host.style.height='auto';host.style.overflow='visible';host.appendChild(stage);return{host,stage,width,height:Math.ceil(stage.scrollHeight||600)};
   }
 
   async function nodeToFile(stage,width,height,name){
@@ -122,12 +152,12 @@
     finally{built?.host?.remove();preparing=false;if(button?.isConnected){button.disabled=false;button.removeAttribute('aria-busy')}}
   }
 
-  function installStyles(){if(document.getElementById('skyChartExportV2Styles'))return;const style=document.createElement('style');style.id='skyChartExportV2Styles';style.textContent=`
+  function installStyles(){if(document.getElementById('skyChartExportV3Styles'))return;document.getElementById('skyChartExportV2Styles')?.remove();const style=document.createElement('style');style.id='skyChartExportV3Styles';style.textContent=`
     .sky-export-icon-button{appearance:none;display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#2d2824;cursor:pointer}.sky-export-icon-button svg{width:17px;height:17px}.sky-export-icon-button:hover,.sky-export-icon-button:focus-visible{outline:none;border-color:#2462d0;box-shadow:0 0 0 2px rgba(36,98,208,.12)}.sky-export-icon-button:disabled{opacity:.5}.sky-export-icon-button[data-export-ready="true"]{border-color:#2462d0;color:#2462d0}
     #skyFoundationComparison>.sky-foundation-heading{flex-wrap:wrap}#skyFoundationComparison .sky-export-wheel-slot{display:flex;align-items:center;justify-content:flex-end;margin-left:auto}.sky-relationship-heading-actions{display:flex;align-items:center;gap:6px}.sky-relationship-heading-actions button{margin:0}
     #${STATUS_ID}{flex:1 0 100%;color:#665e57;text-align:right;font:650 .58rem/1.2 system-ui,sans-serif}#${STATUS_ID}:empty{display:none}#${STATUS_ID}[data-error="true"]{color:#b81712}
     .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>svg{position:absolute}.sky-export-info{position:absolute;top:22px;z-index:3;width:360px;display:grid;gap:5px;padding:12px 14px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08);font-size:15px;line-height:1.28;text-align:left}.sky-export-info strong{font-size:19px}.sky-export-info span{color:#5d554e}.sky-export-info-a{left:${WHEEL_EXPORT_FRAME.side}px;border-left:5px solid #c9211e}.sky-export-info-b{right:${WHEEL_EXPORT_FRAME.side}px;border-right:5px solid #2462d0}.sky-export-filter-summary{position:absolute;left:50%;bottom:18px;z-index:3;transform:translateX(-50%);max-width:82%;padding:8px 14px;border-radius:999px;background:rgba(255,253,248,.96);box-shadow:0 1px 7px rgba(31,27,24,.08);font:750 14px/1.25 system-ui,sans-serif;text-align:center;color:#554e48}
-    .sky-relationships-export-stage{box-sizing:border-box;padding:16px;border:1px solid rgba(31,27,24,.13);border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-relationships-export-head{display:flex;align-items:center;justify-content:space-between;padding:0 2px 10px;font-size:16px}.sky-relationships-export-head>span{padding:5px 9px;border-radius:999px;background:#f0ebe4;font-size:12px;font-weight:800}.sky-relationships-export-summary{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#f6f0e8;color:#5d554e;font-size:12px;font-weight:700}.sky-relationships-export-frame{overflow:hidden}.sky-relationships-export-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.sky-relationships-export-grid>.sky-foundation-relationship-row{margin:0!important}
+    .sky-relationships-export-stage{box-sizing:border-box;padding:16px;border:1px solid rgba(31,27,24,.13);border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-relationships-export-head{display:flex;align-items:center;justify-content:space-between;padding:0 2px 10px;font-size:16px}.sky-relationships-export-head>span{padding:5px 9px;border-radius:999px;background:#f0ebe4;font-size:12px;font-weight:800}.sky-relationships-export-summary{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#f6f0e8;color:#5d554e;font-size:12px;font-weight:700}.sky-relationships-export-frame{overflow:visible}.sky-relationships-export-groups{display:grid;gap:12px}.sky-relationships-export-group{display:grid;gap:6px}.sky-relationships-export-group-title{padding:6px 9px;border-radius:7px;background:#f2ece5;color:#3b3530;font:900 12px/1.2 system-ui,sans-serif}.sky-relationships-export-group.sky-a .sky-relationships-export-group-title{border-left:4px solid #c9211e}.sky-relationships-export-group.sky-b .sky-relationships-export-group-title{border-left:4px solid #2462d0}.sky-relationships-export-group.sky-ab .sky-relationships-export-group-title{border-left:4px solid #7655aa}.sky-relationships-export-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.sky-relationships-export-grid>.sky-foundation-relationship-row{margin:0!important}
   `;document.head.appendChild(style)}
 
   function button(id,label){const b=document.createElement('button');b.type='button';b.id=id;b.className='sky-export-icon-button';b.innerHTML=ICON;b.setAttribute('aria-label',label);b.title=label;return b}
