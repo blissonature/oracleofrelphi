@@ -154,7 +154,17 @@
     });
     return best<=9?nearest:null;
   }
-  function interactive(event){const root=document.getElementById('skyFoundationRoot'),node=event.target.closest?.('[data-interactive]');if(!root?.contains(node))return null;if(node.dataset.interactive!=='aspect')return node;return nearestAspect(event)||node}
+  function interactive(event){
+    const root=document.getElementById('skyFoundationRoot');if(!root)return null;
+    const node=event.target.closest?.('[data-interactive]');
+    if(node&&root.contains(node)){
+      if(node.dataset.interactive!=='aspect')return node;
+      return nearestAspect(event)||node;
+    }
+    const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
+    if(wheel&&root.contains(event.target))return nearestAspect(event);
+    return null;
+  }
   function clearableWhitespace(event){
     const root=document.getElementById('skyFoundationRoot'),target=event.target;if(!root?.contains(target))return false;
     if(target.closest?.('button,input,select,textarea,a,label,summary,details,.sky-foundation-relationship-row,#skySelectedRelationship,.sky-chart-filter-bar,.sky-foundation-relationships-heading'))return false;
