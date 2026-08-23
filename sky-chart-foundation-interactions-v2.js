@@ -119,7 +119,20 @@
     const indexes=new Map();relations.forEach((relation,index)=>indexes.set(relationKey(relation.left.id,relation.aspect.id,relation.right.id,relation.orb),index));
     Array.from(document.querySelectorAll('[data-layer="aspects"] > line:not(.sky-foundation-aspect-hit)')).forEach(line=>{const index=indexes.get(relationKey(line.dataset.leftPlacement,line.dataset.aspect,line.dataset.rightPlacement,line.dataset.orb)),relation=relations[index];if(!relation){delete line.dataset.relationIndex;return}line.classList.add('sky-foundation-interactive','sky-foundation-aspect');Object.assign(line.dataset,{interactive:'aspect',focusPiece:'aspect',relationIndex:String(index),aspect:relation.aspect.id,leftPlacement:relation.left.id,rightPlacement:relation.right.id,leftHouse:String(relation.left.house),rightHouse:String(relation.right.house),leftSign:String(relation.left.sign),rightSign:String(relation.right.sign),harmonicOrder:String(relation.harmonicOrder),harmonicNumerator:String(relation.harmonicNumerator),phaseError:relation.phaseError.toFixed(6),harmonicCoherence:relation.coherence.toFixed(8)});line.setAttribute('tabindex','0');line.setAttribute('role','button');line.setAttribute('aria-label',`Sky A ${relation.left.entry.name} ${relation.aspect.id} Sky B ${relation.right.entry.name}, harmonic ${relation.harmonicOrder}, phase error ${relation.phaseError.toFixed(2)} degrees`);line.style.pointerEvents='stroke'})
   }
-  function annotateLedger(slot,list){const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;Array.from(panel.querySelectorAll('.sky-foundation-row')).forEach((row,index)=>{const record=list[index];if(!record)return;Object.assign(row.dataset,{interactive:'placement',sky:slot,placement:record.id,house:String(record.house),sign:String(record.sign)});row.setAttribute('tabindex','0');row.setAttribute('role','button');row.setAttribute('aria-label',`Sky ${slot} ${record.entry.name}, house ${record.house}`)})}
+  function ledgerRecord(row,list){
+    const label=String(row.querySelector('.sky-foundation-row-name')?.textContent||'').trim();if(!label)return null;
+    const entry=canonical(label,{name:label});if(!entry?.id)return null;
+    return list.find(record=>record.id===entry.id)||null;
+  }
+  function annotateLedger(slot,list){
+    const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;
+    panel.querySelectorAll('.sky-foundation-row').forEach(row=>{
+      const record=ledgerRecord(row,list);
+      if(!record){delete row.dataset.interactive;delete row.dataset.sky;delete row.dataset.placement;delete row.dataset.house;delete row.dataset.sign;row.removeAttribute('tabindex');row.removeAttribute('role');return}
+      Object.assign(row.dataset,{interactive:'placement',sky:slot,placement:record.id,house:String(record.house),sign:String(record.sign)});
+      row.setAttribute('tabindex','0');row.setAttribute('role','button');row.setAttribute('aria-label',`Sky ${slot} ${record.entry.name}, house ${record.house}`)
+    })
+  }
 
   function specFrom(node){const kind=node?.dataset?.interactive;if(kind==='house')return{kind,sky:node.dataset.sky,value:Number(node.dataset.house)};if(kind==='sign')return{kind,sky:null,value:Number(node.dataset.sign)};if(kind==='placement')return{kind,sky:node.dataset.sky,value:node.dataset.placement};if(kind==='aspect')return{kind,sky:null,value:Number(node.dataset.relationIndex)};return null}
   function same(a,b){return!!a&&!!b&&a.kind===b.kind&&a.sky===b.sky&&a.value===b.value}
