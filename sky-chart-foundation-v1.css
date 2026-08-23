@@ -133,24 +133,19 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 .sky-foundation-leader { fill:none; stroke-width:1.45; stroke-linecap:round; vector-effect:non-scaling-stroke; }
 .sky-foundation-aspect { stroke-width:2.1; stroke-linecap:round; opacity:.62; vector-effect:non-scaling-stroke; }
 
-/* Zodiac signs keep the canonical Without-circles presentation. Instead of a
-   blurred glow, eight tight white shadows form a crisp knockout around the
-   actual glyph silhouette. This creates a readable black-on-white edge on
-   every saturated wedge without restoring the canonical circle. */
+/* Zodiac signs use their canonical glyph art on a true neutral field. The
+   white medallion is deliberately solid rather than simulated with glow, so
+   every sign reads with the same contrast regardless of wedge color. */
 [data-layer="zodiac"] .sky-foundation-sign-glyph {
-  filter:
-    drop-shadow(2px 0 0 #fff)
-    drop-shadow(-2px 0 0 #fff)
-    drop-shadow(0 2px 0 #fff)
-    drop-shadow(0 -2px 0 #fff)
-    drop-shadow(1.45px 1.45px 0 #fff)
-    drop-shadow(-1.45px 1.45px 0 #fff)
-    drop-shadow(1.45px -1.45px 0 #fff)
-    drop-shadow(-1.45px -1.45px 0 #fff)
-    drop-shadow(0 1.5px 1.5px rgba(31,27,24,.34));
+  filter:drop-shadow(0 1.6px 2px rgba(31,27,24,.26));
 }
 [data-layer="zodiac"] .sky-foundation-sign-glyph > .relphi-glyph-bubble > circle {
-  display:none !important;
+  display:block !important;
+  opacity:1 !important;
+  fill:#fffdf8 !important;
+  stroke:#2d2824 !important;
+  stroke-width:1.15 !important;
+  vector-effect:non-scaling-stroke;
 }
 
 @media(max-width:1120px) {
