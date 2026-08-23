@@ -50,7 +50,7 @@
   }
 
   function cardCount(panel) {
-    return panel ? panel.querySelectorAll('.card-row-board [data-row-card]').length : 0;
+    return panel ? panel.querySelectorAll('[data-row-card]').length : 0;
   }
 
   function openChooseFlow(panel) {
