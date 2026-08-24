@@ -9,6 +9,7 @@
     {selector:'#skyChartHousePopover.sky-chart-house-filter-popover.is-portaled:not([hidden])',min:280,max:330},
     {selector:'#skyChartAspectPopover.sky-chart-aspect-filter-popover.is-portaled:not([hidden])',min:240,max:270}
   ];
+  const MENU_SELECTOR='#skyChartPlacementPopover,#skyChartHousePopover,#skyChartAspectPopover';
   const WIDTH_ATTR='data-relphi-locked-popover-width';
   let syncQueued=false;
   let unlockQueued=false;
@@ -16,6 +17,8 @@
   let scrollX=0,scrollY=0;
   let bodyRestore=null,htmlRestore=null;
   const observedMenus=new Set();
+  const menuObservers=new WeakMap();
+  let creationObserver=null;
 
   function clamp(value,min,max){return Math.max(min,Math.min(max,value))}
   function activeMenus(){
@@ -37,11 +40,11 @@
     if(menu.style.width!==px)menu.style.width=px;
     if(menu.style.minWidth!==px)menu.style.minWidth=px;
     if(menu.style.maxWidth!==px)menu.style.maxWidth=px;
-    menu.style.boxSizing='border-box';
-    menu.style.scrollbarGutter='stable';
-    menu.style.overscrollBehavior='contain';
-    menu.style.touchAction='pan-y';
-    menu.style.webkitOverflowScrolling='touch';
+    if(menu.style.boxSizing!=='border-box')menu.style.boxSizing='border-box';
+    if(menu.style.scrollbarGutter!=='stable')menu.style.scrollbarGutter='stable';
+    if(menu.style.overscrollBehavior!=='contain')menu.style.overscrollBehavior='contain';
+    if(menu.style.touchAction!=='pan-y')menu.style.touchAction='pan-y';
+    if(menu.style.webkitOverflowScrolling!=='touch')menu.style.webkitOverflowScrolling='touch';
   }
   function clearClosedWidthLocks(){
     document.querySelectorAll(`[${WIDTH_ATTR}]`).forEach(menu=>{
@@ -107,8 +110,18 @@
     });
   });
 
+  function bindMenus(){
+    document.querySelectorAll(MENU_SELECTOR).forEach(menu=>{
+      if(menuObservers.has(menu))return;
+      const observer=new MutationObserver(scheduleSync);
+      observer.observe(menu,{attributes:true,attributeFilter:['class','hidden']});
+      menuObservers.set(menu,observer);
+    });
+  }
+
   function sync(){
     syncQueued=false;
+    bindMenus();
     clearClosedWidthLocks();
     const active=activeMenus();
     if(active.length){
@@ -135,12 +148,29 @@
     if(event.target?.matches?.('input,textarea,select,[contenteditable="true"]'))return;
     if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key))event.preventDefault();
   }
+  function containsManagedMenu(node){
+    if(!(node instanceof Element))return false;
+    return node.matches(MENU_SELECTOR)||!!node.querySelector?.(MENU_SELECTOR);
+  }
 
   function start(){
-    new MutationObserver(scheduleSync).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','style']});
+    bindMenus();
+    creationObserver=new MutationObserver(records=>{
+      if(records.some(record=>[...record.addedNodes,...record.removedNodes].some(containsManagedMenu))){
+        bindMenus();
+        scheduleSync();
+      }
+    });
+    creationObserver.observe(document.body,{subtree:true,childList:true});
     window.addEventListener('wheel',preventBackgroundScroll,{capture:true,passive:false});
     window.addEventListener('touchmove',preventBackgroundScroll,{capture:true,passive:false});
-    document.addEventListener('keydown',preventBackgroundKeys,true);
+    document.addEventListener('keydown',event=>{
+      preventBackgroundKeys(event);
+      if(event.key==='Escape')requestAnimationFrame(scheduleSync);
+    },true);
+    document.addEventListener('click',event=>{
+      if(event.target.closest?.('[data-placement-filter-toggle],[data-house-filter-toggle],[data-aspect-filter-toggle]'))requestAnimationFrame(scheduleSync);
+    },true);
     window.addEventListener('resize',scheduleSync);
     window.visualViewport?.addEventListener('resize',scheduleSync);
     window.addEventListener('pagehide',()=>{if(pageLocked){document.body.style.position=bodyRestore?.position||'';document.body.style.top=bodyRestore?.top||'';document.body.style.left=bodyRestore?.left||'';document.body.style.right=bodyRestore?.right||'';document.body.style.width=bodyRestore?.width||'';document.body.style.overflow=bodyRestore?.overflow||'';document.body.style.paddingRight=bodyRestore?.paddingRight||''}});
