@@ -113,11 +113,25 @@ function apply(row){
 }
 function flush(){queued=false;const rows=[...dirtyRows];dirtyRows.clear();rows.forEach(apply)}
 function queue(row){if(row?.matches?.('.sky-foundation-relationship-row'))dirtyRows.add(row);if(queued)return;queued=true;queueMicrotask(flush)}
-function queueFromRecord(record){const targetRow=record.target?.closest?.('.sky-foundation-relationship-row');if(targetRow)queue(targetRow);if(record.type==='childList')record.addedNodes.forEach(node=>{if(node.nodeType!==1)return;if(node.matches?.('.sky-foundation-relationship-row'))queue(node);node.querySelectorAll?.('.sky-foundation-relationship-row').forEach(queue)})}
+function expansionChanged(record){
+  if(record.type!=='attributes'||record.attributeName!=='class')return false;
+  const row=record.target?.closest?.('.sky-foundation-relationship-row');if(!row)return false;
+  const was=String(record.oldValue||'').split(/\s+/).includes('is-inline-expanded');
+  const now=row.classList.contains('is-inline-expanded');
+  return was!==now;
+}
+function queueFromRecord(record){
+  if(record.type==='attributes'){
+    if(expansionChanged(record))queue(record.target.closest('.sky-foundation-relationship-row'));
+    return;
+  }
+  const targetRow=record.target?.closest?.('.sky-foundation-relationship-row');if(targetRow)queue(targetRow);
+  record.addedNodes.forEach(node=>{if(node.nodeType!==1)return;if(node.matches?.('.sky-foundation-relationship-row'))queue(node);node.querySelectorAll?.('.sky-foundation-relationship-row').forEach(queue)})
+}
 function ensureObserver(){
   const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;
-  observer?.disconnect();observedList=list;observer=new MutationObserver(records=>records.forEach(queueFromRecord));observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});list.querySelectorAll('.sky-foundation-relationship-row').forEach(queue);
+  observer?.disconnect();observedList=list;observer=new MutationObserver(records=>records.forEach(queueFromRecord));observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class'],attributeOldValue:true});list.querySelectorAll('.sky-foundation-relationship-row').forEach(queue);
 }
-function start(){installStyle();ensureObserver();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed'].forEach(name=>window.addEventListener(name,ensureObserver));}
+function start(){installStyle();ensureObserver();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,ensureObserver));}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
