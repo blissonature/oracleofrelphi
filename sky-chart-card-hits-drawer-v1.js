@@ -50,6 +50,7 @@ document.addEventListener('click',event=>{const cardButton=event.target.closest(
 window.addEventListener('relphi:sky-drawer-opened',event=>{const{slot,drawer}=event.detail||{};if(drawer==='card-hits'&&KEYS[slot]){selectedCard[slot]='';render(slot)}});
 window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key))refreshOpen()});
 window.addEventListener('relphi:sky-foundation-ready',refreshOpen);
+window.RelphiSkyCardHitsDrawer=Object.freeze({getHits:buildTally,thumbnailFor,displayName});
 function start(){installStyles();refreshOpen()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
