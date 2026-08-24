@@ -133,7 +133,7 @@
     const slot=event.key===SLOT_KEYS.A?'A':event.key===SLOT_KEYS.B?'B':null;if(!slot||!pending[slot])return;
     const request=pending[slot];pending[slot]=null;
     const value=payload(slot),source=String(value?.calcProfile?.source||'');
-    if(source!=='where-when-v1')return;
+    if(!['where-when-v1','where-when-v2'].includes(source))return;
     saveCalculatedSky(slot,request);
   });
 
