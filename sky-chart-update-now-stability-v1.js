@@ -72,6 +72,7 @@
     if(!window.RelphiHouseSystems||!window.Astronomy)throw new Error('The Sky calculation engine is unavailable.');
     const existing=read(slot)||{};
     const instant=now.toUTC().toJSDate();
+    const liveNowAt=now.toUTC().toISO();
     const placements={};
     BODIES.forEach(name=>{placements[name]=placementObject(name,astronomyLongitude(name,instant))});
     const asc=ascendantLongitude(instant,packet.latitude,packet.longitude);
@@ -89,11 +90,17 @@
     const name='Now';
     const metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{};
     delete metadata.savedSkyId;delete metadata.savedSkyName;delete metadata.savedSkyLoadedAt;
+    delete metadata.liveNowDisabled;delete metadata.liveNowDisabledReason;
     metadata.name=name;metadata.title=name;
+    metadata.liveNowOrigin='update-to-now';
+    metadata.liveNowAt=liveNowAt;
+    metadata.liveNowLatitude=String(packet.latitude);
+    metadata.liveNowLongitude=String(packet.longitude);
 
     return{
       ...existing,
       name,title:name,displayName:name,skyName:name,
+      saved:false,
       placements,
       houseCusps:houses.cusps,
       metadata,
@@ -101,14 +108,16 @@
         ...priorProfile,
         name,title:name,
         dateTime:now.toFormat("yyyy-MM-dd'T'HH:mm"),
-        instant:now.toUTC().toISO(),
+        instant:liveNowAt,
         latitude:String(packet.latitude),longitude:String(packet.longitude),
         location:packet.canonical,locationQuery:packet.query,
         timeZone:packet.timezone,
         houseSystem:houses.system||requestedSystem,
         houseCusps:houses.cusps,cusps:houses.cusps,
         houseSystemNote:houses.note,
-        source:'where-when-v1'
+        source:'where-when-v1',
+        liveNowOrigin:'update-to-now',
+        liveNowAt
       },
       savedAt:new Date().toISOString()
     };
@@ -145,6 +154,7 @@
       setConfirmedView(slot);
       localStorage.setItem(KEYS[slot],JSON.stringify(next));
       dispatch(slot);
+      window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'update-to-now',at:next.metadata.liveNowAt}}));
       window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'update-to-now-stable'}}));
     }catch(error){console.error(error);announceError(slot,error)}
     finally{
