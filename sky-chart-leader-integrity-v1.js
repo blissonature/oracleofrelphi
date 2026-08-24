@@ -9,6 +9,7 @@
 
   let queued=false;
   let observer=null;
+  let hoverFilterActive=false;
 
   function installStyle(){
     if(document.getElementById('skyLeaderIntegrityV2Style'))return;
@@ -163,6 +164,13 @@
 
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
 
+  function isHoverFilterEvent(event){
+    const state=event.detail?.state||null;
+    const hover=state?.mode==='hover'||(!state&&hoverFilterActive);
+    hoverFilterActive=state?.mode==='hover';
+    return hover;
+  }
+
   function foundationReady(){
     // Capture synchronously. The interaction controller responds to the same event by
     // scheduling a later animation-frame annotation pass, so this preserves the exact
@@ -174,9 +182,12 @@
   function start(){
     installStyle();
     window.addEventListener('relphi:sky-foundation-ready',foundationReady);
-    ['relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed','relphi:sky-placement-multiselect-changed',
+    ['relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed',
      'relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed',
      'relphi:sky-harmonic-window-visibility-changed','relphi:sky-filter-wheel-focus-changed'].forEach(name=>window.addEventListener(name,schedule));
+    window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
+      if(!isHoverFilterEvent(event))schedule();
+    });
 
     const mount=document.getElementById('skyFoundationWheelMount');
     if(mount){
@@ -184,13 +195,14 @@
         const relevant=records.some(record=>{
           if(record.type==='childList')return true;
           const target=record.target;
-          // Never react to our own leader-class repairs; only endpoint/wheel state changes.
           if(target?.closest?.('[data-layer="leaders"]'))return false;
           return target?.matches?.('.sky-foundation-wheel,[data-layer="placements"] > g[data-sky][data-placement]');
         });
         if(relevant)schedule();
       });
-      observer.observe(mount,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-hidden']});
+      // Structural hide/show changes still repair leader visibility. Hover classes are
+      // intentionally excluded because the fast hover path already owns their presentation.
+      observer.observe(mount,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','aria-hidden']});
     }
     captureAuthoredIdentity(document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel'));
     schedule();
