@@ -24,6 +24,7 @@
   let portalOwner = null;
   let queued = false;
   let countTimer = 0;
+  let hoverFilterActive = false;
 
   function filterBar() {
     return document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
@@ -305,6 +306,13 @@
     requestAnimationFrame(refresh);
   }
 
+  function filterChanged(event) {
+    const state = event.detail?.state || null;
+    const hover = state?.mode === 'hover' || (!state && hoverFilterActive);
+    hoverFilterActive = state?.mode === 'hover';
+    if (!hover) schedule();
+  }
+
   function closeOutside(event) {
     const owner = portalOwner;
     const menu = popover();
@@ -323,11 +331,11 @@
     [
       'relphi:sky-foundation-ready',
       'relphi:sky-foundation-interactions-ready',
-      'relphi:sky-foundation-filter-changed',
       'relphi:sky-placement-multiselect-changed',
       'relphi:sky-house-multiselect-changed',
       'relphi:sky-single-sky-aspects-rendered'
     ].forEach(name => window.addEventListener(name, schedule));
+    window.addEventListener('relphi:sky-foundation-filter-changed', filterChanged);
 
     document.addEventListener('change', handleChange);
     document.addEventListener('pointerdown', closeOutside, true);
