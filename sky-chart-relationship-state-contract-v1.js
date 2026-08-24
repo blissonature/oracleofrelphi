@@ -14,6 +14,11 @@
     'sky-chart-house-multiselect-hidden',
     'sky-chart-aspect-multiselect-hidden'
   ]);
+  const VISIBILITY_CLASSES = Object.freeze([
+    ...HIDDEN_CLASSES,
+    'sky-chart-sign-filter-hidden',
+    'sky-chart-semantic-hidden'
+  ]);
 
   let explicitSelectionStarted = false;
   let queued = false;
@@ -114,6 +119,21 @@
     document.documentElement.dataset.skyRelationshipSelectionPolicy = 'explicit';
   }
 
+  function classVisibilityChanged(record) {
+    if (record.attributeName !== 'class') return false;
+    const row = record.target?.closest?.('.sky-foundation-relationship-row[data-relation-index]');
+    if (!row) return false;
+    const before = new Set(String(record.oldValue || '').split(/\s+/).filter(Boolean));
+    return VISIBILITY_CLASSES.some(className => before.has(className) !== row.classList.contains(className));
+  }
+
+  function relationshipMutationMatters(record) {
+    if (record.type === 'childList') return record.addedNodes.length > 0 || record.removedNodes.length > 0;
+    if (!record.target?.matches?.('.sky-foundation-relationship-row[data-relation-index]')) return false;
+    if (record.attributeName === 'class') return classVisibilityChanged(record);
+    return ['hidden','style','aria-current'].includes(record.attributeName);
+  }
+
   function bindObservers() {
     const relationships = document.getElementById('skyFoundationRelationships');
     if (relationships !== observedRelationships) {
@@ -122,13 +142,14 @@
       if (relationships) {
         relationshipObserver = new MutationObserver(records => {
           if (applying) return;
-          if (records.some(record => record.type === 'childList' || record.target?.matches?.('.sky-foundation-relationship-row[data-relation-index]'))) schedule();
+          if (records.some(relationshipMutationMatters)) schedule();
         });
         relationshipObserver.observe(relationships, {
           childList: true,
           subtree: true,
           attributes: true,
-          attributeFilter: ['class', 'hidden', 'style', 'aria-current']
+          attributeFilter: ['class', 'hidden', 'style', 'aria-current'],
+          attributeOldValue: true
         });
       }
     }
