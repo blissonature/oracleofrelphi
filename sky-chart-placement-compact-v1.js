@@ -6,6 +6,8 @@
   window.__relphiSkyPlacementCompactV1 = true;
 
   let queued = false;
+  let observer = null;
+  let observedMenu = null;
 
   function makeHeader() {
     const header = document.createElement('div');
@@ -37,17 +39,17 @@
       list.prepend(makeHeader());
     }
 
-    list.dataset.compactPlacementList = 'true';
+    if (list.dataset.compactPlacementList !== 'true') list.dataset.compactPlacementList = 'true';
     list.querySelectorAll('.sky-chart-placement-list-item .sky-chart-placement-choice span').forEach(span => {
-      span.hidden = true;
-      span.setAttribute('aria-hidden', 'true');
+      if (!span.hidden) span.hidden = true;
+      if (span.getAttribute('aria-hidden') !== 'true') span.setAttribute('aria-hidden', 'true');
     });
   }
 
   function positionMenu() {
     const menu = document.getElementById('skyChartPlacementPopover');
     const head = document.querySelector('[data-placement-filter="combined"] .sky-chart-placement-filter-head');
-    if (!menu?.classList.contains('is-portaled') || !head) return;
+    if (!menu?.classList.contains('is-portaled') || menu.hidden || !head) return;
 
     const margin = window.innerWidth <= 410 ? 8 : 10;
     const maximum = window.innerWidth <= 410 ? 330 : 350;
@@ -57,13 +59,35 @@
       window.innerWidth - width - margin,
       Math.max(margin, rect.left + rect.width / 2 - width / 2)
     );
+    const widthValue = `${width}px`;
+    const leftValue = `${left}px`;
 
-    menu.style.setProperty('width', `${width}px`, 'important');
-    menu.style.setProperty('left', `${left}px`, 'important');
+    if (menu.style.getPropertyValue('width') !== widthValue || menu.style.getPropertyPriority('width') !== 'important') {
+      menu.style.setProperty('width', widthValue, 'important');
+    }
+    if (menu.style.getPropertyValue('left') !== leftValue || menu.style.getPropertyPriority('left') !== 'important') {
+      menu.style.setProperty('left', leftValue, 'important');
+    }
+  }
+
+  function bindMenuObserver() {
+    const menu = document.getElementById('skyChartPlacementPopover');
+    if (menu === observedMenu) return;
+    observer?.disconnect();
+    observedMenu = menu;
+    if (!menu) return;
+    observer = new MutationObserver(schedule);
+    observer.observe(menu, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'hidden']
+    });
   }
 
   function run() {
     queued = false;
+    bindMenuObserver();
     compactList();
     positionMenu();
   }
@@ -74,11 +98,18 @@
     requestAnimationFrame(run);
   }
 
-  const observer = new MutationObserver(schedule);
+  function scheduleIfOpen() {
+    const menu = document.getElementById('skyChartPlacementPopover');
+    if (menu?.classList.contains('is-portaled') && !menu.hidden) schedule();
+  }
+
   function start() {
-    observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
-    window.addEventListener('resize', schedule);
-    window.addEventListener('scroll', schedule, true);
+    bindMenuObserver();
+    window.addEventListener('resize', scheduleIfOpen);
+    window.addEventListener('scroll', scheduleIfOpen, true);
+    document.addEventListener('click', event => {
+      if (event.target.closest?.('[data-placement-filter-toggle]')) schedule();
+    }, true);
     ['relphi:sky-placement-multiselect-changed', 'relphi:sky-foundation-ready'].forEach(name => window.addEventListener(name, schedule));
     schedule();
   }
