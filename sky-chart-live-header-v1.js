@@ -5,9 +5,10 @@ if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyLiveHead
 window.__relphiSkyLiveHeaderV1=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+const SLOT_BY_KEY=new Map(Object.entries(KEYS).map(([slot,key])=>[key,slot]));
 const STEP_MS=5*60*1000;
 const LIVE_ORIGINS=new Set(['here-and-now','update-to-now']);
-const STYLE_ID='skyLiveHeaderV5Styles';
+const STYLE_ID='skyLiveHeaderV6Styles';
 let queued=false,timer=0;
 
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
@@ -211,29 +212,40 @@ function plan(){clearTimeout(timer);const delay=nextDelay();if(delay)timer=setTi
 function render(){queued=false;installStyles();renderSlot('A');renderSlot('B');plan()}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 
-function setDisabled(slot,disabled,reason){
-  const value=read(slot);if(!value||typeof value!=='object')return;
+function clearManualLiveIdentity(slot){
+  const value=read(slot);if(!value||typeof value!=='object')return false;
+  const p={...profile(value)};
+  if(String(p.source||'')!=='where-when-v2')return false;
   const m={...metadata(value)};
-  if(disabled){m.liveNowDisabled=true;m.liveNowDisabledReason=reason||'custom'}
-  else{delete m.liveNowDisabled;delete m.liveNowDisabledReason}
-  value.metadata=m;if(write(slot,value))schedule();
+  const hadLive=!!(m.liveNowOrigin||m.liveNowAt||p.liveNowOrigin||p.liveNowAt||m.liveNowDisabled!==true);
+  if(!hadLive)return false;
+  delete m.liveNowOrigin;delete m.liveNowAt;delete m.liveNowLatitude;delete m.liveNowLongitude;delete m.liveNowMigrated;
+  m.liveNowDisabled=true;m.liveNowDisabledReason='custom-where-when';
+  delete p.liveNowOrigin;delete p.liveNowAt;
+  value.metadata=m;value.calcProfile=p;
+  if(!write(slot,value))return false;
+  window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'',reason:'custom-where-when'}}));
+  return true;
 }
-function watchChange(slot,before,callback,timeout=10000){
-  const started=Date.now();(function check(){const current=localStorage.getItem(KEYS[slot])||'';if(current!==before){callback();return}if(Date.now()-started<timeout)setTimeout(check,90)})();
+function onStorage(event){
+  const slot=SLOT_BY_KEY.get(event?.key);
+  if(slot)clearManualLiveIdentity(slot);
+  schedule();
 }
-function slotFor(node){return node?.closest?.('#skyFoundationA')?'A':node?.closest?.('#skyFoundationB')?'B':''}
 
-document.addEventListener('submit',event=>{
-  const form=event.target?.closest?.('.sky-where-when-editor');if(!form)return;
-  const slot=form.dataset.slot||slotFor(form);if(!KEYS[slot])return;
-  const before=localStorage.getItem(KEYS[slot])||'';watchChange(slot,before,()=>setDisabled(slot,true,'custom-where-when'));
-},true);
 window.addEventListener('relphi:sky-name-updated',event=>{
   const detail=event.detail||{},source=String(detail.source||'');
-  if(detail.slot&&/^update-to-now(?:-stable)?$/.test(source))setDisabled(detail.slot,false);else schedule();
+  if(detail.slot&&/^update-to-now(?:-stable)?$/.test(source)){
+    const value=read(detail.slot);if(value&&typeof value==='object'){
+      const m={...metadata(value)};delete m.liveNowDisabled;delete m.liveNowDisabledReason;value.metadata=m;write(detail.slot,value);
+    }
+  }
+  schedule();
 });
-['storage','relphi:sky-foundation-ready','relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed'].forEach(name=>window.addEventListener(name,schedule));
+window.addEventListener('storage',onStorage);
+['relphi:sky-foundation-ready','relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed'].forEach(name=>window.addEventListener(name,schedule));
 
 window.RelphiSkyLiveHeader=Object.freeze({isLive,legacyLive,ageLabel,liveMs});
-installStyles();schedule();
+function start(){installStyles();schedule()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
