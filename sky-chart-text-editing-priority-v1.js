@@ -14,14 +14,19 @@
     '[data-saved-name-input]:not([disabled])'
   ].join(',');
   const NAME_SELECTOR='[data-ww-sky-name],[data-save-sky-name-input],[data-saved-name-input]';
-  const LOCATION_QUERY_SELECTOR='.sky-where-when-editor [data-ww-field="location-query"]';
+  const PASSIVE_TEXT_SELECTOR=[
+    '.sky-where-when-editor [data-ww-field="location-query"]',
+    '.sky-where-when-editor [data-ww-sky-name]',
+    '[data-save-sky-name-input]',
+    '[data-saved-name-input]'
+  ].join(',');
   const root=document.documentElement;
   const deferred=new Set();
   let active=null;
   let releaseTimer=0;
 
   function isEditingField(node){return node instanceof HTMLElement&&node.matches(EDITOR_SELECTOR)}
-  function isLocationQuery(node){return node instanceof HTMLElement&&node.matches(LOCATION_QUERY_SELECTOR)}
+  function isPassiveText(node){return node instanceof HTMLElement&&node.matches(PASSIVE_TEXT_SELECTOR)}
   function editing(){return !!active&&active.isConnected&&document.activeElement===active}
 
   function begin(control){
@@ -63,16 +68,16 @@
     releaseTimer=window.setTimeout(finish,0);
   },true);
 
-  // The location query is passive until Search (or Enter). Keep ordinary typing native and
-  // stop each key/input event before it fans out through the chart's document-level controllers.
-  // No default action is prevented, so text entry, deletion, selection, paste, and Tab remain
-  // browser-native. Enter is deliberately allowed through to the location-search controller.
+  // Location/name fields are passive while text is being composed. Search/save/submit work
+  // happens on explicit actions, so ordinary keystrokes and input events must not fan out
+  // through unrelated document-level Sky Chart controllers. Default browser editing remains
+  // untouched. Enter is allowed through for established search/submit behavior.
   window.addEventListener('keydown',event=>{
-    if(!isLocationQuery(event.target)||event.key==='Enter')return;
+    if(!isPassiveText(event.target)||event.key==='Enter')return;
     event.stopPropagation();
   },true);
   window.addEventListener('input',event=>{
-    if(!isLocationQuery(event.target))return;
+    if(!isPassiveText(event.target))return;
     event.stopPropagation();
   },true);
 
