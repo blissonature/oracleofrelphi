@@ -133,7 +133,18 @@
     // scroll-sensitive number input.
     activeWindow=model()?.defaultWindow??6;
     ensureInstalled();observeFilterBay();
-    window.addEventListener('relphi:sky-foundation-filter-changed',event=>{wheelState=event.detail?.state||null;wheelIndexes=wheelState?.mode==='selected'?new Set((event.detail.relationshipIndexes||[]).map(String)):null;schedule()});
+    window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
+      const nextState=event.detail?.state||null;
+      const hover=nextState?.mode==='hover'||(!nextState&&wheelState?.mode==='hover');
+      if(hover){
+        wheelState=nextState;
+        wheelIndexes=null;
+        return;
+      }
+      wheelState=nextState;
+      wheelIndexes=wheelState?.mode==='selected'?new Set((event.detail.relationshipIndexes||[]).map(String)):null;
+      schedule();
+    });
     ['relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:selected-relationship-rendered','relphi:sky-foundation-ready'].forEach(name=>window.addEventListener(name,ensureInstalled));
     document.getElementById('skyFoundationRelationships')?.addEventListener('change',schedule);
   }
