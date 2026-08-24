@@ -5,6 +5,7 @@ if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyLiveOrig
 window.__relphiSkyLiveOriginMigrationV1=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+const SLOT_BY_KEY=new Map(Object.entries(KEYS).map(([slot,key])=>[key,slot]));
 const LIVE_ORIGINS=new Set(['here-and-now','update-to-now']);
 
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
@@ -43,7 +44,7 @@ function isNamedNow(value){
 function legacyOrigin(value){
   if(!value||typeof value!=='object'||hasSavedIdentity(value)||!isNamedNow(value))return'';
   const metadata=value.metadata&&typeof value.metadata==='object'?value.metadata:{};
-  if(LIVE_ORIGINS.has(String(metadata.liveNowOrigin||'')))return'';
+  if(metadata.liveNowDisabled===true||LIVE_ORIGINS.has(String(metadata.liveNowOrigin||'')))return'';
   const data=profile(value);
   const timestamp=instantMs(value);
   if(!Number.isFinite(timestamp))return'';
@@ -74,14 +75,21 @@ function migrate(slot){
   metadata.liveNowLatitude=String(data.latitude??'');
   metadata.liveNowLongitude=String(data.longitude??'');
   metadata.liveNowMigrated='legacy-v2';
+  delete metadata.liveNowDisabled;delete metadata.liveNowDisabledReason;
   value.metadata=metadata;
+  value.calcProfile={...data,liveNowOrigin:origin,liveNowAt:metadata.liveNowAt};
   if(!write(slot,value))return false;
   window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin,migrated:true}}));
   return true;
 }
 
 function run(){migrate('A');migrate('B')}
-window.RelphiSkyLiveOriginMigration={legacyOrigin,migrate,run};
+function migrateStorageEvent(event){
+  const slot=SLOT_BY_KEY.get(event?.key);
+  if(slot)migrate(slot);
+}
+window.RelphiSkyLiveOriginMigration=Object.freeze({legacyOrigin,migrate,run});
 run();
+window.addEventListener('storage',migrateStorageEvent);
 window.addEventListener('relphi:sky-foundation-ready',run);
 })();
