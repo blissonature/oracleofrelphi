@@ -19,6 +19,7 @@ let queued=false;
 let observer=null;
 let observedList=null;
 let syncingFilter=false;
+let hoverFilterActive=false;
 const autoSelected=new Set();
 const explicitNodeFilters=new Set();
 
@@ -227,6 +228,9 @@ document.addEventListener('change',event=>{
 });
 window.addEventListener('relphi:sky-foundation-filter-changed',event=>{
   const state=event.detail?.state||null;
+  const hover=state?.mode==='hover'||(!state&&hoverFilterActive);
+  hoverFilterActive=state?.mode==='hover';
+  if(hover)return;
   if(state?.mode==='selected'){
     wheelSelectionState=state;
     wheelSelectionIndexes=new Set((event.detail?.relationshipIndexes||[]).map(String));
