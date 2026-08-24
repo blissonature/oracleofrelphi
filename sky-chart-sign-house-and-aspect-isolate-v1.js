@@ -72,7 +72,9 @@
 
   function applySignHouseCorrection(event) {
     const state = event.detail?.state;
-    if (!state || state.kind !== 'sign') return;
+    // The fast hover path already computes sign-to-house overlap from cached cusps.
+    // Re-reading both saved skies and recomputing cusps here would duplicate that work.
+    if (!state || state.mode === 'hover' || state.kind !== 'sign') return;
     const sign = Number(state.value);
     if (!Number.isInteger(sign) || sign < 0 || sign > 11) return;
     const bySky = {
