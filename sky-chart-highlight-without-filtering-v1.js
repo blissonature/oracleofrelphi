@@ -13,6 +13,7 @@
   let wheelRelatedRows = new Set();
   let hoveredRow = null;
   let hoveredLines = new Set();
+  let hoverFilterActive = false;
 
   function relationshipIdentity(node) {
     if (!node) return '';
@@ -140,12 +141,23 @@
     root.dataset.highlightWithoutFilteringBound = 'true';
 
     window.addEventListener('relphi:sky-foundation-filter-changed', event => {
-      const mode = event.detail?.state?.mode;
+      const state = event.detail?.state || null;
+      const mode = state?.mode || '';
+      const hover = mode === 'hover' || (!state && hoverFilterActive);
+      hoverFilterActive = mode === 'hover';
+
       if (mode === 'selected') {
         setWheelRelated([]);
+        queueVisibilityRestore();
         return;
       }
-      setWheelRelated(mode === 'hover' ? event.detail.relationshipIndexes || [] : []);
+
+      if (hover) {
+        setWheelRelated(mode === 'hover' ? event.detail.relationshipIndexes || [] : []);
+        return;
+      }
+
+      setWheelRelated([]);
       queueVisibilityRestore();
     });
 
