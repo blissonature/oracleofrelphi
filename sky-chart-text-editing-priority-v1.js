@@ -14,12 +14,14 @@
     '[data-saved-name-input]:not([disabled])'
   ].join(',');
   const NAME_SELECTOR='[data-ww-sky-name],[data-save-sky-name-input],[data-saved-name-input]';
+  const LOCATION_QUERY_SELECTOR='.sky-where-when-editor [data-ww-field="location-query"]';
   const root=document.documentElement;
   const deferred=new Set();
   let active=null;
   let releaseTimer=0;
 
   function isEditingField(node){return node instanceof HTMLElement&&node.matches(EDITOR_SELECTOR)}
+  function isLocationQuery(node){return node instanceof HTMLElement&&node.matches(LOCATION_QUERY_SELECTOR)}
   function editing(){return !!active&&active.isConnected&&document.activeElement===active}
 
   function begin(control){
@@ -61,9 +63,22 @@
     releaseTimer=window.setTimeout(finish,0);
   },true);
 
+  // The location query is passive until Search (or Enter). Keep ordinary typing native and
+  // stop each key/input event before it fans out through the chart's document-level controllers.
+  // No default action is prevented, so text entry, deletion, selection, paste, and Tab remain
+  // browser-native. Enter is deliberately allowed through to the location-search controller.
+  window.addEventListener('keydown',event=>{
+    if(!isLocationQuery(event.target)||event.key==='Enter')return;
+    event.stopPropagation();
+  },true);
+  window.addEventListener('input',event=>{
+    if(!isLocationQuery(event.target))return;
+    event.stopPropagation();
+  },true);
+
   // These application-level events can fan out into wheel/list recomposition. Suppress only
-  // while a native editor owns focus; do not prevent input, change, pointer, selection, or
-  // keyboard events belonging to the control itself.
+  // while a native editor owns focus; do not prevent change, pointer, selection, or the native
+  // editing behavior of the control itself.
   const expensive=['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed','relphi:sky-orb-limit-changed'];
   expensive.forEach(name=>window.addEventListener(name,event=>{
     if(!editing())return;
