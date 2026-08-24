@@ -6,11 +6,14 @@
   if (window.__relphiSkyFilterNeutralFinalV1) return;
   window.__relphiSkyFilterNeutralFinalV1 = true;
 
-  let queued = false;
+  let menuQueued = false;
   let fitting = false;
   let placementSyncTimer = 0;
   let relationshipVisibilityQueued = false;
   let synchronizingRelationshipVisibility = false;
+  let relationshipObserver = null;
+  let observedRelationships = null;
+  let hoverFilterActive = false;
 
   const FILTER_HIDDEN_CLASSES = Object.freeze([
     'sky-foundation-single-sky-cross-hidden',
@@ -23,7 +26,7 @@
   ]);
 
   function fitPlacementMenu() {
-    queued = false;
+    menuQueued = false;
     if (fitting) return;
     const menu = document.getElementById('skyChartPlacementPopover');
     const head = document.querySelector('[data-placement-filter="combined"] .sky-chart-placement-filter-head');
@@ -55,6 +58,12 @@
     menu.style.setProperty('max-width', maximumValue, 'important');
     menu.style.setProperty('left', leftValue, 'important');
     fitting = false;
+  }
+
+  function scheduleMenu() {
+    if (menuQueued) return;
+    menuQueued = true;
+    requestAnimationFrame(fitPlacementMenu);
   }
 
   function selectedPlacements(slot) {
@@ -105,7 +114,7 @@
       if (line.hidden === visible) line.hidden = !visible;
       if (line.style.display !== nextDisplay) line.style.display = nextDisplay;
       line.classList.toggle('sky-chart-relationship-filter-hidden', !visible);
-      line.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      if (line.getAttribute('aria-hidden') !== (visible ? 'false' : 'true')) line.setAttribute('aria-hidden', visible ? 'false' : 'true');
       if (visible) visibleLines += 1;
     });
 
@@ -119,53 +128,59 @@
     requestAnimationFrame(synchronizeRelationshipVisibility);
   }
 
-  function schedule() {
-    if (!queued) {
-      queued = true;
-      requestAnimationFrame(fitPlacementMenu);
-    }
+  function observeRelationships() {
+    const root = document.getElementById('skyFoundationRelationships');
+    if (root === observedRelationships) return;
+    relationshipObserver?.disconnect();
+    observedRelationships = root;
+    if (!root) return;
+    relationshipObserver = new MutationObserver(records => {
+      if (synchronizingRelationshipVisibility) return;
+      if (records.some(record => {
+        if (record.type === 'childList') return record.addedNodes.length || record.removedNodes.length;
+        return record.target?.matches?.('.sky-foundation-relationship-row[data-relation-index]');
+      })) scheduleRelationshipVisibility();
+    });
+    relationshipObserver.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'hidden', 'style']
+    });
+  }
+
+  function scheduleStructural() {
+    observeRelationships();
+    scheduleMenu();
     scheduleRelationshipVisibility();
   }
 
+  function isHoverFilterEvent(event) {
+    const state = event.detail?.state || null;
+    const hover = state?.mode === 'hover' || (!state && hoverFilterActive);
+    hoverFilterActive = state?.mode === 'hover';
+    return hover;
+  }
+
   function start() {
+    observeRelationships();
     document.addEventListener('click', event => {
       if (!event.target.closest?.('[data-placement-filter-toggle]')) return;
       fitPlacementMenu();
-      schedule();
+      scheduleMenu();
     });
     document.addEventListener('change', event => {
       if (event.target.closest?.('[data-placement-choice]')) schedulePlacementStateSync();
       if (event.target.closest?.('.sky-chart-filter-bar')) scheduleRelationshipVisibility();
     });
 
-    const observer = new MutationObserver(records => {
-      fitPlacementMenu();
-      if (synchronizingRelationshipVisibility) return;
-      const affectsRelationships = records.some(record => {
-        const target = record.target?.nodeType === 1 ? record.target : record.target?.parentElement;
-        return !!target?.closest?.('#skyFoundationRelationships,[data-layer="aspects"]');
-      });
-      if (affectsRelationships) scheduleRelationshipVisibility();
+    window.addEventListener('resize', scheduleStructural);
+    window.addEventListener('scroll', scheduleMenu, true);
+    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-single-sky-aspects-rendered'].forEach(name => window.addEventListener(name, scheduleStructural));
+    window.addEventListener('relphi:sky-foundation-filter-changed', event => {
+      if (!isHoverFilterEvent(event)) scheduleStructural();
     });
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'hidden', 'style']
-    });
-
-    window.addEventListener('resize', schedule);
-    window.addEventListener('scroll', schedule, true);
-    [
-      'relphi:sky-foundation-ready',
-      'relphi:sky-foundation-interactions-ready',
-      'relphi:sky-foundation-filter-changed',
-      'relphi:sky-placement-multiselect-changed',
-      'relphi:sky-house-multiselect-changed',
-      'relphi:sky-aspect-multiselect-changed',
-      'relphi:sky-single-sky-aspects-rendered'
-    ].forEach(name => window.addEventListener(name, schedule));
-    schedule();
+    scheduleStructural();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
