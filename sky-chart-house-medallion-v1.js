@@ -12,6 +12,7 @@ const STYLE_ID='skyHouseMedallionV4Styles';
 const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 let observer=null,observedList=null,raf=0;
+let hoverFilterActive=false;
 const pendingRows=new Set();
 const coordinateObservers=new WeakMap();
 
@@ -163,10 +164,18 @@ function ensureObserver(){
 }
 function refreshAfterHarmonicWindow(){requestAnimationFrame(()=>{ensureObserver();queueAllCompactRows()})}
 function sync(){installStyles();ensureObserver()}
+function filterSync(event){
+  const state=event.detail?.state||null;
+  const hover=state?.mode==='hover'||(!state&&hoverFilterActive);
+  hoverFilterActive=state?.mode==='hover';
+  if(hover)return;
+  sync();
+}
 
 installStyles();
 window.RelphiHouseMedallion=Object.freeze({colors:Object.freeze(HOUSE_COLORS.slice()),names:Object.freeze(HOUSE_NAMES.slice()),create:medallion,decorateCoordinate,refreshCompact:queueAllCompactRows});
-['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-foundation-filter-changed'].forEach(name=>window.addEventListener(name,sync));
+['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,sync));
+window.addEventListener('relphi:sky-foundation-filter-changed',filterSync);
 window.addEventListener('relphi:sky-harmonic-window-visibility-changed',refreshAfterHarmonicWindow);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();
 })();
