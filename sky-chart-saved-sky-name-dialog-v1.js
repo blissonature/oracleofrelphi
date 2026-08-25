@@ -28,7 +28,7 @@
   function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalize(record?.name)}`)}
   function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
   function candidateName(value){
-    for(const candidate of [value?.name,value?.displayName,value?.skyName,value?.title]){
+    for(const candidate of [value?.metadata?.savedSkyName,value?.name,value?.displayName,value?.skyName,value?.title,value?.calcProfile?.name,value?.calcProfile?.title]){
       const name=String(candidate||'').trim();
       if(!GENERIC_NAMES.has(normalize(name)))return name;
     }
@@ -45,10 +45,14 @@
     const next=clone(value||{});
     next.name=name;next.title=name;next.displayName=name;next.skyName=name;
     next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};
-    next.metadata.savedSkyId=id;next.metadata.savedSkyName=name;next.metadata.savedSkyLoadedAt=new Date().toISOString();
+    next.metadata.savedSkyId=id;next.metadata.savedSkyName=name;next.metadata.savedSkyLoadedAt=new Date().toISOString();next.metadata.name=name;next.metadata.title=name;
     next.calcProfile=next.calcProfile&&typeof next.calcProfile==='object'?next.calcProfile:{};
     next.calcProfile.name=name;next.calcProfile.title=name;
     return next;
+  }
+  function announceName(slot,name,id){
+    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name,source:'saved-sky'}}));
+    window.dispatchEvent(new CustomEvent('relphi:saved-sky-active-changed',{detail:{slot,name,id}}));
   }
   function saveAs(slot,name){
     const value=payload(slot);
@@ -66,7 +70,7 @@
     if(!writeJson(SLOT_KEYS[slot],active))return{ok:false,message:'The sky was saved, but the active card could not be renamed.'};
     try{window.dispatchEvent(new StorageEvent('storage',{key:SLOT_KEYS[slot],newValue:localStorage.getItem(SLOT_KEYS[slot]),storageArea:localStorage}))}catch(_){}
     window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{name:clean,id,action:'create'}}));
-    window.dispatchEvent(new CustomEvent('relphi:saved-sky-active-changed',{detail:{slot,name:clean,id}}));
+    announceName(slot,clean,id);
     return{ok:true,message:'Sky saved.'};
   }
 
