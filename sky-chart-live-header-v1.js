@@ -1,14 +1,15 @@
-// Live-origin Sky header: age in five-minute increments + Update to Now refresh.
+// Live-origin Sky header: persistent age in five-minute increments + Update to Now refresh.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyLiveHeaderV1)return;
 window.__relphiSkyLiveHeaderV1=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+const AGE_KEYS={A:'relphiSkyLiveAgeAnchorA',B:'relphiSkyLiveAgeAnchorB'};
 const SLOT_BY_KEY=new Map(Object.entries(KEYS).map(([slot,key])=>[key,slot]));
 const STEP_MS=5*60*1000;
 const LIVE_ORIGINS=new Set(['here-and-now','update-to-now']);
-const STYLE_ID='skyLiveHeaderV7Styles';
+const STYLE_ID='skyLiveHeaderV8Styles';
 let queued=false,timer=0;
 
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
@@ -41,7 +42,48 @@ function legacyLive(value){
   return LIVE_ORIGINS.has(origin);
 }
 function isLive(value){return markedLive(value)||legacyLive(value)}
+function liveOrigin(value){
+  const marked=String(metadata(value).liveNowOrigin||'');
+  if(LIVE_ORIGINS.has(marked))return marked;
+  const legacy=window.RelphiSkyLiveOriginMigration?.legacyOrigin?.(value)||'';
+  return LIVE_ORIGINS.has(legacy)?legacy:'';
+}
 function liveMs(value){const marker=markerMs(value);return Number.isFinite(marker)?marker:profileMs(value)}
+function parseAgeRecord(slot){
+  try{
+    const raw=JSON.parse(localStorage.getItem(AGE_KEYS[slot])||'null');
+    const at=Date.parse(raw?.at||'');
+    return Number.isFinite(at)?{at,origin:String(raw?.origin||'')} : null;
+  }catch(_){return null}
+}
+function saveAgeRecord(slot,origin,timestamp){
+  if(!AGE_KEYS[slot]||!LIVE_ORIGINS.has(origin)||!Number.isFinite(timestamp))return false;
+  try{localStorage.setItem(AGE_KEYS[slot],JSON.stringify({origin,at:new Date(timestamp).toISOString()}));return true}catch(_){return false}
+}
+function clearAgeRecord(slot){try{if(AGE_KEYS[slot])localStorage.removeItem(AGE_KEYS[slot])}catch(_){}}
+function payloadAgeMs(value){const parsed=Date.parse(metadata(value).liveAgeAnchorAt||'');return Number.isFinite(parsed)?parsed:NaN}
+function persistAgeAnchor(slot,value,origin,timestamp){
+  if(!value||typeof value!=='object'||!LIVE_ORIGINS.has(origin)||!Number.isFinite(timestamp))return timestamp;
+  const iso=new Date(timestamp).toISOString();
+  const m={...metadata(value)};
+  if(m.liveAgeAnchorAt!==iso){m.liveAgeAnchorAt=iso;value.metadata=m;write(slot,value)}
+  saveAgeRecord(slot,origin,timestamp);
+  return timestamp;
+}
+function ageAnchorMs(slot,value){
+  const origin=liveOrigin(value);if(!origin)return NaN;
+  const payloadAnchor=payloadAgeMs(value);
+  if(Number.isFinite(payloadAnchor)){saveAgeRecord(slot,origin,payloadAnchor);return payloadAnchor}
+  const record=parseAgeRecord(slot);
+  if(record&&record.origin===origin)return record.at;
+
+  // Legacy live skies predate an immutable refresh timestamp. Adopt the surviving
+  // live calculation timestamp once, and never let a page-load recalculation promote
+  // that legacy state to "Now". A real Update-to-Now action replaces this anchor.
+  const surviving=liveMs(value);if(!Number.isFinite(surviving))return NaN;
+  const adopted=Math.min(surviving,Date.now()-STEP_MS);
+  return persistAgeAnchor(slot,value,origin,adopted);
+}
 function ageLabel(timestamp,now=Date.now()){
   const elapsed=Math.max(0,Number(now)-Number(timestamp));
   const minutes=Math.floor(elapsed/STEP_MS)*5;
@@ -100,7 +142,7 @@ function statusButton(slot){
   button.append(age,icon);return button;
 }
 function renderLive(slot,container,value){
-  const label=ageLabel(liveMs(value));container.dataset.liveHeaderOwned='true';
+  const label=ageLabel(ageAnchorMs(slot,value));container.dataset.liveHeaderOwned='true';
   let control=container.querySelector(`:scope > [data-live-header-refresh="${slot}"]`);
   if(!control){control=statusButton(slot);container.replaceChildren(control)}
   const age=control.querySelector('.sky-live-age');if(age&&age.textContent!==label)age.textContent=label;
@@ -113,11 +155,11 @@ function release(slot,container){
 function renderSlot(slot){
   const value=read(slot);
   if(isLive(value)){const container=host(slot,true);if(container)renderLive(slot,container,value);return}
-  release(slot,host(slot,false));
+  clearAgeRecord(slot);release(slot,host(slot,false));
 }
 function nextDelay(){
   const now=Date.now();let soonest=Infinity;
-  for(const slot of ['A','B']){const value=read(slot);if(!isLive(value))continue;const timestamp=liveMs(value);if(!Number.isFinite(timestamp))continue;const elapsed=Math.max(0,now-timestamp),next=(Math.floor(elapsed/STEP_MS)+1)*STEP_MS;soonest=Math.min(soonest,next-elapsed+40)}
+  for(const slot of ['A','B']){const value=read(slot);if(!isLive(value))continue;const timestamp=ageAnchorMs(slot,value);if(!Number.isFinite(timestamp))continue;const elapsed=Math.max(0,now-timestamp),next=(Math.floor(elapsed/STEP_MS)+1)*STEP_MS;soonest=Math.min(soonest,next-elapsed+40)}
   return Number.isFinite(soonest)?Math.max(1000,Math.min(STEP_MS,soonest)):0;
 }
 function plan(){clearTimeout(timer);const delay=nextDelay();if(delay)timer=setTimeout(schedule,delay)}
@@ -126,8 +168,16 @@ function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function clearManualLiveIdentity(slot){
   const value=read(slot);if(!value||typeof value!=='object')return false;const p={...profile(value)};if(String(p.source||'')!=='where-when-v2')return false;const m={...metadata(value)};
   const hadLive=!!(m.liveNowOrigin||m.liveNowAt||p.liveNowOrigin||p.liveNowAt||m.liveNowDisabled!==true);if(!hadLive)return false;
-  delete m.liveNowOrigin;delete m.liveNowAt;delete m.liveNowLatitude;delete m.liveNowLongitude;delete m.liveNowMigrated;m.liveNowDisabled=true;m.liveNowDisabledReason='custom-where-when';delete p.liveNowOrigin;delete p.liveNowAt;value.metadata=m;value.calcProfile=p;
+  delete m.liveNowOrigin;delete m.liveNowAt;delete m.liveAgeAnchorAt;delete m.liveNowLatitude;delete m.liveNowLongitude;delete m.liveNowMigrated;m.liveNowDisabled=true;m.liveNowDisabledReason='custom-where-when';delete p.liveNowOrigin;delete p.liveNowAt;value.metadata=m;value.calcProfile=p;
+  clearAgeRecord(slot);
   if(!write(slot,value))return false;window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'',reason:'custom-where-when'}}));return true;
+}
+function stampAgeFromLiveEvent(event){
+  const detail=event?.detail||{},slot=detail.slot,origin=String(detail.origin||''),at=Date.parse(detail.at||'');
+  if(KEYS[slot]&&LIVE_ORIGINS.has(origin)&&Number.isFinite(at)){
+    const value=read(slot);if(value&&typeof value==='object')persistAgeAnchor(slot,value,origin,at);else saveAgeRecord(slot,origin,at);
+  }
+  schedule();
 }
 function onStorage(event){const slot=SLOT_BY_KEY.get(event?.key);if(slot)clearManualLiveIdentity(slot);schedule()}
 window.addEventListener('relphi:sky-name-updated',event=>{
@@ -135,9 +185,10 @@ window.addEventListener('relphi:sky-name-updated',event=>{
   if(detail.slot&&/^update-to-now(?:-stable)?$/.test(source)){const value=read(detail.slot);if(value&&typeof value==='object'){const m={...metadata(value)};delete m.liveNowDisabled;delete m.liveNowDisabledReason;value.metadata=m;write(detail.slot,value)}}
   schedule();
 });
+window.addEventListener('relphi:sky-live-origin-changed',stampAgeFromLiveEvent);
 window.addEventListener('storage',onStorage);
-['relphi:sky-foundation-ready','relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed','relphi:sky-name-updated'].forEach(name=>window.addEventListener(name,schedule));
-window.RelphiSkyLiveHeader=Object.freeze({isLive,legacyLive,ageLabel,liveMs});
+['relphi:sky-foundation-ready','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed','relphi:sky-name-updated'].forEach(name=>window.addEventListener(name,schedule));
+window.RelphiSkyLiveHeader=Object.freeze({isLive,legacyLive,ageLabel,liveMs,ageAnchorMs});
 function start(){installStyles();schedule()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
