@@ -6,11 +6,12 @@
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','unsaved sky']);
-  const STYLE_ID='skyCardStableTitleV2';
+  const STYLE_ID='skyCardStableTitleV3';
   let queued=false;
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
+    document.getElementById('skyCardStableTitleV2')?.remove();
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
@@ -29,7 +30,9 @@
         margin:0!important;
       }
       #skyFoundationA>.sky-foundation-heading>.sky-card-title-stable>.sky-saved-name-trigger,
-      #skyFoundationB>.sky-foundation-heading>.sky-card-title-stable>.sky-saved-name-trigger{
+      #skyFoundationB>.sky-foundation-heading>.sky-card-title-stable>.sky-saved-name-trigger,
+      #skyFoundationA>.sky-foundation-heading>.sky-card-title-stable>.sky-now-recovery-control,
+      #skyFoundationB>.sky-foundation-heading>.sky-card-title-stable>.sky-now-recovery-control{
         width:100%!important;
         min-width:0!important;
       }
@@ -52,6 +55,42 @@
     const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
     return!!String(metadata.savedSkyId||metadata.savedSkyName||'').trim();
   }
+  function refreshIcon(){
+    return '<span class="sky-live-header-refresh" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M20 6v5h-5" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 18v-5h5" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.6 10A7 7 0 0 0 6.1 6.8L4 9" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.4 14A7 7 0 0 0 17.9 17.2L20 15" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+  }
+  function ensureNowRecovery(host,slot){
+    let button=host.querySelector(':scope > [data-now-recovery-control]');
+    if(!button){
+      host.replaceChildren();
+      button=document.createElement('button');
+      button.type='button';
+      button.className='sky-live-header-control sky-now-recovery-control';
+      button.dataset.nowRecoveryControl=slot;
+      button.dataset.finalNow=slot;
+      button.dataset.tooltip='Update to Now';
+      button.title='Update to Now';
+      button.innerHTML=`<span class="sky-live-header-age">Now</span>${refreshIcon()}`;
+      host.appendChild(button);
+    }
+    button.setAttribute('aria-label','Update to Now.');
+    return button;
+  }
+  function ensureSavedTrigger(host,slot){
+    let button=host.querySelector(':scope > [data-saved-sky-trigger]');
+    if(!button){
+      host.replaceChildren();
+      button=document.createElement('button');
+      button.type='button';
+      button.className='sky-saved-name-trigger';
+      button.dataset.savedSkyTrigger=slot;
+      button.setAttribute('aria-haspopup','dialog');
+      button.setAttribute('aria-expanded','false');
+      const label=document.createElement('span');label.className='sky-saved-name-label';
+      const chevron=document.createElement('span');chevron.className='sky-saved-name-chevron';chevron.setAttribute('aria-hidden','true');
+      button.append(label,chevron);host.appendChild(button);
+    }
+    return button;
+  }
   function ensure(slot){
     const panel=document.getElementById(`skyFoundation${slot}`),heading=panel?.querySelector(':scope > .sky-foundation-heading');
     const source=heading?.querySelector(':scope > .sky-foundation-name');
@@ -67,28 +106,23 @@
       heading.insertBefore(host,source);
     }
 
-    // A live-origin sky temporarily gives this host to the staleness renderer.
-    // Do not recreate the Saved-skies dropdown while that renderer owns it.
+    // A genuine live-origin sky gives this host to the freshness renderer.
     if(host.dataset.liveHeaderOwned==='true')return;
 
-    let button=host.querySelector(':scope > [data-saved-sky-trigger]');
-    if(!button){
-      host.replaceChildren();
-      button=document.createElement('button');
-      button.type='button';
-      button.className='sky-saved-name-trigger';
-      button.dataset.savedSkyTrigger=slot;
-      button.setAttribute('aria-haspopup','dialog');
-      button.setAttribute('aria-expanded','false');
-      const label=document.createElement('span');label.className='sky-saved-name-label';
-      const chevron=document.createElement('span');chevron.className='sky-saved-name-chevron';chevron.setAttribute('aria-hidden','true');
-      button.append(label,chevron);host.appendChild(button);
+    const value=read(slot),name=nameFor(slot),isSaved=saved(value);
+
+    // Recovery contract: an unsaved sky that visibly says Now should always expose
+    // Update to Now in the header. This lets a damaged/manualized Now state restore
+    // its authoritative live identity without routing through Saved skies.
+    if(normalize(name)==='now'&&!isSaved){
+      ensureNowRecovery(host,slot);
+      return;
     }
 
-    const value=read(slot),name=nameFor(slot),label=button.querySelector('.sky-saved-name-label');
+    const button=ensureSavedTrigger(host,slot),label=button.querySelector('.sky-saved-name-label');
     if(label&&label.textContent!==name)label.textContent=name;
-    button.classList.toggle('is-saved',saved(value));
-    button.title=saved(value)?name:`${name} · open Saved skies`;
+    button.classList.toggle('is-saved',isSaved);
+    button.title=isSaved?name:`${name} · open Saved skies`;
     button.setAttribute('aria-label',`${name}. Open Saved skies for Sky ${slot}.`);
   }
   function run(){queued=false;ensure('A');ensure('B')}
