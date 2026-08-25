@@ -43,9 +43,23 @@ function whereMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.whereFi
 function placementMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.placementFingerprint||null}
 function cardHitsMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.cardHitsFingerprint||null}
 
-function stripCloneIdentity(root){
-  root.removeAttribute('id');root.removeAttribute('role');root.removeAttribute('aria-label');root.removeAttribute('data-sky-heptagram');
-  root.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+function temporalTrace(sourceSvg){
+  const root=svg('svg',{
+    viewBox:sourceSvg.getAttribute('viewBox')||'8 8 344 344',
+    preserveAspectRatio:'xMidYMid meet',
+    class:'sky-where-fingerprint-heptagram',
+    'aria-hidden':'true',
+    focusable:'false'
+  });
+  // The weekly star already classifies its geometry as past/current/future.
+  // The hour path already has one current segment. Those three selectors are
+  // the entire compact fingerprint: no guide, future dots, planet groups,
+  // glyphs, bubbles, labels, rings, or construction geometry.
+  const week=Array.from(sourceSvg.querySelectorAll('.sky-ph-week-segment.past,.sky-ph-week-segment.current'));
+  const hour=sourceSvg.querySelector('.sky-ph-hour-segment.current');
+  week.forEach(line=>{const clone=line.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)});
+  if(hour){const clone=hour.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)}
+  return root.childElementCount?root:null;
 }
 function renderWhere(slot,payload){
   const mount=whereMount(slot);if(!mount)return;
@@ -55,9 +69,10 @@ function renderWhere(slot,payload){
   if(!complete||!sourceSvg||sourceSvg.dataset.canonicalSourceReady!=='true'||sourceSvg.dataset.canonicalHeptagramReady!=='true'){
     mount.hidden=true;mount.removeAttribute('aria-label');return;
   }
-  const clone=sourceSvg.cloneNode(true);stripCloneIdentity(clone);clone.classList.add('sky-where-fingerprint-heptagram');clone.setAttribute('aria-hidden','true');clone.setAttribute('focusable','false');
-  mount.appendChild(clone);mount.hidden=false;
-  mount.setAttribute('aria-label',`Where and When fingerprint for Sky ${slot}: current planetary-hours heptagram.`);
+  const trace=temporalTrace(sourceSvg);
+  if(!trace){mount.hidden=true;mount.removeAttribute('aria-label');return}
+  mount.appendChild(trace);mount.hidden=false;
+  mount.setAttribute('aria-label',`Where and When fingerprint for Sky ${slot}: week progress and current planetary-hour segment.`);
 }
 
 function renderPlacements(slot,payload){
@@ -114,7 +129,7 @@ function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relevantStorage(event){return !event.key||Object.values(KEYS).includes(event.key)}
 
 window.addEventListener('storage',event=>{if(relevantStorage(event))schedule()});
-['relphi:sky-foundation-ready','relphi:sky-heptagram-source-ready','relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed'].forEach(name=>window.addEventListener(name,schedule));
+['relphi:sky-foundation-ready','relphi:sky-heptagram-source-ready','relphi:sky-heptagram-canonical-ready','relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed'].forEach(name=>window.addEventListener(name,schedule));
 window.RelphiSkyDrawerFingerprints=Object.freeze({render:schedule});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 })();
