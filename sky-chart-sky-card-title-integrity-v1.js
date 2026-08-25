@@ -41,12 +41,23 @@
   }
   function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
   function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
+  function manualWhereWhen(value){
+    const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
+    const profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
+    return metadata.liveNowDisabled===true||metadata.liveNowDisabledReason==='custom-where-when'||String(profile.source||'')==='where-when-v2';
+  }
   function nameFor(slot){
     const value=read(slot),metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{},profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
-    for(const candidate of [metadata.savedSkyName,value?.name,value?.displayName,value?.skyName,value?.title,profile.name,profile.title]){
-      const name=String(candidate||'').trim();
-      if(name&&!GENERIC.has(normalize(name)))return name;
+    const savedName=String(metadata.savedSkyName||'').trim();
+    if(savedName)return savedName;
+
+    const manual=manualWhereWhen(value);
+    for(const candidate of [value?.name,value?.displayName,value?.skyName,value?.title,profile.name,profile.title]){
+      const name=String(candidate||'').trim(),normalized=normalize(name);
+      if(name&&!GENERIC.has(normalized)&&!(manual&&normalized==='now'))return name;
     }
+    if(manual)return'Unsaved sky';
+
     const raw=profile.instant||profile.dateTime||value?.instant||value?.dateTime;
     if(raw){const date=new Date(raw);if(!Number.isNaN(date.getTime())&&Math.abs(Date.now()-date.getTime())<10*60*1000)return'Now'}
     return'Unsaved sky';
@@ -109,12 +120,11 @@
     // A genuine live-origin sky gives this host to the freshness renderer.
     if(host.dataset.liveHeaderOwned==='true')return;
 
-    const value=read(slot),name=nameFor(slot),isSaved=saved(value);
+    const value=read(slot),name=nameFor(slot),isSaved=saved(value),manual=manualWhereWhen(value);
 
-    // Recovery contract: an unsaved sky that visibly says Now should always expose
-    // Update to Now in the header. This lets a damaged/manualized Now state restore
-    // its authoritative live identity without routing through Saved skies.
-    if(normalize(name)==='now'&&!isSaved){
+    // Recovery is reserved for damaged live skies. A manual Where/When sky owns
+    // a custom/non-live identity even when stale payload fields still contain Now.
+    if(normalize(name)==='now'&&!isSaved&&!manual){
       ensureNowRecovery(host,slot);
       return;
     }
