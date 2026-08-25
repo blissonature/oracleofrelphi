@@ -40,14 +40,45 @@
     document.head.appendChild(style);
   }
   function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
+  function write(slot,value){try{localStorage.setItem(KEYS[slot],JSON.stringify(value));return true}catch(_){return false}}
   function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
   function manualWhereWhen(value){
     const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
     const profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
     return metadata.liveNowDisabled===true||metadata.liveNowDisabledReason==='custom-where-when'||String(profile.source||'')==='where-when-v2';
   }
-  function nameFor(slot){
-    const value=read(slot),metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{},profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
+  function saved(value){
+    const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
+    return!!String(metadata.savedSkyId||metadata.savedSkyName||'').trim();
+  }
+  function repairManualIdentity(slot,value){
+    if(!value||!manualWhereWhen(value)||saved(value))return value;
+    let changed=false;
+    const next={...value};
+    const metadata=next.metadata&&typeof next.metadata==='object'?{...next.metadata}:{};
+    const profile=next.calcProfile&&typeof next.calcProfile==='object'?{...next.calcProfile}:{};
+    for(const key of ['name','title','displayName','skyName']){
+      if(normalize(next[key])==='now'){delete next[key];changed=true}
+    }
+    for(const key of ['name','title']){
+      if(normalize(profile[key])==='now'){delete profile[key];changed=true}
+      if(normalize(metadata[key])==='now'){delete metadata[key];changed=true}
+    }
+    for(const key of ['liveNowOrigin','liveNowAt','liveNowLatitude','liveNowLongitude','liveNowMigrated','liveAgeAnchorAt']){
+      if(Object.prototype.hasOwnProperty.call(metadata,key)){delete metadata[key];changed=true}
+    }
+    for(const key of ['liveNowOrigin','liveNowAt']){
+      if(Object.prototype.hasOwnProperty.call(profile,key)){delete profile[key];changed=true}
+    }
+    if(metadata.liveNowDisabled!==true){metadata.liveNowDisabled=true;changed=true}
+    if(metadata.liveNowDisabledReason!=='custom-where-when'){metadata.liveNowDisabledReason='custom-where-when';changed=true}
+    next.metadata=metadata;next.calcProfile=profile;
+    try{if(localStorage.getItem(`relphiSkyLiveAgeAnchor${slot}`)!==null){localStorage.removeItem(`relphiSkyLiveAgeAnchor${slot}`);changed=true}}catch(_){}
+    if(changed)write(slot,next);
+    return next;
+  }
+  function nameFor(slot,valueOverride){
+    const value=valueOverride||read(slot),metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{},profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
     const savedName=String(metadata.savedSkyName||'').trim();
     if(savedName)return savedName;
 
@@ -61,10 +92,6 @@
     const raw=profile.instant||profile.dateTime||value?.instant||value?.dateTime;
     if(raw){const date=new Date(raw);if(!Number.isNaN(date.getTime())&&Math.abs(Date.now()-date.getTime())<10*60*1000)return'Now'}
     return'Unsaved sky';
-  }
-  function saved(value){
-    const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
-    return!!String(metadata.savedSkyId||metadata.savedSkyName||'').trim();
   }
   function refreshIcon(){
     return '<span class="sky-live-header-refresh" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M20 6v5h-5" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 18v-5h5" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.6 10A7 7 0 0 0 6.1 6.8L4 9" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.4 14A7 7 0 0 0 17.9 17.2L20 15" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
@@ -120,7 +147,7 @@
     // A genuine live-origin sky gives this host to the freshness renderer.
     if(host.dataset.liveHeaderOwned==='true')return;
 
-    const value=read(slot),name=nameFor(slot),isSaved=saved(value),manual=manualWhereWhen(value);
+    const value=repairManualIdentity(slot,read(slot)),name=nameFor(slot,value),isSaved=saved(value),manual=manualWhereWhen(value);
 
     // Recovery is reserved for damaged live skies. A manual Where/When sky owns
     // a custom/non-live identity even when stale payload fields still contain Now.
