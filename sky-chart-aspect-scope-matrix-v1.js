@@ -123,7 +123,7 @@ function applyMatrix({announce=true}={}){
   if(announce){
     const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
     const scopes=SCOPES.filter(scope=>state[scope.id].size>0).map(scope=>scope.id);
-    const selected=IDS.filter(id=>SCOPES.some(scope=>state[scope.id].has(id));
+    const selected=IDS.filter(id=>SCOPES.some(scope=>state[scope.id].has(id)));
     window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed',{detail:{selected,scopes,matrix}}));
   }
   applying=false;
