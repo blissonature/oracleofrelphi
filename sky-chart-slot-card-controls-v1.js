@@ -1,17 +1,22 @@
 // Present Sky B comparison presence as paired card-local icon controls.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySlotCardControlsV1)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySlotCardControlsV2)return;
   window.__relphiSkySlotCardControlsV1=true;
+  window.__relphiSkySlotCardControlsV2=true;
 
   const SKY_B_KEY='relphiSkyChartB';
   let queued=false;
+  let undoTimer=0;
 
   function icon(kind){
     const span=document.createElement('span');
     span.className=`sky-slot-card-icon sky-slot-card-icon--${kind}`;
     span.setAttribute('aria-hidden','true');
     return span;
+  }
+  function storedSkyBRaw(){
+    try{return localStorage.getItem(SKY_B_KEY)}catch(_){return null}
   }
   function hasStoredSkyB(){
     try{
@@ -52,15 +57,77 @@
     button.hidden=hasStoredSkyB()||editing;
   }
 
+  function dismissUndo(){
+    clearTimeout(undoTimer);
+    undoTimer=0;
+    document.querySelector('.sky-slot-undo-toast')?.remove();
+  }
+  function dispatchSkyBStorage(raw){
+    try{
+      window.dispatchEvent(new StorageEvent('storage',{key:SKY_B_KEY,newValue:raw,storageArea:localStorage}));
+      return;
+    }catch(_){}
+    const event=new Event('storage');
+    try{Object.defineProperty(event,'key',{value:SKY_B_KEY})}catch(_){}
+    window.dispatchEvent(event);
+  }
+  function restoreSkyB(raw){
+    if(!raw)return;
+    try{localStorage.setItem(SKY_B_KEY,raw)}catch(_){return}
+    delete document.documentElement.dataset.skyBEditing;
+    const startup=window.RelphiSkyStartupMode;
+    if(startup?.writeMode)startup.writeMode('comparison');
+    else{
+      document.documentElement.dataset.skyLastMode='comparison';
+      try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
+    }
+    startup?.syncRoot?.();
+    dispatchSkyBStorage(raw);
+    window.dispatchEvent(new CustomEvent('relphi:sky-b-restored'));
+    dismissUndo();
+  }
+  function showUndo(raw){
+    if(!raw)return;
+    dismissUndo();
+    const toast=document.createElement('div');
+    toast.className='sky-slot-undo-toast';
+    toast.setAttribute('role','status');
+    toast.setAttribute('aria-live','polite');
+    const message=document.createElement('span');
+    message.textContent='Sky B removed';
+    const undo=document.createElement('button');
+    undo.type='button';
+    undo.className='sky-slot-undo-button';
+    undo.textContent='Undo';
+    undo.addEventListener('click',event=>{
+      event.preventDefault();event.stopPropagation();restoreSkyB(raw);
+    });
+    toast.append(message,undo);
+    document.body.appendChild(toast);
+    undoTimer=window.setTimeout(dismissUndo,6000);
+  }
+  function bindRemoveUndo(remove){
+    if(remove.dataset.cardUndoBound==='true')return;
+    remove.dataset.cardUndoBound='true';
+    remove.addEventListener('click',()=>{
+      const snapshot=storedSkyBRaw();
+      if(!snapshot)return;
+      setTimeout(()=>{
+        const removed=document.documentElement.dataset.skyBPresent==='false'||document.documentElement.dataset.skyLastMode==='single';
+        if(removed)showUndo(snapshot);
+      },0);
+    },true);
+  }
   function styleRemove(){
     const remove=document.querySelector('#skyFoundationB > .sky-foundation-heading [data-remove-sky-b]');
     if(!remove)return;
-    if(remove.dataset.cardIconified==='true')return;
-    remove.dataset.cardIconified='true';
+    bindRemoveUndo(remove);
+    if(remove.dataset.cardIconified==='close')return;
+    remove.dataset.cardIconified='close';
     remove.classList.add('sky-slot-card-control','sky-slot-card-control--remove');
     remove.setAttribute('aria-label','Remove Sky B');
     remove.title='Remove Sky B';
-    remove.replaceChildren(icon('minus'));
+    remove.replaceChildren(icon('close'));
   }
 
   function suppressInternalAdd(){
