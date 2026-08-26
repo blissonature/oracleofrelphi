@@ -5,6 +5,7 @@
   window.__relphiSkyUpdateNowStabilityV1=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+  const AGE_KEYS={A:'relphiSkyLiveAgeAnchorA',B:'relphiSkyLiveAgeAnchorB'};
   const VIEW_KEY='relphiSkyWhereWhenViewV1';
   const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const BODIES=['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
@@ -16,6 +17,11 @@
   function dispatch(slot){
     try{window.dispatchEvent(new StorageEvent('storage',{key:KEYS[slot],newValue:localStorage.getItem(KEYS[slot]),storageArea:localStorage}))}
     catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:KEYS[slot]});window.dispatchEvent(event)}
+  }
+
+  function saveAgeAnchor(slot,at){
+    if(!AGE_KEYS[slot]||!at)return;
+    try{localStorage.setItem(AGE_KEYS[slot],JSON.stringify({origin:'update-to-now',at}))}catch(_){}
   }
 
   function currentPosition(){
@@ -94,6 +100,7 @@
     metadata.name=name;metadata.title=name;
     metadata.liveNowOrigin='update-to-now';
     metadata.liveNowAt=liveNowAt;
+    metadata.liveAgeAnchorAt=liveNowAt;
     metadata.liveNowLatitude=String(packet.latitude);
     metadata.liveNowLongitude=String(packet.longitude);
 
@@ -152,7 +159,9 @@
       if(!now?.isValid)throw new Error('The current local time could not be resolved.');
       const next=calculate(slot,packet,now);
       setConfirmedView(slot);
+      // Write the sky and its freshness clock as one logical transaction before any rerender event.
       localStorage.setItem(KEYS[slot],JSON.stringify(next));
+      saveAgeAnchor(slot,next.metadata.liveNowAt);
       dispatch(slot);
       window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'update-to-now',at:next.metadata.liveNowAt}}));
       window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'update-to-now-stable'}}));
