@@ -11,7 +11,7 @@ const ASPECT_SYMBOLS=Object.freeze({conjunction:'☌',opposition:'☍',trine:'�
 let observer=null,observedList=null,queued=false,applying=false;
 
 function installStyles(){if(document.getElementById('skyRelationshipScopeSectionsV1Styles'))return;const style=document.createElement('style');style.id='skyRelationshipScopeSectionsV1Styles';style.textContent=`
-  .sky-relationship-scope-heading{display:flex;align-items:center;min-height:28px;box-sizing:border-box;padding:7px 10px 5px;color:#514941;background:#f4efe8;border-top:1px solid rgba(31,27,24,.13);border-bottom:1px solid rgba(31,27,24,.08);font:900 .63rem/1 system-ui,sans-serif;letter-spacing:.01em}
+  .sky-relationship-scope-heading{grid-column:1/-1;display:flex;align-items:center;width:100%;min-height:28px;box-sizing:border-box;padding:7px 10px 5px;color:#514941;background:#f4efe8;border-top:1px solid rgba(31,27,24,.13);border-bottom:1px solid rgba(31,27,24,.08);font:900 .63rem/1 system-ui,sans-serif;letter-spacing:.01em}
   .sky-relationship-scope-heading:first-child{border-top:0}
   .sky-relationship-scope-heading[hidden]{display:none!important}
 `;document.head.appendChild(style)}
