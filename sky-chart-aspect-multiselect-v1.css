@@ -15,7 +15,7 @@
 .sky-chart-aspect-filter.is-open .sky-chart-aspect-filter-toggle{box-shadow:2px 0 0 0 rgba(31,27,24,.08),0 2px 0 0 rgba(31,27,24,.08),0 -2px 0 0 rgba(31,27,24,.08)}
 .sky-chart-aspect-filter-popover{position:absolute;top:calc(100% + 6px);left:50%;width:min(400px,calc(100vw - 20px));max-height:min(520px,78vh);overflow:auto;box-sizing:border-box;padding:7px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2);transform:translateX(-50%);pointer-events:auto}
 .sky-chart-aspect-filter-popover[hidden]{display:none!important}
-.sky-chart-aspect-filter-popover.is-portaled{position:fixed;z-index:10000;right:auto;bottom:auto;margin:0;transform:none;isolation:isolate}
+.sky-chart-aspect-filter-popover.is-portaled{position:fixed;z-index:10000;right:auto;bottom:auto;margin:0;transform:none;isolation:isolate;width:min(400px,calc(100vw - 20px))!important;min-width:min(400px,calc(100vw - 20px))!important;max-width:min(400px,calc(100vw - 20px))!important}
 .sky-chart-aspect-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:9px;background:#fff}
 .sky-chart-aspect-list-header,.sky-chart-aspect-list-item{display:grid;grid-template-columns:minmax(0,1fr) 148px;align-items:center}
 .sky-chart-aspect-list-header{position:sticky;z-index:2;top:-7px;min-height:31px;border-bottom:1px solid rgba(31,27,24,.16);background:#e9e3da;color:#29231e;font:900 .61rem/1 system-ui,sans-serif}
@@ -41,16 +41,11 @@
 .sky-chart-aspect-filter input[type="checkbox"]:indeterminate::after,.sky-chart-aspect-filter-popover input[type="checkbox"]:indeterminate::after{content:"−";font-size:14px}
 .sky-chart-aspect-filter input[type="checkbox"]:focus-visible,.sky-chart-aspect-filter-popover input[type="checkbox"]:focus-visible{outline:2px solid #625a52;outline-offset:2px}
 .sky-chart-aspect-multiselect-hidden{display:none!important}
-
-/* Native House System and custom menus use the same chevron artwork. */
 .sky-chart-filter-house-system select,[data-house-system-filter]{appearance:none!important;-webkit-appearance:none!important;padding-right:32px!important;background-color:#fff!important;background-image:var(--sky-chart-filter-chevron)!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:15px 15px!important}
-
-/* Present the four primary angles together in each placement ledger. */
 .sky-foundation-ledger-angle-heading{padding:8px 12px 6px;border-top:1px solid rgba(31,27,24,.14);border-bottom:1px solid rgba(31,27,24,.08);background:#f1ece4;color:#4a433d;font:900 .62rem/1 system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase}
 .sky-foundation-row[data-angle-placement]{background:rgba(31,27,24,.018)}
-
 @media(max-width:410px){
-  .sky-chart-aspect-filter-popover{width:min(374px,calc(100vw - 16px))}
+  .sky-chart-aspect-filter-popover,.sky-chart-aspect-filter-popover.is-portaled{width:min(374px,calc(100vw - 16px))!important;min-width:min(374px,calc(100vw - 16px))!important;max-width:min(374px,calc(100vw - 16px))!important}
   .sky-chart-aspect-list-header,.sky-chart-aspect-list-item{grid-template-columns:minmax(0,1fr) 136px}
   .sky-chart-aspect-list-header-choices,.sky-chart-aspect-list-choices{grid-template-columns:repeat(4,34px)}
   .sky-chart-aspect-list-header-choices>span{font-size:.52rem}
