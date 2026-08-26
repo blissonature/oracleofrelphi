@@ -50,6 +50,8 @@
 }
 .sky-slot-card-icon--plus::after{transform:translate(-50%,-50%) rotate(90deg)}
 .sky-slot-card-icon--minus::after{display:none}
+.sky-slot-card-icon--close::before{transform:translate(-50%,-50%) rotate(45deg)}
+.sky-slot-card-icon--close::after{transform:translate(-50%,-50%) rotate(-45deg)}
 
 /* The legacy presence button supplies behavior; the icon treatment owns appearance. */
 #skyFoundationB>.sky-foundation-heading [data-remove-sky-b].sky-slot-card-control{
@@ -62,6 +64,39 @@
   line-height:0;
   color:#2462d0;
 }
+
+.sky-slot-undo-toast{
+  position:fixed;
+  left:50%;
+  bottom:max(18px,calc(env(safe-area-inset-bottom) + 14px));
+  z-index:12000;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  max-width:calc(100vw - 28px);
+  box-sizing:border-box;
+  padding:10px 12px 10px 14px;
+  border:1px solid rgba(31,27,24,.2);
+  border-radius:999px;
+  background:#292522;
+  color:#fff;
+  box-shadow:0 8px 28px rgba(31,27,24,.24);
+  transform:translateX(-50%);
+  font:750 .72rem/1.2 system-ui,sans-serif;
+  white-space:nowrap;
+}
+.sky-slot-undo-button{
+  appearance:none;
+  min-height:30px;
+  padding:5px 10px;
+  border:1px solid rgba(255,255,255,.34);
+  border-radius:999px;
+  background:#fff;
+  color:#292522;
+  font:900 .7rem/1 system-ui,sans-serif;
+  cursor:pointer;
+}
+.sky-slot-undo-button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 
 @media(max-width:620px){
   .sky-slot-card-control,
