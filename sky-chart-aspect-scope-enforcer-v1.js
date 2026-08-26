@@ -1,10 +1,14 @@
-// Aspect scope enforcer v1: keeps matrix scope filtering authoritative across legacy refresh passes.
+// Aspect scope enforcer v2: preserve the matrix state independently of DOM rebuilds.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyAspectScopeEnforcerV1)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyAspectScopeEnforcerV2)return;
 window.__relphiSkyAspectScopeEnforcerV1=true;
+window.__relphiSkyAspectScopeEnforcerV2=true;
 
 const HIDDEN='sky-chart-aspect-multiselect-hidden';
+const ASPECTS=Object.freeze(['conjunction','semi-sextile','octile','sextile','quintile','square','trine','tri-octile','bi-quintile','quincunx','opposition']);
+const SCOPES=Object.freeze(['A-A','B-B','A-B']);
+const matrix=Object.fromEntries(SCOPES.map(scope=>[scope,new Set(ASPECTS)]));
 let observer=null,observedRoot=null,queued=false,enforcing=false;
 
 function normalize(value){
@@ -21,15 +25,10 @@ function relationshipMode(node){
   if(single==='A'||single==='B')return`${single}-${single}`;
   return'A-B';
 }
-function matrixChoice(node){
-  const aspect=normalize(node?.dataset?.aspect||'');
-  if(!aspect)return null;
-  const scope=relationshipMode(node);
-  return document.querySelector(`#skyChartAspectPopover [data-aspect-matrix-scope="${scope}"][data-aspect-matrix-aspect="${aspect}"]`);
-}
 function shouldShow(node){
-  const choice=matrixChoice(node);
-  return choice?choice.checked:true;
+  const aspect=normalize(node?.dataset?.aspect||'');
+  if(!aspect)return true;
+  return matrix[relationshipMode(node)]?.has(aspect)??true;
 }
 function enforceNode(node){
   if(!node?.classList)return;
@@ -41,7 +40,7 @@ function updateCount(){
     const rows=[...document.querySelectorAll('.sky-foundation-relationship-row')].filter(row=>!row.classList.contains('sky-foundation-single-sky-cross-hidden'));
     const shown=rows.filter(row=>!row.hidden&&!row.classList.contains('sky-chart-filter-hidden')&&!row.classList.contains('sky-chart-orb-hidden')&&!row.classList.contains('sky-orb-filter-hidden')&&!row.classList.contains('sky-chart-multiselect-hidden')&&!row.classList.contains('sky-chart-house-multiselect-hidden')&&!row.classList.contains(HIDDEN)&&!row.classList.contains('sky-chart-sign-filter-hidden')&&!row.classList.contains('sky-chart-semantic-hidden')).length;
     const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');
-    if(count)count.textContent=`${shown}/${rows.length}`;
+    if(count&&count.textContent!==`${shown}/${rows.length}`)count.textContent=`${shown}/${rows.length}`;
     if(empty)empty.hidden=shown!==0;
   });
 }
@@ -58,8 +57,28 @@ function schedule(){
   queued=true;
   requestAnimationFrame(enforceAll);
 }
-function relevantNode(node){
-  return node instanceof Element&&(node.matches?.('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect')||node.querySelector?.('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect'));
+function importMatrix(detail){
+  const incoming=detail?.matrix;
+  if(!incoming||typeof incoming!=='object')return false;
+  for(const scope of SCOPES){
+    const values=Array.isArray(incoming[scope])?incoming[scope]:[];
+    matrix[scope]=new Set(values.map(normalize).filter(aspect=>ASPECTS.includes(aspect)));
+  }
+  return true;
+}
+function targetNode(node){
+  if(!(node instanceof Element))return null;
+  if(node.matches?.('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect'))return node;
+  return null;
+}
+function addedRelationship(node){
+  if(!(node instanceof Element))return false;
+  return node.matches?.('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect')||!!node.querySelector?.('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect');
+}
+function mutationNeedsRepair(record){
+  if(record.type==='childList')return[...record.addedNodes].some(addedRelationship);
+  const node=targetNode(record.target);
+  return!!node&&node.classList.contains(HIDDEN)===shouldShow(node);
 }
 function bindObserver(){
   const root=document.getElementById('skyFoundationRoot');
@@ -67,17 +86,22 @@ function bindObserver(){
   observer?.disconnect();observedRoot=root;
   observer=new MutationObserver(records=>{
     if(enforcing)return;
-    const relevant=records.some(record=>record.type==='attributes'?relevantNode(record.target):[...record.addedNodes,...record.removedNodes].some(relevantNode));
-    if(relevant)schedule();
+    if(records.some(mutationNeedsRepair))schedule();
   });
   observer.observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
 }
+function handleAspectEvent(event){
+  if(importMatrix(event.detail)){
+    enforceAll();
+    return;
+  }
+  // Legacy passes may have just rewritten the shared hidden class. Reassert the
+  // last real matrix state immediately, without consulting replaceable inputs.
+  enforceAll();
+}
 function start(){
   bindObserver();schedule();
-  document.addEventListener('change',event=>{
-    if(event.target.closest?.('[data-aspect-matrix-scope][data-aspect-matrix-aspect]'))enforceAll();
-  });
-  window.addEventListener('relphi:sky-aspect-multiselect-changed',enforceAll);
+  window.addEventListener('relphi:sky-aspect-multiselect-changed',handleAspectEvent);
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered'].forEach(name=>window.addEventListener(name,()=>{bindObserver();schedule()}));
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
