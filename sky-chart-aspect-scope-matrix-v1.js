@@ -1,10 +1,10 @@
-// Aspect scope matrix v1: per-aspect filtering across A↔A, B↔B, and A↔B.
+// Aspect scope matrix v2: per-aspect filtering across A↔A, B↔B, and A↔B.
 // The legacy aspect controller remains responsible for generating intrasky B relationships;
-// this layer owns the visible aspect-selection matrix and uses the established hidden class.
+// this layer owns the visible aspect-selection matrix and reasserts its state after legacy filter passes.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyAspectScopeMatrixV1)return;
-window.__relphiSkyAspectScopeMatrixV1=true;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyAspectScopeMatrixV2)return;
+window.__relphiSkyAspectScopeMatrixV1=true;window.__relphiSkyAspectScopeMatrixV2=true;
 
 const ASPECTS=Object.freeze([
   {id:'conjunction',label:'Conjunction'},
@@ -123,7 +123,7 @@ function applyMatrix({announce=true}={}){
   if(announce){
     const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
     const scopes=SCOPES.filter(scope=>state[scope.id].size>0).map(scope=>scope.id);
-    const selected=IDS.filter(id=>SCOPES.some(scope=>state[scope.id].has(id)));
+    const selected=IDS.filter(id=>SCOPES.some(scope=>state[scope.id].has(id));
     window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed',{detail:{selected,scopes,matrix}}));
   }
   applying=false;
@@ -151,9 +151,14 @@ function handleChange(event){
 }
 function refresh(){queued=false;if(!ensureUI())return;applyMatrix({announce:false});positionPopover()}
 function schedule(){if(queued||applying)return;queued=true;requestAnimationFrame(refresh)}
+function handleLegacyAspectPass(event){
+  if(event.detail?.matrix)return;
+  schedule();
+}
 function start(){
   schedule();document.addEventListener('change',handleChange);
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-foundation-filter-changed'].forEach(name=>window.addEventListener(name,schedule));
+  window.addEventListener('relphi:sky-aspect-multiselect-changed',handleLegacyAspectPass);
   window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartB')schedule()});
   new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-last-mode','data-sky-b-editing']});
   document.addEventListener('click',event=>{if(event.target.closest?.('[data-aspect-filter-toggle]'))requestAnimationFrame(positionPopover)});
