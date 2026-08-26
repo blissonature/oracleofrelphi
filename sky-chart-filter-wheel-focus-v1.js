@@ -1,7 +1,8 @@
-// Let explicit semantic filters drive wheel focus without treating Harmonic Window as isolation.
+// Let explicit semantic filters drive wheel focus without treating Harmonic Window or relationship scope as isolation.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyFilterWheelFocusV2)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyFilterWheelFocusV3)return;
+  window.__relphiSkyFilterWheelFocusV3=true;
   window.__relphiSkyFilterWheelFocusV2=true;
   window.__relphiSkyFilterWheelFocusV1=true;
 
@@ -26,9 +27,23 @@
     };
   }
 
-  // Harmonic Window is deliberately excluded here. It is a tolerance threshold,
-  // not a semantic selection of chart territory. It may hide relationship rows and
-  // aspect lines, but it must not dim unrelated placements, houses, or signs.
+  function relationshipMode(row){
+    const declared=String(row?.dataset?.relationshipMode||'').toUpperCase();
+    if(declared==='A-A'||declared==='B-B'||declared==='A-B')return declared;
+    const slots=relationshipSlots(row);
+    return slots.left===slots.right?`${slots.left}-${slots.right}`:'A-B';
+  }
+
+  function scopeEligible(row){
+    const raw=String(document.documentElement.dataset.skyRelationshipScopeSelection||'').trim();
+    if(!raw)return true;
+    const selected=new Set(raw.split(',').map(value=>value.trim().toUpperCase()).filter(Boolean));
+    return selected.has(relationshipMode(row));
+  }
+
+  // Harmonic Window and relationship-scope switches are deliberately excluded here.
+  // They control tolerance/which relationship families are present; neither should dim
+  // unrelated placements, houses, or signs or visually thicken the surviving aspects.
   function excludedByExplicitFilter(row){
     if(row.classList.contains('sky-foundation-single-sky-cross-hidden'))return true;
     for(const className of row.classList){
@@ -42,7 +57,8 @@
 
   function eligibleRows(){
     return Array.from(document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]'))
-      .filter(row=>!row.classList.contains('sky-foundation-single-sky-cross-hidden'));
+      .filter(row=>!row.classList.contains('sky-foundation-single-sky-cross-hidden'))
+      .filter(scopeEligible);
   }
 
   function explicitRows(rows){return rows.filter(row=>!excludedByExplicitFilter(row))}
@@ -128,10 +144,6 @@
     if(!list||list===observedList)return;
     observer?.disconnect();
     observedList=list;
-    // Re-rendering the relationship list requires a new focus pass. Attribute/class
-    // mutations do not: the explicit filter controls already emit dedicated events.
-    // Ignoring class churn also prevents Harmonic Window from scheduling hundreds
-    // of redundant focus passes while it toggles row visibility.
     observer=new MutationObserver(records=>{
       if(records.some(record=>record.type==='childList'))schedule();
     });
