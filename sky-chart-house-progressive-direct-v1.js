@@ -87,8 +87,9 @@ function start(){
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,bind));
 }
 
-// Registered before the general progressive controller so house taps remain a two-level chain.
-document.addEventListener('pointerup',handlePointerUp,true);
-document.addEventListener('click',handleClick,true);
+// Window capture runs before the general progressive controller's document capture,
+// regardless of script registration order, so the house remains a two-level chain.
+window.addEventListener('pointerup',handlePointerUp,true);
+window.addEventListener('click',handleClick,true);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
