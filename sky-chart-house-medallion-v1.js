@@ -1,15 +1,16 @@
-// House medallion v5: shared house marker for relationship tiles and expanded dual-card headers.
-// Compact tiles keep the numbered medallion; expanded progressive study uses an ordinal House label.
+// House medallion v6: shared numeric house marker for relationship tiles and expanded study.
+// The marker always stays numeric; the separate progressive name layer owns labels such as 2ⁿᵈ House.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHouseMedallionV5)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHouseMedallionV6)return;
+window.__relphiSkyHouseMedallionV6=true;
 window.__relphiSkyHouseMedallionV5=true;
 window.__relphiSkyHouseMedallionV4=true;
 window.__relphiSkyHouseMedallionV3=true;
 window.__relphiSkyHouseMedallionV2=true;
 window.__relphiSkyHouseMedallionV1=true;
 
-const STYLE_ID='skyHouseMedallionV5Styles';
+const STYLE_ID='skyHouseMedallionV6Styles';
 const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const ORDINAL_SUFFIX={1:'ˢᵗ',2:'ⁿᵈ',3:'ʳᵈ'};
@@ -18,10 +19,11 @@ let hoverFilterActive=false;
 const pendingRows=new Set();
 const coordinateObservers=new WeakMap();
 
+function validHouse(value){const n=Number(value);return Number.isFinite(n)&&n>=1&&n<=12?Math.trunc(n):0}
 function ordinalHouseLabel(value){const n=validHouse(value);return n?`${n}${ORDINAL_SUFFIX[n]||'ᵗʰ'} House`:'House'}
 function houseInk(hex){const value=String(hex||'').replace('#','');if(value.length!==6)return'#fff';const r=parseInt(value.slice(0,2),16),g=parseInt(value.slice(2,4),16),b=parseInt(value.slice(4,6),16),luma=.299*r+.587*g+.114*b;return luma>160?'#211d1a':'#fff'}
 function installStyles(){
-  ['skyHouseMedallionV1Styles','skyHouseMedallionV2Styles','skyHouseMedallionV3Styles','skyHouseMedallionV4Styles'].forEach(id=>document.getElementById(id)?.remove());
+  ['skyHouseMedallionV1Styles','skyHouseMedallionV2Styles','skyHouseMedallionV3Styles','skyHouseMedallionV4Styles','skyHouseMedallionV5Styles'].forEach(id=>document.getElementById(id)?.remove());
   if(document.getElementById(STYLE_ID))return;
   const style=document.createElement('style');
   style.id=STYLE_ID;
@@ -68,18 +70,7 @@ function installStyles(){
     .relphi-house-medallion[data-house="10"],
     .relphi-house-medallion[data-house="11"],
     .relphi-house-medallion[data-house="12"]{font-size:.49rem!important;letter-spacing:-.035em}
-    .sky-foundation-relationship-row.is-inline-expanded .relphi-house-coordinate{
-      grid-template-columns:50px auto!important;
-    }
-    .sky-foundation-relationship-row.is-inline-expanded .relphi-house-medallion[data-inline-progressive-glyph]{
-      width:auto!important;
-      min-width:18px!important;
-      padding:0 6px!important;
-      border-radius:999px!important;
-      font-size:.54rem!important;
-      letter-spacing:0!important;
-      cursor:pointer;
-    }
+    .sky-foundation-relationship-row.is-inline-expanded .relphi-house-medallion[data-inline-progressive-glyph]{cursor:pointer}
     .sky-foundation-relationship-row.is-inline-expanded .relphi-house-medallion:hover{
       filter:brightness(.92);
       box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 3px var(--house-color);
@@ -87,23 +78,21 @@ function installStyles(){
     @media(max-width:620px){
       .sky-foundation-relationship-copy small.relphi-house-coordinate{grid-template-columns:48px 18px!important;column-gap:3px!important}
       .relphi-house-coordinate-value{width:48px;min-width:48px}
-      .sky-foundation-relationship-row.is-inline-expanded .relphi-house-coordinate{grid-template-columns:48px auto!important}
     }
   `;
   document.head.appendChild(style);
 }
 
-function validHouse(value){const n=Number(value);return Number.isFinite(n)&&n>=1&&n<=12?Math.trunc(n):0}
 function medallion(house,field,interactive=false,existing=null){
   const n=validHouse(house);if(!n)return null;
-  const node=existing instanceof HTMLElement?existing:document.createElement('span'),dataLabel=String(n),visibleLabel=interactive?ordinalHouseLabel(n):dataLabel,color=HOUSE_COLORS[n-1];
+  const node=existing instanceof HTMLElement?existing:document.createElement('span'),label=String(n),color=HOUSE_COLORS[n-1];
   if(node.className!=='relphi-house-medallion')node.className='relphi-house-medallion';
-  if(node.dataset.house!==dataLabel)node.dataset.house=dataLabel;
-  if(node.textContent!==visibleLabel)node.textContent=visibleLabel;
+  if(node.dataset.house!==label)node.dataset.house=label;
+  if(node.textContent!==label)node.textContent=label;
   if(node.style.getPropertyValue('--house-color')!==color)node.style.setProperty('--house-color',color);
   const ink=houseInk(color);if(node.style.getPropertyValue('--house-ink')!==ink)node.style.setProperty('--house-ink',ink);
   if(node.getAttribute('aria-label')!==HOUSE_NAMES[n])node.setAttribute('aria-label',HOUSE_NAMES[n]);
-  const title=interactive?`Reveal ${HOUSE_NAMES[n]} meaning`:HOUSE_NAMES[n];
+  const title=interactive?`Reveal ${ordinalHouseLabel(n)}`:HOUSE_NAMES[n];
   if(node.getAttribute('title')!==title)node.setAttribute('title',title);
   if(interactive&&field){if(node.dataset.inlineProgressiveGlyph!==field)node.dataset.inlineProgressiveGlyph=field}
   else if(node.dataset.inlineProgressiveGlyph)delete node.dataset.inlineProgressiveGlyph;
