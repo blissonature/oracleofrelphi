@@ -10,6 +10,9 @@ const interactions = fs.readFileSync(path.join(root, 'sky-chart-foundation-inter
 const relationships = fs.readFileSync(path.join(root, 'sky-chart-relationship-list-layout-v1.js'), 'utf8');
 const relationshipCopy = fs.readFileSync(path.join(root, 'sky-chart-relationship-copy-v1.js'), 'utf8');
 const coordinatePrecision = fs.readFileSync(path.join(root, 'sky-chart-coordinate-precision-v1.js'), 'utf8');
+const intraskyA = fs.readFileSync(path.join(root, 'sky-chart-intrasky-a-v1.js'), 'utf8');
+const aspectMultiselect = fs.readFileSync(path.join(root, 'sky-chart-aspect-multiselect-v1.js'), 'utf8');
+const cardHitsDrawer = fs.readFileSync(path.join(root, 'sky-chart-card-hits-drawer-v1.js'), 'utf8');
 const selectedRelationship = fs.readFileSync(path.join(root, 'sky-chart-selected-relationship-v4.js'), 'utf8');
 const selectedRelationshipCss = fs.readFileSync(path.join(root, 'sky-chart-selected-understanding-v1.css'), 'utf8');
 const progressive = fs.readFileSync(path.join(root, 'sky-chart-progressive-comparison-v1.js'), 'utf8');
@@ -197,17 +200,25 @@ test('relationship copying serializes semantic rows with explicit planet-in-sign
   assert.doesNotMatch(relationshipCopy, /sourceOrb|Orb /);
 });
 
-test('stored coordinate fields override rounded longitude text throughout relationship presentation without a global mutation observer', () => {
-  assert.match(coordinatePrecision, /function exactCoordinate\(item\)/);
-  assert.match(coordinatePrecision, /Math\.trunc\(Number\(item\.minute \?\? item\.minutes\)\)/);
+test('finite longitude is the coordinate authority across active Sky Chart presentation paths', () => {
+  assert.match(coordinatePrecision, /A finite longitude is the coordinate authority/);
+  assert.match(coordinatePrecision, /function longitude\(item\)/);
+  assert.match(coordinatePrecision, /const value = longitude\(item\)/);
+  assert.match(coordinatePrecision, /const signIndex = Math\.floor\(value \/ 30\)/);
   assert.match(coordinatePrecision, /function correctRelationships\(mapsA,mapsB\)/);
-  assert.match(coordinatePrecision, /mapsA\.byIdentity\.get\(row\.dataset\.leftPlacement/);
   assert.match(coordinatePrecision, /small\.dataset\.relationshipCoordinate = left\.text/);
-  assert.match(coordinatePrecision, /row\.dataset\.leftSign = String\(left\.signIndex\)/);
-  assert.match(coordinatePrecision, /relphi:sky-foundation-interactions-ready/);
+  assert.match(coordinatePrecision, /longitude-authoritative-by-row-sky/);
+  assert.match(intraskyA, /function coordinate\(record\)\{const value=norm\(record\.value\)/);
+  assert.match(aspectMultiselect, /function coordinate\(record\) \{[\s\S]*const value = norm\(record\.value\);/);
+  assert.doesNotMatch(aspectMultiselect, /const explicitSign =/);
+  assert.match(cardHitsDrawer, /const signIndex=Math\.floor\(value\/30\)/);
+  assert.doesNotMatch(cardHitsDrawer, /explicitSign/);
   assert.doesNotMatch(coordinatePrecision, /new MutationObserver/);
   assert.doesNotMatch(coordinatePrecision, /observe\(document\.documentElement/);
-  assert.match(html, /sky-chart-coordinate-precision-v1\.js\?v=3/);
+  assert.match(html, /sky-chart-coordinate-precision-v1\.js\?v=5/);
+  assert.match(html, /sky-chart-intrasky-a-v1\.js\?v=2/);
+  assert.match(html, /sky-chart-aspect-multiselect-v1\.js\?v=4/);
+  assert.match(html, /sky-chart-card-hits-drawer-v1\.js\?v=3/);
 });
 
 test('Planetary Hours heptagram scales the complete circled master as one unit', () => {
