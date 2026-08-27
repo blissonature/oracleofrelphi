@@ -83,11 +83,11 @@ async function inspect(width,height,suffix){
   assert.ok(state.zodiac.every(item=>item.radius===19));
   assert.ok(state.zodiac.every(item=>item.glyphCount===1));
   assert.ok(state.zodiac.every(item=>item.circleDisplay==='none'));
-  assert.equal(state.sourceFill,'#111111');
-  assert.equal(state.sourceStroke,'');
-  assert.equal(state.sourceStrokeWidth,'');
-  assert.equal(state.renderedFill,'#171717');
-  assert.equal(state.renderedStroke,'');
+  assert.equal(state.sourceFill,'none');
+  assert.equal(state.sourceStroke,'#111111');
+  assert.equal(state.sourceStrokeWidth,'7');
+  assert.equal(state.renderedFill,'none');
+  assert.equal(state.renderedStroke,'#171717');
   assert.equal(state.angleCount,8);
   assert.equal(state.angleLines.length,8);
   assert.ok(state.angleLines.every(line=>line.edge===(line.sky==='A'?574:166)));
@@ -103,4 +103,4 @@ async function inspect(width,height,suffix){
 await inspect(1440,900,'desktop');
 await inspect(390,844,'mobile');
 await browser.close();
-console.log('Placement glyphs are sky-owned red/blue; zodiac glyphs use uncircled canonical masters.');
+console.log('Placement glyphs are sky-owned red/blue; zodiac glyphs consume the explicitly authorized Master Glyph List source.');
