@@ -167,10 +167,18 @@ async function drawHeptagram(svg,p){
   window.dispatchEvent(new CustomEvent('relphi:sky-heptagram-source-ready',{detail:{svg}}));
   return{dayKey,hourKey:current.ruler,hourNumber:currentIndex+1,start:current.start,end:current.end};
 }
+function planetaryHoursHref(p){
+  const params=new URLSearchParams();params.set('phShare','1');params.set('lat',String(p.latitude));params.set('lon',String(p.longitude));params.set('tz',String(p.timeZone||''));if(p.location)params.set('loc',String(p.location));
+  let instant='';
+  if(p.instant){const date=new Date(p.instant);if(Number.isFinite(date.getTime()))instant=date.toISOString()}
+  if(!instant&&p.dateTime&&window.luxon?.DateTime){const dt=window.luxon.DateTime.fromISO(String(p.dateTime),{zone:String(p.timeZone||'UTC'),setZone:true});if(dt.isValid)instant=dt.toUTC().toISO()}
+  if(instant)params.set('dt',instant);
+  return 'planetaryhours.html#'+params.toString();
+}
 function summarySignature(p){return[p.instant||p.dateTime,p.latitude,p.longitude,p.timeZone].join('|')}
 async function renderSummary(slot,force=false){
   const state=cardState[slot];if(state.rendering){state.rerender=true;return}state.rendering=true;
-  try{do{state.rerender=false;const p=profileFor(slot),refs=shell(slot);if(!refs)break;if(!completeProfile(p)){refs.summary.hidden=true;state.summarySignature='';break}refs.summary.hidden=false;const signature=summarySignature(p);if(!force&&signature===state.summarySignature&&refs.heptagram.dataset.canonicalSourceReady==='true'&&refs.heptagram.dataset.canonicalHeptagramReady==='true')continue;state.summarySignature=signature;refs.heptagram.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360');try{await drawHeptagram(refs.heptagram,p)}catch(error){state.summarySignature='';refs.heptagram.dataset.canonicalSourceReady='error';console.error(error)}}while(state.rerender)}finally{state.rendering=false}
+  try{do{state.rerender=false;const p=profileFor(slot),refs=shell(slot);if(!refs)break;if(!completeProfile(p)){refs.summary.hidden=true;state.summarySignature='';break}refs.summary.hidden=false;const frame=refs.heptagram?.closest?.('[data-sky-heptagram-frame]');if(frame){frame.href=planetaryHoursHref(p);frame.title='Open this Sky in Planetary Hours'}const signature=summarySignature(p);if(!force&&signature===state.summarySignature&&refs.heptagram.dataset.canonicalSourceReady==='true'&&refs.heptagram.dataset.canonicalHeptagramReady==='true')continue;state.summarySignature=signature;refs.heptagram.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360');try{await drawHeptagram(refs.heptagram,p)}catch(error){state.summarySignature='';refs.heptagram.dataset.canonicalSourceReady='error';console.error(error)}}while(state.rerender)}finally{state.rendering=false}
 }
 function scheduleSummary(slot,force=false){const state=cardState[slot];if(state.rendering){state.rerender=true;return}void renderSummary(slot,force)}
 
