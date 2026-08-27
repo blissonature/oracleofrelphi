@@ -45,7 +45,22 @@ const forbiddenPaths = [
   'canonical-glyph-contract-v1.json',
   'docs/sky-chart-canonical-glyph-contract.md',
   'assets/canonical-glyphs/v1',
-  'assets/planet-glyphs/part-of-fortune.svg'
+  'assets/planet-glyphs/part-of-fortune.svg',
+  'relphi-glyph-canonical-frame-contract-v1.js',
+  'sky-chart-glyph-audit-v1.js',
+  'review/canonical-glyph-loader-prototype.html',
+  'review/canonical-glyph-loader-prototype.mjs',
+  'review/canonical-glyph-production-contract',
+  'schemas/canonical-glyph-approval',
+  'scripts/generate-glyph-canon-audit.mjs',
+  'tools/bake-rendered-canonical-vectors.mjs',
+  'tools/check-canonical-cutover-readiness.mjs',
+  'tools/export-canonical-glyph-state-manifest.mjs',
+  'tools/intake-canonical-glyph-source.mjs',
+  'tools/run-canonical-shadow-acceptance.mjs',
+  'tools/trace-canonical-glyph-runtime.mjs',
+  'tools/verify-canonical-glyph-approvals.mjs',
+  'tools/verify-canonical-source-package.mjs'
 ];
 for (const file of forbiddenPaths) {
   if (exists(file)) failures.push(`Unauthorized competing glyph layer still exists: ${file}`);
