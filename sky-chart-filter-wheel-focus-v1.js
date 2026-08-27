@@ -133,8 +133,10 @@
     window.dispatchEvent(new CustomEvent('relphi:sky-filter-wheel-focus-changed',{detail:{active:true,visible:matched.length,total:rows.length,relationshipIndexes:Array.from(relations)}}));
   }
 
+  function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
+
   function schedule(){
-    if(queued)return;
+    if(queued||whereWhenEditing())return;
     queued=true;
     requestAnimationFrame(sync);
   }
@@ -159,7 +161,8 @@
       'relphi:sky-placement-multiselect-changed',
       'relphi:sky-house-multiselect-changed',
       'relphi:sky-aspect-multiselect-changed',
-      'relphi:sky-zodiac-filter-changed'
+      'relphi:sky-zodiac-filter-changed',
+      'relphi:sky-where-when-committed'
     ].forEach(name=>window.addEventListener(name,schedule));
     document.addEventListener('change',event=>{
       if(event.target.closest?.('#skyFoundationRelationships .sky-chart-filter-bar')&&!event.target.matches?.('[data-harmonic-window-input]'))schedule();
