@@ -709,7 +709,6 @@
     }).observe(root, { childList:true, subtree:true });
 
     [
-      'relphi:sky-foundation-ready',
       'relphi:sky-foundation-interactions-ready',
       'relphi:sky-placement-multiselect-changed',
       'relphi:sky-house-multiselect-changed',
