@@ -65,6 +65,31 @@
     return { text:`${degree}°${String(minute).padStart(2,'0')}′`, sign, signIndex, full:`${degree}°${String(minute).padStart(2,'0')}′ ${sign}` };
   }
 
+  function repairRedundantCoordinateFields(slot,payload) {
+    if (!payload || typeof payload !== 'object') return payload;
+    let changed = false;
+    source(payload).forEach(([,item]) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item) || !Number.isFinite(Number(item.longitude))) return;
+      const value = norm(item.longitude);
+      const signIndex = Math.floor(value / 30);
+      const within = value - signIndex * 30;
+      const degree = Math.floor(within);
+      const minuteFloat = (within - degree) * 60;
+      const minute = Math.floor(minuteFloat + 1e-9);
+      const second = Math.max(0,Math.min(59,Math.floor((minuteFloat - minute) * 60 + 1e-7)));
+      const sign = SIGNS[signIndex];
+      if (item.sign !== sign) { item.sign = sign; changed = true; }
+      if (Number(item.degree) !== degree) { item.degree = degree; changed = true; }
+      if (Number(item.minute) !== minute) { item.minute = minute; changed = true; }
+      if (Number(item.second) !== second) { item.second = second; changed = true; }
+    });
+    if (changed) {
+      try { localStorage.setItem(KEYS[slot], JSON.stringify(payload)); }
+      catch (_) {}
+    }
+    return payload;
+  }
+
   function identityFor(sourceKey,item) {
     const registry = window.RelphiGlyphRegistry;
     for (const candidate of [item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,sourceKey]) {
@@ -81,7 +106,8 @@
   function mapsFor(slot) {
     const byName = new Map();
     const byIdentity = new Map();
-    source(read(KEYS[slot])).forEach(([sourceKey,item]) => {
+    const payload = repairRedundantCoordinateFields(slot,read(KEYS[slot]));
+    source(payload).forEach(([sourceKey,item]) => {
       if (!item || typeof item !== 'object' || Array.isArray(item)) return;
       const coordinate = exactCoordinate(item);
       if (!coordinate) return;
