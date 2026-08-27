@@ -172,7 +172,7 @@
   function positionPopover(){
     if(!openSlot||!popover||popover.hidden)return;
     const trigger=triggerFor(openSlot);if(!trigger)return;
-    const rect=trigger.getBoundingClientRect(),margin=12,gap=6,width=Math.min(330,window.innerWidth-margin*2);
+    const rect=trigger.getBoundingClientRect(),margin=12,gap=6,width=Math.min(440,window.innerWidth-margin*2);
     const left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin));
     const below=window.innerHeight-rect.bottom-margin-gap,above=rect.top-margin-gap;
     const openAbove=below<280&&above>below;
