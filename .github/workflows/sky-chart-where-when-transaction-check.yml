@@ -1,0 +1,64 @@
+name: Sky Chart Where and When transaction check
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-coordinate-precision-v1.js'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-intrasky-a-v1.js'
+      - 'sky-chart-aspect-multiselect-v1.js'
+      - 'sky-chart-aspect-scope-matrix-v1.js'
+      - 'sky-chart-relationship-scope-sections-v1.js'
+      - 'sky-chart-relationship-sort-v1.js'
+      - 'sky-chart-filter-wheel-focus-v1.js'
+      - 'sky-chart-final-pass-v2.js'
+      - 'sky-chart-where-when-v2.js'
+      - 'sky-chart-update-now-stability-v1.js'
+      - 'sky-chart-saved-sky-name-dialog-v1.js'
+      - 'sky-chart-saved-skies-v1.js'
+      - 'tests/sky-chart-where-when-transaction-stability.mjs'
+      - '.github/workflows/sky-chart-where-when-transaction-check.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-where-when-v2.js'
+      - 'sky-chart-foundation-v2.js'
+      - 'tests/sky-chart-where-when-transaction-stability.mjs'
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-coordinate-precision-v1.js
+          node --check sky-chart-foundation-v2.js
+          node --check sky-chart-foundation-interactions-v2.js
+          node --check sky-chart-intrasky-a-v1.js
+          node --check sky-chart-aspect-multiselect-v1.js
+          node --check sky-chart-aspect-scope-matrix-v1.js
+          node --check sky-chart-relationship-scope-sections-v1.js
+          node --check sky-chart-relationship-sort-v1.js
+          node --check sky-chart-filter-wheel-focus-v1.js
+          node --check sky-chart-final-pass-v2.js
+          node --check sky-chart-where-when-v2.js
+          node --check sky-chart-update-now-stability-v1.js
+          node --check sky-chart-saved-sky-name-dialog-v1.js
+          node --check sky-chart-saved-skies-v1.js
+          node --check tests/sky-chart-where-when-transaction-stability.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Run transaction stability assertions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-transaction-server.log 2>&1 &
+          node tests/sky-chart-where-when-transaction-stability.mjs
