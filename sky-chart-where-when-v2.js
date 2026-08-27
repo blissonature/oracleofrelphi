@@ -23,6 +23,36 @@ const cardState={
   B:{query:'',selected:null,inference:null,busy:false,summarySignature:'',rendering:false,rerender:false}
 };
 
+const transactionState={editing:new Set(),committed:new Set()};
+function publishTransactionState(){
+  const slots=[...transactionState.editing].sort();
+  document.documentElement.dataset.skyWhereWhenEditing=slots.length?'true':'false';
+  document.documentElement.dataset.skyWhereWhenEditingSlots=slots.join(',');
+  window.dispatchEvent(new CustomEvent('relphi:sky-where-when-edit-state-changed',{detail:{active:slots.length>0,slots}}));
+}
+function beginWhereWhen(slot){
+  if(!SLOT_KEYS[slot])return;
+  transactionState.editing.add(slot);
+  publishTransactionState();
+}
+function finishWhereWhen(slot,committed){
+  if(!SLOT_KEYS[slot])return;
+  if(committed)transactionState.committed.add(slot);
+  transactionState.editing.delete(slot);
+  publishTransactionState();
+  if(transactionState.editing.size||!transactionState.committed.size)return;
+  const slots=[...transactionState.committed].sort();
+  transactionState.committed.clear();
+  window.dispatchEvent(new CustomEvent('relphi:sky-where-when-committed',{detail:{slots}}));
+}
+window.RelphiSkyWhereWhenTransaction=Object.freeze({
+  begin:beginWhereWhen,
+  commit:slot=>finishWhereWhen(slot,true),
+  cancel:slot=>finishWhereWhen(slot,false),
+  active:()=>transactionState.editing.size>0,
+  slots:()=>[...transactionState.editing]
+});
+
 function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function writeJson(key,value){localStorage.setItem(key,JSON.stringify(value))}
 function payload(slot){return readJson(SLOT_KEYS[slot],null)}
@@ -63,8 +93,9 @@ function editorMarkup(slot,p){
     <div class="sky-where-when-footer"><button class="sky-where-when-button secondary sky-update-now-editor" type="button" data-final-now="${slot}">Update to Now</button><button class="sky-where-when-button secondary sky-where-when-cancel" type="button" data-ww-action="cancel">Cancel</button><button class="sky-where-when-button primary" type="submit"${disabled}>Use This Where and When</button></div>
   </form>`;
 }
-function openEditor(slot,focus=true){const refs=shell(slot);if(!refs)return;refs.editor.innerHTML=editorMarkup(slot,profileFor(slot));window.RelphiSkyCardShell.setEditorExpanded(slot,true);if(focus)requestAnimationFrame(()=>refs.editor.querySelector('[data-ww-field="location-query"]')?.focus())}
-function closeEditor(slot){const refs=shell(slot);if(!refs)return;window.RelphiSkyCardShell.setEditorExpanded(slot,false);refs.editor.replaceChildren();cardState[slot].inference=null;cardState[slot].busy=false}
+function openEditor(slot,focus=true){const refs=shell(slot);if(!refs)return;beginWhereWhen(slot);refs.editor.innerHTML=editorMarkup(slot,profileFor(slot));window.RelphiSkyCardShell.setEditorExpanded(slot,true);if(focus)requestAnimationFrame(()=>refs.editor.querySelector('[data-ww-field="location-query"]')?.focus())}
+function clearEditor(slot){const refs=shell(slot);if(!refs)return;window.RelphiSkyCardShell.setEditorExpanded(slot,false);refs.editor.replaceChildren();cardState[slot].inference=null;cardState[slot].busy=false}
+function closeEditor(slot){clearEditor(slot);finishWhereWhen(slot,false)}
 
 function localDateTimeToInstant(date,time,timeZone){if(!window.luxon?.DateTime)throw new Error('Time-zone conversion is unavailable.');const dt=window.luxon.DateTime.fromISO(`${date}T${time}`,{zone:timeZone,setZone:true});if(!dt.isValid)throw new Error(dt.invalidExplanation||'That local date and time is not valid in the selected time zone.');return dt}
 function astronomyLongitude(bodyName,date){const A=window.Astronomy;if(!A)throw new Error('Astronomy Engine is unavailable.');if(bodyName==='Moon'&&typeof A.EclipticGeoMoon==='function')return norm(A.EclipticGeoMoon(date).lon);return norm(A.Ecliptic(A.GeoVector(bodyName,date,true)).elon)}
@@ -149,7 +180,7 @@ async function inferDateFromPlacements(slot){const value=payload(slot),map=place
 async function reversePacket(latitude,longitude){const reverseUrl=new URL('https://api.bigdatacloud.net/data/reverse-geocode-client');reverseUrl.searchParams.set('latitude',String(latitude));reverseUrl.searchParams.set('longitude',String(longitude));reverseUrl.searchParams.set('localityLanguage','en');const zoneUrl=new URL('https://api.open-meteo.com/v1/forecast');zoneUrl.searchParams.set('latitude',String(latitude));zoneUrl.searchParams.set('longitude',String(longitude));zoneUrl.searchParams.set('timezone','auto');zoneUrl.searchParams.set('forecast_days','1');const[reverseResponse,zoneResponse]=await Promise.all([fetch(reverseUrl.toString(),{headers:{Accept:'application/json'}}),fetch(zoneUrl.toString(),{headers:{Accept:'application/json'}})]);if(!reverseResponse.ok||!zoneResponse.ok)throw new Error('The estimated coordinates could not be matched to a canonical place.');const reverse=await reverseResponse.json(),zone=await zoneResponse.json(),canonical=[reverse.locality||reverse.city,reverse.principalSubdivision,reverse.countryName].map(v=>String(v||'').trim()).filter((v,i,list)=>v&&list.indexOf(v)===i).join(', ');return{canonical,timezone:String(zone.timezone||'UTC')}}
 async function infer(slot){const recovered=extractRecoveredInference(slot);if(recovered){inferenceCard(slot,recovered);status(slot,'Recovered a Where and When estimate. Review it before applying.');return}setBusy(slot,true);status(slot,'Estimating date, time, and place from planetary placements…');try{const estimate=await inferDateFromPlacements(slot);let packet={canonical:'',timezone:'UTC'};try{packet=await reversePacket(estimate.latitude,estimate.longitude)}catch(_){}const dt=window.luxon.DateTime.fromJSDate(estimate.date).setZone(packet.timezone||'UTC');inferenceCard(slot,{query:'Placement inference',canonical:packet.canonical||`${displayCoordinate(estimate.latitude)}, ${displayCoordinate(estimate.longitude)}`,latitude:estimate.latitude,longitude:estimate.longitude,timezone:packet.timezone||'UTC',dateTime:dt.toFormat("yyyy-MM-dd'T'HH:mm"),confidence:estimate.confidence});status(slot,'Inference complete. Nothing changes until you choose Apply inference.')}catch(error){status(slot,error.message||'The placements did not contain enough information for an estimate.',true)}finally{setBusy(slot,false)}}
 function applyInference(slot){const result=cardState[slot].inference;if(!result)return;cardState[slot].selected={query:result.query||'Placement inference',canonical:result.canonical,latitude:Number(result.latitude),longitude:Number(result.longitude),timezone:result.timezone||'UTC'};cardState[slot].query=cardState[slot].selected.query;const card=panel(slot);card.querySelector('[data-ww-field="location-query"]').value=cardState[slot].query;card.querySelector('[data-ww-field="timezone"]').value=result.timezone||'UTC';card.querySelector('[data-ww-field="latitude"]').value=displayCoordinate(result.latitude);card.querySelector('[data-ww-field="longitude"]').value=displayCoordinate(result.longitude);const[date,time]=String(result.dateTime||'').split('T');card.querySelector('[data-ww-field="date"]').value=date||'';card.querySelector('[data-ww-field="time"]').value=(time||'').slice(0,5);const when=card.querySelector('[data-ww-when]');when.disabled=false;when.querySelectorAll('input').forEach(node=>{node.disabled=false});card.querySelector('button[type="submit"]').disabled=false;const confirmation=card.querySelector('.sky-location-confirmation');confirmation.hidden=false;confirmation.innerHTML=`<p><strong>You searched:</strong> ${escapeHtml(cardState[slot].selected.query)}</p><p><strong>Location found:</strong> ${escapeHtml(cardState[slot].selected.canonical)}</p>`;status(slot,'Inference applied to the form. Review it, then confirm.')}
-async function submit(slot,form){const selected=cardState[slot].selected,date=form.querySelector('[data-ww-field="date"]')?.value||'',time=form.querySelector('[data-ww-field="time"]')?.value||'';if(!selected)return status(slot,'Choose a canonical location first.',true);if(!date||!time)return status(slot,'Enter both the local date and local time.',true);setBusy(slot,true);status(slot,'Calculating placements and Planetary Hours…');try{const nextPayload=calculateSky(slot,selected,date,time);writeJson(SLOT_KEYS[slot],nextPayload);closeEditor(slot);dispatchSlotChange(slot);scheduleSummary(slot,true)}catch(error){setBusy(slot,false);status(slot,error.message||'The Sky could not be calculated.',true)}}
+async function submit(slot,form){const selected=cardState[slot].selected,date=form.querySelector('[data-ww-field="date"]')?.value||'',time=form.querySelector('[data-ww-field="time"]')?.value||'';if(!selected)return status(slot,'Choose a canonical location first.',true);if(!date||!time)return status(slot,'Enter both the local date and local time.',true);setBusy(slot,true);status(slot,'Calculating placements and Planetary Hours…');try{const nextPayload=calculateSky(slot,selected,date,time);writeJson(SLOT_KEYS[slot],nextPayload);clearEditor(slot);dispatchSlotChange(slot);finishWhereWhen(slot,true);scheduleSummary(slot,true)}catch(error){setBusy(slot,false);status(slot,error.message||'The Sky could not be calculated.',true)}}
 
 document.addEventListener('click',event=>{
   const disclosure=event.target.closest('[data-ww-disclosure]');if(disclosure){const slot=disclosure.dataset.wwDisclosure;if(!SLOT_KEYS[slot])return;event.preventDefault();event.stopPropagation();if(disclosure.getAttribute('aria-expanded')==='true')closeEditor(slot);else openEditor(slot,true);return}
