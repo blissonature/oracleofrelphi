@@ -714,8 +714,7 @@
       'relphi:sky-placement-multiselect-changed',
       'relphi:sky-house-multiselect-changed',
       'relphi:sky-single-sky-aspects-rendered',
-      'relphi:sky-intrasky-relationships-ready',
-      'relphi:sky-where-when-committed'
+      'relphi:sky-intrasky-relationships-ready'
     ].forEach(name => window.addEventListener(name, schedule));
     window.addEventListener('relphi:sky-foundation-filter-changed', filterChanged);
     window.addEventListener('storage', event => {
