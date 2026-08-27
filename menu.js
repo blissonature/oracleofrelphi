@@ -52,10 +52,8 @@
 
   function loadAstrologyFoundationEnhancements() {
     if (!/(^|\/)astrology-foundations\.html$/.test(window.location.pathname)) return;
-    loadCanonicalGlyphRuntime(function () {
-      appendScript('astrology-foundations-canonical-glyphs-v1.js?v=1');
-    });
-    appendScript('astrology-foundations-mobile-signs.js?v=2');
+    // Astrology Foundations glyph loading is owned by navloader's single shared
+    // Master Glyph runtime path. Preserve the authored matrix layout here.
     appendScript('astrology-foundations-consistency.js?v=1');
   }
 
