@@ -130,16 +130,10 @@ function ensureControl(){
   }
   return select;
 }
-function idle(){
-  return new Promise(resolve=>{
-    if('requestIdleCallback'in window)requestIdleCallback(resolve,{timeout:80});
-    else setTimeout(()=>resolve({timeRemaining:()=>8,didTimeout:true}),0);
-  });
-}
 async function prepareTransitSort(){
   const generation=++calculationGeneration;
   const api=window.RelphiRelationshipTransitMeta;
-  if(!api?.durationDaysForRow){
+  if(!api?.durationDaysForRowAsync){
     busy=false;
     ensureControl();
     dispatch();
@@ -147,17 +141,18 @@ async function prepareTransitSort(){
   }
   busy=true;
   ensureControl();
-  const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')];
-  let index=0;
-  while(index<rows.length){
-    const deadline=await idle();
+  const HIDDEN_CLASSES=[
+    'sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
+    'sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden',
+    'sky-chart-zodiac-filter-hidden','sky-chart-semantic-hidden'
+  ];
+  const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
+    .filter(row=>!HIDDEN_CLASSES.some(name=>row.classList.contains(name)));
+  for(const row of rows){
     if(generation!==calculationGeneration)return;
-    let processed=0;
-    while(index<rows.length&&(processed<1||deadline.timeRemaining()>4)){
-      api.durationDaysForRow(rows[index]);
-      index+=1;
-      processed+=1;
-    }
+    await api.durationDaysForRowAsync(row,()=>generation!==calculationGeneration);
+    if(generation!==calculationGeneration)return;
+    await new Promise(resolve=>setTimeout(resolve,0));
   }
   if(generation!==calculationGeneration)return;
   busy=false;
@@ -185,6 +180,8 @@ function refreshForRows(){
   if(mode!==MODES.exact)dispatch();
 }
 function invalidateTransit(){
+  calculationGeneration+=1;
+  busy=false;
   window.RelphiRelationshipTransitMeta?.clearDurationCache?.();
   if(mode===MODES.longest||mode===MODES.shortest)prepareTransitSort();
 }
