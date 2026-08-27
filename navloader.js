@@ -133,10 +133,8 @@
 
   function loadCanonicalGlyphRuntime(onready) {
     ensureCanonicalSkyBootStyle();
-    appendScript('relphi-glyph-registry-v1.js?v=28', function () {
-      appendScript('relphi-glyph-component-v1.js?v=32', function () {
-        appendScript('relphi-glyph-source-integrity-v1.js?v=2', onready);
-      });
+    appendScript('relphi-glyph-registry-v1.js?v=29', function () {
+      appendScript('relphi-glyph-component-v1.js?v=33', onready);
     });
   }
 
