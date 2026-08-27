@@ -80,6 +80,44 @@ function installStyles(){if(document.getElementById('skyRelationshipTransitMetaV
 .inline-rel-transit-row{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;gap:4px!important;align-items:start!important;min-width:0!important}.inline-rel-transit-row>b{color:#48413b!important;font:900 .47rem/1.2 system-ui,sans-serif!important}.inline-rel-transit-row>span{min-width:0!important;overflow-wrap:anywhere!important}.inline-rel-transit-window[data-transit-kind="unavailable"]{color:#777!important}
 @media(max-width:620px){.inline-rel-progressive-token[data-inline-progressive-token="aspect"]>.inline-rel-transit-window{font-size:.46rem!important}.inline-rel-transit-row>b{font-size:.45rem!important}}
 `;document.head.appendChild(style)}
+const sortDurationCache=new Map();
+function sortDurationSignature(row){
+  const liveSignature=['A','B'].map(slot=>`${slot}:${liveOrigin(slot)}:${profileDate(slot)?.toISOString()||''}`).join('|');
+  return[
+    row?.dataset?.relationshipMode||'',
+    row?.dataset?.relationIndex||'',
+    row?.dataset?.aspect||'',
+    row?.dataset?.leftPlacement||'',
+    row?.dataset?.rightPlacement||'',
+    Number.isFinite(Number(row?.dataset?.sourceOrb))?Number(row.dataset.sourceOrb).toFixed(8):'',
+    angularLimit(row).toFixed(8),
+    liveSignature
+  ].join('|');
+}
+function durationDaysForSort(row){
+  if(!row?.isConnected)return null;
+  const signature=sortDurationSignature(row);
+  if(sortDurationCache.has(signature))return sortDurationCache.get(signature);
+  const model=modelFor(row);
+  let duration=null;
+  if(model.kind==='dynamic'&&model.errorAt(model.center)<=model.limit+1e-8){
+    const timeline=collectTimeline(model);
+    if(timeline&&Number.isFinite(timeline.durationDays))duration=timeline.durationDays;
+  }
+  sortDurationCache.set(signature,duration);
+  if(Number.isFinite(duration))row.dataset.transitDurationDays=String(duration);
+  else delete row.dataset.transitDurationDays;
+  return duration;
+}
+function clearSortDurationCache(){
+  sortDurationCache.clear();
+  document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>delete row.dataset.transitDurationDays);
+}
+window.RelphiRelationshipTransitMeta=Object.freeze({
+  durationDaysForRow:durationDaysForSort,
+  clearDurationCache:clearSortDurationCache
+});
+
 function start(){installStyles();attach();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:sky-intrasky-relationships-ready','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
