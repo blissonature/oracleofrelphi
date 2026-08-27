@@ -93,12 +93,7 @@ function relationships(list,scope){
   return result.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.orb-b.orb);
 }
 function coordinate(record){
-  const item=record.item||{},explicitSign=SIGNS.indexOf(String(item.sign||item.zodiac||'').trim().toLowerCase()),explicitDegree=Number(item.degree??item.degrees),explicitMinute=Number(item.minute??item.minutes);
-  if(explicitSign>=0&&Number.isFinite(explicitDegree)&&Number.isFinite(explicitMinute)){
-    const degree=Math.max(0,Math.min(29,Math.trunc(explicitDegree))),minute=Math.max(0,Math.min(59,Math.trunc(explicitMinute)));
-    return{sign:explicitSign,text:`${degree}°${String(minute).padStart(2,'0')}′`};
-  }
-  const sign=Math.floor(record.value/30),within=record.value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-9);
+  const value=norm(record.value),sign=Math.floor(value/30),within=value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-9);
   return{sign,text:`${degree}°${String(minute).padStart(2,'0')}′`};
 }
 function glyphSlot(role,label){
