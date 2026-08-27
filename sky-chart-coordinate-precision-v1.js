@@ -192,9 +192,13 @@
     document.documentElement.dataset.skyCoordinatePrecision = 'longitude-authoritative-by-row-sky';
   }
 
+  function whereWhenEditing() {
+    return document.documentElement.dataset.skyWhereWhenEditing === 'true';
+  }
+
   let queued = false;
   function schedule() {
-    if (queued) return;
+    if (queued || whereWhenEditing()) return;
     queued = true;
     queueMicrotask(() => {
       queued = false;
@@ -203,7 +207,7 @@
   }
 
   function start() {
-    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:selected-relationship-rendered','relphi:sky-progressive-symbols-ready']
+    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:selected-relationship-rendered','relphi:sky-progressive-symbols-ready','relphi:sky-where-when-committed']
       .forEach(name => window.addEventListener(name,schedule));
     window.addEventListener('storage',event => {
       if (!event.key || event.key === KEYS.A || event.key === KEYS.B) schedule();
