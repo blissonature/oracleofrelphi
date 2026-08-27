@@ -484,7 +484,6 @@
     }).observe(root, { childList:true, subtree:true });
     window.addEventListener('relphi:sky-foundation-ready', schedule);
     window.addEventListener('relphi:sky-foundation-interactions-ready', schedule);
-    window.addEventListener('relphi:sky-where-when-committed', schedule);
     window.addEventListener('storage', schedule);
     schedule();
   }
