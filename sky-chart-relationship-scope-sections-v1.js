@@ -54,8 +54,9 @@ function applyCollapseState(list){
     }
   }
 }
+function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
 function groupList(){
-  queued=false;if(applying)return;
+  queued=false;if(applying||whereWhenEditing())return;
   const list=document.getElementById('skyFoundationRelationshipList');if(!list)return;
   const rows=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row')];if(!rows.length)return;
   const other=[...list.children].filter(n=>!n.matches?.('.sky-foundation-relationship-row,.sky-relationship-scope-heading,.sky-relationship-family-heading')),desired=[...other];
@@ -113,6 +114,6 @@ function ensureObserver(){
 }
 function bind(){ensureObserver();bindCopyButton();schedule()}
 function bindCopySoon(){bindCopyButton();requestAnimationFrame(bindCopyButton)}
-function start(){installStyles();document.addEventListener('click',handleDisclosureClick);bind();requestAnimationFrame(bindCopySoon);const events=['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-aspect-multiselect-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-foundation-filter-changed','relphi:relationship-display-changed','relphi:relationship-sort-changed'];events.forEach(name=>window.addEventListener(name,()=>{schedule();bindCopySoon()}))}
+function start(){installStyles();document.addEventListener('click',handleDisclosureClick);bind();requestAnimationFrame(bindCopySoon);const events=['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-aspect-multiselect-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-foundation-filter-changed','relphi:relationship-display-changed','relphi:relationship-sort-changed','relphi:sky-where-when-committed'];events.forEach(name=>window.addEventListener(name,()=>{schedule();bindCopySoon()}))}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
