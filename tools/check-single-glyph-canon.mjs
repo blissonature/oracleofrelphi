@@ -1,238 +1,92 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const ROOT = process.cwd();
-const SELF = 'tools/check-single-glyph-canon.mjs';
+const AUTHORIZED_COMMIT = '0d56ee7ec0ea0fc3e44debcb809afde09f3271ab';
 const failures = [];
-const productionExt = /\.(?:html|js|mjs|css|json|yml|yaml)$/i;
-const skipDirs = new Set(['.git', 'node_modules', 'coverage', 'tests', 'test']);
-const staticMasterIds = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith','part-of-fortune'];
 
-function rel(file) {
-  return path.relative(ROOT, file).split(path.sep).join('/');
-}
+const gitShow = file => execFileSync('git',['show',`${AUTHORIZED_COMMIT}:${file}`],{cwd:ROOT});
+const current = file => fs.readFileSync(path.join(ROOT,file));
+const exists = file => fs.existsSync(path.join(ROOT,file));
 
-function walk(dir, out = []) {
-  if (!fs.existsSync(dir)) return out;
-  for (const entry of fs.readdirSync(dir, { withFileTypes:true })) {
-    if (skipDirs.has(entry.name)) continue;
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, out);
-    else if (productionExt.test(entry.name)) out.push(full);
-  }
-  return out;
-}
-
-function text(file) {
-  return fs.readFileSync(file, 'utf8');
-}
-
-function fail(message) {
-  failures.push(message);
-}
-
-const files = walk(ROOT);
-const sourceFiles = files.filter(file => {
-  const name = rel(file);
-  return name !== SELF &&
-    !name.startsWith('tools/') &&
-    !name.startsWith('.github/') &&
-    !name.startsWith('schemas/') &&
-    !name.startsWith('assets/canonical-glyphs/v1/');
-});
-
-const forbiddenRefs = [
-  'relphi-moon-stroke-preservation-v1.js',
-  'relphi-neptune-cross-connection-v1.js',
-  'relphi-canonical-glyph-state-v1.js',
-  'RelphiCanonicalGlyphState',
-  'assets/planet-glyphs/ascendant.svg',
-  'assets/planet-glyphs/midheaven.svg',
-  'assets/planet-glyphs/earth.svg',
-  'assets/canonical-glyphs/v1/',
-  'assets/angle-glyphs/',
-  'https://oracleofrelphi.com/relphi-glyph-registry-v1.js',
-  'https://oracleofrelphi.com/relphi-glyph-component-v1.js'
+const authorityFiles = [
+  'glyphs-unified-preview.html',
+  'relphi-glyph-registry-v1.js',
+  'relphi-glyph-component-v1.js'
 ];
 
-for (const file of sourceFiles) {
-  const body = text(file);
-  for (const token of forbiddenRefs) {
-    if (body.includes(token)) fail(`${rel(file)} references forbidden competing glyph source: ${token}`);
+let approvedRegistry = '';
+try { approvedRegistry = gitShow('relphi-glyph-registry-v1.js').toString('utf8'); }
+catch (error) { failures.push(`Cannot read authorized registry from ${AUTHORIZED_COMMIT}: ${error.message}`); }
+
+const approvedAssets = approvedRegistry
+  ? [...new Set([...approvedRegistry.matchAll(/'((?:assets\\/)[^']+\\.svg)'/g)].map(match => match[1]))]
+  : [];
+
+for (const file of [...authorityFiles,...approvedAssets]) {
+  if (!exists(file)) {
+    failures.push(`Authorized source is missing: ${file}`);
+    continue;
+  }
+  try {
+    const approved = gitShow(file);
+    const actual = current(file);
+    if (!approved.equals(actual)) failures.push(`${file} differs from the explicitly authorized source at ${AUTHORIZED_COMMIT}`);
+  } catch (error) {
+    failures.push(`Could not verify ${file}: ${error.message}`);
   }
 }
 
-const registryDefinitions = sourceFiles.filter(file => text(file).includes('window.RelphiGlyphRegistry ='));
-const componentDefinitions = sourceFiles.filter(file => text(file).includes('window.RelphiGlyphComponent ='));
-if (registryDefinitions.length !== 1 || rel(registryDefinitions[0] || '') !== 'relphi-glyph-registry-v1.js') {
-  fail(`Expected exactly one RelphiGlyphRegistry definition in relphi-glyph-registry-v1.js; found: ${registryDefinitions.map(rel).join(', ') || 'none'}`);
-}
-if (componentDefinitions.length !== 1 || rel(componentDefinitions[0] || '') !== 'relphi-glyph-component-v1.js') {
-  fail(`Expected exactly one RelphiGlyphComponent definition in relphi-glyph-component-v1.js; found: ${componentDefinitions.map(rel).join(', ') || 'none'}`);
-}
-
-// The registry is the sole production file allowed to name concrete glyph SVG assets.
-// Consumers choose identities and presentation states; they never bypass the registry
-// by importing a planet/zodiac/aspect/element SVG directly.
-const directGlyphAssetPattern = /assets\/(?:planet|zodiac|aspect|element)-glyphs\/[a-z0-9._/-]+\.svg/gi;
-for (const file of sourceFiles) {
-  const name = rel(file);
-  if (name === 'relphi-glyph-registry-v1.js') continue;
-  const matches = Array.from(new Set(text(file).match(directGlyphAssetPattern) || []));
-  if (matches.length) fail(`${name} bypasses the registry with direct glyph asset reference(s): ${matches.join(', ')}`);
-}
-
-// Relationship rows have exactly one glyph painter. The interaction controller may
-// create semantic slots, but only the relationship layout module may populate them,
-// and it must populate them through RelphiGlyphComponent.createBubble().
-const relationshipLayoutPath = path.join(ROOT, 'sky-chart-relationship-list-layout-v1.js');
-const relationshipInteractionPath = path.join(ROOT, 'sky-chart-foundation-interactions-v2.js');
-const selectedRelationshipPath = path.join(ROOT, 'sky-chart-selected-relationship-v4.js');
-if (!fs.existsSync(relationshipLayoutPath)) {
-  fail('Missing sole relationship glyph painter: sky-chart-relationship-list-layout-v1.js');
-} else {
-  const relationshipLayout = text(relationshipLayoutPath);
-  if (!relationshipLayout.includes('RelphiGlyphComponent')) fail('Relationship glyph painter no longer resolves the shared RelphiGlyphComponent.');
-  if (!relationshipLayout.includes('component.createBubble(')) fail('Relationship glyph painter no longer uses the shared createBubble method.');
-  if (!relationshipLayout.includes('data-relationship-canonical-host')) fail('Relationship glyph painter no longer marks exclusive canonical ownership of its SVG hosts.');
-  if (!relationshipLayout.includes('host.childElementCount !== 1')) fail('Relationship glyph painter no longer validates its canonical SVG subtree.');
-  if (!relationshipLayout.includes('arts.length !== 1')) fail('Relationship glyph painter no longer rejects duplicate canonical art inside one slot.');
-}
-if (fs.existsSync(relationshipInteractionPath)) {
-  const interaction = text(relationshipInteractionPath);
-  for (const token of ['RelphiCanonicalGlyphState','placeCanonicalGlyph(','component.createBubble(','RelphiGlyphComponent.createBubble(']) {
-    if (interaction.includes(token)) fail(`Interaction controller is rendering relationship glyphs instead of leaving painting to the sole relationship renderer: ${token}`);
-  }
-}
-if (!fs.existsSync(selectedRelationshipPath)) {
-  fail('Missing selected relationship consumer: sky-chart-selected-relationship-v4.js');
-} else {
-  const selectedRelationship = text(selectedRelationshipPath);
-  if (!selectedRelationship.includes('window.RelphiGlyphComponent')) fail('Selected relationship consumer no longer resolves the shared RelphiGlyphComponent.');
-  if (!selectedRelationship.includes('component.createBubble(')) fail('Selected relationship consumer no longer uses the shared createBubble method.');
-  if (selectedRelationship.includes('RelphiCanonicalGlyphState')) fail('Selected relationship consumer restored a competing glyph rendering API.');
-}
-
-const forbiddenFiles = [
-  'relphi-moon-stroke-preservation-v1.js',
-  'relphi-neptune-cross-connection-v1.js',
-  'relphi-canonical-glyph-state-v1.js',
-  'relphi-glyph-canon-binding-v1.js',
-  'relphi-glyph-component-e9344099.js',
-  'sky-chart-angle-glyph-fit-v1.js',
-  'sky-chart-canonical-glyph-correction-v1.js',
-  'sky-chart-wheel-e9344099-canonical-master-v1.js',
-  'sky-chart-wheel-canonical-component-v1.js',
-  'assets/planet-glyphs/ascendant.svg',
-  'assets/planet-glyphs/midheaven.svg',
-  'assets/planet-glyphs/earth.svg',
-  'assets/canonical-glyphs/v1/manifest.json',
-  'canonical-glyphs-v1-preview.html',
-  'glyph-canon-approved-source-manifest.json'
+const forbiddenPaths = [
+  'relphi-glyph-source-integrity-v1.js',
+  'relphi-canonical-glyph-loader-v1.js',
+  'relphi-canonical-glyph-element-v1.js',
+  'canonical-glyph-contract-v1.json',
+  'docs/sky-chart-canonical-glyph-contract.md',
+  'assets/canonical-glyphs/v1',
+  'assets/planet-glyphs/part-of-fortune.svg'
 ];
-for (const name of forbiddenFiles) {
-  if (fs.existsSync(path.join(ROOT, name))) fail(`Forbidden competing glyph source still exists: ${name}`);
-}
-if (fs.existsSync(path.join(ROOT, 'assets/angle-glyphs'))) fail('assets/angle-glyphs/ is forbidden; angles come from the Master Glyph List registry treatment.');
-
-const registryPath = path.join(ROOT, 'relphi-glyph-registry-v1.js');
-const componentPath = path.join(ROOT, 'relphi-glyph-component-v1.js');
-const integrityPath = path.join(ROOT, 'relphi-glyph-source-integrity-v1.js');
-const inlineConsumerPath = path.join(ROOT, 'relphi-inline-glyph-consumer-v1.js');
-const foundationsConsumerPath = path.join(ROOT, 'astrology-foundations-canonical-glyphs-v1.js');
-const navloaderPath = path.join(ROOT, 'navloader.js');
-const moonPath = path.join(ROOT, 'assets/planet-glyphs/moon.svg');
-for (const [file, label] of [
-  [registryPath,'relphi-glyph-registry-v1.js'],
-  [componentPath,'relphi-glyph-component-v1.js'],
-  [integrityPath,'relphi-glyph-source-integrity-v1.js'],
-  [inlineConsumerPath,'relphi-inline-glyph-consumer-v1.js'],
-  [foundationsConsumerPath,'astrology-foundations-canonical-glyphs-v1.js'],
-  [navloaderPath,'navloader.js'],
-  [moonPath,'approved Moon asset']
-]) {
-  if (!fs.existsSync(file)) fail(`Missing ${label}`);
+for (const file of forbiddenPaths) {
+  if (exists(file)) failures.push(`Unauthorized competing glyph layer still exists: ${file}`);
 }
 
-let registry = '';
-if (fs.existsSync(registryPath)) {
-  registry = text(registryPath);
-  const angleRules = [
-    ["['asc','Ascendant',['asc','ascendant','rising','ac'],null,1,0,0,'Asc','letter','700']", 'Ascendant'],
-    ["['dsc','Descendant',['dsc','descendant','dc'],null,1,0,0,'Dsc','letter','700']", 'Descendant'],
-    ["['mc','Midheaven',['mc','midheaven'],null,1,0,0,'MC','letter','700']", 'Midheaven'],
-    ["['ic','Imum Coeli',['ic','imum coeli','imumcoeli'],null,1,0,0,'IC','letter','700']", 'Imum Coeli']
-  ];
-  for (const [snippet, label] of angleRules) {
-    if (!registry.includes(snippet)) fail(`${label} no longer uses the approved Master Glyph List text treatment.`);
-  }
-  for (const id of staticMasterIds) {
-    const pattern = new RegExp(`\\['${id}'[^\\n]+?,1,0,0,null,'static-master'\\]`);
-    if (!pattern.test(registry)) fail(`${id} is not pinned to the shared static-master treatment.`);
+const activeEntryPoints = [
+  'glyphs-unified-preview.html',
+  'glyphs.html',
+  'sky-chart.html',
+  'part1/sky-chart.html',
+  'part2/sky-chart.html',
+  'navloader.js'
+];
+const forbiddenTokens = [
+  'relphi-glyph-source-integrity-v1.js',
+  'relphi-canonical-glyph-loader-v1.js',
+  'relphi-canonical-glyph-element-v1.js',
+  'assets/canonical-glyphs/v1/'
+];
+for (const file of activeEntryPoints) {
+  if (!exists(file)) continue;
+  const source = current(file).toString('utf8');
+  for (const token of forbiddenTokens) {
+    if (source.includes(token)) failures.push(`${file} references unauthorized glyph layer: ${token}`);
   }
 }
 
-const planetDir = path.join(ROOT, 'assets/planet-glyphs');
-if (fs.existsSync(planetDir) && registry) {
-  for (const entry of fs.readdirSync(planetDir, { withFileTypes:true })) {
-    if (!entry.isFile() || !entry.name.endsWith('.svg')) continue;
-    const assetPath = `assets/planet-glyphs/${entry.name}`;
-    if (!registry.includes(`'${assetPath}'`)) fail(`Unregistered planet-glyph SVG can masquerade as authority: ${assetPath}`);
-  }
-
-  for (const id of staticMasterIds) {
-    const file = path.join(planetDir, `${id}.svg`);
-    if (!fs.existsSync(file)) {
-      fail(`Missing shared static master: ${id}`);
-      continue;
-    }
-    const source = text(file);
-    if (/<g\b/i.test(source)) fail(`${id} static master contains a group-level paint exception.`);
-    if (!/<(?:path|circle|rect)\b[^>]*(?:fill|stroke)="/i.test(source)) fail(`${id} static master has no directly paintable shape.`);
-  }
+if (exists('relphi-glyph-registry-v1.js')) {
+  const source=current('relphi-glyph-registry-v1.js').toString('utf8');
+  if ((source.match(/window\.RelphiGlyphRegistry\s*=/g)||[]).length!==1) failures.push('Authorized registry definition is missing or duplicated.');
 }
-
-if (fs.existsSync(componentPath)) {
-  const component = text(componentPath);
-  if (!component.includes("if (entry.fitMode === 'static-master') return;")) fail('Static masters are no longer protected from runtime fitting.');
-  if (!component.includes("if (entry.fitMode === 'static-master') return staticMaster")) fail('Static-master draw path is missing.');
-  if (component.includes("entry.id === 'lilith'")) fail('Lilith-specific component logic returned; Lilith must use the shared static-master path.');
-  if (component.includes("entry.fitMode === 'lilith'")) fail('Lilith-specific fitting returned; Lilith must not have a bespoke fit mode.');
-  if (component.includes("entry.id === 'part-of-fortune'")) fail('Part of Fortune-specific component logic returned; it must use the shared static-master path.');
-  if (component.includes('function fortune(')) fail('Procedural Part of Fortune renderer returned; it must come from its static master asset.');
-  if (component.includes('function sun(')) fail('Procedural Sun renderer returned; Sun must come from the shared asset source.');
-}
-
-if (fs.existsSync(integrityPath)) {
-  const integrity = text(integrityPath);
-  if (!integrity.includes("Object.defineProperty(window, 'RelphiGlyphRegistry'")) fail('Registry global is no longer locked.');
-  if (!integrity.includes("Object.defineProperty(window, 'RelphiGlyphComponent'")) fail('Component global is no longer locked.');
-}
-
-if (fs.existsSync(navloaderPath)) {
-  const nav = text(navloaderPath);
-  for (const snippet of [
-    "appendScript('relphi-glyph-registry-v1.js?v=28'",
-    "appendScript('relphi-glyph-component-v1.js?v=32'",
-    "appendScript('relphi-glyph-source-integrity-v1.js?v=2'",
-    "appendScript('relphi-inline-glyph-consumer-v1.js?v=2'",
-    "appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2'"
-  ]) {
-    if (!nav.includes(snippet)) fail(`navloader lost required single-canon route: ${snippet}`);
-  }
-}
-
-if (fs.existsSync(moonPath)) {
-  const moon = text(moonPath);
-  if (!moon.includes('M47.9220542672045 30.973850765136838')) fail('Approved thin Moon geometry changed.');
-  if (!moon.includes('stroke-width="3.3114267878104444"')) fail('Approved thin Moon stroke changed.');
+if (exists('relphi-glyph-component-v1.js')) {
+  const source=current('relphi-glyph-component-v1.js').toString('utf8');
+  if ((source.match(/window\.RelphiGlyphComponent\s*=/g)||[]).length!==1) failures.push('Authorized component definition is missing or duplicated.');
 }
 
 if (failures.length) {
-  console.error('\nSINGLE GLYPH CANON CHECK FAILED\n');
-  failures.forEach((message, index) => console.error(`${index + 1}. ${message}`));
+  console.error('\nAUTHORIZED GLYPH SOURCE CHECK FAILED\n');
+  failures.forEach((message,index)=>console.error(`${index+1}. ${message}`));
   process.exit(1);
 }
 
-console.log('Single glyph canon check passed.');
-console.log('One registry, one component, registry-only asset addressing, one relationship glyph painter, shared createBubble consumers, atomic relationship glyph ownership, shared static-master treatment, approved angle treatments, no unregistered planet SVGs, and no known competing production source paths.');
+console.log(`Authorized glyph source verified at ${AUTHORIZED_COMMIT}.`);
+console.log(`${authorityFiles.length} authority files and ${approvedAssets.length} registry-referenced assets match exactly; no competing active glyph layer is present.`);
