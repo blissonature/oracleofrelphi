@@ -66,29 +66,32 @@ function installStyles(){
   const style=document.createElement('style');
   style.id='skyRelationshipSortV1Styles';
   style.textContent=`
-.sky-relationship-sort-control{display:flex;align-items:center;min-width:0}
-.sky-relationship-sort-select{appearance:auto;-webkit-appearance:menulist;box-sizing:border-box;width:142px;max-width:142px;height:29px;margin:0;padding:0 6px;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;font:800 .64rem/1 system-ui,sans-serif;cursor:pointer}
-.sky-relationship-sort-select:hover,.sky-relationship-sort-select:focus-visible{border-color:#6b625a;outline:0;background:#fffdfa}
-.sky-relationship-sort-select[aria-busy="true"]{cursor:progress;opacity:.66}
-@media(max-width:620px){.sky-relationship-sort-select{width:126px;max-width:126px;height:27px;padding-inline:5px;font-size:.59rem}}
+#skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-sort-control{align-self:end!important;min-width:0!important}
+#skyFoundationRelationships .sky-relationship-sort-control>span{align-self:end;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sky-filter-label-color,#4e463f);font:var(--sky-filter-label-font,800 .62rem/1.2 system-ui,sans-serif)}
+#skyFoundationRelationships .sky-relationship-sort-select[aria-busy="true"]{cursor:progress!important;opacity:.66}
+@media(min-width:901px){
+  #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-sort-control{grid-column:3/span 2!important}
+}
 `;
   document.head.appendChild(style);
 }
 function ensureControl(){
   installStyles();
-  const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
-  if(!heading)return null;
-  let actions=heading.querySelector(':scope>.sky-relationship-heading-actions');
-  if(!actions){
-    actions=document.createElement('span');
-    actions.className='sky-relationship-heading-actions';
-    const clear=heading.querySelector('#skyFoundationClearIsolation');
-    heading.insertBefore(actions,clear||null);
-  }
-  let control=actions.querySelector(':scope>.sky-relationship-sort-control');
+  const relationships=document.getElementById('skyFoundationRelationships');
+  const bar=relationships?.querySelector('.sky-chart-filter-bar');
+  if(!bar)return null;
+
+  const headingControl=relationships.querySelector('.sky-foundation-relationships-heading .sky-relationship-sort-control');
+  headingControl?.remove();
+
+  let control=bar.querySelector(':scope>.sky-relationship-sort-control');
   if(!control){
     control=document.createElement('label');
     control.className='sky-relationship-sort-control';
+
+    const label=document.createElement('span');
+    label.textContent='Sort';
+
     const select=document.createElement('select');
     select.className='sky-relationship-sort-select';
     select.dataset.relationshipSort='true';
@@ -99,17 +102,26 @@ function ensureControl(){
       [MODES.aspect,'Aspect Type'],
       [MODES.longest,'Longest Transit First'],
       [MODES.shortest,'Shortest Transit First']
-    ].forEach(([value,label])=>{
+    ].forEach(([value,text])=>{
       const option=document.createElement('option');
       option.value=value;
-      option.textContent=label;
+      option.textContent=text;
       select.appendChild(option);
     });
     select.value=mode;
     select.addEventListener('change',()=>setMode(select.value));
-    control.appendChild(select);
-    actions.prepend(control);
+    control.append(label,select);
   }
+
+  const display=bar.querySelector(':scope>[data-relationship-display-control]');
+  if(display){
+    if(control.previousElementSibling!==display)display.after(control);
+  }else if(control.parentElement!==bar){
+    bar.appendChild(control);
+  }else if(!control.isConnected){
+    bar.appendChild(control);
+  }
+
   const select=control.querySelector('select');
   if(select&&select.value!==mode)select.value=mode;
   if(select){
