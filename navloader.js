@@ -54,7 +54,7 @@
 
   function initMenu() {
     if (window.RelphiInitMenu) return window.RelphiInitMenu();
-    appendScript('menu.js?v=7');
+    appendScript('menu.js?v=8');
   }
 
   function injectNav(html) {
