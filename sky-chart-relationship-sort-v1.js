@@ -1,4 +1,4 @@
-// Relationship sorting: preserve Most Exact First as the default and add Aspect Type / transit-length modes.
+// Relationship sorting: exactitude, aspect taxonomy, duration, and phase-end timing.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipSortV1)return;
@@ -7,8 +7,10 @@ window.__relphiRelationshipSortV1=true;
 const MODES=Object.freeze({
   exact:'exact',
   aspect:'aspect',
-  longest:'transit-longest',
-  shortest:'transit-shortest'
+  longest:'duration-longest',
+  shortest:'duration-shortest',
+  endsSoonest:'ends-soonest',
+  endsLast:'ends-last'
 });
 const ASPECT_ORDER=Object.freeze([
   'conjunction','opposition','trine','square','sextile',
@@ -39,21 +41,23 @@ function compareAspect(a,b){
   const br=ASPECT_RANK.get(String(b?.dataset?.aspect||''))??999;
   return ar-br||compareExact(a,b);
 }
-function transitDuration(row){
-  const value=Number(row?.dataset?.transitDurationDays);
+function timingValue(row,key){
+  const value=Number(row?.dataset?.[key]);
   return Number.isFinite(value)?value:null;
 }
-function compareTransit(a,b,direction){
-  const ad=transitDuration(a),bd=transitDuration(b);
-  if(ad!=null&&bd!=null)return direction*(ad-bd)||compareExact(a,b);
-  if(ad!=null)return-1;
-  if(bd!=null)return 1;
+function compareTiming(a,b,key,direction){
+  const av=timingValue(a,key),bv=timingValue(b,key);
+  if(av!=null&&bv!=null)return direction*(av-bv)||compareExact(a,b);
+  if(av!=null)return-1;
+  if(bv!=null)return 1;
   return compareExact(a,b);
 }
 function compareRows(a,b){
   if(mode===MODES.aspect)return compareAspect(a,b);
-  if(mode===MODES.longest)return compareTransit(a,b,-1);
-  if(mode===MODES.shortest)return compareTransit(a,b,1);
+  if(mode===MODES.longest)return compareTiming(a,b,'transitDurationDays',-1);
+  if(mode===MODES.shortest)return compareTiming(a,b,'transitDurationDays',1);
+  if(mode===MODES.endsSoonest)return compareTiming(a,b,'transitEndsInDays',1);
+  if(mode===MODES.endsLast)return compareTiming(a,b,'transitEndsInDays',-1);
   return compareExact(a,b);
 }
 function currentMode(){return mode}
@@ -100,8 +104,10 @@ function ensureControl(){
     [
       [MODES.exact,'Most Exact First'],
       [MODES.aspect,'Aspect Type'],
-      [MODES.longest,'Longest Transit First'],
-      [MODES.shortest,'Shortest Transit First']
+      [MODES.longest,'Longest Duration'],
+      [MODES.shortest,'Shortest Duration'],
+      [MODES.endsSoonest,'Ends Soonest'],
+      [MODES.endsLast,'Ends Last']
     ].forEach(([value,text])=>{
       const option=document.createElement('option');
       option.value=value;
@@ -126,14 +132,14 @@ function ensureControl(){
   if(select&&select.value!==mode)select.value=mode;
   if(select){
     select.setAttribute('aria-busy',busy?'true':'false');
-    select.title=busy?'Calculating transit lengths…':'Sort relationships';
+    select.title=busy?'Calculating relationship timing…':'Sort relationships';
   }
   return select;
 }
 async function prepareTransitSort(){
   const generation=++calculationGeneration;
   const api=window.RelphiRelationshipTransitMeta;
-  if(!api?.estimatedDurationDaysForRow){
+  if(!api?.estimatedTimingForRow){
     busy=false;
     ensureControl();
     dispatch();
@@ -150,7 +156,7 @@ async function prepareTransitSort(){
     .filter(row=>!HIDDEN_CLASSES.some(name=>row.classList.contains(name)));
   for(let index=0;index<rows.length;index+=1){
     if(generation!==calculationGeneration)return;
-    api.estimatedDurationDaysForRow(rows[index]);
+    api.estimatedTimingForRow(rows[index]);
     if(index%4===3)await new Promise(resolve=>setTimeout(resolve,0));
   }
   if(generation!==calculationGeneration)return;
@@ -164,7 +170,7 @@ function setMode(next){
   calculationGeneration+=1;
   busy=false;
   ensureControl();
-  if(mode===MODES.longest||mode===MODES.shortest){
+  if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode)){
     prepareTransitSort();
     return;
   }
@@ -172,7 +178,7 @@ function setMode(next){
 }
 function refreshForRows(){
   ensureControl();
-  if(mode===MODES.longest||mode===MODES.shortest){
+  if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode)){
     prepareTransitSort();
     return;
   }
@@ -182,7 +188,7 @@ function invalidateTransit(){
   calculationGeneration+=1;
   busy=false;
   window.RelphiRelationshipTransitMeta?.clearDurationCache?.();
-  if(mode===MODES.longest||mode===MODES.shortest)prepareTransitSort();
+  if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode))prepareTransitSort();
 }
 window.RelphiRelationshipSort=Object.freeze({
   compareRows,
