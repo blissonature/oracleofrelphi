@@ -161,8 +161,7 @@
       'relphi:sky-placement-multiselect-changed',
       'relphi:sky-house-multiselect-changed',
       'relphi:sky-aspect-multiselect-changed',
-      'relphi:sky-zodiac-filter-changed',
-      'relphi:sky-where-when-committed'
+      'relphi:sky-zodiac-filter-changed'
     ].forEach(name=>window.addEventListener(name,schedule));
     document.addEventListener('change',event=>{
       if(event.target.closest?.('#skyFoundationRelationships .sky-chart-filter-bar')&&!event.target.matches?.('[data-harmonic-window-input]'))schedule();
