@@ -35,6 +35,12 @@ await moonMarsCoordinate.waitFor({state:'attached',timeout:10000});
 assert.match((await moonMarsCoordinate.textContent())?.trim()||'',/^25°53′/);
 const moonLedgerB=page.locator('#skyFoundationB .sky-foundation-row').filter({hasText:'Moon'}).first();
 assert.match((await moonLedgerB.textContent())||'',/25°53′\s+Aquarius/);
+const repairedSkyB=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
+assert.deepEqual(
+  {longitude:repairedSkyB.placements.Moon.longitude,sign:repairedSkyB.placements.Moon.sign,degree:repairedSkyB.placements.Moon.degree,minute:repairedSkyB.placements.Moon.minute},
+  {longitude:325+53/60,sign:'Aquarius',degree:25,minute:53},
+  'Redundant Moon fields must self-heal from the canonical longitude.'
+);
 
 assert.equal(await page.locator('[data-filter="placement"]').count(),0);
 assert.equal(await page.locator('[data-placement-filter-sky]').count(),0);
