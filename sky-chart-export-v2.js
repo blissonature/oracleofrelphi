@@ -169,7 +169,7 @@
   function ensureRelationshipControl(){
     const heading=document.querySelector('#skyFoundationRelationships>.sky-foundation-relationships-heading');if(!heading)return;
     let actions=heading.querySelector('.sky-relationship-heading-actions');if(!actions){actions=document.createElement('span');actions.className='sky-relationship-heading-actions';const copy=[...heading.querySelectorAll('button')].find(b=>/^copy$/i.test(b.textContent.trim()));if(copy){heading.insertBefore(actions,copy);actions.appendChild(copy)}else heading.appendChild(actions)}
-    if(!actions.querySelector(`#${REL_ID}`)){const b=button(REL_ID,'Download Relationships snapshot');b.addEventListener('click',()=>exportKind('relationships',b));actions.appendChild(b)}
+    if(!actions.querySelector(`#${REL_ID}`)){const b=button(REL_ID,'Download Relationships snapshot');b.dataset.relationshipExportOwner='columns-v2';actions.appendChild(b)}
   }
   function invalidate(){pendingIOS=null;document.querySelectorAll('.sky-export-icon-button[data-export-ready]').forEach(b=>delete b.dataset.exportReady)}
   function ensure(){installStyles();ensureWheelControl();ensureRelationshipControl()}
