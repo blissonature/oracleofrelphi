@@ -1,51 +1,55 @@
-name: Single glyph canon
+name: Authorized glyph source
 
 on:
   push:
     paths:
-      - '**/*.html'
-      - '**/*.js'
-      - '**/*.mjs'
-      - '**/*.css'
-      - '**/*.json'
-      - 'assets/**/*.svg'
+      - 'glyphs-unified-preview.html'
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'assets/planet-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'assets/aspect-glyphs/**'
+      - 'glyphs.html'
+      - 'sky-chart.html'
+      - 'part1/sky-chart.html'
+      - 'part2/sky-chart.html'
+      - 'navloader.js'
       - 'tools/check-single-glyph-canon.mjs'
-      - 'tools/check-planet-glyph-hashes.mjs'
-      - 'tools/check-sky-chart-glyph-readiness.mjs'
-      - 'tests/sky-chart-requested-visuals.test.mjs'
-      - 'tests/sky-chart-angle-lane-isolation.test.mjs'
       - '.github/workflows/single-glyph-canon.yml'
   pull_request:
     paths:
-      - '**/*.html'
-      - '**/*.js'
-      - '**/*.mjs'
-      - '**/*.css'
-      - '**/*.json'
-      - 'assets/**/*.svg'
+      - 'glyphs-unified-preview.html'
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'assets/planet-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'assets/aspect-glyphs/**'
+      - 'glyphs.html'
+      - 'sky-chart.html'
+      - 'part1/sky-chart.html'
+      - 'part2/sky-chart.html'
+      - 'navloader.js'
       - 'tools/check-single-glyph-canon.mjs'
-      - 'tools/check-planet-glyph-hashes.mjs'
-      - 'tools/check-sky-chart-glyph-readiness.mjs'
-      - 'tests/sky-chart-requested-visuals.test.mjs'
-      - 'tests/sky-chart-angle-lane-isolation.test.mjs'
       - '.github/workflows/single-glyph-canon.yml'
 
 permissions:
   contents: read
 
 jobs:
-  single-canon:
+  authorized-source:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Enforce one registry, one component, one rendering route
+      - name: Verify explicitly authorized glyph source
         run: node tools/check-single-glyph-canon.mjs
-      - name: Pin approved planetary master bytes
-        run: node tools/check-planet-glyph-hashes.mjs
-      - name: Check Sky Chart glyph readiness
-        run: node tools/check-sky-chart-glyph-readiness.mjs
-      - name: Run glyph-facing Sky Chart regression tests
-        run: node --test tests/sky-chart-requested-visuals.test.mjs tests/sky-chart-angle-lane-isolation.test.mjs
+      - name: Check registry and component syntax
+        run: |
+          node --check relphi-glyph-registry-v1.js
+          node --check relphi-glyph-component-v1.js

@@ -42,9 +42,10 @@ const sample = (name, offset) => {
 const browser = await chromium.launch({headless:true});
 const page = await browser.newPage({viewport:{width:1440,height:1300}});
 const errors=[];
-page.on('pageerror', error => errors.push(error.message));
+page.on('pageerror', error => { errors.push(error.message); console.error('[pageerror]', error.stack || error.message); });
+page.on('response', response => { if (response.status()===404) console.error('[404]', response.url()); });
 page.on('console', message => {
-  if (message.type()==='error' && !/favicon/i.test(message.text())) errors.push(message.text());
+  if (message.type()==='error' && !/favicon/i.test(message.text())) { errors.push(message.text()); console.error('[browser console]', message.text()); }
 });
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js', route => route.fulfill({
   path:path.resolve('node_modules/suncalc/suncalc.js'), contentType:'application/javascript'

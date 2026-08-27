@@ -1,9 +1,0 @@
-{
-  "fixtures_are_review_only": true,
-  "mutate_checked_in_sources": false,
-  "scenarios": [
-    "missing-file",
-    "hash-mismatch",
-    "malformed-manifest"
-  ]
-}

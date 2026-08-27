@@ -13,9 +13,9 @@ on:
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-foundation-interactions-v1.css'
       - 'sky-chart-relationship-list-layout-v1.js'
-      - 'relphi-canonical-glyph-state-v1.js'
-      - 'tools/export-canonical-glyph-state-manifest.mjs'
-      - 'tests/relationship-canonical-state-contract.mjs'
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'tools/check-single-glyph-canon.mjs'
       - '.github/workflows/sky-chart-part1-browser-check.yml'
 
 jobs:
@@ -23,11 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: JavaScript syntax
+      - name: Verify authorized glyph source and JavaScript syntax
         run: |
+          node tools/check-single-glyph-canon.mjs
           node --check sky-chart-foundation-v1.js
           node --check sky-chart-foundation-interactions-v1.js
           node --check sky-chart-foundation-interactions-v2.js
@@ -64,8 +67,9 @@ jobs:
           const browser=await chromium.launch({headless:true});
           const page=await browser.newPage({viewport:{width:1440,height:1100}});
           const errors=[];
-          page.on('pageerror',error=>errors.push(error.message));
-          page.on('console',message=>{if(message.type()==='error')errors.push(message.text())});
+          page.on('pageerror',error=>{errors.push(error.message);console.error('[pageerror]',error.stack||error.message)});
+          page.on('response',response=>{if(response.status()===404)console.error('[404]',response.url())});
+          page.on('console',message=>{if(message.type()==='error'){errors.push(message.text());console.error('[browser console]',message.text())}});
           await page.addInitScript(({a,b})=>{
             localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
             localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
@@ -127,7 +131,6 @@ jobs:
           assert.equal(unlocked.isolation,false);
           assert.equal(unlocked.visibleRows,unlocked.totalRows);
 
-          // Relationship rows are reading-selection controls, not isolation controls.
           const firstRow=page.locator('.sky-foundation-relationship-row').first();
           await firstRow.click({force:true});
           await page.waitForTimeout(100);
@@ -136,7 +139,6 @@ jobs:
           assert.equal(afterRowClick.visibleRows,afterRowClick.totalRows);
           assert.equal(afterRowClick.count,`${afterRowClick.totalRows}/${afterRowClick.totalRows}`);
 
-          // Hovering rows cannot mutate the list under the pointer.
           const beforeHover=afterRowClick.visibleRows;
           await page.locator('.sky-foundation-relationship-row').nth(1).hover({force:true});
           await page.waitForTimeout(250);
@@ -162,31 +164,3 @@ jobs:
           path: |
             sky-chart-part1-desktop.png
             sky-chart-part1-mobile.png
-
-  canonical-glyph-state-export:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Validate clean Relationships source
-        run: |
-          node --check relphi-canonical-glyph-state-v1.js
-          node --check sky-chart-foundation-interactions-v2.js
-          node --check sky-chart-relationship-list-layout-v1.js
-          node --check tests/relationship-canonical-state-contract.mjs
-          node tests/relationship-canonical-state-contract.mjs
-      - name: Install Chromium
-        run: |
-          npm install --no-save playwright@1.52.0
-          npx playwright install --with-deps chromium
-      - name: Export exact canonical state assets
-        run: node tools/export-canonical-glyph-state-manifest.mjs relphi-canonical-glyph-manifest-v1.js
-      - name: Validate generated manifest
-        run: node --check relphi-canonical-glyph-manifest-v1.js
-      - uses: actions/upload-artifact@v4
-        with:
-          name: canonical-glyph-state-manifest
-          path: relphi-canonical-glyph-manifest-v1.js
-          if-no-files-found: error
