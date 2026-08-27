@@ -1,14 +1,15 @@
 // Sky Chart coordinate precision contract.
-// Minute-precision text uses the chart's stored sign/degree/minute fields; full
-// longitude remains untouched for wheel geometry, houses, and aspect math.
+// A finite longitude is the coordinate authority for geometry and presentation.
+// Stored sign/degree/minute fields are fallback input only when longitude is absent.
 // Corrections are event-driven: never watch the entire document for mutations.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyCoordinatePrecisionV3) return;
+  if (window.__relphiSkyCoordinatePrecisionV4) return;
   window.__relphiSkyCoordinatePrecisionV1 = true;
   window.__relphiSkyCoordinatePrecisionV2 = true;
   window.__relphiSkyCoordinatePrecisionV3 = true;
+  window.__relphiSkyCoordinatePrecisionV4 = true;
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -40,16 +41,27 @@
     return ALIASES.get(raw) || raw.replace(/[.]/g,'').replace(/\s+/g,'-');
   }
 
+  const norm = value => ((Number(value) % 360) + 360) % 360;
+
+  function longitude(item) {
+    if (!item) return NaN;
+    if (Number.isFinite(Number(item.longitude))) return norm(item.longitude);
+    const sign = SIGNS.findIndex(name => name.toLowerCase() === String(item.sign || item.zodiac || '').trim().toLowerCase());
+    const degree = Number(item.degree ?? item.degrees);
+    const minute = Number(item.minute ?? item.minutes);
+    const second = Number(item.second ?? item.seconds ?? 0);
+    if (sign < 0 || !Number.isFinite(degree) || !Number.isFinite(minute)) return NaN;
+    return norm(sign * 30 + degree + minute / 60 + (Number.isFinite(second) ? second : 0) / 3600);
+  }
+
   function exactCoordinate(item) {
-    if (!item || !Number.isFinite(Number(item.degree ?? item.degrees)) || !Number.isFinite(Number(item.minute ?? item.minutes))) return null;
-    const degree = Math.max(0,Math.min(29,Math.trunc(Number(item.degree ?? item.degrees))));
-    const minute = Math.max(0,Math.min(59,Math.trunc(Number(item.minute ?? item.minutes))));
-    let sign = String(item.sign || item.zodiac || '').trim();
-    if (!sign && Number.isFinite(Number(item.longitude))) sign = SIGNS[Math.floor((((Number(item.longitude)%360)+360)%360)/30)];
-    if (!sign) return null;
-    sign = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
-    const signIndex = SIGNS.indexOf(sign);
-    if (signIndex < 0) return null;
+    const value = longitude(item);
+    if (!Number.isFinite(value)) return null;
+    const signIndex = Math.floor(value / 30);
+    const within = value - signIndex * 30;
+    const degree = Math.floor(within);
+    const minute = Math.floor((within - degree) * 60 + 1e-9);
+    const sign = SIGNS[signIndex];
     return { text:`${degree}°${String(minute).padStart(2,'0')}′`, sign, signIndex, full:`${degree}°${String(minute).padStart(2,'0')}′ ${sign}` };
   }
 
@@ -173,7 +185,7 @@
     correctLedger('B',mapsB);
     correctRelationships(mapsA,mapsB);
     correctSelectedRelationship(mapsA,mapsB);
-    document.documentElement.dataset.skyCoordinatePrecision = 'stored-sign-degree-minute-fields-by-row-sky';
+    document.documentElement.dataset.skyCoordinatePrecision = 'longitude-authoritative-by-row-sky';
   }
 
   let queued = false;
