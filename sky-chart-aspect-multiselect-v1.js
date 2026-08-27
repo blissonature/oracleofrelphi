@@ -1,4 +1,4 @@
-// Multi-select aspect checklist plus relationship-scope controls for Sky Chart rows and wheel lines.
+// Legacy aspect control shell plus Sky B intrasky generator. The scope matrix is the sole owner of aspect/scope visibility.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -250,20 +250,11 @@
   }
 
   function applyFilters() {
-    document.querySelectorAll('.sky-foundation-relationship-row').forEach(row => {
-      row.classList.toggle('sky-chart-aspect-multiselect-hidden', !relationshipVisible(row));
-    });
-    document.querySelectorAll('[data-layer="aspects"] > .sky-foundation-aspect').forEach(line => {
-      line.classList.toggle('sky-chart-aspect-multiselect-hidden', !relationshipVisible(line));
-    });
+    // The matrix module owns sky-chart-aspect-multiselect-hidden, public scope state,
+    // counts, and filter-change broadcasts. This legacy module only keeps its shell
+    // coherent while generating B↔B relationships.
     updateControlStates();
-    document.documentElement.dataset.skyAspectMultiselect = 'ready';
-    document.documentElement.dataset.skyAspectSelection = `${selected.size}/${IDS.length}`;
-    document.documentElement.dataset.skyRelationshipScopeSelection = Array.from(selectedScopes).join(',');
-    updateVisibleCount();
-    window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed', {
-      detail:{ selected:Array.from(selected), scopes:Array.from(selectedScopes) }
-    }));
+    document.documentElement.dataset.skyAspectLegacy = 'generator-only';
   }
 
   function handleChange(event) {
