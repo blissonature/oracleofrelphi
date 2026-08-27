@@ -205,6 +205,8 @@ test('finite longitude is the coordinate authority across active Sky Chart prese
   assert.match(coordinatePrecision, /function longitude\(item\)/);
   assert.match(coordinatePrecision, /const value = longitude\(item\)/);
   assert.match(coordinatePrecision, /const signIndex = Math\.floor\(value \/ 30\)/);
+  assert.match(coordinatePrecision, /function repairRedundantCoordinateFields\(slot,payload\)/);
+  assert.match(coordinatePrecision, /localStorage\.setItem\(KEYS\[slot\], JSON\.stringify\(payload\)\)/);
   assert.match(coordinatePrecision, /function correctRelationships\(mapsA,mapsB\)/);
   assert.match(coordinatePrecision, /small\.dataset\.relationshipCoordinate = left\.text/);
   assert.match(coordinatePrecision, /longitude-authoritative-by-row-sky/);
