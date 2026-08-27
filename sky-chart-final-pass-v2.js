@@ -439,8 +439,13 @@
     });
   }
 
+  function whereWhenEditing() {
+    return document.documentElement.dataset.skyWhereWhenEditing === 'true';
+  }
+
   function refresh() {
     queued = false;
+    if (whereWhenEditing()) return;
     ['A','B'].forEach(slot => {
       addHeaderActions(slot);
       addEditorControls(slot);
@@ -454,7 +459,7 @@
   }
 
   function schedule() {
-    if (queued) return;
+    if (queued || whereWhenEditing()) return;
     queued = true;
     requestAnimationFrame(refresh);
   }
@@ -479,6 +484,7 @@
     }).observe(root, { childList:true, subtree:true });
     window.addEventListener('relphi:sky-foundation-ready', schedule);
     window.addEventListener('relphi:sky-foundation-interactions-ready', schedule);
+    window.addEventListener('relphi:sky-where-when-committed', schedule);
     window.addEventListener('storage', schedule);
     schedule();
   }
