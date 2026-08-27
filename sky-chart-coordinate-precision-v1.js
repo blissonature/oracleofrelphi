@@ -100,10 +100,25 @@
     return (side === 'left' ? copies[0] : copies[copies.length - 1])?.querySelector('small') || null;
   }
 
+  function rowSky(row,side) {
+    const explicit = String(row?.dataset?.[side === 'left' ? 'leftSky' : 'rightSky'] || '').toUpperCase();
+    if (explicit === 'A' || explicit === 'B') return explicit;
+    const mode = String(row?.dataset?.relationshipMode || '').toUpperCase();
+    if (mode === 'A-A') return 'A';
+    if (mode === 'B-B') return 'B';
+    return side === 'left' ? 'A' : 'B';
+  }
+
+  function mapsForRowSide(row,side,mapsA,mapsB) {
+    return rowSky(row,side) === 'B' ? mapsB : mapsA;
+  }
+
   function correctRelationships(mapsA,mapsB) {
     document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row => {
-      const left = mapsA.byIdentity.get(row.dataset.leftPlacement || '');
-      const right = mapsB.byIdentity.get(row.dataset.rightPlacement || '');
+      const leftMaps = mapsForRowSide(row,'left',mapsA,mapsB);
+      const rightMaps = mapsForRowSide(row,'right',mapsA,mapsB);
+      const left = leftMaps.byIdentity.get(row.dataset.leftPlacement || '');
+      const right = rightMaps.byIdentity.get(row.dataset.rightPlacement || '');
       if (left) {
         row.dataset.leftSign = String(left.signIndex);
         const small = relationshipCopy(row,'left');
@@ -158,7 +173,7 @@
     correctLedger('B',mapsB);
     correctRelationships(mapsA,mapsB);
     correctSelectedRelationship(mapsA,mapsB);
-    document.documentElement.dataset.skyCoordinatePrecision = 'stored-sign-degree-minute-fields';
+    document.documentElement.dataset.skyCoordinatePrecision = 'stored-sign-degree-minute-fields-by-row-sky';
   }
 
   let queued = false;
