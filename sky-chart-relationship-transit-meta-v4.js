@@ -81,6 +81,7 @@ function installStyles(){if(document.getElementById('skyRelationshipTransitMetaV
 @media(max-width:620px){.inline-rel-progressive-token[data-inline-progressive-token="aspect"]>.inline-rel-transit-window{font-size:.46rem!important}.inline-rel-transit-row>b{font-size:.45rem!important}}
 `;document.head.appendChild(style)}
 const sortDurationCache=new Map();
+const SORT_CANCELLED=Symbol('sort-cancelled');
 function sortDurationSignature(row){
   const liveSignature=['A','B'].map(slot=>`${slot}:${liveOrigin(slot)}:${profileDate(slot)?.toISOString()||''}`).join('|');
   return[
@@ -94,27 +95,121 @@ function sortDurationSignature(row){
     liveSignature
   ].join('|');
 }
-function durationDaysForSort(row){
+function yieldSortThread(){return new Promise(resolve=>setTimeout(resolve,0))}
+function assertSortActive(shouldCancel){if(shouldCancel?.())throw SORT_CANCELLED}
+async function sampledInside(model,ms,budget,shouldCancel){
+  assertSortActive(shouldCancel);
+  const inside=model.errorAt(ms)<=model.limit+1e-8;
+  budget.count+=1;
+  if(budget.count>=20){
+    budget.count=0;
+    await yieldSortThread();
+    assertSortActive(shouldCancel);
+  }
+  return inside;
+}
+async function refineBoundaryForSort(model,insideMs,outsideMs,budget,shouldCancel){
+  let yes=insideMs,no=outsideMs;
+  for(let i=0;i<28;i++){
+    const mid=(yes+no)/2;
+    if(await sampledInside(model,mid,budget,shouldCancel))yes=mid;
+    else no=mid;
+  }
+  return(yes+no)/2;
+}
+async function scanDurationBoundary(model,direction,settings,budget,shouldCancel){
+  const stepMs=settings.step*DAY,horizonMs=settings.horizon*DAY,gapMs=settings.gap*DAY;
+  const center=model.center;
+  let activeCursor=center;
+  let farBoundary=center;
+
+  while(Math.abs(activeCursor-center)<=horizonMs){
+    let lastInside=activeCursor;
+    let probe=activeCursor;
+    let exitBoundary=null;
+
+    while(Math.abs(probe-center)<=horizonMs){
+      const next=probe+direction*stepMs;
+      if(Math.abs(next-center)>horizonMs)return null;
+      if(await sampledInside(model,next,budget,shouldCancel)){
+        lastInside=next;
+        probe=next;
+        continue;
+      }
+      exitBoundary=await refineBoundaryForSort(model,lastInside,next,budget,shouldCancel);
+      farBoundary=exitBoundary;
+      probe=next;
+      break;
+    }
+
+    if(exitBoundary==null)return null;
+    if(gapMs<=0)return farBoundary;
+
+    let lastOutside=probe;
+    let reentryInside=null;
+    while(Math.abs(probe-center)<=horizonMs){
+      const next=probe+direction*stepMs;
+      if(Math.abs(next-center)>horizonMs)return farBoundary;
+      if(Math.abs(next-exitBoundary)>gapMs+stepMs)return farBoundary;
+      if(await sampledInside(model,next,budget,shouldCancel)){
+        const entryBoundary=await refineBoundaryForSort(model,next,lastOutside,budget,shouldCancel);
+        if(Math.abs(entryBoundary-exitBoundary)>gapMs)return farBoundary;
+        reentryInside=next;
+        break;
+      }
+      lastOutside=next;
+      probe=next;
+    }
+
+    if(reentryInside==null)return farBoundary;
+    activeCursor=reentryInside;
+  }
+  return null;
+}
+async function durationTimelineForSort(model,shouldCancel){
+  const settings=searchSettings(model),budget={count:0};
+  if(!(await sampledInside(model,model.center,budget,shouldCancel)))return null;
+  const backward=await scanDurationBoundary(model,-1,settings,budget,shouldCancel);
+  if(!Number.isFinite(backward))return null;
+  await yieldSortThread();
+  assertSortActive(shouldCancel);
+  const forward=await scanDurationBoundary(model,1,settings,budget,shouldCancel);
+  if(!Number.isFinite(forward)||forward<backward)return null;
+  return(forward-backward)/DAY;
+}
+async function durationDaysForSortAsync(row,shouldCancel){
   if(!row?.isConnected)return null;
   const signature=sortDurationSignature(row);
-  if(sortDurationCache.has(signature))return sortDurationCache.get(signature);
-  const model=modelFor(row);
-  let duration=null;
-  if(model.kind==='dynamic'&&model.errorAt(model.center)<=model.limit+1e-8){
-    const timeline=collectTimeline(model);
-    if(timeline&&Number.isFinite(timeline.durationDays))duration=timeline.durationDays;
+  if(sortDurationCache.has(signature)){
+    const cached=sortDurationCache.get(signature);
+    if(Number.isFinite(cached))row.dataset.transitDurationDays=String(cached);
+    else delete row.dataset.transitDurationDays;
+    return cached;
   }
-  sortDurationCache.set(signature,duration);
-  if(Number.isFinite(duration))row.dataset.transitDurationDays=String(duration);
-  else delete row.dataset.transitDurationDays;
-  return duration;
+  try{
+    assertSortActive(shouldCancel);
+    const model=modelFor(row);
+    let duration=null;
+    if(model.kind==='dynamic'&&model.errorAt(model.center)<=model.limit+1e-8){
+      duration=await durationTimelineForSort(model,shouldCancel);
+      if(!Number.isFinite(duration))duration=null;
+    }
+    assertSortActive(shouldCancel);
+    sortDurationCache.set(signature,duration);
+    if(Number.isFinite(duration))row.dataset.transitDurationDays=String(duration);
+    else delete row.dataset.transitDurationDays;
+    return duration;
+  }catch(error){
+    if(error===SORT_CANCELLED)return null;
+    throw error;
+  }
 }
 function clearSortDurationCache(){
   sortDurationCache.clear();
   document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>delete row.dataset.transitDurationDays);
 }
 window.RelphiRelationshipTransitMeta=Object.freeze({
-  durationDaysForRow:durationDaysForSort,
+  durationDaysForRowAsync:durationDaysForSortAsync,
   clearDurationCache:clearSortDurationCache
 });
 
