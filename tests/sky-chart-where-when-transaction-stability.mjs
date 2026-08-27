@@ -69,7 +69,8 @@ const beforeSubmit=await relationshipState();
 const countsBefore=await page.evaluate(()=>({...window.__wwTransactionCounts}));
 
 await editorA.locator('[data-ww-field="date"]').fill('1990-04-15');
-await editorA.locator('[data-ww-field="time"]').fill('13:30');
+await editorA.locator('[data-sky-time-entry]').fill('1:30 PM');
+await editorA.locator('[data-sky-time-entry]').press('Enter');
 await editorA.locator('button[type="submit"]').click();
 await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.dateTime==='1990-04-15T13:30');
 assert.equal(await page.locator('#skyFoundationA .sky-where-when-editor').count(),0);
@@ -82,7 +83,8 @@ assert.deepEqual(await relationshipState(),beforeSubmit,'Relationships must rema
 assert.deepEqual(await page.evaluate(()=>({...window.__wwTransactionCounts})),countsBefore,'No foundation or relationship rebuild may run while another Where and When editor remains open.');
 
 await editorB.locator('[data-ww-field="date"]').fill('2026-09-01');
-await editorB.locator('[data-ww-field="time"]').fill('09:15');
+await editorB.locator('[data-sky-time-entry]').fill('9:15 AM');
+await editorB.locator('[data-sky-time-entry]').press('Enter');
 await editorB.locator('button[type="submit"]').click();
 await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='false');
 await page.waitForFunction(()=>window.__wwTransactionCounts.foundation>=1,{timeout:20000});
