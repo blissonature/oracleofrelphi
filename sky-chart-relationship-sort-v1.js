@@ -133,7 +133,7 @@ function ensureControl(){
 async function prepareTransitSort(){
   const generation=++calculationGeneration;
   const api=window.RelphiRelationshipTransitMeta;
-  if(!api?.durationDaysForRowAsync){
+  if(!api?.estimatedDurationDaysForRow){
     busy=false;
     ensureControl();
     dispatch();
@@ -148,11 +148,10 @@ async function prepareTransitSort(){
   ];
   const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
     .filter(row=>!HIDDEN_CLASSES.some(name=>row.classList.contains(name)));
-  for(const row of rows){
+  for(let index=0;index<rows.length;index+=1){
     if(generation!==calculationGeneration)return;
-    await api.durationDaysForRowAsync(row,()=>generation!==calculationGeneration);
-    if(generation!==calculationGeneration)return;
-    await new Promise(resolve=>setTimeout(resolve,0));
+    api.estimatedDurationDaysForRow(rows[index]);
+    if(index%4===3)await new Promise(resolve=>setTimeout(resolve,0));
   }
   if(generation!==calculationGeneration)return;
   busy=false;
