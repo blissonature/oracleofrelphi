@@ -1,4 +1,4 @@
-// Relationship scope sections v7: semantic grouping, visual-only disclosure drawers, and fail-safe fast Copy.
+// Relationship scope sections v8: semantic grouping, visibility-aware headers, visual-only disclosure drawers, and fail-safe fast Copy.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV7)return;
@@ -92,7 +92,25 @@ function handleDisclosureClick(event){
   if(!button||!list?.contains(button))return;
   event.preventDefault();event.stopPropagation();toggleDrawer(button.dataset.relationshipDrawerToggle);
 }
-function ensureObserver(){const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;observer?.disconnect();observedList=list;observer=new MutationObserver(records=>{if(applying)return;if(records.some(r=>[...r.addedNodes,...r.removedNodes].some(n=>n instanceof Element&&n.matches?.('.sky-foundation-relationship-row'))))schedule()});observer.observe(list,{childList:true,subtree:false})}
+function visibilityClassChanged(record){
+  if(record.type!=='attributes'||record.attributeName!=='class')return false;
+  const row=record.target?.matches?.('.sky-foundation-relationship-row')?record.target:null;
+  if(!row)return false;
+  const before=new Set(String(record.oldValue||'').split(/\s+/).filter(Boolean));
+  return HIDDEN_CLASSES.some(className=>before.has(className)!==row.classList.contains(className));
+}
+function visibilityMutation(record){
+  if(record.type==='childList')return[...record.addedNodes,...record.removedNodes].some(node=>node instanceof Element&&node.matches?.('.sky-foundation-relationship-row'));
+  if(!record.target?.matches?.('.sky-foundation-relationship-row'))return false;
+  if(record.attributeName==='class')return visibilityClassChanged(record);
+  return record.attributeName==='hidden'||record.attributeName==='aria-hidden';
+}
+function ensureObserver(){
+  const list=document.getElementById('skyFoundationRelationshipList');if(!list||list===observedList)return;
+  observer?.disconnect();observedList=list;
+  observer=new MutationObserver(records=>{if(records.some(visibilityMutation))schedule()});
+  observer.observe(list,{childList:true,subtree:true,attributes:true,attributeFilter:['class','hidden','aria-hidden'],attributeOldValue:true});
+}
 function bind(){ensureObserver();bindCopyButton();schedule()}
 function bindCopySoon(){bindCopyButton();requestAnimationFrame(bindCopyButton)}
 function start(){installStyles();document.addEventListener('click',handleDisclosureClick);bind();requestAnimationFrame(bindCopySoon);const events=['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-aspect-multiselect-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-foundation-filter-changed','relphi:relationship-display-changed'];events.forEach(name=>window.addEventListener(name,()=>{schedule();bindCopySoon()}))}
