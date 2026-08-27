@@ -87,11 +87,12 @@ async function build(){
   host.dataset.relationshipExportHost='true';
   Object.assign(host.style,{position:'fixed',left:'-100000px',top:'0',width:`${width}px`,background:'#fffdf8',zIndex:'-1'});
   document.body.appendChild(host);
-  const shadow=host.attachShadow({mode:'closed'});
-  for(const source of document.querySelectorAll('head link[rel="stylesheet"],head style')){
-    const clone=source.cloneNode(true);
-    shadow.appendChild(clone);
+  const shadow=host.attachShadow({mode:'closed'}),css=document.createElement('style');
+  let cssText='';
+  for(const styleSheet of document.styleSheets){
+    try{cssText+=Array.from(styleSheet.cssRules||[]).map(rule=>rule.cssText).join('\n')+'\n'}catch(_){}
   }
+  css.textContent=cssText;shadow.appendChild(css);
   sheet.className='rel-export-sheet';sheet.style.width=`${width}px`;sheet.innerHTML=`<div class="rel-export-head">Relationships <span>${document.getElementById('skyFoundationRelationshipCount')?.textContent||rows.length}</span></div>`;
   const filter=summary();if(filter){const line=document.createElement('div');line.className='rel-export-summary';line.textContent=`Showing only: ${filter}`;sheet.appendChild(line)}
   const wrap=document.createElement('div');wrap.className='rel-export-cols';sheet.appendChild(wrap);shadow.appendChild(sheet);
