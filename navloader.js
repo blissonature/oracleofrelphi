@@ -166,7 +166,7 @@
     }
     if (/(^|\/)astrology-foundations\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () {
-        appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2');
+        appendScript('astrology-foundations-canonical-glyphs-v1.js?v=3');
         appendScript('relphi-inline-glyph-consumer-v1.js?v=2');
       });
     }
