@@ -23,7 +23,7 @@ const safe=value=>String(value).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace
 const fileName=()=>`${safe(name('A'))}-vs-${safe(name('B'))}-relationships-${new Date().toISOString().slice(0,16).replace(/[-:T]/g,'')}.png`;
 
 function visible(row){const style=getComputedStyle(row);return!row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}
-function currentRows(){return[...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row')].filter(visible)}
+function currentRows(){return[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')].filter(visible)}
 function summary(){
   const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');if(!bar)return'';
   const parts=[],harmonic=bar.querySelector('[data-harmonic-window-input]');
@@ -86,15 +86,22 @@ async function build(){
   const host=document.createElement('div'),sheet=document.createElement('div');
   host.dataset.relationshipExportHost='true';
   Object.assign(host.style,{position:'fixed',left:'-100000px',top:'0',width:`${width}px`,background:'#fffdf8',zIndex:'-1'});
+  document.body.appendChild(host);
+  const shadow=host.attachShadow({mode:'closed'});
+  for(const source of document.querySelectorAll('head link[rel="stylesheet"],head style')){
+    const clone=source.cloneNode(true);
+    shadow.appendChild(clone);
+  }
   sheet.className='rel-export-sheet';sheet.style.width=`${width}px`;sheet.innerHTML=`<div class="rel-export-head">Relationships <span>${document.getElementById('skyFoundationRelationshipCount')?.textContent||rows.length}</span></div>`;
   const filter=summary();if(filter){const line=document.createElement('div');line.className='rel-export-summary';line.textContent=`Showing only: ${filter}`;sheet.appendChild(line)}
-  const wrap=document.createElement('div');wrap.className='rel-export-cols';sheet.appendChild(wrap);host.appendChild(sheet);document.body.appendChild(host);
+  const wrap=document.createElement('div');wrap.className='rel-export-cols';sheet.appendChild(wrap);shadow.appendChild(sheet);
   const jobs=[];
   for(let index=0;index<cols;index++){
     const column=document.createElement('div');column.className='rel-export-col';wrap.appendChild(column);
     for(const row of rows.slice(index*ROWS,(index+1)*ROWS)){const clone=cleanClone(row);column.appendChild(clone);jobs.push(hydrate(clone,row))}
   }
-  await Promise.allSettled(jobs);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  await Promise.allSettled(jobs);
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   return{host,sheet,width,height:Math.ceil(sheet.scrollHeight),count:rows.length,cols};
 }
 async function png(built){
