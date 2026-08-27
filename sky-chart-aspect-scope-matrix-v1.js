@@ -151,15 +151,16 @@ function handleChange(event){
   const input=event.target.closest?.('[data-aspect-matrix-scope][data-aspect-matrix-aspect]');if(!input)return;
   setCells(input.dataset.aspectMatrixScope,input.dataset.aspectMatrixAspect,input.checked);applyMatrix();
 }
-function refresh(){queued=false;if(!ensureUI())return;applyMatrix({announce:false});positionPopover()}
-function schedule(){if(queued||applying)return;queued=true;requestAnimationFrame(refresh)}
+function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
+function refresh(){queued=false;if(whereWhenEditing()||!ensureUI())return;applyMatrix({announce:false});positionPopover()}
+function schedule(){if(queued||applying||whereWhenEditing())return;queued=true;requestAnimationFrame(refresh)}
 function handleLegacyAspectPass(event){
   if(event.detail?.matrix)return;
   schedule();
 }
 function start(){
   schedule();document.addEventListener('change',handleChange);
-  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-foundation-filter-changed'].forEach(name=>window.addEventListener(name,schedule));
+  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-foundation-filter-changed','relphi:sky-where-when-committed'].forEach(name=>window.addEventListener(name,schedule));
   window.addEventListener('relphi:sky-aspect-multiselect-changed',handleLegacyAspectPass);
   window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartB')schedule()});
   new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-last-mode','data-sky-b-editing']});
