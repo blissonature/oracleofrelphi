@@ -207,7 +207,7 @@
   }
 
   function start() {
-    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:selected-relationship-rendered','relphi:sky-progressive-symbols-ready','relphi:sky-where-when-committed']
+    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:selected-relationship-rendered','relphi:sky-progressive-symbols-ready']
       .forEach(name => window.addEventListener(name,schedule));
     window.addEventListener('storage',event => {
       if (!event.key || event.key === KEYS.A || event.key === KEYS.B) schedule();
