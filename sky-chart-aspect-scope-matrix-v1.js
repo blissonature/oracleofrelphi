@@ -1,6 +1,5 @@
-// Aspect scope matrix v2: per-aspect filtering across A↔A, B↔B, and A↔B.
-// The legacy aspect controller remains responsible for generating intrasky B relationships;
-// this layer owns the visible aspect-selection matrix and reasserts its state after legacy filter passes.
+// Aspect scope matrix v3: the sole owner of per-aspect visibility across A↔A, B↔B, and A↔B.
+// The legacy aspect controller remains responsible only for generating intrasky B relationships and its control shell.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyAspectScopeMatrixV2)return;
@@ -119,13 +118,16 @@ function visible(node){const aspect=normalize(node?.dataset?.aspect||'');if(!asp
 function applyMatrix({announce=true}={}){
   applying=true;
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node)));
-  updateInputs();document.documentElement.dataset.skyAspectMatrix='ready';updateCount();
-  if(announce){
-    const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
-    const scopes=SCOPES.filter(scope=>state[scope.id].size>0).map(scope=>scope.id);
-    const selected=IDS.filter(id=>SCOPES.some(scope=>state[scope.id].has(id)));
-    window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed',{detail:{selected,scopes,matrix}}));
-  }
+  updateInputs();
+  const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
+  const scopes=SCOPES.filter(scope=>state[scope.id].size>0).map(scope=>scope.id);
+  const selected=IDS.filter(id=>SCOPES.some(scope=>state[scope.id].has(id)));
+  document.documentElement.dataset.skyAspectMatrix='ready';
+  document.documentElement.dataset.skyAspectMultiselect='ready';
+  document.documentElement.dataset.skyAspectSelection=`${selected.length}/${IDS.length}`;
+  document.documentElement.dataset.skyRelationshipScopeSelection=scopes.join(',');
+  updateCount();
+  if(announce)window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed',{detail:{selected,scopes,matrix}}));
   applying=false;
 }
 function positionPopover(){
