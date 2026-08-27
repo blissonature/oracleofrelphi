@@ -20,6 +20,7 @@ const ASPECT_RANK=new Map(ASPECT_ORDER.map((id,index)=>[id,index]));
 let mode=MODES.exact;
 let calculationGeneration=0;
 let busy=false;
+function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
 
 function number(row,key,fallback=Infinity){
   const value=Number(row?.dataset?.[key]);
@@ -137,6 +138,7 @@ function ensureControl(){
   return select;
 }
 async function prepareTransitSort(){
+  if(whereWhenEditing())return;
   const generation=++calculationGeneration;
   const api=window.RelphiRelationshipTransitMeta;
   if(!api?.estimatedTimingForRow){
@@ -177,6 +179,7 @@ function setMode(next){
   dispatch();
 }
 function refreshForRows(){
+  if(whereWhenEditing())return;
   ensureControl();
   if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode)){
     prepareTransitSort();
@@ -186,6 +189,7 @@ function refreshForRows(){
 }
 function invalidateTransit(){
   calculationGeneration+=1;
+  if(whereWhenEditing()){busy=false;return;}
   busy=false;
   window.RelphiRelationshipTransitMeta?.clearDurationCache?.();
   if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode))prepareTransitSort();
@@ -208,6 +212,7 @@ function start(){
     'relphi:sky-harmonic-window-visibility-changed',
     'relphi:sky-live-origin-changed'
   ].forEach(name=>window.addEventListener(name,()=>requestAnimationFrame(invalidateTransit)));
+  window.addEventListener('relphi:sky-where-when-committed',()=>requestAnimationFrame(refreshForRows));
   const root=document.getElementById('skyFoundationRoot');
   if(root)new MutationObserver(()=>requestAnimationFrame(ensureControl)).observe(root,{childList:true,subtree:true});
 }
