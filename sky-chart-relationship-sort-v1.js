@@ -73,8 +73,8 @@ function installStyles(){
 #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-sort-control{align-self:end!important;min-width:0!important}
 #skyFoundationRelationships .sky-relationship-sort-control>span{align-self:end;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sky-filter-label-color,#4e463f);font:var(--sky-filter-label-font,800 .62rem/1.2 system-ui,sans-serif)}
 #skyFoundationRelationships .sky-relationship-sort-select[aria-busy="true"]{cursor:progress!important;opacity:.66}
-@media(min-width:901px){
-  #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-sort-control{grid-column:3/span 2!important}
+@media(min-width:621px){
+  #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-sort-control{grid-column:8/span 5!important;grid-row:2!important}
 }
 `;
   document.head.appendChild(style);
