@@ -1,6 +1,6 @@
 // Full relationship transit window timing for expanded relationship tiles.
 // Restores start, exact, end, duration, passes, and retrograde-return information.
-// Dated intrasky aspects use both bodies in motion; intersky timing uses the live moving side when one is available.
+// Dated intrasky aspects use both bodies in motion. Intersky timing treats Sky B as the moving transit side when both skies are dated, unless an explicit live side is available.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipTransitMetaV4)return;
@@ -60,11 +60,27 @@ function modelFor(row){
 
   const sameSky=left.sky===right.sky;
   const timedIntrasky=sameSky&&left.timed&&right.timed;
-  const movingEndpoints=timedIntrasky?[left,right]:[left,right].filter(ep=>ep.live);
+  let movingEndpoints=[],timingConvention='';
+  if(timedIntrasky){
+    movingEndpoints=[left,right];
+    timingConvention='dated-intrasky';
+  }else{
+    const liveEndpoints=[left,right].filter(ep=>ep.live&&ep.timed);
+    if(liveEndpoints.length){
+      movingEndpoints=liveEndpoints;
+      timingConvention='live-side';
+    }else if(right.timed){
+      // In A↔B comparisons Sky B is the transit/moving side against Sky A.
+      movingEndpoints=[right];
+      timingConvention='sky-b-transit';
+    }else if(left.timed){
+      movingEndpoints=[left];
+      timingConvention='sky-a-transit';
+    }
+  }
 
   if(!movingEndpoints.length){
-    const hasDate=left.timed||right.timed;
-    return{kind:'static',left,right,reason:hasDate?'No moving-side convention is available for this comparison.':'Timing needs a dated sky.'};
+    return{kind:'static',left,right,reason:'Timing needs a dated sky.'};
   }
   if(movingEndpoints.some(ep=>!endpointCanMove(ep))){
     return{kind:'unavailable',left,right,reason:'Timing is unavailable for this moving calculated point.'};
@@ -82,7 +98,7 @@ function modelFor(row){
     return Number.isFinite(a)&&Number.isFinite(b)?signedAspectError(a,b,angle):NaN;
   };
   const errorAt=ms=>Math.abs(signedErrorAt(ms));
-  return{kind:'dynamic',left,right,liveEndpoints:movingEndpoints,movingEndpoints,angle,limit,center,valueAt,signedErrorAt,errorAt,timedIntrasky};
+  return{kind:'dynamic',left,right,liveEndpoints:movingEndpoints,movingEndpoints,timingConvention,angle,limit,center,valueAt,signedErrorAt,errorAt,timedIntrasky};
 }
 function angularVelocity(ep,ms,valueAt){if(!MOTION_IDS.has(ep.id))return NaN;const half=ep.id==='moon'?.02:.06,a=valueAt(ep,ms-half*DAY),b=valueAt(ep,ms+half*DAY);return Number.isFinite(a)&&Number.isFinite(b)?wrap(b-a)/(2*half):NaN}
 function motionAt(model,ms){const states=[];for(const ep of model.liveEndpoints){if(!MOTION_IDS.has(ep.id))continue;const speed=angularVelocity(ep,ms,model.valueAt);if(Number.isFinite(speed))states.push({id:ep.id,name:bodyName(ep.id),retrograde:speed<0,speed})}return states}
@@ -118,7 +134,6 @@ function calculate(row,token){
   if(model.kind==='static'){removeMeta(row);return}
   if(model.kind!=='dynamic'){renderUnavailable(row,model.reason);return}
   if(model.errorAt(model.center)>model.limit+1e-8){renderUnavailable(row,'Outside the current Harmonic Window');return}
-  if(model.timedIntrasky&&!model.left.live){renderEstimatedTiming(row);return}
   const timeline=collectTimeline(model);
   if(token!==generation||!row.isConnected||!row.classList.contains('is-inline-expanded'))return;
   if(!timeline){renderUnavailable(row,'Complete transit window not found');return}
