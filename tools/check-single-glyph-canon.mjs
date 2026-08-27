@@ -21,7 +21,7 @@ try { approvedRegistry = gitShow('relphi-glyph-registry-v1.js').toString('utf8')
 catch (error) { failures.push(`Cannot read authorized registry from ${AUTHORIZED_COMMIT}: ${error.message}`); }
 
 const approvedAssets = approvedRegistry
-  ? [...new Set([...approvedRegistry.matchAll(/'((?:assets\\/)[^']+\\.svg)'/g)].map(match => match[1]))]
+  ? [...new Set([...approvedRegistry.matchAll(/'(assets\/[^']+\.svg)'/g)].map(match => match[1]))]
   : [];
 
 for (const file of [...authorityFiles,...approvedAssets]) {
