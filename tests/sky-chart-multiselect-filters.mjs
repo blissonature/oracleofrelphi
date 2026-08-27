@@ -11,6 +11,9 @@ function sample(name,offset,profile){
 }
 const skyA=sample('My birth chart',0,{dateTime:'1985-10-08T04:37',instant:'1985-10-08T08:37:00.000Z',location:'Malden, Massachusetts, United States',timeZone:'America/New_York',latitude:42.4251,longitude:-71.0662});
 const skyB=sample('Planetary Hours 2026-08-02 02:07',29.27,{dateTime:'2026-08-02T02:07',instant:'2026-08-02T08:07:00.000Z',location:'Salt Lake City, Utah, United States',timeZone:'America/Denver',latitude:40.7608,longitude:-111.891});
+// Regression fixture: numeric longitude is Aquarius 25°53′ while redundant legacy fields falsely say Cancer 28°25′.
+skyB.placements.Moon={...skyB.placements.Moon,longitude:325+53/60,sign:'Cancer',degree:28,minute:25,second:0};
+skyB.placements.Mars=placement('Mars',100.5);
 
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:1100}});
@@ -23,6 +26,21 @@ await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'}
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]',{timeout:20000});
 await page.waitForSelector('html[data-sky-placement-multiselect="ready"]',{timeout:20000});
+
+const moonMarsB=page.locator('.sky-intrasky-b-generated[data-left-placement="moon"][data-right-placement="mars"]');
+await moonMarsB.waitFor({state:'attached',timeout:20000});
+assert.equal(await moonMarsB.getAttribute('data-left-sign'),'10','Sky B Moon sign must come from Aquarius longitude, not stale Cancer fields.');
+const moonMarsCoordinate=moonMarsB.locator('.sky-foundation-relationship-copy small').first();
+await moonMarsCoordinate.waitFor({state:'attached',timeout:10000});
+assert.match((await moonMarsCoordinate.textContent())?.trim()||'',/^25°53′/);
+const moonLedgerB=page.locator('#skyFoundationB .sky-foundation-row').filter({hasText:'Moon'}).first();
+assert.match((await moonLedgerB.textContent())||'',/25°53′\s+Aquarius/);
+const repairedSkyB=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
+assert.deepEqual(
+  {longitude:repairedSkyB.placements.Moon.longitude,sign:repairedSkyB.placements.Moon.sign,degree:repairedSkyB.placements.Moon.degree,minute:repairedSkyB.placements.Moon.minute},
+  {longitude:325+53/60,sign:'Aquarius',degree:25,minute:53},
+  'Redundant Moon fields must self-heal from the canonical longitude.'
+);
 
 assert.equal(await page.locator('[data-filter="placement"]').count(),0);
 assert.equal(await page.locator('[data-placement-filter-sky]').count(),0);
