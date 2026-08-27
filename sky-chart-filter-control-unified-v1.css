@@ -83,9 +83,25 @@
 @media(min-width:621px){
   body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar,
   body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar[data-multiselect-placement-filters="true"][data-multiselect-house-filters="true"]{
-    grid-template-columns:minmax(0,.54fr) minmax(0,1.42fr) minmax(0,1.18fr) minmax(0,1.18fr) minmax(0,.88fr) minmax(0,1.16fr)!important;gap:5px!important;padding:7px 8px!important
+    grid-template-columns:repeat(12,minmax(0,1fr))!important;
+    grid-auto-flow:row!important;
+    gap:7px 6px!important;
+    padding:7px 8px!important
   }
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-display-control{grid-column:auto!important;max-width:none!important;min-width:0!important}
+
+  /* Row 1: inclusion filters. */
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-aspect-filter{grid-column:1/span 3!important;grid-row:1!important}
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-placement-filter{grid-column:4/span 3!important;grid-row:1!important}
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-zodiac-filter{grid-column:7/span 3!important;grid-row:1!important}
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-house-filter{grid-column:10/span 3!important;grid-row:1!important}
+
+  /* Row 2: evaluation / presentation controls. */
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-orb-number-field{grid-column:1/span 4!important;grid-row:2!important}
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-display-control{grid-column:5/span 3!important;grid-row:2!important;max-width:none!important;min-width:0!important}
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-sort-control{grid-column:8/span 5!important;grid-row:2!important;max-width:none!important;min-width:0!important}
+
+  body.sky-chart-page #skyFoundationRelationships .sky-orb-number-field>span{white-space:nowrap!important}
+
   body.sky-chart-page #skyFoundationRelationships .sky-chart-aspect-summary-choices,
   body.sky-chart-page #skyFoundationRelationships .sky-chart-placement-summary-choices,
   body.sky-chart-page #skyFoundationRelationships .sky-chart-house-summary-choices{gap:3px!important;padding-left:.4rem!important;padding-right:30px!important}
