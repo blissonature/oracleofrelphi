@@ -1,6 +1,6 @@
 // Full relationship transit window timing for expanded relationship tiles.
 // Restores start, exact, end, duration, passes, and retrograde-return information.
-// Timing is shown only when at least one endpoint belongs to a live Here-and-Now / Update-to-Now sky.
+// Dated intrasky aspects use both bodies in motion; intersky timing uses the live moving side when one is available.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipTransitMetaV4)return;
@@ -84,7 +84,7 @@ function modelFor(row){
   const errorAt=ms=>Math.abs(signedErrorAt(ms));
   return{kind:'dynamic',left,right,liveEndpoints:movingEndpoints,movingEndpoints,angle,limit,center,valueAt,signedErrorAt,errorAt,timedIntrasky};
 }
-function angularVelocity(ep,ms,valueAt){if(!ep.live||!MOTION_IDS.has(ep.id))return NaN;const half=ep.id==='moon'?.02:.06,a=valueAt(ep,ms-half*DAY),b=valueAt(ep,ms+half*DAY);return Number.isFinite(a)&&Number.isFinite(b)?wrap(b-a)/(2*half):NaN}
+function angularVelocity(ep,ms,valueAt){if(!MOTION_IDS.has(ep.id))return NaN;const half=ep.id==='moon'?.02:.06,a=valueAt(ep,ms-half*DAY),b=valueAt(ep,ms+half*DAY);return Number.isFinite(a)&&Number.isFinite(b)?wrap(b-a)/(2*half):NaN}
 function motionAt(model,ms){const states=[];for(const ep of model.liveEndpoints){if(!MOTION_IDS.has(ep.id))continue;const speed=angularVelocity(ep,ms,model.valueAt);if(Number.isFinite(speed))states.push({id:ep.id,name:bodyName(ep.id),retrograde:speed<0,speed})}return states}
 function estimatedRelativeSpeed(model){const half=.04,a=model.errorAt(model.center-half*DAY),b=model.errorAt(model.center+half*DAY);return Number.isFinite(a)&&Number.isFinite(b)?Math.abs(b-a)/(2*half):NaN}
 function searchSettings(model){const ids=model.liveEndpoints.map(ep=>ep.id),minStep=Math.min(...ids.map(id=>MIN_STEP[id]??.05)),maxStep=Math.min(...ids.map(id=>MAX_STEP[id]??2)),minHorizon=Math.max(...ids.map(id=>MIN_HORIZON[id]??1200)),speed=estimatedRelativeSpeed(model),estimate=Number.isFinite(speed)&&speed>1e-5?model.limit/speed:NaN,step=Number.isFinite(estimate)?Math.max(minStep,Math.min(maxStep,estimate/5)):maxStep,horizon=Math.min(MAX_HORIZON,Math.max(minHorizon,Number.isFinite(estimate)?estimate*12:0)),gap=Math.max(...ids.map(id=>RETURN_GAP[id]??0));return{step,horizon,gap}}
@@ -100,7 +100,30 @@ function motionSummary(model,timeline){const current=motionAt(model,model.center
 function rowMarkup(label,value){const line=document.createElement('span');line.className='inline-rel-transit-row';const key=document.createElement('b');key.textContent=label;const text=document.createElement('span');text.textContent=value;line.append(key,text);return line}
 function renderTimeline(row,model,timeline){const meta=metaNode(row);if(!meta)return;const exactText=timeline.exacts.length?timeline.exacts.map(dateLabel).join(' · '):'near pass';const motion=motionSummary(model,timeline),passText=timeline.exacts.length===1?'1 exact pass':`${timeline.exacts.length} exact passes`;meta.replaceChildren(rowMarkup('Start',dateLabel(timeline.startMs)),rowMarkup('Exact',exactText),rowMarkup('End',dateLabel(timeline.endMs)),rowMarkup('Duration',durationLabel(timeline.durationDays)),rowMarkup('Passes',motion?`${passText} · ${motion}`:passText));meta.dataset.transitReady='true';meta.dataset.transitKind='dynamic';meta.title=`Active from ${dateLabel(timeline.startMs)} to ${dateLabel(timeline.endMs)}; ${durationLabel(timeline.durationDays)} total activation span; ${passText}${motion?`; ${motion}`:''}.`;meta.setAttribute('aria-label',meta.title)}
 function renderUnavailable(row,reason){const meta=metaNode(row);if(!meta)return;meta.replaceChildren(rowMarkup('Timing',reason||'Unavailable'));meta.dataset.transitReady='true';meta.dataset.transitKind='unavailable';meta.title=reason||'Transit timing is unavailable.';meta.setAttribute('aria-label',meta.title)}
-function calculate(row,token){if(!row?.isConnected||!row.classList.contains('is-inline-expanded'))return;const model=modelFor(row);if(model.kind==='static'){removeMeta(row);return}if(model.kind!=='dynamic'){renderUnavailable(row,model.reason);return}if(model.errorAt(model.center)>model.limit+1e-8){renderUnavailable(row,'Outside the current Harmonic Window');return}const timeline=collectTimeline(model);if(token!==generation||!row.isConnected||!row.classList.contains('is-inline-expanded'))return;if(!timeline){renderUnavailable(row,'Complete transit window not found');return}renderTimeline(row,model,timeline)}
+function renderEstimatedTiming(row){
+  const timing=estimatedTimingForSort(row),meta=metaNode(row);
+  if(!meta)return;
+  if(!timing||!Number.isFinite(timing.durationDays)){renderUnavailable(row,'Timing estimate unavailable');return}
+  const lines=[rowMarkup('Duration',`≈ ${durationLabel(timing.durationDays)}`)];
+  if(Number.isFinite(timing.endsInDays))lines.push(rowMarkup('Ends',`≈ ${durationLabel(timing.endsInDays)} after chart moment`));
+  meta.replaceChildren(...lines);
+  meta.dataset.transitReady='true';
+  meta.dataset.transitKind='estimated';
+  meta.title='Estimated from the relationship’s local motion at the chart moment.';
+  meta.setAttribute('aria-label',meta.title);
+}
+function calculate(row,token){
+  if(!row?.isConnected||!row.classList.contains('is-inline-expanded'))return;
+  const model=modelFor(row);
+  if(model.kind==='static'){removeMeta(row);return}
+  if(model.kind!=='dynamic'){renderUnavailable(row,model.reason);return}
+  if(model.errorAt(model.center)>model.limit+1e-8){renderUnavailable(row,'Outside the current Harmonic Window');return}
+  if(model.timedIntrasky&&!model.left.live){renderEstimatedTiming(row);return}
+  const timeline=collectTimeline(model);
+  if(token!==generation||!row.isConnected||!row.classList.contains('is-inline-expanded'))return;
+  if(!timeline){renderUnavailable(row,'Complete transit window not found');return}
+  renderTimeline(row,model,timeline)
+}
 function clearCollapsed(){document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row:not(.is-inline-expanded)').forEach(removeMeta)}
 function decorate(){clearCollapsed();const row=document.querySelector('#skyFoundationRelationshipList .sky-foundation-relationship-row.is-inline-expanded');if(!row)return;const model=modelFor(row);if(model.kind==='static'){removeMeta(row);return}const meta=metaNode(row);if(!meta){requestAnimationFrame(decorate);return}const liveSignature=['A','B'].map(slot=>`${slot}:${liveOrigin(slot)}:${profileDate(slot)?.toISOString()||''}`).join('|'),signature=[row.dataset.relationIndex,row.dataset.aspect,row.dataset.leftPlacement,row.dataset.rightPlacement,document.querySelector('[data-harmonic-window-input]')?.value||'',liveSignature].join('|');if(meta.dataset.transitSignature===signature&&meta.dataset.transitReady==='true')return;meta.dataset.transitSignature=signature;meta.dataset.transitReady='false';meta.dataset.transitKind='loading';meta.replaceChildren(rowMarkup('Timing','Calculating…'));const token=++generation,run=()=>calculate(row,token);if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:90});else setTimeout(run,20)}
 function schedule(){requestAnimationFrame(()=>requestAnimationFrame(decorate))}
