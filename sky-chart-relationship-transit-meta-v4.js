@@ -101,7 +101,7 @@ async function sampledInside(model,ms,budget,shouldCancel){
   assertSortActive(shouldCancel);
   const inside=model.errorAt(ms)<=model.limit+1e-8;
   budget.count+=1;
-  if(budget.count>=20){
+  if(budget.count>=8){
     budget.count=0;
     await yieldSortThread();
     assertSortActive(shouldCancel);
