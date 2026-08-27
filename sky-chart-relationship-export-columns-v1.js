@@ -43,12 +43,27 @@ function durationLabel(days){
   if(days<730)return`${Math.round(days/30.4375*10)/10} months`;
   return`${Math.round(days/365.25*10)/10} years`;
 }
+function dateLabel(ms){return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(ms))}
 function timingLines(row){
-  const timing=window.RelphiRelationshipTransitMeta?.estimatedTimingForRow?.(row);
-  if(!timing||!Number.isFinite(timing.durationDays))return['Timing unavailable for this relationship.'];
-  const lines=[`Duration ≈ ${durationLabel(timing.durationDays)}`];
-  if(Number.isFinite(timing.endsInDays))lines.push(`Ends ≈ ${durationLabel(timing.endsInDays)} after the chart moment`);
-  return lines;
+  const full=window.RelphiRelationshipTransitMeta?.exportTimingForRow?.(row);
+  if(full?.kind==='dynamic'){
+    const exact=full.exacts?.length?full.exacts.map(dateLabel).join(' · '):'near pass';
+    const passes=full.passCount===1?'1 exact pass':`${full.passCount||0} exact passes`;
+    return[
+      `Start ${dateLabel(full.startMs)}`,
+      `Exact ${exact}`,
+      `End ${dateLabel(full.endMs)}`,
+      `Duration ${durationLabel(full.durationDays)}`,
+      `Passes ${full.motion?passes+' · '+full.motion:passes}`
+    ];
+  }
+  const estimate=window.RelphiRelationshipTransitMeta?.estimatedTimingForRow?.(row);
+  if(estimate&&Number.isFinite(estimate.durationDays)){
+    const lines=[`Duration ≈ ${durationLabel(estimate.durationDays)}`];
+    if(Number.isFinite(estimate.endsInDays))lines.push(`Ends ≈ ${durationLabel(estimate.endsInDays)} after the chart moment`);
+    return lines;
+  }
+  return[`Timing ${full?.reason||'unavailable for this relationship.'}`];
 }
 function semanticBlock(row,side){
   const left=side==='left',id=String(row.dataset[left?'leftPlacement':'rightPlacement']||''),signIndex=Number(row.dataset[left?'leftSign':'rightSign']),house=Number(row.dataset[left?'leftHouse':'rightHouse']),sign=SIGN_NAMES[signIndex]||'Sign';
