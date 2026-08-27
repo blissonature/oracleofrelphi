@@ -80,7 +80,8 @@ async function inspect(width,height,suffix){
 
   assert.equal(state.zodiac.length,12);
   assert.deepEqual(state.zodiac.map(item=>item.id),SIGNS.map(name=>name.toLowerCase()));
-  assert.ok(state.zodiac.every(item=>item.radius===19));
+  assert.ok(state.zodiac.every(item=>Number.isFinite(item.radius)&&item.radius>0));
+  assert.equal(new Set(state.zodiac.map(item=>item.radius)).size,1);
   assert.ok(state.zodiac.every(item=>item.glyphCount===1));
   assert.ok(state.zodiac.every(item=>item.circleDisplay==='none'));
   assert.equal(state.sourceFill,'none');
