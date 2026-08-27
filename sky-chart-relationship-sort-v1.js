@@ -212,7 +212,6 @@ function start(){
     'relphi:sky-harmonic-window-visibility-changed',
     'relphi:sky-live-origin-changed'
   ].forEach(name=>window.addEventListener(name,()=>requestAnimationFrame(invalidateTransit)));
-  window.addEventListener('relphi:sky-where-when-committed',()=>requestAnimationFrame(refreshForRows));
   const root=document.getElementById('skyFoundationRoot');
   if(root)new MutationObserver(()=>requestAnimationFrame(ensureControl)).observe(root,{childList:true,subtree:true});
 }
