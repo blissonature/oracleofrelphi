@@ -326,8 +326,8 @@ test('glyph fitting keeps the explicitly authorized browser-measured implementat
 });
 
 test('shared pages and Sky Chart use the same component version', () => {
-  assert.match(navloader, /appendScript\('relphi-glyph-component-v1\.js\?v=32'/);
-  assert.match(html, /relphi-glyph-component-v1\.js\?v=32/);
+  assert.match(navloader, /appendScript\('relphi-glyph-component-v1\.js\?v=33'/);
+  assert.match(html, /relphi-glyph-component-v1\.js\?v=33/);
 });
 
 test('Sky Chart cache keys point at the compact relationship, copy, coordinate, and thumbnail preview', () => {
