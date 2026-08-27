@@ -1,8 +1,8 @@
-// Relationship scope sections v8: semantic grouping, visibility-aware headers, visual-only disclosure drawers, and fail-safe fast Copy.
+// Relationship scope sections v9: semantic grouping, sortable scope drawers, visibility-aware headers, visual-only disclosure, and Copy.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV7)return;
-window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScopeSectionsV2=true;window.__relphiRelationshipScopeSectionsV3=true;window.__relphiRelationshipScopeSectionsV4=true;window.__relphiRelationshipScopeSectionsV5=true;window.__relphiRelationshipScopeSectionsV6=true;window.__relphiRelationshipScopeSectionsV7=true;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV9)return;
+window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScopeSectionsV2=true;window.__relphiRelationshipScopeSectionsV3=true;window.__relphiRelationshipScopeSectionsV4=true;window.__relphiRelationshipScopeSectionsV5=true;window.__relphiRelationshipScopeSectionsV6=true;window.__relphiRelationshipScopeSectionsV7=true;window.__relphiRelationshipScopeSectionsV8=true;window.__relphiRelationshipScopeSectionsV9=true;
 
 const GROUPS=Object.freeze([{mode:'A-A',title:'A↔A',family:'intrasky'},{mode:'B-B',title:'B↔B',family:'intrasky'},{mode:'A-B',title:'A↔B',family:'intersky'}]);
 const FAMILIES=Object.freeze([{id:'intrasky',title:'Intrasky'},{id:'intersky',title:'Intersky'}]);
@@ -63,7 +63,7 @@ function groupList(){
     const groups=GROUPS.filter(g=>g.family===family.id),head=familyHeading(list,family);
     head.hidden=!groups.some(g=>rows.some(r=>mode(r)===g.mode&&visible(r)));
     desired.push(head);
-    for(const g of groups){const section=rows.filter(r=>mode(r)===g.mode),sh=scopeHeading(list,g);sh.hidden=!section.some(visible);desired.push(sh,...section)}
+    for(const g of groups){let section=rows.filter(r=>mode(r)===g.mode);const sorter=window.RelphiRelationshipSort;if(sorter?.compareRows)section=section.slice().sort(sorter.compareRows);const sh=scopeHeading(list,g);sh.hidden=!section.some(visible);desired.push(sh,...section)}
   }
   if(!sameOrder([...list.children],desired)){
     applying=true;const frag=document.createDocumentFragment();desired.forEach(n=>frag.appendChild(n));list.appendChild(frag);applying=false;
@@ -113,6 +113,6 @@ function ensureObserver(){
 }
 function bind(){ensureObserver();bindCopyButton();schedule()}
 function bindCopySoon(){bindCopyButton();requestAnimationFrame(bindCopyButton)}
-function start(){installStyles();document.addEventListener('click',handleDisclosureClick);bind();requestAnimationFrame(bindCopySoon);const events=['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-aspect-multiselect-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-foundation-filter-changed','relphi:relationship-display-changed'];events.forEach(name=>window.addEventListener(name,()=>{schedule();bindCopySoon()}))}
+function start(){installStyles();document.addEventListener('click',handleDisclosureClick);bind();requestAnimationFrame(bindCopySoon);const events=['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-aspect-multiselect-changed','relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-foundation-filter-changed','relphi:relationship-display-changed','relphi:relationship-sort-changed'];events.forEach(name=>window.addEventListener(name,()=>{schedule();bindCopySoon()}))}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
