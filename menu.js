@@ -52,8 +52,8 @@
 
   function loadAstrologyFoundationEnhancements() {
     if (!/(^|\/)astrology-foundations\.html$/.test(window.location.pathname)) return;
-    // Astrology Foundations glyph loading is owned by navloader's single shared
-    // Master Glyph runtime path. Preserve the authored matrix layout here.
+    // Preserve the authored matrix layout while applying only mobile sizing.
+    appendScript('astrology-foundations-mobile-signs.js?v=3');
     appendScript('astrology-foundations-consistency.js?v=1');
   }
 
