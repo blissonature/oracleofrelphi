@@ -48,11 +48,42 @@ function ascendantLongitude(date,slot){const p=profile(slot),latitude=Number(p.l
 function midheavenLongitude(date,slot){const p=profile(slot),longitude=Number(p.longitude);if(!Number.isFinite(longitude))return NaN;const theta=siderealDegrees(date,longitude)*Math.PI/180,epsilon=obliquity(date)*Math.PI/180;if(![theta,epsilon].every(Number.isFinite))return NaN;return norm(Math.atan2(Math.sin(theta),Math.cos(theta)*Math.cos(epsilon))*180/Math.PI)}
 function vertexLongitude(date,slot){const p=profile(slot),latitude=Number(p.latitude),longitude=Number(p.longitude);if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return NaN;const armc=siderealDegrees(date,longitude),epsilon=obliquity(date);if(!Number.isFinite(armc)||!Number.isFinite(epsilon))return NaN;const x=norm(armc-90),poleLatitude=latitude>=0?90-latitude:-90-latitude,rad=Math.PI/180,numerator=Math.sin(x*rad),denominator=Math.cos(epsilon*rad)*Math.cos(x*rad)-Math.sin(epsilon*rad)*Math.tan(poleLatitude*rad);let vertex=norm(Math.atan2(numerator,denominator)/rad);if(Math.abs(latitude)<=epsilon){const mc=midheavenLongitude(date,slot);if(Number.isFinite(mc)&&wrap(vertex-mc)>0)vertex=norm(vertex+180)}return vertex}
 function ephemerisLongitude(id,date,slot){if(id==='north-node')return meanNodeLongitude(date);if(id==='south-node')return norm(meanNodeLongitude(date)+180);if(id==='lilith')return meanLilithLongitude(date);if(id==='vertex')return vertexLongitude(date,slot);if(id==='asc')return ascendantLongitude(date,slot);if(id==='dsc'){const value=ascendantLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}if(id==='mc')return midheavenLongitude(date,slot);if(id==='ic'){const value=midheavenLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}const astronomy=window.Astronomy,bodyName=BODY[id],bodyValue=astronomy?.Body?.[bodyName]||bodyName;if(!bodyName||!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;try{if(id==='moon'&&typeof astronomy.EclipticGeoMoon==='function')return norm(astronomy.EclipticGeoMoon(date).lon);return norm(astronomy.Ecliptic(astronomy.GeoVector(bodyValue,date,true)).elon)}catch(_){return NaN}}
-function endpoint(row,side){const sky=rowSky(row,side),id=String(row.dataset[side==='left'?'leftPlacement':'rightPlacement']||''),record=findRecord(sky,id),date=profileDate(sky);return{side,sky,id,record,date,live:isLive(sky)}}
-function endpointCanMove(ep){return!!(ep.live&&ep.date&&Number.isFinite(ephemerisLongitude(ep.id,ep.date,ep.sky)))}
+function endpoint(row,side){const sky=rowSky(row,side),id=String(row.dataset[side==='left'?'leftPlacement':'rightPlacement']||''),record=findRecord(sky,id),date=profileDate(sky);return{side,sky,id,record,date,live:isLive(sky),timed:!!date}}
+function endpointCanMove(ep){return!!(ep?.date&&Number.isFinite(ephemerisLongitude(ep.id,ep.date,ep.sky)))}
 function bodyName(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||id}
 function signedAspectError(a,b,angle){const delta=wrap(Number(a)-Number(b)),positive=wrap(delta-angle),negative=wrap(delta+angle);return Math.abs(positive)<=Math.abs(negative)?positive:negative}
-function modelFor(row){const aspect=String(row.dataset.aspect||''),angle=ANGLE[aspect];if(!Number.isFinite(angle))return{kind:'unavailable',reason:'Aspect timing is unavailable.'};const left=endpoint(row,'left'),right=endpoint(row,'right'),limit=angularLimit(row);if(!left.record||!right.record)return{kind:'unavailable',reason:'Placement timing data is unavailable.'};const liveEndpoints=[left,right].filter(ep=>ep.live);if(!liveEndpoints.length)return{kind:'static',left,right};if(liveEndpoints.some(ep=>!endpointCanMove(ep)))return{kind:'unavailable',left,right,reason:'Timing is unavailable for this moving calculated point.'};const center=liveEndpoints[0].date.getTime(),valueAt=(ep,ms)=>{if(!ep.live)return ep.record.value;const date=new Date(ep.date.getTime()+(ms-center));return ephemerisLongitude(ep.id,date,ep.sky)},signedErrorAt=ms=>{const a=valueAt(left,ms),b=valueAt(right,ms);return Number.isFinite(a)&&Number.isFinite(b)?signedAspectError(a,b,angle):NaN},errorAt=ms=>Math.abs(signedErrorAt(ms));return{kind:'dynamic',left,right,liveEndpoints,angle,limit,center,valueAt,signedErrorAt,errorAt}}
+function modelFor(row){
+  const aspect=String(row.dataset.aspect||''),angle=ANGLE[aspect];
+  if(!Number.isFinite(angle))return{kind:'unavailable',reason:'Aspect timing is unavailable.'};
+  const left=endpoint(row,'left'),right=endpoint(row,'right'),limit=angularLimit(row);
+  if(!left.record||!right.record)return{kind:'unavailable',reason:'Placement timing data is unavailable.'};
+
+  const sameSky=left.sky===right.sky;
+  const timedIntrasky=sameSky&&left.timed&&right.timed;
+  const movingEndpoints=timedIntrasky?[left,right]:[left,right].filter(ep=>ep.live);
+
+  if(!movingEndpoints.length){
+    const hasDate=left.timed||right.timed;
+    return{kind:'static',left,right,reason:hasDate?'No moving-side convention is available for this comparison.':'Timing needs a dated sky.'};
+  }
+  if(movingEndpoints.some(ep=>!endpointCanMove(ep))){
+    return{kind:'unavailable',left,right,reason:'Timing is unavailable for this moving calculated point.'};
+  }
+
+  const center=(timedIntrasky?left.date:movingEndpoints[0].date).getTime();
+  const movingSet=new Set(movingEndpoints);
+  const valueAt=(ep,ms)=>{
+    if(!movingSet.has(ep))return ep.record.value;
+    const date=new Date(ep.date.getTime()+(ms-center));
+    return ephemerisLongitude(ep.id,date,ep.sky);
+  };
+  const signedErrorAt=ms=>{
+    const a=valueAt(left,ms),b=valueAt(right,ms);
+    return Number.isFinite(a)&&Number.isFinite(b)?signedAspectError(a,b,angle):NaN;
+  };
+  const errorAt=ms=>Math.abs(signedErrorAt(ms));
+  return{kind:'dynamic',left,right,liveEndpoints:movingEndpoints,movingEndpoints,angle,limit,center,valueAt,signedErrorAt,errorAt,timedIntrasky};
+}
 function angularVelocity(ep,ms,valueAt){if(!ep.live||!MOTION_IDS.has(ep.id))return NaN;const half=ep.id==='moon'?.02:.06,a=valueAt(ep,ms-half*DAY),b=valueAt(ep,ms+half*DAY);return Number.isFinite(a)&&Number.isFinite(b)?wrap(b-a)/(2*half):NaN}
 function motionAt(model,ms){const states=[];for(const ep of model.liveEndpoints){if(!MOTION_IDS.has(ep.id))continue;const speed=angularVelocity(ep,ms,model.valueAt);if(Number.isFinite(speed))states.push({id:ep.id,name:bodyName(ep.id),retrograde:speed<0,speed})}return states}
 function estimatedRelativeSpeed(model){const half=.04,a=model.errorAt(model.center-half*DAY),b=model.errorAt(model.center+half*DAY);return Number.isFinite(a)&&Number.isFinite(b)?Math.abs(b-a)/(2*half):NaN}
@@ -95,7 +126,7 @@ function sortDurationSignature(row){
   ].join('|');
 }
 function endpointSpeedForSort(model,ep){
-  if(!ep?.live)return 0;
+  if(!model?.movingEndpoints?.includes(ep))return 0;
   const fastAngle=['asc','dsc','mc','ic','vertex'].includes(ep.id);
   const half=fastAngle?.001:ep.id==='moon'?.02:.06;
   const before=model.valueAt(ep,model.center-half*DAY);
@@ -103,36 +134,49 @@ function endpointSpeedForSort(model,ep){
   if(!Number.isFinite(before)||!Number.isFinite(after))return NaN;
   return wrap(after-before)/(2*half);
 }
-function estimatedDurationDaysForSort(row){
+function estimatedTimingForSort(row){
   if(!row?.isConnected)return null;
   const signature=sortDurationSignature(row);
   if(sortDurationCache.has(signature)){
     const cached=sortDurationCache.get(signature);
-    if(Number.isFinite(cached))row.dataset.transitDurationDays=String(cached);
-    else delete row.dataset.transitDurationDays;
+    if(Number.isFinite(cached?.durationDays))row.dataset.transitDurationDays=String(cached.durationDays);else delete row.dataset.transitDurationDays;
+    if(Number.isFinite(cached?.endsInDays))row.dataset.transitEndsInDays=String(cached.endsInDays);else delete row.dataset.transitEndsInDays;
     return cached;
   }
+
   const model=modelFor(row);
-  let duration=null;
+  let timing=null;
   if(model.kind==='dynamic'&&model.errorAt(model.center)<=model.limit+1e-8){
     const leftSpeed=endpointSpeedForSort(model,model.left);
     const rightSpeed=endpointSpeedForSort(model,model.right);
-    const relative=Math.abs(Number(leftSpeed)-Number(rightSpeed));
-    if(Number.isFinite(relative)&&relative>1e-7){
-      duration=(2*model.limit)/relative;
+    const relative=Number(leftSpeed)-Number(rightSpeed);
+    const speed=Math.abs(relative);
+    const error=Number(model.signedErrorAt(model.center));
+    if(Number.isFinite(speed)&&speed>1e-7&&Number.isFinite(error)){
+      const durationDays=(2*model.limit)/speed;
+      const candidates=[
+        ( model.limit-error)/relative,
+        (-model.limit-error)/relative
+      ].filter(value=>Number.isFinite(value)&&value>=0);
+      const endsInDays=candidates.length?Math.min(...candidates):null;
+      timing={durationDays,endsInDays};
     }
   }
-  sortDurationCache.set(signature,duration);
-  if(Number.isFinite(duration))row.dataset.transitDurationDays=String(duration);
-  else delete row.dataset.transitDurationDays;
-  return duration;
+
+  sortDurationCache.set(signature,timing);
+  if(Number.isFinite(timing?.durationDays))row.dataset.transitDurationDays=String(timing.durationDays);else delete row.dataset.transitDurationDays;
+  if(Number.isFinite(timing?.endsInDays))row.dataset.transitEndsInDays=String(timing.endsInDays);else delete row.dataset.transitEndsInDays;
+  return timing;
 }
 function clearSortDurationCache(){
   sortDurationCache.clear();
-  document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>delete row.dataset.transitDurationDays);
+  document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>{
+    delete row.dataset.transitDurationDays;
+    delete row.dataset.transitEndsInDays;
+  });
 }
 window.RelphiRelationshipTransitMeta=Object.freeze({
-  estimatedDurationDaysForRow:estimatedDurationDaysForSort,
+  estimatedTimingForRow:estimatedTimingForSort,
   clearDurationCache:clearSortDurationCache
 });
 
