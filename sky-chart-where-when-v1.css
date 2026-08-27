@@ -234,7 +234,7 @@
 
 .sky-where-when-grid {
   display:grid;
-  grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);
+  grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);
   gap:6px;
   width:100%;
 }
