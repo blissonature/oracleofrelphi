@@ -213,8 +213,27 @@ function clearSortDurationCache(){
     delete row.dataset.transitEndsInDays;
   });
 }
+function exportTimingForRow(row){
+  if(!row?.isConnected)return{kind:'unavailable',reason:'Relationship is unavailable.'};
+  const model=modelFor(row);
+  if(model.kind==='static'||model.kind==='unavailable')return{kind:'unavailable',reason:model.reason||'Timing unavailable.'};
+  if(model.errorAt(model.center)>model.limit+1e-8)return{kind:'unavailable',reason:'Outside the current Harmonic Window.'};
+  const timeline=collectTimeline(model);
+  if(!timeline)return{kind:'unavailable',reason:'Complete transit window not found.'};
+  return{
+    kind:'dynamic',
+    startMs:timeline.startMs,
+    endMs:timeline.endMs,
+    exacts:[...timeline.exacts],
+    durationDays:timeline.durationDays,
+    passCount:timeline.exacts.length,
+    motion:motionSummary(model,timeline),
+    timingConvention:model.timingConvention||''
+  };
+}
 window.RelphiRelationshipTransitMeta=Object.freeze({
   estimatedTimingForRow:estimatedTimingForSort,
+  exportTimingForRow,
   clearDurationCache:clearSortDurationCache
 });
 
