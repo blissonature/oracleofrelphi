@@ -22,7 +22,6 @@ const heptagram = fs.readFileSync(path.join(root, 'sky-chart-heptagram-canonical
 const heptagramCss = fs.readFileSync(path.join(root, 'sky-chart-heptagram-canonical-v1.css'), 'utf8');
 const registry = fs.readFileSync(path.join(root, 'relphi-glyph-registry-v1.js'), 'utf8');
 const component = fs.readFileSync(path.join(root, 'relphi-glyph-component-v1.js'), 'utf8');
-const fortune = fs.readFileSync(path.join(root, 'assets/planet-glyphs/part-of-fortune.svg'), 'utf8');
 const angles = fs.readFileSync(path.join(root, 'sky-chart-angle-placements-v1.js'), 'utf8');
 const hits = fs.readFileSync(path.join(root, 'sky-chart-card-hits-v2.js'), 'utf8');
 const navloader = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
@@ -252,15 +251,15 @@ test('Planetary Hours heptagram is glyph-only inside the SVG', () => {
   assert.match(heptagramCss, /\.sky-ph-heptagram text\{display:none!important\}/);
 });
 
-test('Lilith uses the same static-master path as the planetary SVG masters', () => {
-  assert.match(registry, /\['lilith','Lilith',[^\n]+,1,0,0,null,'static-master'\]/);
-  assert.doesNotMatch(component, /entry\.id === 'lilith'/);
+test('Lilith keeps the explicitly authorized fitted asset treatment', () => {
+  assert.match(registry, /\['lilith','Lilith',[^\n]+assets\/planet-glyphs\/lilith\.svg',1\.05,0,0,null,'circle','400'\]/);
+  assert.match(component, /entry\.fitMode === 'lilith'/);
 });
 
-test('Part of Fortune is a full-sized static master rather than a procedural insert', () => {
-  assert.match(registry, /\['part-of-fortune','Part of Fortune',[^\n]+assets\/planet-glyphs\/part-of-fortune\.svg',1,0,0,null,'static-master'\]/);
-  assert.match(fortune, /<circle cx="50" cy="50" r="20"/);
-  assert.doesNotMatch(component, /entry\.id === 'part-of-fortune'/);
+test('Part of Fortune keeps the explicitly authorized procedural fallback', () => {
+  assert.match(registry, /\['part-of-fortune','Part of Fortune',[^\n]+,null,\.92,0,0,'fortune','circle'\]/);
+  assert.match(component, /function fortune\(parent, color\)/);
+  assert.match(component, /entry\.fallback === 'fortune'/);
 });
 
 test('Chart Card Hits explain their evidence instead of acting as relationship filters', () => {
@@ -315,13 +314,15 @@ test('Chart Angles are grouped visually without reordering ledger row identity',
   assert.doesNotMatch(angles, /ledger\.appendChild\(match\[1\]\)/);
 });
 
-test('dynamic SVG glyph fitting is identity-stable even inside hidden relationship rows', () => {
-  assert.match(component, /const fitMetrics = new Map\(\);/);
-  assert.match(component, /const cached = fitMetrics\.get\(entry\.id\);/);
-  assert.match(component, /const box = mountedBox\(node\) \|\| probeBox\(node\);/);
-  assert.match(component, /probe\.dataset\.relphiGlyphMeasureProbe = 'true';/);
-  assert.match(component, /fitMetrics\.set\(entry\.id, metrics\);/);
-  assert.match(component, /node\.dataset\.fitMetricsSource = 'identity-cache';/);
+test('glyph fitting keeps the explicitly authorized browser-measured implementation', () => {
+  assert.match(component, /node\.getBBox\(\)/);
+  assert.match(component, /await new Promise\(resolve => requestAnimationFrame\(resolve\)\)/);
+  assert.match(component, /Number\(entry\.scale\) \|\| 1/);
+  assert.match(component, /entry\.dx \|\| 0/);
+  assert.match(component, /entry\.dy \|\| 0/);
+  assert.doesNotMatch(component, /fitMetrics/);
+  assert.doesNotMatch(component, /probeBox/);
+  assert.doesNotMatch(component, /staticMaster/);
 });
 
 test('shared pages and Sky Chart use the same component version', () => {
