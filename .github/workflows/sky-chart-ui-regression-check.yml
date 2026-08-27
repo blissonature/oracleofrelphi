@@ -4,13 +4,12 @@ on:
   pull_request:
     paths:
       - 'glyphs.html'
+      - 'glyphs-unified-preview.html'
       - 'part1/sky-chart.html'
       - 'part2/sky-chart.html'
       - 'sky-chart.html'
-      - 'glyph-canon-approved-source-manifest.json'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
-      - 'relphi-glyph-source-integrity-v1.js'
       - 'relphi-glyph-copy-serializer-v1.js'
       - 'assets/planet-glyphs/**'
       - 'assets/zodiac-glyphs/**'
@@ -19,7 +18,7 @@ on:
       - 'sky-chart-foundation-v1.js'
       - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-selected-relationship-v3.js'
-      - 'tests/sky-chart-canonical-master-contract.test.mjs'
+      - 'tools/check-single-glyph-canon.mjs'
       - 'tests/sky-chart-single-canon-browser.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-stability-now.mjs'
@@ -41,20 +40,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check permanent source and JavaScript syntax
+      - name: Verify authorized glyph source and JavaScript syntax
         run: |
+          node tools/check-single-glyph-canon.mjs
           node --check relphi-glyph-registry-v1.js
           node --check relphi-glyph-component-v1.js
-          node --check relphi-glyph-source-integrity-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
           node --check sky-chart-foundation-v1.js
           node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-selected-relationship-v3.js
-          node --check tests/sky-chart-canonical-master-contract.test.mjs
           node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-stability-now.mjs
-          node tests/sky-chart-canonical-master-contract.test.mjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -70,7 +67,6 @@ jobs:
         with:
           name: sky-chart-ui-regression-screenshots
           path: |
-            glyph-canon-source-audit.json
             sky-chart-single-canon-desktop.png
             sky-chart-single-canon-mobile.png
             sky-chart-filter-controls-unified.png
