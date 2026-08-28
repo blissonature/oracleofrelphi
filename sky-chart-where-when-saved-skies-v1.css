@@ -31,6 +31,13 @@
   font:800 .6rem/1.2 system-ui,sans-serif;
 }
 .sky-where-when-save-choice:hover{border-color:rgba(31,27,24,.34);background:#fff}
+.sky-where-when-save-stack{display:grid;gap:4px;min-width:0}
+.sky-where-when-save-help{
+  display:block;
+  padding:0 4px;
+  color:#756c64;
+  font:650 .54rem/1.25 system-ui,sans-serif;
+}
 .sky-where-when-save-choice input{
   width:16px;
   height:16px;
