@@ -205,8 +205,9 @@ test('finite longitude is the coordinate authority across active Sky Chart prese
   assert.match(coordinatePrecision, /function longitude\(item\)/);
   assert.match(coordinatePrecision, /const value = longitude\(item\)/);
   assert.match(coordinatePrecision, /const signIndex = Math\.floor\(value \/ 30\)/);
-  assert.match(coordinatePrecision, /function repairRedundantCoordinateFields\(slot,payload\)/);
-  assert.match(coordinatePrecision, /localStorage\.setItem\(KEYS\[slot\], JSON\.stringify\(payload\)\)/);
+  assert.match(coordinatePrecision, /Presentation is deliberately read-only/);
+  assert.doesNotMatch(coordinatePrecision, /repairRedundantCoordinateFields/);
+  assert.doesNotMatch(coordinatePrecision, /localStorage\.setItem/);
   assert.match(coordinatePrecision, /function correctRelationships\(mapsA,mapsB\)/);
   assert.match(coordinatePrecision, /small\.dataset\.relationshipCoordinate = left\.text/);
   assert.match(coordinatePrecision, /longitude-authoritative-by-row-sky/);
@@ -217,9 +218,9 @@ test('finite longitude is the coordinate authority across active Sky Chart prese
   assert.doesNotMatch(cardHitsDrawer, /explicitSign/);
   assert.doesNotMatch(coordinatePrecision, /new MutationObserver/);
   assert.doesNotMatch(coordinatePrecision, /observe\(document\.documentElement/);
-  assert.match(html, /sky-chart-coordinate-precision-v1\.js\?v=5/);
-  assert.match(html, /sky-chart-intrasky-a-v1\.js\?v=2/);
-  assert.match(html, /sky-chart-aspect-multiselect-v1\.js\?v=4/);
+  assert.match(html, /sky-chart-coordinate-precision-v1\.js\?v=6/);
+  assert.match(html, /sky-chart-intrasky-a-v1\.js\?v=3/);
+  assert.match(html, /sky-chart-aspect-multiselect-v1\.js\?v=5/);
   assert.match(html, /sky-chart-card-hits-drawer-v1\.js\?v=3/);
 });
 

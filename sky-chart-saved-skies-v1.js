@@ -8,7 +8,7 @@
   const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky']);
   let openSlot=null,queued=false,popover=null,observer=null;
-  let namingMode=false,nameDraft='';
+  let namingMode=false,nameDraft='',deleteArm=null,deleteArmTimer=0;
 
   const normalize=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const clone=value=>JSON.parse(JSON.stringify(value));
@@ -63,12 +63,11 @@
     return null;
   }
   function matchingRecord(value,records){
+    // A working sky belongs to Saved skies only when it carries an explicit
+    // saved-sky identity. Never silently reattach an unsaved working copy by
+    // matching its placements or date/time to a library record.
     if(!value||!hasPlacements(value))return null;
-    const explicit=explicitRecord(value,records);if(explicit)return explicit;
-    const exact=skySignature(value),exactHits=records.filter(record=>skySignature(record)===exact);
-    if(exactHits.length===1)return exactHits[0];
-    const placementOnly=placementSignature(value),placementHits=records.filter(record=>placementSignature(record)===placementOnly);
-    return placementHits.length===1?placementHits[0]:null;
+    return explicitRecord(value,records);
   }
   function isDirty(value,record){return!!record&&skySignature(value)!==skySignature(record)}
   function isNearNow(value){
@@ -133,12 +132,53 @@
     window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{name:clean,id,action:index>=0?'update':'create'}}));
     return{ok:true,message:index>=0?'Changes saved.':'Sky saved.'};
   }
+  function clearStaleWhereWhenTransactions(){
+    const transaction=window.RelphiSkyWhereWhenTransaction;
+    ['A','B'].forEach(candidate=>{
+      const form=document.querySelector(`.sky-where-when-editor[data-slot="${candidate}"]`);
+      if(!form)transaction?.cancel?.(candidate);
+    });
+    if(transaction?.active?.()!==true){
+      document.documentElement.dataset.skyWhereWhenEditing='false';
+      document.documentElement.dataset.skyWhereWhenEditingSlots='';
+    }
+  }
+  function closeWhereWhenEditor(slot){
+    const form=document.querySelector(`.sky-where-when-editor[data-slot="${slot}"]`);
+    const disclosure=document.querySelector(`[data-ww-disclosure="${slot}"][aria-expanded="true"]`);
+    if(disclosure)disclosure.click();
+    else{
+      window.RelphiSkyWhereWhenTransaction?.cancel?.(slot);
+      form?.remove();
+    }
+    clearStaleWhereWhenTransactions();
+  }
   function loadRecord(slot,record){
-    const id=recordRef(record),active=applyNamedIdentity(record,String(record.name||'Saved sky').trim(),id);
+    closeWhereWhenEditor(slot);
+    const id=recordRef(record),name=String(record.name||'Saved sky').trim(),active=applyNamedIdentity(record,name,id);
     delete active.savedAt;delete active.updatedAt;
     if(!writeJson(SLOT_KEYS[slot],active))return false;
     if(slot==='B'){try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}document.documentElement.dataset.skyLastMode='comparison'}
-    dispatchStorage(slot);return true;
+    window.RelphiSkyCardShell?.sync?.(slot,active);
+    dispatchStorage(slot);
+    window.dispatchEvent(new CustomEvent('relphi:saved-sky-loaded',{detail:{slot,id,name}}));
+    return true;
+  }
+  function deleteRecord(ref){
+    const records=library(),index=records.findIndex(record=>recordRef(record)===String(ref||''));
+    if(index<0)return false;
+    const [removed]=records.splice(index,1);
+    if(!writeLibrary(records))return false;
+    ['A','B'].forEach(slot=>{
+      const value=payload(slot),active=explicitRecord(value,[removed]);
+      if(!active)return;
+      const next=clone(value);
+      next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};
+      delete next.metadata.savedSkyId;delete next.metadata.savedSkyName;delete next.metadata.savedSkyLoadedAt;
+      writeJson(SLOT_KEYS[slot],next);dispatchStorage(slot);
+    });
+    window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{name:String(removed?.name||''),id:recordRef(removed),action:'delete'}}));
+    return true;
   }
 
   function shortMeta(record){
@@ -149,30 +189,77 @@
   }
   function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 
+  function resetDeleteArm(){
+    clearTimeout(deleteArmTimer);deleteArmTimer=0;deleteArm=null;
+    popover?.querySelectorAll('[data-saved-delete-ref][data-confirming="true"]').forEach(button=>{
+      button.dataset.confirming='false';button.textContent='×';button.title='Delete from Saved skies';
+    });
+  }
+  function armDelete(button){
+    resetDeleteArm();
+    deleteArm=button.dataset.savedDeleteRef||null;
+    button.dataset.confirming='true';button.textContent='Delete?';button.title='Tap again to delete';
+    deleteArmTimer=window.setTimeout(resetDeleteArm,3500);
+  }
+  function handlePopoverClick(event){
+    if(!openSlot)return;
+    const closeButton=event.target.closest?.('[data-saved-close]');
+    if(closeButton){event.preventDefault();close();return}
+    const deleteButton=event.target.closest?.('[data-saved-delete-ref]');
+    if(deleteButton){
+      event.preventDefault();
+      const ref=deleteButton.dataset.savedDeleteRef;
+      if(deleteArm!==ref){armDelete(deleteButton);return}
+      resetDeleteArm();
+      if(deleteRecord(ref)){renderPopover();schedule()}
+      return;
+    }
+    const item=event.target.closest?.('[data-saved-sky-ref]');
+    if(item){
+      event.preventDefault();
+      const slot=openSlot,record=library().find(entry=>recordRef(entry)===item.dataset.savedSkyRef);
+      if(!record)return;
+      item.setAttribute('aria-busy','true');
+      if(loadRecord(slot,record)){close();schedule()}
+      else item.removeAttribute('aria-busy');
+      return;
+    }
+    if(event.target.closest?.('[data-saved-update]')){
+      const state=identity(openSlot);if(state.record){const result=saveActive(openSlot,state.record.name,state.record);renderPopover();const node=popover.querySelector('[data-saved-form-status]');if(node)node.textContent=result.message}
+      return;
+    }
+    if(event.target.closest?.('[data-saved-name-cancel]')){event.preventDefault();namingMode=false;nameDraft='';renderPopover()}
+  }
+
   function ensurePopover(){
     if(popover?.isConnected)return popover;
     popover=document.createElement('div');
     popover.id='skySavedSkiesPopover';popover.className='sky-saved-skies-popover';popover.hidden=true;
     popover.setAttribute('role','dialog');popover.setAttribute('aria-label','Saved skies');
+    popover.addEventListener('click',handlePopoverClick);
     document.body.appendChild(popover);return popover;
   }
   function renderPopover(){
     const menu=ensurePopover();if(!openSlot)return;
     const records=library(),active=identity(openSlot),activeRef=active.record?recordRef(active.record):'';
     const items=records.length?records.map(record=>{
-      const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef;
-      return `<button type="button" class="sky-saved-list-item${current?' is-active':''}" data-saved-sky-ref="${escapeHtml(ref)}"><span class="sky-saved-list-name">${escapeHtml(record.name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button>`;
+      const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky');
+      return `<div class="sky-saved-list-row${current?' is-active':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button></div>`;
     }).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
     const status=active.saved?(active.dirty?'Unsaved changes':'Saved'):'Not saved';
     const formHidden=namingMode?'':' hidden';
     menu.innerHTML=`<div class="sky-saved-popover-head"><strong>Saved skies</strong><button type="button" data-saved-close aria-label="Close saved skies">×</button></div><div class="sky-saved-list">${items}</div><div class="sky-saved-popover-foot"><div class="sky-saved-active-status"><span>${escapeHtml(active.name)}</span><small>${status}</small></div><div class="sky-saved-actions">${active.saved&&active.dirty?'<button type="button" data-saved-update>Save changes</button>':''}<button type="button" data-saved-as>${active.saved?'Save as…':'Save this sky…'}</button></div><form class="sky-saved-name-form" data-saved-name-form${formHidden}><label><span>Name this sky</span><input type="text" maxlength="80" autocomplete="off" data-saved-name-input value="${escapeHtml(nameDraft)}"></label><div><button type="button" data-saved-name-cancel>Cancel</button><button type="submit">Save</button></div><p data-saved-form-status aria-live="polite"></p></form></div>`;
     positionPopover();
   }
-  function triggerFor(slot){return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`)}
+  function triggersFor(slot){return Array.from(document.querySelectorAll(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`))}
+  function triggerFor(slot){
+    return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading>.sky-card-title-stable [data-saved-sky-trigger]`)||triggersFor(slot)[0]||null;
+  }
+  function setTriggerExpanded(slot,expanded){triggersFor(slot).forEach(trigger=>trigger.setAttribute('aria-expanded',expanded?'true':'false'))}
   function positionPopover(){
     if(!openSlot||!popover||popover.hidden)return;
     const trigger=triggerFor(openSlot);if(!trigger)return;
-    const rect=trigger.getBoundingClientRect(),margin=12,gap=6,width=Math.min(330,window.innerWidth-margin*2);
+    const rect=trigger.getBoundingClientRect(),margin=12,gap=6,width=Math.min(440,window.innerWidth-margin*2);
     const left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin));
     const below=window.innerHeight-rect.bottom-margin-gap,above=rect.top-margin-gap;
     const openAbove=below<280&&above>below;
@@ -181,10 +268,10 @@
   }
   function open(slot){
     openSlot=slot;namingMode=false;nameDraft='';
-    const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true');
+    const menu=ensurePopover();menu.hidden=false;renderPopover();setTriggerExpanded(slot,true);
   }
   function close(){
-    if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;namingMode=false;nameDraft='';
+    if(!popover)return;resetDeleteArm();setTriggerExpanded(openSlot,false);popover.hidden=true;popover.removeAttribute('style');openSlot=null;namingMode=false;nameDraft='';
   }
 
   function renderIdentity(slot){
@@ -225,12 +312,7 @@
   document.addEventListener('click',event=>{
     const trigger=event.target.closest?.('[data-saved-sky-trigger]');
     if(trigger){event.preventDefault();event.stopPropagation();const slot=trigger.dataset.savedSkyTrigger;if(openSlot===slot&&!popover?.hidden)close();else open(slot);return}
-    if(event.target.closest?.('[data-saved-close]')){close();return}
-    const item=event.target.closest?.('[data-saved-sky-ref]');
-    if(item&&openSlot){const record=library().find(entry=>recordRef(entry)===item.dataset.savedSkyRef);if(record&&loadRecord(openSlot,record)){close();schedule()}return}
-    if(event.target.closest?.('[data-saved-update]')&&openSlot){const state=identity(openSlot);if(state.record){const result=saveActive(openSlot,state.record.name,state.record);renderPopover();const node=popover.querySelector('[data-saved-form-status]');if(node)node.textContent=result.message}return}
-    if(event.target.closest?.('[data-saved-as]')&&openSlot){event.preventDefault();event.stopPropagation();beginNaming();return}
-    if(event.target.closest?.('[data-saved-name-cancel]')){event.preventDefault();namingMode=false;nameDraft='';renderPopover();return}
+    if(event.target.closest?.('[data-saved-as]')&&openSlot){event.preventDefault();event.stopPropagation();beginNaming()}
   },true);
 
   document.addEventListener('input',event=>{

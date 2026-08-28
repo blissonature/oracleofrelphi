@@ -86,13 +86,20 @@ function annotateRow(row){
   row.classList.toggle('sky-chart-semantic-hidden',!semanticVisible(row));
   reconcilePlacementFilter(row,meta);
 }
-function matchingLineForRow(line,row){
-  return canonical(line.dataset.leftPlacement)===canonical(row.dataset.leftPlacement)&&canonical(line.dataset.rightPlacement)===canonical(row.dataset.rightPlacement)&&canonical(line.dataset.aspect)===canonical(row.dataset.aspect);
+function relationshipKey(node){
+  return [canonical(node?.dataset?.leftPlacement),canonical(node?.dataset?.rightPlacement),canonical(node?.dataset?.aspect)].join('|');
 }
 function annotateLines(rows){
+  const byIndex=new Map(),byKey=new Map();
+  rows.forEach(row=>{
+    const index=String(row.dataset.relationIndex||'');
+    if(index)byIndex.set(index,row);
+    const key=relationshipKey(row);
+    if(!byKey.has(key))byKey.set(key,row);
+  });
   const lines=[...document.querySelectorAll('[data-layer="aspects"] [data-left-placement][data-right-placement]')];
   lines.forEach(line=>{
-    const row=rows.find(candidate=>matchingLineForRow(line,candidate));
+    const row=byIndex.get(String(line.dataset.relationIndex||''))||byKey.get(relationshipKey(line));
     if(!row){line.classList.remove('sky-chart-semantic-hidden','sky-chart-constitutive-line');delete line.dataset.relationshipKind;return}
     const kind=row.dataset.relationshipKind;
     line.dataset.relationshipKind=kind;
@@ -158,8 +165,9 @@ function ensureObserver(){
   if(!list||list===observedList)return;
   observer?.disconnect();observedList=list;observer=new MutationObserver(schedule);observer.observe(list,{childList:true,subtree:false});
 }
+function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
 function apply(){
-  queued=false;ensureObserver();
+  queued=false;if(whereWhenEditing())return;ensureObserver();
   const rows=[...document.querySelectorAll('.sky-foundation-relationship-row')];
   rows.forEach(annotateRow);
   annotateLines(rows);
@@ -167,7 +175,7 @@ function apply(){
   exposeState();
   document.documentElement.dataset.skyRelationshipSemantics='ready';
 }
-function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>requestAnimationFrame(apply))}
+function schedule(){if(queued||whereWhenEditing())return;queued=true;requestAnimationFrame(()=>requestAnimationFrame(apply))}
 function dispatchPlacementChange(input,checked,remember){
   if(!input||input.checked===checked)return;
   input.checked=checked;

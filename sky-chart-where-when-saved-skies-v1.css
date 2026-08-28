@@ -1,7 +1,7 @@
 /* Compact naming/saving controls for the Where and When editor. */
 .sky-where-when-identity{
   display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-columns:minmax(125px,1fr) minmax(0,1fr);
   gap:8px;
   align-items:end;
   width:100%;
@@ -11,6 +11,7 @@
   padding:1px 1px 2px;
 }
 .sky-where-when-name-label{min-width:0;max-width:100%}
+.sky-where-when-name-label .sky-where-when-input{min-height:42px}
 .sky-where-when-save-choice{
   display:flex;
   align-items:center;
@@ -25,16 +26,28 @@
   background:#fffdfa;
   color:#3c352f;
   cursor:pointer;
-  white-space:nowrap;
-  font:800 .6rem/1.15 system-ui,sans-serif;
+  white-space:normal;
+  line-height:1.2;
+  font:800 .6rem/1.2 system-ui,sans-serif;
 }
 .sky-where-when-save-choice:hover{border-color:rgba(31,27,24,.34);background:#fff}
+.sky-where-when-save-stack{display:grid;gap:4px;min-width:0}
+.sky-where-when-save-help{
+  display:block;
+  padding:0 4px;
+  color:#756c64;
+  font:650 .54rem/1.25 system-ui,sans-serif;
+}
 .sky-where-when-save-choice input{
   width:16px;
   height:16px;
   margin:0;
   accent-color:#c9211e;
   flex:0 0 auto;
+}
+@container (max-width:340px){
+  .sky-where-when-identity{grid-template-columns:1fr;align-items:stretch}
+  .sky-where-when-save-choice{justify-content:flex-start;width:100%;min-height:40px;border-radius:10px}
 }
 @media(max-width:620px){
   .sky-where-when-identity{grid-template-columns:1fr;align-items:stretch}

@@ -199,8 +199,9 @@
     root.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row'))return;const node=interactive(event);if(node){event.preventDefault();const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState();return}if(clearableWhitespace(event))clearFromWhitespace()});
     root.addEventListener('keydown',event=>{if(event.key==='Escape'){clearFromWhitespace();return}if(!['Enter',' '].includes(event.key)||event.target.closest('.sky-foundation-relationship-row'))return;const node=interactive(event);if(!node)return;event.preventDefault();const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState()});
   }
+  function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   async function refresh(){
-    refreshQueued=false;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
+    refreshQueued=false;if(whereWhenEditing())return;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
     const preparedA=prepare(read(KEYS.A),'A'),preparedB=prepare(read(KEYS.B),'B'),relations=relationships(preparedA.list,preparedB.list),nextSignature=relationshipSignature(relations);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
     annotateHouseLayer('a-houses','A');annotateHouseLayer('b-houses','B');annotateSigns();annotatePlacements(current.listA,current.listB);annotateAspects(relations);annotateLedger('A',current.listA);annotateLedger('B',current.listB);
     if(renderedRelationshipSignature!==nextSignature||!relationshipRowsIntact(relations)){await renderRows(relations);renderedRelationshipSignature=nextSignature}

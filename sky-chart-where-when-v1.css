@@ -36,6 +36,7 @@
 }
 
 .sky-where-when-editor {
+  container-type:inline-size;
   display:grid;
   gap:12px;
   width:100%;
@@ -233,9 +234,17 @@
 
 .sky-where-when-grid {
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:7px;
+  grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);
+  gap:6px;
   width:100%;
+}
+
+.sky-where-when-grid [data-ww-field="date"],
+.sky-where-when-grid [data-ww-field="time"] {
+  min-height:40px;
+  padding-left:.55rem;
+  padding-right:.55rem;
+  font-variant-numeric:tabular-nums;
 }
 
 .sky-where-when-advanced {

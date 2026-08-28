@@ -89,6 +89,14 @@
 
 .sky-saved-list{overflow:auto;overscroll-behavior:contain;padding:6px}
 .sky-saved-empty{margin:0;padding:20px 12px;color:#756c64;text-align:center;font:650 .68rem/1.35 system-ui,sans-serif}
+.sky-saved-list-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 30px;
+  gap:3px;
+  align-items:stretch;
+  border-radius:9px;
+}
+.sky-saved-list-row.is-active{background:#f1ece5}
 .sky-saved-list-item{
   appearance:none;
   position:relative;
@@ -107,10 +115,40 @@
   text-align:left;
 }
 .sky-saved-list-item:hover,.sky-saved-list-item:focus-visible{outline:none;border-color:rgba(31,27,24,.12);background:#f6f1ea}
-.sky-saved-list-item.is-active{background:#f1ece5}
 .sky-saved-list-name{grid-area:name;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 .68rem/1.2 system-ui,sans-serif}
 .sky-saved-list-meta{grid-area:meta;min-width:0;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#756c64;font:600 .57rem/1.2 system-ui,sans-serif}
 .sky-saved-list-check{grid-area:check;align-self:center;justify-self:center;color:#575049;font:900 .72rem/1 system-ui,sans-serif}
+.sky-saved-list-delete{
+  appearance:none;
+  display:grid;
+  place-items:center;
+  align-self:center;
+  width:27px;
+  height:27px;
+  padding:0;
+  border:1px solid transparent;
+  border-radius:999px;
+  background:transparent;
+  color:#81766c;
+  cursor:pointer;
+  font:700 .9rem/1 system-ui,sans-serif;
+}
+.sky-saved-list-delete:hover,.sky-saved-list-delete:focus-visible{
+  outline:none;
+  border-color:rgba(152,45,39,.22);
+  background:#fff1ef;
+  color:#9a2f29;
+}
+.sky-saved-list-delete[data-confirming="true"]{
+  width:auto;
+  min-width:58px;
+  padding:0 7px;
+  border-color:rgba(152,45,39,.28);
+  background:#fff1ef;
+  color:#9a2f29;
+  font-size:.56rem;
+  font-weight:850;
+}
 
 .sky-saved-popover-foot{
   max-height:min(55vh,360px);

@@ -54,8 +54,9 @@ function applyCollapseState(list){
     }
   }
 }
+function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
 function groupList(){
-  queued=false;if(applying)return;
+  queued=false;if(applying||whereWhenEditing())return;
   const list=document.getElementById('skyFoundationRelationshipList');if(!list)return;
   const rows=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row')];if(!rows.length)return;
   const other=[...list.children].filter(n=>!n.matches?.('.sky-foundation-relationship-row,.sky-relationship-scope-heading,.sky-relationship-family-heading')),desired=[...other];

@@ -59,7 +59,7 @@
 
     activeWindow=limit;
     model()?.setWindow?.(limit);
-    const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')];
+    const visibleIndexes=new Set(),rows=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')],rowsByIndex=new Map(rows.map(row=>[String(row.dataset.relationIndex||''),row]));
     rows.forEach(row=>{
       const phase=phaseFromRow(row),hiddenByOrb=Number.isFinite(phase)&&phase>limit,hiddenByWheel=wheelIndexes&&!wheelIndexes.has(String(row.dataset.relationIndex));
       const hiddenByOther=row.classList.contains('sky-chart-filter-hidden')||row.classList.contains('sky-chart-multiselect-hidden')||row.classList.contains('sky-chart-house-multiselect-hidden')||row.classList.contains('sky-chart-aspect-multiselect-hidden')||row.classList.contains('sky-chart-sign-filter-hidden')||row.classList.contains('sky-foundation-single-sky-cross-hidden');
@@ -77,7 +77,7 @@
     document.querySelectorAll('[data-layer="aspects"] .sky-foundation-aspect').forEach(line=>{
       const index=String(line.dataset.relationIndex||'');
       setSvgVisibility(line,index!==''&&visibleIndexes.has(index));
-      const row=index?document.querySelector(`.sky-foundation-relationship-row[data-relation-index="${index}"]`):null;
+      const row=index?rowsByIndex.get(index):null;
       if(row){line.dataset.harmonicWindow=row.dataset.harmonicWindow||'';line.dataset.harmonicCoherence=row.dataset.harmonicCoherence||''}
     });
 

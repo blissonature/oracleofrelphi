@@ -151,8 +151,9 @@ function handleChange(event){
   const input=event.target.closest?.('[data-aspect-matrix-scope][data-aspect-matrix-aspect]');if(!input)return;
   setCells(input.dataset.aspectMatrixScope,input.dataset.aspectMatrixAspect,input.checked);applyMatrix();
 }
-function refresh(){queued=false;if(!ensureUI())return;applyMatrix({announce:false});positionPopover()}
-function schedule(){if(queued||applying)return;queued=true;requestAnimationFrame(refresh)}
+function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
+function refresh(){queued=false;if(whereWhenEditing()||!ensureUI())return;applyMatrix({announce:false});positionPopover()}
+function schedule(){if(queued||applying||whereWhenEditing())return;queued=true;requestAnimationFrame(refresh)}
 function handleLegacyAspectPass(event){
   if(event.detail?.matrix)return;
   schedule();

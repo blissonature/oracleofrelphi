@@ -21,6 +21,7 @@
   ]);
   const originalSetItem = Storage.prototype.setItem;
   let decorating = false;
+  let decorateQueued = false;
 
   const norm = value => ((Number(value) % 360) + 360) % 360;
   const normalizeKey = value => String(value || '')
@@ -211,13 +212,24 @@
 
   normalizeExistingStorage();
 
+  function whereWhenEditing() {
+    return document.documentElement.dataset.skyWhereWhenEditing === 'true';
+  }
+  function scheduleDecorate() {
+    if (decorateQueued || whereWhenEditing()) return;
+    decorateQueued = true;
+    requestAnimationFrame(() => {
+      decorateQueued = false;
+      if (!whereWhenEditing()) decorateLedgers();
+    });
+  }
+
   function start() {
     const root = document.getElementById('skyFoundationRoot') || document.documentElement;
-    new MutationObserver(() => requestAnimationFrame(decorateLedgers))
+    new MutationObserver(scheduleDecorate)
       .observe(root, { childList:true, subtree:true });
-    window.addEventListener('relphi:sky-foundation-ready', () => requestAnimationFrame(decorateLedgers));
-    window.addEventListener('relphi:sky-foundation-interactions-ready', () => requestAnimationFrame(decorateLedgers));
-    requestAnimationFrame(decorateLedgers);
+    window.addEventListener('relphi:sky-foundation-interactions-ready', scheduleDecorate);
+    scheduleDecorate();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });

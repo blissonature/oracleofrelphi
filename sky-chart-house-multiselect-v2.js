@@ -242,13 +242,20 @@
     return true;
   }
 
+  function whereWhenEditing() {
+    return document.documentElement.dataset.skyWhereWhenEditing === 'true';
+  }
   function refresh() {
     queued = false;
-    if (!ensure()) return;
+    if (whereWhenEditing() || !ensure()) return;
     apply();
     position();
   }
-  function schedule() { if (!queued) { queued = true; requestAnimationFrame(refresh); } }
+  function schedule() {
+    if (queued || whereWhenEditing()) return;
+    queued = true;
+    requestAnimationFrame(refresh);
+  }
   function filterChanged(event) {
     const state = event.detail?.state || null;
     const hover = state?.mode === 'hover' || (!state && hoverFilterActive);

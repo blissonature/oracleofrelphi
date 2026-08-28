@@ -152,6 +152,9 @@
 
   async function update(slot,button){
     if(button.dataset.updateNowBusy==='true')return;
+    const transaction=window.RelphiSkyWhereWhenTransaction;
+    const alreadyEditing=transaction?.slots?.().includes(slot)===true;
+    if(!alreadyEditing)transaction?.begin?.(slot);
     button.dataset.updateNowBusy='true';button.disabled=true;button.setAttribute('aria-busy','true');
     try{
       const packet=await currentLocationPacket();
@@ -165,7 +168,8 @@
       dispatch(slot);
       window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'update-to-now',at:next.metadata.liveNowAt}}));
       window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'update-to-now-stable'}}));
-    }catch(error){console.error(error);announceError(slot,error)}
+      transaction?.commit?.(slot);
+    }catch(error){console.error(error);announceError(slot,error);if(!alreadyEditing)transaction?.cancel?.(slot)}
     finally{
       delete button.dataset.updateNowBusy;
       if(button.isConnected){button.disabled=false;button.removeAttribute('aria-busy')}

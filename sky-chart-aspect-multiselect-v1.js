@@ -474,17 +474,6 @@
     }
   }
 
-  function sortRelationshipRows(list) {
-    const rows = [...list.querySelectorAll(':scope>.sky-foundation-relationship-row')];
-    rows.sort((a,b) =>
-      Number(a.dataset.phaseError || Infinity) - Number(b.dataset.phaseError || Infinity) ||
-      Number(a.dataset.harmonicOrder || Infinity) - Number(b.dataset.harmonicOrder || Infinity) ||
-      Number(a.dataset.sourceOrb || Infinity) - Number(b.dataset.sourceOrb || Infinity) ||
-      String(a.dataset.relationIndex || '').localeCompare(String(b.dataset.relationIndex || ''))
-    );
-    rows.forEach(row => list.appendChild(row));
-  }
-
   function comparisonActive() {
     const html = document.documentElement;
     const a = document.getElementById('skyFoundationA');
@@ -513,7 +502,12 @@
     row.dataset.rightSky = 'B';
   }
 
+  function whereWhenEditing() {
+    return document.documentElement.dataset.skyWhereWhenEditing === 'true';
+  }
+
   function ensureIntraskyB() {
+    if (whereWhenEditing()) return;
     const listMount = document.getElementById('skyFoundationRelationshipList');
     if (!listMount || !window.RelphiHarmonicOrb) return;
 
@@ -537,7 +531,6 @@
     listMount.querySelectorAll(':scope>.sky-intrasky-b-generated').forEach(row => row.remove());
     const relations = relationshipsB(list);
     relations.forEach((relation,index) => listMount.appendChild(makeBRow(relation,index)));
-    sortRelationshipRows(listMount);
     listMount.querySelectorAll(':scope>.sky-intrasky-b-generated').forEach(row => {
       void repairBGlyph(row,'left');
       void repairBGlyph(row,'right');
@@ -674,6 +667,7 @@
 
   function refresh() {
     queued = false;
+    if (whereWhenEditing()) return;
     ensureIntraskyB();
     if (!ensureControl()) return;
     applyFilters();
@@ -681,7 +675,7 @@
   }
 
   function schedule() {
-    if (queued) return;
+    if (queued || whereWhenEditing()) return;
     queued = true;
     requestAnimationFrame(refresh);
   }
@@ -715,7 +709,6 @@
     }).observe(root, { childList:true, subtree:true });
 
     [
-      'relphi:sky-foundation-ready',
       'relphi:sky-foundation-interactions-ready',
       'relphi:sky-placement-multiselect-changed',
       'relphi:sky-house-multiselect-changed',
