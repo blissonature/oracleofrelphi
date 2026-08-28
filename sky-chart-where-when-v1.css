@@ -447,3 +447,27 @@
     grid-template-columns:1fr;
   }
 }
+
+.sky-where-when-now-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.sky-where-when-now-row span{
+  min-width:0;
+  color:#625950;
+  font:650 .61rem/1.3 system-ui,sans-serif;
+}
+.sky-use-now-button{
+  flex:0 0 auto;
+}
+@media(max-width:620px){
+  .sky-where-when-now-row{
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+  }
+  .sky-where-when-now-row .sky-use-now-button{
+    width:auto;
+  }
+}
