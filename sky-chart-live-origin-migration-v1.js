@@ -6,7 +6,7 @@ window.__relphiSkyLiveOriginMigrationV1=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const SLOT_BY_KEY=new Map(Object.entries(KEYS).map(([slot,key])=>[key,slot]));
-const LIVE_ORIGINS=new Set(['here-and-now','update-to-now']);
+const LIVE_ORIGINS=new Set(['here-and-now','update-to-now','use-now']);
 
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
 function write(slot,value){try{localStorage.setItem(KEYS[slot],JSON.stringify(value));return true}catch(_){return false}}
