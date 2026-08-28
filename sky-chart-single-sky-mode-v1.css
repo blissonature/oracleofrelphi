@@ -37,3 +37,21 @@ html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-hou
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-house-list-header>span:last-child{display:none!important}
 @media(max-width:900px){html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"a" "comparison"}}
 @media(max-width:620px){html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{grid-template-columns:1fr;grid-template-areas:"a" "comparison"}.sky-slot-presence-button{padding:.34rem .55rem;font-size:.6rem}}
+
+.sky-single-canonical-source-error{
+  margin:10px 14px 0;
+  padding:10px 12px;
+  border:1px solid rgba(155,38,32,.36);
+  border-radius:10px;
+  background:#fff4f2;
+  color:#6d2622;
+  font:650 .72rem/1.35 system-ui,sans-serif;
+}
+.sky-single-canonical-source-error strong,
+.sky-single-canonical-source-error span{
+  display:block;
+}
+.sky-single-canonical-source-error strong{
+  margin-bottom:2px;
+  font-weight:850;
+}
