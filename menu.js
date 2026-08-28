@@ -53,7 +53,7 @@
   function loadAstrologyFoundationEnhancements() {
     if (!/(^|\/)astrology-foundations\.html$/.test(window.location.pathname)) return;
     // Preserve the authored matrix layout while applying only mobile sizing.
-    appendScript('astrology-foundations-mobile-signs.js?v=4');
+    appendScript('astrology-foundations-mobile-signs.js?v=5');
     appendScript('astrology-foundations-consistency.js?v=1');
   }
 
