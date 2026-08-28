@@ -19,7 +19,7 @@ const ASPECT_ORDER=Object.freeze([
 const ASPECT_RANK=new Map(ASPECT_ORDER.map((id,index)=>[id,index]));
 let mode=MODES.exact;
 let calculationGeneration=0;
-let busy=false;
+let busy=false,transitTimer=0;
 function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
 
 function number(row,key,fallback=Infinity){
@@ -138,6 +138,7 @@ function ensureControl(){
   return select;
 }
 async function prepareTransitSort(){
+  transitTimer=0;
   if(whereWhenEditing())return;
   const generation=++calculationGeneration;
   const api=window.RelphiRelationshipTransitMeta;
@@ -166,6 +167,11 @@ async function prepareTransitSort(){
   ensureControl();
   dispatch();
 }
+function scheduleTransitSort(delay=90){
+  calculationGeneration+=1;
+  clearTimeout(transitTimer);
+  transitTimer=setTimeout(()=>prepareTransitSort(),Math.max(0,Number(delay)||0));
+}
 function setMode(next){
   if(!Object.values(MODES).includes(next))next=MODES.exact;
   mode=next;
@@ -173,7 +179,7 @@ function setMode(next){
   busy=false;
   ensureControl();
   if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode)){
-    prepareTransitSort();
+    scheduleTransitSort(0);
     return;
   }
   dispatch();
@@ -182,7 +188,7 @@ function refreshForRows(){
   if(whereWhenEditing())return;
   ensureControl();
   if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode)){
-    prepareTransitSort();
+    scheduleTransitSort(110);
     return;
   }
   if(mode!==MODES.exact)dispatch();
@@ -192,7 +198,7 @@ function invalidateTransit(){
   if(whereWhenEditing()){busy=false;return;}
   busy=false;
   window.RelphiRelationshipTransitMeta?.clearDurationCache?.();
-  if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode))prepareTransitSort();
+  if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode))scheduleTransitSort(110);
 }
 window.RelphiRelationshipSort=Object.freeze({
   compareRows,
