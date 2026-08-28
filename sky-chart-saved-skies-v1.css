@@ -139,6 +139,16 @@
   background:#fff1ef;
   color:#9a2f29;
 }
+.sky-saved-list-delete[data-confirming="true"]{
+  width:auto;
+  min-width:58px;
+  padding:0 7px;
+  border-color:rgba(152,45,39,.28);
+  background:#fff1ef;
+  color:#9a2f29;
+  font-size:.56rem;
+  font-weight:850;
+}
 
 .sky-saved-popover-foot{
   max-height:min(55vh,360px);
