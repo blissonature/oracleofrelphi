@@ -46,8 +46,8 @@
   }
   body .foundation-matrix:not(.house-matrix) .flip-face{padding:.18rem !important;border-radius:.68rem !important}
   body .foundation-matrix:not(.house-matrix) svg.front-glyph{
-    width:58px !important;
-    height:58px !important;
+    width:72px !important;
+    height:72px !important;
     max-width:94% !important;
     max-height:94% !important;
     transform:none !important;
@@ -56,7 +56,7 @@
 
 @media (max-width:350px){
   body .foundation-matrix:not(.house-matrix) svg.front-glyph{
-    width:54px !important;
-    height:54px !important;
+    width:64px !important;
+    height:64px !important;
   }
 }
