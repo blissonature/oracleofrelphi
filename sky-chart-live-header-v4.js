@@ -12,7 +12,7 @@ window.__relphiSkyLiveHeaderV1=true;
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const AGE_KEYS={A:'relphiSkyLiveAgeAnchorA',B:'relphiSkyLiveAgeAnchorB'};
 const STEP_MS=5*60*1000;
-const LIVE_ORIGINS=new Set(['here-and-now','update-to-now']);
+const LIVE_ORIGINS=new Set(['here-and-now','update-to-now','use-now']);
 const STYLE_ID='skyLiveHeaderV11Styles';
 let queued=false,timer=0;
 
