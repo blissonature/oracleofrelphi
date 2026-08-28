@@ -108,7 +108,8 @@ function updateInputs(){
 }
 function updateCount(){
   requestAnimationFrame(()=>{
-    const rows=[...document.querySelectorAll('.sky-foundation-relationship-row')].filter(row=>!row.classList.contains('sky-foundation-single-sky-cross-hidden'));
+    const active=new Set(activeScopes());
+    const rows=[...document.querySelectorAll('.sky-foundation-relationship-row')].filter(row=>!row.classList.contains('sky-foundation-single-sky-cross-hidden')&&active.has(relationshipMode(row)));
     const shown=rows.filter(row=>!row.hidden&&!row.classList.contains('sky-chart-filter-hidden')&&!row.classList.contains('sky-chart-orb-hidden')&&!row.classList.contains('sky-orb-filter-hidden')&&!row.classList.contains('sky-chart-multiselect-hidden')&&!row.classList.contains('sky-chart-house-multiselect-hidden')&&!row.classList.contains('sky-chart-aspect-multiselect-hidden')&&!row.classList.contains('sky-chart-sign-filter-hidden')&&!row.classList.contains('sky-chart-semantic-hidden')).length;
     const count=document.getElementById('skyFoundationRelationshipCount'),empty=document.getElementById('skyFoundationRelationshipEmpty');
     if(count)count.textContent=`${shown}/${rows.length}`;if(empty)empty.hidden=shown!==0;
@@ -120,8 +121,9 @@ function applyMatrix({announce=true}={}){
   document.querySelectorAll('.sky-foundation-relationship-row,[data-layer="aspects"]>.sky-foundation-aspect').forEach(node=>node.classList.toggle('sky-chart-aspect-multiselect-hidden',!visible(node)));
   updateInputs();
   const matrix=Object.fromEntries(SCOPES.map(scope=>[scope.id,IDS.filter(id=>state[scope.id].has(id))]));
-  const scopes=SCOPES.filter(scope=>state[scope.id].size>0).map(scope=>scope.id);
-  const selected=IDS.filter(id=>SCOPES.some(scope=>state[scope.id].has(id)));
+  const active=new Set(activeScopes());
+  const scopes=SCOPES.filter(scope=>active.has(scope.id)&&state[scope.id].size>0).map(scope=>scope.id);
+  const selected=IDS.filter(id=>SCOPES.some(scope=>active.has(scope.id)&&state[scope.id].has(id)));
   document.documentElement.dataset.skyAspectMatrix='ready';
   document.documentElement.dataset.skyAspectMultiselect='ready';
   document.documentElement.dataset.skyAspectSelection=`${selected.length}/${IDS.length}`;
