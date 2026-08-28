@@ -251,7 +251,11 @@
     menu.innerHTML=`<div class="sky-saved-popover-head"><strong>Saved skies</strong><button type="button" data-saved-close aria-label="Close saved skies">×</button></div><div class="sky-saved-list">${items}</div><div class="sky-saved-popover-foot"><div class="sky-saved-active-status"><span>${escapeHtml(active.name)}</span><small>${status}</small></div><div class="sky-saved-actions">${active.saved&&active.dirty?'<button type="button" data-saved-update>Save changes</button>':''}<button type="button" data-saved-as>${active.saved?'Save as…':'Save this sky…'}</button></div><form class="sky-saved-name-form" data-saved-name-form${formHidden}><label><span>Name this sky</span><input type="text" maxlength="80" autocomplete="off" data-saved-name-input value="${escapeHtml(nameDraft)}"></label><div><button type="button" data-saved-name-cancel>Cancel</button><button type="submit">Save</button></div><p data-saved-form-status aria-live="polite"></p></form></div>`;
     positionPopover();
   }
-  function triggerFor(slot){return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`)}
+  function triggersFor(slot){return Array.from(document.querySelectorAll(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`))}
+  function triggerFor(slot){
+    return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading>.sky-card-title-stable [data-saved-sky-trigger]`)||triggersFor(slot)[0]||null;
+  }
+  function setTriggerExpanded(slot,expanded){triggersFor(slot).forEach(trigger=>trigger.setAttribute('aria-expanded',expanded?'true':'false'))}
   function positionPopover(){
     if(!openSlot||!popover||popover.hidden)return;
     const trigger=triggerFor(openSlot);if(!trigger)return;
@@ -264,10 +268,10 @@
   }
   function open(slot){
     openSlot=slot;namingMode=false;nameDraft='';
-    const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true');
+    const menu=ensurePopover();menu.hidden=false;renderPopover();setTriggerExpanded(slot,true);
   }
   function close(){
-    if(!popover)return;resetDeleteArm();triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;namingMode=false;nameDraft='';
+    if(!popover)return;resetDeleteArm();setTriggerExpanded(openSlot,false);popover.hidden=true;popover.removeAttribute('style');openSlot=null;namingMode=false;nameDraft='';
   }
 
   function renderIdentity(slot){
