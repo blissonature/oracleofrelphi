@@ -1,31 +1,55 @@
 /* Mobile layout contract for Astrology Foundations.
-   Keep the authored four-column zodiac matrix intact. */
+   Preserve the four-column zodiac matrix and fit it within the viewport. */
 @media (max-width:560px){
-  body .matrix-scroll{
-    overflow-x:auto !important;
-    overflow-y:hidden !important;
-  }
+  body .foundation-page{padding-left:.45rem !important;padding-right:.45rem !important}
+  body .foundation-panel{padding:.55rem !important}
+  body .matrix-scroll{overflow-x:hidden !important;overflow-y:hidden !important;padding-bottom:0 !important}
   body .foundation-matrix:not(.house-matrix){
-    min-width:40rem !important;
-    width:auto !important;
-    max-width:none !important;
-    grid-template-columns:minmax(4.7rem,5.2rem) repeat(3,minmax(9rem,1fr)) !important;
-    gap:.36rem !important;
+    min-width:0 !important;
+    width:100% !important;
+    max-width:100% !important;
+    grid-template-columns:minmax(3.2rem,3.65rem) repeat(3,minmax(0,1fr)) !important;
+    gap:.28rem !important;
   }
   body .foundation-matrix:not(.house-matrix) .matrix-corner{
     display:grid !important;
     grid-column:auto !important;
+    min-width:0 !important;
   }
   body .foundation-matrix:not(.house-matrix) .matrix-row-label{
     display:grid !important;
     grid-column:auto !important;
+    min-width:0 !important;
     margin:0 !important;
-    padding:.35rem .2rem !important;
-    border:1.5px solid #111 !important;
-    border-radius:1rem !important;
-    box-shadow:0 4px 16px rgba(0,0,0,.04) !important;
+    padding:.24rem .12rem !important;
+    border:1.25px solid #111 !important;
+    border-radius:.68rem !important;
+    box-shadow:none !important;
     background:#fff !important;
-    font-size:.82rem !important;
-    line-height:1 !important;
+    font-size:.66rem !important;
+    line-height:1.02 !important;
+    letter-spacing:0 !important;
+    text-align:center !important;
+    overflow-wrap:anywhere !important;
+  }
+  body .foundation-matrix:not(.house-matrix) .matrix-head{
+    min-width:0 !important;
+    padding:.3rem .08rem !important;
+    border-radius:.62rem !important;
+    font-size:.61rem !important;
+    line-height:1.02 !important;
+  }
+  body .foundation-matrix:not(.house-matrix) .flip-tile{
+    min-width:0 !important;
+    width:100% !important;
+    height:4.05rem !important;
+  }
+  body .foundation-matrix:not(.house-matrix) .flip-face{padding:.18rem !important;border-radius:.68rem !important}
+  body .foundation-matrix:not(.house-matrix) svg.front-glyph{
+    width:44px !important;
+    height:44px !important;
+    max-width:86% !important;
+    max-height:86% !important;
+    transform:none !important;
   }
 }
