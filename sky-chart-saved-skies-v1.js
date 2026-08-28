@@ -200,8 +200,8 @@
     const records=library(),active=identity(openSlot),activeRef=active.record?recordRef(active.record):'';
     const items=records.length?records.map(record=>{
       const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky'),confirming=ref===deletePendingRef;
-      const deleteLabel=confirming?`Confirm deletion of ${name}`:`Delete ${name} from Saved skies`;
-      return `<div class="sky-saved-list-row${current?' is-active':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete${confirming?' is-confirming':''}" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="${escapeHtml(deleteLabel)}" title="${confirming?'Tap again to delete':'Delete from Saved skies'}">${confirming?'Delete?':'×'}</button></div>`;
+      const confirmation=confirming?`<div class="sky-saved-delete-confirmation" role="group" aria-label="Delete ${escapeHtml(name)}?"><span>Delete this saved sky?</span><button type="button" data-saved-delete-cancel>Cancel</button><button type="button" class="is-danger" data-saved-delete-confirm="${escapeHtml(ref)}">Delete</button></div>`:'';
+      return `<div class="sky-saved-list-row${current?' is-active':''}${confirming?' is-confirming-delete':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button>${confirmation}</div>`;
     }).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
     const status=active.saved?(active.dirty?'Unsaved changes':'Saved'):'Not saved';
     const formHidden=namingMode?'':' hidden';
@@ -267,14 +267,22 @@
     if(trigger){event.preventDefault();event.stopPropagation();const slot=trigger.dataset.savedSkyTrigger;if(openSlot===slot&&!popover?.hidden)close();else open(slot);return}
     if(event.target.closest?.('[data-saved-close]')){close();return}
     const deleteButton=event.target.closest?.('[data-saved-delete-ref]');
+    const deleteConfirm=event.target.closest?.('[data-saved-delete-confirm]');
+    if(deleteConfirm&&openSlot){
+      event.preventDefault();event.stopPropagation();
+      const ref=deleteConfirm.dataset.savedDeleteConfirm;
+      deletePendingRef='';
+      if(deleteRecord(ref)){renderPopover();schedule()}
+      return;
+    }
+    if(event.target.closest?.('[data-saved-delete-cancel]')&&openSlot){
+      event.preventDefault();event.stopPropagation();deletePendingRef='';renderPopover();return;
+    }
     if(deleteButton&&openSlot){
       event.preventDefault();event.stopPropagation();
       const ref=deleteButton.dataset.savedDeleteRef,record=library().find(entry=>recordRef(entry)===ref);
       if(!record)return;
-      if(deletePendingRef!==ref){deletePendingRef=ref;renderPopover();return}
-      deletePendingRef='';
-      if(deleteRecord(ref)){renderPopover();schedule()}
-      return;
+      deletePendingRef=ref;renderPopover();return;
     }
     const item=event.target.closest?.('[data-saved-sky-ref]');
     if(item&&openSlot){event.preventDefault();event.stopPropagation();deletePendingRef='';const record=library().find(entry=>recordRef(entry)===item.dataset.savedSkyRef);if(record&&loadRecord(openSlot,record)){close();schedule()}return}
