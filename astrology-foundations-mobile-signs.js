@@ -58,10 +58,10 @@
         border-radius:.68rem!important;
       }
       .foundation-matrix:not(.house-matrix) svg.front-glyph{
-        width:58px!important;
-        height:58px!important;
-        max-width:94%!important;
-        max-height:94%!important;
+        width:72px!important;
+        height:72px!important;
+        max-width:96%!important;
+        max-height:96%!important;
         transform:none!important;
       }
       .foundation-matrix:not(.house-matrix) .flip-back{
@@ -87,7 +87,7 @@
       }
       .foundation-matrix:not(.house-matrix) .matrix-head{font-size:.57rem!important}
       .foundation-matrix:not(.house-matrix) .matrix-row-label{font-size:.61rem!important}
-      .foundation-matrix:not(.house-matrix) svg.front-glyph{width:54px!important;height:54px!important}
+      .foundation-matrix:not(.house-matrix) svg.front-glyph{width:64px!important;height:64px!important}
     }
   `;
   document.head.appendChild(style);
