@@ -81,7 +81,7 @@
     style.textContent=`
       .sky-save-name-overlay{position:fixed;inset:0;z-index:30000;display:grid;place-items:center;padding:16px;box-sizing:border-box;background:rgba(28,24,21,.28);overscroll-behavior:contain}
       .sky-save-name-overlay[hidden]{display:none!important}
-      .sky-save-name-dialog{width:min(360px,calc(100vw - 32px));box-sizing:border-box;padding:16px;border:1px solid rgba(31,27,24,.18);border-radius:14px;background:#fffdf8;box-shadow:0 22px 60px rgba(31,27,24,.28);color:#211d19}
+      .sky-save-name-dialog{width:min(520px,calc(100vw - 32px));box-sizing:border-box;padding:16px;border:1px solid rgba(31,27,24,.18);border-radius:14px;background:#fffdf8;box-shadow:0 22px 60px rgba(31,27,24,.28);color:#211d19}
       .sky-save-name-dialog h2{margin:0 0 4px;font:900 .9rem/1.15 system-ui,sans-serif}
       .sky-save-name-dialog p{margin:0 0 12px;color:#756c64;font:650 .62rem/1.35 system-ui,sans-serif}
       .sky-save-name-dialog label{display:grid;gap:5px}

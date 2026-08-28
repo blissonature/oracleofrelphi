@@ -35,11 +35,11 @@ await moonMarsCoordinate.waitFor({state:'attached',timeout:10000});
 assert.match((await moonMarsCoordinate.textContent())?.trim()||'',/^25°53′/);
 const moonLedgerB=page.locator('#skyFoundationB .sky-foundation-row').filter({hasText:'Moon'}).first();
 assert.match((await moonLedgerB.textContent())||'',/25°53′\s+Aquarius/);
-const repairedSkyB=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
+const storedSkyB=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartB')));
 assert.deepEqual(
-  {longitude:repairedSkyB.placements.Moon.longitude,sign:repairedSkyB.placements.Moon.sign,degree:repairedSkyB.placements.Moon.degree,minute:repairedSkyB.placements.Moon.minute},
-  {longitude:325+53/60,sign:'Aquarius',degree:25,minute:53},
-  'Redundant Moon fields must self-heal from the canonical longitude.'
+  {longitude:storedSkyB.placements.Moon.longitude,sign:storedSkyB.placements.Moon.sign,degree:storedSkyB.placements.Moon.degree,minute:storedSkyB.placements.Moon.minute},
+  {longitude:325+53/60,sign:'Cancer',degree:28,minute:25},
+  'Coordinate presentation must not rewrite persisted redundant fields during rendering.'
 );
 
 assert.equal(await page.locator('[data-filter="placement"]').count(),0);

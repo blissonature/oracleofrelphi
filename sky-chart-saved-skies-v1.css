@@ -89,6 +89,14 @@
 
 .sky-saved-list{overflow:auto;overscroll-behavior:contain;padding:6px}
 .sky-saved-empty{margin:0;padding:20px 12px;color:#756c64;text-align:center;font:650 .68rem/1.35 system-ui,sans-serif}
+.sky-saved-list-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 30px;
+  gap:3px;
+  align-items:stretch;
+  border-radius:9px;
+}
+.sky-saved-list-row.is-active{background:#f1ece5}
 .sky-saved-list-item{
   appearance:none;
   position:relative;
@@ -107,10 +115,30 @@
   text-align:left;
 }
 .sky-saved-list-item:hover,.sky-saved-list-item:focus-visible{outline:none;border-color:rgba(31,27,24,.12);background:#f6f1ea}
-.sky-saved-list-item.is-active{background:#f1ece5}
 .sky-saved-list-name{grid-area:name;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 .68rem/1.2 system-ui,sans-serif}
 .sky-saved-list-meta{grid-area:meta;min-width:0;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#756c64;font:600 .57rem/1.2 system-ui,sans-serif}
 .sky-saved-list-check{grid-area:check;align-self:center;justify-self:center;color:#575049;font:900 .72rem/1 system-ui,sans-serif}
+.sky-saved-list-delete{
+  appearance:none;
+  display:grid;
+  place-items:center;
+  align-self:center;
+  width:27px;
+  height:27px;
+  padding:0;
+  border:1px solid transparent;
+  border-radius:999px;
+  background:transparent;
+  color:#81766c;
+  cursor:pointer;
+  font:700 .9rem/1 system-ui,sans-serif;
+}
+.sky-saved-list-delete:hover,.sky-saved-list-delete:focus-visible{
+  outline:none;
+  border-color:rgba(152,45,39,.22);
+  background:#fff1ef;
+  color:#9a2f29;
+}
 
 .sky-saved-popover-foot{
   max-height:min(55vh,360px);
@@ -149,4 +177,50 @@
 @media(max-width:620px){
   .sky-saved-name-trigger{padding-left:5px;padding-right:5px;font-size:.68rem}
   .sky-saved-skies-popover{max-width:calc(100vw - 16px)}
+}
+
+
+.sky-saved-list-row.is-confirming-delete{
+  grid-template-columns:minmax(0,1fr) 30px;
+}
+.sky-saved-delete-confirmation{
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:6px;
+  margin:0 3px 5px;
+  padding:7px 8px;
+  border:1px solid rgba(152,45,39,.22);
+  border-radius:9px;
+  background:#fff4f2;
+  color:#5f2823;
+  font:750 .58rem/1.2 system-ui,sans-serif;
+}
+.sky-saved-delete-confirmation button{
+  appearance:none;
+  min-height:32px;
+  padding:0 10px;
+  border:1px solid rgba(31,27,24,.18);
+  border-radius:999px;
+  background:#fff;
+  color:#2a2521;
+  cursor:pointer;
+  font:800 .58rem/1 system-ui,sans-serif;
+}
+.sky-saved-delete-confirmation button.is-danger{
+  border-color:#9a2f29;
+  background:#9a2f29;
+  color:#fff;
+}
+@media(max-width:420px){
+  .sky-saved-delete-confirmation{
+    grid-template-columns:1fr 1fr;
+  }
+  .sky-saved-delete-confirmation span{
+    grid-column:1 / -1;
+  }
+  .sky-saved-delete-confirmation button{
+    width:100%;
+  }
 }

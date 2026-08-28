@@ -99,14 +99,19 @@
     form.dataset.savedSkiesControls='true';
     const value=payload(slot),records=library(),record=explicitRecord(value,records),name=record?String(record.name||'').trim():candidateName(value);
     const section=document.createElement('section');section.className='sky-where-when-identity';section.dataset.wwSavedSkies='true';
+    const escapedName=String(name||'').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
+    const saveLabel=record?`Update “${String(record.name||'Saved sky').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]))}” in Saved skies`:'Save to Saved skies';
     section.innerHTML=`
       <label class="sky-where-when-label sky-where-when-name-label">Sky name
-        <input class="sky-where-when-input" data-ww-sky-name type="text" maxlength="80" autocomplete="off" placeholder="Optional" value="${String(name||'').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]))}">
+        <input class="sky-where-when-input" data-ww-sky-name type="text" maxlength="80" autocomplete="off" placeholder="Optional" value="${escapedName}">
       </label>
-      <label class="sky-where-when-save-choice">
-        <input type="checkbox" data-ww-save-library${record?' checked':''}>
-        <span>${record?'Save changes to Saved Skies':'Save to Saved Skies'}</span>
-      </label>`;
+      <div class="sky-where-when-save-stack">
+        <label class="sky-where-when-save-choice">
+          <input type="checkbox" data-ww-save-library>
+          <span>${saveLabel}</span>
+        </label>
+        <small class="sky-where-when-save-help">${record?'Unchecked keeps this as a working copy; the saved sky will not change.':'Unchecked keeps this sky on the chart without adding it to Saved skies.'}</small>
+      </div>`;
     form.insertBefore(section,form.firstElementChild);
   }
   function hydrate(){document.querySelectorAll('.sky-where-when-editor').forEach(inject)}

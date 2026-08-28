@@ -133,8 +133,10 @@
     window.dispatchEvent(new CustomEvent('relphi:sky-filter-wheel-focus-changed',{detail:{active:true,visible:matched.length,total:rows.length,relationshipIndexes:Array.from(relations)}}));
   }
 
+  function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
+
   function schedule(){
-    if(queued)return;
+    if(queued||whereWhenEditing())return;
     queued=true;
     requestAnimationFrame(sync);
   }
