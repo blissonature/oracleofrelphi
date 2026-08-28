@@ -121,6 +121,35 @@ assert.ok(nameSizes.dialog>=500,`Sky name dialog should be wide on desktop, got 
 assert.ok(nameSizes.input>=450,`Sky name field should be wide on desktop, got ${nameSizes.input}px`);
 await dialog.locator('[data-save-sky-name-cancel]').click();
 
+// Saved skies: loading must replace the working slot immediately, and deletion
+// must mutate the library from the visible popover controls.
+const savedOne=structuredClone(skyA);
+savedOne.id='saved-one';
+savedOne.name=savedOne.title=savedOne.displayName=savedOne.skyName='Saved One';
+savedOne.metadata={...(savedOne.metadata||{}),savedSkyId:'saved-one',savedSkyName:'Saved One'};
+const savedTwo=structuredClone(skyB);
+savedTwo.id='saved-two';
+savedTwo.name=savedTwo.title=savedTwo.displayName=savedTwo.skyName='Saved Two';
+savedTwo.metadata={...(savedTwo.metadata||{}),savedSkyId:'saved-two',savedSkyName:'Saved Two'};
+await page.evaluate(({one,two})=>{
+  localStorage.setItem('relphiSkyLibraryV1',JSON.stringify([one,two]));
+  window.dispatchEvent(new StorageEvent('storage',{key:'relphiSkyLibraryV1',newValue:localStorage.getItem('relphiSkyLibraryV1'),storageArea:localStorage}));
+},{one:savedOne,two:savedTwo});
+await page.waitForTimeout(100);
+
+await page.locator('[data-saved-sky-trigger="A"]:visible').click();
+await page.locator('#skySavedSkiesPopover [data-saved-sky-ref="saved-two"]').click();
+await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA'))?.metadata?.savedSkyId==='saved-two',{timeout:10000});
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).name),'Saved Two','Clicking a saved sky must load it into the active slot.');
+
+await page.locator('[data-saved-sky-trigger="A"]:visible').click();
+const deleteSavedOne=page.locator('#skySavedSkiesPopover [data-saved-delete-ref="saved-one"]');
+await deleteSavedOne.click();
+assert.equal(await deleteSavedOne.textContent(),'Delete?','First delete tap must visibly arm deletion.');
+await deleteSavedOne.click();
+await page.waitForFunction(()=>!JSON.parse(localStorage.getItem('relphiSkyLibraryV1')).some(record=>record.id==='saved-one'));
+assert.equal(await page.locator('#skySavedSkiesPopover [data-saved-sky-ref="saved-one"]').count(),0,'Deleted Saved sky must disappear from the library.');
+
 assert.deepEqual(errors,[]);
 await browser.close();
 console.log('Where and When transaction stability passed.');
