@@ -155,12 +155,16 @@ function cleanClone(row){
 async function hydrate(clone,row){
   const templates=window.RelphiRelationshipGlyphTemplates;if(!templates?.clone)return;
   const aspect=String(row.dataset.aspect||''),leftSign=SIGNS[+row.dataset.leftSign],rightSign=SIGNS[+row.dataset.rightSign];
+  const mode=String(row.dataset.relationshipMode||'A-B').toUpperCase();
+  const leftSky=String(row.dataset.leftSky||(mode==='B-B'?'B':'A')).toUpperCase();
+  const rightSky=String(row.dataset.rightSky||(mode==='A-A'?'A':'B')).toUpperCase();
+  const leftColor=templates.colors[leftSky]||templates.colors.A,rightColor=templates.colors[rightSky]||templates.colors.B;
   const specs=[
-    [clone.querySelector('.sky-foundation-relationship-glyph--left'),row.dataset.leftPlacement,templates.colors.A],
-    [clone.querySelector('.sky-foundation-relationship-placement--left .sky-foundation-relationship-sign'),leftSign,templates.colors.A],
+    [clone.querySelector('.sky-foundation-relationship-glyph--left'),row.dataset.leftPlacement,leftColor],
+    [clone.querySelector('.sky-foundation-relationship-placement--left .sky-foundation-relationship-sign'),leftSign,leftColor],
     [clone.querySelector('.sky-foundation-relationship-glyph--aspect'),aspect,templates.colors.aspects[aspect]],
-    [clone.querySelector('.sky-foundation-relationship-glyph--right'),row.dataset.rightPlacement,templates.colors.B],
-    [clone.querySelector('.sky-foundation-relationship-placement--right .sky-foundation-relationship-sign'),rightSign,templates.colors.B]
+    [clone.querySelector('.sky-foundation-relationship-glyph--right'),row.dataset.rightPlacement,rightColor],
+    [clone.querySelector('.sky-foundation-relationship-placement--right .sky-foundation-relationship-sign'),rightSign,rightColor]
   ];
   await Promise.all(specs.map(async([host,id,color])=>{if(!host||!id||host.firstElementChild?.tagName?.toLowerCase()==='svg')return;const svg=await templates.clone(id,color||'#777');if(svg)host.replaceChildren(svg)}));
 }
