@@ -380,9 +380,10 @@
     return true;
   }
 
+  function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   function refresh(){
     refreshQueued=false;
-    if(!ensure())return;
+    if(whereWhenEditing()||!ensure())return;
     const changed=refreshAvailable('A')|refreshAvailable('B');
     if(changed||!popover()?.querySelector('[data-placement-list]'))renderList();
     else updateControl();
@@ -391,7 +392,7 @@
     if(isOpen(portalOwner))schedulePosition(false);
   }
   function scheduleRefresh(){
-    if(refreshQueued)return;
+    if(refreshQueued||whereWhenEditing())return;
     refreshQueued=true;
     requestAnimationFrame(refresh);
   }
