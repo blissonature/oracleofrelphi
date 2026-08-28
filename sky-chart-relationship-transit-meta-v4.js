@@ -25,17 +25,57 @@ const MIN_HORIZON={asc:2,dsc:2,mc:2,ic:2,vertex:2,moon:45,mercury:400,venus:700,
 const RETURN_GAP={asc:0,dsc:0,mc:0,ic:0,vertex:0,moon:2,mercury:35,venus:70,mars:150,sun:10,jupiter:300,saturn:420,uranus:600,neptune:700,pluto:800,'north-node':500,'south-node':500,lilith:500};
 const MAX_HORIZON=12000;
 let generation=0,observer=null,observedList=null;
+const readCache={A:{raw:null,value:null},B:{raw:null,value:null}};
+const recordCache=new WeakMap(),profileDateCache=new WeakMap(),liveOriginCache=new WeakMap();
 
 const norm=value=>((Number(value)%360)+360)%360;
 const wrap=value=>((Number(value)+540)%360)-180;
-function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
+function read(slot){
+  const raw=localStorage.getItem(KEYS[slot])||'null',cache=readCache[slot]||{raw:null,value:null};
+  if(cache.raw===raw)return cache.value;
+  let value=null;try{value=JSON.parse(raw)}catch(_){}
+  cache.raw=raw;cache.value=value;readCache[slot]=cache;return value;
+}
 function source(payload){const raw=[payload?.placements,payload?.positions,payload?.points,payload?.bodies].find(value=>value&&typeof value==='object')||payload||{};return Array.isArray(raw)?raw.map((value,index)=>[String(value?.name||value?.id||index),value]):Object.entries(raw)}
 function longitudeValue(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const sign=SIGNS.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:norm(sign*30+Number(item.degree||item.degrees||0)+Number(item.minute||item.minutes||0)/60+Number(item.second||item.seconds||0)/3600)}
 function canonicalId(key,item){const registry=window.RelphiGlyphRegistry;for(const candidate of[item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){if(candidate==null)continue;const raw=String(candidate).trim(),id=ALIAS[raw.toLowerCase()]||raw,entry=registry?.resolve?.(id)||registry?.get?.(id);if(entry?.id)return entry.id}return''}
-function findRecord(slot,id){for(const[key,item]of source(read(slot))){if(!item||typeof item!=='object'||Array.isArray(item)||canonicalId(key,item)!==id)continue;const value=longitudeValue(item);if(Number.isFinite(value))return{id,value}}return null}
+function recordMap(slot){
+  const payload=read(slot);if(!payload||typeof payload!=='object')return null;
+  if(recordCache.has(payload))return recordCache.get(payload);
+  const map=new Map();
+  for(const[key,item]of source(payload)){
+    if(!item||typeof item!=='object'||Array.isArray(item))continue;
+    const id=canonicalId(key,item),value=longitudeValue(item);
+    if(id&&Number.isFinite(value)&&!map.has(id))map.set(id,{id,value});
+  }
+  recordCache.set(payload,map);return map;
+}
+function findRecord(slot,id){return recordMap(slot)?.get(id)||null}
 function profile(slot){const value=read(slot);return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}
-function profileDate(slot){const p=profile(slot),raw=p.instant||p.dateTime||read(slot)?.instant||read(slot)?.dateTime;if(!raw)return null;if(p.instant){const date=new Date(p.instant);if(Number.isFinite(date.getTime()))return date}try{if(window.luxon?.DateTime&&p.timeZone){const dt=window.luxon.DateTime.fromISO(String(p.dateTime||raw),{zone:String(p.timeZone),setZone:true});if(dt?.isValid)return dt.toUTC().toJSDate()}}catch(_){}const date=new Date(raw);return Number.isFinite(date.getTime())?date:null}
-function liveOrigin(slot){const payload=read(slot);if(!payload||typeof payload!=='object')return'';const metadata=payload.metadata&&typeof payload.metadata==='object'?payload.metadata:{},explicit=String(metadata.liveNowOrigin||'');if(LIVE_ORIGINS.has(explicit))return explicit;const p=profile(slot),name=String(payload.name||payload.title||'').trim().toLowerCase(),query=String(p.locationQuery||'').trim().toLowerCase(),location=String(p.location||'').trim().toLowerCase(),saved=!!(metadata.savedSkyId||metadata.savedSkyName||metadata.savedSkyLoadedAt);if(saved||name!=='now')return'';if(query==='my current location')return'update-to-now';if(query==='current location'||location==='current location')return'here-and-now';return''}
+function profileDate(slot){
+  const payload=read(slot);if(!payload||typeof payload!=='object')return null;
+  if(profileDateCache.has(payload))return profileDateCache.get(payload);
+  const p=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{},raw=p.instant||p.dateTime||payload.instant||payload.dateTime;
+  let result=null;
+  if(raw){
+    if(p.instant){const date=new Date(p.instant);if(Number.isFinite(date.getTime()))result=date}
+    if(!result)try{if(window.luxon?.DateTime&&p.timeZone){const dt=window.luxon.DateTime.fromISO(String(p.dateTime||raw),{zone:String(p.timeZone),setZone:true});if(dt?.isValid)result=dt.toUTC().toJSDate()}}catch(_){}
+    if(!result){const date=new Date(raw);if(Number.isFinite(date.getTime()))result=date}
+  }
+  profileDateCache.set(payload,result);return result;
+}
+function liveOrigin(slot){
+  const payload=read(slot);if(!payload||typeof payload!=='object')return'';
+  if(liveOriginCache.has(payload))return liveOriginCache.get(payload);
+  const metadata=payload.metadata&&typeof payload.metadata==='object'?payload.metadata:{},explicit=String(metadata.liveNowOrigin||'');
+  let result='';
+  if(LIVE_ORIGINS.has(explicit))result=explicit;
+  else{
+    const p=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{},name=String(payload.name||payload.title||'').trim().toLowerCase(),query=String(p.locationQuery||'').trim().toLowerCase(),location=String(p.location||'').trim().toLowerCase(),saved=!!(metadata.savedSkyId||metadata.savedSkyName||metadata.savedSkyLoadedAt);
+    if(!saved&&name==='now'){if(query==='my current location')result='update-to-now';else if(query==='current location'||location==='current location')result='here-and-now'}
+  }
+  liveOriginCache.set(payload,result);return result;
+}
 function isLive(slot){return LIVE_ORIGINS.has(liveOrigin(slot))}
 function rowSky(row,side){const explicit=row.dataset[side==='left'?'leftSky':'rightSky'];if(explicit==='A'||explicit==='B')return explicit;const mode=String(row.dataset.relationshipMode||'A-B');if(mode==='A-A')return'A';if(mode==='B-B')return'B';return side==='left'?'A':'B'}
 function angularLimit(row){const aspect=String(row.dataset.aspect||''),model=window.RelphiHarmonicOrb,entry=model?.byId?.(aspect),harmonic=Number(row.dataset.harmonicOrder||entry?.harmonic||1)||1,input=document.querySelector('[data-harmonic-window-input]'),phase=Number(String(input?.value??model?.defaultWindow??6).replace(',','.')),safe=Number.isFinite(phase)&&phase>=0?phase:Number(model?.defaultWindow)||6;return Math.max(.0001,safe/harmonic)}
