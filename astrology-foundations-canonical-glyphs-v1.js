@@ -21,10 +21,10 @@
     svg.dataset.masterGlyphSource = 'glyphs-unified-preview.html';
     if ((className || '').split(/\s+/).includes('front-glyph')) {
       Object.assign(svg.style, {
-        width:'64px',
-        height:'64px',
-        maxWidth:'82%',
-        maxHeight:'82%',
+        width:'88px',
+        height:'88px',
+        maxWidth:'92%',
+        maxHeight:'92%',
         display:'block',
         overflow:'visible'
       });
