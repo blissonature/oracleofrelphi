@@ -179,13 +179,48 @@
   .sky-saved-skies-popover{max-width:calc(100vw - 16px)}
 }
 
-.sky-saved-list-delete.is-confirming{
-  width:auto;
-  min-width:58px;
-  padding:0 7px;
-  border-color:rgba(152,45,39,.28);
-  background:#fff1ef;
-  color:#9a2f29;
-  font-size:.56rem;
-  font-weight:850;
+
+.sky-saved-list-row.is-confirming-delete{
+  grid-template-columns:minmax(0,1fr) 30px;
+}
+.sky-saved-delete-confirmation{
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:6px;
+  margin:0 3px 5px;
+  padding:7px 8px;
+  border:1px solid rgba(152,45,39,.22);
+  border-radius:9px;
+  background:#fff4f2;
+  color:#5f2823;
+  font:750 .58rem/1.2 system-ui,sans-serif;
+}
+.sky-saved-delete-confirmation button{
+  appearance:none;
+  min-height:32px;
+  padding:0 10px;
+  border:1px solid rgba(31,27,24,.18);
+  border-radius:999px;
+  background:#fff;
+  color:#2a2521;
+  cursor:pointer;
+  font:800 .58rem/1 system-ui,sans-serif;
+}
+.sky-saved-delete-confirmation button.is-danger{
+  border-color:#9a2f29;
+  background:#9a2f29;
+  color:#fff;
+}
+@media(max-width:420px){
+  .sky-saved-delete-confirmation{
+    grid-template-columns:1fr 1fr;
+  }
+  .sky-saved-delete-confirmation span{
+    grid-column:1 / -1;
+  }
+  .sky-saved-delete-confirmation button{
+    width:100%;
+  }
 }
