@@ -178,3 +178,14 @@
   .sky-saved-name-trigger{padding-left:5px;padding-right:5px;font-size:.68rem}
   .sky-saved-skies-popover{max-width:calc(100vw - 16px)}
 }
+
+.sky-saved-list-delete.is-confirming{
+  width:auto;
+  min-width:58px;
+  padding:0 7px;
+  border-color:rgba(152,45,39,.28);
+  background:#fff1ef;
+  color:#9a2f29;
+  font-size:.56rem;
+  font-weight:850;
+}
