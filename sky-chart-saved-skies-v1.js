@@ -208,7 +208,12 @@
     menu.innerHTML=`<div class="sky-saved-popover-head"><strong>Saved skies</strong><button type="button" data-saved-close aria-label="Close saved skies">×</button></div><div class="sky-saved-list">${items}</div><div class="sky-saved-popover-foot"><div class="sky-saved-active-status"><span>${escapeHtml(active.name)}</span><small>${status}</small></div><div class="sky-saved-actions">${active.saved&&active.dirty?'<button type="button" data-saved-update>Save changes</button>':''}<button type="button" data-saved-as>${active.saved?'Save as…':'Save this sky…'}</button></div><form class="sky-saved-name-form" data-saved-name-form${formHidden}><label><span>Name this sky</span><input type="text" maxlength="80" autocomplete="off" data-saved-name-input value="${escapeHtml(nameDraft)}"></label><div><button type="button" data-saved-name-cancel>Cancel</button><button type="submit">Save</button></div><p data-saved-form-status aria-live="polite"></p></form></div>`;
     positionPopover();
   }
-  function triggerFor(slot){return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`)}
+  function triggerFor(slot){
+    // The visible title lives in .sky-card-title-stable; foundation also keeps a
+    // hidden owned name node. Always prefer the stable, visible trigger.
+    return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading>.sky-card-title-stable [data-saved-sky-trigger]`)||
+      document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`);
+  }
   function positionPopover(){
     if(!openSlot||!popover||popover.hidden)return;
     const trigger=triggerFor(openSlot);if(!trigger)return;
@@ -244,9 +249,15 @@
     queued=false;
     renderIdentity('A');
     renderIdentity('B');
-    // Never rebuild the active naming form. Replacing a focused input dismisses
-    // the software keyboard on mobile browsers. While naming, only reposition it.
-    if(openSlot){if(namingMode)positionPopover();else renderPopover()}
+    // Keep the open popover DOM stable. Chart/foundation mutations can happen
+    // repeatedly while a finger is down on mobile; replacing innerHTML during
+    // that gesture cancels the synthesized click. Explicit Saved Skies actions
+    // render the popover themselves, so background sync only repositions it.
+    if(openSlot)positionPopover();
+  }
+  function refreshOpenPopover(){
+    if(openSlot&&!popover?.hidden&&!namingMode)renderPopover();
+    else if(openSlot)positionPopover();
   }
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
   function beginNaming(){
@@ -315,8 +326,15 @@
   window.visualViewport?.addEventListener('resize',positionPopover,{passive:true});
   window.visualViewport?.addEventListener('scroll',positionPopover,{passive:true});
   window.addEventListener('scroll',positionPopover,{passive:true,capture:true});
-  window.addEventListener('storage',event=>{if(!event.key||event.key===LIBRARY_KEY||Object.values(SLOT_KEYS).includes(event.key))schedule()});
-  ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed'].forEach(name=>window.addEventListener(name,schedule));
+  window.addEventListener('storage',event=>{
+    if(!event.key||event.key===LIBRARY_KEY||Object.values(SLOT_KEYS).includes(event.key))schedule();
+    if(event.key===LIBRARY_KEY)refreshOpenPopover();
+  });
+  ['relphi:sky-foundation-ready','relphi:sky-name-updated'].forEach(name=>window.addEventListener(name,schedule));
+  window.addEventListener('relphi:saved-sky-library-changed',()=>{
+    schedule();
+    refreshOpenPopover();
+  });
 
   function start(){
     ensurePopover();schedule();
