@@ -25,13 +25,13 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 function placementName(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||String(id||'').replace(/-/g,' ')}
 function houseNumber(row,side){const n=Number(row.dataset[side==='left'?'leftHouse':'rightHouse']);return Number.isFinite(n)&&n>=1&&n<=12?n:0}
 function ordinalHouseName(n){return n?`${n}${HOUSE_SUFFIX[n]||'ᵗʰ'} House`:'House'}
+function sideSky(row,side){const explicit=String(row.dataset[side==='left'?'leftSky':'rightSky']||'').toUpperCase();if(explicit==='A'||explicit==='B')return explicit;const mode=String(row.dataset.relationshipMode||'A-B').toUpperCase();if(mode==='A-A')return'A';if(mode==='B-B')return'B';return side==='left'?'A':'B'}
 function infoFor(row,field){
-  if(field==='left-placement'){const id=String(row.dataset.leftPlacement||'');return{name:placementName(id),referent:PLACEMENT_REFERENTS[id]||'a calculated placement in Sky A',tone:'a'}}
-  if(field==='right-placement'){const id=String(row.dataset.rightPlacement||'');return{name:placementName(id),referent:PLACEMENT_REFERENTS[id]||'a calculated placement in Sky B',tone:'b'}}
-  if(field==='left-sign'){const name=SIGN_NAMES[Number(row.dataset.leftSign)]||'Sign';return{name,referent:SIGN_REFERENTS[name]||'the zodiacal mode containing the Sky A placement',tone:'a'}}
-  if(field==='right-sign'){const name=SIGN_NAMES[Number(row.dataset.rightSign)]||'Sign';return{name,referent:SIGN_REFERENTS[name]||'the zodiacal mode containing the Sky B placement',tone:'b'}}
-  if(field==='left-house'){const n=houseNumber(row,'left');return{name:ordinalHouseName(n),referent:HOUSE_REFERENTS[n]||'the house occupied by the Sky A placement',tone:'a'}}
-  if(field==='right-house'){const n=houseNumber(row,'right');return{name:ordinalHouseName(n),referent:HOUSE_REFERENTS[n]||'the house occupied by the Sky B placement',tone:'b'}}
+  const side=field.startsWith('left-')?'left':field.startsWith('right-')?'right':'';
+  const sky=side?sideSky(row,side):'',tone=sky?sky.toLowerCase():'aspect';
+  if(field==='left-placement'||field==='right-placement'){const id=String(row.dataset[side==='left'?'leftPlacement':'rightPlacement']||'');return{name:placementName(id),referent:PLACEMENT_REFERENTS[id]||`a calculated placement in Sky ${sky}`,tone}}
+  if(field==='left-sign'||field==='right-sign'){const name=SIGN_NAMES[Number(row.dataset[side==='left'?'leftSign':'rightSign'])]||'Sign';return{name,referent:SIGN_REFERENTS[name]||`the zodiacal mode containing the Sky ${sky} placement`,tone}}
+  if(field==='left-house'||field==='right-house'){const n=houseNumber(row,side);return{name:ordinalHouseName(n),referent:HOUSE_REFERENTS[n]||`the house occupied by the Sky ${sky} placement`,tone}}
   const id=String(row.dataset.aspect||'');return{name:ASPECT_NAMES[id]||id,referent:ASPECT_REFERENTS[id]||'a measured relationship between the two placements',tone:'aspect'};
 }
 function tokenMarkup(row,field){const info=infoFor(row,field);return `<span class="inline-rel-progressive-token" data-inline-progressive-token="${field}" data-inline-progressive-stage="0" data-tone="${info.tone}" hidden><span class="inline-rel-progressive-level inline-rel-progressive-name" data-inline-progressive-level="name">${esc(info.name)}</span><span class="inline-rel-progressive-level inline-rel-progressive-referent" data-inline-progressive-level="referent" hidden>${esc(info.referent)}</span></span>`}
