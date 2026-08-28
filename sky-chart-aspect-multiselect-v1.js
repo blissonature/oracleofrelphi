@@ -675,7 +675,7 @@
   }
 
   function schedule() {
-    if (queued) return;
+    if (queued || whereWhenEditing()) return;
     queued = true;
     requestAnimationFrame(refresh);
   }
