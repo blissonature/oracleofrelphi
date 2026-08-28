@@ -8,7 +8,7 @@
   const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky']);
   let openSlot=null,queued=false,popover=null,observer=null;
-  let namingMode=false,nameDraft='';
+  let namingMode=false,nameDraft='',deletePendingRef='';
 
   const normalize=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
   const clone=value=>JSON.parse(JSON.stringify(value));
@@ -132,18 +132,29 @@
     window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{name:clean,id,action:index>=0?'update':'create'}}));
     return{ok:true,message:index>=0?'Changes saved.':'Sky saved.'};
   }
-  function closeWhereWhenEditor(slot){
-    const form=document.querySelector(`.sky-where-when-editor[data-slot="${slot}"]`);
-    if(!form)return;
-    const disclosure=document.querySelector(`[data-ww-disclosure="${slot}"][aria-expanded="true"]`);
-    if(disclosure){disclosure.click();return}
-    window.RelphiSkyWhereWhenTransaction?.cancel?.(slot);
-    form.remove();
+  function closeWhereWhenEditors(){
+    // Loading a saved record replaces the working sky. Release every live or
+    // stale Where and When transaction first, because foundation rendering is
+    // globally paused while any editor owns the transaction lock.
+    const transaction=window.RelphiSkyWhereWhenTransaction,slots=new Set();
+    try{(transaction?.slots?.()||[]).forEach(slot=>{if(SLOT_KEYS[slot])slots.add(slot)})}catch(_){}
+    document.querySelectorAll('.sky-where-when-editor[data-slot]').forEach(form=>{if(SLOT_KEYS[form.dataset.slot])slots.add(form.dataset.slot)});
+    slots.forEach(slot=>{
+      try{transaction?.cancel?.(slot)}catch(_){}
+      try{window.RelphiSkyCardShell?.setEditorExpanded?.(slot,false)}catch(_){}
+      document.querySelectorAll(`.sky-where-when-editor[data-slot="${slot}"]`).forEach(form=>form.remove());
+    });
+    try{
+      if(transaction?.active?.()===false){
+        document.documentElement.dataset.skyWhereWhenEditing='false';
+        document.documentElement.dataset.skyWhereWhenEditingSlots='';
+      }
+    }catch(_){}
   }
   function loadRecord(slot,record){
     // Loading replaces the working sky. Close any stale Where and When draft
     // first so the committed saved sky is allowed to rebuild the chart.
-    closeWhereWhenEditor(slot);
+    closeWhereWhenEditors();
     const id=recordRef(record),active=applyNamedIdentity(record,String(record.name||'Saved sky').trim(),id);
     delete active.savedAt;delete active.updatedAt;
     if(!writeJson(SLOT_KEYS[slot],active))return false;
@@ -188,8 +199,9 @@
     const menu=ensurePopover();if(!openSlot)return;
     const records=library(),active=identity(openSlot),activeRef=active.record?recordRef(active.record):'';
     const items=records.length?records.map(record=>{
-      const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky');
-      return `<div class="sky-saved-list-row${current?' is-active':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button></div>`;
+      const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky'),confirming=ref===deletePendingRef;
+      const deleteLabel=confirming?`Confirm deletion of ${name}`:`Delete ${name} from Saved skies`;
+      return `<div class="sky-saved-list-row${current?' is-active':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete${confirming?' is-confirming':''}" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="${escapeHtml(deleteLabel)}" title="${confirming?'Tap again to delete':'Delete from Saved skies'}">${confirming?'Delete?':'×'}</button></div>`;
     }).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
     const status=active.saved?(active.dirty?'Unsaved changes':'Saved'):'Not saved';
     const formHidden=namingMode?'':' hidden';
@@ -208,11 +220,11 @@
     Object.assign(popover.style,{width:`${width}px`,maxHeight:`${maxHeight}px`,left:`${left}px`,top:openAbove?'auto':`${rect.bottom+gap}px`,bottom:openAbove?`${window.innerHeight-rect.top+gap}px`:'auto'});
   }
   function open(slot){
-    openSlot=slot;namingMode=false;nameDraft='';
+    openSlot=slot;namingMode=false;nameDraft='';deletePendingRef='';
     const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true');
   }
   function close(){
-    if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;namingMode=false;nameDraft='';
+    if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;namingMode=false;nameDraft='';deletePendingRef='';
   }
 
   function renderIdentity(slot){
@@ -257,15 +269,15 @@
     const deleteButton=event.target.closest?.('[data-saved-delete-ref]');
     if(deleteButton&&openSlot){
       event.preventDefault();event.stopPropagation();
-      const record=library().find(entry=>recordRef(entry)===deleteButton.dataset.savedDeleteRef);
+      const ref=deleteButton.dataset.savedDeleteRef,record=library().find(entry=>recordRef(entry)===ref);
       if(!record)return;
-      if(window.confirm(`Delete “${String(record.name||'Saved sky')}” from Saved skies? The sky currently on the chart will remain.`)){
-        deleteRecord(deleteButton.dataset.savedDeleteRef);renderPopover();schedule();
-      }
+      if(deletePendingRef!==ref){deletePendingRef=ref;renderPopover();return}
+      deletePendingRef='';
+      if(deleteRecord(ref)){renderPopover();schedule()}
       return;
     }
     const item=event.target.closest?.('[data-saved-sky-ref]');
-    if(item&&openSlot){event.preventDefault();event.stopPropagation();const record=library().find(entry=>recordRef(entry)===item.dataset.savedSkyRef);if(record&&loadRecord(openSlot,record)){close();schedule()}return}
+    if(item&&openSlot){event.preventDefault();event.stopPropagation();deletePendingRef='';const record=library().find(entry=>recordRef(entry)===item.dataset.savedSkyRef);if(record&&loadRecord(openSlot,record)){close();schedule()}return}
     if(event.target.closest?.('[data-saved-update]')&&openSlot){const state=identity(openSlot);if(state.record){const result=saveActive(openSlot,state.record.name,state.record);renderPopover();const node=popover.querySelector('[data-saved-form-status]');if(node)node.textContent=result.message}return}
     if(event.target.closest?.('[data-saved-as]')&&openSlot){event.preventDefault();event.stopPropagation();beginNaming();return}
     if(event.target.closest?.('[data-saved-name-cancel]')){event.preventDefault();namingMode=false;nameDraft='';renderPopover();return}
