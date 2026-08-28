@@ -413,6 +413,12 @@
   }
 
   function applyFilters() {
+    const linesByIndex = new Map();
+    document.querySelectorAll('[data-layer="aspects"] [data-relation-index]').forEach(node => {
+      const index = String(node.dataset.relationIndex || '');
+      if (!linesByIndex.has(index)) linesByIndex.set(index, []);
+      linesByIndex.get(index).push(node);
+    });
     document.querySelectorAll('.sky-foundation-relationship-row').forEach(row => {
       const label = String(row.getAttribute('aria-label') || '').toLowerCase();
       const visible =
@@ -421,7 +427,7 @@
         (filters.houseA === 'all' || row.dataset.leftHouse === filters.houseA) &&
         (filters.houseB === 'all' || row.dataset.rightHouse === filters.houseB);
       row.classList.toggle('sky-chart-filter-hidden', !visible);
-      document.querySelectorAll(`[data-layer="aspects"] [data-relation-index="${row.dataset.relationIndex}"]`)
+      (linesByIndex.get(String(row.dataset.relationIndex || '')) || [])
         .forEach(node => node.classList.toggle('sky-chart-filter-hidden', !visible));
     });
   }
