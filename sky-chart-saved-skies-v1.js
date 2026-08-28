@@ -63,12 +63,11 @@
     return null;
   }
   function matchingRecord(value,records){
+    // A working sky belongs to Saved skies only when it carries an explicit
+    // saved-sky identity. Never silently reattach an unsaved working copy by
+    // matching its placements or date/time to a library record.
     if(!value||!hasPlacements(value))return null;
-    const explicit=explicitRecord(value,records);if(explicit)return explicit;
-    const exact=skySignature(value),exactHits=records.filter(record=>skySignature(record)===exact);
-    if(exactHits.length===1)return exactHits[0];
-    const placementOnly=placementSignature(value),placementHits=records.filter(record=>placementSignature(record)===placementOnly);
-    return placementHits.length===1?placementHits[0]:null;
+    return explicitRecord(value,records);
   }
   function isDirty(value,record){return!!record&&skySignature(value)!==skySignature(record)}
   function isNearNow(value){
@@ -133,12 +132,41 @@
     window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{name:clean,id,action:index>=0?'update':'create'}}));
     return{ok:true,message:index>=0?'Changes saved.':'Sky saved.'};
   }
+  function closeWhereWhenEditor(slot){
+    const form=document.querySelector(`.sky-where-when-editor[data-slot="${slot}"]`);
+    if(!form)return;
+    const disclosure=document.querySelector(`[data-ww-disclosure="${slot}"][aria-expanded="true"]`);
+    if(disclosure){disclosure.click();return}
+    window.RelphiSkyWhereWhenTransaction?.cancel?.(slot);
+    form.remove();
+  }
   function loadRecord(slot,record){
+    // Loading replaces the working sky. Close any stale Where and When draft
+    // first so the committed saved sky is allowed to rebuild the chart.
+    closeWhereWhenEditor(slot);
     const id=recordRef(record),active=applyNamedIdentity(record,String(record.name||'Saved sky').trim(),id);
     delete active.savedAt;delete active.updatedAt;
     if(!writeJson(SLOT_KEYS[slot],active))return false;
     if(slot==='B'){try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}document.documentElement.dataset.skyLastMode='comparison'}
-    dispatchStorage(slot);return true;
+    dispatchStorage(slot);
+    window.dispatchEvent(new CustomEvent('relphi:saved-sky-loaded',{detail:{slot,id,name:String(record.name||'Saved sky').trim()}}));
+    return true;
+  }
+  function deleteRecord(ref){
+    const records=library(),index=records.findIndex(record=>recordRef(record)===String(ref||''));
+    if(index<0)return false;
+    const [removed]=records.splice(index,1);
+    if(!writeLibrary(records))return false;
+    ['A','B'].forEach(slot=>{
+      const value=payload(slot),active=explicitRecord(value,[removed]);
+      if(!active)return;
+      const next=clone(value);
+      next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};
+      delete next.metadata.savedSkyId;delete next.metadata.savedSkyName;delete next.metadata.savedSkyLoadedAt;
+      writeJson(SLOT_KEYS[slot],next);dispatchStorage(slot);
+    });
+    window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{name:String(removed?.name||''),id:recordRef(removed),action:'delete'}}));
+    return true;
   }
 
   function shortMeta(record){
@@ -160,8 +188,8 @@
     const menu=ensurePopover();if(!openSlot)return;
     const records=library(),active=identity(openSlot),activeRef=active.record?recordRef(active.record):'';
     const items=records.length?records.map(record=>{
-      const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef;
-      return `<button type="button" class="sky-saved-list-item${current?' is-active':''}" data-saved-sky-ref="${escapeHtml(ref)}"><span class="sky-saved-list-name">${escapeHtml(record.name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button>`;
+      const ref=recordRef(record),meta=shortMeta(record),current=ref===activeRef,name=String(record.name||'Saved sky');
+      return `<div class="sky-saved-list-row${current?' is-active':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button></div>`;
     }).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
     const status=active.saved?(active.dirty?'Unsaved changes':'Saved'):'Not saved';
     const formHidden=namingMode?'':' hidden';
@@ -226,8 +254,18 @@
     const trigger=event.target.closest?.('[data-saved-sky-trigger]');
     if(trigger){event.preventDefault();event.stopPropagation();const slot=trigger.dataset.savedSkyTrigger;if(openSlot===slot&&!popover?.hidden)close();else open(slot);return}
     if(event.target.closest?.('[data-saved-close]')){close();return}
+    const deleteButton=event.target.closest?.('[data-saved-delete-ref]');
+    if(deleteButton&&openSlot){
+      event.preventDefault();event.stopPropagation();
+      const record=library().find(entry=>recordRef(entry)===deleteButton.dataset.savedDeleteRef);
+      if(!record)return;
+      if(window.confirm(`Delete “${String(record.name||'Saved sky')}” from Saved skies? The sky currently on the chart will remain.`)){
+        deleteRecord(deleteButton.dataset.savedDeleteRef);renderPopover();schedule();
+      }
+      return;
+    }
     const item=event.target.closest?.('[data-saved-sky-ref]');
-    if(item&&openSlot){const record=library().find(entry=>recordRef(entry)===item.dataset.savedSkyRef);if(record&&loadRecord(openSlot,record)){close();schedule()}return}
+    if(item&&openSlot){event.preventDefault();event.stopPropagation();const record=library().find(entry=>recordRef(entry)===item.dataset.savedSkyRef);if(record&&loadRecord(openSlot,record)){close();schedule()}return}
     if(event.target.closest?.('[data-saved-update]')&&openSlot){const state=identity(openSlot);if(state.record){const result=saveActive(openSlot,state.record.name,state.record);renderPopover();const node=popover.querySelector('[data-saved-form-status]');if(node)node.textContent=result.message}return}
     if(event.target.closest?.('[data-saved-as]')&&openSlot){event.preventDefault();event.stopPropagation();beginNaming();return}
     if(event.target.closest?.('[data-saved-name-cancel]')){event.preventDefault();namingMode=false;nameDraft='';renderPopover();return}
