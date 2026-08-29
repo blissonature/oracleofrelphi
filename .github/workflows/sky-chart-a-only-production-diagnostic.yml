@@ -17,7 +17,7 @@ jobs:
       - name: Reproduce A-only production states
         run: |
           python3 -m http.server 4173 >/tmp/sky-prod-diag-server.log 2>&1 &
-          cat > /tmp/sky-prod-diag.mjs <<'EOF'
+          cat > sky-prod-diag.mjs <<'EOF'
           import { chromium } from 'playwright';
           import path from 'node:path';
 
@@ -93,4 +93,4 @@ jobs:
           await run('A only, B absent',null,'single');
           await run('A only, stale B object',{name:'Old empty Sky B',placements:{}},'comparison');
           EOF
-          node /tmp/sky-prod-diag.mjs
+          node sky-prod-diag.mjs
