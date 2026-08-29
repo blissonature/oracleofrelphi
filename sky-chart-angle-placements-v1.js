@@ -3,13 +3,14 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyAnglePlacementsV6) return;
+  if (window.__relphiSkyAnglePlacementsV7) return;
   window.__relphiSkyAnglePlacementsV1 = true;
   window.__relphiSkyAnglePlacementsV2 = true;
   window.__relphiSkyAnglePlacementsV3 = true;
   window.__relphiSkyAnglePlacementsV4 = true;
   window.__relphiSkyAnglePlacementsV5 = true;
   window.__relphiSkyAnglePlacementsV6 = true;
+  window.__relphiSkyAnglePlacementsV7 = true;
 
   const KEYS = new Set(['relphiSkyChartA', 'relphiSkyChartB']);
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -179,7 +180,7 @@
       ['A','B'].forEach(slot => {
         const ledger = document.querySelector(`#skyFoundation${slot} .sky-foundation-ledger`);
         if (!ledger) return;
-        ledger.querySelectorAll('.sky-foundation-ledger-angle-heading').forEach(node => node.remove());
+        let heading = ledger.querySelector(':scope > .sky-foundation-ledger-angle-heading');
         const rows = Array.from(ledger.querySelectorAll('.sky-foundation-row'));
         let found = false;
 
@@ -197,13 +198,32 @@
           if (name) name.textContent = angle.label;
         });
 
-        if (!found) return;
-        const heading = document.createElement('div');
-        heading.className = 'sky-foundation-ledger-angle-heading';
-        heading.dataset.placementSection = 'chart-angles';
+        if (!found) {
+          heading?.remove();
+          return;
+        }
+        if (!heading) {
+          heading = document.createElement('div');
+          heading.className = 'sky-foundation-ledger-angle-heading';
+          heading.dataset.placementSection = 'chart-angles';
+          ledger.appendChild(heading);
+        }
         heading.style.order = '1000';
-        heading.textContent = 'Chart Angles';
-        ledger.appendChild(heading);
+        let title = heading.querySelector(':scope > .sky-foundation-ledger-angle-title');
+        if (!title) {
+          title = document.createElement('span');
+          title.className = 'sky-foundation-ledger-angle-title';
+          title.textContent = 'Chart Angles';
+          heading.prepend(title);
+        }
+        let houseSystemMount = heading.querySelector(':scope > [data-placement-house-system-mount]');
+        if (!houseSystemMount) {
+          houseSystemMount = document.createElement('span');
+          houseSystemMount.className = 'sky-foundation-ledger-angle-house-system';
+          houseSystemMount.dataset.placementHouseSystemMount = slot;
+          heading.appendChild(houseSystemMount);
+        }
+        window.RelphiSkyPlacementHouseSystem?.mount?.(slot);
       });
     } finally {
       decorating = false;
