@@ -54,3 +54,22 @@
   .sky-chart-filter-bar[data-multiselect-aspect-filters="true"]>.sky-chart-aspect-filter,
   .sky-chart-aspect-filter{grid-column:1/-1!important;width:100%!important}
 }
+
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-header,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-item{
+  grid-template-columns:minmax(0,1fr) 74px;
+}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-header-choices,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-choices{
+  grid-template-columns:repeat(2,37px);
+}
+@media(max-width:620px){
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-header,
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-item{
+    grid-template-columns:minmax(0,1fr) 68px;
+  }
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-header-choices,
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-aspect-list-choices{
+    grid-template-columns:repeat(2,34px);
+  }
+}
