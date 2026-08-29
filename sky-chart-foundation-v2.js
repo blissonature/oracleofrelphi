@@ -31,8 +31,9 @@ function annular(inner,outer,start,end){const span=norm(end-start)||360,large=sp
 function read(key){
   try{
     const startup=window.RelphiSkyStartupMode;
-    if(typeof startup?.read==='function')return startup.read(key);
-    return JSON.parse(localStorage.getItem(key)||'null');
+    const raw=typeof startup?.read==='function'?startup.read(key):localStorage.getItem(key);
+    if(raw==null)return null;
+    return typeof raw==='string'?JSON.parse(raw):raw;
   }catch(_){return null}
 }
 function requestedOrb(){const input=document.querySelector('[data-filter="orb"]'),value=Number(input?.value);return Number.isFinite(value)&&value>=0?Math.min(360,value):1}
