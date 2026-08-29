@@ -12,6 +12,7 @@
   let portalOwner = null;
   let countTimer = 0;
   let hoverFilterActive = false;
+  let lastScopeSignature = '';
 
   const angleId = value => {
     const key = String(value || '').trim().toLowerCase().replace(/[._-]+/g, ' ').replace(/\s+/g, ' ');
@@ -21,6 +22,13 @@
     if (['ic','imum coeli','imumcoeli'].includes(key)) return 'ic';
     return '';
   };
+
+  function bActive() {
+    const html = document.documentElement;
+    return html.dataset.skyBEditing === 'true' || html.dataset.skyBPresent === 'true';
+  }
+  function activeSlots() { return bActive() ? SLOTS : ['A']; }
+  function activeKinds() { return bActive() ? ['all','a','b'] : ['all','a']; }
 
   function filterBar() { return document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'); }
   function control() { return document.querySelector('[data-house-filter="combined"]'); }
@@ -38,6 +46,7 @@
 
   function combinedSummary() {
     const a = summary('A');
+    if (!bActive()) return a;
     const b = summary('B');
     if (a === 'All' && b === 'All') return 'All';
     if (a === 'None' && b === 'None') return 'None';
@@ -46,7 +55,7 @@
 
   function updateChoice(input) {
     const ids = idsFor(input.dataset.houseScope, input.dataset.houseTarget);
-    const slots = input.dataset.houseChoice === 'all' ? SLOTS : [input.dataset.houseChoice.toUpperCase()];
+    const slots = input.dataset.houseChoice === 'all' ? activeSlots() : [input.dataset.houseChoice.toUpperCase()].filter(slot => slot !== 'B' || bActive());
     const available = ids.length * slots.length;
     const selected = slots.reduce((sum, slot) => sum + ids.filter(id => state[slot].has(id)).length, 0);
     input.checked = available > 0 && selected === available;
@@ -89,7 +98,7 @@
     choices.className = 'sky-chart-house-list-choices';
     choices.setAttribute('role', 'group');
     choices.setAttribute('aria-label', labelText);
-    ['all','a','b'].forEach(kindName => choices.appendChild(choice(scope, target, kindName, labelText)));
+    activeKinds().forEach(kindName => choices.appendChild(choice(scope, target, kindName, labelText)));
     item.append(label, choices);
     return item;
   }
@@ -103,7 +112,7 @@
     list.dataset.houseList = 'combined';
     const header = document.createElement('div');
     header.className = 'sky-chart-house-list-header';
-    header.innerHTML = '<strong>House</strong><span>All</span><span>A</span><span>B</span>';
+    header.innerHTML = bActive() ? '<strong>House</strong><span>All</span><span>A</span><span>B</span>' : '<strong>House</strong><span>All</span><span>A</span>';
     list.append(header, row('all','all','All houses','master'));
     HOUSES.forEach(house => list.appendChild(row('house', house, `House ${house}`, 'house')));
     body.appendChild(list);
@@ -165,7 +174,7 @@
   function handleChange(event) {
     const input = event.target.closest?.('[data-house-choice]');
     if (!input) return;
-    const slots = input.dataset.houseChoice === 'all' ? SLOTS : [input.dataset.houseChoice.toUpperCase()];
+    const slots = input.dataset.houseChoice === 'all' ? activeSlots() : [input.dataset.houseChoice.toUpperCase()].filter(slot => slot !== 'B' || bActive());
     const ids = idsFor(input.dataset.houseScope, input.dataset.houseTarget);
     slots.forEach(slot => setSelection(ids, slot, input.checked));
     apply();
@@ -218,7 +227,7 @@
     root.dataset.houseFilter = 'combined';
     root.innerHTML = '<div class="sky-chart-house-filter-head"><span class="sky-chart-house-filter-label">Houses</span><div class="sky-chart-house-summary-choices" role="group" aria-label="All houses"></div><button type="button" class="sky-chart-house-filter-toggle" data-house-filter-toggle aria-label="Open house filters" aria-haspopup="dialog" aria-expanded="false" aria-controls="skyChartHousePopover">⌄</button><span class="sky-chart-house-filter-status" data-house-filter-summary aria-live="polite">All</span></div><div id="skyChartHousePopover" class="sky-chart-house-filter-popover" role="dialog" aria-label="House filters" hidden><div class="sky-chart-house-filter-body"></div></div>';
     const choices = root.querySelector('.sky-chart-house-summary-choices');
-    ['all','a','b'].forEach(kind => choices.appendChild(choice('all','all',kind,'All houses')));
+    activeKinds().forEach(kind => choices.appendChild(choice('all','all',kind,'All houses')));
     root.querySelector('[data-house-filter-toggle]').addEventListener('click', () => isOpen(root) ? close(root) : open(root));
     return root;
   }
@@ -248,6 +257,17 @@
   function refresh() {
     queued = false;
     if (whereWhenEditing() || !ensure()) return;
+    const scopeSignature = bActive() ? 'A+B' : 'A';
+    if (scopeSignature !== lastScopeSignature) {
+      lastScopeSignature = scopeSignature;
+      const owner = control();
+      const choices = owner?.querySelector('.sky-chart-house-summary-choices');
+      if (choices) {
+        choices.replaceChildren();
+        activeKinds().forEach(kind => choices.appendChild(choice('all','all',kind,'All houses')));
+      }
+      renderList();
+    }
     apply();
     position();
   }
@@ -285,6 +305,8 @@
     });
     window.addEventListener('resize', position);
     window.addEventListener('scroll', position, true);
+    window.addEventListener('storage', event => { if (!event.key || event.key === 'relphiSkyChartB') schedule(); });
+    new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing']});
     schedule();
   }
 
