@@ -9,7 +9,7 @@
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   // Only preserve points that this layer cannot safely recalculate. Lilith is intentionally excluded:
   // carrying an old Lilith into a newly dated sky makes the new sky inherit the prior sky-state's apogee.
-  const PRESERVE = ['Chiron','Vertex'];
+  const PRESERVE = ['Vertex'];
   const HOUSE_SYSTEMS = {
     'whole-sign':'Whole Sign', 'equal-house':'Equal House', porphyry:'Porphyry', placidus:'Placidus',
     alcabitius:'Alcabitius', regiomontanus:'Regiomontanus', campanus:'Campanus', koch:'Koch'
