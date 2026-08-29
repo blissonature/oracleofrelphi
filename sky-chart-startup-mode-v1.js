@@ -120,7 +120,21 @@ function writeMode(mode){
   return next;
 }
 function hasStoredSkyB(){
-  return !!rawGet(SKY_B_KEY);
+  const raw=rawGet(SKY_B_KEY);
+  if(!raw)return false;
+  try{
+    const value=JSON.parse(raw);
+    if(!value||typeof value!=='object')return false;
+    const source=[value.placements,value.positions,value.points,value.bodies]
+      .find(candidate=>candidate&&typeof candidate==='object'&&!Array.isArray(candidate))||value;
+    return Object.entries(source).some(([key,item])=>{
+      if(!item||typeof item!=='object'||Array.isArray(item))return false;
+      if(/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key))return false;
+      return Number.isFinite(Number(item.longitude))||
+        !!String(item.sign||item.zodiac||'').trim()||
+        (item.degree!==''&&item.degree!=null&&Number.isFinite(Number(item.degree)));
+    });
+  }catch(_){return false}
 }
 function syncRoot(){
   let mode=readMode();
