@@ -106,6 +106,8 @@ const SKY_B_KEY='relphiSkyChartB';
 const html=document.documentElement;
 const nativeGetItem=Storage.prototype.getItem;
 const nativeSetItem=Storage.prototype.setItem;
+const BASE_SKY_NAMES=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','asc','ascendant','rising','ac','mc','midheaven','mediumcoeli']);
+const baseSkyName=value=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
 
 function rawGet(key){
   try{return nativeGetItem.call(localStorage,key)}catch(_){return null}
@@ -129,7 +131,8 @@ function hasStoredSkyB(){
       .find(candidate=>candidate&&typeof candidate==='object'&&!Array.isArray(candidate))||value;
     return Object.entries(source).some(([key,item])=>{
       if(!item||typeof item!=='object'||Array.isArray(item))return false;
-      if(/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key))return false;
+      const id=baseSkyName(item.name||item.label||item.body||item.planet||item.point||item.id||item.glyphId||key);
+      if(!BASE_SKY_NAMES.has(id))return false;
       return Number.isFinite(Number(item.longitude))||
         !!String(item.sign||item.zodiac||'').trim()||
         (item.degree!==''&&item.degree!=null&&Number.isFinite(Number(item.degree)));
@@ -168,7 +171,7 @@ function read(key){
   if(key===SKY_B_KEY&&readMode()!=='comparison'&&html.dataset.skyBEditing!=='true')return null;
   return rawGet(key);
 }
-window.RelphiSkyStartupMode=Object.freeze({read,readMode,writeMode,syncRoot});
+window.RelphiSkyStartupMode=Object.freeze({read,readMode,writeMode,syncRoot,hasStoredSkyB});
 
 // Fail closed into the ordinary single-sky view before the body can paint.
 syncRoot();
