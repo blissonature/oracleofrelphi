@@ -45,12 +45,21 @@ function finishWhereWhen(slot,committed){
   transactionState.committed.clear();
   window.dispatchEvent(new CustomEvent('relphi:sky-where-when-committed',{detail:{slots}}));
 }
+function reconcileWhereWhenTransaction(){
+  [...transactionState.editing].forEach(slot=>{
+    const editor=document.querySelector(`.sky-where-when-editor[data-slot="${slot}"]`);
+    const mount=editor?.closest?.('[data-ww-editor-mount]');
+    if(!editor?.isConnected||mount?.hidden)transactionState.editing.delete(slot);
+  });
+  publishTransactionState();
+}
 window.RelphiSkyWhereWhenTransaction=Object.freeze({
   begin:beginWhereWhen,
   commit:slot=>finishWhereWhen(slot,true),
   cancel:slot=>finishWhereWhen(slot,false),
   active:()=>transactionState.editing.size>0,
-  slots:()=>[...transactionState.editing]
+  slots:()=>[...transactionState.editing],
+  reconcile:reconcileWhereWhenTransaction
 });
 
 function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
@@ -224,6 +233,15 @@ window.addEventListener('storage',event=>{if(!event.key||Object.values(SLOT_KEYS
 window.addEventListener('relphi:sky-foundation-ready',()=>{scheduleSummary('A');scheduleSummary('B')});
 window.addEventListener('relphi:sky-name-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]){closeEditor(slot);window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot,true)}});
 window.addEventListener('resize',()=>{['A','B'].forEach(slot=>{const svg=shell(slot)?.heptagram;if(svg&&svg.dataset.canonicalSourceReady==='true')svg.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360')})},{passive:true});
+function recoverWhereWhen(){
+  reconcileWhereWhenTransaction();
+  ['A','B'].forEach(slot=>{
+    window.RelphiSkyCardShell?.ensure?.(slot,payload(slot));
+    scheduleSummary(slot,true);
+  });
+}
 function start(){['A','B'].forEach(slot=>{shell(slot);scheduleSummary(slot)})}
+window.addEventListener('pageshow',()=>requestAnimationFrame(recoverWhereWhen));
+window.addEventListener('relphi:sky-session-recovered',recoverWhereWhen);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
