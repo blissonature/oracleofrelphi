@@ -41,8 +41,19 @@ function obstacleHit(candidate,other,gap){
   return circleClearance(candidate,other,gap)<0;
 }
 function segmentDistance(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;if(l2<=1e-9)return Math.hypot(p.x-a.x,p.y-a.y);const t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/l2));return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
-function obstacleRadius(obstacle){return obstacle.kind==='square'?obstacle.half*Math.SQRT2:obstacle.r}
-function segmentHitsObstacle(segment,obstacle,gap){return segmentDistance(obstacle,{x:segment.x1,y:segment.y1},{x:segment.x2,y:segment.y2})<obstacleRadius(obstacle)+gap}
+function segmentHitsSquare(segment,square,gap){
+  const minX=square.x-square.half-gap,maxX=square.x+square.half+gap,minY=square.y-square.half-gap,maxY=square.y+square.half+gap;
+  const x1=segment.x1,y1=segment.y1,dx=segment.x2-x1,dy=segment.y2-y1,p=[-dx,dx,-dy,dy],q=[x1-minX,maxX-x1,y1-minY,maxY-y1];
+  let u1=0,u2=1;
+  for(let i=0;i<4;i++){
+    if(Math.abs(p[i])<1e-9){if(q[i]<0)return false;continue}
+    const r=q[i]/p[i];
+    if(p[i]<0){if(r>u2)return false;if(r>u1)u1=r}
+    else{if(r<u1)return false;if(r<u2)u2=r}
+  }
+  return true;
+}
+function segmentHitsObstacle(segment,obstacle,gap){return obstacle.kind==='square'?segmentHitsSquare(segment,obstacle,gap):segmentDistance(obstacle,{x:segment.x1,y:segment.y1},{x:segment.x2,y:segment.y2})<obstacle.r+gap}
 function orientation(a,b,c){return(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)}
 function closePoint(a,b,epsilon=1.25){return Math.hypot(a.x-b.x,a.y-b.y)<=epsilon}
 function segmentsCross(a,b){
@@ -52,9 +63,11 @@ function segmentsCross(a,b){
   return((o1>eps&&o2<-eps)||(o1<-eps&&o2>eps))&&((o3>eps&&o4<-eps)||(o3<-eps&&o4>eps));
 }
 function sameSignDisplay(exact,display){const sign=Math.floor(norm(exact)/30),start=sign*30+.02,end=start+29.96,delta=((norm(display)-norm(exact)+540)%360)-180;return norm(Math.max(start,Math.min(end,norm(exact)+delta)))}
-function leaderGeometry(center,target,radius){
-  const dx=target.x-center.x,dy=target.y-center.y,d=Math.hypot(dx,dy)||1,edge=Math.min(d,Math.max(0,radius+1));
-  return{x1:center.x+dx/d*edge,y1:center.y+dy/d*edge,x2:target.x,y2:target.y,length:Math.max(0,d-edge)};
+function routedLeader(center,lane,display,exact,radius,geometry,view){
+  const start=point(center,lane-radius-1,display),route=point(center,view.leaderRouteRadius,display),target=point(center,geometry.degree,exact);
+  const segments=[{x1:start.x,y1:start.y,x2:route.x,y2:route.y},{x1:route.x,y1:route.y,x2:target.x,y2:target.y}];
+  const length=segments.reduce((sum,segment)=>sum+Math.hypot(segment.x2-segment.x1,segment.y2-segment.y1),0);
+  return{segments,length,start,route,target};
 }
 function houseNumberObstacles(houseCusps,geometry,view){
   return houseCusps.map((start,index)=>{const end=houseCusps[(index+1)%12],span=norm(end-start)||30,p=point(view.center,geometry.house.numberRadius,start+span/2);return{kind:'circle',x:p.x,y:p.y,r:view.houseNumberObstacleRadius,type:'house-number',index:index+1}});
@@ -96,11 +109,11 @@ function placementLanes(geometry,view){
 function placementCandidates(record,geometry,view){
   const lanes=placementLanes(geometry,view),offsets=[0];
   for(let amount=view.tangentialStep;amount<=view.tangentialLimit+.001;amount+=view.tangentialStep)offsets.push(-amount,amount);
-  const target=point(view.center,geometry.degree,record.value),out=[];
+  const out=[];
   for(const offset of offsets){
     const display=sameSignDisplay(record.value,record.value+offset);
     for(let laneIndex=0;laneIndex<lanes.length;laneIndex++){
-      const lane=lanes[laneIndex],p=point(view.center,lane,display),bubble={kind:'circle',x:p.x,y:p.y,r:view.placementFrameRadius,type:'placement',id:record.id},leader=leaderGeometry(p,target,view.placementFrameRadius);
+      const lane=lanes[laneIndex],p=point(view.center,lane,display),bubble={kind:'circle',x:p.x,y:p.y,r:view.placementFrameRadius,type:'placement',id:record.id},leader=routedLeader(view.center,lane,display,record.value,view.placementFrameRadius,geometry,view);
       out.push({lane,laneIndex,p,bubble,leader,display,offset:Math.abs(((display-record.value+540)%360)-180)});
     }
   }
@@ -110,15 +123,25 @@ function validPlacement(candidate,obstacles,segments,placed,view){
   if(candidate.leader.length<view.minimumVisibleLeader)return false;
   const allObstacles=[...obstacles,...placed.map(item=>item.bubble)];
   if(allObstacles.some(other=>obstacleHit(candidate.bubble,other,view.placementClearance)))return false;
-  const allSegments=[...segments,...placed.map(item=>item.leader)];
+  const allSegments=[...segments,...placed.flatMap(item=>item.leader.segments)];
   if(allSegments.some(segment=>segmentHitsObstacle(segment,candidate.bubble,view.lineClearance)))return false;
-  if(allObstacles.some(other=>segmentHitsObstacle(candidate.leader,other,view.leaderClearance)))return false;
-  if(allSegments.some(segment=>segmentsCross(candidate.leader,segment)))return false;
+  for(const segment of candidate.leader.segments){
+    if(allObstacles.some(other=>segmentHitsObstacle(segment,other,view.leaderClearance)))return false;
+    if(allSegments.some(other=>segmentsCross(segment,other)))return false;
+  }
   return true;
+}
+function placementPriority(list,angleLayout){
+  const angleValues=angleLayout.records.map(item=>item.record.value);
+  return[...list].sort((a,b)=>{
+    const da=angleValues.length?Math.min(...angleValues.map(value=>separation(a.value,value))):180;
+    const db=angleValues.length?Math.min(...angleValues.map(value=>separation(b.value,value))):180;
+    return da-db||a.value-b.value;
+  });
 }
 function layoutPlacements(list,geometry,view,angleLayout){
   const placed=[],records=[],errors=[];
-  for(const record of [...list].sort((a,b)=>a.value-b.value)){
+  for(const record of placementPriority(list,angleLayout)){
     const chosen=placementCandidates(record,geometry,view).find(candidate=>validPlacement(candidate,angleLayout.obstacles,angleLayout.segments,placed,view));
     if(!chosen){errors.push({type:'placement-collision',id:record.id,value:record.value});continue}
     placed.push(chosen);records.push({...record,...chosen});
@@ -129,7 +152,7 @@ function layoutPlacements(list,geometry,view,angleLayout){
 function singleView(shared){const base=shared.mini,baseGeometry=shared.miniRole('A');return{
  center:base.center,zodiac:base.zodiac,houseFillOpacity:base.houseFillOpacity,
  placementRadius:9.5,placementFrameRadius:10.5,placementClearance:2,leaderClearance:2.5,lineClearance:2.5,minimumVisibleLeader:6,
- tangentialStep:1,tangentialLimit:5,boundaryClearance:3,houseNumberObstacleRadius:7,
+ tangentialStep:1,tangentialLimit:8,boundaryClearance:3,houseNumberObstacleRadius:7,leaderRouteRadius:132.5,
  angleFrameRadius:13,angleFrameHalf:13,angleClearance:4,angleAxisGap:2.5,angleLanes:[189,169,149],
  // Angles own exact-longitude radial lanes first. Ordinary placement bubbles
  // stay inside the house band and route around the complete angle frames.
@@ -149,11 +172,11 @@ async function draw(prepared,current){const shared=window.RelphiSkyWheelSpec,mou
  });
  const placementLayout=layoutPlacements(ordinary,g,view,angleLayout);layoutErrors.push(...placementLayout.errors);
  placementLayout.records.forEach(record=>{
-   const leader=svg('line',{x1:record.leader.x1,y1:record.leader.y1,x2:record.leader.x2,y2:record.leader.y2,stroke:shared.SKY.A,class:'sky-foundation-leader','data-sky':'A','data-placement':record.id,'data-exact-longitude':record.value.toFixed(8),'data-display-longitude':record.display.toFixed(8),'data-leader-routing':record.offset>0?'ordered-offset':'exact-radial','data-visible-leader-length':record.leader.length.toFixed(3)});
-   layers.leaders.appendChild(leader);
-   const host=svg('g',{transform:`translate(${record.p.x} ${record.p.y})`,'data-sky':'A','data-placement':record.id,'data-house':record.house,'data-exact-longitude':record.value.toFixed(8),'data-display-longitude':record.display.toFixed(8),'data-placement-lane':record.lane,'data-placement-routing':record.offset>0?'ordered-offset':'exact-radial','data-display-offset':record.offset.toFixed(3)});
+   const leaders=record.leader.segments.map((segment,index)=>svg('line',{x1:segment.x1,y1:segment.y1,x2:segment.x2,y2:segment.y2,stroke:shared.SKY.A,class:'sky-foundation-leader','data-sky':'A','data-placement':record.id,'data-leader-segment':String(index+1),'data-exact-longitude':record.value.toFixed(8),'data-display-longitude':record.display.toFixed(8),'data-leader-routing':record.offset>0?'routed-offset':'exact-radial','data-visible-leader-length':record.leader.length.toFixed(3)}));
+   leaders.forEach(leader=>layers.leaders.appendChild(leader));
+   const host=svg('g',{transform:`translate(${record.p.x} ${record.p.y})`,'data-sky':'A','data-placement':record.id,'data-house':record.house,'data-exact-longitude':record.value.toFixed(8),'data-display-longitude':record.display.toFixed(8),'data-placement-lane':record.lane,'data-placement-routing':record.offset>0?'routed-offset':'exact-radial','data-display-offset':record.offset.toFixed(3)});
    layers.placements.appendChild(host);
-   jobs.push(cloneGlyph(record.id,shared.SKY.A,view.placementRadius,true).then(x=>host.appendChild(x)).catch(error=>{host.dataset.canonicalGlyphError=String(error?.message||error);leader.remove();sourceErrors.push({id:record.id,name:record.entry?.name||record.id,error:String(error?.message||error)});throw error}));
+   jobs.push(cloneGlyph(record.id,shared.SKY.A,view.placementRadius,true).then(x=>host.appendChild(x)).catch(error=>{host.dataset.canonicalGlyphError=String(error?.message||error);leaders.forEach(leader=>leader.remove());sourceErrors.push({id:record.id,name:record.entry?.name||record.id,error:String(error?.message||error)});throw error}));
  });
  if(layoutErrors.length)console.error('[Standalone Sky layout unresolved]',layoutErrors);
  const settled=await Promise.allSettled(jobs);if(current!==token)return null;const uniqueErrors=[...new Map(sourceErrors.map(item=>[item.id,item])).values()];wheel.dataset.canonicalSourceReady=uniqueErrors.length?'error':'true';wheel.dataset.sourcePlacementCount=String(list.length);wheel.dataset.renderedPlacementCount=String(layers.placements.querySelectorAll(':scope>g[data-placement]:not([data-canonical-glyph-error])').length);wheel.dataset.glyphRenderFailures=String(uniqueErrors.length);wheel.dataset.canonicalSourceErrors=uniqueErrors.map(item=>item.id).join(',');wheel.dataset.layoutErrors=layoutErrors.map(item=>item.id).join(',');wheel.dataset.layoutErrorCount=String(layoutErrors.length);if(uniqueErrors.length)console.warn('[Standalone Sky canonical glyph source]',uniqueErrors);mount.replaceChildren(wheel);delete mount.dataset.singleSkyPending;return wheel}
