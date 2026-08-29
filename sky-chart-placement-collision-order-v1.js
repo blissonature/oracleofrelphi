@@ -168,7 +168,11 @@ function arrange(wheel){
   // collisions in sky-chart-single-sky-mode-v2.js. Running this pass there
   // moves ordinary placements around the comparison center (600,600), outside
   // the standalone wheel's visible viewBox centered at (300,300).
-  if(!(wheel instanceof SVGSVGElement)||wheel.dataset.singleSky||arranging)return;arranging=true;
+  if(!(wheel instanceof SVGSVGElement)||arranging)return;
+    // A-only Sky Chart now uses the same 1200×1200 comparison geometry, so it
+    // intentionally shares this collision resolver. Only legacy mini geometry
+    // would be ineligible.
+    if(wheel.dataset.singleSky&&wheel.dataset.wheelGeometry!=='comparison')return;arranging=true;
   try{
     const a=solveSlot(wheel,'A'),b=solveSlot(wheel,'B');
     wheel.dataset.placementLeaderCrossings=String(a.crossings+b.crossings);
