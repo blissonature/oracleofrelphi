@@ -16,6 +16,22 @@
   const rad=value=>Number(value)*Math.PI/180;
   const deg=value=>Number(value)*180/Math.PI;
   const signedDifference=(a,b)=>((Number(a)-Number(b)+540)%360)-180;
+  const BASE_SKY_NAMES=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','asc','ascendant','rising','ac','mc','midheaven','mediumcoeli']);
+  const baseSkyName=value=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  function hasBaseSky(payload){
+    if(!payload||typeof payload!=='object')return false;
+    const source=[payload.placements,payload.positions,payload.points,payload.bodies]
+      .find(candidate=>candidate&&typeof candidate==='object'&&!Array.isArray(candidate));
+    if(!source)return false;
+    return Object.entries(source).some(([key,item])=>{
+      if(!item||typeof item!=='object'||Array.isArray(item))return false;
+      const id=baseSkyName(item.name||item.label||item.body||item.planet||item.point||item.id||item.glyphId||key);
+      if(!BASE_SKY_NAMES.has(id))return false;
+      return Number.isFinite(Number(item.longitude))||
+        !!String(item.sign||item.zodiac||'').trim()||
+        (item.degree!==''&&item.degree!=null&&Number.isFinite(Number(item.degree)));
+    });
+  }
 
   function read(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_){return null}}
   function write(key,value){localStorage.setItem(key,JSON.stringify(value))}
@@ -93,7 +109,7 @@
   }
 
   function enrich(payload){
-    if(!payload)return false;
+    if(!payload||!hasBaseSky(payload))return false;
     const before=JSON.stringify(payload),placements=sourceOf(payload),profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
     const asc=find(placements,['Ascendant','ASC','Rising']),mc=find(placements,['Midheaven','Medium Coeli','MC']),sun=find(placements,['Sun']),moon=find(placements,['Moon']);
     const explicitInstantRaw=profile.instant||profile.dateTime||payload.instant||payload.dateTime;

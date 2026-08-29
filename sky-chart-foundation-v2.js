@@ -28,7 +28,14 @@ function svg(name,attrs){const node=document.createElementNS(NS,name);Object.ent
 function polar(radius,degree){const c=center(),angle=(norm(degree)-180)*Math.PI/180;return{x:c.x+radius*Math.cos(angle),y:c.y+radius*Math.sin(angle)}}
 function radialLine(parent,inner,outer,degree,attrs){const a=polar(inner,degree),b=polar(outer,degree),line=svg('line',Object.assign({x1:a.x,y1:a.y,x2:b.x,y2:b.y},attrs||{}));parent.appendChild(line);return line}
 function annular(inner,outer,start,end){const span=norm(end-start)||360,large=span>180?1:0,a=polar(outer,start),b=polar(outer,start+span),c=polar(inner,start+span),d=polar(inner,start);return`M${a.x} ${a.y} A${outer} ${outer} 0 ${large} 1 ${b.x} ${b.y} L${c.x} ${c.y} A${inner} ${inner} 0 ${large} 0 ${d.x} ${d.y} Z`}
-function read(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_){return null}}
+function read(key){
+  try{
+    const startup=window.RelphiSkyStartupMode;
+    const raw=typeof startup?.read==='function'?startup.read(key):localStorage.getItem(key);
+    if(raw==null)return null;
+    return typeof raw==='string'?JSON.parse(raw):raw;
+  }catch(_){return null}
+}
 function requestedOrb(){const input=document.querySelector('[data-filter="orb"]'),value=Number(input?.value);return Number.isFinite(value)&&value>=0?Math.min(360,value):1}
 function source(payload){if(!payload||typeof payload!=='object')return[];const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object'),raw=known||payload;if(Array.isArray(raw))return raw.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]);return Object.entries(raw).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac))}
 function longitude(item){if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);const signs=spec()?.SIGNS||[],sign=signs.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());return sign<0?NaN:norm(sign*30+Number(item?.degree||item?.degrees||0)+Number(item?.minute||item?.minutes||0)/60+Number(item?.second||item?.seconds||0)/3600)}
