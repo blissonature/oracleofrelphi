@@ -179,7 +179,7 @@
       ['A','B'].forEach(slot => {
         const ledger = document.querySelector(`#skyFoundation${slot} .sky-foundation-ledger`);
         if (!ledger) return;
-        ledger.querySelectorAll('.sky-foundation-ledger-angle-heading').forEach(node => node.remove());
+        const existingHeading = ledger.querySelector('.sky-foundation-ledger-angle-heading');
         const rows = Array.from(ledger.querySelectorAll('.sky-foundation-row'));
         let found = false;
 
@@ -197,14 +197,24 @@
           if (name) name.textContent = angle.label;
         });
 
-        if (!found) return;
-        const heading = document.createElement('div');
+        if (!found) {
+          existingHeading?.remove();
+          return;
+        }
+        const heading = existingHeading || document.createElement('div');
         heading.className = 'sky-foundation-ledger-angle-heading';
         heading.dataset.placementSection = 'chart-angles';
         heading.style.order = '1000';
-        heading.textContent = 'Chart Angles';
-        ledger.appendChild(heading);
+        let title = heading.querySelector(':scope > .sky-foundation-ledger-angle-title');
+        if (!title) {
+          title = document.createElement('span');
+          title.className = 'sky-foundation-ledger-angle-title';
+          heading.prepend(title);
+        }
+        if (title.textContent !== 'Chart Angles') title.textContent = 'Chart Angles';
+        if (!existingHeading) ledger.appendChild(heading);
       });
+      window.dispatchEvent(new CustomEvent('relphi:sky-angle-ledger-decorated'));
     } finally {
       decorating = false;
     }
