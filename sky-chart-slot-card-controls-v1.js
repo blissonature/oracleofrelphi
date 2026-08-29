@@ -210,7 +210,6 @@
     window.addEventListener('storage',schedule);
     window.addEventListener('relphi:sky-foundation-ready',schedule);
     window.addEventListener('relphi:sky-session-recovered',schedule);
-    window.addEventListener('pageshow',()=>requestAnimationFrame(()=>requestAnimationFrame(schedule)));
     window.addEventListener('relphi:sky-where-when-edit-state-changed',event=>{
       const slots=Array.isArray(event.detail?.slots)?event.detail.slots:[];
       if(slots.includes('B')||hasStoredSkyB()||document.documentElement.dataset.skyBEditing!=='true')return schedule();
