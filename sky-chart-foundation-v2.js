@@ -69,7 +69,7 @@ function aspectLine(layer,relation,leftSky,rightSky,relationIndex,cuspsA,cuspsB)
   const attrs={
     x1:from.x,y1:from.y,x2:to.x,y2:to.y,stroke:relation.aspect.color,class:'sky-foundation-aspect',
     'data-aspect':relation.aspect.id,'data-left-placement':relation.left.id,'data-right-placement':relation.right.id,
-    'data-left-sky':leftSky,'data-right-sky':rightSky,'data-relationship-mode':leftSky===rightSky?\`\${leftSky}-\${rightSky}\`:'A-B',
+    'data-left-sky':leftSky,'data-right-sky':rightSky,'data-relationship-mode':leftSky===rightSky?`${leftSky}-${rightSky}`:'A-B',
     'data-orb':relation.orb.toFixed(6),'data-left-house':houseFor(relation.left.value,leftCusps),'data-right-house':houseFor(relation.right.value,rightCusps),
     'data-left-sign':Math.floor(norm(relation.left.value)/30),'data-right-sign':Math.floor(norm(relation.right.value)/30),
     'data-interactive':'aspect','data-focus-piece':'aspect',tabindex:'0',role:'button'
@@ -79,7 +79,7 @@ function aspectLine(layer,relation,leftSky,rightSky,relationIndex,cuspsA,cuspsB)
   if(Number.isFinite(relation.harmonicNumerator))attrs['data-harmonic-numerator']=String(relation.harmonicNumerator);
   if(Number.isFinite(relation.phaseError))attrs['data-phase-error']=relation.phaseError.toFixed(6);
   if(Number.isFinite(relation.harmonicCoherence??relation.coherence))attrs['data-harmonic-coherence']=Number(relation.harmonicCoherence??relation.coherence).toFixed(8);
-  attrs['aria-label']=\`Sky \${leftSky} \${relation.left.entry?.name||relation.left.id} \${relation.aspect.id} Sky \${rightSky} \${relation.right.entry?.name||relation.right.id}\`;
+  attrs['aria-label']=`Sky ${leftSky} ${relation.left.entry?.name||relation.left.id} ${relation.aspect.id} Sky ${rightSky} ${relation.right.entry?.name||relation.right.id}`;
   const line=svg('line',attrs);layer.appendChild(line);return line
 }
 function segmentDistance(point,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;if(l2<=1e-9)return Math.hypot(point.x-a.x,point.y-a.y);const t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.y-a.y)*dy)/l2));return Math.hypot(point.x-(a.x+t*dx),point.y-(a.y+t*dy))}
