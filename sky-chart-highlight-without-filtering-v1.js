@@ -3,8 +3,9 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHighlightWithoutFilteringV1) return;
+  if (window.__relphiSkyHighlightWithoutFilteringV2) return;
   window.__relphiSkyHighlightWithoutFilteringV1 = true;
+  window.__relphiSkyHighlightWithoutFilteringV2 = true;
 
   let visibilityQueued = false;
   let rowsByIndex = new Map();
@@ -15,12 +16,22 @@
   let hoveredLines = new Set();
   let hoverFilterActive = false;
 
+  function endpointSky(node, side) {
+    const explicit = String(node?.dataset?.[side === 'left' ? 'leftSky' : 'rightSky'] || '').toUpperCase();
+    if (explicit === 'A' || explicit === 'B') return explicit;
+    const mode = String(node?.dataset?.relationshipMode || '').toUpperCase();
+    if (mode === 'A-A') return 'A';
+    if (mode === 'B-B') return 'B';
+    return side === 'left' ? 'A' : 'B';
+  }
+
   function relationshipIdentity(node) {
     if (!node) return '';
     const left = String(node.dataset.leftPlacement || '').trim();
     const aspect = String(node.dataset.aspect || '').trim();
     const right = String(node.dataset.rightPlacement || '').trim();
-    return left && aspect && right ? `${left}|${aspect}|${right}` : '';
+    if (!left || !aspect || !right) return '';
+    return `${endpointSky(node,'left')}:${left}|${aspect}|${endpointSky(node,'right')}:${right}`;
   }
 
   function addMappedLine(map, key, line) {
