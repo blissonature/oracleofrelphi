@@ -44,6 +44,5 @@ function repair(){
   });
 }
 window.RelphiSkyCardShell=Object.freeze({ensure,get:refs,sync,setEditorExpanded,openDrawer,complete,repair});
-window.addEventListener('pageshow',()=>requestAnimationFrame(repair));
 window.addEventListener('relphi:sky-session-recovered',repair);
 })();
