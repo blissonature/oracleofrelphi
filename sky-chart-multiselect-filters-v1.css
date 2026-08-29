@@ -46,11 +46,11 @@
 /* Native select controls reserve explicit arrow room. This also protects the neighboring filters. */
 .sky-chart-filter-bar select{box-sizing:border-box;padding-right:2.15rem!important;text-overflow:ellipsis}
 /* In single-sky mode the B column is not applicable, so the placement table collapses to All + A. */
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-summary-choices .sky-chart-placement-choice-b,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list .sky-chart-placement-choice-b,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-header span:last-child{display:none!important}
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-header,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,38px)}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-summary-choices .sky-chart-placement-choice-b,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list .sky-chart-placement-choice-b,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-header span:last-child{display:none!important}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-header,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,38px)}
 @media(prefers-reduced-motion:reduce){.sky-chart-placement-filter-toggle::before{transition:none}}
 @media(max-width:840px){.sky-chart-placement-filter{grid-column:span 2!important}}
-@media(max-width:620px){.sky-chart-placement-filter{grid-column:1/-1!important}.sky-chart-placement-filter-popover{width:calc(100vw - 16px);padding:8px}.sky-chart-placement-list-header,.sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(3,36px)}html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-header,html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]):not([data-sky-last-mode="comparison"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,36px)}.sky-chart-placement-list-label{padding:7px 8px;font-size:.63rem}}
+@media(max-width:620px){.sky-chart-placement-filter{grid-column:1/-1!important}.sky-chart-placement-filter-popover{width:calc(100vw - 16px);padding:8px}.sky-chart-placement-list-header,.sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(3,36px)}html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-header,html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,36px)}.sky-chart-placement-list-label{padding:7px 8px;font-size:.63rem}}

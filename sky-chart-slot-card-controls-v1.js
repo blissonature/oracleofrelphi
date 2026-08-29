@@ -57,6 +57,51 @@
     button.hidden=hasStoredSkyB()||editing;
   }
 
+  function releaseSkyBWhereWhen(){
+    const transaction=window.RelphiSkyWhereWhenTransaction;
+    try{transaction?.cancel?.('B')}catch(_){}
+    try{window.RelphiSkyCardShell?.setEditorExpanded?.('B',false)}catch(_){}
+    document.querySelectorAll('.sky-where-when-editor[data-slot="B"]').forEach(form=>form.remove());
+    try{
+      if(transaction?.active?.()===false){
+        document.documentElement.dataset.skyWhereWhenEditing='false';
+        document.documentElement.dataset.skyWhereWhenEditingSlots='';
+      }
+    }catch(_){}
+  }
+  function removeSkyB(){
+    releaseSkyBWhereWhen();
+    try{localStorage.removeItem(SKY_B_KEY)}catch(_){return}
+    delete document.documentElement.dataset.skyBEditing;
+    const startup=window.RelphiSkyStartupMode;
+    startup?.writeMode?.('single');
+    startup?.syncRoot?.();
+    document.documentElement.dataset.skyLastMode='single';
+    document.documentElement.dataset.skyBPresent='false';
+    dispatchSkyBStorage(null);
+    window.dispatchEvent(new CustomEvent('relphi:sky-b-removed'));
+  }
+  function ensureRemoveControl(){
+    const heading=document.querySelector('#skyFoundationB > .sky-foundation-heading');
+    if(!heading)return;
+    const present=document.documentElement.dataset.skyBPresent==='true'&&hasStoredSkyB();
+    let remove=heading.querySelector('[data-remove-sky-b]');
+    if(present&&!remove){
+      remove=document.createElement('button');
+      remove.type='button';
+      remove.className='sky-slot-presence-button sky-slot-remove';
+      remove.dataset.removeSkyB='true';
+      remove.textContent='Remove Sky B';
+      remove.addEventListener('click',event=>{
+        event.preventDefault();
+        event.stopPropagation();
+        removeSkyB();
+      });
+      heading.appendChild(remove);
+    }
+    if(remove)remove.hidden=!present;
+  }
+
   function dismissUndo(){
     clearTimeout(undoTimer);
     undoTimer=0;
@@ -82,6 +127,8 @@
       try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
     }
     startup?.syncRoot?.();
+    document.documentElement.dataset.skyLastMode='comparison';
+    document.documentElement.dataset.skyBPresent='true';
     dispatchSkyBStorage(raw);
     window.dispatchEvent(new CustomEvent('relphi:sky-b-restored'));
     dismissUndo();
@@ -113,8 +160,7 @@
       const snapshot=storedSkyBRaw();
       if(!snapshot)return;
       setTimeout(()=>{
-        const removed=document.documentElement.dataset.skyBPresent==='false'||document.documentElement.dataset.skyLastMode==='single';
-        if(removed)showUndo(snapshot);
+        if(!hasStoredSkyB())showUndo(snapshot);
       },0);
     },true);
   }
@@ -139,7 +185,7 @@
     }
   }
 
-  function sync(){queued=false;suppressInternalAdd();ensureAddProxy();styleRemove()}
+  function sync(){queued=false;suppressInternalAdd();ensureAddProxy();ensureRemoveControl();styleRemove()}
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
   function start(){
     sync();

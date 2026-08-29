@@ -19,9 +19,9 @@
     catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:KEYS[slot]});window.dispatchEvent(event)}
   }
 
-  function saveAgeAnchor(slot,at){
+  function saveAgeAnchor(slot,at,origin='update-to-now'){
     if(!AGE_KEYS[slot]||!at)return;
-    try{localStorage.setItem(AGE_KEYS[slot],JSON.stringify({origin:'update-to-now',at}))}catch(_){}
+    try{localStorage.setItem(AGE_KEYS[slot],JSON.stringify({origin,at}))}catch(_){}
   }
 
   function currentPosition(){
@@ -74,7 +74,7 @@
     return{name,longitude:value,sign:SIGNS[signIndex],degree,minute,second};
   }
 
-  function calculate(slot,packet,now){
+  function calculate(slot,packet,now,origin='update-to-now'){
     if(!window.RelphiHouseSystems||!window.Astronomy)throw new Error('The Sky calculation engine is unavailable.');
     const existing=read(slot)||{};
     const instant=now.toUTC().toJSDate();
@@ -98,7 +98,7 @@
     delete metadata.savedSkyId;delete metadata.savedSkyName;delete metadata.savedSkyLoadedAt;
     delete metadata.liveNowDisabled;delete metadata.liveNowDisabledReason;
     metadata.name=name;metadata.title=name;
-    metadata.liveNowOrigin='update-to-now';
+    metadata.liveNowOrigin=origin;
     metadata.liveNowAt=liveNowAt;
     metadata.liveAgeAnchorAt=liveNowAt;
     metadata.liveNowLatitude=String(packet.latitude);
@@ -123,7 +123,7 @@
         houseCusps:houses.cusps,cusps:houses.cusps,
         houseSystemNote:houses.note,
         source:'where-when-v1',
-        liveNowOrigin:'update-to-now',
+        liveNowOrigin:origin,
         liveNowAt
       },
       savedAt:new Date().toISOString()
@@ -150,6 +150,15 @@
     if(node)node.textContent=error?.code===1?'Location permission was denied.':error?.message||'Here and Now could not be set.';
   }
 
+  function existingUseNowPacket(slot){
+    const value=read(slot),metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{},profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
+    const origin=String(metadata.liveNowOrigin||profile.liveNowOrigin||'');
+    if(origin!=='use-now')return null;
+    const latitude=Number(profile.latitude),longitude=Number(profile.longitude),timezone=String(profile.timeZone||'');
+    if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||!timezone)return null;
+    return{query:String(profile.locationQuery||profile.location||'Selected location'),canonical:String(profile.location||profile.locationQuery||'Selected location'),latitude,longitude,timezone};
+  }
+
   async function update(slot,button){
     if(button.dataset.updateNowBusy==='true')return;
     const transaction=window.RelphiSkyWhereWhenTransaction;
@@ -157,17 +166,21 @@
     if(!alreadyEditing)transaction?.begin?.(slot);
     button.dataset.updateNowBusy='true';button.disabled=true;button.setAttribute('aria-busy','true');
     try{
-      const packet=await currentLocationPacket();
+      const remotePacket=existingUseNowPacket(slot),origin=remotePacket?'use-now':'update-to-now';
+      const packet=remotePacket||await currentLocationPacket();
       const now=window.luxon?.DateTime?.now().setZone(packet.timezone);
       if(!now?.isValid)throw new Error('The current local time could not be resolved.');
-      const next=calculate(slot,packet,now);
+      const next=calculate(slot,packet,now,origin);
+      if(!window.RelphiChironEphemeris)throw new Error('The Chiron ephemeris service is unavailable.');
+      await window.RelphiChironEphemeris.completePayload(next);
+      if(!window.RelphiChironEphemeris.hasChiron(next.placements))throw new Error('Chiron could not be calculated for this live sky.');
       setConfirmedView(slot);
       // Write the sky and its freshness clock as one logical transaction before any rerender event.
       localStorage.setItem(KEYS[slot],JSON.stringify(next));
-      saveAgeAnchor(slot,next.metadata.liveNowAt);
+      saveAgeAnchor(slot,next.metadata.liveNowAt,origin);
       dispatch(slot);
-      window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin:'update-to-now',at:next.metadata.liveNowAt}}));
-      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:'update-to-now-stable'}}));
+      window.dispatchEvent(new CustomEvent('relphi:sky-live-origin-changed',{detail:{slot,origin,at:next.metadata.liveNowAt}}));
+      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Now',source:origin==='use-now'?'use-now-refresh':'update-to-now-stable'}}));
       transaction?.commit?.(slot);
     }catch(error){console.error(error);announceError(slot,error);if(!alreadyEditing)transaction?.cancel?.(slot)}
     finally{

@@ -11,6 +11,7 @@ const FALLBACK_SKY={A:'#c9211e',B:'#2462d0'};
 const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const ANGLE_IDS=new Set(['asc','ascendant','rising','dsc','descendant','mc','midheaven','ic','imumcoeli']);
 let queued=false;
+const cardHitSignature={A:'',B:''};
 
 const norm=value=>((Number(value)%360)+360)%360;
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
@@ -107,6 +108,9 @@ function renderPlacements(slot,payload){
 function renderCardHits(slot){
   const mount=cardHitsMount(slot);if(!mount)return;
   const api=window.RelphiSkyCardHitsDrawer,hits=api?.getHits?.(slot)||[];
+  const signature=hits.map(hit=>`${hit.id}:${hit.count}`).join('|');
+  if(cardHitSignature[slot]===signature&&(hits.length?!!mount.firstElementChild:mount.hidden))return;
+  cardHitSignature[slot]=signature;
   mount.replaceChildren();
   if(!hits.length){mount.hidden=true;mount.removeAttribute('aria-label');return}
   mount.hidden=false;

@@ -163,7 +163,16 @@ function solveSlot(wheel,slot){
 }
 
 function arrange(wheel){
-  if(!(wheel instanceof SVGSVGElement)||arranging)return;arranging=true;
+  // This resolver is authored for the 1200×1200 A/B comparison geometry.
+  // Standalone wheels use their own 600×600 geometry and already resolve
+  // collisions in sky-chart-single-sky-mode-v2.js. Running this pass there
+  // moves ordinary placements around the comparison center (600,600), outside
+  // the standalone wheel's visible viewBox centered at (300,300).
+  if(!(wheel instanceof SVGSVGElement)||arranging)return;
+    // A-only Sky Chart now uses the same 1200×1200 comparison geometry, so it
+    // intentionally shares this collision resolver. Only legacy mini geometry
+    // would be ineligible.
+    if(wheel.dataset.singleSky&&wheel.dataset.wheelGeometry!=='comparison')return;arranging=true;
   try{
     const a=solveSlot(wheel,'A'),b=solveSlot(wheel,'B');
     wheel.dataset.placementLeaderCrossings=String(a.crossings+b.crossings);
