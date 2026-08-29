@@ -24,6 +24,7 @@
   };
 
   function bActive() {
+    try { window.RelphiSkyStartupMode?.syncRoot?.(); } catch (_) {}
     const html = document.documentElement;
     return html.dataset.skyBEditing === 'true' || html.dataset.skyBPresent === 'true';
   }
@@ -289,7 +290,7 @@
       if (records.every(record => record.target?.closest?.('.sky-chart-house-filter'))) return;
       schedule();
     }).observe(root, { childList:true, subtree:true });
-    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-single-sky-aspects-rendered'].forEach(name => window.addEventListener(name, schedule));
+    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-placement-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-single-sky-aspects-rendered','relphi:sky-b-removed','relphi:sky-b-restored'].forEach(name => window.addEventListener(name, schedule));
     window.addEventListener('relphi:sky-foundation-filter-changed', filterChanged);
     document.addEventListener('change', handleChange);
     document.addEventListener('pointerdown', event => {
