@@ -145,6 +145,26 @@ function syncRoot(){
   else html.dataset.skyLastMode=mode;
   html.dataset.skyBPresent=mode==='comparison'&&hasStoredSkyB()?'true':'false';
 }
+function visibleEditor(slot){
+  const editor=document.querySelector(`.sky-where-when-editor[data-slot="${slot}"]`);
+  if(!editor||!editor.isConnected)return false;
+  const mount=editor.closest('[data-ww-editor-mount]');
+  return !mount?.hidden;
+}
+function recoverTransientState(){
+  const transaction=window.RelphiSkyWhereWhenTransaction;
+  const activeSlots=typeof transaction?.slots==='function'?transaction.slots():[];
+  if(html.dataset.skyBEditing==='true'&&!hasStoredSkyB()&&!activeSlots.includes('B')&&!visibleEditor('B')){
+    delete html.dataset.skyBEditing;
+    writeMode('single');
+  }
+  if(html.dataset.skyWhereWhenEditing==='true'&&!activeSlots.length&&!visibleEditor('A')&&!visibleEditor('B')){
+    html.dataset.skyWhereWhenEditing='false';
+    html.dataset.skyWhereWhenEditingSlots='';
+  }
+  syncRoot();
+  window.dispatchEvent(new CustomEvent('relphi:sky-session-recovered'));
+}
 function previewTarotHref(cardId){
   const url=new URL(location.href);
   url.search='';
@@ -171,7 +191,7 @@ function read(key){
   if(key===SKY_B_KEY&&readMode()!=='comparison'&&html.dataset.skyBEditing!=='true')return null;
   return rawGet(key);
 }
-window.RelphiSkyStartupMode=Object.freeze({read,readMode,writeMode,syncRoot,hasStoredSkyB});
+window.RelphiSkyStartupMode=Object.freeze({read,readMode,writeMode,syncRoot,hasStoredSkyB,recoverTransientState});
 
 // Fail closed into the ordinary single-sky view before the body can paint.
 syncRoot();
@@ -218,6 +238,10 @@ window.addEventListener('storage',event=>{
   if(event.storageArea&&event.storageArea!==localStorage)return;
   if(event.key===SKY_B_KEY&&!hasStoredSkyB())writeMode('single');
   if(event.key===SKY_B_KEY||event.key===MODE_KEY)syncRoot();
+});
+window.addEventListener('pageshow',()=>requestAnimationFrame(()=>requestAnimationFrame(recoverTransientState)));
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')requestAnimationFrame(recoverTransientState);
 });
 
 })();
