@@ -77,6 +77,8 @@ jobs:
                 singleSky:wheel?.dataset.singleSky||'',
                 wheelGeometry:wheel?.dataset.wheelGeometry||'',
                 mountText:document.getElementById('skyFoundationWheelMount')?.innerText||'',
+                mountChildren:[...document.getElementById('skyFoundationWheelMount').children].map(node=>({tag:node.tagName,class:node.getAttribute('class')||'',single:node.getAttribute('data-single-sky')||'',geometry:node.getAttribute('data-wheel-geometry')||'',html:node.outerHTML.slice(0,500)})),
+                rawB:localStorage.getItem('relphiSkyChartB'),
                 addExists:!!add,
                 addHidden:add?.hidden??null,
                 addDisplay:style?.display||'',
