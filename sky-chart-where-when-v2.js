@@ -241,7 +241,6 @@ function recoverWhereWhen(){
   });
 }
 function start(){['A','B'].forEach(slot=>{shell(slot);scheduleSummary(slot)})}
-window.addEventListener('pageshow',()=>requestAnimationFrame(recoverWhereWhen));
 window.addEventListener('relphi:sky-session-recovered',recoverWhereWhen);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
