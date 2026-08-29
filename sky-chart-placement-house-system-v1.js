@@ -2,11 +2,12 @@
 // One comparison-level system is applied to both skies; each sky still computes its own cusps.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementHouseSystemV4)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementHouseSystemV5)return;
 window.__relphiSkyPlacementHouseSystemV1=true;
 window.__relphiSkyPlacementHouseSystemV2=true;
 window.__relphiSkyPlacementHouseSystemV3=true;
 window.__relphiSkyPlacementHouseSystemV4=true;
+window.__relphiSkyPlacementHouseSystemV5=true;
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const SHARED_KEY='relphiSkySharedHouseSystemV1';
 const SYSTEMS={'whole-sign':'Whole Sign','equal-house':'Equal House',porphyry:'Porphyry',placidus:'Placidus',alcabitius:'Alcabitius',regiomontanus:'Regiomontanus',campanus:'Campanus',koch:'Koch'};
@@ -41,7 +42,9 @@ function placementView(slot){return window.RelphiSkyCardShell?.get?.(slot)?.plac
 function angleHeading(slot){return document.querySelector(`#skyFoundation${slot} .sky-foundation-ledger-angle-heading[data-placement-section="chart-angles"]`)||null}
 function decorate(slot){
   const view=placementView(slot);if(!view)return;
-  view.querySelectorAll(':scope > .sky-placement-house-system-inline').forEach(node=>node.remove());
+  view.querySelectorAll('.sky-placement-house-system-inline').forEach(node=>{
+    if(!node.closest('.sky-foundation-ledger-angle-heading[data-placement-section="chart-angles"]'))node.remove();
+  });
   const heading=angleHeading(slot);if(!heading)return;
   let target=heading.querySelector(':scope > [data-placement-house-system-mount]');
   if(!target){
@@ -58,7 +61,7 @@ function decorate(slot){
   }
   target.replaceChildren(control(slot))
 }
-function removeRelationshipHouseSystem(){document.querySelector('[data-house-system-filter]')?.closest('label')?.remove()}
+function removeRelationshipHouseSystem(){document.querySelectorAll('[data-house-system-filter]').forEach(node=>node.closest('label')?.remove())}
 function hydrate(){queued=false;removeRelationshipHouseSystem();decorate('A');decorate('B')}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(hydrate)}
 function installStyles(){
@@ -66,6 +69,7 @@ function installStyles(){
   ['skyPlacementHouseSystemV3Styles','skyPlacementHouseSystemV2Styles','skyPlacementHouseSystemV1Styles'].forEach(id=>document.getElementById(id)?.remove());
   const style=document.createElement('style');style.id='skyPlacementHouseSystemV4Styles';
   style.textContent=`
+    .sky-where-when-placement-view .sky-placement-house-system-inline:not(.sky-foundation-ledger-angle-heading .sky-placement-house-system-inline){display:none!important}
     .sky-foundation-ledger-angle-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:34px;padding:5px 8px;box-sizing:border-box}
     .sky-foundation-ledger-angle-title{min-width:0;font:850 .64rem/1.15 system-ui,sans-serif;letter-spacing:.035em;text-transform:uppercase;color:#5d554e}
     .sky-foundation-ledger-angle-house-system{display:flex;align-items:center;justify-content:flex-end;min-width:0;margin-left:auto}
@@ -77,7 +81,7 @@ function installStyles(){
   document.head.appendChild(style)
 }
 document.addEventListener('change',event=>{const select=event.target.closest('[data-placement-house-system]');if(select)changeHouseSystem(select.value,select)});
-['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-house-multiselect-changed'].forEach(name=>window.addEventListener(name,schedule));
+['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-house-multiselect-changed','relphi:sky-chart-angles-ready'].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(Object.values(KEYS).includes(event.key)){if(!syncing)syncSharedSystem();schedule()}});
 window.RelphiSkyPlacementHouseSystem=Object.freeze({mount:decorate,sync:syncControls});
 function start(){installStyles();syncSharedSystem();schedule()}
