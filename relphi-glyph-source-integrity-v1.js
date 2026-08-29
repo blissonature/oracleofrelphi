@@ -12,7 +12,7 @@
   const fields = ['id','name','asset','scale','dx','dy','fallback','fitMode','fontWeight'];
   // Master Glyph List identities whose approved artwork is authored by the shared
   // component rather than an external SVG asset.
-  const componentMasterIds = Object.freeze(['chiron','north-node','south-node','part-of-fortune','asc','dsc','mc','ic']);
+  const componentMasterIds = Object.freeze(['chiron','north-node','south-node','part-of-fortune','vertex','asc','dsc','mc','ic']);
   const componentMasters = new Set(componentMasterIds);
   function masterAvailable(entry) {
     return !!entry && (!!entry.asset || componentMasters.has(entry.id));
