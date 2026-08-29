@@ -27,13 +27,29 @@
   }
 
   function startAddSkyB(){
+    if(hasStoredSkyB())return;
     const internal=document.querySelector('#skyFoundationComparison [data-add-sky-b]');
     if(internal){internal.click();return}
-    // Fail visibly into the established editing state rather than silently doing nothing.
-    document.documentElement.dataset.skyBEditing='true';
-    document.documentElement.dataset.skyLastMode='comparison';
-    try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
-    window.dispatchEvent(new CustomEvent('relphi:sky-b-add-requested'));
+
+    const root=document.documentElement;
+    root.dataset.skyBEditing='true';
+    const startup=window.RelphiSkyStartupMode;
+    if(startup?.writeMode)startup.writeMode('comparison');
+    else{
+      root.dataset.skyLastMode='comparison';
+      try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
+    }
+    startup?.syncRoot?.();
+
+    const panel=document.getElementById('skyFoundationB');
+    if(panel)panel.hidden=false;
+    window.RelphiSkyCardShell?.ensure?.('B',null);
+    window.RelphiSkyCardShell?.openDrawer?.('B','where');
+
+    requestAnimationFrame(()=>{
+      if(document.querySelector('#skyFoundationB .sky-where-when-editor'))return;
+      window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot:'B',drawer:'where'}}));
+    });
   }
   function ensureAddProxy(){
     const heading=document.querySelector('#skyFoundationA > .sky-foundation-heading');
@@ -193,6 +209,17 @@
     new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing','data-sky-last-mode']});
     window.addEventListener('storage',schedule);
     window.addEventListener('relphi:sky-foundation-ready',schedule);
+    window.addEventListener('relphi:sky-where-when-edit-state-changed',event=>{
+      const slots=Array.isArray(event.detail?.slots)?event.detail.slots:[];
+      if(slots.includes('B')||hasStoredSkyB()||document.documentElement.dataset.skyBEditing!=='true')return schedule();
+      delete document.documentElement.dataset.skyBEditing;
+      const startup=window.RelphiSkyStartupMode;
+      startup?.writeMode?.('single');
+      startup?.syncRoot?.();
+      document.documentElement.dataset.skyLastMode='single';
+      document.documentElement.dataset.skyBPresent='false';
+      schedule();
+    });
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
