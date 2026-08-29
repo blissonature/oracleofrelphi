@@ -1,12 +1,13 @@
-// Sky Chart interaction controller v4: preserve the established intersky tile path and bridge intrasky tiles into the same wheel dim/isolate display.
-// Wheel focus follows relationship rows that remain eligible under the active scope/aspect/placement filters.
+// Sky Chart interaction controller v5: preserve intersky behavior, bridge intrasky tiles, and use ownership-aware relationship identity for wheel focus.
+// Render indexes remain list addresses only; hover/isolation never depends on them for matching aspect lines.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyFoundationInteractionsV4)return;
+  if(window.__relphiSkyFoundationInteractionsV5)return;
   window.__relphiSkyFoundationInteractionsV2=true;
   window.__relphiSkyFoundationInteractionsV3=true;
   window.__relphiSkyFoundationInteractionsV4=true;
+  window.__relphiSkyFoundationInteractionsV5=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
@@ -144,31 +145,37 @@
     })
   }
 
-  function specFrom(node){const kind=node?.dataset?.interactive;if(kind==='house')return{kind,sky:node.dataset.sky,value:Number(node.dataset.house)};if(kind==='sign')return{kind,sky:null,value:Number(node.dataset.sign)};if(kind==='placement')return{kind,sky:node.dataset.sky,value:node.dataset.placement};if(kind==='aspect')return{kind,sky:null,value:String(node.dataset.relationIndex||'')};return null}
+  function relationshipSlots(node){
+    const left=String(node?.dataset?.leftSky||'').toUpperCase(),right=String(node?.dataset?.rightSky||'').toUpperCase(),mode=String(node?.dataset?.relationshipMode||'').toUpperCase();
+    return{left:left==='A'||left==='B'?left:mode==='B-B'?'B':'A',right:right==='A'||right==='B'?right:mode==='A-A'?'A':'B'}
+  }
+  function relationshipIdentity(node){
+    if(!node)return'';
+    const slots=relationshipSlots(node),left=String(node.dataset.leftPlacement||''),aspect=String(node.dataset.aspect||''),right=String(node.dataset.rightPlacement||'');
+    return left&&aspect&&right?`${slots.left}:${left}|${aspect}|${slots.right}:${right}`:''
+  }
+  function specFrom(node){const kind=node?.dataset?.interactive;if(kind==='house')return{kind,sky:node.dataset.sky,value:Number(node.dataset.house)};if(kind==='sign')return{kind,sky:null,value:Number(node.dataset.sign)};if(kind==='placement')return{kind,sky:node.dataset.sky,value:node.dataset.placement};if(kind==='aspect')return{kind,sky:null,value:relationshipIdentity(node)};return null}
   function same(a,b){return!!a&&!!b&&a.kind===b.kind&&a.sky===b.sky&&a.value===b.value}
   function relationMatches(relation,index,state){if(!state)return true;if(state.kind==='aspect')return String(index)===String(state.value);if(state.kind==='sign')return relation.left.sign===state.value||relation.right.sign===state.value;if(state.kind==='house')return state.sky==='A'?relation.left.house===state.value:relation.right.house===state.value;if(state.kind==='placement')return state.sky==='A'?relation.left.id===state.value:relation.right.id===state.value;return true}
   function arcsOverlap(start,span,targetStart,targetSpan){const samples=[start,norm(start+span-.0001),targetStart,norm(targetStart+targetSpan-.0001)];const inside=(value,arcStart,arcSpan)=>norm(value-arcStart)<arcSpan;return samples.some((value,index)=>index<2?inside(value,targetStart,targetSpan):inside(value,start,span))}
   function housesForSign(houseCusps,sign){const result=[];const targetStart=sign*30;houseCusps.forEach((start,index)=>{const span=norm(houseCusps[(index+1)%12]-start)||30;if(arcsOverlap(start,span,targetStart,30))result.push(index+1)});return result}
   const PERSISTENT_HIDDEN_CLASSES=['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-sign-filter-hidden','sky-chart-semantic-hidden'];
-  function rowSlots(row){
-    const left=String(row?.dataset?.leftSky||'').toUpperCase(),right=String(row?.dataset?.rightSky||'').toUpperCase(),mode=String(row?.dataset?.relationshipMode||'').toUpperCase();
-    return{left:left==='A'||left==='B'?left:mode==='B-B'?'B':'A',right:right==='A'||right==='B'?right:mode==='A-A'?'A':'B'}
-  }
+  function rowSlots(row){return relationshipSlots(row)}
   function rowEligibleForWheel(row){return!PERSISTENT_HIDDEN_CLASSES.some(name=>row.classList.contains(name))}
   function rowMatchesState(row,state){
     if(!state)return true;
-    const slots=rowSlots(row),index=String(row.dataset.relationIndex||'');
-    if(state.kind==='aspect')return index===String(state.value);
+    const slots=rowSlots(row);
+    if(state.kind==='aspect')return relationshipIdentity(row)===String(state.value);
     if(state.kind==='sign')return Number(row.dataset.leftSign)===state.value||Number(row.dataset.rightSign)===state.value;
     if(state.kind==='house')return(slots.left===state.sky&&Number(row.dataset.leftHouse)===state.value)||(slots.right===state.sky&&Number(row.dataset.rightHouse)===state.value);
     if(state.kind==='placement')return(slots.left===state.sky&&row.dataset.leftPlacement===state.value)||(slots.right===state.sky&&row.dataset.rightPlacement===state.value);
     return true;
   }
   function keepSets(state){
-    const matched=new Set(),placements=new Set(),houses=new Set(),signs=new Set();
+    const matched=new Set(),relationships=new Set(),placements=new Set(),houses=new Set(),signs=new Set();
     document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{
       if(!rowEligibleForWheel(row)||!rowMatchesState(row,state))return;
-      const slots=rowSlots(row),index=String(row.dataset.relationIndex||'');if(index)matched.add(index);
+      const slots=rowSlots(row),index=String(row.dataset.relationIndex||''),identity=relationshipIdentity(row);if(index)matched.add(index);if(identity)relationships.add(identity);
       if(row.dataset.leftPlacement)placements.add(`${slots.left}:${row.dataset.leftPlacement}`);
       if(row.dataset.rightPlacement)placements.add(`${slots.right}:${row.dataset.rightPlacement}`);
       if(row.dataset.leftHouse)houses.add(`${slots.left}:${row.dataset.leftHouse}`);
@@ -179,10 +186,10 @@
     if(state?.kind==='house'){houses.add(`${state.sky}:${state.value}`);const list=state.sky==='A'?current.listA:current.listB;list.filter(record=>record.house===state.value).forEach(record=>{placements.add(`${state.sky}:${record.id}`);signs.add(record.sign)})}
     if(state?.kind==='sign'){signs.add(state.value);[...current.listA,...current.listB].filter(record=>record.sign===state.value).forEach(record=>placements.add(`${record.sky}:${record.id}`));housesForSign(current.cuspsA,state.value).forEach(house=>houses.add(`A:${house}`));housesForSign(current.cuspsB,state.value).forEach(house=>houses.add(`B:${house}`))}
     if(state?.kind==='placement'){placements.add(`${state.sky}:${state.value}`);const list=state.sky==='A'?current.listA:current.listB,record=list.find(item=>item.id===state.value);if(record){houses.add(`${state.sky}:${record.house}`);signs.add(record.sign)}}
-    return{matched,placements,houses,signs};
+    return{matched,relationships,placements,houses,signs};
   }
-  function kept(node,keep){const type=node.dataset.focusPiece;if(type==='aspect')return keep.matched.has(String(node.dataset.relationIndex||''));if(type==='house')return keep.houses.has(`${node.dataset.sky}:${node.dataset.house}`);if(type==='sign')return keep.signs.has(Number(node.dataset.sign));if(type==='placement'||type==='leader')return keep.placements.has(`${node.dataset.sky}:${node.dataset.placement}`);return false}
-  function matchesNode(node,state){if(!state)return false;const type=node.dataset.interactive;if(state.kind==='aspect')return type==='aspect'&&String(node.dataset.relationIndex||'')===String(state.value);if(state.kind==='house')return type==='house'&&node.dataset.sky===state.sky&&Number(node.dataset.house)===state.value;if(state.kind==='sign')return type==='sign'&&Number(node.dataset.sign)===state.value;if(state.kind==='placement')return type==='placement'&&node.dataset.sky===state.sky&&node.dataset.placement===state.value;return false}
+  function kept(node,keep){const type=node.dataset.focusPiece;if(type==='aspect')return keep.relationships.has(relationshipIdentity(node));if(type==='house')return keep.houses.has(`${node.dataset.sky}:${node.dataset.house}`);if(type==='sign')return keep.signs.has(Number(node.dataset.sign));if(type==='placement'||type==='leader')return keep.placements.has(`${node.dataset.sky}:${node.dataset.placement}`);return false}
+  function matchesNode(node,state){if(!state)return false;const type=node.dataset.interactive;if(state.kind==='aspect')return type==='aspect'&&relationshipIdentity(node)===String(state.value);if(state.kind==='house')return type==='house'&&node.dataset.sky===state.sky&&Number(node.dataset.house)===state.value;if(state.kind==='sign')return type==='sign'&&Number(node.dataset.sign)===state.value;if(state.kind==='placement')return type==='placement'&&node.dataset.sky===state.sky&&node.dataset.placement===state.value;return false}
   function intraskyRow(row){const mode=String(row?.dataset?.relationshipMode||'').toUpperCase();return mode==='A-A'||mode==='B-B'}
   function rowEndpointSky(row,side){
     const explicit=String(row?.dataset?.[side==='left'?'leftSky':'rightSky']||'').toUpperCase();
@@ -208,12 +215,7 @@
   function sameRowState(a,b){return!!a&&!!b&&a.key===b.key}
   function rowLineMatches(node,state){
     if(!state||node.dataset.focusPiece!=='aspect')return false;
-    if(String(node.dataset.leftPlacement||'')!==state.left.id||String(node.dataset.rightPlacement||'')!==state.right.id||String(node.dataset.aspect||'')!==state.aspect)return false;
-    const explicitLeft=String(node.dataset.leftSky||'').toUpperCase(),explicitRight=String(node.dataset.rightSky||'').toUpperCase();
-    if(explicitLeft&&explicitLeft!==state.left.sky)return false;
-    if(explicitRight&&explicitRight!==state.right.sky)return false;
-    if(!explicitLeft&&!explicitRight&&state.left.sky===state.right.sky)return String(node.dataset.relationIndex||'')===String(state.index||'');
-    return true;
+    return relationshipIdentity(node)===state.key;
   }
   function rowKeeps(node,state){
     if(!state)return false;
