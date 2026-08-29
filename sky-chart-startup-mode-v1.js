@@ -117,8 +117,8 @@ function readMode(){
 }
 function writeMode(mode){
   const next=mode==='comparison'?'comparison':'single';
-  try{nativeSetItem.call(localStorage,MODE_KEY,next)}catch(_){}
-  html.dataset.skyLastMode=next;
+  try{if(rawGet(MODE_KEY)!==next)nativeSetItem.call(localStorage,MODE_KEY,next)}catch(_){}
+  if(html.dataset.skyLastMode!==next)html.dataset.skyLastMode=next;
   return next;
 }
 function hasStoredSkyB(){
@@ -140,10 +140,21 @@ function hasStoredSkyB(){
   }catch(_){return false}
 }
 function syncRoot(){
-  let mode=readMode();
-  if(mode==='comparison'&&!hasStoredSkyB()&&html.dataset.skyBEditing!=='true')mode=writeMode('single');
-  else html.dataset.skyLastMode=mode;
-  html.dataset.skyBPresent=mode==='comparison'&&hasStoredSkyB()?'true':'false';
+  let changed=false,mode=readMode();
+  if(mode==='comparison'&&!hasStoredSkyB()&&html.dataset.skyBEditing!=='true'){
+    const prior=html.dataset.skyLastMode;
+    mode=writeMode('single');
+    changed=changed||prior!==mode;
+  }else if(html.dataset.skyLastMode!==mode){
+    html.dataset.skyLastMode=mode;
+    changed=true;
+  }
+  const present=mode==='comparison'&&hasStoredSkyB()?'true':'false';
+  if(html.dataset.skyBPresent!==present){
+    html.dataset.skyBPresent=present;
+    changed=true;
+  }
+  return changed;
 }
 function visibleEditor(slot){
   const editor=document.querySelector(`.sky-where-when-editor[data-slot="${slot}"]`);
@@ -151,19 +162,25 @@ function visibleEditor(slot){
   const mount=editor.closest('[data-ww-editor-mount]');
   return !mount?.hidden;
 }
-function recoverTransientState(){
+function recoverTransientState(options={}){
+  let changed=false;
   const transaction=window.RelphiSkyWhereWhenTransaction;
   const activeSlots=typeof transaction?.slots==='function'?transaction.slots():[];
   if(html.dataset.skyBEditing==='true'&&!hasStoredSkyB()&&!activeSlots.includes('B')&&!visibleEditor('B')){
     delete html.dataset.skyBEditing;
     writeMode('single');
+    changed=true;
   }
   if(html.dataset.skyWhereWhenEditing==='true'&&!activeSlots.length&&!visibleEditor('A')&&!visibleEditor('B')){
     html.dataset.skyWhereWhenEditing='false';
     html.dataset.skyWhereWhenEditingSlots='';
+    changed=true;
   }
-  syncRoot();
-  window.dispatchEvent(new CustomEvent('relphi:sky-session-recovered'));
+  changed=syncRoot()||changed;
+  if(changed||options.repair===true){
+    window.dispatchEvent(new CustomEvent('relphi:sky-session-recovered',{detail:{changed,repair:options.repair===true}}));
+  }
+  return changed;
 }
 function previewTarotHref(cardId){
   const url=new URL(location.href);
@@ -239,9 +256,10 @@ window.addEventListener('storage',event=>{
   if(event.key===SKY_B_KEY&&!hasStoredSkyB())writeMode('single');
   if(event.key===SKY_B_KEY||event.key===MODE_KEY)syncRoot();
 });
-window.addEventListener('pageshow',()=>requestAnimationFrame(()=>requestAnimationFrame(recoverTransientState)));
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible')requestAnimationFrame(recoverTransientState);
+window.addEventListener('pageshow',event=>{
+  // Ordinary tab switching must be inert. Repair only a real BFCache/discard restore.
+  if(!event.persisted&&!document.wasDiscarded)return;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>recoverTransientState({repair:true})));
 });
 
 })();
