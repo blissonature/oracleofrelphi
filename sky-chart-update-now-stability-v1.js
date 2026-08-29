@@ -171,6 +171,9 @@
       const now=window.luxon?.DateTime?.now().setZone(packet.timezone);
       if(!now?.isValid)throw new Error('The current local time could not be resolved.');
       const next=calculate(slot,packet,now,origin);
+      if(!window.RelphiChironEphemeris)throw new Error('The Chiron ephemeris service is unavailable.');
+      await window.RelphiChironEphemeris.completePayload(next);
+      if(!window.RelphiChironEphemeris.hasChiron(next.placements))throw new Error('Chiron could not be calculated for this live sky.');
       setConfirmedView(slot);
       // Write the sky and its freshness clock as one logical transaction before any rerender event.
       localStorage.setItem(KEYS[slot],JSON.stringify(next));
