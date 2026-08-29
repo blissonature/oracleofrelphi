@@ -68,6 +68,7 @@
   }
 
   function bActive(){
+    try{window.RelphiSkyStartupMode?.syncRoot?.()}catch(_){}
     const html=document.documentElement;
     return html.dataset.skyBEditing==='true'||html.dataset.skyBPresent==='true';
   }
@@ -443,7 +444,7 @@
     });
     modeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing','data-sky-last-mode']});
 
-    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-single-sky-aspects-rendered'].forEach(name=>window.addEventListener(name,scheduleRefresh));
+    ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-single-sky-aspects-rendered','relphi:sky-b-removed','relphi:sky-b-restored'].forEach(name=>window.addEventListener(name,scheduleRefresh));
     document.addEventListener('change',handleChange);
     document.addEventListener('pointerdown',event=>{
       if(!isOpen(portalOwner))return;
