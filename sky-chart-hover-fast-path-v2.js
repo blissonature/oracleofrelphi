@@ -1,9 +1,9 @@
-// Sky Chart hover fast path v3: ownership-aware relationship identities, cached SVG geometry,
-// delta class updates, and deferred ledger/list work. Click/keyboard selection remains
-// owned by sky-chart-foundation-interactions-v2.js.
+// Sky Chart hover fast path v4: the rendered wheel lines are the authority for hover geometry.
+// Relationship-row indexes are used only to report matching list rows; they never decide which SVG line stays lit.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHoverFastPathV3)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHoverFastPathV4)return;
+  window.__relphiSkyHoverFastPathV4=true;
   window.__relphiSkyHoverFastPathV3=true;
   window.__relphiSkyHoverFastPathV2=true;
   window.__relphiSkyHoverFastPathV1=true;
@@ -189,21 +189,30 @@
       else if(type==='sign')addMap(interactive.sign,Number(node.dataset.sign),node);
     });
 
-    const relationIndex={byIdentity:new Map(),byPlacement:new Map(),byHouse:new Map(),bySign:new Map()};
-    const relations=Array.from(document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')).map(row=>{
-      const slots=relationshipSlots(row),identity=relationshipIdentity(row),address=String(row.dataset.relationIndex||'');
-      return{
-        identity,address,
-        left:{slot:slots.left,id:row.dataset.leftPlacement,house:Number(row.dataset.leftHouse),sign:Number(row.dataset.leftSign)},
-        right:{slot:slots.right,id:row.dataset.rightPlacement,house:Number(row.dataset.rightHouse),sign:Number(row.dataset.rightSign)}
-      };
-    }).filter(item=>item.identity&&item.address);
-    relations.forEach(relation=>indexRelation(relationIndex,relation));
+    const rowAddressesByIdentity=new Map();
+    document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{
+      const identity=relationshipIdentity(row),address=String(row.dataset.relationIndex||'');
+      if(!identity||!address)return;
+      addMap(rowAddressesByIdentity,identity,address);
+    });
 
-    const grid=new Map(),segments=[];
+    const relationIndex={byIdentity:new Map(),byPlacement:new Map(),byHouse:new Map(),bySign:new Map()};
+    const relations=[],grid=new Map(),segments=[];
     wheel.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
       const identity=relationshipIdentity(line),x1=num(line.getAttribute('x1')),y1=num(line.getAttribute('y1')),x2=num(line.getAttribute('x2')),y2=num(line.getAttribute('y2'));
       if(!identity||![x1,y1,x2,y2].every(Number.isFinite))return;
+      const slots=relationshipSlots(line);
+      let relation=relationIndex.byIdentity.get(identity);
+      if(!relation){
+        relation={
+          identity,
+          addresses:new Set(rowAddressesByIdentity.get(identity)||[]),
+          left:{slot:slots.left,id:String(line.dataset.leftPlacement||''),house:Number(line.dataset.leftHouse),sign:Number(line.dataset.leftSign)},
+          right:{slot:slots.right,id:String(line.dataset.rightPlacement||''),house:Number(line.dataset.rightHouse),sign:Number(line.dataset.rightSign)}
+        };
+        relations.push(relation);
+        indexRelation(relationIndex,relation);
+      }
       const segment={line,identity,a:{x:x1,y:y1},b:{x:x2,y:y2}};
       segments.push(segment);
       addSegmentToGrid(grid,segment);
@@ -218,7 +227,7 @@
       placementIndex,
       relations,
       relationIndex,
-      allRelationIndexes:relations.map(item=>item.address),
+      allRelationIndexes:Array.from(document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]'),row=>String(row.dataset.relationIndex||'')).filter(Boolean),
       cusps:{A:houseCusps('A'),B:houseCusps('B')},
       grid,
       segments,
@@ -229,16 +238,26 @@
     if(!locked())wheel.classList.remove('has-isolation');
   }
 
+  function lineEligible(line){
+    return!!line?.isConnected&&!line.hidden&&line.style.display!=='none'&&
+      !line.classList.contains('sky-chart-filter-hidden')&&
+      !line.classList.contains('sky-chart-orb-hidden')&&
+      !line.classList.contains('sky-orb-filter-hidden')&&
+      !line.classList.contains('sky-chart-aspect-multiselect-hidden');
+  }
+  function relationEligible(relation){
+    return!!cache?.focus?.aspect?.get(relation.identity)&&Array.from(cache.focus.aspect.get(relation.identity)).some(lineEligible);
+  }
   function matchingRelations(state){
     if(!state)return[];
     if(state.kind==='aspect'){
       const relation=cache.relationIndex.byIdentity.get(state.value);
-      return relation?[relation]:[];
+      return relation&&relationEligible(relation)?[relation]:[];
     }
-    if(state.kind==='sign')return cache.relationIndex.bySign.get(state.value)||[];
-    if(state.kind==='house')return cache.relationIndex.byHouse.get(key(state.sky,state.value))||[];
-    if(state.kind==='placement')return cache.relationIndex.byPlacement.get(key(state.sky,state.value))||[];
-    return[];
+    const source=state.kind==='sign'?cache.relationIndex.bySign.get(state.value):
+      state.kind==='house'?cache.relationIndex.byHouse.get(key(state.sky,state.value)):
+      state.kind==='placement'?cache.relationIndex.byPlacement.get(key(state.sky,state.value)):null;
+    return Array.from(source||[]).filter(relationEligible);
   }
   function keepFor(state){
     const id=stateKey(state);
@@ -247,7 +266,7 @@
 
     const matched=new Set(),identities=new Set(),placements=new Set(),houses=new Set(),signs=new Set();
     matchingRelations(state).forEach(relation=>{
-      matched.add(relation.address);identities.add(relation.identity);
+      relation.addresses.forEach(address=>matched.add(address));identities.add(relation.identity);
       for(const end of [relation.left,relation.right]){
         placements.add(key(end.slot,end.id));
         houses.add(key(end.slot,end.house));
@@ -436,6 +455,10 @@
     window.addEventListener('relphi:sky-intrasky-relationships-ready',refresh);
     window.addEventListener('relphi:sky-intrasky-b-relationships-ready',refresh);
     window.addEventListener('relphi:sky-aspect-multiselect-changed',refresh);
+    window.addEventListener('relphi:sky-placement-multiselect-changed',refresh);
+    window.addEventListener('relphi:sky-house-multiselect-changed',refresh);
+    window.addEventListener('relphi:sky-zodiac-filter-changed',refresh);
+    window.addEventListener('relphi:sky-harmonic-window-visibility-changed',refresh);
     window.addEventListener('relphi:sky-foundation-ready',invalidate);
     window.addEventListener('storage',invalidate);
     window.addEventListener('resize',scheduleTransform,{passive:true});
