@@ -91,8 +91,8 @@
 
   /* Row 1: inclusion filters. */
   body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-aspect-filter{grid-column:1/span 3!important;grid-row:1!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-placement-filter{grid-column:4/span 3!important;grid-row:1!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-zodiac-filter{grid-column:7/span 3!important;grid-row:1!important}
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-placement-filter{grid-column:4/span 4!important;grid-row:1!important}
+  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-zodiac-filter{grid-column:8/span 2!important;grid-row:1!important}
   body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-chart-house-filter{grid-column:10/span 3!important;grid-row:1!important}
 
   /* Row 2: evaluation / presentation controls. */
