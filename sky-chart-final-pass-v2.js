@@ -27,6 +27,22 @@
 
   const norm = value => ((Number(value) % 360) + 360) % 360;
   const normalizedName = value => String(value || '').toLowerCase().replace(/[._-]+/g, '').replace(/\s+/g, '');
+  const BASE_SKY_NAMES=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','asc','ascendant','rising','ac','mc','midheaven','mediumcoeli']);
+  const baseSkyName=value=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  function hasBaseSky(value){
+    if(!value||typeof value!=='object')return false;
+    const source=[value.placements,value.positions,value.points,value.bodies]
+      .find(candidate=>candidate&&typeof candidate==='object'&&!Array.isArray(candidate));
+    if(!source)return false;
+    return Object.entries(source).some(([key,item])=>{
+      if(!item||typeof item!=='object'||Array.isArray(item))return false;
+      const id=baseSkyName(item.name||item.label||item.body||item.planet||item.point||item.id||item.glyphId||key);
+      if(!BASE_SKY_NAMES.has(id))return false;
+      return Number.isFinite(Number(item.longitude))||
+        !!String(item.sign||item.zodiac||'').trim()||
+        (item.degree!==''&&item.degree!=null&&Number.isFinite(Number(item.degree)));
+    });
+  }
 
   function read(slot) {
     try { return JSON.parse(localStorage.getItem(KEYS[slot]) || 'null'); }
@@ -79,7 +95,7 @@
   }
 
   function enrichPayload(value, previous) {
-    if (!value || typeof value !== 'object') return value;
+    if (!value || typeof value !== 'object' || !hasBaseSky(value)) return value;
     const source = placements(value);
     const profile = value.calcProfile && typeof value.calcProfile === 'object' ? value.calcProfile : {};
     const asc = find(source, ['Ascendant','ASC','Rising']);
@@ -159,7 +175,7 @@
 
   function completeStored(slot, emit) {
     const current = read(slot);
-    if (!current) return false;
+    if (!current || !hasBaseSky(current)) return false;
     const before = JSON.stringify(current);
     const after = JSON.stringify(enrichPayload(current, current));
     if (before === after) return false;
