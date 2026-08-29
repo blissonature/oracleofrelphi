@@ -3,11 +3,12 @@
 // Dated intrasky aspects use both bodies in motion. Intersky timing treats Sky B as the moving transit side when both skies are dated, unless an explicit live side is available.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipTransitMetaV4)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipTransitMetaV5)return;
 window.__relphiRelationshipTransitMetaV1=true;
 window.__relphiRelationshipTransitMetaV2=true;
 window.__relphiRelationshipTransitMetaV3=true;
 window.__relphiRelationshipTransitMetaV4=true;
+window.__relphiRelationshipTransitMetaV5=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const BODY={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',pluto:'Pluto'};
@@ -128,10 +129,17 @@ function modelFor(row){
 
   const center=(timedIntrasky?left.date:movingEndpoints[0].date).getTime();
   const movingSet=new Set(movingEndpoints);
+  // Anchor motion to the positions actually rendered in the Sky. The ephemeris supplies
+  // change through time, while the chart record remains the exact center-state authority.
+  // This prevents small engine/model differences from making a visible in-orb relationship
+  // look "outside the current Harmonic Window" to the timing calculator.
+  const centerEphemeris=new Map(movingEndpoints.map(ep=>[ep,ephemerisLongitude(ep.id,ep.date,ep.sky)]));
   const valueAt=(ep,ms)=>{
     if(!movingSet.has(ep))return ep.record.value;
-    const date=new Date(ep.date.getTime()+(ms-center));
-    return ephemerisLongitude(ep.id,date,ep.sky);
+    const baseline=centerEphemeris.get(ep);
+    if(!Number.isFinite(baseline))return NaN;
+    const date=new Date(ep.date.getTime()+(ms-center)),value=ephemerisLongitude(ep.id,date,ep.sky);
+    return Number.isFinite(value)?norm(ep.record.value+wrap(value-baseline)):NaN;
   };
   const signedErrorAt=ms=>{
     const a=valueAt(left,ms),b=valueAt(right,ms);
@@ -143,10 +151,51 @@ function modelFor(row){
 function angularVelocity(ep,ms,valueAt){if(!MOTION_IDS.has(ep.id))return NaN;const half=ep.id==='moon'?.02:.06,a=valueAt(ep,ms-half*DAY),b=valueAt(ep,ms+half*DAY);return Number.isFinite(a)&&Number.isFinite(b)?wrap(b-a)/(2*half):NaN}
 function motionAt(model,ms){const states=[];for(const ep of model.liveEndpoints){if(!MOTION_IDS.has(ep.id))continue;const speed=angularVelocity(ep,ms,model.valueAt);if(Number.isFinite(speed))states.push({id:ep.id,name:bodyName(ep.id),retrograde:speed<0,speed})}return states}
 function estimatedRelativeSpeed(model){const half=.04,a=model.errorAt(model.center-half*DAY),b=model.errorAt(model.center+half*DAY);return Number.isFinite(a)&&Number.isFinite(b)?Math.abs(b-a)/(2*half):NaN}
+function signedRelativeSpeed(model){const half=.04,a=model.signedErrorAt(model.center-half*DAY),b=model.signedErrorAt(model.center+half*DAY);return Number.isFinite(a)&&Number.isFinite(b)?Math.abs(wrap(b-a))/(2*half):NaN}
 function searchSettings(model){const ids=model.liveEndpoints.map(ep=>ep.id),minStep=Math.min(...ids.map(id=>MIN_STEP[id]??.05)),maxStep=Math.min(...ids.map(id=>MAX_STEP[id]??2)),minHorizon=Math.max(...ids.map(id=>MIN_HORIZON[id]??1200)),speed=estimatedRelativeSpeed(model),estimate=Number.isFinite(speed)&&speed>1e-5?model.limit/speed:NaN,step=Number.isFinite(estimate)?Math.max(minStep,Math.min(maxStep,estimate/5)):maxStep,horizon=Math.min(MAX_HORIZON,Math.max(minHorizon,Number.isFinite(estimate)?estimate*12:0)),gap=Math.max(...ids.map(id=>RETURN_GAP[id]??0));return{step,horizon,gap}}
+function localSearchSettings(model){
+  const ids=model.movingEndpoints.map(ep=>ep.id),minStep=Math.min(...ids.map(id=>MIN_STEP[id]??.05)),maxStep=Math.min(...ids.map(id=>MAX_STEP[id]??2)),minHorizon=Math.max(...ids.map(id=>MIN_HORIZON[id]??1200)),speed=signedRelativeSpeed(model),estimate=Number.isFinite(speed)&&speed>1e-6?model.limit/speed:NaN;
+  return{step:Number.isFinite(estimate)?Math.max(minStep,Math.min(maxStep,estimate/4)):maxStep,horizon:Math.min(MAX_HORIZON,Math.max(minHorizon,Number.isFinite(estimate)?estimate*16:0))}
+}
 function refineBoundary(insideMs,outsideMs,inside){let yes=insideMs,no=outsideMs;for(let i=0;i<34;i++){const mid=(yes+no)/2;if(inside(mid))yes=mid;else no=mid}return(yes+no)/2}
 function root(a,b,fn){let fa=fn(a),fb=fn(b);if(!Number.isFinite(fa)||!Number.isFinite(fb))return NaN;if(Math.abs(fa)<1e-10)return a;if(Math.abs(fb)<1e-10)return b;if(Math.sign(fa)===Math.sign(fb))return NaN;for(let i=0;i<38;i++){const mid=(a+b)/2,fm=fn(mid);if(!Number.isFinite(fm))return NaN;if(Math.abs(fm)<1e-11)return mid;if(Math.sign(fa)===Math.sign(fm)){a=mid;fa=fm}else{b=mid;fb=fm}}return(a+b)/2}
-function collectTimeline(model){const{step,horizon,gap}=searchSettings(model),samples=[];for(let day=-horizon;day<=horizon;day+=step){const ms=model.center+day*DAY,error=model.signedErrorAt(ms);if(Number.isFinite(error))samples.push({ms,error})}if(!samples.some(sample=>Math.abs(sample.ms-model.center)<1000))samples.push({ms:model.center,error:model.signedErrorAt(model.center)});samples.sort((a,b)=>a.ms-b.ms);const inside=ms=>model.errorAt(ms)<=model.limit+1e-8,windows=[];let start=-1;for(let i=0;i<=samples.length;i++){const active=i<samples.length&&Math.abs(samples[i].error)<=model.limit+1e-8;if(active&&start<0)start=i;if(!active&&start>=0){const end=i-1;let entry=samples[start].ms,exit=samples[end].ms;if(start>0)entry=refineBoundary(entry,samples[start-1].ms,inside);if(i<samples.length)exit=refineBoundary(exit,samples[i].ms,inside);windows.push({start,end,entry,exit});start=-1}}const currentIndex=windows.findIndex(window=>window.entry<=model.center&&window.exit>=model.center);if(currentIndex<0)return null;let first=currentIndex,last=currentIndex;if(gap>0){while(first>0&&(windows[first].entry-windows[first-1].exit)/DAY<=gap)first--;while(last<windows.length-1&&(windows[last+1].entry-windows[last].exit)/DAY<=gap)last++}const group=windows.slice(first,last+1),exacts=[];group.forEach(window=>{for(let i=Math.max(1,window.start);i<=window.end;i++){const a=samples[i-1],b=samples[i];if(a.ms<window.entry||b.ms>window.exit)continue;if(a.error===0||b.error===0||Math.sign(a.error)!==Math.sign(b.error)){const time=root(a.ms,b.ms,model.signedErrorAt);if(Number.isFinite(time)&&time>=window.entry&&time<=window.exit&&!exacts.some(value=>Math.abs(value-time)<.0005*DAY))exacts.push(time)}}});exacts.sort((a,b)=>a-b);const startMs=group[0].entry,endMs=group[group.length-1].exit;return{startMs,endMs,exacts,windows:group,durationDays:(endMs-startMs)/DAY}}
+function collectLocalTimeline(model){
+  const{step,horizon}=localSearchSettings(model),inside=ms=>model.errorAt(ms)<=model.limit+1e-8;
+  if(!inside(model.center))return null;
+  function boundary(direction){
+    let last=model.center;
+    for(let day=step;day<=horizon+1e-9;day+=step){
+      const next=model.center+direction*Math.min(day,horizon)*DAY;
+      if(!inside(next))return refineBoundary(last,next,inside);
+      last=next;
+    }
+    return NaN;
+  }
+  const startMs=boundary(-1),endMs=boundary(1);
+  if(!Number.isFinite(startMs)||!Number.isFinite(endMs)||endMs<=startMs)return null;
+  const samples=[{ms:startMs,error:model.signedErrorAt(startMs)}];
+  for(let ms=startMs+step*DAY;ms<endMs;ms+=step*DAY)samples.push({ms,error:model.signedErrorAt(ms)});
+  samples.push({ms:endMs,error:model.signedErrorAt(endMs)});
+  const exacts=[];
+  for(let i=1;i<samples.length;i++){
+    const a=samples[i-1],b=samples[i];
+    if(!Number.isFinite(a.error)||!Number.isFinite(b.error))continue;
+    if(Math.abs(a.error)<1e-10)exacts.push(a.ms);
+    if(Math.abs(b.error)<1e-10||Math.sign(a.error)!==Math.sign(b.error)){
+      const time=root(a.ms,b.ms,model.signedErrorAt);
+      if(Number.isFinite(time)&&time>=startMs&&time<=endMs&&!exacts.some(value=>Math.abs(value-time)<.0005*DAY))exacts.push(time);
+    }
+  }
+  exacts.sort((a,b)=>a-b);
+  return{startMs,endMs,exacts,windows:[{entry:startMs,exit:endMs}],durationDays:(endMs-startMs)/DAY}
+}
+function collectTimeline(model){
+  // Two moving endpoints do not need a multi-millennial global scan. Find the
+  // contiguous activation containing the chart moment directly; this avoids the
+  // Moon/inner-planet × outer-planet explosion that made timing appear to hang.
+  if((model.movingEndpoints?.length||0)>1)return collectLocalTimeline(model);
+  const{step,horizon,gap}=searchSettings(model),samples=[];for(let day=-horizon;day<=horizon;day+=step){const ms=model.center+day*DAY,error=model.signedErrorAt(ms);if(Number.isFinite(error))samples.push({ms,error})}if(!samples.some(sample=>Math.abs(sample.ms-model.center)<1000))samples.push({ms:model.center,error:model.signedErrorAt(model.center)});samples.sort((a,b)=>a.ms-b.ms);const inside=ms=>model.errorAt(ms)<=model.limit+1e-8,windows=[];let start=-1;for(let i=0;i<=samples.length;i++){const active=i<samples.length&&Math.abs(samples[i].error)<=model.limit+1e-8;if(active&&start<0)start=i;if(!active&&start>=0){const end=i-1;let entry=samples[start].ms,exit=samples[end].ms;if(start>0)entry=refineBoundary(entry,samples[start-1].ms,inside);if(i<samples.length)exit=refineBoundary(exit,samples[i].ms,inside);windows.push({start,end,entry,exit});start=-1}}const currentIndex=windows.findIndex(window=>window.entry<=model.center&&window.exit>=model.center);if(currentIndex<0)return null;let first=currentIndex,last=currentIndex;if(gap>0){while(first>0&&(windows[first].entry-windows[first-1].exit)/DAY<=gap)first--;while(last<windows.length-1&&(windows[last+1].entry-windows[last].exit)/DAY<=gap)last++}const group=windows.slice(first,last+1),exacts=[];group.forEach(window=>{for(let i=Math.max(1,window.start);i<=window.end;i++){const a=samples[i-1],b=samples[i];if(a.ms<window.entry||b.ms>window.exit)continue;if(a.error===0||b.error===0||Math.sign(a.error)!==Math.sign(b.error)){const time=root(a.ms,b.ms,model.signedErrorAt);if(Number.isFinite(time)&&time>=window.entry&&time<=window.exit&&!exacts.some(value=>Math.abs(value-time)<.0005*DAY))exacts.push(time)}}});exacts.sort((a,b)=>a-b);const startMs=group[0].entry,endMs=group[group.length-1].exit;return{startMs,endMs,exacts,windows:group,durationDays:(endMs-startMs)/DAY}
+}
 function dateLabel(ms){return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'}).format(new Date(ms))}
 function durationLabel(days){if(days<1){const minutes=days*24*60;if(minutes<90)return`${Math.max(1,Math.round(minutes))} min`;return`${Math.max(1,Math.round(days*24*10)/10)} hr`}if(days<14)return`${Math.round(days*10)/10} days`;if(days<75)return`${Math.round(days)} days`;if(days<730)return`${Math.round(days/30.4375*10)/10} months`;return`${Math.round(days/365.25*10)/10} years`}
 function aspectToken(row){return row.querySelector(':scope>.inline-rel-detail .inline-rel-progressive-strip [data-inline-progressive-token="aspect"]')}
@@ -176,7 +225,11 @@ function calculate(row,token){
   if(model.errorAt(model.center)>model.limit+1e-8){renderUnavailable(row,'Outside the current Harmonic Window');return}
   const timeline=collectTimeline(model);
   if(token!==generation||!row.isConnected||!row.classList.contains('is-inline-expanded'))return;
-  if(!timeline){renderUnavailable(row,'Complete transit window not found');return}
+  if(!timeline){
+    const estimate=estimatedTimingForSort(row);
+    if(estimate&&Number.isFinite(estimate.durationDays)){renderEstimatedTiming(row);return}
+    renderUnavailable(row,'Complete transit window not found');return
+  }
   renderTimeline(row,model,timeline)
 }
 function clearCollapsed(){document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row:not(.is-inline-expanded)').forEach(removeMeta)}
