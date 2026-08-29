@@ -57,6 +57,36 @@
     button.hidden=hasStoredSkyB()||editing;
   }
 
+  function removeSkyB(){
+    try{localStorage.removeItem(SKY_B_KEY)}catch(_){return}
+    delete document.documentElement.dataset.skyBEditing;
+    const startup=window.RelphiSkyStartupMode;
+    startup?.writeMode?.('single');
+    startup?.syncRoot?.();
+    dispatchSkyBStorage(null);
+    window.dispatchEvent(new CustomEvent('relphi:sky-b-removed'));
+  }
+  function ensureRemoveControl(){
+    const heading=document.querySelector('#skyFoundationB > .sky-foundation-heading');
+    if(!heading)return;
+    const present=document.documentElement.dataset.skyBPresent==='true'&&hasStoredSkyB();
+    let remove=heading.querySelector('[data-remove-sky-b]');
+    if(present&&!remove){
+      remove=document.createElement('button');
+      remove.type='button';
+      remove.className='sky-slot-presence-button sky-slot-remove';
+      remove.dataset.removeSkyB='true';
+      remove.textContent='Remove Sky B';
+      remove.addEventListener('click',event=>{
+        event.preventDefault();
+        event.stopPropagation();
+        removeSkyB();
+      });
+      heading.appendChild(remove);
+    }
+    if(remove)remove.hidden=!present;
+  }
+
   function dismissUndo(){
     clearTimeout(undoTimer);
     undoTimer=0;
@@ -139,7 +169,7 @@
     }
   }
 
-  function sync(){queued=false;suppressInternalAdd();ensureAddProxy();styleRemove()}
+  function sync(){queued=false;suppressInternalAdd();ensureAddProxy();ensureRemoveControl();styleRemove()}
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
   function start(){
     sync();
