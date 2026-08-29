@@ -94,5 +94,91 @@ jobs:
 
           await run('A only, B absent',null,'single');
           await run('A only, stale B object',{name:'Old empty Sky B',placements:{}},'comparison');
+          await run('A only, contaminated node-only B',{
+            name:'Old contaminated Sky B',
+            placements:{
+              'North Node':{name:'North Node',longitude:329.44,sign:'Aquarius',degree:29,minute:26},
+              'South Node':{name:'South Node',longitude:149.44,sign:'Leo',degree:29,minute:26}
+            }
+          },'comparison');
+
+          async function runInteractions(){
+            const realB={
+              name:'Real Sky B',
+              houseSystem:'whole-sign',
+              placements:{
+                Sun:{name:'Sun',sign:'Virgo',degree:6,minute:12,longitude:156.2},
+                Moon:{name:'Moon',sign:'Pisces',degree:18,minute:3,longitude:348.05},
+                Mercury:{name:'Mercury',sign:'Virgo',degree:2,minute:40,longitude:152.6667},
+                Ascendant:{name:'Ascendant',sign:'Sagittarius',degree:11,minute:0,longitude:251},
+                Midheaven:{name:'Midheaven',sign:'Libra',degree:25,minute:0,longitude:205}
+              }
+            };
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:390,height:844}});
+            await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',r=>r.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+            await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',r=>r.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+            await page.addInitScript(a=>{
+              localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
+              localStorage.removeItem('relphiSkyChartB');
+              localStorage.setItem('relphiSkyChartLastModeV1','single');
+            },oldStyleA);
+
+            await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
+            await page.waitForSelector('#skyFoundationWheelMount > svg[data-single-sky="A"]',{timeout:20000});
+            const add=page.locator('[data-card-add-sky-b]');
+            await add.waitFor({state:'visible',timeout:20000});
+            await add.click();
+
+            await page.waitForFunction(()=>document.documentElement.dataset.skyBEditing==='true');
+            await page.waitForSelector('#skyFoundationB .sky-where-when-editor[data-slot="B"]',{state:'visible',timeout:10000});
+            const addState=await page.evaluate(()=>({
+              editing:document.documentElement.dataset.skyBEditing,
+              bDisplay:getComputedStyle(document.getElementById('skyFoundationB')).display,
+              mode:document.documentElement.dataset.skyLastMode,
+              editor:!!document.querySelector('#skyFoundationB .sky-where-when-editor[data-slot="B"]')
+            }));
+            if(addState.editing!=='true'||addState.bDisplay==='none'||addState.mode!=='comparison'||!addState.editor)throw new Error('Add Sky B did not open the B editor: '+JSON.stringify(addState));
+
+            await page.locator('#skyFoundationB [data-ww-action="cancel"]').click();
+            await page.waitForFunction(()=>document.documentElement.dataset.skyBEditing!=='true');
+            await page.waitForSelector('[data-card-add-sky-b]',{state:'visible',timeout:10000});
+            await page.waitForSelector('#skyFoundationWheelMount > svg[data-single-sky="A"]',{timeout:10000});
+
+            await page.evaluate(b=>{
+              localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+              window.RelphiSkyStartupMode?.writeMode?.('comparison');
+              window.RelphiSkyStartupMode?.syncRoot?.();
+              try{
+                window.dispatchEvent(new StorageEvent('storage',{key:'relphiSkyChartB',newValue:JSON.stringify(b),storageArea:localStorage}));
+              }catch(_){
+                const e=new Event('storage');Object.defineProperty(e,'key',{value:'relphiSkyChartB'});window.dispatchEvent(e);
+              }
+            },realB);
+            await page.waitForFunction(()=>document.documentElement.dataset.skyBPresent==='true');
+            await page.waitForSelector('#skyFoundationWheelMount > svg[aria-label="Sky A and Sky B rainbow comparison wheel"]',{timeout:20000});
+            const remove=page.locator('#skyFoundationB [data-remove-sky-b]');
+            await remove.waitFor({state:'visible',timeout:10000});
+            await remove.click();
+
+            await page.waitForFunction(()=>!localStorage.getItem('relphiSkyChartB')&&document.documentElement.dataset.skyBPresent==='false');
+            await page.waitForSelector('#skyFoundationWheelMount > svg[data-single-sky="A"]',{timeout:20000});
+            await page.waitForSelector('.sky-slot-undo-toast .sky-slot-undo-button',{state:'visible',timeout:10000});
+            await page.locator('.sky-slot-undo-toast .sky-slot-undo-button').click();
+
+            await page.waitForFunction(()=>!!localStorage.getItem('relphiSkyChartB')&&document.documentElement.dataset.skyBPresent==='true');
+            await page.waitForSelector('#skyFoundationWheelMount > svg[aria-label="Sky A and Sky B rainbow comparison wheel"]',{timeout:20000});
+            const finalState=await page.evaluate(()=>({
+              bPresent:document.documentElement.dataset.skyBPresent,
+              mode:document.documentElement.dataset.skyLastMode,
+              restoredName:JSON.parse(localStorage.getItem('relphiSkyChartB')||'null')?.name||'',
+              comparison:!!document.querySelector('#skyFoundationWheelMount > svg[aria-label="Sky A and Sky B rainbow comparison wheel"]')
+            }));
+            console.log('INTERACTION',JSON.stringify(finalState,null,2));
+            if(finalState.bPresent!=='true'||finalState.mode!=='comparison'||finalState.restoredName!=='Real Sky B'||!finalState.comparison)throw new Error('Sky B Undo did not restore comparison: '+JSON.stringify(finalState));
+            await browser.close();
+          }
+
+          await runInteractions();
           EOF
           node sky-prod-diag.mjs
