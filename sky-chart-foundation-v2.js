@@ -63,7 +63,7 @@ function buildSingleWheel(listA,cuspsA){
     viewBox:cmp.viewBox.join(' '),role:'img','aria-label':'Sky A zodiac wheel',
     class:'sky-foundation-wheel relphi-canonical-ready',
     'data-ring-order':'A-houses-inner-zodiac-outer','data-inner-sky':'A',
-    'data-wheel-spec':'relphi-sky-wheel-v1','data-single-sky':'A'
+    'data-wheel-spec':'relphi-sky-wheel-v1','data-single-sky':'A','data-wheel-geometry':'comparison'
   });
   chart.appendChild(svg('circle',{cx:c.x,cy:c.y,r:outerRadius+8,fill:'#fffdf8',stroke:'rgba(31,27,24,.14)'}));
   const layers={};
