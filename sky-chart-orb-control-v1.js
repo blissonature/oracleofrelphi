@@ -38,12 +38,22 @@
     else{node.style.setProperty('display','none','important');node.style.setProperty('pointer-events','none','important')}
   }
 
+  function relationshipSlots(row){
+    const left=String(row?.dataset?.leftSky||'').toUpperCase(),right=String(row?.dataset?.rightSky||'').toUpperCase(),mode=String(row?.dataset?.relationshipMode||'').toUpperCase();
+    return{
+      left:left==='A'||left==='B'?left:mode==='B-B'?'B':'A',
+      right:right==='A'||right==='B'?right:mode==='A-A'?'A':'B'
+    };
+  }
+
   function reconcilePlacementIsolation(rows,visibleIndexes){
     if(wheelState?.kind!=='placement')return;
-    const kept=new Set([`${wheelState.sky}:${wheelState.value}`]);
+    const target=`${wheelState.sky}:${wheelState.value}`,kept=new Set([target]);
     rows.forEach(row=>{
       if(!visibleIndexes.has(String(row.dataset.relationIndex)))return;
-      kept.add(`A:${row.dataset.leftPlacement}`);kept.add(`B:${row.dataset.rightPlacement}`);
+      const slots=relationshipSlots(row),left=`${slots.left}:${row.dataset.leftPlacement}`,right=`${slots.right}:${row.dataset.rightPlacement}`;
+      if(left!==target&&right!==target)return;
+      kept.add(left);kept.add(right);
     });
     document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"],#skyFoundationWheelMount [data-focus-piece="leader"]').forEach(node=>node.classList.toggle('is-kept',kept.has(`${node.dataset.sky}:${node.dataset.placement}`)));
   }
