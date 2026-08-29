@@ -13,11 +13,11 @@ jobs:
           node-version: '22'
       - run: |
           npm install --no-save playwright@1.52.0
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
       - name: Test deployed Sky Chart interactions
         run: |
           cat > live-sky-diag.mjs <<'EOF'
-          import { chromium } from 'playwright';
+          import { chromium, webkit, devices } from 'playwright';
 
           const A={
             name:'Marisa',
@@ -47,8 +47,9 @@ jobs:
             }
           };
 
-          const browser=await chromium.launch({headless:true});
-          const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true});
+          const browser=await webkit.launch({headless:true});
+          const context=await browser.newContext({...devices['iPhone 13']});
+          const page=await context.newPage();
           const consoleErrors=[],pageErrors=[],failed=[];
           page.on('pageerror',e=>pageErrors.push(e.stack||e.message));
           page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text())});
@@ -145,5 +146,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: live-sky-diagnostic
+          name: live-sky-webkit-diagnostic
           path: live-sky.png
