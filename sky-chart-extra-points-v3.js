@@ -163,7 +163,7 @@
       lilithMethod:finalLilith?.source==='mean-lunar-apogee-projected'?'mean-lunar-apogee-projected':'',
       vertex:finalVertex?(finalVertex.source==='prime-vertical-swiss'?'calculated':'provided'):'not-provided',
       partOfFortune:'calculated',
-      chiron:find(placements,['Chiron'])?'provided':'not-provided'
+      chiron:(()=>{const item=find(placements,['Chiron']);return item?(item.source==='swiss-ephemeris-chiron'?'calculated':'provided'):'not-provided'})()
     };
     payload.calcProfile=profile;
     return before!==JSON.stringify(payload);
