@@ -10,6 +10,17 @@
   if (!registry || !component) throw new Error('[Relphi glyph integrity] Registry and component must load before the integrity guard.');
 
   const fields = ['id','name','asset','scale','dx','dy','fallback','fitMode','fontWeight'];
+  // Master Glyph List identities whose approved artwork is authored by the shared
+  // component rather than an external SVG asset.
+  const componentMasterIds = Object.freeze(['chiron','north-node','south-node','part-of-fortune','vertex','asc','dsc','mc','ic']);
+  const componentMasters = new Set(componentMasterIds);
+  function masterAvailable(entry) {
+    return !!entry && (!!entry.asset || componentMasters.has(entry.id));
+  }
+  function resolveMaster(identity) {
+    const entry = registry.get(identity) || registry.resolve(identity);
+    return masterAvailable(entry) ? entry : null;
+  }
   const signature = () => JSON.stringify(registry.entries.map(entry => [
     ...fields.map(field => entry[field] ?? null),
     Array.isArray(entry.aliases) ? entry.aliases.slice() : []
@@ -45,6 +56,11 @@
     return true;
   }
 
+  window.RelphiGlyphMasterSource = Object.freeze({
+    componentMasterIds,
+    masterAvailable,
+    resolve: resolveMaster
+  });
   window.RelphiGlyphIntegrity = Object.freeze({ assert: assertIntegrity });
   queueMicrotask(assertIntegrity);
   window.addEventListener('load', assertIntegrity, { once: true });
