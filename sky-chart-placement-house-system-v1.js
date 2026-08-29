@@ -29,15 +29,35 @@ function announce(system,slots){window.dispatchEvent(new CustomEvent('relphi:sky
 function commitHouseChange(){houseChangeQueued=false;const change=pendingChange;pendingChange=null;if(!change)return;const{system,select,previous}=change;try{syncing=true;const next={};for(const slot of['A','B']){const value=read(slot);if(!value)continue;next[slot]=applySystem(slot,value,system)}Object.entries(next).forEach(([slot,value])=>write(slot,value));localStorage.setItem(SHARED_KEY,system);syncControls(system);select?.setCustomValidity('');announce(system,Object.keys(next));schedule()}catch(error){console.error(error);localStorage.setItem(SHARED_KEY,previous);syncControls(previous);if(select){select.setCustomValidity(error.message);select.reportValidity()}}finally{syncing=false}if(pendingChange&&!houseChangeQueued){houseChangeQueued=true;requestAnimationFrame(commitHouseChange)}}
 function changeHouseSystem(system,select){if(!SYSTEMS[system])return;const previous=sharedSystem();localStorage.setItem(SHARED_KEY,system);syncControls(system);select?.setCustomValidity('');pendingChange={system,select,previous};if(houseChangeQueued)return;houseChangeQueued=true;requestAnimationFrame(commitHouseChange)}
 function syncSharedSystem(){if(syncing)return;const system=sharedSystem(),needs=[];for(const slot of['A','B']){const value=read(slot);if(!value)continue;const current=String(profile(value).houseSystem||value?.houseSystem||'whole-sign');if(current!==system)needs.push(slot)}if(!needs.length){syncControls(system);return}try{syncing=true;const changed=[];needs.forEach(slot=>{const value=read(slot);if(!value)return;changed.push([slot,applySystem(slot,value,system)])});changed.forEach(([slot,value])=>write(slot,value));syncControls(system);announce(system,changed.map(([slot])=>slot))}catch(error){console.error('[Sky Chart] Could not synchronize shared House System',error)}finally{syncing=false}}
-function control(slot){const system=sharedSystem(),label=document.createElement('label');label.className='sky-placement-house-system-inline';label.innerHTML=`<span>House System</span><select data-placement-house-system="${slot}" aria-label="House System for both skies">${Object.entries(SYSTEMS).map(([id,name])=>`<option value="${id}"${id===system?' selected':''}>${name}</option>`).join('')}</select>`;return label}
-function mount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.placements||document.getElementById(`skyFoundation${slot}`)?.querySelector('.sky-where-when-placement-view')||null}
-function decorate(slot){const view=mount(slot);if(!view)return;const system=sharedSystem(),existing=view.querySelector(':scope > .sky-placement-house-system-inline');if(existing){const select=existing.querySelector('[data-placement-house-system]');if(select&&select.value!==system)select.value=system;return}view.prepend(control(slot))}
+function control(slot){const system=sharedSystem(),label=document.createElement('label');label.className='sky-placement-house-system-inline';label.innerHTML=`<span class="sky-placement-house-system-label">House System</span><select data-placement-house-system="${slot}" aria-label="House System for both skies">${Object.entries(SYSTEMS).map(([id,name])=>`<option value="${id}"${id===system?' selected':''}>${name}</option>`).join('')}</select>`;return label}
+function placementView(slot){return window.RelphiSkyCardShell?.get?.(slot)?.placements||document.getElementById(`skyFoundation${slot}`)?.querySelector('.sky-where-when-placement-view')||null}
+function angleHeading(slot){return document.querySelector(`#skyFoundation${slot} .sky-foundation-ledger-angle-heading`)}
+function decorate(slot){
+  const view=placementView(slot);
+  if(!view)return;
+  const system=sharedSystem();
+  view.querySelectorAll(':scope > .sky-placement-house-system-inline').forEach(node=>node.remove());
+  const heading=angleHeading(slot);
+  if(!heading)return;
+  heading.querySelectorAll(':scope > .sky-placement-house-system-inline').forEach((node,index)=>{if(index)node.remove()});
+  let existing=heading.querySelector(':scope > .sky-placement-house-system-inline');
+  if(!existing){existing=control(slot);heading.appendChild(existing)}
+  const select=existing.querySelector('[data-placement-house-system]');
+  if(select&&select.value!==system)select.value=system;
+}
 function removeRelationshipHouseSystem(){document.querySelector('[data-house-system-filter]')?.closest('label')?.remove()}
 function hydrate(){queued=false;removeRelationshipHouseSystem();decorate('A');decorate('B')}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(hydrate)}
-function installStyles(){if(document.getElementById('skyPlacementHouseSystemV3Styles'))return;document.getElementById('skyPlacementHouseSystemV2Styles')?.remove();document.getElementById('skyPlacementHouseSystemV1Styles')?.remove();const style=document.createElement('style');style.id='skyPlacementHouseSystemV3Styles';style.textContent=`.sky-placement-house-system-inline{display:grid;grid-template-columns:auto minmax(128px,190px);align-items:center;justify-content:end;gap:8px;margin:0 0 .55rem;padding:.55rem .65rem 0;color:#554c44;font:800 .62rem/1.2 system-ui,sans-serif}.sky-placement-house-system-inline select{width:100%;min-height:35px;border:1px solid rgba(31,27,24,.22);border-radius:9px;background:#fff;padding:.45rem .55rem;color:#211d19;font:750 .68rem/1.2 system-ui,sans-serif}@media(max-width:620px){.sky-placement-house-system-inline{grid-template-columns:1fr;margin-bottom:.65rem}.sky-placement-house-system-inline select{font-size:16px}}`;document.head.appendChild(style)}
+function installStyles(){if(document.getElementById('skyPlacementHouseSystemV4Styles'))return;document.getElementById('skyPlacementHouseSystemV3Styles')?.remove();document.getElementById('skyPlacementHouseSystemV2Styles')?.remove();document.getElementById('skyPlacementHouseSystemV1Styles')?.remove();const style=document.createElement('style');style.id='skyPlacementHouseSystemV4Styles';style.textContent=`
+.sky-foundation-ledger-angle-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:31px;padding:4px 10px;border-top:1px solid rgba(31,27,24,.10);border-bottom:1px solid rgba(31,27,24,.075);box-sizing:border-box}
+.sky-foundation-ledger-angle-title{min-width:0;color:#4f463f;font:800 .62rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap}
+.sky-placement-house-system-inline{display:flex;align-items:center;justify-content:flex-end;min-width:0;margin:0;padding:0;color:#554c44;font:800 .62rem/1.2 system-ui,sans-serif}
+.sky-placement-house-system-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.sky-placement-house-system-inline select{width:min(124px,52vw);min-width:0;min-height:27px;border:1px solid rgba(31,27,24,.22);border-radius:7px;background:#fff;padding:.28rem 1.45rem .28rem .45rem;color:#211d19;font:750 .62rem/1.2 system-ui,sans-serif}
+@media(max-width:620px){.sky-foundation-ledger-angle-heading{gap:6px;padding:4px 8px}.sky-placement-house-system-inline select{width:min(118px,49vw);font-size:16px;min-height:30px;padding-top:.18rem;padding-bottom:.18rem}}
+`;document.head.appendChild(style)}
 document.addEventListener('change',event=>{const select=event.target.closest('[data-placement-house-system]');if(select)changeHouseSystem(select.value,select)});
-['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-house-multiselect-changed'].forEach(name=>window.addEventListener(name,schedule));
+['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-house-multiselect-changed','relphi:sky-angle-ledger-decorated'].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(Object.values(KEYS).includes(event.key)){if(!syncing)syncSharedSystem();schedule()}});
 function start(){installStyles();syncSharedSystem();schedule()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
