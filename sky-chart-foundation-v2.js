@@ -44,7 +44,7 @@ async function drawCanonical(parent,id,options){const registry=window.RelphiGlyp
 async function drawBubble(parent,id,options,uncircled=false){const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=registry?.get(id)||registry?.resolve(id);if(!masterAvailable(entry)||!component?.createBubble)throw new Error('Canonical Master Glyph List entry unavailable: '+id);const bubble=component.createBubble(parent,entry.id,options);if(uncircled){bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true')}await bubble.ready;return bubble.root}
 function glyphFailure(host,error){host.dataset.relphiGlyphError=error?.message||'canonical-glyph-failed';console.error(error)}
 function renderCard(slot,payload,list,cusps){const panel=document.getElementById(`skyFoundation${slot}`);if(!panel)return[];panel.querySelector('.sky-foundation-name').textContent=payload?.name||`Sky ${slot}`;const refs=window.RelphiSkyCardShell?.ensure?.(slot,payload),mount=refs?.placements||panel.querySelector('.sky-foundation-body');mount.replaceChildren();if(!list.length){mount.innerHTML='<p class="sky-foundation-empty">No approved canonical placements are available for this sky.</p>';return[]}const ledger=document.createElement('div');ledger.className='sky-foundation-ledger';mount.appendChild(ledger);const color=spec()?.SKY?.[slot]||'#333',jobs=[];list.forEach(record=>{const position=coordinate(record),row=document.createElement('div');row.className='sky-foundation-row';row.innerHTML=`<svg viewBox="-20 -20 40 40" aria-label="${esc(record.entry.name)}"></svg><span class="sky-foundation-row-name">${esc(record.entry.name)}</span><span class="sky-foundation-coordinate">${position.text} ${SIGN_NAMES[position.sign]}</span><span class="sky-foundation-house">H${houseFor(record.value,cusps)}</span>`;ledger.appendChild(row);const host=row.querySelector('svg');jobs.push(drawCanonical(host,record.id,{radius:16,padding:1,color}).catch(error=>glyphFailure(host,error)))});return jobs}
-function relationships(a,b){const result=[],limit=Math.min(180,requestedOrb());a.forEach(left=>b.forEach(right=>{const distance=separation(left.value,right.value);ASPECTS.forEach(aspect=>{const orb=Math.abs(distance-aspect.angle);if(orb<=limit)result.push({left,right,aspect,orb})})}));return result.sort((x,y)=>x.orb-y.orb)}
+function relationships(a,b){const result=[],limit=Math.min(180,requestedOrb()),same=a===b;a.forEach((left,i)=>b.forEach((right,j)=>{if(same&&j<=i)return;const distance=separation(left.value,right.value);ASPECTS.forEach(aspect=>{const orb=Math.abs(distance-aspect.angle);if(orb<=limit)result.push({left,right,aspect,orb})})}));return result.sort((x,y)=>x.orb-y.orb)}
 function segmentDistance(point,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;if(l2<=1e-9)return Math.hypot(point.x-a.x,point.y-a.y);const t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.y-a.y)*dy)/l2));return Math.hypot(point.x-(a.x+t*dx),point.y-(a.y+t*dy))}
 function circleCollision(a,b,clearance){return Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r+clearance}
 function squareCircle(square,circle,clearance){const dx=Math.max(Math.abs(square.x-circle.x)-square.half,0),dy=Math.max(Math.abs(square.y-circle.y)-square.half,0);return Math.hypot(dx,dy)<circle.r+clearance}
@@ -55,6 +55,48 @@ function addZodiac(layer,obstacles,jobs){const shared=spec(),z=comparison()?.zod
 function addOrdinary(layerLeaders,layerPlacements,slot,list,cusps,g,obstacles,jobs){const color=spec()?.SKY?.[slot]||'#333',lane=Number(g.placement?.[0]),bubbleRadius=Number(comparison()?.placementBubbleRadius)||17.2;if(!Number.isFinite(lane))return;list.filter(record=>!ANGLE_IDS.has(record.id)).forEach(record=>{const exact=polar(g.degree,record.value),display=polar(lane,record.value);layerLeaders.appendChild(svg('line',{x1:display.x,y1:display.y,x2:exact.x,y2:exact.y,stroke:color,class:'sky-foundation-leader','data-sky':slot,'data-placement':record.id,'data-exact-longitude':record.value.toFixed(8)}));const host=svg('g',{transform:`translate(${display.x} ${display.y})`,'data-sky':slot,'data-placement':record.id,'data-house':houseFor(record.value,cusps),'data-placement-lane':lane,'data-display-longitude':record.value.toFixed(8),'data-exact-longitude':record.value.toFixed(8)});layerPlacements.appendChild(host);obstacles.push({kind:'circle',x:display.x,y:display.y,r:bubbleRadius});jobs.push(drawBubble(host,record.id,{radius:Number(comparison()?.placementRadius)||16,padding:1,color,fill:'#fffdf8',strokeWidth:2.35}).catch(error=>glyphFailure(host,error)))})}
 function addAngles(layerLeaders,layerPlacements,slot,list,cusps,g,obstacles,jobs){const color=spec()?.SKY?.[slot]||'#333',frameRadius=19,half=frameRadius+1.2,clearance=6,angleGap=Number(comparison()?.angleGap)||17;list.filter(record=>ANGLE_IDS.has(record.id)).forEach(record=>{let chosen=null;for(const lane of g.angle||[]){const p=polar(lane,record.value),candidate={kind:'square',x:p.x,y:p.y,half};if(lane-half-clearance<=g.inner||lane+half+clearance>=g.outer||obstacleCollision(candidate,obstacles,clearance))continue;chosen={lane,p,candidate};break}if(!chosen){const lane=Number(g.angle?.[0]),p=polar(lane,record.value);chosen={lane,p,candidate:{kind:'square',x:p.x,y:p.y,half},fallback:true}}const labelSide=g.side==='inner'?chosen.lane-angleGap:chosen.lane+angleGap,lineStart=Math.min(g.edge,labelSide),lineEnd=Math.max(g.edge,labelSide);if(lineEnd>lineStart)radialLine(layerLeaders,lineStart,lineEnd,record.value,{stroke:color,class:'sky-foundation-angle-axis','stroke-width':'2.6','vector-effect':'non-scaling-stroke','data-sky':slot,'data-placement':record.id,'data-angle':record.id,'data-exact-longitude':record.value.toFixed(8),'data-angle-lane':chosen.lane,'data-axis-extreme':g.side,'data-axis-edge-radius':g.edge});const host=svg('g',{transform:`translate(${chosen.p.x} ${chosen.p.y})`,'data-sky':slot,'data-placement':record.id,'data-angle-axis':'true','data-house':houseFor(record.value,cusps),'data-angle-lane':chosen.lane,'data-angle-longitude':record.value.toFixed(8),'data-exact-longitude':record.value.toFixed(8),'data-angle-extreme':g.side,'data-angle-lane-fallback':chosen.fallback?'true':'false'});layerPlacements.appendChild(host);obstacles.push(chosen.candidate);jobs.push(drawBubble(host,record.id,{radius:frameRadius,padding:1,color,strokeWidth:2.35},true).catch(error=>glyphFailure(host,error)))})}
 function buildWheel(listA,listB,cuspsA,cuspsB){const shared=spec(),cmp=comparison(),gA=geometry('A'),gB=geometry('B');if(!shared||!cmp||!gA||!gB)throw new Error('Shared Sky wheel specification is unavailable.');const c=center(),outerRadius=Math.max(gA.outer,gB.outer,cmp.zodiac.outer),chart=svg('svg',{viewBox:cmp.viewBox.join(' '),role:'img','aria-label':'Sky A and Sky B rainbow comparison wheel',class:'sky-foundation-wheel relphi-canonical-ready','data-ring-order':'A-inner-B-outer','data-inner-sky':'A','data-outer-sky':'B','data-wheel-spec':'relphi-sky-wheel-v1'});chart.appendChild(svg('circle',{cx:c.x,cy:c.y,r:outerRadius+8,fill:'#fffdf8',stroke:'rgba(31,27,24,.14)'}));const layers={};['a-houses','zodiac','b-houses','ticks','aspects','outlines','leaders','placements'].forEach(name=>{layers[name]=svg('g',{'data-layer':name});chart.appendChild(layers[name])});const jobs=[],obstacles=[];houseLayer(layers['a-houses'],'A',cuspsA,gA,obstacles);houseLayer(layers['b-houses'],'B',cuspsB,gB,obstacles);addZodiac(layers.zodiac,obstacles,jobs);[gA.inner,cmp.zodiac.inner,cmp.zodiac.outer,gB.outer].forEach(radius=>layers.outlines.appendChild(svg('circle',{cx:c.x,cy:c.y,r:radius,class:'sky-foundation-ring'})));for(let degree=0;degree<360;degree+=1){const length=degree%10===0?12:degree%5===0?8:5,className=degree%10===0?'sky-foundation-tick sky-foundation-tick-major':'sky-foundation-tick';radialLine(layers.ticks,gA.degree-length,gA.degree,degree,{class:className});radialLine(layers.ticks,gB.degree,gB.degree+length,degree,{class:className})}const aspectRadius=Math.max(1,gA.inner-1);relationships(listA,listB).forEach(relation=>{const from=polar(aspectRadius,relation.left.value),to=polar(aspectRadius,relation.right.value);layers.aspects.appendChild(svg('line',{x1:from.x,y1:from.y,x2:to.x,y2:to.y,stroke:relation.aspect.color,class:'sky-foundation-aspect','data-aspect':relation.aspect.id,'data-left-placement':relation.left.id,'data-right-placement':relation.right.id,'data-orb':relation.orb.toFixed(6)}))});addOrdinary(layers.leaders,layers.placements,'A',listA,cuspsA,gA,obstacles,jobs);addOrdinary(layers.leaders,layers.placements,'B',listB,cuspsB,gB,obstacles,jobs);addAngles(layers.leaders,layers.placements,'A',listA,cuspsA,gA,obstacles,jobs);addAngles(layers.leaders,layers.placements,'B',listB,cuspsB,gB,obstacles,jobs);window.RelphiPlacementCollisionOrder?.arrange?.(chart);chart.dataset.finalGeometryReady='true';return{chart,jobs}}
+function buildSingleWheel(listA,cuspsA){
+  const shared=spec(),cmp=comparison(),gA=geometry('A');
+  if(!shared||!cmp||!gA)throw new Error('Shared Sky wheel specification is unavailable.');
+  const c=center(),outerRadius=cmp.zodiac.outer;
+  const chart=svg('svg',{
+    viewBox:cmp.viewBox.join(' '),role:'img','aria-label':'Sky A zodiac wheel',
+    class:'sky-foundation-wheel relphi-canonical-ready',
+    'data-ring-order':'A-houses-inner-zodiac-outer','data-inner-sky':'A',
+    'data-wheel-spec':'relphi-sky-wheel-v1','data-single-sky':'A'
+  });
+  chart.appendChild(svg('circle',{cx:c.x,cy:c.y,r:outerRadius+8,fill:'#fffdf8',stroke:'rgba(31,27,24,.14)'}));
+  const layers={};
+  ['a-houses','zodiac','ticks','aspects','outlines','leaders','placements'].forEach(name=>{
+    layers[name]=svg('g',{'data-layer':name});chart.appendChild(layers[name]);
+  });
+  const jobs=[],obstacles=[];
+  // Same inner Sky A house geometry and same zodiac ring as comparison mode.
+  houseLayer(layers['a-houses'],'A',cuspsA,gA,obstacles);
+  addZodiac(layers.zodiac,obstacles,jobs);
+  [gA.inner,cmp.zodiac.inner,cmp.zodiac.outer].forEach(radius=>layers.outlines.appendChild(svg('circle',{cx:c.x,cy:c.y,r:radius,class:'sky-foundation-ring'})));
+  for(let degree=0;degree<360;degree+=1){
+    const length=degree%10===0?12:degree%5===0?8:5,className=degree%10===0?'sky-foundation-tick sky-foundation-tick-major':'sky-foundation-tick';
+    radialLine(layers.ticks,gA.degree-length,gA.degree,degree,{class:className});
+  }
+  // Same aspect boundary as the comparison wheel: aspects live inside the house ring.
+  const aspectRadius=Math.max(1,gA.inner-1);
+  relationships(listA,listA).forEach(relation=>{
+    const from=polar(aspectRadius,relation.left.value),to=polar(aspectRadius,relation.right.value);
+    layers.aspects.appendChild(svg('line',{
+      x1:from.x,y1:from.y,x2:to.x,y2:to.y,stroke:relation.aspect.color,
+      class:'sky-foundation-aspect','data-aspect':relation.aspect.id,
+      'data-left-placement':relation.left.id,'data-right-placement':relation.right.id,
+      'data-orb':relation.orb.toFixed(6),'data-relationship-mode':'A-A'
+    }));
+  });
+  // Exact same Sky A placement and angle functions as comparison mode.
+  addOrdinary(layers.leaders,layers.placements,'A',listA,cuspsA,gA,obstacles,jobs);
+  addAngles(layers.leaders,layers.placements,'A',listA,cuspsA,gA,obstacles,jobs);
+  window.RelphiPlacementCollisionOrder?.arrange?.(chart);
+  chart.dataset.finalGeometryReady='true';
+  return{chart,jobs};
+}
 function signature(a,b){try{return JSON.stringify([a,b,requestedOrb()])}catch(_){return String(Date.now())}}
 function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
 async function render(force=false){if(whereWhenEditing())return;if(rendering){rerender=true;return}const root=shell();if(!root)return;const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;if(!registry||!component?.draw||!component?.createBubble||!spec()){setTimeout(()=>render(true),20);return}const payloadA=read(KEYS.A),payloadB=read(KEYS.B),nextSignature=signature(payloadA,payloadB);if(!force&&nextSignature===lastSignature)return;rendering=true;rerender=false;try{const listA=records(payloadA),listB=records(payloadB),cuspsA=houseCusps(payloadA,listA),cuspsB=houseCusps(payloadB,listB),cardJobs=[...renderCard('A',payloadA,listA,cuspsA),...renderCard('B',payloadB,listB,cuspsB)],mount=document.getElementById('skyFoundationWheelMount');
@@ -63,13 +105,11 @@ async function render(force=false){if(whereWhenEditing())return;if(rendering){re
       mount.innerHTML='<p class="sky-foundation-empty">Sky A needs approved canonical placements.</p>';
       await Promise.allSettled(cardJobs);
     }else if(!listB.length){
-      // Sky A-only mode is owned by sky-chart-single-sky-mode-v2.js.
-      // Do not clear or replace the shared wheel mount here: on Sky B removal
-      // both renderers receive the same storage event and the comparison pass
-      // used to race the standalone pass, leaving the mount blank.
-      await Promise.allSettled(cardJobs);
-      mount.dataset.comparisonYieldedToSingleSky='true';
-      window.dispatchEvent(new CustomEvent('relphi:sky-comparison-yielded',{detail:{mode:'A-A'}}));
+      delete mount.dataset.comparisonYieldedToSingleSky;
+      const wheel=buildSingleWheel(listA,cuspsA);
+      await Promise.allSettled([...cardJobs,...wheel.jobs]);
+      if(!records(read(KEYS.B)).length)mount.replaceChildren(wheel.chart);
+      else rerender=true;
     }else{
       delete mount.dataset.comparisonYieldedToSingleSky;
       const wheel=buildWheel(listA,listB,cuspsA,cuspsB);
@@ -78,8 +118,9 @@ async function render(force=false){if(whereWhenEditing())return;if(rendering){re
       // Re-check ownership before replacing the shared mount.
       if(records(read(KEYS.B)).length)mount.replaceChildren(wheel.chart);
       else{
-        mount.dataset.comparisonYieldedToSingleSky='true';
-        window.dispatchEvent(new CustomEvent('relphi:sky-comparison-yielded',{detail:{mode:'A-A'}}));
+        const single=buildSingleWheel(listA,cuspsA);
+        await Promise.allSettled(single.jobs);
+        mount.replaceChildren(single.chart);
       }
     }
     root.setAttribute('aria-busy','false');lastSignature=nextSignature;window.dispatchEvent(new Event('relphi:sky-foundation-ready'))}catch(error){console.error('Sky Chart foundation render failed:',error);const mount=document.getElementById('skyFoundationWheelMount');if(records(read(KEYS.B)).length)mount.innerHTML='<p class="sky-foundation-empty">The canonical foundation could not render.</p>';else window.dispatchEvent(new CustomEvent('relphi:sky-comparison-yielded',{detail:{mode:'A-A',error:true}}))}finally{rendering=false;if(rerender)requestAnimationFrame(()=>render(true))}}
