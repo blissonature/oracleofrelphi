@@ -26,8 +26,15 @@ const explicitNodeFilters=new Set();
 const canonical=value=>String(value||'').trim().toLowerCase();
 const pairKey=(a,b)=>[canonical(a),canonical(b)].sort().join('|');
 const selectionKey=(slot,id)=>`${slot}:${canonical(id)}`;
-function isSingleSkyRow(row){return row?.dataset.relationshipMode==='A-A'||document.documentElement.dataset.skyRelationshipMode==='A-A'}
-function endpointSlots(row){return isSingleSkyRow(row)?{left:'A',right:'A'}:{left:'A',right:'B'}}
+function endpointSlots(row){
+  const left=String(row?.dataset?.leftSky||'').toUpperCase(),right=String(row?.dataset?.rightSky||'').toUpperCase();
+  if((left==='A'||left==='B')&&(right==='A'||right==='B'))return{left,right};
+  const mode=String(row?.dataset?.relationshipMode||'').toUpperCase();
+  if(mode==='A-A')return{left:'A',right:'A'};
+  if(mode==='B-B')return{left:'B',right:'B'};
+  return{left:'A',right:'B'};
+}
+function isSingleSkyRow(row){const slots=endpointSlots(row);return slots.left===slots.right}
 function constitutiveMeta(row){if(!isSingleSkyRow(row))return null;return CONSTITUTIVE.get(pairKey(row.dataset.leftPlacement,row.dataset.rightPlacement))||null}
 function rowHasAngle(row){return ANGLES.has(canonical(row.dataset.leftPlacement))||ANGLES.has(canonical(row.dataset.rightPlacement))}
 function placementInput(slot,id){return document.querySelector(`[data-placement-option="${canonical(id)}"][data-slot="${slot}"]`)}
