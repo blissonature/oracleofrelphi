@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyAnglePlacementsV7) return;
+  if (window.__relphiSkyAnglePlacementsV8) return;
   window.__relphiSkyAnglePlacementsV1 = true;
   window.__relphiSkyAnglePlacementsV2 = true;
   window.__relphiSkyAnglePlacementsV3 = true;
@@ -11,6 +11,7 @@
   window.__relphiSkyAnglePlacementsV5 = true;
   window.__relphiSkyAnglePlacementsV6 = true;
   window.__relphiSkyAnglePlacementsV7 = true;
+  window.__relphiSkyAnglePlacementsV8 = true;
 
   const KEYS = new Set(['relphiSkyChartA', 'relphiSkyChartB']);
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -224,6 +225,7 @@
           heading.appendChild(houseSystemMount);
         }
         window.RelphiSkyPlacementHouseSystem?.mount?.(slot);
+        window.dispatchEvent(new CustomEvent('relphi:sky-chart-angles-ready',{detail:{slot}}));
       });
     } finally {
       decorating = false;
