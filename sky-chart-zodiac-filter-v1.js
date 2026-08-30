@@ -1,7 +1,10 @@
 // Canonical Zodiac Signs filter for relationship rows.
+// Wheel sign selection mirrors into this control without becoming a second filter layer.
 (function(){
 'use strict';
-if(window.__relphiSkyZodiacFilterV2)return;window.__relphiSkyZodiacFilterV2=true;
+if(window.__relphiSkyZodiacFilterV3)return;
+window.__relphiSkyZodiacFilterV3=true;
+window.__relphiSkyZodiacFilterV2=true;
 
 const SIGNS=[['aries','Aries'],['taurus','Taurus'],['gemini','Gemini'],['cancer','Cancer'],['leo','Leo'],['virgo','Virgo'],['libra','Libra'],['scorpio','Scorpio'],['sagittarius','Sagittarius'],['capricorn','Capricorn'],['aquarius','Aquarius'],['pisces','Pisces']];
 const COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
@@ -30,15 +33,21 @@ function syncChecks(){
   if(button)button.textContent=summary();
 }
 
+function clearAppliedSignFilter(){
+  document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row=>row.classList.remove('sky-chart-sign-filter-hidden'));
+}
 function apply(){
   queued=false;
   const all=selected.size===12;
   document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{
     const match=all||selected.has(String(row.dataset.leftSign))||selected.has(String(row.dataset.rightSign));
-    row.classList.toggle('sky-chart-sign-filter-hidden',!match);
+    // A wheel sign already owns relationship isolation. The dropdown mirrors that state
+    // for visibility, but must not feed the same sign back as a second filtering layer.
+    row.classList.toggle('sky-chart-sign-filter-hidden',wheelDriven?false:!match);
   });
   syncChecks();
-  window.dispatchEvent(new CustomEvent('relphi:sky-zodiac-filter-changed',{detail:{signs:Array.from(selected,Number)}}));
+  document.documentElement.dataset.skyZodiacFilterSource=wheelDriven?'wheel':'manual';
+  window.dispatchEvent(new CustomEvent('relphi:sky-zodiac-filter-changed',{detail:{signs:Array.from(selected,Number),source:wheelDriven?'wheel':'manual'}}));
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(apply)}
 
@@ -133,8 +142,17 @@ function install(){
   syncChecks();
 }
 
+// A wheel sign replaces the previous sign selection. Remove any sign-filter class
+// before the foundation click handler computes the new wheel relationship set, so
+// Scorpio → Libra → Scorpio cannot collapse into Scorpio ∩ Libra.
+document.addEventListener('pointerdown',event=>{
+  const sector=event.target.closest?.('#skyFoundationWheelMount [data-interactive="sign"]');
+  if(!sector)return;
+  clearAppliedSignFilter();
+},true);
+
 // A click on a wheel sign already locks the foundation isolation. Mirror that exact
-// selection into the Sign filter after the interaction controller has updated the DOM.
+// selection into the Sign control after the interaction controller has updated the DOM.
 document.addEventListener('click',event=>{
   const sector=event.target.closest?.('#skyFoundationWheelMount [data-interactive="sign"]');
   if(!sector)return;
