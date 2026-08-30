@@ -1,0 +1,81 @@
+name: Drawing Board standalone check
+
+on:
+  push:
+    paths:
+      - 'drawing-board/**'
+      - 'drawing-board-standalone-v2.js'
+      - 'drawing-board-tarot-ux-v1.js'
+      - 'drawing-board-celtic-mobile-v1.js'
+      - 'drawing-board-ledger-selection-bridge-v1.js'
+      - 'tarot-ledger-no-board-v1.js'
+      - 'navloader.js'
+      - 'nav.html'
+      - 'tools.html'
+      - 'index.html'
+      - 'scripts/materialize-drawing-board.py'
+      - 'tests/drawing-board-standalone-v2.test.js'
+      - 'tests/drawing-board-navigation.browser.js'
+      - 'tests/drawing-board-no-ledger-flash.browser.js'
+      - 'tests/drawing-board-celtic-mobile.browser.js'
+      - '.github/workflows/drawing-board-standalone-check.yml'
+  pull_request:
+    paths:
+      - 'drawing-board/**'
+      - 'drawing-board-standalone-v2.js'
+      - 'drawing-board-tarot-ux-v1.js'
+      - 'drawing-board-celtic-mobile-v1.js'
+      - 'drawing-board-ledger-selection-bridge-v1.js'
+      - 'tarot-ledger-no-board-v1.js'
+      - 'navloader.js'
+      - 'nav.html'
+      - 'tools.html'
+      - 'index.html'
+      - 'scripts/materialize-drawing-board.py'
+      - 'tests/drawing-board-standalone-v2.test.js'
+      - 'tests/drawing-board-navigation.browser.js'
+      - 'tests/drawing-board-no-ledger-flash.browser.js'
+      - 'tests/drawing-board-celtic-mobile.browser.js'
+      - '.github/workflows/drawing-board-standalone-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: drawing-board-standalone-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  separation-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax and structural contracts
+        run: |
+          node --check drawing-board-standalone-v2.js
+          node --check drawing-board-tarot-ux-v1.js
+          node --check drawing-board-celtic-mobile-v1.js
+          node --check drawing-board-ledger-selection-bridge-v1.js
+          node --check tarot-ledger-no-board-v1.js
+          node --check navloader.js
+          node --check tests/drawing-board-standalone-v2.test.js
+          node --check tests/drawing-board-navigation.browser.js
+          node --check tests/drawing-board-no-ledger-flash.browser.js
+          node --check tests/drawing-board-celtic-mobile.browser.js
+          node tests/drawing-board-standalone-v2.test.js
+      - name: Install Playwright driver only
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          npm install --no-save playwright@1.52.0
+          command -v google-chrome
+      - name: Run standalone Drawing Board browser regression
+        run: |
+          python3 -m http.server 8000 > /tmp/drawing-board-standalone-server.log 2>&1 &
+          RELPHI_BROWSER_EXECUTABLE="$(command -v google-chrome)" node tests/drawing-board-no-ledger-flash.browser.js
+          RELPHI_BROWSER_EXECUTABLE="$(command -v google-chrome)" node tests/drawing-board-navigation.browser.js
+          RELPHI_BROWSER_EXECUTABLE="$(command -v google-chrome)" node tests/drawing-board-celtic-mobile.browser.js
