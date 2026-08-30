@@ -1,13 +1,14 @@
-// Sky Chart interaction controller v5: preserve intersky behavior, bridge intrasky tiles, and use ownership-aware relationship identity for wheel focus.
-// Render indexes remain list addresses only; hover/isolation never depends on them for matching aspect lines.
+// Sky Chart interaction controller v6: ownership-aware wheel focus plus filter-reactive locked isolation.
+// A locked wheel selection is recomputed whenever relationship eligibility changes, so stale endpoints cannot remain illuminated.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
-  if(window.__relphiSkyFoundationInteractionsV5)return;
+  if(window.__relphiSkyFoundationInteractionsV6)return;
   window.__relphiSkyFoundationInteractionsV2=true;
   window.__relphiSkyFoundationInteractionsV3=true;
   window.__relphiSkyFoundationInteractionsV4=true;
   window.__relphiSkyFoundationInteractionsV5=true;
+  window.__relphiSkyFoundationInteractionsV6=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
@@ -159,7 +160,7 @@
   function relationMatches(relation,index,state){if(!state)return true;if(state.kind==='aspect')return String(index)===String(state.value);if(state.kind==='sign')return relation.left.sign===state.value||relation.right.sign===state.value;if(state.kind==='house')return state.sky==='A'?relation.left.house===state.value:relation.right.house===state.value;if(state.kind==='placement')return state.sky==='A'?relation.left.id===state.value:relation.right.id===state.value;return true}
   function arcsOverlap(start,span,targetStart,targetSpan){const samples=[start,norm(start+span-.0001),targetStart,norm(targetStart+targetSpan-.0001)];const inside=(value,arcStart,arcSpan)=>norm(value-arcStart)<arcSpan;return samples.some((value,index)=>index<2?inside(value,targetStart,targetSpan):inside(value,start,span))}
   function housesForSign(houseCusps,sign){const result=[];const targetStart=sign*30;houseCusps.forEach((start,index)=>{const span=norm(houseCusps[(index+1)%12]-start)||30;if(arcsOverlap(start,span,targetStart,30))result.push(index+1)});return result}
-  const PERSISTENT_HIDDEN_CLASSES=['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-sign-filter-hidden','sky-chart-semantic-hidden'];
+  const PERSISTENT_HIDDEN_CLASSES=['sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden','sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden','sky-chart-sign-filter-hidden','sky-chart-zodiac-filter-hidden','sky-chart-semantic-hidden'];
   function rowSlots(row){return relationshipSlots(row)}
   function rowEligibleForWheel(row){return!PERSISTENT_HIDDEN_CLASSES.some(name=>row.classList.contains(name))}
   function rowMatchesState(row,state){
@@ -288,6 +289,15 @@
     selectionClearObserver?.disconnect();selectionClearObserver=new MutationObserver(()=>{if(root?.dataset.relationshipSelectionCleared==='true')clearSelectionMarks();else{selectionClearObserver.disconnect();selectionClearObserver=null}});if(root)selectionClearObserver.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-current','data-selected-relation']});
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-clear-selection',{detail:{source:'white-space'}}));requestAnimationFrame(clearSelectionMarks)
   }
+  let interactionReapplyQueued=false;
+  function reapplyInteractionState(){
+    if(interactionReapplyQueued)return;
+    interactionReapplyQueued=true;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      interactionReapplyQueued=false;
+      if(lockedState||hoverState||rowLockedState||rowHoverState)applyState();
+    }));
+  }
   function bind(){
     const root=document.getElementById('skyFoundationRoot');if(!root||root.dataset.foundationInteractionsV2Bound==='true')return;root.dataset.foundationInteractionsV2Bound='true';
     root.addEventListener('pointerover',event=>{
@@ -342,6 +352,17 @@
     bind();applyState();window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
   }
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
-  function start(){window.addEventListener('relphi:sky-foundation-ready',schedule);window.addEventListener('relphi:sky-orb-limit-changed',schedule);if(document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false')schedule()}
+  function start(){
+    window.addEventListener('relphi:sky-foundation-ready',schedule);
+    window.addEventListener('relphi:sky-orb-limit-changed',schedule);
+    [
+      'relphi:sky-aspect-multiselect-changed',
+      'relphi:sky-placement-multiselect-changed',
+      'relphi:sky-house-multiselect-changed',
+      'relphi:sky-zodiac-filter-changed',
+      'relphi:sky-harmonic-window-visibility-changed'
+    ].forEach(name=>window.addEventListener(name,reapplyInteractionState));
+    if(document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false')schedule()
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
