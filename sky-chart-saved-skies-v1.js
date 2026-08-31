@@ -1,7 +1,9 @@
-// Compact sky command menu: the top sky-name dropdown owns New, Load, Save, Remove, and Sky B entry.
+// Compact sky command menu: the title chevron is the only open/close affordance.
+// Empty Sky A/B titles point directly to Where and When; command rows carry the actions.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesV3)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesV4)return;
+  window.__relphiSkySavedSkiesV4=true;
   window.__relphiSkySavedSkiesV3=true;
   window.__relphiSkySavedSkiesV2=true;
   window.__relphiSkySavedSkiesV1=true;
@@ -91,8 +93,8 @@
     const custom=candidateName(value);
     if(custom)return{name:custom,record:null,dirty:false,saved:false};
     if(isNearNow(value))return{name:'Now',record:null,dirty:false,saved:false};
-    if(!value)return{name:`Sky ${slot}`,record:null,dirty:false,saved:false};
-    return{name:'New Sky',record:null,dirty:false,saved:false};
+    if(!value||!hasPlacements(value))return{name:'Where and When',record:null,dirty:false,saved:false};
+    return{name:'Unsaved sky',record:null,dirty:false,saved:false};
   }
 
   function applyNamedIdentity(value,name,id){
@@ -219,7 +221,7 @@
   }
 
   function blankPayload(){
-    return{name:'New Sky',title:'New Sky',displayName:'New Sky',skyName:'New Sky',saved:false,placements:{},metadata:{name:'New Sky',title:'New Sky'},calcProfile:{name:'New Sky',title:'New Sky'}};
+    return{name:'Where and When',title:'Where and When',displayName:'Where and When',skyName:'Where and When',saved:false,placements:{},metadata:{name:'Where and When',title:'Where and When'},calcProfile:{name:'Where and When',title:'Where and When'}};
   }
   function openBlankWhereWhen(slot){
     const value=payload(slot);
@@ -246,7 +248,7 @@
     }
     if(!writeJson(SLOT_KEYS.A,blankPayload()))return false;
     dispatchStorage('A');
-    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'New Sky',source:'new-sky'}}));
+    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'new-sky'}}));
     openBlankWhereWhen('A');
     return true;
   }
@@ -260,7 +262,7 @@
     try{localStorage.removeItem(SLOT_KEYS.A)}catch(_){return false}
     dispatchStorage('A');
     window.RelphiSkyCardShell?.sync?.('A',null);
-    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Sky A',source:'remove-sky'}}));
+    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'remove-sky'}}));
     return true;
   }
   function addSkyB(){
@@ -291,18 +293,18 @@
         const confirmation=confirming?`<div class="sky-saved-delete-confirmation" role="group" aria-label="Delete ${escapeHtml(name)}?"><span>Delete this saved sky?</span><button type="button" data-saved-delete-cancel>Cancel</button><button type="button" class="is-danger" data-saved-delete-confirm="${escapeHtml(ref)}">Delete</button></div>`:'';
         return `<div class="sky-saved-list-row${current?' is-active':''}${confirming?' is-confirming-delete':''}"><button type="button" class="sky-saved-list-item" data-saved-sky-ref="${escapeHtml(ref)}" aria-label="Load ${escapeHtml(name)} into Sky ${openSlot}"><span class="sky-saved-list-name">${escapeHtml(name)}</span>${meta?`<span class="sky-saved-list-meta">${escapeHtml(meta)}</span>`:''}<span class="sky-saved-list-check" aria-hidden="true">${current?'✓':''}</span></button><button type="button" class="sky-saved-list-delete" data-saved-delete-ref="${escapeHtml(ref)}" aria-label="Delete ${escapeHtml(name)} from Saved skies" title="Delete from Saved skies">×</button>${confirmation}</div>`;
       }).join(''):'<p class="sky-saved-empty">No saved skies yet.</p>';
-      menu.innerHTML=`<div class="sky-saved-popover-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>Load Sky</strong><button type="button" data-saved-close aria-label="Close sky menu">×</button></div><div class="sky-saved-list">${items}</div>`;
+      menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>Load Sky</strong></div><div class="sky-saved-list">${items}</div>`;
       positionPopover();return;
     }
     if(menuView==='save'){
       const label=active.saved?'Save Changes':'Save Sky',name=active.saved?active.name:(active.name==='New Sky'||active.name===`Sky ${openSlot}`?'':active.name);
-      menu.innerHTML=`<div class="sky-saved-popover-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>${label}</strong><button type="button" data-saved-close aria-label="Close sky menu">×</button></div><form class="sky-saved-command-save" data-sky-command-save-form><label><span>Sky name</span><input type="text" maxlength="80" autocomplete="off" data-sky-command-save-name value="${escapeHtml(name)}" placeholder="Name this sky"></label><button type="submit">${label}</button><p data-sky-command-status aria-live="polite"></p></form>`;
+      menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>${label}</strong></div><form class="sky-saved-command-save" data-sky-command-save-form><label><span>Sky name</span><input type="text" maxlength="80" autocomplete="off" data-sky-command-save-name value="${escapeHtml(name)}" placeholder="Name this sky"></label><button type="submit">${label}</button><p data-sky-command-status aria-live="polite"></p></form>`;
       positionPopover();return;
     }
     const canAddB=openSlot==='A'&&!window.RelphiSkySlotControls?.hasSkyB?.()&&document.documentElement.dataset.skyBEditing!=='true';
     const saveButton=hasSky?`<button type="button" class="sky-saved-command" data-sky-command="save"><span>${active.saved?'Save Changes':'Save Sky'}</span></button>`:'';
     const addB=canAddB?'<button type="button" class="sky-saved-command" data-sky-command="add-b"><span>Add Sky B</span></button>':'';
-    menu.innerHTML=`<div class="sky-saved-popover-head"><strong>${escapeHtml(active.name)}</strong><button type="button" data-saved-close aria-label="Close sky menu">×</button></div><div class="sky-saved-command-list"><button type="button" class="sky-saved-command" data-sky-command="new"><span>New Sky</span></button><button type="button" class="sky-saved-command" data-sky-command="load"><span>Load Sky</span></button>${saveButton}${addB}<button type="button" class="sky-saved-command is-danger" data-sky-command="remove"><span>Remove Sky</span></button></div>`;
+    menu.innerHTML=`<div class="sky-saved-command-list"><button type="button" class="sky-saved-command" data-sky-command="new"><span>New Sky</span></button><button type="button" class="sky-saved-command" data-sky-command="load"><span>Load Sky</span></button>${saveButton}${addB}<button type="button" class="sky-saved-command is-danger" data-sky-command="remove"><span>Remove Sky</span></button></div>`;
     positionPopover();
   }
   function triggerFor(slot){
