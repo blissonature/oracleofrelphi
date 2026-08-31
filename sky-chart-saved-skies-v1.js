@@ -278,7 +278,7 @@
     if(popover?.isConnected)return popover;
     popover=document.createElement('div');
     popover.id='skySavedSkiesPopover';popover.className='sky-saved-skies-popover';popover.hidden=true;
-    popover.setAttribute('role','dialog');popover.setAttribute('aria-label','Saved skies');
+    popover.setAttribute('role','dialog');popover.setAttribute('aria-label','Sky menu');
     document.body.appendChild(popover);return popover;
   }
   function renderPopover(){
