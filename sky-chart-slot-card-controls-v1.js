@@ -222,5 +222,10 @@
       schedule();
     });
   }
+  window.RelphiSkySlotControls=Object.freeze({
+    addSkyB:startAddSkyB,
+    removeSkyB,
+    hasSkyB:hasStoredSkyB
+  });
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
