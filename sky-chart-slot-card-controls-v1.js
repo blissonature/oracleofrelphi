@@ -61,27 +61,6 @@
       window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot:'B',drawer:'where'}}));
     });
   }
-  function ensureAddProxy(){
-    const heading=document.querySelector('#skyFoundationA > .sky-foundation-heading');
-    if(!heading)return;
-    let button=heading.querySelector('[data-card-add-sky-b]');
-    if(!button){
-      button=document.createElement('button');
-      button.type='button';
-      button.className='sky-slot-card-control sky-slot-card-control--add';
-      button.dataset.cardAddSkyB='true';
-      button.setAttribute('aria-label','Add Sky B');
-      button.title='Add Sky B';
-      button.appendChild(icon('plus'));
-      button.addEventListener('click',event=>{
-        event.preventDefault();event.stopPropagation();startAddSkyB();
-      });
-      heading.appendChild(button);
-    }
-    const editing=document.documentElement.dataset.skyBEditing==='true';
-    button.hidden=skyBPresent()||editing;
-  }
-
   function releaseSkyBWhereWhen(){
     const transaction=window.RelphiSkyWhereWhenTransaction;
     try{transaction?.cancel?.('B')}catch(_){}
@@ -210,7 +189,13 @@
     }
   }
 
-  function sync(){queued=false;suppressInternalAdd();ensureAddProxy();ensureRemoveControl();styleRemove()}
+  function sync(){
+    queued=false;
+    suppressInternalAdd();
+    document.querySelectorAll('#skyFoundationA > .sky-foundation-heading [data-card-add-sky-b]').forEach(node=>node.remove());
+    ensureRemoveControl();
+    styleRemove();
+  }
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
   function start(){
     sync();
