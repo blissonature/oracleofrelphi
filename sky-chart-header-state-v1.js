@@ -5,7 +5,7 @@ if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyHeaderSt
 window.__relphiSkyHeaderStateV1=true;
 window.__relphiSkyHeaderStateV2=true;
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','unsaved sky','now']);
+const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','unsaved sky','new sky','where and when','now']);
 let nameQueued=false;
 function installStyles(){if(document.getElementById('skyHeaderStateStylesV2'))return;document.getElementById('skyHeaderStateStyles')?.remove();const style=document.createElement('style');style.id='skyHeaderStateStylesV2';style.textContent=`
 #skyFoundationA>.sky-foundation-heading,#skyFoundationB>.sky-foundation-heading{position:relative!important;display:grid!important;grid-template-columns:68px minmax(0,1fr) auto!important;grid-template-rows:44px!important;align-items:center!important;min-height:44px!important;height:44px!important;padding:0!important;overflow:visible!important}
