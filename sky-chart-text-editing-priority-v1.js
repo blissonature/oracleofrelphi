@@ -11,14 +11,16 @@
     '.sky-where-when-editor textarea:not([readonly]):not([disabled])',
     '.sky-where-when-editor select:not([disabled])',
     '[data-save-sky-name-input]:not([disabled])',
-    '[data-saved-name-input]:not([disabled])'
+    '[data-saved-name-input]:not([disabled])',
+    '[data-sky-command-save-name]:not([disabled])'
   ].join(',');
-  const NAME_SELECTOR='[data-ww-sky-name],[data-save-sky-name-input],[data-saved-name-input]';
+  const NAME_SELECTOR='[data-ww-sky-name],[data-save-sky-name-input],[data-saved-name-input],[data-sky-command-save-name]';
   const PASSIVE_TEXT_SELECTOR=[
     '.sky-where-when-editor [data-ww-field="location-query"]',
     '.sky-where-when-editor [data-ww-sky-name]',
     '[data-save-sky-name-input]',
-    '[data-saved-name-input]'
+    '[data-saved-name-input]',
+    '[data-sky-command-save-name]'
   ].join(',');
   const root=document.documentElement;
   const deferred=new Set();
