@@ -26,8 +26,18 @@
     }catch(_){return false}
   }
 
+  function skyBPresent(){
+    return document.documentElement.dataset.skyBPresent==='true';
+  }
+
   function startAddSkyB(){
-    if(hasStoredSkyB())return;
+    if(skyBPresent()||document.documentElement.dataset.skyBEditing==='true')return;
+    // A hidden/stale B payload must not suppress the user's Add Sky B control
+    // or silently restore an old comparison. Add Sky B always starts a fresh B workflow.
+    if(hasStoredSkyB()){
+      try{localStorage.removeItem(SKY_B_KEY)}catch(_){}
+      dispatchSkyBStorage(null);
+    }
     const internal=document.querySelector('#skyFoundationComparison [data-add-sky-b]');
     if(internal){internal.click();return}
 
@@ -69,7 +79,7 @@
       heading.appendChild(button);
     }
     const editing=document.documentElement.dataset.skyBEditing==='true';
-    button.hidden=hasStoredSkyB()||editing;
+    button.hidden=skyBPresent()||editing;
   }
 
   function releaseSkyBWhereWhen(){
@@ -99,7 +109,7 @@
   function ensureRemoveControl(){
     const heading=document.querySelector('#skyFoundationB > .sky-foundation-heading');
     if(!heading)return;
-    const present=document.documentElement.dataset.skyBPresent==='true'&&hasStoredSkyB();
+    const present=skyBPresent()&&hasStoredSkyB();
     let remove=heading.querySelector('[data-remove-sky-b]');
     if(present&&!remove){
       remove=document.createElement('button');
@@ -225,7 +235,8 @@
   window.RelphiSkySlotControls=Object.freeze({
     addSkyB:startAddSkyB,
     removeSkyB,
-    hasSkyB:hasStoredSkyB
+    hasSkyB:skyBPresent,
+    hasStoredSkyB
   });
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
