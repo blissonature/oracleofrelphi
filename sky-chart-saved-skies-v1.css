@@ -239,3 +239,31 @@
 .sky-saved-identity-actions button{appearance:none;min-height:32px;padding:0 11px;border:1px solid #27221e;border-radius:999px;background:#27221e;color:#fff;cursor:pointer;font:800 .59rem/1 system-ui,sans-serif}
 .sky-saved-identity-form>[data-saved-form-status]{grid-column:1/-1;min-height:.75rem;margin:0;color:#7d3c32;font:650 .56rem/1.25 system-ui,sans-serif}
 @media(max-width:620px){.sky-saved-identity-form{grid-template-columns:1fr}.sky-saved-identity-actions,.sky-saved-identity-form>[data-saved-form-status]{grid-column:1}}
+
+
+/* Compact top-of-card Sky command menu. */
+.sky-saved-command-list{display:grid;gap:2px;padding:6px}
+.sky-saved-command{
+  appearance:none;display:flex;align-items:center;width:100%;min-height:38px;
+  box-sizing:border-box;padding:8px 10px;border:1px solid transparent;border-radius:8px;
+  background:transparent;color:#211d19;cursor:pointer;text-align:left;
+  font:800 .66rem/1.2 system-ui,sans-serif
+}
+.sky-saved-command:hover,.sky-saved-command:focus-visible{outline:none;border-color:rgba(31,27,24,.12);background:#f4efe8}
+.sky-saved-command.is-danger{color:#962f2a}
+.sky-saved-command.is-danger:hover,.sky-saved-command.is-danger:focus-visible{background:#fff1ef;border-color:rgba(152,45,39,.18)}
+.sky-saved-back{font-size:1.15rem!important}
+.sky-saved-command-save{display:grid;gap:8px;padding:10px}
+.sky-saved-command-save label{display:grid;gap:4px}
+.sky-saved-command-save label>span{font:800 .58rem/1.1 system-ui,sans-serif}
+.sky-saved-command-save input{
+  width:100%;min-height:38px;box-sizing:border-box;padding:7px 9px;
+  border:1px solid rgba(31,27,24,.24);border-radius:8px;background:#fff;color:#211d19;
+  font:700 .68rem/1.2 system-ui,sans-serif
+}
+.sky-saved-command-save input:focus{outline:2px solid rgba(31,27,24,.16);outline-offset:1px;border-color:rgba(31,27,24,.45)}
+.sky-saved-command-save>button{
+  appearance:none;justify-self:end;min-height:32px;padding:0 12px;border:1px solid #27221e;
+  border-radius:999px;background:#27221e;color:#fff;cursor:pointer;font:800 .59rem/1 system-ui,sans-serif
+}
+.sky-saved-command-save p{min-height:.75rem;margin:0;color:#7d3c32;font:650 .56rem/1.25 system-ui,sans-serif}
