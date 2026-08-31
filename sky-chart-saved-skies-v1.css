@@ -267,3 +267,23 @@
   border-radius:999px;background:#27221e;color:#fff;cursor:pointer;font:800 .59rem/1 system-ui,sans-serif
 }
 .sky-saved-command-save p{min-height:.75rem;margin:0;color:#7d3c32;font:650 .56rem/1.25 system-ui,sans-serif}
+
+.sky-saved-subview-head{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr);
+  align-items:center;
+  gap:6px;
+  min-height:38px;
+  padding:0 8px;
+  border-bottom:1px solid rgba(31,27,24,.11);
+  background:#f5f0e9;
+}
+.sky-saved-subview-head strong{font:900 .7rem/1.1 system-ui,sans-serif}
+.sky-saved-subview-head .sky-saved-back{
+  appearance:none;display:grid;place-items:center;width:27px;height:27px;padding:0;
+  border:0;border-radius:999px;background:transparent;color:#675f58;cursor:pointer
+}
+.sky-saved-subview-head .sky-saved-back:hover,.sky-saved-subview-head .sky-saved-back:focus-visible{
+  outline:none;background:#e9e2da;color:#1f1b18
+}
+.sky-saved-command-list:first-child{padding-top:6px}
