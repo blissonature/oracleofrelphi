@@ -243,6 +243,7 @@ document.addEventListener('click',event=>{
 document.addEventListener('submit',event=>{const form=event.target.closest('.sky-where-when-editor');if(!form)return;event.preventDefault();submit(form.dataset.slot,form)});
 document.addEventListener('keydown',event=>{if(event.key!=='Enter')return;const input=event.target.closest('[data-ww-field="location-query"]');if(!input)return;event.preventDefault();const slot=eventSlot(input);if(slot)searchLocation(slot)});
 window.addEventListener('relphi:sky-drawer-opened',event=>{const{slot,drawer}=event.detail||{};if(drawer!=='where'||!SLOT_KEYS[slot])return;openEditor(slot,false)});
+window.addEventListener('relphi:sky-drawer-closed',event=>{const{slot,drawer}=event.detail||{};if(drawer!=='where'||!SLOT_KEYS[slot])return;if(transactionState.editing.has(slot))closeEditor(slot)});
 window.addEventListener('storage',event=>{if(!event.key||Object.values(SLOT_KEYS).includes(event.key)){['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot)})}});
 window.addEventListener('relphi:sky-foundation-ready',()=>{scheduleSummary('A');scheduleSummary('B')});
 window.addEventListener('relphi:sky-name-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]){closeEditor(slot);window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot,true)}});
