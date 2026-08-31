@@ -10,7 +10,7 @@
 
   const LIBRARY_KEY='relphiSkyLibraryV1';
   const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-  const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky']);
+  const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when']);
   let openSlot=null,queued=false,popover=null,observer=null;
   let deletePendingRef='',menuView='commands';
 
@@ -297,7 +297,7 @@
       positionPopover();return;
     }
     if(menuView==='save'){
-      const label=active.saved?'Save Changes':'Save Sky',name=active.saved?active.name:(active.name==='New Sky'||active.name===`Sky ${openSlot}`?'':active.name);
+      const label=active.saved?'Save Changes':'Save Sky',name=active.saved?active.name:(active.name==='New Sky'||active.name==='Where and When'||active.name===`Sky ${openSlot}`||active.name==='Unsaved sky'?'':active.name);
       menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>${label}</strong></div><form class="sky-saved-command-save" data-sky-command-save-form><label><span>Sky name</span><input type="text" maxlength="80" autocomplete="off" data-sky-command-save-name value="${escapeHtml(name)}" placeholder="Name this sky"></label><button type="submit">${label}</button><p data-sky-command-status aria-live="polite"></p></form>`;
       positionPopover();return;
     }
