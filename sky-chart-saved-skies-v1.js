@@ -301,7 +301,7 @@
       menu.innerHTML=`<div class="sky-saved-subview-head"><button type="button" class="sky-saved-back" data-sky-menu-back aria-label="Back">‹</button><strong>${label}</strong></div><form class="sky-saved-command-save" data-sky-command-save-form><label><span>Sky name</span><input type="text" maxlength="80" autocomplete="off" data-sky-command-save-name value="${escapeHtml(name)}" placeholder="Name this sky"></label><button type="submit">${label}</button><p data-sky-command-status aria-live="polite"></p></form>`;
       positionPopover();return;
     }
-    const canAddB=openSlot==='A'&&!window.RelphiSkySlotControls?.hasSkyB?.()&&document.documentElement.dataset.skyBEditing!=='true';
+    const canAddB=openSlot==='A'&&!window.RelphiSkySlotControls?.hasSkyB?.();
     const saveButton=hasSky?`<button type="button" class="sky-saved-command" data-sky-command="save"><span>${active.saved?'Save Changes':'Save Sky'}</span></button>`:'';
     const addB=canAddB?'<button type="button" class="sky-saved-command" data-sky-command="add-b"><span>Add Sky B</span></button>':'';
     menu.innerHTML=`<div class="sky-saved-command-list"><button type="button" class="sky-saved-command" data-sky-command="new"><span>New Sky</span></button><button type="button" class="sky-saved-command" data-sky-command="load"><span>Load Sky</span></button>${saveButton}${addB}<button type="button" class="sky-saved-command is-danger" data-sky-command="remove"><span>Remove Sky</span></button></div>`;
