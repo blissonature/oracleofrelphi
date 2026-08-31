@@ -24,9 +24,13 @@ function installDrawerBehavior(slot,root){
     if(details.dataset.skyDrawerBound==='true')return;
     details.dataset.skyDrawerBound='true';
     details.addEventListener('toggle',()=>{
-      if(!details.open)return;
+      const name=details.dataset.skyDrawer||'';
+      if(!details.open){
+        window.dispatchEvent(new CustomEvent('relphi:sky-drawer-closed',{detail:{slot,drawer:name}}));
+        return;
+      }
       root.querySelectorAll(':scope > .sky-card-drawer[open]').forEach(other=>{if(other!==details)other.open=false});
-      window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot,drawer:details.dataset.skyDrawer||''}}));
+      window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot,drawer:name}}));
     });
   });
 }
