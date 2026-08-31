@@ -5,7 +5,7 @@
   window.__relphiSkyCardTitleIntegrityV1=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-  const GENERIC=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','unsaved sky']);
+  const GENERIC=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','unsaved sky','new sky','where and when']);
   const STYLE_ID='skyCardStableTitleV3';
   let queued=false;
 
@@ -51,6 +51,12 @@
     const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
     return!!String(metadata.savedSkyId||metadata.savedSkyName||'').trim();
   }
+  function hasPlacements(value){
+    if(!value||typeof value!=='object')return false;
+    const source=[value.placements,value.positions,value.points,value.bodies].find(candidate=>candidate&&typeof candidate==='object'&&!Array.isArray(candidate));
+    if(!source)return false;
+    return Object.values(source).some(item=>item&&typeof item==='object'&&!Array.isArray(item)&&(Number.isFinite(Number(item.longitude))||String(item.sign||item.zodiac||'').trim()));
+  }
   function repairManualIdentity(slot,value){
     if(!value||!manualWhereWhen(value)||saved(value))return value;
     let changed=false;
@@ -79,6 +85,7 @@
   }
   function nameFor(slot,valueOverride){
     const value=valueOverride||read(slot),metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{},profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
+    if(!hasPlacements(value))return'Where and When';
     const savedName=String(metadata.savedSkyName||'').trim();
     if(savedName)return savedName;
 
