@@ -304,7 +304,8 @@
     const canAddB=openSlot==='A'&&!window.RelphiSkySlotControls?.hasSkyB?.();
     const saveButton=hasSky?`<button type="button" class="sky-saved-command" data-sky-command="save"><span>${active.saved?'Save Changes':'Save Sky'}</span></button>`:'';
     const addB=canAddB?'<button type="button" class="sky-saved-command" data-sky-command="add-b"><span>Add Sky B</span></button>':'';
-    menu.innerHTML=`<div class="sky-saved-command-list"><button type="button" class="sky-saved-command" data-sky-command="new"><span>New Sky</span></button><button type="button" class="sky-saved-command" data-sky-command="load"><span>Load Sky</span></button>${saveButton}${addB}<button type="button" class="sky-saved-command is-danger" data-sky-command="remove"><span>Remove Sky</span></button></div>`;
+    const removeButton=openSlot==='B'?'<button type="button" class="sky-saved-command is-danger" data-sky-command="remove"><span>Remove Sky</span></button>':'';
+    menu.innerHTML=`<div class="sky-saved-command-list"><button type="button" class="sky-saved-command" data-sky-command="new"><span>New Sky</span></button><button type="button" class="sky-saved-command" data-sky-command="load"><span>Load Sky</span></button>${saveButton}${addB}${removeButton}</div>`;
     positionPopover();
   }
   function triggerFor(slot){
