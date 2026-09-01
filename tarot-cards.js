@@ -3034,7 +3034,13 @@ window.RELPHI_TAROT_CARDS = [
       "Active",
       "Mars",
       "Relphi",
-      "Universal Human Needs"
+      "Universal Human Needs",
+      "Zodiac template",
+      "I",
+      "Lamb",
+      "Taleh",
+      "Yang arc (Aries through Virgo)",
+      "House 1"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3044,7 +3050,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Aries",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Fire",
+      "modality": "Cardinal",
+      "sign_polarity": "Yang",
+      "natural_house": 1,
+      "macro_half": "Yang arc (Aries through Virgo)",
+      "half_position": 1,
+      "hebrew_zodiac": {
+        "hebrew": "טָלֶה",
+        "transliteration": "Taleh",
+        "literal": "Lamb",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "I",
+      "opposed_sign": "Libra",
+      "opposition_axis": "I ↔ You"
     },
     "hebrew": {
       "letter": "Heh",
@@ -3063,6 +3084,11 @@ window.RELPHI_TAROT_CARDS = [
         "number": "4",
         "title": "The Emperor",
         "notes": "Thoth name: The Emperor. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "The Emperor",
+        "title": "I",
+        "notes": "Aries / natural House 1. Yang arc (Aries through Virgo); individual sign polarity Yang. טָלֶה Taleh means Lamb. A first-person center emerges and projects itself into the field."
       }
     },
     "stable_symbol_id": "the_emperor",
@@ -3074,7 +3100,12 @@ window.RELPHI_TAROT_CARDS = [
         "Relphi Universal Human Needs sequence",
         "Protection",
         "boundary",
-        "defense"
+        "defense",
+        "I",
+        "Lamb",
+        "Taleh",
+        "Yang arc (Aries through Virgo)",
+        "Natural House 1"
       ],
       "universal_human_needs": {
         "sequence_position": 4,
@@ -3085,7 +3116,34 @@ window.RELPHI_TAROT_CARDS = [
         "formula_relative_to_sun_mercury": "transformation from the Sun-to-Mercury base interval",
         "transformation": "Subsistence becomes protection: life becomes boundary."
       },
-      "dossier_note": "The Emperor carries Earth into Mars: what lives must be defended, bounded, and made durable."
+      "dossier_note": "The Emperor carries Earth into Mars: what lives must be defended, bounded, and made durable. Zodiac foundation: I. Aries begins the yang macro-half through a yang sign. Mars describes the protrusive act of beginning; the Sun is exalted here as light rises in strength.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "I",
+        "operation": "A first-person center emerges and projects itself into the field.",
+        "natural_house": 1,
+        "macro_half": "Yang arc (Aries through Virgo)",
+        "half_position": 1,
+        "sign_polarity": "Yang",
+        "opposed_sign": "Libra",
+        "opposed_foundation": "You / Other",
+        "opposition_axis": "I ↔ You",
+        "hebrew_zodiac": {
+          "hebrew": "טָלֶה",
+          "transliteration": "Taleh",
+          "literal": "Lamb",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Heh / Window: a bounded inside opens toward an outside.",
+        "insight": "Aries begins the yang macro-half through a yang sign. Mars describes the protrusive act of beginning; the Sun is exalted here as light rises in strength.",
+        "recursive_correspondences": [
+          "Equinoctial gate: the yang macro-half begins through a yang sign.",
+          "Mars: protrusive agency, severance, initiation, and directed force.",
+          "Sun exaltation: solar light rises in seasonal strength at the Aries gate.",
+          "Body-scale imaginal analogue: phallus/penis as outward projection and penetrative agency."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
     }
   },
   {
@@ -3106,7 +3164,13 @@ window.RELPHI_TAROT_CARDS = [
       "Nail",
       "The Hierophant",
       "Passive",
-      "Venus"
+      "Venus",
+      "Zodiac template",
+      "Substance",
+      "Ox",
+      "Shor",
+      "Yang arc (Aries through Virgo)",
+      "House 2"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3116,7 +3180,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Taurus",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Earth",
+      "modality": "Fixed",
+      "sign_polarity": "Yin",
+      "natural_house": 2,
+      "macro_half": "Yang arc (Aries through Virgo)",
+      "half_position": 2,
+      "hebrew_zodiac": {
+        "hebrew": "שׁוֹר",
+        "transliteration": "Shor",
+        "literal": "Ox",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "Substance",
+      "opposed_sign": "Scorpio",
+      "opposition_axis": "Substance ↔ Interpenetration"
     },
     "hebrew": {
       "letter": "Vav",
@@ -3135,10 +3214,53 @@ window.RELPHI_TAROT_CARDS = [
         "number": "5",
         "title": "The Hierophant",
         "notes": "Thoth name: The Hierophant. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "The Hierophant",
+        "title": "Substance",
+        "notes": "Taurus / natural House 2. Yang arc (Aries through Virgo); individual sign polarity Yin. שׁוֹר Shor means Ox. The emerging I acquires body, weight, continuity, possession, and value."
       }
     },
     "stable_symbol_id": "the_hierophant",
-    "stable_symbol_kind": "card"
+    "stable_symbol_kind": "card",
+    "relphi": {
+      "title": "Zodiac foundation: Substance",
+      "summary": "The emerging I acquires body, weight, continuity, possession, and value.",
+      "principles": [
+        "Substance",
+        "Ox",
+        "Shor",
+        "Yang arc (Aries through Virgo)",
+        "Natural House 2"
+      ],
+      "dossier_note": "Zodiac foundation: Substance. The ox bears weight and Vav’s nail fastens. The Aries vector becomes something that can endure, be held, enjoyed, protected, and valued.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "Substance",
+        "operation": "The emerging I acquires body, weight, continuity, possession, and value.",
+        "natural_house": 2,
+        "macro_half": "Yang arc (Aries through Virgo)",
+        "half_position": 2,
+        "sign_polarity": "Yin",
+        "opposed_sign": "Scorpio",
+        "opposed_foundation": "Interpenetration",
+        "opposition_axis": "Substance ↔ Interpenetration",
+        "hebrew_zodiac": {
+          "hebrew": "שׁוֹר",
+          "transliteration": "Shor",
+          "literal": "Ox",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Vav / Nail: fastening, joining, and making a relation hold.",
+        "insight": "The ox bears weight and Vav’s nail fastens. The Aries vector becomes something that can endure, be held, enjoyed, protected, and valued.",
+        "recursive_correspondences": [
+          "Ox: weight-bearing embodiment and endurance.",
+          "Venus: value, attraction, pleasure, and preservation.",
+          "Natural Second House: resources, possession, value, and material continuity."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
+    }
   },
   {
     "card_id": "the_lovers",
@@ -3158,7 +3280,13 @@ window.RELPHI_TAROT_CARDS = [
       "Sword",
       "The Lovers",
       "Active",
-      "Mercury"
+      "Mercury",
+      "Zodiac template",
+      "Distinction",
+      "Twins",
+      "Te’omim",
+      "Yang arc (Aries through Virgo)",
+      "House 3"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3168,7 +3296,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Gemini",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Air",
+      "modality": "Mutable",
+      "sign_polarity": "Yang",
+      "natural_house": 3,
+      "macro_half": "Yang arc (Aries through Virgo)",
+      "half_position": 3,
+      "hebrew_zodiac": {
+        "hebrew": "תְּאוֹמִים",
+        "transliteration": "Te’omim",
+        "literal": "Twins",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "Distinction",
+      "opposed_sign": "Sagittarius",
+      "opposition_axis": "Distinction ↔ Orientation"
     },
     "hebrew": {
       "letter": "Zayin",
@@ -3187,10 +3330,53 @@ window.RELPHI_TAROT_CARDS = [
         "number": "6",
         "title": "The Lovers",
         "notes": "Thoth name: The Lovers. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "The Lovers",
+        "title": "Distinction",
+        "notes": "Gemini / natural House 3. Yang arc (Aries through Virgo); individual sign polarity Yang. תְּאוֹמִים Te’omim means Twins. The embodied center divides experience into distinguishable terms and exchanges signals between them."
       }
     },
     "stable_symbol_id": "the_lovers",
-    "stable_symbol_kind": "card"
+    "stable_symbol_kind": "card",
+    "relphi": {
+      "title": "Zodiac foundation: Distinction",
+      "summary": "The embodied center divides experience into distinguishable terms and exchanges signals between them.",
+      "principles": [
+        "Distinction",
+        "Twins",
+        "Te’omim",
+        "Yang arc (Aries through Virgo)",
+        "Natural House 3"
+      ],
+      "dossier_note": "Zodiac foundation: Distinction. Twins make two visible; Zayin’s sword cuts a distinction; Mercury names, compares, translates, and carries messages.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "Distinction",
+        "operation": "The embodied center divides experience into distinguishable terms and exchanges signals between them.",
+        "natural_house": 3,
+        "macro_half": "Yang arc (Aries through Virgo)",
+        "half_position": 3,
+        "sign_polarity": "Yang",
+        "opposed_sign": "Sagittarius",
+        "opposed_foundation": "Orientation",
+        "opposition_axis": "Distinction ↔ Orientation",
+        "hebrew_zodiac": {
+          "hebrew": "תְּאוֹמִים",
+          "transliteration": "Te’omim",
+          "literal": "Twins",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Zayin / Sword: cutting a distinction so two terms can be recognized.",
+        "insight": "Twins make two visible; Zayin’s sword cuts a distinction; Mercury names, compares, translates, and carries messages.",
+        "recursive_correspondences": [
+          "Twins: plurality and mirrored difference.",
+          "Mercury: language, comparison, translation, and exchange.",
+          "Natural Third House: speech, learning, siblings, neighbors, and the local field."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
+    }
   },
   {
     "card_id": "the_chariot",
@@ -3218,7 +3404,13 @@ window.RELPHI_TAROT_CARDS = [
       "conservation of energy",
       "momentum",
       "navigation by the stars",
-      "stable reference frame"
+      "stable reference frame",
+      "Zodiac template",
+      "Room",
+      "Crab",
+      "Sartan",
+      "Yang arc (Aries through Virgo)",
+      "House 4"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3228,7 +3420,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Cancer",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Water",
+      "modality": "Cardinal",
+      "sign_polarity": "Yin",
+      "natural_house": 4,
+      "macro_half": "Yang arc (Aries through Virgo)",
+      "half_position": 4,
+      "hebrew_zodiac": {
+        "hebrew": "סַרְטָן",
+        "transliteration": "Sartan",
+        "literal": "Crab",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "Room",
+      "opposed_sign": "Capricorn",
+      "opposition_axis": "Room ↔ Regard"
     },
     "hebrew": {
       "letter": "Cheth",
@@ -3247,6 +3454,11 @@ window.RELPHI_TAROT_CARDS = [
         "number": "7",
         "title": "The Chariot",
         "notes": "Thoth name: The Chariot. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "The Chariot",
+        "title": "Room",
+        "notes": "Cancer / natural House 4. Yang arc (Aries through Virgo); individual sign polarity Yin. סַרְטָן Sartan means Crab. The developing whole creates interior space capable of containing differentiated life without erasing it."
       }
     },
     "stable_symbol_id": "the_chariot",
@@ -3262,9 +3474,41 @@ window.RELPHI_TAROT_CARDS = [
         "conservation of energy",
         "momentum",
         "navigation by the stars",
-        "stable reference frame"
+        "stable reference frame",
+        "Room",
+        "Crab",
+        "Sartan",
+        "Yang arc (Aries through Virgo)",
+        "Natural House 4"
       ],
-      "dossier_note": "Relphi reads the Chariot as the occupied operational slot: the center is cleared, not cluttered, so direction and motion can be measured."
+      "dossier_note": "Relphi reads the Chariot as the occupied operational slot: the center is cleared, not cluttered, so direction and motion can be measured. Zodiac foundation: Room. Cancer is the solstitial midpoint of the Aries-to-Libra arc. Crab, shell, fence, home, and womb share bounded interiority. The Moon shows light and dark occupying one sphere without either ceasing to be itself.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "Room",
+        "operation": "The developing whole creates interior space capable of containing differentiated life without erasing it.",
+        "natural_house": 4,
+        "macro_half": "Yang arc (Aries through Virgo)",
+        "half_position": 4,
+        "sign_polarity": "Yin",
+        "opposed_sign": "Capricorn",
+        "opposed_foundation": "Regard / Standing",
+        "opposition_axis": "Room ↔ Regard",
+        "hebrew_zodiac": {
+          "hebrew": "סַרְטָן",
+          "transliteration": "Sartan",
+          "literal": "Crab",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Cheth / Fence: a boundary that establishes an inside.",
+        "insight": "Cancer is the solstitial midpoint of the Aries-to-Libra arc. Crab, shell, fence, home, and womb share bounded interiority. The Moon shows light and dark occupying one sphere without either ceasing to be itself.",
+        "recursive_correspondences": [
+          "Moon: one body can hold light and dark in co-presence.",
+          "Crab and shell: protected interiority.",
+          "Imaginal formulation: room within oneself for another to remain themselves.",
+          "Natural Fourth House: home, roots, ancestry, private foundation, and belonging."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
     }
   },
   {
@@ -3285,7 +3529,13 @@ window.RELPHI_TAROT_CARDS = [
       "Serpent",
       "Lust",
       "Active",
-      "Sun"
+      "Sun",
+      "Zodiac template",
+      "Radiance",
+      "Lion",
+      "Aryeh",
+      "Yang arc (Aries through Virgo)",
+      "House 5"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3295,7 +3545,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Leo",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Fire",
+      "modality": "Fixed",
+      "sign_polarity": "Yang",
+      "natural_house": 5,
+      "macro_half": "Yang arc (Aries through Virgo)",
+      "half_position": 5,
+      "hebrew_zodiac": {
+        "hebrew": "אַרְיֵה",
+        "transliteration": "Aryeh",
+        "literal": "Lion",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "Radiance",
+      "opposed_sign": "Aquarius",
+      "opposition_axis": "Radiance ↔ Circulation"
     },
     "hebrew": {
       "letter": "Teth",
@@ -3314,10 +3579,54 @@ window.RELPHI_TAROT_CARDS = [
         "number": "11",
         "title": "Lust",
         "notes": "Thoth name: Lust. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "Strength / Lust",
+        "title": "Radiance",
+        "notes": "Leo / natural House 5. Yang arc (Aries through Virgo); individual sign polarity Yang. אַרְיֵה Aryeh means Lion. Life established within an interior center expresses, creates, displays, and radiates from itself."
       }
     },
     "stable_symbol_id": "strength",
-    "stable_symbol_kind": "card"
+    "stable_symbol_kind": "card",
+    "relphi": {
+      "title": "Zodiac foundation: Radiance",
+      "summary": "Life established within an interior center expresses, creates, displays, and radiates from itself.",
+      "principles": [
+        "Radiance",
+        "Lion",
+        "Aryeh",
+        "Yang arc (Aries through Virgo)",
+        "Natural House 5"
+      ],
+      "dossier_note": "Zodiac foundation: Radiance. Leo is the first full sign after the Cancer hinge. The Sun is a center that makes itself known by emitting; the lion’s mane resembles a corona around the head.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "Radiance",
+        "operation": "Life established within an interior center expresses, creates, displays, and radiates from itself.",
+        "natural_house": 5,
+        "macro_half": "Yang arc (Aries through Virgo)",
+        "half_position": 5,
+        "sign_polarity": "Yang",
+        "opposed_sign": "Aquarius",
+        "opposed_foundation": "Circulation / Vessel",
+        "opposition_axis": "Radiance ↔ Circulation",
+        "hebrew_zodiac": {
+          "hebrew": "אַרְיֵה",
+          "transliteration": "Aryeh",
+          "literal": "Lion",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Teth / Serpent: concentrated living force held in a continuous body.",
+        "insight": "Leo is the first full sign after the Cancer hinge. The Sun is a center that makes itself known by emitting; the lion’s mane resembles a corona around the head.",
+        "recursive_correspondences": [
+          "Sun: centrality, emission, vitality, and self-luminous presence.",
+          "Lion’s mane: a corona that makes the head visibly radiant and prominent.",
+          "Aries brings the self forth; Leo brings what is inside the self forth.",
+          "Natural Fifth House: pleasure, children, creativity, play, and display."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
+    }
   },
   {
     "card_id": "the_hermit",
@@ -3337,7 +3646,13 @@ window.RELPHI_TAROT_CARDS = [
       "Hand",
       "The Hermit",
       "Passive",
-      "Mercury"
+      "Mercury",
+      "Zodiac template",
+      "Ripeness",
+      "Virgin / Maiden",
+      "Betulah",
+      "Yang arc (Aries through Virgo)",
+      "House 6"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3347,7 +3662,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Virgo",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Earth",
+      "modality": "Mutable",
+      "sign_polarity": "Yin",
+      "natural_house": 6,
+      "macro_half": "Yang arc (Aries through Virgo)",
+      "half_position": 6,
+      "hebrew_zodiac": {
+        "hebrew": "בְּתוּלָה",
+        "transliteration": "Betulah",
+        "literal": "Virgin / Maiden",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "Ripeness",
+      "opposed_sign": "Pisces",
+      "opposition_axis": "Ripeness ↔ Whole"
     },
     "hebrew": {
       "letter": "Yod",
@@ -3366,10 +3696,54 @@ window.RELPHI_TAROT_CARDS = [
         "number": "9",
         "title": "The Hermit",
         "notes": "Thoth name: The Hermit. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "The Hermit",
+        "title": "Ripeness",
+        "notes": "Virgo / natural House 6. Yang arc (Aries through Virgo); individual sign polarity Yin. בְּתוּלָה Betulah means Virgin / Maiden. The yang arc matures what it has grown, then gathers, sorts, refines, and prepares it for the threshold."
       }
     },
     "stable_symbol_id": "the_hermit",
-    "stable_symbol_kind": "card"
+    "stable_symbol_kind": "card",
+    "relphi": {
+      "title": "Zodiac foundation: Ripeness",
+      "summary": "The yang arc matures what it has grown, then gathers, sorts, refines, and prepares it for the threshold.",
+      "principles": [
+        "Ripeness",
+        "Virgin / Maiden",
+        "Betulah",
+        "Yang arc (Aries through Virgo)",
+        "Natural House 6"
+      ],
+      "dossier_note": "Zodiac foundation: Ripeness. Virgo is ripeness at the cusp of the zodiac’s second macro-half. The hand gathers and works what is ready; what ripens here is ready to be weighed in Libra.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "Ripeness",
+        "operation": "The yang arc matures what it has grown, then gathers, sorts, refines, and prepares it for the threshold.",
+        "natural_house": 6,
+        "macro_half": "Yang arc (Aries through Virgo)",
+        "half_position": 6,
+        "sign_polarity": "Yin",
+        "opposed_sign": "Pisces",
+        "opposed_foundation": "Whole / Release",
+        "opposition_axis": "Ripeness ↔ Whole",
+        "hebrew_zodiac": {
+          "hebrew": "בְּתוּלָה",
+          "transliteration": "Betulah",
+          "literal": "Virgin / Maiden",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Yod / Hand: gathering, selecting, working, and making ready.",
+        "insight": "Virgo is ripeness at the cusp of the zodiac’s second macro-half. The hand gathers and works what is ready; what ripens here is ready to be weighed in Libra.",
+        "recursive_correspondences": [
+          "Betulah: the Maiden/Virgin as a living image rather than an opaque label.",
+          "Harvest: ripeness, readiness, sorting, discernment, and useful preparation.",
+          "Lúnasa: a comparative seasonal analogue for harvest-opening and ripeness, not a claim of historical derivation.",
+          "Natural Sixth House: work, service, craft, health, maintenance, and correction."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
+    }
   },
   {
     "card_id": "wheel_of_fortune",
@@ -3462,7 +3836,13 @@ window.RELPHI_TAROT_CARDS = [
       "Ox-goad",
       "Adjustment",
       "Mixed",
-      "Venus"
+      "Venus",
+      "Zodiac template",
+      "You / Other",
+      "Scales",
+      "Moznayim",
+      "Yin arc (Libra through Pisces)",
+      "House 7"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3472,7 +3852,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Libra",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Air",
+      "modality": "Cardinal",
+      "sign_polarity": "Yang",
+      "natural_house": 7,
+      "macro_half": "Yin arc (Libra through Pisces)",
+      "half_position": 1,
+      "hebrew_zodiac": {
+        "hebrew": "מֹאזְנַיִם",
+        "transliteration": "Moznayim",
+        "literal": "Scales",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "You / Other",
+      "opposed_sign": "Aries",
+      "opposition_axis": "I ↔ You"
     },
     "hebrew": {
       "letter": "Lamed",
@@ -3491,10 +3886,55 @@ window.RELPHI_TAROT_CARDS = [
         "number": "8",
         "title": "Adjustment",
         "notes": "Thoth name: Adjustment. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "Justice / Adjustment",
+        "title": "You / Other",
+        "notes": "Libra / natural House 7. Yin arc (Libra through Pisces); individual sign polarity Yang. מֹאזְנַיִם Moznayim means Scales. A second center is recognized across from the first; relation begins between two first persons."
       }
     },
     "stable_symbol_id": "justice",
-    "stable_symbol_kind": "card"
+    "stable_symbol_kind": "card",
+    "relphi": {
+      "title": "Zodiac foundation: You / Other",
+      "summary": "A second center is recognized across from the first; relation begins between two first persons.",
+      "principles": [
+        "You / Other",
+        "Scales",
+        "Moznayim",
+        "Yin arc (Libra through Pisces)",
+        "Natural House 7"
+      ],
+      "dossier_note": "Zodiac foundation: You / Other. Libra begins the yin macro-half through a yang sign. The equinoctial gate repeats the Aries operation at another scale: a new beginning, now oriented toward the Other.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "You / Other",
+        "operation": "A second center is recognized across from the first; relation begins between two first persons.",
+        "natural_house": 7,
+        "macro_half": "Yin arc (Libra through Pisces)",
+        "half_position": 1,
+        "sign_polarity": "Yang",
+        "opposed_sign": "Aries",
+        "opposed_foundation": "I",
+        "opposition_axis": "I ↔ You",
+        "hebrew_zodiac": {
+          "hebrew": "מֹאזְנַיִם",
+          "transliteration": "Moznayim",
+          "literal": "Scales",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Lamed / Ox-goad: directed adjustment, guidance, and calibration.",
+        "insight": "Libra begins the yin macro-half through a yang sign. The equinoctial gate repeats the Aries operation at another scale: a new beginning, now oriented toward the Other.",
+        "recursive_correspondences": [
+          "Equinoctial gate: the yin macro-half begins through a yang sign.",
+          "Scales: two distinct sides brought into relation and proportion.",
+          "Vulva: paired lips around a relational opening, used here as an imaginal structural analogue.",
+          "Coitus: two differentiated bodies form one coordinated relational event.",
+          "Natural Seventh House: partner, contract, direct other, and one-to-one encounter."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
+    }
   },
   {
     "card_id": "the_hanged_man",
@@ -3588,7 +4028,13 @@ window.RELPHI_TAROT_CARDS = [
       "Fish",
       "Death",
       "Passive",
-      "Mars"
+      "Mars",
+      "Zodiac template",
+      "Interpenetration",
+      "Scorpion",
+      "Akrav",
+      "Yin arc (Libra through Pisces)",
+      "House 8"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3598,7 +4044,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Scorpio",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Water",
+      "modality": "Fixed",
+      "sign_polarity": "Yin",
+      "natural_house": 8,
+      "macro_half": "Yin arc (Libra through Pisces)",
+      "half_position": 2,
+      "hebrew_zodiac": {
+        "hebrew": "עַקְרָב",
+        "transliteration": "Akrav",
+        "literal": "Scorpion",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "Interpenetration",
+      "opposed_sign": "Taurus",
+      "opposition_axis": "Substance ↔ Interpenetration"
     },
     "hebrew": {
       "letter": "Nun",
@@ -3617,6 +4078,11 @@ window.RELPHI_TAROT_CARDS = [
         "number": "13",
         "title": "Death",
         "notes": "Thoth name: Death."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "Death",
+        "title": "Interpenetration",
+        "notes": "Scorpio / natural House 8. Yin arc (Libra through Pisces); individual sign polarity Yin. עַקְרָב Akrav means Scorpion. What Libra joins at the boundary moves inward into exchange, penetration, mingling, vulnerability, consequence, and bond."
       }
     },
     "stable_symbol_id": "death",
@@ -3633,9 +4099,14 @@ window.RELPHI_TAROT_CARDS = [
         "missing apex",
         "trimmed ending",
         "official downgrading",
-        "coverup logic"
+        "coverup logic",
+        "Interpenetration",
+        "Scorpion",
+        "Akrav",
+        "Yin arc (Libra through Pisces)",
+        "Natural House 8"
       ],
-      "dossier_note": "Pluto names the cut-off body, the downgraded body, the missing apex, the trimmed ending, the covered-over harm, and the real thing removed from official standing. Pluto remains real after being made smaller by the system.",
+      "dossier_note": "Pluto names the cut-off body, the downgraded body, the missing apex, the trimmed ending, the covered-over harm, and the real thing removed from official standing. Pluto remains real after being made smaller by the system. Zodiac foundation: Interpenetration. Taurus asks what is embodied and held; Scorpio asks what happens when embodied resources, fluids, risks, debts, desires, and consequences become shared.",
       "pluto_note": {
         "status": "Relphi note on Death only",
         "examples": [
@@ -3648,6 +4119,32 @@ window.RELPHI_TAROT_CARDS = [
           "newspaper ending trimmed from the inverted-pyramid article"
         ],
         "counter_motion": "excavation, restored scale, and refusing minimization"
+      },
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "Interpenetration",
+        "operation": "What Libra joins at the boundary moves inward into exchange, penetration, mingling, vulnerability, consequence, and bond.",
+        "natural_house": 8,
+        "macro_half": "Yin arc (Libra through Pisces)",
+        "half_position": 2,
+        "sign_polarity": "Yin",
+        "opposed_sign": "Taurus",
+        "opposed_foundation": "Substance",
+        "opposition_axis": "Substance ↔ Interpenetration",
+        "hebrew_zodiac": {
+          "hebrew": "עַקְרָב",
+          "transliteration": "Akrav",
+          "literal": "Scorpion",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Nun / Fish: a living body moving within a medium, useful here as an image of immersion.",
+        "insight": "Taurus asks what is embodied and held; Scorpio asks what happens when embodied resources, fluids, risks, debts, desires, and consequences become shared.",
+        "recursive_correspondences": [
+          "Mars: force carried into depth, defense, severance, and survival.",
+          "Scorpion: guarded vulnerability, penetration, venom, and transformation.",
+          "Natural Eighth House: shared resources, debt, loss, inheritance, intimacy, and release."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
       }
     }
   },
@@ -3669,7 +4166,13 @@ window.RELPHI_TAROT_CARDS = [
       "Prop",
       "Art",
       "Active",
-      "Jupiter"
+      "Jupiter",
+      "Zodiac template",
+      "Orientation",
+      "Bow",
+      "Keshet",
+      "Yin arc (Libra through Pisces)",
+      "House 9"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3679,7 +4182,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Sagittarius",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Fire",
+      "modality": "Mutable",
+      "sign_polarity": "Yang",
+      "natural_house": 9,
+      "macro_half": "Yin arc (Libra through Pisces)",
+      "half_position": 3,
+      "hebrew_zodiac": {
+        "hebrew": "קֶשֶׁת",
+        "transliteration": "Keshet",
+        "literal": "Bow",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "Orientation",
+      "opposed_sign": "Gemini",
+      "opposition_axis": "Distinction ↔ Orientation"
     },
     "hebrew": {
       "letter": "Samekh",
@@ -3698,10 +4216,54 @@ window.RELPHI_TAROT_CARDS = [
         "number": "14",
         "title": "Art",
         "notes": "Thoth name: Art. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "Temperance / Art",
+        "title": "Orientation",
+        "notes": "Sagittarius / natural House 9. Yin arc (Libra through Pisces); individual sign polarity Yang. קֶשֶׁת Keshet means Bow. The relational field takes accumulated distinctions and bonds and orients them toward a horizon, worldview, journey, law, teaching, or meaning."
       }
     },
     "stable_symbol_id": "temperance",
-    "stable_symbol_kind": "card"
+    "stable_symbol_kind": "card",
+    "relphi": {
+      "title": "Zodiac foundation: Orientation",
+      "summary": "The relational field takes accumulated distinctions and bonds and orients them toward a horizon, worldview, journey, law, teaching, or meaning.",
+      "principles": [
+        "Orientation",
+        "Bow",
+        "Keshet",
+        "Yin arc (Libra through Pisces)",
+        "Natural House 9"
+      ],
+      "dossier_note": "Zodiac foundation: Orientation. The Hebrew zodiacal image is the bow rather than the archer. A bow stores tension, chooses direction, and releases across distance.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "Orientation",
+        "operation": "The relational field takes accumulated distinctions and bonds and orients them toward a horizon, worldview, journey, law, teaching, or meaning.",
+        "natural_house": 9,
+        "macro_half": "Yin arc (Libra through Pisces)",
+        "half_position": 3,
+        "sign_polarity": "Yang",
+        "opposed_sign": "Gemini",
+        "opposed_foundation": "Distinction",
+        "opposition_axis": "Distinction ↔ Orientation",
+        "hebrew_zodiac": {
+          "hebrew": "קֶשֶׁת",
+          "transliteration": "Keshet",
+          "literal": "Bow",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Samekh / Prop: support that keeps a structure or journey upheld.",
+        "insight": "The Hebrew zodiacal image is the bow rather than the archer. A bow stores tension, chooses direction, and releases across distance.",
+        "recursive_correspondences": [
+          "Bow: stored tension, chosen direction, aim, and release across distance.",
+          "Jupiter: enlargement, meaning, blessing, law, teaching, and horizon.",
+          "Gemini distinguishes locally; Sagittarius orients those distinctions toward a larger world.",
+          "Natural Ninth House: worldview, religion, philosophy, higher learning, law, and long journeys."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
+    }
   },
   {
     "card_id": "the_devil",
@@ -3721,7 +4283,13 @@ window.RELPHI_TAROT_CARDS = [
       "Eye",
       "The Devil",
       "Passive",
-      "Saturn"
+      "Saturn",
+      "Zodiac template",
+      "Regard / Standing",
+      "Goat Kid",
+      "Gedi",
+      "Yin arc (Libra through Pisces)",
+      "House 10"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3731,7 +4299,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Capricorn",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Earth",
+      "modality": "Cardinal",
+      "sign_polarity": "Yin",
+      "natural_house": 10,
+      "macro_half": "Yin arc (Libra through Pisces)",
+      "half_position": 4,
+      "hebrew_zodiac": {
+        "hebrew": "גְּדִי",
+        "transliteration": "Gedi",
+        "literal": "Goat Kid",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "Regard / Standing",
+      "opposed_sign": "Cancer",
+      "opposition_axis": "Room ↔ Regard"
     },
     "hebrew": {
       "letter": "Ayin",
@@ -3750,10 +4333,55 @@ window.RELPHI_TAROT_CARDS = [
         "number": "15",
         "title": "The Devil",
         "notes": "Thoth name: The Devil. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "The Devil",
+        "title": "Regard / Standing",
+        "notes": "Capricorn / natural House 10. Yin arc (Libra through Pisces); individual sign polarity Yin. גְּדִי Gedi means Goat Kid. The relational whole creates public and perceptual space in which a distinct self can be seen, regarded, evaluated, and given standing."
       }
     },
     "stable_symbol_id": "the_devil",
-    "stable_symbol_kind": "card"
+    "stable_symbol_kind": "card",
+    "relphi": {
+      "title": "Zodiac foundation: Regard / Standing",
+      "summary": "The relational whole creates public and perceptual space in which a distinct self can be seen, regarded, evaluated, and given standing.",
+      "principles": [
+        "Regard / Standing",
+        "Goat Kid",
+        "Gedi",
+        "Yin arc (Libra through Pisces)",
+        "Natural House 10"
+      ],
+      "dossier_note": "Zodiac foundation: Regard / Standing. Capricorn is the solstitial midpoint of the Libra-to-Aries arc. Ayin means eye. Height creates reciprocal visibility: from the prominent place one sees farther and is seen from farther away.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "Regard / Standing",
+        "operation": "The relational whole creates public and perceptual space in which a distinct self can be seen, regarded, evaluated, and given standing.",
+        "natural_house": 10,
+        "macro_half": "Yin arc (Libra through Pisces)",
+        "half_position": 4,
+        "sign_polarity": "Yin",
+        "opposed_sign": "Cancer",
+        "opposed_foundation": "Room",
+        "opposition_axis": "Room ↔ Regard",
+        "hebrew_zodiac": {
+          "hebrew": "גְּדִי",
+          "transliteration": "Gedi",
+          "literal": "Goat Kid",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Ayin / Eye: seeing, being seen, regard, assessment, and visibility.",
+        "insight": "Capricorn is the solstitial midpoint of the Libra-to-Aries arc. Ayin means eye. Height creates reciprocal visibility: from the prominent place one sees farther and is seen from farther away.",
+        "recursive_correspondences": [
+          "Gedi: a young goat; climbing gives the image height, prominence, and footing.",
+          "Ayin/Eye: organ of sight; imaginally, seeing, being seen, regard, and evaluation.",
+          "Saturn: boundary, consequence, rank, responsibility, and durable structure.",
+          "Cancer makes interior room; Capricorn makes public and perceptual standing.",
+          "Natural Tenth House: vocation, public standing, reputation, authority, achievement, and visible responsibility."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
+    }
   },
   {
     "card_id": "the_tower",
@@ -3847,7 +4475,13 @@ window.RELPHI_TAROT_CARDS = [
       "Fish-hook",
       "The Star",
       "Mixed",
-      "Saturn"
+      "Saturn",
+      "Zodiac template",
+      "Circulation / Vessel",
+      "Bucket",
+      "Deli",
+      "Yin arc (Libra through Pisces)",
+      "House 11"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3857,7 +4491,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Aquarius",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Air",
+      "modality": "Fixed",
+      "sign_polarity": "Yang",
+      "natural_house": 11,
+      "macro_half": "Yin arc (Libra through Pisces)",
+      "half_position": 5,
+      "hebrew_zodiac": {
+        "hebrew": "דְּלִי",
+        "transliteration": "Deli",
+        "literal": "Bucket",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "Circulation / Vessel",
+      "opposed_sign": "Leo",
+      "opposition_axis": "Radiance ↔ Circulation"
     },
     "hebrew": {
       "letter": "Tzaddi",
@@ -3876,10 +4525,54 @@ window.RELPHI_TAROT_CARDS = [
         "number": "17",
         "title": "The Star",
         "notes": "Thoth name: The Star. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "The Star",
+        "title": "Circulation / Vessel",
+        "notes": "Aquarius / natural House 11. Yin arc (Libra through Pisces); individual sign polarity Yang. דְּלִי Deli means Bucket. After public standing, a larger social vessel organizes distinct participants into circulation, networks, alliances, systems, and futures."
       }
     },
     "stable_symbol_id": "the_star",
-    "stable_symbol_kind": "card"
+    "stable_symbol_kind": "card",
+    "relphi": {
+      "title": "Zodiac foundation: Circulation / Vessel",
+      "summary": "After public standing, a larger social vessel organizes distinct participants into circulation, networks, alliances, systems, and futures.",
+      "principles": [
+        "Circulation / Vessel",
+        "Bucket",
+        "Deli",
+        "Yin arc (Libra through Pisces)",
+        "Natural House 11"
+      ],
+      "dossier_note": "Zodiac foundation: Circulation / Vessel. Aquarius is the first full sign after the Capricorn hinge. Deli means bucket: the object is the vessel, not water itself. Fixed air can therefore be imagined as structured containment and distribution.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "Circulation / Vessel",
+        "operation": "After public standing, a larger social vessel organizes distinct participants into circulation, networks, alliances, systems, and futures.",
+        "natural_house": 11,
+        "macro_half": "Yin arc (Libra through Pisces)",
+        "half_position": 5,
+        "sign_polarity": "Yang",
+        "opposed_sign": "Leo",
+        "opposed_foundation": "Radiance",
+        "opposition_axis": "Radiance ↔ Circulation",
+        "hebrew_zodiac": {
+          "hebrew": "דְּלִי",
+          "transliteration": "Deli",
+          "literal": "Bucket",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Tzaddi / Fish-hook: a tool that reaches into a medium and draws something into connection.",
+        "insight": "Aquarius is the first full sign after the Capricorn hinge. Deli means bucket: the object is the vessel, not water itself. Fixed air can therefore be imagined as structured containment and distribution.",
+        "recursive_correspondences": [
+          "Deli/Bucket: vessel, carrying, containment, emptying, filling, and distribution.",
+          "Fixed air: a stable informational or social container rather than literal water.",
+          "Leo radiates from a personal center; Aquarius circulates through a collective one.",
+          "Natural Eleventh House: friends, allies, groups, networks, future hopes, and common projects."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
+    }
   },
   {
     "card_id": "the_moon",
@@ -3899,7 +4592,13 @@ window.RELPHI_TAROT_CARDS = [
       "Back of the head",
       "The Moon",
       "Passive",
-      "Jupiter"
+      "Jupiter",
+      "Zodiac template",
+      "Whole / Release",
+      "Fishes",
+      "Dagim",
+      "Yin arc (Libra through Pisces)",
+      "House 12"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3909,7 +4608,22 @@ window.RELPHI_TAROT_CARDS = [
       "decan_ruler": "",
       "degree_span": "",
       "zodiac_range": "Pisces",
-      "attribution_type": "Sign"
+      "attribution_type": "Sign",
+      "element": "Water",
+      "modality": "Mutable",
+      "sign_polarity": "Yin",
+      "natural_house": 12,
+      "macro_half": "Yin arc (Libra through Pisces)",
+      "half_position": 6,
+      "hebrew_zodiac": {
+        "hebrew": "דָּגִים",
+        "transliteration": "Dagim",
+        "literal": "Fishes",
+        "source": "Sefer Yetzirah 5"
+      },
+      "foundation_keyword": "Whole / Release",
+      "opposed_sign": "Virgo",
+      "opposition_axis": "Ripeness ↔ Whole"
     },
     "hebrew": {
       "letter": "Qoph",
@@ -3928,10 +4642,54 @@ window.RELPHI_TAROT_CARDS = [
         "number": "18",
         "title": "The Moon",
         "notes": "Thoth name: The Moon. Attribution shown here follows the practical Golden Dawn backbone; Crowley-specific variants, including the Tzaddi and Heh controversy, can be expanded in a later pass."
+      },
+      "relphi_zodiac_template": {
+        "display_name": "The Moon",
+        "title": "Whole / Release",
+        "notes": "Pisces / natural House 12. Yin arc (Libra through Pisces); individual sign polarity Yin. דָּגִים Dagim means Fishes. The yin arc releases its differentiated relations into an encompassing field, completing the cycle and preparing the conditions from which Aries can emerge again."
       }
     },
     "stable_symbol_id": "the_moon",
-    "stable_symbol_kind": "card"
+    "stable_symbol_kind": "card",
+    "relphi": {
+      "title": "Zodiac foundation: Whole / Release",
+      "summary": "The yin arc releases its differentiated relations into an encompassing field, completing the cycle and preparing the conditions from which Aries can emerge again.",
+      "principles": [
+        "Whole / Release",
+        "Fishes",
+        "Dagim",
+        "Yin arc (Libra through Pisces)",
+        "Natural House 12"
+      ],
+      "dossier_note": "Zodiac foundation: Whole / Release. Two fishes remain distinct while moving in one medium. Pisces is the ripening and release of the relational half: participation in a whole larger than either participant.",
+      "zodiac_foundation": {
+        "status": "Oracle of Relphi imaginal / recursive correspondence layer; historical attributions are stored separately and this layer does not claim etymological derivation.",
+        "foundation": "Whole / Release",
+        "operation": "The yin arc releases its differentiated relations into an encompassing field, completing the cycle and preparing the conditions from which Aries can emerge again.",
+        "natural_house": 12,
+        "macro_half": "Yin arc (Libra through Pisces)",
+        "half_position": 6,
+        "sign_polarity": "Yin",
+        "opposed_sign": "Virgo",
+        "opposed_foundation": "Ripeness",
+        "opposition_axis": "Ripeness ↔ Whole",
+        "hebrew_zodiac": {
+          "hebrew": "דָּגִים",
+          "transliteration": "Dagim",
+          "literal": "Fishes",
+          "source": "Sefer Yetzirah 5"
+        },
+        "hebrew_letter_bridge": "Qoph / Back of the head: imaginally, what lies behind ordinary forward-facing awareness.",
+        "insight": "Two fishes remain distinct while moving in one medium. Pisces is the ripening and release of the relational half: participation in a whole larger than either participant.",
+        "recursive_correspondences": [
+          "Fishes: distinct lives moving within one encompassing medium.",
+          "Jupiter: enlargement, meaning, faith, and participation in something larger.",
+          "Virgo sorts and prepares; Pisces releases distinctions back into the whole.",
+          "Natural Twelfth House: hiddenness, retreat, exile, dream, undoing, and surrender."
+        ],
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+      }
+    }
   },
   {
     "card_id": "the_sun",
