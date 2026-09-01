@@ -30,7 +30,7 @@ function warmExactTarotPreview(){
   [
     'style.css?v=346',
     'navloader.js?v=56',
-    'tarot-cards.js',
+    'tarot-cards.js?v=2',
     'relphi-locked-interpretations.js?v=207',
     'relphi-card-senses.js?v=321',
     'relphi-rising-sign-house-offset-effects.js?v=219',
