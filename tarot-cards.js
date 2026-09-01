@@ -3040,7 +3040,8 @@ window.RELPHI_TAROT_CARDS = [
       "Lamb",
       "Taleh",
       "Yang arc (Aries through Virgo)",
-      "House 1"
+      "House 1",
+      "Nisan"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3065,7 +3066,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "I",
       "opposed_sign": "Libra",
-      "opposition_axis": "I ↔ You"
+      "opposition_axis": "I ↔ You",
+      "hebrew_month": {
+        "name": "Nisan",
+        "hebrew": "ניסן",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Heh",
@@ -3088,7 +3094,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "The Emperor",
         "title": "I",
-        "notes": "Aries / natural House 1. Yang arc (Aries through Virgo); individual sign polarity Yang. טָלֶה Taleh means Lamb. A first-person center emerges and projects itself into the field."
+        "notes": "Aries / natural House 1. Yang arc (Aries through Virgo); individual sign polarity Yang. טָלֶה Taleh means Lamb. A first-person center emerges and projects itself into the field. Hebrew month: Nisan (ניסן)."
       }
     },
     "stable_symbol_id": "the_emperor",
@@ -3142,7 +3148,12 @@ window.RELPHI_TAROT_CARDS = [
           "Sun exaltation: solar light rises in seasonal strength at the Aries gate.",
           "Body-scale imaginal analogue: phallus/penis as outward projection and penetrative agency."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Nisan",
+          "hebrew": "ניסן",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -3170,7 +3181,8 @@ window.RELPHI_TAROT_CARDS = [
       "Ox",
       "Shor",
       "Yang arc (Aries through Virgo)",
-      "House 2"
+      "House 2",
+      "Iyar"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3195,7 +3207,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "Substance",
       "opposed_sign": "Scorpio",
-      "opposition_axis": "Substance ↔ Interpenetration"
+      "opposition_axis": "Substance ↔ Interpenetration",
+      "hebrew_month": {
+        "name": "Iyar",
+        "hebrew": "אייר",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Vav",
@@ -3218,7 +3235,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "The Hierophant",
         "title": "Substance",
-        "notes": "Taurus / natural House 2. Yang arc (Aries through Virgo); individual sign polarity Yin. שׁוֹר Shor means Ox. The emerging I acquires body, weight, continuity, possession, and value."
+        "notes": "Taurus / natural House 2. Yang arc (Aries through Virgo); individual sign polarity Yin. שׁוֹר Shor means Ox. The emerging I acquires body, weight, continuity, possession, and value. Hebrew month: Iyar (אייר)."
       }
     },
     "stable_symbol_id": "the_hierophant",
@@ -3258,7 +3275,12 @@ window.RELPHI_TAROT_CARDS = [
           "Venus: value, attraction, pleasure, and preservation.",
           "Natural Second House: resources, possession, value, and material continuity."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Iyar",
+          "hebrew": "אייר",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -3286,7 +3308,8 @@ window.RELPHI_TAROT_CARDS = [
       "Twins",
       "Te’omim",
       "Yang arc (Aries through Virgo)",
-      "House 3"
+      "House 3",
+      "Sivan"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3311,7 +3334,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "Distinction",
       "opposed_sign": "Sagittarius",
-      "opposition_axis": "Distinction ↔ Orientation"
+      "opposition_axis": "Distinction ↔ Orientation",
+      "hebrew_month": {
+        "name": "Sivan",
+        "hebrew": "סיון",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Zayin",
@@ -3334,7 +3362,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "The Lovers",
         "title": "Distinction",
-        "notes": "Gemini / natural House 3. Yang arc (Aries through Virgo); individual sign polarity Yang. תְּאוֹמִים Te’omim means Twins. The embodied center divides experience into distinguishable terms and exchanges signals between them."
+        "notes": "Gemini / natural House 3. Yang arc (Aries through Virgo); individual sign polarity Yang. תְּאוֹמִים Te’omim means Twins. The embodied center divides experience into distinguishable terms and exchanges signals between them. Hebrew month: Sivan (סיון)."
       }
     },
     "stable_symbol_id": "the_lovers",
@@ -3374,7 +3402,12 @@ window.RELPHI_TAROT_CARDS = [
           "Mercury: language, comparison, translation, and exchange.",
           "Natural Third House: speech, learning, siblings, neighbors, and the local field."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Sivan",
+          "hebrew": "סיון",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -3410,7 +3443,8 @@ window.RELPHI_TAROT_CARDS = [
       "Crab",
       "Sartan",
       "Yang arc (Aries through Virgo)",
-      "House 4"
+      "House 4",
+      "Tammuz"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3435,7 +3469,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "Room",
       "opposed_sign": "Capricorn",
-      "opposition_axis": "Room ↔ Regard"
+      "opposition_axis": "Room ↔ Regard",
+      "hebrew_month": {
+        "name": "Tammuz",
+        "hebrew": "תמוז",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Cheth",
@@ -3458,7 +3497,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "The Chariot",
         "title": "Room",
-        "notes": "Cancer / natural House 4. Yang arc (Aries through Virgo); individual sign polarity Yin. סַרְטָן Sartan means Crab. The developing whole creates interior space capable of containing differentiated life without erasing it."
+        "notes": "Cancer / natural House 4. Yang arc (Aries through Virgo); individual sign polarity Yin. סַרְטָן Sartan means Crab. The developing whole creates interior space capable of containing differentiated life without erasing it. Hebrew month: Tammuz (תמוז)."
       }
     },
     "stable_symbol_id": "the_chariot",
@@ -3507,7 +3546,12 @@ window.RELPHI_TAROT_CARDS = [
           "Imaginal formulation: room within oneself for another to remain themselves.",
           "Natural Fourth House: home, roots, ancestry, private foundation, and belonging."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Tammuz",
+          "hebrew": "תמוז",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -3535,7 +3579,8 @@ window.RELPHI_TAROT_CARDS = [
       "Lion",
       "Aryeh",
       "Yang arc (Aries through Virgo)",
-      "House 5"
+      "House 5",
+      "Av"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3560,7 +3605,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "Radiance",
       "opposed_sign": "Aquarius",
-      "opposition_axis": "Radiance ↔ Circulation"
+      "opposition_axis": "Radiance ↔ Circulation",
+      "hebrew_month": {
+        "name": "Av",
+        "hebrew": "אב",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Teth",
@@ -3583,7 +3633,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "Strength / Lust",
         "title": "Radiance",
-        "notes": "Leo / natural House 5. Yang arc (Aries through Virgo); individual sign polarity Yang. אַרְיֵה Aryeh means Lion. Life established within an interior center expresses, creates, displays, and radiates from itself."
+        "notes": "Leo / natural House 5. Yang arc (Aries through Virgo); individual sign polarity Yang. אַרְיֵה Aryeh means Lion. Life established within an interior center expresses, creates, displays, and radiates from itself. Hebrew month: Av (אב)."
       }
     },
     "stable_symbol_id": "strength",
@@ -3624,7 +3674,12 @@ window.RELPHI_TAROT_CARDS = [
           "Aries brings the self forth; Leo brings what is inside the self forth.",
           "Natural Fifth House: pleasure, children, creativity, play, and display."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Av",
+          "hebrew": "אב",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -3652,7 +3707,8 @@ window.RELPHI_TAROT_CARDS = [
       "Virgin / Maiden",
       "Betulah",
       "Yang arc (Aries through Virgo)",
-      "House 6"
+      "House 6",
+      "Elul"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3677,7 +3733,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "Ripeness",
       "opposed_sign": "Pisces",
-      "opposition_axis": "Ripeness ↔ Whole"
+      "opposition_axis": "Ripeness ↔ Whole",
+      "hebrew_month": {
+        "name": "Elul",
+        "hebrew": "אלול",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Yod",
@@ -3700,7 +3761,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "The Hermit",
         "title": "Ripeness",
-        "notes": "Virgo / natural House 6. Yang arc (Aries through Virgo); individual sign polarity Yin. בְּתוּלָה Betulah means Virgin / Maiden. The yang arc matures what it has grown, then gathers, sorts, refines, and prepares it for the threshold."
+        "notes": "Virgo / natural House 6. Yang arc (Aries through Virgo); individual sign polarity Yin. בְּתוּלָה Betulah means Virgin / Maiden. The yang arc matures what it has grown, then gathers, sorts, refines, and prepares it for the threshold. Hebrew month: Elul (אלול)."
       }
     },
     "stable_symbol_id": "the_hermit",
@@ -3741,7 +3802,12 @@ window.RELPHI_TAROT_CARDS = [
           "Lúnasa: a comparative seasonal analogue for harvest-opening and ripeness, not a claim of historical derivation.",
           "Natural Sixth House: work, service, craft, health, maintenance, and correction."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Elul",
+          "hebrew": "אלול",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -3842,7 +3908,8 @@ window.RELPHI_TAROT_CARDS = [
       "Scales",
       "Moznayim",
       "Yin arc (Libra through Pisces)",
-      "House 7"
+      "House 7",
+      "Tishrei"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -3867,7 +3934,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "You / Other",
       "opposed_sign": "Aries",
-      "opposition_axis": "I ↔ You"
+      "opposition_axis": "I ↔ You",
+      "hebrew_month": {
+        "name": "Tishrei",
+        "hebrew": "תשרי",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Lamed",
@@ -3890,7 +3962,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "Justice / Adjustment",
         "title": "You / Other",
-        "notes": "Libra / natural House 7. Yin arc (Libra through Pisces); individual sign polarity Yang. מֹאזְנַיִם Moznayim means Scales. A second center is recognized across from the first; relation begins between two first persons."
+        "notes": "Libra / natural House 7. Yin arc (Libra through Pisces); individual sign polarity Yang. מֹאזְנַיִם Moznayim means Scales. A second center is recognized across from the first; relation begins between two first persons. Hebrew month: Tishrei (תשרי)."
       }
     },
     "stable_symbol_id": "justice",
@@ -3932,7 +4004,12 @@ window.RELPHI_TAROT_CARDS = [
           "Coitus: two differentiated bodies form one coordinated relational event.",
           "Natural Seventh House: partner, contract, direct other, and one-to-one encounter."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Tishrei",
+          "hebrew": "תשרי",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -4034,7 +4111,8 @@ window.RELPHI_TAROT_CARDS = [
       "Scorpion",
       "Akrav",
       "Yin arc (Libra through Pisces)",
-      "House 8"
+      "House 8",
+      "Marcheshvan / Cheshvan"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -4059,7 +4137,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "Interpenetration",
       "opposed_sign": "Taurus",
-      "opposition_axis": "Substance ↔ Interpenetration"
+      "opposition_axis": "Substance ↔ Interpenetration",
+      "hebrew_month": {
+        "name": "Marcheshvan / Cheshvan",
+        "hebrew": "מרחשון / חשון",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Nun",
@@ -4082,7 +4165,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "Death",
         "title": "Interpenetration",
-        "notes": "Scorpio / natural House 8. Yin arc (Libra through Pisces); individual sign polarity Yin. עַקְרָב Akrav means Scorpion. What Libra joins at the boundary moves inward into exchange, penetration, mingling, vulnerability, consequence, and bond."
+        "notes": "Scorpio / natural House 8. Yin arc (Libra through Pisces); individual sign polarity Yin. עַקְרָב Akrav means Scorpion. What Libra joins at the boundary moves inward into exchange, penetration, mingling, vulnerability, consequence, and bond. Hebrew month: Marcheshvan / Cheshvan (מרחשון / חשון)."
       }
     },
     "stable_symbol_id": "death",
@@ -4144,7 +4227,12 @@ window.RELPHI_TAROT_CARDS = [
           "Scorpion: guarded vulnerability, penetration, venom, and transformation.",
           "Natural Eighth House: shared resources, debt, loss, inheritance, intimacy, and release."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Marcheshvan / Cheshvan",
+          "hebrew": "מרחשון / חשון",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -4172,7 +4260,8 @@ window.RELPHI_TAROT_CARDS = [
       "Bow",
       "Keshet",
       "Yin arc (Libra through Pisces)",
-      "House 9"
+      "House 9",
+      "Kislev"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -4197,7 +4286,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "Orientation",
       "opposed_sign": "Gemini",
-      "opposition_axis": "Distinction ↔ Orientation"
+      "opposition_axis": "Distinction ↔ Orientation",
+      "hebrew_month": {
+        "name": "Kislev",
+        "hebrew": "כסלו",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Samekh",
@@ -4220,7 +4314,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "Temperance / Art",
         "title": "Orientation",
-        "notes": "Sagittarius / natural House 9. Yin arc (Libra through Pisces); individual sign polarity Yang. קֶשֶׁת Keshet means Bow. The relational field takes accumulated distinctions and bonds and orients them toward a horizon, worldview, journey, law, teaching, or meaning."
+        "notes": "Sagittarius / natural House 9. Yin arc (Libra through Pisces); individual sign polarity Yang. קֶשֶׁת Keshet means Bow. The relational field takes accumulated distinctions and bonds and orients them toward a horizon, worldview, journey, law, teaching, or meaning. Hebrew month: Kislev (כסלו)."
       }
     },
     "stable_symbol_id": "temperance",
@@ -4261,7 +4355,12 @@ window.RELPHI_TAROT_CARDS = [
           "Gemini distinguishes locally; Sagittarius orients those distinctions toward a larger world.",
           "Natural Ninth House: worldview, religion, philosophy, higher learning, law, and long journeys."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Kislev",
+          "hebrew": "כסלו",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -4289,7 +4388,8 @@ window.RELPHI_TAROT_CARDS = [
       "Goat Kid",
       "Gedi",
       "Yin arc (Libra through Pisces)",
-      "House 10"
+      "House 10",
+      "Tevet"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -4314,7 +4414,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "Regard / Standing",
       "opposed_sign": "Cancer",
-      "opposition_axis": "Room ↔ Regard"
+      "opposition_axis": "Room ↔ Regard",
+      "hebrew_month": {
+        "name": "Tevet",
+        "hebrew": "טבת",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Ayin",
@@ -4337,7 +4442,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "The Devil",
         "title": "Regard / Standing",
-        "notes": "Capricorn / natural House 10. Yin arc (Libra through Pisces); individual sign polarity Yin. גְּדִי Gedi means Goat Kid. The relational whole creates public and perceptual space in which a distinct self can be seen, regarded, evaluated, and given standing."
+        "notes": "Capricorn / natural House 10. Yin arc (Libra through Pisces); individual sign polarity Yin. גְּדִי Gedi means Goat Kid. The relational whole creates public and perceptual space in which a distinct self can be seen, regarded, evaluated, and given standing. Hebrew month: Tevet (טבת)."
       }
     },
     "stable_symbol_id": "the_devil",
@@ -4379,7 +4484,12 @@ window.RELPHI_TAROT_CARDS = [
           "Cancer makes interior room; Capricorn makes public and perceptual standing.",
           "Natural Tenth House: vocation, public standing, reputation, authority, achievement, and visible responsibility."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Tevet",
+          "hebrew": "טבת",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -4481,7 +4591,8 @@ window.RELPHI_TAROT_CARDS = [
       "Bucket",
       "Deli",
       "Yin arc (Libra through Pisces)",
-      "House 11"
+      "House 11",
+      "Shevat"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -4506,7 +4617,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "Circulation / Vessel",
       "opposed_sign": "Leo",
-      "opposition_axis": "Radiance ↔ Circulation"
+      "opposition_axis": "Radiance ↔ Circulation",
+      "hebrew_month": {
+        "name": "Shevat",
+        "hebrew": "שבט",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Tzaddi",
@@ -4529,7 +4645,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "The Star",
         "title": "Circulation / Vessel",
-        "notes": "Aquarius / natural House 11. Yin arc (Libra through Pisces); individual sign polarity Yang. דְּלִי Deli means Bucket. After public standing, a larger social vessel organizes distinct participants into circulation, networks, alliances, systems, and futures."
+        "notes": "Aquarius / natural House 11. Yin arc (Libra through Pisces); individual sign polarity Yang. דְּלִי Deli means Bucket. After public standing, a larger social vessel organizes distinct participants into circulation, networks, alliances, systems, and futures. Hebrew month: Shevat (שבט)."
       }
     },
     "stable_symbol_id": "the_star",
@@ -4570,7 +4686,12 @@ window.RELPHI_TAROT_CARDS = [
           "Leo radiates from a personal center; Aquarius circulates through a collective one.",
           "Natural Eleventh House: friends, allies, groups, networks, future hopes, and common projects."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Shevat",
+          "hebrew": "שבט",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
@@ -4598,7 +4719,8 @@ window.RELPHI_TAROT_CARDS = [
       "Fishes",
       "Dagim",
       "Yin arc (Libra through Pisces)",
-      "House 12"
+      "House 12",
+      "Adar"
     ],
     "astrology": {
       "logic": "Major arcana attribution.",
@@ -4623,7 +4745,12 @@ window.RELPHI_TAROT_CARDS = [
       },
       "foundation_keyword": "Whole / Release",
       "opposed_sign": "Virgo",
-      "opposition_axis": "Ripeness ↔ Whole"
+      "opposition_axis": "Ripeness ↔ Whole",
+      "hebrew_month": {
+        "name": "Adar",
+        "hebrew": "אדר",
+        "source": "Sefer Yetzirah 5"
+      }
     },
     "hebrew": {
       "letter": "Qoph",
@@ -4646,7 +4773,7 @@ window.RELPHI_TAROT_CARDS = [
       "relphi_zodiac_template": {
         "display_name": "The Moon",
         "title": "Whole / Release",
-        "notes": "Pisces / natural House 12. Yin arc (Libra through Pisces); individual sign polarity Yin. דָּגִים Dagim means Fishes. The yin arc releases its differentiated relations into an encompassing field, completing the cycle and preparing the conditions from which Aries can emerge again."
+        "notes": "Pisces / natural House 12. Yin arc (Libra through Pisces); individual sign polarity Yin. דָּגִים Dagim means Fishes. The yin arc releases its differentiated relations into an encompassing field, completing the cycle and preparing the conditions from which Aries can emerge again. Hebrew month: Adar (אדר)."
       }
     },
     "stable_symbol_id": "the_moon",
@@ -4687,7 +4814,12 @@ window.RELPHI_TAROT_CARDS = [
           "Virgo sorts and prepares; Pisces releases distinctions back into the whole.",
           "Natural Twelfth House: hiddenness, retreat, exile, dream, undoing, and surrender."
         ],
-        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center."
+        "general_model": "The zodiac is read at two scales: Aries through Virgo is the larger yang arc; Libra through Pisces is the larger yin arc, while individual sign polarity continues to alternate inside both halves. Two complementary arcs organize one center.",
+        "hebrew_month": {
+          "name": "Adar",
+          "hebrew": "אדר",
+          "source": "Sefer Yetzirah 5"
+        }
       }
     }
   },
