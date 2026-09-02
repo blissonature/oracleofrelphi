@@ -647,8 +647,8 @@
     else if (!state.designMode && normalizedValue) selectedId = '';
     renderOmniboxOptions(datalist);
     field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a Spread Template or type position labels…');
-    field.setAttribute('aria-label', 'Spread Template name');
+    field.setAttribute('placeholder', 'Type comma-separated position stickers or choose a Spread Template…');
+    field.setAttribute('aria-label', 'Position stickers');
     if (state.designMode && document.activeElement !== field) field.value = draftName;
     if (newPromptArmed && !state.designMode && !String(field.value || '').trim()) field.value = NEW_TEMPLATE_PROMPT;
     clearSelection.hidden = state.designMode || state.locked || !String(field.value || '').trim();
@@ -708,12 +708,12 @@
           return;
         }
         if (value === NEW_TEMPLATE_PROMPT) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
+        // Free typing in this field is position-sticker input. Let the core Drawing Board
+        // input handler receive the event so it can rebuild the live placeholders.
         selectedId = '';
         templateMode = 'new';
         draftLayout = null;
-        draftName = value.slice(0, 60);
+        draftName = '';
         copySourceId = '';
         newPromptArmed = false;
         clearSelection.hidden = !value;
@@ -763,6 +763,27 @@
       banner.innerHTML = '<strong>Active layout locked</strong><span>' + (state.activeLayout ? displayName(state.activeLayout) : 'Custom layout') + ' is snapshotted for this reading. Clear the board to choose or redesign a spread.</span>';
     }
   }
+  function interceptSelectedTemplatePlaceholder(event) {
+    const add = event.target?.closest?.('#shortListPanel #addCardPlaceholder');
+    if (!add) return;
+    const state = bridge()?.getState?.();
+    if (!state || state.designMode || state.hasCards || state.locked || state.activeLayout) return;
+    const selected = templateMode === 'existing' ? prefabById(selectedId) : null;
+    if (!selected) return;
+
+    // Choosing a template must remain structural context for Add Placeholder.
+    // Convert the selected shipped/custom template into an editable copy first,
+    // then let the core Drawing Board add the next slot to that preserved layout.
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    beginDesign(selected, { copy:true });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const live = bridge()?.getState?.();
+      if (!live?.designMode) return;
+      document.querySelector('#shortListPanel #addCardPlaceholder')?.click();
+    }));
+  }
+
   function lockControls(panel, state) {
     const structureLocked = state.locked && !state.designMode;
     ['rowPositionLabels','rowDrawScope','rowAllowRepeats','rowAllowReversalsQuick','rowSnapEnabled','rowRotationSnapEnabled','resetCardRowLayout','resetRowCardTransform'].forEach(id => {
@@ -770,7 +791,25 @@
       if (control) control.disabled = structureLocked;
     });
     const add = panel.querySelector('#addCardPlaceholder');
-    if (add) add.disabled = structureLocked;
+    if (add) {
+      // A shipped/locked spread may be extended without destroying its existing positions.
+      // The first Add Placeholder click turns the active layout into an editable copy,
+      // then repeats the click against that preserved copy.
+      add.disabled = !!state.hasCards;
+      if (!add.dataset.relphiExtendTemplateBound) {
+        add.dataset.relphiExtendTemplateBound = 'true';
+        add.addEventListener('click', event => {
+          const live = bridge()?.getState?.();
+          if (!live?.locked || live.designMode || live.hasCards || !live.activeLayout) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          beginDesign(live.activeLayout, { copy:true });
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            panel.querySelector('#addCardPlaceholder')?.click();
+          }));
+        }, true);
+      }
+    }
     const draw = panel.querySelector('#drawRandomRowCard');
     if (draw) {
       draw.disabled = !!state.designMode;
@@ -1000,6 +1039,7 @@
   function start() {
     migrateLegacy();
     installStyles();
+    document.addEventListener('click', interceptSelectedTemplatePlaceholder, true);
     document.addEventListener('relphi:drawing-board-rendered', schedule);
     document.addEventListener('relphi:drawing-board-center-view', schedule);
     new MutationObserver(records => {
