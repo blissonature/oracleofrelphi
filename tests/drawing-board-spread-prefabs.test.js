@@ -38,7 +38,7 @@ vm.runInContext(source, sandbox);
 
 const api = sandbox.window.RelphiDrawingBoardSpreadPrefabs;
 assert.ok(api, 'prefab registry should be exposed for integration and regression checks');
-assert.equal(api.shipped.length, 9);
+assert.equal(api.shipped.length, 10);
 assert.deepEqual(
   Array.from(api.shipped, item => [item.id, item.cardCount]),
   [
@@ -50,6 +50,7 @@ assert.deepEqual(
     ['saturn-square-9', 9],
     ['celtic-cross-10', 10],
     ['celtic-cross-11', 11],
+    ['six-axes-cancer-leo-hinge-12', 12],
     ['focus-1', 1]
   ]
 );
@@ -57,6 +58,7 @@ assert.ok(api.shipped.every(item => item.source === 'shipped' && item.editable =
 
 const celtic10 = api.shipped.find(item => item.id === 'celtic-cross-10');
 const celtic11 = api.shipped.find(item => item.id === 'celtic-cross-11');
+const sixAxes = api.shipped.find(item => item.id === 'six-axes-cancer-leo-hinge-12');
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').crosses, 'covering');
 assert.equal(celtic11.positions.find(item => item.role === 'covering').covers, 'significator');
 assert.equal(celtic11.positions.find(item => item.role === 'crossing').crosses, 'covering');
@@ -112,6 +114,29 @@ assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'before').transfo
 assert.ok(Math.abs(celtic11.positions[1].openTransform.y - celtic11.positions.find(item => item.id === 'crowning').transform.y - .226) < 1e-12);
 assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'beneath').transform.y - celtic11.positions[1].openTransform.y - .226) < 1e-12);
 
+assert.equal(sixAxes.helper, 'six-axis-hinge');
+assert.equal(sixAxes.cardCount, 12);
+assert.deepEqual(
+  Array.from(sixAxes.positions, item => item.label),
+  [
+    '1 · Aries · I',
+    '2 · Taurus · Mine',
+    '3 · Gemini · Word',
+    '4 · Cancer · Interior',
+    '5 · Leo · Heart',
+    '6 · Virgo · Distinction',
+    '7 · Libra · You',
+    '8 · Scorpio · Ours',
+    '9 · Sagittarius · Meaning',
+    '10 · Capricorn · Form',
+    '11 · Aquarius · Field',
+    '12 · Pisces · Dissolution'
+  ]
+);
+assert.equal(sixAxes.positions.find(item => item.id === 'aries-i').transform.y, sixAxes.positions.find(item => item.id === 'libra-you').transform.y);
+assert.equal(sixAxes.positions.find(item => item.id === 'cancer-interior').transform.x, sixAxes.positions.find(item => item.id === 'leo-heart').transform.x);
+assert.ok(sixAxes.positions.find(item => item.id === 'leo-heart').transform.y > sixAxes.positions.find(item => item.id === 'cancer-interior').transform.y);
+
 assert.match(source, /return prefab\.cardCount \+ ' \| ' \+ prefab\.name/);
 assert.match(source, /Save As Copy and Use/);
 assert.match(source, /Save Template and Use/);
@@ -151,6 +176,11 @@ assert.doesNotMatch(source, /relphiSpreadPrefabSelect/);
 assert.doesNotMatch(source, /window\.prompt/);
 assert.match(source, /Open Center/);
 assert.match(source, /Restore Cross/);
+assert.match(source, /centerViewChanged/);
+assert.match(source, /Ordinary board renders, including zoom renders, must preserve user transforms/);
+assert.match(source, /six-axis-hinge/);
+assert.match(source, /Cancer \| Leo/);
+assert.match(source, /held within → radiant/);
 assert.match(source, /relphiDrawingBoardSpreadPrefabsV2/);
 assert.match(source, /relphiDrawingBoardStickerPrefabsV1/);
 assert.match(source, /SHIPPED\.some\(item => item\.id === clean\.id\)/);
@@ -161,6 +191,9 @@ assert.doesNotMatch(source, /data-row-drawer-field/);
 assert.match(source, /opacity:0!important/);
 assert.match(source, /is-recently-used/);
 assert.match(source, /zoomCardRowExtents/);
+assert.match(source, /right:\.75rem!important;bottom:\.75rem!important;top:auto!important;left:auto!important/);
+assert.match(source, /writing-mode:horizontal-tb!important/);
+assert.doesNotMatch(source, /card-row-workspace-toolbar\{position:absolute!important;top:\.55rem!important;left:\.55rem!important/);
 assert.doesNotMatch(source, /cursor:not-allowed/);
 assert.doesNotMatch(source, /drawnCardIds|readingName|readingNotes/);
 
@@ -170,6 +203,6 @@ assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Cel
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
 assert.match(source, /draftName = String\(state\.currentLayout\.name/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=10/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=11/);
 
 console.log('Drawing Board spread prefab regression checks passed.');
