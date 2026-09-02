@@ -4,6 +4,7 @@
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
 
   const STICKER_TOGGLE_KEY = 'relphiDrawingBoardPositionStickersV1';
+  const CARD_BACKGROUND_KEY = 'relphiDrawingBoardCardBackgroundV1';
   let scheduled = false;
   let descriptionSelectionCard = null;
 
@@ -199,6 +200,197 @@
       if (layer) layer.dataset.relphiDescriptionSource = 'locked-interpretation';
     });
   }
+  function workspacePictureIcon() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="9" r="1.6"></circle><path d="M5.5 17l4.7-4.7 3.2 3.2 2.3-2.3 2.8 3.8"></path></svg>';
+  }
+  function workspaceMagnetIcon() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v8a6 6 0 0 0 12 0V3"></path><path d="M6 7h4M14 7h4"></path></svg>';
+  }
+  function workspaceMoveIcon() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18"></path><path d="M12 3l-2 2m2-2 2 2M12 21l-2-2m2 2 2-2M3 12l2-2m-2 2 2 2M21 12l-2-2m2 2-2 2"></path></svg>';
+  }
+  function cardBackgroundImage() {
+    try { return localStorage.getItem(CARD_BACKGROUND_KEY) || ''; } catch (_) { return ''; }
+  }
+  function setCardBackgroundImage(value) {
+    try {
+      if (value) localStorage.setItem(CARD_BACKGROUND_KEY, value);
+      else localStorage.removeItem(CARD_BACKGROUND_KEY);
+    } catch (_) {}
+  }
+  function applyWorkspaceCardBackground(panel) {
+    const board = panel.querySelector('.card-row-board');
+    if (!board) return;
+    const value = cardBackgroundImage();
+    board.classList.toggle('has-workspace-card-background', !!value);
+    if (value) board.style.setProperty('--workspace-card-background', 'url("' + value.replace(/"/g, '%22') + '")');
+    else board.style.removeProperty('--workspace-card-background');
+  }
+  function installWorkspaceTools(panel) {
+    const workspace = panel.querySelector('.card-row-workspace');
+    if (!workspace) return;
+    const existing = workspace.querySelector('.relphi-workspace-tools');
+    if (existing) {
+      applyWorkspaceCardBackground(panel);
+      return;
+    }
+
+    const takeInput = id => {
+      const input = panel.querySelector('#' + id);
+      if (!input) return null;
+      const label = input.closest('label');
+      if (label && label !== input) {
+        label.insertAdjacentElement('afterend', input);
+        label.remove();
+      }
+      return input;
+    };
+    const take = id => panel.querySelector('#' + id);
+
+    const alignCheck = takeInput('rowSnapEnabled');
+    const alignMinus = take('rowSnapGridMinus');
+    const alignValue = take('rowSnapGridValue');
+    const alignPlus = take('rowSnapGridPlus');
+    const rotateCheck = takeInput('rowRotationSnapEnabled');
+    const rotateMinus = take('rowRotationSnapMinus');
+    const rotateValue = take('rowRotationSnapValue');
+    const rotatePlus = take('rowRotationSnapPlus');
+    const cardColor = takeInput('rowEnvelopeColor');
+    const boardColor = takeInput('rowTableColor');
+    const boardUpload = take('rowTableImageUpload');
+    const boardReset = take('rowTableImageReset');
+    panel.querySelector('.card-row-snap-steppers')?.remove();
+
+    const tools = document.createElement('div');
+    tools.className = 'relphi-workspace-tools';
+    tools.innerHTML =
+      '<div class="relphi-workspace-tool-buttons">' +
+        '<button type="button" class="relphi-workspace-tool-trigger" data-tool="snaps" title="Snaps" aria-label="Snaps" aria-expanded="false">' + workspaceMagnetIcon() + '</button>' +
+        '<button type="button" class="relphi-workspace-tool-trigger" data-tool="background" title="Background" aria-label="Background" aria-expanded="false">' + workspacePictureIcon() + '</button>' +
+      '</div>' +
+      '<section class="relphi-workspace-flyout" hidden>' +
+        '<div class="relphi-workspace-section" data-section="snaps"><h4>Snaps</h4><div class="relphi-snap-rows"></div></div>' +
+        '<div class="relphi-workspace-section" data-section="background"><h4>Background</h4><div class="relphi-background-rows"></div></div>' +
+      '</section>';
+
+    const snapRows = tools.querySelector('.relphi-snap-rows');
+    const addSnapRow = (checkbox, minus, value, plus, icon) => {
+      const row = document.createElement('div');
+      row.className = 'relphi-snap-row';
+      if (checkbox) row.appendChild(checkbox);
+      if (minus) row.appendChild(minus);
+      const measure = document.createElement('span');
+      measure.className = 'relphi-snap-measure';
+      measure.innerHTML = icon + '<span class="relphi-snap-value-slot"></span>';
+      if (value) measure.querySelector('.relphi-snap-value-slot').appendChild(value);
+      row.appendChild(measure);
+      if (plus) row.appendChild(plus);
+      snapRows.appendChild(row);
+    };
+    if (alignCheck) alignCheck.setAttribute('aria-label','Enable position snap');
+    if (rotateCheck) rotateCheck.setAttribute('aria-label','Enable rotation snap');
+    addSnapRow(alignCheck, alignMinus, alignValue, alignPlus, workspaceMoveIcon());
+    addSnapRow(rotateCheck, rotateMinus, rotateValue, rotatePlus, '<span class="relphi-rotate-glyph" aria-hidden="true">↻</span>');
+
+    const backgroundRows = tools.querySelector('.relphi-background-rows');
+    const cardRow = document.createElement('div');
+    cardRow.className = 'relphi-background-row';
+    cardRow.innerHTML =
+      '<strong>Card</strong>' +
+      '<button type="button" id="workspaceCardImageUpload" class="relphi-picture-action" title="Upload card background image" aria-label="Upload card background image">' + workspacePictureIcon() + '</button>' +
+      '<span class="relphi-card-color-slot"></span>' +
+      '<button type="button" id="workspaceCardBackgroundReset" class="relphi-reset-action" title="Clear card background" aria-label="Clear card background">×</button>' +
+      '<input id="workspaceCardImageFile" type="file" accept="image/*" hidden>';
+    if (cardColor) cardRow.querySelector('.relphi-card-color-slot').appendChild(cardColor);
+    backgroundRows.appendChild(cardRow);
+
+    const boardRow = document.createElement('div');
+    boardRow.className = 'relphi-background-row';
+    boardRow.innerHTML =
+      '<strong>Board</strong><span class="relphi-board-image-slot"></span><span class="relphi-board-color-slot"></span><span class="relphi-board-reset-slot"></span>';
+    if (boardUpload) {
+      boardUpload.textContent = '';
+      boardUpload.innerHTML = workspacePictureIcon();
+      boardUpload.classList.add('relphi-picture-action');
+      boardUpload.title = 'Upload board background image';
+      boardUpload.setAttribute('aria-label','Upload board background image');
+      boardRow.querySelector('.relphi-board-image-slot').appendChild(boardUpload);
+    }
+    if (boardColor) boardRow.querySelector('.relphi-board-color-slot').appendChild(boardColor);
+    if (boardReset) {
+      boardReset.textContent = '×';
+      boardReset.classList.add('relphi-reset-action');
+      boardReset.title = 'Clear board background';
+      boardReset.setAttribute('aria-label','Clear board background');
+      boardRow.querySelector('.relphi-board-reset-slot').appendChild(boardReset);
+    }
+    backgroundRows.appendChild(boardRow);
+    workspace.appendChild(tools);
+
+    const flyout = tools.querySelector('.relphi-workspace-flyout');
+    const triggers = Array.from(tools.querySelectorAll('.relphi-workspace-tool-trigger'));
+    const setOpen = section => {
+      const closing = !flyout.hidden && flyout.dataset.section === section;
+      flyout.hidden = closing;
+      flyout.dataset.section = closing ? '' : section;
+      triggers.forEach(button => {
+        const active = !closing && button.dataset.tool === section;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-expanded', String(active));
+      });
+      tools.querySelectorAll('.relphi-workspace-section').forEach(node => node.classList.toggle('is-current', !closing && node.dataset.section === section));
+    };
+    triggers.forEach(button => button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(button.dataset.tool);
+    }));
+
+    const cardFile = tools.querySelector('#workspaceCardImageFile');
+    tools.querySelector('#workspaceCardImageUpload')?.addEventListener('click', event => {
+      event.preventDefault();
+      cardFile?.click();
+    });
+    cardFile?.addEventListener('change', () => {
+      const file = cardFile.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCardBackgroundImage(String(reader.result || ''));
+        applyWorkspaceCardBackground(panel);
+      };
+      reader.readAsDataURL(file);
+      cardFile.value = '';
+    });
+    tools.querySelector('#workspaceCardBackgroundReset')?.addEventListener('click', event => {
+      event.preventDefault();
+      setCardBackgroundImage('');
+      if (cardColor) {
+        cardColor.value = '#f3f0ea';
+        cardColor.dispatchEvent(new Event('input',{bubbles:true}));
+        cardColor.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+      applyWorkspaceCardBackground(panel);
+    });
+    boardReset?.addEventListener('click', () => {
+      if (boardColor) {
+        boardColor.value = '#fffaf0';
+        boardColor.dispatchEvent(new Event('input',{bubbles:true}));
+        boardColor.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+    });
+    document.addEventListener('click', event => {
+      if (flyout.hidden || event.target.closest?.('.relphi-workspace-tools')) return;
+      flyout.hidden = true;
+      flyout.dataset.section = '';
+      triggers.forEach(button => {
+        button.classList.remove('is-active');
+        button.setAttribute('aria-expanded','false');
+      });
+    });
+    applyWorkspaceCardBackground(panel);
+  }
+
   function organizeBoardOptions(panel) {
     const composer = panel.querySelector('.card-row-composer');
     if (!composer || composer.classList.contains('is-relphi-organized')) return;
@@ -228,65 +420,27 @@
     const setupSection = section('setup');
     const setup = setupSection.querySelector('.board-options-body');
     const spreadSetup = setupGroup(setup, 'spread', 'What would you like to know?', '');
-    const drawSetup = setupGroup(setup, 'draw', 'Draw settings', 'Choose the pack before drawing.');
 
     move(spreadSetup, control('rowPositionLabels'));
+    move(spreadSetup, control('rowDrawScope'));
 
-    const behaviorRow = document.createElement('div');
-    behaviorRow.className = 'board-reading-behavior-row';
-    move(behaviorRow, control('rowPositionStickersQuick'));
-    move(behaviorRow, control('rowAllowRepeats'));
-    move(behaviorRow, control('rowAllowReversalsQuick'));
-    spreadSetup.appendChild(behaviorRow);
-
-    move(drawSetup, control('rowDrawScope'));
-
-    const arrange = setupGroup(setup, 'arrange', 'Arrange board', 'Alignment, rotation, card scale, and board appearance.');
-    const alignment = document.createElement('div');
-    alignment.className = 'board-snap-control board-snap-control--align';
-    alignment.setAttribute('aria-label', 'Alignment snap controls');
-    move(alignment, control('rowSnapEnabled'));
-    move(alignment, panel.querySelector('#rowSnapGridMinus'));
-    move(alignment, panel.querySelector('#rowSnapGridValue'));
-    move(alignment, panel.querySelector('#rowSnapGridPlus'));
-    arrange.appendChild(alignment);
-    const rotation = document.createElement('div');
-    rotation.className = 'board-snap-control board-snap-control--rotation';
-    rotation.setAttribute('aria-label', 'Rotation snap controls');
-    move(rotation, control('rowRotationSnapEnabled'));
-    move(rotation, panel.querySelector('#rowRotationSnapMinus'));
-    move(rotation, panel.querySelector('#rowRotationSnapValue'));
-    move(rotation, panel.querySelector('#rowRotationSnapPlus'));
-    arrange.appendChild(rotation);
-    composer.querySelector('.card-row-snap-steppers')?.remove();
-
-    const colors = document.createElement('div');
-    colors.className = 'board-arrange-colors';
-    move(colors, control('rowEnvelopeColor'));
-    move(colors, control('rowTableColor'));
-    arrange.appendChild(colors);
-
-    const actions = document.createElement('div');
-    actions.className = 'board-arrange-actions';
-    move(actions, panel.querySelector('#rowTableImageUpload'));
-    move(actions, panel.querySelector('#rowTableImageReset'));
-    move(actions, panel.querySelector('#resetCardRowLayout'));
-    arrange.appendChild(actions);
-
-    const renameLabel = (id, text) => {
-      const label = control(id);
-      const textNode = Array.from(label?.childNodes || []).find(node => node.nodeType === 3);
-      if (textNode) textNode.textContent = text + ' ';
-    };
-    renameLabel('rowEnvelopeColor', 'Card / placeholder color');
-    renameLabel('rowTableColor', 'Board color');
-    const boardImageUpload = panel.querySelector('#rowTableImageUpload');
-    const boardImageReset = panel.querySelector('#rowTableImageReset');
-    if (boardImageUpload) boardImageUpload.textContent = 'Upload board image';
-    if (boardImageReset) boardImageReset.textContent = 'Remove board image';
+    const toggleStack = document.createElement('div');
+    toggleStack.className = 'board-reading-toggle-stack';
+    const stickerToggle = control('rowPositionStickersQuick');
+    const repeatsToggle = control('rowAllowRepeats');
+    const reversalsToggle = control('rowAllowReversalsQuick');
+    if (stickerToggle) {
+      const textNode = Array.from(stickerToggle.childNodes).find(node => node.nodeType === 3);
+      if (textNode) textNode.textContent = ' Position stickers';
+      toggleStack.appendChild(stickerToggle);
+    }
+    if (repeatsToggle) toggleStack.appendChild(repeatsToggle);
+    if (reversalsToggle) toggleStack.appendChild(reversalsToggle);
+    spreadSetup.appendChild(toggleStack);
 
     const boardDrawer = panel.querySelector('.card-row-drawing-board');
     const workspace = panel.querySelector('.card-row-workspace');
+    installWorkspaceTools(panel);
     let afterCanvas = boardDrawer?.querySelector('#drawing-board-after-canvas');
     if (boardDrawer && workspace && !afterCanvas) {
       afterCanvas = document.createElement('section');
@@ -338,6 +492,21 @@
 
     organizeBoardHeader(panel);
 
+    let primaryActions = boardDrawer?.querySelector('.drawing-board-primary-actions');
+    if (boardDrawer && !primaryActions) {
+      primaryActions = document.createElement('div');
+      primaryActions.className = 'drawing-board-primary-actions';
+      const settings = panel.querySelector('.card-row-more-options');
+      if (settings) settings.insertAdjacentElement('afterend', primaryActions);
+      else boardDrawer.insertBefore(primaryActions, workspace || null);
+    }
+    if (primaryActions) {
+      ['drawRandomRowCard','addCardPlaceholder','clearRowCardsOnly','clearShortList'].forEach(id => {
+        const button = panel.querySelector('#' + id);
+        if (button) primaryActions.appendChild(button);
+      });
+    }
+
     const envelopeColor = panel.querySelector('#rowEnvelopeColor');
     const applyEnvelopeColor = () => {
       const color = envelopeColor?.value || '#f3f0ea';
@@ -368,9 +537,6 @@
       const node = toolbar.querySelector(selector);
       if (node) destination.appendChild(node);
     };
-    const create = group('create');
-    move(create, '#drawRandomRowCard');
-    move(create, '#addCardPlaceholder');
     const history = group('history');
     const historyToggle = document.createElement('button');
     historyToggle.type = 'button';
@@ -390,11 +556,6 @@
       historyToggle.setAttribute('aria-expanded', String(!historyMenu.hidden));
     });
     historyMenu.addEventListener('click', event => event.stopPropagation());
-    const clear = toolbar.querySelector('#clearShortList');
-    if (clear) {
-      clear.classList.add('board-clear-action');
-      toolbar.appendChild(clear);
-    }
   }
   function reinforceReversalUi(panel) {
     const allowed = !!panel.querySelector('#rowAllowReversalsQuick')?.checked;
@@ -473,6 +634,7 @@
     style.textContent += 'html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:start!important;gap:.55rem!important}html body #shortListPanel .board-setup-group--arrange{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:.42rem!important;align-content:start!important}html body #shortListPanel .board-setup-group--arrange>header{grid-column:1/-1!important;margin:0!important;padding-bottom:.35rem!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control{display:grid!important;grid-template-columns:minmax(4.4rem,1fr) 1.85rem minmax(2.7rem,auto) 1.85rem!important;gap:.22rem!important;min-height:2.15rem!important;width:100%!important;padding:.22rem!important;border-radius:8px!important;box-sizing:border-box!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control>label{font-size:.72rem!important;line-height:1.1!important;text-align:left!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control>button{min-width:1.85rem!important;width:1.85rem!important;min-height:1.85rem!important;height:1.85rem!important;padding:.1rem!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control>span{font-size:.72rem!important;white-space:nowrap!important}html body #shortListPanel .board-arrange-colors{grid-column:1/-1!important;display:flex!important;align-items:end!important;gap:.7rem!important;padding:.08rem 0!important}html body #shortListPanel .board-arrange-colors>label{flex:0 1 auto!important;width:auto!important;font-size:.72rem!important;white-space:nowrap!important}html body #shortListPanel .board-arrange-colors input[type="color"]{display:block!important;width:3rem!important;height:1.8rem!important;margin-top:.18rem!important}html body #shortListPanel .board-arrange-actions{grid-column:1/-1!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.35rem!important}html body #shortListPanel .board-arrange-actions>button{width:100%!important;min-height:2rem!important;padding:.32rem .4rem!important;font-size:.7rem!important;line-height:1.1!important}html body #shortListPanel .card-row-composer.is-relphi-organized>.card-row-control-block--tools{display:none!important}@media(max-width:860px){html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .board-setup-group--arrange{grid-template-columns:1fr 1fr!important}}@media(max-width:560px){html body #shortListPanel .board-setup-group--arrange{grid-template-columns:1fr!important}html body #shortListPanel .board-setup-group--arrange>header,html body #shortListPanel .board-arrange-colors,html body #shortListPanel .board-arrange-actions{grid-column:1!important}html body #shortListPanel .board-arrange-actions{grid-template-columns:1fr!important}}';
     style.textContent += 'html body #shortListPanel .card-row-drawing-board:has(.card-row-composer:not(.is-relphi-organized)){visibility:hidden!important}html body #shortListPanel .card-row-drawing-board:has(.card-row-composer.is-relphi-organized){visibility:visible!important}';
     style.textContent += 'html body #shortListPanel .board-setup-group--spread>header span:empty{display:none!important}html body #shortListPanel .board-reading-behavior-row{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.4rem!important;align-items:stretch!important;width:100%!important;margin-top:.1rem!important}html body #shortListPanel .board-reading-behavior-row>label{display:flex!important;align-items:center!important;gap:.4rem!important;min-height:2.25rem!important;margin:0!important;padding:.38rem .5rem!important;border:1px solid #ded5cd!important;border-radius:8px!important;background:#fbf8f5!important;box-sizing:border-box!important}html body #shortListPanel .board-reading-behavior-row>label::after{margin-left:auto!important}@media(max-width:620px){html body #shortListPanel .board-reading-behavior-row{grid-template-columns:1fr!important}}';
+    style.textContent += 'html body #shortListPanel .card-row-control-block--setup .board-options-body{display:block!important;padding:.55rem!important}html body #shortListPanel .board-setup-group--spread{display:flex!important;flex-direction:column!important;gap:.5rem!important;width:100%!important;max-width:none!important}html body #shortListPanel .board-setup-group--spread .card-row-draw-scope-label{order:30!important;width:100%!important;margin:.05rem 0!important}html body #shortListPanel .board-reading-toggle-stack{order:40!important;display:grid!important;grid-template-columns:1fr!important;gap:.32rem!important;width:100%!important}html body #shortListPanel .board-reading-toggle-stack>label{display:grid!important;grid-template-columns:1rem minmax(0,1fr) auto!important;align-items:center!important;column-gap:.55rem!important;width:100%!important;min-height:2.25rem!important;margin:0!important;padding:.38rem .55rem!important;border:1px solid #ded5cd!important;border-radius:8px!important;background:#fbf8f5!important;box-sizing:border-box!important;font-weight:800!important}html body #shortListPanel .board-reading-toggle-stack>label input[type="checkbox"]{grid-column:1!important;width:1rem!important;height:1rem!important;margin:0!important}html body #shortListPanel .board-reading-toggle-stack>label::after{grid-column:3!important;margin:0!important}html body #shortListPanel .drawing-board-primary-actions{display:flex!important;flex-wrap:wrap!important;justify-content:flex-end!important;gap:.4rem!important;margin:.5rem .45rem!important;padding:.5rem!important;border:1px solid #ded5cd!important;border-radius:9px!important;background:#fffaf4!important}html body #shortListPanel .drawing-board-primary-actions button{min-height:2.35rem!important;padding:.45rem .75rem!important;border:1px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#171412!important;font-weight:850!important}html body #shortListPanel .drawing-board-primary-actions #drawRandomRowCard{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}html body #shortListPanel .drawing-board-primary-actions #clearShortList:not(:disabled){border-color:rgba(220,31,24,.45)!important;color:#b81712!important}html body #shortListPanel .board-header-group--create{display:none!important}html body #shortListPanel .relphi-workspace-tools{position:absolute!important;left:.65rem!important;bottom:.65rem!important;z-index:1600!important;display:flex!important;align-items:flex-end!important;gap:.35rem!important;font-family:Montserrat,"Segoe UI",Arial,sans-serif!important}html body #shortListPanel .relphi-workspace-tool-buttons{display:flex!important;gap:.25rem!important;padding:.26rem!important;border:1px solid rgba(23,20,18,.24)!important;border-radius:9px!important;background:rgba(255,250,244,.96)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important}html body #shortListPanel .relphi-workspace-tool-trigger,html body #shortListPanel .relphi-picture-action,html body #shortListPanel .relphi-reset-action,html body #shortListPanel .relphi-snap-row>button{display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:.3rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;box-shadow:none!important}html body #shortListPanel .relphi-workspace-tool-trigger svg,html body #shortListPanel .relphi-picture-action svg,html body #shortListPanel .relphi-snap-measure svg{display:block!important;width:1.05rem!important;height:1.05rem!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}html body #shortListPanel .relphi-workspace-tool-trigger.is-active{border-color:#171412!important;background:#f1ece6!important}html body #shortListPanel .relphi-workspace-flyout{position:absolute!important;left:0!important;bottom:calc(100% + .4rem)!important;width:min(22rem,calc(100vw - 2rem))!important;padding:.7rem!important;border:1px solid #cfc5bc!important;border-radius:10px!important;background:#fffaf4!important;box-shadow:0 12px 28px rgba(30,20,15,.16)!important}html body #shortListPanel .relphi-workspace-flyout[hidden]{display:none!important}html body #shortListPanel .relphi-workspace-section{display:grid!important;gap:.42rem!important;padding:.15rem 0!important}html body #shortListPanel .relphi-workspace-section+ .relphi-workspace-section{margin-top:.7rem!important;padding-top:.7rem!important;border-top:1px solid #e6ddd5!important}html body #shortListPanel .relphi-workspace-section h4{margin:0!important;font-size:1rem!important}html body #shortListPanel .relphi-snap-rows,html body #shortListPanel .relphi-background-rows{display:grid!important;gap:.4rem!important}html body #shortListPanel .relphi-snap-row{display:grid!important;grid-template-columns:1.2rem 2rem minmax(5rem,1fr) 2rem!important;gap:.35rem!important;align-items:center!important}html body #shortListPanel .relphi-snap-row>input[type="checkbox"]{width:1rem!important;height:1rem!important;margin:0!important}html body #shortListPanel .relphi-snap-measure{display:flex!important;align-items:center!important;justify-content:center!important;gap:.35rem!important;min-height:2rem!important;padding:.25rem .45rem!important;border:1px solid #e1d8d0!important;border-radius:7px!important;background:#fff!important;font-weight:850!important;white-space:nowrap!important}html body #shortListPanel .relphi-snap-value-slot>span{font-size:.78rem!important;font-weight:850!important}html body #shortListPanel .relphi-rotate-glyph{font-size:1.1rem!important}html body #shortListPanel .relphi-background-row{display:grid!important;grid-template-columns:minmax(3.8rem,1fr) 2rem 2.6rem 2rem!important;gap:.35rem!important;align-items:center!important}html body #shortListPanel .relphi-background-row>strong{font-size:.82rem!important}html body #shortListPanel .relphi-background-row input[type="color"]{display:block!important;width:2.6rem!important;height:2rem!important;margin:0!important;padding:2px!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important}html body #shortListPanel .relphi-reset-action{font-size:1.15rem!important;font-weight:700!important}html body #shortListPanel .card-row-board.has-workspace-card-background .card-row-drop-card,html body #shortListPanel .card-row-board.has-workspace-card-background .card-row-card,html body #shortListPanel .card-row-board.has-workspace-card-background .or-card{background-image:var(--workspace-card-background)!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}@media(max-width:620px){html body #shortListPanel .drawing-board-primary-actions{justify-content:stretch!important}html body #shortListPanel .drawing-board-primary-actions button{flex:1 1 45%!important}html body #shortListPanel .relphi-workspace-tools{left:.45rem!important;bottom:.45rem!important}}';
     document.head.appendChild(style);
     setArrivalState();
     new MutationObserver(records => {
