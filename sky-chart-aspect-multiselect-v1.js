@@ -260,6 +260,10 @@
     applyFilters();
   }
 
+  function whereWhenEditing() {
+    return document.documentElement.dataset.skyWhereWhenEditing === 'true';
+  }
+
   function isOpen(owner) {
     return owner?.classList.contains('is-open');
   }
