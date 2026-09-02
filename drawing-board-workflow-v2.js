@@ -206,14 +206,9 @@
     move(drawSetup, control('rowAllowRepeats'));
     move(drawSetup, control('rowAllowReversalsQuick'));
 
-    const arrangeSection = section('tools');
-    const arrange = arrangeSection.querySelector('.board-options-body');
-    const arrangeHeading = document.createElement('div');
-    arrangeHeading.className = 'board-options-heading';
-    arrangeHeading.innerHTML = '<h4>Arrange board</h4><p>Alignment, rotation, card scale, and board appearance.</p>';
-    arrange.appendChild(arrangeHeading);
+    const arrange = setupGroup(setup, 'arrange', 'Arrange board', 'Alignment, rotation, card scale, and board appearance.');
     const alignment = document.createElement('div');
-    alignment.className = 'board-snap-control';
+    alignment.className = 'board-snap-control board-snap-control--align';
     alignment.setAttribute('aria-label', 'Alignment snap controls');
     move(alignment, control('rowSnapEnabled'));
     move(alignment, panel.querySelector('#rowSnapGridMinus'));
@@ -221,7 +216,7 @@
     move(alignment, panel.querySelector('#rowSnapGridPlus'));
     arrange.appendChild(alignment);
     const rotation = document.createElement('div');
-    rotation.className = 'board-snap-control';
+    rotation.className = 'board-snap-control board-snap-control--rotation';
     rotation.setAttribute('aria-label', 'Rotation snap controls');
     move(rotation, control('rowRotationSnapEnabled'));
     move(rotation, panel.querySelector('#rowRotationSnapMinus'));
@@ -229,11 +224,19 @@
     move(rotation, panel.querySelector('#rowRotationSnapPlus'));
     arrange.appendChild(rotation);
     composer.querySelector('.card-row-snap-steppers')?.remove();
-    move(arrange, control('rowEnvelopeColor'));
-    move(arrange, control('rowTableColor'));
-    move(arrange, panel.querySelector('#rowTableImageUpload'));
-    move(arrange, panel.querySelector('#rowTableImageReset'));
-    move(arrange, panel.querySelector('#resetCardRowLayout'));
+
+    const colors = document.createElement('div');
+    colors.className = 'board-arrange-colors';
+    move(colors, control('rowEnvelopeColor'));
+    move(colors, control('rowTableColor'));
+    arrange.appendChild(colors);
+
+    const actions = document.createElement('div');
+    actions.className = 'board-arrange-actions';
+    move(actions, panel.querySelector('#rowTableImageUpload'));
+    move(actions, panel.querySelector('#rowTableImageReset'));
+    move(actions, panel.querySelector('#resetCardRowLayout'));
+    arrange.appendChild(actions);
 
     const renameLabel = (id, text) => {
       const label = control(id);
@@ -425,6 +428,7 @@
     style.textContent += 'html body #shortListPanel .board-setup-group--draw .spread-toggle,html body #shortListPanel .board-setup-group--draw .quick-reversal-toggle{display:flex!important;flex-direction:row!important;align-items:center!important;gap:.4rem!important;width:100%!important;min-height:2.35rem!important;margin-top:auto!important;padding:.4rem .55rem!important;border:1px solid #ded5cd!important;border-radius:8px!important;background:#fbf8f5!important;box-sizing:border-box!important}html body #shortListPanel .board-setup-group--draw .spread-toggle input,html body #shortListPanel .board-setup-group--draw .quick-reversal-toggle input{flex:0 0 auto!important;width:1rem!important;height:1rem!important;margin:0!important}html body #shortListPanel #undoShortList:disabled,html body #shortListPanel #redoShortList:disabled,html body #shortListPanel #clearShortList:disabled{opacity:.4!important;border:1px solid rgba(17,17,17,.28)!important;background:#fffdf8!important;color:rgba(17,17,17,.48)!important;box-shadow:none!important;cursor:default!important}';
     style.textContent += 'html body #shortListPanel .board-labels-staging{display:none!important}html body #shortListPanel .card-row-composer.is-relphi-organized .card-row-control-block--setup .board-options-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}';
     style.textContent += 'html body #shortListPanel .card-row-composer.is-relphi-organized{padding:.55rem!important;background:#f5f0ea!important}html body #shortListPanel .card-row-composer.is-relphi-organized>.card-row-control-block{display:block!important;width:100%!important;margin:0 0 .55rem!important;padding:0!important;border:1px solid #d8cec5!important;border-radius:9px!important;background:#fff!important}html body #shortListPanel .card-row-control-block--setup .board-options-body{display:grid!important;grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr) minmax(0,.95fr)!important;gap:.55rem!important;padding:.55rem!important}html body #shortListPanel .card-row-control-block--tools .board-options-body{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.5rem!important;padding:.6rem!important;align-items:end!important}html body #shortListPanel .card-row-control-block--tools .board-options-heading{grid-column:1/-1!important}html body #shortListPanel .board-setup-group--draw .spread-toggle,html body #shortListPanel .board-setup-group--draw .quick-reversal-toggle{border:2px solid #cfc5bc!important;background:#fffaf4!important;font-weight:900!important}html body #shortListPanel .board-setup-group--draw .spread-toggle:has(input:checked),html body #shortListPanel .board-setup-group--draw .quick-reversal-toggle:has(input:checked){border-color:#171412!important;background:#f1ece6!important}html body #shortListPanel .drawing-board-after-canvas{display:grid!important;gap:.65rem!important;margin:.7rem 0 0!important}html body #shortListPanel .drawing-board-post-section{display:grid!important;gap:.5rem!important;padding:.7rem!important;border:1px solid #d8cec5!important;border-radius:10px!important;background:#fff!important}html body #shortListPanel .drawing-board-post-section>header{display:flex!important;flex-direction:column!important;gap:.12rem!important}html body #shortListPanel .drawing-board-post-section>header strong{font-size:.9rem!important}html body #shortListPanel .drawing-board-post-section>header span{color:#6b625c!important;font-size:.72rem!important}html body #shortListPanel .drawing-board-post-body,html body #shortListPanel #drawing-board-post-export .board-options-body{display:flex!important;flex-wrap:wrap!important;gap:.5rem!important;align-items:end!important}html body #shortListPanel #drawing-board-notes .card-row-notes-label{width:100%!important;margin:0!important}html body #shortListPanel #drawing-board-notes textarea{display:block!important;width:100%!important;min-height:6rem!important;margin:.3rem 0 0!important;box-sizing:border-box!important}html body #shortListPanel #drawing-board-post-export button{flex:1 1 12rem!important}html body #shortListPanel .card-row-workspace .or-card-layer.relphi-info-layer .or-layer-scroll{display:block!important;visibility:visible!important;opacity:1!important}html body #shortListPanel .card-row-workspace .or-card-layer.relphi-info-layer .or-layer-scroll span{white-space:normal!important}@media(max-width:940px){html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:1fr 1fr!important}html body #shortListPanel .board-setup-group--spread{grid-column:1/-1!important}}@media(max-width:700px){html body #shortListPanel .card-row-control-block--setup .board-options-body,html body #shortListPanel .card-row-control-block--tools .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .board-setup-group--spread{grid-column:auto!important}}';
+    style.textContent += 'html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:start!important;gap:.55rem!important}html body #shortListPanel .board-setup-group--arrange{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:.42rem!important;align-content:start!important}html body #shortListPanel .board-setup-group--arrange>header{grid-column:1/-1!important;margin:0!important;padding-bottom:.35rem!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control{display:grid!important;grid-template-columns:minmax(4.4rem,1fr) 1.85rem minmax(2.7rem,auto) 1.85rem!important;gap:.22rem!important;min-height:2.15rem!important;width:100%!important;padding:.22rem!important;border-radius:8px!important;box-sizing:border-box!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control>label{font-size:.72rem!important;line-height:1.1!important;text-align:left!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control>button{min-width:1.85rem!important;width:1.85rem!important;min-height:1.85rem!important;height:1.85rem!important;padding:.1rem!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control>span{font-size:.72rem!important;white-space:nowrap!important}html body #shortListPanel .board-arrange-colors{grid-column:1/-1!important;display:flex!important;align-items:end!important;gap:.7rem!important;padding:.08rem 0!important}html body #shortListPanel .board-arrange-colors>label{flex:0 1 auto!important;width:auto!important;font-size:.72rem!important;white-space:nowrap!important}html body #shortListPanel .board-arrange-colors input[type="color"]{display:block!important;width:3rem!important;height:1.8rem!important;margin-top:.18rem!important}html body #shortListPanel .board-arrange-actions{grid-column:1/-1!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.35rem!important}html body #shortListPanel .board-arrange-actions>button{width:100%!important;min-height:2rem!important;padding:.32rem .4rem!important;font-size:.7rem!important;line-height:1.1!important}html body #shortListPanel .card-row-composer.is-relphi-organized>.card-row-control-block--tools{display:none!important}@media(max-width:860px){html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .board-setup-group--arrange{grid-template-columns:1fr 1fr!important}}@media(max-width:560px){html body #shortListPanel .board-setup-group--arrange{grid-template-columns:1fr!important}html body #shortListPanel .board-setup-group--arrange>header,html body #shortListPanel .board-arrange-colors,html body #shortListPanel .board-arrange-actions{grid-column:1!important}html body #shortListPanel .board-arrange-actions{grid-template-columns:1fr!important}}';
     document.head.appendChild(style);
     setArrivalState();
     new MutationObserver(scheduleEnhance).observe(document.body, { childList:true, subtree:true });
