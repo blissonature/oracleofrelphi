@@ -7,7 +7,7 @@ const root = path.resolve(__dirname, '..');
 const lifecycle = fs.readFileSync(path.join(root, 'drawing-board-template-lifecycle-v1.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-custom-position-stickers-v1\.js\?v=1[\s\S]*drawing-board-template-lifecycle-v1\.js\?v=1[\s\S]*drawing-board-spread-prefabs-v1\.js\?v=11/);
+assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=3[\s\S]*drawing-board-spread-prefabs-v1\.js\?v=12/);
 assert.match(lifecycle, /id = 'clearShortListCardsOnly'/);
 assert.match(lifecycle, /textContent = 'Clear Cards'/);
 assert.match(lifecycle, /clear\.click\(\)/);
@@ -17,6 +17,8 @@ assert.match(lifecycle, /templateFromValue/);
 assert.match(lifecycle, /stageLayout\(layout\)/);
 assert.match(lifecycle, /ensureSlotCount\(positions\.length\)/);
 assert.match(lifecycle, /data-row-position-label-editor/);
+assert.match(lifecycle, /String\(input\.value \|\| ''\)\.trim\(\) === value/);
+assert.doesNotMatch(lifecycle, /relphi:drawing-board-rendered'[\s\S]{0,180}scheduleReconcile/);
 
 class FakeMutationObserver {
   constructor() {}
