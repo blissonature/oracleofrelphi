@@ -394,7 +394,7 @@
     const field = document.querySelector('#shortListPanel #rowPositionLabels');
     const labels = String(field?.value || '').split(',').map(value => value.trim()).filter(Boolean);
     let current = state?.currentLayout;
-    if (!current?.positions?.length && labels.length) {
+    if (labels.length) {
       current = {
         id:'untitled-spread',
         name:'Untitled spread',
@@ -519,6 +519,27 @@
     field.removeAttribute('list');
     field.setAttribute('placeholder', 'Aries, Libra, Taurus, Scorpio…');
     field.setAttribute('aria-label', 'Position labels');
+    if (!field.dataset.relphiDirectPositionSync) {
+      field.dataset.relphiDirectPositionSync = 'true';
+      const syncTypedLabels = () => {
+        const live = bridge()?.getState();
+        const picker = host.querySelector('#relphiSpreadTemplateSelect');
+        if (live?.locked || live?.designMode || (picker?.value && picker.value !== '__new__')) return;
+        const labels = String(field.value || '').split(',').map(value => value.trim()).filter(Boolean);
+        if (!labels.length) return;
+        ensurePositionSlots(labels.length);
+        const items = Array.from(panel.querySelectorAll('.card-row-board .card-row-item'));
+        labels.forEach((label, index) => {
+          const editor = items[index]?.querySelector('[data-row-position-label-editor],.card-row-position-editor');
+          if (!editor || editor.textContent.trim() === label) return;
+          editor.textContent = label;
+          editor.dispatchEvent(new Event('input', { bubbles:true }));
+          editor.dispatchEvent(new Event('change', { bubbles:true }));
+        });
+      };
+      field.addEventListener('input', () => requestAnimationFrame(syncTypedLabels));
+      field.addEventListener('change', syncTypedLabels);
+    }
 
     let library = host.querySelector('.relphi-spread-prefab-library');
     if (!library) {
@@ -1117,6 +1138,8 @@
       '#shortListPanel .relphi-settings-lock-note[hidden]{display:none!important}',
       '#shortListPanel .board-setup-group--spread>.card-row-position-label{width:100%!important}',
       '#shortListPanel .board-setup-group--spread>.quick-position-sticker-toggle{width:100%!important}',
+      '#shortListPanel .board-setup-group--draw .spread-toggle::after,#shortListPanel .board-setup-group--draw .quick-reversal-toggle::after{content:"OFF";margin-left:auto!important;padding:.16rem .38rem!important;border:1px solid #b8aea6!important;border-radius:999px!important;background:#fff!important;color:#6b625c!important;font-size:.62rem!important;font-weight:900!important;letter-spacing:.05em!important}',
+      '#shortListPanel .board-setup-group--draw .spread-toggle:has(input:checked)::after,#shortListPanel .board-setup-group--draw .quick-reversal-toggle:has(input:checked)::after{content:"ON";border-color:#171412!important;background:#171412!important;color:#fff!important}',
       '#shortListPanel .relphi-labels-toggle,#shortListPanel .relphi-labels-drawer{display:none!important}',
       '#shortListPanel .card-row-workspace-toolbar{position:absolute!important;top:auto!important;left:auto!important;right:.65rem!important;bottom:.65rem!important;z-index:1500!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-end!important;gap:.38rem!important;width:auto!important;min-width:0!important;max-width:none!important;height:auto!important;min-height:0!important;margin:0!important;padding:.38rem .45rem!important;border:1px solid rgba(23,20,18,.24)!important;border-radius:10px!important;background:rgba(255,250,244,.95)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important;opacity:1!important;transition:none!important}',
       '#shortListPanel .card-row-workspace-toolbar .card-row-zoom-label{display:flex!important;flex-direction:row!important;align-items:center!important;gap:.35rem!important;width:auto!important;margin:0!important;padding:0!important}',
