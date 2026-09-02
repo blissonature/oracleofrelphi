@@ -791,7 +791,25 @@
       if (control) control.disabled = structureLocked;
     });
     const add = panel.querySelector('#addCardPlaceholder');
-    if (add) add.disabled = structureLocked;
+    if (add) {
+      // A shipped/locked spread may be extended without destroying its existing positions.
+      // The first Add Placeholder click turns the active layout into an editable copy,
+      // then repeats the click against that preserved copy.
+      add.disabled = !!state.hasCards;
+      if (!add.dataset.relphiExtendTemplateBound) {
+        add.dataset.relphiExtendTemplateBound = 'true';
+        add.addEventListener('click', event => {
+          const live = bridge()?.getState?.();
+          if (!live?.locked || live.designMode || live.hasCards || !live.activeLayout) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          beginDesign(live.activeLayout, { copy:true });
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            panel.querySelector('#addCardPlaceholder')?.click();
+          }));
+        }, true);
+      }
+    }
     const draw = panel.querySelector('#drawRandomRowCard');
     if (draw) {
       draw.disabled = !!state.designMode;
