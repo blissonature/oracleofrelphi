@@ -1,4 +1,5 @@
 // Capture Drawing Board card activation before the older title-only detail handler.
+// Also keeps the corrected 11-card Celtic Cross geometry stable when zoom rerenders the board.
 (function () {
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname) && window.__relphiTarotPreviewDocument !== true) return;
@@ -53,6 +54,32 @@
   function cardFor(event) {
     return event.target?.closest?.(PANEL + ' .card-row-board [data-row-card]') || null;
   }
+
+  function correctCelticEleven() {
+    const root = document.querySelector(PANEL);
+    const state = window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    if (!root || state?.activeLayout?.id !== 'celtic-cross-11' || state.centerOpen) return;
+    const board = root.querySelector('.card-row-board');
+    if (!board) return;
+    [
+      {index:0,left:208,top:262,rotation:0,scale:.45,z:10},
+      {index:1,left:225,top:248,rotation:0,scale:.45,z:20},
+      {index:2,left:225,top:248,rotation:90,scale:.45,z:30}
+    ].forEach(value => {
+      const item = board.querySelector('[data-row-index="' + value.index + '"]');
+      if (!item) return;
+      item.style.left = value.left + 'px';
+      item.style.top = value.top + 'px';
+      item.style.zIndex = String(value.z);
+      item.style.setProperty('--row-card-scale', String(value.scale));
+      item.style.setProperty('--row-card-rotation', value.rotation + 'deg');
+      item.querySelector('[data-row-card]')?.style.setProperty('transform-origin','50% 50%','important');
+    });
+  }
+  function restoreCelticAfterZoom() {
+    requestAnimationFrame(() => requestAnimationFrame(correctCelticEleven));
+  }
+
   window.addEventListener('click', event => {
     const card = cardFor(event);
     if (!card) return;
@@ -71,4 +98,18 @@
     event.stopImmediatePropagation();
     go(identity(card));
   }, true);
+
+  document.addEventListener('input', event => {
+    if (event.target?.id === 'rowZoom') restoreCelticAfterZoom();
+  }, true);
+  document.addEventListener('change', event => {
+    if (event.target?.id === 'rowZoom') restoreCelticAfterZoom();
+  }, true);
+  document.addEventListener('wheel', event => {
+    if (!event.target?.closest?.(PANEL + ' .card-row-workspace')) return;
+    restoreCelticAfterZoom();
+  }, {capture:true,passive:true});
+  document.addEventListener('relphi:drawing-board-rendered', restoreCelticAfterZoom);
+  document.addEventListener('relphi:drawing-board-center-view', restoreCelticAfterZoom);
+  correctCelticEleven();
 })();
