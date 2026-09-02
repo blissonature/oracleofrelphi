@@ -124,7 +124,10 @@ function annotateInterRows(list){
 }
 function sortRows(list){
   const rows=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row')];
-  rows.sort((a,b)=>Number(a.dataset.phaseError||Infinity)-Number(b.dataset.phaseError||Infinity)||Number(a.dataset.harmonicOrder||Infinity)-Number(b.dataset.harmonicOrder||Infinity)||Number(a.dataset.sourceOrb||Infinity)-Number(b.dataset.sourceOrb||Infinity)||String(a.dataset.relationIndex).localeCompare(String(b.dataset.relationIndex)));
+  const compare=window.RelphiRelationshipSort?.compareRows;
+  rows.sort(typeof compare==='function'
+    ?(a,b)=>compare(a,b)
+    :(a,b)=>Number(a.dataset.phaseError||Infinity)-Number(b.dataset.phaseError||Infinity)||Number(a.dataset.harmonicOrder||Infinity)-Number(b.dataset.harmonicOrder||Infinity)||Number(a.dataset.sourceOrb||Infinity)-Number(b.dataset.sourceOrb||Infinity)||String(a.dataset.relationIndex).localeCompare(String(b.dataset.relationIndex)));
   rows.forEach(row=>list.appendChild(row));
 }
 function updateCount(){
@@ -217,6 +220,10 @@ function start(){
   installStyles();cleanupUnauthorizedScopeUI();schedule();reorderPlacementLedgers();
   ['relphi:sky-foundation-interactions-ready','relphi:sky-foundation-ready'].forEach(name=>window.addEventListener(name,()=>{schedule();reorderPlacementLedgers()}));
   ['relphi:sky-placement-multiselect-changed','relphi:sky-house-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-zodiac-filter-changed','relphi:sky-harmonic-window-visibility-changed','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,scheduleCount));
+  window.addEventListener('relphi:relationship-sort-changed',()=>{
+    const list=document.getElementById('skyFoundationRelationshipList');
+    if(list)sortRows(list);
+  });
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
