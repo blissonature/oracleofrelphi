@@ -117,9 +117,16 @@
     return item;
   }
 
-  function cardIdentity(title) {
-    const card = title.closest('[data-row-card]');
-    return { id: card?.dataset.rowCard || '', title: title.textContent.trim() };
+  function cardIdentity(node) {
+    const card = node?.matches?.('[data-row-card]') ? node : node?.closest?.('[data-row-card]');
+    const title = card?.querySelector('.or-card-title-banner')?.textContent.trim() || '';
+    return { id: card?.dataset.rowCard || '', title };
+  }
+  function navigationCardFromEvent(event) {
+    const card = event.target.closest?.(PANEL + ' .card-row-board [data-row-card]');
+    if (!card) return null;
+    if (event.target.closest('button,input,textarea,select,label,a,[contenteditable="true"],[data-shortlist],[data-filter],[data-row-transform-handle],[data-row-reverse],.card-row-sense-panel,.card-row-position-panel')) return null;
+    return card;
   }
   function findLedgerCard(identity) {
     const list = document.getElementById('cardList');
@@ -131,24 +138,30 @@
     }) || null;
   }
   function revealFullCard(identity) {
-    (document.getElementById('showAllCards') || document.getElementById('landingShowLedger'))?.click();
+    if (!identity?.id && !identity?.title) return;
+    const command = document.getElementById('oracleCommand');
+    const run = document.getElementById('runCommand');
+    if (command && run && identity.title) {
+      command.value = identity.title;
+      command.dispatchEvent(new Event('input', { bubbles:true }));
+      run.click();
+    } else {
+      (document.getElementById('showAllCards') || document.getElementById('landingShowLedger'))?.click();
+    }
     const started = Date.now();
     (function tryOpen() {
       const match = findLedgerCard(identity);
       if (match) {
-        (match.closest('button,[role="button"],[role="listitem"],li,article') || match).click();
         document.getElementById('browsePanel')?.removeAttribute('hidden');
-        document.getElementById('cardDetail')?.scrollIntoView({ behavior:'smooth', block:'start' });
+        (match.closest('button,[role="button"],[role="listitem"],li,article') || match).scrollIntoView({ behavior:'smooth', block:'center' });
+        (match.closest('button,[role="button"],[role="listitem"],li,article') || match).click();
+        requestAnimationFrame(function () {
+          document.getElementById('cardDetail')?.scrollIntoView({ behavior:'smooth', block:'start' });
+        });
         return;
       }
-      if (Date.now() - started < 1800) return requestAnimationFrame(tryOpen);
-      const command = document.getElementById('oracleCommand');
-      const run = document.getElementById('runCommand');
-      if (command && run) {
-        command.value = identity.title;
-        command.dispatchEvent(new Event('input', { bubbles:true }));
-        run.click();
-      }
+      if (Date.now() - started < 2200) return requestAnimationFrame(tryOpen);
+      (document.getElementById('showAllCards') || document.getElementById('landingShowLedger'))?.click();
     })();
   }
 
@@ -265,10 +278,11 @@
         item.title = 'Draw a card into this position';
       }
     });
-    panel.querySelectorAll('.card-row-board .or-card-title-banner').forEach(function (title) {
-      title.classList.add('relphi-card-title-link');
-      title.setAttribute('role', 'button');
-      title.setAttribute('tabindex', '0');
+    panel.querySelectorAll('.card-row-board [data-row-card]').forEach(function (card) {
+      card.classList.add('relphi-ledger-card-link');
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.title = 'Open this card in Tarot Ledger';
     });
   }
 
@@ -299,8 +313,9 @@
       '#shortListPanel .board-arrange-flyout{position:relative!important;z-index:1100!important;max-width:100%!important}',
       '#shortListPanel .board-arrange-flyout .card-row-control-block{position:static!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;background:#fff!important;opacity:1!important;overflow:visible!important}',
       '#shortListPanel .board-arrange-flyout .board-options-body{background:#fff!important;opacity:1!important}',
-      '#shortListPanel .relphi-card-title-link{cursor:pointer!important;text-decoration:none!important;border-radius:.25rem!important;transition:background-color .15s ease,color .15s ease!important}',
-      '#shortListPanel .relphi-card-title-link:hover,#shortListPanel .relphi-card-title-link:focus-visible{background:#fff1ee!important;color:#b81712!important;outline:none!important}',
+      '#shortListPanel .card-row-board .or-card-layer.relphi-info-layer,#shortListPanel .card-row-board .relphi-info-scroll{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}',
+      '#shortListPanel .relphi-ledger-card-link{cursor:pointer!important}',
+      '#shortListPanel .relphi-ledger-card-link:focus-visible{outline:3px solid rgba(220,31,24,.32)!important;outline-offset:3px!important}',
       '#shortListPanel .relphi-position-prefab-select{display:block!important;width:100%!important;max-width:100%!important;min-height:2.45rem!important;margin-top:.35rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;color:#171412!important;padding:.45rem .6rem!important;box-sizing:border-box!important}',
       '#shortListPanel .relphi-clickable-placeholder,#shortListPanel .relphi-clickable-placeholder .card-row-drop-card,#shortListPanel .relphi-clickable-placeholder .card-row-card{cursor:pointer!important}',
       '#shortListPanel .relphi-targeted-draw-pending{outline:4px solid rgba(220,31,24,.38)!important;outline-offset:4px!important;cursor:wait!important}',
@@ -319,19 +334,20 @@
     }, true);
 
     document.addEventListener('click', function (event) {
-      const title = event.target.closest?.(PANEL + ' .card-row-board .or-card-title-banner');
-      if (!title) return;
+      const card = navigationCardFromEvent(event);
+      if (!card) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      revealFullCard(cardIdentity(title));
+      revealFullCard(cardIdentity(card));
     }, true);
 
     document.addEventListener('keydown', function (event) {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      const title = event.target.closest?.(PANEL + ' .card-row-board .or-card-title-banner');
-      if (!title) return;
+      const card = event.target.closest?.(PANEL + ' .card-row-board [data-row-card]');
+      if (!card || event.target !== card) return;
       event.preventDefault();
-      revealFullCard(cardIdentity(title));
+      event.stopImmediatePropagation();
+      revealFullCard(cardIdentity(card));
     }, true);
 
     new MutationObserver(function () { requestAnimationFrame(enhance); }).observe(document.body, {
