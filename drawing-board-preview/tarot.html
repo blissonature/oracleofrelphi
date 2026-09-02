@@ -27,8 +27,12 @@
       if(!response.ok)throw new Error(`CDN returned ${response.status}`);
       let html=await response.text();
       const base=`<base href="${assetBase}">`;
-      if(/<head[^>]*>/i.test(html))html=html.replace(/<head([^>]*)>/i,`<head$1>${base}`);
-      else html=base+html;
+      const bootStyle='<style id="relphiPreviewBootHide">html{visibility:hidden!important;background:#fffdf8!important}</style>';
+      const revealScript='<script>(function(){function reveal(){var s=document.getElementById("relphiPreviewBootHide");if(s)s.remove();document.documentElement.style.visibility="visible";}window.addEventListener("load",function(){requestAnimationFrame(function(){requestAnimationFrame(reveal);});},{once:true});})();<\\/script>';
+      if(/<head[^>]*>/i.test(html))html=html.replace(/<head([^>]*)>/i,`<head$1>${base}${bootStyle}`);
+      else html=base+bootStyle+html;
+      if(/<\\/body>/i.test(html))html=html.replace(/<\\/body>/i,revealScript+'</body>');
+      else html+=revealScript;
       document.open();
       document.write(html);
       document.close();
