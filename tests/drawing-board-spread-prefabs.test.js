@@ -38,7 +38,7 @@ vm.runInContext(source, sandbox);
 
 const api = sandbox.window.RelphiDrawingBoardSpreadPrefabs;
 assert.ok(api, 'prefab registry should be exposed for integration and regression checks');
-assert.equal(api.shipped.length, 9);
+assert.equal(api.shipped.length, 10);
 assert.deepEqual(
   Array.from(api.shipped, item => [item.id, item.cardCount]),
   [
@@ -50,6 +50,7 @@ assert.deepEqual(
     ['saturn-square-9', 9],
     ['celtic-cross-10', 10],
     ['celtic-cross-11', 11],
+    ['six-polarities-houses-12', 12],
     ['focus-1', 1]
   ]
 );
@@ -57,6 +58,11 @@ assert.ok(api.shipped.every(item => item.source === 'shipped' && item.editable =
 
 const celtic10 = api.shipped.find(item => item.id === 'celtic-cross-10');
 const celtic11 = api.shipped.find(item => item.id === 'celtic-cross-11');
+const polarities = api.shipped.find(item => item.id === 'six-polarities-houses-12');
+assert.deepEqual(
+  Array.from(polarities.positions.slice().sort((a,b) => a.drawOrder - b.drawOrder), item => item.label),
+  ['Aries','Libra','Taurus','Scorpio','Gemini','Sagittarius','Cancer','Capricorn','Leo','Aquarius','Virgo','Pisces']
+);
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').crosses, 'covering');
 assert.equal(celtic11.positions.find(item => item.role === 'covering').covers, 'significator');
 assert.equal(celtic11.positions.find(item => item.role === 'crossing').crosses, 'covering');
@@ -112,36 +118,31 @@ assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'before').transfo
 assert.ok(Math.abs(celtic11.positions[1].openTransform.y - celtic11.positions.find(item => item.id === 'crowning').transform.y - .226) < 1e-12);
 assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'beneath').transform.y - celtic11.positions[1].openTransform.y - .226) < 1e-12);
 
-assert.match(source, /return prefab\.cardCount \+ ' \| ' \+ prefab\.name/);
+assert.match(source, /return prefab\.cardCount \+ ' \\| ' \+ prefab\.name/);
 assert.match(source, /Save As Copy and Use/);
 assert.match(source, /Save Template and Use/);
 assert.match(source, />Use Once</);
-assert.match(source, /Spread Template name/);
-assert.match(source, /renderOmniboxOptions\(datalist\)/);
-assert.match(source, /Editing the template name above creates a new template/);
-assert.match(source, /Card count plus name must be unique/);
-assert.match(source, /templateNameConflict\(name, state\.slotCount\)/);
+assert.match(source, /id="relphiSpreadTemplateSelect"/);
+assert.match(source, /<select id="relphiSpreadTemplateSelect"/);
+assert.match(source, /Custom \/ no saved template/);
+assert.match(source, /New template…/);
+assert.match(source, /Position labels/);
+assert.match(source, /Template name<input id="relphiSpreadDesignName"/);
+assert.match(source, /Spread and draw settings are locked while cards are on the board/);
+assert.match(source, /applyForUse\(prefab\)/);
+assert.match(source, /stagePrefab\(prefab\)/);
+assert.match(source, /syncTypedLabels/);
+assert.match(source, /relphiTemplateClear/);
+assert.match(source, /right:2\.05rem/);
+assert.match(source, /border:0!important/);
+assert.doesNotMatch(source, />Use Template</);
+assert.doesNotMatch(source, /id = 'relphiLabelsToggle'/);
+assert.doesNotMatch(source, /className = 'relphi-labels-drawer'/);
+assert.doesNotMatch(source, /Finish from the Templates drawer/);
+assert.match(source, /Finish in Board Options/);
 assert.match(source, /Design Template/);
-assert.match(source, /id = 'relphiLabelsToggle'/);
-assert.match(source, /className = 'relphi-labels-drawer'/);
-assert.match(source, /toggle\.textContent = 'Templates'/);
-assert.match(source, /NEW_TEMPLATE_OPTION = 'New'/);
-assert.match(source, /Create a new Spread Template/);
-assert.match(source, /NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…'/);
-assert.match(source, /id = 'relphiTemplateClear'/);
-assert.match(source, /Clear template selection/);
-assert.match(source, /field\.value = displayName\(match\)/);
-assert.match(source, /newPromptArmed = false/);
-assert.match(source, /className = 'relphi-template-eye'/);
-assert.match(source, /quickLabel\.parentElement !== omnibox/);
-assert.match(source, /Hide position stickers/);
-assert.match(source, /relphi-eye-slash/);
-assert.doesNotMatch(source, /name="relphiTemplateMode"/);
-assert.doesNotMatch(source, /class="relphi-template-mode"/);
-assert.match(source, /Customize Template/);
 assert.match(source, /data-prefab-action="cancel"/);
 assert.match(source, /document\.getElementById\('clearShortList'\)\?\.click/);
-assert.match(source, /Finish from the Templates drawer/);
 assert.match(source, /Situation, Challenge, Strategy/);
 assert.match(source, /Option A', 'Option B', 'Advice/);
 assert.match(source, /You', 'Other', 'Bond', 'Challenge', 'Next step/);
@@ -158,9 +159,13 @@ assert.match(source, /button:disabled\{opacity:\.45!important;cursor:default!imp
 assert.match(source, /function addWorkspaceControls/);
 assert.doesNotMatch(source, /card-row-transform-drawer/);
 assert.doesNotMatch(source, /data-row-drawer-field/);
-assert.match(source, /opacity:0!important/);
-assert.match(source, /is-recently-used/);
 assert.match(source, /zoomCardRowExtents/);
+assert.match(source, /zoom\.step = '\.025'/);
+assert.match(source, /zoom\.min = '\.35'/);
+assert.match(source, /zoomWord\.textContent = 'Zoom'/);
+assert.match(source, /center\.hidden = true/);
+assert.match(source, /right:\.65rem!important;bottom:\.65rem!important/);
+assert.match(source, /writing-mode:horizontal-tb!important/);
 assert.doesNotMatch(source, /cursor:not-allowed/);
 assert.doesNotMatch(source, /drawnCardIds|readingName|readingNotes/);
 
@@ -170,6 +175,6 @@ assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Cel
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
 assert.match(source, /draftName = String\(state\.currentLayout\.name/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=10/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\\.js\\?v=12/);
 
 console.log('Drawing Board spread prefab regression checks passed.');
