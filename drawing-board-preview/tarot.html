@@ -4,37 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <title>Drawing Board Tarot Host · Oracle of Relphi</title>
+  <title>Tarot Ledger Preview · Oracle of Relphi</title>
   <style>
     html,body{margin:0;min-height:100%;font:16px/1.45 system-ui,sans-serif;background:#fff;color:#111}
     #previewStatus{max-width:760px;margin:12vh auto;padding:1.25rem 1.5rem;border:2px solid #dc1f18;border-radius:1.5em;background:#faf8f7}
+    #previewStatus a{color:#111;font-weight:800;text-underline-offset:.18em}
   </style>
 </head>
 <body>
-  <div id="previewStatus">Loading exact Tarot Ledger host…</div>
+  <div id="previewStatus">Opening exact Tarot Ledger preview… <a id="directPreview" href="#">Open directly</a></div>
   <script>
-  (async function(){
+  (function(){
     'use strict';
     const status=document.getElementById('previewStatus');
+    const link=document.getElementById('directPreview');
     const ref=new URLSearchParams(location.search).get('ref')||'';
     if(!/^[0-9a-f]{40}$/i.test(ref)){
       status.textContent='This preview needs an exact forty-character commit SHA in ?ref=.';
       return;
     }
-    const assetBase=`https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@${ref}/`;
-    try{
-      const response=await fetch(assetBase+'tarot.html');
-      if(!response.ok)throw new Error(`CDN returned ${response.status}`);
-      let html=await response.text();
-      const base=`<base href="${assetBase}">`;
-      if(/<head[^>]*>/i.test(html))html=html.replace(/<head([^>]*)>/i,`<head$1>${base}`);
-      else html=base+html;
-      document.open();
-      document.write(html);
-      document.close();
-    }catch(error){
-      status.textContent=`Preview failed to load revision ${ref}: ${error.message}`;
-    }
+    const direct='https://raw.githack.com/blissonature/oracleofrelphi/'+ref+'/tarot.html';
+    link.href=direct;
+    link.rel='noopener';
+    // raw.githack serves the exact immutable commit with browser-safe MIME types,
+    // so the Tarot document and all of its relative CSS/JS assets come from one revision.
+    requestAnimationFrame(function(){ location.replace(direct); });
   })();
   </script>
 </body>
