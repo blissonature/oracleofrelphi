@@ -164,6 +164,27 @@
       ]
     },
     {
+      id:'six-polarities-houses-12',
+      name:'Six Polarities of the Houses',
+      cardCount:12,
+      source:'shipped',
+      editable:false,
+      positions:[
+        position('aries', 'Aries', 1, transform(.06, .02, 0, .40)),
+        position('libra', 'Libra', 2, transform(.68, .02, 0, .40)),
+        position('taurus', 'Taurus', 3, transform(.06, .18, 0, .40)),
+        position('scorpio', 'Scorpio', 4, transform(.68, .18, 0, .40)),
+        position('gemini', 'Gemini', 5, transform(.06, .34, 0, .40)),
+        position('sagittarius', 'Sagittarius', 6, transform(.68, .34, 0, .40)),
+        position('cancer', 'Cancer', 7, transform(.06, .50, 0, .40)),
+        position('capricorn', 'Capricorn', 8, transform(.68, .50, 0, .40)),
+        position('leo', 'Leo', 9, transform(.06, .66, 0, .40)),
+        position('aquarius', 'Aquarius', 10, transform(.68, .66, 0, .40)),
+        position('virgo', 'Virgo', 11, transform(.06, .82, 0, .40)),
+        position('pisces', 'Pisces', 12, transform(.68, .82, 0, .40))
+      ]
+    },
+    {
       id:'focus-1',
       name:'Focus',
       cardCount:1,
@@ -292,8 +313,45 @@
     window.alert('Clear the Drawing Board before you ' + action + '. The active reading keeps its layout snapshot locked.');
     return false;
   }
+  function orderedPositions(prefab) {
+    return (prefab?.positions || []).slice().sort((a,b) => Number(a.drawOrder) - Number(b.drawOrder));
+  }
+  function labelsForPrefab(prefab) {
+    return orderedPositions(prefab).map((item, index) => String(item.label || ('Position #' + (index + 1))).trim());
+  }
+  function dispatchPositionLabels(labels) {
+    const field = document.querySelector('#shortListPanel #rowPositionLabels');
+    if (!field) return false;
+    const value = (labels || []).join(', ');
+    field.value = value;
+    field.dataset.relphiManualValue = value;
+    field.dispatchEvent(new Event('input', { bubbles:true }));
+    field.dispatchEvent(new Event('change', { bubbles:true }));
+    return true;
+  }
+  function ensurePositionSlots(count) {
+    const panel = document.getElementById('shortListPanel');
+    const add = panel?.querySelector('#addCardPlaceholder');
+    if (!panel || !add || count < 1) return;
+    let guard = 0;
+    while (Number(bridge()?.getState()?.slotCount || panel.querySelectorAll('.card-row-board .card-row-item').length) < count && guard < count + 4) {
+      const disabled = !!add.disabled;
+      if (disabled) add.disabled = false;
+      add.click();
+      if (disabled) add.disabled = true;
+      guard += 1;
+    }
+  }
+  function stagePrefab(prefab) {
+    const labels = labelsForPrefab(prefab);
+    if (!labels.length) return;
+    dispatchPositionLabels(labels);
+    ensurePositionSlots(labels.length);
+    dispatchPositionLabels(labels);
+  }
   function applyForUse(prefab) {
     if (!prefab || !requireClear('choose another spread')) return;
+    stagePrefab(prefab);
     if (!bridge()?.applyLayout(clone(prefab), { designMode:false })) return;
     selectedId = prefab.id;
     draftLayout = null;
@@ -333,9 +391,23 @@
   function beginCustomDesign() {
     if (!requireClear('design a layout')) return;
     const state = bridge()?.getState();
-    const current = state?.currentLayout;
-    if (!current?.positions?.length) return window.alert('Type at least one position sticker before designing the spread.');
-    const name = draftName || '';
+    const field = document.querySelector('#shortListPanel #rowPositionLabels');
+    const labels = String(field?.value || '').split(',').map(value => value.trim()).filter(Boolean);
+    let current = state?.currentLayout;
+    if (!current?.positions?.length && labels.length) {
+      current = {
+        id:'untitled-spread',
+        name:'Untitled spread',
+        cardCount:labels.length,
+        source:'active',
+        editable:true,
+        positions:gridPositions(labels)
+      };
+      stagePrefab(current);
+    }
+    if (!current?.positions?.length) return window.alert('Type at least one position label before designing the spread.');
+    const name = String(draftName || '').trim();
+    if (!name) return window.alert('Enter a template name before designing the spread.');
     draftLayout = {
       ...clone(current),
       id:uniqueId(name),
@@ -347,7 +419,6 @@
     draftName = name;
     copySourceId = '';
     selectedId = draftLayout.id;
-    labelsOpen = true;
     templateMode = 'new';
     bridge()?.applyLayout(clone(draftLayout), { designMode:true });
     schedule();
@@ -435,64 +506,153 @@
       '</div>' + activeLineage;
   }
   function addLibrary(panel, state) {
-    const host = panel.querySelector('.board-setup-group--spread') || panel.querySelector('#rowPositionLabels')?.closest('label');
+    const host = panel.querySelector('.board-setup-group--spread');
     const field = panel.querySelector('#rowPositionLabels');
-    const datalist = panel.querySelector('#rowStickerPresetList');
-    if (!host || !field || !datalist) return;
-    const available = allPrefabs();
-    const activePrefab = prefabById(state.activeLayout?.id);
-    const normalizedValue = String(field.value || '').trim().toLowerCase();
-    const exactValue = available.find(item => displayName(item).toLowerCase() === normalizedValue);
-    const labelValue = available.find(item => labelsValue(item).toLowerCase() === normalizedValue);
-    if (activePrefab) selectedId = activePrefab.id;
-    else if (exactValue) selectedId = exactValue.id;
-    else if (!state.designMode && labelValue) selectedId = labelValue.id;
-    else if (!state.designMode && normalizedValue) selectedId = '';
-    renderOmniboxOptions(datalist);
-    field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a spread design or type comma-separated position stickers…');
-    field.setAttribute('aria-label', 'Position stickers and spread designs');
-    if (!field.dataset.relphiSpreadOmniboxBound) {
-      field.dataset.relphiSpreadOmniboxBound = 'true';
-      const chooseFromOmnibox = event => {
-        if (bridge()?.getState()?.designMode) return;
-        const match = allPrefabs().find(item => displayName(item).toLowerCase() === String(field.value || '').trim().toLowerCase());
-        if (match) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          selectedId = match.id;
+    if (!host || !field) return;
+
+    const fieldLabel = field.closest('label');
+    if (fieldLabel && !fieldLabel.dataset.relphiPositionLabel) {
+      const textNode = Array.from(fieldLabel.childNodes).find(node => node.nodeType === 3);
+      if (textNode) textNode.nodeValue = 'Position labels ';
+      fieldLabel.dataset.relphiPositionLabel = 'true';
+    }
+    field.removeAttribute('list');
+    field.setAttribute('placeholder', 'Aries, Libra, Taurus, Scorpio…');
+    field.setAttribute('aria-label', 'Position labels');
+
+    let library = host.querySelector('.relphi-spread-prefab-library');
+    if (!library) {
+      library = document.createElement('section');
+      library.className = 'relphi-spread-prefab-library relphi-spread-prefab-library--inline';
+      library.innerHTML =
+        '<label class="relphi-template-select-label">Spread Template' +
+          '<span class="relphi-template-select-wrap">' +
+            '<select id="relphiSpreadTemplateSelect" aria-label="Spread Template"></select>' +
+            '<button id="relphiTemplateClear" class="relphi-template-clear" type="button" aria-label="Clear Spread Template" title="Clear Spread Template">×</button>' +
+          '</span>' +
+        '</label>' +
+        '<div class="relphi-settings-lock-note" role="note" hidden></div>' +
+        '<div class="relphi-template-editor"></div>';
+      host.insertBefore(library, fieldLabel || host.firstChild);
+
+      const select = library.querySelector('#relphiSpreadTemplateSelect');
+      select.addEventListener('change', () => {
+        const live = bridge()?.getState();
+        if (live?.locked && !live?.designMode) return schedule();
+        const value = select.value;
+        if (value === '__new__') {
+          selectedId = '';
+          templateMode = 'new';
           draftLayout = null;
           draftName = '';
+          copySourceId = '';
+          newPromptArmed = false;
+          if (!String(field.value || '').trim()) dispatchPositionLabels([]);
           schedule();
           return;
         }
+        if (!value) {
+          selectedId = '';
+          templateMode = 'new';
+          draftLayout = null;
+          draftName = '';
+          copySourceId = '';
+          newPromptArmed = false;
+          dispatchPositionLabels([]);
+          schedule();
+          return;
+        }
+        const prefab = prefabById(value);
+        if (prefab) applyForUse(prefab);
+      });
+
+      library.querySelector('#relphiTemplateClear').addEventListener('click', event => {
+        event.preventDefault();
+        const live = bridge()?.getState();
+        if (live?.locked && !live?.designMode) return schedule();
         selectedId = '';
+        templateMode = 'new';
         draftLayout = null;
         draftName = '';
+        copySourceId = '';
+        newPromptArmed = false;
+        select.value = '';
+        dispatchPositionLabels([]);
         schedule();
-      };
-      field.addEventListener('input', chooseFromOmnibox, true);
-      field.addEventListener('change', chooseFromOmnibox, true);
+      });
     }
-    let library = host.querySelector('.relphi-spread-prefab-library');
+
+    const select = library.querySelector('#relphiSpreadTemplateSelect');
+    const activePrefab = prefabById(state.activeLayout?.id);
+    if (activePrefab && !state.designMode) selectedId = activePrefab.id;
+    const choices = allPrefabs();
+    const previous = select.value;
+    select.innerHTML =
+      '<option value="">Custom / no saved template</option>' +
+      '<option value="__new__">New template…</option>' +
+      choices.map(prefab => '<option value="' + escapeHtml(prefab.id) + '">' + escapeHtml(displayName(prefab)) + '</option>').join('');
+    const desired = state.designMode
+      ? (prefabById(selectedId)?.id || '')
+      : (prefabById(selectedId)?.id || (previous && choices.some(item => item.id === previous) ? previous : ''));
+    select.value = desired;
+    const structureLocked = !!state.locked && !state.designMode;
+    select.disabled = structureLocked || !!state.designMode;
+
+    const clear = library.querySelector('#relphiTemplateClear');
+    clear.hidden = !select.value || select.value === '__new__' || structureLocked || !!state.designMode;
+    clear.disabled = structureLocked || !!state.designMode;
+
+    const lockNote = library.querySelector('.relphi-settings-lock-note');
+    lockNote.hidden = !structureLocked;
+    lockNote.textContent = structureLocked
+      ? 'Spread and draw settings are locked while cards are on the board. Clear the board to change them.'
+      : '';
+
+    const editor = library.querySelector('.relphi-template-editor');
     const prefab = prefabById(selectedId) || draftLayout;
-    if (!library) {
-      library = document.createElement('section');
-      library.className = 'relphi-spread-prefab-library';
-      field.closest('label')?.insertAdjacentElement('afterend', library);
-    }
-    library.innerHTML = unifiedLibraryMarkup(prefab, state);
-    const nameField = library.querySelector('#relphiSpreadDesignName');
+    const designing = !!state.designMode;
+    const isNew = templateMode === 'new' && !designing;
+    const conflict = designing && templateNameConflict(draftName, Number(state.slotCount) || Number(draftLayout?.positions?.length) || 0);
+
+    editor.innerHTML =
+      ((isNew || designing) ?
+        '<label class="relphi-spread-design-name">Template name<input id="relphiSpreadDesignName" type="text" maxlength="60" value="' + escapeHtml(draftName || prefab?.name || '') + '" placeholder="Name this template"></label>' : '') +
+      (designing ?
+        '<small id="relphiSpreadNameHelp" class="' + (conflict ? 'is-error' : '') + '">' +
+          (conflict ? 'A template with this card count and name already exists.' : 'Move, rotate, label, add, or remove positions, then save the template.') +
+        '</small>' : '') +
+      '<div class="relphi-prefab-actions">' +
+        (!designing && isNew ? '<button type="button" class="primary" data-prefab-action="design">Design Template</button>' : '') +
+        (!designing && prefab?.source === 'shipped' ? '<button type="button" data-prefab-action="copy">Customize a Copy</button>' : '') +
+        (!designing && prefab?.source === 'custom' ? '<button type="button" data-prefab-action="edit">Edit Template</button><button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
+        (designing ? '<button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!String(draftName || '').trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button>' : '') +
+      '</div>';
+
+    const nameField = editor.querySelector('#relphiSpreadDesignName');
     nameField?.addEventListener('input', () => {
       draftName = String(nameField.value || '').slice(0, 60);
       if (draftLayout) draftLayout.name = draftName;
+      const live = bridge()?.getState();
+      const count = Number(live?.slotCount) || Number(draftLayout?.positions?.length) || 0;
+      const conflictNow = !!live?.designMode && templateNameConflict(draftName, count);
+      const help = editor.querySelector('#relphiSpreadNameHelp');
+      const save = editor.querySelector('[data-prefab-action="save"]');
+      if (help) {
+        help.classList.toggle('is-error', conflictNow);
+        help.textContent = conflictNow
+          ? 'A template with this card count and name already exists.'
+          : 'Move, rotate, label, add, or remove positions, then save the template.';
+      }
+      if (save) save.disabled = !draftName.trim() || conflictNow;
     });
-    library.querySelector('[data-prefab-action="use"]')?.addEventListener('click', () => applyForUse(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="copy"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId), { copy:true }));
-    library.querySelector('[data-prefab-action="edit"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="duplicate"]')?.addEventListener('click', () => duplicateCustom(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
+
+    editor.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
+    editor.querySelector('[data-prefab-action="copy"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId), { copy:true }));
+    editor.querySelector('[data-prefab-action="edit"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId)));
+    editor.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
+    editor.querySelector('[data-prefab-action="once"]')?.addEventListener('click', () => finishDesign(false));
+    editor.querySelector('[data-prefab-action="cancel"]')?.addEventListener('click', cancelDesign);
+    editor.querySelector('[data-prefab-action="save"]')?.addEventListener('click', () => finishDesign(true));
   }
   function labelsDrawerMarkup(prefab, state) {
     const designing = !!state.designMode;
@@ -735,10 +895,10 @@
       workspace.insertBefore(banner, workspace.firstChild);
     }
     if (state.designMode) {
-      banner.innerHTML = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish from the Templates drawer.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
+      banner.innerHTML = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish in Board Options.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
       banner.querySelector('[data-design-action="remove"]')?.addEventListener('click', () => bridge()?.removePosition(state.transformTarget));
     } else {
-      banner.innerHTML = '<strong>Active layout locked</strong><span>' + (state.activeLayout ? displayName(state.activeLayout) : 'Custom layout') + ' is snapshotted for this reading. Clear the board to choose or redesign a spread.</span>';
+      banner.innerHTML = '<strong>Active layout locked</strong><span>' + (state.activeLayout ? displayName(state.activeLayout) : 'Custom layout') + ' is locked for this reading. Clear the board to change the spread or draw settings.</span>';
     }
   }
   function lockControls(panel, state) {
@@ -798,23 +958,41 @@
     const workspace = panel.querySelector('.card-row-workspace');
     const toolbar = panel.querySelector('.card-row-workspace-toolbar');
     if (!board || !workspace || !toolbar) return;
+
+    const zoom = toolbar.querySelector('#rowZoom') || document.getElementById('rowZoom');
+    if (zoom) {
+      zoom.min = '.35';
+      zoom.max = '2.4';
+      zoom.step = '.025';
+    }
+    const zoomWord = toolbar.querySelector('.card-row-zoom-label>span');
+    if (zoomWord) zoomWord.textContent = 'Zoom';
+    const center = toolbar.querySelector('#resetCardRowPan');
+    if (center) {
+      center.hidden = true;
+      center.tabIndex = -1;
+      center.setAttribute('aria-hidden', 'true');
+    }
+    const panNote = toolbar.querySelector('.card-row-pan-note');
+    if (panNote) panNote.hidden = true;
+    toolbar.querySelector('.board-arrange-flyout')?.remove();
+
     let extents = toolbar.querySelector('#zoomCardRowExtents');
     if (!extents) {
       extents = document.createElement('button');
       extents.id = 'zoomCardRowExtents';
       extents.type = 'button';
       extents.title = 'Zoom to show all cards';
-      extents.setAttribute('aria-label', 'Zoom Extents');
+      extents.setAttribute('aria-label', 'Zoom to show all cards');
       extents.textContent = '⛶';
-      toolbar.insertBefore(extents, toolbar.querySelector('#resetCardRowPan'));
+      toolbar.appendChild(extents);
       extents.addEventListener('click', event => {
         event.preventDefault();
         document.getElementById('resetCardRowPan')?.click();
         const items = Array.from(board.querySelectorAll('.card-row-item'));
         if (!items.length) return;
-        const zoom = document.getElementById('rowZoom');
-        if (!zoom) return;
-        const current = Math.max(.45, Number(zoom.value) || 1);
+        const liveZoom = document.getElementById('rowZoom');
+        if (!liveZoom) return;
         const logical = items.map(item => {
           const left = Number.parseFloat(item.style.left) || 0;
           const top = Number.parseFloat(item.style.top) || 0;
@@ -823,21 +1001,11 @@
         });
         const maxX = Math.max(...logical.map(value => value.right));
         const maxY = Math.max(...logical.map(value => value.bottom));
-        const fit = Math.max(.45, Math.min(2.4, Math.min((workspace.clientWidth - 96) / Math.max(1, maxX), (workspace.clientHeight - 96) / Math.max(1, maxY))));
-        zoom.value = String(fit);
-        zoom.dispatchEvent(new Event('input', { bubbles:true }));
-        zoom.dispatchEvent(new Event('change', { bubbles:true }));
+        const fit = Math.max(.35, Math.min(2.4, Math.min((workspace.clientWidth - 72) / Math.max(1, maxX), (workspace.clientHeight - 72) / Math.max(1, maxY))));
+        liveZoom.value = String(fit);
+        liveZoom.dispatchEvent(new Event('input', { bubbles:true }));
+        liveZoom.dispatchEvent(new Event('change', { bubbles:true }));
       });
-    }
-    if (!toolbar.dataset.relphiFadeBound) {
-      toolbar.dataset.relphiFadeBound = 'true';
-      let fadeTimer = 0;
-      const showRecentlyUsed = () => {
-        window.clearTimeout(fadeTimer);
-        toolbar.classList.add('is-recently-used');
-        fadeTimer = window.setTimeout(() => toolbar.classList.remove('is-recently-used'), 1800);
-      };
-      ['pointerenter','pointermove','focusin','input','click'].forEach(type => toolbar.addEventListener(type, showRecentlyUsed));
     }
   }
   function enhance() {
@@ -849,7 +1017,7 @@
     enhancing = true;
     try {
       const state = api.getState();
-      addLabelsDrawer(panel, state);
+      addLibrary(panel, state);
       addDesignControls(panel, state);
       lockControls(panel, state);
       applyCenterView(panel, state);
@@ -935,6 +1103,30 @@
       '#shortListPanel .card-row-workspace .relphi-layout-status{margin-left:3.8rem!important}',
       '@media(prefers-reduced-motion:reduce){#shortListPanel .card-row-workspace-toolbar{transition:none!important}}',
       '@media(max-width:700px){#shortListPanel .relphi-labels-field{grid-template-columns:minmax(0,1fr)!important;gap:.35rem!important}#shortListPanel .relphi-layout-status{grid-template-columns:1fr}#shortListPanel .relphi-layout-status>span,#shortListPanel .relphi-layout-status>div{grid-column:1;grid-row:auto}#shortListPanel .relphi-layout-status>div{justify-content:flex-start}#shortListPanel .relphi-prefab-actions button{flex:1 1 46%}}'
+    ].join('');
+    style.textContent += [
+      '#shortListPanel .relphi-spread-prefab-library--inline{order:-1;display:grid!important;gap:.45rem!important;width:100%!important;padding:0!important;border:0!important;background:transparent!important}',
+      '#shortListPanel .relphi-template-select-label{display:grid!important;gap:.2rem!important;width:100%!important;margin:0!important;font-size:.78rem!important;font-weight:800!important}',
+      '#shortListPanel .relphi-template-select-wrap{position:relative!important;display:block!important;width:100%!important}',
+      '#shortListPanel #relphiSpreadTemplateSelect{display:block!important;width:100%!important;min-height:2.35rem!important;margin:.2rem 0 0!important;padding:.45rem 4.2rem .45rem .6rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.84rem!important;font-weight:600!important;box-sizing:border-box!important}',
+      '#shortListPanel .relphi-template-select-wrap .relphi-template-clear{position:absolute!important;right:2.05rem!important;top:50%!important;transform:translateY(-43%)!important;z-index:2!important;display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#5f5751!important;font-size:1.45rem!important;font-weight:500!important;line-height:1!important;box-shadow:none!important}',
+      '#shortListPanel .relphi-template-select-wrap .relphi-template-clear:hover{color:#171412!important;background:transparent!important}',
+      '#shortListPanel .relphi-template-select-wrap .relphi-template-clear[hidden]{display:none!important}',
+      '#shortListPanel .relphi-template-editor{display:grid!important;gap:.45rem!important}',
+      '#shortListPanel .relphi-settings-lock-note{padding:.48rem .55rem!important;border-left:3px solid #171412!important;background:#f4efe9!important;color:#4f4741!important;font-size:.72rem!important;font-weight:700!important;line-height:1.3!important}',
+      '#shortListPanel .relphi-settings-lock-note[hidden]{display:none!important}',
+      '#shortListPanel .board-setup-group--spread>.card-row-position-label{width:100%!important}',
+      '#shortListPanel .board-setup-group--spread>.quick-position-sticker-toggle{width:100%!important}',
+      '#shortListPanel .relphi-labels-toggle,#shortListPanel .relphi-labels-drawer{display:none!important}',
+      '#shortListPanel .card-row-workspace-toolbar{position:absolute!important;top:auto!important;left:auto!important;right:.65rem!important;bottom:.65rem!important;z-index:1500!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-end!important;gap:.38rem!important;width:auto!important;min-width:0!important;max-width:none!important;height:auto!important;min-height:0!important;margin:0!important;padding:.38rem .45rem!important;border:1px solid rgba(23,20,18,.24)!important;border-radius:10px!important;background:rgba(255,250,244,.95)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important;opacity:1!important;transition:none!important}',
+      '#shortListPanel .card-row-workspace-toolbar .card-row-zoom-label{display:flex!important;flex-direction:row!important;align-items:center!important;gap:.35rem!important;width:auto!important;margin:0!important;padding:0!important}',
+      '#shortListPanel .card-row-workspace-toolbar .card-row-zoom-label>span{position:static!important;width:auto!important;height:auto!important;overflow:visible!important;clip:auto!important;white-space:nowrap!important;color:#171412!important;font-size:.68rem!important;font-weight:850!important}',
+      '#shortListPanel #rowZoom{writing-mode:horizontal-tb!important;direction:ltr!important;appearance:auto!important;width:7.25rem!important;min-width:7.25rem!important;max-width:7.25rem!important;height:1rem!important;min-height:1rem!important;margin:0!important;padding:0!important}',
+      '#shortListPanel #rowZoomValue{min-width:2.6rem!important;font-size:.62rem!important;font-weight:800!important;line-height:1!important;text-align:center!important}',
+      '#shortListPanel #resetCardRowPan,#shortListPanel .card-row-workspace-toolbar .card-row-pan-note,#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{display:none!important}',
+      '#shortListPanel .card-row-workspace-toolbar>#zoomCardRowExtents{display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font-size:1rem!important;line-height:1!important}',
+      '#shortListPanel .card-row-workspace .relphi-layout-status{margin-left:.45rem!important;margin-right:.45rem!important}',
+      '@media(max-width:620px){#shortListPanel #rowZoom{width:5.5rem!important;min-width:5.5rem!important;max-width:5.5rem!important}#shortListPanel .card-row-workspace-toolbar{right:.45rem!important;bottom:.45rem!important}}'
     ].join('');
     document.head.appendChild(style);
   }
