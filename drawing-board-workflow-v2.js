@@ -108,7 +108,7 @@
   }
   function addLeanExports(panel) {
     const tools = panel.querySelector('.card-row-composer');
-    if (!tools || tools.querySelector('#printRowPdf')) return;
+    if (!tools || panel.querySelector('#printRowPdf')) return;
     const optimized = document.createElement('button');
     optimized.type = 'button';
     optimized.id = 'downloadRowOptimizedHtml';
