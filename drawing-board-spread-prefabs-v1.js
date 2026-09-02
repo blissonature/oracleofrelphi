@@ -501,12 +501,19 @@
   function renderLabelBuilder(panel, field, labels) {
     const host = field?.closest('.board-setup-group--spread');
     if (!host || !field) return null;
+    let promptRow = host.querySelector('.relphi-label-template-row');
+    if (!promptRow) {
+      promptRow = document.createElement('div');
+      promptRow.className = 'relphi-label-template-row';
+      promptRow.innerHTML = '<strong>Type card labels</strong><div class="relphi-template-inline-slot"></div>';
+      host.querySelector('header')?.insertAdjacentElement('afterend', promptRow);
+    }
     let builder = host.querySelector('.relphi-label-builder');
     if (!builder) {
       builder = document.createElement('div');
       builder.className = 'relphi-label-builder';
       builder.setAttribute('aria-label', 'Card labels');
-      field.closest('label')?.insertAdjacentElement('beforebegin', builder);
+      promptRow.insertAdjacentElement('afterend', builder);
     }
     const clean = (labels && labels.length ? labels : ['']).map(value => String(value || ''));
     const existing = Array.from(builder.querySelectorAll('.relphi-label-row'));
@@ -612,7 +619,7 @@
       library = document.createElement('section');
       library.className = 'relphi-spread-prefab-library relphi-spread-prefab-library--inline';
       library.innerHTML =
-        '<label class="relphi-template-select-label">Spread Template' +
+        '<label class="relphi-template-select-label">Select a Template' +
           '<span class="relphi-template-select-wrap">' +
             '<select id="relphiSpreadTemplateSelect" aria-label="Spread Template"></select>' +
             '<button id="relphiTemplateClear" class="relphi-template-clear" type="button" aria-label="Clear Spread Template" title="Clear Spread Template">×</button>' +
@@ -620,7 +627,8 @@
         '</label>' +
         '<div class="relphi-settings-lock-note" role="note" hidden></div>' +
         '<div class="relphi-template-editor"></div>';
-      host.insertBefore(library, fieldLabel || host.firstChild);
+      const slot = host.querySelector('.relphi-template-inline-slot');
+      (slot || host).appendChild(library);
 
       const select = library.querySelector('#relphiSpreadTemplateSelect');
       select.addEventListener('change', () => {
@@ -1010,6 +1018,17 @@
       '#shortListPanel .relphi-label-row button:disabled,#shortListPanel .relphi-label-row input:disabled{opacity:.45!important;cursor:default!important}',
       '#shortListPanel .relphi-spread-prefab-library--inline{margin-top:.15rem!important}',
       '@media(max-width:560px){#shortListPanel .relphi-label-row{grid-template-columns:1.45rem minmax(0,1fr) 2rem 2rem!important}}'
+    ].join('');
+    style.textContent += [
+      '#shortListPanel .relphi-label-template-row{display:grid!important;grid-template-columns:auto minmax(15rem,1fr)!important;gap:.65rem!important;align-items:center!important;width:100%!important;margin:.05rem 0 .35rem!important}',
+      '#shortListPanel .relphi-label-template-row>strong{font-size:.76rem!important;white-space:nowrap!important}',
+      '#shortListPanel .relphi-template-inline-slot{min-width:0!important}',
+      '#shortListPanel .relphi-template-inline-slot .relphi-spread-prefab-library--inline{margin:0!important}',
+      '#shortListPanel .relphi-template-inline-slot .relphi-template-select-label{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;gap:.45rem!important;align-items:center!important;font-size:.72rem!important}',
+      '#shortListPanel .relphi-template-inline-slot .relphi-template-select-wrap{min-width:0!important}',
+      '#shortListPanel .relphi-template-inline-slot #relphiSpreadTemplateSelect{margin:0!important;min-height:2.25rem!important}',
+      '#shortListPanel .relphi-template-inline-slot .relphi-settings-lock-note,#shortListPanel .relphi-template-inline-slot .relphi-template-editor{grid-column:1/-1!important}',
+      '@media(max-width:700px){#shortListPanel .relphi-label-template-row{grid-template-columns:1fr!important}#shortListPanel .relphi-template-inline-slot .relphi-template-select-label{grid-template-columns:1fr!important}}'
     ].join('');
     document.head.appendChild(style);
   }
