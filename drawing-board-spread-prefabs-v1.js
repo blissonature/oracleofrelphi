@@ -16,6 +16,8 @@
   let labelsOpen = false;
   let newPromptArmed = false;
   let suppressOmniboxHandler = false;
+  let appliedCenterLayoutId = '';
+  let appliedCenterOpen = null;
   const NEW_TEMPLATE_OPTION = 'New';
   const NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…';
 
@@ -161,6 +163,28 @@
         position('house', '8 · Your house', 9, transform(.76, .492, 0, .45, 4)),
         position('hopes-fears', '9 · Your hopes or fears', 10, transform(.76, .266, 0, .45, 4)),
         position('outcome', '10 · What will come', 11, transform(.76, .04, 0, .45, 4))
+      ]
+    },
+    {
+      id:'six-axes-cancer-leo-hinge-12',
+      name:'Six Axes: Cancer–Leo Hinge',
+      cardCount:12,
+      source:'shipped',
+      editable:false,
+      helper:'six-axis-hinge',
+      positions:[
+        position('aries-i', '1 · Aries · I', 1, transform(.04, .04, 0, .45, 4)),
+        position('taurus-mine', '2 · Taurus · Mine', 2, transform(.04, .34, 0, .45, 4)),
+        position('gemini-word', '3 · Gemini · Word', 3, transform(.04, .64, 0, .45, 4)),
+        position('cancer-interior', '4 · Cancer · Interior', 4, transform(.53, .04, 0, .45, 4)),
+        position('leo-heart', '5 · Leo · Heart', 5, transform(.53, .34, 0, .45, 4)),
+        position('virgo-distinction', '6 · Virgo · Distinction', 6, transform(.53, .64, 0, .45, 4)),
+        position('libra-you', '7 · Libra · You', 7, transform(.27, .04, 0, .45, 4)),
+        position('scorpio-ours', '8 · Scorpio · Ours', 8, transform(.27, .34, 0, .45, 4)),
+        position('sagittarius-meaning', '9 · Sagittarius · Meaning', 9, transform(.27, .64, 0, .45, 4)),
+        position('capricorn-form', '10 · Capricorn · Form', 10, transform(.76, .04, 0, .45, 4)),
+        position('aquarius-field', '11 · Aquarius · Field', 11, transform(.76, .34, 0, .45, 4)),
+        position('pisces-dissolution', '12 · Pisces · Dissolution', 12, transform(.76, .64, 0, .45, 4))
       ]
     },
     {
@@ -762,21 +786,34 @@
   function applyCenterView(panel, state) {
     const board = panel.querySelector('.card-row-board');
     const layout = state.activeLayout;
-    if (!board || !layout || layout.helper !== 'celtic-center') {
+    if (!layout || layout.helper !== 'celtic-center') {
       panel.querySelector('.relphi-center-helper')?.remove();
+      appliedCenterLayoutId = '';
+      appliedCenterOpen = null;
       return;
     }
-    layout.positions.forEach((position, index) => {
-      if (!position.role || !['significator','covering','crossing'].includes(position.role)) return;
-      const value = state.centerOpen && position.openTransform ? position.openTransform : position.transform;
-      const item = board.querySelector('[data-row-index="' + index + '"]');
-      if (!item || !value) return;
-      item.style.left = Math.round(Number(value.x) * 900) + 'px';
-      item.style.top = Math.round(Number(value.y) * 760) + 'px';
-      item.style.zIndex = String(Number(value.zIndex) || 1);
-      item.style.setProperty('--row-card-scale', String(Number(value.scale) || 1));
-      item.style.setProperty('--row-card-rotation', (Number(value.rotation) || 0) + 'deg');
-    });
+    if (!board) return;
+
+    // The helper owns only an explicit Open Center / Restore Cross transition.
+    // Ordinary board renders, including zoom renders, must preserve user transforms.
+    const centerOpen = !!state.centerOpen;
+    const centerViewChanged = appliedCenterLayoutId !== String(layout.id || '') || appliedCenterOpen !== centerOpen;
+    if (centerViewChanged) {
+      layout.positions.forEach((position, index) => {
+        if (!position.role || !['significator','covering','crossing'].includes(position.role)) return;
+        const value = centerOpen && position.openTransform ? position.openTransform : position.transform;
+        const item = board.querySelector('[data-row-index="' + index + '"]');
+        if (!item || !value) return;
+        item.style.left = Math.round(Number(value.x) * 900) + 'px';
+        item.style.top = Math.round(Number(value.y) * 760) + 'px';
+        item.style.zIndex = String(Number(value.zIndex) || 1);
+        item.style.setProperty('--row-card-scale', String(Number(value.scale) || 1));
+        item.style.setProperty('--row-card-rotation', (Number(value.rotation) || 0) + 'deg');
+      });
+      appliedCenterLayoutId = String(layout.id || '');
+      appliedCenterOpen = centerOpen;
+    }
+
     let helper = board.querySelector('.relphi-center-helper');
     if (!helper) {
       helper = document.createElement('button');
@@ -784,14 +821,32 @@
       helper.className = 'relphi-center-helper';
       board.appendChild(helper);
     }
-    helper.textContent = state.centerOpen ? 'Restore Cross' : 'Open Center';
-    helper.setAttribute('aria-pressed', String(!!state.centerOpen));
+    helper.textContent = centerOpen ? 'Restore Cross' : 'Open Center';
+    helper.setAttribute('aria-pressed', String(centerOpen));
     helper.onclick = event => {
       event.preventDefault();
       event.stopPropagation();
-      bridge()?.setCenterOpen(!state.centerOpen);
+      bridge()?.setCenterOpen(!centerOpen);
       schedule();
     };
+  }
+
+  function applySixAxisHinge(panel, state) {
+    const board = panel.querySelector('.card-row-board');
+    const layout = state.activeLayout;
+    if (!board || !layout || layout.helper !== 'six-axis-hinge') {
+      panel.querySelector('.relphi-six-axis-hinge')?.remove();
+      return;
+    }
+    let hinge = board.querySelector('.relphi-six-axis-hinge');
+    if (!hinge) {
+      hinge = document.createElement('div');
+      hinge.className = 'relphi-six-axis-hinge';
+      hinge.setAttribute('role', 'note');
+      hinge.setAttribute('aria-label', 'Cancer to Leo hinge: what is held within becomes radiant');
+      hinge.innerHTML = '<strong>Cancer | Leo</strong><span>held within → radiant</span>';
+      board.appendChild(hinge);
+    }
   }
   function addWorkspaceControls(panel) {
     const board = panel.querySelector('.card-row-board');
@@ -853,6 +908,7 @@
       addDesignControls(panel, state);
       lockControls(panel, state);
       applyCenterView(panel, state);
+      applySixAxisHinge(panel, state);
       addWorkspaceControls(panel);
     } finally {
       enhancing = false;
@@ -914,25 +970,28 @@
       '#shortListPanel .relphi-layout-design-mode #drawRandomRowCard{opacity:.52!important}',
       '#shortListPanel .relphi-center-helper{position:absolute;left:540px;top:610px;z-index:160!important;min-width:118px;min-height:46px;padding:.65rem .9rem;border:2px solid #171412;border-radius:999px;background:#fff!important;color:#171412!important;font:inherit;font-size:.78rem;font-weight:900;box-shadow:0 5px 14px rgba(30,20,15,.16);touch-action:manipulation}',
       '#shortListPanel .relphi-center-helper:focus-visible{outline:3px solid rgba(220,31,24,.35);outline-offset:3px}',
+      '#shortListPanel .relphi-six-axis-hinge{position:absolute;left:468px;top:211px;z-index:120;display:grid;justify-items:center;gap:.08rem;width:150px;padding:.18rem .35rem;border-top:1px solid rgba(23,20,18,.32);border-bottom:1px solid rgba(23,20,18,.32);background:rgba(255,250,244,.9);color:#171412;text-align:center;pointer-events:none}',
+      '#shortListPanel .relphi-six-axis-hinge strong{font-size:.67rem;line-height:1.05;text-transform:uppercase;letter-spacing:.045em}',
+      '#shortListPanel .relphi-six-axis-hinge span{font-size:.58rem;line-height:1.05;color:#625952}',
       '#shortListPanel .card-row-workspace{position:relative!important;overflow:hidden!important;background:var(--row-table-image,none) center/cover no-repeat,repeating-linear-gradient(0deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),repeating-linear-gradient(90deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),var(--row-table-bg,#fffaf0)!important}',
       '#shortListPanel .card-row-workspace .short-list-row.card-row-board{top:0!important;overflow:visible!important;background:var(--row-table-image,none) center/cover no-repeat,repeating-linear-gradient(0deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),repeating-linear-gradient(90deg,transparent 0 calc(var(--row-grid-size,48px) - 1px),rgba(26,22,18,.09) calc(var(--row-grid-size,48px) - 1px) var(--row-grid-size,48px)),var(--row-table-bg,#fffaf0)!important}',
       'html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item{position:absolute!important}',
-      '#shortListPanel .card-row-workspace-toolbar{position:absolute!important;top:.55rem!important;left:.55rem!important;right:auto!important;z-index:1500!important;display:grid!important;grid-template-columns:1fr!important;justify-items:center!important;gap:.3rem!important;width:2.7rem!important;max-width:2.7rem!important;margin:0!important;padding:.4rem .28rem!important;border:1px solid rgba(23,20,18,.28)!important;border-radius:999px!important;background:rgba(255,250,244,.94)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important;backdrop-filter:blur(4px);opacity:0!important;transition:opacity .35s ease!important}',
+      '#shortListPanel .card-row-workspace-toolbar{position:absolute!important;right:.75rem!important;bottom:.75rem!important;top:auto!important;left:auto!important;z-index:1500!important;display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:.3rem!important;width:auto!important;max-width:calc(100% - 1.5rem)!important;margin:0!important;padding:.32rem .4rem!important;border:1px solid rgba(23,20,18,.28)!important;border-radius:999px!important;background:rgba(255,250,244,.94)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important;backdrop-filter:blur(4px);opacity:0!important;transition:opacity .35s ease!important}',
       '#shortListPanel .card-row-workspace-toolbar:hover,#shortListPanel .card-row-workspace-toolbar:focus-within,#shortListPanel .card-row-workspace-toolbar.is-recently-used{opacity:.96!important}',
-      '#shortListPanel .card-row-zoom-label{display:grid!important;justify-items:center!important;gap:.2rem!important;width:auto!important;margin:0!important;padding:0!important}',
+      '#shortListPanel .card-row-zoom-label{display:flex!important;align-items:center!important;gap:.2rem!important;width:auto!important;margin:0!important;padding:0!important}',
       '#shortListPanel .card-row-zoom-label>span{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important}',
-      '#shortListPanel #rowZoom{writing-mode:vertical-lr!important;direction:rtl!important;appearance:slider-vertical!important;width:1rem!important;min-width:1rem!important;max-width:1rem!important;height:6.5rem!important;min-height:6.5rem!important;margin:.1rem 0!important;padding:0!important}',
+      '#shortListPanel #rowZoom{writing-mode:horizontal-tb!important;direction:ltr!important;appearance:auto!important;width:7rem!important;min-width:5rem!important;max-width:9rem!important;height:1rem!important;min-height:1rem!important;margin:0!important;padding:0!important}',
       '#shortListPanel #rowZoomValue{font-size:.58rem!important;font-weight:800!important;line-height:1!important}',
       '#shortListPanel .card-row-workspace-toolbar>button{display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;border:1px solid #aaa098!important;border-radius:999px!important;background:#fff!important;color:#171412!important;font-size:1rem!important;line-height:1!important}',
-      '#shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar{grid-template-columns:1fr!important;grid-auto-flow:row!important;align-items:center!important;justify-content:center!important;height:auto!important;min-height:0!important;max-height:none!important}',
-      '#shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar .card-row-zoom-label{grid-column:1!important;grid-row:auto!important}',
-      '#shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>button{grid-column:1!important;grid-row:auto!important}',
-      'html body #shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>*{grid-column:1!important;grid-row:auto!important}',
-      'html body #shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>#resetCardRowPan{grid-column:1!important;grid-row:auto!important}',
+      '#shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar{display:flex!important;flex-flow:row nowrap!important;align-items:center!important;justify-content:flex-end!important;height:auto!important;min-height:0!important;max-height:none!important}',
+      '#shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar .card-row-zoom-label{grid-column:auto!important;grid-row:auto!important}',
+      '#shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>button{grid-column:auto!important;grid-row:auto!important}',
+      'html body #shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>*{grid-column:auto!important;grid-row:auto!important}',
+      'html body #shortListPanel .card-row-drawing-board .card-row-workspace>.card-row-workspace-toolbar>#resetCardRowPan{grid-column:auto!important;grid-row:auto!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{width:2rem!important;min-width:2rem!important;margin:0!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;padding:0!important;border-radius:999px!important;font-size:0!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button::before{content:"↔";font-size:1rem}',
-      '#shortListPanel .card-row-workspace .relphi-layout-status{margin-left:3.8rem!important}',
+      '#shortListPanel .card-row-workspace .relphi-layout-status{margin:.45rem!important}',
       '@media(prefers-reduced-motion:reduce){#shortListPanel .card-row-workspace-toolbar{transition:none!important}}',
       '@media(max-width:700px){#shortListPanel .relphi-labels-field{grid-template-columns:minmax(0,1fr)!important;gap:.35rem!important}#shortListPanel .relphi-layout-status{grid-template-columns:1fr}#shortListPanel .relphi-layout-status>span,#shortListPanel .relphi-layout-status>div{grid-column:1;grid-row:auto}#shortListPanel .relphi-layout-status>div{justify-content:flex-start}#shortListPanel .relphi-prefab-actions button{flex:1 1 46%}}'
     ].join('');
