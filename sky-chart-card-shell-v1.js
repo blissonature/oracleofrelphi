@@ -12,24 +12,24 @@ function installStyles(){
   style.textContent=`
 #skyFoundationRoot .sky-card-drawers{display:block!important;width:100%!important;min-width:0!important;border-top:1px solid rgba(31,27,24,.11)!important}
 #skyFoundationRoot .sky-card-fingerprint-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%!important;min-width:0!important;border-bottom:1px solid rgba(31,27,24,.11)!important;background:#fffdfa!important}
-#skyFoundationRoot .sky-card-fingerprint-tab{appearance:none!important;display:grid!important;place-items:center!important;min-width:0!important;min-height:58px!important;margin:0!important;padding:6px 8px!important;border:0!important;border-right:1px solid rgba(31,27,24,.11)!important;border-radius:0!important;background:transparent!important;color:inherit!important;box-shadow:none!important;cursor:pointer!important}
+#skyFoundationRoot .sky-card-fingerprint-tab{appearance:none!important;position:relative!important;display:grid!important;place-items:center!important;min-width:0!important;min-height:62px!important;margin:0!important;padding:0!important;border:0!important;border-right:1px solid rgba(31,27,24,.11)!important;border-radius:0!important;background:transparent!important;color:inherit!important;box-shadow:none!important;cursor:pointer!important}
 #skyFoundationRoot .sky-card-fingerprint-tab:last-child{border-right:0!important}
 #skyFoundationRoot .sky-card-fingerprint-tab:hover,#skyFoundationRoot .sky-card-fingerprint-tab:focus-visible{background:#f8f3ed!important;outline:none!important}
-#skyFoundationRoot .sky-card-fingerprint-tab[data-active="true"]{background:color-mix(in srgb,var(--slot-color,#555) 6%,#fffdfa)!important;box-shadow:inset 0 -3px var(--slot-color,#555)!important}
-#skyFoundationRoot .sky-card-fingerprint-tab>.sky-drawer-fingerprint{display:grid!important;place-items:center!important;width:100%!important;max-width:78px!important;height:44px!important;min-width:0!important;margin:0!important}
+#skyFoundationRoot .sky-card-fingerprint-tab[data-active="true"]{background:color-mix(in srgb,var(--slot-color,#555) 6%,#fffdfa)!important}
+#skyFoundationRoot .sky-card-fingerprint-tab[data-active="true"]::after{content:""!important;position:absolute!important;left:0!important;right:0!important;bottom:0!important;height:3px!important;background:var(--slot-color,#555)!important;pointer-events:none!important}
+#skyFoundationRoot .sky-card-fingerprint-tab>.sky-drawer-fingerprint{display:grid!important;place-items:center!important;width:52px!important;height:52px!important;min-width:52px!important;min-height:52px!important;max-width:52px!important;max-height:52px!important;margin:0 auto!important;padding:0!important;overflow:visible!important}
 #skyFoundationRoot .sky-card-fingerprint-tab>.sky-drawer-fingerprint[hidden]{display:none!important}
-#skyFoundationRoot .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram{display:block!important;width:44px!important;height:44px!important;overflow:visible!important}
-#skyFoundationRoot .sky-card-fingerprint-tab .sky-placement-fingerprint-wheel{display:block!important;width:70px!important;height:42px!important;overflow:visible!important}
-#skyFoundationRoot .sky-card-fingerprint-tab .sky-card-hits-fingerprint-strip{display:grid!important;place-items:center!important;width:100%!important;height:44px!important}
-#skyFoundationRoot .sky-card-fingerprint-tab .sky-card-hits-fingerprint-card{position:relative!important;display:inline-grid!important;place-items:center!important}
-#skyFoundationRoot .sky-card-fingerprint-tab .sky-card-hits-fingerprint-card img{display:block!important;width:22px!important;height:38px!important;object-fit:cover!important;border-radius:2px!important}
-#skyFoundationRoot .sky-card-fingerprint-tab .sky-card-hits-fingerprint-count{position:absolute!important;right:-10px!important;top:-5px!important;display:grid!important;place-items:center!important;min-width:19px!important;height:19px!important;padding:0 3px!important;border:2px solid #fff!important;border-radius:999px!important;background:#5b5651!important;color:#fff!important;font:900 10px/1 system-ui,sans-serif!important;box-sizing:border-box!important}
+#skyFoundationRoot .sky-card-fingerprint-tab .sky-where-fingerprint-heptagram{display:block!important;width:40px!important;height:40px!important;margin:auto!important;overflow:visible!important}
+#skyFoundationRoot .sky-card-fingerprint-tab .sky-placement-fingerprint-wheel{display:block!important;width:40px!important;height:40px!important;margin:auto!important;overflow:visible!important}
+#skyFoundationRoot .sky-card-fingerprint-tab .sky-card-hits-fingerprint-strip{display:grid!important;place-items:center!important;width:40px!important;height:40px!important;margin:auto!important}
+#skyFoundationRoot .sky-card-fingerprint-tab .sky-card-hits-fingerprint-card{position:relative!important;display:grid!important;place-items:center!important;width:24px!important;height:40px!important;margin:auto!important}
+#skyFoundationRoot .sky-card-fingerprint-tab .sky-card-hits-fingerprint-card img{display:block!important;width:24px!important;height:40px!important;object-fit:cover!important;border-radius:2px!important}
+#skyFoundationRoot .sky-card-fingerprint-tab .sky-card-hits-fingerprint-count{position:absolute!important;right:-8px!important;top:-4px!important;display:grid!important;place-items:center!important;min-width:18px!important;height:18px!important;padding:0 3px!important;border:2px solid #fff!important;border-radius:999px!important;background:#5b5651!important;color:#fff!important;font:900 10px/1 system-ui,sans-serif!important;box-sizing:border-box!important}
 #skyFoundationRoot .sky-card-drawer{min-width:0!important;margin:0!important;border:0!important;background:#fffdfa!important}
 #skyFoundationRoot .sky-card-drawer>.sky-card-drawer-summary{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
 #skyFoundationRoot .sky-card-drawer[open]>.sky-card-drawer-body{border-bottom:1px solid rgba(31,27,24,.11)!important}
 @media(max-width:620px){
-  #skyFoundationRoot .sky-card-fingerprint-tab{min-height:56px!important;padding:5px 6px!important}
-  #skyFoundationRoot .sky-card-fingerprint-tab .sky-placement-fingerprint-wheel{width:64px!important;height:40px!important}
+  #skyFoundationRoot .sky-card-fingerprint-tab{min-height:60px!important}
 }
 `;
   document.head.appendChild(style);
