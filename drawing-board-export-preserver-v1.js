@@ -340,7 +340,7 @@
   function ensureButton() {
     queued = false;
     const panel = document.getElementById('shortListPanel');
-    const destination = panel && panel.querySelector('#board-options-export .board-options-body');
+    const destination = panel && panel.querySelector('#drawing-board-post-export .board-options-body, #board-options-export .board-options-body');
     if (!panel || !destination) return;
     let button = destination.querySelector('#' + BUTTON_ID);
     if (!button) {
