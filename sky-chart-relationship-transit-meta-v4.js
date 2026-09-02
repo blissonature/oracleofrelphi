@@ -272,6 +272,7 @@ function estimatedTimingForSort(row){
     const cached=sortDurationCache.get(signature);
     if(Number.isFinite(cached?.durationDays))row.dataset.transitDurationDays=String(cached.durationDays);else delete row.dataset.transitDurationDays;
     if(Number.isFinite(cached?.endsInDays))row.dataset.transitEndsInDays=String(cached.endsInDays);else delete row.dataset.transitEndsInDays;
+    if(Number.isFinite(cached?.startedDaysAgo))row.dataset.transitStartedDaysAgo=String(cached.startedDaysAgo);else delete row.dataset.transitStartedDaysAgo;
     return cached;
   }
 
@@ -290,13 +291,19 @@ function estimatedTimingForSort(row){
         (-model.limit-error)/relative
       ].filter(value=>Number.isFinite(value)&&value>=0);
       const endsInDays=candidates.length?Math.min(...candidates):null;
-      timing={durationDays,endsInDays};
+      const pastCandidates=[
+        ( model.limit-error)/relative,
+        (-model.limit-error)/relative
+      ].filter(value=>Number.isFinite(value)&&value<=0);
+      const startedDaysAgo=pastCandidates.length?-Math.max(...pastCandidates):null;
+      timing={durationDays,endsInDays,startedDaysAgo};
     }
   }
 
   sortDurationCache.set(signature,timing);
   if(Number.isFinite(timing?.durationDays))row.dataset.transitDurationDays=String(timing.durationDays);else delete row.dataset.transitDurationDays;
   if(Number.isFinite(timing?.endsInDays))row.dataset.transitEndsInDays=String(timing.endsInDays);else delete row.dataset.transitEndsInDays;
+  if(Number.isFinite(timing?.startedDaysAgo))row.dataset.transitStartedDaysAgo=String(timing.startedDaysAgo);else delete row.dataset.transitStartedDaysAgo;
   return timing;
 }
 function clearSortDurationCache(){
@@ -304,6 +311,7 @@ function clearSortDurationCache(){
   document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row=>{
     delete row.dataset.transitDurationDays;
     delete row.dataset.transitEndsInDays;
+    delete row.dataset.transitStartedDaysAgo;
   });
 }
 function exportTimingForRow(row){
