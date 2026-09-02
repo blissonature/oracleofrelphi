@@ -118,7 +118,7 @@ assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'before').transfo
 assert.ok(Math.abs(celtic11.positions[1].openTransform.y - celtic11.positions.find(item => item.id === 'crowning').transform.y - .226) < 1e-12);
 assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'beneath').transform.y - celtic11.positions[1].openTransform.y - .226) < 1e-12);
 
-assert.match(source, /return prefab\.cardCount \+ ' \\| ' \+ prefab\.name/);
+assert.match(source, /return prefab\.cardCount \+ ' \| ' \+ prefab\.name/);
 assert.match(source, /Save As Copy and Use/);
 assert.match(source, /Save Template and Use/);
 assert.match(source, />Use Once</);
@@ -175,6 +175,6 @@ assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Cel
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
 assert.match(source, /draftName = String\(state\.currentLayout\.name/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\\.js\\?v=12/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=12/);
 
 console.log('Drawing Board spread prefab regression checks passed.');
