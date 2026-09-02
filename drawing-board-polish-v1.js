@@ -275,10 +275,18 @@
     });
   }
 
+  function placeBoardBelowLedger(root) {
+    const browse = document.getElementById('browsePanel');
+    if (!root || !browse || root.parentElement === browse.parentElement && root.previousElementSibling === browse) return;
+    browse.insertAdjacentElement('afterend', root);
+  }
+
   function enhance() {
     renderQueued = false;
     const root = panel();
-    if (!root || root.hidden) return;
+    if (!root) return;
+    placeBoardBelowLedger(root);
+    if (root.hidden) return;
     installTemplatePicker(root);
     correctCelticEleven(root);
     root.querySelectorAll('.card-row-board [data-row-card]').forEach(card => {
