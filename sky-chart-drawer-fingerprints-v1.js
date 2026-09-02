@@ -52,11 +52,10 @@ function temporalTrace(sourceSvg){
     'aria-hidden':'true',
     focusable:'false'
   });
-  // The weekly star already classifies its geometry as past/current/future.
-  // The hour path already has one current segment. Those three selectors are
-  // the entire compact fingerprint: no guide, future dots, planet groups,
-  // glyphs, bubbles, labels, rings, or construction geometry.
-  const week=Array.from(sourceSvg.querySelectorAll('.sky-ph-week-segment.past,.sky-ph-week-segment.current'));
+  // Keep the complete weekly heptagram so the compact fingerprint reads
+  // as a miniature of the actual Where and When geometry, while preserving
+  // its past/current/future state. Add only the current planetary-hour trace.
+  const week=Array.from(sourceSvg.querySelectorAll('.sky-ph-week-segment'));
   const hour=sourceSvg.querySelector('.sky-ph-hour-segment.current');
   week.forEach(line=>{const clone=line.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)});
   if(hour){const clone=hour.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)}
