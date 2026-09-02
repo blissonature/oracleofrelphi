@@ -167,6 +167,8 @@ assert.match(source, /center\.hidden = true/);
 assert.match(source, /right:\.65rem!important;bottom:\.65rem!important/);
 assert.match(source, /writing-mode:horizontal-tb!important/);
 assert.doesNotMatch(source, /cursor:not-allowed/);
+assert.match(source, /board-reading-toggle-stack>label::after/);
+assert.doesNotMatch(source, /'rowSnapEnabled','rowRotationSnapEnabled'/);
 assert.doesNotMatch(source, /drawnCardIds|readingName|readingNotes/);
 
 assert.match(app, /rowActiveLayout:\s*cloneBoardValue\(state\.rowActiveLayout,\s*null\)/);
@@ -175,6 +177,6 @@ assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Cel
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
 assert.match(source, /draftName = String\(state\.currentLayout\.name/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=12/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=16/);
 
 console.log('Drawing Board spread prefab regression checks passed.');
