@@ -16,8 +16,6 @@
   let labelsOpen = false;
   let newPromptArmed = false;
   let suppressOmniboxHandler = false;
-  let appliedCenterLayoutId = '';
-  let appliedCenterOpen = null;
   const NEW_TEMPLATE_OPTION = 'New';
   const NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…';
 
@@ -786,34 +784,22 @@
   function applyCenterView(panel, state) {
     const board = panel.querySelector('.card-row-board');
     const layout = state.activeLayout;
-    if (!layout || layout.helper !== 'celtic-center') {
+    if (!board || !layout || layout.helper !== 'celtic-center') {
       panel.querySelector('.relphi-center-helper')?.remove();
-      appliedCenterLayoutId = '';
-      appliedCenterOpen = null;
       return;
     }
-    if (!board) return;
-
-    // The helper owns only an explicit Open Center / Restore Cross transition.
-    // Ordinary board renders, including zoom renders, must preserve user transforms.
     const centerOpen = !!state.centerOpen;
-    const centerViewChanged = appliedCenterLayoutId !== String(layout.id || '') || appliedCenterOpen !== centerOpen;
-    if (centerViewChanged) {
-      layout.positions.forEach((position, index) => {
-        if (!position.role || !['significator','covering','crossing'].includes(position.role)) return;
-        const value = centerOpen && position.openTransform ? position.openTransform : position.transform;
-        const item = board.querySelector('[data-row-index="' + index + '"]');
-        if (!item || !value) return;
-        item.style.left = Math.round(Number(value.x) * 900) + 'px';
-        item.style.top = Math.round(Number(value.y) * 760) + 'px';
-        item.style.zIndex = String(Number(value.zIndex) || 1);
-        item.style.setProperty('--row-card-scale', String(Number(value.scale) || 1));
-        item.style.setProperty('--row-card-rotation', (Number(value.rotation) || 0) + 'deg');
-      });
-      appliedCenterLayoutId = String(layout.id || '');
-      appliedCenterOpen = centerOpen;
-    }
-
+    layout.positions.forEach((position, index) => {
+      if (!position.role || !['significator','covering','crossing'].includes(position.role)) return;
+      const value = centerOpen && position.openTransform ? position.openTransform : position.transform;
+      const item = board.querySelector('[data-row-index="' + index + '"]');
+      if (!item || !value) return;
+      item.style.left = Math.round(Number(value.x) * 900) + 'px';
+      item.style.top = Math.round(Number(value.y) * 760) + 'px';
+      item.style.zIndex = String(Number(value.zIndex) || 1);
+      item.style.setProperty('--row-card-scale', String(Number(value.scale) || 1));
+      item.style.setProperty('--row-card-rotation', (Number(value.rotation) || 0) + 'deg');
+    });
     let helper = board.querySelector('.relphi-center-helper');
     if (!helper) {
       helper = document.createElement('button');
@@ -893,6 +879,20 @@
         fadeTimer = window.setTimeout(() => toolbar.classList.remove('is-recently-used'), 1800);
       };
       ['pointerenter','pointermove','focusin','input','click'].forEach(type => toolbar.addEventListener(type, showRecentlyUsed));
+    }
+    if (!workspace.dataset.relphiCenterZoomSync) {
+      workspace.dataset.relphiCenterZoomSync = 'true';
+      const restoreCenterView = () => {
+        if (bridge()?.getState()?.activeLayout?.helper !== 'celtic-center') return;
+        schedule();
+      };
+      workspace.addEventListener('wheel', event => {
+        if (!(event.ctrlKey || event.metaKey)) return;
+        restoreCenterView();
+      }, { passive:true });
+      const zoomInput = toolbar.querySelector('#rowZoom') || panel.querySelector('#rowZoom');
+      zoomInput?.addEventListener('input', restoreCenterView);
+      zoomInput?.addEventListener('change', restoreCenterView);
     }
   }
   function enhance() {
