@@ -9,6 +9,7 @@ const MODES=Object.freeze({
   aspect:'aspect',
   longest:'duration-longest',
   shortest:'duration-shortest',
+  beganMostRecently:'began-most-recently',
   endsSoonest:'ends-soonest',
   endsLast:'ends-last'
 });
@@ -57,6 +58,7 @@ function compareRows(a,b){
   if(mode===MODES.aspect)return compareAspect(a,b);
   if(mode===MODES.longest)return compareTiming(a,b,'transitDurationDays',-1);
   if(mode===MODES.shortest)return compareTiming(a,b,'transitDurationDays',1);
+  if(mode===MODES.beganMostRecently)return compareTiming(a,b,'transitStartedDaysAgo',1);
   if(mode===MODES.endsSoonest)return compareTiming(a,b,'transitEndsInDays',1);
   if(mode===MODES.endsLast)return compareTiming(a,b,'transitEndsInDays',-1);
   return compareExact(a,b);
@@ -107,6 +109,7 @@ function ensureControl(){
       [MODES.aspect,'Aspect Type'],
       [MODES.longest,'Longest Duration'],
       [MODES.shortest,'Shortest Duration'],
+      [MODES.beganMostRecently,'Began Most Recently'],
       [MODES.endsSoonest,'Ends Soonest'],
       [MODES.endsLast,'Ends Last']
     ].forEach(([value,text])=>{
@@ -178,7 +181,7 @@ function setMode(next){
   calculationGeneration+=1;
   busy=false;
   ensureControl();
-  if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode)){
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast].includes(mode)){
     scheduleTransitSort(0);
     return;
   }
@@ -187,7 +190,7 @@ function setMode(next){
 function refreshForRows(){
   if(whereWhenEditing())return;
   ensureControl();
-  if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode)){
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast].includes(mode)){
     scheduleTransitSort(110);
     return;
   }
@@ -198,7 +201,7 @@ function invalidateTransit(){
   if(whereWhenEditing()){busy=false;return;}
   busy=false;
   window.RelphiRelationshipTransitMeta?.clearDurationCache?.();
-  if([MODES.longest,MODES.shortest,MODES.endsSoonest,MODES.endsLast].includes(mode))scheduleTransitSort(110);
+  if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast].includes(mode))scheduleTransitSort(110);
 }
 window.RelphiRelationshipSort=Object.freeze({
   compareRows,
