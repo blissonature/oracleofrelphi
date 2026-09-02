@@ -120,11 +120,24 @@
     popover.style.maxHeight = Math.max(260, Math.min(480, window.innerHeight - top - 10)) + 'px';
   }
   function chooseTemplate(prefab) {
-    const field = panel()?.querySelector('#rowPositionLabels');
-    if (!field || !prefab) return;
-    field.value = displayName(prefab);
-    field.dispatchEvent(new Event('input', { bubbles:true }));
-    field.dispatchEvent(new Event('change', { bubbles:true }));
+    const root = panel();
+    const field = root?.querySelector('#rowPositionLabels');
+    if (!root || !field || !prefab) return;
+    const bridge = window.RelphiDrawingBoardPrefabsBridge;
+    const applied = bridge?.applyLayout?.(JSON.parse(JSON.stringify(prefab)), { designMode:false });
+    if (!applied) {
+      const state = bridge?.getState?.();
+      if (!state?.hasCards && !state?.locked) {
+        field.value = (prefab.positions || []).slice().sort((a,b) => Number(a.drawOrder) - Number(b.drawOrder)).map(position => position.label).join(', ');
+        field.dispatchEvent(new Event('input', { bubbles:true }));
+        field.dispatchEvent(new Event('change', { bubbles:true }));
+      }
+    }
+    const stickerToggle = panel()?.querySelector('#rowPositionStickersQuick');
+    if (stickerToggle && !stickerToggle.checked) {
+      stickerToggle.checked = true;
+      stickerToggle.dispatchEvent(new Event('change', { bubbles:true }));
+    }
     closePopover();
   }
   function renderTemplateList() {
@@ -180,22 +193,19 @@
     try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom.slice(-40))); }
     catch (_) { statusNode.textContent = 'This browser could not save the template.'; return; }
 
-    const field = panel()?.querySelector('#rowPositionLabels');
-    if (!field) return;
-    field.value = displayName(prefab);
-    field.dispatchEvent(new Event('input', { bubbles:true }));
-    field.dispatchEvent(new Event('change', { bubbles:true }));
+    const bridge = window.RelphiDrawingBoardPrefabsBridge;
+    const applied = bridge?.applyLayout?.(JSON.parse(JSON.stringify(prefab)), { designMode:false });
+    if (!applied) {
+      statusNode.textContent = 'Template was saved. Clear the current Drawing Board to use it.';
+      return;
+    }
     const stickerToggle = panel()?.querySelector('#rowPositionStickersQuick');
     if (stickerToggle && !stickerToggle.checked) {
       stickerToggle.checked = true;
       stickerToggle.dispatchEvent(new Event('change', { bubbles:true }));
     }
-    statusNode.textContent = 'Template created.';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const use = panel()?.querySelector('.relphi-labels-dynamic [data-prefab-action="use"]');
-      use?.click();
-      closePopover();
-    }));
+    statusNode.textContent = 'Template created and loaded.';
+    requestAnimationFrame(() => requestAnimationFrame(closePopover));
   }
 
   function ensurePopover() {
