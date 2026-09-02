@@ -13,44 +13,33 @@
   <main class="tarot-app-shell">
     <section class="tarot-hero compact">
       <h1>Tarot <span class="red">Ledger</span></h1>
+      <p class="tarot-hero-subtitle">Search · study · draw.</p>
     </section>
 
-    <section class="tarot-entry-panel" aria-label="Tarot Ledger entry points">
-      <article>
-        <p class="eyebrow">Start reading</p>
-        <h2>Search, draw, or build a board.</h2>
-        <p>Tarot Ledger is both a symbolic reference and a working space. Search the deck, draw cards, or open Drawing Board immediately.</p>
-      </article>
-      <div class="tarot-entry-actions">
-        <button id="landingDrawCard" type="button">Draw a Card</button>
-        <button id="landingOpenBoard" type="button">Open Drawing Board</button>
-        <button id="landingShowLedger" type="button">Browse the Ledger</button>
+    <section class="tarot-command-panel tarot-command-panel--primary" aria-label="Tarot search">
+      <label class="command-label visually-hidden" for="oracleCommand">Search Tarot Ledger</label>
+      <div class="command-row">
+        <div class="search-input-wrap">
+          <input id="oracleCommand" type="search" placeholder="Ex. Saturn, Libra, Sorrow, Lamed, Cups" autocomplete="off"/>
+        </div>
+        <button id="runCommand" type="button">Search</button>
+        <button class="clear-keywords-button" type="button" data-clear-search-terms>Clear</button>
       </div>
+      <div id="commandMenu" class="command-menu" hidden></div>
     </section>
 
-    <section class="tarot-mode-bar" aria-label="Tarot Ledger modes">
+    <section class="tarot-mode-bar tarot-mode-bar--ledger" aria-label="Tarot Ledger controls">
       <button id="showAllCards" type="button">Show All Cards</button>
+      <button id="relphiOpenDrawingBoardCurrent" type="button" aria-controls="shortListPanel" aria-expanded="false">Open Drawing Board</button>
       <button id="drawMode" type="button" hidden>Draw Cards</button>
       <button id="dateMode" type="button" hidden>Date Field</button>
       <button id="chartMode" type="button" hidden>Sky Chart</button>
       <button id="currentSkyMode" type="button" hidden>Current Sky</button>
       <button id="clearSearch" type="button" title="Hide card results without clearing the Drawing Board">Hide Cards</button>
-    </section>
-
-    <section class="tarot-command-panel tarot-command-drawer" aria-label="Tarot command panel">
-      <details open>
-        <summary><span>Command and search</span><button id="clearSearchKeywordsCollapsed" class="drawer-clear-keywords" type="button">Clear keywords only</button></summary>
-        <label class="command-label visually-hidden" for="oracleCommand">Command and search</label>
-        <div class="command-row">
-          <div class="search-input-wrap">
-            <input id="oracleCommand" type="search" placeholder="Ex. /draw or Saturn, Libra, Sorrow, Lamed, Cups" autocomplete="off"/>
-          </div>
-          <button id="runCommand" type="button">Search</button>
-          <button class="clear-keywords-button" type="button" data-clear-search-terms>Clear keywords only</button>
-        </div>
-        <div id="commandMenu" class="command-menu" hidden></div>
-      </details>
-      <section id="shortListPanel" class="short-list-panel" hidden aria-label="Drawing Board"></section>
+      <button id="clearSearchKeywordsCollapsed" type="button" hidden>Clear keywords only</button>
+      <button id="landingDrawCard" type="button" hidden aria-hidden="true" tabindex="-1">Draw a Card</button>
+      <button id="landingOpenBoard" type="button" hidden aria-hidden="true" tabindex="-1">Open Drawing Board</button>
+      <button id="landingShowLedger" type="button" hidden aria-hidden="true" tabindex="-1">Browse the Ledger</button>
     </section>
 
     <section id="tarotSummary" class="tarot-summary" aria-live="polite">
@@ -356,9 +345,11 @@
       </div>
       <article id="cardDetail" class="tarot-detail" aria-live="polite"></article>
     </section>
+  
+    <section id="shortListPanel" class="short-list-panel" hidden aria-label="Drawing Board"></section>
   </main>
 
-  <script src="navloader.js?v=54"></script>
+  <script src="navloader.js?v=55"></script>
   <script src="tarot-cards.js"></script>
   <script src="relphi-locked-interpretations.js?v=207"></script>
   <script src="relphi-card-senses.js?v=321"></script>
