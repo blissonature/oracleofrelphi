@@ -647,8 +647,8 @@
     else if (!state.designMode && normalizedValue) selectedId = '';
     renderOmniboxOptions(datalist);
     field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a Spread Template or type position labels…');
-    field.setAttribute('aria-label', 'Spread Template name');
+    field.setAttribute('placeholder', 'Type comma-separated position stickers or choose a Spread Template…');
+    field.setAttribute('aria-label', 'Position stickers');
     if (state.designMode && document.activeElement !== field) field.value = draftName;
     if (newPromptArmed && !state.designMode && !String(field.value || '').trim()) field.value = NEW_TEMPLATE_PROMPT;
     clearSelection.hidden = state.designMode || state.locked || !String(field.value || '').trim();
@@ -708,12 +708,12 @@
           return;
         }
         if (value === NEW_TEMPLATE_PROMPT) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
+        // Free typing in this field is position-sticker input. Let the core Drawing Board
+        // input handler receive the event so it can rebuild the live placeholders.
         selectedId = '';
         templateMode = 'new';
         draftLayout = null;
-        draftName = value.slice(0, 60);
+        draftName = '';
         copySourceId = '';
         newPromptArmed = false;
         clearSelection.hidden = !value;
