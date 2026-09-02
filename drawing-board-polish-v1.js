@@ -106,9 +106,11 @@
   }
   function positionPopover(trigger) {
     if (!popover || !trigger) return;
-    const rect = trigger.getBoundingClientRect();
-    const width = Math.min(430, Math.max(280, rect.width + 280));
-    let left = Math.min(window.innerWidth - width - 10, Math.max(10, rect.right - width));
+    const root = panel();
+    const anchor = root?.querySelector('.relphi-template-omnibox') || root?.querySelector('#rowPositionLabels') || trigger;
+    const rect = anchor.getBoundingClientRect();
+    const width = Math.min(430, Math.max(300, rect.width));
+    const left = Math.min(window.innerWidth - width - 10, Math.max(10, rect.left));
     let top = rect.bottom + 7;
     const availableBelow = window.innerHeight - top - 10;
     if (availableBelow < 260 && rect.top > 300) top = Math.max(10, rect.top - 430);
