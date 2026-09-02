@@ -14,6 +14,7 @@
   let copySourceId = '';
   let templateMode = 'existing';
   let labelsOpen = false;
+  let templateMenuOpen = false;
   let newPromptArmed = false;
   let suppressOmniboxHandler = false;
   const NEW_TEMPLATE_OPTION = 'New';
@@ -116,7 +117,7 @@
           role:'covering',
           openTransform:transform(.25, .326, 0, .45, 20)
         }),
-        position('crossing', '2 · What crosses you', 2, transform(.25, .326, 90, .45, 30), {
+        position('crossing', '2 · What crosses you', 2, transform(.391, .390, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
           openTransform:transform(.355, .326, 0, .45, 30)
@@ -148,7 +149,7 @@
           covers:'significator',
           openTransform:transform(.25, .326, 0, .45, 20)
         }),
-        position('crossing', '2 · What crosses you', 3, transform(.25, .326, 90, .45, 30), {
+        position('crossing', '2 · What crosses you', 3, transform(.391, .390, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
           openTransform:transform(.355, .326, 0, .45, 30)
@@ -516,24 +517,56 @@
     library.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
     library.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
   }
+  function templatePickerLabel(prefab) {
+    if (templateMode === 'new') return 'New template';
+    return prefab ? displayName(prefab) : 'Choose a template';
+  }
+  function templatePickerMenuMarkup() {
+    const prefabs = allPrefabs();
+    const shipped = prefabs.filter(item => item.source === 'shipped');
+    const custom = prefabs.filter(item => item.source === 'custom');
+    const rows = items => items.map(item =>
+      '<button type="button" class="relphi-template-menu-item' + (selectedId === item.id && templateMode === 'existing' ? ' is-active' : '') + '" data-template-id="' + escapeHtml(item.id) + '"><span>' + escapeHtml(displayName(item)) + '</span><small>' + escapeHtml(labelsValue(item)) + '</small></button>'
+    ).join('');
+    return '<button type="button" class="relphi-template-menu-item relphi-template-menu-new' + (templateMode === 'new' ? ' is-active' : '') + '" data-template-new="true"><span>New template</span><small>Name it and type your own position labels.</small></button>' +
+      '<div class="relphi-template-menu-section"><strong>Shipped templates</strong>' + rows(shipped) + '</div>' +
+      (custom.length ? '<div class="relphi-template-menu-section"><strong>My templates</strong>' + rows(custom) + '</div>' : '');
+  }
+  function templateNameFieldMarkup(count, conflict, designing) {
+    const help = conflict
+      ? 'A ' + count + '-card template already has that name. Choose a different name.'
+      : designing
+        ? 'Name the reusable template you are designing.'
+        : 'Name the template, then type its comma-separated position labels above.';
+    return '<label class="relphi-template-name-field">Template name<input id="relphiTemplateNameInput" type="text" maxlength="60" autocomplete="off" value="' + escapeHtml(draftName) + '" placeholder="Name this template"><small id="relphiSpreadNameHelp" class="' + (conflict ? 'is-error' : '') + '">' + escapeHtml(help) + '</small></label>';
+  }
   function labelsDrawerMarkup(prefab, state) {
     const designing = !!state.designMode;
     const custom = prefab?.source === 'custom' && !designing;
     const count = Number(state.slotCount) || Number(draftLayout?.positions?.length) || 0;
-    const conflict = designing && templateNameConflict(draftName, count);
-    const selection = templateMode === 'existing' && prefab && !designing
-      ? '<div class="relphi-selected-design"><span>Selected template</span><strong>' + escapeHtml(displayName(prefab)) + '</strong></div>'
-      : templateMode === 'new' && !designing
-        ? '<div class="relphi-selected-design"><span>New template</span><strong>' + (count ? count + ' labels ready to design' : 'Type labels in the field above') + '</strong></div>'
-        : '';
-    const nameHelp = designing
-      ? '<small id="relphiSpreadNameHelp" class="' + (conflict ? 'is-error' : '') + '">' + (conflict ? 'That ' + count + '-card name already exists. Change the template name above to create a unique copy.' : 'Editing the template name above creates a new template. Card count plus name must be unique.') + '</small>'
-      : '';
-    return selection + nameHelp + '<div class="relphi-prefab-actions">' +
-      (!designing && templateMode === 'existing' && prefab ? '<button type="button" data-prefab-action="use"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Use Template</button><button type="button" data-prefab-action="copy"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Customize Template</button>' : '') +
-      (!designing && templateMode === 'existing' && custom ? '<button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
-      (!designing && templateMode === 'new' ? '<button type="button" data-prefab-action="design"' + (!state.slotCount || state.hasCards || state.locked ? ' disabled' : '') + '>Design Template</button>' : '') +
-      (designing ? '<button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!draftName.trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button>' : '') +
+    const conflict = !!draftName.trim() && templateNameConflict(draftName, count);
+
+    if (designing) {
+      return templateNameFieldMarkup(count, conflict, true) +
+        '<div class="relphi-selected-design"><span>Positions</span><strong>' + count + ' ready to arrange</strong></div>' +
+        '<div class="relphi-prefab-actions"><button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!draftName.trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button></div>';
+    }
+
+    if (templateMode === 'new') {
+      return templateNameFieldMarkup(count, conflict, false) +
+        '<div class="relphi-selected-design"><span>Position labels</span><strong>' + (count ? count + ' ready to design' : 'Type labels above, separated by commas') + '</strong></div>' +
+        '<div class="relphi-prefab-actions"><button type="button" class="primary" data-prefab-action="design"' + (!draftName.trim() || conflict || !count || state.hasCards || state.locked ? ' disabled' : '') + '>Design Template</button></div>';
+    }
+
+    if (!prefab) {
+      return '<div class="relphi-selected-design"><span>Spread template</span><strong>Choose a shipped template or create a new one.</strong></div>';
+    }
+
+    return '<div class="relphi-selected-design"><span>Selected template</span><strong>' + escapeHtml(displayName(prefab)) + '</strong></div>' +
+      '<div class="relphi-prefab-actions">' +
+        '<button type="button" class="primary" data-prefab-action="use"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Use Template</button>' +
+        '<button type="button" data-prefab-action="copy"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Customize Template</button>' +
+        (custom ? '<button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
       '</div>';
   }
   function addLabelsDrawer(panel, state) {
@@ -541,11 +574,12 @@
     const datalist = panel.querySelector('#rowStickerPresetList');
     const board = panel.querySelector('.card-row-drawing-board');
     const toolbar = panel.querySelector('.card-row-icon-toolbar');
-    if (!board || !toolbar || !field || !datalist) return;
+    if (!board || !toolbar || !field) return;
+
     if (state.designMode && !draftLayout && state.currentLayout?.positions?.length) {
       draftLayout = clone(state.currentLayout);
       copySourceId = String(state.currentLayout.basedOn || '');
-      draftName = String(state.currentLayout.name || '').trim() === 'Untitled spread' ? '' : String(state.currentLayout.name || '');
+      draftName = String(state.currentLayout.name || '').trim() === 'Untitled spread' ? draftName : String(state.currentLayout.name || draftName);
       templateMode = copySourceId ? 'existing' : 'new';
     }
 
@@ -561,6 +595,7 @@
         event.preventDefault();
         event.stopPropagation();
         labelsOpen = !labelsOpen;
+        templateMenuOpen = false;
         if (labelsOpen && board.tagName === 'DETAILS') board.open = true;
         schedule();
       });
@@ -572,50 +607,32 @@
     if (!drawer) {
       drawer = document.createElement('section');
       drawer.className = 'relphi-labels-drawer';
-      drawer.innerHTML = '<header><div><strong>Templates</strong><span>Position labels, placement, rotation, and scale belong to a Spread Template.</span></div><button type="button" class="relphi-labels-close" aria-label="Close Templates">Close</button></header><div class="relphi-labels-field"><div class="relphi-template-omnibox"></div></div><div class="relphi-labels-dynamic"></div>';
+      drawer.innerHTML = '<header><div><strong>Templates</strong><span>Choose a reusable layout or make one from your own position labels.</span></div><button type="button" class="relphi-labels-close" aria-label="Close Templates">Close</button></header><div class="relphi-template-picker"><span class="relphi-template-picker-title">Spread Template</span><button type="button" id="relphiTemplatePicker" class="relphi-template-picker-trigger" aria-haspopup="true" aria-expanded="false"><span class="relphi-template-picker-value"></span><span class="relphi-template-chevron" aria-hidden="true"></span></button><div class="relphi-template-menu" hidden></div></div><div class="relphi-position-labels-host"></div><div class="relphi-labels-dynamic"></div>';
       board.querySelector(':scope > summary')?.insertAdjacentElement('afterend', drawer);
       drawer.querySelector('.relphi-labels-close')?.addEventListener('click', () => {
         labelsOpen = false;
+        templateMenuOpen = false;
         schedule();
       });
     }
     drawer.hidden = !labelsOpen;
-    const fieldHost = drawer.querySelector('.relphi-labels-field');
-    const omnibox = drawer.querySelector('.relphi-template-omnibox');
+    if (!labelsOpen) return;
+
+    const positionHost = drawer.querySelector('.relphi-position-labels-host');
     const fieldLabel = field.closest('label');
     const quickLabel = panel.querySelector('#rowPositionStickersQuick')?.closest('label');
-    if (fieldLabel && fieldLabel.parentElement !== omnibox) omnibox.appendChild(fieldLabel);
-    if (fieldLabel && !fieldLabel.dataset.relphiTemplateLabel) {
+    if (fieldLabel && fieldLabel.parentElement !== positionHost) positionHost.appendChild(fieldLabel);
+    if (fieldLabel && !fieldLabel.dataset.relphiPositionLabel) {
       const textNode = Array.from(fieldLabel.childNodes).find(node => node.nodeType === 3);
-      if (textNode) textNode.nodeValue = 'Spread Template ';
-      fieldLabel.dataset.relphiTemplateLabel = 'true';
+      if (textNode) textNode.nodeValue = 'Position labels ';
+      fieldLabel.dataset.relphiPositionLabel = 'true';
     }
-    let clearSelection = drawer.querySelector('#relphiTemplateClear');
-    if (!clearSelection) {
-      clearSelection = document.createElement('button');
-      clearSelection.id = 'relphiTemplateClear';
-      clearSelection.type = 'button';
-      clearSelection.className = 'relphi-template-clear';
-      clearSelection.setAttribute('aria-label', 'Clear template selection');
-      clearSelection.title = 'Clear template selection';
-      clearSelection.textContent = '×';
-      omnibox.appendChild(clearSelection);
-      clearSelection.addEventListener('click', () => {
-        if (bridge()?.getState()?.designMode) return;
-        selectedId = '';
-        templateMode = 'existing';
-        draftLayout = null;
-        draftName = '';
-        copySourceId = '';
-        newPromptArmed = false;
-        field.value = '';
-        suppressOmniboxHandler = true;
-        field.dispatchEvent(new Event('input', { bubbles:true }));
-        suppressOmniboxHandler = false;
-        schedule();
-      });
-    }
-    if (quickLabel && quickLabel.parentElement !== omnibox) omnibox.appendChild(quickLabel);
+    field.removeAttribute('list');
+    field.setAttribute('placeholder', 'Question one, Question two, Question three…');
+    field.setAttribute('aria-label', 'Position labels');
+    if (datalist) datalist.hidden = true;
+
+    if (quickLabel && quickLabel.parentElement !== positionHost) positionHost.appendChild(quickLabel);
     if (quickLabel && !quickLabel.dataset.relphiEyeControl) {
       quickLabel.dataset.relphiEyeControl = 'true';
       Array.from(quickLabel.childNodes).filter(node => node.nodeType === 3).forEach(node => node.remove());
@@ -628,112 +645,98 @@
       const syncEye = () => {
         const visible = !!quickInput?.checked;
         quickLabel.classList.toggle('is-visible', visible);
-        quickLabel.title = visible ? 'Hide position stickers' : 'Show position stickers';
-        quickLabel.setAttribute('aria-label', visible ? 'Hide position stickers' : 'Show position stickers');
+        quickLabel.title = visible ? 'Hide position labels on the board' : 'Show position labels on the board';
+        quickLabel.setAttribute('aria-label', visible ? 'Hide position labels on the board' : 'Show position labels on the board');
       };
       quickInput?.addEventListener('change', syncEye);
       syncEye();
     }
     panel.querySelector('.board-labels-staging')?.remove();
 
-    const available = allPrefabs();
-    const activePrefab = prefabById(state.activeLayout?.id);
-    const normalizedValue = String(field.value || '').trim().toLowerCase();
-    const exactValue = available.find(item => displayName(item).toLowerCase() === normalizedValue);
-    const labelValue = available.find(item => labelsValue(item).toLowerCase() === normalizedValue);
-    if (activePrefab && !state.designMode) selectedId = activePrefab.id;
-    else if (exactValue) selectedId = exactValue.id;
-    else if (templateMode === 'existing' && !state.designMode && labelValue) selectedId = labelValue.id;
-    else if (!state.designMode && normalizedValue) selectedId = '';
-    renderOmniboxOptions(datalist);
-    field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a Spread Template or type position labels…');
-    field.setAttribute('aria-label', 'Spread Template name');
-    if (state.designMode && document.activeElement !== field) field.value = draftName;
-    if (newPromptArmed && !state.designMode && !String(field.value || '').trim()) field.value = NEW_TEMPLATE_PROMPT;
-    clearSelection.hidden = state.designMode || state.locked || !String(field.value || '').trim();
-    clearSelection.disabled = !!state.designMode || !!state.locked;
-    if (!field.dataset.relphiLabelsDrawerBound) {
-      field.dataset.relphiLabelsDrawerBound = 'true';
-      const chooseFromOmnibox = event => {
-        if (suppressOmniboxHandler) return;
-        const value = String(field.value || '').trim();
-        if (bridge()?.getState()?.designMode) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          draftName = value.replace(/^\d+\s*\|\s*/, '').slice(0, 60);
-          if (draftLayout) draftLayout.name = draftName;
-          const liveState = bridge()?.getState();
-          const count = Number(liveState?.slotCount) || 0;
-          const conflict = templateNameConflict(draftName, count);
-          const help = drawer.querySelector('#relphiSpreadNameHelp');
-          const save = drawer.querySelector('[data-prefab-action="save"]');
-          if (help) {
-            help.classList.toggle('is-error', conflict);
-            help.textContent = conflict
-              ? 'That ' + count + '-card name already exists. Change the template name above to create a unique copy.'
-              : 'Editing the template name above creates a new template. Card count plus name must be unique.';
-          }
-          if (save) save.disabled = !draftName.trim() || conflict;
-          return;
-        }
-        if (value.toLowerCase() === NEW_TEMPLATE_OPTION.toLowerCase()) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          selectedId = '';
-          templateMode = 'new';
-          draftLayout = null;
-          draftName = '';
-          copySourceId = '';
-          field.value = '';
-          suppressOmniboxHandler = true;
-          field.dispatchEvent(new Event('input', { bubbles:true }));
-          suppressOmniboxHandler = false;
-          newPromptArmed = true;
-          schedule();
-          return;
-        }
-        const match = allPrefabs().find(item => displayName(item).toLowerCase() === value.toLowerCase());
-        if (match) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          selectedId = match.id;
-          templateMode = 'existing';
-          draftLayout = null;
-          draftName = '';
-          copySourceId = '';
-          newPromptArmed = false;
-          field.value = displayName(match);
-          schedule();
-          return;
-        }
-        if (value === NEW_TEMPLATE_PROMPT) return;
+    if (!field.dataset.relphiTemplatePositionBound) {
+      field.dataset.relphiTemplatePositionBound = 'true';
+      field.addEventListener('change', schedule);
+      field.addEventListener('keydown', event => {
+        if (event.key !== 'Enter') return;
         event.preventDefault();
-        event.stopImmediatePropagation();
-        selectedId = '';
-        templateMode = 'new';
-        draftLayout = null;
-        draftName = value.slice(0, 60);
-        copySourceId = '';
-        newPromptArmed = false;
-        clearSelection.hidden = !value;
-        schedule();
-      };
-      field.addEventListener('input', chooseFromOmnibox, true);
-      field.addEventListener('change', chooseFromOmnibox, true);
-      field.addEventListener('pointerdown', () => {
-        if (!newPromptArmed || field.value !== NEW_TEMPLATE_PROMPT) return;
-        newPromptArmed = false;
-        field.value = '';
-        clearSelection.hidden = true;
-        field.dispatchEvent(new Event('input', { bubbles:true }));
+        field.dispatchEvent(new Event('change', { bubbles:true }));
       });
     }
 
+    const activePrefab = prefabById(state.activeLayout?.id);
+    if (activePrefab && !state.designMode) {
+      selectedId = activePrefab.id;
+      templateMode = 'existing';
+    }
     const prefab = prefabById(selectedId) || draftLayout;
-    if (!state.designMode && templateMode === 'existing' && prefab && document.activeElement !== field) field.value = displayName(prefab);
+
+    const picker = drawer.querySelector('#relphiTemplatePicker');
+    const pickerValue = picker?.querySelector('.relphi-template-picker-value');
+    const menu = drawer.querySelector('.relphi-template-menu');
+    if (pickerValue) pickerValue.textContent = templatePickerLabel(prefabById(selectedId));
+    if (picker) {
+      picker.setAttribute('aria-expanded', String(templateMenuOpen));
+      if (!picker.dataset.relphiPickerBound) {
+        picker.dataset.relphiPickerBound = 'true';
+        picker.addEventListener('click', event => {
+          event.preventDefault();
+          event.stopPropagation();
+          templateMenuOpen = !templateMenuOpen;
+          schedule();
+        });
+      }
+    }
+    if (menu) {
+      menu.hidden = !templateMenuOpen;
+      menu.innerHTML = templatePickerMenuMarkup();
+      menu.querySelector('[data-template-new]')?.addEventListener('click', () => {
+        selectedId = '';
+        templateMode = 'new';
+        draftLayout = null;
+        draftName = '';
+        copySourceId = '';
+        templateMenuOpen = false;
+        schedule();
+      });
+      menu.querySelectorAll('[data-template-id]').forEach(button => button.addEventListener('click', () => {
+        selectedId = String(button.dataset.templateId || '');
+        templateMode = 'existing';
+        draftLayout = null;
+        draftName = '';
+        copySourceId = '';
+        templateMenuOpen = false;
+        schedule();
+      }));
+    }
+
     const dynamic = drawer.querySelector('.relphi-labels-dynamic');
     dynamic.innerHTML = labelsDrawerMarkup(prefab, state);
+
+    const nameInput = dynamic.querySelector('#relphiTemplateNameInput');
+    const updateNameUi = () => {
+      if (!nameInput) return;
+      draftName = String(nameInput.value || '').trimStart().slice(0, 60);
+      if (draftLayout) draftLayout.name = draftName;
+      const liveState = bridge()?.getState() || state;
+      const count = Number(liveState.slotCount) || Number(draftLayout?.positions?.length) || 0;
+      const conflict = !!draftName.trim() && templateNameConflict(draftName, count);
+      const help = dynamic.querySelector('#relphiSpreadNameHelp');
+      if (help) {
+        help.classList.toggle('is-error', conflict);
+        help.textContent = conflict
+          ? 'A ' + count + '-card template already has that name. Choose a different name.'
+          : liveState.designMode
+            ? 'Name the reusable template you are designing.'
+            : 'Name the template, then type its comma-separated position labels above.';
+      }
+      const design = dynamic.querySelector('[data-prefab-action="design"]');
+      if (design) design.disabled = !draftName.trim() || conflict || !count || !!liveState.hasCards || !!liveState.locked;
+      const save = dynamic.querySelector('[data-prefab-action="save"]');
+      if (save) save.disabled = !draftName.trim() || conflict;
+    };
+    nameInput?.addEventListener('input', updateNameUi);
+    nameInput?.addEventListener('change', updateNameUi);
+
     dynamic.querySelector('[data-prefab-action="use"]')?.addEventListener('click', () => applyForUse(prefabById(selectedId)));
     dynamic.querySelector('[data-prefab-action="copy"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId), { copy:true }));
     dynamic.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
