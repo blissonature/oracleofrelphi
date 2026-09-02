@@ -546,12 +546,11 @@
         }
         if (!value) {
           selectedId = '';
-          templateMode = 'new';
+          templateMode = 'custom';
           draftLayout = null;
           draftName = '';
           copySourceId = '';
           newPromptArmed = false;
-          dispatchPositionLabels([]);
           schedule();
           return;
         }
@@ -564,13 +563,12 @@
         const live = bridge()?.getState();
         if (live?.locked && !live?.designMode) return schedule();
         selectedId = '';
-        templateMode = 'new';
+        templateMode = 'custom';
         draftLayout = null;
         draftName = '';
         copySourceId = '';
         newPromptArmed = false;
         select.value = '';
-        dispatchPositionLabels([]);
         schedule();
       });
     }
