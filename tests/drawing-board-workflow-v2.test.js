@@ -10,12 +10,12 @@ const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=25/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=26/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=4/);
 assert.doesNotMatch(nav, /drawing-board-custom-position-stickers-v1\.js/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=2/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=12/);
-assert.match(page, /navloader\.js\?v=53/);
+assert.match(page, /navloader\.js\?v=54/);
 assert.match(page, /tarot-app\.js\?v=360/);
 
 assert.match(workflow, /Show position stickers/);
@@ -79,6 +79,12 @@ assert.doesNotMatch(workflow, /<span>Reading setup<\/span>/);
 assert.match(workflow, /Arrange board/);
 assert.match(workflow, /Alignment snap controls/);
 assert.match(workflow, /Rotation snap controls/);
+assert.match(workflow, /setupGroup\(setup, 'arrange', 'Arrange board'/);
+assert.match(workflow, /board-arrange-colors/);
+assert.match(workflow, /board-arrange-actions/);
+assert.match(workflow, /board-setup-group--arrange\{display:grid!important/);
+assert.match(workflow, /grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)!important/);
+assert.match(workflow, /board-arrange-actions\{grid-column:1\/-1!important;display:grid!important;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important/);
 assert.match(workflow, /Save & export/);
 assert.match(workflow, /Download board data \(JSON\)/);
 assert.match(workflow, /Download web version/);
