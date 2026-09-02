@@ -22,6 +22,14 @@
       status.textContent='This preview needs an exact forty-character commit SHA in ?ref=.';
       return;
     }
+    const staticPreview=`/drawing-board-preview/revisions/${ref}/index.html`;
+    try{
+      const local=await fetch(staticPreview,{method:'HEAD',cache:'no-store'});
+      if(local.ok){
+        location.replace(staticPreview);
+        return;
+      }
+    }catch(_){}
     const rawBase=`https://raw.githubusercontent.com/blissonature/oracleofrelphi/${ref}/`;
     const assetBase=`https://cdn.jsdelivr.net/gh/blissonature/oracleofrelphi@${ref}/`;
     try{
