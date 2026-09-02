@@ -15,10 +15,6 @@
   let templateMode = 'existing';
   let labelsOpen = false;
   let templateMenuOpen = false;
-  let newPromptArmed = false;
-  let suppressOmniboxHandler = false;
-  const NEW_TEMPLATE_OPTION = 'New';
-  const NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…';
 
   const transform = (x, y, rotation = 0, scale = 1, zIndex = 1) => ({ x, y, rotation, scale, zIndex });
   const position = (id, label, drawOrder, value, semantics = {}) => ({
@@ -349,7 +345,6 @@
     draftName = '';
     copySourceId = '';
     templateMode = 'existing';
-    newPromptArmed = false;
     labelsOpen = true;
     schedule();
   }
@@ -428,94 +423,6 @@
     copySourceId = '';
     templateMode = save ? 'existing' : templateMode;
     schedule();
-  }
-  function renderOmniboxOptions(datalist) {
-    datalist.innerHTML = '<option value="' + NEW_TEMPLATE_OPTION + '" label="Create a new Spread Template"></option>' + allPrefabs().map(prefab => {
-      const group = prefab.source === 'shipped' ? 'Shipped spread' : 'My spread';
-      return '<option value="' + escapeHtml(displayName(prefab)) + '" label="' + escapeHtml(group + ': ' + labelsValue(prefab)) + '"></option>';
-    }).join('');
-  }
-  function unifiedLibraryMarkup(prefab, state) {
-    const shipped = prefab?.source === 'shipped';
-    const custom = prefab?.source === 'custom';
-    const designing = !!state.designMode;
-    const activeLineage = custom && prefab.basedOn
-      ? '<small>Based on: ' + escapeHtml(prefabById(prefab.basedOn) ? displayName(prefabById(prefab.basedOn)) : prefab.basedOn) + '</small>'
-      : '';
-    const currentDesign = prefab
-      ? '<div class="relphi-selected-design"><span>Selected spread design</span><strong>' + escapeHtml(displayName(prefab)) + '</strong></div>'
-      : '<div class="relphi-selected-design"><span>Custom position stickers</span><strong>Not saved as a spread design</strong></div>';
-    const nameField = designing
-      ? '<label class="relphi-spread-design-name">Spread design name<input id="relphiSpreadDesignName" type="text" maxlength="60" value="' + escapeHtml(draftName || prefab?.name || '') + '" placeholder="Name this reusable spread design"><small>This names the reusable design, not this reading.</small></label>'
-      : '';
-    return '<div class="relphi-prefab-heading"><span>Position stickers, placement, rotation, and scale are properties of one spread design.</span></div>' +
-      currentDesign + nameField +
-      '<div class="relphi-prefab-actions">' +
-        (!designing && prefab ? '<button type="button" data-prefab-action="use"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Use Spread</button>' : '') +
-        (!designing && shipped ? '<button type="button" data-prefab-action="copy"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Customize a Copy</button>' : '') +
-        (!designing && custom ? '<button type="button" data-prefab-action="edit"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Edit Spread Design</button><button type="button" data-prefab-action="duplicate">Duplicate</button><button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
-        (!designing && !prefab ? '<button type="button" data-prefab-action="design"' + (!state.slotCount || state.hasCards || state.locked ? ' disabled' : '') + '>Design These Positions</button>' : '') +
-      '</div>' + activeLineage;
-  }
-  function addLibrary(panel, state) {
-    const host = panel.querySelector('.board-setup-group--spread') || panel.querySelector('#rowPositionLabels')?.closest('label');
-    const field = panel.querySelector('#rowPositionLabels');
-    const datalist = panel.querySelector('#rowStickerPresetList');
-    if (!host || !field || !datalist) return;
-    const available = allPrefabs();
-    const activePrefab = prefabById(state.activeLayout?.id);
-    const normalizedValue = String(field.value || '').trim().toLowerCase();
-    const exactValue = available.find(item => displayName(item).toLowerCase() === normalizedValue);
-    const labelValue = available.find(item => labelsValue(item).toLowerCase() === normalizedValue);
-    if (activePrefab) selectedId = activePrefab.id;
-    else if (exactValue) selectedId = exactValue.id;
-    else if (!state.designMode && labelValue) selectedId = labelValue.id;
-    else if (!state.designMode && normalizedValue) selectedId = '';
-    renderOmniboxOptions(datalist);
-    field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a spread design or type comma-separated position stickers…');
-    field.setAttribute('aria-label', 'Position stickers and spread designs');
-    if (!field.dataset.relphiSpreadOmniboxBound) {
-      field.dataset.relphiSpreadOmniboxBound = 'true';
-      const chooseFromOmnibox = event => {
-        if (bridge()?.getState()?.designMode) return;
-        const match = allPrefabs().find(item => displayName(item).toLowerCase() === String(field.value || '').trim().toLowerCase());
-        if (match) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          selectedId = match.id;
-          draftLayout = null;
-          draftName = '';
-          schedule();
-          return;
-        }
-        selectedId = '';
-        draftLayout = null;
-        draftName = '';
-        schedule();
-      };
-      field.addEventListener('input', chooseFromOmnibox, true);
-      field.addEventListener('change', chooseFromOmnibox, true);
-    }
-    let library = host.querySelector('.relphi-spread-prefab-library');
-    const prefab = prefabById(selectedId) || draftLayout;
-    if (!library) {
-      library = document.createElement('section');
-      library.className = 'relphi-spread-prefab-library';
-      field.closest('label')?.insertAdjacentElement('afterend', library);
-    }
-    library.innerHTML = unifiedLibraryMarkup(prefab, state);
-    const nameField = library.querySelector('#relphiSpreadDesignName');
-    nameField?.addEventListener('input', () => {
-      draftName = String(nameField.value || '').slice(0, 60);
-      if (draftLayout) draftLayout.name = draftName;
-    });
-    library.querySelector('[data-prefab-action="use"]')?.addEventListener('click', () => applyForUse(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="copy"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId), { copy:true }));
-    library.querySelector('[data-prefab-action="edit"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="duplicate"]')?.addEventListener('click', () => duplicateCustom(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
   }
   function templatePickerLabel(prefab) {
     if (templateMode === 'new') return 'New template';
