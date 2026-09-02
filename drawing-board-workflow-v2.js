@@ -56,7 +56,7 @@
     if (!drawer || panel.querySelector('.drawing-board-helpful-tip')) return;
     const tip = document.createElement('aside');
     tip.className = 'drawing-board-helpful-tip';
-    tip.innerHTML = '<strong>Helpful tip</strong><span>Open Arrange and choose Upload board image to add a custom background.</span>';
+    tip.innerHTML = '<strong>Helpful tip</strong><span>Use the magnet and picture controls on the board for snaps and backgrounds.</span>';
     drawer.insertAdjacentElement('afterend', tip);
   }
 
@@ -323,6 +323,7 @@
     }
     if (boardColor) boardRow.querySelector('.relphi-board-color-slot').appendChild(boardColor);
     if (boardReset) {
+      boardReset.disabled = false;
       boardReset.textContent = '×';
       boardReset.classList.add('relphi-reset-action');
       boardReset.title = 'Clear board background';
@@ -689,7 +690,7 @@
       }
       const clear = event.target.closest?.('#clearShortList');
       if (!clear) return;
-      if (window.confirm('Clear the entire Drawing Board, including cards, envelopes, position stickers, custom art, notes, and layout?')) return;
+      if (window.confirm('Reset the entire Drawing Board, including cards, position stickers, backgrounds, notes, and layout?')) return;
       event.preventDefault();
       event.stopImmediatePropagation();
     }, true);
