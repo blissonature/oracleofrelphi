@@ -896,6 +896,12 @@
       '#shortListPanel #rowZoomValue{min-width:2.6rem!important;font-size:.62rem!important;font-weight:800!important;line-height:1!important;text-align:center!important}',
       '#shortListPanel #resetCardRowPan,#shortListPanel .card-row-workspace-toolbar .card-row-pan-note,#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{display:none!important}',
       '#shortListPanel .card-row-workspace-toolbar>#zoomCardRowExtents{display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:0!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font-size:1rem!important;line-height:1!important}',
+      '#shortListPanel .card-row-workspace-toolbar{display:inline-flex!important;flex-flow:row nowrap!important;align-items:center!important;justify-content:flex-end!important;white-space:nowrap!important;width:auto!important;min-width:max-content!important;max-width:calc(100% - 1.3rem)!important}',
+      '#shortListPanel .card-row-workspace-toolbar .card-row-zoom-label{display:inline-flex!important;flex-flow:row nowrap!important;align-items:center!important;gap:.35rem!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;white-space:nowrap!important}',
+      '#shortListPanel .card-row-workspace-toolbar .card-row-zoom-label>span{display:inline!important;position:static!important;width:auto!important;height:auto!important;overflow:visible!important;clip:auto!important;white-space:nowrap!important}',
+      '#shortListPanel #rowZoom{display:block!important;flex:0 0 7.25rem!important;width:7.25rem!important;min-width:7.25rem!important;max-width:7.25rem!important}',
+      '#shortListPanel #rowZoomValue{display:none!important}',
+      '#shortListPanel .card-row-workspace-toolbar>#zoomCardRowExtents{display:inline-grid!important;flex:0 0 2rem!important;align-self:center!important}',
       '#shortListPanel .card-row-workspace .relphi-layout-status{margin-left:.45rem!important;margin-right:.45rem!important}',
       '@media(max-width:620px){#shortListPanel #rowZoom{width:5.5rem!important;min-width:5.5rem!important;max-width:5.5rem!important}#shortListPanel .card-row-workspace-toolbar{right:.45rem!important;bottom:.45rem!important}}'
     ].join('');
