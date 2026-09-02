@@ -139,28 +139,28 @@
       editable:false,
       helper:'celtic-center',
       positions:[
-        position('significator', 'Significator', 1, transform(.25, .326, 0, .45, 10), {
+        position('significator', 'Significator', 1, transform(.30, .36, 0, .40, 10), {
           role:'significator',
-          openTransform:transform(.145, .326, 0, .45, 10)
+          openTransform:transform(.16, .36, 0, .40, 10)
         }),
-        position('covering', '1 · What covers you', 2, transform(.25, .326, 0, .45, 20), {
+        position('covering', '1 · What covers you', 2, transform(.30, .36, 0, .40, 20), {
           role:'covering',
           covers:'significator',
-          openTransform:transform(.25, .326, 0, .45, 20)
+          openTransform:transform(.30, .36, 0, .40, 20)
         }),
-        position('crossing', '2 · What crosses you', 3, transform(.25, .326, 90, .45, 30), {
+        position('crossing', '2 · What crosses you', 3, transform(.30, .36, 90, .40, 30), {
           role:'crossing',
           crosses:'covering',
-          openTransform:transform(.355, .326, 0, .45, 30)
+          openTransform:transform(.44, .36, 0, .40, 30)
         }),
-        position('crowning', '3 · What crowns you', 4, transform(.25, .10, 0, .45, 4)),
-        position('beneath', '4 · What is beneath you', 5, transform(.25, .552, 0, .45, 4)),
-        position('behind', '5 · What is behind you', 6, transform(.04, .326, 0, .45, 4)),
-        position('before', '6 · What is before you', 7, transform(.46, .326, 0, .45, 4)),
-        position('self', '7 · Yourself', 8, transform(.76, .718, 0, .45, 4)),
-        position('house', '8 · Your house', 9, transform(.76, .492, 0, .45, 4)),
-        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.76, .266, 0, .45, 4)),
-        position('outcome', '10 · What will come', 11, transform(.76, .04, 0, .45, 4))
+        position('crowning', '3 · What crowns you', 4, transform(.30, .07, 0, .40, 4)),
+        position('beneath', '4 · What is beneath you', 5, transform(.30, .65, 0, .40, 4)),
+        position('behind', '5 · What is behind you', 6, transform(.03, .36, 0, .40, 4)),
+        position('before', '6 · What is before you', 7, transform(.57, .36, 0, .40, 4)),
+        position('self', '7 · Yourself', 8, transform(.82, .70, 0, .40, 4)),
+        position('house', '8 · Your house', 9, transform(.82, .49, 0, .40, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.82, .28, 0, .40, 4)),
+        position('outcome', '10 · What will come', 11, transform(.82, .07, 0, .40, 4))
       ]
     },
     {
@@ -625,7 +625,6 @@
             '<button id="relphiTemplateClear" class="relphi-template-clear" type="button" aria-label="Clear Spread Template" title="Clear Spread Template">×</button>' +
           '</span>' +
         '</label>' +
-        '<div class="relphi-settings-lock-note" role="note" hidden></div>' +
         '<div class="relphi-template-editor"></div>';
       const slot = host.querySelector('.relphi-template-inline-slot');
       (slot || host).appendChild(library);
@@ -699,10 +698,16 @@
     clear.hidden = !select.value || select.value === '__new__' || structureLocked || !!state.designMode;
     clear.disabled = structureLocked || !!state.designMode;
 
-    const lockNote = library.querySelector('.relphi-settings-lock-note');
+    let lockNote = host.querySelector(':scope > header .relphi-settings-lock-note');
+    if (!lockNote) {
+      lockNote = document.createElement('span');
+      lockNote.className = 'relphi-settings-lock-note';
+      lockNote.setAttribute('role','note');
+      host.querySelector(':scope > header')?.appendChild(lockNote);
+    }
     lockNote.hidden = !structureLocked;
     lockNote.textContent = structureLocked
-      ? 'Spread and draw settings are locked while cards are on the board. Clear the board to change them.'
+      ? 'Spread and draw settings are locked while cards are on the board. Clear the board to change.'
       : '';
 
     const editor = library.querySelector('.relphi-template-editor');
@@ -720,7 +725,6 @@
         '</small>' : '') +
       '<div class="relphi-prefab-actions">' +
         (!designing && isNew ? '<button type="button" class="primary" data-prefab-action="design">Design Template</button>' : '') +
-        (!designing && prefab?.source === 'shipped' ? '<button type="button" data-prefab-action="copy">Customize a Copy</button>' : '') +
         (!designing && prefab?.source === 'custom' ? '<button type="button" data-prefab-action="edit">Edit Template</button><button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
         (designing ? '<button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!String(draftName || '').trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button>' : '') +
       '</div>';
@@ -744,7 +748,6 @@
     });
 
     editor.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
-    editor.querySelector('[data-prefab-action="copy"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId), { copy:true }));
     editor.querySelector('[data-prefab-action="edit"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId)));
     editor.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
     editor.querySelector('[data-prefab-action="once"]')?.addEventListener('click', () => finishDesign(false));
@@ -756,7 +759,7 @@
     const workspace = panel.querySelector('.card-row-workspace');
     if (!workspace) return;
     let banner = workspace.querySelector('.relphi-layout-status');
-    if (!state.designMode && !state.activeLayout) {
+    if (!state.designMode) {
       banner?.remove();
       return;
     }
@@ -765,12 +768,8 @@
       banner.className = 'relphi-layout-status';
       workspace.insertBefore(banner, workspace.firstChild);
     }
-    if (state.designMode) {
-      banner.innerHTML = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish in Board Options.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
-      banner.querySelector('[data-design-action="remove"]')?.addEventListener('click', () => bridge()?.removePosition(state.transformTarget));
-    } else {
-      banner.innerHTML = '<strong>Active layout locked</strong><span>' + (state.activeLayout ? displayName(state.activeLayout) : 'Custom layout') + ' is locked for this reading. Clear the board to change the spread or draw settings.</span>';
-    }
+    banner.innerHTML = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish in Board Options.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
+    banner.querySelector('[data-design-action="remove"]')?.addEventListener('click', () => bridge()?.removePosition(state.transformTarget));
   }
   function lockControls(panel, state) {
     const structureLocked = state.locked && !state.designMode;
@@ -1053,6 +1052,14 @@
       '#shortListPanel .card-row-workspace-toolbar .relphi-zoom-row #rowZoomValue{display:none!important}',
       '#shortListPanel .card-row-workspace-toolbar .relphi-zoom-row #zoomCardRowExtents{display:grid!important;place-items:center!important;flex:0 0 2rem!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important}',
       '@media(max-width:620px){#shortListPanel .card-row-workspace-toolbar .relphi-zoom-row #rowZoom{flex-basis:5.5rem!important;width:5.5rem!important;min-width:5.5rem!important;max-width:5.5rem!important}}'
+    ].join('');
+    style.textContent += [
+      '#shortListPanel .board-setup-group--spread>header{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:.65rem!important;flex-wrap:nowrap!important}',
+      '#shortListPanel .board-setup-group--spread>header>strong{flex:0 0 auto!important}',
+      '#shortListPanel .board-setup-group--spread>header .relphi-settings-lock-note{display:block!important;flex:1 1 auto!important;min-width:0!important;padding:0!important;border:0!important;background:transparent!important;color:#6b625c!important;font-size:.66rem!important;font-weight:700!important;line-height:1.2!important;text-align:right!important}',
+      '#shortListPanel .board-setup-group--spread>header .relphi-settings-lock-note[hidden]{display:none!important}',
+      '#shortListPanel .relphi-template-inline-slot .relphi-settings-lock-note{display:none!important}',
+      '@media(max-width:680px){#shortListPanel .board-setup-group--spread>header{align-items:flex-start!important}#shortListPanel .board-setup-group--spread>header .relphi-settings-lock-note{font-size:.61rem!important}}'
     ].join('');
     document.head.appendChild(style);
   }
