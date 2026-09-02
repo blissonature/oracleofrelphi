@@ -763,6 +763,27 @@
       banner.innerHTML = '<strong>Active layout locked</strong><span>' + (state.activeLayout ? displayName(state.activeLayout) : 'Custom layout') + ' is snapshotted for this reading. Clear the board to choose or redesign a spread.</span>';
     }
   }
+  function interceptSelectedTemplatePlaceholder(event) {
+    const add = event.target?.closest?.('#shortListPanel #addCardPlaceholder');
+    if (!add) return;
+    const state = bridge()?.getState?.();
+    if (!state || state.designMode || state.hasCards || state.locked || state.activeLayout) return;
+    const selected = templateMode === 'existing' ? prefabById(selectedId) : null;
+    if (!selected) return;
+
+    // Choosing a template must remain structural context for Add Placeholder.
+    // Convert the selected shipped/custom template into an editable copy first,
+    // then let the core Drawing Board add the next slot to that preserved layout.
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    beginDesign(selected, { copy:true });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const live = bridge()?.getState?.();
+      if (!live?.designMode) return;
+      document.querySelector('#shortListPanel #addCardPlaceholder')?.click();
+    }));
+  }
+
   function lockControls(panel, state) {
     const structureLocked = state.locked && !state.designMode;
     ['rowPositionLabels','rowDrawScope','rowAllowRepeats','rowAllowReversalsQuick','rowSnapEnabled','rowRotationSnapEnabled','resetCardRowLayout','resetRowCardTransform'].forEach(id => {
@@ -1000,6 +1021,7 @@
   function start() {
     migrateLegacy();
     installStyles();
+    document.addEventListener('click', interceptSelectedTemplatePlaceholder, true);
     document.addEventListener('relphi:drawing-board-rendered', schedule);
     document.addEventListener('relphi:drawing-board-center-view', schedule);
     new MutationObserver(records => {
