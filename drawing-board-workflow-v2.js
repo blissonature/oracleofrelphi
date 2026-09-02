@@ -137,6 +137,36 @@
       printWindow.addEventListener('load', () => setTimeout(() => printWindow.print(), 250), { once:true });
     });
   }
+  function relphiLockedInterpretation(cardId) {
+    const id = String(cardId || '');
+    const senseCard = window.RELPHI_CARD_SENSES?.cards?.find?.(item => item.card_id === id);
+    if (senseCard?.locked_relphi_interpretation) return senseCard.locked_relphi_interpretation;
+    const lockedCard = window.RELPHI_LOCKED_INTERPRETATIONS?.cards?.find?.(item => item.card_id === id);
+    return lockedCard?.relphi_derived_interpretation || '';
+  }
+  function syncDescriptionLayers(panel) {
+    panel.querySelectorAll('[data-row-card]').forEach(card => {
+      const id = card.dataset.rowCard || '';
+      const item = card.closest('.card-row-item');
+      const reversed = !!item?.classList.contains('is-row-reversed') || card.dataset.rowReversed === 'true';
+      let scroll = card.querySelector('.or-layer-scroll');
+      let text = scroll?.querySelector('span') || null;
+      const current = text?.textContent?.trim() || '';
+      const locked = relphiLockedInterpretation(id);
+      const interpretation = reversed ? (current || locked) : (locked || current);
+      if (!interpretation) return;
+      const layer = card.querySelector('.or-card-layer.relphi-info-layer');
+      if (!scroll && layer) {
+        scroll = document.createElement('div');
+        scroll.className = 'or-layer-scroll relphi-description-scroll';
+        text = document.createElement('span');
+        scroll.appendChild(text);
+        layer.appendChild(scroll);
+      }
+      if (text) text.textContent = interpretation;
+      if (layer) layer.dataset.relphiDescriptionSource = 'locked-interpretation';
+    });
+  }
   function organizeBoardOptions(panel) {
     const composer = panel.querySelector('.card-row-composer');
     if (!composer || composer.classList.contains('is-relphi-organized')) return;
@@ -146,63 +176,42 @@
       const element = panel.querySelector('#' + id);
       return element?.closest('label') || element;
     };
-    const tabs = document.createElement('div');
-    tabs.className = 'board-options-tabs';
-    tabs.setAttribute('role', 'tablist');
-    tabs.setAttribute('aria-label', 'Drawing Board options');
-    composer.appendChild(tabs);
-    const block = (kind, title, description) => {
-      const section = document.createElement('section');
-      section.className = 'card-row-control-block card-row-control-block--' + kind + ' is-collapsed';
-      section.id = 'board-options-' + kind;
-      section.setAttribute('role', 'tabpanel');
-      section.innerHTML = '<div class="board-options-body"></div>';
-      composer.appendChild(section);
-      const toggle = document.createElement('button');
-      toggle.type = 'button';
-      toggle.className = 'board-options-toggle';
-      toggle.setAttribute('role', 'tab');
-      toggle.setAttribute('aria-controls', section.id);
-      toggle.setAttribute('aria-expanded', 'false');
-      toggle.title = description;
-      toggle.textContent = title;
-      tabs.appendChild(toggle);
-      toggle.addEventListener('click', () => {
-        const willOpen = section.classList.contains('is-collapsed');
-        composer.querySelectorAll(':scope > .card-row-control-block').forEach(other => {
-          other.classList.add('is-collapsed');
-        });
-        tabs.querySelectorAll('.board-options-toggle').forEach(button => button.setAttribute('aria-expanded', 'false'));
-        section.classList.toggle('is-collapsed', !willOpen);
-        toggle.setAttribute('aria-expanded', String(willOpen));
-      });
-      return section.querySelector('.board-options-body');
+    const move = (destination, node) => { if (destination && node) destination.appendChild(node); };
+    const section = (kind, host = composer) => {
+      const node = document.createElement('section');
+      node.className = 'card-row-control-block card-row-control-block--' + kind;
+      node.id = 'board-options-' + kind;
+      node.innerHTML = '<div class="board-options-body"></div>';
+      host.appendChild(node);
+      return node;
     };
-    const move = (destination, node) => { if (node) destination.appendChild(node); };
-
-    const setup = block('setup', 'Reading setup', 'Choose the reading structure and the cards available before drawing.');
-    const setupGroup = (kind, title, description) => {
+    const setupGroup = (host, kind, title, description) => {
       const group = document.createElement('section');
       group.className = 'board-setup-group board-setup-group--' + kind;
       group.innerHTML = '<header><strong>' + title + '</strong><span>' + description + '</span></header>';
-      setup.appendChild(group);
+      host.appendChild(group);
       return group;
     };
-    const readingSetup = setupGroup('reading', 'Reading details', 'Name the reading and keep its notes together.');
-    const drawSetup = setupGroup('draw', 'Draw settings', 'Choose the cards available for this reading.');
-    const labelsStaging = document.createElement('div');
-    labelsStaging.className = 'board-labels-staging';
-    labelsStaging.hidden = true;
-    setup.appendChild(labelsStaging);
-    move(labelsStaging, control('rowPositionLabels'));
-    move(labelsStaging, control('rowPositionStickersQuick'));
+
+    const setupSection = section('setup');
+    const setup = setupSection.querySelector('.board-options-body');
+    const spreadSetup = setupGroup(setup, 'spread', 'Spread template', 'Choose or create the spread before drawing.');
+    const readingSetup = setupGroup(setup, 'reading', 'Reading details', 'Name the reading before drawing.');
+    const drawSetup = setupGroup(setup, 'draw', 'Draw settings', 'Choose the pack, repeats, and reversals before drawing.');
+
+    move(spreadSetup, control('rowPositionLabels'));
+    move(spreadSetup, control('rowPositionStickersQuick'));
     move(readingSetup, control('rowName'));
-    move(readingSetup, control('rowNotes'));
     move(drawSetup, control('rowDrawScope'));
     move(drawSetup, control('rowAllowRepeats'));
     move(drawSetup, control('rowAllowReversalsQuick'));
 
-    const tools = block('tools', 'Arrange board', 'Reposition, align, rotate, and style the creative workspace.');
+    const arrangeSection = section('tools');
+    const arrange = arrangeSection.querySelector('.board-options-body');
+    const arrangeHeading = document.createElement('div');
+    arrangeHeading.className = 'board-options-heading';
+    arrangeHeading.innerHTML = '<h4>Arrange board</h4><p>Alignment, rotation, card scale, and board appearance.</p>';
+    arrange.appendChild(arrangeHeading);
     const alignment = document.createElement('div');
     alignment.className = 'board-snap-control';
     alignment.setAttribute('aria-label', 'Alignment snap controls');
@@ -210,7 +219,7 @@
     move(alignment, panel.querySelector('#rowSnapGridMinus'));
     move(alignment, panel.querySelector('#rowSnapGridValue'));
     move(alignment, panel.querySelector('#rowSnapGridPlus'));
-    tools.appendChild(alignment);
+    arrange.appendChild(alignment);
     const rotation = document.createElement('div');
     rotation.className = 'board-snap-control';
     rotation.setAttribute('aria-label', 'Rotation snap controls');
@@ -218,13 +227,13 @@
     move(rotation, panel.querySelector('#rowRotationSnapMinus'));
     move(rotation, panel.querySelector('#rowRotationSnapValue'));
     move(rotation, panel.querySelector('#rowRotationSnapPlus'));
-    tools.appendChild(rotation);
+    arrange.appendChild(rotation);
     composer.querySelector('.card-row-snap-steppers')?.remove();
-    move(tools, control('rowEnvelopeColor'));
-    move(tools, control('rowTableColor'));
-    move(tools, panel.querySelector('#rowTableImageUpload'));
-    move(tools, panel.querySelector('#rowTableImageReset'));
-    move(tools, panel.querySelector('#resetCardRowLayout'));
+    move(arrange, control('rowEnvelopeColor'));
+    move(arrange, control('rowTableColor'));
+    move(arrange, panel.querySelector('#rowTableImageUpload'));
+    move(arrange, panel.querySelector('#rowTableImageReset'));
+    move(arrange, panel.querySelector('#resetCardRowLayout'));
 
     const renameLabel = (id, text) => {
       const label = control(id);
@@ -237,40 +246,47 @@
     const boardImageReset = panel.querySelector('#rowTableImageReset');
     if (boardImageUpload) boardImageUpload.textContent = 'Upload board image';
     if (boardImageReset) boardImageReset.textContent = 'Remove board image';
-    const panNote = panel.querySelector('.card-row-pan-note');
-    if (panNote) panNote.textContent = panNote.textContent.replace(/table background/i, 'board background');
 
-    const exports = block('export', 'Save & export', 'Keep a web version, a print-ready PDF, or reusable board data.');
-    ['downloadRowHtml', 'downloadRowTextHtml', 'printCardRowImage', 'snapshotCardRowArrangement'].forEach(id => panel.querySelector('#' + id)?.remove());
-    const data = panel.querySelector('#downloadRowJson');
-    if (data) data.textContent = 'Download board data (JSON)';
-    move(exports, panel.querySelector('#downloadRowOptimizedHtml'));
-    move(exports, panel.querySelector('#printRowPdf'));
-    move(exports, data);
-    move(composer, panel.querySelector('#rowTableImageFile'));
-
-    const arrangeSection = panel.querySelector('#board-options-tools');
-    const arrangeToggle = tabs.querySelector('[aria-controls="board-options-tools"]');
-    const workspaceToolbar = panel.querySelector('.card-row-workspace-toolbar');
-    if (arrangeSection && arrangeToggle && workspaceToolbar) {
-      const flyout = document.createElement('div');
-      flyout.className = 'board-arrange-flyout';
-      arrangeToggle.classList.add('board-arrange-trigger');
-      arrangeToggle.textContent = 'Arrange';
-      flyout.appendChild(arrangeToggle);
-      flyout.appendChild(arrangeSection);
-      workspaceToolbar.appendChild(flyout);
+    const boardDrawer = panel.querySelector('.card-row-drawing-board');
+    const workspace = panel.querySelector('.card-row-workspace');
+    let afterCanvas = boardDrawer?.querySelector('#drawing-board-after-canvas');
+    if (boardDrawer && workspace && !afterCanvas) {
+      afterCanvas = document.createElement('section');
+      afterCanvas.id = 'drawing-board-after-canvas';
+      afterCanvas.className = 'drawing-board-after-canvas';
+      workspace.insertAdjacentElement('afterend', afterCanvas);
     }
+    if (afterCanvas) {
+      let notesSection = afterCanvas.querySelector('#drawing-board-notes');
+      if (!notesSection) {
+        notesSection = document.createElement('section');
+        notesSection.id = 'drawing-board-notes';
+        notesSection.className = 'drawing-board-post-section drawing-board-notes';
+        notesSection.innerHTML = '<header><strong>Notes</strong><span>Write interpretation notes after you can see the cards.</span></header><div class="drawing-board-post-body"></div>';
+        afterCanvas.appendChild(notesSection);
+      }
+      move(notesSection.querySelector('.drawing-board-post-body'), control('rowNotes'));
+
+      let exportSection = afterCanvas.querySelector('#drawing-board-post-export');
+      if (!exportSection) {
+        exportSection = document.createElement('section');
+        exportSection.id = 'drawing-board-post-export';
+        exportSection.className = 'drawing-board-post-section drawing-board-export';
+        exportSection.innerHTML = '<header><strong>Save & export</strong><span>Save or export after the reading is on the board.</span></header><div class="board-options-body"></div>';
+        afterCanvas.appendChild(exportSection);
+      }
+      ['downloadRowHtml', 'downloadRowTextHtml', 'printCardRowImage', 'snapshotCardRowArrangement'].forEach(id => panel.querySelector('#' + id)?.remove());
+      const data = panel.querySelector('#downloadRowJson');
+      if (data) data.textContent = 'Download board data (JSON)';
+      move(exportSection.querySelector('.board-options-body'), panel.querySelector('#downloadRowOptimizedHtml'));
+      move(exportSection.querySelector('.board-options-body'), panel.querySelector('#printRowPdf'));
+      move(exportSection.querySelector('.board-options-body'), data);
+    }
+    move(composer, panel.querySelector('#rowTableImageFile'));
 
     const settingsPanel = panel.querySelector('.card-row-more-options');
     if (settingsPanel?.querySelector(':scope > summary')) settingsPanel.querySelector(':scope > summary').textContent = 'Board options';
-    const setupSection = panel.querySelector('#board-options-setup');
-    const setupToggle = tabs.querySelector('[aria-controls="board-options-setup"]');
-    if (!panel.querySelector('[data-row-card]') && setupSection && setupToggle) {
-      if (settingsPanel) settingsPanel.open = true;
-      setupSection.classList.remove('is-collapsed');
-      setupToggle.setAttribute('aria-expanded', 'true');
-    }
+    if (settingsPanel) settingsPanel.open = true;
 
     organizeBoardHeader(panel);
 
@@ -361,6 +377,7 @@
     removeUnavailableSelectionControls(panel);
     addLeanExports(panel);
     organizeBoardOptions(panel);
+    syncDescriptionLayers(panel);
     reinforceReversalUi(panel);
     normalizeDisabledButtonCursors(panel);
     ensureNumberedStickers(panel);
@@ -407,6 +424,7 @@
     style.textContent += 'html body #shortListPanel .card-row-composer.is-relphi-organized .card-row-control-block--setup .board-options-body{display:grid!important;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr) minmax(0,.85fr)!important;align-items:stretch!important}html body #shortListPanel .card-row-composer.is-relphi-organized .board-setup-group>label{flex:none!important}html body #shortListPanel .board-setup-group .quick-position-sticker-toggle,html body #shortListPanel .board-setup-group .quick-reversal-toggle{display:flex!important;flex-direction:row!important;align-items:center!important;gap:.4rem!important;min-height:2.35rem!important;margin-top:auto!important;padding:.4rem .55rem!important;border:1px solid #ded5cd!important;border-radius:8px!important;background:#fbf8f5!important}html body #shortListPanel .board-setup-group .quick-position-sticker-toggle input,html body #shortListPanel .board-setup-group .quick-reversal-toggle input{margin:0!important}@media(max-width:940px){html body #shortListPanel .card-row-composer.is-relphi-organized .card-row-control-block--setup .board-options-body{grid-template-columns:1fr 1fr!important}}@media(max-width:720px){html body #shortListPanel .card-row-composer.is-relphi-organized .card-row-control-block--setup .board-options-body{grid-template-columns:1fr!important}}';
     style.textContent += 'html body #shortListPanel .board-setup-group--draw .spread-toggle,html body #shortListPanel .board-setup-group--draw .quick-reversal-toggle{display:flex!important;flex-direction:row!important;align-items:center!important;gap:.4rem!important;width:100%!important;min-height:2.35rem!important;margin-top:auto!important;padding:.4rem .55rem!important;border:1px solid #ded5cd!important;border-radius:8px!important;background:#fbf8f5!important;box-sizing:border-box!important}html body #shortListPanel .board-setup-group--draw .spread-toggle input,html body #shortListPanel .board-setup-group--draw .quick-reversal-toggle input{flex:0 0 auto!important;width:1rem!important;height:1rem!important;margin:0!important}html body #shortListPanel #undoShortList:disabled,html body #shortListPanel #redoShortList:disabled,html body #shortListPanel #clearShortList:disabled{opacity:.4!important;border:1px solid rgba(17,17,17,.28)!important;background:#fffdf8!important;color:rgba(17,17,17,.48)!important;box-shadow:none!important;cursor:default!important}';
     style.textContent += 'html body #shortListPanel .board-labels-staging{display:none!important}html body #shortListPanel .card-row-composer.is-relphi-organized .card-row-control-block--setup .board-options-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}';
+    style.textContent += 'html body #shortListPanel .card-row-composer.is-relphi-organized{padding:.55rem!important;background:#f5f0ea!important}html body #shortListPanel .card-row-composer.is-relphi-organized>.card-row-control-block{display:block!important;width:100%!important;margin:0 0 .55rem!important;padding:0!important;border:1px solid #d8cec5!important;border-radius:9px!important;background:#fff!important}html body #shortListPanel .card-row-control-block--setup .board-options-body{display:grid!important;grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr) minmax(0,.95fr)!important;gap:.55rem!important;padding:.55rem!important}html body #shortListPanel .card-row-control-block--tools .board-options-body{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:.5rem!important;padding:.6rem!important;align-items:end!important}html body #shortListPanel .card-row-control-block--tools .board-options-heading{grid-column:1/-1!important}html body #shortListPanel .board-setup-group--draw .spread-toggle,html body #shortListPanel .board-setup-group--draw .quick-reversal-toggle{border:2px solid #cfc5bc!important;background:#fffaf4!important;font-weight:900!important}html body #shortListPanel .board-setup-group--draw .spread-toggle:has(input:checked),html body #shortListPanel .board-setup-group--draw .quick-reversal-toggle:has(input:checked){border-color:#171412!important;background:#f1ece6!important}html body #shortListPanel .drawing-board-after-canvas{display:grid!important;gap:.65rem!important;margin:.7rem 0 0!important}html body #shortListPanel .drawing-board-post-section{display:grid!important;gap:.5rem!important;padding:.7rem!important;border:1px solid #d8cec5!important;border-radius:10px!important;background:#fff!important}html body #shortListPanel .drawing-board-post-section>header{display:flex!important;flex-direction:column!important;gap:.12rem!important}html body #shortListPanel .drawing-board-post-section>header strong{font-size:.9rem!important}html body #shortListPanel .drawing-board-post-section>header span{color:#6b625c!important;font-size:.72rem!important}html body #shortListPanel .drawing-board-post-body,html body #shortListPanel #drawing-board-post-export .board-options-body{display:flex!important;flex-wrap:wrap!important;gap:.5rem!important;align-items:end!important}html body #shortListPanel #drawing-board-notes .card-row-notes-label{width:100%!important;margin:0!important}html body #shortListPanel #drawing-board-notes textarea{display:block!important;width:100%!important;min-height:6rem!important;margin:.3rem 0 0!important;box-sizing:border-box!important}html body #shortListPanel #drawing-board-post-export button{flex:1 1 12rem!important}html body #shortListPanel .card-row-workspace .or-card-layer.relphi-info-layer .or-layer-scroll{display:block!important;visibility:visible!important;opacity:1!important}html body #shortListPanel .card-row-workspace .or-card-layer.relphi-info-layer .or-layer-scroll span{white-space:normal!important}@media(max-width:940px){html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:1fr 1fr!important}html body #shortListPanel .board-setup-group--spread{grid-column:1/-1!important}}@media(max-width:700px){html body #shortListPanel .card-row-control-block--setup .board-options-body,html body #shortListPanel .card-row-control-block--tools .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .board-setup-group--spread{grid-column:auto!important}}';
     document.head.appendChild(style);
     setArrivalState();
     new MutationObserver(scheduleEnhance).observe(document.body, { childList:true, subtree:true });
