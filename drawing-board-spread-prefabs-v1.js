@@ -334,7 +334,11 @@
     const add = panel?.querySelector('#addCardPlaceholder');
     if (!panel || !add || count < 1) return;
     let guard = 0;
-    while (Number(bridge()?.getState()?.slotCount || panel.querySelectorAll('.card-row-board .card-row-item').length) < count && guard < count + 4) {
+    const currentCount = () => Math.max(
+      Number(bridge()?.getState()?.slotCount) || 0,
+      panel.querySelectorAll('.card-row-board .card-row-item').length
+    );
+    while (currentCount() < count && guard < count + 4) {
       const disabled = !!add.disabled;
       if (disabled) add.disabled = false;
       add.click();
