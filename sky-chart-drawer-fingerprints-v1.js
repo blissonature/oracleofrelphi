@@ -83,7 +83,7 @@ function renderPlacements(slot,payload){
   mount.hidden=false;
   const colors=window.RelphiSkyWheelSpec?.COLORS||FALLBACK_COLORS;
   const skyColor=window.RelphiSkyWheelSpec?.SKY?.[slot]||FALLBACK_SKY[slot];
-  const root=svg('svg',{viewBox:'0 0 64 38','aria-hidden':'true',focusable:'false',class:'sky-placement-fingerprint-wheel'});
+  const root=svg('svg',{viewBox:'13 0 38 38',preserveAspectRatio:'xMidYMid meet','aria-hidden':'true',focusable:'false',class:'sky-placement-fingerprint-wheel'});
   const cx=32,cy=19,inner=15,outer=18;
   for(let index=0;index<12;index+=1){
     root.appendChild(svg('path',{d:annularPath(cx,cy,inner,outer,index*30,index*30+30),fill:colors[index]||'#ddd','fill-opacity':'.88'}));
