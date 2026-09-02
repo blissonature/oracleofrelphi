@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="robots" content="noindex,nofollow,noarchive"/>
+  <title>Drawing Board Preview · Oracle of Relphi</title>
+  <link href="/style.css?v=346" rel="stylesheet"/>
+  <style>
+    html,body{margin:0;min-height:100%;background:#fffdf8;color:#241f1b;font:16px/1.45 system-ui,sans-serif}
+    .preview-shell{max-width:1500px;margin:0 auto;padding:.75rem}
+    .preview-note{margin:0 0 .6rem;padding:.62rem .8rem;border:1px solid rgba(31,27,24,.14);border-radius:10px;background:#f5f0e9;font-size:.78rem;color:#5f574f}
+    #drawingBoardFrame{display:block;width:100%;height:calc(100vh - 3rem);min-height:760px;border:1px solid rgba(31,27,24,.16);border-radius:14px;background:#fff}
+  </style>
+</head>
+<body>
+  <main class="preview-shell">
+    <p class="preview-note">Drawing Board preview · exact UI pass 1cf3ae291fd5</p>
+    <iframe id="drawingBoardFrame" title="Drawing Board preview" src="/tarot.html?board=workflow-v2&amp;standaloneDrawingBoard=1#tarot"></iframe>
+  </main>
+  <script>
+  (function(){
+    'use strict';
+    const frame=document.getElementById('drawingBoardFrame');
+    const base='/drawing-board-preview/revisions/1cf3ae291fd58cd004ce72ea4b5add563894a271/';
+
+    function addScript(doc,src,id){
+      return new Promise((resolve,reject)=>{
+        if(doc.getElementById(id)) return resolve();
+        const script=doc.createElement('script');
+        script.id=id;
+        script.src=base+src;
+        script.async=false;
+        script.onload=resolve;
+        script.onerror=()=>reject(new Error('Could not load '+src));
+        doc.body.appendChild(script);
+      });
+    }
+
+    function isolate(doc){
+      const board=doc.getElementById('shortListPanel');
+      if(!board) return false;
+      board.hidden=false;
+      let style=doc.getElementById('relphi-preview-isolation');
+      if(!style){
+        style=doc.createElement('style');
+        style.id='relphi-preview-isolation';
+        style.textContent='html,body{background:#fff!important}body{padding-top:0!important}#nav-placeholder,.menu-container,.tarot-landing,.tarot-view-toggle,.tarot-view-tabs,#landingOpenBoard,#viewBoard{display:none!important}#shortListPanel{display:block!important;margin:0 auto!important;max-width:none!important;width:100%!important}';
+        doc.head.appendChild(style);
+      }
+      let node=board;
+      while(node&&node.parentElement&&node.parentElement!==doc.body){
+        const parent=node.parentElement;
+        Array.from(parent.children).forEach(sibling=>{if(sibling!==node)sibling.style.setProperty('display','none','important');});
+        node=parent;
+      }
+      if(node&&node.parentElement===doc.body){
+        Array.from(doc.body.children).forEach(sibling=>{
+          if(sibling!==node&&sibling.tagName!=='SCRIPT')sibling.style.setProperty('display','none','important');
+        });
+      }
+      board.style.setProperty('display','block','important');
+      return true;
+    }
+
+    async function boot(){
+      let doc;
+      try{doc=frame.contentDocument||frame.contentWindow.document;}catch(error){return;}
+      if(!doc||!doc.body) return setTimeout(boot,80);
+      const openBoard=doc.getElementById('landingOpenBoard');
+      const boardTab=doc.getElementById('viewBoard');
+      if(openBoard) openBoard.click();
+      else if(boardTab) boardTab.click();
+      if(!isolate(doc)) return setTimeout(boot,80);
+      try{
+        await addScript(doc,'drawing-board-card-click-guard-v1.js','relphiPreviewCardClickGuard');
+        await addScript(doc,'drawing-board-polish-v1.js','relphiPreviewDrawingBoardPolish');
+        frame.contentWindow.dispatchEvent(new Event('resize'));
+      }catch(error){
+        console.error(error);
+      }
+    }
+    frame.addEventListener('load',()=>setTimeout(boot,80));
+  })();
+  </script>
+</body>
+</html>
