@@ -65,6 +65,7 @@
     const input = field();
     if (!input || !labels.length) return false;
     const value = labels.join(', ');
+    if (String(input.value || '').trim() === value) return false;
     input.value = value;
     input.dataset.relphiManualValue = value;
     input.dispatchEvent(new Event('input', { bubbles:true }));
@@ -234,8 +235,6 @@
 
   document.addEventListener('relphi:drawing-board-rendered', () => {
     installClearCardsButton();
-    const layout = stateLayout();
-    if (layout) scheduleReconcile(layout);
   });
 
   new MutationObserver(records => {
