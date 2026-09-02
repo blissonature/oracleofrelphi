@@ -281,11 +281,25 @@
     browse.insertAdjacentElement('afterend', root);
   }
 
+  function installCurrentBoardTrigger(root) {
+    const trigger = document.getElementById('relphiOpenDrawingBoardCurrent');
+    if (!trigger || trigger.dataset.relphiBoardTriggerBound === 'true') return;
+    trigger.dataset.relphiBoardTriggerBound = 'true';
+    trigger.addEventListener('click', event => {
+      event.preventDefault();
+      root.hidden = false;
+      const drawer = root.querySelector('.card-row-drawing-board');
+      if (drawer?.tagName === 'DETAILS') drawer.open = true;
+      requestAnimationFrame(() => root.scrollIntoView({ behavior:'smooth', block:'start' }));
+    });
+  }
+
   function enhance() {
     renderQueued = false;
     const root = panel();
     if (!root) return;
     placeBoardBelowLedger(root);
+    installCurrentBoardTrigger(root);
     if (root.hidden) return;
     installTemplatePicker(root);
     correctCelticEleven(root);
