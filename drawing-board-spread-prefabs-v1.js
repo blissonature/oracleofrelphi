@@ -481,20 +481,110 @@
     templateMode = save ? 'existing' : templateMode;
     schedule();
   }
+  function labelsFromHiddenField(field) {
+    const labels = String(field?.value || '').split(',').map(value => value.trim());
+    while (labels.length > 1 && !labels[labels.length - 1]) labels.pop();
+    return labels.length ? labels : [''];
+  }
+  function writeLabelBuilderToHidden(field, builder) {
+    if (!field || !builder) return;
+    const labels = Array.from(builder.querySelectorAll('[data-relphi-label-input]')).map(input => String(input.value || '').trim());
+    while (labels.length > 1 && !labels[labels.length - 1]) labels.pop();
+    const value = labels.filter(Boolean).join(', ');
+    if (field.value !== value) {
+      field.value = value;
+      field.dataset.relphiManualValue = value;
+      field.dispatchEvent(new Event('input', { bubbles:true }));
+      field.dispatchEvent(new Event('change', { bubbles:true }));
+    }
+  }
+  function renderLabelBuilder(panel, field, labels) {
+    const host = field?.closest('.board-setup-group--spread');
+    if (!host || !field) return null;
+    let builder = host.querySelector('.relphi-label-builder');
+    if (!builder) {
+      builder = document.createElement('div');
+      builder.className = 'relphi-label-builder';
+      builder.setAttribute('aria-label', 'Card labels');
+      field.closest('label')?.insertAdjacentElement('beforebegin', builder);
+    }
+    const clean = (labels && labels.length ? labels : ['']).map(value => String(value || ''));
+    const existing = Array.from(builder.querySelectorAll('.relphi-label-row'));
+    clean.forEach((value, index) => {
+      let row = existing[index];
+      if (!row) {
+        row = document.createElement('div');
+        row.className = 'relphi-label-row';
+        row.innerHTML =
+          '<span class="relphi-label-number"></span>' +
+          '<input type="text" data-relphi-label-input autocomplete="off">' +
+          '<button type="button" class="relphi-label-add" title="Add label" aria-label="Add label">+</button>' +
+          '<button type="button" class="relphi-label-remove" title="Remove label" aria-label="Remove label">×</button>';
+        builder.appendChild(row);
+        const input = row.querySelector('[data-relphi-label-input]');
+        input.addEventListener('input', () => writeLabelBuilderToHidden(field, builder));
+        input.addEventListener('change', () => writeLabelBuilderToHidden(field, builder));
+        input.addEventListener('keydown', event => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          row.querySelector('.relphi-label-add')?.click();
+        });
+        row.querySelector('.relphi-label-add').addEventListener('click', () => {
+          const values = Array.from(builder.querySelectorAll('[data-relphi-label-input]')).map(node => node.value);
+          values.splice(index + 1, 0, '');
+          renderLabelBuilder(panel, field, values);
+          writeLabelBuilderToHidden(field, builder);
+          builder.querySelectorAll('[data-relphi-label-input]')[index + 1]?.focus();
+        });
+        row.querySelector('.relphi-label-remove').addEventListener('click', () => {
+          const values = Array.from(builder.querySelectorAll('[data-relphi-label-input]')).map(node => node.value);
+          if (values.length <= 1) {
+            values[0] = '';
+          } else {
+            values.splice(index, 1);
+          }
+          renderLabelBuilder(panel, field, values);
+          writeLabelBuilderToHidden(field, builder);
+          const inputs = builder.querySelectorAll('[data-relphi-label-input]');
+          inputs[Math.min(index, inputs.length - 1)]?.focus();
+        });
+      }
+      row.querySelector('.relphi-label-number').textContent = String(index + 1) + '.';
+      const input = row.querySelector('[data-relphi-label-input]');
+      if (document.activeElement !== input && input.value !== value) input.value = value;
+    });
+    existing.slice(clean.length).forEach(row => row.remove());
+    const rows = Array.from(builder.querySelectorAll('.relphi-label-row'));
+    rows.forEach((row, index) => {
+      const add = row.querySelector('.relphi-label-add');
+      const remove = row.querySelector('.relphi-label-remove');
+      add.hidden = index !== rows.length - 1;
+      remove.hidden = rows.length === 1;
+    });
+    return builder;
+  }
+  function syncBuilderFromHidden(panel, field) {
+    const builder = field?.closest('.board-setup-group--spread')?.querySelector('.relphi-label-builder');
+    if (!builder || !field) return;
+    const hiddenLabels = labelsFromHiddenField(field);
+    const visibleLabels = Array.from(builder.querySelectorAll('[data-relphi-label-input]')).map(input => input.value);
+    if (JSON.stringify(hiddenLabels) !== JSON.stringify(visibleLabels)) renderLabelBuilder(panel, field, hiddenLabels);
+  }
+
   function addLibrary(panel, state) {
     const host = panel.querySelector('.board-setup-group--spread');
     const field = panel.querySelector('#rowPositionLabels');
     if (!host || !field) return;
 
     const fieldLabel = field.closest('label');
-    if (fieldLabel && !fieldLabel.dataset.relphiPositionLabel) {
-      const textNode = Array.from(fieldLabel.childNodes).find(node => node.nodeType === 3);
-      if (textNode) textNode.nodeValue = 'Position labels ';
-      fieldLabel.dataset.relphiPositionLabel = 'true';
+    if (fieldLabel) {
+      fieldLabel.classList.add('relphi-position-label-storage');
+      fieldLabel.setAttribute('aria-hidden', 'true');
     }
     field.removeAttribute('list');
-    field.setAttribute('placeholder', 'Aries, Libra, Taurus, Scorpio…');
     field.setAttribute('aria-label', 'Position labels');
+    field.tabIndex = -1;
+    renderLabelBuilder(panel, field, labelsFromHiddenField(field));
     if (!field.dataset.relphiDirectPositionSync) {
       field.dataset.relphiDirectPositionSync = 'true';
       const syncTypedLabels = () => {
@@ -590,8 +680,12 @@
       ? (prefabById(selectedId)?.id || '')
       : (prefabById(selectedId)?.id || (previous && choices.some(item => item.id === previous) ? previous : ''));
     select.value = desired;
+    syncBuilderFromHidden(panel, field);
     const structureLocked = !!state.locked && !state.designMode;
     select.disabled = structureLocked || !!state.designMode;
+    host.querySelectorAll('.relphi-label-builder input,.relphi-label-builder button').forEach(control => {
+      control.disabled = structureLocked || !!state.designMode;
+    });
 
     const clear = library.querySelector('#relphiTemplateClear');
     clear.hidden = !select.value || select.value === '__new__' || structureLocked || !!state.designMode;
@@ -904,6 +998,18 @@
       '#shortListPanel .card-row-workspace-toolbar>#zoomCardRowExtents{display:inline-grid!important;flex:0 0 2rem!important;align-self:center!important}',
       '#shortListPanel .card-row-workspace .relphi-layout-status{margin-left:.45rem!important;margin-right:.45rem!important}',
       '@media(max-width:620px){#shortListPanel #rowZoom{width:5.5rem!important;min-width:5.5rem!important;max-width:5.5rem!important}#shortListPanel .card-row-workspace-toolbar{right:.45rem!important;bottom:.45rem!important}}'
+    ].join('');
+    style.textContent += [
+      '#shortListPanel .relphi-position-label-storage{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}',
+      '#shortListPanel .relphi-label-builder{display:grid!important;gap:.35rem!important;width:100%!important;margin:0!important}',
+      '#shortListPanel .relphi-label-row{display:grid!important;grid-template-columns:1.65rem minmax(0,1fr) 2.15rem 2.15rem!important;gap:.3rem!important;align-items:center!important;width:100%!important}',
+      '#shortListPanel .relphi-label-number{font-size:.78rem!important;font-weight:900!important;text-align:right!important}',
+      '#shortListPanel .relphi-label-row input{width:100%!important;min-width:0!important;height:2.25rem!important;margin:0!important;padding:.4rem .55rem!important;border:1px solid #c9bfb7!important;border-radius:7px!important;background:#fff!important;box-sizing:border-box!important;font:inherit!important}',
+      '#shortListPanel .relphi-label-row button{display:grid!important;place-items:center!important;width:2.15rem!important;min-width:2.15rem!important;height:2.15rem!important;min-height:2.15rem!important;margin:0!important;padding:0!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font-size:1.15rem!important;font-weight:800!important;line-height:1!important}',
+      '#shortListPanel .relphi-label-row button[hidden]{display:none!important}',
+      '#shortListPanel .relphi-label-row button:disabled,#shortListPanel .relphi-label-row input:disabled{opacity:.45!important;cursor:default!important}',
+      '#shortListPanel .relphi-spread-prefab-library--inline{margin-top:.15rem!important}',
+      '@media(max-width:560px){#shortListPanel .relphi-label-row{grid-template-columns:1.45rem minmax(0,1fr) 2rem 2rem!important}}'
     ].join('');
     document.head.appendChild(style);
   }
