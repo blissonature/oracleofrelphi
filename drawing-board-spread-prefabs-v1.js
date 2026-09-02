@@ -774,7 +774,7 @@
   }
   function lockControls(panel, state) {
     const structureLocked = state.locked && !state.designMode;
-    ['rowPositionLabels','rowDrawScope','rowAllowRepeats','rowAllowReversalsQuick','rowSnapEnabled','rowRotationSnapEnabled','resetCardRowLayout','resetRowCardTransform'].forEach(id => {
+    ['rowPositionLabels','rowDrawScope','rowAllowRepeats','rowAllowReversalsQuick','resetCardRowLayout','resetRowCardTransform'].forEach(id => {
       const control = panel.querySelector('#' + id);
       if (control) control.disabled = structureLocked;
     });
@@ -988,8 +988,8 @@
       '#shortListPanel .relphi-settings-lock-note[hidden]{display:none!important}',
       '#shortListPanel .board-setup-group--spread>.card-row-position-label{width:100%!important}',
       '#shortListPanel .board-setup-group--spread>.quick-position-sticker-toggle{width:100%!important}',
-      '#shortListPanel .board-setup-group--draw .spread-toggle::after,#shortListPanel .board-setup-group--draw .quick-reversal-toggle::after{content:"OFF";margin-left:auto!important;padding:.16rem .38rem!important;border:1px solid #b8aea6!important;border-radius:999px!important;background:#fff!important;color:#6b625c!important;font-size:.62rem!important;font-weight:900!important;letter-spacing:.05em!important}',
-      '#shortListPanel .board-setup-group--draw .spread-toggle:has(input:checked)::after,#shortListPanel .board-setup-group--draw .quick-reversal-toggle:has(input:checked)::after{content:"ON";border-color:#171412!important;background:#171412!important;color:#fff!important}',
+      '#shortListPanel .board-reading-toggle-stack>label::after{content:"OFF";margin-left:auto!important;padding:.16rem .38rem!important;border:1px solid #b8aea6!important;border-radius:999px!important;background:#fff!important;color:#6b625c!important;font-size:.62rem!important;font-weight:900!important;letter-spacing:.05em!important}',
+      '#shortListPanel .board-reading-toggle-stack>label:has(input:checked)::after{content:"ON";border-color:#171412!important;background:#171412!important;color:#fff!important}',
       '#shortListPanel .relphi-labels-toggle,#shortListPanel .relphi-labels-drawer{display:none!important}',
       '#shortListPanel .card-row-workspace-toolbar{position:absolute!important;top:auto!important;left:auto!important;right:.65rem!important;bottom:.65rem!important;z-index:1500!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-end!important;gap:.38rem!important;width:auto!important;min-width:0!important;max-width:none!important;height:auto!important;min-height:0!important;margin:0!important;padding:.38rem .45rem!important;border:1px solid rgba(23,20,18,.24)!important;border-radius:10px!important;background:rgba(255,250,244,.95)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important;opacity:1!important;transition:none!important}',
       '#shortListPanel .card-row-workspace-toolbar .card-row-zoom-label{display:flex!important;flex-direction:row!important;align-items:center!important;gap:.35rem!important;width:auto!important;margin:0!important;padding:0!important}',
@@ -1029,6 +1029,12 @@
       '#shortListPanel .relphi-template-inline-slot #relphiSpreadTemplateSelect{margin:0!important;min-height:2.25rem!important}',
       '#shortListPanel .relphi-template-inline-slot .relphi-settings-lock-note,#shortListPanel .relphi-template-inline-slot .relphi-template-editor{grid-column:1/-1!important}',
       '@media(max-width:700px){#shortListPanel .relphi-label-template-row{grid-template-columns:1fr!important}#shortListPanel .relphi-template-inline-slot .relphi-template-select-label{grid-template-columns:1fr!important}}'
+    ].join('');
+    style.textContent += [
+      '#shortListPanel .board-setup-group--spread .card-row-draw-scope-label{display:grid!important;gap:.2rem!important;width:100%!important;margin:.05rem 0!important;font-size:.76rem!important;font-weight:850!important}',
+      '#shortListPanel .board-setup-group--spread .card-row-draw-scope-label select{width:100%!important;margin:0!important}',
+      '#shortListPanel .board-reading-toggle-stack>label::after{justify-self:end!important}',
+      '#shortListPanel .board-reading-toggle-stack>label:has(input:disabled){opacity:.5!important}'
     ].join('');
     document.head.appendChild(style);
   }
