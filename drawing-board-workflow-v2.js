@@ -227,13 +227,11 @@
 
     const setupSection = section('setup');
     const setup = setupSection.querySelector('.board-options-body');
-    const spreadSetup = setupGroup(setup, 'spread', 'Spread template', 'Choose or create the spread before drawing.');
-    const readingSetup = setupGroup(setup, 'reading', 'Reading details', 'Name the reading before drawing.');
+    const spreadSetup = setupGroup(setup, 'spread', 'What do you want to know?', 'Type card labels or choose a template.');
     const drawSetup = setupGroup(setup, 'draw', 'Draw settings', 'Choose the pack, repeats, and reversals before drawing.');
 
     move(spreadSetup, control('rowPositionLabels'));
     move(spreadSetup, control('rowPositionStickersQuick'));
-    move(readingSetup, control('rowName'));
     move(drawSetup, control('rowDrawScope'));
     move(drawSetup, control('rowAllowRepeats'));
     move(drawSetup, control('rowAllowReversalsQuick'));
@@ -292,6 +290,16 @@
       workspace.insertAdjacentElement('afterend', afterCanvas);
     }
     if (afterCanvas) {
+      let titleSection = afterCanvas.querySelector('#drawing-board-title');
+      if (!titleSection) {
+        titleSection = document.createElement('section');
+        titleSection.id = 'drawing-board-title';
+        titleSection.className = 'drawing-board-post-section drawing-board-title';
+        titleSection.innerHTML = '<header><strong>Reading title</strong><span>Optional title for saving and export.</span></header><div class="drawing-board-post-body"></div>';
+        afterCanvas.appendChild(titleSection);
+      }
+      move(titleSection.querySelector('.drawing-board-post-body'), control('rowName'));
+
       let notesSection = afterCanvas.querySelector('#drawing-board-notes');
       if (!notesSection) {
         notesSection = document.createElement('section');
