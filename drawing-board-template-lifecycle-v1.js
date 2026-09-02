@@ -42,7 +42,9 @@
   }
 
   function selectedTemplate() {
-    return templateFromValue(field()?.value || '');
+    const id = panel()?.querySelector('#relphiSpreadTemplateSelect')?.value || '';
+    if (!id || id === '__new__') return null;
+    return listTemplates().find(item => item.id === id) || null;
   }
 
   function stateLayout() {
@@ -227,31 +229,8 @@
     if (String(clear.textContent || '').trim().toLowerCase() === 'clear') clear.textContent = 'Clear Board';
   }
 
-  // Selecting a saved template should mean using it. Wait until the prefab chooser has
-  // recorded its selection, then instantiate the saved positions while the board is clear.
-  document.addEventListener('input', event => {
-    if (staging || event.target?.id !== 'rowPositionLabels') return;
-    const layout = templateFromValue(event.target.value);
-    if (!layout) return;
-    window.setTimeout(() => applySavedTemplate(layout), 0);
-  }, true);
-
-  document.addEventListener('change', event => {
-    if (staging || event.target?.id !== 'rowPositionLabels') return;
-    const layout = templateFromValue(event.target.value);
-    if (!layout) return;
-    window.setTimeout(() => applySavedTemplate(layout), 0);
-  }, true);
-
-  // The explicit Use Template button still works. Pre-stage its slots before the prefab
-  // handler locks the restored layout for use.
-  document.addEventListener('click', event => {
-    const use = event.target?.closest?.('[data-prefab-action="use"]');
-    if (!use) return;
-    const layout = selectedTemplate();
-    const state = bridge()?.getState?.();
-    if (layout && !state?.hasCards && !state?.locked && !state?.designMode) stageLayout(layout);
-  }, true);
+  // Saved-template selection is handled directly by the Board Options template select.
+  // This lifecycle module now only preserves positions across card clearing and restoration.
 
   document.addEventListener('relphi:drawing-board-rendered', () => {
     installClearCardsButton();
