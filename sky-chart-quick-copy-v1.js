@@ -18,11 +18,9 @@
       .sky-quick-copy-button:hover,.sky-quick-copy-button:focus-visible{background:#f4efe8;border-color:rgba(31,27,24,.38);outline:none}
       .sky-quick-copy-button[data-copy-state="done"]{border-color:color-mix(in srgb,var(--slot-color,#555) 42%,rgba(31,27,24,.18));background:color-mix(in srgb,var(--slot-color,#555) 8%,#fff);color:var(--slot-color,#555)}
       .sky-card-hit-detail-copy .sky-card-hit-copy-one{justify-self:start;margin-top:.18rem}
-      .sky-card-drawer[data-sky-drawer="placements"]>.sky-card-drawer-summary{grid-template-columns:minmax(0,1fr) auto auto 18px}
-      .sky-card-drawer[data-sky-drawer="placements"]>.sky-card-drawer-summary>.sky-placement-copy{grid-column:3;align-self:center;justify-self:end;margin:0;padding:.34rem .58rem}
-      .sky-card-drawer[data-sky-drawer="placements"]>.sky-card-drawer-summary>.sky-card-drawer-chevron{grid-column:4}
-      .sky-card-drawer[data-sky-drawer="placements"][open]>.sky-card-drawer-summary>.sky-drawer-fingerprint-placements{display:none!important}
-      @media(max-width:620px){.sky-quick-copy-button{padding:.36rem .56rem;font-size:.6rem}.sky-card-drawer[data-sky-drawer="placements"]>.sky-card-drawer-summary>.sky-placement-copy{padding:.32rem .52rem}}
+      .sky-placement-copy-row{display:flex;justify-content:flex-end;align-items:center;padding:.42rem .62rem .12rem}
+      .sky-placement-copy-row>.sky-placement-copy{margin:0;padding:.34rem .58rem}
+      @media(max-width:620px){.sky-quick-copy-button{padding:.36rem .56rem;font-size:.6rem}.sky-placement-copy-row{padding:.38rem .56rem .08rem}.sky-placement-copy-row>.sky-placement-copy{padding:.32rem .52rem}}
     `;
     document.head.appendChild(style);
   }
@@ -103,14 +101,17 @@
 
   function installPlacementButton(view){
     if(!view||!view.querySelector('.sky-foundation-row'))return;
-    view.querySelector(':scope > .sky-placement-copy-row')?.remove();
-    const drawer=view.closest('.sky-card-drawer[data-sky-drawer="placements"]'),summary=drawer?.querySelector(':scope > .sky-card-drawer-summary');
-    if(!summary)return;
-    let button=summary.querySelector(':scope > [data-copy-placements]');
+    let row=view.querySelector(':scope > .sky-placement-copy-row');
+    let button=row?.querySelector(':scope > [data-copy-placements]');
+    if(!row){
+      row=document.createElement('div');
+      row.className='sky-placement-copy-row';
+      view.prepend(row);
+    }
     if(!button){
       button=document.createElement('button');
       button.type='button';button.className='sky-quick-copy-button sky-placement-copy';button.dataset.copyPlacements='true';button.textContent='Copy';
-      summary.insertBefore(button,summary.querySelector(':scope > .sky-card-drawer-chevron')||null);
+      row.appendChild(button);
     }
     const slot=slotFor(view);button.setAttribute('aria-label',`Copy all placements for ${skyName(slot)}`);
   }
