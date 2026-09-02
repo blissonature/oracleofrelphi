@@ -153,7 +153,7 @@
   function loadEnhancements() {
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
       appendScript('tarot-date-sky-bridge-v1.js?v=2');
-      appendScript('drawing-board-workflow-v2.js?v=32');
+      appendScript('drawing-board-workflow-v2.js?v=33');
       appendScript('drawing-board-interactions-v1.js?v=5');
       appendScript('drawing-board-template-lifecycle-v1.js?v=3', function () {
         appendScript('drawing-board-spread-prefabs-v1.js?v=18');
