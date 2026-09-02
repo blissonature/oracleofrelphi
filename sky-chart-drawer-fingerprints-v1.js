@@ -115,16 +115,12 @@ function renderCardHits(slot){
   if(!hits.length){mount.hidden=true;mount.removeAttribute('aria-label');return}
   mount.hidden=false;
   const strip=document.createElement('span');strip.className='sky-card-hits-fingerprint-strip';
-  const shown=hits.slice(0,3);
-  shown.forEach(hit=>{
-    const card=document.createElement('span');card.className='sky-card-hits-fingerprint-card';
-    const image=document.createElement('img');image.src=api.thumbnailFor(hit.card,16,28);image.alt='';image.width=16;image.height=28;image.loading='lazy';image.decoding='async';card.appendChild(image);
-    const chip=document.createElement('span');chip.className='sky-card-hits-fingerprint-count';chip.textContent=String(hit.count);card.appendChild(chip);strip.appendChild(card);
-  });
-  if(hits.length>shown.length){const more=document.createElement('span');more.className='sky-card-hits-fingerprint-more';more.textContent=`+${hits.length-shown.length}`;strip.appendChild(more)}
+  const strongest=hits[0];
+  const card=document.createElement('span');card.className='sky-card-hits-fingerprint-card';
+  const image=document.createElement('img');image.src=api.thumbnailFor(strongest.card,22,38);image.alt='';image.width=22;image.height=38;image.loading='lazy';image.decoding='async';card.appendChild(image);
+  const chip=document.createElement('span');chip.className='sky-card-hits-fingerprint-count';chip.textContent=String(strongest.count);card.appendChild(chip);strip.appendChild(card);
   mount.appendChild(strip);
-  const strongest=shown.map(hit=>`${api.displayName(hit.card)} ×${hit.count}`).join(', ');
-  mount.setAttribute('aria-label',`Card Hits fingerprint: ${hits.length} cards. Strongest hits: ${strongest}.`);
+  mount.setAttribute('aria-label',`Card Hits fingerprint: strongest card is ${api.displayName(strongest.card)} with ${strongest.count} associated placement${strongest.count===1?'':'s'}, from ${hits.length} card${hits.length===1?'':'s'} total.`);
 }
 
 function renderSlot(slot){const payload=read(slot);renderWhere(slot,payload);renderPlacements(slot,payload);renderCardHits(slot)}
