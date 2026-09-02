@@ -149,7 +149,7 @@
       });
       appendScript('drawing-board-workflow-v2.js?v=24', function () {
         appendScript('drawing-board-interactions-v1.js?v=5', function () {
-          appendScript('drawing-board-spread-prefabs-v1.js?v=11', function () {
+          appendScript('drawing-board-spread-prefabs-v1.js?v=12', function () {
             appendScript('drawing-board-polish-v1.js?v=1', function () {
               appendScript('drawing-board-card-click-guard-v1.js?v=1', function () {
                 window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
