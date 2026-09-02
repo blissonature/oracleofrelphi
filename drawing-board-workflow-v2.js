@@ -484,7 +484,30 @@
       }
       ['downloadRowHtml', 'downloadRowTextHtml', 'printCardRowImage', 'snapshotCardRowArrangement'].forEach(id => panel.querySelector('#' + id)?.remove());
       const data = panel.querySelector('#downloadRowJson');
-      if (data) data.textContent = 'Download board data (JSON)';
+      if (data) {
+        data.textContent = 'Download board data (JSON)';
+        if (!data.dataset.relphiNamedExport) {
+          data.dataset.relphiNamedExport = 'true';
+          data.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            const rawName = panel.querySelector('#rowName')?.value.trim() || 'Drawing Board';
+            const safeName = rawName.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() || 'Drawing Board';
+            const payload = {
+              name: rawName,
+              notes: panel.querySelector('#rowNotes')?.value || '',
+              cards: cardExportData(panel)
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = safeName + '.json';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+          }, true);
+        }
+      }
       move(exportSection.querySelector('.board-options-body'), panel.querySelector('#downloadRowOptimizedHtml'));
       move(exportSection.querySelector('.board-options-body'), panel.querySelector('#printRowPdf'));
       move(exportSection.querySelector('.board-options-body'), data);
