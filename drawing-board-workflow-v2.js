@@ -6,7 +6,6 @@
   const STICKER_TOGGLE_KEY = 'relphiDrawingBoardPositionStickersV1';
   let scheduled = false;
   let descriptionSelectionCard = null;
-  let arrivalPending = (!location.search || location.search === '?board=workflow-v2') && (!location.hash || location.hash === '#tarot');
 
   function stickersEnabled() {
     try { return localStorage.getItem(STICKER_TOGGLE_KEY) !== '0'; }
@@ -66,16 +65,49 @@
     });
   }
 
+  function syncBoardEntryButton() {
+    const panel = document.getElementById('shortListPanel');
+    const trigger = document.getElementById('relphiOpenDrawingBoardCurrent');
+    if (!panel || !trigger) return;
+    const open = !panel.hidden;
+    trigger.setAttribute('aria-expanded', String(open));
+    trigger.textContent = open ? 'Close Drawing Board' : 'Open Drawing Board';
+  }
+  function openBoardFromLedger() {
+    const panel = document.getElementById('shortListPanel');
+    if (!panel) return;
+    if (panel.hidden) {
+      document.getElementById('landingOpenBoard')?.click();
+      panel.hidden = false;
+      requestAnimationFrame(() => {
+        const drawer = panel.querySelector('.card-row-drawing-board');
+        if (drawer?.tagName === 'DETAILS') drawer.open = true;
+        syncBoardEntryButton();
+        scheduleEnhance();
+        panel.scrollIntoView({ behavior:'smooth', block:'start' });
+      });
+      return;
+    }
+    panel.hidden = true;
+    syncBoardEntryButton();
+  }
   function setArrivalState() {
-    document.querySelector('.tarot-command-drawer > details')?.setAttribute('open', '');
     const clear = document.getElementById('clearSearch');
     if (clear) {
       clear.textContent = 'Hide Cards';
       clear.title = 'Hide card results without clearing the Drawing Board';
     }
-    if (!arrivalPending) return;
     const panel = document.getElementById('shortListPanel');
-    if (panel) panel.hidden = false;
+    if (panel) panel.hidden = true;
+    const trigger = document.getElementById('relphiOpenDrawingBoardCurrent');
+    if (trigger && !trigger.dataset.relphiBoardEntryBound) {
+      trigger.dataset.relphiBoardEntryBound = 'true';
+      trigger.addEventListener('click', event => {
+        event.preventDefault();
+        openBoardFromLedger();
+      });
+    }
+    syncBoardEntryButton();
   }
   function cardExportData(panel) {
     return Array.from(panel.querySelectorAll('.card-row-item[data-row-index]')).map((item, index) => {
@@ -366,14 +398,11 @@
   function enhance() {
     scheduled = false;
     const panel = document.getElementById('shortListPanel');
-    if (!panel || panel.hidden) return;
-    if (arrivalPending) {
-      const drawer = panel.querySelector('.card-row-drawing-board');
-      if (drawer) {
-        if (!cardExportData(panel).length) drawer.open = false;
-        arrivalPending = false;
-      }
+    if (!panel || panel.hidden) {
+      syncBoardEntryButton();
+      return;
     }
+    syncBoardEntryButton();
     addStickerToggle(panel);
     panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     addHelpfulTip(panel);
@@ -431,7 +460,10 @@
     style.textContent += 'html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:start!important;gap:.55rem!important}html body #shortListPanel .board-setup-group--arrange{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:.42rem!important;align-content:start!important}html body #shortListPanel .board-setup-group--arrange>header{grid-column:1/-1!important;margin:0!important;padding-bottom:.35rem!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control{display:grid!important;grid-template-columns:minmax(4.4rem,1fr) 1.85rem minmax(2.7rem,auto) 1.85rem!important;gap:.22rem!important;min-height:2.15rem!important;width:100%!important;padding:.22rem!important;border-radius:8px!important;box-sizing:border-box!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control>label{font-size:.72rem!important;line-height:1.1!important;text-align:left!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control>button{min-width:1.85rem!important;width:1.85rem!important;min-height:1.85rem!important;height:1.85rem!important;padding:.1rem!important}html body #shortListPanel .board-setup-group--arrange .board-snap-control>span{font-size:.72rem!important;white-space:nowrap!important}html body #shortListPanel .board-arrange-colors{grid-column:1/-1!important;display:flex!important;align-items:end!important;gap:.7rem!important;padding:.08rem 0!important}html body #shortListPanel .board-arrange-colors>label{flex:0 1 auto!important;width:auto!important;font-size:.72rem!important;white-space:nowrap!important}html body #shortListPanel .board-arrange-colors input[type="color"]{display:block!important;width:3rem!important;height:1.8rem!important;margin-top:.18rem!important}html body #shortListPanel .board-arrange-actions{grid-column:1/-1!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.35rem!important}html body #shortListPanel .board-arrange-actions>button{width:100%!important;min-height:2rem!important;padding:.32rem .4rem!important;font-size:.7rem!important;line-height:1.1!important}html body #shortListPanel .card-row-composer.is-relphi-organized>.card-row-control-block--tools{display:none!important}@media(max-width:860px){html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:1fr!important}html body #shortListPanel .board-setup-group--arrange{grid-template-columns:1fr 1fr!important}}@media(max-width:560px){html body #shortListPanel .board-setup-group--arrange{grid-template-columns:1fr!important}html body #shortListPanel .board-setup-group--arrange>header,html body #shortListPanel .board-arrange-colors,html body #shortListPanel .board-arrange-actions{grid-column:1!important}html body #shortListPanel .board-arrange-actions{grid-template-columns:1fr!important}}';
     document.head.appendChild(style);
     setArrivalState();
-    new MutationObserver(scheduleEnhance).observe(document.body, { childList:true, subtree:true });
+    new MutationObserver(records => {
+      if (records.some(record => record.type === 'attributes' && record.target?.id === 'shortListPanel')) syncBoardEntryButton();
+      scheduleEnhance();
+    }).observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['hidden'] });
     document.addEventListener('pointerdown', beginDescriptionSelection, true);
     window.addEventListener('pointerup', endDescriptionSelection, true);
     window.addEventListener('pointercancel', endDescriptionSelection, true);
