@@ -149,7 +149,7 @@
       });
       appendScript('drawing-board-workflow-v2.js?v=24', function () {
         appendScript('drawing-board-interactions-v1.js?v=5', function () {
-          appendScript('drawing-board-spread-prefabs-v1.js?v=10', function () {
+          appendScript('drawing-board-spread-prefabs-v1.js?v=11', function () {
             window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
           });
         });
