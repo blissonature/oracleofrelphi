@@ -1017,6 +1017,17 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
       event.stopImmediatePropagation();
     }, true);
     scheduleEnhance();
+    const previewParams = new URLSearchParams(location.search);
+    if (previewParams.get('standaloneDrawingBoard') === '1' || previewParams.get('board') === 'workflow-v2') {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const livePanel = document.getElementById('shortListPanel');
+        if (livePanel?.hidden) openBoardFromLedger();
+        else {
+          livePanel?.removeAttribute('hidden');
+          scheduleEnhance();
+        }
+      }));
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
   else start();
