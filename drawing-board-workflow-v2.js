@@ -665,13 +665,6 @@
       });
     }
 
-    panel.querySelector('#drawingBoardSetupButton')?.remove();
-    panel.querySelector('#drawingBoardOptionsPopover')?.remove();
-    panel.querySelectorAll('.drawing-board-settings-wrap').forEach(wrap => {
-      if (wrap.contains(button)) wrap.replaceWith(button);
-      else wrap.remove();
-    });
-
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (drawer) drawer.id = 'drawingBoardReadingOptions';
 
