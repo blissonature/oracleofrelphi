@@ -107,7 +107,7 @@
     const label = document.createElement('label');
     label.className = 'quick-position-sticker-toggle';
     label.title = 'Show position labels when you add them';
-    label.innerHTML = '<input id="rowPositionStickersQuick" type="checkbox"' + (stickersEnabled() ? ' checked' : '') + '> Position Stickers';
+    label.innerHTML = '<input id="rowPositionStickersQuick" type="checkbox"' + (stickersEnabled() ? ' checked' : '') + '> Labels';
     const reversals = toolbar.querySelector('.quick-reversal-toggle');
     toolbar.insertBefore(label, reversals || toolbar.firstChild);
     label.querySelector('input').addEventListener('change', event => {
@@ -633,11 +633,9 @@
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (drawer) drawer.id = 'drawingBoardReadingOptions';
 
-    const clearCards = panel.querySelector('#clearRowCardsOnly') || panel.querySelector('#clearShortListCardsOnly');
-    const actionRow = panel.querySelector('.drawing-board-primary-actions');
-    const anchor = actionRow?.contains(reset) ? reset : (clearCards || reset);
-    if (button.parentElement !== anchor.parentElement || button.nextElementSibling !== anchor) {
-      anchor.insertAdjacentElement('beforebegin', button);
+    const quickSettings = panel.querySelector('.drawing-board-quick-settings');
+    if (quickSettings && button.parentElement !== quickSettings) {
+      quickSettings.appendChild(button);
     }
     button.setAttribute('aria-expanded', String(panel.dataset.relphiReadingOptionsOpen === 'true'));
     button.classList.toggle('is-active', panel.dataset.relphiReadingOptionsOpen === 'true');
@@ -702,12 +700,12 @@
       if (textNode) textNode.textContent = ' ' + text;
       label.title = text;
     };
-    renameToggle(stickerToggle, 'Position Stickers');
-    renameToggle(repeatsToggle, 'Repeats');
     renameToggle(reversalsToggle, 'Reversals');
-    if (stickerToggle) toggleStack.appendChild(stickerToggle);
-    if (repeatsToggle) toggleStack.appendChild(repeatsToggle);
+    renameToggle(repeatsToggle, 'Repeats');
+    renameToggle(stickerToggle, 'Labels');
     if (reversalsToggle) toggleStack.appendChild(reversalsToggle);
+    if (repeatsToggle) toggleStack.appendChild(repeatsToggle);
+    if (stickerToggle) toggleStack.appendChild(stickerToggle);
     drawSettingsRow.appendChild(toggleStack);
 
     const boardDrawer = panel.querySelector('.card-row-drawing-board');
@@ -814,11 +812,40 @@
       }
       const hasCards = !!panel.querySelector('.card-row-board [data-row-card]');
       clearCards.disabled = !hasCards;
-      ['undoShortList','redoShortList','drawRandomRowCard','addCardPlaceholder','clearRowCardsOnly'].forEach(id => {
+
+      let actionButtons = primaryActions.querySelector('.drawing-board-action-buttons');
+      if (!actionButtons) {
+        actionButtons = document.createElement('div');
+        actionButtons.className = 'drawing-board-action-buttons';
+        primaryActions.appendChild(actionButtons);
+      }
+      ['drawRandomRowCard','undoShortList','clearRowCardsOnly'].forEach(id => {
         const button = panel.querySelector('#' + id);
-        if (button) primaryActions.appendChild(button);
+        if (button) actionButtons.appendChild(button);
       });
-      if (resetBoard) primaryActions.appendChild(resetBoard);
+
+      let quickSettings = primaryActions.querySelector('.drawing-board-quick-settings');
+      if (!quickSettings) {
+        quickSettings = document.createElement('div');
+        quickSettings.className = 'drawing-board-quick-settings';
+        primaryActions.appendChild(quickSettings);
+      }
+      const pack = panel.querySelector('#rowDrawScope')?.closest('label');
+      if (pack) quickSettings.appendChild(pack);
+      [reversalsToggle, repeatsToggle, stickerToggle].forEach(label => {
+        if (label) quickSettings.appendChild(label);
+      });
+
+      const staging = panel.querySelector('.card-row-action-staging');
+      ['redoShortList','addCardPlaceholder'].forEach(id => {
+        const button = panel.querySelector('#' + id);
+        if (button && staging) staging.appendChild(button);
+      });
+
+      if (resetBoard) {
+        resetBoard.classList.add('board-reset-action');
+        spreadSetup.appendChild(resetBoard);
+      }
     }
     panel.querySelector('.card-row-action-staging:empty')?.remove();
 
