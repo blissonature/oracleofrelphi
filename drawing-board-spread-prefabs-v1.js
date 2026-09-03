@@ -138,6 +138,14 @@
       cardCount:12,
       source:'shipped',
       editable:false,
+      polarityLabels:[
+        { top:'aries', bottom:'libra', label:'Self / Other' },
+        { top:'taurus', bottom:'scorpio', label:'Mine / Ours' },
+        { top:'gemini', bottom:'sagittarius', label:'Word / Meaning' },
+        { top:'cancer', bottom:'capricorn', label:'Interior / Form' },
+        { top:'leo', bottom:'aquarius', label:'Heart / Field' },
+        { top:'virgo', bottom:'pisces', label:'Distinction / Dissolution' }
+      ],
       positions:[
         position('aries', 'Aries', 1, transform(.01304, .07408, 0, .83)),
         position('libra', 'Libra', 2, transform(.01304, .50000, 0, .83)),
@@ -915,6 +923,56 @@
       schedule();
     };
   }
+  function applyPolarityLabels(panel, state) {
+    const board = panel.querySelector('.card-row-board');
+    const layout = state?.activeLayout;
+    const definitions = Array.isArray(layout?.polarityLabels) ? layout.polarityLabels : [];
+    if (!board || !definitions.length) {
+      board?.querySelectorAll('.relphi-polarity-label').forEach(node => node.remove());
+      return;
+    }
+
+    const positions = Array.isArray(layout.positions) ? layout.positions : [];
+    const byId = new Map(positions.map((item, index) => [item.id, { item, index }]));
+    const live = new Set();
+
+    const geometry = entry => {
+      if (!entry) return null;
+      const node = board.querySelector('[data-row-index="' + entry.index + '"]');
+      const transform = entry.item?.transform || {};
+      const left = Number.parseFloat(node?.style.left);
+      const top = Number.parseFloat(node?.style.top);
+      const scale = Number.parseFloat(node?.style.getPropertyValue('--row-card-scale'));
+      const x = Number.isFinite(left) ? left : (Number(transform.x) || 0) * 900;
+      const y = Number.isFinite(top) ? top : (Number(transform.y) || 0) * 760;
+      const s = Number.isFinite(scale) ? scale : (Number(transform.scale) || 1);
+      return { x, y, width:210 * s, height:382 * s };
+    };
+
+    definitions.forEach((definition, index) => {
+      const top = geometry(byId.get(definition.top));
+      const bottom = geometry(byId.get(definition.bottom));
+      if (!top || !bottom) return;
+      const key = String(index);
+      live.add(key);
+      let label = board.querySelector('.relphi-polarity-label[data-polarity-index="' + key + '"]');
+      if (!label) {
+        label = document.createElement('div');
+        label.className = 'relphi-polarity-label';
+        label.dataset.polarityIndex = key;
+        label.setAttribute('aria-hidden', 'true');
+        board.appendChild(label);
+      }
+      label.textContent = definition.label;
+      label.style.left = ((top.x + top.width / 2 + bottom.x + bottom.width / 2) / 2) + 'px';
+      label.style.top = ((top.y + top.height + bottom.y) / 2) + 'px';
+    });
+
+    board.querySelectorAll('.relphi-polarity-label').forEach(node => {
+      if (!live.has(node.dataset.polarityIndex || '')) node.remove();
+    });
+  }
+
   function addWorkspaceControls(panel) {
     const board = panel.querySelector('.card-row-board');
     const workspace = panel.querySelector('.card-row-workspace');
@@ -1021,6 +1079,7 @@
       addDesignControls(panel, state);
       lockControls(panel, state);
       applyCenterView(panel, state);
+      applyPolarityLabels(panel, state);
       addWorkspaceControls(panel);
       ensureMobileLayoutFit(panel, state);
     } finally {
@@ -1083,6 +1142,7 @@
       '#shortListPanel .relphi-layout-design-mode #drawRandomRowCard{opacity:.52!important}',
       '#shortListPanel .relphi-center-helper{position:absolute;left:410px;top:610px;z-index:160!important;min-width:118px;min-height:46px;padding:.65rem .9rem;border:2px solid #171412;border-radius:999px;background:#fff!important;color:#171412!important;font:inherit;font-size:.78rem;font-weight:900;box-shadow:0 5px 14px rgba(30,20,15,.16);touch-action:manipulation}',
       '#shortListPanel .relphi-center-helper:focus-visible{outline:3px solid rgba(220,31,24,.35);outline-offset:3px}',
+      '#shortListPanel .relphi-polarity-label{position:absolute!important;z-index:1450!important;transform:translate(-50%,-50%)!important;pointer-events:none!important;white-space:nowrap!important;padding:.22rem .48rem!important;border:1px solid rgba(23,20,18,.42)!important;border-radius:999px!important;background:rgba(255,250,244,.97)!important;color:#171412!important;font:850 .68rem/1.1 Inter,Montserrat,"Segoe UI",Arial,sans-serif!important;letter-spacing:.01em!important;box-shadow:0 2px 8px rgba(30,20,15,.12)!important}',
       '#shortListPanel .card-row-workspace{position:relative!important;overflow:hidden!important;background-image:var(--row-table-image,none),var(--relphi-board-texture,none)!important;background-position:center,center!important;background-size:cover,var(--relphi-board-texture-size,auto)!important;background-repeat:no-repeat,repeat!important;background-blend-mode:normal,soft-light!important;background-color:var(--row-table-bg,#7d1f28)!important}',
       '#shortListPanel .card-row-workspace .short-list-row.card-row-board{top:0!important;overflow:visible!important;background-image:var(--row-table-image,none),var(--relphi-board-texture,none)!important;background-position:center,center!important;background-size:cover,var(--relphi-board-texture-size,auto)!important;background-repeat:no-repeat,repeat!important;background-blend-mode:normal,soft-light!important;background-color:var(--row-table-bg,#7d1f28)!important}',
       'html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item{position:absolute!important}',
