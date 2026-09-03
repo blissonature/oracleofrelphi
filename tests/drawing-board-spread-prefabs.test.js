@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=41/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=42/);
 
 const storage = new Map();
 const document = {
@@ -209,6 +209,10 @@ assert.match(source, /const positionPanel = node\?\.querySelector\(':scope > \.c
 assert.match(source, /positionPanel\.offsetTop/);
 assert.match(source, /const corridorTop = top\.visualBottom/);
 assert.match(source, /const corridorBottom = bottom\.positionPanelTop/);
+assert.match(source, /const pairs = definitions\.map/);
+assert.match(source, /const corridorYs = pairs\.map\(pair => pair\.corridorY\)/);
+assert.match(source, /const sharedCorridorY = corridorYs\.length/);
+assert.match(source, /Number\.isFinite\(sharedCorridorY\) \? sharedCorridorY : corridorY/);
 assert.doesNotMatch(source, /top\.y \+ top\.height \+ bottom\.y/);
 assert.match(source, /function addWorkspaceControls/);
 assert.match(source, /var\(--relphi-board-texture,none\)/);
