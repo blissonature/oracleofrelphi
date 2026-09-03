@@ -13502,10 +13502,10 @@ label {
 /* v296 Drawing Board reversed cards: reversal is a card state, not a layout rotation. */
 .card-row-workspace .short-list-row.card-row-board .card-row-card-wrap {
   position: relative !important;
-  width: calc(100% - 10px) !important;
-  max-width: calc(100% - 10px) !important;
-  margin-left: 5px !important;
-  margin-right: 5px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
   box-sizing: border-box !important;
 }
 .card-row-workspace .short-list-row.card-row-board .card-row-card-wrap .card-row-card,
