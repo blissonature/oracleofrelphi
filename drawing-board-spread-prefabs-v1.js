@@ -329,14 +329,23 @@
   function labelsForPrefab(prefab) {
     return orderedPositions(prefab).map((item, index) => String(item.label || ('Position #' + (index + 1))).trim());
   }
+  function enablePositionStickers() {
+    const toggle = document.querySelector('#shortListPanel #rowPositionStickersQuick');
+    if (!toggle || toggle.checked) return;
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event('input', { bubbles:true }));
+    toggle.dispatchEvent(new Event('change', { bubbles:true }));
+  }
   function dispatchPositionLabels(labels) {
     const field = document.querySelector('#shortListPanel #rowPositionLabels');
     if (!field) return false;
-    const value = (labels || []).join(', ');
+    const clean = (labels || []).map(value => String(value || '').trim()).filter(Boolean);
+    const value = clean.join(', ');
     field.value = value;
     field.dataset.relphiManualValue = value;
     field.dispatchEvent(new Event('input', { bubbles:true }));
     field.dispatchEvent(new Event('change', { bubbles:true }));
+    if (clean.length) enablePositionStickers();
     return true;
   }
   function ensurePositionSlots(count) {
@@ -501,13 +510,15 @@
     if (!field || !builder) return;
     const labels = Array.from(builder.querySelectorAll('[data-relphi-label-input]')).map(input => String(input.value || '').trim());
     while (labels.length > 1 && !labels[labels.length - 1]) labels.pop();
-    const value = labels.filter(Boolean).join(', ');
+    const clean = labels.filter(Boolean);
+    const value = clean.join(', ');
     if (field.value !== value) {
       field.value = value;
       field.dataset.relphiManualValue = value;
       field.dispatchEvent(new Event('input', { bubbles:true }));
       field.dispatchEvent(new Event('change', { bubbles:true }));
     }
+    if (clean.length) enablePositionStickers();
   }
   function renderLabelBuilder(panel, field, labels) {
     const host = field?.closest('.board-setup-group--spread');
