@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=38/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=39/);
 
 const storage = new Map();
 const document = {
@@ -217,6 +217,8 @@ assert.match(source, /viewportHeight \* \.52/);
 assert.match(source, /fitActiveLayoutOnMobile\(\)/);
 assert.match(source, /position:fixed!important;top:4\.25rem/);
 assert.match(source, /height:clamp\(22rem,56dvh,34rem\)!important/);
+assert.match(source, /scrollbar-gutter:stable!important/);
+assert.match(source, /relphi-reading-options-drawer>\.card-row-composer\{height:auto!important;max-height:none!important;overflow:visible!important/);
 assert.match(source, /zoom\.step = '\.025'/);
 assert.match(source, /zoom\.min = '\.35'/);
 assert.match(source, /zoomWord\.textContent = 'Zoom'/);
