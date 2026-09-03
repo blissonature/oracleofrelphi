@@ -6,6 +6,7 @@
   const CUSTOM_KEY = 'relphiDrawingBoardSpreadPrefabsV2';
   const LEGACY_KEY = 'relphiDrawingBoardStickerPrefabsV1';
   const MAX_CUSTOM = 40;
+  const RETIRED_PREFAB_IDS = new Set(['celtic-cross-11']);
   let selectedId = '';
   let enhancing = false;
   let queued = false;
@@ -132,38 +133,6 @@
       ]
     },
     {
-      id:'celtic-cross-11',
-      name:'Celtic Cross',
-      cardCount:11,
-      source:'shipped',
-      editable:false,
-      helper:'celtic-center',
-      positions:[
-        position('significator', 'Significator', 1, transform(.30, .36, 0, .40, 10), {
-          role:'significator',
-          openTransform:transform(.16, .36, 0, .40, 10)
-        }),
-        position('covering', '1 · What covers you', 2, transform(.30, .36, 0, .40, 20), {
-          role:'covering',
-          covers:'significator',
-          openTransform:transform(.30, .36, 0, .40, 20)
-        }),
-        position('crossing', '2 · What crosses you', 3, transform(.30, .36, 90, .40, 30), {
-          role:'crossing',
-          crosses:'covering',
-          openTransform:transform(.44, .36, 0, .40, 30)
-        }),
-        position('crowning', '3 · What crowns you', 4, transform(.30, .07, 0, .40, 4)),
-        position('beneath', '4 · What is beneath you', 5, transform(.30, .65, 0, .40, 4)),
-        position('behind', '5 · What is behind you', 6, transform(.03, .36, 0, .40, 4)),
-        position('before', '6 · What is before you', 7, transform(.57, .36, 0, .40, 4)),
-        position('self', '7 · Yourself', 8, transform(.82, .48, 0, .40, 4)),
-        position('house', '8 · Your house', 9, transform(.82, .36, 0, .40, 4)),
-        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.82, .24, 0, .40, 4)),
-        position('outcome', '10 · What will come', 11, transform(.82, .12, 0, .40, 4))
-      ]
-    },
-    {
       id:'six-polarities-houses-12',
       name:'Six Polarities of the Houses',
       cardCount:12,
@@ -283,11 +252,11 @@
   function customPrefabs() {
     try {
       const value = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]');
-      return Array.isArray(value) ? value.map(sanitizeCustom).filter(Boolean) : [];
+      return Array.isArray(value) ? value.map(sanitizeCustom).filter(Boolean).filter(item => !RETIRED_PREFAB_IDS.has(item.id)) : [];
     } catch (_) { return []; }
   }
   function writeCustomPrefabs(prefabs) {
-    const clean = prefabs.map(sanitizeCustom).filter(Boolean).filter(item => !SHIPPED.some(shipped => shipped.id === item.id)).slice(0, MAX_CUSTOM);
+    const clean = prefabs.map(sanitizeCustom).filter(Boolean).filter(item => !RETIRED_PREFAB_IDS.has(item.id)).filter(item => !SHIPPED.some(shipped => shipped.id === item.id)).slice(0, MAX_CUSTOM);
     try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(clean)); return true; }
     catch (_) { return false; }
   }
