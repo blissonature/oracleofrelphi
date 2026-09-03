@@ -1189,6 +1189,15 @@
       'html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label{display:flex!important;align-items:center!important;justify-content:flex-start!important;width:100%!important;min-width:0!important;max-width:none!important;margin:0!important;padding:.34rem .5rem!important;box-sizing:border-box!important;white-space:nowrap!important}',
       '@media(max-width:560px){html body #shortListPanel .drawing-board-top-actions{flex-wrap:wrap!important}html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{grid-template-columns:repeat(3,minmax(0,1fr))!important}}'
     ].join('');
+    style.textContent += [
+      'html body #shortListPanel .card-row-workspace>.drawing-board-primary-actions,html body #shortListPanel .card-row-workspace>.relphi-board-controller-hotzone--actions{display:none!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup>.board-options-body{display:block!important;width:100%!important;max-width:100%!important;grid-template-columns:1fr!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{display:flex!important;flex-direction:column!important;width:100%!important;max-width:100%!important;grid-column:1/-1!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row{display:flex!important;flex-direction:column!important;align-items:stretch!important;width:100%!important;gap:.38rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row>.card-row-draw-scope-label{order:0!important;width:100%!important;max-width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{order:1!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:stretch!important;gap:.35rem!important;width:100%!important;max-width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;flex:1 1 0!important;width:auto!important;min-width:0!important;max-width:none!important;white-space:nowrap!important;overflow:visible!important}'
+    ].join('');
     document.head.appendChild(style);
   }
   function start() {
