@@ -17329,17 +17329,16 @@ html body .or-card-grid.tarot-result-grid{align-items:start!important;grid-auto-
 
 
 /* v321 Drawing Board sense/export cleanup and table-image clarity */
-.card-row-workspace{
-  background:
-    var(--row-table-image, none) center center / cover no-repeat,
-    var(--row-table-bg, #fffaf0) !important;
-}
+.card-row-workspace,
 .card-row-workspace .short-list-row.card-row-board{
-  background:
-    var(--row-table-image, none) center center / cover no-repeat,
-    repeating-linear-gradient(0deg, rgba(220,31,24,.08) 0 1px, transparent 1px var(--row-grid-y)),
-    repeating-linear-gradient(90deg, rgba(220,31,24,.08) 0 1px, transparent 1px var(--row-grid-x)),
-    var(--row-table-bg, #fffaf0) !important;
+  background-image:
+    var(--row-table-image, none),
+    var(--relphi-board-texture, none) !important;
+  background-position: center, center !important;
+  background-size: cover, var(--relphi-board-texture-size, auto) !important;
+  background-repeat: no-repeat, repeat !important;
+  background-blend-mode: normal, soft-light !important;
+  background-color: var(--row-table-bg, #7d1f28) !important;
 }
 .card-row-workspace .short-list-row.card-row-board .card-row-sense-panel label small{display:none!important}
 .search-input-wrap .quick-search-clear{display:none!important}
