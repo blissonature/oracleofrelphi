@@ -954,7 +954,7 @@
     // semantic axis band hidden until every card image has settled, then require
     // the same measured corridor on two consecutive animation frames.
     const cardImages = Array.from(board.querySelectorAll('.card-row-item img'));
-    const imagesReady = cardImages.every(img => img.complete && Number(img.naturalWidth) > 0);
+    const imagesReady = cardImages.every(img => img.complete);
     if (!imagesReady) {
       board.querySelectorAll('.relphi-polarity-label').forEach(node => {
         node.style.visibility = 'hidden';
