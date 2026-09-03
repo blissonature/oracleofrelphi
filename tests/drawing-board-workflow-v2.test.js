@@ -10,12 +10,12 @@ const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=28/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=29/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=4/);
 assert.doesNotMatch(nav, /drawing-board-custom-position-stickers-v1\.js/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=2/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=12/);
-assert.match(page, /navloader\.js\?v=57/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=14/);
+assert.match(page, /navloader\.js\?v=58/);
 assert.match(page, /tarot-app\.js\?v=360/);
 
 assert.match(workflow, /Show position stickers/);
@@ -56,11 +56,11 @@ assert.doesNotMatch(workflow, /Spread design', 'Choose a reusable design or type
 assert.match(workflow, /> Show position stickers/);
 assert.match(workflow, /Spread template', 'Choose or create the spread before drawing\.'/);
 assert.match(workflow, /Reading details', 'Name the reading before drawing\.'/);
-assert.match(workflow, /Draw settings', 'Choose the pack, repeats, and reversals before drawing\.'/);
+assert.match(workflow, /Draw settings', 'Choose the pack, position stickers, repeats, and reversals before drawing\.'/);
 assert.match(workflow, /move\(spreadSetup, control\('rowPositionLabels'\)\)/);
-assert.match(workflow, /move\(spreadSetup, control\('rowPositionStickersQuick'\)\)/);
-assert.match(workflow, /move\(drawSetup, control\('rowAllowRepeats'\)\)/);
-assert.match(workflow, /move\(drawSetup, control\('rowAllowReversalsQuick'\)\)/);
+assert.match(workflow, /move\(drawToggles, control\('rowPositionStickersQuick'\)\)/);
+assert.match(workflow, /move\(drawToggles, control\('rowAllowRepeats'\)\)/);
+assert.match(workflow, /move\(drawToggles, control\('rowAllowReversalsQuick'\)\)/);
 assert.match(workflow, /drawing-board-after-canvas/);
 assert.match(workflow, /Write interpretation notes after you can see the cards\./);
 assert.match(workflow, /Save or export after the reading is on the board\./);
@@ -74,7 +74,10 @@ assert.match(workflow, /#undoShortList:disabled[\s\S]*#redoShortList:disabled[\s
 assert.match(interactions, /html body #shortListPanel \.board-history-icon:disabled\{opacity:\.4!important;border:1px solid rgba\(17,17,17,\.28\)!important;background:#fffdf8!important;color:rgba\(17,17,17,\.48\)!important;box-shadow:none!important;cursor:default!important\}/);
 assert.doesNotMatch(workflow, /move\(choices, '\.quick-position-sticker-toggle'\)/);
 assert.match(workflow, /panel\.querySelector\('#rowPositionStickersQuick'\)/);
-assert.match(workflow, /settingsPanel.*Board options/);
+assert.match(workflow, /drawToggles\.className = 'board-draw-toggles'/);
+assert.match(workflow, /card-row-drawing-board:not\(\[open\]\)>summary button/);
+assert.doesNotMatch(workflow, /move\(spreadSetup, control\('rowPositionStickersQuick'\)\)/);
+assert.match(workflow, /settingsPanel.*Options/);
 assert.doesNotMatch(workflow, /<span>Reading setup<\/span>/);
 assert.match(workflow, /Arrange board/);
 assert.match(workflow, /Alignment snap controls/);
