@@ -196,6 +196,16 @@
 
   function bridge() { return window.RelphiDrawingBoardPrefabsBridge; }
   function clone(value) { return JSON.parse(JSON.stringify(value)); }
+  function withDefaultRules(prefab) {
+    const ready = clone(prefab);
+    ready.rules = {
+      ...(ready.rules || {}),
+      allowReversals:ready.rules?.allowReversals !== false,
+      allowRepeats:!!ready.rules?.allowRepeats,
+      drawScope:String(ready.rules?.drawScope || 'full')
+    };
+    return ready;
+  }
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({
       '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -355,8 +365,9 @@
   }
   function applyForUse(prefab) {
     if (!prefab || !requireClear('choose another spread')) return;
-    stagePrefab(prefab);
-    if (!bridge()?.applyLayout(clone(prefab), { designMode:false })) return;
+    const ready = withDefaultRules(prefab);
+    stagePrefab(ready);
+    if (!bridge()?.applyLayout(ready, { designMode:false })) return;
     selectedId = prefab.id;
     draftLayout = null;
     draftName = '';
@@ -366,7 +377,7 @@
   }
   function beginDesign(prefab, options = {}) {
     if (!prefab || !requireClear('design a layout')) return;
-    const copy = clone(prefab);
+    const copy = withDefaultRules(prefab);
     copy.id = uniqueId(copy.name + '-copy');
     copy.name = prefab.name;
     copy.source = 'custom';
