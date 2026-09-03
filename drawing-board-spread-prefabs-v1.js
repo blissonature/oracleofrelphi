@@ -1122,6 +1122,9 @@
     queued = true;
     requestAnimationFrame(enhance);
   }
+  // Ownership boundary: top action layout belongs only to
+  // drawing-board-workflow-v2.css / drawing-board-workflow-v2.js.
+  // Spread prefabs must never style .drawing-board-top-actions or move/reset its buttons.
   // Ownership boundary: Drawing Board Options row/toggle geometry belongs only to
   // drawing-board-workflow-v2.css / drawing-board-workflow-v2.js. Spread prefabs
   // may style prefab-specific controls, but must not restyle the Pack/toggle row.
@@ -1277,10 +1280,6 @@
     ].join('');
     style.textContent += [
       'html body #shortListPanel #addCardPlaceholder{display:none!important}',
-      'html body #shortListPanel .drawing-board-top-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:.35rem!important;flex-wrap:wrap!important;margin:.35rem .45rem!important;padding:0!important;background:transparent!important}',
-      'html body #shortListPanel .drawing-board-top-actions>button{flex:0 0 auto!important;width:auto!important;min-width:0!important;min-height:2.15rem!important;margin:0!important;padding:.38rem .68rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.78rem!important;font-weight:850!important;line-height:1!important;box-shadow:none!important}',
-      'html body #shortListPanel .drawing-board-top-actions>#drawRandomRowCard{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}',
-      'html body #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly:not(:disabled){border-color:rgba(220,31,24,.45)!important;color:#b81712!important}',
       'html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{width:min(29rem,calc(100% - 1rem))!important;max-width:min(29rem,calc(100% - 1rem))!important;max-height:min(72vh,42rem)!important}',
       'html body #shortListPanel .relphi-reading-options-drawer>.card-row-composer{display:block!important;width:100%!important;max-width:100%!important;padding:.45rem!important;box-sizing:border-box!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup{display:block!important;width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important}',
@@ -1307,14 +1306,6 @@
       '@media(max-width:620px){html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-saver{grid-template-columns:1fr!important}html body #shortListPanel .relphi-reading-options-drawer #relphiSaveLabelsAsTemplate{justify-self:start!important}}'
     ].join('');
     style.textContent += [
-      'html body #shortListPanel .drawing-board-top-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:.35rem!important;flex-wrap:nowrap!important;width:calc(100% - .9rem)!important;max-width:calc(100% - .9rem)!important;margin:.35rem .45rem!important}',
-      'html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{order:0!important;flex:0 0 auto!important;margin-right:auto!important}',
-      'html body #shortListPanel .drawing-board-top-actions>#drawRandomRowCard{order:10!important}',
-      'html body #shortListPanel .drawing-board-top-actions>#undoShortList{order:11!important}',
-      'html body #shortListPanel .drawing-board-top-actions>#redoShortList{order:12!important}',
-      'html body #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly{order:13!important}',
-      'html body #shortListPanel .drawing-board-top-actions>.board-history-icon{display:inline-grid!important;place-items:center!important;flex:0 0 2.25rem!important;width:2.25rem!important;min-width:2.25rem!important;max-width:2.25rem!important;height:2.25rem!important;min-height:2.25rem!important;padding:0!important;border-radius:7px!important}',
-      'html body #shortListPanel .drawing-board-top-actions>.board-history-icon svg{width:1.2rem!important;height:1.2rem!important}',
       'html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{left:.5rem!important;right:auto!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .card-row-composer.is-relphi-organized,html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup,html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup>.board-options-body,html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{width:100%!important;max-width:100%!important;box-sizing:border-box!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{display:flex!important;flex-direction:column!important;gap:.55rem!important}',
@@ -1325,7 +1316,7 @@
       'html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{display:flex!important;flex-direction:column!important;width:100%!important;max-width:100%!important;grid-column:1/-1!important}',
     ].join('');
     style.textContent += [
-      '@media(max-width:700px){html body #shortListPanel .card-row-drawing-board{position:relative!important}html body #shortListPanel .drawing-board-top-actions{position:sticky!important;top:0!important;z-index:2400!important;display:flex!important;align-items:center!important;gap:.32rem!important;flex-wrap:nowrap!important;width:calc(100% - .7rem)!important;max-width:calc(100% - .7rem)!important;margin:.25rem .35rem!important;padding:.32rem!important;border:1px solid rgba(35,29,25,.16)!important;border-radius:9px!important;background:rgba(255,252,248,.98)!important;box-shadow:0 3px 12px rgba(30,20,15,.10)!important;backdrop-filter:blur(6px)!important}html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{margin-right:auto!important}html body #shortListPanel .card-row-workspace{height:clamp(22rem,56dvh,34rem)!important;min-height:clamp(22rem,56dvh,34rem)!important;max-height:clamp(22rem,56dvh,34rem)!important}html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{position:fixed!important;top:4.25rem!important;right:.45rem!important;bottom:.45rem!important;left:.45rem!important;z-index:2300!important;width:auto!important;max-width:none!important;max-height:none!important;margin:0!important;overflow:hidden!important;border-radius:12px!important;box-shadow:0 12px 34px rgba(30,20,15,.26)!important}html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.card-row-composer{display:block!important;width:100%!important;max-width:100%!important;height:100%!important;max-height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;padding:.55rem!important;box-sizing:border-box!important}html body #shortListPanel .relphi-reading-options-drawer .board-reset-action{position:sticky!important;bottom:0!important;z-index:4!important;align-self:flex-start!important;margin:.35rem 0 0!important;background:#fffdf8!important;box-shadow:0 -8px 14px rgba(255,253,248,.96)!important}}'
+      '@media(max-width:700px){html body #shortListPanel .card-row-drawing-board{position:relative!important}html body #shortListPanel .card-row-workspace{height:clamp(22rem,56dvh,34rem)!important;min-height:clamp(22rem,56dvh,34rem)!important;max-height:clamp(22rem,56dvh,34rem)!important}html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{position:fixed!important;top:4.25rem!important;right:.45rem!important;bottom:.45rem!important;left:.45rem!important;z-index:2300!important;width:auto!important;max-width:none!important;max-height:none!important;margin:0!important;overflow:hidden!important;border-radius:12px!important;box-shadow:0 12px 34px rgba(30,20,15,.26)!important}html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.card-row-composer{display:block!important;width:100%!important;max-width:100%!important;height:100%!important;max-height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;padding:.55rem!important;box-sizing:border-box!important}}'
     ].join('');
     style.textContent += [
       'html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{top:.5rem!important;bottom:.5rem!important;height:auto!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;scrollbar-gutter:stable!important}',
