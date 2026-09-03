@@ -958,10 +958,32 @@
       return { x, y, width, visualBottom, positionPanelTop };
     };
 
-    definitions.forEach((definition, index) => {
+    const pairs = definitions.map((definition, index) => {
       const top = geometry(byId.get(definition.top));
       const bottom = geometry(byId.get(definition.bottom));
-      if (!top || !bottom) return;
+      if (!top || !bottom) return null;
+      const corridorTop = top.visualBottom;
+      const corridorBottom = bottom.positionPanelTop;
+      return {
+        definition,
+        index,
+        top,
+        bottom,
+        corridorY:(corridorTop + corridorBottom) / 2
+      };
+    }).filter(Boolean);
+
+    // These labels form one semantic band between two aligned card rows.
+    // A single card can report an anomalous offsetHeight/offsetTop after a
+    // reversal or late image layout. Use the median rendered corridor so one
+    // card cannot pull only its polarity label into a card face.
+    const corridorYs = pairs.map(pair => pair.corridorY).filter(Number.isFinite).sort((a,b) => a - b);
+    const mid = Math.floor(corridorYs.length / 2);
+    const sharedCorridorY = corridorYs.length
+      ? (corridorYs.length % 2 ? corridorYs[mid] : (corridorYs[mid - 1] + corridorYs[mid]) / 2)
+      : null;
+
+    pairs.forEach(({ definition, index, top, bottom, corridorY }) => {
       const key = String(index);
       live.add(key);
       let label = board.querySelector('.relphi-polarity-label[data-polarity-index="' + key + '"]');
@@ -974,13 +996,7 @@
       }
       label.textContent = definition.label;
       label.style.left = ((top.x + top.width / 2 + bottom.x + bottom.width / 2) / 2) + 'px';
-      // Position the polarity label in the actual free corridor between the
-      // upper card face and the lower row's position sticker. The lower sticker
-      // is absolutely positioned above its card, so using bottom.y would put
-      // this label directly on top of it.
-      const corridorTop = top.visualBottom;
-      const corridorBottom = bottom.positionPanelTop;
-      label.style.top = ((corridorTop + corridorBottom) / 2) + 'px';
+      label.style.top = (Number.isFinite(sharedCorridorY) ? sharedCorridorY : corridorY) + 'px';
     });
 
     board.querySelectorAll('.relphi-polarity-label').forEach(node => {
