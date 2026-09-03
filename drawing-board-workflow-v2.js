@@ -647,14 +647,19 @@
     const row = permanentTopActionRow(panel);
     if (!row) return null;
 
-    const options = panel.querySelector('#drawingBoardOptionsButton');
-    const draw = panel.querySelector('#drawRandomRowCard');
-    const undo = panel.querySelector('#undoShortList');
-    const redo = panel.querySelector('#redoShortList');
-    const clearCards = panel.querySelector('#clearShortListCardsOnly');
+    const desired = [
+      panel.querySelector('#drawingBoardOptionsButton'),
+      panel.querySelector('#drawRandomRowCard'),
+      panel.querySelector('#undoShortList'),
+      panel.querySelector('#redoShortList'),
+      panel.querySelector('#clearShortListCardsOnly')
+    ].filter(Boolean);
 
-    [options, draw, undo, redo, clearCards].forEach(button => {
-      if (button) row.appendChild(button);
+    desired.forEach((button, index) => {
+      const current = row.children[index] || null;
+      if (button.parentElement !== row || current !== button) {
+        row.insertBefore(button, current);
+      }
     });
 
     row.querySelectorAll('.drawing-board-action-buttons,.drawing-board-primary-actions').forEach(node => {
@@ -868,10 +873,10 @@
     }
 
     const staging = panel.querySelector('.card-row-action-staging');
-    ['drawRandomRowCard','undoShortList','redoShortList','addCardPlaceholder'].forEach(id => {
-      const button = panel.querySelector('#' + id);
-      if (button && staging) staging.appendChild(button);
-    });
+    const addPlaceholder = panel.querySelector('#addCardPlaceholder');
+    if (addPlaceholder && staging && addPlaceholder.parentElement !== staging) {
+      staging.appendChild(addPlaceholder);
+    }
     panel.querySelector('.card-row-action-staging:empty')?.remove();
 
     const envelopeColor = panel.querySelector('#rowEnvelopeColor');
@@ -967,10 +972,13 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
       toggleReadingOptions(document.getElementById(panelId));
     });
     document.addEventListener('relphi:drawing-board-rendered', scheduleEnhance);
-    new MutationObserver(records => {
-      if (records.some(record => record.type === 'attributes' && record.target?.id === 'shortListPanel')) syncBoardEntryButton();
-      scheduleEnhance();
-    }).observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['hidden'] });
+    const panel = document.getElementById('shortListPanel');
+    if (panel) {
+      new MutationObserver(() => {
+        syncBoardEntryButton();
+        scheduleEnhance();
+      }).observe(panel, { attributes:true, attributeFilter:['hidden'] });
+    }
     document.addEventListener('pointerdown', beginDescriptionSelection, true);
     window.addEventListener('pointerup', endDescriptionSelection, true);
     window.addEventListener('pointercancel', endDescriptionSelection, true);
