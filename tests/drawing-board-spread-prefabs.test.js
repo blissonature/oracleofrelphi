@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=35/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=36/);
 
 const storage = new Map();
 const document = {
@@ -193,6 +193,7 @@ assert.match(source, /if \(clean\.length\) enablePositionStickers\(\)/);
 assert.match(source, /rowPositionStickersQuick/);
 assert.match(source, /drawScope:String\(ready\.rules\?\.drawScope \|\| 'full'\)/);
 assert.match(source, /const ready = withDefaultRules\(prefab\)/);
+assert.match(source, /window\.RelphiDrawingBoardSetPositionStickers\?\.\(true\)/);
 assert.doesNotMatch(source, /\['rowPositionLabels','rowDrawScope','rowAllowRepeats','rowAllowReversalsQuick'/);
 assert.match(source, /editor\.contentEditable = 'true'/);
 assert.match(source, /function addWorkspaceControls/);
