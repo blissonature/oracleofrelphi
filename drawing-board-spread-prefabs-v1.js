@@ -139,18 +139,18 @@
       source:'shipped',
       editable:false,
       positions:[
-        position('aries', 'Aries', 1, transform(.198, .18, 0, .62)),
-        position('libra', 'Libra', 2, transform(.198, .498, 0, .62)),
-        position('taurus', 'Taurus', 3, transform(.327, .18, 0, .62)),
-        position('scorpio', 'Scorpio', 4, transform(.327, .498, 0, .62)),
-        position('gemini', 'Gemini', 5, transform(.456, .18, 0, .62)),
-        position('sagittarius', 'Sagittarius', 6, transform(.456, .498, 0, .62)),
-        position('cancer', 'Cancer', 7, transform(.585, .18, 0, .62)),
-        position('capricorn', 'Capricorn', 8, transform(.585, .498, 0, .62)),
-        position('leo', 'Leo', 9, transform(.714, .18, 0, .62)),
-        position('aquarius', 'Aquarius', 10, transform(.714, .498, 0, .62)),
-        position('virgo', 'Virgo', 11, transform(.843, .18, 0, .62)),
-        position('pisces', 'Pisces', 12, transform(.843, .498, 0, .62))
+        position('aries', 'Aries', 1, transform(.01304, .07408, 0, .83)),
+        position('libra', 'Libra', 2, transform(.01304, .50000, 0, .83)),
+        position('taurus', 'Taurus', 3, transform(.17573, .07408, 0, .83)),
+        position('scorpio', 'Scorpio', 4, transform(.17573, .50000, 0, .83)),
+        position('gemini', 'Gemini', 5, transform(.33842, .07408, 0, .83)),
+        position('sagittarius', 'Sagittarius', 6, transform(.33842, .50000, 0, .83)),
+        position('cancer', 'Cancer', 7, transform(.50111, .07408, 0, .83)),
+        position('capricorn', 'Capricorn', 8, transform(.50111, .50000, 0, .83)),
+        position('leo', 'Leo', 9, transform(.66380, .07408, 0, .83)),
+        position('aquarius', 'Aquarius', 10, transform(.66380, .50000, 0, .83)),
+        position('virgo', 'Virgo', 11, transform(.82649, .07408, 0, .83)),
+        position('pisces', 'Pisces', 12, transform(.82649, .50000, 0, .83))
       ]
     },
     {
