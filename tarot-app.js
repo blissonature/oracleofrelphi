@@ -2002,7 +2002,7 @@
     return true;
   }
   function finishPrefabDesign(details = {}) {
-    if (!state.rowLayoutDesignMode) return null;
+    if (!state.rowLayoutDesignMode || (state.shortList || []).length) return null;
     state.rowActiveLayout = layoutSnapshotFromBoard(details);
     state.rowPositionMeta = state.rowActiveLayout.positions.map(position => ({
       id:position.id,
@@ -2084,32 +2084,6 @@
   window.RelphiDrawingBoardPrefabsBridge = Object.freeze({
     applyLayout:applyPrefabLayout,
     captureLayout:layoutSnapshotFromBoard,
-    captureBoard() { return cloneBoardValue(boardSnapshot(), {}); },
-    restoreBoard(snapshot) {
-      if (!snapshot || typeof snapshot !== 'object') return false;
-      restoreBoardSnapshot(cloneBoardValue(snapshot, {}));
-      refreshShortListViews();
-      return true;
-    },
-    prepareDesign(prefab) {
-      if (!prefab || !Array.isArray(prefab.positions) || !prefab.positions.length) return false;
-      const hasCards = !!(state.shortList || []).length;
-      const sameActiveTemplate = !!state.rowActiveLayout?.id && state.rowActiveLayout.id === prefab.id;
-      if (hasCards && sameActiveTemplate) {
-        state.rowLayoutDesignMode = true;
-        state.rowLayoutLocked = false;
-        state.rowCenterOpen = false;
-        renderShortList();
-        return true;
-      }
-      state.shortList = [];
-      state.shortListSelection = [];
-      state.rowCardReversals = {};
-      state.rowLayoutDesignMode = false;
-      state.rowLayoutLocked = false;
-      return applyPrefabLayout(prefab, { designMode:true });
-    },
-    clearBoard:clearDrawingBoardNative,
     finishDesign:finishPrefabDesign,
     removePosition:removePrefabPosition,
     swapPositionSlots:swapDrawingBoardPositionSlots,
@@ -2120,6 +2094,71 @@
       return state.rowCenterOpen;
     },
     refresh:renderShortList
+  });
+
+  function drawingBoardOptionsComparable(snapshot = boardSnapshot()) {
+    const source = snapshot && typeof snapshot === 'object' ? snapshot : {};
+    return {
+      shortListPositionLabels:Array.isArray(source.shortListPositionLabels) ? source.shortListPositionLabels.slice() : [],
+      shortListPositionCardIds:Array.isArray(source.shortListPositionCardIds) ? source.shortListPositionCardIds.slice() : [],
+      rowDrawScope:String(source.rowDrawScope || 'full'),
+      rowAllowRepeats:!!source.rowAllowRepeats,
+      rowAllowReversals:source.rowAllowReversals !== false,
+      rowSnapEnabled:source.rowSnapEnabled !== false,
+      rowSnapGrid:String(source.rowSnapGrid || 'one-eighth'),
+      rowRotationSnapEnabled:source.rowRotationSnapEnabled !== false,
+      rowRotationSnapDegrees:Number(source.rowRotationSnapDegrees) || 15,
+      rowEnvelopeLayout:cloneBoardValue(source.rowEnvelopeLayout, {}),
+      rowCardTransforms:cloneBoardValue(source.rowCardTransforms, {}),
+      rowActiveLayout:cloneBoardValue(source.rowActiveLayout, null),
+      rowPositionMeta:cloneBoardValue(source.rowPositionMeta, []),
+      rowEnvelopeColor:String(source.rowEnvelopeColor || '#f3f0ea'),
+      rowEnvelopeArt:cloneBoardValue(source.rowEnvelopeArt, {}),
+      rowTableColor:String(source.rowTableColor || '#7d1f28'),
+      rowTableImage:String(source.rowTableImage || '')
+    };
+  }
+  function restoreDrawingBoardOptionsSnapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return false;
+    restoreBoardSnapshot(cloneBoardValue(snapshot, {}));
+    customCardArtStore = { ...(state.customCardArt || {}) };
+    writeCustomCardArtStore(customCardArtStore);
+    refreshShortListViews();
+    return true;
+  }
+  function drawingBoardOptionsChangedFrom(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return false;
+    return JSON.stringify(drawingBoardOptionsComparable(snapshot)) !== JSON.stringify(drawingBoardOptionsComparable(boardSnapshot()));
+  }
+  function saveDrawingBoardOptionsAndClear() {
+    const configured = boardSnapshot();
+    const next = {
+      ...configured,
+      shortList:[],
+      shortListSelection:[],
+      shortListSelectMode:false,
+      shortListName:'',
+      shortListNotes:'',
+      rowDrawDeck:[],
+      rowDrawDeckSignature:'',
+      rowCardReversals:{},
+      rowShuffled:false,
+      rowShuffleCount:0,
+      customCardArt:{}
+    };
+    pushBoardUndo();
+    restoreBoardSnapshot(next);
+    customCardArtStore = {};
+    writeCustomCardArtStore(customCardArtStore);
+    resetRowDrawDeck();
+    refreshShortListViews();
+    return true;
+  }
+  window.RelphiDrawingBoardOptionsBridge = Object.freeze({
+    capture() { return cloneBoardValue(boardSnapshot(), {}); },
+    restore:restoreDrawingBoardOptionsSnapshot,
+    changedFrom:drawingBoardOptionsChangedFrom,
+    saveAndClear:saveDrawingBoardOptionsAndClear
   });
   function rowEnvelopeArtFor(index) { return state.rowEnvelopeArt?.[index] || ''; }
   function setRowEnvelopeArt(index, dataUrl) {
