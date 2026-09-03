@@ -31,5 +31,5 @@ assert.doesNotMatch(app, /editor\.addEventListener\('blur'[\s\S]{0,220}rowLayout
 assert.match(app, /function addCardPlaceholder\(\)[\s\S]{0,120}rowLayoutLocked/, 'layout structure remains locked after drawing');
 assert.match(app, /function setRowCardTransform\(index, updates = \{\}\)[\s\S]{0,120}rowLayoutLocked/, 'card transform structure remains locked after drawing');
 assert.doesNotMatch(app, /RWS_IMAGE_DATA/, 'unused embedded image payload must not return to tarot-app.js');
-assert.match(html, /tarot-app\.js\?v=362/);
+assert.match(html, /tarot-app\.js\?v=364/);
 console.log('Drawing Board persistence regression checks passed');
