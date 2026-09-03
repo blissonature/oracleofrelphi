@@ -14,8 +14,6 @@
   let draftName = '';
   let copySourceId = '';
   let templateMode = 'existing';
-  let designBoardSnapshot = null;
-  let designHadBoardContent = false;
   let labelsOpen = false;
   let newPromptArmed = false;
   let suppressOmniboxHandler = false;
@@ -292,13 +290,9 @@
   function normalizedName(value) {
     return String(value || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
   }
-  function templateNameConflict(name, cardCount, excludeId = '') {
+  function templateNameConflict(name, cardCount) {
     const normalized = normalizedName(name);
-    return !!normalized && allPrefabs().some(item =>
-      item.id !== excludeId &&
-      item.cardCount === cardCount &&
-      normalizedName(item.name) === normalized
-    );
+    return !!normalized && allPrefabs().some(item => item.cardCount === cardCount && normalizedName(item.name) === normalized);
   }
   function requireClear(action) {
     const state = bridge()?.getState();
@@ -386,44 +380,28 @@
     schedule();
   }
   function beginDesign(prefab, options = {}) {
-    const api = bridge();
-    if (!prefab || !api) return;
-    const state = api.getState?.() || {};
-    designBoardSnapshot = api.captureBoard?.() || null;
-    designHadBoardContent = !!(state.hasCards || state.locked);
+    if (!prefab || !requireClear('design a layout')) return;
     const copy = withDefaultRules(prefab);
-    copy.id = prefab.id;
+    copy.id = uniqueId(copy.name + '-copy');
     copy.name = prefab.name;
     copy.source = 'custom';
     copy.editable = true;
-    copy.basedOn = prefab.basedOn || null;
+    copy.basedOn = prefab.id;
     draftLayout = copy;
     draftName = prefab.name;
     copySourceId = prefab.id;
-    selectedId = prefab.id;
+    selectedId = copy.id;
     labelsOpen = true;
     templateMode = 'existing';
-    if (!api.prepareDesign?.(copy)) {
-      if (designBoardSnapshot) api.restoreBoard?.(designBoardSnapshot);
-      designBoardSnapshot = null;
-      designHadBoardContent = false;
-      return;
-    }
-    const panel = document.getElementById('shortListPanel');
-    if (panel?.dataset.relphiReadingOptionsOpen !== 'true') {
-      window.RelphiDrawingBoardToggleOptions?.();
-    }
+    bridge()?.applyLayout(copy, { designMode:true });
     schedule();
   }
   function cancelDesign() {
-    const api = bridge();
-    if (designBoardSnapshot) api?.restoreBoard?.(designBoardSnapshot);
-    selectedId = copySourceId || selectedId || '';
+    document.getElementById('clearShortList')?.click();
+    selectedId = copySourceId || '';
     draftLayout = null;
     draftName = '';
     copySourceId = '';
-    designBoardSnapshot = null;
-    designHadBoardContent = false;
     templateMode = 'existing';
     newPromptArmed = false;
     labelsOpen = true;
@@ -487,47 +465,35 @@
     schedule();
   }
   function finishDesign(save) {
-    const api = bridge();
-    const state = api?.getState();
-    if (!state?.designMode || !state.slotCount || !save) return;
+    const state = bridge()?.getState();
+    if (!state?.designMode || !state.slotCount) return;
     const selected = draftLayout || prefabById(selectedId);
     const name = String(draftName || '').trim().replace(/\s+/g, ' ').slice(0, 60);
-    if (!name) {
+    if (save && !name) {
       window.alert('Enter a name for this spread template before saving it.');
       schedule();
       return;
     }
-    if (templateNameConflict(name, state.slotCount, copySourceId || selected?.id || '')) {
+    if (save && templateNameConflict(name, state.slotCount)) {
       window.alert('A ' + state.slotCount + '-card spread template named "' + name + '" already exists. Choose a unique name.');
       schedule();
       return;
     }
-    if (designHadBoardContent) {
-      const confirmed = window.confirm(
-        'Saving these template changes will clear the entire Drawing Board and the active reading. Cancel to go back without losing the board.'
-      );
-      if (!confirmed) return;
-    }
-    const snapshot = api.finishDesign({
-      id:copySourceId || selected?.id || uniqueId(name),
-      name,
-      source:'custom',
-      editable:true,
-      basedOn:selected?.basedOn || null
+    const snapshot = bridge().finishDesign({
+      id:save ? uniqueId(name) : 'use-once-' + Date.now().toString(36),
+      name:save ? name : 'One-time layout',
+      source:save ? 'custom' : 'active',
+      editable:!!save,
+      basedOn:copySourceId || selected?.basedOn || null
     });
-    if (!snapshot) return;
-    if (!saveCustom(snapshot)) {
-      window.alert('This browser could not save the custom spread design.');
-      return;
+    if (save && snapshot) {
+      if (!saveCustom(snapshot)) return window.alert('This browser could not save the custom spread design.');
+      selectedId = snapshot.id;
     }
-    selectedId = snapshot.id;
-    api.clearBoard?.();
     draftLayout = null;
     draftName = '';
     copySourceId = '';
-    designBoardSnapshot = null;
-    designHadBoardContent = false;
-    templateMode = 'existing';
+    templateMode = save ? 'existing' : templateMode;
     schedule();
   }
   function labelsFromHiddenField(field) {
@@ -834,7 +800,7 @@
     const editor = library.querySelector('.relphi-template-editor');
     const prefab = prefabById(selectedId) || draftLayout;
     const designing = !!state.designMode;
-    const conflict = designing && templateNameConflict(draftName, Number(state.slotCount) || Number(draftLayout?.positions?.length) || 0, copySourceId);
+    const conflict = designing && templateNameConflict(draftName, Number(state.slotCount) || Number(draftLayout?.positions?.length) || 0);
 
     const editorHtml =
       (designing ?
@@ -844,8 +810,8 @@
           (conflict ? 'A template with this card count and name already exists.' : 'Move, rotate, label, add, or remove positions, then save the template.') +
         '</small>' : '') +
       '<div class="relphi-prefab-actions">' +
-        (!designing && prefab?.source === 'custom' ? '<button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
-        (designing ? '<button type="button" class="primary" data-prefab-action="save"' + (!String(draftName || '').trim() || conflict ? ' disabled' : '') + '>Save</button><button type="button" data-prefab-action="cancel">Cancel</button>' : '') +
+        (!designing && prefab?.source === 'custom' ? '<button type="button" data-prefab-action="edit">Edit Template</button><button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
+        (designing ? '<button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!String(draftName || '').trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button>' : '') +
       '</div>';
     if (editor.innerHTML !== editorHtml) {
       editor.innerHTML = editorHtml;
@@ -860,7 +826,7 @@
         if (draftLayout) draftLayout.name = draftName;
         const live = bridge()?.getState();
         const count = Number(live?.slotCount) || Number(draftLayout?.positions?.length) || 0;
-        const conflictNow = !!live?.designMode && templateNameConflict(draftName, count, copySourceId);
+        const conflictNow = !!live?.designMode && templateNameConflict(draftName, count);
         const help = editor.querySelector('#relphiSpreadNameHelp');
         const save = editor.querySelector('[data-prefab-action="save"]');
         if (help) {
@@ -873,40 +839,13 @@
         if (save) save.disabled = !draftName.trim() || conflictNow;
       });
 
+      editor.querySelector('[data-prefab-action="edit"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId)));
       editor.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
+      editor.querySelector('[data-prefab-action="once"]')?.addEventListener('click', () => finishDesign(false));
       editor.querySelector('[data-prefab-action="cancel"]')?.addEventListener('click', cancelDesign);
       editor.querySelector('[data-prefab-action="save"]')?.addEventListener('click', () => finishDesign(true));
     }
   }
-  function syncTopEditTemplateButton(panel, state) {
-    const row = panel.querySelector('.drawing-board-top-actions');
-    if (!row) return;
-    const active = state?.activeLayout?.id ? prefabById(state.activeLayout.id) : null;
-    const shouldShow = !!active && active.source === 'custom' && !state.designMode;
-    let button = row.querySelector('#editDrawingBoardTemplate');
-    row.classList.toggle('has-edit-template-action', shouldShow);
-    if (!shouldShow) {
-      button?.remove();
-      return;
-    }
-    if (!button) {
-      button = document.createElement('button');
-      button.type = 'button';
-      button.id = 'editDrawingBoardTemplate';
-      button.className = 'relphi-edit-template-top';
-      button.textContent = 'Edit Template';
-      button.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        beginDesign(prefabById(bridge()?.getState()?.activeLayout?.id));
-      });
-    }
-    const options = row.querySelector('#drawingBoardOptionsButton');
-    if (button.parentElement !== row || button.previousElementSibling !== options) {
-      row.insertBefore(button, options?.nextSibling || row.firstChild);
-    }
-  }
-
   function addDesignControls(panel, state) {
     panel.classList.toggle('relphi-layout-design-mode', !!state.designMode);
     const workspace = panel.querySelector('.card-row-workspace');
@@ -921,14 +860,7 @@
       banner.className = 'relphi-layout-status';
       workspace.insertBefore(banner, workspace.firstChild);
     }
-    const bannerHtml = '<strong>Editing Spread Template</strong><span>' +
-      (state.hasCards
-        ? 'Move, rotate, or relabel positions. Save clears this reading; Cancel restores it.'
-        : 'Move, rotate, label, add, or remove placeholders. Save or Cancel in Board Options.') +
-      '</span><div><button type="button" data-design-action="remove"' +
-      (state.slotCount < 2 || state.hasCards ? ' disabled' : '') +
-      (state.hasCards ? ' title="Remove positions after clearing the active reading"' : '') +
-      '>Remove selected position</button></div>';
+    const bannerHtml = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish in Board Options.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
     if (banner.innerHTML !== bannerHtml) {
       banner.innerHTML = bannerHtml;
       banner.querySelector('[data-design-action="remove"]')?.addEventListener('click', () => bridge()?.removePosition(state.transformTarget));
@@ -1176,7 +1108,6 @@
       const state = api.getState();
       addLibrary(panel, state);
       addDesignControls(panel, state);
-      syncTopEditTemplateButton(panel, state);
       lockControls(panel, state);
       applyCenterView(panel, state);
       applyPolarityLabels(panel, state);
@@ -1211,9 +1142,6 @@
       '#shortListPanel .relphi-spread-design-name small{font-weight:500!important}',
       '#shortListPanel .relphi-prefab-actions{display:flex;flex-wrap:wrap;gap:.4rem}',
       '#shortListPanel .relphi-prefab-actions .danger{color:#a01813;border-color:rgba(160,24,19,.45)}',
-      'html body #shortListPanel .drawing-board-top-actions.has-edit-template-action>#drawingBoardOptionsButton{margin-right:0!important}',
-      'html body #shortListPanel .drawing-board-top-actions>#editDrawingBoardTemplate{order:1!important;flex:0 0 auto!important;margin:0 auto 0 0!important;min-height:2.2rem!important;padding:.42rem .72rem!important;border:1px solid #dc1f18!important;border-radius:8px!important;background:#fff!important;color:#b81712!important;font:inherit!important;font-size:.78rem!important;font-weight:850!important;line-height:1!important;box-shadow:none!important;white-space:nowrap!important}',
-      'html body #shortListPanel .drawing-board-top-actions>#editDrawingBoardTemplate:hover{background:#fff4f1!important}',
       '#shortListPanel .relphi-labels-toggle.is-open{border-color:#dc1f18!important;background:#fff4f1!important;color:#b81712!important}',
       '#shortListPanel .relphi-labels-drawer{display:grid;gap:.65rem;margin:0 .6rem .6rem;padding:.75rem;border:1px solid #d5cbc3;border-radius:10px;background:#fffaf4;box-shadow:0 7px 18px rgba(35,24,18,.09)}',
       '#shortListPanel .relphi-labels-drawer[hidden]{display:none!important}',
