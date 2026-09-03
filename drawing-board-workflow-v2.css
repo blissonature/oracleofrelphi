@@ -1220,3 +1220,62 @@ html body #shortListPanel .relphi-workspace-tools:has(.relphi-workspace-flyout:n
     gap:.28rem!important;
   }
 }
+
+
+/* v25 placeholder footprint = card-art footprint
+   The empty slot must never create a larger white envelope behind a drawn card. */
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  padding:0!important;
+  border:0!important;
+  outline:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  align-content:start!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item>.card-row-drop-card{
+  width:calc(100% - 10px)!important;
+  max-width:calc(100% - 10px)!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:500/866!important;
+  margin-left:5px!important;
+  margin-right:5px!important;
+  padding:0!important;
+  box-sizing:border-box!important;
+  border:1px dashed rgba(255,253,248,.56)!important;
+  border-radius:.38rem!important;
+  background:rgba(255,253,248,.08)!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item>.card-row-drop-card>.card-row-drop-card-inner{
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  padding:.65rem!important;
+  box-sizing:border-box!important;
+  color:rgba(255,253,248,.82)!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item>.card-row-drop-card.has-custom-envelope-art{
+  padding:0!important;
+  background:transparent!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item>.card-row-drop-card.has-custom-envelope-art>img{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  object-fit:cover!important;
+  border:0!important;
+  border-radius:.38rem!important;
+  background:transparent!important;
+}
