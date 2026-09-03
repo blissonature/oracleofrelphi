@@ -445,6 +445,11 @@
       const closing = !flyout.hidden && flyout.dataset.section === section;
       flyout.hidden = closing;
       flyout.dataset.section = closing ? '' : section;
+      tools.classList.toggle('has-open-flyout', !closing);
+      if (!closing) {
+        tools.classList.remove('is-controller-idle');
+        tools.classList.add('is-controller-visible');
+      }
       triggers.forEach(button => {
         const active = !closing && button.dataset.tool === section;
         button.classList.toggle('is-active', active);
@@ -502,6 +507,7 @@
       if (flyout.hidden || event.target.closest?.('.relphi-workspace-tools')) return;
       flyout.hidden = true;
       flyout.dataset.section = '';
+      tools.classList.remove('has-open-flyout');
       triggers.forEach(button => {
         button.classList.remove('is-active');
         button.setAttribute('aria-expanded','false');
