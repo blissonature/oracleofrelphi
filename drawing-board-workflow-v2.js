@@ -589,6 +589,14 @@
     }
   }
 
+  function toggleReadingOptions(panel = document.getElementById('shortListPanel')) {
+    if (!panel) return false;
+    const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
+    setReadingOptionsOpen(panel, opening);
+    return opening;
+  }
+  window.RelphiDrawingBoardToggleOptions = () => toggleReadingOptions();
+
   function syncReadingOptionsDrawer(panel) {
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (!drawer) return;
@@ -956,10 +964,7 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
   function start() {setArrivalState();
     document.addEventListener('relphi:drawing-board-options-toggle', event => {
       const panelId = event.detail?.panelId || 'shortListPanel';
-      const panel = document.getElementById(panelId);
-      if (!panel) return;
-      const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
-      setReadingOptionsOpen(panel, opening);
+      toggleReadingOptions(document.getElementById(panelId));
     });
     document.addEventListener('relphi:drawing-board-rendered', scheduleEnhance);
     new MutationObserver(records => {
