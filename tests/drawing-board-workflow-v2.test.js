@@ -15,14 +15,14 @@ const workflowCss = fs.readFileSync(path.join(root, 'drawing-board-workflow-v2.c
 const workflowUi = workflow + '\n' + workflowCss;
 const prefabs = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.js'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=67/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=68/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=12/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=7/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=43/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=44/);
 assert.match(page, /style\.css\?v=351/);
 assert.match(page, /drawing-board-workflow-v2\.css\?v=19/);
-assert.match(page, /navloader\.js\?v=105/);
-assert.match(page, /tarot-app\.js\?v=372/);
+assert.match(page, /navloader\.js\?v=106/);
+assert.match(page, /tarot-app\.js\?v=373/);
 assert.doesNotMatch(workflow, /document\.createElement\('style'\)|style\.textContent|document\.head\.appendChild\(style\)/);
 assert.equal((workflow.match(/installOptionsButton\(panel\)/g) || []).length, 2);
 assert.doesNotMatch(workflow, /board-arrange-flyout|board-arrange-trigger/);
@@ -51,7 +51,7 @@ assert.match(prefabs, /Ownership boundary: Drawing Board Options row\/toggle geo
 
 
 
-assert.match(page, /tarot-app\.js\?v=372/);
+assert.match(page, /tarot-app\.js\?v=373/);
 
 assert.match(workflowUi, /Position Stickers/);
 assert.match(workflowUi, /Position #/);
@@ -117,6 +117,9 @@ assert.match(tarot, /function clearDrawingBoardNative\(\)/);
 assert.match(tarot, /captureBoard\(\) \{ return cloneBoardValue\(boardSnapshot\(\), \{\}\); \}/);
 assert.match(tarot, /restoreBoard\(snapshot\)/);
 assert.match(tarot, /prepareDesign\(prefab\)/);
+assert.match(tarot, /const sameActiveTemplate =/);
+assert.match(tarot, /state\.rowLayoutDesignMode = true/);
+assert.doesNotMatch(tarot, /function finishPrefabDesign\(details = \{\}\) \{[\s\S]{0,120}\(state\.shortList \|\| \[\]\)\.length/);
 assert.match(tarot, /clearBoard:clearDrawingBoardNative/);
 assert.match(tarot, /button\.onclick = event =>/);
 assert.match(tarot, /relphi:drawing-board-options-toggle/);
@@ -142,6 +145,7 @@ assert.match(tarot, /aria-label="Drawing Board staging controls"/);
 assert.match(workflow, /function permanentTopActionRow\(panel\)/);
 assert.match(workflow, /function ensurePermanentTopActions\(panel\)/);
 assert.match(workflow, /const desired = \[/);
+assert.match(workflow, /panel\.querySelector\('#editDrawingBoardTemplate'\)/);
 assert.match(workflow, /if \(button\.parentElement !== row \|\| current !== button\)/);
 assert.match(workflow, /row\.insertBefore\(button, current\)/);
 assert.doesNotMatch(workflow, /\[options, draw, undo, redo, clearCards\]\.forEach\(button => \{[\s\S]{0,120}row\.appendChild\(button\)/);
