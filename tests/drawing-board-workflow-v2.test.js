@@ -14,14 +14,14 @@ const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 const workflowCss = fs.readFileSync(path.join(root, 'drawing-board-workflow-v2.css'), 'utf8');
 const workflowUi = workflow + '\n' + workflowCss;
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=59/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=60/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=10/);
-assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=5/);
+assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=6/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=33/);
 assert.match(page, /style\.css\?v=350/);
 assert.match(page, /drawing-board-workflow-v2\.css\?v=13/);
-assert.match(page, /navloader\.js\?v=91/);
-assert.match(page, /tarot-app\.js\?v=364/);
+assert.match(page, /navloader\.js\?v=92/);
+assert.match(page, /tarot-app\.js\?v=365/);
 assert.doesNotMatch(workflow, /document\.createElement\('style'\)|style\.textContent|document\.head\.appendChild\(style\)/);
 assert.equal((workflow.match(/installOptionsButton\(panel\)/g) || []).length, 2);
 assert.doesNotMatch(workflow, /board-arrange-flyout|board-arrange-trigger/);
@@ -34,7 +34,7 @@ assert.match(workflowCss, /Drawing Board workflow UI/);
 
 
 
-assert.match(page, /tarot-app\.js\?v=364/);
+assert.match(page, /tarot-app\.js\?v=365/);
 
 assert.match(workflowUi, /Position Stickers/);
 assert.match(workflowUi, /Position #/);
@@ -88,9 +88,19 @@ assert.match(interactions, /button\.innerHTML = historyIconSvg\(entry\[1\]\)/);
 assert.match(lifecycle, /staging\.appendChild\(add\)/);
 assert.doesNotMatch(workflow, /clearRowCardsOnly/);
 assert.doesNotMatch(workflow, /drawing-board-quick-settings/);
+assert.match(tarot, /class="drawing-board-top-actions"/);
+assert.match(tarot, /id="drawingBoardOptionsButton"/);
+assert.match(tarot, /id="drawRandomRowCard"/);
+assert.match(tarot, /id="undoShortList"/);
+assert.match(tarot, /id="redoShortList"/);
+assert.match(tarot, /id="clearShortListCardsOnly"/);
+assert.match(tarot, /aria-label="Drawing Board staging controls"/);
 assert.match(workflow, /function permanentTopActionRow\(panel\)/);
 assert.match(workflow, /function ensurePermanentTopActions\(panel\)/);
 assert.match(workflow, /window\.RelphiDrawingBoardEnsureTopActions = ensurePermanentTopActions/);
+assert.match(workflow, /button\.dataset\.relphiOptionsBound/);
+assert.match(lifecycle, /cardsOnly\.dataset\.relphiClearCardsBound/);
+assert.match(workflow, /document\.addEventListener\('relphi:drawing-board-rendered', scheduleEnhance\)/);
 assert.match(workflow, /\[options, draw, undo, redo, clearCards\]\.forEach\(button =>/);
 assert.match(workflow, /row\.appendChild\(button\)/);
 assert.match(interactions, /window\.RelphiDrawingBoardEnsureTopActions\?\.\(panel\)/);
