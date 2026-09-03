@@ -60,3 +60,41 @@
 @media(max-width:520px){html body #shortListPanel .board-draw-settings-row .board-reading-toggle-stack{grid-template-columns:1fr!important}}
 html body #shortListPanel .relphi-board-controller{transition:opacity .22s ease,transform .22s ease,visibility .22s linear!important}html body #shortListPanel .relphi-board-controller.is-controller-idle:not(.is-controller-visible){opacity:0!important;visibility:hidden!important;pointer-events:none!important}html body #shortListPanel .relphi-board-controller.is-controller-visible{opacity:.98!important;visibility:visible!important;pointer-events:auto!important}html body #shortListPanel .drawing-board-primary-actions.relphi-board-controller{position:absolute!important;left:.5rem!important;top:.5rem!important;z-index:1700!important;margin:0!important;width:max-content!important;max-width:calc(100% - 1rem)!important}html body #shortListPanel .drawing-board-primary-actions.relphi-board-controller.is-controller-idle:not(.is-controller-visible){transform:translateY(-.45rem)!important}html body #shortListPanel .relphi-workspace-tools.relphi-board-controller.is-controller-idle:not(.is-controller-visible){transform:translateY(.45rem)!important}html body #shortListPanel .card-row-workspace-toolbar.relphi-board-controller{opacity:.98!important}html body #shortListPanel .card-row-workspace-toolbar.relphi-board-controller.is-controller-idle:not(.is-controller-visible){opacity:0!important;transform:translateY(.45rem)!important}html body #shortListPanel .relphi-board-controller-hotzone{position:absolute!important;z-index:1690!important;background:transparent!important;pointer-events:auto!important}html body #shortListPanel .relphi-board-controller-hotzone--actions{left:0!important;top:0!important;width:min(22rem,55%)!important;height:1.4rem!important}html body #shortListPanel .relphi-board-controller-hotzone--tools{left:0!important;bottom:0!important;width:8rem!important;height:1.4rem!important}html body #shortListPanel .relphi-board-controller-hotzone--zoom{right:0!important;bottom:0!important;width:min(20rem,55%)!important;height:1.4rem!important}
 @media(prefers-reduced-motion:reduce){html body #shortListPanel .relphi-board-controller{transition:none!important}}
+
+
+/* v3 single Options + compact pack controls + collapsed title only */
+html body #shortListPanel .card-row-drawing-board:not([open]) > summary .card-row-icon-toolbar,
+html body #shortListPanel .card-row-drawing-board:not([open]) > summary button,
+html body #shortListPanel .card-row-drawing-board:not([open]) > summary label{
+  display:none!important;
+}
+html body #shortListPanel .card-row-action-staging{
+  display:none!important;
+}
+html body #shortListPanel .board-draw-settings-row > .card-row-draw-scope-label{
+  grid-column:1!important;
+  grid-row:1!important;
+  align-self:stretch!important;
+  width:100%!important;
+  margin:0!important;
+}
+html body #shortListPanel .board-draw-settings-row > .board-reading-toggle-stack{
+  grid-column:2!important;
+  grid-row:1!important;
+  align-self:stretch!important;
+  width:100%!important;
+  margin:0!important;
+}
+html body #shortListPanel .board-draw-settings-row > .board-reading-toggle-stack > label{
+  grid-column:auto!important;
+  grid-row:auto!important;
+  align-self:stretch!important;
+  min-width:0!important;
+}
+@media(max-width:720px){
+  html body #shortListPanel .board-draw-settings-row > .card-row-draw-scope-label,
+  html body #shortListPanel .board-draw-settings-row > .board-reading-toggle-stack{
+    grid-column:1!important;
+    grid-row:auto!important;
+  }
+}
