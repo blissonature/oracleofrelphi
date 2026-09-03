@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=28/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=29/);
 
 const storage = new Map();
 const document = {
@@ -66,6 +66,22 @@ assert.deepEqual(
   Array.from(polarities.positions.slice().sort((a,b) => a.drawOrder - b.drawOrder), item => item.label),
   ['Aries','Libra','Taurus','Scorpio','Gemini','Sagittarius','Cancer','Capricorn','Leo','Aquarius','Virgo','Pisces']
 );
+const polarityColumns = [
+  ['Aries','Libra'],
+  ['Taurus','Scorpio'],
+  ['Gemini','Sagittarius'],
+  ['Cancer','Capricorn'],
+  ['Leo','Aquarius'],
+  ['Virgo','Pisces']
+];
+assert.equal(new Set(polarities.positions.map(item => item.transform.x)).size, 6, 'Six Polarities should use six columns');
+assert.equal(new Set(polarities.positions.map(item => item.transform.y)).size, 2, 'Six Polarities should use two rows');
+polarityColumns.forEach(([top, bottom]) => {
+  const topPosition = polarities.positions.find(item => item.label === top);
+  const bottomPosition = polarities.positions.find(item => item.label === bottom);
+  assert.equal(topPosition.transform.x, bottomPosition.transform.x, top + ' / ' + bottom + ' should share a column');
+  assert.notEqual(topPosition.transform.y, bottomPosition.transform.y, top + ' / ' + bottom + ' should occupy separate rows');
+});
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').crosses, 'covering');
 assert.deepEqual(
   Array.from(celtic10.positions, item => item.label),
