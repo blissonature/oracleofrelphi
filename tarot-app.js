@@ -2002,7 +2002,7 @@
     return true;
   }
   function finishPrefabDesign(details = {}) {
-    if (!state.rowLayoutDesignMode || (state.shortList || []).length) return null;
+    if (!state.rowLayoutDesignMode) return null;
     state.rowActiveLayout = layoutSnapshotFromBoard(details);
     state.rowPositionMeta = state.rowActiveLayout.positions.map(position => ({
       id:position.id,
@@ -2093,6 +2093,15 @@
     },
     prepareDesign(prefab) {
       if (!prefab || !Array.isArray(prefab.positions) || !prefab.positions.length) return false;
+      const hasCards = !!(state.shortList || []).length;
+      const sameActiveTemplate = !!state.rowActiveLayout?.id && state.rowActiveLayout.id === prefab.id;
+      if (hasCards && sameActiveTemplate) {
+        state.rowLayoutDesignMode = true;
+        state.rowLayoutLocked = false;
+        state.rowCenterOpen = false;
+        renderShortList();
+        return true;
+      }
       state.shortList = [];
       state.shortListSelection = [];
       state.rowCardReversals = {};
