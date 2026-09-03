@@ -414,80 +414,80 @@
     applyWorkspaceCardBackground(panel);
   }
 
+  function readingOptionsResetState(panel) {
+    const board = panel.querySelector('.card-row-board');
+    const hasCards = !!board?.querySelector('[data-row-card]');
+    const hasPositions = !!board?.querySelector('.card-row-item');
+    const hasLabels = labelsFromField(panel.querySelector('#rowPositionLabels')).length > 0;
+    return !hasCards && !hasPositions && !hasLabels;
+  }
+
+  function setReadingOptionsOpen(panel, open, mode) {
+    const drawer = panel.querySelector('.relphi-reading-options-drawer');
+    const summary = drawer?.querySelector(':scope > summary');
+    if (!drawer || !summary) return;
+    drawer.open = true;
+    panel.dataset.relphiReadingOptionsOpen = open ? 'true' : 'false';
+    if (mode) panel.dataset.relphiReadingOptionsMode = mode;
+    drawer.classList.toggle('is-reading-options-open', !!open);
+    summary.setAttribute('aria-expanded', String(!!open));
+    summary.title = open ? 'Hide Reading Options' : 'Show Reading Options · labels, templates, and draw settings';
+    summary.setAttribute('aria-label', summary.title);
+  }
+
+  function syncReadingOptionsDrawer(panel) {
+    const drawer = panel.querySelector('.relphi-reading-options-drawer');
+    if (!drawer) return;
+    const reset = readingOptionsResetState(panel);
+    const current = reset ? 'true' : 'false';
+    const previous = panel.dataset.relphiReadingOptionsResetState;
+    if (previous === undefined) {
+      panel.dataset.relphiReadingOptionsResetState = current;
+      setReadingOptionsOpen(panel, reset, reset ? 'auto-reset' : 'closed');
+      return;
+    }
+    if (previous === current) return;
+    panel.dataset.relphiReadingOptionsResetState = current;
+    if (reset) {
+      setReadingOptionsOpen(panel, true, 'auto-reset');
+    } else if (panel.dataset.relphiReadingOptionsMode === 'auto-reset') {
+      setReadingOptionsOpen(panel, false, 'closed');
+    }
+  }
+
   function installReadingOptionsDrawer(panel) {
     const drawer = panel.querySelector('.card-row-more-options');
     const summary = drawer?.querySelector(':scope > summary');
     const boardDrawer = panel.querySelector('.card-row-drawing-board');
-    if (!drawer || !summary || !boardDrawer) return;
+    const workspace = panel.querySelector('.card-row-workspace');
+    if (!drawer || !summary || !boardDrawer || !workspace) return;
+
     drawer.classList.add('relphi-reading-options-drawer');
+    drawer.classList.remove('is-reading-options-idle');
     drawer.open = true;
-    summary.textContent = 'Reading Options';
+    summary.innerHTML = '<span>Reading Options</span><small>Labels · Templates · Full Pack · Reversals</small><span class="relphi-reading-options-chevron" aria-hidden="true">⌄</span>';
     summary.setAttribute('role', 'button');
 
-    let hotzone = boardDrawer.querySelector(':scope > .relphi-reading-options-hotzone');
-    if (!hotzone) {
-      hotzone = document.createElement('div');
-      hotzone.className = 'relphi-reading-options-hotzone';
-      hotzone.setAttribute('aria-hidden', 'true');
-      boardDrawer.appendChild(hotzone);
+    boardDrawer.querySelectorAll(':scope > .relphi-reading-options-hotzone').forEach(node => node.remove());
+    if (drawer.parentElement !== boardDrawer || drawer.nextElementSibling !== workspace) {
+      workspace.insertAdjacentElement('beforebegin', drawer);
     }
 
-    let closeTimer = 0;
-    const cancelClose = () => {
-      if (closeTimer) window.clearTimeout(closeTimer);
-      closeTimer = 0;
-      drawer.classList.remove('is-reading-options-idle');
-    };
-    const setOpen = value => {
-      const open = !!value;
-      panel.dataset.relphiReadingOptionsOpen = open ? 'true' : 'false';
-      drawer.classList.toggle('is-reading-options-open', open);
-      summary.setAttribute('aria-expanded', String(open));
-      summary.title = open ? 'Hide Reading Options' : 'Show Reading Options · labels and templates';
-      summary.setAttribute('aria-label', summary.title);
-      if (open) drawer.classList.remove('is-reading-options-idle');
-    };
-    const openFromEdge = () => {
-      cancelClose();
-      setOpen(true);
-    };
-    const scheduleClose = () => {
-      cancelClose();
-      closeTimer = window.setTimeout(() => {
-        setOpen(false);
-        drawer.classList.add('is-reading-options-idle');
-        closeTimer = 0;
-      }, 1000);
-    };
-
-    if (!Object.prototype.hasOwnProperty.call(panel.dataset, 'relphiReadingOptionsOpen')) {
-      panel.dataset.relphiReadingOptionsOpen = 'false';
-    }
     if (summary.dataset.relphiReadingOptionsBound !== 'true') {
       summary.dataset.relphiReadingOptionsBound = 'true';
       summary.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        cancelClose();
-        setOpen(panel.dataset.relphiReadingOptionsOpen !== 'true');
+        const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
+        setReadingOptionsOpen(panel, opening, opening ? 'manual' : 'closed');
       });
-      summary.addEventListener('mouseenter', openFromEdge);
-      hotzone.addEventListener('mouseenter', openFromEdge);
-      drawer.addEventListener('mouseenter', cancelClose);
-      drawer.addEventListener('mouseleave', scheduleClose);
-      hotzone.addEventListener('mouseleave', scheduleClose);
-      drawer.addEventListener('focusin', openFromEdge);
-      drawer.addEventListener('focusout', event => {
-        if (!drawer.contains(event.relatedTarget)) scheduleClose();
+      summary.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        summary.click();
       });
     }
-    setOpen(panel.dataset.relphiReadingOptionsOpen === 'true');
-    if (panel.dataset.relphiReadingOptionsOpen !== 'true') {
-      closeTimer = window.setTimeout(() => {
-        drawer.classList.add('is-reading-options-idle');
-        closeTimer = 0;
-      }, 1000);
-    }
+    syncReadingOptionsDrawer(panel);
   }
 
   function organizeBoardOptions(panel) {
@@ -708,6 +708,7 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     removeUnavailableSelectionControls(panel);
     addLeanExports(panel);
     organizeBoardOptions(panel);
+    syncReadingOptionsDrawer(panel);
     syncDescriptionLayers(panel);
     reinforceReversalUi(panel);
     normalizeDisabledButtonCursors(panel);
@@ -774,18 +775,19 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     ].join('');
     style.textContent += [
       'html body #shortListPanel .card-row-drawing-board{position:relative!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer{position:absolute!important;top:3rem!important;left:0!important;z-index:2200!important;width:min(22rem,calc(100% - 3.25rem))!important;margin:0!important;border:1px solid #cfc5bc!important;border-radius:0 12px 12px 0!important;background:#f5f0ea!important;box-shadow:12px 16px 34px rgba(35,25,18,.18)!important;transform:translateX(-100%)!important;transition:transform .22s ease!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-open{transform:translateX(0)!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer>summary{position:absolute!important;left:100%!important;top:.5rem!important;display:flex!important;align-items:center!important;justify-content:center!important;width:2.7rem!important;min-width:2.7rem!important;min-height:8.2rem!important;padding:.65rem .45rem!important;border:1px solid #bdb3aa!important;border-left:0!important;border-radius:0 10px 10px 0!important;background:#171412!important;color:#fff!important;writing-mode:vertical-rl!important;text-orientation:mixed!important;font-size:.74rem!important;font-weight:900!important;letter-spacing:.04em!important;cursor:pointer!important;list-style:none!important;box-shadow:5px 8px 16px rgba(35,25,18,.14)!important;transition:transform .22s ease,opacity .22s ease!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer{position:relative!important;display:block!important;width:calc(100% - 1rem)!important;max-width:none!important;max-height:3rem!important;margin:.45rem .5rem .25rem!important;border:1px solid #cfc5bc!important;border-radius:11px!important;background:#f5f0ea!important;box-shadow:0 3px 10px rgba(35,25,18,.07)!important;overflow:hidden!important;transform:none!important;transition:max-height .24s ease,box-shadow .24s ease!important;box-sizing:border-box!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-open{max-height:min(72vh,48rem)!important;box-shadow:0 10px 24px rgba(35,25,18,.12)!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer>summary{position:relative!important;display:grid!important;grid-template-columns:auto 1fr auto!important;align-items:center!important;gap:.65rem!important;width:100%!important;min-width:0!important;min-height:2.9rem!important;margin:0!important;padding:.55rem .75rem!important;border:0!important;border-radius:10px!important;background:#fffaf4!important;color:#171412!important;writing-mode:horizontal-tb!important;text-orientation:mixed!important;font-size:.82rem!important;font-weight:900!important;letter-spacing:0!important;cursor:pointer!important;list-style:none!important;box-shadow:none!important;box-sizing:border-box!important}',
       'html body #shortListPanel .relphi-reading-options-drawer>summary::-webkit-details-marker{display:none!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-open>summary{background:#dc1f18!important;border-color:#b81712!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-idle:not(.is-reading-options-open)>summary{transform:translateX(-2.25rem)!important;opacity:.22!important}',
-      'html body #shortListPanel .relphi-reading-options-hotzone{position:absolute!important;left:0!important;top:3rem!important;bottom:1rem!important;z-index:2195!important;width:1.05rem!important;background:transparent!important;pointer-events:auto!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer>.card-row-composer{max-height:min(72vh,46rem)!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:.6rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer>summary>small{min-width:0!important;color:#756b64!important;font-size:.72rem!important;font-weight:650!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}',
+      'html body #shortListPanel .relphi-reading-options-chevron{font-size:1.15rem!important;color:#dc1f18!important;line-height:1!important;transition:transform .2s ease!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-open .relphi-reading-options-chevron{transform:rotate(180deg)!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer>.card-row-composer{display:block!important;max-height:none!important;overflow:visible!important;overscroll-behavior:auto!important;margin:0!important;padding:.6rem!important;border-top:1px solid #dfd6ce!important;border-radius:0 0 10px 10px!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer:not(.is-reading-options-open)>.card-row-composer{visibility:hidden!important;pointer-events:none!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup{margin:0!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .board-options-tabs{display:none!important}',
-      '@media(max-width:700px){html body #shortListPanel .relphi-reading-options-drawer{top:2.75rem!important;width:calc(100% - 3.15rem)!important}html body #shortListPanel .relphi-reading-options-drawer>summary{min-height:7.2rem!important;width:2.55rem!important;min-width:2.55rem!important}}',
-      '@media(prefers-reduced-motion:reduce){html body #shortListPanel .relphi-reading-options-drawer{transition:none!important}}'
+      '@media(max-width:700px){html body #shortListPanel .relphi-reading-options-drawer{width:calc(100% - .7rem)!important;margin:.35rem!important}html body #shortListPanel .relphi-reading-options-drawer>summary{grid-template-columns:auto 1fr auto!important;padding:.5rem .6rem!important}html body #shortListPanel .relphi-reading-options-drawer>summary>small{font-size:.66rem!important}}',
+      '@media(prefers-reduced-motion:reduce){html body #shortListPanel .relphi-reading-options-drawer{transition:none!important}html body #shortListPanel .relphi-reading-options-chevron{transition:none!important}}'
     ].join('');
     document.head.appendChild(style);
     setArrivalState();
