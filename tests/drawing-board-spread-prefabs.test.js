@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=29/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=30/);
 
 const storage = new Map();
 const document = {
@@ -120,7 +120,16 @@ assert.match(source, />Use Once</);
 assert.match(source, /id="relphiSpreadTemplateSelect"/);
 assert.match(source, /<select id="relphiSpreadTemplateSelect"/);
 assert.match(source, /Custom \/ no saved template/);
-assert.match(source, /New template…/);
+assert.doesNotMatch(source, /New template…/);
+assert.match(source, /<strong>Add labels<\/strong>/);
+assert.match(source, /Save as Template/);
+assert.match(source, /id="relphiSaveLabelsAsTemplate"/);
+assert.match(source, /id="relphiLabelTemplateName"/);
+assert.match(source, /function saveLabelsAsTemplate/);
+assert.match(source, /ensureLabelTemplateSaver\(panel, field, builder\)/);
+assert.match(source, /#addCardPlaceholder\{display:none!important\}/);
+assert.match(source, /drawing-board-top-actions/);
+assert.match(source, /width:min\(29rem/);
 assert.match(source, /Position labels/);
 assert.match(source, /Template name<input id="relphiSpreadDesignName"/);
 assert.doesNotMatch(source, /Spread and draw settings are locked while cards are on the board/);
@@ -141,7 +150,6 @@ assert.doesNotMatch(source, /id = 'relphiLabelsToggle'/);
 assert.doesNotMatch(source, /className = 'relphi-labels-drawer'/);
 assert.doesNotMatch(source, /Finish from the Templates drawer/);
 assert.match(source, /Finish in Board Options/);
-assert.match(source, /Design Template/);
 assert.match(source, /data-prefab-action="cancel"/);
 assert.match(source, /document\.getElementById\('clearShortList'\)\?\.click/);
 assert.match(source, /Situation, Challenge, Strategy/);
