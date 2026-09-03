@@ -1166,6 +1166,13 @@
     setRowCardReversalArray(rowCardReversalArray(next.length));
     refreshShortListViews();
   }
+  function clearShortListCardsOnlyNative() {
+    if (!(state.shortList || []).length) return;
+    state.rowSenseSelections = {};
+    state.rowSenseNotes = {};
+    commitShortList([]);
+  }
+
   function undoShortList() {
     if (!state.shortListUndo.length) return;
     state.shortListRedo.push(boardSnapshot());
@@ -2424,9 +2431,27 @@
     });
   }
 
+  function bindDrawingBoardTopActions(wrap) {
+    if (!wrap || wrap.dataset.relphiNativeTopActionsBound === 'true') return;
+    wrap.dataset.relphiNativeTopActionsBound = 'true';
+    wrap.addEventListener('click', event => {
+      const button = event.target.closest?.('.drawing-board-top-actions button');
+      if (!button || !wrap.contains(button) || button.disabled) return;
+      const action = button.id;
+      if (!['drawRandomRowCard','undoShortList','redoShortList','clearShortListCardsOnly'].includes(action)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (action === 'drawRandomRowCard') drawRandomRowCard();
+      else if (action === 'undoShortList') undoShortList();
+      else if (action === 'redoShortList') redoShortList();
+      else if (action === 'clearShortListCardsOnly') clearShortListCardsOnlyNative();
+    }, true);
+  }
+
   function renderShortList() {
     const wrap = $('shortListPanel');
     if (!wrap) return;
+    bindDrawingBoardTopActions(wrap);
     const boardDrawerWasOpen = wrap.querySelector('.card-row-drawing-board')?.open;
     const optionsWasOpen = wrap.querySelector('.card-row-more-options')?.open;
     const items = state.shortList.map(cardById).filter(Boolean);
@@ -2521,10 +2546,6 @@
       resetRowDrawDeck();
       refreshShortListViews();
     });
-    const undo = $('undoShortList');
-    if (undo) undo.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); undoShortList(); });
-    const redo = $('redoShortList');
-    if (redo) redo.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); redoShortList(); });
     const toggle = $('toggleRowSelect');
     if (toggle) toggle.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); state.shortListSelectMode = !state.shortListSelectMode; renderShortList(); });
     const selectAll = $('selectAllRow');
@@ -2683,7 +2704,6 @@
         renderShortList();
       });
     });
-    const drawOne = $('drawRandomRowCard'); if (drawOne) drawOne.addEventListener('click', drawRandomRowCard);
     qsa('[data-row-card]', wrap).forEach(cardEl => {
       cardEl.addEventListener('click', event => {
         if (event.target.closest('[data-shortlist], [data-filter], .card-row-sense-panel, [data-row-transform-handle], [data-row-reverse]')) return;
