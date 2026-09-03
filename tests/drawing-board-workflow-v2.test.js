@@ -11,12 +11,12 @@ const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=46/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=47/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=7/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=3/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=28/);
 assert.match(page, /style\.css\?v=349/);
-assert.match(page, /navloader\.js\?v=77/);
+assert.match(page, /navloader\.js\?v=78/);
 assert.match(page, /tarot-app\.js\?v=363/);
 
 
@@ -108,9 +108,10 @@ assert.match(workflow, /button\.setAttribute\('aria-controls', 'drawingBoardRead
 assert.match(workflow, /setReadingOptionsOpen\(panel, opening, opening \? 'manual' : 'closed'\)/);
 assert.doesNotMatch(workflow, /setup\.id = 'drawingBoardSetupButton'/);
 assert.doesNotMatch(workflow, /function setCompactOptionsOpen/);
+assert.doesNotMatch(workflow, /drawingBoardSetupButton/);
+assert.doesNotMatch(workflow, /drawingBoardOptionsPopover/);
+assert.doesNotMatch(workflow, /drawing-board-settings-wrap/);
 assert.doesNotMatch(workflow, /popover\.id = 'drawingBoardOptionsPopover'/);
-assert.match(workflow, /panel\.querySelector\('#drawingBoardSetupButton'\)\?\.remove\(\)/);
-assert.match(workflow, /panel\.querySelector\('#drawingBoardOptionsPopover'\)\?\.remove\(\)/);
 assert.match(workflow, /drawSettingsRow\.appendChild\(toggleStack\)/);
 assert.match(workflow, /board-draw-settings-row\{display:grid!important;grid-template-columns:minmax\(10rem,1\.15fr\) minmax\(18rem,2\.85fr\)!important/);
 assert.match(workflow, /board-draw-settings-row \.board-reading-toggle-stack\{display:grid!important;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important/);
