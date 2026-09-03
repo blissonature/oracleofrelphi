@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=26/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=27/);
 
 const storage = new Map();
 const document = {
@@ -91,7 +91,7 @@ assert.equal(celtic11.positions.find(item => item.id === 'before').transform.x, 
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.deepEqual(
   Array.from(celtic10.positions.slice(6).map(item => [item.transform.x, item.transform.y])),
-  [[.76,.62],[.76,.46],[.76,.30],[.76,.14]]
+  [[.76,.48],[.76,.36],[.76,.24],[.76,.12]]
 );
 
 assert.equal(celtic11.positions.find(item => item.role === 'crossing').transform.rotation, 90);
@@ -115,8 +115,8 @@ assert.equal(
 assert.equal(celtic11.positions[2].openTransform.rotation, 0);
 assert.equal(
   JSON.stringify(celtic11.positions.slice(7).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.82, .62], [.82, .46], [.82, .30], [.82, .14]]),
-  'the right-hand ladder should stay compact while rising from Self to Outcome'
+  JSON.stringify([[.82, .48], [.82, .36], [.82, .24], [.82, .12]]),
+  'the right-hand ladder should be tightly stacked and keep the bottom card visible'
 );
 assert.ok(Math.abs(celtic11.positions[0].openTransform.x - celtic11.positions.find(item => item.id === 'behind').transform.x - .13) < 1e-12);
 assert.ok(Math.abs(celtic11.positions[1].openTransform.x - celtic11.positions[0].openTransform.x - .14) < 1e-12);
@@ -168,6 +168,9 @@ assert.match(source, /Restore Cross/);
 assert.match(source, /relphi-celtic-crossing-rotated/);
 assert.match(source, /card-row-item\.relphi-celtic-crossing-rotated>\.card-row-drop-card/);
 assert.match(source, /card-row-drop-card-inner\{transform:rotate\(-90deg\)!important\}/);
+assert.match(source, /relphi-celtic-crossing-rotated\{background:transparent!important/);
+assert.match(source, /translate\(-50%,-5\.25rem\)!important/);
+assert.match(source, /card-row-drop-card-inner\{display:none!important\}/);
 assert.match(source, /position\.role === 'crossing'/);
 assert.doesNotMatch(source, /content:\"OFF\"/);
 assert.doesNotMatch(source, /content:\"ON\"/);
