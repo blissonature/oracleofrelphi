@@ -738,12 +738,6 @@
     spreadSetup.style.setProperty('max-width', '100%', 'important');
     spreadSetup.style.setProperty('grid-column', '1 / -1', 'important');
 
-    const readingName = control('rowName');
-    if (readingName) {
-      const textNode = Array.from(readingName.childNodes).find(node => node.nodeType === 3);
-      if (textNode) textNode.textContent = 'Reading Name ';
-    }
-    move(spreadSetup, readingName);
     move(spreadSetup, control('rowPositionLabels'));
 
     const drawSettingsRow = document.createElement('div');
@@ -809,6 +803,16 @@
       workspace.insertAdjacentElement('afterend', afterCanvas);
     }
     if (afterCanvas) {
+      let titleSection = afterCanvas.querySelector('#drawing-board-title');
+      if (!titleSection) {
+        titleSection = document.createElement('section');
+        titleSection.id = 'drawing-board-title';
+        titleSection.className = 'drawing-board-post-section drawing-board-title';
+        titleSection.innerHTML = '<header><strong>Reading Name</strong></header><div class="drawing-board-post-body"></div>';
+        afterCanvas.prepend(titleSection);
+      }
+      move(titleSection.querySelector('.drawing-board-post-body'), control('rowName'));
+
       let notesSection = afterCanvas.querySelector('#drawing-board-notes');
       if (!notesSection) {
         notesSection = document.createElement('section');
