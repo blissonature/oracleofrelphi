@@ -4,7 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
-const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.js'), 'utf8');
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=24/);
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
@@ -158,6 +158,12 @@ assert.doesNotMatch(source, /relphiSpreadPrefabSelect/);
 assert.doesNotMatch(source, /window\.prompt/);
 assert.match(source, /Open Center/);
 assert.match(source, /Restore Cross/);
+assert.match(source, /relphi-celtic-crossing-rotated/);
+assert.match(source, /card-row-item\.relphi-celtic-crossing-rotated>\.card-row-drop-card/);
+assert.match(source, /card-row-drop-card-inner\{transform:rotate\(-90deg\)!important\}/);
+assert.match(source, /position\.role === 'crossing'/);
+assert.doesNotMatch(source, /content:\"OFF\"/);
+assert.doesNotMatch(source, /content:\"ON\"/);
 assert.match(source, /relphiDrawingBoardSpreadPrefabsV2/);
 assert.match(source, /relphiDrawingBoardStickerPrefabsV1/);
 assert.match(source, /SHIPPED\.some\(item => item\.id === clean\.id\)/);
@@ -182,7 +188,7 @@ assert.match(source, /center\.hidden = true/);
 assert.match(source, /right:\.65rem!important;bottom:\.65rem!important/);
 assert.match(source, /writing-mode:horizontal-tb!important/);
 assert.doesNotMatch(source, /cursor:not-allowed/);
-assert.match(source, /board-reading-toggle-stack>label::after/);
+assert.match(source, /board-reading-toggle-stack>label::after\{content:\"?none/);
 assert.doesNotMatch(source, /'rowSnapEnabled','rowRotationSnapEnabled'/);
 assert.doesNotMatch(source, /drawnCardIds|readingName|readingNotes/);
 
