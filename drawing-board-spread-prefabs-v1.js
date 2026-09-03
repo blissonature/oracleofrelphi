@@ -409,6 +409,10 @@
       designHadBoardContent = false;
       return;
     }
+    const panel = document.getElementById('shortListPanel');
+    if (panel?.dataset.relphiReadingOptionsOpen !== 'true') {
+      window.RelphiDrawingBoardToggleOptions?.();
+    }
     schedule();
   }
   function cancelDesign() {
