@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=42/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=43/);
 
 const storage = new Map();
 const document = {
@@ -131,9 +131,9 @@ assert.equal(
 );
 
 assert.match(source, /return prefab\.cardCount \+ ' \| ' \+ prefab\.name/);
-assert.match(source, /Save As Copy and Use/);
-assert.match(source, /Save Template and Use/);
-assert.match(source, />Use Once</);
+assert.doesNotMatch(source, /Save As Copy and Use|Save Template and Use|>Use Once</);
+assert.match(source, /data-prefab-action="save"[^>]*>Save<\/button>/);
+assert.match(source, /data-prefab-action="cancel">Cancel<\/button>/);
 assert.match(source, /id="relphiSpreadTemplateSelect"/);
 assert.match(source, /<select id="relphiSpreadTemplateSelect"/);
 assert.match(source, /Custom \/ no saved template/);
@@ -214,6 +214,15 @@ assert.match(source, /const corridorYs = pairs\.map\(pair => pair\.corridorY\)/)
 assert.match(source, /const sharedCorridorY = corridorYs\.length/);
 assert.match(source, /Number\.isFinite\(sharedCorridorY\) \? sharedCorridorY : corridorY/);
 assert.doesNotMatch(source, /top\.y \+ top\.height \+ bottom\.y/);
+assert.match(source, /function syncTopEditTemplateButton/);
+assert.match(source, /editDrawingBoardTemplate/);
+assert.match(source, /relphi-edit-template-top/);
+assert.match(source, /captureBoard\?\.\(\)/);
+assert.match(source, /prepareDesign\?\.\(copy\)/);
+assert.match(source, /restoreBoard\?\.\(designBoardSnapshot\)/);
+assert.match(source, /Saving these template changes will clear the entire Drawing Board and the active reading/);
+assert.match(source, /api\.clearBoard\?\.\(\)/);
+assert.match(source, /templateNameConflict\(name, state\.slotCount, copySourceId/);
 assert.match(source, /function addWorkspaceControls/);
 assert.match(source, /var\(--relphi-board-texture,none\)/);
 assert.match(source, /background-color:var\(--row-table-bg,#7d1f28\)!important/);
