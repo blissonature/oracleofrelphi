@@ -13,14 +13,14 @@ const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 const workflowCss = fs.readFileSync(path.join(root, 'drawing-board-workflow-v2.css'), 'utf8');
 const workflowUi = workflow + '\n' + workflowCss;
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=48/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=49/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=7/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=3/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=28/);
 assert.match(page, /style\.css\?v=350/);
-assert.match(page, /drawing-board-workflow-v2\.css\?v=2/);
-assert.match(page, /navloader\.js\?v=79/);
-assert.match(page, /tarot-app\.js\?v=363/);
+assert.match(page, /drawing-board-workflow-v2\.css\?v=3/);
+assert.match(page, /navloader\.js\?v=80/);
+assert.match(page, /tarot-app\.js\?v=364/);
 assert.doesNotMatch(workflow, /document\.createElement\('style'\)|style\.textContent|document\.head\.appendChild\(style\)/);
 assert.equal((workflow.match(/installOptionsButton\(panel\)/g) || []).length, 2);
 assert.doesNotMatch(workflow, /board-arrange-flyout|board-arrange-trigger/);
@@ -33,7 +33,7 @@ assert.match(workflowCss, /Drawing Board workflow UI/);
 
 
 
-assert.match(page, /tarot-app\.js\?v=363/);
+assert.match(page, /tarot-app\.js\?v=364/);
 
 assert.match(workflowUi, /Show position stickers/);
 assert.match(workflowUi, /Position #/);
@@ -116,6 +116,16 @@ assert.match(workflowUi, /function installOptionsButton\(panel\)/);
 assert.match(workflowUi, /button\.id = 'drawingBoardOptionsButton'/);
 assert.match(workflowUi, /button\.textContent = 'Options'/);
 assert.match(workflowUi, /button\.setAttribute\('aria-controls', 'drawingBoardReadingOptions'\)/);
+assert.match(tarot, /<summary><strong>Drawing Board <span class="card-row-count">\$\{items\.length\}<\/span><\/strong><\/summary>/);
+assert.match(tarot, /card-row-icon-toolbar card-row-action-staging/);
+assert.doesNotMatch(tarot, /<summary>[\s\S]{0,900}card-row-icon-toolbar/);
+assert.match(workflow, /if \(resetBoard\) primaryActions\.appendChild\(resetBoard\)/);
+assert.match(workflow, /const anchor = actionRow\?\.contains\(reset\) \? reset : \(clearCards \|\| reset\)/);
+assert.match(workflowCss, /v3 single Options \+ compact pack controls \+ collapsed title only/);
+assert.match(workflowCss, /board-draw-settings-row > \.card-row-draw-scope-label[\s\S]{0,180}grid-column:1!important/);
+assert.match(workflowCss, /board-draw-settings-row > \.board-reading-toggle-stack[\s\S]{0,180}grid-column:2!important/);
+assert.match(workflowCss, /board-reading-toggle-stack > label[\s\S]{0,180}grid-column:auto!important/);
+assert.match(workflowCss, /card-row-action-staging[\s\S]{0,80}display:none!important/);
 assert.match(workflowUi, /setReadingOptionsOpen\(panel, opening, opening \? 'manual' : 'closed'\)/);
 assert.doesNotMatch(workflowUi, /setup\.id = 'drawingBoardSetupButton'/);
 assert.doesNotMatch(workflowUi, /function setCompactOptionsOpen/);
