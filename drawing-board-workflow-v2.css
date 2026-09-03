@@ -107,6 +107,7 @@ html body #shortListPanel .board-setup-group--spread{
   gap:.5rem!important;
 }
 html body #shortListPanel .board-setup-group--spread>header{order:0!important}
+html body #shortListPanel .board-setup-group--spread>header:has(strong:empty){display:none!important}
 html body #shortListPanel .board-setup-group--spread>.card-row-name-label{
   order:1!important;
   width:100%!important;
