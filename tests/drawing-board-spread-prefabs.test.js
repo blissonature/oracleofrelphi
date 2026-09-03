@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=33/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=34/);
 
 const storage = new Map();
 const document = {
