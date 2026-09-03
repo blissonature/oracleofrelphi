@@ -923,18 +923,56 @@
       schedule();
     };
   }
+  function queuePolarityGeometryRefresh(board) {
+    if (!board || board.dataset.relphiPolarityRefreshQueued === 'true') return;
+    board.dataset.relphiPolarityRefreshQueued = 'true';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      board.dataset.relphiPolarityRefreshQueued = 'false';
+      schedule();
+    }));
+  }
+
   function applyPolarityLabels(panel, state) {
     const board = panel.querySelector('.card-row-board');
     const layout = state?.activeLayout;
     const definitions = Array.isArray(layout?.polarityLabels) ? layout.polarityLabels : [];
     if (!board || !definitions.length) {
       board?.querySelectorAll('.relphi-polarity-label').forEach(node => node.remove());
+      if (board) {
+        delete board.dataset.relphiPolarityGeometrySignature;
+        delete board.dataset.relphiPolarityGeometryStable;
+        delete board.dataset.relphiPolarityLoadBound;
+      }
       return;
     }
 
     const positions = Array.isArray(layout.positions) ? layout.positions : [];
     const byId = new Map(positions.map((item, index) => [item.id, { item, index }]));
     const live = new Set();
+
+    // Card art can report transient dimensions during the first render. Keep the
+    // semantic axis band hidden until every card image has settled, then require
+    // the same measured corridor on two consecutive animation frames.
+    const cardImages = Array.from(board.querySelectorAll('.card-row-item img'));
+    const imagesReady = cardImages.every(img => img.complete && Number(img.naturalWidth) > 0);
+    if (!imagesReady) {
+      board.querySelectorAll('.relphi-polarity-label').forEach(node => {
+        node.style.visibility = 'hidden';
+        node.style.opacity = '0';
+      });
+      cardImages.forEach(img => {
+        if (img.complete || img.dataset.relphiPolarityLoadBound === 'true') return;
+        img.dataset.relphiPolarityLoadBound = 'true';
+        const settled = () => {
+          img.dataset.relphiPolarityLoadBound = 'false';
+          queuePolarityGeometryRefresh(board);
+        };
+        img.addEventListener('load', settled, { once:true });
+        img.addEventListener('error', settled, { once:true });
+      });
+      queuePolarityGeometryRefresh(board);
+      return;
+    }
 
     const geometry = entry => {
       if (!entry) return null;
@@ -983,6 +1021,21 @@
       ? (corridorYs.length % 2 ? corridorYs[mid] : (corridorYs[mid - 1] + corridorYs[mid]) / 2)
       : null;
 
+    const geometrySignature = pairs.map(({ top, bottom, corridorY }) => [
+      Math.round(top.x * 10) / 10,
+      Math.round(top.width * 10) / 10,
+      Math.round(top.visualBottom * 10) / 10,
+      Math.round(bottom.positionPanelTop * 10) / 10,
+      Math.round(corridorY * 10) / 10
+    ].join(':')).join('|');
+
+    const previousSignature = board.dataset.relphiPolarityGeometrySignature || '';
+    const stableCount = Number(board.dataset.relphiPolarityGeometryStable) || 0;
+    const nextStableCount = previousSignature === geometrySignature ? stableCount + 1 : 0;
+    board.dataset.relphiPolarityGeometrySignature = geometrySignature;
+    board.dataset.relphiPolarityGeometryStable = String(nextStableCount);
+    const geometryStable = nextStableCount >= 1;
+
     pairs.forEach(({ definition, index, top, bottom, corridorY }) => {
       const key = String(index);
       live.add(key);
@@ -997,7 +1050,11 @@
       label.textContent = definition.label;
       label.style.left = ((top.x + top.width / 2 + bottom.x + bottom.width / 2) / 2) + 'px';
       label.style.top = (Number.isFinite(sharedCorridorY) ? sharedCorridorY : corridorY) + 'px';
+      label.style.visibility = geometryStable ? 'visible' : 'hidden';
+      label.style.opacity = geometryStable ? '1' : '0';
     });
+
+    if (!geometryStable) queuePolarityGeometryRefresh(board);
 
     board.querySelectorAll('.relphi-polarity-label').forEach(node => {
       if (!live.has(node.dataset.polarityIndex || '')) node.remove();
