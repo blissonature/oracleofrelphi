@@ -936,26 +936,25 @@ html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-
   }
 }
 
-
-/* v22 Save & export buttons use the Drawing Board control language */
-html body #shortListPanel #drawing-board-post-export .board-options-body{
-  display:flex!important;
-  flex-wrap:wrap!important;
-  align-items:center!important;
-  justify-content:flex-start!important;
-  gap:.45rem!important;
-}
-html body #shortListPanel #drawing-board-post-export .board-options-body>button{
+/* v23 canonical Drawing Board button language
+   Two text-button variants only:
+   primary = red fill; secondary = white with red outline.
+   Undo/redo are icon-only secondary buttons. */
+html body #shortListPanel .drawing-board-top-actions>button,
+html body #shortListPanel #drawing-board-post-export .board-options-body>button,
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>button{
+  appearance:none!important;
+  -webkit-appearance:none!important;
   flex:0 0 auto!important;
   width:auto!important;
   min-width:0!important;
   min-height:2.2rem!important;
   margin:0!important;
   padding:.42rem .72rem!important;
-  border:1px solid #aaa098!important;
+  border:1px solid rgba(220,31,24,.52)!important;
   border-radius:8px!important;
   background:#fff!important;
-  color:#171412!important;
+  color:#b81712!important;
   font:inherit!important;
   font-size:.78rem!important;
   font-weight:850!important;
@@ -964,18 +963,101 @@ html body #shortListPanel #drawing-board-post-export .board-options-body>button{
   white-space:nowrap!important;
   cursor:pointer!important;
 }
-html body #shortListPanel #drawing-board-post-export .board-options-body>button:hover:not(:disabled){
-  border-color:#171412!important;
-  background:#f7f3ee!important;
-  color:#171412!important;
+html body #shortListPanel .drawing-board-top-actions>button:hover:not(:disabled),
+html body #shortListPanel #drawing-board-post-export .board-options-body>button:hover:not(:disabled),
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>button:hover:not(:disabled){
+  border-color:#dc1f18!important;
+  background:#fff4f1!important;
+  color:#b81712!important;
 }
-html body #shortListPanel #drawing-board-post-export .board-options-body>button:focus-visible{
-  outline:2px solid #171412!important;
+html body #shortListPanel .drawing-board-top-actions>button:focus-visible,
+html body #shortListPanel #drawing-board-post-export .board-options-body>button:focus-visible,
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>button:focus-visible{
+  outline:2px solid #dc1f18!important;
   outline-offset:2px!important;
 }
-html body #shortListPanel #drawing-board-post-export .board-options-body>button:disabled{
+html body #shortListPanel .drawing-board-top-actions>button:disabled,
+html body #shortListPanel #drawing-board-post-export .board-options-body>button:disabled,
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>button:disabled{
   opacity:.4!important;
   cursor:default!important;
+}
+html body #shortListPanel .drawing-board-top-actions>#drawRandomRowCard,
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>.relphi-options-save{
+  border-color:#dc1f18!important;
+  background:#dc1f18!important;
+  color:#fff!important;
+}
+html body #shortListPanel .drawing-board-top-actions>#drawRandomRowCard:hover:not(:disabled),
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>.relphi-options-save:hover:not(:disabled){
+  border-color:#b81712!important;
+  background:#b81712!important;
+  color:#fff!important;
+}
+html body #shortListPanel .drawing-board-top-actions>.board-history-icon{
+  display:inline-grid!important;
+  place-items:center!important;
+  width:2.25rem!important;
+  min-width:2.25rem!important;
+  max-width:2.25rem!important;
+  height:2.25rem!important;
+  min-height:2.25rem!important;
+  padding:0!important;
+}
+html body #shortListPanel #drawing-board-post-export .board-options-body{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:.45rem!important;
+}
+
+/* Reading Name owns the compact reading summary. */
+html body #shortListPanel #drawing-board-title .drawing-board-post-body{
+  display:grid!important;
+  grid-template-columns:minmax(15rem,.72fr) minmax(0,1.8fr)!important;
+  align-items:center!important;
+  gap:.55rem 1rem!important;
+  width:100%!important;
+}
+html body #shortListPanel #drawing-board-title .card-row-name-label{
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+html body #shortListPanel #drawing-board-title .card-row-name-label input{
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel #drawing-board-title .card-row-stats{
+  justify-self:stretch!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  gap:.28rem!important;
+  width:auto!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  font-size:.72rem!important;
+  line-height:1.15!important;
+}
+html body #shortListPanel #drawing-board-title .card-row-stats>strong{
+  white-space:nowrap!important;
+}
+html body #shortListPanel #drawing-board-title .card-row-stats>span{
+  padding:.12rem .3rem!important;
+}
+@media(max-width:760px){
+  html body #shortListPanel #drawing-board-title .drawing-board-post-body{
+    grid-template-columns:1fr!important;
+  }
+  html body #shortListPanel #drawing-board-title .card-row-stats{
+    justify-content:flex-start!important;
+  }
 }
 @media(max-width:520px){
   html body #shortListPanel #drawing-board-post-export .board-options-body{
