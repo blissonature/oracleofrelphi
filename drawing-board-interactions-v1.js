@@ -49,22 +49,31 @@
   function directHistoryControls(panel) {
     const toolbar = panel.querySelector('.card-row-icon-toolbar');
     if (!toolbar) return;
-    let group = toolbar.querySelector('.board-header-group--history');
-    if (!group) {
-      group = document.createElement('span');
-      group.className = 'board-header-group board-header-group--history';
-      toolbar.insertBefore(group, toolbar.querySelector('#clearShortList') || null);
+    let actions = toolbar.querySelector('.board-header-group--actions');
+    if (!actions) {
+      actions = document.createElement('span');
+      actions.className = 'board-header-group board-header-group--actions';
+      toolbar.appendChild(actions);
     }
-    [[panel.querySelector('#undoShortList'), 'undo', 'Undo'], [panel.querySelector('#redoShortList'), 'redo', 'Redo']].forEach(function (entry) {
-      const button = entry[0];
-      if (!button) return;
-      button.classList.add('board-history-icon');
-      button.innerHTML = iconSvg(entry[1]);
-      button.setAttribute('aria-label', entry[2]);
-      button.title = entry[2];
-      if (button.parentElement !== group) group.appendChild(button);
+    const undo = panel.querySelector('#undoShortList');
+    if (undo) {
+      undo.classList.remove('board-history-icon');
+      undo.hidden = false;
+      undo.textContent = 'Undo';
+      undo.setAttribute('aria-label', 'Undo');
+      undo.title = 'Undo';
+      if (undo.parentElement !== actions) actions.appendChild(undo);
+    }
+    const redo = panel.querySelector('#redoShortList');
+    if (redo) {
+      redo.hidden = true;
+      redo.setAttribute('aria-hidden', 'true');
+      const staging = panel.querySelector('.board-header-controls-staging');
+      if (staging && redo.parentElement !== staging) staging.appendChild(redo);
+    }
+    panel.querySelectorAll('.board-history-toggle,.board-history-menu,.board-header-group--history').forEach(function (node) {
+      if (!node.contains(undo)) node.remove();
     });
-    panel.querySelectorAll('.board-history-toggle,.board-history-menu').forEach(function (node) { node.remove(); });
   }
 
   function finishTargetedDraw(target, first, swapped) {
@@ -283,10 +292,10 @@
       '#shortListPanel .card-row-workspace{position:relative!important;isolation:isolate!important}',
       '#shortListPanel .card-row-workspace-toolbar{position:relative!important;z-index:1000!important;background:#fff!important;opacity:1!important}',
       '#shortListPanel .card-row-board,#shortListPanel .card-row-board-grid,#shortListPanel .card-row-item{position:relative!important;z-index:1!important}',
-      '#shortListPanel .board-header-group--history{display:inline-flex!important;align-items:center!important;gap:.4rem!important;min-width:5.4rem!important}',
-      '#shortListPanel .board-history-icon{appearance:none!important;display:inline-grid!important;place-items:center!important;width:2.6rem!important;min-width:2.6rem!important;max-width:2.6rem!important;height:2.6rem!important;min-height:2.6rem!important;padding:0!important;border:2px solid #171412!important;border-radius:9px!important;background:#fff!important;color:#171412!important;box-shadow:none!important;opacity:1!important}',
-      'html body #shortListPanel .board-history-icon:disabled{opacity:.4!important;border:1px solid rgba(17,17,17,.28)!important;background:#fffdf8!important;color:rgba(17,17,17,.48)!important;box-shadow:none!important;cursor:default!important}',
-      '#shortListPanel .board-history-icon svg{display:block!important;width:1.4rem!important;height:1.4rem!important}',
+      '#shortListPanel .board-header-group--actions{display:inline-flex!important;align-items:center!important;gap:.28rem!important}',
+      '#shortListPanel #undoShortList{display:inline-flex!important;align-items:center!important;justify-content:center!important}',
+      '#shortListPanel #undoShortList:disabled{opacity:.4!important;cursor:default!important}',
+      '#shortListPanel #redoShortList[hidden]{display:none!important}',
       'html body #shortListPanel #drawRandomRowCard,html body #shortListPanel #drawRandomRowCard:hover,html body #shortListPanel #drawRandomRowCard:focus,html body #shortListPanel #drawRandomRowCard:active{appearance:none!important;-webkit-appearance:none!important;border:2px solid #b81712!important;background:#dc1f18!important;background-color:#dc1f18!important;background-image:none!important;color:#fff!important;box-shadow:none!important}',
       'html body #shortListPanel .card-row-workspace-toolbar input[type="range"],html body #shortListPanel .card-row-workspace-toolbar meter,html body #shortListPanel .card-row-workspace-toolbar progress{accent-color:#dc1f18!important;color:#dc1f18!important}',
       'html body #shortListPanel .card-row-workspace-toolbar input[type="range"]::-webkit-slider-runnable-track{background:#d8cec5!important}',
