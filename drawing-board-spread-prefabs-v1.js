@@ -125,10 +125,10 @@
         position('beneath', '4 · What is beneath you', 4, transform(.25, .552, 0, .45, 4)),
         position('behind', '5 · What is behind you', 5, transform(.04, .326, 0, .45, 4)),
         position('before', '6 · What is before you', 6, transform(.46, .326, 0, .45, 4)),
-        position('self', '7 · Yourself', 7, transform(.76, .718, 0, .45, 4)),
-        position('house', '8 · Your house', 8, transform(.76, .492, 0, .45, 4)),
-        position('hopes-fears', '9 · Your hopes or fears', 9, transform(.76, .266, 0, .45, 4)),
-        position('outcome', '10 · What will come', 10, transform(.76, .04, 0, .45, 4))
+        position('self', '7 · Yourself', 7, transform(.76, .62, 0, .45, 4)),
+        position('house', '8 · Your house', 8, transform(.76, .46, 0, .45, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 9, transform(.76, .30, 0, .45, 4)),
+        position('outcome', '10 · What will come', 10, transform(.76, .14, 0, .45, 4))
       ]
     },
     {
@@ -157,10 +157,10 @@
         position('beneath', '4 · What is beneath you', 5, transform(.30, .65, 0, .40, 4)),
         position('behind', '5 · What is behind you', 6, transform(.03, .36, 0, .40, 4)),
         position('before', '6 · What is before you', 7, transform(.57, .36, 0, .40, 4)),
-        position('self', '7 · Yourself', 8, transform(.82, .70, 0, .40, 4)),
-        position('house', '8 · Your house', 9, transform(.82, .49, 0, .40, 4)),
-        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.82, .28, 0, .40, 4)),
-        position('outcome', '10 · What will come', 11, transform(.82, .07, 0, .40, 4))
+        position('self', '7 · Yourself', 8, transform(.82, .62, 0, .40, 4)),
+        position('house', '8 · Your house', 9, transform(.82, .46, 0, .40, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.82, .30, 0, .40, 4)),
+        position('outcome', '10 · What will come', 11, transform(.82, .14, 0, .40, 4))
       ]
     },
     {
@@ -986,7 +986,7 @@
       '#shortListPanel .relphi-layout-design-mode .card-row-item{outline:1px dashed rgba(220,31,24,.35);outline-offset:3px}',
       '#shortListPanel button:disabled{opacity:.45!important;cursor:default!important}',
       '#shortListPanel .relphi-layout-design-mode #drawRandomRowCard{opacity:.52!important}',
-      '#shortListPanel .relphi-center-helper{position:absolute;left:540px;top:610px;z-index:160!important;min-width:118px;min-height:46px;padding:.65rem .9rem;border:2px solid #171412;border-radius:999px;background:#fff!important;color:#171412!important;font:inherit;font-size:.78rem;font-weight:900;box-shadow:0 5px 14px rgba(30,20,15,.16);touch-action:manipulation}',
+      '#shortListPanel .relphi-center-helper{position:absolute;left:410px;top:610px;z-index:160!important;min-width:118px;min-height:46px;padding:.65rem .9rem;border:2px solid #171412;border-radius:999px;background:#fff!important;color:#171412!important;font:inherit;font-size:.78rem;font-weight:900;box-shadow:0 5px 14px rgba(30,20,15,.16);touch-action:manipulation}',
       '#shortListPanel .relphi-center-helper:focus-visible{outline:3px solid rgba(220,31,24,.35);outline-offset:3px}',
       '#shortListPanel .card-row-workspace{position:relative!important;overflow:hidden!important;background-image:var(--row-table-image,none),var(--relphi-board-texture,none)!important;background-position:center,center!important;background-size:cover,var(--relphi-board-texture-size,auto)!important;background-repeat:no-repeat,repeat!important;background-blend-mode:normal,soft-light!important;background-color:var(--row-table-bg,#7d1f28)!important}',
       '#shortListPanel .card-row-workspace .short-list-row.card-row-board{top:0!important;overflow:visible!important;background-image:var(--row-table-image,none),var(--relphi-board-texture,none)!important;background-position:center,center!important;background-size:cover,var(--relphi-board-texture-size,auto)!important;background-repeat:no-repeat,repeat!important;background-blend-mode:normal,soft-light!important;background-color:var(--row-table-bg,#7d1f28)!important}',
