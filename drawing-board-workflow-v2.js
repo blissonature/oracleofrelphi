@@ -633,9 +633,9 @@
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (drawer) drawer.id = 'drawingBoardReadingOptions';
 
-    const quickSettings = panel.querySelector('.drawing-board-quick-settings');
-    if (quickSettings && button.parentElement !== quickSettings) {
-      quickSettings.appendChild(button);
+    const actionButtons = panel.querySelector('.drawing-board-action-buttons');
+    if (actionButtons && button.parentElement !== actionButtons) {
+      actionButtons.appendChild(button);
     }
     button.setAttribute('aria-expanded', String(panel.dataset.relphiReadingOptionsOpen === 'true'));
     button.classList.toggle('is-active', panel.dataset.relphiReadingOptionsOpen === 'true');
@@ -700,12 +700,12 @@
       if (textNode) textNode.textContent = ' ' + text;
       label.title = text;
     };
+    renameToggle(stickerToggle, 'Labels');
     renameToggle(reversalsToggle, 'Reversals');
     renameToggle(repeatsToggle, 'Repeats');
-    renameToggle(stickerToggle, 'Labels');
+    if (stickerToggle) toggleStack.appendChild(stickerToggle);
     if (reversalsToggle) toggleStack.appendChild(reversalsToggle);
     if (repeatsToggle) toggleStack.appendChild(repeatsToggle);
-    if (stickerToggle) toggleStack.appendChild(stickerToggle);
     drawSettingsRow.appendChild(toggleStack);
 
     const boardDrawer = panel.querySelector('.card-row-drawing-board');
@@ -822,18 +822,6 @@
       ['drawRandomRowCard','undoShortList','clearRowCardsOnly'].forEach(id => {
         const button = panel.querySelector('#' + id);
         if (button) actionButtons.appendChild(button);
-      });
-
-      let quickSettings = primaryActions.querySelector('.drawing-board-quick-settings');
-      if (!quickSettings) {
-        quickSettings = document.createElement('div');
-        quickSettings.className = 'drawing-board-quick-settings';
-        primaryActions.appendChild(quickSettings);
-      }
-      const pack = panel.querySelector('#rowDrawScope')?.closest('label');
-      if (pack) quickSettings.appendChild(pack);
-      [reversalsToggle, repeatsToggle, stickerToggle].forEach(label => {
-        if (label) quickSettings.appendChild(label);
       });
 
       const staging = panel.querySelector('.card-row-action-staging');
