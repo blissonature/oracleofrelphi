@@ -4,7 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
-const workflow = fs.readFileSync(path.join(root, 'drawing-board-workflow-v2.js'), 'utf8');
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=41/);
 const interactions = fs.readFileSync(path.join(root, 'drawing-board-interactions-v1.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
@@ -14,8 +14,8 @@ assert.match(nav, /drawing-board-workflow-v2\.js\?v=40/);
 assert.match(nav, /drawing-board-interactions-v1\\.js\\?v=7/);
 assert.doesNotMatch(nav, /drawing-board-custom-position-stickers-v1\.js/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\\.js\\?v=3/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=23/);
-assert.match(page, /navloader\.js\?v=70/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=24/);
+assert.match(page, /navloader\.js\?v=71/);
 assert.match(page, /tarot-app\\.js\\?v=362/);
 
 assert.match(workflow, /Show position stickers/);
@@ -58,13 +58,13 @@ assert.match(workflow, /What would you like to know\?/);
 assert.doesNotMatch(workflow, /Reading details', 'Name the reading before drawing/);
 assert.doesNotMatch(workflow, /Draw settings', 'Choose the pack, repeats, and reversals before drawing/);
 assert.match(workflow, /move\(spreadSetup, control\('rowPositionLabels'\)\)/);
-assert.match(workflow, /move\(spreadSetup, control\('rowDrawScope'\)\)/);
+assert.match(workflow, /packControl\.classList\.add\('relphi-fixed-full-pack'\)/);
 assert.match(workflow, /board-reading-toggle-stack/);
 assert.match(workflow, /drawing-board-primary-actions/);
 assert.match(workflow, /\['undoShortList','redoShortList','drawRandomRowCard','addCardPlaceholder','clearRowCardsOnly'\]/);
-assert.match(workflow, /toggleStack\.appendChild\(stickerToggle\)/);
-assert.match(workflow, /toggleStack\.appendChild\(repeatsToggle\)/);
-assert.match(workflow, /toggleStack\.appendChild\(reversalsToggle\)/);
+assert.match(workflow, /renameToggle\(stickerToggle, 'Labels'\)/);
+assert.match(workflow, /renameToggle\(repeatsToggle, 'Repeats'\)/);
+assert.match(workflow, /renameToggle\(reversalsToggle, 'Reversals'\)/);
 assert.match(workflow, /drawing-board-after-canvas/);
 assert.match(workflow, /Write interpretation notes after you can see the cards\./);
 assert.match(workflow, /Save or export after the reading is on the board\./);
@@ -88,13 +88,21 @@ assert.match(workflow, /function readingOptionsResetState\(panel\)/);
 assert.match(workflow, /function readingOptionsAutoCloseReady\(panel\)/);
 assert.match(workflow, /hasCards \|\| \(!!template && template !== '__new__'\)/);
 assert.match(workflow, /function syncReadingOptionsDrawer\(panel\)/);
-assert.match(workflow, /summary\.innerHTML = '<span>Reading Options<\/span>/);
-assert.match(workflow, /Labels · Templates · Full Pack · Reversals/);
+assert.match(workflow, /function installOptionsButton\(panel\)/);
+assert.match(workflow, /id = 'drawingBoardOptionsButton'/);
+assert.match(workflow, /button\.textContent = 'Options'/);
+assert.match(workflow, /aria-controls', 'drawingBoardReadingOptions'/);
+assert.match(workflow, /relphi-reading-options-drawer:not\(\.is-reading-options-open\)\{display:none!important\}/);
+assert.match(workflow, /relphi-reading-options-drawer>summary\{display:none!important\}/);
+assert.match(workflow, /relphi-fixed-full-pack\{display:none!important\}/);
+assert.match(workflow, /board-reading-toggle-stack>label::after\{content:none!important;display:none!important\}/);
+
+
 assert.match(workflow, /workspace\.insertAdjacentElement\('beforebegin', drawer\)/);
 assert.match(workflow, /setReadingOptionsOpen\(panel, true, 'auto-reset'\)/);
 assert.match(workflow, /panel\.dataset\.relphiReadingOptionsMode === 'auto-reset'/);
-assert.match(workflow, /relphi-reading-options-chevron/);
-assert.match(workflow, /max-height:min\(72vh,48rem\)!important/);
+
+
 assert.doesNotMatch(workflow, /relphi-reading-options-hotzone/);
 assert.doesNotMatch(workflow, /translateX\(-100%\)/);
 assert.doesNotMatch(workflow, /openFromEdge/);
