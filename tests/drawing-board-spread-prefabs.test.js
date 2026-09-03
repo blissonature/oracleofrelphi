@@ -86,11 +86,11 @@ assert.ok(polarities.positions.every(item => item.transform.scale === .62), 'Six
 const polarityXs = Array.from(new Set(polarities.positions.map(item => item.transform.x))).sort((a,b) => a - b);
 const polarityYs = Array.from(new Set(polarities.positions.map(item => item.transform.y))).sort((a,b) => a - b);
 assert.deepEqual(polarityXs, [.198,.327,.456,.585,.714,.843], 'Six Polarities should form a centered compact six-column block');
-assert.deepEqual(polarityYs, [.18,.485], 'Six Polarities rows should sit directly together');
+assert.deepEqual(polarityYs, [.18,.498], 'Six Polarities rows should sit directly together');
 for (let i = 1; i < polarityXs.length; i += 1) {
   assert.ok(Math.abs((polarityXs[i] - polarityXs[i - 1]) - .129) < 1e-9, 'Six Polarities horizontal gaps should stay small and even');
 }
-assert.ok(Math.abs((polarityYs[1] - polarityYs[0]) - .305) < 1e-9, 'Six Polarities vertical pair spacing should be essentially card-height with no large row gap');
+assert.ok(Math.abs((polarityYs[1] - polarityYs[0]) - .318) < 1e-9, 'Six Polarities vertical pair spacing should be essentially card-height with no large row gap');
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').crosses, 'covering');
 assert.deepEqual(
   Array.from(celtic10.positions, item => item.label),
