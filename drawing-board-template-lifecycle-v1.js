@@ -219,14 +219,6 @@
       cardsOnly.title = 'Remove drawn cards and keep the spread positions';
       cardsOnly.setAttribute('aria-label', 'Clear cards and keep spread positions');
     }
-    if (cardsOnly.dataset.relphiClearCardsBound !== 'true') {
-      cardsOnly.dataset.relphiClearCardsBound = 'true';
-      cardsOnly.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        clearCardsOnly();
-      });
-    }
     cardsOnly.disabled = !bridge()?.getState?.()?.hasCards;
 
     window.RelphiDrawingBoardEnsureTopActions?.(root);
