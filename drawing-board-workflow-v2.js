@@ -417,31 +417,77 @@
   function installReadingOptionsDrawer(panel) {
     const drawer = panel.querySelector('.card-row-more-options');
     const summary = drawer?.querySelector(':scope > summary');
-    if (!drawer || !summary) return;
+    const boardDrawer = panel.querySelector('.card-row-drawing-board');
+    if (!drawer || !summary || !boardDrawer) return;
     drawer.classList.add('relphi-reading-options-drawer');
     drawer.open = true;
     summary.textContent = 'Reading Options';
     summary.setAttribute('role', 'button');
-    if (!Object.prototype.hasOwnProperty.call(panel.dataset, 'relphiReadingOptionsOpen')) {
-      panel.dataset.relphiReadingOptionsOpen = 'false';
+
+    let hotzone = boardDrawer.querySelector(':scope > .relphi-reading-options-hotzone');
+    if (!hotzone) {
+      hotzone = document.createElement('div');
+      hotzone.className = 'relphi-reading-options-hotzone';
+      hotzone.setAttribute('aria-hidden', 'true');
+      boardDrawer.appendChild(hotzone);
     }
+
+    let closeTimer = 0;
+    const cancelClose = () => {
+      if (closeTimer) window.clearTimeout(closeTimer);
+      closeTimer = 0;
+      drawer.classList.remove('is-reading-options-idle');
+    };
     const setOpen = value => {
       const open = !!value;
       panel.dataset.relphiReadingOptionsOpen = open ? 'true' : 'false';
       drawer.classList.toggle('is-reading-options-open', open);
       summary.setAttribute('aria-expanded', String(open));
-      summary.title = open ? 'Hide Reading Options' : 'Show Reading Options';
+      summary.title = open ? 'Hide Reading Options' : 'Show Reading Options · labels and templates';
       summary.setAttribute('aria-label', summary.title);
+      if (open) drawer.classList.remove('is-reading-options-idle');
     };
+    const openFromEdge = () => {
+      cancelClose();
+      setOpen(true);
+    };
+    const scheduleClose = () => {
+      cancelClose();
+      closeTimer = window.setTimeout(() => {
+        setOpen(false);
+        drawer.classList.add('is-reading-options-idle');
+        closeTimer = 0;
+      }, 1000);
+    };
+
+    if (!Object.prototype.hasOwnProperty.call(panel.dataset, 'relphiReadingOptionsOpen')) {
+      panel.dataset.relphiReadingOptionsOpen = 'false';
+    }
     if (summary.dataset.relphiReadingOptionsBound !== 'true') {
       summary.dataset.relphiReadingOptionsBound = 'true';
       summary.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
+        cancelClose();
         setOpen(panel.dataset.relphiReadingOptionsOpen !== 'true');
+      });
+      summary.addEventListener('mouseenter', openFromEdge);
+      hotzone.addEventListener('mouseenter', openFromEdge);
+      drawer.addEventListener('mouseenter', cancelClose);
+      drawer.addEventListener('mouseleave', scheduleClose);
+      hotzone.addEventListener('mouseleave', scheduleClose);
+      drawer.addEventListener('focusin', openFromEdge);
+      drawer.addEventListener('focusout', event => {
+        if (!drawer.contains(event.relatedTarget)) scheduleClose();
       });
     }
     setOpen(panel.dataset.relphiReadingOptionsOpen === 'true');
+    if (panel.dataset.relphiReadingOptionsOpen !== 'true') {
+      closeTimer = window.setTimeout(() => {
+        drawer.classList.add('is-reading-options-idle');
+        closeTimer = 0;
+      }, 1000);
+    }
   }
 
   function organizeBoardOptions(panel) {
@@ -730,9 +776,11 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
       'html body #shortListPanel .card-row-drawing-board{position:relative!important}',
       'html body #shortListPanel .relphi-reading-options-drawer{position:absolute!important;top:3rem!important;left:0!important;z-index:2200!important;width:min(22rem,calc(100% - 3.25rem))!important;margin:0!important;border:1px solid #cfc5bc!important;border-radius:0 12px 12px 0!important;background:#f5f0ea!important;box-shadow:12px 16px 34px rgba(35,25,18,.18)!important;transform:translateX(-100%)!important;transition:transform .22s ease!important}',
       'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-open{transform:translateX(0)!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer>summary{position:absolute!important;left:100%!important;top:.5rem!important;display:flex!important;align-items:center!important;justify-content:center!important;width:2.7rem!important;min-width:2.7rem!important;min-height:8.2rem!important;padding:.65rem .45rem!important;border:1px solid #bdb3aa!important;border-left:0!important;border-radius:0 10px 10px 0!important;background:#171412!important;color:#fff!important;writing-mode:vertical-rl!important;text-orientation:mixed!important;font-size:.74rem!important;font-weight:900!important;letter-spacing:.04em!important;cursor:pointer!important;list-style:none!important;box-shadow:5px 8px 16px rgba(35,25,18,.14)!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer>summary{position:absolute!important;left:100%!important;top:.5rem!important;display:flex!important;align-items:center!important;justify-content:center!important;width:2.7rem!important;min-width:2.7rem!important;min-height:8.2rem!important;padding:.65rem .45rem!important;border:1px solid #bdb3aa!important;border-left:0!important;border-radius:0 10px 10px 0!important;background:#171412!important;color:#fff!important;writing-mode:vertical-rl!important;text-orientation:mixed!important;font-size:.74rem!important;font-weight:900!important;letter-spacing:.04em!important;cursor:pointer!important;list-style:none!important;box-shadow:5px 8px 16px rgba(35,25,18,.14)!important;transition:transform .22s ease,opacity .22s ease!important}',
       'html body #shortListPanel .relphi-reading-options-drawer>summary::-webkit-details-marker{display:none!important}',
       'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-open>summary{background:#dc1f18!important;border-color:#b81712!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-idle:not(.is-reading-options-open)>summary{transform:translateX(-2.25rem)!important;opacity:.22!important}',
+      'html body #shortListPanel .relphi-reading-options-hotzone{position:absolute!important;left:0!important;top:3rem!important;bottom:1rem!important;z-index:2195!important;width:1.05rem!important;background:transparent!important;pointer-events:auto!important}',
       'html body #shortListPanel .relphi-reading-options-drawer>.card-row-composer{max-height:min(72vh,46rem)!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:.6rem!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup{margin:0!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .board-options-tabs{display:none!important}',
