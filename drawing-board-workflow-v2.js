@@ -649,6 +649,7 @@
 
     const desired = [
       panel.querySelector('#drawingBoardOptionsButton'),
+      panel.querySelector('#editDrawingBoardTemplate'),
       panel.querySelector('#drawRandomRowCard'),
       panel.querySelector('#undoShortList'),
       panel.querySelector('#redoShortList'),
