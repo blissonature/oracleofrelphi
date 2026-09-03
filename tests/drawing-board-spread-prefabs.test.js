@@ -85,7 +85,7 @@ polarityColumns.forEach(([top, bottom]) => {
 assert.ok(polarities.positions.every(item => item.transform.scale === .62), 'Six Polarities cards should be enlarged to .62 scale');
 const polarityXs = Array.from(new Set(polarities.positions.map(item => item.transform.x))).sort((a,b) => a - b);
 const polarityYs = Array.from(new Set(polarities.positions.map(item => item.transform.y))).sort((a,b) => a - b);
-assert.deepEqual(polarityXs, [.118,.247,.376,.505,.634,.763], 'Six Polarities should form a centered compact six-column block');
+assert.deepEqual(polarityXs, [.198,.327,.456,.585,.714,.843], 'Six Polarities should form a centered compact six-column block');
 assert.deepEqual(polarityYs, [.18,.485], 'Six Polarities rows should sit directly together');
 for (let i = 1; i < polarityXs.length; i += 1) {
   assert.ok(Math.abs((polarityXs[i] - polarityXs[i - 1]) - .129) < 1e-9, 'Six Polarities horizontal gaps should stay small and even');
