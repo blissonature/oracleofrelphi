@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=31/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=32/);
 
 const storage = new Map();
 const document = {
@@ -129,6 +129,9 @@ assert.match(source, /function saveLabelsAsTemplate/);
 assert.match(source, /ensureLabelTemplateSaver\(panel, field, builder\)/);
 assert.match(source, /#addCardPlaceholder\{display:none!important\}/);
 assert.match(source, /drawing-board-top-actions/);
+assert.match(source, /card-row-workspace>\.drawing-board-primary-actions[\s\S]{0,140}display:none!important/);
+assert.match(source, /relphi-reading-options-drawer \.board-reading-toggle-stack[\s\S]{0,260}display:flex!important[\s\S]{0,160}flex-wrap:nowrap!important/);
+assert.match(source, /relphi-reading-options-drawer \.board-reading-toggle-stack>label[\s\S]{0,520}flex:1 1 0!important/);
 assert.match(source, /width:min\(29rem/);
 assert.match(source, /Position labels/);
 assert.match(source, /Template name<input id="relphiSpreadDesignName"/);
