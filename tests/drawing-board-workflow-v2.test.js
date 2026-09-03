@@ -10,12 +10,12 @@ const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=39/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=40/);
 assert.match(nav, /drawing-board-interactions-v1\\.js\\?v=7/);
 assert.doesNotMatch(nav, /drawing-board-custom-position-stickers-v1\.js/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\\.js\\?v=3/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=23/);
-assert.match(page, /navloader\.js\?v=69/);
+assert.match(page, /navloader\.js\?v=70/);
 assert.match(page, /tarot-app\\.js\\?v=362/);
 
 assert.match(workflow, /Show position stickers/);
@@ -85,6 +85,8 @@ assert.match(workflow, /drawScope\.value = 'full'/);
 assert.match(workflow, /reversals\.checked = true/);
 assert.match(workflow, /setStickersEnabled\(false\)/);
 assert.match(workflow, /function readingOptionsResetState\(panel\)/);
+assert.match(workflow, /function readingOptionsAutoCloseReady\(panel\)/);
+assert.match(workflow, /hasCards \|\| \(!!template && template !== '__new__'\)/);
 assert.match(workflow, /function syncReadingOptionsDrawer\(panel\)/);
 assert.match(workflow, /summary\.innerHTML = '<span>Reading Options<\/span>/);
 assert.match(workflow, /Labels · Templates · Full Pack · Reversals/);
