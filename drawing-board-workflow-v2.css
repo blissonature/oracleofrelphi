@@ -720,6 +720,8 @@ html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-s
 }
 html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label{
   display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
   align-items:center!important;
   justify-content:flex-start!important;
   width:100%!important;
