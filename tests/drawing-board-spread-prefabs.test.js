@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=27/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=28/);
 
 const storage = new Map();
 const document = {
@@ -40,7 +40,7 @@ vm.runInContext(source, sandbox);
 
 const api = sandbox.window.RelphiDrawingBoardSpreadPrefabs;
 assert.ok(api, 'prefab registry should be exposed for integration and regression checks');
-assert.equal(api.shipped.length, 10);
+assert.equal(api.shipped.length, 9);
 assert.deepEqual(
   Array.from(api.shipped, item => [item.id, item.cardCount]),
   [
@@ -51,24 +51,22 @@ assert.deepEqual(
     ['hope-and-comfort-5', 5],
     ['saturn-square-9', 9],
     ['celtic-cross-10', 10],
-    ['celtic-cross-11', 11],
     ['six-polarities-houses-12', 12],
     ['focus-1', 1]
   ]
 );
 assert.ok(api.shipped.every(item => item.source === 'shipped' && item.editable === false));
+assert.equal(api.shipped.some(item => item.id === 'celtic-cross-11'), false);
+assert.doesNotMatch(source, /id:'celtic-cross-11'/);
+assert.match(source, /RETIRED_PREFAB_IDS = new Set\(\['celtic-cross-11'\]\)/);
 
 const celtic10 = api.shipped.find(item => item.id === 'celtic-cross-10');
-const celtic11 = api.shipped.find(item => item.id === 'celtic-cross-11');
 const polarities = api.shipped.find(item => item.id === 'six-polarities-houses-12');
 assert.deepEqual(
   Array.from(polarities.positions.slice().sort((a,b) => a.drawOrder - b.drawOrder), item => item.label),
   ['Aries','Libra','Taurus','Scorpio','Gemini','Sagittarius','Cancer','Capricorn','Leo','Aquarius','Virgo','Pisces']
 );
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').crosses, 'covering');
-assert.equal(celtic11.positions.find(item => item.role === 'covering').covers, 'significator');
-assert.equal(celtic11.positions.find(item => item.role === 'crossing').crosses, 'covering');
-assert.equal(celtic11.positions[0].label, 'Significator');
 assert.deepEqual(
   Array.from(celtic10.positions, item => item.label),
   [
@@ -86,44 +84,18 @@ assert.deepEqual(
 );
 assert.equal(celtic10.positions.find(item => item.id === 'behind').transform.x, .04);
 assert.equal(celtic10.positions.find(item => item.id === 'before').transform.x, .46);
-assert.equal(celtic11.positions.find(item => item.id === 'behind').transform.x, .03);
-assert.equal(celtic11.positions.find(item => item.id === 'before').transform.x, .57);
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.deepEqual(
   Array.from(celtic10.positions.slice(6).map(item => [item.transform.x, item.transform.y])),
   [[.76,.48],[.76,.36],[.76,.24],[.76,.12]]
 );
 
-assert.equal(celtic11.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.ok(celtic10.positions.filter(item => item.openTransform).length >= 2);
-assert.ok(celtic11.positions.filter(item => item.openTransform).length >= 3);
 assert.equal(
   JSON.stringify(celtic10.positions.slice(0, 2).map(item => [item.transform.x, item.transform.y])),
   JSON.stringify([[.25, .326], [.25, .326]]),
   'the ten-card center should pile before being opened'
 );
-assert.equal(
-  JSON.stringify(celtic11.positions.slice(0, 3).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.30, .36], [.30, .36], [.30, .36]]),
-  'significator, cover, and cross should share one piled center'
-);
-assert.equal(
-  JSON.stringify(celtic11.positions.slice(0, 3).map(item => item.openTransform.x)),
-  JSON.stringify([.16, .30, .44]),
-  'the open center should place its three cards side by side'
-);
-assert.equal(celtic11.positions[2].openTransform.rotation, 0);
-assert.equal(
-  JSON.stringify(celtic11.positions.slice(7).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.82, .48], [.82, .36], [.82, .24], [.82, .12]]),
-  'the right-hand ladder should be tightly stacked and keep the bottom card visible'
-);
-assert.ok(Math.abs(celtic11.positions[0].openTransform.x - celtic11.positions.find(item => item.id === 'behind').transform.x - .13) < 1e-12);
-assert.ok(Math.abs(celtic11.positions[1].openTransform.x - celtic11.positions[0].openTransform.x - .14) < 1e-12);
-assert.ok(Math.abs(celtic11.positions[2].openTransform.x - celtic11.positions[1].openTransform.x - .14) < 1e-12);
-assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'before').transform.x - celtic11.positions[2].openTransform.x - .13) < 1e-12);
-assert.ok(Math.abs(celtic11.positions[1].openTransform.y - celtic11.positions.find(item => item.id === 'crowning').transform.y - .29) < 1e-12);
-assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'beneath').transform.y - celtic11.positions[1].openTransform.y - .29) < 1e-12);
 
 assert.match(source, /return prefab\.cardCount \+ ' \| ' \+ prefab\.name/);
 assert.match(source, /Save As Copy and Use/);
