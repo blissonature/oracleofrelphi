@@ -15,13 +15,13 @@ const workflowCss = fs.readFileSync(path.join(root, 'drawing-board-workflow-v2.c
 const workflowUi = workflow + '\n' + workflowCss;
 
 assert.match(nav, /drawing-board-workflow-v2\.js\?v=61/);
-assert.match(nav, /drawing-board-interactions-v1\.js\?v=10/);
+assert.match(nav, /drawing-board-interactions-v1\.js\?v=11/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=6/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=36/);
 assert.match(page, /style\.css\?v=350/);
 assert.match(page, /drawing-board-workflow-v2\.css\?v=13/);
-assert.match(page, /navloader\.js\?v=95/);
-assert.match(page, /tarot-app\.js\?v=367/);
+assert.match(page, /navloader\.js\?v=96/);
+assert.match(page, /tarot-app\.js\?v=368/);
 assert.doesNotMatch(workflow, /document\.createElement\('style'\)|style\.textContent|document\.head\.appendChild\(style\)/);
 assert.equal((workflow.match(/installOptionsButton\(panel\)/g) || []).length, 2);
 assert.doesNotMatch(workflow, /board-arrange-flyout|board-arrange-trigger/);
@@ -34,7 +34,7 @@ assert.match(workflowCss, /Drawing Board workflow UI/);
 
 
 
-assert.match(page, /tarot-app\.js\?v=367/);
+assert.match(page, /tarot-app\.js\?v=368/);
 
 assert.match(workflowUi, /Position Stickers/);
 assert.match(workflowUi, /Position #/);
@@ -97,6 +97,12 @@ assert.match(tarot, /id="clearShortListCardsOnly"/);
 assert.match(tarot, /function bindDrawingBoardTopActions\(wrap\)/);
 assert.match(tarot, /relphiNativeTopActionsBound/);
 assert.match(tarot, /function clearShortListCardsOnlyNative\(\)/);
+assert.match(tarot, /function swapDrawingBoardPositionSlots\(a, b\)/);
+assert.match(tarot, /swapPositionSlots:swapDrawingBoardPositionSlots/);
+assert.match(interactions, /const targetIndex = Number\(item\.dataset\.rowIndex\)/);
+assert.match(interactions, /const drawnIndex = panel\.querySelectorAll\('\.card-row-board \[data-row-card\]'\)\.length/);
+assert.match(interactions, /window\.RelphiDrawingBoardSetPositionStickers\?\.\(true\)/);
+assert.match(interactions, /swapPositionSlots\?\.\(drawnIndex, targetIndex\)/);
 assert.match(tarot, /event\.stopImmediatePropagation\(\)/);
 assert.match(workflowUi, /event\.target\.closest\?\.\('#drawingBoardOptionsButton'\)/);
 assert.doesNotMatch(workflowUi, /button\.dataset\.relphiOptionsBound/);
