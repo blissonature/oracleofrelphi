@@ -954,16 +954,13 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     }, 0);
   }
   function start() {setArrivalState();
-    document.addEventListener('click', event => {
-      const button = event.target.closest?.('#drawingBoardOptionsButton');
-      if (!button) return;
-      const panel = button.closest('#shortListPanel');
+    document.addEventListener('relphi:drawing-board-options-toggle', event => {
+      const panelId = event.detail?.panelId || 'shortListPanel';
+      const panel = document.getElementById(panelId);
       if (!panel) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
       const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
       setReadingOptionsOpen(panel, opening);
-    }, true);
+    });
     document.addEventListener('relphi:drawing-board-rendered', scheduleEnhance);
     new MutationObserver(records => {
       if (records.some(record => record.type === 'attributes' && record.target?.id === 'shortListPanel')) syncBoardEntryButton();
