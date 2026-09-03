@@ -396,8 +396,17 @@
       revealFullCard(cardIdentity(title));
     }, true);
 
-    new MutationObserver(function () { requestAnimationFrame(enhance); }).observe(document.body, {
-      childList:true, subtree:true, attributes:true, attributeFilter:['hidden','class']
+    let enhanceQueued = false;
+    const queueEnhance = function () {
+      if (enhanceQueued) return;
+      enhanceQueued = true;
+      requestAnimationFrame(function () {
+        enhanceQueued = false;
+        enhance();
+      });
+    };
+    new MutationObserver(queueEnhance).observe(document.body, {
+      childList:true, subtree:true, attributes:true, attributeFilter:['hidden']
     });
     enhance();
   }
