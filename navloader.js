@@ -152,7 +152,7 @@
 
   function refreshDrawingBoardControlAssets() {
     const link = document.querySelector('link[href^="drawing-board-workflow-v2.css"]');
-    if (link) link.href = 'drawing-board-workflow-v2.css?v=10';
+    if (link) link.href = 'drawing-board-workflow-v2.css?v=11';
     if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-collapse-contract';
