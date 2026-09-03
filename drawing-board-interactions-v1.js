@@ -83,25 +83,18 @@
     const draw = panel.querySelector('#drawRandomRowCard');
     if (!draw || draw.disabled) return;
 
-    activeTarget = item;
-    item.classList.add('relphi-targeted-draw-pending', 'relphi-target-draw-proxy');
-    item.classList.remove('card-row-placeholder-item');
+    const targetIndex = Number(item.dataset.rowIndex);
+    const drawnIndex = panel.querySelectorAll('.card-row-board [data-row-card]').length;
+    if (!Number.isInteger(targetIndex) || targetIndex < 0) return;
 
-    const emptyItems = Array.from(panel.querySelectorAll('.card-row-item')).filter(isEmptyItem);
-    const first = emptyItems[0] || item;
-    const swapped = first !== item && swapItems(item, first);
-    const observer = new MutationObserver(function () {
-      if (!item.isConnected || item.querySelector('[data-row-card]')) {
-        observer.disconnect();
-        finishTargetedDraw(item, first, swapped);
-      }
-    });
-    observer.observe(panel, { childList:true, subtree:true, attributes:true, attributeFilter:['class','data-row-card'] });
+    activeTarget = item;
+    window.RelphiDrawingBoardSetPositionStickers?.(true);
     draw.click();
-    restoreTimer = window.setTimeout(function () {
-      observer.disconnect();
-      finishTargetedDraw(item, first, swapped);
-    }, 5000);
+
+    if (targetIndex !== drawnIndex) {
+      window.RelphiDrawingBoardPrefabsBridge?.swapPositionSlots?.(drawnIndex, targetIndex);
+    }
+    activeTarget = null;
   }
 
   function placeholderFromPointer(event) {
