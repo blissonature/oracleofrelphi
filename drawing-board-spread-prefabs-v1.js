@@ -241,7 +241,7 @@
       basedOn:prefab.basedOn ? String(prefab.basedOn).slice(0, 100) : null,
       positions,
       rules:{
-        allowReversals:!!prefab.rules?.allowReversals,
+        allowReversals:prefab.rules?.allowReversals !== false,
         allowRepeats:!!prefab.rules?.allowRepeats,
         drawScope:String(prefab.rules?.drawScope || 'full')
       }
@@ -597,7 +597,7 @@
       const syncTypedLabels = () => {
         const live = bridge()?.getState();
         const picker = host.querySelector('#relphiSpreadTemplateSelect');
-        if (live?.locked || live?.designMode || (picker?.value && picker.value !== '__new__')) return;
+        if (live?.designMode) return;
         const labels = String(field.value || '').split(',').map(value => value.trim()).filter(Boolean);
         if (!labels.length) return;
         ensurePositionSlots(labels.length);
@@ -692,25 +692,12 @@
     const structureLocked = !!state.locked && !state.designMode;
     select.disabled = structureLocked || !!state.designMode;
     host.querySelectorAll('.relphi-label-builder input,.relphi-label-builder button').forEach(control => {
-      control.disabled = structureLocked || !!state.designMode;
+      control.disabled = !!state.designMode;
     });
 
     const clear = library.querySelector('#relphiTemplateClear');
     clear.hidden = !select.value || select.value === '__new__' || structureLocked || !!state.designMode;
     clear.disabled = structureLocked || !!state.designMode;
-
-    let lockNote = host.querySelector(':scope > header .relphi-settings-lock-note');
-    if (!lockNote) {
-      lockNote = document.createElement('span');
-      lockNote.className = 'relphi-settings-lock-note';
-      lockNote.setAttribute('role','note');
-      host.querySelector(':scope > header')?.appendChild(lockNote);
-    }
-    const lockText = structureLocked
-      ? 'Spread and draw settings are locked while cards are on the board. Clear the board to change.'
-      : '';
-    if (lockNote.hidden === structureLocked) lockNote.hidden = !structureLocked;
-    if (lockNote.textContent !== lockText) lockNote.textContent = lockText;
 
     const editor = library.querySelector('.relphi-template-editor');
     const prefab = prefabById(selectedId) || draftLayout;
@@ -786,7 +773,7 @@
   }
   function lockControls(panel, state) {
     const structureLocked = state.locked && !state.designMode;
-    ['rowPositionLabels','rowDrawScope','rowAllowRepeats','rowAllowReversalsQuick','resetCardRowLayout','resetRowCardTransform'].forEach(id => {
+    ['resetCardRowLayout','resetRowCardTransform'].forEach(id => {
       const control = panel.querySelector('#' + id);
       if (control) control.disabled = structureLocked;
     });
@@ -798,8 +785,8 @@
       draw.title = state.designMode ? 'Finish designing the layout before drawing' : 'Draw random card';
     }
     panel.querySelectorAll('[data-row-position-label-editor]').forEach(editor => {
-      editor.contentEditable = state.designMode || !state.locked ? 'true' : 'false';
-      editor.setAttribute('aria-readonly', state.designMode || !state.locked ? 'false' : 'true');
+      editor.contentEditable = 'true';
+      editor.setAttribute('aria-readonly', 'false');
     });
   }
   function applyCenterView(panel, state) {
@@ -1005,8 +992,6 @@
       '#shortListPanel .relphi-template-select-wrap .relphi-template-clear:hover{color:#171412!important;background:transparent!important}',
       '#shortListPanel .relphi-template-select-wrap .relphi-template-clear[hidden]{display:none!important}',
       '#shortListPanel .relphi-template-editor{display:grid!important;gap:.45rem!important}',
-      '#shortListPanel .relphi-settings-lock-note{padding:.48rem .55rem!important;border-left:3px solid #171412!important;background:#f4efe9!important;color:#4f4741!important;font-size:.72rem!important;font-weight:700!important;line-height:1.3!important}',
-      '#shortListPanel .relphi-settings-lock-note[hidden]{display:none!important}',
       '#shortListPanel .board-setup-group--spread>.card-row-position-label{width:100%!important}',
       '#shortListPanel .board-setup-group--spread>.quick-position-sticker-toggle{width:100%!important}',
       '#shortListPanel .board-reading-toggle-stack>label::after{content:"OFF";margin-left:auto!important;padding:.16rem .38rem!important;border:1px solid #b8aea6!important;border-radius:999px!important;background:#fff!important;color:#6b625c!important;font-size:.62rem!important;font-weight:900!important;letter-spacing:.05em!important}',
@@ -1048,7 +1033,6 @@
       '#shortListPanel .relphi-template-inline-slot .relphi-template-select-label{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;gap:.45rem!important;align-items:center!important;font-size:.72rem!important}',
       '#shortListPanel .relphi-template-inline-slot .relphi-template-select-wrap{min-width:0!important}',
       '#shortListPanel .relphi-template-inline-slot #relphiSpreadTemplateSelect{margin:0!important;min-height:2.25rem!important}',
-      '#shortListPanel .relphi-template-inline-slot .relphi-settings-lock-note,#shortListPanel .relphi-template-inline-slot .relphi-template-editor{grid-column:1/-1!important}',
       '@media(max-width:700px){#shortListPanel .relphi-label-template-row{grid-template-columns:1fr!important}#shortListPanel .relphi-template-inline-slot .relphi-template-select-label{grid-template-columns:1fr!important}}'
     ].join('');
     style.textContent += [
@@ -1069,10 +1053,6 @@
     style.textContent += [
       '#shortListPanel .board-setup-group--spread>header{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:.65rem!important;flex-wrap:nowrap!important}',
       '#shortListPanel .board-setup-group--spread>header>strong{flex:0 0 auto!important}',
-      '#shortListPanel .board-setup-group--spread>header .relphi-settings-lock-note{display:block!important;flex:1 1 auto!important;min-width:0!important;padding:0!important;border:0!important;background:transparent!important;color:#6b625c!important;font-size:.66rem!important;font-weight:700!important;line-height:1.2!important;text-align:right!important}',
-      '#shortListPanel .board-setup-group--spread>header .relphi-settings-lock-note[hidden]{display:none!important}',
-      '#shortListPanel .relphi-template-inline-slot .relphi-settings-lock-note{display:none!important}',
-      '@media(max-width:680px){#shortListPanel .board-setup-group--spread>header{align-items:flex-start!important}#shortListPanel .board-setup-group--spread>header .relphi-settings-lock-note{font-size:.61rem!important}}'
     ].join('');
     document.head.appendChild(style);
   }
