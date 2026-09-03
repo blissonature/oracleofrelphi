@@ -11,18 +11,18 @@ const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=42/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=43/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=7/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=3/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=25/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=26/);
 assert.match(page, /style\.css\?v=347/);
-assert.match(page, /navloader\.js\?v=72/);
+assert.match(page, /navloader\.js\?v=73/);
 assert.match(page, /tarot-app\.js\?v=363/);
 
 
 
 
-assert.match(page, /tarot-app\\.js\\?v=362/);
+assert.match(page, /tarot-app\.js\?v=363/);
 
 assert.match(workflow, /Show position stickers/);
 assert.match(workflow, /Position #/);
