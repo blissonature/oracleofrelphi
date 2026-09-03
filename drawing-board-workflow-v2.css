@@ -262,3 +262,35 @@ html body #shortListPanel .board-reset-action{
     margin-left:0!important;
   }
 }
+
+
+/* v7.1 prevent inherited flex/grid rules from inflating compact controls */
+html body #shortListPanel .drawing-board-primary-actions.relphi-board-controller{
+  width:calc(100% - 1rem)!important;
+  max-width:calc(100% - 1rem)!important;
+}
+html body #shortListPanel .drawing-board-action-buttons>button,
+html body #shortListPanel .drawing-board-quick-settings>label,
+html body #shortListPanel .drawing-board-quick-settings>#drawingBoardOptionsButton{
+  flex:0 0 auto!important;
+}
+@media(max-width:620px){
+  html body #shortListPanel .drawing-board-primary-actions,
+  html body #shortListPanel .drawing-board-primary-actions.relphi-board-controller{
+    flex-direction:row!important;
+    align-items:center!important;
+    flex-wrap:wrap!important;
+  }
+  html body #shortListPanel .drawing-board-action-buttons,
+  html body #shortListPanel .drawing-board-quick-settings{
+    width:auto!important;
+    max-width:100%!important;
+    flex-wrap:wrap!important;
+  }
+  html body #shortListPanel .drawing-board-action-buttons>button,
+  html body #shortListPanel .drawing-board-quick-settings>label,
+  html body #shortListPanel .drawing-board-quick-settings>#drawingBoardOptionsButton{
+    flex:0 0 auto!important;
+    width:auto!important;
+  }
+}
