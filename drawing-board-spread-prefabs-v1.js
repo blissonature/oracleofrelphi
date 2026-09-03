@@ -679,10 +679,11 @@
     if (activePrefab && !state.designMode) selectedId = activePrefab.id;
     const choices = allPrefabs();
     const previous = select.value;
-    select.innerHTML =
+    const optionsHtml =
       '<option value="">Custom / no saved template</option>' +
       '<option value="__new__">New template…</option>' +
       choices.map(prefab => '<option value="' + escapeHtml(prefab.id) + '">' + escapeHtml(displayName(prefab)) + '</option>').join('');
+    if (select.innerHTML !== optionsHtml) select.innerHTML = optionsHtml;
     const desired = state.designMode
       ? (prefabById(selectedId)?.id || '')
       : (prefabById(selectedId)?.id || (previous && choices.some(item => item.id === previous) ? previous : ''));
@@ -705,10 +706,11 @@
       lockNote.setAttribute('role','note');
       host.querySelector(':scope > header')?.appendChild(lockNote);
     }
-    lockNote.hidden = !structureLocked;
-    lockNote.textContent = structureLocked
+    const lockText = structureLocked
       ? 'Spread and draw settings are locked while cards are on the board. Clear the board to change.'
       : '';
+    if (lockNote.hidden === structureLocked) lockNote.hidden = !structureLocked;
+    if (lockNote.textContent !== lockText) lockNote.textContent = lockText;
 
     const editor = library.querySelector('.relphi-template-editor');
     const prefab = prefabById(selectedId) || draftLayout;
@@ -716,7 +718,7 @@
     const isNew = templateMode === 'new' && !designing;
     const conflict = designing && templateNameConflict(draftName, Number(state.slotCount) || Number(draftLayout?.positions?.length) || 0);
 
-    editor.innerHTML =
+    const editorHtml =
       ((isNew || designing) ?
         '<label class="relphi-spread-design-name">Template name<input id="relphiSpreadDesignName" type="text" maxlength="60" value="' + escapeHtml(draftName || prefab?.name || '') + '" placeholder="Name this template"></label>' : '') +
       (designing ?
@@ -728,31 +730,39 @@
         (!designing && prefab?.source === 'custom' ? '<button type="button" data-prefab-action="edit">Edit Template</button><button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
         (designing ? '<button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!String(draftName || '').trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button>' : '') +
       '</div>';
+    if (editor.innerHTML !== editorHtml) {
+      editor.innerHTML = editorHtml;
+      editor.dataset.relphiBindings = '';
+    }
 
     const nameField = editor.querySelector('#relphiSpreadDesignName');
-    nameField?.addEventListener('input', () => {
-      draftName = String(nameField.value || '').slice(0, 60);
-      if (draftLayout) draftLayout.name = draftName;
-      const live = bridge()?.getState();
-      const count = Number(live?.slotCount) || Number(draftLayout?.positions?.length) || 0;
-      const conflictNow = !!live?.designMode && templateNameConflict(draftName, count);
-      const help = editor.querySelector('#relphiSpreadNameHelp');
-      const save = editor.querySelector('[data-prefab-action="save"]');
-      if (help) {
-        help.classList.toggle('is-error', conflictNow);
-        help.textContent = conflictNow
-          ? 'A template with this card count and name already exists.'
-          : 'Move, rotate, label, add, or remove positions, then save the template.';
-      }
-      if (save) save.disabled = !draftName.trim() || conflictNow;
-    });
+    if (editor.dataset.relphiBindings !== 'true') {
+      editor.dataset.relphiBindings = 'true';
+      nameField?.addEventListener('input', () => {
+        draftName = String(nameField.value || '').slice(0, 60);
+        if (draftLayout) draftLayout.name = draftName;
+        const live = bridge()?.getState();
+        const count = Number(live?.slotCount) || Number(draftLayout?.positions?.length) || 0;
+        const conflictNow = !!live?.designMode && templateNameConflict(draftName, count);
+        const help = editor.querySelector('#relphiSpreadNameHelp');
+        const save = editor.querySelector('[data-prefab-action="save"]');
+        if (help) {
+          help.classList.toggle('is-error', conflictNow);
+          const helpText = conflictNow
+            ? 'A template with this card count and name already exists.'
+            : 'Move, rotate, label, add, or remove positions, then save the template.';
+          if (help.textContent !== helpText) help.textContent = helpText;
+        }
+        if (save) save.disabled = !draftName.trim() || conflictNow;
+      });
 
-    editor.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
-    editor.querySelector('[data-prefab-action="edit"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId)));
-    editor.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
-    editor.querySelector('[data-prefab-action="once"]')?.addEventListener('click', () => finishDesign(false));
-    editor.querySelector('[data-prefab-action="cancel"]')?.addEventListener('click', cancelDesign);
-    editor.querySelector('[data-prefab-action="save"]')?.addEventListener('click', () => finishDesign(true));
+      editor.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
+      editor.querySelector('[data-prefab-action="edit"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId)));
+      editor.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
+      editor.querySelector('[data-prefab-action="once"]')?.addEventListener('click', () => finishDesign(false));
+      editor.querySelector('[data-prefab-action="cancel"]')?.addEventListener('click', cancelDesign);
+      editor.querySelector('[data-prefab-action="save"]')?.addEventListener('click', () => finishDesign(true));
+    }
   }
   function addDesignControls(panel, state) {
     panel.classList.toggle('relphi-layout-design-mode', !!state.designMode);
@@ -768,8 +778,11 @@
       banner.className = 'relphi-layout-status';
       workspace.insertBefore(banner, workspace.firstChild);
     }
-    banner.innerHTML = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish in Board Options.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
-    banner.querySelector('[data-design-action="remove"]')?.addEventListener('click', () => bridge()?.removePosition(state.transformTarget));
+    const bannerHtml = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish in Board Options.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
+    if (banner.innerHTML !== bannerHtml) {
+      banner.innerHTML = bannerHtml;
+      banner.querySelector('[data-design-action="remove"]')?.addEventListener('click', () => bridge()?.removePosition(state.transformTarget));
+    }
   }
   function lockControls(panel, state) {
     const structureLocked = state.locked && !state.designMode;
