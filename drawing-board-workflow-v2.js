@@ -899,7 +899,12 @@
         titleSection.innerHTML = '<header><strong>Reading Name</strong></header><div class="drawing-board-post-body"></div>';
         afterCanvas.prepend(titleSection);
       }
-      move(titleSection.querySelector('.drawing-board-post-body'), control('rowName'));
+      const titleBody = titleSection.querySelector('.drawing-board-post-body');
+      move(titleBody, control('rowName'));
+      const statsSummary = panel.querySelector('.card-row-stats');
+      if (titleBody && statsSummary && statsSummary.parentElement !== titleBody) {
+        titleBody.appendChild(statsSummary);
+      }
 
       let notesSection = afterCanvas.querySelector('#drawing-board-notes');
       if (!notesSection) {
