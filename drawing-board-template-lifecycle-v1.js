@@ -204,19 +204,6 @@
     window.setTimeout(() => restoreAfterCardClear(snapshot), 0);
   }
 
-  function topActionRow(root) {
-    const drawer = root?.querySelector('.card-row-drawing-board');
-    const summary = drawer?.querySelector(':scope > summary');
-    if (!drawer || !summary) return null;
-    let row = drawer.querySelector(':scope > .drawing-board-top-actions');
-    if (!row) {
-      row = document.createElement('div');
-      row.className = 'drawing-board-top-actions';
-      summary.insertAdjacentElement('afterend', row);
-    }
-    return row;
-  }
-
   function installClearCardsButton() {
     const root = panel();
     const clear = root?.querySelector('#clearShortList');
@@ -239,14 +226,7 @@
     }
     cardsOnly.disabled = !bridge()?.getState?.()?.hasCards;
 
-    const actions = topActionRow(root);
-    if (actions) {
-      ['drawRandomRowCard','undoShortList','redoShortList'].forEach(id => {
-        const button = root.querySelector('#' + id);
-        if (button) actions.appendChild(button);
-      });
-      actions.appendChild(cardsOnly);
-    }
+    window.RelphiDrawingBoardEnsureTopActions?.(root);
 
     const add = root.querySelector('#addCardPlaceholder');
     const staging = root.querySelector('.card-row-action-staging');
