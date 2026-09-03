@@ -503,8 +503,10 @@
 
 
 
+    workspace.querySelector(':scope > .drawing-board-primary-actions')?.remove();
+    workspace.querySelector(':scope > .relphi-board-controller-hotzone--actions')?.remove();
+
     const controllers = [
-      { key:'actions', node:workspace.querySelector(':scope > .drawing-board-primary-actions') },
       { key:'tools', node:workspace.querySelector(':scope > .relphi-workspace-tools') },
       { key:'zoom', node:workspace.querySelector(':scope > .card-row-workspace-toolbar') }
     ].filter(item => item.node);
@@ -690,6 +692,15 @@
     const setupSection = section('setup');
     const setup = setupSection.querySelector('.board-options-body');
     const spreadSetup = setupGroup(setup, 'spread', '', '');
+    setupSection.style.setProperty('width', '100%', 'important');
+    setup.style.setProperty('display', 'block', 'important');
+    setup.style.setProperty('width', '100%', 'important');
+    setup.style.setProperty('grid-template-columns', '1fr', 'important');
+    spreadSetup.style.setProperty('display', 'flex', 'important');
+    spreadSetup.style.setProperty('flex-direction', 'column', 'important');
+    spreadSetup.style.setProperty('width', '100%', 'important');
+    spreadSetup.style.setProperty('max-width', '100%', 'important');
+    spreadSetup.style.setProperty('grid-column', '1 / -1', 'important');
 
     const readingName = control('rowName');
     if (readingName) {
@@ -701,16 +712,31 @@
 
     const drawSettingsRow = document.createElement('div');
     drawSettingsRow.className = 'board-draw-settings-row';
+    drawSettingsRow.style.setProperty('display', 'flex', 'important');
+    drawSettingsRow.style.setProperty('flex-direction', 'column', 'important');
+    drawSettingsRow.style.setProperty('align-items', 'stretch', 'important');
+    drawSettingsRow.style.setProperty('gap', '.38rem', 'important');
+    drawSettingsRow.style.setProperty('width', '100%', 'important');
     spreadSetup.appendChild(drawSettingsRow);
 
     const packControl = control('rowDrawScope');
     if (packControl) {
       packControl.classList.remove('relphi-fixed-full-pack');
+      packControl.style.setProperty('order', '0', 'important');
+      packControl.style.setProperty('width', '100%', 'important');
+      packControl.style.setProperty('max-width', '100%', 'important');
       move(drawSettingsRow, packControl);
     }
 
     const toggleStack = document.createElement('div');
     toggleStack.className = 'board-reading-toggle-stack';
+    toggleStack.style.setProperty('display', 'flex', 'important');
+    toggleStack.style.setProperty('flex-direction', 'row', 'important');
+    toggleStack.style.setProperty('flex-wrap', 'nowrap', 'important');
+    toggleStack.style.setProperty('align-items', 'stretch', 'important');
+    toggleStack.style.setProperty('gap', '.35rem', 'important');
+    toggleStack.style.setProperty('width', '100%', 'important');
+    toggleStack.style.setProperty('order', '1', 'important');
     const stickerToggle = control('rowPositionStickersQuick');
     const repeatsToggle = control('rowAllowRepeats');
     const reversalsToggle = control('rowAllowReversalsQuick');
@@ -723,9 +749,17 @@
     renameToggle(stickerToggle, 'Labels');
     renameToggle(reversalsToggle, 'Reversals');
     renameToggle(repeatsToggle, 'Repeats');
-    if (stickerToggle) toggleStack.appendChild(stickerToggle);
-    if (reversalsToggle) toggleStack.appendChild(reversalsToggle);
-    if (repeatsToggle) toggleStack.appendChild(repeatsToggle);
+    [stickerToggle, reversalsToggle, repeatsToggle].forEach(label => {
+      if (!label) return;
+      label.style.setProperty('display', 'inline-flex', 'important');
+      label.style.setProperty('align-items', 'center', 'important');
+      label.style.setProperty('justify-content', 'flex-start', 'important');
+      label.style.setProperty('flex', '1 1 0', 'important');
+      label.style.setProperty('width', 'auto', 'important');
+      label.style.setProperty('min-width', '0', 'important');
+      label.style.setProperty('white-space', 'nowrap', 'important');
+      toggleStack.appendChild(label);
+    });
     drawSettingsRow.appendChild(toggleStack);
 
     const boardDrawer = panel.querySelector('.card-row-drawing-board');
@@ -793,37 +827,20 @@
 
     organizeBoardHeader(panel);
 
-    let primaryActions = workspace?.querySelector(':scope > .drawing-board-primary-actions');
-    if (workspace && !primaryActions) {
-      primaryActions = document.createElement('div');
-      primaryActions.className = 'drawing-board-primary-actions';
-      workspace.insertBefore(primaryActions, workspace.firstChild);
-    }
     const resetBoard = panel.querySelector('#clearShortList');
     if (resetBoard) {
       resetBoard.textContent = 'Reset Board';
       resetBoard.title = 'Reset the entire Drawing Board';
       resetBoard.setAttribute('aria-label', 'Reset the entire Drawing Board');
+      resetBoard.classList.add('board-reset-action');
+      spreadSetup.appendChild(resetBoard);
     }
-    if (primaryActions) {
-      let actionButtons = primaryActions.querySelector('.drawing-board-action-buttons');
-      if (!actionButtons) {
-        actionButtons = document.createElement('div');
-        actionButtons.className = 'drawing-board-action-buttons';
-        primaryActions.appendChild(actionButtons);
-      }
 
-      const staging = panel.querySelector('.card-row-action-staging');
-      ['drawRandomRowCard','undoShortList','redoShortList','addCardPlaceholder'].forEach(id => {
-        const button = panel.querySelector('#' + id);
-        if (button && staging) staging.appendChild(button);
-      });
-
-      if (resetBoard) {
-        resetBoard.classList.add('board-reset-action');
-        spreadSetup.appendChild(resetBoard);
-      }
-    }
+    const staging = panel.querySelector('.card-row-action-staging');
+    ['drawRandomRowCard','undoShortList','redoShortList','addCardPlaceholder'].forEach(id => {
+      const button = panel.querySelector('#' + id);
+      if (button && staging) staging.appendChild(button);
+    });
     panel.querySelector('.card-row-action-staging:empty')?.remove();
 
     const envelopeColor = panel.querySelector('#rowEnvelopeColor');
