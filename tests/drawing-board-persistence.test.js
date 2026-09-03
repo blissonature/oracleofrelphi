@@ -7,8 +7,8 @@ const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'latin1');
 const html = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
 assert.match(app, /relphiDrawingBoardSessionV1/);
-['shortListName:', 'rowCardReversals:', 'rowEnvelopeLayout:', 'rowCardTransforms:', 'rowSenseNotes:', 'rowTableImage:'].forEach(needle => assert.ok(app.includes(needle), 'missing board snapshot field: ' + needle));
-assert.match(app, /function restoreBoardSnapshot\(snapshot\)[\s\S]*state\.shortListName[\s\S]*state\.rowCardReversals[\s\S]*state\.rowEnvelopeLayout[\s\S]*state\.rowCardTransforms[\s\S]*state\.rowSenseNotes[\s\S]*state\.rowTableImage/);
+['shortListName:', 'rowCardReversals:', 'rowEnvelopeLayout:', 'rowCardTransforms:', 'rowTableImage:'].forEach(needle => assert.ok(app.includes(needle), 'missing board snapshot field: ' + needle));
+assert.match(app, /function restoreBoardSnapshot\(snapshot\)[\s\S]*state\.shortListName[\s\S]*state\.rowCardReversals[\s\S]*state\.rowEnvelopeLayout[\s\S]*state\.rowCardTransforms[\s\S]*state\.rowTableImage/);
 assert.match(app, /localStorage\.setItem\(DRAWING_BOARD_STORAGE_KEY/);
 assert.match(app, /addEventListener\('pagehide', flushDrawingBoardSave\)/);
 assert.match(app, /visibilityState === 'hidden'/);
@@ -31,5 +31,5 @@ assert.doesNotMatch(app, /editor\.addEventListener\('blur'[\s\S]{0,220}rowLayout
 assert.match(app, /function addCardPlaceholder\(\)[\s\S]{0,120}rowLayoutLocked/, 'layout structure remains locked after drawing');
 assert.match(app, /function setRowCardTransform\(index, updates = \{\}\)[\s\S]{0,120}rowLayoutLocked/, 'card transform structure remains locked after drawing');
 assert.doesNotMatch(app, /RWS_IMAGE_DATA/, 'unused embedded image payload must not return to tarot-app.js');
-assert.match(html, /tarot-app\.js\?v=364/);
+assert.match(html, /tarot-app\.js\?v=369/);
 console.log('Drawing Board persistence regression checks passed');
