@@ -28,6 +28,8 @@
   });
   let scheduled = false;
   let descriptionSelectionCard = null;
+  let optionsBaseline = null;
+  let optionsStickerBaseline = true;
 
   function stickersEnabled() {
     try { return localStorage.getItem(STICKER_TOGGLE_KEY) !== '0'; }
@@ -575,7 +577,19 @@
     });
   }
 
-  function setReadingOptionsOpen(panel, open) {
+  function optionsBridge() {
+    return window.RelphiDrawingBoardOptionsBridge || null;
+  }
+  function beginOptionsSession() {
+    if (optionsBaseline) return;
+    optionsBaseline = optionsBridge()?.capture?.() || null;
+    optionsStickerBaseline = stickersEnabled();
+  }
+  function clearOptionsSession() {
+    optionsBaseline = null;
+    optionsStickerBaseline = stickersEnabled();
+  }
+  function renderReadingOptionsOpenState(panel, open) {
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (!drawer) return;
     drawer.open = true;
@@ -585,15 +599,61 @@
     if (trigger) {
       trigger.setAttribute('aria-expanded', String(!!open));
       trigger.classList.toggle('is-active', !!open);
-      trigger.title = open ? 'Hide Options' : 'Open Options';
+      trigger.title = open ? 'Options are open' : 'Open Options';
     }
+  }
+  function cancelReadingOptions(panel = document.getElementById('shortListPanel')) {
+    if (!panel) return false;
+    if (optionsBaseline) optionsBridge()?.restore?.(optionsBaseline);
+    setPositionStickersVisible(optionsStickerBaseline);
+    clearOptionsSession();
+    renderReadingOptionsOpenState(panel, false);
+    return true;
+  }
+  function saveReadingOptions(panel = document.getElementById('shortListPanel')) {
+    if (!panel) return false;
+    const bridge = optionsBridge();
+    const changed = !!optionsBaseline && (
+      !!bridge?.changedFrom?.(optionsBaseline) ||
+      stickersEnabled() !== optionsStickerBaseline
+    );
+    if (!changed) {
+      clearOptionsSession();
+      renderReadingOptionsOpenState(panel, false);
+      return true;
+    }
+    const confirmed = window.confirm(
+      'Saving these Options changes will clear the entire Drawing Board before the new settings are applied. Cancel to go back without clearing anything.'
+    );
+    if (!confirmed) return false;
+    bridge?.saveAndClear?.();
+    clearOptionsSession();
+    renderReadingOptionsOpenState(panel, false);
+    return true;
+  }
+  function setReadingOptionsOpen(panel, open) {
+    if (!panel) return;
+    if (open) {
+      beginOptionsSession();
+      renderReadingOptionsOpenState(panel, true);
+      return;
+    }
+    if (panel.dataset.relphiReadingOptionsOpen === 'true' && optionsBaseline) {
+      cancelReadingOptions(panel);
+      return;
+    }
+    renderReadingOptionsOpenState(panel, false);
   }
 
   function toggleReadingOptions(panel = document.getElementById('shortListPanel')) {
     if (!panel) return false;
     const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
-    setReadingOptionsOpen(panel, opening);
-    return opening;
+    if (opening) {
+      setReadingOptionsOpen(panel, true);
+      return true;
+    }
+    cancelReadingOptions(panel);
+    return false;
   }
   window.RelphiDrawingBoardToggleOptions = () => toggleReadingOptions();
 
@@ -608,6 +668,29 @@
       trigger.setAttribute('aria-expanded', String(open));
       trigger.classList.toggle('is-active', open);
     }
+  }
+
+  function installOptionsCommitBar(panel) {
+    const drawer = panel.querySelector('.relphi-reading-options-drawer');
+    if (!drawer) return null;
+    let bar = drawer.querySelector(':scope > .relphi-options-commit-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'relphi-options-commit-bar';
+      bar.innerHTML = '<button type="button" class="relphi-options-save">Save</button><button type="button" class="relphi-options-cancel">Cancel</button>';
+      drawer.appendChild(bar);
+      bar.querySelector('.relphi-options-save')?.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        saveReadingOptions(panel);
+      });
+      bar.querySelector('.relphi-options-cancel')?.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        cancelReadingOptions(panel);
+      });
+    }
+    return bar;
   }
 
   function installReadingOptionsDrawer(panel) {
@@ -649,7 +732,7 @@
 
     const desired = [
       panel.querySelector('#drawingBoardOptionsButton'),
-      panel.querySelector('#editDrawingBoardTemplate'),
+      panel.querySelector('#clearShortList'),
       panel.querySelector('#drawRandomRowCard'),
       panel.querySelector('#undoShortList'),
       panel.querySelector('#redoShortList'),
@@ -878,7 +961,6 @@
       resetBoard.title = 'Reset the entire Drawing Board';
       resetBoard.setAttribute('aria-label', 'Reset the entire Drawing Board');
       resetBoard.classList.add('board-reset-action');
-      spreadSetup.appendChild(resetBoard);
     }
 
     const staging = panel.querySelector('.card-row-action-staging');
@@ -941,6 +1023,7 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     organizeBoardOptions(panel);
     syncReadingOptionsDrawer(panel);
     installOptionsButton(panel);
+    installOptionsCommitBar(panel);
     ensurePermanentTopActions(panel);
     installBoardControllerAutoHide(panel);
     syncDescriptionLayers(panel);
@@ -1003,7 +1086,7 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
       const openOptionsPanel = document.querySelector('#shortListPanel .relphi-reading-options-drawer.is-reading-options-open');
       if (openOptionsPanel && !event.target.closest?.('#drawingBoardOptionsButton,.relphi-reading-options-drawer')) {
         const panel = document.getElementById('shortListPanel');
-        if (panel) setReadingOptionsOpen(panel, false);
+        if (panel) cancelReadingOptions(panel);
       }
       const openHistory = document.querySelector('#shortListPanel .board-history-menu:not([hidden])');
       if (openHistory && !event.target.closest?.('.board-header-group--history')) {
