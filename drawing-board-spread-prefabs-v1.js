@@ -962,7 +962,13 @@
         });
         const maxX = Math.max(...logical.map(value => value.right));
         const maxY = Math.max(...logical.map(value => value.bottom));
-        const fit = Math.max(.35, Math.min(2.4, Math.min((workspace.clientWidth - 72) / Math.max(1, maxX), (workspace.clientHeight - 72) / Math.max(1, maxY))));
+        const mobile = window.matchMedia?.('(max-width:700px)').matches;
+        const availableWidth = Math.max(220, workspace.clientWidth - (mobile ? 24 : 72));
+        const viewportHeight = Math.max(320, window.visualViewport?.height || window.innerHeight || workspace.clientHeight);
+        const availableHeight = mobile
+          ? Math.max(240, Math.min(workspace.clientHeight - 24, viewportHeight * .52))
+          : Math.max(240, workspace.clientHeight - 72);
+        const fit = Math.max(.35, Math.min(2.4, Math.min(availableWidth / Math.max(1, maxX), availableHeight / Math.max(1, maxY))));
         liveZoom.value = String(fit);
         liveZoom.dispatchEvent(new Event('input', { bubbles:true }));
         liveZoom.dispatchEvent(new Event('change', { bubbles:true }));
@@ -979,6 +985,29 @@
     if (zoomLabel && zoomLabel.parentElement !== zoomRow) zoomRow.appendChild(zoomLabel);
     if (extents && extents.parentElement !== zoomRow) zoomRow.appendChild(extents);
   }
+  function ensureMobileLayoutFit(panel, state) {
+    if (!window.matchMedia?.('(max-width:700px)').matches) return;
+    const positions = state?.currentLayout?.positions || state?.activeLayout?.positions || [];
+    if (!Array.isArray(positions) || positions.length < 2) return;
+    const signature = positions.map(item => {
+      const t = item?.transform || item?.canonicalTransform || {};
+      return [item?.id || '', item?.label || '', t.x || 0, t.y || 0, t.scale || 1, t.rotation || 0].join(':');
+    }).join('|');
+    if (!signature || panel.dataset.relphiMobileFitSignature === signature) return;
+    panel.dataset.relphiMobileFitSignature = signature;
+    let attempts = 0;
+    const fit = () => {
+      attempts += 1;
+      const button = panel.querySelector('#zoomCardRowExtents');
+      if (button) {
+        button.click();
+        return;
+      }
+      if (attempts < 8) window.requestAnimationFrame(fit);
+    };
+    window.requestAnimationFrame(fit);
+  }
+
   function enhance() {
     queued = false;
     if (enhancing) return;
@@ -993,6 +1022,7 @@
       lockControls(panel, state);
       applyCenterView(panel, state);
       addWorkspaceControls(panel);
+      ensureMobileLayoutFit(panel, state);
     } finally {
       enhancing = false;
     }
