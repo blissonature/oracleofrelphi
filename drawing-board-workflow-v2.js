@@ -160,6 +160,7 @@
       });
       return;
     }
+    setReadingOptionsOpen(panel, false);
     panel.hidden = true;
     syncBoardEntryButton();
   }
@@ -170,7 +171,10 @@
       clear.title = 'Hide card results without clearing the Drawing Board';
     }
     const panel = document.getElementById('shortListPanel');
-    if (panel) panel.hidden = true;
+    if (panel) {
+      panel.dataset.relphiReadingOptionsOpen = 'false';
+      panel.hidden = true;
+    }
     const trigger = document.getElementById('relphiOpenDrawingBoardCurrent');
     if (trigger && !trigger.dataset.relphiBoardEntryBound) {
       trigger.dataset.relphiBoardEntryBound = 'true';
