@@ -744,7 +744,7 @@
     }
     const panNote = toolbar.querySelector('.card-row-pan-note');
     if (panNote) panNote.hidden = true;
-    toolbar.querySelector('.board-arrange-flyout')?.remove();
+    // Keep the compact snaps/background flyout owned by the Drawing Board workflow.
 
     let extents = toolbar.querySelector('#zoomCardRowExtents');
     if (!extents) {
@@ -869,6 +869,12 @@
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{width:2rem!important;min-width:2rem!important;margin:0!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;padding:0!important;border-radius:999px!important;font-size:0!important}',
       '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>button::before{content:"↔";font-size:1rem}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout{position:relative!important;z-index:1700!important}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>.card-row-control-block{position:absolute!important;left:calc(100% + .5rem)!important;top:0!important;z-index:1750!important;display:block!important;width:min(26rem,calc(100vw - 5rem))!important;max-width:none!important;margin:0!important;padding:0!important;border:1px solid #cfc5bc!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 30px rgba(30,20,15,.18)!important;overflow:visible!important}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout>.card-row-control-block.is-collapsed{display:none!important}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout .board-options-body{display:grid!important;grid-template-columns:1fr!important;gap:.4rem!important;width:100%!important;padding:.45rem!important;box-sizing:border-box!important;background:#fff!important}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout .board-flyout-group{display:grid!important;gap:.35rem!important;padding:.4rem!important;border:1px solid #e1d8d0!important;border-radius:8px!important;background:#fff!important}',
+      '#shortListPanel .card-row-workspace-toolbar .board-arrange-flyout .board-flyout-group>header{padding-bottom:.28rem!important;border-bottom:1px solid #eee7e1!important;font-size:.72rem!important}',
       '#shortListPanel .card-row-workspace .relphi-layout-status{margin-left:3.8rem!important}',
       '@media(prefers-reduced-motion:reduce){#shortListPanel .card-row-workspace-toolbar{transition:none!important}}',
       '@media(max-width:700px){#shortListPanel .relphi-labels-field{grid-template-columns:minmax(0,1fr)!important;gap:.35rem!important}#shortListPanel .relphi-layout-status{grid-template-columns:1fr}#shortListPanel .relphi-layout-status>span,#shortListPanel .relphi-layout-status>div{grid-column:1;grid-row:auto}#shortListPanel .relphi-layout-status>div{justify-content:flex-start}#shortListPanel .relphi-prefab-actions button{flex:1 1 46%}}'
