@@ -1010,7 +1010,8 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
         document.querySelector('#shortListPanel .board-history-toggle')?.setAttribute('aria-expanded', 'false');
       }
       const description = event.target.closest?.('#shortListPanel .or-card-layer.relphi-info-layer');
-      if (description && !event.target.closest('button,a,input,select,textarea')) {
+      const descriptionAction = event.target.closest?.('.card-title-link,[data-card-id],button,a,input,select,textarea');
+      if (description && !descriptionAction) {
         event.stopImmediatePropagation();
         return;
       }
