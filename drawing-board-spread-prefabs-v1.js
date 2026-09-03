@@ -125,10 +125,10 @@
         position('beneath', '4 · What is beneath you', 4, transform(.25, .552, 0, .45, 4)),
         position('behind', '5 · What is behind you', 5, transform(.04, .326, 0, .45, 4)),
         position('before', '6 · What is before you', 6, transform(.46, .326, 0, .45, 4)),
-        position('self', '7 · Yourself', 7, transform(.76, .62, 0, .45, 4)),
-        position('house', '8 · Your house', 8, transform(.76, .46, 0, .45, 4)),
-        position('hopes-fears', '9 · Your hopes or fears', 9, transform(.76, .30, 0, .45, 4)),
-        position('outcome', '10 · What will come', 10, transform(.76, .14, 0, .45, 4))
+        position('self', '7 · Yourself', 7, transform(.76, .48, 0, .45, 4)),
+        position('house', '8 · Your house', 8, transform(.76, .36, 0, .45, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 9, transform(.76, .24, 0, .45, 4)),
+        position('outcome', '10 · What will come', 10, transform(.76, .12, 0, .45, 4))
       ]
     },
     {
@@ -157,10 +157,10 @@
         position('beneath', '4 · What is beneath you', 5, transform(.30, .65, 0, .40, 4)),
         position('behind', '5 · What is behind you', 6, transform(.03, .36, 0, .40, 4)),
         position('before', '6 · What is before you', 7, transform(.57, .36, 0, .40, 4)),
-        position('self', '7 · Yourself', 8, transform(.82, .62, 0, .40, 4)),
-        position('house', '8 · Your house', 9, transform(.82, .46, 0, .40, 4)),
-        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.82, .30, 0, .40, 4)),
-        position('outcome', '10 · What will come', 11, transform(.82, .14, 0, .40, 4))
+        position('self', '7 · Yourself', 8, transform(.82, .48, 0, .40, 4)),
+        position('house', '8 · Your house', 9, transform(.82, .36, 0, .40, 4)),
+        position('hopes-fears', '9 · Your hopes or fears', 10, transform(.82, .24, 0, .40, 4)),
+        position('outcome', '10 · What will come', 11, transform(.82, .12, 0, .40, 4))
       ]
     },
     {
@@ -1083,6 +1083,11 @@
     style.textContent += [
       '#shortListPanel .board-setup-group--spread>header{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:.65rem!important;flex-wrap:nowrap!important}',
       '#shortListPanel .board-setup-group--spread>header>strong{flex:0 0 auto!important}',
+    ].join('');
+    style.textContent += [
+      'html body #shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated{background:transparent!important;background-color:transparent!important;border-color:transparent!important;box-shadow:none!important}',
+      'html body #shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-position-panel{left:50%!important;right:auto!important;top:50%!important;bottom:auto!important;width:max-content!important;max-width:8.5rem!important;margin:0!important;transform:translate(-50%,-5.25rem)!important;z-index:160!important;white-space:normal!important}',
+      'html body #shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card>.card-row-drop-card-inner{display:none!important}'
     ].join('');
     document.head.appendChild(style);
   }
