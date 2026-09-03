@@ -3,14 +3,14 @@
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
 
-  const STICKER_TOGGLE_KEY = 'relphiDrawingBoardPositionStickersV1';
+  const STICKER_TOGGLE_KEY = 'relphiDrawingBoardPositionStickersV2';
   const CARD_BACKGROUND_KEY = 'relphiDrawingBoardCardBackgroundV1';
   let scheduled = false;
   let descriptionSelectionCard = null;
 
   function stickersEnabled() {
-    try { return localStorage.getItem(STICKER_TOGGLE_KEY) !== '0'; }
-    catch (_) { return true; }
+    try { return localStorage.getItem(STICKER_TOGGLE_KEY) === '1'; }
+    catch (_) { return false; }
   }
   function setStickersEnabled(value) {
     try { localStorage.setItem(STICKER_TOGGLE_KEY, value ? '1' : '0'); } catch (_) {}
@@ -23,6 +23,36 @@
     field.value = labels.join(', ');
     field.dispatchEvent(new Event('input', { bubbles:true }));
     field.dispatchEvent(new Event('change', { bubbles:true }));
+  }
+  function ensureReadyToDrawDefaults(panel) {
+    if (!panel || panel.dataset.relphiReadyDefaultsApplied === 'true') return;
+    const drawScope = panel.querySelector('#rowDrawScope');
+    const reversals = panel.querySelector('#rowAllowReversalsQuick');
+    if (!drawScope || !reversals) return;
+
+    const hasCards = !!panel.querySelector('.card-row-board [data-row-card]');
+    const hasLabels = labelsFromField(panel.querySelector('#rowPositionLabels')).length > 0;
+    if (!hasCards && !hasLabels) {
+      const fullPack = Array.from(drawScope.options || []).some(option => option.value === 'full');
+      if (fullPack && drawScope.value !== 'full') {
+        drawScope.value = 'full';
+        drawScope.dispatchEvent(new Event('input', { bubbles:true }));
+        drawScope.dispatchEvent(new Event('change', { bubbles:true }));
+      }
+      if (!reversals.checked) {
+        reversals.checked = true;
+        reversals.dispatchEvent(new Event('input', { bubbles:true }));
+        reversals.dispatchEvent(new Event('change', { bubbles:true }));
+      }
+      setStickersEnabled(false);
+      const stickers = panel.querySelector('#rowPositionStickersQuick');
+      if (stickers?.checked) {
+        stickers.checked = false;
+        stickers.dispatchEvent(new Event('input', { bubbles:true }));
+        stickers.dispatchEvent(new Event('change', { bubbles:true }));
+      }
+    }
+    panel.dataset.relphiReadyDefaultsApplied = 'true';
   }
   function addStickerToggle(panel) {
     const toolbar = panel.querySelector('.card-row-icon-toolbar');
@@ -626,7 +656,8 @@
     }
     syncBoardEntryButton();
     addStickerToggle(panel);
-    panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
+        ensureReadyToDrawDefaults(panel);
+panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     addHelpfulTip(panel);
     removeUnavailableSelectionControls(panel);
     addLeanExports(panel);
