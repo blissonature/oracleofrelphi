@@ -650,7 +650,8 @@
     if (drawer) drawer.id = 'drawingBoardReadingOptions';
 
     const clearCards = panel.querySelector('#clearRowCardsOnly') || panel.querySelector('#clearShortListCardsOnly');
-    const anchor = clearCards || reset;
+    const actionRow = panel.querySelector('.drawing-board-primary-actions');
+    const anchor = actionRow?.contains(reset) ? reset : (clearCards || reset);
     if (button.parentElement !== anchor.parentElement || button.nextElementSibling !== anchor) {
       anchor.insertAdjacentElement('beforebegin', button);
     }
@@ -800,6 +801,12 @@
       primaryActions.className = 'drawing-board-primary-actions';
       workspace.insertBefore(primaryActions, workspace.firstChild);
     }
+    const resetBoard = panel.querySelector('#clearShortList');
+    if (resetBoard) {
+      resetBoard.textContent = 'Reset Board';
+      resetBoard.title = 'Reset the entire Drawing Board';
+      resetBoard.setAttribute('aria-label', 'Reset the entire Drawing Board');
+    }
     if (primaryActions) {
       let clearCards = panel.querySelector('#clearRowCardsOnly');
       if (!clearCards) {
@@ -831,13 +838,9 @@
         const button = panel.querySelector('#' + id);
         if (button) primaryActions.appendChild(button);
       });
+      if (resetBoard) primaryActions.appendChild(resetBoard);
     }
-    const resetBoard = panel.querySelector('#clearShortList');
-    if (resetBoard) {
-      resetBoard.textContent = 'Reset Board';
-      resetBoard.title = 'Reset the entire Drawing Board';
-      resetBoard.setAttribute('aria-label', 'Reset the entire Drawing Board');
-    }
+    panel.querySelector('.card-row-action-staging:empty')?.remove();
 
     const envelopeColor = panel.querySelector('#rowEnvelopeColor');
     const applyEnvelopeColor = () => {
