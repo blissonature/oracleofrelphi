@@ -782,6 +782,8 @@
     [stickerToggle, reversalsToggle, repeatsToggle].forEach(label => {
       if (!label) return;
       label.style.setProperty('display', 'flex', 'important');
+      label.style.setProperty('flex-direction', 'row', 'important');
+      label.style.setProperty('flex-wrap', 'nowrap', 'important');
       label.style.setProperty('align-items', 'center', 'important');
       label.style.setProperty('justify-content', 'flex-start', 'important');
       label.style.setProperty('width', '100%', 'important');
