@@ -19805,3 +19805,11 @@ body.sky-chart-page .unified-sky-wheel .chart-wheel-all-aspects .chart-wheel-asp
   .sky-data-menu,
   .sky-data-menu > summary { width: 100%; text-align: center; }
 }
+
+
+/* Drawing Board collapsed state: title only. */
+#shortListPanel .card-row-drawing-board:not([open]) > summary .card-row-icon-toolbar,
+#shortListPanel .card-row-drawing-board:not([open]) > summary button,
+#shortListPanel .card-row-drawing-board:not([open]) > summary label {
+  display: none !important;
+}
