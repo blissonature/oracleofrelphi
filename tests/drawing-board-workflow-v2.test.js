@@ -78,7 +78,11 @@ assert.match(workflow, /#undoShortList:disabled[\s\S]*#redoShortList:disabled[\s
 assert.match(interactions, /html body #shortListPanel \.board-history-icon:disabled\{opacity:\.4!important;border:1px solid rgba\(17,17,17,\.28\)!important;background:#fffdf8!important;color:rgba\(17,17,17,\.48\)!important;box-shadow:none!important;cursor:default!important\}/);
 assert.doesNotMatch(workflow, /move\(choices, '\.quick-position-sticker-toggle'\)/);
 assert.match(workflow, /panel\.querySelector\('#rowPositionStickersQuick'\)/);
-assert.match(workflow, /settingsPanel.*Board options/);
+assert.match(workflow, /function installReadingOptionsDrawer\(panel\)/);
+assert.match(workflow, /summary\.textContent = 'Reading Options'/);
+assert.match(workflow, /relphi-reading-options-drawer/);
+assert.match(workflow, /transform:translateX\(-100%\)!important/);
+assert.doesNotMatch(workflow, /ensureNumberedStickers/);
 assert.doesNotMatch(workflow, /<span>Reading setup<\/span>/);
 assert.doesNotMatch(workflow, /setupGroup\(setup, 'arrange'/);
 assert.match(workflow, /resetBoard\.textContent = 'Reset Board'/);
