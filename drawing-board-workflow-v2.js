@@ -3,7 +3,7 @@
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
 
-  const STICKER_TOGGLE_KEY = 'relphiDrawingBoardPositionStickersV2';
+  const STICKER_TOGGLE_KEY = 'relphiDrawingBoardPositionStickersV3';
   const CARD_BACKGROUND_KEY = 'relphiDrawingBoardCardBackgroundV1';
   const BOARD_TEXTURE_KEY = 'relphiDrawingBoardTextureV1';
   const DEFAULT_BOARD_TEXTURE = 'felt';
@@ -30,12 +30,25 @@
   let descriptionSelectionCard = null;
 
   function stickersEnabled() {
-    try { return localStorage.getItem(STICKER_TOGGLE_KEY) === '1'; }
-    catch (_) { return false; }
+    try { return localStorage.getItem(STICKER_TOGGLE_KEY) !== '0'; }
+    catch (_) { return true; }
   }
   function setStickersEnabled(value) {
     try { localStorage.setItem(STICKER_TOGGLE_KEY, value ? '1' : '0'); } catch (_) {}
   }
+  function setPositionStickersVisible(value) {
+    const enabled = !!value;
+    setStickersEnabled(enabled);
+    const panel = document.getElementById('shortListPanel');
+    if (panel) {
+      panel.classList.toggle('row-position-stickers-disabled', !enabled);
+      const input = panel.querySelector('#rowPositionStickersQuick');
+      if (input) input.checked = enabled;
+    }
+    scheduleEnhance();
+    return enabled;
+  }
+  window.RelphiDrawingBoardSetPositionStickers = setPositionStickersVisible;
   function boardTexture() {
     try {
       const value = localStorage.getItem(BOARD_TEXTURE_KEY) || DEFAULT_BOARD_TEXTURE;
@@ -91,10 +104,10 @@
         reversals.dispatchEvent(new Event('input', { bubbles:true }));
         reversals.dispatchEvent(new Event('change', { bubbles:true }));
       }
-      setStickersEnabled(false);
+      setStickersEnabled(true);
       const stickers = panel.querySelector('#rowPositionStickersQuick');
-      if (stickers?.checked) {
-        stickers.checked = false;
+      if (stickers && !stickers.checked) {
+        stickers.checked = true;
         stickers.dispatchEvent(new Event('input', { bubbles:true }));
         stickers.dispatchEvent(new Event('change', { bubbles:true }));
       }
@@ -111,8 +124,7 @@
     const reversals = toolbar.querySelector('.quick-reversal-toggle');
     toolbar.insertBefore(label, reversals || toolbar.firstChild);
     label.querySelector('input').addEventListener('change', event => {
-      setStickersEnabled(event.currentTarget.checked);
-      scheduleEnhance();
+      setPositionStickersVisible(event.currentTarget.checked);
     });
   }
   function addHelpfulTip(panel) {
@@ -666,16 +678,6 @@
       button.textContent = 'Options';
     }
     button.setAttribute('aria-controls', 'drawingBoardReadingOptions');
-    if (button.dataset.relphiOptionsBound !== 'true') {
-      button.dataset.relphiOptionsBound = 'true';
-      button.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
-        setReadingOptionsOpen(panel, opening);
-      });
-    }
-
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (drawer) drawer.id = 'drawingBoardReadingOptions';
 
@@ -952,6 +954,16 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     }, 0);
   }
   function start() {setArrivalState();
+    document.addEventListener('click', event => {
+      const button = event.target.closest?.('#drawingBoardOptionsButton');
+      if (!button) return;
+      const panel = button.closest('#shortListPanel');
+      if (!panel) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
+      setReadingOptionsOpen(panel, opening);
+    }, true);
     document.addEventListener('relphi:drawing-board-rendered', scheduleEnhance);
     new MutationObserver(records => {
       if (records.some(record => record.type === 'attributes' && record.target?.id === 'shortListPanel')) syncBoardEntryButton();
