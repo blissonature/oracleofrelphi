@@ -782,7 +782,7 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
       'html body #shortListPanel .relphi-reading-options-drawer>summary>small{min-width:0!important;color:#756b64!important;font-size:.72rem!important;font-weight:650!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}',
       'html body #shortListPanel .relphi-reading-options-chevron{font-size:1.15rem!important;color:#dc1f18!important;line-height:1!important;transition:transform .2s ease!important}',
       'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-open .relphi-reading-options-chevron{transform:rotate(180deg)!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer>.card-row-composer{display:block!important;max-height:none!important;overflow:visible!important;overscroll-behavior:auto!important;margin:0!important;padding:.6rem!important;border-top:1px solid #dfd6ce!important;border-radius:0 0 10px 10px!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer>.card-row-composer{display:block!important;max-height:calc(72vh - 3.2rem)!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;margin:0!important;padding:.6rem!important;border-top:1px solid #dfd6ce!important;border-radius:0 0 10px 10px!important}',
       'html body #shortListPanel .relphi-reading-options-drawer:not(.is-reading-options-open)>.card-row-composer{visibility:hidden!important;pointer-events:none!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup{margin:0!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .board-options-tabs{display:none!important}',
