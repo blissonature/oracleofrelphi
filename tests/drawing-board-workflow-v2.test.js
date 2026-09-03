@@ -13,14 +13,15 @@ const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 const workflowCss = fs.readFileSync(path.join(root, 'drawing-board-workflow-v2.css'), 'utf8');
 const workflowUi = workflow + '\n' + workflowCss;
+const prefabs = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.js'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=64/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=66/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=12/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=7/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=39/);
-assert.match(page, /style\.css\?v=350/);
-assert.match(page, /drawing-board-workflow-v2\.css\?v=16/);
-assert.match(page, /navloader\.js\?v=102/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=40/);
+assert.match(page, /style\.css\?v=351/);
+assert.match(page, /drawing-board-workflow-v2\.css\?v=18/);
+assert.match(page, /navloader\.js\?v=103/);
 assert.match(page, /tarot-app\.js\?v=370/);
 assert.doesNotMatch(workflow, /document\.createElement\('style'\)|style\.textContent|document\.head\.appendChild\(style\)/);
 assert.equal((workflow.match(/installOptionsButton\(panel\)/g) || []).length, 2);
@@ -29,6 +30,14 @@ assert.doesNotMatch(workflow, /board-arrange-flyout|board-arrange-trigger/);
   assert.equal(workflowCss.includes(token), false, 'retired Drawing Board CSS survived consolidation: ' + token);
 });
 assert.match(workflowCss, /Drawing Board workflow UI/);
+
+assert.match(style, /\.card-row-composer label:not\(\.spread-toggle\):not\(\.quick-reversal-toggle\):not\(\.quick-position-sticker-toggle\)/);
+assert.match(workflowCss, /board-reading-toggle-stack>label\{[\s\S]{0,180}flex-direction:row!important[\s\S]{0,120}flex-wrap:nowrap!important/);
+assert.match(workflow, /label\.style\.setProperty\('flex-direction', 'row', 'important'\)/);
+assert.match(workflow, /label\.style\.setProperty\('flex-wrap', 'nowrap', 'important'\)/);
+assert.doesNotMatch(prefabs, /board-reading-toggle-stack/);
+assert.doesNotMatch(prefabs, /board-draw-settings-row/);
+assert.match(prefabs, /Ownership boundary: Drawing Board Options row\/toggle geometry belongs only to/);
 
 
 
