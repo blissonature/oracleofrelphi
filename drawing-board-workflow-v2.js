@@ -786,46 +786,15 @@
       resetBoard.setAttribute('aria-label', 'Reset the entire Drawing Board');
     }
     if (primaryActions) {
-      let clearCards = panel.querySelector('#clearRowCardsOnly');
-      if (!clearCards) {
-        clearCards = document.createElement('button');
-        clearCards.type = 'button';
-        clearCards.id = 'clearRowCardsOnly';
-        clearCards.textContent = 'Clear Cards';
-        clearCards.title = 'Remove drawn cards but keep the spread and board layout';
-        clearCards.setAttribute('aria-label','Clear cards and keep the board layout');
-        clearCards.addEventListener('click', event => {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          const removeNext = () => {
-            const currentPanel = document.getElementById('shortListPanel');
-            const remove = currentPanel?.querySelector('.card-row-board [data-shortlist][aria-pressed="true"]');
-            if (!remove) {
-              scheduleEnhance();
-              return;
-            }
-            remove.click();
-            window.setTimeout(removeNext, 30);
-          };
-          removeNext();
-        }, true);
-      }
-      const hasCards = !!panel.querySelector('.card-row-board [data-row-card]');
-      clearCards.disabled = !hasCards;
-
       let actionButtons = primaryActions.querySelector('.drawing-board-action-buttons');
       if (!actionButtons) {
         actionButtons = document.createElement('div');
         actionButtons.className = 'drawing-board-action-buttons';
         primaryActions.appendChild(actionButtons);
       }
-      ['drawRandomRowCard','undoShortList','clearRowCardsOnly'].forEach(id => {
-        const button = panel.querySelector('#' + id);
-        if (button) actionButtons.appendChild(button);
-      });
 
       const staging = panel.querySelector('.card-row-action-staging');
-      ['redoShortList','addCardPlaceholder'].forEach(id => {
+      ['drawRandomRowCard','undoShortList','redoShortList','addCardPlaceholder'].forEach(id => {
         const button = panel.querySelector('#' + id);
         if (button && staging) staging.appendChild(button);
       });
