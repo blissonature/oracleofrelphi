@@ -1068,3 +1068,155 @@ html body #shortListPanel #drawing-board-title .card-row-stats>span{
     justify-content:center!important;
   }
 }
+
+
+/* v24 position-sticker clearance + workspace tool flyout */
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-position-panel{
+  bottom:calc(100% + 2px)!important;
+  margin:0!important;
+}
+
+/* Snaps and Background are two views of one compact flyout, not two stacked panels. */
+html body #shortListPanel .relphi-workspace-flyout{
+  width:min(21rem,calc(100vw - 1.5rem))!important;
+  max-width:calc(100vw - 1.5rem)!important;
+  padding:.75rem!important;
+  border:1px solid #cfc5bc!important;
+  border-radius:10px!important;
+  background:#fffdf8!important;
+  box-shadow:0 12px 28px rgba(30,20,15,.18)!important;
+  box-sizing:border-box!important;
+  opacity:1!important;
+}
+html body #shortListPanel .relphi-workspace-section{
+  display:none!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+}
+html body #shortListPanel .relphi-workspace-section.is-current{
+  display:grid!important;
+  gap:.55rem!important;
+}
+html body #shortListPanel .relphi-workspace-section.is-current>h4{
+  margin:0 0 .1rem!important;
+  font-size:.95rem!important;
+  line-height:1.1!important;
+}
+html body #shortListPanel .relphi-snap-rows,
+html body #shortListPanel .relphi-background-rows{
+  display:grid!important;
+  gap:.5rem!important;
+}
+html body #shortListPanel .relphi-snap-row{
+  display:grid!important;
+  grid-template-columns:1rem 1.5rem 2rem minmax(4.75rem,1fr) 2rem!important;
+  align-items:center!important;
+  gap:.35rem!important;
+  width:100%!important;
+  min-width:0!important;
+}
+html body #shortListPanel .relphi-snap-row>input[type="checkbox"]{
+  grid-column:1!important;
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-snap-row>.relphi-snap-icon{
+  grid-column:2!important;
+  display:grid!important;
+  place-items:center!important;
+  width:1.5rem!important;
+  height:1.5rem!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-snap-row>button:first-of-type{
+  grid-column:3!important;
+}
+html body #shortListPanel .relphi-snap-row>.relphi-snap-measure{
+  grid-column:4!important;
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:2rem!important;
+  margin:0!important;
+  padding:.25rem .45rem!important;
+  border:1px solid #e1d8d0!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  box-sizing:border-box!important;
+  font-weight:850!important;
+  white-space:nowrap!important;
+}
+html body #shortListPanel .relphi-snap-row>button:last-of-type{
+  grid-column:5!important;
+}
+html body #shortListPanel .relphi-snap-row>button,
+html body #shortListPanel .relphi-picture-action,
+html body #shortListPanel .relphi-reset-action{
+  width:2rem!important;
+  min-width:2rem!important;
+  max-width:2rem!important;
+  height:2rem!important;
+  min-height:2rem!important;
+  max-height:2rem!important;
+  margin:0!important;
+  padding:.25rem!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel .relphi-snap-reset-layout{
+  grid-column:1 / -1!important;
+  justify-self:start!important;
+  width:auto!important;
+  max-width:none!important;
+  min-height:2rem!important;
+  margin:.1rem 0 0!important;
+  padding:.35rem .6rem!important;
+}
+html body #shortListPanel .relphi-background-row{
+  display:grid!important;
+  grid-template-columns:minmax(4rem,1fr) 2rem 2.6rem 2rem!important;
+  align-items:center!important;
+  gap:.4rem!important;
+  width:100%!important;
+  min-width:0!important;
+}
+html body #shortListPanel .relphi-background-row>strong{
+  min-width:0!important;
+  font-size:.82rem!important;
+}
+html body #shortListPanel .relphi-background-row input[type="color"]{
+  display:block!important;
+  width:2.6rem!important;
+  height:2rem!important;
+  margin:0!important;
+  padding:2px!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel .relphi-texture-row{
+  grid-template-columns:4rem minmax(0,1fr)!important;
+}
+html body #shortListPanel .relphi-texture-row>select{
+  grid-column:2!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-workspace-tools:has(.relphi-workspace-flyout:not([hidden])){
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  transform:none!important;
+}
+@media(max-width:520px){
+  html body #shortListPanel .relphi-workspace-flyout{
+    width:min(20rem,calc(100vw - .9rem))!important;
+    max-width:calc(100vw - .9rem)!important;
+    padding:.65rem!important;
+  }
+  html body #shortListPanel .relphi-snap-row{
+    grid-template-columns:1rem 1.35rem 1.9rem minmax(4rem,1fr) 1.9rem!important;
+    gap:.28rem!important;
+  }
+}
