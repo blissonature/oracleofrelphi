@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=39/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=41/);
 
 const storage = new Map();
 const document = {
@@ -65,6 +65,10 @@ const polarities = api.shipped.find(item => item.id === 'six-polarities-houses-1
 assert.deepEqual(
   Array.from(polarities.positions.slice().sort((a,b) => a.drawOrder - b.drawOrder), item => item.label),
   ['Aries','Libra','Taurus','Scorpio','Gemini','Sagittarius','Cancer','Capricorn','Leo','Aquarius','Virgo','Pisces']
+);
+assert.deepEqual(
+  Array.from(polarities.polarityLabels, item => item.label),
+  ['Self / Other','Mine / Ours','Word / Meaning','Interior / Form','Heart / Field','Distinction / Dissolution']
 );
 const polarityColumns = [
   ['Aries','Libra'],
@@ -143,8 +147,8 @@ assert.match(source, /ensureLabelTemplateSaver\(panel, field, builder\)/);
 assert.match(source, /#addCardPlaceholder\{display:none!important\}/);
 assert.match(source, /drawing-board-top-actions/);
 assert.match(source, /card-row-workspace>\.drawing-board-primary-actions[\s\S]{0,140}display:none!important/);
-assert.match(source, /relphi-reading-options-drawer \.board-reading-toggle-stack[\s\S]{0,260}display:flex!important[\s\S]{0,160}flex-wrap:nowrap!important/);
-assert.match(source, /relphi-reading-options-drawer \.board-reading-toggle-stack>label[\s\S]{0,520}flex:1 1 0!important/);
+assert.doesNotMatch(source, /board-reading-toggle-stack/);
+assert.doesNotMatch(source, /board-draw-settings-row/);
 assert.match(source, /width:min\(29rem/);
 assert.match(source, /Position labels/);
 assert.match(source, /Template name<input id="relphiSpreadDesignName"/);
@@ -200,6 +204,12 @@ assert.match(source, /const ready = withDefaultRules\(prefab\)/);
 assert.match(source, /window\.RelphiDrawingBoardSetPositionStickers\?\.\(true\)/);
 assert.doesNotMatch(source, /\['rowPositionLabels','rowDrawScope','rowAllowRepeats','rowAllowReversalsQuick'/);
 assert.match(source, /editor\.contentEditable = 'true'/);
+assert.match(source, /const visual = node\?\.querySelector\('\.card-row-drop-card,\.card-row-card-wrap,\.card-row-card'\)/);
+assert.match(source, /const positionPanel = node\?\.querySelector\(':scope > \.card-row-position-panel'\)/);
+assert.match(source, /positionPanel\.offsetTop/);
+assert.match(source, /const corridorTop = top\.visualBottom/);
+assert.match(source, /const corridorBottom = bottom\.positionPanelTop/);
+assert.doesNotMatch(source, /top\.y \+ top\.height \+ bottom\.y/);
 assert.match(source, /function addWorkspaceControls/);
 assert.match(source, /var\(--relphi-board-texture,none\)/);
 assert.match(source, /background-color:var\(--row-table-bg,#7d1f28\)!important/);
@@ -227,7 +237,7 @@ assert.match(source, /right:\.65rem!important;bottom:\.65rem!important/);
 assert.match(source, /left:410px;top:610px/);
 assert.match(source, /writing-mode:horizontal-tb!important/);
 assert.doesNotMatch(source, /cursor:not-allowed/);
-assert.match(source, /board-reading-toggle-stack>label::after\{content:\"?none/);
+assert.doesNotMatch(source, /board-reading-toggle-stack/);
 assert.doesNotMatch(source, /'rowSnapEnabled','rowRotationSnapEnabled'/);
 assert.doesNotMatch(source, /drawnCardIds|readingName|readingNotes/);
 
