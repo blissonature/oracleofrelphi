@@ -21,7 +21,7 @@ assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=7/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=46/);
 assert.match(page, /style\.css\?v=351/);
 assert.match(page, /drawing-board-workflow-v2\.css\?v=22/);
-assert.match(page, /navloader\.js\?v=107/);
+assert.match(page, /navloader\.js\?v=108/);
 assert.match(page, /tarot-app\.js\?v=374/);
 assert.doesNotMatch(workflow, /document\.createElement\('style'\)|style\.textContent|document\.head\.appendChild\(style\)/);
 assert.equal((workflow.match(/installOptionsButton\(panel\)/g) || []).length, 2);
