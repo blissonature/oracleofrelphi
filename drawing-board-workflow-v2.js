@@ -952,6 +952,7 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     }, 0);
   }
   function start() {setArrivalState();
+    document.addEventListener('relphi:drawing-board-rendered', scheduleEnhance);
     new MutationObserver(records => {
       if (records.some(record => record.type === 'attributes' && record.target?.id === 'shortListPanel')) syncBoardEntryButton();
       scheduleEnhance();
