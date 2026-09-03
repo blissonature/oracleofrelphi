@@ -321,6 +321,11 @@ html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.ca
   overflow:auto!important;
 }
 @media(max-width:700px){
+  html body #shortListPanel .card-row-workspace{
+    height:clamp(22rem,56dvh,34rem)!important;
+    min-height:clamp(22rem,56dvh,34rem)!important;
+    max-height:clamp(22rem,56dvh,34rem)!important;
+  }
   html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{
     top:5.75rem!important;
     right:.35rem!important;
@@ -590,6 +595,7 @@ html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-s
     display:flex!important;
     align-items:center!important;
     gap:.32rem!important;
+    flex-wrap:nowrap!important;
     width:calc(100% - .7rem)!important;
     max-width:calc(100% - .7rem)!important;
     margin:.25rem .35rem!important;
