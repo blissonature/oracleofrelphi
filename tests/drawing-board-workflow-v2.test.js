@@ -10,12 +10,12 @@ const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=30/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=31/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=5/);
 assert.doesNotMatch(nav, /drawing-board-custom-position-stickers-v1\.js/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=3/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=15/);
-assert.match(page, /navloader\.js\?v=59/);
+assert.match(page, /navloader\.js\?v=60/);
 assert.match(page, /tarot-app\.js\?v=360/);
 
 assert.match(workflow, /> Labels/);
