@@ -23,7 +23,10 @@
       status.textContent='This preview needs an exact forty-character commit SHA in ?ref=.';
       return;
     }
-    const direct='https://raw.githack.com/blissonature/oracleofrelphi/'+ref+'/tarot.html';
+    const params=new URLSearchParams(location.search);
+    params.delete('ref');
+    const suffix=params.toString()?('?'+params.toString()):'';
+    const direct='https://raw.githack.com/blissonature/oracleofrelphi/'+ref+'/tarot.html'+suffix+(location.hash||'');
     link.href=direct;
     link.rel='noopener';
     // raw.githack serves the exact immutable commit with browser-safe MIME types,
