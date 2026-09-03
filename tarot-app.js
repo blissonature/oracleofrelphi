@@ -2171,6 +2171,39 @@
     renderShortList();
     return true;
   }
+  function swapDrawingBoardPositionSlots(a, b) {
+    const first = Number(a);
+    const second = Number(b);
+    const count = rowSlotCount();
+    if (!Number.isInteger(first) || !Number.isInteger(second) || first < 0 || second < 0 || first >= count || second >= count || first === second) return false;
+
+    const swapArray = array => {
+      if (!Array.isArray(array)) return;
+      const tmp = array[first];
+      array[first] = array[second];
+      array[second] = tmp;
+    };
+    const swapObject = object => {
+      if (!object || typeof object !== 'object') return;
+      const aKey = String(first), bKey = String(second);
+      const aHas = Object.prototype.hasOwnProperty.call(object, aKey);
+      const bHas = Object.prototype.hasOwnProperty.call(object, bKey);
+      const aValue = object[aKey], bValue = object[bKey];
+      if (bHas) object[aKey] = bValue; else delete object[aKey];
+      if (aHas) object[bKey] = aValue; else delete object[bKey];
+    };
+
+    swapArray(state.shortListPositionLabels);
+    swapArray(state.shortListPositionCardIds);
+    swapArray(state.rowPositionMeta);
+    swapObject(state.rowEnvelopeLayout);
+    swapObject(state.rowCardTransforms);
+    swapObject(state.rowEnvelopeArt);
+
+    renderShortList();
+    return true;
+  }
+
   function drawingBoardPrefabState() {
     return cloneBoardValue({
       designMode:!!state.rowLayoutDesignMode,
@@ -2188,6 +2221,7 @@
     captureLayout:layoutSnapshotFromBoard,
     finishDesign:finishPrefabDesign,
     removePosition:removePrefabPosition,
+    swapPositionSlots:swapDrawingBoardPositionSlots,
     getState:drawingBoardPrefabState,
     setCenterOpen(value) {
       state.rowCenterOpen = !!value;
