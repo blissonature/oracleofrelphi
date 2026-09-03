@@ -18,7 +18,7 @@ const prefabs = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1
 assert.match(nav, /drawing-board-workflow-v2\.js\?v=69/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=12/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=7/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=45/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=46/);
 assert.match(page, /style\.css\?v=351/);
 assert.match(page, /drawing-board-workflow-v2\.css\?v=22/);
 assert.match(page, /navloader\.js\?v=107/);
@@ -45,6 +45,8 @@ assert.match(workflow, /label\.style\.setProperty\('flex-direction', 'row', 'imp
 assert.match(workflow, /label\.style\.setProperty\('flex-wrap', 'nowrap', 'important'\)/);
 assert.doesNotMatch(prefabs, /board-reading-toggle-stack/);
 assert.doesNotMatch(prefabs, /board-draw-settings-row/);
+assert.doesNotMatch(prefabs, /drawing-board-top-actions/);
+assert.doesNotMatch(prefabs, /board-reset-action/);
 assert.match(prefabs, /Ownership boundary: Drawing Board Options row\/toggle geometry belongs only to/);
 
 
