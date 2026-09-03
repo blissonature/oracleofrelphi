@@ -79,6 +79,11 @@ assert.match(interactions, /html body #shortListPanel \.board-history-icon:disab
 assert.doesNotMatch(workflow, /move\(choices, '\.quick-position-sticker-toggle'\)/);
 assert.match(workflow, /panel\.querySelector\('#rowPositionStickersQuick'\)/);
 assert.match(workflow, /function installReadingOptionsDrawer\(panel\)/);
+assert.match(workflow, /relphiDrawingBoardPositionStickersV2/);
+assert.match(workflow, /function ensureReadyToDrawDefaults\(panel\)/);
+assert.match(workflow, /drawScope\.value = 'full'/);
+assert.match(workflow, /reversals\.checked = true/);
+assert.match(workflow, /setStickersEnabled\(false\)/);
 assert.match(workflow, /summary\.textContent = 'Reading Options'/);
 assert.match(workflow, /relphi-reading-options-drawer/);
 assert.match(workflow, /transform:translateX\(-100%\)!important/);
