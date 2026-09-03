@@ -159,6 +159,35 @@
     window.setTimeout(locate, 0);
   }
 
+  function correctCelticEleven(panel) {
+    const state = window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    if (!panel || state?.activeLayout?.id !== 'celtic-cross-11' || state.centerOpen) return;
+    const board = panel.querySelector('.card-row-board');
+    if (!board) return;
+    [
+      {index:0,left:208,top:262,rotation:0,scale:.45,z:10},
+      {index:1,left:225,top:248,rotation:0,scale:.45,z:20},
+      {index:2,left:225,top:248,rotation:90,scale:.45,z:30},
+      {index:3,left:225,top:76,rotation:0,scale:.45,z:4},
+      {index:4,left:225,top:420,rotation:0,scale:.45,z:4},
+      {index:5,left:36,top:248,rotation:0,scale:.45,z:4},
+      {index:6,left:414,top:248,rotation:0,scale:.45,z:4},
+      {index:7,left:684,top:546,rotation:0,scale:.45,z:4},
+      {index:8,left:684,top:374,rotation:0,scale:.45,z:4},
+      {index:9,left:684,top:202,rotation:0,scale:.45,z:4},
+      {index:10,left:684,top:30,rotation:0,scale:.45,z:4}
+    ].forEach(value => {
+      const item = board.querySelector('[data-row-index="' + value.index + '"]');
+      if (!item) return;
+      item.style.left = value.left + 'px';
+      item.style.top = value.top + 'px';
+      item.style.zIndex = String(value.z);
+      item.style.setProperty('--row-card-scale', String(value.scale));
+      item.style.setProperty('--row-card-rotation', value.rotation + 'deg');
+      item.querySelector('[data-row-card]')?.style.setProperty('transform-origin','50% 50%','important');
+    });
+  }
+
   function installPositionStickerEditor(panel) {
     const field = panel.querySelector('#rowPositionLabels');
     if (!field || field.dataset.relphiStickerEditor === 'true') return;
@@ -277,6 +306,7 @@
       title.setAttribute('role', 'button');
       title.setAttribute('tabindex', '0');
     });
+    correctCelticEleven(panel);
   }
 
   function start() {
@@ -320,6 +350,13 @@
       '#shortListPanel .card-row-board .or-card-art,#shortListPanel .card-row-board .card-row-card-art{cursor:pointer!important;pointer-events:auto!important}'
     ].join('');
     document.head.appendChild(style);
+
+    document.addEventListener('relphi:drawing-board-rendered', function () {
+      window.requestAnimationFrame(function () { correctCelticEleven(root()); });
+    });
+    document.addEventListener('input', function (event) {
+      if (event.target?.id === 'rowZoom') window.requestAnimationFrame(function () { correctCelticEleven(root()); });
+    }, true);
 
     document.addEventListener('pointerdown', function (event) {
       if (event.button != null && event.button !== 0) return;
