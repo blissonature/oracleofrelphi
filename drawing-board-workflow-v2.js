@@ -24,25 +24,12 @@
     field.dispatchEvent(new Event('input', { bubbles:true }));
     field.dispatchEvent(new Event('change', { bubbles:true }));
   }
-  function ensureNumberedStickers(panel) {
-    if (!stickersEnabled()) return false;
-    const field = panel.querySelector('#rowPositionLabels');
-    const cardCount = panel.querySelectorAll('.card-row-item [data-row-card]').length;
-    if (!field || !cardCount) return false;
-    const labels = labelsFromField(field);
-    let changed = false;
-    for (let index = 0; index < cardCount; index += 1) {
-      if (!labels[index]) { labels[index] = 'Position #' + (index + 1); changed = true; }
-    }
-    if (changed) setLabels(field, labels);
-    return changed;
-  }
   function addStickerToggle(panel) {
     const toolbar = panel.querySelector('.card-row-icon-toolbar');
     if (!toolbar || panel.querySelector('#rowPositionStickersQuick')) return;
     const label = document.createElement('label');
     label.className = 'quick-position-sticker-toggle';
-    label.title = 'Give every card an editable numbered position sticker';
+    label.title = 'Show position labels when you add them';
     label.innerHTML = '<input id="rowPositionStickersQuick" type="checkbox"' + (stickersEnabled() ? ' checked' : '') + '> Show position stickers';
     const reversals = toolbar.querySelector('.quick-reversal-toggle');
     toolbar.insertBefore(label, reversals || toolbar.firstChild);
@@ -397,6 +384,36 @@
     applyWorkspaceCardBackground(panel);
   }
 
+  function installReadingOptionsDrawer(panel) {
+    const drawer = panel.querySelector('.card-row-more-options');
+    const summary = drawer?.querySelector(':scope > summary');
+    if (!drawer || !summary) return;
+    drawer.classList.add('relphi-reading-options-drawer');
+    drawer.open = true;
+    summary.textContent = 'Reading Options';
+    summary.setAttribute('role', 'button');
+    if (!Object.prototype.hasOwnProperty.call(panel.dataset, 'relphiReadingOptionsOpen')) {
+      panel.dataset.relphiReadingOptionsOpen = 'false';
+    }
+    const setOpen = value => {
+      const open = !!value;
+      panel.dataset.relphiReadingOptionsOpen = open ? 'true' : 'false';
+      drawer.classList.toggle('is-reading-options-open', open);
+      summary.setAttribute('aria-expanded', String(open));
+      summary.title = open ? 'Hide Reading Options' : 'Show Reading Options';
+      summary.setAttribute('aria-label', summary.title);
+    };
+    if (summary.dataset.relphiReadingOptionsBound !== 'true') {
+      summary.dataset.relphiReadingOptionsBound = 'true';
+      summary.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        setOpen(panel.dataset.relphiReadingOptionsOpen !== 'true');
+      });
+    }
+    setOpen(panel.dataset.relphiReadingOptionsOpen === 'true');
+  }
+
   function organizeBoardOptions(panel) {
     const composer = panel.querySelector('.card-row-composer');
     if (!composer || composer.classList.contains('is-relphi-organized')) return;
@@ -515,9 +532,7 @@
     }
     move(composer, panel.querySelector('#rowTableImageFile'));
 
-    const settingsPanel = panel.querySelector('.card-row-more-options');
-    if (settingsPanel?.querySelector(':scope > summary')) settingsPanel.querySelector(':scope > summary').textContent = 'Board options';
-    if (settingsPanel) settingsPanel.open = true;
+    installReadingOptionsDrawer(panel);
 
     organizeBoardHeader(panel);
 
@@ -619,7 +634,6 @@
     syncDescriptionLayers(panel);
     reinforceReversalUi(panel);
     normalizeDisabledButtonCursors(panel);
-    ensureNumberedStickers(panel);
   }
   function scheduleEnhance() {
     if (scheduled) return;
@@ -680,6 +694,19 @@
       '#shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-position-panel .card-row-position-editor{min-height:1.25em!important;max-height:none!important}',
       '#shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card,#shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.or-card{grid-row:1!important;align-self:start!important}',
       '@media(max-width:620px){#shortListPanel .drawing-board-primary-actions{width:calc(100% - 1rem)!important;max-width:calc(100% - 1rem)!important}#shortListPanel .relphi-snap-row{grid-template-columns:1.1rem 1.45rem 1.9rem minmax(3.2rem,1fr) 1.9rem!important}}'
+    ].join('');
+    style.textContent += [
+      'html body #shortListPanel .card-row-drawing-board{position:relative!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer{position:absolute!important;top:3rem!important;left:0!important;z-index:2200!important;width:min(22rem,calc(100% - 3.25rem))!important;margin:0!important;border:1px solid #cfc5bc!important;border-radius:0 12px 12px 0!important;background:#f5f0ea!important;box-shadow:12px 16px 34px rgba(35,25,18,.18)!important;transform:translateX(-100%)!important;transition:transform .22s ease!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-open{transform:translateX(0)!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer>summary{position:absolute!important;left:100%!important;top:.5rem!important;display:flex!important;align-items:center!important;justify-content:center!important;width:2.7rem!important;min-width:2.7rem!important;min-height:8.2rem!important;padding:.65rem .45rem!important;border:1px solid #bdb3aa!important;border-left:0!important;border-radius:0 10px 10px 0!important;background:#171412!important;color:#fff!important;writing-mode:vertical-rl!important;text-orientation:mixed!important;font-size:.74rem!important;font-weight:900!important;letter-spacing:.04em!important;cursor:pointer!important;list-style:none!important;box-shadow:5px 8px 16px rgba(35,25,18,.14)!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer>summary::-webkit-details-marker{display:none!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-open>summary{background:#dc1f18!important;border-color:#b81712!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer>.card-row-composer{max-height:min(72vh,46rem)!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:.6rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup{margin:0!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-options-tabs{display:none!important}',
+      '@media(max-width:700px){html body #shortListPanel .relphi-reading-options-drawer{top:2.75rem!important;width:calc(100% - 3.15rem)!important}html body #shortListPanel .relphi-reading-options-drawer>summary{min-height:7.2rem!important;width:2.55rem!important;min-width:2.55rem!important}}',
+      '@media(prefers-reduced-motion:reduce){html body #shortListPanel .relphi-reading-options-drawer{transition:none!important}}'
     ].join('');
     document.head.appendChild(style);
     setArrivalState();
