@@ -664,7 +664,10 @@
       button.type = 'button';
       button.id = 'drawingBoardOptionsButton';
       button.textContent = 'Options';
-      button.setAttribute('aria-controls', 'drawingBoardReadingOptions');
+    }
+    button.setAttribute('aria-controls', 'drawingBoardReadingOptions');
+    if (button.dataset.relphiOptionsBound !== 'true') {
+      button.dataset.relphiOptionsBound = 'true';
       button.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
