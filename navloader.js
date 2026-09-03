@@ -152,7 +152,7 @@
 
   function refreshDrawingBoardControlAssets() {
     const link = document.querySelector('link[href^="drawing-board-workflow-v2.css"]');
-    if (link) link.href = 'drawing-board-workflow-v2.css?v=12';
+    if (link) link.href = 'drawing-board-workflow-v2.css?v=13';
     if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-collapse-contract';
@@ -165,10 +165,10 @@
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
       refreshDrawingBoardControlAssets();
       appendScript('tarot-date-sky-bridge-v1.js?v=2');
-      appendScript('drawing-board-workflow-v2.js?v=57');
+      appendScript('drawing-board-workflow-v2.js?v=58');
       appendScript('drawing-board-interactions-v1.js?v=9');
       appendScript('drawing-board-template-lifecycle-v1.js?v=4', function () {
-        appendScript('drawing-board-spread-prefabs-v1.js?v=31');
+        appendScript('drawing-board-spread-prefabs-v1.js?v=32');
       });
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
