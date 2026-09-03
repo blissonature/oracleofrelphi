@@ -10388,11 +10388,7 @@ html body #browsePanel .or-card.relphi-surface .or-card-layer.relphi-info-layer 
   padding: 1rem !important;
   border: 1px solid rgba(17,17,17,.22) !important;
   border-radius: 1rem !important;
-  background:
-    linear-gradient(rgba(255,255,255,.88), rgba(255,255,255,.88)),
-    repeating-linear-gradient(0deg, rgba(220,31,24,.08) 0 1px, transparent 1px var(--row-grid-y)),
-    repeating-linear-gradient(90deg, rgba(220,31,24,.08) 0 1px, transparent 1px var(--row-grid-x)),
-    #fffaf0 !important;
+  background-color: var(--row-table-bg, #7d1f28) !important;
   box-sizing: border-box !important;
 }
 .short-list-row.card-row-board .card-row-item {
@@ -10623,12 +10619,7 @@ html body #browsePanel .or-card.relphi-surface .or-card-layer.relphi-info-layer 
 .card-row-composer .card-row-notes-label { grid-column: span 2; }
 .card-row-composer .card-row-position-label { grid-column: span 2; }
 .short-list-row.card-row-board {
-  background:
-    var(--row-table-image, none) center center / cover no-repeat,
-    repeating-linear-gradient(0deg, rgba(220,31,24,.14) 0 1px, transparent 1px var(--row-grid-y)),
-    repeating-linear-gradient(90deg, rgba(220,31,24,.14) 0 1px, transparent 1px var(--row-grid-x)),
-    var(--row-table-bg, #fffaf0) !important;
-  background-color: var(--row-table-bg, #fffaf0) !important;
+  background-color: var(--row-table-bg, #7d1f28) !important;
 }
 .short-list-row.card-row-board .card-row-item,
 .short-list-row.card-row-board .or-card,
@@ -10807,12 +10798,7 @@ html body #browsePanel .or-card.relphi-surface .or-card-layer.relphi-info-layer 
   will-change: transform !important;
   border: 1px solid rgba(17,17,17,.22) !important;
   border-radius: 1rem !important;
-  background:
-    var(--row-table-image, none) center center / cover no-repeat,
-    repeating-linear-gradient(0deg, rgba(220,31,24,.14) 0 1px, transparent 1px var(--row-grid-y)),
-    repeating-linear-gradient(90deg, rgba(220,31,24,.14) 0 1px, transparent 1px var(--row-grid-x)),
-    var(--row-table-bg, #fffaf0) !important;
-  background-color: var(--row-table-bg, #fffaf0) !important;
+  background-color: var(--row-table-bg, #7d1f28) !important;
 }
 .card-row-workspace .short-list-row.card-row-board .card-row-item {
   transform: none !important;
