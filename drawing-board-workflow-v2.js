@@ -671,9 +671,14 @@
 
     const setupSection = section('setup');
     const setup = setupSection.querySelector('.board-options-body');
-    const spreadSetup = setupGroup(setup, 'spread', 'Board Options', 'Templates, reading name, pack, position labels, position stickers, repeats, and reversals.');
+    const spreadSetup = setupGroup(setup, 'spread', '', '');
 
-    move(spreadSetup, control('rowName'));
+    const readingName = control('rowName');
+    if (readingName) {
+      const textNode = Array.from(readingName.childNodes).find(node => node.nodeType === 3);
+      if (textNode) textNode.textContent = 'Reading Name ';
+    }
+    move(spreadSetup, readingName);
     move(spreadSetup, control('rowPositionLabels'));
 
     const drawSettingsRow = document.createElement('div');
