@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=43/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=44/);
 
 const storage = new Map();
 const document = {
@@ -221,6 +221,8 @@ assert.match(source, /captureBoard\?\.\(\)/);
 assert.match(source, /prepareDesign\?\.\(copy\)/);
 assert.match(source, /restoreBoard\?\.\(designBoardSnapshot\)/);
 assert.match(source, /Saving these template changes will clear the entire Drawing Board and the active reading/);
+assert.match(source, /state\.hasCards/);
+assert.match(source, /Save clears this reading; Cancel restores it/);
 assert.match(source, /api\.clearBoard\?\.\(\)/);
 assert.match(source, /templateNameConflict\(name, state\.slotCount, copySourceId/);
 assert.match(source, /function addWorkspaceControls/);
