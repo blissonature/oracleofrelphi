@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=32/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=33/);
 
 const storage = new Map();
 const document = {
@@ -82,6 +82,15 @@ polarityColumns.forEach(([top, bottom]) => {
   assert.equal(topPosition.transform.x, bottomPosition.transform.x, top + ' / ' + bottom + ' should share a column');
   assert.notEqual(topPosition.transform.y, bottomPosition.transform.y, top + ' / ' + bottom + ' should occupy separate rows');
 });
+assert.ok(polarities.positions.every(item => item.transform.scale === .62), 'Six Polarities cards should be enlarged to .62 scale');
+const polarityXs = Array.from(new Set(polarities.positions.map(item => item.transform.x))).sort((a,b) => a - b);
+const polarityYs = Array.from(new Set(polarities.positions.map(item => item.transform.y))).sort((a,b) => a - b);
+assert.deepEqual(polarityXs, [.118,.247,.376,.505,.634,.763], 'Six Polarities should form a centered compact six-column block');
+assert.deepEqual(polarityYs, [.18,.485], 'Six Polarities rows should sit directly together');
+for (let i = 1; i < polarityXs.length; i += 1) {
+  assert.ok(Math.abs((polarityXs[i] - polarityXs[i - 1]) - .129) < 1e-9, 'Six Polarities horizontal gaps should stay small and even');
+}
+assert.ok(Math.abs((polarityYs[1] - polarityYs[0]) - .305) < 1e-9, 'Six Polarities vertical pair spacing should be essentially card-height with no large row gap');
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').crosses, 'covering');
 assert.deepEqual(
   Array.from(celtic10.positions, item => item.label),
