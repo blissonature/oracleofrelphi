@@ -11,12 +11,12 @@ const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=44/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=45/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=7/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=3/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=28/);
 assert.match(page, /style\.css\?v=348/);
-assert.match(page, /navloader\.js\?v=75/);
+assert.match(page, /navloader\.js\?v=76/);
 assert.match(page, /tarot-app\.js\?v=363/);
 
 
@@ -111,6 +111,8 @@ assert.match(workflow, /button\.textContent = 'Options'/);
 assert.match(workflow, /button\.setAttribute\('aria-controls', 'drawingBoardOptionsPopover'\)/);
 assert.match(workflow, /popover\.id = 'drawingBoardOptionsPopover'/);
 assert.match(workflow, /popover\.setAttribute\('aria-label', 'Drawing Board options'\)/);
+assert.match(workflow, /relphiCompactOptionsOutsideBound/);
+assert.match(workflow, /const livePanel = document\.getElementById\('shortListPanel'\)/);
 assert.match(workflow, /panel\.querySelector\('#rowAllowReversalsQuick'\)\?\.closest\('label'\)/);
 assert.match(workflow, /panel\.querySelector\('#rowAllowRepeats'\)\?\.closest\('label'\)/);
 assert.match(workflow, /panel\.querySelector\('#rowPositionStickersQuick'\)\?\.closest\('label'\)/);
