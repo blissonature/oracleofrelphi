@@ -39,6 +39,13 @@
     layer?.remove();
   }
 
+  function historyIconSvg(kind) {
+    const path = kind === 'undo'
+      ? '<path d="M9 7 4 12l5 5"/><path d="M4 12h9a7 7 0 0 1 7 7"/>'
+      : '<path d="m15 7 5 5-5 5"/><path d="M20 12h-9a7 7 0 0 0-7 7"/>';
+    return '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+  }
+
   function topActionRow(panel) {
     const drawer = panel.querySelector('.card-row-drawing-board');
     const summary = drawer?.querySelector(':scope > summary');
@@ -58,8 +65,8 @@
     [[panel.querySelector('#undoShortList'), 'undo', 'Undo'], [panel.querySelector('#redoShortList'), 'redo', 'Redo']].forEach(function (entry) {
       const button = entry[0];
       if (!button) return;
-      button.classList.remove('board-history-icon');
-      button.textContent = entry[2];
+      button.classList.add('board-history-icon');
+      button.innerHTML = historyIconSvg(entry[1]);
       button.setAttribute('aria-label', entry[2]);
       button.title = entry[2];
       if (button.parentElement !== actions) actions.appendChild(button);
