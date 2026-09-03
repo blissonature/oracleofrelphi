@@ -406,3 +406,20 @@ html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-s
     grid-template-columns:1fr!important;
   }
 }
+
+
+/* v11 top actions and hidden placeholder control */
+html body #shortListPanel #addCardPlaceholder{
+  display:none!important;
+}
+html body #shortListPanel .card-row-drawing-board:not([open])>.drawing-board-top-actions{
+  display:none!important;
+}
+html body #shortListPanel .drawing-board-top-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:.35rem!important;
+  flex-wrap:wrap!important;
+  margin:.35rem .45rem!important;
+}
