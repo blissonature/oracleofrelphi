@@ -623,6 +623,28 @@
     return row;
   }
 
+  function ensurePermanentTopActions(panel) {
+    const row = permanentTopActionRow(panel);
+    if (!row) return null;
+
+    const options = panel.querySelector('#drawingBoardOptionsButton');
+    const draw = panel.querySelector('#drawRandomRowCard');
+    const undo = panel.querySelector('#undoShortList');
+    const redo = panel.querySelector('#redoShortList');
+    const clearCards = panel.querySelector('#clearShortListCardsOnly');
+
+    [options, draw, undo, redo, clearCards].forEach(button => {
+      if (button) row.appendChild(button);
+    });
+
+    row.querySelectorAll('.drawing-board-action-buttons,.drawing-board-primary-actions').forEach(node => {
+      if (!node.children.length) node.remove();
+    });
+    return row;
+  }
+
+  window.RelphiDrawingBoardEnsureTopActions = ensurePermanentTopActions;
+
   function installOptionsButton(panel) {
     const reset = panel.querySelector('#clearShortList');
     if (!reset) return;
@@ -654,11 +676,7 @@
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (drawer) drawer.id = 'drawingBoardReadingOptions';
 
-    const topActions = permanentTopActionRow(panel);
-    if (topActions) {
-      if (button.parentElement !== topActions) topActions.prepend(button);
-      else if (topActions.firstElementChild !== button) topActions.prepend(button);
-    }
+    ensurePermanentTopActions(panel);
     button.setAttribute('aria-expanded', String(panel.dataset.relphiReadingOptionsOpen === 'true'));
     button.classList.toggle('is-active', panel.dataset.relphiReadingOptionsOpen === 'true');
   }
@@ -896,6 +914,7 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     organizeBoardOptions(panel);
     syncReadingOptionsDrawer(panel);
     installOptionsButton(panel);
+    ensurePermanentTopActions(panel);
     installBoardControllerAutoHide(panel);
     syncDescriptionLayers(panel);
     reinforceReversalUi(panel);
