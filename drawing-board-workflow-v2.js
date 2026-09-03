@@ -595,8 +595,8 @@
     summary.hidden = true;
     summary.setAttribute('aria-hidden', 'true');
 
-    if (drawer.parentElement !== boardDrawer || drawer.nextElementSibling !== workspace) {
-      workspace.insertAdjacentElement('beforebegin', drawer);
+    if (drawer.parentElement !== workspace) {
+      workspace.insertAdjacentElement('afterbegin', drawer);
     }
     if (panel.dataset.relphiReadingOptionsOpen !== 'true') panel.dataset.relphiReadingOptionsOpen = 'false';
     syncReadingOptionsDrawer(panel);
@@ -952,6 +952,11 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
       if (descriptionLayerFromEvent(event)) event.stopImmediatePropagation();
     }, true);
     document.addEventListener('click', event => {
+      const openOptionsPanel = document.querySelector('#shortListPanel .relphi-reading-options-drawer.is-reading-options-open');
+      if (openOptionsPanel && !event.target.closest?.('#drawingBoardOptionsButton,.relphi-reading-options-drawer')) {
+        const panel = document.getElementById('shortListPanel');
+        if (panel) setReadingOptionsOpen(panel, false);
+      }
       const openHistory = document.querySelector('#shortListPanel .board-history-menu:not([hidden])');
       if (openHistory && !event.target.closest?.('.board-header-group--history')) {
         openHistory.hidden = true;
