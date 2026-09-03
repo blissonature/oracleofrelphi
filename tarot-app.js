@@ -309,7 +309,7 @@
   }
 
   const state = {
-    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: true, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, rowSenseSelections: {}, rowSenseNotes: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#7d1f28', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, rowActiveLayout: null, rowPositionMeta: [], rowLayoutDesignMode: false, rowLayoutLocked: false, rowCenterOpen: false, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
+    mode: 'idle', query: '', selected: null, currentSpread: [], currentSpreadKey: '', chart: {}, currentSky: {}, lastDateField: null, activeCelticCard: null, revealGuideActive: false, revealGuideEnabled: true, crossedLayout: true, positionStickers: true, transitFilters: { aspect:['conjunction','opposition','trine','square','sextile'], house:'all', sign:'all', placement:'all', orb:'3' }, cardFilters: [], shortList: [], shortListUndo: [], shortListRedo: [], shortListSelection: [], shortListSelectMode: false, shortListPositionLabels: [], shortListPositionCardIds: [], rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: true, rowDrawDeck: [], rowDrawDeckSignature: '', rowCardReversals: {}, shortListName: '', shortListNotes: '', rowZoom: 1, rowPanX: 0, rowPanY: 0, rowSnapEnabled: true, rowSnapGrid: 'one-eighth', rowRotationSnapEnabled: true, rowRotationSnapDegrees: 15, rowShuffled: false, rowShuffleCount: 0, resultScale: 'medium', resultZoom: 1, resultLayout: 'auto', resultGlyphsVisible: false, rowEnvelopeLayout: {}, rowCardTransforms: {}, rowTransformTarget: 0, rowEnvelopeColor: '#f3f0ea', rowEnvelopeArt: {}, rowTableColor: '#7d1f28', rowTableImage: '', rowCustomArtTarget: '', customCardArt: {}, rowActiveLayout: null, rowPositionMeta: [], rowLayoutDesignMode: false, rowLayoutLocked: false, rowCenterOpen: false, chartName: '', chartNotes: '', currentSkyName: '', currentSkyNotes: '', skyChartMode: 'single', skyBuilderUiMode: 'wizard', skyCreatorTarget: 'chart', skyCreatorDrawerAutoClosed: false, skyEntrySource: { chart:'', currentSky:'' }, skyEntryMethod: { chart:'', currentSky:'' }, skyEntryPendingSource: { chart:'', currentSky:'' }, skyLibrarySelection: { chart:'', currentSky:'' }, relationshipFilterOpenMenu:'', cardRowBoardOpen: true, cardRowSettingsOpen: false
   };
 
   function escapeHtml(value) {
@@ -502,152 +502,8 @@
   }
   function titleWithBreaksHtml(card) { return escapeHtml(title(card)).replace(/\//g, '/<wbr>'); }
 
-  const CARD_SENSE_DATA = window.RELPHI_CARD_SENSES || { cards: [] };
-  const CARD_SENSE_ID_ALIASES = {
-    princess_of_wands:'page_of_wands',
-    knight_of_wands:'king_of_wands',
-    princess_of_cups:'page_of_cups',
-    knight_of_cups:'king_of_cups',
-    princess_of_swords:'page_of_swords',
-    knight_of_swords:'king_of_swords',
-    princess_of_disks:'page_of_pentacles',
-    queen_of_disks:'queen_of_pentacles',
-    knight_of_disks:'king_of_pentacles',
-    ace_of_disks:'ace_of_pentacles',
-    two_of_disks:'two_of_pentacles',
-    three_of_disks:'three_of_pentacles',
-    four_of_disks:'four_of_pentacles',
-    five_of_disks:'five_of_pentacles',
-    six_of_disks:'six_of_pentacles',
-    seven_of_disks:'seven_of_pentacles',
-    eight_of_disks:'eight_of_pentacles',
-    nine_of_disks:'nine_of_pentacles',
-    ten_of_disks:'ten_of_pentacles'
-  };
-  const CARD_SENSE_INDEX = (() => {
-    const index = new Map();
-    (CARD_SENSE_DATA.cards || []).forEach(item => {
-      if (item?.card_id) index.set(String(item.card_id), item);
-    });
-    Object.entries(CARD_SENSE_ID_ALIASES).forEach(([alias, canonical]) => {
-      if (index.has(canonical)) index.set(alias, index.get(canonical));
-    });
-    return index;
-  })();
-  function cardSenseData(card) {
-    const id = String(card?.card_id || '');
-    if (!id) return null;
-    // Direct card sense entries win. This keeps the Air-rank courts
-    // (RWS Knights / Thoth Princes) separate from the Fire-rank
-    // courts (RWS Kings / Thoth Knights).
-    return CARD_SENSE_INDEX.get(id) || CARD_SENSE_INDEX.get(CARD_SENSE_ID_ALIASES[id]) || null;
-  }
-  function cardSenseChoices(card) {
-    const data = cardSenseData(card);
-    const senses = Array.isArray(data?.senses) ? data.senses.filter(sense => sense && (sense.label || sense.panel_phrase || sense.key)) : [];
-    const seen = new Set();
-    return senses.filter(sense => {
-      const key = String(sense.key || sense.label || sense.panel_phrase || '').trim().toLowerCase();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-  function rowSenseKey(index, cardId) {
-    return `${Math.max(0, Number(index) || 0)}:${String(cardId || '')}`;
-  }
-  function rowSelectedSenseKey(index, card) {
-    const data = cardSenseData(card);
-    if (!data) return '';
-    return state.rowSenseSelections?.[rowSenseKey(index, card.card_id)] || '';
-  }
-  function rowSenseValueForStorage(index, card) {
-    return String(state.rowSenseSelections?.[rowSenseKey(index, card?.card_id)] || '').trim();
-  }
-  function findSenseByInputValue(card, value) {
-    const data = cardSenseData(card);
-    const input = String(value || '').trim();
-    if (!data || !input) return null;
-    const fold = text => String(text || '').trim().toLowerCase();
-    return cardSenseChoices(card).find(sense => [sense.key, sense.label, sense.panel_phrase, sense.relationship_phrase].some(part => fold(part) === fold(input))) || null;
-  }
-  function rowSelectedSense(index, card) {
-    const data = cardSenseData(card);
-    if (!data) return null;
-    const stored = rowSenseValueForStorage(index, card);
-    const key = rowSelectedSenseKey(index, card);
-    const choices = cardSenseChoices(card);
-    const sense = choices.find(item => item.key === key) || findSenseByInputValue(card, stored);
-    if (sense) return sense;
-    if (stored) return { key:stored, label:stored, panel_phrase:stored, relationship_phrase:stored, custom:true };
-    return null;
-  }
-  function rowSenseNote(index, card) {
-    return String(state.rowSenseNotes?.[rowSenseKey(index, card?.card_id)] || '').slice(0, 240);
-  }
-  function rowSenseInputValue(index, card) {
-    const stored = rowSenseValueForStorage(index, card);
-    const data = cardSenseData(card);
-    const storedSense = findSenseByInputValue(card, stored) || cardSenseChoices(card).find(sense => sense.key === stored);
-    if (stored && !storedSense) return stored;
-    if (storedSense) return storedSense.label || storedSense.panel_phrase || stored;
-    return stored || '';
-  }
-  function storeRowSenseInput(index, cardId, value) {
-    const card = cardById(cardId) || (state.shortList?.[index] ? cardById(state.shortList[index]) : null);
-    const data = cardSenseData(card);
-    const raw = String(value || '').trim().slice(0, 160);
-    state.rowSenseSelections ||= {};
-    const key = rowSenseKey(index, cardId || card?.card_id || '');
-    if (!raw) {
-      delete state.rowSenseSelections[key];
-      return;
-    }
-    const sense = findSenseByInputValue(card, raw) || cardSenseChoices(card).find(item => item.key === raw);
-    state.rowSenseSelections[key] = sense?.key || raw;
-  }
-  function currentStickerPresetByLabels() {
-    const labels = (state.shortListPositionLabels || []).map(label => String(label || '').trim().toLowerCase());
-    if (!labels.length) return null;
-    return STICKER_PRESETS.find(preset => {
-      const presetLabels = (preset.labels || []).map(label => String(label || '').trim().toLowerCase());
-      return presetLabels.length === labels.length && presetLabels.every((label, index) => label === labels[index]);
-    }) || null;
-  }
-  function rowSenseDomain() {
-    const preset = currentStickerPresetByLabels();
-    return preset?.group === 'Relationship' ? 'relationship' : 'general';
-  }
-  function rowSensePhrase(index, card) {
-    const sense = rowSelectedSense(index, card);
-    if (!sense) return '';
-    if (rowSenseDomain() === 'relationship' && sense.relationship_phrase) return sense.relationship_phrase;
-    return sense.panel_phrase || sense.label || '';
-  }
-  function rowSenseSummary(index, card) {
-    const sense = rowSelectedSense(index, card);
-    const phrase = rowSensePhrase(index, card);
-    const note = rowSenseNote(index, card);
-    const pieces = [];
-    const fold = value => String(value || '').trim().toLowerCase();
-    if (sense?.label) pieces.push(sense.label);
-    if (phrase && fold(phrase) !== fold(sense?.label)) pieces.push(phrase);
-    if (note) pieces.push(`Note: ${note}`);
-    return pieces.join(' — ');
-  }
   function rowCardInterpretation(card, index = 0) {
     return layerInterpretationForOrientation(card, rowCardIsReversed(index));
-  }
-  function cardSensePanelHtml(card, index) {
-    const data = cardSenseData(card);
-    const choices = cardSenseChoices(card);
-    if (!data || choices.length < 2) return '';
-    const inputValue = rowSenseInputValue(index, card);
-    const optionsId = `card-row-sense-options-${index}-${String(card.card_id || '').replace(/[^a-z0-9_-]/gi, '-')}`;
-    const options = choices.map(sense => `<option value="${escapeHtml(sense.label || sense.panel_phrase || sense.key)}"></option>`).join('');
-    const prompt = data.panel_prompt || 'Select a sense';
-    const domainClass = rowSenseDomain() === 'relationship' ? ' is-relationship-sense' : '';
-    return `<div class="card-row-sense-panel${domainClass}" data-row-sense-panel="${index}" aria-label="${escapeHtml(prompt)} for ${escapeHtml(title(card))}"><label><span>${escapeHtml(prompt)}</span><input class="card-row-sense-input" type="text" list="${escapeHtml(optionsId)}" data-row-sense-input="${index}" data-row-sense-card-id="${escapeHtml(card.card_id)}" value="${escapeHtml(inputValue)}" placeholder="Choose or type…" autocomplete="off" aria-label="${escapeHtml(prompt)} for ${escapeHtml(title(card))}"><datalist id="${escapeHtml(optionsId)}">${options}</datalist></label></div>`;
   }
   function thothTitle(card) { return card?.systems?.thoth?.display_name || card?.name || ''; }
   function cardById(id) { return cards.find(card => card.card_id === id) || null; }
@@ -929,8 +785,6 @@
       rowDrawDeck: (state.rowDrawDeck || []).slice(),
       rowDrawDeckSignature: String(state.rowDrawDeckSignature || ''),
       rowCardReversals: { ...(state.rowCardReversals || {}) },
-      rowSenseSelections: { ...(state.rowSenseSelections || {}) },
-      rowSenseNotes: { ...(state.rowSenseNotes || {}) },
       rowZoom: Number(state.rowZoom) || 1,
       rowPanX: Number(state.rowPanX) || 0,
       rowPanY: Number(state.rowPanY) || 0,
@@ -990,8 +844,6 @@
     state.rowLayoutDesignMode = !!snapshot.rowLayoutDesignMode && !(state.shortList || []).length;
     state.rowLayoutLocked = !!snapshot.rowLayoutLocked || !!(state.shortList || []).length;
     state.rowCenterOpen = false;
-    state.rowSenseSelections = { ...(snapshot.rowSenseSelections || {}) };
-    state.rowSenseNotes = { ...(snapshot.rowSenseNotes || {}) };
     state.rowTransformTarget = Number(snapshot.rowTransformTarget) || 0;
     if (has('rowZoom')) state.rowZoom = Math.max(.25, Math.min(4, Number(snapshot.rowZoom) || 1));
     if (has('rowPanX')) state.rowPanX = Number(snapshot.rowPanX) || 0;
@@ -1032,7 +884,6 @@
       Object.keys(snapshot.rowEnvelopeLayout || {}).length ||
       Object.keys(snapshot.rowCardTransforms || {}).length ||
       !!snapshot.rowActiveLayout ||
-      Object.keys(snapshot.rowSenseNotes || {}).length ||
       String(snapshot.rowTableImage || '') ||
       Object.keys(snapshot.rowEnvelopeArt || {}).length ||
       Object.keys(snapshot.customCardArt || {}).length
@@ -1168,8 +1019,6 @@
   }
   function clearShortListCardsOnlyNative() {
     if (!(state.shortList || []).length) return;
-    state.rowSenseSelections = {};
-    state.rowSenseNotes = {};
     commitShortList([]);
   }
 
@@ -1244,10 +1093,8 @@
       customCardArtIds: [],
       layout: state.rowEnvelopeLayout || {},
       transforms: state.rowCardTransforms || {},
-      senseSelections: state.rowSenseSelections || {},
-      senseNotes: state.rowSenseNotes || {},
       stats: rowStats(active),
-      cards: active.map((card, i) => ({ position: state.shortListPositionLabels[i] || String(i+1), positionStickerCardId: state.shortListPositionCardIds?.[i] || '', cardId: card.card_id, title: title(card), reversed: rowCardIsReversed(i), orientation: rowCardIsReversed(i) ? 'reversed' : 'upright', transform: rowCardTransform(i), selectedSenseKey: rowSelectedSenseKey(i, card), selectedSenseLabel: rowSelectedSense(i, card)?.label || '', selectedSensePhrase: rowSensePhrase(i, card), senseNote: rowSenseNote(i, card), interpretation: rowCardInterpretation(card, i) }))
+      cards: active.map((card, i) => ({ position: state.shortListPositionLabels[i] || String(i+1), positionStickerCardId: state.shortListPositionCardIds?.[i] || '', cardId: card.card_id, title: title(card), reversed: rowCardIsReversed(i), orientation: rowCardIsReversed(i) ? 'reversed' : 'upright', transform: rowCardTransform(i), interpretation: rowCardInterpretation(card, i) }))
     };
   }
 
@@ -1296,18 +1143,6 @@
     return '';
   }
 
-  function cleanSenseExportLine(c) {
-    const fold = value => String(value || '').trim().toLowerCase();
-    const label = String(c.selectedSenseLabel || '').trim();
-    const phrase = String(c.selectedSensePhrase || '').trim();
-    const note = String(c.senseNote || '').trim();
-    const parts = [];
-    if (label) parts.push(label);
-    if (phrase && fold(phrase) !== fold(label)) parts.push(phrase);
-    if (note) parts.push(`Note: ${note}`);
-    return parts.join(' — ');
-  }
-
   async function downloadShortListHtml() {
     return downloadShortListReadingHtml({ includeArt: true });
   }
@@ -1327,14 +1162,10 @@
     const positionClass = value => positionLengthClass(value) ? ' ' + positionLengthClass(value) : '';
     const orientationMethod = rowOrientationMethodText();
     const titleLine = c => `${escapeHtml(c.title)}${c.reversed ? ' · reversed' : ''}`;
-    const senseLine = c => {
-      const sense = cleanSenseExportLine(c);
-      return sense ? `<p class="sense-line"><strong>Sense:</strong> ${escapeHtml(sense)}</p>` : '';
-    };
     const reverseLine = c => c.reversed ? `<p class="orientation-note"><strong>Reversed:</strong> ${escapeHtml(orientationMethod)}</p>` : '';
     const interpretationLine = c => `<p class="relphi-definition">${escapeHtml(c.interpretation || '')}</p>`;
-    const cardsHtml = data.cards.map((c, i) => `<article class="export-card${c.reversed ? ' is-reversed' : ''}${includeArt ? '' : ' export-card-text-only'}"><div class="export-position${positionClass(c.position)}"><strong>${escapeHtml(c.position || ('Position ' + (i + 1)))}</strong></div>${includeArt ? `<img class="export-card-art${c.reversed ? ' is-reversed' : ''}" src="${imageSources[i] || ''}" alt="${escapeHtml(c.title)} card art${c.reversed ? ', reversed' : ''}">` : ''}<h2>${titleLine(c)}</h2>${reverseLine(c)}${senseLine(c)}${interpretationLine(c)}</article>`).join('');
-    const style = `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&display=swap');body{font-family:'Montserrat',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:${includeArt ? '1120' : '860'}px;margin:40px auto;line-height:1.52;background:#fffaf0;color:#111;padding:0 1rem}h1{font-family:'Montserrat',system-ui,sans-serif;letter-spacing:.04em}.meta{border:1px solid rgba(220,31,24,.45);border-radius:18px;padding:1rem;margin:1rem 0;background:#fffdf8}.stamp{font-size:.9rem;color:#666}.card-grid{display:grid;grid-template-columns:${includeArt ? 'repeat(auto-fill,minmax(180px,205px))' : '1fr'};justify-content:start;align-items:start;gap:1.1rem;margin:1.2rem 0}.export-card{border:1px solid rgba(17,17,17,.82);border-radius:14px;padding:.8rem;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.07);max-width:${includeArt ? '205px' : 'none'}}.export-card-text-only{max-width:none}.export-card.is-reversed{border-width:2px}.export-position{font-weight:800;margin-bottom:.55rem;border:1px solid rgba(17,17,17,.22);border-radius:10px;background:#fffaf0;padding:.42rem .55rem;min-height:2.4rem;display:grid;place-items:center;text-align:center;box-sizing:border-box;line-height:1.15}.export-position.is-md{font-size:.82rem}.export-position.is-sm{font-size:.72rem}.export-position.is-xs{font-size:.62rem;line-height:1.02}.export-card img{display:block;width:100%;max-width:172px;max-height:295px;margin:0 auto;border-radius:10px;border:1px solid #222;object-fit:contain}.export-card img.is-reversed{transform:rotate(180deg)}.export-card h2{font-size:1.05rem;margin:.6rem 0 .3rem;text-transform:capitalize}.export-card p{font-size:.95rem}.orientation-note{border-left:3px solid #111;padding-left:.55rem;background:#fffaf0}.sense-line{border:1px solid rgba(17,17,17,.18);border-radius:10px;padding:.45rem;background:#fffaf0;font-size:.88rem}.relphi-definition{margin:.55rem 0 0}`;
+    const cardsHtml = data.cards.map((c, i) => `<article class="export-card${c.reversed ? ' is-reversed' : ''}${includeArt ? '' : ' export-card-text-only'}"><div class="export-position${positionClass(c.position)}"><strong>${escapeHtml(c.position || ('Position ' + (i + 1)))}</strong></div>${includeArt ? `<img class="export-card-art${c.reversed ? ' is-reversed' : ''}" src="${imageSources[i] || ''}" alt="${escapeHtml(c.title)} card art${c.reversed ? ', reversed' : ''}">` : ''}<h2>${titleLine(c)}</h2>${reverseLine(c)}${interpretationLine(c)}</article>`).join('');
+    const style = `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&display=swap');body{font-family:'Montserrat',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:${includeArt ? '1120' : '860'}px;margin:40px auto;line-height:1.52;background:#fffaf0;color:#111;padding:0 1rem}h1{font-family:'Montserrat',system-ui,sans-serif;letter-spacing:.04em}.meta{border:1px solid rgba(220,31,24,.45);border-radius:18px;padding:1rem;margin:1rem 0;background:#fffdf8}.stamp{font-size:.9rem;color:#666}.card-grid{display:grid;grid-template-columns:${includeArt ? 'repeat(auto-fill,minmax(180px,205px))' : '1fr'};justify-content:start;align-items:start;gap:1.1rem;margin:1.2rem 0}.export-card{border:1px solid rgba(17,17,17,.82);border-radius:14px;padding:.8rem;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.07);max-width:${includeArt ? '205px' : 'none'}}.export-card-text-only{max-width:none}.export-card.is-reversed{border-width:2px}.export-position{font-weight:800;margin-bottom:.55rem;border:1px solid rgba(17,17,17,.22);border-radius:10px;background:#fffaf0;padding:.42rem .55rem;min-height:2.4rem;display:grid;place-items:center;text-align:center;box-sizing:border-box;line-height:1.15}.export-position.is-md{font-size:.82rem}.export-position.is-sm{font-size:.72rem}.export-position.is-xs{font-size:.62rem;line-height:1.02}.export-card img{display:block;width:100%;max-width:172px;max-height:295px;margin:0 auto;border-radius:10px;border:1px solid #222;object-fit:contain}.export-card img.is-reversed{transform:rotate(180deg)}.export-card h2{font-size:1.05rem;margin:.6rem 0 .3rem;text-transform:capitalize}.export-card p{font-size:.95rem}.orientation-note{border-left:3px solid #111;padding-left:.55rem;background:#fffaf0}.relphi-definition{margin:.55rem 0 0}`;
     const fileSuffix = includeArt ? 'with-art' : 'text-only';
     download(`drawing-board-${fileSuffix}-${createdSlug}.html`, `<!doctype html><html><head><meta charset="utf-8"><title>Drawing Board</title><style>${style}</style></head><body><h1>Drawing Board</h1><div class="meta">${data.name ? `<p><strong>${escapeHtml(data.name)}</strong></p>` : ''}<p>${escapeHtml(data.scope)} · ${data.count} cards</p><p class="stamp">Created ${escapeHtml(createdLabel)}</p>${data.notes ? `<p><strong>Notes:</strong> ${escapeHtml(data.notes)}</p>` : ''}</div><section class="card-grid">${cardsHtml}</section></body></html>`, 'text/html');
   }
@@ -2412,7 +2243,7 @@
     const reverseLabel = reversed ? 'Set card upright' : 'Reverse card';
     const reverseButton = `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>`;
     const transformHandles = `<span class="card-row-transform-box" aria-hidden="true"><span class="card-row-scale-handle card-row-scale-handle--nw" data-row-transform-handle="scale" data-corner="nw"></span><span class="card-row-rotate-handle card-row-rotate-handle--ne" data-row-transform-handle="rotate" data-corner="ne"></span><span class="card-row-scale-handle card-row-scale-handle--sw" data-row-transform-handle="scale" data-corner="sw"></span><span class="card-row-scale-handle card-row-scale-handle--se" data-row-transform-handle="scale" data-corner="se"></span></span>`;
-    return `<div class="card-row-item${selected ? ' is-row-selected' : ''}${transformTarget ? ' is-transform-target' : ''}${miniDescription ? ' is-description-mini' : ''}${reversed ? ' is-row-reversed' : ''}" data-row-index="${index}" style="${cardRowItemStyle(index)}">${panel}<div class="card-row-card-wrap">${cardHtml}${reverseButton}${transformHandles}</div>${cardSensePanelHtml(card, index)}</div>`;
+    return `<div class="card-row-item${selected ? ' is-row-selected' : ''}${transformTarget ? ' is-transform-target' : ''}${miniDescription ? ' is-description-mini' : ''}${reversed ? ' is-row-reversed' : ''}" data-row-index="${index}" style="${cardRowItemStyle(index)}">${panel}<div class="card-row-card-wrap">${cardHtml}${reverseButton}${transformHandles}</div></div>`;
   }
 
   function bindCardRowDirectTransform(wrap) {
@@ -2553,8 +2384,6 @@
       state.shortListPositionLabels = [];
       state.shortListPositionCardIds = [];
       state.rowCardReversals = {};
-      state.rowSenseSelections = {};
-      state.rowSenseNotes = {};
       state.rowEnvelopeLayout = {};
       state.rowCardTransforms = {};
       state.rowActiveLayout = null;
@@ -2711,36 +2540,9 @@
     const reversals = $('rowAllowReversals'); if (reversals) reversals.addEventListener('change', () => { state.rowAllowReversals = reversals.checked; resetRowDrawDeck(); renderShortList(); });
     const quickReversals = $('rowAllowReversalsQuick'); if (quickReversals) quickReversals.addEventListener('change', () => { state.rowAllowReversals = quickReversals.checked; resetRowDrawDeck(); renderShortList(); });
     qsa('[data-row-reverse]', wrap).forEach(button => button.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); toggleRowCardReversal(button.dataset.rowReverse); }));
-    qsa('[data-row-sense-input]', wrap).forEach(input => {
-      const syncPhrase = () => {
-        const index = Number(input.dataset.rowSenseInput) || 0;
-        const cardId = input.dataset.rowSenseCardId || state.shortList[index] || '';
-        storeRowSenseInput(index, cardId, input.value);
-        const card = cardById(cardId);
-        const phrase = wrap.querySelector(`[data-row-sense-phrase="${index}"]`);
-        if (phrase && card) phrase.textContent = rowSensePhrase(index, card);
-      };
-      ['pointerdown','click','mousedown','mouseup','keydown','touchstart'].forEach(type => input.addEventListener(type, event => event.stopPropagation()));
-      input.addEventListener('input', syncPhrase);
-      input.addEventListener('change', event => { event.preventDefault(); event.stopPropagation(); syncPhrase(); renderShortList(); });
-    });
-    qsa('[data-row-sense-choice]', wrap).forEach(button => {
-      ['pointerdown','click','mousedown','mouseup','keydown','touchstart'].forEach(type => button.addEventListener(type, event => event.stopPropagation()));
-      button.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        const index = Number(button.dataset.rowSenseChoice) || 0;
-        const cardId = button.dataset.rowSenseCardId || state.shortList[index] || '';
-        const value = button.dataset.rowSenseValue || button.textContent || '';
-        storeRowSenseInput(index, cardId, value);
-        const input = wrap.querySelector(`[data-row-sense-input="${index}"]`);
-        if (input) input.value = value;
-        renderShortList();
-      });
-    });
     qsa('[data-row-card]', wrap).forEach(cardEl => {
       cardEl.addEventListener('click', event => {
-        if (event.target.closest('[data-shortlist], [data-filter], .card-row-sense-panel, [data-row-transform-handle], [data-row-reverse]')) return;
+        if (event.target.closest('[data-shortlist], [data-filter], [data-row-transform-handle], [data-row-reverse]')) return;
         const rowItem = cardEl.closest('.card-row-item[data-row-index]');
         if (rowItem && cardEl.closest('.card-row-board')) {
           event.preventDefault();
