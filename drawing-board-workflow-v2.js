@@ -584,32 +584,12 @@
     panel.dataset.relphiReadingOptionsOpen = open ? 'true' : 'false';
     if (mode) panel.dataset.relphiReadingOptionsMode = mode;
     drawer.classList.toggle('is-reading-options-open', !!open);
-    const trigger = panel.querySelector('#drawingBoardSetupButton');
+    const trigger = panel.querySelector('#drawingBoardOptionsButton');
     if (trigger) {
       trigger.setAttribute('aria-expanded', String(!!open));
       trigger.classList.toggle('is-active', !!open);
-      trigger.title = open ? 'Hide labels and templates' : 'Open labels and templates';
+      trigger.title = open ? 'Hide Options' : 'Open Options';
     }
-    if (open) {
-      const popover = panel.querySelector('#drawingBoardOptionsPopover');
-      const options = panel.querySelector('#drawingBoardOptionsButton');
-      if (popover) popover.hidden = true;
-      if (options) {
-        options.setAttribute('aria-expanded', 'false');
-        options.classList.remove('is-active');
-      }
-    }
-  }
-
-  function setCompactOptionsOpen(panel, open) {
-    const popover = panel.querySelector('#drawingBoardOptionsPopover');
-    const button = panel.querySelector('#drawingBoardOptionsButton');
-    if (!popover || !button) return;
-    popover.hidden = !open;
-    button.setAttribute('aria-expanded', String(!!open));
-    button.classList.toggle('is-active', !!open);
-    button.title = open ? 'Hide Options' : 'Open Options';
-    if (open) setReadingOptionsOpen(panel, false, 'closed');
   }
 
   function syncReadingOptionsDrawer(panel) {
@@ -670,96 +650,38 @@
       });
     }
 
-    const clearCards = panel.querySelector('#clearShortListCardsOnly');
-    const anchor = clearCards || reset;
-    let wrap = panel.querySelector('.drawing-board-settings-wrap');
-    if (!wrap) {
-      wrap = document.createElement('span');
-      wrap.className = 'drawing-board-settings-wrap';
-    }
-    if (wrap.parentElement !== anchor.parentElement || wrap.nextElementSibling !== anchor) {
-      anchor.insertAdjacentElement('beforebegin', wrap);
-    }
-
-    let setup = panel.querySelector('#drawingBoardSetupButton');
-    if (!setup) {
-      setup = document.createElement('button');
-      setup.type = 'button';
-      setup.id = 'drawingBoardSetupButton';
-      setup.textContent = 'Setup';
-      setup.title = 'Labels and templates';
-      setup.setAttribute('aria-controls', 'drawingBoardReadingOptions');
-      setup.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
-        setReadingOptionsOpen(panel, opening, opening ? 'manual' : 'closed');
-      });
-      wrap.appendChild(setup);
-    }
-
     let button = panel.querySelector('#drawingBoardOptionsButton');
     if (!button) {
       button = document.createElement('button');
       button.type = 'button';
       button.id = 'drawingBoardOptionsButton';
       button.textContent = 'Options';
-      button.setAttribute('aria-controls', 'drawingBoardOptionsPopover');
+      button.setAttribute('aria-controls', 'drawingBoardReadingOptions');
       button.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        const popover = panel.querySelector('#drawingBoardOptionsPopover');
-        setCompactOptionsOpen(panel, !!popover?.hidden);
+        const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
+        setReadingOptionsOpen(panel, opening, opening ? 'manual' : 'closed');
       });
-      wrap.appendChild(button);
     }
 
-    let popover = panel.querySelector('#drawingBoardOptionsPopover');
-    if (!popover) {
-      popover = document.createElement('span');
-      popover.id = 'drawingBoardOptionsPopover';
-      popover.className = 'drawing-board-options-popover';
-      popover.setAttribute('role', 'group');
-      popover.setAttribute('aria-label', 'Drawing Board options');
-      popover.hidden = true;
-      wrap.appendChild(popover);
-    }
-
-    const toggles = [
-      panel.querySelector('#rowAllowReversalsQuick')?.closest('label'),
-      panel.querySelector('#rowAllowRepeats')?.closest('label'),
-      panel.querySelector('#rowPositionStickersQuick')?.closest('label')
-    ].filter(Boolean);
-    toggles.forEach(label => popover.appendChild(label));
-    panel.querySelectorAll('.board-reading-toggle-stack').forEach(stack => {
-      if (!stack.children.length) stack.remove();
+    panel.querySelector('#drawingBoardSetupButton')?.remove();
+    panel.querySelector('#drawingBoardOptionsPopover')?.remove();
+    panel.querySelectorAll('.drawing-board-settings-wrap').forEach(wrap => {
+      if (wrap.contains(button)) wrap.replaceWith(button);
+      else wrap.remove();
     });
 
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (drawer) drawer.id = 'drawingBoardReadingOptions';
-    setup.setAttribute('aria-expanded', String(panel.dataset.relphiReadingOptionsOpen === 'true'));
-    setup.classList.toggle('is-active', panel.dataset.relphiReadingOptionsOpen === 'true');
-    if (popover.hidden) {
-      button.setAttribute('aria-expanded', 'false');
-      button.classList.remove('is-active');
-    }
 
-    if (document.documentElement.dataset.relphiCompactOptionsOutsideBound !== 'true') {
-      document.documentElement.dataset.relphiCompactOptionsOutsideBound = 'true';
-      document.addEventListener('click', event => {
-        if (event.target.closest?.('.drawing-board-settings-wrap')) return;
-        const livePanel = document.getElementById('shortListPanel');
-        if (livePanel) setCompactOptionsOpen(livePanel, false);
-      });
+    const clearCards = panel.querySelector('#clearRowCardsOnly') || panel.querySelector('#clearShortListCardsOnly');
+    const anchor = clearCards || reset;
+    if (button.parentElement !== anchor.parentElement || button.nextElementSibling !== anchor) {
+      anchor.insertAdjacentElement('beforebegin', button);
     }
-    if (wrap.dataset.relphiEscapeBound !== 'true') {
-      wrap.dataset.relphiEscapeBound = 'true';
-      wrap.addEventListener('keydown', event => {
-        if (event.key !== 'Escape') return;
-        setCompactOptionsOpen(panel, false);
-        button.focus();
-      });
-    }
+    button.setAttribute('aria-expanded', String(panel.dataset.relphiReadingOptionsOpen === 'true'));
+    button.classList.toggle('is-active', panel.dataset.relphiReadingOptionsOpen === 'true');
   }
 
   function organizeBoardOptions(panel) {
@@ -793,10 +715,15 @@
     const spreadSetup = setupGroup(setup, 'spread', 'What would you like to know?', '');
 
     move(spreadSetup, control('rowPositionLabels'));
+
+    const drawSettingsRow = document.createElement('div');
+    drawSettingsRow.className = 'board-draw-settings-row';
+    spreadSetup.appendChild(drawSettingsRow);
+
     const packControl = control('rowDrawScope');
     if (packControl) {
-      packControl.classList.add('relphi-fixed-full-pack');
-      move(spreadSetup, packControl);
+      packControl.classList.remove('relphi-fixed-full-pack');
+      move(drawSettingsRow, packControl);
     }
 
     const toggleStack = document.createElement('div');
@@ -816,7 +743,7 @@
     if (reversalsToggle) toggleStack.appendChild(reversalsToggle);
     if (repeatsToggle) toggleStack.appendChild(repeatsToggle);
     if (stickerToggle) toggleStack.appendChild(stickerToggle);
-    spreadSetup.appendChild(toggleStack);
+    drawSettingsRow.appendChild(toggleStack);
 
     const boardDrawer = panel.querySelector('.card-row-drawing-board');
     const workspace = panel.querySelector('.card-row-workspace');
@@ -1072,18 +999,19 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     ].join('');
     style.textContent += 'html body #shortListPanel .board-reading-toggle-stack{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.35rem!important;width:100%!important;margin:.1rem 0 0!important}html body #shortListPanel .board-reading-toggle-stack>label{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:.45rem!important;min-height:2.1rem!important;margin:0!important;padding:.38rem .5rem!important;border:1px solid #d8cec5!important;border-radius:7px!important;background:#fff!important;font-size:.78rem!important;font-weight:800!important;line-height:1!important;box-sizing:border-box!important}html body #shortListPanel .board-reading-toggle-stack>label input[type="checkbox"]{flex:0 0 auto!important;width:1rem!important;height:1rem!important;margin:0!important}html body #shortListPanel .board-reading-toggle-stack>label::after{content:none!important;display:none!important}@media(max-width:520px){html body #shortListPanel .board-reading-toggle-stack{grid-template-columns:1fr!important}}';
     style.textContent += [
-      'html body #shortListPanel .drawing-board-settings-wrap{position:relative!important;display:inline-flex!important;align-items:center!important;gap:.35rem!important;margin:0!important;padding:0!important;vertical-align:middle!important}',
-      'html body #shortListPanel #drawingBoardSetupButton,html body #shortListPanel #drawingBoardOptionsButton{min-height:2.2rem!important;margin:0!important;padding:.42rem .7rem!important;border:1px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.78rem!important;font-weight:850!important;line-height:1!important;box-shadow:none!important}',
-      'html body #shortListPanel #drawingBoardSetupButton.is-active,html body #shortListPanel #drawingBoardOptionsButton.is-active{border-color:#171412!important;background:#f1ece6!important}',
-      'html body #shortListPanel .drawing-board-options-popover{position:absolute!important;right:0!important;top:calc(100% + .35rem)!important;z-index:2300!important;display:grid!important;grid-template-columns:repeat(3,max-content)!important;gap:.3rem!important;width:max-content!important;max-width:min(28rem,calc(100vw - 2rem))!important;margin:0!important;padding:.38rem!important;border:1px solid #cfc5bc!important;border-radius:9px!important;background:#fffaf4!important;box-shadow:0 10px 24px rgba(30,20,15,.16)!important}',
-      'html body #shortListPanel .drawing-board-options-popover[hidden]{display:none!important}',
-      'html body #shortListPanel .drawing-board-options-popover>label{display:flex!important;align-items:center!important;gap:.4rem!important;min-width:0!important;min-height:2rem!important;margin:0!important;padding:.32rem .48rem!important;border:1px solid #ded5cd!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font-size:.76rem!important;font-weight:800!important;line-height:1!important;white-space:nowrap!important;box-sizing:border-box!important}',
-      'html body #shortListPanel .drawing-board-options-popover>label input[type="checkbox"]{width:1rem!important;height:1rem!important;margin:0!important;accent-color:#111!important}',
-      'html body #shortListPanel .drawing-board-options-popover>label::after{content:none!important;display:none!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer:not(.is-reading-options-open){display:none!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer>summary{display:none!important}',
-      '@media(max-width:560px){html body #shortListPanel .drawing-board-options-popover{grid-template-columns:1fr!important;right:auto!important;left:0!important;width:10.5rem!important}}'
+      'html body #shortListPanel #drawingBoardOptionsButton{min-height:2.2rem!important;margin:0!important;padding:.42rem .72rem!important;border:1px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.78rem!important;font-weight:850!important;line-height:1!important;box-shadow:none!important}',
+      'html body #shortListPanel #drawingBoardOptionsButton.is-active{border-color:#171412!important;background:#f1ece6!important}',
+      'html body #shortListPanel .relphi-fixed-full-pack{display:block!important}',
+      'html body #shortListPanel .board-draw-settings-row{display:grid!important;grid-template-columns:minmax(10rem,1.15fr) minmax(18rem,2.85fr)!important;gap:.4rem!important;align-items:end!important;width:100%!important;margin:.05rem 0 0!important}',
+      'html body #shortListPanel .board-draw-settings-row>.card-row-draw-scope-label{width:100%!important;margin:0!important}',
+      'html body #shortListPanel .board-draw-settings-row .board-reading-toggle-stack{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:.35rem!important;width:100%!important;margin:0!important}',
+      'html body #shortListPanel .board-draw-settings-row .board-reading-toggle-stack>label{display:flex!important;align-items:center!important;gap:.42rem!important;min-height:2.35rem!important;margin:0!important;padding:.38rem .5rem!important;border:1px solid #d8cec5!important;border-radius:7px!important;background:#fff!important;font-size:.78rem!important;font-weight:800!important;line-height:1!important;box-sizing:border-box!important}',
+      'html body #shortListPanel .board-draw-settings-row .board-reading-toggle-stack>label input[type="checkbox"]{width:1rem!important;height:1rem!important;margin:0!important;accent-color:#111!important}',
+      'html body #shortListPanel .board-draw-settings-row .board-reading-toggle-stack>label::after{content:none!important;display:none!important}',
+      '@media(max-width:720px){html body #shortListPanel .board-draw-settings-row{grid-template-columns:1fr!important}html body #shortListPanel .board-draw-settings-row .board-reading-toggle-stack{grid-template-columns:repeat(3,minmax(0,1fr))!important}}',
+      '@media(max-width:520px){html body #shortListPanel .board-draw-settings-row .board-reading-toggle-stack{grid-template-columns:1fr!important}}'
     ].join('');
+    style.textContent += 'html body #shortListPanel .card-row-drawing-board:not([open])>summary .card-row-icon-toolbar,html body #shortListPanel .card-row-drawing-board:not([open])>summary button,html body #shortListPanel .card-row-drawing-board:not([open])>summary label{display:none!important}';
     document.head.appendChild(style);
     setArrivalState();
     new MutationObserver(records => {
