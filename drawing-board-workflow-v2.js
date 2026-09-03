@@ -528,6 +528,32 @@
       workspace.insertBefore(primaryActions, workspace.firstChild);
     }
     if (primaryActions) {
+      let clearCards = panel.querySelector('#clearRowCardsOnly');
+      if (!clearCards) {
+        clearCards = document.createElement('button');
+        clearCards.type = 'button';
+        clearCards.id = 'clearRowCardsOnly';
+        clearCards.textContent = 'Clear Cards';
+        clearCards.title = 'Remove drawn cards but keep the spread and board layout';
+        clearCards.setAttribute('aria-label','Clear cards and keep the board layout');
+        clearCards.addEventListener('click', event => {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          const removeNext = () => {
+            const currentPanel = document.getElementById('shortListPanel');
+            const remove = currentPanel?.querySelector('.card-row-board [data-shortlist][aria-pressed="true"]');
+            if (!remove) {
+              scheduleEnhance();
+              return;
+            }
+            remove.click();
+            window.setTimeout(removeNext, 30);
+          };
+          removeNext();
+        }, true);
+      }
+      const hasCards = !!panel.querySelector('.card-row-board [data-row-card]');
+      clearCards.disabled = !hasCards;
       ['undoShortList','redoShortList','drawRandomRowCard','addCardPlaceholder','clearRowCardsOnly'].forEach(id => {
         const button = panel.querySelector('#' + id);
         if (button) primaryActions.appendChild(button);
