@@ -921,7 +921,14 @@
       banner.className = 'relphi-layout-status';
       workspace.insertBefore(banner, workspace.firstChild);
     }
-    const bannerHtml = '<strong>Designing Spread Template — card drawing is unavailable</strong><span>Move, rotate, label, add, or remove placeholders. Finish in Board Options.</span><div><button type="button" data-design-action="remove"' + (state.slotCount < 2 ? ' disabled' : '') + '>Remove selected position</button></div>';
+    const bannerHtml = '<strong>Editing Spread Template</strong><span>' +
+      (state.hasCards
+        ? 'Move, rotate, or relabel positions. Save clears this reading; Cancel restores it.'
+        : 'Move, rotate, label, add, or remove placeholders. Save or Cancel in Board Options.') +
+      '</span><div><button type="button" data-design-action="remove"' +
+      (state.slotCount < 2 || state.hasCards ? ' disabled' : '') +
+      (state.hasCards ? ' title="Remove positions after clearing the active reading"' : '') +
+      '>Remove selected position</button></div>';
     if (banner.innerHTML !== bannerHtml) {
       banner.innerHTML = bannerHtml;
       banner.querySelector('[data-design-action="remove"]')?.addEventListener('click', () => bridge()?.removePosition(state.transformTarget));
