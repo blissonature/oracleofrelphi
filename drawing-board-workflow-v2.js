@@ -556,6 +556,16 @@
   function installOptionsButton(panel) {
     const reset = panel.querySelector('#clearShortList');
     if (!reset) return;
+    if (reset.dataset.relphiTextureResetBound !== 'true') {
+      reset.dataset.relphiTextureResetBound = 'true';
+      reset.addEventListener('click', () => {
+        window.setTimeout(() => {
+          if (!readingOptionsResetState(panel)) return;
+          setBoardTexture(DEFAULT_BOARD_TEXTURE);
+          applyBoardTexture(panel);
+        }, 0);
+      });
+    }
     let button = panel.querySelector('#drawingBoardOptionsButton');
     if (!button) {
       button = document.createElement('button');
