@@ -89,6 +89,11 @@ assert.equal(celtic10.positions.find(item => item.id === 'before').transform.x, 
 assert.equal(celtic11.positions.find(item => item.id === 'behind').transform.x, .03);
 assert.equal(celtic11.positions.find(item => item.id === 'before').transform.x, .57);
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').transform.rotation, 90);
+assert.deepEqual(
+  Array.from(celtic10.positions.slice(6).map(item => [item.transform.x, item.transform.y])),
+  [[.76,.62],[.76,.46],[.76,.30],[.76,.14]]
+);
+
 assert.equal(celtic11.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.ok(celtic10.positions.filter(item => item.openTransform).length >= 2);
 assert.ok(celtic11.positions.filter(item => item.openTransform).length >= 3);
@@ -110,8 +115,8 @@ assert.equal(
 assert.equal(celtic11.positions[2].openTransform.rotation, 0);
 assert.equal(
   JSON.stringify(celtic11.positions.slice(7).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.82, .70], [.82, .49], [.82, .28], [.82, .07]]),
-  'the right-hand ladder should rise from Self to Outcome'
+  JSON.stringify([[.82, .62], [.82, .46], [.82, .30], [.82, .14]]),
+  'the right-hand ladder should stay compact while rising from Self to Outcome'
 );
 assert.ok(Math.abs(celtic11.positions[0].openTransform.x - celtic11.positions.find(item => item.id === 'behind').transform.x - .13) < 1e-12);
 assert.ok(Math.abs(celtic11.positions[1].openTransform.x - celtic11.positions[0].openTransform.x - .14) < 1e-12);
@@ -193,6 +198,7 @@ assert.match(source, /zoom\.min = '\.35'/);
 assert.match(source, /zoomWord\.textContent = 'Zoom'/);
 assert.match(source, /center\.hidden = true/);
 assert.match(source, /right:\.65rem!important;bottom:\.65rem!important/);
+assert.match(source, /left:410px;top:610px/);
 assert.match(source, /writing-mode:horizontal-tb!important/);
 assert.doesNotMatch(source, /cursor:not-allowed/);
 assert.match(source, /board-reading-toggle-stack>label::after\{content:\"?none/);
