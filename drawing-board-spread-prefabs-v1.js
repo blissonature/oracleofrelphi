@@ -138,19 +138,27 @@
       cardCount:12,
       source:'shipped',
       editable:false,
+      polarityLabels:[
+        { top:'aries', bottom:'libra', label:'Self / Other' },
+        { top:'taurus', bottom:'scorpio', label:'Mine / Ours' },
+        { top:'gemini', bottom:'sagittarius', label:'Word / Meaning' },
+        { top:'cancer', bottom:'capricorn', label:'Interior / Form' },
+        { top:'leo', bottom:'aquarius', label:'Heart / Field' },
+        { top:'virgo', bottom:'pisces', label:'Distinction / Dissolution' }
+      ],
       positions:[
-        position('aries', 'Aries', 1, transform(.06, .02, 0, .40)),
-        position('libra', 'Libra', 2, transform(.68, .02, 0, .40)),
-        position('taurus', 'Taurus', 3, transform(.06, .18, 0, .40)),
-        position('scorpio', 'Scorpio', 4, transform(.68, .18, 0, .40)),
-        position('gemini', 'Gemini', 5, transform(.06, .34, 0, .40)),
-        position('sagittarius', 'Sagittarius', 6, transform(.68, .34, 0, .40)),
-        position('cancer', 'Cancer', 7, transform(.06, .50, 0, .40)),
-        position('capricorn', 'Capricorn', 8, transform(.68, .50, 0, .40)),
-        position('leo', 'Leo', 9, transform(.06, .66, 0, .40)),
-        position('aquarius', 'Aquarius', 10, transform(.68, .66, 0, .40)),
-        position('virgo', 'Virgo', 11, transform(.06, .82, 0, .40)),
-        position('pisces', 'Pisces', 12, transform(.68, .82, 0, .40))
+        position('aries', 'Aries', 1, transform(.01304, .07408, 0, .83)),
+        position('libra', 'Libra', 2, transform(.01304, .50000, 0, .83)),
+        position('taurus', 'Taurus', 3, transform(.17573, .07408, 0, .83)),
+        position('scorpio', 'Scorpio', 4, transform(.17573, .50000, 0, .83)),
+        position('gemini', 'Gemini', 5, transform(.33842, .07408, 0, .83)),
+        position('sagittarius', 'Sagittarius', 6, transform(.33842, .50000, 0, .83)),
+        position('cancer', 'Cancer', 7, transform(.50111, .07408, 0, .83)),
+        position('capricorn', 'Capricorn', 8, transform(.50111, .50000, 0, .83)),
+        position('leo', 'Leo', 9, transform(.66380, .07408, 0, .83)),
+        position('aquarius', 'Aquarius', 10, transform(.66380, .50000, 0, .83)),
+        position('virgo', 'Virgo', 11, transform(.82649, .07408, 0, .83)),
+        position('pisces', 'Pisces', 12, transform(.82649, .50000, 0, .83))
       ]
     },
     {
@@ -341,11 +349,29 @@
     ensurePositionSlots(labels.length);
     dispatchPositionLabels(labels);
   }
+  function fitActiveLayoutOnMobile() {
+    if (!window.matchMedia?.('(max-width:700px)').matches) return;
+    let attempts = 0;
+    const fit = () => {
+      attempts += 1;
+      const button = document.querySelector('#shortListPanel #zoomCardRowExtents');
+      const board = document.querySelector('#shortListPanel .card-row-board');
+      if (button && board?.querySelector('.card-row-item')) {
+        button.click();
+        return;
+      }
+      if (attempts < 8) window.requestAnimationFrame(fit);
+    };
+    window.requestAnimationFrame(fit);
+  }
+
   function applyForUse(prefab) {
     if (!prefab || !requireClear('choose another spread')) return;
     const ready = withDefaultRules(prefab);
+    window.RelphiDrawingBoardSetPositionStickers?.(true);
     stagePrefab(ready);
     if (!bridge()?.applyLayout(ready, { designMode:false })) return;
+    fitActiveLayoutOnMobile();
     selectedId = prefab.id;
     draftLayout = null;
     draftName = '';
@@ -489,6 +515,98 @@
     }
     if (clean.length) enablePositionStickers();
   }
+  function labelsFromBuilder(builder) {
+    return Array.from(builder?.querySelectorAll('[data-relphi-label-input]') || [])
+      .map(input => String(input.value || '').trim())
+      .filter(Boolean);
+  }
+
+  function saveLabelsAsTemplate(panel, field, builder, saver) {
+    const nameField = saver?.querySelector('#relphiLabelTemplateName');
+    const status = saver?.querySelector('.relphi-label-template-status');
+    const labels = labelsFromBuilder(builder);
+    const name = String(nameField?.value || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+
+    if (!labels.length) {
+      if (status) status.textContent = 'Add at least one label first.';
+      return;
+    }
+    if (!name) {
+      if (status) status.textContent = 'Name the template first.';
+      nameField?.focus();
+      return;
+    }
+    if (templateNameConflict(name, labels.length)) {
+      if (status) status.textContent = 'A ' + labels.length + '-card template with that name already exists.';
+      return;
+    }
+
+    writeLabelBuilderToHidden(field, builder);
+    ensurePositionSlots(labels.length);
+
+    const live = bridge()?.getState();
+    const current = live?.currentLayout;
+    let positions = Array.isArray(current?.positions) && current.positions.length === labels.length
+      ? current.positions.slice().sort((a,b) => Number(a.drawOrder) - Number(b.drawOrder)).map((item, index) => ({
+          ...clone(item),
+          id:String(item.id || ('position-' + (index + 1))),
+          label:labels[index],
+          drawOrder:index + 1
+        }))
+      : gridPositions(labels);
+
+    const saved = sanitizeCustom({
+      id:uniqueId(name),
+      name,
+      source:'custom',
+      editable:true,
+      positions,
+      rules:{
+        allowReversals:!!panel.querySelector('#rowAllowReversalsQuick')?.checked,
+        allowRepeats:!!panel.querySelector('#rowAllowRepeats')?.checked,
+        drawScope:String(panel.querySelector('#rowDrawScope')?.value || 'full')
+      }
+    });
+    if (!saved || !saveCustom(saved)) {
+      if (status) status.textContent = 'This browser could not save the template.';
+      return;
+    }
+
+    selectedId = saved.id;
+    draftLayout = null;
+    draftName = '';
+    copySourceId = '';
+    templateMode = 'existing';
+    if (status) status.textContent = 'Saved as ' + displayName(saved) + '.';
+    schedule();
+  }
+
+  function ensureLabelTemplateSaver(panel, field, builder) {
+    const host = builder?.closest('.board-setup-group--spread');
+    if (!host || !field || !builder) return null;
+    let saver = host.querySelector('.relphi-label-template-saver');
+    if (!saver) {
+      saver = document.createElement('div');
+      saver.className = 'relphi-label-template-saver';
+      saver.innerHTML =
+        '<label>Template name<input id="relphiLabelTemplateName" type="text" maxlength="60" autocomplete="off" placeholder="Name this spread"></label>' +
+        '<button type="button" class="primary" id="relphiSaveLabelsAsTemplate">Save as Template</button>' +
+        '<small class="relphi-label-template-status" aria-live="polite"></small>';
+      builder.insertAdjacentElement('afterend', saver);
+      const nameField = saver.querySelector('#relphiLabelTemplateName');
+      const save = saver.querySelector('#relphiSaveLabelsAsTemplate');
+      const sync = () => {
+        const labels = labelsFromBuilder(builder);
+        save.disabled = !labels.length || !String(nameField.value || '').trim();
+      };
+      nameField.addEventListener('input', sync);
+      save.addEventListener('click', () => saveLabelsAsTemplate(panel, field, builder, saver));
+      builder.addEventListener('input', sync);
+      sync();
+    }
+    return saver;
+  }
+
   function renderLabelBuilder(panel, field, labels) {
     const host = field?.closest('.board-setup-group--spread');
     if (!host || !field) return null;
@@ -496,7 +614,7 @@
     if (!promptRow) {
       promptRow = document.createElement('div');
       promptRow.className = 'relphi-label-template-row';
-      promptRow.innerHTML = '<strong>Type card labels</strong><div class="relphi-template-inline-slot"></div>';
+      promptRow.innerHTML = '<strong>Add labels</strong><div class="relphi-template-inline-slot"></div>';
       host.querySelector('header')?.insertAdjacentElement('afterend', promptRow);
     }
     let builder = host.querySelector('.relphi-label-builder');
@@ -559,6 +677,7 @@
       add.hidden = index !== rows.length - 1;
       remove.hidden = rows.length === 1;
     });
+    ensureLabelTemplateSaver(panel, field, builder);
     return builder;
   }
   function syncBuilderFromHidden(panel, field) {
@@ -610,7 +729,7 @@
       library = document.createElement('section');
       library.className = 'relphi-spread-prefab-library relphi-spread-prefab-library--inline';
       library.innerHTML =
-        '<label class="relphi-template-select-label">Select a Template' +
+        '<label class="relphi-template-select-label">Template' +
           '<span class="relphi-template-select-wrap">' +
             '<select id="relphiSpreadTemplateSelect" aria-label="Spread Template"></select>' +
             '<button id="relphiTemplateClear" class="relphi-template-clear" type="button" aria-label="Clear Spread Template" title="Clear Spread Template">×</button>' +
@@ -625,17 +744,6 @@
         const live = bridge()?.getState();
         if (live?.locked && !live?.designMode) return schedule();
         const value = select.value;
-        if (value === '__new__') {
-          selectedId = '';
-          templateMode = 'new';
-          draftLayout = null;
-          draftName = '';
-          copySourceId = '';
-          newPromptArmed = false;
-          if (!String(field.value || '').trim()) dispatchPositionLabels([]);
-          schedule();
-          return;
-        }
         if (!value) {
           selectedId = '';
           templateMode = 'custom';
@@ -672,7 +780,6 @@
     const previous = select.value;
     const optionsHtml =
       '<option value="">Custom / no saved template</option>' +
-      '<option value="__new__">New template…</option>' +
       choices.map(prefab => '<option value="' + escapeHtml(prefab.id) + '">' + escapeHtml(displayName(prefab)) + '</option>').join('');
     if (select.innerHTML !== optionsHtml) select.innerHTML = optionsHtml;
     const desired = state.designMode
@@ -687,24 +794,22 @@
     });
 
     const clear = library.querySelector('#relphiTemplateClear');
-    clear.hidden = !select.value || select.value === '__new__' || structureLocked || !!state.designMode;
+    clear.hidden = !select.value || structureLocked || !!state.designMode;
     clear.disabled = structureLocked || !!state.designMode;
 
     const editor = library.querySelector('.relphi-template-editor');
     const prefab = prefabById(selectedId) || draftLayout;
     const designing = !!state.designMode;
-    const isNew = templateMode === 'new' && !designing;
     const conflict = designing && templateNameConflict(draftName, Number(state.slotCount) || Number(draftLayout?.positions?.length) || 0);
 
     const editorHtml =
-      ((isNew || designing) ?
-        '<label class="relphi-spread-design-name">Template name<input id="relphiSpreadDesignName" type="text" maxlength="60" value="' + escapeHtml(draftName || prefab?.name || '') + '" placeholder="Name this template"></label>' : '') +
       (designing ?
+        '<label class="relphi-spread-design-name">Template name<input id="relphiSpreadDesignName" type="text" maxlength="60" value="' + escapeHtml(draftName || prefab?.name || '') + '" placeholder="Name this template"></label>' +
+
         '<small id="relphiSpreadNameHelp" class="' + (conflict ? 'is-error' : '') + '">' +
           (conflict ? 'A template with this card count and name already exists.' : 'Move, rotate, label, add, or remove positions, then save the template.') +
         '</small>' : '') +
       '<div class="relphi-prefab-actions">' +
-        (!designing && isNew ? '<button type="button" class="primary" data-prefab-action="design">Design Template</button>' : '') +
         (!designing && prefab?.source === 'custom' ? '<button type="button" data-prefab-action="edit">Edit Template</button><button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
         (designing ? '<button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!String(draftName || '').trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button>' : '') +
       '</div>';
@@ -734,7 +839,6 @@
         if (save) save.disabled = !draftName.trim() || conflictNow;
       });
 
-      editor.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
       editor.querySelector('[data-prefab-action="edit"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId)));
       editor.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
       editor.querySelector('[data-prefab-action="once"]')?.addEventListener('click', () => finishDesign(false));
@@ -819,6 +923,144 @@
       schedule();
     };
   }
+  function queuePolarityGeometryRefresh(board) {
+    if (!board || board.dataset.relphiPolarityRefreshQueued === 'true') return;
+    board.dataset.relphiPolarityRefreshQueued = 'true';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      board.dataset.relphiPolarityRefreshQueued = 'false';
+      schedule();
+    }));
+  }
+
+  function applyPolarityLabels(panel, state) {
+    const board = panel.querySelector('.card-row-board');
+    const layout = state?.activeLayout;
+    const definitions = Array.isArray(layout?.polarityLabels) ? layout.polarityLabels : [];
+    if (!board || !definitions.length) {
+      board?.querySelectorAll('.relphi-polarity-label').forEach(node => node.remove());
+      if (board) {
+        delete board.dataset.relphiPolarityGeometrySignature;
+        delete board.dataset.relphiPolarityGeometryStable;
+        delete board.dataset.relphiPolarityLoadBound;
+      }
+      return;
+    }
+
+    const positions = Array.isArray(layout.positions) ? layout.positions : [];
+    const byId = new Map(positions.map((item, index) => [item.id, { item, index }]));
+    const live = new Set();
+
+    // Card art can report transient dimensions during the first render. Keep the
+    // semantic axis band hidden until every card image has settled, then require
+    // the same measured corridor on two consecutive animation frames.
+    const cardImages = Array.from(board.querySelectorAll('.card-row-item img'));
+    const imagesReady = cardImages.every(img => img.complete);
+    if (!imagesReady) {
+      board.querySelectorAll('.relphi-polarity-label').forEach(node => {
+        node.style.visibility = 'hidden';
+        node.style.opacity = '0';
+      });
+      cardImages.forEach(img => {
+        if (img.complete || img.dataset.relphiPolarityLoadBound === 'true') return;
+        img.dataset.relphiPolarityLoadBound = 'true';
+        const settled = () => {
+          img.dataset.relphiPolarityLoadBound = 'false';
+          queuePolarityGeometryRefresh(board);
+        };
+        img.addEventListener('load', settled, { once:true });
+        img.addEventListener('error', settled, { once:true });
+      });
+      queuePolarityGeometryRefresh(board);
+      return;
+    }
+
+    const geometry = entry => {
+      if (!entry) return null;
+      const node = board.querySelector('[data-row-index="' + entry.index + '"]');
+      const transform = entry.item?.transform || {};
+      const left = Number.parseFloat(node?.style.left);
+      const top = Number.parseFloat(node?.style.top);
+      const scale = Number.parseFloat(node?.style.getPropertyValue('--row-card-scale'));
+      const x = Number.isFinite(left) ? left : (Number(transform.x) || 0) * 900;
+      const y = Number.isFinite(top) ? top : (Number(transform.y) || 0) * 760;
+      const s = Number.isFinite(scale) ? scale : (Number(transform.scale) || 1);
+      const width = (node?.offsetWidth || 210) * s;
+      const visual = node?.querySelector('.card-row-drop-card,.card-row-card-wrap,.card-row-card');
+      const positionPanel = node?.querySelector(':scope > .card-row-position-panel');
+      const visualBottom = visual
+        ? y + ((Number(visual.offsetTop) || 0) + (Number(visual.offsetHeight) || 0)) * s
+        : y + (node?.offsetHeight || 382) * s;
+      const positionPanelTop = positionPanel
+        ? y + (Number(positionPanel.offsetTop) || 0) * s
+        : y;
+      return { x, y, width, visualBottom, positionPanelTop };
+    };
+
+    const pairs = definitions.map((definition, index) => {
+      const top = geometry(byId.get(definition.top));
+      const bottom = geometry(byId.get(definition.bottom));
+      if (!top || !bottom) return null;
+      const corridorTop = top.visualBottom;
+      const corridorBottom = bottom.positionPanelTop;
+      return {
+        definition,
+        index,
+        top,
+        bottom,
+        corridorY:(corridorTop + corridorBottom) / 2
+      };
+    }).filter(Boolean);
+
+    // These labels form one semantic band between two aligned card rows.
+    // A single card can report an anomalous offsetHeight/offsetTop after a
+    // reversal or late image layout. Use the median rendered corridor so one
+    // card cannot pull only its polarity label into a card face.
+    const corridorYs = pairs.map(pair => pair.corridorY).filter(Number.isFinite).sort((a,b) => a - b);
+    const mid = Math.floor(corridorYs.length / 2);
+    const sharedCorridorY = corridorYs.length
+      ? (corridorYs.length % 2 ? corridorYs[mid] : (corridorYs[mid - 1] + corridorYs[mid]) / 2)
+      : null;
+
+    const geometrySignature = pairs.map(({ top, bottom, corridorY }) => [
+      Math.round(top.x * 10) / 10,
+      Math.round(top.width * 10) / 10,
+      Math.round(top.visualBottom * 10) / 10,
+      Math.round(bottom.positionPanelTop * 10) / 10,
+      Math.round(corridorY * 10) / 10
+    ].join(':')).join('|');
+
+    const previousSignature = board.dataset.relphiPolarityGeometrySignature || '';
+    const stableCount = Number(board.dataset.relphiPolarityGeometryStable) || 0;
+    const nextStableCount = previousSignature === geometrySignature ? stableCount + 1 : 0;
+    board.dataset.relphiPolarityGeometrySignature = geometrySignature;
+    board.dataset.relphiPolarityGeometryStable = String(nextStableCount);
+    const geometryStable = nextStableCount >= 1;
+
+    pairs.forEach(({ definition, index, top, bottom, corridorY }) => {
+      const key = String(index);
+      live.add(key);
+      let label = board.querySelector('.relphi-polarity-label[data-polarity-index="' + key + '"]');
+      if (!label) {
+        label = document.createElement('div');
+        label.className = 'relphi-polarity-label';
+        label.dataset.polarityIndex = key;
+        label.setAttribute('aria-hidden', 'true');
+        board.appendChild(label);
+      }
+      label.textContent = definition.label;
+      label.style.left = ((top.x + top.width / 2 + bottom.x + bottom.width / 2) / 2) + 'px';
+      label.style.top = (Number.isFinite(sharedCorridorY) ? sharedCorridorY : corridorY) + 'px';
+      label.style.visibility = geometryStable ? 'visible' : 'hidden';
+      label.style.opacity = geometryStable ? '1' : '0';
+    });
+
+    if (!geometryStable) queuePolarityGeometryRefresh(board);
+
+    board.querySelectorAll('.relphi-polarity-label').forEach(node => {
+      if (!live.has(node.dataset.polarityIndex || '')) node.remove();
+    });
+  }
+
   function addWorkspaceControls(panel) {
     const board = panel.querySelector('.card-row-board');
     const workspace = panel.querySelector('.card-row-workspace');
@@ -866,7 +1108,13 @@
         });
         const maxX = Math.max(...logical.map(value => value.right));
         const maxY = Math.max(...logical.map(value => value.bottom));
-        const fit = Math.max(.35, Math.min(2.4, Math.min((workspace.clientWidth - 72) / Math.max(1, maxX), (workspace.clientHeight - 72) / Math.max(1, maxY))));
+        const mobile = window.matchMedia?.('(max-width:700px)').matches;
+        const availableWidth = Math.max(220, workspace.clientWidth - (mobile ? 24 : 72));
+        const viewportHeight = Math.max(320, window.visualViewport?.height || window.innerHeight || workspace.clientHeight);
+        const availableHeight = mobile
+          ? Math.max(240, Math.min(workspace.clientHeight - 24, viewportHeight * .52))
+          : Math.max(240, workspace.clientHeight - 72);
+        const fit = Math.max(.35, Math.min(2.4, Math.min(availableWidth / Math.max(1, maxX), availableHeight / Math.max(1, maxY))));
         liveZoom.value = String(fit);
         liveZoom.dispatchEvent(new Event('input', { bubbles:true }));
         liveZoom.dispatchEvent(new Event('change', { bubbles:true }));
@@ -883,6 +1131,29 @@
     if (zoomLabel && zoomLabel.parentElement !== zoomRow) zoomRow.appendChild(zoomLabel);
     if (extents && extents.parentElement !== zoomRow) zoomRow.appendChild(extents);
   }
+  function ensureMobileLayoutFit(panel, state) {
+    if (!window.matchMedia?.('(max-width:700px)').matches) return;
+    const positions = state?.currentLayout?.positions || state?.activeLayout?.positions || [];
+    if (!Array.isArray(positions) || positions.length < 2) return;
+    const signature = positions.map(item => {
+      const t = item?.transform || item?.canonicalTransform || {};
+      return [item?.id || '', item?.label || '', t.x || 0, t.y || 0, t.scale || 1, t.rotation || 0].join(':');
+    }).join('|');
+    if (!signature || panel.dataset.relphiMobileFitSignature === signature) return;
+    panel.dataset.relphiMobileFitSignature = signature;
+    let attempts = 0;
+    const fit = () => {
+      attempts += 1;
+      const button = panel.querySelector('#zoomCardRowExtents');
+      if (button) {
+        button.click();
+        return;
+      }
+      if (attempts < 8) window.requestAnimationFrame(fit);
+    };
+    window.requestAnimationFrame(fit);
+  }
+
   function enhance() {
     queued = false;
     if (enhancing) return;
@@ -896,7 +1167,9 @@
       addDesignControls(panel, state);
       lockControls(panel, state);
       applyCenterView(panel, state);
+      applyPolarityLabels(panel, state);
       addWorkspaceControls(panel);
+      ensureMobileLayoutFit(panel, state);
     } finally {
       enhancing = false;
     }
@@ -906,6 +1179,12 @@
     queued = true;
     requestAnimationFrame(enhance);
   }
+  // Ownership boundary: top action layout belongs only to
+  // drawing-board-workflow-v2.css / drawing-board-workflow-v2.js.
+  // Spread prefabs must never style or reposition the permanent toolbar or Reset Board.
+  // Ownership boundary: Drawing Board Options row/toggle geometry belongs only to
+  // drawing-board-workflow-v2.css / drawing-board-workflow-v2.js. Spread prefabs
+  // may style prefab-specific controls, but must not restyle the Pack/toggle row.
   function installStyles() {
     if (document.getElementById('relphi-spread-prefab-styles')) return;
     const style = document.createElement('style');
@@ -957,6 +1236,7 @@
       '#shortListPanel .relphi-layout-design-mode #drawRandomRowCard{opacity:.52!important}',
       '#shortListPanel .relphi-center-helper{position:absolute;left:410px;top:610px;z-index:160!important;min-width:118px;min-height:46px;padding:.65rem .9rem;border:2px solid #171412;border-radius:999px;background:#fff!important;color:#171412!important;font:inherit;font-size:.78rem;font-weight:900;box-shadow:0 5px 14px rgba(30,20,15,.16);touch-action:manipulation}',
       '#shortListPanel .relphi-center-helper:focus-visible{outline:3px solid rgba(220,31,24,.35);outline-offset:3px}',
+      '#shortListPanel .relphi-polarity-label{position:absolute!important;z-index:1450!important;transform:translate(-50%,-50%)!important;pointer-events:none!important;white-space:nowrap!important;padding:.22rem .48rem!important;border:1px solid rgba(23,20,18,.42)!important;border-radius:999px!important;background:rgba(255,250,244,.97)!important;color:#171412!important;font:850 .68rem/1.1 Inter,Montserrat,"Segoe UI",Arial,sans-serif!important;letter-spacing:.01em!important;box-shadow:0 2px 8px rgba(30,20,15,.12)!important}',
       '#shortListPanel .card-row-workspace{position:relative!important;overflow:hidden!important;background-image:var(--row-table-image,none),var(--relphi-board-texture,none)!important;background-position:center,center!important;background-size:cover,var(--relphi-board-texture-size,auto)!important;background-repeat:no-repeat,repeat!important;background-blend-mode:normal,soft-light!important;background-color:var(--row-table-bg,#7d1f28)!important}',
       '#shortListPanel .card-row-workspace .short-list-row.card-row-board{top:0!important;overflow:visible!important;background-image:var(--row-table-image,none),var(--relphi-board-texture,none)!important;background-position:center,center!important;background-size:cover,var(--relphi-board-texture-size,auto)!important;background-repeat:no-repeat,repeat!important;background-blend-mode:normal,soft-light!important;background-color:var(--row-table-bg,#7d1f28)!important}',
       'html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item{position:absolute!important}',
@@ -990,7 +1270,6 @@
       '#shortListPanel .relphi-template-editor{display:grid!important;gap:.45rem!important}',
       '#shortListPanel .board-setup-group--spread>.card-row-position-label{width:100%!important}',
       '#shortListPanel .board-setup-group--spread>.quick-position-sticker-toggle{width:100%!important}',
-      '#shortListPanel .board-reading-toggle-stack>label::after{content:none!important;display:none!important}',
       '#shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated{transform:scale(var(--row-card-scale,1))!important;transform-origin:0 0!important}',
       '#shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-card-wrap,#shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card{transform:rotate(90deg)!important;transform-origin:50% 50%!important}',
       '#shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card>.card-row-drop-card-inner{transform:rotate(-90deg)!important}',
@@ -1037,8 +1316,6 @@
     style.textContent += [
       '#shortListPanel .board-setup-group--spread .card-row-draw-scope-label{display:grid!important;gap:.2rem!important;width:100%!important;margin:.05rem 0!important;font-size:.76rem!important;font-weight:850!important}',
       '#shortListPanel .board-setup-group--spread .card-row-draw-scope-label select{width:100%!important;margin:0!important}',
-      '#shortListPanel .board-reading-toggle-stack>label::after{justify-self:end!important}',
-      '#shortListPanel .board-reading-toggle-stack>label:has(input:disabled){opacity:.5!important}'
     ].join('');
     style.textContent += [
       '#shortListPanel .card-row-workspace-toolbar{display:block!important;width:auto!important;min-width:0!important;max-width:none!important;padding:.38rem .45rem!important}',
@@ -1057,6 +1334,50 @@
       'html body #shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated{background:transparent!important;background-color:transparent!important;border-color:transparent!important;box-shadow:none!important}',
       'html body #shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-position-panel{left:50%!important;right:auto!important;top:50%!important;bottom:auto!important;width:max-content!important;max-width:8.5rem!important;margin:0!important;transform:translate(-50%,-5.25rem)!important;z-index:160!important;white-space:normal!important}',
       'html body #shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card>.card-row-drop-card-inner{display:none!important}'
+    ].join('');
+    style.textContent += [
+      'html body #shortListPanel #addCardPlaceholder{display:none!important}',
+      'html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{width:min(29rem,calc(100% - 1rem))!important;max-width:min(29rem,calc(100% - 1rem))!important;max-height:min(72vh,42rem)!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer>.card-row-composer{display:block!important;width:100%!important;max-width:100%!important;padding:.45rem!important;box-sizing:border-box!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup{display:block!important;width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup>.board-options-body{display:block!important;width:100%!important;max-width:100%!important;padding:0!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{display:flex!important;flex-direction:column!important;gap:.55rem!important;width:100%!important;max-width:100%!important;margin:0!important;padding:.65rem!important;box-sizing:border-box!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread>.card-row-name-label{order:1!important;width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-row{order:2!important;display:grid!important;grid-template-columns:1fr!important;gap:.4rem!important;width:100%!important;align-items:start!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-row>strong{font-size:.78rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-template-inline-slot{width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-template-select-label{display:grid!important;grid-template-columns:1fr!important;gap:.18rem!important;width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer #relphiSpreadTemplateSelect{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;padding-right:3.2rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-builder{order:3!important;display:grid!important;gap:.35rem!important;width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-row{display:grid!important;grid-template-columns:1.6rem minmax(0,1fr) 2.1rem 2.1rem!important;gap:.3rem!important;align-items:center!important;width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-row>input{width:100%!important;min-width:0!important;margin:0!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-saver{order:4!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.35rem!important;align-items:end!important;width:100%!important;padding-top:.15rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-saver>label{display:grid!important;gap:.18rem!important;width:100%!important;margin:0!important;font-size:.72rem!important;font-weight:800!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer #relphiLabelTemplateName{width:100%!important;min-width:0!important;margin:0!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer #relphiSaveLabelsAsTemplate{width:auto!important;min-width:max-content!important;min-height:2.35rem!important;margin:0!important;padding:.42rem .65rem!important;white-space:nowrap!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-status{grid-column:1/-1!important;min-height:0!important;color:#6b625c!important;font-size:.68rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-position-label-storage{display:none!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-template-editor:empty{display:none!important}',
+      'html body #shortListPanel .relphi-snap-reset-layout{grid-column:1/-1!important;width:auto!important;justify-self:start!important;margin-top:.15rem!important}',
+      '@media(max-width:620px){html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-saver{grid-template-columns:1fr!important}html body #shortListPanel .relphi-reading-options-drawer #relphiSaveLabelsAsTemplate{justify-self:start!important}}'
+    ].join('');
+    style.textContent += [
+      'html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{left:.5rem!important;right:auto!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .card-row-composer.is-relphi-organized,html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup,html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup>.board-options-body,html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{width:100%!important;max-width:100%!important;box-sizing:border-box!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{display:flex!important;flex-direction:column!important;gap:.55rem!important}',
+    ].join('');
+    style.textContent += [
+      'html body #shortListPanel .card-row-workspace>.drawing-board-primary-actions,html body #shortListPanel .card-row-workspace>.relphi-board-controller-hotzone--actions{display:none!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup>.board-options-body{display:block!important;width:100%!important;max-width:100%!important;grid-template-columns:1fr!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{display:flex!important;flex-direction:column!important;width:100%!important;max-width:100%!important;grid-column:1/-1!important}',
+    ].join('');
+    style.textContent += [
+      '@media(max-width:700px){html body #shortListPanel .card-row-drawing-board{position:relative!important}html body #shortListPanel .card-row-workspace{height:clamp(22rem,56dvh,34rem)!important;min-height:clamp(22rem,56dvh,34rem)!important;max-height:clamp(22rem,56dvh,34rem)!important}html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{position:fixed!important;top:4.25rem!important;right:.45rem!important;bottom:.45rem!important;left:.45rem!important;z-index:2300!important;width:auto!important;max-width:none!important;max-height:none!important;margin:0!important;overflow:hidden!important;border-radius:12px!important;box-shadow:0 12px 34px rgba(30,20,15,.26)!important}html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.card-row-composer{display:block!important;width:100%!important;max-width:100%!important;height:100%!important;max-height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;padding:.55rem!important;box-sizing:border-box!important}}'
+    ].join('');
+    style.textContent += [
+      'html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{top:.5rem!important;bottom:.5rem!important;height:auto!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;scrollbar-gutter:stable!important}',
+      'html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.card-row-composer{height:auto!important;max-height:none!important;overflow:visible!important;padding:.5rem!important}',
+      '@media(max-width:700px){html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{top:4.25rem!important;bottom:.45rem!important}}'
     ].join('');
     document.head.appendChild(style);
   }

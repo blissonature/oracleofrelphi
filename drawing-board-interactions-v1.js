@@ -39,34 +39,29 @@
     layer?.remove();
   }
 
-  function iconSvg(kind) {
+  function historyIconSvg(kind) {
     const path = kind === 'undo'
       ? '<path d="M9 7 4 12l5 5"/><path d="M4 12h9a7 7 0 0 1 7 7"/>'
       : '<path d="m15 7 5 5-5 5"/><path d="M20 12h-9a7 7 0 0 0-7 7"/>';
-    return '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+    return '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
   }
 
   function directHistoryControls(panel) {
-    const workspace = panel.querySelector('.card-row-workspace');
-    if (!workspace) return;
-    let actions = workspace.querySelector(':scope > .drawing-board-primary-actions');
-    if (!actions) {
-      actions = document.createElement('div');
-      actions.className = 'drawing-board-primary-actions';
-      workspace.insertBefore(actions, workspace.firstChild);
-    }
     [[panel.querySelector('#undoShortList'), 'undo', 'Undo'], [panel.querySelector('#redoShortList'), 'redo', 'Redo']].forEach(function (entry) {
       const button = entry[0];
       if (!button) return;
       button.classList.add('board-history-icon');
-      button.innerHTML = iconSvg(entry[1]);
+      if (button.dataset.relphiHistoryIcon !== entry[1]) {
+        button.dataset.relphiHistoryIcon = entry[1];
+        button.innerHTML = historyIconSvg(entry[1]);
+      }
       button.setAttribute('aria-label', entry[2]);
       button.title = entry[2];
-      if (button.parentElement !== actions) actions.appendChild(button);
     });
     panel.querySelectorAll('.board-history-toggle,.board-history-menu,.board-header-group--history').forEach(function (node) {
       if (!node.querySelector?.('#undoShortList,#redoShortList')) node.remove();
     });
+    window.RelphiDrawingBoardEnsureTopActions?.(panel);
   }
 
   function finishTargetedDraw(target, first, swapped) {
@@ -91,25 +86,18 @@
     const draw = panel.querySelector('#drawRandomRowCard');
     if (!draw || draw.disabled) return;
 
-    activeTarget = item;
-    item.classList.add('relphi-targeted-draw-pending', 'relphi-target-draw-proxy');
-    item.classList.remove('card-row-placeholder-item');
+    const targetIndex = Number(item.dataset.rowIndex);
+    const drawnIndex = panel.querySelectorAll('.card-row-board [data-row-card]').length;
+    if (!Number.isInteger(targetIndex) || targetIndex < 0) return;
 
-    const emptyItems = Array.from(panel.querySelectorAll('.card-row-item')).filter(isEmptyItem);
-    const first = emptyItems[0] || item;
-    const swapped = first !== item && swapItems(item, first);
-    const observer = new MutationObserver(function () {
-      if (!item.isConnected || item.querySelector('[data-row-card]')) {
-        observer.disconnect();
-        finishTargetedDraw(item, first, swapped);
-      }
-    });
-    observer.observe(panel, { childList:true, subtree:true, attributes:true, attributeFilter:['class','data-row-card'] });
+    activeTarget = item;
+    window.RelphiDrawingBoardSetPositionStickers?.(true);
     draw.click();
-    restoreTimer = window.setTimeout(function () {
-      observer.disconnect();
-      finishTargetedDraw(item, first, swapped);
-    }, 5000);
+
+    if (targetIndex !== drawnIndex) {
+      window.RelphiDrawingBoardPrefabsBridge?.swapPositionSlots?.(drawnIndex, targetIndex);
+    }
+    activeTarget = null;
   }
 
   function placeholderFromPointer(event) {
@@ -372,9 +360,13 @@
         enhance();
       });
     };
-    new MutationObserver(queueEnhance).observe(document.body, {
-      childList:true, subtree:true, attributes:true, attributeFilter:['hidden']
-    });
+    document.addEventListener('relphi:drawing-board-rendered', queueEnhance);
+    const panel = root();
+    if (panel) {
+      new MutationObserver(queueEnhance).observe(panel, {
+        attributes:true, attributeFilter:['hidden']
+      });
+    }
     enhance();
   }
 

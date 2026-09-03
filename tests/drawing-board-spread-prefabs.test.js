@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=28/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=47/);
 
 const storage = new Map();
 const document = {
@@ -66,6 +66,39 @@ assert.deepEqual(
   Array.from(polarities.positions.slice().sort((a,b) => a.drawOrder - b.drawOrder), item => item.label),
   ['Aries','Libra','Taurus','Scorpio','Gemini','Sagittarius','Cancer','Capricorn','Leo','Aquarius','Virgo','Pisces']
 );
+assert.deepEqual(
+  Array.from(polarities.polarityLabels, item => item.label),
+  ['Self / Other','Mine / Ours','Word / Meaning','Interior / Form','Heart / Field','Distinction / Dissolution']
+);
+const polarityColumns = [
+  ['Aries','Libra'],
+  ['Taurus','Scorpio'],
+  ['Gemini','Sagittarius'],
+  ['Cancer','Capricorn'],
+  ['Leo','Aquarius'],
+  ['Virgo','Pisces']
+];
+assert.equal(new Set(polarities.positions.map(item => item.transform.x)).size, 6, 'Six Polarities should use six columns');
+assert.equal(new Set(polarities.positions.map(item => item.transform.y)).size, 2, 'Six Polarities should use two rows');
+polarityColumns.forEach(([top, bottom]) => {
+  const topPosition = polarities.positions.find(item => item.label === top);
+  const bottomPosition = polarities.positions.find(item => item.label === bottom);
+  assert.equal(topPosition.transform.x, bottomPosition.transform.x, top + ' / ' + bottom + ' should share a column');
+  assert.notEqual(topPosition.transform.y, bottomPosition.transform.y, top + ' / ' + bottom + ' should occupy separate rows');
+});
+assert.ok(polarities.positions.every(item => item.transform.scale === .83), 'Six Polarities cards should use the largest practical six-column scale');
+const polarityXs = Array.from(new Set(polarities.positions.map(item => item.transform.x))).sort((a,b) => a - b);
+const polarityYs = Array.from(new Set(polarities.positions.map(item => item.transform.y))).sort((a,b) => a - b);
+assert.deepEqual(polarityXs, [.01304,.17573,.33842,.50111,.6638,.82649], 'Six Polarities should fill the board as a centered six-column block');
+assert.deepEqual(polarityYs, [.07408,.5], 'Six Polarities opposition rows should touch edge-to-edge');
+for (let i = 1; i < polarityXs.length; i += 1) {
+  const cardWidth = 174 * .83 / 900;
+  const gapPx = ((polarityXs[i] - polarityXs[i - 1]) - cardWidth) * 900;
+  assert.ok(Math.abs(gapPx - 2) < .05, 'Six Polarities horizontal gaps should be about 2px');
+}
+const cardHeight = 390 * .83 / 760;
+const verticalGapPx = ((polarityYs[1] - polarityYs[0]) - cardHeight) * 760;
+assert.ok(Math.abs(verticalGapPx) < .05, 'Each opposition pair should touch with zero vertical gap');
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').crosses, 'covering');
 assert.deepEqual(
   Array.from(celtic10.positions, item => item.label),
@@ -104,7 +137,21 @@ assert.match(source, />Use Once</);
 assert.match(source, /id="relphiSpreadTemplateSelect"/);
 assert.match(source, /<select id="relphiSpreadTemplateSelect"/);
 assert.match(source, /Custom \/ no saved template/);
-assert.match(source, /New template…/);
+assert.doesNotMatch(source, /New template…/);
+assert.match(source, /<strong>Add labels<\/strong>/);
+assert.match(source, /Save as Template/);
+assert.match(source, /id="relphiSaveLabelsAsTemplate"/);
+assert.match(source, /id="relphiLabelTemplateName"/);
+assert.match(source, /function saveLabelsAsTemplate/);
+assert.match(source, /ensureLabelTemplateSaver\(panel, field, builder\)/);
+assert.match(source, /#addCardPlaceholder\{display:none!important\}/);
+assert.match(source, /drawing-board-top-actions/);
+assert.match(source, /card-row-workspace>\.drawing-board-primary-actions[\s\S]{0,140}display:none!important/);
+assert.doesNotMatch(source, /board-reading-toggle-stack/);
+assert.doesNotMatch(source, /board-draw-settings-row/);
+assert.doesNotMatch(source, /drawing-board-top-actions/);
+assert.doesNotMatch(source, /board-reset-action/);
+assert.match(source, /width:min\(29rem/);
 assert.match(source, /Position labels/);
 assert.match(source, /Template name<input id="relphiSpreadDesignName"/);
 assert.doesNotMatch(source, /Spread and draw settings are locked while cards are on the board/);
@@ -125,7 +172,6 @@ assert.doesNotMatch(source, /id = 'relphiLabelsToggle'/);
 assert.doesNotMatch(source, /className = 'relphi-labels-drawer'/);
 assert.doesNotMatch(source, /Finish from the Templates drawer/);
 assert.match(source, /Finish in Board Options/);
-assert.match(source, /Design Template/);
 assert.match(source, /data-prefab-action="cancel"/);
 assert.match(source, /document\.getElementById\('clearShortList'\)\?\.click/);
 assert.match(source, /Situation, Challenge, Strategy/);
@@ -157,8 +203,30 @@ assert.match(source, /if \(clean\.length\) enablePositionStickers\(\)/);
 assert.match(source, /rowPositionStickersQuick/);
 assert.match(source, /drawScope:String\(ready\.rules\?\.drawScope \|\| 'full'\)/);
 assert.match(source, /const ready = withDefaultRules\(prefab\)/);
+assert.match(source, /window\.RelphiDrawingBoardSetPositionStickers\?\.\(true\)/);
 assert.doesNotMatch(source, /\['rowPositionLabels','rowDrawScope','rowAllowRepeats','rowAllowReversalsQuick'/);
 assert.match(source, /editor\.contentEditable = 'true'/);
+assert.match(source, /const visual = node\?\.querySelector\('\.card-row-drop-card,\.card-row-card-wrap,\.card-row-card'\)/);
+assert.match(source, /const positionPanel = node\?\.querySelector\(':scope > \.card-row-position-panel'\)/);
+assert.match(source, /positionPanel\.offsetTop/);
+assert.match(source, /const corridorTop = top\.visualBottom/);
+assert.match(source, /const corridorBottom = bottom\.positionPanelTop/);
+assert.match(source, /const pairs = definitions\.map/);
+assert.match(source, /const corridorYs = pairs\.map\(pair => pair\.corridorY\)/);
+assert.match(source, /const sharedCorridorY = corridorYs\.length/);
+assert.match(source, /function queuePolarityGeometryRefresh/);
+assert.match(source, /const imagesReady = cardImages\.every\(img => img\.complete\)/);
+assert.match(source, /img\.addEventListener\('load', settled, \{ once:true \}\)/);
+assert.match(source, /const geometrySignature = pairs\.map/);
+assert.match(source, /const geometryStable = nextStableCount >= 1/);
+assert.match(source, /label\.style\.visibility = geometryStable \? 'visible' : 'hidden'/);
+assert.match(source, /if \(!geometryStable\) queuePolarityGeometryRefresh\(board\)/);
+assert.match(source, /Number\.isFinite\(sharedCorridorY\) \? sharedCorridorY : corridorY/);
+assert.doesNotMatch(source, /top\.y \+ top\.height \+ bottom\.y/);
+assert.doesNotMatch(source, /syncTopEditTemplateButton|editDrawingBoardTemplate|designBoardSnapshot/);
+assert.doesNotMatch(source, /Saving these template changes will clear the entire Drawing Board/);
+assert.match(source, /if \(!prefab \|\| !requireClear\('design a layout'\)\) return/);
+assert.match(source, /document\.getElementById\('clearShortList'\)\?\.click\(\)/);
 assert.match(source, /function addWorkspaceControls/);
 assert.match(source, /var\(--relphi-board-texture,none\)/);
 assert.match(source, /background-color:var\(--row-table-bg,#7d1f28\)!important/);
@@ -168,6 +236,16 @@ assert.match(app, /state\.rowTableColor = '#7d1f28'/);
 assert.doesNotMatch(source, /card-row-transform-drawer/);
 assert.doesNotMatch(source, /data-row-drawer-field/);
 assert.match(source, /zoomCardRowExtents/);
+assert.match(source, /function fitActiveLayoutOnMobile\(\)/);
+assert.match(source, /function ensureMobileLayoutFit\(panel, state\)/);
+assert.match(source, /panel\.dataset\.relphiMobileFitSignature/);
+assert.match(source, /window\.visualViewport\?\.height/);
+assert.match(source, /viewportHeight \* \.52/);
+assert.match(source, /fitActiveLayoutOnMobile\(\)/);
+assert.match(source, /position:fixed!important;top:4\.25rem/);
+assert.match(source, /height:clamp\(22rem,56dvh,34rem\)!important/);
+assert.match(source, /scrollbar-gutter:stable!important/);
+assert.match(source, /relphi-reading-options-drawer>\.card-row-composer\{height:auto!important;max-height:none!important;overflow:visible!important/);
 assert.match(source, /zoom\.step = '\.025'/);
 assert.match(source, /zoom\.min = '\.35'/);
 assert.match(source, /zoomWord\.textContent = 'Zoom'/);
@@ -176,7 +254,7 @@ assert.match(source, /right:\.65rem!important;bottom:\.65rem!important/);
 assert.match(source, /left:410px;top:610px/);
 assert.match(source, /writing-mode:horizontal-tb!important/);
 assert.doesNotMatch(source, /cursor:not-allowed/);
-assert.match(source, /board-reading-toggle-stack>label::after\{content:\"?none/);
+assert.doesNotMatch(source, /board-reading-toggle-stack/);
 assert.doesNotMatch(source, /'rowSnapEnabled','rowRotationSnapEnabled'/);
 assert.doesNotMatch(source, /drawnCardIds|readingName|readingNotes/);
 

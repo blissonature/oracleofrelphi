@@ -40,7 +40,7 @@
 @media(max-width:720px){html body #shortListPanel .card-row-composer.is-relphi-organized .card-row-control-block--setup .board-options-body{grid-template-columns:1fr!important}}html body #shortListPanel #undoShortList:disabled,html body #shortListPanel #redoShortList:disabled,html body #shortListPanel #clearShortList:disabled{opacity:.4!important;border:1px solid rgba(17,17,17,.28)!important;background:#fffdf8!important;color:rgba(17,17,17,.48)!important;box-shadow:none!important;cursor:default!important}html body #shortListPanel .board-labels-staging{display:none!important}html body #shortListPanel .card-row-composer.is-relphi-organized .card-row-control-block--setup .board-options-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}html body #shortListPanel .card-row-composer.is-relphi-organized{padding:.55rem!important;background:#f5f0ea!important}html body #shortListPanel .card-row-composer.is-relphi-organized>.card-row-control-block{display:block!important;width:100%!important;margin:0 0 .55rem!important;padding:0!important;border:1px solid #d8cec5!important;border-radius:9px!important;background:#fff!important}html body #shortListPanel .card-row-control-block--setup .board-options-body{display:grid!important;grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr) minmax(0,.95fr)!important;gap:.55rem!important;padding:.55rem!important}html body #shortListPanel .drawing-board-after-canvas{display:grid!important;gap:.65rem!important;margin:.7rem 0 0!important}html body #shortListPanel .drawing-board-post-section{display:grid!important;gap:.5rem!important;padding:.7rem!important;border:1px solid #d8cec5!important;border-radius:10px!important;background:#fff!important}html body #shortListPanel .drawing-board-post-section>header{display:flex!important;flex-direction:column!important;gap:.12rem!important}html body #shortListPanel .drawing-board-post-section>header strong{font-size:.9rem!important}html body #shortListPanel .drawing-board-post-section>header span{color:#6b625c!important;font-size:.72rem!important}html body #shortListPanel .drawing-board-post-body,html body #shortListPanel #drawing-board-post-export .board-options-body{display:flex!important;flex-wrap:wrap!important;gap:.5rem!important;align-items:end!important}html body #shortListPanel #drawing-board-notes .card-row-notes-label{width:100%!important;margin:0!important}html body #shortListPanel #drawing-board-notes textarea{display:block!important;width:100%!important;min-height:6rem!important;margin:.3rem 0 0!important;box-sizing:border-box!important}html body #shortListPanel #drawing-board-post-export button{flex:1 1 12rem!important}html body #shortListPanel .card-row-workspace .or-card-layer.relphi-info-layer .or-layer-scroll{display:block!important;visibility:visible!important;opacity:1!important}html body #shortListPanel .card-row-workspace .or-card-layer.relphi-info-layer .or-layer-scroll span{white-space:normal!important}
 @media(max-width:940px){html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:1fr 1fr!important}html body #shortListPanel .board-setup-group--spread{grid-column:1/-1!important}}
 @media(max-width:700px){html body #shortListPanel .board-setup-group--spread{grid-column:auto!important}}html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:start!important;gap:.55rem!important}
-@media(max-width:860px){html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:1fr!important}}html body #shortListPanel .card-row-drawing-board:has(.card-row-composer:not(.is-relphi-organized)){visibility:hidden!important}html body #shortListPanel .card-row-drawing-board:has(.card-row-composer.is-relphi-organized){visibility:visible!important}html body #shortListPanel .board-setup-group--spread>header span:empty{display:none!important}html body #shortListPanel .card-row-control-block--setup .board-options-body{display:block!important;padding:.55rem!important}html body #shortListPanel .board-setup-group--spread{display:flex!important;flex-direction:column!important;gap:.5rem!important;width:100%!important;max-width:none!important}html body #shortListPanel .board-setup-group--spread .card-row-draw-scope-label{order:30!important;width:100%!important;margin:.05rem 0!important}html body #shortListPanel .drawing-board-primary-actions{display:flex!important;flex-wrap:wrap!important;justify-content:flex-end!important;gap:.4rem!important;margin:.5rem .45rem!important;padding:.5rem!important;border:1px solid #ded5cd!important;border-radius:9px!important;background:#fffaf4!important}html body #shortListPanel .drawing-board-primary-actions button{min-height:2.35rem!important;padding:.45rem .75rem!important;border:1px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#171412!important;font-weight:850!important}html body #shortListPanel .drawing-board-primary-actions #drawRandomRowCard{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}html body #shortListPanel .drawing-board-primary-actions #clearShortList:not(:disabled){border-color:rgba(220,31,24,.45)!important;color:#b81712!important}html body #shortListPanel .relphi-workspace-tools{position:absolute!important;left:.65rem!important;bottom:.65rem!important;z-index:1600!important;display:flex!important;align-items:flex-end!important;gap:.35rem!important;font-family:Montserrat,"Segoe UI",Arial,sans-serif!important}html body #shortListPanel .relphi-workspace-tool-buttons{display:flex!important;gap:.25rem!important;padding:.26rem!important;border:1px solid rgba(23,20,18,.24)!important;border-radius:9px!important;background:rgba(255,250,244,.96)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important}html body #shortListPanel .relphi-workspace-tool-trigger,html body #shortListPanel .relphi-picture-action,html body #shortListPanel .relphi-reset-action,html body #shortListPanel .relphi-snap-row>button{display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:.3rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;box-shadow:none!important}html body #shortListPanel .relphi-workspace-tool-trigger svg,html body #shortListPanel .relphi-picture-action svg,html body #shortListPanel .relphi-snap-measure svg{display:block!important;width:1.05rem!important;height:1.05rem!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}html body #shortListPanel .relphi-workspace-tool-trigger.is-active{border-color:#171412!important;background:#f1ece6!important}html body #shortListPanel .relphi-workspace-flyout{position:absolute!important;left:0!important;bottom:calc(100% + .4rem)!important;width:min(22rem,calc(100vw - 2rem))!important;padding:.7rem!important;border:1px solid #cfc5bc!important;border-radius:10px!important;background:#fffaf4!important;box-shadow:0 12px 28px rgba(30,20,15,.16)!important}html body #shortListPanel .relphi-workspace-flyout[hidden]{display:none!important}html body #shortListPanel .relphi-workspace-section{display:grid!important;gap:.42rem!important;padding:.15rem 0!important}html body #shortListPanel .relphi-workspace-section+ .relphi-workspace-section{margin-top:.7rem!important;padding-top:.7rem!important;border-top:1px solid #e6ddd5!important}html body #shortListPanel .relphi-workspace-section h4{margin:0!important;font-size:1rem!important}html body #shortListPanel .relphi-snap-rows,html body #shortListPanel .relphi-background-rows{display:grid!important;gap:.4rem!important}html body #shortListPanel .relphi-snap-row{display:grid!important;grid-template-columns:1.2rem 2rem minmax(5rem,1fr) 2rem!important;gap:.35rem!important;align-items:center!important}html body #shortListPanel .relphi-snap-row>input[type="checkbox"]{width:1rem!important;height:1rem!important;margin:0!important}html body #shortListPanel .relphi-snap-measure{display:flex!important;align-items:center!important;justify-content:center!important;gap:.35rem!important;min-height:2rem!important;padding:.25rem .45rem!important;border:1px solid #e1d8d0!important;border-radius:7px!important;background:#fff!important;font-weight:850!important;white-space:nowrap!important}html body #shortListPanel .relphi-snap-value-slot>span{font-size:.78rem!important;font-weight:850!important}html body #shortListPanel .relphi-rotate-glyph{font-size:1.1rem!important}html body #shortListPanel .relphi-background-row{display:grid!important;grid-template-columns:minmax(3.8rem,1fr) 2rem 2.6rem 2rem!important;gap:.35rem!important;align-items:center!important}html body #shortListPanel .relphi-background-row>strong{font-size:.82rem!important}html body #shortListPanel .relphi-background-row input[type="color"]{display:block!important;width:2.6rem!important;height:2rem!important;margin:0!important;padding:2px!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important}html body #shortListPanel .relphi-texture-row{grid-template-columns:minmax(3.8rem,1fr) minmax(8rem,1.9fr)!important}html body #shortListPanel .relphi-texture-row select{display:block!important;width:100%!important;min-height:2rem!important;margin:0!important;padding:.28rem .5rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.78rem!important;font-weight:750!important}html body #shortListPanel .relphi-reset-action{font-size:1.15rem!important;font-weight:700!important}html body #shortListPanel .card-row-board.has-workspace-card-background .card-row-drop-card,html body #shortListPanel .card-row-board.has-workspace-card-background .card-row-card,html body #shortListPanel .card-row-board.has-workspace-card-background .or-card{background-image:var(--workspace-card-background)!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
+@media(max-width:860px){html body #shortListPanel .card-row-control-block--setup .board-options-body{grid-template-columns:1fr!important}}html body #shortListPanel .board-setup-group--spread>header span:empty{display:none!important}html body #shortListPanel .card-row-control-block--setup .board-options-body{display:block!important;padding:.55rem!important}html body #shortListPanel .board-setup-group--spread{display:flex!important;flex-direction:column!important;gap:.5rem!important;width:100%!important;max-width:none!important}html body #shortListPanel .board-setup-group--spread .card-row-draw-scope-label{order:30!important;width:100%!important;margin:.05rem 0!important}html body #shortListPanel .drawing-board-primary-actions{display:flex!important;flex-wrap:wrap!important;justify-content:flex-end!important;gap:.4rem!important;margin:.5rem .45rem!important;padding:.5rem!important;border:1px solid #ded5cd!important;border-radius:9px!important;background:#fffaf4!important}html body #shortListPanel .drawing-board-primary-actions button{min-height:2.35rem!important;padding:.45rem .75rem!important;border:1px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#171412!important;font-weight:850!important}html body #shortListPanel .drawing-board-primary-actions #drawRandomRowCard{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}html body #shortListPanel .drawing-board-primary-actions #clearShortList:not(:disabled){border-color:rgba(220,31,24,.45)!important;color:#b81712!important}html body #shortListPanel .relphi-workspace-tools{position:absolute!important;left:.65rem!important;bottom:.65rem!important;z-index:1600!important;display:flex!important;align-items:flex-end!important;gap:.35rem!important;font-family:Montserrat,"Segoe UI",Arial,sans-serif!important}html body #shortListPanel .relphi-workspace-tool-buttons{display:flex!important;gap:.25rem!important;padding:.26rem!important;border:1px solid rgba(23,20,18,.24)!important;border-radius:9px!important;background:rgba(255,250,244,.96)!important;box-shadow:0 4px 12px rgba(30,20,15,.12)!important}html body #shortListPanel .relphi-workspace-tool-trigger,html body #shortListPanel .relphi-picture-action,html body #shortListPanel .relphi-reset-action,html body #shortListPanel .relphi-snap-row>button{display:grid!important;place-items:center!important;width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;margin:0!important;padding:.3rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;box-shadow:none!important}html body #shortListPanel .relphi-workspace-tool-trigger svg,html body #shortListPanel .relphi-picture-action svg,html body #shortListPanel .relphi-snap-measure svg{display:block!important;width:1.05rem!important;height:1.05rem!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}html body #shortListPanel .relphi-workspace-tool-trigger.is-active{border-color:#171412!important;background:#f1ece6!important}html body #shortListPanel .relphi-workspace-flyout{position:absolute!important;left:0!important;bottom:calc(100% + .4rem)!important;width:min(22rem,calc(100vw - 2rem))!important;padding:.7rem!important;border:1px solid #cfc5bc!important;border-radius:10px!important;background:#fffaf4!important;box-shadow:0 12px 28px rgba(30,20,15,.16)!important}html body #shortListPanel .relphi-workspace-flyout[hidden]{display:none!important}html body #shortListPanel .relphi-workspace-section{display:grid!important;gap:.42rem!important;padding:.15rem 0!important}html body #shortListPanel .relphi-workspace-section+ .relphi-workspace-section{margin-top:.7rem!important;padding-top:.7rem!important;border-top:1px solid #e6ddd5!important}html body #shortListPanel .relphi-workspace-section h4{margin:0!important;font-size:1rem!important}html body #shortListPanel .relphi-snap-rows,html body #shortListPanel .relphi-background-rows{display:grid!important;gap:.4rem!important}html body #shortListPanel .relphi-snap-row{display:grid!important;grid-template-columns:1.2rem 2rem minmax(5rem,1fr) 2rem!important;gap:.35rem!important;align-items:center!important}html body #shortListPanel .relphi-snap-row>input[type="checkbox"]{width:1rem!important;height:1rem!important;margin:0!important}html body #shortListPanel .relphi-snap-measure{display:flex!important;align-items:center!important;justify-content:center!important;gap:.35rem!important;min-height:2rem!important;padding:.25rem .45rem!important;border:1px solid #e1d8d0!important;border-radius:7px!important;background:#fff!important;font-weight:850!important;white-space:nowrap!important}html body #shortListPanel .relphi-snap-value-slot>span{font-size:.78rem!important;font-weight:850!important}html body #shortListPanel .relphi-rotate-glyph{font-size:1.1rem!important}html body #shortListPanel .relphi-background-row{display:grid!important;grid-template-columns:minmax(3.8rem,1fr) 2rem 2.6rem 2rem!important;gap:.35rem!important;align-items:center!important}html body #shortListPanel .relphi-background-row>strong{font-size:.82rem!important}html body #shortListPanel .relphi-background-row input[type="color"]{display:block!important;width:2.6rem!important;height:2rem!important;margin:0!important;padding:2px!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important}html body #shortListPanel .relphi-texture-row{grid-template-columns:minmax(3.8rem,1fr) minmax(8rem,1.9fr)!important}html body #shortListPanel .relphi-texture-row select{display:block!important;width:100%!important;min-height:2rem!important;margin:0!important;padding:.28rem .5rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.78rem!important;font-weight:750!important}html body #shortListPanel .relphi-reset-action{font-size:1.15rem!important;font-weight:700!important}html body #shortListPanel .card-row-board.has-workspace-card-background .card-row-drop-card,html body #shortListPanel .card-row-board.has-workspace-card-background .card-row-card,html body #shortListPanel .card-row-board.has-workspace-card-background .or-card{background-image:var(--workspace-card-background)!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
 @media(max-width:620px){html body #shortListPanel .drawing-board-primary-actions{justify-content:stretch!important}html body #shortListPanel .drawing-board-primary-actions button{flex:1 1 45%!important}html body #shortListPanel .relphi-workspace-tools{left:.45rem!important;bottom:.45rem!important}}
 #shortListPanel .drawing-board-primary-actions{position:relative!important;z-index:1450!important;display:flex!important;flex-flow:row wrap!important;align-items:center!important;gap:.4rem!important;width:max-content!important;max-width:calc(100% - 1rem)!important;margin:.5rem!important;padding:.38rem!important;border:1px solid rgba(23,20,18,.22)!important;border-radius:10px!important;background:rgba(255,250,244,.96)!important;box-shadow:0 3px 10px rgba(30,20,15,.08)!important}
 #shortListPanel .drawing-board-primary-actions button{margin:0!important;min-height:2.2rem!important}
@@ -97,4 +97,1178 @@ html body #shortListPanel .board-draw-settings-row > .board-reading-toggle-stack
     grid-column:1!important;
     grid-row:auto!important;
   }
+}
+
+
+/* v5 confirmed Board Options ownership */
+html body #shortListPanel .board-setup-group--spread{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:.5rem!important;
+}
+html body #shortListPanel .board-setup-group--spread>header{order:0!important}
+html body #shortListPanel .board-setup-group--spread>header:has(strong:empty){display:none!important}
+html body #shortListPanel .board-setup-group--spread>.card-row-name-label{
+  order:1!important;
+  width:100%!important;
+  margin:0!important;
+}
+html body #shortListPanel .board-setup-group--spread>.relphi-label-template-row{order:2!important}
+html body #shortListPanel .board-setup-group--spread>.relphi-label-builder{order:3!important}
+html body #shortListPanel .board-setup-group--spread>.relphi-position-label-storage{
+  order:4!important;
+  display:none!important;
+}
+html body #shortListPanel .board-setup-group--spread>.board-draw-settings-row{
+  order:5!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer:not(.is-reading-options-open){
+  display:none!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer.is-reading-options-open{
+  display:block!important;
+}
+html body #shortListPanel .board-draw-settings-row{
+  display:grid!important;
+  grid-template-columns:minmax(10rem,1.15fr) minmax(22rem,2.85fr)!important;
+  gap:.4rem!important;
+  align-items:stretch!important;
+}
+html body #shortListPanel .board-reading-toggle-stack{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:.35rem!important;
+}
+html body #shortListPanel .board-reading-toggle-stack>label{
+  min-width:0!important;
+  min-height:2.35rem!important;
+  margin:0!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:.42rem!important;
+}
+@media(max-width:720px){
+  html body #shortListPanel .board-draw-settings-row{grid-template-columns:1fr!important}
+}
+@media(max-width:520px){
+  html body #shortListPanel .board-reading-toggle-stack{grid-template-columns:1fr!important}
+}
+
+
+/* v7 compact controls exactly matching the approved reference */
+html body #shortListPanel .drawing-board-primary-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.45rem!important;
+  width:calc(100% - 1rem)!important;
+  max-width:calc(100% - 1rem)!important;
+  padding:.35rem!important;
+}
+html body #shortListPanel .drawing-board-action-buttons,
+html body #shortListPanel .drawing-board-quick-settings{
+  display:flex!important;
+  align-items:center!important;
+  gap:.32rem!important;
+  flex-wrap:wrap!important;
+}
+html body #shortListPanel .drawing-board-action-buttons{
+  flex:0 0 auto!important;
+}
+html body #shortListPanel .drawing-board-quick-settings{
+  flex:0 1 auto!important;
+  justify-content:flex-end!important;
+  margin-left:auto!important;
+}
+html body #shortListPanel .drawing-board-action-buttons>button,
+html body #shortListPanel .drawing-board-quick-settings>#drawingBoardOptionsButton{
+  width:auto!important;
+  min-width:0!important;
+  min-height:2.1rem!important;
+  margin:0!important;
+  padding:.32rem .6rem!important;
+  border-radius:7px!important;
+  white-space:nowrap!important;
+}
+html body #shortListPanel .drawing-board-quick-settings>.card-row-draw-scope-label{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.32rem!important;
+  width:auto!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  white-space:nowrap!important;
+}
+html body #shortListPanel .drawing-board-quick-settings>.card-row-draw-scope-label>select{
+  display:inline-block!important;
+  width:auto!important;
+  min-width:8.2rem!important;
+  max-width:10rem!important;
+  min-height:2.1rem!important;
+  margin:0!important;
+  padding:.3rem 1.6rem .3rem .48rem!important;
+}
+html body #shortListPanel .drawing-board-quick-settings>.spread-toggle,
+html body #shortListPanel .drawing-board-quick-settings>.quick-reversal-toggle,
+html body #shortListPanel .drawing-board-quick-settings>.quick-position-sticker-toggle{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:.3rem!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:2.1rem!important;
+  margin:0!important;
+  padding:.32rem .5rem!important;
+  border:1px solid #d0c7bf!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  font-size:.76rem!important;
+  font-weight:800!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel .drawing-board-quick-settings>.spread-toggle::after,
+html body #shortListPanel .drawing-board-quick-settings>.quick-reversal-toggle::after,
+html body #shortListPanel .drawing-board-quick-settings>.quick-position-sticker-toggle::after{
+  content:none!important;
+  display:none!important;
+}
+html body #shortListPanel .drawing-board-quick-settings input[type="checkbox"]{
+  flex:0 0 auto!important;
+  width:.95rem!important;
+  height:.95rem!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row{
+  display:none!important;
+}
+html body #shortListPanel .board-reset-action{
+  width:auto!important;
+  align-self:flex-start!important;
+  margin-top:.35rem!important;
+}
+@media(max-width:850px){
+  html body #shortListPanel .drawing-board-primary-actions{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+  }
+  html body #shortListPanel .drawing-board-quick-settings{
+    justify-content:flex-start!important;
+    margin-left:0!important;
+  }
+}
+
+
+/* v7.1 prevent inherited flex/grid rules from inflating compact controls */
+html body #shortListPanel .drawing-board-primary-actions.relphi-board-controller{
+  width:calc(100% - 1rem)!important;
+  max-width:calc(100% - 1rem)!important;
+}
+html body #shortListPanel .drawing-board-action-buttons>button,
+html body #shortListPanel .drawing-board-quick-settings>label,
+html body #shortListPanel .drawing-board-quick-settings>#drawingBoardOptionsButton{
+  flex:0 0 auto!important;
+}
+@media(max-width:620px){
+  html body #shortListPanel .drawing-board-primary-actions,
+  html body #shortListPanel .drawing-board-primary-actions.relphi-board-controller{
+    flex-direction:row!important;
+    align-items:center!important;
+    flex-wrap:wrap!important;
+  }
+  html body #shortListPanel .drawing-board-action-buttons,
+  html body #shortListPanel .drawing-board-quick-settings{
+    width:auto!important;
+    max-width:100%!important;
+    flex-wrap:wrap!important;
+  }
+  html body #shortListPanel .drawing-board-action-buttons>button,
+  html body #shortListPanel .drawing-board-quick-settings>label,
+  html body #shortListPanel .drawing-board-quick-settings>#drawingBoardOptionsButton{
+    flex:0 0 auto!important;
+    width:auto!important;
+  }
+}
+
+
+/* v9 Board Options is an overlay; opening it never moves the canvas */
+html body #shortListPanel .card-row-workspace{
+  position:relative!important;
+}
+html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{
+  position:absolute!important;
+  top:3.15rem!important;
+  right:.5rem!important;
+  left:auto!important;
+  z-index:1900!important;
+  display:none!important;
+  width:min(34rem,calc(100% - 1rem))!important;
+  max-width:calc(100% - 1rem)!important;
+  max-height:calc(100% - 3.65rem)!important;
+  margin:0!important;
+  box-shadow:0 14px 34px rgba(30,20,15,.22)!important;
+}
+html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer.is-reading-options-open{
+  display:block!important;
+}
+html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.card-row-composer{
+  max-height:min(70vh,calc(100% - .5rem))!important;
+  overflow:auto!important;
+}
+@media(max-width:700px){
+  html body #shortListPanel .card-row-workspace{
+    height:clamp(22rem,56dvh,34rem)!important;
+    min-height:clamp(22rem,56dvh,34rem)!important;
+    max-height:clamp(22rem,56dvh,34rem)!important;
+  }
+  html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{
+    top:5.75rem!important;
+    right:.35rem!important;
+    width:calc(100% - .7rem)!important;
+    max-width:calc(100% - .7rem)!important;
+  }
+}
+
+
+/* v10 confirmed toggle ownership: all three toggles live inside Board Options */
+html body #shortListPanel .drawing-board-primary-actions{
+  justify-content:flex-start!important;
+}
+html body #shortListPanel .drawing-board-action-buttons{
+  display:flex!important;
+  align-items:center!important;
+  gap:.32rem!important;
+  flex-wrap:wrap!important;
+}
+html body #shortListPanel .drawing-board-action-buttons>#drawingBoardOptionsButton{
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:2.1rem!important;
+  margin:0!important;
+  padding:.32rem .6rem!important;
+  white-space:nowrap!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row{
+  display:grid!important;
+  grid-template-columns:minmax(9rem,1fr) auto!important;
+  gap:.45rem!important;
+  align-items:end!important;
+  width:100%!important;
+  margin:.15rem 0 0!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row>.card-row-draw-scope-label{
+  display:block!important;
+  width:100%!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:.32rem!important;
+  flex-wrap:wrap!important;
+  width:auto!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:.3rem!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:2.1rem!important;
+  margin:0!important;
+  padding:.32rem .5rem!important;
+  border:1px solid #d0c7bf!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  font-size:.76rem!important;
+  font-weight:800!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label::after{
+  content:none!important;
+  display:none!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack input[type="checkbox"]{
+  flex:0 0 auto!important;
+  width:.95rem!important;
+  height:.95rem!important;
+  margin:0!important;
+}
+@media(max-width:650px){
+  html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row{
+    grid-template-columns:1fr!important;
+  }
+}
+
+
+/* v11 top actions and hidden placeholder control */
+html body #shortListPanel #addCardPlaceholder{
+  display:none!important;
+}
+html body #shortListPanel .card-row-drawing-board:not([open])>.drawing-board-top-actions{
+  display:none!important;
+}
+html body #shortListPanel .drawing-board-top-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:.35rem!important;
+  flex-wrap:wrap!important;
+  margin:.35rem .45rem!important;
+}
+
+
+/* v12 permanent top-row Options + single-column Options layout */
+html body #shortListPanel .drawing-board-top-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:.35rem!important;
+  flex-wrap:nowrap!important;
+  width:calc(100% - .9rem)!important;
+  max-width:calc(100% - .9rem)!important;
+  margin:.35rem .45rem!important;
+}
+html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{
+  order:0!important;
+  flex:0 0 auto!important;
+  margin-right:auto!important;
+}
+html body #shortListPanel .drawing-board-top-actions>#drawRandomRowCard{order:10!important}
+html body #shortListPanel .drawing-board-top-actions>#undoShortList{order:11!important}
+html body #shortListPanel .drawing-board-top-actions>#redoShortList{order:12!important}
+html body #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly{order:13!important}
+html body #shortListPanel .drawing-board-top-actions>.board-history-icon{
+  display:inline-grid!important;
+  place-items:center!important;
+  flex:0 0 2.25rem!important;
+  width:2.25rem!important;
+  min-width:2.25rem!important;
+  max-width:2.25rem!important;
+  height:2.25rem!important;
+  min-height:2.25rem!important;
+  padding:0!important;
+  border-radius:7px!important;
+}
+html body #shortListPanel .drawing-board-top-actions>.board-history-icon svg{
+  width:1.2rem!important;
+  height:1.2rem!important;
+}
+html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{
+  left:.5rem!important;
+  right:auto!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .card-row-composer.is-relphi-organized,
+html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup,
+html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup>.board-options-body,
+html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:.55rem!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:.38rem!important;
+  width:100%!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row>.card-row-draw-scope-label{
+  width:100%!important;
+  max-width:100%!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row>.card-row-draw-scope-label select{
+  width:100%!important;
+  max-width:100%!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:.35rem!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:.34rem .5rem!important;
+  box-sizing:border-box!important;
+  white-space:nowrap!important;
+}
+@media(max-width:560px){
+  html body #shortListPanel .drawing-board-top-actions{flex-wrap:wrap!important}
+  html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+
+
+/* v13 remove retired hover-action artifact and lock Options toggle row */
+html body #shortListPanel .card-row-workspace>.drawing-board-primary-actions,
+html body #shortListPanel .card-row-workspace>.relphi-board-controller-hotzone--actions{
+  display:none!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup>.board-options-body{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  grid-template-columns:1fr!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{
+  display:flex!important;
+  flex-direction:column!important;
+  width:100%!important;
+  max-width:100%!important;
+  grid-column:1/-1!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  width:100%!important;
+  gap:.38rem!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row>.card-row-draw-scope-label{
+  order:0!important;
+  width:100%!important;
+  max-width:100%!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{
+  order:1!important;
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:stretch!important;
+  gap:.35rem!important;
+  width:100%!important;
+  max-width:100%!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex:1 1 0!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+}
+
+
+/* v14 mobile Drawing Board: actions always reachable, Options internally scrolls */
+@media(max-width:700px){
+  html body #shortListPanel .card-row-drawing-board{
+    position:relative!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions{
+    position:sticky!important;
+    top:0!important;
+    z-index:2400!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:.32rem!important;
+    flex-wrap:nowrap!important;
+    width:calc(100% - .7rem)!important;
+    max-width:calc(100% - .7rem)!important;
+    margin:.25rem .35rem!important;
+    padding:.32rem!important;
+    border:1px solid rgba(35,29,25,.16)!important;
+    border-radius:9px!important;
+    background:rgba(255,252,248,.98)!important;
+    box-shadow:0 3px 12px rgba(30,20,15,.10)!important;
+    backdrop-filter:blur(6px)!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{
+    margin-right:auto!important;
+  }
+  html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{
+    position:fixed!important;
+    top:4.25rem!important;
+    right:.45rem!important;
+    bottom:.45rem!important;
+    left:.45rem!important;
+    z-index:2300!important;
+    width:auto!important;
+    max-width:none!important;
+    max-height:none!important;
+    margin:0!important;
+    overflow:hidden!important;
+    border-radius:12px!important;
+    box-shadow:0 12px 34px rgba(30,20,15,.26)!important;
+  }
+  html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.card-row-composer{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:100%!important;
+    max-height:100%!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+    padding:.55rem!important;
+    box-sizing:border-box!important;
+  }
+  html body #shortListPanel .relphi-reading-options-drawer .board-reset-action{
+    position:sticky!important;
+    bottom:0!important;
+    z-index:4!important;
+    align-self:flex-start!important;
+    margin:.35rem 0 0!important;
+    background:#fffdf8!important;
+    box-shadow:0 -8px 14px rgba(255,253,248,.96)!important;
+  }
+  html body #shortListPanel .relphi-reading-options-drawer .relphi-label-row{
+    min-height:2.35rem!important;
+  }
+  html body #shortListPanel .relphi-reading-options-drawer .relphi-label-row>input{
+    min-height:2.2rem!important;
+  }
+}
+
+
+/* v15 top action row is the interactive control surface */
+html body #shortListPanel .drawing-board-top-actions{
+  position:relative!important;
+  z-index:2450!important;
+  isolation:isolate!important;
+  pointer-events:auto!important;
+}
+html body #shortListPanel .drawing-board-top-actions>button{
+  position:relative!important;
+  z-index:1!important;
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+html body #shortListPanel .drawing-board-top-actions>button svg,
+html body #shortListPanel .drawing-board-top-actions>button svg *{
+  pointer-events:none!important;
+}
+
+
+/* v15 Options uses one full-height internal scroll surface */
+html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{
+  top:.5rem!important;
+  bottom:.5rem!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  scrollbar-gutter:stable!important;
+}
+html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.card-row-composer{
+  height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+  padding:.5rem!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reset-action{
+  position:sticky!important;
+  bottom:.35rem!important;
+  z-index:5!important;
+  background:#fffdf8!important;
+  box-shadow:0 -10px 16px rgba(255,253,248,.96)!important;
+}
+@media(max-width:700px){
+  html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{
+    top:4.25rem!important;
+    bottom:.45rem!important;
+  }
+}
+
+
+/* v17 final Options toggle-row contract: Labels, Reversals, Repeats stay equal and inline */
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:.35rem!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  min-height:2.35rem!important;
+  margin:0!important;
+  padding:.34rem .42rem!important;
+  gap:.3rem!important;
+  box-sizing:border-box!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  font-size:.74rem!important;
+  line-height:1!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label>input[type="checkbox"]{
+  flex:0 0 auto!important;
+  width:.95rem!important;
+  height:.95rem!important;
+  margin:0!important;
+}
+@media(max-width:520px){
+  html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label{
+    padding:.32rem .34rem!important;
+    gap:.24rem!important;
+    font-size:.7rem!important;
+  }
+}
+
+
+/* v19 Drawing Board description-layer ownership
+   Ledger/result cards may use hover/focus reveal; Drawing Board cards do not.
+   The board description layer is a persistent readable surface. */
+html body #shortListPanel .card-row-workspace .card-row-card>.or-card-layer.relphi-info-layer{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  transform:none!important;
+  pointer-events:auto!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-card>.or-card-layer.relphi-info-layer .or-layer-scroll,
+html body #shortListPanel .card-row-workspace .card-row-card>.or-card-layer.relphi-info-layer .relphi-info-scroll{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  min-height:0!important;
+  overflow:auto!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-card>.or-card-layer.relphi-info-layer .or-card-title-banner.card-title-link{
+  cursor:pointer!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+  text-decoration:underline!important;
+  text-underline-offset:.14em!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-card>.or-card-layer.relphi-info-layer .or-card-title-banner.card-title-link:focus-visible{
+  outline:2px solid #171412!important;
+  outline-offset:2px!important;
+}
+
+
+/* v20 Reset Board and transactional Options ownership */
+html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{
+  order:0!important;
+  flex:0 0 auto!important;
+  margin:0!important;
+}
+html body #shortListPanel .drawing-board-top-actions>#clearShortList.board-reset-action{
+  order:1!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:2.2rem!important;
+  margin:0 auto 0 0!important;
+  padding:.42rem .72rem!important;
+  border:1px solid rgba(220,31,24,.45)!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#b81712!important;
+  font:inherit!important;
+  font-size:.78rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  box-shadow:none!important;
+  white-space:nowrap!important;
+}
+html body #shortListPanel .drawing-board-top-actions>#clearShortList.board-reset-action:hover:not(:disabled){
+  border-color:#dc1f18!important;
+  background:#fff4f1!important;
+  color:#b81712!important;
+}
+html body #shortListPanel .drawing-board-top-actions>#clearShortList.board-reset-action:disabled{
+  opacity:.4!important;
+  border-color:rgba(220,31,24,.28)!important;
+  background:#fff!important;
+  color:rgba(184,23,18,.48)!important;
+  cursor:default!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar{
+  position:sticky!important;
+  bottom:0!important;
+  z-index:12!important;
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  gap:.45rem!important;
+  width:100%!important;
+  margin:.55rem 0 0!important;
+  padding:.6rem .5rem .5rem!important;
+  border-top:1px solid #ded5cd!important;
+  background:rgba(255,253,248,.98)!important;
+  box-shadow:0 -10px 16px rgba(255,253,248,.96)!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>button{
+  width:auto!important;
+  min-width:5rem!important;
+  min-height:2.25rem!important;
+  margin:0!important;
+  padding:.42rem .78rem!important;
+  border:1px solid #aaa098!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#171412!important;
+  font:inherit!important;
+  font-size:.78rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>.relphi-options-save{
+  border-color:#dc1f18!important;
+  background:#dc1f18!important;
+  color:#fff!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>.relphi-options-cancel{
+  border-color:#aaa098!important;
+  background:#fff!important;
+  color:#171412!important;
+}
+
+
+/* v21 mobile Drawing Board toolbar
+   Row 1: Options + Reset Board
+   Row 2: Draw + Undo + Redo + Clear Cards */
+@media(max-width:700px){
+  html body #shortListPanel .drawing-board-top-actions{
+    display:grid!important;
+    grid-template-columns:max-content 2.25rem 2.25rem max-content!important;
+    grid-template-rows:auto auto!important;
+    justify-content:start!important;
+    align-items:center!important;
+    column-gap:.4rem!important;
+    row-gap:.45rem!important;
+    width:calc(100% - .9rem)!important;
+    max-width:calc(100% - .9rem)!important;
+    margin:.4rem .45rem!important;
+    overflow:visible!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{
+    grid-row:1!important;
+    grid-column:1!important;
+    width:auto!important;
+    min-width:0!important;
+    margin:0!important;
+    justify-self:start!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#clearShortList.board-reset-action{
+    grid-row:1!important;
+    grid-column:2 / span 3!important;
+    width:auto!important;
+    min-width:0!important;
+    margin:0!important;
+    justify-self:start!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#drawRandomRowCard{
+    grid-row:2!important;
+    grid-column:1!important;
+    width:auto!important;
+    min-width:0!important;
+    margin:0!important;
+    justify-self:start!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#undoShortList{
+    grid-row:2!important;
+    grid-column:2!important;
+    margin:0!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#redoShortList{
+    grid-row:2!important;
+    grid-column:3!important;
+    margin:0!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly{
+    grid-row:2!important;
+    grid-column:4!important;
+    width:auto!important;
+    min-width:0!important;
+    margin:0!important;
+    justify-self:start!important;
+    white-space:nowrap!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>.board-history-icon{
+    width:2.25rem!important;
+    min-width:2.25rem!important;
+    max-width:2.25rem!important;
+    height:2.25rem!important;
+    min-height:2.25rem!important;
+  }
+}
+
+/* v23 canonical Drawing Board button language
+   Two text-button variants only:
+   primary = red fill; secondary = white with red outline.
+   Undo/redo are icon-only secondary buttons. */
+html body #shortListPanel .drawing-board-top-actions>button,
+html body #shortListPanel #drawing-board-post-export .board-options-body>button,
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>button{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:2.2rem!important;
+  margin:0!important;
+  padding:.42rem .72rem!important;
+  border:1px solid rgba(220,31,24,.52)!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#b81712!important;
+  font:inherit!important;
+  font-size:.78rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  box-shadow:none!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+}
+html body #shortListPanel .drawing-board-top-actions>button:hover:not(:disabled),
+html body #shortListPanel #drawing-board-post-export .board-options-body>button:hover:not(:disabled),
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>button:hover:not(:disabled){
+  border-color:#dc1f18!important;
+  background:#fff4f1!important;
+  color:#b81712!important;
+}
+html body #shortListPanel .drawing-board-top-actions>button:focus-visible,
+html body #shortListPanel #drawing-board-post-export .board-options-body>button:focus-visible,
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>button:focus-visible{
+  outline:2px solid #dc1f18!important;
+  outline-offset:2px!important;
+}
+html body #shortListPanel .drawing-board-top-actions>button:disabled,
+html body #shortListPanel #drawing-board-post-export .board-options-body>button:disabled,
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>button:disabled{
+  opacity:.4!important;
+  cursor:default!important;
+}
+html body #shortListPanel .drawing-board-top-actions>#drawRandomRowCard,
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>.relphi-options-save{
+  border-color:#dc1f18!important;
+  background:#dc1f18!important;
+  color:#fff!important;
+}
+html body #shortListPanel .drawing-board-top-actions>#drawRandomRowCard:hover:not(:disabled),
+html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar>.relphi-options-save:hover:not(:disabled){
+  border-color:#b81712!important;
+  background:#b81712!important;
+  color:#fff!important;
+}
+html body #shortListPanel .drawing-board-top-actions>.board-history-icon{
+  display:inline-grid!important;
+  place-items:center!important;
+  width:2.25rem!important;
+  min-width:2.25rem!important;
+  max-width:2.25rem!important;
+  height:2.25rem!important;
+  min-height:2.25rem!important;
+  padding:0!important;
+}
+html body #shortListPanel #drawing-board-post-export .board-options-body{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:.45rem!important;
+}
+
+/* Reading Name owns the compact reading summary. */
+html body #shortListPanel #drawing-board-title .drawing-board-post-body{
+  display:grid!important;
+  grid-template-columns:minmax(15rem,.72fr) minmax(0,1.8fr)!important;
+  align-items:center!important;
+  gap:.55rem 1rem!important;
+  width:100%!important;
+}
+html body #shortListPanel #drawing-board-title .card-row-name-label{
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+html body #shortListPanel #drawing-board-title .card-row-name-label input{
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel #drawing-board-title .card-row-stats{
+  justify-self:stretch!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  gap:.28rem!important;
+  width:auto!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  font-size:.72rem!important;
+  line-height:1.15!important;
+}
+html body #shortListPanel #drawing-board-title .card-row-stats>strong{
+  white-space:nowrap!important;
+}
+html body #shortListPanel #drawing-board-title .card-row-stats>span{
+  padding:.12rem .3rem!important;
+}
+@media(max-width:760px){
+  html body #shortListPanel #drawing-board-title .drawing-board-post-body{
+    grid-template-columns:1fr!important;
+  }
+  html body #shortListPanel #drawing-board-title .card-row-stats{
+    justify-content:flex-start!important;
+  }
+}
+@media(max-width:520px){
+  html body #shortListPanel #drawing-board-post-export .board-options-body{
+    align-items:stretch!important;
+  }
+  html body #shortListPanel #drawing-board-post-export .board-options-body>button{
+    width:100%!important;
+    justify-content:center!important;
+  }
+}
+
+
+/* v24 position-sticker clearance + workspace tool flyout */
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-position-panel{
+  bottom:calc(100% + 2px)!important;
+  margin:0!important;
+}
+
+/* Snaps and Background are two views of one compact flyout, not two stacked panels. */
+html body #shortListPanel .relphi-workspace-flyout{
+  width:min(21rem,calc(100vw - 1.5rem))!important;
+  max-width:calc(100vw - 1.5rem)!important;
+  padding:.75rem!important;
+  border:1px solid #cfc5bc!important;
+  border-radius:10px!important;
+  background:#fffdf8!important;
+  box-shadow:0 12px 28px rgba(30,20,15,.18)!important;
+  box-sizing:border-box!important;
+  opacity:1!important;
+}
+html body #shortListPanel .relphi-workspace-section{
+  display:none!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+}
+html body #shortListPanel .relphi-workspace-section.is-current{
+  display:grid!important;
+  gap:.55rem!important;
+}
+html body #shortListPanel .relphi-workspace-section.is-current>h4{
+  margin:0 0 .1rem!important;
+  font-size:.95rem!important;
+  line-height:1.1!important;
+}
+html body #shortListPanel .relphi-snap-rows,
+html body #shortListPanel .relphi-background-rows{
+  display:grid!important;
+  gap:.5rem!important;
+}
+html body #shortListPanel .relphi-snap-row{
+  display:grid!important;
+  grid-template-columns:1rem 1.5rem 2rem minmax(4.75rem,1fr) 2rem!important;
+  align-items:center!important;
+  gap:.35rem!important;
+  width:100%!important;
+  min-width:0!important;
+}
+html body #shortListPanel .relphi-snap-row>input[type="checkbox"]{
+  grid-column:1!important;
+  width:1rem!important;
+  height:1rem!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-snap-row>.relphi-snap-icon{
+  grid-column:2!important;
+  display:grid!important;
+  place-items:center!important;
+  width:1.5rem!important;
+  height:1.5rem!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-snap-row>button:first-of-type{
+  grid-column:3!important;
+}
+html body #shortListPanel .relphi-snap-row>.relphi-snap-measure{
+  grid-column:4!important;
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:2rem!important;
+  margin:0!important;
+  padding:.25rem .45rem!important;
+  border:1px solid #e1d8d0!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  box-sizing:border-box!important;
+  font-weight:850!important;
+  white-space:nowrap!important;
+}
+html body #shortListPanel .relphi-snap-row>button:last-of-type{
+  grid-column:5!important;
+}
+html body #shortListPanel .relphi-snap-row>button,
+html body #shortListPanel .relphi-picture-action,
+html body #shortListPanel .relphi-reset-action{
+  width:2rem!important;
+  min-width:2rem!important;
+  max-width:2rem!important;
+  height:2rem!important;
+  min-height:2rem!important;
+  max-height:2rem!important;
+  margin:0!important;
+  padding:.25rem!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel .relphi-snap-reset-layout{
+  grid-column:1 / -1!important;
+  justify-self:start!important;
+  width:auto!important;
+  max-width:none!important;
+  min-height:2rem!important;
+  margin:.1rem 0 0!important;
+  padding:.35rem .6rem!important;
+}
+html body #shortListPanel .relphi-background-row{
+  display:grid!important;
+  grid-template-columns:minmax(4rem,1fr) 2rem 2.6rem 2rem!important;
+  align-items:center!important;
+  gap:.4rem!important;
+  width:100%!important;
+  min-width:0!important;
+}
+html body #shortListPanel .relphi-background-row>strong{
+  min-width:0!important;
+  font-size:.82rem!important;
+}
+html body #shortListPanel .relphi-background-row input[type="color"]{
+  display:block!important;
+  width:2.6rem!important;
+  height:2rem!important;
+  margin:0!important;
+  padding:2px!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel .relphi-texture-row{
+  grid-template-columns:4rem minmax(0,1fr)!important;
+}
+html body #shortListPanel .relphi-texture-row>select{
+  grid-column:2!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-workspace-tools:has(.relphi-workspace-flyout:not([hidden])){
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  transform:none!important;
+}
+@media(max-width:520px){
+  html body #shortListPanel .relphi-workspace-flyout{
+    width:min(20rem,calc(100vw - .9rem))!important;
+    max-width:calc(100vw - .9rem)!important;
+    padding:.65rem!important;
+  }
+  html body #shortListPanel .relphi-snap-row{
+    grid-template-columns:1rem 1.35rem 1.9rem minmax(4rem,1fr) 1.9rem!important;
+    gap:.28rem!important;
+  }
+}
+
+
+/* v26 card slot owns exactly the card-art footprint.
+   CARD_ROW_ENVELOPE_W is already the intended 174px card width. Older global
+   CSS inset the filled card by 5px on each side, exposing the slot behind it. */
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item{
+  width:var(--row-envelope-w,174px)!important;
+  min-width:var(--row-envelope-w,174px)!important;
+  max-width:var(--row-envelope-w,174px)!important;
+  padding:0!important;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item>.card-row-drop-card{
+  width:100%!important;
+  max-width:100%!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  box-sizing:border-box!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.card-row-card,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.or-card.card-row-card,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.or-card.tarot-card-surface.relphi-surface--card.card-row-card{
+  width:100%!important;
+  max-width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.card-row-card .or-card-art.relphi-surface-face,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.card-row-card img.or-card-art,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.card-row-card .spread-card-art{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
 }

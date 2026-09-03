@@ -26,10 +26,7 @@ let browser;
     shortListNotes: 'This editable board should survive a trip to Sky Chart.',
     rowCardReversals: {},
     rowEnvelopeLayout: {},
-    rowCardTransforms: {},
-    rowSenseSelections: {},
-    rowSenseNotes: {},
-    rowTransformTarget: 0,
+    rowCardTransforms: {},    rowTransformTarget: 0,
     cardRowBoardOpen: true,
     cardRowSettingsOpen: false
   };

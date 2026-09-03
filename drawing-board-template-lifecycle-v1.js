@@ -208,6 +208,7 @@
     const root = panel();
     const clear = root?.querySelector('#clearShortList');
     if (!root || !clear) return;
+
     let cardsOnly = root.querySelector('#clearShortListCardsOnly');
     if (!cardsOnly) {
       cardsOnly = document.createElement('button');
@@ -217,14 +218,15 @@
       cardsOnly.textContent = 'Clear Cards';
       cardsOnly.title = 'Remove drawn cards and keep the spread positions';
       cardsOnly.setAttribute('aria-label', 'Clear cards and keep spread positions');
-      clear.insertAdjacentElement('beforebegin', cardsOnly);
-      cardsOnly.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        clearCardsOnly();
-      });
     }
     cardsOnly.disabled = !bridge()?.getState?.()?.hasCards;
+
+    window.RelphiDrawingBoardEnsureTopActions?.(root);
+
+    const add = root.querySelector('#addCardPlaceholder');
+    const staging = root.querySelector('.card-row-action-staging');
+    if (add && staging && add.parentElement !== staging) staging.appendChild(add);
+
     clear.title = 'Clear board: remove cards and spread positions';
     clear.setAttribute('aria-label', 'Clear board including cards and spread positions');
     if (String(clear.textContent || '').trim().toLowerCase() === 'clear') clear.textContent = 'Clear Board';
