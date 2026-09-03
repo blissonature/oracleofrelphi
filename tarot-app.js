@@ -2310,6 +2310,10 @@
     };
 
     bind('drawingBoardOptionsButton', () => {
+      if (typeof window.RelphiDrawingBoardToggleOptions === 'function') {
+        window.RelphiDrawingBoardToggleOptions();
+        return;
+      }
       document.dispatchEvent(new CustomEvent('relphi:drawing-board-options-toggle', {
         detail: { panelId:'shortListPanel' }
       }));
