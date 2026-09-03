@@ -13,13 +13,13 @@ const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 const workflowCss = fs.readFileSync(path.join(root, 'drawing-board-workflow-v2.css'), 'utf8');
 const workflowUi = workflow + '\n' + workflowCss;
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=54/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=55/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=7/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=3/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=29/);
 assert.match(page, /style\.css\?v=350/);
-assert.match(page, /drawing-board-workflow-v2\.css\?v=9/);
-assert.match(page, /navloader\.js\?v=85/);
+assert.match(page, /drawing-board-workflow-v2\.css\?v=10/);
+assert.match(page, /navloader\.js\?v=86/);
 assert.match(page, /tarot-app\.js\?v=364/);
 assert.doesNotMatch(workflow, /document\.createElement\('style'\)|style\.textContent|document\.head\.appendChild\(style\)/);
 assert.equal((workflow.match(/installOptionsButton\(panel\)/g) || []).length, 2);
@@ -84,13 +84,19 @@ assert.match(workflowUi, /move\(drawSettingsRow, packControl\)/);
 assert.match(workflowUi, /board-reading-toggle-stack/);
 assert.match(workflowUi, /drawing-board-primary-actions/);
 assert.match(workflow, /drawing-board-action-buttons/);
-assert.match(workflow, /drawing-board-quick-settings/);
+assert.doesNotMatch(workflow, /drawing-board-quick-settings/);
+assert.match(workflow, /actionButtons\.appendChild\(button\)/);
+assert.match(workflowCss, /v10 confirmed toggle ownership/);
+assert.match(workflowCss, /relphi-reading-options-drawer \.board-draw-settings-row[\s\S]{0,220}display:grid!important/);
+assert.match(workflowCss, /relphi-reading-options-drawer \.board-reading-toggle-stack[\s\S]{0,220}display:flex!important/);
+assert.match(workflowCss, /relphi-reading-options-drawer \.board-reading-toggle-stack>label[\s\S]{0,520}width:auto!important/);
+
 assert.match(workflow, /quickSettings\.appendChild\(button\)/);
 assert.match(workflow, /spreadSetup\.appendChild\(resetBoard\)/);
 assert.match(workflowCss, /v7 compact controls exactly matching the approved reference/);
-assert.match(workflowCss, /drawing-board-quick-settings[\s\S]{0,250}display:flex!important/);
-assert.match(workflowCss, /drawing-board-quick-settings>\.spread-toggle[\s\S]{0,500}width:auto!important/);
-assert.match(workflowCss, /drawing-board-quick-settings>\.quick-reversal-toggle[\s\S]{0,500}white-space:nowrap!important/);
+
+
+
 assert.match(workflowCss, /relphi-reading-options-drawer \.board-draw-settings-row[\s\S]{0,120}display:none!important/);
 assert.match(workflowUi, /function installBoardControllerAutoHide\(panel\)/);
 assert.match(workflowUi, /relphi-board-controller-hotzone--actions/);
@@ -101,6 +107,7 @@ assert.match(workflowUi, /is-controller-idle/);
 assert.match(workflowUi, /installBoardControllerAutoHide\(panel\)/);
 assert.match(workflowUi, /\['drawRandomRowCard','undoShortList','clearRowCardsOnly'\]/);
 assert.match(workflowUi, /renameToggle\(stickerToggle, 'Labels'\)/);
+assert.match(workflow, /if \(stickerToggle\) toggleStack\.appendChild\(stickerToggle\)[\s\S]{0,160}if \(reversalsToggle\) toggleStack\.appendChild\(reversalsToggle\)[\s\S]{0,160}if \(repeatsToggle\) toggleStack\.appendChild\(repeatsToggle\)/);
 assert.match(workflowUi, /renameToggle\(repeatsToggle, 'Repeats'\)/);
 assert.match(workflowUi, /renameToggle\(reversalsToggle, 'Reversals'\)/);
 assert.match(workflowUi, /drawing-board-after-canvas/);
