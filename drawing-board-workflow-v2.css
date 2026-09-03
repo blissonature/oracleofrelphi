@@ -753,3 +753,34 @@ html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-s
     font-size:.7rem!important;
   }
 }
+
+
+/* v19 Drawing Board description-layer ownership
+   Ledger/result cards may use hover/focus reveal; Drawing Board cards do not.
+   The board description layer is a persistent readable surface. */
+html body #shortListPanel .card-row-workspace .card-row-card>.or-card-layer.relphi-info-layer{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  transform:none!important;
+  pointer-events:auto!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-card>.or-card-layer.relphi-info-layer .or-layer-scroll,
+html body #shortListPanel .card-row-workspace .card-row-card>.or-card-layer.relphi-info-layer .relphi-info-scroll{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  min-height:0!important;
+  overflow:auto!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-card>.or-card-layer.relphi-info-layer .or-card-title-banner.card-title-link{
+  cursor:pointer!important;
+  user-select:none!important;
+  -webkit-user-select:none!important;
+  text-decoration:underline!important;
+  text-underline-offset:.14em!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-card>.or-card-layer.relphi-info-layer .or-card-title-banner.card-title-link:focus-visible{
+  outline:2px solid #171412!important;
+  outline-offset:2px!important;
+}
