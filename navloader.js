@@ -152,7 +152,7 @@
 
   function refreshDrawingBoardControlAssets() {
     const link = document.querySelector('link[href^="drawing-board-workflow-v2.css"]');
-    if (link) link.href = 'drawing-board-workflow-v2.css?v=13';
+    if (link) link.href = 'drawing-board-workflow-v2.css?v=14';
     if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-collapse-contract';
@@ -168,7 +168,7 @@
       appendScript('drawing-board-workflow-v2.js?v=61');
       appendScript('drawing-board-interactions-v1.js?v=11');
       appendScript('drawing-board-template-lifecycle-v1.js?v=6', function () {
-        appendScript('drawing-board-spread-prefabs-v1.js?v=36');
+        appendScript('drawing-board-spread-prefabs-v1.js?v=37');
       });
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
