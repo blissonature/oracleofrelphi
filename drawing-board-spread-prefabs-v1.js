@@ -946,7 +946,16 @@
       const x = Number.isFinite(left) ? left : (Number(transform.x) || 0) * 900;
       const y = Number.isFinite(top) ? top : (Number(transform.y) || 0) * 760;
       const s = Number.isFinite(scale) ? scale : (Number(transform.scale) || 1);
-      return { x, y, width:210 * s, height:382 * s };
+      const width = (node?.offsetWidth || 210) * s;
+      const visual = node?.querySelector('.card-row-drop-card,.card-row-card-wrap,.card-row-card');
+      const positionPanel = node?.querySelector(':scope > .card-row-position-panel');
+      const visualBottom = visual
+        ? y + ((Number(visual.offsetTop) || 0) + (Number(visual.offsetHeight) || 0)) * s
+        : y + (node?.offsetHeight || 382) * s;
+      const positionPanelTop = positionPanel
+        ? y + (Number(positionPanel.offsetTop) || 0) * s
+        : y;
+      return { x, y, width, visualBottom, positionPanelTop };
     };
 
     definitions.forEach((definition, index) => {
@@ -965,7 +974,13 @@
       }
       label.textContent = definition.label;
       label.style.left = ((top.x + top.width / 2 + bottom.x + bottom.width / 2) / 2) + 'px';
-      label.style.top = ((top.y + top.height + bottom.y) / 2) + 'px';
+      // Position the polarity label in the actual free corridor between the
+      // upper card face and the lower row's position sticker. The lower sticker
+      // is absolutely positioned above its card, so using bottom.y would put
+      // this label directly on top of it.
+      const corridorTop = top.visualBottom;
+      const corridorBottom = bottom.positionPanelTop;
+      label.style.top = ((corridorTop + corridorBottom) / 2) + 'px';
     });
 
     board.querySelectorAll('.relphi-polarity-label').forEach(node => {
