@@ -10,12 +10,12 @@ const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 const tarot = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const page = fs.readFileSync(path.join(root, 'tarot.html'), 'utf8');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=31/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=32/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=5/);
 assert.doesNotMatch(nav, /drawing-board-custom-position-stickers-v1\.js/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=3/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=15/);
-assert.match(page, /navloader\.js\?v=60/);
+assert.match(page, /navloader\.js\?v=61/);
 assert.match(page, /tarot-app\.js\?v=360/);
 
 assert.match(workflow, /> Labels/);
@@ -115,7 +115,10 @@ assert.match(page, /tarot-command-panel--primary/);
 assert.match(page, /relphiOpenDrawingBoardCurrent/);
 assert.match(page, /Open Drawing Board/);
 assert.match(workflow, /function openBoardFromLedger/);
-assert.match(workflow, /card-row-drawing-board:has\(\.card-row-composer:not\(\.is-relphi-organized\)\)\{visibility:hidden!important\}/);
+assert.doesNotMatch(workflow, /card-row-drawing-board:has\(\.card-row-composer:not\(\.is-relphi-organized\)\)\{visibility:hidden!important\}/);
+assert.match(workflow, /function forceBoardOpen\(panel\)/);
+assert.match(workflow, /panel\.style\.setProperty\('visibility', 'visible', 'important'\)/);
+assert.match(workflow, /if \(boardRequestedOpen && panel\?\.hidden\) forceBoardOpen\(panel\)/);
 assert.match(workflow, /panel\.hidden = true/);
 assert.match(workflow, /drawer\.open = true/);
 
