@@ -480,6 +480,89 @@
     applyBoardTexture(panel);
   }
 
+  function installBoardControllerAutoHide(panel) {
+    const workspace = panel.querySelector('.card-row-workspace');
+    if (!workspace) return;
+
+    if (!document.getElementById('relphi-board-controller-autohide-style')) {
+      const style = document.createElement('style');
+      style.id = 'relphi-board-controller-autohide-style';
+      style.textContent = [
+        'html body #shortListPanel .relphi-board-controller{transition:opacity .22s ease,transform .22s ease,visibility .22s linear!important}',
+        'html body #shortListPanel .relphi-board-controller.is-controller-idle:not(.is-controller-visible){opacity:0!important;visibility:hidden!important;pointer-events:none!important}',
+        'html body #shortListPanel .relphi-board-controller.is-controller-visible{opacity:.98!important;visibility:visible!important;pointer-events:auto!important}',
+        'html body #shortListPanel .drawing-board-primary-actions.relphi-board-controller{position:absolute!important;left:.5rem!important;top:.5rem!important;z-index:1700!important;margin:0!important;width:max-content!important;max-width:calc(100% - 1rem)!important}',
+        'html body #shortListPanel .drawing-board-primary-actions.relphi-board-controller.is-controller-idle:not(.is-controller-visible){transform:translateY(-.45rem)!important}',
+        'html body #shortListPanel .relphi-workspace-tools.relphi-board-controller.is-controller-idle:not(.is-controller-visible){transform:translateY(.45rem)!important}',
+        'html body #shortListPanel .card-row-workspace-toolbar.relphi-board-controller{opacity:.98!important}',
+        'html body #shortListPanel .card-row-workspace-toolbar.relphi-board-controller.is-controller-idle:not(.is-controller-visible){opacity:0!important;transform:translateY(.45rem)!important}',
+        'html body #shortListPanel .relphi-board-controller-hotzone{position:absolute!important;z-index:1690!important;background:transparent!important;pointer-events:auto!important}',
+        'html body #shortListPanel .relphi-board-controller-hotzone--actions{left:0!important;top:0!important;width:min(22rem,55%)!important;height:1.4rem!important}',
+        'html body #shortListPanel .relphi-board-controller-hotzone--tools{left:0!important;bottom:0!important;width:8rem!important;height:1.4rem!important}',
+        'html body #shortListPanel .relphi-board-controller-hotzone--zoom{right:0!important;bottom:0!important;width:min(20rem,55%)!important;height:1.4rem!important}',
+        '@media(prefers-reduced-motion:reduce){html body #shortListPanel .relphi-board-controller{transition:none!important}}'
+      ].join('');
+      document.head.appendChild(style);
+    }
+
+    const controllers = [
+      { key:'actions', node:workspace.querySelector(':scope > .drawing-board-primary-actions') },
+      { key:'tools', node:workspace.querySelector(':scope > .relphi-workspace-tools') },
+      { key:'zoom', node:workspace.querySelector(':scope > .card-row-workspace-toolbar') }
+    ].filter(item => item.node);
+
+    controllers.forEach(({ key, node }) => {
+      node.classList.add('relphi-board-controller', 'relphi-board-controller--' + key);
+      let zone = workspace.querySelector(':scope > .relphi-board-controller-hotzone[data-controller="' + key + '"]');
+      if (!zone) {
+        zone = document.createElement('div');
+        zone.className = 'relphi-board-controller-hotzone relphi-board-controller-hotzone--' + key;
+        zone.dataset.controller = key;
+        zone.setAttribute('aria-hidden', 'true');
+        workspace.appendChild(zone);
+      }
+
+      const reveal = () => {
+        if (node._relphiControllerTimer) window.clearTimeout(node._relphiControllerTimer);
+        node._relphiControllerTimer = 0;
+        node.classList.remove('is-controller-idle');
+        node.classList.add('is-controller-visible');
+      };
+      const hide = () => {
+        node._relphiControllerTimer = 0;
+        if (node.matches(':hover') || node.contains(document.activeElement)) return;
+        if (key === 'tools' && !node.querySelector('.relphi-workspace-flyout')?.hidden) return;
+        node.classList.remove('is-controller-visible');
+        node.classList.add('is-controller-idle');
+      };
+      const scheduleHide = () => {
+        if (node._relphiControllerTimer) window.clearTimeout(node._relphiControllerTimer);
+        node._relphiControllerTimer = window.setTimeout(hide, 1000);
+      };
+
+      if (node.dataset.relphiControllerAutoHideBound !== 'true') {
+        node.dataset.relphiControllerAutoHideBound = 'true';
+        zone.addEventListener('mouseenter', reveal);
+        zone.addEventListener('mouseleave', scheduleHide);
+        node.addEventListener('mouseenter', reveal);
+        node.addEventListener('mouseleave', scheduleHide);
+        node.addEventListener('focusin', reveal);
+        node.addEventListener('focusout', event => {
+          if (!node.contains(event.relatedTarget)) scheduleHide();
+        });
+        node.addEventListener('click', () => {
+          reveal();
+          scheduleHide();
+        }, true);
+      }
+
+      if (!node.classList.contains('is-controller-visible') && !node.classList.contains('is-controller-idle')) {
+        reveal();
+        scheduleHide();
+      }
+    });
+  }
+
   function readingOptionsResetState(panel) {
     const board = panel.querySelector('.card-row-board');
     const hasCards = !!board?.querySelector('[data-row-card]');
@@ -821,6 +904,7 @@ panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
     installOptionsButton(panel);
     syncReadingOptionsDrawer(panel);
     installOptionsButton(panel);
+    installBoardControllerAutoHide(panel);
     syncDescriptionLayers(panel);
     reinforceReversalUi(panel);
     normalizeDisabledButtonCursors(panel);
