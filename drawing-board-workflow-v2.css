@@ -935,3 +935,54 @@ html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-
     min-height:2.25rem!important;
   }
 }
+
+
+/* v22 Save & export buttons use the Drawing Board control language */
+html body #shortListPanel #drawing-board-post-export .board-options-body{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:.45rem!important;
+}
+html body #shortListPanel #drawing-board-post-export .board-options-body>button{
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:2.2rem!important;
+  margin:0!important;
+  padding:.42rem .72rem!important;
+  border:1px solid #aaa098!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#171412!important;
+  font:inherit!important;
+  font-size:.78rem!important;
+  font-weight:850!important;
+  line-height:1!important;
+  box-shadow:none!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+}
+html body #shortListPanel #drawing-board-post-export .board-options-body>button:hover:not(:disabled){
+  border-color:#171412!important;
+  background:#f7f3ee!important;
+  color:#171412!important;
+}
+html body #shortListPanel #drawing-board-post-export .board-options-body>button:focus-visible{
+  outline:2px solid #171412!important;
+  outline-offset:2px!important;
+}
+html body #shortListPanel #drawing-board-post-export .board-options-body>button:disabled{
+  opacity:.4!important;
+  cursor:default!important;
+}
+@media(max-width:520px){
+  html body #shortListPanel #drawing-board-post-export .board-options-body{
+    align-items:stretch!important;
+  }
+  html body #shortListPanel #drawing-board-post-export .board-options-body>button{
+    width:100%!important;
+    justify-content:center!important;
+  }
+}
