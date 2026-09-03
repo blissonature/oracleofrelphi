@@ -84,8 +84,8 @@ assert.deepEqual(
 );
 assert.equal(celtic10.positions.find(item => item.id === 'behind').transform.x, .04);
 assert.equal(celtic10.positions.find(item => item.id === 'before').transform.x, .46);
-assert.equal(celtic11.positions.find(item => item.id === 'behind').transform.x, .04);
-assert.equal(celtic11.positions.find(item => item.id === 'before').transform.x, .46);
+assert.equal(celtic11.positions.find(item => item.id === 'behind').transform.x, .03);
+assert.equal(celtic11.positions.find(item => item.id === 'before').transform.x, .57);
 assert.equal(celtic10.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.equal(celtic11.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.ok(celtic10.positions.filter(item => item.openTransform).length >= 2);
@@ -97,26 +97,26 @@ assert.equal(
 );
 assert.equal(
   JSON.stringify(celtic11.positions.slice(0, 3).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.25, .326], [.25, .326], [.25, .326]]),
+  JSON.stringify([[.30, .36], [.30, .36], [.30, .36]]),
   'significator, cover, and cross should share one piled center'
 );
 assert.equal(
   JSON.stringify(celtic11.positions.slice(0, 3).map(item => item.openTransform.x)),
-  JSON.stringify([.145, .25, .355]),
+  JSON.stringify([.16, .30, .44]),
   'the open center should place its three cards side by side'
 );
 assert.equal(celtic11.positions[2].openTransform.rotation, 0);
 assert.equal(
   JSON.stringify(celtic11.positions.slice(7).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.76, .718], [.76, .492], [.76, .266], [.76, .04]]),
+  JSON.stringify([[.82, .70], [.82, .49], [.82, .28], [.82, .07]]),
   'the right-hand ladder should rise from Self to Outcome'
 );
-assert.ok(Math.abs(celtic11.positions[0].openTransform.x - celtic11.positions.find(item => item.id === 'behind').transform.x - .105) < 1e-12);
-assert.ok(Math.abs(celtic11.positions[1].openTransform.x - celtic11.positions[0].openTransform.x - .105) < 1e-12);
-assert.ok(Math.abs(celtic11.positions[2].openTransform.x - celtic11.positions[1].openTransform.x - .105) < 1e-12);
-assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'before').transform.x - celtic11.positions[2].openTransform.x - .105) < 1e-12);
-assert.ok(Math.abs(celtic11.positions[1].openTransform.y - celtic11.positions.find(item => item.id === 'crowning').transform.y - .226) < 1e-12);
-assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'beneath').transform.y - celtic11.positions[1].openTransform.y - .226) < 1e-12);
+assert.ok(Math.abs(celtic11.positions[0].openTransform.x - celtic11.positions.find(item => item.id === 'behind').transform.x - .13) < 1e-12);
+assert.ok(Math.abs(celtic11.positions[1].openTransform.x - celtic11.positions[0].openTransform.x - .14) < 1e-12);
+assert.ok(Math.abs(celtic11.positions[2].openTransform.x - celtic11.positions[1].openTransform.x - .14) < 1e-12);
+assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'before').transform.x - celtic11.positions[2].openTransform.x - .13) < 1e-12);
+assert.ok(Math.abs(celtic11.positions[1].openTransform.y - celtic11.positions.find(item => item.id === 'crowning').transform.y - .29) < 1e-12);
+assert.ok(Math.abs(celtic11.positions.find(item => item.id === 'beneath').transform.y - celtic11.positions[1].openTransform.y - .29) < 1e-12);
 
 assert.match(source, /return prefab\.cardCount \+ ' \| ' \+ prefab\.name/);
 assert.match(source, /Save As Copy and Use/);
@@ -136,6 +136,10 @@ assert.match(source, /relphiTemplateClear/);
 assert.match(source, /right:2\.05rem/);
 assert.match(source, /border:0!important/);
 assert.doesNotMatch(source, />Use Template</);
+assert.doesNotMatch(source, /Customize a Copy/);
+assert.doesNotMatch(source, /Active layout locked/);
+assert.match(source, /if \(select\.innerHTML !== optionsHtml\) select\.innerHTML = optionsHtml/);
+assert.match(source, /if \(editor\.innerHTML !== editorHtml\)/);
 assert.doesNotMatch(source, /id = 'relphiLabelsToggle'/);
 assert.doesNotMatch(source, /className = 'relphi-labels-drawer'/);
 assert.doesNotMatch(source, /Finish from the Templates drawer/);
