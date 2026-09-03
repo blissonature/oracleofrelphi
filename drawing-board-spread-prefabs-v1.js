@@ -489,6 +489,98 @@
     }
     if (clean.length) enablePositionStickers();
   }
+  function labelsFromBuilder(builder) {
+    return Array.from(builder?.querySelectorAll('[data-relphi-label-input]') || [])
+      .map(input => String(input.value || '').trim())
+      .filter(Boolean);
+  }
+
+  function saveLabelsAsTemplate(panel, field, builder, saver) {
+    const nameField = saver?.querySelector('#relphiLabelTemplateName');
+    const status = saver?.querySelector('.relphi-label-template-status');
+    const labels = labelsFromBuilder(builder);
+    const name = String(nameField?.value || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+
+    if (!labels.length) {
+      if (status) status.textContent = 'Add at least one label first.';
+      return;
+    }
+    if (!name) {
+      if (status) status.textContent = 'Name the template first.';
+      nameField?.focus();
+      return;
+    }
+    if (templateNameConflict(name, labels.length)) {
+      if (status) status.textContent = 'A ' + labels.length + '-card template with that name already exists.';
+      return;
+    }
+
+    writeLabelBuilderToHidden(field, builder);
+    ensurePositionSlots(labels.length);
+
+    const live = bridge()?.getState();
+    const current = live?.currentLayout;
+    let positions = Array.isArray(current?.positions) && current.positions.length === labels.length
+      ? current.positions.slice().sort((a,b) => Number(a.drawOrder) - Number(b.drawOrder)).map((item, index) => ({
+          ...clone(item),
+          id:String(item.id || ('position-' + (index + 1))),
+          label:labels[index],
+          drawOrder:index + 1
+        }))
+      : gridPositions(labels);
+
+    const saved = sanitizeCustom({
+      id:uniqueId(name),
+      name,
+      source:'custom',
+      editable:true,
+      positions,
+      rules:{
+        allowReversals:!!panel.querySelector('#rowAllowReversalsQuick')?.checked,
+        allowRepeats:!!panel.querySelector('#rowAllowRepeats')?.checked,
+        drawScope:String(panel.querySelector('#rowDrawScope')?.value || 'full')
+      }
+    });
+    if (!saved || !saveCustom(saved)) {
+      if (status) status.textContent = 'This browser could not save the template.';
+      return;
+    }
+
+    selectedId = saved.id;
+    draftLayout = null;
+    draftName = '';
+    copySourceId = '';
+    templateMode = 'existing';
+    if (status) status.textContent = 'Saved as ' + displayName(saved) + '.';
+    schedule();
+  }
+
+  function ensureLabelTemplateSaver(panel, field, builder) {
+    const host = builder?.closest('.board-setup-group--spread');
+    if (!host || !field || !builder) return null;
+    let saver = host.querySelector('.relphi-label-template-saver');
+    if (!saver) {
+      saver = document.createElement('div');
+      saver.className = 'relphi-label-template-saver';
+      saver.innerHTML =
+        '<label>Template name<input id="relphiLabelTemplateName" type="text" maxlength="60" autocomplete="off" placeholder="Name this spread"></label>' +
+        '<button type="button" class="primary" id="relphiSaveLabelsAsTemplate">Save as Template</button>' +
+        '<small class="relphi-label-template-status" aria-live="polite"></small>';
+      builder.insertAdjacentElement('afterend', saver);
+      const nameField = saver.querySelector('#relphiLabelTemplateName');
+      const save = saver.querySelector('#relphiSaveLabelsAsTemplate');
+      const sync = () => {
+        const labels = labelsFromBuilder(builder);
+        save.disabled = !labels.length || !String(nameField.value || '').trim();
+      };
+      nameField.addEventListener('input', sync);
+      save.addEventListener('click', () => saveLabelsAsTemplate(panel, field, builder, saver));
+      builder.addEventListener('input', sync);
+      sync();
+    }
+    return saver;
+  }
+
   function renderLabelBuilder(panel, field, labels) {
     const host = field?.closest('.board-setup-group--spread');
     if (!host || !field) return null;
@@ -559,6 +651,7 @@
       add.hidden = index !== rows.length - 1;
       remove.hidden = rows.length === 1;
     });
+    ensureLabelTemplateSaver(panel, field, builder);
     return builder;
   }
   function syncBuilderFromHidden(panel, field) {
