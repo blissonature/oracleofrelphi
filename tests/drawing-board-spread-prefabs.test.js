@@ -181,6 +181,10 @@ assert.match(app, /rowActiveLayout:\s*cloneBoardValue\(state\.rowActiveLayout,\s
 assert.match(app, /rowCenterOpen/, 'temporary Celtic view state should exist');
 assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Celtic view must not persist in the board snapshot');
 assert.match(app, /state\.rowLayoutLocked = true/);
+assert.match(app, /rowAllowReversals: true/);
+assert.match(app, /option\('full','Full Pack'\)/);
+assert.doesNotMatch(app, /const editable = !state\.rowLayoutLocked \|\| state\.rowLayoutDesignMode/);
+assert.doesNotMatch(app, /labels\.addEventListener\('input',[\s\S]{0,180}rowLayoutLocked/);
 assert.match(app, /relphi:drawing-board-rendered/);
 assert.match(source, /draftName = String\(state\.currentLayout\.name/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=21/);
