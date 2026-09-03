@@ -107,7 +107,7 @@
     const label = document.createElement('label');
     label.className = 'quick-position-sticker-toggle';
     label.title = 'Show position labels when you add them';
-    label.innerHTML = '<input id="rowPositionStickersQuick" type="checkbox"' + (stickersEnabled() ? ' checked' : '') + '> Show position stickers';
+    label.innerHTML = '<input id="rowPositionStickersQuick" type="checkbox"' + (stickersEnabled() ? ' checked' : '') + '> Position Stickers';
     const reversals = toolbar.querySelector('.quick-reversal-toggle');
     toolbar.insertBefore(label, reversals || toolbar.firstChild);
     label.querySelector('input').addEventListener('change', event => {
@@ -544,26 +544,11 @@
     });
   }
 
-  function readingOptionsResetState(panel) {
-    const board = panel.querySelector('.card-row-board');
-    const hasCards = !!board?.querySelector('[data-row-card]');
-    const hasPositions = !!board?.querySelector('.card-row-item');
-    const hasLabels = labelsFromField(panel.querySelector('#rowPositionLabels')).length > 0;
-    return !hasCards && !hasPositions && !hasLabels;
-  }
-
-  function readingOptionsAutoCloseReady(panel) {
-    const hasCards = !!panel.querySelector('.card-row-board [data-row-card]');
-    const template = panel.querySelector('#relphiSpreadTemplateSelect')?.value || '';
-    return hasCards || (!!template && template !== '__new__');
-  }
-
-  function setReadingOptionsOpen(panel, open, mode) {
+  function setReadingOptionsOpen(panel, open) {
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (!drawer) return;
     drawer.open = true;
     panel.dataset.relphiReadingOptionsOpen = open ? 'true' : 'false';
-    if (mode) panel.dataset.relphiReadingOptionsMode = mode;
     drawer.classList.toggle('is-reading-options-open', !!open);
     const trigger = panel.querySelector('#drawingBoardOptionsButton');
     if (trigger) {
@@ -576,25 +561,13 @@
   function syncReadingOptionsDrawer(panel) {
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (!drawer) return;
-    const reset = readingOptionsResetState(panel);
-    const current = reset ? 'true' : 'false';
-    const previous = panel.dataset.relphiReadingOptionsResetState;
-    if (previous === undefined) {
-      panel.dataset.relphiReadingOptionsResetState = current;
-      setReadingOptionsOpen(panel, reset, reset ? 'auto-reset' : 'closed');
-      return;
-    }
-    if (previous === current) {
-      if (!reset && panel.dataset.relphiReadingOptionsMode === 'auto-reset' && readingOptionsAutoCloseReady(panel)) {
-        setReadingOptionsOpen(panel, false, 'closed');
-      }
-      return;
-    }
-    panel.dataset.relphiReadingOptionsResetState = current;
-    if (reset) {
-      setReadingOptionsOpen(panel, true, 'auto-reset');
-    } else if (panel.dataset.relphiReadingOptionsMode === 'auto-reset' && readingOptionsAutoCloseReady(panel)) {
-      setReadingOptionsOpen(panel, false, 'closed');
+    const open = panel.dataset.relphiReadingOptionsOpen === 'true';
+    drawer.open = true;
+    drawer.classList.toggle('is-reading-options-open', open);
+    const trigger = panel.querySelector('#drawingBoardOptionsButton');
+    if (trigger) {
+      trigger.setAttribute('aria-expanded', String(open));
+      trigger.classList.toggle('is-active', open);
     }
   }
 
@@ -607,13 +580,14 @@
 
     drawer.classList.add('relphi-reading-options-drawer');
     drawer.open = true;
-    summary.textContent = 'Reading Options';
+    summary.textContent = 'Board Options';
     summary.hidden = true;
     summary.setAttribute('aria-hidden', 'true');
 
     if (drawer.parentElement !== boardDrawer || drawer.nextElementSibling !== workspace) {
       workspace.insertAdjacentElement('beforebegin', drawer);
     }
+    if (panel.dataset.relphiReadingOptionsOpen !== 'true') panel.dataset.relphiReadingOptionsOpen = 'false';
     syncReadingOptionsDrawer(panel);
   }
 
@@ -624,7 +598,6 @@
       reset.dataset.relphiTextureResetBound = 'true';
       reset.addEventListener('click', () => {
         window.setTimeout(() => {
-          if (!readingOptionsResetState(panel)) return;
           setBoardTexture(DEFAULT_BOARD_TEXTURE);
           applyBoardTexture(panel);
         }, 0);
@@ -642,7 +615,7 @@
         event.preventDefault();
         event.stopPropagation();
         const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
-        setReadingOptionsOpen(panel, opening, opening ? 'manual' : 'closed');
+        setReadingOptionsOpen(panel, opening);
       });
     }
 
@@ -687,8 +660,9 @@
 
     const setupSection = section('setup');
     const setup = setupSection.querySelector('.board-options-body');
-    const spreadSetup = setupGroup(setup, 'spread', 'What would you like to know?', '');
+    const spreadSetup = setupGroup(setup, 'spread', 'Board Options', 'Templates, reading name, pack, position labels, position stickers, repeats, and reversals.');
 
+    move(spreadSetup, control('rowName'));
     move(spreadSetup, control('rowPositionLabels'));
 
     const drawSettingsRow = document.createElement('div');
@@ -712,12 +686,12 @@
       if (textNode) textNode.textContent = ' ' + text;
       label.title = text;
     };
-    renameToggle(reversalsToggle, 'Reversals');
+    renameToggle(stickerToggle, 'Position Stickers');
     renameToggle(repeatsToggle, 'Repeats');
-    renameToggle(stickerToggle, 'Labels');
-    if (reversalsToggle) toggleStack.appendChild(reversalsToggle);
-    if (repeatsToggle) toggleStack.appendChild(repeatsToggle);
+    renameToggle(reversalsToggle, 'Reversals');
     if (stickerToggle) toggleStack.appendChild(stickerToggle);
+    if (repeatsToggle) toggleStack.appendChild(repeatsToggle);
+    if (reversalsToggle) toggleStack.appendChild(reversalsToggle);
     drawSettingsRow.appendChild(toggleStack);
 
     const boardDrawer = panel.querySelector('.card-row-drawing-board');
@@ -731,16 +705,6 @@
       workspace.insertAdjacentElement('afterend', afterCanvas);
     }
     if (afterCanvas) {
-      let titleSection = afterCanvas.querySelector('#drawing-board-title');
-      if (!titleSection) {
-        titleSection = document.createElement('section');
-        titleSection.id = 'drawing-board-title';
-        titleSection.className = 'drawing-board-post-section drawing-board-title';
-        titleSection.innerHTML = '<header><strong>Reading title</strong><span>Optional title for saving and export.</span></header><div class="drawing-board-post-body"></div>';
-        afterCanvas.appendChild(titleSection);
-      }
-      move(titleSection.querySelector('.drawing-board-post-body'), control('rowName'));
-
       let notesSection = afterCanvas.querySelector('#drawing-board-notes');
       if (!notesSection) {
         notesSection = document.createElement('section');
