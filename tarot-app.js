@@ -2322,6 +2322,19 @@
     bind('undoShortList', () => undoShortList());
     bind('redoShortList', () => redoShortList());
     bind('clearShortListCardsOnly', () => clearShortListCardsOnlyNative());
+
+    qsa('.card-row-board .or-card-title-banner.card-title-link[data-card-id]', wrap).forEach(link => {
+      const open = event => {
+        event.preventDefault();
+        event.stopPropagation();
+        openFullEntryById(link.dataset.cardId);
+      };
+      link.onclick = open;
+      link.onkeydown = event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        open(event);
+      };
+    });
   }
 
   function renderShortList() {
