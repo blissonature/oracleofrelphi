@@ -39,27 +39,27 @@
     layer?.remove();
   }
 
-  function iconSvg(kind) {
-    const path = kind === 'undo'
-      ? '<path d="M9 7 4 12l5 5"/><path d="M4 12h9a7 7 0 0 1 7 7"/>'
-      : '<path d="m15 7 5 5-5 5"/><path d="M20 12h-9a7 7 0 0 0-7 7"/>';
-    return '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+  function topActionRow(panel) {
+    const drawer = panel.querySelector('.card-row-drawing-board');
+    const summary = drawer?.querySelector(':scope > summary');
+    if (!drawer || !summary) return null;
+    let row = drawer.querySelector(':scope > .drawing-board-top-actions');
+    if (!row) {
+      row = document.createElement('div');
+      row.className = 'drawing-board-top-actions';
+      summary.insertAdjacentElement('afterend', row);
+    }
+    return row;
   }
 
   function directHistoryControls(panel) {
-    const workspace = panel.querySelector('.card-row-workspace');
-    if (!workspace) return;
-    let actions = workspace.querySelector(':scope > .drawing-board-primary-actions');
-    if (!actions) {
-      actions = document.createElement('div');
-      actions.className = 'drawing-board-primary-actions';
-      workspace.insertBefore(actions, workspace.firstChild);
-    }
+    const actions = topActionRow(panel);
+    if (!actions) return;
     [[panel.querySelector('#undoShortList'), 'undo', 'Undo'], [panel.querySelector('#redoShortList'), 'redo', 'Redo']].forEach(function (entry) {
       const button = entry[0];
       if (!button) return;
-      button.classList.add('board-history-icon');
-      button.innerHTML = iconSvg(entry[1]);
+      button.classList.remove('board-history-icon');
+      button.textContent = entry[2];
       button.setAttribute('aria-label', entry[2]);
       button.title = entry[2];
       if (button.parentElement !== actions) actions.appendChild(button);
