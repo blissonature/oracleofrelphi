@@ -26,5 +26,5 @@ assert.match(app, /rowPositionMeta:/);
 assert.match(app, /rowLayoutDesignMode:/);
 assert.match(app, /rowLayoutLocked:/);
 assert.match(app, /RelphiDrawingBoardPrefabsBridge/);
-assert.match(html, /tarot-app\.js\?v=360/);
+assert.match(html, /tarot-app\.js\?v=361/);
 console.log('Drawing Board persistence regression checks passed');
