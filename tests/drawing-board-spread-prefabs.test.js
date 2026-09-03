@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=36/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=37/);
 
 const storage = new Map();
 const document = {
@@ -205,6 +205,14 @@ assert.match(app, /state\.rowTableColor = '#7d1f28'/);
 assert.doesNotMatch(source, /card-row-transform-drawer/);
 assert.doesNotMatch(source, /data-row-drawer-field/);
 assert.match(source, /zoomCardRowExtents/);
+assert.match(source, /function fitActiveLayoutOnMobile\(\)/);
+assert.match(source, /function ensureMobileLayoutFit\(panel, state\)/);
+assert.match(source, /panel\.dataset\.relphiMobileFitSignature/);
+assert.match(source, /window\.visualViewport\?\.height/);
+assert.match(source, /viewportHeight \* \.52/);
+assert.match(source, /fitActiveLayoutOnMobile\(\)/);
+assert.match(source, /position:fixed!important;top:4\.25rem/);
+assert.match(source, /height:clamp\(22rem,56dvh,34rem\)!important/);
 assert.match(source, /zoom\.step = '\.025'/);
 assert.match(source, /zoom\.min = '\.35'/);
 assert.match(source, /zoomWord\.textContent = 'Zoom'/);
