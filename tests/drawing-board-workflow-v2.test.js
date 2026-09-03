@@ -14,14 +14,14 @@ const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 const workflowCss = fs.readFileSync(path.join(root, 'drawing-board-workflow-v2.css'), 'utf8');
 const workflowUi = workflow + '\n' + workflowCss;
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=60/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=61/);
 assert.match(nav, /drawing-board-interactions-v1\.js\?v=10/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=6/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=35/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=36/);
 assert.match(page, /style\.css\?v=350/);
 assert.match(page, /drawing-board-workflow-v2\.css\?v=13/);
-assert.match(page, /navloader\.js\?v=94/);
-assert.match(page, /tarot-app\.js\?v=366/);
+assert.match(page, /navloader\.js\?v=95/);
+assert.match(page, /tarot-app\.js\?v=367/);
 assert.doesNotMatch(workflow, /document\.createElement\('style'\)|style\.textContent|document\.head\.appendChild\(style\)/);
 assert.equal((workflow.match(/installOptionsButton\(panel\)/g) || []).length, 2);
 assert.doesNotMatch(workflow, /board-arrange-flyout|board-arrange-trigger/);
@@ -34,7 +34,7 @@ assert.match(workflowCss, /Drawing Board workflow UI/);
 
 
 
-assert.match(page, /tarot-app\.js\?v=366/);
+assert.match(page, /tarot-app\.js\?v=367/);
 
 assert.match(workflowUi, /Position Stickers/);
 assert.match(workflowUi, /Position #/);
@@ -94,6 +94,12 @@ assert.match(tarot, /id="drawRandomRowCard"/);
 assert.match(tarot, /id="undoShortList"/);
 assert.match(tarot, /id="redoShortList"/);
 assert.match(tarot, /id="clearShortListCardsOnly"/);
+assert.match(tarot, /function bindDrawingBoardTopActions\(wrap\)/);
+assert.match(tarot, /relphiNativeTopActionsBound/);
+assert.match(tarot, /function clearShortListCardsOnlyNative\(\)/);
+assert.match(tarot, /event\.stopImmediatePropagation\(\)/);
+assert.match(workflowUi, /event\.target\.closest\?\.\('#drawingBoardOptionsButton'\)/);
+assert.doesNotMatch(workflowUi, /button\.dataset\.relphiOptionsBound/);
 assert.match(tarot, /aria-label="Drawing Board staging controls"/);
 assert.match(workflow, /function permanentTopActionRow\(panel\)/);
 assert.match(workflow, /function ensurePermanentTopActions\(panel\)/);
@@ -156,11 +162,14 @@ assert.match(interactions, /html body #shortListPanel \.board-history-icon:disab
 assert.doesNotMatch(workflowUi, /move\(choices, '\.quick-position-sticker-toggle'\)/);
 assert.match(workflowUi, /panel\.querySelector\('#rowPositionStickersQuick'\)/);
 assert.match(workflowUi, /function installReadingOptionsDrawer\(panel\)/);
-assert.match(workflowUi, /relphiDrawingBoardPositionStickersV2/);
+assert.match(workflowUi, /relphiDrawingBoardPositionStickersV3/);
 assert.match(workflowUi, /function ensureReadyToDrawDefaults\(panel\)/);
 assert.match(workflowUi, /drawScope\.value = 'full'/);
 assert.match(workflowUi, /reversals\.checked = true/);
-assert.match(workflowUi, /setStickersEnabled\(false\)/);
+assert.match(workflowUi, /setStickersEnabled\(true\)/);
+assert.match(workflowUi, /localStorage\.getItem\(STICKER_TOGGLE_KEY\) !== '0'/);
+assert.match(workflowUi, /catch \(_\) \{ return true; \}/);
+assert.match(workflowUi, /window\.RelphiDrawingBoardSetPositionStickers = setPositionStickersVisible/);
 assert.doesNotMatch(workflowUi, /function readingOptionsResetState\(panel\)/);
 assert.doesNotMatch(workflowUi, /function readingOptionsAutoCloseReady\(panel\)/);
 assert.match(workflowUi, /function syncReadingOptionsDrawer\(panel\)/);
