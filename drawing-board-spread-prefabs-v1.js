@@ -1124,7 +1124,7 @@
   }
   // Ownership boundary: top action layout belongs only to
   // drawing-board-workflow-v2.css / drawing-board-workflow-v2.js.
-  // Spread prefabs must never style .drawing-board-top-actions or move/reset its buttons.
+  // Spread prefabs must never style or reposition the permanent toolbar or Reset Board.
   // Ownership boundary: Drawing Board Options row/toggle geometry belongs only to
   // drawing-board-workflow-v2.css / drawing-board-workflow-v2.js. Spread prefabs
   // may style prefab-specific controls, but must not restyle the Pack/toggle row.
@@ -1299,7 +1299,6 @@
       'html body #shortListPanel .relphi-reading-options-drawer #relphiLabelTemplateName{width:100%!important;min-width:0!important;margin:0!important}',
       'html body #shortListPanel .relphi-reading-options-drawer #relphiSaveLabelsAsTemplate{width:auto!important;min-width:max-content!important;min-height:2.35rem!important;margin:0!important;padding:.42rem .65rem!important;white-space:nowrap!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-status{grid-column:1/-1!important;min-height:0!important;color:#6b625c!important;font-size:.68rem!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer .board-reset-action{order:6!important;align-self:flex-start!important;margin-top:.1rem!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .relphi-position-label-storage{display:none!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .relphi-template-editor:empty{display:none!important}',
       'html body #shortListPanel .relphi-snap-reset-layout{grid-column:1/-1!important;width:auto!important;justify-self:start!important;margin-top:.15rem!important}',
@@ -1321,7 +1320,6 @@
     style.textContent += [
       'html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{top:.5rem!important;bottom:.5rem!important;height:auto!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;scrollbar-gutter:stable!important}',
       'html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.card-row-composer{height:auto!important;max-height:none!important;overflow:visible!important;padding:.5rem!important}',
-      'html body #shortListPanel .relphi-reading-options-drawer .board-reset-action{position:sticky!important;bottom:.35rem!important;z-index:5!important;background:#fffdf8!important;box-shadow:0 -10px 16px rgba(255,253,248,.96)!important}',
       '@media(max-width:700px){html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{top:4.25rem!important;bottom:.45rem!important}}'
     ].join('');
     document.head.appendChild(style);
