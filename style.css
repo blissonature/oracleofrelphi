@@ -13062,7 +13062,6 @@ label {
 .card-row-control-block--writing .card-row-notes-label {
   grid-column: 1 / -1 !important;
 }
-.card-row-control-block--layout,
 .card-row-control-block--draw,
 .card-row-control-block--table,
 .card-row-control-block--export {
