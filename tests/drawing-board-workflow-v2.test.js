@@ -18,13 +18,13 @@ assert.match(nav, /drawing-board-interactions-v1\.js\?v=7/);
 assert.match(nav, /drawing-board-template-lifecycle-v1\.js\?v=3/);
 assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=28/);
 assert.match(page, /style\.css\?v=350/);
-assert.match(page, /drawing-board-workflow-v2\.css\?v=1/);
+assert.match(page, /drawing-board-workflow-v2\.css\?v=2/);
 assert.match(page, /navloader\.js\?v=79/);
 assert.match(page, /tarot-app\.js\?v=363/);
 assert.doesNotMatch(workflow, /document\.createElement\('style'\)|style\.textContent|document\.head\.appendChild\(style\)/);
 assert.equal((workflow.match(/installOptionsButton\(panel\)/g) || []).length, 2);
 assert.doesNotMatch(workflow, /board-arrange-flyout|board-arrange-trigger/);
-['board-options-tabs','board-options-toggle','board-options-heading','board-snap-control','card-row-control-block--layout','board-setup-group--arrange','board-setup-group--draw','board-reading-behavior-row'].forEach(token => {
+['board-options-tabs','board-options-toggle','board-options-heading','board-snap-control','card-row-control-block--layout','board-setup-group--arrange','board-setup-group--draw','board-reading-behavior-row','board-header-group--create','board-header-group--choices'].forEach(token => {
   assert.equal(workflowCss.includes(token), false, 'retired Drawing Board CSS survived consolidation: ' + token);
 });
 assert.match(workflowCss, /Drawing Board workflow UI/);
