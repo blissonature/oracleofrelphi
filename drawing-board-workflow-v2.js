@@ -144,12 +144,19 @@
     if (panel.hidden) {
       document.getElementById('landingOpenBoard')?.click();
       panel.hidden = false;
+      panel.removeAttribute('hidden');
       requestAnimationFrame(() => {
+        panel.hidden = false;
+        panel.removeAttribute('hidden');
         const drawer = panel.querySelector('.card-row-drawing-board');
         if (drawer?.tagName === 'DETAILS') drawer.open = true;
         syncBoardEntryButton();
         scheduleEnhance();
-        panel.scrollIntoView({ behavior:'smooth', block:'start' });
+        requestAnimationFrame(() => {
+          panel.hidden = false;
+          panel.removeAttribute('hidden');
+          panel.scrollIntoView({ behavior:'smooth', block:'start' });
+        });
       });
       return;
     }
