@@ -865,3 +865,73 @@ html body #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-
   background:#fff!important;
   color:#171412!important;
 }
+
+
+/* v21 mobile Drawing Board toolbar
+   Row 1: Options + Reset Board
+   Row 2: Draw + Undo + Redo + Clear Cards */
+@media(max-width:700px){
+  html body #shortListPanel .drawing-board-top-actions{
+    display:grid!important;
+    grid-template-columns:max-content 2.25rem 2.25rem max-content!important;
+    grid-template-rows:auto auto!important;
+    justify-content:start!important;
+    align-items:center!important;
+    column-gap:.4rem!important;
+    row-gap:.45rem!important;
+    width:calc(100% - .9rem)!important;
+    max-width:calc(100% - .9rem)!important;
+    margin:.4rem .45rem!important;
+    overflow:visible!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{
+    grid-row:1!important;
+    grid-column:1!important;
+    width:auto!important;
+    min-width:0!important;
+    margin:0!important;
+    justify-self:start!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#clearShortList.board-reset-action{
+    grid-row:1!important;
+    grid-column:2 / span 3!important;
+    width:auto!important;
+    min-width:0!important;
+    margin:0!important;
+    justify-self:start!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#drawRandomRowCard{
+    grid-row:2!important;
+    grid-column:1!important;
+    width:auto!important;
+    min-width:0!important;
+    margin:0!important;
+    justify-self:start!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#undoShortList{
+    grid-row:2!important;
+    grid-column:2!important;
+    margin:0!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#redoShortList{
+    grid-row:2!important;
+    grid-column:3!important;
+    margin:0!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly{
+    grid-row:2!important;
+    grid-column:4!important;
+    width:auto!important;
+    min-width:0!important;
+    margin:0!important;
+    justify-self:start!important;
+    white-space:nowrap!important;
+  }
+  html body #shortListPanel .drawing-board-top-actions>.board-history-icon{
+    width:2.25rem!important;
+    min-width:2.25rem!important;
+    max-width:2.25rem!important;
+    height:2.25rem!important;
+    min-height:2.25rem!important;
+  }
+}
