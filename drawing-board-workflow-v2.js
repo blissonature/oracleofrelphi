@@ -608,6 +608,19 @@
     syncReadingOptionsDrawer(panel);
   }
 
+  function permanentTopActionRow(panel) {
+    const drawer = panel.querySelector('.card-row-drawing-board');
+    const summary = drawer?.querySelector(':scope > summary');
+    if (!drawer || !summary) return null;
+    let row = drawer.querySelector(':scope > .drawing-board-top-actions');
+    if (!row) {
+      row = document.createElement('div');
+      row.className = 'drawing-board-top-actions';
+      summary.insertAdjacentElement('afterend', row);
+    }
+    return row;
+  }
+
   function installOptionsButton(panel) {
     const reset = panel.querySelector('#clearShortList');
     if (!reset) return;
@@ -639,9 +652,10 @@
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     if (drawer) drawer.id = 'drawingBoardReadingOptions';
 
-    const actionButtons = panel.querySelector('.drawing-board-action-buttons');
-    if (actionButtons && button.parentElement !== actionButtons) {
-      actionButtons.appendChild(button);
+    const topActions = permanentTopActionRow(panel);
+    if (topActions) {
+      if (button.parentElement !== topActions) topActions.prepend(button);
+      else if (topActions.firstElementChild !== button) topActions.prepend(button);
     }
     button.setAttribute('aria-expanded', String(panel.dataset.relphiReadingOptionsOpen === 'true'));
     button.classList.toggle('is-active', panel.dataset.relphiReadingOptionsOpen === 'true');
