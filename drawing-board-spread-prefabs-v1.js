@@ -344,6 +344,7 @@
   function applyForUse(prefab) {
     if (!prefab || !requireClear('choose another spread')) return;
     const ready = withDefaultRules(prefab);
+    window.RelphiDrawingBoardSetPositionStickers?.(true);
     stagePrefab(ready);
     if (!bridge()?.applyLayout(ready, { designMode:false })) return;
     selectedId = prefab.id;
