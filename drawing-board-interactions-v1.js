@@ -51,7 +51,10 @@
       const button = entry[0];
       if (!button) return;
       button.classList.add('board-history-icon');
-      button.innerHTML = historyIconSvg(entry[1]);
+      if (button.dataset.relphiHistoryIcon !== entry[1]) {
+        button.dataset.relphiHistoryIcon = entry[1];
+        button.innerHTML = historyIconSvg(entry[1]);
+      }
       button.setAttribute('aria-label', entry[2]);
       button.title = entry[2];
     });
@@ -357,9 +360,13 @@
         enhance();
       });
     };
-    new MutationObserver(queueEnhance).observe(document.body, {
-      childList:true, subtree:true, attributes:true, attributeFilter:['hidden']
-    });
+    document.addEventListener('relphi:drawing-board-rendered', queueEnhance);
+    const panel = root();
+    if (panel) {
+      new MutationObserver(queueEnhance).observe(panel, {
+        attributes:true, attributeFilter:['hidden']
+      });
+    }
     enhance();
   }
 
