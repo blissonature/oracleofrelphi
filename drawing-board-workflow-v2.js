@@ -337,6 +337,7 @@
     const boardColor = takeInput('rowTableColor');
     const boardUpload = take('rowTableImageUpload');
     const boardReset = take('rowTableImageReset');
+    const resetLayout = take('resetCardRowLayout');
     panel.querySelector('.card-row-snap-steppers')?.remove();
 
     const tools = document.createElement('div');
@@ -372,6 +373,11 @@
     if (rotateCheck) rotateCheck.setAttribute('aria-label','Enable rotation snap');
     addSnapRow(alignCheck, alignMinus, alignValue, alignPlus, workspaceMoveIcon());
     addSnapRow(rotateCheck, rotateMinus, rotateValue, rotatePlus, '<span class="relphi-rotate-glyph" aria-hidden="true">↻</span>');
+    if (resetLayout) {
+      resetLayout.textContent = 'Reset layout';
+      resetLayout.classList.add('relphi-snap-reset-layout');
+      snapRows.appendChild(resetLayout);
+    }
 
     const backgroundRows = tools.querySelector('.relphi-background-rows');
     const cardRow = document.createElement('div');
