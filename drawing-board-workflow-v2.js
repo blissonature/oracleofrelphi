@@ -744,12 +744,16 @@
       button.classList.remove('is-active');
     }
 
-    if (wrap.dataset.relphiOutsideCloseBound !== 'true') {
-      wrap.dataset.relphiOutsideCloseBound = 'true';
+    if (document.documentElement.dataset.relphiCompactOptionsOutsideBound !== 'true') {
+      document.documentElement.dataset.relphiCompactOptionsOutsideBound = 'true';
       document.addEventListener('click', event => {
         if (event.target.closest?.('.drawing-board-settings-wrap')) return;
-        setCompactOptionsOpen(panel, false);
+        const livePanel = document.getElementById('shortListPanel');
+        if (livePanel) setCompactOptionsOpen(livePanel, false);
       });
+    }
+    if (wrap.dataset.relphiEscapeBound !== 'true') {
+      wrap.dataset.relphiEscapeBound = 'true';
       wrap.addEventListener('keydown', event => {
         if (event.key !== 'Escape') return;
         setCompactOptionsOpen(panel, false);
