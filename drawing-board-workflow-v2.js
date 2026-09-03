@@ -760,12 +760,12 @@
 
     const toggleStack = document.createElement('div');
     toggleStack.className = 'board-reading-toggle-stack';
-    toggleStack.style.setProperty('display', 'flex', 'important');
-    toggleStack.style.setProperty('flex-direction', 'row', 'important');
-    toggleStack.style.setProperty('flex-wrap', 'nowrap', 'important');
+    toggleStack.style.setProperty('display', 'grid', 'important');
+    toggleStack.style.setProperty('grid-template-columns', 'repeat(3, minmax(0, 1fr))', 'important');
     toggleStack.style.setProperty('align-items', 'stretch', 'important');
     toggleStack.style.setProperty('gap', '.35rem', 'important');
     toggleStack.style.setProperty('width', '100%', 'important');
+    toggleStack.style.setProperty('max-width', '100%', 'important');
     toggleStack.style.setProperty('order', '1', 'important');
     const stickerToggle = control('rowPositionStickersQuick');
     const repeatsToggle = control('rowAllowRepeats');
@@ -781,13 +781,15 @@
     renameToggle(repeatsToggle, 'Repeats');
     [stickerToggle, reversalsToggle, repeatsToggle].forEach(label => {
       if (!label) return;
-      label.style.setProperty('display', 'inline-flex', 'important');
+      label.style.setProperty('display', 'flex', 'important');
       label.style.setProperty('align-items', 'center', 'important');
       label.style.setProperty('justify-content', 'flex-start', 'important');
-      label.style.setProperty('flex', '1 1 0', 'important');
-      label.style.setProperty('width', 'auto', 'important');
+      label.style.setProperty('width', '100%', 'important');
       label.style.setProperty('min-width', '0', 'important');
+      label.style.setProperty('max-width', '100%', 'important');
+      label.style.setProperty('box-sizing', 'border-box', 'important');
       label.style.setProperty('white-space', 'nowrap', 'important');
+      label.style.setProperty('overflow', 'hidden', 'important');
       toggleStack.appendChild(label);
     });
     drawSettingsRow.appendChild(toggleStack);
