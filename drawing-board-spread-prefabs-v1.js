@@ -1136,6 +1136,40 @@
       'html body #shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-position-panel{left:50%!important;right:auto!important;top:50%!important;bottom:auto!important;width:max-content!important;max-width:8.5rem!important;margin:0!important;transform:translate(-50%,-5.25rem)!important;z-index:160!important;white-space:normal!important}',
       'html body #shortListPanel .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card>.card-row-drop-card-inner{display:none!important}'
     ].join('');
+    style.textContent += [
+      'html body #shortListPanel #addCardPlaceholder{display:none!important}',
+      'html body #shortListPanel .drawing-board-top-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:.35rem!important;flex-wrap:wrap!important;margin:.35rem .45rem!important;padding:0!important;background:transparent!important}',
+      'html body #shortListPanel .drawing-board-top-actions>button{flex:0 0 auto!important;width:auto!important;min-width:0!important;min-height:2.15rem!important;margin:0!important;padding:.38rem .68rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.78rem!important;font-weight:850!important;line-height:1!important;box-shadow:none!important}',
+      'html body #shortListPanel .drawing-board-top-actions>#drawRandomRowCard{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}',
+      'html body #shortListPanel .drawing-board-top-actions>#clearShortListCardsOnly:not(:disabled){border-color:rgba(220,31,24,.45)!important;color:#b81712!important}',
+      'html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{width:min(29rem,calc(100% - 1rem))!important;max-width:min(29rem,calc(100% - 1rem))!important;max-height:min(72vh,42rem)!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer>.card-row-composer{display:block!important;width:100%!important;max-width:100%!important;padding:.45rem!important;box-sizing:border-box!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup{display:block!important;width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .card-row-control-block--setup>.board-options-body{display:block!important;width:100%!important;max-width:100%!important;padding:0!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread{display:flex!important;flex-direction:column!important;gap:.55rem!important;width:100%!important;max-width:100%!important;margin:0!important;padding:.65rem!important;box-sizing:border-box!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-setup-group--spread>.card-row-name-label{order:1!important;width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-row{order:2!important;display:grid!important;grid-template-columns:1fr!important;gap:.4rem!important;width:100%!important;align-items:start!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-row>strong{font-size:.78rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-template-inline-slot{width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-template-select-label{display:grid!important;grid-template-columns:1fr!important;gap:.18rem!important;width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer #relphiSpreadTemplateSelect{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;padding-right:3.2rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-builder{order:3!important;display:grid!important;gap:.35rem!important;width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-row{display:grid!important;grid-template-columns:1.6rem minmax(0,1fr) 2.1rem 2.1rem!important;gap:.3rem!important;align-items:center!important;width:100%!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-row>input{width:100%!important;min-width:0!important;margin:0!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-saver{order:4!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.35rem!important;align-items:end!important;width:100%!important;padding-top:.15rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-saver>label{display:grid!important;gap:.18rem!important;width:100%!important;margin:0!important;font-size:.72rem!important;font-weight:800!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer #relphiLabelTemplateName{width:100%!important;min-width:0!important;margin:0!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer #relphiSaveLabelsAsTemplate{width:auto!important;min-width:max-content!important;min-height:2.35rem!important;margin:0!important;padding:.42rem .65rem!important;white-space:nowrap!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-status{grid-column:1/-1!important;min-height:0!important;color:#6b625c!important;font-size:.68rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row{order:5!important;display:grid!important;grid-template-columns:minmax(9rem,1fr) auto!important;gap:.45rem!important;align-items:end!important;width:100%!important;margin:0!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{display:flex!important;align-items:center!important;gap:.3rem!important;flex-wrap:nowrap!important;width:auto!important;margin:0!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label{display:inline-flex!important;align-items:center!important;gap:.28rem!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;min-height:2.2rem!important;margin:0!important;padding:.34rem .48rem!important;white-space:nowrap!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .board-reset-action{order:6!important;align-self:flex-start!important;margin-top:.1rem!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-position-label-storage{display:none!important}',
+      'html body #shortListPanel .relphi-reading-options-drawer .relphi-template-editor:empty{display:none!important}',
+      'html body #shortListPanel .relphi-snap-reset-layout{grid-column:1/-1!important;width:auto!important;justify-self:start!important;margin-top:.15rem!important}',
+      '@media(max-width:620px){html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row{grid-template-columns:1fr!important}html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{flex-wrap:wrap!important}html body #shortListPanel .relphi-reading-options-drawer .relphi-label-template-saver{grid-template-columns:1fr!important}html body #shortListPanel .relphi-reading-options-drawer #relphiSaveLabelsAsTemplate{justify-self:start!important}}'
+    ].join('');
     document.head.appendChild(style);
   }
   function start() {
