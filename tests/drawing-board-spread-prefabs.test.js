@@ -4,9 +4,11 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=24/);
+const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.js'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
+
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=25/);
 
 const storage = new Map();
 const document = {
@@ -178,6 +180,11 @@ assert.match(source, /const ready = withDefaultRules\(prefab\)/);
 assert.doesNotMatch(source, /\['rowPositionLabels','rowDrawScope','rowAllowRepeats','rowAllowReversalsQuick'/);
 assert.match(source, /editor\.contentEditable = 'true'/);
 assert.match(source, /function addWorkspaceControls/);
+assert.match(source, /var\(--relphi-board-texture,none\)/);
+assert.match(source, /background-color:var\(--row-table-bg,#7d1f28\)!important/);
+assert.doesNotMatch(source, /row-grid-size/);
+assert.match(app, /rowTableColor: '#7d1f28'/);
+assert.match(app, /state\.rowTableColor = '#7d1f28'/);
 assert.doesNotMatch(source, /card-row-transform-drawer/);
 assert.doesNotMatch(source, /data-row-drawer-field/);
 assert.match(source, /zoomCardRowExtents/);
@@ -202,6 +209,5 @@ assert.doesNotMatch(app, /const editable = !state\.rowLayoutLocked \|\| state\.r
 assert.doesNotMatch(app, /labels\.addEventListener\('input',[\s\S]{0,180}rowLayoutLocked/);
 assert.match(app, /relphi:drawing-board-rendered/);
 assert.match(source, /draftName = String\(state\.currentLayout\.name/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=23/);
 
 console.log('Drawing Board spread prefab regression checks passed.');
