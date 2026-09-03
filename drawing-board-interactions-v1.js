@@ -46,22 +46,7 @@
     return '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
   }
 
-  function topActionRow(panel) {
-    const drawer = panel.querySelector('.card-row-drawing-board');
-    const summary = drawer?.querySelector(':scope > summary');
-    if (!drawer || !summary) return null;
-    let row = drawer.querySelector(':scope > .drawing-board-top-actions');
-    if (!row) {
-      row = document.createElement('div');
-      row.className = 'drawing-board-top-actions';
-      summary.insertAdjacentElement('afterend', row);
-    }
-    return row;
-  }
-
   function directHistoryControls(panel) {
-    const actions = topActionRow(panel);
-    if (!actions) return;
     [[panel.querySelector('#undoShortList'), 'undo', 'Undo'], [panel.querySelector('#redoShortList'), 'redo', 'Redo']].forEach(function (entry) {
       const button = entry[0];
       if (!button) return;
@@ -69,11 +54,11 @@
       button.innerHTML = historyIconSvg(entry[1]);
       button.setAttribute('aria-label', entry[2]);
       button.title = entry[2];
-      if (button.parentElement !== actions) actions.appendChild(button);
     });
     panel.querySelectorAll('.board-history-toggle,.board-history-menu,.board-header-group--history').forEach(function (node) {
       if (!node.querySelector?.('#undoShortList,#redoShortList')) node.remove();
     });
+    window.RelphiDrawingBoardEnsureTopActions?.(panel);
   }
 
   function finishTargetedDraw(target, first, swapped) {
