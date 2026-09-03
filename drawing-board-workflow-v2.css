@@ -294,3 +294,37 @@ html body #shortListPanel .drawing-board-quick-settings>#drawingBoardOptionsButt
     width:auto!important;
   }
 }
+
+
+/* v9 Board Options is an overlay; opening it never moves the canvas */
+html body #shortListPanel .card-row-workspace{
+  position:relative!important;
+}
+html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{
+  position:absolute!important;
+  top:3.15rem!important;
+  right:.5rem!important;
+  left:auto!important;
+  z-index:1900!important;
+  display:none!important;
+  width:min(34rem,calc(100% - 1rem))!important;
+  max-width:calc(100% - 1rem)!important;
+  max-height:calc(100% - 3.65rem)!important;
+  margin:0!important;
+  box-shadow:0 14px 34px rgba(30,20,15,.22)!important;
+}
+html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer.is-reading-options-open{
+  display:block!important;
+}
+html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.card-row-composer{
+  max-height:min(70vh,calc(100% - .5rem))!important;
+  overflow:auto!important;
+}
+@media(max-width:700px){
+  html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{
+    top:5.75rem!important;
+    right:.35rem!important;
+    width:calc(100% - .7rem)!important;
+    max-width:calc(100% - .7rem)!important;
+  }
+}
