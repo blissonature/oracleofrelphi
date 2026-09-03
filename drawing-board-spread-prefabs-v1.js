@@ -588,7 +588,7 @@
     if (!promptRow) {
       promptRow = document.createElement('div');
       promptRow.className = 'relphi-label-template-row';
-      promptRow.innerHTML = '<strong>Type card labels</strong><div class="relphi-template-inline-slot"></div>';
+      promptRow.innerHTML = '<strong>Add labels</strong><div class="relphi-template-inline-slot"></div>';
       host.querySelector('header')?.insertAdjacentElement('afterend', promptRow);
     }
     let builder = host.querySelector('.relphi-label-builder');
@@ -703,7 +703,7 @@
       library = document.createElement('section');
       library.className = 'relphi-spread-prefab-library relphi-spread-prefab-library--inline';
       library.innerHTML =
-        '<label class="relphi-template-select-label">Select a Template' +
+        '<label class="relphi-template-select-label">Template' +
           '<span class="relphi-template-select-wrap">' +
             '<select id="relphiSpreadTemplateSelect" aria-label="Spread Template"></select>' +
             '<button id="relphiTemplateClear" class="relphi-template-clear" type="button" aria-label="Clear Spread Template" title="Clear Spread Template">×</button>' +
@@ -718,17 +718,6 @@
         const live = bridge()?.getState();
         if (live?.locked && !live?.designMode) return schedule();
         const value = select.value;
-        if (value === '__new__') {
-          selectedId = '';
-          templateMode = 'new';
-          draftLayout = null;
-          draftName = '';
-          copySourceId = '';
-          newPromptArmed = false;
-          if (!String(field.value || '').trim()) dispatchPositionLabels([]);
-          schedule();
-          return;
-        }
         if (!value) {
           selectedId = '';
           templateMode = 'custom';
@@ -765,7 +754,6 @@
     const previous = select.value;
     const optionsHtml =
       '<option value="">Custom / no saved template</option>' +
-      '<option value="__new__">New template…</option>' +
       choices.map(prefab => '<option value="' + escapeHtml(prefab.id) + '">' + escapeHtml(displayName(prefab)) + '</option>').join('');
     if (select.innerHTML !== optionsHtml) select.innerHTML = optionsHtml;
     const desired = state.designMode
@@ -780,24 +768,22 @@
     });
 
     const clear = library.querySelector('#relphiTemplateClear');
-    clear.hidden = !select.value || select.value === '__new__' || structureLocked || !!state.designMode;
+    clear.hidden = !select.value || structureLocked || !!state.designMode;
     clear.disabled = structureLocked || !!state.designMode;
 
     const editor = library.querySelector('.relphi-template-editor');
     const prefab = prefabById(selectedId) || draftLayout;
     const designing = !!state.designMode;
-    const isNew = templateMode === 'new' && !designing;
     const conflict = designing && templateNameConflict(draftName, Number(state.slotCount) || Number(draftLayout?.positions?.length) || 0);
 
     const editorHtml =
-      ((isNew || designing) ?
-        '<label class="relphi-spread-design-name">Template name<input id="relphiSpreadDesignName" type="text" maxlength="60" value="' + escapeHtml(draftName || prefab?.name || '') + '" placeholder="Name this template"></label>' : '') +
       (designing ?
+        '<label class="relphi-spread-design-name">Template name<input id="relphiSpreadDesignName" type="text" maxlength="60" value="' + escapeHtml(draftName || prefab?.name || '') + '" placeholder="Name this template"></label>' +
+
         '<small id="relphiSpreadNameHelp" class="' + (conflict ? 'is-error' : '') + '">' +
           (conflict ? 'A template with this card count and name already exists.' : 'Move, rotate, label, add, or remove positions, then save the template.') +
         '</small>' : '') +
       '<div class="relphi-prefab-actions">' +
-        (!designing && isNew ? '<button type="button" class="primary" data-prefab-action="design">Design Template</button>' : '') +
         (!designing && prefab?.source === 'custom' ? '<button type="button" data-prefab-action="edit">Edit Template</button><button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
         (designing ? '<button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!String(draftName || '').trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button>' : '') +
       '</div>';
@@ -827,7 +813,6 @@
         if (save) save.disabled = !draftName.trim() || conflictNow;
       });
 
-      editor.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
       editor.querySelector('[data-prefab-action="edit"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId)));
       editor.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
       editor.querySelector('[data-prefab-action="once"]')?.addEventListener('click', () => finishDesign(false));
