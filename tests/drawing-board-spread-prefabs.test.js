@@ -128,7 +128,9 @@ assert.match(source, /Custom \/ no saved template/);
 assert.match(source, /New template…/);
 assert.match(source, /Position labels/);
 assert.match(source, /Template name<input id="relphiSpreadDesignName"/);
-assert.match(source, /Spread and draw settings are locked while cards are on the board/);
+assert.doesNotMatch(source, /Spread and draw settings are locked while cards are on the board/);
+assert.match(source, /control\.disabled = !!state\.designMode/);
+assert.match(source, /editor\.contentEditable = 'true'/);
 assert.match(source, /applyForUse\(prefab\)/);
 assert.match(source, /stagePrefab\(prefab\)/);
 assert.match(source, /syncTypedLabels/);
@@ -181,6 +183,6 @@ assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Cel
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
 assert.match(source, /draftName = String\(state\.currentLayout\.name/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=16/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=21/);
 
 console.log('Drawing Board spread prefab regression checks passed.');
