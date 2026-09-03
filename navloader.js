@@ -165,10 +165,10 @@
     if (/(^|\/)tarot\.html$/.test(location.pathname)) {
       refreshDrawingBoardControlAssets();
       appendScript('tarot-date-sky-bridge-v1.js?v=2');
-      appendScript('drawing-board-workflow-v2.js?v=67');
+      appendScript('drawing-board-workflow-v2.js?v=68');
       appendScript('drawing-board-interactions-v1.js?v=12');
       appendScript('drawing-board-template-lifecycle-v1.js?v=7', function () {
-        appendScript('drawing-board-spread-prefabs-v1.js?v=43');
+        appendScript('drawing-board-spread-prefabs-v1.js?v=44');
       });
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
