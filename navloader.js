@@ -166,7 +166,7 @@
       refreshDrawingBoardControlAssets();
       appendScript('tarot-date-sky-bridge-v1.js?v=2');
       appendScript('drawing-board-workflow-v2.js?v=61');
-      appendScript('drawing-board-interactions-v1.js?v=10');
+      appendScript('drawing-board-interactions-v1.js?v=11');
       appendScript('drawing-board-template-lifecycle-v1.js?v=6', function () {
         appendScript('drawing-board-spread-prefabs-v1.js?v=36');
       });
