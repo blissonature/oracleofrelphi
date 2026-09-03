@@ -14,10 +14,7 @@
   let copySourceId = '';
   let templateMode = 'existing';
   let labelsOpen = false;
-  let newPromptArmed = false;
-  let suppressOmniboxHandler = false;
-  const NEW_TEMPLATE_OPTION = 'New';
-  const NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…';
+  let templateMenuOpen = false;
 
   const transform = (x, y, rotation = 0, scale = 1, zIndex = 1) => ({ x, y, rotation, scale, zIndex });
   const position = (id, label, drawOrder, value, semantics = {}) => ({
@@ -116,7 +113,7 @@
           role:'covering',
           openTransform:transform(.25, .326, 0, .45, 20)
         }),
-        position('crossing', '2 · What crosses you', 2, transform(.25, .326, 90, .45, 30), {
+        position('crossing', '2 · What crosses you', 2, transform(.391, .390, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
           openTransform:transform(.355, .326, 0, .45, 30)
@@ -148,7 +145,7 @@
           covers:'significator',
           openTransform:transform(.25, .326, 0, .45, 20)
         }),
-        position('crossing', '2 · What crosses you', 3, transform(.25, .326, 90, .45, 30), {
+        position('crossing', '2 · What crosses you', 3, transform(.391, .390, 90, .45, 30), {
           role:'crossing',
           crosses:'covering',
           openTransform:transform(.355, .326, 0, .45, 30)
@@ -348,7 +345,6 @@
     draftName = '';
     copySourceId = '';
     templateMode = 'existing';
-    newPromptArmed = false;
     labelsOpen = true;
     schedule();
   }
@@ -428,112 +424,56 @@
     templateMode = save ? 'existing' : templateMode;
     schedule();
   }
-  function renderOmniboxOptions(datalist) {
-    datalist.innerHTML = '<option value="' + NEW_TEMPLATE_OPTION + '" label="Create a new Spread Template"></option>' + allPrefabs().map(prefab => {
-      const group = prefab.source === 'shipped' ? 'Shipped spread' : 'My spread';
-      return '<option value="' + escapeHtml(displayName(prefab)) + '" label="' + escapeHtml(group + ': ' + labelsValue(prefab)) + '"></option>';
-    }).join('');
+  function templatePickerLabel(prefab) {
+    if (templateMode === 'new') return 'New template';
+    return prefab ? displayName(prefab) : 'Choose a template';
   }
-  function unifiedLibraryMarkup(prefab, state) {
-    const shipped = prefab?.source === 'shipped';
-    const custom = prefab?.source === 'custom';
-    const designing = !!state.designMode;
-    const activeLineage = custom && prefab.basedOn
-      ? '<small>Based on: ' + escapeHtml(prefabById(prefab.basedOn) ? displayName(prefabById(prefab.basedOn)) : prefab.basedOn) + '</small>'
-      : '';
-    const currentDesign = prefab
-      ? '<div class="relphi-selected-design"><span>Selected spread design</span><strong>' + escapeHtml(displayName(prefab)) + '</strong></div>'
-      : '<div class="relphi-selected-design"><span>Custom position stickers</span><strong>Not saved as a spread design</strong></div>';
-    const nameField = designing
-      ? '<label class="relphi-spread-design-name">Spread design name<input id="relphiSpreadDesignName" type="text" maxlength="60" value="' + escapeHtml(draftName || prefab?.name || '') + '" placeholder="Name this reusable spread design"><small>This names the reusable design, not this reading.</small></label>'
-      : '';
-    return '<div class="relphi-prefab-heading"><span>Position stickers, placement, rotation, and scale are properties of one spread design.</span></div>' +
-      currentDesign + nameField +
-      '<div class="relphi-prefab-actions">' +
-        (!designing && prefab ? '<button type="button" data-prefab-action="use"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Use Spread</button>' : '') +
-        (!designing && shipped ? '<button type="button" data-prefab-action="copy"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Customize a Copy</button>' : '') +
-        (!designing && custom ? '<button type="button" data-prefab-action="edit"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Edit Spread Design</button><button type="button" data-prefab-action="duplicate">Duplicate</button><button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
-        (!designing && !prefab ? '<button type="button" data-prefab-action="design"' + (!state.slotCount || state.hasCards || state.locked ? ' disabled' : '') + '>Design These Positions</button>' : '') +
-      '</div>' + activeLineage;
+  function templatePickerMenuMarkup() {
+    const prefabs = allPrefabs();
+    const shipped = prefabs.filter(item => item.source === 'shipped');
+    const custom = prefabs.filter(item => item.source === 'custom');
+    const rows = items => items.map(item =>
+      '<button type="button" class="relphi-template-menu-item' + (selectedId === item.id && templateMode === 'existing' ? ' is-active' : '') + '" data-template-id="' + escapeHtml(item.id) + '"><span>' + escapeHtml(displayName(item)) + '</span><small>' + escapeHtml(labelsValue(item)) + '</small></button>'
+    ).join('');
+    return '<button type="button" class="relphi-template-menu-item relphi-template-menu-new' + (templateMode === 'new' ? ' is-active' : '') + '" data-template-new="true"><span>New template</span><small>Name it and type your own position labels.</small></button>' +
+      '<div class="relphi-template-menu-section"><strong>Shipped templates</strong>' + rows(shipped) + '</div>' +
+      (custom.length ? '<div class="relphi-template-menu-section"><strong>My templates</strong>' + rows(custom) + '</div>' : '');
   }
-  function addLibrary(panel, state) {
-    const host = panel.querySelector('.board-setup-group--spread') || panel.querySelector('#rowPositionLabels')?.closest('label');
-    const field = panel.querySelector('#rowPositionLabels');
-    const datalist = panel.querySelector('#rowStickerPresetList');
-    if (!host || !field || !datalist) return;
-    const available = allPrefabs();
-    const activePrefab = prefabById(state.activeLayout?.id);
-    const normalizedValue = String(field.value || '').trim().toLowerCase();
-    const exactValue = available.find(item => displayName(item).toLowerCase() === normalizedValue);
-    const labelValue = available.find(item => labelsValue(item).toLowerCase() === normalizedValue);
-    if (activePrefab) selectedId = activePrefab.id;
-    else if (exactValue) selectedId = exactValue.id;
-    else if (!state.designMode && labelValue) selectedId = labelValue.id;
-    else if (!state.designMode && normalizedValue) selectedId = '';
-    renderOmniboxOptions(datalist);
-    field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a spread design or type comma-separated position stickers…');
-    field.setAttribute('aria-label', 'Position stickers and spread designs');
-    if (!field.dataset.relphiSpreadOmniboxBound) {
-      field.dataset.relphiSpreadOmniboxBound = 'true';
-      const chooseFromOmnibox = event => {
-        if (bridge()?.getState()?.designMode) return;
-        const match = allPrefabs().find(item => displayName(item).toLowerCase() === String(field.value || '').trim().toLowerCase());
-        if (match) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          selectedId = match.id;
-          draftLayout = null;
-          draftName = '';
-          schedule();
-          return;
-        }
-        selectedId = '';
-        draftLayout = null;
-        draftName = '';
-        schedule();
-      };
-      field.addEventListener('input', chooseFromOmnibox, true);
-      field.addEventListener('change', chooseFromOmnibox, true);
-    }
-    let library = host.querySelector('.relphi-spread-prefab-library');
-    const prefab = prefabById(selectedId) || draftLayout;
-    if (!library) {
-      library = document.createElement('section');
-      library.className = 'relphi-spread-prefab-library';
-      field.closest('label')?.insertAdjacentElement('afterend', library);
-    }
-    library.innerHTML = unifiedLibraryMarkup(prefab, state);
-    const nameField = library.querySelector('#relphiSpreadDesignName');
-    nameField?.addEventListener('input', () => {
-      draftName = String(nameField.value || '').slice(0, 60);
-      if (draftLayout) draftLayout.name = draftName;
-    });
-    library.querySelector('[data-prefab-action="use"]')?.addEventListener('click', () => applyForUse(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="copy"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId), { copy:true }));
-    library.querySelector('[data-prefab-action="edit"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="duplicate"]')?.addEventListener('click', () => duplicateCustom(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
-    library.querySelector('[data-prefab-action="design"]')?.addEventListener('click', beginCustomDesign);
+  function templateNameFieldMarkup(count, conflict, designing) {
+    const help = conflict
+      ? 'A ' + count + '-card template already has that name. Choose a different name.'
+      : designing
+        ? 'Name the reusable template you are designing.'
+        : 'Name the template, then type its comma-separated position labels above.';
+    return '<label class="relphi-template-name-field">Template name<input id="relphiTemplateNameInput" type="text" maxlength="60" autocomplete="off" value="' + escapeHtml(draftName) + '" placeholder="Name this template"><small id="relphiSpreadNameHelp" class="' + (conflict ? 'is-error' : '') + '">' + escapeHtml(help) + '</small></label>';
   }
   function labelsDrawerMarkup(prefab, state) {
     const designing = !!state.designMode;
     const custom = prefab?.source === 'custom' && !designing;
     const count = Number(state.slotCount) || Number(draftLayout?.positions?.length) || 0;
-    const conflict = designing && templateNameConflict(draftName, count);
-    const selection = templateMode === 'existing' && prefab && !designing
-      ? '<div class="relphi-selected-design"><span>Selected template</span><strong>' + escapeHtml(displayName(prefab)) + '</strong></div>'
-      : templateMode === 'new' && !designing
-        ? '<div class="relphi-selected-design"><span>New template</span><strong>' + (count ? count + ' labels ready to design' : 'Type labels in the field above') + '</strong></div>'
-        : '';
-    const nameHelp = designing
-      ? '<small id="relphiSpreadNameHelp" class="' + (conflict ? 'is-error' : '') + '">' + (conflict ? 'That ' + count + '-card name already exists. Change the template name above to create a unique copy.' : 'Editing the template name above creates a new template. Card count plus name must be unique.') + '</small>'
-      : '';
-    return selection + nameHelp + '<div class="relphi-prefab-actions">' +
-      (!designing && templateMode === 'existing' && prefab ? '<button type="button" data-prefab-action="use"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Use Template</button><button type="button" data-prefab-action="copy"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Customize Template</button>' : '') +
-      (!designing && templateMode === 'existing' && custom ? '<button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
-      (!designing && templateMode === 'new' ? '<button type="button" data-prefab-action="design"' + (!state.slotCount || state.hasCards || state.locked ? ' disabled' : '') + '>Design Template</button>' : '') +
-      (designing ? '<button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!draftName.trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button>' : '') +
+    const conflict = !!draftName.trim() && templateNameConflict(draftName, count);
+
+    if (designing) {
+      return templateNameFieldMarkup(count, conflict, true) +
+        '<div class="relphi-selected-design"><span>Positions</span><strong>' + count + ' ready to arrange</strong></div>' +
+        '<div class="relphi-prefab-actions"><button type="button" data-prefab-action="cancel">Cancel</button><button type="button" data-prefab-action="once">Use Once</button><button type="button" class="primary" data-prefab-action="save"' + (!draftName.trim() || conflict ? ' disabled' : '') + '>' + (copySourceId ? 'Save As Copy and Use' : 'Save Template and Use') + '</button></div>';
+    }
+
+    if (templateMode === 'new') {
+      return templateNameFieldMarkup(count, conflict, false) +
+        '<div class="relphi-selected-design"><span>Position labels</span><strong>' + (count ? count + ' ready to design' : 'Type labels above, separated by commas') + '</strong></div>' +
+        '<div class="relphi-prefab-actions"><button type="button" class="primary" data-prefab-action="design"' + (!draftName.trim() || conflict || !count || state.hasCards || state.locked ? ' disabled' : '') + '>Design Template</button></div>';
+    }
+
+    if (!prefab) {
+      return '<div class="relphi-selected-design"><span>Spread template</span><strong>Choose a shipped template or create a new one.</strong></div>';
+    }
+
+    return '<div class="relphi-selected-design"><span>Selected template</span><strong>' + escapeHtml(displayName(prefab)) + '</strong></div>' +
+      '<div class="relphi-prefab-actions">' +
+        '<button type="button" class="primary" data-prefab-action="use"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Use Template</button>' +
+        '<button type="button" data-prefab-action="copy"' + (state.hasCards || state.locked ? ' disabled' : '') + '>Customize Template</button>' +
+        (custom ? '<button type="button" class="danger" data-prefab-action="delete">Delete</button>' : '') +
       '</div>';
   }
   function addLabelsDrawer(panel, state) {
@@ -541,11 +481,12 @@
     const datalist = panel.querySelector('#rowStickerPresetList');
     const board = panel.querySelector('.card-row-drawing-board');
     const toolbar = panel.querySelector('.card-row-icon-toolbar');
-    if (!board || !toolbar || !field || !datalist) return;
+    if (!board || !toolbar || !field) return;
+
     if (state.designMode && !draftLayout && state.currentLayout?.positions?.length) {
       draftLayout = clone(state.currentLayout);
       copySourceId = String(state.currentLayout.basedOn || '');
-      draftName = String(state.currentLayout.name || '').trim() === 'Untitled spread' ? '' : String(state.currentLayout.name || '');
+      draftName = String(state.currentLayout.name || '').trim() === 'Untitled spread' ? draftName : String(state.currentLayout.name || draftName);
       templateMode = copySourceId ? 'existing' : 'new';
     }
 
@@ -561,6 +502,7 @@
         event.preventDefault();
         event.stopPropagation();
         labelsOpen = !labelsOpen;
+        templateMenuOpen = false;
         if (labelsOpen && board.tagName === 'DETAILS') board.open = true;
         schedule();
       });
@@ -572,50 +514,32 @@
     if (!drawer) {
       drawer = document.createElement('section');
       drawer.className = 'relphi-labels-drawer';
-      drawer.innerHTML = '<header><div><strong>Templates</strong><span>Position labels, placement, rotation, and scale belong to a Spread Template.</span></div><button type="button" class="relphi-labels-close" aria-label="Close Templates">Close</button></header><div class="relphi-labels-field"><div class="relphi-template-omnibox"></div></div><div class="relphi-labels-dynamic"></div>';
+      drawer.innerHTML = '<header><div><strong>Templates</strong><span>Choose a reusable layout or make one from your own position labels.</span></div><button type="button" class="relphi-labels-close" aria-label="Close Templates">Close</button></header><div class="relphi-template-picker"><span class="relphi-template-picker-title">Spread Template</span><button type="button" id="relphiTemplatePicker" class="relphi-template-picker-trigger" aria-haspopup="true" aria-expanded="false"><span class="relphi-template-picker-value"></span><span class="relphi-template-chevron" aria-hidden="true"></span></button><div class="relphi-template-menu" hidden></div></div><div class="relphi-position-labels-host"></div><div class="relphi-labels-dynamic"></div>';
       board.querySelector(':scope > summary')?.insertAdjacentElement('afterend', drawer);
       drawer.querySelector('.relphi-labels-close')?.addEventListener('click', () => {
         labelsOpen = false;
+        templateMenuOpen = false;
         schedule();
       });
     }
     drawer.hidden = !labelsOpen;
-    const fieldHost = drawer.querySelector('.relphi-labels-field');
-    const omnibox = drawer.querySelector('.relphi-template-omnibox');
+    if (!labelsOpen) return;
+
+    const positionHost = drawer.querySelector('.relphi-position-labels-host');
     const fieldLabel = field.closest('label');
     const quickLabel = panel.querySelector('#rowPositionStickersQuick')?.closest('label');
-    if (fieldLabel && fieldLabel.parentElement !== omnibox) omnibox.appendChild(fieldLabel);
-    if (fieldLabel && !fieldLabel.dataset.relphiTemplateLabel) {
+    if (fieldLabel && fieldLabel.parentElement !== positionHost) positionHost.appendChild(fieldLabel);
+    if (fieldLabel && !fieldLabel.dataset.relphiPositionLabel) {
       const textNode = Array.from(fieldLabel.childNodes).find(node => node.nodeType === 3);
-      if (textNode) textNode.nodeValue = 'Spread Template ';
-      fieldLabel.dataset.relphiTemplateLabel = 'true';
+      if (textNode) textNode.nodeValue = 'Position labels ';
+      fieldLabel.dataset.relphiPositionLabel = 'true';
     }
-    let clearSelection = drawer.querySelector('#relphiTemplateClear');
-    if (!clearSelection) {
-      clearSelection = document.createElement('button');
-      clearSelection.id = 'relphiTemplateClear';
-      clearSelection.type = 'button';
-      clearSelection.className = 'relphi-template-clear';
-      clearSelection.setAttribute('aria-label', 'Clear template selection');
-      clearSelection.title = 'Clear template selection';
-      clearSelection.textContent = '×';
-      omnibox.appendChild(clearSelection);
-      clearSelection.addEventListener('click', () => {
-        if (bridge()?.getState()?.designMode) return;
-        selectedId = '';
-        templateMode = 'existing';
-        draftLayout = null;
-        draftName = '';
-        copySourceId = '';
-        newPromptArmed = false;
-        field.value = '';
-        suppressOmniboxHandler = true;
-        field.dispatchEvent(new Event('input', { bubbles:true }));
-        suppressOmniboxHandler = false;
-        schedule();
-      });
-    }
-    if (quickLabel && quickLabel.parentElement !== omnibox) omnibox.appendChild(quickLabel);
+    field.removeAttribute('list');
+    field.setAttribute('placeholder', 'Question one, Question two, Question three…');
+    field.setAttribute('aria-label', 'Position labels');
+    if (datalist) datalist.hidden = true;
+
+    if (quickLabel && quickLabel.parentElement !== positionHost) positionHost.appendChild(quickLabel);
     if (quickLabel && !quickLabel.dataset.relphiEyeControl) {
       quickLabel.dataset.relphiEyeControl = 'true';
       Array.from(quickLabel.childNodes).filter(node => node.nodeType === 3).forEach(node => node.remove());
@@ -628,112 +552,98 @@
       const syncEye = () => {
         const visible = !!quickInput?.checked;
         quickLabel.classList.toggle('is-visible', visible);
-        quickLabel.title = visible ? 'Hide position stickers' : 'Show position stickers';
-        quickLabel.setAttribute('aria-label', visible ? 'Hide position stickers' : 'Show position stickers');
+        quickLabel.title = visible ? 'Hide position labels on the board' : 'Show position labels on the board';
+        quickLabel.setAttribute('aria-label', visible ? 'Hide position labels on the board' : 'Show position labels on the board');
       };
       quickInput?.addEventListener('change', syncEye);
       syncEye();
     }
     panel.querySelector('.board-labels-staging')?.remove();
 
-    const available = allPrefabs();
-    const activePrefab = prefabById(state.activeLayout?.id);
-    const normalizedValue = String(field.value || '').trim().toLowerCase();
-    const exactValue = available.find(item => displayName(item).toLowerCase() === normalizedValue);
-    const labelValue = available.find(item => labelsValue(item).toLowerCase() === normalizedValue);
-    if (activePrefab && !state.designMode) selectedId = activePrefab.id;
-    else if (exactValue) selectedId = exactValue.id;
-    else if (templateMode === 'existing' && !state.designMode && labelValue) selectedId = labelValue.id;
-    else if (!state.designMode && normalizedValue) selectedId = '';
-    renderOmniboxOptions(datalist);
-    field.setAttribute('list', 'rowStickerPresetList');
-    field.setAttribute('placeholder', 'Choose a Spread Template or type position labels…');
-    field.setAttribute('aria-label', 'Spread Template name');
-    if (state.designMode && document.activeElement !== field) field.value = draftName;
-    if (newPromptArmed && !state.designMode && !String(field.value || '').trim()) field.value = NEW_TEMPLATE_PROMPT;
-    clearSelection.hidden = state.designMode || state.locked || !String(field.value || '').trim();
-    clearSelection.disabled = !!state.designMode || !!state.locked;
-    if (!field.dataset.relphiLabelsDrawerBound) {
-      field.dataset.relphiLabelsDrawerBound = 'true';
-      const chooseFromOmnibox = event => {
-        if (suppressOmniboxHandler) return;
-        const value = String(field.value || '').trim();
-        if (bridge()?.getState()?.designMode) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          draftName = value.replace(/^\d+\s*\|\s*/, '').slice(0, 60);
-          if (draftLayout) draftLayout.name = draftName;
-          const liveState = bridge()?.getState();
-          const count = Number(liveState?.slotCount) || 0;
-          const conflict = templateNameConflict(draftName, count);
-          const help = drawer.querySelector('#relphiSpreadNameHelp');
-          const save = drawer.querySelector('[data-prefab-action="save"]');
-          if (help) {
-            help.classList.toggle('is-error', conflict);
-            help.textContent = conflict
-              ? 'That ' + count + '-card name already exists. Change the template name above to create a unique copy.'
-              : 'Editing the template name above creates a new template. Card count plus name must be unique.';
-          }
-          if (save) save.disabled = !draftName.trim() || conflict;
-          return;
-        }
-        if (value.toLowerCase() === NEW_TEMPLATE_OPTION.toLowerCase()) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          selectedId = '';
-          templateMode = 'new';
-          draftLayout = null;
-          draftName = '';
-          copySourceId = '';
-          field.value = '';
-          suppressOmniboxHandler = true;
-          field.dispatchEvent(new Event('input', { bubbles:true }));
-          suppressOmniboxHandler = false;
-          newPromptArmed = true;
-          schedule();
-          return;
-        }
-        const match = allPrefabs().find(item => displayName(item).toLowerCase() === value.toLowerCase());
-        if (match) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          selectedId = match.id;
-          templateMode = 'existing';
-          draftLayout = null;
-          draftName = '';
-          copySourceId = '';
-          newPromptArmed = false;
-          field.value = displayName(match);
-          schedule();
-          return;
-        }
-        if (value === NEW_TEMPLATE_PROMPT) return;
+    if (!field.dataset.relphiTemplatePositionBound) {
+      field.dataset.relphiTemplatePositionBound = 'true';
+      field.addEventListener('change', schedule);
+      field.addEventListener('keydown', event => {
+        if (event.key !== 'Enter') return;
         event.preventDefault();
-        event.stopImmediatePropagation();
-        selectedId = '';
-        templateMode = 'new';
-        draftLayout = null;
-        draftName = value.slice(0, 60);
-        copySourceId = '';
-        newPromptArmed = false;
-        clearSelection.hidden = !value;
-        schedule();
-      };
-      field.addEventListener('input', chooseFromOmnibox, true);
-      field.addEventListener('change', chooseFromOmnibox, true);
-      field.addEventListener('pointerdown', () => {
-        if (!newPromptArmed || field.value !== NEW_TEMPLATE_PROMPT) return;
-        newPromptArmed = false;
-        field.value = '';
-        clearSelection.hidden = true;
-        field.dispatchEvent(new Event('input', { bubbles:true }));
+        field.dispatchEvent(new Event('change', { bubbles:true }));
       });
     }
 
+    const activePrefab = prefabById(state.activeLayout?.id);
+    if (activePrefab && !state.designMode) {
+      selectedId = activePrefab.id;
+      templateMode = 'existing';
+    }
     const prefab = prefabById(selectedId) || draftLayout;
-    if (!state.designMode && templateMode === 'existing' && prefab && document.activeElement !== field) field.value = displayName(prefab);
+
+    const picker = drawer.querySelector('#relphiTemplatePicker');
+    const pickerValue = picker?.querySelector('.relphi-template-picker-value');
+    const menu = drawer.querySelector('.relphi-template-menu');
+    if (pickerValue) pickerValue.textContent = templatePickerLabel(prefabById(selectedId));
+    if (picker) {
+      picker.setAttribute('aria-expanded', String(templateMenuOpen));
+      if (!picker.dataset.relphiPickerBound) {
+        picker.dataset.relphiPickerBound = 'true';
+        picker.addEventListener('click', event => {
+          event.preventDefault();
+          event.stopPropagation();
+          templateMenuOpen = !templateMenuOpen;
+          schedule();
+        });
+      }
+    }
+    if (menu) {
+      menu.hidden = !templateMenuOpen;
+      menu.innerHTML = templatePickerMenuMarkup();
+      menu.querySelector('[data-template-new]')?.addEventListener('click', () => {
+        selectedId = '';
+        templateMode = 'new';
+        draftLayout = null;
+        draftName = '';
+        copySourceId = '';
+        templateMenuOpen = false;
+        schedule();
+      });
+      menu.querySelectorAll('[data-template-id]').forEach(button => button.addEventListener('click', () => {
+        selectedId = String(button.dataset.templateId || '');
+        templateMode = 'existing';
+        draftLayout = null;
+        draftName = '';
+        copySourceId = '';
+        templateMenuOpen = false;
+        schedule();
+      }));
+    }
+
     const dynamic = drawer.querySelector('.relphi-labels-dynamic');
     dynamic.innerHTML = labelsDrawerMarkup(prefab, state);
+
+    const nameInput = dynamic.querySelector('#relphiTemplateNameInput');
+    const updateNameUi = () => {
+      if (!nameInput) return;
+      draftName = String(nameInput.value || '').trimStart().slice(0, 60);
+      if (draftLayout) draftLayout.name = draftName;
+      const liveState = bridge()?.getState() || state;
+      const count = Number(liveState.slotCount) || Number(draftLayout?.positions?.length) || 0;
+      const conflict = !!draftName.trim() && templateNameConflict(draftName, count);
+      const help = dynamic.querySelector('#relphiSpreadNameHelp');
+      if (help) {
+        help.classList.toggle('is-error', conflict);
+        help.textContent = conflict
+          ? 'A ' + count + '-card template already has that name. Choose a different name.'
+          : liveState.designMode
+            ? 'Name the reusable template you are designing.'
+            : 'Name the template, then type its comma-separated position labels above.';
+      }
+      const design = dynamic.querySelector('[data-prefab-action="design"]');
+      if (design) design.disabled = !draftName.trim() || conflict || !count || !!liveState.hasCards || !!liveState.locked;
+      const save = dynamic.querySelector('[data-prefab-action="save"]');
+      if (save) save.disabled = !draftName.trim() || conflict;
+    };
+    nameInput?.addEventListener('input', updateNameUi);
+    nameInput?.addEventListener('change', updateNameUi);
+
     dynamic.querySelector('[data-prefab-action="use"]')?.addEventListener('click', () => applyForUse(prefabById(selectedId)));
     dynamic.querySelector('[data-prefab-action="copy"]')?.addEventListener('click', () => beginDesign(prefabById(selectedId), { copy:true }));
     dynamic.querySelector('[data-prefab-action="delete"]')?.addEventListener('click', () => deleteCustom(prefabById(selectedId)));
@@ -947,17 +857,36 @@
       '#shortListPanel .relphi-labels-drawer button{min-height:2.25rem!important;padding:.4rem .65rem!important;border:1px solid #aaa098!important;border-radius:7px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.78rem!important;font-weight:800!important;line-height:1.1!important;box-shadow:none!important}',
       '#shortListPanel .relphi-labels-drawer button.primary{border-color:#dc1f18!important;background:#dc1f18!important;color:#fff!important}',
       '#shortListPanel .relphi-labels-field{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:end!important;gap:.55rem!important}',
-      '#shortListPanel .relphi-template-omnibox{position:relative;display:grid;min-width:0}',
-      '#shortListPanel .relphi-template-omnibox>label{display:grid!important;gap:.2rem!important;width:100%!important;margin:0!important;font-size:.78rem!important;font-weight:800!important}',
-      '#shortListPanel .relphi-template-omnibox input[type="text"]{display:block!important;width:100%!important;min-height:2.35rem!important;margin:.2rem 0 0!important;padding:.45rem 2.35rem .45rem 2.65rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fff!important;box-sizing:border-box!important}',
-      '#shortListPanel .relphi-template-clear{position:absolute!important;right:.25rem!important;bottom:.22rem!important;z-index:2!important;display:grid!important;place-items:center!important;width:1.9rem!important;min-width:1.9rem!important;height:1.9rem!important;min-height:1.9rem!important;padding:0!important;border:0!important;border-radius:999px!important;background:transparent!important;font-size:1.15rem!important;line-height:1!important}',
-      '#shortListPanel .relphi-template-clear[hidden]{display:none!important}',
-      '#shortListPanel .relphi-template-omnibox .quick-position-sticker-toggle{position:absolute!important;left:.25rem!important;bottom:.22rem!important;z-index:2!important;display:grid!important;place-items:center!important;width:1.9rem!important;min-width:1.9rem!important;height:1.9rem!important;min-height:1.9rem!important;margin:0!important;padding:0!important;border:0!important;border-radius:5px!important;background:transparent!important;color:#b4aca5!important;box-shadow:inset 0 1px 1px rgba(255,255,255,.9),inset 0 -1px 1px rgba(70,55,45,.08)!important;filter:drop-shadow(0 1px 0 rgba(255,255,255,.9));opacity:.72!important;box-sizing:border-box!important;cursor:pointer!important}',
-      '#shortListPanel .relphi-template-omnibox .quick-position-sticker-toggle.is-visible{color:#171412!important;opacity:1!important}',
-      '#shortListPanel .relphi-labels-field .quick-position-sticker-toggle input{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}',
+      '#shortListPanel .relphi-template-picker{position:relative;display:grid;gap:.2rem;min-width:0}',
+      '#shortListPanel .relphi-template-picker-title{font-size:.78rem;font-weight:800;color:#171412}',
+      '#shortListPanel .relphi-template-picker-trigger{appearance:none!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:6px!important;width:100%!important;min-height:2.35rem!important;padding:.45rem .62rem!important;border:1px solid #bdb3aa!important;border-radius:8px!important;background:#fffdf8!important;color:#171411!important;cursor:pointer!important;text-align:left!important;font:800 .78rem/1.15 Montserrat,"Segoe UI",Arial,sans-serif!important;box-shadow:none!important}',
+      '#shortListPanel .relphi-template-picker-trigger:hover,#shortListPanel .relphi-template-picker-trigger:focus-visible{border-color:#9f9489!important;background:#f8f3ed!important;outline:none!important}',
+      '#shortListPanel .relphi-template-picker-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '#shortListPanel .relphi-template-chevron{width:7px;height:7px;margin:-3px 2px 0 4px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;color:#81766c;transform:rotate(45deg);transition:transform .12s ease;flex:0 0 auto}',
+      '#shortListPanel .relphi-template-picker-trigger[aria-expanded="true"] .relphi-template-chevron{transform:translateY(4px) rotate(225deg)}',
+      '#shortListPanel .relphi-template-menu{position:absolute;left:0;right:0;top:calc(100% + .35rem);z-index:12500;display:grid;overflow:hidden;max-height:min(62vh,34rem);overflow-y:auto;border:1px solid rgba(31,27,24,.2);border-radius:13px;background:#fffdf8;box-shadow:0 18px 44px rgba(31,27,24,.22);color:#211d19}',
+      '#shortListPanel .relphi-template-menu[hidden]{display:none!important}',
+      '#shortListPanel .relphi-template-menu-section{display:grid;border-top:1px solid rgba(31,27,24,.12)}',
+      '#shortListPanel .relphi-template-menu-section>strong{display:block;padding:.52rem .68rem .36rem;background:#f5f0e9;color:#5f5751;font-size:.66rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase}',
+      '#shortListPanel .relphi-template-menu-item{appearance:none!important;display:grid!important;gap:.12rem!important;width:100%!important;min-height:0!important;padding:.58rem .68rem!important;border:0!important;border-radius:0!important;background:#fffdf8!important;color:#211d19!important;text-align:left!important;font:inherit!important;box-shadow:none!important}',
+      '#shortListPanel .relphi-template-menu-item+ .relphi-template-menu-item{border-top:1px solid rgba(31,27,24,.08)!important}',
+      '#shortListPanel .relphi-template-menu-item:hover,#shortListPanel .relphi-template-menu-item:focus-visible{outline:none!important;background:#f6f1ea!important}',
+      '#shortListPanel .relphi-template-menu-item.is-active{background:#f2ebe3!important}',
+      '#shortListPanel .relphi-template-menu-item>span{font-size:.78rem;font-weight:850;line-height:1.15}',
+      '#shortListPanel .relphi-template-menu-item>small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#71675e;font-size:.66rem;font-weight:550;line-height:1.2}',
+      '#shortListPanel .relphi-template-menu-new{background:#f5f0e9!important}',
+      '#shortListPanel .relphi-position-labels-host{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:.45rem;padding:.55rem;border:1px solid #ded5cd;border-radius:9px;background:#fff}',
+      '#shortListPanel .relphi-position-labels-host>label:first-child{display:grid!important;gap:.2rem!important;width:100%!important;margin:0!important;font-size:.78rem!important;font-weight:800!important}',
+      '#shortListPanel .relphi-position-labels-host input[type="text"]{display:block!important;width:100%!important;min-height:2.35rem!important;margin:0!important;padding:.45rem .6rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fffdf8!important;color:#171412!important;box-sizing:border-box!important}',
+      '#shortListPanel .relphi-position-labels-host .quick-position-sticker-toggle{display:grid!important;place-items:center!important;width:2.15rem!important;min-width:2.15rem!important;height:2.15rem!important;min-height:2.15rem!important;margin:0!important;padding:0!important;border:1px solid #d2c8bf!important;border-radius:7px!important;background:#fffdf8!important;color:#b4aca5!important;opacity:.78!important;box-sizing:border-box!important;cursor:pointer!important}',
+      '#shortListPanel .relphi-position-labels-host .quick-position-sticker-toggle.is-visible{color:#171412!important;opacity:1!important;background:#f6f1ea!important}',
+      '#shortListPanel .relphi-position-labels-host .quick-position-sticker-toggle input{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}',
       '#shortListPanel .relphi-template-eye{display:block;width:1.2rem;height:1.2rem;pointer-events:none}',
       '#shortListPanel .relphi-template-eye svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}',
       '#shortListPanel .quick-position-sticker-toggle.is-visible .relphi-eye-slash{display:none}',
+      '#shortListPanel .relphi-template-name-field{display:grid!important;gap:.25rem!important;width:100%!important;padding:.6rem!important;border:1px solid #ded5cd!important;border-radius:9px!important;background:#fff!important;color:#171412!important;font-size:.78rem!important;font-weight:850!important}',
+      '#shortListPanel .relphi-template-name-field input{display:block!important;width:100%!important;min-height:2.35rem!important;margin:0!important;padding:.45rem .6rem!important;border:1px solid #bdb3aa!important;border-radius:7px!important;background:#fffdf8!important;color:#171412!important;font:650 .84rem/1.25 Montserrat,"Segoe UI",Arial,sans-serif!important;box-sizing:border-box!important}',
+      '#shortListPanel .relphi-template-name-field small{color:#6b625c;font-size:.68rem;font-weight:550;line-height:1.25}',
       '#shortListPanel .relphi-labels-dynamic{display:grid;gap:.55rem}',
       '#shortListPanel #relphiSpreadNameHelp.is-error{color:#a01813!important;font-weight:750!important}',
       '#shortListPanel .relphi-layout-status{position:relative;z-index:1200;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.3rem 1rem;align-items:center;margin:.45rem;padding:.7rem .8rem;border:2px solid #171412;border-radius:10px;background:#fff;color:#171412;box-shadow:0 7px 18px rgba(35,24,18,.14)}',

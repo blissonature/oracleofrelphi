@@ -86,16 +86,18 @@ assert.equal(celtic10.positions.find(item => item.role === 'crossing').transform
 assert.equal(celtic11.positions.find(item => item.role === 'crossing').transform.rotation, 90);
 assert.ok(celtic10.positions.filter(item => item.openTransform).length >= 2);
 assert.ok(celtic11.positions.filter(item => item.openTransform).length >= 3);
-assert.equal(
-  JSON.stringify(celtic10.positions.slice(0, 2).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.25, .326], [.25, .326]]),
-  'the ten-card center should pile before being opened'
+assert.deepEqual(
+  Array.from(celtic10.positions.slice(0, 2), item => [item.transform.x, item.transform.y]),
+  [[.25, .326], [.391, .390]],
+  'the rotated crossing card should use the compensated origin that centers it over the covering card'
 );
-assert.equal(
-  JSON.stringify(celtic11.positions.slice(0, 3).map(item => [item.transform.x, item.transform.y])),
-  JSON.stringify([[.25, .326], [.25, .326], [.25, .326]]),
-  'significator, cover, and cross should share one piled center'
+assert.deepEqual(
+  Array.from(celtic11.positions.slice(0, 3), item => [item.transform.x, item.transform.y]),
+  [[.25, .326], [.25, .326], [.391, .390]],
+  'the significator and covering card share a center while the rotated crossing card uses a compensated origin'
 );
+assert.equal(celtic11.positions.find(item => item.role === 'crossing').transform.x, .391);
+assert.equal(celtic11.positions.find(item => item.role === 'crossing').transform.y, .390);
 assert.equal(
   JSON.stringify(celtic11.positions.slice(0, 3).map(item => item.openTransform.x)),
   JSON.stringify([.145, .25, .355]),
@@ -141,25 +143,31 @@ assert.match(source, /return prefab\.cardCount \+ ' \| ' \+ prefab\.name/);
 assert.match(source, /Save As Copy and Use/);
 assert.match(source, /Save Template and Use/);
 assert.match(source, />Use Once</);
-assert.match(source, /Spread Template name/);
-assert.match(source, /renderOmniboxOptions\(datalist\)/);
-assert.match(source, /Editing the template name above creates a new template/);
-assert.match(source, /Card count plus name must be unique/);
-assert.match(source, /templateNameConflict\(name, state\.slotCount\)/);
+assert.match(source, /id="relphiTemplateNameInput"/);
+assert.match(source, /Template name/);
 assert.match(source, /Design Template/);
 assert.match(source, /id = 'relphiLabelsToggle'/);
 assert.match(source, /className = 'relphi-labels-drawer'/);
 assert.match(source, /toggle\.textContent = 'Templates'/);
-assert.match(source, /NEW_TEMPLATE_OPTION = 'New'/);
-assert.match(source, /Create a new Spread Template/);
-assert.match(source, /NEW_TEMPLATE_PROMPT = 'Enter a name for the new Spread Template…'/);
-assert.match(source, /id = 'relphiTemplateClear'/);
-assert.match(source, /Clear template selection/);
-assert.match(source, /field\.value = displayName\(match\)/);
-assert.match(source, /newPromptArmed = false/);
+assert.match(source, /class="relphi-template-picker"/);
+assert.match(source, /class="relphi-template-chevron"/);
+assert.match(source, /data-template-new="true"/);
+assert.match(source, /data-template-id=/);
+assert.match(source, /field\.removeAttribute\('list'\)/);
+assert.match(source, /Position labels/);
+assert.match(source, /Name the template, then type its comma-separated position labels above/);
+assert.match(source, /templateMenuOpen/);
+assert.match(source, /background:#fffdf8/);
+assert.match(source, /background:#f5f0e9/);
+assert.match(source, /border-right:1\.6px solid currentColor/);
+assert.match(source, /rotate\(225deg\)/);
+assert.doesNotMatch(source, /NEW_TEMPLATE_OPTION/);
+assert.doesNotMatch(source, /NEW_TEMPLATE_PROMPT/);
+assert.doesNotMatch(source, /renderOmniboxOptions/);
+assert.doesNotMatch(source, /field\.setAttribute\('list'/);
 assert.match(source, /className = 'relphi-template-eye'/);
-assert.match(source, /quickLabel\.parentElement !== omnibox/);
-assert.match(source, /Hide position stickers/);
+assert.match(source, /quickLabel\.parentElement !== positionHost/);
+assert.match(source, /Hide position labels on the board/);
 assert.match(source, /relphi-eye-slash/);
 assert.doesNotMatch(source, /name="relphiTemplateMode"/);
 assert.doesNotMatch(source, /class="relphi-template-mode"/);
@@ -205,6 +213,6 @@ assert.doesNotMatch(app, /rowCenterOpen:\s*state\.rowCenterOpen/, 'temporary Cel
 assert.match(app, /state\.rowLayoutLocked = true/);
 assert.match(app, /relphi:drawing-board-rendered/);
 assert.match(source, /draftName = String\(state\.currentLayout\.name/);
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=11/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=12/);
 
 console.log('Drawing Board spread prefab regression checks passed.');
