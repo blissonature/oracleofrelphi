@@ -153,3 +153,112 @@ html body #shortListPanel .board-reading-toggle-stack>label{
 @media(max-width:520px){
   html body #shortListPanel .board-reading-toggle-stack{grid-template-columns:1fr!important}
 }
+
+
+/* v7 compact controls exactly matching the approved reference */
+html body #shortListPanel .drawing-board-primary-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:.45rem!important;
+  width:calc(100% - 1rem)!important;
+  max-width:calc(100% - 1rem)!important;
+  padding:.35rem!important;
+}
+html body #shortListPanel .drawing-board-action-buttons,
+html body #shortListPanel .drawing-board-quick-settings{
+  display:flex!important;
+  align-items:center!important;
+  gap:.32rem!important;
+  flex-wrap:wrap!important;
+}
+html body #shortListPanel .drawing-board-action-buttons{
+  flex:0 0 auto!important;
+}
+html body #shortListPanel .drawing-board-quick-settings{
+  flex:0 1 auto!important;
+  justify-content:flex-end!important;
+  margin-left:auto!important;
+}
+html body #shortListPanel .drawing-board-action-buttons>button,
+html body #shortListPanel .drawing-board-quick-settings>#drawingBoardOptionsButton{
+  width:auto!important;
+  min-width:0!important;
+  min-height:2.1rem!important;
+  margin:0!important;
+  padding:.32rem .6rem!important;
+  border-radius:7px!important;
+  white-space:nowrap!important;
+}
+html body #shortListPanel .drawing-board-quick-settings>.card-row-draw-scope-label{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:.32rem!important;
+  width:auto!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  white-space:nowrap!important;
+}
+html body #shortListPanel .drawing-board-quick-settings>.card-row-draw-scope-label>select{
+  display:inline-block!important;
+  width:auto!important;
+  min-width:8.2rem!important;
+  max-width:10rem!important;
+  min-height:2.1rem!important;
+  margin:0!important;
+  padding:.3rem 1.6rem .3rem .48rem!important;
+}
+html body #shortListPanel .drawing-board-quick-settings>.spread-toggle,
+html body #shortListPanel .drawing-board-quick-settings>.quick-reversal-toggle,
+html body #shortListPanel .drawing-board-quick-settings>.quick-position-sticker-toggle{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:.3rem!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:2.1rem!important;
+  margin:0!important;
+  padding:.32rem .5rem!important;
+  border:1px solid #d0c7bf!important;
+  border-radius:7px!important;
+  background:#fff!important;
+  font-size:.76rem!important;
+  font-weight:800!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  box-sizing:border-box!important;
+}
+html body #shortListPanel .drawing-board-quick-settings>.spread-toggle::after,
+html body #shortListPanel .drawing-board-quick-settings>.quick-reversal-toggle::after,
+html body #shortListPanel .drawing-board-quick-settings>.quick-position-sticker-toggle::after{
+  content:none!important;
+  display:none!important;
+}
+html body #shortListPanel .drawing-board-quick-settings input[type="checkbox"]{
+  flex:0 0 auto!important;
+  width:.95rem!important;
+  height:.95rem!important;
+  margin:0!important;
+}
+html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row{
+  display:none!important;
+}
+html body #shortListPanel .board-reset-action{
+  width:auto!important;
+  align-self:flex-start!important;
+  margin-top:.35rem!important;
+}
+@media(max-width:850px){
+  html body #shortListPanel .drawing-board-primary-actions{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+  }
+  html body #shortListPanel .drawing-board-quick-settings{
+    justify-content:flex-start!important;
+    margin-left:0!important;
+  }
+}
