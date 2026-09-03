@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=45/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=46/);
 
 const storage = new Map();
 const document = {
@@ -149,6 +149,8 @@ assert.match(source, /drawing-board-top-actions/);
 assert.match(source, /card-row-workspace>\.drawing-board-primary-actions[\s\S]{0,140}display:none!important/);
 assert.doesNotMatch(source, /board-reading-toggle-stack/);
 assert.doesNotMatch(source, /board-draw-settings-row/);
+assert.doesNotMatch(source, /drawing-board-top-actions/);
+assert.doesNotMatch(source, /board-reset-action/);
 assert.match(source, /width:min\(29rem/);
 assert.match(source, /Position labels/);
 assert.match(source, /Template name<input id="relphiSpreadDesignName"/);
