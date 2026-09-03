@@ -204,10 +204,24 @@
     window.setTimeout(() => restoreAfterCardClear(snapshot), 0);
   }
 
+  function topActionRow(root) {
+    const drawer = root?.querySelector('.card-row-drawing-board');
+    const summary = drawer?.querySelector(':scope > summary');
+    if (!drawer || !summary) return null;
+    let row = drawer.querySelector(':scope > .drawing-board-top-actions');
+    if (!row) {
+      row = document.createElement('div');
+      row.className = 'drawing-board-top-actions';
+      summary.insertAdjacentElement('afterend', row);
+    }
+    return row;
+  }
+
   function installClearCardsButton() {
     const root = panel();
     const clear = root?.querySelector('#clearShortList');
     if (!root || !clear) return;
+
     let cardsOnly = root.querySelector('#clearShortListCardsOnly');
     if (!cardsOnly) {
       cardsOnly = document.createElement('button');
@@ -217,7 +231,6 @@
       cardsOnly.textContent = 'Clear Cards';
       cardsOnly.title = 'Remove drawn cards and keep the spread positions';
       cardsOnly.setAttribute('aria-label', 'Clear cards and keep spread positions');
-      clear.insertAdjacentElement('beforebegin', cardsOnly);
       cardsOnly.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
@@ -225,6 +238,20 @@
       });
     }
     cardsOnly.disabled = !bridge()?.getState?.()?.hasCards;
+
+    const actions = topActionRow(root);
+    if (actions) {
+      ['drawRandomRowCard','undoShortList','redoShortList'].forEach(id => {
+        const button = root.querySelector('#' + id);
+        if (button) actions.appendChild(button);
+      });
+      actions.appendChild(cardsOnly);
+    }
+
+    const add = root.querySelector('#addCardPlaceholder');
+    const staging = root.querySelector('.card-row-action-staging');
+    if (add && staging && add.parentElement !== staging) staging.appendChild(add);
+
     clear.title = 'Clear board: remove cards and spread positions';
     clear.setAttribute('aria-label', 'Clear board including cards and spread positions');
     if (String(clear.textContent || '').trim().toLowerCase() === 'clear') clear.textContent = 'Clear Board';
