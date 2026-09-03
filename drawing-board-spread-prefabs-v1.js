@@ -341,12 +341,29 @@
     ensurePositionSlots(labels.length);
     dispatchPositionLabels(labels);
   }
+  function fitActiveLayoutOnMobile() {
+    if (!window.matchMedia?.('(max-width:700px)').matches) return;
+    let attempts = 0;
+    const fit = () => {
+      attempts += 1;
+      const button = document.querySelector('#shortListPanel #zoomCardRowExtents');
+      const board = document.querySelector('#shortListPanel .card-row-board');
+      if (button && board?.querySelector('.card-row-item')) {
+        button.click();
+        return;
+      }
+      if (attempts < 8) window.requestAnimationFrame(fit);
+    };
+    window.requestAnimationFrame(fit);
+  }
+
   function applyForUse(prefab) {
     if (!prefab || !requireClear('choose another spread')) return;
     const ready = withDefaultRules(prefab);
     window.RelphiDrawingBoardSetPositionStickers?.(true);
     stagePrefab(ready);
     if (!bridge()?.applyLayout(ready, { designMode:false })) return;
+    fitActiveLayoutOnMobile();
     selectedId = prefab.id;
     draftLayout = null;
     draftName = '';
@@ -1198,6 +1215,9 @@
       'html body #shortListPanel .relphi-reading-options-drawer .board-draw-settings-row>.card-row-draw-scope-label{order:0!important;width:100%!important;max-width:100%!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack{order:1!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:stretch!important;gap:.35rem!important;width:100%!important;max-width:100%!important}',
       'html body #shortListPanel .relphi-reading-options-drawer .board-reading-toggle-stack>label{display:inline-flex!important;align-items:center!important;justify-content:flex-start!important;flex:1 1 0!important;width:auto!important;min-width:0!important;max-width:none!important;white-space:nowrap!important;overflow:visible!important}'
+    ].join('');
+    style.textContent += [
+      '@media(max-width:700px){html body #shortListPanel .card-row-drawing-board{position:relative!important}html body #shortListPanel .drawing-board-top-actions{position:sticky!important;top:0!important;z-index:2400!important;display:flex!important;align-items:center!important;gap:.32rem!important;width:calc(100% - .7rem)!important;max-width:calc(100% - .7rem)!important;margin:.25rem .35rem!important;padding:.32rem!important;border:1px solid rgba(35,29,25,.16)!important;border-radius:9px!important;background:rgba(255,252,248,.98)!important;box-shadow:0 3px 12px rgba(30,20,15,.10)!important;backdrop-filter:blur(6px)!important}html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{margin-right:auto!important}html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{position:fixed!important;top:4.25rem!important;right:.45rem!important;bottom:.45rem!important;left:.45rem!important;z-index:2300!important;width:auto!important;max-width:none!important;max-height:none!important;margin:0!important;overflow:hidden!important;border-radius:12px!important;box-shadow:0 12px 34px rgba(30,20,15,.26)!important}html body #shortListPanel .card-row-workspace>.relphi-reading-options-drawer>.card-row-composer{display:block!important;width:100%!important;max-width:100%!important;height:100%!important;max-height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;padding:.55rem!important;box-sizing:border-box!important}html body #shortListPanel .relphi-reading-options-drawer .board-reset-action{position:sticky!important;bottom:0!important;z-index:4!important;align-self:flex-start!important;margin:.35rem 0 0!important;background:#fffdf8!important;box-shadow:0 -8px 14px rgba(255,253,248,.96)!important}}'
     ].join('');
     document.head.appendChild(style);
   }
