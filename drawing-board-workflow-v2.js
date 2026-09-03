@@ -422,6 +422,12 @@
     return !hasCards && !hasPositions && !hasLabels;
   }
 
+  function readingOptionsAutoCloseReady(panel) {
+    const hasCards = !!panel.querySelector('.card-row-board [data-row-card]');
+    const template = panel.querySelector('#relphiSpreadTemplateSelect')?.value || '';
+    return hasCards || (!!template && template !== '__new__');
+  }
+
   function setReadingOptionsOpen(panel, open, mode) {
     const drawer = panel.querySelector('.relphi-reading-options-drawer');
     const summary = drawer?.querySelector(':scope > summary');
@@ -446,11 +452,16 @@
       setReadingOptionsOpen(panel, reset, reset ? 'auto-reset' : 'closed');
       return;
     }
-    if (previous === current) return;
+    if (previous === current) {
+      if (!reset && panel.dataset.relphiReadingOptionsMode === 'auto-reset' && readingOptionsAutoCloseReady(panel)) {
+        setReadingOptionsOpen(panel, false, 'closed');
+      }
+      return;
+    }
     panel.dataset.relphiReadingOptionsResetState = current;
     if (reset) {
       setReadingOptionsOpen(panel, true, 'auto-reset');
-    } else if (panel.dataset.relphiReadingOptionsMode === 'auto-reset') {
+    } else if (panel.dataset.relphiReadingOptionsMode === 'auto-reset' && readingOptionsAutoCloseReady(panel)) {
       setReadingOptionsOpen(panel, false, 'closed');
     }
   }
@@ -468,7 +479,6 @@
     summary.innerHTML = '<span>Reading Options</span><small>Labels · Templates · Full Pack · Reversals</small><span class="relphi-reading-options-chevron" aria-hidden="true">⌄</span>';
     summary.setAttribute('role', 'button');
 
-    boardDrawer.querySelectorAll(':scope > .relphi-reading-options-hotzone').forEach(node => node.remove());
     if (drawer.parentElement !== boardDrawer || drawer.nextElementSibling !== workspace) {
       workspace.insertAdjacentElement('beforebegin', drawer);
     }
