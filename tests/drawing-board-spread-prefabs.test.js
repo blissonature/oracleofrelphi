@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(root, 'drawing-board-spread-prefabs-v1.
 const app = fs.readFileSync(path.join(root, 'tarot-app.js'), 'utf8');
 const nav = fs.readFileSync(path.join(root, 'navloader.js'), 'utf8');
 
-assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=46/);
+assert.match(nav, /drawing-board-spread-prefabs-v1\.js\?v=47/);
 
 const storage = new Map();
 const document = {
@@ -214,6 +214,13 @@ assert.match(source, /const corridorBottom = bottom\.positionPanelTop/);
 assert.match(source, /const pairs = definitions\.map/);
 assert.match(source, /const corridorYs = pairs\.map\(pair => pair\.corridorY\)/);
 assert.match(source, /const sharedCorridorY = corridorYs\.length/);
+assert.match(source, /function queuePolarityGeometryRefresh/);
+assert.match(source, /const imagesReady = cardImages\.every\(img => img\.complete\)/);
+assert.match(source, /img\.addEventListener\('load', settled, \{ once:true \}\)/);
+assert.match(source, /const geometrySignature = pairs\.map/);
+assert.match(source, /const geometryStable = nextStableCount >= 1/);
+assert.match(source, /label\.style\.visibility = geometryStable \? 'visible' : 'hidden'/);
+assert.match(source, /if \(!geometryStable\) queuePolarityGeometryRefresh\(board\)/);
 assert.match(source, /Number\.isFinite\(sharedCorridorY\) \? sharedCorridorY : corridorY/);
 assert.doesNotMatch(source, /top\.y \+ top\.height \+ bottom\.y/);
 assert.doesNotMatch(source, /syncTopEditTemplateButton|editDrawingBoardTemplate|designBoardSnapshot/);
