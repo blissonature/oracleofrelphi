@@ -1,0 +1,110 @@
+name: One-time Drawing Board source patch
+on:
+  push:
+    branches:
+      - preview/drawing-board-board-options-r1
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/drawing-board-board-options-r1
+          fetch-depth: 0
+
+      - name: Remove reading-option lock and set ready defaults
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("tarot-app.js")
+          s = path.read_bytes().decode("utf-8")
+
+          def replace_once(pattern, replacement, label, flags=0):
+              global s
+              s2, count = re.subn(pattern, replacement, s, count=1, flags=flags)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected one match, got {count}")
+              s = s2
+
+          replace_once(
+              r"rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: false,",
+              "rowDrawScope: 'full', rowAllowRepeats: false, rowAllowReversals: true,",
+              "default reversals",
+          )
+          replace_once(
+              r"option\('full','Full deck'\)",
+              "option('full','Full Pack')",
+              "full pack label",
+          )
+          replace_once(
+              r"\s*const editable = !state\.rowLayoutLocked \|\| state\.rowLayoutDesignMode;\r?\n",
+              "\n",
+              "position editor lock",
+          )
+          replace_once(
+              r'contenteditable="\$\{editable \? \'true\' : \'false\'\}" role="textbox" aria-readonly="\$\{editable \? \'false\' : \'true\'\}" aria-label="\$\{editable \? \'Edit\' : \'Locked\'\} significance for position \$\{index \+ 1\}"',
+              'contenteditable="true" role="textbox" aria-readonly="false" aria-label="Edit significance for position ${index + 1}"',
+              "position editor attributes",
+          )
+          replace_once(
+              r"labels\.addEventListener\('input', \(\) => \{\r?\n\s*if \(state\.rowLayoutLocked && !state\.rowLayoutDesignMode\) return;",
+              "labels.addEventListener('input', () => {",
+              "position label field input lock",
+          )
+
+          guard = "if (state.rowLayoutLocked && !state.rowLayoutDesignMode) { renderShortList(); return; } "
+          guard_count = s.count(guard)
+          if guard_count < 4:
+              raise SystemExit(f"reading option guards: expected at least four, got {guard_count}")
+          s = s.replace(guard, "")
+
+          replace_once(
+              r"editor\.addEventListener\('input', \(\) => \{\r?\n\s*if \(state\.rowLayoutLocked && !state\.rowLayoutDesignMode\) return;",
+              "editor.addEventListener('input', () => {",
+              "inline position label input lock",
+          )
+          replace_once(
+              r"state\.rowAllowReversals = !!rules\.allowReversals;",
+              "state.rowAllowReversals = rules.allowReversals !== false;",
+              "template reversal default",
+          )
+          replace_once(
+              r"state\.rowActiveLayout = null;\r?\n\s*state\.rowPositionMeta = \[\];\r?\n\s*state\.rowLayoutDesignMode = false;\r?\n\s*state\.rowLayoutLocked = false;\r?\n\s*state\.rowCenterOpen = false;",
+              "state.rowActiveLayout = null;\n      state.rowPositionMeta = [];\n      state.rowLayoutDesignMode = false;\n      state.rowLayoutLocked = false;\n      state.rowDrawScope = 'full';\n      state.rowAllowRepeats = false;\n      state.rowAllowReversals = true;\n      state.rowCenterOpen = false;",
+              "Reset Board defaults",
+          )
+
+          required = [
+              "rowAllowReversals: true",
+              "option('full','Full Pack')",
+              'contenteditable="true" role="textbox" aria-readonly="false"',
+              "state.rowAllowReversals = rules.allowReversals !== false;",
+              "state.rowDrawScope = 'full';",
+          ]
+          for value in required:
+              if value not in s:
+                  raise SystemExit(f"missing required source change: {value}")
+          if "const editable = !state.rowLayoutLocked || state.rowLayoutDesignMode" in s:
+              raise SystemExit("position editor lock still present")
+
+          path.write_bytes(s.encode("utf-8"))
+          PY
+          node --check tarot-app.js
+
+      - name: Commit source patch and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "oracleofrelphi-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/one-time-drawing-board-source-patch.yml
+          git add tarot-app.js
+          git commit -m "Unlock Drawing Board reading options at source"
+          git push origin HEAD:preview/drawing-board-board-options-r1
