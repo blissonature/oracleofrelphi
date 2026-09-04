@@ -102,8 +102,40 @@
     }
   }
 
+  function liveBoardState() {
+    try { return window.RelphiDrawingBoardPrefabsBridge?.getState?.() || null; }
+    catch (_) { return null; }
+  }
+  function orderedLayoutLabels(layout) {
+    return (layout?.positions || []).slice().sort((a,b) => Number(a?.drawOrder || 0) - Number(b?.drawOrder || 0))
+      .map((item,index) => String(item?.label || ('Position #' + (index + 1))).trim()).filter(Boolean);
+  }
+  function clearEditorStructure(root) {
+    const select = root?.querySelector('#relphiSpreadTemplateSelect');
+    if (select) select.value = '';
+    setBuilderLabels(root,[]);
+    normalizeTemplatePrompt(root);
+  }
+  function syncLiveStructureIntoEditor(root = panel()) {
+    if (!root) return;
+    const state = liveBoardState();
+    if (!state) return;
+    const layout = [state.activeLayout,state.currentLayout].find(candidate => Array.isArray(candidate?.positions) && candidate.positions.length);
+    if (layout) {
+      const select = root.querySelector('#relphiSpreadTemplateSelect');
+      const known = prefabById(layout.id);
+      if (select && known) select.value = known.id;
+      setBuilderLabels(root,orderedLayoutLabels(layout));
+      return;
+    }
+    const domSlots = root.querySelectorAll('.card-row-board .card-row-item').length;
+    const slotCount = Math.max(domSlots,Number(state.slotCount) || 0);
+    if (!state.hasCards && slotCount === 0) clearEditorStructure(root);
+  }
+
   function beginSession(root = panel()) {
     if (!root || session) return;
+    syncLiveStructureIntoEditor(root);
     const baseline = readDraft(root);
     session = { baseline, draft:JSON.parse(JSON.stringify(baseline)) };
     root.classList.add('relphi-options-transaction-active');
@@ -124,8 +156,16 @@
     style.textContent = `
       #shortListPanel .drawing-board-top-actions>#clearShortList,
       #shortListPanel .card-row-action-staging>#clearShortList{display:none!important}
+      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions,
+      #shortListPanel.relphi-options-transaction-active .drawing-board-top-actions,
+      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-primary-actions,
+      #shortListPanel.relphi-options-transaction-active .drawing-board-primary-actions{
+        visibility:hidden!important;opacity:0!important;pointer-events:none!important
+      }
+      #shortListPanel[data-relphi-reading-options-open="true"] .relphi-reading-options-drawer,
+      #shortListPanel.relphi-options-transaction-active .relphi-reading-options-drawer{z-index:4200!important}
       #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar{
-        position:sticky!important;top:0!important;z-index:2450!important;display:flex!important;align-items:center!important;
+        position:sticky!important;top:0!important;z-index:4250!important;display:flex!important;align-items:center!important;
         width:100%!important;min-height:3.5rem!important;padding:.55rem .65rem!important;margin:0!important;box-sizing:border-box!important;
         background:rgba(255,253,248,.98)!important;border-bottom:1px solid #d8cec5!important;box-shadow:0 4px 12px rgba(35,24,18,.08)!important;
         backdrop-filter:blur(6px)!important
@@ -140,6 +180,12 @@
       #shortListPanel .relphi-options-commit-bar .relphi-options-ok{border-color:#b81712!important;background:#dc1f18!important;color:#fff!important}
       #shortListPanel .relphi-options-commit-bar button:focus-visible{outline:3px solid rgba(220,31,24,.22)!important;outline-offset:2px!important}
       #shortListPanel .relphi-reading-options-drawer>.card-row-composer{padding-top:.55rem!important}
+      @media(max-width:700px){
+        #shortListPanel[data-relphi-reading-options-open="true"] .relphi-reading-options-drawer,
+        #shortListPanel.relphi-options-transaction-active .relphi-reading-options-drawer{
+          isolation:isolate!important;box-shadow:0 16px 42px rgba(30,20,15,.26)!important
+        }
+      }
       @media(max-width:520px){
         #shortListPanel .relphi-options-commit-bar{padding:.5rem!important}
         #shortListPanel .relphi-options-commit-bar button{padding:.45rem .65rem!important;font-size:.76rem!important}
@@ -250,7 +296,12 @@
       const root = panel();
       const select = root?.querySelector('#relphiSpreadTemplateSelect');
       if (select) {
-        applying = true; select.value = ''; dispatch(select,'change'); applying = false; normalizeTemplatePrompt(root);
+        applying = true;
+        select.value = '';
+        dispatch(select,'change');
+        clearEditorStructure(root);
+        applying = false;
+        normalizeTemplatePrompt(root);
         if (after) after();
         return;
       }
@@ -283,7 +334,12 @@
 
   function draftTemplateChanged(root,select) {
     const prefab = prefabById(select.value);
-    if (prefab) { setBuilderLabels(root,labelsForPrefab(prefab)); setDraftRules(root,prefab); }
+    if (prefab) {
+      setBuilderLabels(root,labelsForPrefab(prefab));
+      setDraftRules(root,prefab);
+    } else if (!select.value) {
+      setBuilderLabels(root,[]);
+    }
     refreshDraft(root);
   }
   function interceptDraftEvent(event) {
@@ -312,6 +368,7 @@
       event.preventDefault(); event.stopImmediatePropagation();
       const select = root.querySelector('#relphiSpreadTemplateSelect');
       if (select) select.value = '';
+      setBuilderLabels(root,[]);
       refreshDraft(root); schedule(); return;
     }
     const saveTemplate = event.target.closest?.('#relphiSaveLabelsAsTemplate');
