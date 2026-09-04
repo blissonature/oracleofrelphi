@@ -24,7 +24,7 @@
         if(!win||!doc||!doc.head)return;
 
         var style=doc.createElement('style');
-        style.id='drawing-board-celtic-readable-v31';
+        style.id='drawing-board-celtic-readable-v32';
         style.textContent=`
 /* Rounded card/slot boundary. */
 html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap{
@@ -59,13 +59,14 @@ html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.ca
   }
 }
 
-/* Every Celtic item uses the same center origin. This makes edge-to-edge geometry exact. */
+/* Every Celtic item uses the same center origin. */
 html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item{
   transform-origin:50% 50%!important;
 }
 
-/* Position stickers remain readable at the larger card scale. */
+/* Position stickers are part of the layout geometry, never painted over a neighboring card. */
 html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item>.card-row-position-panel{
+  bottom:calc(100% + 2px)!important;
   min-height:2.4rem!important;
   height:auto!important;
   max-height:none!important;
@@ -110,7 +111,7 @@ html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-i
   text-align:center!important;
 }
 
-/* Staff labels sit beside their edge-to-edge vertical stack. */
+/* Staff labels stay beside the staff. This preserves the large four-card stack. */
 html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="6"]>.card-row-position-panel,
 html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="7"]>.card-row-position-panel,
 html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="8"]>.card-row-position-panel,
@@ -145,6 +146,8 @@ html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
         var STAFF_LEFT=620;
         var FALLBACK_W=174;
         var FALLBACK_H=301;
+        var FALLBACK_STICKER_H=40;
+        var STICKER_CLEARANCE=2;
 
         function clone(value){return JSON.parse(JSON.stringify(value));}
         function metrics(board){
@@ -154,15 +157,33 @@ html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
           var height=(face&&face.offsetHeight)||FALLBACK_H;
           return {w:width,h:height,vw:width*SCALE,vh:height*SCALE};
         }
+        function stickerGap(board,index){
+          var item=board&&board.querySelector('[data-row-index="'+index+'"]');
+          var sticker=item&&item.querySelector(':scope > .card-row-position-panel');
+          var height=(sticker&&sticker.offsetHeight)||FALLBACK_STICKER_H;
+          return (height+STICKER_CLEARANCE)*SCALE;
+        }
+        function stickerGaps(board){
+          return {
+            covering:stickerGap(board,0),
+            crossing:stickerGap(board,1),
+            crowning:stickerGap(board,2),
+            beneath:stickerGap(board,3)
+          };
+        }
         function uprightVisualLeft(logicalLeft,m){return logicalLeft+(m.w-m.vw)/2;}
         function uprightVisualRight(logicalLeft,m){return uprightVisualLeft(logicalLeft,m)+m.vw;}
         function xForVisualLeft(visualLeft,m){return visualLeft-(m.w-m.vw)/2;}
         function xForVisualRight(visualRight,m){return visualRight-(m.w+m.vw)/2;}
 
-        function geometry(centerOpen,m){
+        function geometry(centerOpen,m,gaps){
+          gaps=gaps||{covering:(FALLBACK_STICKER_H+STICKER_CLEARANCE)*SCALE,crossing:(FALLBACK_STICKER_H+STICKER_CLEARANCE)*SCALE,beneath:(FALLBACK_STICKER_H+STICKER_CLEARANCE)*SCALE};
           var axis=CENTER_LEFT+m.w/2;
-          var crownY=CENTER_TOP-m.vh;
-          var beneathY=CENTER_TOP+m.vh;
+
+          /* Crown -> Covers -> Beneath remains one centered column. The only vertical
+             space between card faces is the sticker band belonging to the next card. */
+          var crownY=CENTER_TOP-m.vh-gaps.covering;
+          var beneathY=CENTER_TOP+m.vh+gaps.beneath;
           var coveringX=CENTER_LEFT;
           var crossingX=CENTER_LEFT;
           var centralLeft;
@@ -170,23 +191,26 @@ html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
 
           if(centerOpen){
             /* The touching edge between Covers and Crosses is exactly the vertical axis.
-               Covers moves left by half one rendered card width; Crosses moves right by half. */
+               Covers shifts left by half a rendered card width; Crosses shifts right by half. */
             coveringX=CENTER_LEFT-m.vw/2;
             crossingX=CENTER_LEFT+m.vw/2;
             centralLeft=uprightVisualLeft(coveringX,m);
             centralRight=uprightVisualRight(crossingX,m);
           }else{
-            /* The rotated crossing card defines the horizontal footprint of the closed cross. */
+            /* The rotated crossing card defines the closed center footprint. Its rotated
+               sticker projects to the right, so Before starts after that sticker band. */
             centralLeft=axis-m.vh/2;
             centralRight=axis+m.vh/2;
           }
 
-          /* Behind and Before touch the center cluster with zero horizontal gap. */
+          /* Behind stays flush to the left card face. Before is flush in Open Center;
+             in the closed cross it leaves exactly the rotated crossing-sticker clearance. */
           var behindX=xForVisualRight(centralLeft,m);
-          var beforeX=xForVisualLeft(centralRight,m);
+          var beforeLeft=centralRight+(centerOpen?0:gaps.crossing);
+          var beforeX=xForVisualLeft(beforeLeft,m);
 
-          /* Four-card staff is also edge-to-edge, vertically centered on Covers. */
-          var staffTop=CENTER_TOP-1.5*m.vh;
+          /* Staff labels live beside the cards, so the staff itself remains a tight large stack. */
+          var staffTop=8;
 
           return {
             covering:[coveringX,CENTER_TOP,0,20],
@@ -206,7 +230,9 @@ html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
           return {x:values[0]/BASE_W,y:values[1]/BASE_H,rotation:values[2],scale:SCALE,zIndex:values[3]};
         }
         function fallbackGeometry(centerOpen){
-          return geometry(centerOpen,{w:FALLBACK_W,h:FALLBACK_H,vw:FALLBACK_W*SCALE,vh:FALLBACK_H*SCALE});
+          var m={w:FALLBACK_W,h:FALLBACK_H,vw:FALLBACK_W*SCALE,vh:FALLBACK_H*SCALE};
+          var gap=(FALLBACK_STICKER_H+STICKER_CLEARANCE)*SCALE;
+          return geometry(centerOpen,m,{covering:gap,crossing:gap,crowning:gap,beneath:gap});
         }
         function optimizePrefab(prefab){
           if(!prefab||prefab.id!==TARGET||!Array.isArray(prefab.positions))return prefab;
@@ -226,11 +252,11 @@ html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
         function installBridge(){
           var original=win.RelphiDrawingBoardPrefabsBridge;
           if(!original)return null;
-          if(original.__relphiCelticReadableV31)return original;
+          if(original.__relphiCelticReadableV32)return original;
           var wrapped={};
           Object.keys(original).forEach(function(key){wrapped[key]=original[key];});
           wrapped.applyLayout=function(prefab,options){return original.applyLayout(optimizePrefab(prefab),options);};
-          Object.defineProperty(wrapped,'__relphiCelticReadableV31',{value:true,enumerable:false});
+          Object.defineProperty(wrapped,'__relphiCelticReadableV32',{value:true,enumerable:false});
           win.RelphiDrawingBoardPrefabsBridge=Object.freeze(wrapped);
           return win.RelphiDrawingBoardPrefabsBridge;
         }
@@ -255,7 +281,8 @@ html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
           }
 
           var m=metrics(board);
-          var g=geometry(!!state.centerOpen,m);
+          var gaps=stickerGaps(board);
+          var g=geometry(!!state.centerOpen,m,gaps);
           var ids=['covering','crossing','crowning','beneath','behind','before','self','house','hopes-fears','outcome'];
           ids.forEach(function(id,index){
             var values=g[id];
@@ -331,7 +358,16 @@ html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
           if(!workspace||!board||!zoom)return;
           var rects=Array.from(board.querySelectorAll('.card-row-item')).map(function(item){
             var face=item.querySelector('.card-row-card-wrap,.card-row-drop-card');
-            return (face||item).getBoundingClientRect();
+            var sticker=item.querySelector(':scope > .card-row-position-panel');
+            var faceRect=(face||item).getBoundingClientRect();
+            var stickerRect=sticker&&sticker.getBoundingClientRect();
+            if(!stickerRect)return faceRect;
+            return {
+              left:Math.min(faceRect.left,stickerRect.left),
+              top:Math.min(faceRect.top,stickerRect.top),
+              right:Math.max(faceRect.right,stickerRect.right),
+              bottom:Math.max(faceRect.bottom,stickerRect.bottom)
+            };
           });
           if(!rects.length)return;
           var workspaceRect=workspace.getBoundingClientRect();
