@@ -8,27 +8,9 @@
   <style>
     html,body{margin:0;min-height:100%;background:#fffdf8}
     #drawingBoardFrame{display:block;width:100%;height:100vh;border:0;background:#fffdf8}
-    #previewFailure{display:none;max-width:760px;margin:12vh auto;padding:1.25rem 1.5rem;border:1px solid #d8cec5;border-radius:12px;background:#fff;color:#241f1b;font:16px/1.45 system-ui,sans-serif}
   </style>
 </head>
 <body>
-  <iframe id="drawingBoardFrame" title="Drawing Board exact revision preview"></iframe>
-  <div id="previewFailure">Unable to resolve the exact Drawing Board revision.</div>
-  <script>
-  (function(){
-    'use strict';
-    var frame=document.getElementById('drawingBoardFrame');
-    var failure=document.getElementById('previewFailure');
-    var base=String(document.baseURI||'');
-    var match=base.match(/oracleofrelphi@([0-9a-f]{40})\//i);
-    if(!match){
-      frame.style.display='none';
-      failure.style.display='block';
-      return;
-    }
-    var ref=match[1];
-    frame.src='https://raw.githack.com/blissonature/oracleofrelphi/'+ref+'/drawing-board-rounded-slot-preview-v27.html?board=workflow-v2&standaloneDrawingBoard=1#tarot';
-  })();
-  </script>
+  <iframe id="drawingBoardFrame" title="Drawing Board exact revision preview" src="drawing-board-rounded-slot-preview-v27.html?board=workflow-v2&amp;standaloneDrawingBoard=1#tarot"></iframe>
 </body>
 </html>
