@@ -166,6 +166,7 @@
       refreshDrawingBoardControlAssets();
       appendScript('tarot-date-sky-bridge-v1.js?v=2');
       appendScript('tarot-search-list-v1.js?v=1');
+      appendScript('tarot-reversed-copy-v1.js?v=1');
       appendScript('drawing-board-workflow-v2.js?v=71');
       appendScript('drawing-board-interactions-v1.js?v=12');
       appendScript('drawing-board-template-lifecycle-v1.js?v=7', function () {
