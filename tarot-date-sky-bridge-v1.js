@@ -7,7 +7,7 @@
     if (document.querySelector('script[src^="drawing-board-export-preserver-v1.js"]')) return;
     const script = document.createElement('script');
     script.async = false;
-    script.src = 'drawing-board-export-preserver-v1.js?v=1';
+    script.src = 'drawing-board-export-preserver-v1.js?v=2';
     document.body.appendChild(script);
   }
 

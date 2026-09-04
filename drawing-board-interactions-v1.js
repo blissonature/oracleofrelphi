@@ -39,32 +39,29 @@
     layer?.remove();
   }
 
-  function iconSvg(kind) {
+  function historyIconSvg(kind) {
     const path = kind === 'undo'
       ? '<path d="M9 7 4 12l5 5"/><path d="M4 12h9a7 7 0 0 1 7 7"/>'
       : '<path d="m15 7 5 5-5 5"/><path d="M20 12h-9a7 7 0 0 0-7 7"/>';
-    return '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+    return '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
   }
 
   function directHistoryControls(panel) {
-    const toolbar = panel.querySelector('.card-row-icon-toolbar');
-    if (!toolbar) return;
-    let group = toolbar.querySelector('.board-header-group--history');
-    if (!group) {
-      group = document.createElement('span');
-      group.className = 'board-header-group board-header-group--history';
-      toolbar.insertBefore(group, toolbar.querySelector('#clearShortList') || null);
-    }
     [[panel.querySelector('#undoShortList'), 'undo', 'Undo'], [panel.querySelector('#redoShortList'), 'redo', 'Redo']].forEach(function (entry) {
       const button = entry[0];
       if (!button) return;
       button.classList.add('board-history-icon');
-      button.innerHTML = iconSvg(entry[1]);
+      if (button.dataset.relphiHistoryIcon !== entry[1]) {
+        button.dataset.relphiHistoryIcon = entry[1];
+        button.innerHTML = historyIconSvg(entry[1]);
+      }
       button.setAttribute('aria-label', entry[2]);
       button.title = entry[2];
-      if (button.parentElement !== group) group.appendChild(button);
     });
-    panel.querySelectorAll('.board-history-toggle,.board-history-menu').forEach(function (node) { node.remove(); });
+    panel.querySelectorAll('.board-history-toggle,.board-history-menu,.board-header-group--history').forEach(function (node) {
+      if (!node.querySelector?.('#undoShortList,#redoShortList')) node.remove();
+    });
+    window.RelphiDrawingBoardEnsureTopActions?.(panel);
   }
 
   function finishTargetedDraw(target, first, swapped) {
@@ -89,25 +86,18 @@
     const draw = panel.querySelector('#drawRandomRowCard');
     if (!draw || draw.disabled) return;
 
-    activeTarget = item;
-    item.classList.add('relphi-targeted-draw-pending', 'relphi-target-draw-proxy');
-    item.classList.remove('card-row-placeholder-item');
+    const targetIndex = Number(item.dataset.rowIndex);
+    const drawnIndex = panel.querySelectorAll('.card-row-board [data-row-card]').length;
+    if (!Number.isInteger(targetIndex) || targetIndex < 0) return;
 
-    const emptyItems = Array.from(panel.querySelectorAll('.card-row-item')).filter(isEmptyItem);
-    const first = emptyItems[0] || item;
-    const swapped = first !== item && swapItems(item, first);
-    const observer = new MutationObserver(function () {
-      if (!item.isConnected || item.querySelector('[data-row-card]')) {
-        observer.disconnect();
-        finishTargetedDraw(item, first, swapped);
-      }
-    });
-    observer.observe(panel, { childList:true, subtree:true, attributes:true, attributeFilter:['class','data-row-card'] });
+    activeTarget = item;
+    window.RelphiDrawingBoardSetPositionStickers?.(true);
     draw.click();
-    restoreTimer = window.setTimeout(function () {
-      observer.disconnect();
-      finishTargetedDraw(item, first, swapped);
-    }, 5000);
+
+    if (targetIndex !== drawnIndex) {
+      window.RelphiDrawingBoardPrefabsBridge?.swapPositionSlots?.(drawnIndex, targetIndex);
+    }
+    activeTarget = null;
   }
 
   function placeholderFromPointer(event) {
@@ -131,25 +121,30 @@
     }) || null;
   }
   function revealFullCard(identity) {
-    (document.getElementById('showAllCards') || document.getElementById('landingShowLedger'))?.click();
-    const started = Date.now();
-    (function tryOpen() {
+    const command = document.getElementById('oracleCommand');
+    const run = document.getElementById('runCommand');
+    if (command && run) {
+      command.value = identity.title;
+      command.dispatchEvent(new Event('input', { bubbles:true }));
+      run.click();
+    } else {
+      (document.getElementById('showAllCards') || document.getElementById('landingShowLedger'))?.click();
+    }
+
+    let attempts = 0;
+    const locate = function () {
       const match = findLedgerCard(identity);
       if (match) {
-        (match.closest('button,[role="button"],[role="listitem"],li,article') || match).click();
+        const target = match.closest('button,[role="button"],[role="listitem"],li,article') || match;
+        target.click();
         document.getElementById('browsePanel')?.removeAttribute('hidden');
         document.getElementById('cardDetail')?.scrollIntoView({ behavior:'smooth', block:'start' });
         return;
       }
-      if (Date.now() - started < 1800) return requestAnimationFrame(tryOpen);
-      const command = document.getElementById('oracleCommand');
-      const run = document.getElementById('runCommand');
-      if (command && run) {
-        command.value = identity.title;
-        command.dispatchEvent(new Event('input', { bubbles:true }));
-        run.click();
-      }
-    })();
+      attempts += 1;
+      if (attempts < 24) window.setTimeout(locate, 50);
+    };
+    window.setTimeout(locate, 0);
   }
 
   function installPositionStickerEditor(panel) {
@@ -307,6 +302,15 @@
       '#shortListPanel .card-row-workspace.relphi-is-pinching,#shortListPanel .card-row-workspace.relphi-is-pinching *{touch-action:none!important;user-select:none!important;-webkit-user-select:none!important}',
       '@media(max-width:700px){#shortListPanel .board-arrange-flyout{display:flex!important;flex-wrap:wrap!important;width:100%!important}#shortListPanel .board-arrange-flyout>.board-arrange-trigger{flex:0 0 auto!important}#shortListPanel .board-arrange-flyout>.card-row-control-block{flex:1 0 100%!important;margin-top:.35rem!important;max-height:none!important;overflow:visible!important;border:1px solid #d8cec5!important;border-radius:10px!important;box-shadow:none!important}#shortListPanel .board-arrange-flyout .board-options-body{display:grid!important;grid-template-columns:1fr!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}}'
     ].join('');
+    style.textContent += [
+      '#shortListPanel .card-row-board .or-card.relphi-description-open .or-card-layer.relphi-info-layer,#shortListPanel .card-row-board [data-row-card].relphi-description-open .or-card-layer.relphi-info-layer{opacity:1!important;transform:translateY(0)!important;visibility:visible!important;pointer-events:auto!important}',
+      '#shortListPanel .card-row-board .or-card-title-banner.relphi-card-title-link{position:relative!important;z-index:160!important;pointer-events:auto!important;cursor:pointer!important}',
+      '#shortListPanel .card-row-board .or-card-art,#shortListPanel .card-row-board .card-row-card-art{cursor:pointer!important;pointer-events:auto!important}'
+    ].join('');
+    style.textContent += [
+      '#shortListPanel .card-row-board .or-card:not(.relphi-description-open) .or-card-layer.relphi-info-layer,#shortListPanel .card-row-board [data-row-card]:not(.relphi-description-open) .or-card-layer.relphi-info-layer{opacity:0!important;transform:translateY(.35rem)!important;visibility:hidden!important;pointer-events:none!important}',
+      '#shortListPanel .card-row-board .or-card.relphi-description-open .or-card-layer.relphi-info-layer,#shortListPanel .card-row-board [data-row-card].relphi-description-open .or-card-layer.relphi-info-layer{opacity:1!important;transform:translateY(0)!important;visibility:visible!important;pointer-events:auto!important}'
+    ].join('');
     document.head.appendChild(style);
 
     document.addEventListener('pointerdown', function (event) {
@@ -320,10 +324,23 @@
 
     document.addEventListener('click', function (event) {
       const title = event.target.closest?.(PANEL + ' .card-row-board .or-card-title-banner');
-      if (!title) return;
+      if (title) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        revealFullCard(cardIdentity(title));
+        return;
+      }
+      const art = event.target.closest?.(PANEL + ' .card-row-board .or-card-art, ' + PANEL + ' .card-row-board .card-row-card-art');
+      if (!art) return;
+      const card = art.closest('[data-row-card],.or-card');
+      if (!card) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      revealFullCard(cardIdentity(title));
+      const opening = !card.classList.contains('relphi-description-open');
+      root()?.querySelectorAll('.relphi-description-open').forEach(function (other) {
+        if (other !== card) other.classList.remove('relphi-description-open');
+      });
+      card.classList.toggle('relphi-description-open', opening);
     }, true);
 
     document.addEventListener('keydown', function (event) {
@@ -334,9 +351,22 @@
       revealFullCard(cardIdentity(title));
     }, true);
 
-    new MutationObserver(function () { requestAnimationFrame(enhance); }).observe(document.body, {
-      childList:true, subtree:true, attributes:true, attributeFilter:['hidden','class']
-    });
+    let enhanceQueued = false;
+    const queueEnhance = function () {
+      if (enhanceQueued) return;
+      enhanceQueued = true;
+      requestAnimationFrame(function () {
+        enhanceQueued = false;
+        enhance();
+      });
+    };
+    document.addEventListener('relphi:drawing-board-rendered', queueEnhance);
+    const panel = root();
+    if (panel) {
+      new MutationObserver(queueEnhance).observe(panel, {
+        attributes:true, attributeFilter:['hidden']
+      });
+    }
     enhance();
   }
 
