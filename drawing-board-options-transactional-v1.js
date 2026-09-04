@@ -156,6 +156,9 @@
     style.textContent = `
       #shortListPanel .drawing-board-top-actions>#clearShortList,
       #shortListPanel .card-row-action-staging>#clearShortList{display:none!important}
+      #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{
+        order:0!important;flex:0 0 auto!important;margin-left:0!important;margin-right:auto!important
+      }
       #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions,
       #shortListPanel.relphi-options-transaction-active .drawing-board-top-actions,
       #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-primary-actions,
@@ -206,7 +209,11 @@
         '<span class="relphi-options-right"><button type="button" class="relphi-options-cancel">Cancel</button><button type="button" class="relphi-options-ok">OK</button></span>';
     }
     const summary = box.querySelector(':scope > summary');
-    if (summary) summary.insertAdjacentElement('afterend',bar); else box.prepend(bar);
+    if (summary) {
+      if (summary.nextElementSibling !== bar) summary.insertAdjacentElement('afterend',bar);
+    } else if (box.firstElementChild !== bar) {
+      box.prepend(bar);
+    }
   }
 
   function normalizeTemplatePrompt(root = panel()) {
@@ -289,47 +296,33 @@
     window.setTimeout(() => applyDraft(draft,baseline),0);
   }
 
-  function clearTemplateSelection(after) {
-    let attempts = 0;
-    const clear = () => {
-      attempts += 1;
-      const root = panel();
-      const select = root?.querySelector('#relphiSpreadTemplateSelect');
-      if (select) {
-        applying = true;
-        select.value = '';
-        dispatch(select,'change');
-        clearEditorStructure(root);
-        applying = false;
-        normalizeTemplatePrompt(root);
-        if (after) after();
-        return;
-      }
-      if (attempts < 30) return window.setTimeout(clear,35);
-      if (after) after();
-    };
-    clear();
-  }
-  function reopenOptions() {
-    let attempts = 0;
-    const open = () => {
-      attempts += 1;
-      const root = panel();
-      if (root && !optionsOpen(root)) { window.RelphiDrawingBoardToggleOptions?.(); schedule(); return; }
-      if (!root && attempts < 30) window.setTimeout(open,35);
-    };
-    window.setTimeout(open,0);
-  }
   function resetBoard() {
     const root = panel();
     if (!root) return;
-    closeThroughExistingCancel();
-    window.setTimeout(() => {
-      const liveRoot = panel();
-      const nativeReset = liveRoot?.querySelector('#clearShortList');
-      if (nativeReset && !nativeReset.disabled) nativeReset.click();
-      window.setTimeout(() => clearTemplateSelection(reopenOptions),0);
-    },0);
+    const bridge = window.RelphiDrawingBoardOptionsBridge;
+    const blank = { template:'', labels:[], pack:'full', stickers:true, reversals:true, repeats:false };
+    applying = true;
+    try {
+      if (bridge?.capture && bridge?.restore) {
+        bridge.restore(structuralBlankSnapshot(bridge.capture()));
+      } else {
+        const nativeReset = root.querySelector('#clearShortList');
+        if (nativeReset && !nativeReset.disabled) nativeReset.click();
+      }
+      const select = root.querySelector('#relphiSpreadTemplateSelect');
+      if (select) {
+        select.value = '';
+        dispatch(select,'change');
+      }
+      clearEditorStructure(root);
+      applyRules(root,blank);
+      session = { baseline:JSON.parse(JSON.stringify(blank)), draft:JSON.parse(JSON.stringify(blank)) };
+      root.classList.add('relphi-options-transaction-active');
+      normalizeTemplatePrompt(root);
+    } finally {
+      applying = false;
+    }
+    schedule();
   }
 
   function draftTemplateChanged(root,select) {
