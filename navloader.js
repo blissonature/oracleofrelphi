@@ -167,7 +167,9 @@
             appendScript('drawing-board-spread-prefabs-v1.js?v=47', function () {
               appendScript('drawing-board-options-transactional-v1.js?v=1', function () {
                 appendScript('drawing-board-render-geometry-v1.js?v=1', function () {
-                  window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+                  appendScript('drawing-board-chrome-ownership-v1.js?v=1', function () {
+                    window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+                  });
                 });
               });
             });
