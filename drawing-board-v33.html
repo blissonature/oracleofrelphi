@@ -22,14 +22,14 @@
       try{
         var doc=tarotFrame&&tarotFrame.contentDocument;
         if(!doc||!doc.head)return;
-        var style=doc.getElementById('relphi-drawing-board-description-layer-v34');
+        var style=doc.getElementById('relphi-drawing-board-description-layer-v36');
         if(!style){
           style=doc.createElement('style');
-          style.id='relphi-drawing-board-description-layer-v34';
+          style.id='relphi-drawing-board-description-layer-v36';
           doc.head.appendChild(style);
         }
         style.textContent=`
-/* v34: standalone Drawing Board exposes the Relphi description layer without forcing it open.
+/* v36: standalone Drawing Board exposes the Relphi description layer without forcing it open.
    Card art is the resting state; hover or keyboard focus reveals the interpretation. */
 html body #shortListPanel .card-row-workspace .card-row-board .card-row-card>.or-card-layer.relphi-info-layer,
 html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card>.or-card-layer.relphi-info-layer{
@@ -59,6 +59,42 @@ html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-
   display:block!important;
   min-height:0!important;
   overflow:auto!important;
+}
+
+/* v36: the slot owns no square paint. The card wrapper itself owns the same rounded
+   clipping boundary as the art, so no white/square wedges can remain behind the corners. */
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item{
+  background:transparent!important;
+  background-color:transparent!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item::before,
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item::after{
+  content:none!important;
+  display:none!important;
+  background:none!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item>.card-row-card-wrap,
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-placeholder-item>.card-row-drop-card{
+  border-radius:.72rem!important;
+  overflow:hidden!important;
+  clip-path:inset(0 round .72rem)!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item>.card-row-card-wrap::before,
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item>.card-row-card-wrap::after,
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-placeholder-item>.card-row-drop-card::before,
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-placeholder-item>.card-row-drop-card::after{
+  content:none!important;
+  display:none!important;
 }
 `;
       }catch(error){
@@ -150,9 +186,78 @@ html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-
       }
     }
 
+    function cardFace(item){
+      return item&&item.querySelector('.card-row-card-wrap,.card-row-drop-card');
+    }
+
+    function applyCelticStaffGap(tarotFrame){
+      try{
+        var doc=tarotFrame&&tarotFrame.contentDocument;
+        var panel=doc&&doc.getElementById('shortListPanel');
+        var board=panel&&panel.querySelector('.card-row-board');
+        if(!panel||!board||!panel.classList.contains('relphi-celtic-readable'))return;
+
+        var before=board.querySelector('[data-row-index="5"]');
+        var firstStaff=board.querySelector('[data-row-index="6"]');
+        var beforeFace=cardFace(before);
+        var staffFace=cardFace(firstStaff);
+        if(!beforeFace||!staffFace)return;
+
+        var beforeRect=beforeFace.getBoundingClientRect();
+        var staffRect=staffFace.getBoundingClientRect();
+        if(!beforeRect.width||!staffRect.width)return;
+
+        /* Exactly one rendered card width of empty space between Before and the ladder. */
+        var desiredStaffLeft=beforeRect.right+beforeRect.width;
+        var delta=desiredStaffLeft-staffRect.left;
+        if(Math.abs(delta)<.5)return;
+
+        [6,7,8,9].forEach(function(index){
+          var item=board.querySelector('[data-row-index="'+index+'"]');
+          if(!item)return;
+          var left=parseFloat(item.style.left);
+          if(!Number.isFinite(left))left=parseFloat(tarotFrame.contentWindow.getComputedStyle(item).left)||0;
+          item.style.left=(left+delta).toFixed(2)+'px';
+        });
+      }catch(error){
+        console.error('Drawing Board Celtic staff spacing failed',error);
+      }
+    }
+
+    function installCelticStaffGap(tarotFrame){
+      try{
+        var win=tarotFrame&&tarotFrame.contentWindow;
+        var doc=tarotFrame&&tarotFrame.contentDocument;
+        if(!win||!doc||win.__relphiCelticStaffGapV36)return;
+        win.__relphiCelticStaffGapV36=true;
+        var queued=false;
+        function schedule(){
+          if(queued)return;
+          queued=true;
+          win.requestAnimationFrame(function(){
+            win.requestAnimationFrame(function(){
+              win.setTimeout(function(){queued=false;applyCelticStaffGap(tarotFrame);},0);
+            });
+          });
+        }
+        doc.addEventListener('relphi:drawing-board-rendered',schedule);
+        doc.addEventListener('relphi:drawing-board-center-view',schedule);
+        doc.addEventListener('change',function(event){
+          if(event.target&&event.target.matches&&event.target.matches('#relphiSpreadTemplateSelect,#rowZoom'))schedule();
+        },true);
+        var panel=doc.getElementById('shortListPanel');
+        if(panel)new win.MutationObserver(schedule).observe(panel,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+        win.addEventListener('resize',schedule);
+        schedule();
+      }catch(error){
+        console.error('Drawing Board Celtic staff spacing install failed',error);
+      }
+    }
+
     function prepareInnerBoard(tarotFrame){
       restoreDescriptionLayer(tarotFrame);
       installTitleNavigation(tarotFrame);
+      installCelticStaffGap(tarotFrame);
     }
 
     function bindInnerBoard(){
