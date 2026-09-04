@@ -44,6 +44,9 @@ function installLiveSkyState(){
 function installRelationshipDisplay(){
   appendOnce('sky-chart-relationship-display-v1.js?v=1','__relphiSkyRelationshipDisplayV1');
 }
+function installTouchIsolation(){
+  appendOnce('sky-chart-touch-isolation-v1.js?v=1','__relphiSkyTouchIsolationV1');
+}
 function scrollableAncestor(target){
   let node=target instanceof Element?target:null;
   while(node&&node!==document.body&&node!==document.documentElement){
@@ -75,6 +78,7 @@ function install(){
   installStyles();
   installLiveSkyState();
   installRelationshipDisplay();
+  installTouchIsolation();
   document.addEventListener('touchstart',onTouchStart,{capture:true,passive:true});
   document.addEventListener('touchmove',onTouchMove,{capture:true,passive:false});
 }
