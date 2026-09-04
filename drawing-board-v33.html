@@ -66,6 +66,95 @@ html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-
       }
     }
 
+    function cleanCardTitle(value){
+      return String(value||'')
+        .replace(/\s*[·•]\s*Reversed\s*$/i,'')
+        .replace(/\s*[-–—]\s*Reversed\s*$/i,'')
+        .replace(/\s*\(Reversed\)\s*$/i,'')
+        .trim();
+    }
+
+    function exactLedgerCard(doc,id,title){
+      var list=doc.getElementById('cardList');
+      if(!list)return null;
+      var wanted=String(title||'').toLowerCase();
+      return Array.from(list.querySelectorAll('.or-card[data-id],[data-card-id],[data-card],article,li,[role="listitem"]')).find(function(node){
+        var nodeId=String(node.getAttribute('data-id')||node.getAttribute('data-card-id')||node.getAttribute('data-card')||'');
+        if(id&&nodeId===id)return true;
+        return wanted&&String(node.textContent||'').toLowerCase().includes(wanted);
+      })||null;
+    }
+
+    function openLedgerEntry(tarotFrame,titleNode){
+      var doc=tarotFrame.contentDocument;
+      var card=titleNode&&titleNode.closest&&titleNode.closest('[data-row-card]');
+      var id=String(card&&card.dataset&&card.dataset.rowCard||'').trim();
+      var title=cleanCardTitle(titleNode&&titleNode.textContent);
+      if(!title&&id)title=id.replace(/_/g,' ');
+
+      var command=doc.getElementById('oracleCommand');
+      var run=doc.getElementById('runCommand');
+      if(command&&run){
+        command.value=title;
+        command.dispatchEvent(new Event('input',{bubbles:true}));
+        command.dispatchEvent(new Event('change',{bubbles:true}));
+        run.click();
+      }else{
+        (doc.getElementById('showAllCards')||doc.getElementById('landingShowLedger'))?.click();
+      }
+
+      var attempts=0;
+      (function locate(){
+        var match=exactLedgerCard(doc,id,title);
+        if(match){
+          var target=match.closest('.or-card[data-id],[data-card-id],[data-card],button,[role="button"],[role="listitem"],li,article')||match;
+          target.click();
+          doc.getElementById('browsePanel')?.removeAttribute('hidden');
+          var detail=doc.getElementById('cardDetail');
+          if(detail){
+            detail.removeAttribute('hidden');
+            detail.scrollIntoView({behavior:'smooth',block:'start'});
+          }
+          return;
+        }
+        attempts+=1;
+        if(attempts<50)tarotFrame.contentWindow.setTimeout(locate,40);
+      })();
+    }
+
+    function installTitleNavigation(tarotFrame){
+      try{
+        var win=tarotFrame&&tarotFrame.contentWindow;
+        var doc=tarotFrame&&tarotFrame.contentDocument;
+        if(!win||!doc||win.__relphiBoardTitleNavigationV35)return;
+        win.__relphiBoardTitleNavigationV35=true;
+
+        win.addEventListener('click',function(event){
+          var title=event.target&&event.target.closest&&event.target.closest('#shortListPanel .card-row-board .or-card-title-banner');
+          if(!title)return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          openLedgerEntry(tarotFrame,title);
+        },true);
+
+        win.addEventListener('keydown',function(event){
+          if(event.key!=='Enter'&&event.key!==' ')return;
+          var title=event.target&&event.target.closest&&event.target.closest('#shortListPanel .card-row-board .or-card-title-banner');
+          if(!title)return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          openLedgerEntry(tarotFrame,title);
+        },true);
+      }catch(error){
+        console.error('Drawing Board title navigation restore failed',error);
+      }
+    }
+
+    function prepareInnerBoard(tarotFrame){
+      restoreDescriptionLayer(tarotFrame);
+      installTitleNavigation(tarotFrame);
+    }
+
     function bindInnerBoard(){
       try{
         var shellDoc=shell.contentDocument;
@@ -73,9 +162,9 @@ html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-
         if(!tarotFrame)return setTimeout(bindInnerBoard,60);
         if(tarotFrame.dataset.relphiDescriptionLayerBound!=='true'){
           tarotFrame.dataset.relphiDescriptionLayerBound='true';
-          tarotFrame.addEventListener('load',function(){restoreDescriptionLayer(tarotFrame);});
+          tarotFrame.addEventListener('load',function(){prepareInnerBoard(tarotFrame);});
         }
-        restoreDescriptionLayer(tarotFrame);
+        prepareInnerBoard(tarotFrame);
       }catch(error){
         console.error('Drawing Board description-layer binding failed',error);
       }
