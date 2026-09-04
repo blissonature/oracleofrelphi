@@ -26,6 +26,11 @@
     if (!node?.style) return;
     ['position','inset','left','right','top','bottom','translate','transform','z-index'].forEach(name => node.style.removeProperty(name));
   }
+  function ensureParent(root, id, destination) {
+    const node = root?.querySelector('#' + id);
+    if (!node || !destination || node.parentElement === destination) return;
+    destination.appendChild(node);
+  }
 
   function ensureAfterCanvas(root) {
     const boardDrawer = root.querySelector('.card-row-drawing-board');
@@ -63,28 +68,29 @@
     if (!workspace || !tools) return;
 
     const snapRows = tools.querySelector('.relphi-snap-rows');
-    const snapRow = snapRows?.querySelector('.relphi-snap-row:nth-of-type(1)');
-    const rotationRow = snapRows?.querySelector('.relphi-snap-row:nth-of-type(2)');
+    const rows = Array.from(snapRows?.querySelectorAll('.relphi-snap-row') || []);
+    const snapRow = rows[0] || null;
+    const rotationRow = rows[1] || null;
+    const snapMeasure = snapRow?.querySelector('.relphi-snap-measure') || null;
+    const rotationMeasure = rotationRow?.querySelector('.relphi-snap-measure') || null;
     const cardColor = tools.querySelector('.relphi-card-color-slot');
     const boardImage = tools.querySelector('.relphi-board-image-slot');
     const boardColor = tools.querySelector('.relphi-board-color-slot');
     const boardReset = tools.querySelector('.relphi-board-reset-slot');
 
-    const appendInOrder = (destination, ids) => {
-      if (!destination) return;
-      ids.forEach(id => {
-        const node = root.querySelector('#' + id);
-        if (node && node.parentElement !== destination) destination.appendChild(node);
-      });
-    };
-    appendInOrder(snapRow, ['rowSnapEnabled','rowSnapGridMinus','rowSnapGridValue','rowSnapGridPlus']);
-    appendInOrder(rotationRow, ['rowRotationSnapEnabled','rowRotationSnapMinus','rowRotationSnapValue','rowRotationSnapPlus']);
-    const resetLayout = root.querySelector('#resetCardRowLayout');
-    if (snapRows && resetLayout && resetLayout.parentElement !== snapRows) snapRows.appendChild(resetLayout);
-    appendInOrder(cardColor, ['rowEnvelopeColor']);
-    appendInOrder(boardImage, ['rowTableImageUpload']);
-    appendInOrder(boardColor, ['rowTableColor']);
-    appendInOrder(boardReset, ['rowTableImageReset']);
+    ensureParent(root, 'rowSnapEnabled', snapRow);
+    ensureParent(root, 'rowSnapGridMinus', snapRow);
+    ensureParent(root, 'rowSnapGridValue', snapMeasure);
+    ensureParent(root, 'rowSnapGridPlus', snapRow);
+    ensureParent(root, 'rowRotationSnapEnabled', rotationRow);
+    ensureParent(root, 'rowRotationSnapMinus', rotationRow);
+    ensureParent(root, 'rowRotationSnapValue', rotationMeasure);
+    ensureParent(root, 'rowRotationSnapPlus', rotationRow);
+    ensureParent(root, 'resetCardRowLayout', snapRows);
+    ensureParent(root, 'rowEnvelopeColor', cardColor);
+    ensureParent(root, 'rowTableImageUpload', boardImage);
+    ensureParent(root, 'rowTableColor', boardColor);
+    ensureParent(root, 'rowTableImageReset', boardReset);
   }
 
   function ensureOptions(root) {
