@@ -169,14 +169,15 @@
       appendScript('drawing-board-interactions-v1.js?v=12');
       appendScript('drawing-board-template-lifecycle-v1.js?v=7', function () {
         appendScript('drawing-board-spread-prefabs-v1.js?v=47', function () {
-          appendScript('drawing-board-options-transactional-v1.js?v=1');
+          appendScript('drawing-board-options-transactional-v1.js?v=1', function () {
+            appendScript('drawing-board-render-geometry-v1.js?v=1');
+          });
         });
       });
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('standardize-zodiac-wheels.js?v=4');
-      appendScript('relphi-glyph-bubbles.js?v=2');
     }
     if (/(^|\/)glyphs\.html$/.test(location.pathname)) {
       appendScript('relphi-glyph-registry-v1.js?v=19', function () {
