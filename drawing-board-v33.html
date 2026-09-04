@@ -22,33 +22,43 @@
       try{
         var doc=tarotFrame&&tarotFrame.contentDocument;
         if(!doc||!doc.head)return;
-        var style=doc.getElementById('relphi-drawing-board-description-layer-v33');
+        var style=doc.getElementById('relphi-drawing-board-description-layer-v34');
         if(!style){
           style=doc.createElement('style');
-          style.id='relphi-drawing-board-description-layer-v33';
+          style.id='relphi-drawing-board-description-layer-v34';
           doc.head.appendChild(style);
         }
         style.textContent=`
-/* v33: standalone Drawing Board keeps the same persistent Relphi description layer as the normal board. */
+/* v34: standalone Drawing Board exposes the Relphi description layer without forcing it open.
+   Card art is the resting state; hover or keyboard focus reveals the interpretation. */
 html body #shortListPanel .card-row-workspace .card-row-board .card-row-card>.or-card-layer.relphi-info-layer,
 html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card>.or-card-layer.relphi-info-layer{
   display:flex!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  transform:translateY(.25rem)!important;
+  pointer-events:none!important;
+  z-index:48!important;
+  transition:opacity .16s ease,transform .16s ease!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card:hover>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card:focus>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card:focus-within>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card:hover>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card:focus>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card:focus-within>.or-card-layer.relphi-info-layer{
   visibility:visible!important;
   opacity:1!important;
   transform:none!important;
   pointer-events:auto!important;
-  z-index:48!important;
 }
 html body #shortListPanel .card-row-workspace .card-row-board .card-row-card>.or-card-layer.relphi-info-layer .or-layer-scroll,
 html body #shortListPanel .card-row-workspace .card-row-board .card-row-card>.or-card-layer.relphi-info-layer .relphi-info-scroll,
 html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card>.or-card-layer.relphi-info-layer .or-layer-scroll,
 html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card>.or-card-layer.relphi-info-layer .relphi-info-scroll{
   display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
   min-height:0!important;
   overflow:auto!important;
-  pointer-events:auto!important;
 }
 `;
       }catch(error){
