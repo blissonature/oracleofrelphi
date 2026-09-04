@@ -24,7 +24,7 @@
         if(!win||!doc||!doc.head)return;
 
         var style=doc.createElement('style');
-        style.id='drawing-board-celtic-readable-v29';
+        style.id='drawing-board-celtic-readable-v30';
         style.textContent=`
 /* Preserve the v28 rounded card/slot boundary. */
 html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap{
@@ -71,15 +71,36 @@ html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item>
   white-space:normal!important;
 }
 
-/* The crossing card rotates; its label does not. Give covering and crossing two separate pills. */
-html body #shortListPanel.relphi-celtic-readable .card-row-item.relphi-celtic-crossing-rotated>.card-row-position-panel{
-  left:calc(100% + .55rem)!important;
+/* v30: the crossing position is one rotated unit. The shipped prefab normally
+   counter-rotates the card wrapper so its label stays horizontal; cancel that
+   split geometry so card, placeholder, and "What crosses you" label rotate together. */
+html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated{
+  transform:rotate(var(--row-card-rotation,90deg)) scale(var(--row-card-scale,1))!important;
+  transform-origin:50% 50%!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-card-wrap,
+html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card{
+  transform:none!important;
+  transform-origin:50% 50%!important;
+}
+html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card>.card-row-drop-card-inner{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  transform:none!important;
+}
+html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-position-panel{
+  left:0!important;
   right:auto!important;
   top:auto!important;
   bottom:calc(100% + 2px)!important;
-  width:7rem!important;
-  max-width:7rem!important;
-  min-width:7rem!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:100%!important;
   margin:0!important;
   transform:none!important;
   z-index:180!important;
@@ -102,6 +123,13 @@ html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[
   transform:translateY(-50%)!important;
   text-align:left!important;
   z-index:170!important;
+}
+
+/* Keep the center-view control clear of the spread footprint. */
+html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
+  left:450px!important;
+  top:900px!important;
+  transform:translateX(-50%)!important;
 }
 `;
         doc.head.appendChild(style);
