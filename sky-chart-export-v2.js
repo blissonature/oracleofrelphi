@@ -1,9 +1,10 @@
-// Sky Chart export v3: contextual wheel PNGs and relationship-view PNGs grouped by sky scope.
+// Sky Chart export v4: contextual wheel PNGs and relationship-view PNGs grouped by sky scope.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyExportV3)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyExportV4)return;
   window.__relphiSkyExportV2=true;
   window.__relphiSkyExportV3=true;
+  window.__relphiSkyExportV4=true;
 
   const LIB_URL='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
   const WHEEL_ID='skyChartWheelExport';
@@ -16,6 +17,11 @@
     Object.freeze({mode:'A-B',title:'Sky A ↔ Sky B — Intersky',className:'sky-ab'})
   ]);
   const ICON='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v11m0 0-4-4m4 4 4-4M5 15v4h14v-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const SNAPSHOT_STYLE_PROPERTIES=Object.freeze([
+    'display','visibility','opacity','filter','color','fill','fill-opacity','fill-rule',
+    'stroke','stroke-opacity','stroke-width','stroke-dasharray','stroke-dashoffset',
+    'stroke-linecap','stroke-linejoin','paint-order'
+  ]);
   let libraryPromise=null,preparing=false,pendingIOS=null;
 
   const isIOS=()=>/iPad|iPhone|iPod/i.test(String(navigator.userAgent||''))||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -82,12 +88,38 @@
     const host=document.createElement('div');host.className='sky-export-host';
     Object.assign(host.style,{position:'fixed',left:'-100000px',top:'0',width:`${width}px`,height:`${height}px`,background:'#fffdf8',overflow:'hidden',zIndex:'-1'});document.body.appendChild(host);return host;
   }
+
+  function freezeWheelAppearance(source,clone){
+    const sourceNodes=[source,...source.querySelectorAll('*')];
+    const cloneNodes=[clone,...clone.querySelectorAll('*')];
+    sourceNodes.forEach((node,index)=>{
+      const copy=cloneNodes[index];
+      if(!(node instanceof Element)||!(copy instanceof Element))return;
+      const computed=getComputedStyle(node);
+      SNAPSHOT_STYLE_PROPERTIES.forEach(property=>{
+        const value=computed.getPropertyValue(property);
+        if(value)copy.style.setProperty(property,value);
+      });
+    });
+  }
+
   function buildWheelStage(){
-    const wheel=document.querySelector('#skyFoundationWheelMount > svg.sky-foundation-wheel');if(!wheel)throw new Error('The comparison wheel is not ready.');
+    const sourceMount=document.getElementById('skyFoundationWheelMount');
+    const wheel=sourceMount?.querySelector(':scope > svg.sky-foundation-wheel');if(!wheel)throw new Error('The comparison wheel is not ready.');
     const box=wheel.viewBox?.baseVal,wheelWidth=Math.max(1,Math.ceil(box?.width||1200)),wheelHeight=Math.max(1,Math.ceil(box?.height||1200));
     const width=wheelWidth+WHEEL_EXPORT_FRAME.side*2,height=wheelHeight+WHEEL_EXPORT_FRAME.top+WHEEL_EXPORT_FRAME.bottom;
     const host=exportHost(width,height),stage=document.createElement('div');stage.className='sky-wheel-export-stage';stage.style.width=`${width}px`;stage.style.height=`${height}px`;
-    const clone=wheel.cloneNode(true);clone.removeAttribute('style');Object.assign(clone.style,{position:'absolute',display:'block',left:`${WHEEL_EXPORT_FRAME.side}px`,top:`${WHEEL_EXPORT_FRAME.top}px`,width:`${wheelWidth}px`,height:`${wheelHeight}px`,maxHeight:'none',overflow:'visible'});stage.appendChild(clone);
+
+    // Freeze the already-rendered composition before any export work can trigger a wheel
+    // rebuild. The export shell intentionally preserves #skyFoundationWheelMount because
+    // the live filter-focus/dimming and aspect-line CSS is scoped through that parent.
+    const wheelMount=document.createElement('div');wheelMount.id='skyFoundationWheelMount';wheelMount.className=sourceMount.className;
+    Object.assign(wheelMount.style,{position:'absolute',display:'block',left:`${WHEEL_EXPORT_FRAME.side}px`,top:`${WHEEL_EXPORT_FRAME.top}px`,width:`${wheelWidth}px`,height:`${wheelHeight}px`,minHeight:'0',padding:'0',border:'0',overflow:'visible',background:'transparent'});
+    const clone=wheel.cloneNode(true);
+    freezeWheelAppearance(wheel,clone);
+    Object.assign(clone.style,{position:'relative',display:'block',left:'0',top:'0',width:`${wheelWidth}px`,height:`${wheelHeight}px`,maxHeight:'none',overflow:'visible'});
+    wheelMount.appendChild(clone);stage.appendChild(wheelMount);
+
     stage.append(infoBox(facts('A'),'a'),infoBox(facts('B'),'b'));
     const summary=filterSummary();if(summary){const line=document.createElement('div');line.className='sky-export-filter-summary';line.textContent=`Showing only: ${summary}`;stage.appendChild(line)}
     host.appendChild(stage);return{host,stage,width,height};
@@ -143,7 +175,9 @@
     preparing=true;button.disabled=true;button.setAttribute('aria-busy','true');status(kind==='wheel'?'Preparing wheel PNG…':'Preparing Relationships PNG…');
     let built=null;
     try{
-      if(kind==='wheel'){window.RelphiPlacementCollisionOrder?.arrangeCurrent?.();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));built=buildWheelStage()}
+      // Wheel export must capture the composition exactly as it is already rendered.
+      // Do not call arrangeCurrent() here: that routine can rebuild placement/aspect state.
+      if(kind==='wheel')built=buildWheelStage();
       else built=buildRelationshipStage();
       await new Promise(resolve=>requestAnimationFrame(resolve));built.height=Math.max(1,Math.ceil(built.stage.scrollHeight||built.height));built.host.style.height=`${built.height}px`;
       const file=await nodeToFile(built.stage,built.width,built.height,filename(kind==='wheel'?'wheel':'relationships'));
@@ -156,7 +190,7 @@
     .sky-export-icon-button{appearance:none;display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid rgba(31,27,24,.2);border-radius:999px;background:#fff;color:#2d2824;cursor:pointer}.sky-export-icon-button svg{width:17px;height:17px}.sky-export-icon-button:hover,.sky-export-icon-button:focus-visible{outline:none;border-color:#2462d0;box-shadow:0 0 0 2px rgba(36,98,208,.12)}.sky-export-icon-button:disabled{opacity:.5}.sky-export-icon-button[data-export-ready="true"]{border-color:#2462d0;color:#2462d0}
     #skyFoundationComparison>.sky-foundation-heading{flex-wrap:wrap}#skyFoundationComparison .sky-export-wheel-slot{display:flex;align-items:center;justify-content:flex-end;margin-left:auto}.sky-relationship-heading-actions{display:flex;align-items:center;gap:6px}.sky-relationship-heading-actions button{margin:0}
     #${STATUS_ID}{flex:1 0 100%;color:#665e57;text-align:right;font:650 .58rem/1.2 system-ui,sans-serif}#${STATUS_ID}:empty{display:none}#${STATUS_ID}[data-error="true"]{color:#b81712}
-    .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>svg{position:absolute}.sky-export-info{position:absolute;top:22px;z-index:3;width:360px;display:grid;gap:5px;padding:12px 14px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08);font-size:15px;line-height:1.28;text-align:left}.sky-export-info strong{font-size:19px}.sky-export-info span{color:#5d554e}.sky-export-info-a{left:${WHEEL_EXPORT_FRAME.side}px;border-left:5px solid #c9211e}.sky-export-info-b{right:${WHEEL_EXPORT_FRAME.side}px;border-right:5px solid #2462d0}.sky-export-filter-summary{position:absolute;left:50%;bottom:18px;z-index:3;transform:translateX(-50%);max-width:82%;padding:8px 14px;border-radius:999px;background:rgba(255,253,248,.96);box-shadow:0 1px 7px rgba(31,27,24,.08);font:750 14px/1.25 system-ui,sans-serif;text-align:center;color:#554e48}
+    .sky-wheel-export-stage{position:relative;background:#fffdf8;color:#2d2824;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-wheel-export-stage>#skyFoundationWheelMount{position:absolute}.sky-export-info{position:absolute;top:22px;z-index:3;width:360px;display:grid;gap:5px;padding:12px 14px;border-radius:12px;background:rgba(255,253,248,.96);box-shadow:0 1px 8px rgba(31,27,24,.08);font-size:15px;line-height:1.28;text-align:left}.sky-export-info strong{font-size:19px}.sky-export-info span{color:#5d554e}.sky-export-info-a{left:${WHEEL_EXPORT_FRAME.side}px;border-left:5px solid #c9211e}.sky-export-info-b{right:${WHEEL_EXPORT_FRAME.side}px;border-right:5px solid #2462d0}.sky-export-filter-summary{position:absolute;left:50%;bottom:18px;z-index:3;transform:translateX(-50%);max-width:82%;padding:8px 14px;border-radius:999px;background:rgba(255,253,248,.96);box-shadow:0 1px 7px rgba(31,27,24,.08);font:750 14px/1.25 system-ui,sans-serif;text-align:center;color:#554e48}
     .sky-relationships-export-stage{box-sizing:border-box;padding:16px;border:1px solid rgba(31,27,24,.13);border-radius:14px;background:#fffdf8;color:#191613;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.sky-relationships-export-head{display:flex;align-items:center;justify-content:space-between;padding:0 2px 10px;font-size:16px}.sky-relationships-export-head>span{padding:5px 9px;border-radius:999px;background:#f0ebe4;font-size:12px;font-weight:800}.sky-relationships-export-summary{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#f6f0e8;color:#5d554e;font-size:12px;font-weight:700}.sky-relationships-export-frame{overflow:visible}.sky-relationships-export-groups{display:grid;gap:12px}.sky-relationships-export-group{display:grid;gap:6px}.sky-relationships-export-group-title{padding:6px 9px;border-radius:7px;background:#f2ece5;color:#3b3530;font:900 12px/1.2 system-ui,sans-serif}.sky-relationships-export-group.sky-a .sky-relationships-export-group-title{border-left:4px solid #c9211e}.sky-relationships-export-group.sky-b .sky-relationships-export-group-title{border-left:4px solid #2462d0}.sky-relationships-export-group.sky-ab .sky-relationships-export-group-title{border-left:4px solid #7655aa}.sky-relationships-export-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.sky-relationships-export-grid>.sky-foundation-relationship-row{margin:0!important}
   `;document.head.appendChild(style)}
 
