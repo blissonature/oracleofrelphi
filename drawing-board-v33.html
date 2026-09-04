@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Drawing Board Preview · Oracle of Relphi</title>
+  <style>
+    html,body{margin:0;min-height:100%;background:#fffdf8}
+    #drawingBoardShell{display:block;width:100%;height:100vh;border:0;background:#fffdf8}
+  </style>
+</head>
+<body>
+  <iframe id="drawingBoardShell" title="Drawing Board description-layer preview" src="drawing-board.html"></iframe>
+  <script>
+  (function(){
+    'use strict';
+    var shell=document.getElementById('drawingBoardShell');
+
+    function restoreDescriptionLayer(tarotFrame){
+      try{
+        var doc=tarotFrame&&tarotFrame.contentDocument;
+        if(!doc||!doc.head)return;
+        var style=doc.getElementById('relphi-drawing-board-description-layer-v33');
+        if(!style){
+          style=doc.createElement('style');
+          style.id='relphi-drawing-board-description-layer-v33';
+          doc.head.appendChild(style);
+        }
+        style.textContent=`
+/* v33: standalone Drawing Board keeps the same persistent Relphi description layer as the normal board. */
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card>.or-card-layer.relphi-info-layer{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  transform:none!important;
+  pointer-events:auto!important;
+  z-index:48!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card>.or-card-layer.relphi-info-layer .or-layer-scroll,
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card>.or-card-layer.relphi-info-layer .relphi-info-scroll,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card>.or-card-layer.relphi-info-layer .or-layer-scroll,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card>.or-card-layer.relphi-info-layer .relphi-info-scroll{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  min-height:0!important;
+  overflow:auto!important;
+  pointer-events:auto!important;
+}
+`;
+      }catch(error){
+        console.error('Drawing Board description-layer restore failed',error);
+      }
+    }
+
+    function bindInnerBoard(){
+      try{
+        var shellDoc=shell.contentDocument;
+        var tarotFrame=shellDoc&&shellDoc.getElementById('drawingBoardFrame');
+        if(!tarotFrame)return setTimeout(bindInnerBoard,60);
+        if(tarotFrame.dataset.relphiDescriptionLayerBound!=='true'){
+          tarotFrame.dataset.relphiDescriptionLayerBound='true';
+          tarotFrame.addEventListener('load',function(){restoreDescriptionLayer(tarotFrame);});
+        }
+        restoreDescriptionLayer(tarotFrame);
+      }catch(error){
+        console.error('Drawing Board description-layer binding failed',error);
+      }
+    }
+
+    shell.addEventListener('load',bindInnerBoard);
+    bindInnerBoard();
+  })();
+  </script>
+</body>
+</html>
