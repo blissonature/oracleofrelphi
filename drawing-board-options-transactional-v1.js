@@ -156,7 +156,7 @@
     style.textContent = `
       #shortListPanel .drawing-board-top-actions>#clearShortList,
       #shortListPanel .card-row-action-staging>#clearShortList{display:none!important}
-      #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{
+      html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{
         order:0!important;flex:0 0 auto!important;margin-left:0!important;margin-right:auto!important
       }
       #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions,
@@ -224,7 +224,18 @@
     const root = panel();
     if (!root || !optionsOpen(root)) return;
     endSession(root);
-    window.RelphiDrawingBoardToggleOptions?.();
+    const toggle = window.RelphiDrawingBoardToggleOptions;
+    if (typeof toggle === 'function') toggle();
+    root.dataset.relphiReadingOptionsOpen = 'false';
+    root.classList.remove('relphi-options-transaction-active');
+    drawer(root)?.classList.remove('is-reading-options-open');
+    const trigger = root.querySelector('#drawingBoardOptionsButton');
+    if (trigger) {
+      trigger.setAttribute('aria-expanded','false');
+      trigger.classList.remove('is-active');
+      trigger.title = 'Open Options';
+    }
+    schedule();
   }
   function dispatch(control,type) { control?.dispatchEvent(new Event(type,{bubbles:true})); }
   function waitForControls(callback,attempt = 0) {
