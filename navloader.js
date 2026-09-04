@@ -168,7 +168,9 @@
       appendScript('drawing-board-workflow-v2.js?v=71');
       appendScript('drawing-board-interactions-v1.js?v=12');
       appendScript('drawing-board-template-lifecycle-v1.js?v=7', function () {
-        appendScript('drawing-board-spread-prefabs-v1.js?v=47');
+        appendScript('drawing-board-spread-prefabs-v1.js?v=47', function () {
+          appendScript('drawing-board-options-transactional-v1.js?v=1');
+        });
       });
     }
     if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
