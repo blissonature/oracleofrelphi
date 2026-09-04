@@ -179,7 +179,7 @@
     if (isTarotContext()) {
       loadCanonicalGlyphRuntime();
       refreshDrawingBoardControlAssets();
-      appendScript('tarot-date-sky-bridge-v1.js?v=2');
+      appendScript('tarot-date-sky-bridge-v1.js?v=3');
       appendScript('tarot-search-list-v1.js?v=1');
       appendScript('tarot-reversed-copy-v1.js?v=1');
       appendScript('tarot-card-selection-scroll-v1.js?v=1', function () {
@@ -240,6 +240,10 @@
     if (document.querySelector('.menu-container')) return initMenu();
     fetch('nav.html?v=14').then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); }).then(injectNav).catch(fallbackNav);
   }
+
+  // Tarot's temporary Drawing Board controls can be constructed before DOMContentLoaded.
+  // Install the mask synchronously so those intermediate positions are never painted.
+  if (isTarotContext()) refreshDrawingBoardControlAssets();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
