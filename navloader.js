@@ -140,18 +140,37 @@
     });
   }
 
+  function refreshDrawingBoardControlAssets() {
+    const link = document.querySelector('link[href^="drawing-board-workflow-v2.css"]');
+    if (link) link.href = 'drawing-board-workflow-v2.css?v=26';
+    if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
+      const style = document.createElement('style');
+      style.id = 'relphi-drawing-board-collapse-contract';
+      style.textContent = '#shortListPanel .card-row-drawing-board:not([open])>summary>:not(strong){display:none!important}';
+      document.head.appendChild(style);
+    }
+  }
+
   function loadEnhancements() {
     if (isTarotContext()) {
       loadCanonicalGlyphRuntime();
-      appendScript('tarot-date-sky-bridge-v1.js?v=1');
+      refreshDrawingBoardControlAssets();
+      appendScript('tarot-date-sky-bridge-v1.js?v=2');
+      appendScript('tarot-search-list-v1.js?v=1');
       appendScript('tarot-reversed-copy-v1.js?v=1');
       appendScript('tarot-card-selection-scroll-v1.js?v=1', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
-      appendScript('drawing-board-workflow-v2.js?v=24', function () {
-        appendScript('drawing-board-interactions-v1.js?v=5', function () {
-          appendScript('drawing-board-spread-prefabs-v1.js?v=11', function () {
-            window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+      appendScript('drawing-board-workflow-v2.js?v=71', function () {
+        appendScript('drawing-board-interactions-v1.js?v=12', function () {
+          appendScript('drawing-board-template-lifecycle-v1.js?v=7', function () {
+            appendScript('drawing-board-spread-prefabs-v1.js?v=47', function () {
+              appendScript('drawing-board-options-transactional-v1.js?v=1', function () {
+                appendScript('drawing-board-render-geometry-v1.js?v=1', function () {
+                  window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
+                });
+              });
+            });
           });
         });
       });
