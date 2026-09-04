@@ -18,11 +18,14 @@
     var frame=document.getElementById('drawingBoardFrame');
     frame.addEventListener('load',function(){
       try{
+        var win=frame.contentWindow;
         var doc=frame.contentDocument;
-        if(!doc||!doc.head)return;
+        if(!win||!doc||!doc.head)return;
+
         var style=doc.createElement('style');
-        style.id='drawing-board-rounded-slot-fix-v28';
+        style.id='drawing-board-celtic-readable-v29';
         style.textContent=`
+/* Preserve the v28 rounded card/slot boundary. */
 html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap{
   border:0!important;
   outline:0!important;
@@ -41,10 +44,243 @@ html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.ca
 html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item>.card-row-drop-card{
   outline:0!important;
 }
+
+/* Celtic Cross owns a taller canvas so card readability wins over forced fit-to-one-screen shrinkage. */
+@media(min-width:701px){
+  html body #shortListPanel.relphi-celtic-readable .card-row-workspace{
+    height:980px!important;
+    min-height:980px!important;
+    max-height:980px!important;
+  }
+  html body #shortListPanel.relphi-celtic-readable .short-list-row.card-row-board{
+    height:980px!important;
+    min-height:980px!important;
+  }
+}
+
+/* Position stickers stay readable even though the cards themselves are scaled. */
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item>.card-row-position-panel{
+  min-height:2.4rem!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+  padding:.4rem .5rem!important;
+  font-size:1rem!important;
+  line-height:1.08!important;
+  white-space:normal!important;
+}
+
+/* The crossing card rotates; its label does not. Give covering and crossing two separate pills. */
+html body #shortListPanel.relphi-celtic-readable .card-row-item.relphi-celtic-crossing-rotated>.card-row-position-panel{
+  left:calc(100% + .55rem)!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:calc(100% + 2px)!important;
+  width:7rem!important;
+  max-width:7rem!important;
+  min-width:7rem!important;
+  margin:0!important;
+  transform:none!important;
+  z-index:180!important;
+  text-align:center!important;
+}
+
+/* The four staff labels sit beside the cards so the staff can use the full vertical canvas. */
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="6"]>.card-row-position-panel,
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="7"]>.card-row-position-panel,
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="8"]>.card-row-position-panel,
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="9"]>.card-row-position-panel{
+  left:calc(100% + .75rem)!important;
+  right:auto!important;
+  top:50%!important;
+  bottom:auto!important;
+  width:10rem!important;
+  max-width:10rem!important;
+  min-width:10rem!important;
+  margin:0!important;
+  transform:translateY(-50%)!important;
+  text-align:left!important;
+  z-index:170!important;
+}
 `;
         doc.head.appendChild(style);
+
+        var TARGET='celtic-cross-10';
+        var SCALE=.76;
+        var BASE_W=900;
+        var BASE_H=760;
+        var CLOSED={
+          covering:[250,384,0,20],
+          crossing:[250,384,90,30],
+          crowning:[250,26,0,4],
+          beneath:[250,743,0,4],
+          behind:[10,384,0,4],
+          before:[490,384,0,4],
+          self:[720,743,0,4],
+          house:[720,504,0,4],
+          'hopes-fears':[720,265,0,4],
+          outcome:[720,26,0,4]
+        };
+        var OPEN={
+          covering:[160,384,0,20],
+          crossing:[310,384,0,30]
+        };
+
+        function clone(value){return JSON.parse(JSON.stringify(value));}
+        function transformFrom(values){
+          return {x:values[0]/BASE_W,y:values[1]/BASE_H,rotation:values[2],scale:SCALE,zIndex:values[3]};
+        }
+        function optimizePrefab(prefab){
+          if(!prefab||prefab.id!==TARGET||!Array.isArray(prefab.positions))return prefab;
+          var copy=clone(prefab);
+          copy.positions=copy.positions.map(function(position){
+            var values=CLOSED[position.id];
+            if(!values)return position;
+            var next=Object.assign({},position,{transform:transformFrom(values)});
+            if(position.id==='covering'||position.id==='crossing')next.openTransform=transformFrom(OPEN[position.id]);
+            return next;
+          });
+          return copy;
+        }
+
+        function installBridge(){
+          var original=win.RelphiDrawingBoardPrefabsBridge;
+          if(!original)return null;
+          if(original.__relphiCelticReadableV29)return original;
+          var wrapped={};
+          Object.keys(original).forEach(function(key){wrapped[key]=original[key];});
+          wrapped.applyLayout=function(prefab,options){return original.applyLayout(optimizePrefab(prefab),options);};
+          Object.defineProperty(wrapped,'__relphiCelticReadableV29',{value:true,enumerable:false});
+          win.RelphiDrawingBoardPrefabsBridge=Object.freeze(wrapped);
+          return win.RelphiDrawingBoardPrefabsBridge;
+        }
+
+        function setIfDifferent(node,property,value){
+          if(!node)return;
+          if(node.style[property]!==value)node.style[property]=value;
+        }
+        function setCustomIfDifferent(node,property,value){
+          if(!node)return;
+          if(node.style.getPropertyValue(property)!==value)node.style.setProperty(property,value);
+        }
+
+        function applyDomGeometry(state){
+          var panel=doc.getElementById('shortListPanel');
+          var board=panel&&panel.querySelector('.card-row-board');
+          if(!panel||!board)return;
+          var active=state&&state.activeLayout;
+          var isCeltic=active&&active.id===TARGET;
+          panel.classList.toggle('relphi-celtic-readable',!!isCeltic);
+          if(!isCeltic){
+            delete panel.dataset.relphiCelticZoomInitialized;
+            return;
+          }
+
+          var valuesByIndex=[CLOSED.covering,CLOSED.crossing,CLOSED.crowning,CLOSED.beneath,CLOSED.behind,CLOSED.before,CLOSED.self,CLOSED.house,CLOSED['hopes-fears'],CLOSED.outcome];
+          if(state.centerOpen){
+            valuesByIndex[0]=OPEN.covering;
+            valuesByIndex[1]=OPEN.crossing;
+          }
+          valuesByIndex.forEach(function(values,index){
+            var item=board.querySelector('[data-row-index="'+index+'"]');
+            if(!item)return;
+            setIfDifferent(item,'left',Math.round(values[0])+'px');
+            setIfDifferent(item,'top',Math.round(values[1])+'px');
+            setIfDifferent(item,'zIndex',String(values[3]||1));
+            setCustomIfDifferent(item,'--row-card-scale',String(SCALE));
+            setCustomIfDifferent(item,'--row-card-rotation',(values[2]||0)+'deg');
+            item.classList.toggle('relphi-celtic-crossing-rotated',index===1&&!state.centerOpen);
+          });
+
+          if(!win.matchMedia('(max-width:700px)').matches&&!panel.dataset.relphiCelticZoomInitialized){
+            var zoom=doc.getElementById('rowZoom');
+            if(zoom){
+              var current=Number(zoom.value)||1;
+              if(current<1){
+                zoom.value='1';
+                zoom.dispatchEvent(new win.Event('input',{bubbles:true}));
+                zoom.dispatchEvent(new win.Event('change',{bubbles:true}));
+              }
+            }
+            panel.dataset.relphiCelticZoomInitialized='true';
+          }
+        }
+
+        function upgradeActiveLayout(){
+          var api=installBridge();
+          if(!api)return;
+          var state=api.getState&&api.getState();
+          var panel=doc.getElementById('shortListPanel');
+          if(!state||!panel)return;
+          if(state.activeLayout&&state.activeLayout.id===TARGET&&!state.hasCards&&!state.locked){
+            var scale=Number(state.activeLayout.positions&&state.activeLayout.positions[0]&&state.activeLayout.positions[0].transform&&state.activeLayout.positions[0].transform.scale)||0;
+            if(Math.abs(scale-SCALE)>.001&&panel.dataset.relphiCelticStateUpgraded!=='true'){
+              panel.dataset.relphiCelticStateUpgraded='true';
+              api.applyLayout(state.activeLayout,{designMode:!!state.designMode});
+              state=api.getState&&api.getState();
+            }
+          }
+          applyDomGeometry(state);
+        }
+
+        var queued=false;
+        function schedule(){
+          if(queued)return;
+          queued=true;
+          win.requestAnimationFrame(function(){
+            win.requestAnimationFrame(function(){queued=false;upgradeActiveLayout();});
+          });
+        }
+
+        doc.addEventListener('relphi:drawing-board-rendered',schedule);
+        doc.addEventListener('relphi:drawing-board-center-view',schedule);
+        doc.addEventListener('change',function(event){
+          if(event.target&&event.target.matches&&event.target.matches('#relphiSpreadTemplateSelect,#rowZoom'))schedule();
+        },true);
+
+        doc.addEventListener('click',function(event){
+          var button=event.target&&event.target.closest&&event.target.closest('#zoomCardRowExtents');
+          if(!button)return;
+          var api=win.RelphiDrawingBoardPrefabsBridge;
+          var state=api&&api.getState&&api.getState();
+          if(!state||!state.activeLayout||state.activeLayout.id!==TARGET)return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          doc.getElementById('resetCardRowPan')&&doc.getElementById('resetCardRowPan').click();
+          var workspace=doc.querySelector('#shortListPanel .card-row-workspace');
+          var board=doc.querySelector('#shortListPanel .card-row-board');
+          var zoom=doc.getElementById('rowZoom');
+          if(!workspace||!board||!zoom)return;
+          var items=Array.from(board.querySelectorAll('.card-row-item'));
+          var maxX=1,maxY=1;
+          items.forEach(function(item){
+            var left=parseFloat(item.style.left)||0;
+            var top=parseFloat(item.style.top)||0;
+            var scale=parseFloat(item.style.getPropertyValue('--row-card-scale'))||1;
+            var rotation=Math.abs(parseFloat(item.style.getPropertyValue('--row-card-rotation'))||0)%180;
+            var face=item.querySelector('.card-row-card-wrap,.card-row-drop-card');
+            var width=(face&&face.offsetWidth)||item.offsetWidth||174;
+            var height=(face&&face.offsetHeight)||301;
+            if(rotation===90){var swap=width;width=height;height=swap;}
+            maxX=Math.max(maxX,left+width*scale);
+            maxY=Math.max(maxY,top+height*scale);
+          });
+          var mobile=win.matchMedia('(max-width:700px)').matches;
+          var availableWidth=Math.max(220,workspace.clientWidth-24);
+          var availableHeight=Math.max(240,workspace.clientHeight-24);
+          var fit=Math.min(2.4,availableWidth/maxX,availableHeight/maxY);
+          if(!mobile)fit=Math.max(1,fit);
+          fit=Math.max(.35,fit);
+          zoom.value=String(fit);
+          zoom.dispatchEvent(new win.Event('input',{bubbles:true}));
+          zoom.dispatchEvent(new win.Event('change',{bubbles:true}));
+          schedule();
+        },true);
+
+        new win.MutationObserver(schedule).observe(doc.body,{childList:true,subtree:true});
+        schedule();
       }catch(error){
-        console.error('Drawing Board corner preview fix failed',error);
+        console.error('Drawing Board Celtic Cross preview fix failed',error);
       }
     });
   })();
