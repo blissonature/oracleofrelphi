@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Drawing Board Preview · Oracle of Relphi</title>
+  <style>
+    html,body{margin:0;min-height:100%;background:#fffdf8}
+    #drawingBoardShell{display:block;width:100%;height:100vh;border:0;background:#fffdf8}
+  </style>
+</head>
+<body>
+  <iframe id="drawingBoardShell" title="Drawing Board description-layer preview" src="drawing-board.html"></iframe>
+  <script>
+  (function(){
+    'use strict';
+    var shell=document.getElementById('drawingBoardShell');
+
+    function restoreDescriptionLayer(tarotFrame){
+      try{
+        var doc=tarotFrame&&tarotFrame.contentDocument;
+        if(!doc||!doc.head)return;
+        var style=doc.getElementById('relphi-drawing-board-description-layer-v37');
+        if(!style){
+          style=doc.createElement('style');
+          style.id='relphi-drawing-board-description-layer-v37';
+          doc.head.appendChild(style);
+        }
+        style.textContent=`
+/* v37: standalone Drawing Board exposes the Relphi description layer without forcing it open.
+   Card art is the resting state; hover or keyboard focus reveals the interpretation. */
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card>.or-card-layer.relphi-info-layer{
+  display:flex!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  transform:translateY(.25rem)!important;
+  pointer-events:none!important;
+  z-index:48!important;
+  transition:opacity .16s ease,transform .16s ease!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card:hover>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card:focus>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card:focus-within>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card:hover>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card:focus>.or-card-layer.relphi-info-layer,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card:focus-within>.or-card-layer.relphi-info-layer{
+  visibility:visible!important;
+  opacity:1!important;
+  transform:none!important;
+  pointer-events:auto!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card>.or-card-layer.relphi-info-layer .or-layer-scroll,
+html body #shortListPanel .card-row-workspace .card-row-board .card-row-card>.or-card-layer.relphi-info-layer .relphi-info-scroll,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card>.or-card-layer.relphi-info-layer .or-layer-scroll,
+html body #shortListPanel .card-row-workspace .card-row-board .or-card.card-row-card>.or-card-layer.relphi-info-layer .relphi-info-scroll{
+  display:block!important;
+  min-height:0!important;
+  overflow:auto!important;
+}
+
+/* The slot owns no square paint. The card wrapper itself owns the same rounded
+   clipping boundary as the art, so no white/square wedges remain behind the corners. */
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item{
+  background:transparent!important;
+  background-color:transparent!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item::before,
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item::after{
+  content:none!important;
+  display:none!important;
+  background:none!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item>.card-row-card-wrap,
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-placeholder-item>.card-row-drop-card{
+  border-radius:.72rem!important;
+  overflow:hidden!important;
+  clip-path:inset(0 round .72rem)!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item>.card-row-card-wrap::before,
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-item>.card-row-card-wrap::after,
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-placeholder-item>.card-row-drop-card::before,
+html body #shortListPanel .card-row-workspace .card-row-board>.card-row-placeholder-item>.card-row-drop-card::after{
+  content:none!important;
+  display:none!important;
+}
+
+/* The Celtic ladder uses one winning X coordinate. The renderer may continue writing
+   inline left values, but these four staff cards stay on the measured one-card-gap line. */
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="6"],
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="7"],
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="8"],
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="9"]{
+  left:var(--relphi-celtic-staff-left,620px)!important;
+}
+`;
+      }catch(error){
+        console.error('Drawing Board description-layer restore failed',error);
+      }
+    }
+
+    function cleanCardTitle(value){
+      return String(value||'')
+        .replace(/\s*[·•]\s*Reversed\s*$/i,'')
+        .replace(/\s*[-–—]\s*Reversed\s*$/i,'')
+        .replace(/\s*\(Reversed\)\s*$/i,'')
+        .trim();
+    }
+
+    function exactLedgerCard(doc,id,title){
+      var list=doc.getElementById('cardList');
+      if(!list)return null;
+      var wanted=String(title||'').toLowerCase();
+      return Array.from(list.querySelectorAll('.or-card[data-id],[data-card-id],[data-card],article,li,[role="listitem"]')).find(function(node){
+        var nodeId=String(node.getAttribute('data-id')||node.getAttribute('data-card-id')||node.getAttribute('data-card')||'');
+        if(id&&nodeId===id)return true;
+        return wanted&&String(node.textContent||'').toLowerCase().includes(wanted);
+      })||null;
+    }
+
+    function openLedgerEntry(tarotFrame,titleNode){
+      var doc=tarotFrame.contentDocument;
+      var card=titleNode&&titleNode.closest&&titleNode.closest('[data-row-card]');
+      var id=String(card&&card.dataset&&card.dataset.rowCard||'').trim();
+      var title=cleanCardTitle(titleNode&&titleNode.textContent);
+      if(!title&&id)title=id.replace(/_/g,' ');
+
+      var command=doc.getElementById('oracleCommand');
+      var run=doc.getElementById('runCommand');
+      if(command&&run){
+        command.value=title;
+        command.dispatchEvent(new Event('input',{bubbles:true}));
+        command.dispatchEvent(new Event('change',{bubbles:true}));
+        run.click();
+      }else{
+        (doc.getElementById('showAllCards')||doc.getElementById('landingShowLedger'))?.click();
+      }
+
+      var attempts=0;
+      (function locate(){
+        var match=exactLedgerCard(doc,id,title);
+        if(match){
+          var target=match.closest('.or-card[data-id],[data-card-id],[data-card],button,[role="button"],[role="listitem"],li,article')||match;
+          target.click();
+          doc.getElementById('browsePanel')?.removeAttribute('hidden');
+          var detail=doc.getElementById('cardDetail');
+          if(detail){
+            detail.removeAttribute('hidden');
+            detail.scrollIntoView({behavior:'smooth',block:'start'});
+          }
+          return;
+        }
+        attempts+=1;
+        if(attempts<50)tarotFrame.contentWindow.setTimeout(locate,40);
+      })();
+    }
+
+    function installTitleNavigation(tarotFrame){
+      try{
+        var win=tarotFrame&&tarotFrame.contentWindow;
+        var doc=tarotFrame&&tarotFrame.contentDocument;
+        if(!win||!doc||win.__relphiBoardTitleNavigationV35)return;
+        win.__relphiBoardTitleNavigationV35=true;
+
+        win.addEventListener('click',function(event){
+          var title=event.target&&event.target.closest&&event.target.closest('#shortListPanel .card-row-board .or-card-title-banner');
+          if(!title)return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          openLedgerEntry(tarotFrame,title);
+        },true);
+
+        win.addEventListener('keydown',function(event){
+          if(event.key!=='Enter'&&event.key!==' ')return;
+          var title=event.target&&event.target.closest&&event.target.closest('#shortListPanel .card-row-board .or-card-title-banner');
+          if(!title)return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          openLedgerEntry(tarotFrame,title);
+        },true);
+      }catch(error){
+        console.error('Drawing Board title navigation restore failed',error);
+      }
+    }
+
+    function cardFace(item){
+      return item&&item.querySelector('.card-row-card-wrap,.card-row-drop-card');
+    }
+
+    function applyCelticStaffGap(tarotFrame){
+      try{
+        var win=tarotFrame&&tarotFrame.contentWindow;
+        var doc=tarotFrame&&tarotFrame.contentDocument;
+        var panel=doc&&doc.getElementById('shortListPanel');
+        var board=panel&&panel.querySelector('.card-row-board');
+        if(!win||!panel||!board||!panel.classList.contains('relphi-celtic-readable'))return;
+
+        var before=board.querySelector('[data-row-index="5"]');
+        var firstStaff=board.querySelector('[data-row-index="6"]');
+        var beforeFace=cardFace(before);
+        var staffFace=cardFace(firstStaff);
+        if(!before||!firstStaff||!beforeFace||!staffFace)return;
+
+        var beforeRect=beforeFace.getBoundingClientRect();
+        var staffRect=staffFace.getBoundingClientRect();
+        var boardRect=board.getBoundingClientRect();
+        if(!beforeRect.width||!staffRect.width||!board.offsetWidth)return;
+
+        /* Visual rule: [Before card] [one full card-width of empty felt] [staff card]. */
+        var desiredStaffVisualLeft=beforeRect.right+beforeRect.width;
+        var visualDelta=desiredStaffVisualLeft-staffRect.left;
+        var boardScaleX=boardRect.width/board.offsetWidth;
+        if(!Number.isFinite(boardScaleX)||Math.abs(boardScaleX)<.0001)boardScaleX=1;
+
+        var currentLeft=parseFloat(win.getComputedStyle(firstStaff).left);
+        if(!Number.isFinite(currentLeft))currentLeft=parseFloat(firstStaff.style.left)||620;
+        var desiredLeft=currentLeft+(visualDelta/boardScaleX);
+        var next=desiredLeft.toFixed(2)+'px';
+        if(board.style.getPropertyValue('--relphi-celtic-staff-left')!==next){
+          board.style.setProperty('--relphi-celtic-staff-left',next);
+        }
+      }catch(error){
+        console.error('Drawing Board Celtic staff spacing failed',error);
+      }
+    }
+
+    function installCelticStaffGap(tarotFrame){
+      try{
+        var win=tarotFrame&&tarotFrame.contentWindow;
+        var doc=tarotFrame&&tarotFrame.contentDocument;
+        if(!win||!doc||win.__relphiCelticStaffGapV37)return;
+        win.__relphiCelticStaffGapV37=true;
+        var queued=false;
+        function schedule(){
+          if(queued)return;
+          queued=true;
+          win.requestAnimationFrame(function(){
+            win.requestAnimationFrame(function(){
+              win.setTimeout(function(){queued=false;applyCelticStaffGap(tarotFrame);},0);
+            });
+          });
+        }
+        doc.addEventListener('relphi:drawing-board-rendered',schedule);
+        doc.addEventListener('relphi:drawing-board-center-view',schedule);
+        doc.addEventListener('change',function(event){
+          if(event.target&&event.target.matches&&event.target.matches('#relphiSpreadTemplateSelect,#rowZoom'))schedule();
+        },true);
+        var panel=doc.getElementById('shortListPanel');
+        if(panel)new win.MutationObserver(schedule).observe(panel,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+        win.addEventListener('resize',schedule);
+        schedule();
+      }catch(error){
+        console.error('Drawing Board Celtic staff spacing install failed',error);
+      }
+    }
+
+    function prepareInnerBoard(tarotFrame){
+      restoreDescriptionLayer(tarotFrame);
+      installTitleNavigation(tarotFrame);
+      installCelticStaffGap(tarotFrame);
+    }
+
+    function bindInnerBoard(){
+      try{
+        var shellDoc=shell.contentDocument;
+        var tarotFrame=shellDoc&&shellDoc.getElementById('drawingBoardFrame');
+        if(!tarotFrame)return setTimeout(bindInnerBoard,60);
+        if(tarotFrame.dataset.relphiDescriptionLayerBound!=='true'){
+          tarotFrame.dataset.relphiDescriptionLayerBound='true';
+          tarotFrame.addEventListener('load',function(){prepareInnerBoard(tarotFrame);});
+        }
+        prepareInnerBoard(tarotFrame);
+      }catch(error){
+        console.error('Drawing Board description-layer binding failed',error);
+      }
+    }
+
+    shell.addEventListener('load',bindInnerBoard);
+    bindInnerBoard();
+  })();
+  </script>
+</body>
+</html>

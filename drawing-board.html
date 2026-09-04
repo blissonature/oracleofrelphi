@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Drawing Board Preview · Oracle of Relphi</title>
+  <style>
+    html,body{margin:0;min-height:100%;background:#fffdf8}
+    #drawingBoardFrame{display:block;width:100%;height:100vh;border:0;background:#fffdf8}
+  </style>
+</head>
+<body>
+  <iframe id="drawingBoardFrame" title="Drawing Board exact revision preview" src="tarot.html?board=workflow-v2&amp;standaloneDrawingBoard=1#tarot"></iframe>
+  <script>
+  (function(){
+    'use strict';
+    var frame=document.getElementById('drawingBoardFrame');
+    frame.addEventListener('load',function(){
+      try{
+        var win=frame.contentWindow;
+        var doc=frame.contentDocument;
+        if(!win||!doc||!doc.head)return;
+
+        var style=doc.createElement('style');
+        style.id='drawing-board-celtic-readable-v32';
+        style.textContent=`
+/* Rounded card/slot boundary. */
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap{
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item>.card-row-drop-card,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.card-row-card,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.or-card.card-row-card,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.or-card.tarot-card-surface.relphi-surface--card.card-row-card{
+  border-radius:.72rem!important;
+  overflow:hidden!important;
+  clip-path:inset(0 round .72rem)!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item>.card-row-drop-card{
+  outline:0!important;
+}
+
+/* Celtic Cross gets enough height to keep its cards large. */
+@media(min-width:701px){
+  html body #shortListPanel.relphi-celtic-readable .card-row-workspace{
+    height:980px!important;
+    min-height:980px!important;
+    max-height:980px!important;
+  }
+  html body #shortListPanel.relphi-celtic-readable .short-list-row.card-row-board{
+    height:980px!important;
+    min-height:980px!important;
+  }
+}
+
+/* Every Celtic item uses the same center origin. */
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item{
+  transform-origin:50% 50%!important;
+}
+
+/* Position stickers are part of the layout geometry, never painted over a neighboring card. */
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item>.card-row-position-panel{
+  bottom:calc(100% + 2px)!important;
+  min-height:2.4rem!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+  padding:.4rem .5rem!important;
+  font-size:1rem!important;
+  line-height:1.08!important;
+  white-space:normal!important;
+}
+
+/* Crossing is one rotated unit: placeholder/card and its label rotate together. */
+html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated{
+  transform:rotate(var(--row-card-rotation,90deg)) scale(var(--row-card-scale,1))!important;
+  transform-origin:50% 50%!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-card-wrap,
+html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card{
+  transform:none!important;
+  transform-origin:50% 50%!important;
+}
+html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card>.card-row-drop-card-inner{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  transform:none!important;
+}
+html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-position-panel{
+  left:0!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:calc(100% + 2px)!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:100%!important;
+  margin:0!important;
+  transform:none!important;
+  z-index:180!important;
+  text-align:center!important;
+}
+
+/* Staff labels stay beside the staff. This preserves the large four-card stack. */
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="6"]>.card-row-position-panel,
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="7"]>.card-row-position-panel,
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="8"]>.card-row-position-panel,
+html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="9"]>.card-row-position-panel{
+  left:calc(100% + .6rem)!important;
+  right:auto!important;
+  top:50%!important;
+  bottom:auto!important;
+  width:9rem!important;
+  max-width:9rem!important;
+  min-width:9rem!important;
+  margin:0!important;
+  transform:translateY(-50%)!important;
+  text-align:left!important;
+  z-index:170!important;
+}
+
+html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
+  left:450px!important;
+  top:925px!important;
+  transform:translateX(-50%)!important;
+}
+`;
+        doc.head.appendChild(style);
+
+        var TARGET='celtic-cross-10';
+        var SCALE=.80;
+        var BASE_W=900;
+        var BASE_H=760;
+        var CENTER_LEFT=250;
+        var CENTER_TOP=340;
+        var STAFF_LEFT=620;
+        var FALLBACK_W=174;
+        var FALLBACK_H=301;
+        var FALLBACK_STICKER_H=40;
+        var STICKER_CLEARANCE=2;
+
+        function clone(value){return JSON.parse(JSON.stringify(value));}
+        function metrics(board){
+          var item=board&&board.querySelector('.card-row-item');
+          var face=item&&item.querySelector('.card-row-card-wrap,.card-row-drop-card');
+          var width=(face&&face.offsetWidth)||FALLBACK_W;
+          var height=(face&&face.offsetHeight)||FALLBACK_H;
+          return {w:width,h:height,vw:width*SCALE,vh:height*SCALE};
+        }
+        function stickerGap(board,index){
+          var item=board&&board.querySelector('[data-row-index="'+index+'"]');
+          var sticker=item&&item.querySelector(':scope > .card-row-position-panel');
+          var height=(sticker&&sticker.offsetHeight)||FALLBACK_STICKER_H;
+          return (height+STICKER_CLEARANCE)*SCALE;
+        }
+        function stickerGaps(board){
+          return {
+            covering:stickerGap(board,0),
+            crossing:stickerGap(board,1),
+            crowning:stickerGap(board,2),
+            beneath:stickerGap(board,3)
+          };
+        }
+        function uprightVisualLeft(logicalLeft,m){return logicalLeft+(m.w-m.vw)/2;}
+        function uprightVisualRight(logicalLeft,m){return uprightVisualLeft(logicalLeft,m)+m.vw;}
+        function xForVisualLeft(visualLeft,m){return visualLeft-(m.w-m.vw)/2;}
+        function xForVisualRight(visualRight,m){return visualRight-(m.w+m.vw)/2;}
+
+        function geometry(centerOpen,m,gaps){
+          gaps=gaps||{covering:(FALLBACK_STICKER_H+STICKER_CLEARANCE)*SCALE,crossing:(FALLBACK_STICKER_H+STICKER_CLEARANCE)*SCALE,beneath:(FALLBACK_STICKER_H+STICKER_CLEARANCE)*SCALE};
+          var axis=CENTER_LEFT+m.w/2;
+
+          /* Crown -> Covers -> Beneath remains one centered column. The only vertical
+             space between card faces is the sticker band belonging to the next card. */
+          var crownY=CENTER_TOP-m.vh-gaps.covering;
+          var beneathY=CENTER_TOP+m.vh+gaps.beneath;
+          var coveringX=CENTER_LEFT;
+          var crossingX=CENTER_LEFT;
+          var centralLeft;
+          var centralRight;
+
+          if(centerOpen){
+            /* The touching edge between Covers and Crosses is exactly the vertical axis.
+               Covers shifts left by half a rendered card width; Crosses shifts right by half. */
+            coveringX=CENTER_LEFT-m.vw/2;
+            crossingX=CENTER_LEFT+m.vw/2;
+            centralLeft=uprightVisualLeft(coveringX,m);
+            centralRight=uprightVisualRight(crossingX,m);
+          }else{
+            /* The rotated crossing card defines the closed center footprint. Its rotated
+               sticker projects to the right, so Before starts after that sticker band. */
+            centralLeft=axis-m.vh/2;
+            centralRight=axis+m.vh/2;
+          }
+
+          /* Behind stays flush to the left card face. Before is flush in Open Center;
+             in the closed cross it leaves exactly the rotated crossing-sticker clearance. */
+          var behindX=xForVisualRight(centralLeft,m);
+          var beforeLeft=centralRight+(centerOpen?0:gaps.crossing);
+          var beforeX=xForVisualLeft(beforeLeft,m);
+
+          /* Staff labels live beside the cards, so the staff itself remains a tight large stack. */
+          var staffTop=8;
+
+          return {
+            covering:[coveringX,CENTER_TOP,0,20],
+            crossing:[crossingX,CENTER_TOP,centerOpen?0:90,30],
+            crowning:[CENTER_LEFT,crownY,0,4],
+            beneath:[CENTER_LEFT,beneathY,0,4],
+            behind:[behindX,CENTER_TOP,0,4],
+            before:[beforeX,CENTER_TOP,0,4],
+            outcome:[STAFF_LEFT,staffTop,0,4],
+            'hopes-fears':[STAFF_LEFT,staffTop+m.vh,0,4],
+            house:[STAFF_LEFT,staffTop+2*m.vh,0,4],
+            self:[STAFF_LEFT,staffTop+3*m.vh,0,4]
+          };
+        }
+
+        function transformFrom(values){
+          return {x:values[0]/BASE_W,y:values[1]/BASE_H,rotation:values[2],scale:SCALE,zIndex:values[3]};
+        }
+        function fallbackGeometry(centerOpen){
+          var m={w:FALLBACK_W,h:FALLBACK_H,vw:FALLBACK_W*SCALE,vh:FALLBACK_H*SCALE};
+          var gap=(FALLBACK_STICKER_H+STICKER_CLEARANCE)*SCALE;
+          return geometry(centerOpen,m,{covering:gap,crossing:gap,crowning:gap,beneath:gap});
+        }
+        function optimizePrefab(prefab){
+          if(!prefab||prefab.id!==TARGET||!Array.isArray(prefab.positions))return prefab;
+          var closed=fallbackGeometry(false);
+          var open=fallbackGeometry(true);
+          var copy=clone(prefab);
+          copy.positions=copy.positions.map(function(position){
+            var values=closed[position.id];
+            if(!values)return position;
+            var next=Object.assign({},position,{transform:transformFrom(values)});
+            if(position.id==='covering'||position.id==='crossing')next.openTransform=transformFrom(open[position.id]);
+            return next;
+          });
+          return copy;
+        }
+
+        function installBridge(){
+          var original=win.RelphiDrawingBoardPrefabsBridge;
+          if(!original)return null;
+          if(original.__relphiCelticReadableV32)return original;
+          var wrapped={};
+          Object.keys(original).forEach(function(key){wrapped[key]=original[key];});
+          wrapped.applyLayout=function(prefab,options){return original.applyLayout(optimizePrefab(prefab),options);};
+          Object.defineProperty(wrapped,'__relphiCelticReadableV32',{value:true,enumerable:false});
+          win.RelphiDrawingBoardPrefabsBridge=Object.freeze(wrapped);
+          return win.RelphiDrawingBoardPrefabsBridge;
+        }
+
+        function setIfDifferent(node,property,value){
+          if(node&&node.style[property]!==value)node.style[property]=value;
+        }
+        function setCustomIfDifferent(node,property,value){
+          if(node&&node.style.getPropertyValue(property)!==value)node.style.setProperty(property,value);
+        }
+
+        function applyDomGeometry(state){
+          var panel=doc.getElementById('shortListPanel');
+          var board=panel&&panel.querySelector('.card-row-board');
+          if(!panel||!board)return;
+          var active=state&&state.activeLayout;
+          var isCeltic=active&&active.id===TARGET;
+          panel.classList.toggle('relphi-celtic-readable',!!isCeltic);
+          if(!isCeltic){
+            delete panel.dataset.relphiCelticZoomInitialized;
+            return;
+          }
+
+          var m=metrics(board);
+          var gaps=stickerGaps(board);
+          var g=geometry(!!state.centerOpen,m,gaps);
+          var ids=['covering','crossing','crowning','beneath','behind','before','self','house','hopes-fears','outcome'];
+          ids.forEach(function(id,index){
+            var values=g[id];
+            var item=board.querySelector('[data-row-index="'+index+'"]');
+            if(!item||!values)return;
+            setIfDifferent(item,'left',values[0].toFixed(2)+'px');
+            setIfDifferent(item,'top',values[1].toFixed(2)+'px');
+            setIfDifferent(item,'zIndex',String(values[3]||1));
+            setCustomIfDifferent(item,'--row-card-scale',String(SCALE));
+            setCustomIfDifferent(item,'--row-card-rotation',(values[2]||0)+'deg');
+            item.classList.toggle('relphi-celtic-crossing-rotated',id==='crossing'&&!state.centerOpen);
+          });
+
+          if(!win.matchMedia('(max-width:700px)').matches&&!panel.dataset.relphiCelticZoomInitialized){
+            var zoom=doc.getElementById('rowZoom');
+            if(zoom){
+              var current=Number(zoom.value)||1;
+              if(current<1){
+                zoom.value='1';
+                zoom.dispatchEvent(new win.Event('input',{bubbles:true}));
+                zoom.dispatchEvent(new win.Event('change',{bubbles:true}));
+              }
+            }
+            panel.dataset.relphiCelticZoomInitialized='true';
+          }
+        }
+
+        function upgradeActiveLayout(){
+          var api=installBridge();
+          if(!api)return;
+          var state=api.getState&&api.getState();
+          var panel=doc.getElementById('shortListPanel');
+          if(!state||!panel)return;
+          if(state.activeLayout&&state.activeLayout.id===TARGET&&!state.hasCards&&!state.locked){
+            var scale=Number(state.activeLayout.positions&&state.activeLayout.positions[0]&&state.activeLayout.positions[0].transform&&state.activeLayout.positions[0].transform.scale)||0;
+            if(Math.abs(scale-SCALE)>.001&&panel.dataset.relphiCelticStateUpgraded!=='true'){
+              panel.dataset.relphiCelticStateUpgraded='true';
+              api.applyLayout(state.activeLayout,{designMode:!!state.designMode});
+              state=api.getState&&api.getState();
+            }
+          }
+          applyDomGeometry(state);
+        }
+
+        var queued=false;
+        function schedule(){
+          if(queued)return;
+          queued=true;
+          win.requestAnimationFrame(function(){
+            win.requestAnimationFrame(function(){queued=false;upgradeActiveLayout();});
+          });
+        }
+
+        doc.addEventListener('relphi:drawing-board-rendered',schedule);
+        doc.addEventListener('relphi:drawing-board-center-view',schedule);
+        doc.addEventListener('change',function(event){
+          if(event.target&&event.target.matches&&event.target.matches('#relphiSpreadTemplateSelect,#rowZoom'))schedule();
+        },true);
+
+        /* Celtic extents uses the actual rendered faces, not obsolete fixed card dimensions. */
+        doc.addEventListener('click',function(event){
+          var button=event.target&&event.target.closest&&event.target.closest('#zoomCardRowExtents');
+          if(!button)return;
+          var api=win.RelphiDrawingBoardPrefabsBridge;
+          var state=api&&api.getState&&api.getState();
+          if(!state||!state.activeLayout||state.activeLayout.id!==TARGET)return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          doc.getElementById('resetCardRowPan')&&doc.getElementById('resetCardRowPan').click();
+          var workspace=doc.querySelector('#shortListPanel .card-row-workspace');
+          var board=doc.querySelector('#shortListPanel .card-row-board');
+          var zoom=doc.getElementById('rowZoom');
+          if(!workspace||!board||!zoom)return;
+          var rects=Array.from(board.querySelectorAll('.card-row-item')).map(function(item){
+            var face=item.querySelector('.card-row-card-wrap,.card-row-drop-card');
+            var sticker=item.querySelector(':scope > .card-row-position-panel');
+            var faceRect=(face||item).getBoundingClientRect();
+            var stickerRect=sticker&&sticker.getBoundingClientRect();
+            if(!stickerRect)return faceRect;
+            return {
+              left:Math.min(faceRect.left,stickerRect.left),
+              top:Math.min(faceRect.top,stickerRect.top),
+              right:Math.max(faceRect.right,stickerRect.right),
+              bottom:Math.max(faceRect.bottom,stickerRect.bottom)
+            };
+          });
+          if(!rects.length)return;
+          var workspaceRect=workspace.getBoundingClientRect();
+          var minX=Math.min.apply(null,rects.map(function(r){return r.left-workspaceRect.left;}));
+          var minY=Math.min.apply(null,rects.map(function(r){return r.top-workspaceRect.top;}));
+          var maxX=Math.max.apply(null,rects.map(function(r){return r.right-workspaceRect.left;}));
+          var maxY=Math.max.apply(null,rects.map(function(r){return r.bottom-workspaceRect.top;}));
+          var width=Math.max(1,maxX-minX);
+          var height=Math.max(1,maxY-minY);
+          var availableWidth=Math.max(220,workspace.clientWidth-24);
+          var availableHeight=Math.max(240,workspace.clientHeight-24);
+          var fit=Math.min(2.4,availableWidth/width,availableHeight/height);
+          if(!win.matchMedia('(max-width:700px)').matches)fit=Math.max(1,fit);
+          fit=Math.max(.35,fit);
+          zoom.value=String(fit);
+          zoom.dispatchEvent(new win.Event('input',{bubbles:true}));
+          zoom.dispatchEvent(new win.Event('change',{bubbles:true}));
+          schedule();
+        },true);
+
+        new win.MutationObserver(schedule).observe(doc.body,{childList:true,subtree:true});
+        schedule();
+      }catch(error){
+        console.error('Drawing Board Celtic Cross preview fix failed',error);
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
