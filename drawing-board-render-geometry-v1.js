@@ -7,6 +7,7 @@
 
   const PANEL = '#shortListPanel';
   const RADIUS = '.72rem';
+  const MIDDLE_GAP = 16;
   let queued = false;
   let applying = false;
 
@@ -18,6 +19,28 @@
     if (!node) return;
     if (node.style.getPropertyValue(property) === value && node.style.getPropertyPriority(property) === 'important') return;
     node.style.setProperty(property, value, 'important');
+  }
+
+  function renderedScaleX(liveBoard) {
+    if (!liveBoard?.offsetWidth) return 1;
+    const rect = liveBoard.getBoundingClientRect();
+    const scale = rect.width / liveBoard.offsetWidth;
+    return Number.isFinite(scale) && Math.abs(scale) >= .001 ? scale : 1;
+  }
+
+  function adjustTranslateX(item, dataKey, deltaVisual, scaleX) {
+    if (!item || !Number.isFinite(deltaVisual) || Math.abs(deltaVisual) < .5) return false;
+    const previous = Number(item.dataset[dataKey] || 0);
+    const next = previous + (deltaVisual / scaleX);
+    item.dataset[dataKey] = String(next);
+    setImportant(item, 'translate', next.toFixed(2) + 'px 0px');
+    return true;
+  }
+
+  function clearTranslateX(item, dataKey) {
+    if (!item || item.dataset[dataKey] === undefined) return;
+    item.style.removeProperty('translate');
+    delete item.dataset[dataKey];
   }
 
   function installStyle() {
@@ -63,6 +86,60 @@
     });
   }
 
+  function clearMiddleTranslations(liveBoard) {
+    [0,1,4,5].forEach(index => {
+      clearTranslateX(liveBoard?.querySelector(':scope > .card-row-item[data-row-index="' + index + '"]'), 'relphiMiddleTranslateX');
+    });
+  }
+
+  function positionCelticMiddleRow(rootNode) {
+    const liveBoard = board(rootNode);
+    if (!liveBoard) return;
+    if (!rootNode.classList.contains('relphi-celtic-readable')) {
+      clearMiddleTranslations(liveBoard);
+      return;
+    }
+
+    const covers = liveBoard.querySelector(':scope > .card-row-item[data-row-index="0"]');
+    const crosses = liveBoard.querySelector(':scope > .card-row-item[data-row-index="1"]');
+    const behind = liveBoard.querySelector(':scope > .card-row-item[data-row-index="4"]');
+    const before = liveBoard.querySelector(':scope > .card-row-item[data-row-index="5"]');
+    const coverFace = face(covers);
+    const crossFace = face(crosses);
+    const behindFace = face(behind);
+    const beforeFace = face(before);
+    if (!coverFace || !crossFace || !behindFace || !beforeFace) return;
+
+    const scaleX = renderedScaleX(liveBoard);
+    const centerOpen = !crosses.classList.contains('relphi-celtic-crossing-rotated');
+
+    // In the traditional closed cross, Covers and Crosses remain one crossed unit.
+    // In Open Center, give the two center cards the same small gap as the outer cards.
+    if (!centerOpen) {
+      clearTranslateX(covers, 'relphiMiddleTranslateX');
+      clearTranslateX(crosses, 'relphiMiddleTranslateX');
+    } else {
+      let coverRect = coverFace.getBoundingClientRect();
+      let crossRect = crossFace.getBoundingClientRect();
+      const currentGap = crossRect.left - coverRect.right;
+      const extra = MIDDLE_GAP - currentGap;
+      if (Math.abs(extra) >= .5) {
+        adjustTranslateX(covers, 'relphiMiddleTranslateX', -extra / 2, scaleX);
+        adjustTranslateX(crosses, 'relphiMiddleTranslateX', extra / 2, scaleX);
+      }
+    }
+
+    const coverRect = coverFace.getBoundingClientRect();
+    const crossRect = crossFace.getBoundingClientRect();
+    const centralLeft = Math.min(coverRect.left, crossRect.left);
+    const centralRight = Math.max(coverRect.right, crossRect.right);
+
+    const behindRect = behindFace.getBoundingClientRect();
+    const beforeRect = beforeFace.getBoundingClientRect();
+    adjustTranslateX(behind, 'relphiMiddleTranslateX', (centralLeft - MIDDLE_GAP) - behindRect.right, scaleX);
+    adjustTranslateX(before, 'relphiMiddleTranslateX', (centralRight + MIDDLE_GAP) - beforeRect.left, scaleX);
+  }
+
   function clearStaffTranslation(liveBoard) {
     liveBoard?.querySelectorAll(':scope > .card-row-item[data-row-index="6"],:scope > .card-row-item[data-row-index="7"],:scope > .card-row-item[data-row-index="8"],:scope > .card-row-item[data-row-index="9"]').forEach(item => {
       if (item.dataset.relphiStaffTranslateX) {
@@ -88,16 +165,14 @@
 
     const beforeRect = beforeFace.getBoundingClientRect();
     const staffRect = staffFace.getBoundingClientRect();
-    const boardRect = liveBoard.getBoundingClientRect();
-    if (!beforeRect.width || !staffRect.width || !liveBoard.offsetWidth) return;
+    if (!beforeRect.width || !staffRect.width) return;
 
     // Required visual rule: Before | one full rendered card-width of felt | staff.
     const desiredLeft = beforeRect.right + beforeRect.width;
     const deltaVisual = desiredLeft - staffRect.left;
     if (Math.abs(deltaVisual) < .5) return;
 
-    let scaleX = boardRect.width / liveBoard.offsetWidth;
-    if (!Number.isFinite(scaleX) || Math.abs(scaleX) < .001) scaleX = 1;
+    const scaleX = renderedScaleX(liveBoard);
     const previous = Number(firstStaff.dataset.relphiStaffTranslateX || 0);
     const next = previous + (deltaVisual / scaleX);
 
@@ -131,6 +206,7 @@
       installStyle();
       ownCardSurfaces(rootNode);
       enforceFlushLabels(rootNode);
+      positionCelticMiddleRow(rootNode);
       positionCelticStaff(rootNode);
     } finally {
       applying = false;
