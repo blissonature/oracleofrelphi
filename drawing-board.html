@@ -8,26 +8,45 @@
   <style>
     html,body{margin:0;min-height:100%;background:#fffdf8}
     #drawingBoardFrame{display:block;width:100%;height:100vh;border:0;background:#fffdf8}
-    #previewFailure{display:none;max-width:760px;margin:12vh auto;padding:1.25rem 1.5rem;border:1px solid #d8cec5;border-radius:12px;background:#fff;color:#241f1b;font:16px/1.45 system-ui,sans-serif}
   </style>
 </head>
 <body>
-  <iframe id="drawingBoardFrame" title="Drawing Board exact revision preview"></iframe>
-  <div id="previewFailure">Unable to resolve the exact Drawing Board revision.</div>
+  <iframe id="drawingBoardFrame" title="Drawing Board exact revision preview" src="tarot.html?board=workflow-v2&amp;standaloneDrawingBoard=1#tarot"></iframe>
   <script>
   (function(){
     'use strict';
     var frame=document.getElementById('drawingBoardFrame');
-    var failure=document.getElementById('previewFailure');
-    var base=String(document.baseURI||'');
-    var match=base.match(/oracleofrelphi@([0-9a-f]{40})\//i);
-    if(!match){
-      frame.style.display='none';
-      failure.style.display='block';
-      return;
-    }
-    var ref=match[1];
-    frame.src='https://raw.githack.com/blissonature/oracleofrelphi/'+ref+'/tarot.html?board=workflow-v2&standaloneDrawingBoard=1#tarot';
+    frame.addEventListener('load',function(){
+      try{
+        var doc=frame.contentDocument;
+        if(!doc||!doc.head)return;
+        var style=doc.createElement('style');
+        style.id='drawing-board-rounded-slot-fix-v28';
+        style.textContent=`
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap{
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item>.card-row-drop-card,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.card-row-card,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.or-card.card-row-card,
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item>.card-row-card-wrap>.or-card.tarot-card-surface.relphi-surface--card.card-row-card{
+  border-radius:.72rem!important;
+  overflow:hidden!important;
+  clip-path:inset(0 round .72rem)!important;
+}
+html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-placeholder-item>.card-row-drop-card{
+  outline:0!important;
+}
+`;
+        doc.head.appendChild(style);
+      }catch(error){
+        console.error('Drawing Board corner preview fix failed',error);
+      }
+    });
   })();
   </script>
 </body>
