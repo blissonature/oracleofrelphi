@@ -113,31 +113,38 @@
     const scaleX = renderedScaleX(liveBoard);
     const centerOpen = !crosses.classList.contains('relphi-celtic-crossing-rotated');
 
-    // In the traditional closed cross, Covers and Crosses remain one crossed unit.
-    // In Open Center, give the two center cards the same small gap as the outer cards.
+    // Closed and open center views share one fixed outer footprint: the width of
+    // two upright cards plus the intended center gap. Rotating Crosses therefore
+    // never changes Behind, Before, or the staff coordinates.
     if (!centerOpen) {
       clearTranslateX(covers, 'relphiMiddleTranslateX');
       clearTranslateX(crosses, 'relphiMiddleTranslateX');
-    } else {
-      let coverRect = coverFace.getBoundingClientRect();
-      let crossRect = crossFace.getBoundingClientRect();
-      const currentGap = crossRect.left - coverRect.right;
-      const extra = MIDDLE_GAP - currentGap;
-      if (Math.abs(extra) >= .5) {
-        adjustTranslateX(covers, 'relphiMiddleTranslateX', -extra / 2, scaleX);
-        adjustTranslateX(crosses, 'relphiMiddleTranslateX', extra / 2, scaleX);
-      }
     }
 
-    const coverRect = coverFace.getBoundingClientRect();
-    const crossRect = crossFace.getBoundingClientRect();
-    const centralLeft = Math.min(coverRect.left, crossRect.left);
-    const centralRight = Math.max(coverRect.right, crossRect.right);
+    let coverRect = coverFace.getBoundingClientRect();
+    let crossRect = crossFace.getBoundingClientRect();
+    const coverCenter = coverRect.left + coverRect.width / 2;
+    const crossCenter = crossRect.left + crossRect.width / 2;
+    const axis = centerOpen ? (coverCenter + crossCenter) / 2 : coverCenter;
+    const cardWidth = coverRect.width;
+    if (!cardWidth) return;
 
+    if (centerOpen) {
+      const targetCoverRight = axis - MIDDLE_GAP / 2;
+      const targetCrossLeft = axis + MIDDLE_GAP / 2;
+      adjustTranslateX(covers, 'relphiMiddleTranslateX', targetCoverRight - coverRect.right, scaleX);
+      adjustTranslateX(crosses, 'relphiMiddleTranslateX', targetCrossLeft - crossRect.left, scaleX);
+      coverRect = coverFace.getBoundingClientRect();
+      crossRect = crossFace.getBoundingClientRect();
+    }
+
+    const fixedCentralLeft = axis - cardWidth - MIDDLE_GAP / 2;
+    const fixedCentralRight = axis + cardWidth + MIDDLE_GAP / 2;
     const behindRect = behindFace.getBoundingClientRect();
     const beforeRect = beforeFace.getBoundingClientRect();
-    adjustTranslateX(behind, 'relphiMiddleTranslateX', (centralLeft - MIDDLE_GAP) - behindRect.right, scaleX);
-    adjustTranslateX(before, 'relphiMiddleTranslateX', (centralRight + MIDDLE_GAP) - beforeRect.left, scaleX);
+
+    adjustTranslateX(behind, 'relphiMiddleTranslateX', (fixedCentralLeft - MIDDLE_GAP) - behindRect.right, scaleX);
+    adjustTranslateX(before, 'relphiMiddleTranslateX', (fixedCentralRight + MIDDLE_GAP) - beforeRect.left, scaleX);
   }
 
   function clearStaffTranslation(liveBoard) {
