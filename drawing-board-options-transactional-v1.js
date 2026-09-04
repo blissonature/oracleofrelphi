@@ -122,63 +122,24 @@
     const style = document.createElement('style');
     style.id = 'relphi-transactional-options-style';
     style.textContent = `
-      /* Reset belongs to setup; Clear Cards remains the board-level new-reading action. */
       #shortListPanel .drawing-board-top-actions>#clearShortList,
       #shortListPanel .card-row-action-staging>#clearShortList{display:none!important}
-
       #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar{
-        position:sticky!important;
-        top:0!important;
-        z-index:2450!important;
-        display:flex!important;
-        align-items:center!important;
-        width:100%!important;
-        min-height:3.5rem!important;
-        padding:.55rem .65rem!important;
-        margin:0!important;
-        box-sizing:border-box!important;
-        background:rgba(255,253,248,.98)!important;
-        border-bottom:1px solid #d8cec5!important;
-        box-shadow:0 4px 12px rgba(35,24,18,.08)!important;
-        backdrop-filter:blur(6px)!important;
+        position:sticky!important;top:0!important;z-index:2450!important;display:flex!important;align-items:center!important;
+        width:100%!important;min-height:3.5rem!important;padding:.55rem .65rem!important;margin:0!important;box-sizing:border-box!important;
+        background:rgba(255,253,248,.98)!important;border-bottom:1px solid #d8cec5!important;box-shadow:0 4px 12px rgba(35,24,18,.08)!important;
+        backdrop-filter:blur(6px)!important
       }
-      #shortListPanel .relphi-options-commit-bar .relphi-options-right{
-        margin-left:auto!important;
-        display:flex!important;
-        align-items:center!important;
-        gap:.7rem!important;
-      }
+      #shortListPanel .relphi-options-commit-bar .relphi-options-right{margin-left:auto!important;display:flex!important;align-items:center!important;gap:.7rem!important}
       #shortListPanel .relphi-options-commit-bar button{
-        appearance:none!important;
-        min-height:2.45rem!important;
-        padding:.48rem .9rem!important;
-        border:1px solid #aaa098!important;
-        border-radius:8px!important;
-        background:#fff!important;
-        color:#171412!important;
-        font:inherit!important;
-        font-size:.82rem!important;
-        font-weight:850!important;
-        line-height:1!important;
-        box-shadow:none!important;
-        cursor:pointer!important;
+        appearance:none!important;min-height:2.45rem!important;padding:.48rem .9rem!important;border:1px solid #aaa098!important;border-radius:8px!important;
+        background:#fff!important;color:#171412!important;font:inherit!important;font-size:.82rem!important;font-weight:850!important;line-height:1!important;
+        box-shadow:none!important;cursor:pointer!important
       }
-      #shortListPanel .relphi-options-commit-bar .relphi-options-reset{
-        border-color:rgba(184,23,18,.58)!important;
-        color:#a01813!important;
-      }
-      #shortListPanel .relphi-options-commit-bar .relphi-options-ok{
-        border-color:#b81712!important;
-        background:#dc1f18!important;
-        color:#fff!important;
-      }
-      #shortListPanel .relphi-options-commit-bar button:focus-visible{
-        outline:3px solid rgba(220,31,24,.22)!important;
-        outline-offset:2px!important;
-      }
-      #shortListPanel .relphi-reading-options-drawer>.card-row-composer{
-        padding-top:.55rem!important;
-      }
+      #shortListPanel .relphi-options-commit-bar .relphi-options-reset{border-color:rgba(184,23,18,.58)!important;color:#a01813!important}
+      #shortListPanel .relphi-options-commit-bar .relphi-options-ok{border-color:#b81712!important;background:#dc1f18!important;color:#fff!important}
+      #shortListPanel .relphi-options-commit-bar button:focus-visible{outline:3px solid rgba(220,31,24,.22)!important;outline-offset:2px!important}
+      #shortListPanel .relphi-reading-options-drawer>.card-row-composer{padding-top:.55rem!important}
       @media(max-width:520px){
         #shortListPanel .relphi-options-commit-bar{padding:.5rem!important}
         #shortListPanel .relphi-options-commit-bar button{padding:.45rem .65rem!important;font-size:.76rem!important}
@@ -192,39 +153,27 @@
     const box = drawer(root);
     if (!box) return;
     let bar = box.querySelector(':scope > .relphi-options-commit-bar');
-    if (!bar) {
-      bar = document.createElement('div');
-      bar.className = 'relphi-options-commit-bar';
-    }
+    if (!bar) { bar = document.createElement('div'); bar.className = 'relphi-options-commit-bar'; }
     if (bar.dataset.relphiTransactional !== 'true') {
       bar.dataset.relphiTransactional = 'true';
-      bar.innerHTML =
-        '<button type="button" class="relphi-options-reset">Reset Board</button>' +
-        '<span class="relphi-options-right">' +
-          '<button type="button" class="relphi-options-cancel">Cancel</button>' +
-          '<button type="button" class="relphi-options-ok">OK</button>' +
-        '</span>';
+      bar.innerHTML = '<button type="button" class="relphi-options-reset">Reset Board</button>' +
+        '<span class="relphi-options-right"><button type="button" class="relphi-options-cancel">Cancel</button><button type="button" class="relphi-options-ok">OK</button></span>';
     }
     const summary = box.querySelector(':scope > summary');
-    if (summary) summary.insertAdjacentElement('afterend',bar);
-    else box.prepend(bar);
+    if (summary) summary.insertAdjacentElement('afterend',bar); else box.prepend(bar);
   }
 
   function normalizeTemplatePrompt(root = panel()) {
     const first = root?.querySelector('#relphiSpreadTemplateSelect option[value=""]');
     if (first && first.textContent !== 'Choose a template') first.textContent = 'Choose a template';
   }
-
   function closeThroughExistingCancel() {
     const root = panel();
     if (!root || !optionsOpen(root)) return;
     endSession(root);
     window.RelphiDrawingBoardToggleOptions?.();
   }
-
-  function dispatch(control,type) {
-    control?.dispatchEvent(new Event(type,{bubbles:true}));
-  }
+  function dispatch(control,type) { control?.dispatchEvent(new Event(type,{bubbles:true})); }
   function waitForControls(callback,attempt = 0) {
     const root = panel();
     const ready = root?.querySelector('#rowDrawScope') && root?.querySelector('#rowPositionLabels');
@@ -234,56 +183,29 @@
 
   function structuralBlankSnapshot(snapshot) {
     return {
-      ...snapshot,
-      shortList:[],
-      shortListSelection:[],
-      shortListSelectMode:false,
-      shortListPositionLabels:[],
-      shortListPositionCardIds:[],
-      rowCardReversals:{},
-      rowEnvelopeLayout:{},
-      rowCardTransforms:{},
-      rowActiveLayout:null,
-      rowPositionMeta:[],
-      rowLayoutDesignMode:false,
-      rowLayoutLocked:false,
-      rowCenterOpen:false,
-      rowEnvelopeArt:{},
-      rowDrawDeck:[],
-      rowDrawDeckSignature:'',
-      rowShuffled:false,
-      rowShuffleCount:0,
-      customCardArt:{}
+      ...snapshot,shortList:[],shortListSelection:[],shortListSelectMode:false,shortListPositionLabels:[],shortListPositionCardIds:[],
+      rowCardReversals:{},rowEnvelopeLayout:{},rowCardTransforms:{},rowActiveLayout:null,rowPositionMeta:[],rowLayoutDesignMode:false,
+      rowLayoutLocked:false,rowCenterOpen:false,rowEnvelopeArt:{},rowDrawDeck:[],rowDrawDeckSignature:'',rowShuffled:false,rowShuffleCount:0,customCardArt:{}
     };
   }
 
   function applyRules(root,draft) {
     const pack = root.querySelector('#rowDrawScope');
-    if (pack) {
-      pack.value = draft.pack || 'full';
-      dispatch(pack,'input');
-      dispatch(pack,'change');
-    }
-    [
-      ['rowPositionStickersQuick',draft.stickers],
-      ['rowAllowReversalsQuick',draft.reversals],
-      ['rowAllowRepeats',draft.repeats]
-    ].forEach(([id,value]) => {
+    if (pack) { pack.value = draft.pack || 'full'; dispatch(pack,'input'); dispatch(pack,'change'); }
+    [['rowPositionStickersQuick',draft.stickers],['rowAllowReversalsQuick',draft.reversals],['rowAllowRepeats',draft.repeats]].forEach(([id,value]) => {
       const input = root.querySelector('#' + id);
       if (!input) return;
-      input.checked = !!value;
-      dispatch(input,'input');
-      dispatch(input,'change');
+      input.checked = !!value; dispatch(input,'input'); dispatch(input,'change');
     });
   }
-
-  function applyLabelsAndRules(draft) {
+  function applyLabelsAndRules(draft,applyLabels) {
     waitForControls(root => {
-      const hidden = root.querySelector('#rowPositionLabels');
-      hidden.value = cleanLabels(draft.labels).join(', ');
-      hidden.dataset.relphiManualValue = hidden.value;
-      dispatch(hidden,'input');
-      dispatch(hidden,'change');
+      if (applyLabels) {
+        const hidden = root.querySelector('#rowPositionLabels');
+        hidden.value = cleanLabels(draft.labels).join(', ');
+        hidden.dataset.relphiManualValue = hidden.value;
+        dispatch(hidden,'input'); dispatch(hidden,'change');
+      }
       window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
         const liveRoot = panel();
         if (liveRoot) applyRules(liveRoot,draft);
@@ -294,19 +216,20 @@
 
   function applyDraft(draft,baseline) {
     applying = true;
+    const structural = structureChanged(draft,baseline);
     const bridge = window.RelphiDrawingBoardOptionsBridge;
-    if (structureChanged(draft,baseline) && bridge?.capture && bridge?.restore) {
+    if (!structural) {
+      applyLabelsAndRules(draft,false);
+      return;
+    }
+    if (bridge?.capture && bridge?.restore) {
       const live = bridge.capture();
       bridge.restore(structuralBlankSnapshot(live));
     }
-
     waitForControls(root => {
       const select = root.querySelector('#relphiSpreadTemplateSelect');
-      if (select) {
-        select.value = draft.template || '';
-        dispatch(select,'change');
-      }
-      window.requestAnimationFrame(() => window.requestAnimationFrame(() => applyLabelsAndRules(draft)));
+      if (select) { select.value = draft.template || ''; dispatch(select,'change'); }
+      window.requestAnimationFrame(() => window.requestAnimationFrame(() => applyLabelsAndRules(draft,true)));
     });
   }
 
@@ -316,8 +239,6 @@
     refreshDraft(root);
     const draft = JSON.parse(JSON.stringify(session.draft));
     const baseline = JSON.parse(JSON.stringify(session.baseline));
-    // Close through the existing Cancel path first. Because draft controls never wrote
-    // through, this simply clears the old baseline snapshot; then apply the draft once.
     closeThroughExistingCancel();
     window.setTimeout(() => applyDraft(draft,baseline),0);
   }
@@ -329,11 +250,7 @@
       const root = panel();
       const select = root?.querySelector('#relphiSpreadTemplateSelect');
       if (select) {
-        applying = true;
-        select.value = '';
-        dispatch(select,'change');
-        applying = false;
-        normalizeTemplatePrompt(root);
+        applying = true; select.value = ''; dispatch(select,'change'); applying = false; normalizeTemplatePrompt(root);
         if (after) after();
         return;
       }
@@ -342,129 +259,80 @@
     };
     clear();
   }
-
   function reopenOptions() {
     let attempts = 0;
     const open = () => {
       attempts += 1;
       const root = panel();
-      if (root && !optionsOpen(root)) {
-        window.RelphiDrawingBoardToggleOptions?.();
-        schedule();
-        return;
-      }
+      if (root && !optionsOpen(root)) { window.RelphiDrawingBoardToggleOptions?.(); schedule(); return; }
       if (!root && attempts < 30) window.setTimeout(open,35);
     };
     window.setTimeout(open,0);
   }
-
   function resetBoard() {
     const root = panel();
     if (!root) return;
-    // Reset is an immediate structural action. Close the draft session first so Cancel
-    // can never resurrect the pre-reset board afterward.
     closeThroughExistingCancel();
     window.setTimeout(() => {
       const liveRoot = panel();
       const nativeReset = liveRoot?.querySelector('#clearShortList');
       if (nativeReset && !nativeReset.disabled) nativeReset.click();
-      // The template picker owns a separate selected-template ID. Clear it after the
-      // native board reset so the picker cannot continue to advertise a dead layout.
       window.setTimeout(() => clearTemplateSelection(reopenOptions),0);
     },0);
   }
 
   function draftTemplateChanged(root,select) {
     const prefab = prefabById(select.value);
-    if (prefab) {
-      setBuilderLabels(root,labelsForPrefab(prefab));
-      setDraftRules(root,prefab);
-    }
+    if (prefab) { setBuilderLabels(root,labelsForPrefab(prefab)); setDraftRules(root,prefab); }
     refreshDraft(root);
   }
-
   function interceptDraftEvent(event) {
     if (applying) return;
     const root = panel();
     const box = drawer(root);
     const target = event.target;
-    if (!root || !box || !optionsOpen(root) || !box.contains(target)) return;
-    if (!target.matches?.(CORE_CONTROL_SELECTOR)) return;
-
-    // The browser control itself changes, but the event never reaches the live board
-    // handlers. This is the draft boundary.
+    if (!root || !box || !optionsOpen(root) || !box.contains(target) || !target.matches?.(CORE_CONTROL_SELECTOR)) return;
     event.stopImmediatePropagation();
-    if (target.id === 'relphiSpreadTemplateSelect' && event.type === 'change') {
-      draftTemplateChanged(root,target);
-    } else {
-      refreshDraft(root);
-    }
+    if (target.id === 'relphiSpreadTemplateSelect' && event.type === 'change') draftTemplateChanged(root,target);
+    else refreshDraft(root);
   }
 
   function handleClick(event) {
     const root = panel();
     const box = drawer(root);
     if (!root || !box) return;
-
     const reset = event.target.closest?.('.relphi-options-reset');
-    if (reset && box.contains(reset)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      resetBoard();
-      return;
-    }
+    if (reset && box.contains(reset)) { event.preventDefault(); event.stopImmediatePropagation(); resetBoard(); return; }
     const cancel = event.target.closest?.('.relphi-options-cancel');
-    if (cancel && box.contains(cancel)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      closeThroughExistingCancel();
-      return;
-    }
+    if (cancel && box.contains(cancel)) { event.preventDefault(); event.stopImmediatePropagation(); closeThroughExistingCancel(); return; }
     const confirm = event.target.closest?.('.relphi-options-ok');
-    if (confirm && box.contains(confirm)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      ok();
-      return;
-    }
-
+    if (confirm && box.contains(confirm)) { event.preventDefault(); event.stopImmediatePropagation(); ok(); return; }
     const templateClear = event.target.closest?.('#relphiTemplateClear');
     if (templateClear && optionsOpen(root)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
+      event.preventDefault(); event.stopImmediatePropagation();
       const select = root.querySelector('#relphiSpreadTemplateSelect');
       if (select) select.value = '';
-      refreshDraft(root);
-      schedule();
-      return;
+      refreshDraft(root); schedule(); return;
     }
-
     const saveTemplate = event.target.closest?.('#relphiSaveLabelsAsTemplate');
     if (saveTemplate && optionsOpen(root) && session) {
       refreshDraft(root);
       if (!sameDraft(session.baseline,session.draft)) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
+        event.preventDefault(); event.stopImmediatePropagation();
         const status = root.querySelector('.relphi-label-template-status');
         if (status) status.textContent = 'Press OK to apply this setup before saving it as a template.';
         return;
       }
     }
-
-    if (event.target.closest?.('.relphi-label-add,.relphi-label-remove') && optionsOpen(root)) {
-      window.setTimeout(() => refreshDraft(panel()),0);
-    }
+    if (event.target.closest?.('.relphi-label-add,.relphi-label-remove') && optionsOpen(root)) window.setTimeout(() => refreshDraft(panel()),0);
   }
 
   function enhance() {
     queued = false;
     const root = panel();
     if (!root || root.hidden) return;
-    installStyle();
-    installActionBar(root);
-    normalizeTemplatePrompt(root);
-    if (optionsOpen(root)) beginSession(root);
-    else if (session) endSession(root);
+    installStyle(); installActionBar(root); normalizeTemplatePrompt(root);
+    if (optionsOpen(root)) beginSession(root); else if (session) endSession(root);
   }
   function schedule() {
     if (queued) return;
