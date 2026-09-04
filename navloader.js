@@ -144,6 +144,7 @@
     if (isTarotContext()) {
       loadCanonicalGlyphRuntime();
       appendScript('tarot-date-sky-bridge-v1.js?v=1');
+      appendScript('tarot-reversed-copy-v1.js?v=1');
       appendScript('tarot-card-selection-scroll-v1.js?v=1', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
