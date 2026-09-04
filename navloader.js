@@ -149,6 +149,30 @@
       style.textContent = '#shortListPanel .card-row-drawing-board:not([open])>summary>:not(strong){display:none!important}';
       document.head.appendChild(style);
     }
+    if (!document.getElementById('relphi-drawing-board-boot-style')) {
+      const style = document.createElement('style');
+      style.id = 'relphi-drawing-board-boot-style';
+      style.textContent = `
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) .drawing-board-top-actions,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-workspace-toolbar,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-workspace-tools,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-reading-options-drawer,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-composer,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) #drawing-board-after-canvas,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) .drawing-board-helpful-tip{
+          visibility:hidden!important;
+          opacity:0!important;
+          pointer-events:none!important;
+        }
+        #shortListPanel.relphi-drawing-board-ui-ready .drawing-board-top-actions,
+        #shortListPanel.relphi-drawing-board-ui-ready .card-row-workspace-toolbar,
+        #shortListPanel.relphi-drawing-board-ui-ready .relphi-workspace-tools,
+        #shortListPanel.relphi-drawing-board-ui-ready #drawing-board-after-canvas{
+          transition:opacity .08s linear!important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
   }
 
   function loadEnhancements() {
@@ -167,7 +191,7 @@
             appendScript('drawing-board-spread-prefabs-v1.js?v=47', function () {
               appendScript('drawing-board-options-transactional-v1.js?v=1', function () {
                 appendScript('drawing-board-render-geometry-v1.js?v=1', function () {
-                  appendScript('drawing-board-chrome-ownership-v1.js?v=2', function () {
+                  appendScript('drawing-board-chrome-ownership-v1.js?v=3', function () {
                     window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
                   });
                 });
