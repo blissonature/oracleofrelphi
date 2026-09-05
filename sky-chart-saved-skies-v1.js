@@ -2,7 +2,8 @@
 // Empty Sky A/B titles point directly to Where and When; command rows carry the actions.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesV4)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesV5)return;
+  window.__relphiSkySavedSkiesV5=true;
   window.__relphiSkySavedSkiesV4=true;
   window.__relphiSkySavedSkiesV3=true;
   window.__relphiSkySavedSkiesV2=true;
@@ -44,18 +45,27 @@
       return [normalize(item?.name||item?.label||key),Number.isFinite(lon)?Number(lon.toFixed(6)):null,!!item?.retrograde];
     }).sort((a,b)=>a[0].localeCompare(b[0])));
   }
-  function skySignature(value){
+  function canonicalCoordinate(value){const n=Number(value);return Number.isFinite(n)?Number(n.toFixed(6)):null}
+  function canonicalInstant(value){
+    const profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
+    const direct=String(profile.instant||value?.instant||'').trim();
+    if(direct){const ms=Date.parse(direct);if(Number.isFinite(ms))return new Date(ms).toISOString()}
+    const raw=String(profile.dateTime||value?.dateTime||'').trim(),zone=String(profile.timeZone||value?.timeZone||'').trim();
+    if(raw&&zone&&window.luxon?.DateTime){try{const dt=window.luxon.DateTime.fromISO(raw,{zone,setZone:true});if(dt?.isValid)return dt.toUTC().toISO()}catch(_){}}
+    return raw;
+  }
+  function skySettingsSignature(value){
     const profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
     return JSON.stringify({
-      placements:placementSignature(value),
-      dateTime:profile.dateTime||value?.dateTime||'',
-      instant:profile.instant||value?.instant||'',
-      latitude:String(profile.latitude??value?.latitude??''),
-      longitude:String(profile.longitude??value?.longitude??''),
-      timeZone:String(profile.timeZone??value?.timeZone??''),
-      location:String(profile.location??value?.location??''),
-      houseSystem:String(profile.houseSystem??value?.houseSystem??'')
+      instant:canonicalInstant(value),
+      latitude:canonicalCoordinate(profile.latitude??value?.latitude),
+      longitude:canonicalCoordinate(profile.longitude??value?.longitude),
+      timeZone:normalize(profile.timeZone??value?.timeZone??''),
+      houseSystem:normalize(profile.houseSystem??value?.houseSystem??'whole-sign')
     });
+  }
+  function skySignature(value){
+    return JSON.stringify({settings:skySettingsSignature(value),placements:placementSignature(value)});
   }
 
   function explicitRecord(value,records){
@@ -67,13 +77,13 @@
     return null;
   }
   function matchingRecord(value,records){
-    // A working sky belongs to Saved skies only when it carries an explicit
-    // saved-sky identity. Never silently reattach an unsaved working copy by
-    // matching its placements or date/time to a library record.
     if(!value||!hasPlacements(value))return null;
-    return explicitRecord(value,records);
+    const explicit=explicitRecord(value,records);
+    if(explicit)return explicit;
+    const signature=skySettingsSignature(value);
+    return records.find(record=>skySettingsSignature(record)===signature)||null;
   }
-  function isDirty(value,record){return!!record&&skySignature(value)!==skySignature(record)}
+  function isDirty(value,record){return!!record&&skySettingsSignature(value)!==skySettingsSignature(record)}
   function isNearNow(value){
     const profile=value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{};
     const raw=profile.instant||profile.dateTime||value?.instant||value?.dateTime;
@@ -89,12 +99,11 @@
   }
   function identity(slot){
     const value=payload(slot),records=library(),record=matchingRecord(value,records);
-    if(record)return{name:String(record.name).trim(),record,dirty:isDirty(value,record),saved:true};
+    if(record)return{name:String(record.name).trim(),record,dirty:isDirty(value,record),saved:true,matchedBySettings:!explicitRecord(value,records)};
     const custom=candidateName(value);
     if(custom)return{name:custom,record:null,dirty:false,saved:false};
     if(isNearNow(value))return{name:'Now',record:null,dirty:false,saved:false};
-    if(!value||!hasPlacements(value))return{name:'Where and When',record:null,dirty:false,saved:false};
-    return{name:'Unsaved sky',record:null,dirty:false,saved:false};
+    return{name:'Where and When',record:null,dirty:false,saved:false};
   }
 
   function applyNamedIdentity(value,name,id){
@@ -108,7 +117,7 @@
     return next;
   }
   function applyWorkingIdentity(value,name){
-    const next=clone(value||{}),clean=String(name||'').trim()||'Unsaved sky';
+    const next=clone(value||{}),clean=String(name||'').trim()||'Where and When';
     next.name=clean;next.title=clean;next.displayName=clean;next.skyName=clean;
     next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};
     delete next.metadata.savedSkyId;delete next.metadata.savedSkyName;delete next.metadata.savedSkyLoadedAt;
@@ -173,9 +182,6 @@
     }catch(_){}
   }
   function closeWhereWhenEditors(){
-    // Loading a saved record replaces the working sky. Release every live or
-    // stale Where and When transaction first, because foundation rendering is
-    // globally paused while any editor owns the transaction lock.
     const transaction=window.RelphiSkyWhereWhenTransaction,slots=new Set();
     try{(transaction?.slots?.()||[]).forEach(slot=>{if(SLOT_KEYS[slot])slots.add(slot)})}catch(_){}
     document.querySelectorAll('.sky-where-when-editor[data-slot]').forEach(form=>{if(SLOT_KEYS[form.dataset.slot])slots.add(form.dataset.slot)});
@@ -192,8 +198,6 @@
     }catch(_){}
   }
   function loadRecord(slot,record){
-    // Loading replaces the working sky. Close any stale Where and When draft
-    // first so the committed saved sky is allowed to rebuild the chart.
     closeWhereWhenEditors();
     const id=recordRef(record),active=applyNamedIdentity(record,String(record.name||'Saved sky').trim(),id);
     delete active.savedAt;delete active.updatedAt;
@@ -265,9 +269,7 @@
     window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'remove-sky'}}));
     return true;
   }
-  function addSkyB(){
-    window.RelphiSkySlotControls?.addSkyB?.();
-  }
+  function addSkyB(){window.RelphiSkySlotControls?.addSkyB?.()}
   function shortMeta(record){
     const profile=record?.calcProfile&&typeof record.calcProfile==='object'?record.calcProfile:{};
     const date=String(profile.dateTime||record?.dateTime||'').slice(0,10);
@@ -310,10 +312,7 @@
     positionPopover();
   }
   function triggerFor(slot){
-    // The visible title lives in .sky-card-title-stable; foundation also keeps a
-    // hidden owned name node. Always prefer the stable, visible trigger.
-    return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading>.sky-card-title-stable [data-saved-sky-trigger]`)||
-      document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`);
+    return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading>.sky-card-title-stable [data-saved-sky-trigger]`)||document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading [data-saved-sky-trigger]`);
   }
   function positionPopover(){
     if(!openSlot||!popover||popover.hidden)return;
@@ -325,13 +324,8 @@
     const maxHeight=Math.min(520,Math.max(230,openAbove?above:below));
     Object.assign(popover.style,{width:`${width}px`,maxHeight:`${maxHeight}px`,left:`${left}px`,top:openAbove?'auto':`${rect.bottom+gap}px`,bottom:openAbove?`${window.innerHeight-rect.top+gap}px`:'auto'});
   }
-  function open(slot){
-    openSlot=slot;deletePendingRef='';menuView='commands';
-    const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true');
-  }
-  function close(){
-    if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;deletePendingRef='';menuView='commands';
-  }
+  function open(slot){openSlot=slot;deletePendingRef='';menuView='commands';const menu=ensurePopover();menu.hidden=false;renderPopover();triggerFor(slot)?.setAttribute('aria-expanded','true')}
+  function close(){if(!popover)return;triggerFor(openSlot)?.setAttribute('aria-expanded','false');popover.hidden=true;popover.removeAttribute('style');openSlot=null;deletePendingRef='';menuView='commands'}
 
   function renderIdentity(slot){
     const panel=document.getElementById(`skyFoundation${slot}`),container=panel?.querySelector(':scope > .sky-foundation-heading > .sky-foundation-name');
@@ -346,20 +340,8 @@
     button.classList.toggle('is-saved',state.saved);button.classList.toggle('is-dirty',state.dirty);
     button.setAttribute('aria-label',`${state.name}. Open Sky menu for Sky ${slot}.`);
   }
-  function sync(){
-    queued=false;
-    renderIdentity('A');
-    renderIdentity('B');
-    // Keep the open popover DOM stable. Chart/foundation mutations can happen
-    // repeatedly while a finger is down on mobile; replacing innerHTML during
-    // that gesture cancels the synthesized click. Explicit Saved Skies actions
-    // render the popover themselves, so background sync only repositions it.
-    if(openSlot)positionPopover();
-  }
-  function refreshOpenPopover(){
-    if(openSlot&&!popover?.hidden)renderPopover();
-    else if(openSlot)positionPopover();
-  }
+  function sync(){queued=false;renderIdentity('A');renderIdentity('B');if(openSlot)positionPopover()}
+  function refreshOpenPopover(){if(openSlot&&!popover?.hidden)renderPopover();else if(openSlot)positionPopover()}
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
 
   document.addEventListener('click',event=>{
@@ -386,9 +368,7 @@
       if(deleteRecord(ref)){renderPopover();schedule()}
       return;
     }
-    if(event.target.closest?.('[data-saved-delete-cancel]')&&openSlot){
-      event.preventDefault();event.stopPropagation();deletePendingRef='';renderPopover();return;
-    }
+    if(event.target.closest?.('[data-saved-delete-cancel]')&&openSlot){event.preventDefault();event.stopPropagation();deletePendingRef='';renderPopover();return}
     if(deleteButton&&openSlot){
       event.preventDefault();event.stopPropagation();
       const ref=deleteButton.dataset.savedDeleteRef,record=library().find(entry=>recordRef(entry)===ref);
@@ -405,8 +385,7 @@
     const input=form.querySelector('[data-sky-command-save-name]'),status=form.querySelector('[data-sky-command-status]'),active=identity(openSlot);
     const result=saveActive(openSlot,input?.value||'',active.record||null);
     if(status)status.textContent=result.message;
-    if(result.ok){menuView='commands';renderPopover();schedule()}
-    else input?.focus({preventScroll:true});
+    if(result.ok){menuView='commands';renderPopover();schedule()}else input?.focus({preventScroll:true});
   });
 
   document.addEventListener('pointerdown',event=>{
@@ -423,12 +402,10 @@
     if(!event.key||event.key===LIBRARY_KEY||Object.values(SLOT_KEYS).includes(event.key))schedule();
     if(event.key===LIBRARY_KEY)refreshOpenPopover();
   });
-  ['relphi:sky-foundation-ready','relphi:sky-name-updated'].forEach(name=>window.addEventListener(name,schedule));
-  window.addEventListener('relphi:saved-sky-library-changed',()=>{
-    schedule();
-    refreshOpenPopover();
-  });
+  ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:sky-where-when-committed'].forEach(name=>window.addEventListener(name,schedule));
+  window.addEventListener('relphi:saved-sky-library-changed',()=>{schedule();refreshOpenPopover()});
 
+  window.RelphiSkySavedSkyIdentity=Object.freeze({identity,matchingRecord,settingsSignature:skySettingsSignature,library});
   function start(){
     ensurePopover();schedule();
     const root=document.getElementById('skyFoundationRoot')||document.body;
