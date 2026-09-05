@@ -1,9 +1,10 @@
 // Persistent Sky-card title contract: every present Sky keeps the same Load/Save menu trigger.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardTitleIntegrityV2)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardTitleIntegrityV3)return;
   window.__relphiSkyCardTitleIntegrityV1=true;
   window.__relphiSkyCardTitleIntegrityV2=true;
+  window.__relphiSkyCardTitleIntegrityV3=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when']);
@@ -49,21 +50,28 @@
     const m=metadata(value),p=profile(value);
     return m.liveNowDisabled===true||m.liveNowDisabledReason==='custom-where-when'||String(p.source||'')==='where-when-v2';
   }
+  function editingWhereWhen(slot){
+    try{if(window.RelphiSkyWhereWhenTransaction?.slots?.().includes(slot))return true}catch(_){}
+    const slots=String(document.documentElement.dataset.skyWhereWhenEditingSlots||'').split(',').map(value=>value.trim()).filter(Boolean);
+    if(slots.includes(slot))return true;
+    return!!document.querySelector(`#skyFoundation${slot} .sky-where-when-editor[data-slot="${slot}"]`);
+  }
   function nearNow(value){
     const p=profile(value),raw=p.instant||p.dateTime||value?.instant||value?.dateTime;
     if(!raw)return false;const date=new Date(raw);return!Number.isNaN(date.getTime())&&Math.abs(Date.now()-date.getTime())<10*60*1000;
   }
   function nameFor(slot,value){
+    if(editingWhereWhen(slot))return'Where and When';
     if(!hasPlacements(value))return'Where and When';
     const m=metadata(value),p=profile(value),savedName=String(m.savedSkyName||'').trim();
     if(savedName)return savedName;
+    if(manualWhereWhen(value))return'Where and When';
     if(liveOrigin(value)||nearNow(value))return'Now';
-    const manual=manualWhereWhen(value);
     for(const candidate of [value?.name,value?.displayName,value?.skyName,value?.title,p.name,p.title,m.name,m.title]){
       const name=String(candidate||'').trim(),norm=normalize(name);
-      if(name&&!GENERIC.has(norm)&&!(manual&&norm==='now'))return name;
+      if(name&&!GENERIC.has(norm))return name;
     }
-    return manual?'Unsaved sky':'Unsaved sky';
+    return'Where and When';
   }
 
   function heading(slot){return document.querySelector(`#skyFoundation${slot}>.sky-foundation-heading`)}
@@ -88,10 +96,10 @@
   }
   function ensure(slot){
     const button=ensureTrigger(slot);if(!button)return;
-    const value=read(slot),name=nameFor(slot,value),label=button.querySelector('.sky-saved-name-label'),isSaved=saved(value);
+    const value=read(slot),name=nameFor(slot,value),label=button.querySelector('.sky-saved-name-label'),isSaved=saved(value)&&!editingWhereWhen(slot);
     if(label&&label.textContent!==name)label.textContent=name;
     button.classList.toggle('is-saved',isSaved);
-    button.title=isSaved?`${name} · open Sky menu`:`${name} · open Sky menu`;
+    button.title=`${name} · open Sky menu`;
     button.setAttribute('aria-label',`${name}. Open Sky menu for Sky ${slot}.`);
   }
   function run(){queued=false;installStyle();ensure('A');ensure('B')}
@@ -101,7 +109,7 @@
     const root=document.getElementById('skyFoundationRoot')||document.body;
     new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
     window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key))schedule()});
-    ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed','relphi:sky-live-origin-changed','relphi:sky-b-restored','relphi:sky-session-recovered'].forEach(name=>window.addEventListener(name,schedule));
+    ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed','relphi:sky-live-origin-changed','relphi:sky-b-restored','relphi:sky-session-recovered','relphi:sky-where-when-edit-state-changed','relphi:sky-where-when-committed'].forEach(name=>window.addEventListener(name,schedule));
   }
   window.RelphiSkyCardTitle=Object.freeze({refresh:schedule,nameFor});
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
