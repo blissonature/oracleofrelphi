@@ -128,13 +128,25 @@ function renderCardHits(slot){
   mount.setAttribute('aria-label',`Card Hits fingerprint: strongest card is ${api.displayName(strongest.card)} with ${strongest.count} associated placement${strongest.count===1?'':'s'}, from ${hits.length} card${hits.length===1?'':'s'} total.`);
 }
 
+function installSkyCommandContract(){
+  if(document.getElementById('relphi-sky-command-contract'))return;
+  const style=document.createElement('style');
+  style.id='relphi-sky-command-contract';
+  style.textContent='#skySavedSkiesPopover [data-sky-command="new"]{display:none!important}';
+  document.head.appendChild(style);
+}
+function removeNewSkyCommands(){document.querySelectorAll('#skySavedSkiesPopover [data-sky-command="new"]').forEach(node=>node.remove())}
+
 function renderSlot(slot){const payload=read(slot);renderWhere(slot,payload);renderPlacements(slot,payload);renderCardHits(slot)}
-function render(){queued=false;renderSlot('A');renderSlot('B')}
+function render(){queued=false;removeNewSkyCommands();renderSlot('A');renderSlot('B')}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relevantStorage(event){return !event.key||Object.values(KEYS).includes(event.key)}
 
+installSkyCommandContract();
 window.addEventListener('storage',event=>{if(relevantStorage(event))schedule()});
 ['relphi:sky-foundation-ready','relphi:sky-heptagram-source-ready','relphi:sky-heptagram-canonical-ready','relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed'].forEach(name=>window.addEventListener(name,schedule));
+document.addEventListener('click',()=>window.setTimeout(removeNewSkyCommands,0),true);
+new MutationObserver(records=>{if(records.some(record=>record.addedNodes.length))removeNewSkyCommands()}).observe(document.body,{childList:true,subtree:true});
 window.RelphiSkyDrawerFingerprints=Object.freeze({render:schedule});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 })();
