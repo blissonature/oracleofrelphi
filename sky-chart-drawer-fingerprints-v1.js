@@ -12,6 +12,7 @@ const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scor
 const ANGLE_IDS=new Set(['asc','ascendant','rising','dsc','descendant','mc','midheaven','ic','imumcoeli']);
 let queued=false;
 const cardHitSignature={A:'',B:''};
+const whereRetry={A:0,B:0};
 
 const norm=value=>((Number(value)%360)+360)%360;
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
@@ -52,9 +53,8 @@ function temporalTrace(sourceSvg){
     'aria-hidden':'true',
     focusable:'false'
   });
-  // Keep the complete weekly heptagram so the compact fingerprint reads
-  // as a miniature of the actual Where and When geometry, while preserving
-  // its past/current/future state. Add only the current planetary-hour trace.
+  // The compact fingerprint needs only the heptagram line geometry. It must not
+  // disappear merely because the full-size glyph bubbles are still completing.
   const week=Array.from(sourceSvg.querySelectorAll('.sky-ph-week-segment'));
   const hour=sourceSvg.querySelector('.sky-ph-hour-segment.current');
   week.forEach(line=>{const clone=line.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)});
@@ -66,11 +66,17 @@ function renderWhere(slot,payload){
   const refs=window.RelphiSkyCardShell?.get?.(slot),sourceSvg=refs?.heptagram,profile=payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
   const complete=!!(profile.dateTime&&profile.location&&profile.timeZone&&Number.isFinite(Number(profile.latitude))&&Number.isFinite(Number(profile.longitude)));
   mount.replaceChildren();
-  if(!complete||!sourceSvg||sourceSvg.dataset.canonicalSourceReady!=='true'||sourceSvg.dataset.canonicalHeptagramReady!=='true'){
+  if(!complete||!sourceSvg){
+    whereRetry[slot]=0;
     mount.hidden=true;mount.removeAttribute('aria-label');return;
   }
   const trace=temporalTrace(sourceSvg);
-  if(!trace){mount.hidden=true;mount.removeAttribute('aria-label');return}
+  if(!trace){
+    mount.hidden=true;mount.removeAttribute('aria-label');
+    if(whereRetry[slot]<24){whereRetry[slot]+=1;window.setTimeout(schedule,50)}
+    return;
+  }
+  whereRetry[slot]=0;
   mount.appendChild(trace);mount.hidden=false;
   mount.setAttribute('aria-label',`Where and When fingerprint for Sky ${slot}: week progress and current planetary-hour segment.`);
 }
