@@ -137,14 +137,24 @@ function installSkyCommandContract(){
 }
 function removeNewSkyCommands(){document.querySelectorAll('#skySavedSkiesPopover [data-sky-command="new"]').forEach(node=>node.remove())}
 
-function renderSlot(slot){const payload=read(slot);renderWhere(slot,payload);renderPlacements(slot,payload);renderCardHits(slot)}
+function renderSlot(slot){
+  const payload=read(slot);
+  // The slot owns a persistent Sky-card shell. If a real Remove/Add cycle or a
+  // foundation rebuild replaced that shell, restore it before drawing any fingerprints.
+  window.RelphiSkyCardShell?.ensure?.(slot,payload);
+  renderWhere(slot,payload);renderPlacements(slot,payload);renderCardHits(slot);
+}
 function render(){queued=false;removeNewSkyCommands();renderSlot('A');renderSlot('B')}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relevantStorage(event){return !event.key||Object.values(KEYS).includes(event.key)}
 
 installSkyCommandContract();
 window.addEventListener('storage',event=>{if(relevantStorage(event))schedule()});
-['relphi:sky-foundation-ready','relphi:sky-heptagram-source-ready','relphi:sky-heptagram-canonical-ready','relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed'].forEach(name=>window.addEventListener(name,schedule));
+[
+  'relphi:sky-foundation-ready','relphi:sky-heptagram-source-ready','relphi:sky-heptagram-canonical-ready',
+  'relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed',
+  'relphi:saved-sky-loaded','relphi:sky-b-restored','relphi:sky-session-recovered'
+].forEach(name=>window.addEventListener(name,schedule));
 document.addEventListener('click',()=>window.setTimeout(removeNewSkyCommands,0),true);
 new MutationObserver(records=>{if(records.some(record=>record.addedNodes.length))removeNewSkyCommands()}).observe(document.body,{childList:true,subtree:true});
 window.RelphiSkyDrawerFingerprints=Object.freeze({render:schedule});
