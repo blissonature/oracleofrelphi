@@ -1,13 +1,16 @@
-// Single-sky wheel layout v4: preserve one radial placement lane and resolve crowding tangentially within each true sign.
+// Single-sky wheel layout v5: one radial lane, true-sign-preserving tangential collision resolution, including adjacent sign boundaries.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySingleSkyLayoutV4)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySingleSkyLayoutV5)return;
 window.__relphiSkySingleSkyLayoutV1=true;
 window.__relphiSkySingleSkyLayoutV2=true;
 window.__relphiSkySingleSkyLayoutV3=true;
 window.__relphiSkySingleSkyLayoutV4=true;
+window.__relphiSkySingleSkyLayoutV5=true;
 
 const EPS=1e-6;
+const SIGN_MARGIN=.28;
+const RELAX_PASSES=18;
 let queued=false,arranging=false;
 
 const num=value=>{const n=Number(value);return Number.isFinite(n)?n:NaN};
@@ -31,7 +34,10 @@ function ordinaryItems(wheel,slot){
 }
 function placementLane(){const lane=Number(role()?.placement?.[0]);return Number.isFinite(lane)?lane:287}
 function minimumSeparation(lane){
-  const cmp=comparison()||{},bubble=Number(cmp.placementBubbleRadius)||19.7,clearance=Math.max(3,Number(cmp.placementClearance)||6),chord=2*bubble+clearance;
+  const cmp=comparison()||{},bubble=Number(cmp.placementBubbleRadius)||19.7;
+  // A little more air than the comparison wheel because a standalone sky has no
+  // competing outer placement ring and readability is more important than compactness.
+  const clearance=Math.max(9,Number(cmp.placementClearance)||6),chord=2*bubble+clearance;
   const ratio=Math.min(.999999,chord/(2*Math.max(1,lane)));
   return 2*Math.asin(ratio)*180/Math.PI+.08;
 }
@@ -46,17 +52,54 @@ function isotonic(values){
   });
   const out=new Array(values.length);blocks.forEach(block=>{for(let i=block.start;i<=block.end;i++)out[i]=block.mean});return out;
 }
+function signBounds(sign,unwrapped=false){
+  const shift=unwrapped&&sign===0?360:0;
+  return{min:sign*30+SIGN_MARGIN+shift,max:(sign+1)*30-SIGN_MARGIN+shift};
+}
 function solveSign(items,lane){
   if(!items.length)return[];
   if(items.length===1)return[{item:items[0],display:items[0].exact,lane}];
   const sign=items[0].sign,signStart=sign*30,signEnd=signStart+30;
-  const requested=minimumSeparation(lane),maxFit=(29.4)/(items.length-1),sep=Math.min(requested,maxFit);
-  const margin=Math.min(.3,Math.max(.05,sep*.04)),lower=signStart+margin,upper=signEnd-margin-(items.length-1)*sep;
+  const requested=minimumSeparation(lane),maxFit=(30-SIGN_MARGIN*2)/(items.length-1),sep=Math.min(requested,maxFit);
+  const lower=signStart+SIGN_MARGIN,upper=signEnd-SIGN_MARGIN-(items.length-1)*sep;
   const targets=items.map((item,index)=>item.exact-index*sep),fit=isotonic(targets);
   return items.map((item,index)=>{
     const base=Math.max(lower,Math.min(upper,fit[index])),display=base+index*sep;
     return{item,display,lane};
   });
+}
+function sortedCircular(solution){return solution.slice().sort((a,b)=>norm(a.display)-norm(b.display)||a.item.index-b.item.index)}
+function relaxBoundaryCollisions(solution,lane){
+  if(solution.length<2)return solution;
+  const required=minimumSeparation(lane);
+  for(let pass=0;pass<RELAX_PASSES;pass++){
+    let changed=false;
+    const ordered=sortedCircular(solution);
+    for(let i=0;i<ordered.length;i++){
+      const left=ordered[i],right=ordered[(i+1)%ordered.length],wrap=i===ordered.length-1;
+      const leftValue=norm(left.display),rightValue=norm(right.display)+(wrap?360:0),gap=rightValue-leftValue;
+      if(gap+EPS>=required)continue;
+      let need=required-gap;
+      const leftBounds=signBounds(left.item.sign,false);
+      const rightBounds=signBounds(right.item.sign,wrap);
+      const leftCurrent=leftValue;
+      const rightCurrent=rightValue;
+      const leftRoom=Math.max(0,leftCurrent-leftBounds.min);
+      const rightRoom=Math.max(0,rightBounds.max-rightCurrent);
+      if(leftRoom+rightRoom<=EPS)continue;
+      const leftMove=Math.min(leftRoom,need/2);
+      left.display=norm(leftCurrent-leftMove);need-=leftMove;
+      const rightMove=Math.min(rightRoom,need);
+      right.display=norm(rightCurrent+rightMove);need-=rightMove;
+      if(need>EPS){
+        const extraLeft=Math.min(Math.max(0,leftRoom-leftMove),need);
+        left.display=norm(left.display-extraLeft);need-=extraLeft;
+      }
+      changed=true;
+    }
+    if(!changed)break;
+  }
+  return solution;
 }
 function protectHouseNumbers(wheel){
   const c=center(),g=role();if(!g)return;
@@ -71,6 +114,7 @@ function applyPlacements(wheel){
   const lane=placementLane(),bySign=new Map();
   items.forEach(item=>{if(!bySign.has(item.sign))bySign.set(item.sign,[]);bySign.get(item.sign).push(item)});
   let solution=[];for(let sign=0;sign<12;sign++)solution.push(...solveSign(bySign.get(sign)||[],lane));
+  solution=relaxBoundaryCollisions(solution,lane);
   solution.sort((a,b)=>a.item.exact-b.item.exact||a.item.index-b.item.index);
   solution.forEach((record,index)=>{
     const {item}=record,point=polar(lane,record.display),exact=polar(Number(role()?.degree)||323,item.exact);
@@ -83,9 +127,10 @@ function applyPlacements(wheel){
     item.leader.setAttribute('x1',point.x.toFixed(3));item.leader.setAttribute('y1',point.y.toFixed(3));
     item.leader.setAttribute('x2',exact.x.toFixed(3));item.leader.setAttribute('y2',exact.y.toFixed(3));
     item.leader.dataset.displayLongitude=norm(record.display).toFixed(8);
-    item.leader.dataset.leaderRouting='standalone-single-lane-ordered-v4';
+    item.leader.dataset.leaderRouting='standalone-single-lane-boundary-aware-v5';
   });
-  wheel.dataset.singleSkyCollisionLayout='single-lane-tangential-v4';
+  wheel.dataset.singleSkyCollisionLayout='single-lane-boundary-aware-v5';
+  wheel.dataset.singleSkyMinimumSeparation=minimumSeparation(lane).toFixed(3);
 }
 function apply(){
   queued=false;if(arranging)return;
