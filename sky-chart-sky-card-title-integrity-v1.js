@@ -1,10 +1,11 @@
 // Persistent Sky-card title contract: every present Sky keeps the same Load/Save menu trigger.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardTitleIntegrityV3)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardTitleIntegrityV4)return;
   window.__relphiSkyCardTitleIntegrityV1=true;
   window.__relphiSkyCardTitleIntegrityV2=true;
   window.__relphiSkyCardTitleIntegrityV3=true;
+  window.__relphiSkyCardTitleIntegrityV4=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when']);
@@ -60,9 +61,14 @@
     const p=profile(value),raw=p.instant||p.dateTime||value?.instant||value?.dateTime;
     if(!raw)return false;const date=new Date(raw);return!Number.isNaN(date.getTime())&&Math.abs(Date.now()-date.getTime())<10*60*1000;
   }
+  function resolvedSavedIdentity(slot){
+    try{return window.RelphiSkySavedSkyIdentity?.identity?.(slot)||null}catch(_){return null}
+  }
   function nameFor(slot,value){
     if(editingWhereWhen(slot))return'Where and When';
     if(!hasPlacements(value))return'Where and When';
+    const matched=resolvedSavedIdentity(slot);
+    if(matched?.saved&&matched.name)return matched.name;
     const m=metadata(value),p=profile(value),savedName=String(m.savedSkyName||'').trim();
     if(savedName)return savedName;
     if(manualWhereWhen(value))return'Where and When';
@@ -96,9 +102,11 @@
   }
   function ensure(slot){
     const button=ensureTrigger(slot);if(!button)return;
-    const value=read(slot),name=nameFor(slot,value),label=button.querySelector('.sky-saved-name-label'),isSaved=saved(value)&&!editingWhereWhen(slot);
+    const value=read(slot),matched=resolvedSavedIdentity(slot),name=nameFor(slot,value),label=button.querySelector('.sky-saved-name-label');
+    const isSaved=!editingWhereWhen(slot)&&((matched?.saved===true)||saved(value));
     if(label&&label.textContent!==name)label.textContent=name;
     button.classList.toggle('is-saved',isSaved);
+    button.classList.toggle('is-dirty',!!matched?.dirty);
     button.title=`${name} · open Sky menu`;
     button.setAttribute('aria-label',`${name}. Open Sky menu for Sky ${slot}.`);
   }
@@ -108,7 +116,7 @@
     run();
     const root=document.getElementById('skyFoundationRoot')||document.body;
     new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
-    window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key))schedule()});
+    window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key==='relphiSkyLibraryV1')schedule()});
     ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed','relphi:sky-live-origin-changed','relphi:sky-b-restored','relphi:sky-session-recovered','relphi:sky-where-when-edit-state-changed','relphi:sky-where-when-committed'].forEach(name=>window.addEventListener(name,schedule));
   }
   window.RelphiSkyCardTitle=Object.freeze({refresh:schedule,nameFor});
