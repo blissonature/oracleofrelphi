@@ -1,84 +1,71 @@
-// Placement foreground interaction: hover/focus/tap raises one placement without reordering canonical placement nodes.
+// Placement foreground interaction v2: raise the actual SVG placement and its leader in paint order.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementForegroundV1)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyPlacementForegroundV2)return;
 window.__relphiSkyPlacementForegroundV1=true;
+window.__relphiSkyPlacementForegroundV2=true;
 
-const OVERLAY_ATTR='data-placement-foreground-overlay';
-let hoverTarget=null,focusTarget=null,pinnedTarget=null;
+let pinnedKey='';
 
 function placementFrom(node){return node?.closest?.('[data-layer="placements"]>g[data-sky][data-placement]')||null}
-function liveWheel(){return document.querySelector('#skyFoundationWheelMount>svg.sky-foundation-wheel')}
-function placementLayer(wheel=liveWheel()){return wheel?.querySelector('[data-layer="placements"]')||null}
-function ensureOverlay(){
-  const layer=placementLayer();if(!layer)return null;
-  let overlay=layer.querySelector(`:scope>g[${OVERLAY_ATTR}]`);
-  if(!overlay){
-    overlay=document.createElementNS('http://www.w3.org/2000/svg','g');
-    overlay.setAttribute(OVERLAY_ATTR,'true');
-    overlay.setAttribute('aria-hidden','true');
-    overlay.style.pointerEvents='none';
-    layer.appendChild(overlay);
-  }else if(overlay!==layer.lastElementChild){
-    layer.appendChild(overlay);
-  }
-  return overlay;
-}
+function wheel(){return document.querySelector('#skyFoundationWheelMount>svg.sky-foundation-wheel')}
+function layers(){const w=wheel();return{placements:w?.querySelector('[data-layer="placements"]')||null,leaders:w?.querySelector('[data-layer="leaders"]')||null}}
 function keyOf(node){return node?`${node.dataset.sky||''}:${node.dataset.placement||''}`:''}
-function resolveTarget(key){
-  if(!key)return null;const [sky,...rest]=String(key).split(':'),placement=rest.join(':');
-  const layer=placementLayer();if(!layer)return null;
-  return layer.querySelector(`:scope>g[data-sky="${CSS.escape(sky)}"][data-placement="${CSS.escape(placement)}"]`);
+function leaderFor(node,leaders){
+  if(!node||!leaders)return null;
+  const sky=node.dataset.sky,placement=node.dataset.placement,exact=Number(node.dataset.exactLongitude);
+  const candidates=[...leaders.querySelectorAll(`:scope>line[data-sky="${CSS.escape(String(sky||''))}"][data-placement="${CSS.escape(String(placement||''))}"]`)];
+  if(Number.isFinite(exact)){
+    const exactMatch=candidates.find(line=>Math.abs(Number(line.dataset.exactLongitude)-exact)<1e-5);if(exactMatch)return exactMatch;
+  }
+  return candidates[0]||null;
 }
-function activeTarget(){
-  const candidate=hoverTarget||focusTarget||resolveTarget(pinnedTarget);
-  return candidate?.isConnected?candidate:null;
+function resolve(key){
+  if(!key)return null;const split=String(key).split(':'),sky=split.shift(),placement=split.join(':');
+  const {placements}=layers();return placements?.querySelector(`:scope>g[data-sky="${CSS.escape(sky)}"][data-placement="${CSS.escape(placement)}"]`)||null;
 }
-function clearOverlay(){const overlay=ensureOverlay();overlay?.replaceChildren()}
-function render(){
-  const overlay=ensureOverlay();if(!overlay)return;
-  overlay.replaceChildren();
-  const target=activeTarget();if(!target)return;
-  const clone=target.cloneNode(true);
-  clone.removeAttribute('tabindex');clone.removeAttribute('role');clone.removeAttribute('aria-label');clone.removeAttribute('data-interactive');
-  clone.dataset.placementForeground='true';
-  clone.setAttribute('aria-hidden','true');
-  clone.style.pointerEvents='none';
-  overlay.appendChild(clone);
-  overlay.dataset.foregroundKey=keyOf(target);
+function raise(node){
+  if(!node?.isConnected)return;
+  const {placements,leaders}=layers();if(!placements)return;
+  const leader=leaderFor(node,leaders);
+  if(leader&&leaders)leaders.appendChild(leader);
+  placements.appendChild(node);
+  node.dataset.placementForeground='true';
 }
-function setHover(node){hoverTarget=node;render()}
-function clearHover(node){if(!node||hoverTarget===node)hoverTarget=null;render()}
-function setFocus(node){focusTarget=node;render()}
-function clearFocus(node){if(!node||focusTarget===node)focusTarget=null;render()}
-function pin(node){pinnedTarget=node?keyOf(node):null;render()}
-
+function clearMarks(){document.querySelectorAll('[data-layer="placements"]>g[data-placement-foreground]').forEach(node=>delete node.dataset.placementForeground)}
+function raisePinned(){const node=resolve(pinnedKey);if(node){clearMarks();raise(node)}}
+function cycleAtPoint(event){
+  const {placements}=layers();if(!placements)return null;
+  const seen=new Set(),candidates=[];
+  for(const element of document.elementsFromPoint(event.clientX,event.clientY)){
+    const node=placementFrom(element);if(!node||node.parentElement!==placements)continue;
+    const key=keyOf(node);if(seen.has(key))continue;seen.add(key);candidates.push(node);
+  }
+  if(!candidates.length)return placementFrom(event.target);
+  const currentIndex=candidates.findIndex(node=>keyOf(node)===pinnedKey);
+  return candidates[(currentIndex+1+candidates.length)%candidates.length]||candidates[0];
+}
 function start(){
-  ensureOverlay();
-  const mount=document.getElementById('skyFoundationWheelMount');
-  mount?.addEventListener('pointerover',event=>{
+  const mount=document.getElementById('skyFoundationWheelMount');if(!mount)return;
+  mount.addEventListener('pointerover',event=>{
     const node=placementFrom(event.target);if(!node)return;
-    const related=placementFrom(event.relatedTarget);if(related===node)return;
-    setHover(node);
-  });
-  mount?.addEventListener('pointerout',event=>{
+    clearMarks();raise(node);
+  },true);
+  mount.addEventListener('focusin',event=>{
     const node=placementFrom(event.target);if(!node)return;
-    const related=placementFrom(event.relatedTarget);if(related===node)return;
-    clearHover(node);
-  });
-  mount?.addEventListener('focusin',event=>{const node=placementFrom(event.target);if(node)setFocus(node)});
-  mount?.addEventListener('focusout',event=>{const node=placementFrom(event.target);if(node)clearFocus(node)});
-  mount?.addEventListener('click',event=>{
-    const node=placementFrom(event.target);
-    if(node){pin(node);return}
-    if(event.target.closest?.('.sky-foundation-wheel'))pin(null);
-  });
+    clearMarks();raise(node);
+  },true);
+  mount.addEventListener('click',event=>{
+    const target=cycleAtPoint(event);
+    if(target){pinnedKey=keyOf(target);clearMarks();raise(target);return}
+    if(event.target.closest?.('.sky-foundation-wheel')){pinnedKey='';clearMarks()}
+  },true);
   new MutationObserver(records=>{
-    if(records.some(record=>record.type==='childList'))requestAnimationFrame(()=>{ensureOverlay();render()});
-  }).observe(mount||document.body,{childList:true,subtree:false});
-  ['relphi:sky-foundation-ready','relphi:sky-b-removed','relphi:sky-b-restored','relphi:saved-sky-loaded','relphi:sky-where-when-committed'].forEach(name=>window.addEventListener(name,()=>requestAnimationFrame(()=>{ensureOverlay();render()})));
+    if(records.some(record=>record.type==='childList'))requestAnimationFrame(raisePinned);
+  }).observe(mount,{childList:true,subtree:false});
+  ['relphi:sky-foundation-ready','relphi:sky-b-removed','relphi:sky-b-restored','relphi:saved-sky-loaded','relphi:sky-where-when-committed'].forEach(name=>window.addEventListener(name,()=>requestAnimationFrame(raisePinned)));
 }
 
-window.RelphiSkyPlacementForeground=Object.freeze({render,clear:()=>{hoverTarget=null;focusTarget=null;pinnedTarget=null;clearOverlay()},pinByKey:key=>{pinnedTarget=String(key||'')||null;render()}});
+window.RelphiSkyPlacementForeground=Object.freeze({raiseByKey:key=>{pinnedKey=String(key||'');raisePinned()},clear:()=>{pinnedKey='';clearMarks()}});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
