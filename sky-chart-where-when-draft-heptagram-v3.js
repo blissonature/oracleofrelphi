@@ -23,13 +23,15 @@ function installStyle(){
   node.textContent=`
     html[data-sky-where-when-editing="true"] .sky-where-when-heptagram-slot [data-sky-heptagram-frame]{display:none!important}
     .sky-where-when-heptagram-slot[data-draft-heptagram-ready="true"]{
-      display:grid!important;grid-template-rows:auto auto;place-items:center;width:100%;min-height:0!important;padding:4px 0 6px;box-sizing:border-box
+      display:grid!important;grid-template-rows:auto auto;place-items:center;align-content:start;row-gap:12px;
+      width:100%;min-height:0!important;padding:6px 0 10px;box-sizing:border-box;overflow:visible!important
     }
     .sky-where-when-draft-heptagram{
-      display:block!important;width:min(100%,176px)!important;height:auto!important;min-height:0!important;max-height:176px!important;overflow:visible!important;margin:0 auto!important
+      display:block!important;width:min(100%,176px)!important;height:auto!important;min-height:0!important;max-height:176px!important;
+      overflow:visible!important;margin:0 auto!important
     }
     .sky-where-when-ph-jump{
-      display:inline-flex;align-items:center;justify-content:center;max-width:100%;margin:1px auto 0;padding:.2rem .35rem;
+      display:inline-flex;align-items:center;justify-content:center;max-width:100%;margin:0 auto;padding:.2rem .35rem;
       color:#5b1715;font:850 .64rem/1.25 system-ui,sans-serif;text-align:center;text-decoration:underline;text-underline-offset:3px
     }
     .sky-where-when-ph-jump:hover,.sky-where-when-ph-jump:focus-visible{
@@ -105,7 +107,7 @@ function buildPreview(p){
   const current=rows[currentIndex],weekIndex=Math.max(0,WEEK_PATH.indexOf(dayKey));
   const dayFraction=Math.max(0,Math.min(1,(p.instant-frame.start)/(frame.end-frame.start)));
   const hourFraction=Math.max(0,Math.min(1,(p.instant-current.start)/(current.end-current.start)));
-  const root=svg('svg',{viewBox:'18 18 324 324',preserveAspectRatio:'xMidYMid meet',class:'sky-ph-heptagram sky-where-when-draft-heptagram',role:'img','aria-label':`Draft Where and When heptagram. ${dayKey} planetary day; ${current.ruler} planetary hour.`});
+  const root=svg('svg',{viewBox:'0 0 360 360',preserveAspectRatio:'xMidYMid meet',class:'sky-ph-heptagram sky-where-when-draft-heptagram',role:'img','aria-label':`Draft Where and When heptagram. ${dayKey} planetary day; ${current.ruler} planetary hour.`});
   root.dataset.draftWhereWhen='true';
   root.appendChild(svg('circle',{cx:180,cy:180,r:142,class:'sky-ph-circle'}));
   root.appendChild(svg('circle',{cx:180,cy:180,r:142,class:'sky-ph-guide'}));
