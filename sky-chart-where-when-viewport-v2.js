@@ -17,11 +17,11 @@ function installStyle(){
     .sky-where-when-status:empty{display:none!important;min-height:0!important;margin:0!important}
     @media(min-width:621px){
       .sky-where-when-grid{
-        grid-template-columns:minmax(0,.94fr) minmax(0,1.06fr)!important
+        grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)!important
       }
       .sky-where-when-grid [data-ww-field="date"]{
-        padding-left:.4rem!important;
-        padding-right:.25rem!important
+        padding-left:.5rem!important;
+        padding-right:.35rem!important
       }
     }
     @media(min-width:901px){
@@ -112,11 +112,11 @@ function forceTimeWidth(body){
   if(!body||!window.matchMedia?.('(min-width:621px)')?.matches)return;
   const grid=body.querySelector('.sky-where-when-grid');
   if(!grid)return;
-  grid.style.setProperty('grid-template-columns','minmax(0,.94fr) minmax(0,1.06fr)','important');
+  grid.style.setProperty('grid-template-columns','minmax(0,1.12fr) minmax(0,.88fr)','important');
   const date=grid.querySelector('[data-ww-field="date"]');
   if(date){
-    date.style.setProperty('padding-left','.4rem','important');
-    date.style.setProperty('padding-right','.25rem','important');
+    date.style.setProperty('padding-left','.5rem','important');
+    date.style.setProperty('padding-right','.35rem','important');
   }
 }
 function normalize(slot){
