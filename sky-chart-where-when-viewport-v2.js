@@ -17,11 +17,11 @@ function installStyle(){
     .sky-where-when-status:empty{display:none!important;min-height:0!important;margin:0!important}
     @media(min-width:621px){
       .sky-where-when-grid{
-        grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important
+        grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr)!important
       }
       .sky-where-when-grid [data-ww-field="date"]{
-        padding-left:.45rem!important;
-        padding-right:.3rem!important
+        padding-left:.35rem!important;
+        padding-right:.2rem!important
       }
     }
     @media(min-width:901px){
@@ -108,12 +108,24 @@ function sizeBody(form,body){
   const available=Math.max(260,Math.floor(window.innerHeight-top-footerHeight-10));
   body.style.maxHeight=`${available}px`;
 }
+function forceTimeWidth(body){
+  if(!body||!window.matchMedia?.('(min-width:621px)')?.matches)return;
+  const grid=body.querySelector('.sky-where-when-grid');
+  if(!grid)return;
+  grid.style.setProperty('grid-template-columns','minmax(0,.86fr) minmax(0,1.14fr)','important');
+  const date=grid.querySelector('[data-ww-field="date"]');
+  if(date){
+    date.style.setProperty('padding-left','.35rem','important');
+    date.style.setProperty('padding-right','.2rem','important');
+  }
+}
 function normalize(slot){
   const form=editor(slot);if(!form)return;
   const body=wrapForm(form);if(!body)return;
   const preview=body.querySelector(`[data-ww-heptagram-slot="${slot}"]`);
   const advanced=body.querySelector('.sky-where-when-advanced');
   if(preview&&advanced&&preview.nextElementSibling!==advanced)advanced.before(preview);
+  forceTimeWidth(body);
   sizeBody(form,body);
   if(preview&&preview.dataset.draftHeptagramReady!=='true')window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot);
 }
