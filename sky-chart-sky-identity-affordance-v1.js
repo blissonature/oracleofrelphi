@@ -24,6 +24,7 @@ function installStyle(){
       padding:6px 7px;border:1px solid rgba(31,27,24,.12);border-radius:10px;background:#faf7f2;color:#665e57;
       font:700 .59rem/1.25 system-ui,sans-serif;text-align:center
     }
+    .sky-where-when-footer>.sky-sky-save-cue{grid-column:1/-1}
     .sky-sky-save-cue strong{color:#2b2622;font-weight:900}
     .sky-sky-save-cue .sky-open-sky-menu{flex:0 0 auto;width:auto!important;padding:.45rem .62rem!important;font-size:.59rem!important}
     .sky-where-when-ph-jump.sky-where-when-button{
@@ -73,8 +74,8 @@ function decorateCue(slot){
   if(!show){existing?.remove();return}
   if(editor){
     const footer=editor.querySelector('.sky-where-when-footer');if(!footer)return;
-    if(existing&&existing.parentElement===editor&&existing.nextElementSibling===footer)return;
-    existing?.remove();footer.before(cue(slot));return;
+    if(existing&&existing.parentElement===footer&&footer.firstElementChild===existing)return;
+    existing?.remove();footer.prepend(cue(slot));return;
   }
   const confirmed=panel.querySelector('.sky-where-when-confirmed');
   if(confirmed&&!confirmed.closest('[hidden]')){
