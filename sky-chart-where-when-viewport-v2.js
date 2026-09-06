@@ -14,6 +14,7 @@ function installStyle(){
   node.id='skyWhereWhenViewportStyleV2';
   node.textContent=`
     .sky-where-when-scroll-body{display:contents}
+    .sky-where-when-status:empty{display:none!important;min-height:0!important;margin:0!important}
     @media(min-width:621px){
       .sky-where-when-grid{
         grid-template-columns:minmax(118px,1.15fr) minmax(96px,.85fr)!important
@@ -47,7 +48,7 @@ function installStyle(){
         overflow-x:hidden!important;
         overscroll-behavior:contain;
         scrollbar-gutter:auto;
-        padding:12px!important;
+        padding:12px 12px 4px!important;
       }
       .sky-where-when-footer{
         position:relative!important;
