@@ -1,4 +1,4 @@
-// Where and When viewport v2. The fields scroll only when needed; the action rail does not.
+// Where and When viewport v2. Content stays compact; only the field body scrolls when the viewport actually requires it.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyWhereWhenViewportV2)return;
@@ -22,18 +22,23 @@ function installStyle(){
     @media(min-width:901px){
       .sky-where-when-editor{
         display:grid!important;
-        grid-template-rows:minmax(0,1fr) auto!important;
+        grid-template-rows:auto auto!important;
         height:auto!important;
-        max-height:min(690px,calc(100dvh - 180px))!important;
+        max-height:none!important;
         min-height:0!important;
         align-self:start!important;
+        align-content:start!important;
         padding:0!important;
         gap:0!important;
-        overflow:hidden!important;
+        overflow:visible!important;
       }
       .sky-where-when-scroll-body{
         display:grid!important;
+        grid-auto-rows:max-content!important;
+        align-content:start!important;
         gap:12px!important;
+        width:100%!important;
+        height:auto!important;
         min-width:0!important;
         min-height:0!important;
         max-width:100%!important;
@@ -89,12 +94,22 @@ function wrapForm(form){
   }
   return body;
 }
+function sizeBody(form,body){
+  if(!form||!body)return;
+  if(!window.matchMedia?.('(min-width:901px)')?.matches){body.style.removeProperty('max-height');return}
+  const footer=form.querySelector(':scope > .sky-where-when-footer');
+  const top=Math.max(0,form.getBoundingClientRect().top);
+  const footerHeight=Math.ceil(footer?.getBoundingClientRect().height||0);
+  const available=Math.max(260,Math.floor(window.innerHeight-top-footerHeight-10));
+  body.style.maxHeight=`${available}px`;
+}
 function normalize(slot){
   const form=editor(slot);if(!form)return;
   const body=wrapForm(form);if(!body)return;
   const preview=body.querySelector(`[data-ww-heptagram-slot="${slot}"]`);
   const advanced=body.querySelector('.sky-where-when-advanced');
   if(preview&&advanced&&preview.nextElementSibling!==advanced)advanced.before(preview);
+  sizeBody(form,body);
   if(preview&&preview.dataset.draftHeptagramReady!=='true')window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot);
 }
 function normalizeAll(){queued=false;slots.forEach(normalize)}
@@ -109,4 +124,5 @@ if(root){
 }
 window.addEventListener('relphi:sky-where-when-edit-state-changed',schedule);
 window.addEventListener('resize',schedule,{passive:true});
+window.visualViewport?.addEventListener('resize',schedule,{passive:true});
 })();
