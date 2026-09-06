@@ -1,4 +1,4 @@
-// Where and When viewport v2. The fields scroll; the action rail does not.
+// Where and When viewport v2. The fields scroll only when needed; the action rail does not.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyWhereWhenViewportV2)return;
@@ -14,13 +14,19 @@ function installStyle(){
   node.id='skyWhereWhenViewportStyleV2';
   node.textContent=`
     .sky-where-when-scroll-body{display:contents}
+    @media(min-width:621px){
+      .sky-where-when-grid{
+        grid-template-columns:minmax(118px,1.15fr) minmax(96px,.85fr)!important
+      }
+    }
     @media(min-width:901px){
       .sky-where-when-editor{
         display:grid!important;
         grid-template-rows:minmax(0,1fr) auto!important;
-        height:clamp(440px,calc(100dvh - 180px),690px)!important;
-        max-height:calc(100dvh - 180px)!important;
+        height:auto!important;
+        max-height:min(690px,calc(100dvh - 180px))!important;
         min-height:0!important;
+        align-self:start!important;
         padding:0!important;
         gap:0!important;
         overflow:hidden!important;
@@ -35,7 +41,7 @@ function installStyle(){
         overflow-y:auto!important;
         overflow-x:hidden!important;
         overscroll-behavior:contain;
-        scrollbar-gutter:stable;
+        scrollbar-gutter:auto;
         padding:12px!important;
       }
       .sky-where-when-footer{
