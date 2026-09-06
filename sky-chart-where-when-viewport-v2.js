@@ -17,7 +17,11 @@ function installStyle(){
     .sky-where-when-status:empty{display:none!important;min-height:0!important;margin:0!important}
     @media(min-width:621px){
       .sky-where-when-grid{
-        grid-template-columns:minmax(118px,1.15fr) minmax(96px,.85fr)!important
+        grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important
+      }
+      .sky-where-when-grid [data-ww-field="date"]{
+        padding-left:.45rem!important;
+        padding-right:.3rem!important
       }
     }
     @media(min-width:901px){
