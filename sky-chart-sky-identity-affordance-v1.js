@@ -58,7 +58,7 @@ function decorateHeader(slot){
   let badge=button.querySelector(':scope > .sky-header-save-state');
   if(!show){badge?.remove();return}
   if(!badge){badge=document.createElement('span');badge.className='sky-header-save-state';badge.setAttribute('aria-hidden','true');const chevron=button.querySelector(':scope > .sky-saved-name-chevron');button.insertBefore(badge,chevron||null)}
-  badge.textContent='Unsaved';
+  if(badge.textContent!=='Unsaved')badge.textContent='Unsaved';
 }
 function cue(slot){
   const box=document.createElement('div');box.className='sky-sky-save-cue';box.dataset.skySaveCue=slot;
@@ -69,14 +69,24 @@ function cue(slot){
 function decorateCue(slot){
   const panel=document.getElementById(`skyFoundation${slot}`);if(!panel)return;
   const info=state(slot),value=read(slot),editor=panel.querySelector(`.sky-where-when-editor[data-slot="${slot}"]`),show=!info.saved&&(hasPlacements(value)||!!editor);
-  panel.querySelectorAll(`[data-sky-save-cue="${slot}"]`).forEach(node=>node.remove());
-  if(!show)return;
-  if(editor){const footer=editor.querySelector('.sky-where-when-footer');if(footer)footer.before(cue(slot));return}
-  const confirmed=panel.querySelector('.sky-where-when-confirmed');if(confirmed&&!confirmed.closest('[hidden]'))confirmed.appendChild(cue(slot));
+  let existing=panel.querySelector(`[data-sky-save-cue="${slot}"]`);
+  if(!show){existing?.remove();return}
+  if(editor){
+    const footer=editor.querySelector('.sky-where-when-footer');if(!footer)return;
+    if(existing&&existing.parentElement===editor&&existing.nextElementSibling===footer)return;
+    existing?.remove();footer.before(cue(slot));return;
+  }
+  const confirmed=panel.querySelector('.sky-where-when-confirmed');
+  if(confirmed&&!confirmed.closest('[hidden]')){
+    if(existing&&existing.parentElement===confirmed)return;
+    existing?.remove();confirmed.appendChild(cue(slot));return;
+  }
+  existing?.remove();
 }
 function decoratePlanetaryHours(){
   document.querySelectorAll('.sky-where-when-editor .sky-where-when-ph-jump').forEach(link=>{
-    link.classList.add('sky-where-when-button','secondary');
+    if(link.dataset.skyPhAction==='true')return;
+    link.dataset.skyPhAction='true';link.classList.add('sky-where-when-button','secondary');
     link.textContent='Open in Planetary Hours';
     link.setAttribute('aria-label','Open this moment in Planetary Hours');
   });
@@ -91,7 +101,7 @@ function decorateMenu(){
   const info=state(slot),save=menu.querySelector('[data-sky-command="save"]');
   if(save){
     save.classList.toggle('sky-name-save-primary',!info.saved);
-    const label=save.querySelector('span');if(label&&!info.saved)label.textContent='Name & Save Sky';
+    const label=save.querySelector('span');if(label&&!info.saved&&label.textContent!=='Name & Save Sky')label.textContent='Name & Save Sky';
     if(!info.saved&&save.parentElement?.classList.contains('sky-saved-command-list')&&save.parentElement.firstElementChild!==save)save.parentElement.prepend(save);
   }
   if(!info.saved){
