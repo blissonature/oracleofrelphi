@@ -86,3 +86,51 @@
 .sky-card-house-toggle[data-card-house-toggle="10"]::before{background:#5961c8;color:#fff;font-size:.49rem;letter-spacing:-.035em}
 .sky-card-house-toggle[data-card-house-toggle="11"]::before{background:#8c4fb4;color:#fff;font-size:.49rem;letter-spacing:-.035em}
 .sky-card-house-toggle[data-card-house-toggle="12"]::before{background:#bd438e;color:#fff;font-size:.49rem;letter-spacing:-.035em}
+
+/* House hit concentration reads as tally marks instead of a second numbered bubble.
+   The House medallion owns the number; the right edge now shows only quantity. */
+.sky-card-house-hit-count{
+  --tally-1-w:0px;--tally-1-d:0px;--tally-2-w:0px;--tally-2-d:0px;--tally-3-w:0px;--tally-3-d:0px;
+  display:block!important;
+  justify-self:end!important;
+  width:48px!important;
+  min-width:48px!important;
+  height:18px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background-color:transparent!important;
+  background-image:
+    linear-gradient(105deg,transparent 42%,currentColor 43% 57%,transparent 58%),
+    repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 4px),
+    linear-gradient(105deg,transparent 42%,currentColor 43% 57%,transparent 58%),
+    repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 4px),
+    linear-gradient(105deg,transparent 42%,currentColor 43% 57%,transparent 58%),
+    repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 4px)!important;
+  background-size:
+    var(--tally-1-d) 16px,var(--tally-1-w) 16px,
+    var(--tally-2-d) 16px,var(--tally-2-w) 16px,
+    var(--tally-3-d) 16px,var(--tally-3-w) 16px!important;
+  background-position:0 1px,0 1px,18px 1px,18px 1px,36px 1px,36px 1px!important;
+  background-repeat:no-repeat!important;
+  color:var(--accent,#777)!important;
+  font:800 .56rem/18px system-ui,sans-serif!important;
+  text-align:right!important;
+  box-shadow:none!important;
+}
+.sky-card-house-hit-count.is-zero{background-image:none!important;color:transparent!important;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="1 hit"]{--tally-1-w:2px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="2 hits"]{--tally-1-w:6px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="3 hits"]{--tally-1-w:10px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="4 hits"]{--tally-1-w:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="5 hits"]{--tally-1-w:14px;--tally-1-d:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="6 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:2px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="7 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:6px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="8 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:10px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="9 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="10 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="11 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:2px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="12 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:6px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="13 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:10px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="14 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="15 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:14px;--tally-3-d:14px;font-size:0!important}
