@@ -1,18 +1,19 @@
-// Sky freshness is secondary state. It never replaces the persistent Sky title/menu.
+// Sky freshness is secondary state. The Sky title carries the age; this module keeps the refresh affordance beside it.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyLiveHeaderV5)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyLiveHeaderV6)return;
 window.__relphiSkyLiveHeaderV1=true;
 window.__relphiSkyLiveHeaderV2=true;
 window.__relphiSkyLiveHeaderV3=true;
 window.__relphiSkyLiveHeaderV4=true;
 window.__relphiSkyLiveHeaderV5=true;
+window.__relphiSkyLiveHeaderV6=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const AGE_KEYS={A:'relphiSkyLiveAgeAnchorA',B:'relphiSkyLiveAgeAnchorB'};
 const LIVE_ORIGINS=new Set(['here-and-now','update-to-now','use-now']);
 const STEP_MS=5*60*1000;
-const STYLE_ID='skyLiveHeaderV12Styles';
+const STYLE_ID='skyLiveHeaderV13Styles';
 let queued=false,timer=0;
 
 function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
@@ -49,7 +50,7 @@ function freshness(slot,value){
 }
 function ageLabel(at,now=Date.now()){
   const minutes=Math.floor(Math.max(0,now-Number(at))/STEP_MS)*5;
-  return minutes<5?'Now':`${minutes}m`;
+  return minutes<5?'Now':`${minutes} minutes ago`;
 }
 
 function installStyles(){
@@ -60,17 +61,16 @@ function installStyles(){
     #skyFoundationA>.sky-foundation-heading>.sky-card-title-stable,
     #skyFoundationB>.sky-foundation-heading>.sky-card-title-stable{flex:1 1 auto!important;min-width:0!important}
     .sky-live-header-control{
-      position:relative;appearance:none;display:flex;align-items:center;justify-content:center;gap:4px;
-      flex:0 0 auto;min-width:34px;height:32px;padding:0 6px;border:1px solid transparent;border-radius:999px;
+      position:relative;appearance:none;display:grid;place-items:center;
+      flex:0 0 34px;width:34px;height:34px;padding:0;border:1px solid transparent;border-radius:999px;
       background:transparent;color:#625951;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent
     }
-    .sky-live-header-age{font:800 .58rem/1 system-ui,sans-serif;white-space:nowrap}
-    .sky-live-header-refresh{display:grid;place-items:center;width:17px;height:17px;flex:0 0 17px}
-    .sky-live-header-refresh svg{display:block;width:17px;height:17px;overflow:visible}
+    .sky-live-header-refresh{display:grid;place-items:center;width:19px;height:19px}
+    .sky-live-header-refresh svg{display:block;width:19px;height:19px;overflow:visible}
     .sky-live-header-control:hover,.sky-live-header-control:focus-visible{outline:none;border-color:rgba(31,27,24,.15);background:rgba(31,27,24,.045);color:#201c18}
     .sky-live-header-control:focus-visible{box-shadow:0 0 0 2px rgba(31,27,24,.18)}
     .sky-live-header-control:disabled{cursor:progress;opacity:.5}
-    @media(max-width:620px){.sky-live-header-age{display:none}.sky-live-header-control{width:30px;min-width:30px;padding:0}}
+    @media(max-width:620px){.sky-live-header-control{flex-basis:32px;width:32px;height:32px}}
   `;
   document.head.appendChild(style);
 }
@@ -81,7 +81,7 @@ function ensureControl(slot){
   let control=head.querySelector(`:scope > [data-live-header-control="${slot}"]`);
   if(!control){
     control=document.createElement('button');control.type='button';control.className='sky-live-header-control';control.dataset.liveHeaderControl=slot;control.dataset.finalNow=slot;
-    control.innerHTML=`<span class="sky-live-header-age" data-live-age="${slot}"></span>${icon()}`;
+    control.innerHTML=icon();
   }
   const remove=head.querySelector(':scope > [data-remove-sky-b],:scope > .sky-slot-card-control--remove');
   if(control.parentElement!==head){if(remove)head.insertBefore(control,remove);else head.appendChild(control)}
@@ -92,8 +92,8 @@ function release(slot){heading(slot)?.querySelector(`:scope > [data-live-header-
 function renderSlot(slot){
   const state=freshness(slot,read(slot));if(!state){release(slot);return}
   const control=ensureControl(slot);if(!control)return;
-  const label=ageLabel(state.at),age=control.querySelector('[data-live-age]');if(age)age.textContent=label;
-  control.title=`Update to Now · ${label}`;control.setAttribute('aria-label',`Update to Now. Sky age: ${label}.`);
+  const label=ageLabel(state.at);
+  control.title='Update to Now';control.setAttribute('aria-label',`Update to Now. Sky age: ${label}.`);
 }
 function nextDelay(){
   const now=Date.now();let soon=Infinity;
@@ -101,7 +101,7 @@ function nextDelay(){
   return Number.isFinite(soon)?Math.max(1000,Math.min(STEP_MS,soon)):0;
 }
 function plan(){clearTimeout(timer);const delay=nextDelay();if(delay)timer=setTimeout(schedule,delay)}
-function render(){queued=false;installStyles();renderSlot('A');renderSlot('B');plan()}
+function render(){queued=false;installStyles();renderSlot('A');renderSlot('B');window.RelphiSkyCardTitle?.refresh?.();plan()}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function stamp(event){
   const d=event?.detail||{},slot=d.slot,origin=String(d.origin||''),at=Date.parse(d.at||'');
