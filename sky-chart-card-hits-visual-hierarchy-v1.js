@@ -2,11 +2,12 @@
 // occupied decans on a white field outlined in the same house color.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardHitsVisualHierarchyV2)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardHitsVisualHierarchyV3)return;
 window.__relphiSkyCardHitsVisualHierarchyV1=true;
 window.__relphiSkyCardHitsVisualHierarchyV2=true;
+window.__relphiSkyCardHitsVisualHierarchyV3=true;
 
-const STYLE_ID='skyCardHitsVisualHierarchyV2Styles';
+const STYLE_ID='skyCardHitsVisualHierarchyV3Styles';
 let queued=false;
 
 function installStyles(){
@@ -64,8 +65,8 @@ function installStyles(){
       margin:0!important;
       padding:.34rem .48rem .32rem .62rem!important;
       border:0!important;
-      border-bottom:1px solid color-mix(in srgb,var(--sky-house-unit-color,#777) 48%,rgba(31,27,24,.08))!important;
-      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 18%,#fffdfa)!important;
+      border-bottom:1px solid color-mix(in srgb,var(--sky-house-unit-color,#777) 52%,rgba(31,27,24,.08))!important;
+      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 20%,#fffdfa)!important;
       box-shadow:inset 5px 0 0 var(--sky-house-unit-color,#777)!important;
       color:#4e4741!important;
       font:850 .55rem/1.15 system-ui,sans-serif!important;
@@ -82,7 +83,7 @@ function installStyles(){
       align-items:start!important;
       min-width:0!important;
       padding:.48rem .38rem .48rem!important;
-      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 32%,#fffdfa)!important;
+      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 34%,#fffdfa)!important;
     }
     .sky-card-house-decans-zone{
       grid-column:2!important;
@@ -99,7 +100,7 @@ function installStyles(){
     .sky-card-house-decans-heading{
       display:block!important;
       margin:0 0 .28rem!important;
-      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 72%,#332d28)!important;
+      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 78%,#332d28)!important;
       font:900 .42rem/1 system-ui,sans-serif!important;
       letter-spacing:.06em!important;
       text-align:left!important;
@@ -142,7 +143,7 @@ function installStyles(){
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-span-major-role{
       display:block!important;
       width:100%!important;
-      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 82%,#2f2924)!important;
+      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 84%,#2f2924)!important;
       font:900 .42rem/1 system-ui,sans-serif!important;
       letter-spacing:.055em!important;
       text-align:center!important;
@@ -176,6 +177,7 @@ function installStyles(){
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-span-major-name,
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-decan-label{
       display:flex!important;
+      flex-wrap:wrap!important;
       align-items:flex-start!important;
       justify-content:center!important;
       gap:.08rem!important;
@@ -195,6 +197,15 @@ function installStyles(){
       flex:0 0 12px!important;
       width:12px!important;
       height:12px!important;
+    }
+    .sky-card-house-decan-multiplier{
+      flex:0 0 100%!important;
+      display:block!important;
+      margin:.08rem 0 0!important;
+      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 86%,#261f1a)!important;
+      font:950 .49rem/1 system-ui,sans-serif!important;
+      letter-spacing:.015em!important;
+      text-align:center!important;
     }
     @media(max-width:520px){
       .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line{
@@ -216,6 +227,41 @@ function installStyles(){
   document.head.appendChild(style);
 }
 
+function captureDecanCounts(root=document){
+  root.querySelectorAll?.('.sky-card-house-decan').forEach(node=>{
+    if(node.dataset.houseDecanHitCount)return;
+    const chip=node.querySelector('.sky-card-house-decan-count');
+    if(!chip)return;
+    const hits=Number(chip.textContent);
+    if(Number.isFinite(hits))node.dataset.houseDecanHitCount=String(hits);
+  });
+}
+
+function ensureSpanHeading(span){
+  let heading=span.querySelector(':scope > .sky-card-house-span-heading');
+  if(heading)return heading;
+  const aria=String(span.getAttribute('aria-label')||'');
+  const range=aria.split(':')[0].replace(/\s+to\s+/i,' → ').trim();
+  if(!range)return null;
+  heading=document.createElement('div');
+  heading.className='sky-card-house-span-heading';
+  heading.textContent=range;
+  return heading;
+}
+
+function applyDecanMultiplier(node){
+  const hits=Number(node.dataset.houseDecanHitCount);
+  node.querySelector('.sky-card-house-decan-multiplier')?.remove();
+  if(!Number.isFinite(hits)||hits<=1)return;
+  const label=node.querySelector('.sky-card-house-decan-label');
+  if(!label)return;
+  const multiplier=document.createElement('span');
+  multiplier.className='sky-card-house-decan-multiplier';
+  multiplier.textContent=`×${hits}`;
+  multiplier.setAttribute('aria-label',`${hits} placements in this decan`);
+  label.appendChild(multiplier);
+}
+
 function enhanceSpan(span){
   if(!span||span.dataset.visualHierarchy==='true')return;
   const line=span.querySelector(':scope > .sky-card-house-card-line');
@@ -224,7 +270,8 @@ function enhanceSpan(span){
   const decans=[...line.querySelectorAll(':scope > .sky-card-house-decan')];
   if(majors.length<2)return;
 
-  const heading=span.querySelector(':scope > .sky-card-house-span-heading');
+  decans.forEach(applyDecanMultiplier);
+  const heading=ensureSpanHeading(span);
   const governance=document.createElement('div');
   governance.className='sky-card-house-governance';
   majors.forEach(node=>governance.appendChild(node));
@@ -251,18 +298,20 @@ function enhanceSpan(span){
   line.replaceChildren();
   if(heading)line.appendChild(heading);
   line.append(governance,decanZone);
+  span.querySelector(':scope > .sky-card-house-span-heading')?.remove();
   span.dataset.visualHierarchy='true';
 }
 
 function enhanceAll(){
   queued=false;
+  captureDecanCounts();
   installStyles();
   document.querySelectorAll('.sky-card-house-span').forEach(enhanceSpan);
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(enhanceAll)}
 function start(){
-  installStyles();enhanceAll();
-  new MutationObserver(schedule).observe(document.getElementById('skyFoundationRoot')||document.body,{childList:true,subtree:true});
+  captureDecanCounts();installStyles();enhanceAll();
+  new MutationObserver(()=>{captureDecanCounts();schedule()}).observe(document.getElementById('skyFoundationRoot')||document.body,{childList:true,subtree:true});
   ['relphi:sky-drawer-opened','relphi:saved-sky-loaded','relphi:sky-house-multiselect-changed'].forEach(name=>window.addEventListener(name,schedule));
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
