@@ -1,16 +1,18 @@
 // Persistent Sky-card title contract: every present Sky keeps the same Load/Save menu trigger.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardTitleIntegrityV4)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardTitleIntegrityV5)return;
   window.__relphiSkyCardTitleIntegrityV1=true;
   window.__relphiSkyCardTitleIntegrityV2=true;
   window.__relphiSkyCardTitleIntegrityV3=true;
   window.__relphiSkyCardTitleIntegrityV4=true;
+  window.__relphiSkyCardTitleIntegrityV5=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when']);
   const STYLE_ID='skyCardStableTitleV4';
-  let queued=false;
+  const STEP_MS=5*60*1000;
+  let queued=false,timer=0;
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -47,6 +49,18 @@
     if(['here-and-now','update-to-now','use-now'].includes(origin))return origin;
     return window.RelphiSkyLiveOriginMigration?.legacyOrigin?.(value)||'';
   }
+  function liveAnchorMs(value){
+    const m=metadata(value),p=profile(value);
+    for(const raw of [m.liveAgeAnchorAt,m.liveNowAt,p.liveNowAt,p.instant,p.dateTime,value?.instant,value?.dateTime]){
+      const ms=Date.parse(String(raw||''));if(Number.isFinite(ms))return ms;
+    }
+    return NaN;
+  }
+  function liveAgeLabel(value,now=Date.now()){
+    const at=liveAnchorMs(value);if(!Number.isFinite(at))return'Now';
+    const minutes=Math.floor(Math.max(0,Number(now)-at)/STEP_MS)*5;
+    return minutes<5?'Now':`${minutes} minutes ago`;
+  }
   function manualWhereWhen(value){
     const m=metadata(value),p=profile(value);
     return m.liveNowDisabled===true||m.liveNowDisabledReason==='custom-where-when'||String(p.source||'')==='where-when-v2';
@@ -72,7 +86,8 @@
     const m=metadata(value),p=profile(value),savedName=String(m.savedSkyName||'').trim();
     if(savedName)return savedName;
     if(manualWhereWhen(value))return'Where and When';
-    if(liveOrigin(value)||nearNow(value))return'Now';
+    if(liveOrigin(value))return liveAgeLabel(value);
+    if(nearNow(value))return'Now';
     for(const candidate of [value?.name,value?.displayName,value?.skyName,value?.title,p.name,p.title,m.name,m.title]){
       const name=String(candidate||'').trim(),norm=normalize(name);
       if(name&&!GENERIC.has(norm))return name;
@@ -110,7 +125,19 @@
     button.title=`${name} · open Sky menu`;
     button.setAttribute('aria-label',`${name}. Open Sky menu for Sky ${slot}.`);
   }
-  function run(){queued=false;installStyle();ensure('A');ensure('B')}
+  function nextLiveDelay(){
+    const now=Date.now();let soon=Infinity;
+    for(const slot of ['A','B']){
+      const value=read(slot),matched=resolvedSavedIdentity(slot);
+      if(!value||editingWhereWhen(slot)||matched?.saved||saved(value)||manualWhereWhen(value)||!liveOrigin(value))continue;
+      const at=liveAnchorMs(value);if(!Number.isFinite(at))continue;
+      const elapsed=Math.max(0,now-at),next=(Math.floor(elapsed/STEP_MS)+1)*STEP_MS;
+      soon=Math.min(soon,next-elapsed+40);
+    }
+    return Number.isFinite(soon)?Math.max(1000,Math.min(STEP_MS,soon)):0;
+  }
+  function plan(){clearTimeout(timer);const delay=nextLiveDelay();if(delay)timer=setTimeout(schedule,delay)}
+  function run(){queued=false;installStyle();ensure('A');ensure('B');plan()}
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(run)}
   function start(){
     run();
@@ -119,7 +146,7 @@
     window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key==='relphiSkyLibraryV1')schedule()});
     ['relphi:sky-foundation-ready','relphi:sky-name-updated','relphi:saved-sky-library-changed','relphi:saved-sky-active-changed','relphi:sky-live-origin-changed','relphi:sky-b-restored','relphi:sky-session-recovered','relphi:sky-where-when-edit-state-changed','relphi:sky-where-when-committed'].forEach(name=>window.addEventListener(name,schedule));
   }
-  window.RelphiSkyCardTitle=Object.freeze({refresh:schedule,nameFor});
+  window.RelphiSkyCardTitle=Object.freeze({refresh:schedule,nameFor,liveAgeLabel});
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
 
