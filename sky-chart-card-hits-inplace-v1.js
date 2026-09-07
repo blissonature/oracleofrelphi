@@ -1,15 +1,18 @@
 // Card Hits presentation refinement: relationship-style in-place ruler expansion
-// and compact house disclosures showing ruler card, zodiac sign card, and intersecting decan cards.
+// and compact house disclosures that expose concentration first, then occupied house legs.
 (function(){
 'use strict';
 if(window.__relphiSkyCardHitsInplaceV1)return;
 window.__relphiSkyCardHitsInplaceV1=true;
 
 const SIGN_RULERS={aries:'Mars',taurus:'Venus',gemini:'Mercury',cancer:'Moon',leo:'Sun',virgo:'Mercury',libra:'Venus',scorpio:'Mars',sagittarius:'Jupiter',capricorn:'Saturn',aquarius:'Saturn',pisces:'Jupiter'};
+const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const FALLBACK={Sun:'the_sun',Moon:'the_high_priestess',Mercury:'the_magician',Venus:'the_empress',Mars:'the_tower',Jupiter:'wheel_of_fortune',Saturn:'the_world'};
 const openHouse={A:null,B:null};
 let queued=false;
 const watched=new WeakSet();
+const norm=v=>((Number(v)%360)+360)%360;
 
 function tarotCards(){return Array.isArray(window.RELPHI_TAROT_CARDS)?window.RELPHI_TAROT_CARDS:[]}
 function values(v){return String(v||'').split(',').map(x=>x.trim()).filter(Boolean)}
@@ -28,6 +31,85 @@ function thumb(card,w=48,h=83){
   return u.href;
 }
 function titleCase(v){const s=String(v||'');return s?s[0].toUpperCase()+s.slice(1):''}
+function json(key){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):null}catch(_){return null}}
+function numericCusps(raw){
+  if(!raw)return null;
+  let a=null;
+  if(Array.isArray(raw))a=raw.map(v=>Number(typeof v==='object'?(v.longitude??v.value??v.degree):v));
+  else if(typeof raw==='object'){
+    const keyed=[];
+    for(let h=1;h<=12;h++){
+      const v=raw[h]??raw[String(h)]??raw[`h${h}`]??raw[`house${h}`];
+      keyed.push(Number(typeof v==='object'?(v?.longitude??v?.value??v?.degree):v));
+    }
+    a=keyed.every(Number.isFinite)?keyed:Object.values(raw).map(v=>Number(typeof v==='object'?(v?.longitude??v?.value??v?.degree):v)).filter(Number.isFinite);
+  }
+  return a&&a.length>=12&&a.slice(0,12).every(Number.isFinite)?a.slice(0,12).map(norm):null;
+}
+function source(payload){
+  if(!payload||typeof payload!=='object')return[];
+  const raw=[payload.placements,payload.positions,payload.points,payload.bodies].find(v=>v&&typeof v==='object')||payload;
+  if(Array.isArray(raw))return raw.map((v,i)=>[String(v?.name||v?.label||v?.id||i),v]);
+  return Object.entries(raw).filter(([k,v])=>v&&typeof v==='object'&&!Array.isArray(v)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(k));
+}
+function longitude(v){
+  if(Number.isFinite(Number(v?.longitude)))return norm(v.longitude);
+  const i=SIGNS.findIndex(s=>s.toLowerCase()===String(v?.sign||v?.zodiac||'').trim().toLowerCase());
+  if(i<0)return NaN;
+  return norm(i*30+Number(v?.degree||v?.degrees||0)+Number(v?.minute||v?.minutes||0)/60+Number(v?.second||v?.seconds||0)/3600);
+}
+function ascLongitude(payload){
+  for(const [key,item] of source(payload)){
+    const candidates=[item?.name,item?.label,item?.body,item?.planet,item?.point,item?.id,item?.glyphId,key].map(v=>String(v||'').trim().toLowerCase().replace(/[_\s-]+/g,''));
+    if(candidates.some(v=>v==='asc'||v==='ascendant'||v==='rising')){const lon=longitude(item);if(Number.isFinite(lon))return lon}
+  }
+  return NaN;
+}
+function cuspArrayForSlot(slot){
+  const payload=json(KEYS[slot]);
+  if(!payload)return null;
+  const profile=payload.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
+  for(const raw of[profile.houseCusps,profile.cusps,payload.houseCusps,payload.cusps,payload.houses]){
+    const c=numericCusps(raw);if(c)return c;
+  }
+  const asc=ascLongitude(payload);
+  if(!Number.isFinite(asc))return null;
+  const system=String(profile.houseSystem||payload.houseSystem||'').toLowerCase();
+  if(system.includes('whole')){
+    const start=Math.floor(asc/30)*30;
+    return Array.from({length:12},(_,i)=>norm(start+i*30));
+  }
+  if(system.includes('equal'))return Array.from({length:12},(_,i)=>norm(asc+i*30));
+  return null;
+}
+function formatLongitude(value){
+  let minutes=Math.round(norm(value)*60)%(360*60);
+  if(minutes<0)minutes+=360*60;
+  const si=Math.floor(minutes/(30*60))%12;
+  const within=minutes-si*30*60;
+  const degree=Math.floor(within/60),minute=within%60;
+  return `${degree}°${String(minute).padStart(2,'0')}′ ${SIGNS[si]}`;
+}
+function houseLegs(cusps,house){
+  if(!cusps||!Number.isFinite(house)||house<1||house>12)return[];
+  const start=norm(cusps[house-1]);
+  let end=norm(cusps[house%12]);
+  if(end<=start)end+=360;
+  const legs=[];
+  let cursor=start,guard=0;
+  while(cursor<end-1e-8&&guard++<14){
+    const normalized=norm(cursor+1e-8);
+    const signIndex=Math.floor(normalized/30)%12;
+    const cycle=Math.floor(cursor/360)*360;
+    let signEnd=cycle+(signIndex+1)*30;
+    if(signIndex===11&&signEnd<=cursor+1e-8)signEnd+=360;
+    while(signEnd<=cursor+1e-8)signEnd+=360;
+    const legEnd=Math.min(end,signEnd);
+    legs.push({sign:SIGNS[signIndex].toLowerCase(),start:cursor,end:legEnd});
+    cursor=legEnd;
+  }
+  return legs;
+}
 
 function ensureStyles(){
   if(document.getElementById('skyCardHitsInplaceV1Styles'))return;
@@ -40,8 +122,9 @@ function ensureStyles(){
 .sky-card-house-toggle{appearance:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.55rem;width:100%;min-height:42px;padding:.55rem .65rem;border:0;background:#fffdfa;color:#211d19;cursor:pointer;text-align:left}
 .sky-card-house-toggle:hover,.sky-card-house-toggle:focus-visible{background:#f8f4ee;outline:none}
 .sky-card-house-toggle[aria-expanded="true"]{border-bottom:1px solid rgba(31,27,24,.09)}
+.sky-card-house-toggle:disabled{cursor:default}.sky-card-house-toggle:disabled:hover{background:#fffdfa}
 .sky-card-house-toggle-name{font:900 .67rem/1.1 system-ui,sans-serif;white-space:nowrap}
-.sky-card-house-toggle-signs{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6d645c;font:750 .57rem/1.15 system-ui,sans-serif}
+.sky-card-house-toggle-range{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6d645c;font:750 .57rem/1.15 system-ui,sans-serif}
 .sky-card-house-hit-count{display:grid;place-items:center;min-width:25px;height:25px;padding:0 5px;border-radius:999px;background:var(--accent);color:#fff;font:900 .65rem/1 system-ui,sans-serif;box-shadow:0 1px 3px rgba(31,27,24,.14)}
 .sky-card-house-hit-count.is-zero{background:#ebe6df;color:#8b8178;box-shadow:none}
 .sky-card-house-detail{display:grid;gap:.82rem;min-width:0;padding:.7rem .65rem .78rem;background:#fffdfa}
@@ -50,7 +133,7 @@ function ensureStyles(){
 .sky-card-house-span{display:grid;gap:.52rem;min-width:0;padding-top:.78rem;border-top:1px solid rgba(31,27,24,.09)}
 .sky-card-house-span:first-child{padding-top:0;border-top:0}
 .sky-card-house-span-heading{display:flex;align-items:center;gap:.4rem;min-width:0;color:#2b2622}
-.sky-card-house-span-heading strong{font:900 .66rem/1.15 system-ui,sans-serif}
+.sky-card-house-span-heading strong{font:900 .62rem/1.2 system-ui,sans-serif}
 .sky-card-house-span-majors{display:flex;gap:.7rem;align-items:flex-start;justify-content:flex-start;min-width:0}
 .sky-card-house-span-major{display:grid;grid-template-rows:auto auto auto;justify-items:center;gap:.22rem;width:52px;min-width:0}
 .sky-card-house-span-major-role{color:#7a7068;font:900 .45rem/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em}
@@ -75,9 +158,7 @@ function placeRulerDetail(root){
   if(!grid||!detail)return;
   const active=grid.querySelector('.sky-card-ruler.is-active');
   if(!active)return;
-  if(detail.parentElement!==grid||detail.previousElementSibling!==active){
-    active.insertAdjacentElement('afterend',detail);
-  }
+  if(detail.parentElement!==grid||detail.previousElementSibling!==active)active.insertAdjacentElement('afterend',detail);
   detail.classList.add('sky-card-ruler-detail-inline');
 }
 
@@ -98,7 +179,8 @@ function makeMajor(role,label,card){
   box.append(roleLabel,art,name);
   return box;
 }
-function makeSpan(sign,nodes){
+function makeSpan(leg,nodes){
+  const sign=leg.sign;
   const ruler=SIGN_RULERS[sign]||'';
   const rulerCard=planetCard(ruler);
   const zodiacCard=signCard(sign);
@@ -106,12 +188,12 @@ function makeSpan(sign,nodes){
   const span=document.createElement('section');
   span.className='sky-card-house-span';
   span.dataset.houseSignSpan=sign;
-  span.setAttribute('aria-label',`${signName} span: ${ruler} ruler card, ${signName} zodiac card, and decan cards`);
+  span.setAttribute('aria-label',`${formatLongitude(leg.start)} to ${formatLongitude(leg.end)}: ${ruler} ruler card, ${signName} zodiac card, and occupied decan cards`);
 
   const heading=document.createElement('div');
   heading.className='sky-card-house-span-heading';
   const strong=document.createElement('strong');
-  strong.textContent=signName;
+  strong.textContent=`${formatLongitude(leg.start)} → ${formatLongitude(leg.end)}`;
   heading.appendChild(strong);
 
   const majors=document.createElement('div');
@@ -146,30 +228,36 @@ function cleanDecanHit(item){
   item.querySelector('.sky-card-house-decan-count')?.remove();
   if(item.title)item.title=item.title.replace(/\s*·\s*\d+\s+placements?\s*$/i,'');
 }
-function makeHouseToggle(house,groups,total){
+function makeHouseToggle(house,cusps,total,fallbackSigns){
   const button=document.createElement('button');
   button.type='button';
   button.className='sky-card-house-toggle';
   button.dataset.cardHouseToggle=String(house);
+  button.disabled=total===0;
   const name=document.createElement('span');
   name.className='sky-card-house-toggle-name';
   name.textContent=`House ${house}`;
-  const signs=document.createElement('span');
-  signs.className='sky-card-house-toggle-signs';
-  signs.textContent=groups.map(group=>titleCase(group.sign)).join(' → ');
+  const range=document.createElement('span');
+  range.className='sky-card-house-toggle-range';
+  if(cusps){
+    range.textContent=`${formatLongitude(cusps[house-1])} → ${formatLongitude(cusps[house%12])}`;
+  }else{
+    range.textContent=fallbackSigns.join(' → ');
+  }
   const count=document.createElement('span');
   count.className=`sky-card-house-hit-count${total===0?' is-zero':''}`;
   count.textContent=String(total);
   count.setAttribute('aria-label',`${total} hit${total===1?'':'s'} in House ${house}`);
-  button.append(name,signs,count);
+  button.setAttribute('aria-label',total===0?`House ${house}, no hits`:`House ${house}, ${total} hit${total===1?'':'s'}. Show occupied spans.`);
+  button.append(name,range,count);
   return button;
 }
 function applyHouseDisclosure(root){
   const slot=root?.dataset.cardHitsStructureSlot||'';
   if(!slot)return;
   root.querySelectorAll('.sky-card-house-row[data-house-number]').forEach(row=>{
-    const house=Number(row.dataset.houseNumber);
-    const expanded=openHouse[slot]===house;
+    const house=Number(row.dataset.houseNumber),total=Number(row.dataset.houseHitCount)||0;
+    const expanded=total>0&&openHouse[slot]===house;
     const button=row.querySelector(':scope > .sky-card-house-toggle');
     const detail=row.querySelector(':scope > .sky-card-house-detail');
     if(button)button.setAttribute('aria-expanded',String(expanded));
@@ -178,6 +266,7 @@ function applyHouseDisclosure(root){
 }
 function groupHouseSpans(root){
   const slot=root?.dataset.cardHitsStructureSlot||'';
+  const cuspValues=slot?cuspArrayForSlot(slot):null;
   root.querySelectorAll('.sky-card-house-row').forEach(row=>{
     if(row.dataset.rulerSpansEnhanced==='true')return;
     const original=row.querySelector(':scope > .sky-card-house-decans');
@@ -185,21 +274,36 @@ function groupHouseSpans(root){
     const items=Array.from(original.querySelectorAll(':scope > .sky-card-house-decan'));
     const house=houseNumberFromRow(row);
     if(!items.length||!house){row.dataset.rulerSpansEnhanced='true';return}
+
     const total=items.reduce((sum,item)=>sum+decanHitCount(item),0);
-    const groups=[];
+    const occupiedBySign=new Map();
+    const fallbackSigns=[];
     items.forEach(item=>{
       const sign=signOfDecan(item);
       if(!sign)return;
+      if(!fallbackSigns.includes(titleCase(sign)))fallbackSigns.push(titleCase(sign));
+      const hits=decanHitCount(item);
+      if(hits<=0)return;
       cleanDecanHit(item);
-      let group=groups[groups.length-1];
-      if(!group||group.sign!==sign){group={sign,nodes:[]};groups.push(group)}
-      group.nodes.push(item);
+      if(!occupiedBySign.has(sign))occupiedBySign.set(sign,[]);
+      occupiedBySign.get(sign).push(item);
     });
-    if(!groups.length)return;
+
     const list=document.createElement('div');
     list.className='sky-card-house-detail sky-card-house-span-list';
-    groups.forEach(group=>list.appendChild(makeSpan(group.sign,group.nodes)));
-    const toggle=makeHouseToggle(house,groups,total);
+    const legs=cuspValues?houseLegs(cuspValues,house):[];
+    if(total>0){
+      if(legs.length){
+        legs.forEach(leg=>{
+          const nodes=occupiedBySign.get(leg.sign)||[];
+          if(nodes.length)list.appendChild(makeSpan(leg,nodes));
+        });
+      }else{
+        occupiedBySign.forEach((nodes,sign)=>list.appendChild(makeSpan({sign,start:0,end:0},nodes)));
+      }
+    }
+
+    const toggle=makeHouseToggle(house,cuspValues,total,fallbackSigns);
     row.querySelector(':scope > .sky-card-house-label')?.remove();
     original.replaceWith(list);
     row.prepend(toggle);
@@ -215,10 +319,7 @@ function enhanceRoot(root){
   placeRulerDetail(root);
   groupHouseSpans(root);
 }
-function enhanceAll(){
-  queued=false;
-  document.querySelectorAll('.sky-card-hits-structure').forEach(enhanceRoot);
-}
+function enhanceAll(){queued=false;document.querySelectorAll('.sky-card-hits-structure').forEach(enhanceRoot)}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(enhanceAll)}
 function watchMount(mount){
   if(!mount||watched.has(mount))return;
@@ -236,7 +337,7 @@ window.addEventListener('relphi:saved-sky-loaded',schedule);
 window.addEventListener('relphi:sky-house-multiselect-changed',schedule);
 document.addEventListener('click',event=>{
   const houseButton=event.target.closest?.('[data-card-house-toggle]');
-  if(houseButton){
+  if(houseButton&&!houseButton.disabled){
     const root=houseButton.closest('.sky-card-hits-structure');
     const slot=root?.dataset.cardHitsStructureSlot||'';
     const house=Number(houseButton.dataset.cardHouseToggle);
