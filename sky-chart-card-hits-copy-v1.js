@@ -1,3 +1,16 @@
+// Load the current Card Hits presentation refinement after the structural drawer.
+(function(){
+  'use strict';
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
+  if(!document.querySelector('script[data-card-hits-inplace-loader]')){
+    const script=document.createElement('script');
+    script.src='sky-chart-card-hits-inplace-v1.js?v=1';
+    script.async=false;
+    script.dataset.cardHitsInplaceLoader='true';
+    document.head.appendChild(script);
+  }
+})();
+
 // Copy every Card Hit and its associated placements as clean Markdown.
 (function(){
   'use strict';
