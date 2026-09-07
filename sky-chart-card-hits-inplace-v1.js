@@ -1,5 +1,5 @@
 // Card Hits presentation refinement: relationship-style in-place ruler expansion
-// and house spans led by the Major Arcana card of the sign ruler.
+// and house spans showing ruler card, zodiac sign card, and intersecting decan cards.
 (function(){
 'use strict';
 if(window.__relphiSkyCardHitsInplaceV1)return;
@@ -14,6 +14,8 @@ function tarotCards(){return Array.isArray(window.RELPHI_TAROT_CARDS)?window.REL
 function values(v){return String(v||'').split(',').map(x=>x.trim()).filter(Boolean)}
 function byId(id){return tarotCards().find(c=>c.card_id===id||c.stable_symbol_id===id)||null}
 function planetCard(planet){return tarotCards().find(c=>c.arcana==='Major'&&values(c.astrology?.planet).includes(planet))||byId(FALLBACK[planet])}
+function signCard(sign){const wanted=String(sign||'').trim().toLowerCase();return tarotCards().find(c=>c.arcana==='Major'&&values(c.astrology?.sign).some(v=>v.toLowerCase()===wanted))||null}
+function cardName(card){return String(card?.systems?.golden_dawn_rws?.display_name||card?.name||card?.title||card?.card_name||card?.card_id||'Card').replace(/_/g,' ')}
 function thumb(card,w=48,h=83){
   if(!card)return'';
   const shared=window.RelphiSkyCardHitsDrawer?.thumbnailFor;
@@ -34,22 +36,27 @@ function ensureStyles(){
 .sky-card-rulers-grid>.sky-card-ruler-detail.sky-card-ruler-detail-inline{grid-column:1/-1;margin:0;min-width:0;animation:skyCardHitsInlineOpen .14s ease-out}
 @keyframes skyCardHitsInlineOpen{from{opacity:.35;transform:translateY(-3px)}to{opacity:1;transform:none}}
 .sky-card-house-row[data-ruler-spans-enhanced="true"]{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:.65rem!important}
-.sky-card-house-span-list{display:grid;gap:.7rem;min-width:0}
-.sky-card-house-span{display:grid;grid-template-columns:46px minmax(0,1fr);gap:.55rem;align-items:start;min-width:0;padding-top:.68rem;border-top:1px solid rgba(31,27,24,.09)}
+.sky-card-house-row[data-ruler-spans-enhanced="true"]>.sky-card-house-label{justify-content:flex-start!important}
+.sky-card-house-row[data-ruler-spans-enhanced="true"]>.sky-card-house-label>span{display:none!important}
+.sky-card-house-span-list{display:grid;gap:.82rem;min-width:0}
+.sky-card-house-span{display:grid;gap:.52rem;min-width:0;padding-top:.78rem;border-top:1px solid rgba(31,27,24,.09)}
 .sky-card-house-span:first-child{padding-top:0;border-top:0}
-.sky-card-house-span-ruler{display:grid;justify-items:center;gap:.24rem;min-width:0}
-.sky-card-house-span-ruler-art{display:block;width:42px;height:73px;border:1px solid rgba(31,27,24,.18);border-radius:4px;background:#eee;box-shadow:0 2px 7px rgba(31,27,24,.12);overflow:hidden}
-.sky-card-house-span-ruler-art>img{display:block;width:100%;height:100%;object-fit:cover}
-.sky-card-house-span-ruler-name{max-width:46px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#332d28;font:850 .52rem/1.1 system-ui,sans-serif;text-align:center}
-.sky-card-house-span-body{display:grid;gap:.35rem;min-width:0}
-.sky-card-house-span-heading{display:flex;align-items:baseline;justify-content:space-between;gap:.4rem;min-width:0;color:#5f554d;font:760 .55rem/1.15 system-ui,sans-serif}
-.sky-card-house-span-heading strong{color:#2b2622;font:900 .6rem/1.15 system-ui,sans-serif}
-.sky-card-house-span-decans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.36rem;align-items:start;justify-items:center;min-width:0}
+.sky-card-house-span-heading{display:flex;align-items:center;gap:.4rem;min-width:0;color:#2b2622}
+.sky-card-house-span-heading strong{font:900 .66rem/1.15 system-ui,sans-serif}
+.sky-card-house-span-majors{display:flex;gap:.7rem;align-items:flex-start;justify-content:flex-start;min-width:0}
+.sky-card-house-span-major{display:grid;grid-template-rows:auto auto auto;justify-items:center;gap:.22rem;width:52px;min-width:0}
+.sky-card-house-span-major-role{color:#7a7068;font:900 .45rem/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em}
+.sky-card-house-span-major-art{display:block;width:46px;height:80px;border:1px solid rgba(31,27,24,.18);border-radius:4px;background:#eee;box-shadow:0 2px 7px rgba(31,27,24,.12);overflow:hidden}
+.sky-card-house-span-major-art>img{display:block;width:100%;height:100%;object-fit:cover}
+.sky-card-house-span-major-name{max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#332d28;font:850 .52rem/1.1 system-ui,sans-serif;text-align:center}
+.sky-card-house-span-decans-wrap{display:grid;gap:.28rem;min-width:0}
+.sky-card-house-span-decans-label{color:#7a7068;font:900 .45rem/1 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.05em}
+.sky-card-house-span-decans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.42rem;align-items:start;justify-items:center;min-width:0}
 .sky-card-house-span-decans .sky-card-house-decan{width:100%;gap:.3rem}
 .sky-card-house-span-decans .sky-card-house-decan-art{width:min(52px,100%);height:auto;aspect-ratio:62/108}
 .sky-card-house-span-decans .sky-card-house-decan-label{font-size:.5rem;padding:.15rem 0;gap:.12rem}
 .sky-card-house-span-decans .sky-card-house-decan-label .sky-card-inline-glyph{flex-basis:16px;width:16px;height:16px}
-@media(max-width:520px){.sky-card-house-span{grid-template-columns:42px minmax(0,1fr);gap:.45rem}.sky-card-house-span-ruler-art{width:38px;height:66px}.sky-card-house-span-ruler-name{max-width:42px}.sky-card-house-span-decans{gap:.28rem}}
+@media(max-width:520px){.sky-card-house-span-majors{gap:.55rem}.sky-card-house-span-major{width:48px}.sky-card-house-span-major-art{width:42px;height:73px}.sky-card-house-span-major-name{max-width:48px}.sky-card-house-span-decans{gap:.3rem}}
 `;
   document.head.appendChild(style);
 }
@@ -67,38 +74,53 @@ function placeRulerDetail(root){
 }
 
 function signOfDecan(node){return node.querySelector('[data-relphi-card-sign]')?.dataset.relphiCardSign||''}
+function makeMajor(role,label,card){
+  const box=document.createElement('div');
+  box.className='sky-card-house-span-major';
+  const roleLabel=document.createElement('span');
+  roleLabel.className='sky-card-house-span-major-role';
+  roleLabel.textContent=role;
+  const art=document.createElement('span');
+  art.className='sky-card-house-span-major-art';
+  art.title=card?cardName(card):label;
+  if(card){const img=document.createElement('img');img.src=thumb(card,58,101);img.alt='';img.loading='lazy';img.decoding='async';art.appendChild(img)}
+  const name=document.createElement('span');
+  name.className='sky-card-house-span-major-name';
+  name.textContent=label;
+  box.append(roleLabel,art,name);
+  return box;
+}
 function makeSpan(sign,nodes){
   const ruler=SIGN_RULERS[sign]||'';
-  const card=planetCard(ruler);
+  const rulerCard=planetCard(ruler);
+  const zodiacCard=signCard(sign);
+  const signName=titleCase(sign);
   const span=document.createElement('section');
   span.className='sky-card-house-span';
   span.dataset.houseSignSpan=sign;
+  span.setAttribute('aria-label',`${signName} span: ${ruler} ruler card, ${signName} zodiac card, and decan cards`);
 
-  const rulerBox=document.createElement('div');
-  rulerBox.className='sky-card-house-span-ruler';
-  rulerBox.setAttribute('aria-label',`${ruler} rules the ${titleCase(sign)} span of this house`);
-  const art=document.createElement('span');
-  art.className='sky-card-house-span-ruler-art';
-  if(card){const img=document.createElement('img');img.src=thumb(card,52,90);img.alt='';img.loading='lazy';img.decoding='async';art.appendChild(img)}
-  const rulerName=document.createElement('span');
-  rulerName.className='sky-card-house-span-ruler-name';
-  rulerName.textContent=ruler;
-  rulerBox.append(art,rulerName);
-
-  const body=document.createElement('div');
-  body.className='sky-card-house-span-body';
   const heading=document.createElement('div');
   heading.className='sky-card-house-span-heading';
   const strong=document.createElement('strong');
-  strong.textContent=titleCase(sign);
-  const meta=document.createElement('span');
-  meta.textContent=`ruled by ${ruler}`;
-  heading.append(strong,meta);
+  strong.textContent=signName;
+  heading.appendChild(strong);
+
+  const majors=document.createElement('div');
+  majors.className='sky-card-house-span-majors';
+  majors.append(makeMajor('Ruler',ruler,rulerCard),makeMajor('Sign',signName,zodiacCard));
+
+  const decansWrap=document.createElement('div');
+  decansWrap.className='sky-card-house-span-decans-wrap';
+  const decansLabel=document.createElement('span');
+  decansLabel.className='sky-card-house-span-decans-label';
+  decansLabel.textContent='Decans';
   const decans=document.createElement('div');
   decans.className='sky-card-house-span-decans';
   nodes.forEach(node=>decans.appendChild(node));
-  body.append(heading,decans);
-  span.append(rulerBox,body);
+  decansWrap.append(decansLabel,decans);
+
+  span.append(heading,majors,decansWrap);
   return span;
 }
 
