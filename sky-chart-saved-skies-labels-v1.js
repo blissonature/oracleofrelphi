@@ -1,10 +1,14 @@
 // Saved Skies stays fingerprint-first, with readable identity and Where/When beside each fingerprint.
+// This layer also preserves the direct-picker contract: Sky A exposes Add Sky B when absent,
+// and New Sky in Sky B resets the B slot in place instead of removing the comparison card.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesLabelsV1)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesLabelsV2)return;
+window.__relphiSkySavedSkiesLabelsV2=true;
 window.__relphiSkySavedSkiesLabelsV1=true;
 
 const LIBRARY_KEY='relphiSkyLibraryV1';
+const SKY_B_KEY='relphiSkyChartB';
 let queued=false,observer=null;
 
 function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
@@ -13,10 +17,11 @@ function recordRef(record){return String(record?.id||record?.savedSkyId||record?
 function library(){const fromApi=window.RelphiSkySavedSkyIdentity?.library?.();const list=Array.isArray(fromApi)?fromApi:readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list:[]}
 function profile(record){return record?.calcProfile&&typeof record.calcProfile==='object'?record.calcProfile:{}}
 function metadata(record){return record?.metadata&&typeof record.metadata==='object'?record.metadata:{}}
+function activePickerSlot(){return document.querySelector('[data-saved-sky-trigger][aria-expanded="true"]')?.dataset.savedSkyTrigger||''}
 
 function installStyle(){
-  if(document.getElementById('skySavedSkiesLabelsV1Style'))return;
-  const style=document.createElement('style');style.id='skySavedSkiesLabelsV1Style';style.textContent=`
+  if(document.getElementById('skySavedSkiesLabelsV2Style'))return;
+  const style=document.createElement('style');style.id='skySavedSkiesLabelsV2Style';style.textContent=`
 #skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{
   display:grid!important;
   grid-template-columns:max-content minmax(0,1fr) 20px!important;
@@ -80,9 +85,24 @@ function copyFor(record){
 }
 function signature(record){return JSON.stringify([String(record?.name||''),dateTime(record),place(record)])}
 
+function ensureAddSkyB(popover){
+  const list=popover.querySelector('.sky-saved-list');if(!list)return;
+  const existing=list.querySelector('[data-sky-add-b-row]');
+  const shouldShow=activePickerSlot()==='A'&&!window.RelphiSkySlotControls?.hasSkyB?.();
+  if(!shouldShow){existing?.remove();return}
+  if(existing)return;
+  const row=document.createElement('div');row.className='sky-create-new-row';row.dataset.skyAddBRow='true';
+  const button=document.createElement('button');button.type='button';button.className='sky-create-new-button';button.dataset.skyCommand='add-b';button.setAttribute('aria-label','Add Sky B for comparison');
+  const plus=document.createElement('span');plus.className='sky-create-new-plus';plus.setAttribute('aria-hidden','true');plus.textContent='+';
+  const label=document.createElement('span');label.textContent='Add Sky B';button.append(plus,label);row.appendChild(button);
+  const newRow=list.querySelector('[data-sky-create-new]');
+  if(newRow)newRow.insertAdjacentElement('afterend',row);else list.prepend(row);
+}
+
 function decorate(){
   queued=false;installStyle();
   const popover=document.getElementById('skySavedSkiesPopover');if(!popover||popover.hidden)return;
+  ensureAddSkyB(popover);
   const byRef=new Map(library().map(record=>[recordRef(record),record]));
   popover.querySelectorAll('.sky-saved-list-row').forEach(row=>{
     const item=row.querySelector('[data-saved-sky-ref][data-private-sky-fingerprint="true"]');if(!item)return;
@@ -98,6 +118,50 @@ function decorate(){
   });
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(decorate)}
+
+function blankPayload(){return{name:'Where and When',title:'Where and When',displayName:'Where and When',skyName:'Where and When',saved:false,placements:{},metadata:{name:'Where and When',title:'Where and When'},calcProfile:{name:'Where and When',title:'Where and When'}}}
+function dispatchSkyBStorage(){
+  try{window.dispatchEvent(new StorageEvent('storage',{key:SKY_B_KEY,newValue:localStorage.getItem(SKY_B_KEY),storageArea:localStorage}));return}catch(_){}
+  const event=new Event('storage');try{Object.defineProperty(event,'key',{value:SKY_B_KEY})}catch(_){}window.dispatchEvent(event);
+}
+function closePicker(slot){
+  const popover=document.getElementById('skySavedSkiesPopover');if(popover){popover.hidden=true;popover.removeAttribute('style')}
+  document.querySelector(`[data-saved-sky-trigger="${slot}"]`)?.setAttribute('aria-expanded','false');
+}
+function resetSkyBInPlace(){
+  const transaction=window.RelphiSkyWhereWhenTransaction;
+  try{transaction?.cancel?.('B')}catch(_){}
+  try{window.RelphiSkyCardShell?.setEditorExpanded?.('B',false)}catch(_){}
+  document.querySelectorAll('.sky-where-when-editor[data-slot="B"]').forEach(form=>form.remove());
+  const blank=blankPayload();
+  try{localStorage.setItem(SKY_B_KEY,JSON.stringify(blank))}catch(_){return}
+  const root=document.documentElement,startup=window.RelphiSkyStartupMode;
+  try{startup?.writeMode?.('comparison')}catch(_){}
+  try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
+  root.dataset.skyLastMode='comparison';root.dataset.skyBPresent='true';delete root.dataset.skyBEditing;
+  try{startup?.syncRoot?.()}catch(_){}
+  dispatchSkyBStorage();
+  window.dispatchEvent(new CustomEvent('relphi:saved-sky-active-changed',{detail:{slot:'B'}}));
+  window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'B',name:'Where and When',source:'new-sky-in-place'}}));
+  closePicker('B');
+  requestAnimationFrame(()=>{
+    window.RelphiSkyCardShell?.ensure?.('B',blank);
+    window.RelphiSkyCardShell?.openDrawer?.('B','where');
+    requestAnimationFrame(()=>{
+      if(document.querySelector('#skyFoundationB .sky-where-when-editor[data-slot="B"]'))return;
+      window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot:'B',drawer:'where'}}));
+    });
+  });
+}
+
+// Window capture runs before the Saved Skies document-capture handler. This prevents
+// the legacy B newSky path from removing Sky B and then trying to add it back.
+window.addEventListener('click',event=>{
+  const command=event.target.closest?.('#skySavedSkiesPopover [data-sky-command="new"]');
+  if(!command||activePickerSlot()!=='B')return;
+  event.preventDefault();event.stopImmediatePropagation();resetSkyBInPlace();
+},true);
+
 function start(){
   installStyle();schedule();
   const popover=document.getElementById('skySavedSkiesPopover');
@@ -107,7 +171,9 @@ function start(){
     bodyObserver.observe(document.body,{childList:true,subtree:true});
   }
   window.addEventListener('relphi:saved-sky-library-changed',schedule);
-  window.addEventListener('storage',event=>{if(!event.key||event.key===LIBRARY_KEY)schedule()});
+  window.addEventListener('relphi:sky-b-removed',schedule);
+  window.addEventListener('relphi:sky-b-restored',schedule);
+  window.addEventListener('storage',event=>{if(!event.key||event.key===LIBRARY_KEY||event.key===SKY_B_KEY)schedule()});
   document.addEventListener('click',event=>{if(event.target.closest?.('[data-saved-sky-trigger]'))requestAnimationFrame(schedule)},true);
 }
 window.RelphiSkySavedSkiesLabels=Object.freeze({refresh:schedule});
