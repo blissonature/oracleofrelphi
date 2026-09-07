@@ -1,5 +1,5 @@
 // Card Hits presentation refinement: relationship-style in-place ruler expansion
-// and house spans showing ruler card, zodiac sign card, and intersecting decan cards.
+// and compact house disclosures showing ruler card, zodiac sign card, and intersecting decan cards.
 (function(){
 'use strict';
 if(window.__relphiSkyCardHitsInplaceV1)return;
@@ -7,6 +7,7 @@ window.__relphiSkyCardHitsInplaceV1=true;
 
 const SIGN_RULERS={aries:'Mars',taurus:'Venus',gemini:'Mercury',cancer:'Moon',leo:'Sun',virgo:'Mercury',libra:'Venus',scorpio:'Mars',sagittarius:'Jupiter',capricorn:'Saturn',aquarius:'Saturn',pisces:'Jupiter'};
 const FALLBACK={Sun:'the_sun',Moon:'the_high_priestess',Mercury:'the_magician',Venus:'the_empress',Mars:'the_tower',Jupiter:'wheel_of_fortune',Saturn:'the_world'};
+const openHouse={A:null,B:null};
 let queued=false;
 const watched=new WeakSet();
 
@@ -35,9 +36,16 @@ function ensureStyles(){
   style.textContent=`
 .sky-card-rulers-grid>.sky-card-ruler-detail.sky-card-ruler-detail-inline{grid-column:1/-1;margin:0;min-width:0;animation:skyCardHitsInlineOpen .14s ease-out}
 @keyframes skyCardHitsInlineOpen{from{opacity:.35;transform:translateY(-3px)}to{opacity:1;transform:none}}
-.sky-card-house-row[data-ruler-spans-enhanced="true"]{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:.65rem!important}
-.sky-card-house-row[data-ruler-spans-enhanced="true"]>.sky-card-house-label{justify-content:flex-start!important}
-.sky-card-house-row[data-ruler-spans-enhanced="true"]>.sky-card-house-label>span{display:none!important}
+.sky-card-house-row[data-ruler-spans-enhanced="true"]{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:0!important;padding:0!important;overflow:hidden!important;align-items:stretch!important}
+.sky-card-house-toggle{appearance:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.55rem;width:100%;min-height:42px;padding:.55rem .65rem;border:0;background:#fffdfa;color:#211d19;cursor:pointer;text-align:left}
+.sky-card-house-toggle:hover,.sky-card-house-toggle:focus-visible{background:#f8f4ee;outline:none}
+.sky-card-house-toggle[aria-expanded="true"]{border-bottom:1px solid rgba(31,27,24,.09)}
+.sky-card-house-toggle-name{font:900 .67rem/1.1 system-ui,sans-serif;white-space:nowrap}
+.sky-card-house-toggle-signs{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6d645c;font:750 .57rem/1.15 system-ui,sans-serif}
+.sky-card-house-hit-count{display:grid;place-items:center;min-width:25px;height:25px;padding:0 5px;border-radius:999px;background:var(--accent);color:#fff;font:900 .65rem/1 system-ui,sans-serif;box-shadow:0 1px 3px rgba(31,27,24,.14)}
+.sky-card-house-hit-count.is-zero{background:#ebe6df;color:#8b8178;box-shadow:none}
+.sky-card-house-detail{display:grid;gap:.82rem;min-width:0;padding:.7rem .65rem .78rem;background:#fffdfa}
+.sky-card-house-detail[hidden]{display:none!important}
 .sky-card-house-span-list{display:grid;gap:.82rem;min-width:0}
 .sky-card-house-span{display:grid;gap:.52rem;min-width:0;padding-top:.78rem;border-top:1px solid rgba(31,27,24,.09)}
 .sky-card-house-span:first-child{padding-top:0;border-top:0}
@@ -56,7 +64,7 @@ function ensureStyles(){
 .sky-card-house-span-decans .sky-card-house-decan-art{width:min(52px,100%);height:auto;aspect-ratio:62/108}
 .sky-card-house-span-decans .sky-card-house-decan-label{font-size:.5rem;padding:.15rem 0;gap:.12rem}
 .sky-card-house-span-decans .sky-card-house-decan-label .sky-card-inline-glyph{flex-basis:16px;width:16px;height:16px}
-@media(max-width:520px){.sky-card-house-span-majors{gap:.55rem}.sky-card-house-span-major{width:48px}.sky-card-house-span-major-art{width:42px;height:73px}.sky-card-house-span-major-name{max-width:48px}.sky-card-house-span-decans{gap:.3rem}}
+@media(max-width:520px){.sky-card-house-toggle{gap:.42rem;padding:.5rem .55rem}.sky-card-house-span-majors{gap:.55rem}.sky-card-house-span-major{width:48px}.sky-card-house-span-major-art{width:42px;height:73px}.sky-card-house-span-major-name{max-width:48px}.sky-card-house-span-decans{gap:.3rem}}
 `;
   document.head.appendChild(style);
 }
@@ -124,28 +132,82 @@ function makeSpan(sign,nodes){
   return span;
 }
 
+function houseNumberFromRow(row){
+  const text=row.querySelector(':scope > .sky-card-house-label strong')?.textContent||'';
+  const match=text.match(/\d+/);
+  return match?Number(match[0]):null;
+}
+function decanHitCount(item){
+  const chip=item.querySelector('.sky-card-house-decan-count');
+  const value=Number(chip?.textContent);
+  return Number.isFinite(value)?value:0;
+}
+function cleanDecanHit(item){
+  item.querySelector('.sky-card-house-decan-count')?.remove();
+  if(item.title)item.title=item.title.replace(/\s*·\s*\d+\s+placements?\s*$/i,'');
+}
+function makeHouseToggle(house,groups,total){
+  const button=document.createElement('button');
+  button.type='button';
+  button.className='sky-card-house-toggle';
+  button.dataset.cardHouseToggle=String(house);
+  const name=document.createElement('span');
+  name.className='sky-card-house-toggle-name';
+  name.textContent=`House ${house}`;
+  const signs=document.createElement('span');
+  signs.className='sky-card-house-toggle-signs';
+  signs.textContent=groups.map(group=>titleCase(group.sign)).join(' → ');
+  const count=document.createElement('span');
+  count.className=`sky-card-house-hit-count${total===0?' is-zero':''}`;
+  count.textContent=String(total);
+  count.setAttribute('aria-label',`${total} hit${total===1?'':'s'} in House ${house}`);
+  button.append(name,signs,count);
+  return button;
+}
+function applyHouseDisclosure(root){
+  const slot=root?.dataset.cardHitsStructureSlot||'';
+  if(!slot)return;
+  root.querySelectorAll('.sky-card-house-row[data-house-number]').forEach(row=>{
+    const house=Number(row.dataset.houseNumber);
+    const expanded=openHouse[slot]===house;
+    const button=row.querySelector(':scope > .sky-card-house-toggle');
+    const detail=row.querySelector(':scope > .sky-card-house-detail');
+    if(button)button.setAttribute('aria-expanded',String(expanded));
+    if(detail)detail.hidden=!expanded;
+  });
+}
 function groupHouseSpans(root){
+  const slot=root?.dataset.cardHitsStructureSlot||'';
   root.querySelectorAll('.sky-card-house-row').forEach(row=>{
     if(row.dataset.rulerSpansEnhanced==='true')return;
     const original=row.querySelector(':scope > .sky-card-house-decans');
     if(!original)return;
     const items=Array.from(original.querySelectorAll(':scope > .sky-card-house-decan'));
-    if(!items.length){row.dataset.rulerSpansEnhanced='true';return}
+    const house=houseNumberFromRow(row);
+    if(!items.length||!house){row.dataset.rulerSpansEnhanced='true';return}
+    const total=items.reduce((sum,item)=>sum+decanHitCount(item),0);
     const groups=[];
     items.forEach(item=>{
       const sign=signOfDecan(item);
       if(!sign)return;
+      cleanDecanHit(item);
       let group=groups[groups.length-1];
       if(!group||group.sign!==sign){group={sign,nodes:[]};groups.push(group)}
       group.nodes.push(item);
     });
     if(!groups.length)return;
     const list=document.createElement('div');
-    list.className='sky-card-house-span-list';
+    list.className='sky-card-house-detail sky-card-house-span-list';
     groups.forEach(group=>list.appendChild(makeSpan(group.sign,group.nodes)));
+    const toggle=makeHouseToggle(house,groups,total);
+    row.querySelector(':scope > .sky-card-house-label')?.remove();
     original.replaceWith(list);
+    row.prepend(toggle);
+    row.dataset.houseNumber=String(house);
+    row.dataset.houseHitCount=String(total);
     row.dataset.rulerSpansEnhanced='true';
   });
+  if(slot)applyHouseDisclosure(root);
 }
 
 function enhanceRoot(root){
@@ -172,6 +234,16 @@ function bind(){
 window.addEventListener('relphi:sky-drawer-opened',schedule);
 window.addEventListener('relphi:saved-sky-loaded',schedule);
 window.addEventListener('relphi:sky-house-multiselect-changed',schedule);
-document.addEventListener('click',event=>{if(event.target.closest?.('[data-card-ruler],[data-card-hits-view]'))requestAnimationFrame(schedule)},false);
+document.addEventListener('click',event=>{
+  const houseButton=event.target.closest?.('[data-card-house-toggle]');
+  if(houseButton){
+    const root=houseButton.closest('.sky-card-hits-structure');
+    const slot=root?.dataset.cardHitsStructureSlot||'';
+    const house=Number(houseButton.dataset.cardHouseToggle);
+    if(slot&&house){openHouse[slot]=openHouse[slot]===house?null:house;applyHouseDisclosure(root)}
+    return;
+  }
+  if(event.target.closest?.('[data-card-ruler],[data-card-hits-view]'))requestAnimationFrame(schedule);
+},false);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',bind,{once:true}):bind();
 })();
