@@ -89,6 +89,46 @@
 
 .sky-saved-list{overflow:auto;overscroll-behavior:contain;padding:6px}
 .sky-saved-empty{margin:0;padding:20px 12px;color:#756c64;text-align:center;font:650 .68rem/1.35 system-ui,sans-serif}
+
+/* The top Saved Skies commands use the same rounded secondary-button language as
+   the rest of Sky Chart. New Sky and Add Sky B are deliberately identical in size. */
+#skySavedSkiesPopover .sky-create-new-row{
+  display:block!important;
+  width:100%;
+  margin:0 0 5px;
+}
+#skySavedSkiesPopover .sky-create-new-button{
+  appearance:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  width:100%;
+  min-width:0;
+  min-height:34px;
+  box-sizing:border-box;
+  padding:0 12px;
+  border:1px solid rgba(31,27,24,.22);
+  border-radius:999px;
+  background:#fff;
+  color:#211d19;
+  cursor:pointer;
+  font:850 .62rem/1 system-ui,sans-serif;
+  text-align:center;
+  white-space:nowrap;
+}
+#skySavedSkiesPopover .sky-create-new-button:hover,
+#skySavedSkiesPopover .sky-create-new-button:focus-visible{
+  outline:3px solid rgba(201,33,30,.12);
+  outline-offset:1px;
+  border-color:rgba(31,27,24,.42);
+  background:#f5efe7;
+}
+#skySavedSkiesPopover .sky-create-new-plus{
+  flex:0 0 auto;
+  font:900 .78rem/1 system-ui,sans-serif;
+}
+
 .sky-saved-list-row{
   display:grid;
   grid-template-columns:minmax(0,1fr) 30px;
