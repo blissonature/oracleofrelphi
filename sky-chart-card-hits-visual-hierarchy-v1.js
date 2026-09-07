@@ -1,15 +1,17 @@
-// House Card Hits visual hierarchy: governance on a tinted house-color field,
+// House Card Hits visual hierarchy: governance on a house-color field,
 // occupied decans on a white field outlined in the same house color.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardHitsVisualHierarchyV1)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardHitsVisualHierarchyV2)return;
 window.__relphiSkyCardHitsVisualHierarchyV1=true;
+window.__relphiSkyCardHitsVisualHierarchyV2=true;
 
-const STYLE_ID='skyCardHitsVisualHierarchyV1Styles';
+const STYLE_ID='skyCardHitsVisualHierarchyV2Styles';
 let queued=false;
 
 function installStyles(){
   if(document.getElementById(STYLE_ID))return;
+  document.querySelectorAll('[id^="skyCardHitsVisualHierarchyV"][id$="Styles"]').forEach(node=>node.remove());
   const style=document.createElement('style');
   style.id=STYLE_ID;
   style.textContent=`
@@ -28,23 +30,26 @@ function installStyles(){
 
     .sky-card-house-span[data-visual-hierarchy="true"]{
       gap:0!important;
+      min-width:0!important;
     }
     .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line{
-      --sky-house-card-col:50px;
-      --sky-house-card-art-w:46px;
-      --sky-house-card-art-h:80px;
-      display:inline-grid!important;
-      grid-template-columns:max-content max-content!important;
+      --sky-house-card-col:46px;
+      --sky-house-card-art-w:42px;
+      --sky-house-card-art-h:73px;
+      display:grid!important;
+      grid-template-columns:auto minmax(0,1fr)!important;
       grid-template-rows:auto auto!important;
-      width:max-content!important;
+      width:100%!important;
       max-width:100%!important;
+      min-width:0!important;
+      box-sizing:border-box!important;
       gap:0!important;
       padding:0!important;
-      border:1px solid color-mix(in srgb,var(--sky-house-unit-color,#777) 76%,#5c554f)!important;
+      border:2px solid var(--sky-house-unit-color,#777)!important;
       border-radius:13px!important;
       overflow:hidden!important;
       background:#fffdfa!important;
-      box-shadow:0 1px 2px rgba(31,27,24,.04)!important;
+      box-shadow:0 1px 3px rgba(31,27,24,.06)!important;
     }
     .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line::before,
     .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line::after{
@@ -57,23 +62,27 @@ function installStyles(){
       display:block!important;
       min-width:0!important;
       margin:0!important;
-      padding:.34rem .48rem .32rem!important;
+      padding:.34rem .48rem .32rem .62rem!important;
       border:0!important;
-      border-bottom:1px solid color-mix(in srgb,var(--sky-house-unit-color,#777) 26%,rgba(31,27,24,.08))!important;
-      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 5%,#fffdfa)!important;
-      color:#554d46!important;
+      border-bottom:1px solid color-mix(in srgb,var(--sky-house-unit-color,#777) 48%,rgba(31,27,24,.08))!important;
+      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 18%,#fffdfa)!important;
+      box-shadow:inset 5px 0 0 var(--sky-house-unit-color,#777)!important;
+      color:#4e4741!important;
       font:850 .55rem/1.15 system-ui,sans-serif!important;
       white-space:nowrap!important;
+      overflow:hidden!important;
+      text-overflow:ellipsis!important;
     }
     .sky-card-house-governance{
       grid-column:1!important;
       grid-row:2!important;
       display:grid!important;
       grid-template-columns:repeat(2,var(--sky-house-card-col))!important;
-      gap:.4rem!important;
+      gap:.3rem!important;
       align-items:start!important;
-      padding:.5rem .48rem .5rem!important;
-      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 12%,#fffdfa)!important;
+      min-width:0!important;
+      padding:.48rem .38rem .48rem!important;
+      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 32%,#fffdfa)!important;
     }
     .sky-card-house-decans-zone{
       grid-column:2!important;
@@ -82,14 +91,15 @@ function installStyles(){
       grid-template-rows:auto 1fr!important;
       align-content:start!important;
       min-width:0!important;
-      padding:.5rem .48rem .5rem!important;
-      border-left:1px solid color-mix(in srgb,var(--sky-house-unit-color,#777) 76%,#5c554f)!important;
+      box-sizing:border-box!important;
+      padding:.48rem .38rem .48rem!important;
+      border-left:2px solid var(--sky-house-unit-color,#777)!important;
       background:#fffdfa!important;
     }
     .sky-card-house-decans-heading{
       display:block!important;
       margin:0 0 .28rem!important;
-      color:#6f665f!important;
+      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 72%,#332d28)!important;
       font:900 .42rem/1 system-ui,sans-serif!important;
       letter-spacing:.06em!important;
       text-align:left!important;
@@ -97,22 +107,24 @@ function installStyles(){
     }
     .sky-card-house-decans-grid{
       display:grid!important;
-      grid-auto-flow:column!important;
-      grid-auto-columns:var(--sky-house-card-col)!important;
-      gap:.4rem!important;
+      grid-template-columns:repeat(2,var(--sky-house-card-col))!important;
+      grid-auto-rows:auto!important;
+      gap:.42rem .3rem!important;
       align-items:start!important;
       justify-content:start!important;
+      min-width:0!important;
+      max-width:100%!important;
     }
     .sky-card-house-no-placements{
       display:flex!important;
       align-items:center!important;
-      justify-content:center!important;
-      min-width:72px!important;
-      min-height:98px!important;
-      padding:0 .2rem!important;
+      justify-content:flex-start!important;
+      min-width:0!important;
+      min-height:91px!important;
+      padding:0 .1rem!important;
       color:#81776f!important;
       font:800 .49rem/1.2 system-ui,sans-serif!important;
-      text-align:center!important;
+      text-align:left!important;
     }
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-span-major,
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-decan{
@@ -124,12 +136,13 @@ function installStyles(){
       gap:.24rem!important;
       width:var(--sky-house-card-col)!important;
       min-width:var(--sky-house-card-col)!important;
+      max-width:var(--sky-house-card-col)!important;
       margin:0!important;
     }
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-span-major-role{
       display:block!important;
       width:100%!important;
-      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 72%,#332d28)!important;
+      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 82%,#2f2924)!important;
       font:900 .42rem/1 system-ui,sans-serif!important;
       letter-spacing:.055em!important;
       text-align:center!important;
@@ -165,7 +178,7 @@ function installStyles(){
       display:flex!important;
       align-items:flex-start!important;
       justify-content:center!important;
-      gap:.1rem!important;
+      gap:.08rem!important;
       width:var(--sky-house-card-col)!important;
       max-width:var(--sky-house-card-col)!important;
       min-height:18px!important;
@@ -173,25 +186,31 @@ function installStyles(){
       padding:0!important;
       overflow:visible!important;
       color:#332d28!important;
-      font:850 .47rem/1.15 system-ui,sans-serif!important;
+      font:850 .46rem/1.15 system-ui,sans-serif!important;
       text-align:center!important;
       text-overflow:clip!important;
       white-space:normal!important;
     }
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-decan-label .sky-card-inline-glyph{
-      flex:0 0 13px!important;
-      width:13px!important;
-      height:13px!important;
+      flex:0 0 12px!important;
+      width:12px!important;
+      height:12px!important;
     }
     @media(max-width:520px){
       .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line{
-        --sky-house-card-col:47px;
-        --sky-house-card-art-w:43px;
-        --sky-house-card-art-h:75px;
+        --sky-house-card-col:44px;
+        --sky-house-card-art-w:40px;
+        --sky-house-card-art-h:69px;
       }
-      .sky-card-house-governance,.sky-card-house-decans-zone{padding:.46rem .4rem .46rem!important}
-      .sky-card-house-governance,.sky-card-house-decans-grid{gap:.3rem!important}
-      .sky-card-house-no-placements{min-width:64px!important;min-height:92px!important}
+      .sky-card-house-governance,.sky-card-house-decans-zone{padding:.44rem .3rem .44rem!important}
+      .sky-card-house-governance,.sky-card-house-decans-grid{column-gap:.24rem!important}
+    }
+    @media(max-width:340px){
+      .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line{
+        grid-template-columns:1fr!important;
+      }
+      .sky-card-house-governance{grid-column:1!important;grid-row:2!important}
+      .sky-card-house-decans-zone{grid-column:1!important;grid-row:3!important;border-left:0!important;border-top:2px solid var(--sky-house-unit-color,#777)!important}
     }
   `;
   document.head.appendChild(style);
