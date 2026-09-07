@@ -1,6 +1,7 @@
 /* Native Sky-card drawers. One stylesheet owns the compact fingerprint strip geometry. */
 .sky-card-drawers{display:block;width:100%;min-width:0;border-top:1px solid rgba(31,27,24,.11)}
 .sky-card-fingerprint-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;min-width:0;border-bottom:1px solid rgba(31,27,24,.11);background:#fffdfa}
+.sky-card-drawers[data-where-editor-expanded="true"]>.sky-card-fingerprint-tabs{display:none}
 .sky-card-fingerprint-tab{appearance:none;position:relative;display:grid;place-items:center;min-width:0;min-height:62px;margin:0;padding:0;border:0;border-right:1px solid rgba(31,27,24,.11);border-radius:0;background:transparent;color:inherit;box-shadow:none;cursor:pointer}
 .sky-card-fingerprint-tab:last-child{border-right:0}
 .sky-card-fingerprint-tab:hover,.sky-card-fingerprint-tab:focus-visible{background:#f8f3ed;outline:none}
