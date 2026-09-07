@@ -1,18 +1,21 @@
-// House Card Hits visual hierarchy: governance on a house-color field,
-// occupied decans on a white field outlined in the same house color.
+// House Card Hits visual hierarchy.
+// One presentation owner: house-color governance field + white decan-hit field.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardHitsVisualHierarchyV3)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardHitsVisualHierarchyV4)return;
 window.__relphiSkyCardHitsVisualHierarchyV1=true;
 window.__relphiSkyCardHitsVisualHierarchyV2=true;
 window.__relphiSkyCardHitsVisualHierarchyV3=true;
+window.__relphiSkyCardHitsVisualHierarchyV4=true;
 
-const STYLE_ID='skyCardHitsVisualHierarchyV3Styles';
+const STYLE_ID='skyCardHitsVisualHierarchyV4Styles';
+const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
 let queued=false;
 
 function installStyles(){
+  document.querySelectorAll('[id^="skyCardHitsVisualHierarchyV"][id$="Styles"],#skyCardHitsHouseUniformV1Styles').forEach(node=>node.remove());
   if(document.getElementById(STYLE_ID))return;
-  document.querySelectorAll('[id^="skyCardHitsVisualHierarchyV"][id$="Styles"]').forEach(node=>node.remove());
   const style=document.createElement('style');
   style.id=STYLE_ID;
   style.textContent=`
@@ -30,16 +33,37 @@ function installStyles(){
     .sky-card-house-row[data-house-number="12"]{--sky-house-unit-color:#bd438e}
 
     .sky-card-house-span[data-visual-hierarchy="true"]{
-      gap:0!important;
+      display:grid!important;
+      gap:.34rem!important;
       min-width:0!important;
+      padding-top:.7rem!important;
+      border-top:1px solid rgba(31,27,24,.09)!important;
+    }
+    .sky-card-house-span[data-visual-hierarchy="true"]:first-child{
+      padding-top:0!important;
+      border-top:0!important;
+    }
+    .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-span-heading{
+      display:block!important;
+      min-width:0!important;
+      margin:0!important;
+      padding:0 .12rem!important;
+      border:0!important;
+      background:transparent!important;
+      box-shadow:none!important;
+      color:#2e2925!important;
+      font:900 .59rem/1.18 system-ui,sans-serif!important;
+      white-space:nowrap!important;
+      overflow:hidden!important;
+      text-overflow:ellipsis!important;
     }
     .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line{
-      --sky-house-card-col:46px;
-      --sky-house-card-art-w:42px;
-      --sky-house-card-art-h:73px;
+      --sky-house-card-col:47px;
+      --sky-house-card-art-w:43px;
+      --sky-house-card-art-h:75px;
       display:grid!important;
       grid-template-columns:auto minmax(0,1fr)!important;
-      grid-template-rows:auto auto!important;
+      align-items:stretch!important;
       width:100%!important;
       max-width:100%!important;
       min-width:0!important;
@@ -50,68 +74,53 @@ function installStyles(){
       border-radius:13px!important;
       overflow:hidden!important;
       background:#fffdfa!important;
-      box-shadow:0 1px 3px rgba(31,27,24,.06)!important;
+      box-shadow:0 2px 6px rgba(31,27,24,.07)!important;
     }
     .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line::before,
     .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line::after{
       content:none!important;
       display:none!important;
     }
-    .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-span-heading{
-      grid-column:1/-1!important;
-      grid-row:1!important;
-      display:block!important;
-      min-width:0!important;
-      margin:0!important;
-      padding:.34rem .48rem .32rem .62rem!important;
-      border:0!important;
-      border-bottom:1px solid color-mix(in srgb,var(--sky-house-unit-color,#777) 52%,rgba(31,27,24,.08))!important;
-      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 20%,#fffdfa)!important;
-      box-shadow:inset 5px 0 0 var(--sky-house-unit-color,#777)!important;
-      color:#4e4741!important;
-      font:850 .55rem/1.15 system-ui,sans-serif!important;
-      white-space:nowrap!important;
-      overflow:hidden!important;
-      text-overflow:ellipsis!important;
-    }
     .sky-card-house-governance{
       grid-column:1!important;
-      grid-row:2!important;
       display:grid!important;
       grid-template-columns:repeat(2,var(--sky-house-card-col))!important;
-      gap:.3rem!important;
       align-items:start!important;
+      align-self:stretch!important;
+      gap:.34rem!important;
       min-width:0!important;
-      padding:.48rem .38rem .48rem!important;
-      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 34%,#fffdfa)!important;
+      box-sizing:border-box!important;
+      padding:.55rem .42rem .52rem!important;
+      background:color-mix(in srgb,var(--sky-house-unit-color,#777) 44%,#fffdfa)!important;
     }
     .sky-card-house-decans-zone{
       grid-column:2!important;
-      grid-row:2!important;
       display:grid!important;
       grid-template-rows:auto 1fr!important;
       align-content:start!important;
+      align-self:stretch!important;
       min-width:0!important;
       box-sizing:border-box!important;
-      padding:.48rem .38rem .48rem!important;
+      padding:.55rem .42rem .52rem!important;
       border-left:2px solid var(--sky-house-unit-color,#777)!important;
       background:#fffdfa!important;
     }
     .sky-card-house-decans-heading{
       display:block!important;
-      margin:0 0 .28rem!important;
-      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 78%,#332d28)!important;
-      font:900 .42rem/1 system-ui,sans-serif!important;
-      letter-spacing:.06em!important;
+      margin:0 0 .34rem!important;
+      color:#332d28!important;
+      font:950 .43rem/1 system-ui,sans-serif!important;
+      letter-spacing:.065em!important;
       text-align:left!important;
       text-transform:uppercase!important;
     }
     .sky-card-house-decans-grid{
       display:grid!important;
-      grid-template-columns:repeat(2,var(--sky-house-card-col))!important;
+      grid-template-columns:repeat(auto-fit,var(--sky-house-card-col))!important;
       grid-auto-rows:auto!important;
-      gap:.42rem .3rem!important;
+      gap:.48rem .34rem!important;
       align-items:start!important;
+      align-content:start!important;
       justify-content:start!important;
       min-width:0!important;
       max-width:100%!important;
@@ -121,20 +130,20 @@ function installStyles(){
       align-items:center!important;
       justify-content:flex-start!important;
       min-width:0!important;
-      min-height:91px!important;
-      padding:0 .1rem!important;
-      color:#81776f!important;
-      font:800 .49rem/1.2 system-ui,sans-serif!important;
+      min-height:96px!important;
+      padding:0 .08rem!important;
+      color:#665e57!important;
+      font:800 .5rem/1.25 system-ui,sans-serif!important;
       text-align:left!important;
     }
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-span-major,
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-decan{
       display:grid!important;
-      grid-template-rows:10px var(--sky-house-card-art-h) minmax(18px,auto)!important;
+      grid-template-rows:10px var(--sky-house-card-art-h) minmax(20px,auto)!important;
       justify-items:center!important;
       align-items:start!important;
       align-content:start!important;
-      gap:.24rem!important;
+      gap:.25rem!important;
       width:var(--sky-house-card-col)!important;
       min-width:var(--sky-house-card-col)!important;
       max-width:var(--sky-house-card-col)!important;
@@ -143,9 +152,9 @@ function installStyles(){
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-span-major-role{
       display:block!important;
       width:100%!important;
-      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 84%,#2f2924)!important;
-      font:900 .42rem/1 system-ui,sans-serif!important;
-      letter-spacing:.055em!important;
+      color:#2c2723!important;
+      font:950 .42rem/1 system-ui,sans-serif!important;
+      letter-spacing:.06em!important;
       text-align:center!important;
       text-transform:uppercase!important;
     }
@@ -161,9 +170,10 @@ function installStyles(){
       height:var(--sky-house-card-art-h)!important;
       aspect-ratio:500/866!important;
       margin:0!important;
-      border:1px solid rgba(31,27,24,.16)!important;
+      border:1px solid rgba(31,27,24,.22)!important;
       border-radius:5px!important;
-      box-shadow:0 2px 6px rgba(31,27,24,.11)!important;
+      background:#eee!important;
+      box-shadow:0 2px 6px rgba(31,27,24,.13)!important;
       overflow:hidden!important;
     }
     .sky-card-house-span[data-visual-hierarchy="true"] .sky-card-house-span-major-art>img,
@@ -183,12 +193,12 @@ function installStyles(){
       gap:.08rem!important;
       width:var(--sky-house-card-col)!important;
       max-width:var(--sky-house-card-col)!important;
-      min-height:18px!important;
+      min-height:20px!important;
       margin:0!important;
       padding:0!important;
       overflow:visible!important;
-      color:#332d28!important;
-      font:850 .46rem/1.15 system-ui,sans-serif!important;
+      color:#29241f!important;
+      font:900 .47rem/1.15 system-ui,sans-serif!important;
       text-align:center!important;
       text-overflow:clip!important;
       white-space:normal!important;
@@ -199,13 +209,13 @@ function installStyles(){
       height:12px!important;
     }
     .sky-card-house-decan-multiplier{
-      flex:0 0 100%!important;
-      display:block!important;
-      margin:.08rem 0 0!important;
-      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 86%,#261f1a)!important;
-      font:950 .49rem/1 system-ui,sans-serif!important;
-      letter-spacing:.015em!important;
-      text-align:center!important;
+      display:inline-block!important;
+      flex:0 0 auto!important;
+      margin-left:.06rem!important;
+      color:color-mix(in srgb,var(--sky-house-unit-color,#555) 58%,#211d19)!important;
+      font:1000 .5rem/1 system-ui,sans-serif!important;
+      letter-spacing:.01em!important;
+      white-space:nowrap!important;
     }
     @media(max-width:520px){
       .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line{
@@ -213,105 +223,104 @@ function installStyles(){
         --sky-house-card-art-w:40px;
         --sky-house-card-art-h:69px;
       }
-      .sky-card-house-governance,.sky-card-house-decans-zone{padding:.44rem .3rem .44rem!important}
-      .sky-card-house-governance,.sky-card-house-decans-grid{column-gap:.24rem!important}
+      .sky-card-house-governance,.sky-card-house-decans-zone{padding:.5rem .32rem .48rem!important}
+      .sky-card-house-governance{gap:.26rem!important}
+      .sky-card-house-decans-grid{gap:.42rem .26rem!important}
     }
     @media(max-width:340px){
-      .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line{
-        grid-template-columns:1fr!important;
-      }
-      .sky-card-house-governance{grid-column:1!important;grid-row:2!important}
-      .sky-card-house-decans-zone{grid-column:1!important;grid-row:3!important;border-left:0!important;border-top:2px solid var(--sky-house-unit-color,#777)!important}
+      .sky-card-house-span[data-visual-hierarchy="true"]>.sky-card-house-card-line{grid-template-columns:1fr!important}
+      .sky-card-house-governance{grid-column:1!important;grid-row:1!important}
+      .sky-card-house-decans-zone{grid-column:1!important;grid-row:2!important;border-left:0!important;border-top:2px solid var(--sky-house-unit-color,#777)!important}
     }
   `;
   document.head.appendChild(style);
 }
 
-function captureDecanCounts(root=document){
-  root.querySelectorAll?.('.sky-card-house-decan').forEach(node=>{
-    if(node.dataset.houseDecanHitCount)return;
-    const chip=node.querySelector('.sky-card-house-decan-count');
-    if(!chip)return;
-    const hits=Number(chip.textContent);
-    if(Number.isFinite(hits))node.dataset.houseDecanHitCount=String(hits);
-  });
+function json(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_){return null}}
+function rootFor(node){return node?.closest?.('.sky-card-hits-structure')||null}
+function slotFor(node){return rootFor(node)?.dataset.cardHitsStructureSlot||''}
+function houseFor(node){return Number(node?.closest?.('.sky-card-house-row')?.dataset.houseNumber)||0}
+function signOfDecan(node){return String(node?.querySelector?.('[data-relphi-card-sign]')?.dataset.relphiCardSign||'').toLowerCase()}
+function decanOf(node){
+  const text=String(node?.querySelector?.('.sky-card-house-decan-label')?.textContent||'');
+  const match=text.match(/(\d+)\s*[–-]/);
+  return match?Math.max(0,Math.min(2,Math.floor(Number(match[1])/10))):-1;
 }
-
-function ensureSpanHeading(span){
-  let heading=span.querySelector(':scope > .sky-card-house-span-heading');
-  if(heading)return heading;
-  const aria=String(span.getAttribute('aria-label')||'');
-  const range=aria.split(':')[0].replace(/\s+to\s+/i,' → ').trim();
-  if(!range)return null;
-  heading=document.createElement('div');
-  heading.className='sky-card-house-span-heading';
-  heading.textContent=range;
-  return heading;
+function modelCount(node){
+  const slot=slotFor(node),house=houseFor(node),sign=signOfDecan(node),decan=decanOf(node);
+  if(!KEYS[slot]||!house||!sign||decan<0)return NaN;
+  const payload=json(KEYS[slot]);
+  const houseDecans=window.RelphiSkyCardHitsStructure?.houseDecans;
+  if(!payload||typeof houseDecans!=='function')return NaN;
+  try{
+    const model=houseDecans(payload).find(item=>Number(item.house)===house);
+    const si=SIGNS.indexOf(sign);
+    const hit=model?.cards?.find(item=>Number(item.signIndex)===si&&Number(item.decan)===decan);
+    return Number(hit?.count);
+  }catch(_){return NaN}
 }
-
+function decanHitCount(node){
+  const model=modelCount(node);if(Number.isFinite(model))return model;
+  const stored=Number(node?.dataset?.houseDecanHitCount);if(Number.isFinite(stored))return stored;
+  const chip=Number(node?.querySelector?.('.sky-card-house-decan-count')?.textContent);if(Number.isFinite(chip))return chip;
+  const title=String(node?.title||'').match(/·\s*(\d+)\s+placements?\s*$/i);return title?Number(title[1]):NaN;
+}
 function applyDecanMultiplier(node){
-  const hits=Number(node.dataset.houseDecanHitCount);
+  const hits=decanHitCount(node);
+  if(Number.isFinite(hits))node.dataset.houseDecanHitCount=String(hits);
+  node.querySelector('.sky-card-house-decan-count')?.remove();
   node.querySelector('.sky-card-house-decan-multiplier')?.remove();
   if(!Number.isFinite(hits)||hits<=1)return;
-  const label=node.querySelector('.sky-card-house-decan-label');
-  if(!label)return;
+  const label=node.querySelector('.sky-card-house-decan-label');if(!label)return;
   const multiplier=document.createElement('span');
   multiplier.className='sky-card-house-decan-multiplier';
   multiplier.textContent=`×${hits}`;
   multiplier.setAttribute('aria-label',`${hits} placements in this decan`);
   label.appendChild(multiplier);
 }
-
+function ensureSpanHeading(span){
+  let heading=span.querySelector(':scope > .sky-card-house-span-heading');
+  if(heading)return heading;
+  const aria=String(span.getAttribute('aria-label')||'');
+  const range=aria.split(':')[0].replace(/\s+to\s+/i,' → ').trim();
+  if(!range)return null;
+  heading=document.createElement('div');heading.className='sky-card-house-span-heading';heading.textContent=range;
+  span.prepend(heading);return heading;
+}
 function enhanceSpan(span){
-  if(!span||span.dataset.visualHierarchy==='true')return;
-  const line=span.querySelector(':scope > .sky-card-house-card-line');
-  if(!line)return;
+  if(!span)return;
+  const line=span.querySelector(':scope > .sky-card-house-card-line');if(!line)return;
+  ensureSpanHeading(span);
+
+  if(span.dataset.visualHierarchy==='true'){
+    line.querySelectorAll('.sky-card-house-decan').forEach(applyDecanMultiplier);
+    return;
+  }
   const majors=[...line.querySelectorAll(':scope > .sky-card-house-span-major')];
   const decans=[...line.querySelectorAll(':scope > .sky-card-house-decan')];
   if(majors.length<2)return;
-
   decans.forEach(applyDecanMultiplier);
-  const heading=ensureSpanHeading(span);
-  const governance=document.createElement('div');
-  governance.className='sky-card-house-governance';
+
+  const governance=document.createElement('div');governance.className='sky-card-house-governance';
   majors.forEach(node=>governance.appendChild(node));
-
-  const decanZone=document.createElement('div');
-  decanZone.className='sky-card-house-decans-zone';
-  const decanHeading=document.createElement('span');
-  decanHeading.className='sky-card-house-decans-heading';
-  decanHeading.textContent='Decans';
-  decanZone.appendChild(decanHeading);
-
+  const decanZone=document.createElement('div');decanZone.className='sky-card-house-decans-zone';
+  const decanHeading=document.createElement('span');decanHeading.className='sky-card-house-decans-heading';decanHeading.textContent='Decan Hits';decanZone.appendChild(decanHeading);
   if(decans.length){
-    const grid=document.createElement('div');
-    grid.className='sky-card-house-decans-grid';
-    decans.forEach(node=>grid.appendChild(node));
-    decanZone.appendChild(grid);
+    const grid=document.createElement('div');grid.className='sky-card-house-decans-grid';
+    decans.forEach(node=>grid.appendChild(node));decanZone.appendChild(grid);
   }else{
-    const empty=document.createElement('span');
-    empty.className='sky-card-house-no-placements';
-    empty.textContent='No placements';
-    decanZone.appendChild(empty);
+    const empty=document.createElement('span');empty.className='sky-card-house-no-placements';empty.textContent='No placements';decanZone.appendChild(empty);
   }
-
-  line.replaceChildren();
-  if(heading)line.appendChild(heading);
-  line.append(governance,decanZone);
-  span.querySelector(':scope > .sky-card-house-span-heading')?.remove();
+  line.replaceChildren(governance,decanZone);
   span.dataset.visualHierarchy='true';
 }
-
 function enhanceAll(){
-  queued=false;
-  captureDecanCounts();
-  installStyles();
-  document.querySelectorAll('.sky-card-house-span').forEach(enhanceSpan);
+  queued=false;installStyles();document.querySelectorAll('.sky-card-house-span').forEach(enhanceSpan);
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(enhanceAll)}
 function start(){
-  captureDecanCounts();installStyles();enhanceAll();
-  new MutationObserver(()=>{captureDecanCounts();schedule()}).observe(document.getElementById('skyFoundationRoot')||document.body,{childList:true,subtree:true});
+  installStyles();enhanceAll();
+  new MutationObserver(schedule).observe(document.getElementById('skyFoundationRoot')||document.body,{childList:true,subtree:true});
   ['relphi:sky-drawer-opened','relphi:saved-sky-loaded','relphi:sky-house-multiselect-changed'].forEach(name=>window.addEventListener(name,schedule));
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
