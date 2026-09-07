@@ -1,217 +1,40 @@
-// Sky Chart identity workflow: Saved Skies is the direct picker and Where & When owns naming + persistence.
+// Saved Sky identity follows Where & When: match an existing sky first, otherwise ask for a name after commit.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyIdentityAffordanceV2)return;
-window.__relphiSkyIdentityAffordanceV2=true;
-window.__relphiSkyIdentityAffordanceV1=true;
-
-const LIBRARY_KEY='relphiSkyLibraryV1';
-const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-const GENERIC_NAMES=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when','now']);
-const pendingSave={A:null,B:null};
-let queued=false;
-
-const style=document.createElement('style');
-style.id='sky-chart-identity-workflow-v2-style';
-style.textContent=`
-#skySavedSkiesPopover [data-sky-command="save"],
-#skySavedSkiesPopover [data-sky-command-save-form]{display:none!important}
-#skySavedSkiesPopover .sky-create-new-row{padding:6px 6px 2px}
-#skySavedSkiesPopover .sky-create-new-button{width:100%;display:flex;align-items:center;gap:10px;border:1px solid rgba(76,67,55,.18);border-radius:12px;background:rgba(255,255,255,.72);color:inherit;padding:11px 13px;font:inherit;font-weight:750;text-align:left;cursor:pointer}
-#skySavedSkiesPopover .sky-create-new-button:hover,#skySavedSkiesPopover .sky-create-new-button:focus-visible{background:rgba(255,255,255,.96);outline:none;box-shadow:0 0 0 2px rgba(201,33,30,.14)}
-#skySavedSkiesPopover .sky-create-new-plus{font-size:1.25em;line-height:1;color:#c9211e}
-.sky-where-when-name-section{margin-top:10px}
-.sky-where-when-name-help{margin:6px 0 0;color:var(--muted,#756f67);font-size:.88em;line-height:1.35}
-.sky-where-when-name-conflict{margin-top:9px;padding:10px 11px;border:1px solid rgba(201,33,30,.24);border-radius:10px;background:rgba(201,33,30,.055)}
-.sky-where-when-name-conflict p{margin:0 0 8px;font-size:.9em;line-height:1.35}
-.sky-where-when-name-conflict-actions{display:flex;flex-wrap:wrap;gap:7px}
-.sky-where-when-name-conflict button{font:inherit;border:1px solid rgba(76,67,55,.22);border-radius:9px;background:#fff;padding:7px 10px;cursor:pointer}
-.sky-where-when-name-conflict button:first-child{font-weight:750}
-`;
-document.head.appendChild(style);
-
-function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
-function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
-function clone(value){return JSON.parse(JSON.stringify(value))}
-function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
-function payload(slot){return readJson(SLOT_KEYS[slot],null)}
-function rawLibrary(){const list=readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list.filter(record=>record&&typeof record==='object'):[]}
-function realRecordId(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||'').trim()}
-function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
-function hasPlacements(value){const source=value&&(value.placements||value.positions||value.points||value.bodies);return!!(source&&typeof source==='object'&&!Array.isArray(source)&&Object.keys(source).length)}
-function candidateName(value){for(const candidate of [value?.metadata?.savedSkyName,value?.name,value?.displayName,value?.skyName,value?.title]){const clean=String(candidate||'').trim();if(clean&&!GENERIC_NAMES.has(normalize(clean)))return clean}return''}
-function activeRecord(slot,records=rawLibrary()){
-  const value=payload(slot),meta=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
-  const id=String(meta.savedSkyId||'').trim();
-  if(id){const hit=records.find(record=>realRecordId(record)===id);if(hit)return hit}
-  const savedName=normalize(meta.savedSkyName);
-  if(savedName){const hit=records.find(record=>normalize(record.name)===savedName);if(hit)return hit}
-  try{const hit=window.RelphiSkySavedSkyIdentity?.identity?.(slot)?.record;if(hit){const rid=realRecordId(hit),rname=normalize(hit.name);return records.find(record=>(rid&&realRecordId(record)===rid)||(!rid&&rname&&normalize(record.name)===rname))||hit}}catch(_){}
-  return null;
-}
-function dispatchSlot(slot){
-  const key=SLOT_KEYS[slot];
-  try{window.dispatchEvent(new StorageEvent('storage',{key,newValue:localStorage.getItem(key),storageArea:localStorage}))}
-  catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:key});window.dispatchEvent(event)}
-  window.dispatchEvent(new CustomEvent('relphi:saved-sky-active-changed',{detail:{slot}}));
-}
-function blankPayload(){return{name:'Where and When',title:'Where and When',displayName:'Where and When',skyName:'Where and When',saved:false,placements:{},metadata:{name:'Where and When',title:'Where and When'},calcProfile:{name:'Where and When',title:'Where and When'}}}
-function slotFromOpenTrigger(){for(const slot of ['A','B']){const trigger=document.querySelector(`#skyFoundation${slot} [data-saved-sky-trigger]`);if(trigger?.getAttribute('aria-expanded')==='true')return slot}return null}
-function closePicker(slot){const trigger=document.querySelector(`#skyFoundation${slot} [data-saved-sky-trigger]`);if(trigger?.getAttribute('aria-expanded')==='true')trigger.click()}
-function openBlankWhereWhen(slot){
-  const blank=blankPayload();
-  pendingSave[slot]=null;
-  document.querySelectorAll(`#skyFoundation${slot} [data-sky-heptagram-frame="${slot}"]`).forEach(node=>node.remove());
-  writeJson(SLOT_KEYS[slot],blank);
-  dispatchSlot(slot);
-  window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:'Where and When',source:'create-new'}}));
-  requestAnimationFrame(()=>{
-    window.RelphiSkyCardShell?.ensure?.(slot,blank);
-    window.RelphiSkyCardShell?.openDrawer?.(slot,'where');
-    requestAnimationFrame(()=>{
-      if(!document.querySelector(`#skyFoundation${slot} .sky-where-when-editor[data-slot="${slot}"]`))window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot,drawer:'where'}}));
-    });
-  });
-}
-function createNew(slot){if(!SLOT_KEYS[slot])return;closePicker(slot);openBlankWhereWhen(slot)}
-
-function directToLibrary(trigger){
-  if(!trigger||trigger.getAttribute('aria-expanded')!=='true')return;
-  const popover=document.getElementById('skySavedSkiesPopover');
-  const load=popover?.querySelector('[data-sky-command="load"]');
-  if(load)load.click();
-}
-function decorateLibrary(){
-  const popover=document.getElementById('skySavedSkiesPopover');if(!popover)return;
-  const list=popover.querySelector('.sky-saved-list');if(!list)return;
-  const heading=popover.querySelector('.sky-saved-subview-head strong');if(heading&&normalize(heading.textContent)==='load sky')heading.textContent='Saved Skies';
-  if(!list.querySelector('[data-sky-create-new]')){
-    const row=document.createElement('div');row.className='sky-create-new-row';row.dataset.skyCreateNew='true';
-    const button=document.createElement('button');button.type='button';button.className='sky-create-new-button';button.dataset.skyCreateNewButton='true';button.setAttribute('aria-label','Create a new blank sky');
-    const plus=document.createElement('span');plus.className='sky-create-new-plus';plus.setAttribute('aria-hidden','true');plus.textContent='+';
-    const label=document.createElement('span');label.textContent='Create New';
-    button.append(plus,label);row.appendChild(button);list.prepend(row);
-  }
-}
-
-function skyNameForEditor(slot){
-  const records=rawLibrary(),record=activeRecord(slot,records);if(record?.name)return String(record.name).trim();
-  return candidateName(payload(slot));
-}
-function injectNameField(form){
-  if(!form||form.querySelector('[data-ww-sky-name]'))return;
-  const slot=form.dataset.slot;if(!SLOT_KEYS[slot])return;
-  const section=document.createElement('fieldset');section.className='sky-where-when-section sky-where-when-name-section';section.dataset.wwSkyNameSection='true';
-  const legend=document.createElement('legend');legend.textContent='Name';
-  const label=document.createElement('label');label.className='sky-where-when-label';label.append('Sky name');
-  const input=document.createElement('input');input.className='sky-where-when-input';input.dataset.wwSkyName='true';input.type='text';input.maxLength=80;input.autocomplete='off';input.placeholder='Name this sky';input.value=skyNameForEditor(slot);
-  const help=document.createElement('p');help.className='sky-where-when-name-help';help.dataset.wwSkyNameHelp='true';help.textContent='This sky will be saved when you use this Where and When.';
-  const conflict=document.createElement('div');conflict.className='sky-where-when-name-conflict';conflict.dataset.wwSkyNameConflict='true';conflict.hidden=true;
-  label.appendChild(input);section.append(legend,label,help,conflict);
-  const heptagram=form.querySelector('[data-ww-heptagram-slot]');
-  if(heptagram)heptagram.insertAdjacentElement('afterend',section);else form.querySelector('.sky-where-when-status')?.insertAdjacentElement('beforebegin',section);
-}
-function availableName(name,records,excludeRecord){
-  const excludedId=realRecordId(excludeRecord),excludedName=normalize(excludeRecord?.name);
-  const taken=new Set(records.filter(record=>{
-    if(record===excludeRecord)return false;
-    const rid=realRecordId(record);if(excludedId&&rid===excludedId)return false;
-    if(!excludedId&&excludedName&&normalize(record.name)===excludedName)return false;
-    return true;
-  }).map(record=>normalize(record.name)).filter(Boolean));
-  const match=String(name).trim().match(/^(.*?)(?:\s+(\d+))?$/),hasSuffix=match?.[2]&&Number(match[2])>=2,root=(hasSuffix?match[1]:String(name).trim()).trim();let n=hasSuffix?Number(match[2])+1:2,candidate=`${root} ${n}`;
-  while(taken.has(normalize(candidate))){n+=1;candidate=`${root} ${n}`}
-  return candidate;
-}
-function showNameProblem(form,message){const help=form.querySelector('[data-ww-sky-name-help]');if(help){help.textContent=message;help.style.color='#a51d1a'}form.querySelector('[data-ww-sky-name]')?.focus()}
-function clearNameProblem(form){const help=form.querySelector('[data-ww-sky-name-help]');if(help){help.textContent='This sky will be saved when you use this Where and When.';help.style.color=''}}
-function showConflict(form,name,suggestion,resume){
-  const box=form.querySelector('[data-ww-sky-name-conflict]');if(!box)return;
-  box.replaceChildren();box.hidden=false;box.dataset.resume=resume;box.dataset.suggestion=suggestion;
-  const text=document.createElement('p');text.textContent=`“${name}” is already used. Save this sky with the next available name, or rename it.`;
-  const actions=document.createElement('div');actions.className='sky-where-when-name-conflict-actions';
-  const use=document.createElement('button');use.type='button';use.dataset.wwNameUseSuggestion='true';use.textContent=`Use “${suggestion}”`;
-  const rename=document.createElement('button');rename.type='button';rename.dataset.wwNameRename='true';rename.textContent='Rename';
-  actions.append(use,rename);box.append(text,actions);
-}
-function prepareSave(form,resume){
-  injectNameField(form);
-  const slot=form.dataset.slot,input=form.querySelector('[data-ww-sky-name]'),name=String(input?.value||'').trim();
-  clearNameProblem(form);
-  const box=form.querySelector('[data-ww-sky-name-conflict]');if(box)box.hidden=true;
-  if(!name){showNameProblem(form,'Name this sky before using this Where and When.');input?.focus();return false}
-  const records=rawLibrary(),previous=activeRecord(slot,records),previousId=realRecordId(previous),previousName=String(previous?.name||'').trim();
-  const duplicate=records.find(record=>{
-    if(record===previous)return false;
-    const rid=realRecordId(record);if(previousId&&rid===previousId)return false;
-    if(!previousId&&previousName&&normalize(record.name)===normalize(previousName))return false;
-    return normalize(record.name)===normalize(name);
-  });
-  if(duplicate){showConflict(form,name,availableName(name,records,previous),resume);return false}
-  pendingSave[slot]={name,previousId,previousName};
-  return true;
-}
-function applyNamedIdentity(value,name,id){
-  const next=clone(value||{});next.name=name;next.title=name;next.displayName=name;next.skyName=name;next.saved=true;
-  next.metadata=next.metadata&&typeof next.metadata==='object'?next.metadata:{};next.metadata.savedSkyId=id;next.metadata.savedSkyName=name;next.metadata.savedSkyLoadedAt=new Date().toISOString();next.metadata.name=name;next.metadata.title=name;
-  next.calcProfile=next.calcProfile&&typeof next.calcProfile==='object'?next.calcProfile:{};next.calcProfile.name=name;next.calcProfile.title=name;
-  return next;
-}
-function commitPending(slot){
-  const pending=pendingSave[slot];if(!pending)return;
-  const value=payload(slot);if(!value||!hasPlacements(value))return;
-  pendingSave[slot]=null;
-  const records=rawLibrary();let index=-1;
-  if(pending.previousId)index=records.findIndex(record=>realRecordId(record)===pending.previousId);
-  if(index<0&&pending.previousName)index=records.findIndex(record=>normalize(record.name)===normalize(pending.previousName));
-  const previous=index>=0?records[index]:null,id=realRecordId(previous)||newId(),now=new Date().toISOString(),active=applyNamedIdentity(value,pending.name,id),record=clone(active);
-  delete active.savedAt;delete active.updatedAt;
-  record.id=id;record.savedAt=previous?.savedAt||record.savedAt||now;record.updatedAt=now;
-  if(index>=0)records[index]=record;else records.push(record);
-  if(!writeJson(LIBRARY_KEY,records)||!writeJson(SLOT_KEYS[slot],active))return;
-  dispatchSlot(slot);
-  window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{slot,name:pending.name,id,action:index>=0?'update':'create'}}));
-  window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:pending.name,source:'where-when-auto-save'}}));
-}
-
-function decorate(){
-  document.querySelectorAll('.sky-where-when-editor[data-slot]').forEach(injectNameField);
-  decorateLibrary();
-  document.querySelectorAll('#skySavedSkiesPopover [data-sky-command="save"],#skySavedSkiesPopover [data-sky-command-save-form]').forEach(node=>node.hidden=true);
-}
-function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;decorate()})}
-
-// Saved-sky chevrons go straight through the old command shell into the fingerprint library.
-document.addEventListener('click',event=>{
-  const trigger=event.target.closest('[data-saved-sky-trigger]');if(!trigger)return;
-  requestAnimationFrame(()=>directToLibrary(trigger));
-});
-// The library back arrow now closes the picker instead of revealing the obsolete command menu.
-document.addEventListener('click',event=>{
-  const back=event.target.closest('#skySavedSkiesPopover [data-sky-menu-back]');if(!back)return;
-  const slot=slotFromOpenTrigger();if(!slot)return;event.preventDefault();event.stopImmediatePropagation();closePicker(slot);
-},true);
-document.addEventListener('click',event=>{
-  const create=event.target.closest('[data-sky-create-new-button]');if(create){event.preventDefault();event.stopImmediatePropagation();const slot=slotFromOpenTrigger();if(slot)createNew(slot);return}
-  const suggestion=event.target.closest('[data-ww-name-use-suggestion]');if(suggestion){event.preventDefault();const form=suggestion.closest('.sky-where-when-editor'),box=form?.querySelector('[data-ww-sky-name-conflict]'),input=form?.querySelector('[data-ww-sky-name]');if(!form||!box||!input)return;input.value=box.dataset.suggestion||input.value;box.hidden=true;const resume=box.dataset.resume||'submit';if(resume==='use-now')form.querySelector('[data-ww-action="use-now"]')?.click();else form.requestSubmit();return}
-  const rename=event.target.closest('[data-ww-name-rename]');if(rename){event.preventDefault();const form=rename.closest('.sky-where-when-editor'),box=form?.querySelector('[data-ww-sky-name-conflict]'),input=form?.querySelector('[data-ww-sky-name]');if(box)box.hidden=true;input?.focus();input?.select();return}
-  const cancel=event.target.closest('[data-ww-action="cancel"]');if(cancel){const form=cancel.closest('.sky-where-when-editor');if(form?.dataset.slot)pendingSave[form.dataset.slot]=null}
-},true);
-// Use Now is also a commit path in the existing Where & When controller, so it obeys the same naming rules.
-document.addEventListener('click',event=>{
-  const button=event.target.closest('[data-ww-action="use-now"]');if(!button)return;const form=button.closest('.sky-where-when-editor');if(!form)return;
-  if(!prepareSave(form,'use-now')){event.preventDefault();event.stopImmediatePropagation()}
-},true);
-// Normal final confirmation: validate name first, then let the native Where & When calculation run unchanged.
-document.addEventListener('submit',event=>{
-  const form=event.target.closest('.sky-where-when-editor');if(!form)return;
-  if(!prepareSave(form,'submit')){event.preventDefault();event.stopImmediatePropagation()}
-},true);
-document.addEventListener('input',event=>{const input=event.target.closest('[data-ww-sky-name]');if(!input)return;const form=input.closest('.sky-where-when-editor'),box=form?.querySelector('[data-ww-sky-name-conflict]');if(box)box.hidden=true;clearNameProblem(form)});
-window.addEventListener('relphi:sky-working-copy-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]&&event.detail?.source==='where-when')commitPending(slot)});
-window.addEventListener('relphi:sky-where-when-committed',event=>{(event.detail?.slots||[]).forEach(slot=>{if(SLOT_KEYS[slot])commitPending(slot)})});
-window.addEventListener('relphi:saved-sky-library-changed',schedule);
-window.addEventListener('relphi:sky-foundation-ready',schedule);
-new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-expanded','hidden']});
-schedule();
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyIdentityAffordanceV3)return;
+window.__relphiSkyIdentityAffordanceV3=true;window.__relphiSkyIdentityAffordanceV2=true;window.__relphiSkyIdentityAffordanceV1=true;
+const LIB='relphiSkyLibraryV1',KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+let promptSlot='';
+const css=document.createElement('style');css.id='skyIdentityPromptV3';css.textContent=`
+.sky-name-prompt{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:18px;background:rgba(23,20,18,.34)}.sky-name-prompt[hidden]{display:none!important}.sky-name-prompt-card{width:min(390px,100%);display:grid;gap:12px;padding:18px;border:1px solid rgba(31,27,24,.16);border-radius:18px;background:#fffdfa;box-shadow:0 18px 55px rgba(31,27,24,.22)}.sky-name-prompt-card h3{margin:0;font:900 1rem/1.2 system-ui,sans-serif}.sky-name-prompt-card p{margin:0;color:#675e56;font:.86rem/1.4 system-ui,sans-serif}.sky-name-prompt-card label{display:grid;gap:6px;font:800 .75rem/1.2 system-ui,sans-serif}.sky-name-prompt-card input{width:100%;box-sizing:border-box;border:1px solid rgba(31,27,24,.22);border-radius:10px;background:#fff;padding:10px 11px;font:inherit;color:#211d19}.sky-name-prompt-card input:focus{outline:2px solid rgba(201,33,30,.22);border-color:#c9211e}.sky-name-prompt-conflict{display:grid;gap:8px;padding:10px;border-radius:10px;background:#f7eee9;color:#6d2d28;font:.8rem/1.35 system-ui,sans-serif}.sky-name-prompt-conflict[hidden]{display:none!important}.sky-name-prompt-conflict button{justify-self:start;border:1px solid rgba(31,27,24,.16);border-radius:999px;background:#fff;padding:7px 10px;font:800 .72rem system-ui,sans-serif;cursor:pointer}.sky-name-prompt-actions{display:flex;justify-content:flex-end;gap:8px}.sky-name-prompt-actions button{border:1px solid rgba(31,27,24,.18);border-radius:999px;padding:9px 14px;background:#fff;color:#2b2622;font:850 .75rem system-ui,sans-serif;cursor:pointer}.sky-name-prompt-actions [data-sky-name-save]{border-color:#c9211e;background:#c9211e;color:#fff}`;document.head.appendChild(css);
+function get(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
+function put(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
+function copy(v){return JSON.parse(JSON.stringify(v))}
+function norm(v){return String(v||'').trim().toLowerCase().replace(/\s+/g,' ')}
+function sky(slot){return get(KEYS[slot],null)}function lib(){const v=get(LIB,[]);return Array.isArray(v)?v.filter(Boolean):[]}
+function prof(v){return v?.calcProfile&&typeof v.calcProfile==='object'?v.calcProfile:{}}function meta(v){return v?.metadata&&typeof v.metadata==='object'?v.metadata:{}}
+function rid(v){return String(v?.id||v?.savedSkyId||v?.metadata?.savedSkyId||'').trim()}function id(){return`sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
+function hasPlacements(v){const p=v&&(v.placements||v.positions||v.points||v.bodies);return!!(p&&typeof p==='object'&&!Array.isArray(p)&&Object.keys(p).length)}
+function dateTime(p){const d=String(p.dateTime||'').trim();if(d)return d.slice(0,16);const i=String(p.instant||''),z=String(p.timeZone||'');if(i&&z&&window.luxon?.DateTime){const x=window.luxon.DateTime.fromISO(i,{setZone:true}).setZone(z);if(x.isValid)return x.toFormat("yyyy-MM-dd'T'HH:mm")}return''}
+function coord(v){const n=Number(v);return Number.isFinite(n)?n.toFixed(5):''}
+function signature(v){const p=prof(v),d=dateTime(p),z=String(p.timeZone||'').trim();if(!d||!z)return'';const a=coord(p.latitude),o=coord(p.longitude);if(a&&o)return`${d}|${z}|${a}|${o}`;const l=norm(p.location);return l?`${d}|${z}|${l}`:''}
+function match(v){const s=signature(v);return s?lib().find(r=>signature(r)===s)||null:null}
+function named(v,name,recordId){const n=copy(v||{});n.name=name;n.title=name;n.displayName=name;n.skyName=name;n.saved=true;n.metadata=meta(n);n.metadata.savedSkyId=recordId;n.metadata.savedSkyName=name;n.metadata.savedSkyLoadedAt=new Date().toISOString();n.metadata.name=name;n.metadata.title=name;n.calcProfile=prof(n);n.calcProfile.name=name;n.calcProfile.title=name;return n}
+function notify(slot,name,source){const key=KEYS[slot];try{window.dispatchEvent(new StorageEvent('storage',{key,newValue:localStorage.getItem(key),storageArea:localStorage}))}catch(_){const e=new Event('storage');Object.defineProperty(e,'key',{value:key});window.dispatchEvent(e)}window.dispatchEvent(new CustomEvent('relphi:saved-sky-active-changed',{detail:{slot,name,source}}));window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name,source}}))}
+function adopt(slot,record){const v=sky(slot),name=String(record?.name||'').trim();if(!v||!name)return false;const next=named(v,name,rid(record)||id());if(!put(KEYS[slot],next))return false;notify(slot,name,'where-when-match');return true}
+function nextName(name){const taken=new Set(lib().map(r=>norm(r.name)).filter(Boolean)),clean=String(name||'').trim(),m=clean.match(/^(.*?)(?:\s+(\d+))?$/),s=m?.[2]&&Number(m[2])>=2,root=(s?m[1]:clean).trim();let n=s?Number(m[2])+1:2,c=`${root} ${n}`;while(taken.has(norm(c))){n++;c=`${root} ${n}`}return c}
+function save(slot,name){const clean=String(name||'').trim(),v=sky(slot),records=lib();if(!clean||!v||!hasPlacements(v)||records.some(r=>norm(r.name)===norm(clean)))return false;const recordId=id(),now=new Date().toISOString(),active=named(v,clean,recordId),record=copy(active);record.id=recordId;record.savedAt=record.savedAt||now;record.updatedAt=now;if(!put(LIB,[...records,record])||!put(KEYS[slot],active))return false;window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{slot,name:clean,id:recordId,action:'create'}}));notify(slot,clean,'where-when-name-prompt');return true}
+function prompt(){let r=document.getElementById('skyWhereWhenNamePrompt');if(r)return r;r=document.createElement('div');r.id='skyWhereWhenNamePrompt';r.className='sky-name-prompt';r.hidden=true;r.innerHTML=`<section class="sky-name-prompt-card" role="dialog" aria-modal="true" aria-labelledby="skyNamePromptTitle"><h3 id="skyNamePromptTitle">Name this sky</h3><p>This Where and When is not in Saved Skies yet.</p><label>Sky name<input data-sky-name-input type="text" maxlength="80" autocomplete="off"></label><div class="sky-name-prompt-conflict" data-sky-name-conflict hidden></div><div class="sky-name-prompt-actions"><button type="button" data-sky-name-cancel>Cancel</button><button type="button" data-sky-name-save>Save Sky</button></div></section>`;document.body.appendChild(r);return r}
+function closePrompt(){const r=prompt();r.hidden=true;promptSlot='';const b=r.querySelector('[data-sky-name-conflict]');b.hidden=true;b.replaceChildren()}
+function openPrompt(slot){promptSlot=slot;const r=prompt(),i=r.querySelector('[data-sky-name-input]'),b=r.querySelector('[data-sky-name-conflict]');b.hidden=true;b.replaceChildren();i.value='';r.hidden=false;requestAnimationFrame(()=>i.focus())}
+function conflict(name){const b=prompt().querySelector('[data-sky-name-conflict]'),suggestion=nextName(name);b.hidden=false;b.replaceChildren();const t=document.createElement('span');t.textContent=`“${name}” is already in use.`;const x=document.createElement('button');x.type='button';x.dataset.skyNameSuggestion=suggestion;x.textContent=`Use “${suggestion}”`;b.append(t,x)}
+function resolve(slot){const v=sky(slot);if(!v||!hasPlacements(v)||String(meta(v).liveNowOrigin||prof(v).liveNowOrigin||'')==='use-now')return;const found=match(v);if(found){closePrompt();adopt(slot,found)}else openPrompt(slot)}
+function openSlot(){for(const s of['A','B'])if(document.querySelector(`#skyFoundation${s} [data-saved-sky-trigger]`)?.getAttribute('aria-expanded')==='true')return s;return''}
+function blank(slot){const v={name:'Where and When',title:'Where and When',displayName:'Where and When',skyName:'Where and When',saved:false,placements:{},metadata:{name:'Where and When',title:'Where and When'},calcProfile:{name:'Where and When',title:'Where and When'}};put(KEYS[slot],v);notify(slot,'Where and When','create-new');requestAnimationFrame(()=>{window.RelphiSkyCardShell?.ensure?.(slot,v);window.RelphiSkyCardShell?.openDrawer?.(slot,'where');requestAnimationFrame(()=>{if(!document.querySelector(`#skyFoundation${slot} .sky-where-when-editor[data-slot="${slot}"]`))window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot,drawer:'where'}}))})})}
+document.addEventListener('click',e=>{const n=e.target.closest('[data-sky-create-new-button]');if(n){const s=openSlot();if(s){e.preventDefault();e.stopImmediatePropagation();document.querySelector(`#skyFoundation${s} [data-saved-sky-trigger]`)?.click();closePrompt();blank(s)}return}if(e.target.closest('[data-sky-name-cancel]')){e.preventDefault();closePrompt();return}const sug=e.target.closest('[data-sky-name-suggestion]');if(sug&&promptSlot){e.preventDefault();if(save(promptSlot,sug.dataset.skyNameSuggestion))closePrompt();return}if(e.target.closest('[data-sky-name-save]')&&promptSlot){e.preventDefault();const i=prompt().querySelector('[data-sky-name-input]'),name=String(i.value||'').trim();if(!name){i.focus();return}if(lib().some(r=>norm(r.name)===norm(name))){conflict(name);i.focus();return}if(save(promptSlot,name))closePrompt()}},true);
+document.addEventListener('input',e=>{if(!e.target.closest('[data-sky-name-input]'))return;const b=prompt().querySelector('[data-sky-name-conflict]');b.hidden=true;b.replaceChildren()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!prompt().hidden){e.preventDefault();closePrompt()}else if(e.key==='Enter'&&e.target.closest('[data-sky-name-input]')){e.preventDefault();prompt().querySelector('[data-sky-name-save]')?.click()}});
+window.addEventListener('relphi:sky-working-copy-updated',e=>{const s=e.detail?.slot;if(KEYS[s]&&e.detail?.source==='where-when')requestAnimationFrame(()=>resolve(s))});
+window.RelphiSkySavedSkyIdentityFlow=Object.freeze({signature,matchingRecord:match,resolveCommitted:resolve});
+function start(){prompt()}document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
