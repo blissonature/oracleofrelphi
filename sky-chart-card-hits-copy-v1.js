@@ -9,6 +9,89 @@
     script.dataset.cardHitsInplaceLoader='true';
     document.head.appendChild(script);
   }
+  if(!document.getElementById('skyCardHitsHouseUniformV1Styles')){
+    const style=document.createElement('style');
+    style.id='skyCardHitsHouseUniformV1Styles';
+    style.textContent=`
+      .sky-card-house-card-line{
+        --sky-house-card-item:56px;
+        --sky-house-card-art-w:50px;
+        --sky-house-card-art-h:87px;
+        display:grid!important;
+        grid-template-columns:repeat(auto-fill,var(--sky-house-card-item))!important;
+        gap:.58rem!important;
+        align-items:start!important;
+        justify-content:start!important;
+      }
+      .sky-card-house-span-major,
+      .sky-card-house-card-line .sky-card-house-decan{
+        display:grid!important;
+        grid-template-rows:10px var(--sky-house-card-art-h) minmax(18px,auto)!important;
+        justify-items:center!important;
+        align-items:start!important;
+        align-content:start!important;
+        gap:.24rem!important;
+        width:var(--sky-house-card-item)!important;
+        min-width:var(--sky-house-card-item)!important;
+      }
+      .sky-card-house-span-major-role,
+      .sky-card-house-card-line .sky-card-house-decan::before{
+        display:block!important;
+        width:100%!important;
+        color:#756c64!important;
+        font:900 .42rem/1 system-ui,sans-serif!important;
+        letter-spacing:.05em!important;
+        text-align:center!important;
+        text-transform:uppercase!important;
+      }
+      .sky-card-house-card-line .sky-card-house-decan::before{content:'Decan'}
+      .sky-card-house-span-major-art,
+      .sky-card-house-card-line .sky-card-house-decan-art{
+        display:block!important;
+        width:var(--sky-house-card-art-w)!important;
+        height:var(--sky-house-card-art-h)!important;
+        max-width:none!important;
+        aspect-ratio:500/866!important;
+        margin:0!important;
+        border-radius:5px!important;
+      }
+      .sky-card-house-span-major-art>img,
+      .sky-card-house-card-line .sky-card-house-decan-art>img{
+        display:block!important;
+        width:100%!important;
+        height:100%!important;
+        object-fit:cover!important;
+        border-radius:4px!important;
+      }
+      .sky-card-house-span-major-name,
+      .sky-card-house-card-line .sky-card-house-decan-label{
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        gap:.12rem!important;
+        width:var(--sky-house-card-item)!important;
+        max-width:var(--sky-house-card-item)!important;
+        min-height:18px!important;
+        margin:0!important;
+        padding:0!important;
+        overflow:visible!important;
+        color:#332d28!important;
+        font:850 .49rem/1.15 system-ui,sans-serif!important;
+        text-align:center!important;
+        text-overflow:clip!important;
+        white-space:normal!important;
+      }
+      .sky-card-house-card-line .sky-card-house-decan-label .sky-card-inline-glyph{
+        flex:0 0 14px!important;
+        width:14px!important;
+        height:14px!important;
+      }
+      @media(max-width:520px){
+        .sky-card-house-card-line{gap:.5rem!important}
+      }
+    `;
+    document.head.appendChild(style);
+  }
 })();
 
 // Copy every Card Hit and its associated placements as clean Markdown.
