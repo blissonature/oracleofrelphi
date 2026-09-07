@@ -13,44 +13,92 @@
     const style=document.createElement('style');
     style.id='skyCardHitsHouseUniformV1Styles';
     style.textContent=`
+      .sky-card-house-row[data-house-number="1"]{--sky-house-unit-color:#e53935}
+      .sky-card-house-row[data-house-number="2"]{--sky-house-unit-color:#f06b32}
+      .sky-card-house-row[data-house-number="3"]{--sky-house-unit-color:#f39a2e}
+      .sky-card-house-row[data-house-number="4"]{--sky-house-unit-color:#f5be3d}
+      .sky-card-house-row[data-house-number="5"]{--sky-house-unit-color:#f1dc43}
+      .sky-card-house-row[data-house-number="6"]{--sky-house-unit-color:#a9cf46}
+      .sky-card-house-row[data-house-number="7"]{--sky-house-unit-color:#43a85b}
+      .sky-card-house-row[data-house-number="8"]{--sky-house-unit-color:#2ca69b}
+      .sky-card-house-row[data-house-number="9"]{--sky-house-unit-color:#3285c7}
+      .sky-card-house-row[data-house-number="10"]{--sky-house-unit-color:#5961c8}
+      .sky-card-house-row[data-house-number="11"]{--sky-house-unit-color:#8c4fb4}
+      .sky-card-house-row[data-house-number="12"]{--sky-house-unit-color:#bd438e}
+
       .sky-card-house-card-line{
-        --sky-house-card-item:56px;
-        --sky-house-card-art-w:50px;
-        --sky-house-card-art-h:87px;
+        --sky-house-card-art-w:46px;
+        --sky-house-card-art-h:80px;
+        position:relative!important;
         display:grid!important;
-        grid-template-columns:repeat(auto-fill,var(--sky-house-card-item))!important;
-        gap:.58rem!important;
+        grid-template-columns:repeat(5,minmax(0,1fr))!important;
+        column-gap:.28rem!important;
+        row-gap:.42rem!important;
         align-items:start!important;
-        justify-content:start!important;
+        justify-content:stretch!important;
+        min-width:0!important;
+        padding:.52rem .42rem .5rem!important;
+        border:1.5px solid var(--sky-house-unit-color,#777)!important;
+        border-radius:12px!important;
+        overflow:hidden!important;
+        background:linear-gradient(90deg,
+          color-mix(in srgb,var(--sky-house-unit-color,#777) 24%,#fffdfa) 0%,
+          color-mix(in srgb,var(--sky-house-unit-color,#777) 24%,#fffdfa) 40%,
+          #fffdfa 40%,
+          #fffdfa 100%)!important;
+      }
+      .sky-card-house-card-line::before{
+        content:'';
+        position:absolute;
+        z-index:0;
+        top:0;
+        bottom:0;
+        left:40%;
+        width:1.5px;
+        background:var(--sky-house-unit-color,#777);
+        pointer-events:none;
+      }
+      .sky-card-house-card-line:not(:has(.sky-card-house-decan))::after{
+        content:'No placements';
+        grid-column:3/-1;
+        align-self:center;
+        justify-self:center;
+        z-index:1;
+        color:#776e66;
+        font:800 .52rem/1.2 system-ui,sans-serif;
+        text-align:center;
       }
       .sky-card-house-span-major,
       .sky-card-house-card-line .sky-card-house-decan{
+        position:relative!important;
+        z-index:1!important;
         display:grid!important;
         grid-template-rows:10px var(--sky-house-card-art-h) minmax(18px,auto)!important;
         justify-items:center!important;
         align-items:start!important;
         align-content:start!important;
         gap:.24rem!important;
-        width:var(--sky-house-card-item)!important;
-        min-width:var(--sky-house-card-item)!important;
+        width:100%!important;
+        min-width:0!important;
       }
       .sky-card-house-span-major-role,
       .sky-card-house-card-line .sky-card-house-decan::before{
         display:block!important;
         width:100%!important;
-        color:#756c64!important;
+        color:#6b625b!important;
         font:900 .42rem/1 system-ui,sans-serif!important;
         letter-spacing:.05em!important;
         text-align:center!important;
         text-transform:uppercase!important;
       }
+      .sky-card-house-span-major-role{color:color-mix(in srgb,var(--sky-house-unit-color,#555) 72%,#332d28)!important}
       .sky-card-house-card-line .sky-card-house-decan::before{content:'Decan'}
       .sky-card-house-span-major-art,
       .sky-card-house-card-line .sky-card-house-decan-art{
         display:block!important;
         width:var(--sky-house-card-art-w)!important;
+        max-width:100%!important;
         height:var(--sky-house-card-art-h)!important;
-        max-width:none!important;
         aspect-ratio:500/866!important;
         margin:0!important;
         border-radius:5px!important;
@@ -66,28 +114,33 @@
       .sky-card-house-span-major-name,
       .sky-card-house-card-line .sky-card-house-decan-label{
         display:flex!important;
-        align-items:center!important;
+        align-items:flex-start!important;
         justify-content:center!important;
-        gap:.12rem!important;
-        width:var(--sky-house-card-item)!important;
-        max-width:var(--sky-house-card-item)!important;
+        gap:.1rem!important;
+        width:100%!important;
+        max-width:100%!important;
         min-height:18px!important;
         margin:0!important;
         padding:0!important;
         overflow:visible!important;
         color:#332d28!important;
-        font:850 .49rem/1.15 system-ui,sans-serif!important;
+        font:850 .47rem/1.15 system-ui,sans-serif!important;
         text-align:center!important;
         text-overflow:clip!important;
         white-space:normal!important;
       }
       .sky-card-house-card-line .sky-card-house-decan-label .sky-card-inline-glyph{
-        flex:0 0 14px!important;
-        width:14px!important;
-        height:14px!important;
+        flex:0 0 13px!important;
+        width:13px!important;
+        height:13px!important;
       }
       @media(max-width:520px){
-        .sky-card-house-card-line{gap:.5rem!important}
+        .sky-card-house-card-line{
+          --sky-house-card-art-w:43px;
+          --sky-house-card-art-h:75px;
+          column-gap:.2rem!important;
+          padding:.48rem .32rem .46rem!important;
+        }
       }
     `;
     document.head.appendChild(style);
