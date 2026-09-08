@@ -1,16 +1,17 @@
 // Persistent Sky-card title contract: every present Sky keeps the same Load/Save menu trigger.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardTitleIntegrityV5)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardTitleIntegrityV6)return;
   window.__relphiSkyCardTitleIntegrityV1=true;
   window.__relphiSkyCardTitleIntegrityV2=true;
   window.__relphiSkyCardTitleIntegrityV3=true;
   window.__relphiSkyCardTitleIntegrityV4=true;
   window.__relphiSkyCardTitleIntegrityV5=true;
+  window.__relphiSkyCardTitleIntegrityV6=true;
 
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const GENERIC=new Set(['','current sky','sky a','sky b','standalone sky','comparison','unnamed sky','untitled sky','new sky','where and when']);
-  const STYLE_ID='skyCardStableTitleV4';
+  const STYLE_ID='skyCardStableTitleV5';
   const STEP_MS=5*60*1000;
   let queued=false,timer=0;
 
@@ -59,7 +60,7 @@
   function liveAgeLabel(value,now=Date.now()){
     const at=liveAnchorMs(value);if(!Number.isFinite(at))return'Now';
     const minutes=Math.floor(Math.max(0,Number(now)-at)/STEP_MS)*5;
-    return minutes<5?'Now':`${minutes} minutes ago`;
+    return minutes<5?'Now':`${minutes} mins. ago`;
   }
   function manualWhereWhen(value){
     const m=metadata(value),p=profile(value);
