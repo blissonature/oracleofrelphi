@@ -52,50 +52,54 @@
    do not belong on top of it; the Sky title already communicates "Now". */
 .sky-live-header-control{display:none!important}
 
-/* House hit concentration reads as tally marks instead of a second numbered bubble.
-   The House medallion owns the number; the right edge now shows only quantity. */
+/* House hit concentration reads as conventional grouped tally marks: four upright
+   strokes crossed by the fifth, then a clean gap before the remainder. */
 .sky-card-house-hit-count{
+  --tally-start:2px;
   --tally-1-w:0px;--tally-1-d:0px;--tally-2-w:0px;--tally-2-d:0px;--tally-3-w:0px;--tally-3-d:0px;
   display:block!important;
   justify-self:end!important;
-  width:48px!important;
-  min-width:48px!important;
+  width:54px!important;
+  min-width:54px!important;
   height:18px!important;
   padding:0!important;
   border:0!important;
   border-radius:0!important;
   background-color:transparent!important;
   background-image:
-    linear-gradient(105deg,transparent 42%,currentColor 43% 57%,transparent 58%),
-    repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 4px),
-    linear-gradient(105deg,transparent 42%,currentColor 43% 57%,transparent 58%),
-    repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 4px),
-    linear-gradient(105deg,transparent 42%,currentColor 43% 57%,transparent 58%),
-    repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 4px)!important;
+    linear-gradient(135deg,transparent 45%,currentColor 46% 54%,transparent 55%),
+    repeating-linear-gradient(90deg,currentColor 0 1.5px,transparent 1.5px 4px),
+    linear-gradient(135deg,transparent 45%,currentColor 46% 54%,transparent 55%),
+    repeating-linear-gradient(90deg,currentColor 0 1.5px,transparent 1.5px 4px),
+    linear-gradient(135deg,transparent 45%,currentColor 46% 54%,transparent 55%),
+    repeating-linear-gradient(90deg,currentColor 0 1.5px,transparent 1.5px 4px)!important;
   background-size:
     var(--tally-1-d) 16px,var(--tally-1-w) 16px,
     var(--tally-2-d) 16px,var(--tally-2-w) 16px,
     var(--tally-3-d) 16px,var(--tally-3-w) 16px!important;
-  background-position:0 1px,0 1px,18px 1px,18px 1px,36px 1px,36px 1px!important;
+  background-position:
+    var(--tally-start) 1px,var(--tally-start) 1px,
+    calc(var(--tally-start) + 18px) 1px,calc(var(--tally-start) + 18px) 1px,
+    calc(var(--tally-start) + 36px) 1px,calc(var(--tally-start) + 36px) 1px!important;
   background-repeat:no-repeat!important;
-  color:var(--accent,#777)!important;
+  color:var(--slot-color,var(--accent,#777))!important;
   font:800 .56rem/18px system-ui,sans-serif!important;
   text-align:right!important;
   box-shadow:none!important;
 }
 .sky-card-house-hit-count.is-zero{background-image:none!important;color:transparent!important;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="1 hit"]{--tally-1-w:2px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="2 hits"]{--tally-1-w:6px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="3 hits"]{--tally-1-w:10px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="4 hits"]{--tally-1-w:14px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="5 hits"]{--tally-1-w:14px;--tally-1-d:14px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="6 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:2px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="7 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:6px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="8 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:10px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="9 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="10 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="11 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:2px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="12 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:6px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="13 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:10px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="14 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:14px;font-size:0!important}
-.sky-card-house-hit-count[aria-label^="15 hits"]{--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:14px;--tally-3-d:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="1 hit"]{--tally-start:50px;--tally-1-w:2px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="2 hits"]{--tally-start:46px;--tally-1-w:6px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="3 hits"]{--tally-start:42px;--tally-1-w:10px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="4 hits"]{--tally-start:38px;--tally-1-w:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="5 hits"]{--tally-start:38px;--tally-1-w:14px;--tally-1-d:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="6 hits"]{--tally-start:32px;--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:2px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="7 hits"]{--tally-start:28px;--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:6px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="8 hits"]{--tally-start:24px;--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:10px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="9 hits"]{--tally-start:20px;--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="10 hits"]{--tally-start:20px;--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="11 hits"]{--tally-start:14px;--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:2px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="12 hits"]{--tally-start:10px;--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:6px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="13 hits"]{--tally-start:6px;--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:10px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="14 hits"]{--tally-start:2px;--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:14px;font-size:0!important}
+.sky-card-house-hit-count[aria-label^="15 hits"]{--tally-start:2px;--tally-1-w:14px;--tally-1-d:14px;--tally-2-w:14px;--tally-2-d:14px;--tally-3-w:14px;--tally-3-d:14px;font-size:0!important}
