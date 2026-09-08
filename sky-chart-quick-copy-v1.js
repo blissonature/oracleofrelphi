@@ -2,9 +2,10 @@
 // Clipboard text is derived from the rendered UI so copied values cannot diverge from display truth.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyQuickCopyV2)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyQuickCopyV3)return;
   window.__relphiSkyQuickCopyV1=true;
   window.__relphiSkyQuickCopyV2=true;
+  window.__relphiSkyQuickCopyV3=true;
 
   let queued=false;
 
@@ -61,7 +62,9 @@
     const rows=[...view.querySelectorAll('.sky-foundation-row')].map(row=>{
       const body=clean(row.querySelector('.sky-foundation-row-name')?.textContent);
       const coordinate=clean(row.querySelector('.sky-foundation-coordinate')?.textContent);
-      const house=clean(row.querySelector('.sky-foundation-house')?.textContent);
+      const houseHost=row.querySelector('.sky-foundation-house');
+      const houseNumber=clean(houseHost?.dataset?.house);
+      const house=houseNumber?`H${houseNumber}`:clean(houseHost?.textContent);
       if(!body)return '';
       return `- **${body}** — ${[coordinate,house].filter(Boolean).join(' · ')}`;
     }).filter(Boolean);
