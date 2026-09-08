@@ -188,7 +188,6 @@ function ensureStyles(){
 .sky-card-house-toggle{appearance:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.55rem;width:100%;min-height:42px;padding:.55rem .65rem;border:0;background:#fffdfa;color:#211d19;cursor:pointer;text-align:left}
 .sky-card-house-toggle:hover,.sky-card-house-toggle:focus-visible{background:#f8f4ee;outline:none}
 .sky-card-house-toggle[aria-expanded="true"]{border-bottom:1px solid rgba(31,27,24,.09)}
-.sky-card-house-toggle-name{font:900 .67rem/1.1 system-ui,sans-serif;white-space:nowrap}
 .sky-card-house-toggle-range{display:flex;align-items:center;gap:.24rem;min-width:0;overflow:visible;color:#5f5750;font:780 .57rem/1.15 system-ui,sans-serif;white-space:nowrap}
 .sky-card-house-toggle-range-text{white-space:nowrap}.sky-card-house-toggle-arrow{opacity:.62;margin:0 .02rem}.sky-card-house-toggle-glyph{display:inline-block;flex:0 0 18px;width:18px;height:18px}
 .sky-card-house-toggle-glyph svg,.sky-card-house-detail-glyph svg{display:block;width:100%;height:100%;overflow:visible}
@@ -261,11 +260,21 @@ function makeSpan(leg,nodes){
   else{const empty=document.createElement('span');empty.className='sky-card-house-no-placements';empty.textContent='No placements';decans.appendChild(empty)}
   stack.appendChild(decans);span.appendChild(stack);return span;
 }
-function houseNumberFromRow(row){const text=row.querySelector(':scope > .sky-card-house-label strong')?.textContent||'';const match=text.match(/\d+/);return match?Number(match[0]):null}
+function validHouseNumber(value){const n=Number(value);return Number.isFinite(n)&&n>=1&&n<=12?Math.trunc(n):null}
+function houseMedallion(house){
+  const n=validHouseNumber(house);if(!n)return null;
+  const canonical=window.RelphiHouseMedallion?.create?.(n,'',false);if(canonical)return canonical;
+  const fallback=document.createElement('span');fallback.className='relphi-house-medallion';fallback.dataset.house=String(n);fallback.textContent=String(n);fallback.setAttribute('aria-label',ordinalHouse(n));return fallback;
+}
+function houseNumberFromRow(row){
+  const stored=validHouseNumber(row?.dataset?.houseNumber);if(stored)return stored;
+  const marker=row?.querySelector?.(':scope > .sky-card-house-label .relphi-house-medallion[data-house],:scope > .sky-card-house-toggle .relphi-house-medallion[data-house]');
+  return validHouseNumber(marker?.dataset?.house);
+}
 function rangePart(value){const frag=document.createDocumentFragment(),text=document.createElement('span');text.className='sky-card-house-toggle-range-text';text.textContent=formatDegree(value);frag.append(text,glyphHost(SIGNS[signIndexAt(value)].toLowerCase(),'sky-card-house-toggle-glyph'));return frag}
 function makeHouseToggle(house,cusps,total,fallbackSigns){
   const button=document.createElement('button');button.type='button';button.className='sky-card-house-toggle';button.dataset.cardHouseToggle=String(house);
-  const name=document.createElement('span');name.className='sky-card-house-toggle-name';name.textContent=`House ${house}`;
+  const marker=houseMedallion(house);
   const range=document.createElement('span');range.className='sky-card-house-toggle-range';
   let rangeLabel='';
   if(cusps){
@@ -275,7 +284,7 @@ function makeHouseToggle(house,cusps,total,fallbackSigns){
   }
   range.setAttribute('aria-label',rangeLabel||`House ${house} zodiac span`);
   const count=document.createElement('span');count.className=`sky-card-house-hit-count${total===0?' is-zero':''}`;count.textContent=String(total);count.setAttribute('aria-label',`${total} hit${total===1?'':'s'} in House ${house}`);
-  button.setAttribute('aria-label',`House ${house}, ${total} hit${total===1?'':'s'}. Open House details.`);button.append(name,range,count);return button;
+  button.setAttribute('aria-label',`House ${house}, ${total} hit${total===1?'':'s'}. Open House details.`);if(marker)button.append(marker,range,count);else button.append(range,count);return button;
 }
 function makeHouseMeaning(house){
   const group=document.createElement('div');group.className='sky-card-house-meaning';group.dataset.cardHouseProgressiveGroup='true';
