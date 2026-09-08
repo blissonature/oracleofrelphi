@@ -99,6 +99,16 @@
     return scrollExactCardIntoView(cardId);
   }
 
+  function ensureFullEntryDeepLink(){
+    if(!requestedCardId()||window.__relphiTarotCardDeepLinkV9)return;
+    if(document.querySelector('script[data-relphi-tarot-card-deep-link]'))return;
+    const script=document.createElement('script');
+    const base=document.currentScript?.src?new URL('.',document.currentScript.src):new URL('.',location.href);
+    script.src=new URL('tarot-card-deep-link-v1.js?v=9',base).href;
+    script.dataset.relphiTarotCardDeepLink='true';
+    document.head.appendChild(script);
+  }
+
   // Any card subsequently opened from the canonical results list becomes the
   // selected card immediately; this is independent of the initial deep link.
   document.addEventListener('click',event=>{
@@ -120,8 +130,9 @@
     }).observe(list,{childList:true,subtree:true});
   };
 
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',observeList,{once:true});
-  else observeList();
+  function start(){observeList();ensureFullEntryDeepLink()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 
   window.RelphiTarotCardSelectionScroll=Object.freeze({scrollExactCardIntoView,scrollFromLocation,markSelected});
 })();
