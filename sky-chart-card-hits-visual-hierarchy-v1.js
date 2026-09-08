@@ -2,7 +2,7 @@
 // Expanded Houses pair ruler/sign governance, then give decan hits the full reading width.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardHitsVisualHierarchyV7)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardHitsVisualHierarchyV8)return;
 window.__relphiSkyCardHitsVisualHierarchyV1=true;
 window.__relphiSkyCardHitsVisualHierarchyV2=true;
 window.__relphiSkyCardHitsVisualHierarchyV3=true;
@@ -10,8 +10,9 @@ window.__relphiSkyCardHitsVisualHierarchyV4=true;
 window.__relphiSkyCardHitsVisualHierarchyV5=true;
 window.__relphiSkyCardHitsVisualHierarchyV6=true;
 window.__relphiSkyCardHitsVisualHierarchyV7=true;
+window.__relphiSkyCardHitsVisualHierarchyV8=true;
 
-const STYLE_ID='skyCardHitsVisualHierarchyV7Styles';
+const STYLE_ID='skyCardHitsVisualHierarchyV8Styles';
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const HOUSES=Array.from({length:12},(_,i)=>String(i+1));
 let queued=false;
@@ -34,9 +35,9 @@ function installStyles(){
     .sky-card-house-row[data-house-number="11"]{--sky-house-unit-color:#8c4fb4}
     .sky-card-house-row[data-house-number="12"]{--sky-house-unit-color:#bd438e}
 
-    /* Collapsed = scan-first. Keep the exact degrees, but let the canonical sign glyphs breathe. */
-    .sky-card-house-toggle-range{gap:.22rem!important;font-size:.61rem!important;line-height:1.15!important}
-    .sky-card-house-toggle-glyph{display:inline-block!important;flex:0 0 23px!important;width:23px!important;height:23px!important}
+    /* Collapsed = scan-first. Keep the exact degrees, but make the canonical sign glyphs visually legible. */
+    .sky-card-house-toggle-range{gap:.18rem!important;font-size:.61rem!important;line-height:1.15!important}
+    .sky-card-house-toggle-glyph{display:inline-block!important;flex:0 0 30px!important;width:30px!important;height:30px!important}
 
     .sky-card-house-detail{gap:.82rem!important}
     .sky-card-house-first-tip{display:flex;align-items:center;justify-content:space-between;gap:.65rem;padding:.56rem .62rem;border:1px solid color-mix(in srgb,var(--sky-house-unit-color,#777) 38%,rgba(31,27,24,.12));border-radius:.65rem;background:color-mix(in srgb,var(--sky-house-unit-color,#777) 7%,#fffdfa);color:#514a44;font:760 .62rem/1.38 system-ui,sans-serif}
@@ -57,7 +58,7 @@ function installStyles(){
     .sky-card-house-span-major-art>img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;border-radius:4px!important}
     .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-copy{display:grid!important;align-content:start!important;justify-items:center!important;gap:.25rem!important;width:100%!important;min-width:0!important;text-align:center!important}
     .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-card-name{display:block!important;max-width:100%!important;color:#655d56!important;font:760 .61rem/1.22 system-ui,sans-serif!important;white-space:normal!important;overflow-wrap:anywhere!important}
-    .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-name-line{display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap!important;gap:.24rem!important;min-width:0!important;width:100%!important}
+    .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-detail-name-line{display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:wrap!important;gap:.3rem!important;min-width:0!important;width:100%!important}
 
     /* When someone asks for meaning, turn the pair into a reading layout so the definition gets real width. */
     .sky-card-house-detail-stack:has(> .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan) .sky-card-house-progressive-name[aria-expanded="true"]){grid-template-columns:minmax(0,1fr)!important}
@@ -69,8 +70,8 @@ function installStyles(){
 
     .sky-card-house-detail-copy{display:grid;align-content:center;justify-items:start;gap:.28rem;min-width:0}
     .sky-card-house-detail-card-name{display:block;max-width:100%;color:#655d56;font:760 .64rem/1.24 system-ui,sans-serif;white-space:normal;overflow-wrap:anywhere}
-    .sky-card-house-detail-name-line{display:flex;align-items:center;gap:.3rem;min-width:0}
-    .sky-card-house-detail-glyph{display:inline-block!important;flex:0 0 25px!important;width:25px!important;height:25px!important}
+    .sky-card-house-detail-name-line{display:flex;align-items:center;gap:.34rem;min-width:0}
+    .sky-card-house-detail-glyph{display:inline-block!important;flex:0 0 32px!important;width:32px!important;height:32px!important}
     .sky-card-house-progressive-name{appearance:none;display:inline-block;max-width:100%;margin:0;padding:.08rem .15rem;border:0;border-radius:4px;background:transparent;color:#27221f;cursor:pointer;font:900 .72rem/1.22 system-ui,sans-serif;text-align:left;white-space:normal;overflow-wrap:anywhere;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-card-house-progressive-name:hover{background:color-mix(in srgb,var(--sky-house-unit-color,#777) 9%,transparent)}
     .sky-card-house-progressive-name:focus-visible{outline:2px solid var(--sky-house-unit-color,#777);outline-offset:2px}
@@ -88,7 +89,7 @@ function installStyles(){
     .sky-card-house-decan-art>img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;border-radius:4px!important}
     .sky-card-house-decan-meta{display:block!important;color:#403a35!important;font:850 .68rem/1.26 system-ui,sans-serif!important;white-space:normal!important}
     .sky-card-house-face{display:grid!important;gap:.22rem!important;min-width:0!important;margin-top:.12rem!important}
-    .sky-card-house-face-line{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:.28rem!important;min-width:0!important}
+    .sky-card-house-face-line{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:.34rem!important;min-width:0!important}
     .sky-card-house-face-label{color:#655d56!important;font:820 .61rem/1.15 system-ui,sans-serif!important;white-space:nowrap!important}
     .sky-card-house-face-name{font-size:.69rem!important;padding:.05rem .1rem!important}
     .sky-card-house-no-placements{display:block!important;grid-column:1/-1!important;min-width:0!important;min-height:0!important;margin:0!important;padding:.42rem .52rem!important;border:1px dashed color-mix(in srgb,var(--sky-house-unit-color,#777) 32%,rgba(31,27,24,.12))!important;border-radius:.6rem!important;background:rgba(45,39,34,.025)!important;color:#655d56!important;font:760 .62rem/1.35 system-ui,sans-serif!important;text-align:left!important}
@@ -99,11 +100,11 @@ function installStyles(){
     @media(max-width:520px){
       .sky-card-house-detail{padding:.7rem .62rem .78rem!important}
       .sky-card-house-toggle-range{font-size:.59rem!important}
-      .sky-card-house-toggle-glyph{flex-basis:22px!important;width:22px!important;height:22px!important}
+      .sky-card-house-toggle-glyph{flex-basis:29px!important;width:29px!important;height:29px!important}
       .sky-card-house-detail-stack{gap:.46rem!important}
       .sky-card-house-detail-row:not(.sky-card-house-detail-row-decan){padding:.46rem .36rem .52rem!important}
       .sky-card-house-span-major-art{width:50px!important;height:87px!important;max-width:50px!important}
-      .sky-card-house-detail-glyph{flex-basis:24px!important;width:24px!important;height:24px!important}
+      .sky-card-house-detail-glyph{flex-basis:31px!important;width:31px!important;height:31px!important}
       .sky-card-house-progressive-name{font-size:.7rem!important}
       .sky-card-house-detail-card-name{font-size:.62rem!important}
       .sky-card-house-progressive-referent{font-size:.62rem!important;line-height:1.42!important}
