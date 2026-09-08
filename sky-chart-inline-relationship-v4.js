@@ -132,7 +132,13 @@ async function open(row){
   ]);
   document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');
 }
-function openLedger(cardId){window.dispatchEvent(new CustomEvent('relphi:open-ledger-card',{detail:{cardId,source:'inline-relationship'}}));requestAnimationFrame(()=>{const d=document.querySelector('.sky-ledger-dialog');if(d&&!d.open&&typeof d.showModal==='function')d.showModal()})}
+function openLedger(cardId){
+  const id=String(cardId||'').trim();
+  if(!id)return;
+  const url=new URL('tarot.html',location.href);
+  url.searchParams.set('card',id);
+  location.assign(url.href);
+}
 
 document.addEventListener('click',e=>{
   const ledger=e.target.closest('[data-inline-ledger]');
