@@ -5,12 +5,13 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyCoordinatePrecisionV5) return;
+  if (window.__relphiSkyCoordinatePrecisionV6) return;
   window.__relphiSkyCoordinatePrecisionV1 = true;
   window.__relphiSkyCoordinatePrecisionV2 = true;
   window.__relphiSkyCoordinatePrecisionV3 = true;
   window.__relphiSkyCoordinatePrecisionV4 = true;
   window.__relphiSkyCoordinatePrecisionV5 = true;
+  window.__relphiSkyCoordinatePrecisionV6 = true;
 
   const KEYS = { A:'relphiSkyChartA', B:'relphiSkyChartB' };
   const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
@@ -129,6 +130,18 @@
     return rowSky(row,side) === 'B' ? mapsB : mapsA;
   }
 
+  function preserveHouseCoordinate(small,coordinate,house,field) {
+    if (!small) return;
+    const n = Number(house);
+    const api = window.RelphiHouseMedallion;
+    if (Number.isFinite(n) && n >= 1 && n <= 12 && api?.decorateCoordinate) {
+      api.decorateCoordinate(small,coordinate,n,field,false);
+      return;
+    }
+    small.dataset.relationshipCoordinate = coordinate;
+    if (small.textContent !== coordinate) small.textContent = coordinate;
+  }
+
   function correctRelationships(mapsA,mapsB) {
     document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row').forEach(row => {
       const leftMaps = mapsForRowSide(row,'left',mapsA,mapsB);
@@ -137,19 +150,11 @@
       const right = rightMaps.byIdentity.get(row.dataset.rightPlacement || '');
       if (left) {
         row.dataset.leftSign = String(left.signIndex);
-        const small = relationshipCopy(row,'left');
-        if (small) {
-          small.dataset.relationshipCoordinate = left.text;
-          if (small.textContent !== left.text) small.textContent = left.text;
-        }
+        preserveHouseCoordinate(relationshipCopy(row,'left'),left.text,row.dataset.leftHouse,'left-house');
       }
       if (right) {
         row.dataset.rightSign = String(right.signIndex);
-        const small = relationshipCopy(row,'right');
-        if (small) {
-          small.dataset.relationshipCoordinate = right.text;
-          if (small.textContent !== right.text) small.textContent = right.text;
-        }
+        preserveHouseCoordinate(relationshipCopy(row,'right'),right.text,row.dataset.rightHouse,'right-house');
       }
     });
   }
