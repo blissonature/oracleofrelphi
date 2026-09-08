@@ -1,4 +1,4 @@
-// Relationship sorting: exactitude, aspect taxonomy, valence, duration, and phase-end timing.
+// Relationship sorting: exactitude, aspect taxonomy, strength/valence, duration, and phase-end timing.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipSortV1)return;
@@ -7,6 +7,7 @@ window.__relphiRelationshipSortV1=true;
 const MODES=Object.freeze({
   exact:'exact',
   aspect:'aspect',
+  strongest:'strongest',
   challenging:'most-challenging',
   supportive:'most-supportive',
   longest:'duration-longest',
@@ -21,60 +22,82 @@ const ASPECT_ORDER=Object.freeze([
 ]);
 const ASPECT_RANK=new Map(ASPECT_ORDER.map((id,index)=>[id,index]));
 
-// Valence is intentionally scope-agnostic: A↔B, A↔A, and B↔B use the same score.
-// Sky A/B may be natal, event, or current; neither side is privileged here.
-const ASPECT_PROFILE=Object.freeze({
-  conjunction:Object.freeze({valence:0,intensity:1}),
-  opposition:Object.freeze({valence:-1,intensity:1}),
-  trine:Object.freeze({valence:.8,intensity:.82}),
-  square:Object.freeze({valence:-1,intensity:.95}),
-  sextile:Object.freeze({valence:.62,intensity:.68}),
-  quincunx:Object.freeze({valence:-.58,intensity:.72}),
-  'semi-sextile':Object.freeze({valence:.18,intensity:.4}),
-  quintile:Object.freeze({valence:.45,intensity:.52}),
-  'bi-quintile':Object.freeze({valence:.42,intensity:.5}),
-  octile:Object.freeze({valence:-.52,intensity:.6}),
-  'tri-octile':Object.freeze({valence:-.58,intensity:.64})
+// The ranking model is deliberately scope-agnostic: A↔B, A↔A, and B↔B use
+// the same score. Sky A/B may be natal, event, or current; neither is privileged.
+//
+// Harmonic order is charged once, through phase error. Aspect prominence is only
+// the intrinsic prominence of the geometric operation; it is not a second harmonic penalty.
+const EXACTNESS_HALF_PHASE=3;
+const EXACTNESS_EXPONENT=1.75;
+const ASPECT_PROMINENCE=Object.freeze({
+  conjunction:1,
+  opposition:.98,
+  square:.96,
+  trine:.94,
+  sextile:.92,
+  quincunx:.88,
+  'tri-octile':.87,
+  octile:.86,
+  quintile:.86,
+  'bi-quintile':.85,
+  'semi-sextile':.84
 });
-const POINT_TONE=Object.freeze({
-  sun:.25,moon:.15,mercury:.1,venus:.7,mars:-.7,jupiter:.8,saturn:-.8,
-  uranus:-.55,neptune:-.45,pluto:-.8,chiron:-.5,
-  'north-node':0,'south-node':0,lilith:-.2,'part-of-fortune':.35,vertex:0,
-  asc:0,dsc:0,mc:0,ic:0
+const ASPECT_VALENCE=Object.freeze({
+  trine:.8,
+  sextile:.65,
+  quintile:.25,
+  'bi-quintile':.25,
+  'semi-sextile':.1,
+  conjunction:0,
+  quincunx:-.45,
+  octile:-.4,
+  'tri-octile':-.45,
+  opposition:-.7,
+  square:-.75
 });
-const POINT_IMPORTANCE=Object.freeze({
-  sun:1.25,moon:1.25,asc:1.25,dsc:1.25,mc:1.25,ic:1.25,
-  mercury:1.12,venus:1.12,mars:1.12,jupiter:1.08,saturn:1.08,
-  uranus:1.05,neptune:1.05,pluto:1.05,chiron:1.05,
-  'north-node':.95,'south-node':.95,vertex:.95,'part-of-fortune':.9,lilith:.9
+const HARMONIC_ORDER=Object.freeze({
+  conjunction:1,
+  opposition:2,
+  trine:3,
+  square:4,
+  quintile:5,
+  'bi-quintile':5,
+  sextile:6,
+  octile:8,
+  'tri-octile':8,
+  quincunx:12,
+  'semi-sextile':12
 });
-const PAIR_VALENCE=Object.freeze({
-  'jupiter|venus':.75,
-  'jupiter|moon':.5,
-  'jupiter|sun':.48,
-  'jupiter|mercury':.42,
-  'sun|venus':.38,
-  'moon|venus':.42,
-  'mercury|venus':.3,
-  'mars|pluto':-.9,
-  'mars|uranus':-.85,
-  'mars|saturn':-.75,
-  'moon|pluto':-.85,
-  'pluto|sun':-.65,
-  'mercury|pluto':-.48,
-  'pluto|venus':-.35,
-  'pluto|saturn':-.55,
-  'saturn|uranus':-.6,
-  'neptune|saturn':-.35,
-  'chiron|sun':-.65,
-  'chiron|moon':-.55,
-  'chiron|mars':-.5,
-  'mercury|neptune':-.45,
-  'moon|neptune':-.35,
-  'saturn|sun':-.45,
-  'moon|saturn':-.6,
-  'saturn|venus':-.25
+
+// Active bodies have agency. Sensitive anchors are locations/points that can be struck.
+// Chiron remains an active astronomical body, but with lower authority than a planet.
+const ACTIVE_AUTHORITY=Object.freeze({
+  sun:1.1,moon:1.1,
+  mercury:1,venus:1,mars:1,jupiter:1,saturn:1,uranus:1,neptune:1,pluto:1,
+  chiron:.85
 });
+const ANCHOR_SENSITIVITY=Object.freeze({
+  asc:1.1,dsc:1.1,mc:1.1,ic:1.1,
+  'north-node':.85,'south-node':.85,
+  'part-of-fortune':.8,
+  lilith:.7,vertex:.7
+});
+const PLANETARY_NATURE=Object.freeze({
+  jupiter:.25,venus:.22,
+  sun:0,moon:0,mercury:0,
+  mars:-.22,saturn:-.25,
+  uranus:0,neptune:0,pluto:0,chiron:0
+});
+const SCORE_MODEL=Object.freeze({
+  exactnessHalfPhase:EXACTNESS_HALF_PHASE,
+  exactnessExponent:EXACTNESS_EXPONENT,
+  aspectProminence:ASPECT_PROMINENCE,
+  aspectValence:ASPECT_VALENCE,
+  activeAuthority:ACTIVE_AUTHORITY,
+  anchorSensitivity:ANCHOR_SENSITIVITY,
+  planetaryNature:PLANETARY_NATURE
+});
+
 let scoreCache=new WeakMap();
 let mode=MODES.exact;
 let calculationGeneration=0;
@@ -103,57 +126,92 @@ function compareAspect(a,b){
   return ar-br||compareExact(a,b);
 }
 function normalizedPoint(id){return String(id||'').trim().toLowerCase()}
-function pairKey(left,right){return [normalizedPoint(left),normalizedPoint(right)].sort().join('|')}
+function activeAuthority(id){return ACTIVE_AUTHORITY[normalizedPoint(id)]??null}
+function anchorSensitivity(id){return ANCHOR_SENSITIVITY[normalizedPoint(id)]??null}
+function isActive(id){return activeAuthority(id)!=null}
+function phaseError(row){
+  const stored=number(row,'phaseError',NaN);
+  if(Number.isFinite(stored))return Math.max(0,stored);
+  const orb=number(row,'sourceOrb',0);
+  const aspectId=String(row?.dataset?.aspect||'');
+  const harmonic=number(row,'harmonicOrder',HARMONIC_ORDER[aspectId]??1);
+  return Math.max(0,orb)*Math.max(1,harmonic);
+}
 function exactness(row){
-  const error=number(row,'phaseError',number(row,'sourceOrb',0));
-  const window=number(row,'harmonicWindow',NaN);
-  if(Number.isFinite(window)&&window>0){
-    const remaining=1-clamp(error/window,0,1);
-    return .35+.65*remaining;
-  }
-  return 1/(1+Math.max(0,error)/1.5);
+  const ratio=phaseError(row)/EXACTNESS_HALF_PHASE;
+  return 1/(1+Math.pow(Math.max(0,ratio),EXACTNESS_EXPONENT));
+}
+function contactAuthority(left,right){
+  const leftActive=activeAuthority(left),rightActive=activeAuthority(right);
+  const leftAnchor=anchorSensitivity(left),rightAnchor=anchorSensitivity(right);
+  if(leftActive!=null&&rightActive!=null)return (leftActive+rightActive)/2;
+  if(leftActive!=null&&rightAnchor!=null)return (leftActive+rightAnchor)/2;
+  if(rightActive!=null&&leftAnchor!=null)return (rightActive+leftAnchor)/2;
+  if(leftAnchor!=null&&rightAnchor!=null)return .55*((leftAnchor+rightAnchor)/2);
+  // Unknown endpoints remain visible but do not receive special authority.
+  if(leftActive!=null||rightActive!=null)return .8;
+  if(leftAnchor!=null||rightAnchor!=null)return .55;
+  return .5;
+}
+function natureAdjustment(left,right){
+  const active=[];
+  if(isActive(left))active.push(PLANETARY_NATURE[normalizedPoint(left)]??0);
+  if(isActive(right))active.push(PLANETARY_NATURE[normalizedPoint(right)]??0);
+  if(!active.length)return 0;
+  return active.reduce((sum,value)=>sum+value,0)/active.length;
 }
 function relationshipScore(row){
-  if(!row)return Object.freeze({valence:0,intensity:0,signed:0,challenge:0,support:0});
+  if(!row)return Object.freeze({strength:0,valence:0,signed:0,challenge:0,support:0,exactness:0,contactAuthority:0,phaseError:Infinity});
   const cached=scoreCache.get(row);
   if(cached)return cached;
 
   const aspectId=String(row.dataset.aspect||'');
-  const profile=ASPECT_PROFILE[aspectId]||Object.freeze({valence:0,intensity:.45});
   const left=normalizedPoint(row.dataset.leftPlacement);
   const right=normalizedPoint(row.dataset.rightPlacement);
-  const leftTone=POINT_TONE[left]??0,rightTone=POINT_TONE[right]??0;
-  const meanTone=(leftTone+rightTone)/2;
-  const adjustment=PAIR_VALENCE[pairKey(left,right)]??0;
-
-  let valence;
-  if(aspectId==='conjunction')valence=adjustment*.7+meanTone*.75;
-  else valence=profile.valence*.65+adjustment*.65+meanTone*.15;
-  valence=clamp(valence,-1,1);
-
-  const endpointImportance=((POINT_IMPORTANCE[left]??1)+(POINT_IMPORTANCE[right]??1))/2;
-  const pairIntensity=1+.25*Math.abs(adjustment);
-  const intensity=profile.intensity*exactness(row)*endpointImportance*pairIntensity;
-  const signed=valence*intensity;
+  const prominence=ASPECT_PROMINENCE[aspectId]??.8;
+  const precision=exactness(row);
+  const authority=contactAuthority(left,right);
+  const strength=prominence*precision*authority;
+  const nature=natureAdjustment(left,right);
+  const geometricValence=ASPECT_VALENCE[aspectId]??0;
+  const valence=clamp(
+    aspectId==='conjunction' ? nature*1.5 : geometricValence+nature,
+    -1,
+    1
+  );
+  const signed=strength*valence;
   const result=Object.freeze({
+    strength,
     valence,
-    intensity,
     signed,
-    challenge:Math.max(0,-signed),
-    support:Math.max(0,signed)
+    challenge:strength*Math.max(-valence,0),
+    support:strength*Math.max(valence,0),
+    exactness:precision,
+    contactAuthority:authority,
+    phaseError:phaseError(row)
   });
   scoreCache.set(row,result);
+  row.dataset.relationshipStrength=strength.toFixed(6);
+  // Backward-compatible alias for the first scoring draft.
+  row.dataset.relationshipIntensity=strength.toFixed(6);
   row.dataset.relationshipValence=valence.toFixed(6);
-  row.dataset.relationshipIntensity=intensity.toFixed(6);
   row.dataset.relationshipSignedScore=signed.toFixed(6);
+  row.dataset.relationshipChallengeScore=result.challenge.toFixed(6);
+  row.dataset.relationshipSupportScore=result.support.toFixed(6);
+  row.dataset.relationshipExactness=precision.toFixed(6);
+  row.dataset.relationshipContactAuthority=authority.toFixed(6);
   return result;
 }
 function invalidateScores(){scoreCache=new WeakMap()}
+function compareStrength(a,b){
+  const as=relationshipScore(a),bs=relationshipScore(b);
+  return bs.strength-as.strength || compareExact(a,b);
+}
 function compareValence(a,b,kind){
   const as=relationshipScore(a),bs=relationshipScore(b);
   const av=kind==='challenge'?as.challenge:as.support;
   const bv=kind==='challenge'?bs.challenge:bs.support;
-  return bv-av || bs.intensity-as.intensity || compareExact(a,b);
+  return bv-av || bs.strength-as.strength || compareExact(a,b);
 }
 function timingValue(row,key){
   const value=Number(row?.dataset?.[key]);
@@ -168,6 +226,7 @@ function compareTiming(a,b,key,direction){
 }
 function compareRows(a,b){
   if(mode===MODES.aspect)return compareAspect(a,b);
+  if(mode===MODES.strongest)return compareStrength(a,b);
   if(mode===MODES.challenging)return compareValence(a,b,'challenge');
   if(mode===MODES.supportive)return compareValence(a,b,'support');
   if(mode===MODES.longest)return compareTiming(a,b,'transitDurationDays',-1);
@@ -221,6 +280,7 @@ function ensureControl(){
     [
       [MODES.exact,'Most Exact First'],
       [MODES.aspect,'Aspect Type'],
+      [MODES.strongest,'Strongest First'],
       [MODES.challenging,'Most Challenging First'],
       [MODES.supportive,'Most Supportive First'],
       [MODES.longest,'Longest Duration'],
@@ -324,6 +384,7 @@ function invalidateTransit(){
 window.RelphiRelationshipSort=Object.freeze({
   compareRows,
   mode:currentMode,
+  model:SCORE_MODEL,
   scoreRow:relationshipScore,
   setMode
 });
