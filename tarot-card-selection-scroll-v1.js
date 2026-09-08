@@ -100,11 +100,11 @@
   }
 
   function ensureFullEntryDeepLink(){
-    if(!requestedCardId()||window.__relphiTarotCardDeepLinkV9)return;
+    if(!requestedCardId()||window.__relphiTarotCardDeepLinkV10)return;
     if(document.querySelector('script[data-relphi-tarot-card-deep-link]'))return;
     const script=document.createElement('script');
     const base=document.currentScript?.src?new URL('.',document.currentScript.src):new URL('.',location.href);
-    script.src=new URL('tarot-card-deep-link-v1.js?v=9',base).href;
+    script.src=new URL('tarot-card-deep-link-v1.js?v=10',base).href;
     script.dataset.relphiTarotCardDeepLink='true';
     document.head.appendChild(script);
   }
