@@ -1,5 +1,4 @@
-// Data-derived fingerprints for collapsed Where and When and Placements drawers.
-// Card Hits owns its own chart-ruler fingerprint through RelphiSkyCardHitsStructure.
+// Data-derived fingerprints for collapsed Where and When, Placements, and Card Hits drawers.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyDrawerFingerprintsV1)return;
@@ -43,6 +42,7 @@ function axisValue(records,primaryIds,oppositeIds){const primary=records.find(re
 function addAxis(root,cx,cy,radius,degree,className){if(!Number.isFinite(degree))return;const a=polar(cx,cy,radius,degree),b=polar(cx,cy,radius,degree+180);root.appendChild(svg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:className}))}
 function whereMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.whereFingerprint||null}
 function placementMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.placementFingerprint||null}
+function cardHitsMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.cardHitsFingerprint||null}
 
 function temporalTrace(sourceSvg){
   const root=svg('svg',{
@@ -100,6 +100,26 @@ function renderPlacements(slot,payload){
   mount.setAttribute('aria-label',`Placements fingerprint: ${ordinary.length} plotted placement${ordinary.length===1?'':'s'}${axes?`, oriented by ${axes}`:''}.`);
 }
 
+function renderCardHits(slot,payload){
+  const mount=cardHitsMount(slot);if(!mount)return;
+  const structure=window.RelphiSkyCardHitsStructure;
+  const fingerprint=payload&&structure?.fingerprint?.(payload);
+  if(!fingerprint){
+    mount.replaceChildren();
+    mount.hidden=true;
+    mount.removeAttribute('aria-label');
+    mount.removeAttribute('data-ruler-sign');
+    return;
+  }
+  const ruler=fingerprint.dataset.chartRulerFingerprint||'';
+  const sign=structure.chartRulerInfo?.(payload)?.signIndex;
+  if(mount.firstElementChild?.dataset?.chartRulerFingerprint!==ruler)mount.replaceChildren(fingerprint);
+  mount.hidden=false;
+  if(Number.isFinite(sign))mount.dataset.rulerSign=String(sign);else mount.removeAttribute('data-ruler-sign');
+  const label=fingerprint.getAttribute('aria-label');
+  if(label)mount.setAttribute('aria-label',label);
+}
+
 function installSkyCommandContract(){
   if(document.getElementById('relphi-sky-command-contract'))return;
   const style=document.createElement('style');
@@ -114,13 +134,12 @@ function renderSlot(slot){
   window.RelphiSkyCardShell?.ensure?.(slot,payload);
   renderWhere(slot,payload);
   renderPlacements(slot,payload);
+  renderCardHits(slot,payload);
 }
 function render(){
   queued=false;
   removeNewSkyCommands();
   renderSlot('A');renderSlot('B');
-  // Card Hits is a separate owner. Ask it to refresh only after the shell and the
-  // two fingerprints this module owns are stable, and never mutate its fingerprint.
   window.RelphiSkyCardHitsStructure?.render?.();
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
