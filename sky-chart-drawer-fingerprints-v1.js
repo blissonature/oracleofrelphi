@@ -113,9 +113,12 @@ function renderCardHits(slot,payload){
   }
   const ruler=fingerprint.dataset.chartRulerFingerprint||'';
   const sign=structure.chartRulerInfo?.(payload)?.signIndex;
-  if(mount.firstElementChild?.dataset?.chartRulerFingerprint!==ruler)mount.replaceChildren(fingerprint);
+  const signKey=Number.isFinite(sign)?String(sign):'';
+  const sameRuler=mount.firstElementChild?.dataset?.chartRulerFingerprint===ruler;
+  const sameSign=(mount.dataset.rulerSign||'')===signKey;
+  if(!sameRuler||!sameSign)mount.replaceChildren(fingerprint);
   mount.hidden=false;
-  if(Number.isFinite(sign))mount.dataset.rulerSign=String(sign);else mount.removeAttribute('data-ruler-sign');
+  if(signKey)mount.dataset.rulerSign=signKey;else mount.removeAttribute('data-ruler-sign');
   const label=fingerprint.getAttribute('aria-label');
   if(label)mount.setAttribute('aria-label',label);
 }
