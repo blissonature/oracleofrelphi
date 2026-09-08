@@ -21,6 +21,16 @@ const ASPECT_ORDER=Object.freeze([
   'quincunx','semi-sextile','quintile','bi-quintile','octile','tri-octile'
 ]);
 const ASPECT_RANK=new Map(ASPECT_ORDER.map((id,index)=>[id,index]));
+const AXIS_FAMILY=Object.freeze({
+  asc:'horizon',dsc:'horizon',
+  mc:'meridian',ic:'meridian',
+  'north-node':'nodes','south-node':'nodes'
+});
+const SIGNIFICANCE_HIDDEN_CLASSES=Object.freeze([
+  'sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
+  'sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden',
+  'sky-chart-zodiac-filter-hidden','sky-chart-semantic-hidden'
+]);
 
 // The ranking model is deliberately scope-agnostic: A↔B, A↔A, and B↔B use
 // the same score. Sky A/B may be natal, event, or current; neither is privileged.
@@ -128,6 +138,29 @@ function compareAspect(a,b){
   return ar-br||compareExact(a,b);
 }
 function normalizedPoint(id){return String(id||'').trim().toLowerCase()}
+function endpointSky(row,side){
+  const stored=String(row?.dataset?.[side==='left'?'leftSky':'rightSky']||'').trim().toUpperCase();
+  if(stored==='A'||stored==='B')return stored;
+  const mode=String(row?.dataset?.relationshipMode||'A-B').toUpperCase();
+  if(mode==='A-A')return'A';
+  if(mode==='B-B')return'B';
+  return side==='left'?'A':'B';
+}
+function endpointFamilyToken(row,side){
+  const key=side==='left'?'leftPlacement':'rightPlacement';
+  const point=normalizedPoint(row?.dataset?.[key]);
+  const axis=AXIS_FAMILY[point];
+  return `${endpointSky(row,side)}:${axis?`axis:${axis}`:`point:${point}`}`;
+}
+function axisFamilyKey(row){
+  const left=normalizedPoint(row?.dataset?.leftPlacement),right=normalizedPoint(row?.dataset?.rightPlacement);
+  if(!AXIS_FAMILY[left]&&!AXIS_FAMILY[right])return'';
+  return [endpointFamilyToken(row,'left'),endpointFamilyToken(row,'right')].sort().join('|');
+}
+function rowEligibleForSignificanceFamily(row){
+  if(!row||row.hidden||row.getAttribute?.('aria-hidden')==='true')return false;
+  return !SIGNIFICANCE_HIDDEN_CLASSES.some(name=>row.classList?.contains(name));
+}
 function activeAuthority(id){return ACTIVE_AUTHORITY[normalizedPoint(id)]??null}
 function anchorSensitivity(id){return ANCHOR_SENSITIVITY[normalizedPoint(id)]??null}
 function isActive(id){return activeAuthority(id)!=null}
@@ -210,15 +243,49 @@ function relationshipScore(row){
   return result;
 }
 function invalidateScores(){scoreCache=new WeakMap()}
-function compareStrength(a,b){
+function significanceValue(row,kind){
+  const score=relationshipScore(row);
+  if(kind==='challenge')return score.challenge;
+  if(kind==='support')return score.support;
+  return score.strength;
+}
+function compareRawSignificance(a,b,kind){
+  const av=significanceValue(a,kind),bv=significanceValue(b,kind);
+  if(bv!==av)return bv-av;
   const as=relationshipScore(a),bs=relationshipScore(b);
   return bs.strength-as.strength || compareExact(a,b);
 }
-function compareValence(a,b,kind){
-  const as=relationshipScore(a),bs=relationshipScore(b);
-  const av=kind==='challenge'?as.challenge:as.support;
-  const bv=kind==='challenge'?bs.challenge:bs.support;
-  return bv-av || bs.strength-as.strength || compareExact(a,b);
+function axisFamilyRepresentative(row,kind){
+  const key=axisFamilyKey(row);
+  if(!key)return row;
+  const list=row?.closest?.('#skyFoundationRelationshipList');
+  if(!list)return row;
+  const siblings=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row[data-relation-index]')]
+    .filter(candidate=>rowEligibleForSignificanceFamily(candidate)&&axisFamilyKey(candidate)===key);
+  if(siblings.length<2)return row;
+  let best=siblings[0];
+  for(let index=1;index<siblings.length;index+=1){
+    if(compareRawSignificance(siblings[index],best,kind)<0)best=siblings[index];
+  }
+  return best;
+}
+function significanceFamilyTier(row,kind){
+  const key=axisFamilyKey(row);
+  if(!key){
+    delete row.dataset.relationshipAxisFamily;
+    delete row.dataset.relationshipAxisFamilyPrimary;
+    return 0;
+  }
+  const representative=axisFamilyRepresentative(row,kind);
+  const primary=representative===row;
+  row.dataset.relationshipAxisFamily=key;
+  row.dataset.relationshipAxisFamilyPrimary=primary?'true':'false';
+  return primary?0:1;
+}
+function compareSignificance(a,b,kind){
+  const at=significanceFamilyTier(a,kind),bt=significanceFamilyTier(b,kind);
+  if(at!==bt)return at-bt;
+  return compareRawSignificance(a,b,kind);
 }
 function timingValue(row,key){
   const value=Number(row?.dataset?.[key]);
@@ -233,9 +300,9 @@ function compareTiming(a,b,key,direction){
 }
 function compareRows(a,b){
   if(mode===MODES.aspect)return compareAspect(a,b);
-  if(mode===MODES.strongest)return compareStrength(a,b);
-  if(mode===MODES.challenging)return compareValence(a,b,'challenge');
-  if(mode===MODES.supportive)return compareValence(a,b,'support');
+  if(mode===MODES.strongest)return compareSignificance(a,b,'strength');
+  if(mode===MODES.challenging)return compareSignificance(a,b,'challenge');
+  if(mode===MODES.supportive)return compareSignificance(a,b,'support');
   if(mode===MODES.longest)return compareTiming(a,b,'transitDurationDays',-1);
   if(mode===MODES.shortest)return compareTiming(a,b,'transitDurationDays',1);
   if(mode===MODES.beganMostRecently)return compareTiming(a,b,'transitStartedDaysAgo',1);
@@ -336,13 +403,8 @@ async function prepareTransitSort(){
   }
   busy=true;
   ensureControl();
-  const HIDDEN_CLASSES=[
-    'sky-foundation-single-sky-cross-hidden','sky-chart-filter-hidden','sky-chart-orb-hidden','sky-orb-filter-hidden',
-    'sky-chart-multiselect-hidden','sky-chart-house-multiselect-hidden','sky-chart-aspect-multiselect-hidden',
-    'sky-chart-zodiac-filter-hidden','sky-chart-semantic-hidden'
-  ];
   const rows=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
-    .filter(row=>!HIDDEN_CLASSES.some(name=>row.classList.contains(name)));
+    .filter(row=>!SIGNIFICANCE_HIDDEN_CLASSES.some(name=>row.classList.contains(name)));
   for(let index=0;index<rows.length;index+=1){
     if(generation!==calculationGeneration)return;
     api.estimatedTimingForRow(rows[index]);
@@ -389,6 +451,7 @@ function invalidateTransit(){
   if([MODES.longest,MODES.shortest,MODES.beganMostRecently,MODES.endsSoonest,MODES.endsLast].includes(mode))scheduleTransitSort(110);
 }
 window.RelphiRelationshipSort=Object.freeze({
+  axisFamilyKey,
   compareRows,
   mode:currentMode,
   model:SCORE_MODEL,
