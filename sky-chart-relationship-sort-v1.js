@@ -243,49 +243,66 @@ function relationshipScore(row){
   return result;
 }
 function invalidateScores(){scoreCache=new WeakMap()}
-function significanceValue(row,kind){
-  const score=relationshipScore(row);
-  if(kind==='challenge')return score.challenge;
-  if(kind==='support')return score.support;
-  return score.strength;
-}
-function compareRawSignificance(a,b,kind){
-  const av=significanceValue(a,kind),bv=significanceValue(b,kind);
-  if(bv!==av)return bv-av;
+function compareRawStrength(a,b){
   const as=relationshipScore(a),bs=relationshipScore(b);
   return bs.strength-as.strength || compareExact(a,b);
 }
-function axisFamilyRepresentative(row,kind){
+function compareRawSigned(a,b,direction){
+  const as=relationshipScore(a),bs=relationshipScore(b);
+  const delta=as.signed-bs.signed;
+  if(delta!==0)return direction==='supportive'?-delta:delta;
+  return bs.strength-as.strength || compareExact(a,b);
+}
+function axisFamilyRows(row){
   const key=axisFamilyKey(row);
-  if(!key)return row;
+  if(!key)return[row];
   const list=row?.closest?.('#skyFoundationRelationshipList');
-  if(!list)return row;
+  if(!list)return[row];
   const siblings=[...list.querySelectorAll(':scope>.sky-foundation-relationship-row[data-relation-index]')]
     .filter(candidate=>rowEligibleForSignificanceFamily(candidate)&&axisFamilyKey(candidate)===key);
-  if(siblings.length<2)return row;
+  return siblings.length?siblings:[row];
+}
+// A family has one stable representative for all significance sorts: its strongest
+// visible manifestation. This prevents the family identity from changing when the
+// user switches between supportive and challenging views.
+function axisFamilyRepresentative(row){
+  const siblings=axisFamilyRows(row);
   let best=siblings[0];
   for(let index=1;index<siblings.length;index+=1){
-    if(compareRawSignificance(siblings[index],best,kind)<0)best=siblings[index];
+    if(compareRawStrength(siblings[index],best)<0)best=siblings[index];
+  }
+  const key=axisFamilyKey(row);
+  if(key){
+    for(const sibling of siblings){
+      sibling.dataset.relationshipAxisFamily=key;
+      sibling.dataset.relationshipAxisFamilyPrimary=sibling===best?'true':'false';
+    }
+  }else{
+    delete row.dataset.relationshipAxisFamily;
+    delete row.dataset.relationshipAxisFamilyPrimary;
   }
   return best;
 }
-function significanceFamilyTier(row,kind){
-  const key=axisFamilyKey(row);
-  if(!key){
-    delete row.dataset.relationshipAxisFamily;
-    delete row.dataset.relationshipAxisFamilyPrimary;
-    return 0;
-  }
-  const representative=axisFamilyRepresentative(row,kind);
-  const primary=representative===row;
-  row.dataset.relationshipAxisFamily=key;
-  row.dataset.relationshipAxisFamilyPrimary=primary?'true':'false';
-  return primary?0:1;
+function sameAxisFamily(a,b){
+  const ak=axisFamilyKey(a),bk=axisFamilyKey(b);
+  return Boolean(ak&&ak===bk);
 }
 function compareSignificance(a,b,kind){
-  const at=significanceFamilyTier(a,kind),bt=significanceFamilyTier(b,kind);
-  if(at!==bt)return at-bt;
-  return compareRawSignificance(a,b,kind);
+  const ar=axisFamilyRepresentative(a),br=axisFamilyRepresentative(b);
+
+  // Mirrored manifestations stay together as one configuration block rather than
+  // being dumped below unrelated rows. Their order within the block follows the
+  // selected significance view.
+  if(sameAxisFamily(a,b)){
+    if(kind==='strength')return compareRawStrength(a,b);
+    return compareRawSigned(a,b,kind==='support'?'supportive':'challenging');
+  }
+
+  // Families are positioned by their strongest manifestation. For valence views,
+  // the signed score is continuous: Most Challenging runs negative→positive and
+  // Most Supportive runs positive→negative, making the two views true opposites.
+  if(kind==='strength')return compareRawStrength(ar,br);
+  return compareRawSigned(ar,br,kind==='support'?'supportive':'challenging');
 }
 function timingValue(row,key){
   const value=Number(row?.dataset?.[key]);
