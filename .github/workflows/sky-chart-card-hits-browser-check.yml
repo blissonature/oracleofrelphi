@@ -32,7 +32,7 @@ jobs:
       - name: Assert Card Hits fingerprint and drawer
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-card-hits-server.log 2>&1 &
-          cat > /tmp/sky-card-hits-check.mjs <<'EOF'
+          cat > sky-card-hits-check.mjs <<'EOF'
           import { chromium } from 'playwright';
           import assert from 'node:assert/strict';
 
@@ -120,4 +120,5 @@ jobs:
           assert.equal(drawer.structure,true);
           await browser.close();
           EOF
-          node /tmp/sky-card-hits-check.mjs
+          node ./sky-card-hits-check.mjs
+          rm sky-card-hits-check.mjs
