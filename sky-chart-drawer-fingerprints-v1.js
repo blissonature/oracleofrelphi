@@ -1,4 +1,5 @@
-// Data-derived fingerprints for collapsed Where and When, Placements, and Card Hits drawers.
+// Data-derived fingerprints for collapsed Where and When and Placements drawers.
+// Card Hits owns its own chart-ruler fingerprint through RelphiSkyCardHitsStructure.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyDrawerFingerprintsV1)return;
@@ -11,7 +12,6 @@ const FALLBACK_SKY={A:'#c9211e',B:'#2462d0'};
 const SIGN_NAMES=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const ANGLE_IDS=new Set(['asc','ascendant','rising','dsc','descendant','mc','midheaven','ic','imumcoeli']);
 let queued=false;
-const cardHitSignature={A:'',B:''};
 const whereRetry={A:0,B:0};
 
 const norm=value=>((Number(value)%360)+360)%360;
@@ -43,7 +43,6 @@ function axisValue(records,primaryIds,oppositeIds){const primary=records.find(re
 function addAxis(root,cx,cy,radius,degree,className){if(!Number.isFinite(degree))return;const a=polar(cx,cy,radius,degree),b=polar(cx,cy,radius,degree+180);root.appendChild(svg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:className}))}
 function whereMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.whereFingerprint||null}
 function placementMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.placementFingerprint||null}
-function cardHitsMount(slot){return window.RelphiSkyCardShell?.get?.(slot)?.cardHitsFingerprint||null}
 
 function temporalTrace(sourceSvg){
   const root=svg('svg',{
@@ -53,8 +52,6 @@ function temporalTrace(sourceSvg){
     'aria-hidden':'true',
     focusable:'false'
   });
-  // The compact fingerprint needs only the heptagram line geometry. It must not
-  // disappear merely because the full-size glyph bubbles are still completing.
   const week=Array.from(sourceSvg.querySelectorAll('.sky-ph-week-segment'));
   const hour=sourceSvg.querySelector('.sky-ph-hour-segment.current');
   week.forEach(line=>{const clone=line.cloneNode(true);clone.removeAttribute('id');root.appendChild(clone)});
@@ -66,16 +63,9 @@ function renderWhere(slot,payload){
   const refs=window.RelphiSkyCardShell?.get?.(slot),sourceSvg=refs?.heptagram,profile=payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
   const complete=!!(profile.dateTime&&profile.location&&profile.timeZone&&Number.isFinite(Number(profile.latitude))&&Number.isFinite(Number(profile.longitude)));
   mount.replaceChildren();
-  if(!complete||!sourceSvg){
-    whereRetry[slot]=0;
-    mount.hidden=true;mount.removeAttribute('aria-label');return;
-  }
+  if(!complete||!sourceSvg){whereRetry[slot]=0;mount.hidden=true;mount.removeAttribute('aria-label');return}
   const trace=temporalTrace(sourceSvg);
-  if(!trace){
-    mount.hidden=true;mount.removeAttribute('aria-label');
-    if(whereRetry[slot]<24){whereRetry[slot]+=1;window.setTimeout(schedule,50)}
-    return;
-  }
+  if(!trace){mount.hidden=true;mount.removeAttribute('aria-label');if(whereRetry[slot]<24){whereRetry[slot]+=1;window.setTimeout(schedule,50)}return}
   whereRetry[slot]=0;
   mount.appendChild(trace);mount.hidden=false;
   mount.setAttribute('aria-label',`Where and When fingerprint for Sky ${slot}: week progress and current planetary-hour segment.`);
@@ -110,24 +100,6 @@ function renderPlacements(slot,payload){
   mount.setAttribute('aria-label',`Placements fingerprint: ${ordinary.length} plotted placement${ordinary.length===1?'':'s'}${axes?`, oriented by ${axes}`:''}.`);
 }
 
-function renderCardHits(slot){
-  const mount=cardHitsMount(slot);if(!mount)return;
-  const api=window.RelphiSkyCardHitsDrawer,hits=api?.getHits?.(slot)||[];
-  const signature=hits.map(hit=>`${hit.id}:${hit.count}`).join('|');
-  if(cardHitSignature[slot]===signature&&(hits.length?!!mount.firstElementChild:mount.hidden))return;
-  cardHitSignature[slot]=signature;
-  mount.replaceChildren();
-  if(!hits.length){mount.hidden=true;mount.removeAttribute('aria-label');return}
-  mount.hidden=false;
-  const strip=document.createElement('span');strip.className='sky-card-hits-fingerprint-strip';
-  const strongest=hits[0];
-  const card=document.createElement('span');card.className='sky-card-hits-fingerprint-card';
-  const image=document.createElement('img');image.src=api.thumbnailFor(strongest.card,22,38);image.alt='';image.width=22;image.height=38;image.loading='lazy';image.decoding='async';card.appendChild(image);
-  const chip=document.createElement('span');chip.className='sky-card-hits-fingerprint-count';chip.textContent=String(strongest.count);card.appendChild(chip);strip.appendChild(card);
-  mount.appendChild(strip);
-  mount.setAttribute('aria-label',`Card Hits fingerprint: strongest card is ${api.displayName(strongest.card)} with ${strongest.count} associated placement${strongest.count===1?'':'s'}, from ${hits.length} card${hits.length===1?'':'s'} total.`);
-}
-
 function installSkyCommandContract(){
   if(document.getElementById('relphi-sky-command-contract'))return;
   const style=document.createElement('style');
@@ -139,12 +111,18 @@ function removeNewSkyCommands(){document.querySelectorAll('#skySavedSkiesPopover
 
 function renderSlot(slot){
   const payload=read(slot);
-  // The slot owns a persistent Sky-card shell. If a real Remove/Add cycle or a
-  // foundation rebuild replaced that shell, restore it before drawing any fingerprints.
   window.RelphiSkyCardShell?.ensure?.(slot,payload);
-  renderWhere(slot,payload);renderPlacements(slot,payload);renderCardHits(slot);
+  renderWhere(slot,payload);
+  renderPlacements(slot,payload);
 }
-function render(){queued=false;removeNewSkyCommands();renderSlot('A');renderSlot('B')}
+function render(){
+  queued=false;
+  removeNewSkyCommands();
+  renderSlot('A');renderSlot('B');
+  // Card Hits is a separate owner. Ask it to refresh only after the shell and the
+  // two fingerprints this module owns are stable, and never mutate its fingerprint.
+  window.RelphiSkyCardHitsStructure?.render?.();
+}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relevantStorage(event){return !event.key||Object.values(KEYS).includes(event.key)}
 
