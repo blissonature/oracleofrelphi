@@ -1,9 +1,10 @@
-// Tarot Ledger card deep link v9: open the requested card and make its full Ledger entry the visible destination.
+// Tarot Ledger card deep link v10: open the requested card inside the ordinary Ledger UI.
 (function(){
 'use strict';
 const params=new URLSearchParams(location.search);
 const tarotContext=/(^|\/)tarot\.html$/.test(location.pathname)||(window.__relphiTarotPreviewDocument===true&&params.get('view')==='tarot');
-if(!tarotContext||window.__relphiTarotCardDeepLinkV9)return;
+if(!tarotContext||window.__relphiTarotCardDeepLinkV10)return;
+window.__relphiTarotCardDeepLinkV10=true;
 window.__relphiTarotCardDeepLinkV9=true;
 window.__relphiTarotCardDeepLinkV8=true;
 window.__relphiTarotCardDeepLinkV7=true;
@@ -39,48 +40,51 @@ function detailMatches(){
   const text=normalize(detail.textContent);
   return names.some(name=>text.includes(name));
 }
-function installFocusedEntryStyle(){
-  if(document.getElementById('relphi-deep-linked-card-style'))return;
-  const style=document.createElement('style');
-  style.id='relphi-deep-linked-card-style';
-  style.textContent=[
-    'body.relphi-deep-linked-card .tarot-entry-panel,',
-    'body.relphi-deep-linked-card .tarot-mode-bar,',
-    'body.relphi-deep-linked-card .tarot-command-panel,',
-    'body.relphi-deep-linked-card #tarotSummary,',
-    'body.relphi-deep-linked-card #visibilityPanel,',
-    'body.relphi-deep-linked-card #browsePanel>.tarot-list-panel{display:none!important}',
-    'body.relphi-deep-linked-card #browsePanel{display:block!important}',
-    'body.relphi-deep-linked-card #cardDetail{display:block!important;max-width:72rem;margin:0 auto!important}'
-  ].join('');
-  document.head.appendChild(style);
+function restoreCanonicalLedgerChrome(){
+  document.getElementById('relphi-deep-linked-card-style')?.remove();
+  document.body?.classList.remove('relphi-deep-linked-card');
 }
-function landOnDetail(){
-  const detail=document.getElementById('cardDetail');
-  if(!detail)return;
-  const land=()=>{
-    detail.scrollIntoView?.({behavior:'auto',block:'start',inline:'nearest'});
-    if(window.scrollY>4)window.scrollTo({top:Math.max(0,detail.getBoundingClientRect().top+window.scrollY-12),behavior:'auto'});
+function collapseDrawingBoard(){
+  const panel=document.getElementById('shortListPanel');
+  if(panel){
+    panel.hidden=true;
+    panel.setAttribute('hidden','');
+    const drawer=panel.querySelector('.card-row-drawing-board,details.short-list-drawer');
+    if(drawer?.tagName==='DETAILS')drawer.open=false;
+  }
+  const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+  if(trigger){
+    trigger.setAttribute('aria-expanded','false');
+    trigger.textContent='Open Drawing Board';
+  }
+}
+function keepCanonicalArrival(){
+  restoreCanonicalLedgerChrome();
+  collapseDrawingBoard();
+  document.getElementById('browsePanel')?.removeAttribute('hidden');
+}
+function settleLedgerViewport(){
+  const settle=()=>{
+    restoreCanonicalLedgerChrome();
+    collapseDrawingBoard();
+    window.RelphiTarotCardSelectionScroll?.scrollExactCardIntoView?.(CARD_ID);
+    window.scrollTo({top:0,left:0,behavior:'auto'});
   };
-  land();
-  requestAnimationFrame(land);
-  setTimeout(land,120);
-  setTimeout(land,420);
+  requestAnimationFrame(()=>requestAnimationFrame(settle));
+  setTimeout(settle,120);
 }
 function finish(){
   if(!detailMatches())return false;
   opened=true;
-  document.getElementById('browsePanel')?.removeAttribute('hidden');
-  installFocusedEntryStyle();
-  document.body?.classList.add('relphi-deep-linked-card');
-  landOnDetail();
+  keepCanonicalArrival();
+  settleLedgerViewport();
   return true;
 }
 function targetCard(){
   const list=document.getElementById('cardList');
   if(!list)return null;
   const id=cssEscape(CARD_ID);
-  return list.querySelector(`.or-card[data-id="${id}"]`);
+  return list.querySelector(`.or-card[data-id="${id}"]`)||list.querySelector(`[data-card-id="${id}"]`);
 }
 function ledgerReady(){
   const browse=document.getElementById('browsePanel');
@@ -88,6 +92,7 @@ function ledgerReady(){
   return !!(browse&&list&&!browse.hidden&&list.children.length);
 }
 function prepareLedger(){
+  keepCanonicalArrival();
   if(ledgerReady())return true;
   const browse=document.getElementById('browsePanel');
   const list=document.getElementById('cardList');
@@ -98,6 +103,7 @@ function prepareLedger(){
     if(trigger){
       lastLedgerClickAt=now;
       trigger.click();
+      collapseDrawingBoard();
     }
   }
   return ledgerReady();
@@ -114,16 +120,29 @@ function seek(){
   const now=Date.now();
   if(card&&now-lastCardClickAt>300){
     lastCardClickAt=now;
-    // Click the card surface itself. Tarot Ledger's delegated result handler
-    // treats that as an ordinary request for this card's full detail entry.
+    // Use the ordinary Ledger result interaction so a Sky Chart handoff opens
+    // exactly the same full entry a person would get by selecting the card here.
     card.click();
+    collapseDrawingBoard();
     if(finish())return;
   }
   attempts+=1;
   if(attempts<MAX_ATTEMPTS)schedule();
   else console.warn('[Oracle of Relphi] Tarot Ledger deep link could not confirm full card detail:',CARD_ID);
 }
-function start(){if(CARD_ID)schedule(0)}
+function start(){
+  if(!CARD_ID)return;
+  keepCanonicalArrival();
+  schedule(0);
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-window.addEventListener('load',()=>{if(!opened&&CARD_ID)schedule(0)},{once:true});
+window.addEventListener('load',()=>{
+  if(!CARD_ID)return;
+  // tarot-app restores saved Drawing Board contents just after load. Preserve the
+  // contents, but keep the Board closed on a fresh Ledger arrival.
+  setTimeout(()=>{
+    keepCanonicalArrival();
+    if(!opened)schedule(0);
+  },0);
+},{once:true});
 })();
