@@ -52,41 +52,6 @@
    do not belong on top of it; the Sky title already communicates "Now". */
 .sky-live-header-control{display:none!important}
 
-/* Card Hits Houses use the same numeric, sign-colored House medallion language as
-   Relationship tiles instead of spelling out "House #" inside every disclosure. */
-.sky-card-house-toggle-name{display:none!important}
-.sky-card-house-toggle::before{
-  content:attr(data-card-house-toggle);
-  display:inline-grid;
-  place-items:center;
-  justify-self:start;
-  width:18px;
-  height:18px;
-  box-sizing:border-box;
-  padding:0;
-  border:0;
-  border-radius:50%;
-  background:#777;
-  color:#fff;
-  font:900 .58rem/1 system-ui,sans-serif;
-  font-variant-numeric:tabular-nums;
-  text-align:center;
-  white-space:nowrap;
-  box-shadow:0 1px 2px rgba(0,0,0,.16);
-}
-.sky-card-house-toggle[data-card-house-toggle="1"]::before{background:#e53935;color:#fff}
-.sky-card-house-toggle[data-card-house-toggle="2"]::before{background:#f06b32;color:#fff}
-.sky-card-house-toggle[data-card-house-toggle="3"]::before{background:#f39a2e;color:#211d1a}
-.sky-card-house-toggle[data-card-house-toggle="4"]::before{background:#f5be3d;color:#211d1a}
-.sky-card-house-toggle[data-card-house-toggle="5"]::before{background:#f1dc43;color:#211d1a}
-.sky-card-house-toggle[data-card-house-toggle="6"]::before{background:#a9cf46;color:#211d1a}
-.sky-card-house-toggle[data-card-house-toggle="7"]::before{background:#43a85b;color:#fff}
-.sky-card-house-toggle[data-card-house-toggle="8"]::before{background:#2ca69b;color:#fff}
-.sky-card-house-toggle[data-card-house-toggle="9"]::before{background:#3285c7;color:#fff}
-.sky-card-house-toggle[data-card-house-toggle="10"]::before{background:#5961c8;color:#fff;font-size:.49rem;letter-spacing:-.035em}
-.sky-card-house-toggle[data-card-house-toggle="11"]::before{background:#8c4fb4;color:#fff;font-size:.49rem;letter-spacing:-.035em}
-.sky-card-house-toggle[data-card-house-toggle="12"]::before{background:#bd438e;color:#fff;font-size:.49rem;letter-spacing:-.035em}
-
 /* House hit concentration reads as tally marks instead of a second numbered bubble.
    The House medallion owns the number; the right edge now shows only quantity. */
 .sky-card-house-hit-count{
