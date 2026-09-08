@@ -82,6 +82,7 @@ const ANCHOR_SENSITIVITY=Object.freeze({
   'part-of-fortune':.8,
   lilith:.7,vertex:.7
 });
+const ANCHOR_ANCHOR_FACTOR=.55;
 const PLANETARY_NATURE=Object.freeze({
   jupiter:.25,venus:.22,
   sun:0,moon:0,mercury:0,
@@ -95,6 +96,7 @@ const SCORE_MODEL=Object.freeze({
   aspectValence:ASPECT_VALENCE,
   activeAuthority:ACTIVE_AUTHORITY,
   anchorSensitivity:ANCHOR_SENSITIVITY,
+  anchorAnchorFactor:ANCHOR_ANCHOR_FACTOR,
   planetaryNature:PLANETARY_NATURE
 });
 
@@ -144,10 +146,15 @@ function exactness(row){
 function contactAuthority(left,right){
   const leftActive=activeAuthority(left),rightActive=activeAuthority(right);
   const leftAnchor=anchorSensitivity(left),rightAnchor=anchorSensitivity(right);
-  if(leftActive!=null&&rightActive!=null)return (leftActive+rightActive)/2;
-  if(leftActive!=null&&rightAnchor!=null)return (leftActive+rightAnchor)/2;
-  if(rightActive!=null&&leftAnchor!=null)return (rightActive+leftAnchor)/2;
-  if(leftAnchor!=null&&rightAnchor!=null)return .55*((leftAnchor+rightAnchor)/2);
+  // Two actors share agency; geometric mean keeps the relationship symmetric without
+  // letting one unusually high authority dominate the other.
+  if(leftActive!=null&&rightActive!=null)return Math.sqrt(leftActive*rightActive);
+  // An active body striking an anchor is limited by what it strikes: anchor sensitivity
+  // is allowed to matter fully rather than being averaged away by the body's agency.
+  if(leftActive!=null&&rightAnchor!=null)return leftActive*rightAnchor;
+  if(rightActive!=null&&leftAnchor!=null)return rightActive*leftAnchor;
+  // Anchor↔anchor is correspondence between sensitive locations, not two active agents.
+  if(leftAnchor!=null&&rightAnchor!=null)return ANCHOR_ANCHOR_FACTOR*Math.sqrt(leftAnchor*rightAnchor);
   // Unknown endpoints remain visible but do not receive special authority.
   if(leftActive!=null||rightActive!=null)return .8;
   if(leftAnchor!=null||rightAnchor!=null)return .55;
