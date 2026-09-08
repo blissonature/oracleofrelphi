@@ -6,7 +6,7 @@ if(window.RelphiChironEphemeris)return;
 
 const MODULE_URL='https://cdn.jsdelivr.net/npm/@swisseph/browser@1.3.1/dist/swisseph-browser.js';
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-let enginePromise=null;
+let enginePromise=null,engineState=null;
 
 const norm=value=>((Number(value)%360)+360)%360;
 function placementObject(longitude){
@@ -27,7 +27,13 @@ function instantFor(payload){
   const date=new Date(raw);
   return Number.isFinite(date.getTime())?date:null;
 }
+function validateDate(date){
+  if(!(date instanceof Date)||!Number.isFinite(date.getTime()))throw new Error('Chiron requires a valid chart instant.');
+  const year=date.getUTCFullYear();
+  if(year<1800||year>=2400)throw new Error('Chiron calculation currently requires a chart date from 1800 through 2399.');
+}
 async function engine(){
+  if(engineState)return engineState;
   if(enginePromise)return enginePromise;
   enginePromise=(async()=>{
     const mod=await import(MODULE_URL);
@@ -35,20 +41,27 @@ async function engine(){
     await swe.init();
     // Chiron is asteroid 15 and requires the Swiss asteroid ephemeris file.
     await swe.loadStandardEphemeris();
-    return{swe,Asteroid:mod.Asteroid,CalculationFlag:mod.CalculationFlag};
-  })().catch(error=>{enginePromise=null;throw error});
+    engineState={swe,Asteroid:mod.Asteroid,CalculationFlag:mod.CalculationFlag};
+    return engineState;
+  })().catch(error=>{enginePromise=null;engineState=null;throw error});
   return enginePromise;
 }
-async function calculate(date){
-  if(!(date instanceof Date)||!Number.isFinite(date.getTime()))throw new Error('Chiron requires a valid chart instant.');
-  const year=date.getUTCFullYear();
-  if(year<1800||year>=2400)throw new Error('Chiron calculation currently requires a chart date from 1800 through 2399.');
-  const{ swe,Asteroid,CalculationFlag }=await engine();
-  const jd=swe.dateToJulianDay(date);
-  const result=swe.calculatePosition(jd,Asteroid.Chiron,CalculationFlag.SwissEphemeris);
+function calculateFromEngine(state,date){
+  validateDate(date);
+  const jd=state.swe.dateToJulianDay(date);
+  const result=state.swe.calculatePosition(jd,state.Asteroid.Chiron,state.CalculationFlag.SwissEphemeris);
   if(!Number.isFinite(Number(result?.longitude)))throw new Error('Swiss Ephemeris did not return a Chiron longitude.');
   return placementObject(result.longitude);
 }
+async function calculate(date){
+  validateDate(date);
+  return calculateFromEngine(await engine(),date);
+}
+function calculateSync(date){
+  if(!engineState)return null;
+  return calculateFromEngine(engineState,date);
+}
+async function ready(){await engine();return true}
 async function completePayload(payload){
   const placements=source(payload);
   if(!placements||hasChiron(placements))return false;
@@ -62,5 +75,5 @@ async function completePayload(payload){
   return true;
 }
 
-window.RelphiChironEphemeris=Object.freeze({calculate,completePayload,hasChiron});
+window.RelphiChironEphemeris=Object.freeze({calculate,calculateSync,ready,isReady:()=>!!engineState,completePayload,hasChiron});
 })();
