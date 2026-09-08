@@ -182,7 +182,7 @@
       appendScript('tarot-date-sky-bridge-v1.js?v=3');
       appendScript('tarot-search-list-v1.js?v=1');
       appendScript('tarot-reversed-copy-v1.js?v=1');
-      appendScript('tarot-card-selection-scroll-v1.js?v=1', function () {
+      appendScript('tarot-card-selection-scroll-v1.js?v=2', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
       appendScript('drawing-board-workflow-v2.js?v=71', function () {
