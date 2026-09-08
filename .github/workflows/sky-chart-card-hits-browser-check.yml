@@ -1,0 +1,123 @@
+name: Sky Chart Card Hits browser check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-card-shell-v1.js'
+      - 'sky-chart-card-hits-drawer-v3.js'
+      - 'sky-chart-drawer-fingerprints-v1.js'
+      - 'sky-chart-card-drawers-v1.css'
+      - '.github/workflows/sky-chart-card-hits-browser-check.yml'
+
+jobs:
+  card-hits-browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-card-shell-v1.js
+          node --check sky-chart-card-hits-drawer-v3.js
+          node --check sky-chart-drawer-fingerprints-v1.js
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Assert Card Hits fingerprint and drawer
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-card-hits-server.log 2>&1 &
+          cat > /tmp/sky-card-hits-check.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          import assert from 'node:assert/strict';
+
+          const sample={
+            name:'Card Hits test',
+            calcProfile:{
+              houseSystem:'whole-sign',
+              dateTime:'2026-09-08T15:00:00',
+              location:'Salt Lake City, Utah',
+              timeZone:'America/Denver',
+              latitude:40.7608,
+              longitude:-111.8910,
+              houseCusps:Array.from({length:12},(_,i)=>(150+i*30)%360)
+            },
+            placements:{
+              Sun:{name:'Sun',longitude:195},
+              Moon:{name:'Moon',longitude:118.4},
+              Ascendant:{name:'Ascendant',longitude:168.4},
+              Mercury:{name:'Mercury',longitude:206.1},
+              Venus:{name:'Venus',longitude:169.8},
+              Mars:{name:'Mars',longitude:167.8},
+              Jupiter:{name:'Jupiter',longitude:307.1},
+              Saturn:{name:'Saturn',longitude:235.5},
+              Uranus:{name:'Uranus',longitude:254.8},
+              Neptune:{name:'Neptune',longitude:271},
+              Pluto:{name:'Pluto',longitude:213.8}
+            }
+          };
+
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1280,height:1200}});
+          const errors=[];
+          page.on('pageerror',error=>errors.push('pageerror: '+error.message));
+          page.on('console',message=>{if(message.type()==='error')errors.push('console: '+message.text())});
+          await page.addInitScript(payload=>{
+            localStorage.setItem('relphiSkyChartA',JSON.stringify(payload));
+            localStorage.removeItem('relphiSkyChartB');
+          },sample);
+          await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
+          await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
+          await page.waitForTimeout(500);
+          const state=await page.evaluate(()=>{
+            const shell=window.RelphiSkyCardShell?.get?.('A');
+            const mount=shell?.cardHitsFingerprint;
+            const button=document.querySelector('#skyFoundationA [data-sky-drawer-tab="card-hits"]');
+            const structure=window.RelphiSkyCardHitsStructure;
+            let info=null,fp=null,fpError='';
+            try{info=structure?.chartRulerInfo?.(JSON.parse(localStorage.getItem('relphiSkyChartA')||'null'))||null}catch(error){fpError+='info:'+error.message+';'}
+            try{fp=structure?.fingerprint?.(JSON.parse(localStorage.getItem('relphiSkyChartA')||'null'))||null}catch(error){fpError+='fingerprint:'+error.message+';'}
+            return{
+              hasShell:!!shell,
+              hasButton:!!button,
+              buttonRect:button?{w:button.getBoundingClientRect().width,h:button.getBoundingClientRect().height}:null,
+              hasMount:!!mount,
+              mountHidden:mount?.hidden??null,
+              mountChildCount:mount?.childElementCount??null,
+              mountHTML:mount?.innerHTML||'',
+              structurePresent:!!structure,
+              info:info?{ruler:info.ruler,sign:info.sign,signIndex:info.signIndex,hasCard:!!info.card}:null,
+              directFingerprint:fp?{ruler:fp.dataset.chartRulerFingerprint||'',html:fp.outerHTML}:null,
+              fpError,
+              tabs:[...document.querySelectorAll('#skyFoundationA [data-sky-drawer-tab]')].map(x=>x.dataset.skyDrawerTab),
+              bodyHTML:document.querySelector('#skyFoundationA .sky-foundation-body')?.innerHTML||''
+            };
+          });
+          console.log('CARD_HITS_STATE '+JSON.stringify(state));
+          console.log('PAGE_ERRORS '+JSON.stringify(errors));
+          assert.equal(state.hasShell,true);
+          assert.equal(state.hasButton,true);
+          assert.equal(state.hasMount,true);
+          assert.equal(state.structurePresent,true);
+          assert.ok(state.info?.ruler);
+          assert.equal(state.info?.hasCard,true);
+          assert.equal(state.mountHidden,false);
+          assert.ok(state.mountChildCount>0);
+          await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click({force:true});
+          await page.waitForTimeout(300);
+          const drawer=await page.evaluate(()=>({
+            open:document.querySelector('#skyFoundationA [data-sky-drawer="card-hits"]')?.open||false,
+            structure:!!document.querySelector('#skyFoundationA .sky-card-hits-structure'),
+            html:document.querySelector('#skyFoundationA [data-sky-drawer-mount="card-hits"]')?.innerHTML||''
+          }));
+          console.log('CARD_HITS_DRAWER '+JSON.stringify(drawer));
+          assert.equal(drawer.open,true);
+          assert.equal(drawer.structure,true);
+          await browser.close();
+          EOF
+          node /tmp/sky-card-hits-check.mjs
