@@ -1,12 +1,15 @@
 // Card Hits presentation refinement: relationship-style ruler expansion and progressive House detail.
 (function(){
 'use strict';
-if(window.__relphiSkyCardHitsInplaceV3)return;
+if(window.__relphiSkyCardHitsInplaceV4)return;
+window.__relphiSkyCardHitsInplaceV4=true;
 window.__relphiSkyCardHitsInplaceV3=true;
 window.__relphiSkyCardHitsInplaceV2=true;
 window.__relphiSkyCardHitsInplaceV1=true;
 
 const NS='http://www.w3.org/2000/svg';
+const RELATIONSHIP_GLYPH_DISPLAY_SIZE=38;
+const RELATIONSHIP_GLYPH_RADIUS=19;
 const SIGN_RULERS={aries:'Mars',taurus:'Venus',gemini:'Mercury',cancer:'Moon',leo:'Sun',virgo:'Mercury',libra:'Venus',scorpio:'Mars',sagittarius:'Jupiter',capricorn:'Saturn',aquarius:'Saturn',pisces:'Jupiter'};
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
@@ -163,6 +166,12 @@ function faceLord(sign,decan){const si=SIGNS.findIndex(s=>s.toLowerCase()===Stri
 function glyphHost(id,className='sky-card-house-detail-glyph'){
   const host=document.createElement('span');host.className=className;host.dataset.relphiHouseGlyph=String(id||'').toLowerCase();host.setAttribute('aria-hidden','true');return host;
 }
+function relationshipMatchedRadius(host){
+  const rectWidth=host?.getBoundingClientRect?.().width||0;
+  const cssWidth=parseFloat(getComputedStyle(host).width)||0;
+  const displaySize=rectWidth||cssWidth||RELATIONSHIP_GLYPH_DISPLAY_SIZE;
+  return RELATIONSHIP_GLYPH_RADIUS*(RELATIONSHIP_GLYPH_DISPLAY_SIZE/displaySize);
+}
 function hydrateHouseGlyphs(scope){
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;if(!registry||!component?.createBubble||!scope?.querySelectorAll)return;
   scope.querySelectorAll('[data-relphi-house-glyph]').forEach(host=>{
@@ -171,7 +180,7 @@ function hydrateHouseGlyphs(scope){
     host.dataset.relphiHouseGlyphHydrated='true';host.replaceChildren();
     const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','-32 -32 64 64');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');host.appendChild(svg);
     try{
-      const bubble=component.createBubble(svg,entry.id,{radius:26,padding:1,color:'#111111',fill:'#ffffff'});
+      const bubble=component.createBubble(svg,entry.id,{radius:relationshipMatchedRadius(host),padding:1,color:'#111111',fill:'#ffffff'});
       if(bubble.circle){bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true')}
       Promise.resolve(bubble.ready).catch(error=>{host.dataset.relphiHouseGlyphHydrated='error';console.error('[Sky Chart] Canonical House Card Hits glyph failed',entry.id,error)});
     }catch(error){host.dataset.relphiHouseGlyphHydrated='error';console.error('[Sky Chart] Canonical House Card Hits glyph failed',entry.id,error)}
@@ -179,10 +188,11 @@ function hydrateHouseGlyphs(scope){
 }
 
 function ensureStyles(){
-  if(document.getElementById('skyCardHitsInplaceV3Styles'))return;
+  if(document.getElementById('skyCardHitsInplaceV4Styles'))return;
+  document.getElementById('skyCardHitsInplaceV3Styles')?.remove();
   document.getElementById('skyCardHitsInplaceV2Styles')?.remove();
   document.getElementById('skyCardHitsInplaceV1Styles')?.remove();
-  const style=document.createElement('style');style.id='skyCardHitsInplaceV3Styles';
+  const style=document.createElement('style');style.id='skyCardHitsInplaceV4Styles';
   style.textContent=`
 .sky-card-rulers-grid>.sky-card-ruler-detail.sky-card-ruler-detail-inline{grid-column:1/-1;margin:0;min-width:0;animation:skyCardHitsInlineOpen .14s ease-out}
 @keyframes skyCardHitsInlineOpen{from{opacity:.35;transform:translateY(-3px)}to{opacity:1;transform:none}}
