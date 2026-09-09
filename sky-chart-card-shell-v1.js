@@ -5,7 +5,13 @@ if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyCardShel
 window.__relphiSkyCardShellV1=true;
 
 const PANELS={A:'skyFoundationA',B:'skyFoundationB'};
-function installStyles(){}
+function installStyles(){
+  if(document.getElementById('skyCardAtomicWhereRevealV1'))return;
+  const style=document.createElement('style');
+  style.id='skyCardAtomicWhereRevealV1';
+  style.textContent='.sky-card-drawers[data-where-prewarming="true"]>.sky-card-fingerprint-tabs{display:grid!important}';
+  document.head.appendChild(style);
+}
 function profile(payload){return payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{}}
 function complete(payload){const p=profile(payload);return!!(p&&p.dateTime&&p.location&&p.timeZone&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude)))}
 function panel(slot){return document.getElementById(PANELS[slot]||'')}
@@ -22,18 +28,43 @@ function syncTabs(root){
     button.setAttribute('aria-expanded',active?'true':'false');
   });
 }
-function activateDrawer(root,target){
-  if(!target||target.open)return;
-  // If Where and When is the target, hide its committed summary before the
-  // <details> element opens. The editor moves that heptagram into its hidden source
-  // mount after the drawer-open event; without this pre-hide the committed summary
-  // can paint for one frame while switching away from Placements.
-  if(target.dataset.skyDrawer==='where')target.querySelector('[data-sky-where-summary]')?.classList.add('is-editor-expanded');
-  // Close the currently visible drawer before opening the next one. The native
-  // <details> toggle event is asynchronous; opening first lets both drawer bodies
-  // exist for a paint and can flash Where/When content over Placements.
+function afterFrames(count,callback){if(count<=0){callback();return}requestAnimationFrame(()=>afterFrames(count-1,callback))}
+function invalidateTransition(root){const next=Number(root.dataset.drawerTransitionToken||0)+1;root.dataset.drawerTransitionToken=String(next);return next}
+function cancelWherePrewarm(root){
+  if(root.dataset.wherePrewarming!=='true')return;
+  const slot=String(root.dataset.skyCardDrawers||'');
+  invalidateTransition(root);
+  delete root.dataset.wherePrewarming;
+  window.dispatchEvent(new CustomEvent('relphi:sky-drawer-closed',{detail:{slot,drawer:'where',prewarm:true}}));
+}
+function revealDrawer(root,target){
   root.querySelectorAll(':scope > .sky-card-drawer[open]').forEach(other=>{if(other!==target)other.open=false});
   target.open=true;
+}
+function activateDrawer(root,target){
+  if(!target||target.open)return;
+  installStyles();
+  const name=target.dataset.skyDrawer||'';
+  if(name==='where'){
+    const slot=String(root.dataset.skyCardDrawers||'');
+    const token=invalidateTransition(root);
+    root.dataset.wherePrewarming='true';
+    target.querySelector('[data-sky-where-summary]')?.classList.add('is-editor-expanded');
+    // Build the complete editor while the current drawer remains the painted view.
+    // The existing opened event is the Where/When controller's construction signal.
+    // Four frames allow its normalizers and static footer heptagram to settle before reveal.
+    window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot,drawer:'where',prewarm:true}}));
+    afterFrames(4,()=>{
+      if(root.dataset.drawerTransitionToken!==String(token)||root.dataset.wherePrewarming!=='true')return;
+      target.dataset.skyDrawerPrewarmed='true';
+      revealDrawer(root,target);
+      delete root.dataset.wherePrewarming;
+    });
+    return;
+  }
+  cancelWherePrewarm(root);
+  invalidateTransition(root);
+  revealDrawer(root,target);
 }
 function installDrawerBehavior(slot,root){
   installStyles();
@@ -43,6 +74,12 @@ function installDrawerBehavior(slot,root){
     button.addEventListener('click',()=>{
       const target=drawer(root,button.dataset.skyDrawerTab||'');
       if(!target)return;
+      if(root.dataset.wherePrewarming==='true'){
+        const requested=button.dataset.skyDrawerTab||'';
+        if(requested==='where'){cancelWherePrewarm(root);syncTabs(root);return}
+        cancelWherePrewarm(root);
+        if(target.open){syncTabs(root);return}
+      }
       if(target.open)target.open=false;
       else activateDrawer(root,target);
     });
@@ -64,6 +101,10 @@ function installDrawerBehavior(slot,root){
       }
       root.querySelectorAll(':scope > .sky-card-drawer[open]').forEach(other=>{if(other!==details)other.open=false});
       syncTabs(root);
+      if(details.dataset.skyDrawerPrewarmed==='true'){
+        delete details.dataset.skyDrawerPrewarmed;
+        return;
+      }
       window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot,drawer:name}}));
     });
   });
