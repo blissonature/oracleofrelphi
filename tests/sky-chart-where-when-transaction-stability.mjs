@@ -10,134 +10,56 @@ const placement=(name,longitude)=>{
 function sample(name,offset,dateTime,instant,location,timeZone,latitude,longitude){
   const asc=(168.38+offset)%360,mc=(76.28+offset)%360,cusps=Array.from({length:12},(_,i)=>(asc+i*30)%360);
   const raw={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Midheaven:76.28};
-  return{
-    name,
-    houseSystem:'equal-house',
-    houseCusps:cusps,
-    calcProfile:{dateTime,instant,location,locationQuery:location,timeZone,latitude,longitude,houseCusps:cusps,houseSystem:'equal-house'},
-    placements:Object.fromEntries(Object.entries(raw).map(([key,value])=>[key,placement(key,typeof value==='number'?value+offset:value)]))
-  };
+  return{name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime,instant,location,locationQuery:location,timeZone,latitude,longitude,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(raw).map(([key,value])=>[key,placement(key,typeof value==='number'?value+offset:value)]))};
 }
-
 const skyA=sample('Alpha sky',0,'1985-10-08T04:37','1985-10-08T08:37:00.000Z','Malden, Massachusetts, United States','America/New_York',42.4251,-71.0662);
 const skyB=sample('Beta sky',29.27,'2026-08-27T08:00','2026-08-27T14:00:00.000Z','Salt Lake City, Utah, United States','America/Denver',40.7608,-111.891);
 
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:1100}});
-const errors=[];
-page.on('pageerror',error=>errors.push(error.message));
-
+const errors=[];page.on('pageerror',error=>errors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
 await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
-
-await page.addInitScript(({a,b})=>{
-  localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
-  localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
-  localStorage.setItem('relphiSkyChartLastModeV1','comparison');
-}, {a:skyA,b:skyB});
-
+await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison')},{a:skyA,b:skyB});
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForSelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]',{timeout:20000});
 await page.waitForSelector('#skyFoundationA [data-sky-drawer-tab="where"]',{timeout:20000});
 await page.waitForSelector('#skyFoundationB [data-sky-drawer-tab="where"]',{timeout:20000});
+await page.evaluate(()=>{window.__wwTransactionCounts={foundation:0,interactions:0};window.addEventListener('relphi:sky-foundation-ready',()=>window.__wwTransactionCounts.foundation++);window.addEventListener('relphi:sky-foundation-interactions-ready',()=>window.__wwTransactionCounts.interactions++)});
+const relationshipState=()=>page.evaluate(()=>[...document.querySelector('#skyFoundationRelationshipList').children].map(node=>node.matches('.sky-foundation-relationship-row')?['row',node.dataset.relationshipMode,node.dataset.relationIndex,node.dataset.leftPlacement,node.dataset.aspect,node.dataset.rightPlacement,node.dataset.sourceOrb].join(':'):node.matches('.sky-relationship-family-heading')?'family:'+node.dataset.relationshipFamilyHeading:node.matches('.sky-relationship-scope-heading')?'scope:'+node.dataset.relationshipScopeHeading:'other:'+node.className));
+const whereTabA=page.locator('#skyFoundationA [data-sky-drawer-tab="where"]'),whereTabB=page.locator('#skyFoundationB [data-sky-drawer-tab="where"]');
 
-await page.evaluate(()=>{
-  window.__wwTransactionCounts={foundation:0,interactions:0};
-  window.addEventListener('relphi:sky-foundation-ready',()=>window.__wwTransactionCounts.foundation++);
-  window.addEventListener('relphi:sky-foundation-interactions-ready',()=>window.__wwTransactionCounts.interactions++);
-});
-
-const relationshipState=()=>page.evaluate(()=>[...document.querySelector('#skyFoundationRelationshipList').children].map(node=>{
-  if(node.matches('.sky-foundation-relationship-row'))return ['row',node.dataset.relationshipMode,node.dataset.relationIndex,node.dataset.leftPlacement,node.dataset.aspect,node.dataset.rightPlacement,node.dataset.sourceOrb].join(':');
-  if(node.matches('.sky-relationship-family-heading'))return 'family:'+node.dataset.relationshipFamilyHeading;
-  if(node.matches('.sky-relationship-scope-heading'))return 'scope:'+node.dataset.relationshipScopeHeading;
-  return 'other:'+node.className;
-}));
-
-const whereTabA=page.locator('#skyFoundationA [data-sky-drawer-tab="where"]');
-const whereTabB=page.locator('#skyFoundationB [data-sky-drawer-tab="where"]');
-
-// An unchanged drawer close is navigation, not a sky-data change: keep the painted wheel intact.
 await whereTabA.click();
-const firstEditorA=page.locator('#skyFoundationA .sky-where-when-editor');
-await firstEditorA.waitFor();
-const footerContract=await firstEditorA.evaluate(form=>{
-  const footer=form.querySelector('.sky-where-when-footer');
-  return{
-    hasHeptagramMount:!!footer?.querySelector('[data-ww-heptagram-slot="A"]'),
-    hasCommittedFrame:!!footer?.querySelector('[data-sky-heptagram-frame="A"]'),
-    buttons:[...footer.querySelectorAll('.sky-where-when-footer-actions button')].map(button=>button.textContent.trim()),
-    advancedBeforeFooter:!!form.querySelector('.sky-where-when-advanced')&&!!(form.querySelector('.sky-where-when-advanced').compareDocumentPosition(footer)&Node.DOCUMENT_POSITION_FOLLOWING)
-  };
-});
-assert.equal(footerContract.hasHeptagramMount,true,'Where and When must own the footer heptagram mount.');
-assert.equal(footerContract.hasCommittedFrame,true,'The current heptagram must be present in the static footer before editing.');
-assert.deepEqual(footerContract.buttons,['Cancel','Use This Where and When']);
-assert.equal(footerContract.advancedBeforeFooter,true,'Advanced settings must remain above the static footer.');
+const firstEditorA=page.locator('#skyFoundationA .sky-where-when-editor');await firstEditorA.waitFor();
+const footerContract=await firstEditorA.evaluate(form=>{const footer=form.querySelector('.sky-where-when-footer');return{hasHeptagramMount:!!footer?.querySelector('[data-ww-heptagram-slot="A"]'),hasCommittedFrame:!!footer?.querySelector('[data-sky-heptagram-frame="A"]'),buttons:[...footer.querySelectorAll('.sky-where-when-footer-actions button')].map(button=>button.textContent.trim()),advancedBeforeFooter:!!form.querySelector('.sky-where-when-advanced')&&!!(form.querySelector('.sky-where-when-advanced').compareDocumentPosition(footer)&Node.DOCUMENT_POSITION_FOLLOWING)}});
+assert.equal(footerContract.hasHeptagramMount,true);assert.equal(footerContract.hasCommittedFrame,true);assert.deepEqual(footerContract.buttons,['Cancel','Use This Where and When']);assert.equal(footerContract.advancedBeforeFooter,true);
 await page.evaluate(()=>{document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel').dataset.unchangedCloseMarker='keep'});
-const countsBeforeUnchangedClose=await page.evaluate(()=>({...window.__wwTransactionCounts}));
-await whereTabA.click();
-await page.waitForFunction(()=>!document.querySelector('#skyFoundationA .sky-where-when-editor')&&document.documentElement.dataset.skyWhereWhenEditing==='false');
-await page.waitForTimeout(500);
+const countsBeforeUnchangedClose=await page.evaluate(()=>({...window.__wwTransactionCounts}));await whereTabA.click();
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationA .sky-where-when-editor')&&document.documentElement.dataset.skyWhereWhenEditing==='false');await page.waitForTimeout(500);
 assert.deepEqual(await page.evaluate(()=>({...window.__wwTransactionCounts})),countsBeforeUnchangedClose,'Closing an unchanged Where and When drawer must not rebuild the foundation.');
 assert.equal(await page.locator('#skyFoundationWheelMount>.sky-foundation-wheel').getAttribute('data-unchanged-close-marker'),'keep','Closing an unchanged Where and When drawer must preserve the painted wheel node.');
 
-await whereTabA.click();
-await whereTabB.click();
+await whereTabA.click();await whereTabB.click();
 await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='true'&&document.documentElement.dataset.skyWhereWhenEditingSlots==='A,B');
-
-const editorA=page.locator('#skyFoundationA .sky-where-when-editor');
-const editorB=page.locator('#skyFoundationB .sky-where-when-editor');
-await editorA.waitFor();
-await editorB.waitFor();
-
-const beforeSubmit=await relationshipState();
-const countsBefore=await page.evaluate(()=>({...window.__wwTransactionCounts}));
-
-await editorA.locator('[data-ww-field="date"]').fill('1990-04-15');
-await editorA.locator('[data-sky-time-entry]').fill('1:30 PM');
-await editorA.locator('[data-sky-time-entry]').press('Enter');
-await editorA.locator('button[type="submit"]').click();
+const editorA=page.locator('#skyFoundationA .sky-where-when-editor'),editorB=page.locator('#skyFoundationB .sky-where-when-editor');await editorA.waitFor();await editorB.waitFor();
+const beforeSubmit=await relationshipState(),countsBefore=await page.evaluate(()=>({...window.__wwTransactionCounts}));
+await editorA.locator('[data-ww-field="date"]').fill('1990-04-15');await editorA.locator('[data-sky-time-entry]').fill('1:30 PM');await editorA.locator('[data-sky-time-entry]').press('Enter');await editorA.locator('button[type="submit"]').click();
 await page.waitForFunction(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.dateTime==='1990-04-15T13:30');
-assert.equal(await page.locator('#skyFoundationA .sky-where-when-editor').count(),0);
-assert.equal(await page.locator('#skyFoundationB .sky-where-when-editor').count(),1);
-assert.equal(await page.locator('html').getAttribute('data-sky-where-when-editing'),'true');
-assert.equal(await page.locator('html').getAttribute('data-sky-where-when-editing-slots'),'B');
+assert.equal(await page.locator('#skyFoundationA .sky-where-when-editor').count(),0);assert.equal(await page.locator('#skyFoundationB .sky-where-when-editor').count(),1);assert.equal(await page.locator('html').getAttribute('data-sky-where-when-editing'),'true');assert.equal(await page.locator('html').getAttribute('data-sky-where-when-editing-slots'),'B');
+await page.waitForTimeout(500);
+assert.equal(await page.locator('#skyWhereWhenNamePrompt:not([hidden])').count(),0,'Naming must not interrupt another open Where and When editor.');
+await page.waitForTimeout(900);
+assert.deepEqual(await relationshipState(),beforeSubmit,'Relationships must remain frozen after Sky A is saved while Sky B is still being edited.');assert.deepEqual(await page.evaluate(()=>({...window.__wwTransactionCounts})),countsBefore,'No foundation or relationship rebuild may run while another Where and When editor remains open.');
 
-await page.waitForTimeout(1400);
-assert.deepEqual(await relationshipState(),beforeSubmit,'Relationships must remain frozen after Sky A is saved while Sky B is still being edited.');
-assert.deepEqual(await page.evaluate(()=>({...window.__wwTransactionCounts})),countsBefore,'No foundation or relationship rebuild may run while another Where and When editor remains open.');
+await editorB.locator('[data-ww-field="date"]').fill('2026-09-01');await editorB.locator('[data-sky-time-entry]').fill('9:15 AM');await editorB.locator('[data-sky-time-entry]').press('Enter');await editorB.locator('button[type="submit"]').click();
+await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='false');await page.waitForFunction(()=>window.__wwTransactionCounts.foundation>=1,{timeout:20000});await page.waitForFunction(()=>window.__wwTransactionCounts.interactions>=1,{timeout:20000});await page.waitForTimeout(700);
+const countsAfterCommit=await page.evaluate(()=>({...window.__wwTransactionCounts}));assert.equal(countsAfterCommit.foundation,1,'Both confirmed skies should produce one foundation rebuild.');assert.equal(countsAfterCommit.interactions,1,'Both confirmed skies should produce one relationship interaction rebuild.');assert.notDeepEqual(await relationshipState(),beforeSubmit,'Relationships should update after the last open Where and When editor is confirmed.');
+await page.waitForSelector('#skyWhereWhenNamePrompt:not([hidden])',{timeout:5000});
+assert.equal(await page.locator('#skyWhereWhenNamePrompt:not([hidden])').count(),1,'Naming may begin after the full Where and When transaction completes.');
+for(let i=0;i<2;i++){const visible=page.locator('#skyWhereWhenNamePrompt:not([hidden])');if(await visible.count()){await visible.locator('[data-sky-name-cancel]').click();await page.waitForTimeout(30)}}
+await page.waitForTimeout(1400);assert.deepEqual(await page.evaluate(()=>({...window.__wwTransactionCounts})),countsAfterCommit,'The removed one-second polling loop must not restart rendering after the committed rebuild.');
 
-await editorB.locator('[data-ww-field="date"]').fill('2026-09-01');
-await editorB.locator('[data-sky-time-entry]').fill('9:15 AM');
-await editorB.locator('[data-sky-time-entry]').press('Enter');
-await editorB.locator('button[type="submit"]').click();
-await page.waitForFunction(()=>document.documentElement.dataset.skyWhereWhenEditing==='false');
-await page.waitForFunction(()=>window.__wwTransactionCounts.foundation>=1,{timeout:20000});
-await page.waitForFunction(()=>window.__wwTransactionCounts.interactions>=1,{timeout:20000});
-await page.waitForTimeout(700);
-
-const countsAfterCommit=await page.evaluate(()=>({...window.__wwTransactionCounts}));
-assert.equal(countsAfterCommit.foundation,1,'Both confirmed skies should produce one foundation rebuild.');
-assert.equal(countsAfterCommit.interactions,1,'Both confirmed skies should produce one relationship interaction rebuild.');
-assert.notDeepEqual(await relationshipState(),beforeSubmit,'Relationships should update after the last open Where and When editor is confirmed.');
-
-await page.waitForTimeout(1400);
-assert.deepEqual(await page.evaluate(()=>({...window.__wwTransactionCounts})),countsAfterCommit,'The removed one-second polling loop must not restart rendering after the committed rebuild.');
-
-await page.locator('[data-saved-sky-trigger="A"]').click();
-await page.locator('[data-saved-as]').click();
-const dialog=page.locator('.sky-save-name-dialog');
-await dialog.waitFor();
-const nameSizes=await dialog.evaluate(node=>{
-  const input=node.querySelector('[data-save-sky-name-input]');
-  return{dialog:node.getBoundingClientRect().width,input:input.getBoundingClientRect().width};
-});
-assert.ok(nameSizes.dialog>=500,`Sky name dialog should be wide on desktop, got ${nameSizes.dialog}px`);
-assert.ok(nameSizes.input>=450,`Sky name field should be wide on desktop, got ${nameSizes.input}px`);
-await dialog.locator('[data-save-sky-name-cancel]').click();
-
-assert.deepEqual(errors,[]);
-await browser.close();
-console.log('Where and When transaction stability passed.');
+await page.locator('[data-saved-sky-trigger="A"]').click();await page.locator('[data-saved-as]').click();const dialog=page.locator('.sky-save-name-dialog');await dialog.waitFor();
+const nameSizes=await dialog.evaluate(node=>{const input=node.querySelector('[data-save-sky-name-input]');return{dialog:node.getBoundingClientRect().width,input:input.getBoundingClientRect().width}});assert.ok(nameSizes.dialog>=500);assert.ok(nameSizes.input>=450);await dialog.locator('[data-save-sky-name-cancel]').click();
+assert.deepEqual(errors,[]);await browser.close();console.log('Where and When transaction stability passed.');
