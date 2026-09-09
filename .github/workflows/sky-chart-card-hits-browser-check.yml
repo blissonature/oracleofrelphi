@@ -1,12 +1,20 @@
 name: Sky Chart Card Hits browser check
 
 on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-card-shell-v2.js'
+      - 'sky-chart-card-hits-drawer-v3.js'
+      - 'sky-chart-drawer-fingerprints-v1.js'
+      - 'sky-chart-card-drawers-v1.css'
+      - '.github/workflows/sky-chart-card-hits-browser-check.yml'
   push:
     branches:
       - main
     paths:
       - 'sky-chart.html'
-      - 'sky-chart-card-shell-v1.js'
+      - 'sky-chart-card-shell-v2.js'
       - 'sky-chart-card-hits-drawer-v3.js'
       - 'sky-chart-drawer-fingerprints-v1.js'
       - 'sky-chart-card-drawers-v1.css'
@@ -22,7 +30,7 @@ jobs:
           node-version: '22'
       - name: JavaScript syntax
         run: |
-          node --check sky-chart-card-shell-v1.js
+          node --check sky-chart-card-shell-v2.js
           node --check sky-chart-card-hits-drawer-v3.js
           node --check sky-chart-drawer-fingerprints-v1.js
       - name: Install Chromium
@@ -118,6 +126,7 @@ jobs:
           console.log('CARD_HITS_DRAWER '+JSON.stringify(drawer));
           assert.equal(drawer.open,true);
           assert.equal(drawer.structure,true);
+          assert.deepEqual(errors,[]);
           await browser.close();
           EOF
           node ./sky-card-hits-check.mjs
