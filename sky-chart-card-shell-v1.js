@@ -22,6 +22,14 @@ function syncTabs(root){
     button.setAttribute('aria-expanded',active?'true':'false');
   });
 }
+function activateDrawer(root,target){
+  if(!target||target.open)return;
+  // Close the currently visible drawer before opening the next one. The native
+  // <details> toggle event is asynchronous; opening first lets both drawer bodies
+  // exist for a paint and can flash Where/When content over Placements.
+  root.querySelectorAll(':scope > .sky-card-drawer[open]').forEach(other=>{if(other!==target)other.open=false});
+  target.open=true;
+}
 function installDrawerBehavior(slot,root){
   installStyles();
   root.querySelectorAll(':scope > .sky-card-fingerprint-tabs > [data-sky-drawer-tab]').forEach(button=>{
@@ -29,7 +37,9 @@ function installDrawerBehavior(slot,root){
     button.dataset.skyDrawerTabBound='true';
     button.addEventListener('click',()=>{
       const target=drawer(root,button.dataset.skyDrawerTab||'');
-      if(target)target.open=!target.open;
+      if(!target)return;
+      if(target.open)target.open=false;
+      else activateDrawer(root,target);
     });
   });
   root.querySelectorAll(':scope > .sky-card-drawer').forEach(details=>{
@@ -54,10 +64,10 @@ function installDrawerBehavior(slot,root){
   });
   syncTabs(root);
 }
-function sync(slot,payload){const current=refs(slot);if(!current)return null;const hasProfile=complete(payload),previous=current.root.dataset.whereWhenAvailable;current.summary.hidden=!hasProfile;current.root.dataset.whereWhenAvailable=hasProfile?'true':'false';if(previous==='false'&&hasProfile){const target=drawer(current.root,'placements');if(target&&!target.open)target.open=true}else if(previous==='true'&&!hasProfile){current.editor.hidden=true;current.editor.replaceChildren();current.root.dataset.whereEditorExpanded='false';current.summary?.classList.remove('is-editor-expanded');const target=drawer(current.root,'placements');if(target&&!target.open)target.open=true}return current}
+function sync(slot,payload){const current=refs(slot);if(!current)return null;const hasProfile=complete(payload),previous=current.root.dataset.whereWhenAvailable;current.summary.hidden=!hasProfile;current.root.dataset.whereWhenAvailable=hasProfile?'true':'false';if(previous==='false'&&hasProfile){const target=drawer(current.root,'placements');activateDrawer(current.root,target)}else if(previous==='true'&&!hasProfile){current.editor.hidden=true;current.editor.replaceChildren();current.root.dataset.whereEditorExpanded='false';current.summary?.classList.remove('is-editor-expanded');const target=drawer(current.root,'placements');activateDrawer(current.root,target)}return current}
 function ensure(slot,payload){installStyles();const host=body(slot);if(!host)return null;host.removeAttribute('inert');let current=refs(slot);if(!current){const holder=document.createElement('div');holder.innerHTML=markup(slot,complete(payload)).trim();const root=holder.firstElementChild;host.replaceChildren(root);current=refs(slot)}installDrawerBehavior(slot,current.root);return sync(slot,payload)}
 function setEditorExpanded(slot,expanded){const current=refs(slot);if(!current)return;current.editor.hidden=!expanded;current.summary?.classList.toggle('is-editor-expanded',!!expanded);current.root.dataset.whereEditorExpanded=expanded?'true':'false'}
-function openDrawer(slot,name){const current=refs(slot);if(!current)return;const target=drawer(current.root,name);if(target&&!target.open)target.open=true}
+function openDrawer(slot,name){const current=refs(slot);if(!current)return;activateDrawer(current.root,drawer(current.root,name))}
 function repair(){
   ['A','B'].forEach(slot=>{
     const current=refs(slot);
