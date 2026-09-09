@@ -1,8 +1,9 @@
-// Restore the PR #114 single Here and Now control after the original integrity module was deleted.
+// Preserve the PR #114 Here and Now shortcut without removing the distinct current-time-at-selected-location workflow.
 // New Sky in Sky B and Card Hits fingerprint repair now live in their current owning modules.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyRegressionIntegrityV3)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyRegressionIntegrityV4)return;
+window.__relphiSkyRegressionIntegrityV4=true;
 window.__relphiSkyRegressionIntegrityV3=true;
 window.__relphiSkyRegressionIntegrityV2=true;
 window.__relphiSkyRegressionIntegrityV1=true;
@@ -44,16 +45,44 @@ function preserveWheelForUnchangedClose(event){
   preserveTimer=window.setTimeout(()=>{delete root.dataset.skyPreserveWheel},2500);
 }
 
+function ensureCurrentLocalTime(editor){
+  const when=editor?.querySelector('[data-ww-when]');
+  if(!when)return;
+  let row=when.querySelector('.sky-where-when-now-row');
+  let button=row?.querySelector('[data-ww-action="use-now"]');
+  if(!row){
+    row=document.createElement('div');
+    row.className='sky-where-when-now-row';
+    const grid=when.querySelector('.sky-where-when-grid');
+    if(grid)grid.before(row);else when.appendChild(row);
+  }
+  if(!button){
+    button=document.createElement('button');
+    button.type='button';
+    button.className='sky-where-when-button secondary sky-use-now-button';
+    button.dataset.wwAction='use-now';
+    row.prepend(button);
+  }
+  button.textContent='Current local time';
+  button.setAttribute('aria-label','Use current local time at this location');
+  button.title='Use current local time at this location';
+  let help=Array.from(row.children).find(node=>node!==button&&node.tagName==='SPAN');
+  if(!help){help=document.createElement('span');row.appendChild(help)}
+  help.textContent='Use the current instant at this location.';
+}
+
 function ensureHereNow(editor){
   if(!editor)return;
   const slot=String(editor.dataset.slot||'');
   if(!SLOT_KEYS[slot])return;
 
-  // PR #114 contract: one current-location/current-time shortcut, not three competing controls.
+  // Here and Now means this device's current location + current instant.
+  // Current local time is intentionally separate: it keeps the selected customer location
+  // and converts the current instant into that location's time zone.
   const currentLocation=editor.querySelector('[data-ww-action="use-current-location"]');
   const currentLocationRow=currentLocation?.closest('.sky-where-current-location-actions');
   if(currentLocationRow)currentLocationRow.remove();else currentLocation?.remove();
-  editor.querySelector('.sky-where-when-now-row')?.remove();
+  ensureCurrentLocalTime(editor);
 
   let row=editor.querySelector('.sky-where-when-here-now-row');
   let button=row?.querySelector('[data-final-now]');
@@ -73,6 +102,7 @@ function ensureHereNow(editor){
   button.title='Here and Now';
 
   // Remove every other final-now control, including the legacy footer Update to Now button.
+  // Do not remove data-ww-action="use-now": it is the selected-location current-time action.
   editor.querySelectorAll('[data-final-now]').forEach(node=>{if(node!==button)node.remove()});
 
   const body=editor.querySelector(':scope > .sky-where-when-scroll-body');
