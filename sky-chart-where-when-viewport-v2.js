@@ -15,6 +15,8 @@ function installStyle(){
   node.textContent=`
     .sky-where-when-scroll-body{display:contents}
     .sky-where-when-status:empty{display:none!important;min-height:0!important;margin:0!important}
+    .sky-coordinate-resolve-group{display:grid;gap:.28rem;margin-top:.1rem}
+    .sky-coordinate-resolve-help{margin:0;color:#655d56;font:650 .62rem/1.4 system-ui,sans-serif}
     @media(min-width:621px){
       .sky-where-when-grid{
         grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)!important
@@ -119,12 +121,43 @@ function forceTimeWidth(body){
     date.style.setProperty('padding-right','.35rem','important');
   }
 }
+function organizeCoordinateResolver(body,slot){
+  const advanced=body?.querySelector('.sky-where-when-advanced-body');
+  const grid=advanced?.querySelector('.sky-where-when-coordinate-grid');
+  const resolve=advanced?.querySelector('[data-ww-action="resolve-coordinates"]');
+  if(!advanced||!grid||!resolve)return;
+
+  let group=advanced.querySelector('.sky-coordinate-resolve-group');
+  if(!group){
+    group=document.createElement('div');
+    group.className='sky-coordinate-resolve-group';
+    const actions=document.createElement('div');
+    actions.className='sky-where-when-inline-actions sky-coordinate-resolve-actions';
+    const help=document.createElement('p');
+    help.className='sky-coordinate-resolve-help';
+    help.id=`skyCoordinateResolveHelp${slot}`;
+    help.textContent='Find the locality and time zone from coordinates.';
+    group.append(actions,help);
+    grid.insertAdjacentElement('afterend',group);
+  }
+
+  const originalRow=resolve.closest('.sky-where-when-inline-actions');
+  group.querySelector('.sky-coordinate-resolve-actions')?.appendChild(resolve);
+  resolve.title='Find the locality and time zone from coordinates.';
+  resolve.setAttribute('aria-describedby',`skyCoordinateResolveHelp${slot}`);
+
+  if(originalRow&&originalRow!==group.querySelector('.sky-coordinate-resolve-actions')){
+    const remaining=Array.from(originalRow.children).filter(node=>node!==resolve&&node.dataset?.wwAction!=='infer');
+    if(!remaining.length)originalRow.hidden=true;
+  }
+}
 function normalize(slot){
   const form=editor(slot);if(!form)return;
   const body=wrapForm(form);if(!body)return;
   const preview=body.querySelector(`[data-ww-heptagram-slot="${slot}"]`);
   const advanced=body.querySelector('.sky-where-when-advanced');
   if(preview&&advanced&&preview.nextElementSibling!==advanced)advanced.before(preview);
+  organizeCoordinateResolver(body,slot);
   forceTimeWidth(body);
   sizeBody(form,body);
   if(preview&&preview.dataset.draftHeptagramReady!=='true')window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot);
