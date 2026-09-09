@@ -2,12 +2,47 @@
 // New Sky in Sky B and Card Hits fingerprint repair now live in their current owning modules.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyRegressionIntegrityV2)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyRegressionIntegrityV3)return;
+window.__relphiSkyRegressionIntegrityV3=true;
 window.__relphiSkyRegressionIntegrityV2=true;
 window.__relphiSkyRegressionIntegrityV1=true;
 
 const SLOT_KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
+const root=document.documentElement;
 let queued=false;
+let editSignature='';
+let preserveTimer=0;
+
+function installWheelContinuityStyle(){
+  if(document.getElementById('skyWhereDrawerWheelContinuityV1'))return;
+  const style=document.createElement('style');
+  style.id='skyWhereDrawerWheelContinuityV1';
+  style.textContent='html[data-sky-preserve-wheel="true"] #skyFoundationWheelMount{visibility:visible!important}';
+  document.head.appendChild(style);
+}
+function storageSignature(){
+  try{return JSON.stringify(Object.values(SLOT_KEYS).map(key=>localStorage.getItem(key)||''))}catch(_){return''}
+}
+function releaseWheelContinuity(){
+  if(root.dataset.skyPreserveWheel!=='true')return;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{delete root.dataset.skyPreserveWheel}));
+}
+function preserveWheelForUnchangedClose(event){
+  const active=event.detail?.active===true;
+  if(active){
+    editSignature=storageSignature();
+    delete root.dataset.skyPreserveWheel;
+    clearTimeout(preserveTimer);
+    return;
+  }
+  if(!editSignature)return;
+  const unchanged=storageSignature()===editSignature;
+  editSignature='';
+  if(!unchanged)return;
+  root.dataset.skyPreserveWheel='true';
+  clearTimeout(preserveTimer);
+  preserveTimer=window.setTimeout(()=>{delete root.dataset.skyPreserveWheel},2500);
+}
 
 function ensureHereNow(editor){
   if(!editor)return;
@@ -51,14 +86,17 @@ function decorate(scope=document){
 function repair(){queued=false;decorate()}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(repair)}
 function start(){
+  installWheelContinuityStyle();
   decorate();
-  const root=document.getElementById('skyFoundationRoot')||document.body;
+  const foundation=document.getElementById('skyFoundationRoot')||document.body;
   new MutationObserver(records=>{
     for(const record of records){
       for(const node of record.addedNodes||[]){if(node.nodeType===1)decorate(node)}
     }
     schedule();
-  }).observe(root,{childList:true,subtree:true});
+  }).observe(foundation,{childList:true,subtree:true});
+  window.addEventListener('relphi:sky-where-when-edit-state-changed',preserveWheelForUnchangedClose);
+  window.addEventListener('relphi:sky-foundation-interactions-ready',releaseWheelContinuity);
   ['relphi:sky-foundation-ready','relphi:sky-drawer-opened','relphi:sky-where-when-edit-state-changed','relphi:sky-where-when-committed']
     .forEach(name=>window.addEventListener(name,schedule));
   setTimeout(schedule,0);
