@@ -18,7 +18,7 @@ on:
       - 'sky-chart-render-stability-v2.js'
       - 'sky-chart-where-when-v3.js'
       - 'sky-chart-where-when-draft-heptagram-v4.js'
-      - 'sky-chart-where-when-paste-inference-v1.js'
+      - 'sky-chart-where-when-paste-inference-v2.js'
       - 'sky-chart-where-when-viewport-v3.js'
       - 'sky-chart-saved-sky-name-dialog-v1.js'
       - 'sky-chart-saved-skies-v1.js'
@@ -34,7 +34,7 @@ on:
       - 'sky-chart-render-stability-v2.js'
       - 'sky-chart-where-when-v3.js'
       - 'sky-chart-where-when-draft-heptagram-v4.js'
-      - 'sky-chart-where-when-paste-inference-v1.js'
+      - 'sky-chart-where-when-paste-inference-v2.js'
       - 'sky-chart-where-when-viewport-v3.js'
       - 'sky-chart-foundation-v2.js'
       - 'tests/sky-chart-where-when-transaction-stability.mjs'
@@ -64,7 +64,7 @@ jobs:
           node --check sky-chart-render-stability-v2.js
           node --check sky-chart-where-when-v3.js
           node --check sky-chart-where-when-draft-heptagram-v4.js
-          node --check sky-chart-where-when-paste-inference-v1.js
+          node --check sky-chart-where-when-paste-inference-v2.js
           node --check sky-chart-where-when-viewport-v3.js
           node --check sky-chart-saved-sky-name-dialog-v1.js
           node --check sky-chart-saved-skies-v1.js
