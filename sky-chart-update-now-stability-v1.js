@@ -14,6 +14,20 @@
   const read=slot=>{try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}};
   const panel=slot=>document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');
 
+  function normalizeHereAndNowLabels(scope=document){
+    scope.querySelectorAll?.('.sky-where-when-actions [data-final-now]').forEach(button=>{
+      button.textContent='Here and Now';
+      button.setAttribute('aria-label','Here and Now');
+      button.title='Here and Now';
+    });
+  }
+
+  function watchHereAndNowLabels(){
+    normalizeHereAndNowLabels();
+    const root=document.getElementById('skyFoundationRoot')||document.body;
+    new MutationObserver(()=>normalizeHereAndNowLabels(root)).observe(root,{childList:true,subtree:true});
+  }
+
   function dispatch(slot){
     try{window.dispatchEvent(new StorageEvent('storage',{key:KEYS[slot],newValue:localStorage.getItem(KEYS[slot]),storageArea:localStorage}))}
     catch(_){const event=new Event('storage');Object.defineProperty(event,'key',{value:KEYS[slot]});window.dispatchEvent(event)}
@@ -194,8 +208,10 @@
     if(!button)return;
     const slot=button.dataset.finalNow;
     if(!KEYS[slot])return;
-    // This controller owns Update to Now before the legacy target listener can open/focus the editor.
+    // This controller owns Here and Now before the legacy target listener can open/focus the editor.
     event.preventDefault();event.stopImmediatePropagation();
     update(slot,button);
   },true);
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watchHereAndNowLabels,{once:true});else watchHereAndNowLabels();
 })();
