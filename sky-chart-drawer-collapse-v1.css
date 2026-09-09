@@ -1,0 +1,2 @@
+/* Keep the fingerprint drawer controls available while Where and When is being edited. */
+.sky-card-drawers[data-where-editor-expanded="true"] > .sky-card-fingerprint-tabs{display:grid!important}
