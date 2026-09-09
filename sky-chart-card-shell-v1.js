@@ -24,6 +24,11 @@ function syncTabs(root){
 }
 function activateDrawer(root,target){
   if(!target||target.open)return;
+  // If Where and When is the target, hide its committed summary before the
+  // <details> element opens. The editor moves that heptagram into its hidden source
+  // mount after the drawer-open event; without this pre-hide the committed summary
+  // can paint for one frame while switching away from Placements.
+  if(target.dataset.skyDrawer==='where')target.querySelector('[data-sky-where-summary]')?.classList.add('is-editor-expanded');
   // Close the currently visible drawer before opening the next one. The native
   // <details> toggle event is asynchronous; opening first lets both drawer bodies
   // exist for a paint and can flash Where/When content over Placements.
