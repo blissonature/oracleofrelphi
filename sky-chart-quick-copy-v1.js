@@ -2,10 +2,11 @@
 // Clipboard text is derived from the rendered UI so copied values cannot diverge from display truth.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyQuickCopyV3)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyQuickCopyV4)return;
   window.__relphiSkyQuickCopyV1=true;
   window.__relphiSkyQuickCopyV2=true;
   window.__relphiSkyQuickCopyV3=true;
+  window.__relphiSkyQuickCopyV4=true;
 
   let queued=false;
 
@@ -142,9 +143,16 @@
     document.querySelectorAll('.sky-where-when-placement-view').forEach(installPlacementButton);
     document.querySelectorAll('.sky-card-hits-tab[data-card-hits-slot]').forEach(installCardHitButton);
   }
-  function schedule(){if(queued)return;queued=true;requestAnimationFrame(hydrate)}
+  function schedule(){
+    if(queued)return;
+    queued=true;
+    queueMicrotask(hydrate);
+  }
 
   function start(){
+    // This module now starts before the foundation renderer. Install the placement
+    // header styles and observer immediately so rows and their header are hydrated
+    // in the same pre-paint microtask, rather than waiting for DOMContentLoaded.
     installStyles();hydrate();
     const root=document.getElementById('skyFoundationRoot')||document.body;
     new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
@@ -157,5 +165,5 @@
     ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,schedule));
   }
 
-  document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
+  start();
 })();
