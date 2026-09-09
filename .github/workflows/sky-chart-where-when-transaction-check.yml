@@ -14,20 +14,31 @@ on:
       - 'sky-chart-relationship-sort-v1.js'
       - 'sky-chart-filter-wheel-focus-v1.js'
       - 'sky-chart-final-pass-v2.js'
-      - 'sky-chart-where-when-v2.js'
-      - 'sky-chart-update-now-stability-v1.js'
+      - 'sky-chart-card-shell-v2.js'
+      - 'sky-chart-render-stability-v2.js'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-where-when-draft-heptagram-v4.js'
+      - 'sky-chart-where-when-paste-inference-v1.js'
+      - 'sky-chart-where-when-viewport-v3.js'
       - 'sky-chart-saved-sky-name-dialog-v1.js'
       - 'sky-chart-saved-skies-v1.js'
       - 'tests/sky-chart-where-when-transaction-stability.mjs'
+      - 'tests/sky-chart-architecture-contract.mjs'
       - '.github/workflows/sky-chart-where-when-transaction-check.yml'
   push:
     branches:
       - main
     paths:
       - 'sky-chart.html'
-      - 'sky-chart-where-when-v2.js'
+      - 'sky-chart-card-shell-v2.js'
+      - 'sky-chart-render-stability-v2.js'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-where-when-draft-heptagram-v4.js'
+      - 'sky-chart-where-when-paste-inference-v1.js'
+      - 'sky-chart-where-when-viewport-v3.js'
       - 'sky-chart-foundation-v2.js'
       - 'tests/sky-chart-where-when-transaction-stability.mjs'
+      - 'tests/sky-chart-architecture-contract.mjs'
 
 jobs:
   browser-check:
@@ -37,7 +48,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: JavaScript syntax
+      - name: JavaScript syntax and architecture contracts
         run: |
           node --check sky-chart-coordinate-precision-v1.js
           node --check sky-chart-foundation-v2.js
@@ -49,11 +60,16 @@ jobs:
           node --check sky-chart-relationship-sort-v1.js
           node --check sky-chart-filter-wheel-focus-v1.js
           node --check sky-chart-final-pass-v2.js
-          node --check sky-chart-where-when-v2.js
-          node --check sky-chart-update-now-stability-v1.js
+          node --check sky-chart-card-shell-v2.js
+          node --check sky-chart-render-stability-v2.js
+          node --check sky-chart-where-when-v3.js
+          node --check sky-chart-where-when-draft-heptagram-v4.js
+          node --check sky-chart-where-when-paste-inference-v1.js
+          node --check sky-chart-where-when-viewport-v3.js
           node --check sky-chart-saved-sky-name-dialog-v1.js
           node --check sky-chart-saved-skies-v1.js
           node --check tests/sky-chart-where-when-transaction-stability.mjs
+          node tests/sky-chart-architecture-contract.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
