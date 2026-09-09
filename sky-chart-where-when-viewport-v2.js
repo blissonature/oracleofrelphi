@@ -17,6 +17,7 @@ function installStyle(){
     .sky-where-when-status:empty{display:none!important;min-height:0!important;margin:0!important}
     .sky-coordinate-resolve-group{display:grid;gap:.28rem;margin-top:.1rem}
     .sky-coordinate-resolve-help{margin:0;color:#655d56;font:650 .62rem/1.4 system-ui,sans-serif}
+    .sky-location-confirmation[data-placement-inference-location="true"] .sky-inferred-location-value{font-weight:800}
     @media(min-width:621px){
       .sky-where-when-grid{
         grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)!important
@@ -151,6 +152,29 @@ function organizeCoordinateResolver(body,slot){
     if(!remaining.length)originalRow.hidden=true;
   }
 }
+function normalizeInferredLocation(form){
+  const query=form?.querySelector('[data-ww-field="location-query"]');
+  const confirmation=form?.querySelector('.sky-location-confirmation');
+  if(!query||!confirmation||confirmation.hidden)return;
+  const state=form.__relphiPasteImport;
+  const marker='Inferred from pasted placements';
+  const inferred=state?.whereWhenSource==='placement-inference'||query.value.trim()===marker||confirmation.textContent.includes(marker);
+  if(!inferred)return;
+  if(state?.packet)state.packet.query='';
+  if(query.value.trim()===marker)query.value='';
+  if(confirmation.dataset.placementInferenceLocation==='true')return;
+
+  const found=Array.from(confirmation.querySelectorAll('p')).find(node=>/^Location found:/i.test(node.textContent.trim()));
+  const canonical=(found?.textContent||'').replace(/^Location found:\s*/i,'').trim()||state?.packet?.canonical||'';
+  confirmation.dataset.placementInferenceLocation='true';
+  confirmation.replaceChildren();
+  const label=document.createElement('p'),strong=document.createElement('strong'),location=document.createElement('p');
+  strong.textContent='Location inferred from pasted placements';
+  label.appendChild(strong);
+  location.className='sky-inferred-location-value';
+  location.textContent=canonical;
+  confirmation.append(label,location);
+}
 function normalize(slot){
   const form=editor(slot);if(!form)return;
   const body=wrapForm(form);if(!body)return;
@@ -158,6 +182,7 @@ function normalize(slot){
   const advanced=body.querySelector('.sky-where-when-advanced');
   if(preview&&advanced&&preview.nextElementSibling!==advanced)advanced.before(preview);
   organizeCoordinateResolver(body,slot);
+  normalizeInferredLocation(form);
   forceTimeWidth(body);
   sizeBody(form,body);
   if(preview&&preview.dataset.draftHeptagramReady!=='true')window.RelphiSkyWhereWhenDraftHeptagram?.render?.(slot);
@@ -169,7 +194,11 @@ installStyle();schedule();
 const root=document.getElementById('skyFoundationRoot');
 if(root){
   new MutationObserver(records=>{
-    if(records.some(record=>Array.from(record.addedNodes).some(node=>node.nodeType===1&&(node.matches?.('.sky-where-when-editor,.sky-where-when-footer,[data-ww-heptagram-slot]')||node.querySelector?.('.sky-where-when-editor,.sky-where-when-footer,[data-ww-heptagram-slot]')))))schedule();
+    if(records.some(record=>{
+      const target=record.target?.nodeType===1?record.target:null;
+      if(target?.closest?.('.sky-location-confirmation'))return true;
+      return Array.from(record.addedNodes).some(node=>node.nodeType===1&&(node.matches?.('.sky-where-when-editor,.sky-where-when-footer,[data-ww-heptagram-slot]')||node.querySelector?.('.sky-where-when-editor,.sky-where-when-footer,[data-ww-heptagram-slot]')));
+    }))schedule();
   }).observe(root,{subtree:true,childList:true});
 }
 window.addEventListener('relphi:sky-where-when-edit-state-changed',schedule);
