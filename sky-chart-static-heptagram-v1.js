@@ -1,7 +1,8 @@
 // Keep the live Where and When heptagram in the editor's static footer with its actions.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyStaticHeptagramV3)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyStaticHeptagramV4)return;
+window.__relphiSkyStaticHeptagramV4=true;
 window.__relphiSkyStaticHeptagramV3=true;
 window.__relphiSkyStaticHeptagramV2=true;
 window.__relphiSkyStaticHeptagramV1=true;
@@ -12,9 +13,10 @@ let queued=false,observer=null;
 function installStyle(){
   document.getElementById('skyStaticHeptagramV1Style')?.remove();
   document.getElementById('skyStaticHeptagramV2Style')?.remove();
-  if(document.getElementById('skyStaticHeptagramV3Style'))return;
+  document.getElementById('skyStaticHeptagramV3Style')?.remove();
+  if(document.getElementById('skyStaticHeptagramV4Style'))return;
   const style=document.createElement('style');
-  style.id='skyStaticHeptagramV3Style';
+  style.id='skyStaticHeptagramV4Style';
   style.textContent=`
     /* The original preview mount remains immediately below Advanced so existing
        draft/render controllers keep their DOM contract, but it is only a source. */
@@ -90,12 +92,22 @@ function renderSlot(slot){
   const form=editor(slot);if(!form)return;
   const structure=ensureStructure(form);if(!structure)return;
   const source=sourceFor(form,slot);
-  if(!source){structure.preview.hidden=true;structure.preview.replaceChildren();delete structure.preview.dataset.signature;return}
+  /* Draft rendering briefly removes/rebuilds its source. Preserve the last good
+     footer copy across that gap instead of blanking the static panel. */
+  if(!source){
+    if(structure.preview.firstElementChild){structure.preview.hidden=false;return}
+    structure.preview.hidden=true;
+    return;
+  }
   const signature=simpleHash(`${source.href}|${source.svg.outerHTML}`);
   if(structure.preview.dataset.signature===signature){structure.preview.hidden=false;return}
   const clone=source.svg.cloneNode(true);
   clone.removeAttribute('id');
   clone.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  /* This is a display copy, not a draft-rendering source. Leaving this marker on
+     the clone lets the draft renderer's cleanup delete the footer heptagram. */
+  clone.removeAttribute('data-draft-where-when');
+  clone.dataset.footerHeptagramCopy='true';
   clone.setAttribute('aria-hidden','true');
   clone.removeAttribute('role');
   clone.style.visibility='visible';

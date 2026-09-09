@@ -131,7 +131,9 @@ async function renderNow(slot){
   timers[slot]=0;const token=++renderToken[slot];
   const form=editor(slot),target=mount(slot);if(!form||!target)return;
   const p=packet(slot);
-  form.querySelectorAll('[data-draft-where-when="true"],.sky-where-when-ph-jump').forEach(node=>node.remove());
+  /* Only clear the renderer's own source mount. The Where/When footer contains a
+     separate display copy and must never be swept up by draft refresh cleanup. */
+  target.querySelectorAll('[data-draft-where-when="true"],.sky-where-when-ph-jump').forEach(node=>node.remove());
   if(!p){target.hidden=true;target.removeAttribute('data-draft-heptagram-ready');return}
   try{
     const preview=buildPreview(p);if(!preview){target.hidden=true;target.removeAttribute('data-draft-heptagram-ready');return}
