@@ -1,7 +1,8 @@
 // Keep the live Where and When heptagram in the editor's static footer with its actions.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyStaticHeptagramV2)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyStaticHeptagramV3)return;
+window.__relphiSkyStaticHeptagramV3=true;
 window.__relphiSkyStaticHeptagramV2=true;
 window.__relphiSkyStaticHeptagramV1=true;
 
@@ -10,9 +11,10 @@ let queued=false,observer=null;
 
 function installStyle(){
   document.getElementById('skyStaticHeptagramV1Style')?.remove();
-  if(document.getElementById('skyStaticHeptagramV2Style'))return;
+  document.getElementById('skyStaticHeptagramV2Style')?.remove();
+  if(document.getElementById('skyStaticHeptagramV3Style'))return;
   const style=document.createElement('style');
-  style.id='skyStaticHeptagramV2Style';
+  style.id='skyStaticHeptagramV3Style';
   style.textContent=`
     /* The original preview mount remains immediately below Advanced so existing
        draft/render controllers keep their DOM contract, but it is only a source. */
@@ -36,7 +38,7 @@ function installStyle(){
     }
     .sky-where-when-footer-heptagram .sky-ph-heptagram{
       display:block!important;width:min(100%,176px)!important;height:auto!important;max-height:176px!important;
-      margin:0 auto!important;overflow:visible!important
+      margin:0 auto!important;overflow:visible!important;visibility:visible!important
     }
     .sky-where-when-footer-actions{
       display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,2fr)!important;
@@ -60,7 +62,7 @@ function sourceFor(form,slot){
   const mount=form?.querySelector(`[data-ww-heptagram-slot="${slot}"]`);if(!mount)return null;
   const draft=mount.querySelector('[data-draft-where-when="true"]');
   const draftJump=mount.querySelector('.sky-where-when-ph-jump');
-  if(draft)return{svg:draft,href:String(draftJump?.getAttribute('href')||''),title:'Open this draft moment in Planetary Hours'};
+  if(draft&&draft.style.visibility!=='hidden')return{svg:draft,href:String(draftJump?.getAttribute('href')||''),title:'Open this draft moment in Planetary Hours'};
   const committed=mount.querySelector('[data-sky-heptagram-frame] .sky-ph-heptagram');
   const frame=committed?.closest?.('[data-sky-heptagram-frame]');
   return committed?{svg:committed,href:String(frame?.getAttribute('href')||''),title:String(frame?.getAttribute('title')||'Open this Sky in Planetary Hours')}:null;
@@ -84,7 +86,6 @@ function ensureStructure(form){
   return{footer,preview,actions};
 }
 function renderSlot(slot){
-  // Remove the card-level panel created by the earlier interpretation.
   document.querySelectorAll(`#skyFoundation${slot} .sky-static-heptagram-panel`).forEach(node=>node.remove());
   const form=editor(slot);if(!form)return;
   const structure=ensureStructure(form);if(!structure)return;
@@ -92,7 +93,12 @@ function renderSlot(slot){
   if(!source){structure.preview.hidden=true;structure.preview.replaceChildren();delete structure.preview.dataset.signature;return}
   const signature=simpleHash(`${source.href}|${source.svg.outerHTML}`);
   if(structure.preview.dataset.signature===signature){structure.preview.hidden=false;return}
-  const clone=source.svg.cloneNode(true);clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));clone.setAttribute('aria-hidden','true');clone.removeAttribute('role');
+  const clone=source.svg.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  clone.setAttribute('aria-hidden','true');
+  clone.removeAttribute('role');
+  clone.style.visibility='visible';
   let frame;
   if(source.href){frame=document.createElement('a');frame.href=source.href;frame.title=source.title;frame.setAttribute('aria-label',source.title)}
   else{frame=document.createElement('div');frame.className='sky-where-when-footer-heptagram-frame'}
@@ -104,8 +110,8 @@ function start(){
   installStyle();document.querySelectorAll('.sky-static-heptagram-panel').forEach(node=>node.remove());schedule();
   const root=document.getElementById('skyFoundationRoot')||document.body;
   observer=new MutationObserver(records=>{if(records.some(record=>!record.target?.closest?.('.sky-where-when-footer-heptagram')))schedule()});
-  observer.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','href','data-draft-heptagram-ready','data-canonical-source-ready']});
-  ['relphi:sky-drawer-opened','relphi:sky-drawer-closed','relphi:sky-where-when-edit-state-changed','relphi:sky-where-when-committed','relphi:sky-heptagram-source-ready'].forEach(name=>window.addEventListener(name,schedule));
+  observer.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','href','style','data-draft-heptagram-ready','data-canonical-source-ready','data-canonical-heptagram-ready']});
+  ['relphi:sky-drawer-opened','relphi:sky-drawer-closed','relphi:sky-where-when-edit-state-changed','relphi:sky-where-when-committed','relphi:sky-heptagram-source-ready','relphi:sky-heptagram-canonical-ready'].forEach(name=>window.addEventListener(name,schedule));
   document.addEventListener('input',event=>{if(event.target.closest?.('.sky-where-when-editor'))schedule()},true);
   document.addEventListener('change',event=>{if(event.target.closest?.('.sky-where-when-editor'))schedule()},true);
 }
