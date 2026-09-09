@@ -18,6 +18,8 @@ function installStyle(){
     .sky-coordinate-resolve-group{display:grid;gap:.28rem;margin-top:.1rem}
     .sky-coordinate-resolve-help{margin:0;color:#655d56;font:650 .62rem/1.4 system-ui,sans-serif}
     .sky-location-confirmation[data-placement-inference-location="true"] .sky-inferred-location-value{font-weight:800}
+    .sky-inference-card{display:none!important}
+    .sky-ww-paste-status:not(.is-error){display:none!important}
     @media(min-width:621px){
       .sky-where-when-grid{
         grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)!important
@@ -180,7 +182,7 @@ function normalize(slot){
   const body=wrapForm(form);if(!body)return;
   const preview=body.querySelector(`[data-ww-heptagram-slot="${slot}"]`);
   const advanced=body.querySelector('.sky-where-when-advanced');
-  if(preview&&advanced&&preview.nextElementSibling!==advanced)advanced.before(preview);
+  if(preview&&advanced&&advanced.nextElementSibling!==preview)preview.before(advanced);
   organizeCoordinateResolver(body,slot);
   normalizeInferredLocation(form);
   forceTimeWidth(body);

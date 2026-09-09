@@ -152,7 +152,7 @@ function scheduleOpen(delay=0){['A','B'].forEach(slot=>{if(editor(slot))schedule
 function normalize(slot){
   const form=editor(slot);if(!form)return;
   const preview=form.querySelector(`[data-ww-heptagram-slot="${slot}"]`),advanced=form.querySelector('.sky-where-when-advanced');
-  if(preview&&advanced&&preview.nextElementSibling!==advanced)advanced.before(preview);
+  if(preview&&advanced&&advanced.nextElementSibling!==preview)preview.before(advanced);
   schedule(slot,0);
 }
 function start(){
