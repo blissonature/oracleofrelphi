@@ -21,7 +21,7 @@ function installStyle(){
       margin:0!important;padding:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important
     }
     .sky-where-when-footer{
-      display:grid!important;grid-template-rows:auto auto!important;gap:8px!important;
+      display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;gap:8px!important;
       width:100%!important;margin:0!important;padding:8px 12px 12px!important;box-sizing:border-box!important;
       border-top:1px solid rgba(31,27,24,.12)!important;background:#fffdfa!important;
       box-shadow:0 -8px 18px rgba(255,253,250,.96)!important
