@@ -11,7 +11,7 @@ function loadRegressionIntegrity(){
   if(document.querySelector('script[data-sky-regression-integrity]'))return;
   const script=document.createElement('script');
   const source=document.currentScript?.src||location.href;
-  script.src=new URL('sky-chart-regression-integrity-v1.js?v=2',source).href;
+  script.src=new URL('sky-chart-regression-integrity-v1.js?v=3',source).href;
   script.dataset.skyRegressionIntegrity='true';
   document.head.appendChild(script);
 }
