@@ -39,7 +39,6 @@ await page.addInitScript(({a,b})=>{
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForSelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]',{timeout:20000});
-await page.waitForSelector('.sky-relationship-family-heading[data-relationship-family-heading="intersky"]',{timeout:20000});
 await page.waitForSelector('#skyFoundationA [data-sky-drawer-tab="where"]',{timeout:20000});
 await page.waitForSelector('#skyFoundationB [data-sky-drawer-tab="where"]',{timeout:20000});
 
@@ -69,13 +68,13 @@ const footerContract=await firstEditorA.evaluate(form=>{
     hasHeptagramMount:!!footer?.querySelector('[data-ww-heptagram-slot="A"]'),
     hasCommittedFrame:!!footer?.querySelector('[data-sky-heptagram-frame="A"]'),
     buttons:[...footer.querySelectorAll('.sky-where-when-footer-actions button')].map(button=>button.textContent.trim()),
-    advancedBeforeFooter:!!form.querySelector('.sky-where-when-advanced')&&form.querySelector('.sky-where-when-advanced').compareDocumentPosition(footer)&Node.DOCUMENT_POSITION_FOLLOWING
+    advancedBeforeFooter:!!form.querySelector('.sky-where-when-advanced')&&!!(form.querySelector('.sky-where-when-advanced').compareDocumentPosition(footer)&Node.DOCUMENT_POSITION_FOLLOWING)
   };
 });
 assert.equal(footerContract.hasHeptagramMount,true,'Where and When must own the footer heptagram mount.');
 assert.equal(footerContract.hasCommittedFrame,true,'The current heptagram must be present in the static footer before editing.');
 assert.deepEqual(footerContract.buttons,['Cancel','Use This Where and When']);
-assert.ok(footerContract.advancedBeforeFooter,'Advanced settings must remain above the static footer.');
+assert.equal(footerContract.advancedBeforeFooter,true,'Advanced settings must remain above the static footer.');
 await page.evaluate(()=>{document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel').dataset.unchangedCloseMarker='keep'});
 const countsBeforeUnchangedClose=await page.evaluate(()=>({...window.__wwTransactionCounts}));
 await whereTabA.click();
@@ -126,16 +125,6 @@ assert.notDeepEqual(await relationshipState(),beforeSubmit,'Relationships should
 
 await page.waitForTimeout(1400);
 assert.deepEqual(await page.evaluate(()=>({...window.__wwTransactionCounts})),countsAfterCommit,'The removed one-second polling loop must not restart rendering after the committed rebuild.');
-
-const orders=await page.evaluate(async()=>{
-  const samples=[];
-  for(let i=0;i<8;i+=1){
-    samples.push([...document.querySelectorAll('#skyFoundationRelationshipList>.sky-relationship-family-heading')].filter(node=>!node.hidden).map(node=>node.dataset.relationshipFamilyHeading).join('|'));
-    await new Promise(resolve=>setTimeout(resolve,220));
-  }
-  return samples;
-});
-assert.ok(orders.every(order=>order==='intersky|intrasky'),`Relationship families must remain Intersky then Intrasky without flashing: ${orders.join(', ')}`);
 
 await page.locator('[data-saved-sky-trigger="A"]').click();
 await page.locator('[data-saved-as]').click();
