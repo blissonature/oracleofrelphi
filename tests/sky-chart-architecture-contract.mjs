@@ -12,6 +12,7 @@ const stability=read('sky-chart-render-stability-v2.js');
 const foundation=read('sky-chart-foundation-v2.js');
 const finalBehavior=read('sky-chart-final-behavior-v2.js');
 const quickCopy=read('sky-chart-quick-copy-v2.js');
+const identity=read('sky-chart-sky-identity-affordance-v1.js');
 
 const retired=[
   'sky-chart-card-shell-v1.js',
@@ -73,6 +74,11 @@ assert.match(paste,/window\.RelphiSkyWhereWhenPasteInference=Object\.freeze/,'Pa
 assert.equal(paste.includes('Inferred from pasted placements'),false,'Paste inference must not manufacture the old fake search query marker');
 assert.equal(paste.includes('Preview ready.'),false,'Completed inference must not restore obsolete preview-status copy');
 assert.equal(paste.includes('Estimated where:'),false,'Completed inference must not restore obsolete estimate summary copy');
+
+assert.match(identity,/pendingResolve/,'Sky naming must queue unresolved identities instead of interrupting an active editor');
+assert.match(identity,/relphi:sky-where-when-committed/,'Queued Sky naming must resume only after the Where and When transaction completes');
+assert.match(identity,/transactionActive\(\)/,'Sky naming must check the transaction before opening its modal');
+assert.equal(identity.includes('requestAnimationFrame(()=>resolve(s))'),false,'Sky naming must not open immediately from a per-slot working-copy update');
 
 assert.equal(viewport.includes('MutationObserver'),false,'Viewport behavior must size only and never repair editor DOM');
 assert.equal(stability.includes('window.addEventListener=function'),false,'Render stability must never monkeypatch addEventListener');
