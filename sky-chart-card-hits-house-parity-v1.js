@@ -105,8 +105,10 @@ function begin(row,type){
 }
 function end(row,type){
   if(!row)return;
-  dispatchPreview(row,type,false);
   if(type==='focus'){if(focusPreview===row)focusPreview=null}else if(pointerPreview===row)pointerPreview=null;
+  dispatchPreview(row,type,false);
+  const fallback=pointerPreview?{row:pointerPreview,type:'pointer'}:focusPreview?{row:focusPreview,type:'focus'}:null;
+  if(fallback)dispatchPreview(fallback.row,fallback.type,true);
   if(row!==pointerPreview&&row!==focusPreview)row.classList.remove('is-card-house-preview');
 }
 function rowFrom(event){return event.target.closest?.(ROW)||null}
