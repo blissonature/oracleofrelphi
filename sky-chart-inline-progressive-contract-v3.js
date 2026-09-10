@@ -81,10 +81,9 @@ function handleClick(event){
     const same=event.target===fastPointerTarget||fastPointerTarget.contains?.(event.target)||event.target.contains?.(fastPointerTarget);
     if(same){event.preventDefault();event.stopImmediatePropagation();fastPointerTarget=null;return}
   }
-  if(ownRevealEvent(event))return;
-  const row=expandedRowFor(event.target);if(!row)return;
-  if(event.target.closest?.('[data-inline-ledger]'))return;
-  event.preventDefault();event.stopImmediatePropagation();
+  // Progressive reveal owns only its explicit glyph/name/referent targets.
+  // Blank space belongs to the relationship row controller so it can collapse the tile.
+  ownRevealEvent(event);
 }
 function handleKey(event){if(event.key!=='Enter'&&event.key!==' ')return;ownRevealEvent(event)}
 function installStyles(){
