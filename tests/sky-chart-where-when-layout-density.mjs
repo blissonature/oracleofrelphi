@@ -36,36 +36,22 @@ const metrics=await editor.evaluate(form=>{
   const footer=form.querySelector('.sky-where-when-footer');
   const slot=form.querySelector('.sky-where-when-heptagram-slot');
   const heptagram=slot.querySelector('.sky-where-when-draft-heptagram');
-  const jump=slot.querySelector('.sky-where-when-ph-jump');
-  const frame=slot.querySelector('[data-sky-heptagram-frame]');
   const confirm=footer.querySelector('button[type="submit"]');
   const cancel=footer.querySelector('.sky-where-when-cancel');
-  const r=node=>node?.getBoundingClientRect();
-  const bodyRect=r(body),whenRect=r(when),dateRect=r(date),slotStyle=getComputedStyle(slot),footerStyle=getComputedStyle(footer),formStyle=getComputedStyle(form);
+  const r=node=>node.getBoundingClientRect();
+  const bodyRect=r(body),whenRect=r(when),dateRect=r(date);
   return{
     cardWidth:r(card).width,
-    formHeight:r(form).height,
-    formGridRows:formStyle.gridTemplateRows,
     heptagramWidth:r(heptagram).width,
     heptagramHeight:r(heptagram).height,
-    jumpHeight:r(jump)?.height||0,
-    frameDisplay:frame?getComputedStyle(frame).display:'missing',
-    frameHeight:r(frame)?.height||0,
     slotHeight:r(slot).height,
-    slotMinHeight:slotStyle.minHeight,
-    slotGridRows:slotStyle.gridTemplateRows,
-    slotAlignContent:slotStyle.alignContent,
-    slotAlignItems:slotStyle.alignItems,
     footerHeight:r(footer).height,
-    footerGridRows:footerStyle.gridTemplateRows,
-    footerAlignContent:footerStyle.alignContent,
     confirmClientWidth:confirm.clientWidth,
     confirmScrollWidth:confirm.scrollWidth,
     cancelWidth:r(cancel).width,
     confirmWidth:r(confirm).width,
     whenVisiblePixels:Math.max(0,Math.min(bodyRect.bottom,whenRect.bottom)-Math.max(bodyRect.top,whenRect.top)),
     dateStartsInsideBody:dateRect.top<bodyRect.bottom-4,
-    bodyHeight:bodyRect.height,
     bodyMaxHeight:parseFloat(getComputedStyle(body).maxHeight)||0
   };
 });
@@ -74,14 +60,15 @@ console.log('WHERE_WHEN_LAYOUT_METRICS',JSON.stringify(metrics));
 await panel.screenshot({path:'sky-chart-where-when-layout-density.png'});
 
 assert.ok(metrics.cardWidth<=272,'Comparison Sky cards should remain in the narrow-card layout used by the screenshot.');
-assert.ok(metrics.heptagramWidth>=145&&metrics.heptagramWidth<=152,`Footer heptagram should be about 150px, got ${metrics.heptagramWidth}.`);
-assert.ok(metrics.slotHeight<180,`Heptagram slot should not reserve a large empty block, got ${metrics.slotHeight}px.`);
-assert.ok(metrics.footerHeight<230,`Footer should stay compact enough to return vertical room to When, got ${metrics.footerHeight}px.`);
+assert.ok(metrics.heptagramWidth>=174&&metrics.heptagramWidth<=178,`Footer heptagram should restore to about 176px, got ${metrics.heptagramWidth}.`);
+assert.ok(metrics.heptagramHeight>=174&&metrics.heptagramHeight<=178,`Footer heptagram must have a square footprint, got ${metrics.heptagramWidth}×${metrics.heptagramHeight}.`);
+assert.ok(metrics.slotHeight<210,`Heptagram slot should not reserve a large empty block, got ${metrics.slotHeight}px.`);
+assert.ok(metrics.footerHeight<255,`Footer should stay compact enough to return vertical room to When, got ${metrics.footerHeight}px.`);
 assert.ok(metrics.confirmScrollWidth<=metrics.confirmClientWidth+1,`Confirm label must fit inside its button (${metrics.confirmScrollWidth}/${metrics.confirmClientWidth}).`);
 assert.ok(metrics.confirmWidth>metrics.cancelWidth*1.9,'Confirm action should keep the intended roughly 2× width of Cancel.');
 assert.ok(metrics.whenVisiblePixels>=90,`At least the useful top of When should show without scrolling, got ${metrics.whenVisiblePixels}px.`);
 assert.equal(metrics.dateStartsInsideBody,true,'The date field should begin inside the default visible Where/When scroll viewport.');
-assert.ok(metrics.bodyMaxHeight>=300,`The scroll body should receive the space recovered from the footer, got max-height ${metrics.bodyMaxHeight}px.`);
+assert.ok(metrics.bodyMaxHeight>=390,`The scroll body should receive the space recovered from the footer, got max-height ${metrics.bodyMaxHeight}px.`);
 
 assert.deepEqual(errors,[]);
 await browser.close();
