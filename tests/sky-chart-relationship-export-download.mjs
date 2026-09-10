@@ -35,7 +35,6 @@ assert.equal(await button.getAttribute('data-relationship-export-owner'),'column
 await button.click();
 await page.waitForTimeout(3000);
 const diagnostics=await page.evaluate(()=>({
-  status:document.getElementById('skyChartExportStatus')?.textContent||'',
   disabled:document.getElementById('skyChartRelationshipsExport')?.disabled||false,
   relationshipExportV3:!!window.__relphiRelationshipExportColumnsV3,
   relationshipExportV2:!!window.__relphiRelationshipExportColumnsV2,
@@ -47,7 +46,9 @@ const diagnostics=await page.evaluate(()=>({
 console.log('RELATIONSHIP_EXPORT_DIAGNOSTICS',JSON.stringify({diagnostics,downloads:downloads.length,errors,consoleErrors}));
 assert.ok(downloads.length>0,`Relationships export did not start a download: ${JSON.stringify(diagnostics)}`);
 assert.match(downloads[0].suggestedFilename(),/relationships-.*\.png$/i);
-assert.match(diagnostics.status,/download started/i);
+assert.equal(diagnostics.disabled,false,'Download control should recover after export completes.');
+assert.equal(diagnostics.rexSheet,false,'Off-screen export sheet should be removed after completion.');
 assert.deepEqual(errors,[]);
+assert.ok(!consoleErrors.some(message=>/ReferenceError:\s*li is not defined/i.test(message)),`Relationships export threw its former concept-rendering error: ${consoleErrors.join('\n')}`);
 await browser.close();
 console.log('Relationships download button produces a PNG download.');
