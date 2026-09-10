@@ -60,6 +60,6 @@ assert.equal(await page.locator('#skyWhereWhenNamePrompt:not([hidden])').count()
 for(let i=0;i<2;i++){const visible=page.locator('#skyWhereWhenNamePrompt:not([hidden])');if(await visible.count()){await visible.locator('[data-sky-name-cancel]').click();await page.waitForTimeout(30)}}
 await page.waitForTimeout(1400);assert.deepEqual(await page.evaluate(()=>({...window.__wwTransactionCounts})),countsAfterCommit,'The removed one-second polling loop must not restart rendering after the committed rebuild.');
 
-await page.locator('[data-saved-sky-trigger="A"]').click();await page.locator('[data-saved-as]').click();const dialog=page.locator('.sky-save-name-dialog');await dialog.waitFor();
+await page.locator('[data-saved-sky-trigger="A"]').click();await page.locator('#skySavedSkiesPopover [data-sky-command="save"]').click();const dialog=page.locator('.sky-save-name-dialog:not([hidden])');await dialog.waitFor();
 const nameSizes=await dialog.evaluate(node=>{const input=node.querySelector('[data-save-sky-name-input]');return{dialog:node.getBoundingClientRect().width,input:input.getBoundingClientRect().width}});assert.ok(nameSizes.dialog>=500);assert.ok(nameSizes.input>=450);await dialog.locator('[data-save-sky-name-cancel]').click();
 assert.deepEqual(errors,[]);await browser.close();console.log('Where and When transaction stability passed.');
