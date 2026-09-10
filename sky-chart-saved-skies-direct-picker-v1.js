@@ -2,9 +2,10 @@
 // The picker is finalized synchronously in the same click task so users never see the intermediate command view.
 (function(){
 'use strict';
-if(window.__relphiSkySavedSkiesDirectPickerV2)return;
+if(window.__relphiSkySavedSkiesDirectPickerV3)return;
 window.__relphiSkySavedSkiesDirectPickerV1=true;
 window.__relphiSkySavedSkiesDirectPickerV2=true;
+window.__relphiSkySavedSkiesDirectPickerV3=true;
 let queued=false;
 
 function ensureNewSky(list){
@@ -20,8 +21,8 @@ function normalizePicker(){
   queued=false;
   const popover=document.getElementById('skySavedSkiesPopover');if(!popover||popover.hidden)return;
   const load=popover.querySelector('[data-sky-command="load"]');if(load)load.click();
-  const heading=popover.querySelector('.sky-saved-subview-head strong');if(heading&&heading.textContent!=='Saved Skies')heading.textContent='Saved Skies';
   const list=popover.querySelector('.sky-saved-list');if(!list)return;
+  popover.querySelector('.sky-saved-subview-head')?.remove();
   ensureNewSky(list);
   // These run synchronously/microtask-only; neither owns a DOM observer anymore.
   window.RelphiSkyPrivateLoad?.redactNow?.();
