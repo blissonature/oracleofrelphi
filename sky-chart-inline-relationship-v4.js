@@ -147,7 +147,18 @@ document.addEventListener('click',e=>{
   const revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');
   if(revealRow){const field=topGlyph.dataset.inlineTopReveal||fieldFromTopGlyph(topGlyph);if(field){e.preventDefault();e.stopImmediatePropagation();cycleReveal(revealRow,field);return}}
   const row=e.target.closest('.sky-foundation-relationship-row[data-relation-index]');
-  if(row)requestAnimationFrame(()=>open(row));
+  if(!row)return;
+  // Any click that reaches this point was not claimed by an interactive child.
+  // If the row is already expanded, treat it as a background click and collapse it
+  // directly. Do not depend on openRow identity, because other presentation layers
+  // may have replaced/rebound the row since it was opened.
+  if(row.classList.contains('is-inline-expanded')){
+    e.preventDefault();
+    close(row);
+    if(openRow===row)openRow=null;
+    return;
+  }
+  requestAnimationFrame(()=>open(row));
 },true);
 function suppress(){const p=document.getElementById('skySelectedRelationship');if(p)p.hidden=true}
 window.addEventListener('relphi:selected-relationship-rendered',suppress);
