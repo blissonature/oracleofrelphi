@@ -1,7 +1,8 @@
 // Data-derived fingerprints for collapsed Where and When, Placements, and Card Hits drawers.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyDrawerFingerprintsV1)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyDrawerFingerprintsV2)return;
+window.__relphiSkyDrawerFingerprintsV2=true;
 window.__relphiSkyDrawerFingerprintsV1=true;
 
 const NS='http://www.w3.org/2000/svg';
@@ -123,15 +124,6 @@ function renderCardHits(slot,payload){
   if(label)mount.setAttribute('aria-label',label);
 }
 
-function installSkyCommandContract(){
-  if(document.getElementById('relphi-sky-command-contract'))return;
-  const style=document.createElement('style');
-  style.id='relphi-sky-command-contract';
-  style.textContent='#skySavedSkiesPopover [data-sky-command="new"]{display:none!important}';
-  document.head.appendChild(style);
-}
-function removeNewSkyCommands(){document.querySelectorAll('#skySavedSkiesPopover [data-sky-command="new"]').forEach(node=>node.remove())}
-
 function renderSlot(slot){
   const payload=read(slot);
   window.RelphiSkyCardShell?.ensure?.(slot,payload);
@@ -141,22 +133,18 @@ function renderSlot(slot){
 }
 function render(){
   queued=false;
-  removeNewSkyCommands();
   renderSlot('A');renderSlot('B');
   window.RelphiSkyCardHitsStructure?.render?.();
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relevantStorage(event){return !event.key||Object.values(KEYS).includes(event.key)}
 
-installSkyCommandContract();
 window.addEventListener('storage',event=>{if(relevantStorage(event))schedule()});
 [
   'relphi:sky-foundation-ready','relphi:sky-heptagram-source-ready','relphi:sky-heptagram-canonical-ready',
   'relphi:sky-live-origin-changed','relphi:saved-sky-active-changed','relphi:saved-sky-library-changed',
   'relphi:saved-sky-loaded','relphi:sky-b-restored','relphi:sky-session-recovered'
 ].forEach(name=>window.addEventListener(name,schedule));
-document.addEventListener('click',()=>window.setTimeout(removeNewSkyCommands,0),true);
-new MutationObserver(records=>{if(records.some(record=>record.addedNodes.length))removeNewSkyCommands()}).observe(document.body,{childList:true,subtree:true});
 window.RelphiSkyDrawerFingerprints=Object.freeze({render:schedule});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 })();
