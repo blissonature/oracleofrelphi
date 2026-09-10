@@ -36,24 +36,42 @@ const metrics=await editor.evaluate(form=>{
   const footer=form.querySelector('.sky-where-when-footer');
   const slot=form.querySelector('.sky-where-when-heptagram-slot');
   const heptagram=slot.querySelector('.sky-where-when-draft-heptagram');
+  const jump=slot.querySelector('.sky-where-when-ph-jump');
+  const frame=slot.querySelector('[data-sky-heptagram-frame]');
   const confirm=footer.querySelector('button[type="submit"]');
   const cancel=footer.querySelector('.sky-where-when-cancel');
-  const r=node=>node.getBoundingClientRect();
-  const bodyRect=r(body),whenRect=r(when),dateRect=r(date);
+  const r=node=>node?.getBoundingClientRect();
+  const bodyRect=r(body),whenRect=r(when),dateRect=r(date),slotStyle=getComputedStyle(slot),footerStyle=getComputedStyle(footer),formStyle=getComputedStyle(form);
   return{
     cardWidth:r(card).width,
+    formHeight:r(form).height,
+    formGridRows:formStyle.gridTemplateRows,
     heptagramWidth:r(heptagram).width,
+    heptagramHeight:r(heptagram).height,
+    jumpHeight:r(jump)?.height||0,
+    frameDisplay:frame?getComputedStyle(frame).display:'missing',
+    frameHeight:r(frame)?.height||0,
     slotHeight:r(slot).height,
+    slotMinHeight:slotStyle.minHeight,
+    slotGridRows:slotStyle.gridTemplateRows,
+    slotAlignContent:slotStyle.alignContent,
+    slotAlignItems:slotStyle.alignItems,
     footerHeight:r(footer).height,
+    footerGridRows:footerStyle.gridTemplateRows,
+    footerAlignContent:footerStyle.alignContent,
     confirmClientWidth:confirm.clientWidth,
     confirmScrollWidth:confirm.scrollWidth,
     cancelWidth:r(cancel).width,
     confirmWidth:r(confirm).width,
     whenVisiblePixels:Math.max(0,Math.min(bodyRect.bottom,whenRect.bottom)-Math.max(bodyRect.top,whenRect.top)),
     dateStartsInsideBody:dateRect.top<bodyRect.bottom-4,
+    bodyHeight:bodyRect.height,
     bodyMaxHeight:parseFloat(getComputedStyle(body).maxHeight)||0
   };
 });
+
+console.log('WHERE_WHEN_LAYOUT_METRICS',JSON.stringify(metrics));
+await panel.screenshot({path:'sky-chart-where-when-layout-density.png'});
 
 assert.ok(metrics.cardWidth<=272,'Comparison Sky cards should remain in the narrow-card layout used by the screenshot.');
 assert.ok(metrics.heptagramWidth>=145&&metrics.heptagramWidth<=152,`Footer heptagram should be about 150px, got ${metrics.heptagramWidth}.`);
@@ -65,7 +83,6 @@ assert.ok(metrics.whenVisiblePixels>=90,`At least the useful top of When should 
 assert.equal(metrics.dateStartsInsideBody,true,'The date field should begin inside the default visible Where/When scroll viewport.');
 assert.ok(metrics.bodyMaxHeight>=300,`The scroll body should receive the space recovered from the footer, got max-height ${metrics.bodyMaxHeight}px.`);
 
-await panel.screenshot({path:'sky-chart-where-when-layout-density.png'});
 assert.deepEqual(errors,[]);
 await browser.close();
 console.log('Where and When compact footer layout passed.');
