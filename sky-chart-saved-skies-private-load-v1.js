@@ -1,7 +1,8 @@
 // Concealed Saved Skies load list: identify records by the existing three-part Sky fingerprint, never by saved name.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesPrivateLoadV1)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesPrivateLoadV2)return;
+window.__relphiSkySavedSkiesPrivateLoadV2=true;
 window.__relphiSkySavedSkiesPrivateLoadV1=true;
 
 const NS='http://www.w3.org/2000/svg';
@@ -119,17 +120,17 @@ function cardForPlanet(planet){return cards().find(card=>card.arcana==='Major'&&
 function cardForSign(sign){return cards().find(card=>card.arcana==='Major'&&splitValues(card.astrology?.sign).includes(sign))||null}
 function cardForDecan(record){return cardById(DECAN_CARDS[record.signIndex]?.[record.decan])}
 function displayName(card){return String(card?.name||card?.title||card?.card_name||card?.card_id||'Card').replace(/_/g,' ')}
-function thumbnailFor(card,w=22,h=38){const id=encodeURIComponent(card?.card_id||card?.stable_symbol_id||''),source=new URL(`assets/tarot/rws/${id}.webp`,document.baseURI).href,thumb=new URL('https://wsrv.nl/');thumb.searchParams.set('url',source);thumb.searchParams.set('w',String(w));thumb.searchParams.set('h',String(h));thumb.searchParams.set('fit','cover');thumb.searchParams.set('output','webp');thumb.searchParams.set('q','50');return thumb.href}
+function thumbnailFor(card){const id=encodeURIComponent(card?.card_id||card?.stable_symbol_id||'');return new URL(`assets/tarot/rws/${id}.webp`,document.baseURI).href}
 function associationCards(record){const found=[];if(PLANET_NAMES.has(record.body))found.push(cardForPlanet(record.body));found.push(cardForSign(record.sign),cardForDecan(record),cardForPlanet(SIGN_RULERS[record.signIndex]));const exalted=EXALTATIONS[record.signIndex];if(exalted)found.push(cardForPlanet(exalted));const decanRuler=DECAN_RULERS[record.signIndex]?.[record.decan];if(decanRuler)found.push(cardForPlanet(decanRuler));return found.filter(Boolean)}
 function strongestCard(payload){const tally=new Map();cardRecords(payload).forEach(record=>{const seen=new Set();associationCards(record).forEach(card=>{const id=card.card_id||card.stable_symbol_id;if(!id||seen.has(id))return;seen.add(id);let hit=tally.get(id);if(!hit){hit={id,card,count:0};tally.set(id,hit)}hit.count+=1})});return Array.from(tally.values()).sort((a,b)=>b.count-a.count||displayName(a.card).localeCompare(displayName(b.card)))[0]||null}
-function cardFingerprint(payload){const hit=strongestCard(payload);if(!hit)return null;const strip=document.createElement('span');strip.className='sky-card-hits-fingerprint-strip';const card=document.createElement('span');card.className='sky-card-hits-fingerprint-card';const image=document.createElement('img');image.src=thumbnailFor(hit.card);image.alt='';image.width=22;image.height=38;image.loading='lazy';image.decoding='async';card.appendChild(image);const chip=document.createElement('span');chip.className='sky-card-hits-fingerprint-count';chip.textContent=String(hit.count);card.appendChild(chip);strip.appendChild(card);return strip}
+function cardFingerprint(payload){const hit=strongestCard(payload);if(!hit)return null;const strip=document.createElement('span');strip.className='sky-card-hits-fingerprint-strip';const card=document.createElement('span');card.className='sky-card-hits-fingerprint-card';const image=document.createElement('img');image.src=thumbnailFor(hit.card);image.alt='';image.width=22;image.height=38;image.loading='eager';image.decoding='sync';card.appendChild(image);const chip=document.createElement('span');chip.className='sky-card-hits-fingerprint-count';chip.textContent=String(hit.count);card.appendChild(chip);strip.appendChild(card);return strip}
 
 function piece(part,node){const mount=document.createElement('span');mount.className='sky-saved-fingerprint-piece';mount.dataset.fingerprintPart=part;if(node)mount.appendChild(node);else{const empty=document.createElement('span');empty.className='sky-saved-fingerprint-empty';empty.setAttribute('aria-hidden','true');mount.appendChild(empty)}return mount}
 function triptych(record){const root=document.createElement('span');root.className='sky-saved-fingerprint-triptych';root.setAttribute('aria-hidden','true');root.append(piece('where',whereFingerprint(record)),piece('placements',placementsFingerprint(record)),piece('card',cardFingerprint(record)));return root}
 
 function redactLoadList(){
-  queued=false;const menu=document.getElementById('skySavedSkiesPopover');if(!menu||menu.hidden)return;
-  const head=menu.querySelector('.sky-saved-subview-head strong');if(!head||String(head.textContent||'').trim()!=='Load Sky')return;
+  queued=false;const menu=document.getElementById('skySavedSkiesPopover');if(!menu)return;
+  const head=menu.querySelector('.sky-saved-subview-head strong'),title=String(head?.textContent||'').trim();if(!head||!['Load Sky','Saved Skies'].includes(title))return;
   const byRef=new Map(library().map(record=>[recordRef(record),record]));
   menu.querySelectorAll('.sky-saved-list-row').forEach(row=>{
     const item=row.querySelector('[data-saved-sky-ref]');if(!item)return;const ref=String(item.dataset.savedSkyRef||''),record=byRef.get(ref);if(!record)return;
@@ -142,7 +143,11 @@ function redactLoadList(){
   });
 }
 function schedule(){if(queued)return;queued=true;queueMicrotask(redactLoadList)}
-function start(){installStyle();migrateLegacyIds();schedule();new MutationObserver(records=>{if(records.some(record=>record.addedNodes.length||record.removedNodes.length))schedule()}).observe(document.body,{childList:true,subtree:true});document.addEventListener('click',schedule,true);window.addEventListener('relphi:saved-sky-library-changed',schedule)}
-window.RelphiSkyPrivateLoad=Object.freeze({redact:schedule});
+function start(){
+  installStyle();migrateLegacyIds();schedule();
+  document.addEventListener('click',event=>{if(event.target.closest?.('[data-saved-sky-trigger],#skySavedSkiesPopover'))schedule()},true);
+  window.addEventListener('relphi:saved-sky-library-changed',schedule);
+}
+window.RelphiSkyPrivateLoad=Object.freeze({redact:schedule,redactNow:redactLoadList});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
