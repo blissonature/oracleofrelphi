@@ -1,0 +1,56 @@
+name: Sky Chart aspect line check
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-orb-control-v1.js'
+      - 'sky-chart-highlight-without-filtering-v1.js'
+      - 'sky-chart-relationship-state-contract-v1.js'
+      - 'tests/sky-chart-aspect-line-visibility.mjs'
+      - '.github/workflows/sky-chart-aspect-line-check.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-orb-control-v1.js'
+      - 'sky-chart-highlight-without-filtering-v1.js'
+      - 'sky-chart-relationship-state-contract-v1.js'
+      - 'tests/sky-chart-aspect-line-visibility.mjs'
+      - '.github/workflows/sky-chart-aspect-line-check.yml'
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-foundation-v2.js
+          node --check sky-chart-foundation-interactions-v2.js
+          node --check sky-chart-orb-control-v1.js
+          node --check sky-chart-highlight-without-filtering-v1.js
+          node --check sky-chart-relationship-state-contract-v1.js
+          node --check tests/sky-chart-aspect-line-visibility.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Run visible aspect-line assertions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-aspect-line-server.log 2>&1 &
+          node tests/sky-chart-aspect-line-visibility.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-aspect-line-visibility
+          path: sky-chart-aspect-line-visibility.png
+          if-no-files-found: ignore
