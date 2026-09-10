@@ -1,0 +1,67 @@
+/* Compact the active Where and When editor footer without shrinking the heptagram itself. */
+.sky-where-when-editor .sky-where-when-heptagram-slot{
+  display:grid!important;
+  place-items:center!important;
+  align-content:start!important;
+  row-gap:4px!important;
+  width:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0 0 4px!important;
+  box-sizing:border-box!important;
+}
+
+/* The drawer stylesheet still carried an old 112px editor-preview rule. Keep the
+   live footer preview legible, while making the committed frame and draft use the
+   same footprint so the viewport is measured correctly on first open. */
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-heptagram{
+  display:block!important;
+  width:150px!important;
+  max-width:min(100%,150px)!important;
+  height:auto!important;
+  max-height:150px!important;
+  margin:0 auto!important;
+}
+
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump,
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-where-when-ph-jump{
+  width:auto!important;
+  max-width:100%!important;
+  margin:0 auto!important;
+  padding:.12rem .25rem!important;
+}
+
+/* Give the scrolling Where/When body back the space that was being reserved by
+   the oversized footer footprint. */
+.sky-where-when-editor .sky-where-when-footer{
+  gap:5px!important;
+  padding:5px 8px 8px!important;
+}
+
+/* Preserve the requested roughly 1:2 Cancel/confirm relationship, but bias a
+   little more room toward the long confirm label so it stays inside the card. */
+.sky-where-when-editor .sky-where-when-footer-actions{
+  grid-template-columns:minmax(62px,.78fr) minmax(0,2.22fr)!important;
+  gap:5px!important;
+}
+.sky-where-when-editor .sky-where-when-footer-actions .sky-where-when-button{
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:.6rem .48rem!important;
+  font-size:.64rem!important;
+  line-height:1!important;
+}
+
+/* Sky cards are containers and can be ~270px wide even on a wide desktop. Size
+   the action row from the card, not from the browser viewport. */
+@container (max-width:285px){
+  .sky-where-when-editor .sky-where-when-footer-actions{
+    grid-template-columns:minmax(58px,.72fr) minmax(0,2.28fr)!important;
+    gap:4px!important;
+  }
+  .sky-where-when-editor .sky-where-when-footer-actions .sky-where-when-button{
+    padding:.58rem .34rem!important;
+    font-size:.62rem!important;
+  }
+}
