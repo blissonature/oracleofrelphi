@@ -1,0 +1,32 @@
+name: Sky Chart relationship blank collapse v2
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-inline-relationship-v5.js'
+      - 'sky-chart-inline-progressive-contract-v3.js'
+      - 'tests/sky-chart-relationship-blank-collapse-browser.mjs'
+      - '.github/workflows/sky-chart-relationship-blank-collapse-check-v2.yml'
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-inline-relationship-v5.js
+          node --check sky-chart-inline-progressive-contract-v3.js
+          node --check tests/sky-chart-relationship-blank-collapse-browser.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+      - name: Run relationship collapse regression
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-relationship-collapse-server.log 2>&1 &
+          node tests/sky-chart-relationship-blank-collapse-browser.mjs
