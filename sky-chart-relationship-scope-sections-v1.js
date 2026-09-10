@@ -1,11 +1,12 @@
-// Relationship scope sections v10: semantic grouping and sorting without visible scope headers; Copy retains semantic grouping.
+// Relationship scope sections v11: semantic grouping and sorting without visible scope headers; Copy retains semantic grouping.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV10)return;
-window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScopeSectionsV2=true;window.__relphiRelationshipScopeSectionsV3=true;window.__relphiRelationshipScopeSectionsV4=true;window.__relphiRelationshipScopeSectionsV5=true;window.__relphiRelationshipScopeSectionsV6=true;window.__relphiRelationshipScopeSectionsV7=true;window.__relphiRelationshipScopeSectionsV8=true;window.__relphiRelationshipScopeSectionsV9=true;window.__relphiRelationshipScopeSectionsV10=true;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV11)return;
+window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScopeSectionsV2=true;window.__relphiRelationshipScopeSectionsV3=true;window.__relphiRelationshipScopeSectionsV4=true;window.__relphiRelationshipScopeSectionsV5=true;window.__relphiRelationshipScopeSectionsV6=true;window.__relphiRelationshipScopeSectionsV7=true;window.__relphiRelationshipScopeSectionsV8=true;window.__relphiRelationshipScopeSectionsV9=true;window.__relphiRelationshipScopeSectionsV10=true;window.__relphiRelationshipScopeSectionsV11=true;
 
 const GROUPS=Object.freeze([{mode:'A-B',title:'A↔B',family:'intersky'},{mode:'A-A',title:'A↔A',family:'intrasky'},{mode:'B-B',title:'B↔B',family:'intrasky'}]);
 const FAMILIES=Object.freeze([{id:'intersky',title:'Intersky'},{id:'intrasky',title:'Intrasky'}]);
+const GLOBAL_TIMING_SORTS=new Set(['duration-longest','duration-shortest','began-most-recently','ends-soonest','ends-last']);
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const SIGN_SYMBOLS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 const ASPECT_SYMBOLS=Object.freeze({conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'});
@@ -31,12 +32,18 @@ function groupList(){
   collapsed.clear();
   rows.forEach(row=>row.classList.remove(COLLAPSED_VISUAL_CLASS));
   const other=[...list.children].filter(node=>!node.matches?.('.sky-foundation-relationship-row')),desired=[...other];
-  for(const family of FAMILIES){
-    for(const group of GROUPS.filter(item=>item.family===family.id)){
-      let section=rows.filter(row=>mode(row)===group.mode);
-      const sorter=window.RelphiRelationshipSort;
-      if(sorter?.compareRows)section=section.slice().sort(sorter.compareRows);
-      desired.push(...section);
+  const sorter=window.RelphiRelationshipSort,sortMode=sorter?.mode?.();
+  // Timing is a property of each relationship itself. Keep timing sorts global across
+  // A↔B, A↔A, and B↔B instead of re-grouping them by scope after the sorter runs.
+  if(GLOBAL_TIMING_SORTS.has(sortMode)&&sorter?.compareRows){
+    desired.push(...rows.slice().sort(sorter.compareRows));
+  }else{
+    for(const family of FAMILIES){
+      for(const group of GROUPS.filter(item=>item.family===family.id)){
+        let section=rows.filter(row=>mode(row)===group.mode);
+        if(sorter?.compareRows)section=section.slice().sort(sorter.compareRows);
+        desired.push(...section);
+      }
     }
   }
   if(!sameOrder([...list.children],desired)){
