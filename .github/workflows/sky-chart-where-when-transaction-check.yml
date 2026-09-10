@@ -15,6 +15,8 @@ on:
       - 'sky-chart-filter-wheel-focus-v1.js'
       - 'sky-chart-final-pass-v2.js'
       - 'sky-chart-card-shell-v2.js'
+      - 'sky-chart-card-drawers-v1.css'
+      - 'sky-chart-where-when-layout-density-v1.css'
       - 'sky-chart-render-stability-v2.js'
       - 'sky-chart-where-when-v3.js'
       - 'sky-chart-where-when-draft-heptagram-v4.js'
@@ -24,6 +26,7 @@ on:
       - 'sky-chart-saved-sky-name-dialog-v1.js'
       - 'sky-chart-saved-skies-v1.js'
       - 'tests/sky-chart-where-when-transaction-stability.mjs'
+      - 'tests/sky-chart-where-when-layout-density.mjs'
       - 'tests/sky-chart-architecture-contract.mjs'
       - '.github/workflows/sky-chart-where-when-transaction-check.yml'
   push:
@@ -32,6 +35,8 @@ on:
     paths:
       - 'sky-chart.html'
       - 'sky-chart-card-shell-v2.js'
+      - 'sky-chart-card-drawers-v1.css'
+      - 'sky-chart-where-when-layout-density-v1.css'
       - 'sky-chart-render-stability-v2.js'
       - 'sky-chart-where-when-v3.js'
       - 'sky-chart-where-when-draft-heptagram-v4.js'
@@ -40,6 +45,7 @@ on:
       - 'sky-chart-sky-identity-affordance-v1.js'
       - 'sky-chart-foundation-v2.js'
       - 'tests/sky-chart-where-when-transaction-stability.mjs'
+      - 'tests/sky-chart-where-when-layout-density.mjs'
       - 'tests/sky-chart-architecture-contract.mjs'
 
 jobs:
@@ -72,12 +78,20 @@ jobs:
           node --check sky-chart-saved-sky-name-dialog-v1.js
           node --check sky-chart-saved-skies-v1.js
           node --check tests/sky-chart-where-when-transaction-stability.mjs
+          node --check tests/sky-chart-where-when-layout-density.mjs
           node tests/sky-chart-architecture-contract.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
           npx playwright install --with-deps chromium
-      - name: Run transaction stability assertions
+      - name: Run transaction and layout assertions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-transaction-server.log 2>&1 &
           node tests/sky-chart-where-when-transaction-stability.mjs
+          node tests/sky-chart-where-when-layout-density.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-where-when-layout
+          path: sky-chart-where-when-layout-density.png
+          if-no-files-found: ignore
