@@ -22,7 +22,7 @@ const TIMING_MODES=new Set(['duration-longest','duration-shortest','began-most-r
 const cache=new Map();
 const readCache={A:{raw:null,value:null},B:{raw:null,value:null}};
 const recordCache=new WeakMap(),profileDateCache=new WeakMap(),liveOriginCache=new WeakMap();
-let observer=null,queued=false,baseApi=null;
+let observer=null,queued=false,sortQueued=false,baseApi=null;
 
 const norm=value=>((Number(value)%360)+360)%360;
 const wrap=value=>((Number(value)+540)%360)-180;
@@ -168,10 +168,17 @@ function timingForRow(row){
   const model=modelFor(row),timeline=model?currentWindow(model):null,result=timeline?{model,timeline,durationDays:timeline.durationDays,endsInDays:(timeline.endMs-model.center)/DAY,startedDaysAgo:(model.center-timeline.startMs)/DAY}:null;
   cache.set(key,result);return result;
 }
+function scheduleSortRefresh(){
+  const sort=window.RelphiRelationshipSort,sortMode=sort?.mode?.(),select=document.querySelector('select[data-relationship-sort]');
+  if(!TIMING_MODES.has(sortMode)||select?.getAttribute('aria-busy')==='true'||sortQueued)return;
+  sortQueued=true;
+  requestAnimationFrame(()=>{sortQueued=false;applySort()});
+}
 function writeTiming(row,timing){
   if(Number.isFinite(timing?.durationDays))row.dataset.transitDurationDays=String(timing.durationDays);else delete row.dataset.transitDurationDays;
   if(Number.isFinite(timing?.endsInDays))row.dataset.transitEndsInDays=String(timing.endsInDays);else delete row.dataset.transitEndsInDays;
   if(Number.isFinite(timing?.startedDaysAgo))row.dataset.transitStartedDaysAgo=String(timing.startedDaysAgo);else delete row.dataset.transitStartedDaysAgo;
+  scheduleSortRefresh();
 }
 function estimatedTimingForRow(row){const timing=timingForRow(row);writeTiming(row,timing);return timing}
 function exportTimingForRow(row){
@@ -218,8 +225,8 @@ function primeChiron(){
 }
 function start(){
   installApi();
-  window.addEventListener('relphi:relationship-sort-changed',()=>requestAnimationFrame(applySort));
-  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{invalidate();requestAnimationFrame(applySort)}));
+  window.addEventListener('relphi:relationship-sort-changed',scheduleSortRefresh);
+  ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-intrasky-relationships-ready','relphi:sky-intrasky-b-relationships-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{invalidate();scheduleSortRefresh()}));
   document.addEventListener('click',event=>{if(event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]'))schedulePatch(80)},true);
   const list=document.getElementById('skyFoundationRelationshipList');if(list){observer=new MutationObserver(()=>schedulePatch(60));observer.observe(list,{subtree:true,childList:true,attributes:true,attributeFilter:['class','data-transit-kind']})}
   primeChiron();
