@@ -69,7 +69,7 @@ try{
   assert.ok(!state.text.includes('unavailable'),'timing tile should not say unavailable');
   assert.ok(state.chironReady,'Swiss Chiron ephemeris should be ready');
 
-  // Shortest Duration must sort from the same completed timing data used by the tile.
+  // Timing sorts are global across A↔B, A↔A, and B↔B, not grouped by relationship scope.
   const sort=page.locator('select[data-relationship-sort]');
   await sort.selectOption('duration-shortest');
   await page.waitForFunction(()=>document.querySelector('select[data-relationship-sort]')?.getAttribute('aria-busy')==='true',null,{timeout:10000});
