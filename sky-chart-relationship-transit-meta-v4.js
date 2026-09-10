@@ -3,27 +3,28 @@
 // Dated intrasky aspects use both bodies in motion. Intersky timing treats Sky B as the moving transit side when both skies are dated, unless an explicit live side is available.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipTransitMetaV5)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipTransitMetaV6)return;
 window.__relphiRelationshipTransitMetaV1=true;
 window.__relphiRelationshipTransitMetaV2=true;
 window.__relphiRelationshipTransitMetaV3=true;
 window.__relphiRelationshipTransitMetaV4=true;
 window.__relphiRelationshipTransitMetaV5=true;
+window.__relphiRelationshipTransitMetaV6=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const BODY={sun:'Sun',moon:'Moon',mercury:'Mercury',venus:'Venus',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',pluto:'Pluto'};
-const MOTION_IDS=new Set([...Object.keys(BODY),'north-node','south-node','lilith']);
+const MOTION_IDS=new Set([...Object.keys(BODY),'chiron','north-node','south-node','lilith']);
 const ANGLE={conjunction:0,'semi-sextile':30,octile:45,sextile:60,quintile:72,square:90,trine:120,'tri-octile':135,'bi-quintile':144,quincunx:150,opposition:180};
 const SIGNS=['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
 const ALIAS={rising:'asc',ascendant:'asc',asc:'asc',ac:'asc',descendant:'dsc',dsc:'dsc',dc:'dsc',midheaven:'mc',mc:'mc','imum coeli':'ic',imumcoeli:'ic',ic:'ic',vx:'vertex',vertex:'vertex','north node':'north-node',node:'north-node','true node':'north-node','mean node':'north-node','south node':'south-node',chiron:'chiron',lilith:'lilith','black moon lilith':'lilith',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 const LIVE_ORIGINS=new Set(['here-and-now','update-to-now','use-now']);
 const DAY=86400000;
-const MIN_STEP={asc:.0007,dsc:.0007,mc:.0007,ic:.0007,vertex:.0007,moon:.01,mercury:.03,venus:.04,mars:.06,sun:.06,jupiter:.12,saturn:.18,uranus:.25,neptune:.3,pluto:.35,'north-node':.15,'south-node':.15,lilith:.15};
-const MAX_STEP={asc:.01,dsc:.01,mc:.01,ic:.01,vertex:.01,moon:.2,mercury:.5,venus:.7,mars:1,sun:1,jupiter:4,saturn:7,uranus:10,neptune:12,pluto:14,'north-node':5,'south-node':5,lilith:5};
-const MIN_HORIZON={asc:2,dsc:2,mc:2,ic:2,vertex:2,moon:45,mercury:400,venus:700,mars:1200,sun:800,jupiter:3000,saturn:4500,uranus:6000,neptune:7000,pluto:8000,'north-node':4000,'south-node':4000,lilith:2500};
+const MIN_STEP={asc:.0007,dsc:.0007,mc:.0007,ic:.0007,vertex:.0007,'part-of-fortune':.0007,moon:.01,mercury:.03,venus:.04,mars:.06,sun:.06,jupiter:.12,saturn:.18,uranus:.25,neptune:.3,pluto:.35,chiron:.18,'north-node':.15,'south-node':.15,lilith:.15};
+const MAX_STEP={asc:.01,dsc:.01,mc:.01,ic:.01,vertex:.01,'part-of-fortune':.01,moon:.2,mercury:.5,venus:.7,mars:1,sun:1,jupiter:4,saturn:7,uranus:10,neptune:12,pluto:14,chiron:4,'north-node':5,'south-node':5,lilith:5};
+const MIN_HORIZON={asc:2,dsc:2,mc:2,ic:2,vertex:2,'part-of-fortune':2,moon:45,mercury:400,venus:700,mars:1200,sun:800,jupiter:3000,saturn:4500,uranus:6000,neptune:7000,pluto:8000,chiron:3000,'north-node':4000,'south-node':4000,lilith:2500};
 // The return-gap values preserve the earlier Sky Chart behavior: retrograde-separated passes
 // remain one total activation span instead of being reported as unrelated single passes.
-const RETURN_GAP={asc:0,dsc:0,mc:0,ic:0,vertex:0,moon:2,mercury:35,venus:70,mars:150,sun:10,jupiter:300,saturn:420,uranus:600,neptune:700,pluto:800,'north-node':500,'south-node':500,lilith:500};
+const RETURN_GAP={asc:0,dsc:0,mc:0,ic:0,vertex:0,'part-of-fortune':0,moon:2,mercury:35,venus:70,mars:150,sun:10,jupiter:300,saturn:420,uranus:600,neptune:700,pluto:800,chiron:500,'north-node':500,'south-node':500,lilith:500};
 const MAX_HORIZON=12000;
 let generation=0,observer=null,observedList=null;
 const readCache={A:{raw:null,value:null},B:{raw:null,value:null}};
@@ -88,7 +89,14 @@ function obliquity(date){const A=window.Astronomy;return A?.e_tilt?Number(A.e_ti
 function ascendantLongitude(date,slot){const p=profile(slot),latitude=Number(p.latitude),longitude=Number(p.longitude);if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return NaN;const theta=siderealDegrees(date,longitude)*Math.PI/180,phi=latitude*Math.PI/180,epsilon=obliquity(date)*Math.PI/180;if(![theta,phi,epsilon].every(Number.isFinite))return NaN;return norm(Math.atan2(-Math.cos(theta),Math.sin(theta)*Math.cos(epsilon)+Math.tan(phi)*Math.sin(epsilon))*180/Math.PI+180)}
 function midheavenLongitude(date,slot){const p=profile(slot),longitude=Number(p.longitude);if(!Number.isFinite(longitude))return NaN;const theta=siderealDegrees(date,longitude)*Math.PI/180,epsilon=obliquity(date)*Math.PI/180;if(![theta,epsilon].every(Number.isFinite))return NaN;return norm(Math.atan2(Math.sin(theta),Math.cos(theta)*Math.cos(epsilon))*180/Math.PI)}
 function vertexLongitude(date,slot){const p=profile(slot),latitude=Number(p.latitude),longitude=Number(p.longitude);if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return NaN;const armc=siderealDegrees(date,longitude),epsilon=obliquity(date);if(!Number.isFinite(armc)||!Number.isFinite(epsilon))return NaN;const x=norm(armc-90),poleLatitude=latitude>=0?90-latitude:-90-latitude,rad=Math.PI/180,numerator=Math.sin(x*rad),denominator=Math.cos(epsilon*rad)*Math.cos(x*rad)-Math.sin(epsilon*rad)*Math.tan(poleLatitude*rad);let vertex=norm(Math.atan2(numerator,denominator)/rad);if(Math.abs(latitude)<=epsilon){const mc=midheavenLongitude(date,slot);if(Number.isFinite(mc)&&wrap(vertex-mc)>0)vertex=norm(vertex+180)}return vertex}
-function ephemerisLongitude(id,date,slot){if(id==='north-node')return meanNodeLongitude(date);if(id==='south-node')return norm(meanNodeLongitude(date)+180);if(id==='lilith')return meanLilithLongitude(date);if(id==='vertex')return vertexLongitude(date,slot);if(id==='asc')return ascendantLongitude(date,slot);if(id==='dsc'){const value=ascendantLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}if(id==='mc')return midheavenLongitude(date,slot);if(id==='ic'){const value=midheavenLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}const astronomy=window.Astronomy,bodyName=BODY[id],bodyValue=astronomy?.Body?.[bodyName]||bodyName;if(!bodyName||!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;try{if(id==='moon'&&typeof astronomy.EclipticGeoMoon==='function')return norm(astronomy.EclipticGeoMoon(date).lon);return norm(astronomy.Ecliptic(astronomy.GeoVector(bodyValue,date,true)).elon)}catch(_){return NaN}}
+function fortuneLongitude(date,slot){
+  const asc=ascendantLongitude(date,slot),sun=ephemerisLongitude('sun',date,slot),moon=ephemerisLongitude('moon',date,slot),p=profile(slot),latitude=Number(p.latitude),longitude=Number(p.longitude);
+  if(![asc,sun,moon].every(Number.isFinite))return NaN;
+  let day=true;
+  try{if(window.SunCalc&&Number.isFinite(latitude)&&Number.isFinite(longitude))day=window.SunCalc.getPosition(date,latitude,longitude).altitude>0}catch(_){}
+  return norm(day?asc+moon-sun:asc+sun-moon);
+}
+function ephemerisLongitude(id,date,slot){if(id==='north-node')return meanNodeLongitude(date);if(id==='south-node')return norm(meanNodeLongitude(date)+180);if(id==='lilith')return meanLilithLongitude(date);if(id==='vertex')return vertexLongitude(date,slot);if(id==='part-of-fortune')return fortuneLongitude(date,slot);if(id==='asc')return ascendantLongitude(date,slot);if(id==='dsc'){const value=ascendantLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}if(id==='mc')return midheavenLongitude(date,slot);if(id==='ic'){const value=midheavenLongitude(date,slot);return Number.isFinite(value)?norm(value+180):NaN}if(id==='chiron'){try{return Number(window.RelphiChironEphemeris?.calculateSync?.(date)?.longitude)}catch(_){return NaN}}const astronomy=window.Astronomy,bodyName=BODY[id],bodyValue=astronomy?.Body?.[bodyName]||bodyName;if(!bodyName||!astronomy?.GeoVector||!astronomy?.Ecliptic||!bodyValue)return NaN;try{if(id==='moon'&&typeof astronomy.EclipticGeoMoon==='function')return norm(astronomy.EclipticGeoMoon(date).lon);return norm(astronomy.Ecliptic(astronomy.GeoVector(bodyValue,date,true)).elon)}catch(_){return NaN}}
 function endpoint(row,side){const sky=rowSky(row,side),id=String(row.dataset[side==='left'?'leftPlacement':'rightPlacement']||''),record=findRecord(sky,id),date=profileDate(sky);return{side,sky,id,record,date,live:isLive(sky),timed:!!date}}
 function endpointCanMove(ep){return!!(ep?.date&&Number.isFinite(ephemerisLongitude(ep.id,ep.date,ep.sky)))}
 function bodyName(id){const entry=window.RelphiGlyphRegistry?.get?.(id)||window.RelphiGlyphRegistry?.resolve?.(id);return entry?.name||id}
@@ -124,7 +132,7 @@ function modelFor(row){
     return{kind:'static',left,right,reason:'Timing needs a dated sky.'};
   }
   if(movingEndpoints.some(ep=>!endpointCanMove(ep))){
-    return{kind:'unavailable',left,right,reason:'Timing is unavailable for this moving calculated point.'};
+    return{kind:'unavailable',left,right,reason:'Timing could not be calculated for this moving placement.'};
   }
 
   const center=(timedIntrasky?left.date:movingEndpoints[0].date).getTime();
@@ -258,7 +266,7 @@ function sortDurationSignature(row){
 }
 function endpointSpeedForSort(model,ep){
   if(!model?.movingEndpoints?.includes(ep))return 0;
-  const fastAngle=['asc','dsc','mc','ic','vertex'].includes(ep.id);
+  const fastAngle=['asc','dsc','mc','ic','vertex','part-of-fortune'].includes(ep.id);
   const half=fastAngle?.001:ep.id==='moon'?.02:.06;
   const before=model.valueAt(ep,model.center-half*DAY);
   const after=model.valueAt(ep,model.center+half*DAY);
@@ -338,6 +346,12 @@ window.RelphiRelationshipTransitMeta=Object.freeze({
   clearDurationCache:clearSortDurationCache
 });
 
-function start(){installStyles();attach();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:sky-intrasky-relationships-ready','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
+function refreshAfterChironReady(){
+  clearSortDurationCache();
+  document.querySelectorAll('#skyFoundationRelationshipList .inline-rel-transit-window[data-transit-kind="unavailable"]').forEach(meta=>{meta.dataset.transitReady='false';delete meta.dataset.transitSignature});
+  schedule();
+}
+function primeChiron(){const service=window.RelphiChironEphemeris;if(!service?.ready)return;service.ready().then(refreshAfterChironReady).catch(error=>console.error('[Relationship timing Chiron]',error))}
+function start(){installStyles();attach();primeChiron();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready','relphi:sky-harmonic-window-visibility-changed','relphi:sky-live-origin-changed','relphi:sky-intrasky-relationships-ready','relphi:relationship-display-changed'].forEach(name=>window.addEventListener(name,()=>{attach();schedule()}));document.addEventListener('click',event=>{if(event.target.closest('.sky-foundation-relationship-row[data-relation-index]'))schedule()},true)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
