@@ -13,6 +13,8 @@ const foundation=read('sky-chart-foundation-v2.js');
 const finalBehavior=read('sky-chart-final-behavior-v2.js');
 const quickCopy=read('sky-chart-quick-copy-v2.js');
 const identity=read('sky-chart-sky-identity-affordance-v1.js');
+const savedSkies=read('sky-chart-saved-skies-v1.js');
+const extraPoints=read('sky-chart-extra-points-v3.js');
 
 const retired=[
   'sky-chart-card-shell-v1.js',
@@ -79,6 +81,12 @@ assert.match(identity,/pendingResolve/,'Sky naming must queue unresolved identit
 assert.match(identity,/relphi:sky-where-when-committed/,'Queued Sky naming must resume only after the Where and When transaction completes');
 assert.match(identity,/transactionActive\(\)/,'Sky naming must check the transaction before opening its modal');
 assert.equal(identity.includes('requestAnimationFrame(()=>resolve(s))'),false,'Sky naming must not open immediately from a per-slot working-copy update');
+
+assert.equal(savedSkies.includes('function renderIdentity'),false,'Saved Skies must not render a second Sky title/menu trigger');
+assert.equal(savedSkies.includes('button.dataset.savedSkyTrigger'),false,'Saved Skies consumes the title trigger but must not manufacture card title chrome');
+assert.match(savedSkies,/sky-chart-sky-card-title-integrity/,'Saved Skies must document the single title owner');
+assert.equal(extraPoints.includes("addEventListener('relphi:sky-foundation-ready'"),false,'Derived points must be prepared before foundation rendering, not repaired afterward');
+assert.match(extraPoints,/RelphiSkyExtraPoints=Object\.freeze/,'Derived-point preparation must expose an explicit state API');
 
 assert.equal(viewport.includes('MutationObserver'),false,'Viewport behavior must size only and never repair editor DOM');
 assert.equal(stability.includes('window.addEventListener=function'),false,'Render stability must never monkeypatch addEventListener');
