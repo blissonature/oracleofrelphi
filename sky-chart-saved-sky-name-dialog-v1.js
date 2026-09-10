@@ -34,13 +34,6 @@
     }
     return '';
   }
-  function explicitRecord(value,records){
-    const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
-    const id=String(metadata.savedSkyId||'');
-    if(id){const match=records.find(record=>recordRef(record)===id||String(record.id||'')===id);if(match)return match}
-    const savedName=normalize(metadata.savedSkyName);
-    return savedName?records.find(record=>normalize(record.name)===savedName)||null:null;
-  }
   function applyNamedIdentity(value,name,id){
     const next=clone(value||{});
     next.name=name;next.title=name;next.displayName=name;next.skyName=name;
@@ -110,8 +103,6 @@
   }
   function openDialog(slot){
     ensureDialog();activeSlot=slot;status.textContent='';input.value=candidateName(payload(slot));overlay.hidden=false;document.documentElement.dataset.skySaveNameOpen='true';
-    // Do not programmatically focus on mobile. The user's tap into this stable input
-    // is what should invoke the keyboard, and nothing will rebuild the node afterward.
     if(!matchMedia('(pointer:coarse)').matches)requestAnimationFrame(()=>input.focus({preventScroll:true}));
   }
   function closeDialog(){
@@ -122,16 +113,22 @@
     const trigger=document.querySelector('[data-saved-sky-trigger][aria-expanded="true"]');
     return trigger?.dataset.savedSkyTrigger||null;
   }
+  function isUnsaved(slot){
+    const state=window.RelphiSkySavedSkyIdentity?.identity?.(slot);
+    return state?state.saved!==true:true;
+  }
 
   installStyles();ensureDialog();
-  // Register before the Saved Skies controller. This intercepts its inline naming action
-  // and routes it to the stable dialog instead.
+  // Unsaved skies use one stable naming dialog. Saved skies keep the Saved Skies
+  // controller's Save Changes path because that operation overwrites an existing record.
   document.addEventListener('click',event=>{
-    const action=event.target.closest?.('[data-saved-as]');if(!action)return;
+    const action=event.target.closest?.('[data-saved-as],[data-sky-command="save"]');if(!action)return;
     const slot=activeSlotFromPopover();if(!slot)return;
+    if(action.matches('[data-sky-command="save"]')&&!isUnsaved(slot))return;
     event.preventDefault();event.stopImmediatePropagation();openDialog(slot);
     const popover=document.getElementById('skySavedSkiesPopover');if(popover)popover.hidden=true;
     const trigger=document.querySelector(`[data-saved-sky-trigger="${slot}"]`);trigger?.setAttribute('aria-expanded','false');
   },true);
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&activeSlot){event.preventDefault();event.stopImmediatePropagation();closeDialog()}},true);
+  window.RelphiSkySaveNameDialog=Object.freeze({open:openDialog,close:closeDialog});
 })();
