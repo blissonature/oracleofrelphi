@@ -18,10 +18,10 @@ const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
 await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
-await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison');sessionStorage.removeItem('relphiSkyWhereWhenViewV1')},{a:skyA,b:skyB});
+await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));sessionStorage.removeItem('relphiSkyWhereWhenViewV1')},{a:skyA,b:skyB});
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
-await page.waitForSelector('html[data-sky-placement-multiselect="v4"]',{timeout:20000});
+await page.waitForSelector('html[data-sky-placement-multiselect="ready"]',{timeout:20000});
 await page.waitForSelector('html[data-sky-house-multiselect="ready"]',{timeout:20000});
 
 assert.equal(await page.locator('[data-filter="houseA"],[data-filter="houseB"]').count(),0,'The two house selects must be replaced by one shared control.');
@@ -79,7 +79,7 @@ const list=menu.locator('[data-house-list="combined"]');
 assert.equal(await list.locator('.sky-chart-house-list-header').count(),1);
 assert.equal(await list.locator('.sky-chart-house-list-item-master').count(),1);
 assert.equal(await list.locator('.sky-chart-house-list-item-house').count(),12);
-assert.equal(await list.locator('[data-house-angle-scope],[data-house-angle-choice]').count(),0,'Angles use their assigned houses and do not need separate house-filter choices.');
+assert.equal(await list.locator('[data-house-angle-scope],[data-house-angle-choice]').count(),0,'Angles must remain placement filters, not house filters.');
 for(const item of await list.locator('.sky-chart-house-list-item').all()){
   assert.deepEqual(await item.locator('[data-house-choice]').evaluateAll(nodes=>nodes.map(node=>node.dataset.houseChoice)),['all','a','b']);
 }
@@ -91,35 +91,33 @@ const firstCross=page.locator('.sky-foundation-relationship-row[data-relation-in
 const firstAHouse=await firstCross.getAttribute('data-left-house');
 const firstBHouse=await firstCross.getAttribute('data-right-house');
 
-const houseEndpointCheck=async(side,house)=>visibleRows().evaluateAll((rows,{side,house})=>({
-  allValid:rows.every(row=>!row.dataset[`${side}House`]||row.dataset[`${side}House`]===house),
-  hasMatch:rows.some(row=>row.dataset[`${side}House`]===house)
-}),{side,house});
+const angleAwareEndpointCheck=async(side,house)=>visibleRows().evaluateAll((rows,{side,house})=>{
+  const angle=value=>{
+    const key=String(value||'').trim().toLowerCase().replace(/[._-]+/g,' ').replace(/\s+/g,' ');
+    return ['asc','ascendant','ac','rising','dsc','desc','descendant','dc','mc','midheaven','medium coeli','ic','imum coeli','imumcoeli'].includes(key);
+  };
+  return {
+    allValid:rows.every(row=>angle(row.dataset[`${side}Placement`])||row.dataset[`${side}House`]===house),
+    hasNumericMatch:rows.some(row=>!angle(row.dataset[`${side}Placement`])&&row.dataset[`${side}House`]===house)
+  };
+},{side,house});
 
 await masterA.uncheck();
 await list.locator(`[data-house-scope="house"][data-house-target="${firstAHouse}"][data-house-choice="a"]`).check();
 await page.waitForTimeout(120);
 assert.ok(await visibleRows().count()>0);
-const aCheck=await houseEndpointCheck('left',firstAHouse);
-assert.equal(aCheck.allValid,true,'Sky A house selections must filter every Sky A endpoint, including Asc/MC/IC/Dsc, by its assigned house.');
-assert.equal(aCheck.hasMatch,true,'Sky A house selection must leave at least one relationship in the selected house visible.');
+const aCheck=await angleAwareEndpointCheck('left',firstAHouse);
+assert.equal(aCheck.allValid,true,'Sky A house selections must filter every numeric Sky A endpoint while leaving angle placements to the Placements filter.');
+assert.equal(aCheck.hasNumericMatch,true,'Sky A house selection must leave at least one matching numeric-house relationship visible.');
 await masterA.check();
 
 await masterB.uncheck();
 await list.locator(`[data-house-scope="house"][data-house-target="${firstBHouse}"][data-house-choice="b"]`).check();
 await page.waitForTimeout(120);
 assert.ok(await visibleRows().count()>0);
-const bCheck=await houseEndpointCheck('right',firstBHouse);
-assert.equal(bCheck.allValid,true,'Sky B house selections must filter every Sky B endpoint, including Asc/MC/IC/Dsc, by its assigned house.');
-assert.equal(bCheck.hasMatch,true,'Sky B house selection must leave at least one relationship in the selected house visible.');
-await masterB.check();
-await page.waitForTimeout(120);
-
-await masterA.uncheck();
-await masterB.uncheck();
-await page.waitForTimeout(120);
-assert.equal(await visibleRows().count(),0,'Turning off all houses for both skies must leave no relationships visible; angle-to-angle relationships cannot bypass the house filter.');
-await masterA.check();
+const bCheck=await angleAwareEndpointCheck('right',firstBHouse);
+assert.equal(bCheck.allValid,true,'Sky B house selections must filter every numeric Sky B endpoint while leaving angle placements to the Placements filter.');
+assert.equal(bCheck.hasNumericMatch,true,'Sky B house selection must leave at least one matching numeric-house relationship visible.');
 await masterB.check();
 await page.waitForTimeout(120);
 
@@ -168,4 +166,4 @@ assert.equal(await menu.isVisible(),true);
 await page.screenshot({path:'sky-chart-house-multiselect-mobile.png',fullPage:true});
 assert.deepEqual(errors,[]);
 await browser.close();
-console.log('Sky Chart shared Houses checklist and assigned-house endpoint filtering passed.');
+console.log('Sky Chart shared Houses checklist and neutral black-and-white checkboxes passed.');
