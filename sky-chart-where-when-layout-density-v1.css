@@ -3,23 +3,27 @@
   display:grid!important;
   place-items:center!important;
   align-content:start!important;
-  row-gap:4px!important;
+  row-gap:3px!important;
   width:100%!important;
   min-height:0!important;
   margin:0!important;
-  padding:0 0 4px!important;
+  padding:0 0 3px!important;
   box-sizing:border-box!important;
 }
 
-/* The drawer stylesheet still carried an old 112px editor-preview rule. Keep the
-   live footer preview legible, while making the committed frame and draft use the
-   same footprint so the viewport is measured correctly on first open. */
+/* The drawer stylesheet still carries an old 112px editor-preview rule. Restore
+   the intended 176px preview and give the square SVG an explicit square box.
+   `height:auto` was resolving to the card width (270px) for this generated SVG,
+   which created the large blank-looking footer even after its width was reduced. */
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-heptagram{
   display:block!important;
-  width:150px!important;
-  max-width:min(100%,150px)!important;
-  height:auto!important;
-  max-height:150px!important;
+  width:176px!important;
+  min-width:0!important;
+  max-width:min(100%,176px)!important;
+  height:176px!important;
+  min-height:0!important;
+  max-height:176px!important;
+  aspect-ratio:1/1!important;
   margin:0 auto!important;
 }
 
@@ -28,14 +32,17 @@
   width:auto!important;
   max-width:100%!important;
   margin:0 auto!important;
-  padding:.12rem .25rem!important;
+  padding:.08rem .2rem!important;
+  font-size:.60rem!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
 }
 
 /* Give the scrolling Where/When body back the space that was being reserved by
    the oversized footer footprint. */
 .sky-where-when-editor .sky-where-when-footer{
-  gap:5px!important;
-  padding:5px 8px 8px!important;
+  gap:4px!important;
+  padding:4px 8px 8px!important;
 }
 
 /* Preserve the requested roughly 1:2 Cancel/confirm relationship, but bias a
