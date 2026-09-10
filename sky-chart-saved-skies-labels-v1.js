@@ -3,13 +3,14 @@
 // and New Sky in Sky B resets the B slot in place instead of removing the comparison card.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesLabelsV2)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesLabelsV3)return;
+window.__relphiSkySavedSkiesLabelsV3=true;
 window.__relphiSkySavedSkiesLabelsV2=true;
 window.__relphiSkySavedSkiesLabelsV1=true;
 
 const LIBRARY_KEY='relphiSkyLibraryV1';
 const SKY_B_KEY='relphiSkyChartB';
-let queued=false,observer=null;
+let queued=false;
 
 function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
@@ -117,7 +118,7 @@ function decorate(){
     const confirmation=row.querySelector('.sky-saved-delete-confirmation');if(confirmation)confirmation.setAttribute('aria-label',`Delete ${name}?`);
   });
 }
-function schedule(){if(queued)return;queued=true;requestAnimationFrame(decorate)}
+function schedule(){if(queued)return;queued=true;queueMicrotask(decorate)}
 
 function blankPayload(){return{name:'Where and When',title:'Where and When',displayName:'Where and When',skyName:'Where and When',saved:false,placements:{},metadata:{name:'Where and When',title:'Where and When'},calcProfile:{name:'Where and When',title:'Where and When'}}}
 function dispatchSkyBStorage(){
@@ -154,8 +155,6 @@ function resetSkyBInPlace(){
   });
 }
 
-// Window capture runs before the Saved Skies document-capture handler. This prevents
-// the legacy B newSky path from removing Sky B and then trying to add it back.
 window.addEventListener('click',event=>{
   const command=event.target.closest?.('#skySavedSkiesPopover [data-sky-command="new"]');
   if(!command||activePickerSlot()!=='B')return;
@@ -164,18 +163,14 @@ window.addEventListener('click',event=>{
 
 function start(){
   installStyle();schedule();
-  const popover=document.getElementById('skySavedSkiesPopover');
-  if(popover){observer=new MutationObserver(schedule);observer.observe(popover,{childList:true,subtree:true})}
-  else{
-    const bodyObserver=new MutationObserver(()=>{const node=document.getElementById('skySavedSkiesPopover');if(!node)return;bodyObserver.disconnect();observer=new MutationObserver(schedule);observer.observe(node,{childList:true,subtree:true});schedule()});
-    bodyObserver.observe(document.body,{childList:true,subtree:true});
-  }
   window.addEventListener('relphi:saved-sky-library-changed',schedule);
   window.addEventListener('relphi:sky-b-removed',schedule);
   window.addEventListener('relphi:sky-b-restored',schedule);
   window.addEventListener('storage',event=>{if(!event.key||event.key===LIBRARY_KEY||event.key===SKY_B_KEY)schedule()});
-  document.addEventListener('click',event=>{if(event.target.closest?.('[data-saved-sky-trigger]'))requestAnimationFrame(schedule)},true);
+  document.addEventListener('click',event=>{
+    if(event.target.closest?.('[data-saved-sky-trigger],#skySavedSkiesPopover'))schedule();
+  },true);
 }
-window.RelphiSkySavedSkiesLabels=Object.freeze({refresh:schedule});
+window.RelphiSkySavedSkiesLabels=Object.freeze({refresh:schedule,decorateNow:decorate});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
