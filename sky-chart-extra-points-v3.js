@@ -11,7 +11,7 @@
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
   const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   const MEAN_LUNAR_INCLINATION=5.1453964;
-  let running=false,queued=false;
+  let running=false;
   const norm=value=>((Number(value)%360)+360)%360;
   const rad=value=>Number(value)*Math.PI/180;
   const deg=value=>Number(value)*180/Math.PI;
@@ -105,7 +105,7 @@
 
   function ownsDerivedPoints(profile){
     const source=String(profile?.source||'').trim().toLowerCase();
-    return source==='where-when-v1'||source==='where-when-v2';
+    return source==='where-when-v1'||source==='where-when-v2'||source==='where-when-v3';
   }
 
   function enrich(payload){
@@ -186,8 +186,7 @@
   }
 
   function run(){
-    queued=false;
-    if(running)return;
+    if(running)return false;
     running=true;
     try{
       let changed=false;
@@ -196,15 +195,20 @@
         if(payload&&enrich(payload)){write(key,payload);changed=true}
       });
       if(changed)window.dispatchEvent(new Event('storage'));
+      return changed;
     }finally{
       running=false;
     }
   }
-  function schedule(){if(queued||running)return;queued=true;requestAnimationFrame(run)}
-  function start(){
-    window.addEventListener('relphi:sky-foundation-ready',schedule);
-    window.addEventListener('storage',schedule);
-    schedule();
+  function storageChanged(event){
+    if(!event.key||Object.values(KEYS).includes(event.key))run();
   }
+  function start(){
+    // Normalize stored sky state before the foundation consumes it. Derived points
+    // are state preparation, not a post-render repair pass.
+    run();
+    window.addEventListener('storage',storageChanged);
+  }
+  window.RelphiSkyExtraPoints=Object.freeze({enrich,run});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
