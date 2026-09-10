@@ -21,7 +21,7 @@ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js
 await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));sessionStorage.removeItem('relphiSkyWhereWhenViewV1')},{a:skyA,b:skyB});
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
-await page.waitForSelector('html[data-sky-placement-multiselect="ready"]',{timeout:20000});
+await page.waitForSelector('html[data-sky-placement-multiselect="v4"]',{timeout:20000});
 await page.waitForSelector('html[data-sky-house-multiselect="ready"]',{timeout:20000});
 
 assert.equal(await page.locator('[data-filter="houseA"],[data-filter="houseB"]').count(),0,'The two house selects must be replaced by one shared control.');
