@@ -48,7 +48,9 @@ try {
     for(let y=r.top+3;y<r.bottom-3;y+=4){
       for(let x=r.left+3;x<r.right-3;x+=4){
         const el=document.elementFromPoint(x,y);
-        if(!el||!row.contains(el)||el.closest(interactive))continue;
+        if(!el||!row.contains(el))continue;
+        const interactiveHit=el.closest(interactive);
+        if(interactiveHit&&interactiveHit!==row)continue;
         return{x,y,target:el.className?.baseVal||el.className||el.tagName};
       }
     }
