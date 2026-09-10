@@ -1,0 +1,39 @@
+name: Sky Chart house filter check
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-house-multiselect-v2.js'
+      - 'tests/sky-chart-house-filter-angles.mjs'
+      - '.github/workflows/sky-chart-house-filter-check.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-house-multiselect-v2.js'
+      - 'tests/sky-chart-house-filter-angles.mjs'
+      - '.github/workflows/sky-chart-house-filter-check.yml'
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check sky-chart-house-multiselect-v2.js
+          node --check tests/sky-chart-house-filter-angles.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Run house filter assertions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-house-filter-server.log 2>&1 &
+          node tests/sky-chart-house-filter-angles.mjs

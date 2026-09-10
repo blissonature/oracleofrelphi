@@ -1,4 +1,4 @@
-// Shared Houses checklist for Sky A and Sky B; chart angles remain placement-only filters.
+// Shared Houses checklist for Sky A and Sky B; every relationship endpoint obeys its assigned house.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -13,15 +13,6 @@
   let countTimer = 0;
   let hoverFilterActive = false;
   let lastScopeSignature = '';
-
-  const angleId = value => {
-    const key = String(value || '').trim().toLowerCase().replace(/[._-]+/g, ' ').replace(/\s+/g, ' ');
-    if (['asc','ascendant','ac','rising'].includes(key)) return 'asc';
-    if (['dsc','desc','descendant','dc'].includes(key)) return 'dsc';
-    if (['mc','midheaven','medium coeli'].includes(key)) return 'mc';
-    if (['ic','imum coeli','imumcoeli'].includes(key)) return 'ic';
-    return '';
-  };
 
   function bActive() {
     try { window.RelphiSkyStartupMode?.syncRoot?.(); } catch (_) {}
@@ -129,7 +120,6 @@
   }
 
   function endpointVisible(node, side, slot) {
-    if (angleId(node.dataset[`${side}Placement`])) return true;
     const house = String(node.dataset[`${side}House`] || '');
     return !house || state[slot].has(house);
   }
