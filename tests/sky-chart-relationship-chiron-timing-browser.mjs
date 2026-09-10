@@ -68,8 +68,24 @@ try{
   for(const label of ['Start','Exact','End','Duration','Passes'])assert.ok(state.text.includes(label),`timing tile should include ${label}: ${state.text}`);
   assert.ok(!state.text.includes('unavailable'),'timing tile should not say unavailable');
   assert.ok(state.chironReady,'Swiss Chiron ephemeris should be ready');
+
+  // Shortest Duration must sort from the same completed timing data used by the tile.
+  const sort=page.locator('select[data-relationship-sort]');
+  await sort.selectOption('duration-shortest');
+  await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipSort==='duration-shortest');
+  await page.waitForFunction(()=>document.querySelector('select[data-relationship-sort]')?.getAttribute('aria-busy')==='false',null,{timeout:45000});
+  await page.waitForTimeout(250);
+  const durations=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
+    .filter(row=>!row.hidden&&getComputedStyle(row).display!=='none')
+    .map(row=>({id:row.dataset.relationIndex,duration:Number(row.dataset.transitDurationDays),left:row.dataset.leftPlacement,right:row.dataset.rightPlacement,aspect:row.dataset.aspect}))
+    .filter(item=>Number.isFinite(item.duration)));
+  assert.ok(durations.length>1,`shortest-duration sort should time multiple visible rows: ${JSON.stringify(durations)}`);
+  for(let i=1;i<durations.length;i+=1){
+    assert.ok(durations[i-1].duration<=durations[i].duration+1e-9,`Shortest Duration is out of order at ${i-1}/${i}: ${JSON.stringify(durations.slice(Math.max(0,i-2),i+2))}`);
+  }
+
   assert.deepEqual(pageErrors,[],`browser errors: ${pageErrors.join(' | ')}`);
-  console.log(`browser Chiron timing passed: ${state.text.replace(/\s+/g,' ').trim()}`);
+  console.log(`browser Chiron timing and shortest-duration sort passed; ${durations.length} timed rows`);
 }finally{
   await browser.close();
 }
