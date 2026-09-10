@@ -72,6 +72,7 @@ try{
   // Shortest Duration must sort from the same completed timing data used by the tile.
   const sort=page.locator('select[data-relationship-sort]');
   await sort.selectOption('duration-shortest');
+  await page.waitForFunction(()=>document.querySelector('select[data-relationship-sort]')?.getAttribute('aria-busy')==='true',null,{timeout:10000});
   await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipSort==='duration-shortest');
   await page.waitForFunction(()=>document.querySelector('select[data-relationship-sort]')?.getAttribute('aria-busy')==='false',null,{timeout:45000});
   await page.waitForTimeout(250);
