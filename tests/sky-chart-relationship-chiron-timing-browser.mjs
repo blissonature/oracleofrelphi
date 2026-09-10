@@ -26,10 +26,12 @@ try{
   await page.addInitScript(({a,b})=>{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
   },{a:sampleA,b:sampleB});
 
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle',timeout:30000});
   await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
+  await page.waitForFunction(()=>document.documentElement.dataset.skyBPresent==='true',null,{timeout:10000});
   await page.waitForFunction(()=>{
     return [...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row')].some(row=>{
       const pair=new Set([row.dataset.leftPlacement,row.dataset.rightPlacement]);
@@ -37,8 +39,6 @@ try{
     });
   },null,{timeout:20000});
 
-  const row=page.locator('#skyFoundationRelationshipList .sky-foundation-relationship-row').filter({has:page.locator(':scope')});
-  const target=page.locator('#skyFoundationRelationshipList .sky-foundation-relationship-row[data-relationship-mode="B-B"][data-aspect="opposition"]').filter({has:page.locator('[aria-label*="Venus"], [aria-label*="Chiron"]')}).first();
   // Use the data attributes to avoid depending on visible wording or glyph layout.
   const handle=await page.evaluateHandle(()=>[...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row')].find(row=>{
     const pair=new Set([row.dataset.leftPlacement,row.dataset.rightPlacement]);
