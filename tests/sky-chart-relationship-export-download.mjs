@@ -14,14 +14,16 @@ const skyB=sample('Beta sky',29.27,{dateTime:'2026-09-09T21:00',instant:'2026-09
 
 const browser=await chromium.launch({headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:1000},acceptDownloads:true});
-const errors=[];page.on('pageerror',error=>errors.push(error.message));
+const errors=[],consoleErrors=[],downloads=[];
+page.on('pageerror',error=>errors.push(error.message));
+page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text())});
+page.on('download',download=>downloads.push(download));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
 await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
 await page.addInitScript(({a,b})=>{
   localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
   localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
   localStorage.setItem('relphiSkyChartLastModeV1','comparison');
-  // Exercise the real export owner and browser download path without depending on a third-party serializer in CI.
   window.htmlToImage={toBlob:async()=>new Blob(['png'],{type:'image/png'}),toPng:async()=> 'data:image/png;base64,cG5n'};
 },{a:skyA,b:skyB});
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
@@ -30,12 +32,22 @@ await page.waitForSelector('#skyFoundationRelationshipList .sky-foundation-relat
 const button=page.locator('#skyChartRelationshipsExport');
 await button.waitFor({state:'visible',timeout:10000});
 assert.equal(await button.getAttribute('data-relationship-export-owner'),'columns-v2');
-const downloadPromise=page.waitForEvent('download',{timeout:15000});
 await button.click();
-const download=await downloadPromise;
-assert.match(download.suggestedFilename(),/relationships-.*\.png$/i);
-const status=await page.locator('#skyChartExportStatus').textContent();
-assert.match(status||'',/download started/i);
+await page.waitForTimeout(3000);
+const diagnostics=await page.evaluate(()=>({
+  status:document.getElementById('skyChartExportStatus')?.textContent||'',
+  disabled:document.getElementById('skyChartRelationshipsExport')?.disabled||false,
+  relationshipExportV3:!!window.__relphiRelationshipExportColumnsV3,
+  relationshipExportV2:!!window.__relphiRelationshipExportColumnsV2,
+  genericExportV5:!!window.__relphiSkyExportV5,
+  visibleRows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(r=>{const s=getComputedStyle(r);return !r.hidden&&s.display!=='none'&&s.visibility!=='hidden'}).length,
+  pendingImages:[...document.querySelectorAll('.rex-sheet img')].filter(i=>!i.complete||!i.naturalWidth).map(i=>i.getAttribute('src')).slice(0,12),
+  rexSheet:!!document.querySelector('.rex-sheet')
+}));
+console.log('RELATIONSHIP_EXPORT_DIAGNOSTICS',JSON.stringify({diagnostics,downloads:downloads.length,errors,consoleErrors}));
+assert.ok(downloads.length>0,`Relationships export did not start a download: ${JSON.stringify(diagnostics)}`);
+assert.match(downloads[0].suggestedFilename(),/relationships-.*\.png$/i);
+assert.match(diagnostics.status,/download started/i);
 assert.deepEqual(errors,[]);
 await browser.close();
 console.log('Relationships download button produces a PNG download.');
