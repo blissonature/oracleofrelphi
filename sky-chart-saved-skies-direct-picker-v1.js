@@ -2,10 +2,11 @@
 // The picker is finalized synchronously in the same click task so users never see the intermediate command view.
 (function(){
 'use strict';
-if(window.__relphiSkySavedSkiesDirectPickerV3)return;
+if(window.__relphiSkySavedSkiesDirectPickerV4)return;
 window.__relphiSkySavedSkiesDirectPickerV1=true;
 window.__relphiSkySavedSkiesDirectPickerV2=true;
 window.__relphiSkySavedSkiesDirectPickerV3=true;
+window.__relphiSkySavedSkiesDirectPickerV4=true;
 let queued=false;
 
 function ensureNewSky(list){
@@ -22,7 +23,9 @@ function normalizePicker(){
   const popover=document.getElementById('skySavedSkiesPopover');if(!popover||popover.hidden)return;
   const load=popover.querySelector('[data-sky-command="load"]');if(load)load.click();
   const list=popover.querySelector('.sky-saved-list');if(!list)return;
-  popover.querySelector('.sky-saved-subview-head')?.remove();
+  // Keep the load-view heading in the DOM for existing fingerprint logic, but make it completely invisible.
+  const heading=popover.querySelector('.sky-saved-subview-head');
+  if(heading){heading.hidden=true;heading.setAttribute('aria-hidden','true');heading.style.setProperty('display','none','important')}
   ensureNewSky(list);
   // These run synchronously/microtask-only; neither owns a DOM observer anymore.
   window.RelphiSkyPrivateLoad?.redactNow?.();
