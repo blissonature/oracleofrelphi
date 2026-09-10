@@ -3,9 +3,10 @@
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
-  if (window.__relphiSkyHighlightWithoutFilteringV2) return;
+  if (window.__relphiSkyHighlightWithoutFilteringV3) return;
   window.__relphiSkyHighlightWithoutFilteringV1 = true;
   window.__relphiSkyHighlightWithoutFilteringV2 = true;
+  window.__relphiSkyHighlightWithoutFilteringV3 = true;
 
   let visibilityQueued = false;
   let rowsByIndex = new Map();
@@ -31,7 +32,16 @@
     const aspect = String(node.dataset.aspect || '').trim();
     const right = String(node.dataset.rightPlacement || '').trim();
     if (!left || !aspect || !right) return '';
-    return `${endpointSky(node,'left')}:${left}|${aspect}|${endpointSky(node,'right')}:${right}`;
+    const leftSky = endpointSky(node, 'left');
+    const rightSky = endpointSky(node, 'right');
+    // Intrasky endpoints are symmetric. The foundation and relationship-list owners
+    // are free to enumerate their placement records in different orders, so identity
+    // must not depend on which endpoint happened to be called "left" first.
+    if (leftSky === rightSky) {
+      const [first, second] = [left, right].sort();
+      return `${leftSky}:${first}|${aspect}|${rightSky}:${second}`;
+    }
+    return `${leftSky}:${left}|${aspect}|${rightSky}:${right}`;
   }
 
   function addMappedLine(map, key, line) {
@@ -46,8 +56,8 @@
 
   // relationIndex is a render address, not relationship identity. Foundation wheel
   // lines already carry the same endpoint/aspect identity as relationship rows.
-  // Rebind once after each interactions pass, then use cached identity/index maps on
-  // the hot hover path instead of scanning the relationship DOM on every pointer move.
+  // Rebind after each relationship-producing lifecycle event so A-B, A-A and B-B
+  // all settle against the completed relationship list.
   function synchronizeLineIdentity() {
     clearRowHover();
     const rowsByIdentity = new Map();
@@ -66,9 +76,13 @@
       const identity = relationshipIdentity(line);
       const index = identity ? rowsByIdentity.get(identity) : undefined;
       if (index === undefined) {
-        delete line.dataset.relationIndex;
+        // Intrasky rows are appended after the first interactions-ready pass. Keep
+        // the foundation's AA-/BB- address intact until that row owner has finished;
+        // deleting it here made the visibility controllers permanently hide the line.
+        line.dataset.relationshipIdentityPending = 'true';
         return;
       }
+      delete line.dataset.relationshipIdentityPending;
       line.dataset.relationIndex = index;
       line.dataset.interactive = 'aspect';
       line.dataset.focusPiece = 'aspect';
@@ -101,6 +115,12 @@
     if (count) count.textContent = `${visible}/${rowsByIndex.size}`;
     const empty = document.getElementById('skyFoundationRelationshipEmpty');
     if (empty) empty.hidden = visible !== 0;
+  }
+
+  function synchronizeAllRelationships() {
+    synchronizeLineIdentity();
+    setWheelRelated([]);
+    restoreVisibility();
   }
 
   function queueVisibilityRestore() {
@@ -193,19 +213,17 @@
       const row = event.target.closest('.sky-foundation-relationship-row');
       if (row && !row.contains(event.relatedTarget)) clearRowHover();
     });
-
-    window.addEventListener('relphi:sky-foundation-interactions-ready', () => {
-      synchronizeLineIdentity();
-      setWheelRelated([]);
-      restoreVisibility();
-    });
   }
 
   function start() {
     bind();
     synchronizeLineIdentity();
     window.addEventListener('relphi:sky-foundation-ready', bind);
-    window.addEventListener('relphi:sky-foundation-interactions-ready', bind);
+    [
+      'relphi:sky-foundation-interactions-ready',
+      'relphi:sky-intrasky-relationships-ready',
+      'relphi:sky-intrasky-b-relationships-ready'
+    ].forEach(name => window.addEventListener(name, synchronizeAllRelationships));
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
