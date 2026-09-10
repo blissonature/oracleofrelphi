@@ -34,7 +34,10 @@ const audit=await page.evaluate(()=>{
     const mode=String(node.dataset.relationshipMode||'A-B').toUpperCase();
     const leftSky=node.dataset.leftSky||(mode==='B-B'?'B':'A');
     const rightSky=node.dataset.rightSky||(mode==='A-A'?'A':'B');
-    return `${leftSky}:${node.dataset.leftPlacement}|${node.dataset.aspect}|${rightSky}:${node.dataset.rightPlacement}`;
+    let left=String(node.dataset.leftPlacement||'');
+    let right=String(node.dataset.rightPlacement||'');
+    if(leftSky===rightSky)[left,right]=[left,right].sort();
+    return `${leftSky}:${left}|${node.dataset.aspect}|${rightSky}:${right}`;
   };
   const visibleRows=rows.filter(visible);
   const visibleLines=lines.filter(visible);
@@ -54,7 +57,8 @@ const audit=await page.evaluate(()=>{
 console.log('ASPECT_LINE_AUDIT',JSON.stringify(audit));
 await page.screenshot({path:'sky-chart-aspect-line-visibility.png',fullPage:true});
 assert.ok(audit.visibleRows>0,'Fixture must produce visible relationship rows.');
-assert.ok(audit.visibleLines>0,'Visible relationship rows must produce visible aspect lines in the wheel center.');
+assert.equal(audit.indexedLines,audit.totalLines,'Every rendered aspect line must retain a relationship address.');
+assert.equal(audit.visibleLines,audit.visibleRows,'Visible relationship rows and wheel aspect lines must stay in one-to-one visibility parity.');
 assert.ok(audit.missingVisibleRowLines.length===0,`Every visible relationship row needs a visible wheel line; missing ${audit.missingVisibleRowLines.join(', ')}`);
 assert.deepEqual(errors,[]);
 await browser.close();
