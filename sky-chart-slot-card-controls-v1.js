@@ -1,13 +1,17 @@
 // Present Sky B comparison presence as paired card-local icon controls.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySlotCardControlsV2)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySlotCardControlsV3)return;
   window.__relphiSkySlotCardControlsV1=true;
   window.__relphiSkySlotCardControlsV2=true;
+  window.__relphiSkySlotCardControlsV3=true;
 
+  const SKY_A_KEY='relphiSkyChartA';
   const SKY_B_KEY='relphiSkyChartB';
+  const LIVE_AGE_KEYS={A:'relphiSkyLiveAgeAnchorA',B:'relphiSkyLiveAgeAnchorB'};
   let queued=false;
   let undoTimer=0;
+  let promoting=false;
 
   function icon(kind){
     const span=document.createElement('span');
@@ -111,15 +115,18 @@
     undoTimer=0;
     document.querySelector('.sky-slot-undo-toast')?.remove();
   }
-  function dispatchSkyBStorage(raw){
+  function dispatchStorage(key,raw){
     try{
-      window.dispatchEvent(new StorageEvent('storage',{key:SKY_B_KEY,newValue:raw,storageArea:localStorage}));
+      window.dispatchEvent(new StorageEvent('storage',{key,newValue:raw,storageArea:localStorage}));
       return;
     }catch(_){}
     const event=new Event('storage');
-    try{Object.defineProperty(event,'key',{value:SKY_B_KEY})}catch(_){}
+    try{Object.defineProperty(event,'key',{value:key})}catch(_){}
+    try{Object.defineProperty(event,'newValue',{value:raw})}catch(_){}
     window.dispatchEvent(event);
   }
+  function dispatchSkyAStorage(raw){dispatchStorage(SKY_A_KEY,raw)}
+  function dispatchSkyBStorage(raw){dispatchStorage(SKY_B_KEY,raw)}
   function restoreSkyB(raw){
     if(!raw)return;
     try{localStorage.setItem(SKY_B_KEY,raw)}catch(_){return}
@@ -189,6 +196,45 @@
     }
   }
 
+  // Keep slot identity canonical: when A is removed while B still exists,
+  // the remaining sky becomes A and comparison mode collapses to standalone.
+  function promoteSkyBToA(){
+    if(promoting)return false;
+    let rawB=null,activeA=null;
+    try{
+      activeA=localStorage.getItem(SKY_A_KEY);
+      rawB=localStorage.getItem(SKY_B_KEY);
+    }catch(_){return false}
+    if(activeA||!rawB)return false;
+
+    promoting=true;
+    let promoted=null;
+    try{
+      localStorage.setItem(SKY_A_KEY,rawB);
+      try{promoted=JSON.parse(rawB)}catch(_){}
+      const ageB=localStorage.getItem(LIVE_AGE_KEYS.B);
+      if(ageB===null)localStorage.removeItem(LIVE_AGE_KEYS.A);
+      else localStorage.setItem(LIVE_AGE_KEYS.A,ageB);
+      localStorage.removeItem(LIVE_AGE_KEYS.B);
+    }catch(_){promoting=false;return false}
+
+    dispatchSkyAStorage(rawB);
+    removeSkyB();
+    window.dispatchEvent(new CustomEvent('relphi:sky-b-promoted-to-a',{detail:{from:'B',to:'A'}}));
+
+    // The original A-removal handler may still finish by syncing A with null.
+    // Reassert the promoted payload on the next frame after that handler returns.
+    requestAnimationFrame(()=>{
+      try{window.RelphiSkyCardShell?.sync?.('A',promoted)}catch(_){}
+      dispatchSkyAStorage(rawB);
+      const name=String(promoted?.name||promoted?.displayName||promoted?.skyName||promoted?.title||'Where and When');
+      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name,source:'promote-sky-b'}}));
+      promoting=false;
+      schedule();
+    });
+    return true;
+  }
+
   function sync(){
     queued=false;
     suppressInternalAdd();
@@ -197,12 +243,20 @@
     styleRemove();
   }
   function schedule(){if(queued)return;queued=true;requestAnimationFrame(sync)}
+  function handleStorage(event){
+    if(event?.key===SKY_A_KEY){
+      let hasA=false;
+      try{hasA=!!localStorage.getItem(SKY_A_KEY)}catch(_){}
+      if(!hasA&&storedSkyBRaw())promoteSkyBToA();
+    }
+    schedule();
+  }
   function start(){
     sync();
     const root=document.getElementById('skyFoundationRoot')||document.body;
     new MutationObserver(schedule).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
     new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing','data-sky-last-mode']});
-    window.addEventListener('storage',schedule);
+    window.addEventListener('storage',handleStorage);
     window.addEventListener('relphi:sky-foundation-ready',schedule);
     window.addEventListener('relphi:sky-session-recovered',schedule);
     window.addEventListener('relphi:sky-where-when-edit-state-changed',event=>{
@@ -220,6 +274,7 @@
   window.RelphiSkySlotControls=Object.freeze({
     addSkyB:startAddSkyB,
     removeSkyB,
+    promoteSkyBToA,
     hasSkyB:skyBPresent,
     hasStoredSkyB
   });
