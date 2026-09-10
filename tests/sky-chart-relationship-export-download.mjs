@@ -24,7 +24,13 @@ await page.addInitScript(({a,b})=>{
   localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
   localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
   localStorage.setItem('relphiSkyChartLastModeV1','comparison');
-  window.htmlToImage={toBlob:async()=>new Blob(['png'],{type:'image/png'}),toPng:async()=> 'data:image/png;base64,cG5n'};
+  window.htmlToImage={
+    toBlob:async(_node,options)=>{
+      window.__relphiRelationshipExportOptions={...options};
+      return new Blob(['png'],{type:'image/png'});
+    },
+    toPng:async()=> 'data:image/png;base64,cG5n'
+  };
 },{a:skyA,b:skyB});
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
@@ -36,10 +42,12 @@ await button.click();
 await page.waitForTimeout(3000);
 const diagnostics=await page.evaluate(()=>({
   disabled:document.getElementById('skyChartRelationshipsExport')?.disabled||false,
+  relationshipExportV4:!!window.__relphiRelationshipExportColumnsV4,
   relationshipExportV3:!!window.__relphiRelationshipExportColumnsV3,
   relationshipExportV2:!!window.__relphiRelationshipExportColumnsV2,
   genericExportV5:!!window.__relphiSkyExportV5,
   visibleRows:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].filter(r=>{const s=getComputedStyle(r);return !r.hidden&&s.display!=='none'&&s.visibility!=='hidden'}).length,
+  exportOptions:window.__relphiRelationshipExportOptions||null,
   pendingImages:[...document.querySelectorAll('.rex-sheet img')].filter(i=>!i.complete||!i.naturalWidth).map(i=>i.getAttribute('src')).slice(0,12),
   rexSheet:!!document.querySelector('.rex-sheet')
 }));
@@ -48,7 +56,13 @@ assert.ok(downloads.length>0,`Relationships export did not start a download: ${J
 assert.match(downloads[0].suggestedFilename(),/relationships-.*\.png$/i);
 assert.equal(diagnostics.disabled,false,'Download control should recover after export completes.');
 assert.equal(diagnostics.rexSheet,false,'Off-screen export sheet should be removed after completion.');
+assert.equal(diagnostics.relationshipExportV4,true,'Compact Relationships exporter should own the download.');
+const expectedCols=Math.ceil(diagnostics.visibleRows/16);
+const expectedWidth=24+expectedCols*500+Math.max(0,expectedCols-1)*8;
+const expectedRatio=diagnostics.visibleRows>24?1:1.1;
+assert.equal(diagnostics.exportOptions?.width,expectedWidth,'Relationship export should use the compact 500px column geometry.');
+assert.equal(diagnostics.exportOptions?.canvasWidth,Math.ceil(expectedWidth*expectedRatio),'Relationship export should not restore the old oversized raster scale.');
 assert.deepEqual(errors,[]);
 assert.ok(!consoleErrors.some(message=>/ReferenceError:\s*li is not defined/i.test(message)),`Relationships export threw its former concept-rendering error: ${consoleErrors.join('\n')}`);
 await browser.close();
-console.log('Relationships download button produces a PNG download.');
+console.log('Relationships download button produces a compact PNG download.');
