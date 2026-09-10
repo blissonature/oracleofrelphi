@@ -1,0 +1,25 @@
+name: Sky Chart relationship timing coverage
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-relationship-transit-meta-v4.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-relationship-timing-coverage.mjs'
+      - '.github/workflows/sky-chart-relationship-timing-coverage.yml'
+
+jobs:
+  timing-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-relationship-transit-meta-v4.js
+          node --check tests/sky-chart-relationship-timing-coverage.mjs
+      - name: Timing coverage regression
+        run: node tests/sky-chart-relationship-timing-coverage.mjs
