@@ -75,24 +75,23 @@ try{
 
   await page.locator('#skySavedSkiesPopover [data-sky-command="new"]').click();
   await page.waitForFunction(()=>{
-    try{
-      const b=JSON.parse(localStorage.getItem('relphiSkyChartB')||'null');
-      return document.documentElement.dataset.skyBPresent==='true'&&b&&Object.keys(b.placements||{}).length===0;
-    }catch(_){return false}
+    const editor=document.querySelector('#skyFoundationB .sky-where-when-editor[data-slot="B"]');
+    const panel=document.getElementById('skyFoundationB');
+    return document.documentElement.dataset.skyBEditing==='true'&&!!editor&&!!panel&&!panel.hidden;
   },null,{timeout:10000});
   await page.waitForTimeout(250);
   const afterNew=await page.evaluate(()=>({
     removed:window.__skyBRemovedCount,
-    bPresent:document.documentElement.dataset.skyBPresent,
-    bCard:!!document.getElementById('skyFoundationB'),
+    editing:document.documentElement.dataset.skyBEditing,
+    bCard:!!document.getElementById('skyFoundationB')&&!document.getElementById('skyFoundationB').hidden,
     mode:localStorage.getItem('relphiSkyChartLastModeV1'),
-    blank:Object.keys(JSON.parse(localStorage.getItem('relphiSkyChartB')||'{}').placements||{}).length===0
+    storedB:localStorage.getItem('relphiSkyChartB')
   }));
-  assert.equal(afterNew.removed,0,`New Sky in B must not remove/re-add Sky B: ${JSON.stringify(afterNew)}`);
-  assert.equal(afterNew.bPresent,'true',`Sky B must remain present: ${JSON.stringify(afterNew)}`);
-  assert.equal(afterNew.bCard,true,`Sky B card must remain mounted: ${JSON.stringify(afterNew)}`);
-  assert.equal(afterNew.mode,'comparison',`comparison mode must remain active: ${JSON.stringify(afterNew)}`);
-  assert.equal(afterNew.blank,true,`Sky B should reset in place to a blank sky: ${JSON.stringify(afterNew)}`);
+  assert.equal(afterNew.removed,0,`New Sky in B must not invoke Remove Sky B: ${JSON.stringify(afterNew)}`);
+  assert.equal(afterNew.editing,'true',`Sky B must remain as the active new-sky editor: ${JSON.stringify(afterNew)}`);
+  assert.equal(afterNew.bCard,true,`Sky B card must remain visibly mounted: ${JSON.stringify(afterNew)}`);
+  assert.equal(afterNew.mode,'comparison',`comparison mode must remain active while editing the new B: ${JSON.stringify(afterNew)}`);
+  assert.equal(afterNew.storedB,null,`uncommitted New Sky B should not masquerade as a stored completed sky: ${JSON.stringify(afterNew)}`);
 
   assert.deepEqual(errors,[],`browser errors: ${errors.join(' | ')}`);
   console.log('axis label/notch pairing, visible heptagram thumbprints, Saved Skies fingerprints, and in-place Sky B New Sky passed');
