@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'sky-chart-relationship-transit-meta-v4.js'
+      - 'sky-chart-mobile-scroll-zoom-v1.js'
       - 'sky-chart.html'
       - 'tests/sky-chart-relationship-timing-coverage.mjs'
       - 'tests/sky-chart-relationship-chiron-timing-browser.mjs'
@@ -22,6 +23,7 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check sky-chart-relationship-transit-meta-v4.js
+          node --check sky-chart-mobile-scroll-zoom-v1.js
           node --check tests/sky-chart-relationship-timing-coverage.mjs
           node --check tests/sky-chart-relationship-chiron-timing-browser.mjs
           node --check tests/sky-chart-relationship-mobile-tap-browser.mjs
