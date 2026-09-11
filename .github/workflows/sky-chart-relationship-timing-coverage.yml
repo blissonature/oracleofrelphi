@@ -7,6 +7,7 @@ on:
       - 'sky-chart.html'
       - 'tests/sky-chart-relationship-timing-coverage.mjs'
       - 'tests/sky-chart-relationship-chiron-timing-browser.mjs'
+      - 'tests/sky-chart-relationship-mobile-tap-browser.mjs'
       - '.github/workflows/sky-chart-relationship-timing-coverage.yml'
 
 jobs:
@@ -23,13 +24,15 @@ jobs:
           node --check sky-chart-relationship-transit-meta-v4.js
           node --check tests/sky-chart-relationship-timing-coverage.mjs
           node --check tests/sky-chart-relationship-chiron-timing-browser.mjs
+          node --check tests/sky-chart-relationship-mobile-tap-browser.mjs
       - name: Timing coverage regression
         run: node tests/sky-chart-relationship-timing-coverage.mjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.52.0
           npx playwright install --with-deps chromium
-      - name: Browser Chiron timing regression
+      - name: Browser relationship timing regressions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-timing-server.log 2>&1 &
           node tests/sky-chart-relationship-chiron-timing-browser.mjs
+          node tests/sky-chart-relationship-mobile-tap-browser.mjs
