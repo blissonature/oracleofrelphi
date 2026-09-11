@@ -176,19 +176,14 @@
   }
   function newSky(slot){
     if(!SLOT_KEYS[slot])return false;closeWhereWhenEditor(slot);
-    const blank=blankPayload();
     if(slot==='B'){
-      if(!writeJson(SLOT_KEYS.B,blank))return false;
-      const root=document.documentElement,startup=window.RelphiSkyStartupMode;
-      try{startup?.writeMode?.('comparison')}catch(_){}
-      try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
-      root.dataset.skyLastMode='comparison';root.dataset.skyBPresent='true';delete root.dataset.skyBEditing;
-      try{startup?.syncRoot?.()}catch(_){}
+      try{localStorage.removeItem(SLOT_KEYS.B)}catch(_){return false}
       dispatchStorage('B');
+      window.RelphiSkySlotControls?.addSkyB?.();
       window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'B',name:'Where and When',source:'new-sky'}}));
-      schedule();openBlankWhereWhen('B');return true;
+      schedule();return true;
     }
-    if(!writeJson(SLOT_KEYS.A,blank))return false;dispatchStorage('A');window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'new-sky'}}));openBlankWhereWhen('A');return true;
+    if(!writeJson(SLOT_KEYS.A,blankPayload()))return false;dispatchStorage('A');window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'new-sky'}}));openBlankWhereWhen('A');return true;
   }
   function removeSky(slot){
     if(!SLOT_KEYS[slot])return false;closeWhereWhenEditor(slot);
