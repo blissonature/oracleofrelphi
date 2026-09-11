@@ -1,7 +1,8 @@
 // Concealed Saved Skies load list: identify records by the existing three-part Sky fingerprint, never by saved name.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesPrivateLoadV2)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesPrivateLoadV3)return;
+window.__relphiSkySavedSkiesPrivateLoadV3=true;
 window.__relphiSkySavedSkiesPrivateLoadV2=true;
 window.__relphiSkySavedSkiesPrivateLoadV1=true;
 
@@ -130,9 +131,9 @@ function triptych(record){const root=document.createElement('span');root.classNa
 
 function redactLoadList(){
   queued=false;const menu=document.getElementById('skySavedSkiesPopover');if(!menu)return;
-  const head=menu.querySelector('.sky-saved-subview-head strong'),title=String(head?.textContent||'').trim();if(!head||!['Load Sky','Saved Skies'].includes(title))return;
+  const list=menu.querySelector('.sky-saved-list');if(!list)return;
   const byRef=new Map(library().map(record=>[recordRef(record),record]));
-  menu.querySelectorAll('.sky-saved-list-row').forEach(row=>{
+  list.querySelectorAll('.sky-saved-list-row').forEach(row=>{
     const item=row.querySelector('[data-saved-sky-ref]');if(!item)return;const ref=String(item.dataset.savedSkyRef||''),record=byRef.get(ref);if(!record)return;
     if(item.dataset.privateSkyFingerprint!=='true'){
       const current=row.classList.contains('is-active'),check=document.createElement('span');check.className='sky-saved-list-check';check.setAttribute('aria-hidden','true');check.textContent=current?'✓':'';

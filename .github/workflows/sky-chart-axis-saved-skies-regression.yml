@@ -1,0 +1,39 @@
+name: Sky Chart axis and Saved Skies regression
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-leader-integrity-v1.js'
+      - 'sky-chart-saved-skies-v1.js'
+      - 'sky-chart-saved-skies-private-load-v1.js'
+      - 'sky-chart-saved-skies-labels-v1.js'
+      - 'sky-chart-saved-skies-direct-picker-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-axis-saved-skies-regression-browser.mjs'
+      - '.github/workflows/sky-chart-axis-saved-skies-regression.yml'
+
+jobs:
+  browser-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-leader-integrity-v1.js
+          node --check sky-chart-saved-skies-v1.js
+          node --check sky-chart-saved-skies-private-load-v1.js
+          node --check sky-chart-saved-skies-labels-v1.js
+          node --check sky-chart-saved-skies-direct-picker-v1.js
+          node --check tests/sky-chart-axis-saved-skies-regression-browser.mjs
+      - name: Install browser dependencies
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Browser regression
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-axis-saved-server.log 2>&1 &
+          node tests/sky-chart-axis-saved-skies-regression-browser.mjs
