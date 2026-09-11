@@ -49,6 +49,16 @@ try{
     if(axis.extreme==='outer')assert.equal(axis.sky,'B',`outer axis belongs to Sky B: ${JSON.stringify(axis)}`);
   }
 
+  await page.waitForFunction(()=>{
+    const mount=window.RelphiSkyCardShell?.get?.('B')?.whereFingerprint;
+    return !!mount&&!mount.hidden&&!!mount.querySelector('.sky-where-fingerprint-heptagram');
+  },null,{timeout:5000});
+  const drawerHeptagram=await page.evaluate(()=>{
+    const mount=window.RelphiSkyCardShell?.get?.('B')?.whereFingerprint;
+    return{exists:!!mount,hidden:mount?.hidden,heptagram:!!mount?.querySelector('.sky-where-fingerprint-heptagram')};
+  });
+  assert.deepEqual(drawerHeptagram,{exists:true,hidden:false,heptagram:true},`Sky B Where/When thumbprint should be visible: ${JSON.stringify(drawerHeptagram)}`);
+
   await page.locator('[data-saved-sky-trigger="B"]').click();
   await page.waitForSelector('#skySavedSkiesPopover .sky-saved-list',{timeout:5000});
   await page.waitForFunction(()=>!!document.querySelector('#skySavedSkiesPopover [data-private-sky-fingerprint="true"]'),null,{timeout:5000});
@@ -85,7 +95,7 @@ try{
   assert.equal(afterNew.blank,true,`Sky B should reset in place to a blank sky: ${JSON.stringify(afterNew)}`);
 
   assert.deepEqual(errors,[],`browser errors: ${errors.join(' | ')}`);
-  console.log('axis label/notch pairing, Saved Skies heptagram, and in-place Sky B New Sky passed');
+  console.log('axis label/notch pairing, visible heptagram thumbprints, Saved Skies fingerprints, and in-place Sky B New Sky passed');
 }finally{
   await browser.close();
 }
