@@ -127,9 +127,14 @@
 .sky-where-search-row {
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
-  gap:6px;
+  gap:4px;
   align-items:end;
   width:100%;
+}
+
+.sky-where-search-row [data-ww-action="search-location"] {
+  padding-left:.62rem;
+  padding-right:.62rem;
 }
 
 .sky-where-when-button {
