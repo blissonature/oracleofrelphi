@@ -27,10 +27,10 @@ jobs:
           node --check tests/sky-chart-relationship-mobile-tap-browser.mjs
       - name: Timing coverage regression
         run: node tests/sky-chart-relationship-timing-coverage.mjs
-      - name: Install Chromium
+      - name: Install browser engines
         run: |
           npm install --no-save playwright@1.52.0
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
       - name: Browser relationship timing regressions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-timing-server.log 2>&1 &
