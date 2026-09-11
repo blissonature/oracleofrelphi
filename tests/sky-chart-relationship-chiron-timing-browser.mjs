@@ -27,6 +27,7 @@ try{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
     localStorage.setItem('relphiSkyChartLastModeV1','comparison');
+    localStorage.setItem('relphiSkyRelationshipDisplayV1','glyphs');
   },{a:sampleA,b:sampleB});
 
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle',timeout:30000});
@@ -68,6 +69,18 @@ try{
   for(const label of ['Start','Exact','End','Duration','Passes'])assert.ok(state.text.includes(label),`timing tile should include ${label}: ${state.text}`);
   assert.ok(!state.text.includes('unavailable'),'timing tile should not say unavailable');
   assert.ok(state.chironReady,'Swiss Chiron ephemeris should be ready');
+
+  // Expanding one row must not leak its timing/cards into Copy while Display is Glyphs.
+  const glyphCopyState=await page.evaluate(()=>{
+    const row=[...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row')].find(node=>{
+      const pair=new Set([node.dataset.leftPlacement,node.dataset.rightPlacement]);
+      return node.dataset.relationshipMode==='B-B'&&node.dataset.aspect==='opposition'&&pair.has('venus')&&pair.has('chiron');
+    });
+    const api=window.RelphiRelationshipCopySerializer;
+    return{display:document.documentElement.dataset.relationshipDisplay||'',level:api?.levelForRow?.(row),semantic:api?.serialize?.(row)||''};
+  });
+  assert.equal(glyphCopyState.level,0,`Glyphs display must keep expanded rows at compact copy level: ${JSON.stringify(glyphCopyState)}`);
+  assert.equal(glyphCopyState.semantic,'',`Glyphs display must not serialize expanded timing/card detail: ${JSON.stringify(glyphCopyState)}`);
 
   // Collapse the timing tile so Copy uses the same compact representation for every row.
   await element.click();
@@ -141,7 +154,7 @@ try{
   }
 
   assert.deepEqual(pageErrors,[],`browser errors: ${pageErrors.join(' | ')}`);
-  console.log('browser Chiron timing, all five timing sorts, and timing-sort Copy order passed');
+  console.log('browser Chiron timing, glyph-only copy, all five timing sorts, and timing-sort Copy order passed');
 }finally{
   await browser.close();
 }
