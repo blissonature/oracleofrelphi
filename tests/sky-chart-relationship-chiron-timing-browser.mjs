@@ -69,24 +69,34 @@ try{
   assert.ok(!state.text.includes('unavailable'),'timing tile should not say unavailable');
   assert.ok(state.chironReady,'Swiss Chiron ephemeris should be ready');
 
-  // Timing sorts are global across A↔B, A↔A, and B↔B, not grouped by relationship scope.
   const sort=page.locator('select[data-relationship-sort]');
-  await sort.selectOption('duration-shortest');
-  await page.waitForFunction(()=>document.querySelector('select[data-relationship-sort]')?.getAttribute('aria-busy')==='true',null,{timeout:10000});
-  await page.waitForFunction(()=>document.documentElement.dataset.skyRelationshipSort==='duration-shortest');
-  await page.waitForFunction(()=>document.querySelector('select[data-relationship-sort]')?.getAttribute('aria-busy')==='false',null,{timeout:45000});
-  await page.waitForTimeout(250);
-  const durations=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
-    .filter(row=>!row.hidden&&getComputedStyle(row).display!=='none')
-    .map(row=>({id:row.dataset.relationIndex,duration:Number(row.dataset.transitDurationDays),left:row.dataset.leftPlacement,right:row.dataset.rightPlacement,aspect:row.dataset.aspect}))
-    .filter(item=>Number.isFinite(item.duration)));
-  assert.ok(durations.length>1,`shortest-duration sort should time multiple visible rows: ${JSON.stringify(durations)}`);
-  for(let i=1;i<durations.length;i+=1){
-    assert.ok(durations[i-1].duration<=durations[i].duration+1e-9,`Shortest Duration is out of order at ${i-1}/${i}: ${JSON.stringify(durations.slice(Math.max(0,i-2),i+2))}`);
+  const timingSorts=[
+    {mode:'duration-shortest',field:'transitDurationDays',direction:1,label:'Shortest Duration'},
+    {mode:'duration-longest',field:'transitDurationDays',direction:-1,label:'Longest Duration'},
+    {mode:'began-most-recently',field:'transitStartedDaysAgo',direction:1,label:'Began Most Recently'},
+    {mode:'ends-soonest',field:'transitEndsInDays',direction:1,label:'Ends Soonest'},
+    {mode:'ends-last',field:'transitEndsInDays',direction:-1,label:'Ends Last'}
+  ];
+
+  for(const spec of timingSorts){
+    await sort.selectOption(spec.mode);
+    await page.waitForFunction(mode=>document.documentElement.dataset.skyRelationshipSort===mode,spec.mode,{timeout:45000});
+    await page.waitForFunction(()=>document.querySelector('select[data-relationship-sort]')?.getAttribute('aria-busy')==='false',null,{timeout:45000});
+    await page.waitForTimeout(300);
+    const values=await page.evaluate(field=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
+      .filter(row=>!row.hidden&&getComputedStyle(row).display!=='none')
+      .map(row=>({id:row.dataset.relationIndex,value:Number(row.dataset[field]),scope:row.dataset.relationshipMode,left:row.dataset.leftPlacement,right:row.dataset.rightPlacement,aspect:row.dataset.aspect}))
+      .filter(item=>Number.isFinite(item.value)),spec.field);
+    assert.ok(values.length>1,`${spec.label} should time multiple visible rows: ${JSON.stringify(values)}`);
+    for(let i=1;i<values.length;i+=1){
+      const previous=values[i-1].value,current=values[i].value;
+      const ordered=spec.direction===1?previous<=current+1e-9:previous+1e-9>=current;
+      assert.ok(ordered,`${spec.label} is out of global order at ${i-1}/${i}: ${JSON.stringify(values.slice(Math.max(0,i-2),i+2))}`);
+    }
   }
 
   assert.deepEqual(pageErrors,[],`browser errors: ${pageErrors.join(' | ')}`);
-  console.log(`browser Chiron timing and shortest-duration sort passed; ${durations.length} timed rows`);
+  console.log('browser Chiron timing and all five timing sorts passed');
 }finally{
   await browser.close();
 }
