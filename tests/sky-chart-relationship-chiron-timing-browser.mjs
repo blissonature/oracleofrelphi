@@ -69,6 +69,20 @@ try{
   assert.ok(!state.text.includes('unavailable'),'timing tile should not say unavailable');
   assert.ok(state.chironReady,'Swiss Chiron ephemeris should be ready');
 
+  // Collapse the timing tile so Copy uses the same compact representation for every row.
+  await element.click();
+  await page.waitForFunction(()=>![...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row')].some(row=>row.classList.contains('is-inline-expanded')),null,{timeout:10000});
+
+  // Capture Copy output instead of writing to the runner clipboard.
+  await page.evaluate(()=>{
+    window.__relphiCopiedText='';
+    document.execCommand=()=>false;
+    const clipboard={writeText:async text=>{window.__relphiCopiedText=String(text);}};
+    try{Object.defineProperty(navigator,'clipboard',{configurable:true,value:clipboard})}catch(_){
+      try{navigator.clipboard.writeText=clipboard.writeText}catch(__){}
+    }
+  });
+
   const sort=page.locator('select[data-relationship-sort]');
   const timingSorts=[
     {mode:'duration-shortest',field:'transitDurationDays',direction:1,label:'Shortest Duration'},
@@ -93,10 +107,41 @@ try{
       const ordered=spec.direction===1?previous<=current+1e-9:previous+1e-9>=current;
       assert.ok(ordered,`${spec.label} is out of global order at ${i-1}/${i}: ${JSON.stringify(values.slice(Math.max(0,i-2),i+2))}`);
     }
+
+    // Copy must preserve this same global DOM order instead of regrouping by A↔B/A↔A/B↔B.
+    const signatures=await page.evaluate(()=>{
+      const placementSymbols={sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
+      const signSymbols=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+      const aspectSymbols={conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'};
+      const coordinate=(row,side)=>{
+        const small=row.querySelector(`.sky-foundation-relationship-placement--${side} .sky-foundation-relationship-copy small`);
+        const stored=String(small?.dataset?.relationshipCoordinate||'').trim();
+        return stored||String(small?.textContent||'').match(/\d{1,2}°\d{2}′/)?.[0]||'';
+      };
+      return [...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')]
+        .filter(row=>!row.hidden&&getComputedStyle(row).display!=='none')
+        .slice(0,30)
+        .map(row=>{
+          const left=row.dataset.leftPlacement||'',right=row.dataset.rightPlacement||'',aspect=row.dataset.aspect||'';
+          return `${placementSymbols[left]||left} in ${signSymbols[Number(row.dataset.leftSign)]||''} ${coordinate(row,'left')} ${aspectSymbols[aspect]||aspect} ${placementSymbols[right]||right} in ${signSymbols[Number(row.dataset.rightSign)]||''} ${coordinate(row,'right')}`.replace(/\s+/g,' ').trim();
+        })
+        .filter(Boolean);
+    });
+    assert.ok(signatures.length>5,`${spec.label} should expose enough rows to verify Copy order`);
+    await page.evaluate(()=>{window.__relphiCopiedText=''});
+    await page.locator('.sky-relationship-copy-button').click();
+    await page.waitForFunction(()=>Boolean(window.__relphiCopiedText),null,{timeout:3000});
+    const copied=await page.evaluate(()=>window.__relphiCopiedText);
+    let cursor=-1;
+    for(const signature of signatures){
+      const next=copied.indexOf(signature,cursor+1);
+      assert.ok(next>=0,`${spec.label} Copy omitted or reordered row after position ${cursor}: ${signature}\n${copied}`);
+      cursor=next;
+    }
   }
 
   assert.deepEqual(pageErrors,[],`browser errors: ${pageErrors.join(' | ')}`);
-  console.log('browser Chiron timing and all five timing sorts passed');
+  console.log('browser Chiron timing, all five timing sorts, and timing-sort Copy order passed');
 }finally{
   await browser.close();
 }
