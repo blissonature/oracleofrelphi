@@ -1,19 +1,22 @@
-// Mobile interaction cleanup v2: every Relationships surface yields vertical drags to page scrolling.
-// A movement threshold keeps scroll gestures from being mistaken for taps/reveals.
+// Mobile interaction cleanup v3: every Relationships surface yields vertical drags to page scrolling.
+// Scroll-gesture suppression belongs only to that gesture's synthesized click; a new tap is never poisoned by the prior scroll.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyMobileScrollZoomV2)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyMobileScrollZoomV3)return;
 window.__relphiSkyMobileScrollZoomV1=true;
 window.__relphiSkyMobileScrollZoomV2=true;
-const STYLE_ID='skyMobileScrollZoomV2Styles';
+window.__relphiSkyMobileScrollZoomV3=true;
+const STYLE_ID='skyMobileScrollZoomV3Styles';
 let gesture=null;
 let suppressClickUntil=0;
+let suppressClickTarget=null;
 
 function inRelationshipList(target){
   return target instanceof Element&&!!target.closest('#skyFoundationRelationshipList');
 }
 function install(){
   document.getElementById('skyMobileScrollZoomV1Styles')?.remove();
+  document.getElementById('skyMobileScrollZoomV2Styles')?.remove();
   if(document.getElementById(STYLE_ID))return;
   const style=document.createElement('style');style.id=STYLE_ID;style.textContent=`
     @media(max-width:620px){
@@ -49,8 +52,13 @@ function install(){
   `;document.head.appendChild(style);
 }
 
+function clearClickSuppression(){suppressClickUntil=0;suppressClickTarget=null}
+function sameTarget(a,b){return !!(a&&b&&(a===b||a.contains?.(b)||b.contains?.(a)))}
 function onPointerDown(event){
   if((event.pointerType!=='touch'&&event.pointerType!=='pen')||!inRelationshipList(event.target))return;
+  // A new pointer sequence is a new user intent. Never let a previous scroll's
+  // compatibility-click guard swallow this tap.
+  clearClickSuppression();
   gesture={id:event.pointerId,x:event.clientX,y:event.clientY,moved:false};
 }
 function onPointerMove(event){
@@ -60,19 +68,22 @@ function onPointerMove(event){
 }
 function onPointerUp(event){
   if(!gesture||gesture.id!==event.pointerId)return;
-  const moved=gesture.moved&&inRelationshipList(event.target);
+  const moved=gesture.moved&&inRelationshipList(event.target),target=event.target;
   gesture=null;
   if(!moved)return;
   suppressClickUntil=performance.now()+650;
+  suppressClickTarget=target;
   // This runs on window capture, before the document-level relationship reveal handlers.
-  // Native scrolling has already owned the gesture; stop only the app's pointer-up reaction.
+  // Native scrolling has already owned the gesture; stop only this gesture's pointer-up reaction.
   event.stopImmediatePropagation();
 }
 function onPointerCancel(event){if(gesture&&gesture.id===event.pointerId)gesture=null}
 function onClick(event){
-  if(performance.now()>=suppressClickUntil||!inRelationshipList(event.target))return;
+  if(performance.now()>=suppressClickUntil){clearClickSuppression();return}
+  if(!inRelationshipList(event.target)||!sameTarget(suppressClickTarget,event.target))return;
   event.preventDefault();
   event.stopImmediatePropagation();
+  clearClickSuppression();
 }
 
 window.addEventListener('pointerdown',onPointerDown,{capture:true,passive:true});

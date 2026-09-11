@@ -2,7 +2,8 @@
 // Sky title rendering belongs to sky-chart-sky-card-title-integrity; this module owns menu behavior and saved-sky state only.
 (function(){
   'use strict';
-  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesV5)return;
+  if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesV6)return;
+  window.__relphiSkySavedSkiesV6=true;
   window.__relphiSkySavedSkiesV5=true;
   window.__relphiSkySavedSkiesV4=true;
   window.__relphiSkySavedSkiesV3=true;
@@ -176,8 +177,11 @@
   function newSky(slot){
     if(!SLOT_KEYS[slot])return false;closeWhereWhenEditor(slot);
     if(slot==='B'){
-      const controls=window.RelphiSkySlotControls;if(controls?.hasSkyB?.())controls.removeSkyB?.();
-      requestAnimationFrame(()=>{controls?.addSkyB?.();try{localStorage.setItem(SLOT_KEYS.B,JSON.stringify(blankPayload()))}catch(_){}schedule();openBlankWhereWhen('B')});return true;
+      try{localStorage.removeItem(SLOT_KEYS.B)}catch(_){return false}
+      dispatchStorage('B');
+      window.RelphiSkySlotControls?.addSkyB?.();
+      window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'B',name:'Where and When',source:'new-sky'}}));
+      schedule();return true;
     }
     if(!writeJson(SLOT_KEYS.A,blankPayload()))return false;dispatchStorage('A');window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot:'A',name:'Where and When',source:'new-sky'}}));openBlankWhereWhen('A');return true;
   }

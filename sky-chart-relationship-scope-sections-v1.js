@@ -1,11 +1,12 @@
-// Relationship scope sections v10: semantic grouping and sorting without visible scope headers; Copy retains semantic grouping.
+// Relationship scope sections v12: semantic grouping for ordinary sorts; timing-sort Copy preserves displayed global order.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV10)return;
-window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScopeSectionsV2=true;window.__relphiRelationshipScopeSectionsV3=true;window.__relphiRelationshipScopeSectionsV4=true;window.__relphiRelationshipScopeSectionsV5=true;window.__relphiRelationshipScopeSectionsV6=true;window.__relphiRelationshipScopeSectionsV7=true;window.__relphiRelationshipScopeSectionsV8=true;window.__relphiRelationshipScopeSectionsV9=true;window.__relphiRelationshipScopeSectionsV10=true;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV12)return;
+window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScopeSectionsV2=true;window.__relphiRelationshipScopeSectionsV3=true;window.__relphiRelationshipScopeSectionsV4=true;window.__relphiRelationshipScopeSectionsV5=true;window.__relphiRelationshipScopeSectionsV6=true;window.__relphiRelationshipScopeSectionsV7=true;window.__relphiRelationshipScopeSectionsV8=true;window.__relphiRelationshipScopeSectionsV9=true;window.__relphiRelationshipScopeSectionsV10=true;window.__relphiRelationshipScopeSectionsV11=true;window.__relphiRelationshipScopeSectionsV12=true;
 
 const GROUPS=Object.freeze([{mode:'A-B',title:'A↔B',family:'intersky'},{mode:'A-A',title:'A↔A',family:'intrasky'},{mode:'B-B',title:'B↔B',family:'intrasky'}]);
 const FAMILIES=Object.freeze([{id:'intersky',title:'Intersky'},{id:'intrasky',title:'Intrasky'}]);
+const GLOBAL_TIMING_SORTS=new Set(['duration-longest','duration-shortest','began-most-recently','ends-soonest','ends-last']);
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const SIGN_SYMBOLS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 const ASPECT_SYMBOLS=Object.freeze({conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'});
@@ -31,12 +32,18 @@ function groupList(){
   collapsed.clear();
   rows.forEach(row=>row.classList.remove(COLLAPSED_VISUAL_CLASS));
   const other=[...list.children].filter(node=>!node.matches?.('.sky-foundation-relationship-row')),desired=[...other];
-  for(const family of FAMILIES){
-    for(const group of GROUPS.filter(item=>item.family===family.id)){
-      let section=rows.filter(row=>mode(row)===group.mode);
-      const sorter=window.RelphiRelationshipSort;
-      if(sorter?.compareRows)section=section.slice().sort(sorter.compareRows);
-      desired.push(...section);
+  const sorter=window.RelphiRelationshipSort,sortMode=sorter?.mode?.();
+  // Timing is a property of each relationship itself. Keep timing sorts global across
+  // A↔B, A↔A, and B↔B instead of re-grouping them by scope after the sorter runs.
+  if(GLOBAL_TIMING_SORTS.has(sortMode)&&sorter?.compareRows){
+    desired.push(...rows.slice().sort(sorter.compareRows));
+  }else{
+    for(const family of FAMILIES){
+      for(const group of GROUPS.filter(item=>item.family===family.id)){
+        let section=rows.filter(row=>mode(row)===group.mode);
+        if(sorter?.compareRows)section=section.slice().sort(sorter.compareRows);
+        desired.push(...section);
+      }
     }
   }
   if(!sameOrder([...list.children],desired)){
@@ -54,10 +61,34 @@ function compactRow(row){const l=String(row.dataset.leftPlacement||''),r=String(
 function serializeRow(row){const api=window.RelphiRelationshipCopySerializer,level=api?.levelForRow?.(row)??0;if(level>0){const text=api?.serialize?.(row,{level,includeScope:false});if(text)return{text,semantic:true}}return{text:compactRow(row),semantic:false}}
 function visibleRows(){const out=[];for(const row of document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]'))if(visible(row))out.push(row);return out}
 function serializeSection(rows){const out=[];let semantic=false;for(const row of rows){const item=serializeRow(row);if(!item.text)continue;out.push(item.text);if(item.semantic)semantic=true}return out.join(semantic?'\n\n':'\n')}
-function serializeAll(){const rows=visibleRows(),families=[];for(const family of FAMILIES){const sections=[];for(const group of GROUPS){if(group.family!==family.id)continue;const body=serializeSection(rows.filter(r=>mode(r)===group.mode));if(body)sections.push(`${group.title}\n${body}`)}if(sections.length)families.push(`${family.title}\n\n${sections.join('\n\n')}`)}return families.length?`Relationships\n\n${families.join('\n\n')}`:''}
+function groupForMode(value){return GROUPS.find(group=>group.mode===value)||null}
+function familyForGroup(group){return FAMILIES.find(family=>family.id===group?.family)||null}
+function serializeDisplayOrder(rows){
+  const blocks=[];let currentMode='',bucket=[];
+  const flush=()=>{
+    if(!bucket.length)return;
+    const group=groupForMode(currentMode),family=familyForGroup(group),body=serializeSection(bucket);
+    if(body&&group&&family)blocks.push(`${family.title}\n\n${group.title}\n${body}`);
+    bucket=[];
+  };
+  for(const row of rows){const rowMode=mode(row);if(currentMode&&rowMode!==currentMode)flush();currentMode=rowMode;bucket.push(row)}
+  flush();
+  return blocks.length?`Relationships\n\n${blocks.join('\n\n')}`:'';
+}
+function serializeAll(){
+  const rows=visibleRows(),sortMode=window.RelphiRelationshipSort?.mode?.();
+  if(GLOBAL_TIMING_SORTS.has(sortMode))return serializeDisplayOrder(rows);
+  const families=[];
+  for(const family of FAMILIES){
+    const sections=[];
+    for(const group of GROUPS){if(group.family!==family.id)continue;const body=serializeSection(rows.filter(r=>mode(r)===group.mode));if(body)sections.push(`${group.title}\n${body}`)}
+    if(sections.length)families.push(`${family.title}\n\n${sections.join('\n\n')}`);
+  }
+  return families.length?`Relationships\n\n${families.join('\n\n')}`:'';
+}
 function legacyCopy(text){const active=document.activeElement;let ta=null;try{ta=document.createElement('textarea');ta.value=text;ta.setAttribute('aria-hidden','true');Object.assign(ta.style,{position:'fixed',left:'0',top:'0',width:'1px',height:'1px',padding:'0',border:'0',opacity:'0',fontSize:'16px'});document.body.appendChild(ta);try{ta.focus({preventScroll:true})}catch(_){ta.focus()}ta.select();ta.setSelectionRange(0,ta.value.length);return document.execCommand('copy')===true}catch(_){return false}finally{ta?.remove();try{active?.focus?.({preventScroll:true})}catch(_){try{active?.focus?.()}catch(__){}}}}
 async function writeClipboard(text){if(legacyCopy(text))return true;if(!navigator.clipboard?.writeText)return false;let timer=0;try{const timeout=new Promise(resolve=>{timer=window.setTimeout(()=>resolve(false),900)});const copy=Promise.resolve(navigator.clipboard.writeText(text)).then(()=>true,()=>false);return await Promise.race([copy,timeout])}catch(_){return false}finally{clearTimeout(timer)}}
-function bindCopyButton(){const b=document.querySelector('.sky-relationship-copy-button');if(!b||b.dataset.scopeCopyOverride==='v7')return;b.dataset.scopeCopyOverride='v7';b.setAttribute('aria-label','Copy included relationships at the current reveal level');b.addEventListener('click',async e=>{e.preventDefault();e.stopImmediatePropagation();const text=serializeAll();if(!text)return;b.textContent='Copying…';let ok=false;try{ok=await writeClipboard(text)}catch(_){}if(!ok){b.textContent='Copy failed';clearTimeout(copyTimer);copyTimer=setTimeout(()=>{if(b.isConnected)b.textContent='Copy'},1400);return}b.textContent='Copied';clearTimeout(copyTimer);copyTimer=setTimeout(()=>{if(b.isConnected)b.textContent='Copy'},1000)},true)}
+function bindCopyButton(){const b=document.querySelector('.sky-relationship-copy-button');if(!b||b.dataset.scopeCopyOverride==='v8')return;b.dataset.scopeCopyOverride='v8';b.setAttribute('aria-label','Copy included relationships at the current reveal level');b.addEventListener('click',async e=>{e.preventDefault();e.stopImmediatePropagation();const text=serializeAll();if(!text)return;b.textContent='Copying…';let ok=false;try{ok=await writeClipboard(text)}catch(_){}if(!ok){b.textContent='Copy failed';clearTimeout(copyTimer);copyTimer=setTimeout(()=>{if(b.isConnected)b.textContent='Copy'},1400);return}b.textContent='Copied';clearTimeout(copyTimer);copyTimer=setTimeout(()=>{if(b.isConnected)b.textContent='Copy'},1000)},true)}
 function visibilityClassChanged(record){
   if(record.type!=='attributes'||record.attributeName!=='class')return false;
   const row=record.target?.matches?.('.sky-foundation-relationship-row')?record.target:null;

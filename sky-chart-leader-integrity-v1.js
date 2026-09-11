@@ -64,7 +64,8 @@
     // Ordinary leaders originate exactly at the displaced marker center. Matching the
     // SVG start point recovers the authored marker even if another layer overwrote data-*.
     if(leader.dataset.angle){
-      const sky=leader.dataset.axisExtreme==='outer'?'A':leader.dataset.axisExtreme==='inner'?'B':leader.dataset.sky;
+      // Comparison geometry is explicitly A=inner, B=outer.
+      const sky=leader.dataset.axisExtreme==='inner'?'A':leader.dataset.axisExtreme==='outer'?'B':leader.dataset.sky;
       return markerFor(wheel,sky,leader.dataset.angle)||wheel.querySelector(`[data-layer="placements"] > g[data-placement="${esc(leader.dataset.angle)}"][data-angle-axis="true"]`);
     }
     const start={x:Number(leader.getAttribute('x1')),y:Number(leader.getAttribute('y1'))};
@@ -84,8 +85,8 @@
       let sky=leader.dataset.sky||'';
       let placement=leader.dataset.angle||leader.dataset.placement||'';
       if(leader.dataset.angle){
-        if(leader.dataset.axisExtreme==='outer')sky='A';
-        else if(leader.dataset.axisExtreme==='inner')sky='B';
+        if(leader.dataset.axisExtreme==='inner')sky='A';
+        else if(leader.dataset.axisExtreme==='outer')sky='B';
       }
       const marker=markerFromGeometry(wheel,leader);
       if(marker){sky=marker.dataset.sky||sky;placement=marker.dataset.placement||placement}

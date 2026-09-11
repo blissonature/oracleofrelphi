@@ -1,0 +1,40 @@
+name: Sky Chart relationship timing coverage
+
+on:
+  pull_request:
+    paths:
+      - 'sky-chart-relationship-transit-meta-v4.js'
+      - 'sky-chart-mobile-scroll-zoom-v1.js'
+      - 'sky-chart.html'
+      - 'tests/sky-chart-relationship-timing-coverage.mjs'
+      - 'tests/sky-chart-relationship-chiron-timing-browser.mjs'
+      - 'tests/sky-chart-relationship-mobile-tap-browser.mjs'
+      - '.github/workflows/sky-chart-relationship-timing-coverage.yml'
+
+jobs:
+  timing-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check sky-chart-relationship-transit-meta-v4.js
+          node --check sky-chart-mobile-scroll-zoom-v1.js
+          node --check tests/sky-chart-relationship-timing-coverage.mjs
+          node --check tests/sky-chart-relationship-chiron-timing-browser.mjs
+          node --check tests/sky-chart-relationship-mobile-tap-browser.mjs
+      - name: Timing coverage regression
+        run: node tests/sky-chart-relationship-timing-coverage.mjs
+      - name: Install browser engines
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium webkit
+      - name: Browser relationship timing regressions
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-timing-server.log 2>&1 &
+          node tests/sky-chart-relationship-chiron-timing-browser.mjs
+          node tests/sky-chart-relationship-mobile-tap-browser.mjs
