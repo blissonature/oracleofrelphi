@@ -112,32 +112,10 @@
     new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true, characterData:true });
   }
 
-  function append(src, onload) {
-    const base = src.split('?')[0];
-    const existing = document.querySelector(`script[src^="${base}"]`);
-    if (existing) { if (onload) setTimeout(onload, 0); return existing; }
-    const script = document.createElement('script');
-    script.async = false;
-    script.src = src;
-    if (onload) script.addEventListener('load', onload, { once:true });
-    document.body.appendChild(script);
-    return script;
-  }
-
-  function loadPlanetaryHoursParity(onready) {
-    if (!IS_PLANETARY_HOURS) { if (onready) onready(); return; }
-    const loadParity = () => append('planetary-hours-sky-chart-visual-parity-v1.js?v=4', onready);
-    if (window.RelphiSkyWheelSpec) loadParity();
-    else append('sky-chart-wheel-spec-v1.js?v=6', loadParity);
-  }
 
   function start() {
     if (!window.RelphiGlyphRegistry || !window.RelphiGlyphComponent?.createBubble) {
       setTimeout(start, 40);
-      return;
-    }
-    if (IS_PLANETARY_HOURS) {
-      loadPlanetaryHoursParity(() => { run(document); observe(); });
       return;
     }
     run(document);

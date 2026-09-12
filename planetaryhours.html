@@ -1234,20 +1234,21 @@
   .ph-current-wheel-card:hover { border-color:rgba(220,31,24,.55); box-shadow:0 8px 22px rgba(0,0,0,.07); transform:translateY(-1px); }
   .ph-current-wheel-card:focus-visible { outline:3px solid rgba(220,31,24,.3); outline-offset:3px; border-color:var(--relphi-red); }
   .ph-current-wheel-card h3 { margin:.05rem 0 .25rem; font-size:.95rem; }
-  .ph-current-wheel { width:min(242px, 100%); height:auto; display:block; margin:0 auto; overflow:visible; }
-  .ph-current-wheel .wheel-core { fill:#fffaf7; stroke:#c4c1bc; stroke-width:1.25; }
-  .ph-current-wheel .sign-tick { stroke:#6f6b66; stroke-width:.55; opacity:.42; }
-  .ph-current-wheel .house-cusp { stroke:#77736e; stroke-width:.62; opacity:.24; }
-  .ph-current-wheel .house-label { fill:#5f5b56; font:800 7px system-ui,sans-serif; opacity:.64; }
-  .ph-current-wheel .sign-label { fill:#4a4744; font:800 12px Georgia,'Segoe UI Symbol',serif; }
-  .ph-current-wheel .angle-axis { stroke:#4f4b47; stroke-width:.8; opacity:.48; stroke-dasharray:2.2 2.2; }
-  .ph-current-wheel .angle-label { fill:#4f4b47; font:800 5.5px system-ui,sans-serif; paint-order:stroke; stroke:#fffaf7; stroke-width:2px; }
-  .ph-current-wheel .planet-center-ray { stroke:#222; stroke-width:.55; opacity:.13; }
-  .ph-current-wheel .planet-stick { stroke:#222; stroke-width:.9; opacity:.72; }
-  .ph-current-wheel .planet-contact { fill:var(--relphi-red); stroke:#fff; stroke-width:.7; }
-  .ph-current-wheel .planet-dot { fill:#fff; stroke:var(--relphi-red); stroke-width:1.45; }
-  .ph-current-wheel .planet-label { fill:#111; font:900 10px 'Segoe UI Symbol','Noto Sans Symbols',serif; }
-  .ph-current-wheel .planet-marker.is-clustered .planet-stick { stroke-width:1.05; opacity:.88; }
+  .ph-current-wheel { width:min(242px,100%); height:auto; display:block; margin:0 auto; overflow:visible; }
+  .ph-current-wheel-direct:not(.is-ready) { visibility:hidden; }
+  .ph-current-wheel-direct .ph-wheel-house-sector { stroke:rgba(45,39,34,.10); stroke-width:1.1; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-house-cusp { stroke:rgba(45,39,34,.28); stroke-width:1.15; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-house-number { fill:#514943; font:800 16px/1 system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; }
+  .ph-current-wheel-direct .ph-wheel-zodiac-sector { stroke:#fffdfa; stroke-width:1.45; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-zodiac-inner,
+  .ph-current-wheel-direct .ph-wheel-zodiac-outer { fill:none; stroke:rgba(45,39,34,.38); stroke-width:1.35; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-sign { pointer-events:none; filter:drop-shadow(0 0 2px rgba(255,255,255,.98)); }
+  .ph-current-wheel-direct .ph-wheel-angle-line { stroke:#514943; stroke-width:1.3; stroke-linecap:round; opacity:.72; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-angle-label { fill:#514943; font:850 13px/1 system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; paint-order:stroke; stroke:#fffdfa; stroke-width:3px; }
+  .ph-current-wheel-direct .ph-wheel-placement-leader { stroke:#c9211e; stroke-width:1.35; stroke-linecap:round; opacity:.58; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-placement-contact { fill:#c9211e; stroke:#fffdfa; stroke-width:1.15; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-placement { filter:drop-shadow(0 1px 2px rgba(45,39,34,.16)); }
+  .ph-current-wheel-direct .ph-wheel-center { fill:#211d1a; stroke:#fffdfa; stroke-width:1.5; vector-effect:non-scaling-stroke; }
   .ph-current-wheel-card .ph-tiny { margin:.25rem 0 0; }
 
   /* v320 mobile priority: the living instrument leads; day context follows compactly. */
@@ -1314,8 +1315,24 @@
     mask:var(--ph-canonical-glyph) center / contain no-repeat;
     flex:0 0 auto;
   }
+  #dayRulerProfileName,
+  #hourRulerProfileName {
+    display:inline-flex;
+    align-items:center;
+    vertical-align:middle;
+  }
   #dayRulerProfileName .ph-direct-canonical-glyph,
-  #hourRulerProfileName .ph-direct-canonical-glyph { margin-right:.18em; }
+  #hourRulerProfileName .ph-direct-canonical-glyph {
+    width:2.15em;
+    height:2.15em;
+    margin:0 .04em 0 0;
+    vertical-align:middle;
+  }
+  #dayRulerProfileName .ph-direct-canonical-glyph { color:#fff; }
+  #hourRulerProfileName .ph-direct-canonical-glyph { color:#111; }
+  @media (max-width:760px) {
+    #dayRulerProfileName .ph-direct-canonical-glyph { color:#111; }
+  }
 
   /* Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing. */
   #heptagramSvg .ph-core-heptagram-circle,
@@ -1394,7 +1411,7 @@
         <p id="sunTimes">—</p>
         <p class="ph-tiny" id="bridgeInfo">—</p>
         <p><a class="ph-btn ph-datefield-link" id="dateFieldLink" href="sky-chart.html#sky-calc">Jump to this date in Sky Chart</a></p>
-        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this date and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"><p class="ph-tiny">Planet wheel loads when Astronomy Engine is available.</p></div></a>
+        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this date and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div></a>
       </div>
       <div class="ph-hour-frame ph-hour-frame-merged ph-living-heptagram-frame">
         <p class="eyebrow">Living planetary hour</p>
@@ -1569,6 +1586,9 @@
   </section>
 </main>
 
+<script src="relphi-glyph-registry-v1.js?v=28"></script>
+<script src="relphi-glyph-component-v1.js?v=32"></script>
+<script src="sky-chart-wheel-spec-v1.js?v=6"></script>
 <script>
 (function () {
   const planets = [
@@ -2169,7 +2189,6 @@
 
   function phNormDeg(value) { const n = Number(value) || 0; return ((n % 360) + 360) % 360; }
   const phSigns = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-  const phSignGlyphs = {Aries:'♈', Taurus:'♉', Gemini:'♊', Cancer:'♋', Leo:'♌', Virgo:'♍', Libra:'♎', Scorpio:'♏', Sagittarius:'♐', Capricorn:'♑', Aquarius:'♒', Pisces:'♓'};
   function phZodiacPoint(lon, r, cx, cy) { const a = (phNormDeg(lon) + 180) * Math.PI / 180; return {x:cx + Math.cos(a)*r, y:cy + Math.sin(a)*r}; }
   function phLongitudeToPlacement(lon) { lon = phNormDeg(lon); const index = Math.floor(lon / 30) % 12; const inSign = lon - index * 30; return {sign:phSigns[index], degree:Math.floor(inSign), minute:Math.round((inSign - Math.floor(inSign))*60)}; }
   function phAstronomyLongitude(body, date) {
@@ -2229,55 +2248,175 @@
     });
     return result;
   }
+  const phWheelNs = 'http://www.w3.org/2000/svg';
+  const phWheelSignIds = ['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
+  let phWheelRenderGeneration = 0;
+
+  function phWheelSvg(name, attrs) {
+    const node = document.createElementNS(phWheelNs, name);
+    Object.entries(attrs || {}).forEach(function (entry) { node.setAttribute(entry[0], String(entry[1])); });
+    return node;
+  }
+
+  function phWheelAnnularPath(center, inner, outer, start, end) {
+    const span = phNormDeg(end - start) || 360;
+    const large = span > 180 ? 1 : 0;
+    const a = phZodiacPoint(start, outer, center.x, center.y);
+    const b = phZodiacPoint(start + span, outer, center.x, center.y);
+    const c = phZodiacPoint(start + span, inner, center.x, center.y);
+    const d = phZodiacPoint(start, inner, center.x, center.y);
+    return 'M' + a.x.toFixed(3) + ' ' + a.y.toFixed(3) +
+      ' A' + outer + ' ' + outer + ' 0 ' + large + ' 1 ' + b.x.toFixed(3) + ' ' + b.y.toFixed(3) +
+      ' L' + c.x.toFixed(3) + ' ' + c.y.toFixed(3) +
+      ' A' + inner + ' ' + inner + ' 0 ' + large + ' 0 ' + d.x.toFixed(3) + ' ' + d.y.toFixed(3) + ' Z';
+  }
+
+  function phWheelCanonicalBubble(host, id, options) {
+    const registry = window.RelphiGlyphRegistry;
+    const component = window.RelphiGlyphComponent;
+    const entry = registry && (registry.get(id) || registry.resolve(id));
+    if (!host || !entry || !component?.createBubble) return Promise.resolve(false);
+    try {
+      const rendered = component.createBubble(host, entry.id, {
+        radius: options.radius,
+        padding: options.padding == null ? .7 : options.padding,
+        color: options.color,
+        fill: options.fill == null ? '#fffdfa' : options.fill,
+        strokeWidth: options.strokeWidth == null ? 1.8 : options.strokeWidth
+      });
+      if (options.plain) {
+        rendered.circle.style.opacity = '0';
+        rendered.circle.setAttribute('aria-hidden', 'true');
+      }
+      return Promise.resolve(rendered.ready).then(function () { return true; }).catch(function () { return false; });
+    } catch (error) {
+      return Promise.resolve(false);
+    }
+  }
+
   function phRenderCurrentWheel(frame) {
     if (!el.phCurrentWheel) return;
-    if (!window.Astronomy) { el.phCurrentWheel.innerHTML = '<p class="ph-tiny">Astronomy Engine is unavailable.</p>'; return; }
+    const generation = ++phWheelRenderGeneration;
+    if (!window.Astronomy || !window.RelphiSkyWheelSpec || !window.RelphiGlyphRegistry || !window.RelphiGlyphComponent?.createBubble) {
+      el.phCurrentWheel.replaceChildren();
+      return;
+    }
     const date = frame ? frame.localNow : localNow();
-    const cx = 110, cy = 110;
-    const houseNumRadius = 29;
-    const coreWheelRadius = 78;
-    const signGlyphRadius = 64;
-    const lollipopRadius = 100;
     try {
+      const spec = window.RelphiSkyWheelSpec.mini;
+      const role = window.RelphiSkyWheelSpec.miniRole?.('A') || spec.standalone;
+      const center = spec.center || {x:300,y:300};
+      const zodiac = spec.zodiac;
+      const house = role.house || {inner:zodiac.outer,outer:207,numberRadius:167.75};
+      const colors = window.RelphiSkyWheelSpec.COLORS;
+      const placementColor = window.RelphiSkyWheelSpec.SKY?.A || '#c9211e';
+      const root = phWheelSvg('svg', {
+        class:'ph-current-wheel ph-current-wheel-direct',
+        viewBox:(spec.viewBox || [0,0,600,600]).join(' '),
+        preserveAspectRatio:'xMidYMid meet',
+        role:'img',
+        'aria-label':'Current planetary placements mini zodiac wheel using the Sky Chart visual system'
+      });
+      root.dataset.directWheelReady = 'false';
+
+      const houseLayer = phWheelSvg('g', {class:'ph-wheel-house-layer'});
+      const zodiacLayer = phWheelSvg('g', {class:'ph-wheel-zodiac-layer'});
+      const angleLayer = phWheelSvg('g', {class:'ph-wheel-angle-layer'});
+      const placementLayer = phWheelSvg('g', {class:'ph-wheel-placement-layer'});
+      const jobs = [];
+
       const asc = phAscendantLongitude(date, state.lat, state.lon);
       const mc = phMidheavenLongitude(date, state.lon);
-      const houseTicks = Array.from({length:12}, function (_, i) {
-        const cuspLon = phNormDeg(asc + i * 30);
-        const edge = phZodiacPoint(cuspLon, coreWheelRadius, cx, cy);
-        const label = phZodiacPoint(cuspLon + 15, houseNumRadius, cx, cy);
-        return '<g><line class="house-cusp" x1="' + cx + '" y1="' + cy + '" x2="' + edge.x.toFixed(1) + '" y2="' + edge.y.toFixed(1) + '"></line><text class="house-label" x="' + label.x.toFixed(1) + '" y="' + label.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + (i + 1) + '</text></g>';
-      }).join('');
-      const signTrack = phSigns.map(function (sign, i) {
-        const boundary = i * 30;
-        const tickA = phZodiacPoint(boundary, coreWheelRadius - 8, cx, cy);
-        const tickB = phZodiacPoint(boundary, coreWheelRadius, cx, cy);
-        const label = phZodiacPoint(boundary + 15, signGlyphRadius, cx, cy);
-        return '<g><line class="sign-tick" x1="' + tickA.x.toFixed(1) + '" y1="' + tickA.y.toFixed(1) + '" x2="' + tickB.x.toFixed(1) + '" y2="' + tickB.y.toFixed(1) + '"></line><text class="sign-label" x="' + label.x.toFixed(1) + '" y="' + label.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + phSignGlyphs[sign] + '</text></g>';
-      }).join('');
-      function axisMarkup(longitude, firstLabel, oppositeLabel) {
-        const first = phZodiacPoint(longitude, coreWheelRadius, cx, cy);
-        const opposite = phZodiacPoint(longitude + 180, coreWheelRadius, cx, cy);
-        const firstText = phZodiacPoint(longitude, coreWheelRadius - 6, cx, cy);
-        const oppositeText = phZodiacPoint(longitude + 180, coreWheelRadius - 6, cx, cy);
-        return '<g><line class="angle-axis" x1="' + first.x.toFixed(1) + '" y1="' + first.y.toFixed(1) + '" x2="' + opposite.x.toFixed(1) + '" y2="' + opposite.y.toFixed(1) + '"></line><text class="angle-label" x="' + firstText.x.toFixed(1) + '" y="' + firstText.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + firstLabel + '</text><text class="angle-label" x="' + oppositeText.x.toFixed(1) + '" y="' + oppositeText.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + oppositeLabel + '</text></g>';
+      for (let i = 0; i < 12; i += 1) {
+        const start = phNormDeg(asc + i * 30);
+        const end = start + 30;
+        const mid = start + 15;
+        houseLayer.appendChild(phWheelSvg('path', {
+          d:phWheelAnnularPath(center, house.inner, house.outer, start, end),
+          class:'ph-wheel-house-sector',
+          fill:i % 2 ? '#faf7f2' : '#fffdfa'
+        }));
+        const a = phZodiacPoint(start, house.inner, center.x, center.y);
+        const b = phZodiacPoint(start, house.outer, center.x, center.y);
+        houseLayer.appendChild(phWheelSvg('line', {x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'ph-wheel-house-cusp'}));
+        const labelPoint = phZodiacPoint(mid, house.numberRadius, center.x, center.y);
+        const label = phWheelSvg('text', {x:labelPoint.x,y:labelPoint.y,class:'ph-wheel-house-number'});
+        label.textContent = String(i + 1);
+        houseLayer.appendChild(label);
       }
-      const axes = axisMarkup(asc, 'ASC', 'DSC') + axisMarkup(mc, 'MC', 'IC');
-      const bodies = skyBodies.slice(0, 10);
-      const bodyItems = bodies.map(function (body) {
+
+      for (let i = 0; i < 12; i += 1) {
+        zodiacLayer.appendChild(phWheelSvg('path', {
+          d:phWheelAnnularPath(center, zodiac.inner, zodiac.outer, i * 30, i * 30 + 30),
+          class:'ph-wheel-zodiac-sector',
+          fill:colors[i] || '#ddd',
+          'fill-opacity':zodiac.fillOpacity == null ? .82 : zodiac.fillOpacity
+        }));
+      }
+      zodiacLayer.appendChild(phWheelSvg('circle', {cx:center.x,cy:center.y,r:zodiac.inner,class:'ph-wheel-zodiac-inner'}));
+      zodiacLayer.appendChild(phWheelSvg('circle', {cx:center.x,cy:center.y,r:zodiac.outer,class:'ph-wheel-zodiac-outer'}));
+
+      phWheelSignIds.forEach(function (id, index) {
+        const point = phZodiacPoint(index * 30 + 15, (zodiac.inner + zodiac.outer) / 2, center.x, center.y);
+        const host = phWheelSvg('g', {transform:'translate(' + point.x + ' ' + point.y + ')',class:'ph-wheel-sign'});
+        zodiacLayer.appendChild(host);
+        jobs.push(phWheelCanonicalBubble(host, id, {radius:zodiac.glyphRadius || 14,color:'#514b45',plain:true,strokeWidth:1.5}));
+      });
+
+      const edge = Number(role.edge || house.outer);
+      const inward = edge - Number(spec.angleGap || 12);
+      [["Asc",asc],["Dsc",asc + 180],["MC",mc],["IC",mc + 180]].forEach(function (definition) {
+        const labelText = definition[0];
+        const degree = definition[1];
+        const a = phZodiacPoint(degree, inward, center.x, center.y);
+        const b = phZodiacPoint(degree, edge, center.x, center.y);
+        const t = phZodiacPoint(degree, edge + 16, center.x, center.y);
+        angleLayer.appendChild(phWheelSvg('line', {x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'ph-wheel-angle-line'}));
+        const label = phWheelSvg('text', {x:t.x,y:t.y,class:'ph-wheel-angle-label'});
+        label.textContent = labelText;
+        angleLayer.appendChild(label);
+      });
+
+      const bodyItems = skyBodies.slice(0,10).map(function (body) {
         const lon = phAstronomyLongitude(body, date);
-        return { body:body, lon:lon, placement:phLongitudeToPlacement(lon) };
+        return {body:body,lon:lon,placement:phLongitudeToPlacement(lon)};
       });
       const displayAngles = phWheelDisplayAngles(bodyItems, 10.5);
-      const markers = bodyItems.map(function (item) {
+      const placementRadius = Number(role.placement?.[0] || 172);
+      const bubbleRadius = Number(spec.placementBubbleRadius || 13);
+      const strokeWidth = Number(spec.placementStrokeWidth || 1.8);
+      bodyItems.forEach(function (item) {
         const displayLon = displayAngles.get(item.body);
-        const contact = phZodiacPoint(item.lon, coreWheelRadius, cx, cy);
-        const ball = phZodiacPoint(displayLon, lollipopRadius, cx, cy);
-        const clustered = Math.abs((((displayLon - item.lon) % 360) + 540) % 360 - 180) > 0.05;
-        return '<g class="planet-marker' + (clustered ? ' is-clustered' : '') + '"><line class="planet-center-ray" x1="' + cx + '" y1="' + cy + '" x2="' + contact.x.toFixed(1) + '" y2="' + contact.y.toFixed(1) + '"></line><circle class="planet-contact" cx="' + contact.x.toFixed(1) + '" cy="' + contact.y.toFixed(1) + '" r="1.8"></circle><line class="planet-stick" x1="' + contact.x.toFixed(1) + '" y1="' + contact.y.toFixed(1) + '" x2="' + ball.x.toFixed(1) + '" y2="' + ball.y.toFixed(1) + '"></line><circle class="planet-dot" cx="' + ball.x.toFixed(1) + '" cy="' + ball.y.toFixed(1) + '" r="7"></circle><text class="planet-label" x="' + ball.x.toFixed(1) + '" y="' + (ball.y + 0.5).toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + (skyGlyphs[item.body] || item.body[0]) + '</text><title>' + item.body + ' ' + item.placement.sign + ' ' + item.placement.degree + '°' + String(item.placement.minute).padStart(2, '0') + '′</title></g>';
-      }).join('');
-      el.phCurrentWheel.innerHTML = '<svg class="ph-current-wheel" viewBox="0 0 220 220" role="img" aria-label="Current planetary placements mini zodiac wheel with houses, signs, angles, and separated placement markers"><circle class="wheel-core" cx="110" cy="110" r="' + coreWheelRadius + '"></circle><g class="house-layer">' + houseTicks + '</g><g class="sign-layer">' + signTrack + '</g><g class="angle-layer">' + axes + '</g><g class="planet-layer">' + markers + '</g><circle cx="110" cy="110" r="3" fill="#111"></circle></svg><p class="ph-tiny">Preview only. Use Sky Chart for the full reading.</p>';
+        const from = phZodiacPoint(item.lon, zodiac.outer, center.x, center.y);
+        const to = phZodiacPoint(displayLon, placementRadius, center.x, center.y);
+        placementLayer.appendChild(phWheelSvg('line', {x1:from.x,y1:from.y,x2:to.x,y2:to.y,class:'ph-wheel-placement-leader'}));
+        placementLayer.appendChild(phWheelSvg('circle', {cx:from.x,cy:from.y,r:2.4,class:'ph-wheel-placement-contact'}));
+        const host = phWheelSvg('g', {transform:'translate(' + to.x + ' ' + to.y + ')',class:'ph-wheel-placement'});
+        host.dataset.placement = item.body.toLowerCase();
+        const title = phWheelSvg('title');
+        title.textContent = item.body + ' ' + item.placement.sign + ' ' + item.placement.degree + '°' + String(item.placement.minute).padStart(2,'0') + '′';
+        host.appendChild(title);
+        placementLayer.appendChild(host);
+        jobs.push(phWheelCanonicalBubble(host, item.body.toLowerCase(), {radius:bubbleRadius,color:placementColor,fill:'#fffdfa',strokeWidth:strokeWidth}));
+      });
+
+      root.appendChild(houseLayer);
+      root.appendChild(zodiacLayer);
+      root.appendChild(angleLayer);
+      root.appendChild(placementLayer);
+      root.appendChild(phWheelSvg('circle', {cx:center.x,cy:center.y,r:4,class:'ph-wheel-center'}));
+      const caption = document.createElement('p');
+      caption.className = 'ph-tiny';
+      caption.textContent = 'Preview only. Use Sky Chart for the full reading.';
+      el.phCurrentWheel.replaceChildren(root, caption);
+
+      Promise.allSettled(jobs).then(function () {
+        if (generation !== phWheelRenderGeneration || !root.isConnected) return;
+        root.dataset.directWheelReady = 'true';
+        root.classList.add('is-ready');
+      });
     } catch (error) {
-      el.phCurrentWheel.innerHTML = '<p class="ph-tiny">Current wheel unavailable: ' + String(error.message || error) + '</p>';
+      el.phCurrentWheel.replaceChildren();
     }
   }
 

@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const page=fs.readFileSync('planetaryhours.html','utf8');
-const parity=fs.readFileSync('planetary-hours-sky-chart-visual-parity-v1.js','utf8');
 const standardizer=fs.readFileSync('standardize-zodiac-wheels.js','utf8');
 const nav=fs.readFileSync('navloader.js','utf8');
 const integrity=fs.readFileSync('planetary-hours-active-time-integrity-v1.js','utf8');
@@ -16,15 +15,17 @@ assert.match(page,/r=\"27\"/);
 assert.match(page,/for \(let i = 0; i < 7; i\+\+\) svg \+= heptagramLine\(chaldean/);
 assert.match(page,/directHeptagramPlanetMarkup\(key, dayKey, hourKey\)/);
 assert.match(page,/data-direct-heptagram-ready|directHeptagramReady/);
-assert.doesNotMatch(parity,/heptagramSvg|ph-heptagram-node|ph-core-heptagram/);
-assert.match(parity,/Planetary Hours current-placements mini wheel/);
 assert.doesNotMatch(nav,/relphi-ph-visual-boot-mask|ensurePlanetaryHoursVisualBootStyle/);
 assert.doesNotMatch(integrity,/correctHour24|ph-heptagram-node/);
 assert.doesNotMatch(standardizer,/installPlanetaryHoursBootMask|relphi-ph-visual-boot-mask/);
 assert.match(standardizer,/isPlanetaryHoursOwnedSvg/);
+assert.doesNotMatch(standardizer,/planetary-hours-sky-chart-visual-parity|loadPlanetaryHoursParity/);
 
 assert.match(page,/function canonicalPlanetGlyphMarkup/);
 assert.match(page,/assets\/planet-glyphs\//);
+assert.match(page,/#dayRulerProfileName \.ph-direct-canonical-glyph \{ color:#fff; \}/);
+assert.match(page,/#hourRulerProfileName \.ph-direct-canonical-glyph \{ color:#111; \}/);
+assert.match(page,/width:2\.15em/);
 assert.match(page,/dayRulerProfileName\.innerHTML = canonicalPlanetGlyphMarkup/);
 assert.match(page,/hourRulerProfileName\.innerHTML = canonicalPlanetGlyphMarkup/);
 assert.doesNotMatch(page,/id="moonDisc">☽<\/div>/);
@@ -37,4 +38,15 @@ assert.doesNotMatch(page,/byKey\[prevDayKeyForCue\]\.sym/);
 assert.doesNotMatch(page,/byKey\[nextDayKeyForCue\]\.sym/);
 assert.match(page,/heptagramOrderText\.innerHTML/);
 
-console.log('Planetary Hours direct heptagram and canonical first-paint glyph ownership contract passed.');
+assert.match(page,/relphi-glyph-registry-v1\.js\?v=28/);
+assert.match(page,/relphi-glyph-component-v1\.js\?v=32/);
+assert.match(page,/sky-chart-wheel-spec-v1\.js\?v=6/);
+assert.match(page,/ph-current-wheel-direct/);
+assert.match(page,/function phWheelCanonicalBubble/);
+assert.match(page,/root\.dataset\.directWheelReady = 'false'/);
+assert.match(page,/root\.classList\.add\('is-ready'\)/);
+assert.doesNotMatch(page,/const phSignGlyphs/);
+assert.doesNotMatch(page,/Planet wheel loads when Astronomy Engine is available/);
+assert.doesNotMatch(page,/class=\"planet-marker/);
+
+console.log('Planetary Hours direct heptagram, ruler glyph, and direct mini-wheel ownership contract passed.');
