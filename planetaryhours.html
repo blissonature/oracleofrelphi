@@ -375,7 +375,7 @@
   .ph-settings-group + .ph-settings-group { border-top:1px solid rgba(17,17,17,.09); padding-top:.85rem; }
   .ph-settings-group-title { color:#3f3a36; font-size:.78rem; font-weight:850; letter-spacing:.08em; text-transform:uppercase; }
   .ph-settings-row { display:grid; align-items:end; gap:.65rem; }
-  .ph-settings-row-location { grid-template-columns:auto auto minmax(220px,1fr) minmax(115px,.45fr) minmax(115px,.45fr) auto; }
+  .ph-settings-row-location { grid-template-columns:auto minmax(220px,1fr) minmax(115px,.45fr) minmax(115px,.45fr) auto; }
   .ph-settings-row-place { grid-template-columns:minmax(260px,1fr) auto auto; }
   .ph-settings-row-time { grid-template-columns:auto minmax(0,1fr); align-items:end; }
   .ph-settings-field { display:grid !important; min-width:0; gap:.28rem !important; color:#514b46 !important; font-size:.78rem; font-weight:750; line-height:1.1; }
@@ -394,7 +394,7 @@
   .ph-system-time-toggle { align-self:end; min-height:2.55rem; padding:.45rem .65rem; border:1px solid rgba(17,17,17,.09); border-radius:999px; background:#fff; white-space:nowrap; }
   .ph-row-system-time { display:grid; grid-template-columns:minmax(155px,1fr) minmax(135px,.8fr) auto; gap:.65rem; align-items:end; min-width:0; }
   @media (max-width: 980px) {
-    .ph-settings-row-location { grid-template-columns:auto auto minmax(220px,1fr) minmax(115px,.5fr) minmax(115px,.5fr); }
+    .ph-settings-row-location { grid-template-columns:auto minmax(220px,1fr) minmax(115px,.5fr) minmax(115px,.5fr) auto; }
     .ph-settings-row-location #setLatLon { grid-column:5; }
     .ph-settings-row-place { grid-template-columns:minmax(220px,1fr) auto auto; }
   }
@@ -1410,6 +1410,20 @@
   #heptagramSvg .ph-core-heptagram-planet { filter:drop-shadow(0 1px 2px rgba(45,39,34,.12)); }
   #heptagramSvg .ph-core-heptagram-art * { vector-effect:non-scaling-stroke; }
 
+
+  /* Settings correction: one visible time display and reliably legible secondary actions. */
+  #controls .ph-btn.ph-btn-secondary {
+    background:#fff !important;
+    color:var(--relphi-red-dark) !important;
+    border:1px solid var(--relphi-line) !important;
+    box-shadow:none !important;
+  }
+  #controls .ph-btn.ph-btn-secondary:hover,
+  #controls .ph-btn.ph-btn-secondary:focus {
+    background:#fff7f5 !important;
+    color:var(--relphi-red-dark) !important;
+    border-color:rgba(220,31,24,.38) !important;
+  }
 </style>
 <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
@@ -1426,10 +1440,10 @@
     <details id="settingsDetails">
       <summary><span>Where and when settings</span><span class="ph-settings-summary" id="settingsSummary">—</span></summary>
       <div class="ph-settings-body">
+        <span class="ph-sr-only" id="localClock" aria-hidden="true">--:--</span>
         <div class="ph-settings-group ph-settings-group-location">
           <div class="ph-settings-group-title">Location</div>
           <div class="ph-settings-row ph-settings-row-location">
-            <span class="ph-clock" id="localClock">--:--</span>
             <button class="ph-btn" id="useGeo" type="button">Use my location</button>
             <label class="ph-settings-field ph-settings-field-timezone"><span>Timezone</span>
               <select class="ph-select" id="tzSelect"></select>
