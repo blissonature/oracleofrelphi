@@ -342,6 +342,10 @@ async function applyPlanetaryHoursHandoff(){
     await window.RelphiChironEphemeris.completePayload(nextPayload);
     if(!window.RelphiChironEphemeris.hasChiron(nextPayload.placements))throw new Error('Chiron could not be calculated for this sky.');
     writeJson(SLOT_KEYS[slot],nextPayload);
+    if(window.RelphiSkyStartupMode){
+      window.RelphiSkyStartupMode.writeMode(slot==='B'?'comparison':'single');
+      window.RelphiSkyStartupMode.syncRoot();
+    }
     dispatchSlotChange(slot);
     window.dispatchEvent(new CustomEvent('relphi:sky-working-copy-updated',{detail:{slot,source:'planetary-hours',dateTime:handoff.dateTime,location:handoff.location}}));
     window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:nextPayload.name||`Sky ${slot}`,source:'planetary-hours'}}));
