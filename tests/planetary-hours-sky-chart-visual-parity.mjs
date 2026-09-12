@@ -87,4 +87,11 @@ assert.match(page,/\.ph-table thead \{ display: none; \}/);
 assert.match(page,/\.ph-table-wrap \{ max-height: none; overflow: visible; \}/);
 assert.doesNotMatch(page,/r\.ruler\.key \+ '\\"><span class=\"ph-dot\"><\/span>/);
 
+assert.match(page,/wandererExpandedBody: null/);
+assert.match(page,/const collapsed = !item\.visibility\.practical && state\.wandererExpandedBody !== body/);
+assert.match(page,/collapsed \? 'is-collapsed ' : ''/);
+assert.match(page,/aria-expanded=/);
+assert.match(page,/\.ph-wanderer-card\.is-collapsed \.ph-wanderer-mini-meters/);
+assert.match(page,/state\.wandererExpandedBody = button\.classList\.contains\('is-collapsed'\) \? body : null/);
+
 console.log('Planetary Hours direct heptagram, enlarged canonical glyphs, rainbow houses, and direct mini-wheel ownership contract passed.');

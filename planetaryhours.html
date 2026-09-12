@@ -736,6 +736,29 @@
   .ph-wanderer-facts div { grid-template-columns: 3rem 1fr; }
   .ph-wanderer-select-note { font-size: .72rem; color: #666; font-weight: 700; text-align: right; }
 
+  /* Compact unavailable wanderers so the useful guide does not dominate the page. */
+  .ph-wanderer-grid { align-items: start; }
+  .ph-wanderer-card.is-collapsed {
+    gap: .18rem;
+    padding: .48rem .55rem;
+    background: #fff;
+    box-shadow: none !important;
+  }
+  .ph-wanderer-card.is-collapsed .ph-wanderer-title { margin-bottom: 0; }
+  .ph-wanderer-card.is-collapsed .ph-wanderer-rail,
+  .ph-wanderer-card.is-collapsed .ph-wanderer-caption,
+  .ph-wanderer-card.is-collapsed .ph-wanderer-facts,
+  .ph-wanderer-card.is-collapsed .ph-wanderer-mini-meters,
+  .ph-wanderer-card.is-collapsed .ph-wanderer-selected-guide,
+  .ph-wanderer-card.is-collapsed .ph-wanderer-visibility-dot { display: none; }
+  .ph-wanderer-card.is-collapsed::after {
+    content: 'Tap for guide';
+    justify-self: end;
+    color: #777;
+    font-size: .68rem;
+    font-weight: 750;
+  }
+
   .ph-obstruction-icon {
     display: inline-grid;
     place-items: center;
@@ -1610,7 +1633,7 @@
         <div class="ph-section-heading compact">
           <p class="eyebrow">Wanderer visibility</p>
           <h3>Rise, set, and current sky position</h3>
-          <p class="ph-planet-instructions">Choose a tile to see rise, set, visibility, compass direction, and altitude together. Tiles are ordered by practical viewing: naked eye, binoculars, telescope, not practical, then below horizon.</p>
+          <p class="ph-planet-instructions">Viewable wanderers stay open. Wanderers that are not practical to see are collapsed; tap one to open its full orientation guide. Tiles remain ordered by practical viewing.</p>
         </div>
         <div class="ph-wanderer-grid" id="wandererGrid">
           <p class="ph-tiny">Planet positions load here when Astronomy Engine is available.</p>
@@ -1727,7 +1750,7 @@
     saturn: 'https://commons.wikimedia.org/wiki/Special:FilePath/Chronos_MET_DP-932-001.jpg?width=640'
   };
   const browserTimeZone = (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
-  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, heptagramHourOverride: null, timeFormat: '12h' };
+  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h' };
   const locationPresets = [
     {name:'Greenwich, London, UK', lat:51.4769, lon:-0.0005, tz:'Europe/London'},
     {name:'Boston, Massachusetts, USA', lat:42.3601, lon:-71.0589, tz:'America/New_York'},
@@ -2580,7 +2603,8 @@
     });
     el.wandererGrid.innerHTML = items.map(function (item) {
       const body = item.body;
-      return '<button class="ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (state.skyBody === body ? 'is-selected' : '') + '" type="button" data-sky-body="' + body + '" aria-pressed="' + (state.skyBody === body ? 'true' : 'false') + '" aria-label="Orient to ' + body + '">' +
+      const collapsed = !item.visibility.practical && state.wandererExpandedBody !== body;
+      return '<button class="ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + (state.skyBody === body ? 'is-selected' : '') + '" type="button" data-sky-body="' + body + '" aria-pressed="' + (state.skyBody === body ? 'true' : 'false') + '" aria-expanded="' + (collapsed ? 'false' : 'true') + '" aria-label="' + (collapsed ? 'Expand ' : 'Orient to ') + body + '">' +
         (item.visibility.practical ? '<span class="ph-wanderer-visibility-dot" aria-hidden="true"></span>' : '') +
         '<div class="ph-wanderer-title"><span class="ph-wanderer-title-main"><span class="glyph">' + (skyGlyphs[body] || '') + '</span><span>' + body + '</span></span><span class="ph-wanderer-status-stack"><span class="ph-wanderer-status sky-state">' + (item.above ? 'above' : 'below') + '</span><span class="ph-wanderer-status viewing">' + item.visibility.viewing + '</span></span></div>' +
         '<div class="ph-wanderer-rail" aria-label="Rise/set visualization for ' + body + '">' +
@@ -3225,6 +3249,7 @@
       const body = button.getAttribute('data-sky-body');
       if (!body) return;
       state.skyBody = body;
+      state.wandererExpandedBody = button.classList.contains('is-collapsed') ? body : null;
       if (el.skyQuery) el.skyQuery.value = 'Where is ' + body + ' right now?';
       renderWandererGrid();
       renderSkyOrientation(true);
