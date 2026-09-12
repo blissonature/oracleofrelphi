@@ -28,8 +28,8 @@
   margin:0 auto!important;
 }
 
-/* The draft heptagram and its caption are one link. Keep the caption visually
-   integrated with the preview rather than reviving the old brown underlined link. */
+/* The draft heptagram and its caption are one link. Keep the caption below the
+   preview, but give it the same light pill language as the Cancel action. */
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump{
   display:grid!important;
   place-items:center!important;
@@ -52,17 +52,23 @@
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump-title{
   order:2!important;
   display:block!important;
+  box-sizing:border-box!important;
   margin:0!important;
-  padding:.08rem .2rem!important;
-  color:#191512!important;
-  font:850 .60rem/1.15 system-ui,sans-serif!important;
+  padding:.38rem .62rem!important;
+  border:1px solid rgba(31,27,24,.24)!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#211d19!important;
+  font:850 .60rem/1 system-ui,sans-serif!important;
   text-align:center!important;
   text-decoration:none!important;
   white-space:nowrap!important;
 }
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:hover .sky-ph-jump-title,
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible .sky-ph-jump-title{
-  color:#191512!important;
+  border-color:rgba(31,27,24,.52)!important;
+  background:#f5efe7!important;
+  color:#211d19!important;
 }
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible{
   outline:2px solid rgba(201,33,30,.16)!important;
