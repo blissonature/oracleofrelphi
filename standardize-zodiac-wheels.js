@@ -7,6 +7,7 @@
   if (window.__relphiCanonicalWheelStandardizerV1) return;
   window.__relphiCanonicalWheelStandardizerV1 = true;
 
+  const IS_PLANETARY_HOURS = /(^|\/)planetaryhours\.html$/.test(location.pathname);
   const NS = 'http://www.w3.org/2000/svg';
   const IDENTITIES = Object.freeze({
     '☉':'sun','⊙':'sun','☽':'moon','☾':'moon','☿':'mercury','♀':'venus','♂':'mars',
@@ -18,6 +19,22 @@
   let queued = false;
 
   const bare = value => String(value || '').replace(/[\uFE0E\uFE0F]/g, '').trim();
+
+  function installPlanetaryHoursBootMask() {
+    if (!IS_PLANETARY_HOURS || document.getElementById('relphi-ph-visual-boot-mask')) return;
+    const style = document.createElement('style');
+    style.id = 'relphi-ph-visual-boot-mask';
+    style.textContent = [
+      '#heptagramSvg:not([data-sky-chart-parity-ready="true"]){visibility:hidden!important}',
+      '#phCurrentWheel:not([data-sky-chart-parity-ready="true"]){visibility:hidden!important;min-height:242px}',
+      '#phCurrentWheel[data-sky-chart-parity-ready="true"]{visibility:visible!important}'
+    ].join('');
+    (document.head || document.documentElement).appendChild(style);
+  }
+
+  function isPlanetaryHoursOwnedSvg(svg) {
+    return IS_PLANETARY_HOURS && (svg?.id === 'heptagramSvg' || !!svg?.closest?.('#phCurrentWheel'));
+  }
 
   function looksLikeWheel(svg) {
     const marker = ((svg.id || '') + ' ' + (svg.getAttribute('class') || '')).toLowerCase();
@@ -61,7 +78,7 @@
   }
 
   function standardizeSvg(svg) {
-    if (!looksLikeWheel(svg)) return;
+    if (isPlanetaryHoursOwnedSvg(svg) || !looksLikeWheel(svg)) return;
     svg.querySelectorAll('text').forEach(node => {
       const id = IDENTITIES[bare(node.textContent)];
       if (id) nestedSvgForText(node, id);
@@ -83,6 +100,7 @@
 
   function standardizeHtmlGlyphs(root) {
     (root || document).querySelectorAll('[data-planet], .planet-glyph, .glyph').forEach(node => {
+      if (IS_PLANETARY_HOURS && node.closest?.('#heptagramSvg,#phCurrentWheel')) return;
       if (node.closest('svg') || node.querySelector('svg[data-canonical-glyph-id]')) return;
       const id = IDENTITIES[bare(node.textContent)];
       if (id) inlineSvg(node, id);
@@ -101,19 +119,25 @@
     requestAnimationFrame(() => { queued = false; run(document); });
   }
 
-  function loadPlanetaryHoursParity() {
-    if (!/(^|\/)planetaryhours\.html$/.test(location.pathname) || window.__relphiPlanetaryHoursSkyChartVisualParityV1) return;
-    const append = (src, onload) => {
-      const base = src.split('?')[0];
-      const existing = document.querySelector(`script[src^="${base}"]`);
-      if (existing) { if (onload) setTimeout(onload, 0); return; }
-      const script = document.createElement('script');
-      script.async = false;
-      script.src = src;
-      if (onload) script.addEventListener('load', onload, { once:true });
-      document.body.appendChild(script);
-    };
-    const loadParity = () => append('planetary-hours-sky-chart-visual-parity-v1.js?v=1');
+  function observe() {
+    new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true, characterData:true });
+  }
+
+  function append(src, onload) {
+    const base = src.split('?')[0];
+    const existing = document.querySelector(`script[src^="${base}"]`);
+    if (existing) { if (onload) setTimeout(onload, 0); return existing; }
+    const script = document.createElement('script');
+    script.async = false;
+    script.src = src;
+    if (onload) script.addEventListener('load', onload, { once:true });
+    document.body.appendChild(script);
+    return script;
+  }
+
+  function loadPlanetaryHoursParity(onready) {
+    if (!IS_PLANETARY_HOURS) { if (onready) onready(); return; }
+    const loadParity = () => append('planetary-hours-sky-chart-visual-parity-v1.js?v=2', onready);
     if (window.RelphiSkyWheelSpec) loadParity();
     else append('sky-chart-wheel-spec-v1.js?v=6', loadParity);
   }
@@ -123,11 +147,15 @@
       setTimeout(start, 40);
       return;
     }
+    if (IS_PLANETARY_HOURS) {
+      loadPlanetaryHoursParity(() => { run(document); observe(); });
+      return;
+    }
     run(document);
-    new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true, characterData:true });
-    loadPlanetaryHoursParity();
+    observe();
   }
 
+  installPlanetaryHoursBootMask();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
   else start();
 })();
