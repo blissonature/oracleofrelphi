@@ -107,4 +107,9 @@ async function apply(){queued=false;await enhanceWheel()}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>void apply())}
 function start(){installStyles();schedule();observer=new MutationObserver(records=>{if(records.some(record=>record.target instanceof Element&&(record.target.matches?.('#phCurrentWheel')||record.target.closest?.('#phCurrentWheel'))))schedule()});observer.observe(document.body,{childList:true,subtree:true});window.addEventListener('relphi:canonical-glyph-runtime-ready',schedule)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+
+async function apply(){queued=false;await enhanceWheel()}
+function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>void apply())}
+function start(){installStyles();schedule();observer=new MutationObserver(records=>{if(records.some(record=>record.target instanceof Element&&(record.target.matches?.('#phCurrentWheel')||record.target.closest?.('#phCurrentWheel'))))schedule()});observer.observe(document.body,{childList:true,subtree:true});window.addEventListener('relphi:canonical-glyph-runtime-ready',schedule)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
