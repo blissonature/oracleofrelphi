@@ -314,12 +314,66 @@ document.addEventListener('keydown',event=>{if(event.key!=='Enter')return;const 
 window.addEventListener('relphi:sky-drawer-preparing',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot])openEditor(slot,false)});
 window.addEventListener('relphi:sky-drawer-opened',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot]&&!transactionState.editing.has(slot))openEditor(slot,false)});
 window.addEventListener('relphi:sky-drawer-closed',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot]&&transactionState.editing.has(slot))closeEditor(slot)});
+function readPlanetaryHoursHandoff(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('source')!=='planetary-hours')return null;
+  const dateTime=String(params.get('datetime')||'').trim(),latitude=Number(params.get('lat')),longitude=Number(params.get('lon')),timeZone=String(params.get('tz')||'').trim();
+  const match=dateTime.match(/^(\d{4}-\d\d-\d\d)T(\d\d:\d\d)/);
+  if(!match||!Number.isFinite(latitude)||!Number.isFinite(longitude)||!timeZone)return null;
+  const locationName=String(params.get('loc')||'').trim()||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`;
+  return{date:match[1],time:match[2],dateTime:`${match[1]}T${match[2]}`,latitude,longitude,timeZone,location:locationName,name:String(params.get('name')||'').trim()};
+}
+function slotHasPlacements(slot){
+  const value=payload(slot),placements=value?.placements;
+  return!!(placements&&typeof placements==='object'&&Object.keys(placements).length);
+}
+let planetaryHoursHandoffConsumed=false;
+async function applyPlanetaryHoursHandoff(){
+  const handoff=readPlanetaryHoursHandoff();
+  if(!handoff||planetaryHoursHandoffConsumed)return;
+  planetaryHoursHandoffConsumed=true;
+  const slot=!slotHasPlacements('A')?'A':'B';
+  const selected={source:'planetary-hours',query:handoff.location,canonical:handoff.location,latitude:handoff.latitude,longitude:handoff.longitude,timezone:handoff.timeZone};
+  cardState[slot].selected=selected;
+  try{
+    const nextPayload=calculateSky(slot,selected,handoff.date,handoff.time);
+    if(handoff.name){nextPayload.name=handoff.name;nextPayload.title=handoff.name;nextPayload.displayName=handoff.name;nextPayload.skyName=handoff.name}
+    if(!window.RelphiChironEphemeris)throw new Error('The Chiron ephemeris service is unavailable.');
+    await window.RelphiChironEphemeris.completePayload(nextPayload);
+    if(!window.RelphiChironEphemeris.hasChiron(nextPayload.placements))throw new Error('Chiron could not be calculated for this sky.');
+    writeJson(SLOT_KEYS[slot],nextPayload);
+    dispatchSlotChange(slot);
+    window.dispatchEvent(new CustomEvent('relphi:sky-working-copy-updated',{detail:{slot,source:'planetary-hours',dateTime:handoff.dateTime,location:handoff.location}}));
+    window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:nextPayload.name||`Sky ${slot}`,source:'planetary-hours'}}));
+    scheduleSummary(slot,true);
+    requestAnimationFrame(()=>window.RelphiSkyCardShell?.openDrawer?.(slot,'placements'));
+    const clean=new URL(location.href);
+    ['preview','source','datetime','date','lat','lon','tz','loc','name','calc'].forEach(key=>clean.searchParams.delete(key));
+    history.replaceState(history.state,'',clean.pathname+clean.search+clean.hash);
+  }catch(error){
+    console.error(error);
+    planetaryHoursHandoffConsumed=false;
+    const refs=shell(slot);
+    if(refs)status(slot,error.message||'The Planetary Hours sky could not be built.',true);
+  }
+}
+function schedulePlanetaryHoursHandoff(){
+  if(!readPlanetaryHoursHandoff())return;
+  let attempts=0;
+  const run=()=>{
+    attempts+=1;
+    const ready=!!(window.Astronomy&&window.luxon?.DateTime&&window.RelphiHouseSystems?.calculateCusps&&window.RelphiChironEphemeris&&window.RelphiSkyCardShell);
+    if(ready){void applyPlanetaryHoursHandoff();return}
+    if(attempts<120)setTimeout(run,50);
+  };
+  run();
+}
 window.addEventListener('storage',event=>{if(!event.key||Object.values(SLOT_KEYS).includes(event.key)){['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot)})}});
 window.addEventListener('relphi:sky-foundation-ready',()=>{scheduleSummary('A');scheduleSummary('B')});
 window.addEventListener('relphi:sky-name-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]){window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot,true)}});
 window.addEventListener('resize',()=>{['A','B'].forEach(slot=>{const svg=shell(slot)?.heptagram;if(svg&&svg.dataset.canonicalSourceReady==='true')svg.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360')})},{passive:true});
 function recoverWhereWhen(){reconcileWhereWhenTransaction();['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.ensure?.(slot,payload(slot));scheduleSummary(slot,true)})}
-function start(){installStyles();['A','B'].forEach(slot=>{shell(slot);scheduleSummary(slot)})}
+function start(){installStyles();['A','B'].forEach(slot=>{shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff()}
 window.addEventListener('relphi:sky-session-recovered',recoverWhereWhen);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
