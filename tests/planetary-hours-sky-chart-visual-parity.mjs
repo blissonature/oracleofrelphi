@@ -5,6 +5,7 @@ const page=fs.readFileSync('planetaryhours.html','utf8');
 const standardizer=fs.readFileSync('standardize-zodiac-wheels.js','utf8');
 const nav=fs.readFileSync('navloader.js','utf8');
 const integrity=fs.readFileSync('planetary-hours-active-time-integrity-v1.js','utf8');
+const heptagramArt=page.slice(page.indexOf('const heptagramCanonicalArt'),page.indexOf('function canonicalPlanetGlyphMarkup'));
 
 assert.match(page,/Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing/);
 assert.match(page,/const heptagramCanonicalArt = Object\.freeze/);
@@ -14,8 +15,8 @@ assert.match(page,/r=\"23\"/);
 assert.match(page,/r=\"27\"/);
 assert.match(page,/for \(let i = 0; i < 7; i\+\+\) svg \+= heptagramLine\(chaldean/);
 assert.match(page,/directHeptagramPlanetMarkup\(key, dayKey, hourKey\)/);
-assert.match(page,/stroke-width=\"2\.25\"/);
-assert.match(page,/stroke-width=\"1\.85\"/);
+assert.match(heptagramArt,/stroke-width=\"1\.90\"/);
+assert.doesNotMatch(heptagramArt,/stroke-width=\"(?:2\.65|2\.25|2\.10|1\.85|2\.08)\"/);
 assert.doesNotMatch(page,/stroke-width=\"3\.3226974572350114\"/);
 assert.match(page,/const glyphColor=isHour\?color:'#ffffff', fill=isHour\?'#ffffff':color/);
 assert.doesNotMatch(page,/const glyphColor=isHour\?'#ffffff':color, fill=isHour\?color:'#ffffff'/);
