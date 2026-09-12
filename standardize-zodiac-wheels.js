@@ -101,6 +101,23 @@
     requestAnimationFrame(() => { queued = false; run(document); });
   }
 
+  function loadPlanetaryHoursParity() {
+    if (!/(^|\/)planetaryhours\.html$/.test(location.pathname) || window.__relphiPlanetaryHoursSkyChartVisualParityV1) return;
+    const append = (src, onload) => {
+      const base = src.split('?')[0];
+      const existing = document.querySelector(`script[src^="${base}"]`);
+      if (existing) { if (onload) setTimeout(onload, 0); return; }
+      const script = document.createElement('script');
+      script.async = false;
+      script.src = src;
+      if (onload) script.addEventListener('load', onload, { once:true });
+      document.body.appendChild(script);
+    };
+    const loadParity = () => append('planetary-hours-sky-chart-visual-parity-v1.js?v=1');
+    if (window.RelphiSkyWheelSpec) loadParity();
+    else append('sky-chart-wheel-spec-v1.js?v=6', loadParity);
+  }
+
   function start() {
     if (!window.RelphiGlyphRegistry || !window.RelphiGlyphComponent?.createBubble) {
       setTimeout(start, 40);
@@ -108,6 +125,7 @@
     }
     run(document);
     new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true, characterData:true });
+    loadPlanetaryHoursParity();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
