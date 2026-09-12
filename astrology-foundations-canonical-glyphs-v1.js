@@ -13,11 +13,22 @@
   function canonicalSvg(id, className, circled) {
     const svg = document.createElementNS(NS, 'svg');
     svg.className.baseVal = className || '';
-    svg.setAttribute('viewBox', '-19 -19 38 38');
+    // Match the Master Glyph List host exactly; only the surrounding tool layout changes.
+    svg.setAttribute('viewBox', '-32 -32 64 64');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     svg.setAttribute('aria-hidden', 'true');
     svg.dataset.canonicalGlyphId = id;
-    svg.dataset.masterGlyphSource = 'https://oracleofrelphi.com/glyphs-unified-preview.html';
+    svg.dataset.masterGlyphSource = 'glyphs-unified-preview.html';
+    if ((className || '').split(/\s+/).includes('front-glyph')) {
+      Object.assign(svg.style, {
+        width:'88px',
+        height:'88px',
+        maxWidth:'92%',
+        maxHeight:'92%',
+        display:'block',
+        overflow:'visible'
+      });
+    }
     const registry = window.RelphiGlyphRegistry;
     const component = window.RelphiGlyphComponent;
     const entry = registry && (registry.get(id) || registry.resolve(id));
