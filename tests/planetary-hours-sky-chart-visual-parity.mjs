@@ -53,4 +53,4 @@ assert.doesNotMatch(page,/const phSignGlyphs/);
 assert.doesNotMatch(page,/Planet wheel loads when Astronomy Engine is available/);
 assert.doesNotMatch(page,/class=\"planet-marker/);
 
-console.log('Planetary Hours direct heptagram, ruler glyph, and direct mini-wheel ownership contract passed.');
+console.log('Planetary Hours direct heptagram, enlarged canonical glyphs, rainbow houses, and direct mini-wheel ownership contract passed.');
