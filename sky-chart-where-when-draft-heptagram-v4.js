@@ -23,9 +23,8 @@ function installStyle(){
     .sky-where-when-heptagram-slot [data-sky-heptagram-frame]{display:block;width:min(100%,176px);margin:0 auto}
     .sky-where-when-heptagram-slot [data-sky-heptagram-frame] .sky-ph-heptagram{display:block;width:100%;height:auto}
     .sky-where-when-draft-heptagram{display:block!important;width:min(100%,176px)!important;height:auto!important;max-height:176px!important;overflow:visible!important;margin:0 auto!important}
-    .sky-where-when-ph-jump{display:inline-flex;align-items:center;justify-content:center;justify-self:center;max-width:100%;margin:0 auto;padding:.2rem .35rem;color:#5b1715;font:850 .64rem/1.25 system-ui,sans-serif;text-align:center;text-decoration:underline;text-underline-offset:3px}
-    .sky-where-when-ph-jump:hover,.sky-where-when-ph-jump:focus-visible{color:#9f1b18;outline:2px solid rgba(201,33,30,.16);outline-offset:2px;border-radius:5px}
-    @media(max-width:620px){.sky-where-when-ph-jump{font-size:.66rem}}
+    .sky-where-when-heptagram-slot .sky-ph-jump{justify-self:center;max-width:100%;margin:0 auto}
+    .sky-where-when-heptagram-slot .sky-ph-jump-title{white-space:nowrap}
   `;document.head.appendChild(node);
 }
 function editor(slot){return document.querySelector(`.sky-where-when-editor[data-slot="${slot}"]`)}
@@ -68,11 +67,11 @@ function buildPreview(p){
   partialLine(root,point(current.ruler,142),point(CHALDEAN[(CHALDEAN.indexOf(current.ruler)+1)%7],142),hourFraction,'sky-ph-hour-segment current');CHALDEAN.forEach(key=>root.appendChild(planetGroup(key,dayKey,current.ruler)));return root;
 }
 function planetaryHoursHref(p){const params=new URLSearchParams();params.set('phShare','1');params.set('lat',String(p.latitude));params.set('lon',String(p.longitude));params.set('tz',p.timeZone);if(p.location)params.set('loc',p.location);if(p.instantIso)params.set('dt',p.instantIso);return'planetaryhours.html#'+params.toString()}
-function clearDraft(target){target?.querySelectorAll('[data-draft-where-when="true"],.sky-where-when-ph-jump').forEach(node=>node.remove());target?.removeAttribute('data-draft-heptagram-ready')}
+function clearDraft(target){target?.querySelectorAll('[data-draft-where-when-link="true"],[data-draft-where-when="true"],.sky-where-when-ph-jump').forEach(node=>node.remove());target?.removeAttribute('data-draft-heptagram-ready')}
 async function renderNow(slot){
   timers[slot]=0;const token=++renderToken[slot],form=editor(slot),target=mount(slot);if(!form||!target)return;const p=packet(slot);clearDraft(target);if(!p)return;
   try{
-    const preview=buildPreview(p);if(!preview)return;const jump=document.createElement('a');jump.className='sky-where-when-ph-jump';jump.href=planetaryHoursHref(p);jump.textContent='Jump to this moment in Planetary Hours';preview.style.visibility='hidden';target.append(preview,jump);
+    const preview=buildPreview(p);if(!preview)return;const jump=document.createElement('a');jump.className='sky-ph-jump';jump.dataset.draftWhereWhenLink='true';jump.href=planetaryHoursHref(p);const title=document.createElement('span');title.className='sky-ph-jump-title';title.textContent='Jump to this time in Planetary Hours';preview.style.visibility='hidden';jump.append(title,preview);target.append(jump);
     const canonical=window.RelphiSkyHeptagramCanonical;if(canonical?.correct)await canonical.correct(preview);if(token!==renderToken[slot]||!preview.isConnected)return;preview.style.visibility='visible';target.dataset.draftHeptagramReady='true';
   }catch(error){clearDraft(target);console.error('Where/When moment preview failed:',error)}
 }
