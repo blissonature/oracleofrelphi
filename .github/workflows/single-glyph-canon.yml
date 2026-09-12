@@ -31,7 +31,7 @@ on:
       - '.github/workflows/single-glyph-canon.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   single-canon:
@@ -49,27 +49,3 @@ jobs:
         run: node tools/check-sky-chart-glyph-readiness.mjs
       - name: Run glyph-facing Sky Chart regression tests
         run: node --test tests/sky-chart-requested-visuals.test.mjs tests/sky-chart-angle-lane-isolation.test.mjs
-
-  restore-planetary-hours-crlf:
-    if: github.event_name == 'pull_request' && github.head_ref == 'fix/planetary-hours-visual-parity' && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: fix/planetary-hours-visual-parity
-      - name: Restore CRLF without changing content
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('planetaryhours.html')
-          text = p.read_text()
-          p.write_bytes(text.replace('\r\n', '\n').replace('\n', '\r\n').encode())
-          PY
-      - name: Commit line-ending restoration
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add planetaryhours.html
-          git diff --cached --quiet && exit 0
-          git commit -m "Preserve Planetary Hours source line endings"
-          git push origin HEAD:fix/planetary-hours-visual-parity
