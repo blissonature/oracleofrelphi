@@ -14,6 +14,8 @@ assert.match(page,/r=\"23\"/);
 assert.match(page,/r=\"27\"/);
 assert.match(page,/for \(let i = 0; i < 7; i\+\+\) svg \+= heptagramLine\(chaldean/);
 assert.match(page,/directHeptagramPlanetMarkup\(key, dayKey, hourKey\)/);
+assert.match(page,/const glyphColor=isHour\?color:'#ffffff', fill=isHour\?'#ffffff':color/);
+assert.doesNotMatch(page,/const glyphColor=isHour\?'#ffffff':color, fill=isHour\?color:'#ffffff'/);
 assert.match(page,/data-direct-heptagram-ready|directHeptagramReady/);
 assert.doesNotMatch(nav,/relphi-ph-visual-boot-mask|ensurePlanetaryHoursVisualBootStyle/);
 assert.doesNotMatch(integrity,/correctHour24|ph-heptagram-node/);

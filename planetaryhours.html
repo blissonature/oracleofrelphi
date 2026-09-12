@@ -2852,7 +2852,7 @@
   function directHeptagramPlanetMarkup(key, dayKey, hourKey) {
     const p=heptagramPointFor(key), color=heptagramColors[key], isDay=key===dayKey, isHour=key===hourKey;
     const stateId=isDay&&isHour?'day-and-hour-ruler':isDay?'day-ruler':isHour?'hour-ruler':'plain';
-    const glyphColor=isHour?'#ffffff':color, fill=isHour?color:'#ffffff';
+    const glyphColor=isHour?color:'#ffffff', fill=isHour?'#ffffff':color;
     const art=heptagramCanonicalArt[key].split('#111111').join(glyphColor);
     const rings=isDay?'<circle class="ph-core-heptagram-day-ring inner" cx="0" cy="0" r="23" stroke="'+color+'"></circle><circle class="ph-core-heptagram-day-ring outer" cx="0" cy="0" r="27" stroke="'+color+'"></circle>':'';
     return '<g class="ph-core-heptagram-planet p-'+key+(isDay?' is-day-ruler':'')+(isHour?' is-hour-ruler':'')+'" data-planetary-hour-state="'+stateId+'">'+
