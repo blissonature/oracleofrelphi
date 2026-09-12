@@ -11,6 +11,7 @@ const PLANET_IDS=new Set(['sun','moon','mercury','venus','mars','jupiter','satur
 const FALLBACK_ZODIAC=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const SKY_COLOR='#c9211e';
 let queued=false,observer=null;
+
 const norm=value=>((Number(value)%360)+360)%360;
 function svg(name,attrs={}){const node=document.createElementNS(NS,name);Object.entries(attrs).forEach(([key,value])=>node.setAttribute(key,String(value)));return node}
 function point(center,radius,degree){const angle=(norm(degree)-180)*Math.PI/180;return{x:center.x+radius*Math.cos(angle),y:center.y+radius*Math.sin(angle)}}
@@ -18,8 +19,20 @@ function longitudeFromPoint(cx,cy,x,y){return norm(Math.atan2(Number(y)-cy,Numbe
 function annularPath(center,inner,outer,start,end){const span=norm(end-start)||360,large=span>180?1:0,a=point(center,outer,start),b=point(center,outer,start+span),c=point(center,inner,start+span),d=point(center,inner,start);return`M${a.x.toFixed(3)} ${a.y.toFixed(3)} A${outer} ${outer} 0 ${large} 1 ${b.x.toFixed(3)} ${b.y.toFixed(3)} L${c.x.toFixed(3)} ${c.y.toFixed(3)} A${inner} ${inner} 0 ${large} 0 ${d.x.toFixed(3)} ${d.y.toFixed(3)} Z`}
 function numberAttr(node,name,fallback=NaN){const value=Number(node?.getAttribute(name));return Number.isFinite(value)?value:fallback}
 function canonicalEntry(id){const registry=window.RelphiGlyphRegistry;return registry&&(registry.get(id)||registry.resolve(id))}
-async function bubble(host,id,{radius,color,fill='#fffdfa',strokeWidth=1.8,plain=false}={}){const entry=canonicalEntry(id),component=window.RelphiGlyphComponent;if(!host||!entry||!component?.createBubble)return false;host.replaceChildren();host.dataset.canonicalGlyphId=entry.id;try{const rendered=component.createBubble(host,entry.id,{radius,padding:.7,color,fill,strokeWidth});if(plain){rendered.circle.style.opacity='0';rendered.circle.setAttribute('aria-hidden','true')}await rendered.ready;return true}catch(error){host.replaceChildren();host.dataset.glyphUnavailable='true';console.error('[Relphi Planetary Hours mini wheel]',error);return false}}
-function installStyles(){if(document.getElementById('planetaryHoursMiniWheelParityV1Styles'))return;const style=document.createElement('style');style.id='planetaryHoursMiniWheelParityV1Styles';style.textContent=`
+async function bubble(host,id,{radius,color,fill='#fffdfa',strokeWidth=1.8,plain=false}={}){
+  const entry=canonicalEntry(id),component=window.RelphiGlyphComponent;
+  if(!host||!entry||!component?.createBubble)return false;
+  host.replaceChildren();host.dataset.canonicalGlyphId=entry.id;
+  try{
+    const rendered=component.createBubble(host,entry.id,{radius,padding:.7,color,fill,strokeWidth});
+    if(plain){rendered.circle.style.opacity='0';rendered.circle.setAttribute('aria-hidden','true')}
+    await rendered.ready;return true;
+  }catch(error){host.replaceChildren();host.dataset.glyphUnavailable='true';console.error('[Relphi Planetary Hours mini wheel]',error);return false}
+}
+
+function installStyles(){
+  if(document.getElementById('planetaryHoursMiniWheelParityV1Styles'))return;
+  const style=document.createElement('style');style.id='planetaryHoursMiniWheelParityV1Styles';style.textContent=`
 #phCurrentWheel .ph-current-wheel[data-sky-chart-parity="true"]{display:block;width:min(242px,100%);height:auto;margin:0 auto;overflow:visible}
 #phCurrentWheel .ph-parity-house-sector{stroke:rgba(45,39,34,.10);stroke-width:1.1;vector-effect:non-scaling-stroke}
 #phCurrentWheel .ph-parity-house-cusp{stroke:rgba(45,39,34,.28);stroke-width:1.15;vector-effect:non-scaling-stroke}
@@ -33,7 +46,9 @@ function installStyles(){if(document.getElementById('planetaryHoursMiniWheelPari
 #phCurrentWheel .ph-parity-placement-contact{fill:${SKY_COLOR};stroke:#fffdfa;stroke-width:1.15;vector-effect:non-scaling-stroke}
 #phCurrentWheel .ph-parity-placement{filter:drop-shadow(0 1px 2px rgba(45,39,34,.16))}
 #phCurrentWheel .ph-parity-center{fill:#211d1a;stroke:#fffdfa;stroke-width:1.5;vector-effect:non-scaling-stroke}
-`;document.head.appendChild(style)}
+`;document.head.appendChild(style)
+}
+
 function sourceCenter(old){const core=old.querySelector('.wheel-core');return{x:numberAttr(core,'cx',110),y:numberAttr(core,'cy',110)}}
 function degreesFromLines(nodes,center,endpoint='end'){return nodes.map(line=>longitudeFromPoint(center.x,center.y,numberAttr(line,endpoint==='start'?'x1':'x2'),numberAttr(line,endpoint==='start'?'y1':'y2'))).filter(Number.isFinite)}
 function planetId(marker){
@@ -86,39 +101,20 @@ async function buildParityWheel(model){
 async function enhanceWheel(){
   const mount=document.getElementById('phCurrentWheel');if(!mount)return false;
   const final=mount.querySelector('svg.ph-current-wheel[data-sky-chart-parity="true"]');
-  if(final){mount.dataset.skyChartParityReady='true';return false}
+  if(final)return false;
   const old=mount.querySelector('svg.ph-current-wheel');if(!old)return false;
-  mount.removeAttribute('data-sky-chart-parity-ready');
   const model=extractWheel(old);if(!model.planets.length)return false;
   const replacement=await buildParityWheel(model);if(!old.isConnected)return false;
-  old.replaceWith(replacement);mount.dataset.skyChartParityReady='true';return true;
+  old.replaceWith(replacement);return true;
 }
-
-async function applyWheel(){
-  wheelQueued=false;if(wheelApplying)return;wheelApplying=true;
-  try{await enhanceWheel()}finally{wheelApplying=false}
-}
-function scheduleWheel(){if(wheelQueued)return;wheelQueued=true;queueMicrotask(()=>void applyWheel())}
-function mutationTouches(record,selector){
-  const target=record.target instanceof Element?record.target:null;
-  if(target?.matches?.(selector)||target?.closest?.(selector))return true;
-  return [...record.addedNodes,...record.removedNodes].some(node=>node instanceof Element&&(node.matches?.(selector)||node.closest?.(selector)));
-}
-function onWheelMutations(records){
-  if(wheelApplying)return;
-  if(records.some(record=>mutationTouches(record,'#phCurrentWheel'))){document.getElementById('phCurrentWheel')?.removeAttribute('data-sky-chart-parity-ready');scheduleWheel()}
-}
-function start(){
-  installStyles();
-  attachHeptagramSource();scheduleHeptagram();scheduleWheel();
-  wheelObserver=new MutationObserver(onWheelMutations);wheelObserver.observe(document.body,{childList:true,subtree:true});
-  window.addEventListener('relphi:canonical-glyph-runtime-ready',()=>{scheduleHeptagram();scheduleWheel()});
-}
-installBootMask();
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 
 async function apply(){queued=false;await enhanceWheel()}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>void apply())}
-function start(){installStyles();schedule();observer=new MutationObserver(records=>{if(records.some(record=>record.target instanceof Element&&(record.target.matches?.('#phCurrentWheel')||record.target.closest?.('#phCurrentWheel'))))schedule()});observer.observe(document.body,{childList:true,subtree:true});window.addEventListener('relphi:canonical-glyph-runtime-ready',schedule)}
+function start(){
+  installStyles();schedule();
+  observer=new MutationObserver(records=>{if(records.some(record=>record.target instanceof Element&&(record.target.matches?.('#phCurrentWheel')||record.target.closest?.('#phCurrentWheel'))))schedule()});
+  observer.observe(document.body,{childList:true,subtree:true});
+  window.addEventListener('relphi:canonical-glyph-runtime-ready',schedule);
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
