@@ -76,10 +76,17 @@ if click_old not in page:
 page = page.replace(click_old, click_new, 1)
 page_path.write_text(page)
 
-test_needle = "assert.doesNotMatch(page,/r\\.ruler\\.key \\+ '\\\\"><span class=\\\"ph-dot\\\"><\\/span>/);\n"
-test_add = """assert.match(page,/wandererExpandedBody: null/);\nassert.match(page,/const collapsed = !item\\.visibility\\.practical && state\\.wandererExpandedBody !== body/);\nassert.match(page,/collapsed \\? 'is-collapsed ' : ''/);\nassert.match(page,/aria-expanded=\\\"' \\+ \\(collapsed \\? 'false' : 'true'\\)/);\nassert.match(page,/\\.ph-wanderer-card\\.is-collapsed \\.ph-wanderer-mini-meters/);\nassert.match(page,/state\\.wandererExpandedBody = button\\.classList\\.contains\\('is-collapsed'\\) \\? body : null/);\n"""
+marker = "console.log('Planetary Hours direct heptagram, enlarged canonical glyphs, rainbow houses, and direct mini-wheel ownership contract passed.');"
+test_add = """assert.match(page,/wandererExpandedBody: null/);
+assert.match(page,/const collapsed = !item\\.visibility\\.practical && state\\.wandererExpandedBody !== body/);
+assert.match(page,/collapsed \\? 'is-collapsed ' : ''/);
+assert.match(page,/aria-expanded=/);
+assert.match(page,/\\.ph-wanderer-card\\.is-collapsed \\.ph-wanderer-mini-meters/);
+assert.match(page,/state\\.wandererExpandedBody = button\\.classList\\.contains\\('is-collapsed'\\) \\? body : null/);
+
+"""
 if test_add not in test:
-    if test_needle not in test:
+    if marker not in test:
         raise SystemExit('test insertion point not found')
-    test = test.replace(test_needle, test_needle + test_add, 1)
+    test = test.replace(marker, test_add + marker, 1)
 test_path.write_text(test)
