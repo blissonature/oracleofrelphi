@@ -37,6 +37,18 @@ jobs:
           if old not in s: raise SystemExit('click marker not found')
           s = s.replace(old, new, 1)
           path.write_text(s)
+
+          test = Path('tests/planetary-hours-sky-chart-visual-parity.mjs')
+          t = test.read_text()
+          old = "assert.match(page,/const collapsed = \\(!item\\.visibility\\.practical \\|\\| !item\\.above\\) && state\\.wandererExpandedBody !== body/);"
+          new = "assert.match(page,/wandererCollapsedBodies: Object\\.create\\(null\\)/);\nassert.match(page,/const manuallyCollapsed = !!state\\.wandererCollapsedBodies\\[body\\]/);\nassert.match(page,/const collapsed = manuallyCollapsed \\|\\| \\(\\(!item\\.visibility\\.practical \\|\\| !item\\.above\\) && state\\.wandererExpandedBody !== body\\)/);"
+          if old not in t: raise SystemExit('collapsed test marker not found')
+          t = t.replace(old, new, 1)
+          old = "assert.match(page,/state\\.wandererExpandedBody = button\\.classList\\.contains\\('is-collapsed'\\) \\? body : null/);"
+          new = "assert.match(page,/const wasSelected = state\\.skyBody === body/);\nassert.match(page,/state\\.wandererCollapsedBodies\\[body\\] = true/);\nassert.match(page,/delete state\\.wandererCollapsedBodies\\[body\\]/);"
+          if old not in t: raise SystemExit('click test marker not found')
+          t = t.replace(old, new, 1)
+          test.write_text(t)
           PY
       - name: Verify
         shell: bash
@@ -51,6 +63,6 @@ jobs:
           rm .github/workflows/ph-wanderer-toggle-collapse-temp.yml
           git config user.name blissonature
           git config user.email blissonature@gmail.com
-          git add planetaryhours.html .github/workflows/ph-wanderer-toggle-collapse-temp.yml
+          git add planetaryhours.html tests/planetary-hours-sky-chart-visual-parity.mjs .github/workflows/ph-wanderer-toggle-collapse-temp.yml
           git commit -m 'Allow Wanderer cards to collapse on repeat tap'
           git push origin HEAD:fix/planetary-hours-visual-parity
