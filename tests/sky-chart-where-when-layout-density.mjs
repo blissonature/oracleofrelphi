@@ -28,6 +28,13 @@ await editor.waitFor({state:'visible'});
 await page.waitForSelector('#skyFoundationB [data-ww-heptagram-slot="B"][data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
 await page.waitForTimeout(80);
 
+const jump=editor.locator('.sky-where-when-heptagram-slot > .sky-ph-jump[data-draft-where-when-link="true"]');
+assert.equal(await jump.count(),1,'Draft Planetary Hours preview should be one link block.');
+assert.equal(await jump.evaluate(node=>node.tagName),'A');
+assert.equal(await jump.locator('.sky-where-when-draft-heptagram').count(),1,'The heptagram must live inside the Planetary Hours link.');
+assert.equal((await jump.locator('.sky-ph-jump-title').textContent()).trim(),'Jump to this time in Planetary Hours');
+assert.equal(await editor.locator('.sky-where-when-ph-jump').count(),0,'The old separate brown text link must not return.');
+
 const metrics=await editor.evaluate(form=>{
   const card=form.closest('.sky-foundation-panel');
   const body=form.querySelector('.sky-where-when-scroll-body');

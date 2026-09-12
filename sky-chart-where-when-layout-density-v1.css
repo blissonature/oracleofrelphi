@@ -17,6 +17,7 @@
    which created the large blank-looking footer even after its width was reduced. */
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-heptagram{
   display:block!important;
+  order:1!important;
   width:176px!important;
   min-width:0!important;
   max-width:min(100%,176px)!important;
@@ -27,15 +28,47 @@
   margin:0 auto!important;
 }
 
-.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump,
-.sky-where-when-editor .sky-where-when-heptagram-slot .sky-where-when-ph-jump{
+/* The draft heptagram and its caption are one link, but should retain the light
+   visual treatment of the former brown text link rather than becoming a card. */
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump{
+  display:grid!important;
+  place-items:center!important;
+  gap:3px!important;
   width:auto!important;
   max-width:100%!important;
+  min-width:0!important;
   margin:0 auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:inherit!important;
+  text-decoration:none!important;
+  transform:none!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump-title{
+  order:2!important;
+  display:block!important;
+  margin:0!important;
   padding:.08rem .2rem!important;
-  font-size:.60rem!important;
-  line-height:1.15!important;
+  color:#5b1715!important;
+  font:850 .60rem/1.15 system-ui,sans-serif!important;
+  text-align:center!important;
+  text-decoration:underline!important;
+  text-underline-offset:3px!important;
   white-space:nowrap!important;
+}
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:hover .sky-ph-jump-title,
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible .sky-ph-jump-title{
+  color:#9f1b18!important;
+}
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible{
+  outline:2px solid rgba(201,33,30,.16)!important;
+  outline-offset:2px!important;
+  border-radius:5px!important;
 }
 
 /* Give the scrolling Where/When body back the space that was being reserved by
