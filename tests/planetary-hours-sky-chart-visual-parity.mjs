@@ -79,5 +79,11 @@ assert.match(page,/color:'#111',plain:true/);
 assert.doesNotMatch(page,/const phSignGlyphs/);
 assert.doesNotMatch(page,/Planet wheel loads when Astronomy Engine is available/);
 assert.doesNotMatch(page,/class=\"planet-marker/);
+assert.match(page,/Mobile planetary-hours table: compact cards instead of a wide clipped table/);
+assert.match(page,/@media \(max-width: 700px\)/);
+assert.match(page,/grid-template-areas:[\s\S]*\"number time ruler\"[\s\S]*\"light focus focus\"/);
+assert.match(page,/\.ph-table \{ min-width: 0; width: 100%; display: block; \}/);
+assert.match(page,/\.ph-table thead \{ display: none; \}/);
+assert.match(page,/overflow-x: hidden/);
 
 console.log('Planetary Hours direct heptagram, enlarged canonical glyphs, rainbow houses, and direct mini-wheel ownership contract passed.');

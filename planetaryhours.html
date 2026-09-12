@@ -303,6 +303,39 @@
     background: rgba(220,31,24,0.045);
   }
 
+
+  /* Mobile planetary-hours table: compact cards instead of a wide clipped table. */
+  @media (max-width: 700px) {
+    #tableSection { padding-inline: .75em; }
+    #tableSection h2 { font-size: clamp(1.55rem, 8vw, 2.2rem); line-height: 1.08; }
+    .ph-table-wrap { max-height: 520px; overflow-y: auto; overflow-x: hidden; }
+    .ph-table { min-width: 0; width: 100%; display: block; }
+    .ph-table thead { display: none; }
+    .ph-table tbody { display: grid; }
+    .ph-table tr {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "number time ruler"
+        "light focus focus";
+      align-items: center;
+      column-gap: .65rem;
+      row-gap: .4rem;
+      padding: .8rem .7rem;
+      border-bottom: 1px solid var(--relphi-line);
+    }
+    .ph-table th,
+    .ph-table td { padding: 0; border-bottom: 0; min-width: 0; }
+    .ph-table td:nth-child(1) { grid-area: number; font-weight: 800; align-self: start; }
+    .ph-table td:nth-child(2) { grid-area: time; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .ph-table td:nth-child(3) { grid-area: ruler; display: flex; align-items: center; justify-self: end; gap: .3rem; white-space: nowrap; }
+    .ph-table td:nth-child(4) { grid-area: light; align-self: start; }
+    .ph-table td:nth-child(5) { grid-area: focus; font-size: .86rem; line-height: 1.35; color: var(--relphi-muted); }
+    .ph-table tr.active { box-shadow: inset 3px 0 var(--relphi-red); }
+    .ph-table .ph-dot,
+    .ph-table .ph-direct-canonical-glyph { flex: 0 0 auto; }
+  }
+
   .ph-location-search {
     flex: 1 1 280px;
     min-width: 240px;
