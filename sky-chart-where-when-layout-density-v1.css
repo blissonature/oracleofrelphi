@@ -64,16 +64,16 @@
   text-decoration:none!important;
   white-space:nowrap!important;
 }
+/* Match the Cancel button's hover/focus treatment exactly: keep the pill's
+   normal border/background and use the same brightness + red focus halo. */
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:hover .sky-ph-jump-title,
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible .sky-ph-jump-title{
-  border-color:rgba(31,27,24,.52)!important;
-  background:#f5efe7!important;
-  color:#211d19!important;
+  filter:brightness(.94)!important;
+  outline:3px solid rgba(201,33,30,.18)!important;
+  outline-offset:2px!important;
 }
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible{
-  outline:2px solid rgba(201,33,30,.16)!important;
-  outline-offset:2px!important;
-  border-radius:5px!important;
+  outline:none!important;
 }
 
 /* Give the scrolling Where/When body back the space that was being reserved by
