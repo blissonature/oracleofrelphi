@@ -1,0 +1,78 @@
+name: Planetary Hours compact Wanderers temp
+on:
+  push:
+    branches: [fix/planetary-hours-visual-parity]
+    paths: ['.github/workflows/ph-wanderer-compact-temp.yml']
+permissions:
+  contents: write
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+          fetch-depth: 0
+      - name: Compact unavailable Wanderers in Moon column
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          page_path=Path('planetaryhours.html')
+          s=page_path.read_text()
+
+          css_old="""  .ph-moon-frame .ph-wanderer-card.is-collapsed { min-width: 0; }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-title { align-items: flex-start; }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed::after { justify-self: start; }"""
+          css_new="""  .ph-moon-frame .ph-wanderer-card.is-collapsed {
+    min-width: 0;
+    padding: .42rem .48rem;
+    min-height: 0;
+    opacity: .82;
+  }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-title {
+    align-items: center;
+    justify-content: flex-start;
+    gap: .24rem;
+    margin: 0;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-title-main {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-status-stack,
+  .ph-moon-frame .ph-wanderer-card.is-collapsed::after { display: none; }"""
+          if css_old not in s:
+              raise SystemExit('Moon-column collapsed CSS marker not found')
+          s=s.replace(css_old,css_new,1)
+
+          logic_old="const collapsed = !item.visibility.practical && state.wandererExpandedBody !== body;"
+          logic_new="const collapsed = (!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body;"
+          if logic_old not in s:
+              raise SystemExit('Wanderer collapse logic marker not found')
+          s=s.replace(logic_old,logic_new,1)
+          page_path.write_text(s)
+
+          test_path=Path('tests/planetary-hours-sky-chart-visual-parity.mjs')
+          t=test_path.read_text()
+          old="assert.match(page,/const collapsed = !item\\.visibility\\.practical && state\\.wandererExpandedBody !== body/);"
+          new="assert.match(page,/const collapsed = \\(!item\\.visibility\\.practical \\|\\| !item\\.above\\) && state\\.wandererExpandedBody !== body/);\nassert.match(page,/\\.ph-moon-frame \\.ph-wanderer-card\\.is-collapsed \\.ph-wanderer-status-stack,[\\s\\S]*::after \\{ display: none; \\}/);"
+          if old not in t:
+              raise SystemExit('Wanderer test marker not found')
+          t=t.replace(old,new,1)
+          test_path.write_text(t)
+          PY
+      - name: Verify Planetary Hours contract
+        run: |
+          node tests/planetary-hours-sky-chart-visual-parity.mjs
+      - name: Commit product change and remove temporary workflow
+        run: |
+          rm .github/workflows/ph-wanderer-compact-temp.yml
+          git config user.name blissonature
+          git config user.email blissonature@gmail.com
+          git add planetaryhours.html tests/planetary-hours-sky-chart-visual-parity.mjs .github/workflows/ph-wanderer-compact-temp.yml
+          git commit -m "Compact unavailable Wanderers in Moon column"
+          git push origin HEAD:fix/planetary-hours-visual-parity
