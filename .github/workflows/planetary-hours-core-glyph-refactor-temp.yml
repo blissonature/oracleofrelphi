@@ -1,0 +1,158 @@
+name: Planetary Hours core glyph refactor temporary
+on:
+  push:
+    branches:
+      - fix/planetary-hours-visual-parity
+permissions:
+  contents: write
+jobs:
+  refactor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+      - name: Refactor Planetary Hours glyph ownership at source
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          page_path = Path('planetaryhours.html')
+          page = page_path.read_text(encoding='utf-8')
+
+          def replace_once(old, new, label):
+              global page
+              count = page.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              page = page.replace(old, new, 1)
+
+          # The Moon panel must not paint a font glyph before its calculated phase disc.
+          replace_once(
+              '<div class="ph-moon-disc" id="moonDisc">☽</div>',
+              '<div class="ph-moon-disc" id="moonDisc"></div>',
+              'remove noncanonical Moon placeholder'
+          )
+
+          # Planetary Hours renders its own dynamic planet glyphs from the canonical SVG assets.
+          css_anchor = '  /* Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing. */'
+          css = '''  /* Planetary Hours owns its dynamic planet glyphs from first paint. */
+          .ph-direct-canonical-glyph {
+            display:inline-block;
+            width:1.08em;
+            height:1.08em;
+            vertical-align:-.16em;
+            background:currentColor;
+            -webkit-mask:var(--ph-canonical-glyph) center / contain no-repeat;
+            mask:var(--ph-canonical-glyph) center / contain no-repeat;
+            flex:0 0 auto;
+          }
+          #dayRulerProfileName .ph-direct-canonical-glyph,
+          #hourRulerProfileName .ph-direct-canonical-glyph { margin-right:.18em; }
+
+'''
+          if 'Planetary Hours owns its dynamic planet glyphs from first paint.' not in page:
+              if css_anchor not in page:
+                  raise SystemExit('canonical glyph CSS anchor not found')
+              page = page.replace(css_anchor, css + css_anchor, 1)
+
+          helper_anchor = '  function directHeptagramPlanetMarkup(key, dayKey, hourKey) {'
+          helper = '''  function canonicalPlanetGlyphMarkup(key, label) {
+            const id = String(key || '').toLowerCase();
+            if (!/^(sun|moon|mercury|venus|mars|jupiter|saturn|uranus|neptune|pluto)$/.test(id)) return '';
+            return '<span class="ph-direct-canonical-glyph p-' + id + '" style="--ph-canonical-glyph:url(\\'assets/planet-glyphs/' + id + '.svg\\')" role="img" aria-label="' + attrText(label || id) + '"></span>';
+          }
+
+          function canonicalBodyGlyphMarkup(body) {
+            const name = String(body || '');
+            return canonicalPlanetGlyphMarkup(name.toLowerCase(), name);
+          }
+
+'''
+          if 'function canonicalPlanetGlyphMarkup' not in page:
+              if helper_anchor not in page:
+                  raise SystemExit('canonical helper anchor not found')
+              page = page.replace(helper_anchor, helper + helper_anchor, 1)
+
+          replacements = [
+              ("if (el.dayRulerProfileName) el.dayRulerProfileName.textContent = day.sym + ' ' + day.name + ' day';",
+               "if (el.dayRulerProfileName) el.dayRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(day.key, day.name) + ' ' + day.name + ' day';",
+               'day ruler canonical source'),
+              ("if (el.hourRulerProfileName && row) el.hourRulerProfileName.textContent = row.ruler.sym + ' ' + row.ruler.name + ' hour';",
+               "if (el.hourRulerProfileName && row) el.hourRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(row.ruler.key, row.ruler.name) + ' ' + row.ruler.name + ' hour';",
+               'hour ruler canonical source'),
+              ("const weekText = weekPath.slice(0, 7).map(function (key) { return byKey[key].sym + ' ' + byKey[key].name; }).join(' → ') + ' → ' + byKey.sun.sym + ' Sun';",
+               "const weekText = weekPath.slice(0, 7).map(function (key) { return canonicalPlanetGlyphMarkup(key, byKey[key].name) + ' ' + byKey[key].name; }).join(' → ') + ' → ' + canonicalPlanetGlyphMarkup('sun', 'Sun') + ' Sun';",
+               'week path canonical source'),
+              ("if (el.heptagramOrderText) el.heptagramOrderText.textContent = 'Planetary week path: ' + weekText + '. Completed this week: ' + completeText + '.';",
+               "if (el.heptagramOrderText) el.heptagramOrderText.innerHTML = 'Planetary week path: ' + weekText + '. Completed this week: ' + completeText + '.';",
+               'week path html render'),
+              ("return '<span class=\"ph-hour-bead ' + cls + ' p-' + r.ruler.key + '\">' + r.index + ' ' + r.ruler.sym + '</span>';",
+               "return '<span class=\"ph-hour-bead ' + cls + ' p-' + r.ruler.key + '\">' + r.index + ' ' + canonicalPlanetGlyphMarkup(r.ruler.key, r.ruler.name) + '</span>';",
+               'hour bead canonical source'),
+              ("return '<span class=\"ph-pill p-' + p.key + '\"><span class=\"ph-dot\"></span>' + p.sym + ' ' + label + '</span>';",
+               "return '<span class=\"ph-pill p-' + p.key + '\"><span class=\"ph-dot\"></span>' + canonicalPlanetGlyphMarkup(p.key, p.name) + ' ' + label + '</span>';",
+               'pill canonical source'),
+              ("'<span class=\"ph-mini-ruler p-' + row.ruler.key + '\">' + row.ruler.sym + ' ' + row.ruler.name + '</span>' +",
+               "'<span class=\"ph-mini-ruler p-' + row.ruler.key + '\">' + canonicalPlanetGlyphMarkup(row.ruler.key, row.ruler.name) + ' ' + row.ruler.name + '</span>' +",
+               'mini card canonical source'),
+              ("el.currentGlyph.textContent = currentRow.ruler.sym;",
+               "el.currentGlyph.innerHTML = canonicalPlanetGlyphMarkup(currentRow.ruler.key, currentRow.ruler.name);",
+               'ticker canonical source'),
+              ("'<td class=\"p-' + r.ruler.key + '\"><span class=\"ph-dot\"></span> ' + r.ruler.sym + ' ' + r.ruler.name + '</td>' +",
+               "'<td class=\"p-' + r.ruler.key + '\"><span class=\"ph-dot\"></span> ' + canonicalPlanetGlyphMarkup(r.ruler.key, r.ruler.name) + ' ' + r.ruler.name + '</td>' +",
+               'table canonical source'),
+              ("if (el.prevDayCue) el.prevDayCue.textContent = '← ' + byKey[prevDayKeyForCue].sym + ' day';",
+               "if (el.prevDayCue) el.prevDayCue.innerHTML = '← ' + canonicalPlanetGlyphMarkup(prevDayKeyForCue, byKey[prevDayKeyForCue].name) + ' day';",
+               'previous day canonical source'),
+              ("if (el.nextDayCue) el.nextDayCue.textContent = byKey[nextDayKeyForCue].sym + ' day →';",
+               "if (el.nextDayCue) el.nextDayCue.innerHTML = canonicalPlanetGlyphMarkup(nextDayKeyForCue, byKey[nextDayKeyForCue].name) + ' day →';",
+               'next day canonical source'),
+              ("'<div class=\"ph-wanderer-title\"><span class=\"ph-wanderer-title-main\"><span class=\"glyph\">' + (skyGlyphs[body] || '') + '</span><span>' + body + '</span></span><span class=\"ph-wanderer-status-stack\">",
+               "'<div class=\"ph-wanderer-title\"><span class=\"ph-wanderer-title-main\"><span class=\"glyph\">' + canonicalBodyGlyphMarkup(body) + '</span><span>' + body + '</span></span><span class=\"ph-wanderer-status-stack\">",
+               'wanderer canonical source'),
+              ("el.skyObserveTitle.textContent = (skyGlyphs[body] || '') + ' ' + body;",
+               "el.skyObserveTitle.innerHTML = canonicalBodyGlyphMarkup(body) + ' ' + body;",
+               'sky observe canonical source'),
+              ("if (el.skyCurrentBodyChip) el.skyCurrentBodyChip.innerHTML = '<span class=\"glyph\">' + (skyGlyphs[body] || '') + '</span><span>' + body + ' selected</span>';",
+               "if (el.skyCurrentBodyChip) el.skyCurrentBodyChip.innerHTML = '<span class=\"glyph\">' + canonicalBodyGlyphMarkup(body) + '</span><span>' + body + ' selected</span>';",
+               'sky chip canonical source')
+          ]
+          for old, new, label in replacements:
+              if old in page:
+                  page = page.replace(old, new, 1)
+              elif new not in page:
+                  raise SystemExit(f'{label}: source expression not found')
+
+          page_path.write_text(page, encoding='utf-8', newline='')
+
+          test_path = Path('tests/planetary-hours-sky-chart-visual-parity.mjs')
+          test = test_path.read_text(encoding='utf-8')
+          additions = """
+assert.match(page,/function canonicalPlanetGlyphMarkup/);
+assert.match(page,/assets\\/planet-glyphs\\/' \\+ id \\+ '\\.svg/);
+assert.match(page,/dayRulerProfileName\\.innerHTML = canonicalPlanetGlyphMarkup/);
+assert.match(page,/hourRulerProfileName\\.innerHTML = canonicalPlanetGlyphMarkup/);
+assert.doesNotMatch(page,/id=\"moonDisc\">☽<\\/div>/);
+assert.doesNotMatch(page,/dayRulerProfileName\\.textContent = day\\.sym/);
+assert.doesNotMatch(page,/hourRulerProfileName.*textContent = row\\.ruler\\.sym/);
+"""
+          marker = "console.log('Planetary Hours direct heptagram and ruler-profile ownership contract passed.');"
+          if 'assert.match(page,/function canonicalPlanetGlyphMarkup/);' not in test:
+              if marker not in test:
+                  raise SystemExit('test insertion marker not found')
+              test = test.replace(marker, additions + '\n' + marker, 1)
+              test_path.write_text(test, encoding='utf-8', newline='')
+          PY
+
+          if git diff --quiet -- planetaryhours.html tests/planetary-hours-sky-chart-visual-parity.mjs; then
+            echo "Core glyph refactor already applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add planetaryhours.html tests/planetary-hours-sky-chart-visual-parity.mjs
+          git commit -m "Render Planetary Hours canonical glyphs at source"
+          git push origin HEAD:fix/planetary-hours-visual-parity
