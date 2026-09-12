@@ -1,0 +1,54 @@
+name: Planetary Hours moon phase label temp
+
+on:
+  push:
+    branches:
+      - fix/planetary-hours-visual-parity
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+          fetch-depth: 0
+      - name: Correct waxing crescent label at the source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('planetaryhours.html')
+          text = path.read_text()
+          old = "if (phase < 0.22) return 'Waning crescent';"
+          new = "if (phase < 0.22) return 'Waxing crescent';"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one waxing-side mislabeled crescent branch, found {count}')
+          text = text.replace(old, new, 1)
+          if "return 'Waning crescent';" not in text:
+              raise SystemExit('Waning crescent branch was unexpectedly lost')
+          path.write_text(text)
+          PY
+      - name: Verify phase-name direction contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('planetaryhours.html').read_text()
+          assert "if (phase < 0.22) return 'Waxing crescent';" in text
+          assert "if (phase < 0.28) return 'First quarter';" in text
+          assert "if (phase < 0.72) return 'Waning gibbous';" in text
+          assert "return 'Waning crescent';" in text
+          print('Moon phase naming direction contract passed.')
+          PY
+      - name: Commit source correction and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/ph-fix-moon-phase-label-temp.yml
+          git add planetaryhours.html
+          git commit -m "Correct waxing crescent moon phase label"
+          git push origin HEAD:fix/planetary-hours-visual-parity
