@@ -71,7 +71,7 @@ function clearDraft(target){target?.querySelectorAll('[data-draft-where-when-lin
 async function renderNow(slot){
   timers[slot]=0;const token=++renderToken[slot],form=editor(slot),target=mount(slot);if(!form||!target)return;const p=packet(slot);clearDraft(target);if(!p)return;
   try{
-    const preview=buildPreview(p);if(!preview)return;const jump=document.createElement('a');jump.className='sky-ph-jump';jump.dataset.draftWhereWhenLink='true';jump.href=planetaryHoursHref(p);const title=document.createElement('span');title.className='sky-ph-jump-title';title.textContent='Jump to this time in Planetary Hours';preview.style.visibility='hidden';jump.append(title,preview);target.append(jump);
+    const preview=buildPreview(p);if(!preview)return;const jump=document.createElement('a');jump.className='sky-ph-jump';jump.dataset.draftWhereWhenLink='true';jump.href=planetaryHoursHref(p);const title=document.createElement('span');title.className='sky-ph-jump-title';title.textContent='Jump to this time in Planetary Hours';preview.style.visibility='hidden';jump.append(preview,title);target.append(jump);
     const canonical=window.RelphiSkyHeptagramCanonical;if(canonical?.correct)await canonical.correct(preview);if(token!==renderToken[slot]||!preview.isConnected)return;preview.style.visibility='visible';target.dataset.draftHeptagramReady='true';
   }catch(error){clearDraft(target);console.error('Where/When moment preview failed:',error)}
 }
