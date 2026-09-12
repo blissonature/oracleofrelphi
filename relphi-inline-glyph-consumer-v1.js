@@ -65,6 +65,10 @@
     return host;
   }
 
+  function insidePageOwnedDynamicGlyphRegion(node) {
+    return Boolean(node?.parentElement?.closest('.ph-ruler-profile'));
+  }
+
   function eligibleTextNode(node) {
     const parent = node.parentElement;
     if (!parent) return false;
@@ -72,7 +76,7 @@
     if (parent.closest('script,style,textarea,input,select,option,.relphi-inline-canonical-glyph')) return false;
     // Planetary Hours owns its ruler-profile labels and rewrites them from the active frame.
     // Do not turn those page-owned labels into a second asynchronous rendering pass.
-    if (parent.closest('.ph-ruler-profile')) return false;
+    if (insidePageOwnedDynamicGlyphRegion(node)) return false;
     return true;
   }
 
