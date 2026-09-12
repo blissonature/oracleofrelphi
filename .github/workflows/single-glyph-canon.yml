@@ -51,7 +51,7 @@ jobs:
         run: node --test tests/sky-chart-requested-visuals.test.mjs tests/sky-chart-angle-lane-isolation.test.mjs
 
   planetary-hours-core-refactor:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/fix/planetary-hours-visual-parity' && github.actor != 'github-actions[bot]'
+    if: github.event_name == 'pull_request' && github.head_ref == 'fix/planetary-hours-visual-parity' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
