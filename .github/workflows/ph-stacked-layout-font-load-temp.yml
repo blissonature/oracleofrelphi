@@ -17,35 +17,20 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
           page=Path('planetaryhours.html')
           s=page.read_text()
           s=s.replace('<link rel="stylesheet" href="style.css?v=346"/>','<link rel="stylesheet" href="style.css?v=347"/>',1)
-
           marker='  /* v320 mobile priority: the living instrument leads; day context follows compactly. */'
-          css='''  /* Keep the 24-hour table as a full-width section below the complete three-column summary. */
-  #tableSection { width: 100%; max-width: 1100px; clear: both; }
-  .ph-summary-grid-consolidated > #tableSection {
-    grid-column: 1 / -1 !important;
-    width: 100% !important;
-    max-width: none !important;
-  }
-
-'''
-          if marker not in s:
-              raise SystemExit('layout CSS marker not found')
-          if 'Keep the 24-hour table as a full-width section' not in s:
-              s=s.replace(marker,css+marker,1)
+          css="  /* Keep the 24-hour table as a full-width section below the complete three-column summary. */\n  #tableSection { width: 100%; max-width: 1100px; clear: both; }\n  .ph-summary-grid-consolidated > #tableSection { grid-column: 1 / -1 !important; width: 100% !important; max-width: none !important; }\n\n"
+          if marker not in s: raise SystemExit('layout CSS marker not found')
+          if 'Keep the 24-hour table as a full-width section' not in s: s=s.replace(marker,css+marker,1)
           page.write_text(s)
-
           style=Path('style.css')
           t=style.read_text()
           old="@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap');"
           new="@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=block');"
-          if old not in t:
-              raise SystemExit('Montserrat import marker not found')
-          t=t.replace(old,new,1)
-          style.write_text(t)
+          if old not in t: raise SystemExit('Montserrat import marker not found')
+          style.write_text(t.replace(old,new,1))
           PY
       - name: Verify Planetary Hours contract
         run: |
