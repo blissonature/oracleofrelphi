@@ -20,17 +20,6 @@
 
   const bare = value => String(value || '').replace(/[\uFE0E\uFE0F]/g, '').trim();
 
-  function installPlanetaryHoursBootMask() {
-    if (!IS_PLANETARY_HOURS || document.getElementById('relphi-ph-visual-boot-mask')) return;
-    const style = document.createElement('style');
-    style.id = 'relphi-ph-visual-boot-mask';
-    style.textContent = [
-      '#heptagramSvg:not([data-sky-chart-parity-ready="true"]){visibility:hidden!important}',
-      '#phCurrentWheel:not([data-sky-chart-parity-ready="true"]){visibility:hidden!important;min-height:242px}',
-      '#phCurrentWheel[data-sky-chart-parity-ready="true"]{visibility:visible!important}'
-    ].join('');
-    (document.head || document.documentElement).appendChild(style);
-  }
 
   function isPlanetaryHoursOwnedSvg(svg) {
     return IS_PLANETARY_HOURS && (svg?.id === 'heptagramSvg' || !!svg?.closest?.('#phCurrentWheel'));
@@ -137,7 +126,7 @@
 
   function loadPlanetaryHoursParity(onready) {
     if (!IS_PLANETARY_HOURS) { if (onready) onready(); return; }
-    const loadParity = () => append('planetary-hours-sky-chart-visual-parity-v1.js?v=3', onready);
+    const loadParity = () => append('planetary-hours-sky-chart-visual-parity-v1.js?v=4', onready);
     if (window.RelphiSkyWheelSpec) loadParity();
     else append('sky-chart-wheel-spec-v1.js?v=6', loadParity);
   }
@@ -155,7 +144,6 @@
     observe();
   }
 
-  installPlanetaryHoursBootMask();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
   else start();
 })();

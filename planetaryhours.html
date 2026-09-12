@@ -1302,6 +1302,23 @@
     .ph-day-ruler-photo-label .ph-ruler-focus-line { color: #555; font-size: .78rem; }
   }
 
+
+  /* Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing. */
+  #heptagramSvg .ph-core-heptagram-circle,
+  #heptagramSvg .ph-core-heptagram-guide { fill:none; stroke:#2a2521; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-circle { stroke-width:1.4; opacity:.55; }
+  #heptagramSvg .ph-core-heptagram-guide { stroke-width:1; opacity:.2; }
+  #heptagramSvg .ph-core-heptagram-week { fill:none; stroke:#d8d0c8; stroke-width:3; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-week.past { stroke:#c9211e; }
+  #heptagramSvg .ph-core-heptagram-week.current { stroke:#c9211e; stroke-width:6; filter:drop-shadow(0 0 5px rgba(201,33,30,.34)); }
+  #heptagramSvg .ph-core-heptagram-hour { fill:none; stroke:#27221e; stroke-width:2.2; stroke-linecap:round; opacity:.28; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-hour.current { stroke:#c9211e; stroke-width:5; opacity:1; filter:drop-shadow(0 0 4px rgba(201,33,30,.30)); }
+  #heptagramSvg .ph-core-heptagram-day-ring { fill:none; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-day-ring.inner { stroke-width:1.65; }
+  #heptagramSvg .ph-core-heptagram-day-ring.outer { stroke-width:1.15; opacity:.76; }
+  #heptagramSvg .ph-core-heptagram-planet { filter:drop-shadow(0 1px 2px rgba(45,39,34,.12)); }
+  #heptagramSvg .ph-core-heptagram-art * { vector-effect:non-scaling-stroke; }
+
 </style>
 <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
@@ -2614,7 +2631,7 @@
   function heptagramPointFor(key) {
     const idx = chaldean.indexOf(key);
     const angle = (-90 + idx * (360 / chaldean.length)) * Math.PI / 180;
-    const cx = 180, cy = 180, r = 118;
+    const cx = 180, cy = 180, r = 142;
     return {x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, angle: angle};
   }
 
@@ -2651,6 +2668,27 @@
     return '<line class="' + className + '" x1="' + a.x.toFixed(2) + '" y1="' + a.y.toFixed(2) + '" x2="' + x.toFixed(2) + '" y2="' + y.toFixed(2) + '"></line>';
   }
 
+  const heptagramColors = Object.freeze({saturn:'#8c7a42',jupiter:'#41752f',mars:'#c9211e',sun:'#d08a00',venus:'#b23b79',mercury:'#277390',moon:'#58628a'});
+  const heptagramCanonicalArt = Object.freeze({
+    sun:'<circle cx="50" cy="50" r="16.634607932695275" fill="none" stroke="#111111" stroke-width="3.9091328641833893" stroke-linecap="round" stroke-linejoin="round"/><circle cx="50" cy="50" r="3.5764407055294836" fill="#111111" stroke="#111111" stroke-width="1.9129799122599562" stroke-linecap="round" stroke-linejoin="round" paint-order="stroke fill"/>',
+    moon:'<path d="M47.9220542672045 30.973850765136838C61.31728865008755 33.8880411272652 68.10978064023885 43.8087063489102 65.24081017917813 54.515849875003106C62.37183971811741 65.22299340109602 51.52903648882156 70.41829551040571 38.4713280425339 66.24444120403113C45.950988541848844 63.523247082146234 50.787778085441296 58.068742202403556 52.64417073671588 51.14059050904932C54.50056338799046 44.21243881569508 53.03903321035179 37.07030425297551 47.9220542672045 30.973850765136838Z" fill="none" stroke="#111111" stroke-width="3.3114267878104444" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
+    mercury:'<path d="M39.72984422309179 28.553498230574014C41.2401612491077 32.78238590341857 44.864922111545894 34.59476633463767 50 34.59476633463767S58.75983875089231 32.78238590341857 60.27015577690822 28.553498230574014" fill="none" stroke="#111111" stroke-width="3.3226974572350114" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><circle cx="50" cy="45.46904892195226" r="10.874282587314584" fill="none" stroke="#111111" stroke-width="3.3226974572350114" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M50 56.34333150926684L50 71.44650176942599M42.75047827512361 64.19698004454959L57.24952172487639 64.19698004454959" fill="none" stroke="#111111" stroke-width="3.3226974572350114" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
+    venus:'<circle cx="50" cy="41.57860230356569" r="12.351383288103655" fill="none" stroke="#111111" stroke-width="3.0878458220259137" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M50 53.92998559166934L50 70.77278098453797M42.70145532975693 62.91280980119927L57.298544670243075 62.91280980119927" fill="none" stroke="#111111" stroke-width="3.0878458220259137" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
+    mars:'<circle cx="44.18674072855829" cy="55.98977452270298" r="12.732012563063838" fill="none" stroke="#111111" stroke-width="2.8010427638740447" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M53.60843002522554 46.56808522603574L65.57652183450554 34.09071291423318M57.93731429666724 34.09071291423318L65.57652183450554 34.09071291423318L65.57652183450554 41.72992045207148" fill="none" stroke="#111111" stroke-width="2.8010427638740447" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
+    jupiter:'<path d="M35.600705705939745 43.44355534975665C33.13175145651101 39.49322855067068 34.1193331562825 35.04911090169897 38.56345080525422 32.58015665227024C43.00756845422593 30.111202402841506 48.43926780296914 31.592574952498744 50.41443120251213 35.542901751584715C52.88338545194085 40.480810250442175 50.41443120251213 46.406300449071125 46.957895253311904 51.34420894792859C44.48894100388317 54.80074489712881 41.526195904568695 57.26969914655754 38.56345080525422 59.24486254610053" fill="none" stroke="#111111" stroke-width="2.715849674371604" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M35.106914856054 59.24486254610053L65.72194754897025 59.24486254610053M57.82129395079832 32.08636580238449L57.82129395079832 68.62688869392971" fill="none" stroke="#111111" stroke-width="2.715849674371604" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
+    saturn:'<path d="M43.613219676770356 28.949988079580496L43.613219676770356 60.05083139269875M38.05949765657067 33.94833789776021L50.277686101009984 33.94833789776021" fill="none" stroke="#111111" stroke-width="3.054547111109828" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M43.613219676770356 48.3880151502794C45.83470848485024 43.94503753411965 49.16694169697004 41.16817652401981 53.05454711110983 41.16817652401981C58.052896929289545 41.16817652401981 61.38513014140936 45.05578193815959 61.38513014140936 50.05413175633931C61.38513014140936 53.94173717047909 59.16364133332949 57.273970382598904 56.386780323229644 61.716947998758656C53.609919313129794 66.1599256149184 53.609919313129794 68.93678662501824 56.386780323229644 70.60290323107816C58.60826913130951 71.7136476351181 60.82975793938939 70.60290323107816 61.94050234342933 68.93678662501824" fill="none" stroke="#111111" stroke-width="3.054547111109828" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>'
+  });
+  function directHeptagramPlanetMarkup(key, dayKey, hourKey) {
+    const p=heptagramPointFor(key), color=heptagramColors[key], isDay=key===dayKey, isHour=key===hourKey;
+    const stateId=isDay&&isHour?'day-and-hour-ruler':isDay?'day-ruler':isHour?'hour-ruler':'plain';
+    const glyphColor=isHour?'#ffffff':color, fill=isHour?color:'#ffffff';
+    const art=heptagramCanonicalArt[key].split('#111111').join(glyphColor);
+    const rings=isDay?'<circle class="ph-core-heptagram-day-ring inner" cx="0" cy="0" r="23" stroke="'+color+'"></circle><circle class="ph-core-heptagram-day-ring outer" cx="0" cy="0" r="27" stroke="'+color+'"></circle>':'';
+    return '<g class="ph-core-heptagram-planet p-'+key+(isDay?' is-day-ruler':'')+(isHour?' is-hour-ruler':'')+'" data-planetary-hour-state="'+stateId+'">'+
+      '<g transform="translate('+p.x.toFixed(2)+' '+p.y.toFixed(2)+')" class="ph-core-heptagram-node-glyph" data-canonical-glyph-id="'+key+'">'+
+      '<g transform="scale('+(17/19)+')" data-master-glyph-unit="true">'+rings+'<g class="ph-core-heptagram-bubble"><circle cx="0" cy="0" r="19" fill="'+fill+'" stroke="'+color+'" stroke-width="'+(isHour?'2.8':'2.35')+'"></circle><g class="ph-core-heptagram-art" transform="matrix(0.64 0 0 0.64 -32 -32)">'+art+'</g></g></g></g><title>'+byKey[key].name+(isDay?' day ruler':'')+(isHour?' hour ruler':'')+'</title></g>';
+  }
+
   function renderAnimatedHeptagram(frame, rows, dayKey, currentIdx) {
     if (!el.heptagramSvg) return;
     const liveHour = Math.max(1, Math.min(24, currentIdx + 1));
@@ -2679,42 +2717,25 @@
     const weekIndex = Math.max(0, weekPath.indexOf(dayKey));
     const dayFraction = selectedPosition >= 24 ? 1 : Math.max(0, Math.min(1, (selectedPosition - 1) / 23));
     let svg = '';
-    svg += '<circle class="ph-heptagram-circle" cx="180" cy="180" r="118"></circle>';
-    svg += '<circle class="ph-heptagram-guide" cx="180" cy="180" r="78"></circle>';
+    svg += '<circle class="ph-core-heptagram-circle" cx="180" cy="180" r="142"></circle>';
+    svg += '<circle class="ph-core-heptagram-guide" cx="180" cy="180" r="142"></circle>';
 
     for (let i = 0; i < 7; i++) {
       const a = weekPath[i], b = weekPath[i + 1];
-      if (i < weekIndex) svg += heptagramLine(a, b, 'ph-heptagram-star-segment past');
+      if (i < weekIndex) svg += heptagramLine(a, b, 'ph-core-heptagram-week past');
       else if (i === weekIndex) {
-        svg += heptagramLine(a, b, 'ph-heptagram-star-segment future');
-        svg += heptagramPartialLine(a, b, 'ph-heptagram-star-segment current', dayFraction);
-      } else svg += heptagramLine(a, b, 'ph-heptagram-star-segment future');
+        svg += heptagramLine(a, b, 'ph-core-heptagram-week future');
+        svg += heptagramPartialLine(a, b, 'ph-core-heptagram-week current', dayFraction);
+      } else svg += heptagramLine(a, b, 'ph-core-heptagram-week future');
     }
 
-    const currentSegment = Math.max(0, selectedHour - 1);
-    for (let i = 0; i < 23; i++) {
-      if (i < currentSegment) svg += heptagramLine(sequence24[i], sequence24[i + 1], 'ph-heptagram-hour-segment past');
-      else if (i === currentSegment) {
-        svg += heptagramLine(sequence24[i], sequence24[i + 1], 'ph-heptagram-hour-segment future');
-        svg += heptagramPartialLine(sequence24[i], sequence24[i + 1], 'ph-heptagram-hour-segment current', hourFraction);
-      } else svg += heptagramLine(sequence24[i], sequence24[i + 1], 'ph-heptagram-hour-segment future');
-    }
-    chaldean.forEach(function (key) {
-      const p = heptagramPointFor(key);
-      const lp = heptagramLabelPointFor(key);
-      const planet = byKey[key];
-      const isCurrent = row && row.ruler.key === key;
-      const isDay = key === dayKey;
-      const isWeekComplete = weekPath.slice(0, weekIndex + 1).includes(key);
-      const classes = 'ph-heptagram-node p-' + key + (isCurrent ? ' current' : '') + (isDay ? ' day-ruler' : '') + (isWeekComplete ? ' week-complete' : '');
-      svg += '<g class="p-' + key + '">';
-      svg += '<circle class="' + classes + '" cx="' + p.x.toFixed(2) + '" cy="' + p.y.toFixed(2) + '" r="18"></circle>';
-      svg += '<text class="ph-heptagram-glyph" x="' + p.x.toFixed(2) + '" y="' + (p.y + 9).toFixed(2) + '" text-anchor="middle">' + planet.sym + '</text>';
-      svg += '<text class="ph-heptagram-label" x="' + lp.x.toFixed(2) + '" y="' + lp.y.toFixed(2) + '" text-anchor="middle">' + planet.name + '</text>';
-      if (isDay) svg += '<title>' + planet.name + ' day ruler</title>';
-      svg += '</g>';
-    });
+    for (let i = 0; i < 7; i++) svg += heptagramLine(chaldean[i], chaldean[(i + 1) % 7], 'ph-core-heptagram-hour future');
+    const hourKey = row.ruler.key;
+    const hourNext = chaldean[(chaldean.indexOf(hourKey) + 1) % 7];
+    svg += heptagramPartialLine(hourKey, hourNext, 'ph-core-heptagram-hour current', hourFraction);
+    chaldean.forEach(function (key) { svg += directHeptagramPlanetMarkup(key, dayKey, hourKey); });
     el.heptagramSvg.innerHTML = svg;
+    el.heptagramSvg.dataset.directHeptagramReady = 'true';
 
     if (el.dayRulerPortrait && mythicProfiles[dayKey]) { el.dayRulerPortrait.src = mythicProfiles[dayKey]; el.dayRulerPortrait.alt = day.name + ' profile artwork'; }
     if (el.dayRulerProfileName) el.dayRulerProfileName.textContent = day.sym + ' ' + day.name + ' day';

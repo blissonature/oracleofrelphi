@@ -34,17 +34,6 @@
     return /(^|\/)planetaryhours\.html$/.test(location.pathname);
   }
 
-  function ensurePlanetaryHoursVisualBootStyle() {
-    if (!isPlanetaryHoursContext() || document.getElementById('relphi-ph-visual-boot-mask')) return;
-    const style = document.createElement('style');
-    style.id = 'relphi-ph-visual-boot-mask';
-    style.textContent = [
-      '#heptagramSvg:not([data-sky-chart-parity-ready="true"]){visibility:hidden!important}',
-      '#phCurrentWheel:not([data-sky-chart-parity-ready="true"]){visibility:hidden!important;min-height:242px}',
-      '#phCurrentWheel[data-sky-chart-parity-ready="true"]{visibility:visible!important}'
-    ].join('');
-    (document.head || document.documentElement).appendChild(style);
-  }
 
   function initAnalytics() {
     const id = 'G-PNWZP2MW64';
@@ -219,16 +208,12 @@
     }
     if (isPlanetaryHoursContext()) {
       loadCanonicalGlyphRuntime(function () {
-        appendScript('sky-chart-wheel-spec-v1.js?v=6', function () {
-          appendScript('planetary-hours-sky-chart-visual-parity-v1.js?v=3', function () {
-            appendScript('standardize-zodiac-wheels.js?v=6');
-            appendScript('relphi-inline-glyph-consumer-v1.js?v=2');
-          });
-        });
+        appendScript('standardize-zodiac-wheels.js?v=7');
+        appendScript('relphi-inline-glyph-consumer-v1.js?v=2');
       });
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('planetary-hours-moon-position-v1.js?v=1');
-      appendScript('planetary-hours-active-time-integrity-v1.js?v=2');
+      appendScript('planetary-hours-active-time-integrity-v1.js?v=3');
     }
     if (/(^|\/)astrology-foundations\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () {
@@ -263,7 +248,6 @@
 
   // These masks must be installed synchronously, before DOMContentLoaded enhancement work can paint intermediate states.
   if (isTarotContext()) refreshDrawingBoardControlAssets();
-  if (isPlanetaryHoursContext()) ensurePlanetaryHoursVisualBootStyle();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();

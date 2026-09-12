@@ -1,42 +1,26 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
+const page=fs.readFileSync('planetaryhours.html','utf8');
 const parity=fs.readFileSync('planetary-hours-sky-chart-visual-parity-v1.js','utf8');
 const standardizer=fs.readFileSync('standardize-zodiac-wheels.js','utf8');
-const navloader=fs.readFileSync('navloader.js','utf8');
+const nav=fs.readFileSync('navloader.js','utf8');
+const integrity=fs.readFileSync('planetary-hours-active-time-integrity-v1.js','utf8');
 
-assert.match(standardizer,/sky-chart-wheel-spec-v1\.js\?v=6/);
-assert.match(standardizer,/planetary-hours-sky-chart-visual-parity-v1\.js\?v=3/);
-assert.match(standardizer,/installPlanetaryHoursBootMask\(\)/);
-assert.match(standardizer,/isPlanetaryHoursOwnedSvg\(svg\)/);
-assert.match(standardizer,/if \(isPlanetaryHoursOwnedSvg\(svg\) \|\| !looksLikeWheel\(svg\)\) return/);
+assert.match(page,/Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing/);
+assert.match(page,/const heptagramCanonicalArt = Object\.freeze/);
+assert.match(page,/const cx = 180, cy = 180, r = 142/);
+assert.match(page,/ph-core-heptagram-day-ring inner/);
+assert.match(page,/r=\"23\"/);
+assert.match(page,/r=\"27\"/);
+assert.match(page,/for \(let i = 0; i < 7; i\+\+\) svg \+= heptagramLine\(chaldean/);
+assert.match(page,/directHeptagramPlanetMarkup\(key, dayKey, hourKey\)/);
+assert.match(page,/data-direct-heptagram-ready|directHeptagramReady/);
+assert.doesNotMatch(parity,/heptagramSvg|ph-heptagram-node|ph-core-heptagram/);
+assert.match(parity,/Planetary Hours current-placements mini wheel/);
+assert.doesNotMatch(nav,/relphi-ph-visual-boot-mask|ensurePlanetaryHoursVisualBootStyle/);
+assert.doesNotMatch(integrity,/correctHour24|ph-heptagram-node/);
+assert.doesNotMatch(standardizer,/installPlanetaryHoursBootMask|relphi-ph-visual-boot-mask/);
+assert.match(standardizer,/isPlanetaryHoursOwnedSvg/);
 
-assert.match(navloader,/ensurePlanetaryHoursVisualBootStyle/);
-assert.match(navloader,/#heptagramSvg:not\(\[data-sky-chart-parity-ready="true"\]\)/);
-assert.match(navloader,/planetary-hours-sky-chart-visual-parity-v1\.js\?v=3/);
-assert.match(navloader,/if \(isPlanetaryHoursContext\(\)\) ensurePlanetaryHoursVisualBootStyle\(\)/);
-
-assert.match(parity,/__relphiPlanetaryHoursSkyChartVisualParityV3/);
-assert.match(parity,/MASTER_RADIUS=19,DISPLAY_RADIUS=17,MASTER_SCALE=DISPLAY_RADIUS\/MASTER_RADIUS/);
-assert.match(parity,/DAY_RING_INNER_RADIUS=23,DAY_RING_OUTER_RADIUS=27/);
-assert.match(parity,/async function buildHeptagramDisplay\(source\)/);
-assert.match(parity,/const display=source\.cloneNode\(true\)/);
-assert.match(parity,/display\.dataset\.skyChartParityDisplay='true'/);
-assert.match(parity,/node\.classList\.add\('ph-parity-anchor'\)/);
-assert.match(parity,/component\.createBubble\(master,entry\.id/);
-assert.match(parity,/display\.dataset\.skyChartParityReady='true'/);
-assert.match(parity,/heptagramSourceObserver=new MutationObserver/);
-assert.match(parity,/heptagramSource\.replaceWith\(display\)/);
-assert.match(parity,/visible\.replaceWith\(display\)/);
-assert.match(parity,/heptagramSourceObserver\.observe\(heptagramSource/);
-assert.doesNotMatch(parity,/heptagramSource\.removeAttribute\('data-sky-chart-parity-ready'\)/);
-
-assert.match(parity,/window\.RelphiSkyWheelSpec\?\.mini/);
-assert.match(parity,/window\.RelphiSkyWheelSpec\?\.miniRole\?\.\('A'\)/);
-assert.match(parity,/ph-parity-zodiac-sector/);
-assert.match(parity,/ph-parity-house-sector/);
-assert.match(parity,/bubble\(host,id,\{radius:zodiac\.glyphRadius\|\|14,color:'#514b45',plain:true/);
-assert.match(parity,/bubble\(host,item\.id,\{radius:bubbleRadius,color:SKY_COLOR,fill:'#fffdfa',strokeWidth\}\)/);
-assert.match(parity,/mount\.dataset\.skyChartParityReady='true'/);
-
-console.log('Planetary Hours Sky Chart visual parity contract passed.');
+console.log('Planetary Hours direct heptagram ownership contract passed.');
