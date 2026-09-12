@@ -1380,35 +1380,6 @@
   .ph-current-wheel-direct .ph-wheel-center { fill:#211d1a; stroke:#fffdfa; stroke-width:1.5; vector-effect:non-scaling-stroke; }
   .ph-current-wheel-card .ph-tiny { margin:.25rem 0 0; }
 
-  /* Desktop test: Day + Hour continue into the 24-hour list while the sky rail flows independently. */
-@media (min-width: 901px) {
-  .ph-summary-grid-consolidated {
-    align-items: start;
-    grid-template-areas:
-      "day hour moon"
-      "table table moon";
-  }
-  .ph-summary-grid-consolidated > .ph-day-frame { grid-area: day; align-self: start; }
-  .ph-summary-grid-consolidated > .ph-living-heptagram-frame { grid-area: hour; align-self: start; }
-  .ph-summary-grid-consolidated > .ph-moon-frame { grid-area: moon; align-self: start; }
-  .ph-summary-grid-consolidated > #tableSection {
-    grid-area: table;
-    width: 100%;
-    max-width: none;
-    margin: .15rem 0 0;
-    box-sizing: border-box;
-    align-self: start;
-  }
-}
-@media (max-width: 900px) {
-  .ph-summary-grid-consolidated > #tableSection {
-    order: 6;
-    width: 100%;
-    margin: .9rem 0 0;
-    box-sizing: border-box;
-  }
-}
-
   /* v320 mobile priority: the living instrument leads; day context follows compactly. */
   @media (max-width: 760px) {
     .ph-summary-grid-consolidated > .ph-living-heptagram-frame { order: 1; }
@@ -1744,8 +1715,12 @@
       </article>
     </div>
       </section>
-    
-      <section class="ph-panel" id="tableSection">
+    </div>
+  </section>
+
+
+
+  <section class="ph-panel" id="tableSection">
     <h2>Twenty-four planetary hours</h2>
     <div class="ph-table-wrap">
       <table class="ph-table" id="hoursTable">
@@ -1757,11 +1732,6 @@
       </table>
     </div>
   </section>
-
-  </div>
-  </section>
-
-
 
   <section class="ph-panel">
     <details class="ph-help">
