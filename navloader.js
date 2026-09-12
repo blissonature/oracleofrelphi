@@ -30,6 +30,11 @@
     return /(^|\/)sky-chart\.html$/.test(location.pathname) && !isTarotPreviewDocument();
   }
 
+  function isPlanetaryHoursContext() {
+    return /(^|\/)planetaryhours\.html$/.test(location.pathname);
+  }
+
+
   function initAnalytics() {
     const id = 'G-PNWZP2MW64';
     if (!/(^|\.)oracleofrelphi\.com$/i.test(location.hostname) || document.getElementById('relphi-google-tag')) return;
@@ -201,14 +206,14 @@
         });
       });
     }
-    if (/(^|\/)planetaryhours\.html$/.test(location.pathname)) {
+    if (isPlanetaryHoursContext()) {
       loadCanonicalGlyphRuntime(function () {
-        appendScript('standardize-zodiac-wheels.js?v=5');
+        appendScript('standardize-zodiac-wheels.js?v=7');
         appendScript('relphi-inline-glyph-consumer-v1.js?v=2');
       });
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('planetary-hours-moon-position-v1.js?v=1');
-      appendScript('planetary-hours-active-time-integrity-v1.js?v=2');
+      appendScript('planetary-hours-active-time-integrity-v1.js?v=3');
     }
     if (/(^|\/)astrology-foundations\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () {
@@ -241,8 +246,7 @@
     fetch('nav.html?v=14').then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); }).then(injectNav).catch(fallbackNav);
   }
 
-  // Tarot's temporary Drawing Board controls can be constructed before DOMContentLoaded.
-  // Install the mask synchronously so those intermediate positions are never painted.
+  // These masks must be installed synchronously, before DOMContentLoaded enhancement work can paint intermediate states.
   if (isTarotContext()) refreshDrawingBoardControlAssets();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);

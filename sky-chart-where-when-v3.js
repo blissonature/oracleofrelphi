@@ -31,7 +31,23 @@ function installStyles(){
     .sky-where-when-footer{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;gap:.5rem!important;width:100%;padding:.45rem .62rem .62rem!important;box-sizing:border-box;background:#fffdf8;border-top:1px solid rgba(31,27,24,.12);z-index:2}
     .sky-where-when-footer-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:.48rem;width:100%}
     .sky-where-when-footer-actions .sky-where-when-button{width:100%;min-width:0;margin:0}
-    @media(max-width:620px){.sky-where-when-here-now-row{padding:.55rem .55rem .14rem}.sky-where-when-footer{padding:.42rem .55rem .55rem!important}}
+    .sky-ph-handoff-dialog{width:min(680px,calc(100vw - 2rem));max-width:680px;border:2px solid #dc1f18;border-radius:1.3rem;padding:0;background:#fffdf8;color:#1f1b18;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+    .sky-ph-handoff-dialog::backdrop{background:rgba(17,14,12,.48);backdrop-filter:blur(2px)}
+    .sky-ph-handoff-inner{padding:1.2rem;display:grid;gap:1rem}
+    .sky-ph-handoff-inner h2{margin:0;text-align:center;font-size:1.35rem}
+    .sky-ph-handoff-inner>p{margin:0;text-align:center;color:#5d554f}
+    .sky-ph-handoff-slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
+    .sky-ph-handoff-slot{appearance:none;width:100%;min-width:0;text-align:left;border:1px solid rgba(31,27,24,.18);border-radius:1rem;background:#fff;padding:.9rem;display:grid;gap:.28rem;cursor:pointer;color:inherit}
+    .sky-ph-handoff-slot:hover,.sky-ph-handoff-slot:focus-visible{border-color:#dc1f18;box-shadow:0 0 0 3px rgba(220,31,24,.1);outline:none}
+    .sky-ph-handoff-action{font-size:.75rem;font-weight:850;letter-spacing:.05em;text-transform:uppercase;color:#dc1f18}
+    .sky-ph-handoff-name{font-size:1rem;line-height:1.25}
+    .sky-ph-handoff-meta{font-size:.82rem;line-height:1.35;color:#6a625c;overflow-wrap:anywhere}
+    .sky-ph-handoff-slot.is-empty{border-style:dashed;background:#fffdfa}
+    .sky-ph-handoff-actions{display:flex;justify-content:center;gap:.65rem;flex-wrap:wrap}
+    .sky-ph-handoff-clear,.sky-ph-handoff-cancel{border-radius:999px;padding:.68rem 1rem;font:inherit;font-weight:750;cursor:pointer}
+    .sky-ph-handoff-clear{background:#fff;color:#dc1f18;border:1px solid #dc1f18}
+    .sky-ph-handoff-cancel{background:#fff;color:#333;border:1px solid rgba(31,27,24,.22)}
+    @media(max-width:620px){.sky-where-when-here-now-row{padding:.55rem .55rem .14rem}.sky-where-when-footer{padding:.42rem .55rem .55rem!important}.sky-ph-handoff-slots{grid-template-columns:1fr}}
   `;
   document.head.appendChild(style);
 }
@@ -145,7 +161,7 @@ function calculateSky(slot,selected,date,time,options={}){
   placements.Ascendant=placementObject('Ascendant',asc);placements.Midheaven=placementObject('Midheaven',mc);
   const houseSystem=localStorage.getItem(SHARED_HOUSE_KEY)||profileFor(slot).houseSystem||'whole-sign';
   const houses=window.RelphiHouseSystems.calculateCusps({system:houseSystem,ascendant:asc,midheaven:mc,siderealDegrees:siderealDegrees(instant,selected.longitude),obliquityDegrees:obliquity(instant),latitude:selected.latitude});
-  const existing=payload(slot)||{},metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{},liveOrigin=String(options.liveOrigin||'');
+  const existing=options.replaceExisting?{}:(payload(slot)||{}),metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{},priorProfile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{},liveOrigin=String(options.liveOrigin||'');
   delete metadata.savedSkyId;delete metadata.savedSkyName;delete metadata.savedSkyLoadedAt;
   metadata.whereWhenSource=selected.source||'manual';
   if(liveOrigin==='use-now'){
@@ -314,12 +330,109 @@ document.addEventListener('keydown',event=>{if(event.key!=='Enter')return;const 
 window.addEventListener('relphi:sky-drawer-preparing',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot])openEditor(slot,false)});
 window.addEventListener('relphi:sky-drawer-opened',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot]&&!transactionState.editing.has(slot))openEditor(slot,false)});
 window.addEventListener('relphi:sky-drawer-closed',event=>{const{slot,drawer}=event.detail||{};if(drawer==='where'&&SLOT_KEYS[slot]&&transactionState.editing.has(slot))closeEditor(slot)});
+function readPlanetaryHoursHandoff(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('source')!=='planetary-hours')return null;
+  const dateTime=String(params.get('datetime')||'').trim(),latitude=Number(params.get('lat')),longitude=Number(params.get('lon')),timeZone=String(params.get('tz')||'').trim();
+  const match=dateTime.match(/^(\d{4}-\d\d-\d\d)T(\d\d:\d\d)/);
+  if(!match||!Number.isFinite(latitude)||!Number.isFinite(longitude)||!timeZone)return null;
+  const locationName=String(params.get('loc')||'').trim()||`${displayCoordinate(latitude)}, ${displayCoordinate(longitude)}`;
+  return{date:match[1],time:match[2],dateTime:`${match[1]}T${match[2]}`,latitude,longitude,timeZone,location:locationName,name:String(params.get('name')||'').trim()};
+}
+function slotHasPlacements(slot){
+const value=payload(slot),placements=value?.placements;
+return!!(placements&&typeof placements==='object'&&Object.keys(placements).length);
+}
+function planetaryHoursSlotPreview(slot){
+const value=payload(slot)||{},profile=value.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{},name=String(value.name||value.title||value.displayName||value.skyName||`Sky ${slot}`).trim()||`Sky ${slot}`;
+const dateTime=String(profile.dateTime||'').trim(),locationName=String(profile.location||'').trim();
+return{name,dateTime,location:locationName};
+}
+function planetaryHoursSlotMarkup(slot,filled){
+if(!filled)return`<button class="sky-ph-handoff-slot is-empty" type="button" data-ph-handoff-slot="${slot}"><span class="sky-ph-handoff-action">Use Sky ${slot}</span><strong class="sky-ph-handoff-name">Empty slot</strong><span class="sky-ph-handoff-meta">Keep the current Sky A and add this moment for comparison.</span></button>`;
+const info=planetaryHoursSlotPreview(slot),meta=[info.dateTime,info.location].filter(Boolean).join(' · ')||'Existing sky';
+return`<button class="sky-ph-handoff-slot" type="button" data-ph-handoff-slot="${slot}"><span class="sky-ph-handoff-action">Replace Sky ${slot}</span><strong class="sky-ph-handoff-name">${escapeHtml(info.name)}</strong><span class="sky-ph-handoff-meta">${escapeHtml(meta)}</span></button>`;
+}
+function choosePlanetaryHoursTarget(){
+const aFilled=slotHasPlacements('A'),bFilled=slotHasPlacements('B');
+if(!aFilled)return Promise.resolve({slot:'A',clearBoth:false});
+return new Promise(resolve=>{
+document.querySelector('.sky-ph-handoff-dialog')?.remove();
+const dialog=document.createElement('dialog');
+dialog.className='sky-ph-handoff-dialog';
+dialog.setAttribute('aria-labelledby','skyPhHandoffTitle');
+dialog.innerHTML=`<div class="sky-ph-handoff-inner"><h2 id="skyPhHandoffTitle">${bFilled?'Sky Chart slots filled':'Sky Chart already has a sky'}</h2><p>Where should this Planetary Hours moment go?</p><div class="sky-ph-handoff-slots">${planetaryHoursSlotMarkup('A',true)}${planetaryHoursSlotMarkup('B',bFilled)}</div><div class="sky-ph-handoff-actions">${bFilled?'<button class="sky-ph-handoff-clear" type="button" data-ph-handoff-clear>Clear both and open this moment</button>':''}<button class="sky-ph-handoff-cancel" type="button" data-ph-handoff-cancel>Cancel</button></div></div>`;
+const finish=choice=>{try{dialog.close()}catch(_){}dialog.remove();resolve(choice)};
+dialog.addEventListener('click',event=>{
+const slotButton=event.target.closest?.('[data-ph-handoff-slot]');
+if(slotButton)return finish({slot:slotButton.dataset.phHandoffSlot,clearBoth:false});
+if(event.target.closest?.('[data-ph-handoff-clear]'))return finish({slot:'A',clearBoth:true});
+if(event.target.closest?.('[data-ph-handoff-cancel]'))return finish(null);
+});
+dialog.addEventListener('cancel',event=>{event.preventDefault();finish(null)},{once:true});
+document.body.appendChild(dialog);
+if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');
+});
+}
+function cleanPlanetaryHoursHandoffUrl(){
+const clean=new URL(location.href);
+['preview','source','datetime','date','lat','lon','tz','loc','name','calc'].forEach(key=>clean.searchParams.delete(key));
+history.replaceState(history.state,'',clean.pathname+clean.search+clean.hash);
+}
+let planetaryHoursHandoffConsumed=false;
+async function applyPlanetaryHoursHandoff(){
+const handoff=readPlanetaryHoursHandoff();
+if(!handoff||planetaryHoursHandoffConsumed)return;
+planetaryHoursHandoffConsumed=true;
+const choice=await choosePlanetaryHoursTarget();
+if(!choice){cleanPlanetaryHoursHandoffUrl();return}
+const slot=choice.slot;
+const selected={source:'planetary-hours',query:handoff.location,canonical:handoff.location,latitude:handoff.latitude,longitude:handoff.longitude,timezone:handoff.timeZone};
+cardState[slot].selected=selected;
+try{
+const nextPayload=calculateSky(slot,selected,handoff.date,handoff.time,{replaceExisting:true});
+if(handoff.name){nextPayload.name=handoff.name;nextPayload.title=handoff.name;nextPayload.displayName=handoff.name;nextPayload.skyName=handoff.name}
+if(!window.RelphiChironEphemeris)throw new Error('The Chiron ephemeris service is unavailable.');
+await window.RelphiChironEphemeris.completePayload(nextPayload);
+if(!window.RelphiChironEphemeris.hasChiron(nextPayload.placements))throw new Error('Chiron could not be calculated for this sky.');
+if(choice.clearBoth){localStorage.removeItem(SLOT_KEYS.A);localStorage.removeItem(SLOT_KEYS.B)}
+writeJson(SLOT_KEYS[slot],nextPayload);
+const hasB=!choice.clearBoth&&(slot==='B'||slotHasPlacements('B'));
+if(window.RelphiSkyStartupMode){
+window.RelphiSkyStartupMode.writeMode(hasB?'comparison':'single');
+window.RelphiSkyStartupMode.syncRoot();
+}
+if(choice.clearBoth)dispatchSlotChange('B');
+dispatchSlotChange(slot);
+window.dispatchEvent(new CustomEvent('relphi:sky-working-copy-updated',{detail:{slot,source:'planetary-hours',dateTime:handoff.dateTime,location:handoff.location}}));
+window.dispatchEvent(new CustomEvent('relphi:sky-name-updated',{detail:{slot,name:nextPayload.name||`Sky ${slot}`,source:'planetary-hours'}}));
+scheduleSummary(slot,true);
+requestAnimationFrame(()=>window.RelphiSkyCardShell?.openDrawer?.(slot,'placements'));
+cleanPlanetaryHoursHandoffUrl();
+}catch(error){
+console.error(error);
+planetaryHoursHandoffConsumed=false;
+const refs=shell(slot);
+if(refs)status(slot,error.message||'The Planetary Hours sky could not be built.',true);
+}
+}
+function schedulePlanetaryHoursHandoff(){
+  if(!readPlanetaryHoursHandoff())return;
+  let attempts=0;
+  const run=()=>{
+    attempts+=1;
+    const ready=!!(window.Astronomy&&window.luxon?.DateTime&&window.RelphiHouseSystems?.calculateCusps&&window.RelphiChironEphemeris&&window.RelphiSkyCardShell);
+    if(ready){void applyPlanetaryHoursHandoff();return}
+    if(attempts<120)setTimeout(run,50);
+  };
+  run();
+}
 window.addEventListener('storage',event=>{if(!event.key||Object.values(SLOT_KEYS).includes(event.key)){['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot)})}});
 window.addEventListener('relphi:sky-foundation-ready',()=>{scheduleSummary('A');scheduleSummary('B')});
 window.addEventListener('relphi:sky-name-updated',event=>{const slot=event.detail?.slot;if(SLOT_KEYS[slot]){window.RelphiSkyCardShell?.sync?.(slot,payload(slot));scheduleSummary(slot,true)}});
 window.addEventListener('resize',()=>{['A','B'].forEach(slot=>{const svg=shell(slot)?.heptagram;if(svg&&svg.dataset.canonicalSourceReady==='true')svg.setAttribute('viewBox',window.matchMedia?.('(max-width:620px)')?.matches?'0 -8 360 368':'0 0 360 360')})},{passive:true});
 function recoverWhereWhen(){reconcileWhereWhenTransaction();['A','B'].forEach(slot=>{window.RelphiSkyCardShell?.ensure?.(slot,payload(slot));scheduleSummary(slot,true)})}
-function start(){installStyles();['A','B'].forEach(slot=>{shell(slot);scheduleSummary(slot)})}
+function start(){installStyles();['A','B'].forEach(slot=>{shell(slot);scheduleSummary(slot)});schedulePlanetaryHoursHandoff()}
 window.addEventListener('relphi:sky-session-recovered',recoverWhereWhen);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();

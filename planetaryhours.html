@@ -303,6 +303,39 @@
     background: rgba(220,31,24,0.045);
   }
 
+
+  /* Mobile planetary-hours table: compact cards instead of a wide clipped table. */
+  @media (max-width: 700px) {
+    #tableSection { padding-inline: .75em; }
+    #tableSection h2 { font-size: clamp(1.55rem, 8vw, 2.2rem); line-height: 1.08; }
+    .ph-table-wrap { max-height: none; overflow: visible; }
+    .ph-table { min-width: 0; width: 100%; display: block; }
+    .ph-table thead { display: none; }
+    .ph-table tbody { display: grid; }
+    .ph-table tr {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas:
+        "number time"
+        ". ruler"
+        "light focus";
+      align-items: start;
+      column-gap: .8rem;
+      row-gap: .45rem;
+      padding: .9rem .8rem 1rem;
+      border-bottom: 1px solid var(--relphi-line);
+    }
+    .ph-table th,
+    .ph-table td { padding: 0; border-bottom: 0; min-width: 0; }
+    .ph-table td:nth-child(1) { grid-area: number; font-weight: 800; line-height: 1.2; }
+    .ph-table td:nth-child(2) { grid-area: time; white-space: nowrap; font-variant-numeric: tabular-nums; line-height: 1.2; }
+    .ph-table td:nth-child(3) { grid-area: ruler; display: flex; align-items: center; justify-self: start; gap: .38rem; white-space: nowrap; font-weight: 650; }
+    .ph-table td:nth-child(4) { grid-area: light; align-self: start; padding-top: .08rem; }
+    .ph-table td:nth-child(5) { grid-area: focus; font-size: .86rem; line-height: 1.38; color: var(--relphi-muted); }
+    .ph-table tr.active { box-shadow: inset 3px 0 var(--relphi-red); }
+    .ph-table .ph-direct-canonical-glyph { flex: 0 0 auto; }
+  }
+
   .ph-location-search {
     flex: 1 1 280px;
     min-width: 240px;
@@ -367,6 +400,55 @@
     margin-top: 0.9em;
     border-top: 1px solid var(--relphi-line);
     padding-top: 0.9em;
+  }
+
+  /* Settings UI: semantic rows, aligned fields, and quieter secondary actions. */
+  .ph-settings-body { display:grid; gap:1rem; }
+  .ph-settings-group { display:grid; gap:.65rem; }
+  .ph-settings-group + .ph-settings-group { border-top:1px solid rgba(17,17,17,.09); padding-top:.85rem; }
+  .ph-settings-group-title { color:#3f3a36; font-size:.78rem; font-weight:850; letter-spacing:.08em; text-transform:uppercase; }
+  .ph-settings-row { display:grid; align-items:end; gap:.65rem; }
+  .ph-settings-row-location { grid-template-columns:auto minmax(220px,1fr) minmax(115px,.45fr) minmax(115px,.45fr) auto; }
+  .ph-settings-row-place { grid-template-columns:minmax(260px,1fr) auto auto; }
+  .ph-settings-row-time { grid-template-columns:auto minmax(0,1fr); align-items:end; }
+  .ph-settings-field { display:grid !important; min-width:0; gap:.28rem !important; color:#514b46 !important; font-size:.78rem; font-weight:750; line-height:1.1; }
+  .ph-settings-field > span { padding-left:.2rem; }
+  .ph-settings-field .ph-input,
+  .ph-settings-field .ph-select { box-sizing:border-box; width:100%; min-width:0; min-height:2.55rem; }
+  .ph-settings-field-coordinate .ph-input.short { width:100%; }
+  .ph-settings-row .ph-btn,
+  .ph-settings-row .ph-clock { min-height:2.55rem; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; white-space:nowrap; }
+  .ph-settings-row .ph-clock { padding-inline:1rem; }
+  .ph-btn-secondary { background:#fff; color:var(--relphi-red-dark); border:1px solid var(--relphi-line); box-shadow:none; }
+  .ph-btn-secondary:hover,
+  .ph-btn-secondary:focus { background:#fff7f5; color:var(--relphi-red-dark); border-color:rgba(220,31,24,.38); }
+  .ph-settings-echo { margin:.05rem 0 0; padding:.45rem .6rem; border-radius:.65rem; background:rgba(255,255,255,.65); }
+  .ph-location-note { grid-column:1 / -1; margin:0; padding-left:.2rem; }
+  .ph-system-time-toggle { align-self:end; min-height:2.55rem; padding:.45rem .65rem; border:1px solid rgba(17,17,17,.09); border-radius:999px; background:#fff; white-space:nowrap; }
+  .ph-row-system-time { display:grid; grid-template-columns:minmax(155px,1fr) minmax(135px,.8fr) auto; gap:.65rem; align-items:end; min-width:0; }
+  @media (max-width: 980px) {
+    .ph-settings-row-location { grid-template-columns:auto minmax(220px,1fr) minmax(115px,.5fr) minmax(115px,.5fr) auto; }
+    .ph-settings-row-location #setLatLon { grid-column:5; }
+    .ph-settings-row-place { grid-template-columns:minmax(220px,1fr) auto auto; }
+  }
+  @media (max-width: 760px) {
+    .ph-settings-body { gap:.85rem; }
+    .ph-settings-row-location,
+    .ph-settings-row-place,
+    .ph-settings-row-time,
+    .ph-row-system-time { grid-template-columns:1fr 1fr; }
+    .ph-settings-row-location .ph-clock,
+    .ph-settings-row-location #useGeo,
+    .ph-settings-field-timezone,
+    .ph-location-search,
+    .ph-location-note,
+    .ph-system-time-toggle,
+    .ph-row-system-time { grid-column:1 / -1; }
+    .ph-settings-row-location #setLatLon { grid-column:auto; }
+    .ph-settings-row-place #applyLocation { grid-column:1; }
+    .ph-settings-row-place #copyLink { grid-column:2; }
+    .ph-row-system-time { display:grid; }
+    .ph-row-system-time #applyDT { grid-column:1 / -1; }
   }
   .ph-summary-grid-merged {
     grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
@@ -471,6 +553,7 @@
   .ph-moon-frame h2 { margin-top: 0; }
   .ph-hour-frame { text-align: center; }
   .ph-top-hour-time { font-weight: 800; margin: .65em 0 .2em; }
+  .ph-datefield-jump { text-align: center; }
   .ph-datefield-link {
     display: inline-flex;
     margin-top: .75em;
@@ -595,7 +678,33 @@
 
 
   /* v196 top-block wanderer rise/set strip */
-  .ph-wanderer-strip { grid-column: 1 / -1; margin-top: 1rem; border-top: 1px solid var(--relphi-line); padding-top: .9rem; }
+  .ph-wanderer-strip { margin-top: 1rem; border-top: 1px solid var(--relphi-line); padding-top: .9rem; }
+  .ph-moon-frame .ph-wanderer-strip { margin-top: .85rem; padding-top: .75rem; }
+  .ph-moon-frame .ph-section-heading.compact h3 { font-size: 1.05rem; line-height: 1.15; margin: .08rem 0 .35rem; }
+  .ph-moon-frame .ph-planet-instructions { font-size: .78rem; line-height: 1.3; margin: 0 0 .55rem; }
+  .ph-moon-frame .ph-wanderer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; }
+  .ph-moon-frame .ph-wanderer-card:not(.is-collapsed) { grid-column: 1 / -1; }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed {
+    min-width: 0;
+    padding: .42rem .48rem;
+    min-height: 0;
+    opacity: .82;
+  }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-title {
+    align-items: center;
+    justify-content: flex-start;
+    gap: .24rem;
+    margin: 0;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-title-main {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-status-stack,
+  .ph-moon-frame .ph-wanderer-card.is-collapsed::after { display: none; }
   .ph-section-heading.compact h3 { margin: .1rem 0 .65rem; text-align: center; }
   .ph-wanderer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: .55rem; }
   .ph-wanderer-card { background: #fff; border: 1px solid var(--relphi-line); border-radius: .9rem; padding: .55rem; text-align: left; }
@@ -641,7 +750,6 @@
   .ph-wanderer-card { position: relative; width: 100%; appearance: none; -webkit-appearance: none; cursor: pointer; }
   .ph-wanderer-card.is-above { background: linear-gradient(180deg, rgba(220,31,24,.06), #fff 38%); box-shadow: inset 0 0 0 2px rgba(220,31,24,.24); }
   .ph-wanderer-card.is-viewable { box-shadow: inset 0 0 0 2px rgba(220,31,24,.24), 0 0 0 2px rgba(255,193,7,.34); }
-  .ph-wanderer-card.is-selected { border-color: var(--relphi-red-dark); box-shadow: inset 0 0 0 2px var(--relphi-red-dark), 0 .35rem 1.1rem rgba(0,0,0,.08); }
   .ph-wanderer-card:focus-visible { outline: 3px solid rgba(30,136,229,.45); outline-offset: 2px; }
   .ph-wanderer-title { align-items: flex-start; }
   .ph-wanderer-title-main { display: flex; align-items: center; gap: .35rem; }
@@ -650,9 +758,30 @@
   .ph-wanderer-card.is-viewable .ph-wanderer-status.viewing { background: rgba(255,193,7,.14); color: #7a5200; border-color: rgba(122,82,0,.18); }
   .ph-wanderer-status.sky-state { background: rgba(220,31,24,.10); color: var(--relphi-red-dark); border-color: rgba(220,31,24,.12); }
   .ph-wanderer-card:not(.is-above) .ph-wanderer-status.sky-state { background: #f5f1ea; color: #555; }
-  .ph-wanderer-visibility-dot { position: absolute; top: .55rem; left: .55rem; width: .65rem; height: .65rem; border-radius: 50%; background: #ffc107; box-shadow: 0 0 0 .25rem rgba(255,193,7,.18); }
   .ph-wanderer-facts div { grid-template-columns: 3rem 1fr; }
   .ph-wanderer-select-note { font-size: .72rem; color: #666; font-weight: 700; text-align: right; }
+
+  /* Compact unavailable wanderers so the useful guide does not dominate the page. */
+  .ph-wanderer-grid { align-items: start; }
+  .ph-wanderer-card.is-collapsed {
+    gap: .18rem;
+    padding: .48rem .55rem;
+    background: #fff;
+    box-shadow: none !important;
+  }
+  .ph-wanderer-card.is-collapsed .ph-wanderer-title { margin-bottom: 0; }
+  .ph-wanderer-card.is-collapsed .ph-wanderer-rail,
+  .ph-wanderer-card.is-collapsed .ph-wanderer-caption,
+  .ph-wanderer-card.is-collapsed .ph-wanderer-facts,
+  .ph-wanderer-card.is-collapsed .ph-wanderer-mini-meters,
+  .ph-wanderer-card.is-collapsed .ph-wanderer-selected-guide { display: none; }
+  .ph-wanderer-card.is-collapsed::after {
+    content: 'Tap for guide';
+    justify-self: end;
+    color: #777;
+    font-size: .68rem;
+    font-weight: 750;
+  }
 
   .ph-obstruction-icon {
     display: inline-grid;
@@ -1047,7 +1176,7 @@
   }
   .ph-hour-ruler-inline strong {
     display: inline;
-    margin-left: .35rem;
+    margin-left: 0;
     font-size: 1rem;
     line-height: 1.2;
   }
@@ -1221,7 +1350,7 @@
   .ph-current-wheel-card {
     display:block;
     margin:.65rem auto 0;
-    max-width:270px;
+    max-width:340px;
     border:1px solid var(--relphi-line);
     border-radius:1rem;
     background:#fff;
@@ -1234,20 +1363,21 @@
   .ph-current-wheel-card:hover { border-color:rgba(220,31,24,.55); box-shadow:0 8px 22px rgba(0,0,0,.07); transform:translateY(-1px); }
   .ph-current-wheel-card:focus-visible { outline:3px solid rgba(220,31,24,.3); outline-offset:3px; border-color:var(--relphi-red); }
   .ph-current-wheel-card h3 { margin:.05rem 0 .25rem; font-size:.95rem; }
-  .ph-current-wheel { width:min(242px, 100%); height:auto; display:block; margin:0 auto; overflow:visible; }
-  .ph-current-wheel .wheel-core { fill:#fffaf7; stroke:#c4c1bc; stroke-width:1.25; }
-  .ph-current-wheel .sign-tick { stroke:#6f6b66; stroke-width:.55; opacity:.42; }
-  .ph-current-wheel .house-cusp { stroke:#77736e; stroke-width:.62; opacity:.24; }
-  .ph-current-wheel .house-label { fill:#5f5b56; font:800 7px system-ui,sans-serif; opacity:.64; }
-  .ph-current-wheel .sign-label { fill:#4a4744; font:800 12px Georgia,'Segoe UI Symbol',serif; }
-  .ph-current-wheel .angle-axis { stroke:#4f4b47; stroke-width:.8; opacity:.48; stroke-dasharray:2.2 2.2; }
-  .ph-current-wheel .angle-label { fill:#4f4b47; font:800 5.5px system-ui,sans-serif; paint-order:stroke; stroke:#fffaf7; stroke-width:2px; }
-  .ph-current-wheel .planet-center-ray { stroke:#222; stroke-width:.55; opacity:.13; }
-  .ph-current-wheel .planet-stick { stroke:#222; stroke-width:.9; opacity:.72; }
-  .ph-current-wheel .planet-contact { fill:var(--relphi-red); stroke:#fff; stroke-width:.7; }
-  .ph-current-wheel .planet-dot { fill:#fff; stroke:var(--relphi-red); stroke-width:1.45; }
-  .ph-current-wheel .planet-label { fill:#111; font:900 10px 'Segoe UI Symbol','Noto Sans Symbols',serif; }
-  .ph-current-wheel .planet-marker.is-clustered .planet-stick { stroke-width:1.05; opacity:.88; }
+  .ph-current-wheel { width:min(320px,100%); height:auto; display:block; margin:0 auto; overflow:visible; }
+  .ph-current-wheel-direct:not(.is-ready) { visibility:hidden; }
+  .ph-current-wheel-direct .ph-wheel-house-sector { stroke:none; }
+  .ph-current-wheel-direct .ph-wheel-house-cusp { stroke:#c9211e; stroke-width:1.15; opacity:.72; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-house-number { fill:#514943; font:800 16px/1 system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; }
+  .ph-current-wheel-direct .ph-wheel-zodiac-sector { stroke:#fffdfa; stroke-width:1.45; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-zodiac-inner,
+  .ph-current-wheel-direct .ph-wheel-zodiac-outer { fill:none; stroke:rgba(45,39,34,.38); stroke-width:1.35; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-sign { pointer-events:none; filter:none; }
+  .ph-current-wheel-direct .ph-wheel-angle-line { stroke:#514943; stroke-width:1.3; stroke-linecap:round; opacity:.72; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-angle-label { fill:#514943; font:850 13px/1 system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; paint-order:stroke; stroke:#fffdfa; stroke-width:3px; }
+  .ph-current-wheel-direct .ph-wheel-placement-leader { stroke:#c9211e; stroke-width:1.35; stroke-linecap:round; opacity:.58; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-placement-contact { fill:#c9211e; stroke:#fffdfa; stroke-width:1.15; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-placement { filter:drop-shadow(0 1px 2px rgba(45,39,34,.16)); }
+  .ph-current-wheel-direct .ph-wheel-center { fill:#211d1a; stroke:#fffdfa; stroke-width:1.5; vector-effect:non-scaling-stroke; }
   .ph-current-wheel-card .ph-tiny { margin:.25rem 0 0; }
 
   /* v320 mobile priority: the living instrument leads; day context follows compactly. */
@@ -1302,6 +1432,78 @@
     .ph-day-ruler-photo-label .ph-ruler-focus-line { color: #555; font-size: .78rem; }
   }
 
+
+  /* Planetary Hours owns dynamic ruler glyphs directly from the canonical SVG assets. */
+  .ph-direct-canonical-glyph {
+    display:inline-block;
+    width:1.8em;
+    height:1.8em;
+    vertical-align:-.16em;
+    background:currentColor;
+    -webkit-mask:var(--ph-canonical-glyph) center / contain no-repeat;
+    mask:var(--ph-canonical-glyph) center / contain no-repeat;
+    flex:0 0 auto;
+  }
+  #dayRulerProfileName,
+  #hourRulerProfileName {
+    display:inline-flex;
+    align-items:center;
+    vertical-align:middle;
+  }
+  #dayRulerProfileName .ph-direct-canonical-glyph,
+  #hourRulerProfileName .ph-direct-canonical-glyph {
+    width:2.15em;
+    height:2.15em;
+    margin:0 .28em 0 0;
+    vertical-align:middle;
+    transform:scale(1.42);
+    transform-origin:center;
+  }
+  .ph-pill .ph-direct-canonical-glyph {
+    width:1.35em;
+    height:1.35em;
+    margin:0 .32em;
+    vertical-align:-.08em;
+    transform:scale(1.9);
+    transform-origin:center;
+  }
+  #dayRulerProfileName .ph-direct-canonical-glyph { color:#fff; }
+  #hourRulerProfileName .ph-direct-canonical-glyph { color:#111; }
+  .ph-moon-frame .ph-direct-canonical-glyph { width:1.08em; height:1.08em; }
+  @media (max-width:760px) {
+    #dayRulerProfileName .ph-direct-canonical-glyph { color:#111; }
+  }
+
+  /* Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing. */
+  #heptagramSvg .ph-core-heptagram-circle,
+  #heptagramSvg .ph-core-heptagram-guide { fill:none; stroke:#2a2521; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-circle { stroke-width:1.4; opacity:.55; }
+  #heptagramSvg .ph-core-heptagram-guide { stroke-width:1; opacity:.2; }
+  #heptagramSvg .ph-core-heptagram-week { fill:none; stroke:#d8d0c8; stroke-width:3; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-week.past { stroke:#c9211e; }
+  #heptagramSvg .ph-core-heptagram-week.current { stroke:#c9211e; stroke-width:6; filter:drop-shadow(0 0 5px rgba(201,33,30,.34)); }
+  #heptagramSvg .ph-core-heptagram-hour { fill:none; stroke:#27221e; stroke-width:2.2; stroke-linecap:round; opacity:.28; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-hour.current { stroke:#c9211e; stroke-width:5; opacity:1; filter:drop-shadow(0 0 4px rgba(201,33,30,.30)); }
+  #heptagramSvg .ph-core-heptagram-day-ring { fill:none; vector-effect:non-scaling-stroke; }
+  #heptagramSvg .ph-core-heptagram-day-ring.inner { stroke-width:1.65; }
+  #heptagramSvg .ph-core-heptagram-day-ring.outer { stroke-width:1.15; opacity:.76; }
+  #heptagramSvg .ph-core-heptagram-planet { filter:drop-shadow(0 1px 2px rgba(45,39,34,.12)); }
+  #heptagramSvg .ph-core-heptagram-art * { vector-effect:non-scaling-stroke; }
+
+
+  /* Settings correction: one visible time display and reliably legible secondary actions. */
+  #controls .ph-btn.ph-btn-secondary {
+    background:#fff !important;
+    color:var(--relphi-red-dark) !important;
+    border:1px solid var(--relphi-line) !important;
+    box-shadow:none !important;
+  }
+  #controls .ph-btn.ph-btn-secondary:hover,
+  #controls .ph-btn.ph-btn-secondary:focus {
+    background:#fff7f5 !important;
+    color:var(--relphi-red-dark) !important;
+    border-color:rgba(220,31,24,.38) !important;
+  }
 </style>
 <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
@@ -1318,33 +1520,39 @@
     <details id="settingsDetails">
       <summary><span>Where and when settings</span><span class="ph-settings-summary" id="settingsSummary">—</span></summary>
       <div class="ph-settings-body">
-        <div class="ph-row">
-          <span class="ph-clock" id="localClock">--:--</span>
-          <button class="ph-btn" id="useGeo" type="button">Use my location</button>
-          <label>Timezone
-            <select class="ph-select" id="tzSelect"></select>
-          </label>
-          <label>Lat <input class="ph-input short" id="lat" step="0.0001" type="number"/></label>
-          <label>Lon <input class="ph-input short" id="lon" step="0.0001" type="number"/></label>
-          <button class="ph-btn" id="setLatLon" type="button">Set</button>
-          <button class="ph-btn" id="copyLink" type="button">Copy link</button>
+        <span class="ph-sr-only" id="localClock" aria-hidden="true">--:--</span>
+        <div class="ph-settings-group ph-settings-group-location">
+          <div class="ph-settings-group-title">Location</div>
+          <div class="ph-settings-row ph-settings-row-location">
+            <button class="ph-btn" id="useGeo" type="button">Use my location</button>
+            <label class="ph-settings-field ph-settings-field-timezone"><span>Timezone</span>
+              <select class="ph-select" id="tzSelect"></select>
+            </label>
+            <label class="ph-settings-field ph-settings-field-coordinate"><span>Lat</span><input class="ph-input short" id="lat" step="0.0001" type="number"/></label>
+            <label class="ph-settings-field ph-settings-field-coordinate"><span>Lon</span><input class="ph-input short" id="lon" step="0.0001" type="number"/></label>
+            <button class="ph-btn ph-btn-secondary" id="setLatLon" type="button">Set</button>
+          </div>
+          <p class="ph-settings-echo ph-tiny" id="echo">—</p>
+          <div class="ph-settings-row ph-settings-row-place" aria-label="Manual location search">
+            <label class="ph-settings-field ph-location-search"><span>Search place</span>
+              <input class="ph-input" id="locationSearch" list="locationOptions" placeholder="Search a preloaded place, e.g. Malden" type="search"/>
+            </label>
+            <datalist id="locationOptions"></datalist>
+            <button class="ph-btn" id="applyLocation" type="button">Use selected location</button>
+            <button class="ph-btn ph-btn-secondary" id="copyLink" type="button">Copy link</button>
+            <span class="ph-location-note" id="locationNote">Choose a place to update latitude, longitude, and timezone together.</span>
+          </div>
         </div>
-        <p class="ph-tiny" id="echo">—</p>
-        <div class="ph-row" aria-label="Manual location search">
-          <label class="ph-location-search">Manual Location Mode
-            <input class="ph-input" id="locationSearch" list="locationOptions" placeholder="Search a preloaded place, e.g. Malden" type="search"/>
-          </label>
-          <datalist id="locationOptions"></datalist>
-          <button class="ph-btn" id="applyLocation" type="button">Use selected location</button>
-          <span class="ph-location-note" id="locationNote">Choose a place to update latitude, longitude, and timezone together.</span>
-        </div>
-        <div class="ph-row">
-          <label class="ph-switch">Use system date/time <input checked id="useSystem" type="checkbox"/></label>
-          <span class="ph-row ph-row-system-time" id="manualTime">
-            <label>Date <input class="ph-input" id="datePick" type="date"/></label>
-            <label>Time <input class="ph-input" id="timePick" type="time"/></label>
-            <button class="ph-btn" id="applyDT" type="button">Apply</button>
-          </span>
+        <div class="ph-settings-group ph-settings-group-time">
+          <div class="ph-settings-group-title">Date &amp; time</div>
+          <div class="ph-settings-row ph-settings-row-time">
+            <label class="ph-switch ph-system-time-toggle"><input checked id="useSystem" type="checkbox"/><span>Use system date/time</span></label>
+            <span class="ph-row-system-time" id="manualTime">
+              <label class="ph-settings-field"><span>Date</span><input class="ph-input" id="datePick" type="date"/></label>
+              <label class="ph-settings-field"><span>Time</span><input class="ph-input" id="timePick" type="time"/></label>
+              <button class="ph-btn" id="applyDT" type="button">Apply</button>
+            </span>
+          </div>
         </div>
       </div>
     </details>
@@ -1362,8 +1570,8 @@
         <div class="ph-day-line"><p class="ph-tiny" id="dayRulerMeta">—</p></div>
         <p id="sunTimes">—</p>
         <p class="ph-tiny" id="bridgeInfo">—</p>
-        <p><a class="ph-btn ph-datefield-link" id="dateFieldLink" href="sky-chart.html#sky-calc">Jump to this date in Sky Chart</a></p>
-        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this date and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"><p class="ph-tiny">Planet wheel loads when Astronomy Engine is available.</p></div></a>
+        <p class="ph-datefield-jump"><a class="ph-btn ph-datefield-link" id="dateFieldLink" href="sky-chart.html#sky-calc">Jump to this moment in Sky Chart</a></p>
+        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div></a>
       </div>
       <div class="ph-hour-frame ph-hour-frame-merged ph-living-heptagram-frame">
         <p class="eyebrow">Living planetary hour</p>
@@ -1437,23 +1645,23 @@
       <div class="ph-moon-frame">
         <h2>Moon calendar</h2>
         <div class="ph-moon-wrap">
-          <div class="ph-moon-disc" id="moonDisc">☽</div>
+          <div class="ph-moon-disc" id="moonDisc"></div>
           <div class="ph-moon-facts">
             <p id="moonPhase">—</p>
             <p class="ph-tiny" id="moonTimes">—</p>
             <p class="ph-tiny" id="moonVisibility">—</p>
           </div>
         </div>
-      </div>
       <div class="ph-wanderer-strip" aria-label="Traditional wanderer rise and set times">
         <div class="ph-section-heading compact">
           <p class="eyebrow">Wanderer visibility</p>
           <h3>Rise, set, and current sky position</h3>
-          <p class="ph-planet-instructions">Choose a tile to see rise, set, visibility, compass direction, and altitude together. Tiles are ordered by practical viewing: naked eye, binoculars, telescope, not practical, then below horizon.</p>
+          <p class="ph-planet-instructions">Choose a tile to see rise, set, visibility, compass direction, and altitude together.</p>
         </div>
         <div class="ph-wanderer-grid" id="wandererGrid">
           <p class="ph-tiny">Planet positions load here when Astronomy Engine is available.</p>
         </div>
+      </div>
       </div>
       <section class="ph-sky-orientation ph-sky-orientation-inline ph-sky-orientation-merged ph-sr-only" id="skyOrientationPanel" aria-label="Selected wanderer orientation">
     <div class="ph-section-heading ph-sr-only">
@@ -1538,6 +1746,9 @@
   </section>
 </main>
 
+<script src="relphi-glyph-registry-v1.js?v=28"></script>
+<script src="relphi-glyph-component-v1.js?v=32"></script>
+<script src="sky-chart-wheel-spec-v1.js?v=6"></script>
 <script>
 (function () {
   const planets = [
@@ -1563,7 +1774,7 @@
     saturn: 'https://commons.wikimedia.org/wiki/Special:FilePath/Chronos_MET_DP-932-001.jpg?width=640'
   };
   const browserTimeZone = (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
-  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, heptagramHourOverride: null, timeFormat: '12h' };
+  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h' };
   const locationPresets = [
     {name:'Greenwich, London, UK', lat:51.4769, lon:-0.0005, tz:'Europe/London'},
     {name:'Boston, Massachusetts, USA', lat:42.3601, lon:-71.0589, tz:'America/New_York'},
@@ -1876,7 +2087,7 @@
 
   function moonPhaseName(phase) {
     if (phase < 0.03 || phase > 0.97) return 'New Moon';
-    if (phase < 0.22) return 'Waning crescent';
+    if (phase < 0.22) return 'Waxing crescent';
     if (phase < 0.28) return 'First quarter';
     if (phase < 0.47) return 'Waxing gibbous';
     if (phase < 0.53) return 'Full Moon';
@@ -2138,7 +2349,6 @@
 
   function phNormDeg(value) { const n = Number(value) || 0; return ((n % 360) + 360) % 360; }
   const phSigns = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-  const phSignGlyphs = {Aries:'♈', Taurus:'♉', Gemini:'♊', Cancer:'♋', Leo:'♌', Virgo:'♍', Libra:'♎', Scorpio:'♏', Sagittarius:'♐', Capricorn:'♑', Aquarius:'♒', Pisces:'♓'};
   function phZodiacPoint(lon, r, cx, cy) { const a = (phNormDeg(lon) + 180) * Math.PI / 180; return {x:cx + Math.cos(a)*r, y:cy + Math.sin(a)*r}; }
   function phLongitudeToPlacement(lon) { lon = phNormDeg(lon); const index = Math.floor(lon / 30) % 12; const inSign = lon - index * 30; return {sign:phSigns[index], degree:Math.floor(inSign), minute:Math.round((inSign - Math.floor(inSign))*60)}; }
   function phAstronomyLongitude(body, date) {
@@ -2198,55 +2408,177 @@
     });
     return result;
   }
+  const phWheelNs = 'http://www.w3.org/2000/svg';
+  const phWheelSignIds = ['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
+  let phWheelRenderGeneration = 0;
+
+  function phWheelSvg(name, attrs) {
+    const node = document.createElementNS(phWheelNs, name);
+    Object.entries(attrs || {}).forEach(function (entry) { node.setAttribute(entry[0], String(entry[1])); });
+    return node;
+  }
+
+  function phWheelAnnularPath(center, inner, outer, start, end) {
+    const span = phNormDeg(end - start) || 360;
+    const large = span > 180 ? 1 : 0;
+    const a = phZodiacPoint(start, outer, center.x, center.y);
+    const b = phZodiacPoint(start + span, outer, center.x, center.y);
+    const c = phZodiacPoint(start + span, inner, center.x, center.y);
+    const d = phZodiacPoint(start, inner, center.x, center.y);
+    return 'M' + a.x.toFixed(3) + ' ' + a.y.toFixed(3) +
+      ' A' + outer + ' ' + outer + ' 0 ' + large + ' 1 ' + b.x.toFixed(3) + ' ' + b.y.toFixed(3) +
+      ' L' + c.x.toFixed(3) + ' ' + c.y.toFixed(3) +
+      ' A' + inner + ' ' + inner + ' 0 ' + large + ' 0 ' + d.x.toFixed(3) + ' ' + d.y.toFixed(3) + ' Z';
+  }
+
+  function phWheelCanonicalBubble(host, id, options) {
+    const registry = window.RelphiGlyphRegistry;
+    const component = window.RelphiGlyphComponent;
+    const entry = registry && (registry.get(id) || registry.resolve(id));
+    if (!host || !entry || !component?.createBubble) return Promise.resolve(false);
+    try {
+      const rendered = component.createBubble(host, entry.id, {
+        radius: options.radius,
+        padding: options.padding == null ? .7 : options.padding,
+        color: options.color,
+        fill: options.fill == null ? '#fffdfa' : options.fill,
+        strokeWidth: options.strokeWidth == null ? 1.8 : options.strokeWidth
+      });
+      if (options.plain) {
+        rendered.circle.style.opacity = '0';
+        rendered.circle.setAttribute('aria-hidden', 'true');
+      }
+      return Promise.resolve(rendered.ready).then(function () { return true; }).catch(function () { return false; });
+    } catch (error) {
+      return Promise.resolve(false);
+    }
+  }
+
   function phRenderCurrentWheel(frame) {
     if (!el.phCurrentWheel) return;
-    if (!window.Astronomy) { el.phCurrentWheel.innerHTML = '<p class="ph-tiny">Astronomy Engine is unavailable.</p>'; return; }
+    const generation = ++phWheelRenderGeneration;
+    if (!window.Astronomy || !window.RelphiSkyWheelSpec || !window.RelphiGlyphRegistry || !window.RelphiGlyphComponent?.createBubble) {
+      el.phCurrentWheel.replaceChildren();
+      return;
+    }
     const date = frame ? frame.localNow : localNow();
-    const cx = 110, cy = 110;
-    const houseNumRadius = 29;
-    const coreWheelRadius = 78;
-    const signGlyphRadius = 64;
-    const lollipopRadius = 100;
     try {
+      const spec = window.RelphiSkyWheelSpec.mini;
+      const role = window.RelphiSkyWheelSpec.miniRole?.('A') || spec.standalone;
+      const center = spec.center || {x:300,y:300};
+      const zodiac = spec.zodiac;
+      const house = role.house || {inner:zodiac.outer,outer:207,numberRadius:167.75};
+      const colors = window.RelphiSkyWheelSpec.COLORS;
+      const placementColor = window.RelphiSkyWheelSpec.SKY?.A || '#c9211e';
+      const root = phWheelSvg('svg', {
+        class:'ph-current-wheel ph-current-wheel-direct',
+        viewBox:'60 60 480 480',
+        preserveAspectRatio:'xMidYMid meet',
+        role:'img',
+        'aria-label':'Current planetary placements mini zodiac wheel using the Sky Chart visual system'
+      });
+      root.dataset.directWheelReady = 'false';
+
+      const houseLayer = phWheelSvg('g', {class:'ph-wheel-house-layer'});
+      const zodiacLayer = phWheelSvg('g', {class:'ph-wheel-zodiac-layer'});
+      const angleLayer = phWheelSvg('g', {class:'ph-wheel-angle-layer'});
+      const placementLayer = phWheelSvg('g', {class:'ph-wheel-placement-layer'});
+      const jobs = [];
+
       const asc = phAscendantLongitude(date, state.lat, state.lon);
       const mc = phMidheavenLongitude(date, state.lon);
-      const houseTicks = Array.from({length:12}, function (_, i) {
-        const cuspLon = phNormDeg(asc + i * 30);
-        const edge = phZodiacPoint(cuspLon, coreWheelRadius, cx, cy);
-        const label = phZodiacPoint(cuspLon + 15, houseNumRadius, cx, cy);
-        return '<g><line class="house-cusp" x1="' + cx + '" y1="' + cy + '" x2="' + edge.x.toFixed(1) + '" y2="' + edge.y.toFixed(1) + '"></line><text class="house-label" x="' + label.x.toFixed(1) + '" y="' + label.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + (i + 1) + '</text></g>';
-      }).join('');
-      const signTrack = phSigns.map(function (sign, i) {
-        const boundary = i * 30;
-        const tickA = phZodiacPoint(boundary, coreWheelRadius - 8, cx, cy);
-        const tickB = phZodiacPoint(boundary, coreWheelRadius, cx, cy);
-        const label = phZodiacPoint(boundary + 15, signGlyphRadius, cx, cy);
-        return '<g><line class="sign-tick" x1="' + tickA.x.toFixed(1) + '" y1="' + tickA.y.toFixed(1) + '" x2="' + tickB.x.toFixed(1) + '" y2="' + tickB.y.toFixed(1) + '"></line><text class="sign-label" x="' + label.x.toFixed(1) + '" y="' + label.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + phSignGlyphs[sign] + '</text></g>';
-      }).join('');
-      function axisMarkup(longitude, firstLabel, oppositeLabel) {
-        const first = phZodiacPoint(longitude, coreWheelRadius, cx, cy);
-        const opposite = phZodiacPoint(longitude + 180, coreWheelRadius, cx, cy);
-        const firstText = phZodiacPoint(longitude, coreWheelRadius - 6, cx, cy);
-        const oppositeText = phZodiacPoint(longitude + 180, coreWheelRadius - 6, cx, cy);
-        return '<g><line class="angle-axis" x1="' + first.x.toFixed(1) + '" y1="' + first.y.toFixed(1) + '" x2="' + opposite.x.toFixed(1) + '" y2="' + opposite.y.toFixed(1) + '"></line><text class="angle-label" x="' + firstText.x.toFixed(1) + '" y="' + firstText.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + firstLabel + '</text><text class="angle-label" x="' + oppositeText.x.toFixed(1) + '" y="' + oppositeText.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + oppositeLabel + '</text></g>';
+      const houseNumberRadius = Math.max(Number(house.numberRadius || 0), Number(house.outer) - 12);
+      for (let i = 0; i < 12; i += 1) {
+        const start = phNormDeg(asc + i * 30);
+        const end = start + 30;
+        const mid = start + 15;
+        houseLayer.appendChild(phWheelSvg('path', {
+          d:phWheelAnnularPath(center, house.inner, house.outer, start, end),
+          class:'ph-wheel-house-sector',
+          fill:colors[i] || '#ddd',
+          'fill-opacity':spec.houseFillOpacity == null ? .5 : spec.houseFillOpacity
+        }));
+        const a = phZodiacPoint(start, house.inner, center.x, center.y);
+        const b = phZodiacPoint(start, house.outer, center.x, center.y);
+        houseLayer.appendChild(phWheelSvg('line', {x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'ph-wheel-house-cusp'}));
+        const labelPoint = phZodiacPoint(mid, houseNumberRadius, center.x, center.y);
+        const label = phWheelSvg('text', {x:labelPoint.x,y:labelPoint.y,class:'ph-wheel-house-number'});
+        label.textContent = String(i + 1);
+        houseLayer.appendChild(label);
       }
-      const axes = axisMarkup(asc, 'ASC', 'DSC') + axisMarkup(mc, 'MC', 'IC');
-      const bodies = skyBodies.slice(0, 10);
-      const bodyItems = bodies.map(function (body) {
+
+      for (let i = 0; i < 12; i += 1) {
+        zodiacLayer.appendChild(phWheelSvg('path', {
+          d:phWheelAnnularPath(center, zodiac.inner, zodiac.outer, i * 30, i * 30 + 30),
+          class:'ph-wheel-zodiac-sector',
+          fill:colors[i] || '#ddd',
+          'fill-opacity':zodiac.fillOpacity == null ? .82 : zodiac.fillOpacity
+        }));
+      }
+      zodiacLayer.appendChild(phWheelSvg('circle', {cx:center.x,cy:center.y,r:zodiac.inner,class:'ph-wheel-zodiac-inner'}));
+      zodiacLayer.appendChild(phWheelSvg('circle', {cx:center.x,cy:center.y,r:zodiac.outer,class:'ph-wheel-zodiac-outer'}));
+
+      phWheelSignIds.forEach(function (id, index) {
+        const point = phZodiacPoint(index * 30 + 15, (zodiac.inner + zodiac.outer) / 2, center.x, center.y);
+        const host = phWheelSvg('g', {transform:'translate(' + point.x + ' ' + point.y + ')',class:'ph-wheel-sign'});
+        zodiacLayer.appendChild(host);
+        jobs.push(phWheelCanonicalBubble(host, id, {radius:zodiac.glyphRadius || 14,color:'#111',plain:true,strokeWidth:1.5}));
+      });
+
+      const edge = Number(role.edge || house.outer);
+      const inward = edge - Number(spec.angleGap || 12);
+      [["Asc",asc],["Dsc",asc + 180],["MC",mc],["IC",mc + 180]].forEach(function (definition) {
+        const labelText = definition[0];
+        const degree = definition[1];
+        const a = phZodiacPoint(degree, inward, center.x, center.y);
+        const b = phZodiacPoint(degree, edge, center.x, center.y);
+        const t = phZodiacPoint(degree, edge + 16, center.x, center.y);
+        angleLayer.appendChild(phWheelSvg('line', {x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'ph-wheel-angle-line'}));
+        const label = phWheelSvg('text', {x:t.x,y:t.y,class:'ph-wheel-angle-label'});
+        label.textContent = labelText;
+        angleLayer.appendChild(label);
+      });
+
+      const bodyItems = skyBodies.slice(0,10).map(function (body) {
         const lon = phAstronomyLongitude(body, date);
-        return { body:body, lon:lon, placement:phLongitudeToPlacement(lon) };
+        return {body:body,lon:lon,placement:phLongitudeToPlacement(lon)};
       });
       const displayAngles = phWheelDisplayAngles(bodyItems, 10.5);
-      const markers = bodyItems.map(function (item) {
+      const placementRadius = Number(role.placement?.[0] || 172);
+      const bubbleRadius = Number(spec.placementBubbleRadius || 13);
+      const strokeWidth = Number(spec.placementStrokeWidth || 1.8);
+      bodyItems.forEach(function (item) {
         const displayLon = displayAngles.get(item.body);
-        const contact = phZodiacPoint(item.lon, coreWheelRadius, cx, cy);
-        const ball = phZodiacPoint(displayLon, lollipopRadius, cx, cy);
-        const clustered = Math.abs((((displayLon - item.lon) % 360) + 540) % 360 - 180) > 0.05;
-        return '<g class="planet-marker' + (clustered ? ' is-clustered' : '') + '"><line class="planet-center-ray" x1="' + cx + '" y1="' + cy + '" x2="' + contact.x.toFixed(1) + '" y2="' + contact.y.toFixed(1) + '"></line><circle class="planet-contact" cx="' + contact.x.toFixed(1) + '" cy="' + contact.y.toFixed(1) + '" r="1.8"></circle><line class="planet-stick" x1="' + contact.x.toFixed(1) + '" y1="' + contact.y.toFixed(1) + '" x2="' + ball.x.toFixed(1) + '" y2="' + ball.y.toFixed(1) + '"></line><circle class="planet-dot" cx="' + ball.x.toFixed(1) + '" cy="' + ball.y.toFixed(1) + '" r="7"></circle><text class="planet-label" x="' + ball.x.toFixed(1) + '" y="' + (ball.y + 0.5).toFixed(1) + '" text-anchor="middle" dominant-baseline="middle">' + (skyGlyphs[item.body] || item.body[0]) + '</text><title>' + item.body + ' ' + item.placement.sign + ' ' + item.placement.degree + '°' + String(item.placement.minute).padStart(2, '0') + '′</title></g>';
-      }).join('');
-      el.phCurrentWheel.innerHTML = '<svg class="ph-current-wheel" viewBox="0 0 220 220" role="img" aria-label="Current planetary placements mini zodiac wheel with houses, signs, angles, and separated placement markers"><circle class="wheel-core" cx="110" cy="110" r="' + coreWheelRadius + '"></circle><g class="house-layer">' + houseTicks + '</g><g class="sign-layer">' + signTrack + '</g><g class="angle-layer">' + axes + '</g><g class="planet-layer">' + markers + '</g><circle cx="110" cy="110" r="3" fill="#111"></circle></svg><p class="ph-tiny">Preview only. Use Sky Chart for the full reading.</p>';
+        const from = phZodiacPoint(item.lon, zodiac.outer, center.x, center.y);
+        const to = phZodiacPoint(displayLon, placementRadius, center.x, center.y);
+        placementLayer.appendChild(phWheelSvg('line', {x1:from.x,y1:from.y,x2:to.x,y2:to.y,class:'ph-wheel-placement-leader'}));
+        placementLayer.appendChild(phWheelSvg('circle', {cx:from.x,cy:from.y,r:2.4,class:'ph-wheel-placement-contact'}));
+        const host = phWheelSvg('g', {transform:'translate(' + to.x + ' ' + to.y + ')',class:'ph-wheel-placement'});
+        host.dataset.placement = item.body.toLowerCase();
+        const title = phWheelSvg('title');
+        title.textContent = item.body + ' ' + item.placement.sign + ' ' + item.placement.degree + '°' + String(item.placement.minute).padStart(2,'0') + '′';
+        host.appendChild(title);
+        placementLayer.appendChild(host);
+        jobs.push(phWheelCanonicalBubble(host, item.body.toLowerCase(), {radius:bubbleRadius,color:placementColor,fill:'#fffdfa',strokeWidth:strokeWidth}));
+      });
+
+      root.appendChild(houseLayer);
+      root.appendChild(zodiacLayer);
+      root.appendChild(angleLayer);
+      root.appendChild(placementLayer);
+      root.appendChild(phWheelSvg('circle', {cx:center.x,cy:center.y,r:4,class:'ph-wheel-center'}));
+      const caption = document.createElement('p');
+      caption.className = 'ph-tiny';
+      caption.textContent = 'Preview only. Use Sky Chart for the full reading.';
+      el.phCurrentWheel.replaceChildren(root, caption);
+
+      Promise.allSettled(jobs).then(function () {
+        if (generation !== phWheelRenderGeneration || !root.isConnected) return;
+        root.dataset.directWheelReady = 'true';
+        root.classList.add('is-ready');
+      });
     } catch (error) {
-      el.phCurrentWheel.innerHTML = '<p class="ph-tiny">Current wheel unavailable: ' + String(error.message || error) + '</p>';
+      el.phCurrentWheel.replaceChildren();
     }
   }
 
@@ -2295,8 +2627,8 @@
     });
     el.wandererGrid.innerHTML = items.map(function (item) {
       const body = item.body;
-      return '<button class="ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (state.skyBody === body ? 'is-selected' : '') + '" type="button" data-sky-body="' + body + '" aria-pressed="' + (state.skyBody === body ? 'true' : 'false') + '" aria-label="Orient to ' + body + '">' +
-        (item.visibility.practical ? '<span class="ph-wanderer-visibility-dot" aria-hidden="true"></span>' : '') +
+      const collapsed = (!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body;
+      return '<button class="ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + '" type="button" data-sky-body="' + body + '" aria-pressed="' + (state.skyBody === body ? 'true' : 'false') + '" aria-expanded="' + (collapsed ? 'false' : 'true') + '" aria-label="' + (collapsed ? 'Expand ' : 'Orient to ') + body + '">' +
         '<div class="ph-wanderer-title"><span class="ph-wanderer-title-main"><span class="glyph">' + (skyGlyphs[body] || '') + '</span><span>' + body + '</span></span><span class="ph-wanderer-status-stack"><span class="ph-wanderer-status sky-state">' + (item.above ? 'above' : 'below') + '</span><span class="ph-wanderer-status viewing">' + item.visibility.viewing + '</span></span></div>' +
         '<div class="ph-wanderer-rail" aria-label="Rise/set visualization for ' + body + '">' +
           aboveSegmentsMarkup(item.rise, item.set, start) +
@@ -2423,7 +2755,7 @@
 
   function miniCard(label, row, role) {
     return '<span class="ph-mini-label">' + label + '</span>' +
-      '<span class="ph-mini-ruler p-' + row.ruler.key + '">' + row.ruler.sym + ' ' + row.ruler.name + '</span>' +
+      '<span class="ph-mini-ruler p-' + row.ruler.key + '">' + canonicalPlanetGlyphMarkup(row.ruler.key, row.ruler.name) + ' ' + row.ruler.name + '</span>' +
       '<span class="ph-mini-time">' + fmtHM(row.start) + '–' + fmtHM(row.end) + '</span>' +
       '<span class="ph-mini-time">' + (row.isBright ? 'Bright' : 'Dark') + ' hour ' + row.index + '</span>';
   }
@@ -2582,7 +2914,7 @@
   }
 
   function pillFor(p, label) {
-    return '<span class="ph-pill p-' + p.key + '"><span class="ph-dot"></span>' + p.sym + ' ' + label + '</span>';
+    return '<span class="ph-pill p-' + p.key + '">' + canonicalPlanetGlyphMarkup(p.key, p.name) + ' ' + label + '</span>';
   }
 
   function attrText(value) {
@@ -2614,7 +2946,7 @@
   function heptagramPointFor(key) {
     const idx = chaldean.indexOf(key);
     const angle = (-90 + idx * (360 / chaldean.length)) * Math.PI / 180;
-    const cx = 180, cy = 180, r = 118;
+    const cx = 180, cy = 180, r = 142;
     return {x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, angle: angle};
   }
 
@@ -2651,6 +2983,46 @@
     return '<line class="' + className + '" x1="' + a.x.toFixed(2) + '" y1="' + a.y.toFixed(2) + '" x2="' + x.toFixed(2) + '" y2="' + y.toFixed(2) + '"></line>';
   }
 
+  const heptagramColors = Object.freeze({saturn:'#8c7a42',jupiter:'#41752f',mars:'#c9211e',sun:'#d08a00',venus:'#b23b79',mercury:'#277390',moon:'#58628a'});
+  const heptagramCanonicalArt = Object.freeze({
+    sun:'<circle cx="50" cy="50" r="16.634607932695275" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round"/><circle cx="50" cy="50" r="3.5764407055294836" fill="#111111" stroke="#111111" stroke-width="1.30" stroke-linecap="round" stroke-linejoin="round" paint-order="stroke fill"/>',
+    moon:'<path d="M47.9220542672045 30.973850765136838C61.31728865008755 33.8880411272652 68.10978064023885 43.8087063489102 65.24081017917813 54.515849875003106C62.37183971811741 65.22299340109602 51.52903648882156 70.41829551040571 38.4713280425339 66.24444120403113C45.950988541848844 63.523247082146234 50.787778085441296 58.068742202403556 52.64417073671588 51.14059050904932C54.50056338799046 44.21243881569508 53.03903321035179 37.07030425297551 47.9220542672045 30.973850765136838Z" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
+    mercury:'<path d="M39.72984422309179 28.553498230574014C41.2401612491077 32.78238590341857 44.864922111545894 34.59476633463767 50 34.59476633463767S58.75983875089231 32.78238590341857 60.27015577690822 28.553498230574014" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><circle cx="50" cy="45.46904892195226" r="10.874282587314584" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M50 56.34333150926684L50 71.44650176942599M42.75047827512361 64.19698004454959L57.24952172487639 64.19698004454959" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
+    venus:'<circle cx="50" cy="41.57860230356569" r="12.351383288103655" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M50 53.92998559166934L50 70.77278098453797M42.70145532975693 62.91280980119927L57.298544670243075 62.91280980119927" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
+    mars:'<circle cx="44.18674072855829" cy="55.98977452270298" r="12.732012563063838" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M53.60843002522554 46.56808522603574L65.57652183450554 34.09071291423318M57.93731429666724 34.09071291423318L65.57652183450554 34.09071291423318L65.57652183450554 41.72992045207148" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
+    jupiter:'<path d="M35.600705705939745 43.44355534975665C33.13175145651101 39.49322855067068 34.1193331562825 35.04911090169897 38.56345080525422 32.58015665227024C43.00756845422593 30.111202402841506 48.43926780296914 31.592574952498744 50.41443120251213 35.542901751584715C52.88338545194085 40.480810250442175 50.41443120251213 46.406300449071125 46.957895253311904 51.34420894792859C44.48894100388317 54.80074489712881 41.526195904568695 57.26969914655754 38.56345080525422 59.24486254610053" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M35.106914856054 59.24486254610053L65.72194754897025 59.24486254610053M57.82129395079832 32.08636580238449L57.82129395079832 68.62688869392971" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
+    saturn:'<path d="M43.613219676770356 28.949988079580496L43.613219676770356 60.05083139269875M38.05949765657067 33.94833789776021L50.277686101009984 33.94833789776021" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M43.613219676770356 48.3880151502794C45.83470848485024 43.94503753411965 49.16694169697004 41.16817652401981 53.05454711110983 41.16817652401981C58.052896929289545 41.16817652401981 61.38513014140936 45.05578193815959 61.38513014140936 50.05413175633931C61.38513014140936 53.94173717047909 59.16364133332949 57.273970382598904 56.386780323229644 61.716947998758656C53.609919313129794 66.1599256149184 53.609919313129794 68.93678662501824 56.386780323229644 70.60290323107816C58.60826913130951 71.7136476351181 60.82975793938939 70.60290323107816 61.94050234342933 68.93678662501824" fill="none" stroke="#111111" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>'
+  });
+  function canonicalPlanetGlyphMarkup(key, label) {
+    const id = String(key || '').toLowerCase();
+    if (!/^(sun|moon|mercury|venus|mars|jupiter|saturn|uranus|neptune|pluto)$/.test(id)) return '';
+    return '<span class="ph-direct-canonical-glyph p-' + id + '" style="--ph-canonical-glyph:url(\'assets/planet-glyphs/' + id + '.svg\')" role="img" aria-label="' + attrText(label || id) + '"></span>';
+  }
+
+  function directHeptagramPlanetMarkup(key, dayKey, hourKey) {
+    const p=heptagramPointFor(key), color=heptagramColors[key], isDay=key===dayKey, isHour=key===hourKey;
+    const stateId=isDay&&isHour?'day-and-hour-ruler':isDay?'day-ruler':isHour?'hour-ruler':'plain';
+    const glyphColor=isHour?color:'#ffffff', fill=isHour?'#ffffff':color;
+    const art=heptagramCanonicalArt[key].split('#111111').join(glyphColor);
+    const rings=isDay?'<circle class="ph-core-heptagram-day-ring inner" cx="0" cy="0" r="23" stroke="'+color+'"></circle><circle class="ph-core-heptagram-day-ring outer" cx="0" cy="0" r="27" stroke="'+color+'"></circle>':'';
+    return '<g class="ph-core-heptagram-planet p-'+key+(isDay?' is-day-ruler':'')+(isHour?' is-hour-ruler':'')+'" data-planetary-hour-state="'+stateId+'">'+
+      '<g transform="translate('+p.x.toFixed(2)+' '+p.y.toFixed(2)+')" class="ph-core-heptagram-node-glyph" data-canonical-glyph-id="'+key+'">'+
+      '<g transform="scale('+(17/19)+')" data-master-glyph-unit="true">'+rings+'<g class="ph-core-heptagram-bubble"><circle cx="0" cy="0" r="19" fill="'+fill+'" stroke="'+color+'" stroke-width="'+(isHour?'2.8':'2.35')+'"></circle><g class="ph-core-heptagram-art" transform="matrix(0.64 0 0 0.64 -32 -32)">'+art+'</g></g></g></g><title>'+byKey[key].name+(isDay?' day ruler':'')+(isHour?' hour ruler':'')+'</title></g>';
+  }
+
+  function activePreviewMoment(frame, rows, currentIdx) {
+    const liveHour = Math.max(1, Math.min(24, currentIdx + 1));
+    const liveRow = rows[liveHour - 1] || rows[0];
+    const liveNow = state.useSystem ? new Date() : frame.localNow;
+    const liveSpan = liveRow ? Math.max(1, liveRow.end.getTime() - liveRow.start.getTime()) : 1;
+    const liveFraction = liveRow ? Math.max(0, Math.min(0.999, (liveNow.getTime() - liveRow.start.getTime()) / liveSpan)) : 0;
+    const selectedPosition = Math.max(1, Math.min(24, state.heptagramHourOverride != null ? Number(state.heptagramHourOverride) || 1 : liveHour + liveFraction));
+    const selectedHour = Math.max(1, Math.min(24, Math.floor(selectedPosition)));
+    const hourFraction = selectedPosition >= 24 ? 1 : Math.max(0, Math.min(0.999, selectedPosition - selectedHour));
+    const row = rows[selectedHour - 1] || liveRow;
+    return row ? new Date(row.start.getTime() + Math.max(0, Math.min(1, hourFraction)) * Math.max(1, row.end.getTime() - row.start.getTime())) : liveNow;
+  }
+
   function renderAnimatedHeptagram(frame, rows, dayKey, currentIdx) {
     if (!el.heptagramSvg) return;
     const liveHour = Math.max(1, Math.min(24, currentIdx + 1));
@@ -2679,52 +3051,35 @@
     const weekIndex = Math.max(0, weekPath.indexOf(dayKey));
     const dayFraction = selectedPosition >= 24 ? 1 : Math.max(0, Math.min(1, (selectedPosition - 1) / 23));
     let svg = '';
-    svg += '<circle class="ph-heptagram-circle" cx="180" cy="180" r="118"></circle>';
-    svg += '<circle class="ph-heptagram-guide" cx="180" cy="180" r="78"></circle>';
+    svg += '<circle class="ph-core-heptagram-circle" cx="180" cy="180" r="142"></circle>';
+    svg += '<circle class="ph-core-heptagram-guide" cx="180" cy="180" r="142"></circle>';
 
     for (let i = 0; i < 7; i++) {
       const a = weekPath[i], b = weekPath[i + 1];
-      if (i < weekIndex) svg += heptagramLine(a, b, 'ph-heptagram-star-segment past');
+      if (i < weekIndex) svg += heptagramLine(a, b, 'ph-core-heptagram-week past');
       else if (i === weekIndex) {
-        svg += heptagramLine(a, b, 'ph-heptagram-star-segment future');
-        svg += heptagramPartialLine(a, b, 'ph-heptagram-star-segment current', dayFraction);
-      } else svg += heptagramLine(a, b, 'ph-heptagram-star-segment future');
+        svg += heptagramLine(a, b, 'ph-core-heptagram-week future');
+        svg += heptagramPartialLine(a, b, 'ph-core-heptagram-week current', dayFraction);
+      } else svg += heptagramLine(a, b, 'ph-core-heptagram-week future');
     }
 
-    const currentSegment = Math.max(0, selectedHour - 1);
-    for (let i = 0; i < 23; i++) {
-      if (i < currentSegment) svg += heptagramLine(sequence24[i], sequence24[i + 1], 'ph-heptagram-hour-segment past');
-      else if (i === currentSegment) {
-        svg += heptagramLine(sequence24[i], sequence24[i + 1], 'ph-heptagram-hour-segment future');
-        svg += heptagramPartialLine(sequence24[i], sequence24[i + 1], 'ph-heptagram-hour-segment current', hourFraction);
-      } else svg += heptagramLine(sequence24[i], sequence24[i + 1], 'ph-heptagram-hour-segment future');
-    }
-    chaldean.forEach(function (key) {
-      const p = heptagramPointFor(key);
-      const lp = heptagramLabelPointFor(key);
-      const planet = byKey[key];
-      const isCurrent = row && row.ruler.key === key;
-      const isDay = key === dayKey;
-      const isWeekComplete = weekPath.slice(0, weekIndex + 1).includes(key);
-      const classes = 'ph-heptagram-node p-' + key + (isCurrent ? ' current' : '') + (isDay ? ' day-ruler' : '') + (isWeekComplete ? ' week-complete' : '');
-      svg += '<g class="p-' + key + '">';
-      svg += '<circle class="' + classes + '" cx="' + p.x.toFixed(2) + '" cy="' + p.y.toFixed(2) + '" r="18"></circle>';
-      svg += '<text class="ph-heptagram-glyph" x="' + p.x.toFixed(2) + '" y="' + (p.y + 9).toFixed(2) + '" text-anchor="middle">' + planet.sym + '</text>';
-      svg += '<text class="ph-heptagram-label" x="' + lp.x.toFixed(2) + '" y="' + lp.y.toFixed(2) + '" text-anchor="middle">' + planet.name + '</text>';
-      if (isDay) svg += '<title>' + planet.name + ' day ruler</title>';
-      svg += '</g>';
-    });
+    for (let i = 0; i < 7; i++) svg += heptagramLine(chaldean[i], chaldean[(i + 1) % 7], 'ph-core-heptagram-hour future');
+    const hourKey = row.ruler.key;
+    const hourNext = chaldean[(chaldean.indexOf(hourKey) + 1) % 7];
+    svg += heptagramPartialLine(hourKey, hourNext, 'ph-core-heptagram-hour current', hourFraction);
+    chaldean.forEach(function (key) { svg += directHeptagramPlanetMarkup(key, dayKey, hourKey); });
     el.heptagramSvg.innerHTML = svg;
+    el.heptagramSvg.dataset.directHeptagramReady = 'true';
 
     if (el.dayRulerPortrait && mythicProfiles[dayKey]) { el.dayRulerPortrait.src = mythicProfiles[dayKey]; el.dayRulerPortrait.alt = day.name + ' profile artwork'; }
-    if (el.dayRulerProfileName) el.dayRulerProfileName.textContent = day.sym + ' ' + day.name + ' day';
+    if (el.dayRulerProfileName) el.dayRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(day.key, day.name) + ' ' + day.name + ' day';
     if (el.dayRulerFocus) el.dayRulerFocus.textContent = day.focusDay + '.';
-    if (el.hourRulerProfileName && row) el.hourRulerProfileName.textContent = row.ruler.sym + ' ' + row.ruler.name + ' hour';
+    if (el.hourRulerProfileName && row) el.hourRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(row.ruler.key, row.ruler.name) + ' ' + row.ruler.name + ' hour';
     if (el.hourRulerFocus && row) el.hourRulerFocus.textContent = row.ruler.focusHour + '.';
 
-    const weekText = weekPath.slice(0, 7).map(function (key) { return byKey[key].sym + ' ' + byKey[key].name; }).join(' → ') + ' → ' + byKey.sun.sym + ' Sun';
+    const weekText = weekPath.slice(0, 7).map(function (key) { return canonicalPlanetGlyphMarkup(key, byKey[key].name) + ' ' + byKey[key].name; }).join(' → ') + ' → ' + canonicalPlanetGlyphMarkup('sun', 'Sun') + ' Sun';
     const completeText = weekIndex ? weekPath.slice(0, weekIndex + 1).map(function (key) { return byKey[key].name; }).join(' → ') : 'Sun';
-    if (el.heptagramOrderText) el.heptagramOrderText.textContent = 'Planetary week path: ' + weekText + '. Completed this week: ' + completeText + '.';
+    if (el.heptagramOrderText) el.heptagramOrderText.innerHTML = 'Planetary week path: ' + weekText + '. Completed this week: ' + completeText + '.';
     if (el.heptagramTimeText) el.heptagramTimeText.textContent = day.name + ' day is drawing from ' + byKey[weekPath[weekIndex]].name + ' toward ' + byKey[weekPath[weekIndex + 1]].name + '. Hour ' + selectedHour + ' is ' + row.ruler.name + ' hour, from ' + fmtHM(row.start) + ' to ' + fmtHM(row.end) + '. The hour handoff is ' + Math.round(hourFraction * 100) + '% drawn.';
     if (el.heptagramGeometryText) el.heptagramGeometryText.textContent = 'Solid red lines mark completed planetary days in the current week. Pale guide lines mark future days. The glowing star line marks the current sunrise-to-sunrise day, and the inner ring marks the current planetary hour.';
     if (el.heptagramSummary) {
@@ -2734,7 +3089,7 @@
     if (el.heptagramHourBeads) {
       el.heptagramHourBeads.innerHTML = rows.map(function (r) {
         const cls = r.index < selectedHour ? 'past' : (r.index === selectedHour ? 'current' : 'future');
-        return '<span class="ph-hour-bead ' + cls + ' p-' + r.ruler.key + '">' + r.index + ' ' + r.ruler.sym + '</span>';
+        return '<span class="ph-hour-bead ' + cls + ' p-' + r.ruler.key + '">' + r.index + ' ' + canonicalPlanetGlyphMarkup(r.ruler.key, r.ruler.name) + '</span>';
       }).join('');
     }
   }
@@ -2751,7 +3106,7 @@
     el.tickerFill.style.width = nowPct + '%';
     const currentRow = rows[currentIndex(rows, now)] || rows[0];
     if (el.currentGlyph && currentRow) {
-      el.currentGlyph.textContent = currentRow.ruler.sym;
+      el.currentGlyph.innerHTML = canonicalPlanetGlyphMarkup(currentRow.ruler.key, currentRow.ruler.name);
       el.currentGlyph.className = 'ph-current-glyph p-' + currentRow.ruler.key;
       el.currentGlyph.style.left = nowPct + '%';
       el.currentGlyph.title = 'Current point: ' + currentRow.ruler.name + ' hour ' + currentRow.index;
@@ -2779,7 +3134,7 @@
       if (i === idx + 1) tr.className = 'next';
       tr.innerHTML = '<td>' + r.index + '</td>' +
         '<td>' + fmtHM(r.start) + '–' + fmtHM(r.end) + '</td>' +
-        '<td class="p-' + r.ruler.key + '"><span class="ph-dot"></span> ' + r.ruler.sym + ' ' + r.ruler.name + '</td>' +
+        '<td class="p-' + r.ruler.key + '">' + canonicalPlanetGlyphMarkup(r.ruler.key, r.ruler.name) + ' ' + r.ruler.name + '</td>' +
         '<td><span class="ph-badge ' + (r.isBright ? 'bright' : 'dark') + '">' + (r.isBright ? 'Bright' : 'Dark') + '</span></td>' +
         '<td>' + fullContextStatement(byKey[dayKey], r, rows) + '</td>';
       el.hoursTable.appendChild(tr);
@@ -2811,11 +3166,11 @@
     el.dayRulerMeta.textContent = '';
     el.sunTimes.textContent = 'Bright hours are from sunrise at ' + fmtHMText(frame.sunrise) + ' to sunset at ' + fmtHMText(frame.sunset) + ', followed by dark hours until next sunrise at ' + fmtHMText(frame.end);
     el.bridgeInfo.textContent = '';
-    const dateKeyForLedger = dateInputValueFor(frame.localNow, state.tz);
-    const skyDateTime = dateKeyForLedger + 'T' + timeInputValueFor(frame.localNow, state.tz);
+    const skyMoment = activePreviewMoment(frame, rows, idx);
+    const dateKeyForLedger = dateInputValueFor(skyMoment, state.tz);
+    const skyDateTime = dateKeyForLedger + 'T' + timeInputValueFor(skyMoment, state.tz);
     if (el.dateFieldLink) {
       const skyParams = new URLSearchParams({
-        preview: 'pr55',
         source: 'planetary-hours',
         datetime: skyDateTime,
         lat: String(state.lat),
@@ -2835,11 +3190,11 @@
     if (el.topHourJump && cur) setHourJump(el.topHourJump, cur);
     const prevDayKeyForCue = weekdayToRuler[(rulerToWeekday[dayKey] + 6) % 7];
     const nextDayKeyForCue = weekdayToRuler[(rulerToWeekday[dayKey] + 1) % 7];
-    if (el.prevDayCue) el.prevDayCue.textContent = '← ' + byKey[prevDayKeyForCue].sym + ' day';
-    if (el.nextDayCue) el.nextDayCue.textContent = byKey[nextDayKeyForCue].sym + ' day →';
+    if (el.prevDayCue) el.prevDayCue.textContent = '← Day';
+    if (el.nextDayCue) el.nextDayCue.textContent = 'Day →';
     renderMoonFrame(frame.localNow, state.lat, state.lon);
     renderWandererGrid(frame);
-    phRenderCurrentWheel(frame);
+    phRenderCurrentWheel(Object.assign({}, frame, { localNow: skyMoment }));
     let prev = rows[idx - 1];
     let next = rows[idx + 1];
     if (!prev) {
@@ -2930,6 +3285,7 @@
       const body = button.getAttribute('data-sky-body');
       if (!body) return;
       state.skyBody = body;
+      state.wandererExpandedBody = button.classList.contains('is-collapsed') ? body : null;
       if (el.skyQuery) el.skyQuery.value = 'Where is ' + body + ' right now?';
       renderWandererGrid();
       renderSkyOrientation(true);
