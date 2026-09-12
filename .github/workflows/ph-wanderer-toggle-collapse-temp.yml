@@ -1,0 +1,88 @@
+name: Planetary Hours Wanderer collapse toggle temp
+on:
+  push:
+    branches: [fix/planetary-hours-visual-parity]
+    paths: ['.github/workflows/ph-wanderer-toggle-collapse-temp.yml']
+permissions:
+  contents: write
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+          fetch-depth: 0
+      - name: Make expanded Wanderer cards collapsible again
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('planetaryhours.html')
+          s=path.read_text()
+
+          old="const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h' };"
+          new="const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, wandererCollapsedBodies: Object.create(null), heptagramHourOverride: null, timeFormat: '12h' };"
+          if old not in s: raise SystemExit('state marker not found')
+          s=s.replace(old,new,1)
+
+          old="""      const body = item.body;
+      const collapsed = (!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body;
+      return '<button class=\"ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + '\" type=\"button\" data-sky-body=\"' + body + '\" aria-pressed=\"' + (state.skyBody === body ? 'true' : 'false') + '\" aria-expanded=\"' + (collapsed ? 'false' : 'true') + '\" aria-label=\"' + (collapsed ? 'Expand ' : 'Orient to ') + body + '\">' +"""
+          new="""      const body = item.body;
+      const manuallyCollapsed = !!state.wandererCollapsedBodies[body];
+      const collapsed = manuallyCollapsed || (((!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body));
+      const openAction = state.skyBody === body ? 'Collapse ' : 'Orient to ';
+      return '<button class=\"ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + '\" type=\"button\" data-sky-body=\"' + body + '\" aria-pressed=\"' + (state.skyBody === body ? 'true' : 'false') + '\" aria-expanded=\"' + (collapsed ? 'false' : 'true') + '\" aria-label=\"' + (collapsed ? 'Expand ' : openAction) + body + '\">' +"""
+          if old not in s: raise SystemExit('render marker not found')
+          s=s.replace(old,new,1)
+
+          old="""      const body = button.getAttribute('data-sky-body');
+      if (!body) return;
+      state.skyBody = body;
+      state.wandererExpandedBody = button.classList.contains('is-collapsed') ? body : null;
+      if (el.skyQuery) el.skyQuery.value = 'Where is ' + body + ' right now?';
+      renderWandererGrid();
+      renderSkyOrientation(true);"""
+          new="""      const body = button.getAttribute('data-sky-body');
+      if (!body) return;
+      const wasCollapsed = button.classList.contains('is-collapsed');
+      const wasSelected = state.skyBody === body;
+      if (wasCollapsed) {
+        delete state.wandererCollapsedBodies[body];
+        state.skyBody = body;
+        state.wandererExpandedBody = body;
+      } else if (wasSelected) {
+        state.wandererCollapsedBodies[body] = true;
+        state.wandererExpandedBody = null;
+      } else {
+        state.skyBody = body;
+        state.wandererExpandedBody = null;
+      }
+      if (el.skyQuery) el.skyQuery.value = 'Where is ' + body + ' right now?';
+      renderWandererGrid();
+      renderSkyOrientation(true);"""
+          if old not in s: raise SystemExit('click marker not found')
+          s=s.replace(old,new,1)
+          path.write_text(s)
+          PY
+      - name: Verify Wanderer toggle and Planetary Hours contract
+        run: |
+          node tests/planetary-hours-sky-chart-visual-parity.mjs
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('planetaryhours.html').read_text()
+          assert 'wandererCollapsedBodies: Object.create(null)' in s
+          assert 'const manuallyCollapsed = !!state.wandererCollapsedBodies[body]' in s
+          assert "const openAction = state.skyBody === body ? 'Collapse ' : 'Orient to '" in s
+          assert 'delete state.wandererCollapsedBodies[body]' in s
+          assert 'state.wandererCollapsedBodies[body] = true' in s
+          assert 'const wasSelected = state.skyBody === body' in s
+          PY
+      - name: Commit product change and remove temporary workflow
+        run: |
+          rm .github/workflows/ph-wanderer-toggle-collapse-temp.yml
+          git config user.name blissonature
+          git config user.email blissonature@gmail.com
+          git add planetaryhours.html .github/workflows/ph-wanderer-toggle-collapse-temp.yml
+          git commit -m "Allow Wanderer cards to collapse on repeat tap"
+          git push origin HEAD:fix/planetary-hours-visual-parity
