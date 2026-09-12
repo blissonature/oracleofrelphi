@@ -1,0 +1,96 @@
+name: Planetary Hours independent columns temp
+on:
+  push:
+    branches: [fix/planetary-hours-visual-parity]
+    paths: ['.github/workflows/ph-independent-columns-temp.yml']
+permissions:
+  contents: write
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+          fetch-depth: 0
+      - name: Let the 24-hour list rise under Day and Hour
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path=Path('planetaryhours.html')
+          s=path.read_text()
+
+          day_marker='<section class="ph-panel" id="daySummary">'
+          table_marker='<section class="ph-panel" id="tableSection">'
+          help_marker='<section class="ph-panel">\n    <details class="ph-help">'
+          day_start=s.index(day_marker)
+          table_start=s.index(table_marker, day_start)
+          help_start=s.index(help_marker, table_start)
+          day_section_end=s.rfind('</section>', day_start, table_start)
+          grid_close=s.rfind('</div>', day_start, day_section_end)
+          if min(day_start,table_start,help_start,day_section_end,grid_close) < 0:
+              raise SystemExit('layout markers not found')
+          table_block=s[table_start:help_start]
+          if table_block.count('id="tableSection"') != 1:
+              raise SystemExit('table block extraction failed')
+          s=s[:grid_close] + '\n      ' + table_block.lstrip() + s[grid_close:table_start] + s[help_start:]
+
+          css_marker='  /* v320 mobile priority: the living instrument leads; day context follows compactly. */'
+          css='''  /* Desktop test: Day + Hour continue into the 24-hour list while the sky rail flows independently. */
+  @media (min-width: 901px) {
+    .ph-summary-grid-consolidated {
+      align-items: start;
+      grid-template-areas:
+        "day hour moon"
+        "table table moon";
+    }
+    .ph-summary-grid-consolidated > .ph-day-frame { grid-area: day; align-self: start; }
+    .ph-summary-grid-consolidated > .ph-living-heptagram-frame { grid-area: hour; align-self: start; }
+    .ph-summary-grid-consolidated > .ph-moon-frame { grid-area: moon; align-self: start; }
+    .ph-summary-grid-consolidated > #tableSection {
+      grid-area: table;
+      width: 100%;
+      max-width: none;
+      margin: .15rem 0 0;
+      box-sizing: border-box;
+      align-self: start;
+    }
+  }
+  @media (max-width: 900px) {
+    .ph-summary-grid-consolidated > #tableSection {
+      order: 6;
+      width: 100%;
+      margin: .9rem 0 0;
+      box-sizing: border-box;
+    }
+  }
+
+'''
+          if css_marker not in s:
+              raise SystemExit('CSS insertion marker not found')
+          s=s.replace(css_marker,css+css_marker,1)
+          path.write_text(s)
+          PY
+      - name: Verify Planetary Hours contract
+        run: |
+          node tests/planetary-hours-sky-chart-visual-parity.mjs
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('planetaryhours.html').read_text()
+          assert s.count('id="tableSection"') == 1
+          day=s.index('id="daySummary"')
+          table=s.index('id="tableSection"',day)
+          help=s.index('<details class="ph-help">',table)
+          assert day < table < help
+          assert '"day hour moon"' in s and '"table table moon"' in s
+          assert '.ph-summary-grid-consolidated > #tableSection' in s
+          PY
+      - name: Commit product change and remove temporary workflow
+        run: |
+          rm .github/workflows/ph-independent-columns-temp.yml
+          git config user.name blissonature
+          git config user.email blissonature@gmail.com
+          git add planetaryhours.html .github/workflows/ph-independent-columns-temp.yml
+          git commit -m "Let Planetary Hours columns flow independently"
+          git push origin HEAD:fix/planetary-hours-visual-parity
