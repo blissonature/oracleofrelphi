@@ -684,9 +684,27 @@
   .ph-moon-frame .ph-planet-instructions { font-size: .78rem; line-height: 1.3; margin: 0 0 .55rem; }
   .ph-moon-frame .ph-wanderer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; }
   .ph-moon-frame .ph-wanderer-card:not(.is-collapsed) { grid-column: 1 / -1; }
-  .ph-moon-frame .ph-wanderer-card.is-collapsed { min-width: 0; }
-  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-title { align-items: flex-start; }
-  .ph-moon-frame .ph-wanderer-card.is-collapsed::after { justify-self: start; }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed {
+    min-width: 0;
+    padding: .42rem .48rem;
+    min-height: 0;
+    opacity: .82;
+  }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-title {
+    align-items: center;
+    justify-content: flex-start;
+    gap: .24rem;
+    margin: 0;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-title-main {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-status-stack,
+  .ph-moon-frame .ph-wanderer-card.is-collapsed::after { display: none; }
   .ph-section-heading.compact h3 { margin: .1rem 0 .65rem; text-align: center; }
   .ph-wanderer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: .55rem; }
   .ph-wanderer-card { background: #fff; border: 1px solid var(--relphi-line); border-radius: .9rem; padding: .55rem; text-align: left; }
@@ -2612,7 +2630,7 @@
     });
     el.wandererGrid.innerHTML = items.map(function (item) {
       const body = item.body;
-      const collapsed = !item.visibility.practical && state.wandererExpandedBody !== body;
+      const collapsed = (!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body;
       return '<button class="ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + (state.skyBody === body ? 'is-selected' : '') + '" type="button" data-sky-body="' + body + '" aria-pressed="' + (state.skyBody === body ? 'true' : 'false') + '" aria-expanded="' + (collapsed ? 'false' : 'true') + '" aria-label="' + (collapsed ? 'Expand ' : 'Orient to ') + body + '">' +
         (item.visibility.practical ? '<span class="ph-wanderer-visibility-dot" aria-hidden="true"></span>' : '') +
         '<div class="ph-wanderer-title"><span class="ph-wanderer-title-main"><span class="glyph">' + (skyGlyphs[body] || '') + '</span><span>' + body + '</span></span><span class="ph-wanderer-status-stack"><span class="ph-wanderer-status sky-state">' + (item.above ? 'above' : 'below') + '</span><span class="ph-wanderer-status viewing">' + item.visibility.viewing + '</span></span></div>' +
