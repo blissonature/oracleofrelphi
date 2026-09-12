@@ -553,6 +553,7 @@
   .ph-moon-frame h2 { margin-top: 0; }
   .ph-hour-frame { text-align: center; }
   .ph-top-hour-time { font-weight: 800; margin: .65em 0 .2em; }
+  .ph-datefield-jump { text-align: center; }
   .ph-datefield-link {
     display: inline-flex;
     margin-top: .75em;
@@ -1546,8 +1547,8 @@
         <div class="ph-day-line"><p class="ph-tiny" id="dayRulerMeta">—</p></div>
         <p id="sunTimes">—</p>
         <p class="ph-tiny" id="bridgeInfo">—</p>
-        <p><a class="ph-btn ph-datefield-link" id="dateFieldLink" href="sky-chart.html#sky-calc">Jump to this date in Sky Chart</a></p>
-        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this date and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div></a>
+        <p class="ph-datefield-jump"><a class="ph-btn ph-datefield-link" id="dateFieldLink" href="sky-chart.html#sky-calc">Jump to this moment in Sky Chart</a></p>
+        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div></a>
       </div>
       <div class="ph-hour-frame ph-hour-frame-merged ph-living-heptagram-frame">
         <p class="eyebrow">Living planetary hour</p>
@@ -2987,6 +2988,19 @@
       '<g transform="scale('+(17/19)+')" data-master-glyph-unit="true">'+rings+'<g class="ph-core-heptagram-bubble"><circle cx="0" cy="0" r="19" fill="'+fill+'" stroke="'+color+'" stroke-width="'+(isHour?'2.8':'2.35')+'"></circle><g class="ph-core-heptagram-art" transform="matrix(0.64 0 0 0.64 -32 -32)">'+art+'</g></g></g></g><title>'+byKey[key].name+(isDay?' day ruler':'')+(isHour?' hour ruler':'')+'</title></g>';
   }
 
+  function activePreviewMoment(frame, rows, currentIdx) {
+    const liveHour = Math.max(1, Math.min(24, currentIdx + 1));
+    const liveRow = rows[liveHour - 1] || rows[0];
+    const liveNow = state.useSystem ? new Date() : frame.localNow;
+    const liveSpan = liveRow ? Math.max(1, liveRow.end.getTime() - liveRow.start.getTime()) : 1;
+    const liveFraction = liveRow ? Math.max(0, Math.min(0.999, (liveNow.getTime() - liveRow.start.getTime()) / liveSpan)) : 0;
+    const selectedPosition = Math.max(1, Math.min(24, state.heptagramHourOverride != null ? Number(state.heptagramHourOverride) || 1 : liveHour + liveFraction));
+    const selectedHour = Math.max(1, Math.min(24, Math.floor(selectedPosition)));
+    const hourFraction = selectedPosition >= 24 ? 1 : Math.max(0, Math.min(0.999, selectedPosition - selectedHour));
+    const row = rows[selectedHour - 1] || liveRow;
+    return row ? new Date(row.start.getTime() + Math.max(0, Math.min(1, hourFraction)) * Math.max(1, row.end.getTime() - row.start.getTime())) : liveNow;
+  }
+
   function renderAnimatedHeptagram(frame, rows, dayKey, currentIdx) {
     if (!el.heptagramSvg) return;
     const liveHour = Math.max(1, Math.min(24, currentIdx + 1));
@@ -3130,8 +3144,9 @@
     el.dayRulerMeta.textContent = '';
     el.sunTimes.textContent = 'Bright hours are from sunrise at ' + fmtHMText(frame.sunrise) + ' to sunset at ' + fmtHMText(frame.sunset) + ', followed by dark hours until next sunrise at ' + fmtHMText(frame.end);
     el.bridgeInfo.textContent = '';
-    const dateKeyForLedger = dateInputValueFor(frame.localNow, state.tz);
-    const skyDateTime = dateKeyForLedger + 'T' + timeInputValueFor(frame.localNow, state.tz);
+    const skyMoment = activePreviewMoment(frame, rows, idx);
+    const dateKeyForLedger = dateInputValueFor(skyMoment, state.tz);
+    const skyDateTime = dateKeyForLedger + 'T' + timeInputValueFor(skyMoment, state.tz);
     if (el.dateFieldLink) {
       const skyParams = new URLSearchParams({
         source: 'planetary-hours',
@@ -3157,7 +3172,7 @@
     if (el.nextDayCue) el.nextDayCue.textContent = 'Day →';
     renderMoonFrame(frame.localNow, state.lat, state.lon);
     renderWandererGrid(frame);
-    phRenderCurrentWheel(frame);
+    phRenderCurrentWheel(Object.assign({}, frame, { localNow: skyMoment }));
     let prev = rows[idx - 1];
     let next = rows[idx + 1];
     if (!prev) {
