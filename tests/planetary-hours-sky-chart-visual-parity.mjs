@@ -72,6 +72,8 @@ assert.match(page,/root\.classList\.add\('is-ready'\)/);
 assert.match(page,/viewBox:'60 60 480 480'/);
 assert.match(page,/fill:colors\[i\] \|\| '#ddd'/);
 assert.match(page,/fill-opacity':spec\.houseFillOpacity/);
+assert.match(page,/const houseNumberRadius = Math\.max\(Number\(house\.numberRadius \|\| 0\), Number\(house\.outer\) - 12\)/);
+assert.match(page,/phZodiacPoint\(mid, houseNumberRadius, center\.x, center\.y\)/);
 assert.match(page,/\.ph-wheel-sign \{ pointer-events:none; filter:none; \}/);
 assert.match(page,/color:'#111',plain:true/);
 assert.doesNotMatch(page,/const phSignGlyphs/);

@@ -2407,6 +2407,7 @@
 
       const asc = phAscendantLongitude(date, state.lat, state.lon);
       const mc = phMidheavenLongitude(date, state.lon);
+      const houseNumberRadius = Math.max(Number(house.numberRadius || 0), Number(house.outer) - 12);
       for (let i = 0; i < 12; i += 1) {
         const start = phNormDeg(asc + i * 30);
         const end = start + 30;
@@ -2420,7 +2421,7 @@
         const a = phZodiacPoint(start, house.inner, center.x, center.y);
         const b = phZodiacPoint(start, house.outer, center.x, center.y);
         houseLayer.appendChild(phWheelSvg('line', {x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'ph-wheel-house-cusp'}));
-        const labelPoint = phZodiacPoint(mid, house.numberRadius, center.x, center.y);
+        const labelPoint = phZodiacPoint(mid, houseNumberRadius, center.x, center.y);
         const label = phWheelSvg('text', {x:labelPoint.x,y:labelPoint.y,class:'ph-wheel-house-number'});
         label.textContent = String(i + 1);
         houseLayer.appendChild(label);
