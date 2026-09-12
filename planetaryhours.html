@@ -1242,7 +1242,7 @@
   .ph-current-wheel-direct .ph-wheel-zodiac-sector { stroke:#fffdfa; stroke-width:1.45; vector-effect:non-scaling-stroke; }
   .ph-current-wheel-direct .ph-wheel-zodiac-inner,
   .ph-current-wheel-direct .ph-wheel-zodiac-outer { fill:none; stroke:rgba(45,39,34,.38); stroke-width:1.35; vector-effect:non-scaling-stroke; }
-  .ph-current-wheel-direct .ph-wheel-sign { pointer-events:none; filter:drop-shadow(0 0 2px rgba(255,255,255,.98)); }
+  .ph-current-wheel-direct .ph-wheel-sign { pointer-events:none; filter:none; }
   .ph-current-wheel-direct .ph-wheel-angle-line { stroke:#514943; stroke-width:1.3; stroke-linecap:round; opacity:.72; vector-effect:non-scaling-stroke; }
   .ph-current-wheel-direct .ph-wheel-angle-label { fill:#514943; font:850 13px/1 system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; paint-order:stroke; stroke:#fffdfa; stroke-width:3px; }
   .ph-current-wheel-direct .ph-wheel-placement-leader { stroke:#c9211e; stroke-width:1.35; stroke-linecap:round; opacity:.58; vector-effect:non-scaling-stroke; }
@@ -1323,10 +1323,20 @@
   }
   #dayRulerProfileName .ph-direct-canonical-glyph,
   #hourRulerProfileName .ph-direct-canonical-glyph {
-    width:3.1em;
-    height:3.1em;
-    margin:0 .04em 0 0;
+    width:2.15em;
+    height:2.15em;
+    margin:0 .28em 0 .08em;
     vertical-align:middle;
+    transform:scale(1.42);
+    transform-origin:center;
+  }
+  .ph-pill .ph-direct-canonical-glyph {
+    width:1.35em;
+    height:1.35em;
+    margin:0 .32em;
+    vertical-align:-.08em;
+    transform:scale(1.9);
+    transform-origin:center;
   }
   #dayRulerProfileName .ph-direct-canonical-glyph { color:#fff; }
   #hourRulerProfileName .ph-direct-canonical-glyph { color:#111; }
@@ -2362,7 +2372,7 @@
         const point = phZodiacPoint(index * 30 + 15, (zodiac.inner + zodiac.outer) / 2, center.x, center.y);
         const host = phWheelSvg('g', {transform:'translate(' + point.x + ' ' + point.y + ')',class:'ph-wheel-sign'});
         zodiacLayer.appendChild(host);
-        jobs.push(phWheelCanonicalBubble(host, id, {radius:zodiac.glyphRadius || 14,color:'#514b45',plain:true,strokeWidth:1.5}));
+        jobs.push(phWheelCanonicalBubble(host, id, {radius:zodiac.glyphRadius || 14,color:'#111',plain:true,strokeWidth:1.5}));
       });
 
       const edge = Number(role.edge || house.outer);
