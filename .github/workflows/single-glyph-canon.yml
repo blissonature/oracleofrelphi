@@ -31,7 +31,7 @@ on:
       - '.github/workflows/single-glyph-canon.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   single-canon:
@@ -49,3 +49,24 @@ jobs:
         run: node tools/check-sky-chart-glyph-readiness.mjs
       - name: Run glyph-facing Sky Chart regression tests
         run: node --test tests/sky-chart-requested-visuals.test.mjs tests/sky-chart-angle-lane-isolation.test.mjs
+
+  planetary-hours-core-refactor:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/fix/planetary-hours-visual-parity' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Rewrite the native Planetary Hours renderer
+        run: node tools/refactor-planetary-hours-heptagram-core.mjs
+      - name: Commit the direct renderer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add planetaryhours.html planetary-hours-active-time-integrity-v1.js navloader.js planetary-hours-sky-chart-visual-parity-v1.js standardize-zodiac-wheels.js tests/planetary-hours-sky-chart-visual-parity.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m "Render Planetary Hours heptagram directly"
+          git push origin HEAD:fix/planetary-hours-visual-parity
