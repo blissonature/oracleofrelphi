@@ -1303,6 +1303,20 @@
   }
 
 
+  /* Planetary Hours owns dynamic ruler glyphs directly from the canonical SVG assets. */
+  .ph-direct-canonical-glyph {
+    display:inline-block;
+    width:1.08em;
+    height:1.08em;
+    vertical-align:-.16em;
+    background:currentColor;
+    -webkit-mask:var(--ph-canonical-glyph) center / contain no-repeat;
+    mask:var(--ph-canonical-glyph) center / contain no-repeat;
+    flex:0 0 auto;
+  }
+  #dayRulerProfileName .ph-direct-canonical-glyph,
+  #hourRulerProfileName .ph-direct-canonical-glyph { margin-right:.18em; }
+
   /* Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing. */
   #heptagramSvg .ph-core-heptagram-circle,
   #heptagramSvg .ph-core-heptagram-guide { fill:none; stroke:#2a2521; vector-effect:non-scaling-stroke; }
@@ -1454,7 +1468,7 @@
       <div class="ph-moon-frame">
         <h2>Moon calendar</h2>
         <div class="ph-moon-wrap">
-          <div class="ph-moon-disc" id="moonDisc">☽</div>
+          <div class="ph-moon-disc" id="moonDisc"></div>
           <div class="ph-moon-facts">
             <p id="moonPhase">—</p>
             <p class="ph-tiny" id="moonTimes">—</p>
@@ -2678,6 +2692,12 @@
     jupiter:'<path d="M35.600705705939745 43.44355534975665C33.13175145651101 39.49322855067068 34.1193331562825 35.04911090169897 38.56345080525422 32.58015665227024C43.00756845422593 30.111202402841506 48.43926780296914 31.592574952498744 50.41443120251213 35.542901751584715C52.88338545194085 40.480810250442175 50.41443120251213 46.406300449071125 46.957895253311904 51.34420894792859C44.48894100388317 54.80074489712881 41.526195904568695 57.26969914655754 38.56345080525422 59.24486254610053" fill="none" stroke="#111111" stroke-width="2.715849674371604" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M35.106914856054 59.24486254610053L65.72194754897025 59.24486254610053M57.82129395079832 32.08636580238449L57.82129395079832 68.62688869392971" fill="none" stroke="#111111" stroke-width="2.715849674371604" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>',
     saturn:'<path d="M43.613219676770356 28.949988079580496L43.613219676770356 60.05083139269875M38.05949765657067 33.94833789776021L50.277686101009984 33.94833789776021" fill="none" stroke="#111111" stroke-width="3.054547111109828" stroke-linecap="round" stroke-linejoin="round" opacity="1"/><path d="M43.613219676770356 48.3880151502794C45.83470848485024 43.94503753411965 49.16694169697004 41.16817652401981 53.05454711110983 41.16817652401981C58.052896929289545 41.16817652401981 61.38513014140936 45.05578193815959 61.38513014140936 50.05413175633931C61.38513014140936 53.94173717047909 59.16364133332949 57.273970382598904 56.386780323229644 61.716947998758656C53.609919313129794 66.1599256149184 53.609919313129794 68.93678662501824 56.386780323229644 70.60290323107816C58.60826913130951 71.7136476351181 60.82975793938939 70.60290323107816 61.94050234342933 68.93678662501824" fill="none" stroke="#111111" stroke-width="3.054547111109828" stroke-linecap="round" stroke-linejoin="round" opacity="1"/>'
   });
+  function canonicalPlanetGlyphMarkup(key, label) {
+    const id = String(key || '').toLowerCase();
+    if (!/^(sun|moon|mercury|venus|mars|jupiter|saturn|uranus|neptune|pluto)$/.test(id)) return '';
+    return '<span class="ph-direct-canonical-glyph p-' + id + '" style="--ph-canonical-glyph:url(\'assets/planet-glyphs/' + id + '.svg\')" role="img" aria-label="' + attrText(label || id) + '"></span>';
+  }
+
   function directHeptagramPlanetMarkup(key, dayKey, hourKey) {
     const p=heptagramPointFor(key), color=heptagramColors[key], isDay=key===dayKey, isHour=key===hourKey;
     const stateId=isDay&&isHour?'day-and-hour-ruler':isDay?'day-ruler':isHour?'hour-ruler':'plain';
@@ -2738,9 +2758,9 @@
     el.heptagramSvg.dataset.directHeptagramReady = 'true';
 
     if (el.dayRulerPortrait && mythicProfiles[dayKey]) { el.dayRulerPortrait.src = mythicProfiles[dayKey]; el.dayRulerPortrait.alt = day.name + ' profile artwork'; }
-    if (el.dayRulerProfileName) el.dayRulerProfileName.textContent = day.sym + ' ' + day.name + ' day';
+    if (el.dayRulerProfileName) el.dayRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(day.key, day.name) + ' ' + day.name + ' day';
     if (el.dayRulerFocus) el.dayRulerFocus.textContent = day.focusDay + '.';
-    if (el.hourRulerProfileName && row) el.hourRulerProfileName.textContent = row.ruler.sym + ' ' + row.ruler.name + ' hour';
+    if (el.hourRulerProfileName && row) el.hourRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(row.ruler.key, row.ruler.name) + ' ' + row.ruler.name + ' hour';
     if (el.hourRulerFocus && row) el.hourRulerFocus.textContent = row.ruler.focusHour + '.';
 
     const weekText = weekPath.slice(0, 7).map(function (key) { return byKey[key].sym + ' ' + byKey[key].name; }).join(' → ') + ' → ' + byKey.sun.sym + ' Sun';

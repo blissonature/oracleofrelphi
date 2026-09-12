@@ -28,4 +28,11 @@ assert.match(inlineGlyphs,/closest\('\.ph-ruler-profile'\)/);
 assert.match(inlineGlyphs,/insidePageOwnedDynamicGlyphRegion\(node\)/);
 assert.match(inlineGlyphs,/SVGTextElement\) \|\| node\.closest\('\.relphi-inline-canonical-glyph,\.ph-ruler-profile'\)/);
 
+assert.match(page,/function canonicalPlanetGlyphMarkup/);
+assert.match(page,/dayRulerProfileName\.innerHTML = canonicalPlanetGlyphMarkup/);
+assert.match(page,/hourRulerProfileName\.innerHTML = canonicalPlanetGlyphMarkup/);
+assert.doesNotMatch(page,/id="moonDisc">☽<\/div>/);
+assert.doesNotMatch(page,/dayRulerProfileName\.textContent = day\.sym/);
+assert.doesNotMatch(page,/hourRulerProfileName.*textContent = row\.ruler\.sym/);
+
 console.log('Planetary Hours direct heptagram and ruler-profile ownership contract passed.');
