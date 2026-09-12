@@ -90,10 +90,18 @@ if old_row not in page:
 page = page.replace(old_row, new_row, 1)
 page_path.write_text(page)
 
-needle = "assert.doesNotMatch(page,/class=\\\"planet-marker/);\n"
-addition = """assert.match(page,/\\.ph-table-wrap \\{ max-height: none; overflow: visible; \\}/);\nassert.match(page,/\\\"number time\\\"\\s*\\\"\\. ruler\\\"\\s*\\\"light focus\\\"/);\nassert.doesNotMatch(page,/r\\.ruler\\.key \\+ '\\\\"><span class=\\\"ph-dot\\\"><\\/span>/);\n"""
-if addition not in test:
-    if needle not in test:
-        raise SystemExit('test insertion point not found')
-    test = test.replace(needle, needle + addition, 1)
+old_contract = '''assert.match(page,/grid-template-areas:[\\s\\S]*\\"number time ruler\\"[\\s\\S]*\\"light focus focus\\"/);
+assert.match(page,/\\.ph-table \\{ min-width: 0; width: 100%; display: block; \\}/);
+assert.match(page,/\\.ph-table thead \\{ display: none; \\}/);
+assert.match(page,/overflow-x: hidden/);
+'''
+new_contract = '''assert.match(page,/grid-template-areas:[\\s\\S]*\\"number time\\"[\\s\\S]*\\"\\. ruler\\"[\\s\\S]*\\"light focus\\"/);
+assert.match(page,/\\.ph-table \\{ min-width: 0; width: 100%; display: block; \\}/);
+assert.match(page,/\\.ph-table thead \\{ display: none; \\}/);
+assert.match(page,/\\.ph-table-wrap \\{ max-height: none; overflow: visible; \\}/);
+assert.doesNotMatch(page,/r\\.ruler\\.key \\+ '\\\\"><span class=\\\"ph-dot\\\"><\\/span>/);
+'''
+if old_contract not in test:
+    raise SystemExit('mobile table test contract target not found')
+test = test.replace(old_contract, new_contract, 1)
 test_path.write_text(test)
