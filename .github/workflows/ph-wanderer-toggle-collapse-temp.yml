@@ -1,8 +1,8 @@
 name: Planetary Hours Wanderer collapse toggle temp
 on:
   push:
-    branches: [fix/planetary-hours-visual-parity]
-    paths: ['.github/workflows/ph-wanderer-toggle-collapse-temp.yml']
+    branches:
+      - fix/planetary-hours-visual-parity
 permissions:
   contents: write
 jobs:
@@ -13,37 +13,39 @@ jobs:
         with:
           ref: fix/planetary-hours-visual-parity
           fetch-depth: 0
-      - name: Make expanded Wanderer cards collapsible again
+      - name: Edit Wanderer toggle behavior
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          path=Path('planetaryhours.html')
-          s=path.read_text()
+          path = Path('planetaryhours.html')
+          s = path.read_text()
+          old_state = "const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h' };"
+          new_state = "const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, wandererCollapsedBodies: Object.create(null), heptagramHourOverride: null, timeFormat: '12h' };"
+          if old_state not in s:
+              raise SystemExit('state marker not found')
+          s = s.replace(old_state, new_state, 1)
 
-          old="const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h' };"
-          new="const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, wandererCollapsedBodies: Object.create(null), heptagramHourOverride: null, timeFormat: '12h' };"
-          if old not in s: raise SystemExit('state marker not found')
-          s=s.replace(old,new,1)
-
-          old="""      const body = item.body;
+          old_render = """      const body = item.body;
       const collapsed = (!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body;
       return '<button class=\"ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + '\" type=\"button\" data-sky-body=\"' + body + '\" aria-pressed=\"' + (state.skyBody === body ? 'true' : 'false') + '\" aria-expanded=\"' + (collapsed ? 'false' : 'true') + '\" aria-label=\"' + (collapsed ? 'Expand ' : 'Orient to ') + body + '\">' +"""
-          new="""      const body = item.body;
+          new_render = """      const body = item.body;
       const manuallyCollapsed = !!state.wandererCollapsedBodies[body];
-      const collapsed = manuallyCollapsed || (((!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body));
+      const collapsed = manuallyCollapsed || ((!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body);
       const openAction = state.skyBody === body ? 'Collapse ' : 'Orient to ';
       return '<button class=\"ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + '\" type=\"button\" data-sky-body=\"' + body + '\" aria-pressed=\"' + (state.skyBody === body ? 'true' : 'false') + '\" aria-expanded=\"' + (collapsed ? 'false' : 'true') + '\" aria-label=\"' + (collapsed ? 'Expand ' : openAction) + body + '\">' +"""
-          if old not in s: raise SystemExit('render marker not found')
-          s=s.replace(old,new,1)
+          if old_render not in s:
+              raise SystemExit('render marker not found')
+          s = s.replace(old_render, new_render, 1)
 
-          old="""      const body = button.getAttribute('data-sky-body');
+          old_click = """      const body = button.getAttribute('data-sky-body');
       if (!body) return;
       state.skyBody = body;
       state.wandererExpandedBody = button.classList.contains('is-collapsed') ? body : null;
       if (el.skyQuery) el.skyQuery.value = 'Where is ' + body + ' right now?';
       renderWandererGrid();
       renderSkyOrientation(true);"""
-          new="""      const body = button.getAttribute('data-sky-body');
+          new_click = """      const body = button.getAttribute('data-sky-body');
       if (!body) return;
       const wasCollapsed = button.classList.contains('is-collapsed');
       const wasSelected = state.skyBody === body;
@@ -61,24 +63,20 @@ jobs:
       if (el.skyQuery) el.skyQuery.value = 'Where is ' + body + ' right now?';
       renderWandererGrid();
       renderSkyOrientation(true);"""
-          if old not in s: raise SystemExit('click marker not found')
-          s=s.replace(old,new,1)
+          if old_click not in s:
+              raise SystemExit('click marker not found')
+          s = s.replace(old_click, new_click, 1)
           path.write_text(s)
           PY
-      - name: Verify Wanderer toggle and Planetary Hours contract
+      - name: Verify
+        shell: bash
         run: |
           node tests/planetary-hours-sky-chart-visual-parity.mjs
-          python - <<'PY'
-          from pathlib import Path
-          s=Path('planetaryhours.html').read_text()
-          assert 'wandererCollapsedBodies: Object.create(null)' in s
-          assert 'const manuallyCollapsed = !!state.wandererCollapsedBodies[body]' in s
-          assert "const openAction = state.skyBody === body ? 'Collapse ' : 'Orient to '" in s
-          assert 'delete state.wandererCollapsedBodies[body]' in s
-          assert 'state.wandererCollapsedBodies[body] = true' in s
-          assert 'const wasSelected = state.skyBody === body' in s
-          PY
-      - name: Commit product change and remove temporary workflow
+          grep -q "wandererCollapsedBodies: Object.create(null)" planetaryhours.html
+          grep -q "state.wandererCollapsedBodies\[body\] = true" planetaryhours.html
+          grep -q "delete state.wandererCollapsedBodies\[body\]" planetaryhours.html
+      - name: Commit
+        shell: bash
         run: |
           rm .github/workflows/ph-wanderer-toggle-collapse-temp.yml
           git config user.name blissonature
