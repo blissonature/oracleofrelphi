@@ -70,6 +70,9 @@
     if (!parent) return false;
     if (parent.namespaceURI === NS) return false;
     if (parent.closest('script,style,textarea,input,select,option,.relphi-inline-canonical-glyph')) return false;
+    // Planetary Hours owns its ruler-profile labels and rewrites them from the active frame.
+    // Do not turn those page-owned labels into a second asynchronous rendering pass.
+    if (parent.closest('.ph-ruler-profile')) return false;
     return true;
   }
 
@@ -93,7 +96,7 @@
   }
 
   function replaceSvgText(node) {
-    if (!(node instanceof SVGTextElement) || node.closest('.relphi-inline-canonical-glyph')) return;
+    if (!(node instanceof SVGTextElement) || node.closest('.relphi-inline-canonical-glyph,.ph-ruler-profile')) return;
     const token = String(node.textContent || '').replace(/[\uFE0E\uFE0F]/g, '').trim();
     const id = SVG_TEXT_IDENTITIES[token];
     if (!id) return;
