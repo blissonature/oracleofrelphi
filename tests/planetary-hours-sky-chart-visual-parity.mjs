@@ -35,4 +35,11 @@ assert.doesNotMatch(page,/id="moonDisc">☽<\/div>/);
 assert.doesNotMatch(page,/dayRulerProfileName\.textContent = day\.sym/);
 assert.doesNotMatch(page,/hourRulerProfileName.*textContent = row\.ruler\.sym/);
 
+assert.doesNotMatch(page,/row\.ruler\.sym \+ ' '/);
+assert.doesNotMatch(page,/r\.ruler\.sym \+ '<\/span>'/);
+assert.doesNotMatch(page,/currentRow\.ruler\.sym/);
+assert.doesNotMatch(page,/byKey\[prevDayKeyForCue\]\.sym/);
+assert.doesNotMatch(page,/byKey\[nextDayKeyForCue\]\.sym/);
+assert.match(page,/heptagramOrderText\.innerHTML/);
+
 console.log('Planetary Hours direct heptagram and ruler-profile ownership contract passed.');

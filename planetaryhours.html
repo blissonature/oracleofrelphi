@@ -2454,7 +2454,7 @@
 
   function miniCard(label, row, role) {
     return '<span class="ph-mini-label">' + label + '</span>' +
-      '<span class="ph-mini-ruler p-' + row.ruler.key + '">' + row.ruler.sym + ' ' + row.ruler.name + '</span>' +
+      '<span class="ph-mini-ruler p-' + row.ruler.key + '">' + canonicalPlanetGlyphMarkup(row.ruler.key, row.ruler.name) + ' ' + row.ruler.name + '</span>' +
       '<span class="ph-mini-time">' + fmtHM(row.start) + '–' + fmtHM(row.end) + '</span>' +
       '<span class="ph-mini-time">' + (row.isBright ? 'Bright' : 'Dark') + ' hour ' + row.index + '</span>';
   }
@@ -2613,7 +2613,7 @@
   }
 
   function pillFor(p, label) {
-    return '<span class="ph-pill p-' + p.key + '"><span class="ph-dot"></span>' + p.sym + ' ' + label + '</span>';
+    return '<span class="ph-pill p-' + p.key + '"><span class="ph-dot"></span>' + canonicalPlanetGlyphMarkup(p.key, p.name) + ' ' + label + '</span>';
   }
 
   function attrText(value) {
@@ -2763,9 +2763,9 @@
     if (el.hourRulerProfileName && row) el.hourRulerProfileName.innerHTML = canonicalPlanetGlyphMarkup(row.ruler.key, row.ruler.name) + ' ' + row.ruler.name + ' hour';
     if (el.hourRulerFocus && row) el.hourRulerFocus.textContent = row.ruler.focusHour + '.';
 
-    const weekText = weekPath.slice(0, 7).map(function (key) { return byKey[key].sym + ' ' + byKey[key].name; }).join(' → ') + ' → ' + byKey.sun.sym + ' Sun';
+    const weekText = weekPath.slice(0, 7).map(function (key) { return canonicalPlanetGlyphMarkup(key, byKey[key].name) + ' ' + byKey[key].name; }).join(' → ') + ' → ' + canonicalPlanetGlyphMarkup('sun', 'Sun') + ' Sun';
     const completeText = weekIndex ? weekPath.slice(0, weekIndex + 1).map(function (key) { return byKey[key].name; }).join(' → ') : 'Sun';
-    if (el.heptagramOrderText) el.heptagramOrderText.textContent = 'Planetary week path: ' + weekText + '. Completed this week: ' + completeText + '.';
+    if (el.heptagramOrderText) el.heptagramOrderText.innerHTML = 'Planetary week path: ' + weekText + '. Completed this week: ' + completeText + '.';
     if (el.heptagramTimeText) el.heptagramTimeText.textContent = day.name + ' day is drawing from ' + byKey[weekPath[weekIndex]].name + ' toward ' + byKey[weekPath[weekIndex + 1]].name + '. Hour ' + selectedHour + ' is ' + row.ruler.name + ' hour, from ' + fmtHM(row.start) + ' to ' + fmtHM(row.end) + '. The hour handoff is ' + Math.round(hourFraction * 100) + '% drawn.';
     if (el.heptagramGeometryText) el.heptagramGeometryText.textContent = 'Solid red lines mark completed planetary days in the current week. Pale guide lines mark future days. The glowing star line marks the current sunrise-to-sunrise day, and the inner ring marks the current planetary hour.';
     if (el.heptagramSummary) {
@@ -2775,7 +2775,7 @@
     if (el.heptagramHourBeads) {
       el.heptagramHourBeads.innerHTML = rows.map(function (r) {
         const cls = r.index < selectedHour ? 'past' : (r.index === selectedHour ? 'current' : 'future');
-        return '<span class="ph-hour-bead ' + cls + ' p-' + r.ruler.key + '">' + r.index + ' ' + r.ruler.sym + '</span>';
+        return '<span class="ph-hour-bead ' + cls + ' p-' + r.ruler.key + '">' + r.index + ' ' + canonicalPlanetGlyphMarkup(r.ruler.key, r.ruler.name) + '</span>';
       }).join('');
     }
   }
@@ -2792,7 +2792,7 @@
     el.tickerFill.style.width = nowPct + '%';
     const currentRow = rows[currentIndex(rows, now)] || rows[0];
     if (el.currentGlyph && currentRow) {
-      el.currentGlyph.textContent = currentRow.ruler.sym;
+      el.currentGlyph.innerHTML = canonicalPlanetGlyphMarkup(currentRow.ruler.key, currentRow.ruler.name);
       el.currentGlyph.className = 'ph-current-glyph p-' + currentRow.ruler.key;
       el.currentGlyph.style.left = nowPct + '%';
       el.currentGlyph.title = 'Current point: ' + currentRow.ruler.name + ' hour ' + currentRow.index;
@@ -2820,7 +2820,7 @@
       if (i === idx + 1) tr.className = 'next';
       tr.innerHTML = '<td>' + r.index + '</td>' +
         '<td>' + fmtHM(r.start) + '–' + fmtHM(r.end) + '</td>' +
-        '<td class="p-' + r.ruler.key + '"><span class="ph-dot"></span> ' + r.ruler.sym + ' ' + r.ruler.name + '</td>' +
+        '<td class="p-' + r.ruler.key + '"><span class="ph-dot"></span> ' + canonicalPlanetGlyphMarkup(r.ruler.key, r.ruler.name) + ' ' + r.ruler.name + '</td>' +
         '<td><span class="ph-badge ' + (r.isBright ? 'bright' : 'dark') + '">' + (r.isBright ? 'Bright' : 'Dark') + '</span></td>' +
         '<td>' + fullContextStatement(byKey[dayKey], r, rows) + '</td>';
       el.hoursTable.appendChild(tr);
@@ -2876,8 +2876,8 @@
     if (el.topHourJump && cur) setHourJump(el.topHourJump, cur);
     const prevDayKeyForCue = weekdayToRuler[(rulerToWeekday[dayKey] + 6) % 7];
     const nextDayKeyForCue = weekdayToRuler[(rulerToWeekday[dayKey] + 1) % 7];
-    if (el.prevDayCue) el.prevDayCue.textContent = '← ' + byKey[prevDayKeyForCue].sym + ' day';
-    if (el.nextDayCue) el.nextDayCue.textContent = byKey[nextDayKeyForCue].sym + ' day →';
+    if (el.prevDayCue) el.prevDayCue.innerHTML = '← ' + canonicalPlanetGlyphMarkup(prevDayKeyForCue, byKey[prevDayKeyForCue].name) + ' day';
+    if (el.nextDayCue) el.nextDayCue.innerHTML = canonicalPlanetGlyphMarkup(nextDayKeyForCue, byKey[nextDayKeyForCue].name) + ' day →';
     renderMoonFrame(frame.localNow, state.lat, state.lon);
     renderWandererGrid(frame);
     phRenderCurrentWheel(frame);
