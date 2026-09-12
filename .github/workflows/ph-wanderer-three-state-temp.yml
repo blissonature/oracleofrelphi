@@ -1,0 +1,119 @@
+name: Planetary Hours Wanderer three-state temp
+on:
+  push:
+    branches:
+      - fix/planetary-hours-visual-parity
+permissions:
+  contents: write
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+          fetch-depth: 0
+      - name: Restore middle state for practical Wanderers
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          page = Path('planetaryhours.html')
+          s = page.read_text()
+
+          old_state = "const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, wandererCollapsedBodies: Object.create(null), heptagramHourOverride: null, timeFormat: '12h' };"
+          new_state = "const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h' };"
+          if old_state not in s:
+              raise SystemExit('state marker not found')
+          s = s.replace(old_state, new_state, 1)
+
+          old_render = """      const body = item.body;
+      const manuallyCollapsed = !!state.wandererCollapsedBodies[body];
+      const collapsed = manuallyCollapsed || ((!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body);
+      const openAction = state.skyBody === body ? 'Collapse ' : 'Orient to ';
+      return '<button class=\"ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + '\" type=\"button\" data-sky-body=\"' + body + '\" aria-pressed=\"' + (state.skyBody === body ? 'true' : 'false') + '\" aria-expanded=\"' + (collapsed ? 'false' : 'true') + '\" aria-label=\"' + (collapsed ? 'Expand ' : openAction) + body + '\">' +"""
+          new_render = """      const body = item.body;
+      const naturallyCollapsed = !item.visibility.practical || !item.above;
+      const expanded = state.wandererExpandedBody === body;
+      const collapsed = naturallyCollapsed && !expanded;
+      const openAction = expanded ? (naturallyCollapsed ? 'Collapse ' : 'Return to summary for ') : 'Expand ';
+      return '<button class=\"ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + '\" type=\"button\" data-sky-body=\"' + body + '\" aria-pressed=\"' + (expanded ? 'true' : 'false') + '\" aria-expanded=\"' + (expanded ? 'true' : 'false') + '\" aria-label=\"' + openAction + body + '\">' +"""
+          if old_render not in s:
+              raise SystemExit('render marker not found')
+          s = s.replace(old_render, new_render, 1)
+
+          old_guide = "(state.skyBody === body ? '<div class=\"ph-wanderer-selected-guide\"><strong>Orientation guide</strong>"
+          new_guide = "(expanded ? '<div class=\"ph-wanderer-selected-guide\"><strong>Orientation guide</strong>"
+          if old_guide not in s:
+              raise SystemExit('guide marker not found')
+          s = s.replace(old_guide, new_guide, 1)
+
+          old_click = """      const wasCollapsed = button.classList.contains('is-collapsed');
+      const wasSelected = state.skyBody === body;
+      if (wasCollapsed) { delete state.wandererCollapsedBodies[body]; state.skyBody = body; state.wandererExpandedBody = body; }
+      else if (wasSelected) { state.wandererCollapsedBodies[body] = true; state.wandererExpandedBody = null; }
+      else { state.skyBody = body; state.wandererExpandedBody = null; }
+      if (el.skyQuery) el.skyQuery.value = 'Where is ' + body + ' right now?';
+      renderWandererGrid();
+      renderSkyOrientation(true);"""
+          new_click = """      const wasExpanded = state.wandererExpandedBody === body;
+      if (wasExpanded) {
+        state.wandererExpandedBody = null;
+        renderWandererGrid();
+        return;
+      }
+      state.skyBody = body;
+      state.wandererExpandedBody = body;
+      if (el.skyQuery) el.skyQuery.value = 'Where is ' + body + ' right now?';
+      renderWandererGrid();
+      renderSkyOrientation(true);"""
+          if old_click not in s:
+              raise SystemExit('click marker not found')
+          s = s.replace(old_click, new_click, 1)
+          page.write_text(s)
+
+          test = Path('tests/planetary-hours-sky-chart-visual-parity.mjs')
+          t = test.read_text()
+          old_tests = """assert.match(page,/wandererExpandedBody: null/);
+assert.match(page,/wandererCollapsedBodies: Object\\.create\\(null\\)/);
+assert.match(page,/const manuallyCollapsed = !!state\\.wandererCollapsedBodies\\[body\\]/);
+assert.match(page,/const collapsed = manuallyCollapsed \\|\\| \\(\\(!item\\.visibility\\.practical \\|\\| !item\\.above\\) && state\\.wandererExpandedBody !== body\\)/);
+assert.match(page,/\\.ph-moon-frame \\.ph-wanderer-card\\.is-collapsed \\.ph-wanderer-status-stack,[\\s\\S]*::after \\{ display: none; \\}/);
+assert.match(page,/collapsed \\? 'is-collapsed ' : ''/);
+assert.match(page,/aria-expanded=/);
+assert.match(page,/\\.ph-wanderer-card\\.is-collapsed \\.ph-wanderer-mini-meters/);
+assert.match(page,/const wasSelected = state\\.skyBody === body/);
+assert.match(page,/state\\.wandererCollapsedBodies\\[body\\] = true/);
+assert.match(page,/delete state\\.wandererCollapsedBodies\\[body\\]/);"""
+          new_tests = """assert.match(page,/wandererExpandedBody: null/);
+assert.doesNotMatch(page,/wandererCollapsedBodies/);
+assert.match(page,/const naturallyCollapsed = !item\\.visibility\\.practical \\|\\| !item\\.above/);
+assert.match(page,/const expanded = state\\.wandererExpandedBody === body/);
+assert.match(page,/const collapsed = naturallyCollapsed && !expanded/);
+assert.match(page,/\\.ph-moon-frame \\.ph-wanderer-card\\.is-collapsed \\.ph-wanderer-status-stack,[\\s\\S]*::after \\{ display: none; \\}/);
+assert.match(page,/collapsed \\? 'is-collapsed ' : ''/);
+assert.match(page,/aria-expanded=/);
+assert.match(page,/\\.ph-wanderer-card\\.is-collapsed \\.ph-wanderer-mini-meters/);
+assert.match(page,/const wasExpanded = state\\.wandererExpandedBody === body/);
+assert.match(page,/if \\(wasExpanded\\) \\{[\\s\\S]*state\\.wandererExpandedBody = null;[\\s\\S]*renderWandererGrid\\(\\);[\\s\\S]*return;/);
+assert.match(page,/state\\.wandererExpandedBody = body/);
+assert.match(page,/\\(expanded \\? '<div class=\\\"ph-wanderer-selected-guide/);"""
+          if old_tests not in t:
+              raise SystemExit('test marker not found')
+          t = t.replace(old_tests, new_tests, 1)
+          test.write_text(t)
+          PY
+      - name: Verify
+        shell: bash
+        run: |
+          node tests/planetary-hours-sky-chart-visual-parity.mjs
+      - name: Commit product change
+        shell: bash
+        run: |
+          rm .github/workflows/ph-wanderer-three-state-temp.yml
+          git config user.name blissonature
+          git config user.email blissonature@gmail.com
+          git add planetaryhours.html tests/planetary-hours-sky-chart-visual-parity.mjs .github/workflows/ph-wanderer-three-state-temp.yml
+          git commit -m 'Restore Wanderer middle state'
+          git push origin HEAD:fix/planetary-hours-visual-parity
