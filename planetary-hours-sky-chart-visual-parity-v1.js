@@ -1,10 +1,11 @@
 // Bring Planetary Hours' living heptagram and current-placements wheel onto the same visual contract as Sky Chart.
-// The legacy renderers may calculate freely, but their intermediate DOM is never allowed to paint.
+// The legacy heptagram remains a hidden data source; only completed parity renders are ever displayed.
 (function(){
 'use strict';
-if(!/(^|\/)planetaryhours\.html$/.test(location.pathname)||window.__relphiPlanetaryHoursSkyChartVisualParityV2)return;
+if(!/(^|\/)planetaryhours\.html$/.test(location.pathname)||window.__relphiPlanetaryHoursSkyChartVisualParityV3)return;
 window.__relphiPlanetaryHoursSkyChartVisualParityV1=true;
 window.__relphiPlanetaryHoursSkyChartVisualParityV2=true;
+window.__relphiPlanetaryHoursSkyChartVisualParityV3=true;
 
 const NS='http://www.w3.org/2000/svg';
 const PLANETS=['saturn','jupiter','mars','sun','venus','mercury','moon'];
@@ -15,7 +16,8 @@ const FALLBACK_ZODIAC=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf4
 const SKY_COLOR='#c9211e';
 const MASTER_RADIUS=19,DISPLAY_RADIUS=17,MASTER_SCALE=DISPLAY_RADIUS/MASTER_RADIUS;
 const DAY_RING_INNER_RADIUS=23,DAY_RING_OUTER_RADIUS=27;
-let queued=false,observer=null,applying=false;
+let wheelQueued=false,wheelObserver=null,wheelApplying=false;
+let heptagramSource=null,heptagramSourceObserver=null,heptagramQueued=false,heptagramRevision=0;
 
 const norm=value=>((Number(value)%360)+360)%360;
 function svg(name,attrs={}){const node=document.createElementNS(NS,name);Object.entries(attrs).forEach(([key,value])=>node.setAttribute(key,String(value)));return node}
@@ -50,8 +52,8 @@ async function bubble(host,id,{radius,color,fill='#fffdfa',strokeWidth=1.8,plain
 }
 
 function installStyles(){
-  if(document.getElementById('planetaryHoursSkyChartVisualParityV2Styles'))return;
-  const style=document.createElement('style');style.id='planetaryHoursSkyChartVisualParityV2Styles';style.textContent=`
+  if(document.getElementById('planetaryHoursSkyChartVisualParityV3Styles'))return;
+  const style=document.createElement('style');style.id='planetaryHoursSkyChartVisualParityV3Styles';style.textContent=`
     #heptagramSvg{overflow:visible!important}
     #heptagramSvg .ph-heptagram-circle{fill:none!important;stroke:#2a2521!important;stroke-width:1.4!important;opacity:.55!important;vector-effect:non-scaling-stroke}
     #heptagramSvg .ph-heptagram-guide{fill:none!important;stroke:#2a2521!important;stroke-width:1!important;opacity:.20!important;stroke-dasharray:none!important;vector-effect:non-scaling-stroke}
@@ -63,6 +65,7 @@ function installStyles(){
     #heptagramSvg .ph-heptagram-hour-segment.past{opacity:.72!important}
     #heptagramSvg .ph-heptagram-hour-segment.current{stroke:#c9211e!important;stroke-width:5!important;opacity:1!important;filter:drop-shadow(0 0 4px rgba(201,33,30,.30))!important}
     #heptagramSvg text{display:none!important}
+    #heptagramSvg .ph-parity-anchor{visibility:hidden!important;pointer-events:none!important}
     #heptagramSvg .ph-parity-day-ring{fill:none;vector-effect:non-scaling-stroke}
     #heptagramSvg .ph-parity-day-ring--inner{stroke-width:1.65}
     #heptagramSvg .ph-parity-day-ring--outer{stroke-width:1.15;opacity:.76}
@@ -85,18 +88,24 @@ function installStyles(){
 
 function planetKey(group){return PLANETS.find(key=>group.classList.contains(`p-${key}`))||''}
 function dayRing(radius,color,role){const ring=svg('circle',{cx:0,cy:0,r:radius,fill:'none',stroke:color,'vector-effect':'non-scaling-stroke'});ring.classList.add('ph-parity-day-ring',`ph-parity-day-ring--${role}`);return ring}
-async function enhanceHeptagram(){
-  const root=document.getElementById('heptagramSvg');if(!root)return false;
-  const legacyNodes=[...root.querySelectorAll('.ph-heptagram-node')];
-  if(!legacyNodes.length){if(root.querySelector('.ph-parity-planet'))root.dataset.skyChartParityReady='true';return false}
-  root.removeAttribute('data-sky-chart-parity-ready');root.dataset.skyChartParityBusy='true';
+async function buildHeptagramDisplay(source){
+  const display=source.cloneNode(true);
+  display.id='heptagramSvg';
+  display.dataset.skyChartParityDisplay='true';
+  display.removeAttribute('data-sky-chart-parity-ready');
+  display.removeAttribute('data-sky-chart-parity-busy');
+  const legacyNodes=[...display.querySelectorAll('.ph-heptagram-node')];
+  if(!legacyNodes.length)return null;
   const jobs=[];
   legacyNodes.forEach(node=>{
     const group=node.closest('g'),key=planetKey(group);if(!group||!key)return;
     const x=numberAttr(node,'cx'),y=numberAttr(node,'cy');if(!Number.isFinite(x)||!Number.isFinite(y))return;
     const isDay=node.classList.contains('day-ruler'),isHour=node.classList.contains('current'),color=COLORS[key];
-    group.replaceChildren();group.className.baseVal=`p-${key} ph-parity-planet${isDay?' is-day-ruler':''}${isHour?' is-hour-ruler':''}`;
+    group.querySelectorAll(':scope > .ph-heptagram-glyph,:scope > .ph-heptagram-label,:scope > .ph-parity-node-glyph').forEach(child=>child.remove());
+    group.classList.add('ph-parity-planet');
+    group.classList.toggle('is-day-ruler',isDay);group.classList.toggle('is-hour-ruler',isHour);
     group.dataset.planetaryHourState=isDay&&isHour?'day-and-hour-ruler':isDay?'day-ruler':isHour?'hour-ruler':'plain';
+    node.classList.add('ph-parity-anchor');node.setAttribute('aria-hidden','true');
     const mount=svg('g',{transform:`translate(${x} ${y})`,class:'ph-parity-node-glyph'}),master=svg('g',{transform:`scale(${MASTER_SCALE})`});
     master.dataset.masterGlyphUnit='true';mount.dataset.canonicalGlyphId=key;mount.dataset.canonicalGlyphPresentation='circled';mount.appendChild(master);group.appendChild(mount);
     if(isDay)master.append(dayRing(DAY_RING_INNER_RADIUS,color,'inner'),dayRing(DAY_RING_OUTER_RADIUS,color,'outer'));
@@ -106,10 +115,33 @@ async function enhanceHeptagram(){
       rendered.circle.setAttribute('stroke',color);jobs.push(Promise.resolve(rendered.ready).catch(()=>{}));
     }
   });
-  root.querySelectorAll('text').forEach(node=>node.remove());
+  display.querySelectorAll('text').forEach(node=>node.remove());
   await Promise.allSettled(jobs);
-  root.dataset.skyChartParityReady='true';delete root.dataset.skyChartParityBusy;return true;
+  display.dataset.skyChartParityReady='true';
+  return display;
 }
+function attachHeptagramSource(){
+  if(heptagramSource)return true;
+  const candidate=document.getElementById('heptagramSvg');
+  if(!candidate||candidate.dataset.skyChartParityDisplay==='true')return false;
+  heptagramSource=candidate;
+  heptagramSourceObserver=new MutationObserver(()=>{heptagramRevision+=1;scheduleHeptagram()});
+  heptagramSourceObserver.observe(heptagramSource,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  return true;
+}
+async function rebuildHeptagram(){
+  heptagramQueued=false;
+  if(!attachHeptagramSource()||!heptagramSource.querySelector('.ph-heptagram-node'))return false;
+  const revision=heptagramRevision;
+  const display=await buildHeptagramDisplay(heptagramSource);
+  if(!display||revision!==heptagramRevision)return false;
+  const visible=document.querySelector('#heptagramSvg[data-sky-chart-parity-display="true"]');
+  if(heptagramSource.isConnected)heptagramSource.replaceWith(display);
+  else if(visible?.isConnected)visible.replaceWith(display);
+  else return false;
+  return true;
+}
+function scheduleHeptagram(){if(heptagramQueued)return;heptagramQueued=true;queueMicrotask(()=>void rebuildHeptagram())}
 
 function sourceCenter(old){const core=old.querySelector('.wheel-core');return{x:numberAttr(core,'cx',110),y:numberAttr(core,'cy',110)}}
 function degreesFromLines(nodes,center,endpoint='end'){return nodes.map(line=>longitudeFromPoint(center.x,center.y,numberAttr(line,endpoint==='start'?'x1':'x2'),numberAttr(line,endpoint==='start'?'y1':'y2'))).filter(Number.isFinite)}
@@ -171,28 +203,25 @@ async function enhanceWheel(){
   old.replaceWith(replacement);mount.dataset.skyChartParityReady='true';return true;
 }
 
-async function apply(){
-  queued=false;if(applying)return;applying=true;
-  try{await Promise.allSettled([enhanceHeptagram(),enhanceWheel()])}
-  finally{applying=false}
+async function applyWheel(){
+  wheelQueued=false;if(wheelApplying)return;wheelApplying=true;
+  try{await enhanceWheel()}finally{wheelApplying=false}
 }
-function schedule(){if(queued)return;queued=true;queueMicrotask(()=>void apply())}
+function scheduleWheel(){if(wheelQueued)return;wheelQueued=true;queueMicrotask(()=>void applyWheel())}
 function mutationTouches(record,selector){
   const target=record.target instanceof Element?record.target:null;
   if(target?.matches?.(selector)||target?.closest?.(selector))return true;
   return [...record.addedNodes,...record.removedNodes].some(node=>node instanceof Element&&(node.matches?.(selector)||node.closest?.(selector)));
 }
-function onMutations(records){
-  if(applying)return;
-  let touched=false;
-  if(records.some(record=>mutationTouches(record,'#heptagramSvg'))){document.getElementById('heptagramSvg')?.removeAttribute('data-sky-chart-parity-ready');touched=true}
-  if(records.some(record=>mutationTouches(record,'#phCurrentWheel'))){document.getElementById('phCurrentWheel')?.removeAttribute('data-sky-chart-parity-ready');touched=true}
-  if(touched)schedule();
+function onWheelMutations(records){
+  if(wheelApplying)return;
+  if(records.some(record=>mutationTouches(record,'#phCurrentWheel'))){document.getElementById('phCurrentWheel')?.removeAttribute('data-sky-chart-parity-ready');scheduleWheel()}
 }
 function start(){
-  installStyles();schedule();
-  observer=new MutationObserver(onMutations);observer.observe(document.body,{childList:true,subtree:true});
-  window.addEventListener('relphi:canonical-glyph-runtime-ready',schedule);
+  installStyles();
+  attachHeptagramSource();scheduleHeptagram();scheduleWheel();
+  wheelObserver=new MutationObserver(onWheelMutations);wheelObserver.observe(document.body,{childList:true,subtree:true});
+  window.addEventListener('relphi:canonical-glyph-runtime-ready',()=>{scheduleHeptagram();scheduleWheel()});
 }
 installBootMask();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
