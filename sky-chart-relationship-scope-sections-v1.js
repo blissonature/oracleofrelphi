@@ -1,12 +1,14 @@
-// Relationship scope sections v12: semantic grouping for ordinary sorts; timing-sort Copy preserves displayed global order.
+// Relationship scope sections v14: significance can rank globally; relative timing remains scoped to its sky-time frame.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV12)return;
-window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScopeSectionsV2=true;window.__relphiRelationshipScopeSectionsV3=true;window.__relphiRelationshipScopeSectionsV4=true;window.__relphiRelationshipScopeSectionsV5=true;window.__relphiRelationshipScopeSectionsV6=true;window.__relphiRelationshipScopeSectionsV7=true;window.__relphiRelationshipScopeSectionsV8=true;window.__relphiRelationshipScopeSectionsV9=true;window.__relphiRelationshipScopeSectionsV10=true;window.__relphiRelationshipScopeSectionsV11=true;window.__relphiRelationshipScopeSectionsV12=true;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV14)return;
+window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScopeSectionsV2=true;window.__relphiRelationshipScopeSectionsV3=true;window.__relphiRelationshipScopeSectionsV4=true;window.__relphiRelationshipScopeSectionsV5=true;window.__relphiRelationshipScopeSectionsV6=true;window.__relphiRelationshipScopeSectionsV7=true;window.__relphiRelationshipScopeSectionsV8=true;window.__relphiRelationshipScopeSectionsV9=true;window.__relphiRelationshipScopeSectionsV10=true;window.__relphiRelationshipScopeSectionsV11=true;window.__relphiRelationshipScopeSectionsV12=true;window.__relphiRelationshipScopeSectionsV13=true;window.__relphiRelationshipScopeSectionsV14=true;
 
 const GROUPS=Object.freeze([{mode:'A-B',title:'A↔B',family:'intersky'},{mode:'A-A',title:'A↔A',family:'intrasky'},{mode:'B-B',title:'B↔B',family:'intrasky'}]);
 const FAMILIES=Object.freeze([{id:'intersky',title:'Intersky'},{id:'intrasky',title:'Intrasky'}]);
-const GLOBAL_TIMING_SORTS=new Set(['duration-longest','duration-shortest','began-most-recently','ends-soonest','ends-last']);
+const GLOBAL_TIMING_SORTS=new Set(['duration-longest','duration-shortest','ends-soonest','ends-last']);
+const GLOBAL_SIGNIFICANCE_SORTS=new Set(['most-supportive','most-challenging']);
+const GLOBAL_SORTS=new Set([...GLOBAL_TIMING_SORTS,...GLOBAL_SIGNIFICANCE_SORTS]);
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
 const SIGN_SYMBOLS=Object.freeze(['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓']);
 const ASPECT_SYMBOLS=Object.freeze({conjunction:'☌',opposition:'☍',trine:'△',square:'□',sextile:'✶','semi-sextile':'⚺',quincunx:'⚻',octile:'∠','tri-octile':'⚼',quintile:'Q','bi-quintile':'BQ'});
@@ -24,6 +26,27 @@ function mode(row){const x=String(row?.dataset?.relationshipMode||'').toUpperCas
 function visible(row){if(!row||row.hidden||row.getAttribute('aria-hidden')==='true')return false;for(const c of HIDDEN_CLASSES)if(row.classList.contains(c))return false;return true}
 function sameOrder(a,b){return a.length===b.length&&a.every((n,i)=>n===b[i])}
 function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
+function relationOrdinal(row){const raw=String(row?.dataset?.relationIndex||'');const match=raw.match(/(\d+)(?!.*\d)/);return match?Number(match[1]):Number.MAX_SAFE_INTEGER}
+function scoreFor(row){const value=window.RelphiRelationshipSort?.scoreRow?.(row);return value&&typeof value==='object'?value:{signed:0,strength:0}}
+function axisFamily(row){return String(window.RelphiRelationshipSort?.axisFamilyKey?.(row)||'')}
+function familyRepresentative(row,rows,cache){
+  const key=axisFamily(row);if(!key)return row;if(cache.has(key))return cache.get(key);
+  const members=rows.filter(candidate=>visible(candidate)&&axisFamily(candidate)===key);let best=members[0]||row;
+  for(let i=1;i<members.length;i+=1){const a=scoreFor(members[i]),b=scoreFor(best);if(a.strength>b.strength||(a.strength===b.strength&&relationOrdinal(members[i])<relationOrdinal(best)))best=members[i]}
+  cache.set(key,best);return best;
+}
+function supportiveCompare(a,b,rows,familyCache){
+  const ak=axisFamily(a),bk=axisFamily(b);
+  const ar=ak&&ak===bk?a:familyRepresentative(a,rows,familyCache),br=ak&&ak===bk?b:familyRepresentative(b,rows,familyCache);
+  const as=scoreFor(ar),bs=scoreFor(br);
+  return bs.signed-as.signed||bs.strength-as.strength||relationOrdinal(ar)-relationOrdinal(br)||relationOrdinal(a)-relationOrdinal(b);
+}
+function globalComparator(sortMode,rows){
+  const sorter=window.RelphiRelationshipSort,familyCache=new Map();
+  if(sortMode==='most-supportive')return(a,b)=>supportiveCompare(a,b,rows,familyCache);
+  if(sortMode==='most-challenging')return(a,b)=>-supportiveCompare(a,b,rows,familyCache);
+  return typeof sorter?.compareRows==='function'?sorter.compareRows:(a,b)=>relationOrdinal(a)-relationOrdinal(b);
+}
 function groupList(){
   queued=false;if(applying||whereWhenEditing())return;
   const list=document.getElementById('skyFoundationRelationshipList');if(!list)return;
@@ -33,10 +56,11 @@ function groupList(){
   rows.forEach(row=>row.classList.remove(COLLAPSED_VISUAL_CLASS));
   const other=[...list.children].filter(node=>!node.matches?.('.sky-foundation-relationship-row')),desired=[...other];
   const sorter=window.RelphiRelationshipSort,sortMode=sorter?.mode?.();
-  // Timing is a property of each relationship itself. Keep timing sorts global across
-  // A↔B, A↔A, and B↔B instead of re-grouping them by scope after the sorter runs.
-  if(GLOBAL_TIMING_SORTS.has(sortMode)&&sorter?.compareRows){
-    desired.push(...rows.slice().sort(sorter.compareRows));
+  // Significance and absolute-duration sorts can answer one question across the whole
+  // visible set. "Began Most Recently" is intentionally excluded: its "ago" value is
+  // measured from each relationship scope's own chart timestamp, so scopes must not mix.
+  if(GLOBAL_SORTS.has(sortMode)){
+    desired.push(...rows.slice().sort(globalComparator(sortMode,rows)));
   }else{
     for(const family of FAMILIES){
       for(const group of GROUPS.filter(item=>item.family===family.id)){
@@ -77,7 +101,7 @@ function serializeDisplayOrder(rows){
 }
 function serializeAll(){
   const rows=visibleRows(),sortMode=window.RelphiRelationshipSort?.mode?.();
-  if(GLOBAL_TIMING_SORTS.has(sortMode))return serializeDisplayOrder(rows);
+  if(GLOBAL_SORTS.has(sortMode))return serializeDisplayOrder(rows);
   const families=[];
   for(const family of FAMILIES){
     const sections=[];

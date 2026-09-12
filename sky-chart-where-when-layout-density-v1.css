@@ -17,6 +17,7 @@
    which created the large blank-looking footer even after its width was reduced. */
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-heptagram{
   display:block!important;
+  order:1!important;
   width:176px!important;
   min-width:0!important;
   max-width:min(100%,176px)!important;
@@ -27,15 +28,52 @@
   margin:0 auto!important;
 }
 
-.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump,
-.sky-where-when-editor .sky-where-when-heptagram-slot .sky-where-when-ph-jump{
+/* The draft heptagram and its caption are one link. Keep the caption below the
+   preview, but give it the same light pill language as the Cancel action. */
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump{
+  display:grid!important;
+  place-items:center!important;
+  gap:3px!important;
   width:auto!important;
   max-width:100%!important;
+  min-width:0!important;
   margin:0 auto!important;
-  padding:.08rem .2rem!important;
-  font-size:.60rem!important;
-  line-height:1.15!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#191512!important;
+  text-decoration:none!important;
+  transform:none!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump-title{
+  order:2!important;
+  display:block!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:.38rem .62rem!important;
+  border:1px solid rgba(31,27,24,.24)!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#211d19!important;
+  font:850 .60rem/1 system-ui,sans-serif!important;
+  text-align:center!important;
+  text-decoration:none!important;
   white-space:nowrap!important;
+}
+/* Match the Cancel button's hover/focus treatment exactly: keep the pill's
+   normal border/background and use the same brightness + red focus halo. */
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:hover .sky-ph-jump-title,
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible .sky-ph-jump-title{
+  filter:brightness(.94)!important;
+  outline:3px solid rgba(201,33,30,.18)!important;
+  outline-offset:2px!important;
+}
+.sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible{
+  outline:none!important;
 }
 
 /* Give the scrolling Where/When body back the space that was being reserved by
