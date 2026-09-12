@@ -1221,7 +1221,7 @@
   .ph-current-wheel-card {
     display:block;
     margin:.65rem auto 0;
-    max-width:270px;
+    max-width:340px;
     border:1px solid var(--relphi-line);
     border-radius:1rem;
     background:#fff;
@@ -1234,10 +1234,10 @@
   .ph-current-wheel-card:hover { border-color:rgba(220,31,24,.55); box-shadow:0 8px 22px rgba(0,0,0,.07); transform:translateY(-1px); }
   .ph-current-wheel-card:focus-visible { outline:3px solid rgba(220,31,24,.3); outline-offset:3px; border-color:var(--relphi-red); }
   .ph-current-wheel-card h3 { margin:.05rem 0 .25rem; font-size:.95rem; }
-  .ph-current-wheel { width:min(242px,100%); height:auto; display:block; margin:0 auto; overflow:visible; }
+  .ph-current-wheel { width:min(320px,100%); height:auto; display:block; margin:0 auto; overflow:visible; }
   .ph-current-wheel-direct:not(.is-ready) { visibility:hidden; }
-  .ph-current-wheel-direct .ph-wheel-house-sector { stroke:rgba(45,39,34,.10); stroke-width:1.1; vector-effect:non-scaling-stroke; }
-  .ph-current-wheel-direct .ph-wheel-house-cusp { stroke:rgba(45,39,34,.28); stroke-width:1.15; vector-effect:non-scaling-stroke; }
+  .ph-current-wheel-direct .ph-wheel-house-sector { stroke:none; }
+  .ph-current-wheel-direct .ph-wheel-house-cusp { stroke:#c9211e; stroke-width:1.15; opacity:.72; vector-effect:non-scaling-stroke; }
   .ph-current-wheel-direct .ph-wheel-house-number { fill:#514943; font:800 16px/1 system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; }
   .ph-current-wheel-direct .ph-wheel-zodiac-sector { stroke:#fffdfa; stroke-width:1.45; vector-effect:non-scaling-stroke; }
   .ph-current-wheel-direct .ph-wheel-zodiac-inner,
@@ -1307,8 +1307,8 @@
   /* Planetary Hours owns dynamic ruler glyphs directly from the canonical SVG assets. */
   .ph-direct-canonical-glyph {
     display:inline-block;
-    width:1.08em;
-    height:1.08em;
+    width:1.8em;
+    height:1.8em;
     vertical-align:-.16em;
     background:currentColor;
     -webkit-mask:var(--ph-canonical-glyph) center / contain no-repeat;
@@ -1323,13 +1323,14 @@
   }
   #dayRulerProfileName .ph-direct-canonical-glyph,
   #hourRulerProfileName .ph-direct-canonical-glyph {
-    width:2.15em;
-    height:2.15em;
+    width:3.1em;
+    height:3.1em;
     margin:0 .04em 0 0;
     vertical-align:middle;
   }
   #dayRulerProfileName .ph-direct-canonical-glyph { color:#fff; }
   #hourRulerProfileName .ph-direct-canonical-glyph { color:#111; }
+  .ph-moon-frame .ph-direct-canonical-glyph { width:1.08em; height:1.08em; }
   @media (max-width:760px) {
     #dayRulerProfileName .ph-direct-canonical-glyph { color:#111; }
   }
@@ -2312,7 +2313,7 @@
       const placementColor = window.RelphiSkyWheelSpec.SKY?.A || '#c9211e';
       const root = phWheelSvg('svg', {
         class:'ph-current-wheel ph-current-wheel-direct',
-        viewBox:(spec.viewBox || [0,0,600,600]).join(' '),
+        viewBox:'60 60 480 480',
         preserveAspectRatio:'xMidYMid meet',
         role:'img',
         'aria-label':'Current planetary placements mini zodiac wheel using the Sky Chart visual system'
@@ -2334,7 +2335,8 @@
         houseLayer.appendChild(phWheelSvg('path', {
           d:phWheelAnnularPath(center, house.inner, house.outer, start, end),
           class:'ph-wheel-house-sector',
-          fill:i % 2 ? '#faf7f2' : '#fffdfa'
+          fill:colors[i] || '#ddd',
+          'fill-opacity':spec.houseFillOpacity == null ? .5 : spec.houseFillOpacity
         }));
         const a = phZodiacPoint(start, house.inner, center.x, center.y);
         const b = phZodiacPoint(start, house.outer, center.x, center.y);
