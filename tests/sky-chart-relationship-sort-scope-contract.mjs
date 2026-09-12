@@ -8,5 +8,6 @@ assert.match(source,/if\(sortMode==='most-challenging'\)return\(a,b\)=>-supporti
 assert.doesNotMatch(source,/GLOBAL_TIMING_SORTS=new Set\([^\n]*began-most-recently/);
 assert.doesNotMatch(source,/sortMode==='began-most-recently'\)return/);
 assert.match(source,/if\(sorter\?\.compareRows\)section=section\.slice\(\)\.sort\(sorter\.compareRows\)/);
+assert.match(source,/"Began Most Recently" is intentionally excluded/);
 
 console.log('Relationship sort scope contract passed.');
