@@ -28,8 +28,8 @@
   margin:0 auto!important;
 }
 
-/* The draft heptagram and its caption are one link, but should retain the light
-   visual treatment of the former brown text link rather than becoming a card. */
+/* The draft heptagram and its caption are one link. Keep the caption visually
+   integrated with the preview rather than reviving the old brown underlined link. */
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump{
   display:grid!important;
   place-items:center!important;
@@ -43,7 +43,7 @@
   border-radius:0!important;
   background:transparent!important;
   box-shadow:none!important;
-  color:inherit!important;
+  color:#191512!important;
   text-decoration:none!important;
   transform:none!important;
   pointer-events:auto!important;
@@ -54,16 +54,15 @@
   display:block!important;
   margin:0!important;
   padding:.08rem .2rem!important;
-  color:#5b1715!important;
+  color:#191512!important;
   font:850 .60rem/1.15 system-ui,sans-serif!important;
   text-align:center!important;
-  text-decoration:underline!important;
-  text-underline-offset:3px!important;
+  text-decoration:none!important;
   white-space:nowrap!important;
 }
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:hover .sky-ph-jump-title,
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible .sky-ph-jump-title{
-  color:#9f1b18!important;
+  color:#191512!important;
 }
 .sky-where-when-editor .sky-where-when-heptagram-slot .sky-ph-jump:focus-visible{
   outline:2px solid rgba(201,33,30,.16)!important;
