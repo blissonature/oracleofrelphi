@@ -1778,7 +1778,7 @@
     saturn: 'https://commons.wikimedia.org/wiki/Special:FilePath/Chronos_MET_DP-932-001.jpg?width=640'
   };
   const browserTimeZone = (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
-  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h' };
+  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, wandererCollapsedBodies: Object.create(null), heptagramHourOverride: null, timeFormat: '12h' };
   const locationPresets = [
     {name:'Greenwich, London, UK', lat:51.4769, lon:-0.0005, tz:'Europe/London'},
     {name:'Boston, Massachusetts, USA', lat:42.3601, lon:-71.0589, tz:'America/New_York'},
@@ -2631,8 +2631,10 @@
     });
     el.wandererGrid.innerHTML = items.map(function (item) {
       const body = item.body;
-      const collapsed = (!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body;
-      return '<button class="ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + '" type="button" data-sky-body="' + body + '" aria-pressed="' + (state.skyBody === body ? 'true' : 'false') + '" aria-expanded="' + (collapsed ? 'false' : 'true') + '" aria-label="' + (collapsed ? 'Expand ' : 'Orient to ') + body + '">' +
+      const manuallyCollapsed = !!state.wandererCollapsedBodies[body];
+      const collapsed = manuallyCollapsed || ((!item.visibility.practical || !item.above) && state.wandererExpandedBody !== body);
+      const openAction = state.skyBody === body ? 'Collapse ' : 'Orient to ';
+      return '<button class="ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + '" type="button" data-sky-body="' + body + '" aria-pressed="' + (state.skyBody === body ? 'true' : 'false') + '" aria-expanded="' + (collapsed ? 'false' : 'true') + '" aria-label="' + (collapsed ? 'Expand ' : openAction) + body + '">' +
         '<div class="ph-wanderer-title"><span class="ph-wanderer-title-main"><span class="glyph">' + (skyGlyphs[body] || '') + '</span><span>' + body + '</span></span><span class="ph-wanderer-status-stack"><span class="ph-wanderer-status sky-state">' + (item.above ? 'above' : 'below') + '</span><span class="ph-wanderer-status viewing">' + item.visibility.viewing + '</span></span></div>' +
         '<div class="ph-wanderer-rail" aria-label="Rise/set visualization for ' + body + '">' +
           aboveSegmentsMarkup(item.rise, item.set, start) +
@@ -3288,8 +3290,11 @@
       if (!button) return;
       const body = button.getAttribute('data-sky-body');
       if (!body) return;
-      state.skyBody = body;
-      state.wandererExpandedBody = button.classList.contains('is-collapsed') ? body : null;
+      const wasCollapsed = button.classList.contains('is-collapsed');
+      const wasSelected = state.skyBody === body;
+      if (wasCollapsed) { delete state.wandererCollapsedBodies[body]; state.skyBody = body; state.wandererExpandedBody = body; }
+      else if (wasSelected) { state.wandererCollapsedBodies[body] = true; state.wandererExpandedBody = null; }
+      else { state.skyBody = body; state.wandererExpandedBody = null; }
       if (el.skyQuery) el.skyQuery.value = 'Where is ' + body + ' right now?';
       renderWandererGrid();
       renderSkyOrientation(true);

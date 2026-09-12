@@ -90,12 +90,16 @@ assert.match(page,/\.ph-table-wrap \{ max-height: none; overflow: visible; \}/);
 assert.doesNotMatch(page,/r\.ruler\.key \+ '\\"><span class=\"ph-dot\"><\/span>/);
 
 assert.match(page,/wandererExpandedBody: null/);
-assert.match(page,/const collapsed = \(!item\.visibility\.practical \|\| !item\.above\) && state\.wandererExpandedBody !== body/);
+assert.match(page,/wandererCollapsedBodies: Object\.create\(null\)/);
+assert.match(page,/const manuallyCollapsed = !!state\.wandererCollapsedBodies\[body\]/);
+assert.match(page,/const collapsed = manuallyCollapsed \|\| \(\(!item\.visibility\.practical \|\| !item\.above\) && state\.wandererExpandedBody !== body\)/);
 assert.match(page,/\.ph-moon-frame \.ph-wanderer-card\.is-collapsed \.ph-wanderer-status-stack,[\s\S]*::after \{ display: none; \}/);
 assert.match(page,/collapsed \? 'is-collapsed ' : ''/);
 assert.match(page,/aria-expanded=/);
 assert.match(page,/\.ph-wanderer-card\.is-collapsed \.ph-wanderer-mini-meters/);
-assert.match(page,/state\.wandererExpandedBody = button\.classList\.contains\('is-collapsed'\) \? body : null/);
+assert.match(page,/const wasSelected = state\.skyBody === body/);
+assert.match(page,/state\.wandererCollapsedBodies\[body\] = true/);
+assert.match(page,/delete state\.wandererCollapsedBodies\[body\]/);
 assert.doesNotMatch(page,/ph-wanderer-visibility-dot/);
 assert.doesNotMatch(page,/ph-wanderer-card\.is-selected/);
 
