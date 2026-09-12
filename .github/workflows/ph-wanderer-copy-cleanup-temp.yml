@@ -1,0 +1,26 @@
+name: Planetary Hours wanderer copy cleanup temp
+on:
+  push:
+    branches:
+      - fix/planetary-hours-visual-parity
+permissions:
+  contents: write
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+      - name: Remove public-facing developer note
+        run: python .github/ph_wanderer_copy_cleanup_temp.py
+      - name: Run Planetary Hours visual ownership contract
+        run: node tests/planetary-hours-sky-chart-visual-parity.mjs
+      - name: Commit product change and remove temporary editor
+        run: |
+          rm .github/ph_wanderer_copy_cleanup_temp.py .github/workflows/ph-wanderer-copy-cleanup-temp.yml
+          git config user.name "blissonature"
+          git config user.email "blissonature@gmail.com"
+          git add planetaryhours.html .github/ph_wanderer_copy_cleanup_temp.py .github/workflows/ph-wanderer-copy-cleanup-temp.yml
+          git commit -m "Replace Wanderer implementation note with user guidance"
+          git push origin HEAD:fix/planetary-hours-visual-parity
