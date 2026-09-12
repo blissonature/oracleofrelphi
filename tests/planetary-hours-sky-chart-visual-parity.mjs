@@ -23,7 +23,9 @@ assert.doesNotMatch(nav,/relphi-ph-visual-boot-mask|ensurePlanetaryHoursVisualBo
 assert.doesNotMatch(integrity,/correctHour24|ph-heptagram-node/);
 assert.doesNotMatch(standardizer,/installPlanetaryHoursBootMask|relphi-ph-visual-boot-mask/);
 assert.match(standardizer,/isPlanetaryHoursOwnedSvg/);
-assert.match(inlineGlyphs,/parent\.closest\('\.ph-ruler-profile'\)/);
+assert.match(inlineGlyphs,/function insidePageOwnedDynamicGlyphRegion/);
+assert.match(inlineGlyphs,/closest\('\.ph-ruler-profile'\)/);
+assert.match(inlineGlyphs,/insidePageOwnedDynamicGlyphRegion\(node\)/);
 assert.match(inlineGlyphs,/SVGTextElement\) \|\| node\.closest\('\.relphi-inline-canonical-glyph,\.ph-ruler-profile'\)/);
 
 console.log('Planetary Hours direct heptagram and ruler-profile ownership contract passed.');
