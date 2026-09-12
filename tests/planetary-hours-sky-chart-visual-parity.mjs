@@ -6,6 +6,7 @@ const parity=fs.readFileSync('planetary-hours-sky-chart-visual-parity-v1.js','ut
 const standardizer=fs.readFileSync('standardize-zodiac-wheels.js','utf8');
 const nav=fs.readFileSync('navloader.js','utf8');
 const integrity=fs.readFileSync('planetary-hours-active-time-integrity-v1.js','utf8');
+const inlineGlyphs=fs.readFileSync('relphi-inline-glyph-consumer-v1.js','utf8');
 
 assert.match(page,/Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing/);
 assert.match(page,/const heptagramCanonicalArt = Object\.freeze/);
@@ -22,5 +23,7 @@ assert.doesNotMatch(nav,/relphi-ph-visual-boot-mask|ensurePlanetaryHoursVisualBo
 assert.doesNotMatch(integrity,/correctHour24|ph-heptagram-node/);
 assert.doesNotMatch(standardizer,/installPlanetaryHoursBootMask|relphi-ph-visual-boot-mask/);
 assert.match(standardizer,/isPlanetaryHoursOwnedSvg/);
+assert.match(inlineGlyphs,/parent\.closest\('\.ph-ruler-profile'\)/);
+assert.match(inlineGlyphs,/SVGTextElement\) \|\| node\.closest\('\.relphi-inline-canonical-glyph,\.ph-ruler-profile'\)/);
 
-console.log('Planetary Hours direct heptagram ownership contract passed.');
+console.log('Planetary Hours direct heptagram and ruler-profile ownership contract passed.');
