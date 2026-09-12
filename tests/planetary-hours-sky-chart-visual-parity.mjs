@@ -6,7 +6,6 @@ const parity=fs.readFileSync('planetary-hours-sky-chart-visual-parity-v1.js','ut
 const standardizer=fs.readFileSync('standardize-zodiac-wheels.js','utf8');
 const nav=fs.readFileSync('navloader.js','utf8');
 const integrity=fs.readFileSync('planetary-hours-active-time-integrity-v1.js','utf8');
-const inlineGlyphs=fs.readFileSync('relphi-inline-glyph-consumer-v1.js','utf8');
 
 assert.match(page,/Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing/);
 assert.match(page,/const heptagramCanonicalArt = Object\.freeze/);
@@ -23,18 +22,14 @@ assert.doesNotMatch(nav,/relphi-ph-visual-boot-mask|ensurePlanetaryHoursVisualBo
 assert.doesNotMatch(integrity,/correctHour24|ph-heptagram-node/);
 assert.doesNotMatch(standardizer,/installPlanetaryHoursBootMask|relphi-ph-visual-boot-mask/);
 assert.match(standardizer,/isPlanetaryHoursOwnedSvg/);
-assert.match(inlineGlyphs,/function insidePageOwnedDynamicGlyphRegion/);
-assert.match(inlineGlyphs,/closest\('\.ph-ruler-profile'\)/);
-assert.match(inlineGlyphs,/insidePageOwnedDynamicGlyphRegion\(node\)/);
-assert.match(inlineGlyphs,/SVGTextElement\) \|\| node\.closest\('\.relphi-inline-canonical-glyph,\.ph-ruler-profile'\)/);
 
 assert.match(page,/function canonicalPlanetGlyphMarkup/);
+assert.match(page,/assets\/planet-glyphs\//);
 assert.match(page,/dayRulerProfileName\.innerHTML = canonicalPlanetGlyphMarkup/);
 assert.match(page,/hourRulerProfileName\.innerHTML = canonicalPlanetGlyphMarkup/);
 assert.doesNotMatch(page,/id="moonDisc">☽<\/div>/);
 assert.doesNotMatch(page,/dayRulerProfileName\.textContent = day\.sym/);
 assert.doesNotMatch(page,/hourRulerProfileName.*textContent = row\.ruler\.sym/);
-
 assert.doesNotMatch(page,/row\.ruler\.sym \+ ' '/);
 assert.doesNotMatch(page,/r\.ruler\.sym \+ '<\/span>'/);
 assert.doesNotMatch(page,/currentRow\.ruler\.sym/);
@@ -42,4 +37,4 @@ assert.doesNotMatch(page,/byKey\[prevDayKeyForCue\]\.sym/);
 assert.doesNotMatch(page,/byKey\[nextDayKeyForCue\]\.sym/);
 assert.match(page,/heptagramOrderText\.innerHTML/);
 
-console.log('Planetary Hours direct heptagram and ruler-profile ownership contract passed.');
+console.log('Planetary Hours direct heptagram and canonical first-paint glyph ownership contract passed.');
