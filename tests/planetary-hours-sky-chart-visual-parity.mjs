@@ -28,6 +28,7 @@ assert.match(parity,/display\.dataset\.skyChartParityReady='true'/);
 assert.match(parity,/heptagramSourceObserver=new MutationObserver/);
 assert.match(parity,/heptagramSource\.replaceWith\(display\)/);
 assert.match(parity,/visible\.replaceWith\(display\)/);
+assert.match(parity,/heptagramSourceObserver\.observe\(heptagramSource/);
 assert.doesNotMatch(parity,/heptagramSource\.removeAttribute\('data-sky-chart-parity-ready'\)/);
 
 assert.match(parity,/window\.RelphiSkyWheelSpec\?\.mini/);
