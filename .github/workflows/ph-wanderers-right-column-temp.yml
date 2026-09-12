@@ -22,15 +22,17 @@ jobs:
           s=path.read_text()
 
           css_old="  .ph-wanderer-strip { grid-column: 1 / -1; margin-top: 1rem; border-top: 1px solid var(--relphi-line); padding-top: .9rem; }"
-          css_new="""  .ph-wanderer-strip { margin-top: 1rem; border-top: 1px solid var(--relphi-line); padding-top: .9rem; }
-  .ph-moon-frame .ph-wanderer-strip { margin-top: .85rem; padding-top: .75rem; }
-  .ph-moon-frame .ph-section-heading.compact h3 { font-size: 1.05rem; line-height: 1.15; margin: .08rem 0 .35rem; }
-  .ph-moon-frame .ph-planet-instructions { font-size: .78rem; line-height: 1.3; margin: 0 0 .55rem; }
-  .ph-moon-frame .ph-wanderer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; }
-  .ph-moon-frame .ph-wanderer-card:not(.is-collapsed) { grid-column: 1 / -1; }
-  .ph-moon-frame .ph-wanderer-card.is-collapsed { min-width: 0; }
-  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-title { align-items: flex-start; }
-  .ph-moon-frame .ph-wanderer-card.is-collapsed::after { justify-self: start; }"""
+          css_new="\n".join([
+              "  .ph-wanderer-strip { margin-top: 1rem; border-top: 1px solid var(--relphi-line); padding-top: .9rem; }",
+              "  .ph-moon-frame .ph-wanderer-strip { margin-top: .85rem; padding-top: .75rem; }",
+              "  .ph-moon-frame .ph-section-heading.compact h3 { font-size: 1.05rem; line-height: 1.15; margin: .08rem 0 .35rem; }",
+              "  .ph-moon-frame .ph-planet-instructions { font-size: .78rem; line-height: 1.3; margin: 0 0 .55rem; }",
+              "  .ph-moon-frame .ph-wanderer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; }",
+              "  .ph-moon-frame .ph-wanderer-card:not(.is-collapsed) { grid-column: 1 / -1; }",
+              "  .ph-moon-frame .ph-wanderer-card.is-collapsed { min-width: 0; }",
+              "  .ph-moon-frame .ph-wanderer-card.is-collapsed .ph-wanderer-title { align-items: flex-start; }",
+              "  .ph-moon-frame .ph-wanderer-card.is-collapsed::after { justify-self: start; }",
+          ])
           if css_old not in s:
               raise SystemExit('wanderer strip CSS marker not found')
           s=s.replace(css_old,css_new,1)
@@ -54,8 +56,6 @@ jobs:
               raise SystemExit('moon frame close not found')
           s=before[:moon_close]+block+before[moon_close:]+after
 
-          # Guard the intended hierarchy: Wanderer strip must now be inside the Moon frame,
-          # before that frame closes and before the hidden orientation panel.
           moon_start=s.find('      <div class="ph-moon-frame">')
           w_start=s.find(w_marker,moon_start)
           o_start=s.find(o_marker,w_start)
