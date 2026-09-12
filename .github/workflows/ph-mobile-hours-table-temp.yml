@@ -1,0 +1,32 @@
+name: Planetary Hours mobile table temp
+
+on:
+  push:
+    branches:
+      - fix/planetary-hours-visual-parity
+    paths:
+      - .github/workflows/ph-mobile-hours-table-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+          fetch-depth: 0
+      - name: Make mobile planetary-hours table compact
+        run: python .github/ph-mobile-hours-table-temp.py
+      - name: Run Planetary Hours visual ownership contract
+        run: node tests/planetary-hours-sky-chart-visual-parity.mjs
+      - name: Commit product change and remove temporary editor
+        run: |
+          rm .github/ph-mobile-hours-table-temp.py .github/workflows/ph-mobile-hours-table-temp.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add planetaryhours.html tests/planetary-hours-sky-chart-visual-parity.mjs .github/ph-mobile-hours-table-temp.py .github/workflows/ph-mobile-hours-table-temp.yml
+          git commit -m "Fix mobile planetary hours table layout"
+          git push origin HEAD:fix/planetary-hours-visual-parity
