@@ -137,7 +137,7 @@
 
   function loadPlanetaryHoursParity(onready) {
     if (!IS_PLANETARY_HOURS) { if (onready) onready(); return; }
-    const loadParity = () => append('planetary-hours-sky-chart-visual-parity-v1.js?v=2', onready);
+    const loadParity = () => append('planetary-hours-sky-chart-visual-parity-v1.js?v=3', onready);
     if (window.RelphiSkyWheelSpec) loadParity();
     else append('sky-chart-wheel-spec-v1.js?v=6', loadParity);
   }
