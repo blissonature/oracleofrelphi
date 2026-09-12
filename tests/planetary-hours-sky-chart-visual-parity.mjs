@@ -5,6 +5,8 @@ const page=fs.readFileSync('planetaryhours.html','utf8');
 const standardizer=fs.readFileSync('standardize-zodiac-wheels.js','utf8');
 const nav=fs.readFileSync('navloader.js','utf8');
 const integrity=fs.readFileSync('planetary-hours-active-time-integrity-v1.js','utf8');
+const whereWhen=fs.readFileSync('sky-chart-where-when-v3.js','utf8');
+const skyChart=fs.readFileSync('sky-chart.html','utf8');
 const heptagramArt=page.slice(page.indexOf('const heptagramCanonicalArt'),page.indexOf('function canonicalPlanetGlyphMarkup'));
 
 assert.match(page,/Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing/);
@@ -94,4 +96,14 @@ assert.match(page,/aria-expanded=/);
 assert.match(page,/\.ph-wanderer-card\.is-collapsed \.ph-wanderer-mini-meters/);
 assert.match(page,/state\.wandererExpandedBody = button\.classList\.contains\('is-collapsed'\) \? body : null/);
 
+
+assert.match(whereWhen,/function choosePlanetaryHoursTarget\(\)/);
+assert.match(whereWhen,/Sky Chart slots filled/);
+assert.match(whereWhen,/Clear both and open this moment/);
+assert.match(whereWhen,/Use Sky \$\{slot\}/);
+assert.match(whereWhen,/if\(!aFilled\)return Promise\.resolve\(\{slot:'A',clearBoth:false\}\)/);
+assert.match(whereWhen,/options\.replaceExisting\?\{\}:\(payload\(slot\)\|\|\{\}\)/);
+assert.match(whereWhen,/if\(choice\.clearBoth\)\{localStorage\.removeItem\(SLOT_KEYS\.A\);localStorage\.removeItem\(SLOT_KEYS\.B\)\}/);
+assert.match(whereWhen,/writeMode\(hasB\?'comparison':'single'\)/);
+assert.match(skyChart,/sky-chart-where-when-v3\.js\?v=3/);
 console.log('Planetary Hours direct heptagram, enlarged canonical glyphs, rainbow houses, and direct mini-wheel ownership contract passed.');
