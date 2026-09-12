@@ -1,8 +1,10 @@
 // Bring Planetary Hours' living heptagram and current-placements wheel onto the same visual contract as Sky Chart.
+// The legacy renderers may calculate freely, but their intermediate DOM is never allowed to paint.
 (function(){
 'use strict';
-if(!/(^|\/)planetaryhours\.html$/.test(location.pathname)||window.__relphiPlanetaryHoursSkyChartVisualParityV1)return;
+if(!/(^|\/)planetaryhours\.html$/.test(location.pathname)||window.__relphiPlanetaryHoursSkyChartVisualParityV2)return;
 window.__relphiPlanetaryHoursSkyChartVisualParityV1=true;
+window.__relphiPlanetaryHoursSkyChartVisualParityV2=true;
 
 const NS='http://www.w3.org/2000/svg';
 const PLANETS=['saturn','jupiter','mars','sun','venus','mercury','moon'];
@@ -13,7 +15,7 @@ const FALLBACK_ZODIAC=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf4
 const SKY_COLOR='#c9211e';
 const MASTER_RADIUS=19,DISPLAY_RADIUS=17,MASTER_SCALE=DISPLAY_RADIUS/MASTER_RADIUS;
 const DAY_RING_INNER_RADIUS=23,DAY_RING_OUTER_RADIUS=27;
-let queued=false,observer=null;
+let queued=false,observer=null,applying=false;
 
 const norm=value=>((Number(value)%360)+360)%360;
 function svg(name,attrs={}){const node=document.createElementNS(NS,name);Object.entries(attrs).forEach(([key,value])=>node.setAttribute(key,String(value)));return node}
@@ -26,22 +28,30 @@ function annularPath(center,inner,outer,start,end){
 }
 function numberAttr(node,name,fallback=NaN){const value=Number(node?.getAttribute(name));return Number.isFinite(value)?value:fallback}
 function canonicalEntry(id){const registry=window.RelphiGlyphRegistry;return registry&&(registry.get(id)||registry.resolve(id))}
+
+function installBootMask(){
+  if(document.getElementById('relphi-ph-visual-boot-mask'))return;
+  const style=document.createElement('style');style.id='relphi-ph-visual-boot-mask';style.textContent=`
+    #heptagramSvg:not([data-sky-chart-parity-ready="true"]){visibility:hidden!important}
+    #phCurrentWheel:not([data-sky-chart-parity-ready="true"]){visibility:hidden!important;min-height:242px}
+    #phCurrentWheel[data-sky-chart-parity-ready="true"]{visibility:visible!important}
+  `;(document.head||document.documentElement).appendChild(style);
+}
+
 async function bubble(host,id,{radius,color,fill='#fffdfa',strokeWidth=1.8,plain=false}={}){
   const entry=canonicalEntry(id),component=window.RelphiGlyphComponent;
   if(!host||!entry||!component?.createBubble)return false;
-  host.replaceChildren();
-  host.dataset.canonicalGlyphId=entry.id;
+  host.replaceChildren();host.dataset.canonicalGlyphId=entry.id;
   try{
     const rendered=component.createBubble(host,entry.id,{radius,padding:.7,color,fill,strokeWidth});
     if(plain){rendered.circle.style.opacity='0';rendered.circle.setAttribute('aria-hidden','true')}
-    await rendered.ready;
-    return true;
+    await rendered.ready;return true;
   }catch(error){host.replaceChildren();host.dataset.glyphUnavailable='true';console.error('[Relphi Planetary Hours visual parity]',error);return false}
 }
 
 function installStyles(){
-  if(document.getElementById('planetaryHoursSkyChartVisualParityV1Styles'))return;
-  const style=document.createElement('style');style.id='planetaryHoursSkyChartVisualParityV1Styles';style.textContent=`
+  if(document.getElementById('planetaryHoursSkyChartVisualParityV2Styles'))return;
+  const style=document.createElement('style');style.id='planetaryHoursSkyChartVisualParityV2Styles';style.textContent=`
     #heptagramSvg{overflow:visible!important}
     #heptagramSvg .ph-heptagram-circle{fill:none!important;stroke:#2a2521!important;stroke-width:1.4!important;opacity:.55!important;vector-effect:non-scaling-stroke}
     #heptagramSvg .ph-heptagram-guide{fill:none!important;stroke:#2a2521!important;stroke-width:1!important;opacity:.20!important;stroke-dasharray:none!important;vector-effect:non-scaling-stroke}
@@ -76,9 +86,10 @@ function installStyles(){
 function planetKey(group){return PLANETS.find(key=>group.classList.contains(`p-${key}`))||''}
 function dayRing(radius,color,role){const ring=svg('circle',{cx:0,cy:0,r:radius,fill:'none',stroke:color,'vector-effect':'non-scaling-stroke'});ring.classList.add('ph-parity-day-ring',`ph-parity-day-ring--${role}`);return ring}
 async function enhanceHeptagram(){
-  const root=document.getElementById('heptagramSvg');if(!root)return;
-  const legacyNodes=[...root.querySelectorAll('.ph-heptagram-node')];if(!legacyNodes.length)return;
-  root.dataset.skyChartParityBusy='true';
+  const root=document.getElementById('heptagramSvg');if(!root)return false;
+  const legacyNodes=[...root.querySelectorAll('.ph-heptagram-node')];
+  if(!legacyNodes.length){if(root.querySelector('.ph-parity-planet'))root.dataset.skyChartParityReady='true';return false}
+  root.removeAttribute('data-sky-chart-parity-ready');root.dataset.skyChartParityBusy='true';
   const jobs=[];
   legacyNodes.forEach(node=>{
     const group=node.closest('g'),key=planetKey(group);if(!group||!key)return;
@@ -97,7 +108,7 @@ async function enhanceHeptagram(){
   });
   root.querySelectorAll('text').forEach(node=>node.remove());
   await Promise.allSettled(jobs);
-  root.dataset.skyChartParityReady='true';delete root.dataset.skyChartParityBusy;
+  root.dataset.skyChartParityReady='true';delete root.dataset.skyChartParityBusy;return true;
 }
 
 function sourceCenter(old){const core=old.querySelector('.wheel-core');return{x:numberAttr(core,'cx',110),y:numberAttr(core,'cy',110)}}
@@ -123,7 +134,7 @@ function paritySpec(){const spec=window.RelphiSkyWheelSpec?.mini||fallbackMiniSp
 async function buildParityWheel(model){
   const {spec,role}=paritySpec(),center=spec.center||{x:300,y:300},zodiac=spec.zodiac,house=role.house||{inner:zodiac.outer,outer:207,numberRadius:167.75};
   const viewBox=spec.viewBox||[0,0,600,600],colors=window.RelphiSkyWheelSpec?.COLORS||FALLBACK_ZODIAC;
-  const root=svg('svg',{class:'ph-current-wheel',viewBox:viewBox.join(' '),preserveAspectRatio:'xMidYMid meet',role:'img','aria-label':'Current planetary placements mini zodiac wheel using the Sky Chart visual system'});root.dataset.skyChartParity='true';root.style.visibility='hidden';
+  const root=svg('svg',{class:'ph-current-wheel',viewBox:viewBox.join(' '),preserveAspectRatio:'xMidYMid meet',role:'img','aria-label':'Current planetary placements mini zodiac wheel using the Sky Chart visual system'});root.dataset.skyChartParity='true';
   const houseLayer=svg('g',{class:'ph-parity-house-layer'}),zodiacLayer=svg('g',{class:'ph-parity-zodiac-layer'}),angleLayer=svg('g',{class:'ph-parity-angle-layer'}),placementLayer=svg('g',{class:'ph-parity-placement-layer'});
   const cusps=model.houseCusps.length===12?model.houseCusps:Array.from({length:12},(_,i)=>i*30);
   cusps.forEach((start,index)=>{
@@ -132,9 +143,7 @@ async function buildParityWheel(model){
     const a=point(center,house.inner,start),b=point(center,house.outer,start);houseLayer.appendChild(svg('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'ph-parity-house-cusp'}));
     const label=point(center,house.numberRadius,mid),text=svg('text',{x:label.x,y:label.y,class:'ph-parity-house-number'});text.textContent=String(index+1);houseLayer.appendChild(text);
   });
-  for(let index=0;index<12;index+=1){
-    zodiacLayer.appendChild(svg('path',{d:annularPath(center,zodiac.inner,zodiac.outer,index*30,index*30+30),class:'ph-parity-zodiac-sector',fill:colors[index]||'#ddd','fill-opacity':zodiac.fillOpacity??.82}));
-  }
+  for(let index=0;index<12;index+=1)zodiacLayer.appendChild(svg('path',{d:annularPath(center,zodiac.inner,zodiac.outer,index*30,index*30+30),class:'ph-parity-zodiac-sector',fill:colors[index]||'#ddd','fill-opacity':zodiac.fillOpacity??.82}));
   zodiacLayer.append(svg('circle',{cx:center.x,cy:center.y,r:zodiac.inner,class:'ph-parity-zodiac-inner'}),svg('circle',{cx:center.x,cy:center.y,r:zodiac.outer,class:'ph-parity-zodiac-outer'}));
   const jobs=[];
   SIGN_IDS.forEach((id,index)=>{const p=point(center,(zodiac.inner+zodiac.outer)/2,index*30+15),host=svg('g',{transform:`translate(${p.x} ${p.y})`,class:'ph-parity-sign'});zodiacLayer.appendChild(host);jobs.push(bubble(host,id,{radius:zodiac.glyphRadius||14,color:'#514b45',plain:true,strokeWidth:1.5}))});
@@ -149,22 +158,42 @@ async function buildParityWheel(model){
     const host=svg('g',{transform:`translate(${to.x} ${to.y})`,class:'ph-parity-placement'});host.dataset.placement=item.id;placementLayer.appendChild(host);jobs.push(bubble(host,item.id,{radius:bubbleRadius,color:SKY_COLOR,fill:'#fffdfa',strokeWidth}));
   });
   root.append(houseLayer,zodiacLayer,angleLayer,placementLayer,svg('circle',{cx:center.x,cy:center.y,r:4,class:'ph-parity-center'}));
-  await Promise.allSettled(jobs);root.style.visibility='visible';return root;
+  await Promise.allSettled(jobs);return root;
 }
 async function enhanceWheel(){
-  const mount=document.getElementById('phCurrentWheel');if(!mount)return;
-  const old=mount.querySelector('svg.ph-current-wheel:not([data-sky-chart-parity="true"])');if(!old)return;
-  const model=extractWheel(old);if(!model.planets.length)return;
-  const replacement=await buildParityWheel(model);if(!old.isConnected)return;old.replaceWith(replacement);
+  const mount=document.getElementById('phCurrentWheel');if(!mount)return false;
+  const final=mount.querySelector('svg.ph-current-wheel[data-sky-chart-parity="true"]');
+  if(final){mount.dataset.skyChartParityReady='true';return false}
+  const old=mount.querySelector('svg.ph-current-wheel');if(!old)return false;
+  mount.removeAttribute('data-sky-chart-parity-ready');
+  const model=extractWheel(old);if(!model.planets.length)return false;
+  const replacement=await buildParityWheel(model);if(!old.isConnected)return false;
+  old.replaceWith(replacement);mount.dataset.skyChartParityReady='true';return true;
 }
 
-async function apply(){queued=false;await Promise.allSettled([enhanceHeptagram(),enhanceWheel()])}
-function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>void apply())}
+async function apply(){
+  queued=false;if(applying)return;applying=true;
+  try{await Promise.allSettled([enhanceHeptagram(),enhanceWheel()])}
+  finally{applying=false}
+}
+function schedule(){if(queued)return;queued=true;queueMicrotask(()=>void apply())}
+function mutationTouches(record,selector){
+  const target=record.target instanceof Element?record.target:null;
+  if(target?.matches?.(selector)||target?.closest?.(selector))return true;
+  return [...record.addedNodes,...record.removedNodes].some(node=>node instanceof Element&&(node.matches?.(selector)||node.closest?.(selector)));
+}
+function onMutations(records){
+  if(applying)return;
+  let touched=false;
+  if(records.some(record=>mutationTouches(record,'#heptagramSvg'))){document.getElementById('heptagramSvg')?.removeAttribute('data-sky-chart-parity-ready');touched=true}
+  if(records.some(record=>mutationTouches(record,'#phCurrentWheel'))){document.getElementById('phCurrentWheel')?.removeAttribute('data-sky-chart-parity-ready');touched=true}
+  if(touched)schedule();
+}
 function start(){
   installStyles();schedule();
-  observer=new MutationObserver(records=>{if(records.some(record=>record.type==='childList'&&(record.target===document.getElementById('heptagramSvg')||record.target.closest?.('#heptagramSvg,#phCurrentWheel')||[...record.addedNodes].some(node=>node instanceof Element&&node.matches?.('#heptagramSvg,.ph-current-wheel')))))schedule()});
-  observer.observe(document.body,{childList:true,subtree:true});
+  observer=new MutationObserver(onMutations);observer.observe(document.body,{childList:true,subtree:true});
   window.addEventListener('relphi:canonical-glyph-runtime-ready',schedule);
 }
+installBootMask();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
