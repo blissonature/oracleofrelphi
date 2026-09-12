@@ -1047,7 +1047,7 @@
   }
   .ph-hour-ruler-inline strong {
     display: inline;
-    margin-left: .35rem;
+    margin-left: .08rem;
     font-size: 1rem;
     line-height: 1.2;
   }
@@ -1323,11 +1323,11 @@
   }
   #dayRulerProfileName .ph-direct-canonical-glyph,
   #hourRulerProfileName .ph-direct-canonical-glyph {
-    width:2.15em;
-    height:2.15em;
-    margin:0 .28em 0 .08em;
+    width:1.45em;
+    height:1.45em;
+    margin:0 .02em 0 -.12em;
     vertical-align:middle;
-    transform:scale(1.42);
+    transform:scale(2.05);
     transform-origin:center;
   }
   .ph-pill .ph-direct-canonical-glyph {
@@ -3027,8 +3027,8 @@
     if (el.topHourJump && cur) setHourJump(el.topHourJump, cur);
     const prevDayKeyForCue = weekdayToRuler[(rulerToWeekday[dayKey] + 6) % 7];
     const nextDayKeyForCue = weekdayToRuler[(rulerToWeekday[dayKey] + 1) % 7];
-    if (el.prevDayCue) el.prevDayCue.innerHTML = '← ' + canonicalPlanetGlyphMarkup(prevDayKeyForCue, byKey[prevDayKeyForCue].name) + ' day';
-    if (el.nextDayCue) el.nextDayCue.innerHTML = canonicalPlanetGlyphMarkup(nextDayKeyForCue, byKey[nextDayKeyForCue].name) + ' day →';
+    if (el.prevDayCue) el.prevDayCue.textContent = '← Day';
+    if (el.nextDayCue) el.nextDayCue.textContent = 'Day →';
     renderMoonFrame(frame.localNow, state.lat, state.lon);
     renderWandererGrid(frame);
     phRenderCurrentWheel(frame);
