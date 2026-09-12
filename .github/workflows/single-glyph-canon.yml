@@ -58,11 +58,12 @@ jobs:
         with:
           ref: fix/planetary-hours-visual-parity
       - name: Restore CRLF without changing content
-        run: python - <<'PY'
+        run: |
+          python - <<'PY'
           from pathlib import Path
-          p=Path('planetaryhours.html')
-          text=p.read_text()
-          p.write_bytes(text.replace('\r\n','\n').replace('\n','\r\n').encode())
+          p = Path('planetaryhours.html')
+          text = p.read_text()
+          p.write_bytes(text.replace('\r\n', '\n').replace('\n', '\r\n').encode())
           PY
       - name: Commit line-ending restoration
         run: |
