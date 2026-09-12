@@ -96,6 +96,8 @@ assert.match(page,/collapsed \? 'is-collapsed ' : ''/);
 assert.match(page,/aria-expanded=/);
 assert.match(page,/\.ph-wanderer-card\.is-collapsed \.ph-wanderer-mini-meters/);
 assert.match(page,/state\.wandererExpandedBody = button\.classList\.contains\('is-collapsed'\) \? body : null/);
+assert.doesNotMatch(page,/ph-wanderer-visibility-dot/);
+assert.doesNotMatch(page,/ph-wanderer-card\.is-selected/);
 
 
 assert.match(whereWhen,/function choosePlanetaryHoursTarget\(\)/);
