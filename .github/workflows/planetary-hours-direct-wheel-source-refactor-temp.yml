@@ -1,0 +1,34 @@
+name: Planetary Hours direct wheel source refactor temporary
+on:
+  push:
+    branches:
+      - fix/planetary-hours-visual-parity
+permissions:
+  contents: write
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+      - name: Apply direct source-owned wheel refactor
+        run: |
+          if grep -q 'ph-current-wheel-direct' planetaryhours.html && [ ! -f planetary-hours-sky-chart-visual-parity-v1.js ]; then
+            echo 'Direct wheel refactor already applied.'
+          else
+            python .github/scripts/ph_direct_wheel_source_refactor_temp.py
+          fi
+      - name: Run Planetary Hours visual ownership contract
+        run: node tests/planetary-hours-sky-chart-visual-parity.mjs
+      - name: Commit product changes
+        run: |
+          if git diff --quiet; then
+            echo 'No product changes to commit.'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Render Planetary Hours mini wheel directly at source"
+          git push origin HEAD:fix/planetary-hours-visual-parity
