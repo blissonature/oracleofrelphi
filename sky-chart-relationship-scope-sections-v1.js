@@ -1,12 +1,12 @@
-// Relationship scope sections v13: semantic grouping for ordinary sorts; global sorts preserve one cross-scope ranking.
+// Relationship scope sections v14: significance can rank globally; relative timing remains scoped to its sky-time frame.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV13)return;
-window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScopeSectionsV2=true;window.__relphiRelationshipScopeSectionsV3=true;window.__relphiRelationshipScopeSectionsV4=true;window.__relphiRelationshipScopeSectionsV5=true;window.__relphiRelationshipScopeSectionsV6=true;window.__relphiRelationshipScopeSectionsV7=true;window.__relphiRelationshipScopeSectionsV8=true;window.__relphiRelationshipScopeSectionsV9=true;window.__relphiRelationshipScopeSectionsV10=true;window.__relphiRelationshipScopeSectionsV11=true;window.__relphiRelationshipScopeSectionsV12=true;window.__relphiRelationshipScopeSectionsV13=true;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiRelationshipScopeSectionsV14)return;
+window.__relphiRelationshipScopeSectionsV1=true;window.__relphiRelationshipScopeSectionsV2=true;window.__relphiRelationshipScopeSectionsV3=true;window.__relphiRelationshipScopeSectionsV4=true;window.__relphiRelationshipScopeSectionsV5=true;window.__relphiRelationshipScopeSectionsV6=true;window.__relphiRelationshipScopeSectionsV7=true;window.__relphiRelationshipScopeSectionsV8=true;window.__relphiRelationshipScopeSectionsV9=true;window.__relphiRelationshipScopeSectionsV10=true;window.__relphiRelationshipScopeSectionsV11=true;window.__relphiRelationshipScopeSectionsV12=true;window.__relphiRelationshipScopeSectionsV13=true;window.__relphiRelationshipScopeSectionsV14=true;
 
 const GROUPS=Object.freeze([{mode:'A-B',title:'A↔B',family:'intersky'},{mode:'A-A',title:'A↔A',family:'intrasky'},{mode:'B-B',title:'B↔B',family:'intrasky'}]);
 const FAMILIES=Object.freeze([{id:'intersky',title:'Intersky'},{id:'intrasky',title:'Intrasky'}]);
-const GLOBAL_TIMING_SORTS=new Set(['duration-longest','duration-shortest','began-most-recently','ends-soonest','ends-last']);
+const GLOBAL_TIMING_SORTS=new Set(['duration-longest','duration-shortest','ends-soonest','ends-last']);
 const GLOBAL_SIGNIFICANCE_SORTS=new Set(['most-supportive','most-challenging']);
 const GLOBAL_SORTS=new Set([...GLOBAL_TIMING_SORTS,...GLOBAL_SIGNIFICANCE_SORTS]);
 const PLACEMENT_SYMBOLS=Object.freeze({sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'});
@@ -41,26 +41,10 @@ function supportiveCompare(a,b,rows,familyCache){
   const as=scoreFor(ar),bs=scoreFor(br);
   return bs.signed-as.signed||bs.strength-as.strength||relationOrdinal(ar)-relationOrdinal(br)||relationOrdinal(a)-relationOrdinal(b);
 }
-function recentStartMs(row,cache){
-  if(cache.has(row))return cache.get(row);
-  let value=NaN;
-  try{const timing=window.RelphiRelationshipTransitMeta?.exportTimingForRow?.(row);value=Number(timing?.startMs)}catch(_){}
-  if(!Number.isFinite(value)){
-    const daysAgo=Number(row?.dataset?.transitStartedDaysAgo);
-    if(Number.isFinite(daysAgo))value=Date.now()-daysAgo*86400000;
-  }
-  cache.set(row,value);return value;
-}
 function globalComparator(sortMode,rows){
-  const sorter=window.RelphiRelationshipSort,familyCache=new Map(),startCache=new WeakMap();
+  const sorter=window.RelphiRelationshipSort,familyCache=new Map();
   if(sortMode==='most-supportive')return(a,b)=>supportiveCompare(a,b,rows,familyCache);
   if(sortMode==='most-challenging')return(a,b)=>-supportiveCompare(a,b,rows,familyCache);
-  if(sortMode==='began-most-recently')return(a,b)=>{
-    const av=recentStartMs(a,startCache),bv=recentStartMs(b,startCache);
-    if(Number.isFinite(av)&&Number.isFinite(bv))return bv-av||relationOrdinal(a)-relationOrdinal(b);
-    if(Number.isFinite(av))return-1;if(Number.isFinite(bv))return 1;
-    return relationOrdinal(a)-relationOrdinal(b);
-  };
   return typeof sorter?.compareRows==='function'?sorter.compareRows:(a,b)=>relationOrdinal(a)-relationOrdinal(b);
 }
 function groupList(){
@@ -72,8 +56,9 @@ function groupList(){
   rows.forEach(row=>row.classList.remove(COLLAPSED_VISUAL_CLASS));
   const other=[...list.children].filter(node=>!node.matches?.('.sky-foundation-relationship-row')),desired=[...other];
   const sorter=window.RelphiRelationshipSort,sortMode=sorter?.mode?.();
-  // These sorts answer one question across the whole visible relationship set. Scope
-  // remains metadata; it must not split the ranking into A↔B, A↔A, and B↔B buckets.
+  // Significance and absolute-duration sorts can answer one question across the whole
+  // visible set. "Began Most Recently" is intentionally excluded: its "ago" value is
+  // measured from each relationship scope's own chart timestamp, so scopes must not mix.
   if(GLOBAL_SORTS.has(sortMode)){
     desired.push(...rows.slice().sort(globalComparator(sortMode,rows)));
   }else{
