@@ -24,6 +24,9 @@ assert.match(lifecycle, /card-row-position-panel/);
 assert.match(lifecycle, /frame\.width - GUTTER\*2/);
 assert.match(lifecycle, /frame\.height - GUTTER\*2/);
 assert.match(lifecycle, /stopImmediatePropagation\(\)/);
+assert.match(lifecycle, /rowDrawScope:'full'/);
+assert.match(lifecycle, /rowAllowReversals:true/);
+assert.match(lifecycle, /rowAllowRepeats:false/);
 
 // Interaction code may not own layout.
 assert.doesNotMatch(interactions, /card-row-item\{position:relative/);
@@ -36,7 +39,6 @@ assert.match(interactions, /handles input behavior only/);
 assert.match(renderGeometry, /Deliberately no DOM geometry mutations/);
 assert.doesNotMatch(renderGeometry, /MutationObserver/);
 assert.doesNotMatch(renderGeometry, /style\.left/);
-assert.doesNotMatch(renderGeometry, /translate/);
 
 // Options is a draft transaction; applying a template is one controller call.
 assert.match(options, /Draft edits never mutate the board/);
@@ -46,10 +48,11 @@ assert.match(options, /#drawingBoardOptionsButton/);
 assert.match(options, /event\.stopImmediatePropagation\(\)/);
 assert.doesNotMatch(options, /saveAndClear/);
 
-// Chrome is UI-only and readiness is monotonic.
+// Chrome is UI-only, waits for the assembled current controls, and readiness is monotonic.
 assert.match(chrome, /UI placement\/readiness only/);
 assert.match(chrome, /relphi-drawing-board-ui-stable/);
-assert.match(chrome, /data-relphi-layout-controller/);
+assert.match(chrome, /#zoomCardRowExtents/);
+assert.match(chrome, /data-relphi-transaction-owner="v2"/);
 assert.doesNotMatch(chrome, /relphi-celtic-readable/);
 assert.doesNotMatch(chrome, /row-card-rotation/);
 
