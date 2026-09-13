@@ -3,7 +3,9 @@
   'use strict';
   if(!/(^|\/)tarot\.html$/.test(location.pathname))return;
   if(window.matchMedia&&window.matchMedia('(max-width:700px)').matches)return;
+  // Reserve the retired owner immediately; nested script loading must not create an ownership race.
+  window.__relphiDrawingBoardRenderGeometryV1=true;
   var script=document.createElement('script');
-  script.src='drawing-board-render-geometry-desktop-v2.js?v=1';
+  script.src='drawing-board-render-geometry-desktop-v2.js?v=2';
   document.head.appendChild(script);
 })();
