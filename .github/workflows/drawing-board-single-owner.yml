@@ -8,6 +8,7 @@ on:
     paths:
       - 'drawing-board-*.js'
       - 'tests/drawing-board-single-owner.test.js'
+      - 'tests/drawing-board-runtime.test.js'
       - '.github/workflows/drawing-board-single-owner.yml'
 
 jobs:
@@ -25,5 +26,24 @@ jobs:
           node --check drawing-board-options-transactional-v1.js
           node --check drawing-board-render-geometry-v1.js
           node --check drawing-board-chrome-ownership-v1.js
+          node --check tests/drawing-board-runtime.test.js
       - name: Single-owner architecture checks
         run: node tests/drawing-board-single-owner.test.js
+      - name: Install browser acceptance runner
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run Drawing Board browser acceptance checks
+        run: |
+          mkdir -p test-results
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/relphi-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node tests/drawing-board-runtime.test.js
+      - name: Upload Drawing Board acceptance screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawing-board-acceptance
+          path: test-results/
+          if-no-files-found: ignore
