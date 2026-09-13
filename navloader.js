@@ -154,9 +154,14 @@
       style.id = 'relphi-drawing-board-boot-style';
       style.textContent = `
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .drawing-board-top-actions,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-workspace,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-workspace-toolbar,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-workspace-tools,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-more-options,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-reading-options-drawer,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-spread-prefab-library,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) #relphiSpreadTemplateSelect,
+        #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-label-builder,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-composer,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) #drawing-board-after-canvas,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .drawing-board-helpful-tip{
@@ -165,6 +170,7 @@
           pointer-events:none!important;
         }
         #shortListPanel.relphi-drawing-board-ui-ready .drawing-board-top-actions,
+        #shortListPanel.relphi-drawing-board-ui-ready .card-row-workspace,
         #shortListPanel.relphi-drawing-board-ui-ready .card-row-workspace-toolbar,
         #shortListPanel.relphi-drawing-board-ui-ready .relphi-workspace-tools,
         #shortListPanel.relphi-drawing-board-ui-ready #drawing-board-after-canvas{
@@ -224,7 +230,7 @@
     }
     if (isSkyChartContext() && !document.getElementById('skyFoundationRoot')) {
       const preview = new URLSearchParams(location.search).get('preview');
-      ['sky-chart-stability-hotfix.js?v=1','sky-chart-static-dynamic.js?v=2','sky-chart-aspect-duration-fix.js?v=2','sky-chart-relationship-language.js?v=5','sky-chart-related-relationships-v2.js?v=2','sky-chart-sign-cusps-v1.js?v=1','sky-chart-provenance-fix.js?v=1','sky-chart-calculated-points-v1.js?v=4'].forEach(function (src) { appendScript(src); });
+      ['sky-chart-stability-hotfix.js?v=1','sky-chart-static-dynamic.js?v=2','sky-chart-aspect-duration-fix.js?v=2','sky-chart-relationship-language.js?v=5','sky-chart-related-relationships-v2.js?v=2','sky-chart-sign-cusps-v1.js?v=1','sky-chart-provenance-fix-v1.js?v=1','sky-chart-calculated-points-v1.js?v=4'].forEach(function (src) { appendScript(src); });
       loadCanonicalGlyphRuntime();
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);
@@ -242,7 +248,7 @@
   }
 
   // Tarot's temporary Drawing Board controls can be constructed before DOMContentLoaded.
-  // Install the mask synchronously so those intermediate positions are never painted.
+  // Install the mask synchronously so intermediate controls never paint.
   if (isTarotContext()) refreshDrawingBoardControlAssets();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
