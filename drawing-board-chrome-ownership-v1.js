@@ -125,11 +125,11 @@
       #shortListPanel .relphi-reading-options-drawer #snapshotCardRowArrangement,#shortListPanel .relphi-reading-options-drawer #saveDrawingBoardSnapshotToDevice,#shortListPanel .relphi-reading-options-drawer #downloadRowOptimizedHtml,#shortListPanel .relphi-reading-options-drawer #downloadRowJson{display:none!important}
       #shortListPanel #printRowPdf{display:none!important}
       #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{transform:none!important;translate:none!important}
-      html.relphi-drawing-board-ui-stable #shortListPanel .card-row-more-options:not(.relphi-reading-options-drawer){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
       html.relphi-drawing-board-ui-stable #shortListPanel .relphi-reading-options-drawer .card-row-position-label{display:none!important}
 
-      /* A toolbar without the canonical zoom row is construction-state markup,
-         never a user-visible UI. Keep that state unpaintable from first frame onward. */
+      /* Construction-state chrome never paints. These nodes may exist briefly so
+         enhancement code can upgrade them, but only canonical UI is user-visible. */
+      #shortListPanel .card-row-more-options:not(.relphi-reading-options-drawer){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
       #shortListPanel .card-row-workspace-toolbar:not(:has(.relphi-zoom-row)){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
       html.relphi-drawing-board-ui-stable #shortListPanel .card-row-workspace-toolbar:has(.relphi-zoom-row){visibility:visible!important;opacity:1!important;pointer-events:auto!important}
     `;
