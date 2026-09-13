@@ -237,6 +237,37 @@
     }
     schedule();
   }
+  function closeAfterCommittedReset() {
+    const root = panel();
+    if (!root) return;
+    const toggle = window.RelphiDrawingBoardToggleOptions;
+    const originalBridge = window.RelphiDrawingBoardOptionsBridge;
+    let swappedBridge = false;
+
+    // The workflow's normal close path means Cancel and restores its baseline.
+    // Reset Board is a committed action, so let that path clear its internal
+    // session while temporarily making the restore operation a no-op.
+    if (typeof toggle === 'function' && optionsOpen(root) && originalBridge) {
+      try {
+        window.RelphiDrawingBoardOptionsBridge = { ...originalBridge, restore() { return true; } };
+        swappedBridge = window.RelphiDrawingBoardOptionsBridge !== originalBridge;
+        if (swappedBridge) toggle();
+      } finally {
+        if (swappedBridge) window.RelphiDrawingBoardOptionsBridge = originalBridge;
+      }
+    }
+
+    endSession(root);
+    root.dataset.relphiReadingOptionsOpen = 'false';
+    root.classList.remove('relphi-options-transaction-active');
+    drawer(root)?.classList.remove('is-reading-options-open');
+    const trigger = root.querySelector('#drawingBoardOptionsButton');
+    if (trigger) {
+      trigger.setAttribute('aria-expanded','false');
+      trigger.classList.remove('is-active');
+      trigger.title = 'Open Options';
+    }
+  }
   function dispatch(control,type) { control?.dispatchEvent(new Event(type,{bubbles:true})); }
   function waitForControls(callback,attempt = 0) {
     const root = panel();
@@ -313,27 +344,42 @@
     const bridge = window.RelphiDrawingBoardOptionsBridge;
     const blank = { template:'', labels:[], pack:'full', stickers:true, reversals:true, repeats:false };
     applying = true;
-    try {
-      if (bridge?.capture && bridge?.restore) {
-        bridge.restore(structuralBlankSnapshot(bridge.capture()));
-      } else {
-        const nativeReset = root.querySelector('#clearShortList');
-        if (nativeReset && !nativeReset.disabled) nativeReset.click();
+
+    // Use the board's native full reset. Unlike restoring a partial options
+    // snapshot, this clears the slot count, cards, labels, active spread,
+    // transforms, pan, custom art, and draw deck in one authoritative action.
+    const nativeReset = root.querySelector('#clearShortList');
+    if (nativeReset) {
+      nativeReset.disabled = false;
+      nativeReset.click();
+    } else if (bridge?.capture && bridge?.restore) {
+      bridge.restore(structuralBlankSnapshot(bridge.capture()));
+    }
+
+    window.setTimeout(() => {
+      const liveRoot = panel();
+      if (!liveRoot) {
+        applying = false;
+        return;
       }
-      const select = root.querySelector('#relphiSpreadTemplateSelect');
+
+      // Clear the prefab module's selected template as well as the board state.
+      const select = liveRoot.querySelector('#relphiSpreadTemplateSelect');
       if (select) {
         select.value = '';
         dispatch(select,'change');
       }
-      clearEditorStructure(root);
-      applyRules(root,blank);
-      session = { baseline:JSON.parse(JSON.stringify(blank)), draft:JSON.parse(JSON.stringify(blank)) };
-      root.classList.add('relphi-options-transaction-active');
-      normalizeTemplatePrompt(root);
-    } finally {
+      clearEditorStructure(liveRoot);
+
+      // Close Options as a committed reset, not as Cancel. The workflow's
+      // Cancel path would otherwise restore the pre-reset board snapshot.
+      closeAfterCommittedReset();
+
+      const closedRoot = panel();
+      if (closedRoot) applyRules(closedRoot,blank);
       applying = false;
-    }
-    schedule();
+      schedule();
+    },0);
   }
 
   function draftTemplateChanged(root,select) {
