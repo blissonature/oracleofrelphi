@@ -1,6 +1,6 @@
 // Drawing Board rendered-surface ownership and Celtic visual geometry.
-// One owner only: preserve the shipped Celtic coordinates, make our visual
-// corrections deterministic, and perform at most one fold-fit per state change.
+// The shipped Celtic Cross owns its own ten canonical positions. Persisted board
+// coordinates must never be allowed to turn that spread back into a slot list.
 (function () {
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
@@ -8,13 +8,11 @@
   window.__relphiDrawingBoardRenderGeometryV1 = true;
 
   const PANEL = '#shortListPanel';
-  const RADIUS = '.72rem';
   const CELTIC_LAYOUT_ID = 'celtic-cross-10';
-  const MIDDLE_GAP_RATIO = .14;
-  const MIDDLE_GAP_MIN = 14;
-  const MIDDLE_GAP_MAX = 26;
-  const FOLD_GUTTER = 14;
-  const SIDE_GUTTER = 14;
+  const CANVAS_W = 900;
+  const CANVAS_H = 760;
+  const RADIUS = '.72rem';
+  const GUTTER = 14;
   const FIT_SAFETY = .975;
   const MIN_WORKSPACE_HEIGHT = 280;
   let queued = false;
@@ -24,11 +22,11 @@
   function root() { return document.querySelector(PANEL); }
   function board(rootNode = root()) { return rootNode?.querySelector('.card-row-board') || null; }
   function face(item) { return item?.querySelector('.card-row-card-wrap,.card-row-drop-card') || null; }
-
-  function activeLayoutId() {
-    try { return window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id || ''; }
-    catch (_) { return ''; }
+  function state() {
+    try { return window.RelphiDrawingBoardPrefabsBridge?.getState?.() || null; }
+    catch (_) { return null; }
   }
+  function activeLayoutId() { return state()?.activeLayout?.id || ''; }
 
   function setImportant(node, property, value) {
     if (!node) return;
@@ -36,63 +34,14 @@
     node.style.setProperty(property, value, 'important');
   }
 
-  function syncCelticReadable(rootNode) {
-    const isCeltic = activeLayoutId() === CELTIC_LAYOUT_ID;
-    rootNode?.classList.toggle('relphi-celtic-readable', isCeltic);
-    if (!isCeltic && rootNode) releaseFoldConstraint(rootNode);
-    return isCeltic;
-  }
-
-  function middleGapFor(cardWidth) {
-    return Math.max(MIDDLE_GAP_MIN, Math.min(MIDDLE_GAP_MAX, cardWidth * MIDDLE_GAP_RATIO));
-  }
-
-  function renderedScaleX(liveBoard) {
-    if (!liveBoard?.offsetWidth) return 1;
-    const rect = liveBoard.getBoundingClientRect();
-    const scale = rect.width / liveBoard.offsetWidth;
-    return Number.isFinite(scale) && Math.abs(scale) >= .001 ? Math.abs(scale) : 1;
-  }
-
-  function clearTranslateX(item, dataKey) {
-    if (!item || item.dataset[dataKey] === undefined) return;
-    item.style.removeProperty('translate');
-    delete item.dataset[dataKey];
-  }
-
-  function baseFaceRect(item, dataKey, scaleX) {
-    const surface = face(item);
-    if (!surface) return null;
-    const rect = surface.getBoundingClientRect();
-    const logicalTranslate = Number(item?.dataset?.[dataKey] || 0);
-    const visualTranslate = Number.isFinite(logicalTranslate) ? logicalTranslate * scaleX : 0;
-    return {
-      left:rect.left - visualTranslate,
-      right:rect.right - visualTranslate,
-      top:rect.top,
-      bottom:rect.bottom,
-      width:rect.width,
-      height:rect.height
-    };
-  }
-
-  function setTranslateX(item, dataKey, logicalTranslate) {
-    if (!item || !Number.isFinite(logicalTranslate)) return false;
-    if (Math.abs(logicalTranslate) < .01) {
-      clearTranslateX(item, dataKey);
-      return true;
-    }
-    const previous = Number(item.dataset[dataKey] || 0);
-    const value = logicalTranslate.toFixed(2) + 'px 0px';
-    if (Math.abs(previous - logicalTranslate) < .01 && item.style.getPropertyValue('translate') === value) return false;
-    item.dataset[dataKey] = String(logicalTranslate);
-    setImportant(item, 'translate', value);
-    return true;
-  }
-
-  function setTranslateFromVisualDelta(item, dataKey, deltaVisual, scaleX) {
-    if (!Number.isFinite(deltaVisual) || !Number.isFinite(scaleX) || Math.abs(scaleX) < .001) return false;
-    return setTranslateX(item, dataKey, deltaVisual / scaleX);
+  function shippedCelticLayout() {
+    try {
+      const list = window.RelphiDrawingBoardSpreadPrefabs?.list?.() || [];
+      const shipped = list.find(item => item?.id === CELTIC_LAYOUT_ID && item?.source === 'shipped');
+      if (shipped) return shipped;
+    } catch (_) {}
+    const active = state()?.activeLayout;
+    return active?.id === CELTIC_LAYOUT_ID ? active : null;
   }
 
   function installStyle() {
@@ -100,11 +49,11 @@
     const style = document.createElement('style');
     style.id = 'relphi-render-geometry-style-v1';
     style.textContent = [
+      '#shortListPanel.relphi-celtic-geometry-pending .card-row-workspace{visibility:hidden!important}',
       '#shortListPanel .card-row-board>.card-row-item::before,#shortListPanel .card-row-board>.card-row-item::after{content:none!important;display:none!important}',
       '#shortListPanel .card-row-board>.card-row-item>.card-row-card-wrap::before,#shortListPanel .card-row-board>.card-row-item>.card-row-card-wrap::after,#shortListPanel .card-row-board>.card-row-placeholder-item>.card-row-drop-card::before,#shortListPanel .card-row-board>.card-row-placeholder-item>.card-row-drop-card::after{content:none!important;display:none!important}',
-      '#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="0"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="1"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="2"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="3"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="4"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="5"]>.card-row-position-panel{bottom:100%!important;margin-bottom:0!important}',
-      '#shortListPanel.relphi-celtic-readable.relphi-celtic-cross-unrevealed .card-row-board>.card-row-item[data-row-index="1"]{--row-card-rotation:0deg!important;transform:scale(var(--row-card-scale,1))!important;transform-origin:0 0!important}',
-      '#shortListPanel.relphi-celtic-readable.relphi-celtic-cross-unrevealed .card-row-board>.card-row-item[data-row-index="1"]>.card-row-card-wrap,#shortListPanel.relphi-celtic-readable.relphi-celtic-cross-unrevealed .card-row-board>.card-row-item[data-row-index="1"]>.card-row-drop-card{transform:none!important}',
+      'html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item{position:absolute!important}',
+      '#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="0"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="1"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="2"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="3"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="4"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="5"]>.card-row-position-panel{top:0!important;bottom:auto!important;margin:0!important;transform:translateY(-100%)!important}',
       '#shortListPanel.relphi-celtic-readable.relphi-celtic-cross-unrevealed .relphi-center-helper{display:none!important}'
     ].join('');
     document.head.appendChild(style);
@@ -119,7 +68,6 @@
       setImportant(item, 'border', '0px');
       setImportant(item, 'outline', '0px');
       setImportant(item, 'box-shadow', 'none');
-
       const wrap = item.querySelector(':scope > .card-row-card-wrap');
       const drop = item.querySelector(':scope > .card-row-drop-card');
       [wrap, drop].filter(Boolean).forEach(surface => {
@@ -131,117 +79,47 @@
         setImportant(surface, 'outline', '0px');
         setImportant(surface, 'box-shadow', 'none');
       });
-      item.querySelectorAll('.card-row-card,.or-card.card-row-card,.card-row-drop-card-inner,.card-row-drop-card>img').forEach(surface => {
-        setImportant(surface, 'border-radius', RADIUS);
-        setImportant(surface, 'background-clip', 'padding-box');
-      });
     });
   }
 
-  function syncRevealState(rootNode) {
+  function applyCanonicalCeltic(rootNode) {
     const liveBoard = board(rootNode);
-    const crosses = liveBoard?.querySelector(':scope > .card-row-item[data-row-index="1"]');
-    if (!crosses) return false;
-    const revealed = !!crosses.querySelector('[data-row-card]');
-    const previous = rootNode.dataset.relphiCelticCrossRevealState || '';
-    const next = revealed ? 'revealed' : 'unrevealed';
-    rootNode.dataset.relphiCelticCrossRevealState = next;
-    rootNode.classList.toggle('relphi-celtic-cross-unrevealed', !revealed);
-    if (!revealed) crosses.classList.remove('relphi-celtic-crossing-rotated');
-    if (previous && previous !== next) resetFoldFit(rootNode);
-    return revealed;
-  }
+    const layout = shippedCelticLayout();
+    if (!liveBoard || !layout || !Array.isArray(layout.positions)) return false;
 
-  function clearMiddleTranslations(liveBoard) {
-    [0,1,4,5].forEach(index => {
-      clearTranslateX(liveBoard?.querySelector(':scope > .card-row-item[data-row-index="' + index + '"]'), 'relphiMiddleTranslateX');
-    });
-  }
+    const liveState = state();
+    const centerOpen = !!liveState?.centerOpen;
+    const positions = layout.positions.slice().sort((a,b) => Number(a?.drawOrder || 0) - Number(b?.drawOrder || 0));
+    const crossingItem = liveBoard.querySelector(':scope > .card-row-item[data-row-index="1"]');
+    const crossingRevealed = !!crossingItem?.querySelector('[data-row-card]');
+    rootNode.classList.toggle('relphi-celtic-cross-unrevealed', !crossingRevealed);
+    rootNode.dataset.relphiCelticCrossRevealState = crossingRevealed ? 'revealed' : 'unrevealed';
 
-  function positionCelticMiddleRow(rootNode, crossingRevealed) {
-    const liveBoard = board(rootNode);
-    if (!liveBoard) return;
-    if (!rootNode.classList.contains('relphi-celtic-readable')) {
-      clearMiddleTranslations(liveBoard);
-      return;
-    }
-
-    const covers = liveBoard.querySelector(':scope > .card-row-item[data-row-index="0"]');
-    const crosses = liveBoard.querySelector(':scope > .card-row-item[data-row-index="1"]');
-    const behind = liveBoard.querySelector(':scope > .card-row-item[data-row-index="4"]');
-    const before = liveBoard.querySelector(':scope > .card-row-item[data-row-index="5"]');
-    if (![covers,crosses,behind,before].every(Boolean)) return;
-
-    const scaleX = renderedScaleX(liveBoard);
-    const coverRect = baseFaceRect(covers, 'relphiMiddleTranslateX', scaleX);
-    const crossRect = baseFaceRect(crosses, 'relphiMiddleTranslateX', scaleX);
-    const behindRect = baseFaceRect(behind, 'relphiMiddleTranslateX', scaleX);
-    const beforeRect = baseFaceRect(before, 'relphiMiddleTranslateX', scaleX);
-    if (!coverRect || !crossRect || !behindRect || !beforeRect || !coverRect.width) return;
-
-    const centerOpen = !crossingRevealed || !crosses.classList.contains('relphi-celtic-crossing-rotated');
-    const coverCenter = coverRect.left + coverRect.width / 2;
-    const crossCenter = crossRect.left + crossRect.width / 2;
-    const axis = centerOpen ? (coverCenter + crossCenter) / 2 : coverCenter;
-    const cardWidth = coverRect.width;
-    const middleGap = middleGapFor(cardWidth);
-
-    if (centerOpen) {
-      const targetCoverRight = axis - middleGap / 2;
-      const targetCrossLeft = axis + middleGap / 2;
-      setTranslateFromVisualDelta(covers, 'relphiMiddleTranslateX', targetCoverRight - coverRect.right, scaleX);
-      setTranslateFromVisualDelta(crosses, 'relphiMiddleTranslateX', targetCrossLeft - crossRect.left, scaleX);
-    } else {
-      clearTranslateX(covers, 'relphiMiddleTranslateX');
-      clearTranslateX(crosses, 'relphiMiddleTranslateX');
-    }
-
-    const fixedCentralLeft = axis - cardWidth - middleGap / 2;
-    const fixedCentralRight = axis + cardWidth + middleGap / 2;
-    setTranslateFromVisualDelta(behind, 'relphiMiddleTranslateX', (fixedCentralLeft - middleGap) - behindRect.right, scaleX);
-    setTranslateFromVisualDelta(before, 'relphiMiddleTranslateX', (fixedCentralRight + middleGap) - beforeRect.left, scaleX);
-  }
-
-  function clearStaffTranslation(liveBoard) {
-    [6,7,8,9].forEach(index => {
-      clearTranslateX(liveBoard?.querySelector(':scope > .card-row-item[data-row-index="' + index + '"]'), 'relphiStaffTranslateX');
-    });
-  }
-
-  function positionCelticStaff(rootNode) {
-    const liveBoard = board(rootNode);
-    if (!liveBoard) return;
-    if (!rootNode.classList.contains('relphi-celtic-readable')) {
-      clearStaffTranslation(liveBoard);
-      return;
-    }
-
-    const before = liveBoard.querySelector(':scope > .card-row-item[data-row-index="5"]');
-    const firstStaff = liveBoard.querySelector(':scope > .card-row-item[data-row-index="6"]');
-    if (!before || !firstStaff) return;
-    const scaleX = renderedScaleX(liveBoard);
-    const beforeRect = baseFaceRect(before, 'relphiMiddleTranslateX', scaleX);
-    const staffRect = baseFaceRect(firstStaff, 'relphiStaffTranslateX', scaleX);
-    if (!beforeRect?.width || !staffRect?.width) return;
-
-    const desiredLeft = beforeRect.right + beforeRect.width;
-    const logicalTranslate = (desiredLeft - staffRect.left) / scaleX;
-    [6,7,8,9].forEach(index => {
+    positions.forEach((position, index) => {
       const item = liveBoard.querySelector(':scope > .card-row-item[data-row-index="' + index + '"]');
-      if (item) setTranslateX(item, 'relphiStaffTranslateX', logicalTranslate);
-    });
-  }
+      if (!item) return;
+      const openCrossing = index === 1 && !crossingRevealed;
+      const useOpen = centerOpen || openCrossing;
+      const value = useOpen && position.openTransform ? position.openTransform : position.transform;
+      if (!value) return;
 
-  function enforceFlushLabels(rootNode) {
-    if (!rootNode?.classList.contains('relphi-celtic-readable')) return;
-    const liveBoard = board(rootNode);
-    if (!liveBoard) return;
-    [0,1,2,3,4,5].forEach(index => {
-      const sticker = liveBoard.querySelector(':scope > .card-row-item[data-row-index="' + index + '"] > .card-row-position-panel');
-      if (!sticker) return;
-      setImportant(sticker, 'bottom', '100%');
-      setImportant(sticker, 'margin-bottom', '0px');
+      const x = Number(value.x);
+      const y = Number(value.y);
+      const scale = Number(value.scale);
+      const rotation = Number(value.rotation);
+      const zIndex = Number(value.zIndex);
+      setImportant(item, 'position', 'absolute');
+      setImportant(item, 'left', Math.round((Number.isFinite(x) ? x : 0) * CANVAS_W) + 'px');
+      setImportant(item, 'top', Math.round((Number.isFinite(y) ? y : 0) * CANVAS_H) + 'px');
+      setImportant(item, 'z-index', String(Number.isFinite(zIndex) ? zIndex : 1));
+      item.style.setProperty('--row-card-scale', String(Number.isFinite(scale) ? scale : 1), 'important');
+      item.style.setProperty('--row-card-rotation', (Number.isFinite(rotation) ? rotation : 0) + 'deg', 'important');
+      item.classList.toggle('relphi-celtic-crossing-rotated', index === 1 && crossingRevealed && Math.abs(rotation) % 180 === 90);
+      item.style.removeProperty('translate');
+      delete item.dataset.relphiMiddleTranslateX;
+      delete item.dataset.relphiStaffTranslateX;
     });
+    return true;
   }
 
   function visualBounds(liveBoard) {
@@ -263,12 +141,12 @@
     };
   }
 
-  function constrainFold(rootNode) {
+  function constrainWorkspace(rootNode) {
     const workspace = rootNode.querySelector('.card-row-workspace');
     if (!workspace) return false;
     const viewportHeight = window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || 720;
     const rect = workspace.getBoundingClientRect();
-    const available = Math.floor(viewportHeight - Math.max(0, rect.top) - FOLD_GUTTER);
+    const available = Math.floor(viewportHeight - Math.max(0, rect.top) - GUTTER);
     if (available < MIN_WORKSPACE_HEIGHT) return false;
     if (workspace.dataset.relphiFoldPrevious === undefined) {
       workspace.dataset.relphiFoldPrevious = JSON.stringify({
@@ -284,7 +162,7 @@
     return true;
   }
 
-  function releaseFoldConstraint(rootNode) {
+  function releaseWorkspace(rootNode) {
     const workspace = rootNode?.querySelector('.card-row-workspace');
     if (workspace?.dataset.relphiFoldPrevious !== undefined) {
       let old = {};
@@ -294,18 +172,18 @@
       });
       delete workspace.dataset.relphiFoldPrevious;
     }
+    rootNode?.classList.remove('relphi-celtic-readable','relphi-celtic-cross-unrevealed','relphi-celtic-geometry-pending','relphi-celtic-geometry-ready');
     if (rootNode) {
       delete rootNode.dataset.relphiCelticFoldFitDone;
-      delete rootNode.dataset.relphiCelticFoldFitKey;
       delete rootNode.dataset.relphiCelticPanReset;
-      rootNode.classList.remove('relphi-celtic-cross-unrevealed');
     }
   }
 
-  function resetFoldFit(rootNode = root()) {
+  function resetFit(rootNode = root()) {
     if (!rootNode) return;
     delete rootNode.dataset.relphiCelticFoldFitDone;
-    delete rootNode.dataset.relphiCelticFoldFitKey;
+    rootNode.classList.add('relphi-celtic-geometry-pending');
+    rootNode.classList.remove('relphi-celtic-geometry-ready');
   }
 
   function resetPanOnce(rootNode) {
@@ -314,30 +192,27 @@
     document.getElementById('resetCardRowPan')?.click();
   }
 
-  function fitToFoldOnce(rootNode) {
-    if (fitting || rootNode.dataset.relphiCelticFoldFitDone === 'true') return;
+  function fitOnce(rootNode) {
+    if (fitting || rootNode.dataset.relphiCelticFoldFitDone === 'true') return true;
     const workspace = rootNode.querySelector('.card-row-workspace');
     const liveBoard = board(rootNode);
     const zoom = document.getElementById('rowZoom');
-    if (!workspace || !liveBoard || !zoom || !constrainFold(rootNode)) return;
-
+    if (!workspace || !liveBoard || !zoom || !constrainWorkspace(rootNode)) return false;
     const content = visualBounds(liveBoard);
     const frame = workspace.getBoundingClientRect();
-    if (!content || !frame.width || !frame.height) return;
+    if (!content || !frame.width || !frame.height) return false;
 
     const contentWidth = Math.max(1, content.right - content.left);
     const contentHeight = Math.max(1, content.bottom - content.top);
-    const targetWidth = Math.max(1, frame.width - SIDE_GUTTER * 2);
-    const targetHeight = Math.max(1, frame.height - FOLD_GUTTER * 2);
+    const targetWidth = Math.max(1, frame.width - GUTTER * 2);
+    const targetHeight = Math.max(1, frame.height - GUTTER * 2);
     const ratio = Math.min(targetWidth / contentWidth, targetHeight / contentHeight);
     const current = Number(zoom.value) || 1;
     const min = Number(zoom.min) > 0 ? Number(zoom.min) : .35;
     const max = Number(zoom.max) > 0 ? Number(zoom.max) : 2.4;
     const next = Math.max(min, Math.min(max, current * ratio * FIT_SAFETY));
-
     rootNode.dataset.relphiCelticFoldFitDone = 'true';
-    rootNode.dataset.relphiCelticFoldFitKey = [Math.round(frame.width),Math.round(frame.height),rootNode.dataset.relphiCelticCrossRevealState || ''].join(':');
-    if (Math.abs(next - current) < .006) return;
+    if (Math.abs(next - current) < .006) return true;
 
     fitting = true;
     try {
@@ -347,6 +222,15 @@
     } finally {
       fitting = false;
     }
+    return false;
+  }
+
+  function revealWhenStable(rootNode) {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (activeLayoutId() !== CELTIC_LAYOUT_ID) return;
+      rootNode.classList.remove('relphi-celtic-geometry-pending');
+      rootNode.classList.add('relphi-celtic-geometry-ready');
+    }));
   }
 
   function apply() {
@@ -356,16 +240,18 @@
     if (!rootNode || rootNode.hidden) return;
     applying = true;
     try {
-      const isCeltic = syncCelticReadable(rootNode);
       installStyle();
       ownCardSurfaces(rootNode);
-      if (!isCeltic) return;
+      if (activeLayoutId() !== CELTIC_LAYOUT_ID) {
+        releaseWorkspace(rootNode);
+        return;
+      }
+      rootNode.classList.add('relphi-celtic-readable');
+      rootNode.classList.add('relphi-celtic-geometry-pending');
       resetPanOnce(rootNode);
-      const revealed = syncRevealState(rootNode);
-      enforceFlushLabels(rootNode);
-      positionCelticMiddleRow(rootNode, revealed);
-      positionCelticStaff(rootNode);
-      fitToFoldOnce(rootNode);
+      if (!applyCanonicalCeltic(rootNode)) return;
+      const settled = fitOnce(rootNode);
+      if (settled || rootNode.dataset.relphiCelticFoldFitDone === 'true') revealWhenStable(rootNode);
     } finally {
       applying = false;
     }
@@ -378,34 +264,29 @@
   }
 
   document.addEventListener('relphi:drawing-board-rendered', schedule);
-  document.addEventListener('relphi:drawing-board-center-view', () => { resetFoldFit(); schedule(); });
-  document.addEventListener('input', event => {
-    if (event.target?.matches?.('#rowEnvelopeColor')) schedule();
-    if (event.target?.matches?.('#rowZoom') && event.isTrusted && !fitting) {
-      const rootNode = root();
-      if (rootNode) rootNode.dataset.relphiCelticFoldFitDone = 'true';
-    }
-  }, true);
+  document.addEventListener('relphi:drawing-board-center-view', () => { resetFit(); schedule(); });
   document.addEventListener('change', event => {
     if (event.target?.matches?.('#relphiSpreadTemplateSelect')) {
       const rootNode = root();
       if (rootNode) {
         delete rootNode.dataset.relphiCelticPanReset;
-        resetFoldFit(rootNode);
+        resetFit(rootNode);
       }
       schedule();
     }
-    if (event.target?.matches?.('#rowEnvelopeColor')) schedule();
   }, true);
-  window.addEventListener('resize', () => { resetFoldFit(); schedule(); }, { passive:true });
+  document.addEventListener('input', event => {
+    if (event.target?.matches?.('#rowZoom') && event.isTrusted && !fitting) {
+      const rootNode = root();
+      if (rootNode) rootNode.dataset.relphiCelticFoldFitDone = 'true';
+    }
+  }, true);
+  window.addEventListener('resize', () => { resetFit(); schedule(); }, { passive:true });
 
-  const rootNode = root();
-  if (rootNode) {
-    new MutationObserver(records => {
-      if (applying) return;
-      if (records.some(record => record.type === 'childList')) schedule();
-    }).observe(rootNode, { childList:true, subtree:true });
+  installStyle();
+  const initialRoot = root();
+  if (initialRoot && activeLayoutId() === CELTIC_LAYOUT_ID) {
+    initialRoot.classList.add('relphi-celtic-readable','relphi-celtic-geometry-pending');
   }
-
   apply();
 })();
