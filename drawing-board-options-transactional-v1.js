@@ -57,6 +57,22 @@
     }
   }
 
+  function requestSpreadControls(root) {
+    if (root?.querySelector('#relphiSpreadTemplateSelect')) return true;
+    if (!root?.querySelector('.board-setup-group--spread') || !root?.querySelector('#rowPositionLabels')) return false;
+    if (root.dataset.relphiSpreadRefreshPending === 'true') return false;
+    root.dataset.relphiSpreadRefreshPending = 'true';
+    requestAnimationFrame(() => {
+      delete root.dataset.relphiSpreadRefreshPending;
+      // Spread-prefabs already owns this refresh signal. Request its UI again
+      // after the native board has rebuilt and workflow grouping is stable.
+      document.dispatchEvent(new CustomEvent('relphi:drawing-board-center-view', {
+        detail:{ source:'transactional-options-rehydrate' }
+      }));
+    });
+    return false;
+  }
+
   function setBuilderLabels(root,labels) {
     const builder = root?.querySelector('.relphi-label-builder');
     const hidden = root?.querySelector('#rowPositionLabels');
@@ -107,9 +123,10 @@
   }
 
   function begin(root) {
+    setOpen(root,true);
+    if (!requestSpreadControls(root)) return;
     syncEditorFromBoard(root);
     session = { draft:readDraft(root) };
-    setOpen(root,true);
   }
   function cancel(root) {
     session = null;
