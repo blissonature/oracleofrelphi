@@ -1,0 +1,151 @@
+/* Desktop canonical Drawing Board paint.
+   Structural Celtic coordinates come from the shipped prefab; this sheet only owns paint/readiness. */
+@media (min-width:701px){
+  /* Per-toolbar readiness prevents a persisted panel class from exposing rebuilt/regressed chrome. */
+  html body #shortListPanel .card-row-workspace>.card-row-workspace-toolbar:not([data-relphi-canonical-toolbar-ready="true"]){
+    visibility:hidden!important;
+    opacity:0!important;
+    pointer-events:none!important;
+    transition:none!important;
+  }
+  html body #shortListPanel .card-row-workspace>.card-row-workspace-toolbar[data-relphi-canonical-toolbar-ready="true"]{
+    visibility:visible!important;
+    opacity:.98!important;
+    pointer-events:auto!important;
+    position:absolute!important;
+    top:auto!important;
+    left:auto!important;
+    right:.65rem!important;
+    bottom:.65rem!important;
+    z-index:1500!important;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:.38rem!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:none!important;
+    height:auto!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:.38rem .45rem!important;
+    border:1px solid rgba(23,20,18,.24)!important;
+    border-radius:10px!important;
+    background:rgba(255,250,244,.95)!important;
+    box-shadow:0 4px 12px rgba(30,20,15,.12)!important;
+    transition:none!important;
+  }
+  html body #shortListPanel .card-row-workspace>.card-row-workspace-toolbar[data-relphi-canonical-toolbar-ready="true"] .relphi-zoom-row{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    gap:.38rem!important;
+    width:auto!important;
+    margin:0!important;
+  }
+  html body #shortListPanel .card-row-workspace>.card-row-workspace-toolbar[data-relphi-canonical-toolbar-ready="true"] .card-row-zoom-label{
+    position:static!important;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    gap:.35rem!important;
+    width:auto!important;
+    min-width:0!important;
+    height:auto!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  html body #shortListPanel .card-row-workspace>.card-row-workspace-toolbar[data-relphi-canonical-toolbar-ready="true"] .card-row-zoom-label>span{
+    position:static!important;
+    display:inline!important;
+    width:auto!important;
+    height:auto!important;
+    overflow:visible!important;
+    clip:auto!important;
+    white-space:nowrap!important;
+    color:#171412!important;
+    font-size:.68rem!important;
+    font-weight:850!important;
+  }
+  html body #shortListPanel .card-row-workspace>.card-row-workspace-toolbar[data-relphi-canonical-toolbar-ready="true"] #rowZoom{
+    writing-mode:horizontal-tb!important;
+    direction:ltr!important;
+    appearance:auto!important;
+    width:7.25rem!important;
+    min-width:7.25rem!important;
+    max-width:7.25rem!important;
+    height:1rem!important;
+    min-height:1rem!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  html body #shortListPanel .card-row-workspace>.card-row-workspace-toolbar[data-relphi-canonical-toolbar-ready="true"] #resetCardRowPan,
+  html body #shortListPanel .card-row-workspace>.card-row-workspace-toolbar[data-relphi-canonical-toolbar-ready="true"] #zoomCardRowExtents{
+    position:static!important;
+    display:grid!important;
+    place-items:center!important;
+    width:auto!important;
+    min-width:2.25rem!important;
+    height:2rem!important;
+    min-height:2rem!important;
+    margin:0!important;
+    padding:.35rem .55rem!important;
+    border:1px solid #aaa098!important;
+    border-radius:7px!important;
+    background:#fff!important;
+    color:#171412!important;
+    box-shadow:none!important;
+    font:800 .72rem/1 Montserrat,"Segoe UI",Arial,sans-serif!important;
+  }
+  html body #shortListPanel .card-row-workspace>.card-row-workspace-toolbar[data-relphi-canonical-toolbar-ready="true"] .card-row-pan-note{
+    display:none!important;
+  }
+
+  /* Labels are part of the spread footprint and remain visible above/alongside the traditional cross. */
+  html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="0"]>.card-row-position-panel,
+  html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="1"]>.card-row-position-panel,
+  html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="2"]>.card-row-position-panel,
+  html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="3"]>.card-row-position-panel,
+  html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="4"]>.card-row-position-panel,
+  html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="5"]>.card-row-position-panel{
+    left:.55rem!important;
+    right:.55rem!important;
+    top:auto!important;
+    bottom:calc(100% + 2px)!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:none!important;
+    margin:0!important;
+    transform:none!important;
+    text-align:center!important;
+  }
+  html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="6"]>.card-row-position-panel,
+  html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="7"]>.card-row-position-panel,
+  html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="8"]>.card-row-position-panel,
+  html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="9"]>.card-row-position-panel{
+    left:calc(100% + .6rem)!important;
+    right:auto!important;
+    top:50%!important;
+    bottom:auto!important;
+    width:9rem!important;
+    min-width:9rem!important;
+    max-width:9rem!important;
+    margin:0!important;
+    transform:translateY(-50%)!important;
+    text-align:left!important;
+    z-index:170!important;
+  }
+
+  /* Position 2 is merely staged beside position 1 while empty. Once drawn, the prefab's
+     own traditional x/y/90° transform is left completely untouched. */
+  html body #shortListPanel.relphi-celtic-readable.relphi-celtic-cross-unrevealed .card-row-board>.card-row-item[data-row-index="1"]{
+    left:320px!important;
+    --row-card-rotation:0deg!important;
+    transform:scale(var(--row-card-scale,1))!important;
+    transform-origin:0 0!important;
+  }
+  html body #shortListPanel.relphi-celtic-readable.relphi-celtic-cross-unrevealed .relphi-center-helper{
+    display:none!important;
+  }
+}
