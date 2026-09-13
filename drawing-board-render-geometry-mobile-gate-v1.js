@@ -1,1 +1,0 @@
-// Mobile gate helper placeholder.
