@@ -20,33 +20,10 @@ jobs:
           from pathlib import Path
           p=Path('planetaryhours.html')
           s=p.read_text()
-          old="""  /* Sky Chart jump action must fit the narrow Day column without clipping. */
-  .planetary-page .ph-datefield-link {
-    display: flex !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    white-space: normal !important;
-    text-align: center !important;
-    font-size: .86rem !important;
-    line-height: 1.15 !important;
-    padding: .68em .75em !important;
-"""
-          new="""  /* Sky Chart jump action: static label stays on one line inside the Day column. */
-  .planetary-page .ph-datefield-link {
-    display: inline-flex !important;
-    width: auto !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    white-space: nowrap !important;
-    text-align: center !important;
-    font-size: .78rem !important;
-    line-height: 1.1 !important;
-    padding: .66em .72em !important;
-"""
+          old="  /* Sky Chart jump action must fit the narrow Day column without clipping. */\n  .planetary-page .ph-datefield-link {\n    display: flex !important;\n    width: 100% !important;\n    max-width: 100% !important;\n    box-sizing: border-box !important;\n    white-space: normal !important;\n    text-align: center !important;\n    font-size: .86rem !important;\n    line-height: 1.15 !important;\n    padding: .68em .75em !important;\n"
+          new="  /* Sky Chart jump action: static label stays on one line inside the Day column. */\n  .planetary-page .ph-datefield-link {\n    display: inline-flex !important;\n    width: auto !important;\n    max-width: 100% !important;\n    box-sizing: border-box !important;\n    white-space: nowrap !important;\n    text-align: center !important;\n    font-size: .78rem !important;\n    line-height: 1.1 !important;\n    padding: .66em .72em !important;\n"
           if old not in s: raise SystemExit('jump CSS marker not found')
           p.write_text(s.replace(old,new,1))
-
           t=Path('tests/planetary-hours-sky-chart-visual-parity.mjs')
           x=t.read_text()
           oldtest="assert.match(page,/\\.planetary-page \\.ph-datefield-link \\{[\\s\\S]*width: 100% !important;[\\s\\S]*box-sizing: border-box !important;[\\s\\S]*white-space: normal !important;/);"
