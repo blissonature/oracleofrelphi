@@ -127,8 +127,11 @@
       #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{transform:none!important;translate:none!important}
       html.relphi-drawing-board-ui-stable #shortListPanel .card-row-more-options:not(.relphi-reading-options-drawer){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
       html.relphi-drawing-board-ui-stable #shortListPanel .relphi-reading-options-drawer .card-row-position-label{display:none!important}
-      html.relphi-drawing-board-ui-stable #shortListPanel .card-row-workspace-toolbar:not(:has(.relphi-zoom-row)){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
-      html.relphi-drawing-board-ui-stable #shortListPanel .card-row-workspace-toolbar:has(.relphi-zoom-row){visibility:visible!important;opacity:1!important}
+
+      /* A toolbar without the canonical zoom row is construction-state markup,
+         never a user-visible UI. Keep that state unpaintable from first frame onward. */
+      #shortListPanel .card-row-workspace-toolbar:not(:has(.relphi-zoom-row)){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+      html.relphi-drawing-board-ui-stable #shortListPanel .card-row-workspace-toolbar:has(.relphi-zoom-row){visibility:visible!important;opacity:1!important;pointer-events:auto!important}
     `;
     document.head.appendChild(style);
   }
