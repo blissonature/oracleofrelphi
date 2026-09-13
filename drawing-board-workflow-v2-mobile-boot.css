@@ -1,0 +1,6 @@
+@media (max-width:700px){
+  #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-workspace{
+    visibility:hidden!important;
+    opacity:0!important;
+  }
+}
