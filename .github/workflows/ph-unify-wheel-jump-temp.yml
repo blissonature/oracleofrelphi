@@ -1,0 +1,72 @@
+name: Planetary Hours unified mini wheel jump temp
+on:
+  push:
+    branches:
+      - fix/planetary-hours-visual-parity
+permissions:
+  contents: write
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+          fetch-depth: 0
+      - name: Make mini zodiac and Sky Chart jump one link
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('planetaryhours.html')
+          s=p.read_text()
+
+          # Remove the detached jump-pill styling; the mini-wheel card itself owns the action.
+          s,n=re.subn(r"\n  \.ph-datefield-jump \{[^}]*\}\n  \.ph-datefield-link \{[^}]*\}\n", "\n", s, count=1, flags=re.S)
+          if n != 1: raise SystemExit('base datefield CSS block not found')
+          s,n=re.subn(r"\n\n  /\* Sky Chart jump action:[^*]*\*/\n  \.planetary-page \.ph-datefield-link \{[^}]*\}\n", "\n", s, count=1, flags=re.S)
+          if n != 1: raise SystemExit('override datefield CSS block not found')
+
+          old_markup='''        <p class="ph-datefield-jump"><a class="ph-btn ph-datefield-link" id="dateFieldLink" href="sky-chart.html#sky-calc">Jump to this moment in Sky Chart</a></p>\n        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div></a>'''
+          new_markup='''        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div><span class="ph-current-wheel-jump">Jump to this moment in Sky Chart</span></a>'''
+          if old_markup not in s: raise SystemExit('mini wheel markup not found')
+          s=s.replace(old_markup,new_markup,1)
+
+          css_marker="  .ph-current-wheel-card h3 { margin:.05rem 0 .25rem; font-size:.95rem; }\n"
+          css_add="""  .ph-current-wheel-card h3 { margin:.05rem 0 .25rem; font-size:.95rem; }\n  .ph-current-wheel-jump {\n    display:block;\n    margin:.35rem auto .05rem;\n    color:var(--relphi-red);\n    font-size:.78rem;\n    font-weight:850;\n    line-height:1.1;\n    white-space:nowrap;\n    text-align:center;\n  }\n"""
+          if css_marker not in s: raise SystemExit('mini wheel CSS marker not found')
+          s=s.replace(css_marker,css_add,1)
+
+          el_line="    dateFieldLink: document.getElementById('dateFieldLink'),\n"
+          if el_line not in s: raise SystemExit('dateFieldLink element map line not found')
+          s=s.replace(el_line,'',1)
+
+          if "    if (el.dateFieldLink) {\n" not in s: raise SystemExit('dateFieldLink href guard not found')
+          s=s.replace("    if (el.dateFieldLink) {\n","    if (el.phCurrentWheelCard) {\n",1)
+          old_href="""      el.dateFieldLink.href = skyChartHref;\n      if (el.phCurrentWheelCard) el.phCurrentWheelCard.href = skyChartHref;"""
+          if old_href not in s: raise SystemExit('dual href assignment not found')
+          s=s.replace(old_href,"      el.phCurrentWheelCard.href = skyChartHref;",1)
+          p.write_text(s)
+
+          t=Path('tests/planetary-hours-sky-chart-visual-parity.mjs')
+          x=t.read_text()
+          old_test="assert.match(page,/\\.planetary-page \\.ph-datefield-link \\{[\\s\\S]*max-width: 100% !important;[\\s\\S]*white-space: nowrap !important;[\\s\\S]*font-size: \\.78rem !important;/);\n"
+          new_tests="""assert.doesNotMatch(page,/id=\\\"dateFieldLink\\\"|ph-datefield-link|ph-datefield-jump/);\nassert.match(page,/<a class=\\\"ph-current-wheel-card\\\" id=\\\"phCurrentWheelCard\\\"[\\s\\S]*<div id=\\\"phCurrentWheel\\\"><\\/div><span class=\\\"ph-current-wheel-jump\\\">Jump to this moment in Sky Chart<\\/span><\\/a>/);\nassert.match(page,/\\.ph-current-wheel-jump \\{[\\s\\S]*white-space:nowrap;[\\s\\S]*text-align:center;/);\nassert.doesNotMatch(page,/dateFieldLink: document\\.getElementById/);\nassert.match(page,/if \\(el\\.phCurrentWheelCard\\) \\{[\\s\\S]*el\\.phCurrentWheelCard\\.href = skyChartHref;/);\n"""
+          if old_test not in x: raise SystemExit('old datefield regression assertion not found')
+          x=x.replace(old_test,new_tests,1)
+          t.write_text(x)
+          PY
+      - name: Verify
+        shell: bash
+        run: node tests/planetary-hours-sky-chart-visual-parity.mjs
+      - name: Commit product change
+        shell: bash
+        run: |
+          rm .github/workflows/ph-unify-wheel-jump-temp.yml
+          git config user.name blissonature
+          git config user.email blissonature@gmail.com
+          git add planetaryhours.html tests/planetary-hours-sky-chart-visual-parity.mjs .github/workflows/ph-unify-wheel-jump-temp.yml
+          git commit -m 'Unify mini zodiac with Sky Chart jump'
+          git push origin HEAD:fix/planetary-hours-visual-parity
