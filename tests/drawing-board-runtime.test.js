@@ -158,20 +158,41 @@ async function assertResetStable(page) {
 async function testViewport(browser,viewport,name) {
   const page = await browser.newPage({ viewport });
   await page.addInitScript(() => {
-    window.__relphiFouc = { rawToolbarVisible:false, rawOptionsVisible:false, workspaceSeen:false };
+    window.__relphiFouc = { rawToolbarVisible:false, rawOptionsVisible:false, workspaceSeen:false, rawToolbarSample:null, rawOptionsSample:null };
     function visible(node) {
       if (!node) return false;
       const s = getComputedStyle(node), r = node.getBoundingClientRect();
       return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.opacity !== '0' && s.display !== 'none';
+    }
+    function describe(node) {
+      if (!node) return null;
+      const s = getComputedStyle(node), r = node.getBoundingClientRect();
+      const root = document.querySelector('#shortListPanel');
+      return {
+        html:node.outerHTML.slice(0,1200),
+        styleAttr:node.getAttribute('style') || '',
+        computed:{ display:s.display,visibility:s.visibility,opacity:s.opacity,position:s.position,zIndex:s.zIndex },
+        rect:{ width:r.width,height:r.height,left:r.left,top:r.top },
+        panelClass:root?.className || '',
+        documentClass:document.documentElement.className || '',
+        bootStylePresent:!!document.getElementById('relphi-drawing-board-boot-style'),
+        chromeStylePresent:!!document.getElementById('relphi-drawing-board-chrome-v2-style')
+      };
     }
     function sample() {
       const root = document.querySelector('#shortListPanel');
       const workspace = root?.querySelector('.card-row-workspace');
       if (visible(workspace)) window.__relphiFouc.workspaceSeen = true;
       const toolbar = root?.querySelector('.card-row-workspace-toolbar');
-      if (visible(toolbar) && !toolbar.querySelector('.relphi-zoom-row')) window.__relphiFouc.rawToolbarVisible = true;
+      if (visible(toolbar) && !toolbar.querySelector('.relphi-zoom-row')) {
+        window.__relphiFouc.rawToolbarVisible = true;
+        if (!window.__relphiFouc.rawToolbarSample) window.__relphiFouc.rawToolbarSample = describe(toolbar);
+      }
       const rawOptions = root?.querySelector('.card-row-more-options:not(.relphi-reading-options-drawer)');
-      if (visible(rawOptions)) window.__relphiFouc.rawOptionsVisible = true;
+      if (visible(rawOptions)) {
+        window.__relphiFouc.rawOptionsVisible = true;
+        if (!window.__relphiFouc.rawOptionsSample) window.__relphiFouc.rawOptionsSample = describe(rawOptions);
+      }
       requestAnimationFrame(sample);
     }
     addEventListener('DOMContentLoaded',() => requestAnimationFrame(sample),{once:true});
@@ -181,6 +202,7 @@ async function testViewport(browser,viewport,name) {
   await ensureBoard(page);
   await waitStable(page);
   const fouc = await page.evaluate(() => window.__relphiFouc);
+  if (fouc.rawToolbarVisible || fouc.rawOptionsVisible) console.log(`${name} FOUC snapshot: ${JSON.stringify(fouc)}`);
   assert.equal(fouc.workspaceSeen,true,`${name}: dark board workspace never appeared`);
   assert.equal(fouc.rawToolbarVisible,false,`${name}: obsolete zoom toolbar painted`);
   assert.equal(fouc.rawOptionsVisible,false,`${name}: raw Options UI painted`);
