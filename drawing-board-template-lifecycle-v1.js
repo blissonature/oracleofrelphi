@@ -363,16 +363,21 @@
       #shortListPanel.relphi-layout-settling .card-row-board>.card-row-item{visibility:hidden!important}
       #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item{position:absolute!important}
       #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item>.card-row-position-panel{overflow:visible!important;height:auto!important;max-height:none!important;white-space:normal!important;z-index:180!important}
-      #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="0"]>.card-row-position-panel,
-      #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="1"]>.card-row-position-panel,
-      #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="2"]>.card-row-position-panel,
-      #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="3"]>.card-row-position-panel,
-      #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="4"]>.card-row-position-panel,
-      #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="5"]>.card-row-position-panel{left:0!important;right:auto!important;top:auto!important;bottom:calc(100% + 4px)!important;width:100%!important;max-width:100%!important;margin:0!important;transform:none!important;text-align:center!important}
-      #shortListPanel.relphi-celtic-readable .card-row-board>.relphi-role-self>.card-row-position-panel,
-      #shortListPanel.relphi-celtic-readable .card-row-board>.relphi-role-house>.card-row-position-panel,
-      #shortListPanel.relphi-celtic-readable .card-row-board>.relphi-role-hopes-fears>.card-row-position-panel,
-      #shortListPanel.relphi-celtic-readable .card-row-board>.relphi-role-outcome>.card-row-position-panel{left:calc(100% + 10px)!important;right:auto!important;top:50%!important;bottom:auto!important;width:160px!important;max-width:160px!important;min-width:160px!important;margin:0!important;transform:translateY(-50%)!important;text-align:left!important}
+
+      /* Celtic label placement belongs here, alongside Celtic position geometry.
+         Match the generic renderer's structural selector and add the semantic state,
+         so the generic !important defaults cannot partially win the cascade. */
+      html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item[data-row-index="0"]>.card-row-position-panel,
+      html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item[data-row-index="1"]>.card-row-position-panel,
+      html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item[data-row-index="2"]>.card-row-position-panel,
+      html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item[data-row-index="3"]>.card-row-position-panel,
+      html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item[data-row-index="4"]>.card-row-position-panel,
+      html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item[data-row-index="5"]>.card-row-position-panel{left:0!important;right:auto!important;top:auto!important;bottom:calc(100% + 4px)!important;width:100%!important;max-width:100%!important;margin:0!important;transform:none!important;text-align:center!important}
+
+      html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-self>.card-row-position-panel,
+      html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-house>.card-row-position-panel,
+      html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-hopes-fears>.card-row-position-panel,
+      html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-outcome>.card-row-position-panel{left:calc(100% + 10px)!important;right:auto!important;top:50%!important;bottom:auto!important;width:160px!important;max-width:160px!important;min-width:160px!important;margin:0!important;transform:translateY(-50%)!important;text-align:left!important}
       #shortListPanel.relphi-celtic-readable.relphi-celtic-cross-unrevealed .relphi-center-helper{display:none!important}
     `;
     document.head.appendChild(style);
