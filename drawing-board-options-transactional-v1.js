@@ -166,7 +166,9 @@
     if (!root || root.hidden) return;
     installBar(root);
     normalizePrompt(root);
-    if (root.dataset.relphiReadingOptionsOpen === 'true' && !session) begin(root);
+    const open = root.dataset.relphiReadingOptionsOpen === 'true';
+    if (open && !session) begin(root);
+    else setOpen(root,open);
   }
   function schedule() {
     if (scheduled) return;
