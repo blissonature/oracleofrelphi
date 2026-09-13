@@ -1,0 +1,86 @@
+name: Planetary Hours mini wheel caption fit temp
+on:
+  push:
+    branches:
+      - fix/planetary-hours-visual-parity
+permissions:
+  contents: write
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/planetary-hours-visual-parity
+          fetch-depth: 0
+      - name: Remove redundant mini wheel caption and fit link label
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('planetaryhours.html')
+          s = p.read_text()
+
+          old_caption = """      const caption = document.createElement('p');
+      caption.className = 'ph-tiny';
+      caption.textContent = 'Preview only. Use Sky Chart for the full reading.';
+      el.phCurrentWheel.replaceChildren(root, caption);
+"""
+          new_caption = """      el.phCurrentWheel.replaceChildren(root);
+"""
+          if old_caption not in s:
+              raise SystemExit('mini wheel caption block not found')
+          s = s.replace(old_caption, new_caption, 1)
+
+          old_jump = """  .ph-current-wheel-jump {
+    display:block;
+    margin:.35rem auto .05rem;
+    color:var(--relphi-red);
+    font-size:.78rem;
+    font-weight:850;
+    line-height:1.1;
+    white-space:nowrap;
+    text-align:center;
+  }
+"""
+          new_jump = """  .ph-current-wheel-jump {
+    display:block;
+    margin:.35rem auto .05rem;
+    max-width:100%;
+    box-sizing:border-box;
+    padding:0 .2rem;
+    color:var(--relphi-red);
+    font-size:.64rem;
+    font-weight:850;
+    line-height:1.1;
+    white-space:nowrap;
+    text-align:center;
+  }
+"""
+          if old_jump not in s:
+              raise SystemExit('mini wheel jump CSS block not found')
+          s = s.replace(old_jump, new_jump, 1)
+          p.write_text(s)
+
+          t = Path('tests/planetary-hours-sky-chart-visual-parity.mjs')
+          x = t.read_text()
+          old_test = "assert.match(page,/\\.ph-current-wheel-jump \\{[\\s\\S]*white-space:nowrap;[\\s\\S]*text-align:center;/);"
+          new_test = "assert.match(page,/\\.ph-current-wheel-jump \\{[\\s\\S]*max-width:100%;[\\s\\S]*font-size:\\.64rem;[\\s\\S]*white-space:nowrap;[\\s\\S]*text-align:center;/);\nassert.doesNotMatch(page,/Preview only\\. Use Sky Chart for the full reading\\./);\nassert.match(page,/el\\.phCurrentWheel\\.replaceChildren\\(root\\);/);"
+          if old_test not in x:
+              raise SystemExit('mini wheel jump test marker not found')
+          x = x.replace(old_test, new_test, 1)
+          t.write_text(x)
+          PY
+      - name: Verify
+        shell: bash
+        run: node tests/planetary-hours-sky-chart-visual-parity.mjs
+      - name: Commit product change
+        shell: bash
+        run: |
+          rm .github/workflows/ph-mini-wheel-caption-fit-temp.yml
+          git config user.name blissonature
+          git config user.email blissonature@gmail.com
+          git add planetaryhours.html tests/planetary-hours-sky-chart-visual-parity.mjs .github/workflows/ph-mini-wheel-caption-fit-temp.yml
+          git commit -m 'Tighten mini Sky Chart card'
+          git push origin HEAD:fix/planetary-hours-visual-parity
