@@ -105,44 +105,6 @@
     window.RelphiDrawingBoardEnsureTopActions?.(root);
   }
 
-  function fitMobileBoardToViewport(root) {
-    if (!root) return;
-    const mobile = !!window.matchMedia?.('(max-width:700px)')?.matches;
-    if (!mobile) {
-      delete root.dataset.relphiMobileViewportFit;
-      return;
-    }
-
-    const workspace = root.querySelector('.card-row-workspace');
-    const items = Array.from(workspace?.querySelectorAll('.card-row-board>.card-row-item') || []);
-    let layoutId = '';
-    try { layoutId = window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id || ''; } catch (_) {}
-    if (!workspace || !items.length || !layoutId) return;
-
-    const zoomToFit = root.querySelector('#zoomCardRowExtents');
-    if (!zoomToFit) return;
-
-    const viewportWidth = Math.max(240, Math.floor(
-      window.visualViewport?.width ||
-      document.documentElement.clientWidth ||
-      window.innerWidth ||
-      0
-    ));
-    const signature = layoutId + ':' + items.length + ':' + viewportWidth;
-    if (root.dataset.relphiMobileViewportFit === signature) return;
-    root.dataset.relphiMobileViewportFit = signature;
-
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const liveRoot = panel();
-      const button = liveRoot?.querySelector('#zoomCardRowExtents');
-      if (!button) {
-        if (liveRoot) delete liveRoot.dataset.relphiMobileViewportFit;
-        return;
-      }
-      button.click();
-    }));
-  }
-
   function repair() {
     queued = false;
     if (repairing) return;
@@ -153,7 +115,6 @@
       ensureAfterCanvas(root);
       ensureWorkspaceTools(root);
       ensureOptions(root);
-      fitMobileBoardToViewport(root);
       root.classList.add('relphi-drawing-board-ui-ready');
     } finally {
       repairing = false;
@@ -213,16 +174,20 @@
           overflow-x:hidden!important;
           box-sizing:border-box!important;
         }
-        html body #shortListPanel .card-row-drawing-board,
-        html body #shortListPanel .card-row-workspace{
+        html body #shortListPanel .card-row-drawing-board{
           width:100%!important;
           max-width:100%!important;
           min-width:0!important;
           box-sizing:border-box!important;
-          overflow-x:hidden!important;
         }
-        html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item{
-          position:absolute!important;
+        html body #shortListPanel .card-row-workspace{
+          width:calc(100% - 24px)!important;
+          max-width:calc(100% - 24px)!important;
+          min-width:0!important;
+          margin-left:12px!important;
+          margin-right:12px!important;
+          box-sizing:border-box!important;
+          overflow-x:hidden!important;
         }
       }
       #shortListPanel #drawing-board-post-export #snapshotCardRowArrangement,
