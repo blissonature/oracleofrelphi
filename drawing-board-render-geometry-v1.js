@@ -4,6 +4,6 @@
   if(!/(^|\/)tarot\.html$/.test(location.pathname))return;
   if(window.matchMedia&&window.matchMedia('(max-width:700px)').matches)return;
   var script=document.createElement('script');
-  script.src='drawing-board-render-geometry-desktop-core-v1.js?v=1';
+  script.src='drawing-board-render-geometry-desktop-v2.js?v=1';
   document.head.appendChild(script);
 })();
