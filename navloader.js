@@ -230,7 +230,7 @@
     }
     if (isSkyChartContext() && !document.getElementById('skyFoundationRoot')) {
       const preview = new URLSearchParams(location.search).get('preview');
-      ['sky-chart-stability-hotfix.js?v=1','sky-chart-static-dynamic.js?v=2','sky-chart-aspect-duration-fix.js?v=2','sky-chart-relationship-language.js?v=5','sky-chart-related-relationships-v2.js?v=2','sky-chart-sign-cusps-v1.js?v=1','sky-chart-provenance-fix-v1.js?v=1','sky-chart-calculated-points-v1.js?v=4'].forEach(function (src) { appendScript(src); });
+      ['sky-chart-stability-hotfix.js?v=1','sky-chart-static-dynamic.js?v=2','sky-chart-aspect-duration-fix.js?v=2','sky-chart-relationship-language.js?v=5','sky-chart-related-relationships-v2.js?v=2','sky-chart-sign-cusps-v1.js?v=1','sky-chart-provenance-fix.js?v=1','sky-chart-calculated-points-v1.js?v=4'].forEach(function (src) { appendScript(src); });
       loadCanonicalGlyphRuntime();
       appendScript('sky-chart-builder-v4-unlock.js?v=1');
       loadSkyBuilder(0);
