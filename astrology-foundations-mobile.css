@@ -1,123 +1,62 @@
-/* Narrow-screen layout for Astrology Foundations. Loaded through nav.html so it is not dependent on cached JavaScript. */
-@media (max-width: 600px) {
-  body .foundation-page {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 1rem auto .75rem !important;
-    padding: 0 .45rem !important;
-    box-sizing: border-box !important;
-    overflow-x: hidden !important;
+/* Mobile layout contract for Astrology Foundations.
+   Preserve the four-column zodiac matrix and fit it within the viewport. */
+@media (max-width:560px){
+  body .foundation-page{padding-left:.45rem !important;padding-right:.45rem !important}
+  body .foundation-panel{padding:.55rem !important}
+  body .matrix-scroll{overflow-x:hidden !important;overflow-y:hidden !important;padding-bottom:0 !important}
+  body .foundation-matrix:not(.house-matrix){
+    min-width:0 !important;
+    width:100% !important;
+    max-width:100% !important;
+    grid-template-columns:minmax(3.2rem,3.65rem) repeat(3,minmax(0,1fr)) !important;
+    gap:.28rem !important;
   }
-
-  body .foundation-panel {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: .6rem !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
+  body .foundation-matrix:not(.house-matrix) .matrix-corner{
+    display:grid !important;
+    grid-column:auto !important;
+    min-width:0 !important;
   }
-
-  body .matrix-scroll {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow: visible !important;
-    padding: 0 !important;
+  body .foundation-matrix:not(.house-matrix) .matrix-row-label{
+    display:grid !important;
+    grid-column:auto !important;
+    min-width:0 !important;
+    margin:0 !important;
+    padding:.24rem .12rem !important;
+    border:1.25px solid #111 !important;
+    border-radius:.68rem !important;
+    box-shadow:none !important;
+    background:#fff !important;
+    font-size:.66rem !important;
+    line-height:1.02 !important;
+    letter-spacing:0 !important;
+    text-align:center !important;
+    overflow-wrap:anywhere !important;
   }
-
-  /* Houses: two cards per row on an iPhone Mini. */
-  body .foundation-matrix.house-matrix {
-    min-width: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: .42rem !important;
+  body .foundation-matrix:not(.house-matrix) .matrix-head{
+    min-width:0 !important;
+    padding:.3rem .08rem !important;
+    border-radius:.62rem !important;
+    font-size:.61rem !important;
+    line-height:1.02 !important;
   }
-
-  body .house-matrix .flip-front .label {
-    color: #111 !important;
-    -webkit-text-fill-color: #111 !important;
+  body .foundation-matrix:not(.house-matrix) .flip-tile{
+    min-width:0 !important;
+    width:100% !important;
+    height:4.05rem !important;
   }
-
-  /* Signs: preserve Cardinal / Fixed / Mutable without horizontal scrolling. */
-  body .foundation-matrix:not(.house-matrix) {
-    min-width: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: .34rem !important;
-  }
-
-  body .foundation-matrix:not(.house-matrix) .matrix-corner {
-    display: none !important;
-  }
-
-  body .foundation-matrix:not(.house-matrix) .matrix-head {
-    min-width: 0 !important;
-    padding: .36rem .1rem !important;
-    border-radius: .7rem !important;
-    font-size: .69rem !important;
-    line-height: 1.05 !important;
-    overflow-wrap: anywhere !important;
-  }
-
-  body .foundation-matrix:not(.house-matrix) .matrix-row-label {
-    grid-column: 1 / -1 !important;
-    min-width: 0 !important;
-    margin: .05rem 0 0 !important;
-    padding: .3rem .45rem !important;
-    border: 0 !important;
-    border-radius: .65rem !important;
-    box-shadow: none !important;
-    background: rgba(17,17,17,.055) !important;
-    font-size: .75rem !important;
-    line-height: 1 !important;
-  }
-
-  body .foundation-matrix:not(.house-matrix) .flip-tile {
-    min-width: 0 !important;
-    width: 100% !important;
-    height: 4.2rem !important;
-  }
-
-  body .foundation-matrix:not(.house-matrix) .flip-face {
-    min-width: 0 !important;
-    padding: .25rem !important;
-    border-radius: .7rem !important;
-  }
-
-  body .foundation-matrix:not(.house-matrix) .front-glyph {
-    font-size: clamp(1.8rem, 10vw, 2.25rem) !important;
-    line-height: 1 !important;
-  }
-
-  body .foundation-matrix:not(.house-matrix) .flip-back {
-    padding: .28rem !important;
-    font-size: .64rem !important;
-    line-height: 1.1 !important;
-    overflow-wrap: anywhere !important;
-  }
-
-  body .element-filters {
-    gap: .32rem !important;
-    margin-bottom: .58rem !important;
-  }
-
-  body .element-filters button {
-    padding: .4rem .58rem !important;
-    font-size: .79rem !important;
+  body .foundation-matrix:not(.house-matrix) .flip-face{padding:.18rem !important;border-radius:.68rem !important}
+  body .foundation-matrix:not(.house-matrix) svg.front-glyph{
+    width:72px !important;
+    height:72px !important;
+    max-width:94% !important;
+    max-height:94% !important;
+    transform:none !important;
   }
 }
 
-@media (max-width: 350px) {
-  body .foundation-matrix.house-matrix {
-    grid-template-columns: 1fr !important;
-  }
-
-  body .foundation-matrix:not(.house-matrix) {
-    gap: .26rem !important;
-  }
-
-  body .foundation-matrix:not(.house-matrix) .matrix-head {
-    font-size: .62rem !important;
+@media (max-width:350px){
+  body .foundation-matrix:not(.house-matrix) svg.front-glyph{
+    width:64px !important;
+    height:64px !important;
   }
 }
