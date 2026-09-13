@@ -7,13 +7,28 @@
 
   const PANEL = '#shortListPanel';
   const RADIUS = '.72rem';
-  const MIDDLE_GAP = 16;
+  const CELTIC_LAYOUT_ID = 'celtic-cross-10';
+  const MIDDLE_GAP_RATIO = .14;
+  const MIDDLE_GAP_MIN = 14;
+  const MIDDLE_GAP_MAX = 26;
   let queued = false;
   let applying = false;
 
   function root() { return document.querySelector(PANEL); }
   function board(rootNode = root()) { return rootNode?.querySelector('.card-row-board') || null; }
   function face(item) { return item?.querySelector('.card-row-card-wrap,.card-row-drop-card') || null; }
+
+  function syncCelticReadable(rootNode) {
+    let activeId = '';
+    try { activeId = window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id || ''; } catch (_) {}
+    const isCeltic = activeId === CELTIC_LAYOUT_ID;
+    rootNode?.classList.toggle('relphi-celtic-readable', isCeltic);
+    return isCeltic;
+  }
+
+  function middleGapFor(cardWidth) {
+    return Math.max(MIDDLE_GAP_MIN, Math.min(MIDDLE_GAP_MAX, cardWidth * MIDDLE_GAP_RATIO));
+  }
 
   function setImportant(node, property, value) {
     if (!node) return;
@@ -128,23 +143,24 @@
     const axis = centerOpen ? (coverCenter + crossCenter) / 2 : coverCenter;
     const cardWidth = coverRect.width;
     if (!cardWidth) return;
+    const middleGap = middleGapFor(cardWidth);
 
     if (centerOpen) {
-      const targetCoverRight = axis - MIDDLE_GAP / 2;
-      const targetCrossLeft = axis + MIDDLE_GAP / 2;
+      const targetCoverRight = axis - middleGap / 2;
+      const targetCrossLeft = axis + middleGap / 2;
       adjustTranslateX(covers, 'relphiMiddleTranslateX', targetCoverRight - coverRect.right, scaleX);
       adjustTranslateX(crosses, 'relphiMiddleTranslateX', targetCrossLeft - crossRect.left, scaleX);
       coverRect = coverFace.getBoundingClientRect();
       crossRect = crossFace.getBoundingClientRect();
     }
 
-    const fixedCentralLeft = axis - cardWidth - MIDDLE_GAP / 2;
-    const fixedCentralRight = axis + cardWidth + MIDDLE_GAP / 2;
+    const fixedCentralLeft = axis - cardWidth - middleGap / 2;
+    const fixedCentralRight = axis + cardWidth + middleGap / 2;
     const behindRect = behindFace.getBoundingClientRect();
     const beforeRect = beforeFace.getBoundingClientRect();
 
-    adjustTranslateX(behind, 'relphiMiddleTranslateX', (fixedCentralLeft - MIDDLE_GAP) - behindRect.right, scaleX);
-    adjustTranslateX(before, 'relphiMiddleTranslateX', (fixedCentralRight + MIDDLE_GAP) - beforeRect.left, scaleX);
+    adjustTranslateX(behind, 'relphiMiddleTranslateX', (fixedCentralLeft - middleGap) - behindRect.right, scaleX);
+    adjustTranslateX(before, 'relphiMiddleTranslateX', (fixedCentralRight + middleGap) - beforeRect.left, scaleX);
   }
 
   function clearStaffTranslation(liveBoard) {
@@ -210,6 +226,7 @@
     if (!rootNode || rootNode.hidden) return;
     applying = true;
     try {
+      syncCelticReadable(rootNode);
       installStyle();
       ownCardSurfaces(rootNode);
       enforceFlushLabels(rootNode);
