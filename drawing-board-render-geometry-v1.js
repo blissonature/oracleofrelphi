@@ -1,6 +1,7 @@
 // Drawing Board rendered-surface ownership and Celtic visual geometry.
-// The shipped Celtic Cross owns its own ten canonical positions. Persisted board
-// coordinates must never be allowed to turn that spread back into a slot list.
+// The shipped Celtic Cross owns its canonical positions. This owner fits the
+// complete rendered footprint (cards + position stickers), anchors that footprint
+// inside the visible workspace, and never lets persisted slot coordinates win.
 (function () {
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
@@ -162,8 +163,46 @@
     return true;
   }
 
+  function clearBoardAnchor(liveBoard) {
+    if (!liveBoard) return;
+    if (liveBoard.dataset.relphiCelticAnchorLeft !== undefined) {
+      liveBoard.style.removeProperty('left');
+      delete liveBoard.dataset.relphiCelticAnchorLeft;
+    }
+    if (liveBoard.dataset.relphiCelticAnchorTop !== undefined) {
+      liveBoard.style.removeProperty('top');
+      delete liveBoard.dataset.relphiCelticAnchorTop;
+    }
+  }
+
+  function anchorBottomLeft(rootNode) {
+    const workspace = rootNode.querySelector('.card-row-workspace');
+    const liveBoard = board(rootNode);
+    if (!workspace || !liveBoard) return false;
+
+    const frame = workspace.getBoundingClientRect();
+    const content = visualBounds(liveBoard);
+    if (!content || !frame.width || !frame.height) return false;
+
+    const targetLeft = frame.left + GUTTER;
+    const targetBottom = frame.bottom - GUTTER;
+    const dx = targetLeft - content.left;
+    const dy = targetBottom - content.bottom;
+    const computed = getComputedStyle(liveBoard);
+    const currentLeft = Number.parseFloat(computed.left) || 0;
+    const currentTop = Number.parseFloat(computed.top) || 0;
+
+    setImportant(liveBoard, 'left', (currentLeft + dx).toFixed(2) + 'px');
+    setImportant(liveBoard, 'top', (currentTop + dy).toFixed(2) + 'px');
+    liveBoard.dataset.relphiCelticAnchorLeft = 'true';
+    liveBoard.dataset.relphiCelticAnchorTop = 'true';
+    return true;
+  }
+
   function releaseWorkspace(rootNode) {
     const workspace = rootNode?.querySelector('.card-row-workspace');
+    const liveBoard = board(rootNode);
+    clearBoardAnchor(liveBoard);
     if (workspace?.dataset.relphiFoldPrevious !== undefined) {
       let old = {};
       try { old = JSON.parse(workspace.dataset.relphiFoldPrevious || '{}'); } catch (_) {}
@@ -182,6 +221,8 @@
   function resetFit(rootNode = root()) {
     if (!rootNode) return;
     delete rootNode.dataset.relphiCelticFoldFitDone;
+    delete rootNode.dataset.relphiCelticAnchorComplete;
+    clearBoardAnchor(board(rootNode));
     rootNode.classList.add('relphi-celtic-geometry-pending');
     rootNode.classList.remove('relphi-celtic-geometry-ready');
   }
@@ -193,11 +234,14 @@
   }
 
   function fitOnce(rootNode) {
-    if (fitting || rootNode.dataset.relphiCelticFoldFitDone === 'true') return true;
+    if (fitting) return false;
+    if (rootNode.dataset.relphiCelticFoldFitDone === 'true') return true;
     const workspace = rootNode.querySelector('.card-row-workspace');
     const liveBoard = board(rootNode);
     const zoom = document.getElementById('rowZoom');
     if (!workspace || !liveBoard || !zoom || !constrainWorkspace(rootNode)) return false;
+
+    clearBoardAnchor(liveBoard);
     const content = visualBounds(liveBoard);
     const frame = workspace.getBoundingClientRect();
     if (!content || !frame.width || !frame.height) return false;
@@ -211,6 +255,7 @@
     const min = Number(zoom.min) > 0 ? Number(zoom.min) : .35;
     const max = Number(zoom.max) > 0 ? Number(zoom.max) : 2.4;
     const next = Math.max(min, Math.min(max, current * ratio * FIT_SAFETY));
+
     rootNode.dataset.relphiCelticFoldFitDone = 'true';
     if (Math.abs(next - current) < .006) return true;
 
@@ -222,12 +267,22 @@
     } finally {
       fitting = false;
     }
+
+    // The native zoom handler rewrites both the board and item inline styles.
+    // Re-run our canonical geometry on the next frame before anything is shown.
+    requestAnimationFrame(schedule);
     return false;
   }
 
-  function revealWhenStable(rootNode) {
+  function finishGeometry(rootNode) {
+    if (!anchorBottomLeft(rootNode)) return;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (activeLayoutId() !== CELTIC_LAYOUT_ID) return;
+      // Re-anchor once after layout has settled. This keeps the measured labels,
+      // not merely the card faces, inside the visible gutter.
+      applyCanonicalCeltic(rootNode);
+      anchorBottomLeft(rootNode);
+      rootNode.dataset.relphiCelticAnchorComplete = 'true';
       rootNode.classList.remove('relphi-celtic-geometry-pending');
       rootNode.classList.add('relphi-celtic-geometry-ready');
     }));
@@ -246,12 +301,11 @@
         releaseWorkspace(rootNode);
         return;
       }
-      rootNode.classList.add('relphi-celtic-readable');
-      rootNode.classList.add('relphi-celtic-geometry-pending');
+      rootNode.classList.add('relphi-celtic-readable','relphi-celtic-geometry-pending');
       resetPanOnce(rootNode);
       if (!applyCanonicalCeltic(rootNode)) return;
-      const settled = fitOnce(rootNode);
-      if (settled || rootNode.dataset.relphiCelticFoldFitDone === 'true') revealWhenStable(rootNode);
+      if (!fitOnce(rootNode)) return;
+      finishGeometry(rootNode);
     } finally {
       applying = false;
     }
@@ -278,7 +332,10 @@
   document.addEventListener('input', event => {
     if (event.target?.matches?.('#rowZoom') && event.isTrusted && !fitting) {
       const rootNode = root();
-      if (rootNode) rootNode.dataset.relphiCelticFoldFitDone = 'true';
+      if (rootNode) {
+        rootNode.dataset.relphiCelticFoldFitDone = 'true';
+        delete rootNode.dataset.relphiCelticAnchorComplete;
+      }
     }
   }, true);
   window.addEventListener('resize', () => { resetFit(); schedule(); }, { passive:true });
