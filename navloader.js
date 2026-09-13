@@ -154,14 +154,9 @@
       style.id = 'relphi-drawing-board-boot-style';
       style.textContent = `
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .drawing-board-top-actions,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-workspace,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-workspace-toolbar,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-workspace-tools,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-more-options,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-reading-options-drawer,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-spread-prefab-library,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) #relphiSpreadTemplateSelect,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-label-builder,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-composer,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) #drawing-board-after-canvas,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .drawing-board-helpful-tip{
@@ -170,7 +165,6 @@
           pointer-events:none!important;
         }
         #shortListPanel.relphi-drawing-board-ui-ready .drawing-board-top-actions,
-        #shortListPanel.relphi-drawing-board-ui-ready .card-row-workspace,
         #shortListPanel.relphi-drawing-board-ui-ready .card-row-workspace-toolbar,
         #shortListPanel.relphi-drawing-board-ui-ready .relphi-workspace-tools,
         #shortListPanel.relphi-drawing-board-ui-ready #drawing-board-after-canvas{
@@ -248,7 +242,7 @@
   }
 
   // Tarot's temporary Drawing Board controls can be constructed before DOMContentLoaded.
-  // Install the mask synchronously so intermediate controls never paint.
+  // Install the mask synchronously so those intermediate positions are never painted.
   if (isTarotContext()) refreshDrawingBoardControlAssets();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
