@@ -11,18 +11,40 @@
   const MIDDLE_GAP_RATIO = .14;
   const MIDDLE_GAP_MIN = 14;
   const MIDDLE_GAP_MAX = 26;
+  const FOLD_GUTTER = 14;
+  const FOLD_MIN_USABLE_HEIGHT = 280;
+  const FOLD_SIDE_PADDING = 12;
+  const FOLD_BOTTOM_PADDING = 12;
+  const FOLD_FIT_SAFETY = .985;
   let queued = false;
   let applying = false;
+  let fittingFold = false;
 
   function root() { return document.querySelector(PANEL); }
   function board(rootNode = root()) { return rootNode?.querySelector('.card-row-board') || null; }
   function face(item) { return item?.querySelector('.card-row-card-wrap,.card-row-drop-card') || null; }
+
+  function releaseCelticFoldConstraint(rootNode) {
+    const workspace = rootNode?.querySelector('.card-row-workspace');
+    if (workspace?.dataset.relphiCelticFoldPrevious !== undefined) {
+      let previous = {};
+      try { previous = JSON.parse(workspace.dataset.relphiCelticFoldPrevious || '{}'); } catch (_) {}
+      ['height','min-height','max-height'].forEach(property => {
+        const value = previous[property] || '';
+        if (value) workspace.style.setProperty(property, value);
+        else workspace.style.removeProperty(property);
+      });
+      delete workspace.dataset.relphiCelticFoldPrevious;
+    }
+    if (rootNode) delete rootNode.dataset.relphiCelticFoldFitDone;
+  }
 
   function syncCelticReadable(rootNode) {
     let activeId = '';
     try { activeId = window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id || ''; } catch (_) {}
     const isCeltic = activeId === CELTIC_LAYOUT_ID;
     rootNode?.classList.toggle('relphi-celtic-readable', isCeltic);
+    if (!isCeltic) releaseCelticFoldConstraint(rootNode);
     return isCeltic;
   }
 
@@ -34,6 +56,101 @@
     if (!node) return;
     if (node.style.getPropertyValue(property) === value && node.style.getPropertyPriority(property) === 'important') return;
     node.style.setProperty(property, value, 'important');
+  }
+
+  function constrainCelticWorkspaceToFold(rootNode) {
+    if (!rootNode?.classList.contains('relphi-celtic-readable')) return null;
+    if (window.matchMedia?.('(max-width:700px)')?.matches) return null;
+    const workspace = rootNode.querySelector('.card-row-workspace');
+    if (!workspace) return null;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 720;
+    const workspaceRect = workspace.getBoundingClientRect();
+    const visibleTop = Math.max(0, workspaceRect.top);
+    const availableHeight = Math.floor(viewportHeight - visibleTop - FOLD_GUTTER);
+    if (availableHeight < FOLD_MIN_USABLE_HEIGHT) return null;
+
+    if (workspace.dataset.relphiCelticFoldPrevious === undefined) {
+      workspace.dataset.relphiCelticFoldPrevious = JSON.stringify({
+        height:workspace.style.getPropertyValue('height') || '',
+        'min-height':workspace.style.getPropertyValue('min-height') || '',
+        'max-height':workspace.style.getPropertyValue('max-height') || ''
+      });
+    }
+    const height = availableHeight + 'px';
+    setImportant(workspace, 'height', height);
+    setImportant(workspace, 'min-height', height);
+    setImportant(workspace, 'max-height', height);
+    return availableHeight;
+  }
+
+  function celticVisualBounds(liveBoard) {
+    if (!liveBoard) return null;
+    const nodes = [];
+    liveBoard.querySelectorAll(':scope > .card-row-item').forEach(item => {
+      const cardFace = face(item);
+      const sticker = item.querySelector(':scope > .card-row-position-panel');
+      if (cardFace) nodes.push(cardFace);
+      if (sticker) nodes.push(sticker);
+    });
+    const helper = liveBoard.querySelector('.relphi-center-helper');
+    if (helper) nodes.push(helper);
+    const rects = nodes.map(node => node.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0);
+    if (!rects.length) return null;
+    return {
+      left:Math.min(...rects.map(rect => rect.left)),
+      right:Math.max(...rects.map(rect => rect.right)),
+      top:Math.min(...rects.map(rect => rect.top)),
+      bottom:Math.max(...rects.map(rect => rect.bottom))
+    };
+  }
+
+  function fitCelticToFold(rootNode) {
+    if (fittingFold || !rootNode?.classList.contains('relphi-celtic-readable')) return;
+    if (rootNode.dataset.relphiCelticFoldFitDone === 'true') return;
+    const workspace = rootNode.querySelector('.card-row-workspace');
+    const liveBoard = board(rootNode);
+    const zoomInput = document.getElementById('rowZoom');
+    if (!workspace || !liveBoard || !zoomInput) return;
+    const availableHeight = constrainCelticWorkspaceToFold(rootNode);
+    if (!availableHeight) return;
+
+    const workspaceRect = workspace.getBoundingClientRect();
+    const bounds = celticVisualBounds(liveBoard);
+    if (!bounds) return;
+    const contentWidth = bounds.right - bounds.left;
+    const contentHeight = bounds.bottom - bounds.top;
+    if (!contentWidth || !contentHeight) return;
+
+    const targetWidth = Math.max(1, workspaceRect.width - FOLD_SIDE_PADDING * 2);
+    const topInset = Math.max(0, bounds.top - workspaceRect.top);
+    const targetHeight = Math.max(1, workspaceRect.height - topInset - FOLD_BOTTOM_PADDING);
+    const fitRatio = Math.min(targetWidth / contentWidth, targetHeight / contentHeight, 1);
+    const currentZoom = Number(zoomInput.value) || 1;
+    const inputMin = Number(zoomInput.min);
+    const inputMax = Number(zoomInput.max);
+    const minZoom = Number.isFinite(inputMin) && inputMin > 0 ? inputMin : .45;
+    const maxZoom = Number.isFinite(inputMax) && inputMax > 0 ? Math.min(1, inputMax) : 1;
+
+    if (fitRatio >= .995) {
+      rootNode.dataset.relphiCelticFoldFitDone = 'true';
+      return;
+    }
+
+    const nextZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom * fitRatio * FOLD_FIT_SAFETY));
+    if (Math.abs(nextZoom - currentZoom) < .005) {
+      rootNode.dataset.relphiCelticFoldFitDone = 'true';
+      return;
+    }
+
+    fittingFold = true;
+    rootNode.dataset.relphiCelticFoldFitDone = 'true';
+    zoomInput.value = String(nextZoom);
+    zoomInput.dispatchEvent(new Event('input', { bubbles:true }));
+    zoomInput.dispatchEvent(new Event('change', { bubbles:true }));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      fittingFold = false;
+      schedule();
+    }));
   }
 
   function renderedScaleX(liveBoard) {
@@ -226,12 +343,16 @@
     if (!rootNode || rootNode.hidden) return;
     applying = true;
     try {
-      syncCelticReadable(rootNode);
+      const isCeltic = syncCelticReadable(rootNode);
       installStyle();
       ownCardSurfaces(rootNode);
       enforceFlushLabels(rootNode);
       positionCelticMiddleRow(rootNode);
       positionCelticStaff(rootNode);
+      if (isCeltic) {
+        constrainCelticWorkspaceToFold(rootNode);
+        fitCelticToFold(rootNode);
+      }
     } finally {
       applying = false;
     }
@@ -243,15 +364,27 @@
     requestAnimationFrame(() => requestAnimationFrame(apply));
   }
 
+  function resetCelticFit() {
+    const rootNode = root();
+    if (rootNode) delete rootNode.dataset.relphiCelticFoldFitDone;
+  }
+
   document.addEventListener('relphi:drawing-board-rendered', schedule);
-  document.addEventListener('relphi:drawing-board-center-view', schedule);
+  document.addEventListener('relphi:drawing-board-center-view', () => { resetCelticFit(); schedule(); });
   document.addEventListener('input', event => {
-    if (event.target?.matches?.('#rowZoom,#rowEnvelopeColor')) schedule();
+    if (event.target?.matches?.('#rowZoom,#rowEnvelopeColor')) {
+      if (event.target.matches('#rowZoom') && event.isTrusted && !fittingFold) {
+        const rootNode = root();
+        if (rootNode) rootNode.dataset.relphiCelticFoldFitDone = 'true';
+      }
+      schedule();
+    }
   }, true);
   document.addEventListener('change', event => {
+    if (event.target?.matches?.('#relphiSpreadTemplateSelect')) resetCelticFit();
     if (event.target?.matches?.('#relphiSpreadTemplateSelect,#rowZoom,#rowEnvelopeColor')) schedule();
   }, true);
-  window.addEventListener('resize', schedule);
+  window.addEventListener('resize', () => { resetCelticFit(); schedule(); });
 
   new MutationObserver(records => {
     if (applying) return;
