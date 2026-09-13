@@ -16,6 +16,8 @@
   const FOLD_SIDE_PADDING = 12;
   const FOLD_BOTTOM_PADDING = 12;
   const FOLD_FIT_SAFETY = .985;
+  const FOLD_FIT_TOLERANCE = .012;
+  const FOLD_MAX_FIT_PASSES = 4;
   let queued = false;
   let applying = false;
   let fittingFold = false;
@@ -23,6 +25,12 @@
   function root() { return document.querySelector(PANEL); }
   function board(rootNode = root()) { return rootNode?.querySelector('.card-row-board') || null; }
   function face(item) { return item?.querySelector('.card-row-card-wrap,.card-row-drop-card') || null; }
+
+  function resetCelticFitState(rootNode) {
+    if (!rootNode) return;
+    delete rootNode.dataset.relphiCelticFoldFitDone;
+    rootNode.dataset.relphiCelticFoldFitPass = '0';
+  }
 
   function releaseCelticFoldConstraint(rootNode) {
     const workspace = rootNode?.querySelector('.card-row-workspace');
@@ -36,7 +44,11 @@
       });
       delete workspace.dataset.relphiCelticFoldPrevious;
     }
-    if (rootNode) delete rootNode.dataset.relphiCelticFoldFitDone;
+    if (rootNode) {
+      resetCelticFitState(rootNode);
+      rootNode.classList.remove('relphi-celtic-cross-unrevealed');
+      delete rootNode.dataset.relphiCelticCrossRevealState;
+    }
   }
 
   function syncCelticReadable(rootNode) {
@@ -46,6 +58,19 @@
     rootNode?.classList.toggle('relphi-celtic-readable', isCeltic);
     if (!isCeltic) releaseCelticFoldConstraint(rootNode);
     return isCeltic;
+  }
+
+  function syncCelticCrossRevealState(rootNode) {
+    if (!rootNode?.classList.contains('relphi-celtic-readable')) return true;
+    const crosses = board(rootNode)?.querySelector(':scope > .card-row-item[data-row-index="1"]');
+    const revealed = !!crosses?.querySelector('[data-row-card]');
+    const nextState = revealed ? 'revealed' : 'unrevealed';
+    if (rootNode.dataset.relphiCelticCrossRevealState !== nextState) {
+      rootNode.dataset.relphiCelticCrossRevealState = nextState;
+      resetCelticFitState(rootNode);
+    }
+    rootNode.classList.toggle('relphi-celtic-cross-unrevealed', !revealed);
+    return revealed;
   }
 
   function middleGapFor(cardWidth) {
@@ -124,14 +149,15 @@
     const targetWidth = Math.max(1, workspaceRect.width - FOLD_SIDE_PADDING * 2);
     const topInset = Math.max(0, bounds.top - workspaceRect.top);
     const targetHeight = Math.max(1, workspaceRect.height - topInset - FOLD_BOTTOM_PADDING);
-    const fitRatio = Math.min(targetWidth / contentWidth, targetHeight / contentHeight, 1);
+    const fitRatio = Math.min(targetWidth / contentWidth, targetHeight / contentHeight);
     const currentZoom = Number(zoomInput.value) || 1;
     const inputMin = Number(zoomInput.min);
     const inputMax = Number(zoomInput.max);
     const minZoom = Number.isFinite(inputMin) && inputMin > 0 ? inputMin : .45;
-    const maxZoom = Number.isFinite(inputMax) && inputMax > 0 ? Math.min(1, inputMax) : 1;
+    const maxZoom = Number.isFinite(inputMax) && inputMax > 0 ? inputMax : 2.4;
+    const pass = Number(rootNode.dataset.relphiCelticFoldFitPass || 0);
 
-    if (fitRatio >= .995) {
+    if (Math.abs(1 - fitRatio) <= FOLD_FIT_TOLERANCE || pass >= FOLD_MAX_FIT_PASSES) {
       rootNode.dataset.relphiCelticFoldFitDone = 'true';
       return;
     }
@@ -143,12 +169,15 @@
     }
 
     fittingFold = true;
-    rootNode.dataset.relphiCelticFoldFitDone = 'true';
+    rootNode.dataset.relphiCelticFoldFitPass = String(pass + 1);
     zoomInput.value = String(nextZoom);
     zoomInput.dispatchEvent(new Event('input', { bubbles:true }));
     zoomInput.dispatchEvent(new Event('change', { bubbles:true }));
     requestAnimationFrame(() => requestAnimationFrame(() => {
       fittingFold = false;
+      if (Number(rootNode.dataset.relphiCelticFoldFitPass || 0) >= FOLD_MAX_FIT_PASSES) {
+        rootNode.dataset.relphiCelticFoldFitDone = 'true';
+      }
       schedule();
     }));
   }
@@ -182,7 +211,11 @@
     style.textContent = [
       '#shortListPanel .card-row-board>.card-row-item::before,#shortListPanel .card-row-board>.card-row-item::after{content:none!important;display:none!important}',
       '#shortListPanel .card-row-board>.card-row-item>.card-row-card-wrap::before,#shortListPanel .card-row-board>.card-row-item>.card-row-card-wrap::after,#shortListPanel .card-row-board>.card-row-placeholder-item>.card-row-drop-card::before,#shortListPanel .card-row-board>.card-row-placeholder-item>.card-row-drop-card::after{content:none!important;display:none!important}',
-      '#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="0"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="1"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="2"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="3"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="4"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="5"]>.card-row-position-panel{bottom:100%!important;margin-bottom:0!important}'
+      '#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="0"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="1"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="2"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="3"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="4"]>.card-row-position-panel,#shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="5"]>.card-row-position-panel{bottom:100%!important;margin-bottom:0!important}',
+      'html body #shortListPanel.relphi-celtic-cross-unrevealed .card-row-workspace .short-list-row.card-row-board>.card-row-item[data-row-index="1"].relphi-celtic-crossing-rotated{transform:rotate(0deg) scale(var(--row-card-scale,1))!important}',
+      'html body #shortListPanel.relphi-celtic-cross-unrevealed .card-row-workspace .short-list-row.card-row-board>.card-row-item[data-row-index="1"].relphi-celtic-crossing-rotated>.card-row-position-panel{left:0!important;right:auto!important;top:auto!important;bottom:100%!important;width:100%!important;min-width:100%!important;max-width:100%!important;margin:0!important;transform:none!important;text-align:center!important}',
+      'html body #shortListPanel.relphi-celtic-cross-unrevealed .card-row-workspace .short-list-row.card-row-board>.card-row-item[data-row-index="1"].relphi-celtic-crossing-rotated>.card-row-drop-card>.card-row-drop-card-inner{display:flex!important;align-items:center!important;justify-content:center!important}',
+      'html body #shortListPanel.relphi-celtic-cross-unrevealed .relphi-center-helper{display:none!important}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -243,11 +276,12 @@
     if (!coverFace || !crossFace || !behindFace || !beforeFace) return;
 
     const scaleX = renderedScaleX(liveBoard);
-    const centerOpen = !crosses.classList.contains('relphi-celtic-crossing-rotated');
+    const crossingRevealed = !!crosses.querySelector('[data-row-card]');
+    const centerOpen = !crossingRevealed || !crosses.classList.contains('relphi-celtic-crossing-rotated');
 
-    // Closed and open center views share one fixed outer footprint: the width of
-    // two upright cards plus the intended center gap. Rotating Crosses therefore
-    // never changes Behind, Before, or the staff coordinates.
+    // Before the crossing card is revealed, treat the center as open so its
+    // placeholder remains upright beside Covers. Revealing it closes the center.
+    // Manual Open Center continues to work after reveal.
     if (!centerOpen) {
       clearTranslateX(covers, 'relphiMiddleTranslateX');
       clearTranslateX(crosses, 'relphiMiddleTranslateX');
@@ -344,6 +378,7 @@
     applying = true;
     try {
       const isCeltic = syncCelticReadable(rootNode);
+      if (isCeltic) syncCelticCrossRevealState(rootNode);
       installStyle();
       ownCardSurfaces(rootNode);
       enforceFlushLabels(rootNode);
@@ -365,8 +400,7 @@
   }
 
   function resetCelticFit() {
-    const rootNode = root();
-    if (rootNode) delete rootNode.dataset.relphiCelticFoldFitDone;
+    resetCelticFitState(root());
   }
 
   document.addEventListener('relphi:drawing-board-rendered', schedule);
