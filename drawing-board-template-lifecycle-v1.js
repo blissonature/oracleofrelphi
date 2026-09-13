@@ -16,6 +16,7 @@
   let syncing = false;
   let fitQueued = false;
   let revealPending = false;
+  let reconcileQueued = false;
   let startupAttempts = 0;
 
   const clone = value => value == null ? value : JSON.parse(JSON.stringify(value));
@@ -193,7 +194,9 @@
     snapshot.rowCardTransforms[index] = {scale:t.scale,rotation:t.rotation,zIndex:t.zIndex};
   }
   function celticRevealShouldBeClosed(snapshot) {
-    return !!(snapshot?.shortList?.[1] || snapshot?.shortListPositionCardIds?.[1]);
+    const crossingItem = panel()?.querySelector('.card-row-board>.card-row-item[data-row-index="1"]');
+    const domOccupied = !!crossingItem?.querySelector('[data-row-card]');
+    return !!(domOccupied || snapshot?.shortList?.[1] || snapshot?.shortListPositionCardIds?.[1]);
   }
 
   function syncCelticState() {
@@ -356,10 +359,20 @@
     const button = panel()?.querySelector('#zoomCardRowExtents');
     if (button) button.dataset.relphiLayoutController = 'true';
   }
+  function reconcileCelticAfterRender() {
+    if (reconcileQueued) return;
+    reconcileQueued = true;
+    requestAnimationFrame(() => {
+      reconcileQueued = false;
+      const changed = syncCelticState();
+      tagSemanticPositions();
+      if (changed) requestAnimationFrame(tagSemanticPositions);
+    });
+  }
   function onRendered() {
     ownExtentsButton();
     tagSemanticPositions();
-    syncCelticState();
+    reconcileCelticAfterRender();
   }
 
   function installStyle() {
