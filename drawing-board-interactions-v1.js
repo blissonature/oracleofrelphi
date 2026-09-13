@@ -164,7 +164,6 @@
         field.value = field.dataset.relphiManualValue || '';
       }
     });
-
   }
 
   function keepBoardCloseAfterPlaceholder(panel) {
@@ -277,7 +276,7 @@
       '#shortListPanel .relphi-board-ui-layer{display:none!important}',
       '#shortListPanel .card-row-workspace{position:relative!important;isolation:isolate!important}',
       '#shortListPanel .card-row-workspace-toolbar{position:relative!important;z-index:1000!important;background:#fff!important;opacity:1!important}',
-      '#shortListPanel .card-row-board,#shortListPanel .card-row-board-grid,#shortListPanel .card-row-item{position:relative!important;z-index:1!important}',
+      '#shortListPanel .card-row-board,#shortListPanel .card-row-board-grid{position:relative!important;z-index:1!important}',
       '#shortListPanel .board-header-group--history{display:inline-flex!important;align-items:center!important;gap:.4rem!important;min-width:5.4rem!important}',
       '#shortListPanel .board-history-icon{appearance:none!important;display:inline-grid!important;place-items:center!important;width:2.6rem!important;min-width:2.6rem!important;max-width:2.6rem!important;height:2.6rem!important;min-height:2.6rem!important;padding:0!important;border:2px solid #171412!important;border-radius:9px!important;background:#fff!important;color:#171412!important;box-shadow:none!important;opacity:1!important}',
       'html body #shortListPanel .board-history-icon:disabled{opacity:.4!important;border:1px solid rgba(17,17,17,.28)!important;background:#fffdf8!important;color:rgba(17,17,17,.48)!important;box-shadow:none!important;cursor:default!important}',
