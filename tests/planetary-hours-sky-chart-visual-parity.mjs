@@ -51,7 +51,7 @@ assert.match(page,/ph-btn-secondary/);
 assert.match(page,/class=\"ph-sr-only\" id=\"localClock\"/);
 assert.doesNotMatch(page,/class=\"ph-clock\" id=\"localClock\"/);
 assert.match(page,/#controls \.ph-btn\.ph-btn-secondary/);
-assert.match(page,/\.planetary-page \.ph-datefield-link \{[\s\S]*width: 100% !important;[\s\S]*box-sizing: border-box !important;[\s\S]*white-space: normal !important;/);
+assert.match(page,/\.planetary-page \.ph-datefield-link \{[\s\S]*max-width: 100% !important;[\s\S]*white-space: nowrap !important;[\s\S]*font-size: \.78rem !important;/);
 assert.match(page,/width:1\.8em/);
 assert.match(page,/dayRulerProfileName\.innerHTML = canonicalPlanetGlyphMarkup/);
 assert.match(page,/hourRulerProfileName\.innerHTML = canonicalPlanetGlyphMarkup/);
