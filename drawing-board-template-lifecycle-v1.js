@@ -55,12 +55,12 @@
       ['crossing', transform(.27,.335,90,.45,30), transform(.385,.335,0,.45,30)],
       ['crowning', transform(.27,.065,0,.45,4)],
       ['beneath', transform(.27,.605,0,.45,4)],
-      ['behind', transform(.055,.335,0,.45,4)],
+      ['behind', transform(.08,.335,0,.45,4)],
       ['before', transform(.505,.335,0,.45,4)],
-      ['self', transform(.715,.715,0,.45,4)],
-      ['house', transform(.715,.49,0,.45,4)],
-      ['hopes-fears', transform(.715,.265,0,.45,4)],
-      ['outcome', transform(.715,.04,0,.45,4)]
+      ['self', transform(.689,.715,0,.45,4)],
+      ['house', transform(.689,.49,0,.45,4)],
+      ['hopes-fears', transform(.689,.265,0,.45,4)],
+      ['outcome', transform(.689,.04,0,.45,4)]
     ];
     base.id = CELTIC_ID;
     base.name = 'Celtic Cross';
