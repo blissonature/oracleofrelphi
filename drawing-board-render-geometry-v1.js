@@ -17,7 +17,6 @@
   const FOLD_BOTTOM_PADDING = 12;
   const FOLD_FIT_SAFETY = .985;
   const FOLD_FIT_TOLERANCE = .012;
-  const FOLD_MAX_FIT_PASSES = 4;
   let queued = false;
   let applying = false;
   let fittingFold = false;
@@ -29,7 +28,6 @@
   function resetCelticFitState(rootNode) {
     if (!rootNode) return;
     delete rootNode.dataset.relphiCelticFoldFitDone;
-    rootNode.dataset.relphiCelticFoldFitPass = '0';
   }
 
   function releaseCelticFoldConstraint(rootNode) {
@@ -146,7 +144,8 @@
     const contentHeight = bounds.bottom - bounds.top;
     if (!contentWidth || !contentHeight) return;
 
-    const targetWidth = Math.max(1, workspaceRect.width - FOLD_SIDE_PADDING * 2);
+    const leftInset = Math.max(0, bounds.left - workspaceRect.left);
+    const targetWidth = Math.max(1, workspaceRect.width - leftInset - FOLD_SIDE_PADDING);
     const topInset = Math.max(0, bounds.top - workspaceRect.top);
     const targetHeight = Math.max(1, workspaceRect.height - topInset - FOLD_BOTTOM_PADDING);
     const fitRatio = Math.min(targetWidth / contentWidth, targetHeight / contentHeight);
@@ -155,9 +154,8 @@
     const inputMax = Number(zoomInput.max);
     const minZoom = Number.isFinite(inputMin) && inputMin > 0 ? inputMin : .45;
     const maxZoom = Number.isFinite(inputMax) && inputMax > 0 ? inputMax : 2.4;
-    const pass = Number(rootNode.dataset.relphiCelticFoldFitPass || 0);
 
-    if (Math.abs(1 - fitRatio) <= FOLD_FIT_TOLERANCE || pass >= FOLD_MAX_FIT_PASSES) {
+    if (Math.abs(1 - fitRatio) <= FOLD_FIT_TOLERANCE) {
       rootNode.dataset.relphiCelticFoldFitDone = 'true';
       return;
     }
@@ -168,16 +166,15 @@
       return;
     }
 
+    // One proportional fit is enough. Repeating the fit while geometry is also
+    // settling can turn tiny corrective offsets into visible horizontal drift.
     fittingFold = true;
-    rootNode.dataset.relphiCelticFoldFitPass = String(pass + 1);
+    rootNode.dataset.relphiCelticFoldFitDone = 'true';
     zoomInput.value = String(nextZoom);
     zoomInput.dispatchEvent(new Event('input', { bubbles:true }));
     zoomInput.dispatchEvent(new Event('change', { bubbles:true }));
     requestAnimationFrame(() => requestAnimationFrame(() => {
       fittingFold = false;
-      if (Number(rootNode.dataset.relphiCelticFoldFitPass || 0) >= FOLD_MAX_FIT_PASSES) {
-        rootNode.dataset.relphiCelticFoldFitDone = 'true';
-      }
       schedule();
     }));
   }
@@ -189,19 +186,45 @@
     return Number.isFinite(scale) && Math.abs(scale) >= .001 ? scale : 1;
   }
 
-  function adjustTranslateX(item, dataKey, deltaVisual, scaleX) {
-    if (!item || !Number.isFinite(deltaVisual) || Math.abs(deltaVisual) < .5) return false;
-    const previous = Number(item.dataset[dataKey] || 0);
-    const next = previous + (deltaVisual / scaleX);
-    item.dataset[dataKey] = String(next);
-    setImportant(item, 'translate', next.toFixed(2) + 'px 0px');
-    return true;
-  }
-
   function clearTranslateX(item, dataKey) {
     if (!item || item.dataset[dataKey] === undefined) return;
     item.style.removeProperty('translate');
     delete item.dataset[dataKey];
+  }
+
+  function baseFaceRect(item, dataKey, scaleX) {
+    const surface = face(item);
+    if (!surface) return null;
+    const rect = surface.getBoundingClientRect();
+    const logicalTranslate = Number(item?.dataset?.[dataKey] || 0);
+    const visualTranslate = Number.isFinite(logicalTranslate) ? logicalTranslate * scaleX : 0;
+    return {
+      left:rect.left - visualTranslate,
+      right:rect.right - visualTranslate,
+      top:rect.top,
+      bottom:rect.bottom,
+      width:rect.width,
+      height:rect.height
+    };
+  }
+
+  function setTranslateX(item, dataKey, logicalTranslate) {
+    if (!item || !Number.isFinite(logicalTranslate)) return false;
+    if (Math.abs(logicalTranslate) < .01) {
+      clearTranslateX(item, dataKey);
+      return true;
+    }
+    const previous = Number(item.dataset[dataKey] || 0);
+    const value = logicalTranslate.toFixed(2) + 'px 0px';
+    if (Math.abs(previous - logicalTranslate) < .01 && item.style.getPropertyValue('translate') === value) return false;
+    item.dataset[dataKey] = String(logicalTranslate);
+    setImportant(item, 'translate', value);
+    return true;
+  }
+
+  function setTranslateFromVisualDelta(item, dataKey, deltaVisual, scaleX) {
+    if (!Number.isFinite(deltaVisual) || !Number.isFinite(scaleX) || Math.abs(scaleX) < .001) return false;
+    return setTranslateX(item, dataKey, deltaVisual / scaleX);
   }
 
   function installStyle() {
@@ -279,16 +302,15 @@
     const crossingRevealed = !!crosses.querySelector('[data-row-card]');
     const centerOpen = !crossingRevealed || !crosses.classList.contains('relphi-celtic-crossing-rotated');
 
-    // Before the crossing card is revealed, treat the center as open so its
-    // placeholder remains upright beside Covers. Revealing it closes the center.
-    // Manual Open Center continues to work after reveal.
-    if (!centerOpen) {
-      clearTranslateX(covers, 'relphiMiddleTranslateX');
-      clearTranslateX(crosses, 'relphiMiddleTranslateX');
-    }
+    // Measure every target from its untranslated position. The previous version
+    // measured an already translated card, then added another correction to the
+    // previous correction on the next render, which let the spread walk right.
+    const coverRect = baseFaceRect(covers, 'relphiMiddleTranslateX', scaleX);
+    const crossRect = baseFaceRect(crosses, 'relphiMiddleTranslateX', scaleX);
+    const behindRect = baseFaceRect(behind, 'relphiMiddleTranslateX', scaleX);
+    const beforeRect = baseFaceRect(before, 'relphiMiddleTranslateX', scaleX);
+    if (!coverRect || !crossRect || !behindRect || !beforeRect) return;
 
-    let coverRect = coverFace.getBoundingClientRect();
-    let crossRect = crossFace.getBoundingClientRect();
     const coverCenter = coverRect.left + coverRect.width / 2;
     const crossCenter = crossRect.left + crossRect.width / 2;
     const axis = centerOpen ? (coverCenter + crossCenter) / 2 : coverCenter;
@@ -299,19 +321,17 @@
     if (centerOpen) {
       const targetCoverRight = axis - middleGap / 2;
       const targetCrossLeft = axis + middleGap / 2;
-      adjustTranslateX(covers, 'relphiMiddleTranslateX', targetCoverRight - coverRect.right, scaleX);
-      adjustTranslateX(crosses, 'relphiMiddleTranslateX', targetCrossLeft - crossRect.left, scaleX);
-      coverRect = coverFace.getBoundingClientRect();
-      crossRect = crossFace.getBoundingClientRect();
+      setTranslateFromVisualDelta(covers, 'relphiMiddleTranslateX', targetCoverRight - coverRect.right, scaleX);
+      setTranslateFromVisualDelta(crosses, 'relphiMiddleTranslateX', targetCrossLeft - crossRect.left, scaleX);
+    } else {
+      clearTranslateX(covers, 'relphiMiddleTranslateX');
+      clearTranslateX(crosses, 'relphiMiddleTranslateX');
     }
 
     const fixedCentralLeft = axis - cardWidth - middleGap / 2;
     const fixedCentralRight = axis + cardWidth + middleGap / 2;
-    const behindRect = behindFace.getBoundingClientRect();
-    const beforeRect = beforeFace.getBoundingClientRect();
-
-    adjustTranslateX(behind, 'relphiMiddleTranslateX', (fixedCentralLeft - middleGap) - behindRect.right, scaleX);
-    adjustTranslateX(before, 'relphiMiddleTranslateX', (fixedCentralRight + middleGap) - beforeRect.left, scaleX);
+    setTranslateFromVisualDelta(behind, 'relphiMiddleTranslateX', (fixedCentralLeft - middleGap) - behindRect.right, scaleX);
+    setTranslateFromVisualDelta(before, 'relphiMiddleTranslateX', (fixedCentralRight + middleGap) - beforeRect.left, scaleX);
   }
 
   function clearStaffTranslation(liveBoard) {
@@ -337,24 +357,21 @@
     const staffFace = face(firstStaff);
     if (!beforeFace || !staffFace) return;
 
+    const scaleX = renderedScaleX(liveBoard);
     const beforeRect = beforeFace.getBoundingClientRect();
-    const staffRect = staffFace.getBoundingClientRect();
-    if (!beforeRect.width || !staffRect.width) return;
+    const staffBaseRect = baseFaceRect(firstStaff, 'relphiStaffTranslateX', scaleX);
+    if (!beforeRect.width || !staffBaseRect?.width) return;
 
     // Required visual rule: Before | one full rendered card-width of felt | staff.
+    // Set one absolute offset from the staff's unshifted position; never add it
+    // onto the previous render's offset.
     const desiredLeft = beforeRect.right + beforeRect.width;
-    const deltaVisual = desiredLeft - staffRect.left;
-    if (Math.abs(deltaVisual) < .5) return;
-
-    const scaleX = renderedScaleX(liveBoard);
-    const previous = Number(firstStaff.dataset.relphiStaffTranslateX || 0);
-    const next = previous + (deltaVisual / scaleX);
+    const staffLogicalTranslate = (desiredLeft - staffBaseRect.left) / scaleX;
 
     [6,7,8,9].forEach(index => {
       const item = liveBoard.querySelector(':scope > .card-row-item[data-row-index="' + index + '"]');
       if (!item) return;
-      item.dataset.relphiStaffTranslateX = String(next);
-      setImportant(item, 'translate', next.toFixed(2) + 'px 0px');
+      setTranslateX(item, 'relphiStaffTranslateX', staffLogicalTranslate);
     });
   }
 
