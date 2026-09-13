@@ -50,7 +50,11 @@
     const style = document.createElement('style');
     style.id = 'relphi-render-geometry-style-v1';
     style.textContent = [
-      '#shortListPanel.relphi-celtic-geometry-pending .card-row-workspace{visibility:hidden!important}',
+      // Never hide the entire Drawing Board while enhancement scripts settle.
+      // Only the moving Celtic card surface is masked during its geometry pass.
+      'html body #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-workspace{visibility:visible!important;opacity:1!important;pointer-events:auto!important}',
+      '#shortListPanel.relphi-celtic-geometry-pending .card-row-board{visibility:hidden!important}',
+      '#shortListPanel.relphi-celtic-geometry-ready .card-row-board{visibility:visible!important}',
       '#shortListPanel .card-row-board>.card-row-item::before,#shortListPanel .card-row-board>.card-row-item::after{content:none!important;display:none!important}',
       '#shortListPanel .card-row-board>.card-row-item>.card-row-card-wrap::before,#shortListPanel .card-row-board>.card-row-item>.card-row-card-wrap::after,#shortListPanel .card-row-board>.card-row-placeholder-item>.card-row-drop-card::before,#shortListPanel .card-row-board>.card-row-placeholder-item>.card-row-drop-card::after{content:none!important;display:none!important}',
       'html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item{position:absolute!important}',
@@ -330,13 +334,28 @@
     }
   }, true);
   document.addEventListener('input', event => {
-    if (event.target?.matches?.('#rowZoom') && event.isTrusted && !fitting) {
-      const rootNode = root();
-      if (rootNode) {
-        rootNode.dataset.relphiCelticFoldFitDone = 'true';
-        delete rootNode.dataset.relphiCelticAnchorComplete;
-      }
+    if (!event.target?.matches?.('#rowZoom') || fitting || activeLayoutId() !== CELTIC_LAYOUT_ID) return;
+    const rootNode = root();
+    if (!rootNode) return;
+
+    if (event.isTrusted) {
+      // Manual zoom is respected, but the visible footprint still needs to be
+      // re-anchored so its labels remain inside the gutter.
+      rootNode.dataset.relphiCelticFoldFitDone = 'true';
+      delete rootNode.dataset.relphiCelticAnchorComplete;
+      clearBoardAnchor(board(rootNode));
+      rootNode.classList.add('relphi-celtic-geometry-pending');
+      rootNode.classList.remove('relphi-celtic-geometry-ready');
+      schedule();
+      return;
     }
+
+    // The prefab module still has a generic mobile "fit extents" action that
+    // measures card faces only. If it fires after our Celtic pass, its zoom can
+    // put the top labels outside the clipped workspace. Reclaim ownership and
+    // refit using the complete footprint (cards + labels).
+    resetFit(rootNode);
+    schedule();
   }, true);
   window.addEventListener('resize', () => { resetFit(); schedule(); }, { passive:true });
 
