@@ -1336,13 +1336,17 @@
   }
 
 
-  /* v309 small Planetary Hours polish: keep the Sky Chart button on one line. */
+  /* Sky Chart jump action must fit the narrow Day column without clipping. */
   .planetary-page .ph-datefield-link {
-    white-space: nowrap !important;
-    font-size: .86rem !important;
-    line-height: 1.1 !important;
-    padding: .68em 1em !important;
+    display: flex !important;
+    width: 100% !important;
     max-width: 100% !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    text-align: center !important;
+    font-size: .86rem !important;
+    line-height: 1.15 !important;
+    padding: .68em .75em !important;
     box-sizing: border-box !important;
   }
 
