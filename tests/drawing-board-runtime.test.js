@@ -32,7 +32,47 @@ async function waitStable(page) {
 async function openOptions(page) {
   await page.click('#drawingBoardOptionsButton');
   await page.waitForFunction(() => document.querySelector('#shortListPanel')?.dataset.relphiReadingOptionsOpen === 'true');
-  await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect');
+  try {
+    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect', { timeout:5000 });
+  } catch (error) {
+    const trace = await page.evaluate(() => {
+      const root = document.querySelector('#shortListPanel');
+      const button = root?.querySelector('#drawingBoardOptionsButton');
+      const drawers = Array.from(root?.querySelectorAll('.relphi-reading-options-drawer') || []);
+      const select = root?.querySelector('#relphiSpreadTemplateSelect');
+      const describe = node => {
+        if (!node) return null;
+        const s = getComputedStyle(node), r = node.getBoundingClientRect();
+        return {
+          tag:node.tagName,
+          id:node.id || '',
+          className:node.className || '',
+          open:'open' in node ? !!node.open : null,
+          parent:node.parentElement ? `${node.parentElement.tagName}#${node.parentElement.id || ''}.${node.parentElement.className || ''}` : null,
+          display:s.display,visibility:s.visibility,opacity:s.opacity,pointerEvents:s.pointerEvents,
+          rect:{left:r.left,top:r.top,width:r.width,height:r.height}
+        };
+      };
+      const ancestry = [];
+      for (let node = select; node && node !== root; node = node.parentElement) ancestry.push(describe(node));
+      return {
+        optionsOpen:root?.dataset.relphiReadingOptionsOpen || null,
+        rootClasses:root?.className || '',
+        rootHidden:!!root?.hidden,
+        button:describe(button),
+        buttonExpanded:button?.getAttribute('aria-expanded') || null,
+        drawerCount:drawers.length,
+        drawers:drawers.map(describe),
+        select:describe(select),
+        selectAncestry:ancestry,
+        workspace:describe(root?.querySelector('.card-row-workspace')),
+        layout:window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id || null,
+        cardCount:root?.querySelectorAll('[data-row-card]').length || 0
+      };
+    });
+    console.log(`Options visibility trace: ${JSON.stringify(trace)}`);
+    throw error;
+  }
 }
 
 async function applyCeltic(page,name) {
