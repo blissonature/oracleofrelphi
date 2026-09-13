@@ -15,6 +15,7 @@
   const GUTTER = 12;
   let syncing = false;
   let fitQueued = false;
+  let revealPending = false;
   let startupAttempts = 0;
 
   const clone = value => value == null ? value : JSON.parse(JSON.stringify(value));
@@ -305,17 +306,23 @@
     return true;
   }
 
+  function finishFit() {
+    if (revealPending) panel()?.classList.remove('relphi-layout-settling');
+    revealPending = false;
+    fitQueued = false;
+  }
+
   function fitExtents(options={}) {
+    if (options.revealAfter) revealPending = true;
     if (fitQueued) return;
     fitQueued = true;
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      fitQueued = false;
       const root = panel();
       const workspace = root?.querySelector('.card-row-workspace');
       const zoomInput = root?.querySelector('#rowZoom');
       const bounds = contentBounds();
       if (!workspace || !zoomInput || !bounds) {
-        if (options.revealAfter) root?.classList.remove('relphi-layout-settling');
+        finishFit();
         return;
       }
       const frame = workspace.getBoundingClientRect();
@@ -330,7 +337,7 @@
         const liveWorkspace = panel()?.querySelector('.card-row-workspace');
         const nextBounds = contentBounds();
         if (!liveWorkspace || !nextBounds) {
-          if (options.revealAfter) panel()?.classList.remove('relphi-layout-settling');
+          finishFit();
           return;
         }
         const nextFrame = liveWorkspace.getBoundingClientRect();
@@ -339,7 +346,7 @@
         setViewportState(nextZoom,dx,dy);
         requestAnimationFrame(() => requestAnimationFrame(() => {
           tagSemanticPositions();
-          if (options.revealAfter) panel()?.classList.remove('relphi-layout-settling');
+          finishFit();
         }));
       }));
     }));
