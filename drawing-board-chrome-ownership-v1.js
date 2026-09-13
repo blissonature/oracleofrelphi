@@ -5,7 +5,7 @@
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
   if (window.__relphiDrawingBoardChromeOwnershipV2) return;
   window.__relphiDrawingBoardChromeOwnershipV2 = true;
-  window.__relphiDrawingBoardChromeOwnershipV1 = true; // compatibility filename
+  window.__relphiDrawingBoardChromeOwnershipV1 = true;
 
   const PANEL = '#shortListPanel';
   const EXPORT_IDS = ['snapshotCardRowArrangement','saveDrawingBoardSnapshotToDevice','downloadRowOptimizedHtml','downloadRowJson'];
@@ -80,12 +80,12 @@
     const template = spread?.querySelector('#relphiSpreadTemplateSelect');
     const builder = spread?.querySelector('.relphi-label-builder');
     const zoomRow = root.querySelector('.card-row-workspace-toolbar .relphi-zoom-row');
-    const fit = zoomRow?.querySelector('#zoomCardRowExtents[data-relphi-layout-controller="true"]');
+    const fit = zoomRow?.querySelector('#zoomCardRowExtents');
     return !!(box && bar && spread && template && builder && zoomRow && fit);
   }
 
   function markStable(root) {
-    if (root.classList.contains('relphi-drawing-board-ui-ready')) return;
+    if (root.classList.contains('relphi-drawing-board-ui-ready')) return true;
     if (!currentUiAssembled(root)) return false;
     root.classList.add('relphi-drawing-board-ui-ready');
     document.documentElement.classList.add('relphi-drawing-board-ui-stable');
@@ -102,7 +102,7 @@
       ensureAfterCanvas(root);
       ensureWorkspaceTools(root);
       ensureOptions(root);
-      if (!root.classList.contains('relphi-drawing-board-ui-ready') && !markStable(root)) window.setTimeout(schedule,16);
+      if (!markStable(root)) window.setTimeout(schedule,16);
     } finally { repairing = false; }
   }
   function schedule() {
@@ -125,9 +125,6 @@
       #shortListPanel .relphi-reading-options-drawer #snapshotCardRowArrangement,#shortListPanel .relphi-reading-options-drawer #saveDrawingBoardSnapshotToDevice,#shortListPanel .relphi-reading-options-drawer #downloadRowOptimizedHtml,#shortListPanel .relphi-reading-options-drawer #downloadRowJson{display:none!important}
       #shortListPanel #printRowPdf{display:none!important}
       #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{transform:none!important;translate:none!important}
-
-      /* Once the canonical UI has appeared, a board re-render may replace inner
-         nodes but may never reveal their raw construction states. */
       html.relphi-drawing-board-ui-stable #shortListPanel .card-row-more-options:not(.relphi-reading-options-drawer){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
       html.relphi-drawing-board-ui-stable #shortListPanel .relphi-reading-options-drawer .card-row-position-label{display:none!important}
       html.relphi-drawing-board-ui-stable #shortListPanel .card-row-workspace-toolbar:not(:has(.relphi-zoom-row)){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
