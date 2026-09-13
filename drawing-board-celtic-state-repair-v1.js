@@ -1,6 +1,6 @@
-// Repairs stale/persisted Celtic Cross board geometry from the shipped template.
-// This runs before the desktop visual fitter so a saved default 6+4 grid cannot
-// masquerade as the Celtic Cross merely because its labels survived persistence.
+// One-shot repair for a stale/persisted Celtic Cross board snapshot.
+// It may rewrite stale structural state once during boot, but it never subscribes
+// to Drawing Board render events; restoring state itself causes a render.
 (function () {
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
@@ -11,8 +11,8 @@
   const CANVAS_W = 900;
   const CANVAS_H = 760;
   const EPSILON = .75;
+  let completed = false;
   let repairing = false;
-  let queued = false;
 
   const clone = value => value == null ? value : JSON.parse(JSON.stringify(value));
   const panel = () => document.getElementById('shortListPanel');
@@ -54,8 +54,7 @@
   }
 
   function expectedGeometry(canonical) {
-    const positions = orderedPositions(canonical);
-    return positions.map((position, index) => {
+    return orderedPositions(canonical).map((position, index) => {
       const t = position?.canonicalTransform || position?.transform || {};
       return {
         index,
@@ -76,16 +75,13 @@
   function snapshotMatches(snapshot, canonical) {
     if (snapshot?.rowActiveLayout?.id !== CELTIC) return false;
     const expected = expectedGeometry(canonical);
-    if (!expected.length) return false;
-    const labels = labelsFor(canonical);
-    if (!sameLabels(snapshot.shortListPositionLabels || [], labels)) return false;
+    if (!expected.length || !sameLabels(snapshot.shortListPositionLabels || [], labelsFor(canonical))) return false;
     return expected.every(entry => {
       const point = snapshot.rowEnvelopeLayout?.[entry.index];
       const transform = snapshot.rowCardTransforms?.[entry.index];
       return point && transform &&
         closeEnough(point.x, entry.x) && closeEnough(point.y, entry.y) &&
-        closeEnough(transform.scale, entry.scale) &&
-        closeEnough(transform.rotation, entry.rotation) &&
+        closeEnough(transform.scale, entry.scale) && closeEnough(transform.rotation, entry.rotation) &&
         Number(transform.zIndex || 1) === entry.zIndex;
     });
   }
@@ -118,20 +114,21 @@
     next.rowLayoutDesignMode = false;
     next.rowLayoutLocked = true;
     next.rowTransformTarget = 0;
-    // Keep cards, reversals, notes, art, zoom, pan and the user's temporary center view.
     return next;
   }
 
-  function repairNow() {
-    queued = false;
-    if (repairing) return false;
+  // Returns null only when boot dependencies are not ready yet.
+  function repairOnce() {
+    if (completed || repairing) return false;
     const canonical = canonicalPrefab();
     const pBridge = prefabBridge();
     const oBridge = optionsBridge();
-    if (!canonical || !pBridge?.getState || !oBridge?.capture || !oBridge?.restore) return false;
+    if (!canonical || !pBridge?.getState || !oBridge?.capture || !oBridge?.restore) return null;
 
     const state = pBridge.getState();
     const snapshot = oBridge.capture();
+    completed = true; // Set before restore: restore triggers a Drawing Board render.
+
     if (!intendedCeltic(state, snapshot, canonical) || snapshotMatches(snapshot, canonical)) return false;
 
     repairing = true;
@@ -139,23 +136,17 @@
       oBridge.restore(canonicalSnapshot(snapshot, canonical));
       panel()?.setAttribute('data-relphi-celtic-state-repaired', 'true');
     } finally {
-      requestAnimationFrame(() => { repairing = false; });
+      repairing = false;
     }
     return true;
   }
 
-  function schedule() {
-    if (queued || repairing) return;
-    queued = true;
-    requestAnimationFrame(repairNow);
+  function boot(attempt = 0) {
+    const result = repairOnce();
+    if (result === null && attempt < 20) window.setTimeout(() => boot(attempt + 1), 25);
   }
 
-  // Run synchronously once: previews share localStorage by origin, so the stale
-  // snapshot should be corrected before the desktop geometry owner gets a chance to paint it.
-  repairNow();
-  document.addEventListener('relphi:drawing-board-rendered', schedule, true);
-  document.addEventListener('relphi:tarot-enhancements-ready', schedule, true);
-  document.addEventListener('change', event => {
-    if (event.target?.matches?.('#relphiSpreadTemplateSelect')) schedule();
-  }, true);
+  // This script is loaded after the prefab/options bridges. In case startup timing
+  // differs in a preview, retry briefly; never listen to rendered/mutation events.
+  boot();
 })();
