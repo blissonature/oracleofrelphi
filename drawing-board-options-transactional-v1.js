@@ -220,12 +220,8 @@
     const first = root?.querySelector('#relphiSpreadTemplateSelect option[value=""]');
     if (first && first.textContent !== 'Choose a template') first.textContent = 'Choose a template';
   }
-  function closeThroughExistingCancel() {
-    const root = panel();
-    if (!root || !optionsOpen(root)) return;
-    endSession(root);
-    const toggle = window.RelphiDrawingBoardToggleOptions;
-    if (typeof toggle === 'function') toggle();
+  function forceOptionsClosed(root = panel()) {
+    if (!root) return;
     root.dataset.relphiReadingOptionsOpen = 'false';
     root.classList.remove('relphi-options-transaction-active');
     drawer(root)?.classList.remove('is-reading-options-open');
@@ -235,6 +231,15 @@
       trigger.classList.remove('is-active');
       trigger.title = 'Open Options';
     }
+  }
+  function closeThroughExistingCancel() {
+    const root = panel();
+    if (!root || !optionsOpen(root)) return;
+    endSession(root);
+    const toggle = window.RelphiDrawingBoardToggleOptions;
+    if (typeof toggle === 'function') toggle();
+    forceOptionsClosed(panel());
+    requestAnimationFrame(() => forceOptionsClosed(panel()));
     schedule();
   }
   function dispatch(control,type) { control?.dispatchEvent(new Event(type,{bubbles:true})); }
@@ -312,28 +317,38 @@
     if (!root) return;
     const bridge = window.RelphiDrawingBoardOptionsBridge;
     const blank = { template:'', labels:[], pack:'full', stickers:true, reversals:true, repeats:false };
+    const blankSnapshot = bridge?.capture ? structuralBlankSnapshot(bridge.capture()) : null;
+
+    // Reset is an immediate board action, not an Options draft. Close the Options
+    // transaction first so its older baseline cannot restore the spread we are clearing.
+    closeThroughExistingCancel();
     applying = true;
-    try {
-      if (bridge?.capture && bridge?.restore) {
-        bridge.restore(structuralBlankSnapshot(bridge.capture()));
-      } else {
-        const nativeReset = root.querySelector('#clearShortList');
-        if (nativeReset && !nativeReset.disabled) nativeReset.click();
+
+    window.setTimeout(() => {
+      try {
+        if (blankSnapshot && bridge?.restore) {
+          bridge.restore(blankSnapshot);
+        } else {
+          const liveRoot = panel();
+          const nativeReset = liveRoot?.querySelector('#clearShortList');
+          if (nativeReset && !nativeReset.disabled) nativeReset.click();
+        }
+        waitForControls(liveRoot => {
+          const select = liveRoot.querySelector('#relphiSpreadTemplateSelect');
+          if (select) select.value = '';
+          clearEditorStructure(liveRoot);
+          applyRules(liveRoot,blank);
+          endSession(liveRoot);
+          forceOptionsClosed(liveRoot);
+          applying = false;
+          schedule();
+        });
+      } catch (_) {
+        applying = false;
+        forceOptionsClosed(panel());
+        schedule();
       }
-      const select = root.querySelector('#relphiSpreadTemplateSelect');
-      if (select) {
-        select.value = '';
-        dispatch(select,'change');
-      }
-      clearEditorStructure(root);
-      applyRules(root,blank);
-      session = { baseline:JSON.parse(JSON.stringify(blank)), draft:JSON.parse(JSON.stringify(blank)) };
-      root.classList.add('relphi-options-transaction-active');
-      normalizeTemplatePrompt(root);
-    } finally {
-      applying = false;
-    }
-    schedule();
+    },0);
   }
 
   function draftTemplateChanged(root,select) {
