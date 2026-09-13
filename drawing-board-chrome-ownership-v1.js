@@ -56,7 +56,6 @@
     move(titleBody, stats);
     move(notesBody, notes);
 
-    // Printing duplicates the downloadable HTML path, which can already be printed to PDF.
     root.querySelector('#printRowPdf')?.remove();
 
     EXPORT_IDS.forEach(id => {
@@ -105,6 +104,21 @@
     window.RelphiDrawingBoardEnsureTopActions?.(root);
   }
 
+  function canonicalUiReady(root) {
+    const drawer = root.querySelector('.relphi-reading-options-drawer');
+    const commitBar = drawer?.querySelector(':scope > .relphi-options-commit-bar[data-relphi-transactional="true"]');
+    const spreadGroup = drawer?.querySelector('.board-setup-group--spread');
+    const library = spreadGroup?.querySelector('.relphi-spread-prefab-library');
+    const templateSelect = library?.querySelector('#relphiSpreadTemplateSelect');
+    const labelBuilder = spreadGroup?.querySelector('.relphi-label-builder');
+    if (!drawer || !commitBar || !spreadGroup || !library || !templateSelect || !labelBuilder) return false;
+
+    let activeId = '';
+    try { activeId = window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id || ''; } catch (_) {}
+    if (activeId === 'celtic-cross-10' && !root.classList.contains('relphi-celtic-geometry-ready')) return false;
+    return true;
+  }
+
   function repair() {
     queued = false;
     if (repairing) return;
@@ -115,7 +129,12 @@
       ensureAfterCanvas(root);
       ensureWorkspaceTools(root);
       ensureOptions(root);
-      root.classList.add('relphi-drawing-board-ui-ready');
+      if (canonicalUiReady(root)) {
+        root.classList.add('relphi-drawing-board-ui-ready');
+      } else {
+        root.classList.remove('relphi-drawing-board-ui-ready');
+        window.setTimeout(schedule, 16);
+      }
     } finally {
       repairing = false;
     }
@@ -134,35 +153,11 @@
     }
     style.textContent = `
       #shortListPanel #drawing-board-after-canvas,
-      #shortListPanel #drawing-board-after-canvas *{
-        translate:none!important;
-      }
-      #shortListPanel #drawing-board-after-canvas{
-        position:relative!important;
-        inset:auto!important;
-        transform:none!important;
-        z-index:auto!important;
-      }
-      #shortListPanel #drawing-board-title .drawing-board-post-body{
-        display:grid!important;
-        grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
-        gap:1rem!important;
-        align-items:start!important;
-        width:100%!important;
-      }
-      #shortListPanel #drawing-board-title .relphi-reading-name-control{
-        grid-column:1!important;
-        width:100%!important;
-        min-width:0!important;
-        margin:0!important;
-      }
-      #shortListPanel #drawing-board-title .relphi-reading-stats{
-        grid-column:2!important;
-        width:100%!important;
-        min-width:0!important;
-        margin:0!important;
-        align-self:start!important;
-      }
+      #shortListPanel #drawing-board-after-canvas *{translate:none!important}
+      #shortListPanel #drawing-board-after-canvas{position:relative!important;inset:auto!important;transform:none!important;z-index:auto!important}
+      #shortListPanel #drawing-board-title .drawing-board-post-body{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:1rem!important;align-items:start!important;width:100%!important}
+      #shortListPanel #drawing-board-title .relphi-reading-name-control{grid-column:1!important;width:100%!important;min-width:0!important;margin:0!important}
+      #shortListPanel #drawing-board-title .relphi-reading-stats{grid-column:2!important;width:100%!important;min-width:0!important;margin:0!important;align-self:start!important}
       @media(max-width:700px){
         #shortListPanel #drawing-board-title .drawing-board-post-body{grid-template-columns:1fr!important}
         #shortListPanel #drawing-board-title .relphi-reading-name-control,
@@ -171,42 +166,24 @@
       #shortListPanel #drawing-board-post-export #snapshotCardRowArrangement,
       #shortListPanel #drawing-board-post-export #saveDrawingBoardSnapshotToDevice,
       #shortListPanel #drawing-board-post-export #downloadRowOptimizedHtml,
-      #shortListPanel #drawing-board-post-export #downloadRowJson{
-        position:static!important;
-        inset:auto!important;
-        transform:none!important;
-        translate:none!important;
-      }
+      #shortListPanel #drawing-board-post-export #downloadRowJson{position:static!important;inset:auto!important;transform:none!important;translate:none!important}
       #shortListPanel .relphi-reading-options-drawer #snapshotCardRowArrangement,
       #shortListPanel .relphi-reading-options-drawer #saveDrawingBoardSnapshotToDevice,
       #shortListPanel .relphi-reading-options-drawer #downloadRowOptimizedHtml,
-      #shortListPanel .relphi-reading-options-drawer #downloadRowJson{
-        display:none!important;
-      }
+      #shortListPanel .relphi-reading-options-drawer #downloadRowJson{display:none!important}
       #shortListPanel #printRowPdf{display:none!important}
-      #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{
-        transform:none!important;
-        translate:none!important;
-      }
+      #shortListPanel .card-row-workspace>.relphi-reading-options-drawer{transform:none!important;translate:none!important}
 
-      /* Anchor the six Celtic body labels to the card's top edge instead of the
-         changing item height. Placeholder -> card replacement can no longer move them. */
       #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="0"]>.card-row-position-panel,
       #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="1"]>.card-row-position-panel,
       #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="2"]>.card-row-position-panel,
       #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="3"]>.card-row-position-panel,
       #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="4"]>.card-row-position-panel,
       #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="5"]>.card-row-position-panel{
-        top:0!important;
-        bottom:auto!important;
-        margin:0!important;
-        transform:translateY(-100%)!important;
+        top:0!important;bottom:auto!important;margin:0!important;transform:translateY(-100%)!important
       }
       #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item.relphi-celtic-crossing-rotated>.card-row-position-panel{
-        top:0!important;
-        bottom:auto!important;
-        margin:0!important;
-        transform:translateY(-100%)!important;
+        top:0!important;bottom:auto!important;margin:0!important;transform:translateY(-100%)!important
       }
     `;
     if (style.parentElement !== document.head || style !== document.head.lastElementChild) document.head.appendChild(style);
@@ -225,8 +202,6 @@
     if (event.target?.closest?.('#shortListPanel .card-row-workspace')) schedule();
   }, { capture:true, passive:true });
 
-  // Preview wrappers may inject additional styles after the inner Tarot document loads.
-  // Keep the canonical ownership rules last so preview CSS cannot revive old geometry.
   new MutationObserver(records => {
     if (records.some(record => Array.from(record.addedNodes).some(node => node.nodeType === Node.ELEMENT_NODE && node.id !== 'relphi-drawing-board-chrome-ownership-style'))) {
       requestAnimationFrame(installStyle);
