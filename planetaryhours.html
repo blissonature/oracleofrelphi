@@ -1342,8 +1342,11 @@
   .ph-current-wheel-jump {
     display:block;
     margin:.35rem auto .05rem;
+    max-width:100%;
+    box-sizing:border-box;
+    padding:0 .2rem;
     color:var(--relphi-red);
-    font-size:.78rem;
+    font-size:.64rem;
     font-weight:850;
     line-height:1.1;
     white-space:nowrap;
@@ -2555,10 +2558,7 @@
       root.appendChild(angleLayer);
       root.appendChild(placementLayer);
       root.appendChild(phWheelSvg('circle', {cx:center.x,cy:center.y,r:4,class:'ph-wheel-center'}));
-      const caption = document.createElement('p');
-      caption.className = 'ph-tiny';
-      caption.textContent = 'Preview only. Use Sky Chart for the full reading.';
-      el.phCurrentWheel.replaceChildren(root, caption);
+      el.phCurrentWheel.replaceChildren(root);
 
       Promise.allSettled(jobs).then(function () {
         if (generation !== phWheelRenderGeneration || !root.isConnected) return;
