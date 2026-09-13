@@ -56,7 +56,6 @@
     move(titleBody, stats);
     move(notesBody, notes);
 
-    // Printing duplicates the downloadable HTML path, which can already be printed to PDF.
     root.querySelector('#printRowPdf')?.remove();
 
     EXPORT_IDS.forEach(id => {
@@ -105,6 +104,17 @@
     window.RelphiDrawingBoardEnsureTopActions?.(root);
   }
 
+  function currentUiAssembled(root) {
+    const drawer = root.querySelector('.relphi-reading-options-drawer');
+    const transactionBar = drawer?.querySelector(':scope > .relphi-options-commit-bar[data-relphi-transactional="true"]');
+    const spread = drawer?.querySelector('.board-setup-group--spread');
+    const template = spread?.querySelector('#relphiSpreadTemplateSelect');
+    const builder = spread?.querySelector('.relphi-label-builder');
+    const zoomRow = root.querySelector('.card-row-workspace-toolbar .relphi-zoom-row');
+    const fit = zoomRow?.querySelector('#zoomCardRowExtents');
+    return !!(drawer && transactionBar && spread && template && builder && zoomRow && fit);
+  }
+
   function repair() {
     queued = false;
     if (repairing) return;
@@ -115,7 +125,13 @@
       ensureAfterCanvas(root);
       ensureWorkspaceTools(root);
       ensureOptions(root);
-      root.classList.add('relphi-drawing-board-ui-ready');
+      // UI readiness is one-way. Once the current controls have assembled, a
+      // board re-render (including Reset Board) must never hide the Options button
+      // or expose the retired controls while replacements are being rebuilt.
+      if (!root.classList.contains('relphi-drawing-board-ui-ready')) {
+        if (currentUiAssembled(root)) root.classList.add('relphi-drawing-board-ui-ready');
+        else window.setTimeout(schedule, 16);
+      }
     } finally {
       repairing = false;
     }
@@ -189,6 +205,11 @@
         translate:none!important;
       }
 
+      /* The raw controls are construction material, not a temporary UI. */
+      #shortListPanel .relphi-reading-options-drawer .card-row-position-label{display:none!important}
+      #shortListPanel .card-row-workspace-toolbar>:not(.relphi-zoom-row){visibility:hidden!important;pointer-events:none!important}
+      #shortListPanel .card-row-workspace-toolbar>.relphi-zoom-row{visibility:visible!important;pointer-events:auto!important}
+
       /* Anchor the six Celtic body labels to the card's top edge instead of the
          changing item height. Placeholder -> card replacement can no longer move them. */
       #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item[data-row-index="0"]>.card-row-position-panel,
@@ -225,8 +246,6 @@
     if (event.target?.closest?.('#shortListPanel .card-row-workspace')) schedule();
   }, { capture:true, passive:true });
 
-  // Preview wrappers may inject additional styles after the inner Tarot document loads.
-  // Keep the canonical ownership rules last so preview CSS cannot revive old geometry.
   new MutationObserver(records => {
     if (records.some(record => Array.from(record.addedNodes).some(node => node.nodeType === Node.ELEMENT_NODE && node.id !== 'relphi-drawing-board-chrome-ownership-style'))) {
       requestAnimationFrame(installStyle);
