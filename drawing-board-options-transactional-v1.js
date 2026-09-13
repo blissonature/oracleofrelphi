@@ -125,8 +125,6 @@
   }
   function reset(root) {
     session = null;
-    // Close first, without calling the workflow's Cancel path. The root survives
-    // the native board re-render, so the Options button remains a stable control.
     setOpen(root,false);
     controller()?.resetBoard?.();
   }
@@ -136,9 +134,7 @@
     if (prefab) {
       setBuilderLabels(root,ordered(prefab).map(item => item.label));
       setRules(root,prefab);
-    } else {
-      setBuilderLabels(root,[]);
-    }
+    } else setBuilderLabels(root,[]);
     if (session) session.draft = readDraft(root);
   }
 
@@ -185,7 +181,6 @@
     style.textContent = `
       #shortListPanel .drawing-board-top-actions>#clearShortList,#shortListPanel .card-row-action-staging>#clearShortList{display:none!important}
       html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{order:0!important;flex:0 0 auto!important;margin-left:0!important;margin-right:auto!important}
-      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions,#shortListPanel.relphi-options-transaction-active .drawing-board-top-actions{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
       #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar{position:sticky!important;top:0!important;z-index:4250!important;display:flex!important;align-items:center!important;width:100%!important;min-height:3.5rem!important;padding:.55rem .65rem!important;margin:0!important;box-sizing:border-box!important;background:rgba(255,253,248,.98)!important;border-bottom:1px solid #d8cec5!important;box-shadow:0 4px 12px rgba(35,24,18,.08)!important}
       #shortListPanel .relphi-options-commit-bar .relphi-options-right{margin-left:auto!important;display:flex!important;gap:.7rem!important}
       #shortListPanel .relphi-options-commit-bar button{appearance:none!important;min-height:2.45rem!important;padding:.48rem .9rem!important;border:1px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.82rem!important;font-weight:850!important;box-shadow:none!important;cursor:pointer!important}
@@ -195,8 +190,6 @@
     document.head.appendChild(style);
   }
 
-  // Own the Options trigger before the workflow's target listener. This prevents
-  // a second baseline/cancel transaction from existing at the same time.
   document.addEventListener('click',event => {
     const root = panel();
     if (!root) return;
