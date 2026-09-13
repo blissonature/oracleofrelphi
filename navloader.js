@@ -158,6 +158,15 @@
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-boot-style';
       style.textContent = `
+        /* These are construction states, not alternate UI. They are never paintable,
+           even after the panel has previously reached ready state and is re-rendered. */
+        #shortListPanel .card-row-workspace-toolbar:not(:has(.relphi-zoom-row)),
+        #shortListPanel .card-row-more-options:not(.relphi-reading-options-drawer){
+          visibility:hidden!important;
+          opacity:0!important;
+          pointer-events:none!important;
+        }
+
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .drawing-board-top-actions,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-workspace-toolbar,
         #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-workspace-tools,
@@ -170,7 +179,7 @@
           pointer-events:none!important;
         }
         #shortListPanel.relphi-drawing-board-ui-ready .drawing-board-top-actions,
-        #shortListPanel.relphi-drawing-board-ui-ready .card-row-workspace-toolbar,
+        #shortListPanel.relphi-drawing-board-ui-ready .card-row-workspace-toolbar:has(.relphi-zoom-row),
         #shortListPanel.relphi-drawing-board-ui-ready .relphi-workspace-tools,
         #shortListPanel.relphi-drawing-board-ui-ready #drawing-board-after-canvas{
           transition:opacity .08s linear!important;
