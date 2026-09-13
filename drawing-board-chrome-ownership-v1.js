@@ -105,6 +105,44 @@
     window.RelphiDrawingBoardEnsureTopActions?.(root);
   }
 
+  function fitMobileBoardToViewport(root) {
+    if (!root) return;
+    const mobile = !!window.matchMedia?.('(max-width:700px)')?.matches;
+    if (!mobile) {
+      delete root.dataset.relphiMobileViewportFit;
+      return;
+    }
+
+    const workspace = root.querySelector('.card-row-workspace');
+    const items = Array.from(workspace?.querySelectorAll('.card-row-board>.card-row-item') || []);
+    let layoutId = '';
+    try { layoutId = window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id || ''; } catch (_) {}
+    if (!workspace || !items.length || !layoutId) return;
+
+    const zoomToFit = root.querySelector('#zoomCardRowExtents');
+    if (!zoomToFit) return;
+
+    const viewportWidth = Math.max(240, Math.floor(
+      window.visualViewport?.width ||
+      document.documentElement.clientWidth ||
+      window.innerWidth ||
+      0
+    ));
+    const signature = layoutId + ':' + items.length + ':' + viewportWidth;
+    if (root.dataset.relphiMobileViewportFit === signature) return;
+    root.dataset.relphiMobileViewportFit = signature;
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const liveRoot = panel();
+      const button = liveRoot?.querySelector('#zoomCardRowExtents');
+      if (!button) {
+        if (liveRoot) delete liveRoot.dataset.relphiMobileViewportFit;
+        return;
+      }
+      button.click();
+    }));
+  }
+
   function repair() {
     queued = false;
     if (repairing) return;
@@ -115,6 +153,7 @@
       ensureAfterCanvas(root);
       ensureWorkspaceTools(root);
       ensureOptions(root);
+      fitMobileBoardToViewport(root);
       root.classList.add('relphi-drawing-board-ui-ready');
     } finally {
       repairing = false;
@@ -167,6 +206,24 @@
         #shortListPanel #drawing-board-title .drawing-board-post-body{grid-template-columns:1fr!important}
         #shortListPanel #drawing-board-title .relphi-reading-name-control,
         #shortListPanel #drawing-board-title .relphi-reading-stats{grid-column:1!important}
+        html body #shortListPanel{
+          width:100%!important;
+          max-width:100vw!important;
+          min-width:0!important;
+          overflow-x:hidden!important;
+          box-sizing:border-box!important;
+        }
+        html body #shortListPanel .card-row-drawing-board,
+        html body #shortListPanel .card-row-workspace{
+          width:100%!important;
+          max-width:100%!important;
+          min-width:0!important;
+          box-sizing:border-box!important;
+          overflow-x:hidden!important;
+        }
+        html body #shortListPanel .card-row-workspace .short-list-row.card-row-board>.card-row-item{
+          position:absolute!important;
+        }
       }
       #shortListPanel #drawing-board-post-export #snapshotCardRowArrangement,
       #shortListPanel #drawing-board-post-export #saveDrawingBoardSnapshotToDevice,
@@ -224,6 +281,8 @@
   document.addEventListener('wheel', event => {
     if (event.target?.closest?.('#shortListPanel .card-row-workspace')) schedule();
   }, { capture:true, passive:true });
+  window.addEventListener('resize', schedule, { passive:true });
+  window.visualViewport?.addEventListener('resize', schedule, { passive:true });
 
   // Preview wrappers may inject additional styles after the inner Tarot document loads.
   // Keep the canonical ownership rules last so preview CSS cannot revive old geometry.
