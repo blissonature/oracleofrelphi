@@ -269,11 +269,12 @@
     }
   }
   function dispatch(control,type) { control?.dispatchEvent(new Event(type,{bubbles:true})); }
-  function waitForControls(callback,attempt = 0) {
+  function waitForControls(callback,attempt = 0,requireTemplate = false) {
     const root = panel();
-    const ready = root?.querySelector('#rowDrawScope') && root?.querySelector('#rowPositionLabels');
-    if (ready) return callback(root);
-    if (attempt < 30) window.setTimeout(() => waitForControls(callback,attempt + 1),35);
+    const baseReady = root?.querySelector('#rowDrawScope') && root?.querySelector('#rowPositionLabels');
+    const templateReady = !requireTemplate || !!root?.querySelector('#relphiSpreadTemplateSelect');
+    if (baseReady && templateReady) return callback(root);
+    if (attempt < 30) window.setTimeout(() => waitForControls(callback,attempt + 1,requireTemplate),35);
   }
 
   function structuralBlankSnapshot(snapshot) {
@@ -325,7 +326,7 @@
       const select = root.querySelector('#relphiSpreadTemplateSelect');
       if (select) { select.value = draft.template || ''; dispatch(select,'change'); }
       window.requestAnimationFrame(() => window.requestAnimationFrame(() => applyLabelsAndRules(draft,true)));
-    });
+    },0,!!draft.template);
   }
 
   function ok() {
