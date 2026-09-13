@@ -118,6 +118,21 @@ function assertTraditional(data) {
   const contentW=data.union.right-data.union.left,contentH=data.union.bottom-data.union.top; const fill=Math.max(contentW/data.workspace.width,contentH/data.workspace.height); assert.ok(fill>=.84,`zoom extents wastes too much available space (${(fill*100).toFixed(1)}% fill)`); assert.ok(fill<=1.01,'zoom extents must not overflow the workspace');
 }
 
+async function assertCrossesAfterSecondDraw(page) {
+  await page.click('#drawRandomRowCard');
+  await page.waitForFunction(() => document.querySelectorAll('#shortListPanel [data-row-card]').length >= 1, { timeout:10000 });
+  await page.click('#drawRandomRowCard');
+  await page.waitForFunction(() => document.querySelectorAll('#shortListPanel [data-row-card]').length >= 2, { timeout:10000 });
+  await page.waitForTimeout(180);
+  const data = await inspectCeltic(page);
+  const first = data.faces[0], crossing = data.faces[1];
+  const cx = rect => (rect.left + rect.right) / 2, cy = rect => (rect.top + rect.bottom) / 2;
+  assert.equal(data.crossingRotated,true,'position 2 must rotate only after its card is drawn');
+  assert.ok(data.crossingRotation === '90deg' || data.crossingRotation === '90','drawn position 2 must rotate 90°');
+  assert.ok(Math.abs(cx(first)-cx(crossing)) < 4,'drawn position 2 must move onto position 1 horizontally');
+  assert.ok(Math.abs(cy(first)-cy(crossing)) < 4,'drawn position 2 must move onto position 1 vertically');
+}
+
 async function assertResetStable(page) {
   await openOptions(page);
   await page.evaluate(() => { window.__relphiResetSamples=[]; let count=0; function sample(){const b=document.querySelector('#drawingBoardOptionsButton');const visible=!!b&&b.getBoundingClientRect().width>0&&getComputedStyle(b).visibility!=='hidden'&&getComputedStyle(b).opacity!=='0';window.__relphiResetSamples.push(visible);if(++count<18)requestAnimationFrame(sample);} requestAnimationFrame(sample); });
@@ -133,7 +148,7 @@ async function testViewport(browser,viewport,name) {
   await page.addInitScript(()=>{window.__relphiFouc={rawToolbarVisible:false,rawOptionsVisible:false,workspaceSeen:false,rawToolbarSample:null,rawOptionsSample:null};function visible(n){if(!n)return false;const s=getComputedStyle(n),r=n.getBoundingClientRect();return r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.opacity!=='0'&&s.display!=='none';}function describe(n){if(!n)return null;const s=getComputedStyle(n),r=n.getBoundingClientRect(),root=document.querySelector('#shortListPanel');return{html:n.outerHTML.slice(0,1200),styleAttr:n.getAttribute('style')||'',computed:{display:s.display,visibility:s.visibility,opacity:s.opacity,position:s.position,zIndex:s.zIndex},rect:{width:r.width,height:r.height,left:r.left,top:r.top},panelClass:root?.className||'',documentClass:document.documentElement.className||'',bootStylePresent:!!document.getElementById('relphi-drawing-board-boot-style'),chromeStylePresent:!!document.getElementById('relphi-drawing-board-chrome-v2-style')};}function sample(){const root=document.querySelector('#shortListPanel'),workspace=root?.querySelector('.card-row-workspace');if(visible(workspace))window.__relphiFouc.workspaceSeen=true;const toolbar=root?.querySelector('.card-row-workspace-toolbar');if(visible(toolbar)&&!toolbar.querySelector('.relphi-zoom-row')){window.__relphiFouc.rawToolbarVisible=true;if(!window.__relphiFouc.rawToolbarSample)window.__relphiFouc.rawToolbarSample=describe(toolbar);}const rawOptions=root?.querySelector('.card-row-more-options:not(.relphi-reading-options-drawer)');if(visible(rawOptions)){window.__relphiFouc.rawOptionsVisible=true;if(!window.__relphiFouc.rawOptionsSample)window.__relphiFouc.rawOptionsSample=describe(rawOptions);}requestAnimationFrame(sample);}addEventListener('DOMContentLoaded',()=>requestAnimationFrame(sample),{once:true});});
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000}); await ensureBoard(page); await waitStable(page);
   const fouc=await page.evaluate(()=>window.__relphiFouc); if(fouc.rawToolbarVisible||fouc.rawOptionsVisible)console.log(`${name} FOUC snapshot: ${JSON.stringify(fouc)}`); assert.equal(fouc.workspaceSeen,true,`${name}: dark board workspace never appeared`); assert.equal(fouc.rawToolbarVisible,false,`${name}: obsolete zoom toolbar painted`); assert.equal(fouc.rawOptionsVisible,false,`${name}: raw Options UI painted`);
-  await applyCeltic(page,name); const data=await inspectCeltic(page); console.log(`${name} Celtic geometry: ${JSON.stringify({workspace:data.workspace,staffFaces:data.faces.slice(6),staffLabels:data.labels.slice(6),staffLabelStyles:data.labelStyles.slice(6),staffItemClasses:data.itemClasses.slice(6),union:data.union,fitValue:data.fitValue,rootClasses:data.rootClasses})}`); await page.screenshot({path:`test-results/drawing-board-${name}.png`,fullPage:false}); assertTraditional(data); await assertResetStable(page); await page.close();
+  await applyCeltic(page,name); const data=await inspectCeltic(page); console.log(`${name} Celtic geometry: ${JSON.stringify({workspace:data.workspace,staffFaces:data.faces.slice(6),staffLabels:data.labels.slice(6),staffLabelStyles:data.labelStyles.slice(6),staffItemClasses:data.itemClasses.slice(6),union:data.union,fitValue:data.fitValue,rootClasses:data.rootClasses})}`); await page.screenshot({path:`test-results/drawing-board-${name}.png`,fullPage:false}); assertTraditional(data); await assertCrossesAfterSecondDraw(page); await assertResetStable(page); await page.close();
 }
 
 (async()=>{const browser=await chromium.launch({headless:true});try{await testViewport(browser,{width:1365,height:900},'desktop');await testViewport(browser,{width:390,height:844},'mobile');console.log('Drawing Board runtime acceptance checks passed.');}finally{await browser.close();}})().catch(error=>{console.error(error.stack||error);process.exitCode=1;});
