@@ -315,34 +315,34 @@
   function resetBoard() {
     const root = panel();
     if (!root) return;
-    const bridge = window.RelphiDrawingBoardOptionsBridge;
-    const blank = { template:'', labels:[], pack:'full', stickers:true, reversals:true, repeats:false };
-    const blankSnapshot = bridge?.capture ? structuralBlankSnapshot(bridge.capture()) : null;
 
-    // Reset is an immediate board action, not an Options draft. Close the Options
-    // transaction first so its older baseline cannot restore the spread we are clearing.
+    // Reset Board means the same thing as the native full-board clear: no cards,
+    // no placeholders, and no active spread. Do not rebuild a synthetic blank
+    // snapshot; that can leave the DOM slot count behind after the layout is gone.
     closeThroughExistingCancel();
     applying = true;
 
     window.setTimeout(() => {
       try {
-        if (blankSnapshot && bridge?.restore) {
-          bridge.restore(blankSnapshot);
-        } else {
-          const liveRoot = panel();
-          const nativeReset = liveRoot?.querySelector('#clearShortList');
-          if (nativeReset && !nativeReset.disabled) nativeReset.click();
+        const liveRoot = panel();
+        const nativeReset = liveRoot?.querySelector('#clearShortList');
+        if (nativeReset) {
+          const wasDisabled = !!nativeReset.disabled;
+          nativeReset.disabled = false;
+          nativeReset.click();
+          nativeReset.disabled = wasDisabled;
         }
-        waitForControls(liveRoot => {
-          const select = liveRoot.querySelector('#relphiSpreadTemplateSelect');
-          if (select) select.value = '';
-          clearEditorStructure(liveRoot);
-          applyRules(liveRoot,blank);
-          endSession(liveRoot);
-          forceOptionsClosed(liveRoot);
+
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const settledRoot = panel();
+          if (settledRoot) {
+            clearEditorStructure(settledRoot);
+            endSession(settledRoot);
+            forceOptionsClosed(settledRoot);
+          }
           applying = false;
           schedule();
-        });
+        }));
       } catch (_) {
         applying = false;
         forceOptionsClosed(panel());
