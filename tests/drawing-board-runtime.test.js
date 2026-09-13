@@ -56,6 +56,16 @@ async function inspectCeltic(page) {
     };
     const faces = items.map(item => rect(item.querySelector(':scope>.card-row-card-wrap,:scope>.card-row-drop-card')));
     const labels = items.map(item => rect(item.querySelector(':scope>.card-row-position-panel')));
+    const labelStyles = items.map(item => {
+      const label = item.querySelector(':scope>.card-row-position-panel');
+      const style = getComputedStyle(label);
+      return {
+        left:style.left,right:style.right,top:style.top,bottom:style.bottom,
+        width:style.width,position:style.position,transform:style.transform,
+        display:style.display,visibility:style.visibility
+      };
+    });
+    const itemClasses = items.map(item => item.className);
     const wr = rect(workspace);
     const all = [...faces,...labels];
     const union = {
@@ -64,7 +74,7 @@ async function inspectCeltic(page) {
     };
     const crossing = items[1];
     return {
-      workspace:wr,faces,labels,union,
+      workspace:wr,faces,labels,labelStyles,itemClasses,union,
       crossingRotation:getComputedStyle(crossing).getPropertyValue('--row-card-rotation').trim(),
       crossingRotated:crossing.classList.contains('relphi-celtic-crossing-rotated'),
       rootClasses:root.className,
@@ -91,16 +101,14 @@ function assertTraditional(data) {
   assert.ok(cx(f[4]) < cx(f[0]),'5 must be left of 1');
   assert.ok(cx(f[5]) > cx(f[1]),'6 must be right of the center');
 
-  // Position 2 begins upright and separate. It crosses only after it receives a card.
   assert.ok(cx(f[1]) > cx(f[0]) + f[0].width * .45,'2 must begin separately to the right of 1');
   assert.equal(data.crossingRotated,false,'empty position 2 must not be rotated');
   assert.ok(data.crossingRotation === '0deg' || data.crossingRotation === '0','empty position 2 must be upright');
 
-  // Traditional staff: one x-axis, rising 7 -> 10 with no overlap.
   const staff = f.slice(6);
   const xs = staff.map(cx);
   assert.ok(Math.max(...xs) - Math.min(...xs) < 3,'staff cards must share one vertical axis');
-  assert.ok(staff[9-6].top < staff[8-6].top && staff[8-6].top < staff[7-6].top && staff[7-6].top < staff[6-6].top,'staff must rise from 7 to 10');
+  assert.ok(staff[3].top < staff[2].top && staff[2].top < staff[1].top && staff[1].top < staff[0].top,'staff must rise from 7 to 10');
   for (let i=1;i<staff.length;i++) {
     const upper = staff[staff.length - i];
     const lower = staff[staff.length - i - 1];
@@ -110,10 +118,8 @@ function assertTraditional(data) {
   data.labels.forEach((label,index) => assertInside(label,data.workspace,`label ${index+1}`,3));
   data.faces.forEach((face,index) => assertInside(face,data.workspace,`card ${index+1}`,3));
 
-  // Staff labels must sit beside their cards, not underneath another staff card.
   for (let i=6;i<10;i++) assert.ok(data.labels[i].left >= data.faces[i].right - 3,`staff label ${i+1} must sit beside its card`);
 
-  // Fit should use almost all of at least one available dimension without clipping.
   const contentW = data.union.right - data.union.left;
   const contentH = data.union.bottom - data.union.top;
   const fill = Math.max(contentW / data.workspace.width, contentH / data.workspace.height);
@@ -209,8 +215,9 @@ async function testViewport(browser,viewport,name) {
 
   await applyCeltic(page);
   const data = await inspectCeltic(page);
-  assertTraditional(data);
+  console.log(`${name} Celtic geometry: ${JSON.stringify({workspace:data.workspace,staffFaces:data.faces.slice(6),staffLabels:data.labels.slice(6),staffLabelStyles:data.labelStyles.slice(6),staffItemClasses:data.itemClasses.slice(6),union:data.union,fitValue:data.fitValue,rootClasses:data.rootClasses})}`);
   await page.screenshot({ path:`test-results/drawing-board-${name}.png`,fullPage:false });
+  assertTraditional(data);
   await assertResetStable(page);
   await page.close();
 }
