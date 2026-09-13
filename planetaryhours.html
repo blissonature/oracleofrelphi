@@ -553,20 +553,6 @@
   .ph-moon-frame h2 { margin-top: 0; }
   .ph-hour-frame { text-align: center; }
   .ph-top-hour-time { font-weight: 800; margin: .65em 0 .2em; }
-  .ph-datefield-jump { text-align: center; }
-  .ph-datefield-link {
-    display: inline-flex;
-    margin-top: .75em;
-    white-space: nowrap;
-    align-items: center;
-    justify-content: center;
-    max-width: 100%;
-    box-sizing: border-box;
-    font-size: .86rem;
-    line-height: 1.1;
-    padding-left: 1em;
-    padding-right: 1em;
-  }
   .ph-ticker-shell {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -1336,20 +1322,6 @@
   }
 
 
-  /* Sky Chart jump action: static label stays on one line inside the Day column. */
-  .planetary-page .ph-datefield-link {
-    display: inline-flex !important;
-    width: auto !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    white-space: nowrap !important;
-    text-align: center !important;
-    font-size: .78rem !important;
-    line-height: 1.1 !important;
-    padding: .66em .72em !important;
-    box-sizing: border-box !important;
-  }
-
 
   .ph-current-wheel-card {
     display:block;
@@ -1367,6 +1339,16 @@
   .ph-current-wheel-card:hover { border-color:rgba(220,31,24,.55); box-shadow:0 8px 22px rgba(0,0,0,.07); transform:translateY(-1px); }
   .ph-current-wheel-card:focus-visible { outline:3px solid rgba(220,31,24,.3); outline-offset:3px; border-color:var(--relphi-red); }
   .ph-current-wheel-card h3 { margin:.05rem 0 .25rem; font-size:.95rem; }
+  .ph-current-wheel-jump {
+    display:block;
+    margin:.35rem auto .05rem;
+    color:var(--relphi-red);
+    font-size:.78rem;
+    font-weight:850;
+    line-height:1.1;
+    white-space:nowrap;
+    text-align:center;
+  }
   .ph-current-wheel { width:min(320px,100%); height:auto; display:block; margin:0 auto; overflow:visible; }
   .ph-current-wheel-direct:not(.is-ready) { visibility:hidden; }
   .ph-current-wheel-direct .ph-wheel-house-sector { stroke:none; }
@@ -1578,8 +1560,7 @@
         <div class="ph-day-line"><p class="ph-tiny" id="dayRulerMeta">—</p></div>
         <p id="sunTimes">—</p>
         <p class="ph-tiny" id="bridgeInfo">—</p>
-        <p class="ph-datefield-jump"><a class="ph-btn ph-datefield-link" id="dateFieldLink" href="sky-chart.html#sky-calc">Jump to this moment in Sky Chart</a></p>
-        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div></a>
+        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div><span class="ph-current-wheel-jump">Jump to this moment in Sky Chart</span></a>
       </div>
       <div class="ph-hour-frame ph-hour-frame-merged ph-living-heptagram-frame">
         <p class="eyebrow">Living planetary hour</p>
@@ -1836,7 +1817,6 @@
     moonPhase: document.getElementById('moonPhase'),
     moonTimes: document.getElementById('moonTimes'),
     moonVisibility: document.getElementById('moonVisibility'),
-    dateFieldLink: document.getElementById('dateFieldLink'),
     phCurrentWheelCard: document.getElementById('phCurrentWheelCard'),
     phCurrentWheel: document.getElementById('phCurrentWheel'),
     ticker: document.getElementById('ticker'),
@@ -3180,7 +3160,7 @@
     const skyMoment = activePreviewMoment(frame, rows, idx);
     const dateKeyForLedger = dateInputValueFor(skyMoment, state.tz);
     const skyDateTime = dateKeyForLedger + 'T' + timeInputValueFor(skyMoment, state.tz);
-    if (el.dateFieldLink) {
+    if (el.phCurrentWheelCard) {
       const skyParams = new URLSearchParams({
         source: 'planetary-hours',
         datetime: skyDateTime,
@@ -3192,8 +3172,7 @@
         name: 'Planetary Hours ' + skyDateTime.replace('T', ' ')
       });
       const skyChartHref = 'sky-chart.html?' + skyParams.toString() + '#sky-calc';
-      el.dateFieldLink.href = skyChartHref;
-      if (el.phCurrentWheelCard) el.phCurrentWheelCard.href = skyChartHref;
+      el.phCurrentWheelCard.href = skyChartHref;
     }
     if (el.topHourRuler && cur) el.topHourRuler.innerHTML = pillFor(cur.ruler, cur.ruler.name + ' hour');
     if (el.topHourTime && cur) el.topHourTime.textContent = fmtHM(cur.start) + '–' + fmtHM(cur.end) + ' • ' + (cur.isBright ? 'Bright' : 'Dark') + ' hour ' + cur.index;
