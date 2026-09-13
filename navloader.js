@@ -34,7 +34,6 @@
     return /(^|\/)planetaryhours\.html$/.test(location.pathname);
   }
 
-
   function initAnalytics() {
     const id = 'G-PNWZP2MW64';
     if (!/(^|\.)oracleofrelphi\.com$/i.test(location.hostname) || document.getElementById('relphi-google-tag')) return;
@@ -89,9 +88,7 @@
     note.innerHTML = '<strong>The Sky Builder preview did not finish loading.</strong> <button type="button" id="relphiRetryPreview" class="relphi-preview-retry">Retry preview</button>';
     hero.insertAdjacentElement('afterend', note);
     const retryButton = document.getElementById('relphiRetryPreview');
-    if (retryButton) {
-      Object.assign(retryButton.style, {appearance:'none',border:'1px solid rgba(220,31,24,.45)',borderRadius:'999px',background:'#fff',color:'#111',font:'inherit',fontWeight:'800',marginLeft:'.5rem',padding:'.55rem .9rem',cursor:'pointer'});
-    }
+    if (retryButton) Object.assign(retryButton.style, {appearance:'none',border:'1px solid rgba(220,31,24,.45)',borderRadius:'999px',background:'#fff',color:'#111',font:'inherit',fontWeight:'800',marginLeft:'.5rem',padding:'.55rem .9rem',cursor:'pointer'});
     retryButton?.addEventListener('click', function () {
       const url = new URL(location.href);
       url.searchParams.set('previewRetry', String(Date.now()));
@@ -158,8 +155,10 @@
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-boot-style';
       style.textContent = `
-        /* These are construction states, not alternate UI. They are never paintable,
-           even after the panel has previously reached ready state and is re-rendered. */
+        /* Construction states are never alternate UI. The extra controller selector
+           outranks the generic auto-hide controller rule that otherwise exposes the
+           native toolbar before the canonical zoom row has been assembled. */
+        html body #shortListPanel .card-row-workspace-toolbar.relphi-board-controller:not(:has(.relphi-zoom-row)),
         #shortListPanel .card-row-workspace-toolbar:not(:has(.relphi-zoom-row)),
         #shortListPanel .card-row-more-options:not(.relphi-reading-options-drawer){
           visibility:hidden!important;
@@ -233,9 +232,7 @@
     if (/(^|\/)(mythic-atlas|constellations)\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () { appendScript('relphi-inline-glyph-consumer-v1.js?v=2'); });
     }
-    if (isSkyChartContext() && document.getElementById('skyFoundationRoot')) {
-      appendScript('sky-chart-page-stability-v1.js?v=1');
-    }
+    if (isSkyChartContext() && document.getElementById('skyFoundationRoot')) appendScript('sky-chart-page-stability-v1.js?v=1');
     if (isSkyChartContext() && !document.getElementById('skyFoundationRoot')) {
       const preview = new URLSearchParams(location.search).get('preview');
       ['sky-chart-stability-hotfix.js?v=1','sky-chart-static-dynamic.js?v=2','sky-chart-aspect-duration-fix.js?v=2','sky-chart-relationship-language.js?v=5','sky-chart-related-relationships-v2.js?v=2','sky-chart-sign-cusps-v1.js?v=1','sky-chart-provenance-fix.js?v=1','sky-chart-calculated-points-v1.js?v=4'].forEach(function (src) { appendScript(src); });
@@ -255,7 +252,6 @@
     fetch('nav.html?v=14').then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); }).then(injectNav).catch(fallbackNav);
   }
 
-  // These masks must be installed synchronously, before DOMContentLoaded enhancement work can paint intermediate states.
   if (isTarotContext()) refreshDrawingBoardControlAssets();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
