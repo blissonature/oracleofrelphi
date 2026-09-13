@@ -7,6 +7,15 @@
 
   const PANEL = '#shortListPanel';
   const EXPORT_IDS = ['snapshotCardRowArrangement','saveDrawingBoardSnapshotToDevice','downloadRowOptimizedHtml','downloadRowJson'];
+  const CELTIC_LAYOUT_ID = 'celtic-cross-10';
+  const CELTIC_SCALE = .80;
+  const CELTIC_CENTER_LEFT = 250;
+  const CELTIC_CENTER_TOP = 340;
+  const CELTIC_STAFF_LEFT = 620;
+  const CELTIC_FALLBACK_W = 174;
+  const CELTIC_FALLBACK_H = 301;
+  const CELTIC_FALLBACK_STICKER_H = 40;
+  const CELTIC_STICKER_CLEARANCE = 2;
   let queued = false;
   let repairing = false;
 
@@ -105,6 +114,93 @@
     window.RelphiDrawingBoardEnsureTopActions?.(root);
   }
 
+  function mobileCelticGeometry(root) {
+    if (!window.matchMedia?.('(max-width:700px)')?.matches) {
+      delete root?.dataset.relphiMobileCelticFit;
+      return;
+    }
+    let state = null;
+    try { state = window.RelphiDrawingBoardPrefabsBridge?.getState?.() || null; } catch (_) {}
+    if (!root || state?.activeLayout?.id !== CELTIC_LAYOUT_ID) return;
+
+    const liveBoard = root.querySelector('.card-row-board');
+    const workspace = root.querySelector('.card-row-workspace');
+    const items = Array.from(liveBoard?.querySelectorAll(':scope > .card-row-item') || []);
+    if (!liveBoard || !workspace || items.length < 10) return;
+
+    const firstFace = items[0]?.querySelector('.card-row-card-wrap,.card-row-drop-card');
+    const width = firstFace?.offsetWidth || CELTIC_FALLBACK_W;
+    const height = firstFace?.offsetHeight || CELTIC_FALLBACK_H;
+    const visualWidth = width * CELTIC_SCALE;
+    const visualHeight = height * CELTIC_SCALE;
+    const axis = CELTIC_CENTER_LEFT + width / 2;
+    const stickerGap = index => {
+      const sticker = items[index]?.querySelector(':scope > .card-row-position-panel');
+      return ((sticker?.offsetHeight || CELTIC_FALLBACK_STICKER_H) + CELTIC_STICKER_CLEARANCE) * CELTIC_SCALE;
+    };
+    const open = !!state.centerOpen;
+    const coveringGap = stickerGap(0);
+    const crossingGap = stickerGap(1);
+    const beneathGap = stickerGap(3);
+    const crownY = CELTIC_CENTER_TOP - visualHeight - coveringGap;
+    const beneathY = CELTIC_CENTER_TOP + visualHeight + beneathGap;
+    let coveringX = CELTIC_CENTER_LEFT;
+    let crossingX = CELTIC_CENTER_LEFT;
+    let centralLeft;
+    let centralRight;
+    const uprightVisualLeft = logicalLeft => logicalLeft + (width - visualWidth) / 2;
+    const uprightVisualRight = logicalLeft => uprightVisualLeft(logicalLeft) + visualWidth;
+    const xForVisualLeft = visualLeft => visualLeft - (width - visualWidth) / 2;
+    const xForVisualRight = visualRight => visualRight - (width + visualWidth) / 2;
+
+    if (open) {
+      coveringX = CELTIC_CENTER_LEFT - visualWidth / 2;
+      crossingX = CELTIC_CENTER_LEFT + visualWidth / 2;
+      centralLeft = uprightVisualLeft(coveringX);
+      centralRight = uprightVisualRight(crossingX);
+    } else {
+      centralLeft = axis - visualHeight / 2;
+      centralRight = axis + visualHeight / 2;
+    }
+    const behindX = xForVisualRight(centralLeft);
+    const beforeX = xForVisualLeft(centralRight + (open ? 0 : crossingGap));
+    const staffTop = 8;
+    const geometry = [
+      [coveringX, CELTIC_CENTER_TOP, 0, 20],
+      [crossingX, CELTIC_CENTER_TOP, open ? 0 : 90, 30],
+      [CELTIC_CENTER_LEFT, crownY, 0, 4],
+      [CELTIC_CENTER_LEFT, beneathY, 0, 4],
+      [behindX, CELTIC_CENTER_TOP, 0, 4],
+      [beforeX, CELTIC_CENTER_TOP, 0, 4],
+      [CELTIC_STAFF_LEFT, staffTop + 3 * visualHeight, 0, 4],
+      [CELTIC_STAFF_LEFT, staffTop + 2 * visualHeight, 0, 4],
+      [CELTIC_STAFF_LEFT, staffTop + visualHeight, 0, 4],
+      [CELTIC_STAFF_LEFT, staffTop, 0, 4]
+    ];
+
+    items.slice(0, 10).forEach((item, index) => {
+      const values = geometry[index];
+      item.style.setProperty('position', 'absolute', 'important');
+      item.style.setProperty('left', values[0].toFixed(2) + 'px', 'important');
+      item.style.setProperty('top', values[1].toFixed(2) + 'px', 'important');
+      item.style.setProperty('z-index', String(values[3]), 'important');
+      item.style.setProperty('--row-card-scale', String(CELTIC_SCALE));
+      item.style.setProperty('--row-card-rotation', values[2] + 'deg');
+      item.classList.toggle('relphi-celtic-crossing-rotated', index === 1 && !open);
+    });
+    liveBoard.style.setProperty('min-height', '760px', 'important');
+
+    const viewportWidth = Math.round(window.visualViewport?.width || document.documentElement.clientWidth || window.innerWidth || 0);
+    const signature = [viewportWidth, open ? 1 : 0, items.length].join(':');
+    if (root.dataset.relphiMobileCelticFit === signature) return;
+    root.dataset.relphiMobileCelticFit = signature;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const current = panel();
+      if (!current || current.dataset.relphiMobileCelticFit !== signature) return;
+      current.querySelector('#zoomCardRowExtents')?.click();
+    }));
+  }
+
   function repair() {
     queued = false;
     if (repairing) return;
@@ -115,6 +211,7 @@
       ensureAfterCanvas(root);
       ensureWorkspaceTools(root);
       ensureOptions(root);
+      mobileCelticGeometry(root);
       root.classList.add('relphi-drawing-board-ui-ready');
     } finally {
       repairing = false;
@@ -246,8 +343,16 @@
   document.addEventListener('wheel', event => {
     if (event.target?.closest?.('#shortListPanel .card-row-workspace')) schedule();
   }, { capture:true, passive:true });
-  window.addEventListener('resize', schedule, { passive:true });
-  window.visualViewport?.addEventListener('resize', schedule, { passive:true });
+  window.addEventListener('resize', () => {
+    const root = panel();
+    if (root) delete root.dataset.relphiMobileCelticFit;
+    schedule();
+  }, { passive:true });
+  window.visualViewport?.addEventListener('resize', () => {
+    const root = panel();
+    if (root) delete root.dataset.relphiMobileCelticFit;
+    schedule();
+  }, { passive:true });
 
   // Preview wrappers may inject additional styles after the inner Tarot document loads.
   // Keep the canonical ownership rules last so preview CSS cannot revive old geometry.
