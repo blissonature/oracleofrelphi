@@ -1,411 +1,255 @@
-// Transactional Reading Setup editor for Drawing Board Options.
+// Transactional Drawing Board Options. Draft edits never mutate the board.
+// OK hands one complete draft to the state-level layout controller; Cancel does
+// nothing to board state; Reset delegates one authoritative blank-board action.
 (function () {
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
-  if (window.__relphiDrawingBoardTransactionalOptionsV1) return;
-  window.__relphiDrawingBoardTransactionalOptionsV1 = true;
+  if (window.__relphiDrawingBoardTransactionalOptionsV2) return;
+  window.__relphiDrawingBoardTransactionalOptionsV2 = true;
+  window.__relphiDrawingBoardTransactionalOptionsV1 = true; // compatibility filename
 
   const PANEL = '#shortListPanel';
-  const CORE_CONTROL_SELECTOR = [
-    '#relphiSpreadTemplateSelect',
-    '#rowPositionLabels',
-    '#rowDrawScope',
-    '#rowPositionStickersQuick',
-    '#rowAllowReversalsQuick',
-    '#rowAllowRepeats',
-    '.relphi-label-builder [data-relphi-label-input]'
-  ].join(',');
-
+  const CORE = '#relphiSpreadTemplateSelect,#rowPositionLabels,#rowDrawScope,#rowPositionStickersQuick,#rowAllowReversalsQuick,#rowAllowRepeats,.relphi-label-builder [data-relphi-label-input]';
   let session = null;
-  let applying = false;
-  let queued = false;
+  let scheduled = false;
 
-  function panel() { return document.querySelector(PANEL); }
-  function drawer(root = panel()) { return root?.querySelector('.relphi-reading-options-drawer') || null; }
-  function optionsOpen(root = panel()) { return !!root && root.dataset.relphiReadingOptionsOpen === 'true'; }
-  function prefabs() {
+  const panel = () => document.querySelector(PANEL);
+  const drawer = root => root?.querySelector('.relphi-reading-options-drawer') || null;
+  const controller = () => window.RelphiDrawingBoardLayoutController || null;
+  function templates() {
     try { return window.RelphiDrawingBoardSpreadPrefabs?.list?.() || []; }
     catch (_) { return []; }
   }
-  function prefabById(id) { return prefabs().find(item => item.id === id) || null; }
-  function labelsForPrefab(prefab) {
-    return (prefab?.positions || []).slice().sort((a,b) => Number(a.drawOrder || 0) - Number(b.drawOrder || 0))
-      .map((item,index) => String(item?.label || ('Position #' + (index + 1))).trim()).filter(Boolean);
+  const templateById = id => templates().find(item => item?.id === id) || null;
+  const ordered = layout => Array.isArray(layout?.positions) ? layout.positions.slice().sort((a,b) => Number(a.drawOrder||0)-Number(b.drawOrder||0)) : [];
+  const clean = values => (values || []).map(v => String(v || '').trim()).filter(Boolean);
+
+  function visibleLabels(root) {
+    const inputs = Array.from(root?.querySelectorAll('.relphi-label-builder [data-relphi-label-input]') || []);
+    if (inputs.length) return clean(inputs.map(input => input.value));
+    return clean(String(root?.querySelector('#rowPositionLabels')?.value || '').split(','));
   }
-  function cleanLabels(values) {
-    return (values || []).map(value => String(value || '').trim()).filter(Boolean);
-  }
-  function builderLabels(root = panel()) {
-    const inputs = Array.from(root?.querySelectorAll('.relphi-reading-options-drawer .relphi-label-builder [data-relphi-label-input]') || []);
-    if (inputs.length) return cleanLabels(inputs.map(input => input.value));
-    return cleanLabels(String(root?.querySelector('#rowPositionLabels')?.value || '').split(','));
-  }
-  function readDraft(root = panel()) {
+  function readDraft(root=panel()) {
     return {
       template:String(root?.querySelector('#relphiSpreadTemplateSelect')?.value || ''),
-      labels:builderLabels(root),
+      labels:visibleLabels(root),
       pack:String(root?.querySelector('#rowDrawScope')?.value || 'full'),
       stickers:root?.querySelector('#rowPositionStickersQuick')?.checked !== false,
       reversals:root?.querySelector('#rowAllowReversalsQuick')?.checked !== false,
       repeats:!!root?.querySelector('#rowAllowRepeats')?.checked
     };
   }
-  function sameDraft(a,b) { return JSON.stringify(a || {}) === JSON.stringify(b || {}); }
-  function structureChanged(a,b) {
-    if (!a || !b) return false;
-    return a.template !== b.template || JSON.stringify(a.labels) !== JSON.stringify(b.labels);
-  }
 
-  function setCheckbox(root,id,value) {
-    const input = root?.querySelector('#' + id);
-    if (input) input.checked = !!value;
-  }
-  function setDraftRules(root,prefab) {
-    const rules = prefab?.rules || {};
-    const pack = root?.querySelector('#rowDrawScope');
-    if (pack) pack.value = String(rules.drawScope || 'full');
-    setCheckbox(root,'rowPositionStickersQuick',true);
-    setCheckbox(root,'rowAllowReversalsQuick',rules.allowReversals !== false);
-    setCheckbox(root,'rowAllowRepeats',!!rules.allowRepeats);
+  function setOpen(root,open) {
+    if (!root) return;
+    root.dataset.relphiReadingOptionsOpen = open ? 'true' : 'false';
+    root.classList.toggle('relphi-options-transaction-active',open);
+    const box = drawer(root);
+    if (box) {
+      box.open = true;
+      box.classList.toggle('is-reading-options-open',open);
+    }
+    const trigger = root.querySelector('#drawingBoardOptionsButton');
+    if (trigger) {
+      trigger.setAttribute('aria-expanded',String(open));
+      trigger.classList.toggle('is-active',open);
+      trigger.title = open ? 'Options are open' : 'Open Options';
+    }
   }
 
   function setBuilderLabels(root,labels) {
-    const builder = root?.querySelector('.relphi-reading-options-drawer .relphi-label-builder');
+    const builder = root?.querySelector('.relphi-label-builder');
     const hidden = root?.querySelector('#rowPositionLabels');
-    const clean = labels.length ? labels.map(value => String(value || '')) : [''];
+    const wanted = (labels?.length ? labels : ['']).map(v => String(v || ''));
     if (!builder) {
-      if (hidden) hidden.value = cleanLabels(clean).join(', ');
+      if (hidden) hidden.value = clean(wanted).join(', ');
       return;
     }
-
     let guard = 0;
-    while (builder.querySelectorAll('[data-relphi-label-input]').length < clean.length && guard++ < 45) {
+    while (builder.querySelectorAll('[data-relphi-label-input]').length < wanted.length && guard++ < 45) {
       const rows = builder.querySelectorAll('.relphi-label-row');
-      const add = rows[rows.length - 1]?.querySelector('.relphi-label-add');
-      if (!add) break;
-      add.click();
+      rows[rows.length - 1]?.querySelector('.relphi-label-add')?.click();
     }
     guard = 0;
-    while (builder.querySelectorAll('[data-relphi-label-input]').length > clean.length && guard++ < 45) {
+    while (builder.querySelectorAll('[data-relphi-label-input]').length > wanted.length && guard++ < 45) {
       const rows = builder.querySelectorAll('.relphi-label-row');
-      const remove = rows[rows.length - 1]?.querySelector('.relphi-label-remove');
-      if (!remove) break;
-      remove.click();
+      rows[rows.length - 1]?.querySelector('.relphi-label-remove')?.click();
     }
-
-    Array.from(builder.querySelectorAll('[data-relphi-label-input]')).forEach((input,index) => {
-      input.value = clean[index] || '';
-    });
+    Array.from(builder.querySelectorAll('[data-relphi-label-input]')).forEach((input,index) => { input.value = wanted[index] || ''; });
     if (hidden) {
-      hidden.value = cleanLabels(clean).join(', ');
+      hidden.value = clean(wanted).join(', ');
       hidden.dataset.relphiManualValue = hidden.value;
     }
   }
 
-  function liveBoardState() {
-    try { return window.RelphiDrawingBoardPrefabsBridge?.getState?.() || null; }
-    catch (_) { return null; }
-  }
-  function orderedLayoutLabels(layout) {
-    return (layout?.positions || []).slice().sort((a,b) => Number(a?.drawOrder || 0) - Number(b?.drawOrder || 0))
-      .map((item,index) => String(item?.label || ('Position #' + (index + 1))).trim()).filter(Boolean);
-  }
-  function clearEditorStructure(root) {
-    const select = root?.querySelector('#relphiSpreadTemplateSelect');
-    if (select) select.value = '';
-    setBuilderLabels(root,[]);
-    normalizeTemplatePrompt(root);
-  }
-  function syncLiveStructureIntoEditor(root = panel()) {
-    if (!root) return;
-    const state = liveBoardState();
-    if (!state) return;
-    const layout = [state.activeLayout,state.currentLayout].find(candidate => Array.isArray(candidate?.positions) && candidate.positions.length);
-    if (layout) {
-      const select = root.querySelector('#relphiSpreadTemplateSelect');
-      const known = prefabById(layout.id);
-      if (select && known) select.value = known.id;
-      setBuilderLabels(root,orderedLayoutLabels(layout));
-      return;
-    }
-    const domSlots = root.querySelectorAll('.card-row-board .card-row-item').length;
-    const slotCount = Math.max(domSlots,Number(state.slotCount) || 0);
-    if (!state.hasCards && slotCount === 0) clearEditorStructure(root);
+  function setRules(root,prefab) {
+    const rules = prefab?.rules || {};
+    const pack = root?.querySelector('#rowDrawScope');
+    if (pack) pack.value = String(rules.drawScope || 'full');
+    const stickers = root?.querySelector('#rowPositionStickersQuick');
+    if (stickers) stickers.checked = true;
+    const reversals = root?.querySelector('#rowAllowReversalsQuick');
+    if (reversals) reversals.checked = rules.allowReversals !== false;
+    const repeats = root?.querySelector('#rowAllowRepeats');
+    if (repeats) repeats.checked = !!rules.allowRepeats;
   }
 
-  function beginSession(root = panel()) {
-    if (!root || session) return;
-    syncLiveStructureIntoEditor(root);
-    const baseline = readDraft(root);
-    session = { baseline, draft:JSON.parse(JSON.stringify(baseline)) };
-    root.classList.add('relphi-options-transaction-active');
+  function syncEditorFromBoard(root) {
+    const live = window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    const layout = live?.activeLayout;
+    const select = root?.querySelector('#relphiSpreadTemplateSelect');
+    if (layout?.id && select && templateById(layout.id)) select.value = layout.id;
+    if (layout?.positions?.length) setBuilderLabels(root,ordered(layout).map(item => item.label));
+    if (!layout && !live?.slotCount) {
+      if (select) select.value = '';
+      setBuilderLabels(root,[]);
+    }
   }
-  function endSession(root = panel()) {
+
+  function begin(root) {
+    syncEditorFromBoard(root);
+    session = { draft:readDraft(root) };
+    setOpen(root,true);
+  }
+  function cancel(root) {
     session = null;
-    root?.classList.remove('relphi-options-transaction-active');
+    setOpen(root,false);
   }
-  function refreshDraft(root = panel()) {
-    if (!session || !root) return;
+  function commit(root) {
+    if (!session) return cancel(root);
     session.draft = readDraft(root);
+    const draft = JSON.parse(JSON.stringify(session.draft));
+    session = null;
+    setOpen(root,false);
+    controller()?.applyDraft?.(draft);
+  }
+  function reset(root) {
+    session = null;
+    // Close first, without calling the workflow's Cancel path. The root survives
+    // the native board re-render, so the Options button remains a stable control.
+    setOpen(root,false);
+    controller()?.resetBoard?.();
+  }
+
+  function templateChanged(root,select) {
+    const prefab = templateById(select.value);
+    if (prefab) {
+      setBuilderLabels(root,ordered(prefab).map(item => item.label));
+      setRules(root,prefab);
+    } else {
+      setBuilderLabels(root,[]);
+    }
+    if (session) session.draft = readDraft(root);
+  }
+
+  function installBar(root) {
+    const box = drawer(root);
+    if (!box) return false;
+    let bar = box.querySelector(':scope > .relphi-options-commit-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'relphi-options-commit-bar';
+      const summary = box.querySelector(':scope > summary');
+      summary ? summary.insertAdjacentElement('afterend',bar) : box.prepend(bar);
+    }
+    if (bar.dataset.relphiTransactionOwner !== 'v2') {
+      bar.dataset.relphiTransactionOwner = 'v2';
+      bar.innerHTML = '<button type="button" class="relphi-options-reset">Reset Board</button><span class="relphi-options-right"><button type="button" class="relphi-options-cancel">Cancel</button><button type="button" class="relphi-options-ok">OK</button></span>';
+    }
+    return true;
+  }
+
+  function normalizePrompt(root) {
+    const empty = root?.querySelector('#relphiSpreadTemplateSelect option[value=""]');
+    if (empty) empty.textContent = 'Choose a template';
+  }
+
+  function enhance() {
+    scheduled = false;
+    const root = panel();
+    if (!root || root.hidden) return;
+    installBar(root);
+    normalizePrompt(root);
+    if (root.dataset.relphiReadingOptionsOpen === 'true' && !session) begin(root);
+  }
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(enhance);
   }
 
   function installStyle() {
-    if (document.getElementById('relphi-transactional-options-style')) return;
+    if (document.getElementById('relphi-transactional-options-v2-style')) return;
     const style = document.createElement('style');
-    style.id = 'relphi-transactional-options-style';
+    style.id = 'relphi-transactional-options-v2-style';
     style.textContent = `
-      #shortListPanel .drawing-board-top-actions>#clearShortList,
-      #shortListPanel .card-row-action-staging>#clearShortList{display:none!important}
-      html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{
-        order:0!important;flex:0 0 auto!important;margin-left:0!important;margin-right:auto!important
-      }
-      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions,
-      #shortListPanel.relphi-options-transaction-active .drawing-board-top-actions,
-      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-primary-actions,
-      #shortListPanel.relphi-options-transaction-active .drawing-board-primary-actions{
-        visibility:hidden!important;opacity:0!important;pointer-events:none!important
-      }
-      #shortListPanel[data-relphi-reading-options-open="true"] .relphi-reading-options-drawer,
-      #shortListPanel.relphi-options-transaction-active .relphi-reading-options-drawer{z-index:4200!important}
-      #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar{
-        position:sticky!important;top:0!important;z-index:4250!important;display:flex!important;align-items:center!important;
-        width:100%!important;min-height:3.5rem!important;padding:.55rem .65rem!important;margin:0!important;box-sizing:border-box!important;
-        background:rgba(255,253,248,.98)!important;border-bottom:1px solid #d8cec5!important;box-shadow:0 4px 12px rgba(35,24,18,.08)!important;
-        backdrop-filter:blur(6px)!important
-      }
-      #shortListPanel .relphi-options-commit-bar .relphi-options-right{margin-left:auto!important;display:flex!important;align-items:center!important;gap:.7rem!important}
-      #shortListPanel .relphi-options-commit-bar button{
-        appearance:none!important;min-height:2.45rem!important;padding:.48rem .9rem!important;border:1px solid #aaa098!important;border-radius:8px!important;
-        background:#fff!important;color:#171412!important;font:inherit!important;font-size:.82rem!important;font-weight:850!important;line-height:1!important;
-        box-shadow:none!important;cursor:pointer!important
-      }
+      #shortListPanel .drawing-board-top-actions>#clearShortList,#shortListPanel .card-row-action-staging>#clearShortList{display:none!important}
+      html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{order:0!important;flex:0 0 auto!important;margin-left:0!important;margin-right:auto!important}
+      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions,#shortListPanel.relphi-options-transaction-active .drawing-board-top-actions{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+      #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar{position:sticky!important;top:0!important;z-index:4250!important;display:flex!important;align-items:center!important;width:100%!important;min-height:3.5rem!important;padding:.55rem .65rem!important;margin:0!important;box-sizing:border-box!important;background:rgba(255,253,248,.98)!important;border-bottom:1px solid #d8cec5!important;box-shadow:0 4px 12px rgba(35,24,18,.08)!important}
+      #shortListPanel .relphi-options-commit-bar .relphi-options-right{margin-left:auto!important;display:flex!important;gap:.7rem!important}
+      #shortListPanel .relphi-options-commit-bar button{appearance:none!important;min-height:2.45rem!important;padding:.48rem .9rem!important;border:1px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.82rem!important;font-weight:850!important;box-shadow:none!important;cursor:pointer!important}
       #shortListPanel .relphi-options-commit-bar .relphi-options-reset{border-color:rgba(184,23,18,.58)!important;color:#a01813!important}
       #shortListPanel .relphi-options-commit-bar .relphi-options-ok{border-color:#b81712!important;background:#dc1f18!important;color:#fff!important}
-      #shortListPanel .relphi-options-commit-bar button:focus-visible{outline:3px solid rgba(220,31,24,.22)!important;outline-offset:2px!important}
-      #shortListPanel .relphi-reading-options-drawer>.card-row-composer{padding-top:.55rem!important}
-      @media(max-width:700px){
-        #shortListPanel[data-relphi-reading-options-open="true"] .relphi-reading-options-drawer,
-        #shortListPanel.relphi-options-transaction-active .relphi-reading-options-drawer{
-          isolation:isolate!important;box-shadow:0 16px 42px rgba(30,20,15,.26)!important
-        }
-      }
-      @media(max-width:520px){
-        #shortListPanel .relphi-options-commit-bar{padding:.5rem!important}
-        #shortListPanel .relphi-options-commit-bar button{padding:.45rem .65rem!important;font-size:.76rem!important}
-        #shortListPanel .relphi-options-commit-bar .relphi-options-right{gap:.4rem!important}
-      }
     `;
     document.head.appendChild(style);
   }
 
-  function installActionBar(root = panel()) {
-    const box = drawer(root);
-    if (!box) return;
-    let bar = box.querySelector(':scope > .relphi-options-commit-bar');
-    if (!bar) { bar = document.createElement('div'); bar.className = 'relphi-options-commit-bar'; }
-    if (bar.dataset.relphiTransactional !== 'true') {
-      bar.dataset.relphiTransactional = 'true';
-      bar.innerHTML = '<button type="button" class="relphi-options-reset">Reset Board</button>' +
-        '<span class="relphi-options-right"><button type="button" class="relphi-options-cancel">Cancel</button><button type="button" class="relphi-options-ok">OK</button></span>';
-    }
-    const summary = box.querySelector(':scope > summary');
-    if (summary) {
-      if (summary.nextElementSibling !== bar) summary.insertAdjacentElement('afterend',bar);
-    } else if (box.firstElementChild !== bar) {
-      box.prepend(bar);
-    }
-  }
-
-  function normalizeTemplatePrompt(root = panel()) {
-    const first = root?.querySelector('#relphiSpreadTemplateSelect option[value=""]');
-    if (first && first.textContent !== 'Choose a template') first.textContent = 'Choose a template';
-  }
-  function closeThroughExistingCancel() {
-    const root = panel();
-    if (!root || !optionsOpen(root)) return;
-    endSession(root);
-    const toggle = window.RelphiDrawingBoardToggleOptions;
-    if (typeof toggle === 'function') toggle();
-    root.dataset.relphiReadingOptionsOpen = 'false';
-    root.classList.remove('relphi-options-transaction-active');
-    drawer(root)?.classList.remove('is-reading-options-open');
-    const trigger = root.querySelector('#drawingBoardOptionsButton');
-    if (trigger) {
-      trigger.setAttribute('aria-expanded','false');
-      trigger.classList.remove('is-active');
-      trigger.title = 'Open Options';
-    }
-    schedule();
-  }
-  function dispatch(control,type) { control?.dispatchEvent(new Event(type,{bubbles:true})); }
-  function waitForControls(callback,attempt = 0) {
-    const root = panel();
-    const ready = root?.querySelector('#rowDrawScope') && root?.querySelector('#rowPositionLabels');
-    if (ready) return callback(root);
-    if (attempt < 30) window.setTimeout(() => waitForControls(callback,attempt + 1),35);
-  }
-
-  function structuralBlankSnapshot(snapshot) {
-    return {
-      ...snapshot,shortList:[],shortListSelection:[],shortListSelectMode:false,shortListPositionLabels:[],shortListPositionCardIds:[],
-      rowCardReversals:{},rowEnvelopeLayout:{},rowCardTransforms:{},rowActiveLayout:null,rowPositionMeta:[],rowLayoutDesignMode:false,
-      rowLayoutLocked:false,rowCenterOpen:false,rowEnvelopeArt:{},rowDrawDeck:[],rowDrawDeckSignature:'',rowShuffled:false,rowShuffleCount:0,customCardArt:{}
-    };
-  }
-
-  function applyRules(root,draft) {
-    const pack = root.querySelector('#rowDrawScope');
-    if (pack) { pack.value = draft.pack || 'full'; dispatch(pack,'input'); dispatch(pack,'change'); }
-    [['rowPositionStickersQuick',draft.stickers],['rowAllowReversalsQuick',draft.reversals],['rowAllowRepeats',draft.repeats]].forEach(([id,value]) => {
-      const input = root.querySelector('#' + id);
-      if (!input) return;
-      input.checked = !!value; dispatch(input,'input'); dispatch(input,'change');
-    });
-  }
-  function applyLabelsAndRules(draft,applyLabels) {
-    waitForControls(root => {
-      if (applyLabels) {
-        const hidden = root.querySelector('#rowPositionLabels');
-        hidden.value = cleanLabels(draft.labels).join(', ');
-        hidden.dataset.relphiManualValue = hidden.value;
-        dispatch(hidden,'input'); dispatch(hidden,'change');
-      }
-      window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
-        const liveRoot = panel();
-        if (liveRoot) applyRules(liveRoot,draft);
-        applying = false;
-      }));
-    });
-  }
-
-  function applyDraft(draft,baseline) {
-    applying = true;
-    const structural = structureChanged(draft,baseline);
-    const bridge = window.RelphiDrawingBoardOptionsBridge;
-    if (!structural) {
-      applyLabelsAndRules(draft,false);
-      return;
-    }
-    if (bridge?.capture && bridge?.restore) {
-      const live = bridge.capture();
-      bridge.restore(structuralBlankSnapshot(live));
-    }
-    waitForControls(root => {
-      const select = root.querySelector('#relphiSpreadTemplateSelect');
-      if (select) { select.value = draft.template || ''; dispatch(select,'change'); }
-      window.requestAnimationFrame(() => window.requestAnimationFrame(() => applyLabelsAndRules(draft,true)));
-    });
-  }
-
-  function ok() {
-    const root = panel();
-    if (!root || !session) return;
-    refreshDraft(root);
-    const draft = JSON.parse(JSON.stringify(session.draft));
-    const baseline = JSON.parse(JSON.stringify(session.baseline));
-    closeThroughExistingCancel();
-    window.setTimeout(() => applyDraft(draft,baseline),0);
-  }
-
-  function resetBoard() {
+  // Own the Options trigger before the workflow's target listener. This prevents
+  // a second baseline/cancel transaction from existing at the same time.
+  document.addEventListener('click',event => {
     const root = panel();
     if (!root) return;
-    const bridge = window.RelphiDrawingBoardOptionsBridge;
-    const blank = { template:'', labels:[], pack:'full', stickers:true, reversals:true, repeats:false };
-    applying = true;
-    try {
-      if (bridge?.capture && bridge?.restore) {
-        bridge.restore(structuralBlankSnapshot(bridge.capture()));
-      } else {
-        const nativeReset = root.querySelector('#clearShortList');
-        if (nativeReset && !nativeReset.disabled) nativeReset.click();
-      }
-      const select = root.querySelector('#relphiSpreadTemplateSelect');
-      if (select) {
-        select.value = '';
-        dispatch(select,'change');
-      }
-      clearEditorStructure(root);
-      applyRules(root,blank);
-      session = { baseline:JSON.parse(JSON.stringify(blank)), draft:JSON.parse(JSON.stringify(blank)) };
-      root.classList.add('relphi-options-transaction-active');
-      normalizeTemplatePrompt(root);
-    } finally {
-      applying = false;
+    const trigger = event.target.closest?.('#drawingBoardOptionsButton');
+    if (trigger && root.contains(trigger)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (root.dataset.relphiReadingOptionsOpen === 'true') cancel(root); else begin(root);
+      return;
     }
-    schedule();
-  }
-
-  function draftTemplateChanged(root,select) {
-    const prefab = prefabById(select.value);
-    if (prefab) {
-      setBuilderLabels(root,labelsForPrefab(prefab));
-      setDraftRules(root,prefab);
-    } else if (!select.value) {
-      setBuilderLabels(root,[]);
+    const box = drawer(root);
+    if (!box) return;
+    const resetButton = event.target.closest?.('.relphi-options-reset');
+    if (resetButton && box.contains(resetButton)) {
+      event.preventDefault(); event.stopImmediatePropagation(); reset(root); return;
     }
-    refreshDraft(root);
-  }
-  function interceptDraftEvent(event) {
-    if (applying) return;
-    const root = panel();
-    const box = drawer(root);
-    const target = event.target;
-    if (!root || !box || !optionsOpen(root) || !box.contains(target) || !target.matches?.(CORE_CONTROL_SELECTOR)) return;
-    event.stopImmediatePropagation();
-    if (target.id === 'relphiSpreadTemplateSelect' && event.type === 'change') draftTemplateChanged(root,target);
-    else refreshDraft(root);
-  }
-
-  function handleClick(event) {
-    const root = panel();
-    const box = drawer(root);
-    if (!root || !box) return;
-    const reset = event.target.closest?.('.relphi-options-reset');
-    if (reset && box.contains(reset)) { event.preventDefault(); event.stopImmediatePropagation(); resetBoard(); return; }
-    const cancel = event.target.closest?.('.relphi-options-cancel');
-    if (cancel && box.contains(cancel)) { event.preventDefault(); event.stopImmediatePropagation(); closeThroughExistingCancel(); return; }
-    const confirm = event.target.closest?.('.relphi-options-ok');
-    if (confirm && box.contains(confirm)) { event.preventDefault(); event.stopImmediatePropagation(); ok(); return; }
-    const templateClear = event.target.closest?.('#relphiTemplateClear');
-    if (templateClear && optionsOpen(root)) {
+    const cancelButton = event.target.closest?.('.relphi-options-cancel');
+    if (cancelButton && box.contains(cancelButton)) {
+      event.preventDefault(); event.stopImmediatePropagation(); cancel(root); return;
+    }
+    const okButton = event.target.closest?.('.relphi-options-ok');
+    if (okButton && box.contains(okButton)) {
+      event.preventDefault(); event.stopImmediatePropagation(); commit(root); return;
+    }
+    const clear = event.target.closest?.('#relphiTemplateClear');
+    if (clear && box.contains(clear) && root.dataset.relphiReadingOptionsOpen === 'true') {
       event.preventDefault(); event.stopImmediatePropagation();
       const select = root.querySelector('#relphiSpreadTemplateSelect');
       if (select) select.value = '';
       setBuilderLabels(root,[]);
-      refreshDraft(root); schedule(); return;
+      if (session) session.draft = readDraft(root);
     }
-    const saveTemplate = event.target.closest?.('#relphiSaveLabelsAsTemplate');
-    if (saveTemplate && optionsOpen(root) && session) {
-      refreshDraft(root);
-      if (!sameDraft(session.baseline,session.draft)) {
-        event.preventDefault(); event.stopImmediatePropagation();
-        const status = root.querySelector('.relphi-label-template-status');
-        if (status) status.textContent = 'Press OK to apply this setup before saving it as a template.';
-        return;
-      }
-    }
-    if (event.target.closest?.('.relphi-label-add,.relphi-label-remove') && optionsOpen(root)) window.setTimeout(() => refreshDraft(panel()),0);
-  }
+  },true);
 
-  function enhance() {
-    queued = false;
-    const root = panel();
-    if (!root || root.hidden) return;
-    installStyle(); installActionBar(root); normalizeTemplatePrompt(root);
-    if (optionsOpen(root)) beginSession(root); else if (session) endSession(root);
-  }
-  function schedule() {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(() => requestAnimationFrame(enhance));
-  }
+  document.addEventListener('input',event => {
+    const root = panel(), box = drawer(root), target = event.target;
+    if (!root || !box || root.dataset.relphiReadingOptionsOpen !== 'true' || !box.contains(target) || !target.matches?.(CORE)) return;
+    event.stopImmediatePropagation();
+    if (session) session.draft = readDraft(root);
+  },true);
 
-  document.addEventListener('input',interceptDraftEvent,true);
-  document.addEventListener('change',interceptDraftEvent,true);
-  document.addEventListener('click',handleClick,true);
+  document.addEventListener('change',event => {
+    const root = panel(), box = drawer(root), target = event.target;
+    if (!root || !box || root.dataset.relphiReadingOptionsOpen !== 'true' || !box.contains(target) || !target.matches?.(CORE)) return;
+    event.stopImmediatePropagation();
+    if (target.id === 'relphiSpreadTemplateSelect') templateChanged(root,target);
+    else if (session) session.draft = readDraft(root);
+  },true);
+
+  installStyle();
   document.addEventListener('relphi:drawing-board-rendered',schedule);
-  document.addEventListener('relphi:drawing-board-options-toggle',() => window.setTimeout(schedule,0));
-  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','data-relphi-reading-options-open','hidden']});
+  new MutationObserver(records => {
+    if (records.some(record => record.type === 'childList' && record.addedNodes.length)) schedule();
+  }).observe(document.documentElement,{childList:true,subtree:true});
   schedule();
 })();
