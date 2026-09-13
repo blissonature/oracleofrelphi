@@ -18,59 +18,22 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
           p = Path('planetaryhours.html')
           s = p.read_text()
-
-          old_caption = """      const caption = document.createElement('p');
-      caption.className = 'ph-tiny';
-      caption.textContent = 'Preview only. Use Sky Chart for the full reading.';
-      el.phCurrentWheel.replaceChildren(root, caption);
-"""
-          new_caption = """      el.phCurrentWheel.replaceChildren(root);
-"""
-          if old_caption not in s:
-              raise SystemExit('mini wheel caption block not found')
+          old_caption = "      const caption = document.createElement('p');\n      caption.className = 'ph-tiny';\n      caption.textContent = 'Preview only. Use Sky Chart for the full reading.';\n      el.phCurrentWheel.replaceChildren(root, caption);\n"
+          new_caption = "      el.phCurrentWheel.replaceChildren(root);\n"
+          if old_caption not in s: raise SystemExit('mini wheel caption block not found')
           s = s.replace(old_caption, new_caption, 1)
-
-          old_jump = """  .ph-current-wheel-jump {
-    display:block;
-    margin:.35rem auto .05rem;
-    color:var(--relphi-red);
-    font-size:.78rem;
-    font-weight:850;
-    line-height:1.1;
-    white-space:nowrap;
-    text-align:center;
-  }
-"""
-          new_jump = """  .ph-current-wheel-jump {
-    display:block;
-    margin:.35rem auto .05rem;
-    max-width:100%;
-    box-sizing:border-box;
-    padding:0 .2rem;
-    color:var(--relphi-red);
-    font-size:.64rem;
-    font-weight:850;
-    line-height:1.1;
-    white-space:nowrap;
-    text-align:center;
-  }
-"""
-          if old_jump not in s:
-              raise SystemExit('mini wheel jump CSS block not found')
-          s = s.replace(old_jump, new_jump, 1)
-          p.write_text(s)
-
+          old_jump = "  .ph-current-wheel-jump {\n    display:block;\n    margin:.35rem auto .05rem;\n    color:var(--relphi-red);\n    font-size:.78rem;\n    font-weight:850;\n    line-height:1.1;\n    white-space:nowrap;\n    text-align:center;\n  }\n"
+          new_jump = "  .ph-current-wheel-jump {\n    display:block;\n    margin:.35rem auto .05rem;\n    max-width:100%;\n    box-sizing:border-box;\n    padding:0 .2rem;\n    color:var(--relphi-red);\n    font-size:.64rem;\n    font-weight:850;\n    line-height:1.1;\n    white-space:nowrap;\n    text-align:center;\n  }\n"
+          if old_jump not in s: raise SystemExit('mini wheel jump CSS block not found')
+          p.write_text(s.replace(old_jump, new_jump, 1))
           t = Path('tests/planetary-hours-sky-chart-visual-parity.mjs')
           x = t.read_text()
           old_test = "assert.match(page,/\\.ph-current-wheel-jump \\{[\\s\\S]*white-space:nowrap;[\\s\\S]*text-align:center;/);"
           new_test = "assert.match(page,/\\.ph-current-wheel-jump \\{[\\s\\S]*max-width:100%;[\\s\\S]*font-size:\\.64rem;[\\s\\S]*white-space:nowrap;[\\s\\S]*text-align:center;/);\nassert.doesNotMatch(page,/Preview only\\. Use Sky Chart for the full reading\\./);\nassert.match(page,/el\\.phCurrentWheel\\.replaceChildren\\(root\\);/);"
-          if old_test not in x:
-              raise SystemExit('mini wheel jump test marker not found')
-          x = x.replace(old_test, new_test, 1)
-          t.write_text(x)
+          if old_test not in x: raise SystemExit('mini wheel jump test marker not found')
+          t.write_text(x.replace(old_test, new_test, 1))
           PY
       - name: Verify
         shell: bash
