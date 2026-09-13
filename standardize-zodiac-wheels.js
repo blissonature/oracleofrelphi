@@ -7,6 +7,7 @@
   if (window.__relphiCanonicalWheelStandardizerV1) return;
   window.__relphiCanonicalWheelStandardizerV1 = true;
 
+  const IS_PLANETARY_HOURS = /(^|\/)planetaryhours\.html$/.test(location.pathname);
   const NS = 'http://www.w3.org/2000/svg';
   const IDENTITIES = Object.freeze({
     '☉':'sun','⊙':'sun','☽':'moon','☾':'moon','☿':'mercury','♀':'venus','♂':'mars',
@@ -18,6 +19,11 @@
   let queued = false;
 
   const bare = value => String(value || '').replace(/[\uFE0E\uFE0F]/g, '').trim();
+
+
+  function isPlanetaryHoursOwnedSvg(svg) {
+    return IS_PLANETARY_HOURS && (svg?.id === 'heptagramSvg' || !!svg?.closest?.('#phCurrentWheel'));
+  }
 
   function looksLikeWheel(svg) {
     const marker = ((svg.id || '') + ' ' + (svg.getAttribute('class') || '')).toLowerCase();
@@ -61,7 +67,7 @@
   }
 
   function standardizeSvg(svg) {
-    if (!looksLikeWheel(svg)) return;
+    if (isPlanetaryHoursOwnedSvg(svg) || !looksLikeWheel(svg)) return;
     svg.querySelectorAll('text').forEach(node => {
       const id = IDENTITIES[bare(node.textContent)];
       if (id) nestedSvgForText(node, id);
@@ -83,6 +89,7 @@
 
   function standardizeHtmlGlyphs(root) {
     (root || document).querySelectorAll('[data-planet], .planet-glyph, .glyph').forEach(node => {
+      if (IS_PLANETARY_HOURS && node.closest?.('#heptagramSvg,#phCurrentWheel')) return;
       if (node.closest('svg') || node.querySelector('svg[data-canonical-glyph-id]')) return;
       const id = IDENTITIES[bare(node.textContent)];
       if (id) inlineSvg(node, id);
@@ -101,13 +108,18 @@
     requestAnimationFrame(() => { queued = false; run(document); });
   }
 
+  function observe() {
+    new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true, characterData:true });
+  }
+
+
   function start() {
     if (!window.RelphiGlyphRegistry || !window.RelphiGlyphComponent?.createBubble) {
       setTimeout(start, 40);
       return;
     }
     run(document);
-    new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true, characterData:true });
+    observe();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
