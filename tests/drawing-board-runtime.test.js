@@ -84,6 +84,8 @@ async function assertContained(page) {
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-celtic-before.png'),fullPage:true});
 
   await mobile.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').click();
+  await mobile.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
+  await mobile.locator('.card-row-item[data-row-index="0"]>.card-row-card-wrap').click();
   await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
   assert.equal(await mobile.locator('.relphi-focus-strip>button').count(),10);
   const infoVisible=await mobile.locator('.relphi-focus-card-host .or-card-layer.relphi-info-layer').evaluate(node=>{
@@ -93,6 +95,8 @@ async function assertContained(page) {
   await mobile.click('.relphi-focus-close');
 
   await mobile.locator('.card-row-item[data-row-index="1"] .card-row-drop-card').click();
+  await mobile.waitForSelector('.card-row-item[data-row-index="1"] [data-row-card]',{state:'visible'});
+  await mobile.locator('.card-row-item[data-row-index="1"]>.card-row-card-wrap').click();
   await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
   await mobile.click('.relphi-focus-next');
   await mobile.waitForFunction(() => window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowPositionMeta?.[1]?.celticCrossAcknowledged === true);
