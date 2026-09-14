@@ -13,9 +13,9 @@
   const CANVAS_W = 900;
   const CANVAS_H = 760;
   const CARD_W = 174;
-  const CARD_H = 390;
-  const LABEL_H = 48;
-  const GUTTER = 14;
+  const CARD_H = CARD_W * 866 / 500;
+  const LABEL_H = 38;
+  const GUTTER = 12;
   const MIN_ZOOM = .45;
   const MAX_ZOOM = 2.4;
 
@@ -46,25 +46,25 @@
     return { id, label, drawOrder, transform:point, ...extra };
   }
 
+  // Ordinary spreads use simple rows/grids. Only spreads whose meaning depends
+  // on geometry (Celtic Cross and Saturn Square) receive bespoke layouts.
   function genericPositions(labels) {
     const count = Math.max(1, labels.length);
+    if (count === 1) return [position('position-1', labels[0], 1, transform(.40,.22,1))];
     if (count <= 3) {
-      const scale = count === 1 ? .86 : .68;
-      return labels.map((label, index) => position(
-        `position-${index + 1}`, label, index + 1,
-        transform(count === 1 ? .38 : (.05 + index * .30), count === 1 ? .20 : .27, scale)
-      ));
+      const xs = count === 2 ? [.18,.58] : [.055,.355,.655];
+      return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index],.24,.88)));
     }
-    const cols = count <= 6 ? 3 : 4;
+    if (count <= 6) {
+      const xs = [.055,.355,.655], ys = [.10,.56];
+      return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index%3],ys[Math.floor(index/3)],.74)));
+    }
+    const cols = 4;
     const rows = Math.ceil(count / cols);
-    const scale = count <= 6 ? .58 : .48;
-    const xStep = cols === 3 ? .29 : .225;
-    const yStep = rows <= 2 ? .39 : .27;
-    return labels.map((label, index) => {
-      const col = index % cols;
-      const row = Math.floor(index / cols);
-      return position(`position-${index + 1}`, label, index + 1, transform(.035 + col * xStep, .035 + row * yStep, scale));
-    });
+    const xs = [.015,.25,.485,.72];
+    const ys = rows <= 2 ? [.12,.56] : rows === 3 ? [.02,.34,.66] : Array.from({length:rows},(_,i)=>.015+i*(.93/Math.max(1,rows-1)));
+    const scale = rows <= 3 ? .62 : .52;
+    return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index%cols],ys[Math.floor(index/cols)],scale)));
   }
 
   const CELTIC_LABELS = [
@@ -87,20 +87,20 @@
     source:'shipped',
     editable:false,
     positions:[
-      position('covering', CELTIC_LABELS[0], 1, transform(.20,.35,.48,0,20), { role:'covering' }),
-      position('crossing', CELTIC_LABELS[1], 2, transform(.20,.35,.48,90,30), {
+      position('covering', CELTIC_LABELS[0], 1, transform(.20,.34,.48,0,20), { role:'covering' }),
+      position('crossing', CELTIC_LABELS[1], 2, transform(.20,.34,.48,90,30), {
         role:'crossing', crosses:'covering',
-        canonicalTransform:transform(.35,.35,.48,0,30),
-        crossedTransform:transform(.20,.35,.48,90,30)
+        canonicalTransform:transform(.35,.34,.48,0,30),
+        crossedTransform:transform(.20,.34,.48,90,30)
       }),
-      position('crowning', CELTIC_LABELS[2], 3, transform(.20,.03,.48,0,4), { role:'crowning' }),
-      position('beneath', CELTIC_LABELS[3], 4, transform(.20,.67,.48,0,4), { role:'beneath' }),
-      position('behind', CELTIC_LABELS[4], 5, transform(.02,.35,.48,0,4), { role:'behind' }),
-      position('before', CELTIC_LABELS[5], 6, transform(.50,.35,.48,0,4), { role:'before' }),
-      position('self', CELTIC_LABELS[6], 7, transform(.60,.83,.48,0,4), { role:'self' }),
-      position('house', CELTIC_LABELS[7], 8, transform(.60,.555,.48,0,4), { role:'house' }),
-      position('hopes-fears', CELTIC_LABELS[8], 9, transform(.60,.28,.48,0,4), { role:'hopes-fears' }),
-      position('outcome', CELTIC_LABELS[9], 10, transform(.60,.005,.48,0,4), { role:'outcome' })
+      position('crowning', CELTIC_LABELS[2], 3, transform(.20,.02,.48,0,4), { role:'crowning' }),
+      position('beneath', CELTIC_LABELS[3], 4, transform(.20,.66,.48,0,4), { role:'beneath' }),
+      position('behind', CELTIC_LABELS[4], 5, transform(.015,.34,.48,0,4), { role:'behind' }),
+      position('before', CELTIC_LABELS[5], 6, transform(.49,.34,.48,0,4), { role:'before' }),
+      position('self', CELTIC_LABELS[6], 7, transform(.68,.665,.48,0,4), { role:'self' }),
+      position('house', CELTIC_LABELS[7], 8, transform(.68,.445,.48,0,4), { role:'house' }),
+      position('hopes-fears', CELTIC_LABELS[8], 9, transform(.68,.225,.48,0,4), { role:'hopes-fears' }),
+      position('outcome', CELTIC_LABELS[9], 10, transform(.68,.005,.48,0,4), { role:'outcome' })
     ],
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
@@ -131,11 +131,7 @@
   ];
   const HOUSE_POLARITIES = {
     version:1,id:'six-polarities-houses-12',name:'Six Polarities · Houses',cardCount:12,source:'shipped',editable:false,
-    positions:HOUSE_POLARITY_LABELS.map((label,index) => {
-      const row = Math.floor(index / 2);
-      const col = index % 2;
-      return position(`polarity-${index + 1}`,label,index + 1,transform(col ? .57 : .08,.015 + row * .16,.46));
-    }),
+    positions:genericPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
 
@@ -322,16 +318,20 @@
     for (let i=0;i<count;i++) {
       const p = logicalPosition(snapshot,i);
       const t = logicalTransform(snapshot,i);
-      const cardW=CARD_W*t.scale, cardH=CARD_H*t.scale, labelH=LABEL_H*t.scale;
-      const rotated = rotatedBounds(cardW,cardH,t.rotation);
-      const cardMinX=p.x + cardW/2 - rotated.width/2;
-      const cardMaxX=p.x + cardW/2 + rotated.width/2;
-      const cardMinY=p.y + cardH/2 - rotated.height/2;
-      const cardMaxY=p.y + cardH/2 + rotated.height/2;
-      minX = Math.min(minX,cardMinX);
-      minY = Math.min(minY,p.y-labelH,cardMinY);
-      maxX = Math.max(maxX,cardMaxX);
-      maxY = Math.max(maxY,cardMaxY);
+      // Native positions are the untransformed card box's top-left. CSS scales
+      // and rotates each slot around its center, so extents must use that same origin.
+      const centerX = p.x + CARD_W / 2;
+      const centerY = p.y + CARD_H / 2;
+      const rotated = rotatedBounds(CARD_W*t.scale,CARD_H*t.scale,t.rotation);
+      let left=centerX-rotated.width/2, right=centerX+rotated.width/2;
+      let top=centerY-rotated.height/2, bottom=centerY+rotated.height/2;
+      const labelH = showPositionStickers ? LABEL_H*t.scale : 0;
+      if (labelH) {
+        if (Math.abs(t.rotation % 180) < 1) top -= labelH;
+        else { left -= labelH; right += labelH; top -= labelH; bottom += labelH; }
+      }
+      minX=Math.min(minX,left); minY=Math.min(minY,top);
+      maxX=Math.max(maxX,right); maxY=Math.max(maxY,bottom);
     }
     return {minX,minY,maxX,maxY};
   }
@@ -343,15 +343,16 @@
     const snapshot = bridge.capture();
     const count = currentSlotCount(root);
     const bounds = stateContentBounds(snapshot,count);
-    const toolbar = root.querySelector('.card-row-workspace-toolbar');
+    const toolbar = root.querySelector('.card-row-workspace-toolbar.relphi-board-controller');
+    const toolbarH = toolbar?.offsetHeight || 52;
     const availableW = Math.max(CARD_W, workspace.clientWidth - GUTTER*2);
-    const availableH = Math.max(CARD_H, workspace.clientHeight - (toolbar?.offsetHeight || 56) - GUTTER*2);
-    const contentW = Math.max(CARD_W,bounds.maxX - bounds.minX);
-    const contentH = Math.max(CARD_H,bounds.maxY - bounds.minY);
+    const availableH = Math.max(CARD_H, workspace.clientHeight - toolbarH - GUTTER*2);
+    const contentW = Math.max(CARD_W,bounds.maxX-bounds.minX);
+    const contentH = Math.max(CARD_H,bounds.maxY-bounds.minY);
     const zoom = clamp(Math.min(availableW/contentW,availableH/contentH),MIN_ZOOM,MAX_ZOOM);
     snapshot.rowZoom = zoom;
-    snapshot.rowPanX = Math.round((availableW - contentW*zoom)/2 - bounds.minX*zoom + GUTTER);
-    snapshot.rowPanY = Math.round((availableH - contentH*zoom)/2 - bounds.minY*zoom + GUTTER);
+    snapshot.rowPanX = Math.round((availableW-contentW*zoom)/2-bounds.minX*zoom+GUTTER);
+    snapshot.rowPanY = Math.round((availableH-contentH*zoom)/2-bounds.minY*zoom+GUTTER);
     bridge.restore(snapshot);
     return true;
   }
@@ -452,6 +453,34 @@
     renderFlyout();
     nativeOptions.hidden = true;
     nativeOptions.setAttribute('aria-hidden','true');
+  }
+
+  function installExportArea(root) {
+    const drawer = root.querySelector('.card-row-drawing-board');
+    const workspace = root.querySelector('.card-row-workspace');
+    if (!drawer || !workspace) return;
+    let section = root.querySelector('#drawing-board-post-export');
+    if (!section) {
+      section = document.createElement('section');
+      section.id = 'drawing-board-post-export';
+      section.className = 'relphi-board-export';
+      section.innerHTML = '<header><strong>Save & export</strong><span>Keep the arranged board or export the cards.</span></header><div class="board-options-body"></div>';
+      workspace.insertAdjacentElement('afterend',section);
+    }
+    const destination = section.querySelector('.board-options-body');
+    const labels = {
+      snapshotCardRowArrangement:'Prepare arrangement snapshot (PNG)',
+      downloadRowHtml:'Download cards (HTML)',
+      downloadRowTextHtml:'Download text (HTML)',
+      downloadRowJson:'Download board data (JSON)',
+      printCardRowImage:'Print / image'
+    };
+    Object.entries(labels).forEach(([id,label]) => {
+      const node = root.querySelector('#'+id);
+      if (!node || node.parentElement === destination) return;
+      node.textContent = label;
+      destination.appendChild(node);
+    });
   }
 
   function optionTemplateMarkup(draft) {
@@ -650,7 +679,7 @@
     if (crossingIndex<0 || coveringIndex<0) return false;
     const meta=metaList[crossingIndex] || {};
     if (meta.celticCrossAcknowledged) return false;
-    const covering=snap.rowEnvelopeLayout?.[coveringIndex] || snap.rowEnvelopeLayout?.[String(coveringIndex)] || {x:.20*CANVAS_W,y:.35*CANVAS_H};
+    const covering=snap.rowEnvelopeLayout?.[coveringIndex] || snap.rowEnvelopeLayout?.[String(coveringIndex)] || {x:.20*CANVAS_W,y:.34*CANVAS_H};
     snap.rowEnvelopeLayout ||= {};
     snap.rowCardTransforms ||= {};
     snap.rowPositionMeta ||= [];
@@ -660,6 +689,7 @@
     const activeCrossing=snap.rowActiveLayout?.positions?.find(position=>position?.id==='crossing' || position?.role==='crossing');
     if (activeCrossing) activeCrossing.transform=clone(CELTIC_CROSS.positions[1].crossedTransform);
     bridge.restore(snap);
+    setTimeout(zoomExtents,0);
     return true;
   }
 
@@ -852,10 +882,11 @@
       else delete item.dataset.relphiPositionId;
     });
   }
-  function updateCelticClasses(root) {
-    const state=currentPrefabState();
-    const isCeltic=state.activeLayout?.id==='celtic-cross-10';
+  function updateLayoutClasses(root) {
+    const id=currentPrefabState().activeLayout?.id || '';
+    const isCeltic=id==='celtic-cross-10';
     root.classList.toggle('relphi-celtic-cross',isCeltic);
+    root.classList.toggle('relphi-six-polarities',id==='six-polarities-houses-12');
     const snap=isCeltic?currentSnapshot():null;
     const acknowledged=!!snap?.rowPositionMeta?.some?.(meta=>meta?.celticCrossAcknowledged);
     root.classList.toggle('relphi-celtic-crossed',isCeltic&&acknowledged);
@@ -877,9 +908,10 @@
     root.removeAttribute('hidden');
     root.classList.toggle('relphi-hide-position-stickers',!showPositionStickers);
     markSemanticPositions(root);
-    updateCelticClasses(root);
+    updateLayoutClasses(root);
     installTopActions(root);
     installPermanentControls(root);
+    installExportArea(root);
     installLockedLayoutPointerGuards(root);
     installBoardCapture(root);
     if (optionsSession) renderOptions(root);

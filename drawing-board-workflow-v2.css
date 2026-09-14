@@ -1,4 +1,9 @@
 /* Oracle of Relphi Drawing Board v3: one static enhancement surface. */
+/* Native Drawing Board controls stay invisible until the unified owner converts them.
+   The red board remains visible, so there is no board-level FOUC. */
+#shortListPanel .card-row-workspace-toolbar:not(.relphi-board-controller){visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+#shortListPanel #resetCardRowPan,#shortListPanel .card-row-pan-note{display:none!important}
+
 #shortListPanel{--relphi-board-red:#dc1f18;--relphi-board-ink:#171412;--relphi-board-paper:#fffdf8;--relphi-board-line:#d8cec5;--relphi-board-soft:#f4efe8}
 #shortListPanel[hidden]{display:none!important}
 #shortListPanel .card-row-drawing-board{position:relative!important;margin:.5rem 0 1rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:16px!important;background:#fff!important;overflow:visible!important}
@@ -137,3 +142,13 @@ body .relphi-focus-card-host .card-row-reverse-toggle,body .relphi-focus-card-ho
   body .relphi-focus-card-host>.or-card.card-row-card.tarot-card-surface.relphi-surface--card{width:min(21rem,88vw)!important;min-width:min(21rem,88vw)!important;max-width:min(21rem,88vw)!important}
   .relphi-focus-shell>footer{padding-bottom:max(.55rem,env(safe-area-inset-bottom))!important}
 }
+
+/* Save/export is permanent document chrome below the pannable canvas. */
+#shortListPanel .relphi-board-export{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.75rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
+#shortListPanel .relphi-board-export>header{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:.7rem!important;flex-wrap:wrap!important;text-align:left!important}
+#shortListPanel .relphi-board-export>header strong{font-size:.9rem!important}
+#shortListPanel .relphi-board-export>header span{font-size:.7rem!important;color:#655d56!important}
+#shortListPanel .relphi-board-export .board-options-body{display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:wrap!important}
+#shortListPanel .relphi-board-export button{min-height:2.15rem!important;margin:0!important;padding:.4rem .62rem!important;border:1.25px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.7rem!important;font-weight:800!important}
+#shortListPanel .relphi-board-export #snapshotCardRowArrangement{border-color:var(--relphi-board-red)!important;background:var(--relphi-board-red)!important;color:#fff!important}
+#shortListPanel .relphi-board-export .drawing-board-snapshot-status{flex:1 0 100%!important}

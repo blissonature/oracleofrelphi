@@ -96,6 +96,8 @@ async function assertReadableFocus(page) {
   assert.equal(await mobile.locator('#zoomCardRowExtents').count(),1);
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="snaps"]').count(),1);
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="background"]').count(),1);
+  await mobile.waitForSelector('#drawing-board-post-export #downloadRowHtml',{state:'visible'});
+  await mobile.waitForSelector('#drawing-board-post-export #downloadRowJson',{state:'visible'});
   assert.equal(await mobile.locator('.card-row-action-staging').evaluate(node=>getComputedStyle(node).display),'none');
   const bg=await mobile.locator('.card-row-workspace').evaluate(node=>getComputedStyle(node).backgroundColor);
   assert.notEqual(bg,'rgba(0, 0, 0, 0)');
@@ -108,7 +110,7 @@ async function assertReadableFocus(page) {
   const p1=state.snap.rowEnvelopeLayout['1'] || state.snap.rowEnvelopeLayout[1];
   assert.ok(p1.x > p0.x + 100,'crossing card should begin to the right of covering card');
   const ys=[6,7,8,9].map(i=>(state.snap.rowEnvelopeLayout[String(i)]||state.snap.rowEnvelopeLayout[i]).y);
-  for(let i=1;i<ys.length;i++) assert.ok(Math.abs(ys[i]-ys[i-1])>=200,'Celtic staff spacing should remain readable');
+  for(let i=1;i<ys.length;i++) assert.ok(Math.abs(ys[i]-ys[i-1])>=160,'Celtic staff spacing should remain readable');
   await assertContained(mobile);
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-celtic-before.png'),fullPage:true});
 
@@ -135,6 +137,7 @@ async function assertReadableFocus(page) {
   assert.equal(Math.round(crossed1.y),Math.round(crossed0.y));
   assert.equal(state.snap.rowCardTransforms[String(crossingIndex)]?.rotation ?? state.snap.rowCardTransforms[crossingIndex]?.rotation,90);
   assert.equal(await mobile.locator('#shortListPanel.relphi-celtic-crossed').count(),1);
+  await assertContained(mobile);
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-celtic-crossed.png'),fullPage:true});
   if (await mobile.locator('.relphi-focus-reader').count()) await mobile.click('.relphi-focus-close');
 
@@ -160,7 +163,32 @@ async function assertReadableFocus(page) {
   assert.equal(drawerGeometry.overlap,false,'options commit bar must not cover the last field');
   assert.ok(['auto','scroll'].includes(drawerGeometry.bodyOverflow),'options body should own scrolling');
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});
+  await mobile.selectOption('#relphiSpreadTemplateSelect','six-polarities-houses-12');
+  await mobile.click('#relphiApplyOptions');
+  await mobile.waitForFunction(() => window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id === 'six-polarities-houses-12');
+  await mobile.click('#zoomCardRowExtents');
+  await mobile.waitForTimeout(120);
+  state=await boardState(mobile);
+  const polarityX=new Set(Object.values(state.snap.rowEnvelopeLayout).map(point=>Math.round(point.x)));
+  const polarityY=new Set(Object.values(state.snap.rowEnvelopeLayout).map(point=>Math.round(point.y)));
+  assert.equal(polarityX.size,4,'Six Polarities should use four columns');
+  assert.equal(polarityY.size,3,'Six Polarities should use three rows');
+  await assertContained(mobile);
+  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-six-polarities.png'),fullPage:true});
   assert.deepEqual(mobileErrors,[]);
+
+
+  const compact=await browser.newPage({viewport:{width:390,height:700}});
+  const compactErrors=[];
+  compact.on('pageerror',error=>compactErrors.push(String(error)));
+  await compact.goto(base,{waitUntil:'domcontentloaded'});
+  await waitReady(compact);
+  await openBoard(compact);
+  await applyCeltic(compact);
+  await assertContained(compact);
+  await compact.screenshot({path:path.join(out,'drawing-board-mobile-compact-celtic.png'),fullPage:true});
+  assert.deepEqual(compactErrors,[]);
+  await compact.close();
 
   const desktop=await browser.newPage({viewport:{width:1440,height:1000}});
   const desktopErrors=[];

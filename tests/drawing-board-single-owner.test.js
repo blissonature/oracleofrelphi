@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=72/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=73/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -41,6 +41,8 @@ assert.match(board, /stateContentBounds/);
 assert.match(board, /workspace\.clientWidth/);
 assert.match(board, /workspace\.clientHeight/);
 assert.match(board, /relphi-workspace-tools/);
+assert.match(board, /installExportArea/);
+assert.match(board, /drawing-board-post-export/);
 assert.match(board, /data-tool="snaps"/);
 assert.match(board, /data-tool="background"/);
 assert.match(board, /relphi-reading-options-drawer/);
@@ -62,6 +64,8 @@ assert.match(css, /\.relphi-focus-reader\{/);
 assert.match(css, /\.relphi-focus-strip\{/);
 assert.match(css, /\.relphi-focus-card-host \.or-card-layer\.relphi-info-layer\{[^}]*visibility:visible!important;[^}]*opacity:1!important/);
 assert.match(css, /\.card-row-action-staging\{display:none!important\}/);
+assert.match(css, /card-row-workspace-toolbar:not\(\.relphi-board-controller\).*visibility:hidden!important/);
+assert.match(css, /\.relphi-board-export\{/);
 assert.match(css, /relphi-celtic-crossed[\s\S]*data-relphi-position-id="crossing"/);
 assert.doesNotMatch(css, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-stable/);
 
@@ -102,11 +106,14 @@ assert.deepEqual(Array.from(celtic.positions, item => item.label), [
   '6 · What is before you','7 · Yourself','8 · Your house','9 · Your hopes or fears','10 · What will come'
 ]);
 const cross = celtic.positions[1];
-assert.deepEqual(JSON.parse(JSON.stringify(cross.canonicalTransform)), {x:.35,y:.35,scale:.48,rotation:0,zIndex:30});
-assert.deepEqual(JSON.parse(JSON.stringify(cross.crossedTransform)), {x:.20,y:.35,scale:.48,rotation:90,zIndex:30});
+assert.deepEqual(JSON.parse(JSON.stringify(cross.canonicalTransform)), {x:.35,y:.34,scale:.48,rotation:0,zIndex:30});
+assert.deepEqual(JSON.parse(JSON.stringify(cross.crossedTransform)), {x:.20,y:.34,scale:.48,rotation:90,zIndex:30});
 const staff = celtic.positions.slice(6);
-assert.ok(staff.every(item => item.transform.x === .60 && item.transform.scale === .48));
-for (let i=1;i<staff.length;i++) assert.ok(Math.abs(staff[i-1].transform.y-staff[i].transform.y)*760 >= 200);
+assert.ok(staff.every(item => item.transform.x === .68 && item.transform.scale === .48));
+for (let i=1;i<staff.length;i++) assert.ok(Math.abs(staff[i-1].transform.y-staff[i].transform.y)*760 >= 160);
+const polarities = registry.byId('six-polarities-houses-12');
+assert.equal(new Set(polarities.positions.map(item => item.transform.x)).size, 4);
+assert.equal(new Set(polarities.positions.map(item => item.transform.y)).size, 3);
 const saturn = registry.byId('saturn-square-9');
 assert.deepEqual(Array.from(saturn.positions, item => [item.transform.x,item.transform.y,item.transform.scale]), [
   [.04,.04,.58],[.36,.04,.58],[.68,.04,.58],[.04,.37,.58],[.36,.37,.58],[.68,.37,.58],[.04,.70,.58],[.36,.70,.58],[.68,.70,.58]
