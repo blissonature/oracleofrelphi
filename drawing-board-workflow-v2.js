@@ -842,6 +842,16 @@
     }
   }
 
+  function markSemanticPositions(root) {
+    const snap=currentSnapshot() || {};
+    root.querySelectorAll('.card-row-board>.card-row-item[data-row-index]').forEach(item=>{
+      const index=Number(item.dataset.rowIndex);
+      if (!Number.isInteger(index)) return;
+      const id=positionIdAt(index,snap);
+      if (id) item.dataset.relphiPositionId=id;
+      else delete item.dataset.relphiPositionId;
+    });
+  }
   function updateCelticClasses(root) {
     const state=currentPrefabState();
     const isCeltic=state.activeLayout?.id==='celtic-cross-10';
@@ -866,6 +876,7 @@
     root.hidden=false;
     root.removeAttribute('hidden');
     root.classList.toggle('relphi-hide-position-stickers',!showPositionStickers);
+    markSemanticPositions(root);
     updateCelticClasses(root);
     installTopActions(root);
     installPermanentControls(root);
