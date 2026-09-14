@@ -144,11 +144,11 @@
 
   function refreshDrawingBoardControlAssets() {
     const link = document.querySelector('link[href^="drawing-board-workflow-v2.css"]');
-    if (link) link.href = 'drawing-board-workflow-v2.css?v=27';
+    if (link) link.href = 'drawing-board-workflow-v2.css?v=28';
     if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-collapse-contract';
-      style.textContent = '#shortListPanel .card-row-drawing-board:not([open])>summary>:not(strong){display:none!important}';
+      style.textContent = '#shortListPanel .card-row-drawing-board:not([open])>summary>:not(strong){display:none!important}body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .or-card-add,body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .card-row-reverse-toggle,body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .card-row-transform-box{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}';
       document.head.appendChild(style);
     }
     if (!document.getElementById('relphi-drawing-board-mobile-canvas-width')) {
