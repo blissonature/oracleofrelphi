@@ -38,7 +38,7 @@
       ? layout.positions.slice().sort((a,b) => Number(a?.drawOrder || 0) - Number(b?.drawOrder || 0))
       : [];
   }
-  function transform(x,y,rotation=0,scale=.45,zIndex=4) { return { x,y,rotation,scale,zIndex }; }
+  function transform(x,y,rotation=0,scale=.42,zIndex=4) { return { x,y,rotation,scale,zIndex }; }
 
   function canonicalCeltic(source) {
     const base = clone(source || templateById(CELTIC_ID));
@@ -52,16 +52,16 @@
       'hopes-fears':'9 · Your hopes or fears', outcome:'10 · What will come'
     };
     const spec = [
-      ['covering', transform(.27,.335,0,.45,20), transform(.27,.335,0,.45,20)],
-      ['crossing', transform(.27,.335,90,.45,30), transform(.385,.335,0,.45,30)],
-      ['crowning', transform(.27,.065,0,.45,4)],
-      ['beneath', transform(.27,.605,0,.45,4)],
-      ['behind', transform(.08,.335,0,.45,4)],
-      ['before', transform(.505,.335,0,.45,4)],
-      ['self', transform(.689,.715,0,.45,4)],
-      ['house', transform(.689,.49,0,.45,4)],
-      ['hopes-fears', transform(.689,.265,0,.45,4)],
-      ['outcome', transform(.689,.04,0,.45,4)]
+      ['covering', transform(.12,.313,0,.42,20), transform(.12,.313,0,.42,20)],
+      ['crossing', transform(.12,.313,90,.42,30), transform(.21,.313,0,.42,30)],
+      ['crowning', transform(.12,.055,0,.42,4)],
+      ['beneath', transform(.12,.571,0,.42,4)],
+      ['behind', transform(.02,.313,0,.42,4)],
+      ['before', transform(.30,.313,0,.42,4)],
+      ['self', transform(.40,.571,0,.42,4)],
+      ['house', transform(.40,.399,0,.42,4)],
+      ['hopes-fears', transform(.40,.227,0,.42,4)],
+      ['outcome', transform(.40,.055,0,.42,4)]
     ];
     base.id = CELTIC_ID;
     base.name = 'Celtic Cross';
@@ -366,7 +366,10 @@
       reconcileQueued = false;
       const changed = syncCelticState();
       tagSemanticPositions();
-      if (changed) requestAnimationFrame(tagSemanticPositions);
+      if (changed) requestAnimationFrame(() => {
+        tagSemanticPositions();
+        fitExtents();
+      });
     });
   }
   function onRendered() {
@@ -398,6 +401,13 @@
       html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-house>.card-row-position-panel,
       html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-hopes-fears>.card-row-position-panel,
       html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-outcome>.card-row-position-panel{left:calc(100% + 10px)!important;right:auto!important;top:50%!important;bottom:auto!important;width:160px!important;max-width:160px!important;min-width:160px!important;margin:0!important;transform:translateY(-50%)!important;text-align:left!important}
+
+      @media(max-width:700px){
+        html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-self>.card-row-position-panel,
+        html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-house>.card-row-position-panel,
+        html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-hopes-fears>.card-row-position-panel,
+        html body #shortListPanel.relphi-celtic-readable .card-row-workspace .short-list-row.card-row-board>.card-row-item.relphi-role-outcome>.card-row-position-panel{left:0!important;right:auto!important;top:auto!important;bottom:calc(100% + 4px)!important;width:100%!important;max-width:100%!important;min-width:0!important;transform:none!important;text-align:center!important}
+      }
       #shortListPanel.relphi-celtic-readable.relphi-celtic-cross-unrevealed .relphi-center-helper{display:none!important}
     `;
     document.head.appendChild(style);
