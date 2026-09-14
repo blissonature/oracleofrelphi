@@ -97,19 +97,26 @@ async function assertContained(page) {
   const jsonFile=await jsonDownload;
   assert.match(jsonFile.suggestedFilename(),/\.json$/i,'board-data export should still download');
 
-  // Reset leaves Options usable, including the last save-template control.
+  // Reset leaves Options usable, including the last save-template control. Reset
+  // intentionally re-renders the drawer, so query the replacement DOM only after
+  // that asynchronous render has settled rather than retaining a stale locator.
   await page.click('#drawingBoardOptionsButton');
   await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   await page.click('#relphiResetBoard');
   await page.waitForFunction(() => window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.slotCount===0);
-  const saveTemplate=page.locator('#relphiSaveTemplate');
-  await saveTemplate.scrollIntoViewIfNeeded();
-  const saveGeometry=await saveTemplate.evaluate(button=>{
-    const drawer=button.closest('.relphi-reading-options-drawer');
-    const bar=drawer.querySelector('.relphi-options-commitbar');
+  await page.waitForTimeout(180);
+  await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSaveTemplate',{state:'attached'});
+  const saveGeometry=await page.evaluate(()=>{
+    const drawer=document.querySelector('.relphi-reading-options-drawer.is-reading-options-open');
+    const button=drawer?.querySelector('#relphiSaveTemplate');
+    const body=drawer?.querySelector('.relphi-options-body');
+    const bar=drawer?.querySelector('.relphi-options-commitbar');
+    if (!drawer || !button || !body || !bar) return {inside:false,overlap:true,missing:true};
+    body.scrollTop=body.scrollHeight;
     const b=button.getBoundingClientRect(),d=drawer.getBoundingClientRect(),c=bar.getBoundingClientRect();
-    return {inside:b.top>=d.top && b.bottom<=d.bottom,overlap:b.bottom>c.top && b.top<c.bottom};
+    return {inside:b.top>=d.top && b.bottom<=d.bottom,overlap:b.bottom>c.top && b.top<c.bottom,missing:false};
   });
+  assert.equal(saveGeometry.missing,false,'Save template control must exist after Reset Board');
   assert.equal(saveGeometry.inside,true,'Save template must be reachable inside the mobile Options drawer');
   assert.equal(saveGeometry.overlap,false,'Save template must not be covered by the commit bar');
 
