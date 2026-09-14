@@ -22,7 +22,7 @@
 #shortListPanel .card-row-workspace>.short-list-row.card-row-board{position:absolute!important;inset:0 auto auto 0!important;margin:0!important;padding:0!important;overflow:visible!important;background:transparent!important;transform-origin:0 0!important}
 #shortListPanel .card-row-workspace>.short-list-row.card-row-board>.card-row-item{position:absolute!important;width:var(--row-envelope-w,174px)!important;min-width:var(--row-envelope-w,174px)!important;max-width:var(--row-envelope-w,174px)!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important;transform:rotate(var(--row-card-rotation,0deg)) scale(var(--row-card-scale,1))!important;transform-origin:50% 50%!important}
 #shortListPanel .card-row-workspace .card-row-item>.card-row-position-panel{position:absolute!important;left:.25rem!important;right:.25rem!important;bottom:calc(100% + .32rem)!important;z-index:70!important;min-height:2rem!important;padding:.25rem .35rem!important;border:1px solid rgba(17,17,17,.28)!important;border-radius:7px!important;background:rgba(255,253,248,.94)!important;color:#111!important;font-size:.68rem!important;font-weight:800!important;line-height:1.15!important;text-align:center!important;box-shadow:0 2px 8px rgba(0,0,0,.12)!important;transform:none!important}
-#shortListPanel .card-row-workspace .card-row-position-panel .card-row-position-editor{display:block!important;min-height:1em!important;outline:0!important}
+#shortListPanel .card-row-workspace .card-row-item>.card-row-position-panel .card-row-position-editor{display:block!important;min-height:1em!important;outline:0!important}
 #shortListPanel.relphi-hide-position-stickers .card-row-position-panel{display:none!important}
 #shortListPanel .card-row-card-wrap,#shortListPanel .card-row-drop-card{position:relative!important;width:var(--row-envelope-w,174px)!important;border:0!important;border-radius:10px!important;background:var(--relphi-card-envelope-bg,#f3f0ea)!important;overflow:visible!important;box-shadow:0 3px 12px rgba(0,0,0,.18)!important}
 #shortListPanel .card-row-card-wrap>.or-card,#shortListPanel .card-row-drop-card{width:100%!important;max-width:none!important;margin:0!important}
@@ -116,4 +116,24 @@
   #shortListPanel .relphi-workspace-tools{gap:.18rem!important}
   #shortListPanel .relphi-zoom-step:first-child{display:none!important}
   #shortListPanel .relphi-tool-flyout{left:auto!important;right:0!important;width:min(20rem,calc(100vw - 1.4rem))!important}
+}
+
+/* Focus reader polish: neutralize board-only card sizing so the card is actually readable. */
+body .relphi-focus-card-host>.or-card.card-row-card.tarot-card-surface.relphi-surface--card{display:block!important;position:relative!important;flex:none!important;width:min(22rem,82vw)!important;min-width:min(22rem,82vw)!important;max-width:min(22rem,82vw)!important;height:auto!important;min-height:0!important;max-height:none!important;aspect-ratio:500/866!important;margin:auto!important;padding:0!important;transform:none!important;transform-origin:50% 50%!important;line-height:normal!important;border:1.5px solid #111!important;border-radius:12px!important;background:#fff!important;overflow:hidden!important;box-shadow:0 12px 30px rgba(0,0,0,.25)!important}
+body .relphi-focus-card-host>.or-card.card-row-card .or-card-art.relphi-surface-face{display:block!important;width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;object-fit:contain!important;margin:0!important;transform:none!important}
+body .relphi-focus-card-host>.or-card.card-row-card .or-card-layer.relphi-info-layer{position:absolute!important;inset:0!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;visibility:visible!important;opacity:1!important;transform:none!important;pointer-events:auto!important;overflow:hidden!important;cursor:text!important;background:rgba(255,253,248,.94)!important;padding:clamp(.72rem,2.4vw,1rem)!important;font-size:clamp(.82rem,2.4vw,.98rem)!important;line-height:1.38!important}
+body .relphi-focus-card-host>.or-card.card-row-card .or-layer-head{flex:0 0 auto!important}
+body .relphi-focus-card-host>.or-card.card-row-card .or-layer-scroll{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;overscroll-behavior:contain!important}
+body .relphi-focus-card-host .or-card-add{display:none!important}
+body .relphi-focus-card-host .card-row-reverse-toggle,body .relphi-focus-card-host .card-row-transform-box{display:none!important}
+.relphi-focus-card-host{overscroll-behavior:contain!important}
+
+/* Transactional drawer chrome never competes with its scrollable body. */
+#shortListPanel .relphi-options-heading,#shortListPanel .relphi-options-note,#shortListPanel .relphi-options-commitbar{flex:0 0 auto!important}
+#shortListPanel .relphi-options-body{flex:1 1 auto!important;min-height:0!important;overscroll-behavior:contain!important;scroll-padding-bottom:1rem!important}
+#shortListPanel .relphi-options-commitbar{position:relative!important;z-index:2!important;box-shadow:0 -6px 16px rgba(250,246,241,.96)!important}
+
+@media(max-width:700px){
+  body .relphi-focus-card-host>.or-card.card-row-card.tarot-card-surface.relphi-surface--card{width:min(21rem,88vw)!important;min-width:min(21rem,88vw)!important;max-width:min(21rem,88vw)!important}
+  .relphi-focus-shell>footer{padding-bottom:max(.55rem,env(safe-area-inset-bottom))!important}
 }
