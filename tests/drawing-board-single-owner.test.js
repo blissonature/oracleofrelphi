@@ -54,7 +54,7 @@ assert.match(board, /acknowledgeCelticCrossing/);
 assert.match(board, /celticCrossAcknowledged/);
 assert.match(board, /event\.stopImmediatePropagation\(\)/);
 assert.match(board, /swapPositionSlots/);
-assert.match(board, /data\.relphiPositionId/);
+assert.match(board, /dataset\.relphiPositionId/);
 
 assert.match(css, /\.card-row-workspace\{[^}]*height:clamp\(28rem,62vh,40rem\)/);
 assert.match(css, /@media\(max-width:700px\)[\s\S]*height:clamp\(23rem,58dvh,36rem\)/);
