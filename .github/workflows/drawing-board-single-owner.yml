@@ -29,6 +29,7 @@ jobs:
           node --check tests/drawing-board-workflow-v2.test.js
           node --check tests/drawing-board-spread-prefabs.test.js
           node --check tests/drawing-board-runtime.test.js
+          node --check tests/drawing-board-iphone-regressions.test.js
       - name: Run static Drawing Board contracts
         run: |
           node tests/drawing-board-single-owner.test.js
@@ -45,6 +46,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           node tests/drawing-board-runtime.test.js
+          node tests/drawing-board-iphone-regressions.test.js
       - name: Upload Drawing Board acceptance screenshots
         if: always()
         uses: actions/upload-artifact@v4
