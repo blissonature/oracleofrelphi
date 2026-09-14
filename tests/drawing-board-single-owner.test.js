@@ -54,13 +54,15 @@ assert.match(board, /acknowledgeCelticCrossing/);
 assert.match(board, /celticCrossAcknowledged/);
 assert.match(board, /event\.stopImmediatePropagation\(\)/);
 assert.match(board, /swapPositionSlots/);
+assert.match(board, /data\.relphiPositionId/);
 
 assert.match(css, /\.card-row-workspace\{[^}]*height:clamp\(28rem,62vh,40rem\)/);
 assert.match(css, /@media\(max-width:700px\)[\s\S]*height:clamp\(23rem,58dvh,36rem\)/);
 assert.match(css, /\.relphi-focus-reader\{/);
 assert.match(css, /\.relphi-focus-strip\{/);
 assert.match(css, /\.relphi-focus-card-host \.or-card-layer\.relphi-info-layer\{[^}]*visibility:visible!important;[^}]*opacity:1!important/);
-assert.match(css, /relphi-celtic-crossed[\s\S]*data-row-index="1"/);
+assert.match(css, /\.card-row-action-staging\{display:none!important\}/);
+assert.match(css, /relphi-celtic-crossed[\s\S]*data-relphi-position-id="crossing"/);
 assert.doesNotMatch(css, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-stable/);
 
 const storage = new Map();
