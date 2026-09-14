@@ -34,7 +34,7 @@
   function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
   function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
   function escapeHtml(value) {
-    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[ch]));
   }
   function slug(value) {
     return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60) || 'custom-spread';
@@ -721,6 +721,18 @@
     activeDraw=false;
   }
 
+  function installLockedLayoutPointerGuards(root) {
+    root.querySelectorAll('.card-row-board>.card-row-item[data-row-index]>.card-row-drop-card,.card-row-board>.card-row-item[data-row-index]>.card-row-card-wrap').forEach(surface => {
+      if (surface.dataset.relphiLockedPointerGuard==='true') return;
+      surface.dataset.relphiLockedPointerGuard='true';
+      surface.addEventListener('pointerdown', event => {
+        if (event.target.closest('button,input,textarea,select,label,[contenteditable="true"],[data-row-transform-handle]')) return;
+        const state=currentPrefabState();
+        if (state.locked && !state.designMode) event.stopPropagation();
+      });
+    });
+  }
+
   function installBoardCapture(root) {
     const board=root.querySelector('.card-row-board');
     if (!board || board.dataset.relphiUnifiedCapture==='true') return;
@@ -785,6 +797,7 @@
     updateCelticClasses(root);
     installTopActions(root);
     installPermanentControls(root);
+    installLockedLayoutPointerGuards(root);
     installBoardCapture(root);
     if (optionsSession) renderOptions(root);
     if (pendingFocusIndex!=null) {
