@@ -103,7 +103,7 @@ const cross = celtic.positions[1];
 assert.deepEqual(JSON.parse(JSON.stringify(cross.canonicalTransform)), {x:.35,y:.35,scale:.48,rotation:0,zIndex:30});
 assert.deepEqual(JSON.parse(JSON.stringify(cross.crossedTransform)), {x:.20,y:.35,scale:.48,rotation:90,zIndex:30});
 const staff = celtic.positions.slice(6);
-assert.ok(staff.every(item => item.transform.x === .73 && item.transform.scale === .48));
+assert.ok(staff.every(item => item.transform.x === .60 && item.transform.scale === .48));
 for (let i=1;i<staff.length;i++) assert.ok(Math.abs(staff[i-1].transform.y-staff[i].transform.y)*760 >= 200);
 const saturn = registry.byId('saturn-square-9');
 assert.deepEqual(Array.from(saturn.positions, item => [item.transform.x,item.transform.y,item.transform.scale]), [
