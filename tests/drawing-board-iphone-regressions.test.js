@@ -50,6 +50,35 @@ async function assertContained(page) {
   });
   assert.equal(result.ok,true,JSON.stringify(result.failures));
 }
+async function assertFocusArtVisible(page) {
+  const result=await page.evaluate(()=>{
+    const card=document.querySelector('.relphi-focus-card-host>.or-card');
+    const art=card?.querySelector('.or-card-art');
+    const layer=card?.querySelector('.or-card-layer.relphi-info-layer');
+    const scroll=card?.querySelector('.or-layer-scroll');
+    if (!card || !art || !layer || !scroll) return {ok:false};
+    const c=card.getBoundingClientRect();
+    const a=art.getBoundingClientRect();
+    const s=scroll.getBoundingClientRect();
+    const bg=getComputedStyle(layer).backgroundColor;
+    return {
+      ok:true,
+      naturalWidth:art.naturalWidth,
+      artOpacity:Number(getComputedStyle(art).opacity),
+      layerBackground:bg,
+      exposedHeight:s.top-c.top,
+      cardHeight:c.height,
+      scrollHeight:s.height,
+      artHeight:a.height
+    };
+  });
+  assert.equal(result.ok,true,'focused reader should contain card art and interpretation');
+  assert.ok(result.naturalWidth>0,'focused card artwork must load');
+  assert.ok(result.artOpacity>.9,'focused card artwork must remain visible');
+  assert.equal(result.layerBackground,'rgba(0, 0, 0, 0)','full-card interpretation layer must be transparent');
+  assert.ok(result.exposedHeight>=result.cardHeight*.40,`focused reader should expose at least 40% of the art before interpretation; got ${Math.round(result.exposedHeight/result.cardHeight*100)}%`);
+  assert.ok(result.scrollHeight<=result.cardHeight*.50,'interpretation panel must not swallow the card art');
+}
 
 (async()=>{
   browser=await chromium.launch({headless:true});
@@ -81,6 +110,10 @@ async function assertContained(page) {
   for (let i=0;i<10;i++) {
     await page.click('#drawRandomRowCard');
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
+    if (i===0) {
+      await assertFocusArtVisible(page);
+      await page.screenshot({path:path.join(out,'drawing-board-mobile-focus-art-visible.png'),fullPage:true});
+    }
     await page.click('.relphi-focus-close');
     await page.waitForSelector('.relphi-focus-reader',{state:'detached'});
   }
