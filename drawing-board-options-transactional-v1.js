@@ -53,7 +53,8 @@
     if (trigger) {
       trigger.setAttribute('aria-expanded',String(open));
       trigger.classList.toggle('is-active',open);
-      trigger.title = open ? 'Options are open' : 'Open Options';
+      trigger.textContent = open ? 'Close Options' : 'Options';
+      trigger.title = open ? 'Close Options' : 'Open Options';
     }
   }
 
@@ -201,7 +202,9 @@
     style.textContent = `
       #shortListPanel .drawing-board-top-actions>#clearShortList,#shortListPanel .card-row-action-staging>#clearShortList{display:none!important}
       html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{order:0!important;flex:0 0 auto!important;margin-left:0!important;margin-right:auto!important}
-      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions{z-index:2800!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important;pointer-events:none!important}
+      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions>button:not(#drawingBoardOptionsButton),#shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions>.board-history-icon{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions>#drawingBoardOptionsButton{visibility:visible!important;opacity:1!important;pointer-events:auto!important}
       #shortListPanel[data-relphi-reading-options-open="true"] .card-row-workspace>.relphi-reading-options-drawer{z-index:2700!important}
       #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar{position:sticky!important;top:auto!important;bottom:0!important;z-index:4250!important;display:flex!important;align-items:center!important;width:100%!important;min-height:3.5rem!important;padding:.55rem .65rem!important;margin:.55rem 0 0!important;box-sizing:border-box!important;background:rgba(255,253,248,.98)!important;border-top:1px solid #d8cec5!important;border-bottom:0!important;box-shadow:0 -4px 12px rgba(35,24,18,.08)!important}
       #shortListPanel .relphi-options-commit-bar .relphi-options-right{margin-left:auto!important;display:flex!important;gap:.7rem!important}
@@ -210,6 +213,7 @@
       #shortListPanel .relphi-options-commit-bar .relphi-options-ok{border-color:#b81712!important;background:#dc1f18!important;color:#fff!important}
       @media(max-width:700px){
         #shortListPanel[data-relphi-reading-options-open="true"] .card-row-workspace>.relphi-reading-options-drawer{top:.45rem!important;right:.45rem!important;bottom:.45rem!important;left:.45rem!important}
+        #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions>#drawingBoardOptionsButton{position:fixed!important;top:.8rem!important;right:.8rem!important;left:auto!important;z-index:2810!important;margin:0!important}
       }
     `;
     document.head.appendChild(style);
