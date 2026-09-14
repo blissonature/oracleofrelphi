@@ -1,60 +1,113 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
-const interactions = read('drawing-board-interactions-v1.js');
-const lifecycle = read('drawing-board-template-lifecycle-v1.js');
-const options = read('drawing-board-options-transactional-v1.js');
-const renderGeometry = read('drawing-board-render-geometry-v1.js');
-const chrome = read('drawing-board-chrome-ownership-v1.js');
+const nav = read('navloader.js');
+const board = read('drawing-board-workflow-v2.js');
+const css = read('drawing-board-workflow-v2.css');
+const app = read('tarot-app.js');
 
-// Exactly one loaded owner is allowed to define spread geometry.
-assert.match(lifecycle, /single owner of spread geometry/);
-assert.match(lifecycle, /window\.RelphiDrawingBoardLayoutController/);
-assert.match(lifecycle, /delete base\.helper/);
-assert.match(lifecycle, /canonicalTransform:open \|\| closed/);
-assert.match(lifecycle, /\['behind', transform\(\.02,\.313/);
-assert.match(lifecycle, /\['self', transform\(\.40,\.601/);
-assert.match(lifecycle, /\['house', transform\(\.40,\.419/);
-assert.match(lifecycle, /\['hopes-fears', transform\(\.40,\.237/);
-assert.match(lifecycle, /\['outcome', transform\(\.40,\.055/);
-assert.match(lifecycle, /contentBounds\(\)/);
-assert.match(lifecycle, /card-row-position-panel/);
-assert.match(lifecycle, /frame\.width - GUTTER\*2/);
-assert.match(lifecycle, /frame\.height - GUTTER\*2/);
-assert.match(lifecycle, /stopImmediatePropagation\(\)/);
-assert.match(lifecycle, /rowDrawScope:'full'/);
-assert.match(lifecycle, /rowAllowReversals:true/);
-assert.match(lifecycle, /rowAllowRepeats:false/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=72/);
+[
+  'drawing-board-interactions-v1.js',
+  'drawing-board-template-lifecycle-v1.js',
+  'drawing-board-spread-prefabs-v1.js',
+  'drawing-board-options-transactional-v1.js',
+  'drawing-board-render-geometry-v1.js',
+  'drawing-board-chrome-ownership-v1.js'
+].forEach(name => assert.doesNotMatch(nav, new RegExp(name.replaceAll('.', '\\.'))));
+assert.doesNotMatch(nav, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-stable/);
 
-// Interaction code may not own layout.
-assert.doesNotMatch(interactions, /card-row-item\{position:relative/);
-assert.doesNotMatch(interactions, /style\.left\s*=/);
-assert.doesNotMatch(interactions, /style\.top\s*=/);
-assert.doesNotMatch(interactions, /style\.translate\s*=/);
-assert.match(interactions, /handles input behavior only/);
+['MutationObserver','getBoundingClientRect','relphi-drawing-board-ui-ready','relphi-drawing-board-ui-stable','Close Options'].forEach(needle => {
+  assert.ok(!board.includes(needle), `unified Drawing Board must not contain ${needle}`);
+});
+['repair','reconcile','rehydrate','settling'].forEach(needle => {
+  assert.ok(!board.toLowerCase().includes(needle), `unified Drawing Board must not use ${needle} lifecycle machinery`);
+});
 
-// The former geometry layer is deliberately inert.
-assert.match(renderGeometry, /Deliberately no DOM geometry mutations/);
-assert.doesNotMatch(renderGeometry, /MutationObserver/);
-assert.doesNotMatch(renderGeometry, /style\.left/);
+assert.match(app, /rowEnvelopeLayout:/);
+assert.match(app, /rowCardTransforms:/);
+assert.match(app, /rowActiveLayout:/);
+assert.match(app, /window\.RelphiDrawingBoardPrefabsBridge/);
+assert.match(app, /window\.RelphiDrawingBoardOptionsBridge/);
+assert.match(app, /document\.dispatchEvent\(new CustomEvent\('relphi:drawing-board-rendered'/);
 
-// Options is a draft transaction; applying a template is one controller call.
-assert.match(options, /Draft edits never mutate the board/);
-assert.match(options, /controller\(\)\?\.applyDraft/);
-assert.match(options, /controller\(\)\?\.resetBoard/);
-assert.match(options, /#drawingBoardOptionsButton/);
-assert.match(options, /event\.stopImmediatePropagation\(\)/);
-assert.doesNotMatch(options, /saveAndClear/);
+assert.match(board, /Zoom Extents/);
+assert.match(board, /zoomCardRowExtents/);
+assert.match(board, /stateContentBounds/);
+assert.match(board, /workspace\.clientWidth/);
+assert.match(board, /workspace\.clientHeight/);
+assert.match(board, /relphi-workspace-tools/);
+assert.match(board, /data-tool="snaps"/);
+assert.match(board, /data-tool="background"/);
+assert.match(board, /relphi-reading-options-drawer/);
+assert.match(board, /relphiResetBoard/);
+assert.match(board, /relphiCancelOptions/);
+assert.match(board, /relphiApplyOptions/);
+assert.match(board, /optionsStructuralChanged/);
+assert.match(board, /relphi-focus-reader/);
+assert.match(board, /relphi-focus-strip/);
+assert.match(board, /acknowledgeCelticCrossing/);
+assert.match(board, /celticCrossAcknowledged/);
+assert.match(board, /event\.stopImmediatePropagation\(\)/);
+assert.match(board, /swapPositionSlots/);
 
-// Chrome is UI-only, waits for the assembled current controls, and readiness is monotonic.
-assert.match(chrome, /UI placement\/readiness only/);
-assert.match(chrome, /relphi-drawing-board-ui-stable/);
-assert.match(chrome, /#zoomCardRowExtents/);
-assert.match(chrome, /data-relphi-transaction-owner="v2"/);
-assert.doesNotMatch(chrome, /relphi-celtic-readable/);
-assert.doesNotMatch(chrome, /row-card-rotation/);
+assert.match(css, /\.card-row-workspace\{[^}]*height:clamp\(28rem,62vh,40rem\)/);
+assert.match(css, /@media\(max-width:700px\)[\s\S]*height:clamp\(23rem,58dvh,36rem\)/);
+assert.match(css, /\.relphi-focus-reader\{/);
+assert.match(css, /\.relphi-focus-strip\{/);
+assert.match(css, /\.relphi-focus-card-host \.or-card-layer\.relphi-info-layer\{[^}]*visibility:visible!important;[^}]*opacity:1!important/);
+assert.match(css, /relphi-celtic-crossed[\s\S]*data-row-index="1"/);
+assert.doesNotMatch(css, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-stable/);
 
-console.log('Drawing Board single-owner architecture checks passed.');
+const storage = new Map();
+const sandbox = {
+  location:{ pathname:'/tarot.html' },
+  localStorage:{ getItem:key => storage.get(key) ?? null, setItem:(key,value)=>storage.set(key,String(value)) },
+  document:{ readyState:'loading', addEventListener(){}, getElementById(){return null;}, body:{classList:{add(){},remove(){}}}, querySelector(){return null;} },
+  window:{ addEventListener(){} },
+  Event,
+  CustomEvent: class CustomEvent { constructor(type,options={}) { this.type=type; this.detail=options.detail; } },
+  setTimeout(){ return 1; }, clearTimeout(){}, console
+};
+sandbox.window.window = sandbox.window;
+sandbox.window.document = sandbox.document;
+sandbox.window.localStorage = sandbox.localStorage;
+vm.createContext(sandbox);
+vm.runInContext(board, sandbox);
+const registry = sandbox.window.RelphiDrawingBoardSpreadPrefabs;
+assert.ok(registry, 'unified owner exposes spread registry');
+assert.deepEqual(Array.from(registry.shipped, item => item.id), [
+  'past-present-future-3',
+  'situation-challenge-strategy-3',
+  'choice-path-3',
+  'relationship-check-in-5',
+  'hope-and-comfort-5',
+  'saturn-square-9',
+  'celtic-cross-10',
+  'six-polarities-houses-12',
+  'focus-1'
+]);
+assert.ok(registry.shipped.every(item => item.source === 'shipped' && item.editable === false));
+assert.equal(registry.byId('celtic-cross-11'), null);
+const celtic = registry.byId('celtic-cross-10');
+assert.equal(celtic.cardCount, 10);
+assert.deepEqual(Array.from(celtic.positions, item => item.label), [
+  '1 · What covers you','2 · What crosses you','3 · What crowns you','4 · What is beneath you','5 · What is behind you',
+  '6 · What is before you','7 · Yourself','8 · Your house','9 · Your hopes or fears','10 · What will come'
+]);
+const cross = celtic.positions[1];
+assert.deepEqual(JSON.parse(JSON.stringify(cross.canonicalTransform)), {x:.35,y:.35,scale:.48,rotation:0,zIndex:30});
+assert.deepEqual(JSON.parse(JSON.stringify(cross.crossedTransform)), {x:.20,y:.35,scale:.48,rotation:90,zIndex:30});
+const staff = celtic.positions.slice(6);
+assert.ok(staff.every(item => item.transform.x === .73 && item.transform.scale === .48));
+for (let i=1;i<staff.length;i++) assert.ok(Math.abs(staff[i-1].transform.y-staff[i].transform.y)*760 >= 200);
+const saturn = registry.byId('saturn-square-9');
+assert.deepEqual(Array.from(saturn.positions, item => [item.transform.x,item.transform.y,item.transform.scale]), [
+  [.04,.04,.58],[.36,.04,.58],[.68,.04,.58],[.04,.37,.58],[.36,.37,.58],[.68,.37,.58],[.04,.70,.58],[.36,.70,.58],[.68,.70,.58]
+]);
+
+console.log('Drawing Board single-owner checks passed.');
