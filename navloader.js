@@ -151,6 +151,12 @@
       style.textContent = '#shortListPanel .card-row-drawing-board:not([open])>summary>:not(strong){display:none!important}';
       document.head.appendChild(style);
     }
+    if (!document.getElementById('relphi-drawing-board-mobile-canvas-width')) {
+      const style = document.createElement('style');
+      style.id = 'relphi-drawing-board-mobile-canvas-width';
+      style.textContent = '@media(max-width:700px){#shortListPanel .card-row-workspace{width:calc(100% + 1.2rem)!important;margin-left:-.6rem!important;margin-right:-.6rem!important}}';
+      document.head.appendChild(style);
+    }
   }
 
   function loadEnhancements() {
