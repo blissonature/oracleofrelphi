@@ -58,9 +58,9 @@
       ['beneath', transform(.12,.571,0,.42,4)],
       ['behind', transform(.02,.313,0,.42,4)],
       ['before', transform(.30,.313,0,.42,4)],
-      ['self', transform(.40,.571,0,.42,4)],
-      ['house', transform(.40,.399,0,.42,4)],
-      ['hopes-fears', transform(.40,.227,0,.42,4)],
+      ['self', transform(.40,.601,0,.42,4)],
+      ['house', transform(.40,.419,0,.42,4)],
+      ['hopes-fears', transform(.40,.237,0,.42,4)],
       ['outcome', transform(.40,.055,0,.42,4)]
     ];
     base.id = CELTIC_ID;
