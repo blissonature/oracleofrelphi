@@ -154,7 +154,7 @@
     if (!document.getElementById('relphi-drawing-board-mobile-canvas-width')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-mobile-canvas-width';
-      style.textContent = '@media(max-width:700px){#shortListPanel .card-row-workspace{width:calc(100% + 1.2rem)!important;max-width:none!important;margin-left:-.6rem!important;margin-right:-.6rem!important}}';
+      style.textContent = '@media(max-width:700px){#shortListPanel .card-row-workspace{width:calc(100% + 1.2rem)!important;max-width:none!important;margin-left:-.6rem!important;margin-right:-.6rem!important}#shortListPanel.relphi-celtic-cross .card-row-board{translate:-6px 0!important}}';
       document.head.appendChild(style);
     }
   }
