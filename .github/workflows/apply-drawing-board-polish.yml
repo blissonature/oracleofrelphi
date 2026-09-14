@@ -1,0 +1,138 @@
+name: Apply Drawing Board iPhone polish
+
+on:
+  push:
+    branches:
+      - refactor/drawing-board-single-owner
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/drawing-board-single-owner
+          fetch-depth: 0
+      - name: Apply source-level Drawing Board fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              return text.replace(old, new, 1)
+
+          def sub_once(text, pattern, replacement, label):
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=re.S)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              return updated
+
+          js_path = Path('drawing-board-workflow-v2.js')
+          js = js_path.read_text()
+          js = replace_once(js,
+              "  const CARD_H = 390;\n  const LABEL_H = 48;\n  const GUTTER = 14;",
+              "  const CARD_H = CARD_W * 866 / 500;\n  const LABEL_H = 38;\n  const GUTTER = 12;",
+              'card geometry constants')
+
+          generic = '''  // Ordinary spreads use simple rows/grids. Only spreads whose meaning depends\n  // on geometry (Celtic Cross and Saturn Square) receive bespoke layouts.\n  function genericPositions(labels) {\n    const count = Math.max(1, labels.length);\n    if (count === 1) return [position('position-1', labels[0], 1, transform(.40,.22,1))];\n    if (count <= 3) {\n      const xs = count === 2 ? [.18,.58] : [.055,.355,.655];\n      return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index],.24,.88)));\n    }\n    if (count <= 6) {\n      const xs = [.055,.355,.655], ys = [.10,.56];\n      return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index%3],ys[Math.floor(index/3)],.74)));\n    }\n    const cols = 4;\n    const rows = Math.ceil(count / cols);\n    const xs = [.015,.25,.485,.72];\n    const ys = rows <= 2 ? [.12,.56] : rows === 3 ? [.02,.34,.66] : Array.from({length:rows},(_,i)=>.015+i*(.93/Math.max(1,rows-1)));\n    const scale = rows <= 3 ? .62 : .52;\n    return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index%cols],ys[Math.floor(index/cols)],scale)));\n  }'''
+          js = sub_once(js, r"  function genericPositions\(labels\) \{.*?\n  \}\n\n  const CELTIC_LABELS", generic + "\n\n  const CELTIC_LABELS", 'ordinary spread geometry')
+
+          celtic = '''  const CELTIC_CROSS = {\n    version:1,\n    id:'celtic-cross-10',\n    name:'Celtic Cross',\n    cardCount:10,\n    source:'shipped',\n    editable:false,\n    positions:[\n      position('covering', CELTIC_LABELS[0], 1, transform(.20,.34,.48,0,20), { role:'covering' }),\n      position('crossing', CELTIC_LABELS[1], 2, transform(.20,.34,.48,90,30), {\n        role:'crossing', crosses:'covering',\n        canonicalTransform:transform(.35,.34,.48,0,30),\n        crossedTransform:transform(.20,.34,.48,90,30)\n      }),\n      position('crowning', CELTIC_LABELS[2], 3, transform(.20,.02,.48,0,4), { role:'crowning' }),\n      position('beneath', CELTIC_LABELS[3], 4, transform(.20,.66,.48,0,4), { role:'beneath' }),\n      position('behind', CELTIC_LABELS[4], 5, transform(.015,.34,.48,0,4), { role:'behind' }),\n      position('before', CELTIC_LABELS[5], 6, transform(.49,.34,.48,0,4), { role:'before' }),\n      position('self', CELTIC_LABELS[6], 7, transform(.68,.665,.48,0,4), { role:'self' }),\n      position('house', CELTIC_LABELS[7], 8, transform(.68,.445,.48,0,4), { role:'house' }),\n      position('hopes-fears', CELTIC_LABELS[8], 9, transform(.68,.225,.48,0,4), { role:'hopes-fears' }),\n      position('outcome', CELTIC_LABELS[9], 10, transform(.68,.005,.48,0,4), { role:'outcome' })\n    ],\n    rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }\n  };'''
+          js = sub_once(js, r"  const CELTIC_CROSS = \{.*?\n  \};\n\n  const SATURN_LABELS", celtic + "\n\n  const SATURN_LABELS", 'Celtic geometry')
+
+          house = '''  const HOUSE_POLARITIES = {\n    version:1,id:'six-polarities-houses-12',name:'Six Polarities · Houses',cardCount:12,source:'shipped',editable:false,\n    positions:genericPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),\n    rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }\n  };'''
+          js = sub_once(js, r"  const HOUSE_POLARITIES = \{.*?\n  \};", house, 'Six Polarities geometry')
+
+          bounds = '''  function stateContentBounds(snapshot, count) {\n    if (!count) return {minX:0,minY:0,maxX:CARD_W,maxY:CARD_H};\n    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;\n    for (let i=0;i<count;i++) {\n      const p = logicalPosition(snapshot,i);\n      const t = logicalTransform(snapshot,i);\n      // Native positions are the untransformed card box's top-left. CSS scales\n      // and rotates each slot around its center, so extents must use that same origin.\n      const centerX = p.x + CARD_W / 2;\n      const centerY = p.y + CARD_H / 2;\n      const rotated = rotatedBounds(CARD_W*t.scale,CARD_H*t.scale,t.rotation);\n      let left=centerX-rotated.width/2, right=centerX+rotated.width/2;\n      let top=centerY-rotated.height/2, bottom=centerY+rotated.height/2;\n      const labelH = showPositionStickers ? LABEL_H*t.scale : 0;\n      if (labelH) {\n        if (Math.abs(t.rotation % 180) < 1) top -= labelH;\n        else { left -= labelH; right += labelH; top -= labelH; bottom += labelH; }\n      }\n      minX=Math.min(minX,left); minY=Math.min(minY,top);\n      maxX=Math.max(maxX,right); maxY=Math.max(maxY,bottom);\n    }\n    return {minX,minY,maxX,maxY};\n  }\n  function zoomExtents() {\n    const root = panel();\n    const workspace = root?.querySelector('.card-row-workspace');\n    const bridge = optionsBridge();\n    if (!root || !workspace || !bridge) return false;\n    const snapshot = bridge.capture();\n    const count = currentSlotCount(root);\n    const bounds = stateContentBounds(snapshot,count);\n    const toolbar = root.querySelector('.card-row-workspace-toolbar.relphi-board-controller');\n    const toolbarH = toolbar?.offsetHeight || 52;\n    const availableW = Math.max(CARD_W, workspace.clientWidth - GUTTER*2);\n    const availableH = Math.max(CARD_H, workspace.clientHeight - toolbarH - GUTTER*2);\n    const contentW = Math.max(CARD_W,bounds.maxX-bounds.minX);\n    const contentH = Math.max(CARD_H,bounds.maxY-bounds.minY);\n    const zoom = clamp(Math.min(availableW/contentW,availableH/contentH),MIN_ZOOM,MAX_ZOOM);\n    snapshot.rowZoom = zoom;\n    snapshot.rowPanX = Math.round((availableW-contentW*zoom)/2-bounds.minX*zoom+GUTTER);\n    snapshot.rowPanY = Math.round((availableH-contentH*zoom)/2-bounds.minY*zoom+GUTTER);\n    bridge.restore(snapshot);\n    return true;\n  }'''
+          js = sub_once(js, r"  function stateContentBounds\(snapshot, count\) \{.*?\n  \}\n  function zoomExtents\(\) \{.*?\n  \}", bounds, 'Zoom Extents geometry')
+
+          export_area = '''  function installExportArea(root) {\n    const drawer = root.querySelector('.card-row-drawing-board');\n    const workspace = root.querySelector('.card-row-workspace');\n    if (!drawer || !workspace) return;\n    let section = root.querySelector('#drawing-board-post-export');\n    if (!section) {\n      section = document.createElement('section');\n      section.id = 'drawing-board-post-export';\n      section.className = 'relphi-board-export';\n      section.innerHTML = '<header><strong>Save & export</strong><span>Keep the arranged board or export the cards.</span></header><div class="board-options-body"></div>';\n      workspace.insertAdjacentElement('afterend',section);\n    }\n    const destination = section.querySelector('.board-options-body');\n    const labels = {\n      snapshotCardRowArrangement:'Prepare arrangement snapshot (PNG)',\n      downloadRowHtml:'Download cards (HTML)',\n      downloadRowTextHtml:'Download text (HTML)',\n      downloadRowJson:'Download board data (JSON)',\n      printCardRowImage:'Print / image'\n    };\n    Object.entries(labels).forEach(([id,label]) => {\n      const node = root.querySelector('#'+id);\n      if (!node || node.parentElement === destination) return;\n      node.textContent = label;\n      destination.appendChild(node);\n    });\n  }\n\n'''
+          js = replace_once(js, "  function optionTemplateMarkup(draft) {", export_area + "  function optionTemplateMarkup(draft) {", 'export area insertion')
+
+          layout_classes = '''  function updateLayoutClasses(root) {\n    const id=currentPrefabState().activeLayout?.id || '';\n    const isCeltic=id==='celtic-cross-10';\n    root.classList.toggle('relphi-celtic-cross',isCeltic);\n    root.classList.toggle('relphi-six-polarities',id==='six-polarities-houses-12');\n    const snap=isCeltic?currentSnapshot():null;\n    const acknowledged=!!snap?.rowPositionMeta?.some?.(meta=>meta?.celticCrossAcknowledged);\n    root.classList.toggle('relphi-celtic-crossed',isCeltic&&acknowledged);\n  }'''
+          js = sub_once(js, r"  function updateCelticClasses\(root\) \{.*?\n  \}", layout_classes, 'layout class ownership')
+          js = replace_once(js, "    updateCelticClasses(root);\n    installTopActions(root);\n    installPermanentControls(root);", "    updateLayoutClasses(root);\n    installTopActions(root);\n    installPermanentControls(root);\n    installExportArea(root);", 'enhance export ownership')
+          js = replace_once(js, "{x:.20*CANVAS_W,y:.35*CANVAS_H}", "{x:.20*CANVAS_W,y:.34*CANVAS_H}", 'crossing fallback')
+          js = replace_once(js, "    bridge.restore(snap);\n    return true;\n  }\n\n  function focusItem", "    bridge.restore(snap);\n    setTimeout(zoomExtents,0);\n    return true;\n  }\n\n  function focusItem", 'crossing refit')
+          js_path.write_text(js)
+
+          css_path = Path('drawing-board-workflow-v2.css')
+          css = css_path.read_text()
+          boot_css = '''\n/* Native Drawing Board controls stay invisible until the unified owner converts them.\n   The red board remains visible, so there is no board-level FOUC. */\n#shortListPanel .card-row-workspace-toolbar:not(.relphi-board-controller){visibility:hidden!important;opacity:0!important;pointer-events:none!important}\n#shortListPanel #resetCardRowPan,#shortListPanel .card-row-pan-note{display:none!important}\n'''
+          if 'Native Drawing Board controls stay invisible until the unified owner converts them.' not in css:
+              css = css.replace('/* Oracle of Relphi Drawing Board v3: one static enhancement surface. */', '/* Oracle of Relphi Drawing Board v3: one static enhancement surface. */' + boot_css, 1)
+          export_css = '''\n/* Save/export is permanent document chrome below the pannable canvas. */\n#shortListPanel .relphi-board-export{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.75rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}\n#shortListPanel .relphi-board-export>header{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:.7rem!important;flex-wrap:wrap!important;text-align:left!important}\n#shortListPanel .relphi-board-export>header strong{font-size:.9rem!important}\n#shortListPanel .relphi-board-export>header span{font-size:.7rem!important;color:#655d56!important}\n#shortListPanel .relphi-board-export .board-options-body{display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:wrap!important}\n#shortListPanel .relphi-board-export button{min-height:2.15rem!important;margin:0!important;padding:.4rem .62rem!important;border:1.25px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.7rem!important;font-weight:800!important}\n#shortListPanel .relphi-board-export #snapshotCardRowArrangement{border-color:var(--relphi-board-red)!important;background:var(--relphi-board-red)!important;color:#fff!important}\n#shortListPanel .relphi-board-export .drawing-board-snapshot-status{flex:1 0 100%!important}\n'''
+          if 'Save/export is permanent document chrome below the pannable canvas.' not in css:
+              css += export_css
+          css_path.write_text(css)
+
+          nav_path = Path('navloader.js')
+          nav = nav_path.read_text().replace("drawing-board-workflow-v2.css?v=28", "drawing-board-workflow-v2.css?v=29").replace("drawing-board-workflow-v2.js?v=72", "drawing-board-workflow-v2.js?v=73")
+          nav_path.write_text(nav)
+
+          one_path = Path('tests/drawing-board-single-owner.test.js')
+          one = one_path.read_text().replace(r"drawing-board-workflow-v2\.js\?v=72", r"drawing-board-workflow-v2\.js\?v=73")
+          one = one.replace("assert.match(board, /relphi-workspace-tools/);", "assert.match(board, /relphi-workspace-tools/);\nassert.match(board, /installExportArea/);\nassert.match(board, /drawing-board-post-export/);")
+          one = one.replace("assert.match(css, /\\.card-row-action-staging\\{display:none!important\\}/);", "assert.match(css, /\\.card-row-action-staging\\{display:none!important\\}/);\nassert.match(css, /card-row-workspace-toolbar:not\\(\\.relphi-board-controller\\).*visibility:hidden!important/);\nassert.match(css, /\\.relphi-board-export\\{/);")
+          one = one.replace("{x:.35,y:.35,scale:.48,rotation:0,zIndex:30}", "{x:.35,y:.34,scale:.48,rotation:0,zIndex:30}")
+          one = one.replace("{x:.20,y:.35,scale:.48,rotation:90,zIndex:30}", "{x:.20,y:.34,scale:.48,rotation:90,zIndex:30}")
+          one = one.replace("item.transform.x === .60", "item.transform.x === .68")
+          one = one.replace(">= 200", ">= 160")
+          insertion = "const polarities = registry.byId('six-polarities-houses-12');\nassert.equal(new Set(polarities.positions.map(item => item.transform.x)).size, 4);\nassert.equal(new Set(polarities.positions.map(item => item.transform.y)).size, 3);\n"
+          one = one.replace("const saturn = registry.byId('saturn-square-9');", insertion + "const saturn = registry.byId('saturn-square-9');")
+          one_path.write_text(one)
+
+          pref_path = Path('tests/drawing-board-spread-prefabs.test.js')
+          pref = pref_path.read_text()
+          pref = pref.replace("assert.equal(c.positions[0].transform.x,.20);\nassert.equal(c.positions[1].canonicalTransform.x,.35);\nassert.equal(c.positions[4].transform.x,.02);\nassert.equal(c.positions[5].transform.x,.50);\nassert.deepEqual(Array.from(c.positions.slice(6),p=>p.transform.y),[.83,.555,.28,.005]);", "assert.equal(c.positions[0].transform.x,.20);\nassert.equal(c.positions[0].transform.y,.34);\nassert.equal(c.positions[1].canonicalTransform.x,.35);\nassert.equal(c.positions[1].canonicalTransform.y,.34);\nassert.equal(c.positions[4].transform.x,.015);\nassert.equal(c.positions[5].transform.x,.49);\nassert.ok(c.positions.slice(6).every(p=>p.transform.x===.68));\nassert.deepEqual(Array.from(c.positions.slice(6),p=>p.transform.y),[.665,.445,.225,.005]);")
+          pref = pref.replace("assert.equal(polarities.positions[1].label,'7 · Libra · You');", "assert.equal(polarities.positions[1].label,'7 · Libra · You');\nassert.equal(new Set(polarities.positions.map(p=>p.transform.x)).size,4);\nassert.equal(new Set(polarities.positions.map(p=>p.transform.y)).size,3);")
+          pref_path.write_text(pref)
+
+          wf_path = Path('tests/drawing-board-workflow-v2.test.js')
+          wf = wf_path.read_text()
+          wf = wf.replace("assert.match(board, /function zoomExtents/);", "assert.match(board, /function zoomExtents/);\nassert.match(board, /function installExportArea/);\nassert.match(board, /drawing-board-post-export/);")
+          wf = wf.replace("assert.match(css, /relphi-focus-reader/);", "assert.match(css, /relphi-focus-reader/);\nassert.match(css, /card-row-workspace-toolbar:not\\(\\.relphi-board-controller\\).*visibility:hidden!important/);\nassert.match(css, /relphi-board-export/);")
+          wf_path.write_text(wf)
+
+          runtime_path = Path('tests/drawing-board-runtime.test.js')
+          runtime = runtime_path.read_text()
+          runtime = runtime.replace("  assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool=\"background\"]').count(),1);", "  assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool=\"background\"]').count(),1);\n  await mobile.waitForSelector('#drawing-board-post-export #downloadRowHtml',{state:'visible'});\n  await mobile.waitForSelector('#drawing-board-post-export #downloadRowJson',{state:'visible'});")
+          runtime = runtime.replace(">=200,'Celtic staff spacing should remain readable'", ">=160,'Celtic staff spacing should remain readable'")
+          runtime = runtime.replace("  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-celtic-crossed.png'),fullPage:true});", "  await assertContained(mobile);\n  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-celtic-crossed.png'),fullPage:true});")
+          six = '''  await mobile.selectOption('#relphiSpreadTemplateSelect','six-polarities-houses-12');\n  await mobile.click('#relphiApplyOptions');\n  await mobile.waitForFunction(() => window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id === 'six-polarities-houses-12');\n  await mobile.click('#zoomCardRowExtents');\n  await mobile.waitForTimeout(120);\n  state=await boardState(mobile);\n  const polarityX=new Set(Object.values(state.snap.rowEnvelopeLayout).map(point=>Math.round(point.x)));\n  const polarityY=new Set(Object.values(state.snap.rowEnvelopeLayout).map(point=>Math.round(point.y)));\n  assert.equal(polarityX.size,4,'Six Polarities should use four columns');\n  assert.equal(polarityY.size,3,'Six Polarities should use three rows');\n  await assertContained(mobile);\n  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-six-polarities.png'),fullPage:true});\n'''
+          runtime = runtime.replace("  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});\n  assert.deepEqual(mobileErrors,[]);", "  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});\n" + six + "  assert.deepEqual(mobileErrors,[]);")
+          compact = '''\n  const compact=await browser.newPage({viewport:{width:390,height:700}});\n  const compactErrors=[];\n  compact.on('pageerror',error=>compactErrors.push(String(error)));\n  await compact.goto(base,{waitUntil:'domcontentloaded'});\n  await waitReady(compact);\n  await openBoard(compact);\n  await applyCeltic(compact);\n  await assertContained(compact);\n  await compact.screenshot({path:path.join(out,'drawing-board-mobile-compact-celtic.png'),fullPage:true});\n  assert.deepEqual(compactErrors,[]);\n  await compact.close();\n\n'''
+          runtime = runtime.replace("  const desktop=await browser.newPage({viewport:{width:1440,height:1000}});", compact + "  const desktop=await browser.newPage({viewport:{width:1440,height:1000}});")
+          runtime_path.write_text(runtime)
+          PY
+
+          node --check drawing-board-workflow-v2.js
+          node --check navloader.js
+          node --check tests/drawing-board-single-owner.test.js
+          node --check tests/drawing-board-workflow-v2.test.js
+          node --check tests/drawing-board-spread-prefabs.test.js
+          node --check tests/drawing-board-runtime.test.js
+          node tests/drawing-board-single-owner.test.js
+          node tests/drawing-board-workflow-v2.test.js
+          node tests/drawing-board-spread-prefabs.test.js
+      - name: Commit source-level fixes
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add drawing-board-workflow-v2.js drawing-board-workflow-v2.css navloader.js tests/drawing-board-single-owner.test.js tests/drawing-board-workflow-v2.test.js tests/drawing-board-spread-prefabs.test.js tests/drawing-board-runtime.test.js
+          git commit -m "Fix Drawing Board mobile fit and exports"
+          git push origin HEAD:refactor/drawing-board-single-owner
