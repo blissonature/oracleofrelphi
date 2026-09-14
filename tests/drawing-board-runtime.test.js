@@ -68,6 +68,7 @@ async function assertContained(page) {
   assert.equal(await mobile.locator('#zoomCardRowExtents').count(),1);
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="snaps"]').count(),1);
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="background"]').count(),1);
+  assert.equal(await mobile.locator('.card-row-action-staging').evaluate(node=>getComputedStyle(node).display),'none');
   const bg=await mobile.locator('.card-row-workspace').evaluate(node=>getComputedStyle(node).backgroundColor);
   assert.notEqual(bg,'rgba(0, 0, 0, 0)');
 
@@ -152,6 +153,28 @@ async function assertContained(page) {
   assert.match(focusTitles[0],/covers/i);
   assert.match(focusTitles[9],/come/i);
   await desktop.click('.relphi-focus-close');
+
+  await desktop.click('#drawRandomRowCard');
+  await desktop.waitForSelector('.relphi-focus-reader',{state:'visible'});
+  semantic=await boardState(desktop);
+  let semanticCrossingIndex=semantic.snap.rowPositionMeta.findIndex(meta=>meta?.id==='crossing');
+  assert.equal(semanticCrossingIndex,2,'the crossing position should be resolved semantically after out-of-order draws');
+  assert.match(await desktop.locator('.relphi-focus-shell>header strong').textContent(),/crosses/i);
+  await desktop.click('.relphi-focus-next');
+  await desktop.waitForFunction(() => window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowPositionMeta?.some?.(meta => meta?.id === 'crossing' && meta?.celticCrossAcknowledged === true));
+  semantic=await boardState(desktop);
+  semanticCrossingIndex=semantic.snap.rowPositionMeta.findIndex(meta=>meta?.id==='crossing');
+  assert.equal(semanticCrossingIndex,2);
+  const crossingVisual=await desktop.locator('.card-row-item[data-relphi-position-id="crossing"]').evaluate(item=>{
+    const face=item.querySelector('.card-row-card-wrap');
+    const itemMatrix=new DOMMatrix(getComputedStyle(item).transform);
+    const faceMatrix=new DOMMatrix(getComputedStyle(face).transform);
+    return {index:Number(item.dataset.rowIndex),itemB:itemMatrix.b,itemC:itemMatrix.c,faceB:faceMatrix.b,faceC:faceMatrix.c};
+  });
+  assert.equal(crossingVisual.index,2);
+  assert.ok(Math.abs(crossingVisual.itemB)<.01 && Math.abs(crossingVisual.itemC)<.01,'crossing position label should remain upright');
+  assert.ok(Math.abs(crossingVisual.faceB)>.9 && Math.abs(crossingVisual.faceC)>.9,'crossing card face should rotate ninety degrees');
+  if (await desktop.locator('.relphi-focus-reader').count()) await desktop.click('.relphi-focus-close');
 
   assert.deepEqual(desktopErrors,[]);
   console.log('Drawing Board browser acceptance checks passed');
