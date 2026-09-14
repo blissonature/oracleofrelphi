@@ -97,10 +97,10 @@
       position('beneath', CELTIC_LABELS[3], 4, transform(.20,.67,.48,0,4), { role:'beneath' }),
       position('behind', CELTIC_LABELS[4], 5, transform(.02,.35,.48,0,4), { role:'behind' }),
       position('before', CELTIC_LABELS[5], 6, transform(.50,.35,.48,0,4), { role:'before' }),
-      position('self', CELTIC_LABELS[6], 7, transform(.73,.83,.48,0,4), { role:'self' }),
-      position('house', CELTIC_LABELS[7], 8, transform(.73,.555,.48,0,4), { role:'house' }),
-      position('hopes-fears', CELTIC_LABELS[8], 9, transform(.73,.28,.48,0,4), { role:'hopes-fears' }),
-      position('outcome', CELTIC_LABELS[9], 10, transform(.73,.005,.48,0,4), { role:'outcome' })
+      position('self', CELTIC_LABELS[6], 7, transform(.60,.83,.48,0,4), { role:'self' }),
+      position('house', CELTIC_LABELS[7], 8, transform(.60,.555,.48,0,4), { role:'house' }),
+      position('hopes-fears', CELTIC_LABELS[8], 9, transform(.60,.28,.48,0,4), { role:'hopes-fears' }),
+      position('outcome', CELTIC_LABELS[9], 10, transform(.60,.005,.48,0,4), { role:'outcome' })
     ],
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
