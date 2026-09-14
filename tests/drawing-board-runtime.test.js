@@ -33,6 +33,31 @@ async function boardState(page) {
     snap:window.RelphiDrawingBoardOptionsBridge?.capture?.()
   }));
 }
+async function drawDiagnostics(page,index) {
+  return page.evaluate(index => {
+    const root=document.querySelector('#shortListPanel');
+    const item=root?.querySelector(`.card-row-item[data-row-index="${index}"]`);
+    const face=item?.querySelector('.card-row-drop-card');
+    const draw=root?.querySelector('#drawRandomRowCard');
+    const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.() || {};
+    const rect=face?.getBoundingClientRect();
+    const center=rect ? {x:rect.left+rect.width/2,y:rect.top+rect.height/2} : null;
+    const hit=center ? document.elementFromPoint(center.x,center.y) : null;
+    return {
+      itemClass:item?.className || null,
+      hasCard:!!item?.querySelector('[data-row-card]'),
+      faceConnected:!!face?.isConnected,
+      drawDisabled:!!draw?.disabled,
+      designMode:!!state.designMode,
+      slotCount:Number(state.slotCount)||0,
+      hasCards:!!state.hasCards,
+      hitClass:hit?.className || null,
+      hitTag:hit?.tagName || null,
+      hitInsideFace:!!(hit && face?.contains(hit)),
+      rect:rect ? {left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height} : null
+    };
+  },index);
+}
 async function assertContained(page) {
   const result=await page.evaluate(() => {
     const root=document.querySelector('#shortListPanel');
@@ -83,8 +108,11 @@ async function assertContained(page) {
   await assertContained(mobile);
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-celtic-before.png'),fullPage:true});
 
-  await mobile.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').click();
-  await mobile.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
+  const beforeDispatch=await drawDiagnostics(mobile,0);
+  await mobile.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').dispatchEvent('click');
+  await mobile.waitForTimeout(250);
+  const afterDispatch=await drawDiagnostics(mobile,0);
+  if (!afterDispatch.hasCard) throw new Error('Targeted draw dispatch diagnostic: '+JSON.stringify({beforeDispatch,afterDispatch}));
   await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
   assert.equal(await mobile.locator('.relphi-focus-strip>button').count(),10);
   const infoVisible=await mobile.locator('.relphi-focus-card-host .or-card-layer.relphi-info-layer').evaluate(node=>{
