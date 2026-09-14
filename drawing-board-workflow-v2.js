@@ -823,7 +823,7 @@
     }
   }
 
-  document.addEventListener('click',globalCapture,true);
+  window.addEventListener('click',globalCapture,true);
   document.addEventListener('keydown',event=>{
     if (event.key!=='Escape') return;
     if (document.querySelector('.relphi-focus-reader')) closeFocus({acknowledge:true});
