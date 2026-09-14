@@ -344,8 +344,12 @@
           return;
         }
         const nextFrame = liveWorkspace.getBoundingClientRect();
+        const nextContentH = nextBounds.bottom - nextBounds.top;
+        const centeredGapY = Math.max(0,(nextFrame.height - nextContentH)/2);
+        const mobileCeltic = nextFrame.width <= 700 && state()?.activeLayout?.id === CELTIC_ID;
+        const mobileLift = mobileCeltic ? Math.min(24,Math.max(0,centeredGapY - GUTTER)) : 0;
         const dx = nextFrame.left + (nextFrame.width - (nextBounds.right - nextBounds.left))/2 - nextBounds.left;
-        const dy = nextFrame.top + (nextFrame.height - (nextBounds.bottom - nextBounds.top))/2 - nextBounds.top;
+        const dy = nextFrame.top + (nextFrame.height - nextContentH)/2 - nextBounds.top - mobileLift;
         setViewportState(nextZoom,dx,dy);
         requestAnimationFrame(() => requestAnimationFrame(() => {
           tagSemanticPositions();
