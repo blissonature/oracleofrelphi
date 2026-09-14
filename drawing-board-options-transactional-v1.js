@@ -112,7 +112,7 @@
 
   function syncEditorFromBoard(root) {
     const live = window.RelphiDrawingBoardPrefabsBridge?.getState?.();
-    const layout = live?.activeLayout;
+    const layout = live?.activeLayout || live?.currentLayout || null;
     const select = root?.querySelector('#relphiSpreadTemplateSelect');
     if (layout?.id && select && templateById(layout.id)) select.value = layout.id;
     if (layout?.positions?.length) setBuilderLabels(root,ordered(layout).map(item => item.label));
@@ -162,13 +162,14 @@
     if (!bar) {
       bar = document.createElement('div');
       bar.className = 'relphi-options-commit-bar';
-      const summary = box.querySelector(':scope > summary');
-      summary ? summary.insertAdjacentElement('afterend',bar) : box.prepend(bar);
     }
     if (bar.dataset.relphiTransactionOwner !== 'v2') {
       bar.dataset.relphiTransactionOwner = 'v2';
       bar.innerHTML = '<button type="button" class="relphi-options-reset">Reset Board</button><span class="relphi-options-right"><button type="button" class="relphi-options-cancel">Cancel</button><button type="button" class="relphi-options-ok">OK</button></span>';
     }
+    // The commit bar belongs at the end of the scroll surface so sticky-bottom
+    // behavior is deterministic on mobile and cannot sit behind board actions.
+    if (bar.parentElement !== box || box.lastElementChild !== bar) box.appendChild(bar);
     return true;
   }
 
@@ -200,11 +201,16 @@
     style.textContent = `
       #shortListPanel .drawing-board-top-actions>#clearShortList,#shortListPanel .card-row-action-staging>#clearShortList{display:none!important}
       html body #shortListPanel .drawing-board-top-actions>#drawingBoardOptionsButton{order:0!important;flex:0 0 auto!important;margin-left:0!important;margin-right:auto!important}
-      #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar{position:sticky!important;top:0!important;z-index:4250!important;display:flex!important;align-items:center!important;width:100%!important;min-height:3.5rem!important;padding:.55rem .65rem!important;margin:0!important;box-sizing:border-box!important;background:rgba(255,253,248,.98)!important;border-bottom:1px solid #d8cec5!important;box-shadow:0 4px 12px rgba(35,24,18,.08)!important}
+      #shortListPanel[data-relphi-reading-options-open="true"] .drawing-board-top-actions{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+      #shortListPanel[data-relphi-reading-options-open="true"] .card-row-workspace>.relphi-reading-options-drawer{z-index:2700!important}
+      #shortListPanel .relphi-reading-options-drawer>.relphi-options-commit-bar{position:sticky!important;top:auto!important;bottom:0!important;z-index:4250!important;display:flex!important;align-items:center!important;width:100%!important;min-height:3.5rem!important;padding:.55rem .65rem!important;margin:.55rem 0 0!important;box-sizing:border-box!important;background:rgba(255,253,248,.98)!important;border-top:1px solid #d8cec5!important;border-bottom:0!important;box-shadow:0 -4px 12px rgba(35,24,18,.08)!important}
       #shortListPanel .relphi-options-commit-bar .relphi-options-right{margin-left:auto!important;display:flex!important;gap:.7rem!important}
       #shortListPanel .relphi-options-commit-bar button{appearance:none!important;min-height:2.45rem!important;padding:.48rem .9rem!important;border:1px solid #aaa098!important;border-radius:8px!important;background:#fff!important;color:#171412!important;font:inherit!important;font-size:.82rem!important;font-weight:850!important;box-shadow:none!important;cursor:pointer!important}
       #shortListPanel .relphi-options-commit-bar .relphi-options-reset{border-color:rgba(184,23,18,.58)!important;color:#a01813!important}
       #shortListPanel .relphi-options-commit-bar .relphi-options-ok{border-color:#b81712!important;background:#dc1f18!important;color:#fff!important}
+      @media(max-width:700px){
+        #shortListPanel[data-relphi-reading-options-open="true"] .card-row-workspace>.relphi-reading-options-drawer{top:.45rem!important;right:.45rem!important;bottom:.45rem!important;left:.45rem!important}
+      }
     `;
     document.head.appendChild(style);
   }
