@@ -55,6 +55,34 @@ async function assertContained(page) {
   });
   assert.equal(result.ok,true,JSON.stringify(result.failures));
 }
+async function assertReadableFocus(page) {
+  const geometry=await page.locator('.relphi-focus-card-host>.or-card').evaluate(node=>{
+    const rect=node.getBoundingClientRect();
+    const host=node.parentElement.getBoundingClientRect();
+    const add=node.querySelector('.or-card-add');
+    const reverse=node.querySelector('.card-row-reverse-toggle');
+    const handles=node.querySelector('.card-row-transform-box');
+    const info=node.querySelector('.or-card-layer.relphi-info-layer');
+    const infoStyle=info ? getComputedStyle(info) : null;
+    return {
+      width:rect.width,height:rect.height,
+      hostWidth:host.width,hostHeight:host.height,
+      addVisible:!!add && getComputedStyle(add).display!=='none',
+      reverseVisible:!!reverse && getComputedStyle(reverse).display!=='none',
+      handlesVisible:!!handles && getComputedStyle(handles).display!=='none',
+      infoVisible:!!infoStyle && infoStyle.visibility==='visible' && Number(infoStyle.opacity)>.9,
+      infoFont:infoStyle ? parseFloat(infoStyle.fontSize) : 0
+    };
+  });
+  assert.ok(geometry.width>=280,`focused card should be readable on mobile, got ${geometry.width}px wide`);
+  assert.ok(geometry.height>=450,`focused card should be readable on mobile, got ${geometry.height}px tall`);
+  assert.ok(geometry.width<=geometry.hostWidth+1 && geometry.height<=geometry.hostHeight+1,'focused card must remain inside its reader host');
+  assert.equal(geometry.infoVisible,true);
+  assert.ok(geometry.infoFont>=13,'focused interpretation text should be comfortably readable');
+  assert.equal(geometry.addVisible,false,'focused reader must not show board add/remove chrome');
+  assert.equal(geometry.reverseVisible,false,'focused reader must not show board orientation chrome');
+  assert.equal(geometry.handlesVisible,false,'focused reader must not show board transform handles');
+}
 
 (async()=>{
   browser=await chromium.launch({headless:true});
@@ -88,15 +116,14 @@ async function assertContained(page) {
   await mobile.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
   await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
   assert.equal(await mobile.locator('.relphi-focus-strip>button').count(),10);
-  const infoVisible=await mobile.locator('.relphi-focus-card-host .or-card-layer.relphi-info-layer').evaluate(node=>{
-    const s=getComputedStyle(node); return s.visibility==='visible' && Number(s.opacity)>.9;
-  });
-  assert.equal(infoVisible,true);
+  await assertReadableFocus(mobile);
+  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-focus.png'),fullPage:true});
   await mobile.click('.relphi-focus-close');
 
   await mobile.locator('.card-row-item[data-row-index="1"] .card-row-drop-card').click();
   await mobile.waitForSelector('.card-row-item[data-row-index="1"] [data-row-card]',{state:'visible'});
   await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
+  await assertReadableFocus(mobile);
   await mobile.click('.relphi-focus-next');
   await mobile.waitForFunction(() => window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowPositionMeta?.some?.(meta => meta?.celticCrossAcknowledged === true));
   state=await boardState(mobile);
@@ -121,6 +148,17 @@ async function assertContained(page) {
   await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   await mobile.waitForTimeout(100);
   assert.equal(await mobile.locator('.relphi-reading-options-drawer.is-reading-options-open').count(),1);
+  await mobile.locator('#relphiTemplateName').scrollIntoViewIfNeeded();
+  const drawerGeometry=await mobile.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
+    const body=drawer.querySelector('.relphi-options-body');
+    const field=drawer.querySelector('#relphiTemplateName');
+    const bar=drawer.querySelector('.relphi-options-commitbar');
+    const f=field.getBoundingClientRect(), b=bar.getBoundingClientRect(), d=drawer.getBoundingClientRect();
+    return {fieldVisible:f.bottom>d.top && f.top<d.bottom,overlap:f.bottom>b.top && f.top<b.bottom,bodyOverflow:getComputedStyle(body).overflowY};
+  });
+  assert.equal(drawerGeometry.fieldVisible,true,'last options field should remain reachable');
+  assert.equal(drawerGeometry.overlap,false,'options commit bar must not cover the last field');
+  assert.ok(['auto','scroll'].includes(drawerGeometry.bodyOverflow),'options body should own scrolling');
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});
   assert.deepEqual(mobileErrors,[]);
 
