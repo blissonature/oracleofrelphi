@@ -148,7 +148,7 @@
     if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-collapse-contract';
-      style.textContent = '#shortListPanel .card-row-drawing-board:not([open])>summary>:not(strong){display:none!important}body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .or-card-add,body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .card-row-reverse-toggle,body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .card-row-transform-box{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}';
+      style.textContent = '#shortListPanel .card-row-drawing-board:not([open])>summary>:not(strong){display:none!important}#shortListPanel .card-row-board-empty{font-size:0!important}#shortListPanel .card-row-board-empty::after{content:"Choose a spread in Options, or draw a card. The board is ready.";font-size:.78rem!important}body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .or-card-add,body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .card-row-reverse-toggle,body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .card-row-transform-box{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}';
       document.head.appendChild(style);
     }
     if (!document.getElementById('relphi-drawing-board-mobile-canvas-width')) {
