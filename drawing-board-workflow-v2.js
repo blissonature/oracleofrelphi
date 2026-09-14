@@ -34,7 +34,7 @@
   function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
   function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
   function escapeHtml(value) {
-    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[ch]));
+    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   }
   function slug(value) {
     return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60) || 'custom-spread';
@@ -190,6 +190,46 @@
     );
   }
   function currentCardCount(root = panel()) { return root?.querySelectorAll('.card-row-board [data-row-card]').length || 0; }
+  function canonicalPositions() {
+    const layout=currentPrefabState().activeLayout;
+    if (Array.isArray(layout?.positions) && layout.positions.length) {
+      return layout.positions.slice().sort((a,b)=>(Number(a.drawOrder)||0)-(Number(b.drawOrder)||0));
+    }
+    return Array.from({length:currentSlotCount()},(_,index)=>({id:`position-${index+1}`,drawOrder:index+1}));
+  }
+  function positionIdAt(index, snap=currentSnapshot() || {}) {
+    return String(snap.rowPositionMeta?.[index]?.id || snap.rowActiveLayout?.positions?.[index]?.id || `position-${index+1}`);
+  }
+  function positionRoleAt(index, snap=currentSnapshot() || {}) {
+    return String(snap.rowPositionMeta?.[index]?.role || '');
+  }
+  function nativeIndexForPositionId(id, snap=currentSnapshot() || {}) {
+    const target=String(id || '');
+    const meta=Array.isArray(snap.rowPositionMeta) ? snap.rowPositionMeta : [];
+    const found=meta.findIndex(item=>String(item?.id || '')===target);
+    return found>=0 ? found : null;
+  }
+  function orderedNativePositionIndices() {
+    const snap=currentSnapshot() || {};
+    const count=currentSlotCount();
+    const seen=new Set();
+    const result=[];
+    canonicalPositions().forEach((position,fallbackIndex)=>{
+      const resolved=nativeIndexForPositionId(position.id,snap);
+      const index=resolved==null ? fallbackIndex : resolved;
+      if (index>=0 && index<count && !seen.has(index)) { seen.add(index); result.push(index); }
+    });
+    for (let index=0;index<count;index++) if (!seen.has(index)) result.push(index);
+    return result;
+  }
+  function configuredPositionCount() {
+    const snap=currentSnapshot() || {};
+    return Math.max(
+      Array.isArray(snap.shortListPositionLabels) ? snap.shortListPositionLabels.length : 0,
+      Array.isArray(snap.rowPositionMeta) ? snap.rowPositionMeta.length : 0,
+      Number(currentPrefabState().activeLayout?.cardCount) || 0
+    );
+  }
 
   function blankDraft() {
     return { templateId:'', labels:[], pack:'full', stickers:true, reversals:true, repeats:false, templateName:'' };
@@ -604,16 +644,21 @@
     if (state.activeLayout?.id!=='celtic-cross-10') return false;
     const bridge=optionsBridge(); if (!bridge) return false;
     const snap=bridge.capture();
-    const meta=snap.rowPositionMeta?.[1] || {};
+    const metaList=Array.isArray(snap.rowPositionMeta) ? snap.rowPositionMeta : [];
+    const crossingIndex=metaList.findIndex(meta=>meta?.role==='crossing' || meta?.id==='crossing');
+    const coveringIndex=metaList.findIndex(meta=>meta?.role==='covering' || meta?.id==='covering');
+    if (crossingIndex<0 || coveringIndex<0) return false;
+    const meta=metaList[crossingIndex] || {};
     if (meta.celticCrossAcknowledged) return false;
-    const covering=snap.rowEnvelopeLayout?.[0] || snap.rowEnvelopeLayout?.['0'] || {x:.20*CANVAS_W,y:.35*CANVAS_H};
+    const covering=snap.rowEnvelopeLayout?.[coveringIndex] || snap.rowEnvelopeLayout?.[String(coveringIndex)] || {x:.20*CANVAS_W,y:.35*CANVAS_H};
     snap.rowEnvelopeLayout ||= {};
     snap.rowCardTransforms ||= {};
     snap.rowPositionMeta ||= [];
-    snap.rowEnvelopeLayout[1]={x:Number(covering.x),y:Number(covering.y)};
-    snap.rowCardTransforms[1]={...(snap.rowCardTransforms[1]||{}),scale:.48,rotation:90,zIndex:30};
-    snap.rowPositionMeta[1]={...meta,celticCrossAcknowledged:true};
-    if (snap.rowActiveLayout?.positions?.[1]) snap.rowActiveLayout.positions[1].transform=clone(CELTIC_CROSS.positions[1].crossedTransform);
+    snap.rowEnvelopeLayout[crossingIndex]={x:Number(covering.x),y:Number(covering.y)};
+    snap.rowCardTransforms[crossingIndex]={...(snap.rowCardTransforms[crossingIndex]||{}),scale:.48,rotation:90,zIndex:30};
+    snap.rowPositionMeta[crossingIndex]={...meta,celticCrossAcknowledged:true};
+    const activeCrossing=snap.rowActiveLayout?.positions?.find(position=>position?.id==='crossing' || position?.role==='crossing');
+    if (activeCrossing) activeCrossing.transform=clone(CELTIC_CROSS.positions[1].crossedTransform);
     bridge.restore(snap);
     return true;
   }
@@ -639,20 +684,20 @@
   }
 
   function renderFocusStrip(reader, index) {
-    const count=currentSlotCount();
+    const order=orderedNativePositionIndices();
     const strip=reader.querySelector('.relphi-focus-strip');
     strip.replaceChildren();
-    for (let i=0;i<count;i++) {
+    order.forEach((nativeIndex,logicalIndex)=>{
       const button=document.createElement('button');
-      button.type='button'; button.dataset.focusPosition=String(i); button.className=i===index?'is-current':'';
-      const card=cardAt(i);
+      button.type='button'; button.dataset.focusPosition=String(nativeIndex); button.className=nativeIndex===index?'is-current':'';
+      const card=cardAt(nativeIndex);
       const img=card?.querySelector('img')?.cloneNode(true);
       if (img) { img.removeAttribute('loading'); button.appendChild(img); }
-      const span=document.createElement('span'); span.textContent=String(i+1); button.appendChild(span);
-      button.title=positionLabel(i);
-      button.addEventListener('click',()=>navigateFocus(i));
+      const span=document.createElement('span'); span.textContent=String(logicalIndex+1); button.appendChild(span);
+      button.title=positionLabel(nativeIndex);
+      button.addEventListener('click',()=>navigateFocusTo(nativeIndex));
       strip.appendChild(button);
-    }
+    });
     setTimeout(()=>strip.querySelector('.is-current')?.scrollIntoView({block:'nearest',inline:'center'}),0);
   }
   function openFocus(index) {
@@ -672,8 +717,8 @@
     cloneCard.classList.add('relphi-focused-card');
     reader.querySelector('.relphi-focus-card-host').appendChild(cloneCard);
     reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
-    reader.querySelector('.relphi-focus-prev').addEventListener('click',()=>navigateFocus(index-1));
-    reader.querySelector('.relphi-focus-next').addEventListener('click',()=>navigateFocus(index+1));
+    reader.querySelector('.relphi-focus-prev').addEventListener('click',()=>navigateFocusBy(-1));
+    reader.querySelector('.relphi-focus-next').addEventListener('click',()=>navigateFocusBy(1));
     const title=cloneCard.querySelector('.or-card-title-banner');
     if (title) {
       title.classList.add('relphi-card-title-link'); title.setAttribute('role','button'); title.tabIndex=0;
@@ -685,24 +730,36 @@
     document.body.classList.add('relphi-focus-open');
     return true;
   }
+  function isCrossingPosition(index) {
+    if (index<0) return false;
+    const snap=currentSnapshot() || {};
+    return positionRoleAt(index,snap)==='crossing' || positionIdAt(index,snap)==='crossing';
+  }
   function closeFocus({acknowledge=true}={}) {
     const leaving=focusIndex;
     document.querySelector('.relphi-focus-reader')?.remove();
     document.body.classList.remove('relphi-focus-open');
     focusIndex=-1;
-    if (acknowledge && leaving===1) acknowledgeCelticCrossing();
+    if (acknowledge && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
   }
-  function navigateFocus(target) {
-    const count=currentSlotCount();
-    if (!count) return closeFocus({acknowledge:true});
-    const next=Math.max(0,Math.min(count-1,target));
+  function navigateFocusTo(nativeIndex) {
+    const next=Number(nativeIndex);
+    if (!Number.isInteger(next)) return;
     const leaving=focusIndex;
-    if (leaving===1 && next!==1) acknowledgeCelticCrossing();
+    if (leaving>=0 && leaving!==next && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
     if (cardAt(next)) openFocus(next);
     else {
       closeFocus({acknowledge:false});
       drawInto(focusItem(next),next);
     }
+  }
+  function navigateFocusBy(delta) {
+    const order=orderedNativePositionIndices();
+    if (!order.length) return closeFocus({acknowledge:true});
+    const currentIndex=order.indexOf(focusIndex);
+    const current=currentIndex>=0 ? currentIndex : 0;
+    const logical=Math.max(0,Math.min(order.length-1,current+delta));
+    navigateFocusTo(order[logical]);
   }
 
   function isEmptyItem(item) { return !!item && !item.querySelector('[data-row-card]') && item.classList.contains('card-row-placeholder-item'); }
@@ -715,9 +772,24 @@
     const drawnIndex=currentCardCount(root);
     if (!Number.isInteger(targetIndex)||targetIndex<0) return;
     activeDraw=true;
-    pendingFocusIndex=targetIndex;
+    pendingFocusIndex=drawnIndex;
     draw.click();
     if (targetIndex!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,targetIndex);
+    activeDraw=false;
+  }
+  function nextUndrawnNativeIndex(root=panel()) {
+    return orderedNativePositionIndices().find(index=>!cardAt(index,root) && isEmptyItem(focusItem(index,root))) ?? null;
+  }
+  function drawNextLogical(root=panel()) {
+    if (!root || activeDraw) return;
+    const next=nextUndrawnNativeIndex(root);
+    if (next!=null) { drawInto(focusItem(next,root),next); return; }
+    if (configuredPositionCount()>0) return;
+    const draw=root.querySelector('#drawRandomRowCard');
+    if (!draw || draw.disabled) return;
+    activeDraw=true;
+    pendingFocusIndex=currentCardCount(root);
+    draw.click();
     activeDraw=false;
   }
 
@@ -775,7 +847,7 @@
     const isCeltic=state.activeLayout?.id==='celtic-cross-10';
     root.classList.toggle('relphi-celtic-cross',isCeltic);
     const snap=isCeltic?currentSnapshot():null;
-    const acknowledged=!!snap?.rowPositionMeta?.[1]?.celticCrossAcknowledged;
+    const acknowledged=!!snap?.rowPositionMeta?.some?.(meta=>meta?.celticCrossAcknowledged);
     root.classList.toggle('relphi-celtic-crossed',isCeltic&&acknowledged);
   }
 
@@ -814,6 +886,13 @@
       return;
     }
     const root=panel();
+    const drawTrigger=event.target.closest?.('#shortListPanel #drawRandomRowCard');
+    if (drawTrigger && root?.contains(drawTrigger) && !activeDraw) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      drawNextLogical(root);
+      return;
+    }
     const item=event.target.closest?.('#shortListPanel .card-row-board>.card-row-item[data-row-index]');
     if (item && root?.contains(item) && !event.target.closest?.('button,input,textarea,select,label,[contenteditable="true"],[data-row-transform-handle]')) {
       const index=Number(item.dataset.rowIndex);
