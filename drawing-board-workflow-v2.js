@@ -800,6 +800,23 @@
       setBoardOpen(!boardOpen,{fit:!boardOpen});
       return;
     }
+    const root=panel();
+    const item=event.target.closest?.('#shortListPanel .card-row-board>.card-row-item[data-row-index]');
+    if (item && root?.contains(item) && !event.target.closest?.('button,input,textarea,select,label,[contenteditable="true"],[data-row-transform-handle]')) {
+      const index=Number(item.dataset.rowIndex);
+      if (Number.isInteger(index)) {
+        if (item.querySelector('[data-row-card]')) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          openFocus(index);
+          return;
+        }
+        if (isEmptyItem(item)) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          drawInto(item,index);
+          return;
+        }
+      }
+    }
     if (openTool && !event.target.closest?.('.relphi-workspace-tools')) {
       openTool='';
       enhance(panel());
