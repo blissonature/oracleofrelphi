@@ -56,16 +56,22 @@ async function assertFocusArtVisible(page) {
     const art=card?.querySelector('.or-card-art');
     const layer=card?.querySelector('.or-card-layer.relphi-info-layer');
     const scroll=card?.querySelector('.or-layer-scroll');
-    if (!card || !art || !layer || !scroll) return {ok:false};
+    const text=scroll?.querySelector('span');
+    if (!card || !art || !layer || !scroll || !text) return {ok:false};
     const c=card.getBoundingClientRect();
     const a=art.getBoundingClientRect();
     const s=scroll.getBoundingClientRect();
-    const bg=getComputedStyle(layer).backgroundColor;
+    const layerStyle=getComputedStyle(layer);
+    const textStyle=getComputedStyle(text);
     return {
       ok:true,
       naturalWidth:art.naturalWidth,
       artOpacity:Number(getComputedStyle(art).opacity),
-      layerBackground:bg,
+      layerBackground:layerStyle.backgroundColor,
+      interpretation:text.textContent.trim(),
+      textColor:textStyle.color,
+      textOpacity:Number(textStyle.opacity),
+      textVisibility:textStyle.visibility,
       exposedHeight:s.top-c.top,
       cardHeight:c.height,
       scrollHeight:s.height,
@@ -76,6 +82,10 @@ async function assertFocusArtVisible(page) {
   assert.ok(result.naturalWidth>0,'focused card artwork must load');
   assert.ok(result.artOpacity>.9,'focused card artwork must remain visible');
   assert.equal(result.layerBackground,'rgba(0, 0, 0, 0)','full-card interpretation layer must be transparent');
+  assert.ok(result.interpretation.length>20,'focused interpretation text must be present');
+  assert.equal(result.textColor,'rgb(17, 17, 17)','focused interpretation text must render in readable ink');
+  assert.ok(result.textOpacity>.9,'focused interpretation text must not be faded out');
+  assert.equal(result.textVisibility,'visible','focused interpretation text must be visible');
   assert.ok(result.exposedHeight>=result.cardHeight*.40,`focused reader should expose at least 40% of the art before interpretation; got ${Math.round(result.exposedHeight/result.cardHeight*100)}%`);
   assert.ok(result.scrollHeight<=result.cardHeight*.50,'interpretation panel must not swallow the card art');
 }
