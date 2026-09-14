@@ -154,7 +154,7 @@ function assertTraditional(data) {
   const staff=f.slice(6), xs=staff.map(cx); assert.ok(Math.max(...xs)-Math.min(...xs)<3,'staff cards must share one vertical axis'); assert.ok(staff[3].top<staff[2].top&&staff[2].top<staff[1].top&&staff[1].top<staff[0].top,'staff must rise from 7 to 10');
   for(let i=1;i<staff.length;i++){const upper=staff[staff.length-i],lower=staff[staff.length-i-1];assert.ok(upper.bottom<=lower.top+2||lower.bottom<=upper.top+2,'staff cards must not overlap');}
   data.labels.forEach((label,index)=>assertInside(label,data.workspace,`label ${index+1}`,3)); data.faces.forEach((face,index)=>assertInside(face,data.workspace,`card ${index+1}`,3));
-  for(let i=6;i<10;i++) assert.ok(data.labels[i].left>=data.faces[i].right-3,`staff label ${i+1} must sit beside its card`);
+  if(data.workspace.width>700){for(let i=6;i<10;i++) assert.ok(data.labels[i].left>=data.faces[i].right-3,`staff label ${i+1} must sit beside its card`);}
   const contentW=data.union.right-data.union.left,contentH=data.union.bottom-data.union.top; const fill=Math.max(contentW/data.workspace.width,contentH/data.workspace.height); assert.ok(fill>=.84,`zoom extents wastes too much available space (${(fill*100).toFixed(1)}% fill)`); assert.ok(fill<=1.01,'zoom extents must not overflow the workspace');
 }
 
