@@ -48,8 +48,6 @@
     return { id, label, drawOrder, transform:point, ...extra };
   }
 
-  // Ordinary spreads use simple rows/grids. Only spreads whose meaning depends
-  // on geometry (Celtic Cross and Saturn Square) receive bespoke layouts.
   function genericPositions(labels) {
     const count = Math.max(1, labels.length);
     if (count === 1) return [position('position-1', labels[0], 1, transform(.40,.22,1))];
@@ -305,7 +303,6 @@
     const workspace = root?.querySelector('.card-row-workspace');
     if (!workspace || workspace.dataset.relphiPinchZoom === 'true') return;
     workspace.dataset.relphiPinchZoom = 'true';
-
     let pinching = false;
     let startDistance = 0;
     let startZoom = 1;
@@ -353,7 +350,6 @@
       event.preventDefault();
       event.stopImmediatePropagation();
     };
-
     workspace.addEventListener('touchstart',begin,{capture:true,passive:false});
     workspace.addEventListener('touchmove',move,{capture:true,passive:false});
     workspace.addEventListener('touchend',end,{capture:true,passive:false});
@@ -441,7 +437,6 @@
     const toolbar = root.querySelector('.card-row-workspace-toolbar');
     const nativeOptions = root.querySelector('.card-row-more-options');
     if (!workspace || !toolbar || !nativeOptions) return;
-
     const zoom = root.querySelector('#rowZoom');
     const zoomValue = root.querySelector('#rowZoomValue');
     const snap = root.querySelector('#rowSnapEnabled');
@@ -457,10 +452,8 @@
     const tableColor = root.querySelector('#rowTableColor');
     const tableUpload = root.querySelector('#rowTableImageUpload');
     const tableReset = root.querySelector('#rowTableImageReset');
-
     toolbar.className = 'card-row-workspace-toolbar relphi-board-controller';
     toolbar.replaceChildren();
-
     const zoomRow = document.createElement('div');
     zoomRow.className = 'relphi-zoom-row';
     const zoomOut = document.createElement('button');
@@ -476,7 +469,6 @@
     if (zoom) { zoom.classList.add('relphi-native-zoom'); zoomRow.appendChild(zoom); }
     if (zoomValue) zoomRow.appendChild(zoomValue);
     zoomRow.append(zoomIn,fit);
-
     const tools = document.createElement('div');
     tools.className='relphi-workspace-tools';
     tools.innerHTML = `<button type="button" class="relphi-tool-trigger relphi-more-button" data-tool="more" aria-label="More board tools" title="More board tools">…</button><div class="relphi-tool-flyout" hidden></div>`;
@@ -487,7 +479,6 @@
       flyout.replaceChildren();
       tools.querySelector('.relphi-tool-trigger')?.classList.toggle('is-active',open);
       if (!open) return;
-
       const transformButton=document.createElement('button');
       transformButton.type='button';
       transformButton.id='relphiToggleTransformEditing';
@@ -500,7 +491,6 @@
         renderFlyout();
       });
       flyout.appendChild(transformButton);
-
       const snapsHeading=document.createElement('strong'); snapsHeading.textContent='Snaps'; flyout.appendChild(snapsHeading);
       const posRow=document.createElement('div'); posRow.className='relphi-tool-row';
       posRow.append(controlLabel(snap,'Position snap'));
@@ -511,7 +501,6 @@
       [rotateMinus,rotateValue,rotatePlus].filter(Boolean).forEach(node=>rotRow.appendChild(node));
       flyout.appendChild(rotRow);
       if (resetLayout) { resetLayout.textContent='Reset layout'; flyout.appendChild(resetLayout); }
-
       const backgroundHeading=document.createElement('strong'); backgroundHeading.textContent='Background'; flyout.appendChild(backgroundHeading);
       if (envelopeColor) { const row=document.createElement('div'); row.className='relphi-tool-row'; row.append(controlLabel(envelopeColor,'Card / placeholder')); flyout.appendChild(row); }
       if (tableColor) { const row=document.createElement('div'); row.className='relphi-tool-row'; row.append(controlLabel(tableColor,'Board')); flyout.appendChild(row); }
@@ -576,11 +565,9 @@
   function labelsMarkup(labels) {
     return labels.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" maxlength="90" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
   }
-
   function parseBulkQuestions(value) {
     return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,40);
   }
-
   function markQuestionEditCustom(drawer,draft) {
     if (draft.templateId) draft.basedOnTemplateId=draft.templateId;
     draft.templateId='';
@@ -631,7 +618,6 @@
         <button type="button" id="relphiApplyOptions" class="primary">OK</button>
       </div>`;
     workspace.appendChild(drawer);
-
     const templateSelect = drawer.querySelector('#relphiSpreadTemplateSelect');
     templateSelect?.addEventListener('change',()=>{
       const chosen=templateById(templateSelect.value);
@@ -803,7 +789,8 @@
 
   function acknowledgeCelticCrossing() {
     const state=currentPrefabState();
-    if (state.activeLayout?.id!=='celtic-cross-10') return false;
+    const layout=state.activeLayout;
+    if (layout?.id!=='celtic-cross-10' && layout?.basedOn!=='celtic-cross-10') return false;
     const bridge=optionsBridge(); if (!bridge) return false;
     const snap=bridge.capture();
     const metaList=Array.isArray(snap.rowPositionMeta) ? snap.rowPositionMeta : [];
@@ -1018,7 +1005,6 @@
       });
     });
   }
-
   function installBoardCapture(root) {
     const board=root.querySelector('.card-row-board');
     if (!board || board.dataset.relphiUnifiedCapture==='true') return;
@@ -1037,7 +1023,6 @@
       }
     },true);
   }
-
   function installTopActions(root) {
     const options=root.querySelector('#drawingBoardOptionsButton');
     if (options) {
@@ -1055,7 +1040,6 @@
       draw.addEventListener('click',()=>{ pendingFocusIndex=currentCardCount(root); },true);
     }
   }
-
   function markSemanticPositions(root) {
     const snap=currentSnapshot() || {};
     root.querySelectorAll('.card-row-board>.card-row-item[data-row-index]').forEach(item=>{
@@ -1067,10 +1051,11 @@
     });
   }
   function updateLayoutClasses(root) {
-    const id=currentPrefabState().activeLayout?.id || '';
-    const isCeltic=id==='celtic-cross-10' || currentPrefabState().activeLayout?.basedOn==='celtic-cross-10';
+    const layout=currentPrefabState().activeLayout || {};
+    const id=layout.id || '';
+    const isCeltic=id==='celtic-cross-10' || layout.basedOn==='celtic-cross-10';
     root.classList.toggle('relphi-celtic-cross',isCeltic);
-    root.classList.toggle('relphi-six-polarities',id==='six-polarities-houses-12' || currentPrefabState().activeLayout?.basedOn==='six-polarities-houses-12');
+    root.classList.toggle('relphi-six-polarities',id==='six-polarities-houses-12' || layout.basedOn==='six-polarities-houses-12');
     const snap=isCeltic?currentSnapshot():null;
     const acknowledged=!!snap?.rowPositionMeta?.some?.(meta=>meta?.celticCrossAcknowledged);
     root.classList.toggle('relphi-celtic-crossed',isCeltic&&acknowledged);
