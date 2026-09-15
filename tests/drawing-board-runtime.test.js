@@ -218,14 +218,30 @@ async function assertReadableFocus(page) {
   await desktop.locator('.card-row-item[data-row-index="9"] .card-row-drop-card').click();
   await desktop.waitForSelector('.relphi-focus-reader',{state:'visible'});
   const desktopFocus=await desktop.evaluate(()=>{
-    const art=document.querySelector('.relphi-focus-art')?.getBoundingClientRect();
+    const artEl=document.querySelector('.relphi-focus-art');
+    const art=artEl?.getBoundingClientRect();
     const entry=document.querySelector('.relphi-focus-entry')?.getBoundingClientRect();
-    const pane=document.querySelector('.relphi-focus-art-pane')?.getBoundingClientRect();
-    return art&&entry&&pane?{sideBySide:art.right<=entry.left+3,entryText:document.querySelector('.relphi-focus-entry')?.textContent?.trim().length||0,artContained:art.top>=pane.top-2&&art.bottom<=pane.bottom+2&&art.left>=pane.left-2&&art.right<=pane.right+2}:null;
+    const paneEl=document.querySelector('.relphi-focus-art-pane');
+    const pane=paneEl?.getBoundingClientRect();
+    if (!artEl || !art || !entry || !pane) return null;
+    const nw=artEl.naturalWidth||1, nh=artEl.naturalHeight||1;
+    const scale=Math.min(art.width/nw,art.height/nh);
+    const renderedW=nw*scale, renderedH=nh*scale;
+    const rendered={left:art.left+(art.width-renderedW)/2,right:art.left+(art.width+renderedW)/2,top:art.top+(art.height-renderedH)/2,bottom:art.top+(art.height+renderedH)/2};
+    return {
+      sideBySide:art.right<=entry.left+3,
+      entryText:document.querySelector('.relphi-focus-entry')?.textContent?.trim().length||0,
+      objectFit:getComputedStyle(artEl).objectFit,
+      paneOverflow:getComputedStyle(paneEl).overflow,
+      artContained:rendered.top>=pane.top-2&&rendered.bottom<=pane.bottom+2&&rendered.left>=pane.left-2&&rendered.right<=pane.right+2,
+      rendered,pane:{left:pane.left,right:pane.right,top:pane.top,bottom:pane.bottom}
+    };
   });
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-focus-full-entry.png'),fullPage:true});
   assert.ok(desktopFocus?.sideBySide,'desktop focus view must show full art beside the Ledger entry: '+JSON.stringify(desktopFocus));
-  assert.ok(desktopFocus?.artContained,'desktop focus view must contain the entire card art above the film strip: '+JSON.stringify(desktopFocus));
+  assert.equal(desktopFocus?.objectFit,'contain','desktop focus art must use contain rather than crop');
+  assert.equal(desktopFocus?.paneOverflow,'hidden','desktop focus art pane must clip its viewport boundary');
+  assert.ok(desktopFocus?.artContained,'desktop focus view must contain the entire rendered card art above the film strip: '+JSON.stringify(desktopFocus));
   assert.ok(desktopFocus.entryText>100,'desktop focus view must show the full Ledger entry');
   let semantic=await boardState(desktop);
   const outcomeIndex=semantic.snap.rowPositionMeta.findIndex(meta=>meta?.id==='outcome');
