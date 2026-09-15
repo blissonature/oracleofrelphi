@@ -188,6 +188,13 @@ async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
     await restored.screenshot({path:path.join(out,'drawing-board-mobile-clear-cards-restored-zero.png'),fullPage:true});
     await restored.close();
 
+    const desktop=await browser.newPage({viewport:{width:1024,height:768}});
+    await openBoard(desktop);
+    await drawCards(desktop,3);
+    await assertFreeformClearCardsLeavesZeroSlotBoard(desktop,3);
+    await desktop.screenshot({path:path.join(out,'drawing-board-desktop-clear-cards-freeform-zero.png'),fullPage:true});
+    await desktop.close();
+
     console.log('Drawing Board Clear Cards preservation checks passed');
   } finally {
     await browser.close();

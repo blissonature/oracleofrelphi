@@ -26,6 +26,7 @@
   let pendingFocusIndex = null;
   let activeDraw = false;
   let openTool = '';
+  let transformEditingUnlocked = false;
   let showPositionStickers = readStickerVisibility();
 
   function panel() { return document.getElementById(PANEL_ID); }
@@ -413,44 +414,59 @@
     zoomRow.appendChild(zoomOut);
     if (zoom) { zoom.classList.add('relphi-native-zoom'); zoomRow.appendChild(zoom); }
     if (zoomValue) zoomRow.appendChild(zoomValue);
-    zoomRow.append(fit,zoomIn);
-    toolbar.appendChild(zoomRow);
+    zoomRow.append(zoomIn,fit);
 
     const tools = document.createElement('div');
     tools.className='relphi-workspace-tools';
-    tools.innerHTML = `<button type="button" class="relphi-tool-trigger" data-tool="snaps" aria-label="Snaps" title="Snaps">${icon('magnet')}</button><button type="button" class="relphi-tool-trigger" data-tool="background" aria-label="Background" title="Background">${icon('picture')}</button><div class="relphi-tool-flyout" hidden></div>`;
+    tools.innerHTML = `<button type="button" class="relphi-tool-trigger relphi-more-button" data-tool="more" aria-label="More board tools" title="More board tools">…</button><div class="relphi-tool-flyout" hidden></div>`;
     const flyout = tools.querySelector('.relphi-tool-flyout');
     const renderFlyout = () => {
-      if (!openTool) { flyout.hidden=true; flyout.replaceChildren(); return; }
-      flyout.hidden=false;
+      const open=openTool==='more';
+      flyout.hidden=!open;
       flyout.replaceChildren();
-      const heading=document.createElement('strong'); heading.textContent=openTool==='snaps'?'Snaps':'Background'; flyout.appendChild(heading);
-      if (openTool==='snaps') {
-        const posRow=document.createElement('div'); posRow.className='relphi-tool-row';
-        posRow.append(controlLabel(snap,'Position snap'));
-        [snapMinus,snapValue,snapPlus].filter(Boolean).forEach(node=>posRow.appendChild(node));
-        flyout.appendChild(posRow);
-        const rotRow=document.createElement('div'); rotRow.className='relphi-tool-row';
-        rotRow.append(controlLabel(rotate,'Rotation snap'));
-        [rotateMinus,rotateValue,rotatePlus].filter(Boolean).forEach(node=>rotRow.appendChild(node));
-        flyout.appendChild(rotRow);
-        if (resetLayout) { resetLayout.textContent='Reset layout'; flyout.appendChild(resetLayout); }
-      } else {
-        if (envelopeColor) { const row=document.createElement('div'); row.className='relphi-tool-row'; row.append(controlLabel(envelopeColor,'Card / placeholder')); flyout.appendChild(row); }
-        if (tableColor) { const row=document.createElement('div'); row.className='relphi-tool-row'; row.append(controlLabel(tableColor,'Board')); flyout.appendChild(row); }
-        const imageRow=document.createElement('div'); imageRow.className='relphi-tool-row';
-        if (tableUpload) { tableUpload.textContent='Upload board image'; imageRow.appendChild(tableUpload); }
-        if (tableReset) { tableReset.textContent='Remove board image'; imageRow.appendChild(tableReset); }
-        if (imageRow.children.length) flyout.appendChild(imageRow);
-      }
-      tools.querySelectorAll('.relphi-tool-trigger').forEach(button => button.classList.toggle('is-active',button.dataset.tool===openTool));
+      tools.querySelector('.relphi-tool-trigger')?.classList.toggle('is-active',open);
+      if (!open) return;
+
+      const transformButton=document.createElement('button');
+      transformButton.type='button';
+      transformButton.id='relphiToggleTransformEditing';
+      transformButton.textContent=transformEditingUnlocked?'Lock rotation & scale':'Unlock rotation & scale';
+      transformButton.setAttribute('aria-pressed',String(transformEditingUnlocked));
+      transformButton.addEventListener('click',event=>{
+        event.preventDefault(); event.stopPropagation();
+        transformEditingUnlocked=!transformEditingUnlocked;
+        root.classList.toggle('relphi-transform-editing-unlocked',transformEditingUnlocked);
+        renderFlyout();
+      });
+      flyout.appendChild(transformButton);
+
+      const snapsHeading=document.createElement('strong'); snapsHeading.textContent='Snaps'; flyout.appendChild(snapsHeading);
+      const posRow=document.createElement('div'); posRow.className='relphi-tool-row';
+      posRow.append(controlLabel(snap,'Position snap'));
+      [snapMinus,snapValue,snapPlus].filter(Boolean).forEach(node=>posRow.appendChild(node));
+      flyout.appendChild(posRow);
+      const rotRow=document.createElement('div'); rotRow.className='relphi-tool-row';
+      rotRow.append(controlLabel(rotate,'Rotation snap'));
+      [rotateMinus,rotateValue,rotatePlus].filter(Boolean).forEach(node=>rotRow.appendChild(node));
+      flyout.appendChild(rotRow);
+      if (resetLayout) { resetLayout.textContent='Reset layout'; flyout.appendChild(resetLayout); }
+
+      const backgroundHeading=document.createElement('strong'); backgroundHeading.textContent='Background'; flyout.appendChild(backgroundHeading);
+      if (envelopeColor) { const row=document.createElement('div'); row.className='relphi-tool-row'; row.append(controlLabel(envelopeColor,'Card / placeholder')); flyout.appendChild(row); }
+      if (tableColor) { const row=document.createElement('div'); row.className='relphi-tool-row'; row.append(controlLabel(tableColor,'Board')); flyout.appendChild(row); }
+      const imageRow=document.createElement('div'); imageRow.className='relphi-tool-row';
+      if (tableUpload) { tableUpload.textContent='Upload board image'; imageRow.appendChild(tableUpload); }
+      if (tableReset) { tableReset.textContent='Remove board image'; imageRow.appendChild(tableReset); }
+      if (imageRow.children.length) flyout.appendChild(imageRow);
     };
-    tools.querySelectorAll('.relphi-tool-trigger').forEach(button => button.addEventListener('click',event => {
+    tools.querySelector('.relphi-tool-trigger').addEventListener('click',event => {
       event.preventDefault(); event.stopPropagation();
-      openTool = openTool === button.dataset.tool ? '' : button.dataset.tool;
+      openTool=openTool==='more'?'':'more';
       renderFlyout();
-    }));
-    toolbar.appendChild(tools);
+    });
+    zoomRow.appendChild(tools);
+    toolbar.appendChild(zoomRow);
+    root.classList.toggle('relphi-transform-editing-unlocked',transformEditingUnlocked);
     renderFlyout();
     nativeOptions.hidden = true;
     nativeOptions.setAttribute('aria-hidden','true');
@@ -831,7 +847,7 @@
   function openFocus(index) {
     const root=panel(); const card=cardAt(index,root);
     if (!root || !card || !ledgerBridge()) return false;
-    closeFocus({acknowledge:false});
+    const existingReader=document.querySelector('.relphi-focus-reader');
     focusIndex=index;
     const reader=document.createElement('section');
     reader.className='relphi-focus-reader';
@@ -839,14 +855,15 @@
     reader.setAttribute('role','dialog');
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label',positionLabel(index,root));
-    reader.innerHTML=`<div class="relphi-focus-shell"><header><div class="relphi-focus-heading"><strong class="relphi-focus-position"></strong><span class="relphi-focus-reversed-badge" hidden>Reversed</span></div><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></header><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-strip" aria-label="Reading positions"></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
+    reader.innerHTML=`<div class="relphi-focus-shell"><header><div class="relphi-focus-heading"><strong class="relphi-focus-position"></strong><span class="relphi-focus-reversed-badge" hidden>Reversed</span></div><div class="relphi-focus-actions"><button type="button" class="relphi-focus-draw">Draw</button><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></div></header><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-strip" aria-label="Reading positions"></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
     renderFocusEntry(reader,index);
     renderFocusStrip(reader,index);
     reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
     reader.querySelector('.relphi-focus-prev').addEventListener('click',()=>navigateFocusBy(-1));
     reader.querySelector('.relphi-focus-next').addEventListener('click',()=>navigateFocusBy(1));
+    reader.querySelector('.relphi-focus-draw').addEventListener('click',()=>drawNextLogical(panel()));
     installFocusSwipe(reader);
-    document.body.appendChild(reader);
+    if (existingReader) existingReader.replaceWith(reader); else document.body.appendChild(reader);
     document.body.classList.add('relphi-focus-open');
     return true;
   }
@@ -1007,8 +1024,34 @@
     if (optionsSession) renderOptions(root);
     if (pendingFocusIndex!=null) {
       const target=pendingFocusIndex;
-      if (cardAt(target,root)) { pendingFocusIndex=null; setTimeout(()=>openFocus(target),0); }
+      if (cardAt(target,root)) {
+        pendingFocusIndex=null;
+        if (configuredPositionCount()===0) zoomExtents();
+        setTimeout(()=>openFocus(target),0);
+      }
     }
+  }
+
+  function clearCardsOnly(root=panel()) {
+    const bridge=optionsBridge();
+    const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+    if (!root || !bridge || !trigger) return false;
+    const snapshot=bridge.capture();
+    if (!snapshot) return false;
+    boardOpen=true;
+    trigger.textContent='Close Drawing Board';
+    trigger.setAttribute('aria-expanded','true');
+    root.hidden=false;
+    root.removeAttribute('hidden');
+    snapshot.shortList=[];
+    snapshot.shortListSelection=[];
+    snapshot.rowCardReversals={};
+    snapshot.rowCardManual=[];
+    snapshot.rowDrawDeck=[];
+    snapshot.rowDrawDeckSignature='';
+    snapshot.cardRowBoardOpen=true;
+    bridge.restore(snapshot);
+    return true;
   }
 
   function globalCapture(event) {
@@ -1025,6 +1068,13 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       openOptions(root);
+      return;
+    }
+    const clearCardsTrigger=event.target.closest?.('#shortListPanel #clearShortListCardsOnly');
+    if (clearCardsTrigger && root?.contains(clearCardsTrigger)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      clearCardsOnly(root);
       return;
     }
     const drawTrigger=event.target.closest?.('#shortListPanel #drawRandomRowCard');

@@ -111,16 +111,21 @@ async function assertReadableFocus(page) {
   await waitReady(mobile);
   await openBoard(mobile);
   assert.equal(await mobile.locator('#zoomCardRowExtents').count(),1);
-  assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="snaps"]').count(),1);
-  const magnetSvg=mobile.locator('.relphi-tool-trigger[data-tool="snaps"] svg');
-  await magnetSvg.waitFor({state:'visible'});
-  const magnetGeometry=await magnetSvg.evaluate(svg=>{
-    const box=svg.getBBox();
-    const view=svg.viewBox.baseVal;
-    return {dx:(box.x+box.width/2)-(view.x+view.width/2),dy:(box.y+box.height/2)-(view.y+view.height/2)};
+  assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="more"]').count(),1,'advanced board tools should live behind one ellipsis button');
+  assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="snaps"]').count(),0,'Snaps should not occupy the main zoom toolbar');
+  assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="background"]').count(),0,'Background should not occupy the main zoom toolbar');
+  const zoomOrder=await mobile.evaluate(()=>{
+    const plus=document.querySelector('.relphi-zoom-step[aria-label="Zoom in"]');
+    const fit=document.querySelector('#zoomCardRowExtents');
+    return !!plus && !!fit && !!(plus.compareDocumentPosition(fit)&Node.DOCUMENT_POSITION_FOLLOWING);
   });
-  assert.ok(Math.abs(magnetGeometry.dx)<.25 && Math.abs(magnetGeometry.dy)<.25,'magnet glyph must be geometrically centered in its viewBox: '+JSON.stringify(magnetGeometry));
-  assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="background"]').count(),1);
+  assert.equal(zoomOrder,true,'Zoom Extents must sit after the + button');
+  await mobile.click('.relphi-tool-trigger[data-tool="more"]');
+  await mobile.waitForSelector('.relphi-tool-flyout:not([hidden])',{state:'visible'});
+  assert.equal(await mobile.locator('#rowSnapEnabled').count(),1,'ellipsis menu should contain Snaps');
+  assert.equal(await mobile.locator('#rowTableColor').count(),1,'ellipsis menu should contain Background controls');
+  assert.equal(await mobile.locator('#relphiToggleTransformEditing').getAttribute('aria-pressed'),'false','rotation and scale editing must begin locked');
+  await mobile.click('.relphi-tool-trigger[data-tool="more"]');
   await mobile.waitForSelector('#drawing-board-post-export #downloadRowHtml',{state:'visible'});
   await mobile.waitForSelector('#drawing-board-post-export #downloadRowJson',{state:'visible'});
   assert.equal(await mobile.locator('.card-row-action-staging').evaluate(node=>getComputedStyle(node).display),'none');
@@ -143,9 +148,15 @@ async function assertReadableFocus(page) {
   await mobile.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
   await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
   assert.equal(await mobile.locator('.relphi-focus-strip>button').count(),10);
+  assert.equal(await mobile.locator('.relphi-focus-draw').count(),1,'Card Focus must keep Draw available');
+  assert.equal(await mobile.locator('#shortListPanel [data-row-reverse]').count(),0,'randomly drawn cards must not show the manual card flipper');
   await assertReadableFocus(mobile);
+  const transformDisplay=await mobile.locator('.card-row-item[data-row-index="0"] .card-row-transform-box').evaluate(node=>getComputedStyle(node).display);
+  assert.equal(transformDisplay,'none','rotation/scale gizmos must start hidden');
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-focus.png'),fullPage:true});
-  await mobile.click('.relphi-focus-close');
+  await mobile.click('.relphi-focus-draw');
+  await mobile.waitForFunction(() => Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===1);
+  assert.equal(await mobile.locator('.card-row-item[data-row-index="1"] [data-row-card]').count(),1,'Draw in Card Focus must draw the next position');
   const titleGeometry=await mobile.locator('.card-row-item[data-row-index="0"] [data-row-card]').evaluate(card=>{
     card.classList.add('relphi-description-open');
     const layer=card.querySelector('.or-card-layer.relphi-info-layer');
@@ -159,8 +170,6 @@ async function assertReadableFocus(page) {
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-description-title-centered.png'),fullPage:true});
   await mobile.locator('.card-row-item[data-row-index="0"] [data-row-card]').evaluate(card=>card.classList.remove('relphi-description-open'));
 
-  await mobile.locator('.card-row-item[data-row-index="1"] .card-row-drop-card').click();
-  await mobile.waitForSelector('.card-row-item[data-row-index="1"] [data-row-card]',{state:'visible'});
   await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
   await assertReadableFocus(mobile);
   await mobile.keyboard.press('ArrowLeft');
@@ -194,6 +203,13 @@ async function assertReadableFocus(page) {
   await assertContained(mobile);
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-celtic-crossed.png'),fullPage:true});
   if (await mobile.locator('.relphi-focus-reader').count()) await mobile.click('.relphi-focus-close');
+  await mobile.click('.relphi-tool-trigger[data-tool="more"]');
+  await mobile.click('#relphiToggleTransformEditing');
+  const unlockedDisplay=await mobile.locator('.card-row-item[data-row-index="0"] .card-row-transform-box').evaluate(node=>getComputedStyle(node).display);
+  assert.notEqual(unlockedDisplay,'none','explicit unlock should reveal rotation/scale editing');
+  await mobile.click('#relphiToggleTransformEditing');
+  assert.equal(await mobile.locator('#relphiToggleTransformEditing').getAttribute('aria-pressed'),'false');
+  await mobile.click('.relphi-tool-trigger[data-tool="more"]');
 
   await mobile.click('#drawingBoardOptionsButton');
   await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
