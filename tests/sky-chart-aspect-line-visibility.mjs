@@ -55,11 +55,33 @@ const audit=await page.evaluate(()=>{
   };
 });
 console.log('ASPECT_LINE_AUDIT',JSON.stringify(audit));
-await page.screenshot({path:'sky-chart-aspect-line-visibility.png',fullPage:true});
 assert.ok(audit.visibleRows>0,'Fixture must produce visible relationship rows.');
 assert.equal(audit.indexedLines,audit.totalLines,'Every rendered aspect line must retain a relationship address.');
 assert.equal(audit.visibleLines,audit.visibleRows,'Visible relationship rows and wheel aspect lines must stay in one-to-one visibility parity.');
 assert.ok(audit.missingVisibleRowLines.length===0,`Every visible relationship row needs a visible wheel line; missing ${audit.missingVisibleRowLines.join(', ')}`);
+
+// Relationship-list hover owns only the row/line highlight. It must never dim or isolate the wheel,
+// including A↔A and B↔B rows generated after the comparison relationships.
+const intraskyRow=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="B-B"]:visible, #skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"]:visible').first();
+assert.ok(await intraskyRow.count()>0,'Fixture must produce at least one visible intrasky relationship row.');
+await intraskyRow.hover();
+const rowHoverIsolationSamples=await page.evaluate(async()=>{
+  const samples=[];
+  for(let frame=0;frame<24;frame+=1){
+    await new Promise(resolve=>requestAnimationFrame(resolve));
+    samples.push(document.querySelector('.sky-foundation-wheel')?.classList.contains('has-isolation')||false);
+  }
+  return samples;
+});
+assert.equal(rowHoverIsolationSamples.some(Boolean),false,'Relationship-row hover must keep the wheel fully illuminated on every sampled frame.');
+assert.equal(await intraskyRow.evaluate(row=>row.classList.contains('is-row-hovered')),true,'Hovered relationship row should retain its row-highlight state.');
+assert.ok(await page.locator('.sky-foundation-aspect.is-row-hovered:not(.sky-foundation-aspect-hit)').count()>0,'Relationship-row hover should highlight its matching wheel line.');
+await page.locator('.sky-foundation-relationships-heading h2').hover();
+await page.waitForTimeout(50);
+assert.equal(await page.locator('.sky-foundation-wheel').evaluate(wheel=>wheel.classList.contains('has-isolation')),false);
+assert.equal(await page.locator('.sky-foundation-aspect.is-row-hovered:not(.sky-foundation-aspect-hit)').count(),0);
+
+await page.screenshot({path:'sky-chart-aspect-line-visibility.png',fullPage:true});
 assert.deepEqual(errors,[]);
 await browser.close();
-console.log('Sky Chart visible relationship rows have visible wheel aspect lines.');
+console.log('Sky Chart visible relationship rows have visible wheel aspect lines, and row hover never owns isolation.');

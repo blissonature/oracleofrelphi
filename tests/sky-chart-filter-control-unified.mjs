@@ -115,7 +115,35 @@ for(const [name,toggle] of Object.entries(result.toggles)){
   assert.equal(toggle.backgroundColor,'rgba(0, 0, 0, 0)',`${name} chevron must not create a second box`);
   assert.notEqual(toggle.backgroundImage,'none',`${name} must use the shared chevron artwork`);
 }
+
+// Aspect matrix rows retain the canonical aspect identity so the shared glyph decorator
+// can restore the symbol and its aspect-specific color.
+await page.locator('.sky-chart-aspect-filter-toggle').click();
+await page.waitForSelector('#skyChartAspectPopover:not([hidden]) [data-aspect-list="matrix"]');
+await page.waitForFunction(()=>document.querySelectorAll('#skyChartAspectPopover .sky-filter-symbol-aspect[data-glyph-color]').length===11);
+const aspectGlyphAudit=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"])').evaluateAll(rows=>rows.map(row=>{
+  const host=row.querySelector('.sky-filter-symbol-aspect');
+  return {aspect:row.dataset.aspectListItem,glyph:host?.dataset.canonicalGlyph||'',color:host?.dataset.glyphColor||''};
+}));
+assert.equal(aspectGlyphAudit.length,11);
+assert.ok(aspectGlyphAudit.every(item=>item.glyph===item.aspect),`Aspect glyph identities drifted: ${JSON.stringify(aspectGlyphAudit)}`);
+assert.equal(new Set(aspectGlyphAudit.map(item=>item.color)).size,11,'Each aspect should retain its own color cue.');
+
+// The open popover keeps one horizontal anchor while filters change. Filtering may change
+// page height/scrollbar state, but it must not make the menu jump side to side.
+const popover=page.locator('#skyChartAspectPopover');
+const initialLeft=(await popover.boundingBox()).x;
+const squareAll=popover.locator('[data-aspect-matrix-scope="all"][data-aspect-matrix-aspect="square"]');
+await squareAll.click();
+await page.waitForTimeout(150);
+const leftAfterOff=(await popover.boundingBox()).x;
+await squareAll.click();
+await page.waitForTimeout(150);
+const leftAfterOn=(await popover.boundingBox()).x;
+assert.ok(Math.abs(leftAfterOff-initialLeft)<=0.5,`Aspect popover shifted horizontally from ${initialLeft} to ${leftAfterOff}.`);
+assert.ok(Math.abs(leftAfterOn-initialLeft)<=0.5,`Aspect popover shifted horizontally from ${initialLeft} to ${leftAfterOn}.`);
+
 assert.deepEqual(errors,[]);
 await page.locator('#skyFoundationRelationships .sky-chart-filter-bar').screenshot({path:'sky-chart-filter-controls-unified.png'});
 await browser.close();
-console.log('All relationship filter labels, fonts, boxes, heights, radii, and chevrons match Orb and House System.');
+console.log('Relationship filters match visually; Aspect glyph colors are present and the open Aspect menu stays horizontally stable.');
