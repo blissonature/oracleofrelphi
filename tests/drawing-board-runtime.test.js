@@ -110,6 +110,12 @@ async function assertReadableFocus(page) {
   await openBoard(mobile);
   assert.equal(await mobile.locator('#zoomCardRowExtents').count(),1);
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="snaps"]').count(),1);
+  const magnetGeometry=await mobile.locator('.relphi-tool-trigger[data-tool="snaps"] svg').evaluate(svg=>{
+    const box=svg.getBBox();
+    const view=svg.viewBox.baseVal;
+    return {dx:(box.x+box.width/2)-(view.x+view.width/2),dy:(box.y+box.height/2)-(view.y+view.height/2)};
+  });
+  assert.ok(Math.abs(magnetGeometry.dx)<.25 && Math.abs(magnetGeometry.dy)<.25,'magnet glyph must be geometrically centered in its viewBox: '+JSON.stringify(magnetGeometry));
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="background"]').count(),1);
   await mobile.waitForSelector('#drawing-board-post-export #downloadRowHtml',{state:'visible'});
   await mobile.waitForSelector('#drawing-board-post-export #downloadRowJson',{state:'visible'});
@@ -136,6 +142,18 @@ async function assertReadableFocus(page) {
   await assertReadableFocus(mobile);
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-focus.png'),fullPage:true});
   await mobile.click('.relphi-focus-close');
+  const titleGeometry=await mobile.locator('.card-row-item[data-row-index="0"] [data-row-card]').evaluate(card=>{
+    card.classList.add('relphi-description-open');
+    const layer=card.querySelector('.or-card-layer.relphi-info-layer');
+    const title=layer?.querySelector('.or-card-title-banner.card-title-link');
+    const head=layer?.querySelector('.or-layer-head.relphi-info-static');
+    if (!layer || !title || !head) return null;
+    const lr=layer.getBoundingClientRect(), tr=title.getBoundingClientRect(), hr=head.getBoundingClientRect();
+    return {layerDelta:(tr.left+tr.width/2)-(lr.left+lr.width/2),headDelta:(tr.left+tr.width/2)-(hr.left+hr.width/2)};
+  });
+  assert.ok(titleGeometry && Math.abs(titleGeometry.layerDelta)<1 && Math.abs(titleGeometry.headDelta)<1,'description-layer title must be centered on the card: '+JSON.stringify(titleGeometry));
+  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-description-title-centered.png'),fullPage:true});
+  await mobile.locator('.card-row-item[data-row-index="0"] [data-row-card]').evaluate(card=>card.classList.remove('relphi-description-open'));
 
   await mobile.locator('.card-row-item[data-row-index="1"] .card-row-drop-card').click();
   await mobile.waitForSelector('.card-row-item[data-row-index="1"] [data-row-card]',{state:'visible'});
