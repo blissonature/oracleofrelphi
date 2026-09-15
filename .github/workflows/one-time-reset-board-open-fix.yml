@@ -22,63 +22,26 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
           workflow = Path('drawing-board-workflow-v2.js')
           text = workflow.read_text()
-          old = """    optionsSession.baseline=currentSnapshot();
-    writeStickerVisibility(true);
-    setTimeout(()=>{ enhance(panel()); renderOptions(panel()); },0);
-"""
-          new = """    optionsSession.baseline=currentSnapshot();
-    writeStickerVisibility(true);
-    boardOpen=true;
-    const keepBoardOpen=()=>{
-      const next=panel();
-      if (!next) return;
-      next.hidden=false;
-      next.removeAttribute('hidden');
-      const drawer=next.querySelector('.card-row-drawing-board');
-      if (drawer) drawer.open=true;
-      const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
-      if (trigger) {
-        trigger.textContent='Close Drawing Board';
-        trigger.setAttribute('aria-expanded','true');
-      }
-      enhance(next);
-    };
-    keepBoardOpen();
-    setTimeout(keepBoardOpen,0);
-"""
-          if old not in text:
-              raise SystemExit('reset block not found')
+          old = "    optionsSession.baseline=currentSnapshot();\n    writeStickerVisibility(true);\n    setTimeout(()=>{ enhance(panel()); renderOptions(panel()); },0);\n"
+          new = "    optionsSession.baseline=currentSnapshot();\n    writeStickerVisibility(true);\n    boardOpen=true;\n    const keepBoardOpen=()=>{\n      const next=panel();\n      if (!next) return;\n      next.hidden=false;\n      next.removeAttribute('hidden');\n      const drawer=next.querySelector('.card-row-drawing-board');\n      if (drawer) drawer.open=true;\n      const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');\n      if (trigger) {\n        trigger.textContent='Close Drawing Board';\n        trigger.setAttribute('aria-expanded','true');\n      }\n      enhance(next);\n    };\n    keepBoardOpen();\n    setTimeout(keepBoardOpen,0);\n"
+          if old not in text: raise SystemExit('reset block not found')
           workflow.write_text(text.replace(old, new, 1))
-
           runtime = Path('tests/drawing-board-runtime.test.js')
           text = runtime.read_text()
-          old = """  await mobile.waitForTimeout(100);
-  assert.equal(await mobile.locator('.relphi-reading-options-drawer.is-reading-options-open').count(),1);
-"""
-          new = """  await mobile.waitForTimeout(100);
-  assert.equal(await mobile.locator('#shortListPanel').isVisible(),true,'Reset Board must keep the Drawing Board visible');
-  assert.equal(await mobile.locator('#relphiOpenDrawingBoardCurrent').getAttribute('aria-expanded'),'true','Reset Board must keep the outer Drawing Board toggle open');
-  assert.equal(await mobile.locator('#shortListPanel .card-row-drawing-board').evaluate(node=>node.open),true,'Reset Board must keep the Drawing Board drawer expanded');
-  assert.equal(await mobile.locator('.relphi-reading-options-drawer.is-reading-options-open').count(),1);
-"""
-          if old not in text:
-              raise SystemExit('runtime reset assertion anchor not found')
+          old = "  await mobile.waitForTimeout(100);\n  assert.equal(await mobile.locator('.relphi-reading-options-drawer.is-reading-options-open').count(),1);\n"
+          new = "  await mobile.waitForTimeout(100);\n  assert.equal(await mobile.locator('#shortListPanel').isVisible(),true,'Reset Board must keep the Drawing Board visible');\n  assert.equal(await mobile.locator('#relphiOpenDrawingBoardCurrent').getAttribute('aria-expanded'),'true','Reset Board must keep the outer Drawing Board toggle open');\n  assert.equal(await mobile.locator('#shortListPanel .card-row-drawing-board').evaluate(node=>node.open),true,'Reset Board must keep the Drawing Board drawer expanded');\n  assert.equal(await mobile.locator('.relphi-reading-options-drawer.is-reading-options-open').count(),1);\n"
+          if old not in text: raise SystemExit('runtime reset assertion anchor not found')
           runtime.write_text(text.replace(old, new, 1))
-
           nav = Path('navloader.js')
           text = nav.read_text()
-          if "drawing-board-workflow-v2.js?v=76" not in text:
-              raise SystemExit('navloader v76 anchor not found')
-          nav.write_text(text.replace("drawing-board-workflow-v2.js?v=76", "drawing-board-workflow-v2.js?v=77", 1))
-
+          if 'drawing-board-workflow-v2.js?v=76' not in text: raise SystemExit('navloader v76 anchor not found')
+          nav.write_text(text.replace('drawing-board-workflow-v2.js?v=76', 'drawing-board-workflow-v2.js?v=77', 1))
           contract = Path('tests/drawing-board-single-owner.test.js')
           text = contract.read_text()
-          if "drawing-board-workflow-v2\\.js\\?v=76" not in text:
-              raise SystemExit('contract v76 anchor not found')
-          contract.write_text(text.replace("drawing-board-workflow-v2\\.js\\?v=76", "drawing-board-workflow-v2\\.js\\?v=77", 1))
+          if 'drawing-board-workflow-v2\\.js\\?v=76' not in text: raise SystemExit('contract v76 anchor not found')
+          contract.write_text(text.replace('drawing-board-workflow-v2\\.js\\?v=76', 'drawing-board-workflow-v2\\.js\\?v=77', 1))
           PY
       - name: Validate patch syntax
         run: |
