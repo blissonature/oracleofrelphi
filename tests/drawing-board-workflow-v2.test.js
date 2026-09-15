@@ -49,4 +49,5 @@ assert.match(css, /relphi-options-commitbar/);
 assert.match(css, /relphi-focus-reader/);
 assert.match(css, /card-row-workspace-toolbar:not\(\.relphi-board-controller\).*visibility:hidden!important/);
 assert.match(css, /relphi-board-export/);
+assert.match(css, /card-row-card \.or-card-art\.relphi-surface-face\{[^}]*aspect-ratio:500\/866!important/);
 console.log('Drawing Board workflow v2 checks passed.');
