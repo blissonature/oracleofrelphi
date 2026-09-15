@@ -199,6 +199,28 @@ async function assertReadableFocus(page) {
   assert.equal(drawerGeometry.overlap,false,'options commit bar must not cover the last field');
   assert.ok(['auto','scroll'].includes(drawerGeometry.bodyOverflow),'options body should own scrolling');
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});
+
+  const bulkQuestions=['What is changing?','What needs release?','What supports me?'];
+  await mobile.fill('#relphiBulkQuestions',bulkQuestions.join(', '));
+  assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'comma-separated questions should stage three positions');
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').allInputValues(),bulkQuestions);
+  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-bulk-questions.png'),fullPage:true});
+  await mobile.click('#relphiApplyOptions');
+  await mobile.waitForFunction(() => {
+    const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    return state?.activeLayout?.id==='custom-active' && state.slotCount===3;
+  });
+  state=await boardState(mobile);
+  assert.deepEqual(state.snap.shortListPositionLabels,bulkQuestions,'comma-separated questions should become board position labels');
+
+  await mobile.click('#drawingBoardOptionsButton');
+  await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await mobile.click('#relphiResetBoard');
+  await mobile.waitForFunction(() => {
+    const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
+  });
+  await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   await mobile.selectOption('#relphiSpreadTemplateSelect','six-polarities-houses-12');
   await mobile.click('#relphiApplyOptions');
   await mobile.waitForFunction(() => window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id === 'six-polarities-houses-12');

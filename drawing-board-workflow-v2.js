@@ -500,6 +500,10 @@
     return labels.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" maxlength="90" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
   }
 
+  function parseBulkQuestions(value) {
+    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,40);
+  }
+
   function renderOptions(root = panel()) {
     if (!root || !optionsSession) return;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
@@ -517,6 +521,7 @@
       ${hasCards ? '<p class="relphi-options-note">Reset Board before changing spread positions. Draw settings can still be changed.</p>' : ''}
       <div class="relphi-options-body">
         <label class="relphi-options-field">Spread Template<select id="relphiSpreadTemplateSelect" ${hasCards?'disabled':''}>${optionTemplateMarkup(draft)}</select></label>
+        <label class="relphi-options-field relphi-bulk-questions">Questions / position labels<textarea id="relphiBulkQuestions" rows="3" ${hasCards?'disabled':''} placeholder="Question one, question two, question three">${escapeHtml(draft.labels.join(', '))}</textarea><small>Separate multiple questions with commas.</small></label>
         <div class="relphi-labels-section">
           <div class="relphi-options-subhead"><strong>Position labels</strong><button type="button" id="relphiAddPosition" ${hasCards?'disabled':''}>Add position</button></div>
           <div id="relphiPositionLabels">${labelsMarkup(draft.labels)}</div>
@@ -553,10 +558,25 @@
       }
       renderOptions(root);
     });
+    const bulkQuestions=drawer.querySelector('#relphiBulkQuestions');
+    const syncBulkQuestions=()=>{
+      if (!bulkQuestions || bulkQuestions.disabled) return;
+      const labels=parseBulkQuestions(bulkQuestions.value);
+      draft.labels=labels;
+      draft.templateId='';
+      draft.templateName='';
+      if (templateSelect) templateSelect.value='';
+      const nameField=drawer.querySelector('#relphiTemplateName');
+      if (nameField) nameField.value='';
+      const list=drawer.querySelector('#relphiPositionLabels');
+      if (list) list.innerHTML=labelsMarkup(labels);
+    };
+    bulkQuestions?.addEventListener('input',syncBulkQuestions);
     drawer.querySelector('#relphiPositionLabels')?.addEventListener('input',event=>{
       const row=event.target.closest('.relphi-label-row');
       if (!row || event.target.tagName!=='INPUT') return;
       draft.labels[Number(row.dataset.labelRow)]=event.target.value.slice(0,90);
+      if (bulkQuestions) bulkQuestions.value=draft.labels.join(', ');
     });
     drawer.querySelector('#relphiPositionLabels')?.addEventListener('click',event=>{
       const button=event.target.closest('[data-remove-label]');
