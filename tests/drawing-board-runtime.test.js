@@ -223,7 +223,9 @@ async function assertReadableFocus(page) {
 
   const bulkQuestions=['What is changing?','What needs release?','What supports me?'];
   await mobile.fill('#relphiBulkQuestions',bulkQuestions.join(', '));
-  assert.equal(await mobile.locator('#relphiPositionLabels').count(),0,'Options must not duplicate comma-separated questions into a second label list');
+  assert.equal(await mobile.locator('#relphiPositionLabels').count(),1,'Options must show the synchronized individual label editor');
+  assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'comma-separated questions should create three individual label fields');
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'individual label fields must mirror the comma-separated master field');
   assert.equal(await mobile.locator('#relphiBulkQuestions').inputValue(),bulkQuestions.join(', '));
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-bulk-questions.png'),fullPage:true});
   await mobile.click('#relphiApplyOptions');

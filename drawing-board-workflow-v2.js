@@ -521,6 +521,10 @@
       ${hasCards ? '<p class="relphi-options-note">Reset Board before changing spread positions. Draw settings can still be changed.</p>' : ''}
       <div class="relphi-options-body">
         <label class="relphi-options-field relphi-bulk-questions">Questions / position labels<textarea id="relphiBulkQuestions" rows="3" ${hasCards?'disabled':''} placeholder="Question one, question two, question three">${escapeHtml(draft.labels.join(', '))}</textarea><small>Tip: separate questions with commas. Each comma-separated entry becomes one position.</small></label>
+        <div class="relphi-labels-section">
+          <div class="relphi-options-subhead"><strong>Individual position labels</strong><button type="button" id="relphiAddPosition" ${hasCards?'disabled':''}>Add position</button></div>
+          <div id="relphiPositionLabels">${labelsMarkup(draft.labels)}</div>
+        </div>
         <label class="relphi-options-field">Spread Template<select id="relphiSpreadTemplateSelect" ${hasCards?'disabled':''}>${optionTemplateMarkup(draft)}</select></label>
         <div class="relphi-draw-options">
           <label>Pack<select id="relphiDraftPack">${packOptions(draft.pack)}</select></label>
