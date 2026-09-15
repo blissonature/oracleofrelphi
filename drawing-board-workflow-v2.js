@@ -579,6 +579,12 @@
     return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,40);
   }
 
+  function markQuestionEditCustom(drawer,draft) {
+    draft.templateName='Custom';
+    const nameField=drawer.querySelector('#relphiTemplateName');
+    if (nameField) nameField.value='Custom';
+  }
+
   function renderOptions(root = panel()) {
     if (!root || !optionsSession) return;
     root.querySelector('.relphi-reading-options-drawer')?.remove();
@@ -638,11 +644,7 @@
       if (!bulkQuestions || bulkQuestions.disabled) return;
       const labels=parseBulkQuestions(bulkQuestions.value);
       draft.labels=labels;
-      draft.templateId='';
-      draft.templateName='';
-      if (templateSelect) templateSelect.value='';
-      const nameField=drawer.querySelector('#relphiTemplateName');
-      if (nameField) nameField.value='';
+      markQuestionEditCustom(drawer,draft);
       const list=drawer.querySelector('#relphiPositionLabels');
       if (list) list.innerHTML=labelsMarkup(labels);
     };
@@ -651,18 +653,19 @@
       const row=event.target.closest('.relphi-label-row');
       if (!row || event.target.tagName!=='INPUT') return;
       draft.labels[Number(row.dataset.labelRow)]=event.target.value.slice(0,90);
+      markQuestionEditCustom(drawer,draft);
       if (bulkQuestions) bulkQuestions.value=draft.labels.join(', ');
     });
     drawer.querySelector('#relphiPositionLabels')?.addEventListener('click',event=>{
       const button=event.target.closest('[data-remove-label]');
       if (!button) return;
       draft.labels.splice(Number(button.dataset.removeLabel),1);
-      draft.templateId=''; draft.templateName='';
+      markQuestionEditCustom(drawer,draft);
       renderOptions(root);
     });
     drawer.querySelector('#relphiAddPosition')?.addEventListener('click',()=>{
       draft.labels.push(`Position ${draft.labels.length+1}`);
-      draft.templateId=''; draft.templateName='';
+      markQuestionEditCustom(drawer,draft);
       renderOptions(root);
     });
     drawer.querySelector('#relphiDraftPack')?.addEventListener('change',event=>{draft.pack=event.target.value;});
