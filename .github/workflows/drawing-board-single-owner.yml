@@ -13,8 +13,75 @@ on:
       - 'tests/drawing-board-*.js'
       - '.github/workflows/drawing-board-single-owner.yml'
 
+permissions:
+  contents: write
+
 jobs:
+  apply-mobile-release-blockers:
+    if: github.event_name == 'push' && github.event.head_commit.message == 'Stage mobile release blockers'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/drawing-board-single-owner
+          fetch-depth: 2
+      - name: Apply source fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p=Path(path)
+              text=p.read_text()
+              if old not in text:
+                  raise SystemExit(f'Expected block not found in {path}: {old[:100]!r}')
+              p.write_text(text.replace(old,new,1))
+
+          js='drawing-board-workflow-v2.js'
+          replace_once(js,
+            "      position('self', CELTIC_LABELS[6], 7, transform(.68,.665,.48,0,4), { role:'self' }),\n      position('house', CELTIC_LABELS[7], 8, transform(.68,.445,.48,0,4), { role:'house' }),\n      position('hopes-fears', CELTIC_LABELS[8], 9, transform(.68,.225,.48,0,4), { role:'hopes-fears' }),\n      position('outcome', CELTIC_LABELS[9], 10, transform(.68,.005,.48,0,4), { role:'outcome' })",
+            "      position('self', CELTIC_LABELS[6], 7, transform(.70,.69,.44,0,4), { role:'self' }),\n      position('house', CELTIC_LABELS[7], 8, transform(.70,.46,.44,0,4), { role:'house' }),\n      position('hopes-fears', CELTIC_LABELS[8], 9, transform(.70,.23,.44,0,4), { role:'hopes-fears' }),\n      position('outcome', CELTIC_LABELS[9], 10, transform(.70,.00,.44,0,4), { role:'outcome' })")
+          replace_once(js,
+            "    const root=panel();\n    const drawTrigger=event.target.closest?.('#shortListPanel #drawRandomRowCard');",
+            "    const root=panel();\n    const optionsTrigger=event.target.closest?.('#shortListPanel #drawingBoardOptionsButton');\n    if (optionsTrigger && root?.contains(optionsTrigger)) {\n      event.preventDefault();\n      event.stopImmediatePropagation();\n      openOptions(root);\n      return;\n    }\n    const drawTrigger=event.target.closest?.('#shortListPanel #drawRandomRowCard');")
+
+          css='drawing-board-workflow-v2.css'
+          replace_once(css,
+            "#shortListPanel .drawing-board-top-actions{display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:nowrap!important;width:calc(100% - 1rem)!important;margin:.35rem .5rem!important}",
+            "#shortListPanel .drawing-board-top-actions{position:relative!important;z-index:1800!important;isolation:isolate!important;display:flex!important;align-items:center!important;gap:.4rem!important;flex-wrap:nowrap!important;width:calc(100% - 1rem)!important;margin:.35rem .5rem!important;pointer-events:auto!important;touch-action:manipulation!important}")
+          replace_once(css,
+            "#shortListPanel .drawing-board-top-actions>button{min-height:2.25rem!important;margin:0!important;padding:.42rem .68rem!important;border:1.5px solid var(--relphi-board-ink)!important;border-radius:8px!important;background:#fff!important;color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.78rem!important;font-weight:800!important;line-height:1!important;box-shadow:none!important;white-space:nowrap!important}",
+            "#shortListPanel .drawing-board-top-actions>button{position:relative!important;z-index:1!important;min-height:2.25rem!important;margin:0!important;padding:.42rem .68rem!important;border:1.5px solid var(--relphi-board-ink)!important;border-radius:8px!important;background:#fff!important;color:var(--relphi-board-ink)!important;font:inherit!important;font-size:.78rem!important;font-weight:800!important;line-height:1!important;box-shadow:none!important;white-space:nowrap!important;pointer-events:auto!important;touch-action:manipulation!important}")
+
+          nav='navloader.js'
+          replace_once(nav,"drawing-board-workflow-v2.css?v=29","drawing-board-workflow-v2.css?v=30")
+          replace_once(nav,"drawing-board-workflow-v2.js?v=73","drawing-board-workflow-v2.js?v=74")
+
+          test='tests/drawing-board-iphone-regressions.test.js'
+          replace_once(test,
+            "async function assertFocusArtVisible(page) {",
+            "async function assertStaffLabelsExposed(page) {\n  const result=await page.evaluate(()=>{\n    const root=document.querySelector('#shortListPanel');\n    const ids=new Set(['self','house','hopes-fears','outcome']);\n    const faces=[...root.querySelectorAll('.card-row-board>.card-row-item')].map(item=>({item,face:item.querySelector('.card-row-card-wrap,.card-row-drop-card')})).filter(entry=>entry.face);\n    const failures=[];\n    root.querySelectorAll('.card-row-board>.card-row-item').forEach(item=>{\n      if (!ids.has(item.dataset.relphiPositionId)) return;\n      const label=item.querySelector('.card-row-position-panel');\n      if (!label) { failures.push({id:item.dataset.relphiPositionId,reason:'missing-label'}); return; }\n      const lr=label.getBoundingClientRect();\n      const style=getComputedStyle(label);\n      if (style.display==='none' || style.visibility==='hidden' || lr.width<4 || lr.height<4) failures.push({id:item.dataset.relphiPositionId,reason:'hidden-label'});\n      faces.forEach(entry=>{\n        if (entry.item===item) return;\n        const r=entry.face.getBoundingClientRect();\n        const overlaps=lr.left-2<r.right && lr.right+2>r.left && lr.top-2<r.bottom && lr.bottom+2>r.top;\n        if (overlaps) failures.push({id:item.dataset.relphiPositionId,reason:'label-covered-by-card',other:entry.item.dataset.relphiPositionId||entry.item.dataset.rowIndex});\n      });\n    });\n    return failures;\n  });\n  assert.deepEqual(result,[],'Celtic staff labels must be visibly separated from every card face');\n}\n\nasync function assertFocusArtVisible(page) {")
+          replace_once(test,
+            "  const page=await browser.newPage({viewport:{width:390,height:844}});",
+            "  const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});\n  const page=await context.newPage();")
+          replace_once(test,
+            "  for (const id of ['snapshotCardRowArrangement','downloadRowHtml','downloadRowTextHtml','downloadRowJson','printCardRowImage']) {\n    await page.waitForSelector(`#drawing-board-post-export #${id}`,{state:'visible',timeout:10000});\n  }\n\n  await applyTemplate(page,'celtic-cross-10');",
+            "  for (const id of ['snapshotCardRowArrangement','downloadRowHtml','downloadRowTextHtml','downloadRowJson','printCardRowImage']) {\n    await page.waitForSelector(`#drawing-board-post-export #${id}`,{state:'visible',timeout:10000});\n  }\n\n  const optionsHit=await page.locator('#drawingBoardOptionsButton').evaluate(button=>{\n    const r=button.getBoundingClientRect();\n    const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);\n    return {pointer:getComputedStyle(button).pointerEvents,hit:hit?.closest?.('#drawingBoardOptionsButton')?.id||''};\n  });\n  assert.equal(optionsHit.pointer,'auto','Options must accept pointer/touch input');\n  assert.equal(optionsHit.hit,'drawingBoardOptionsButton','Options touch target must not be covered by another layer');\n  await page.locator('#drawingBoardOptionsButton').tap();\n  await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});\n  await page.screenshot({path:path.join(out,'drawing-board-mobile-options-open.png'),fullPage:true});\n  await page.locator('#relphiCancelOptions').tap();\n  await page.waitForSelector('.relphi-reading-options-drawer',{state:'detached'});\n\n  await applyTemplate(page,'celtic-cross-10');")
+          replace_once(test,
+            "  await assertContained(page);\n  const allLabels=await page.locator('#shortListPanel .card-row-position-panel').evaluateAll",
+            "  await assertContained(page);\n  await assertStaffLabelsExposed(page);\n  const allLabels=await page.locator('#shortListPanel .card-row-position-panel').evaluateAll")
+          PY
+      - name: Restore CI workflow and commit fixes
+        run: |
+          git checkout HEAD^ -- .github/workflows/drawing-board-single-owner.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add drawing-board-workflow-v2.js drawing-board-workflow-v2.css navloader.js tests/drawing-board-iphone-regressions.test.js .github/workflows/drawing-board-single-owner.yml
+          git commit -m 'Fix mobile Options and expose Celtic staff labels'
+          git push origin HEAD:refactor/drawing-board-single-owner
+
   drawing-board-contract:
+    if: github.event_name != 'push' || github.event.head_commit.message != 'Stage mobile release blockers'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
