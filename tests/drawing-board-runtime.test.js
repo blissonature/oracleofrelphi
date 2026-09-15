@@ -298,7 +298,7 @@ async function assertReadableFocus(page) {
   });
   assert.deepEqual(optionsOverflow,[],'no Options control may overflow or be clipped by the drawer');
   assert.equal(desktopOptions.firstIsBulk,true,'comma-separated Questions / position labels must be the first Options field');
-  assert.equal(await desktop.locator('#relphiPositionLabels').count(),0,'Options must not duplicate the question text into per-position fields');
+  assert.equal(await desktop.locator('#relphiPositionLabels').count(),1,'Options must keep the individual position-label editor beneath the comma-separated master field');
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-options-left.png'),fullPage:true});
   await desktop.click('#relphiCancelOptions');
   await applyCeltic(desktop);
