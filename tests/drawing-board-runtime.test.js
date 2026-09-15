@@ -301,7 +301,7 @@ async function assertReadableFocus(page) {
     const firstField=drawer.querySelector('.relphi-options-body>.relphi-options-field:first-child');
     return {left:r.left,right:r.right,viewport:innerWidth,hostLeft:host.left,firstIsBulk:!!firstField?.querySelector('#relphiBulkQuestions')};
   });
-  assert.ok(Math.abs(desktopOptions.left-desktopOptions.hostLeft)<=12,'Options must open on the left side of the Drawing Board');
+  assert.ok(desktopOptions.left>=0 && desktopOptions.left<=20,'Options must open against the left side of the viewport');
   assert.ok(desktopOptions.left>=0 && desktopOptions.right<=desktopOptions.viewport,'Options must not be cut off horizontally');
   const optionsOverflow=await desktop.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
     const dr=drawer.getBoundingClientRect();
@@ -390,5 +390,20 @@ async function assertReadableFocus(page) {
   if (await desktop.locator('.relphi-focus-reader').count()) await desktop.click('.relphi-focus-close');
 
   assert.deepEqual(desktopErrors,[]);
+
+  const manual=await browser.newPage({viewport:{width:1024,height:768}});
+  await manual.goto(base,{waitUntil:'domcontentloaded'});
+  await waitReady(manual);
+  await manual.click('#showAllCards');
+  await manual.waitForSelector('[data-shortlist]',{state:'visible'});
+  const manualAdd=manual.locator('[data-shortlist][aria-pressed="false"]').first();
+  await manualAdd.click();
+  await openBoard(manual);
+  await manual.waitForSelector('#shortListPanel [data-row-card]',{state:'visible'});
+  assert.equal(await manual.locator('#shortListPanel [data-row-reverse]').count(),1,'a card explicitly added from the Ledger must expose the manual flip control');
+  assert.equal(await manual.locator('#shortListPanel .card-row-transform-box').evaluate(node=>getComputedStyle(node).display),'none','manually-added cards must still start with transform gizmos locked');
+  await manual.screenshot({path:path.join(out,'drawing-board-desktop-manual-card-flipper.png'),fullPage:true});
+  await manual.close();
+
   console.log('Drawing Board browser acceptance checks passed');
 })().catch(error=>{console.error(error);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();});
