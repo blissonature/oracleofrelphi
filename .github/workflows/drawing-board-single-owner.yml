@@ -13,29 +13,8 @@ on:
       - 'tests/drawing-board-*.js'
       - '.github/workflows/drawing-board-single-owner.yml'
 
-permissions:
-  contents: write
-
 jobs:
-  apply-mobile-release-blockers:
-    if: github.event_name == 'push' && github.event.head_commit.message == 'Apply mobile release blockers'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: refactor/drawing-board-single-owner
-      - name: Apply source fixes
-        run: python3 tools/apply_mobile_release_blockers.py
-      - name: Commit source fixes
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add drawing-board-workflow-v2.js drawing-board-workflow-v2.css navloader.js tests/drawing-board-iphone-regressions.test.js
-          git commit -m 'Fix mobile Options and expose Celtic staff labels'
-          git push origin HEAD:refactor/drawing-board-single-owner
-
   drawing-board-contract:
-    if: github.event_name != 'push' || github.event.head_commit.message != 'Apply mobile release blockers'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
