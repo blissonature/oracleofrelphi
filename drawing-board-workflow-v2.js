@@ -230,13 +230,16 @@
   }
 
   function blankDraft() {
-    return { templateId:'', labels:[], pack:'full', stickers:true, reversals:true, repeats:false, templateName:'' };
+    return { templateId:'', basedOnTemplateId:'', labels:[], pack:'full', stickers:true, reversals:true, repeats:false, templateName:'' };
   }
   function draftFromState() {
     const snap = currentSnapshot() || {};
     const state = currentPrefabState();
+    const activeId=String(state.activeLayout?.id || '');
+    const knownTemplate=templateById(activeId);
     return {
-      templateId:String(state.activeLayout?.id || ''),
+      templateId:knownTemplate ? activeId : '',
+      basedOnTemplateId:String(state.activeLayout?.basedOn || (knownTemplate ? activeId : '')),
       labels:Array.isArray(snap.shortListPositionLabels) ? snap.shortListPositionLabels.slice() : [],
       pack:String(snap.rowDrawScope || 'full'),
       stickers:showPositionStickers,
@@ -253,8 +256,9 @@
     if (!session) return false;
     const base = session.baseline || {};
     const baseLayout = String(base.rowActiveLayout?.id || '');
+    const draftLayout = session.draft.templateId || (baseLayout==='custom-active' ? 'custom-active' : '');
     const baseLabels = Array.isArray(base.shortListPositionLabels) ? base.shortListPositionLabels : [];
-    return session.draft.templateId !== baseLayout || JSON.stringify(session.draft.labels) !== JSON.stringify(baseLabels);
+    return draftLayout !== baseLayout || JSON.stringify(session.draft.labels) !== JSON.stringify(baseLabels);
   }
 
   function setBoardOpen(open, { fit = false } = {}) {
@@ -379,8 +383,6 @@
     for (let i=0;i<count;i++) {
       const p = logicalPosition(snapshot,i);
       const t = logicalTransform(snapshot,i);
-      // Native positions are the untransformed card box's top-left. CSS scales
-      // and rotates each slot around its center, so extents must use that same origin.
       const centerX = p.x + CARD_W / 2;
       const centerY = p.y + CARD_H / 2;
       const rotated = rotatedBounds(CARD_W*t.scale,CARD_H*t.scale,t.rotation);
@@ -580,7 +582,11 @@
   }
 
   function markQuestionEditCustom(drawer,draft) {
+    if (draft.templateId) draft.basedOnTemplateId=draft.templateId;
+    draft.templateId='';
     draft.templateName='Custom';
+    const templateSelect=drawer.querySelector('#relphiSpreadTemplateSelect');
+    if (templateSelect) templateSelect.value='';
     const nameField=drawer.querySelector('#relphiTemplateName');
     if (nameField) nameField.value='Custom';
   }
@@ -630,12 +636,16 @@
     templateSelect?.addEventListener('change',()=>{
       const chosen=templateById(templateSelect.value);
       draft.templateId=templateSelect.value;
+      draft.basedOnTemplateId=templateSelect.value;
       if (chosen) {
         draft.labels=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>item.label);
         draft.pack=chosen.rules?.drawScope || draft.pack;
         draft.reversals=chosen.rules?.allowReversals !== false;
         draft.repeats=!!chosen.rules?.allowRepeats;
         draft.templateName=chosen.name;
+      } else {
+        draft.basedOnTemplateId='';
+        draft.templateName='Custom';
       }
       renderOptions(root);
     });
@@ -684,7 +694,7 @@
     const draft=optionsSession.draft;
     const name=String(draft.templateName || '').trim();
     if (!name || !draft.labels.length) return;
-    const based=templateById(draft.templateId);
+    const based=templateById(draft.templateId || draft.basedOnTemplateId);
     const positions=(based?.positions?.length===draft.labels.length ? clone(based.positions) : genericPositions(draft.labels));
     positions.forEach((item,index)=>{ item.label=draft.labels[index] || `Position ${index+1}`; item.drawOrder=index+1; });
     const id=`custom-${slug(name)}-${draft.labels.length}`;
@@ -692,6 +702,7 @@
     const items=readCustomTemplates().filter(item=>item.id!==id);
     items.push(custom); writeCustomTemplates(items);
     draft.templateId=id;
+    draft.basedOnTemplateId=id;
     renderOptions(root);
   }
 
@@ -743,15 +754,22 @@
   }
 
   function draftPrefab(draft) {
-    const based=templateById(draft.templateId);
+    const based=templateById(draft.templateId || draft.basedOnTemplateId);
     const labels=draft.labels.map((value,index)=>String(value || `Position ${index+1}`).trim().slice(0,90));
     if (based && based.positions.length===labels.length) {
       const next=clone(based);
       next.positions.forEach((item,index)=>{item.label=labels[index]; item.drawOrder=index+1;});
       next.rules={allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack};
+      if (!draft.templateId) {
+        next.id='custom-active';
+        next.name=draft.templateName || 'Custom';
+        next.source='custom';
+        next.editable=true;
+        next.basedOn=based.id;
+      }
       return next;
     }
-    return {version:1,id:'custom-active',name:draft.templateName || 'Custom spread',cardCount:labels.length,source:'custom',editable:true,positions:genericPositions(labels),rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
+    return {version:1,id:'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions:genericPositions(labels),rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
   }
 
   function applyDrawSettings(draft) {
@@ -947,12 +965,7 @@
     const leaving=focusIndex;
     if (leaving>=0 && leaving!==next && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
     if (cardAt(next)) openFocus(next);
-    else {
-      // Keep the current reader mounted while the next card is drawn. The
-      // newly drawn card replaces it only when its complete focus view is ready,
-      // avoiding the board/page flash between focus cards.
-      drawInto(focusItem(next),next);
-    }
+    else drawInto(focusItem(next),next);
   }
   function navigateFocusBy(delta) {
     const order=orderedNativePositionIndices();
@@ -1055,9 +1068,9 @@
   }
   function updateLayoutClasses(root) {
     const id=currentPrefabState().activeLayout?.id || '';
-    const isCeltic=id==='celtic-cross-10';
+    const isCeltic=id==='celtic-cross-10' || currentPrefabState().activeLayout?.basedOn==='celtic-cross-10';
     root.classList.toggle('relphi-celtic-cross',isCeltic);
-    root.classList.toggle('relphi-six-polarities',id==='six-polarities-houses-12');
+    root.classList.toggle('relphi-six-polarities',id==='six-polarities-houses-12' || currentPrefabState().activeLayout?.basedOn==='six-polarities-houses-12');
     const snap=isCeltic?currentSnapshot():null;
     const acknowledged=!!snap?.rowPositionMeta?.some?.(meta=>meta?.celticCrossAcknowledged);
     root.classList.toggle('relphi-celtic-crossed',isCeltic&&acknowledged);
