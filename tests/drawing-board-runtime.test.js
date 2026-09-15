@@ -203,7 +203,7 @@ async function assertReadableFocus(page) {
   const bulkQuestions=['What is changing?','What needs release?','What supports me?'];
   await mobile.fill('#relphiBulkQuestions',bulkQuestions.join(', '));
   assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'comma-separated questions should stage three positions');
-  assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').allInputValues(),bulkQuestions);
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions);
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-bulk-questions.png'),fullPage:true});
   await mobile.click('#relphiApplyOptions');
   await mobile.waitForFunction(() => {
