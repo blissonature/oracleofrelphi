@@ -3757,6 +3757,20 @@
     bindCardNoteEditor(panel);
 
   }
+  window.RelphiTarotLedgerBridge = Object.freeze({
+    renderCardEntry(cardId, eyebrow = 'Tarot Ledger entry') {
+      const card = cardById(String(cardId || ''));
+      return card ? cardDetailHtml(card, eyebrow) : '';
+    },
+    titleFor(cardId) {
+      const card = cardById(String(cardId || ''));
+      return card ? title(card) : '';
+    },
+    bindCardEntry(root) {
+      if (!root) return;
+      bindCardNoteEditor(root);
+    }
+  });
   function spreadPositionDetailHtml(item) {
     if (!item) return '';
     const number = item.number ? `Card ${item.number}` : 'Spread position';

@@ -10,7 +10,7 @@ let browser;
 
 async function waitReady(page) {
   await page.waitForSelector('#relphiOpenDrawingBoardCurrent',{timeout:20000});
-  await page.waitForFunction(() => !!window.RelphiDrawingBoardSpreadPrefabs && !!window.RelphiDrawingBoardPrefabsBridge && !!window.RelphiDrawingBoardOptionsBridge,{timeout:20000});
+  await page.waitForFunction(() => !!window.RelphiDrawingBoardSpreadPrefabs && !!window.RelphiDrawingBoardPrefabsBridge && !!window.RelphiDrawingBoardOptionsBridge && !!window.RelphiTarotLedgerBridge,{timeout:20000});
 }
 async function openBoard(page) {
   const panel=page.locator('#shortListPanel');
@@ -56,33 +56,48 @@ async function assertContained(page) {
   assert.equal(result.ok,true,JSON.stringify(result.failures));
 }
 async function assertReadableFocus(page) {
-  const geometry=await page.locator('.relphi-focus-card-host>.or-card').evaluate(node=>{
-    const rect=node.getBoundingClientRect();
-    const host=node.parentElement.getBoundingClientRect();
-    const add=node.querySelector('.or-card-add');
-    const reverse=node.querySelector('.card-row-reverse-toggle');
-    const handles=node.querySelector('.card-row-transform-box');
-    const info=node.querySelector('.or-card-layer.relphi-info-layer');
-    const infoStyle=info ? getComputedStyle(info) : null;
+  const result=await page.evaluate(()=>{
+    const reader=document.querySelector('.relphi-focus-reader');
+    const art=reader?.querySelector('.relphi-focus-art');
+    const entry=reader?.querySelector('.relphi-focus-entry');
+    const position=reader?.querySelector('.relphi-focus-position');
+    if (!reader || !art || !entry || !position) return {ok:false};
+    const index=Number(reader.dataset.focusIndex);
+    const item=document.querySelector(`#shortListPanel .card-row-item[data-row-index="${index}"]`);
+    const card=item?.querySelector('[data-row-card]');
+    const reversed=!!item?.classList.contains('is-row-reversed') || card?.dataset.rowReversed==='true' || !!card?.classList.contains('is-row-reversed');
+    const matrix=new DOMMatrix(getComputedStyle(art).transform);
+    const ar=art.getBoundingClientRect(), er=entry.getBoundingClientRect();
     return {
-      width:rect.width,height:rect.height,
-      hostWidth:host.width,hostHeight:host.height,
-      addVisible:!!add && getComputedStyle(add).display!=='none',
-      reverseVisible:!!reverse && getComputedStyle(reverse).display!=='none',
-      handlesVisible:!!handles && getComputedStyle(handles).display!=='none',
-      infoVisible:!!infoStyle && infoStyle.visibility==='visible' && Number(infoStyle.opacity)>.9,
-      infoFont:infoStyle ? parseFloat(infoStyle.fontSize) : 0
+      ok:true,reversed,
+      naturalWidth:art.naturalWidth,
+      matrixA:matrix.a,matrixD:matrix.d,
+      position:position.textContent.trim(),
+      entryText:entry.textContent.trim(),
+      hasTitle:!!entry.querySelector('.full-entry-title-block h2'),
+      duplicateArtVisible:!!entry.querySelector('.tarot-card-art') && getComputedStyle(entry.querySelector('.tarot-card-art')).display!=='none',
+      reversedMeaning:entry.querySelectorAll('[data-relphi-focus-reversed]').length,
+      mobileStack:ar.bottom<=er.top+3,
+      artChildren:reader.querySelector('.relphi-focus-art-frame')?.children.length || 0
     };
   });
-  assert.ok(geometry.width>=280,`focused card should be readable on mobile, got ${geometry.width}px wide`);
-  assert.ok(geometry.height>=450,`focused card should be readable on mobile, got ${geometry.height}px tall`);
-  assert.ok(geometry.width<=geometry.hostWidth+1 && geometry.height<=geometry.hostHeight+1,'focused card must remain inside its reader host');
-  assert.equal(geometry.infoVisible,true);
-  assert.ok(geometry.infoFont>=13,'focused interpretation text should be comfortably readable');
-  assert.equal(geometry.addVisible,false,'focused reader must not show board add/remove chrome');
-  assert.equal(geometry.reverseVisible,false,'focused reader must not show board orientation chrome');
-  assert.equal(geometry.handlesVisible,false,'focused reader must not show board transform handles');
+  assert.equal(result.ok,true);
+  assert.ok(result.naturalWidth>0,'focus art must load');
+  assert.match(result.position,/\S/,'spread position must be visible outside the art');
+  assert.ok(result.entryText.length>100,'focus view must contain the full Tarot Ledger entry');
+  assert.equal(result.hasTitle,true,'full Ledger title block must be present');
+  assert.equal(result.duplicateArtVisible,false,'Ledger entry must not duplicate or cover the dedicated card art');
+  assert.equal(result.mobileStack,true,'mobile focus view must stack the full card above the Ledger entry');
+  assert.equal(result.artChildren,1,'nothing may be layered over the card art');
+  if (result.reversed) {
+    assert.ok(result.matrixA<-.8 && result.matrixD<-.8,'a reversed draw must show reversed card art');
+    assert.equal(result.reversedMeaning,1,'reversed meaning must appear only for a reversed draw');
+  } else {
+    assert.ok(result.matrixA>.8 && result.matrixD>.8,'an upright draw must show upright card art');
+    assert.equal(result.reversedMeaning,0,'upright draws must not be labeled or interpreted as reversed');
+  }
 }
+
 
 (async()=>{
   browser=await chromium.launch({headless:true});
@@ -202,6 +217,13 @@ async function assertReadableFocus(page) {
 
   await desktop.locator('.card-row-item[data-row-index="9"] .card-row-drop-card').click();
   await desktop.waitForSelector('.relphi-focus-reader',{state:'visible'});
+  const desktopFocus=await desktop.evaluate(()=>{
+    const art=document.querySelector('.relphi-focus-art')?.getBoundingClientRect();
+    const entry=document.querySelector('.relphi-focus-entry')?.getBoundingClientRect();
+    return art&&entry?{sideBySide:art.right<=entry.left+3,entryText:document.querySelector('.relphi-focus-entry')?.textContent?.trim().length||0}:null;
+  });
+  assert.ok(desktopFocus?.sideBySide,'desktop focus view must show full art beside the Ledger entry');
+  assert.ok(desktopFocus.entryText>100,'desktop focus view must show the full Ledger entry');
   let semantic=await boardState(desktop);
   const outcomeIndex=semantic.snap.rowPositionMeta.findIndex(meta=>meta?.id==='outcome');
   assert.equal(outcomeIndex,0,'targeted draw should occupy the next native slot while preserving the requested semantic position');

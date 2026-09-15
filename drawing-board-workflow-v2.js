@@ -31,6 +31,7 @@
   function panel() { return document.getElementById(PANEL_ID); }
   function prefabBridge() { return window.RelphiDrawingBoardPrefabsBridge || null; }
   function optionsBridge() { return window.RelphiDrawingBoardOptionsBridge || null; }
+  function ledgerBridge() { return window.RelphiTarotLedgerBridge || null; }
   function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
   function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
   function escapeHtml(value) {
@@ -701,27 +702,66 @@
     const snap=currentSnapshot() || {};
     return String(snap.shortListPositionLabels?.[index] || `Position ${index+1}`);
   }
-  function openLedgerFromCard(card) {
-    const title=card.querySelector('.or-card-title-banner')?.textContent?.trim() || String(card.dataset.rowCard || '').replace(/_/g,' ');
-    const command=document.getElementById('oracleCommand');
-    const run=document.getElementById('runCommand');
-    if (!command || !run) return;
-    closeFocus({acknowledge:true});
-    command.value=title;
-    command.dispatchEvent(new Event('input',{bubbles:true}));
-    run.click();
-    setTimeout(()=>document.getElementById('cardDetail')?.scrollIntoView({behavior:'smooth',block:'start'}),60);
+  function focusCardIsReversed(index, root = panel()) {
+    const item=focusItem(index,root);
+    const card=cardAt(index,root);
+    return !!item?.classList?.contains('is-row-reversed') || card?.dataset?.rowReversed === 'true' || !!card?.classList?.contains('is-row-reversed');
   }
-
+  function focusArtImage(card) {
+    const art=card?.querySelector?.('.or-card-art');
+    if (art?.tagName === 'IMG') return art;
+    return art?.querySelector?.('img') || card?.querySelector?.('img') || null;
+  }
+  function addFocusReversedMeaning(entry, cardId, reversed) {
+    entry.querySelectorAll('[data-relphi-focus-reversed]').forEach(node=>node.remove());
+    if (!reversed) return;
+    const meaning=window.RelphiTarotReversedMeanings?.meaningFor?.(cardId) || '';
+    if (!meaning) return;
+    const section=document.createElement('section');
+    section.className='interpretation-card--priority relphi-focus-reversed';
+    section.dataset.relphiFocusReversed=cardId;
+    const heading=document.createElement('h3'); heading.textContent='Relphi-derived reversed interpretation';
+    const body=document.createElement('p'); body.textContent=meaning;
+    section.append(heading,body);
+    const block=entry.querySelector('.full-entry-title-block');
+    const upright=block?.querySelector(':scope > .locked-relphi-priority,:scope > .uhn-panel');
+    if (upright) upright.insertAdjacentElement('afterend',section);
+    else if (block) block.appendChild(section);
+    else entry.prepend(section);
+  }
+  function renderFocusEntry(reader, index) {
+    const card=cardAt(index);
+    const cardId=String(card?.dataset?.rowCard || '');
+    const artSource=focusArtImage(card);
+    const reversed=focusCardIsReversed(index);
+    const art=reader.querySelector('.relphi-focus-art');
+    const entry=reader.querySelector('.relphi-focus-entry');
+    const position=reader.querySelector('.relphi-focus-position');
+    if (position) position.textContent=positionLabel(index);
+    if (art && artSource) {
+      art.src=artSource.currentSrc || artSource.src || '';
+      art.alt=(artSource.alt || ledgerBridge()?.titleFor?.(cardId) || 'Tarot card') + (reversed ? ' — reversed' : '');
+      art.classList.toggle('is-reversed',reversed);
+    }
+    if (entry) {
+      entry.innerHTML=ledgerBridge()?.renderCardEntry?.(cardId,'Tarot Ledger entry') || '<p>Card entry unavailable.</p>';
+      entry.querySelectorAll('.tarot-card-art,.full-entry-row-button').forEach(node=>node.remove());
+      addFocusReversedMeaning(entry,cardId,reversed);
+      ledgerBridge()?.bindCardEntry?.(entry);
+      entry.scrollTop=0;
+    }
+  }
   function renderFocusStrip(reader, index) {
     const order=orderedNativePositionIndices();
     const strip=reader.querySelector('.relphi-focus-strip');
     strip.replaceChildren();
     order.forEach((nativeIndex,logicalIndex)=>{
       const button=document.createElement('button');
-      button.type='button'; button.dataset.focusPosition=String(nativeIndex); button.className=nativeIndex===index?'is-current':'';
+      button.type='button'; button.dataset.focusPosition=String(nativeIndex);
+      button.classList.toggle('is-current',nativeIndex===index);
+      button.classList.toggle('is-reversed',focusCardIsReversed(nativeIndex));
       const card=cardAt(nativeIndex);
-      const img=card?.querySelector('img')?.cloneNode(true);
+      const img=focusArtImage(card)?.cloneNode(true);
       if (img) { img.removeAttribute('loading'); button.appendChild(img); }
       const span=document.createElement('span'); span.textContent=String(logicalIndex+1); button.appendChild(span);
       button.title=positionLabel(nativeIndex);
@@ -730,32 +770,44 @@
     });
     setTimeout(()=>strip.querySelector('.is-current')?.scrollIntoView({block:'nearest',inline:'center'}),0);
   }
+  function installFocusSwipe(reader) {
+    const main=reader.querySelector('.relphi-focus-main');
+    if (!main) return;
+    let gesture=null;
+    main.addEventListener('pointerdown',event=>{
+      if (event.pointerType==='mouse') return;
+      if (event.target.closest('button,a,input,textarea,select,label,[contenteditable="true"]')) return;
+      gesture={id:event.pointerId,x:event.clientX,y:event.clientY,time:Date.now()};
+    });
+    main.addEventListener('pointercancel',()=>{gesture=null;});
+    main.addEventListener('pointerup',event=>{
+      if (!gesture || event.pointerId!==gesture.id) return;
+      const dx=event.clientX-gesture.x;
+      const dy=event.clientY-gesture.y;
+      const elapsed=Date.now()-gesture.time;
+      gesture=null;
+      if (elapsed>1400 || Math.abs(dx)<56 || Math.abs(dx)<=Math.abs(dy)*1.25) return;
+      navigateFocusBy(dx<0?1:-1);
+    });
+  }
   function openFocus(index) {
     const root=panel(); const card=cardAt(index,root);
-    if (!root || !card) return false;
+    if (!root || !card || !ledgerBridge()) return false;
     closeFocus({acknowledge:false});
     focusIndex=index;
     const reader=document.createElement('section');
     reader.className='relphi-focus-reader';
+    reader.dataset.focusIndex=String(index);
     reader.setAttribute('role','dialog');
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label',positionLabel(index,root));
-    reader.innerHTML=`<div class="relphi-focus-shell"><header><strong></strong><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></header><div class="relphi-focus-card-host"></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-strip" aria-label="Reading positions"></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
-    reader.querySelector('header strong').textContent=positionLabel(index,root);
-    const cloneCard=card.cloneNode(true);
-    cloneCard.removeAttribute('draggable');
-    cloneCard.classList.add('relphi-focused-card');
-    reader.querySelector('.relphi-focus-card-host').appendChild(cloneCard);
+    reader.innerHTML=`<div class="relphi-focus-shell"><header><strong class="relphi-focus-position"></strong><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></header><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-strip" aria-label="Reading positions"></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
+    renderFocusEntry(reader,index);
+    renderFocusStrip(reader,index);
     reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
     reader.querySelector('.relphi-focus-prev').addEventListener('click',()=>navigateFocusBy(-1));
     reader.querySelector('.relphi-focus-next').addEventListener('click',()=>navigateFocusBy(1));
-    const title=cloneCard.querySelector('.or-card-title-banner');
-    if (title) {
-      title.classList.add('relphi-card-title-link'); title.setAttribute('role','button'); title.tabIndex=0;
-      const open=event=>{ if(event.type==='keydown'&&!['Enter',' '].includes(event.key))return; event.preventDefault(); openLedgerFromCard(cloneCard); };
-      title.addEventListener('click',open); title.addEventListener('keydown',open);
-    }
-    renderFocusStrip(reader,index);
+    installFocusSwipe(reader);
     document.body.appendChild(reader);
     document.body.classList.add('relphi-focus-open');
     return true;

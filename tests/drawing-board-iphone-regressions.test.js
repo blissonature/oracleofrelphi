@@ -10,7 +10,7 @@ let browser;
 
 async function waitReady(page) {
   await page.waitForSelector('#relphiOpenDrawingBoardCurrent',{timeout:20000});
-  await page.waitForFunction(() => !!window.RelphiDrawingBoardSpreadPrefabs && !!window.RelphiDrawingBoardPrefabsBridge && !!window.RelphiDrawingBoardOptionsBridge,{timeout:20000});
+  await page.waitForFunction(() => !!window.RelphiDrawingBoardSpreadPrefabs && !!window.RelphiDrawingBoardPrefabsBridge && !!window.RelphiDrawingBoardOptionsBridge && !!window.RelphiTarotLedgerBridge,{timeout:20000});
 }
 async function openBoard(page) {
   const panel=page.locator('#shortListPanel');
@@ -75,45 +75,46 @@ async function assertStaffLabelsExposed(page) {
   assert.deepEqual(result,[],'Celtic staff labels must be visibly separated from every card face');
 }
 
-async function assertFocusArtVisible(page) {
+async function assertFocusReadingView(page) {
   const result=await page.evaluate(()=>{
-    const card=document.querySelector('.relphi-focus-card-host>.or-card');
-    const art=card?.querySelector('.or-card-art');
-    const layer=card?.querySelector('.or-card-layer.relphi-info-layer');
-    const scroll=card?.querySelector('.or-layer-scroll');
-    const text=scroll?.querySelector('span');
-    if (!card || !art || !layer || !scroll || !text) return {ok:false};
-    const c=card.getBoundingClientRect();
-    const a=art.getBoundingClientRect();
-    const s=scroll.getBoundingClientRect();
-    const layerStyle=getComputedStyle(layer);
-    const textStyle=getComputedStyle(text);
+    const reader=document.querySelector('.relphi-focus-reader');
+    const art=reader?.querySelector('.relphi-focus-art');
+    const entry=reader?.querySelector('.relphi-focus-entry');
+    const position=reader?.querySelector('.relphi-focus-position');
+    if (!reader || !art || !entry || !position) return {ok:false};
+    const index=Number(reader.dataset.focusIndex);
+    const item=document.querySelector(`#shortListPanel .card-row-item[data-row-index="${index}"]`);
+    const card=item?.querySelector('[data-row-card]');
+    const reversed=!!item?.classList.contains('is-row-reversed') || card?.dataset.rowReversed==='true' || !!card?.classList.contains('is-row-reversed');
+    const matrix=new DOMMatrix(getComputedStyle(art).transform);
+    const ar=art.getBoundingClientRect(), er=entry.getBoundingClientRect();
     return {
-      ok:true,
-      naturalWidth:art.naturalWidth,
-      artOpacity:Number(getComputedStyle(art).opacity),
-      layerBackground:layerStyle.backgroundColor,
-      interpretation:text.textContent.trim(),
-      textColor:textStyle.color,
-      textOpacity:Number(textStyle.opacity),
-      textVisibility:textStyle.visibility,
-      exposedHeight:s.top-c.top,
-      cardHeight:c.height,
-      scrollHeight:s.height,
-      artHeight:a.height
+      ok:true,reversed,naturalWidth:art.naturalWidth,
+      matrixA:matrix.a,matrixD:matrix.d,
+      position:position.textContent.trim(),
+      fullEntry:entry.textContent.trim(),
+      title:entry.querySelector('.full-entry-title-block h2')?.textContent?.trim()||'',
+      stacked:ar.bottom<=er.top+3,
+      artChildren:reader.querySelector('.relphi-focus-art-frame')?.children.length||0,
+      reversedMeaning:entry.querySelectorAll('[data-relphi-focus-reversed]').length
     };
   });
-  assert.equal(result.ok,true,'focused reader should contain card art and interpretation');
-  assert.ok(result.naturalWidth>0,'focused card artwork must load');
-  assert.ok(result.artOpacity>.9,'focused card artwork must remain visible');
-  assert.equal(result.layerBackground,'rgba(0, 0, 0, 0)','full-card interpretation layer must be transparent');
-  assert.ok(result.interpretation.length>20,'focused interpretation text must be present');
-  assert.equal(result.textColor,'rgb(17, 17, 17)','focused interpretation text must render in readable ink');
-  assert.ok(result.textOpacity>.9,'focused interpretation text must not be faded out');
-  assert.equal(result.textVisibility,'visible','focused interpretation text must be visible');
-  assert.ok(result.exposedHeight>=result.cardHeight*.40,`focused reader should expose at least 40% of the art before interpretation; got ${Math.round(result.exposedHeight/result.cardHeight*100)}%`);
-  assert.ok(result.scrollHeight<=result.cardHeight*.50,'interpretation panel must not swallow the card art');
+  assert.equal(result.ok,true);
+  assert.ok(result.naturalWidth>0,'card art must load');
+  assert.match(result.position,/\S/,'the spread position must be shown outside the art');
+  assert.ok(result.title.length>0,'the full Ledger entry title must be present');
+  assert.ok(result.fullEntry.length>100,'the full Tarot Ledger entry must be present');
+  assert.equal(result.stacked,true,'mobile must place the full card above the entry, never underneath it');
+  assert.equal(result.artChildren,1,'no labels or interpretation may cover the card art');
+  if (result.reversed) {
+    assert.ok(result.matrixA<-.8 && result.matrixD<-.8,'reversed draw must visibly rotate the art');
+    assert.equal(result.reversedMeaning,1,'reversed draw must get the reversed interpretation');
+  } else {
+    assert.ok(result.matrixA>.8 && result.matrixD>.8,'upright draw must keep the art upright');
+    assert.equal(result.reversedMeaning,0,'upright draw must not be labeled reversed');
+  }
 }
+
 
 (async()=>{
   browser=await chromium.launch({headless:true});
@@ -160,7 +161,7 @@ async function assertFocusArtVisible(page) {
     await page.click('#drawRandomRowCard');
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
     if (i===0) {
-      await assertFocusArtVisible(page);
+      await assertFocusReadingView(page);
       await page.screenshot({path:path.join(out,'drawing-board-mobile-focus-art-visible.png'),fullPage:true});
     }
     await page.click('.relphi-focus-close');
@@ -174,6 +175,16 @@ async function assertFocusArtVisible(page) {
   const allLabels=await page.locator('#shortListPanel .card-row-position-panel').evaluateAll(nodes=>nodes.map(node=>({text:node.textContent.trim(),visible:getComputedStyle(node).display!=='none'})));
   assert.equal(allLabels.filter(item=>item.visible).length,10,'all ten Celtic position labels must remain visible');
   await page.screenshot({path:path.join(out,'drawing-board-mobile-celtic-full.png'),fullPage:true});
+
+  await page.click('#shortListPanel .card-row-item[data-relphi-position-id="covering"] [data-row-card]');
+  await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
+  await assertFocusReadingView(page);
+  const swipeTarget=page.locator('.relphi-focus-main');
+  await swipeTarget.dispatchEvent('pointerdown',{pointerType:'touch',pointerId:77,isPrimary:true,clientX:320,clientY:340});
+  await swipeTarget.dispatchEvent('pointerup',{pointerType:'touch',pointerId:77,isPrimary:true,clientX:70,clientY:338});
+  await page.waitForFunction(()=>/crosses/i.test(document.querySelector('.relphi-focus-position')?.textContent||''));
+  await page.click('.relphi-focus-close');
+  await page.waitForSelector('.relphi-focus-reader',{state:'detached'});
 
   const jsonDownload=page.waitForEvent('download');
   await page.click('#drawing-board-post-export #downloadRowJson');
