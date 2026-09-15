@@ -611,7 +611,23 @@
     }
     optionsSession.baseline=currentSnapshot();
     writeStickerVisibility(true);
-    setTimeout(()=>{ enhance(panel()); renderOptions(panel()); },0);
+    boardOpen=true;
+    const keepBoardOpen=()=>{
+      const next=panel();
+      if (!next) return;
+      next.hidden=false;
+      next.removeAttribute('hidden');
+      const drawer=next.querySelector('.card-row-drawing-board');
+      if (drawer) drawer.open=true;
+      const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+      if (trigger) {
+        trigger.textContent='Close Drawing Board';
+        trigger.setAttribute('aria-expanded','true');
+      }
+      enhance(next);
+    };
+    keepBoardOpen();
+    setTimeout(keepBoardOpen,0);
   }
   function closeOptions(root = panel()) {
     optionsSession=null;

@@ -183,6 +183,9 @@ async function assertReadableFocus(page) {
   });
   await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
   await mobile.waitForTimeout(100);
+  assert.equal(await mobile.locator('#shortListPanel').isVisible(),true,'Reset Board must keep the Drawing Board visible');
+  assert.equal(await mobile.locator('#relphiOpenDrawingBoardCurrent').getAttribute('aria-expanded'),'true','Reset Board must keep the outer Drawing Board toggle open');
+  assert.equal(await mobile.locator('#shortListPanel .card-row-drawing-board').evaluate(node=>node.open),true,'Reset Board must keep the Drawing Board drawer expanded');
   assert.equal(await mobile.locator('.relphi-reading-options-drawer.is-reading-options-open').count(),1);
   await mobile.locator('#relphiTemplateName').scrollIntoViewIfNeeded();
   const drawerGeometry=await mobile.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
