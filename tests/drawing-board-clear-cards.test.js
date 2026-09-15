@@ -67,13 +67,15 @@ async function boardState(page){
     rootHidden:document.querySelector('#shortListPanel')?.hidden,
     rootDisplay:getComputedStyle(document.querySelector('#shortListPanel')).display,
     workspaceVisible:!!document.querySelector('#shortListPanel .card-row-workspace') && getComputedStyle(document.querySelector('#shortListPanel .card-row-workspace')).display!=='none',
+    workspaceHeight:document.querySelector('#shortListPanel .card-row-workspace')?.getBoundingClientRect().height || 0,
     layout:window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id || '',
     slots:window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.slotCount || 0,
     labels:(window.RelphiDrawingBoardOptionsBridge?.capture?.()?.shortListPositionLabels || []).slice(),
     placeholders:document.querySelectorAll('#shortListPanel .card-row-board .card-row-placeholder-item').length,
     cards:document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length,
     drawerOpen:!!document.querySelector('#shortListPanel .card-row-drawing-board')?.open,
-    triggerExpanded:document.querySelector('#relphiOpenDrawingBoardCurrent')?.getAttribute('aria-expanded')
+    triggerExpanded:document.querySelector('#relphiOpenDrawingBoardCurrent')?.getAttribute('aria-expanded'),
+    drawDisabled:!!document.querySelector('#drawRandomRowCard')?.disabled
   }));
 }
 
@@ -91,19 +93,20 @@ async function assertClearCardsPreservesBoard(page,expectedSlots,expectedLayout,
   assert.equal(after.rootHidden,false,`${label}: Clear Cards must not hide Drawing Board`);
   assert.notEqual(after.rootDisplay,'none',`${label}: Drawing Board must remain rendered`);
   assert.equal(after.workspaceVisible,true,`${label}: workspace must remain visible`);
+  assert.ok(after.workspaceHeight>=300,`${label}: workspace must retain usable height`);
   assert.equal(after.drawerOpen,true,`${label}: Drawing Board drawer must remain open`);
   assert.equal(after.triggerExpanded,'true',`${label}: Drawing Board trigger must remain open`);
   assert.equal(after.layout,expectedLayout,`${label}: Clear Cards must preserve active layout`);
-  assert.equal(after.slots,expectedSlots,`${label}: Clear Cards must preserve slot count`);
+  assert.equal(after.slots,expectedSlots,`${label}: Clear Cards must preserve spread slot count`);
   assert.equal(after.labels.length,expectedSlots,`${label}: Clear Cards must preserve position labels`);
-  assert.equal(after.placeholders,expectedSlots,`${label}: cleared cards must become placeholders`);
+  assert.equal(after.placeholders,expectedSlots,`${label}: spread cards must clear back to their spread positions`);
 }
 
-async function assertFreeformClearCardsPreservesBoard(page,expectedSlots){
+async function assertFreeformClearCardsLeavesZeroSlotBoard(page,expectedCards){
   const before=await boardState(page);
   assert.equal(before.layout,'','freeform: no active layout before clear');
   assert.equal(before.labels.length,0,'freeform: no position labels before clear');
-  assert.equal(before.slots,expectedSlots,'freeform: cards establish the slot count before clear');
+  assert.equal(before.slots,expectedCards,'freeform: cards establish the transient slot count before clear');
 
   await page.click('#clearShortListCardsOnly');
   await page.waitForFunction(() => document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===0);
@@ -112,12 +115,15 @@ async function assertFreeformClearCardsPreservesBoard(page,expectedSlots){
   const after=await boardState(page);
   assert.equal(after.rootHidden,false,'freeform: Clear Cards must not hide Drawing Board');
   assert.notEqual(after.rootDisplay,'none','freeform: Drawing Board must remain rendered');
-  assert.equal(after.workspaceVisible,true,'freeform: workspace must remain visible');
+  assert.equal(after.workspaceVisible,true,'freeform: zero-slot workspace must remain visible');
+  assert.ok(after.workspaceHeight>=300,'freeform: zero-slot workspace must retain usable height');
   assert.equal(after.drawerOpen,true,'freeform: Drawing Board drawer must remain open');
   assert.equal(after.triggerExpanded,'true','freeform: Drawing Board trigger must remain open');
   assert.equal(after.layout,'','freeform: Clear Cards must not invent a spread');
-  assert.equal(after.slots,expectedSlots,'freeform: Clear Cards must preserve the occupied positions as empty slots');
-  assert.equal(after.placeholders,expectedSlots,'freeform: cleared cards must become placeholders');
+  assert.equal(after.slots,0,'freeform: Clear Cards must leave zero slots when there were no configured positions');
+  assert.equal(after.labels.length,0,'freeform: Clear Cards must not invent position stickers');
+  assert.equal(after.placeholders,0,'freeform: Clear Cards must not invent placeholders');
+  assert.equal(after.drawDisabled,false,'freeform: Draw must remain usable with zero slots');
 }
 
 (async()=>{
@@ -142,8 +148,14 @@ async function assertFreeformClearCardsPreservesBoard(page,expectedSlots){
 
     await resetToBlank(page);
     await drawCards(page,3);
-    await assertFreeformClearCardsPreservesBoard(page,3);
-    await page.screenshot({path:path.join(out,'drawing-board-mobile-clear-cards-freeform.png'),fullPage:true});
+    await assertFreeformClearCardsLeavesZeroSlotBoard(page,3);
+    await page.screenshot({path:path.join(out,'drawing-board-mobile-clear-cards-freeform-zero.png'),fullPage:true});
+
+    await drawCards(page,1);
+    const redrawn=await boardState(page);
+    assert.equal(redrawn.cards,1,'freeform: Draw must create a card directly from the zero-slot board');
+    assert.equal(redrawn.rootHidden,false,'freeform: board must remain visible after drawing again');
+    assert.equal(redrawn.workspaceVisible,true,'freeform: workspace must remain visible after drawing again');
 
     console.log('Drawing Board Clear Cards preservation checks passed');
   } finally {
