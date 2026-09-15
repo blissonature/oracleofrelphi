@@ -9576,6 +9576,11 @@ ${notes || ''}`;
       const commandDetails = document.querySelector('.tarot-command-drawer > details');
       if (commandDetails) commandDetails.open = true;
       setVisible('shortListPanel', true);
+      const currentBoardTrigger = $('relphiOpenDrawingBoardCurrent');
+      if (currentBoardTrigger) {
+        currentBoardTrigger.textContent = 'Close Drawing Board';
+        currentBoardTrigger.setAttribute('aria-expanded', 'true');
+      }
       ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(id => setVisible(id, false));
       renderShortList();
       expandCardRow();
