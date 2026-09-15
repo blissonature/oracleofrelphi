@@ -1,0 +1,41 @@
+name: One-time bulk question test fix
+
+on:
+  push:
+    branches:
+      - refactor/drawing-board-single-owner
+    paths:
+      - '.github/workflows/one-time-bulk-test-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/drawing-board-single-owner
+          fetch-depth: 0
+      - name: Fix Playwright bulk label assertion
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/drawing-board-runtime.test.js')
+          text=p.read_text()
+          old="assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').allInputValues(),bulkQuestions);"
+          new="assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions);"
+          if old not in text:
+              raise SystemExit('bulk label assertion anchor not found')
+          p.write_text(text.replace(old,new,1))
+          PY
+      - name: Validate syntax
+        run: node --check tests/drawing-board-runtime.test.js
+      - name: Commit patch
+        run: |
+          git config user.name 'blissonature'
+          git config user.email 'blissonature@gmail.com'
+          git add tests/drawing-board-runtime.test.js
+          git commit -m 'Fix bulk question browser assertion'
+          git push origin HEAD:refactor/drawing-board-single-owner
