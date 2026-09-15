@@ -285,6 +285,16 @@ async function assertReadableFocus(page) {
   });
   assert.ok(Math.abs(desktopOptions.left-desktopOptions.hostLeft)<=12,'Options must open on the left side of the Drawing Board');
   assert.ok(desktopOptions.left>=0 && desktopOptions.right<=desktopOptions.viewport,'Options must not be cut off horizontally');
+  const optionsOverflow=await desktop.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
+    const dr=drawer.getBoundingClientRect();
+    const offenders=[];
+    drawer.querySelectorAll('input,textarea,select,button,label,.relphi-draw-options,.relphi-template-save').forEach(node=>{
+      const r=node.getBoundingClientRect();
+      if (r.width>0 && (r.left < dr.left-1 || r.right > dr.right+1)) offenders.push({tag:node.tagName,id:node.id||'',cls:node.className||'',left:r.left,right:r.right,drawerLeft:dr.left,drawerRight:dr.right});
+    });
+    return offenders;
+  });
+  assert.deepEqual(optionsOverflow,[],'no Options control may overflow or be clipped by the drawer');
   assert.equal(desktopOptions.firstIsBulk,true,'comma-separated Questions / position labels must be the first Options field');
   assert.equal(await desktop.locator('#relphiPositionLabels').count(),0,'Options must not duplicate the question text into per-position fields');
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-options-left.png'),fullPage:true});

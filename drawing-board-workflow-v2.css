@@ -73,9 +73,11 @@
 #shortListPanel .relphi-label-row{display:grid!important;grid-template-columns:1.8rem minmax(0,1fr) 2rem!important;align-items:center!important;gap:.35rem!important}
 #shortListPanel .relphi-label-row>span{font-size:.7rem!important;font-weight:900!important;text-align:center!important}
 #shortListPanel .relphi-label-row>button{width:2rem!important;height:2rem!important;margin:0!important;padding:0!important;border:1px solid #cfc5bc!important;border-radius:6px!important;background:#fff!important;font-size:1rem!important}
-#shortListPanel .relphi-draw-options{display:grid!important;grid-template-columns:minmax(10rem,1fr) repeat(3,auto)!important;align-items:end!important;gap:.45rem!important}
-#shortListPanel .relphi-draw-options>label:not(:first-child){display:flex!important;align-items:center!important;gap:.35rem!important;min-height:2.15rem!important;padding:.38rem .5rem!important;border:1px solid #d0c7bf!important;border-radius:7px!important;background:#fff!important;white-space:nowrap!important}
-#shortListPanel .relphi-template-save{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:.45rem!important}
+#shortListPanel .relphi-draw-options{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:end!important;gap:.45rem!important;min-width:0!important}
+#shortListPanel .relphi-draw-options>label:first-child{grid-column:1/-1!important;min-width:0!important;width:100%!important}
+#shortListPanel .relphi-draw-options>label:not(:first-child){display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:.35rem!important;min-width:0!important;width:100%!important;min-height:2.15rem!important;padding:.38rem .5rem!important;border:1px solid #d0c7bf!important;border-radius:7px!important;background:#fff!important;white-space:normal!important;overflow-wrap:anywhere!important}
+#shortListPanel .relphi-template-save{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(7.5rem,auto)!important;gap:.45rem!important;min-width:0!important}
+#shortListPanel .relphi-template-save>*{min-width:0!important;max-width:100%!important}
 #shortListPanel .relphi-options-commitbar{display:grid!important;grid-template-columns:auto 1fr auto auto!important;gap:.45rem!important;align-items:center!important;padding:.65rem .85rem!important;border-top:1px solid #ddd4cb!important;background:#faf6f1!important}
 #shortListPanel .relphi-options-commitbar button{min-height:2.15rem!important;margin:0!important;padding:.38rem .65rem!important;border:1.5px solid var(--relphi-board-ink)!important;border-radius:8px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.74rem!important;font-weight:900!important}
 #shortListPanel .relphi-options-commitbar .primary{border-color:var(--relphi-board-red)!important;background:var(--relphi-board-red)!important;color:#fff!important}
@@ -169,3 +171,9 @@
 
 #shortListPanel .relphi-bulk-questions textarea{box-sizing:border-box!important;width:100%!important;min-height:4.5rem!important;margin:0!important;padding:.48rem .55rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.76rem!important;line-height:1.35!important;resize:vertical!important}
 #shortListPanel .relphi-bulk-questions small{font-size:.64rem!important;font-weight:600!important;line-height:1.25!important;color:#665e58!important}
+
+@media(max-width:700px){
+  #shortListPanel .relphi-draw-options{grid-template-columns:1fr!important}
+  #shortListPanel .relphi-draw-options>label:first-child{grid-column:1!important}
+  #shortListPanel .relphi-template-save{grid-template-columns:1fr!important}
+}
