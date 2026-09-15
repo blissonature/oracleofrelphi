@@ -31,11 +31,13 @@ jobs:
           node --check tests/drawing-board-runtime.test.js
           node --check tests/drawing-board-iphone-regressions.test.js
           node --check tests/drawing-board-alignment.test.js
+          node --check tests/drawing-board-bulk-questions.test.js
       - name: Run static Drawing Board contracts
         run: |
           node tests/drawing-board-single-owner.test.js
           node tests/drawing-board-workflow-v2.test.js
           node tests/drawing-board-spread-prefabs.test.js
+          node tests/drawing-board-bulk-questions.test.js
       - name: Install browser acceptance runner
         run: |
           npm install --no-save playwright@1.55.0
