@@ -1,0 +1,145 @@
+name: One-time bulk question restoration
+
+on:
+  push:
+    branches:
+      - refactor/drawing-board-single-owner
+    paths:
+      - '.github/workflows/one-time-bulk-questions-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/drawing-board-single-owner
+          fetch-depth: 0
+      - name: Restore comma-separated question entry
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          workflow = Path('drawing-board-workflow-v2.js')
+          text = workflow.read_text()
+
+          anchor = "\n  function renderOptions(root = panel()) {\n"
+          insert = """
+  function parseBulkQuestions(value) {
+    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,40);
+  }
+"""
+          if anchor not in text:
+              raise SystemExit('renderOptions anchor not found')
+          text = text.replace(anchor, insert + anchor, 1)
+
+          old = """        <div class=\"relphi-labels-section\">\n          <div class=\"relphi-options-subhead\"><strong>Position labels</strong><button type=\"button\" id=\"relphiAddPosition\" ${hasCards?'disabled':''}>Add position</button></div>\n"""
+          new = """        <label class=\"relphi-options-field relphi-bulk-questions\">Questions / position labels<textarea id=\"relphiBulkQuestions\" rows=\"3\" ${hasCards?'disabled':''} placeholder=\"Question one, question two, question three\">${escapeHtml(draft.labels.join(', '))}</textarea><small>Separate multiple questions with commas.</small></label>\n        <div class=\"relphi-labels-section\">\n          <div class=\"relphi-options-subhead\"><strong>Position labels</strong><button type=\"button\" id=\"relphiAddPosition\" ${hasCards?'disabled':''}>Add position</button></div>\n"""
+          if old not in text:
+              raise SystemExit('options labels block not found')
+          text = text.replace(old, new, 1)
+
+          anchor = """    drawer.querySelector('#relphiPositionLabels')?.addEventListener('input',event=>{\n"""
+          insert = """    const bulkQuestions=drawer.querySelector('#relphiBulkQuestions');
+    const syncBulkQuestions=()=>{
+      if (!bulkQuestions || bulkQuestions.disabled) return;
+      const labels=parseBulkQuestions(bulkQuestions.value);
+      draft.labels=labels;
+      draft.templateId='';
+      draft.templateName='';
+      if (templateSelect) templateSelect.value='';
+      const nameField=drawer.querySelector('#relphiTemplateName');
+      if (nameField) nameField.value='';
+      const list=drawer.querySelector('#relphiPositionLabels');
+      if (list) list.innerHTML=labelsMarkup(labels);
+    };
+    bulkQuestions?.addEventListener('input',syncBulkQuestions);
+"""
+          if anchor not in text:
+              raise SystemExit('position labels input anchor not found')
+          text = text.replace(anchor, insert + anchor, 1)
+
+          old = """      draft.labels[Number(row.dataset.labelRow)]=event.target.value.slice(0,90);\n"""
+          new = """      draft.labels[Number(row.dataset.labelRow)]=event.target.value.slice(0,90);\n      if (bulkQuestions) bulkQuestions.value=draft.labels.join(', ');\n"""
+          if old not in text:
+              raise SystemExit('individual label update anchor not found')
+          text = text.replace(old, new, 1)
+          workflow.write_text(text)
+
+          css = Path('drawing-board-workflow-v2.css')
+          text = css.read_text()
+          addition = """
+#shortListPanel .relphi-bulk-questions textarea{box-sizing:border-box!important;width:100%!important;min-height:4.5rem!important;margin:0!important;padding:.48rem .55rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.76rem!important;line-height:1.35!important;resize:vertical!important}
+#shortListPanel .relphi-bulk-questions small{font-size:.64rem!important;font-weight:600!important;line-height:1.25!important;color:#665e58!important}
+"""
+          if '.relphi-bulk-questions textarea' not in text:
+              text += addition
+          css.write_text(text)
+
+          runtime = Path('tests/drawing-board-runtime.test.js')
+          text = runtime.read_text()
+          old = """  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});\n  await mobile.selectOption('#relphiSpreadTemplateSelect','six-polarities-houses-12');\n"""
+          new = """  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});
+
+  const bulkQuestions=['What is changing?','What needs release?','What supports me?'];
+  await mobile.fill('#relphiBulkQuestions',bulkQuestions.join(', '));
+  assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'comma-separated questions should stage three positions');
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').allInputValues(),bulkQuestions);
+  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-bulk-questions.png'),fullPage:true});
+  await mobile.click('#relphiApplyOptions');
+  await mobile.waitForFunction(() => {
+    const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    return state?.activeLayout?.id==='custom-active' && state.slotCount===3;
+  });
+  state=await boardState(mobile);
+  assert.deepEqual(state.snap.shortListPositionLabels,bulkQuestions,'comma-separated questions should become board position labels');
+
+  await mobile.click('#drawingBoardOptionsButton');
+  await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await mobile.click('#relphiResetBoard');
+  await mobile.waitForFunction(() => {
+    const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
+  });
+  await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await mobile.selectOption('#relphiSpreadTemplateSelect','six-polarities-houses-12');
+"""
+          if old not in text:
+              raise SystemExit('runtime bulk questions anchor not found')
+          runtime.write_text(text.replace(old, new, 1))
+
+          contract = Path('tests/drawing-board-single-owner.test.js')
+          text = contract.read_text()
+          if "drawing-board-workflow-v2\\.js\\?v=77" not in text:
+              raise SystemExit('contract cache anchor not found')
+          text = text.replace("drawing-board-workflow-v2\\.js\\?v=77", "drawing-board-workflow-v2\\.js\\?v=78", 1)
+          anchor = "assert.match(board, /optionsStructuralChanged/);\n"
+          addition = "assert.match(board, /relphiBulkQuestions/);\nassert.match(board, /parseBulkQuestions/);\nassert.match(board, /Separate multiple questions with commas/);\nassert.match(css, /relphi-bulk-questions/);\n"
+          if anchor not in text:
+              raise SystemExit('contract insertion anchor not found')
+          contract.write_text(text.replace(anchor, anchor + addition, 1))
+
+          nav = Path('navloader.js')
+          text = nav.read_text()
+          if 'drawing-board-workflow-v2.css?v=32' not in text or 'drawing-board-workflow-v2.js?v=77' not in text:
+              raise SystemExit('nav cache anchors not found')
+          text = text.replace('drawing-board-workflow-v2.css?v=32','drawing-board-workflow-v2.css?v=33',1)
+          text = text.replace('drawing-board-workflow-v2.js?v=77','drawing-board-workflow-v2.js?v=78',1)
+          nav.write_text(text)
+          PY
+      - name: Validate syntax
+        run: |
+          node --check drawing-board-workflow-v2.js
+          node --check navloader.js
+          node --check tests/drawing-board-runtime.test.js
+          node --check tests/drawing-board-single-owner.test.js
+      - name: Commit patch
+        run: |
+          git config user.name 'blissonature'
+          git config user.email 'blissonature@gmail.com'
+          git add drawing-board-workflow-v2.js drawing-board-workflow-v2.css navloader.js tests/drawing-board-runtime.test.js tests/drawing-board-single-owner.test.js
+          git commit -m 'Restore comma-separated Drawing Board questions'
+          git push origin HEAD:refactor/drawing-board-single-owner
