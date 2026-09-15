@@ -97,10 +97,10 @@
       position('beneath', CELTIC_LABELS[3], 4, transform(.20,.66,.48,0,4), { role:'beneath' }),
       position('behind', CELTIC_LABELS[4], 5, transform(.015,.34,.48,0,4), { role:'behind' }),
       position('before', CELTIC_LABELS[5], 6, transform(.49,.34,.48,0,4), { role:'before' }),
-      position('self', CELTIC_LABELS[6], 7, transform(.68,.665,.48,0,4), { role:'self' }),
-      position('house', CELTIC_LABELS[7], 8, transform(.68,.445,.48,0,4), { role:'house' }),
-      position('hopes-fears', CELTIC_LABELS[8], 9, transform(.68,.225,.48,0,4), { role:'hopes-fears' }),
-      position('outcome', CELTIC_LABELS[9], 10, transform(.68,.005,.48,0,4), { role:'outcome' })
+      position('self', CELTIC_LABELS[6], 7, transform(.70,.69,.44,0,4), { role:'self' }),
+      position('house', CELTIC_LABELS[7], 8, transform(.70,.46,.44,0,4), { role:'house' }),
+      position('hopes-fears', CELTIC_LABELS[8], 9, transform(.70,.23,.44,0,4), { role:'hopes-fears' }),
+      position('outcome', CELTIC_LABELS[9], 10, transform(.70,.00,.44,0,4), { role:'outcome' })
     ],
     rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
   };
@@ -929,6 +929,13 @@
       return;
     }
     const root=panel();
+    const optionsTrigger=event.target.closest?.('#shortListPanel #drawingBoardOptionsButton');
+    if (optionsTrigger && root?.contains(optionsTrigger)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openOptions(root);
+      return;
+    }
     const drawTrigger=event.target.closest?.('#shortListPanel #drawRandomRowCard');
     if (drawTrigger && root?.contains(drawTrigger) && !activeDraw) {
       event.preventDefault();

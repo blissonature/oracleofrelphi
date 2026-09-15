@@ -50,6 +50,31 @@ async function assertContained(page) {
   });
   assert.equal(result.ok,true,JSON.stringify(result.failures));
 }
+async function assertStaffLabelsExposed(page) {
+  const result=await page.evaluate(()=>{
+    const root=document.querySelector('#shortListPanel');
+    const ids=new Set(['self','house','hopes-fears','outcome']);
+    const faces=[...root.querySelectorAll('.card-row-board>.card-row-item')].map(item=>({item,face:item.querySelector('.card-row-card-wrap,.card-row-drop-card')})).filter(entry=>entry.face);
+    const failures=[];
+    root.querySelectorAll('.card-row-board>.card-row-item').forEach(item=>{
+      if (!ids.has(item.dataset.relphiPositionId)) return;
+      const label=item.querySelector('.card-row-position-panel');
+      if (!label) { failures.push({id:item.dataset.relphiPositionId,reason:'missing-label'}); return; }
+      const lr=label.getBoundingClientRect();
+      const style=getComputedStyle(label);
+      if (style.display==='none' || style.visibility==='hidden' || lr.width<4 || lr.height<4) failures.push({id:item.dataset.relphiPositionId,reason:'hidden-label'});
+      faces.forEach(entry=>{
+        if (entry.item===item) return;
+        const r=entry.face.getBoundingClientRect();
+        const overlaps=lr.left-2<r.right && lr.right+2>r.left && lr.top-2<r.bottom && lr.bottom+2>r.top;
+        if (overlaps) failures.push({id:item.dataset.relphiPositionId,reason:'label-covered-by-card',other:entry.item.dataset.relphiPositionId||entry.item.dataset.rowIndex});
+      });
+    });
+    return failures;
+  });
+  assert.deepEqual(result,[],'Celtic staff labels must be visibly separated from every card face');
+}
+
 async function assertFocusArtVisible(page) {
   const result=await page.evaluate(()=>{
     const card=document.querySelector('.relphi-focus-card-host>.or-card');
@@ -92,7 +117,8 @@ async function assertFocusArtVisible(page) {
 
 (async()=>{
   browser=await chromium.launch({headless:true});
-  const page=await browser.newPage({viewport:{width:390,height:844}});
+  const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+  const page=await context.newPage();
   const errors=[];
   page.on('pageerror',error=>errors.push(String(error)));
   await page.goto(base,{waitUntil:'domcontentloaded'});
@@ -116,6 +142,19 @@ async function assertFocusArtVisible(page) {
     await page.waitForSelector(`#drawing-board-post-export #${id}`,{state:'visible',timeout:10000});
   }
 
+  const optionsHit=await page.locator('#drawingBoardOptionsButton').evaluate(button=>{
+    const r=button.getBoundingClientRect();
+    const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+    return {pointer:getComputedStyle(button).pointerEvents,hit:hit?.closest?.('#drawingBoardOptionsButton')?.id||''};
+  });
+  assert.equal(optionsHit.pointer,'auto','Options must accept pointer/touch input');
+  assert.equal(optionsHit.hit,'drawingBoardOptionsButton','Options touch target must not be covered by another layer');
+  await page.locator('#drawingBoardOptionsButton').tap();
+  await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await page.screenshot({path:path.join(out,'drawing-board-mobile-options-open.png'),fullPage:true});
+  await page.locator('#relphiCancelOptions').tap();
+  await page.waitForSelector('.relphi-reading-options-drawer',{state:'detached'});
+
   await applyTemplate(page,'celtic-cross-10');
   for (let i=0;i<10;i++) {
     await page.click('#drawRandomRowCard');
@@ -131,6 +170,7 @@ async function assertFocusArtVisible(page) {
   await page.click('#zoomCardRowExtents');
   await page.waitForTimeout(150);
   await assertContained(page);
+  await assertStaffLabelsExposed(page);
   const allLabels=await page.locator('#shortListPanel .card-row-position-panel').evaluateAll(nodes=>nodes.map(node=>({text:node.textContent.trim(),visible:getComputedStyle(node).display!=='none'})));
   assert.equal(allLabels.filter(item=>item.visible).length,10,'all ten Celtic position labels must remain visible');
   await page.screenshot({path:path.join(out,'drawing-board-mobile-celtic-full.png'),fullPage:true});
