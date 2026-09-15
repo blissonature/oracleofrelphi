@@ -10,7 +10,7 @@ assert.match(board, /id="relphiBulkQuestions"/);
 assert.match(board, /function parseBulkQuestions\(value\)/);
 assert.match(board, /split\(','\)/);
 assert.match(board, /Separate multiple questions with commas\./);
-assert.match(runtime, /comma-separated questions should stage three positions/);
+assert.match(runtime, /Options must not duplicate comma-separated questions into a second label list/);
 assert.match(runtime, /comma-separated questions should become board position labels/);
 
 console.log('Drawing Board bulk question checks passed.');
