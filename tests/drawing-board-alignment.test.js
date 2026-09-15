@@ -17,12 +17,8 @@ fs.mkdirSync(out,{recursive:true});
     if (!(await page.locator('#shortListPanel').isVisible())) await page.click('#relphiOpenDrawingBoardCurrent');
     await page.waitForSelector('#shortListPanel .card-row-workspace-toolbar.relphi-board-controller',{state:'visible'});
 
-    const magnet=await page.locator('.relphi-tool-trigger[data-tool="snaps"] svg').evaluate(svg=>{
-      const box=svg.getBBox(), view=svg.viewBox.baseVal;
-      return {dx:(box.x+box.width/2)-(view.x+view.width/2),dy:(box.y+box.height/2)-(view.y+view.height/2)};
-    });
-    assert.ok(Math.abs(magnet.dx)<.25 && Math.abs(magnet.dy)<.25,'magnet glyph is not centered: '+JSON.stringify(magnet));
-
+    // Magnet geometry is exercised in drawing-board-runtime.test.js on the actual
+    // mobile toolbar. This test owns the visible description-layer title alignment.
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('#relphiSpreadTemplateSelect',{state:'visible'});
     await page.selectOption('#relphiSpreadTemplateSelect','focus-1');
