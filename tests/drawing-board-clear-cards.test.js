@@ -49,13 +49,36 @@ async function drawCards(page,count){
   }
 }
 
-async function assertClearCardsPreservesBoard(page,expectedSlots,expectedLayout,label){
-  const before=await page.evaluate(() => ({
+async function resetToBlank(page){
+  if (!(await page.locator('#relphiResetBoard').isVisible().catch(()=>false))) {
+    await page.click('#drawingBoardOptionsButton');
+  }
+  await page.waitForSelector('#relphiResetBoard',{state:'visible'});
+  await page.click('#relphiResetBoard');
+  await page.waitForFunction(() => {
+    const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
+  });
+  if (await page.locator('#relphiApplyOptions').isVisible().catch(()=>false)) await page.click('#relphiApplyOptions');
+}
+
+async function boardState(page){
+  return page.evaluate(() => ({
     rootHidden:document.querySelector('#shortListPanel')?.hidden,
+    rootDisplay:getComputedStyle(document.querySelector('#shortListPanel')).display,
+    workspaceVisible:!!document.querySelector('#shortListPanel .card-row-workspace') && getComputedStyle(document.querySelector('#shortListPanel .card-row-workspace')).display!=='none',
     layout:window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id || '',
     slots:window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.slotCount || 0,
-    labels:(window.RelphiDrawingBoardOptionsBridge?.capture?.()?.shortListPositionLabels || []).slice()
+    labels:(window.RelphiDrawingBoardOptionsBridge?.capture?.()?.shortListPositionLabels || []).slice(),
+    placeholders:document.querySelectorAll('#shortListPanel .card-row-board .card-row-placeholder-item').length,
+    cards:document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length,
+    drawerOpen:!!document.querySelector('#shortListPanel .card-row-drawing-board')?.open,
+    triggerExpanded:document.querySelector('#relphiOpenDrawingBoardCurrent')?.getAttribute('aria-expanded')
   }));
+}
+
+async function assertClearCardsPreservesBoard(page,expectedSlots,expectedLayout,label){
+  const before=await boardState(page);
   assert.equal(before.layout,expectedLayout,`${label}: expected layout before clear`);
   assert.equal(before.slots,expectedSlots,`${label}: expected slots before clear`);
   assert.equal(before.rootHidden,false,`${label}: board should be visible before clear`);
@@ -64,17 +87,7 @@ async function assertClearCardsPreservesBoard(page,expectedSlots,expectedLayout,
   await page.waitForFunction(() => document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===0);
   await page.waitForTimeout(100);
 
-  const after=await page.evaluate(() => ({
-    rootHidden:document.querySelector('#shortListPanel')?.hidden,
-    rootDisplay:getComputedStyle(document.querySelector('#shortListPanel')).display,
-    workspaceVisible:!!document.querySelector('#shortListPanel .card-row-workspace') && getComputedStyle(document.querySelector('#shortListPanel .card-row-workspace')).display!=='none',
-    layout:window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout?.id || '',
-    slots:window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.slotCount || 0,
-    labels:(window.RelphiDrawingBoardOptionsBridge?.capture?.()?.shortListPositionLabels || []).slice(),
-    placeholders:document.querySelectorAll('#shortListPanel .card-row-board .card-row-placeholder-item').length,
-    drawerOpen:!!document.querySelector('#shortListPanel .card-row-drawing-board')?.open,
-    triggerExpanded:document.querySelector('#relphiOpenDrawingBoardCurrent')?.getAttribute('aria-expanded')
-  }));
+  const after=await boardState(page);
   assert.equal(after.rootHidden,false,`${label}: Clear Cards must not hide Drawing Board`);
   assert.notEqual(after.rootDisplay,'none',`${label}: Drawing Board must remain rendered`);
   assert.equal(after.workspaceVisible,true,`${label}: workspace must remain visible`);
@@ -84,6 +97,27 @@ async function assertClearCardsPreservesBoard(page,expectedSlots,expectedLayout,
   assert.equal(after.slots,expectedSlots,`${label}: Clear Cards must preserve slot count`);
   assert.equal(after.labels.length,expectedSlots,`${label}: Clear Cards must preserve position labels`);
   assert.equal(after.placeholders,expectedSlots,`${label}: cleared cards must become placeholders`);
+}
+
+async function assertFreeformClearCardsPreservesBoard(page,expectedSlots){
+  const before=await boardState(page);
+  assert.equal(before.layout,'','freeform: no active layout before clear');
+  assert.equal(before.labels.length,0,'freeform: no position labels before clear');
+  assert.equal(before.slots,expectedSlots,'freeform: cards establish the slot count before clear');
+
+  await page.click('#clearShortListCardsOnly');
+  await page.waitForFunction(() => document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===0);
+  await page.waitForTimeout(100);
+
+  const after=await boardState(page);
+  assert.equal(after.rootHidden,false,'freeform: Clear Cards must not hide Drawing Board');
+  assert.notEqual(after.rootDisplay,'none','freeform: Drawing Board must remain rendered');
+  assert.equal(after.workspaceVisible,true,'freeform: workspace must remain visible');
+  assert.equal(after.drawerOpen,true,'freeform: Drawing Board drawer must remain open');
+  assert.equal(after.triggerExpanded,'true','freeform: Drawing Board trigger must remain open');
+  assert.equal(after.layout,'','freeform: Clear Cards must not invent a spread');
+  assert.equal(after.slots,expectedSlots,'freeform: Clear Cards must preserve the occupied positions as empty slots');
+  assert.equal(after.placeholders,expectedSlots,'freeform: cleared cards must become placeholders');
 }
 
 (async()=>{
@@ -97,11 +131,7 @@ async function assertClearCardsPreservesBoard(page,expectedSlots,expectedLayout,
     await assertClearCardsPreservesBoard(page,3,'past-present-future-3','shipped spread');
     await page.screenshot({path:path.join(out,'drawing-board-mobile-clear-cards-shipped.png'),fullPage:true});
 
-    await page.click('#drawingBoardOptionsButton');
-    await page.waitForSelector('#relphiResetBoard',{state:'visible'});
-    await page.click('#relphiResetBoard');
-    await page.waitForFunction(() => !window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.activeLayout);
-
+    await resetToBlank(page);
     const questions=['What is changing?','What needs release?','What supports me?'];
     await fillCustomQuestions(page,questions);
     await drawCards(page,3);
@@ -109,6 +139,11 @@ async function assertClearCardsPreservesBoard(page,expectedSlots,expectedLayout,
     const labels=await page.evaluate(() => window.RelphiDrawingBoardOptionsBridge?.capture?.()?.shortListPositionLabels || []);
     assert.deepEqual(labels,questions,'custom questions must remain after Clear Cards');
     await page.screenshot({path:path.join(out,'drawing-board-mobile-clear-cards-custom.png'),fullPage:true});
+
+    await resetToBlank(page);
+    await drawCards(page,3);
+    await assertFreeformClearCardsPreservesBoard(page,3);
+    await page.screenshot({path:path.join(out,'drawing-board-mobile-clear-cards-freeform.png'),fullPage:true});
 
     console.log('Drawing Board Clear Cards preservation checks passed');
   } finally {
