@@ -6,8 +6,8 @@ test_path = Path('tests/drawing-board-runtime.test.js')
 nav_path = Path('navloader.js')
 
 js = js_path.read_text()
-old_magnet = "return '<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3v8a6 6 0 0 0 12 0V3\"></path><path d=\"M6 7h4M14 7h4\"></path></svg>';"
-new_magnet = "return '<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 5v8a6 6 0 0 0 12 0V5\"></path><path d=\"M6 9h4M14 9h4\"></path></svg>';"
+old_magnet = "if (kind === 'magnet') return '<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3v8a6 6 0 0 0 12 0V3h-4v8a2 2 0 0 1-4 0V3z\"></path><path d=\"M6 7h4M14 7h4\"></path></svg>';"
+new_magnet = "if (kind === 'magnet') return '<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 5v8a6 6 0 0 0 12 0V5h-4v8a2 2 0 0 1-4 0V5z\"></path><path d=\"M6 9h4M14 9h4\"></path></svg>';"
 if old_magnet not in js:
     raise SystemExit('magnet source not found')
 js = js.replace(old_magnet, new_magnet, 1)
