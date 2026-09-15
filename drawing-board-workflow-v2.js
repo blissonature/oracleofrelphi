@@ -983,10 +983,8 @@
   function enhance(root = panel()) {
     if (!root) return;
     const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
-    if (!initialized) {
-      boardOpen=!root.hidden && trigger?.getAttribute('aria-expanded')==='true';
-      initialized=true;
-    }
+    if (!initialized) initialized=true;
+    boardOpen=trigger?.getAttribute('aria-expanded')==='true';
     if (!boardOpen) {
       root.hidden=true;
       if (trigger) { trigger.textContent='Open Drawing Board'; trigger.setAttribute('aria-expanded','false'); }
@@ -1013,7 +1011,8 @@
     const trigger=event.target.closest?.('#relphiOpenDrawingBoardCurrent');
     if (trigger) {
       event.preventDefault(); event.stopImmediatePropagation();
-      setBoardOpen(!boardOpen,{fit:!boardOpen});
+      const wasOpen=trigger.getAttribute('aria-expanded')==='true';
+      setBoardOpen(!wasOpen,{fit:!wasOpen});
       return;
     }
     const root=panel();
