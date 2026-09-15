@@ -223,10 +223,10 @@ async function assertReadableFocus(page) {
     const pane=document.querySelector('.relphi-focus-art-pane')?.getBoundingClientRect();
     return art&&entry&&pane?{sideBySide:art.right<=entry.left+3,entryText:document.querySelector('.relphi-focus-entry')?.textContent?.trim().length||0,artContained:art.top>=pane.top-2&&art.bottom<=pane.bottom+2&&art.left>=pane.left-2&&art.right<=pane.right+2}:null;
   });
-  assert.ok(desktopFocus?.sideBySide,'desktop focus view must show full art beside the Ledger entry');
-  assert.ok(desktopFocus?.artContained,'desktop focus view must contain the entire card art above the film strip');
-  assert.ok(desktopFocus.entryText>100,'desktop focus view must show the full Ledger entry');
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-focus-full-entry.png'),fullPage:true});
+  assert.ok(desktopFocus?.sideBySide,'desktop focus view must show full art beside the Ledger entry: '+JSON.stringify(desktopFocus));
+  assert.ok(desktopFocus?.artContained,'desktop focus view must contain the entire card art above the film strip: '+JSON.stringify(desktopFocus));
+  assert.ok(desktopFocus.entryText>100,'desktop focus view must show the full Ledger entry');
   let semantic=await boardState(desktop);
   const outcomeIndex=semantic.snap.rowPositionMeta.findIndex(meta=>meta?.id==='outcome');
   assert.equal(outcomeIndex,0,'targeted draw should occupy the next native slot while preserving the requested semantic position');
