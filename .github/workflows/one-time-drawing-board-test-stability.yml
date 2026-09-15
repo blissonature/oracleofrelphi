@@ -1,0 +1,31 @@
+name: One-time Drawing Board test stability
+
+on:
+  push:
+    branches:
+      - refactor/drawing-board-single-owner
+    paths:
+      - '.github/workflows/one-time-drawing-board-test-stability.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/drawing-board-single-owner
+          fetch-depth: 0
+      - name: Stabilize magnet geometry assertion
+        run: python3 tools/patch_drawing_board_magnet_test.py
+      - name: Validate syntax
+        run: node --check tests/drawing-board-runtime.test.js
+      - name: Commit patch
+        run: |
+          git config user.name 'blissonature'
+          git config user.email 'blissonature@gmail.com'
+          git add tests/drawing-board-runtime.test.js
+          git commit -m 'Wait for visible magnet before geometry check'
+          git push origin HEAD:refactor/drawing-board-single-owner
