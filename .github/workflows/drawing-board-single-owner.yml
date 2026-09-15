@@ -32,6 +32,7 @@ jobs:
           node --check tests/drawing-board-iphone-regressions.test.js
           node --check tests/drawing-board-alignment.test.js
           node --check tests/drawing-board-bulk-questions.test.js
+          node --check tests/drawing-board-clear-cards.test.js
       - name: Run static Drawing Board contracts
         run: |
           node tests/drawing-board-single-owner.test.js
@@ -51,6 +52,7 @@ jobs:
           node tests/drawing-board-runtime.test.js
           node tests/drawing-board-iphone-regressions.test.js
           node tests/drawing-board-alignment.test.js
+          node tests/drawing-board-clear-cards.test.js
       - name: Upload Drawing Board acceptance screenshots
         if: always()
         uses: actions/upload-artifact@v4
