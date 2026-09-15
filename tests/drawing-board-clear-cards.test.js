@@ -37,9 +37,13 @@ async function fillCustomQuestions(page,questions){
 async function drawCards(page,count){
   for(let i=0;i<count;i+=1){
     await page.click('#drawRandomRowCard');
-    const focus=page.locator('.relphi-focus-reader');
-    if(await focus.isVisible().catch(()=>false)) await page.click('.relphi-focus-close');
     await page.waitForFunction(expected => document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===expected,i+1);
+    const focus=page.locator('.relphi-focus-reader');
+    try {
+      await focus.waitFor({state:'visible',timeout:1500});
+      await page.click('.relphi-focus-close');
+      await focus.waitFor({state:'detached',timeout:1500}).catch(()=>{});
+    } catch (_) {}
   }
 }
 
