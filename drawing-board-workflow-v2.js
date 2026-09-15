@@ -36,7 +36,7 @@
   function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
   function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
   function escapeHtml(value) {
-    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[ch]));
   }
   function slug(value) {
     return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60) || 'custom-spread';
@@ -552,7 +552,7 @@
 
   function optionTemplateMarkup(draft) {
     const entries = allTemplates();
-    return `<option value="">Custom positions</option>${entries.map(item => `<option value="${escapeHtml(item.id)}" ${draft.templateId===item.id?'selected':''}>${item.cardCount} · ${escapeHtml(item.name)}</option>`).join('')}`;
+    return `<option value="">Custom</option>${entries.map(item => `<option value="${escapeHtml(item.id)}" ${draft.templateId===item.id?'selected':''}>${item.cardCount} · ${escapeHtml(item.name)}</option>`).join('')}`;
   }
   function packOptions(value) {
     const items = [
@@ -563,19 +563,20 @@
     return items.map(([id,label])=>`<option value="${id}" ${value===id?'selected':''}>${label}</option>`).join('');
   }
   function labelsMarkup(labels) {
-    return labels.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" maxlength="90" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
+    const rows=labels.length ? labels : [''];
+    return rows.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" ${index===0?'':'maxlength="90" '}value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
   }
   function parseBulkQuestions(value) {
-    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,40);
+    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,40).map(item=>item.slice(0,90));
   }
   function markQuestionEditCustom(drawer,draft) {
     if (draft.templateId) draft.basedOnTemplateId=draft.templateId;
     draft.templateId='';
-    draft.templateName='Custom';
+    draft.templateName='';
     const templateSelect=drawer.querySelector('#relphiSpreadTemplateSelect');
     if (templateSelect) templateSelect.value='';
     const nameField=drawer.querySelector('#relphiTemplateName');
-    if (nameField) nameField.value='Custom';
+    if (nameField) nameField.value='';
   }
 
   function renderOptions(root = panel()) {
@@ -594,9 +595,8 @@
       <div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Options</h3></div></div>
       ${hasCards ? '<p class="relphi-options-note">Reset Board before changing spread positions. Draw settings can still be changed.</p>' : ''}
       <div class="relphi-options-body">
-        <label class="relphi-options-field relphi-bulk-questions">Questions / position labels<textarea id="relphiBulkQuestions" rows="3" ${hasCards?'disabled':''} placeholder="Question one, question two, question three">${escapeHtml(draft.labels.join(', '))}</textarea><small>Tip: separate questions with commas. Each comma-separated entry becomes one position.</small></label>
         <div class="relphi-labels-section">
-          <div class="relphi-options-subhead"><strong>Individual position labels</strong><button type="button" id="relphiAddPosition" ${hasCards?'disabled':''}>Add position</button></div>
+          <div class="relphi-options-subhead"><strong>Questions / position labels</strong><button type="button" id="relphiAddPosition" ${hasCards?'disabled':''}>Add position</button></div>
           <div id="relphiPositionLabels">${labelsMarkup(draft.labels)}</div>
         </div>
         <label class="relphi-options-field">Spread Template<select id="relphiSpreadTemplateSelect" ${hasCards?'disabled':''}>${optionTemplateMarkup(draft)}</select></label>
@@ -631,28 +631,42 @@
         draft.templateName=chosen.name;
       } else {
         draft.basedOnTemplateId='';
-        draft.templateName='Custom';
+        draft.templateName='';
       }
       renderOptions(root);
     });
-    const bulkQuestions=drawer.querySelector('#relphiBulkQuestions');
-    const syncBulkQuestions=()=>{
-      if (!bulkQuestions || bulkQuestions.disabled) return;
-      const labels=parseBulkQuestions(bulkQuestions.value);
+    const labelsList=drawer.querySelector('#relphiPositionLabels');
+    const acceptCommaList=(value)=>{
+      if (!String(value || '').includes(',')) return false;
+      const labels=parseBulkQuestions(value);
+      if (labels.length<2) return false;
       draft.labels=labels;
       markQuestionEditCustom(drawer,draft);
-      const list=drawer.querySelector('#relphiPositionLabels');
-      if (list) list.innerHTML=labelsMarkup(labels);
+      renderOptions(root);
+      return true;
     };
-    bulkQuestions?.addEventListener('input',syncBulkQuestions);
-    drawer.querySelector('#relphiPositionLabels')?.addEventListener('input',event=>{
+    labelsList?.addEventListener('paste',event=>{
+      const row=event.target.closest('.relphi-label-row');
+      if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
+      const pasted=event.clipboardData?.getData('text') || '';
+      if (!pasted.includes(',') || parseBulkQuestions(pasted).length<2) return;
+      event.preventDefault();
+      acceptCommaList(pasted);
+    });
+    labelsList?.addEventListener('input',event=>{
       const row=event.target.closest('.relphi-label-row');
       if (!row || event.target.tagName!=='INPUT') return;
-      draft.labels[Number(row.dataset.labelRow)]=event.target.value.slice(0,90);
+      const index=Number(row.dataset.labelRow);
+      while (draft.labels.length<=index) draft.labels.push('');
+      draft.labels[index]=event.target.value.slice(0,90);
       markQuestionEditCustom(drawer,draft);
-      if (bulkQuestions) bulkQuestions.value=draft.labels.join(', ');
     });
-    drawer.querySelector('#relphiPositionLabels')?.addEventListener('click',event=>{
+    labelsList?.addEventListener('change',event=>{
+      const row=event.target.closest('.relphi-label-row');
+      if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
+      acceptCommaList(event.target.value);
+    });
+    labelsList?.addEventListener('click',event=>{
       const button=event.target.closest('[data-remove-label]');
       if (!button) return;
       draft.labels.splice(Number(button.dataset.removeLabel),1);
