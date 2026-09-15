@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=78/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=79/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -53,7 +53,10 @@ assert.match(board, /relphiApplyOptions/);
 assert.match(board, /optionsStructuralChanged/);
 assert.match(board, /relphiBulkQuestions/);
 assert.match(board, /parseBulkQuestions/);
-assert.match(board, /Separate multiple questions with commas/);
+assert.match(board, /Tip: separate questions with commas/);
+assert.match(board, /relphi-focus-reversed-badge/);
+assert.match(board, /ArrowLeft/);
+assert.match(board, /ArrowRight/);
 assert.match(css, /relphi-bulk-questions/);
 assert.match(board, /relphi-focus-reader/);
 assert.match(board, /relphi-focus-strip/);

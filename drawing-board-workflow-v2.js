@@ -520,12 +520,8 @@
       <div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Options</h3></div></div>
       ${hasCards ? '<p class="relphi-options-note">Reset Board before changing spread positions. Draw settings can still be changed.</p>' : ''}
       <div class="relphi-options-body">
+        <label class="relphi-options-field relphi-bulk-questions">Questions / position labels<textarea id="relphiBulkQuestions" rows="3" ${hasCards?'disabled':''} placeholder="Question one, question two, question three">${escapeHtml(draft.labels.join(', '))}</textarea><small>Tip: separate questions with commas. Each comma-separated entry becomes one position.</small></label>
         <label class="relphi-options-field">Spread Template<select id="relphiSpreadTemplateSelect" ${hasCards?'disabled':''}>${optionTemplateMarkup(draft)}</select></label>
-        <label class="relphi-options-field relphi-bulk-questions">Questions / position labels<textarea id="relphiBulkQuestions" rows="3" ${hasCards?'disabled':''} placeholder="Question one, question two, question three">${escapeHtml(draft.labels.join(', '))}</textarea><small>Separate multiple questions with commas.</small></label>
-        <div class="relphi-labels-section">
-          <div class="relphi-options-subhead"><strong>Position labels</strong><button type="button" id="relphiAddPosition" ${hasCards?'disabled':''}>Add position</button></div>
-          <div id="relphiPositionLabels">${labelsMarkup(draft.labels)}</div>
-        </div>
         <div class="relphi-draw-options">
           <label>Pack<select id="relphiDraftPack">${packOptions(draft.pack)}</select></label>
           <label><input id="relphiDraftStickers" type="checkbox" ${draft.stickers?'checked':''}> Show position stickers</label>
@@ -773,7 +769,9 @@
     const art=reader.querySelector('.relphi-focus-art');
     const entry=reader.querySelector('.relphi-focus-entry');
     const position=reader.querySelector('.relphi-focus-position');
+    const reversedBadge=reader.querySelector('.relphi-focus-reversed-badge');
     if (position) position.textContent=positionLabel(index);
+    if (reversedBadge) reversedBadge.hidden=!reversed;
     if (art && artSource) {
       art.src=artSource.currentSrc || artSource.src || '';
       art.alt=(artSource.alt || ledgerBridge()?.titleFor?.(cardId) || 'Tarot card') + (reversed ? ' — reversed' : '');
@@ -837,7 +835,7 @@
     reader.setAttribute('role','dialog');
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label',positionLabel(index,root));
-    reader.innerHTML=`<div class="relphi-focus-shell"><header><strong class="relphi-focus-position"></strong><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></header><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-strip" aria-label="Reading positions"></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
+    reader.innerHTML=`<div class="relphi-focus-shell"><header><div class="relphi-focus-heading"><strong class="relphi-focus-position"></strong><span class="relphi-focus-reversed-badge" hidden>Reversed</span></div><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></header><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-strip" aria-label="Reading positions"></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
     renderFocusEntry(reader,index);
     renderFocusStrip(reader,index);
     reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
@@ -867,7 +865,9 @@
     if (leaving>=0 && leaving!==next && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
     if (cardAt(next)) openFocus(next);
     else {
-      closeFocus({acknowledge:false});
+      // Keep the current reader mounted while the next card is drawn. The
+      // newly drawn card replaces it only when its complete focus view is ready,
+      // avoiding the board/page flash between focus cards.
       drawInto(focusItem(next),next);
     }
   }
@@ -1054,8 +1054,16 @@
 
   window.addEventListener('click',globalCapture,true);
   document.addEventListener('keydown',event=>{
+    const reader=document.querySelector('.relphi-focus-reader');
+    const target=event.target;
+    const editable=!!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName || ''));
+    if (reader && !editable && (event.key==='ArrowLeft' || event.key==='ArrowRight')) {
+      event.preventDefault();
+      navigateFocusBy(event.key==='ArrowLeft' ? -1 : 1);
+      return;
+    }
     if (event.key!=='Escape') return;
-    if (document.querySelector('.relphi-focus-reader')) closeFocus({acknowledge:true});
+    if (reader) closeFocus({acknowledge:true});
     else if (optionsSession) closeOptions(panel());
     else if (openTool) { openTool=''; enhance(panel()); }
   });

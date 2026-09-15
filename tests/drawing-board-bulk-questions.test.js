@@ -9,7 +9,9 @@ const runtime = fs.readFileSync(path.join(root, 'tests/drawing-board-runtime.tes
 assert.match(board, /id="relphiBulkQuestions"/);
 assert.match(board, /function parseBulkQuestions\(value\)/);
 assert.match(board, /split\(','\)/);
-assert.match(board, /Separate multiple questions with commas\./);
+assert.match(board, /Tip: separate questions with commas\./);
+assert.doesNotMatch(board, /id="relphiPositionLabels"/);
+assert.doesNotMatch(board, /id="relphiAddPosition"/);
 assert.match(runtime, /Options must not duplicate comma-separated questions into a second label list/);
 assert.match(runtime, /comma-separated questions should become board position labels/);
 

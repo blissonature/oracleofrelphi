@@ -77,6 +77,7 @@ async function assertReadableFocus(page) {
       hasTitle:!!entry.querySelector('.full-entry-title-block h2'),
       duplicateArtVisible:!!entry.querySelector('.tarot-card-art') && getComputedStyle(entry.querySelector('.tarot-card-art')).display!=='none',
       reversedMeaning:entry.querySelectorAll('[data-relphi-focus-reversed]').length,
+      reversedBadgeVisible:!!reader.querySelector('.relphi-focus-reversed-badge') && !reader.querySelector('.relphi-focus-reversed-badge').hidden,
       mobileStack:ar.bottom<=er.top+3,
       artChildren:reader.querySelector('.relphi-focus-art-frame')?.children.length || 0
     };
@@ -89,6 +90,7 @@ async function assertReadableFocus(page) {
   assert.equal(result.duplicateArtVisible,false,'Ledger entry must not duplicate or cover the dedicated card art');
   assert.equal(result.mobileStack,true,'mobile focus view must stack the full card above the Ledger entry');
   assert.equal(result.artChildren,1,'nothing may be layered over the card art');
+  assert.equal(result.reversedBadgeVisible,result.reversed,'Reversed callout must exactly match the card orientation');
   if (result.reversed) {
     assert.ok(result.matrixA<-.8 && result.matrixD<-.8,'a reversed draw must show reversed card art');
     assert.equal(result.reversedMeaning,1,'reversed meaning must appear only for a reversed draw');
@@ -161,7 +163,24 @@ async function assertReadableFocus(page) {
   await mobile.waitForSelector('.card-row-item[data-row-index="1"] [data-row-card]',{state:'visible'});
   await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
   await assertReadableFocus(mobile);
+  await mobile.keyboard.press('ArrowLeft');
+  await mobile.waitForFunction(() => Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===0);
+  await mobile.keyboard.press('ArrowRight');
+  await mobile.waitForFunction(() => Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===1);
+  await mobile.evaluate(()=>{
+    window.__relphiFocusGap=false;
+    window.__relphiFocusGapObserver=new MutationObserver(()=>{
+      if (!document.querySelector('.relphi-focus-reader')) window.__relphiFocusGap=true;
+    });
+    window.__relphiFocusGapObserver.observe(document.body,{childList:true,subtree:true});
+  });
   await mobile.click('.relphi-focus-next');
+  await mobile.waitForFunction(() => Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===2);
+  const focusGap=await mobile.evaluate(()=>{
+    window.__relphiFocusGapObserver?.disconnect();
+    return !!window.__relphiFocusGap;
+  });
+  assert.equal(focusGap,false,'drawing the next card from focus view must not expose a frame without the focus reader');
   await mobile.waitForFunction(() => window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowPositionMeta?.some?.(meta => meta?.celticCrossAcknowledged === true));
   state=await boardState(mobile);
   const crossingIndex=state.snap.rowPositionMeta.findIndex(meta=>meta?.id==='crossing');
@@ -204,8 +223,8 @@ async function assertReadableFocus(page) {
 
   const bulkQuestions=['What is changing?','What needs release?','What supports me?'];
   await mobile.fill('#relphiBulkQuestions',bulkQuestions.join(', '));
-  assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'comma-separated questions should stage three positions');
-  assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions);
+  assert.equal(await mobile.locator('#relphiPositionLabels').count(),0,'Options must not duplicate comma-separated questions into a second label list');
+  assert.equal(await mobile.locator('#relphiBulkQuestions').inputValue(),bulkQuestions.join(', '));
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-bulk-questions.png'),fullPage:true});
   await mobile.click('#relphiApplyOptions');
   await mobile.waitForFunction(() => {
@@ -256,6 +275,20 @@ async function assertReadableFocus(page) {
   await desktop.goto(base,{waitUntil:'domcontentloaded'});
   await waitReady(desktop);
   await openBoard(desktop);
+  await desktop.click('#drawingBoardOptionsButton');
+  await desktop.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  const desktopOptions=await desktop.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
+    const r=drawer.getBoundingClientRect();
+    const host=drawer.parentElement.getBoundingClientRect();
+    const firstField=drawer.querySelector('.relphi-options-body>.relphi-options-field:first-child');
+    return {left:r.left,right:r.right,viewport:innerWidth,hostLeft:host.left,firstIsBulk:!!firstField?.querySelector('#relphiBulkQuestions')};
+  });
+  assert.ok(Math.abs(desktopOptions.left-desktopOptions.hostLeft)<=12,'Options must open on the left side of the Drawing Board');
+  assert.ok(desktopOptions.left>=0 && desktopOptions.right<=desktopOptions.viewport,'Options must not be cut off horizontally');
+  assert.equal(desktopOptions.firstIsBulk,true,'comma-separated Questions / position labels must be the first Options field');
+  assert.equal(await desktop.locator('#relphiPositionLabels').count(),0,'Options must not duplicate the question text into per-position fields');
+  await desktop.screenshot({path:path.join(out,'drawing-board-desktop-options-left.png'),fullPage:true});
+  await desktop.click('#relphiCancelOptions');
   await applyCeltic(desktop);
   await assertContained(desktop);
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-celtic.png'),fullPage:true});

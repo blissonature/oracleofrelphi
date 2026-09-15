@@ -1019,7 +1019,20 @@
   }
   function clearShortListCardsOnlyNative() {
     if (!(state.shortList || []).length) return;
+    state.mode = 'board';
+    state.cardRowBoardOpen = true;
+    const trigger = $('relphiOpenDrawingBoardCurrent');
+    if (trigger) {
+      trigger.textContent = 'Close Drawing Board';
+      trigger.setAttribute('aria-expanded', 'true');
+    }
     commitShortList([]);
+    const wrap = $('shortListPanel');
+    if (wrap) {
+      wrap.hidden = false;
+      const drawer = wrap.querySelector('.card-row-drawing-board');
+      if (drawer) drawer.open = true;
+    }
   }
 
   function clearDrawingBoardNative() {
