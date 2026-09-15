@@ -86,7 +86,7 @@
 .relphi-focus-main{display:grid!important;grid-template-columns:minmax(16rem,.82fr) minmax(0,1.45fr)!important;gap:1rem!important;min-height:0!important;padding:.85rem!important;overflow:hidden!important;touch-action:pan-y!important;background:#fffdf8!important}
 .relphi-focus-art-pane{display:grid!important;place-items:center!important;min-width:0!important;min-height:0!important;overflow:hidden!important}
 .relphi-focus-art-frame{display:grid!important;place-items:center!important;width:100%!important;height:100%!important;min-height:0!important;padding:.2rem!important}
-.relphi-focus-art{display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;border:1.5px solid #111!important;border-radius:10px!important;background:#fff!important;box-shadow:0 10px 26px rgba(0,0,0,.22)!important;transform:none!important;transform-origin:50% 50%!important}
+.relphi-focus-art{display:block!important;box-sizing:border-box!important;width:auto!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;border:1.5px solid #111!important;border-radius:10px!important;background:#fff!important;box-shadow:0 10px 26px rgba(0,0,0,.22)!important;transform:none!important;transform-origin:50% 50%!important}
 .relphi-focus-art.is-reversed{transform:rotate(180deg)!important}
 .relphi-focus-entry{min-width:0!important;min-height:0!important;margin:0!important;padding:.2rem .4rem .9rem!important;overflow:auto!important;overscroll-behavior:contain!important;background:#fffdf8!important;color:#111!important;text-align:left!important}
 .relphi-focus-entry>.eyebrow{margin:.1rem 0 .45rem!important}

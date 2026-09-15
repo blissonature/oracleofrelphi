@@ -176,13 +176,13 @@ async function assertFocusReadingView(page) {
   assert.equal(allLabels.filter(item=>item.visible).length,10,'all ten Celtic position labels must remain visible');
   await page.screenshot({path:path.join(out,'drawing-board-mobile-celtic-full.png'),fullPage:true});
 
-  await page.click('#shortListPanel .card-row-item[data-relphi-position-id="covering"] [data-row-card]');
+  await page.click('#shortListPanel .card-row-item[data-relphi-position-id="self"] [data-row-card]');
   await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
   await assertFocusReadingView(page);
   const swipeTarget=page.locator('.relphi-focus-main');
   await swipeTarget.dispatchEvent('pointerdown',{pointerType:'touch',pointerId:77,isPrimary:true,clientX:320,clientY:340});
   await swipeTarget.dispatchEvent('pointerup',{pointerType:'touch',pointerId:77,isPrimary:true,clientX:70,clientY:338});
-  await page.waitForFunction(()=>/crosses/i.test(document.querySelector('.relphi-focus-position')?.textContent||''));
+  await page.waitForFunction(()=>/house/i.test(document.querySelector('.relphi-focus-position')?.textContent||''));
   await page.click('.relphi-focus-close');
   await page.waitForSelector('.relphi-focus-reader',{state:'detached'});
 

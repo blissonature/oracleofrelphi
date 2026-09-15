@@ -220,9 +220,11 @@ async function assertReadableFocus(page) {
   const desktopFocus=await desktop.evaluate(()=>{
     const art=document.querySelector('.relphi-focus-art')?.getBoundingClientRect();
     const entry=document.querySelector('.relphi-focus-entry')?.getBoundingClientRect();
-    return art&&entry?{sideBySide:art.right<=entry.left+3,entryText:document.querySelector('.relphi-focus-entry')?.textContent?.trim().length||0}:null;
+    const pane=document.querySelector('.relphi-focus-art-pane')?.getBoundingClientRect();
+    return art&&entry&&pane?{sideBySide:art.right<=entry.left+3,entryText:document.querySelector('.relphi-focus-entry')?.textContent?.trim().length||0,artContained:art.top>=pane.top-2&&art.bottom<=pane.bottom+2&&art.left>=pane.left-2&&art.right<=pane.right+2}:null;
   });
   assert.ok(desktopFocus?.sideBySide,'desktop focus view must show full art beside the Ledger entry');
+  assert.ok(desktopFocus?.artContained,'desktop focus view must contain the entire card art above the film strip');
   assert.ok(desktopFocus.entryText>100,'desktop focus view must show the full Ledger entry');
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-focus-full-entry.png'),fullPage:true});
   let semantic=await boardState(desktop);
