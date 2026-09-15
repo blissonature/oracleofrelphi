@@ -24,7 +24,9 @@ async function applyTemplate(page,id){
 }
 
 async function fillCustomQuestions(page,questions){
-  await page.click('#drawingBoardOptionsButton');
+  if (!(await page.locator('#relphiBulkQuestions').isVisible().catch(()=>false))) {
+    await page.click('#drawingBoardOptionsButton');
+  }
   await page.waitForSelector('#relphiBulkQuestions',{state:'visible'});
   await page.fill('#relphiBulkQuestions',questions.join(', '));
   await page.click('#relphiApplyOptions');
