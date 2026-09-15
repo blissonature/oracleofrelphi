@@ -110,7 +110,9 @@ async function assertReadableFocus(page) {
   await openBoard(mobile);
   assert.equal(await mobile.locator('#zoomCardRowExtents').count(),1);
   assert.equal(await mobile.locator('.relphi-tool-trigger[data-tool="snaps"]').count(),1);
-  const magnetGeometry=await mobile.locator('.relphi-tool-trigger[data-tool="snaps"] svg').evaluate(svg=>{
+  const magnetSvg=mobile.locator('.relphi-tool-trigger[data-tool="snaps"] svg');
+  await magnetSvg.waitFor({state:'visible'});
+  const magnetGeometry=await magnetSvg.evaluate(svg=>{
     const box=svg.getBBox();
     const view=svg.viewBox.baseVal;
     return {dx:(box.x+box.width/2)-(view.x+view.width/2),dy:(box.y+box.height/2)-(view.y+view.height/2)};
