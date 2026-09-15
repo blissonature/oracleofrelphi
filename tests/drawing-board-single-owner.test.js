@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=73/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=74/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -109,8 +109,8 @@ const cross = celtic.positions[1];
 assert.deepEqual(JSON.parse(JSON.stringify(cross.canonicalTransform)), {x:.35,y:.34,scale:.48,rotation:0,zIndex:30});
 assert.deepEqual(JSON.parse(JSON.stringify(cross.crossedTransform)), {x:.20,y:.34,scale:.48,rotation:90,zIndex:30});
 const staff = celtic.positions.slice(6);
-assert.ok(staff.every(item => item.transform.x === .68 && item.transform.scale === .48));
-for (let i=1;i<staff.length;i++) assert.ok(Math.abs(staff[i-1].transform.y-staff[i].transform.y)*760 >= 160);
+assert.ok(staff.every(item => item.transform.x === .70 && item.transform.scale === .44));
+for (let i=1;i<staff.length;i++) assert.ok(Math.abs(staff[i-1].transform.y-staff[i].transform.y)*760 >= 170);
 const polarities = registry.byId('six-polarities-houses-12');
 assert.equal(new Set(polarities.positions.map(item => item.transform.x)).size, 4);
 assert.equal(new Set(polarities.positions.map(item => item.transform.y)).size, 3);
