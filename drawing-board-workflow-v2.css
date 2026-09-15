@@ -150,11 +150,6 @@
 #shortListPanel .relphi-options-body{flex:1 1 auto!important;min-height:0!important;overscroll-behavior:contain!important;scroll-padding-bottom:1rem!important}
 #shortListPanel .relphi-options-commitbar{position:relative!important;z-index:2!important;box-shadow:0 -6px 16px rgba(250,246,241,.96)!important}
 
-@media(max-width:700px){
-  body .relphi-focus-card-host>.or-card.card-row-card.tarot-card-surface.relphi-surface--card{width:min(21rem,88vw)!important;min-width:min(21rem,88vw)!important;max-width:min(21rem,88vw)!important}
-  .relphi-focus-shell>footer{padding-bottom:max(.55rem,env(safe-area-inset-bottom))!important}
-}
-
 /* Save/export is permanent document chrome below the pannable canvas. */
 #shortListPanel .relphi-board-export{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.75rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
 #shortListPanel .relphi-board-export>header{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:.7rem!important;flex-wrap:wrap!important;text-align:left!important}

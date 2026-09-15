@@ -224,6 +224,7 @@ async function assertReadableFocus(page) {
   });
   assert.ok(desktopFocus?.sideBySide,'desktop focus view must show full art beside the Ledger entry');
   assert.ok(desktopFocus.entryText>100,'desktop focus view must show the full Ledger entry');
+  await desktop.screenshot({path:path.join(out,'drawing-board-desktop-focus-full-entry.png'),fullPage:true});
   let semantic=await boardState(desktop);
   const outcomeIndex=semantic.snap.rowPositionMeta.findIndex(meta=>meta?.id==='outcome');
   assert.equal(outcomeIndex,0,'targeted draw should occupy the next native slot while preserving the requested semantic position');
