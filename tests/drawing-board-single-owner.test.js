@@ -38,37 +38,94 @@ assert.match(app, /document\.dispatchEvent\(new CustomEvent\('relphi:drawing-boa
 
 assert.match(board, /Zoom Extents/);
 assert.match(board, /zoomCardRowExtents/);
-assert.match(board, /relphi-tool-trigger/);
+assert.match(board, /stateContentBounds/);
+assert.match(board, /workspace\.clientWidth/);
+assert.match(board, /workspace\.clientHeight/);
+assert.match(board, /relphi-workspace-tools/);
+assert.match(board, /installExportArea/);
+assert.match(board, /drawing-board-post-export/);
 assert.match(board, /data-tool="snaps"/);
 assert.match(board, /data-tool="background"/);
-assert.match(board, /drawing-board-post-export/);
-assert.match(board, /snapshotCardRowArrangement/);
-assert.match(board, /downloadRowHtml/);
-assert.match(board, /downloadRowTextHtml/);
-assert.match(board, /downloadRowJson/);
-assert.match(board, /printCardRowImage/);
 assert.match(board, /relphi-reading-options-drawer/);
-assert.match(board, /relphi-options-body/);
-assert.match(board, /relphi-options-commitbar/);
 assert.match(board, /relphiResetBoard/);
 assert.match(board, /relphiCancelOptions/);
 assert.match(board, /relphiApplyOptions/);
-assert.match(board, /celtic-cross-10/);
-assert.match(board, /six-polarities-houses-12/);
+assert.match(board, /optionsStructuralChanged/);
 assert.match(board, /relphi-focus-reader/);
-assert.match(board, /relphi-focus-art-pane/);
+assert.match(board, /relphi-focus-strip/);
+assert.match(board, /relphi-focus-art/);
 assert.match(board, /relphi-focus-entry/);
+assert.match(board, /installFocusSwipe/);
 assert.match(board, /renderCardEntry/);
-assert.match(board, /pointerdown/);
-assert.match(board, /pointerup/);
-assert.match(board, /focusCardIsReversed/);
-assert.match(css, /\.relphi-focus-main/);
-assert.match(css, /grid-template-columns:minmax\(16rem,.82fr\) minmax\(0,1.45fr\)/);
-assert.match(css, /\.relphi-focus-art/);
-assert.match(css, /object-fit:contain/);
-assert.match(css, /\.relphi-focus-entry/);
-assert.match(css, /@media\(max-width:700px\)/);
-assert.match(css, /\.relphi-focus-main\{display:block/);
-assert.match(css, /\.card-row-board-empty\{display:none!important\}/);
+assert.match(board, /acknowledgeCelticCrossing/);
+assert.match(board, /celticCrossAcknowledged/);
+assert.match(board, /event\.stopImmediatePropagation\(\)/);
+assert.match(board, /swapPositionSlots/);
+assert.match(board, /dataset\.relphiPositionId/);
+
+assert.match(css, /\.card-row-workspace\{[^}]*height:clamp\(28rem,62vh,40rem\)/);
+assert.match(css, /@media\(max-width:700px\)[\s\S]*height:clamp\(23rem,58dvh,36rem\)/);
+assert.match(css, /\.relphi-focus-reader\{/);
+assert.match(css, /\.relphi-focus-main\{/);
+assert.match(css, /\.relphi-focus-art\{/);
+assert.match(css, /\.relphi-focus-entry\{/);
+assert.match(css, /\.relphi-focus-art\.is-reversed\{/);
+assert.match(css, /\.relphi-focus-strip\{/);
+assert.doesNotMatch(css, /relphi-focus-card-host/);
+assert.match(css, /\.card-row-action-staging\{display:none!important\}/);
+assert.match(css, /card-row-workspace-toolbar:not\(\.relphi-board-controller\).*visibility:hidden!important/);
+assert.match(css, /\.relphi-board-export\{/);
+assert.match(css, /relphi-celtic-crossed[\s\S]*data-relphi-position-id="crossing"/);
+assert.doesNotMatch(css, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-stable/);
+
+const storage = new Map();
+const sandbox = {
+  location:{ pathname:'/tarot.html' },
+  localStorage:{ getItem:key => storage.get(key) ?? null, setItem:(key,value)=>storage.set(key,String(value)) },
+  document:{ readyState:'loading', addEventListener(){}, getElementById(){return null;}, body:{classList:{add(){},remove(){}}}, querySelector(){return null;} },
+  window:{ addEventListener(){} },
+  Event,
+  CustomEvent: class CustomEvent { constructor(type,options={}) { this.type=type; this.detail=options.detail; } },
+  setTimeout(){ return 1; }, clearTimeout(){}, console
+};
+sandbox.window.window = sandbox.window;
+sandbox.window.document = sandbox.document;
+sandbox.window.localStorage = sandbox.localStorage;
+vm.createContext(sandbox);
+vm.runInContext(board, sandbox);
+const registry = sandbox.window.RelphiDrawingBoardSpreadPrefabs;
+assert.ok(registry, 'unified owner exposes spread registry');
+assert.deepEqual(Array.from(registry.shipped, item => item.id), [
+  'past-present-future-3',
+  'situation-challenge-strategy-3',
+  'choice-path-3',
+  'relationship-check-in-5',
+  'hope-and-comfort-5',
+  'saturn-square-9',
+  'celtic-cross-10',
+  'six-polarities-houses-12',
+  'focus-1'
+]);
+assert.ok(registry.shipped.every(item => item.source === 'shipped' && item.editable === false));
+assert.equal(registry.byId('celtic-cross-11'), null);
+const celtic = registry.byId('celtic-cross-10');
+assert.equal(celtic.cardCount, 10);
+assert.deepEqual(Array.from(celtic.positions, item => item.label), [
+  '1 · What covers you','2 · What crosses you','3 · What crowns you','4 · What is beneath you','5 · What is behind you',
+  '6 · What is before you','7 · Yourself','8 · Your house','9 · Your hopes or fears','10 · What will come'
+]);
+const cross = celtic.positions[1];
+assert.deepEqual(JSON.parse(JSON.stringify(cross.canonicalTransform)), {x:.35,y:.34,scale:.48,rotation:0,zIndex:30});
+assert.deepEqual(JSON.parse(JSON.stringify(cross.crossedTransform)), {x:.20,y:.34,scale:.48,rotation:90,zIndex:30});
+const staff = celtic.positions.slice(6);
+assert.ok(staff.every(item => item.transform.x === .70 && item.transform.scale === .44));
+for (let i=1;i<staff.length;i++) assert.ok(Math.abs(staff[i-1].transform.y-staff[i].transform.y)*760 >= 170);
+const polarities = registry.byId('six-polarities-houses-12');
+assert.equal(new Set(polarities.positions.map(item => item.transform.x)).size, 4);
+assert.equal(new Set(polarities.positions.map(item => item.transform.y)).size, 3);
+const saturn = registry.byId('saturn-square-9');
+assert.deepEqual(Array.from(saturn.positions, item => [item.transform.x,item.transform.y,item.transform.scale]), [
+  [.04,.04,.58],[.36,.04,.58],[.68,.04,.58],[.04,.37,.58],[.36,.37,.58],[.68,.37,.58],[.04,.70,.58],[.36,.70,.58],[.68,.70,.58]
+]);
 
 console.log('Drawing Board single-owner checks passed.');
