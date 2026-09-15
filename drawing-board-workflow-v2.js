@@ -297,6 +297,65 @@
     setZoomFromControl((Number(input?.value) || 1) + delta);
   }
 
+  function installPinchZoom(root) {
+    const workspace = root?.querySelector('.card-row-workspace');
+    if (!workspace || workspace.dataset.relphiPinchZoom === 'true') return;
+    workspace.dataset.relphiPinchZoom = 'true';
+
+    let pinching = false;
+    let startDistance = 0;
+    let startZoom = 1;
+    let disabledCards = [];
+    const control = () => zoomInput(root);
+    const distance = touches => {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.hypot(dx,dy);
+    };
+    const begin = event => {
+      if (event.touches.length !== 2) return;
+      const input = control();
+      if (!input) return;
+      pinching = true;
+      startDistance = distance(event.touches);
+      startZoom = Number(input.value) || 1;
+      disabledCards = Array.from(workspace.querySelectorAll('[draggable="true"],.card-row-item [data-row-card]')).map(node => {
+        const wasDraggable = node.draggable;
+        node.draggable = false;
+        return [node,wasDraggable];
+      });
+      workspace.classList.add('relphi-is-pinching');
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    const move = event => {
+      if (!pinching || event.touches.length !== 2 || !startDistance) return;
+      const input = control();
+      if (!input) return;
+      const next = clamp(startZoom * (distance(event.touches) / startDistance), Number(input.min) || MIN_ZOOM, Number(input.max) || MAX_ZOOM);
+      input.value = String(next);
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    const end = event => {
+      if (!pinching || event.touches.length > 1) return;
+      pinching = false;
+      startDistance = 0;
+      disabledCards.forEach(([node,wasDraggable]) => { if (node.isConnected) node.draggable = wasDraggable; });
+      disabledCards = [];
+      workspace.classList.remove('relphi-is-pinching');
+      control()?.dispatchEvent(new Event('change',{bubbles:true}));
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+
+    workspace.addEventListener('touchstart',begin,{capture:true,passive:false});
+    workspace.addEventListener('touchmove',move,{capture:true,passive:false});
+    workspace.addEventListener('touchend',end,{capture:true,passive:false});
+    workspace.addEventListener('touchcancel',end,{capture:true,passive:false});
+  }
+
   function rotatedBounds(width, height, degrees) {
     const radians = Math.abs(Number(degrees) || 0) * Math.PI / 180;
     return {
@@ -1018,6 +1077,7 @@
     updateLayoutClasses(root);
     installTopActions(root);
     installPermanentControls(root);
+    installPinchZoom(root);
     installExportArea(root);
     installLockedLayoutPointerGuards(root);
     installBoardCapture(root);
