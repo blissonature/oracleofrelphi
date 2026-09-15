@@ -1,0 +1,83 @@
+name: One-time Clear Cards native fix
+
+on:
+  push:
+    branches:
+      - refactor/drawing-board-single-owner
+    paths:
+      - '.github/workflows/one-time-clear-cards-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/drawing-board-single-owner
+          fetch-depth: 0
+      - name: Preserve freeform slots when clearing cards
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('tarot-app.js')
+          text = p.read_text()
+          old = """  function commitShortList(next) {
+    next = next.filter(Boolean);
+    if (shortListSame(state.shortList, next)) return;
+    if (next.length && state.rowLayoutDesignMode) return;
+    pushBoardUndo();
+    if (next.length) {
+      state.rowLayoutLocked = true;
+      state.rowLayoutDesignMode = false;
+    }
+    state.shortList = next;
+    state.shortListSelection = state.shortListSelection.filter(id => next.includes(id));
+    setRowCardReversalArray(rowCardReversalArray(next.length));
+    refreshShortListViews();
+  }
+  function clearShortListCardsOnlyNative() {
+    if (!(state.shortList || []).length) return;
+    commitShortList([]);
+  }
+"""
+          new = """  function commitShortList(next, options = {}) {
+    next = next.filter(Boolean);
+    if (shortListSame(state.shortList, next)) return;
+    if (next.length && state.rowLayoutDesignMode) return;
+    const preserveSlotCount = options.preserveSlots ? rowSlotCount() : 0;
+    pushBoardUndo();
+    if (next.length) {
+      state.rowLayoutLocked = true;
+      state.rowLayoutDesignMode = false;
+    }
+    state.shortList = next;
+    if (preserveSlotCount && rowSlotCount(next.length) < preserveSlotCount) {
+      const labels = (state.shortListPositionLabels || []).slice();
+      while (labels.length < preserveSlotCount) labels.push('');
+      state.shortListPositionLabels = labels;
+    }
+    state.shortListSelection = state.shortListSelection.filter(id => next.includes(id));
+    setRowCardReversalArray(rowCardReversalArray(next.length));
+    refreshShortListViews();
+  }
+  function clearShortListCardsOnlyNative() {
+    if (!(state.shortList || []).length) return;
+    commitShortList([], { preserveSlots: true });
+  }
+"""
+          if old not in text:
+              raise SystemExit('Clear Cards native anchor not found')
+          p.write_text(text.replace(old, new, 1))
+          PY
+      - name: Validate syntax
+        run: node --check tarot-app.js
+      - name: Commit patch
+        run: |
+          git config user.name 'blissonature'
+          git config user.email 'blissonature@gmail.com'
+          git add tarot-app.js
+          git commit -m 'Preserve freeform slots when clearing cards'
+          git push origin HEAD:refactor/drawing-board-single-owner
