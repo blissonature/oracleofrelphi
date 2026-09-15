@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=79/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=80/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -42,10 +42,14 @@ assert.match(board, /stateContentBounds/);
 assert.match(board, /workspace\.clientWidth/);
 assert.match(board, /workspace\.clientHeight/);
 assert.match(board, /relphi-workspace-tools/);
+assert.match(board, /data-tool="more"/);
+assert.doesNotMatch(board, /data-tool="snaps"/);
+assert.doesNotMatch(board, /data-tool="background"/);
+assert.match(board, /Unlock rotation & scale/);
+assert.match(board, /Snaps/);
+assert.match(board, /Background/);
 assert.match(board, /installExportArea/);
 assert.match(board, /drawing-board-post-export/);
-assert.match(board, /data-tool="snaps"/);
-assert.match(board, /data-tool="background"/);
 assert.match(board, /relphi-reading-options-drawer/);
 assert.match(board, /relphiResetBoard/);
 assert.match(board, /relphiCancelOptions/);
@@ -55,6 +59,7 @@ assert.match(board, /relphiBulkQuestions/);
 assert.match(board, /parseBulkQuestions/);
 assert.match(board, /Tip: separate questions with commas/);
 assert.match(board, /relphi-focus-reversed-badge/);
+assert.match(board, /relphi-focus-draw/);
 assert.match(board, /ArrowLeft/);
 assert.match(board, /ArrowRight/);
 assert.match(css, /relphi-bulk-questions/);
@@ -69,6 +74,9 @@ assert.match(board, /celticCrossAcknowledged/);
 assert.match(board, /event\.stopImmediatePropagation\(\)/);
 assert.match(board, /swapPositionSlots/);
 assert.match(board, /dataset\.relphiPositionId/);
+assert.match(board, /function clearCardsOnly/);
+assert.match(app, /rowCardManual/);
+assert.match(app, /rowCardWasAddedManually/);
 
 assert.match(css, /\.card-row-workspace\{[^}]*height:clamp\(28rem,62vh,40rem\)/);
 assert.match(css, /@media\(max-width:700px\)[\s\S]*height:clamp\(23rem,58dvh,36rem\)/);
@@ -83,6 +91,7 @@ assert.match(css, /\.card-row-action-staging\{display:none!important\}/);
 assert.match(css, /card-row-workspace-toolbar:not\(\.relphi-board-controller\).*visibility:hidden!important/);
 assert.match(css, /\.relphi-board-export\{/);
 assert.match(css, /relphi-celtic-crossed[\s\S]*data-relphi-position-id="crossing"/);
+assert.match(css, /relphi-transform-editing-unlocked/);
 assert.doesNotMatch(css, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-stable/);
 
 const storage = new Map();
