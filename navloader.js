@@ -210,7 +210,7 @@
       loadCanonicalGlyphRuntime(function () {
         appendScript('standardize-zodiac-wheels.js?v=7');
         appendScript('relphi-inline-glyph-consumer-v1.js?v=2');
-        appendScript('planetary-hours-sect-v1.js?v=1');
+        appendScript('planetary-hours-sect-v1.js?v=2');
       });
       appendScript('planetary-hours-location-prompt.js?v=4');
       appendScript('planetary-hours-moon-position-v1.js?v=1');
