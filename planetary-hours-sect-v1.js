@@ -145,7 +145,7 @@
       position.above = position.altitude >= 0;
       position.ofSect = position.sect === chartSect;
       position.halb = position.sect === 'diurnal' ? position.above === sunAbove : position.above !== sunAbove;
-      position.hayz = position.halb && position.signGender === position.gender;
+      position.hayz = position.ofSect && position.halb && position.signGender === position.gender;
     });
 
     return {
@@ -266,6 +266,7 @@
     try {
       const result = calculate(context);
       line.replaceChildren();
+      line.removeAttribute('title');
       const jobs = [];
 
       const sect = part('Sect', result.sunAbove ? 'Sun is above the local horizon: day sect.' : 'Sun is below the local horizon: night sect.');
@@ -289,11 +290,19 @@
       valueText(mercury, result.mercury.sect === 'diurnal' ? 'Diurnal' : 'Nocturnal');
       line.appendChild(mercury);
 
+      const ofSect = part('Of sect', 'Planets whose own sect matches this day/night chart.');
+      jobs.push(...glyphList(ofSect, result.ofSect, generation, 'Of sect: '));
+      line.appendChild(ofSect);
+
+      const contrary = part('Contrary', 'Planets whose own sect is opposite the chart sect.');
+      jobs.push(...glyphList(contrary, result.contrary, generation, 'Contrary to sect: '));
+      line.appendChild(contrary);
+
       const halb = part('Halb', 'Halb: diurnal planets share the Sun’s horizon hemisphere; nocturnal planets occupy the opposite hemisphere.');
       jobs.push(...glyphList(halb, result.halb, generation, 'In Halb: '));
       line.appendChild(halb);
 
-      const hayz = part('Hayz', 'Hayz: a planet is in Halb and in a sign matching its gender.');
+      const hayz = part('Hayz', 'Hayz: a planet belongs to the chart sect, is in Halb, and is in a sign matching its gender.');
       jobs.push(...glyphList(hayz, result.hayz, generation, 'In Hayz: '));
       line.appendChild(hayz);
 
@@ -304,6 +313,8 @@
         'benefic of sect ' + PLANET_BY_ID.get(result.sectBenefic).body,
         'malefic of sect ' + PLANET_BY_ID.get(result.sectMalefic).body,
         'Mercury ' + result.mercury.sect,
+        'of sect ' + names(result.ofSect),
+        'contrary ' + names(result.contrary),
         'Halb ' + names(result.halb),
         'Hayz ' + names(result.hayz)
       ].join('. '));
