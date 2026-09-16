@@ -183,7 +183,12 @@
       const natural = Math.max(1, line.scrollWidth);
       if (natural <= available) return;
       const current = parseFloat(getComputedStyle(line).fontSize) || 11;
-      line.style.fontSize = Math.max(8.5, current * available / natural).toFixed(2) + 'px';
+      line.style.fontSize = Math.max(6, current * available / natural).toFixed(2) + 'px';
+      requestAnimationFrame(() => {
+        if (line.scrollWidth <= line.clientWidth) return;
+        const again = parseFloat(getComputedStyle(line).fontSize) || 6;
+        line.style.fontSize = Math.max(4.5, again * line.clientWidth / Math.max(1, line.scrollWidth)).toFixed(2) + 'px';
+      });
     });
   }
 
