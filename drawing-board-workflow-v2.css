@@ -218,3 +218,8 @@
   #shortListPanel .relphi-draw-options>label:first-child{grid-column:1/-1!important}
   #shortListPanel .relphi-template-save{grid-template-columns:minmax(0,1fr) auto!important}
 }
+
+/* Reversal belongs to the card, so the status marker sits with the card title rather than the position question. */
+.relphi-focus-reversed-badge{display:none!important}
+.relphi-focus-reader:has(.relphi-focus-reversed-badge:not([hidden])) .relphi-focus-entry .full-entry-title-row h2::after,
+.relphi-focus-reader:has(.relphi-focus-reversed-badge:not([hidden])) .relphi-focus-entry .full-entry-hero .full-entry-title-block h2::after{content:'Reversed';display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:1.65rem!important;margin-left:.45rem!important;padding:.22rem .48rem!important;border:1.5px solid #b81712!important;border-radius:999px!important;background:#fff3f1!important;color:#a51612!important;font-family:Montserrat,"Segoe UI",Arial,sans-serif!important;font-size:.58rem!important;font-weight:950!important;letter-spacing:.07em!important;line-height:1!important;text-transform:uppercase!important;vertical-align:middle!important;transform:translateY(-.12em)!important}
