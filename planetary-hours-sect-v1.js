@@ -23,23 +23,10 @@
   let scheduled = false;
   let lastSignature = '';
 
-  function normDeg(value) {
-    const number = Number(value) || 0;
-    return ((number % 360) + 360) % 360;
-  }
-
-  function signedDeg(value) {
-    const normalized = normDeg(value);
-    return normalized > 180 ? normalized - 360 : normalized;
-  }
-
-  function isPreviewing() {
-    return /^Previewing\b/i.test(document.getElementById('heptagramHourLabel')?.textContent?.trim() || '');
-  }
-
-  function zone() {
-    return document.getElementById('tzSelect')?.value || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  }
+  function normDeg(value) { const n = Number(value) || 0; return ((n % 360) + 360) % 360; }
+  function signedDeg(value) { const n = normDeg(value); return n > 180 ? n - 360 : n; }
+  function isPreviewing() { return /^Previewing\b/i.test(document.getElementById('heptagramHourLabel')?.textContent?.trim() || ''); }
+  function zone() { return document.getElementById('tzSelect')?.value || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; }
 
   function parseZonedDateTime(value, timeZone) {
     if (!value) return null;
@@ -60,11 +47,8 @@
       const longitude = Number(url.searchParams.get('lon'));
       const timeZone = url.searchParams.get('tz') || zone();
       const instant = parseZonedDateTime(url.searchParams.get('datetime'), timeZone);
-      if (!instant || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
-      return { instant, latitude, longitude, timeZone };
-    } catch (error) {
-      return null;
-    }
+      return instant && Number.isFinite(latitude) && Number.isFinite(longitude) ? { instant, latitude, longitude, timeZone } : null;
+    } catch (_) { return null; }
   }
 
   function controlsContext() {
@@ -72,8 +56,7 @@
     const longitude = Number(document.getElementById('lon')?.value);
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
     const timeZone = zone();
-    const useSystem = document.getElementById('useSystem')?.checked !== false;
-    if (useSystem) return { instant:new Date(), latitude, longitude, timeZone };
+    if (document.getElementById('useSystem')?.checked !== false) return { instant:new Date(), latitude, longitude, timeZone };
     const date = document.getElementById('datePick')?.value;
     const time = document.getElementById('timePick')?.value;
     const instant = parseZonedDateTime(date && time ? date + 'T' + time : '', timeZone);
@@ -89,21 +72,19 @@
   }
 
   function eclipticLongitude(body, instant) {
-    const astronomy = window.Astronomy;
-    if (!astronomy) throw new Error('Astronomy Engine is unavailable.');
-    if (body === 'Moon' && typeof astronomy.EclipticGeoMoon === 'function') return normDeg(astronomy.EclipticGeoMoon(instant).lon);
-    return normDeg(astronomy.Ecliptic(astronomy.GeoVector(body, instant, true)).elon);
+    const A = window.Astronomy;
+    if (!A) throw new Error('Astronomy Engine is unavailable.');
+    if (body === 'Moon' && typeof A.EclipticGeoMoon === 'function') return normDeg(A.EclipticGeoMoon(instant).lon);
+    return normDeg(A.Ecliptic(A.GeoVector(body, instant, true)).elon);
   }
 
   function altitude(body, instant, observer) {
-    const astronomy = window.Astronomy;
-    const equator = astronomy.Equator(body, instant, observer, true, true);
-    return Number(astronomy.Horizon(instant, observer, equator.ra, equator.dec, 'normal').altitude);
+    const A = window.Astronomy;
+    const equator = A.Equator(body, instant, observer, true, true);
+    return Number(A.Horizon(instant, observer, equator.ra, equator.dec, 'normal').altitude);
   }
 
-  function signGender(longitude) {
-    return Math.floor(normDeg(longitude) / 30) % 2 === 0 ? 'masculine' : 'feminine';
-  }
+  function signGender(longitude) { return Math.floor(normDeg(longitude) / 30) % 2 === 0 ? 'masculine' : 'feminine'; }
 
   function mercuryCondition(mercuryLongitude, sunLongitude) {
     const elongation = signedDeg(mercuryLongitude - sunLongitude);
@@ -137,6 +118,9 @@
     const mercury = mercuryCondition(longitudes.get('mercury'), longitudes.get('sun'));
     const sunAbove = positions.get('sun').altitude >= 0;
     const chartSect = sunAbove ? 'diurnal' : 'nocturnal';
+    const sectLight = chartSect === 'diurnal' ? 'sun' : 'moon';
+    const sectBenefic = chartSect === 'diurnal' ? 'jupiter' : 'venus';
+    const sectMalefic = chartSect === 'diurnal' ? 'saturn' : 'mars';
 
     positions.forEach(position => {
       const definition = PLANET_BY_ID.get(position.id);
@@ -146,21 +130,12 @@
       position.ofSect = position.sect === chartSect;
       position.halb = position.sect === 'diurnal' ? position.above === sunAbove : position.above !== sunAbove;
       position.hayz = position.ofSect && position.halb && position.signGender === position.gender;
+      position.isLight = position.id === sectLight;
+      position.isBenefic = position.id === sectBenefic;
+      position.isMalefic = position.id === sectMalefic;
     });
 
-    return {
-      chartSect,
-      sunAbove,
-      sectLight:chartSect === 'diurnal' ? 'sun' : 'moon',
-      sectBenefic:chartSect === 'diurnal' ? 'jupiter' : 'venus',
-      sectMalefic:chartSect === 'diurnal' ? 'saturn' : 'mars',
-      mercury,
-      halb:Array.from(positions.values()).filter(position => position.halb).map(position => position.id),
-      hayz:Array.from(positions.values()).filter(position => position.hayz).map(position => position.id),
-      ofSect:Array.from(positions.values()).filter(position => position.ofSect).map(position => position.id),
-      contrary:Array.from(positions.values()).filter(position => !position.ofSect).map(position => position.id),
-      positions
-    };
+    return { chartSect, sunAbove, sectLight, sectBenefic, sectMalefic, mercury, positions };
   }
 
   function ensureStyle() {
@@ -168,14 +143,17 @@
     const style = document.createElement('style');
     style.id = 'ph-sect-style-v1';
     style.textContent = [
-      '.ph-sect-line{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:.55em;width:100%;max-width:100%;margin:.25rem 0 .1rem;padding:.38em .15em;box-sizing:border-box;white-space:nowrap;overflow:visible;font-size:12.5px;line-height:1.15;color:#2f2a27}',
-      '.ph-sect-part{display:inline-flex;align-items:center;gap:.24em;flex:0 0 auto}',
-      '.ph-sect-part+.ph-sect-part::before{content:"·";margin-right:.3em;color:#8a817a;font-weight:900}',
-      '.ph-sect-label{font-weight:900;color:#514943}',
-      '.ph-sect-value{font-weight:800}',
-      '.ph-sect-glyph-host{display:inline-grid;place-items:center;width:1.42em;height:1.42em;flex:0 0 1.42em;vertical-align:-.14em}',
+      '.ph-sect-line{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:.5em;width:100%;max-width:100%;margin:.25rem 0 .1rem;padding:.38em .1em;box-sizing:border-box;white-space:nowrap;overflow:hidden;font-size:12.5px;line-height:1.15;color:#2f2a27}',
+      '.ph-sect-heading{font-weight:950;flex:0 0 auto}',
+      '.ph-sect-planet{display:inline-flex;align-items:center;gap:.22em;flex:0 0 auto}',
+      '.ph-sect-planet::before{content:"·";margin-right:.28em;color:#8a817a;font-weight:900}',
+      '.ph-sect-glyph-host{display:inline-grid;place-items:center;width:1.4em;height:1.4em;flex:0 0 1.4em}',
       '.ph-sect-glyph{display:block;width:100%;height:100%;overflow:visible}',
-      '@media(max-width:760px){.ph-sect-line{margin:.15rem 0 .05rem;padding:.3em .05em}}'
+      '.ph-sect-statuses{display:inline-flex;align-items:center;gap:.22em;font-weight:820}',
+      '.ph-sect-status{white-space:nowrap}',
+      '.ph-sect-status-short{display:none}',
+      '@media(max-width:760px){.ph-sect-line{font-size:11px;gap:.28em;padding:.3em 0}.ph-sect-planet{gap:.12em}.ph-sect-planet::before{margin-right:.12em}.ph-sect-status-full{display:none}.ph-sect-status-short{display:inline}.ph-sect-statuses{gap:.12em}.ph-sect-glyph-host{width:1.28em;height:1.28em;flex-basis:1.28em}}',
+      '@media(max-width:420px){.ph-sect-line{font-size:10px;gap:.18em}.ph-sect-planet::before{margin-right:.08em}.ph-sect-statuses{gap:.08em}}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -199,32 +177,14 @@
 
   function fitLine(line) {
     if (!line?.parentElement) return;
-    line.style.fontSize = '12.5px';
-    const available = Math.max(1, line.parentElement.clientWidth - 8);
-    const natural = Math.max(1, line.scrollWidth);
-    if (natural <= available) return;
-    const fitted = Math.max(7.25, 12.5 * available / natural);
-    line.style.fontSize = fitted.toFixed(2) + 'px';
-  }
-
-  function part(label, title) {
-    const node = document.createElement('span');
-    node.className = 'ph-sect-part';
-    if (title) node.title = title;
-    if (label) {
-      const labelNode = document.createElement('span');
-      labelNode.className = 'ph-sect-label';
-      labelNode.textContent = label;
-      node.appendChild(labelNode);
-    }
-    return node;
-  }
-
-  function valueText(container, text) {
-    const value = document.createElement('span');
-    value.className = 'ph-sect-value';
-    value.textContent = text;
-    container.appendChild(value);
+    line.style.removeProperty('font-size');
+    requestAnimationFrame(() => {
+      const available = Math.max(1, line.clientWidth - 2);
+      const natural = Math.max(1, line.scrollWidth);
+      if (natural <= available) return;
+      const current = parseFloat(getComputedStyle(line).fontSize) || 11;
+      line.style.fontSize = Math.max(8.5, current * available / natural).toFixed(2) + 'px';
+    });
   }
 
   function glyph(container, id, title, generation) {
@@ -232,7 +192,6 @@
     const component = window.RelphiGlyphComponent;
     const entry = registry?.get(id) || registry?.resolve(id);
     if (!entry || !component?.draw) throw new Error('Canonical glyph unavailable: ' + id);
-
     const host = document.createElement('span');
     host.className = 'ph-sect-glyph-host';
     host.setAttribute('role', 'img');
@@ -246,32 +205,60 @@
     svg.setAttribute('focusable', 'false');
     host.appendChild(svg);
     container.appendChild(host);
-
     return Promise.resolve(component.draw(svg, entry.id, { radius:18, padding:0, color:'currentColor' })).then(() => {
       if (generation !== renderGeneration) host.remove();
     });
   }
 
-  function glyphList(container, ids, generation, titlePrefix) {
-    if (!ids.length) {
-      valueText(container, 'none');
-      return [];
-    }
-    return ids.map(id => glyph(container, id, titlePrefix ? titlePrefix + PLANET_BY_ID.get(id).body : '', generation));
+  function status(container, full, short, title) {
+    const item = document.createElement('span');
+    item.className = 'ph-sect-status';
+    if (title) item.title = title;
+    const fullNode = document.createElement('span');
+    fullNode.className = 'ph-sect-status-full';
+    fullNode.textContent = full;
+    const shortNode = document.createElement('span');
+    shortNode.className = 'ph-sect-status-short';
+    shortNode.textContent = short;
+    item.append(fullNode, shortNode);
+    container.appendChild(item);
+  }
+
+  function planetToken(position, result, generation) {
+    const token = document.createElement('span');
+    token.className = 'ph-sect-planet';
+    const jobs = [glyph(token, position.id, position.body, generation)];
+    const statuses = document.createElement('span');
+    statuses.className = 'ph-sect-statuses';
+    token.appendChild(statuses);
+
+    if (position.isLight) status(statuses, 'Light', 'L', 'Sect light');
+    if (position.isBenefic) status(statuses, 'Benefic', 'B', 'Benefic of sect');
+    if (position.isMalefic) status(statuses, 'Malefic', 'M', 'Malefic of sect');
+    if (position.id === 'mercury') status(statuses, position.sect === 'diurnal' ? 'Diurnal' : 'Nocturnal', position.sect === 'diurnal' ? 'D' : 'N', result.mercury.phase);
+    status(statuses, position.ofSect ? 'Sect' : 'Contrary', position.ofSect ? 'S' : 'C', position.ofSect ? 'Of sect' : 'Contrary to sect');
+    if (position.halb) status(statuses, 'Halb', 'H', 'In Halb');
+    if (position.hayz) status(statuses, 'Hayz', 'Y', 'In Hayz');
+
+    token.title = [
+      position.body,
+      position.isLight ? 'sect light' : '',
+      position.isBenefic ? 'benefic of sect' : '',
+      position.isMalefic ? 'malefic of sect' : '',
+      position.id === 'mercury' ? result.mercury.phase : '',
+      position.ofSect ? 'of sect' : 'contrary to sect',
+      position.halb ? 'Halb' : '',
+      position.hayz ? 'Hayz' : ''
+    ].filter(Boolean).join(' · ');
+    return { token, jobs };
   }
 
   async function render(force) {
     const line = ensureLine();
-    if (!line) return;
-    if (!window.Astronomy || !window.RelphiGlyphRegistry || !window.RelphiGlyphComponent?.draw) return;
+    if (!line || !window.Astronomy || !window.RelphiGlyphRegistry || !window.RelphiGlyphComponent?.draw) return;
     const context = activeContext();
     if (!context) return;
-    const signature = [
-      Math.floor(context.instant.getTime() / 15000),
-      context.latitude.toFixed(5),
-      context.longitude.toFixed(5),
-      isPreviewing() ? 'preview' : 'active'
-    ].join('|');
+    const signature = [Math.floor(context.instant.getTime() / 15000), context.latitude.toFixed(5), context.longitude.toFixed(5), isPreviewing() ? 'preview' : 'active'].join('|');
     if (!force && signature === lastSignature) return;
     lastSignature = signature;
 
@@ -280,65 +267,38 @@
       const result = calculate(context);
       line.replaceChildren();
       line.removeAttribute('title');
+      const heading = document.createElement('span');
+      heading.className = 'ph-sect-heading';
+      heading.textContent = result.chartSect === 'diurnal' ? 'Day Sect' : 'Night Sect';
+      heading.title = result.sunAbove ? 'Sun above the local horizon' : 'Sun below the local horizon';
+      line.appendChild(heading);
+
       const jobs = [];
+      PLANETS.forEach(definition => {
+        const built = planetToken(result.positions.get(definition.id), result, generation);
+        line.appendChild(built.token);
+        jobs.push(...built.jobs);
+      });
 
-      const sect = part('Sect', result.sunAbove ? 'Sun is above the local horizon: day sect.' : 'Sun is below the local horizon: night sect.');
-      valueText(sect, result.chartSect === 'diurnal' ? 'Day' : 'Night');
-      line.appendChild(sect);
-
-      const light = part('Light', 'The luminary of sect.');
-      jobs.push(glyph(light, result.sectLight, 'Sect light', generation));
-      line.appendChild(light);
-
-      const benefic = part('Benefic', 'Benefic belonging to the chart sect.');
-      jobs.push(glyph(benefic, result.sectBenefic, 'Benefic of sect', generation));
-      line.appendChild(benefic);
-
-      const malefic = part('Malefic', 'Malefic belonging to the chart sect.');
-      jobs.push(glyph(malefic, result.sectMalefic, 'Malefic of sect', generation));
-      line.appendChild(malefic);
-
-      const mercury = part('Mercury', result.mercury.phase + ': Mercury is treated as ' + result.mercury.sect + ' and ' + result.mercury.gender + ' here.');
-      jobs.push(glyph(mercury, 'mercury', result.mercury.phase, generation));
-      valueText(mercury, result.mercury.sect === 'diurnal' ? 'Diurnal' : 'Nocturnal');
-      line.appendChild(mercury);
-
-      const ofSect = part('Of sect', 'Planets whose own sect matches this day/night chart.');
-      jobs.push(...glyphList(ofSect, result.ofSect, generation, 'Of sect: '));
-      line.appendChild(ofSect);
-
-      const contrary = part('Contrary', 'Planets whose own sect is opposite the chart sect.');
-      jobs.push(...glyphList(contrary, result.contrary, generation, 'Contrary to sect: '));
-      line.appendChild(contrary);
-
-      const halb = part('Halb', 'Halb: diurnal planets share the Sun’s horizon hemisphere; nocturnal planets occupy the opposite hemisphere.');
-      jobs.push(...glyphList(halb, result.halb, generation, 'In Halb: '));
-      line.appendChild(halb);
-
-      const hayz = part('Hayz', 'Hayz: a planet belongs to the chart sect, is in Halb, and is in a sign matching its gender.');
-      jobs.push(...glyphList(hayz, result.hayz, generation, 'In Hayz: '));
-      line.appendChild(hayz);
-
-      const names = ids => ids.map(id => PLANET_BY_ID.get(id).body).join(', ') || 'none';
-      line.setAttribute('aria-label', [
-        (result.chartSect === 'diurnal' ? 'Day' : 'Night') + ' sect',
-        'sect light ' + PLANET_BY_ID.get(result.sectLight).body,
-        'benefic of sect ' + PLANET_BY_ID.get(result.sectBenefic).body,
-        'malefic of sect ' + PLANET_BY_ID.get(result.sectMalefic).body,
-        'Mercury ' + result.mercury.sect,
-        'of sect ' + names(result.ofSect),
-        'contrary ' + names(result.contrary),
-        'Halb ' + names(result.halb),
-        'Hayz ' + names(result.hayz)
-      ].join('. '));
+      line.setAttribute('aria-label', (result.chartSect === 'diurnal' ? 'Day sect. ' : 'Night sect. ') + PLANETS.map(definition => {
+        const p = result.positions.get(definition.id);
+        const parts = [p.body];
+        if (p.isLight) parts.push('sect light');
+        if (p.isBenefic) parts.push('benefic of sect');
+        if (p.isMalefic) parts.push('malefic of sect');
+        if (p.id === 'mercury') parts.push(result.mercury.sect, result.mercury.phase);
+        parts.push(p.ofSect ? 'of sect' : 'contrary to sect');
+        if (p.halb) parts.push('Halb');
+        if (p.hayz) parts.push('Hayz');
+        return parts.join(', ');
+      }).join('. '));
 
       await Promise.allSettled(jobs);
-      if (generation === renderGeneration) requestAnimationFrame(() => fitLine(line));
+      if (generation === renderGeneration) fitLine(line);
     } catch (error) {
       console.error('[Relphi Planetary Hours Sect]', error);
       if (generation === renderGeneration) {
-        line.replaceChildren();
-        valueText(line, 'Sect unavailable');
+        line.textContent = 'Sect unavailable';
         line.title = String(error?.message || error);
       }
     }
@@ -369,7 +329,7 @@
     document.addEventListener('change', event => { if (WATCH_IDS.has(event.target?.id)) schedule(true); }, true);
     document.addEventListener('input', event => { if (WATCH_IDS.has(event.target?.id)) schedule(false); }, true);
     document.addEventListener('click', event => { if (WATCH_IDS.has(event.target?.id)) setTimeout(() => schedule(true), 40); }, true);
-    window.addEventListener('resize', () => { const line = document.getElementById('phSectLine'); if (line) requestAnimationFrame(() => fitLine(line)); });
+    window.addEventListener('resize', () => { const line = document.getElementById('phSectLine'); if (line) fitLine(line); });
     schedule(true);
     setInterval(() => {
       if (document.getElementById('useSystem')?.checked !== false && !isPreviewing()) schedule(false);
