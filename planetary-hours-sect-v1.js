@@ -168,30 +168,43 @@
     const style = document.createElement('style');
     style.id = 'ph-sect-style-v1';
     style.textContent = [
-      '.ph-sect-line{display:flex;align-items:center;gap:.5rem;width:100%;max-width:100%;margin:.45rem 0 .15rem;padding:.38rem .12rem;box-sizing:border-box;white-space:nowrap;overflow-x:auto;overflow-y:hidden;font-size:.78rem;line-height:1.15;color:#2f2a27;scrollbar-width:thin}',
-      '.ph-sect-part{display:inline-flex;align-items:center;gap:.22rem;flex:0 0 auto}',
-      '.ph-sect-part+.ph-sect-part::before{content:"·";margin-right:.28rem;color:#8a817a;font-weight:900}',
+      '.ph-sect-line{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:.55em;width:100%;max-width:100%;margin:.25rem 0 .1rem;padding:.38em .15em;box-sizing:border-box;white-space:nowrap;overflow:visible;font-size:12.5px;line-height:1.15;color:#2f2a27}',
+      '.ph-sect-part{display:inline-flex;align-items:center;gap:.24em;flex:0 0 auto}',
+      '.ph-sect-part+.ph-sect-part::before{content:"·";margin-right:.3em;color:#8a817a;font-weight:900}',
       '.ph-sect-label{font-weight:900;color:#514943}',
       '.ph-sect-value{font-weight:800}',
-      '.ph-sect-glyph-host{display:inline-grid;place-items:center;width:1.28rem;height:1.28rem;flex:0 0 1.28rem;vertical-align:-.14rem}',
+      '.ph-sect-glyph-host{display:inline-grid;place-items:center;width:1.42em;height:1.42em;flex:0 0 1.42em;vertical-align:-.14em}',
       '.ph-sect-glyph{display:block;width:100%;height:100%;overflow:visible}',
-      '@media(max-width:760px){.ph-sect-line{margin-top:.35rem;padding-bottom:.3rem;font-size:.75rem}}'
+      '@media(max-width:760px){.ph-sect-line{margin:.15rem 0 .05rem;padding:.3em .05em}}'
     ].join('');
     document.head.appendChild(style);
   }
 
   function ensureLine() {
     let line = document.getElementById('phSectLine');
-    if (line) return line;
-    const sunTimes = document.getElementById('sunTimes');
-    if (!sunTimes) return null;
-    line = document.createElement('div');
-    line.id = 'phSectLine';
-    line.className = 'ph-sect-line';
-    line.dataset.method = 'al-biruni';
-    line.setAttribute('aria-live', 'polite');
-    sunTimes.insertAdjacentElement('afterend', line);
+    const grid = document.querySelector('.ph-summary-grid-consolidated');
+    if (!grid) return null;
+    if (!line) {
+      line = document.createElement('div');
+      line.id = 'phSectLine';
+      line.className = 'ph-sect-line';
+      line.dataset.method = 'al-biruni';
+      line.setAttribute('aria-live', 'polite');
+    }
+    const table = document.getElementById('tableSection');
+    if (table && table.parentElement === grid) grid.insertBefore(line, table);
+    else if (line.parentElement !== grid) grid.appendChild(line);
     return line;
+  }
+
+  function fitLine(line) {
+    if (!line?.parentElement) return;
+    line.style.fontSize = '12.5px';
+    const available = Math.max(1, line.parentElement.clientWidth - 8);
+    const natural = Math.max(1, line.scrollWidth);
+    if (natural <= available) return;
+    const fitted = Math.max(7.25, 12.5 * available / natural);
+    line.style.fontSize = fitted.toFixed(2) + 'px';
   }
 
   function part(label, title) {
@@ -320,6 +333,7 @@
       ].join('. '));
 
       await Promise.allSettled(jobs);
+      if (generation === renderGeneration) requestAnimationFrame(() => fitLine(line));
     } catch (error) {
       console.error('[Relphi Planetary Hours Sect]', error);
       if (generation === renderGeneration) {
@@ -355,6 +369,7 @@
     document.addEventListener('change', event => { if (WATCH_IDS.has(event.target?.id)) schedule(true); }, true);
     document.addEventListener('input', event => { if (WATCH_IDS.has(event.target?.id)) schedule(false); }, true);
     document.addEventListener('click', event => { if (WATCH_IDS.has(event.target?.id)) setTimeout(() => schedule(true), 40); }, true);
+    window.addEventListener('resize', () => { const line = document.getElementById('phSectLine'); if (line) requestAnimationFrame(() => fitLine(line)); });
     schedule(true);
     setInterval(() => {
       if (document.getElementById('useSystem')?.checked !== false && !isPreviewing()) schedule(false);
