@@ -194,3 +194,27 @@
 .relphi-focus-actions{display:flex!important;align-items:center!important;gap:.5rem!important}
 .relphi-focus-draw{min-height:2.2rem!important;margin:0!important;padding:.42rem .85rem!important;border:1.5px solid #b81712!important;border-radius:8px!important;background:#dc1f18!important;color:#fff!important;font:inherit!important;font-size:.78rem!important;font-weight:900!important}
 @media(max-width:700px){#shortListPanel .relphi-reading-options-drawer{position:absolute!important;top:.5rem!important;right:.5rem!important;bottom:.5rem!important;left:.5rem!important;width:auto!important;max-width:none!important;height:auto!important;max-height:none!important;box-sizing:border-box!important}.relphi-focus-shell>header{gap:.45rem!important}.relphi-focus-actions{gap:.35rem!important}.relphi-focus-draw{padding:.38rem .65rem!important}}
+
+/* Restore the compact in-board Options presentation from the d125423 era while preserving the current owner and behavior. */
+#shortListPanel .relphi-reading-options-drawer{position:absolute!important;top:.5rem!important;bottom:.5rem!important;left:.5rem!important;right:auto!important;width:min(29rem,calc(100% - 1rem))!important;max-width:min(29rem,calc(100% - 1rem))!important;height:auto!important;max-height:none!important;border-radius:10px!important;box-shadow:0 12px 28px rgba(30,20,15,.20)!important}
+#shortListPanel .relphi-options-heading,#shortListPanel .relphi-options-note{display:none!important}
+#shortListPanel .relphi-options-body{gap:.55rem!important;padding:.55rem .42rem .55rem .55rem!important}
+#shortListPanel .relphi-options-subhead{margin-bottom:.28rem!important}
+#shortListPanel .relphi-options-subhead>strong{font-size:0!important}
+#shortListPanel .relphi-options-subhead>strong::after{content:'Add labels';font-size:.78rem!important;font-weight:850!important}
+#shortListPanel #relphiAddPosition{width:2rem!important;min-width:2rem!important;height:2rem!important;min-height:2rem!important;padding:0!important;font-size:0!important}
+#shortListPanel #relphiAddPosition::after{content:'+';font-size:1rem!important;line-height:1!important}
+#shortListPanel .relphi-template-save{position:relative!important;padding-top:1rem!important}
+#shortListPanel .relphi-template-save::before{content:'Template name';position:absolute!important;top:0!important;left:0!important;font-size:.68rem!important;font-weight:800!important;line-height:1!important}
+#shortListPanel .relphi-options-commitbar{padding:.45rem .55rem!important}
+#shortListPanel .relphi-draw-options{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+#shortListPanel .relphi-draw-options>label:first-child{grid-column:1/-1!important}
+#shortListPanel .relphi-draw-options>label:not(:first-child){min-height:2rem!important;padding:.32rem .42rem!important;font-size:.68rem!important}
+#shortListPanel .relphi-draw-options>label:nth-child(2){font-size:0!important}
+#shortListPanel .relphi-draw-options>label:nth-child(2)::after{content:'Labels';font-size:.68rem!important;font-weight:800!important}
+@media(max-width:700px){
+  #shortListPanel .relphi-reading-options-drawer{top:.35rem!important;bottom:.35rem!important;left:.35rem!important;width:calc(100% - .7rem)!important;max-width:calc(100% - .7rem)!important}
+  #shortListPanel .relphi-draw-options{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  #shortListPanel .relphi-draw-options>label:first-child{grid-column:1/-1!important}
+  #shortListPanel .relphi-template-save{grid-template-columns:minmax(0,1fr) auto!important}
+}
