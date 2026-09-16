@@ -223,3 +223,14 @@
 .relphi-focus-reversed-badge{display:none!important}
 .relphi-focus-reader:has(.relphi-focus-reversed-badge:not([hidden])) .relphi-focus-entry .full-entry-title-row h2::after,
 .relphi-focus-reader:has(.relphi-focus-reversed-badge:not([hidden])) .relphi-focus-entry .full-entry-hero .full-entry-title-block h2::after{content:'Reversed';display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:1.65rem!important;margin-left:.45rem!important;padding:.22rem .48rem!important;border:1.5px solid #b81712!important;border-radius:999px!important;background:#fff3f1!important;color:#a51612!important;font-family:Montserrat,"Segoe UI",Arial,sans-serif!important;font-size:.58rem!important;font-weight:950!important;letter-spacing:.07em!important;line-height:1!important;text-transform:uppercase!important;vertical-align:middle!important;transform:translateY(-.12em)!important}
+
+/* The position belongs in the reading hierarchy: directly above the focused card name, large enough to stay salient. */
+.relphi-focus-shell{position:relative!important}
+.relphi-focus-entry>.eyebrow{display:none!important}
+.relphi-focus-entry .full-entry-title-row h2,.relphi-focus-entry .full-entry-hero .full-entry-title-block h2{anchor-name:--relphi-focus-card-title}
+.relphi-focus-position{font-size:clamp(1rem,1.6vw,1.25rem)!important;font-weight:900!important;line-height:1.2!important}
+@supports (position-anchor:--relphi-focus-card-title){
+  .relphi-focus-position{position:absolute!important;position-anchor:--relphi-focus-card-title;left:anchor(left)!important;top:anchor(top)!important;z-index:25!important;display:block!important;max-width:min(36rem,calc(100vw - 3rem))!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#171412!important;white-space:normal!important;transform:translateY(calc(-100% - .34rem))!important}
+  .relphi-focus-heading{width:0!important;min-width:0!important;flex:0 0 0!important}
+}
+@media(max-width:700px){.relphi-focus-position{font-size:clamp(1.05rem,4.8vw,1.3rem)!important;max-width:calc(100vw - 1.3rem)!important}}
