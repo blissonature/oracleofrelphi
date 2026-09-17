@@ -207,11 +207,11 @@
     if (!isOpen(owner) || !menu?.classList.contains('is-portaled') || !head) return;
     const rect = head.getBoundingClientRect();
     const margin = 12;
-    const width = Math.min(560, Math.max(280, window.innerWidth - margin * 2));
+    const width = Math.min(370, Math.max(280, window.innerWidth - margin * 2));
     const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left + rect.width / 2 - width / 2));
     const below = window.innerHeight - rect.bottom - margin;
     const above = rect.top - margin;
-    const maxHeight = Math.max(220, Math.min(560, Math.max(below, above)));
+    const maxHeight = Math.max(220, Math.min(580, Math.max(below, above)));
     const top = below < 280 && above > below ? Math.max(margin, rect.top - maxHeight - 6) : Math.min(window.innerHeight - maxHeight - margin, rect.bottom + 6);
     Object.assign(menu.style, { width:`${width}px`, maxHeight:`${maxHeight}px`, left:`${left}px`, top:`${Math.max(margin, top)}px` });
   }
