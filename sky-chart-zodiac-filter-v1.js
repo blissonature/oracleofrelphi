@@ -7,7 +7,7 @@ window.__relphiSkyZodiacFilterV3=true;
 window.__relphiSkyZodiacFilterV2=true;
 
 const SIGNS=[
-  ['aries','Aries','Ram'],
+  ['aries','Aries','Lamb'],
   ['taurus','Taurus','Bull'],
   ['gemini','Gemini','Twins'],
   ['cancer','Cancer','Crab'],
@@ -16,7 +16,7 @@ const SIGNS=[
   ['libra','Libra','Scales'],
   ['scorpio','Scorpio','Scorpion'],
   ['sagittarius','Sagittarius','Archer'],
-  ['capricorn','Capricorn','Sea-Goat'],
+  ['capricorn','Capricorn','Kid'],
   ['aquarius','Aquarius','Bucket'],
   ['pisces','Pisces','Fishes']
 ];
