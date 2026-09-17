@@ -7,6 +7,20 @@
 
   const SLOTS = ['A','B'];
   const HOUSES = Array.from({ length:12 }, (_, index) => String(index + 1));
+  const HOUSE_DESCRIPTIONS = Object.freeze({
+    '1':'self, body, approach',
+    '2':'money, possessions, worth',
+    '3':'communication, siblings, local life',
+    '4':'home, family, roots',
+    '5':'pleasure, creativity, children',
+    '6':'work, health, routine',
+    '7':'partners, bonds, agreements',
+    '8':'loss, death, other people’s resources',
+    '9':'travel, belief, higher learning',
+    '10':'career, reputation, public life',
+    '11':'friends, groups, hopes',
+    '12':'solitude, sorrow, hidden things'
+  });
   const state = { A:new Set(HOUSES), B:new Set(HOUSES) };
   let queued = false;
   let portalOwner = null;
@@ -79,18 +93,32 @@
     return label;
   }
 
-  function row(scope, target, labelText, kind) {
+  function row(scope, target, labelText, kind, rowLabel = labelText) {
     const item = document.createElement('div');
     item.className = `sky-chart-house-list-item sky-chart-house-list-item-${kind}`;
     item.dataset.houseListItem = target;
     const label = document.createElement('strong');
     label.className = 'sky-chart-house-list-label';
-    label.textContent = labelText;
+    if (kind === 'house') {
+      const marker = window.RelphiHouseMedallion?.create?.(Number(target));
+      if (!marker) throw new Error('House medallion source primitive is unavailable.');
+      marker.classList.add('sky-chart-house-menu-medallion');
+      marker.setAttribute('aria-hidden','true');
+      marker.removeAttribute('aria-label');
+      marker.removeAttribute('title');
+      const description = document.createElement('span');
+      description.className = 'sky-chart-house-menu-description';
+      description.textContent = labelText;
+      label.append(marker, description);
+      label.setAttribute('aria-label', rowLabel);
+    } else {
+      label.textContent = labelText;
+    }
     const choices = document.createElement('div');
     choices.className = 'sky-chart-house-list-choices';
     choices.setAttribute('role', 'group');
-    choices.setAttribute('aria-label', labelText);
-    activeKinds().forEach(kindName => choices.appendChild(choice(scope, target, kindName, labelText)));
+    choices.setAttribute('aria-label', rowLabel);
+    activeKinds().forEach(kindName => choices.appendChild(choice(scope, target, kindName, rowLabel)));
     item.append(label, choices);
     return item;
   }
@@ -106,7 +134,7 @@
     header.className = 'sky-chart-house-list-header';
     header.innerHTML = bActive() ? '<strong>House</strong><span>All</span><span>A</span><span>B</span>' : '<strong>House</strong><span>All</span><span>A</span>';
     list.append(header, row('all','all','All houses','master'));
-    HOUSES.forEach(house => list.appendChild(row('house', house, `House ${house}`, 'house')));
+    HOUSES.forEach(house => list.appendChild(row('house', house, HOUSE_DESCRIPTIONS[house], 'house', `House ${house}: ${HOUSE_DESCRIPTIONS[house]}`)));
     body.appendChild(list);
     updateControl();
   }
@@ -178,14 +206,41 @@
     const head = owner?.querySelector('.sky-chart-house-filter-head');
     if (!isOpen(owner) || !menu?.classList.contains('is-portaled') || !head) return;
     const rect = head.getBoundingClientRect();
-    const margin = 12;
-    const width = Math.min(330, Math.max(280, window.innerWidth - margin * 2));
+    const margin = 8;
+    const width = Math.min(430, Math.max(280, window.innerWidth - margin * 2));
     const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left + rect.width / 2 - width / 2));
-    const below = window.innerHeight - rect.bottom - margin;
-    const above = rect.top - margin;
-    const maxHeight = Math.max(220, Math.min(560, Math.max(below, above)));
-    const top = below < 280 && above > below ? Math.max(margin, rect.top - maxHeight - 6) : Math.min(window.innerHeight - maxHeight - margin, rect.bottom + 6);
-    Object.assign(menu.style, { width:`${width}px`, maxHeight:`${maxHeight}px`, left:`${left}px`, top:`${Math.max(margin, top)}px` });
+    menu.style.width = `${width}px`;
+
+    // Measure the natural outer height with scrolling disabled. scrollHeight includes
+    // padding but not borders, so include the border box explicitly before deciding
+    // whether the viewport actually requires a scrollbar.
+    menu.style.height = 'auto';
+    menu.style.maxHeight = 'none';
+    menu.style.overflowY = 'hidden';
+    const style = getComputedStyle(menu);
+    const borderHeight = (parseFloat(style.borderTopWidth) || 0) + (parseFloat(style.borderBottomWidth) || 0);
+    const naturalHeight = Math.ceil(menu.scrollHeight + borderHeight);
+    const availableHeight = Math.max(220, window.innerHeight - margin * 2);
+    const needsScroll = naturalHeight > availableHeight;
+    const renderedHeight = needsScroll ? availableHeight : naturalHeight;
+
+    if (needsScroll) {
+      menu.style.height = `${availableHeight}px`;
+      menu.style.maxHeight = `${availableHeight}px`;
+      menu.style.overflowY = 'auto';
+    } else {
+      menu.style.height = 'auto';
+      menu.style.maxHeight = 'none';
+      menu.style.overflowY = 'hidden';
+    }
+
+    const belowTop = rect.bottom + 6;
+    const aboveTop = rect.top - renderedHeight - 6;
+    let top;
+    if (belowTop + renderedHeight <= window.innerHeight - margin) top = belowTop;
+    else if (aboveTop >= margin) top = aboveTop;
+    else top = Math.min(Math.max(margin, rect.top - renderedHeight / 2), Math.max(margin, window.innerHeight - renderedHeight - margin));
+    Object.assign(menu.style, { left:`${left}px`, top:`${top}px` });
   }
 
   function open(owner) {

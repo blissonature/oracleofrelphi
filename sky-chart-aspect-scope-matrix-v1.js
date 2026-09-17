@@ -1,4 +1,4 @@
-// Aspect scope matrix v3: the sole owner of per-aspect visibility across A↔A, B↔B, and A↔B.
+// Aspect scope matrix v4: the sole owner of per-aspect visibility and popover geometry across A↔A, B↔B, and A↔B.
 // The legacy aspect controller remains responsible only for generating intrasky B relationships and its control shell.
 (function(){
 'use strict';
@@ -29,6 +29,7 @@ let queued=false;
 let applying=false;
 let menuObserver=null;
 let lastScopeSignature='';
+let openGeometry=null;
 
 function normalize(value){
   const key=String(value||'').trim().toLowerCase().replace(/[ _]+/g,'-');
@@ -76,7 +77,9 @@ function choice(scope,aspect,labelText,summary=false){
 }
 function matrixRow(aspect,labelText,master=false){
   const row=document.createElement('div');
-  row.className=`sky-chart-aspect-list-item${master?' sky-chart-aspect-list-item-master':''}`;row.dataset.aspectMatrixRow=aspect;
+  row.className=`sky-chart-aspect-list-item${master?' sky-chart-aspect-list-item-master':''}`;
+  row.dataset.aspectMatrixRow=aspect;
+  row.dataset.aspectListItem=aspect;
   const label=document.createElement('strong');label.className='sky-chart-aspect-list-label';label.textContent=labelText;
   const choices=document.createElement('div');choices.className='sky-chart-aspect-list-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label',labelText);
   const scopes=SCOPES.filter(scope=>activeScopes().includes(scope.id));
@@ -93,6 +96,7 @@ function renderPopover(){
   labels.forEach(text=>{const span=document.createElement('span');span.textContent=text;cols.appendChild(span)});
   header.append(title,cols);list.append(header,matrixRow('all','All aspects',true));ASPECTS.forEach(aspect=>list.appendChild(matrixRow(aspect.id,aspect.label)));
   body.replaceChildren(list);
+  window.dispatchEvent(new Event('relphi:sky-aspect-filter-rendered'));
 }
 function renderClosedSummary(owner){
   const head=owner?.querySelector('.sky-chart-aspect-filter-head');if(!head)return;
@@ -137,14 +141,21 @@ function applyMatrix({announce=true}={}){
   if(announce)window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed',{detail:{selected,scopes,matrix}}));
   applying=false;
 }
-function positionPopover(){
+function positionPopover({reset=false}={}){
   const owner=control(),menu=popover(),head=owner?.querySelector('.sky-chart-aspect-filter-head');
-  if(!owner?.classList.contains('is-open')||!menu?.classList.contains('is-portaled')||menu.hidden||!head)return;
-  const rect=head.getBoundingClientRect(),margin=10,width=Math.min(400,Math.max(0,window.innerWidth-margin*2));
-  const left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left+rect.width/2-width/2));
-  const below=window.innerHeight-rect.bottom-margin,above=rect.top-margin,maxHeight=Math.max(220,Math.min(520,Math.max(below,above)));
-  const top=below<260&&above>below?Math.max(margin,rect.top-maxHeight-6):Math.min(window.innerHeight-maxHeight-margin,rect.bottom+6);
-  menu.style.left=`${left}px`;menu.style.top=`${Math.max(margin,top)}px`;menu.style.maxHeight=`${maxHeight}px`;
+  if(!owner?.classList.contains('is-open')||!menu?.classList.contains('is-portaled')||menu.hidden||!head){openGeometry=null;return}
+  if(reset||!openGeometry){
+    const rect=head.getBoundingClientRect(),margin=10;
+    const measuredWidth=menu.getBoundingClientRect().width;
+    const width=measuredWidth>0?measuredWidth:Math.min(400,Math.max(0,window.innerWidth-margin*2));
+    const left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left+rect.width/2-width/2));
+    const below=window.innerHeight-rect.bottom-margin,above=rect.top-margin,maxHeight=Math.max(220,Math.min(520,Math.max(below,above)));
+    const top=below<260&&above>below?Math.max(margin,rect.top-maxHeight-6):Math.min(window.innerHeight-maxHeight-margin,rect.bottom+6);
+    openGeometry={left,top:Math.max(margin,top),maxHeight};
+  }
+  menu.style.setProperty('--sky-aspect-popover-left',`${openGeometry.left}px`);
+  menu.style.setProperty('--sky-aspect-popover-top',`${openGeometry.top}px`);
+  menu.style.setProperty('--sky-aspect-popover-max-height',`${openGeometry.maxHeight}px`);
 }
 function ensureMenuObserver(){
   const menu=popover();if(!menu||menu.dataset.aspectMatrixObserved==='true')return;
@@ -171,8 +182,8 @@ function start(){
   window.addEventListener('relphi:sky-aspect-multiselect-changed',handleLegacyAspectPass);
   window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartB')schedule()});
   new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing']});
-  document.addEventListener('click',event=>{if(event.target.closest?.('[data-aspect-filter-toggle]'))requestAnimationFrame(positionPopover)});
-  window.addEventListener('resize',positionPopover);window.addEventListener('scroll',positionPopover,true);window.visualViewport?.addEventListener('resize',positionPopover);
+  document.addEventListener('click',event=>{if(event.target.closest?.('[data-aspect-filter-toggle],[data-aspect-filter-value]'))requestAnimationFrame(()=>positionPopover({reset:true}))});
+  window.addEventListener('resize',()=>positionPopover({reset:true}));window.addEventListener('scroll',positionPopover,true);window.visualViewport?.addEventListener('resize',()=>positionPopover({reset:true}));
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();

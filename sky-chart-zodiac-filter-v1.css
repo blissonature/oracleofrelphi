@@ -16,10 +16,14 @@
 .sky-chart-zodiac-filter-name{display:flex;align-items:center;justify-content:flex-start;gap:9px;min-width:0;padding:7px 10px;font:750 .67rem/1.15 system-ui,sans-serif;text-align:left}
 .sky-chart-zodiac-filter-glyph{display:grid;place-items:center;width:26px;height:26px;flex:0 0 26px}
 .sky-chart-zodiac-filter-glyph>svg{display:block;width:24px;height:24px;overflow:visible}
+.sky-chart-zodiac-filter-copy{display:flex;align-items:baseline;gap:5px;min-width:0;white-space:nowrap}
+.sky-chart-sign-list-label{flex:0 0 auto}
+.sky-chart-sign-list-figure{min-width:0;color:#6b625a;font-weight:650}
+.sky-chart-sign-list-figure::before{content:"·";margin-right:5px;color:#9a9188}
 .sky-chart-zodiac-filter-check{display:flex;align-self:stretch;align-items:center;justify-content:center;border-left:1px solid rgba(31,27,24,.08);background:rgba(31,27,24,.018)}
 .sky-chart-zodiac-filter-row input[type="checkbox"]{appearance:none;-webkit-appearance:none;position:relative;width:15px;height:15px;min-width:15px;margin:0;border:1px solid #211d19;border-radius:3px;background:#fff!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);color:#111;cursor:pointer;accent-color:transparent!important}
 .sky-chart-zodiac-filter-row input[type="checkbox"]::after{content:"";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#111;font:900 13px/13px Arial,sans-serif}
 .sky-chart-zodiac-filter-row input[type="checkbox"]:checked::after{content:"✓"}
 .sky-chart-zodiac-filter-row input[type="checkbox"]:focus-visible{outline:2px solid #625a52;outline-offset:2px}
 .sky-chart-sign-filter-hidden{display:none!important}
-@media(max-width:620px){.sky-chart-zodiac-filter-menu{width:min(330px,calc(100vw - 24px))}.sky-chart-zodiac-filter-name{padding:7px 8px;font-size:.63rem}}
+@media(max-width:620px){.sky-chart-zodiac-filter-menu{width:min(330px,calc(100vw - 24px))}.sky-chart-zodiac-filter-name{padding:7px 8px;font-size:.63rem}.sky-chart-zodiac-filter-copy{gap:4px}.sky-chart-sign-list-figure::before{margin-right:4px}}

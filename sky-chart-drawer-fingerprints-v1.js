@@ -1,7 +1,8 @@
 // Data-derived fingerprints for collapsed Where and When, Placements, and Card Hits drawers.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyDrawerFingerprintsV2)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyDrawerFingerprintsV3)return;
+window.__relphiSkyDrawerFingerprintsV3=true;
 window.__relphiSkyDrawerFingerprintsV2=true;
 window.__relphiSkyDrawerFingerprintsV1=true;
 
@@ -61,10 +62,12 @@ function temporalTrace(sourceSvg){
 }
 function renderWhere(slot,payload){
   const mount=whereMount(slot);if(!mount)return;
-  const refs=window.RelphiSkyCardShell?.get?.(slot),sourceSvg=refs?.heptagram,profile=payload?.calcProfile&&typeof payload.calcProfile==='object'?payload.calcProfile:{};
-  const complete=!!(profile.dateTime&&profile.location&&profile.timeZone&&Number.isFinite(Number(profile.latitude))&&Number.isFinite(Number(profile.longitude)));
+  const refs=window.RelphiSkyCardShell?.get?.(slot),sourceSvg=refs?.heptagram;
   mount.replaceChildren();
-  if(!complete||!sourceSvg){whereRetry[slot]=0;mount.hidden=true;mount.removeAttribute('aria-label');return}
+  // The full Where and When heptagram is the single source of truth for this
+  // fingerprint. Do not independently reject valid rendered geometry because a
+  // stored sky uses an older metadata/profile shape.
+  if(!payload||!sourceSvg){whereRetry[slot]=0;mount.hidden=true;mount.removeAttribute('aria-label');return}
   const trace=temporalTrace(sourceSvg);
   if(!trace){mount.hidden=true;mount.removeAttribute('aria-label');if(whereRetry[slot]<24){whereRetry[slot]+=1;window.setTimeout(schedule,50)}return}
   whereRetry[slot]=0;

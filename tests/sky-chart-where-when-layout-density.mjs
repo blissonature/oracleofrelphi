@@ -38,15 +38,19 @@ assert.equal(await editor.locator('.sky-where-when-ph-jump').count(),0,'The old 
 const metrics=await editor.evaluate(form=>{
   const card=form.closest('.sky-foundation-panel');
   const body=form.querySelector('.sky-where-when-scroll-body');
+  const where=form.querySelector('[data-ww-where]');
   const when=form.querySelector('[data-ww-when]');
   const date=form.querySelector('[data-ww-field="date"]');
+  const time=form.querySelector('[data-ww-field="time"]');
+  const search=form.querySelector('[data-ww-field="location-query"]');
   const footer=form.querySelector('.sky-where-when-footer');
   const slot=form.querySelector('.sky-where-when-heptagram-slot');
   const heptagram=slot.querySelector('.sky-where-when-draft-heptagram');
   const confirm=footer.querySelector('button[type="submit"]');
   const cancel=footer.querySelector('.sky-where-when-cancel');
   const r=node=>node.getBoundingClientRect();
-  const bodyRect=r(body),whenRect=r(when),dateRect=r(date);
+  const formRect=r(form),bodyRect=r(body),whereRect=r(where),whenRect=r(when),dateRect=r(date),timeRect=r(time),searchRect=r(search);
+  const formStyle=getComputedStyle(form);
   return{
     cardWidth:r(card).width,
     heptagramWidth:r(heptagram).width,
@@ -59,7 +63,15 @@ const metrics=await editor.evaluate(form=>{
     confirmWidth:r(confirm).width,
     whenVisiblePixels:Math.max(0,Math.min(bodyRect.bottom,whenRect.bottom)-Math.max(bodyRect.top,whenRect.top)),
     dateStartsInsideBody:dateRect.top<bodyRect.bottom-4,
-    bodyMaxHeight:parseFloat(getComputedStyle(body).maxHeight)||0
+    bodyMaxHeight:parseFloat(getComputedStyle(body).maxHeight)||0,
+    scrollbarGutter:getComputedStyle(body).scrollbarGutter,
+    expectedContentRight:formRect.right-(parseFloat(formStyle.paddingRight)||0),
+    whereRight:whereRect.right,
+    whenRight:whenRect.right,
+    searchRight:searchRect.right,
+    timeRight:timeRect.right,
+    timeClientWidth:time.clientWidth,
+    timeScrollWidth:time.scrollWidth
   };
 });
 
@@ -76,7 +88,13 @@ assert.ok(metrics.confirmWidth>metrics.cancelWidth*1.9,'Confirm action should ke
 assert.ok(metrics.whenVisiblePixels>=90,`At least the useful top of When should show without scrolling, got ${metrics.whenVisiblePixels}px.`);
 assert.equal(metrics.dateStartsInsideBody,true,'The date field should begin inside the default visible Where/When scroll viewport.');
 assert.ok(metrics.bodyMaxHeight>=390,`The scroll body should receive the space recovered from the footer, got max-height ${metrics.bodyMaxHeight}px.`);
+assert.equal(metrics.scrollbarGutter,'auto','Where/When must not reserve a permanent scrollbar lane in a narrow Sky card.');
+assert.ok(Math.abs(metrics.expectedContentRight-metrics.whereRight)<=1.5,`Where should use the full editor content width; right gap is ${metrics.expectedContentRight-metrics.whereRight}px.`);
+assert.ok(Math.abs(metrics.expectedContentRight-metrics.whenRight)<=1.5,`When should use the full editor content width; right gap is ${metrics.expectedContentRight-metrics.whenRight}px.`);
+assert.ok(metrics.searchRight<=metrics.expectedContentRight+1.5,'Location search field must remain inside the reclaimed content width.');
+assert.ok(metrics.timeRight<=metrics.expectedContentRight+1.5,'Time field must remain inside the reclaimed content width.');
+assert.ok(metrics.timeScrollWidth<=metrics.timeClientWidth+1,'Time control content must not be clipped horizontally.');
 
 assert.deepEqual(errors,[]);
 await browser.close();
-console.log('Where and When compact footer layout passed.');
+console.log('Where and When compact footer and full-width narrow-card layout passed.');

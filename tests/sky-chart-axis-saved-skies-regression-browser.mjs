@@ -48,15 +48,30 @@ try{
     if(axis.extreme==='outer')assert.equal(axis.sky,'B',`outer axis belongs to Sky B: ${JSON.stringify(axis)}`);
   }
 
-  await page.waitForFunction(()=>{
-    const mount=window.RelphiSkyCardShell?.get?.('B')?.whereFingerprint;
+  await page.waitForFunction(()=>['A','B'].every(slot=>{
+    const mount=window.RelphiSkyCardShell?.get?.(slot)?.whereFingerprint;
     return !!mount&&!mount.hidden&&!!mount.querySelector('.sky-where-fingerprint-heptagram');
-  },null,{timeout:5000});
-  const drawerHeptagram=await page.evaluate(()=>{
-    const mount=window.RelphiSkyCardShell?.get?.('B')?.whereFingerprint;
-    return{exists:!!mount,hidden:mount?.hidden,heptagram:!!mount?.querySelector('.sky-where-fingerprint-heptagram')};
-  });
-  assert.deepEqual(drawerHeptagram,{exists:true,hidden:false,heptagram:true},`Sky B Where/When thumbprint should be visible: ${JSON.stringify(drawerHeptagram)}`);
+  }),null,{timeout:5000});
+  const drawerHeptagrams=await page.evaluate(()=>Object.fromEntries(['A','B'].map(slot=>{
+    const mount=window.RelphiSkyCardShell?.get?.(slot)?.whereFingerprint;
+    const heptagram=mount?.querySelector('.sky-where-fingerprint-heptagram');
+    const rect=heptagram?.getBoundingClientRect();
+    const weekLines=Array.from(heptagram?.querySelectorAll('.sky-ph-week-segment')||[]);
+    const visibleWeekLines=weekLines.filter(line=>{
+      const style=getComputedStyle(line),stroke=String(style.stroke||'').toLowerCase();
+      return stroke&&stroke!=='none'&&stroke!=='transparent'&&style.visibility!=='hidden'&&style.display!=='none'&&Number(style.opacity||1)>0;
+    });
+    return[slot,{exists:!!mount,hidden:mount?.hidden,heptagram:!!heptagram,width:rect?.width||0,height:rect?.height||0,weekLines:weekLines.length,visibleWeekLines:visibleWeekLines.length}];
+  })));
+  for(const slot of ['A','B']){
+    const thumb=drawerHeptagrams[slot];
+    assert.equal(thumb.exists,true,`Sky ${slot} Where/When thumbprint mount should exist: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.hidden,false,`Sky ${slot} Where/When thumbprint should not be hidden: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.heptagram,true,`Sky ${slot} microheptagram should exist: ${JSON.stringify(thumb)}`);
+    assert.ok(thumb.width>=40&&thumb.height>=40,`Sky ${slot} microheptagram should occupy its visible tab: ${JSON.stringify(thumb)}`);
+    assert.ok(thumb.weekLines>=7,`Sky ${slot} microheptagram should retain the weekly star geometry: ${JSON.stringify(thumb)}`);
+    assert.equal(thumb.visibleWeekLines,thumb.weekLines,`Sky ${slot} microheptagram lines should be visibly painted: ${JSON.stringify(thumb)}`);
+  }
 
   await page.locator('[data-saved-sky-trigger="B"]').click();
   await page.waitForSelector('#skySavedSkiesPopover .sky-saved-list',{timeout:5000});
@@ -93,7 +108,7 @@ try{
   assert.equal(afterNew.storedB,null,`uncommitted New Sky B should not masquerade as a stored completed sky: ${JSON.stringify(afterNew)}`);
 
   assert.deepEqual(errors,[],`browser errors: ${errors.join(' | ')}`);
-  console.log('axis label/notch pairing, visible heptagram thumbprints, Saved Skies fingerprints, and in-place Sky B New Sky passed');
+  console.log('axis label/notch pairing, visibly painted A/B microheptagrams, Saved Skies fingerprints, and in-place Sky B New Sky passed');
 }finally{
   await browser.close();
 }

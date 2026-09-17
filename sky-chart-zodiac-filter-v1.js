@@ -6,7 +6,20 @@ if(window.__relphiSkyZodiacFilterV3)return;
 window.__relphiSkyZodiacFilterV3=true;
 window.__relphiSkyZodiacFilterV2=true;
 
-const SIGNS=[['aries','Aries'],['taurus','Taurus'],['gemini','Gemini'],['cancer','Cancer'],['leo','Leo'],['virgo','Virgo'],['libra','Libra'],['scorpio','Scorpio'],['sagittarius','Sagittarius'],['capricorn','Capricorn'],['aquarius','Aquarius'],['pisces','Pisces']];
+const SIGNS=[
+  ['aries','Aries','Lamb'],
+  ['taurus','Taurus','Bull'],
+  ['gemini','Gemini','Twins'],
+  ['cancer','Cancer','Crab'],
+  ['leo','Leo','Lion'],
+  ['virgo','Virgo','Maiden'],
+  ['libra','Libra','Scales'],
+  ['scorpio','Scorpio','Scorpion'],
+  ['sagittarius','Sagittarius','Bow'],
+  ['capricorn','Capricorn','Kid'],
+  ['aquarius','Aquarius','Bucket'],
+  ['pisces','Pisces','Fishes']
+];
 const COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const ALL=SIGNS.map((_,index)=>String(index));
 let selected=new Set(ALL),queued=false,wheelDriven=false,root=null,button=null,menu=null;
@@ -73,18 +86,42 @@ function positionMenu(){
   if(!menu||menu.hidden||!button)return;
   const rect=button.getBoundingClientRect(),margin=12,gap=5;
   const width=Math.max(220,Math.min(330,window.innerWidth-margin*2));
-  const below=Math.max(0,window.innerHeight-rect.bottom-margin-gap);
-  const above=Math.max(0,rect.top-margin-gap);
-  const openAbove=below<360&&above>below;
-  const room=Math.max(180,openAbove?above:below);
-  const maxHeight=Math.min(560,room);
   const left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin));
   menu.style.width=`${width}px`;
-  menu.style.maxHeight=`${maxHeight}px`;
+
+  // Let the menu use its natural height whenever the viewport can hold it. Only turn
+  // on scrolling when the full sign list genuinely cannot fit on screen.
+  menu.style.height='auto';
+  menu.style.maxHeight='none';
+  menu.style.overflowY='hidden';
+  const style=getComputedStyle(menu);
+  const borderHeight=(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.borderBottomWidth)||0);
+  const naturalHeight=Math.ceil(menu.scrollHeight+borderHeight);
+  const availableHeight=Math.max(180,window.innerHeight-margin*2);
+  const needsScroll=naturalHeight>availableHeight;
+  const renderedHeight=needsScroll?availableHeight:naturalHeight;
+
+  if(needsScroll){
+    menu.style.height=`${availableHeight}px`;
+    menu.style.maxHeight=`${availableHeight}px`;
+    menu.style.overflowY='auto';
+  }else{
+    menu.style.height='auto';
+    menu.style.maxHeight='none';
+    menu.style.overflowY='hidden';
+  }
+
+  const belowTop=rect.bottom+gap;
+  const aboveTop=rect.top-renderedHeight-gap;
+  let top;
+  if(belowTop+renderedHeight<=window.innerHeight-margin)top=belowTop;
+  else if(aboveTop>=margin)top=aboveTop;
+  else top=Math.min(Math.max(margin,rect.top-renderedHeight/2),Math.max(margin,window.innerHeight-renderedHeight-margin));
+
   menu.style.left=`${left}px`;
-  if(openAbove){menu.style.top='auto';menu.style.bottom=`${window.innerHeight-rect.top+gap}px`;}
-  else{menu.style.bottom='auto';menu.style.top=`${rect.bottom+gap}px`;}
-  menu.dataset.openDirection=openAbove?'above':'below';
+  menu.style.top=`${top}px`;
+  menu.style.bottom='auto';
+  menu.dataset.openDirection=top<rect.top?'above':'below';
 }
 
 function openMenu(){
@@ -113,13 +150,16 @@ function install(){
   const noneButton=document.createElement('button');noneButton.type='button';noneButton.textContent='None';noneButton.dataset.zodiacNone='true';
   actions.append(allButton,noneButton);header.append(hName,actions);list.appendChild(header);
 
-  SIGNS.forEach(([id,name],index)=>{
+  SIGNS.forEach(([id,name,figure],index)=>{
     const row=document.createElement('label');row.className='sky-chart-zodiac-filter-row';row.dataset.signListItem=id;
     const nameCell=document.createElement('span');nameCell.className='sky-chart-zodiac-filter-name';
     const art=document.createElement('span');art.className='sky-chart-zodiac-filter-glyph';canonicalGlyph(art,id,COLORS[index]);
-    const text=document.createElement('span');text.className='sky-chart-sign-list-label';text.textContent=name;nameCell.append(art,text);
+    const copy=document.createElement('span');copy.className='sky-chart-zodiac-filter-copy';
+    const text=document.createElement('span');text.className='sky-chart-sign-list-label';text.textContent=name;
+    const figureText=document.createElement('span');figureText.className='sky-chart-sign-list-figure';figureText.textContent=figure;
+    copy.append(text,figureText);nameCell.append(art,copy);
     const checkCell=document.createElement('span');checkCell.className='sky-chart-zodiac-filter-check';
-    const input=document.createElement('input');input.type='checkbox';input.checked=true;input.value=String(index);input.setAttribute('aria-label',name);checkCell.appendChild(input);
+    const input=document.createElement('input');input.type='checkbox';input.checked=true;input.value=String(index);input.setAttribute('aria-label',`${name}, ${figure}`);checkCell.appendChild(input);
     row.append(nameCell,checkCell);list.appendChild(row);
     input.addEventListener('change',()=>{
       releaseWheelIsolationForManualFilter();
