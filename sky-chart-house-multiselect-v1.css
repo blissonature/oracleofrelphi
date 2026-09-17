@@ -11,7 +11,7 @@
 .sky-chart-house-filter-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .sky-chart-house-summary-choices .sky-chart-house-choice{min-height:0;padding:0 3px;border:0;background:transparent;font-size:.56rem!important}
 .sky-chart-house-summary-choices .sky-chart-house-choice span{display:inline}
-.sky-chart-house-filter-popover{position:absolute;top:calc(100% + 6px);left:50%;width:min(410px,calc(100vw - 16px));max-height:min(600px,calc(100vh - 16px));overflow-x:hidden;overflow-y:auto;scrollbar-gutter:auto;box-sizing:border-box;padding:10px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2);transform:translateX(-50%);pointer-events:auto}
+.sky-chart-house-filter-popover{position:absolute;top:calc(100% + 6px);left:50%;width:min(430px,calc(100vw - 16px));max-height:none;overflow-x:hidden;overflow-y:hidden;scrollbar-gutter:auto;box-sizing:border-box;padding:10px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2);transform:translateX(-50%);pointer-events:auto}
 .sky-chart-house-filter-popover[hidden]{display:none!important}
 .sky-chart-house-filter-popover.is-portaled{position:fixed;z-index:10000;right:auto;bottom:auto;margin:0;transform:none;isolation:isolate}
 .sky-chart-house-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:10px;background:#fff}
