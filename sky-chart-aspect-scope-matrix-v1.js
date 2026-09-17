@@ -29,7 +29,7 @@ let queued=false;
 let applying=false;
 let menuObserver=null;
 let lastScopeSignature='';
-let openLeft=null;
+let openGeometry=null;
 
 function normalize(value){
   const key=String(value||'').trim().toLowerCase().replace(/[ _]+/g,'-');
@@ -141,18 +141,21 @@ function applyMatrix({announce=true}={}){
   if(announce)window.dispatchEvent(new CustomEvent('relphi:sky-aspect-multiselect-changed',{detail:{selected,scopes,matrix}}));
   applying=false;
 }
-function positionPopover({resetHorizontal=false}={}){
+function positionPopover({reset=false}={}){
   const owner=control(),menu=popover(),head=owner?.querySelector('.sky-chart-aspect-filter-head');
-  if(!owner?.classList.contains('is-open')||!menu?.classList.contains('is-portaled')||menu.hidden||!head){openLeft=null;return}
-  const rect=head.getBoundingClientRect(),margin=10,width=Math.min(400,Math.max(0,window.innerWidth-margin*2));
-  const computedLeft=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left+rect.width/2-width/2));
-  if(resetHorizontal||openLeft==null)openLeft=computedLeft;
-  const left=Math.min(window.innerWidth-width-margin,Math.max(margin,openLeft));
-  const below=window.innerHeight-rect.bottom-margin,above=rect.top-margin,maxHeight=Math.max(220,Math.min(520,Math.max(below,above)));
-  const top=below<260&&above>below?Math.max(margin,rect.top-maxHeight-6):Math.min(window.innerHeight-maxHeight-margin,rect.bottom+6);
-  menu.style.setProperty('--sky-aspect-popover-left',`${left}px`);
-  menu.style.setProperty('--sky-aspect-popover-top',`${Math.max(margin,top)}px`);
-  menu.style.setProperty('--sky-aspect-popover-max-height',`${maxHeight}px`);
+  if(!owner?.classList.contains('is-open')||!menu?.classList.contains('is-portaled')||menu.hidden||!head){openGeometry=null;return}
+  if(reset||!openGeometry){
+    const rect=head.getBoundingClientRect(),margin=10;
+    const measuredWidth=menu.getBoundingClientRect().width;
+    const width=measuredWidth>0?measuredWidth:Math.min(400,Math.max(0,window.innerWidth-margin*2));
+    const left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left+rect.width/2-width/2));
+    const below=window.innerHeight-rect.bottom-margin,above=rect.top-margin,maxHeight=Math.max(220,Math.min(520,Math.max(below,above)));
+    const top=below<260&&above>below?Math.max(margin,rect.top-maxHeight-6):Math.min(window.innerHeight-maxHeight-margin,rect.bottom+6);
+    openGeometry={left,top:Math.max(margin,top),maxHeight};
+  }
+  menu.style.setProperty('--sky-aspect-popover-left',`${openGeometry.left}px`);
+  menu.style.setProperty('--sky-aspect-popover-top',`${openGeometry.top}px`);
+  menu.style.setProperty('--sky-aspect-popover-max-height',`${openGeometry.maxHeight}px`);
 }
 function ensureMenuObserver(){
   const menu=popover();if(!menu||menu.dataset.aspectMatrixObserved==='true')return;
@@ -179,8 +182,8 @@ function start(){
   window.addEventListener('relphi:sky-aspect-multiselect-changed',handleLegacyAspectPass);
   window.addEventListener('storage',event=>{if(!event.key||event.key==='relphiSkyChartB')schedule()});
   new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['data-sky-b-present','data-sky-b-editing']});
-  document.addEventListener('click',event=>{if(event.target.closest?.('[data-aspect-filter-toggle],[data-aspect-filter-value]'))requestAnimationFrame(positionPopover)});
-  window.addEventListener('resize',()=>positionPopover({resetHorizontal:true}));window.addEventListener('scroll',positionPopover,true);window.visualViewport?.addEventListener('resize',()=>positionPopover({resetHorizontal:true}));
+  document.addEventListener('click',event=>{if(event.target.closest?.('[data-aspect-filter-toggle],[data-aspect-filter-value]'))requestAnimationFrame(()=>positionPopover({reset:true}))});
+  window.addEventListener('resize',()=>positionPopover({reset:true}));window.addEventListener('scroll',positionPopover,true);window.visualViewport?.addEventListener('resize',()=>positionPopover({reset:true}));
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
