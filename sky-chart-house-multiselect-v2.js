@@ -207,18 +207,40 @@
     if (!isOpen(owner) || !menu?.classList.contains('is-portaled') || !head) return;
     const rect = head.getBoundingClientRect();
     const margin = 8;
-    const width = Math.min(410, Math.max(280, window.innerWidth - margin * 2));
+    const width = Math.min(430, Math.max(280, window.innerWidth - margin * 2));
     const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left + rect.width / 2 - width / 2));
     menu.style.width = `${width}px`;
-    const viewportMaxHeight = Math.max(220, Math.min(600, window.innerHeight - margin * 2));
-    const desiredHeight = Math.min(viewportMaxHeight, Math.max(220, menu.scrollHeight));
+
+    // Measure the natural outer height with scrolling disabled. scrollHeight includes
+    // padding but not borders, so include the border box explicitly before deciding
+    // whether the viewport actually requires a scrollbar.
+    menu.style.height = 'auto';
+    menu.style.maxHeight = 'none';
+    menu.style.overflowY = 'hidden';
+    const style = getComputedStyle(menu);
+    const borderHeight = (parseFloat(style.borderTopWidth) || 0) + (parseFloat(style.borderBottomWidth) || 0);
+    const naturalHeight = Math.ceil(menu.scrollHeight + borderHeight);
+    const availableHeight = Math.max(220, window.innerHeight - margin * 2);
+    const needsScroll = naturalHeight > availableHeight;
+    const renderedHeight = needsScroll ? availableHeight : naturalHeight;
+
+    if (needsScroll) {
+      menu.style.height = `${availableHeight}px`;
+      menu.style.maxHeight = `${availableHeight}px`;
+      menu.style.overflowY = 'auto';
+    } else {
+      menu.style.height = 'auto';
+      menu.style.maxHeight = 'none';
+      menu.style.overflowY = 'hidden';
+    }
+
     const belowTop = rect.bottom + 6;
-    const aboveTop = rect.top - desiredHeight - 6;
+    const aboveTop = rect.top - renderedHeight - 6;
     let top;
-    if (belowTop + desiredHeight <= window.innerHeight - margin) top = belowTop;
+    if (belowTop + renderedHeight <= window.innerHeight - margin) top = belowTop;
     else if (aboveTop >= margin) top = aboveTop;
-    else top = Math.min(Math.max(margin, rect.top - desiredHeight / 2), Math.max(margin, window.innerHeight - desiredHeight - margin));
-    Object.assign(menu.style, { maxHeight:`${desiredHeight}px`, left:`${left}px`, top:`${top}px` });
+    else top = Math.min(Math.max(margin, rect.top - renderedHeight / 2), Math.max(margin, window.innerHeight - renderedHeight - margin));
+    Object.assign(menu.style, { left:`${left}px`, top:`${top}px` });
   }
 
   function open(owner) {
