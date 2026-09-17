@@ -1,4 +1,4 @@
-// Keep Sky Chart filter popovers dimensionally stable and prevent background-page drift while they are open.
+// Keep Sky Chart filter popovers dimensionally stable without changing the page's layout geometry while they are open.
 (function(){
   'use strict';
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyFilterPopoverStabilityV1)return;
@@ -14,8 +14,6 @@
   let syncQueued=false;
   let unlockQueued=false;
   let pageLocked=false;
-  let scrollX=0,scrollY=0;
-  let bodyRestore=null,htmlRestore=null;
   const observedMenus=new Set();
   const menuObservers=new WeakMap();
   let creationObserver=null;
@@ -56,47 +54,19 @@
     });
   }
 
+  // Keep the document's scrollbar and box geometry exactly as they are. Background
+  // scrolling is blocked by the captured wheel/touch/key handlers below instead of
+  // hiding overflow or fixing the body, both of which change the layout viewport.
   function lockPage(){
-    if(pageLocked||!document.body)return;
+    if(pageLocked)return;
     pageLocked=true;
-    scrollX=window.scrollX||window.pageXOffset||0;
-    scrollY=window.scrollY||window.pageYOffset||0;
-    const body=document.body,html=document.documentElement;
-    const scrollbar=Math.max(0,window.innerWidth-html.clientWidth);
-    const computedPaddingRight=parseFloat(getComputedStyle(body).paddingRight)||0;
-    bodyRestore={
-      position:body.style.position,top:body.style.top,left:body.style.left,right:body.style.right,
-      width:body.style.width,overflow:body.style.overflow,paddingRight:body.style.paddingRight
-    };
-    htmlRestore={overflow:html.style.overflow,overscrollBehavior:html.style.overscrollBehavior,scrollbarGutter:html.style.scrollbarGutter};
-
-    html.style.overflow='hidden';
-    html.style.overscrollBehavior='none';
-    html.style.scrollbarGutter='stable';
-    body.style.position='fixed';
-    body.style.top=`-${scrollY}px`;
-    body.style.left=`-${scrollX}px`;
-    body.style.right='0';
-    body.style.width='auto';
-    body.style.overflow='hidden';
-    if(scrollbar>0)body.style.paddingRight=`${computedPaddingRight+scrollbar}px`;
     document.documentElement.dataset.skyFilterPopoverPageLocked='true';
-  }
-  function restoreStyle(node,property,value){
-    if(value)node.style[property]=value;
-    else node.style.removeProperty(property.replace(/[A-Z]/g,match=>`-${match.toLowerCase()}`));
   }
   function unlockPageNow(){
     unlockQueued=false;
-    if(activeMenus().length||!pageLocked||!document.body)return;
-    const body=document.body,html=document.documentElement;
-    const savedBody=bodyRestore||{},savedHtml=htmlRestore||{};
-    ['position','top','left','right','width','overflow','paddingRight'].forEach(property=>restoreStyle(body,property,savedBody[property]||''));
-    ['overflow','overscrollBehavior','scrollbarGutter'].forEach(property=>restoreStyle(html,property,savedHtml[property]||''));
+    if(activeMenus().length||!pageLocked)return;
     pageLocked=false;
-    bodyRestore=null;htmlRestore=null;
     delete document.documentElement.dataset.skyFilterPopoverPageLocked;
-    window.scrollTo(scrollX,scrollY);
   }
   function scheduleUnlock(){
     if(unlockQueued)return;
@@ -174,7 +144,6 @@
     },true);
     window.addEventListener('resize',scheduleSync);
     window.visualViewport?.addEventListener('resize',scheduleSync);
-    window.addEventListener('pagehide',()=>{if(pageLocked){document.body.style.position=bodyRestore?.position||'';document.body.style.top=bodyRestore?.top||'';document.body.style.left=bodyRestore?.left||'';document.body.style.right=bodyRestore?.right||'';document.body.style.width=bodyRestore?.width||'';document.body.style.overflow=bodyRestore?.overflow||'';document.body.style.paddingRight=bodyRestore?.paddingRight||''}});
     scheduleSync();
   }
 
