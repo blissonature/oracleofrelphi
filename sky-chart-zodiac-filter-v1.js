@@ -86,18 +86,42 @@ function positionMenu(){
   if(!menu||menu.hidden||!button)return;
   const rect=button.getBoundingClientRect(),margin=12,gap=5;
   const width=Math.max(220,Math.min(330,window.innerWidth-margin*2));
-  const below=Math.max(0,window.innerHeight-rect.bottom-margin-gap);
-  const above=Math.max(0,rect.top-margin-gap);
-  const openAbove=below<360&&above>below;
-  const room=Math.max(180,openAbove?above:below);
-  const maxHeight=Math.min(560,room);
   const left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin));
   menu.style.width=`${width}px`;
-  menu.style.maxHeight=`${maxHeight}px`;
+
+  // Let the menu use its natural height whenever the viewport can hold it. Only turn
+  // on scrolling when the full sign list genuinely cannot fit on screen.
+  menu.style.height='auto';
+  menu.style.maxHeight='none';
+  menu.style.overflowY='hidden';
+  const style=getComputedStyle(menu);
+  const borderHeight=(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.borderBottomWidth)||0);
+  const naturalHeight=Math.ceil(menu.scrollHeight+borderHeight);
+  const availableHeight=Math.max(180,window.innerHeight-margin*2);
+  const needsScroll=naturalHeight>availableHeight;
+  const renderedHeight=needsScroll?availableHeight:naturalHeight;
+
+  if(needsScroll){
+    menu.style.height=`${availableHeight}px`;
+    menu.style.maxHeight=`${availableHeight}px`;
+    menu.style.overflowY='auto';
+  }else{
+    menu.style.height='auto';
+    menu.style.maxHeight='none';
+    menu.style.overflowY='hidden';
+  }
+
+  const belowTop=rect.bottom+gap;
+  const aboveTop=rect.top-renderedHeight-gap;
+  let top;
+  if(belowTop+renderedHeight<=window.innerHeight-margin)top=belowTop;
+  else if(aboveTop>=margin)top=aboveTop;
+  else top=Math.min(Math.max(margin,rect.top-renderedHeight/2),Math.max(margin,window.innerHeight-renderedHeight-margin));
+
   menu.style.left=`${left}px`;
-  if(openAbove){menu.style.top='auto';menu.style.bottom=`${window.innerHeight-rect.top+gap}px`;}
-  else{menu.style.bottom='auto';menu.style.top=`${rect.bottom+gap}px`;}
-  menu.dataset.openDirection=openAbove?'above':'below';
+  menu.style.top=`${top}px`;
+  menu.style.bottom='auto';
+  menu.dataset.openDirection=top<rect.top?'above':'below';
 }
 
 function openMenu(){
