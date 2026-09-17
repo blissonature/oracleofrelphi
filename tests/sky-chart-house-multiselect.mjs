@@ -75,7 +75,17 @@ assert.equal(placementNeutral.labelColor,placementBColor,'Sky A and B checkbox l
 
 await combined.locator('[data-house-filter-toggle]').click();
 await page.waitForSelector('#skyChartHousePopover.is-portaled:not([hidden])');
-await page.waitForFunction(()=>document.getElementById('skyChartHousePopover')?.getBoundingClientRect().width>=520,null,{timeout:10000});
+await page.waitForFunction(()=>document.getElementById('skyChartHousePopover')?.getBoundingClientRect().width>=425,null,{timeout:10000});
+const desktopMenuGeometry=await menu.evaluate(node=>({
+  width:node.getBoundingClientRect().width,
+  scrollHeight:node.scrollHeight,
+  clientHeight:node.clientHeight,
+  overflowY:getComputedStyle(node).overflowY
+}));
+assert.ok(desktopMenuGeometry.width>=425&&desktopMenuGeometry.width<=431,'Desktop Houses menu should stay near the compact 430px fit.');
+assert.ok(desktopMenuGeometry.scrollHeight<=desktopMenuGeometry.clientHeight+1,'Desktop Houses menu must fit without a vertical scrollbar when the viewport has room.');
+assert.equal(desktopMenuGeometry.overflowY,'hidden','A fitting Houses menu should release scrollbar space back to the learning column.');
+
 const list=menu.locator('[data-house-list="combined"]');
 assert.equal(await list.locator('.sky-chart-house-list-header').count(),1);
 assert.equal(await list.locator('.sky-chart-house-list-item-master').count(),1);
@@ -104,6 +114,8 @@ assert.equal(learningRows.every(row=>!row.visibleText.includes(`House ${row.hous
 assert.equal(learningRows.every(row=>row.labelName.startsWith(`House ${row.house}: `)),true,'Static row semantics must retain the house number.');
 assert.equal(learningRows.every(row=>row.choiceName.startsWith(`House ${row.house}: `)),true,'Checkbox names must retain the house number and meaning.');
 assert.equal(learningRows.some(row=>row.clipped),false,'House learning descriptions must not truncate at desktop width.');
+const houseEight=learningRows.find(row=>row.house==='8');
+assert.ok(houseEight&&!houseEight.clipped,'House 8 is the width constraint and must remain fully visible.');
 
 const visibleRows=()=>page.locator('.sky-foundation-relationship-row:not(.sky-chart-filter-hidden):not(.sky-chart-orb-hidden):not(.sky-orb-filter-hidden):not(.sky-chart-multiselect-hidden):not(.sky-chart-house-multiselect-hidden):not([hidden])');
 const masterA=list.locator('[data-house-scope="all"][data-house-target="all"][data-house-choice="a"]');
@@ -187,4 +199,4 @@ assert.equal(await menu.isVisible(),true);
 await page.screenshot({path:'sky-chart-house-multiselect-mobile.png',fullPage:true});
 assert.deepEqual(errors,[]);
 await browser.close();
-console.log('Sky Chart shared Houses checklist, learning copy, accessibility, and neutral black-and-white checkboxes passed.');
+console.log('Sky Chart shared Houses checklist, learning copy, accessibility, no-scroll desktop fit, and neutral black-and-white checkboxes passed.');
