@@ -15,7 +15,7 @@ const SIGNS=[
   ['virgo','Virgo','Maiden'],
   ['libra','Libra','Scales'],
   ['scorpio','Scorpio','Scorpion'],
-  ['sagittarius','Sagittarius','Archer'],
+  ['sagittarius','Sagittarius','Bow'],
   ['capricorn','Capricorn','Kid'],
   ['aquarius','Aquarius','Bucket'],
   ['pisces','Pisces','Fishes']
