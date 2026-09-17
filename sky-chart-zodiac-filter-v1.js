@@ -17,7 +17,7 @@ const SIGNS=[
   ['scorpio','Scorpio','Scorpion'],
   ['sagittarius','Sagittarius','Archer'],
   ['capricorn','Capricorn','Sea-Goat'],
-  ['aquarius','Aquarius','Water-Bearer'],
+  ['aquarius','Aquarius','Bucket'],
   ['pisces','Pisces','Fishes']
 ];
 const COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
