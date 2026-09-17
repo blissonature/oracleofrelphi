@@ -11,7 +11,10 @@ function installStyle(){
   const style=document.createElement('style');style.id='skyWhereWhenViewportV3Style';
   style.textContent=`
     .sky-where-when-editor{row-gap:0!important}
-    .sky-where-when-scroll-body{scrollbar-gutter:stable;padding-bottom:0}
+    /* Do not permanently reserve a scrollbar lane inside a narrow Sky card.
+       The body may scroll when it genuinely needs to, but when it fits its
+       fields should reclaim the full content width. */
+    .sky-where-when-scroll-body{scrollbar-gutter:auto;padding-bottom:0}
     .sky-where-when-here-now-row{padding:0 .62rem .8rem}
     .sky-location-confirmation:not([data-location-source="placement-inference"]) p:first-child{display:none}
     .sky-where-when-status:empty{display:none}
@@ -20,7 +23,6 @@ function installStyle(){
     @media(max-width:620px){
       .sky-where-when-grid{grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)}
       .sky-where-when-here-now-row{padding:0 .55rem .69rem}
-      .sky-where-when-scroll-body{scrollbar-gutter:auto}
     }
   `;document.head.appendChild(style);
 }
