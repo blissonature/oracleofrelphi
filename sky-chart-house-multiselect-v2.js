@@ -103,6 +103,9 @@
       const marker = window.RelphiHouseMedallion?.create?.(Number(target));
       if (!marker) throw new Error('House medallion source primitive is unavailable.');
       marker.classList.add('sky-chart-house-menu-medallion');
+      marker.setAttribute('aria-hidden','true');
+      marker.removeAttribute('aria-label');
+      marker.removeAttribute('title');
       const description = document.createElement('span');
       description.className = 'sky-chart-house-menu-description';
       description.textContent = labelText;
@@ -204,7 +207,7 @@
     if (!isOpen(owner) || !menu?.classList.contains('is-portaled') || !head) return;
     const rect = head.getBoundingClientRect();
     const margin = 12;
-    const width = Math.min(460, Math.max(280, window.innerWidth - margin * 2));
+    const width = Math.min(560, Math.max(280, window.innerWidth - margin * 2));
     const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left + rect.width / 2 - width / 2));
     const below = window.innerHeight - rect.bottom - margin;
     const above = rect.top - margin;
