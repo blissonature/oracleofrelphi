@@ -6,7 +6,7 @@
 
   const CONFIGS=[
     {selector:'#skyChartPlacementPopover.sky-chart-placement-filter-popover.is-portaled:not([hidden])',min:280,max:360,gutter:'stable'},
-    {selector:'#skyChartHousePopover.sky-chart-house-filter-popover.is-portaled:not([hidden])',min:280,max:410,gutter:'auto'},
+    {selector:'#skyChartHousePopover.sky-chart-house-filter-popover.is-portaled:not([hidden])',min:280,max:430,gutter:'auto'},
     {selector:'#skyChartAspectPopover.sky-chart-aspect-filter-popover.is-portaled:not([hidden])',min:240,max:270,gutter:'stable'}
   ];
   const MENU_SELECTOR='#skyChartPlacementPopover,#skyChartHousePopover,#skyChartAspectPopover';
