@@ -7,6 +7,20 @@
 
   const SLOTS = ['A','B'];
   const HOUSES = Array.from({ length:12 }, (_, index) => String(index + 1));
+  const HOUSE_DESCRIPTIONS = Object.freeze({
+    '1':'self, body, approach',
+    '2':'money, possessions, worth',
+    '3':'communication, siblings, local life',
+    '4':'home, family, roots',
+    '5':'pleasure, creativity, children',
+    '6':'work, health, routine',
+    '7':'partners, bonds, agreements',
+    '8':'loss, death, other people’s resources',
+    '9':'travel, belief, higher learning',
+    '10':'career, reputation, public life',
+    '11':'friends, groups, hopes',
+    '12':'solitude, sorrow, hidden things'
+  });
   const state = { A:new Set(HOUSES), B:new Set(HOUSES) };
   let queued = false;
   let portalOwner = null;
@@ -79,18 +93,29 @@
     return label;
   }
 
-  function row(scope, target, labelText, kind) {
+  function row(scope, target, labelText, kind, rowLabel = labelText) {
     const item = document.createElement('div');
     item.className = `sky-chart-house-list-item sky-chart-house-list-item-${kind}`;
     item.dataset.houseListItem = target;
     const label = document.createElement('strong');
     label.className = 'sky-chart-house-list-label';
-    label.textContent = labelText;
+    if (kind === 'house') {
+      const marker = window.RelphiHouseMedallion?.create?.(Number(target));
+      if (!marker) throw new Error('House medallion source primitive is unavailable.');
+      marker.classList.add('sky-chart-house-menu-medallion');
+      const description = document.createElement('span');
+      description.className = 'sky-chart-house-menu-description';
+      description.textContent = labelText;
+      label.append(marker, description);
+      label.setAttribute('aria-label', rowLabel);
+    } else {
+      label.textContent = labelText;
+    }
     const choices = document.createElement('div');
     choices.className = 'sky-chart-house-list-choices';
     choices.setAttribute('role', 'group');
-    choices.setAttribute('aria-label', labelText);
-    activeKinds().forEach(kindName => choices.appendChild(choice(scope, target, kindName, labelText)));
+    choices.setAttribute('aria-label', rowLabel);
+    activeKinds().forEach(kindName => choices.appendChild(choice(scope, target, kindName, rowLabel)));
     item.append(label, choices);
     return item;
   }
@@ -106,7 +131,7 @@
     header.className = 'sky-chart-house-list-header';
     header.innerHTML = bActive() ? '<strong>House</strong><span>All</span><span>A</span><span>B</span>' : '<strong>House</strong><span>All</span><span>A</span>';
     list.append(header, row('all','all','All houses','master'));
-    HOUSES.forEach(house => list.appendChild(row('house', house, `House ${house}`, 'house')));
+    HOUSES.forEach(house => list.appendChild(row('house', house, HOUSE_DESCRIPTIONS[house], 'house', `House ${house}: ${HOUSE_DESCRIPTIONS[house]}`)));
     body.appendChild(list);
     updateControl();
   }
@@ -179,7 +204,7 @@
     if (!isOpen(owner) || !menu?.classList.contains('is-portaled') || !head) return;
     const rect = head.getBoundingClientRect();
     const margin = 12;
-    const width = Math.min(330, Math.max(280, window.innerWidth - margin * 2));
+    const width = Math.min(460, Math.max(330, window.innerWidth - margin * 2));
     const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left + rect.width / 2 - width / 2));
     const below = window.innerHeight - rect.bottom - margin;
     const above = rect.top - margin;
