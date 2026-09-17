@@ -785,6 +785,7 @@
       rowDrawDeck: (state.rowDrawDeck || []).slice(),
       rowDrawDeckSignature: String(state.rowDrawDeckSignature || ''),
       rowCardReversals: { ...(state.rowCardReversals || {}) },
+      rowCardManual: rowCardManualArray(),
       rowZoom: Number(state.rowZoom) || 1,
       rowPanX: Number(state.rowPanX) || 0,
       rowPanY: Number(state.rowPanY) || 0,
@@ -837,6 +838,7 @@
     if (has('rowDrawDeck')) state.rowDrawDeck = Array.isArray(snapshot.rowDrawDeck) ? snapshot.rowDrawDeck.slice() : [];
     if (has('rowDrawDeckSignature')) state.rowDrawDeckSignature = String(snapshot.rowDrawDeckSignature || '');
     state.rowCardReversals = { ...(snapshot.rowCardReversals || {}) };
+    state.rowCardManual = Array.isArray(snapshot.rowCardManual) ? snapshot.rowCardManual.slice(0,state.shortList.length).map(Boolean) : Array(state.shortList.length).fill(false);
     state.rowEnvelopeLayout = cloneBoardValue(snapshot.rowEnvelopeLayout, {});
     state.rowCardTransforms = cloneBoardValue(snapshot.rowCardTransforms, {});
     state.rowActiveLayout = cloneBoardValue(snapshot.rowActiveLayout, null);
@@ -1003,23 +1005,38 @@
     });
   }
 
-  function commitShortList(next) {
+  function commitShortList(next, options = {}) {
     next = next.filter(Boolean);
     if (shortListSame(state.shortList, next)) return;
     if (next.length && state.rowLayoutDesignMode) return;
+    const nextManual=rowCardManualForNextList(next, options.newCardsManual !== false);
     pushBoardUndo();
     if (next.length) {
       state.rowLayoutLocked = true;
       state.rowLayoutDesignMode = false;
     }
     state.shortList = next;
+    state.rowCardManual = nextManual;
     state.shortListSelection = state.shortListSelection.filter(id => next.includes(id));
     setRowCardReversalArray(rowCardReversalArray(next.length));
     refreshShortListViews();
   }
   function clearShortListCardsOnlyNative() {
     if (!(state.shortList || []).length) return;
+    state.mode = 'board';
+    state.cardRowBoardOpen = true;
+    const trigger = $('relphiOpenDrawingBoardCurrent');
+    if (trigger) {
+      trigger.textContent = 'Close Drawing Board';
+      trigger.setAttribute('aria-expanded', 'true');
+    }
     commitShortList([]);
+    const wrap = $('shortListPanel');
+    if (wrap) {
+      wrap.hidden = false;
+      const drawer = wrap.querySelector('.card-row-drawing-board');
+      if (drawer) drawer.open = true;
+    }
   }
 
   function clearDrawingBoardNative() {
@@ -1029,6 +1046,7 @@
     state.shortListPositionLabels = [];
     state.shortListPositionCardIds = [];
     state.rowCardReversals = {};
+    state.rowCardManual = [];
     state.rowEnvelopeLayout = {};
     state.rowCardTransforms = {};
     state.rowActiveLayout = null;
@@ -1619,7 +1637,7 @@
     }
     if (!draw?.card) return;
     const index = (state.shortList || []).length;
-    commitShortList([...state.shortList, draw.card.card_id]);
+    commitShortList([...state.shortList, draw.card.card_id], { newCardsManual:false });
     setRowCardReversed(index, !!draw.reversed);
     refreshShortListViews();
     expandCardRow();
@@ -2323,6 +2341,25 @@
     });
   }
 
+  function rowCardManualArray(length = (state.shortList || []).length) {
+    const source=Array.isArray(state.rowCardManual) ? state.rowCardManual : [];
+    return Array.from({length},(_,index)=>!!source[index]);
+  }
+  function rowCardWasAddedManually(index) { return !!rowCardManualArray()[Number(index) || 0]; }
+  function rowCardManualForNextList(next, defaultForNew = true) {
+    const before=(state.shortList || []).slice();
+    const flags=rowCardManualArray(before.length);
+    const used=new Set();
+    return next.map(cardId=>{
+      let match=-1;
+      for (let i=0;i<before.length;i++) {
+        if (!used.has(i) && before[i]===cardId) { match=i; break; }
+      }
+      if (match>=0) { used.add(match); return !!flags[match]; }
+      return !!defaultForNew;
+    });
+  }
+
   function rowCardEnvelopeHtml(card, index, panel) {
     const selected = state.shortListSelection.includes(card.card_id);
     const transformTarget = index === rowTransformTargetIndex(rowSlotCount());
@@ -2340,7 +2377,7 @@
     cardHtml = cardHtml.replace('<article class="or-card', `<article class="or-card card-row-card${reversed ? ' is-row-reversed' : ''}`);
     cardHtml = cardHtml.replace(' tabindex="0">', ` draggable="true" data-row-card="${escapeHtml(card.card_id)}" data-row-reversed="${reversed ? 'true' : 'false'}" tabindex="0" aria-label="${escapeHtml(title(card))}${reversed ? ', reversed' : ''}">`);
     const reverseLabel = reversed ? 'Set card upright' : 'Reverse card';
-    const reverseButton = `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>`;
+    const reverseButton = rowCardWasAddedManually(index) ? `<button class="card-row-reverse-toggle${reversed ? ' is-active' : ''}" type="button" data-row-reverse="${index}" aria-pressed="${reversed ? 'true' : 'false'}" title="${escapeHtml(reverseLabel)}" aria-label="${escapeHtml(reverseLabel + ': ' + title(card))}">↕</button>` : '';
     const transformHandles = `<span class="card-row-transform-box" aria-hidden="true"><span class="card-row-scale-handle card-row-scale-handle--nw" data-row-transform-handle="scale" data-corner="nw"></span><span class="card-row-rotate-handle card-row-rotate-handle--ne" data-row-transform-handle="rotate" data-corner="ne"></span><span class="card-row-scale-handle card-row-scale-handle--sw" data-row-transform-handle="scale" data-corner="sw"></span><span class="card-row-scale-handle card-row-scale-handle--se" data-row-transform-handle="scale" data-corner="se"></span></span>`;
     return `<div class="card-row-item${selected ? ' is-row-selected' : ''}${transformTarget ? ' is-transform-target' : ''}${miniDescription ? ' is-description-mini' : ''}${reversed ? ' is-row-reversed' : ''}" data-row-index="${index}" style="${cardRowItemStyle(index)}">${panel}<div class="card-row-card-wrap">${cardHtml}${reverseButton}${transformHandles}</div></div>`;
   }
@@ -3757,6 +3794,20 @@
     bindCardNoteEditor(panel);
 
   }
+  window.RelphiTarotLedgerBridge = Object.freeze({
+    renderCardEntry(cardId, eyebrow = 'Tarot Ledger entry') {
+      const card = cardById(String(cardId || ''));
+      return card ? cardDetailHtml(card, eyebrow) : '';
+    },
+    titleFor(cardId) {
+      const card = cardById(String(cardId || ''));
+      return card ? title(card) : '';
+    },
+    bindCardEntry(root) {
+      if (!root) return;
+      bindCardNoteEditor(root);
+    }
+  });
   function spreadPositionDetailHtml(item) {
     if (!item) return '';
     const number = item.number ? `Card ${item.number}` : 'Spread position';
@@ -9562,6 +9613,11 @@ ${notes || ''}`;
       const commandDetails = document.querySelector('.tarot-command-drawer > details');
       if (commandDetails) commandDetails.open = true;
       setVisible('shortListPanel', true);
+      const currentBoardTrigger = $('relphiOpenDrawingBoardCurrent');
+      if (currentBoardTrigger) {
+        currentBoardTrigger.textContent = 'Close Drawing Board';
+        currentBoardTrigger.setAttribute('aria-expanded', 'true');
+      }
       ['browsePanel','visibilityPanel','spreadPanel','datePanel','chartPanel','currentSkyPanel'].forEach(id => setVisible(id, false));
       renderShortList();
       expandCardRow();

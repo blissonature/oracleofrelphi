@@ -34,7 +34,6 @@
     return /(^|\/)planetaryhours\.html$/.test(location.pathname);
   }
 
-
   function initAnalytics() {
     const id = 'G-PNWZP2MW64';
     if (!/(^|\.)oracleofrelphi\.com$/i.test(location.hostname) || document.getElementById('relphi-google-tag')) return;
@@ -89,9 +88,7 @@
     note.innerHTML = '<strong>The Sky Builder preview did not finish loading.</strong> <button type="button" id="relphiRetryPreview" class="relphi-preview-retry">Retry preview</button>';
     hero.insertAdjacentElement('afterend', note);
     const retryButton = document.getElementById('relphiRetryPreview');
-    if (retryButton) {
-      Object.assign(retryButton.style, {appearance:'none',border:'1px solid rgba(220,31,24,.45)',borderRadius:'999px',background:'#fff',color:'#111',font:'inherit',fontWeight:'800',marginLeft:'.5rem',padding:'.55rem .9rem',cursor:'pointer'});
-    }
+    if (retryButton) Object.assign(retryButton.style, {appearance:'none',border:'1px solid rgba(220,31,24,.45)',borderRadius:'999px',background:'#fff',color:'#111',font:'inherit',fontWeight:'800',marginLeft:'.5rem',padding:'.55rem .9rem',cursor:'pointer'});
     retryButton?.addEventListener('click', function () {
       const url = new URL(location.href);
       url.searchParams.set('previewRetry', String(Date.now()));
@@ -147,35 +144,17 @@
 
   function refreshDrawingBoardControlAssets() {
     const link = document.querySelector('link[href^="drawing-board-workflow-v2.css"]');
-    if (link) link.href = 'drawing-board-workflow-v2.css?v=26';
+    if (link) link.href = 'drawing-board-workflow-v2.css?v=36';
     if (!document.getElementById('relphi-drawing-board-collapse-contract')) {
       const style = document.createElement('style');
       style.id = 'relphi-drawing-board-collapse-contract';
-      style.textContent = '#shortListPanel .card-row-drawing-board:not([open])>summary>:not(strong){display:none!important}';
+      style.textContent = '#shortListPanel .card-row-drawing-board:not([open])>summary>:not(strong){display:none!important}#shortListPanel .card-row-board-empty{font-size:0!important}#shortListPanel .card-row-board-empty::after{content:"Choose a spread in Options, or draw a card. The board is ready.";font-size:.78rem!important}body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .or-card-add,body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .card-row-reverse-toggle,body.relphi-focus-open .relphi-focus-reader .relphi-focus-card-host>.relphi-focused-card .card-row-transform-box{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}';
       document.head.appendChild(style);
     }
-    if (!document.getElementById('relphi-drawing-board-boot-style')) {
+    if (!document.getElementById('relphi-drawing-board-mobile-canvas-width')) {
       const style = document.createElement('style');
-      style.id = 'relphi-drawing-board-boot-style';
-      style.textContent = `
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) .drawing-board-top-actions,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-workspace-toolbar,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-workspace-tools,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) .relphi-reading-options-drawer,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) .card-row-composer,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) #drawing-board-after-canvas,
-        #shortListPanel:not(.relphi-drawing-board-ui-ready) .drawing-board-helpful-tip{
-          visibility:hidden!important;
-          opacity:0!important;
-          pointer-events:none!important;
-        }
-        #shortListPanel.relphi-drawing-board-ui-ready .drawing-board-top-actions,
-        #shortListPanel.relphi-drawing-board-ui-ready .card-row-workspace-toolbar,
-        #shortListPanel.relphi-drawing-board-ui-ready .relphi-workspace-tools,
-        #shortListPanel.relphi-drawing-board-ui-ready #drawing-board-after-canvas{
-          transition:opacity .08s linear!important;
-        }
-      `;
+      style.id = 'relphi-drawing-board-mobile-canvas-width';
+      style.textContent = '@media(max-width:700px){#shortListPanel .card-row-workspace{width:calc(100% + 1.2rem)!important;max-width:none!important;margin-left:-.6rem!important;margin-right:-.6rem!important}#shortListPanel.relphi-celtic-cross .card-row-board{translate:-6px 0!important}}';
       document.head.appendChild(style);
     }
   }
@@ -190,20 +169,8 @@
       appendScript('tarot-card-selection-scroll-v1.js?v=2', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
-      appendScript('drawing-board-workflow-v2.js?v=71', function () {
-        appendScript('drawing-board-interactions-v1.js?v=12', function () {
-          appendScript('drawing-board-template-lifecycle-v1.js?v=7', function () {
-            appendScript('drawing-board-spread-prefabs-v1.js?v=47', function () {
-              appendScript('drawing-board-options-transactional-v1.js?v=1', function () {
-                appendScript('drawing-board-render-geometry-v1.js?v=1', function () {
-                  appendScript('drawing-board-chrome-ownership-v1.js?v=3', function () {
-                    window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
-                  });
-                });
-              });
-            });
-          });
-        });
+      appendScript('drawing-board-workflow-v2.js?v=80', function () {
+        window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
       });
     }
     if (isPlanetaryHoursContext()) {
@@ -225,9 +192,7 @@
     if (/(^|\/)(mythic-atlas|constellations)\.html$/.test(location.pathname)) {
       loadCanonicalGlyphRuntime(function () { appendScript('relphi-inline-glyph-consumer-v1.js?v=2'); });
     }
-    if (isSkyChartContext() && document.getElementById('skyFoundationRoot')) {
-      appendScript('sky-chart-page-stability-v1.js?v=1');
-    }
+    if (isSkyChartContext() && document.getElementById('skyFoundationRoot')) appendScript('sky-chart-page-stability-v1.js?v=1');
     if (isSkyChartContext() && !document.getElementById('skyFoundationRoot')) {
       const preview = new URLSearchParams(location.search).get('preview');
       ['sky-chart-stability-hotfix.js?v=1','sky-chart-static-dynamic.js?v=2','sky-chart-aspect-duration-fix.js?v=2','sky-chart-relationship-language.js?v=5','sky-chart-related-relationships-v2.js?v=2','sky-chart-sign-cusps-v1.js?v=1','sky-chart-provenance-fix.js?v=1','sky-chart-calculated-points-v1.js?v=4'].forEach(function (src) { appendScript(src); });
@@ -247,7 +212,6 @@
     fetch('nav.html?v=14').then(function (response) { if (!response.ok) throw new Error('Could not load nav.html'); return response.text(); }).then(injectNav).catch(fallbackNav);
   }
 
-  // These masks must be installed synchronously, before DOMContentLoaded enhancement work can paint intermediate states.
   if (isTarotContext()) refreshDrawingBoardControlAssets();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);

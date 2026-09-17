@@ -1,1134 +1,1215 @@
-// Drawing Board workflow: adjacent defaults, optional numbered stickers, prefabs, full clear, and lean exports.
+// Oracle of Relphi Drawing Board enhancement layer.
+// Native board state and rendering remain owned by tarot-app.js. This file owns
+// only the stable Drawing Board UI, shipped spread definitions, and reading flow.
 (function () {
   'use strict';
   if (!/(^|\/)tarot\.html$/.test(location.pathname)) return;
+  if (window.__relphiDrawingBoardUnifiedV3) return;
+  window.__relphiDrawingBoardUnifiedV3 = true;
 
-  const STICKER_TOGGLE_KEY = 'relphiDrawingBoardPositionStickersV3';
-  const CARD_BACKGROUND_KEY = 'relphiDrawingBoardCardBackgroundV1';
-  const BOARD_TEXTURE_KEY = 'relphiDrawingBoardTextureV1';
-  const DEFAULT_BOARD_TEXTURE = 'felt';
-  const DEFAULT_BOARD_COLOR = '#7d1f28';
-  const BOARD_TEXTURES = Object.freeze({
-    plain:{ label:'Plain', size:'auto', svg:'' },
-    felt:{
-      label:'Felt',
-      size:'180px 180px',
-      svg:'<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="4" seed="17"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .32"/></feComponentTransfer></filter><rect width="180" height="180" fill="#fff" filter="url(#n)"/></svg>'
-    },
-    linen:{
-      label:'Linen',
-      size:'26px 26px',
-      svg:'<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26"><path d="M0 6.5h26M0 19.5h26M6.5 0v26M19.5 0v26" stroke="#fff" stroke-opacity=".28" stroke-width=".7"/><path d="M0 13h26M13 0v26" stroke="#000" stroke-opacity=".16" stroke-width=".7"/></svg>'
-    },
-    herringbone:{
-      label:'Herringbone',
-      size:'44px 44px',
-      svg:'<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><path d="M-11 11L11-11M0 22L22 0M11 33L33 11M22 44L44 22M33 55L55 33" stroke="#fff" stroke-opacity=".24" stroke-width="5"/><path d="M-11 33L11 55M0 22L22 44M11 11L33 33M22 0L44 22M33-11L55 11" stroke="#000" stroke-opacity=".12" stroke-width="5"/></svg>'
-    }
-  });
-  let scheduled = false;
-  let descriptionSelectionCard = null;
-  let optionsBaseline = null;
-  let optionsStickerBaseline = true;
+  const PANEL_ID = 'shortListPanel';
+  const CUSTOM_TEMPLATE_KEY = 'relphiDrawingBoardSpreadTemplatesV3';
+  const STICKER_VISIBILITY_KEY = 'relphiDrawingBoardPositionStickersV3';
+  const CANVAS_W = 900;
+  const CANVAS_H = 760;
+  const CARD_W = 174;
+  const CARD_H = CARD_W * 866 / 500;
+  const LABEL_H = 38;
+  const GUTTER = 12;
+  const MIN_ZOOM = .45;
+  const MAX_ZOOM = 2.4;
 
-  function stickersEnabled() {
-    try { return localStorage.getItem(STICKER_TOGGLE_KEY) !== '0'; }
-    catch (_) { return true; }
-  }
-  function setStickersEnabled(value) {
-    try { localStorage.setItem(STICKER_TOGGLE_KEY, value ? '1' : '0'); } catch (_) {}
-  }
-  function setPositionStickersVisible(value) {
-    const enabled = !!value;
-    setStickersEnabled(enabled);
-    const panel = document.getElementById('shortListPanel');
-    if (panel) {
-      panel.classList.toggle('row-position-stickers-disabled', !enabled);
-      const input = panel.querySelector('#rowPositionStickersQuick');
-      if (input) input.checked = enabled;
-    }
-    scheduleEnhance();
-    return enabled;
-  }
-  window.RelphiDrawingBoardSetPositionStickers = setPositionStickersVisible;
-  function boardTexture() {
-    try {
-      const value = localStorage.getItem(BOARD_TEXTURE_KEY) || DEFAULT_BOARD_TEXTURE;
-      return BOARD_TEXTURES[value] ? value : DEFAULT_BOARD_TEXTURE;
-    } catch (_) { return DEFAULT_BOARD_TEXTURE; }
-  }
-  function setBoardTexture(value) {
-    const key = BOARD_TEXTURES[value] ? value : DEFAULT_BOARD_TEXTURE;
-    try { localStorage.setItem(BOARD_TEXTURE_KEY, key); } catch (_) {}
-    return key;
-  }
-  function textureImage(value) {
-    const texture = BOARD_TEXTURES[value] || BOARD_TEXTURES[DEFAULT_BOARD_TEXTURE];
-    return texture.svg ? 'url("data:image/svg+xml,' + encodeURIComponent(texture.svg) + '")' : 'none';
-  }
-  function applyBoardTexture(panel) {
-    const workspace = panel.querySelector('.card-row-workspace');
-    const board = panel.querySelector('.card-row-board');
-    const key = boardTexture();
-    const texture = BOARD_TEXTURES[key];
-    [workspace, board].filter(Boolean).forEach(node => {
-      node.dataset.relphiBoardTexture = key;
-      node.style.setProperty('--relphi-board-texture', textureImage(key));
-      node.style.setProperty('--relphi-board-texture-size', texture.size);
-    });
-  }
-  function labelsFromField(field) {
-    return String(field?.value || '').split(',').map(value => value.trim()).filter(Boolean);
-  }
-  function setLabels(field, labels) {
-    if (!field) return;
-    field.value = labels.join(', ');
-    field.dispatchEvent(new Event('input', { bubbles:true }));
-    field.dispatchEvent(new Event('change', { bubbles:true }));
-  }
-  function ensureReadyToDrawDefaults(panel) {
-    if (!panel || panel.dataset.relphiReadyDefaultsApplied === 'true') return;
-    const drawScope = panel.querySelector('#rowDrawScope');
-    const reversals = panel.querySelector('#rowAllowReversalsQuick');
-    if (!drawScope || !reversals) return;
+  let boardOpen = false;
+  let initialized = false;
+  let optionsSession = null;
+  let focusIndex = -1;
+  let pendingFocusIndex = null;
+  let activeDraw = false;
+  let openTool = '';
+  let transformEditingUnlocked = false;
+  let showPositionStickers = readStickerVisibility();
 
-    const hasCards = !!panel.querySelector('.card-row-board [data-row-card]');
-    const hasLabels = labelsFromField(panel.querySelector('#rowPositionLabels')).length > 0;
-    if (!hasCards && !hasLabels) {
-      const fullPack = Array.from(drawScope.options || []).some(option => option.value === 'full');
-      if (fullPack && drawScope.value !== 'full') {
-        drawScope.value = 'full';
-        drawScope.dispatchEvent(new Event('input', { bubbles:true }));
-        drawScope.dispatchEvent(new Event('change', { bubbles:true }));
-      }
-      if (!reversals.checked) {
-        reversals.checked = true;
-        reversals.dispatchEvent(new Event('input', { bubbles:true }));
-        reversals.dispatchEvent(new Event('change', { bubbles:true }));
-      }
-      setStickersEnabled(true);
-      const stickers = panel.querySelector('#rowPositionStickersQuick');
-      if (stickers && !stickers.checked) {
-        stickers.checked = true;
-        stickers.dispatchEvent(new Event('input', { bubbles:true }));
-        stickers.dispatchEvent(new Event('change', { bubbles:true }));
-      }
-    }
-    panel.dataset.relphiReadyDefaultsApplied = 'true';
-  }
-  function addStickerToggle(panel) {
-    const toolbar = panel.querySelector('.card-row-icon-toolbar');
-    if (!toolbar || panel.querySelector('#rowPositionStickersQuick')) return;
-    const label = document.createElement('label');
-    label.className = 'quick-position-sticker-toggle';
-    label.title = 'Show position labels when you add them';
-    label.innerHTML = '<input id="rowPositionStickersQuick" type="checkbox"' + (stickersEnabled() ? ' checked' : '') + '> Labels';
-    const reversals = toolbar.querySelector('.quick-reversal-toggle');
-    toolbar.insertBefore(label, reversals || toolbar.firstChild);
-    label.querySelector('input').addEventListener('change', event => {
-      setPositionStickersVisible(event.currentTarget.checked);
-    });
-  }
-  function addHelpfulTip(panel) {
-    const drawer = panel.querySelector('.card-row-drawing-board');
-    if (!drawer || panel.querySelector('.drawing-board-helpful-tip')) return;
-    const tip = document.createElement('aside');
-    tip.className = 'drawing-board-helpful-tip';
-    tip.innerHTML = '<strong>Helpful tip</strong><span>Use the magnet and picture controls on the board for snaps and backgrounds.</span>';
-    drawer.insertAdjacentElement('afterend', tip);
-  }
-
-  function removeUnavailableSelectionControls(panel) {
-    ['resetRowCardTransform', 'selectAllRow', 'clearRowSelection'].forEach(id => {
-      panel.querySelector('#' + id)?.remove();
-    });
-  }
-
-  function syncBoardEntryButton() {
-    const panel = document.getElementById('shortListPanel');
-    const trigger = document.getElementById('relphiOpenDrawingBoardCurrent');
-    if (!panel || !trigger) return;
-    const open = !panel.hidden;
-    trigger.setAttribute('aria-expanded', String(open));
-    trigger.textContent = open ? 'Close Drawing Board' : 'Open Drawing Board';
-  }
-  function openBoardFromLedger() {
-    const panel = document.getElementById('shortListPanel');
-    if (!panel) return;
-    if (panel.hidden) {
-      document.getElementById('landingOpenBoard')?.click();
-      panel.hidden = false;
-      panel.removeAttribute('hidden');
-      requestAnimationFrame(() => {
-        panel.hidden = false;
-        panel.removeAttribute('hidden');
-        const drawer = panel.querySelector('.card-row-drawing-board');
-        if (drawer?.tagName === 'DETAILS') drawer.open = true;
-        syncBoardEntryButton();
-        scheduleEnhance();
-        requestAnimationFrame(() => {
-          panel.hidden = false;
-          panel.removeAttribute('hidden');
-          panel.scrollIntoView({ behavior:'smooth', block:'start' });
-        });
-      });
-      return;
-    }
-    setReadingOptionsOpen(panel, false);
-    panel.hidden = true;
-    syncBoardEntryButton();
-  }
-  function setArrivalState() {
-    const clear = document.getElementById('clearSearch');
-    if (clear) {
-      clear.textContent = 'Hide Cards';
-      clear.title = 'Hide card results without clearing the Drawing Board';
-    }
-    const panel = document.getElementById('shortListPanel');
-    if (panel) {
-      panel.dataset.relphiReadingOptionsOpen = 'false';
-      panel.hidden = true;
-    }
-    const trigger = document.getElementById('relphiOpenDrawingBoardCurrent');
-    if (trigger && !trigger.dataset.relphiBoardEntryBound) {
-      trigger.dataset.relphiBoardEntryBound = 'true';
-      trigger.addEventListener('click', event => {
-        event.preventDefault();
-        openBoardFromLedger();
-      });
-    }
-    syncBoardEntryButton();
-  }
-  function cardExportData(panel) {
-    return Array.from(panel.querySelectorAll('.card-row-item[data-row-index]')).map((item, index) => {
-      const card = item.querySelector('[data-row-card]');
-      if (!card) return null;
-      const id = card.dataset.rowCard || '';
-      const title = card.querySelector('.or-card-title-banner')?.textContent.trim() || id.replace(/_/g, ' ');
-      const position = item.querySelector('.card-row-position-editor')?.textContent.trim() || 'Position #' + (index + 1);
-      const interpretation = card.querySelector('.or-layer-scroll span')?.textContent.trim() || '';
-      return { id, title, position, interpretation, reversed:item.classList.contains('is-row-reversed') || card.dataset.rowReversed === 'true' };
-    }).filter(Boolean);
-  }
-  function printableHtml(panel) {
-    const cards = cardExportData(panel);
-    const name = panel.querySelector('#rowName')?.value.trim() || 'Drawing Board';
-    const notes = panel.querySelector('#rowNotes')?.value.trim() || '';
-    const exportedAt = new Intl.DateTimeFormat(undefined, { dateStyle:'long', timeStyle:'short' }).format(new Date());
-    const logoUrl = new URL('logo.png', location.href).href;
-    const cardHtml = cards.map((card, index) => '<article class="card"><div class="position"><span>' + escapeHtml(card.position) + '</span><b>' + String(index + 1).padStart(2, '0') + '</b></div><div class="art-frame"><img class="' + (card.reversed ? 'reversed' : '') + '" src="' + optimizedCardUrl(card.id) + '" alt="' + escapeHtml(card.title + (card.reversed ? ', reversed' : ', upright')) + '"></div><div class="card-copy"><div class="card-heading"><h2>' + escapeHtml(card.title) + '</h2><span class="orientation ' + (card.reversed ? 'is-reversed' : '') + '">' + (card.reversed ? 'Reversed' : 'Upright') + '</span></div><p>' + escapeHtml(card.interpretation) + '</p></div></article>').join('');
-    const notesHtml = notes ? '<section class="reading-notes"><span>Reading notes</span><p>' + escapeHtml(notes) + '</p></section>' : '';
-    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + escapeHtml(name) + ' · Oracle of Relphi</title><style>' +
-      '@page{size:A4;margin:10mm}*{box-sizing:border-box}html{background:#eee7df}body{--red:#dc1f18;--ink:#111;--paper:#fffdf8;--muted:#665e58;margin:0;font-family:Inter,Montserrat,"Segoe UI",Arial,sans-serif;color:var(--ink);background:linear-gradient(135deg,#f2ebe3,#fffaf4 46%,#eee6dd);line-height:1.45}.page{width:min(1380px,calc(100% - 32px));margin:24px auto;background:var(--paper);border:1px solid rgba(17,17,17,.14);box-shadow:0 24px 70px rgba(40,28,20,.13)}.masthead{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;padding:24px 30px;border-top:8px solid var(--red);border-bottom:1px solid rgba(17,17,17,.16);background:#111;color:#fff}.brand-mark{width:58px;height:58px;object-fit:cover;background:#fff;border:4px solid #fff}.brand-copy span,.reading-kicker,.reading-notes>span{display:block;text-transform:uppercase;letter-spacing:.15em;font-size:11px;font-weight:900;color:#ff6a62}.brand-copy strong{display:block;font-family:Georgia,serif;font-size:25px;line-height:1.05}.export-meta{text-align:right;color:#d5cec8;font-size:12px}.reading-head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;padding:32px 30px 26px}.reading-head h1{margin:4px 0 0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(34px,5vw,66px);line-height:.96;letter-spacing:-.035em}.reading-count{min-width:120px;text-align:center;padding:14px 18px;border:1px solid rgba(17,17,17,.18);border-radius:999px;font-weight:900}.reading-count b{color:var(--red)}.reading-notes{margin:0 30px 28px;padding:18px 20px;border-left:5px solid var(--red);background:#f7f0e9}.reading-notes p{margin:5px 0 0;white-space:pre-wrap}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;padding:0 30px 34px}.card{break-inside:avoid;display:grid;grid-template-rows:auto auto 1fr;min-width:0;border:1px solid rgba(17,17,17,.18);border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 10px 28px rgba(34,24,18,.08)}.position{display:flex;justify-content:space-between;gap:12px;align-items:center;min-height:44px;padding:9px 12px;background:#111;color:#fff;font-weight:900}.position span{overflow-wrap:anywhere}.position b{color:#ff6a62;font-size:12px;letter-spacing:.12em}.art-frame{display:grid;place-items:center;aspect-ratio:320/554;padding:8px;background:linear-gradient(145deg,#f5ede5,#fff)}.card img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 5px 8px rgba(17,17,17,.14))}.card img.reversed{transform:rotate(180deg)}.card-copy{padding:13px 14px 16px}.card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.card h2{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:18px;line-height:1.05}.orientation{flex:none;padding:4px 7px;border:1px solid rgba(17,17,17,.2);border-radius:999px;text-transform:uppercase;letter-spacing:.08em;font-size:8px;font-weight:900;color:var(--muted)}.orientation.is-reversed{border-color:rgba(220,31,24,.45);color:var(--red);background:#fff2f0}.card p{margin:9px 0 0;color:#3f3833;font-size:12px;line-height:1.45}.footer{display:flex;justify-content:space-between;gap:20px;padding:20px 30px;border-top:1px solid rgba(17,17,17,.14);color:var(--muted);font-size:12px}.footer strong{color:#111}@media(max-width:1100px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:820px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.masthead{grid-template-columns:auto 1fr}.export-meta{grid-column:1/-1;text-align:left}.reading-head{grid-template-columns:1fr}.reading-count{justify-self:start}}@media(max-width:580px){.page{width:100%;margin:0;border:0}.masthead,.reading-head{padding-left:20px;padding-right:20px}.grid{grid-template-columns:1fr;padding-left:20px;padding-right:20px}.reading-notes{margin-left:20px;margin-right:20px}.footer{flex-direction:column;padding-left:20px;padding-right:20px}}@media print{html,body{background:#fff}.page{width:100%;margin:0;border:0;box-shadow:none}.masthead{padding:12mm 8mm 7mm}.brand-mark{width:13mm;height:13mm}.reading-head{padding:8mm 8mm 6mm}.reading-head h1{font-size:28pt}.reading-notes{margin:0 8mm 7mm}.grid{grid-template-columns:repeat(3,1fr);gap:5mm;padding:0 8mm 8mm}.card{border-radius:3mm;box-shadow:none}.position{min-height:10mm;padding:2mm 3mm}.art-frame{padding:2mm}.card-copy{padding:3mm}.card h2{font-size:11pt}.card p{font-size:8pt}.footer{padding:5mm 8mm}}' +
-      '</style></head><body><main class="page"><header class="masthead"><img class="brand-mark" src="' + logoUrl + '" alt="Oracle of Relphi mark"><div class="brand-copy"><span>Tarot Ledger</span><strong>Oracle of Relphi</strong></div><div class="export-meta">Prepared ' + escapeHtml(exportedAt) + '<br>Drawing Board reading</div></header><section class="reading-head"><div><span class="reading-kicker">A Relphi reading</span><h1>' + escapeHtml(name) + '</h1></div><div class="reading-count"><b>' + cards.length + '</b> card' + (cards.length === 1 ? '' : 's') + '</div></section>' + notesHtml + '<section class="grid">' + cardHtml + '</section><footer class="footer"><span><strong>Oracle of Relphi</strong> · Tarot Ledger</span><span>Created with the Relphi Drawing Board</span></footer></main></body></html>';
-  }
-  function optimizedCardUrl(id) {
-    return new URL('assets/tarot/rws-export/' + encodeURIComponent(id) + '.webp', location.href).href;
-  }
+  function panel() { return document.getElementById(PANEL_ID); }
+  function prefabBridge() { return window.RelphiDrawingBoardPrefabsBridge || null; }
+  function optionsBridge() { return window.RelphiDrawingBoardOptionsBridge || null; }
+  function ledgerBridge() { return window.RelphiTarotLedgerBridge || null; }
+  function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
+  function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
   function escapeHtml(value) {
-    return String(value || '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
+    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[ch]));
   }
-  function addLeanExports(panel) {
-    const tools = panel.querySelector('.card-row-composer');
-    if (!tools || panel.querySelector('#printRowPdf')) return;
-    const optimized = document.createElement('button');
-    optimized.type = 'button';
-    optimized.id = 'downloadRowOptimizedHtml';
-    optimized.textContent = 'Download web version';
-    const pdf = document.createElement('button');
-    pdf.type = 'button';
-    pdf.id = 'printRowPdf';
-    pdf.textContent = 'Print / save PDF';
-    const imageButton = tools.querySelector('#printCardRowImage');
-    tools.insertBefore(optimized, imageButton?.nextSibling || null);
-    tools.insertBefore(pdf, optimized.nextSibling);
-    optimized.addEventListener('click', () => {
-      const blob = new Blob([printableHtml(panel)], { type:'text/html' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      const rawName = panel.querySelector('#rowName')?.value.trim() || 'Drawing Board';
-      const safeName = rawName.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() || 'Drawing Board';
-      link.download = safeName + '.html';
-      document.body.appendChild(link); link.click(); link.remove();
-    });
-    pdf.addEventListener('click', () => {
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) return window.alert('Allow pop-ups to open the PDF print view.');
-      try { printWindow.opener = null; } catch (_) {}
-      printWindow.document.open();
-      printWindow.document.write(printableHtml(panel));
-      printWindow.document.close();
-      printWindow.addEventListener('load', () => setTimeout(() => printWindow.print(), 250), { once:true });
-    });
+  function slug(value) {
+    return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60) || 'custom-spread';
   }
-  function relphiLockedInterpretation(cardId) {
-    const id = String(cardId || '');
-    const senseCard = window.RELPHI_CARD_SENSES?.cards?.find?.(item => item.card_id === id);
-    if (senseCard?.locked_relphi_interpretation) return senseCard.locked_relphi_interpretation;
-    const lockedCard = window.RELPHI_LOCKED_INTERPRETATIONS?.cards?.find?.(item => item.card_id === id);
-    return lockedCard?.relphi_derived_interpretation || '';
+  function transform(x, y, scale = .66, rotation = 0, zIndex = 1) {
+    return { x, y, scale, rotation, zIndex };
   }
-  function syncDescriptionLayers(panel) {
-    panel.querySelectorAll('[data-row-card]').forEach(card => {
-      const id = card.dataset.rowCard || '';
-      const item = card.closest('.card-row-item');
-      const reversed = !!item?.classList.contains('is-row-reversed') || card.dataset.rowReversed === 'true';
-      let scroll = card.querySelector('.or-layer-scroll');
-      let text = scroll?.querySelector('span') || null;
-      const current = text?.textContent?.trim() || '';
-      const locked = relphiLockedInterpretation(id);
-      const interpretation = reversed ? (current || locked) : (locked || current);
-      if (!interpretation) return;
-      const layer = card.querySelector('.or-card-layer.relphi-info-layer');
-      if (!scroll && layer) {
-        scroll = document.createElement('div');
-        scroll.className = 'or-layer-scroll relphi-description-scroll';
-        text = document.createElement('span');
-        scroll.appendChild(text);
-        layer.appendChild(scroll);
-      }
-      if (text) text.textContent = interpretation;
-      if (layer) layer.dataset.relphiDescriptionSource = 'locked-interpretation';
-    });
+  function position(id, label, drawOrder, point, extra = {}) {
+    return { id, label, drawOrder, transform:point, ...extra };
   }
-  function workspacePictureIcon() {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="9" r="1.6"></circle><path d="M5.5 17l4.7-4.7 3.2 3.2 2.3-2.3 2.8 3.8"></path></svg>';
+
+  function genericPositions(labels) {
+    const count = Math.max(1, labels.length);
+    if (count === 1) return [position('position-1', labels[0], 1, transform(.40,.22,1))];
+    if (count <= 3) {
+      const xs = count === 2 ? [.18,.58] : [.055,.355,.655];
+      return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index],.24,.88)));
+    }
+    if (count <= 6) {
+      const xs = [.055,.355,.655], ys = [.10,.56];
+      return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index%3],ys[Math.floor(index/3)],.74)));
+    }
+    const cols = 4;
+    const rows = Math.ceil(count / cols);
+    const xs = [.015,.25,.485,.72];
+    const ys = rows <= 2 ? [.12,.56] : rows === 3 ? [.02,.34,.66] : Array.from({length:rows},(_,i)=>.015+i*(.93/Math.max(1,rows-1)));
+    const scale = rows <= 3 ? .62 : .52;
+    return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index%cols],ys[Math.floor(index/cols)],scale)));
   }
-  function workspaceMagnetIcon() {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v8a6 6 0 0 0 12 0V3"></path><path d="M6 7h4M14 7h4"></path></svg>';
-  }
-  function workspaceMoveIcon() {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18"></path><path d="M12 3l-2 2m2-2 2 2M12 21l-2-2m2 2 2-2M3 12l2-2m-2 2 2 2M21 12l-2-2m2 2-2 2"></path></svg>';
-  }
-  function cardBackgroundImage() {
-    try { return localStorage.getItem(CARD_BACKGROUND_KEY) || ''; } catch (_) { return ''; }
-  }
-  function setCardBackgroundImage(value) {
+
+  const CELTIC_LABELS = [
+    '1 · What covers you',
+    '2 · What crosses you',
+    '3 · What crowns you',
+    '4 · What is beneath you',
+    '5 · What is behind you',
+    '6 · What is before you',
+    '7 · Yourself',
+    '8 · Your house',
+    '9 · Your hopes or fears',
+    '10 · What will come'
+  ];
+  const CELTIC_CROSS = {
+    version:1,
+    id:'celtic-cross-10',
+    name:'Celtic Cross',
+    cardCount:10,
+    source:'shipped',
+    editable:false,
+    positions:[
+      position('covering', CELTIC_LABELS[0], 1, transform(.20,.34,.48,0,20), { role:'covering' }),
+      position('crossing', CELTIC_LABELS[1], 2, transform(.20,.34,.48,90,30), {
+        role:'crossing', crosses:'covering',
+        canonicalTransform:transform(.35,.34,.48,0,30),
+        crossedTransform:transform(.20,.34,.48,90,30)
+      }),
+      position('crowning', CELTIC_LABELS[2], 3, transform(.20,.02,.48,0,4), { role:'crowning' }),
+      position('beneath', CELTIC_LABELS[3], 4, transform(.20,.66,.48,0,4), { role:'beneath' }),
+      position('behind', CELTIC_LABELS[4], 5, transform(.015,.34,.48,0,4), { role:'behind' }),
+      position('before', CELTIC_LABELS[5], 6, transform(.49,.34,.48,0,4), { role:'before' }),
+      position('self', CELTIC_LABELS[6], 7, transform(.70,.69,.44,0,4), { role:'self' }),
+      position('house', CELTIC_LABELS[7], 8, transform(.70,.46,.44,0,4), { role:'house' }),
+      position('hopes-fears', CELTIC_LABELS[8], 9, transform(.70,.23,.44,0,4), { role:'hopes-fears' }),
+      position('outcome', CELTIC_LABELS[9], 10, transform(.70,.00,.44,0,4), { role:'outcome' })
+    ],
+    rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
+  };
+
+  const SATURN_LABELS = [
+    '1 · The structure', '2 · The pressure', '3 · The limit',
+    '4 · What is tested', '5 · The center', '6 · What matures',
+    '7 · Responsibility', '8 · Discipline', '9 · Integration'
+  ];
+  const SATURN_POINTS = [
+    [.04,.04],[.36,.04],[.68,.04],
+    [.04,.37],[.36,.37],[.68,.37],
+    [.04,.70],[.36,.70],[.68,.70]
+  ];
+  const SATURN_SQUARE = {
+    version:1,id:'saturn-square-9',name:'Saturn Square',cardCount:9,source:'shipped',editable:false,
+    positions:SATURN_LABELS.map((label,index) => position(`saturn-${index + 1}`,label,index + 1,transform(SATURN_POINTS[index][0],SATURN_POINTS[index][1],.58))),
+    rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
+  };
+
+  const HOUSE_POLARITY_LABELS = [
+    '1 · Aries · I','7 · Libra · You',
+    '2 · Taurus · Mine','8 · Scorpio · Ours',
+    '3 · Gemini · Word','9 · Sagittarius · Meaning',
+    '4 · Cancer · Interior','10 · Capricorn · Form',
+    '5 · Leo · Heart','11 · Aquarius · Field',
+    '6 · Virgo · Distinction','12 · Pisces · Dissolution'
+  ];
+  const HOUSE_POLARITIES = {
+    version:1,id:'six-polarities-houses-12',name:'Six Polarities · Houses',cardCount:12,source:'shipped',editable:false,
+    positions:genericPositions(HOUSE_POLARITY_LABELS).map((item,index) => ({ ...item, id:`polarity-${index + 1}` })),
+    rules:{ allowReversals:true, allowRepeats:false, drawScope:'full' }
+  };
+
+  const SHIPPED = [
+    { id:'past-present-future-3', name:'Past · Present · Future', labels:['Past','Present','Future'] },
+    { id:'situation-challenge-strategy-3', name:'Situation · Challenge · Strategy', labels:['Situation','Challenge','Strategy'] },
+    { id:'choice-path-3', name:'Choice Path', labels:['Option A','Option B','Advice'] },
+    { id:'relationship-check-in-5', name:'Relationship Check-In', labels:['You','Other','Bond','Challenge','Next step'] },
+    { id:'hope-and-comfort-5', name:'Hope and Comfort', labels:['Confusion','Comfort','Lesson','Support','Next step'] }
+  ].map(item => ({
+    version:1,id:item.id,name:item.name,cardCount:item.labels.length,source:'shipped',editable:false,
+    positions:genericPositions(item.labels),rules:{ allowReversals:true,allowRepeats:false,drawScope:'full' }
+  })).concat([
+    SATURN_SQUARE,
+    CELTIC_CROSS,
+    HOUSE_POLARITIES,
+    {version:1,id:'focus-1',name:'Focus',cardCount:1,source:'shipped',editable:false,positions:genericPositions(['Focus']),rules:{allowReversals:true,allowRepeats:false,drawScope:'full'}}
+  ]);
+
+  function readCustomTemplates() {
     try {
-      if (value) localStorage.setItem(CARD_BACKGROUND_KEY, value);
-      else localStorage.removeItem(CARD_BACKGROUND_KEY);
-    } catch (_) {}
+      const parsed = JSON.parse(localStorage.getItem(CUSTOM_TEMPLATE_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed.filter(item => item && Array.isArray(item.positions) && item.positions.length) : [];
+    } catch (_) { return []; }
   }
-  function applyWorkspaceCardBackground(panel) {
-    const board = panel.querySelector('.card-row-board');
-    if (!board) return;
-    const value = cardBackgroundImage();
-    board.classList.toggle('has-workspace-card-background', !!value);
-    if (value) board.style.setProperty('--workspace-card-background', 'url("' + value.replace(/"/g, '%22') + '")');
-    else board.style.removeProperty('--workspace-card-background');
+  function writeCustomTemplates(items) {
+    try { localStorage.setItem(CUSTOM_TEMPLATE_KEY, JSON.stringify(items)); } catch (_) {}
   }
-  function installWorkspaceTools(panel) {
-    const workspace = panel.querySelector('.card-row-workspace');
-    if (!workspace) return;
-    const existing = workspace.querySelector('.relphi-workspace-tools');
-    if (existing) {
-      applyWorkspaceCardBackground(panel);
-      applyBoardTexture(panel);
-      return;
-    }
+  function allTemplates() { return SHIPPED.concat(readCustomTemplates()); }
+  function templateById(id) { return allTemplates().find(item => item.id === id) || null; }
+  function readStickerVisibility() {
+    try { return localStorage.getItem(STICKER_VISIBILITY_KEY) !== 'false'; } catch (_) { return true; }
+  }
+  function writeStickerVisibility(value) {
+    showPositionStickers = !!value;
+    try { localStorage.setItem(STICKER_VISIBILITY_KEY, String(showPositionStickers)); } catch (_) {}
+  }
 
-    const takeInput = id => {
-      const input = panel.querySelector('#' + id);
-      if (!input) return null;
-      const label = input.closest('label');
-      if (label && label !== input) {
-        label.insertAdjacentElement('afterend', input);
-        label.remove();
-      }
-      return input;
+  window.RelphiDrawingBoardSpreadPrefabs = Object.freeze({
+    shipped:SHIPPED,
+    all:allTemplates,
+    byId:templateById
+  });
+
+  function currentSnapshot() { return optionsBridge()?.capture?.() || null; }
+  function currentPrefabState() { return prefabBridge()?.getState?.() || {}; }
+  function activeLayoutId() { return String(currentPrefabState().activeLayout?.id || ''); }
+  function currentSlotCount(root = panel()) {
+    return Math.max(
+      Number(currentPrefabState().slotCount) || 0,
+      root?.querySelectorAll('.card-row-board>.card-row-item').length || 0
+    );
+  }
+  function currentCardCount(root = panel()) { return root?.querySelectorAll('.card-row-board [data-row-card]').length || 0; }
+  function canonicalPositions() {
+    const layout=currentPrefabState().activeLayout;
+    if (Array.isArray(layout?.positions) && layout.positions.length) {
+      return layout.positions.slice().sort((a,b)=>(Number(a.drawOrder)||0)-(Number(b.drawOrder)||0));
+    }
+    return Array.from({length:currentSlotCount()},(_,index)=>({id:`position-${index+1}`,drawOrder:index+1}));
+  }
+  function positionIdAt(index, snap=currentSnapshot() || {}) {
+    return String(snap.rowPositionMeta?.[index]?.id || snap.rowActiveLayout?.positions?.[index]?.id || `position-${index+1}`);
+  }
+  function positionRoleAt(index, snap=currentSnapshot() || {}) {
+    return String(snap.rowPositionMeta?.[index]?.role || '');
+  }
+  function nativeIndexForPositionId(id, snap=currentSnapshot() || {}) {
+    const target=String(id || '');
+    const meta=Array.isArray(snap.rowPositionMeta) ? snap.rowPositionMeta : [];
+    const found=meta.findIndex(item=>String(item?.id || '')===target);
+    return found>=0 ? found : null;
+  }
+  function orderedNativePositionIndices() {
+    const snap=currentSnapshot() || {};
+    const count=currentSlotCount();
+    const seen=new Set();
+    const result=[];
+    canonicalPositions().forEach((position,fallbackIndex)=>{
+      const resolved=nativeIndexForPositionId(position.id,snap);
+      const index=resolved==null ? fallbackIndex : resolved;
+      if (index>=0 && index<count && !seen.has(index)) { seen.add(index); result.push(index); }
+    });
+    for (let index=0;index<count;index++) if (!seen.has(index)) result.push(index);
+    return result;
+  }
+  function configuredPositionCount() {
+    const snap=currentSnapshot() || {};
+    return Math.max(
+      Array.isArray(snap.shortListPositionLabels) ? snap.shortListPositionLabels.length : 0,
+      Array.isArray(snap.rowPositionMeta) ? snap.rowPositionMeta.length : 0,
+      Number(currentPrefabState().activeLayout?.cardCount) || 0
+    );
+  }
+
+  function blankDraft() {
+    return { templateId:'', basedOnTemplateId:'', labels:[], pack:'full', stickers:true, reversals:true, repeats:false, templateName:'' };
+  }
+  function draftFromState() {
+    const snap = currentSnapshot() || {};
+    const state = currentPrefabState();
+    const activeId=String(state.activeLayout?.id || '');
+    const knownTemplate=templateById(activeId);
+    return {
+      templateId:knownTemplate ? activeId : '',
+      basedOnTemplateId:String(state.activeLayout?.basedOn || (knownTemplate ? activeId : '')),
+      labels:Array.isArray(snap.shortListPositionLabels) ? snap.shortListPositionLabels.slice() : [],
+      pack:String(snap.rowDrawScope || 'full'),
+      stickers:showPositionStickers,
+      reversals:snap.rowAllowReversals !== false,
+      repeats:!!snap.rowAllowRepeats,
+      templateName:String(state.activeLayout?.name || '')
     };
-    const take = id => panel.querySelector('#' + id);
-
-    const alignCheck = takeInput('rowSnapEnabled');
-    const alignMinus = take('rowSnapGridMinus');
-    const alignValue = take('rowSnapGridValue');
-    const alignPlus = take('rowSnapGridPlus');
-    const rotateCheck = takeInput('rowRotationSnapEnabled');
-    const rotateMinus = take('rowRotationSnapMinus');
-    const rotateValue = take('rowRotationSnapValue');
-    const rotatePlus = take('rowRotationSnapPlus');
-    const cardColor = takeInput('rowEnvelopeColor');
-    const boardColor = takeInput('rowTableColor');
-    const boardUpload = take('rowTableImageUpload');
-    const boardReset = take('rowTableImageReset');
-    const resetLayout = take('resetCardRowLayout');
-    panel.querySelector('.card-row-snap-steppers')?.remove();
-
-    const tools = document.createElement('div');
-    tools.className = 'relphi-workspace-tools';
-    tools.innerHTML =
-      '<div class="relphi-workspace-tool-buttons">' +
-        '<button type="button" class="relphi-workspace-tool-trigger" data-tool="snaps" title="Snaps" aria-label="Snaps" aria-expanded="false">' + workspaceMagnetIcon() + '</button>' +
-        '<button type="button" class="relphi-workspace-tool-trigger" data-tool="background" title="Background" aria-label="Background" aria-expanded="false">' + workspacePictureIcon() + '</button>' +
-      '</div>' +
-      '<section class="relphi-workspace-flyout" hidden>' +
-        '<div class="relphi-workspace-section" data-section="snaps"><h4>Snaps</h4><div class="relphi-snap-rows"></div></div>' +
-        '<div class="relphi-workspace-section" data-section="background"><h4>Background</h4><div class="relphi-background-rows"></div></div>' +
-      '</section>';
-
-    const snapRows = tools.querySelector('.relphi-snap-rows');
-    const addSnapRow = (checkbox, minus, value, plus, icon) => {
-      const row = document.createElement('div');
-      row.className = 'relphi-snap-row';
-      if (checkbox) row.appendChild(checkbox);
-      const iconWrap = document.createElement('span');
-      iconWrap.className = 'relphi-snap-icon';
-      iconWrap.innerHTML = icon;
-      row.appendChild(iconWrap);
-      if (minus) row.appendChild(minus);
-      const measure = document.createElement('span');
-      measure.className = 'relphi-snap-measure';
-      if (value) measure.appendChild(value);
-      row.appendChild(measure);
-      if (plus) row.appendChild(plus);
-      snapRows.appendChild(row);
-    };
-    if (alignCheck) alignCheck.setAttribute('aria-label','Enable position snap');
-    if (rotateCheck) rotateCheck.setAttribute('aria-label','Enable rotation snap');
-    addSnapRow(alignCheck, alignMinus, alignValue, alignPlus, workspaceMoveIcon());
-    addSnapRow(rotateCheck, rotateMinus, rotateValue, rotatePlus, '<span class="relphi-rotate-glyph" aria-hidden="true">↻</span>');
-    if (resetLayout) {
-      resetLayout.textContent = 'Reset layout';
-      resetLayout.classList.add('relphi-snap-reset-layout');
-      snapRows.appendChild(resetLayout);
-    }
-
-    const backgroundRows = tools.querySelector('.relphi-background-rows');
-    const cardRow = document.createElement('div');
-    cardRow.className = 'relphi-background-row';
-    cardRow.innerHTML =
-      '<strong>Card</strong>' +
-      '<button type="button" id="workspaceCardImageUpload" class="relphi-picture-action" title="Upload card background image" aria-label="Upload card background image">' + workspacePictureIcon() + '</button>' +
-      '<span class="relphi-card-color-slot"></span>' +
-      '<button type="button" id="workspaceCardBackgroundReset" class="relphi-reset-action" title="Clear card background" aria-label="Clear card background">×</button>' +
-      '<input id="workspaceCardImageFile" type="file" accept="image/*" hidden>';
-    if (cardColor) cardRow.querySelector('.relphi-card-color-slot').appendChild(cardColor);
-    backgroundRows.appendChild(cardRow);
-
-    const boardRow = document.createElement('div');
-    boardRow.className = 'relphi-background-row';
-    boardRow.innerHTML =
-      '<strong>Board</strong><span class="relphi-board-image-slot"></span><span class="relphi-board-color-slot"></span><span class="relphi-board-reset-slot"></span>';
-    if (boardUpload) {
-      boardUpload.textContent = '';
-      boardUpload.innerHTML = workspacePictureIcon();
-      boardUpload.classList.add('relphi-picture-action');
-      boardUpload.title = 'Upload board background image';
-      boardUpload.setAttribute('aria-label','Upload board background image');
-      boardRow.querySelector('.relphi-board-image-slot').appendChild(boardUpload);
-    }
-    if (boardColor) boardRow.querySelector('.relphi-board-color-slot').appendChild(boardColor);
-    if (boardReset) {
-      boardReset.disabled = false;
-      boardReset.textContent = '×';
-      boardReset.classList.add('relphi-reset-action');
-      boardReset.title = 'Clear board background';
-      boardReset.setAttribute('aria-label','Clear board background');
-      boardRow.querySelector('.relphi-board-reset-slot').appendChild(boardReset);
-    }
-    backgroundRows.appendChild(boardRow);
-
-    const textureRow = document.createElement('div');
-    textureRow.className = 'relphi-background-row relphi-texture-row';
-    textureRow.innerHTML =
-      '<strong>Texture</strong><select id="workspaceBoardTexture" aria-label="Board texture">' +
-      Object.entries(BOARD_TEXTURES).map(([value, texture]) => '<option value="' + value + '">' + texture.label + '</option>').join('') +
-      '</select>';
-    const textureSelect = textureRow.querySelector('#workspaceBoardTexture');
-    textureSelect.value = boardTexture();
-    backgroundRows.appendChild(textureRow);
-    workspace.appendChild(tools);
-
-    const flyout = tools.querySelector('.relphi-workspace-flyout');
-    const triggers = Array.from(tools.querySelectorAll('.relphi-workspace-tool-trigger'));
-    const setOpen = section => {
-      const closing = !flyout.hidden && flyout.dataset.section === section;
-      flyout.hidden = closing;
-      flyout.dataset.section = closing ? '' : section;
-      tools.classList.toggle('has-open-flyout', !closing);
-      if (!closing) {
-        tools.classList.remove('is-controller-idle');
-        tools.classList.add('is-controller-visible');
-      }
-      triggers.forEach(button => {
-        const active = !closing && button.dataset.tool === section;
-        button.classList.toggle('is-active', active);
-        button.setAttribute('aria-expanded', String(active));
-      });
-      tools.querySelectorAll('.relphi-workspace-section').forEach(node => node.classList.toggle('is-current', !closing && node.dataset.section === section));
-    };
-    triggers.forEach(button => button.addEventListener('click', event => {
-      event.preventDefault();
-      event.stopPropagation();
-      setOpen(button.dataset.tool);
-    }));
-
-    const cardFile = tools.querySelector('#workspaceCardImageFile');
-    tools.querySelector('#workspaceCardImageUpload')?.addEventListener('click', event => {
-      event.preventDefault();
-      cardFile?.click();
-    });
-    cardFile?.addEventListener('change', () => {
-      const file = cardFile.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        setCardBackgroundImage(String(reader.result || ''));
-        applyWorkspaceCardBackground(panel);
-      };
-      reader.readAsDataURL(file);
-      cardFile.value = '';
-    });
-    tools.querySelector('#workspaceCardBackgroundReset')?.addEventListener('click', event => {
-      event.preventDefault();
-      setCardBackgroundImage('');
-      if (cardColor) {
-        cardColor.value = '#f3f0ea';
-        cardColor.dispatchEvent(new Event('input',{bubbles:true}));
-        cardColor.dispatchEvent(new Event('change',{bubbles:true}));
-      }
-      applyWorkspaceCardBackground(panel);
-    });
-    textureSelect?.addEventListener('change', () => {
-      setBoardTexture(textureSelect.value);
-      applyBoardTexture(panel);
-    });
-    boardReset?.addEventListener('click', () => {
-      setBoardTexture(DEFAULT_BOARD_TEXTURE);
-      if (textureSelect) textureSelect.value = DEFAULT_BOARD_TEXTURE;
-      if (boardColor) {
-        boardColor.value = DEFAULT_BOARD_COLOR;
-        boardColor.dispatchEvent(new Event('input',{bubbles:true}));
-        boardColor.dispatchEvent(new Event('change',{bubbles:true}));
-      }
-      applyBoardTexture(panel);
-    });
-    document.addEventListener('click', event => {
-      if (flyout.hidden || event.target.closest?.('.relphi-workspace-tools')) return;
-      flyout.hidden = true;
-      flyout.dataset.section = '';
-      tools.classList.remove('has-open-flyout');
-      triggers.forEach(button => {
-        button.classList.remove('is-active');
-        button.setAttribute('aria-expanded','false');
-      });
-    });
-    applyWorkspaceCardBackground(panel);
-    applyBoardTexture(panel);
-  }
-
-  function installBoardControllerAutoHide(panel) {
-    const workspace = panel.querySelector('.card-row-workspace');
-    if (!workspace) return;
-
-
-
-    workspace.querySelector(':scope > .drawing-board-primary-actions')?.remove();
-    workspace.querySelector(':scope > .relphi-board-controller-hotzone--actions')?.remove();
-
-    const controllers = [
-      { key:'tools', node:workspace.querySelector(':scope > .relphi-workspace-tools') },
-      { key:'zoom', node:workspace.querySelector(':scope > .card-row-workspace-toolbar') }
-    ].filter(item => item.node);
-
-    controllers.forEach(({ key, node }) => {
-      node.classList.add('relphi-board-controller', 'relphi-board-controller--' + key);
-      let zone = workspace.querySelector(':scope > .relphi-board-controller-hotzone[data-controller="' + key + '"]');
-      if (!zone) {
-        zone = document.createElement('div');
-        zone.className = 'relphi-board-controller-hotzone relphi-board-controller-hotzone--' + key;
-        zone.dataset.controller = key;
-        zone.setAttribute('aria-hidden', 'true');
-        workspace.appendChild(zone);
-      }
-
-      const reveal = () => {
-        if (node._relphiControllerTimer) window.clearTimeout(node._relphiControllerTimer);
-        node._relphiControllerTimer = 0;
-        node.classList.remove('is-controller-idle');
-        node.classList.add('is-controller-visible');
-      };
-      const hide = () => {
-        node._relphiControllerTimer = 0;
-        if (node.matches(':hover') || node.contains(document.activeElement)) return;
-        if (key === 'tools' && !node.querySelector('.relphi-workspace-flyout')?.hidden) return;
-        node.classList.remove('is-controller-visible');
-        node.classList.add('is-controller-idle');
-      };
-      const scheduleHide = () => {
-        if (node._relphiControllerTimer) window.clearTimeout(node._relphiControllerTimer);
-        node._relphiControllerTimer = window.setTimeout(hide, 1000);
-      };
-
-      if (node.dataset.relphiControllerAutoHideBound !== 'true') {
-        node.dataset.relphiControllerAutoHideBound = 'true';
-        zone.addEventListener('mouseenter', reveal);
-        zone.addEventListener('mouseleave', scheduleHide);
-        node.addEventListener('mouseenter', reveal);
-        node.addEventListener('mouseleave', scheduleHide);
-        node.addEventListener('focusin', reveal);
-        node.addEventListener('focusout', event => {
-          if (!node.contains(event.relatedTarget)) scheduleHide();
-        });
-        node.addEventListener('click', () => {
-          reveal();
-          scheduleHide();
-        }, true);
-      }
-
-      if (!node.classList.contains('is-controller-visible') && !node.classList.contains('is-controller-idle')) {
-        reveal();
-        scheduleHide();
-      }
-    });
-  }
-
-  function optionsBridge() {
-    return window.RelphiDrawingBoardOptionsBridge || null;
   }
   function beginOptionsSession() {
-    if (optionsBaseline) return;
-    optionsBaseline = optionsBridge()?.capture?.() || null;
-    optionsStickerBaseline = stickersEnabled();
+    if (optionsSession) return;
+    optionsSession = { baseline:currentSnapshot(), draft:draftFromState() };
   }
-  function clearOptionsSession() {
-    optionsBaseline = null;
-    optionsStickerBaseline = stickersEnabled();
+  function optionsStructuralChanged(session = optionsSession) {
+    if (!session) return false;
+    const base = session.baseline || {};
+    const baseLayout = String(base.rowActiveLayout?.id || '');
+    const draftLayout = session.draft.templateId || (baseLayout==='custom-active' ? 'custom-active' : '');
+    const baseLabels = Array.isArray(base.shortListPositionLabels) ? base.shortListPositionLabels : [];
+    return draftLayout !== baseLayout || JSON.stringify(session.draft.labels) !== JSON.stringify(baseLabels);
   }
-  function renderReadingOptionsOpenState(panel, open) {
-    const drawer = panel.querySelector('.relphi-reading-options-drawer');
-    if (!drawer) return;
-    drawer.open = true;
-    panel.dataset.relphiReadingOptionsOpen = open ? 'true' : 'false';
-    drawer.classList.toggle('is-reading-options-open', !!open);
-    const trigger = panel.querySelector('#drawingBoardOptionsButton');
-    if (trigger) {
-      trigger.setAttribute('aria-expanded', String(!!open));
-      trigger.classList.toggle('is-active', !!open);
-      trigger.title = open ? 'Options are open' : 'Open Options';
+
+  function setBoardOpen(open, { fit = false } = {}) {
+    const root = panel();
+    const trigger = document.getElementById('relphiOpenDrawingBoardCurrent');
+    boardOpen = !!open;
+    if (!root || !trigger) return;
+    if (boardOpen) {
+      if (root.hidden) {
+        document.getElementById('landingOpenBoard')?.click();
+        root.hidden = false;
+        root.removeAttribute('hidden');
+      }
+      trigger.textContent = 'Close Drawing Board';
+      trigger.setAttribute('aria-expanded','true');
+      root.hidden = false;
+      root.removeAttribute('hidden');
+      enhance(root);
+      if (fit) setTimeout(zoomExtents, 0);
+    } else {
+      closeFocus({ acknowledge:true });
+      optionsSession = null;
+      root.hidden = true;
+      trigger.textContent = 'Open Drawing Board';
+      trigger.setAttribute('aria-expanded','false');
     }
   }
-  function cancelReadingOptions(panel = document.getElementById('shortListPanel')) {
-    if (!panel) return false;
-    if (optionsBaseline) optionsBridge()?.restore?.(optionsBaseline);
-    setPositionStickersVisible(optionsStickerBaseline);
-    clearOptionsSession();
-    renderReadingOptionsOpenState(panel, false);
-    return true;
+
+  function zoomInput(root = panel()) { return root?.querySelector('#rowZoom') || null; }
+  function setZoomFromControl(value) {
+    const input = zoomInput();
+    if (!input) return;
+    const next = clamp(value, Number(input.min) || MIN_ZOOM, Number(input.max) || MAX_ZOOM);
+    input.value = String(next);
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.dispatchEvent(new Event('change',{bubbles:true}));
   }
-  function saveReadingOptions(panel = document.getElementById('shortListPanel')) {
-    if (!panel) return false;
+  function nudgeZoom(delta) {
+    const input = zoomInput();
+    setZoomFromControl((Number(input?.value) || 1) + delta);
+  }
+
+  function installPinchZoom(root) {
+    const workspace = root?.querySelector('.card-row-workspace');
+    if (!workspace || workspace.dataset.relphiPinchZoom === 'true') return;
+    workspace.dataset.relphiPinchZoom = 'true';
+    let pinching = false;
+    let startDistance = 0;
+    let startZoom = 1;
+    let disabledCards = [];
+    const control = () => zoomInput(root);
+    const distance = touches => {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.hypot(dx,dy);
+    };
+    const begin = event => {
+      if (event.touches.length !== 2) return;
+      const input = control();
+      if (!input) return;
+      pinching = true;
+      startDistance = distance(event.touches);
+      startZoom = Number(input.value) || 1;
+      disabledCards = Array.from(workspace.querySelectorAll('[draggable="true"],.card-row-item [data-row-card]')).map(node => {
+        const wasDraggable = node.draggable;
+        node.draggable = false;
+        return [node,wasDraggable];
+      });
+      workspace.classList.add('relphi-is-pinching');
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    const move = event => {
+      if (!pinching || event.touches.length !== 2 || !startDistance) return;
+      const input = control();
+      if (!input) return;
+      const next = clamp(startZoom * (distance(event.touches) / startDistance), Number(input.min) || MIN_ZOOM, Number(input.max) || MAX_ZOOM);
+      input.value = String(next);
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    const end = event => {
+      if (!pinching || event.touches.length > 1) return;
+      pinching = false;
+      startDistance = 0;
+      disabledCards.forEach(([node,wasDraggable]) => { if (node.isConnected) node.draggable = wasDraggable; });
+      disabledCards = [];
+      workspace.classList.remove('relphi-is-pinching');
+      control()?.dispatchEvent(new Event('change',{bubbles:true}));
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    workspace.addEventListener('touchstart',begin,{capture:true,passive:false});
+    workspace.addEventListener('touchmove',move,{capture:true,passive:false});
+    workspace.addEventListener('touchend',end,{capture:true,passive:false});
+    workspace.addEventListener('touchcancel',end,{capture:true,passive:false});
+  }
+
+  function rotatedBounds(width, height, degrees) {
+    const radians = Math.abs(Number(degrees) || 0) * Math.PI / 180;
+    return {
+      width:Math.abs(Math.cos(radians)) * width + Math.abs(Math.sin(radians)) * height,
+      height:Math.abs(Math.sin(radians)) * width + Math.abs(Math.cos(radians)) * height
+    };
+  }
+  function logicalPosition(snapshot, index) {
+    const saved = snapshot?.rowEnvelopeLayout?.[index] || snapshot?.rowEnvelopeLayout?.[String(index)];
+    if (saved && Number.isFinite(Number(saved.x)) && Number.isFinite(Number(saved.y))) return {x:Number(saved.x),y:Number(saved.y)};
+    const cols = 4;
+    return {x:(index % cols) * CARD_W,y:Math.floor(index / cols) * CARD_H};
+  }
+  function logicalTransform(snapshot, index) {
+    const saved = snapshot?.rowCardTransforms?.[index] || snapshot?.rowCardTransforms?.[String(index)] || {};
+    return {scale:clamp(saved.scale || 1,.45,2.5),rotation:Number(saved.rotation) || 0};
+  }
+  function stateContentBounds(snapshot, count) {
+    if (!count) return {minX:0,minY:0,maxX:CARD_W,maxY:CARD_H};
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    for (let i=0;i<count;i++) {
+      const p = logicalPosition(snapshot,i);
+      const t = logicalTransform(snapshot,i);
+      const centerX = p.x + CARD_W / 2;
+      const centerY = p.y + CARD_H / 2;
+      const rotated = rotatedBounds(CARD_W*t.scale,CARD_H*t.scale,t.rotation);
+      let left=centerX-rotated.width/2, right=centerX+rotated.width/2;
+      let top=centerY-rotated.height/2, bottom=centerY+rotated.height/2;
+      const labelH = showPositionStickers ? LABEL_H*t.scale : 0;
+      if (labelH) {
+        if (Math.abs(t.rotation % 180) < 1) top -= labelH;
+        else { left -= labelH; right += labelH; top -= labelH; bottom += labelH; }
+      }
+      minX=Math.min(minX,left); minY=Math.min(minY,top);
+      maxX=Math.max(maxX,right); maxY=Math.max(maxY,bottom);
+    }
+    return {minX,minY,maxX,maxY};
+  }
+  function zoomExtents() {
+    const root = panel();
+    const workspace = root?.querySelector('.card-row-workspace');
     const bridge = optionsBridge();
-    const changed = !!optionsBaseline && (
-      !!bridge?.changedFrom?.(optionsBaseline) ||
-      stickersEnabled() !== optionsStickerBaseline
-    );
-    if (!changed) {
-      clearOptionsSession();
-      renderReadingOptionsOpenState(panel, false);
-      return true;
-    }
-    const confirmed = window.confirm(
-      'Saving these Options changes will clear the entire Drawing Board before the new settings are applied. Cancel to go back without clearing anything.'
-    );
-    if (!confirmed) return false;
-    bridge?.saveAndClear?.();
-    clearOptionsSession();
-    renderReadingOptionsOpenState(panel, false);
+    if (!root || !workspace || !bridge) return false;
+    const snapshot = bridge.capture();
+    const count = currentSlotCount(root);
+    const bounds = stateContentBounds(snapshot,count);
+    const toolbar = root.querySelector('.card-row-workspace-toolbar.relphi-board-controller');
+    const toolbarH = toolbar?.offsetHeight || 52;
+    const availableW = Math.max(CARD_W, workspace.clientWidth - GUTTER*2);
+    const availableH = Math.max(CARD_H, workspace.clientHeight - toolbarH - GUTTER*2);
+    const contentW = Math.max(CARD_W,bounds.maxX-bounds.minX);
+    const contentH = Math.max(CARD_H,bounds.maxY-bounds.minY);
+    const zoom = clamp(Math.min(availableW/contentW,availableH/contentH),MIN_ZOOM,MAX_ZOOM);
+    snapshot.rowZoom = zoom;
+    snapshot.rowPanX = Math.round((availableW-contentW*zoom)/2-bounds.minX*zoom+GUTTER);
+    snapshot.rowPanY = Math.round((availableH-contentH*zoom)/2-bounds.minY*zoom+GUTTER);
+    bridge.restore(snapshot);
     return true;
   }
-  function setReadingOptionsOpen(panel, open) {
-    if (!panel) return;
-    if (open) {
-      beginOptionsSession();
-      renderReadingOptionsOpenState(panel, true);
-      return;
-    }
-    if (panel.dataset.relphiReadingOptionsOpen === 'true' && optionsBaseline) {
-      cancelReadingOptions(panel);
-      return;
-    }
-    renderReadingOptionsOpenState(panel, false);
+
+  function icon(kind) {
+    if (kind === 'magnet') return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v8a6 6 0 0 0 12 0V5h-4v8a2 2 0 0 1-4 0V5z"></path><path d="M6 9h4M14 9h4"></path></svg>';
+    if (kind === 'picture') return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m4 17 5-5 4 4 2-2 5 5"></path></svg>';
+    if (kind === 'fit') return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"></path><path d="m3 8 5-5M21 8l-5-5M3 16l5 5M21 16l-5 5"></path></svg>';
+    return '';
   }
 
-  function toggleReadingOptions(panel = document.getElementById('shortListPanel')) {
-    if (!panel) return false;
-    const opening = panel.dataset.relphiReadingOptionsOpen !== 'true';
-    if (opening) {
-      setReadingOptionsOpen(panel, true);
+  function controlLabel(input, fallback) {
+    const label = input?.closest('label');
+    if (label) return label;
+    const wrap = document.createElement('label');
+    wrap.textContent = fallback + ' ';
+    if (input) wrap.appendChild(input);
+    return wrap;
+  }
+
+  function installPermanentControls(root) {
+    const workspace = root.querySelector('.card-row-workspace');
+    const toolbar = root.querySelector('.card-row-workspace-toolbar');
+    const nativeOptions = root.querySelector('.card-row-more-options');
+    if (!workspace || !toolbar || !nativeOptions) return;
+    const zoom = root.querySelector('#rowZoom');
+    const zoomValue = root.querySelector('#rowZoomValue');
+    const snap = root.querySelector('#rowSnapEnabled');
+    const snapMinus = root.querySelector('#rowSnapGridMinus');
+    const snapValue = root.querySelector('#rowSnapGridValue');
+    const snapPlus = root.querySelector('#rowSnapGridPlus');
+    const rotate = root.querySelector('#rowRotationSnapEnabled');
+    const rotateMinus = root.querySelector('#rowRotationSnapMinus');
+    const rotateValue = root.querySelector('#rowRotationSnapValue');
+    const rotatePlus = root.querySelector('#rowRotationSnapPlus');
+    const resetLayout = root.querySelector('#resetCardRowLayout');
+    const envelopeColor = root.querySelector('#rowEnvelopeColor');
+    const tableColor = root.querySelector('#rowTableColor');
+    const tableUpload = root.querySelector('#rowTableImageUpload');
+    const tableReset = root.querySelector('#rowTableImageReset');
+    toolbar.className = 'card-row-workspace-toolbar relphi-board-controller';
+    toolbar.replaceChildren();
+    const zoomRow = document.createElement('div');
+    zoomRow.className = 'relphi-zoom-row';
+    const zoomOut = document.createElement('button');
+    zoomOut.type='button'; zoomOut.className='relphi-zoom-step'; zoomOut.textContent='−'; zoomOut.title='Zoom out'; zoomOut.setAttribute('aria-label','Zoom out');
+    const zoomIn = document.createElement('button');
+    zoomIn.type='button'; zoomIn.className='relphi-zoom-step'; zoomIn.textContent='+'; zoomIn.title='Zoom in'; zoomIn.setAttribute('aria-label','Zoom in');
+    const fit = document.createElement('button');
+    fit.type='button'; fit.id='zoomCardRowExtents'; fit.className='relphi-icon-button'; fit.innerHTML=icon('fit'); fit.title='Zoom Extents'; fit.setAttribute('aria-label','Zoom Extents');
+    zoomOut.addEventListener('click',()=>nudgeZoom(-.08));
+    zoomIn.addEventListener('click',()=>nudgeZoom(.08));
+    fit.addEventListener('click',zoomExtents);
+    zoomRow.appendChild(zoomOut);
+    if (zoom) { zoom.classList.add('relphi-native-zoom'); zoomRow.appendChild(zoom); }
+    if (zoomValue) zoomRow.appendChild(zoomValue);
+    zoomRow.append(zoomIn,fit);
+    const tools = document.createElement('div');
+    tools.className='relphi-workspace-tools';
+    tools.innerHTML = `<button type="button" class="relphi-tool-trigger relphi-more-button" data-tool="more" aria-label="More board tools" title="More board tools">…</button><div class="relphi-tool-flyout" hidden></div>`;
+    const flyout = tools.querySelector('.relphi-tool-flyout');
+    const renderFlyout = () => {
+      const open=openTool==='more';
+      flyout.hidden=!open;
+      flyout.replaceChildren();
+      tools.querySelector('.relphi-tool-trigger')?.classList.toggle('is-active',open);
+      if (!open) return;
+      const transformButton=document.createElement('button');
+      transformButton.type='button';
+      transformButton.id='relphiToggleTransformEditing';
+      transformButton.textContent=transformEditingUnlocked?'Lock rotation & scale':'Unlock rotation & scale';
+      transformButton.setAttribute('aria-pressed',String(transformEditingUnlocked));
+      transformButton.addEventListener('click',event=>{
+        event.preventDefault(); event.stopPropagation();
+        transformEditingUnlocked=!transformEditingUnlocked;
+        root.classList.toggle('relphi-transform-editing-unlocked',transformEditingUnlocked);
+        renderFlyout();
+      });
+      flyout.appendChild(transformButton);
+      const snapsHeading=document.createElement('strong'); snapsHeading.textContent='Snaps'; flyout.appendChild(snapsHeading);
+      const posRow=document.createElement('div'); posRow.className='relphi-tool-row';
+      posRow.append(controlLabel(snap,'Position snap'));
+      [snapMinus,snapValue,snapPlus].filter(Boolean).forEach(node=>posRow.appendChild(node));
+      flyout.appendChild(posRow);
+      const rotRow=document.createElement('div'); rotRow.className='relphi-tool-row';
+      rotRow.append(controlLabel(rotate,'Rotation snap'));
+      [rotateMinus,rotateValue,rotatePlus].filter(Boolean).forEach(node=>rotRow.appendChild(node));
+      flyout.appendChild(rotRow);
+      if (resetLayout) { resetLayout.textContent='Reset layout'; flyout.appendChild(resetLayout); }
+      const backgroundHeading=document.createElement('strong'); backgroundHeading.textContent='Background'; flyout.appendChild(backgroundHeading);
+      if (envelopeColor) { const row=document.createElement('div'); row.className='relphi-tool-row'; row.append(controlLabel(envelopeColor,'Card / placeholder')); flyout.appendChild(row); }
+      if (tableColor) { const row=document.createElement('div'); row.className='relphi-tool-row'; row.append(controlLabel(tableColor,'Board')); flyout.appendChild(row); }
+      const imageRow=document.createElement('div'); imageRow.className='relphi-tool-row';
+      if (tableUpload) { tableUpload.textContent='Upload board image'; imageRow.appendChild(tableUpload); }
+      if (tableReset) { tableReset.textContent='Remove board image'; imageRow.appendChild(tableReset); }
+      if (imageRow.children.length) flyout.appendChild(imageRow);
+    };
+    tools.querySelector('.relphi-tool-trigger').addEventListener('click',event => {
+      event.preventDefault(); event.stopPropagation();
+      openTool=openTool==='more'?'':'more';
+      renderFlyout();
+    });
+    zoomRow.appendChild(tools);
+    toolbar.appendChild(zoomRow);
+    root.classList.toggle('relphi-transform-editing-unlocked',transformEditingUnlocked);
+    renderFlyout();
+    nativeOptions.hidden = true;
+    nativeOptions.setAttribute('aria-hidden','true');
+  }
+
+  function installExportArea(root) {
+    const drawer = root.querySelector('.card-row-drawing-board');
+    const workspace = root.querySelector('.card-row-workspace');
+    if (!drawer || !workspace) return;
+    let section = root.querySelector('#drawing-board-post-export');
+    if (!section) {
+      section = document.createElement('section');
+      section.id = 'drawing-board-post-export';
+      section.className = 'relphi-board-export';
+      section.innerHTML = '<header><strong>Save & export</strong><span>Keep the arranged board or export the cards.</span></header><div class="board-options-body"></div>';
+      workspace.insertAdjacentElement('afterend',section);
+    }
+    const destination = section.querySelector('.board-options-body');
+    const labels = {
+      snapshotCardRowArrangement:'Prepare arrangement snapshot (PNG)',
+      downloadRowHtml:'Download cards (HTML)',
+      downloadRowTextHtml:'Download text (HTML)',
+      downloadRowJson:'Download board data (JSON)',
+      printCardRowImage:'Print / image'
+    };
+    Object.entries(labels).forEach(([id,label]) => {
+      const node = root.querySelector('#'+id);
+      if (!node || node.parentElement === destination) return;
+      node.textContent = label;
+      destination.appendChild(node);
+    });
+  }
+
+  function optionTemplateMarkup(draft) {
+    const entries = allTemplates();
+    return `<option value="">Custom</option>${entries.map(item => `<option value="${escapeHtml(item.id)}" ${draft.templateId===item.id?'selected':''}>${item.cardCount} · ${escapeHtml(item.name)}</option>`).join('')}`;
+  }
+  function packOptions(value) {
+    const items = [
+      ['full','Full Pack'],['shown','Shown cards'],['uhn','Universal Human Needs'],['majors','Majors'],
+      ['planetary-majors','Planetary Majors'],['zodiac-majors','Zodiac Majors'],['aces','Aces'],['courts','Courts'],
+      ['pips','Pips'],['decans','Decan pips'],['wands','Wands'],['cups','Cups'],['swords','Swords'],['pentacles','Pentacles / Disks']
+    ];
+    return items.map(([id,label])=>`<option value="${id}" ${value===id?'selected':''}>${label}</option>`).join('');
+  }
+  function labelsMarkup(labels) {
+    const rows=labels.length ? labels : [''];
+    return rows.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" ${index===0?'':'maxlength="90" '}value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
+  }
+  function parseBulkQuestions(value) {
+    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,40).map(item=>item.slice(0,90));
+  }
+  function markQuestionEditCustom(drawer,draft) {
+    if (draft.templateId) draft.basedOnTemplateId=draft.templateId;
+    draft.templateId='';
+    draft.templateName='';
+    const templateSelect=drawer.querySelector('#relphiSpreadTemplateSelect');
+    if (templateSelect) templateSelect.value='';
+    const nameField=drawer.querySelector('#relphiTemplateName');
+    if (nameField) nameField.value='';
+  }
+
+  function renderOptions(root = panel()) {
+    if (!root || !optionsSession) return;
+    root.querySelector('.relphi-reading-options-drawer')?.remove();
+    const workspace = root.querySelector('.card-row-workspace');
+    if (!workspace) return;
+    const draft = optionsSession.draft;
+    const hasCards = currentCardCount(root) > 0;
+    const drawer = document.createElement('section');
+    drawer.className='relphi-reading-options-drawer is-reading-options-open';
+    drawer.id='drawingBoardReadingOptions';
+    drawer.setAttribute('role','dialog');
+    drawer.setAttribute('aria-label','Drawing Board Options');
+    drawer.innerHTML = `
+      <div class="relphi-options-heading"><div><span class="eyebrow">Drawing Board</span><h3>Options</h3></div></div>
+      ${hasCards ? '<p class="relphi-options-note">Reset Board before changing spread positions. Draw settings can still be changed.</p>' : ''}
+      <div class="relphi-options-body">
+        <div class="relphi-labels-section">
+          <div class="relphi-options-subhead"><strong>Questions / position labels</strong><button type="button" id="relphiAddPosition" ${hasCards?'disabled':''}>Add position</button></div>
+          <div id="relphiPositionLabels">${labelsMarkup(draft.labels)}</div>
+        </div>
+        <label class="relphi-options-field">Spread Template<select id="relphiSpreadTemplateSelect" ${hasCards?'disabled':''}>${optionTemplateMarkup(draft)}</select></label>
+        <div class="relphi-draw-options">
+          <label>Pack<select id="relphiDraftPack">${packOptions(draft.pack)}</select></label>
+          <label><input id="relphiDraftStickers" type="checkbox" ${draft.stickers?'checked':''}> Show position stickers</label>
+          <label><input id="relphiDraftReversals" type="checkbox" ${draft.reversals?'checked':''}> Reversals</label>
+          <label><input id="relphiDraftRepeats" type="checkbox" ${draft.repeats?'checked':''}> Repeats</label>
+        </div>
+        <div class="relphi-template-save">
+          <input id="relphiTemplateName" type="text" maxlength="60" placeholder="Custom template name" value="${escapeHtml(draft.templateName)}" ${hasCards?'disabled':''}>
+          <button type="button" id="relphiSaveTemplate" ${hasCards?'disabled':''}>Save template</button>
+        </div>
+      </div>
+      <div class="relphi-options-commitbar">
+        <button type="button" id="relphiResetBoard" class="relphi-reset-board">Reset Board</button>
+        <span></span>
+        <button type="button" id="relphiCancelOptions">Cancel</button>
+        <button type="button" id="relphiApplyOptions" class="primary">OK</button>
+      </div>`;
+    workspace.appendChild(drawer);
+    const templateSelect = drawer.querySelector('#relphiSpreadTemplateSelect');
+    templateSelect?.addEventListener('change',()=>{
+      const chosen=templateById(templateSelect.value);
+      draft.templateId=templateSelect.value;
+      draft.basedOnTemplateId=templateSelect.value;
+      if (chosen) {
+        draft.labels=chosen.positions.slice().sort((a,b)=>a.drawOrder-b.drawOrder).map(item=>item.label);
+        draft.pack=chosen.rules?.drawScope || draft.pack;
+        draft.reversals=chosen.rules?.allowReversals !== false;
+        draft.repeats=!!chosen.rules?.allowRepeats;
+        draft.templateName=chosen.name;
+      } else {
+        draft.basedOnTemplateId='';
+        draft.templateName='';
+      }
+      renderOptions(root);
+    });
+    const labelsList=drawer.querySelector('#relphiPositionLabels');
+    const acceptCommaList=(value)=>{
+      if (!String(value || '').includes(',')) return false;
+      const labels=parseBulkQuestions(value);
+      if (labels.length<2) return false;
+      draft.labels=labels;
+      markQuestionEditCustom(drawer,draft);
+      renderOptions(root);
       return true;
-    }
-    cancelReadingOptions(panel);
-    return false;
+    };
+    labelsList?.addEventListener('paste',event=>{
+      const row=event.target.closest('.relphi-label-row');
+      if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
+      const pasted=event.clipboardData?.getData('text') || '';
+      if (!pasted.includes(',') || parseBulkQuestions(pasted).length<2) return;
+      event.preventDefault();
+      acceptCommaList(pasted);
+    });
+    labelsList?.addEventListener('input',event=>{
+      const row=event.target.closest('.relphi-label-row');
+      if (!row || event.target.tagName!=='INPUT') return;
+      const index=Number(row.dataset.labelRow);
+      while (draft.labels.length<=index) draft.labels.push('');
+      draft.labels[index]=event.target.value.slice(0,90);
+      markQuestionEditCustom(drawer,draft);
+    });
+    labelsList?.addEventListener('change',event=>{
+      const row=event.target.closest('.relphi-label-row');
+      if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
+      acceptCommaList(event.target.value);
+    });
+    labelsList?.addEventListener('click',event=>{
+      const button=event.target.closest('[data-remove-label]');
+      if (!button) return;
+      draft.labels.splice(Number(button.dataset.removeLabel),1);
+      markQuestionEditCustom(drawer,draft);
+      renderOptions(root);
+    });
+    drawer.querySelector('#relphiAddPosition')?.addEventListener('click',()=>{
+      draft.labels.push(`Position ${draft.labels.length+1}`);
+      markQuestionEditCustom(drawer,draft);
+      renderOptions(root);
+    });
+    drawer.querySelector('#relphiDraftPack')?.addEventListener('change',event=>{draft.pack=event.target.value;});
+    drawer.querySelector('#relphiDraftStickers')?.addEventListener('change',event=>{draft.stickers=event.target.checked;});
+    drawer.querySelector('#relphiDraftReversals')?.addEventListener('change',event=>{draft.reversals=event.target.checked;});
+    drawer.querySelector('#relphiDraftRepeats')?.addEventListener('change',event=>{draft.repeats=event.target.checked;});
+    drawer.querySelector('#relphiTemplateName')?.addEventListener('input',event=>{draft.templateName=event.target.value.slice(0,60);});
+    drawer.querySelector('#relphiSaveTemplate')?.addEventListener('click',()=>saveDraftTemplate(root));
+    drawer.querySelector('#relphiResetBoard')?.addEventListener('click',()=>resetBoardFromOptions(root));
+    drawer.querySelector('#relphiCancelOptions')?.addEventListener('click',()=>closeOptions(root));
+    drawer.querySelector('#relphiApplyOptions')?.addEventListener('click',()=>applyOptions(root));
   }
-  window.RelphiDrawingBoardToggleOptions = () => toggleReadingOptions();
 
-  function syncReadingOptionsDrawer(panel) {
-    const drawer = panel.querySelector('.relphi-reading-options-drawer');
-    if (!drawer) return;
-    const open = panel.dataset.relphiReadingOptionsOpen === 'true';
-    drawer.open = true;
-    drawer.classList.toggle('is-reading-options-open', open);
-    const trigger = panel.querySelector('#drawingBoardOptionsButton');
-    if (trigger) {
-      trigger.setAttribute('aria-expanded', String(open));
-      trigger.classList.toggle('is-active', open);
-    }
+  function saveDraftTemplate(root) {
+    if (!optionsSession) return;
+    const draft=optionsSession.draft;
+    const name=String(draft.templateName || '').trim();
+    if (!name || !draft.labels.length) return;
+    const based=templateById(draft.templateId || draft.basedOnTemplateId);
+    const positions=(based?.positions?.length===draft.labels.length ? clone(based.positions) : genericPositions(draft.labels));
+    positions.forEach((item,index)=>{ item.label=draft.labels[index] || `Position ${index+1}`; item.drawOrder=index+1; });
+    const id=`custom-${slug(name)}-${draft.labels.length}`;
+    const custom={version:1,id,name,cardCount:draft.labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions,rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
+    const items=readCustomTemplates().filter(item=>item.id!==id);
+    items.push(custom); writeCustomTemplates(items);
+    draft.templateId=id;
+    draft.basedOnTemplateId=id;
+    renderOptions(root);
   }
 
-  function installOptionsCommitBar(panel) {
-    const drawer = panel.querySelector('.relphi-reading-options-drawer');
-    if (!drawer) return null;
-    let bar = drawer.querySelector(':scope > .relphi-options-commit-bar');
-    if (!bar) {
-      bar = document.createElement('div');
-      bar.className = 'relphi-options-commit-bar';
-      bar.innerHTML = '<button type="button" class="relphi-options-save">Save</button><button type="button" class="relphi-options-cancel">Cancel</button>';
-      drawer.appendChild(bar);
-      bar.querySelector('.relphi-options-save')?.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        saveReadingOptions(panel);
+  function resetBoardFromOptions(root) {
+    if (!optionsSession) return;
+    optionsSession.draft=blankDraft();
+    openTool='';
+    closeFocus({acknowledge:false});
+    const clear=root.querySelector('#clearShortList');
+    if (clear) clear.click();
+    else if (optionsBridge()) {
+      const snap=optionsBridge().capture();
+      Object.assign(snap,{shortList:[],shortListPositionLabels:[],shortListPositionCardIds:[],rowEnvelopeLayout:{},rowCardTransforms:{},rowPositionMeta:[],rowActiveLayout:null,rowLayoutLocked:false,rowLayoutDesignMode:false,rowCardReversals:{},shortListName:'',shortListNotes:'',rowDrawScope:'full',rowAllowRepeats:false,rowAllowReversals:true});
+      optionsBridge().restore(snap);
+    }
+    optionsSession.baseline=currentSnapshot();
+    writeStickerVisibility(true);
+    boardOpen=true;
+    const keepBoardOpen=()=>{
+      const next=panel();
+      if (!next) return;
+      next.hidden=false;
+      next.removeAttribute('hidden');
+      const drawer=next.querySelector('.card-row-drawing-board');
+      if (drawer) drawer.open=true;
+      const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+      if (trigger) {
+        trigger.textContent='Close Drawing Board';
+        trigger.setAttribute('aria-expanded','true');
+      }
+      enhance(next);
+    };
+    keepBoardOpen();
+    setTimeout(keepBoardOpen,0);
+  }
+  function closeOptions(root = panel()) {
+    optionsSession=null;
+    root?.querySelector('.relphi-reading-options-drawer')?.remove();
+    const trigger=root?.querySelector('#drawingBoardOptionsButton');
+    if (trigger) trigger.setAttribute('aria-expanded','false');
+  }
+  function openOptions(root = panel()) {
+    if (!root) return;
+    if (optionsSession) { closeOptions(root); return; }
+    beginOptionsSession();
+    const trigger=root.querySelector('#drawingBoardOptionsButton');
+    if (trigger) { trigger.textContent='Options'; trigger.setAttribute('aria-expanded','true'); }
+    renderOptions(root);
+  }
+
+  function draftPrefab(draft) {
+    const based=templateById(draft.templateId || draft.basedOnTemplateId);
+    const labels=draft.labels.map((value,index)=>String(value || `Position ${index+1}`).trim().slice(0,90));
+    if (based && based.positions.length===labels.length) {
+      const next=clone(based);
+      next.positions.forEach((item,index)=>{item.label=labels[index]; item.drawOrder=index+1;});
+      next.rules={allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack};
+      if (!draft.templateId) {
+        next.id='custom-active';
+        next.name=draft.templateName || 'Custom';
+        next.source='custom';
+        next.editable=true;
+        next.basedOn=based.id;
+      }
+      return next;
+    }
+    return {version:1,id:'custom-active',name:draft.templateName || 'Custom',cardCount:labels.length,source:'custom',editable:true,basedOn:based?.id||null,positions:genericPositions(labels),rules:{allowReversals:draft.reversals,allowRepeats:draft.repeats,drawScope:draft.pack}};
+  }
+
+  function applyDrawSettings(draft) {
+    const bridge=optionsBridge(); if (!bridge) return;
+    const snap=bridge.capture();
+    snap.rowDrawScope=draft.pack;
+    snap.rowAllowRepeats=!!draft.repeats;
+    snap.rowAllowReversals=!!draft.reversals;
+    snap.rowDrawDeck=[];
+    snap.rowDrawDeckSignature='';
+    bridge.restore(snap);
+  }
+  function applyOptions(root = panel()) {
+    if (!optionsSession || !root) return;
+    const draft=clone(optionsSession.draft);
+    const structural=optionsStructuralChanged(optionsSession);
+    writeStickerVisibility(draft.stickers);
+    optionsSession=null;
+    root.querySelector('.relphi-reading-options-drawer')?.remove();
+    if (structural && currentCardCount(root)===0) {
+      const clear=root.querySelector('#clearShortList');
+      clear?.click();
+      const prefab=draftPrefab(draft);
+      if (prefab.positions.length) prefabBridge()?.applyLayout?.(prefab);
+      applyDrawSettings(draft);
+    } else {
+      applyDrawSettings(draft);
+    }
+    setTimeout(()=>{ enhance(panel()); zoomExtents(); },0);
+  }
+
+  function acknowledgeCelticCrossing() {
+    const state=currentPrefabState();
+    const layout=state.activeLayout;
+    if (layout?.id!=='celtic-cross-10' && layout?.basedOn!=='celtic-cross-10') return false;
+    const bridge=optionsBridge(); if (!bridge) return false;
+    const snap=bridge.capture();
+    const metaList=Array.isArray(snap.rowPositionMeta) ? snap.rowPositionMeta : [];
+    const crossingIndex=metaList.findIndex(meta=>meta?.role==='crossing' || meta?.id==='crossing');
+    const coveringIndex=metaList.findIndex(meta=>meta?.role==='covering' || meta?.id==='covering');
+    if (crossingIndex<0 || coveringIndex<0) return false;
+    const meta=metaList[crossingIndex] || {};
+    if (meta.celticCrossAcknowledged) return false;
+    const covering=snap.rowEnvelopeLayout?.[coveringIndex] || snap.rowEnvelopeLayout?.[String(coveringIndex)] || {x:.20*CANVAS_W,y:.34*CANVAS_H};
+    snap.rowEnvelopeLayout ||= {};
+    snap.rowCardTransforms ||= {};
+    snap.rowPositionMeta ||= [];
+    snap.rowEnvelopeLayout[crossingIndex]={x:Number(covering.x),y:Number(covering.y)};
+    snap.rowCardTransforms[crossingIndex]={...(snap.rowCardTransforms[crossingIndex]||{}),scale:.48,rotation:90,zIndex:30};
+    snap.rowPositionMeta[crossingIndex]={...meta,celticCrossAcknowledged:true};
+    const activeCrossing=snap.rowActiveLayout?.positions?.find(position=>position?.id==='crossing' || position?.role==='crossing');
+    if (activeCrossing) activeCrossing.transform=clone(CELTIC_CROSS.positions[1].crossedTransform);
+    bridge.restore(snap);
+    setTimeout(zoomExtents,0);
+    return true;
+  }
+
+  function focusItem(index, root = panel()) {
+    return root?.querySelector(`.card-row-board>.card-row-item[data-row-index="${index}"]`) || null;
+  }
+  function cardAt(index, root = panel()) { return focusItem(index,root)?.querySelector('[data-row-card]') || null; }
+  function positionLabel(index, root = panel()) {
+    const snap=currentSnapshot() || {};
+    return String(snap.shortListPositionLabels?.[index] || `Position ${index+1}`);
+  }
+  function focusCardIsReversed(index, root = panel()) {
+    const item=focusItem(index,root);
+    const card=cardAt(index,root);
+    return !!item?.classList?.contains('is-row-reversed') || card?.dataset?.rowReversed === 'true' || !!card?.classList?.contains('is-row-reversed');
+  }
+  function focusArtImage(card) {
+    const art=card?.querySelector?.('.or-card-art');
+    if (art?.tagName === 'IMG') return art;
+    return art?.querySelector?.('img') || card?.querySelector?.('img') || null;
+  }
+  function addFocusReversedMeaning(entry, cardId, reversed) {
+    entry.querySelectorAll('[data-relphi-focus-reversed]').forEach(node=>node.remove());
+    if (!reversed) return;
+    const meaning=window.RelphiTarotReversedMeanings?.meaningFor?.(cardId) || '';
+    if (!meaning) return;
+    const section=document.createElement('section');
+    section.className='interpretation-card--priority relphi-focus-reversed';
+    section.dataset.relphiFocusReversed=cardId;
+    const heading=document.createElement('h3'); heading.textContent='Relphi-derived reversed interpretation';
+    const body=document.createElement('p'); body.textContent=meaning;
+    section.append(heading,body);
+    const block=entry.querySelector('.full-entry-title-block');
+    const upright=block?.querySelector(':scope > .locked-relphi-priority,:scope > .uhn-panel');
+    if (upright) upright.insertAdjacentElement('afterend',section);
+    else if (block) block.appendChild(section);
+    else entry.prepend(section);
+  }
+  function renderFocusEntry(reader, index) {
+    const card=cardAt(index);
+    const cardId=String(card?.dataset?.rowCard || '');
+    const artSource=focusArtImage(card);
+    const reversed=focusCardIsReversed(index);
+    const art=reader.querySelector('.relphi-focus-art');
+    const entry=reader.querySelector('.relphi-focus-entry');
+    const position=reader.querySelector('.relphi-focus-position');
+    const reversedBadge=reader.querySelector('.relphi-focus-reversed-badge');
+    if (position) position.textContent=positionLabel(index);
+    if (reversedBadge) reversedBadge.hidden=!reversed;
+    if (art && artSource) {
+      art.src=artSource.currentSrc || artSource.src || '';
+      art.alt=(artSource.alt || ledgerBridge()?.titleFor?.(cardId) || 'Tarot card') + (reversed ? ' — reversed' : '');
+      art.classList.toggle('is-reversed',reversed);
+    }
+    if (entry) {
+      entry.innerHTML=ledgerBridge()?.renderCardEntry?.(cardId,'Tarot Ledger entry') || '<p>Card entry unavailable.</p>';
+      entry.querySelectorAll('.tarot-card-art,.full-entry-row-button').forEach(node=>node.remove());
+      addFocusReversedMeaning(entry,cardId,reversed);
+      ledgerBridge()?.bindCardEntry?.(entry);
+      entry.scrollTop=0;
+    }
+  }
+  function renderFocusStrip(reader, index) {
+    const order=orderedNativePositionIndices();
+    const strip=reader.querySelector('.relphi-focus-strip');
+    strip.replaceChildren();
+    order.forEach((nativeIndex,logicalIndex)=>{
+      const button=document.createElement('button');
+      button.type='button'; button.dataset.focusPosition=String(nativeIndex);
+      button.classList.toggle('is-current',nativeIndex===index);
+      button.classList.toggle('is-reversed',focusCardIsReversed(nativeIndex));
+      const card=cardAt(nativeIndex);
+      const img=focusArtImage(card)?.cloneNode(true);
+      if (img) { img.removeAttribute('loading'); button.appendChild(img); }
+      const span=document.createElement('span'); span.textContent=String(logicalIndex+1); button.appendChild(span);
+      button.title=positionLabel(nativeIndex);
+      button.addEventListener('click',()=>navigateFocusTo(nativeIndex));
+      strip.appendChild(button);
+    });
+    setTimeout(()=>strip.querySelector('.is-current')?.scrollIntoView({block:'nearest',inline:'center'}),0);
+  }
+  function installFocusSwipe(reader) {
+    const main=reader.querySelector('.relphi-focus-main');
+    if (!main) return;
+    let gesture=null;
+    main.addEventListener('pointerdown',event=>{
+      if (event.pointerType==='mouse') return;
+      if (event.target.closest('button,a,input,textarea,select,label,[contenteditable="true"]')) return;
+      gesture={id:event.pointerId,x:event.clientX,y:event.clientY,time:Date.now()};
+    });
+    main.addEventListener('pointercancel',()=>{gesture=null;});
+    main.addEventListener('pointerup',event=>{
+      if (!gesture || event.pointerId!==gesture.id) return;
+      const dx=event.clientX-gesture.x;
+      const dy=event.clientY-gesture.y;
+      const elapsed=Date.now()-gesture.time;
+      gesture=null;
+      if (elapsed>1400 || Math.abs(dx)<56 || Math.abs(dx)<=Math.abs(dy)*1.25) return;
+      navigateFocusBy(dx<0?1:-1);
+    });
+  }
+  function openFocus(index) {
+    const root=panel(); const card=cardAt(index,root);
+    if (!root || !card || !ledgerBridge()) return false;
+    const existingReader=document.querySelector('.relphi-focus-reader');
+    focusIndex=index;
+    const reader=document.createElement('section');
+    reader.className='relphi-focus-reader';
+    reader.dataset.focusIndex=String(index);
+    reader.setAttribute('role','dialog');
+    reader.setAttribute('aria-modal','true');
+    reader.setAttribute('aria-label',positionLabel(index,root));
+    reader.innerHTML=`<div class="relphi-focus-shell"><header><div class="relphi-focus-heading"><strong class="relphi-focus-position"></strong><span class="relphi-focus-reversed-badge" hidden>Reversed</span></div><div class="relphi-focus-actions"><button type="button" class="relphi-focus-draw">Draw</button><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></div></header><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-strip" aria-label="Reading positions"></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
+    renderFocusEntry(reader,index);
+    renderFocusStrip(reader,index);
+    reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
+    reader.querySelector('.relphi-focus-prev').addEventListener('click',()=>navigateFocusBy(-1));
+    reader.querySelector('.relphi-focus-next').addEventListener('click',()=>navigateFocusBy(1));
+    reader.querySelector('.relphi-focus-draw').addEventListener('click',()=>drawNextLogical(panel()));
+    installFocusSwipe(reader);
+    if (existingReader) existingReader.replaceWith(reader); else document.body.appendChild(reader);
+    document.body.classList.add('relphi-focus-open');
+    return true;
+  }
+  function isCrossingPosition(index) {
+    if (index<0) return false;
+    const snap=currentSnapshot() || {};
+    return positionRoleAt(index,snap)==='crossing' || positionIdAt(index,snap)==='crossing';
+  }
+  function closeFocus({acknowledge=true}={}) {
+    const leaving=focusIndex;
+    document.querySelector('.relphi-focus-reader')?.remove();
+    document.body.classList.remove('relphi-focus-open');
+    focusIndex=-1;
+    if (acknowledge && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
+  }
+  function navigateFocusTo(nativeIndex) {
+    const next=Number(nativeIndex);
+    if (!Number.isInteger(next)) return;
+    const leaving=focusIndex;
+    if (leaving>=0 && leaving!==next && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
+    if (cardAt(next)) openFocus(next);
+    else drawInto(focusItem(next),next);
+  }
+  function navigateFocusBy(delta) {
+    const order=orderedNativePositionIndices();
+    if (!order.length) return closeFocus({acknowledge:true});
+    const currentIndex=order.indexOf(focusIndex);
+    const current=currentIndex>=0 ? currentIndex : 0;
+    const logical=Math.max(0,Math.min(order.length-1,current+delta));
+    navigateFocusTo(order[logical]);
+  }
+
+  function isEmptyItem(item) { return !!item && !item.querySelector('[data-row-card]') && item.classList.contains('card-row-placeholder-item'); }
+  function drawInto(item, suppliedIndex) {
+    const root=panel();
+    if (!root || activeDraw || !isEmptyItem(item) || currentPrefabState().designMode) return;
+    const draw=root.querySelector('#drawRandomRowCard');
+    if (!draw || draw.disabled) return;
+    const targetIndex=Number.isInteger(suppliedIndex)?suppliedIndex:Number(item.dataset.rowIndex);
+    const drawnIndex=currentCardCount(root);
+    if (!Number.isInteger(targetIndex)||targetIndex<0) return;
+    activeDraw=true;
+    pendingFocusIndex=drawnIndex;
+    draw.click();
+    if (targetIndex!==drawnIndex) prefabBridge()?.swapPositionSlots?.(drawnIndex,targetIndex);
+    activeDraw=false;
+  }
+  function nextUndrawnNativeIndex(root=panel()) {
+    return orderedNativePositionIndices().find(index=>!cardAt(index,root) && isEmptyItem(focusItem(index,root))) ?? null;
+  }
+  function drawNextLogical(root=panel()) {
+    if (!root || activeDraw) return;
+    const next=nextUndrawnNativeIndex(root);
+    if (next!=null) { drawInto(focusItem(next,root),next); return; }
+    if (configuredPositionCount()>0) return;
+    const draw=root.querySelector('#drawRandomRowCard');
+    if (!draw || draw.disabled) return;
+    activeDraw=true;
+    pendingFocusIndex=currentCardCount(root);
+    draw.click();
+    activeDraw=false;
+  }
+
+  function installLockedLayoutPointerGuards(root) {
+    root.querySelectorAll('.card-row-board>.card-row-item[data-row-index]>.card-row-drop-card,.card-row-board>.card-row-item[data-row-index]>.card-row-card-wrap').forEach(surface => {
+      if (surface.dataset.relphiLockedPointerGuard==='true') return;
+      surface.dataset.relphiLockedPointerGuard='true';
+      surface.addEventListener('pointerdown', event => {
+        if (event.target.closest('button,input,textarea,select,label,[contenteditable="true"],[data-row-transform-handle]')) return;
+        const state=currentPrefabState();
+        if (state.locked && !state.designMode) event.stopPropagation();
       });
-      bar.querySelector('.relphi-options-cancel')?.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        cancelReadingOptions(panel);
-      });
-    }
-    return bar;
-  }
-
-  function installReadingOptionsDrawer(panel) {
-    const drawer = panel.querySelector('.card-row-more-options');
-    const summary = drawer?.querySelector(':scope > summary');
-    const boardDrawer = panel.querySelector('.card-row-drawing-board');
-    const workspace = panel.querySelector('.card-row-workspace');
-    if (!drawer || !summary || !boardDrawer || !workspace) return;
-
-    drawer.classList.add('relphi-reading-options-drawer');
-    drawer.open = true;
-    summary.textContent = 'Board Options';
-    summary.hidden = true;
-    summary.setAttribute('aria-hidden', 'true');
-
-    if (drawer.parentElement !== workspace) {
-      workspace.insertAdjacentElement('afterbegin', drawer);
-    }
-    if (panel.dataset.relphiReadingOptionsOpen !== 'true') panel.dataset.relphiReadingOptionsOpen = 'false';
-    syncReadingOptionsDrawer(panel);
-  }
-
-  function permanentTopActionRow(panel) {
-    const drawer = panel.querySelector('.card-row-drawing-board');
-    const summary = drawer?.querySelector(':scope > summary');
-    if (!drawer || !summary) return null;
-    let row = drawer.querySelector(':scope > .drawing-board-top-actions');
-    if (!row) {
-      row = document.createElement('div');
-      row.className = 'drawing-board-top-actions';
-      summary.insertAdjacentElement('afterend', row);
-    }
-    return row;
-  }
-
-  function ensurePermanentTopActions(panel) {
-    const row = permanentTopActionRow(panel);
-    if (!row) return null;
-
-    const desired = [
-      panel.querySelector('#drawingBoardOptionsButton'),
-      panel.querySelector('#clearShortList'),
-      panel.querySelector('#drawRandomRowCard'),
-      panel.querySelector('#undoShortList'),
-      panel.querySelector('#redoShortList'),
-      panel.querySelector('#clearShortListCardsOnly')
-    ].filter(Boolean);
-
-    desired.forEach((button, index) => {
-      const current = row.children[index] || null;
-      if (button.parentElement !== row || current !== button) {
-        row.insertBefore(button, current);
-      }
-    });
-
-    row.querySelectorAll('.drawing-board-action-buttons,.drawing-board-primary-actions').forEach(node => {
-      if (!node.children.length) node.remove();
-    });
-    return row;
-  }
-
-  window.RelphiDrawingBoardEnsureTopActions = ensurePermanentTopActions;
-
-  function installOptionsButton(panel) {
-    const reset = panel.querySelector('#clearShortList');
-    if (!reset) return;
-    if (reset.dataset.relphiTextureResetBound !== 'true') {
-      reset.dataset.relphiTextureResetBound = 'true';
-      reset.addEventListener('click', () => {
-        window.setTimeout(() => {
-          setBoardTexture(DEFAULT_BOARD_TEXTURE);
-          applyBoardTexture(panel);
-        }, 0);
-      });
-    }
-
-    let button = panel.querySelector('#drawingBoardOptionsButton');
-    if (!button) {
-      button = document.createElement('button');
-      button.type = 'button';
-      button.id = 'drawingBoardOptionsButton';
-      button.textContent = 'Options';
-    }
-    button.setAttribute('aria-controls', 'drawingBoardReadingOptions');
-    const drawer = panel.querySelector('.relphi-reading-options-drawer');
-    if (drawer) drawer.id = 'drawingBoardReadingOptions';
-
-    ensurePermanentTopActions(panel);
-    button.setAttribute('aria-expanded', String(panel.dataset.relphiReadingOptionsOpen === 'true'));
-    button.classList.toggle('is-active', panel.dataset.relphiReadingOptionsOpen === 'true');
-  }
-
-  function organizeBoardOptions(panel) {
-    const composer = panel.querySelector('.card-row-composer');
-    if (!composer || composer.classList.contains('is-relphi-organized')) return;
-    composer.classList.add('is-relphi-organized');
-
-    const control = id => {
-      const element = panel.querySelector('#' + id);
-      return element?.closest('label') || element;
-    };
-    const move = (destination, node) => { if (destination && node) destination.appendChild(node); };
-    const section = (kind, host = composer) => {
-      const node = document.createElement('section');
-      node.className = 'card-row-control-block card-row-control-block--' + kind;
-      node.id = 'board-options-' + kind;
-      node.innerHTML = '<div class="board-options-body"></div>';
-      host.appendChild(node);
-      return node;
-    };
-    const setupGroup = (host, kind, title, description) => {
-      const group = document.createElement('section');
-      group.className = 'board-setup-group board-setup-group--' + kind;
-      group.innerHTML = '<header><strong>' + title + '</strong><span>' + description + '</span></header>';
-      host.appendChild(group);
-      return group;
-    };
-
-    const setupSection = section('setup');
-    const setup = setupSection.querySelector('.board-options-body');
-    const spreadSetup = setupGroup(setup, 'spread', '', '');
-    setupSection.style.setProperty('width', '100%', 'important');
-    setup.style.setProperty('display', 'block', 'important');
-    setup.style.setProperty('width', '100%', 'important');
-    setup.style.setProperty('grid-template-columns', '1fr', 'important');
-    spreadSetup.style.setProperty('display', 'flex', 'important');
-    spreadSetup.style.setProperty('flex-direction', 'column', 'important');
-    spreadSetup.style.setProperty('width', '100%', 'important');
-    spreadSetup.style.setProperty('max-width', '100%', 'important');
-    spreadSetup.style.setProperty('grid-column', '1 / -1', 'important');
-
-    move(spreadSetup, control('rowPositionLabels'));
-
-    const drawSettingsRow = document.createElement('div');
-    drawSettingsRow.className = 'board-draw-settings-row';
-    drawSettingsRow.style.setProperty('display', 'flex', 'important');
-    drawSettingsRow.style.setProperty('flex-direction', 'column', 'important');
-    drawSettingsRow.style.setProperty('align-items', 'stretch', 'important');
-    drawSettingsRow.style.setProperty('gap', '.38rem', 'important');
-    drawSettingsRow.style.setProperty('width', '100%', 'important');
-    spreadSetup.appendChild(drawSettingsRow);
-
-    const packControl = control('rowDrawScope');
-    if (packControl) {
-      packControl.classList.remove('relphi-fixed-full-pack');
-      packControl.style.setProperty('order', '0', 'important');
-      packControl.style.setProperty('width', '100%', 'important');
-      packControl.style.setProperty('max-width', '100%', 'important');
-      move(drawSettingsRow, packControl);
-    }
-
-    const toggleStack = document.createElement('div');
-    toggleStack.className = 'board-reading-toggle-stack';
-    toggleStack.style.setProperty('display', 'grid', 'important');
-    toggleStack.style.setProperty('grid-template-columns', 'repeat(3, minmax(0, 1fr))', 'important');
-    toggleStack.style.setProperty('align-items', 'stretch', 'important');
-    toggleStack.style.setProperty('gap', '.35rem', 'important');
-    toggleStack.style.setProperty('width', '100%', 'important');
-    toggleStack.style.setProperty('max-width', '100%', 'important');
-    toggleStack.style.setProperty('order', '1', 'important');
-    const stickerToggle = control('rowPositionStickersQuick');
-    const repeatsToggle = control('rowAllowRepeats');
-    const reversalsToggle = control('rowAllowReversalsQuick');
-    const renameToggle = (label, text) => {
-      if (!label) return;
-      const textNode = Array.from(label.childNodes).find(node => node.nodeType === 3);
-      if (textNode) textNode.textContent = ' ' + text;
-      label.title = text;
-    };
-    renameToggle(stickerToggle, 'Labels');
-    renameToggle(reversalsToggle, 'Reversals');
-    renameToggle(repeatsToggle, 'Repeats');
-    [stickerToggle, reversalsToggle, repeatsToggle].forEach(label => {
-      if (!label) return;
-      label.style.setProperty('display', 'flex', 'important');
-      label.style.setProperty('flex-direction', 'row', 'important');
-      label.style.setProperty('flex-wrap', 'nowrap', 'important');
-      label.style.setProperty('align-items', 'center', 'important');
-      label.style.setProperty('justify-content', 'flex-start', 'important');
-      label.style.setProperty('width', '100%', 'important');
-      label.style.setProperty('min-width', '0', 'important');
-      label.style.setProperty('max-width', '100%', 'important');
-      label.style.setProperty('box-sizing', 'border-box', 'important');
-      label.style.setProperty('white-space', 'nowrap', 'important');
-      label.style.setProperty('overflow', 'hidden', 'important');
-      toggleStack.appendChild(label);
-    });
-    drawSettingsRow.appendChild(toggleStack);
-
-    const boardDrawer = panel.querySelector('.card-row-drawing-board');
-    const workspace = panel.querySelector('.card-row-workspace');
-    installWorkspaceTools(panel);
-    let afterCanvas = boardDrawer?.querySelector('#drawing-board-after-canvas');
-    if (boardDrawer && workspace && !afterCanvas) {
-      afterCanvas = document.createElement('section');
-      afterCanvas.id = 'drawing-board-after-canvas';
-      afterCanvas.className = 'drawing-board-after-canvas';
-      workspace.insertAdjacentElement('afterend', afterCanvas);
-    }
-    if (afterCanvas) {
-      let titleSection = afterCanvas.querySelector('#drawing-board-title');
-      if (!titleSection) {
-        titleSection = document.createElement('section');
-        titleSection.id = 'drawing-board-title';
-        titleSection.className = 'drawing-board-post-section drawing-board-title';
-        titleSection.innerHTML = '<header><strong>Reading Name</strong></header><div class="drawing-board-post-body"></div>';
-        afterCanvas.prepend(titleSection);
-      }
-      const titleBody = titleSection.querySelector('.drawing-board-post-body');
-      move(titleBody, control('rowName'));
-      const statsSummary = panel.querySelector('.card-row-stats');
-      if (titleBody && statsSummary && statsSummary.parentElement !== titleBody) {
-        titleBody.appendChild(statsSummary);
-      }
-
-      let notesSection = afterCanvas.querySelector('#drawing-board-notes');
-      if (!notesSection) {
-        notesSection = document.createElement('section');
-        notesSection.id = 'drawing-board-notes';
-        notesSection.className = 'drawing-board-post-section drawing-board-notes';
-        notesSection.innerHTML = '<header><strong>Notes</strong><span>Write interpretation notes after you can see the cards.</span></header><div class="drawing-board-post-body"></div>';
-        afterCanvas.appendChild(notesSection);
-      }
-      move(notesSection.querySelector('.drawing-board-post-body'), control('rowNotes'));
-
-      let exportSection = afterCanvas.querySelector('#drawing-board-post-export');
-      if (!exportSection) {
-        exportSection = document.createElement('section');
-        exportSection.id = 'drawing-board-post-export';
-        exportSection.className = 'drawing-board-post-section drawing-board-export';
-        exportSection.innerHTML = '<header><strong>Save & export</strong><span>Save or export after the reading is on the board.</span></header><div class="board-options-body"></div>';
-        afterCanvas.appendChild(exportSection);
-      }
-      ['downloadRowHtml', 'downloadRowTextHtml', 'printCardRowImage', 'snapshotCardRowArrangement'].forEach(id => panel.querySelector('#' + id)?.remove());
-      const data = panel.querySelector('#downloadRowJson');
-      if (data) {
-        data.textContent = 'Download board data (JSON)';
-        if (!data.dataset.relphiNamedExport) {
-          data.dataset.relphiNamedExport = 'true';
-          data.addEventListener('click', event => {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            const rawName = panel.querySelector('#rowName')?.value.trim() || 'Drawing Board';
-            const safeName = rawName.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() || 'Drawing Board';
-            const payload = {
-              name: rawName,
-              notes: panel.querySelector('#rowNotes')?.value || '',
-              cards: cardExportData(panel)
-            };
-            const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = safeName + '.json';
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-          }, true);
-        }
-      }
-      move(exportSection.querySelector('.board-options-body'), panel.querySelector('#downloadRowOptimizedHtml'));
-      move(exportSection.querySelector('.board-options-body'), panel.querySelector('#printRowPdf'));
-      move(exportSection.querySelector('.board-options-body'), data);
-    }
-    move(composer, panel.querySelector('#rowTableImageFile'));
-
-    installReadingOptionsDrawer(panel);
-
-    organizeBoardHeader(panel);
-
-    const resetBoard = panel.querySelector('#clearShortList');
-    if (resetBoard) {
-      resetBoard.textContent = 'Reset Board';
-      resetBoard.title = 'Reset the entire Drawing Board';
-      resetBoard.setAttribute('aria-label', 'Reset the entire Drawing Board');
-      resetBoard.classList.add('board-reset-action');
-    }
-
-    const staging = panel.querySelector('.card-row-action-staging');
-    const addPlaceholder = panel.querySelector('#addCardPlaceholder');
-    if (addPlaceholder && staging && addPlaceholder.parentElement !== staging) {
-      staging.appendChild(addPlaceholder);
-    }
-    panel.querySelector('.card-row-action-staging:empty')?.remove();
-
-    const envelopeColor = panel.querySelector('#rowEnvelopeColor');
-    const applyEnvelopeColor = () => {
-      const color = envelopeColor?.value || '#f3f0ea';
-      const board = panel.querySelector('.short-list-row.card-row-board');
-      board?.style.setProperty('--relphi-envelope-bg', color);
-      board?.style.setProperty('--relphi-card-envelope-bg', color);
-      board?.querySelectorAll('.card-row-item,.card-row-drop-card,.card-row-position-panel,.or-card,.relphi-surface').forEach(element => {
-        element.style.setProperty('background-color', color, 'important');
-      });
-    };
-    if (envelopeColor) {
-      envelopeColor.addEventListener('input', applyEnvelopeColor);
-      envelopeColor.addEventListener('change', applyEnvelopeColor);
-      applyEnvelopeColor();
-    }
-  }
-  function organizeBoardHeader(panel) {
-    const toolbar = panel.querySelector('.card-row-icon-toolbar');
-    if (!toolbar) return;
-    toolbar.classList.add('is-relphi-modern');
-    panel.querySelectorAll('.board-history-toggle,.board-history-menu,.board-header-group--history').forEach(node => {
-      if (!node.querySelector?.('#undoShortList,#redoShortList')) node.remove();
     });
   }
-  function reinforceReversalUi(panel) {
-    const allowed = !!panel.querySelector('#rowAllowReversalsQuick')?.checked;
-    panel.classList.toggle('row-reversals-disabled', !allowed);
-    panel.querySelectorAll('.card-row-item.is-row-reversed').forEach(item => {
-      item.querySelectorAll('.or-card-art, .spread-card-art').forEach(image => { image.style.transform = 'rotate(180deg)'; });
+  function installBoardCapture(root) {
+    const board=root.querySelector('.card-row-board');
+    if (!board || board.dataset.relphiUnifiedCapture==='true') return;
+    board.dataset.relphiUnifiedCapture='true';
+    board.addEventListener('click',event=>{
+      const item=event.target.closest('.card-row-item[data-row-index]');
+      if (!item || !board.contains(item)) return;
+      if (event.target.closest('button,input,textarea,select,label,[contenteditable="true"],[data-row-transform-handle]')) return;
+      const index=Number(item.dataset.rowIndex);
+      if (!Number.isInteger(index)) return;
+      if (item.querySelector('[data-row-card]')) {
+        event.preventDefault(); event.stopImmediatePropagation(); openFocus(index); return;
+      }
+      if (isEmptyItem(item)) {
+        event.preventDefault(); event.stopImmediatePropagation(); drawInto(item,index);
+      }
+    },true);
+  }
+  function installTopActions(root) {
+    const options=root.querySelector('#drawingBoardOptionsButton');
+    if (options) {
+      options.textContent='Options';
+      options.setAttribute('aria-expanded',String(!!optionsSession));
+      options.onclick=null;
+      if (options.dataset.relphiUnifiedOptions!=='true') {
+        options.dataset.relphiUnifiedOptions='true';
+        options.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();openOptions(root);},true);
+      }
+    }
+    const draw=root.querySelector('#drawRandomRowCard');
+    if (draw && draw.dataset.relphiUnifiedDraw!=='true') {
+      draw.dataset.relphiUnifiedDraw='true';
+      draw.addEventListener('click',()=>{ pendingFocusIndex=currentCardCount(root); },true);
+    }
+  }
+  function markSemanticPositions(root) {
+    const snap=currentSnapshot() || {};
+    root.querySelectorAll('.card-row-board>.card-row-item[data-row-index]').forEach(item=>{
+      const index=Number(item.dataset.rowIndex);
+      if (!Number.isInteger(index)) return;
+      const id=positionIdAt(index,snap);
+      if (id) item.dataset.relphiPositionId=id;
+      else delete item.dataset.relphiPositionId;
     });
   }
-  function normalizeDisabledButtonCursors(panel) {
-    panel.querySelectorAll('.card-row-drawing-board button:disabled').forEach(button => {
-      button.style.setProperty('cursor', 'default', 'important');
-    });
+  function updateLayoutClasses(root) {
+    const layout=currentPrefabState().activeLayout || {};
+    const id=layout.id || '';
+    const isCeltic=id==='celtic-cross-10' || layout.basedOn==='celtic-cross-10';
+    root.classList.toggle('relphi-celtic-cross',isCeltic);
+    root.classList.toggle('relphi-six-polarities',id==='six-polarities-houses-12' || layout.basedOn==='six-polarities-houses-12');
+    const snap=isCeltic?currentSnapshot():null;
+    const acknowledged=!!snap?.rowPositionMeta?.some?.(meta=>meta?.celticCrossAcknowledged);
+    root.classList.toggle('relphi-celtic-crossed',isCeltic&&acknowledged);
   }
-  function enhance() {
-    scheduled = false;
-    const panel = document.getElementById('shortListPanel');
-    if (!panel || panel.hidden) {
-      syncBoardEntryButton();
+
+  function enhance(root = panel()) {
+    if (!root) return;
+    const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+    if (!initialized) initialized=true;
+    boardOpen=trigger?.getAttribute('aria-expanded')==='true';
+    if (!boardOpen) {
+      root.hidden=true;
+      if (trigger) { trigger.textContent='Open Drawing Board'; trigger.setAttribute('aria-expanded','false'); }
       return;
     }
-    syncBoardEntryButton();
-    addStickerToggle(panel);
-        ensureReadyToDrawDefaults(panel);
-panel.classList.toggle('row-position-stickers-disabled', !stickersEnabled());
-    addHelpfulTip(panel);
-    removeUnavailableSelectionControls(panel);
-    addLeanExports(panel);
-    organizeBoardOptions(panel);
-    syncReadingOptionsDrawer(panel);
-    installOptionsButton(panel);
-    installOptionsCommitBar(panel);
-    ensurePermanentTopActions(panel);
-    installBoardControllerAutoHide(panel);
-    syncDescriptionLayers(panel);
-    reinforceReversalUi(panel);
-    normalizeDisabledButtonCursors(panel);
-  }
-  function scheduleEnhance() {
-    if (scheduled) return;
-    scheduled = true;
-    requestAnimationFrame(enhance);
-  }
-  function descriptionLayerFromEvent(event) {
-    return event.target.closest?.('#shortListPanel .card-row-board .or-card-layer.relphi-info-layer, #shortListPanel .card-row-board .relphi-info-scroll');
-  }
-  function beginDescriptionSelection(event) {
-    const description = descriptionLayerFromEvent(event);
-    if (!description || event.button !== 0) return;
-    const card = description.closest('[data-row-card]');
-    if (!card) return;
-    descriptionSelectionCard = card;
-    card.draggable = false;
-    card.dataset.descriptionSelecting = 'true';
-    event.stopImmediatePropagation();
-  }
-  function endDescriptionSelection() {
-    const card = descriptionSelectionCard;
-    descriptionSelectionCard = null;
-    if (!card) return;
-    setTimeout(() => {
-      if (!card.isConnected) return;
-      card.draggable = true;
-      delete card.dataset.descriptionSelecting;
-    }, 0);
-  }
-  function start() {setArrivalState();
-    document.addEventListener('relphi:drawing-board-options-toggle', event => {
-      const panelId = event.detail?.panelId || 'shortListPanel';
-      toggleReadingOptions(document.getElementById(panelId));
-    });
-    document.addEventListener('relphi:drawing-board-rendered', scheduleEnhance);
-    const panel = document.getElementById('shortListPanel');
-    if (panel) {
-      new MutationObserver(() => {
-        syncBoardEntryButton();
-        scheduleEnhance();
-      }).observe(panel, { attributes:true, attributeFilter:['hidden'] });
+    root.hidden=false;
+    root.removeAttribute('hidden');
+    root.classList.toggle('relphi-hide-position-stickers',!showPositionStickers);
+    markSemanticPositions(root);
+    updateLayoutClasses(root);
+    installTopActions(root);
+    installPermanentControls(root);
+    installPinchZoom(root);
+    installExportArea(root);
+    installLockedLayoutPointerGuards(root);
+    installBoardCapture(root);
+    if (optionsSession) renderOptions(root);
+    if (pendingFocusIndex!=null) {
+      const target=pendingFocusIndex;
+      if (cardAt(target,root)) {
+        pendingFocusIndex=null;
+        if (configuredPositionCount()===0) zoomExtents();
+        setTimeout(()=>openFocus(target),0);
+      }
     }
-    document.addEventListener('pointerdown', beginDescriptionSelection, true);
-    window.addEventListener('pointerup', endDescriptionSelection, true);
-    window.addEventListener('pointercancel', endDescriptionSelection, true);
-    document.addEventListener('dragstart', event => {
-      if (!descriptionLayerFromEvent(event)) return;
+  }
+
+  function clearCardsOnly(root=panel()) {
+    const bridge=optionsBridge();
+    const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+    if (!root || !bridge || !trigger) return false;
+    const snapshot=bridge.capture();
+    if (!snapshot) return false;
+    boardOpen=true;
+    trigger.textContent='Close Drawing Board';
+    trigger.setAttribute('aria-expanded','true');
+    root.hidden=false;
+    root.removeAttribute('hidden');
+    snapshot.shortList=[];
+    snapshot.shortListSelection=[];
+    snapshot.rowCardReversals={};
+    snapshot.rowCardManual=[];
+    snapshot.rowDrawDeck=[];
+    snapshot.rowDrawDeckSignature='';
+    snapshot.cardRowBoardOpen=true;
+    bridge.restore(snapshot);
+    return true;
+  }
+
+  function globalCapture(event) {
+    const trigger=event.target.closest?.('#relphiOpenDrawingBoardCurrent');
+    if (trigger) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      const wasOpen=trigger.getAttribute('aria-expanded')==='true';
+      setBoardOpen(!wasOpen,{fit:!wasOpen});
+      return;
+    }
+    const root=panel();
+    const optionsTrigger=event.target.closest?.('#shortListPanel #drawingBoardOptionsButton');
+    if (optionsTrigger && root?.contains(optionsTrigger)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-    }, true);
-    document.addEventListener('selectstart', event => {
-      if (descriptionLayerFromEvent(event)) event.stopImmediatePropagation();
-    }, true);
-    document.addEventListener('click', event => {
-      const openOptionsPanel = document.querySelector('#shortListPanel .relphi-reading-options-drawer.is-reading-options-open');
-      if (openOptionsPanel && !event.target.closest?.('#drawingBoardOptionsButton,.relphi-reading-options-drawer')) {
-        const panel = document.getElementById('shortListPanel');
-        if (panel) cancelReadingOptions(panel);
-      }
-      const openHistory = document.querySelector('#shortListPanel .board-history-menu:not([hidden])');
-      if (openHistory && !event.target.closest?.('.board-header-group--history')) {
-        openHistory.hidden = true;
-        document.querySelector('#shortListPanel .board-history-toggle')?.setAttribute('aria-expanded', 'false');
-      }
-      const description = event.target.closest?.('#shortListPanel .or-card-layer.relphi-info-layer');
-      const descriptionAction = event.target.closest?.('.card-title-link,[data-card-id],button,a,input,select,textarea');
-      if (description && !descriptionAction) {
-        event.stopImmediatePropagation();
-        return;
-      }
-      const clear = event.target.closest?.('#clearShortList');
-      if (!clear) return;
-      if (window.confirm('Reset the entire Drawing Board, including cards, position stickers, backgrounds, notes, and layout?')) return;
+      openOptions(root);
+      return;
+    }
+    const clearCardsTrigger=event.target.closest?.('#shortListPanel #clearShortListCardsOnly');
+    if (clearCardsTrigger && root?.contains(clearCardsTrigger)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-    }, true);
-    scheduleEnhance();
-    const previewParams = new URLSearchParams(location.search);
-    if (previewParams.get('standaloneDrawingBoard') === '1' || previewParams.get('board') === 'workflow-v2') {
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        const livePanel = document.getElementById('shortListPanel');
-        if (livePanel?.hidden) openBoardFromLedger();
-        else {
-          livePanel?.removeAttribute('hidden');
-          scheduleEnhance();
+      clearCardsOnly(root);
+      return;
+    }
+    const drawTrigger=event.target.closest?.('#shortListPanel #drawRandomRowCard');
+    if (drawTrigger && root?.contains(drawTrigger) && !activeDraw) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      drawNextLogical(root);
+      return;
+    }
+    const item=event.target.closest?.('#shortListPanel .card-row-board>.card-row-item[data-row-index]');
+    if (item && root?.contains(item) && !event.target.closest?.('button,input,textarea,select,label,[contenteditable="true"],[data-row-transform-handle]')) {
+      const index=Number(item.dataset.rowIndex);
+      if (Number.isInteger(index)) {
+        if (item.querySelector('[data-row-card]')) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          openFocus(index);
+          return;
         }
-      }));
+        if (isEmptyItem(item)) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          drawInto(item,index);
+          return;
+        }
+      }
+    }
+    if (openTool && !event.target.closest?.('.relphi-workspace-tools')) {
+      openTool='';
+      enhance(panel());
     }
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
-  else start();
+
+  window.addEventListener('click',globalCapture,true);
+  document.addEventListener('keydown',event=>{
+    const reader=document.querySelector('.relphi-focus-reader');
+    const target=event.target;
+    const editable=!!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName || ''));
+    if (reader && !editable && (event.key==='ArrowLeft' || event.key==='ArrowRight')) {
+      event.preventDefault();
+      navigateFocusBy(event.key==='ArrowLeft' ? -1 : 1);
+      return;
+    }
+    if (event.key!=='Escape') return;
+    if (reader) closeFocus({acknowledge:true});
+    else if (optionsSession) closeOptions(panel());
+    else if (openTool) { openTool=''; enhance(panel()); }
+  });
+  document.addEventListener('relphi:drawing-board-rendered',()=>enhance(panel()));
+  window.addEventListener('relphi:tarot-enhancements-ready',()=>enhance(panel()));
+  window.addEventListener('resize',()=>{ if(boardOpen) zoomExtents(); });
+
+  function boot() {
+    const root=panel();
+    const trigger=document.getElementById('relphiOpenDrawingBoardCurrent');
+    if (!root || !trigger || !prefabBridge() || !optionsBridge()) return false;
+    initialized=true;
+    boardOpen=trigger.getAttribute('aria-expanded')==='true' && !root.hidden;
+    if (!boardOpen) { root.hidden=true; trigger.textContent='Open Drawing Board'; trigger.setAttribute('aria-expanded','false'); }
+    else enhance(root);
+    return true;
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{setTimeout(boot,0);setTimeout(boot,120);},{once:true});
+  else { setTimeout(boot,0); setTimeout(boot,120); }
 })();

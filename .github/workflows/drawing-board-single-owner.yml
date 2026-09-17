@@ -1,0 +1,62 @@
+name: Drawing Board Single Owner
+
+on:
+  push:
+    branches:
+      - refactor/drawing-board-single-owner
+  pull_request:
+    paths:
+      - 'drawing-board-workflow-v2.js'
+      - 'drawing-board-workflow-v2.css'
+      - 'navloader.js'
+      - 'tarot-app.js'
+      - 'tests/drawing-board-*.js'
+      - '.github/workflows/drawing-board-single-owner.yml'
+
+jobs:
+  drawing-board-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check unified Drawing Board
+        run: |
+          node --check drawing-board-workflow-v2.js
+          node --check navloader.js
+          node --check tests/drawing-board-single-owner.test.js
+          node --check tests/drawing-board-workflow-v2.test.js
+          node --check tests/drawing-board-spread-prefabs.test.js
+          node --check tests/drawing-board-runtime.test.js
+          node --check tests/drawing-board-iphone-regressions.test.js
+          node --check tests/drawing-board-alignment.test.js
+          node --check tests/drawing-board-bulk-questions.test.js
+          node --check tests/drawing-board-clear-cards.test.js
+      - name: Run static Drawing Board contracts
+        run: |
+          node tests/drawing-board-single-owner.test.js
+          node tests/drawing-board-workflow-v2.test.js
+          node tests/drawing-board-spread-prefabs.test.js
+          node tests/drawing-board-bulk-questions.test.js
+      - name: Install browser acceptance runner
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run Drawing Board browser acceptance checks
+        run: |
+          mkdir -p test-results
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/relphi-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node tests/drawing-board-clear-cards.test.js
+          node tests/drawing-board-runtime.test.js
+          node tests/drawing-board-iphone-regressions.test.js
+          node tests/drawing-board-alignment.test.js
+      - name: Upload Drawing Board acceptance screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawing-board-acceptance
+          path: test-results/
+          if-no-files-found: ignore

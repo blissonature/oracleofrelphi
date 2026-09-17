@@ -42,9 +42,7 @@ function supportiveCompare(a,b,rows,familyCache){
   return bs.signed-as.signed||bs.strength-as.strength||relationOrdinal(ar)-relationOrdinal(br)||relationOrdinal(a)-relationOrdinal(b);
 }
 function globalComparator(sortMode,rows){
-  const sorter=window.RelphiRelationshipSort,familyCache=new Map();
-  if(sortMode==='most-supportive')return(a,b)=>supportiveCompare(a,b,rows,familyCache);
-  if(sortMode==='most-challenging')return(a,b)=>-supportiveCompare(a,b,rows,familyCache);
+  const sorter=window.RelphiRelationshipSort;
   return typeof sorter?.compareRows==='function'?sorter.compareRows:(a,b)=>relationOrdinal(a)-relationOrdinal(b);
 }
 function groupList(){
