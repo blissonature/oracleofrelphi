@@ -1,22 +1,19 @@
-// Mobile interaction cleanup v3: every Relationships surface yields vertical drags to page scrolling.
-// Scroll-gesture suppression belongs only to that gesture's synthesized click; a new tap is never poisoned by the prior scroll.
+// Mobile interaction cleanup v4: Relationships yields vertical drags to native page scrolling.
+// Tap-versus-pan arbitration belongs to the browser via touch-action. This helper owns layout only;
+// relationship row expansion and progressive reveals retain sole ownership of activation events.
 (function(){
 'use strict';
-if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyMobileScrollZoomV3)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyMobileScrollZoomV4)return;
 window.__relphiSkyMobileScrollZoomV1=true;
 window.__relphiSkyMobileScrollZoomV2=true;
 window.__relphiSkyMobileScrollZoomV3=true;
-const STYLE_ID='skyMobileScrollZoomV3Styles';
-let gesture=null;
-let suppressClickUntil=0;
-let suppressClickTarget=null;
+window.__relphiSkyMobileScrollZoomV4=true;
+const STYLE_ID='skyMobileScrollZoomV4Styles';
 
-function inRelationshipList(target){
-  return target instanceof Element&&!!target.closest('#skyFoundationRelationshipList');
-}
 function install(){
   document.getElementById('skyMobileScrollZoomV1Styles')?.remove();
   document.getElementById('skyMobileScrollZoomV2Styles')?.remove();
+  document.getElementById('skyMobileScrollZoomV3Styles')?.remove();
   if(document.getElementById(STYLE_ID))return;
   const style=document.createElement('style');style.id=STYLE_ID;style.textContent=`
     @media(max-width:620px){
@@ -37,8 +34,9 @@ function install(){
       #skyFoundationRelationships #skyFoundationRelationshipList{
         padding-bottom:max(96px,calc(env(safe-area-inset-bottom) + 72px))!important;
       }
-      /* Any place a finger lands inside Relationships must still be a page-scroll surface.
-         Taps continue to work because pan-y does not suppress ordinary tap/click activation. */
+      /* The browser owns the distinction between a tap and a vertical pan. Do not
+         intercept pointer/click events here; the row and progressive-reveal controllers
+         are the only activation owners. */
       #skyFoundationRelationships #skyFoundationRelationshipList,
       #skyFoundationRelationships #skyFoundationRelationshipList *{
         touch-action:pan-y pinch-zoom!important;
@@ -52,44 +50,5 @@ function install(){
   `;document.head.appendChild(style);
 }
 
-function clearClickSuppression(){suppressClickUntil=0;suppressClickTarget=null}
-function sameTarget(a,b){return !!(a&&b&&(a===b||a.contains?.(b)||b.contains?.(a)))}
-function onPointerDown(event){
-  if((event.pointerType!=='touch'&&event.pointerType!=='pen')||!inRelationshipList(event.target))return;
-  // A new pointer sequence is a new user intent. Never let a previous scroll's
-  // compatibility-click guard swallow this tap.
-  clearClickSuppression();
-  gesture={id:event.pointerId,x:event.clientX,y:event.clientY,moved:false};
-}
-function onPointerMove(event){
-  if(!gesture||gesture.id!==event.pointerId)return;
-  const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
-  if(Math.abs(dy)>=8&&Math.abs(dy)>=Math.abs(dx)*.7)gesture.moved=true;
-}
-function onPointerUp(event){
-  if(!gesture||gesture.id!==event.pointerId)return;
-  const moved=gesture.moved&&inRelationshipList(event.target),target=event.target;
-  gesture=null;
-  if(!moved)return;
-  suppressClickUntil=performance.now()+650;
-  suppressClickTarget=target;
-  // This runs on window capture, before the document-level relationship reveal handlers.
-  // Native scrolling has already owned the gesture; stop only this gesture's pointer-up reaction.
-  event.stopImmediatePropagation();
-}
-function onPointerCancel(event){if(gesture&&gesture.id===event.pointerId)gesture=null}
-function onClick(event){
-  if(performance.now()>=suppressClickUntil){clearClickSuppression();return}
-  if(!inRelationshipList(event.target)||!sameTarget(suppressClickTarget,event.target))return;
-  event.preventDefault();
-  event.stopImmediatePropagation();
-  clearClickSuppression();
-}
-
-window.addEventListener('pointerdown',onPointerDown,{capture:true,passive:true});
-window.addEventListener('pointermove',onPointerMove,{capture:true,passive:true});
-window.addEventListener('pointerup',onPointerUp,true);
-window.addEventListener('pointercancel',onPointerCancel,true);
-window.addEventListener('click',onClick,true);
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',install,{once:true}):install();
 })();
