@@ -5,9 +5,9 @@
   window.__relphiSkyFilterPopoverStabilityV1=true;
 
   const CONFIGS=[
-    {selector:'#skyChartPlacementPopover.sky-chart-placement-filter-popover.is-portaled:not([hidden])',min:280,max:360},
-    {selector:'#skyChartHousePopover.sky-chart-house-filter-popover.is-portaled:not([hidden])',min:280,max:370},
-    {selector:'#skyChartAspectPopover.sky-chart-aspect-filter-popover.is-portaled:not([hidden])',min:240,max:270}
+    {selector:'#skyChartPlacementPopover.sky-chart-placement-filter-popover.is-portaled:not([hidden])',min:280,max:360,gutter:'stable'},
+    {selector:'#skyChartHousePopover.sky-chart-house-filter-popover.is-portaled:not([hidden])',min:280,max:410,gutter:'auto'},
+    {selector:'#skyChartAspectPopover.sky-chart-aspect-filter-popover.is-portaled:not([hidden])',min:240,max:270,gutter:'stable'}
   ];
   const MENU_SELECTOR='#skyChartPlacementPopover,#skyChartHousePopover,#skyChartAspectPopover';
   const WIDTH_ATTR='data-relphi-locked-popover-width';
@@ -30,7 +30,7 @@
   function lockedWidth(menu,config){
     const existing=Number(menu.getAttribute(WIDTH_ATTR));
     if(Number.isFinite(existing)&&existing>0)return existing;
-    const width=clamp(window.innerWidth-24,config.min,config.max);
+    const width=clamp(window.innerWidth-16,config.min,config.max);
     menu.setAttribute(WIDTH_ATTR,String(width));
     return width;
   }
@@ -41,7 +41,8 @@
     if(menu.style.minWidth!==px)menu.style.minWidth=px;
     if(menu.style.maxWidth!==px)menu.style.maxWidth=px;
     if(menu.style.boxSizing!=='border-box')menu.style.boxSizing='border-box';
-    if(menu.style.scrollbarGutter!=='stable')menu.style.scrollbarGutter='stable';
+    const gutter=config.gutter||'stable';
+    if(menu.style.scrollbarGutter!==gutter)menu.style.scrollbarGutter=gutter;
     if(menu.style.overscrollBehavior!=='contain')menu.style.overscrollBehavior='contain';
     if(menu.style.touchAction!=='pan-y')menu.style.touchAction='pan-y';
     if(menu.style.webkitOverflowScrolling!=='touch')menu.style.webkitOverflowScrolling='touch';
