@@ -51,20 +51,32 @@ async function runMobileTap(browserType,label){
     await row.dispatchEvent('pointerup',{...pan,clientY:330,buttons:0});
     assert.equal(await row.getAttribute('aria-expanded'),'false',`${label}: a drag must not expand a relationship tile`);
 
-    // Expansion belongs to the row's normal click activation. No mobile scroll helper
-    // may intercept or synthesize it; WebKit must be able to deliver the tap directly.
-    await row.tap();
+    // The row controller itself owns a completed touch gesture. Expansion must happen
+    // on pointer-up, before any synthesized click exists.
+    const tap1={pointerType:'touch',pointerId:42,isPrimary:true,clientX:120,clientY:300,buttons:1};
+    await row.dispatchEvent('pointerdown',tap1);
+    await row.dispatchEvent('pointerup',{...tap1,buttons:0});
     await page.waitForFunction(()=>Boolean(document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row.is-inline-expanded')),null,{timeout:5000});
-    assert.equal(await row.getAttribute('aria-expanded'),'true',`${label}: a touch tap must expand a relationship tile`);
+    assert.equal(await row.getAttribute('aria-expanded'),'true',`${label}: completed touch must expand immediately`);
 
-    await row.tap();
+    // Safari may synthesize a click after pointer-up. That compatibility click must be
+    // consumed by the same controller rather than toggling the tile closed again.
+    await row.dispatchEvent('click',{detail:1});
+    assert.equal(await row.getAttribute('aria-expanded'),'true',`${label}: synthesized click must not undo touch expansion`);
+
+    const tap2={pointerType:'touch',pointerId:43,isPrimary:true,clientX:120,clientY:300,buttons:1};
+    await row.dispatchEvent('pointerdown',tap2);
+    await row.dispatchEvent('pointerup',{...tap2,buttons:0});
     await page.waitForFunction(()=>!document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row.is-inline-expanded'),null,{timeout:5000});
-    assert.equal(await row.getAttribute('aria-expanded'),'false',`${label}: a second touch tap must collapse the relationship tile`);
+    assert.equal(await row.getAttribute('aria-expanded'),'false',`${label}: second touch must collapse`);
+    await row.dispatchEvent('click',{detail:1});
+    assert.equal(await row.getAttribute('aria-expanded'),'false',`${label}: synthesized click must not undo touch collapse`);
 
+    // Keep the browser-native tap path covered too.
     await row.tap();
     await page.waitForFunction(()=>Boolean(document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row.is-inline-expanded')),null,{timeout:5000});
-    assert.equal(await row.getAttribute('aria-expanded'),'true',`${label}: repeated touch activation must remain stable`);
-    console.log(`${label}: relationship drag/tap ownership remains native and stable`);
+    assert.equal(await row.getAttribute('aria-expanded'),'true',`${label}: native touch tap must remain stable`);
+    console.log(`${label}: relationship controller owns drag-vs-touch activation without click reversal`);
   }finally{
     await context.close();
     await browser.close();
