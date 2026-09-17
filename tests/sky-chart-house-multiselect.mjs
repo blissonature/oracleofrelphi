@@ -75,6 +75,7 @@ assert.equal(placementNeutral.labelColor,placementBColor,'Sky A and B checkbox l
 
 await combined.locator('[data-house-filter-toggle]').click();
 await page.waitForSelector('#skyChartHousePopover.is-portaled:not([hidden])');
+await page.waitForFunction(()=>document.getElementById('skyChartHousePopover')?.getBoundingClientRect().width>=520,null,{timeout:10000});
 const list=menu.locator('[data-house-list="combined"]');
 assert.equal(await list.locator('.sky-chart-house-list-header').count(),1);
 assert.equal(await list.locator('.sky-chart-house-list-item-master').count(),1);
@@ -83,6 +84,26 @@ assert.equal(await list.locator('[data-house-angle-scope],[data-house-angle-choi
 for(const item of await list.locator('.sky-chart-house-list-item').all()){
   assert.deepEqual(await item.locator('[data-house-choice]').evaluateAll(nodes=>nodes.map(node=>node.dataset.houseChoice)),['all','a','b']);
 }
+const learningRows=await list.locator('.sky-chart-house-list-item-house').evaluateAll(rows=>rows.map(row=>{
+  const label=row.querySelector('.sky-chart-house-list-label');
+  const marker=row.querySelector('.sky-chart-house-menu-medallion');
+  const description=row.querySelector('.sky-chart-house-menu-description');
+  const firstChoice=row.querySelector('[data-house-choice="a"]');
+  return{
+    house:row.dataset.houseListItem,
+    visibleText:label?.textContent||'',
+    labelName:label?.getAttribute('aria-label')||'',
+    markerHidden:marker?.getAttribute('aria-hidden')||'',
+    choiceName:firstChoice?.getAttribute('aria-label')||'',
+    clipped:description ? description.scrollWidth>description.clientWidth+1 : true
+  };
+}));
+assert.equal(learningRows.length,12);
+assert.equal(learningRows.every(row=>row.markerHidden==='true'),true,'House medallions are visual numbers; accessible names belong to the row and checkboxes.');
+assert.equal(learningRows.every(row=>!row.visibleText.includes(`House ${row.house}`)),true,'Do not visually repeat House plus the number beside the numbered medallion.');
+assert.equal(learningRows.every(row=>row.labelName.startsWith(`House ${row.house}: `)),true,'Static row semantics must retain the house number.');
+assert.equal(learningRows.every(row=>row.choiceName.startsWith(`House ${row.house}: `)),true,'Checkbox names must retain the house number and meaning.');
+assert.equal(learningRows.some(row=>row.clipped),false,'House learning descriptions must not truncate at desktop width.');
 
 const visibleRows=()=>page.locator('.sky-foundation-relationship-row:not(.sky-chart-filter-hidden):not(.sky-chart-orb-hidden):not(.sky-orb-filter-hidden):not(.sky-chart-multiselect-hidden):not(.sky-chart-house-multiselect-hidden):not([hidden])');
 const masterA=list.locator('[data-house-scope="all"][data-house-target="all"][data-house-choice="a"]');
@@ -166,4 +187,4 @@ assert.equal(await menu.isVisible(),true);
 await page.screenshot({path:'sky-chart-house-multiselect-mobile.png',fullPage:true});
 assert.deepEqual(errors,[]);
 await browser.close();
-console.log('Sky Chart shared Houses checklist and neutral black-and-white checkboxes passed.');
+console.log('Sky Chart shared Houses checklist, learning copy, accessibility, and neutral black-and-white checkboxes passed.');
