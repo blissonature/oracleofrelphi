@@ -206,14 +206,19 @@
     const head = owner?.querySelector('.sky-chart-house-filter-head');
     if (!isOpen(owner) || !menu?.classList.contains('is-portaled') || !head) return;
     const rect = head.getBoundingClientRect();
-    const margin = 12;
-    const width = Math.min(370, Math.max(280, window.innerWidth - margin * 2));
+    const margin = 8;
+    const width = Math.min(410, Math.max(280, window.innerWidth - margin * 2));
     const left = Math.min(window.innerWidth - width - margin, Math.max(margin, rect.left + rect.width / 2 - width / 2));
-    const below = window.innerHeight - rect.bottom - margin;
-    const above = rect.top - margin;
-    const maxHeight = Math.max(220, Math.min(580, Math.max(below, above)));
-    const top = below < 280 && above > below ? Math.max(margin, rect.top - maxHeight - 6) : Math.min(window.innerHeight - maxHeight - margin, rect.bottom + 6);
-    Object.assign(menu.style, { width:`${width}px`, maxHeight:`${maxHeight}px`, left:`${left}px`, top:`${Math.max(margin, top)}px` });
+    menu.style.width = `${width}px`;
+    const viewportMaxHeight = Math.max(220, Math.min(600, window.innerHeight - margin * 2));
+    const desiredHeight = Math.min(viewportMaxHeight, Math.max(220, menu.scrollHeight));
+    const belowTop = rect.bottom + 6;
+    const aboveTop = rect.top - desiredHeight - 6;
+    let top;
+    if (belowTop + desiredHeight <= window.innerHeight - margin) top = belowTop;
+    else if (aboveTop >= margin) top = aboveTop;
+    else top = Math.min(Math.max(margin, rect.top - desiredHeight / 2), Math.max(margin, window.innerHeight - desiredHeight - margin));
+    Object.assign(menu.style, { maxHeight:`${desiredHeight}px`, left:`${left}px`, top:`${top}px` });
   }
 
   function open(owner) {
