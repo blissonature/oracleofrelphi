@@ -1,9 +1,9 @@
-// Inline relationship reveal v7: isolated geometry works for A↔B, A↔A, and B↔B.
+// Inline relationship reveal v8: isolated geometry works for A↔B, A↔A, and B↔B.
 // Endpoint colors, cards, context, and record lookup follow each row's explicit sky ownership.
-// Expanding a tile immediately aligns that tile with the relationship viewport.
+// The relationship controller owns both desktop click and completed mobile touch activation.
 (function(){
 'use strict';
-if(window.__relphiInlineRelationshipV7)return;
+if(window.__relphiInlineRelationshipV8)return;
 window.__relphiInlineRelationshipV1=true;
 window.__relphiInlineRelationshipV2=true;
 window.__relphiInlineRelationshipV3=true;
@@ -11,6 +11,7 @@ window.__relphiInlineRelationshipV4=true;
 window.__relphiInlineRelationshipV5=true;
 window.__relphiInlineRelationshipV6=true;
 window.__relphiInlineRelationshipV7=true;
+window.__relphiInlineRelationshipV8=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const COLORS={A:'#c9211e',B:'#2462d0'};
@@ -21,6 +22,9 @@ const ASPECT_REFERENTS={conjunction:'the two functions operate together','semi-s
 const DECANS=[[['two_of_wands','Two of Wands'],['three_of_wands','Three of Wands'],['four_of_wands','Four of Wands']],[['five_of_pentacles','Five of Pentacles'],['six_of_pentacles','Six of Pentacles'],['seven_of_pentacles','Seven of Pentacles']],[['eight_of_swords','Eight of Swords'],['nine_of_swords','Nine of Swords'],['ten_of_swords','Ten of Swords']],[['two_of_cups','Two of Cups'],['three_of_cups','Three of Cups'],['four_of_cups','Four of Cups']],[['five_of_wands','Five of Wands'],['six_of_wands','Six of Wands'],['seven_of_wands','Seven of Wands']],[['eight_of_pentacles','Eight of Pentacles'],['nine_of_pentacles','Nine of Pentacles'],['ten_of_pentacles','Ten of Pentacles']],[['two_of_swords','Two of Swords'],['three_of_swords','Three of Swords'],['four_of_swords','Four of Swords']],[['five_of_cups','Five of Cups'],['six_of_cups','Six of Cups'],['seven_of_cups','Seven of Cups']],[['eight_of_wands','Eight of Wands'],['nine_of_wands','Nine of Wands'],['ten_of_wands','Ten of Wands']],[['two_of_pentacles','Two of Pentacles'],['three_of_pentacles','Three of Pentacles'],['four_of_pentacles','Four of Pentacles']],[['five_of_swords','Five of Swords'],['six_of_swords','Six of Swords'],['seven_of_swords','Seven of Swords']],[['eight_of_cups','Eight of Cups'],['nine_of_cups','Nine of Cups'],['ten_of_cups','Ten of Cups']]];
 const ALIAS={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 let openRow=null;
+let touchGesture=null;
+let suppressClickRow=null;
+let suppressClickAt=0;
 const cardArtWarmups=new Map();
 
 const norm=n=>((Number(n)%360)+360)%360;
@@ -49,7 +53,32 @@ function decorateTopReveal(row){const fields=[['left','.sky-foundation-relations
 function close(row){clearReveal(row);const detail=row?.querySelector(':scope>.inline-rel-detail');if(detail)detail.hidden=true;row?.classList.remove('is-inline-expanded');row?.setAttribute('aria-expanded','false')}
 function alignExpandedRow(row){requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!row?.isConnected||!row.classList.contains('is-inline-expanded'))return;const list=row.closest('#skyFoundationRelationshipList');if(!list)return;const style=getComputedStyle(list),scrollable=/(auto|scroll)/.test(style.overflowY)&&list.scrollHeight>list.clientHeight+2,rowRect=row.getBoundingClientRect();if(scrollable){const listRect=list.getBoundingClientRect(),max=Math.max(0,list.scrollHeight-list.clientHeight),target=Math.max(0,Math.min(max,list.scrollTop+rowRect.top-listRect.top-6));list.scrollTop=target}else{window.scrollTo(0,Math.max(0,window.scrollY+rowRect.top-8))}}))}
 function open(row){if(row?.classList.contains('is-inline-expanded')){close(row);openRow=null;return}if(openRow&&openRow!==row)close(openRow);const rel=relation(row);if(!rel)return;openRow=row;row.classList.add('is-inline-expanded');row.setAttribute('aria-expanded','true');decorateTopReveal(row);const signature=`${rel.left.sky}:${rel.left.id}@${rel.left.value.toFixed(7)}|${rel.aspect}|${rel.right.sky}:${rel.right.id}@${rel.right.value.toFixed(7)}`;let detail=row.querySelector(':scope>.inline-rel-detail');if(detail&&detail.dataset.inlineRelationshipSignature===signature){detail.hidden=false;document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');alignExpandedRow(row);return}detail?.remove();detail=document.createElement('div');detail.className='inline-rel-detail';detail.dataset.inlineRelationshipSignature=signature;const ca=card(rel.left),cb=card(rel.right);warmCardArt(ca.image);warmCardArt(cb.image);detail.innerHTML=`<div class="inline-rel-top-reveal" role="status" aria-live="polite" hidden></div><div class="inline-rel-visual">${cardMarkup(rel.left.sky,ca)}${wheelMarkup(rel)}${cardMarkup(rel.right.sky,cb)}</div>${contextMarkup(rel)}`;row.appendChild(detail);document.getElementById('skySelectedRelationship')?.setAttribute('hidden','');alignExpandedRow(row)}
-document.addEventListener('click',e=>{const ledger=e.target.closest('[data-inline-ledger]');if(ledger){e.stopImmediatePropagation();return}const topGlyph=e.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right'),revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');if(revealRow){const field=topGlyph.dataset.inlineTopReveal||fieldFromTopGlyph(topGlyph);if(field){e.preventDefault();e.stopImmediatePropagation();cycleReveal(revealRow,field);return}}const row=e.target.closest('.sky-foundation-relationship-row[data-relation-index]');if(row)open(row)},true);
+function rowFromTarget(target){return target?.closest?.('.sky-foundation-relationship-row[data-relation-index]')||null}
+function touchPointer(event){return event.pointerType==='touch'||event.pointerType==='pen'}
+function onPointerDown(event){if(!touchPointer(event))return;const row=rowFromTarget(event.target);if(!row)return;touchGesture={id:event.pointerId,row,x:event.clientX,y:event.clientY,moved:false}}
+function onPointerMove(event){if(!touchGesture||touchGesture.id!==event.pointerId)return;const dx=event.clientX-touchGesture.x,dy=event.clientY-touchGesture.y;if(Math.hypot(dx,dy)>10)touchGesture.moved=true}
+function onPointerCancel(event){if(touchGesture?.id===event.pointerId)touchGesture=null}
+function onPointerUp(event){
+  if(!touchPointer(event)||!touchGesture||touchGesture.id!==event.pointerId)return;
+  const gesture=touchGesture;touchGesture=null;
+  if(gesture.moved||event.target.closest?.('[data-inline-ledger]'))return;
+  const row=rowFromTarget(event.target);if(!row||row!==gesture.row)return;
+  open(row);suppressClickRow=row;suppressClickAt=performance.now();
+}
+function onClick(event){
+  const row=rowFromTarget(event.target);
+  if(row&&row===suppressClickRow&&performance.now()-suppressClickAt<900){event.preventDefault();event.stopImmediatePropagation();suppressClickRow=null;return}
+  suppressClickRow=null;
+  const ledger=event.target.closest('[data-inline-ledger]');if(ledger){event.stopImmediatePropagation();return}
+  const topGlyph=event.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right'),revealRow=topGlyph?.closest('.sky-foundation-relationship-row.is-inline-expanded');
+  if(revealRow){const field=topGlyph.dataset.inlineTopReveal||fieldFromTopGlyph(topGlyph);if(field){event.preventDefault();event.stopImmediatePropagation();cycleReveal(revealRow,field);return}}
+  if(row)open(row)
+}
+document.addEventListener('pointerdown',onPointerDown,{capture:true,passive:true});
+document.addEventListener('pointermove',onPointerMove,{capture:true,passive:true});
+document.addEventListener('pointerup',onPointerUp,true);
+document.addEventListener('pointercancel',onPointerCancel,true);
+document.addEventListener('click',onClick,true);
 function suppress(){const p=document.getElementById('skySelectedRelationship');if(p)p.hidden=true}
 window.addEventListener('relphi:selected-relationship-rendered',suppress);
 window.addEventListener('relphi:sky-foundation-ready',()=>{if(openRow&&!openRow.isConnected)openRow=null;warmCurrentCardArt();suppress()});
