@@ -6,7 +6,20 @@ if(window.__relphiSkyZodiacFilterV3)return;
 window.__relphiSkyZodiacFilterV3=true;
 window.__relphiSkyZodiacFilterV2=true;
 
-const SIGNS=[['aries','Aries'],['taurus','Taurus'],['gemini','Gemini'],['cancer','Cancer'],['leo','Leo'],['virgo','Virgo'],['libra','Libra'],['scorpio','Scorpio'],['sagittarius','Sagittarius'],['capricorn','Capricorn'],['aquarius','Aquarius'],['pisces','Pisces']];
+const SIGNS=[
+  ['aries','Aries','Ram'],
+  ['taurus','Taurus','Bull'],
+  ['gemini','Gemini','Twins'],
+  ['cancer','Cancer','Crab'],
+  ['leo','Leo','Lion'],
+  ['virgo','Virgo','Maiden'],
+  ['libra','Libra','Scales'],
+  ['scorpio','Scorpio','Scorpion'],
+  ['sagittarius','Sagittarius','Archer'],
+  ['capricorn','Capricorn','Sea-Goat'],
+  ['aquarius','Aquarius','Water-Bearer'],
+  ['pisces','Pisces','Fishes']
+];
 const COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const ALL=SIGNS.map((_,index)=>String(index));
 let selected=new Set(ALL),queued=false,wheelDriven=false,root=null,button=null,menu=null;
@@ -113,13 +126,16 @@ function install(){
   const noneButton=document.createElement('button');noneButton.type='button';noneButton.textContent='None';noneButton.dataset.zodiacNone='true';
   actions.append(allButton,noneButton);header.append(hName,actions);list.appendChild(header);
 
-  SIGNS.forEach(([id,name],index)=>{
+  SIGNS.forEach(([id,name,figure],index)=>{
     const row=document.createElement('label');row.className='sky-chart-zodiac-filter-row';row.dataset.signListItem=id;
     const nameCell=document.createElement('span');nameCell.className='sky-chart-zodiac-filter-name';
     const art=document.createElement('span');art.className='sky-chart-zodiac-filter-glyph';canonicalGlyph(art,id,COLORS[index]);
-    const text=document.createElement('span');text.className='sky-chart-sign-list-label';text.textContent=name;nameCell.append(art,text);
+    const copy=document.createElement('span');copy.className='sky-chart-zodiac-filter-copy';
+    const text=document.createElement('span');text.className='sky-chart-sign-list-label';text.textContent=name;
+    const figureText=document.createElement('span');figureText.className='sky-chart-sign-list-figure';figureText.textContent=figure;
+    copy.append(text,figureText);nameCell.append(art,copy);
     const checkCell=document.createElement('span');checkCell.className='sky-chart-zodiac-filter-check';
-    const input=document.createElement('input');input.type='checkbox';input.checked=true;input.value=String(index);input.setAttribute('aria-label',name);checkCell.appendChild(input);
+    const input=document.createElement('input');input.type='checkbox';input.checked=true;input.value=String(index);input.setAttribute('aria-label',`${name}, ${figure}`);checkCell.appendChild(input);
     row.append(nameCell,checkCell);list.appendChild(row);
     input.addEventListener('change',()=>{
       releaseWheelIsolationForManualFilter();
