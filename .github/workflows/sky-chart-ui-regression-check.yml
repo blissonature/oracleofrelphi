@@ -16,6 +16,8 @@ on:
       - 'sky-chart-foundation-v2.js'
       - 'sky-chart-final-pass-v2.js'
       - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-heptagram-canonical-v1.js'
+      - 'sky-chart-where-when-draft-heptagram-v4.js'
       - 'sky-chart-card-shell-v2.js'
       - 'sky-chart-placement-multiselect-v4.js'
       - 'sky-chart-placement-compact-v1.js'
@@ -26,6 +28,7 @@ on:
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-placement-compact.mjs'
       - 'tests/sky-chart-stability-now.mjs'
+      - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
       - '.github/workflows/sky-chart-ui-regression-check.yml'
   workflow_dispatch:
 
@@ -55,10 +58,14 @@ jobs:
           node --check sky-chart-selected-relationship-v4.js
           node --check sky-chart-placement-multiselect-v4.js
           node --check sky-chart-placement-compact-v1.js
+          node --check sky-chart-heptagram-canonical-v1.js
+          node --check sky-chart-where-when-v3.js
+          node --check sky-chart-where-when-draft-heptagram-v4.js
           node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-placement-compact.mjs
           node --check tests/sky-chart-stability-now.mjs
+          node --check tests/sky-chart-hour-ruler-and-sky-colors.mjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -70,6 +77,7 @@ jobs:
           node tests/sky-chart-filter-control-unified.mjs
           node tests/sky-chart-single-canon-browser.mjs
           node tests/sky-chart-stability-now.mjs
+          node tests/sky-chart-hour-ruler-and-sky-colors.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -81,4 +89,8 @@ jobs:
             sky-chart-placement-compact-desktop.png
             sky-chart-placement-compact-mobile.png
             sky-chart-stability-now.png
+            sky-chart-hour-ruler-and-sky-colors-desktop.png
+            sky-chart-hour-ruler-and-sky-colors-mobile.png
+            sky-chart-sky-a-card-colors.png
+            sky-chart-sky-b-card-colors.png
           if-no-files-found: ignore
