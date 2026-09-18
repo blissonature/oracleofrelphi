@@ -2,10 +2,49 @@ name: Canonical glyph integrity
 
 on:
   pull_request:
+    paths:
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'relphi-glyph-source-integrity-v1.js'
+      - 'assets/planet-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'assets/aspect-glyphs/**'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-relationship-list-layout-v2.js'
+      - 'sky-chart-inline-relationship-v5.js'
+      - 'sky-chart-heptagram-canonical-v1.js'
+      - 'sky-chart.html'
+      - 'menu.js'
+      - 'navloader.js'
+      - 'tools/check-single-glyph-canon.mjs'
+      - 'tools/check-planet-glyph-hashes.mjs'
+      - 'tools/check-sky-chart-glyph-readiness.mjs'
+      - 'tests/sky-chart-canonical-master-contract.test.mjs'
+      - '.github/workflows/canonical-glyph-integrity.yml'
   push:
     branches:
       - main
-      - feature/sky-chart-canonical-glyph-coordinate-fix
+    paths:
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'relphi-glyph-source-integrity-v1.js'
+      - 'assets/planet-glyphs/**'
+      - 'assets/zodiac-glyphs/**'
+      - 'assets/element-glyphs/**'
+      - 'assets/aspect-glyphs/**'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-relationship-list-layout-v2.js'
+      - 'sky-chart-inline-relationship-v5.js'
+      - 'sky-chart-heptagram-canonical-v1.js'
+      - 'sky-chart.html'
+      - 'menu.js'
+      - 'navloader.js'
+      - 'tools/check-single-glyph-canon.mjs'
+      - 'tools/check-planet-glyph-hashes.mjs'
+      - 'tools/check-sky-chart-glyph-readiness.mjs'
+      - 'tests/sky-chart-canonical-master-contract.test.mjs'
+      - '.github/workflows/canonical-glyph-integrity.yml'
   workflow_dispatch:
 
 permissions:
@@ -15,21 +54,27 @@ jobs:
   canonical-glyph-integrity:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Verify source-package migration phase
-        run: node tests/canonical-glyph-migration-phase-audit.mjs --phase=source-package
-
-      - name: Verify shadow-cutover migration phase
-        run: node tests/canonical-glyph-migration-phase-audit.mjs --phase=shadow-cutover
-
-      - name: Prove migration audit is read-only
+      - name: Check current canonical ownership
+        run: |
+          node --check relphi-glyph-registry-v1.js
+          node --check relphi-glyph-component-v1.js
+          node --check relphi-glyph-source-integrity-v1.js
+          node --check sky-chart-foundation-v2.js
+          node --check sky-chart-relationship-list-layout-v2.js
+          node --check sky-chart-inline-relationship-v5.js
+          node --check sky-chart-heptagram-canonical-v1.js
+          node --check tools/check-single-glyph-canon.mjs
+          node --check tools/check-sky-chart-glyph-readiness.mjs
+          node --check tests/sky-chart-canonical-master-contract.test.mjs
+          node tools/check-single-glyph-canon.mjs
+          node tools/check-planet-glyph-hashes.mjs
+          node tools/check-sky-chart-glyph-readiness.mjs
+          node tests/sky-chart-canonical-master-contract.test.mjs
+      - name: Prove audit is read-only
         run: |
           git diff --exit-code
           test -z "$(git status --porcelain)"
