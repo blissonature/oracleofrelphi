@@ -287,9 +287,7 @@
     if (!owner) owner = createControl();
     if (!owner.isConnected) {
       const placements = bar.querySelector('[data-placement-filter="combined"]');
-      const system = bar.querySelector('[data-house-system-filter]')?.closest('label');
       if (placements) placements.insertAdjacentElement('afterend', owner);
-      else if (system) system.insertAdjacentElement('beforebegin', owner);
       else bar.appendChild(owner);
     }
     bar.dataset.multiselectHouseFilters = 'true';
