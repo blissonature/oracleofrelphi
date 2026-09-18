@@ -31,7 +31,8 @@ async function inspect(width,height,suffix){
     const geminiSvg=new DOMParser().parseFromString(geminiMarkup,'image/svg+xml').documentElement;
     const sourcePath=geminiSvg.querySelector('path');
     const zodiac=Array.from(document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign]')).map(host=>{
-      const circle=host.querySelector(':scope > .relphi-glyph-bubble > circle');
+      const root=host.querySelector(':scope > .relphi-glyph-bubble');
+      const circle=root?.querySelector(':scope > circle');
       return{
         id:host.dataset.zodiacSign,
         hostRadius:Number(host.dataset.wheelGlyphRadius),
