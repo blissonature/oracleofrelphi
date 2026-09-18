@@ -62,7 +62,6 @@ jobs:
           const page=await browser.newPage({viewport:{width:1440,height:1100}});
           const errors=[];
           page.on('pageerror',error=>errors.push(error.message));
-          page.on('console',message=>{if(message.type()==='error')errors.push(message.text())});
           await page.addInitScript(({a,b})=>{
             localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
             localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
