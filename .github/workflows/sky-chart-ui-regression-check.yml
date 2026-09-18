@@ -4,8 +4,6 @@ on:
   pull_request:
     paths:
       - 'glyphs.html'
-      - 'part1/sky-chart.html'
-      - 'part2/sky-chart.html'
       - 'sky-chart.html'
       - 'glyph-canon-approved-source-manifest.json'
       - 'relphi-glyph-registry-v1.js'
@@ -17,8 +15,11 @@ on:
       - 'assets/element-glyphs/**'
       - 'assets/aspect-glyphs/**'
       - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-final-pass-v2.js'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-card-shell-v2.js'
       - 'sky-chart-glyph-audit-v1.js'
-      - 'sky-chart-selected-relationship-v3.js'
+      - 'sky-chart-selected-relationship-v4.js'
       - 'tests/sky-chart-canonical-master-contract.test.mjs'
       - 'tests/sky-chart-single-canon-browser.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
@@ -49,7 +50,7 @@ jobs:
           node --check relphi-glyph-copy-serializer-v1.js
           node --check sky-chart-foundation-v1.js
           node --check sky-chart-glyph-audit-v1.js
-          node --check sky-chart-selected-relationship-v3.js
+          node --check sky-chart-selected-relationship-v4.js
           node --check tests/sky-chart-canonical-master-contract.test.mjs
           node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
