@@ -115,7 +115,7 @@ if(fs.existsSync(foundationPath)){
 if(fs.existsSync(relationshipPath)){
   const relationship=read(relationshipPath);
   for(const token of ['window.RelphiGlyphComponent','component.createBubble(','data-relationship-canonical-host','slot.replaceChildren(clone)'])if(!relationship.includes(token))fail(`Relationship layout v2 lost canonical ownership contract: ${token}`);
-  if(!relationship.includes("if(svg.querySelector('[data-fit-state="unresolved"]'))"))fail('Relationship template owner no longer rejects unresolved canonical art.');
+  if(!relationship.includes("if(svg.querySelector('[data-fit-state=\"unresolved\"]'))"))fail('Relationship template owner no longer rejects unresolved canonical art.');
 }
 
 if(fs.existsSync(inlinePath)){
