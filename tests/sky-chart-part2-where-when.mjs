@@ -121,7 +121,7 @@ const jump = page.locator('#skyFoundationA .sky-ph-jump');
 assert.equal(await jump.getAttribute('aria-label'), 'Open this Sky in Planetary Hours');
 assert.equal(await jump.locator('.sky-ph-jump-title').count(), 0);
 assert.equal(await jump.locator('.sky-ph-heptagram').count(), 1);
-await page.waitForFunction(() => document.querySelector('#skyFoundationA .sky-ph-heptagram')?.dataset.canonicalHeptagramReady === 'true');
+await jump.locator('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]').waitFor({state:'attached',timeout:15000});
 assert.equal(await jump.locator('.sky-ph-planet').count(), 7);
 assert.equal(await jump.locator('.sky-ph-canonical-bubble').count(), 7);
 const href = await jump.getAttribute('href');
