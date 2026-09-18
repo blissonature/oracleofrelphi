@@ -642,7 +642,7 @@
       if (labels.length<2) return false;
       draft.labels=labels;
       markQuestionEditCustom(drawer,draft);
-      renderOptions(root);
+      setTimeout(()=>{ if (optionsSession) renderOptions(root); },0);
       return true;
     };
     labelsList?.addEventListener('paste',event=>{

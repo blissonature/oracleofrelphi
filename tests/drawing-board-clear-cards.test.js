@@ -24,11 +24,15 @@ async function applyTemplate(page,id){
 }
 
 async function fillCustomQuestions(page,questions){
-  if (!(await page.locator('#relphiBulkQuestions').isVisible().catch(()=>false))) {
+  const firstLabel='#relphiPositionLabels .relphi-label-row input';
+  if (!(await page.locator(firstLabel).first().isVisible().catch(()=>false))) {
     await page.click('#drawingBoardOptionsButton');
   }
-  await page.waitForSelector('#relphiBulkQuestions',{state:'visible'});
-  await page.fill('#relphiBulkQuestions',questions.join(', '));
+  await page.waitForSelector(firstLabel,{state:'visible'});
+  const input=page.locator(firstLabel).first();
+  await input.fill(questions.join(', '));
+  await input.dispatchEvent('change');
+  await page.waitForFunction(count => document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,questions.length);
   await page.click('#relphiApplyOptions');
   await page.waitForFunction(count => {
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
