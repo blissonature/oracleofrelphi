@@ -65,6 +65,21 @@
       window.dispatchEvent(new CustomEvent('relphi:sky-drawer-opened',{detail:{slot:'B',drawer:'where'}}));
     });
   }
+  function finishAddSkyB(){
+    if(!hasStoredSkyB())return false;
+    const root=document.documentElement;
+    delete root.dataset.skyBEditing;
+    const startup=window.RelphiSkyStartupMode;
+    if(startup?.writeMode)startup.writeMode('comparison');
+    else{
+      root.dataset.skyLastMode='comparison';
+      try{localStorage.setItem('relphiSkyChartLastModeV1','comparison')}catch(_){}
+    }
+    startup?.syncRoot?.();
+    schedule();
+    return root.dataset.skyBPresent==='true';
+  }
+
   function releaseSkyBWhereWhen(){
     const transaction=window.RelphiSkyWhereWhenTransaction;
     try{transaction?.cancel?.('B')}catch(_){}
@@ -259,6 +274,10 @@
     window.addEventListener('storage',handleStorage);
     window.addEventListener('relphi:sky-foundation-ready',schedule);
     window.addEventListener('relphi:sky-session-recovered',schedule);
+    window.addEventListener('relphi:sky-where-when-committed',event=>{
+      const slots=Array.isArray(event.detail?.slots)?event.detail.slots:[];
+      if(slots.includes('B'))finishAddSkyB();
+    });
     window.addEventListener('relphi:sky-where-when-edit-state-changed',event=>{
       const slots=Array.isArray(event.detail?.slots)?event.detail.slots:[];
       if(slots.includes('B')||hasStoredSkyB()||document.documentElement.dataset.skyBEditing!=='true')return schedule();
@@ -273,6 +292,7 @@
   }
   window.RelphiSkySlotControls=Object.freeze({
     addSkyB:startAddSkyB,
+    finishAddSkyB,
     removeSkyB,
     promoteSkyBToA,
     hasSkyB:skyBPresent,
