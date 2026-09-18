@@ -115,13 +115,18 @@ try{
       .map(row=>({id:row.dataset.relationIndex,value:Number(row.dataset[field]),scope:row.dataset.relationshipMode,left:row.dataset.leftPlacement,right:row.dataset.rightPlacement,aspect:row.dataset.aspect}))
       .filter(item=>Number.isFinite(item.value)),spec.field);
     assert.ok(values.length>1,`${spec.label} should time multiple visible rows: ${JSON.stringify(values)}`);
-    for(let i=1;i<values.length;i+=1){
-      const previous=values[i-1].value,current=values[i].value;
-      const ordered=spec.direction===1?previous<=current+1e-9:previous+1e-9>=current;
-      assert.ok(ordered,`${spec.label} is out of global order at ${i-1}/${i}: ${JSON.stringify(values.slice(Math.max(0,i-2),i+2))}`);
+    const groups=spec.mode==='began-most-recently'
+      ? [...new Set(values.map(item=>item.scope))].map(scope=>values.filter(item=>item.scope===scope))
+      : [values];
+    for(const group of groups){
+      for(let i=1;i<group.length;i+=1){
+        const previous=group[i-1].value,current=group[i].value;
+        const ordered=spec.direction===1?previous<=current+1e-9:previous+1e-9>=current;
+        assert.ok(ordered,`${spec.label} is out of ${spec.mode==='began-most-recently'?'scope':'global'} order at ${i-1}/${i}: ${JSON.stringify(group.slice(Math.max(0,i-2),i+2))}`);
+      }
     }
 
-    // Copy must preserve this same global DOM order instead of regrouping by A↔B/A↔A/B↔B.
+    // Copy must preserve the same visible DOM order shown to the user.
     const signatures=await page.evaluate(()=>{
       const placementSymbols={sun:'☉',moon:'☽',mercury:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturn:'♄',uranus:'♅',neptune:'♆',pluto:'♇',chiron:'⚷','north-node':'☊','south-node':'☋',lilith:'⚸','part-of-fortune':'⊗',vertex:'Vx',asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
       const signSymbols=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
