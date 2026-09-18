@@ -36,28 +36,32 @@ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js
   path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),
   contentType:'application/javascript'
 }));
-await page.route('https://geocoding-api.open-meteo.com/v1/search**', route => route.fulfill({
+await page.route('https://nominatim.openstreetmap.org/search**', route => route.fulfill({
   status:200,
   contentType:'application/json',
-  body:JSON.stringify({results:[{
-    name:'Malden',
-    admin1:'Massachusetts',
-    country:'United States',
-    latitude:42.4251,
-    longitude:-71.0662,
-    timezone:'America/New_York'
-  }]})
+  body:JSON.stringify([{
+    display_name:'Malden, Massachusetts, United States',
+    lat:'42.4251',
+    lon:'-71.0662',
+    address:{city:'Malden',state:'Massachusetts',country:'United States'}
+  }])
+}));
+await page.route('https://api.open-meteo.com/v1/forecast**', route => route.fulfill({
+  status:200,
+  contentType:'application/json',
+  body:JSON.stringify({timezone:'America/New_York'})
 }));
 
 await page.addInitScript(({a,b}) => {
   localStorage.setItem('relphiSkyChartA', JSON.stringify(a));
   localStorage.setItem('relphiSkyChartB', JSON.stringify(b));
+  localStorage.setItem('relphiSkyChartLastModeV1', 'comparison');
   sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
 }, {a:sample('Sky A test',0),b:sample('Sky B test',73)});
 
-await page.goto('http://127.0.0.1:4173/part2/sky-chart.html', {waitUntil:'networkidle'});
-await page.waitForSelector('#skyFoundationA [data-ww-action="edit"]', {timeout:15000});
-await page.locator('#skyFoundationA [data-ww-action="edit"]').click();
+await page.goto('http://127.0.0.1:4173/sky-chart.html', {waitUntil:'networkidle'});
+await page.waitForSelector('#skyFoundationA [data-sky-drawer-tab="where"]', {timeout:15000});
+await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
 const editor = page.locator('#skyFoundationA .sky-where-when-editor');
 await editor.locator('[data-ww-field="location-query"]').fill('Malden');
 await editor.locator('[data-ww-action="search-location"]').click();
@@ -68,7 +72,7 @@ await editor.locator('button[type="submit"]').click();
 
 const jump = page.locator('#skyFoundationA .sky-ph-jump');
 await jump.waitFor({timeout:15000});
-await page.waitForFunction(() => document.querySelector('#skyFoundationA .sky-ph-heptagram')?.dataset.canonicalHeptagramV1 === 'true');
+await page.waitForFunction(() => document.querySelector('#skyFoundationA .sky-ph-heptagram')?.dataset.canonicalHeptagramReady === 'true');
 assert.equal(await jump.evaluate(node => node.tagName), 'A');
 assert.equal(await jump.locator('a').count(), 0);
 assert.equal((await jump.locator('.sky-ph-jump-title').textContent()).trim(), 'Jump to this time in Planetary Hours');
