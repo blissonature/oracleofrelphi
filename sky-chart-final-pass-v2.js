@@ -10,10 +10,6 @@
   // Only preserve points that this layer cannot safely recalculate. Lilith is intentionally excluded:
   // carrying an old Lilith into a newly dated sky makes the new sky inherit the prior sky-state's apogee.
   const PRESERVE = ['Vertex'];
-  const HOUSE_SYSTEMS = {
-    'whole-sign':'Whole Sign', 'equal-house':'Equal House', porphyry:'Porphyry', placidus:'Placidus',
-    alcabitius:'Alcabitius', regiomontanus:'Regiomontanus', campanus:'Campanus', koch:'Koch'
-  };
   const ASPECT_LABELS = {
     all:'All', conjunction:'Conjunction', 'semi-sextile':'Semi-Sextile', octile:'Octile', sextile:'Sextile',
     quintile:'Quintile', square:'Square', trine:'Trine', 'tri-octile':'Tri-Octile',
@@ -184,46 +180,6 @@
     return true;
   }
 
-  function calculateHouseSystem(slot, system) {
-    const value = read(slot);
-    if (!value) throw new Error(`Sky ${slot} is empty.`);
-    const profile = value.calcProfile || {};
-    const source = placements(value);
-    const asc = find(source, ['Ascendant','ASC','Rising']);
-    const mc = find(source, ['Midheaven','MC']);
-    if (!asc || !mc) throw new Error(`Sky ${slot} needs Ascendant and Midheaven before changing house system.`);
-    if (!window.RelphiHouseSystems || !window.Astronomy) throw new Error('The house calculation engine is unavailable.');
-    const instant = new Date(profile.instant || profile.dateTime || Date.now());
-    const longitude = Number(profile.longitude);
-    const latitude = Number(profile.latitude);
-    if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) throw new Error(`Sky ${slot} needs resolved coordinates.`);
-    const siderealDegrees = norm(window.Astronomy.SiderealTime(instant) * 15 + longitude);
-    const obliquityDegrees = Number(window.Astronomy.e_tilt(instant).tobl);
-    const result = window.RelphiHouseSystems.calculateCusps({
-      system, ascendant:Number(asc.longitude), midheaven:Number(mc.longitude),
-      siderealDegrees, obliquityDegrees, latitude
-    });
-    value.calcProfile = { ...profile, houseSystem:result.system, houseCusps:result.cusps, cusps:result.cusps, houseSystemNote:result.note };
-    value.houseCusps = result.cusps;
-    Object.values(source).forEach(item => {
-      if (Number.isFinite(Number(item?.longitude))) item.house = houseFor(Number(item.longitude), result.cusps);
-    });
-    localStorage.setItem(KEYS[slot], JSON.stringify(value));
-    dispatch(slot);
-  }
-
-  function changeHouseSystem(select) {
-    try {
-      calculateHouseSystem('A', select.value);
-      calculateHouseSystem('B', select.value);
-      select.setCustomValidity('');
-    } catch (error) {
-      console.error(error);
-      select.setCustomValidity(error.message);
-      select.reportValidity();
-    }
-  }
-
   function addFilters() {
     const relationshipPanel = document.getElementById('skyFoundationRelationships');
     if (!relationshipPanel) return;
@@ -238,12 +194,8 @@
     const aspectOptions = Object.entries(ASPECT_LABELS).map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
     const houses = ['all', ...Array.from({ length:12 }, (_, index) => String(index + 1))]
       .map(value => `<option value="${value}">${value === 'all' ? 'All' : value}</option>`).join('');
-    const current = read('A')?.calcProfile?.houseSystem || read('B')?.calcProfile?.houseSystem || 'whole-sign';
-    const systems = Object.entries(HOUSE_SYSTEMS)
-      .map(([value, label]) => `<option value="${value}"${value === current ? ' selected' : ''}>${label}</option>`).join('');
-    bar.innerHTML = `<label>Aspects<select data-filter="aspect">${aspectOptions}</select></label><label>Placements<select data-filter="placement"><option value="all">All</option></select></label><label>Sky A House<select data-filter="houseA">${houses}</select></label><label>Sky B House<select data-filter="houseB">${houses}</select></label><label>House System<select data-house-system-filter>${systems}</select></label>`;
+    bar.innerHTML = `<label>Aspects<select data-filter="aspect">${aspectOptions}</select></label><label>Placements<select data-filter="placement"><option value="all">All</option></select></label><label>Sky A House<select data-filter="houseA">${houses}</select></label><label>Sky B House<select data-filter="houseB">${houses}</select></label>`;
     bar.addEventListener('change', event => {
-      if (event.target.matches('[data-house-system-filter]')) return changeHouseSystem(event.target);
       if (!event.target.dataset.filter) return;
       filters[event.target.dataset.filter] = event.target.value;
       applyFilters();
