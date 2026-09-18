@@ -140,8 +140,10 @@ if(await namePrompt.count()){
 }
 
 await page.locator('#skyFoundationA [data-sky-drawer-tab="placements"]').click();
-assert.equal(await page.locator('#skyFoundationA .sky-where-when-placement-view').isVisible(), true);
-assert.ok(await page.locator('#skyFoundationA .sky-foundation-row').count() >= initialPlacementRows);
+const placementsDrawer=page.locator('#skyFoundationA [data-sky-drawer="placements"]');
+await placementsDrawer.waitFor({state:'visible',timeout:10000});
+assert.equal(await placementsDrawer.getAttribute('open'),'');
+assert.ok(await placementsDrawer.locator('.sky-foundation-row').count() >= initialPlacementRows);
 
 await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
 const reopened = page.locator('#skyFoundationA .sky-where-when-editor');
