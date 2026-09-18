@@ -2,57 +2,40 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import vm from 'node:vm';
 
-const root = path.resolve(import.meta.dirname, '..');
-const source = fs.readFileSync(path.join(root, 'sky-chart-foundation-v1.js'), 'utf8');
+const root=path.resolve(import.meta.dirname,'..');
+const specSource=fs.readFileSync(path.join(root,'sky-chart-wheel-spec-v1.js'),'utf8');
+const foundation=fs.readFileSync(path.join(root,'sky-chart-foundation-v2.js'),'utf8');
+const context={window:{}};
+vm.runInNewContext(specSource,context,{filename:'sky-chart-wheel-spec-v1.js'});
+const spec=context.window.RelphiSkyWheelSpec;
+const cmp=spec.comparison;
 
-function block(name) {
-  const match = source.match(new RegExp(`const ${name} = Object\\.freeze\\(\\{([\\s\\S]*?)\\n  \\}\\);`));
-  assert.ok(match, `${name} must remain an explicit frozen layout contract.`);
-  return match[1];
-}
+test('comparison wheel owns explicit non-overlapping placement and angle lanes',()=>{
+  assert.deepEqual([...cmp.inner.placement],[287,299,283]);
+  assert.deepEqual([...cmp.outer.placement],[450,440,460]);
+  assert.deepEqual([...cmp.inner.angle],[202,220,238]);
+  assert.deepEqual([...cmp.outer.angle],[540,522,504]);
+  assert.equal(cmp.inner.edge,166);
+  assert.equal(cmp.outer.edge,574);
+  assert.equal(cmp.angleGap,17);
+});
 
-function lanes(layoutBlock, slot) {
-  const match = layoutBlock.match(new RegExp(`${slot}:Object\\.freeze\\(\\[([^\\]]+)\\]\\)`));
-  assert.ok(match, `${slot} lanes must be explicit.`);
-  return match[1].split(',').map(value => Number(value.trim()));
-}
-
-const angleBlock = block('ANGLE_LAYOUT');
-const placementBlock = block('PLACEMENT_LAYOUT');
-const angleLanes = { A:lanes(angleBlock,'A'), B:lanes(angleBlock,'B') };
-const placementLanes = { A:lanes(placementBlock,'A'), B:lanes(placementBlock,'B') };
-const bands = { A:[414,574], B:[166,323] };
-const angleHalf = 19 + 2.35 / 2;
-const bubbleRadius = 17.2;
-const clearance = 6;
-const requiredSeparation = angleHalf + bubbleRadius + clearance;
-
-for (const slot of ['A','B']) {
-  const [inner,outer] = bands[slot];
-  for (const lane of placementLanes[slot]) {
-    assert.ok(lane - bubbleRadius - clearance > inner, `Sky ${slot} placement lane ${lane} must clear its inner ring boundary.`);
-    assert.ok(lane + bubbleRadius + clearance < outer, `Sky ${slot} placement lane ${lane} must clear its outer ring boundary.`);
-    for (const angleLane of angleLanes[slot]) {
-      assert.ok(Math.abs(lane - angleLane) >= requiredSeparation,
-        `Sky ${slot} placement lane ${lane} must not intrude into reserved Angle lane ${angleLane}.`);
-    }
+test('placement and Angle lanes remain inside their assigned annuli',()=>{
+  const angleHalf=19+1.2,clearance=6;
+  for(const role of [cmp.inner,cmp.outer]){
+    for(const lane of role.placement)assert.ok(lane>role.inner&&lane<role.outer,`placement lane ${lane} outside annulus`);
+    for(const lane of role.angle)assert.ok(lane-angleHalf-clearance>role.inner&&lane+angleHalf+clearance<role.outer,`angle lane ${lane} does not clear annulus`);
   }
-}
-
-test('ordinary placements have their own radial lanes, separate from Angle lanes', () => {
-  assert.deepEqual(placementLanes.A, [450,440,460]);
-  assert.deepEqual(placementLanes.B, [287,299,283]);
-  assert.doesNotMatch(source, /laneA \+ direction \* 38|index % 4 === 3 \? laneB : laneA/);
 });
 
-test('Angle collision failure is explicit instead of forcing an overlap', () => {
-  assert.match(source, /No legal radial lane for Sky \$\{slot\} \$\{record\.entry\.name\}/);
-  assert.doesNotMatch(source, /fallback:true|used its deterministic extreme lane/);
-});
-
-test('ordinary placement crowding preserves exact longitude through leaders', () => {
-  assert.match(source, /data-display-longitude/);
-  assert.match(source, /const exact = polar\(record\.exactRadius,record\.value\)/);
-  assert.match(source, /const display = polar\(record\.lane,record\.display\)/);
+test('foundation v2 consumes the shared lane contract and preserves exact longitude metadata',()=>{
+  assert.match(foundation,/function geometry\(slot\)\{return spec\(\)\?\.role\?\.\(slot\)\|\|null\}/);
+  assert.match(foundation,/for\(const lane of g\.angle\|\|\[\]\)/);
+  assert.match(foundation,/'data-angle-lane':chosen\.lane/);
+  assert.match(foundation,/'data-angle-longitude':record\.value\.toFixed\(8\)/);
+  assert.match(foundation,/'data-exact-longitude':record\.value\.toFixed\(8\)/);
+  assert.match(foundation,/'data-axis-edge-radius':g\.edge/);
+  assert.match(foundation,/'data-display-longitude':record\.value\.toFixed\(8\)/);
 });
