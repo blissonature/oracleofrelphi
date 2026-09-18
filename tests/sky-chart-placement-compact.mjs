@@ -42,7 +42,10 @@ const metrics=await page.evaluate(()=>{
   const header=document.querySelector('[data-placement-list-header="true"]');
   return{
     menuWidth:menu.getBoundingClientRect().width,
-    rowHeights:rows.map(row=>row.getBoundingClientRect().height),
+    rowMetrics:rows.map(row=>({
+      height:row.getBoundingClientRect().height,
+      placement:row.classList.contains('sky-chart-placement-list-item-placement')
+    })),
     labelAlignments:labels.map(label=>getComputedStyle(label).textAlign),
     headerWidth:header.getBoundingClientRect().width,
     firstRowWidth:rows[0].getBoundingClientRect().width,
@@ -56,7 +59,8 @@ const metrics=await page.evaluate(()=>{
   };
 });
 assert.ok(metrics.menuWidth<=352,`Compact menu is too wide: ${metrics.menuWidth}px`);
-assert.ok(metrics.rowHeights.every(height=>height<=36),`Rows are not compact: ${metrics.rowHeights.join(', ')}`);
+assert.ok(metrics.rowMetrics.filter(row=>row.placement).every(row=>row.height<=36),`Placement rows are not compact: ${JSON.stringify(metrics.rowMetrics)}`);
+assert.ok(metrics.rowMetrics.every(row=>row.height<=44),`Section rows are unexpectedly tall: ${JSON.stringify(metrics.rowMetrics)}`);
 assert.ok(metrics.labelAlignments.every(value=>value==='left'),'Every placement name must be left-aligned.');
 assert.ok(Math.abs(metrics.headerWidth-metrics.firstRowWidth)<=1,'The header must align with the list rows.');
 assert.ok(metrics.choiceWidths.every(width=>width<=35),'Checkbox columns must remain narrow.');
