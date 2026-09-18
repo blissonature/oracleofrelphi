@@ -179,9 +179,6 @@
 #shortListPanel .relphi-board-export #snapshotCardRowArrangement{border-color:var(--relphi-board-red)!important;background:var(--relphi-board-red)!important;color:#fff!important}
 #shortListPanel .relphi-board-export .drawing-board-snapshot-status{flex:1 0 100%!important}
 
-#shortListPanel .relphi-bulk-questions textarea{box-sizing:border-box!important;width:100%!important;min-height:4.5rem!important;margin:0!important;padding:.48rem .55rem!important;border:1px solid #bfb5ac!important;border-radius:7px!important;background:#fff!important;color:#111!important;font:inherit!important;font-size:.76rem!important;line-height:1.35!important;resize:vertical!important}
-#shortListPanel .relphi-bulk-questions small{font-size:.64rem!important;font-weight:600!important;line-height:1.25!important;color:#665e58!important}
-
 @media(max-width:700px){
   #shortListPanel .relphi-draw-options{grid-template-columns:1fr!important}
   #shortListPanel .relphi-draw-options>label:first-child{grid-column:1!important}
