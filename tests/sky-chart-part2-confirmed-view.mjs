@@ -87,6 +87,11 @@ await jump.waitFor({state:'attached',timeout:15000});
 await jump.locator('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]').waitFor({state:'attached',timeout:15000});
 assert.equal(await page.locator('#skyFoundationA [data-sky-drawer="placements"]').getAttribute('open'),'');
 assert.equal(await jump.isVisible(),false,'Committed Where and When heptagram stays in its closed drawer while Placements is active.');
+const namePrompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+if(await namePrompt.count()){
+  await namePrompt.locator('[data-sky-name-cancel]').click();
+  await page.locator('#skyWhereWhenNamePrompt[hidden]').waitFor({state:'attached'});
+}
 await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
 await jump.waitFor({state:'visible',timeout:10000});
 assert.equal(await jump.evaluate(node => node.tagName), 'A');
