@@ -1,15 +1,18 @@
-/* Compact expanded placement list: one header, one name column, three checkbox columns. */
+/* Compact expanded placement list: one label column plus the active checkbox columns. */
 .sky-chart-placement-filter-popover{
   width:min(350px,calc(100vw - 20px))!important;
   padding:7px!important;
 }
 .sky-chart-placement-list{
+  --placement-choice-count:3;
+  --placement-choice-size:34px;
+  --placement-choice-width:calc(var(--placement-choice-count) * var(--placement-choice-size));
   border-radius:8px;
 }
 .sky-chart-placement-list-header,
 .sky-chart-placement-list-item{
   display:grid;
-  grid-template-columns:minmax(0,1fr) 102px;
+  grid-template-columns:minmax(0,1fr) var(--placement-choice-width);
   align-items:center;
 }
 .sky-chart-placement-list-header{
@@ -31,7 +34,7 @@
 .sky-chart-placement-list-header-choices,
 .sky-chart-placement-list-choices{
   display:grid;
-  grid-template-columns:repeat(3,34px);
+  grid-template-columns:repeat(var(--placement-choice-count),var(--placement-choice-size));
   align-self:stretch;
   border-left:1px solid rgba(31,27,24,.1);
 }
@@ -68,8 +71,8 @@
   font-size:.65rem;
 }
 .sky-chart-placement-list-item .sky-chart-placement-choice{
-  width:34px;
-  min-width:34px;
+  width:var(--placement-choice-size);
+  min-width:var(--placement-choice-size);
   padding:3px 0!important;
   gap:0!important;
 }
@@ -86,16 +89,7 @@
   .sky-chart-placement-filter-popover{
     width:min(330px,calc(100vw - 16px))!important;
   }
-  .sky-chart-placement-list-header,
-  .sky-chart-placement-list-item{
-    grid-template-columns:minmax(0,1fr) 96px;
-  }
-  .sky-chart-placement-list-header-choices,
-  .sky-chart-placement-list-choices{
-    grid-template-columns:repeat(3,32px);
-  }
-  .sky-chart-placement-list-item .sky-chart-placement-choice{
-    width:32px;
-    min-width:32px;
+  .sky-chart-placement-list{
+    --placement-choice-size:32px;
   }
 }
