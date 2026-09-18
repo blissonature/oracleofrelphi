@@ -124,7 +124,7 @@ const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorA
   };
 }));
 assert.ok(ledgerAudit.length > 20, 'Both placement ledgers must be populated.');
-const ledgerStructuralAnomalies = ledgerAudit.filter(item => item.count !== 1 || !item.visible || item.error || !/\\brelphi-canonical-glyph\\b/.test(item.classes));
+const ledgerStructuralAnomalies = ledgerAudit.filter(item => item.count !== 1 || !item.visible || item.error || !/\brelphi-canonical-glyph\b/.test(item.classes));
 if (ledgerStructuralAnomalies.length) console.log('LEDGER_STRUCTURAL_ANOMALIES', JSON.stringify(ledgerStructuralAnomalies));
 assert.equal(ledgerStructuralAnomalies.length, 0, 'Every ledger row must contain one visible canonical glyph with no glyph-render error.');
 
