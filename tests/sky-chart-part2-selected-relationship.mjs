@@ -60,20 +60,24 @@ try{
   assert.equal(await row.locator(':scope > .inline-rel-detail').isVisible(),true);
   assert.equal(await row.locator(':scope > .inline-rel-detail .inline-rel-card').count(),2);
   assert.equal(await row.locator(':scope > .inline-rel-detail .inline-rel-wheel').count(),1);
-  assert.equal(await row.locator(':scope > .inline-rel-detail .inline-rel-house-context').count(),1);
+  await row.locator(':scope > .inline-rel-detail > .inline-rel-progressive-strip').waitFor({state:'visible',timeout:5000});
+  assert.equal(await row.locator('[data-inline-progressive-token]').count(),7);
   assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(),visibleBefore,'Expanding a relationship must not filter the list.');
 
   const cardsLoaded=await row.locator('.inline-rel-card img').evaluateAll(images=>images.every(image=>image.complete&&image.naturalWidth>0));
   assert.equal(cardsLoaded,true);
 
   const leftGlyph=row.locator('.sky-foundation-relationship-glyph--left');
+  const leftToken=row.locator('[data-inline-progressive-token="left-placement"]');
   await leftGlyph.click();
-  const reveal=row.locator(':scope > .inline-rel-detail > .inline-rel-top-reveal');
-  assert.equal(await reveal.isVisible(),true);
-  assert.equal(await reveal.getAttribute('data-level'),'name');
-  await leftGlyph.click();
-  assert.equal(await reveal.getAttribute('data-level'),'referent');
-  assert.ok((await reveal.textContent()).trim().length>10);
+  assert.equal(await leftToken.getAttribute('data-inline-progressive-stage'),'1');
+  assert.equal(await leftToken.isVisible(),true);
+  assert.equal(await leftToken.locator('[data-inline-progressive-level="name"]').isVisible(),true);
+  assert.equal(await leftToken.locator('[data-inline-progressive-level="referent"]').isVisible(),false);
+  await leftToken.locator('[data-inline-progressive-level="name"]').click();
+  assert.equal(await leftToken.getAttribute('data-inline-progressive-stage'),'2');
+  assert.equal(await leftToken.locator('[data-inline-progressive-level="referent"]').isVisible(),true);
+  assert.ok((await leftToken.locator('[data-inline-progressive-level="referent"]').textContent()).trim().length>10);
 
   const second=rows.nth(1);
   await second.hover();
