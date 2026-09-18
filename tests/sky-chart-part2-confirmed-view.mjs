@@ -93,7 +93,13 @@ if(await namePrompt.count()){
   await page.locator('#skyWhereWhenNamePrompt[hidden]').waitFor({state:'attached'});
 }
 await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
+const draftJump=page.locator('#skyFoundationA [data-draft-where-when-link="true"]');
+await draftJump.waitFor({state:'visible',timeout:10000});
+assert.equal(await jump.isVisible(),false,'The live draft preview temporarily owns the editor heptagram surface.');
+assert.equal(await draftJump.locator('[data-draft-where-when="true"]').isVisible(),true);
+await page.locator('#skyFoundationA [data-ww-action="cancel"]').click();
 await jump.waitFor({state:'visible',timeout:10000});
+assert.equal(await draftJump.count(),0,'Closing the editor must remove the draft preview.');
 assert.equal(await jump.evaluate(node => node.tagName), 'A');
 assert.equal(await jump.locator('a').count(), 0);
 assert.equal(await jump.getAttribute('aria-label'), 'Open this Sky in Planetary Hours');
