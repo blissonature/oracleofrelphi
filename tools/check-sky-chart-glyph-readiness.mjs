@@ -19,12 +19,12 @@ const requiredFiles = [
   'glyphs-unified-preview.html',
   'assets/planet-glyphs/part-of-fortune.svg',
   'sky-chart.html',
-  'sky-chart-foundation-v1.js',
+  'sky-chart-foundation-v2.js',
   'sky-chart-calculated-points-v1.js',
   'sky-chart-angle-placements-v1.js',
   'sky-chart-card-hits-v2.js',
   'sky-chart-heptagram-canonical-v1.js',
-  'sky-chart-relationship-list-layout-v1.js'
+  'sky-chart-relationship-list-layout-v2.js'
 ];
 requiredFiles.forEach(requireFile);
 
@@ -85,7 +85,9 @@ if (fs.existsSync(required('sky-chart.html'))) {
   const scripts = [
     'relphi-glyph-registry-v1.js',
     'relphi-glyph-component-v1.js',
-    'relphi-glyph-source-integrity-v1.js'
+    'relphi-glyph-source-integrity-v1.js',
+    'sky-chart-wheel-spec-v1.js',
+    'sky-chart-foundation-v2.js'
   ];
   let previous = -1;
   for (const script of scripts) {
@@ -115,8 +117,8 @@ if (fs.existsSync(required('glyphs-unified-preview.html'))) {
   }
 }
 
-if (fs.existsSync(required('sky-chart-foundation-v1.js'))) {
-  const foundation = read('sky-chart-foundation-v1.js');
+if (fs.existsSync(required('sky-chart-foundation-v2.js'))) {
+  const foundation = read('sky-chart-foundation-v2.js');
   for (const snippet of [
     'window.RelphiGlyphRegistry',
     'window.RelphiGlyphComponent',
@@ -157,8 +159,8 @@ if (fs.existsSync(required('sky-chart-heptagram-canonical-v1.js'))) {
   if (heptagram.includes('RelphiCanonicalGlyphState')) fail('Removed alternate glyph-state renderer returned to the heptagram.');
 }
 
-if (fs.existsSync(required('sky-chart-relationship-list-layout-v1.js'))) {
-  const relationships = read('sky-chart-relationship-list-layout-v1.js');
+if (fs.existsSync(required('sky-chart-relationship-list-layout-v2.js'))) {
+  const relationships = read('sky-chart-relationship-list-layout-v2.js');
   if (!/(?:MASTER_)?VIEWBOX\s*=\s*['"]-32 -32 64 64['"]/.test(relationships)) fail('Relationship glyphs no longer preserve the exact Master Glyph List artboard.');
   if (!/(?:MASTER_)?RADIUS\s*=\s*19\b/.test(relationships)) fail('Relationship glyphs no longer render at the canonical master radius before CSS scaling.');
   if (relationships.includes("viewBox', '-16 -16 32 32'") || relationships.includes('radius:13')) fail('Relationship glyphs returned to a cropped or refitted mini-artboard.');
