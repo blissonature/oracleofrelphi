@@ -101,7 +101,8 @@ assert.equal(await editor.locator('[data-ww-field="latitude"]').inputValue(), '4
 assert.equal(await editor.locator('[data-ww-field="longitude"]').inputValue(), '-71.06620');
 
 await editor.locator('[data-ww-field="date"]').fill('1990-04-15');
-await editor.locator('[data-ww-field="time"]').fill('13:30');
+await editor.locator('[data-sky-time-entry]').fill('1:30 PM');
+await editor.locator('[data-sky-time-entry]').press('Tab');
 await editor.locator('button[type="submit"]').click();
 
 await page.locator('#skyFoundationA .sky-ph-jump').waitFor({timeout:15000});
