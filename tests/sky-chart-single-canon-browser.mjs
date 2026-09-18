@@ -21,6 +21,7 @@ async function inspect(width,height,suffix){
   await page.addInitScript(({a,b})=>{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
   },{a:sky('Sky A',0),b:sky('Sky B',0)});
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false');
@@ -66,6 +67,7 @@ async function inspect(width,height,suffix){
     });
     return{
       zodiac,
+      expectedZodiacRadius:Number(window.RelphiSkyWheelSpec?.comparison?.zodiac?.glyphRadius),
       sourceFill:sourcePath?.getAttribute('fill')||'',
       sourceStroke:sourcePath?.getAttribute('stroke')||'',
       sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
@@ -80,7 +82,8 @@ async function inspect(width,height,suffix){
 
   assert.equal(state.zodiac.length,12);
   assert.deepEqual(state.zodiac.map(item=>item.id),SIGNS.map(name=>name.toLowerCase()));
-  assert.ok(state.zodiac.every(item=>item.radius===19));
+  assert.equal(state.expectedZodiacRadius,24);
+  assert.ok(state.zodiac.every(item=>item.radius===state.expectedZodiacRadius));
   assert.ok(state.zodiac.every(item=>item.glyphCount===1));
   assert.ok(state.zodiac.every(item=>item.circleDisplay==='none'));
   assert.equal(state.sourceFill,'#111111');
