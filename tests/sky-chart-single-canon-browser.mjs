@@ -51,19 +51,16 @@ async function inspect(width,height,suffix){
     const placementColors=Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>{
       const expected=host.dataset.sky==='A'?'rgb(201, 33, 30)':'rgb(36, 98, 208)';
       const art=host.querySelector('.relphi-canonical-glyph');
-      const painted=art?Array.from(art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text')).filter(node=>{
-        if(node.matches('text'))return true;
-        const fill=node.getAttribute('fill');
-        const stroke=node.getAttribute('stroke');
-        return(fill&&fill!=='none')||(stroke&&stroke!=='none');
-      }):[];
+      const shapes=art?Array.from(art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text')):[];
+      const painted=shapes.filter(node=>{
+        const style=getComputedStyle(node);
+        return style.fill!=='none'||style.stroke!=='none';
+      });
       const wrong=painted.filter(node=>{
         const style=getComputedStyle(node);
-        const usesFill=node.matches('text')||(node.getAttribute('fill')&&node.getAttribute('fill')!=='none');
-        const usesStroke=node.getAttribute('stroke')&&node.getAttribute('stroke')!=='none';
-        return(usesFill&&style.fill!==expected)||(usesStroke&&style.stroke!==expected);
+        return(style.fill!=='none'&&style.fill!==expected)||(style.stroke!=='none'&&style.stroke!==expected);
       });
-      return{sky:host.dataset.sky,id:host.dataset.placement,expected,painted:painted.length,wrong:wrong.length};
+      return{sky:host.dataset.sky,id:host.dataset.placement,expected,art:!!art,painted:painted.length,wrong:wrong.length};
     });
     return{
       zodiac,
@@ -100,7 +97,8 @@ async function inspect(width,height,suffix){
   assert.deepEqual(state.expectedAngleEdges,{A:166,B:574});
   assert.ok(state.angleLines.every(line=>line.edge===state.expectedAngleEdges[line.sky]));
   assert.ok(state.placementColors.length>=30);
-  assert.ok(state.placementColors.every(item=>item.painted>0));
+  assert.ok(state.placementColors.every(item=>item.art),`Canonical placement art missing: ${JSON.stringify(state.placementColors.filter(item=>!item.art))}`);
+  assert.ok(state.placementColors.every(item=>item.painted>0),`Canonical placement art has no rendered paint: ${JSON.stringify(state.placementColors.filter(item=>!item.painted))}`);
   assert.deepEqual(state.placementColors.filter(item=>item.wrong),[]);
   assert.equal(state.diagnostics,0);
   assert.deepEqual(errors,[]);
