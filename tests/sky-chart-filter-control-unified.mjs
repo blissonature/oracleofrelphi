@@ -25,7 +25,7 @@ await page.waitForSelector('[data-aspect-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-placement-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
 for (const selector of [
-  'input[data-filter="orb"]',
+  '[data-harmonic-window-input]',
   '.sky-chart-aspect-summary-choices',
   '.sky-chart-placement-summary-choices',
   '.sky-chart-house-summary-choices',
@@ -34,14 +34,14 @@ for (const selector of [
 
 const result=await page.evaluate(()=>{
   const selectors={
-    orb:'input[data-filter="orb"]',
+    orb:'[data-harmonic-window-input]',
     aspects:'.sky-chart-aspect-summary-choices',
     placements:'.sky-chart-placement-summary-choices',
     houses:'.sky-chart-house-summary-choices',
     houseSystem:'[data-house-system-filter]'
   };
   const labelSelectors={
-    orb:'input[data-filter="orb"]',
+    orb:'[data-harmonic-window-input]',
     aspects:'.sky-chart-aspect-filter-label',
     placements:'.sky-chart-placement-filter-label',
     houses:'.sky-chart-house-filter-label',
