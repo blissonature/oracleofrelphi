@@ -49,7 +49,8 @@ async function runMobileTap(browserType,label){
     await row.dispatchEvent('pointerdown',pan);
     await row.dispatchEvent('pointermove',{...pan,clientY:330});
     await row.dispatchEvent('pointerup',{...pan,clientY:330,buttons:0});
-    assert.equal(await row.getAttribute('aria-expanded'),'false',`${label}: a drag must not expand a relationship tile`);
+    assert.notEqual(await row.getAttribute('aria-expanded'),'true',`${label}: a drag must not expand a relationship tile`);
+    assert.equal(await row.evaluate(node=>node.classList.contains('is-inline-expanded')),false,`${label}: a drag must leave the relationship tile collapsed`);
 
     // The row controller itself owns a completed touch gesture. Expansion must happen
     // on pointer-up, before any synthesized click exists.
