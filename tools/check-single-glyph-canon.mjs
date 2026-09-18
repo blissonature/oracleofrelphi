@@ -50,7 +50,7 @@ for (const file of productionFiles) {
 const registryPath = path.join(ROOT, 'relphi-glyph-registry-v1.js');
 const componentPath = path.join(ROOT, 'relphi-glyph-component-v1.js');
 const integrityPath = path.join(ROOT, 'relphi-glyph-source-integrity-v1.js');
-const relationshipPath = path.join(ROOT, 'sky-chart-relationship-list-layout-v1.js');
+const relationshipPath = path.join(ROOT, 'sky-chart-relationship-list-layout-v2.js');
 const selectedPath = path.join(ROOT, 'sky-chart-selected-relationship-v4.js');
 const navPath = path.join(ROOT, 'navloader.js');
 const menuPath = path.join(ROOT, 'menu.js');
