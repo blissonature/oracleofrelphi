@@ -106,9 +106,8 @@ await page.addInitScript(({ a, b, fixed }) => {
 await page.goto('http://127.0.0.1:4173/sky-chart.html', { waitUntil:'domcontentloaded', timeout:15000 });
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]', { timeout:20000 });
 await page.waitForFunction(() => document.documentElement.dataset.skyFinalPass === 'v2');
-await page.waitForFunction(() => document.documentElement.dataset.skyChartLiveIntegrity === 'v6');
 await page.waitForFunction(() => document.querySelectorAll('.sky-ph-heptagram').length === 2);
-await page.waitForFunction(() => Array.from(document.querySelectorAll('.sky-ph-summary')).every(node => !/Calculating/i.test(node.textContent || '')));
+await page.waitForFunction(() => Array.from(document.querySelectorAll('.sky-ph-heptagram')).every(node => node.dataset.canonicalSourceReady === 'true' && node.dataset.canonicalHeptagramReady === 'true'));
 
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-axis-label').count(), 0, 'Comparison wheel must not contain chart-axis name labels.');
 
@@ -143,11 +142,10 @@ const initialHeptagramsStable = await page.evaluate(async () => {
     sameA:beforeA === document.querySelector('#skyFoundationA .sky-ph-heptagram'),
     sameB:beforeB === document.querySelector('#skyFoundationB .sky-ph-heptagram'),
     count:document.querySelectorAll('.sky-ph-heptagram').length,
-    pending:document.querySelectorAll('.sky-ph-heptagram[data-canonical-heptagram-v2="pending"]').length,
-    calculating:Array.from(document.querySelectorAll('.sky-ph-summary')).some(node => /Calculating/i.test(node.textContent || ''))
+    ready:Array.from(document.querySelectorAll('.sky-ph-heptagram')).every(node => node.dataset.canonicalSourceReady === 'true' && node.dataset.canonicalHeptagramReady === 'true')
   };
 });
-assert.deepEqual(initialHeptagramsStable, { sameA:true, sameB:true, count:2, pending:0, calculating:false }, 'Repeated ready events must not rebuild or strand the heptagrams.');
+assert.deepEqual(initialHeptagramsStable, { sameA:true, sameB:true, count:2, ready:true }, 'Repeated ready events must not rebuild or strand the heptagrams.');
 
 await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
 const whereEditor = page.locator('#skyFoundationB .sky-where-when-editor');
@@ -186,14 +184,13 @@ for (const name of ['Descendant','IC','North Node','South Node','Part of Fortune
 assert.ok(updateAudit.snapshots >= 1, 'Here and Now must dispatch a completed Sky B record.');
 
 await page.waitForFunction(() => {
-  const summary = document.querySelector('#skyFoundationB .sky-ph-summary');
-  return summary && !/Calculating/i.test(summary.textContent || '');
+  const svg = document.querySelector('#skyFoundationB .sky-ph-heptagram');
+  return svg?.dataset.canonicalSourceReady === 'true' && svg?.dataset.canonicalHeptagramReady === 'true';
 });
-await page.waitForFunction(() => document.documentElement.dataset.skyChartLiveIntegrity === 'v6');
 
 const finalStability = await page.evaluate(async () => {
   const before = document.querySelector('#skyFoundationB .sky-ph-heptagram');
-  const summary = document.querySelector('#skyFoundationB .sky-ph-summary')?.textContent || '';
+  const href = document.querySelector('#skyFoundationB .sky-ph-jump')?.getAttribute('href') || '';
   for (let index = 0; index < 12; index += 1) {
     window.dispatchEvent(new Event('relphi:sky-foundation-ready'));
     window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
@@ -201,12 +198,12 @@ const finalStability = await page.evaluate(async () => {
   await new Promise(resolve => setTimeout(resolve, 750));
   return {
     same:before === document.querySelector('#skyFoundationB .sky-ph-heptagram'),
-    summarySame:summary === (document.querySelector('#skyFoundationB .sky-ph-summary')?.textContent || ''),
+    hrefSame:href === (document.querySelector('#skyFoundationB .sky-ph-jump')?.getAttribute('href') || ''),
     count:document.querySelectorAll('#skyFoundationB .sky-ph-heptagram').length,
-    pending:document.querySelectorAll('#skyFoundationB .sky-ph-heptagram[data-canonical-heptagram-v2="pending"]').length
+    ready:Array.from(document.querySelectorAll('#skyFoundationB .sky-ph-heptagram')).every(node => node.dataset.canonicalSourceReady === 'true' && node.dataset.canonicalHeptagramReady === 'true')
   };
 });
-assert.deepEqual(finalStability, { same:true, summarySame:true, count:1, pending:0 }, 'The updated heptagram must remain stable after event storms.');
+assert.deepEqual(finalStability, { same:true, hrefSame:true, count:1, ready:true }, 'The updated heptagram must remain stable after event storms.');
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-axis-label').count(), 0);
 assert.deepEqual(errors, []);
 
