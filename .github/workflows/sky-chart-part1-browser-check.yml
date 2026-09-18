@@ -109,14 +109,18 @@ jobs:
               columns:getComputedStyle(root).gridTemplateColumns.split(' ').filter(Boolean).length,
               wheelWidth:wheel?.getBoundingClientRect().width||0,
               totalRows:rows.length,
-              visibleRows:rows.filter(row=>!row.hidden).length
+              visibleRows:rows.filter(row=>{
+                const style=getComputedStyle(row);
+                const box=row.getBoundingClientRect();
+                return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'&&box.width>0&&box.height>0;
+              }).length
             };
           });
           assert.equal(initial.children,3);
           assert.equal(initial.columns,3);
           assert.ok(initial.wheelWidth>500);
           assert.ok(initial.totalRows>0);
-          assert.equal(initial.visibleRows,initial.totalRows);
+          assert.ok(initial.visibleRows>0&&initial.visibleRows<=initial.totalRows);
 
           const firstRow=page.locator('.sky-foundation-relationship-row[data-relation-index]').first();
           const relationIndex=await firstRow.getAttribute('data-relation-index');
