@@ -8,7 +8,7 @@ const currentLocation = {
   latitude:40.7608,
   longitude:-111.8910,
   timezone:'America/Denver',
-  canonical:'Salt Lake City, Salt Lake County, Utah, United States'
+  canonical:'Salt Lake City, Utah, United States'
 };
 
 function placement(name, longitude) {
@@ -67,12 +67,13 @@ await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js', route => route.fu
 await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js', route => route.fulfill({
   path:path.resolve('node_modules/luxon/build/global/luxon.min.js'), contentType:'application/javascript'
 }));
-await page.route('https://nominatim.openstreetmap.org/**', route => route.fulfill({
+await page.route('https://api.bigdatacloud.net/**', route => route.fulfill({
   status:200,
   contentType:'application/json',
   body:JSON.stringify({
-    display_name:currentLocation.canonical,
-    address:{ city:'Salt Lake City', county:'Salt Lake County', state:'Utah', country:'United States' }
+    locality:'Salt Lake City',
+    principalSubdivision:'Utah',
+    countryName:'United States'
   })
 }));
 await page.route('https://api.open-meteo.com/**', route => route.fulfill({
@@ -92,6 +93,7 @@ await page.addInitScript(({ a, b, fixed }) => {
   window.Date = FixedDate;
   localStorage.setItem('relphiSkyChartA', JSON.stringify(a));
   localStorage.setItem('relphiSkyChartB', JSON.stringify(b));
+  localStorage.setItem('relphiSkyChartLastModeV1', 'comparison');
   sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
   window.__skyBSnapshots = [];
   window.addEventListener('storage', event => {
@@ -147,7 +149,10 @@ const initialHeptagramsStable = await page.evaluate(async () => {
 });
 assert.deepEqual(initialHeptagramsStable, { sameA:true, sameB:true, count:2, pending:0, calculating:false }, 'Repeated ready events must not rebuild or strand the heptagrams.');
 
-await page.locator('#skyFoundationB [data-final-now="B"]').click();
+await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
+const whereEditor = page.locator('#skyFoundationB .sky-where-when-editor');
+await whereEditor.waitFor({ state:'visible' });
+await whereEditor.locator('[data-ww-action="here-and-now"]').click();
 await page.waitForFunction(({ canonical, latitude, longitude, timezone }) => {
   const value = JSON.parse(localStorage.getItem('relphiSkyChartB') || 'null');
   const profile = value?.calcProfile || {};
@@ -178,7 +183,7 @@ assert.match(updateAudit.profile.dateTime, /^2026-08-02T20:30/);
 for (const name of ['Descendant','IC','North Node','South Node','Part of Fortune','Chiron','Lilith','Vertex']) {
   assert.ok(updateAudit.firstNames.includes(name), `${name} must exist in the first saved Now payload, not a later repair pass.`);
 }
-assert.ok(updateAudit.snapshots >= 1, 'Update to Now must dispatch a completed Sky B record.');
+assert.ok(updateAudit.snapshots >= 1, 'Here and Now must dispatch a completed Sky B record.');
 
 await page.waitForFunction(() => {
   const summary = document.querySelector('#skyFoundationB .sky-ph-summary');
@@ -211,4 +216,4 @@ await page.screenshot({
   animations:'disabled'
 });
 await browser.close();
-console.log('Axis labels removed; heptagrams stable; ledger glyphs canonical; Now saves current location and complete placements atomically.');
+console.log('Axis labels removed; heptagrams stable; ledger glyphs canonical; Here and Now saves current location and complete placements atomically.');
