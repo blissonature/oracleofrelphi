@@ -1,4 +1,4 @@
-name: Sky Chart Part 2 Where and When check
+name: Sky Chart Where and When check
 
 on:
   push:
@@ -6,11 +6,13 @@ on:
       - main
   pull_request:
     paths:
-      - 'part2/sky-chart.html'
-      - 'sky-chart-where-when-v1.js'
+      - 'sky-chart.html'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-location-search-v2.js'
+      - 'sky-chart-card-shell-v2.js'
+      - 'sky-chart-where-when-draft-heptagram-v4.js'
       - 'sky-chart-where-when-v1.css'
-      - 'sky-chart-foundation-v1.js'
-      - 'sky-chart-foundation-interactions-v1.js'
+      - 'sky-chart-where-when-layout-density-v1.css'
       - 'tests/sky-chart-part2-where-when.mjs'
       - 'tests/sky-chart-part2-confirmed-view.mjs'
       - '.github/workflows/sky-chart-part2-where-when-check.yml'
@@ -25,9 +27,10 @@ jobs:
           node-version: '22'
       - name: JavaScript syntax
         run: |
-          node --check sky-chart-foundation-v1.js
-          node --check sky-chart-foundation-interactions-v1.js
-          node --check sky-chart-where-when-v1.js
+          node --check sky-chart-where-when-v3.js
+          node --check sky-chart-location-search-v2.js
+          node --check sky-chart-card-shell-v2.js
+          node --check sky-chart-where-when-draft-heptagram-v4.js
           node --check tests/sky-chart-part2-where-when.mjs
           node --check tests/sky-chart-part2-confirmed-view.mjs
       - name: Install browser dependencies
@@ -36,13 +39,13 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run Where and When browser assertions
         run: |
-          python3 -m http.server 4173 > /tmp/sky-chart-part2-server.log 2>&1 &
+          python3 -m http.server 4173 > /tmp/sky-chart-where-when-server.log 2>&1 &
           node tests/sky-chart-part2-where-when.mjs
           node tests/sky-chart-part2-confirmed-view.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: sky-chart-part2-screenshots
+          name: sky-chart-where-when-screenshots
           path: |
             sky-chart-part2-desktop.png
             sky-chart-part2-mobile.png
