@@ -4,10 +4,7 @@ on:
   pull_request:
     paths:
       - 'glyphs.html'
-      - 'part1/sky-chart.html'
-      - 'part2/sky-chart.html'
       - 'sky-chart.html'
-      - 'glyph-canon-approved-source-manifest.json'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
       - 'relphi-glyph-source-integrity-v1.js'
@@ -16,13 +13,25 @@ on:
       - 'assets/zodiac-glyphs/**'
       - 'assets/element-glyphs/**'
       - 'assets/aspect-glyphs/**'
-      - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-final-pass-v2.js'
+      - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-card-drawers-v1.css'
+      - 'sky-chart-heptagram-canonical-v1.js'
+      - 'sky-chart-where-when-draft-heptagram-v4.js'
+      - 'sky-chart-card-shell-v2.js'
+      - 'sky-chart-placement-multiselect-v4.js'
+      - 'sky-chart-placement-compact-v1.js'
+      - 'sky-chart-placement-compact-v1.css'
+      - 'sky-chart-multiselect-filters-v1.css'
+      - 'sky-chart-slot-card-controls-v1.js'
       - 'sky-chart-glyph-audit-v1.js'
-      - 'sky-chart-selected-relationship-v3.js'
-      - 'tests/sky-chart-canonical-master-contract.test.mjs'
+      - 'sky-chart-selected-relationship-v4.js'
       - 'tests/sky-chart-single-canon-browser.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
+      - 'tests/sky-chart-placement-compact.mjs'
       - 'tests/sky-chart-stability-now.mjs'
+      - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
       - '.github/workflows/sky-chart-ui-regression-check.yml'
   workflow_dispatch:
 
@@ -47,14 +56,20 @@ jobs:
           node --check relphi-glyph-component-v1.js
           node --check relphi-glyph-source-integrity-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
-          node --check sky-chart-foundation-v1.js
+          node --check sky-chart-foundation-v2.js
           node --check sky-chart-glyph-audit-v1.js
-          node --check sky-chart-selected-relationship-v3.js
-          node --check tests/sky-chart-canonical-master-contract.test.mjs
+          node --check sky-chart-selected-relationship-v4.js
+          node --check sky-chart-placement-multiselect-v4.js
+          node --check sky-chart-placement-compact-v1.js
+          node --check sky-chart-slot-card-controls-v1.js
+          node --check sky-chart-heptagram-canonical-v1.js
+          node --check sky-chart-where-when-v3.js
+          node --check sky-chart-where-when-draft-heptagram-v4.js
           node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
+          node --check tests/sky-chart-placement-compact.mjs
           node --check tests/sky-chart-stability-now.mjs
-          node tests/sky-chart-canonical-master-contract.test.mjs
+          node --check tests/sky-chart-hour-ruler-and-sky-colors.mjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -62,17 +77,25 @@ jobs:
       - name: Run focused browser regressions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-ui-regression-server.log 2>&1 &
-          node tests/sky-chart-single-canon-browser.mjs
+          node tests/sky-chart-placement-compact.mjs
           node tests/sky-chart-filter-control-unified.mjs
+          node tests/sky-chart-single-canon-browser.mjs
           node tests/sky-chart-stability-now.mjs
+          node tests/sky-chart-hour-ruler-and-sky-colors.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: sky-chart-ui-regression-screenshots
           path: |
-            glyph-canon-source-audit.json
             sky-chart-single-canon-desktop.png
             sky-chart-single-canon-mobile.png
             sky-chart-filter-controls-unified.png
+            sky-chart-placement-single-desktop.png
+            sky-chart-placement-compact-desktop.png
+            sky-chart-placement-compact-mobile.png
             sky-chart-stability-now.png
+            sky-chart-hour-ruler-and-sky-colors-desktop.png
+            sky-chart-hour-ruler-and-sky-colors-mobile.png
+            sky-chart-sky-a-card-colors.png
+            sky-chart-sky-b-card-colors.png
           if-no-files-found: ignore

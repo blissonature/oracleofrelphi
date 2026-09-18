@@ -11,7 +11,7 @@ const NS='http://www.w3.org/2000/svg';
 const CHALDEAN=['saturn','jupiter','mars','sun','venus','mercury','moon'];
 const WEEK_PATH=['sun','moon','mars','mercury','jupiter','venus','saturn','sun'];
 const WEEKDAY_RULERS={1:'moon',2:'mars',3:'mercury',4:'jupiter',5:'venus',6:'saturn',7:'sun'};
-const COLORS={saturn:'#8c7a42',jupiter:'#41752f',mars:'#c9211e',sun:'#d08a00',venus:'#b23b79',mercury:'#277390',moon:'#58628a'};
+const COLORS={saturn:'#8c7a42',jupiter:'#41752f',mars:'#dc1f18',sun:'#d08a00',venus:'#b23b79',mercury:'#277390',moon:'#58628a'};
 const timers={A:0,B:0},renderToken={A:0,B:0};
 
 function installStyle(){
@@ -66,7 +66,7 @@ function buildPreview(p){
   for(let index=0;index<7;index++)line(root,point(CHALDEAN[index],142),point(CHALDEAN[(index+1)%7],142),'sky-ph-hour-segment future');
   partialLine(root,point(current.ruler,142),point(CHALDEAN[(CHALDEAN.indexOf(current.ruler)+1)%7],142),hourFraction,'sky-ph-hour-segment current');CHALDEAN.forEach(key=>root.appendChild(planetGroup(key,dayKey,current.ruler)));return root;
 }
-function planetaryHoursHref(p){const params=new URLSearchParams();params.set('phShare','1');params.set('lat',String(p.latitude));params.set('lon',String(p.longitude));params.set('tz',p.timeZone);if(p.location)params.set('loc',p.location);if(p.instantIso)params.set('dt',p.instantIso);return'planetaryhours.html#'+params.toString()}
+function planetaryHoursHref(p){const params=new URLSearchParams();params.set('phShare','1');params.set('lat',String(p.latitude));params.set('lon',String(p.longitude));params.set('tz',p.timeZone);if(p.location)params.set('loc',p.location);if(p.instantIso)params.set('dt',p.instantIso);return'/planetaryhours.html#'+params.toString()}
 function clearDraft(target){target?.querySelectorAll('[data-draft-where-when-link="true"],[data-draft-where-when="true"],.sky-where-when-ph-jump').forEach(node=>node.remove());target?.removeAttribute('data-draft-heptagram-ready')}
 async function renderNow(slot){
   timers[slot]=0;const token=++renderToken[slot],form=editor(slot),target=mount(slot);if(!form||!target)return;const p=packet(slot);clearDraft(target);if(!p)return;

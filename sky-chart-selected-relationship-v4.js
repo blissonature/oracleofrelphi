@@ -65,5 +65,7 @@ async function render(i,source){
 document.addEventListener('click',e=>{const panel=e.target.closest('#skySelectedRelationship');const ledger=e.target.closest('[data-ledger-card]');if(panel&&ledger){window.dispatchEvent(new CustomEvent('relphi:open-ledger-card',{detail:{cardId:ledger.dataset.ledgerCard,source:'selected-relationship'}}));return}const row=e.target.closest('.sky-foundation-relationship-row[data-relation-index]');if(row)queueMicrotask(()=>render(Number(row.dataset.relationIndex),'relationship-list'))});
 window.addEventListener('relphi:sky-foundation-clear-selection',()=>{selectedIndex=null;if(ensure())mount.hidden=true});
 function ready(force=false){const panel=ensure();if(!panel)return;if(selectedIndex!=null&&rowFor(selectedIndex)){if(force)render(selectedIndex,'foundation-rerender');return}const first=[...document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]')].find(x=>!x.hidden);if(first)render(Number(first.dataset.relationIndex),'initial-relationship')}
-window.addEventListener('relphi:sky-foundation-ready',()=>ready(true));if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>requestAnimationFrame(()=>ready(false)),{once:true});else requestAnimationFrame(()=>ready(false));
+window.addEventListener('relphi:sky-foundation-ready',()=>ready(true));
+window.addEventListener('relphi:sky-foundation-interactions-ready',()=>ready(true));
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>requestAnimationFrame(()=>ready(false)),{once:true});else requestAnimationFrame(()=>ready(false));
 })();

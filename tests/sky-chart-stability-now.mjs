@@ -8,7 +8,7 @@ const currentLocation = {
   latitude:40.7608,
   longitude:-111.8910,
   timezone:'America/Denver',
-  canonical:'Salt Lake City, Salt Lake County, Utah, United States'
+  canonical:'Salt Lake City, Utah, United States'
 };
 
 function placement(name, longitude) {
@@ -67,12 +67,13 @@ await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js', route => route.fu
 await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js', route => route.fulfill({
   path:path.resolve('node_modules/luxon/build/global/luxon.min.js'), contentType:'application/javascript'
 }));
-await page.route('https://nominatim.openstreetmap.org/**', route => route.fulfill({
+await page.route('https://api.bigdatacloud.net/**', route => route.fulfill({
   status:200,
   contentType:'application/json',
   body:JSON.stringify({
-    display_name:currentLocation.canonical,
-    address:{ city:'Salt Lake City', county:'Salt Lake County', state:'Utah', country:'United States' }
+    locality:'Salt Lake City',
+    principalSubdivision:'Utah',
+    countryName:'United States'
   })
 }));
 await page.route('https://api.open-meteo.com/**', route => route.fulfill({
@@ -92,6 +93,7 @@ await page.addInitScript(({ a, b, fixed }) => {
   window.Date = FixedDate;
   localStorage.setItem('relphiSkyChartA', JSON.stringify(a));
   localStorage.setItem('relphiSkyChartB', JSON.stringify(b));
+  localStorage.setItem('relphiSkyChartLastModeV1', 'comparison');
   sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
   window.__skyBSnapshots = [];
   window.addEventListener('storage', event => {
@@ -104,30 +106,32 @@ await page.addInitScript(({ a, b, fixed }) => {
 await page.goto('http://127.0.0.1:4173/sky-chart.html', { waitUntil:'domcontentloaded', timeout:15000 });
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]', { timeout:20000 });
 await page.waitForFunction(() => document.documentElement.dataset.skyFinalPass === 'v2');
-await page.waitForFunction(() => document.documentElement.dataset.skyChartLiveIntegrity === 'v6');
 await page.waitForFunction(() => document.querySelectorAll('.sky-ph-heptagram').length === 2);
-await page.waitForFunction(() => Array.from(document.querySelectorAll('.sky-ph-summary')).every(node => !/Calculating/i.test(node.textContent || '')));
+await page.waitForFunction(() => Array.from(document.querySelectorAll('.sky-ph-heptagram')).every(node => node.dataset.canonicalSourceReady === 'true' && node.dataset.canonicalHeptagramReady === 'true'));
 
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-axis-label').count(), 0, 'Comparison wheel must not contain chart-axis name labels.');
 
-const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row svg,#skyFoundationB .sky-foundation-row svg')).map(svg => {
+await page.waitForFunction(() => {
+  const hosts=Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row > svg,#skyFoundationB .sky-foundation-row > svg'));
+  return hosts.length>20&&hosts.every(host=>host.querySelectorAll(':scope > .relphi-canonical-glyph').length===1);
+},{},{timeout:12000});
+
+const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row > svg,#skyFoundationB .sky-foundation-row > svg')).map(svg => {
   const row = svg.closest('.sky-foundation-row');
-  const art = svg.querySelector('.relphi-canonical-glyph');
+  const art = svg.querySelector(':scope > .relphi-canonical-glyph');
   return {
-    placement:row?.dataset.placement || '',
     name:row?.querySelector('.sky-foundation-row-name')?.textContent?.trim() || '',
-    fit:svg.dataset.canonicalFit || '',
-    committed:art?.dataset.relphiAtomicCommit || '',
-    transform:art?.getAttribute('transform') || '',
-    count:svg.querySelectorAll('.relphi-canonical-glyph').length,
-    classes:art?.getAttribute('class') || ''
+    viewBox:svg.getAttribute('viewBox') || '',
+    canonicalCount:svg.querySelectorAll(':scope > .relphi-canonical-glyph').length,
+    canonicalClass:art?.getAttribute('class') || '',
+    visible:art ? getComputedStyle(art).visibility !== 'hidden' : false,
+    error:svg.dataset.relphiGlyphError || ''
   };
 }));
 assert.ok(ledgerAudit.length > 20, 'Both placement ledgers must be populated.');
-assert.equal(ledgerAudit.every(item => item.fit === 'registry-component'), true, 'Every ledger glyph must use the shared registry component.');
-const ledgerStructuralAnomalies = ledgerAudit.filter(item => item.committed !== 'true' || !item.transform || item.count !== 1);
-if (ledgerStructuralAnomalies.length) console.log('LEDGER_STRUCTURAL_ANOMALIES', JSON.stringify(ledgerStructuralAnomalies));
-assert.equal(ledgerAudit.every(item => item.committed === 'true' && item.count >= 1), true, 'Every ledger glyph must contain committed canonical artwork.');
+assert.equal(ledgerAudit.every(item => item.viewBox === '-20 -20 40 40'), true, 'Every ledger glyph host must keep the canonical ledger viewport.');
+assert.equal(ledgerAudit.every(item => item.canonicalCount === 1 && /relphi-canonical-glyph/.test(item.canonicalClass)), true, 'Every ledger row must contain exactly one shared canonical glyph.');
+assert.equal(ledgerAudit.every(item => item.visible && !item.error), true, 'Every canonical ledger glyph must finish visibly without a glyph error.');
 
 const initialHeptagramsStable = await page.evaluate(async () => {
   const beforeA = document.querySelector('#skyFoundationA .sky-ph-heptagram');
@@ -141,13 +145,15 @@ const initialHeptagramsStable = await page.evaluate(async () => {
     sameA:beforeA === document.querySelector('#skyFoundationA .sky-ph-heptagram'),
     sameB:beforeB === document.querySelector('#skyFoundationB .sky-ph-heptagram'),
     count:document.querySelectorAll('.sky-ph-heptagram').length,
-    pending:document.querySelectorAll('.sky-ph-heptagram[data-canonical-heptagram-v2="pending"]').length,
-    calculating:Array.from(document.querySelectorAll('.sky-ph-summary')).some(node => /Calculating/i.test(node.textContent || ''))
+    ready:Array.from(document.querySelectorAll('.sky-ph-heptagram')).every(node => node.dataset.canonicalSourceReady === 'true' && node.dataset.canonicalHeptagramReady === 'true')
   };
 });
-assert.deepEqual(initialHeptagramsStable, { sameA:true, sameB:true, count:2, pending:0, calculating:false }, 'Repeated ready events must not rebuild or strand the heptagrams.');
+assert.deepEqual(initialHeptagramsStable, { sameA:true, sameB:true, count:2, ready:true }, 'Repeated ready events must not rebuild or strand the heptagrams.');
 
-await page.locator('#skyFoundationB [data-final-now="B"]').click();
+await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
+const whereEditor = page.locator('#skyFoundationB .sky-where-when-editor');
+await whereEditor.waitFor({ state:'visible' });
+await whereEditor.locator('[data-ww-action="here-and-now"]').click();
 await page.waitForFunction(({ canonical, latitude, longitude, timezone }) => {
   const value = JSON.parse(localStorage.getItem('relphiSkyChartB') || 'null');
   const profile = value?.calcProfile || {};
@@ -175,20 +181,19 @@ assert.equal(Number(updateAudit.profile.latitude), currentLocation.latitude);
 assert.equal(Number(updateAudit.profile.longitude), currentLocation.longitude);
 assert.equal(updateAudit.profile.timeZone, currentLocation.timezone);
 assert.match(updateAudit.profile.dateTime, /^2026-08-02T20:30/);
-for (const name of ['Descendant','IC','North Node','South Node','Part of Fortune','Chiron','Lilith','Vertex']) {
+for (const name of ['Descendant','Imum Coeli','North Node','South Node','Part of Fortune','Chiron','Lilith','Vertex']) {
   assert.ok(updateAudit.firstNames.includes(name), `${name} must exist in the first saved Now payload, not a later repair pass.`);
 }
-assert.ok(updateAudit.snapshots >= 1, 'Update to Now must dispatch a completed Sky B record.');
+assert.ok(updateAudit.snapshots >= 1, 'Here and Now must dispatch a completed Sky B record.');
 
 await page.waitForFunction(() => {
-  const summary = document.querySelector('#skyFoundationB .sky-ph-summary');
-  return summary && !/Calculating/i.test(summary.textContent || '');
+  const svg = document.querySelector('#skyFoundationB .sky-ph-heptagram');
+  return svg?.dataset.canonicalSourceReady === 'true' && svg?.dataset.canonicalHeptagramReady === 'true';
 });
-await page.waitForFunction(() => document.documentElement.dataset.skyChartLiveIntegrity === 'v6');
 
 const finalStability = await page.evaluate(async () => {
   const before = document.querySelector('#skyFoundationB .sky-ph-heptagram');
-  const summary = document.querySelector('#skyFoundationB .sky-ph-summary')?.textContent || '';
+  const href = document.querySelector('#skyFoundationB .sky-ph-jump')?.getAttribute('href') || '';
   for (let index = 0; index < 12; index += 1) {
     window.dispatchEvent(new Event('relphi:sky-foundation-ready'));
     window.dispatchEvent(new Event('relphi:sky-foundation-interactions-ready'));
@@ -196,12 +201,12 @@ const finalStability = await page.evaluate(async () => {
   await new Promise(resolve => setTimeout(resolve, 750));
   return {
     same:before === document.querySelector('#skyFoundationB .sky-ph-heptagram'),
-    summarySame:summary === (document.querySelector('#skyFoundationB .sky-ph-summary')?.textContent || ''),
+    hrefSame:href === (document.querySelector('#skyFoundationB .sky-ph-jump')?.getAttribute('href') || ''),
     count:document.querySelectorAll('#skyFoundationB .sky-ph-heptagram').length,
-    pending:document.querySelectorAll('#skyFoundationB .sky-ph-heptagram[data-canonical-heptagram-v2="pending"]').length
+    ready:Array.from(document.querySelectorAll('#skyFoundationB .sky-ph-heptagram')).every(node => node.dataset.canonicalSourceReady === 'true' && node.dataset.canonicalHeptagramReady === 'true')
   };
 });
-assert.deepEqual(finalStability, { same:true, summarySame:true, count:1, pending:0 }, 'The updated heptagram must remain stable after event storms.');
+assert.deepEqual(finalStability, { same:true, hrefSame:true, count:1, ready:true }, 'The updated heptagram must remain stable after event storms.');
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-axis-label').count(), 0);
 assert.deepEqual(errors, []);
 
@@ -211,4 +216,4 @@ await page.screenshot({
   animations:'disabled'
 });
 await browser.close();
-console.log('Axis labels removed; heptagrams stable; ledger glyphs canonical; Now saves current location and complete placements atomically.');
+console.log('Axis labels removed; heptagrams stable; ledger glyphs canonical; Here and Now saves current location and complete placements atomically.');

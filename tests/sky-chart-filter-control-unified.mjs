@@ -27,23 +27,22 @@ await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
 
 const result=await page.evaluate(()=>{
   const selectors={
-    orb:'input[data-filter="orb"]',
-    aspects:'.sky-chart-aspect-filter-value',
+    orb:'[data-harmonic-window-input]',
+    aspects:'.sky-chart-aspect-summary-choices',
     placements:'.sky-chart-placement-summary-choices',
-    houses:'.sky-chart-house-summary-choices',
-    houseSystem:'[data-house-system-filter]'
+    houses:'.sky-chart-house-summary-choices'
   };
   const labelSelectors={
-    orb:'input[data-filter="orb"]',
+    orb:'[data-harmonic-window-input]',
     aspects:'.sky-chart-aspect-filter-label',
     placements:'.sky-chart-placement-filter-label',
-    houses:'.sky-chart-house-filter-label',
-    houseSystem:'[data-house-system-filter]'
+    houses:'.sky-chart-house-filter-label'
   };
   const fields={};
   const labels={};
   for(const [name,selector] of Object.entries(selectors)){
     const node=document.querySelector(selector);
+    if(!node)throw new Error(`Missing current filter field ${name}: ${selector}`);
     const style=getComputedStyle(node);
     const rect=node.getBoundingClientRect();
     fields[name]={
@@ -67,7 +66,9 @@ const result=await page.evaluate(()=>{
   }
   for(const [name,selector] of Object.entries(labelSelectors)){
     const source=document.querySelector(selector);
-    const node=(name==='orb'||name==='houseSystem')?source.closest('label'):source;
+    if(!source)throw new Error(`Missing current filter label ${name}: ${selector}`);
+    const node=name==='orb'?source.closest('label'):source;
+    if(!node)throw new Error(`Missing current filter label owner ${name}`);
     const style=getComputedStyle(node);
     labels[name]={
       color:style.color,
@@ -84,6 +85,7 @@ const result=await page.evaluate(()=>{
     houses:'.sky-chart-house-filter-toggle'
   })){
     const node=document.querySelector(selector);
+    if(!node)throw new Error(`Missing current filter toggle ${name}: ${selector}`);
     const style=getComputedStyle(node);
     const rect=node.getBoundingClientRect();
     toggles[name]={height:rect.height,borderTopWidth:style.borderTopWidth,backgroundColor:style.backgroundColor,backgroundImage:style.backgroundImage};
@@ -96,8 +98,6 @@ const reference=result.fields.orb;
 for(const name of fieldNames){
   const field=result.fields[name];
   assert.ok(Math.abs(field.height-reference.height)<=0.5,`${name} height ${field.height} does not match Orb ${reference.height}`);
-  assert.ok(Math.abs(field.top-reference.top)<=1,`${name} top ${field.top} does not match Orb ${reference.top}`);
-  assert.ok(Math.abs(field.bottom-reference.bottom)<=1,`${name} bottom ${field.bottom} does not match Orb ${reference.bottom}`);
   for(const property of ['backgroundColor','borderTopColor','borderTopStyle','borderTopWidth','borderTopLeftRadius','borderTopRightRadius','borderBottomLeftRadius','borderBottomRightRadius','color','fontFamily','fontSize','fontWeight','lineHeight']){
     assert.equal(field[property],reference[property],`${name} ${property} must match Orb`);
   }
@@ -146,4 +146,4 @@ assert.ok(Math.abs(leftAfterOn-initialLeft)<=0.5,`Aspect popover shifted horizon
 assert.deepEqual(errors,[]);
 await page.locator('#skyFoundationRelationships .sky-chart-filter-bar').screenshot({path:'sky-chart-filter-controls-unified.png'});
 await browser.close();
-console.log('Relationship filters match visually; Aspect glyph colors are present and the open Aspect menu stays horizontally stable.');
+console.log('Relationship filters share one visual system across their intentional two-row layout; Aspect glyph colors are present and the open Aspect menu stays horizontally stable.');

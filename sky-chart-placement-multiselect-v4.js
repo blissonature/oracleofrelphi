@@ -73,7 +73,7 @@
     return html.dataset.skyBEditing==='true'||html.dataset.skyBPresent==='true';
   }
   function activeSlots(){return bActive()?SLOTS:['A']}
-  function activeKinds(){return bActive()?['all','a','b']:['all','a']}
+  function activeKinds(){return bActive()?['all','a','b']:['a']}
   function filterBar(){return document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar')}
   function control(){return document.querySelector('[data-placement-filter="combined"]')}
   function popover(){return document.getElementById('skyChartPlacementPopover')}
@@ -222,9 +222,22 @@
     const list=document.createElement('div');
     list.className='sky-chart-placement-list';
     list.dataset.placementList='combined';
+    list.style.setProperty('--placement-choice-count',String(activeKinds().length));
     const header=document.createElement('div');
     header.className='sky-chart-placement-list-header';
-    header.innerHTML=bActive()?'<strong>Placement</strong><span>All</span><span>A</span><span>B</span>':'<strong>Placement</strong><span>All</span><span>A</span>';
+    const headerLabel=document.createElement('strong');
+    headerLabel.className='sky-chart-placement-list-header-label';
+    headerLabel.textContent='Placement';
+    const headerChoices=document.createElement('div');
+    headerChoices.className='sky-chart-placement-list-header-choices';
+    headerChoices.setAttribute('aria-hidden','true');
+    activeKinds().forEach(kind=>{
+      const cell=document.createElement('span');
+      cell.className=`sky-chart-placement-list-header-choice sky-chart-placement-list-header-choice-${kind}`;
+      cell.textContent=kind==='all'?'All':kind.toUpperCase();
+      headerChoices.appendChild(cell);
+    });
+    header.append(headerLabel,headerChoices);
     list.append(header,row('all','all','All placements','master'));
     GROUPS.forEach(group=>{
       const entries=listEntries(group.id);

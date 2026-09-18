@@ -21,6 +21,7 @@ async function inspect(width,height,suffix){
   await page.addInitScript(({a,b})=>{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
+    localStorage.setItem('relphiSkyChartLastModeV1','comparison');
   },{a:sky('Sky A',0),b:sky('Sky B',0)});
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false');
@@ -34,7 +35,7 @@ async function inspect(width,height,suffix){
       const circle=host.querySelector(':scope > .relphi-glyph-bubble > circle');
       return{
         id:host.dataset.zodiacSign,
-        radius:Number(host.dataset.wheelGlyphRadius),
+        radius:Number(circle?.getAttribute('r')),
         glyphCount:host.querySelectorAll('.relphi-canonical-glyph').length,
         circleDisplay:circle?getComputedStyle(circle).display:'missing',
         circleOpacity:circle?Number(getComputedStyle(circle).opacity):null
@@ -50,22 +51,24 @@ async function inspect(width,height,suffix){
     const placementColors=Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>{
       const expected=host.dataset.sky==='A'?'rgb(201, 33, 30)':'rgb(36, 98, 208)';
       const art=host.querySelector('.relphi-canonical-glyph');
-      const painted=art?Array.from(art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text')).filter(node=>{
-        if(node.matches('text'))return true;
-        const fill=node.getAttribute('fill');
-        const stroke=node.getAttribute('stroke');
-        return(fill&&fill!=='none')||(stroke&&stroke!=='none');
-      }):[];
+      const shapes=art?[...(art.matches('path,circle,ellipse,rect,polygon,polyline,line,text')?[art]:[]),...art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text')]:[];
+      const painted=shapes.filter(node=>{
+        const style=getComputedStyle(node);
+        return style.fill!=='none'||style.stroke!=='none';
+      });
       const wrong=painted.filter(node=>{
         const style=getComputedStyle(node);
-        const usesFill=node.matches('text')||(node.getAttribute('fill')&&node.getAttribute('fill')!=='none');
-        const usesStroke=node.getAttribute('stroke')&&node.getAttribute('stroke')!=='none';
-        return(usesFill&&style.fill!==expected)||(usesStroke&&style.stroke!==expected);
+        return(style.fill!=='none'&&style.fill!==expected)||(style.stroke!=='none'&&style.stroke!==expected);
       });
-      return{sky:host.dataset.sky,id:host.dataset.placement,expected,painted:painted.length,wrong:wrong.length};
+      return{sky:host.dataset.sky,id:host.dataset.placement,expected,art:!!art,painted:painted.length,wrong:wrong.length};
     });
     return{
       zodiac,
+      expectedZodiacRadius:Number(window.RelphiSkyWheelSpec?.comparison?.zodiac?.glyphRadius),
+      expectedAngleEdges:{
+        A:Number(window.RelphiSkyWheelSpec?.comparison?.inner?.edge),
+        B:Number(window.RelphiSkyWheelSpec?.comparison?.outer?.edge)
+      },
       sourceFill:sourcePath?.getAttribute('fill')||'',
       sourceStroke:sourcePath?.getAttribute('stroke')||'',
       sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
@@ -80,7 +83,8 @@ async function inspect(width,height,suffix){
 
   assert.equal(state.zodiac.length,12);
   assert.deepEqual(state.zodiac.map(item=>item.id),SIGNS.map(name=>name.toLowerCase()));
-  assert.ok(state.zodiac.every(item=>item.radius===19));
+  assert.equal(state.expectedZodiacRadius,24);
+  assert.ok(state.zodiac.every(item=>item.radius===state.expectedZodiacRadius));
   assert.ok(state.zodiac.every(item=>item.glyphCount===1));
   assert.ok(state.zodiac.every(item=>item.circleDisplay==='none'));
   assert.equal(state.sourceFill,'#111111');
@@ -90,9 +94,11 @@ async function inspect(width,height,suffix){
   assert.equal(state.renderedStroke,'');
   assert.equal(state.angleCount,8);
   assert.equal(state.angleLines.length,8);
-  assert.ok(state.angleLines.every(line=>line.edge===(line.sky==='A'?574:166)));
+  assert.deepEqual(state.expectedAngleEdges,{A:166,B:574});
+  assert.ok(state.angleLines.every(line=>line.edge===state.expectedAngleEdges[line.sky]));
   assert.ok(state.placementColors.length>=30);
-  assert.ok(state.placementColors.every(item=>item.painted>0));
+  assert.ok(state.placementColors.every(item=>item.art),`Canonical placement art missing: ${JSON.stringify(state.placementColors.filter(item=>!item.art))}`);
+  assert.ok(state.placementColors.every(item=>item.painted>0),`Canonical placement art has no rendered paint: ${JSON.stringify(state.placementColors.filter(item=>!item.painted))}`);
   assert.deepEqual(state.placementColors.filter(item=>item.wrong),[]);
   assert.equal(state.diagnostics,0);
   assert.deepEqual(errors,[]);

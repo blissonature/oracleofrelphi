@@ -1,4 +1,4 @@
-// Stable final Sky Chart integration: immediate derived placements, Here and Now, and filters.
+// Stable final Sky Chart integration: immediate derived placements and relationship filters.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
@@ -10,10 +10,6 @@
   // Only preserve points that this layer cannot safely recalculate. Lilith is intentionally excluded:
   // carrying an old Lilith into a newly dated sky makes the new sky inherit the prior sky-state's apogee.
   const PRESERVE = ['Vertex'];
-  const HOUSE_SYSTEMS = {
-    'whole-sign':'Whole Sign', 'equal-house':'Equal House', porphyry:'Porphyry', placidus:'Placidus',
-    alcabitius:'Alcabitius', regiomontanus:'Regiomontanus', campanus:'Campanus', koch:'Koch'
-  };
   const ASPECT_LABELS = {
     all:'All', conjunction:'Conjunction', 'semi-sextile':'Semi-Sextile', octile:'Octile', sextile:'Sextile',
     quintile:'Quintile', square:'Square', trine:'Trine', 'tri-octile':'Tri-Octile',
@@ -184,197 +180,6 @@
     return true;
   }
 
-  function panel(slot) {
-    return document.getElementById(slot === 'A' ? 'skyFoundationA' : 'skyFoundationB');
-  }
-
-  function addHeaderActions(slot) {
-    const actions = panel(slot)?.querySelector('.sky-where-when-actions');
-    if (!actions || actions.querySelector('[data-final-now]')) return;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'sky-where-when-action';
-    button.dataset.finalNow = slot;
-    button.textContent = 'Update to Now';
-    button.addEventListener('click', () => updateToNow(slot, button));
-    actions.prepend(button);
-  }
-
-  function currentPosition() {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) return reject(new Error('Current location is unavailable in this browser.'));
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy:false, timeout:12000, maximumAge:0
-      });
-    });
-  }
-
-  async function currentLocationPacket() {
-    const position = await currentPosition();
-    const latitude = Number(position.coords.latitude);
-    const longitude = Number(position.coords.longitude);
-    const [placeResponse, zoneResponse] = await Promise.all([
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=10&addressdetails=1`, { headers:{ Accept:'application/json' } }),
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&timezone=auto&current=temperature_2m`, { headers:{ Accept:'application/json' } })
-    ]);
-    const place = placeResponse.ok ? await placeResponse.json() : {};
-    const zone = zoneResponse.ok ? await zoneResponse.json() : {};
-    const address = place.address || {};
-    const canonical = place.display_name || [
-      address.city || address.town || address.village || address.county,
-      address.state,
-      address.country
-    ].filter(Boolean).join(', ') || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-    const timezone = String(zone.timezone || '');
-    if (!timezone) throw new Error('The current location did not resolve to an IANA time zone.');
-    return { query:'My current location', canonical, latitude, longitude, timezone };
-  }
-
-  function selectCurrentLocation(slot, packet) {
-    const card = panel(slot);
-    const results = card?.querySelector('.sky-location-results');
-    if (!results) return false;
-    const choice = document.createElement('button');
-    choice.type = 'button';
-    choice.className = 'sky-location-result';
-    choice.dataset.wwAction = 'select-location';
-    choice.innerHTML = `<strong>${packet.canonical}</strong><span>${packet.latitude.toFixed(5)}, ${packet.longitude.toFixed(5)} · ${packet.timezone}</span>`;
-    choice.__locationPacket = packet;
-    results.replaceChildren(choice);
-    choice.click();
-    const latitude = Number(card.querySelector('[data-ww-field="latitude"]')?.value);
-    const longitude = Number(card.querySelector('[data-ww-field="longitude"]')?.value);
-    const timezone = card.querySelector('[data-ww-field="timezone"]')?.value;
-    return Math.abs(latitude - packet.latitude) < 1e-5 && Math.abs(longitude - packet.longitude) < 1e-5 && timezone === packet.timezone;
-  }
-
-  function waitForStored(slot, predicate, timeout = 20000) {
-    return new Promise((resolve, reject) => {
-      const started = Date.now();
-      const check = () => {
-        const value = read(slot);
-        if (value && predicate(value)) return resolve(value);
-        if (Date.now() - started >= timeout) return reject(new Error('The updated Sky record did not finish saving.'));
-        setTimeout(check, 40);
-      };
-      check();
-    });
-  }
-
-  async function updateToNow(slot, button) {
-    const originalLabel = button?.textContent || 'Update to Now';
-    if (button) { button.disabled = true; button.textContent = 'Finding Here and Now…'; }
-    try {
-      const packet = await currentLocationPacket();
-      panel(slot)?.querySelector('[data-ww-action="edit"]')?.click();
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      if (!selectCurrentLocation(slot, packet)) throw new Error('The current location could not be applied to the Where and When editor.');
-
-      const now = window.luxon?.DateTime?.now().setZone(packet.timezone);
-      if (!now?.isValid) throw new Error('The current local time could not be resolved.');
-      const dateValue = now.toFormat('yyyy-MM-dd');
-      const timeValue = now.toFormat('HH:mm');
-      const card = panel(slot);
-      const date = card?.querySelector('[data-ww-field="date"]');
-      const time = card?.querySelector('[data-ww-field="time"]');
-      if (!date || !time) throw new Error('The Where and When date fields are unavailable.');
-      date.value = dateValue;
-      time.value = timeValue;
-      card.querySelector('.sky-where-when-editor')?.requestSubmit();
-
-      await waitForStored(slot, value => {
-        const profile = value.calcProfile || {};
-        const source = value.placements || {};
-        return profile.location === packet.canonical &&
-          profile.timeZone === packet.timezone &&
-          Math.abs(Number(profile.latitude) - packet.latitude) < 1e-5 &&
-          Math.abs(Number(profile.longitude) - packet.longitude) < 1e-5 &&
-          String(profile.dateTime || '').startsWith(`${dateValue}T${timeValue}`) &&
-          ['Descendant','IC','North Node','South Node','Part of Fortune'].every(name => source[name]);
-      });
-    } catch (error) {
-      console.error(error);
-      const statusNode = panel(slot)?.querySelector('.sky-where-when-status');
-      if (statusNode) {
-        statusNode.textContent = error?.code === 1 ? 'Location permission was denied.' : error.message || 'Here and Now could not be set.';
-        statusNode.classList.add('is-error');
-      }
-    } finally {
-      if (button?.isConnected) { button.disabled = false; button.textContent = originalLabel; }
-    }
-  }
-
-  function addEditorControls(slot) {
-    const card = panel(slot);
-    const where = card?.querySelector('.sky-where-when-section');
-    const advanced = card?.querySelector('.sky-where-when-advanced-body');
-    advanced?.querySelector('[data-house-system]')?.remove();
-    if (!where || where.querySelector('[data-current-location]')) return;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'sky-where-when-button secondary';
-    button.dataset.currentLocation = slot;
-    button.textContent = 'My current location';
-    button.addEventListener('click', () => useCurrentLocation(slot, button));
-    where.querySelector('.sky-where-search-row')?.insertAdjacentElement('afterend', button);
-  }
-
-  async function useCurrentLocation(slot, button) {
-    button.disabled = true;
-    button.textContent = 'Requesting location…';
-    try {
-      const packet = await currentLocationPacket();
-      if (!selectCurrentLocation(slot, packet)) throw new Error('Current location could not be applied.');
-      button.textContent = 'Current location applied';
-    } catch (error) {
-      console.error(error);
-      button.textContent = error?.code === 1 ? 'Location permission denied' : 'My current location';
-    } finally {
-      button.disabled = false;
-      if (button.textContent === 'Requesting location…') button.textContent = 'My current location';
-    }
-  }
-
-  function calculateHouseSystem(slot, system) {
-    const value = read(slot);
-    if (!value) throw new Error(`Sky ${slot} is empty.`);
-    const profile = value.calcProfile || {};
-    const source = placements(value);
-    const asc = find(source, ['Ascendant','ASC','Rising']);
-    const mc = find(source, ['Midheaven','MC']);
-    if (!asc || !mc) throw new Error(`Sky ${slot} needs Ascendant and Midheaven before changing house system.`);
-    if (!window.RelphiHouseSystems || !window.Astronomy) throw new Error('The house calculation engine is unavailable.');
-    const instant = new Date(profile.instant || profile.dateTime || Date.now());
-    const longitude = Number(profile.longitude);
-    const latitude = Number(profile.latitude);
-    if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) throw new Error(`Sky ${slot} needs resolved coordinates.`);
-    const siderealDegrees = norm(window.Astronomy.SiderealTime(instant) * 15 + longitude);
-    const obliquityDegrees = Number(window.Astronomy.e_tilt(instant).tobl);
-    const result = window.RelphiHouseSystems.calculateCusps({
-      system, ascendant:Number(asc.longitude), midheaven:Number(mc.longitude),
-      siderealDegrees, obliquityDegrees, latitude
-    });
-    value.calcProfile = { ...profile, houseSystem:result.system, houseCusps:result.cusps, cusps:result.cusps, houseSystemNote:result.note };
-    value.houseCusps = result.cusps;
-    Object.values(source).forEach(item => {
-      if (Number.isFinite(Number(item?.longitude))) item.house = houseFor(Number(item.longitude), result.cusps);
-    });
-    localStorage.setItem(KEYS[slot], JSON.stringify(value));
-    dispatch(slot);
-  }
-
-  function changeHouseSystem(select) {
-    try {
-      calculateHouseSystem('A', select.value);
-      calculateHouseSystem('B', select.value);
-      select.setCustomValidity('');
-    } catch (error) {
-      console.error(error);
-      select.setCustomValidity(error.message);
-      select.reportValidity();
-    }
-  }
-
   function addFilters() {
     const relationshipPanel = document.getElementById('skyFoundationRelationships');
     if (!relationshipPanel) return;
@@ -389,12 +194,8 @@
     const aspectOptions = Object.entries(ASPECT_LABELS).map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
     const houses = ['all', ...Array.from({ length:12 }, (_, index) => String(index + 1))]
       .map(value => `<option value="${value}">${value === 'all' ? 'All' : value}</option>`).join('');
-    const current = read('A')?.calcProfile?.houseSystem || read('B')?.calcProfile?.houseSystem || 'whole-sign';
-    const systems = Object.entries(HOUSE_SYSTEMS)
-      .map(([value, label]) => `<option value="${value}"${value === current ? ' selected' : ''}>${label}</option>`).join('');
-    bar.innerHTML = `<label>Aspects<select data-filter="aspect">${aspectOptions}</select></label><label>Placements<select data-filter="placement"><option value="all">All</option></select></label><label>Sky A House<select data-filter="houseA">${houses}</select></label><label>Sky B House<select data-filter="houseB">${houses}</select></label><label>House System<select data-house-system-filter>${systems}</select></label>`;
+    bar.innerHTML = `<label>Aspects<select data-filter="aspect">${aspectOptions}</select></label><label>Placements<select data-filter="placement"><option value="all">All</option></select></label><label>Sky A House<select data-filter="houseA">${houses}</select></label><label>Sky B House<select data-filter="houseB">${houses}</select></label>`;
     bar.addEventListener('change', event => {
-      if (event.target.matches('[data-house-system-filter]')) return changeHouseSystem(event.target);
       if (!event.target.dataset.filter) return;
       filters[event.target.dataset.filter] = event.target.value;
       applyFilters();
@@ -468,10 +269,6 @@
   function refresh() {
     queued = false;
     if (whereWhenEditing()) return;
-    ['A','B'].forEach(slot => {
-      addHeaderActions(slot);
-      addEditorControls(slot);
-    });
     addFilters();
     refreshPlacementFilter();
     applyFilters();

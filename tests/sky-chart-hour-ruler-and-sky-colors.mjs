@@ -4,6 +4,7 @@ import path from 'node:path';
 
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const COLORS={A:'rgb(201, 33, 30)',B:'rgb(36, 98, 208)'};
+const HEPTAGRAM_COLORS={saturn:'rgb(140, 122, 66)',jupiter:'rgb(65, 117, 47)',mars:'rgb(220, 31, 24)',sun:'rgb(208, 138, 0)',venus:'rgb(178, 59, 121)',mercury:'rgb(39, 115, 144)',moon:'rgb(88, 98, 138)'};
 const placement=(name,longitude)=>{const value=((longitude%360)+360)%360,sign=Math.floor(value/30),within=value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60);return{name,longitude:value,sign:SIGNS[sign],degree,minute,second:0}};
 function sample(name,offset,profile){
   const asc=(168.38+offset)%360,cusps=Array.from({length:12},(_,index)=>(asc+index*30)%360);
@@ -19,23 +20,18 @@ const pageErrors=[];
 page.on('pageerror',error=>pageErrors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
 await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
-await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));sessionStorage.removeItem('relphiSkyWhereWhenViewV1')},{a:skyA,b:skyB});
+await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison');sessionStorage.removeItem('relphiSkyWhereWhenViewV1')},{a:skyA,b:skyB});
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
-await page.waitForFunction(()=>document.querySelectorAll('.sky-ph-canonical-bubble.is-hour-ruler').length===2,null,{timeout:20000});
-await page.waitForFunction(()=>typeof window.RelphiSkyColors?.scan==='function',null,{timeout:20000});
+await page.waitForFunction(()=>document.querySelectorAll('.sky-ph-planet.is-hour-ruler .relphi-glyph-bubble[data-heptagram-circled-glyph="true"]').length===2,null,{timeout:20000});
 await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
-await page.waitForFunction(()=>window.RelphiSkyColors?.scan?.().passed===true,null,{timeout:20000});
-const colorScan=await page.evaluate(()=>window.RelphiSkyColors.scan());
-assert.equal(colorScan.passed,true,`Placement color scan painted ${colorScan.painted}/${colorScan.expected} hosts.`);
-assert.equal(await page.getAttribute('html','data-sky-placement-colors'),'passed');
 await page.waitForTimeout(100);
 
-const issues=await page.evaluate(({colors})=>{
+const issues=await page.evaluate(({colors,heptagramColors})=>{
   const issues=[];
   const geometry='path,circle,ellipse,rect,polygon,polyline,line,text';
-  const artFor=host=>{const root=host?.querySelector?.('.relphi-glyph-bubble');return root?Array.from(root.children).find(node=>node.classList?.contains('relphi-canonical-glyph')):null};
-  const paintedLeaves=art=>Array.from(art?.querySelectorAll(geometry)||[]);
+  const artFor=host=>host?.querySelector?.(':scope > .relphi-canonical-glyph')||host?.querySelector?.('.relphi-glyph-bubble > .relphi-canonical-glyph')||null;
+  const paintedLeaves=art=>art?[...(art.matches?.(geometry)?[art]:[]),...art.querySelectorAll(geometry)]:[];
   const checkColor=(host,slot,label)=>{
     const art=artFor(host);
     if(!art){issues.push(`${label}: canonical art missing`);return}
@@ -51,32 +47,85 @@ const issues=await page.evaluate(({colors})=>{
   document.querySelectorAll('[data-layer="placements"] > g[data-sky="A"]').forEach((host,index)=>checkColor(host,'A',`Sky A wheel ${index+1}`));
   document.querySelectorAll('[data-layer="placements"] > g[data-sky="B"]').forEach((host,index)=>checkColor(host,'B',`Sky B wheel ${index+1}`));
 
-  const rulers=Array.from(document.querySelectorAll('.sky-ph-canonical-bubble.is-hour-ruler'));
-  if(rulers.length!==2)issues.push(`Expected 2 hour rulers, received ${rulers.length}`);
-  rulers.forEach((root,index)=>{
+  const heptagrams=Array.from(document.querySelectorAll('.sky-ph-heptagram'));
+  if(heptagrams.length<2)issues.push(`Expected at least 2 Sky Chart heptagrams, received ${heptagrams.length}`);
+  heptagrams.forEach((svg,heptagramIndex)=>{
+    const groups=Array.from(svg.querySelectorAll('.sky-ph-planet'));
+    const dayGroups=groups.filter(group=>group.classList.contains('is-day-ruler'));
+    if(dayGroups.length!==1)issues.push(`Heptagram ${heptagramIndex+1}: expected 1 day ruler, received ${dayGroups.length}`);
+    groups.forEach((group,planetIndex)=>{
+      const key=Object.keys(heptagramColors).find(name=>group.classList.contains(`sky-ph-${name}`));
+      const circle=group.querySelector('.relphi-glyph-bubble > circle');
+      if(!key||!circle){issues.push(`Heptagram ${heptagramIndex+1} planet ${planetIndex+1}: canonical bubble missing`);return}
+      const actual=getComputedStyle(circle).fill;
+      const hour=group.classList.contains('is-hour-ruler');
+      const expected=hour?'rgb(255, 255, 255)':heptagramColors[key];
+      if(actual!==expected)issues.push(`Heptagram ${heptagramIndex+1} ${key}: background ${actual}, expected ${expected}`);
+      const art=Array.from(group.querySelector('.relphi-glyph-bubble')?.children||[]).find(node=>node.classList?.contains('relphi-canonical-glyph'));
+      if(!art){issues.push(`Heptagram ${heptagramIndex+1} ${key}: canonical art missing`);return}
+      const expectedArt=hour?heptagramColors[key]:'rgb(255, 255, 255)';
+      paintedLeaves(art).forEach((node,shapeIndex)=>{
+        const style=getComputedStyle(node);
+        if(style.fill!=='none'&&style.fill!=='rgba(0, 0, 0, 0)'&&style.fill!==expectedArt)issues.push(`Heptagram ${heptagramIndex+1} ${key} shape ${shapeIndex+1}: fill ${style.fill}, expected ${expectedArt}`);
+        if(style.stroke!=='none'&&style.stroke!=='rgba(0, 0, 0, 0)'&&style.stroke!==expectedArt)issues.push(`Heptagram ${heptagramIndex+1} ${key} shape ${shapeIndex+1}: stroke ${style.stroke}, expected ${expectedArt}`);
+      });
+      if(group.classList.contains('is-day-ruler')&&!hour&&actual==='rgb(255, 255, 255)')issues.push(`Heptagram ${heptagramIndex+1} ${key}: day ruler must not invert unless it is also the hour ruler`);
+    });
+  });
+
+  const rulerGroups=Array.from(document.querySelectorAll('.sky-ph-planet.is-hour-ruler'));
+  if(rulerGroups.length!==2)issues.push(`Expected 2 hour rulers, received ${rulerGroups.length}`);
+  rulerGroups.forEach((group,index)=>{
+    const root=group.querySelector('.relphi-glyph-bubble[data-heptagram-circled-glyph="true"]');
+    if(!root){issues.push(`Hour ruler ${index+1}: canonical bubble missing`);return}
     const rootStyle=getComputedStyle(root);
     if(rootStyle.filter!=='none')issues.push(`Hour ruler ${index+1}: filter is ${rootStyle.filter}`);
     const art=Array.from(root.children).find(node=>node.classList?.contains('relphi-canonical-glyph'));
     if(!art)issues.push(`Hour ruler ${index+1}: canonical art missing`);
+    const key=Object.keys(heptagramColors).find(name=>group.classList.contains(`sky-ph-${name}`));
+    const expectedArt=key?heptagramColors[key]:'';
     paintedLeaves(art).forEach((node,shapeIndex)=>{
       const style=getComputedStyle(node);
       if(style.vectorEffect!=='none')issues.push(`Hour ruler ${index+1} shape ${shapeIndex+1}: vector-effect is ${style.vectorEffect}`);
-      if(style.fill!=='none'&&style.fill!=='rgba(0, 0, 0, 0)'&&style.fill!=='rgb(255, 255, 255)')issues.push(`Hour ruler ${index+1} shape ${shapeIndex+1}: nonwhite fill ${style.fill}`);
-      if(style.stroke!=='none'&&style.stroke!=='rgba(0, 0, 0, 0)'&&style.stroke!=='rgb(255, 255, 255)')issues.push(`Hour ruler ${index+1} shape ${shapeIndex+1}: nonwhite stroke ${style.stroke}`);
+      if(style.fill!=='none'&&style.fill!=='rgba(0, 0, 0, 0)'&&style.fill!==expectedArt)issues.push(`Hour ruler ${index+1} shape ${shapeIndex+1}: fill ${style.fill}, expected ${expectedArt}`);
+      if(style.stroke!=='none'&&style.stroke!=='rgba(0, 0, 0, 0)'&&style.stroke!==expectedArt)issues.push(`Hour ruler ${index+1} shape ${shapeIndex+1}: stroke ${style.stroke}, expected ${expectedArt}`);
     });
   });
   return Array.from(new Set(issues));
-},{colors:COLORS});
+},{colors:COLORS,heptagramColors:HEPTAGRAM_COLORS});
 
 assert.deepEqual(issues,[]);
+
+const jumpChecks=await page.evaluate(()=>{
+  return ['A','B'].map(slot=>{
+    const link=document.querySelector(`#skyFoundation${slot} .sky-ph-jump`);
+    const url=new URL(link.href);
+    const params=new URLSearchParams(url.hash.slice(1));
+    return{
+      slot,
+      pathname:url.pathname,
+      pointerEvents:getComputedStyle(link).pointerEvents,
+      phShare:params.get('phShare'),
+      lat:params.get('lat'),
+      lon:params.get('lon'),
+      tz:params.get('tz'),
+      dt:params.get('dt')
+    };
+  });
+});
+jumpChecks.forEach(check=>{
+  assert.equal(check.pathname,'/planetaryhours.html',`Sky ${check.slot} must jump to the root Planetary Hours page.`);
+  assert.equal(check.pointerEvents,'auto',`Sky ${check.slot} Planetary Hours heptagram must be clickable.`);
+  assert.equal(check.phShare,'1');
+  assert.ok(check.lat&&check.lon&&check.tz&&check.dt,`Sky ${check.slot} Planetary Hours link must carry the exact moment and location packet.`);
+});
 assert.deepEqual(pageErrors,[]);
 await page.screenshot({path:'sky-chart-hour-ruler-and-sky-colors-desktop.png',fullPage:true});
 await page.locator('#skyFoundationA').screenshot({path:'sky-chart-sky-a-card-colors.png'});
 await page.locator('#skyFoundationB').screenshot({path:'sky-chart-sky-b-card-colors.png'});
 
 await page.setViewportSize({width:390,height:844});
-await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[data-relphi-atomic-pending="true"]').length===0,null,{timeout:20000});
 await page.waitForTimeout(350);
 await page.screenshot({path:'sky-chart-hour-ruler-and-sky-colors-mobile.png',fullPage:true});
 await browser.close();
-console.log('Sky Chart hour rulers are crisp, and Sky A/B placement glyph colors are consistent.');
+console.log('Sky Chart heptagrams invert only the hour ruler, preserve the day-ruler ring, and link exact moments into Planetary Hours.');

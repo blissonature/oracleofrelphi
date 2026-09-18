@@ -61,8 +61,7 @@ function decorate(slot){
   }
   target.replaceChildren(control(slot))
 }
-function removeRelationshipHouseSystem(){document.querySelectorAll('[data-house-system-filter]').forEach(node=>node.closest('label')?.remove())}
-function hydrate(){queued=false;removeRelationshipHouseSystem();decorate('A');decorate('B')}
+function hydrate(){queued=false;decorate('A');decorate('B')}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(hydrate)}
 function installStyles(){
   if(document.getElementById('skyPlacementHouseSystemV4Styles'))return;

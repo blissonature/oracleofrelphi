@@ -25,7 +25,18 @@ const page = await browser.newPage({viewport:{width:1440,height:1100}});
 const errors=[];
 page.on('pageerror', error => errors.push(error.message));
 page.on('console', message => {
-  if (message.type()==='error' && !/favicon/i.test(message.text())) errors.push(message.text());
+  if (message.type()==='error' && !/favicon|Failed to load resource/i.test(message.text())) errors.push(message.text());
+});
+const deliberateLoaderMisses=new Set([
+  '/assets/astrology-foundations-live-fix-v2-loader-miss',
+  '/assets/standardize-zodiac-wheels-loader-miss',
+  '/assets/planetary-hours-location-prompt-loader-miss-v2'
+]);
+page.on('response', response => {
+  if(response.status()!==404)return;
+  const url=new URL(response.url());
+  if(/\/favicon\.ico$/i.test(url.pathname)||deliberateLoaderMisses.has(url.pathname))return;
+  errors.push(`404 ${response.url()}`);
 });
 
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js', route => route.fulfill({
@@ -36,45 +47,67 @@ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js
   path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),
   contentType:'application/javascript'
 }));
-await page.route('https://geocoding-api.open-meteo.com/v1/search**', route => route.fulfill({
+await page.route('https://nominatim.openstreetmap.org/search**', route => route.fulfill({
   status:200,
   contentType:'application/json',
-  body:JSON.stringify({results:[{
-    name:'Malden',
-    admin1:'Massachusetts',
-    country:'United States',
-    latitude:42.4251,
-    longitude:-71.0662,
-    timezone:'America/New_York'
-  }]})
+  body:JSON.stringify([{
+    display_name:'Malden, Massachusetts, United States',
+    lat:'42.4251',
+    lon:'-71.0662',
+    address:{city:'Malden',state:'Massachusetts',country:'United States'}
+  }])
+}));
+await page.route('https://api.open-meteo.com/v1/forecast**', route => route.fulfill({
+  status:200,
+  contentType:'application/json',
+  body:JSON.stringify({timezone:'America/New_York'})
 }));
 
 await page.addInitScript(({a,b}) => {
   localStorage.setItem('relphiSkyChartA', JSON.stringify(a));
   localStorage.setItem('relphiSkyChartB', JSON.stringify(b));
+  localStorage.setItem('relphiSkyChartLastModeV1', 'comparison');
   sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
 }, {a:sample('Sky A test',0),b:sample('Sky B test',73)});
 
-await page.goto('http://127.0.0.1:4173/part2/sky-chart.html', {waitUntil:'networkidle'});
-await page.waitForSelector('#skyFoundationA [data-ww-action="edit"]', {timeout:15000});
-await page.locator('#skyFoundationA [data-ww-action="edit"]').click();
+await page.goto('http://127.0.0.1:4173/sky-chart.html', {waitUntil:'networkidle'});
+await page.waitForSelector('#skyFoundationA [data-sky-drawer-tab="where"]', {timeout:15000});
+await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
 const editor = page.locator('#skyFoundationA .sky-where-when-editor');
 await editor.locator('[data-ww-field="location-query"]').fill('Malden');
 await editor.locator('[data-ww-action="search-location"]').click();
 await editor.locator('.sky-location-result').click();
 await editor.locator('[data-ww-field="date"]').fill('1990-04-15');
-await editor.locator('[data-ww-field="time"]').fill('13:30');
+await editor.locator('[data-sky-time-entry]').fill('1:30 PM');
+await editor.locator('[data-sky-time-entry]').press('Tab');
 await editor.locator('button[type="submit"]').click();
 
-const jump = page.locator('#skyFoundationA .sky-ph-jump');
-await jump.waitFor({timeout:15000});
-await page.waitForFunction(() => document.querySelector('#skyFoundationA .sky-ph-heptagram')?.dataset.canonicalHeptagramV1 === 'true');
+const jump = page.locator('#skyFoundationA .sky-ph-jump[data-sky-heptagram-frame="A"]');
+await jump.waitFor({state:'attached',timeout:15000});
+await jump.locator('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]').waitFor({state:'attached',timeout:15000});
+assert.equal(await page.locator('#skyFoundationA [data-sky-drawer="placements"]').getAttribute('open'),'');
+assert.equal(await jump.isVisible(),false,'Committed Where and When heptagram stays in its closed drawer while Placements is active.');
+const namePrompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+if(await namePrompt.count()){
+  await namePrompt.locator('[data-sky-name-cancel]').click();
+  await page.locator('#skyWhereWhenNamePrompt[hidden]').waitFor({state:'attached'});
+}
+await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
+const draftJump=page.locator('#skyFoundationA [data-draft-where-when-link="true"]');
+await draftJump.waitFor({state:'visible',timeout:10000});
+assert.equal(await jump.isVisible(),false,'The live draft preview temporarily owns the editor heptagram surface.');
+assert.equal(await draftJump.locator('[data-draft-where-when="true"]').isVisible(),true);
+await page.locator('#skyFoundationA [data-ww-action="cancel"]').click();
+await jump.waitFor({state:'visible',timeout:10000});
+assert.equal(await draftJump.count(),0,'Closing the editor must remove the draft preview.');
 assert.equal(await jump.evaluate(node => node.tagName), 'A');
 assert.equal(await jump.locator('a').count(), 0);
-assert.equal((await jump.locator('.sky-ph-jump-title').textContent()).trim(), 'Jump to this time in Planetary Hours');
-assert.equal(await jump.locator('.sky-ph-planet').count(), 7);
-assert.equal(await jump.locator('.sky-ph-canonical-bubble').count(), 7);
-assert.equal(await jump.locator('.sky-ph-jump-title').count(), 1);
+assert.equal(await jump.getAttribute('aria-label'), 'Open this Sky in Planetary Hours');
+assert.equal(await jump.locator('.sky-ph-jump-title').count(), 0);
+const heptagram = jump.locator('.sky-ph-heptagram');
+assert.equal(await heptagram.getAttribute('data-canonical-source-ready'), 'true');
+assert.ok(await heptagram.locator('.sky-ph-week-segment').count() >= 7);
+assert.ok(await heptagram.locator('.sky-ph-hour-segment').count() >= 7);
 assert.equal((await jump.textContent()).includes('Check the PH'), false);
 assert.ok((await page.locator('#skyFoundationA').boundingBox()).height < 760);
 await page.screenshot({path:'sky-chart-part2-confirmed-desktop.png',fullPage:true});

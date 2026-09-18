@@ -13,7 +13,7 @@ const BODIES=['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus',
 const CHALDEAN=['saturn','jupiter','mars','sun','venus','mercury','moon'];
 const WEEK_PATH=['sun','moon','mars','mercury','jupiter','venus','saturn','sun'];
 const WEEKDAY_RULERS={1:'moon',2:'mars',3:'mercury',4:'jupiter',5:'venus',6:'saturn',7:'sun'};
-const PLANETS={saturn:{color:'#8c7a42'},jupiter:{color:'#41752f'},mars:{color:'#c9211e'},sun:{color:'#d08a00'},venus:{color:'#b23b79'},mercury:{color:'#277390'},moon:{color:'#58628a'}};
+const PLANETS={saturn:{color:'#8c7a42'},jupiter:{color:'#41752f'},mars:{color:'#dc1f18'},sun:{color:'#d08a00'},venus:{color:'#b23b79'},mercury:{color:'#277390'},moon:{color:'#58628a'}};
 const INFERENCE_MARKER='Inferred from pasted placements';
 const cardState={A:{selected:null,busy:false,summarySignature:'',rendering:false,rerender:false},B:{selected:null,busy:false,summarySignature:'',rendering:false,rerender:false}};
 const transactionState={editing:new Set(),committed:new Set()};
@@ -246,6 +246,8 @@ async function submitCalculated(slot,form,options={}){
     if(!window.RelphiChironEphemeris)throw new Error('The Chiron ephemeris service is unavailable.');
     await window.RelphiChironEphemeris.completePayload(nextPayload);
     if(!window.RelphiChironEphemeris.hasChiron(nextPayload.placements))throw new Error('Chiron could not be calculated for this sky.');
+    if(typeof window.RelphiSkyExtraPoints?.enrich!=='function')throw new Error('The derived-point calculator is unavailable.');
+    window.RelphiSkyExtraPoints.enrich(nextPayload);
     writeJson(SLOT_KEYS[slot],nextPayload);
     const committed=payload(slot),profile=committed?.calcProfile||{};
     if(String(profile.location||'')!==String(selected.canonical||''))throw new Error('The new Where and When did not persist.');
@@ -304,7 +306,7 @@ async function drawHeptagram(svg,p){
   CHALDEAN.forEach(key=>{const point=heptagramPoint(key,118),group=svgElement('g',{class:`sky-ph-planet sky-ph-${key}${key===dayKey?' is-day-ruler':''}${key===current.ruler?' is-hour-ruler':''}`,style:`color:${PLANETS[key].color}`});group.append(svgElement('circle',{cx:point.x,cy:point.y,r:18,class:`sky-ph-node${key===dayKey?' day':''}${key===current.ruler?' hour':''}`}),svgElement('g',{transform:`translate(${point.x} ${point.y})`,class:'sky-ph-node-glyph'}));svg.appendChild(group)});
   window.RelphiSkyHeptagramGeometry.correct(svg);await window.RelphiSkyHeptagramCanonical.correct(svg);svg.dataset.canonicalSourceReady='true';window.dispatchEvent(new CustomEvent('relphi:sky-heptagram-source-ready',{detail:{svg}}));
 }
-function planetaryHoursHref(p){const params=new URLSearchParams();params.set('phShare','1');params.set('lat',String(p.latitude));params.set('lon',String(p.longitude));params.set('tz',String(p.timeZone||''));if(p.location)params.set('loc',String(p.location));let instant='';if(p.instant){const date=new Date(p.instant);if(Number.isFinite(date.getTime()))instant=date.toISOString()}if(!instant&&p.dateTime&&window.luxon?.DateTime){const dt=window.luxon.DateTime.fromISO(String(p.dateTime),{zone:String(p.timeZone||'UTC'),setZone:true});if(dt.isValid)instant=dt.toUTC().toISO()}if(instant)params.set('dt',instant);return'planetaryhours.html#'+params.toString()}
+function planetaryHoursHref(p){const params=new URLSearchParams();params.set('phShare','1');params.set('lat',String(p.latitude));params.set('lon',String(p.longitude));params.set('tz',String(p.timeZone||''));if(p.location)params.set('loc',String(p.location));let instant='';if(p.instant){const date=new Date(p.instant);if(Number.isFinite(date.getTime()))instant=date.toISOString()}if(!instant&&p.dateTime&&window.luxon?.DateTime){const dt=window.luxon.DateTime.fromISO(String(p.dateTime),{zone:String(p.timeZone||'UTC'),setZone:true});if(dt.isValid)instant=dt.toUTC().toISO()}if(instant)params.set('dt',instant);return'/planetaryhours.html#'+params.toString()}
 function summarySignature(p){return[p.instant||p.dateTime,p.latitude,p.longitude,p.timeZone].join('|')}
 async function renderSummary(slot,force=false){
   const state=cardState[slot];if(state.rendering){state.rerender=true;return}state.rendering=true;
