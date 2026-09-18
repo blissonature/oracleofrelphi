@@ -34,10 +34,11 @@ async function inspect(width,height,suffix){
       const circle=host.querySelector(':scope > .relphi-glyph-bubble > circle');
       return{
         id:host.dataset.zodiacSign,
-        radius:Number(host.dataset.wheelGlyphRadius),
+        radius:circle?Number(circle.getAttribute('r')):null,
         glyphCount:host.querySelectorAll('.relphi-canonical-glyph').length,
-        circleDisplay:circle?getComputedStyle(circle).display:'missing',
-        circleOpacity:circle?Number(getComputedStyle(circle).opacity):null
+        circleVisibility:circle?getComputedStyle(circle).visibility:'missing',
+        circleOpacity:circle?Number(getComputedStyle(circle).opacity):null,
+        importState:host.dataset.canonicalImport||''
       };
     });
     const geminiPath=document.querySelector('[data-zodiac-sign="gemini"] .relphi-glyph-gemini path');
@@ -82,7 +83,9 @@ async function inspect(width,height,suffix){
   assert.deepEqual(state.zodiac.map(item=>item.id),SIGNS.map(name=>name.toLowerCase()));
   assert.ok(state.zodiac.every(item=>item.radius===19));
   assert.ok(state.zodiac.every(item=>item.glyphCount===1));
-  assert.ok(state.zodiac.every(item=>item.circleDisplay==='none'));
+  assert.ok(state.zodiac.every(item=>item.circleVisibility==='hidden'));
+  assert.ok(state.zodiac.every(item=>item.circleOpacity===0));
+  assert.ok(state.zodiac.every(item=>item.importState==='master-glyph-list-direct-uncircled'));
   assert.equal(state.sourceFill,'#111111');
   assert.equal(state.sourceStroke,'');
   assert.equal(state.sourceStrokeWidth,'');
