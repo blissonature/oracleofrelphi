@@ -13,14 +13,18 @@ on:
       - 'assets/zodiac-glyphs/**'
       - 'assets/element-glyphs/**'
       - 'assets/aspect-glyphs/**'
-      - 'sky-chart-foundation-v1.js'
+      - 'sky-chart-foundation-v2.js'
       - 'sky-chart-final-pass-v2.js'
       - 'sky-chart-where-when-v3.js'
       - 'sky-chart-card-shell-v2.js'
+      - 'sky-chart-placement-multiselect-v4.js'
+      - 'sky-chart-placement-compact-v1.js'
+      - 'sky-chart-placement-compact-v1.css'
       - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-selected-relationship-v4.js'
       - 'tests/sky-chart-single-canon-browser.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
+      - 'tests/sky-chart-placement-compact.mjs'
       - 'tests/sky-chart-stability-now.mjs'
       - '.github/workflows/sky-chart-ui-regression-check.yml'
   workflow_dispatch:
@@ -46,11 +50,14 @@ jobs:
           node --check relphi-glyph-component-v1.js
           node --check relphi-glyph-source-integrity-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
-          node --check sky-chart-foundation-v1.js
+          node --check sky-chart-foundation-v2.js
           node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-selected-relationship-v4.js
+          node --check sky-chart-placement-multiselect-v4.js
+          node --check sky-chart-placement-compact-v1.js
           node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
+          node --check tests/sky-chart-placement-compact.mjs
           node --check tests/sky-chart-stability-now.mjs
       - name: Install Chromium
         run: |
@@ -61,6 +68,7 @@ jobs:
           python3 -m http.server 4173 > /tmp/sky-chart-ui-regression-server.log 2>&1 &
           node tests/sky-chart-single-canon-browser.mjs
           node tests/sky-chart-filter-control-unified.mjs
+          node tests/sky-chart-placement-compact.mjs
           node tests/sky-chart-stability-now.mjs
       - uses: actions/upload-artifact@v4
         if: always()
@@ -70,5 +78,7 @@ jobs:
             sky-chart-single-canon-desktop.png
             sky-chart-single-canon-mobile.png
             sky-chart-filter-controls-unified.png
+            sky-chart-placement-compact-desktop.png
+            sky-chart-placement-compact-mobile.png
             sky-chart-stability-now.png
           if-no-files-found: ignore
