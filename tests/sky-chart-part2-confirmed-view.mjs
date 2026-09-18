@@ -73,7 +73,7 @@ await editor.locator('button[type="submit"]').click();
 
 const jump = page.locator('#skyFoundationA .sky-ph-jump');
 await jump.waitFor({timeout:15000});
-await page.waitForFunction(() => document.querySelector('#skyFoundationA .sky-ph-heptagram')?.dataset.canonicalHeptagramReady === 'true');
+await jump.locator('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]').waitFor({state:'attached',timeout:15000});
 assert.equal(await jump.evaluate(node => node.tagName), 'A');
 assert.equal(await jump.locator('a').count(), 0);
 assert.equal(await jump.getAttribute('aria-label'), 'Open this Sky in Planetary Hours');
