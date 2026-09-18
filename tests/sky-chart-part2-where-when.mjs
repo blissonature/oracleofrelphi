@@ -133,6 +133,12 @@ assert.match(href, /loc=Malden%2C\+Massachusetts%2C\+United\+States/);
 assert.match(href, /dt=/);
 assert.equal((await jump.textContent()).includes('Check the PH'), false);
 
+const namePrompt=page.locator('#skyWhereWhenNamePrompt:not([hidden])');
+if(await namePrompt.count()){
+  await namePrompt.locator('[data-sky-name-cancel]').click();
+  await page.locator('#skyWhereWhenNamePrompt[hidden]').waitFor({state:'attached'});
+}
+
 await page.locator('#skyFoundationA [data-sky-drawer-tab="placements"]').click();
 assert.equal(await page.locator('#skyFoundationA .sky-where-when-placement-view').isVisible(), true);
 assert.ok(await page.locator('#skyFoundationA .sky-foundation-row').count() >= initialPlacementRows);
