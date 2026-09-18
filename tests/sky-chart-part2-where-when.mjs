@@ -118,7 +118,8 @@ assert.ok([
 assert.equal(saved.houseCusps.length, 12);
 
 const jump = page.locator('#skyFoundationA .sky-ph-jump');
-assert.equal((await jump.locator('.sky-ph-jump-title').textContent()).trim(), 'Jump to this time in Planetary Hours');
+assert.equal(await jump.getAttribute('aria-label'), 'Open this Sky in Planetary Hours');
+assert.equal(await jump.locator('.sky-ph-jump-title').count(), 0);
 assert.equal(await jump.locator('.sky-ph-heptagram').count(), 1);
 await page.waitForFunction(() => document.querySelector('#skyFoundationA .sky-ph-heptagram')?.dataset.canonicalHeptagramReady === 'true');
 assert.equal(await jump.locator('.sky-ph-planet').count(), 7);
