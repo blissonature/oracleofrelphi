@@ -105,7 +105,7 @@ await editor.locator('[data-sky-time-entry]').fill('1:30 PM');
 await editor.locator('[data-sky-time-entry]').press('Tab');
 await editor.locator('button[type="submit"]').click();
 
-await page.locator('#skyFoundationA .sky-ph-jump').waitFor({timeout:15000});
+await page.locator('#skyFoundationA .sky-ph-jump').waitFor({state:'attached',timeout:15000});
 const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('relphiSkyChartA')));
 assert.equal(saved.calcProfile.location, 'Malden, Massachusetts, United States');
 assert.equal(saved.calcProfile.locationQuery, 'Malden');
