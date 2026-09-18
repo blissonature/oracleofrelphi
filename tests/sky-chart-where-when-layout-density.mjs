@@ -38,7 +38,7 @@ assert.equal(await editor.locator('.sky-where-when-ph-jump').count(),0,'The old 
 const metrics=await editor.evaluate(form=>{
   const card=form.closest('.sky-foundation-panel');
   const body=form.querySelector('.sky-where-when-scroll-body');
-  const where=form.querySelector('[data-ww-where]');
+  const where=form.querySelector('.sky-where-when-section:not([data-ww-when])');
   const when=form.querySelector('[data-ww-when]');
   const date=form.querySelector('[data-ww-field="date"]');
   const time=form.querySelector('[data-ww-field="time"]');
