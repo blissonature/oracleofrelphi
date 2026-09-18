@@ -22,6 +22,8 @@ on:
       - 'sky-chart-placement-multiselect-v4.js'
       - 'sky-chart-placement-compact-v1.js'
       - 'sky-chart-placement-compact-v1.css'
+      - 'sky-chart-multiselect-filters-v1.css'
+      - 'sky-chart-slot-card-controls-v1.js'
       - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-selected-relationship-v4.js'
       - 'tests/sky-chart-single-canon-browser.mjs'
@@ -58,6 +60,7 @@ jobs:
           node --check sky-chart-selected-relationship-v4.js
           node --check sky-chart-placement-multiselect-v4.js
           node --check sky-chart-placement-compact-v1.js
+          node --check sky-chart-slot-card-controls-v1.js
           node --check sky-chart-heptagram-canonical-v1.js
           node --check sky-chart-where-when-v3.js
           node --check sky-chart-where-when-draft-heptagram-v4.js
@@ -86,6 +89,7 @@ jobs:
             sky-chart-single-canon-desktop.png
             sky-chart-single-canon-mobile.png
             sky-chart-filter-controls-unified.png
+            sky-chart-placement-single-desktop.png
             sky-chart-placement-compact-desktop.png
             sky-chart-placement-compact-mobile.png
             sky-chart-stability-now.png
