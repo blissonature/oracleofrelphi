@@ -25,10 +25,6 @@ async function inspect(width,height,suffix){
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false');
   await page.waitForFunction(()=>document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign] .relphi-canonical-glyph').length===12);
-  await page.waitForFunction(()=>{
-    const hosts=[...document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign]')];
-    return hosts.length===12 && hosts.every(host=>host.dataset.canonicalImport==='master-glyph-list-direct-uncircled');
-  });
 
   const state=await page.evaluate(async()=>{
     const geminiMarkup=await fetch('assets/zodiac-glyphs/gemini.svg?v=filled-silhouette-test').then(r=>r.text());
@@ -38,11 +34,12 @@ async function inspect(width,height,suffix){
       const circle=host.querySelector(':scope > .relphi-glyph-bubble > circle');
       return{
         id:host.dataset.zodiacSign,
-        radius:circle?Number(circle.getAttribute('r')):null,
+        hostRadius:Number(host.dataset.wheelGlyphRadius),
+        circleRadius:circle?Number(circle.getAttribute('r')):null,
         glyphCount:host.querySelectorAll('.relphi-canonical-glyph').length,
-        circleVisibility:circle?getComputedStyle(circle).visibility:'missing',
         circleOpacity:circle?Number(getComputedStyle(circle).opacity):null,
-        importState:host.dataset.canonicalImport||''
+        circlePresentation:root?.dataset.circlePresentation||'',
+        wheelPresentation:root?.dataset.wheelPresentation||''
       };
     });
     const geminiPath=document.querySelector('[data-zodiac-sign="gemini"] .relphi-glyph-gemini path');
@@ -85,11 +82,12 @@ async function inspect(width,height,suffix){
 
   assert.equal(state.zodiac.length,12);
   assert.deepEqual(state.zodiac.map(item=>item.id),SIGNS.map(name=>name.toLowerCase()));
-  assert.ok(state.zodiac.every(item=>item.radius===19));
+  assert.ok(state.zodiac.every(item=>item.hostRadius===28.5));
+  assert.ok(state.zodiac.every(item=>item.circleRadius===28.5));
   assert.ok(state.zodiac.every(item=>item.glyphCount===1));
-  assert.ok(state.zodiac.every(item=>item.circleVisibility==='hidden'));
   assert.ok(state.zodiac.every(item=>item.circleOpacity===0));
-  assert.ok(state.zodiac.every(item=>item.importState==='master-glyph-list-direct-uncircled'));
+  assert.ok(state.zodiac.every(item=>item.circlePresentation==='hidden-only'));
+  assert.ok(state.zodiac.every(item=>item.wheelPresentation==='without-circles'));
   assert.equal(state.sourceFill,'#111111');
   assert.equal(state.sourceStroke,'');
   assert.equal(state.sourceStrokeWidth,'');
