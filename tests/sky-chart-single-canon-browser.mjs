@@ -68,6 +68,10 @@ async function inspect(width,height,suffix){
     return{
       zodiac,
       expectedZodiacRadius:Number(window.RelphiSkyWheelSpec?.comparison?.zodiac?.glyphRadius),
+      expectedAngleEdges:{
+        A:Number(window.RelphiSkyWheelSpec?.comparison?.inner?.edge),
+        B:Number(window.RelphiSkyWheelSpec?.comparison?.outer?.edge)
+      },
       sourceFill:sourcePath?.getAttribute('fill')||'',
       sourceStroke:sourcePath?.getAttribute('stroke')||'',
       sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
@@ -93,7 +97,8 @@ async function inspect(width,height,suffix){
   assert.equal(state.renderedStroke,'');
   assert.equal(state.angleCount,8);
   assert.equal(state.angleLines.length,8);
-  assert.ok(state.angleLines.every(line=>line.edge===(line.sky==='A'?574:166)));
+  assert.deepEqual(state.expectedAngleEdges,{A:166,B:574});
+  assert.ok(state.angleLines.every(line=>line.edge===state.expectedAngleEdges[line.sky]));
   assert.ok(state.placementColors.length>=30);
   assert.ok(state.placementColors.every(item=>item.painted>0));
   assert.deepEqual(state.placementColors.filter(item=>item.wrong),[]);
