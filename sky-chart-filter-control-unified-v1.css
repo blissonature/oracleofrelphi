@@ -26,7 +26,7 @@
 #skyFoundationRelationships .sky-chart-house-filter-label{
   grid-area:label!important;align-self:end!important;min-width:0!important;padding:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;background:transparent!important;color:var(--sky-filter-label-color)!important;font:var(--sky-filter-label-font)!important;letter-spacing:normal!important;text-transform:none!important
 }
-#skyFoundationRelationships .sky-chart-filter-bar input[data-filter="orb"],
+#skyFoundationRelationships .sky-chart-filter-bar [data-harmonic-window-input],
 #skyFoundationRelationships .sky-chart-filter-bar select,
 #skyFoundationRelationships .sky-chart-filter-bar [data-house-system-filter]{
   width:100%!important;min-width:0!important;height:var(--sky-filter-height)!important;min-height:var(--sky-filter-height)!important;box-sizing:border-box!important;margin:0!important;padding:var(--sky-filter-control-padding)!important;border:var(--sky-filter-border)!important;border-radius:var(--sky-filter-radius)!important;background-color:#fff!important;color:var(--sky-filter-control-color)!important;font:var(--sky-filter-control-font)!important;letter-spacing:normal!important
