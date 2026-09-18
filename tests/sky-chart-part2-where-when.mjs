@@ -38,18 +38,15 @@ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js
   path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),
   contentType:'application/javascript'
 }));
-await page.route('https://geocoding-api.open-meteo.com/v1/search**', route => route.fulfill({
+await page.route('https://nominatim.openstreetmap.org/search**', route => route.fulfill({
   status:200,
   contentType:'application/json',
-  body:JSON.stringify({results:[{
-    id:4943629,
-    name:'Malden',
-    admin1:'Massachusetts',
-    country:'United States',
-    latitude:42.4251,
-    longitude:-71.0662,
-    timezone:'America/New_York'
-  }]})
+  body:JSON.stringify([{
+    display_name:'Malden, Massachusetts, United States',
+    lat:'42.4251',
+    lon:'-71.0662',
+    address:{city:'Malden',state:'Massachusetts',country:'United States'}
+  }])
 }));
 await page.route('https://api.bigdatacloud.net/data/reverse-geocode-client**', route => route.fulfill({
   status:200,
@@ -65,18 +62,19 @@ await page.route('https://api.open-meteo.com/v1/forecast**', route => route.fulf
 await page.addInitScript(({a,b}) => {
   localStorage.setItem('relphiSkyChartA', JSON.stringify(a));
   localStorage.setItem('relphiSkyChartB', JSON.stringify(b));
+  localStorage.setItem('relphiSkyChartLastModeV1', 'comparison');
   sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
 }, {a:sample('Sky A test',0),b:sample('Sky B test',73)});
 
-await page.goto('http://127.0.0.1:4173/part2/sky-chart.html', {waitUntil:'networkidle'});
+await page.goto('http://127.0.0.1:4173/sky-chart.html', {waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]', {timeout:15000});
-await page.waitForSelector('#skyFoundationA [data-ww-action="edit"]', {timeout:15000});
+await page.waitForSelector('#skyFoundationA [data-sky-drawer-tab="where"]', {timeout:15000});
 
 assert.equal(await page.locator('#skyFoundationRoot > .sky-foundation-panel').count(), 3);
 const initialPlacementRows = await page.locator('#skyFoundationA .sky-foundation-row').count();
 assert.ok(initialPlacementRows >= 10);
 
-await page.locator('#skyFoundationA [data-ww-action="edit"]').click();
+await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
 const editor = page.locator('#skyFoundationA .sky-where-when-editor');
 await editor.waitFor();
 assert.equal(await editor.locator('[data-ww-when]').evaluate(node => node.disabled), true);
@@ -121,7 +119,7 @@ assert.equal(saved.houseCusps.length, 12);
 const jump = page.locator('#skyFoundationA .sky-ph-jump');
 assert.equal((await jump.locator('.sky-ph-jump-title').textContent()).trim(), 'Jump to this time in Planetary Hours');
 assert.equal(await jump.locator('.sky-ph-heptagram').count(), 1);
-await page.waitForFunction(() => document.querySelector('#skyFoundationA .sky-ph-heptagram')?.dataset.canonicalHeptagramV1 === 'true');
+await page.waitForFunction(() => document.querySelector('#skyFoundationA .sky-ph-heptagram')?.dataset.canonicalHeptagramReady === 'true');
 assert.equal(await jump.locator('.sky-ph-planet').count(), 7);
 assert.equal(await jump.locator('.sky-ph-canonical-bubble').count(), 7);
 const href = await jump.getAttribute('href');
@@ -131,11 +129,11 @@ assert.match(href, /loc=Malden%2C\+Massachusetts%2C\+United\+States/);
 assert.match(href, /dt=/);
 assert.equal((await jump.textContent()).includes('Check the PH'), false);
 
-await page.locator('#skyFoundationA [data-ww-action="placements"]').click();
+await page.locator('#skyFoundationA [data-sky-drawer-tab="placements"]').click();
 assert.equal(await page.locator('#skyFoundationA .sky-where-when-placement-view').isVisible(), true);
 assert.ok(await page.locator('#skyFoundationA .sky-foundation-row').count() >= initialPlacementRows);
 
-await page.locator('#skyFoundationA [data-ww-action="edit"]').click();
+await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
 const reopened = page.locator('#skyFoundationA .sky-where-when-editor');
 await reopened.locator('.sky-where-when-advanced summary').click();
 await reopened.locator('[data-ww-action="infer"]').click();
