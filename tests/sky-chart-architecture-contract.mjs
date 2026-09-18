@@ -11,6 +11,7 @@ const viewport=read('sky-chart-where-when-viewport-v3.js');
 const stability=read('sky-chart-render-stability-v2.js');
 const foundation=read('sky-chart-foundation-v2.js');
 const finalPass=read('sky-chart-final-pass-v2.js');
+const pageHtml=read('sky-chart.html');
 const finalBehavior=read('sky-chart-final-behavior-v2.js');
 const quickCopy=read('sky-chart-quick-copy-v2.js');
 const identity=read('sky-chart-sky-identity-affordance-v1.js');
@@ -68,6 +69,9 @@ assert.equal(finalPass.includes('data-current-location'),false,'Final pass must 
 assert.equal(finalPass.includes('updateToNow'),false,'Final pass must not own the Here and Now transaction');
 assert.equal(finalPass.includes('addEditorControls'),false,'Final pass must not repair Where and When editor chrome');
 assert.equal(finalPass.includes('data-house-system-filter'),false,'Final pass must not recreate the Placements-owned House System control');
+assert.equal(pageHtml.includes('sky-chart-selected-relationship-v4.js'),false,'Live Sky Chart must not load the retired separate Selected Relationship owner');
+assert.equal(pageHtml.includes('sky-chart-progressive-comparison-v1.js'),false,'Live Sky Chart must not load the retired selected-panel progressive layer');
+assert.match(pageHtml,/sky-chart-inline-relationship-v5\.js/,'Live Sky Chart must load the inline relationship owner');
 
 assert.equal(draft.includes('MutationObserver'),false,'Draft heptagram must render from explicit events, not DOM repair observation');
 assert.equal(draft.includes('preview.before(advanced)'),false,'Draft heptagram must not reorder the editor after creation');
