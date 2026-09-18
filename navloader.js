@@ -169,7 +169,7 @@
       appendScript('tarot-card-selection-scroll-v1.js?v=2', function () {
         requestAnimationFrame(function () { window.RelphiTarotCardSelectionScroll?.scrollFromLocation(); });
       });
-      appendScript('drawing-board-workflow-v2.js?v=81', function () {
+      appendScript('drawing-board-workflow-v2.js?v=82', function () {
         window.dispatchEvent(new Event('relphi:tarot-enhancements-ready'));
       });
     }
