@@ -16,6 +16,7 @@ on:
       - 'sky-chart-foundation-v2.js'
       - 'sky-chart-final-pass-v2.js'
       - 'sky-chart-where-when-v3.js'
+      - 'sky-chart-card-drawers-v1.css'
       - 'sky-chart-heptagram-canonical-v1.js'
       - 'sky-chart-where-when-draft-heptagram-v4.js'
       - 'sky-chart-card-shell-v2.js'
