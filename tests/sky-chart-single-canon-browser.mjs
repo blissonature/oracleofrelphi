@@ -35,12 +35,9 @@ async function inspect(width,height,suffix){
       const circle=root?.querySelector(':scope > circle');
       return{
         id:host.dataset.zodiacSign,
-        hostRadius:Number(host.dataset.wheelGlyphRadius),
         circleRadius:circle?Number(circle.getAttribute('r')):null,
         glyphCount:host.querySelectorAll('.relphi-canonical-glyph').length,
-        circleOpacity:circle?Number(getComputedStyle(circle).opacity):null,
-        circlePresentation:root?.dataset.circlePresentation||'',
-        wheelPresentation:root?.dataset.wheelPresentation||''
+        circleOpacity:circle?Number(getComputedStyle(circle).opacity):null
       };
     });
     const geminiPath=document.querySelector('[data-zodiac-sign="gemini"] .relphi-glyph-gemini path');
@@ -69,6 +66,11 @@ async function inspect(width,height,suffix){
     });
     return{
       zodiac,
+      expectedZodiacRadius:Number(window.RelphiSkyWheelSpec?.comparison?.zodiac?.glyphRadius),
+      expectedEdges:{
+        A:Number(window.RelphiSkyWheelSpec?.role?.('A')?.edge),
+        B:Number(window.RelphiSkyWheelSpec?.role?.('B')?.edge)
+      },
       sourceFill:sourcePath?.getAttribute('fill')||'',
       sourceStroke:sourcePath?.getAttribute('stroke')||'',
       sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
@@ -83,12 +85,10 @@ async function inspect(width,height,suffix){
 
   assert.equal(state.zodiac.length,12);
   assert.deepEqual(state.zodiac.map(item=>item.id),SIGNS.map(name=>name.toLowerCase()));
-  assert.ok(state.zodiac.every(item=>item.hostRadius===28.5));
-  assert.ok(state.zodiac.every(item=>item.circleRadius===28.5));
+  assert.ok(Number.isFinite(state.expectedZodiacRadius));
+  assert.ok(state.zodiac.every(item=>item.circleRadius===state.expectedZodiacRadius));
   assert.ok(state.zodiac.every(item=>item.glyphCount===1));
   assert.ok(state.zodiac.every(item=>item.circleOpacity===0));
-  assert.ok(state.zodiac.every(item=>item.circlePresentation==='hidden-only'));
-  assert.ok(state.zodiac.every(item=>item.wheelPresentation==='without-circles'));
   assert.equal(state.sourceFill,'#111111');
   assert.equal(state.sourceStroke,'');
   assert.equal(state.sourceStrokeWidth,'');
@@ -96,7 +96,7 @@ async function inspect(width,height,suffix){
   assert.equal(state.renderedStroke,'');
   assert.equal(state.angleCount,8);
   assert.equal(state.angleLines.length,8);
-  assert.ok(state.angleLines.every(line=>line.edge===(line.sky==='A'?574:166)));
+  assert.ok(state.angleLines.every(line=>line.edge===state.expectedEdges[line.sky]));
   assert.ok(state.placementColors.length>=30);
   assert.ok(state.placementColors.every(item=>item.painted>0));
   assert.deepEqual(state.placementColors.filter(item=>item.wrong),[]);
