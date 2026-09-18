@@ -4,6 +4,7 @@ import path from 'node:path';
 
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const COLORS={A:'rgb(201, 33, 30)',B:'rgb(36, 98, 208)'};
+const HEPTAGRAM_COLORS={saturn:'rgb(140, 122, 66)',jupiter:'rgb(65, 117, 47)',mars:'rgb(220, 31, 24)',sun:'rgb(208, 138, 0)',venus:'rgb(178, 59, 121)',mercury:'rgb(39, 115, 144)',moon:'rgb(88, 98, 138)'};
 const placement=(name,longitude)=>{const value=((longitude%360)+360)%360,sign=Math.floor(value/30),within=value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60);return{name,longitude:value,sign:SIGNS[sign],degree,minute,second:0}};
 function sample(name,offset,profile){
   const asc=(168.38+offset)%360,cusps=Array.from({length:12},(_,index)=>(asc+index*30)%360);
@@ -31,7 +32,7 @@ assert.equal(colorScan.passed,true,`Placement color scan painted ${colorScan.pai
 assert.equal(await page.getAttribute('html','data-sky-placement-colors'),'passed');
 await page.waitForTimeout(100);
 
-const issues=await page.evaluate(({colors})=>{
+const issues=await page.evaluate(({colors,heptagramColors})=>{
   const issues=[];
   const geometry='path,circle,ellipse,rect,polygon,polyline,line,text';
   const artFor=host=>{const root=host?.querySelector?.('.relphi-glyph-bubble');return root?Array.from(root.children).find(node=>node.classList?.contains('relphi-canonical-glyph')):null};
@@ -51,6 +52,22 @@ const issues=await page.evaluate(({colors})=>{
   document.querySelectorAll('[data-layer="placements"] > g[data-sky="A"]').forEach((host,index)=>checkColor(host,'A',`Sky A wheel ${index+1}`));
   document.querySelectorAll('[data-layer="placements"] > g[data-sky="B"]').forEach((host,index)=>checkColor(host,'B',`Sky B wheel ${index+1}`));
 
+  const heptagrams=Array.from(document.querySelectorAll('.sky-ph-heptagram'));
+  if(heptagrams.length<2)issues.push(`Expected at least 2 Sky Chart heptagrams, received ${heptagrams.length}`);
+  heptagrams.forEach((svg,heptagramIndex)=>{
+    const groups=Array.from(svg.querySelectorAll('.sky-ph-planet'));
+    const dayGroups=groups.filter(group=>group.classList.contains('is-day-ruler'));
+    if(dayGroups.length!==1)issues.push(`Heptagram ${heptagramIndex+1}: expected 1 day ruler, received ${dayGroups.length}`);
+    groups.forEach((group,planetIndex)=>{
+      const key=Object.keys(heptagramColors).find(name=>group.classList.contains(`sky-ph-${name}`));
+      const circle=group.querySelector('.relphi-glyph-bubble > circle');
+      if(!key||!circle){issues.push(`Heptagram ${heptagramIndex+1} planet ${planetIndex+1}: canonical bubble missing`);return}
+      const actual=getComputedStyle(circle).fill;
+      const expected=group.classList.contains('is-day-ruler')?'rgb(255, 255, 255)':heptagramColors[key];
+      if(actual!==expected)issues.push(`Heptagram ${heptagramIndex+1} ${key}: fill ${actual}, expected ${expected}`);
+    });
+  });
+
   const rulers=Array.from(document.querySelectorAll('.sky-ph-canonical-bubble.is-hour-ruler'));
   if(rulers.length!==2)issues.push(`Expected 2 hour rulers, received ${rulers.length}`);
   rulers.forEach((root,index)=>{
@@ -66,7 +83,7 @@ const issues=await page.evaluate(({colors})=>{
     });
   });
   return Array.from(new Set(issues));
-},{colors:COLORS});
+},{colors:COLORS,heptagramColors:HEPTAGRAM_COLORS});
 
 assert.deepEqual(issues,[]);
 assert.deepEqual(pageErrors,[]);
@@ -79,4 +96,4 @@ await page.waitForFunction(()=>document.querySelectorAll('.relphi-glyph-bubble[d
 await page.waitForTimeout(350);
 await page.screenshot({path:'sky-chart-hour-ruler-and-sky-colors-mobile.png',fullPage:true});
 await browser.close();
-console.log('Sky Chart hour rulers are crisp, and Sky A/B placement glyph colors are consistent.');
+console.log('Sky Chart heptagrams use a white day ruler and unique planet fills; Sky A/B placement glyph colors are consistent.');
