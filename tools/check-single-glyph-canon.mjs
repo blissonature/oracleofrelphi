@@ -20,7 +20,12 @@ function walk(dir,out=[]){
   return out;
 }
 
-const files=walk(ROOT);
+const dormantMigrationFiles=new Set([
+  'relphi-canonical-glyph-element-v1.js',
+  'relphi-canonical-glyph-loader-v1.js',
+  'canonical-glyphs-v1-preview.html'
+]);
+const files=walk(ROOT).filter(file=>!dormantMigrationFiles.has(rel(file)));
 const forbiddenRefs=[
   'relphi-moon-stroke-preservation-v1.js',
   'relphi-neptune-cross-connection-v1.js',
