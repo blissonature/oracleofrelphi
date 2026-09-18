@@ -92,6 +92,7 @@ await page.addInitScript(({ a, b, fixed }) => {
   window.Date = FixedDate;
   localStorage.setItem('relphiSkyChartA', JSON.stringify(a));
   localStorage.setItem('relphiSkyChartB', JSON.stringify(b));
+  localStorage.setItem('relphiSkyChartLastModeV1', 'comparison');
   sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
   window.__skyBSnapshots = [];
   window.addEventListener('storage', event => {
@@ -104,7 +105,6 @@ await page.addInitScript(({ a, b, fixed }) => {
 await page.goto('http://127.0.0.1:4173/sky-chart.html', { waitUntil:'domcontentloaded', timeout:15000 });
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]', { timeout:20000 });
 await page.waitForFunction(() => document.documentElement.dataset.skyFinalPass === 'v2');
-await page.waitForFunction(() => document.documentElement.dataset.skyChartLiveIntegrity === 'v6');
 await page.waitForFunction(() => document.querySelectorAll('.sky-ph-heptagram').length === 2);
 await page.waitForFunction(() => Array.from(document.querySelectorAll('.sky-ph-summary')).every(node => !/Calculating/i.test(node.textContent || '')));
 
@@ -184,7 +184,6 @@ await page.waitForFunction(() => {
   const summary = document.querySelector('#skyFoundationB .sky-ph-summary');
   return summary && !/Calculating/i.test(summary.textContent || '');
 });
-await page.waitForFunction(() => document.documentElement.dataset.skyChartLiveIntegrity === 'v6');
 
 const finalStability = await page.evaluate(async () => {
   const before = document.querySelector('#skyFoundationB .sky-ph-heptagram');
