@@ -106,7 +106,7 @@ const comparisonWheel=await page.evaluate(()=>{
     visible:visible(wheel),
     aHousePaths:wheel.querySelectorAll('[data-layer="a-houses"] path').length,
     bHousePaths:wheel.querySelectorAll('[data-layer="b-houses"] path').length,
-    zodiacPaths:wheel.querySelectorAll('[data-layer="zodiac"] path').length,
+    zodiacPaths:wheel.querySelectorAll('[data-layer="zodiac"] > path').length,
     outlineCircles:wheel.querySelectorAll('[data-layer="outlines"] circle').length,
     leaders:wheel.querySelectorAll('[data-layer="leaders"] line').length,
     aPlacements:wheel.querySelectorAll('[data-layer="placements"] > g[data-sky="A"]').length,
