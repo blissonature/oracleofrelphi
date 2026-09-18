@@ -94,10 +94,10 @@
 
 .relphi-focus-open{overflow:hidden!important}
 .relphi-focus-reader{position:fixed!important;inset:0!important;z-index:100000!important;display:grid!important;place-items:center!important;padding:1.25rem!important;background:rgba(17,12,10,.72)!important;backdrop-filter:blur(8px)!important}
-.relphi-focus-shell{display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;width:min(76rem,calc(100vw - 2rem))!important;height:min(54rem,calc(100dvh - 2rem))!important;max-height:calc(100dvh - 2rem)!important;border:1px solid rgba(255,255,255,.5)!important;border-radius:18px!important;background:#fffdf8!important;box-shadow:0 24px 70px rgba(0,0,0,.42)!important;overflow:hidden!important}
-.relphi-focus-shell>header{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:1rem!important;padding:.65rem .8rem!important;border-bottom:1px solid #ddd4cb!important;background:#fffdf8!important}
-.relphi-focus-heading{display:flex!important;align-items:center!important;gap:.45rem!important;min-width:0!important}
-.relphi-focus-position{display:inline-flex!important;align-items:center!important;min-height:2rem!important;padding:.35rem .62rem!important;border:1px solid rgba(17,17,17,.2)!important;border-radius:999px!important;background:#f3ede5!important;color:#111!important;font-size:.86rem!important;font-weight:900!important;line-height:1.2!important}
+.relphi-focus-shell{display:grid!important;grid-template-rows:auto auto minmax(0,1fr) auto!important;width:min(76rem,calc(100vw - 2rem))!important;height:min(54rem,calc(100dvh - 2rem))!important;max-height:calc(100dvh - 2rem)!important;border:1px solid rgba(255,255,255,.5)!important;border-radius:18px!important;background:#fffdf8!important;box-shadow:0 24px 70px rgba(0,0,0,.42)!important;overflow:hidden!important}
+.relphi-focus-shell>header{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:1rem!important;padding:.65rem .8rem!important;background:#fffdf8!important}
+.relphi-focus-position-panel{display:grid!important;place-items:center!important;box-sizing:border-box!important;min-width:0!important;min-height:3.5rem!important;padding:.72rem 1.2rem .8rem!important;border-top:2px solid rgba(220,31,24,.48)!important;border-bottom:1px solid #ddd4cb!important;background:#fff8ee!important;text-align:center!important}
+.relphi-focus-position{display:block!important;width:100%!important;max-width:60rem!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;color:#171412!important;font-size:clamp(1.05rem,1.9vw,1.45rem)!important;font-weight:900!important;line-height:1.24!important;white-space:normal!important;overflow-wrap:anywhere!important}
 .relphi-focus-reversed-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:1.85rem!important;padding:.28rem .55rem!important;border:1.5px solid #b81712!important;border-radius:999px!important;background:#fff3f1!important;color:#a51612!important;font-size:.68rem!important;font-weight:950!important;letter-spacing:.07em!important;text-transform:uppercase!important;line-height:1!important}
 .relphi-focus-reversed-badge[hidden]{display:none!important}
 .relphi-focus-close{display:grid!important;place-items:center!important;width:2.2rem!important;height:2.2rem!important;margin:0!important;padding:0!important;border:1px solid #bbb1a8!important;border-radius:50%!important;background:#fff!important;color:#111!important;font-size:1.35rem!important}
@@ -145,8 +145,9 @@
   #shortListPanel .relphi-template-save{grid-template-columns:1fr!important}
   .relphi-focus-reader{padding:0!important;background:#fffdf8!important}
   .relphi-focus-shell{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border:0!important;border-radius:0!important;box-shadow:none!important}
-  .relphi-focus-shell>header{padding:.55rem .65rem!important}
-  .relphi-focus-position{max-width:calc(100vw - 4rem)!important;font-size:.76rem!important;white-space:normal!important}
+  .relphi-focus-shell>header{padding:.5rem .65rem!important}
+  .relphi-focus-position-panel{min-height:3.65rem!important;padding:.62rem .8rem .7rem!important}
+  .relphi-focus-position{font-size:clamp(1.05rem,4.8vw,1.3rem)!important}
   .relphi-focus-main{display:block!important;padding:.55rem!important;overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y!important}
   .relphi-focus-art-pane{display:grid!important;place-items:center!important;overflow:visible!important;padding:.15rem 0 .9rem!important}
   .relphi-focus-art-frame{width:100%!important;height:auto!important;padding:0!important}
@@ -224,13 +225,5 @@
 .relphi-focus-reader:has(.relphi-focus-reversed-badge:not([hidden])) .relphi-focus-entry .full-entry-title-row h2::after,
 .relphi-focus-reader:has(.relphi-focus-reversed-badge:not([hidden])) .relphi-focus-entry .full-entry-hero .full-entry-title-block h2::after{content:'Reversed';display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:1.65rem!important;margin-left:.45rem!important;padding:.22rem .48rem!important;border:1.5px solid #b81712!important;border-radius:999px!important;background:#fff3f1!important;color:#a51612!important;font-family:Montserrat,"Segoe UI",Arial,sans-serif!important;font-size:.58rem!important;font-weight:950!important;letter-spacing:.07em!important;line-height:1!important;text-transform:uppercase!important;vertical-align:middle!important;transform:translateY(-.12em)!important}
 
-/* The position belongs in the reading hierarchy: directly above the focused card name, large enough to stay salient. */
-.relphi-focus-shell{position:relative!important}
+/* The question / position is ceremonial reading chrome, not Ledger content. Keep it static while the card entry scrolls. */
 .relphi-focus-entry>.eyebrow{display:none!important}
-.relphi-focus-entry .full-entry-title-row h2,.relphi-focus-entry .full-entry-hero .full-entry-title-block h2{anchor-name:--relphi-focus-card-title}
-.relphi-focus-position{font-size:clamp(1rem,1.6vw,1.25rem)!important;font-weight:900!important;line-height:1.2!important}
-@supports (position-anchor:--relphi-focus-card-title){
-  .relphi-focus-position{position:absolute!important;position-anchor:--relphi-focus-card-title;left:anchor(left)!important;top:anchor(top)!important;z-index:25!important;display:block!important;max-width:min(36rem,calc(100vw - 3rem))!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#171412!important;white-space:normal!important;transform:translateY(calc(-100% - .34rem))!important}
-  .relphi-focus-heading{width:0!important;min-width:0!important;flex:0 0 0!important}
-}
-@media(max-width:700px){.relphi-focus-position{font-size:clamp(1.05rem,4.8vw,1.3rem)!important;max-width:calc(100vw - 1.3rem)!important}}

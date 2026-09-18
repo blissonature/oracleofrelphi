@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=80/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=81/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -67,6 +67,7 @@ assert.match(board, /relphi-focus-reader/);
 assert.match(board, /relphi-focus-strip/);
 assert.match(board, /relphi-focus-art/);
 assert.match(board, /relphi-focus-entry/);
+assert.match(board, /relphi-focus-position-panel/);
 assert.match(board, /installFocusSwipe/);
 assert.match(board, /renderCardEntry/);
 assert.match(board, /acknowledgeCelticCrossing/);
@@ -84,6 +85,8 @@ assert.match(css, /\.relphi-focus-reader\{/);
 assert.match(css, /\.relphi-focus-main\{/);
 assert.match(css, /\.relphi-focus-art\{/);
 assert.match(css, /\.relphi-focus-entry\{/);
+assert.match(css, /\.relphi-focus-position-panel\{/);
+assert.doesNotMatch(css, /position-anchor:--relphi-focus-card-title/);
 assert.match(css, /\.relphi-focus-art\.is-reversed\{/);
 assert.match(css, /\.relphi-focus-strip\{/);
 assert.doesNotMatch(css, /relphi-focus-card-host/);
