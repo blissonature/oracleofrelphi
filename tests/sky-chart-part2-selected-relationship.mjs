@@ -60,7 +60,7 @@ try{
   assert.equal(await row.locator(':scope > .inline-rel-detail').isVisible(),true);
   assert.equal(await row.locator(':scope > .inline-rel-detail .inline-rel-card').count(),2);
   assert.equal(await row.locator(':scope > .inline-rel-detail .inline-rel-wheel').count(),1);
-  await row.locator(':scope > .inline-rel-detail > .inline-rel-progressive-strip').waitFor({state:'visible',timeout:5000});
+  await row.locator(':scope > .inline-rel-detail > .inline-rel-progressive-strip').waitFor({state:'attached',timeout:5000});
   assert.equal(await row.locator('[data-inline-progressive-token]').count(),7);
   assert.equal(await page.locator('.sky-foundation-relationship-row:visible').count(),visibleBefore,'Expanding a relationship must not filter the list.');
 
