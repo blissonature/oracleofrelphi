@@ -25,6 +25,10 @@ async function inspect(width,height,suffix){
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.getElementById('skyFoundationRoot')?.getAttribute('aria-busy')==='false');
   await page.waitForFunction(()=>document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign] .relphi-canonical-glyph').length===12);
+  await page.waitForFunction(()=>{
+    const hosts=[...document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign]')];
+    return hosts.length===12 && hosts.every(host=>host.dataset.canonicalImport==='master-glyph-list-direct-uncircled');
+  });
 
   const state=await page.evaluate(async()=>{
     const geminiMarkup=await fetch('assets/zodiac-glyphs/gemini.svg?v=filled-silhouette-test').then(r=>r.text());
