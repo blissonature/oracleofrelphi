@@ -82,7 +82,7 @@ await editor.locator('[data-sky-time-entry]').fill('1:30 PM');
 await editor.locator('[data-sky-time-entry]').press('Tab');
 await editor.locator('button[type="submit"]').click();
 
-const jump = page.locator('#skyFoundationA .sky-ph-jump');
+const jump = page.locator('#skyFoundationA .sky-ph-jump[data-sky-heptagram-frame="A"]');
 await jump.waitFor({state:'attached',timeout:15000});
 await jump.locator('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]').waitFor({state:'attached',timeout:15000});
 assert.equal(await page.locator('#skyFoundationA [data-sky-drawer="placements"]').getAttribute('open'),'');
