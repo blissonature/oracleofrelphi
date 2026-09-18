@@ -48,7 +48,8 @@ test('relationship glyphs have one lazy renderer owner and use canonical templat
 test('relationship rows remain three equal centered columns and do not filter on expansion',()=>{
   assert.match(relationships,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(relationships,/"left aspect right" "left orb right"/);
-  assert.match(inline,/classList\.toggle\('is-inline-expanded'/);
+  assert.match(inline,/classList\.add\('is-inline-expanded'/);
+  assert.match(inline,/classList\.remove\('is-inline-expanded'/);
   assert.doesNotMatch(inline,/sky-chart-filter-hidden|relationship-filter-hidden/);
 });
 
