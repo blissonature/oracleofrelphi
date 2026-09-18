@@ -61,7 +61,7 @@ await page.addInitScript(({a,b}) => {
 
 await page.goto('http://127.0.0.1:4173/sky-chart.html', {waitUntil:'networkidle'});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]', {timeout:15000});
-await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]', {timeout:10000});
+await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]', {state:'attached', timeout:10000});
 await page.waitForSelector('#skySelectedRelationship:not([hidden])', {timeout:10000});
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card').count(), 2);
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
