@@ -41,11 +41,9 @@
   }
 
   function loadCanonicalGlyphRuntime(onReady) {
-    appendScript('https://oracleofrelphi.com/relphi-glyph-registry-v1.js?v=24', function () {
-      appendScript('https://oracleofrelphi.com/relphi-glyph-component-v1.js?v=27', function () {
-        appendScript('https://oracleofrelphi.com/relphi-moon-stroke-preservation-v1.js?v=1', function () {
-          appendScript('https://oracleofrelphi.com/relphi-neptune-cross-connection-v1.js?v=1', onReady);
-        });
+    appendScript('relphi-glyph-registry-v1.js?v=28', function () {
+      appendScript('relphi-glyph-component-v1.js?v=32', function () {
+        appendScript('relphi-glyph-source-integrity-v1.js?v=2', onReady);
       });
     });
   }
@@ -53,7 +51,7 @@
   function loadAstrologyFoundationEnhancements() {
     if (!/(^|\/)astrology-foundations\.html$/.test(window.location.pathname)) return;
     loadCanonicalGlyphRuntime(function () {
-      appendScript('astrology-foundations-canonical-glyphs-v1.js?v=1');
+      appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2');
     });
     appendScript('astrology-foundations-mobile-signs.js?v=2');
     appendScript('astrology-foundations-consistency.js?v=1');
