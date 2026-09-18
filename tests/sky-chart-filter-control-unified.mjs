@@ -27,13 +27,13 @@ await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
 
 const result=await page.evaluate(()=>{
   const selectors={
-    orb:'input[data-filter="orb"]',
+    orb:'[data-harmonic-window-input]',
     aspects:'.sky-chart-aspect-summary-choices',
     placements:'.sky-chart-placement-summary-choices',
     houses:'.sky-chart-house-summary-choices'
   };
   const labelSelectors={
-    orb:'input[data-filter="orb"]',
+    orb:'[data-harmonic-window-input]',
     aspects:'.sky-chart-aspect-filter-label',
     placements:'.sky-chart-placement-filter-label',
     houses:'.sky-chart-house-filter-label'
@@ -42,6 +42,7 @@ const result=await page.evaluate(()=>{
   const labels={};
   for(const [name,selector] of Object.entries(selectors)){
     const node=document.querySelector(selector);
+    if(!node)throw new Error(`Missing current filter field ${name}: ${selector}`);
     const style=getComputedStyle(node);
     const rect=node.getBoundingClientRect();
     fields[name]={
@@ -65,7 +66,9 @@ const result=await page.evaluate(()=>{
   }
   for(const [name,selector] of Object.entries(labelSelectors)){
     const source=document.querySelector(selector);
+    if(!source)throw new Error(`Missing current filter label ${name}: ${selector}`);
     const node=name==='orb'?source.closest('label'):source;
+    if(!node)throw new Error(`Missing current filter label owner ${name}`);
     const style=getComputedStyle(node);
     labels[name]={
       color:style.color,
@@ -82,6 +85,7 @@ const result=await page.evaluate(()=>{
     houses:'.sky-chart-house-filter-toggle'
   })){
     const node=document.querySelector(selector);
+    if(!node)throw new Error(`Missing current filter toggle ${name}: ${selector}`);
     const style=getComputedStyle(node);
     const rect=node.getBoundingClientRect();
     toggles[name]={height:rect.height,borderTopWidth:style.borderTopWidth,backgroundColor:style.backgroundColor,backgroundImage:style.backgroundImage};
