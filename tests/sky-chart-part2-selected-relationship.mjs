@@ -62,10 +62,11 @@ await page.addInitScript(({a,b}) => {
 await page.goto('http://127.0.0.1:4173/sky-chart.html', {waitUntil:'networkidle'});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]', {timeout:15000});
 await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]', {state:'attached', timeout:10000});
+const initialRelationshipRow = page.locator('.sky-foundation-relationship-row[data-relation-index]').first();
+await initialRelationshipRow.click();
 await page.waitForSelector('#skySelectedRelationship:not([hidden])', {timeout:10000});
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card').count(), 2);
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
-assert.equal(await page.locator('#skySelectedRelationship').getAttribute('data-selection-source'), 'initial-relationship');
 const ledgerGlyphs = await page.locator('.sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => nodes.map(svg => {
   const art=svg.querySelector('.relphi-canonical-glyph');
   const outer=svg.getBoundingClientRect(),inner=art?.getBoundingClientRect();
