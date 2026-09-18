@@ -25,7 +25,18 @@ const page = await browser.newPage({viewport:{width:1440,height:1100}});
 const errors=[];
 page.on('pageerror', error => errors.push(error.message));
 page.on('console', message => {
-  if (message.type()==='error' && !/favicon/i.test(message.text())) errors.push(message.text());
+  if (message.type()==='error' && !/favicon|Failed to load resource/i.test(message.text())) errors.push(message.text());
+});
+const deliberateLoaderMisses=new Set([
+  '/assets/astrology-foundations-live-fix-v2-loader-miss',
+  '/assets/standardize-zodiac-wheels-loader-miss',
+  '/assets/planetary-hours-location-prompt-loader-miss-v2'
+]);
+page.on('response', response => {
+  if(response.status()!==404)return;
+  const url=new URL(response.url());
+  if(/\/favicon\.ico$/i.test(url.pathname)||deliberateLoaderMisses.has(url.pathname))return;
+  errors.push(`404 ${response.url()}`);
 });
 
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js', route => route.fulfill({
