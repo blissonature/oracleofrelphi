@@ -138,7 +138,7 @@ assert.equal(await heptagram.getAttribute('data-canonical-source-ready'), 'true'
 assert.ok(await heptagram.locator('.sky-ph-week-segment').count() >= 7);
 assert.ok(await heptagram.locator('.sky-ph-hour-segment').count() >= 7);
 const href = await jump.getAttribute('href');
-assert.match(href, /^planetaryhours\.html#phShare=1&/);
+assert.match(href, /^\/planetaryhours\.html#phShare=1&/);
 assert.match(href, /tz=America%2FNew_York/);
 assert.match(href, /loc=Malden%2C\+Massachusetts%2C\+United\+States/);
 assert.match(href, /dt=/);
