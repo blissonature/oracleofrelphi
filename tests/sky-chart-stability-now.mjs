@@ -181,7 +181,7 @@ assert.equal(Number(updateAudit.profile.latitude), currentLocation.latitude);
 assert.equal(Number(updateAudit.profile.longitude), currentLocation.longitude);
 assert.equal(updateAudit.profile.timeZone, currentLocation.timezone);
 assert.match(updateAudit.profile.dateTime, /^2026-08-02T20:30/);
-for (const name of ['Descendant','IC','North Node','South Node','Part of Fortune','Chiron','Lilith','Vertex']) {
+for (const name of ['Descendant','Imum Coeli','North Node','South Node','Part of Fortune','Chiron','Lilith','Vertex']) {
   assert.ok(updateAudit.firstNames.includes(name), `${name} must exist in the first saved Now payload, not a later repair pass.`);
 }
 assert.ok(updateAudit.snapshots >= 1, 'Here and Now must dispatch a completed Sky B record.');
