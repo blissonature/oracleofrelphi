@@ -61,7 +61,7 @@ await page.addInitScript(({a,b}) => {
 
 await page.goto('http://127.0.0.1:4173/sky-chart.html', {waitUntil:'networkidle'});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]', {timeout:15000});
-await page.waitForSelector('.sky-chart-filter-bar [data-house-system-filter]', {timeout:10000});
+await page.waitForSelector('.sky-chart-filter-bar [data-house-system-filter]', {state:'attached', timeout:10000});
 await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]', {timeout:10000});
 await page.waitForSelector('#skySelectedRelationship:not([hidden])', {timeout:10000});
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card').count(), 2);
@@ -303,7 +303,10 @@ assert.ok(completed.placements.Chiron, 'provided Chiron should be preserved');
 
 // House-system changes recalculate both skies rather than changing only a label.
 const beforeCusps = completed.calcProfile.houseCusps.slice();
-await page.locator('[data-house-system-filter]').selectOption('equal-house');
+await page.locator('[data-house-system-filter]').evaluate(select => {
+  select.value='equal-house';
+  select.dispatchEvent(new Event('change',{bubbles:true}));
+});
 await page.waitForFunction(previous => {
   const a=JSON.parse(localStorage.getItem('relphiSkyChartA'));
   const b=JSON.parse(localStorage.getItem('relphiSkyChartB'));
