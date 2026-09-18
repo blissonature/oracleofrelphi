@@ -55,13 +55,14 @@ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js
 await page.addInitScript(({a,b}) => {
   localStorage.setItem('relphiSkyChartA', JSON.stringify(a));
   localStorage.setItem('relphiSkyChartB', JSON.stringify(b));
+  localStorage.setItem('relphiSkyChartLastModeV1', 'comparison');
   sessionStorage.removeItem('relphiSkyWhereWhenViewV1');
 }, {a:sample('Sky A test',0),b:sample('Sky B test',73)});
 
-await page.goto('http://127.0.0.1:4173/part2/sky-chart.html', {waitUntil:'networkidle'});
+await page.goto('http://127.0.0.1:4173/sky-chart.html', {waitUntil:'networkidle'});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]', {timeout:15000});
 await page.waitForSelector('.sky-chart-filter-bar [data-house-system-filter]', {timeout:10000});
-await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-v1="true"]', {timeout:10000});
+await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]', {timeout:10000});
 await page.waitForSelector('#skySelectedRelationship:not([hidden])', {timeout:10000});
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card').count(), 2);
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
