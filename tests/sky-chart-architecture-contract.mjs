@@ -67,6 +67,7 @@ assert.equal(finalPass.includes('data-final-now'),false,'Final pass must not rec
 assert.equal(finalPass.includes('data-current-location'),false,'Final pass must not inject a second current-location control');
 assert.equal(finalPass.includes('updateToNow'),false,'Final pass must not own the Here and Now transaction');
 assert.equal(finalPass.includes('addEditorControls'),false,'Final pass must not repair Where and When editor chrome');
+assert.equal(finalPass.includes('data-house-system-filter'),false,'Final pass must not recreate the Placements-owned House System control');
 
 assert.equal(draft.includes('MutationObserver'),false,'Draft heptagram must render from explicit events, not DOM repair observation');
 assert.equal(draft.includes('preview.before(advanced)'),false,'Draft heptagram must not reorder the editor after creation');
