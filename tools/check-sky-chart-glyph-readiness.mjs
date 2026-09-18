@@ -168,8 +168,8 @@ if (fs.existsSync(required('sky-chart-heptagram-canonical-v1.js'))) {
 
 if (fs.existsSync(required('sky-chart-relationship-list-layout-v1.js'))) {
   const relationships = read('sky-chart-relationship-list-layout-v1.js');
-  if (!relationships.includes("MASTER_VIEWBOX = '-32 -32 64 64'")) fail('Relationship glyphs no longer preserve the exact Master Glyph List artboard.');
-  if (!relationships.includes('MASTER_RADIUS = 19')) fail('Relationship glyphs no longer render at the canonical master radius before CSS scaling.');
+  if (!/(?:MASTER_)?VIEWBOX\\s*=\\s*['"]-32 -32 64 64['"]/.test(relationships)) fail('Relationship glyphs no longer preserve the exact Master Glyph List artboard.');
+  if (!/(?:MASTER_)?RADIUS\\s*=\\s*19\\b/.test(relationships)) fail('Relationship glyphs no longer render at the canonical master radius before CSS scaling.');
   if (relationships.includes("viewBox', '-16 -16 32 32'") || relationships.includes('radius:13')) fail('Relationship glyphs returned to a cropped or refitted mini-artboard.');
 }
 
