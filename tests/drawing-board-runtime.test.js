@@ -247,12 +247,14 @@ async function assertReadableFocus(page) {
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-reset-options.png'),fullPage:true});
 
   const bulkQuestions=['What is changing?','What needs release?','What supports me?'];
-  await mobile.fill('#relphiBulkQuestions',bulkQuestions.join(', '));
-  assert.equal(await mobile.locator('#relphiPositionLabels').count(),1,'Options must show the synchronized individual label editor');
+  const firstQuestion=mobile.locator('#relphiPositionLabels .relphi-label-row input').first();
+  await firstQuestion.fill(bulkQuestions.join(', '));
+  await firstQuestion.dispatchEvent('change');
+  await mobile.waitForFunction(count => document.querySelectorAll('#relphiPositionLabels .relphi-label-row').length===count,bulkQuestions.length);
+  assert.equal(await mobile.locator('#relphiPositionLabels').count(),1,'Options must show the individual label editor');
   assert.equal(await mobile.locator('#relphiPositionLabels .relphi-label-row').count(),3,'comma-separated questions should create three individual label fields');
-  assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'individual label fields must mirror the comma-separated master field');
-  assert.equal(await mobile.locator('#relphiBulkQuestions').inputValue(),bulkQuestions.join(', '));
-  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-bulk-questions.png'),fullPage:true});
+  assert.deepEqual(await mobile.locator('#relphiPositionLabels .relphi-label-row input').evaluateAll(nodes=>nodes.map(node=>node.value)),bulkQuestions,'individual label fields must mirror the comma-separated first field');
+  await mobile.screenshot({path:path.join(out,'drawing-board-mobile-comma-list-questions.png'),fullPage:true});
   await mobile.click('#relphiApplyOptions');
   await mobile.waitForFunction(() => {
     const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
@@ -307,8 +309,8 @@ async function assertReadableFocus(page) {
   const desktopOptions=await desktop.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
     const r=drawer.getBoundingClientRect();
     const host=drawer.parentElement.getBoundingClientRect();
-    const firstField=drawer.querySelector('.relphi-options-body>.relphi-options-field:first-child');
-    return {left:r.left,right:r.right,viewport:innerWidth,hostLeft:host.left,firstIsBulk:!!firstField?.querySelector('#relphiBulkQuestions')};
+    const firstSection=drawer.querySelector('.relphi-options-body>:first-child');
+    return {left:r.left,right:r.right,viewport:innerWidth,hostLeft:host.left,firstIsLabels:firstSection?.classList.contains('relphi-labels-section') && !!firstSection?.querySelector('#relphiPositionLabels')};
   });
   assert.ok(desktopOptions.left>=0 && desktopOptions.left<=20,'Options must open against the left side of the viewport');
   assert.ok(desktopOptions.left>=0 && desktopOptions.right<=desktopOptions.viewport,'Options must not be cut off horizontally');
@@ -322,8 +324,8 @@ async function assertReadableFocus(page) {
     return offenders;
   });
   assert.deepEqual(optionsOverflow,[],'no Options control may overflow or be clipped by the drawer');
-  assert.equal(desktopOptions.firstIsBulk,true,'comma-separated Questions / position labels must be the first Options field');
-  assert.equal(await desktop.locator('#relphiPositionLabels').count(),1,'Options must keep the individual position-label editor beneath the comma-separated master field');
+  assert.equal(desktopOptions.firstIsLabels,true,'Questions / position labels must be the first Options section');
+  assert.equal(await desktop.locator('#relphiPositionLabels').count(),1,'Options must expose the individual position-label editor');
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-options-left.png'),fullPage:true});
   await desktop.click('#relphiCancelOptions');
   await applyCeltic(desktop);
@@ -381,7 +383,7 @@ async function assertReadableFocus(page) {
   semantic=await boardState(desktop);
   let semanticCrossingIndex=semantic.snap.rowPositionMeta.findIndex(meta=>meta?.id==='crossing');
   assert.equal(semanticCrossingIndex,2,'the crossing position should be resolved semantically after out-of-order draws');
-  assert.match(await desktop.locator('.relphi-focus-shell>header strong').textContent(),/crosses/i);
+  assert.match(await desktop.locator('.relphi-focus-position').textContent(),/crosses/i);
   await desktop.click('.relphi-focus-next');
   await desktop.waitForFunction(() => window.RelphiDrawingBoardOptionsBridge?.capture?.()?.rowPositionMeta?.some?.(meta => meta?.id === 'crossing' && meta?.celticCrossAcknowledged === true));
   semantic=await boardState(desktop);
