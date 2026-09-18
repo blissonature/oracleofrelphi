@@ -312,7 +312,7 @@ async function assertReadableFocus(page) {
     const firstSection=drawer.querySelector('.relphi-options-body>:first-child');
     return {left:r.left,right:r.right,viewport:innerWidth,hostLeft:host.left,firstIsLabels:firstSection?.classList.contains('relphi-labels-section') && !!firstSection?.querySelector('#relphiPositionLabels')};
   });
-  assert.ok(desktopOptions.left>=0 && desktopOptions.left<=20,'Options must open against the left side of the viewport');
+  assert.ok(desktopOptions.left>=desktopOptions.hostLeft-1 && desktopOptions.left<=desktopOptions.hostLeft+20,'Options must open against the left side of its Drawing Board host');
   assert.ok(desktopOptions.left>=0 && desktopOptions.right<=desktopOptions.viewport,'Options must not be cut off horizontally');
   const optionsOverflow=await desktop.locator('.relphi-reading-options-drawer.is-reading-options-open').evaluate(drawer=>{
     const dr=drawer.getBoundingClientRect();
