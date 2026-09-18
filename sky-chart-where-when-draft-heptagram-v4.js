@@ -11,7 +11,7 @@ const NS='http://www.w3.org/2000/svg';
 const CHALDEAN=['saturn','jupiter','mars','sun','venus','mercury','moon'];
 const WEEK_PATH=['sun','moon','mars','mercury','jupiter','venus','saturn','sun'];
 const WEEKDAY_RULERS={1:'moon',2:'mars',3:'mercury',4:'jupiter',5:'venus',6:'saturn',7:'sun'};
-const COLORS={saturn:'#8c7a42',jupiter:'#41752f',mars:'#c9211e',sun:'#d08a00',venus:'#b23b79',mercury:'#277390',moon:'#58628a'};
+const COLORS={saturn:'#8c7a42',jupiter:'#41752f',mars:'#dc1f18',sun:'#d08a00',venus:'#b23b79',mercury:'#277390',moon:'#58628a'};
 const timers={A:0,B:0},renderToken={A:0,B:0};
 
 function installStyle(){
