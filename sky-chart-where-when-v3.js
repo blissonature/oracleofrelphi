@@ -246,6 +246,8 @@ async function submitCalculated(slot,form,options={}){
     if(!window.RelphiChironEphemeris)throw new Error('The Chiron ephemeris service is unavailable.');
     await window.RelphiChironEphemeris.completePayload(nextPayload);
     if(!window.RelphiChironEphemeris.hasChiron(nextPayload.placements))throw new Error('Chiron could not be calculated for this sky.');
+    if(typeof window.RelphiSkyExtraPoints?.enrich!=='function')throw new Error('The derived-point calculator is unavailable.');
+    window.RelphiSkyExtraPoints.enrich(nextPayload);
     writeJson(SLOT_KEYS[slot],nextPayload);
     const committed=payload(slot),profile=committed?.calcProfile||{};
     if(String(profile.location||'')!==String(selected.canonical||''))throw new Error('The new Where and When did not persist.');
