@@ -35,7 +35,7 @@ async function inspect(width,height,suffix){
       const circle=host.querySelector(':scope > .relphi-glyph-bubble > circle');
       return{
         id:host.dataset.zodiacSign,
-        radius:Number(host.dataset.wheelGlyphRadius),
+        radius:Number(circle?.getAttribute('r')),
         glyphCount:host.querySelectorAll('.relphi-canonical-glyph').length,
         circleDisplay:circle?getComputedStyle(circle).display:'missing',
         circleOpacity:circle?Number(getComputedStyle(circle).opacity):null
