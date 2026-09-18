@@ -83,8 +83,12 @@ await editor.locator('[data-sky-time-entry]').press('Tab');
 await editor.locator('button[type="submit"]').click();
 
 const jump = page.locator('#skyFoundationA .sky-ph-jump');
-await jump.waitFor({timeout:15000});
+await jump.waitFor({state:'attached',timeout:15000});
 await jump.locator('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]').waitFor({state:'attached',timeout:15000});
+assert.equal(await page.locator('#skyFoundationA [data-sky-drawer="placements"]').getAttribute('open'),'');
+assert.equal(await jump.isVisible(),false,'Committed Where and When heptagram stays in its closed drawer while Placements is active.');
+await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
+await jump.waitFor({state:'visible',timeout:10000});
 assert.equal(await jump.evaluate(node => node.tagName), 'A');
 assert.equal(await jump.locator('a').count(), 0);
 assert.equal(await jump.getAttribute('aria-label'), 'Open this Sky in Planetary Hours');
