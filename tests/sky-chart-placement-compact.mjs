@@ -31,7 +31,8 @@ await page.waitForSelector('[data-placement-list-header="true"]');
 const menu=page.locator('#skyChartPlacementPopover');
 const list=menu.locator('[data-placement-list="combined"]');
 const header=list.locator('[data-placement-list-header="true"]');
-assert.deepEqual(await header.locator('span').evaluateAll(nodes=>nodes.map(node=>node.textContent.trim())),['Placement','All','A','B']);
+assert.equal((await header.locator('.sky-chart-placement-list-header-label').textContent()).trim(),'Placement');
+assert.deepEqual(await header.locator('.sky-chart-placement-list-header-choice').evaluateAll(nodes=>nodes.map(node=>node.textContent.trim())),['All','A','B']);
 assert.equal(await list.locator('.sky-chart-placement-list-item .sky-chart-placement-choice span:visible').count(),0,'All, A, and B labels must appear only in the header.');
 
 const metrics=await page.evaluate(()=>{
@@ -45,7 +46,13 @@ const metrics=await page.evaluate(()=>{
     labelAlignments:labels.map(label=>getComputedStyle(label).textAlign),
     headerWidth:header.getBoundingClientRect().width,
     firstRowWidth:rows[0].getBoundingClientRect().width,
-    choiceWidths:Array.from(rows[0].querySelectorAll('.sky-chart-placement-choice')).map(choice=>choice.getBoundingClientRect().width)
+    choiceWidths:Array.from(rows[0].querySelectorAll('.sky-chart-placement-choice')).map(choice=>choice.getBoundingClientRect().width),
+    headerChoiceCenters:Array.from(header.querySelectorAll('.sky-chart-placement-list-header-choice')).map(node=>{
+      const box=node.getBoundingClientRect();return Math.round((box.left+box.right)/2);
+    }),
+    rowChoiceCenters:Array.from(rows[0].querySelectorAll('.sky-chart-placement-choice')).map(node=>{
+      const box=node.getBoundingClientRect();return Math.round((box.left+box.right)/2);
+    })
   };
 });
 assert.ok(metrics.menuWidth<=352,`Compact menu is too wide: ${metrics.menuWidth}px`);
@@ -53,6 +60,7 @@ assert.ok(metrics.rowHeights.every(height=>height<=36),`Rows are not compact: ${
 assert.ok(metrics.labelAlignments.every(value=>value==='left'),'Every placement name must be left-aligned.');
 assert.ok(Math.abs(metrics.headerWidth-metrics.firstRowWidth)<=1,'The header must align with the list rows.');
 assert.ok(metrics.choiceWidths.every(width=>width<=35),'Checkbox columns must remain narrow.');
+assert.deepEqual(metrics.headerChoiceCenters,metrics.rowChoiceCenters,'All / A / B headings must sit directly over their checkbox columns.');
 
 await page.screenshot({path:'sky-chart-placement-compact-desktop.png',fullPage:true});
 await page.setViewportSize({width:390,height:844});
