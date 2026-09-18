@@ -38,15 +38,17 @@ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js
   path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),
   contentType:'application/javascript'
 }));
-await page.route('https://nominatim.openstreetmap.org/search**', route => route.fulfill({
+await page.route('https://geocoding-api.open-meteo.com/v1/search**', route => route.fulfill({
   status:200,
   contentType:'application/json',
-  body:JSON.stringify([{
-    display_name:'Malden, Massachusetts, United States',
-    lat:'42.4251',
-    lon:'-71.0662',
-    address:{city:'Malden',state:'Massachusetts',country:'United States'}
-  }])
+  body:JSON.stringify({results:[{
+    name:'Malden',
+    admin1:'Massachusetts',
+    country:'United States',
+    latitude:42.4251,
+    longitude:-71.0662,
+    timezone:'America/New_York'
+  }]})
 }));
 await page.route('https://api.bigdatacloud.net/data/reverse-geocode-client**', route => route.fulfill({
   status:200,
@@ -148,18 +150,16 @@ assert.ok(await placementsDrawer.locator('.sky-foundation-row').count() >= initi
 
 await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
 const reopened = page.locator('#skyFoundationA .sky-where-when-editor');
-await reopened.locator('.sky-where-when-advanced summary').click();
-await reopened.locator('[data-ww-action="infer"]').click();
-await reopened.locator('.sky-inference-card:not([hidden])').waitFor();
-assert.match(await reopened.locator('.sky-inference-card').textContent(), /High — recovered from the saved Sky record/);
-await reopened.locator('[data-ww-action="apply-inference"]').click();
+await reopened.waitFor({state:'visible',timeout:10000});
 assert.match(await reopened.locator('.sky-location-confirmation').textContent(), /Location found:\s*Malden, Massachusetts, United States/);
-
-await reopened.locator('[data-ww-field="latitude"]').fill('42.4251');
-await reopened.locator('[data-ww-field="longitude"]').fill('-71.0662');
-await reopened.locator('[data-ww-action="resolve-coordinates"]').click();
-await page.waitForFunction(() => document.querySelector('#skyFoundationA [data-ww-field="timezone"]')?.value === 'America/New_York');
-assert.match(await reopened.locator('.sky-location-confirmation').textContent(), /Malden, Massachusetts, United States/);
+assert.equal(await reopened.locator('[data-ww-field="date"]').inputValue(), '1990-04-15');
+assert.equal(await reopened.locator('[data-ww-field="time"]').inputValue(), '13:30');
+assert.equal(await reopened.locator('[data-ww-action="infer"]').count(), 0, 'The retired v1 inference button must stay gone.');
+assert.equal(await reopened.locator('[data-ww-action="resolve-coordinates"]').count(), 0, 'The retired v1 coordinate resolver must stay gone.');
+await reopened.locator('.sky-where-when-advanced summary').click();
+assert.equal(await reopened.locator('[data-ww-field="timezone"]').inputValue(), 'America/New_York');
+assert.equal(await reopened.locator('[data-ww-field="latitude"]').inputValue(), '42.42510');
+assert.equal(await reopened.locator('[data-ww-field="longitude"]').inputValue(), '-71.06620');
 
 await page.screenshot({path:'sky-chart-part2-desktop.png',fullPage:true});
 await page.setViewportSize({width:390,height:844});
