@@ -61,7 +61,16 @@ await page.addInitScript(({a,b}) => {
 
 await page.goto('http://127.0.0.1:4173/sky-chart.html', {waitUntil:'networkidle'});
 await page.waitForSelector('.sky-foundation-relationship-row[data-relation-index]', {timeout:15000});
-await page.waitForSelector('.sky-chart-filter-bar [data-house-system-filter]', {state:'attached', timeout:10000});
+await page.waitForTimeout(250);
+const filterLifecycle = await page.evaluate(() => ({
+  finalPassLoaded:window.__relphiSkyFinalPassV2===true,
+  finalPassReady:document.documentElement.dataset.skyFinalPass||'',
+  whereWhenEditing:document.documentElement.dataset.skyWhereWhenEditing||'',
+  relationshipPanel:!!document.getElementById('skyFoundationRelationships'),
+  filterBar:!!document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'),
+  houseSystem:!!document.querySelector('#skyFoundationRelationships [data-house-system-filter]')
+}));
+assert.equal(filterLifecycle.houseSystem,true,`Current relationship filters did not initialize: ${JSON.stringify(filterLifecycle)}`);
 await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]', {timeout:10000});
 await page.waitForSelector('#skySelectedRelationship:not([hidden])', {timeout:10000});
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card').count(), 2);
