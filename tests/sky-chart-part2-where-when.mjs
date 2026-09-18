@@ -139,10 +139,11 @@ if(await namePrompt.count()){
   await page.locator('#skyWhereWhenNamePrompt[hidden]').waitFor({state:'attached'});
 }
 
-await page.locator('#skyFoundationA [data-sky-drawer-tab="placements"]').click();
 const placementsDrawer=page.locator('#skyFoundationA [data-sky-drawer="placements"]');
-await placementsDrawer.waitFor({state:'visible',timeout:10000});
-assert.equal(await placementsDrawer.getAttribute('open'),'');
+if((await placementsDrawer.getAttribute('open'))===null){
+  await page.locator('#skyFoundationA [data-sky-drawer-tab="placements"]').click();
+}
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-sky-drawer="placements"]')?.open===true,null,{timeout:10000});
 assert.ok(await placementsDrawer.locator('.sky-foundation-row').count() >= initialPlacementRows);
 
 await page.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
