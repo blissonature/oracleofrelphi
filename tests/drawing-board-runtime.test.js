@@ -60,8 +60,9 @@ async function assertReadableFocus(page) {
     const reader=document.querySelector('.relphi-focus-reader');
     const art=reader?.querySelector('.relphi-focus-art');
     const entry=reader?.querySelector('.relphi-focus-entry');
-    const position=reader?.querySelector('.relphi-focus-position');
-    if (!reader || !art || !entry || !position) return {ok:false};
+    const positionPanel=reader?.querySelector('.relphi-focus-position-panel');
+    const position=positionPanel?.querySelector('.relphi-focus-position');
+    if (!reader || !art || !entry || !positionPanel || !position) return {ok:false};
     const index=Number(reader.dataset.focusIndex);
     const item=document.querySelector(`#shortListPanel .card-row-item[data-row-index="${index}"]`);
     const card=item?.querySelector('[data-row-card]');
@@ -73,6 +74,10 @@ async function assertReadableFocus(page) {
       naturalWidth:art.naturalWidth,
       matrixA:matrix.a,matrixD:matrix.d,
       position:position.textContent.trim(),
+      positionPanelIsShellRow:positionPanel.parentElement?.classList.contains('relphi-focus-shell') || false,
+      positionPanelInsideMain:!!positionPanel.closest('.relphi-focus-main'),
+      positionPanelInsideEntry:!!positionPanel.closest('.relphi-focus-entry'),
+      positionPanelCssPosition:getComputedStyle(positionPanel).position,
       entryText:entry.textContent.trim(),
       hasTitle:!!entry.querySelector('.full-entry-title-block h2'),
       duplicateArtVisible:!!entry.querySelector('.tarot-card-art') && getComputedStyle(entry.querySelector('.tarot-card-art')).display!=='none',
@@ -85,6 +90,10 @@ async function assertReadableFocus(page) {
   assert.equal(result.ok,true);
   assert.ok(result.naturalWidth>0,'focus art must load');
   assert.match(result.position,/\S/,'spread position must be visible outside the art');
+  assert.equal(result.positionPanelIsShellRow,true,'question / position must be a dedicated focus-shell row');
+  assert.equal(result.positionPanelInsideMain,false,'question / position must not scroll with focus main');
+  assert.equal(result.positionPanelInsideEntry,false,'question / position must not belong to the Ledger entry');
+  assert.equal(result.positionPanelCssPosition,'static','question / position panel must remain statically positioned');
   assert.ok(result.entryText.length>100,'focus view must contain the full Tarot Ledger entry');
   assert.equal(result.hasTitle,true,'full Ledger title block must be present');
   assert.equal(result.duplicateArtVisible,false,'Ledger entry must not duplicate or cover the dedicated card art');
