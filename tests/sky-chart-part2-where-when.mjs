@@ -38,17 +38,15 @@ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js
   path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),
   contentType:'application/javascript'
 }));
-await page.route('https://geocoding-api.open-meteo.com/v1/search**', route => route.fulfill({
+await page.route('https://nominatim.openstreetmap.org/search**', route => route.fulfill({
   status:200,
   contentType:'application/json',
-  body:JSON.stringify({results:[{
-    name:'Malden',
-    admin1:'Massachusetts',
-    country:'United States',
-    latitude:42.4251,
-    longitude:-71.0662,
-    timezone:'America/New_York'
-  }]})
+  body:JSON.stringify([{
+    display_name:'Malden, Massachusetts, United States',
+    lat:'42.4251',
+    lon:'-71.0662',
+    address:{city:'Malden',state:'Massachusetts',country:'United States'}
+  }])
 }));
 await page.route('https://api.bigdatacloud.net/data/reverse-geocode-client**', route => route.fulfill({
   status:200,
