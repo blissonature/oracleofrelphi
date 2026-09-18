@@ -73,7 +73,7 @@
     return html.dataset.skyBEditing==='true'||html.dataset.skyBPresent==='true';
   }
   function activeSlots(){return bActive()?SLOTS:['A']}
-  function activeKinds(){return bActive()?['all','a','b']:['all','a']}
+  function activeKinds(){return bActive()?['all','a','b']:['a']}
   function filterBar(){return document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar')}
   function control(){return document.querySelector('[data-placement-filter="combined"]')}
   function popover(){return document.getElementById('skyChartPlacementPopover')}
@@ -222,6 +222,7 @@
     const list=document.createElement('div');
     list.className='sky-chart-placement-list';
     list.dataset.placementList='combined';
+    list.style.setProperty('--placement-choice-count',String(activeKinds().length));
     const header=document.createElement('div');
     header.className='sky-chart-placement-list-header';
     const headerLabel=document.createElement('strong');
