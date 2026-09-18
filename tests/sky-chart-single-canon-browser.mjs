@@ -51,7 +51,7 @@ async function inspect(width,height,suffix){
     const placementColors=Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>{
       const expected=host.dataset.sky==='A'?'rgb(201, 33, 30)':'rgb(36, 98, 208)';
       const art=host.querySelector('.relphi-canonical-glyph');
-      const shapes=art?Array.from(art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text')):[];
+      const shapes=art?[...(art.matches('path,circle,ellipse,rect,polygon,polyline,line,text')?[art]:[]),...art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text')]:[];
       const painted=shapes.filter(node=>{
         const style=getComputedStyle(node);
         return style.fill!=='none'||style.stroke!=='none';
