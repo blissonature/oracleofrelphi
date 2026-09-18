@@ -18,27 +18,31 @@ const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
 await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
-await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));sessionStorage.removeItem('relphiSkyWhereWhenViewV1')},{a:skyA,b:skyB});
+await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison');sessionStorage.removeItem('relphiSkyWhereWhenViewV1')},{a:skyA,b:skyB});
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
 await page.waitForSelector('[data-aspect-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-placement-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
+for (const selector of [
+  '[data-harmonic-window-input]',
+  '.sky-chart-aspect-summary-choices',
+  '.sky-chart-placement-summary-choices',
+  '.sky-chart-house-summary-choices'
+]) await page.waitForSelector(selector,{timeout:20000});
 
 const result=await page.evaluate(()=>{
   const selectors={
-    orb:'input[data-filter="orb"]',
-    aspects:'.sky-chart-aspect-filter-value',
+    orb:'[data-harmonic-window-input]',
+    aspects:'.sky-chart-aspect-summary-choices',
     placements:'.sky-chart-placement-summary-choices',
-    houses:'.sky-chart-house-summary-choices',
-    houseSystem:'[data-house-system-filter]'
+    houses:'.sky-chart-house-summary-choices'
   };
   const labelSelectors={
-    orb:'input[data-filter="orb"]',
+    orb:'[data-harmonic-window-input]',
     aspects:'.sky-chart-aspect-filter-label',
     placements:'.sky-chart-placement-filter-label',
-    houses:'.sky-chart-house-filter-label',
-    houseSystem:'[data-house-system-filter]'
+    houses:'.sky-chart-house-filter-label'
   };
   const fields={};
   const labels={};
@@ -67,7 +71,7 @@ const result=await page.evaluate(()=>{
   }
   for(const [name,selector] of Object.entries(labelSelectors)){
     const source=document.querySelector(selector);
-    const node=(name==='orb'||name==='houseSystem')?source.closest('label'):source;
+    const node=name==='orb'?source.closest('label'):source;
     const style=getComputedStyle(node);
     labels[name]={
       color:style.color,
@@ -96,12 +100,13 @@ const reference=result.fields.orb;
 for(const name of fieldNames){
   const field=result.fields[name];
   assert.ok(Math.abs(field.height-reference.height)<=0.5,`${name} height ${field.height} does not match Orb ${reference.height}`);
-  assert.ok(Math.abs(field.top-reference.top)<=1,`${name} top ${field.top} does not match Orb ${reference.top}`);
-  assert.ok(Math.abs(field.bottom-reference.bottom)<=1,`${name} bottom ${field.bottom} does not match Orb ${reference.bottom}`);
   for(const property of ['backgroundColor','borderTopColor','borderTopStyle','borderTopWidth','borderTopLeftRadius','borderTopRightRadius','borderBottomLeftRadius','borderBottomRightRadius','color','fontFamily','fontSize','fontWeight','lineHeight']){
     assert.equal(field[property],reference[property],`${name} ${property} must match Orb`);
   }
 }
+const primaryRow=['aspects','placements','houses'].map(name=>result.fields[name].top);
+assert.ok(Math.max(...primaryRow)-Math.min(...primaryRow)<=1,'Aspects, placements, and houses must share the primary filter row.');
+assert.ok(reference.top>Math.max(...primaryRow),'Harmonic window must occupy the second filter row on desktop.');
 
 const labelReference=result.labels.orb;
 for(const [name,label] of Object.entries(result.labels)){

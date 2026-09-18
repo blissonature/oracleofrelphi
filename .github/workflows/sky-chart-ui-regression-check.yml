@@ -3,11 +3,8 @@ name: Sky Chart UI regression check
 on:
   pull_request:
     paths:
-      - 'glyphs.html'
-      - 'part1/sky-chart.html'
-      - 'part2/sky-chart.html'
+      - 'glyphs-unified-preview.html'
       - 'sky-chart.html'
-      - 'glyph-canon-approved-source-manifest.json'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
       - 'relphi-glyph-source-integrity-v1.js'
@@ -16,9 +13,10 @@ on:
       - 'assets/zodiac-glyphs/**'
       - 'assets/element-glyphs/**'
       - 'assets/aspect-glyphs/**'
-      - 'sky-chart-foundation-v1.js'
-      - 'sky-chart-glyph-audit-v1.js'
-      - 'sky-chart-selected-relationship-v3.js'
+      - 'sky-chart-wheel-spec-v1.js'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-relationship-list-layout-v2.js'
+      - 'sky-chart-selected-relationship-v4.js'
       - 'tests/sky-chart-canonical-master-contract.test.mjs'
       - 'tests/sky-chart-single-canon-browser.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
@@ -47,9 +45,10 @@ jobs:
           node --check relphi-glyph-component-v1.js
           node --check relphi-glyph-source-integrity-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
-          node --check sky-chart-foundation-v1.js
-          node --check sky-chart-glyph-audit-v1.js
-          node --check sky-chart-selected-relationship-v3.js
+          node --check sky-chart-wheel-spec-v1.js
+          node --check sky-chart-foundation-v2.js
+          node --check sky-chart-relationship-list-layout-v2.js
+          node --check sky-chart-selected-relationship-v4.js
           node --check tests/sky-chart-canonical-master-contract.test.mjs
           node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
@@ -70,7 +69,6 @@ jobs:
         with:
           name: sky-chart-ui-regression-screenshots
           path: |
-            glyph-canon-source-audit.json
             sky-chart-single-canon-desktop.png
             sky-chart-single-canon-mobile.png
             sky-chart-filter-controls-unified.png

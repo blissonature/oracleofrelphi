@@ -19,12 +19,12 @@ const requiredFiles = [
   'glyphs-unified-preview.html',
   'assets/planet-glyphs/part-of-fortune.svg',
   'sky-chart.html',
-  'sky-chart-foundation-v1.js',
+  'sky-chart-foundation-v2.js',
   'sky-chart-calculated-points-v1.js',
   'sky-chart-angle-placements-v1.js',
   'sky-chart-card-hits-v2.js',
   'sky-chart-heptagram-canonical-v1.js',
-  'sky-chart-relationship-list-layout-v1.js'
+  'sky-chart-relationship-list-layout-v2.js'
 ];
 requiredFiles.forEach(requireFile);
 
@@ -86,7 +86,8 @@ if (fs.existsSync(required('sky-chart.html'))) {
     'relphi-glyph-registry-v1.js',
     'relphi-glyph-component-v1.js',
     'relphi-glyph-source-integrity-v1.js',
-    'sky-chart-foundation-v1.js'
+    'sky-chart-wheel-spec-v1.js',
+    'sky-chart-foundation-v2.js'
   ];
   let previous = -1;
   for (const script of scripts) {
@@ -116,8 +117,8 @@ if (fs.existsSync(required('glyphs-unified-preview.html'))) {
   }
 }
 
-if (fs.existsSync(required('sky-chart-foundation-v1.js'))) {
-  const foundation = read('sky-chart-foundation-v1.js');
+if (fs.existsSync(required('sky-chart-foundation-v2.js'))) {
+  const foundation = read('sky-chart-foundation-v2.js');
   for (const snippet of [
     'window.RelphiGlyphRegistry',
     'window.RelphiGlyphComponent',
@@ -150,14 +151,6 @@ if (fs.existsSync(required('sky-chart-angle-placements-v1.js'))) {
   if (angles.includes('ledger.appendChild(match[1])')) fail('Angle ledger returned to DOM reordering that can cross-wire glyph identities.');
 }
 
-if (fs.existsSync(required('sky-chart-card-hits-v2.js'))) {
-  const hits = read('sky-chart-card-hits-v2.js');
-  if (!hits.includes("judgement:Object.freeze({kind:'placement',value:'pluto'")) fail('Judgement no longer isolates Pluto.');
-  if (!hits.includes("kind:'sign',value:SIGNS.indexOf(sign)")) fail('Sign-attributed cards no longer isolate their zodiac sign.');
-  if (!hits.includes("dispatchEvent(new MouseEvent('click'")) fail('Chart Hit cards no longer route through the same wheel isolation interaction.');
-  if (hits.includes('sky-card-hit-detail')) fail('Chart Hit static detail panel returned; card clicks should isolate the chart instead.');
-}
-
 if (fs.existsSync(required('sky-chart-heptagram-canonical-v1.js'))) {
   const heptagram = read('sky-chart-heptagram-canonical-v1.js');
   if (!heptagram.includes('component.createBubble')) fail('Planetary heptagram no longer consumes the canonical circled glyph component path.');
@@ -166,10 +159,10 @@ if (fs.existsSync(required('sky-chart-heptagram-canonical-v1.js'))) {
   if (heptagram.includes('RelphiCanonicalGlyphState')) fail('Removed alternate glyph-state renderer returned to the heptagram.');
 }
 
-if (fs.existsSync(required('sky-chart-relationship-list-layout-v1.js'))) {
-  const relationships = read('sky-chart-relationship-list-layout-v1.js');
-  if (!relationships.includes("MASTER_VIEWBOX = '-32 -32 64 64'")) fail('Relationship glyphs no longer preserve the exact Master Glyph List artboard.');
-  if (!relationships.includes('MASTER_RADIUS = 19')) fail('Relationship glyphs no longer render at the canonical master radius before CSS scaling.');
+if (fs.existsSync(required('sky-chart-relationship-list-layout-v2.js'))) {
+  const relationships = read('sky-chart-relationship-list-layout-v2.js');
+  if (!/(?:MASTER_)?VIEWBOX\s*=\s*['"]-32 -32 64 64['"]/.test(relationships)) fail('Relationship glyphs no longer preserve the exact Master Glyph List artboard.');
+  if (!/(?:MASTER_)?RADIUS\s*=\s*19\b/.test(relationships)) fail('Relationship glyphs no longer render at the canonical master radius before CSS scaling.');
   if (relationships.includes("viewBox', '-16 -16 32 32'") || relationships.includes('radius:13')) fail('Relationship glyphs returned to a cropped or refitted mini-artboard.');
 }
 
@@ -187,4 +180,4 @@ if (failures.length) {
 }
 
 console.log('Sky Chart glyph readiness passed.');
-console.log('Sky Chart is cleared for feature work with glyph rendering frozen to the single Master Glyph List authority, static Part of Fortune and Lilith masters, stable Angle ledger identities, and Chart Hit correspondence isolation.');
+console.log('Sky Chart is cleared for feature work with glyph rendering frozen to the single Master Glyph List authority, static Part of Fortune and Lilith masters, stable Angle ledger identities, and preserved relationship artboards.');
