@@ -88,7 +88,11 @@ try{
   assert.equal(await second.getAttribute('aria-expanded'),'true');
   assert.equal(await row.getAttribute('aria-expanded'),'false','Only one inline relationship may own the open detail at a time.');
 
-  await page.locator('#skyFoundationA [data-sky-drawer-tab="placements"]').click();
+  const placementsDrawer=page.locator('#skyFoundationA [data-sky-drawer="placements"]');
+  if((await placementsDrawer.getAttribute('open'))===null){
+    await page.locator('#skyFoundationA [data-sky-drawer-tab="placements"]').click();
+  }
+  await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-sky-drawer="placements"]')?.open===true,null,{timeout:10000});
   await page.locator('[data-placement-house-system="A"]').waitFor({state:'visible',timeout:10000});
   assert.equal(await page.locator('[data-house-system-filter]').count(),0,'The retired relationship-bar House System control must stay gone.');
   const beforeCusps=await page.evaluate(()=>JSON.parse(localStorage.getItem('relphiSkyChartA')).calcProfile.houseCusps);
