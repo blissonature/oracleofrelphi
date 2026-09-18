@@ -111,7 +111,7 @@ await page.waitForFunction(() => Array.from(document.querySelectorAll('.sky-ph-h
 
 assert.equal(await page.locator('#skyFoundationWheelMount .sky-axis-label').count(), 0, 'Comparison wheel must not contain chart-axis name labels.');
 
-const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row svg,#skyFoundationB .sky-foundation-row svg')).map(svg => {
+const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row > svg[data-canonical-ledger-glyph="true"],#skyFoundationB .sky-foundation-row > svg[data-canonical-ledger-glyph="true"]')).map(svg => {
   const row = svg.closest('.sky-foundation-row');
   const art = svg.querySelector('.relphi-canonical-glyph');
   return {
