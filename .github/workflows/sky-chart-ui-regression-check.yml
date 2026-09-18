@@ -3,9 +3,7 @@ name: Sky Chart UI regression check
 on:
   pull_request:
     paths:
-      - 'glyphs.html'
-      - 'part1/sky-chart.html'
-      - 'part2/sky-chart.html'
+      - 'glyphs-unified-preview.html'
       - 'sky-chart.html'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
@@ -15,8 +13,9 @@ on:
       - 'assets/zodiac-glyphs/**'
       - 'assets/element-glyphs/**'
       - 'assets/aspect-glyphs/**'
-      - 'sky-chart-foundation-v1.js'
-      - 'sky-chart-glyph-audit-v1.js'
+      - 'sky-chart-wheel-spec-v1.js'
+      - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-relationship-list-layout-v2.js'
       - 'sky-chart-selected-relationship-v4.js'
       - 'tests/sky-chart-canonical-master-contract.test.mjs'
       - 'tests/sky-chart-single-canon-browser.mjs'
@@ -46,8 +45,9 @@ jobs:
           node --check relphi-glyph-component-v1.js
           node --check relphi-glyph-source-integrity-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
-          node --check sky-chart-foundation-v1.js
-          node --check sky-chart-glyph-audit-v1.js
+          node --check sky-chart-wheel-spec-v1.js
+          node --check sky-chart-foundation-v2.js
+          node --check sky-chart-relationship-list-layout-v2.js
           node --check sky-chart-selected-relationship-v4.js
           node --check tests/sky-chart-canonical-master-contract.test.mjs
           node --check tests/sky-chart-single-canon-browser.mjs
