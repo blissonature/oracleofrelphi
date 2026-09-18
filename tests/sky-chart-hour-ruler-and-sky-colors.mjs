@@ -75,11 +75,14 @@ const issues=await page.evaluate(({colors,heptagramColors})=>{
     if(rootStyle.filter!=='none')issues.push(`Hour ruler ${index+1}: filter is ${rootStyle.filter}`);
     const art=Array.from(root.children).find(node=>node.classList?.contains('relphi-canonical-glyph'));
     if(!art)issues.push(`Hour ruler ${index+1}: canonical art missing`);
+    const group=root.closest('.sky-ph-planet');
+    const key=Object.keys(heptagramColors).find(name=>group?.classList.contains(`sky-ph-${name}`));
+    const expectedArt=root.classList.contains('is-day-ruler')&&key?heptagramColors[key]:'rgb(255, 255, 255)';
     paintedLeaves(art).forEach((node,shapeIndex)=>{
       const style=getComputedStyle(node);
       if(style.vectorEffect!=='none')issues.push(`Hour ruler ${index+1} shape ${shapeIndex+1}: vector-effect is ${style.vectorEffect}`);
-      if(style.fill!=='none'&&style.fill!=='rgba(0, 0, 0, 0)'&&style.fill!=='rgb(255, 255, 255)')issues.push(`Hour ruler ${index+1} shape ${shapeIndex+1}: nonwhite fill ${style.fill}`);
-      if(style.stroke!=='none'&&style.stroke!=='rgba(0, 0, 0, 0)'&&style.stroke!=='rgb(255, 255, 255)')issues.push(`Hour ruler ${index+1} shape ${shapeIndex+1}: nonwhite stroke ${style.stroke}`);
+      if(style.fill!=='none'&&style.fill!=='rgba(0, 0, 0, 0)'&&style.fill!==expectedArt)issues.push(`Hour ruler ${index+1} shape ${shapeIndex+1}: fill ${style.fill}, expected ${expectedArt}`);
+      if(style.stroke!=='none'&&style.stroke!=='rgba(0, 0, 0, 0)'&&style.stroke!==expectedArt)issues.push(`Hour ruler ${index+1} shape ${shapeIndex+1}: stroke ${style.stroke}, expected ${expectedArt}`);
     });
   });
   return Array.from(new Set(issues));
