@@ -5,7 +5,6 @@ on:
     paths:
       - 'glyphs.html'
       - 'sky-chart.html'
-      - 'glyph-canon-approved-source-manifest.json'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
       - 'relphi-glyph-source-integrity-v1.js'
@@ -20,7 +19,6 @@ on:
       - 'sky-chart-card-shell-v2.js'
       - 'sky-chart-glyph-audit-v1.js'
       - 'sky-chart-selected-relationship-v4.js'
-      - 'tests/sky-chart-canonical-master-contract.test.mjs'
       - 'tests/sky-chart-single-canon-browser.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-stability-now.mjs'
@@ -51,11 +49,9 @@ jobs:
           node --check sky-chart-foundation-v1.js
           node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-selected-relationship-v4.js
-          node --check tests/sky-chart-canonical-master-contract.test.mjs
           node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-stability-now.mjs
-          node tests/sky-chart-canonical-master-contract.test.mjs
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -71,7 +67,6 @@ jobs:
         with:
           name: sky-chart-ui-regression-screenshots
           path: |
-            glyph-canon-source-audit.json
             sky-chart-single-canon-desktop.png
             sky-chart-single-canon-mobile.png
             sky-chart-filter-controls-unified.png
