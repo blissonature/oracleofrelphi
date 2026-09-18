@@ -12,8 +12,7 @@ on:
       - 'tools/check-single-glyph-canon.mjs'
       - 'tools/check-planet-glyph-hashes.mjs'
       - 'tools/check-sky-chart-glyph-readiness.mjs'
-      - 'tests/sky-chart-requested-visuals.test.mjs'
-      - 'tests/sky-chart-angle-lane-isolation.test.mjs'
+      - 'tests/sky-chart-canonical-master-contract.test.mjs'
       - '.github/workflows/single-glyph-canon.yml'
   pull_request:
     paths:
@@ -26,8 +25,7 @@ on:
       - 'tools/check-single-glyph-canon.mjs'
       - 'tools/check-planet-glyph-hashes.mjs'
       - 'tools/check-sky-chart-glyph-readiness.mjs'
-      - 'tests/sky-chart-requested-visuals.test.mjs'
-      - 'tests/sky-chart-angle-lane-isolation.test.mjs'
+      - 'tests/sky-chart-canonical-master-contract.test.mjs'
       - '.github/workflows/single-glyph-canon.yml'
 
 permissions:
@@ -47,5 +45,5 @@ jobs:
         run: node tools/check-planet-glyph-hashes.mjs
       - name: Check Sky Chart glyph readiness
         run: node tools/check-sky-chart-glyph-readiness.mjs
-      - name: Run glyph-facing Sky Chart regression tests
-        run: node --test tests/sky-chart-requested-visuals.test.mjs tests/sky-chart-angle-lane-isolation.test.mjs
+      - name: Run current canonical glyph contract
+        run: node tests/sky-chart-canonical-master-contract.test.mjs
