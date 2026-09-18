@@ -67,7 +67,8 @@ await editor.locator('[data-ww-field="location-query"]').fill('Malden');
 await editor.locator('[data-ww-action="search-location"]').click();
 await editor.locator('.sky-location-result').click();
 await editor.locator('[data-ww-field="date"]').fill('1990-04-15');
-await editor.locator('[data-ww-field="time"]').fill('13:30');
+await editor.locator('[data-sky-time-entry]').fill('1:30 PM');
+await editor.locator('[data-sky-time-entry]').press('Tab');
 await editor.locator('button[type="submit"]').click();
 
 const jump = page.locator('#skyFoundationA .sky-ph-jump');
