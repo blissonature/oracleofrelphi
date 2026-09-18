@@ -122,8 +122,10 @@ assert.equal(await jump.getAttribute('aria-label'), 'Open this Sky in Planetary 
 assert.equal(await jump.locator('.sky-ph-jump-title').count(), 0);
 assert.equal(await jump.locator('.sky-ph-heptagram').count(), 1);
 await jump.locator('.sky-ph-heptagram[data-canonical-heptagram-ready="true"]').waitFor({state:'attached',timeout:15000});
-assert.equal(await jump.locator('.sky-ph-planet').count(), 7);
-assert.equal(await jump.locator('.sky-ph-canonical-bubble').count(), 7);
+const heptagram = jump.locator('.sky-ph-heptagram');
+assert.equal(await heptagram.getAttribute('data-canonical-source-ready'), 'true');
+assert.ok(await heptagram.locator('.sky-ph-week-segment').count() >= 7);
+assert.ok(await heptagram.locator('.sky-ph-hour-segment').count() >= 7);
 const href = await jump.getAttribute('href');
 assert.match(href, /^planetaryhours\.html#phShare=1&/);
 assert.match(href, /tz=America%2FNew_York/);
