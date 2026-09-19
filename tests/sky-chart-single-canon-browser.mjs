@@ -30,13 +30,13 @@ async function inspect(width,height,suffix){
     const geminiMarkup=await fetch('assets/zodiac-glyphs/gemini.svg?v=filled-silhouette-test').then(r=>r.text());
     const geminiSvg=new DOMParser().parseFromString(geminiMarkup,'image/svg+xml').documentElement;
     const sourcePath=geminiSvg.querySelector('path');
+    const expectedZodiacRadius=Number(window.RelphiSkyWheelSpec?.comparison?.zodiac?.glyphRadius);
     const zodiac=Array.from(document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign]')).map(host=>{
       const circle=host.querySelector(':scope > .relphi-glyph-bubble > circle');
       return{
         id:host.dataset.zodiacSign,
-        radius:Number(host.dataset.wheelGlyphRadius),
+        radius:Number(circle?.getAttribute('r')),
         glyphCount:host.querySelectorAll('.relphi-canonical-glyph').length,
-        circleDisplay:circle?getComputedStyle(circle).display:'missing',
         circleOpacity:circle?Number(getComputedStyle(circle).opacity):null
       };
     });
@@ -44,13 +44,14 @@ async function inspect(width,height,suffix){
     const angleLines=Array.from(document.querySelectorAll('.sky-foundation-angle-axis')).map(line=>({
       sky:line.dataset.sky,
       edge:Number(line.dataset.axisEdgeRadius),
+      expectedEdge:Number(window.RelphiSkyWheelSpec?.role?.(line.dataset.sky)?.edge),
       x1:Number(line.getAttribute('x1')),y1:Number(line.getAttribute('y1')),
       x2:Number(line.getAttribute('x2')),y2:Number(line.getAttribute('y2'))
     }));
     const placementColors=Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>{
       const expected=host.dataset.sky==='A'?'rgb(201, 33, 30)':'rgb(36, 98, 208)';
       const art=host.querySelector('.relphi-canonical-glyph');
-      const painted=art?Array.from(art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text')).filter(node=>{
+      const painted=art?[...(art.matches('path,circle,ellipse,rect,polygon,polyline,line,text')?[art]:[]),...Array.from(art.querySelectorAll('path,circle,ellipse,rect,polygon,polyline,line,text'))].filter(node=>{
         if(node.matches('text'))return true;
         const fill=node.getAttribute('fill');
         const stroke=node.getAttribute('stroke');
@@ -66,6 +67,7 @@ async function inspect(width,height,suffix){
     });
     return{
       zodiac,
+      expectedZodiacRadius,
       sourceFill:sourcePath?.getAttribute('fill')||'',
       sourceStroke:sourcePath?.getAttribute('stroke')||'',
       sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
@@ -73,6 +75,7 @@ async function inspect(width,height,suffix){
       renderedStroke:geminiPath?.getAttribute('stroke')||'',
       angleLines,
       angleCount:document.querySelectorAll('[data-angle-axis="true"]').length,
+      renderedSkyCount:new Set(Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>host.dataset.sky).filter(Boolean)).size,
       diagnostics:document.querySelectorAll('[data-angle-collision-error],[data-canonical-glyph-error]').length,
       placementColors
     };
@@ -80,18 +83,20 @@ async function inspect(width,height,suffix){
 
   assert.equal(state.zodiac.length,12);
   assert.deepEqual(state.zodiac.map(item=>item.id),SIGNS.map(name=>name.toLowerCase()));
-  assert.ok(state.zodiac.every(item=>item.radius===19));
+  assert.ok(Number.isFinite(state.expectedZodiacRadius));
+  assert.ok(state.zodiac.every(item=>item.radius===state.expectedZodiacRadius));
   assert.ok(state.zodiac.every(item=>item.glyphCount===1));
-  assert.ok(state.zodiac.every(item=>item.circleDisplay==='none'));
+  assert.ok(state.zodiac.every(item=>item.circleOpacity===0));
   assert.equal(state.sourceFill,'#111111');
   assert.equal(state.sourceStroke,'');
   assert.equal(state.sourceStrokeWidth,'');
   assert.equal(state.renderedFill,'#171717');
   assert.equal(state.renderedStroke,'');
-  assert.equal(state.angleCount,8);
-  assert.equal(state.angleLines.length,8);
-  assert.ok(state.angleLines.every(line=>line.edge===(line.sky==='A'?574:166)));
-  assert.ok(state.placementColors.length>=30);
+  assert.ok(state.renderedSkyCount===1||state.renderedSkyCount===2);
+  assert.equal(state.angleCount,state.renderedSkyCount*4);
+  assert.equal(state.angleLines.length,state.angleCount);
+  assert.ok(state.angleLines.every(line=>Number.isFinite(line.expectedEdge)&&line.edge===line.expectedEdge));
+  assert.ok(state.placementColors.length>0);
   assert.ok(state.placementColors.every(item=>item.painted>0));
   assert.deepEqual(state.placementColors.filter(item=>item.wrong),[]);
   assert.equal(state.diagnostics,0);

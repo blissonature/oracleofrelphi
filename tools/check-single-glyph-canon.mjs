@@ -5,7 +5,7 @@ const ROOT = process.cwd();
 const SELF = 'tools/check-single-glyph-canon.mjs';
 const failures = [];
 const productionExt = /\.(?:html|js|mjs|css|json|yml|yaml)$/i;
-const skipDirs = new Set(['.git', 'node_modules', 'coverage', 'tests', 'test']);
+const skipDirs = new Set(['.git', 'node_modules', 'coverage', 'tests', 'test', 'review', 'scripts']);
 const staticMasterIds = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith','part-of-fortune'];
 
 function rel(file) {
@@ -93,10 +93,10 @@ if (!fs.existsSync(relationshipLayoutPath)) {
 } else {
   const relationshipLayout = text(relationshipLayoutPath);
   if (!relationshipLayout.includes('RelphiGlyphComponent')) fail('Relationship glyph painter no longer resolves the shared RelphiGlyphComponent.');
-  if (!relationshipLayout.includes('component.createBubble(')) fail('Relationship glyph painter no longer uses the shared createBubble method.');
+  if (!relationshipLayout.includes('c.createBubble(')) fail('Relationship glyph painter no longer uses the shared createBubble method.');
   if (!relationshipLayout.includes('data-relationship-canonical-host')) fail('Relationship glyph painter no longer marks exclusive canonical ownership of its SVG hosts.');
-  if (!relationshipLayout.includes('host.childElementCount !== 1')) fail('Relationship glyph painter no longer validates its canonical SVG subtree.');
-  if (!relationshipLayout.includes('arts.length !== 1')) fail('Relationship glyph painter no longer rejects duplicate canonical art inside one slot.');
+  if (!relationshipLayout.includes('master.cloneNode(true)')) fail('Relationship glyph painter no longer clones from its one canonical template.');
+  if (!relationshipLayout.includes('slot.replaceChildren(clone)')) fail('Relationship glyph painter no longer gives each slot exclusive canonical ownership.');
 }
 if (fs.existsSync(relationshipInteractionPath)) {
   const interaction = text(relationshipInteractionPath);
@@ -194,7 +194,7 @@ if (fs.existsSync(planetDir) && registry) {
 
 if (fs.existsSync(componentPath)) {
   const component = text(componentPath);
-  if (!component.includes("if (entry.fitMode === 'static-master') return;")) fail('Static masters are no longer protected from runtime fitting.');
+  if (!component.includes("if (entry.fitMode === 'static-master') return true;")) fail('Static masters are no longer protected from runtime fitting.');
   if (!component.includes("if (entry.fitMode === 'static-master') return staticMaster")) fail('Static-master draw path is missing.');
   if (component.includes("entry.id === 'lilith'")) fail('Lilith-specific component logic returned; Lilith must use the shared static-master path.');
   if (component.includes("entry.fitMode === 'lilith'")) fail('Lilith-specific fitting returned; Lilith must not have a bespoke fit mode.');

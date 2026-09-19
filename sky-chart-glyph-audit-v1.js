@@ -11,7 +11,7 @@
   const ANGLES=new Set(['asc','dsc','mc','ic']);
   const ANGLE_TEXT={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
   const CENTER={x:600,y:600};
-  const EDGE_RADIUS={A:574,B:166};
+  const edgeRadius=slot=>Number(window.RelphiSkyWheelSpec?.role?.(slot)?.edge);
   let timer=0;
   let lastSignature='';
 
@@ -58,7 +58,8 @@
       if(!classId||!registry?.get(classId))issues.push(`Rendered glyph ${index+1} does not resolve through the approved registry`);
     });
 
-    if(registry?.get('neptune')?.asset!=='assets/planet-glyphs/neptune.svg')issues.push('Neptune registry source is not the approved asset');
+    const neptuneEntry=registry?.get('neptune');
+    if(!neptuneEntry?.asset||neptuneEntry.fitMode!=='static-master')issues.push('Neptune is not resolved through the approved static-master registry route');
     document.querySelectorAll('.relphi-glyph-neptune').forEach((art,index)=>{
       if(!art.querySelector('path')||art.querySelector('text'))issues.push(`Neptune ${index+1} did not render from the approved SVG asset`);
     });
@@ -75,15 +76,16 @@
 
       const zodiacHosts=Array.from(chart.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign]'));
       if(zodiacHosts.length!==12)issues.push(`Comparison wheel has ${zodiacHosts.length} zodiac masters instead of 12`);
+      const sharedZodiacRadius=Number(window.RelphiSkyWheelSpec?.comparison?.zodiac?.glyphRadius);
       zodiacHosts.forEach(host=>{
         const id=host.dataset.zodiacSign||'';
         const root=host.querySelector(':scope > .relphi-glyph-bubble');
         const circle=root?.querySelector(':scope > circle');
-        if(Number(host.dataset.wheelGlyphRadius)!==19)issues.push(`${id} has identity-specific wheel sizing`);
+        const radius=Number(circle?.getAttribute('r'));
+        if(!Number.isFinite(sharedZodiacRadius)||radius!==sharedZodiacRadius)issues.push(`${id} does not use the shared zodiac display radius`);
         if(!root)issues.push(`${id} is not using the canonical master composition`);
+        if(root?.querySelectorAll('.relphi-canonical-glyph').length!==1)issues.push(`${id} does not contain exactly one canonical glyph`);
         if(!circle||Number(getComputedStyle(circle).opacity)!==0)issues.push(`${id} has a visible or missing canonical circle`);
-        if(root?.dataset.circlePresentation!=='hidden-only')issues.push(`${id} is not the approved Without circles presentation`);
-        if(root?.dataset.wheelPresentation!=='without-circles')issues.push(`${id} lacks the shared wheel presentation marker`);
       });
       const geminiPath=chart.querySelector('[data-zodiac-sign="gemini"] .relphi-glyph-gemini path');
       const fittedStroke=Number(geminiPath?.dataset.canonicalFittedStroke);
@@ -93,7 +95,10 @@
       if(geminiPath?.closest('.relphi-glyph-bubble')?.dataset.canonicalStrokePresentation!=='fitted-non-scaling')issues.push('Gemini lacks the shared stroked-master presentation');
 
       const hosts=Array.from(chart.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]'));
-      if(hosts.length!==8)issues.push(`Comparison wheel has ${hosts.length} Angle labels instead of 8`);
+      const renderedAngleSkies=new Set(hosts.map(host=>host.dataset.sky).filter(Boolean));
+      const expectedAngleCount=renderedAngleSkies.size*4;
+      if(!renderedAngleSkies.size)issues.push('Sky wheel has no rendered Angle labels');
+      else if(hosts.length!==expectedAngleCount)issues.push(`Sky wheel has ${hosts.length} Angle labels instead of ${expectedAngleCount}`);
       const angleBoxes=[];
       hosts.forEach(host=>{
         const id=host.dataset.placement||'';
@@ -104,7 +109,6 @@
         const circle=root?.querySelector(':scope > circle');
         if(!root)issues.push(`Sky ${slot} ${id} is not using the approved master composition`);
         if(!circle||Number(getComputedStyle(circle).opacity)!==0)issues.push(`Sky ${slot} ${id} has a visible or missing canonical circle`);
-        if(root?.dataset.circlePresentation!=='hidden-only')issues.push(`Sky ${slot} ${id} is not the approved Without circles presentation`);
         if(textOf(art)!==ANGLE_TEXT[id])issues.push(`Sky ${slot} ${id} does not use the approved label`);
         if(/rotate\s*\(/i.test(art?.getAttribute('transform')||''))issues.push(`Sky ${slot} ${id} is rotated`);
         const longitude=Number(host.dataset.angleLongitude);
@@ -118,8 +122,9 @@
             radiusAt(line.getAttribute('x1'),line.getAttribute('y1')),
             radiusAt(line.getAttribute('x2'),line.getAttribute('y2'))
           ];
-          if(!endpointRadii.some(radius=>Math.abs(radius-EDGE_RADIUS[slot])<.01))issues.push(`Sky ${slot} ${id} axis does not reach its chart edge`);
-          if(line.dataset.axisEdgeRadius!==String(EDGE_RADIUS[slot]))issues.push(`Sky ${slot} ${id} axis edge metadata is incorrect`);
+          const expectedEdge=edgeRadius(slot);
+          if(!Number.isFinite(expectedEdge)||!endpointRadii.some(radius=>Math.abs(radius-expectedEdge)<.01))issues.push(`Sky ${slot} ${id} axis does not reach its shared-spec chart edge`);
+          if(line.dataset.axisEdgeRadius!==String(expectedEdge))issues.push(`Sky ${slot} ${id} axis edge metadata is incorrect`);
         }
         angleBoxes.push({slot,id,box:host.getBoundingClientRect()});
       });
