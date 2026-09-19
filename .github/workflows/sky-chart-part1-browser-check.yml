@@ -8,6 +8,8 @@ on:
     paths:
       - 'sky-chart.html'
       - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-layout-shell-v1.js'
+      - 'sky-chart-layout-shell-v1.css'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-highlight-without-filtering-v1.js'
       - 'sky-chart-hover-fast-path-v2.js'
@@ -129,7 +131,8 @@ jobs:
               }).length
             };
           });
-          assert.equal(initial.children,3);
+          assert.equal(initial.children,4);
+          assert.equal(await page.locator('#skyFoundationRelationships').evaluate(node=>node.parentElement?.id),'skyFoundationRoot');
           assert.equal(initial.columns,3);
           assert.ok(initial.wheelWidth>500);
           assert.ok(initial.totalRows>0);
