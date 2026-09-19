@@ -125,6 +125,27 @@ jobs:
           console.log('CARD_HITS_DRAWER '+JSON.stringify(drawer));
           assert.equal(drawer.open,true);
           assert.equal(drawer.structure,true);
+
+          // This sample intentionally has no placements in Leo. Focusing the Sun
+          // must still keep the Sun itself and relationships involving the Sun.
+          await page.locator('#skyFoundationA [data-card-ruler="Sun"]').click();
+          await page.waitForTimeout(150);
+          const sunFocus=await page.evaluate(()=>{
+            const sun=document.querySelector('#skyFoundationWheelMount [data-layer="placements"] [data-sky="A"][data-placement="sun"]');
+            const visibleRelationships=[...document.querySelectorAll('.sky-foundation-relationship-row')]
+              .filter(row=>!row.hidden&&!row.classList.contains('sky-card-ruler-hidden'));
+            return{
+              sunKept:sun?.classList.contains('sky-card-ruler-kept')||false,
+              sunDim:sun?.classList.contains('sky-card-ruler-dim')||false,
+              visibleRelationships:visibleRelationships.length,
+              sunRelationships:visibleRelationships.filter(row=>row.dataset.leftPlacement==='sun'||row.dataset.rightPlacement==='sun').length
+            };
+          });
+          console.log('CARD_HITS_SUN_FOCUS '+JSON.stringify(sunFocus));
+          assert.equal(sunFocus.sunKept,true);
+          assert.equal(sunFocus.sunDim,false);
+          assert.ok(sunFocus.visibleRelationships>0);
+          assert.ok(sunFocus.sunRelationships>0);
           assert.deepEqual(errors,[]);
           await browser.close();
           EOF

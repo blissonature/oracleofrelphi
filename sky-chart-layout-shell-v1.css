@@ -1,0 +1,206 @@
+/* Sky Chart layout shell: one owner for major panel placement. */
+#skyFoundationRelationships{
+  grid-area:relationships;
+  min-width:0;
+  overflow:hidden;
+  border:1px solid rgba(31,27,24,.18);
+  border-radius:16px;
+  background:#fffdf8;
+  box-shadow:0 6px 20px rgba(40,30,20,.06);
+}
+
+.sky-layout-control{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-left:auto;
+  color:#5d554e;
+  font:800 .61rem/1 system-ui,sans-serif;
+  white-space:nowrap;
+}
+.sky-layout-control select{
+  min-height:30px;
+  max-width:122px;
+  box-sizing:border-box;
+  border:1px solid rgba(31,27,24,.2);
+  border-radius:8px;
+  background:#fff;
+  color:#211d19;
+  padding:.34rem 1.7rem .34rem .48rem;
+  font:800 .63rem/1 system-ui,sans-serif;
+  cursor:pointer;
+}
+.sky-layout-control select:focus-visible{
+  outline:2px solid rgba(36,98,208,.3);
+  outline-offset:1px;
+}
+
+/* Side layouts are workspaces, not narrow Tarot content pages. Use the
+   available browser width while leaving a small breathing margin. */
+html[data-sky-layout="cards-left"] body.sky-chart-page,
+html[data-sky-layout="cards-right"] body.sky-chart-page{
+  overflow-x:hidden;
+  padding:.35rem .5rem .25rem;
+}
+html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-app-shell,
+html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-app-shell{
+  width:calc(100vw - 16px);
+  max-width:none;
+  box-sizing:border-box;
+  margin:.55rem auto .35rem;
+}
+html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-hero,
+html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-hero{
+  margin:0 auto .55rem;
+}
+html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-hero h1,
+html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-hero h1{
+  margin-block:.1rem;
+}
+html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-hero-subtitle,
+html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-hero-subtitle{
+  margin:.15rem 0 .25rem;
+}
+html[data-sky-layout="cards-left"] body.sky-chart-page #chartPanel,
+html[data-sky-layout="cards-right"] body.sky-chart-page #chartPanel{
+  margin:0;
+  padding:0;
+}
+html[data-sky-layout="cards-left"] #skyFoundationRoot,
+html[data-sky-layout="cards-right"] #skyFoundationRoot{
+  max-width:100%;
+  overflow:visible;
+}
+
+/* Classic keeps the existing visual order, but Relationships is now a stable
+   root-level region rather than content owned by the wheel panel. */
+html[data-sky-layout="classic"] #skyFoundationRoot{
+  grid-template-columns:minmax(220px,270px) minmax(520px,1fr) minmax(220px,270px);
+  grid-template-areas:
+    "a comparison b"
+    "a relationships b";
+}
+html[data-sky-layout="classic"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
+  grid-template-columns:minmax(220px,270px) minmax(520px,1fr);
+  grid-template-areas:
+    "a comparison"
+    "a relationships";
+}
+
+@media(min-width:1380px){
+  /* Balance the total card region against Relationships so the wheel remains
+     the true visual center.  The wheel receives the same generous scale it had
+     in the classic center column; Relationships keeps its established two
+     columns without becoming a dominant rail. */
+  html[data-sky-layout="cards-left"] #skyFoundationRoot{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,2.8fr) minmax(0,2fr);
+    grid-template-areas:"a b comparison relationships";
+  }
+  html[data-sky-layout="cards-right"] #skyFoundationRoot{
+    grid-template-columns:minmax(0,2fr) minmax(0,2.8fr) minmax(0,1fr) minmax(0,1fr);
+    grid-template-areas:"relationships comparison a b";
+  }
+  html[data-sky-layout="cards-left"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
+    grid-template-columns:minmax(0,2fr) minmax(0,2.8fr) minmax(0,2fr);
+    grid-template-areas:"a comparison relationships";
+  }
+  html[data-sky-layout="cards-right"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
+    grid-template-columns:minmax(0,2fr) minmax(0,2.8fr) minmax(0,2fr);
+    grid-template-areas:"relationships comparison a";
+  }
+
+  html[data-sky-layout="cards-left"] #skyFoundationRelationships,
+  html[data-sky-layout="cards-right"] #skyFoundationRelationships{
+    display:flex;
+    flex-direction:column;
+    align-self:start;
+    height:var(--sky-side-panel-height,auto);
+    max-height:var(--sky-side-panel-height,none);
+    overflow:hidden;
+  }
+  html[data-sky-layout="cards-left"] #skyFoundationRelationshipList,
+  html[data-sky-layout="cards-right"] #skyFoundationRelationshipList{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:6px;
+    row-gap:0;
+    flex:1 1 auto;
+    min-height:0;
+    max-height:none;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    padding:0;
+  }
+  html[data-sky-layout="cards-left"] #skyFoundationRelationshipList>.sky-foundation-relationship-row,
+  html[data-sky-layout="cards-right"] #skyFoundationRelationshipList>.sky-foundation-relationship-row{
+    margin:0;
+    border-radius:0;
+    border-top:0;
+    border-left:1px solid rgba(31,27,24,.13);
+    border-right:1px solid rgba(31,27,24,.13);
+    border-bottom:1px solid rgba(31,27,24,.13);
+    box-shadow:none;
+  }
+  html[data-sky-layout="cards-left"] #skyFoundationRelationshipList>.sky-foundation-relationship-row:nth-child(-n+2),
+  html[data-sky-layout="cards-right"] #skyFoundationRelationshipList>.sky-foundation-relationship-row:nth-child(-n+2){
+    border-top:1px solid rgba(31,27,24,.13);
+  }
+
+}
+
+/* Below the wide-workspace breakpoint, layout preference remains saved but the
+   page uses the established responsive composition. */
+@media(max-width:1379px){
+  html[data-sky-layout] #skyFoundationRoot{
+    grid-template-columns:minmax(195px,230px) minmax(460px,1fr) minmax(195px,230px);
+    grid-template-areas:
+      "a comparison b"
+      "a relationships b";
+    gap:10px;
+  }
+  html[data-sky-layout][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
+    grid-template-columns:minmax(220px,270px) minmax(520px,1fr);
+    grid-template-areas:
+      "a comparison"
+      "a relationships";
+  }
+}
+
+@media(max-width:900px){
+  html[data-sky-layout] #skyFoundationRoot{
+    grid-template-columns:1fr 1fr;
+    grid-template-areas:
+      "a b"
+      "comparison comparison"
+      "relationships relationships";
+  }
+  html[data-sky-layout][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "a"
+      "comparison"
+      "relationships";
+  }
+}
+
+@media(max-width:620px){
+  html[data-sky-layout] #skyFoundationRoot,
+  html[data-sky-layout][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "a"
+      "b"
+      "comparison"
+      "relationships";
+  }
+  html[data-sky-layout][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
+    grid-template-areas:
+      "a"
+      "comparison"
+      "relationships";
+  }
+  .sky-layout-control{
+    flex:1 0 100%;
+    justify-content:flex-end;
+  }
+}

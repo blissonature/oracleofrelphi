@@ -14,6 +14,8 @@ on:
       - 'assets/element-glyphs/**'
       - 'assets/aspect-glyphs/**'
       - 'sky-chart-foundation-v2.js'
+      - 'sky-chart-layout-shell-v1.js'
+      - 'sky-chart-layout-shell-v1.css'
       - 'sky-chart-final-pass-v2.js'
       - 'sky-chart-where-when-v3.js'
       - 'sky-chart-card-drawers-v1.css'
@@ -30,6 +32,7 @@ on:
       - 'tests/sky-chart-single-canon-browser.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-placement-compact.mjs'
+      - 'tests/sky-chart-layout-shell.mjs'
       - 'tests/sky-chart-stability-now.mjs'
       - 'tests/sky-chart-hour-ruler-and-sky-colors.mjs'
       - '.github/workflows/sky-chart-ui-regression-check.yml'
@@ -57,6 +60,7 @@ jobs:
           node --check relphi-glyph-source-integrity-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
           node --check sky-chart-foundation-v2.js
+          node --check sky-chart-layout-shell-v1.js
           node --check sky-chart-glyph-audit-v1.js
           node --check sky-chart-selected-relationship-v4.js
           node --check sky-chart-placement-multiselect-v4.js
@@ -68,6 +72,7 @@ jobs:
           node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-placement-compact.mjs
+          node --check tests/sky-chart-layout-shell.mjs
           node --check tests/sky-chart-stability-now.mjs
           node --check tests/sky-chart-hour-ruler-and-sky-colors.mjs
       - name: Install Chromium
@@ -78,6 +83,7 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-ui-regression-server.log 2>&1 &
           node tests/sky-chart-placement-compact.mjs
+          node tests/sky-chart-layout-shell.mjs
           node tests/sky-chart-filter-control-unified.mjs
           node tests/sky-chart-single-canon-browser.mjs
           node tests/sky-chart-stability-now.mjs
@@ -90,6 +96,9 @@ jobs:
             sky-chart-single-canon-desktop.png
             sky-chart-single-canon-mobile.png
             sky-chart-filter-controls-unified.png
+            sky-chart-layout-cards-left.png
+            sky-chart-layout-cards-right.png
+            sky-chart-layout-mobile.png
             sky-chart-placement-single-desktop.png
             sky-chart-placement-compact-desktop.png
             sky-chart-placement-compact-mobile.png
