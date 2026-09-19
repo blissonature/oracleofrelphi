@@ -239,8 +239,8 @@ test('Planetary Hours heptagram keeps day and hour states visibly distinct witho
   assert.match(heptagram, /if \(state\.day\) addDayRulerHalo\(master, planetColor\)/);
   assert.match(heptagram, /dayRulerRing\(DAY_RING_INNER_RADIUS, color, 'inner'\)/);
   assert.match(heptagram, /dayRulerRing\(DAY_RING_OUTER_RADIUS, color, 'outer'\)/);
-  assert.match(heptagram, /color:state\.hour \? '#ffffff' : planetColor/);
-  assert.match(heptagram, /fill:state\.hour \? planetColor : '#ffffff'/);
+  assert.match(heptagram, /color:state\.hour \? planetColor : '#ffffff'/);
+  assert.match(heptagram, /fill:state\.hour \? '#ffffff' : planetColor/);
   assert.match(heptagram, /day-and-hour-ruler/);
   assert.match(heptagramCss, /\.sky-ph-day-ruler-ring--inner/);
   assert.match(heptagramCss, /\.sky-ph-day-ruler-ring--outer/);
