@@ -11,7 +11,7 @@
   const ANGLES=new Set(['asc','dsc','mc','ic']);
   const ANGLE_TEXT={asc:'Asc',dsc:'Dsc',mc:'MC',ic:'IC'};
   const CENTER={x:600,y:600};
-  const EDGE_RADIUS={A:574,B:166};
+  const edgeRadius=slot=>Number(window.RelphiSkyWheelSpec?.role?.(slot)?.edge);
   let timer=0;
   let lastSignature='';
 
@@ -122,8 +122,9 @@
             radiusAt(line.getAttribute('x1'),line.getAttribute('y1')),
             radiusAt(line.getAttribute('x2'),line.getAttribute('y2'))
           ];
-          if(!endpointRadii.some(radius=>Math.abs(radius-EDGE_RADIUS[slot])<.01))issues.push(`Sky ${slot} ${id} axis does not reach its chart edge`);
-          if(line.dataset.axisEdgeRadius!==String(EDGE_RADIUS[slot]))issues.push(`Sky ${slot} ${id} axis edge metadata is incorrect`);
+          const expectedEdge=edgeRadius(slot);
+          if(!Number.isFinite(expectedEdge)||!endpointRadii.some(radius=>Math.abs(radius-expectedEdge)<.01))issues.push(`Sky ${slot} ${id} axis does not reach its shared-spec chart edge`);
+          if(line.dataset.axisEdgeRadius!==String(expectedEdge))issues.push(`Sky ${slot} ${id} axis edge metadata is incorrect`);
         }
         angleBoxes.push({slot,id,box:host.getBoundingClientRect()});
       });
