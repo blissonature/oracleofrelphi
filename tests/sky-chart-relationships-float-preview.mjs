@@ -82,11 +82,15 @@ try{
   const placementPopover=page.locator('#skyChartPlacementPopover');
   await page.waitForSelector('#skyChartPlacementPopover.is-portaled:not([hidden])');
   assert.ok(Number(await placementPopover.evaluate(node=>getComputedStyle(node).zIndex))>1200,'Placement popover must render above the floating Relationships panel.');
+  const placementAll=placementPopover.locator('[data-placement-scope="all"][data-placement-target="all"][data-placement-choice="all"]');
   const sunAll=placementPopover.locator('[data-placement-scope="placement"][data-placement-target="sun"][data-placement-choice="all"]');
-  await sunAll.uncheck();
-  await page.waitForFunction(()=>![...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')].some(row=>!row.hidden&&getComputedStyle(row).display!=='none'&&(row.dataset.leftPlacement==='sun'||row.dataset.rightPlacement==='sun')));
-  assert.ok(await visibleRows().count()<baseline,'Placement filter must change the visible relationship set.');
+  await placementAll.uncheck();
   await sunAll.check();
+  await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList > .sky-foundation-relationship-row')].some(row=>!row.hidden&&getComputedStyle(row).display!=='none'));
+  const placementCount=await visibleRows().count();
+  assert.ok(placementCount>0&&placementCount<baseline,'Placement filter must narrow the visible relationship set.');
+  assert.equal(await visibleRows().evaluateAll(rows=>rows.every(row=>row.dataset.leftPlacement==='sun'||row.dataset.rightPlacement==='sun')),true,'With only Sun selected, every visible relationship must involve Sun.');
+  await placementAll.check();
   await page.keyboard.press('Escape');
 
   // House filter
