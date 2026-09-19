@@ -1,0 +1,47 @@
+name: Sky Chart relationship filmstrip check
+
+on:
+  push:
+    branches:
+      - feature/sky-chart-relationship-filmstrip
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-relationship-filmstrip-v1.css'
+      - 'sky-chart-relationship-filmstrip-v1.js'
+      - 'tests/sky-chart-relationship-filmstrip.mjs'
+      - '.github/workflows/sky-chart-relationship-filmstrip-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: sky-chart-relationship-filmstrip-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax
+        run: |
+          node --check sky-chart-foundation-interactions-v2.js
+          node --check sky-chart-relationship-filmstrip-v1.js
+          node --check tests/sky-chart-relationship-filmstrip.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+      - name: Run relationship filmstrip browser check
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-filmstrip-server.log 2>&1 &
+          node tests/sky-chart-relationship-filmstrip.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-relationship-filmstrip
+          path: sky-chart-relationship-filmstrip.png
+          if-no-files-found: ignore
