@@ -1,0 +1,51 @@
+name: Sky Chart floating Relationships preview check
+
+on:
+  push:
+    branches:
+      - prototype/sky-chart-relationships-float
+    paths:
+      - 'sky-chart.html'
+      - 'sky-chart-foundation-interactions-v2.js'
+      - 'sky-chart-relationships-float-preview-v1.css'
+      - 'sky-chart-relationships-float-preview-v1.js'
+      - 'tests/sky-chart-relationships-float-preview.mjs'
+      - '.github/workflows/sky-chart-float-preview-check.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: sky-chart-float-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check prototype syntax
+        run: |
+          node --check sky-chart-foundation-interactions-v2.js
+          node --check sky-chart-relationships-float-preview-v1.js
+          node --check tests/sky-chart-relationships-float-preview.mjs
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
+          npx playwright install --with-deps chromium
+
+      - name: Run floating Relationships browser check
+        run: |
+          python3 -m http.server 4173 > /tmp/sky-chart-float-preview-server.log 2>&1 &
+          node tests/sky-chart-relationships-float-preview.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sky-chart-floating-relationships-preview
+          path: sky-chart-relationships-float-preview.png
+          if-no-files-found: ignore
