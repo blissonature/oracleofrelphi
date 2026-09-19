@@ -28,7 +28,7 @@ await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
 const result=await page.evaluate(()=>{
   const selectors={
     orb:'input[data-filter="orb"]',
-    aspects:'.sky-chart-aspect-filter-value',
+    aspects:'.sky-chart-aspect-summary-choices',
     placements:'.sky-chart-placement-summary-choices',
     houses:'.sky-chart-house-summary-choices',
     houseSystem:'[data-house-system-filter]'
