@@ -42,9 +42,9 @@ try{
   assert.ok(Math.abs(panelBox.y-(wheelBox.y+wheelBox.height))<=2,'Collapsed filmstrip must begin immediately below the wheel.');
   assert.ok(panelBox.height<=82,'Collapsed filmstrip must fit in the compact shelf beneath the wheel.');
 
-  const layout=await list.evaluate(node=>{const s=getComputedStyle(node);return{flow:s.gridAutoFlow,columns:s.gridTemplateColumns,overflowX:s.overflowX,overflowY:s.overflowY,height:s.height}});
-  assert.ok(layout.flow.startsWith('column'),'Collapsed Relationships must be a horizontal filmstrip.');
-  assert.notEqual(layout.overflowX,'hidden');
+  const layout=await list.evaluate(node=>{const s=getComputedStyle(node);return{columns:s.gridTemplateColumns,overflowX:s.overflowX,overflowY:s.overflowY,height:s.height}});
+  assert.equal(layout.columns.split(' ').length,3,'Collapsed Relationships must provide exactly three carousel slots.');
+  assert.equal(layout.overflowX,'hidden','Collapsed carousel must not free-scroll horizontally.');
   assert.equal(layout.overflowY,'hidden');
 
   const eligibleCount=()=>page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')].filter(row=>!row.hidden&&row.getAttribute('aria-hidden')!=='true'&&!Array.from(row.classList).some(name=>/hidden$/.test(name))).length);
@@ -130,6 +130,8 @@ try{
   assert.equal(await rich.locator('.sky-filmstrip-rich-sign').count(),2,'Expanded relationship must show both sign names and referents.');
   assert.equal(await rich.locator('.sky-filmstrip-rich-aspect>strong').count(),1,'Expanded relationship must show the aspect name.');
   assert.equal(await rich.locator('.sky-filmstrip-rich-aspect>p').count(),1,'Expanded relationship must show the aspect referent.');
+  await rich.scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible:first-of-type .sky-filmstrip-rich-card img')].every(image=>image.complete&&image.naturalWidth>0));
   assert.equal(await rich.locator('.sky-filmstrip-rich-card img').evaluateAll(images=>images.every(image=>image.complete&&image.naturalWidth>0)),true,'Expanded Tarot card art must load successfully.');
 
   const expandedPanelBox=await panel.boundingBox();
