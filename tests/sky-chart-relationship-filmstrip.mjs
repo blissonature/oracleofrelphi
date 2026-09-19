@@ -131,7 +131,11 @@ try{
   assert.equal(await rich.locator('.sky-filmstrip-rich-aspect>strong').count(),1,'Expanded relationship must show the aspect name.');
   assert.equal(await rich.locator('.sky-filmstrip-rich-aspect>p').count(),1,'Expanded relationship must show the aspect referent.');
   await rich.scrollIntoViewIfNeeded();
-  await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible:first-of-type .sky-filmstrip-rich-card img')].every(image=>image.complete&&image.naturalWidth>0));
+  await page.waitForFunction(()=>{
+    const row=[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row')].find(node=>node.getClientRects().length>0&&node.querySelector('.sky-filmstrip-expanded-detail'));
+    const images=row?[...row.querySelectorAll('.sky-filmstrip-rich-card img')]:[];
+    return images.length===2&&images.every(image=>image.complete&&image.naturalWidth>0);
+  });
   assert.equal(await rich.locator('.sky-filmstrip-rich-card img').evaluateAll(images=>images.every(image=>image.complete&&image.naturalWidth>0)),true,'Expanded Tarot card art must load successfully.');
 
   const expandedPanelBox=await panel.boundingBox();
