@@ -67,10 +67,6 @@ function start(){
   window.addEventListener('relphi:sky-where-when-committed',scheduleSize);
   window.addEventListener('relphi:sky-layout-changed',scheduleSize);
   window.addEventListener('resize',scheduleSize,{passive:true});
-  if('ResizeObserver'in window){
-    const observer=new ResizeObserver(scheduleSize);
-    ['skyFoundationA','skyFoundationB'].forEach(id=>{const node=document.getElementById(id);if(node)observer.observe(node)});
-  }
   scheduleSize();
 }
 window.RelphiSkyLayoutShell=Object.freeze({apply,current:()=>normalize(document.documentElement.dataset.skyLayout),ensureControl,syncPanelHeight});
