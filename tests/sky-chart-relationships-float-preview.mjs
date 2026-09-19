@@ -115,7 +115,7 @@ try{
   assert.ok(Number(await zodiacMenu.evaluate(node=>getComputedStyle(node).zIndex))>1200,'Zodiac popover must render above the floating Relationships panel.');
   const sign=await visibleRows().first().getAttribute('data-left-sign');
   await zodiacMenu.locator('[data-zodiac-none]').click();
-  await zodiacMenu.locator(`.sky-chart-zodiac-filter-row input[value="${sign}"]`).check();
+  await zodiacMenu.locator(`.sky-chart-zodiac-filter-row input[value="${sign}"]`).click();
   await page.waitForTimeout(120);
   const zodiacCount=await visibleRows().count();
   assert.ok(zodiacCount>0&&zodiacCount<baseline,'Zodiac filter must narrow the visible relationship set.');
