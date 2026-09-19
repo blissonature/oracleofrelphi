@@ -1,5 +1,5 @@
-// Relationship rows highlight their wheel line without changing list membership.
-// Wheel gestures retain ownership of dimming/isolation and mark related list rows.
+// Relationship rows highlight their exact wheel line without changing list membership.
+// The interaction controller owns their contextual wheel dim/isolate state.
 (function () {
   'use strict';
   if (!/(^|\/)sky-chart\.html$/.test(location.pathname)) return;
