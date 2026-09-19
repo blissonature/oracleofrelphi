@@ -1,7 +1,7 @@
 // Desktop-only Relationships filmstrip presentation and keyboard/mouse-wheel scrubbing.
 (function(){
 'use strict';
-if(!/(^|\\/)sky-chart\\.html$/.test(location.pathname)||window.__relphiSkyRelationshipFilmstripV1)return;
+if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyRelationshipFilmstripV1)return;
 window.__relphiSkyRelationshipFilmstripV1=true;
 
 const desktopQuery=window.matchMedia('(min-width:901px) and (pointer:fine)');
