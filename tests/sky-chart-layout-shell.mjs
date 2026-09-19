@@ -22,7 +22,10 @@ try{
     localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
     localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
     localStorage.setItem('relphiSkyChartLastModeV1','comparison');
-    localStorage.removeItem('relphiSkyChartLayoutV1');
+    if(!sessionStorage.getItem('relphiLayoutTestSeeded')){
+      localStorage.removeItem('relphiSkyChartLayoutV1');
+      sessionStorage.setItem('relphiLayoutTestSeeded','true');
+    }
   },{a:skyA,b:skyB});
 
   await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
