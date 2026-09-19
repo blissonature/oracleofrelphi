@@ -1,0 +1,90 @@
+/* Prototype only: float the existing live Relationships panel without changing its owner or contents. */
+.sky-relationships-float-button{
+  appearance:none;
+  border:1px solid rgba(31,27,24,.2);
+  border-radius:999px;
+  background:#fff;
+  color:#241f1b;
+  padding:.38rem .62rem;
+  font:800 .64rem/1 system-ui,sans-serif;
+  cursor:pointer;
+}
+.sky-relationships-float-button:hover,
+.sky-relationships-float-button:focus-visible{
+  border-color:rgba(31,27,24,.42);
+  background:#f6f0e8;
+  outline:none;
+}
+.sky-relationships-float-button[aria-pressed="true"]{
+  background:#241f1b;
+  border-color:#241f1b;
+  color:#fff;
+}
+
+html[data-sky-relationships-view="float"] body.sky-chart-page #skyFoundationComparison{
+  overflow:visible;
+}
+
+html[data-sky-relationships-view="float"] #skyFoundationRelationships{
+  position:fixed;
+  z-index:1200;
+  top:78px;
+  right:18px;
+  width:min(680px,calc(100vw - 36px));
+  height:min(76vh,760px);
+  min-width:min(420px,calc(100vw - 36px));
+  min-height:260px;
+  max-width:calc(100vw - 24px);
+  max-height:calc(100vh - 24px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  resize:both;
+  border:1px solid rgba(31,27,24,.2);
+  border-radius:16px;
+  background:#fffdf8;
+  box-shadow:0 22px 60px rgba(31,27,24,.28);
+}
+
+html[data-sky-relationships-view="float"] #skyFoundationRelationships>.sky-foundation-relationships-heading{
+  flex:0 0 auto;
+  cursor:move;
+  user-select:none;
+  background:#fffdf8;
+}
+
+html[data-sky-relationships-view="float"] #skyFoundationRelationships>.sky-foundation-relationships-heading button,
+html[data-sky-relationships-view="float"] #skyFoundationRelationships>.sky-foundation-relationships-heading select,
+html[data-sky-relationships-view="float"] #skyFoundationRelationships>.sky-foundation-relationships-heading input,
+html[data-sky-relationships-view="float"] #skyFoundationRelationships>.sky-foundation-relationships-heading label,
+html[data-sky-relationships-view="float"] #skyFoundationRelationships>.sky-foundation-relationships-heading a{
+  cursor:pointer;
+}
+
+html[data-sky-relationships-view="float"] #skyFoundationRelationshipList{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow:auto;
+}
+
+html[data-sky-relationships-view="float"] #skyFoundationRelationshipEmpty{
+  flex:0 0 auto;
+}
+
+@media(max-width:760px){
+  .sky-relationships-float-button{display:none}
+  html[data-sky-relationships-view="float"] #skyFoundationRelationships{
+    position:static;
+    width:auto;
+    height:auto;
+    min-width:0;
+    min-height:0;
+    max-width:none;
+    max-height:none;
+    resize:none;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+  }
+}
