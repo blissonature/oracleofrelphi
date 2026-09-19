@@ -68,7 +68,20 @@ try{
   const leftRelationshipsHeight=await page.locator('#skyFoundationRelationships').evaluate(node=>node.getBoundingClientRect().height);
   assert.ok(leftRelationshipsHeight<=leftSkyHeight+1,`Relationships must not be taller than the Sky cards: ${leftRelationshipsHeight}px vs ${leftSkyHeight}px.`);
   assert.equal(await page.locator('body').evaluate(node=>node.scrollWidth<=node.clientWidth),true,'Cards Left must not create horizontal page scrolling.');
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=window.innerHeight+1),true,'Cards Left must not require browser vertical scrolling.');
+  const leftViewport=await page.evaluate(()=>({
+    innerHeight:window.innerHeight,
+    docScrollHeight:document.documentElement.scrollHeight,
+    bodyScrollHeight:document.body.scrollHeight,
+    rootTop:Math.round(document.getElementById('skyFoundationRoot').getBoundingClientRect().top),
+    rootBottom:Math.round(document.getElementById('skyFoundationRoot').getBoundingClientRect().bottom),
+    appTop:Math.round(document.querySelector('.tarot-app-shell').getBoundingClientRect().top),
+    appBottom:Math.round(document.querySelector('.tarot-app-shell').getBoundingClientRect().bottom),
+    heroHeight:Math.round(document.querySelector('.tarot-hero').getBoundingClientRect().height),
+    cardAHeight:Math.round(document.getElementById('skyFoundationA').getBoundingClientRect().height),
+    cardBHeight:Math.round(document.getElementById('skyFoundationB').getBoundingClientRect().height)
+  }));
+  console.log('Cards Left viewport metrics',JSON.stringify(leftViewport));
+  assert.equal(leftViewport.docScrollHeight<=leftViewport.innerHeight+1,true,`Cards Left must not require browser vertical scrolling: ${JSON.stringify(leftViewport)}`);
   assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartLayoutV1')),'cards-left');
   await page.screenshot({path:'sky-chart-layout-cards-left.png',fullPage:true});
 
