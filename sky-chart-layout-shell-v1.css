@@ -40,6 +40,7 @@
 html[data-sky-layout="cards-left"] body.sky-chart-page,
 html[data-sky-layout="cards-right"] body.sky-chart-page{
   overflow-x:hidden;
+  padding:.35rem .5rem .25rem;
 }
 html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-app-shell,
 html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-app-shell{
@@ -54,7 +55,11 @@ html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-hero{
 }
 html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-hero h1,
 html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-hero h1{
-  margin-block:.2rem;
+  margin-block:.1rem;
+}
+html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-hero-subtitle,
+html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-hero-subtitle{
+  margin:.15rem 0 .25rem;
 }
 html[data-sky-layout="cards-left"] body.sky-chart-page #chartPanel,
 html[data-sky-layout="cards-right"] body.sky-chart-page #chartPanel{
