@@ -79,25 +79,14 @@ try{
   const expandedRelationshipsHeight=await page.locator('#skyFoundationRelationships').evaluate(node=>node.getBoundingClientRect().height);
   assert.ok(expandedAHeight>baselineAHeight+20,'Rulers should be allowed to extend the Sky card.');
   assert.ok(Math.abs(expandedRelationshipsHeight-baselineRelationshipsHeight)<=1,'Relationships must keep its baseline height when Rulers extends a Sky card.');
+  assert.ok(await page.locator('.sky-foundation-relationship-row:not(.sky-card-ruler-hidden):visible').count()>0,'Sun ruler focus must leave matching relationships visible.');
   assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartLayoutV1')),'cards-left');
   await page.waitForFunction(()=>window.RelphiSkyRelationshipDisplay?.setMode&&window.RelphiRelationshipCopySerializer);
   await page.evaluate(()=>window.RelphiSkyRelationshipDisplay.setMode('referents'));
-  await page.waitForFunction(()=>document.querySelector('.sky-foundation-relationship-row:not(.is-inline-expanded) > .sky-relationship-display-summary[data-relationship-display-summary="referents"]'));
-  const referentText=(await page.locator('.sky-foundation-relationship-row:not(.is-inline-expanded) > .sky-relationship-display-summary').first().textContent())||'';
+  await page.waitForFunction(()=>[...document.querySelectorAll('.sky-foundation-relationship-row:not(.is-inline-expanded) > .sky-relationship-display-summary[data-relationship-display-summary="referents"]')].some(node=>{const row=node.closest('.sky-foundation-relationship-row'),style=getComputedStyle(row);return !row.hidden&&style.display!=='none'&&style.visibility!=='hidden'}));
+  const referentText=(await page.locator('.sky-foundation-relationship-row:not(.is-inline-expanded):visible > .sky-relationship-display-summary').first().textContent())||'';
   assert.ok(/—|identity|feelings|structure|relationship|pressure|exchange|adjustment|opening/i.test(referentText),'Referents mode must visibly render semantic relationship text.');
   await page.evaluate(()=>window.RelphiSkyRelationshipDisplay.setMode('glyphs'));
-
-  const relationshipHeightBeforeRulers=await page.locator('#skyFoundationRelationships').evaluate(node=>node.getBoundingClientRect().height);
-  const skyAHeightBeforeRulers=await page.locator('#skyFoundationA').evaluate(node=>node.getBoundingClientRect().height);
-  await page.locator('#skyFoundationA [data-sky-drawer-tab="card-hits"]').click();
-  await page.waitForSelector('#skyFoundationA [data-card-ruler="Sun"]',{timeout:10000});
-  await page.locator('#skyFoundationA [data-card-ruler="Sun"]').click();
-  await page.waitForTimeout(120);
-  const skyAHeightWithRulers=await page.locator('#skyFoundationA').evaluate(node=>node.getBoundingClientRect().height);
-  const relationshipHeightWithRulers=await page.locator('#skyFoundationRelationships').evaluate(node=>node.getBoundingClientRect().height);
-  assert.ok(skyAHeightWithRulers>skyAHeightBeforeRulers,'Rulers is allowed to make the Sky card taller.');
-  assert.ok(Math.abs(relationshipHeightWithRulers-relationshipHeightBeforeRulers)<=1,'Relationships must not grow when Rulers makes a Sky card taller.');
-  assert.ok(await page.locator('.sky-foundation-relationship-row:not(.sky-card-ruler-hidden):visible').count()>0,'Sun ruler focus must leave matching relationships visible.');
 
     await page.screenshot({path:'sky-chart-layout-cards-left.png',fullPage:true});
 
