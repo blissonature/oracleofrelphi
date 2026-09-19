@@ -42,6 +42,10 @@ try{
 
   const wheel=page.locator('#skyFoundationWheelMount > .sky-foundation-wheel');
   const row=page.locator('#skyFoundationRelationshipList > .sky-foundation-relationship-row:visible').first();
+  await page.evaluate(()=>{
+    window.__relphiFloatPreviewFoundationFilterEvents=0;
+    window.addEventListener('relphi:sky-foundation-filter-changed',()=>{window.__relphiFloatPreviewFoundationFilterEvents+=1});
+  });
   await row.hover();
   await page.waitForTimeout(80);
   assert.equal((await wheel.getAttribute('class')||'').includes('has-isolation'),true,'Relationship hover must dim unrelated wheel structure.');
@@ -51,6 +55,7 @@ try{
   }));
   assert.ok(hoverIsolation.kept>0&&hoverIsolation.kept<hoverIsolation.total,'Relationship hover must keep only the hovered relationship context.');
   assert.ok(await page.locator('.sky-foundation-aspect.is-row-hovered:not(.sky-foundation-aspect-hit)').count()>0,'Relationship hover must identify the matching wheel aspect.');
+  assert.equal(await page.evaluate(()=>window.__relphiFloatPreviewFoundationFilterEvents),0,'Relationship hover isolation must stay on the wheel-only fast path and must not invoke the relationship-filter pipeline.');
   await page.locator('.sky-foundation-relationships-heading h2').hover();
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel')?.classList.contains('has-isolation')===false);
 
