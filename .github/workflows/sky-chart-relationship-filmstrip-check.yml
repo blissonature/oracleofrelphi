@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: sky-chart-relationship-filmstrip-\${{ github.ref }}
+  group: sky-chart-relationship-filmstrip-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
