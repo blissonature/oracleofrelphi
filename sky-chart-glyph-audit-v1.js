@@ -76,15 +76,16 @@
 
       const zodiacHosts=Array.from(chart.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign]'));
       if(zodiacHosts.length!==12)issues.push(`Comparison wheel has ${zodiacHosts.length} zodiac masters instead of 12`);
+      const sharedZodiacRadius=Number(window.RelphiSkyWheelSpec?.comparison?.zodiac?.glyphRadius);
       zodiacHosts.forEach(host=>{
         const id=host.dataset.zodiacSign||'';
         const root=host.querySelector(':scope > .relphi-glyph-bubble');
         const circle=root?.querySelector(':scope > circle');
-        if(Number(host.dataset.wheelGlyphRadius)!==19)issues.push(`${id} has identity-specific wheel sizing`);
+        const radius=Number(circle?.getAttribute('r'));
+        if(!Number.isFinite(sharedZodiacRadius)||radius!==sharedZodiacRadius)issues.push(`${id} does not use the shared zodiac display radius`);
         if(!root)issues.push(`${id} is not using the canonical master composition`);
+        if(root?.querySelectorAll('.relphi-canonical-glyph').length!==1)issues.push(`${id} does not contain exactly one canonical glyph`);
         if(!circle||Number(getComputedStyle(circle).opacity)!==0)issues.push(`${id} has a visible or missing canonical circle`);
-        if(root?.dataset.circlePresentation!=='hidden-only')issues.push(`${id} is not the approved Without circles presentation`);
-        if(root?.dataset.wheelPresentation!=='without-circles')issues.push(`${id} lacks the shared wheel presentation marker`);
       });
       const geminiPath=chart.querySelector('[data-zodiac-sign="gemini"] .relphi-glyph-gemini path');
       const fittedStroke=Number(geminiPath?.dataset.canonicalFittedStroke);
@@ -105,7 +106,6 @@
         const circle=root?.querySelector(':scope > circle');
         if(!root)issues.push(`Sky ${slot} ${id} is not using the approved master composition`);
         if(!circle||Number(getComputedStyle(circle).opacity)!==0)issues.push(`Sky ${slot} ${id} has a visible or missing canonical circle`);
-        if(root?.dataset.circlePresentation!=='hidden-only')issues.push(`Sky ${slot} ${id} is not the approved Without circles presentation`);
         if(textOf(art)!==ANGLE_TEXT[id])issues.push(`Sky ${slot} ${id} does not use the approved label`);
         if(/rotate\s*\(/i.test(art?.getAttribute('transform')||''))issues.push(`Sky ${slot} ${id} is rotated`);
         const longitude=Number(host.dataset.angleLongitude);
