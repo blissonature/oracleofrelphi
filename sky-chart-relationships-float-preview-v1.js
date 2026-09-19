@@ -6,6 +6,8 @@ window.__relphiRelationshipsFloatPreview=true;
 
 const VIEW_ATTR='data-sky-relationships-view';
 let drag=null;
+let dragFrame=0;
+let dragPoint=null;
 
 function panel(){return document.getElementById('skyFoundationRelationships')}
 function heading(){return panel()?.querySelector(':scope>.sky-foundation-relationships-heading')||null}
@@ -80,28 +82,35 @@ function dragStart(event){
   p.style.top=rect.top+'px';
   p.style.right='auto';
   p.style.bottom='auto';
-  drag={pointerId:event.pointerId,dx:event.clientX-rect.left,dy:event.clientY-rect.top};
+  drag={pointerId:event.pointerId,dx:event.clientX-rect.left,dy:event.clientY-rect.top,width:rect.width,height:rect.height};
   head.setPointerCapture?.(event.pointerId);
   event.preventDefault();
 }
 
 function dragMove(event){
   if(!drag||event.pointerId!==drag.pointerId)return;
-  const p=panel();
-  if(!p)return;
-  const rect=p.getBoundingClientRect();
-  const maxLeft=Math.max(8,innerWidth-rect.width-8);
-  const maxTop=Math.max(8,innerHeight-rect.height-8);
-  const left=Math.min(maxLeft,Math.max(8,event.clientX-drag.dx));
-  const top=Math.min(maxTop,Math.max(8,event.clientY-drag.dy));
-  p.style.left=left+'px';
-  p.style.top=top+'px';
+  dragPoint={x:event.clientX,y:event.clientY};
+  if(dragFrame)return;
+  dragFrame=requestAnimationFrame(()=>{
+    dragFrame=0;
+    if(!drag||!dragPoint)return;
+    const p=panel();
+    if(!p)return;
+    const maxLeft=Math.max(8,innerWidth-drag.width-8);
+    const maxTop=Math.max(8,innerHeight-drag.height-8);
+    const left=Math.min(maxLeft,Math.max(8,dragPoint.x-drag.dx));
+    const top=Math.min(maxTop,Math.max(8,dragPoint.y-drag.dy));
+    p.style.left=left+'px';
+    p.style.top=top+'px';
+  });
 }
 
 function dragEnd(event){
   if(!drag||event.pointerId!==drag.pointerId)return;
   heading()?.releasePointerCapture?.(event.pointerId);
   drag=null;
+  dragPoint=null;
+  if(dragFrame){cancelAnimationFrame(dragFrame);dragFrame=0;}
 }
 
 function bindDrag(){
@@ -122,7 +131,6 @@ function reconcile(){
 function start(){
   reconcile();
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,()=>requestAnimationFrame(reconcile)));
-  new MutationObserver(()=>requestAnimationFrame(reconcile)).observe(document.body,{childList:true,subtree:true});
   if(new URLSearchParams(location.search).get('relationships')==='float'){
     requestAnimationFrame(()=>setActive(true));
   }
