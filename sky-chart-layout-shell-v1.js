@@ -13,6 +13,28 @@ function requested(){
   if(ALLOWED.has(param))return param;
   try{return normalize(localStorage.getItem(KEY))}catch(_){return'classic'}
 }
+let sizeQueued=false;
+function syncPanelHeight(){
+  sizeQueued=false;
+  const root=document.getElementById('skyFoundationRoot');
+  if(!root)return;
+  const mode=normalize(document.documentElement.dataset.skyLayout);
+  if(!['cards-left','cards-right'].includes(mode)||innerWidth<1380){
+    root.style.removeProperty('--sky-side-panel-height');
+    return;
+  }
+  const a=document.getElementById('skyFoundationA');
+  const b=document.getElementById('skyFoundationB');
+  const bPresent=document.documentElement.dataset.skyBPresent==='true'||document.documentElement.dataset.skyBEditing==='true';
+  const heights=[a,bPresent?b:null].filter(Boolean).map(node=>node.getBoundingClientRect().height).filter(Number.isFinite);
+  const height=Math.max(0,...heights);
+  if(height>0)root.style.setProperty('--sky-side-panel-height',height+'px');
+}
+function scheduleSize(){
+  if(sizeQueued)return;
+  sizeQueued=true;
+  requestAnimationFrame(()=>requestAnimationFrame(syncPanelHeight));
+}
 function apply(value,{persist=true}={}){
   const next=normalize(value);
   document.documentElement.dataset.skyLayout=next;
@@ -20,6 +42,7 @@ function apply(value,{persist=true}={}){
   if(select&&select.value!==next)select.value=next;
   if(persist){try{localStorage.setItem(KEY,next)}catch(_){}}
   window.dispatchEvent(new CustomEvent('relphi:sky-layout-changed',{detail:{layout:next}}));
+  scheduleSize();
   requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));
   return next;
 }
@@ -40,8 +63,16 @@ function ensureControl(){
 function start(){
   apply(requested(),{persist:false});
   ensureControl();
-  window.addEventListener('relphi:sky-foundation-ready',ensureControl);
+  window.addEventListener('relphi:sky-foundation-ready',()=>{ensureControl();scheduleSize()});
+  window.addEventListener('relphi:sky-where-when-committed',scheduleSize);
+  window.addEventListener('relphi:sky-layout-changed',scheduleSize);
+  window.addEventListener('resize',scheduleSize,{passive:true});
+  if('ResizeObserver'in window){
+    const observer=new ResizeObserver(scheduleSize);
+    ['skyFoundationA','skyFoundationB'].forEach(id=>{const node=document.getElementById(id);if(node)observer.observe(node)});
+  }
+  scheduleSize();
 }
-window.RelphiSkyLayoutShell=Object.freeze({apply,current:()=>normalize(document.documentElement.dataset.skyLayout),ensureControl});
+window.RelphiSkyLayoutShell=Object.freeze({apply,current:()=>normalize(document.documentElement.dataset.skyLayout),ensureControl,syncPanelHeight});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
