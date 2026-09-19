@@ -54,6 +54,7 @@ try{
   assert.ok(b.skyFoundationComparison.right <= b.skyFoundationRelationships.left+2,'Relationships must sit to the right of the wheel.');
   assert.ok(Math.abs(b.skyFoundationA.top-b.skyFoundationB.top)<=2,'Sky A and Sky B must be side by side.');
   assert.equal(await page.locator('#skyFoundationRelationshipList').evaluate(node=>getComputedStyle(node).gridTemplateColumns.split(' ').length),2,'Relationship rail must preserve its two-column list.');
+  assert.equal(await page.locator('#skyFoundationRelationshipList').evaluate(node=>parseFloat(getComputedStyle(node).rowGap)||0),0,'Relationship rows must remain contiguous.');
   const shellWidth=await page.locator('.tarot-app-shell').evaluate(node=>node.getBoundingClientRect().width);
   assert.ok(shellWidth>=page.viewportSize().width-32,`Cards Left should use the browser width: ${shellWidth}px of ${page.viewportSize().width}px`);
   const leftRegionWidth=b.skyFoundationB.right-b.skyFoundationA.left;
@@ -90,6 +91,7 @@ try{
   assert.ok(b.skyFoundationA.left < b.skyFoundationB.left,'Sky A and Sky B retain their internal order.');
   assert.ok(Math.abs(b.skyFoundationA.top-b.skyFoundationB.top)<=2);
   assert.equal(await page.locator('#skyFoundationRelationshipList').evaluate(node=>getComputedStyle(node).gridTemplateColumns.split(' ').length),2,'Cards Right must also preserve two relationship columns.');
+  assert.equal(await page.locator('#skyFoundationRelationshipList').evaluate(node=>parseFloat(getComputedStyle(node).rowGap)||0),0,'Cards Right relationship rows must remain contiguous.');
   assert.ok(await page.locator('.tarot-app-shell').evaluate(node=>node.getBoundingClientRect().width)>=page.viewportSize().width-32,'Cards Right should also use the browser width.');
   const rightCardsWidth=b.skyFoundationB.right-b.skyFoundationA.left;
   const rightRelationshipWidth=b.skyFoundationRelationships.width;
