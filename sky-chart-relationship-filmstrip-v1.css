@@ -1,5 +1,5 @@
-/* Desktop Relationships filmstrip: compact scan row directly under the wheel.
-   Expansion stays in the Comparison column and flows downward as one list. */
+/* Desktop Relationships carousel: exactly three complete tiles with a centered current relationship.
+   Expansion stays below the wheel and becomes a rich single-column relationship catalog. */
 @media (min-width:901px) and (pointer:fine){
   html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships{
     position:relative;
@@ -8,7 +8,6 @@
     border-top:1px solid rgba(31,27,24,.11);
   }
 
-  /* Compact state: only the filmstrip occupies the small shelf beneath the wheel. */
   html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships:not([data-filmstrip-expanded="true"])>.sky-foundation-relationships-heading,
   html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships:not([data-filmstrip-expanded="true"])>.sky-chart-filter-bar,
   html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships:not([data-filmstrip-expanded="true"])>#skyFoundationRelationshipEmpty{
@@ -17,46 +16,48 @@
 
   html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships:not([data-filmstrip-expanded="true"]) #skyFoundationRelationshipList{
     display:grid;
-    grid-template-columns:none;
+    grid-template-columns:repeat(3,minmax(0,1fr));
     grid-template-rows:64px;
-    grid-auto-flow:column;
-    grid-auto-columns:minmax(285px,315px);
     gap:6px;
     height:76px;
     max-height:76px;
-    overflow-x:auto;
-    overflow-y:hidden;
-    overscroll-behavior:contain;
-    scroll-behavior:auto;
-    scrollbar-width:none;
-    padding:6px 44px 6px 6px;
-  }
-
-  html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships:not([data-filmstrip-expanded="true"]) #skyFoundationRelationshipList::-webkit-scrollbar{
-    display:none;
-    width:0;
-    height:0;
+    overflow:hidden;
+    padding:6px 42px;
   }
 
   html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships:not([data-filmstrip-expanded="true"]) #skyFoundationRelationshipList>.sky-foundation-relationship-row{
+    display:none!important;
+    min-width:0;
+    width:auto!important;
     min-height:64px;
     height:64px;
     align-self:stretch;
   }
 
+  html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships:not([data-filmstrip-expanded="true"]) #skyFoundationRelationshipList>.sky-foundation-relationship-row[data-filmstrip-slot="previous"]{
+    display:grid!important;
+    grid-column:1;
+  }
+  html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships:not([data-filmstrip-expanded="true"]) #skyFoundationRelationshipList>.sky-foundation-relationship-row[data-filmstrip-slot="current"]{
+    display:grid!important;
+    grid-column:2;
+  }
+  html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships:not([data-filmstrip-expanded="true"]) #skyFoundationRelationshipList>.sky-foundation-relationship-row[data-filmstrip-slot="next"]{
+    display:grid!important;
+    grid-column:3;
+  }
+
   html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationshipList>.sky-foundation-relationship-row.is-filmstrip-current{
-    border-color:rgba(31,27,24,.52);
-    box-shadow:0 0 0 2px rgba(31,27,24,.08);
+    border-color:rgba(31,27,24,.58);
+    box-shadow:0 0 0 2px rgba(31,27,24,.09);
     background:#f6f0e8;
   }
 
+  html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-nav,
   html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-toggle{
     appearance:none;
     position:absolute;
-    z-index:8;
-    top:50%;
-    right:8px;
-    transform:translateY(-50%);
+    z-index:10;
     display:grid;
     place-items:center;
     width:29px;
@@ -64,17 +65,54 @@
     padding:0;
     border:1px solid rgba(31,27,24,.2);
     border-radius:999px;
-    background:rgba(255,253,248,.96);
+    background:rgba(255,253,248,.97);
     color:#302a25;
     box-shadow:0 1px 4px rgba(31,27,24,.12);
     cursor:pointer;
   }
 
+  html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-nav:hover,
+  html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-nav:focus-visible,
   html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-toggle:hover,
   html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-toggle:focus-visible{
     border-color:rgba(31,27,24,.42);
     background:#f6f0e8;
     outline:none;
+  }
+
+  html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-nav:disabled{
+    opacity:.26;
+    cursor:default;
+  }
+
+  html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-nav--previous{
+    left:7px;
+    bottom:7px;
+  }
+
+  html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-nav--next{
+    right:7px;
+    bottom:7px;
+  }
+
+  html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-arrow{
+    width:8px;
+    height:8px;
+    border-top:2px solid currentColor;
+    border-right:2px solid currentColor;
+  }
+
+  html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-arrow--previous{
+    transform:translateX(2px) rotate(-135deg);
+  }
+
+  html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-arrow--next{
+    transform:translateX(-2px) rotate(45deg);
+  }
+
+  html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-toggle{
+    top:6px;
+    right:7px;
   }
 
   html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-chevron{
@@ -87,17 +125,21 @@
   }
 
   html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-toggle[aria-expanded="true"]{
-    top:22px;
-    transform:none;
+    top:10px;
+    right:10px;
   }
 
   html[data-sky-relationship-filmstrip="true"] .sky-relationship-filmstrip-toggle[aria-expanded="true"] .sky-relationship-filmstrip-chevron{
     transform:translateY(2px) rotate(225deg);
   }
 
-  /* Expanded state: restore normal relationship chrome and use a large single column. */
+  /* Expanded catalog */
   html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships[data-filmstrip-expanded="true"]>.sky-foundation-relationships-heading{
     padding-right:46px;
+  }
+
+  html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships[data-filmstrip-expanded="true"] .sky-relationship-filmstrip-nav{
+    display:none!important;
   }
 
   html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships[data-filmstrip-expanded="true"] #skyFoundationRelationshipList{
@@ -106,17 +148,132 @@
     grid-template-rows:none;
     grid-auto-flow:row;
     grid-auto-columns:auto;
-    gap:6px;
+    gap:9px;
     justify-content:stretch;
     width:100%;
-    max-height:min(72vh,820px);
+    max-height:min(76vh,880px);
     overflow-x:hidden;
     overflow-y:auto;
-    padding:8px;
+    padding:9px;
   }
 
   html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships[data-filmstrip-expanded="true"] #skyFoundationRelationshipList>.sky-foundation-relationship-row{
     min-height:64px;
+    height:auto!important;
+    overflow:visible!important;
+  }
+
+  html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships[data-filmstrip-expanded="true"] .sky-filmstrip-expanded-detail{
+    grid-column:1/-1;
+    grid-row:3;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(105px,.58fr) minmax(0,1fr);
+    align-items:stretch;
+    gap:10px;
+    margin:7px -2px -1px;
+    padding:10px;
+    border-top:1px solid rgba(31,27,24,.11);
+    background:rgba(255,253,248,.76);
+  }
+
+  .sky-filmstrip-rich-side{
+    display:grid;
+    grid-template-columns:72px minmax(0,1fr);
+    align-items:start;
+    gap:10px;
+    min-width:0;
+    padding:8px;
+    border-radius:10px;
+    background:rgba(255,255,255,.78);
+  }
+
+  .sky-filmstrip-rich-side.is-sky-a{border-top:3px solid #c9211e}
+  .sky-filmstrip-rich-side.is-sky-b{border-top:3px solid #2462d0}
+
+  .sky-filmstrip-rich-card{
+    display:grid;
+    gap:4px;
+    justify-items:center;
+    margin:0;
+    min-width:0;
+  }
+
+  .sky-filmstrip-rich-card img{
+    display:block;
+    width:64px;
+    max-width:100%;
+    aspect-ratio:352/600;
+    object-fit:cover;
+    border:1px solid rgba(31,27,24,.34);
+    border-radius:6px;
+    background:#eee;
+  }
+
+  .sky-filmstrip-rich-card figcaption{
+    max-width:72px;
+    font:800 .55rem/1.08 system-ui,sans-serif;
+    text-align:center;
+    color:#302a25;
+  }
+
+  .sky-filmstrip-rich-copy{
+    display:grid;
+    align-content:start;
+    gap:4px;
+    min-width:0;
+  }
+
+  .sky-filmstrip-rich-copy>small,
+  .sky-filmstrip-rich-aspect>small{
+    color:#6b625b;
+    font:750 .54rem/1.22 system-ui,sans-serif;
+  }
+
+  .sky-filmstrip-rich-copy>strong,
+  .sky-filmstrip-rich-aspect>strong{
+    color:#2f2925;
+    font:900 .72rem/1.1 system-ui,sans-serif;
+  }
+
+  .sky-filmstrip-rich-copy>p,
+  .sky-filmstrip-rich-aspect>p{
+    margin:0;
+    color:#5f5751;
+    font:650 .6rem/1.3 system-ui,sans-serif;
+  }
+
+  .sky-filmstrip-rich-sign{
+    display:grid;
+    gap:2px;
+    margin-top:3px;
+    padding-top:5px;
+    border-top:1px solid rgba(31,27,24,.09);
+  }
+
+  .sky-filmstrip-rich-sign b{
+    font:850 .61rem/1.1 system-ui,sans-serif;
+    color:#3a342f;
+  }
+
+  .sky-filmstrip-rich-sign span{
+    color:#6b625b;
+    font:620 .56rem/1.25 system-ui,sans-serif;
+  }
+
+  .sky-filmstrip-rich-aspect{
+    display:grid;
+    align-content:center;
+    justify-items:center;
+    gap:5px;
+    min-width:0;
+    padding:9px 7px;
+    border-radius:10px;
+    background:rgba(45,39,34,.045);
+    text-align:center;
+  }
+
+  html[data-sky-relationship-filmstrip="true"] #skyFoundationRelationships[data-filmstrip-expanded="true"] .inline-rel-detail{
+    display:none!important;
   }
 }
 
