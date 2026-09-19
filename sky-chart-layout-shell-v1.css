@@ -35,6 +35,15 @@
   outline-offset:1px;
 }
 
+/* Side layouts are workspaces, not narrow Tarot content pages. Use the
+   available browser width while leaving a small breathing margin. */
+html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-app-shell,
+html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-app-shell{
+  width:calc(100vw - 24px);
+  max-width:none;
+  box-sizing:border-box;
+}
+
 /* Classic keeps the existing visual order, but Relationships is now a stable
    root-level region rather than content owned by the wheel panel. */
 html[data-sky-layout="classic"] #skyFoundationRoot{
@@ -52,25 +61,25 @@ html[data-sky-layout="classic"][data-sky-b-present="false"]:not([data-sky-b-edit
 
 @media(min-width:1260px){
   html[data-sky-layout="cards-left"] #skyFoundationRoot{
-    grid-template-columns:minmax(180px,240px) minmax(180px,240px) minmax(440px,1.45fr) minmax(280px,.9fr);
+    grid-template-columns:minmax(180px,220px) minmax(180px,220px) minmax(420px,.9fr) minmax(520px,1.2fr);
     grid-template-areas:"a b comparison relationships";
   }
   html[data-sky-layout="cards-right"] #skyFoundationRoot{
-    grid-template-columns:minmax(280px,.9fr) minmax(440px,1.45fr) minmax(180px,240px) minmax(180px,240px);
+    grid-template-columns:minmax(520px,1.2fr) minmax(420px,.9fr) minmax(180px,220px) minmax(180px,220px);
     grid-template-areas:"relationships comparison a b";
   }
   html[data-sky-layout="cards-left"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
-    grid-template-columns:minmax(220px,270px) minmax(480px,1.5fr) minmax(300px,.9fr);
+    grid-template-columns:minmax(220px,260px) minmax(440px,.95fr) minmax(560px,1.2fr);
     grid-template-areas:"a comparison relationships";
   }
   html[data-sky-layout="cards-right"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
-    grid-template-columns:minmax(300px,.9fr) minmax(480px,1.5fr) minmax(220px,270px);
+    grid-template-columns:minmax(560px,1.2fr) minmax(440px,.95fr) minmax(220px,260px);
     grid-template-areas:"relationships comparison a";
   }
 
   html[data-sky-layout="cards-left"] #skyFoundationRelationshipList,
   html[data-sky-layout="cards-right"] #skyFoundationRelationshipList{
-    grid-template-columns:1fr;
+    grid-template-columns:repeat(2,minmax(0,1fr));
     max-height:min(72vh,760px);
   }
 }
