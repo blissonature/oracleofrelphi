@@ -18,8 +18,28 @@ function isOpen(owner=control()){return owner?.classList.contains('is-open')===t
 
 function applyProgressiveToken(token,level,force=false){if(!(token instanceof HTMLElement)||(!force&&token.dataset.relationshipDisplayDefault!==undefined))return;const levels={glyph:0,name:1,meaning:2},names=['glyph','name','meaning'];token.dataset.progressiveStage=names[level];token.dataset.progressiveLevel=String(level);token.dataset.relationshipDisplayDefault=String(level);for(const button of token.querySelectorAll(':scope > .sky-progressive-level')){const n=levels[button.dataset.progressiveLevel],show=Number.isInteger(n)&&n<=level;button.hidden=!show;button.setAttribute('aria-hidden',show?'false':'true');button.setAttribute('aria-expanded',Number.isInteger(n)&&n<level?'true':'false');button.tabIndex=show?0:-1}}
 function applyInlineToken(token,level,force=false){if(!(token instanceof HTMLElement)||(!force&&token.dataset.relationshipDisplayDefault!==undefined))return;const name=token.querySelector(':scope > [data-inline-progressive-level="name"]'),referent=token.querySelector(':scope > [data-inline-progressive-level="referent"]');token.dataset.inlineProgressiveStage=String(level);token.dataset.relationshipDisplayDefault=String(level);token.hidden=level===0;if(name){name.hidden=level===0;name.setAttribute('aria-expanded',level===2?'true':'false')}if(referent)referent.hidden=level<2}
-function applyMode(root=document,force=false,modeId=readMode()){const mode=BY_ID.get(modeId)||MODES[0],level=mode.level;document.documentElement.dataset.relationshipDisplay=mode.id;root.querySelectorAll?.('.sky-progressive-token').forEach(t=>applyProgressiveToken(t,level,force));root.querySelectorAll?.('.inline-rel-progressive-token').forEach(t=>applyInlineToken(t,level,force));syncControl(mode.id);return mode.id}
-function applyAdded(node){if(!(node instanceof Element))return;const level=(BY_ID.get(readMode())||MODES[0]).level;if(node.matches('.sky-progressive-token'))applyProgressiveToken(node,level,false);if(node.matches('.inline-rel-progressive-token'))applyInlineToken(node,level,false);node.querySelectorAll?.('.sky-progressive-token').forEach(t=>applyProgressiveToken(t,level,false));node.querySelectorAll?.('.inline-rel-progressive-token').forEach(t=>applyInlineToken(t,level,false))}
+function applyRowSummary(row,level){
+  if(!(row instanceof HTMLElement)||!row.classList.contains('sky-foundation-relationship-row'))return;
+  let summary=row.querySelector(':scope > .sky-relationship-display-summary');
+  if(level===0){
+    summary?.remove();
+    delete row.dataset.relationshipDisplayLevel;
+    return;
+  }
+  const serializer=window.RelphiRelationshipCopySerializer;
+  const text=serializer?.serialize?.(row,{level,includeScope:false})||'';
+  if(!text)return;
+  if(!summary){
+    summary=document.createElement('span');
+    summary.className='sky-relationship-display-summary';
+    row.appendChild(summary);
+  }
+  summary.textContent=text;
+  summary.dataset.relationshipDisplaySummary=level===2?'referents':'names';
+  row.dataset.relationshipDisplayLevel=String(level);
+}
+function applyMode(root=document,force=false,modeId=readMode()){const mode=BY_ID.get(modeId)||MODES[0],level=mode.level;document.documentElement.dataset.relationshipDisplay=mode.id;root.querySelectorAll?.('.sky-progressive-token').forEach(t=>applyProgressiveToken(t,level,force));root.querySelectorAll?.('.inline-rel-progressive-token').forEach(t=>applyInlineToken(t,level,force));root.querySelectorAll?.('.sky-foundation-relationship-row').forEach(row=>applyRowSummary(row,level));syncControl(mode.id);return mode.id}
+function applyAdded(node){if(!(node instanceof Element))return;const level=(BY_ID.get(readMode())||MODES[0]).level;if(node.matches('.sky-progressive-token'))applyProgressiveToken(node,level,false);if(node.matches('.inline-rel-progressive-token'))applyInlineToken(node,level,false);if(node.matches('.sky-foundation-relationship-row'))applyRowSummary(node,level);node.querySelectorAll?.('.sky-progressive-token').forEach(t=>applyProgressiveToken(t,level,false));node.querySelectorAll?.('.inline-rel-progressive-token').forEach(t=>applyInlineToken(t,level,false));node.querySelectorAll?.('.sky-foundation-relationship-row').forEach(row=>applyRowSummary(row,level))}
 function setMode(modeId,{announce=true}={}){const mode=writeMode(modeId);applyMode(document,true,mode);if(announce)window.dispatchEvent(new CustomEvent('relphi:relationship-display-changed',{detail:{mode}}));return mode}
 
 function installStyles(){if(document.getElementById(STYLE_ID))return;const style=document.createElement('style');style.id=STYLE_ID;style.textContent=`
@@ -33,6 +53,42 @@ function installStyles(){if(document.getElementById(STYLE_ID))return;const style
 #skyFoundationRelationships .sky-relationship-display-control.is-open .sky-relationship-display-value{border-color:rgba(31,27,24,.42)!important;box-shadow:0 0 0 2px rgba(31,27,24,.08)!important}
 #skyFoundationRelationships .sky-relationship-display-popover{position:absolute;top:calc(100% + 6px);left:50%;width:min(280px,calc(100vw - 24px));box-sizing:border-box;padding:7px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2);transform:translateX(-50%);pointer-events:auto}
 #skyFoundationRelationships .sky-relationship-display-popover[hidden]{display:none!important}.sky-relationship-display-popover.is-portaled{position:fixed!important;z-index:10000!important;right:auto!important;bottom:auto!important;margin:0!important;transform:none!important;isolation:isolate!important}.sky-relationship-display-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:9px;background:#fff}.sky-relationship-display-option{appearance:none;display:flex;width:100%;min-height:38px;align-items:center;justify-content:space-between;gap:10px;box-sizing:border-box;padding:8px 10px;border:0;border-top:1px solid rgba(31,27,24,.075);background:#fff;color:#29231e;font:750 .67rem/1.15 system-ui,sans-serif;text-align:left;cursor:pointer}.sky-relationship-display-option:first-child{border-top:0}.sky-relationship-display-option:hover,.sky-relationship-display-option:focus-visible{background:#f4efe8;outline:none}.sky-relationship-display-option[aria-selected="true"]{background:#f4efe8;font-weight:900}.sky-relationship-display-option[aria-selected="true"]::after{content:"✓";flex:0 0 auto;color:#191613;font:900 13px/1 Arial,sans-serif}
+
+.sky-foundation-relationship-row>.sky-relationship-display-summary{display:none}
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="1"],
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="2"]{
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-areas:"display"!important;
+  grid-template-rows:auto!important;
+  min-height:64px;
+  align-items:start;
+}
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="1"]>.sky-foundation-relationship-placement,
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="1"]>.sky-foundation-relationship-glyph--aspect,
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="1"]>.sky-foundation-relationship-orb,
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="2"]>.sky-foundation-relationship-placement,
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="2"]>.sky-foundation-relationship-glyph--aspect,
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="2"]>.sky-foundation-relationship-orb{
+  display:none!important;
+}
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="1"]>.sky-relationship-display-summary,
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="2"]>.sky-relationship-display-summary{
+  grid-area:display;
+  display:block;
+  min-width:0;
+  padding:4px 2px;
+  color:#352f2a;
+  white-space:pre-line;
+  overflow-wrap:anywhere;
+  font:700 .61rem/1.32 system-ui,sans-serif;
+}
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="1"]>.sky-relationship-display-summary{
+  font-weight:820;
+}
+.sky-foundation-relationship-row:not(.is-inline-expanded)[data-relationship-display-level="2"]>.sky-relationship-display-summary{
+  color:#514942;
+}
+.sky-foundation-relationship-row.is-inline-expanded>.sky-relationship-display-summary{display:none!important}
 @media(min-width:621px){#skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-display-control{grid-column:5/span 3!important;grid-row:2!important;max-width:none!important}}@media(max-width:620px){#skyFoundationRelationships{overflow:visible!important}#skyFoundationRelationships #skyFoundationRelationshipList,#skyFoundationRelationships #skyFoundationRelationshipList:has(>.sky-foundation-relationship-row.is-inline-expanded){max-height:none!important;height:auto!important;overflow:visible!important;overscroll-behavior-y:auto!important;-webkit-overflow-scrolling:auto!important;touch-action:pan-y!important;padding-bottom:max(28px,env(safe-area-inset-bottom))!important}#skyFoundationRelationships .sky-foundation-relationship-row.is-inline-expanded{overflow:visible!important}}
 `;document.head.appendChild(style)}
 
@@ -48,7 +104,7 @@ function schedule(){if(queued)return;queued=true;requestAnimationFrame(reconcile
 function ensureObserver(){const root=document.getElementById('skyFoundationRelationships');if(!root||root===observedRoot)return;observer?.disconnect();observedRoot=root;observer=new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)applyAdded(node)});observer.observe(root,{childList:true,subtree:true})}
 function closeOutside(e){const owner=portalOwner,menu=popover();if(!isOpen(owner))return;if(owner?.contains(e.target)||menu?.contains(e.target))return;close(owner)}
 function handleMenuKey(e){if(!isOpen(portalOwner))return;const options=[...popover().querySelectorAll('[data-relationship-display-option]')];if(!options.length)return;const active=document.activeElement,index=Math.max(0,options.indexOf(active));if(e.key==='Escape'){e.preventDefault();close(portalOwner,{focus:true});return}if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const d=e.key==='ArrowDown'?1:-1;options[(index+d+options.length)%options.length].focus();return}if((e.key==='Enter'||e.key===' ')&&active?.dataset?.relationshipDisplayOption){e.preventDefault();choose(active.dataset.relationshipDisplayOption)}}
-function start(){installStyles();writeMode(readMode());reconcile();ensureObserver();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,()=>{ensureObserver();schedule()}));['relphi:sky-foundation-filter-changed','relphi:selected-relationship-rendered','relphi:sky-progressive-symbols-ready'].forEach(name=>window.addEventListener(name,()=>{const root=document.getElementById('skyFoundationRelationships');if(root)applyMode(root,false)}));document.addEventListener('pointerdown',closeOutside,true);document.addEventListener('keydown',handleMenuKey,true);window.addEventListener('resize',positionPortal);window.addEventListener('scroll',positionPortal,true)}
+function start(){installStyles();writeMode(readMode());reconcile();ensureObserver();['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,()=>{ensureObserver();schedule()}));['relphi:sky-foundation-filter-changed','relphi:selected-relationship-rendered','relphi:sky-progressive-symbols-ready','relphi:relationship-copy-serializer-ready'].forEach(name=>window.addEventListener(name,()=>{const root=document.getElementById('skyFoundationRelationships');if(root)applyMode(root,true)}));document.addEventListener('pointerdown',closeOutside,true);document.addEventListener('keydown',handleMenuKey,true);window.addEventListener('resize',positionPortal);window.addEventListener('scroll',positionPortal,true)}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 window.RelphiSkyRelationshipDisplay=Object.freeze({getMode:readMode,setMode:mode=>setMode(mode),apply:(root,force=false)=>applyMode(root||document,force)});
 })();
