@@ -327,7 +327,8 @@
     interactionReapplyQueued=true;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       interactionReapplyQueued=false;
-      if(lockedState||hoverState||rowLockedState||rowHoverState)applyState();
+      if(lockedState||hoverState)applyState();
+      else if(rowLockedState||rowHoverState)scheduleRowWheelStateFast();
     }));
   }
   function bind(){
