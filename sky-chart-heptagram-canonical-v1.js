@@ -118,8 +118,8 @@
       const bubble = component.createBubble(master, entry.id, {
         radius:MASTER_RADIUS,
         padding:1,
-        color:state.hour ? '#ffffff' : planetColor,
-        fill:state.hour ? planetColor : '#ffffff',
+        color:state.hour ? planetColor : '#ffffff',
+        fill:state.hour ? '#ffffff' : planetColor,
         strokeWidth:state.hour ? 2.8 : 2.35
       });
       bubble.circle.setAttribute('stroke', planetColor);
@@ -146,7 +146,7 @@
       clearHeptagramWords(svg);
       svg.dataset.canonicalHeptagramConsumer = 'true';
       svg.dataset.glyphPresentation = 'circled';
-      svg.dataset.rulerStates = 'day-double-ring-hour-fill';
+      svg.dataset.rulerStates = 'hour-white-day-double-ring';
       svg.dataset.canonicalHeptagramReady = 'true';
       delete svg.dataset.canonicalHeptagramBusy;
       window.dispatchEvent(new CustomEvent('relphi:sky-heptagram-canonical-ready',{detail:{svg}}));
