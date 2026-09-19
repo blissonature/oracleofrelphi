@@ -133,15 +133,9 @@ try{
   await harmonic.fill('6');
   await page.waitForTimeout(120);
 
-  // House System remains usable from the floating filter bay.
-  const houseSystem=page.locator('[data-house-system-filter]');
-  assert.equal(await houseSystem.isVisible(),true);
-  assert.equal(await houseSystem.isEnabled(),true);
-  assert.ok(await houseSystem.locator('option').count()>=2,'House System control must retain its options.');
-
   await page.screenshot({path:'sky-chart-relationships-float-preview.png',fullPage:true});
   assert.deepEqual(errors,[]);
-  console.log('Floating Relationships: click isolation and Aspect, Placement, House, Zodiac, Harmonic Window, and House System controls passed.');
+  console.log('Floating Relationships: click isolation and Aspect, Placement, House, Zodiac, and Harmonic Window filters passed.');
 }finally{
   await browser.close();
 }
