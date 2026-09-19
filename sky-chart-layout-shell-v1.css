@@ -129,29 +129,6 @@ html[data-sky-layout="classic"][data-sky-b-present="false"]:not([data-sky-b-edit
     overscroll-behavior:contain;
   }
 
-  /* Wide-workspace density: keep every Sky row visible while fitting the
-     complete cards inside an ordinary desktop viewport. */
-  html[data-sky-layout="cards-left"] #skyFoundationA .sky-foundation-ledger,
-  html[data-sky-layout="cards-left"] #skyFoundationB .sky-foundation-ledger,
-  html[data-sky-layout="cards-right"] #skyFoundationA .sky-foundation-ledger,
-  html[data-sky-layout="cards-right"] #skyFoundationB .sky-foundation-ledger{
-    padding:2px 0;
-  }
-  html[data-sky-layout="cards-left"] #skyFoundationA .sky-foundation-row,
-  html[data-sky-layout="cards-left"] #skyFoundationB .sky-foundation-row,
-  html[data-sky-layout="cards-right"] #skyFoundationA .sky-foundation-row,
-  html[data-sky-layout="cards-right"] #skyFoundationB .sky-foundation-row{
-    min-height:28px;
-    gap:5px;
-    padding:2px 8px;
-  }
-  html[data-sky-layout="cards-left"] #skyFoundationA .sky-foundation-row>svg,
-  html[data-sky-layout="cards-left"] #skyFoundationB .sky-foundation-row>svg,
-  html[data-sky-layout="cards-right"] #skyFoundationA .sky-foundation-row>svg,
-  html[data-sky-layout="cards-right"] #skyFoundationB .sky-foundation-row>svg{
-    width:21px;
-    height:21px;
-  }
 }
 
 /* Below the wide-workspace breakpoint, layout preference remains saved but the
