@@ -13,7 +13,7 @@ const skyA=sample('Sky A',0),skyB=sample('Sky B',31.4);
 
 const browser=await chromium.launch({headless:true});
 try{
-  const page=await browser.newPage({viewport:{width:1660,height:1200}});
+  const page=await browser.newPage({viewport:{width:1536,height:1200}});
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -56,6 +56,15 @@ try{
   assert.equal(await page.locator('#skyFoundationRelationshipList').evaluate(node=>getComputedStyle(node).gridTemplateColumns.split(' ').length),2,'Relationship rail must preserve its two-column list.');
   const shellWidth=await page.locator('.tarot-app-shell').evaluate(node=>node.getBoundingClientRect().width);
   assert.ok(shellWidth>=page.viewportSize().width-32,`Cards Left should use the browser width: ${shellWidth}px of ${page.viewportSize().width}px`);
+  const leftRegionWidth=b.skyFoundationB.right-b.skyFoundationA.left;
+  const relationshipWidth=b.skyFoundationRelationships.width;
+  const wheelCenter=(b.skyFoundationComparison.left+b.skyFoundationComparison.right)/2;
+  const viewportCenter=page.viewportSize().width/2;
+  assert.ok(Math.abs(leftRegionWidth-relationshipWidth)<=28,`Cards Left should balance the two-card region (${leftRegionWidth}px) against Relationships (${relationshipWidth}px).`);
+  assert.ok(Math.abs(wheelCenter-viewportCenter)<=20,`Wheel must remain visually centered: ${wheelCenter}px vs viewport center ${viewportCenter}px.`);
+  assert.ok(b.skyFoundationComparison.width>=560,`Wheel panel should retain its former scale; got ${b.skyFoundationComparison.width}px.`);
+  assert.ok(relationshipWidth<b.skyFoundationComparison.width,'Relationships should not be wider than the wheel panel.');
+  assert.equal(await page.locator('body').evaluate(node=>node.scrollWidth<=node.clientWidth),true,'Cards Left must not create horizontal page scrolling.');
   assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartLayoutV1')),'cards-left');
   await page.screenshot({path:'sky-chart-layout-cards-left.png',fullPage:true});
 
@@ -69,6 +78,13 @@ try{
   assert.ok(Math.abs(b.skyFoundationA.top-b.skyFoundationB.top)<=2);
   assert.equal(await page.locator('#skyFoundationRelationshipList').evaluate(node=>getComputedStyle(node).gridTemplateColumns.split(' ').length),2,'Cards Right must also preserve two relationship columns.');
   assert.ok(await page.locator('.tarot-app-shell').evaluate(node=>node.getBoundingClientRect().width)>=page.viewportSize().width-32,'Cards Right should also use the browser width.');
+  const rightCardsWidth=b.skyFoundationB.right-b.skyFoundationA.left;
+  const rightRelationshipWidth=b.skyFoundationRelationships.width;
+  const rightWheelCenter=(b.skyFoundationComparison.left+b.skyFoundationComparison.right)/2;
+  assert.ok(Math.abs(rightCardsWidth-rightRelationshipWidth)<=28,'Cards Right must keep the side regions balanced.');
+  assert.ok(Math.abs(rightWheelCenter-page.viewportSize().width/2)<=20,'Cards Right must keep the wheel visually centered.');
+  assert.ok(b.skyFoundationComparison.width>=560,'Cards Right must retain wheel scale.');
+  assert.equal(await page.locator('body').evaluate(node=>node.scrollWidth<=node.clientWidth),true,'Cards Right must not create horizontal page scrolling.');
   await page.screenshot({path:'sky-chart-layout-cards-right.png',fullPage:true});
 
   await page.reload({waitUntil:'networkidle'});
