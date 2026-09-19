@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - feature/sky-chart-canonical-glyph-coordinate-fix
   workflow_dispatch:
 
 permissions:
@@ -23,13 +22,14 @@ jobs:
         with:
           node-version: 22
 
-      - name: Verify source-package migration phase
-        run: node tests/canonical-glyph-migration-phase-audit.mjs --phase=source-package
+      - name: Enforce the single canonical glyph runtime
+        run: node tools/check-single-glyph-canon.mjs
 
-      - name: Verify shadow-cutover migration phase
-        run: node tests/canonical-glyph-migration-phase-audit.mjs --phase=shadow-cutover
+      - name: Pin approved planetary master bytes
+        run: node tools/check-planet-glyph-hashes.mjs
 
-      - name: Prove migration audit is read-only
-        run: |
-          git diff --exit-code
-          test -z "$(git status --porcelain)"
+      - name: Check Sky Chart glyph readiness
+        run: node tools/check-sky-chart-glyph-readiness.mjs
+
+      - name: Run glyph-facing Sky Chart regressions
+        run: node --test tests/sky-chart-requested-visuals.test.mjs tests/sky-chart-angle-lane-isolation.test.mjs
