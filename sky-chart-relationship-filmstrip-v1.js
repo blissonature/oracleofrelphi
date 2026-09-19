@@ -14,8 +14,6 @@ let reconcileQueued=false;
 
 function panel(){return document.getElementById('skyFoundationRelationships')}
 function list(){return document.getElementById('skyFoundationRelationshipList')}
-function root(){return document.getElementById('skyFoundationRoot')}
-function comparison(){return document.getElementById('skyFoundationComparison')}
 function active(){return desktopQuery.matches}
 
 function rowKey(row){
@@ -92,22 +90,9 @@ function moveSelection(direction,origin){
   return selectRow(rows[index]);
 }
 
-function actionsHost(){
-  const p=panel(),heading=p?.querySelector(':scope>.sky-foundation-relationships-heading');
-  if(!heading)return null;
-  let host=heading.querySelector(':scope>.sky-relationship-heading-actions');
-  if(!host){
-    host=document.createElement('span');
-    host.className='sky-relationship-heading-actions';
-    const clear=heading.querySelector('#skyFoundationClearIsolation');
-    heading.insertBefore(host,clear||null);
-  }
-  return host;
-}
-
 function ensureToggle(){
-  const host=actionsHost();
-  if(!host)return null;
+  const p=panel();
+  if(!p)return null;
   let button=document.getElementById('skyRelationshipFilmstripToggle');
   if(!button){
     button=document.createElement('button');
@@ -121,7 +106,7 @@ function ensureToggle(){
       setExpanded(!expanded,{restoreFocus:true});
     });
   }
-  if(button.parentElement!==host)host.insertBefore(button,host.firstChild);
+  if(button.parentElement!==p)p.appendChild(button);
   button.setAttribute('aria-expanded',expanded?'true':'false');
   button.setAttribute('aria-label',expanded?'Collapse Relationships to filmstrip':'Expand Relationships list');
   button.title=expanded?'Collapse Relationships':'Expand Relationships';
@@ -146,9 +131,8 @@ function setExpanded(value,{restoreFocus=false}={}){
 }
 
 function mountDesktop(){
-  const p=panel(),r=root();
-  if(!p||!r)return false;
-  if(p.parentElement!==r)r.appendChild(p);
+  const p=panel();
+  if(!p)return false;
   document.documentElement.dataset.skyRelationshipFilmstrip='true';
   p.dataset.filmstripExpanded=expanded?'true':'false';
   ensureToggle();
@@ -157,14 +141,12 @@ function mountDesktop(){
 }
 
 function unmountDesktop(){
-  const p=panel(),c=comparison();
+  const p=panel();
   document.documentElement.removeAttribute('data-sky-relationship-filmstrip');
   if(p){
     p.removeAttribute('data-filmstrip-expanded');
     p.querySelectorAll('.is-filmstrip-current').forEach(row=>row.classList.remove('is-filmstrip-current'));
-    const button=document.getElementById('skyRelationshipFilmstripToggle');
-    button?.remove();
-    if(c&&p.parentElement!==c)c.appendChild(p);
+    document.getElementById('skyRelationshipFilmstripToggle')?.remove();
   }
   window.dispatchEvent(new CustomEvent('relphi:sky-relationship-filmstrip-mode-changed',{detail:{active:false}}));
 }
