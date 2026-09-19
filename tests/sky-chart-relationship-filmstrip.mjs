@@ -34,12 +34,15 @@ try{
   const panel=page.locator('#skyFoundationRelationships');
   const list=page.locator('#skyFoundationRelationshipList');
   const wheel=page.locator('#skyFoundationWheelMount>.sky-foundation-wheel');
-  assert.equal(await panel.evaluate(node=>node.parentElement?.id),'skyFoundationRoot','Desktop filmstrip should portal the existing live Relationships panel to the foundation root.');
+  assert.equal(await panel.evaluate(node=>node.parentElement?.id),'skyFoundationComparison','Desktop filmstrip must stay owned by Comparison directly beneath the wheel.');
 
-  const rootBox=await root.boundingBox(),panelBox=await panel.boundingBox();
-  assert.ok(Math.abs(rootBox.width-panelBox.width)<=2,'Collapsed filmstrip should span the full Sky Chart width.');
+  const comparison=page.locator('#skyFoundationComparison');
+  const comparisonBox=await comparison.boundingBox(),panelBox=await panel.boundingBox(),wheelBox=await page.locator('#skyFoundationWheelMount').boundingBox();
+  assert.ok(Math.abs(comparisonBox.width-panelBox.width)<=2,'Collapsed filmstrip should use the Comparison width.');
+  assert.ok(Math.abs(panelBox.y-(wheelBox.y+wheelBox.height))<=2,'Collapsed filmstrip must begin immediately below the wheel.');
+  assert.ok(panelBox.height<=82,'Collapsed filmstrip must fit in the compact shelf beneath the wheel.');
 
-  const layout=await list.evaluate(node=>{const s=getComputedStyle(node);return{flow:s.gridAutoFlow,columns:s.gridTemplateColumns,overflowX:s.overflowX,overflowY:s.overflowY}});
+  const layout=await list.evaluate(node=>{const s=getComputedStyle(node);return{flow:s.gridAutoFlow,columns:s.gridTemplateColumns,overflowX:s.overflowX,overflowY:s.overflowY,height:s.height}});
   assert.ok(layout.flow.startsWith('column'),'Collapsed Relationships must be a horizontal filmstrip.');
   assert.notEqual(layout.overflowX,'hidden');
   assert.equal(layout.overflowY,'hidden');
@@ -95,9 +98,9 @@ try{
   assert.ok(r1.y>r0.y+r0.height*.6,'Expanded Relationships must be a single vertical column.');
   assert.ok(Math.abs(r1.x-r0.x)<=2,'Expanded single-column relationship tiles must share one column.');
 
-  const topPanels=await page.locator('#skyFoundationA,#skyFoundationComparison,#skyFoundationB').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none').map(n=>n.getBoundingClientRect().bottom));
   const expandedPanelBox=await panel.boundingBox();
-  assert.ok(expandedPanelBox.y>=Math.max(...topPanels)-1,'Expanded picker must flow downward below the chart instead of covering the wheel.');
+  const expandedWheelBox=await page.locator('#skyFoundationWheelMount').boundingBox();
+  assert.ok(expandedPanelBox.y>=expandedWheelBox.y+expandedWheelBox.height-1,'Expanded picker must still begin below the wheel.');
 
   const focusedBeforeDown=await page.evaluate(()=>document.activeElement?.dataset?.relationIndex||'');
   await page.keyboard.press('ArrowDown');
