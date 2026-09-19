@@ -44,8 +44,15 @@ try{
   const row=page.locator('#skyFoundationRelationshipList > .sky-foundation-relationship-row:visible').first();
   await row.hover();
   await page.waitForTimeout(80);
-  assert.equal((await wheel.getAttribute('class')||'').includes('has-isolation'),false,'Relationship hover should highlight its exact aspect without dimming the whole wheel.');
-  assert.ok(await page.locator('.sky-foundation-aspect.is-row-hovered:not(.sky-foundation-aspect-hit)').count()>0,'Relationship hover must still identify the matching wheel aspect.');
+  assert.equal((await wheel.getAttribute('class')||'').includes('has-isolation'),true,'Relationship hover must dim unrelated wheel structure.');
+  const hoverIsolation=await wheel.evaluate(node=>({
+    kept:node.querySelectorAll('[data-focus-piece].is-kept').length,
+    total:node.querySelectorAll('[data-focus-piece]').length
+  }));
+  assert.ok(hoverIsolation.kept>0&&hoverIsolation.kept<hoverIsolation.total,'Relationship hover must keep only the hovered relationship context.');
+  assert.ok(await page.locator('.sky-foundation-aspect.is-row-hovered:not(.sky-foundation-aspect-hit)').count()>0,'Relationship hover must identify the matching wheel aspect.');
+  await page.locator('.sky-foundation-relationships-heading h2').hover();
+  await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel')?.classList.contains('has-isolation')===false);
 
   await row.click({position:{x:18,y:18}});
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel')?.classList.contains('has-isolation')===true);
@@ -135,7 +142,7 @@ try{
 
   await page.screenshot({path:'sky-chart-relationships-float-preview.png',fullPage:true});
   assert.deepEqual(errors,[]);
-  console.log('Floating Relationships: click isolation and Aspect, Placement, House, Zodiac, and Harmonic Window filters passed.');
+  console.log('Floating Relationships: hover/click isolation and Aspect, Placement, House, Zodiac, and Harmonic Window filters passed.');
 }finally{
   await browser.close();
 }
