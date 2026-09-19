@@ -30,13 +30,13 @@ async function inspect(width,height,suffix){
     const geminiMarkup=await fetch('assets/zodiac-glyphs/gemini.svg?v=filled-silhouette-test').then(r=>r.text());
     const geminiSvg=new DOMParser().parseFromString(geminiMarkup,'image/svg+xml').documentElement;
     const sourcePath=geminiSvg.querySelector('path');
+    const expectedZodiacRadius=Number(window.RelphiSkyWheelSpec?.comparison?.zodiac?.glyphRadius);
     const zodiac=Array.from(document.querySelectorAll('[data-layer="zodiac"] > g[data-zodiac-sign]')).map(host=>{
       const circle=host.querySelector(':scope > .relphi-glyph-bubble > circle');
       return{
         id:host.dataset.zodiacSign,
-        radius:Number(host.dataset.wheelGlyphRadius),
+        radius:Number(circle?.getAttribute('r')),
         glyphCount:host.querySelectorAll('.relphi-canonical-glyph').length,
-        circleDisplay:circle?getComputedStyle(circle).display:'missing',
         circleOpacity:circle?Number(getComputedStyle(circle).opacity):null
       };
     });
@@ -66,6 +66,7 @@ async function inspect(width,height,suffix){
     });
     return{
       zodiac,
+      expectedZodiacRadius,
       sourceFill:sourcePath?.getAttribute('fill')||'',
       sourceStroke:sourcePath?.getAttribute('stroke')||'',
       sourceStrokeWidth:sourcePath?.getAttribute('stroke-width')||'',
@@ -80,9 +81,10 @@ async function inspect(width,height,suffix){
 
   assert.equal(state.zodiac.length,12);
   assert.deepEqual(state.zodiac.map(item=>item.id),SIGNS.map(name=>name.toLowerCase()));
-  assert.ok(state.zodiac.every(item=>item.radius===19));
+  assert.ok(Number.isFinite(state.expectedZodiacRadius));
+  assert.ok(state.zodiac.every(item=>item.radius===state.expectedZodiacRadius));
   assert.ok(state.zodiac.every(item=>item.glyphCount===1));
-  assert.ok(state.zodiac.every(item=>item.circleDisplay==='none'));
+  assert.ok(state.zodiac.every(item=>item.circleOpacity===0));
   assert.equal(state.sourceFill,'#111111');
   assert.equal(state.sourceStroke,'');
   assert.equal(state.sourceStrokeWidth,'');
