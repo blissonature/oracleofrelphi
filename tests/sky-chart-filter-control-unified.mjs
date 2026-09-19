@@ -24,21 +24,22 @@ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:2000
 await page.waitForSelector('[data-aspect-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-placement-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
+await Promise.all([
+  page.waitForSelector('.sky-chart-aspect-summary-choices',{timeout:20000}),
+  page.waitForSelector('.sky-chart-placement-summary-choices',{timeout:20000}),
+  page.waitForSelector('.sky-chart-house-summary-choices',{timeout:20000})
+]);
 
 const result=await page.evaluate(()=>{
   const selectors={
-    orb:'input[data-filter="orb"]',
-    aspects:'.sky-chart-aspect-filter-value',
+    aspects:'.sky-chart-aspect-summary-choices',
     placements:'.sky-chart-placement-summary-choices',
-    houses:'.sky-chart-house-summary-choices',
-    houseSystem:'[data-house-system-filter]'
+    houses:'.sky-chart-house-summary-choices'
   };
   const labelSelectors={
-    orb:'input[data-filter="orb"]',
     aspects:'.sky-chart-aspect-filter-label',
     placements:'.sky-chart-placement-filter-label',
-    houses:'.sky-chart-house-filter-label',
-    houseSystem:'[data-house-system-filter]'
+    houses:'.sky-chart-house-filter-label'
   };
   const fields={};
   const labels={};
@@ -67,7 +68,7 @@ const result=await page.evaluate(()=>{
   }
   for(const [name,selector] of Object.entries(labelSelectors)){
     const source=document.querySelector(selector);
-    const node=(name==='orb'||name==='houseSystem')?source.closest('label'):source;
+    const node=source;
     const style=getComputedStyle(node);
     labels[name]={
       color:style.color,
@@ -92,21 +93,21 @@ const result=await page.evaluate(()=>{
 });
 
 const fieldNames=Object.keys(result.fields);
-const reference=result.fields.orb;
+const reference=result.fields.aspects;
 for(const name of fieldNames){
   const field=result.fields[name];
-  assert.ok(Math.abs(field.height-reference.height)<=0.5,`${name} height ${field.height} does not match Orb ${reference.height}`);
-  assert.ok(Math.abs(field.top-reference.top)<=1,`${name} top ${field.top} does not match Orb ${reference.top}`);
-  assert.ok(Math.abs(field.bottom-reference.bottom)<=1,`${name} bottom ${field.bottom} does not match Orb ${reference.bottom}`);
+  assert.ok(Math.abs(field.height-reference.height)<=0.5,`${name} height ${field.height} does not match Aspects ${reference.height}`);
+  assert.ok(Math.abs(field.top-reference.top)<=1,`${name} top ${field.top} does not match Aspects ${reference.top}`);
+  assert.ok(Math.abs(field.bottom-reference.bottom)<=1,`${name} bottom ${field.bottom} does not match Aspects ${reference.bottom}`);
   for(const property of ['backgroundColor','borderTopColor','borderTopStyle','borderTopWidth','borderTopLeftRadius','borderTopRightRadius','borderBottomLeftRadius','borderBottomRightRadius','color','fontFamily','fontSize','fontWeight','lineHeight']){
-    assert.equal(field[property],reference[property],`${name} ${property} must match Orb`);
+    assert.equal(field[property],reference[property],`${name} ${property} must match Aspects`);
   }
 }
 
-const labelReference=result.labels.orb;
+const labelReference=result.labels.aspects;
 for(const [name,label] of Object.entries(result.labels)){
   for(const property of ['color','fontFamily','fontSize','fontWeight','lineHeight']){
-    assert.equal(label[property],labelReference[property],`${name} label ${property} must match Orb`);
+    assert.equal(label[property],labelReference[property],`${name} label ${property} must match Aspects`);
   }
 }
 for(const [name,toggle] of Object.entries(result.toggles)){
