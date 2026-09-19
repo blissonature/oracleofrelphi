@@ -37,11 +37,34 @@
 
 /* Side layouts are workspaces, not narrow Tarot content pages. Use the
    available browser width while leaving a small breathing margin. */
+html[data-sky-layout="cards-left"] body.sky-chart-page,
+html[data-sky-layout="cards-right"] body.sky-chart-page{
+  overflow-x:hidden;
+}
 html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-app-shell,
 html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-app-shell{
-  width:calc(100vw - 24px);
+  width:calc(100vw - 16px);
   max-width:none;
   box-sizing:border-box;
+  margin:.55rem auto .35rem;
+}
+html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-hero,
+html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-hero{
+  margin:0 auto .55rem;
+}
+html[data-sky-layout="cards-left"] body.sky-chart-page .tarot-hero h1,
+html[data-sky-layout="cards-right"] body.sky-chart-page .tarot-hero h1{
+  margin-block:.2rem;
+}
+html[data-sky-layout="cards-left"] body.sky-chart-page #chartPanel,
+html[data-sky-layout="cards-right"] body.sky-chart-page #chartPanel{
+  margin:0;
+  padding:0;
+}
+html[data-sky-layout="cards-left"] #skyFoundationRoot,
+html[data-sky-layout="cards-right"] #skyFoundationRoot{
+  max-width:100%;
+  overflow:visible;
 }
 
 /* Classic keeps the existing visual order, but Relationships is now a stable
@@ -81,10 +104,24 @@ html[data-sky-layout="classic"][data-sky-b-present="false"]:not([data-sky-b-edit
     grid-template-areas:"relationships comparison a";
   }
 
+  html[data-sky-layout="cards-left"] #skyFoundationRelationships,
+  html[data-sky-layout="cards-right"] #skyFoundationRelationships{
+    display:flex;
+    flex-direction:column;
+    align-self:start;
+    height:var(--sky-side-panel-height,auto);
+    max-height:var(--sky-side-panel-height,none);
+    overflow:hidden;
+  }
   html[data-sky-layout="cards-left"] #skyFoundationRelationshipList,
   html[data-sky-layout="cards-right"] #skyFoundationRelationshipList{
     grid-template-columns:repeat(2,minmax(0,1fr));
-    max-height:min(72vh,760px);
+    flex:1 1 auto;
+    min-height:0;
+    max-height:none;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
   }
 }
 
