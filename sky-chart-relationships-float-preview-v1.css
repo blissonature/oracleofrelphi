@@ -38,7 +38,7 @@ html[data-sky-relationships-view="float"] #skyFoundationRelationships{
   max-height:calc(100vh - 24px);
   display:flex;
   flex-direction:column;
-  overflow:hidden;
+  overflow:hidden!important;
   resize:both;
   border:1px solid rgba(31,27,24,.2);
   border-radius:16px;
