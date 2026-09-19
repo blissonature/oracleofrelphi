@@ -349,7 +349,9 @@
       if(row){
         if(!relationshipFilmstripActive()||lockedState||row.contains(event.relatedTarget))return;
         if(event.relatedTarget?.closest?.('.sky-foundation-relationship-row[data-relation-index]'))return;
-        rowHoverState=null;scheduleRowWheelStateFast();return;
+        const focused=document.activeElement?.closest?.('.sky-foundation-relationship-row[data-relation-index]');
+        rowHoverState=focused&&document.getElementById('skyFoundationRelationshipList')?.contains(focused)?rowWheelState(focused):null;
+        scheduleRowWheelStateFast();return;
       }
       if(lockedState)return;
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
