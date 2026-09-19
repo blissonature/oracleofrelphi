@@ -334,10 +334,20 @@
     });
     root.addEventListener('click',event=>{
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
-      if(row)return;
+      if(row){
+        const next=rowWheelState(row);
+        if(!next)return;
+        lockedState=null;hoverState=null;rowHoverState=null;rowLockedState=sameRowState(rowLockedState,next)?null:next;applyState();return;
+      }
       const node=interactive(event);if(node){event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState();return}if(clearableWhitespace(event))clearFromWhitespace()
     });
-    root.addEventListener('keydown',event=>{if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState()});
+    root.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){clearFromWhitespace();return}
+      if(!['Enter',' '].includes(event.key))return;
+      const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
+      if(row){event.preventDefault();const next=rowWheelState(row);if(!next)return;lockedState=null;hoverState=null;rowHoverState=null;rowLockedState=sameRowState(rowLockedState,next)?null:next;applyState();return}
+      const node=interactive(event);if(!node)return;event.preventDefault();rowLockedState=null;rowHoverState=null;const next=specFrom(node);lockedState=same(lockedState,next)?null:next;hoverState=null;applyState()
+    });
   }
   function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   async function refresh(){
