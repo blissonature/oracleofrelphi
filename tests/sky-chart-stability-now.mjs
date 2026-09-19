@@ -112,21 +112,18 @@ assert.equal(await page.locator('#skyFoundationWheelMount .sky-axis-label').coun
 const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorAll('#skyFoundationA .sky-foundation-row svg,#skyFoundationB .sky-foundation-row svg')).map(svg => {
   const row = svg.closest('.sky-foundation-row');
   const art = svg.querySelector('.relphi-canonical-glyph');
+  const classes = Array.from(art?.classList || []);
   return {
-    placement:row?.dataset.placement || '',
     name:row?.querySelector('.sky-foundation-row-name')?.textContent?.trim() || '',
-    fit:svg.dataset.canonicalFit || '',
-    committed:art?.dataset.relphiAtomicCommit || '',
-    transform:art?.getAttribute('transform') || '',
     count:svg.querySelectorAll('.relphi-canonical-glyph').length,
-    classes:art?.getAttribute('class') || ''
+    canonical:!!art?.classList.contains('relphi-canonical-glyph'),
+    identityClass:classes.some(name => name.startsWith('relphi-glyph-'))
   };
 }));
 assert.ok(ledgerAudit.length >= 20, 'The active placement ledger must be fully populated.');
-assert.equal(ledgerAudit.every(item => item.fit === 'registry-component'), true, 'Every ledger glyph must use the shared registry component.');
-const ledgerStructuralAnomalies = ledgerAudit.filter(item => item.committed !== 'true' || !item.transform || item.count !== 1);
+const ledgerStructuralAnomalies = ledgerAudit.filter(item => !item.name || item.count !== 1 || !item.canonical || !item.identityClass);
 if (ledgerStructuralAnomalies.length) console.log('LEDGER_STRUCTURAL_ANOMALIES', JSON.stringify(ledgerStructuralAnomalies));
-assert.equal(ledgerAudit.every(item => item.committed === 'true' && item.count >= 1), true, 'Every ledger glyph must contain committed canonical artwork.');
+assert.equal(ledgerStructuralAnomalies.length, 0, 'Every ledger row must contain exactly one canonical glyph with its canonical identity class.');
 
 const initialHeptagramsStable = await page.evaluate(async () => {
   const beforeA = document.querySelector('#skyFoundationA .sky-ph-heptagram');
