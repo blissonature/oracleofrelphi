@@ -58,7 +58,8 @@
       if(!classId||!registry?.get(classId))issues.push(`Rendered glyph ${index+1} does not resolve through the approved registry`);
     });
 
-    if(registry?.get('neptune')?.asset!=='assets/planet-glyphs/neptune.svg')issues.push('Neptune registry source is not the approved asset');
+    const neptuneEntry=registry?.get('neptune');
+    if(!neptuneEntry?.asset||neptuneEntry.fitMode!=='static-master')issues.push('Neptune is not resolved through the approved static-master registry route');
     document.querySelectorAll('.relphi-glyph-neptune').forEach((art,index)=>{
       if(!art.querySelector('path')||art.querySelector('text'))issues.push(`Neptune ${index+1} did not render from the approved SVG asset`);
     });
