@@ -43,7 +43,7 @@ html[data-sky-relationships-view="float"] #skyFoundationRelationships{
   border:1px solid rgba(31,27,24,.2);
   border-radius:16px;
   background:#fffdf8;
-  box-shadow:0 22px 60px rgba(31,27,24,.28);
+  box-shadow:0 10px 28px rgba(31,27,24,.18);
 }
 
 html[data-sky-relationships-view="float"] #skyFoundationRelationships>.sky-foundation-relationships-heading{
