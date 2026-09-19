@@ -69,6 +69,7 @@ try{
   assert.equal(afterArrow.isRow,true);
   assert.notEqual(afterArrow.index,firstIndex,'ArrowRight must advance to the next filmstrip tile.');
 
+  await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:focus').hover();
   await page.mouse.wheel(0,120);
   await page.waitForTimeout(90);
   const afterWheel=await page.evaluate(()=>({
