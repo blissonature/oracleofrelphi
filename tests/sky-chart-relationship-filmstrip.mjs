@@ -47,14 +47,24 @@ try{
   assert.notEqual(layout.overflowX,'hidden');
   assert.equal(layout.overflowY,'hidden');
 
-  const visibleRows=()=>page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible');
-  const baseline=await visibleRows().count();
+  const eligibleCount=()=>page.evaluate(()=>[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')].filter(row=>!row.hidden&&row.getAttribute('aria-hidden')!=='true'&&!Array.from(row.classList).some(name=>/hidden$/.test(name))).length);
+  const baseline=await eligibleCount();
   assert.ok(baseline>10,'Fixture must begin with a useful relationship set.');
 
-  const first=visibleRows().nth(0);
-  await first.focus();
+  const current=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-filmstrip-slot="current"]');
+  const previous=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-filmstrip-slot="previous"]');
+  const nextTile=page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-filmstrip-slot="next"]');
+  assert.equal(await current.count(),1,'Collapsed carousel must have exactly one current tile.');
+  assert.ok(await previous.count()<=1&&await nextTile.count()<=1,'Collapsed carousel must show at most one complete neighbor per side.');
+  const listBox=await list.boundingBox(),currentBox=await current.boundingBox();
+  assert.ok(Math.abs((currentBox.x+currentBox.width/2)-(listBox.x+listBox.width/2))<=1.5,'Current relationship must stay physically centered.');
+  const shownBoxes=await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').evaluateAll(rows=>rows.map(row=>{const r=row.getBoundingClientRect();return{left:r.left,right:r.right,width:r.width}}));
+  assert.ok(shownBoxes.length>=2&&shownBoxes.length<=3,'Collapsed carousel must show only whole current/neighbor tiles.');
+  assert.equal(shownBoxes.every(box=>box.left>=listBox.x-1&&box.right<=listBox.x+listBox.width+1),true,'Collapsed carousel must not expose partial tiles.');
+
+  await current.focus();
   await page.waitForTimeout(60);
-  assert.equal((await wheel.getAttribute('class')||'').includes('has-isolation'),true,'Focused filmstrip relationship must drive wheel isolation.');
+  assert.equal((await wheel.getAttribute('class')||'').includes('has-isolation'),true,'Focused carousel relationship must drive wheel isolation.');
 
   await page.evaluate(()=>{
     window.__filmstripFilterEvents=0;
@@ -63,14 +73,29 @@ try{
     document.getElementById('skyFoundationRelationshipList')?.addEventListener('click',()=>{window.__filmstripClicks+=1});
   });
 
-  const firstIndex=await first.getAttribute('data-relation-index');
+  const firstIndex=await current.getAttribute('data-relation-index');
   await page.keyboard.press('ArrowRight');
   const afterArrow=await page.evaluate(()=>({
     index:document.activeElement?.dataset?.relationIndex||'',
-    isRow:document.activeElement?.classList?.contains('sky-foundation-relationship-row')||false
+    isRow:document.activeElement?.classList?.contains('sky-foundation-relationship-row')||false,
+    center:document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-filmstrip-slot="current"]')?.dataset?.relationIndex||''
   }));
   assert.equal(afterArrow.isRow,true);
-  assert.notEqual(afterArrow.index,firstIndex,'ArrowRight must advance to the next filmstrip tile.');
+  assert.notEqual(afterArrow.index,firstIndex,'ArrowRight must advance to the next carousel tile.');
+  assert.equal(afterArrow.center,afterArrow.index,'Keyboard navigation must recenter the newly selected tile.');
+
+  const backButton=page.locator('#skyRelationshipFilmstripPrevious');
+  const forwardButton=page.locator('#skyRelationshipFilmstripNext');
+  assert.equal(await backButton.isDisabled(),false,'Back button must enable after moving off the first relationship.');
+  assert.equal(await forwardButton.isDisabled(),false,'Forward button must remain available before the end.');
+  const beforeButton=afterArrow.index;
+  await forwardButton.click();
+  const afterButton=await page.evaluate(()=>({
+    index:document.activeElement?.dataset?.relationIndex||'',
+    center:document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-filmstrip-slot="current"]')?.dataset?.relationIndex||''
+  }));
+  assert.notEqual(afterButton.index,beforeButton,'Forward button must advance one relationship.');
+  assert.equal(afterButton.center,afterButton.index,'Forward button must keep the selected tile centered.');
 
   await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:focus').hover();
   await page.mouse.wheel(0,120);
@@ -80,7 +105,7 @@ try{
     filterEvents:window.__filmstripFilterEvents,
     clicks:window.__filmstripClicks
   }));
-  assert.notEqual(afterWheel.index,afterArrow.index,'Mouse wheel must scrub to the next relationship.');
+  assert.notEqual(afterWheel.index,afterButton.index,'Mouse wheel must scrub to the next relationship.');
   assert.equal(afterWheel.filterEvents,0,'Relationship scrubbing must stay off the expensive foundation filter pipeline.');
   assert.equal(afterWheel.clicks,0,'Mouse-wheel scrubbing must select/focus without activating the tile.');
 
@@ -93,10 +118,19 @@ try{
   await page.waitForFunction(()=>document.getElementById('skyFoundationRelationships')?.dataset.filmstripExpanded==='true');
   assert.equal(await toggle.getAttribute('aria-expanded'),'true');
 
-  const expandedRows=visibleRows();
-  const r0=await expandedRows.nth(0).boundingBox(),r1=await expandedRows.nth(1).boundingBox();
+  const expandedRows=()=>page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible');
+  await page.waitForSelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row .sky-filmstrip-expanded-detail');
+  const r0=await expandedRows().nth(0).boundingBox(),r1=await expandedRows().nth(1).boundingBox();
   assert.ok(r1.y>r0.y+r0.height*.6,'Expanded Relationships must be a single vertical column.');
   assert.ok(Math.abs(r1.x-r0.x)<=2,'Expanded single-column relationship tiles must share one column.');
+  const rich=expandedRows().first().locator(':scope>.sky-filmstrip-expanded-detail');
+  assert.equal(await rich.locator('.sky-filmstrip-rich-card img').count(),2,'Expanded relationship must show both Tarot card artworks.');
+  assert.equal(await rich.locator('.sky-filmstrip-rich-copy>strong').count(),2,'Expanded relationship must show both placement names.');
+  assert.equal(await rich.locator('.sky-filmstrip-rich-copy>p').count(),2,'Expanded relationship must show both placement referents.');
+  assert.equal(await rich.locator('.sky-filmstrip-rich-sign').count(),2,'Expanded relationship must show both sign names and referents.');
+  assert.equal(await rich.locator('.sky-filmstrip-rich-aspect>strong').count(),1,'Expanded relationship must show the aspect name.');
+  assert.equal(await rich.locator('.sky-filmstrip-rich-aspect>p').count(),1,'Expanded relationship must show the aspect referent.');
+  assert.equal(await rich.locator('.sky-filmstrip-rich-card img').evaluateAll(images=>images.every(image=>image.complete&&image.naturalWidth>0)),true,'Expanded Tarot card art must load successfully.');
 
   const expandedPanelBox=await panel.boundingBox();
   const expandedWheelBox=await page.locator('#skyFoundationWheelMount').boundingBox();
@@ -113,7 +147,7 @@ try{
   const square=aspectPopover.locator('[data-aspect-matrix-scope="all"][data-aspect-matrix-aspect="square"]');
   await square.uncheck();
   await page.waitForFunction(()=>![...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-aspect="square"]')].some(row=>!row.hidden&&!Array.from(row.classList).some(name=>/hidden$/.test(name))));
-  assert.ok(await visibleRows().count()<baseline,'Aspect filter must still narrow the filmstrip/list.');
+  assert.ok(await expandedRows().count()<baseline,'Aspect filter must still narrow the filmstrip/list.');
   await square.check();
   await page.keyboard.press('Escape');
 
@@ -125,13 +159,13 @@ try{
   await placementAll.uncheck();
   await sunAll.check();
   await page.waitForTimeout(120);
-  const placementCount=await visibleRows().count();
+  const placementCount=await expandedRows().count();
   assert.ok(placementCount>0&&placementCount<baseline,'Placement filter must still narrow Relationships.');
-  assert.equal(await visibleRows().evaluateAll(rows=>rows.every(row=>row.dataset.leftPlacement==='sun'||row.dataset.rightPlacement==='sun')),true);
+  assert.equal(await expandedRows().evaluateAll(rows=>rows.every(row=>row.dataset.leftPlacement==='sun'||row.dataset.rightPlacement==='sun')),true);
   await placementAll.check();
   await page.keyboard.press('Escape');
 
-  const firstHouse=await visibleRows().first().getAttribute('data-left-house');
+  const firstHouse=await expandedRows().first().getAttribute('data-left-house');
   await page.locator('[data-house-filter="combined"] [data-house-filter-toggle]').click();
   const housePopover=page.locator('#skyChartHousePopover');
   await page.waitForSelector('#skyChartHousePopover.is-portaled:not([hidden])');
@@ -139,25 +173,25 @@ try{
   await houseAll.uncheck();
   await housePopover.locator('[data-house-scope="house"][data-house-target="'+firstHouse+'"][data-house-choice="all"]').check();
   await page.waitForTimeout(120);
-  assert.ok(await visibleRows().count()<baseline,'House filter must still narrow Relationships.');
+  assert.ok(await expandedRows().count()<baseline,'House filter must still narrow Relationships.');
   await houseAll.check();
   await page.keyboard.press('Escape');
 
   await page.locator('[data-zodiac-summary]').click();
   const zodiacMenu=page.locator('#skyChartZodiacFilterMenu');
   await page.waitForSelector('#skyChartZodiacFilterMenu:not([hidden])');
-  const sign=await visibleRows().first().getAttribute('data-left-sign');
+  const sign=await expandedRows().first().getAttribute('data-left-sign');
   await zodiacMenu.locator('[data-zodiac-none]').click();
   await zodiacMenu.locator('.sky-chart-zodiac-filter-row input[value="'+sign+'"]').click();
   await page.waitForTimeout(120);
-  assert.ok(await visibleRows().count()<baseline,'Zodiac filter must still narrow Relationships.');
+  assert.ok(await expandedRows().count()<baseline,'Zodiac filter must still narrow Relationships.');
   await zodiacMenu.locator('[data-zodiac-all]').click();
   await page.keyboard.press('Escape');
 
   const harmonic=page.locator('[data-harmonic-window-input]');
   await harmonic.fill('1');
   await page.waitForTimeout(150);
-  assert.ok(await visibleRows().count()<baseline,'Harmonic Window must still narrow Relationships.');
+  assert.ok(await expandedRows().count()<baseline,'Harmonic Window must still narrow Relationships.');
   await harmonic.fill('6');
   await page.waitForTimeout(120);
 
@@ -168,7 +202,7 @@ try{
 
   assert.deepEqual(errors,[]);
   await page.screenshot({path:'sky-chart-relationship-filmstrip.png',fullPage:true});
-  console.log('Sky Chart Relationships filmstrip, downward single-column expansion, scrubbing, isolation, filters, and desktop-only fallback passed.');
+  console.log('Sky Chart centered relationship carousel, arrow controls, wheel scrubbing, rich downward catalog, filters, and desktop-only fallback passed.');
 }finally{
   await browser.close();
 }
