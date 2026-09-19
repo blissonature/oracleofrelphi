@@ -143,7 +143,10 @@ const initialHeptagramsStable = await page.evaluate(async () => {
 });
 assert.deepEqual(initialHeptagramsStable, { sameA:true, sameB:true, count:2, pending:0, calculating:false }, 'Repeated ready events must not rebuild or strand the heptagrams.');
 
-await page.locator('#skyFoundationB [data-final-now="B"]').click();
+await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
+const whereEditorB=page.locator('#skyFoundationB .sky-where-when-editor');
+await whereEditorB.waitFor({state:'visible'});
+await whereEditorB.locator('[data-ww-action="here-and-now"]').click();
 await page.waitForFunction(({ canonical, latitude, longitude, timezone }) => {
   const value = JSON.parse(localStorage.getItem('relphiSkyChartB') || 'null');
   const profile = value?.calcProfile || {};
