@@ -44,6 +44,7 @@ async function inspect(width,height,suffix){
     const angleLines=Array.from(document.querySelectorAll('.sky-foundation-angle-axis')).map(line=>({
       sky:line.dataset.sky,
       edge:Number(line.dataset.axisEdgeRadius),
+      expectedEdge:Number(window.RelphiSkyWheelSpec?.role?.(line.dataset.sky)?.edge),
       x1:Number(line.getAttribute('x1')),y1:Number(line.getAttribute('y1')),
       x2:Number(line.getAttribute('x2')),y2:Number(line.getAttribute('y2'))
     }));
@@ -94,7 +95,7 @@ async function inspect(width,height,suffix){
   assert.ok(state.renderedSkyCount===1||state.renderedSkyCount===2);
   assert.equal(state.angleCount,state.renderedSkyCount*4);
   assert.equal(state.angleLines.length,state.angleCount);
-  assert.ok(state.angleLines.every(line=>line.edge===(line.sky==='A'?574:166)));
+  assert.ok(state.angleLines.every(line=>Number.isFinite(line.expectedEdge)&&line.edge===line.expectedEdge));
   assert.ok(state.placementColors.length>0);
   assert.ok(state.placementColors.every(item=>item.painted>0));
   assert.deepEqual(state.placementColors.filter(item=>item.wrong),[]);
