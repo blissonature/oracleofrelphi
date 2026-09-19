@@ -53,7 +53,9 @@ try{
   assert.ok(b.skyFoundationB.right <= b.skyFoundationComparison.left+2,'Both Sky cards must stay left of the wheel.');
   assert.ok(b.skyFoundationComparison.right <= b.skyFoundationRelationships.left+2,'Relationships must sit to the right of the wheel.');
   assert.ok(Math.abs(b.skyFoundationA.top-b.skyFoundationB.top)<=2,'Sky A and Sky B must be side by side.');
-  assert.equal(await page.locator('#skyFoundationRelationshipList').evaluate(node=>getComputedStyle(node).gridTemplateColumns.split(' ').length),1,'Relationship rail must use one column.');
+  assert.equal(await page.locator('#skyFoundationRelationshipList').evaluate(node=>getComputedStyle(node).gridTemplateColumns.split(' ').length),2,'Relationship rail must preserve its two-column list.');
+  const shellWidth=await page.locator('.tarot-app-shell').evaluate(node=>node.getBoundingClientRect().width);
+  assert.ok(shellWidth>=page.viewportSize().width-32,`Cards Left should use the browser width: ${shellWidth}px of ${page.viewportSize().width}px`);
   assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartLayoutV1')),'cards-left');
   await page.screenshot({path:'sky-chart-layout-cards-left.png',fullPage:true});
 
@@ -65,6 +67,8 @@ try{
   assert.ok(b.skyFoundationComparison.right <= b.skyFoundationA.left+2,'Both Sky cards must stay right of the wheel.');
   assert.ok(b.skyFoundationA.left < b.skyFoundationB.left,'Sky A and Sky B retain their internal order.');
   assert.ok(Math.abs(b.skyFoundationA.top-b.skyFoundationB.top)<=2);
+  assert.equal(await page.locator('#skyFoundationRelationshipList').evaluate(node=>getComputedStyle(node).gridTemplateColumns.split(' ').length),2,'Cards Right must also preserve two relationship columns.');
+  assert.ok(await page.locator('.tarot-app-shell').evaluate(node=>node.getBoundingClientRect().width)>=page.viewportSize().width-32,'Cards Right should also use the browser width.');
   await page.screenshot({path:'sky-chart-layout-cards-right.png',fullPage:true});
 
   await page.reload({waitUntil:'networkidle'});
