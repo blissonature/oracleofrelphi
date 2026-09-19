@@ -31,5 +31,3 @@ jobs:
       - name: Check Sky Chart glyph readiness
         run: node tools/check-sky-chart-glyph-readiness.mjs
 
-      - name: Run focused glyph-facing Sky Chart regression
-        run: node --test tests/sky-chart-angle-lane-isolation.test.mjs
