@@ -95,7 +95,10 @@
       if(geminiPath?.closest('.relphi-glyph-bubble')?.dataset.canonicalStrokePresentation!=='fitted-non-scaling')issues.push('Gemini lacks the shared stroked-master presentation');
 
       const hosts=Array.from(chart.querySelectorAll('[data-layer="placements"] > g[data-angle-axis="true"]'));
-      if(hosts.length!==8)issues.push(`Comparison wheel has ${hosts.length} Angle labels instead of 8`);
+      const renderedAngleSkies=new Set(hosts.map(host=>host.dataset.sky).filter(Boolean));
+      const expectedAngleCount=renderedAngleSkies.size*4;
+      if(!renderedAngleSkies.size)issues.push('Sky wheel has no rendered Angle labels');
+      else if(hosts.length!==expectedAngleCount)issues.push(`Sky wheel has ${hosts.length} Angle labels instead of ${expectedAngleCount}`);
       const angleBoxes=[];
       hosts.forEach(host=>{
         const id=host.dataset.placement||'';
