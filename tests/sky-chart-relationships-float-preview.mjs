@@ -42,6 +42,32 @@ try{
 
   const wheel=page.locator('#skyFoundationWheelMount > .sky-foundation-wheel');
   const row=page.locator('#skyFoundationRelationshipList > .sky-foundation-relationship-row:visible').first();
+
+  // Spatial keyboard navigation follows the rendered relationship grid.
+  await row.focus();
+  const startBox=await row.boundingBox();
+  await page.keyboard.press('ArrowRight');
+  const rightNav=await page.evaluate(()=>({
+    active:document.activeElement?.classList.contains('sky-foundation-relationship-row')||false,
+    rect:document.activeElement?.getBoundingClientRect?.()
+      ? {left:document.activeElement.getBoundingClientRect().left,top:document.activeElement.getBoundingClientRect().top,width:document.activeElement.getBoundingClientRect().width,height:document.activeElement.getBoundingClientRect().height}
+      : null
+  }));
+  assert.equal(rightNav.active,true,'ArrowRight must move focus to an adjacent relationship tile.');
+  assert.ok(rightNav.rect.left>startBox.x+startBox.width*.5,'ArrowRight must move to the neighboring visual column.');
+
+  const beforeDown=rightNav.rect;
+  await page.keyboard.press('ArrowDown');
+  const downNav=await page.evaluate(()=>({
+    active:document.activeElement?.classList.contains('sky-foundation-relationship-row')||false,
+    rect:document.activeElement?.getBoundingClientRect?.()
+      ? {left:document.activeElement.getBoundingClientRect().left,top:document.activeElement.getBoundingClientRect().top,width:document.activeElement.getBoundingClientRect().width,height:document.activeElement.getBoundingClientRect().height}
+      : null
+  }));
+  assert.equal(downNav.active,true,'ArrowDown must keep focus within relationship tiles.');
+  assert.ok(downNav.rect.top>beforeDown.top+1,'ArrowDown must move to the next visual row.');
+
+  await row.focus();
   await page.evaluate(()=>{
     window.__relphiFloatPreviewFoundationFilterEvents=0;
     window.addEventListener('relphi:sky-foundation-filter-changed',()=>{window.__relphiFloatPreviewFoundationFilterEvents+=1});
