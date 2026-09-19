@@ -59,21 +59,25 @@ html[data-sky-layout="classic"][data-sky-b-present="false"]:not([data-sky-b-edit
     "a relationships";
 }
 
-@media(min-width:1260px){
+@media(min-width:1380px){
+  /* Balance the total card region against Relationships so the wheel remains
+     the true visual center.  The wheel receives the same generous scale it had
+     in the classic center column; Relationships keeps its established two
+     columns without becoming a dominant rail. */
   html[data-sky-layout="cards-left"] #skyFoundationRoot{
-    grid-template-columns:minmax(180px,220px) minmax(180px,220px) minmax(420px,.9fr) minmax(520px,1.2fr);
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,2.8fr) minmax(0,2fr);
     grid-template-areas:"a b comparison relationships";
   }
   html[data-sky-layout="cards-right"] #skyFoundationRoot{
-    grid-template-columns:minmax(520px,1.2fr) minmax(420px,.9fr) minmax(180px,220px) minmax(180px,220px);
+    grid-template-columns:minmax(0,2fr) minmax(0,2.8fr) minmax(0,1fr) minmax(0,1fr);
     grid-template-areas:"relationships comparison a b";
   }
   html[data-sky-layout="cards-left"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
-    grid-template-columns:minmax(220px,260px) minmax(440px,.95fr) minmax(560px,1.2fr);
+    grid-template-columns:minmax(0,2fr) minmax(0,2.8fr) minmax(0,2fr);
     grid-template-areas:"a comparison relationships";
   }
   html[data-sky-layout="cards-right"][data-sky-b-present="false"]:not([data-sky-b-editing="true"]) #skyFoundationRoot{
-    grid-template-columns:minmax(560px,1.2fr) minmax(440px,.95fr) minmax(220px,260px);
+    grid-template-columns:minmax(0,2fr) minmax(0,2.8fr) minmax(0,2fr);
     grid-template-areas:"relationships comparison a";
   }
 
@@ -86,7 +90,7 @@ html[data-sky-layout="classic"][data-sky-b-present="false"]:not([data-sky-b-edit
 
 /* Below the wide-workspace breakpoint, layout preference remains saved but the
    page uses the established responsive composition. */
-@media(max-width:1259px){
+@media(max-width:1379px){
   html[data-sky-layout] #skyFoundationRoot{
     grid-template-columns:minmax(195px,230px) minmax(460px,1fr) minmax(195px,230px);
     grid-template-areas:
