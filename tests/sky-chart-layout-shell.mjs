@@ -13,7 +13,7 @@ const skyA=sample('Sky A',0),skyB=sample('Sky B',31.4);
 
 const browser=await chromium.launch({headless:true});
 try{
-  const page=await browser.newPage({viewport:{width:1536,height:1200}});
+  const page=await browser.newPage({viewport:{width:1536,height:864}});
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
@@ -64,7 +64,11 @@ try{
   assert.ok(Math.abs(wheelCenter-viewportCenter)<=20,`Wheel must remain visually centered: ${wheelCenter}px vs viewport center ${viewportCenter}px.`);
   assert.ok(b.skyFoundationComparison.width>=560,`Wheel panel should retain its former scale; got ${b.skyFoundationComparison.width}px.`);
   assert.ok(relationshipWidth<b.skyFoundationComparison.width,'Relationships should not be wider than the wheel panel.');
+  const leftSkyHeight=Math.max(await page.locator('#skyFoundationA').evaluate(node=>node.getBoundingClientRect().height),await page.locator('#skyFoundationB').evaluate(node=>node.getBoundingClientRect().height));
+  const leftRelationshipsHeight=await page.locator('#skyFoundationRelationships').evaluate(node=>node.getBoundingClientRect().height);
+  assert.ok(leftRelationshipsHeight<=leftSkyHeight+1,`Relationships must not be taller than the Sky cards: ${leftRelationshipsHeight}px vs ${leftSkyHeight}px.`);
   assert.equal(await page.locator('body').evaluate(node=>node.scrollWidth<=node.clientWidth),true,'Cards Left must not create horizontal page scrolling.');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=window.innerHeight+1),true,'Cards Left must not require browser vertical scrolling.');
   assert.equal(await page.evaluate(()=>localStorage.getItem('relphiSkyChartLayoutV1')),'cards-left');
   await page.screenshot({path:'sky-chart-layout-cards-left.png',fullPage:true});
 
@@ -84,7 +88,11 @@ try{
   assert.ok(Math.abs(rightCardsWidth-rightRelationshipWidth)<=28,'Cards Right must keep the side regions balanced.');
   assert.ok(Math.abs(rightWheelCenter-page.viewportSize().width/2)<=20,'Cards Right must keep the wheel visually centered.');
   assert.ok(b.skyFoundationComparison.width>=560,'Cards Right must retain wheel scale.');
+  const rightSkyHeight=Math.max(await page.locator('#skyFoundationA').evaluate(node=>node.getBoundingClientRect().height),await page.locator('#skyFoundationB').evaluate(node=>node.getBoundingClientRect().height));
+  const rightRelationshipsHeight=await page.locator('#skyFoundationRelationships').evaluate(node=>node.getBoundingClientRect().height);
+  assert.ok(rightRelationshipsHeight<=rightSkyHeight+1,'Cards Right must keep Relationships within the Sky-card height.');
   assert.equal(await page.locator('body').evaluate(node=>node.scrollWidth<=node.clientWidth),true,'Cards Right must not create horizontal page scrolling.');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=window.innerHeight+1),true,'Cards Right must not require browser vertical scrolling.');
   await page.screenshot({path:'sky-chart-layout-cards-right.png',fullPage:true});
 
   await page.reload({waitUntil:'networkidle'});
