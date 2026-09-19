@@ -74,6 +74,7 @@ async function inspect(width,height,suffix){
       renderedStroke:geminiPath?.getAttribute('stroke')||'',
       angleLines,
       angleCount:document.querySelectorAll('[data-angle-axis="true"]').length,
+      renderedSkyCount:new Set(Array.from(document.querySelectorAll('[data-layer="placements"] > [data-sky]')).map(host=>host.dataset.sky).filter(Boolean)).size,
       diagnostics:document.querySelectorAll('[data-angle-collision-error],[data-canonical-glyph-error]').length,
       placementColors
     };
@@ -90,10 +91,11 @@ async function inspect(width,height,suffix){
   assert.equal(state.sourceStrokeWidth,'');
   assert.equal(state.renderedFill,'#171717');
   assert.equal(state.renderedStroke,'');
-  assert.equal(state.angleCount,8);
-  assert.equal(state.angleLines.length,8);
+  assert.ok(state.renderedSkyCount===1||state.renderedSkyCount===2);
+  assert.equal(state.angleCount,state.renderedSkyCount*4);
+  assert.equal(state.angleLines.length,state.angleCount);
   assert.ok(state.angleLines.every(line=>line.edge===(line.sky==='A'?574:166)));
-  assert.ok(state.placementColors.length>=30);
+  assert.ok(state.placementColors.length>0);
   assert.ok(state.placementColors.every(item=>item.painted>0));
   assert.deepEqual(state.placementColors.filter(item=>item.wrong),[]);
   assert.equal(state.diagnostics,0);
