@@ -121,6 +121,8 @@ html[data-sky-layout="classic"][data-sky-b-present="false"]:not([data-sky-b-edit
   html[data-sky-layout="cards-left"] #skyFoundationRelationshipList,
   html[data-sky-layout="cards-right"] #skyFoundationRelationshipList{
     grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:6px;
+    row-gap:0;
     flex:1 1 auto;
     min-height:0;
     max-height:none;
