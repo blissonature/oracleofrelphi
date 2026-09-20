@@ -77,9 +77,9 @@ html body #shortListPanel.relphi-celtic-readable .card-row-board>.card-row-item>
   white-space:normal!important;
 }
 
-/* Crossing is one rotated unit: placeholder/card and its label rotate together. */
+/* The crossing card rotates, but its question label stays upright beside it. */
 html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated{
-  transform:rotate(var(--row-card-rotation,90deg)) scale(var(--row-card-scale,1))!important;
+  transform:scale(var(--row-card-scale,1))!important;
   transform-origin:50% 50%!important;
   background:transparent!important;
   background-color:transparent!important;
@@ -88,7 +88,7 @@ html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-i
 }
 html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-card-wrap,
 html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card{
-  transform:none!important;
+  transform:rotate(var(--row-card-rotation,90deg))!important;
   transform-origin:50% 50%!important;
 }
 html body #shortListPanel.relphi-celtic-readable .card-row-workspace .card-row-item.relphi-celtic-crossing-rotated>.card-row-drop-card>.card-row-drop-card-inner{
