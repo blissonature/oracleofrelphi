@@ -1031,10 +1031,12 @@
         current.scrollIntoView({block:'nearest',inline:'center'});
         return;
       }
-      const stripRect=strip.getBoundingClientRect();
-      const currentRect=current.getBoundingClientRect();
-      if (currentRect.left < stripRect.left) strip.scrollLeft -= stripRect.left-currentRect.left;
-      else if (currentRect.right > stripRect.right) strip.scrollLeft += currentRect.right-stripRect.right;
+      const viewLeft=strip.scrollLeft;
+      const viewRight=viewLeft+strip.clientWidth;
+      const currentLeft=current.offsetLeft;
+      const currentRight=currentLeft+current.offsetWidth;
+      if (currentLeft < viewLeft) strip.scrollLeft=currentLeft;
+      else if (currentRight > viewRight) strip.scrollLeft=currentRight-strip.clientWidth;
     });
   }
   function renderFocusStrip(reader, index, options = {}) {
