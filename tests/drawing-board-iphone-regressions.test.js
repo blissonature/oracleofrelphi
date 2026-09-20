@@ -192,7 +192,9 @@ async function assertFocusReadingView(page) {
   const textHtmlPath=await textHtmlFile.path();
   const textHtml=fs.readFileSync(textHtmlPath,'utf8');
   assert.match(textHtml,/Drawing Board · Oracle of Relphi/,'text HTML export should carry Oracle of Relphi document branding');
-  assert.match(textHtml,/an Oracle of Relphi tool/,'text HTML export should identify Drawing Board as an Oracle of Relphi tool');
+  assert.match(textHtml,/class="brand-logo" src="data:image\/png;base64,/,'text HTML export should embed the actual Oracle of Relphi logo');
+  assert.match(textHtml,/Oracle of <span>Relphi<\/span>/,'text HTML export should use the established black/red wordmark treatment');
+  assert.doesNotMatch(textHtml,/an Oracle of Relphi tool/,'Oracle of Relphi itself must not be labeled as an Oracle of Relphi tool');
   assert.match(textHtml,/oracleofrelphi\.com/,'text HTML export should carry the Oracle of Relphi site address');
 
   const jsonDownload=page.waitForEvent('download');
@@ -204,9 +206,9 @@ async function assertFocusReadingView(page) {
   assert.deepEqual(json.brand,{
     name:'Oracle of Relphi',
     tool:'Drawing Board',
-    designation:'an Oracle of Relphi tool',
+    logo:'logo.png',
     website:'https://oracleofrelphi.com/'
-  },'board-data export should preserve Oracle of Relphi provenance');
+  },'board-data export should preserve Oracle of Relphi provenance without mislabeling the brand itself');
 
   // Reset leaves Options usable, including the last save-template control. Reset
   // intentionally re-renders the drawer, so query the replacement DOM only after
