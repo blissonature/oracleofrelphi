@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=86/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=87/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -71,6 +71,8 @@ assert.match(board, /keepFocusStripCurrentVisible/);
 assert.match(board, /renderFocusStrip\(existingReader,index,\{preserveScroll:true\}\)/);
 assert.doesNotMatch(board, /existingReader\.replaceWith\(reader\)/);
 assert.match(board, /relphi-focus-art/);
+assert.match(board, /function replaceFocusArt\(reader, artSource, cardId, reversed\)/);
+assert.match(board, /previous\.replaceWith\(art\)/);
 assert.match(board, /relphi-focus-entry/);
 assert.match(board, /relphi-focus-position-panel/);
 assert.match(board, /installFocusSwipe/);
