@@ -28,6 +28,8 @@ on:
       - 'tests/sky-chart-where-when-transaction-stability.mjs'
       - 'tests/sky-chart-where-when-layout-density.mjs'
       - 'tests/sky-chart-architecture-contract.mjs'
+      - 'tests/sky-chart-relationship-sort-isolation-stability.mjs'
+      - 'tests/sky-chart-challenging-wheel-click-stability.mjs'
       - '.github/workflows/sky-chart-where-when-transaction-check.yml'
   push:
     branches:
@@ -80,6 +82,8 @@ jobs:
           node --check tests/sky-chart-where-when-transaction-stability.mjs
           node --check tests/sky-chart-where-when-layout-density.mjs
           node tests/sky-chart-architecture-contract.mjs
+          node tests/sky-chart-relationship-sort-isolation-stability.mjs
+          node --check tests/sky-chart-challenging-wheel-click-stability.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -88,6 +92,7 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-transaction-server.log 2>&1 &
           node tests/sky-chart-where-when-transaction-stability.mjs
+          node tests/sky-chart-challenging-wheel-click-stability.mjs
           node tests/sky-chart-where-when-layout-density.mjs
       - uses: actions/upload-artifact@v4
         if: always()

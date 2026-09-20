@@ -158,7 +158,10 @@ function axisFamilyKey(row){
   return [endpointFamilyToken(row,'left'),endpointFamilyToken(row,'right')].sort().join('|');
 }
 function rowEligibleForSignificanceFamily(row){
-  if(!row||row.hidden||row.getAttribute?.('aria-hidden')==='true')return false;
+  if(!row)return false;
+  // Keep significance-family ranking stable while wheel selection temporarily hides
+  // nonmatching rows via hidden/aria-hidden. Only persistent filter classes remove a
+  // row from the ranking pool.
   return !SIGNIFICANCE_HIDDEN_CLASSES.some(name=>row.classList?.contains(name));
 }
 function activeAuthority(id){return ACTIVE_AUTHORITY[normalizedPoint(id)]??null}
