@@ -43,7 +43,7 @@ try{
       const master=list?.querySelector(':scope>.sky-chart-placement-list-item-master');
       const kinds=mode==='comparison'?['all','a','b']:['all','a'];
       const headerNodes=kinds.map(kind=>header?.querySelector(`.sky-chart-placement-list-header-choice-${kind}`));
-      const inputNodes=kinds.map(kind=>master?.querySelector(`[data-placement-choice="${kind}"] input`));
+      const inputNodes=kinds.map(kind=>master?.querySelector(`input[data-placement-choice="${kind}"]`));
       const center=node=>{const r=node?.getBoundingClientRect();return r?r.left+r.width/2:NaN};
       return{
         headerCount:header?.querySelectorAll('.sky-chart-placement-list-header-choice').length||0,
