@@ -78,7 +78,7 @@ async function applyQuestions(page,labels){
     });
     assert.equal(denseAudit.xs,10,`50-position automatic layout should use a 10-column comfortable pack; columns=${denseAudit.xs}`);
     assert.equal(denseAudit.ys,5,`50-position automatic layout should use five rows; rows=${denseAudit.ys}`);
-    assert.deepEqual(denseAudit.overlaps,[],'automatic 40-position layout must not overlap card/label envelopes');
+    assert.deepEqual(denseAudit.overlaps,[],'automatic 50-position layout must not overlap card/label envelopes');
     assert.ok(denseAudit.zoom>=.45,'dense layout should remain within supported board zoom');
 
     await page.evaluate(()=>{
