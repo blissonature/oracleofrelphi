@@ -65,7 +65,7 @@ assert.match(board, /Open Drawing Board/);
 assert.match(board, /Close Drawing Board/);
 assert.match(css, /touch-action:pan-x pan-y/);
 assert.match(css, /relphi-is-pinching/);
-assert.match(css, /data-relphi-position-id="crossing"\][^\n]*card-row-position-panel\{top:1\.25rem!important;bottom:auto!important\}/);
+assert.match(css, /data-relphi-position-id="crossing"\][^\n]*card-row-position-panel\{left:calc\(100% \+ 4\.25rem\)!important;right:auto!important;top:50%!important;bottom:auto!important;[^\n]*transform:translateY\(-50%\)!important/);
 assert.match(css, /card-row-workspace-toolbar\.relphi-board-controller/);
 assert.match(css, /relphi-reading-options-drawer/);
 assert.match(css, /relphi-options-commitbar/);
