@@ -1000,22 +1000,31 @@
     else if (block) block.appendChild(section);
     else entry.prepend(section);
   }
+  function replaceFocusArt(reader, artSource, cardId, reversed) {
+    const frame=reader.querySelector('.relphi-focus-art-frame');
+    if (!frame) return;
+    const previous=frame.querySelector('.relphi-focus-art');
+    const art=document.createElement('img');
+    art.className='relphi-focus-art';
+    art.alt=((artSource?.alt || ledgerBridge()?.titleFor?.(cardId) || 'Tarot card') + (reversed ? ' — reversed' : ''));
+    art.decoding='async';
+    art.loading='eager';
+    art.classList.toggle('is-reversed',reversed);
+    if (previous) previous.replaceWith(art); else frame.appendChild(art);
+    const src=artSource?.currentSrc || artSource?.src || '';
+    if (src) art.src=src;
+  }
   function renderFocusEntry(reader, index) {
     const card=cardAt(index);
     const cardId=String(card?.dataset?.rowCard || '');
     const artSource=focusArtImage(card);
     const reversed=focusCardIsReversed(index);
-    const art=reader.querySelector('.relphi-focus-art');
     const entry=reader.querySelector('.relphi-focus-entry');
     const position=reader.querySelector('.relphi-focus-position');
     const reversedBadge=reader.querySelector('.relphi-focus-reversed-badge');
     if (position) position.textContent=positionLabel(index);
     if (reversedBadge) reversedBadge.hidden=!reversed;
-    if (art && artSource) {
-      art.src=artSource.currentSrc || artSource.src || '';
-      art.alt=(artSource.alt || ledgerBridge()?.titleFor?.(cardId) || 'Tarot card') + (reversed ? ' — reversed' : '');
-      art.classList.toggle('is-reversed',reversed);
-    }
+    replaceFocusArt(reader,artSource,cardId,reversed);
     if (entry) {
       entry.innerHTML=ledgerBridge()?.renderCardEntry?.(cardId,'Tarot Ledger entry') || '<p>Card entry unavailable.</p>';
       entry.querySelectorAll('.tarot-card-art,.full-entry-row-button').forEach(node=>node.remove());

@@ -96,7 +96,31 @@ async function resetAndApplyQuestions(page,labels){
     assert.ok(Math.abs(after.scrollLeft-after.before)<100,`filmstrip should move only as much as needed to reveal the next position; before=${after.before}, after=${after.scrollLeft}`);
     assert.equal(after.currentVisible,true,'new current position must remain visible after preserving filmstrip scroll');
 
-    console.log('Focus View filmstrip keeps its scroll position while drawing new cards.');
+    await page.click('.relphi-focus-prev');
+    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===6);
+    const artBeforeNext=await page.evaluate(()=>{
+      const art=document.querySelector('.relphi-focus-art');
+      window.__relphiFocusArtNode=art;
+      window.__relphiFocusArtSrc=art?.currentSrc||art?.src||'';
+      return {src:window.__relphiFocusArtSrc,alt:art?.alt||''};
+    });
+    assert.ok(artBeforeNext.src,'fixture must expose Focus card art before navigating next');
+
+    await page.click('.relphi-focus-next');
+    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===7);
+    const artAfterNext=await page.evaluate(()=> {
+      const art=document.querySelector('.relphi-focus-art');
+      return {
+        sameNode:art===window.__relphiFocusArtNode,
+        beforeSrc:String(window.__relphiFocusArtSrc||''),
+        src:art?.currentSrc||art?.src||'',
+        alt:art?.alt||''
+      };
+    });
+    assert.equal(artAfterNext.sameNode,false,'Focus View must replace the image node immediately when moving to the next question so the previous card cannot linger');
+    assert.notEqual(artAfterNext.src,artAfterNext.beforeSrc,'next Focus question must point at its own card art');
+
+    console.log('Focus View filmstrip keeps its scroll position and swaps card art immediately while navigating.');
   }finally{
     await browser.close();
   }
