@@ -38,7 +38,7 @@
 .sky-chart-filter-bar select{text-transform:none}
 
 /* Aspect hit geometry stays easy to tap without drawing a box. */
-.sky-foundation-aspect-hit{fill:none!important;stroke:transparent!important;outline:none!important;box-shadow:none!important;pointer-events:stroke!important}
+.sky-foundation-aspect-hit{fill:none!important;stroke:transparent!important;stroke-width:28px!important;stroke-linecap:round!important;vector-effect:non-scaling-stroke!important;outline:none!important;box-shadow:none!important;pointer-events:stroke!important}
 .sky-foundation-aspect-hit:focus,.sky-foundation-aspect-hit:focus-visible{outline:none!important;box-shadow:none!important}
 
 /* Keep selected readings stable while the user explores the retained list. */
