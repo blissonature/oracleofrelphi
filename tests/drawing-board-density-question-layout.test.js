@@ -81,6 +81,11 @@ async function applyQuestions(page,labels){
     assert.deepEqual(denseAudit.overlaps,[],'automatic 50-position layout must not overlap card/label envelopes');
     assert.ok(denseAudit.zoom>=.45,'dense layout should remain within supported board zoom');
 
+    await page.click('#drawingBoardOptionsButton');
+    await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+    assert.equal(await page.locator('#relphiAddPosition').isDisabled(),true,'Add position must stop at the comfortable 50-position cap');
+    await page.click('#relphiCancelOptions');
+
     await page.evaluate(()=>{
       const bridge=window.RelphiDrawingBoardOptionsBridge;
       const snap=bridge.capture();
