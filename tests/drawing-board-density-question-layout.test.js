@@ -74,12 +74,14 @@ async function applyQuestions(page,labels){
         const h=Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top);
         if(w>1&&h>1) overlaps.push({a:a.index,b:b.index,w,h});
       }
-      return {xs:xs.length,ys:ys.length,overlaps,zoom:Number(snap.rowZoom)||0};
+      const scales=Object.values(snap.rowCardTransforms||{}).map(item=>Number(item?.scale)).filter(Number.isFinite);
+      return {xs:xs.length,ys:ys.length,overlaps,zoom:Number(snap.rowZoom)||0,minScale:scales.length?Math.min(...scales):1,maxScale:scales.length?Math.max(...scales):1};
     });
     assert.equal(denseAudit.xs,10,`50-position automatic layout should use a 10-column comfortable pack; columns=${denseAudit.xs}`);
     assert.equal(denseAudit.ys,5,`50-position automatic layout should use five rows; rows=${denseAudit.ys}`);
     assert.deepEqual(denseAudit.overlaps,[],'automatic 50-position layout must not overlap card/label envelopes');
     assert.ok(denseAudit.zoom>=.45,'dense layout should remain within supported board zoom');
+    assert.ok(denseAudit.minScale>=.32 && denseAudit.maxScale<.45,`50-position pack should use the dense prefab scale band without being clamped back to .45; scales=${denseAudit.minScale}–${denseAudit.maxScale}`);
 
     await page.click('#drawingBoardOptionsButton');
     await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
