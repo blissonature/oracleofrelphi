@@ -48,7 +48,7 @@ async function applyQuestions(page,labels){
     await openBoard(page);
 
     await resetBoard(page);
-    const dense=Array.from({length:40},(_,i)=>`Question ${i+1}: what relationship or pattern is most important to understand in this position now`);
+    const dense=Array.from({length:50},(_,i)=>`Question ${i+1}: what relationship or pattern is most important to understand in this position now`);
     await applyQuestions(page,dense);
 
     const denseAudit=await page.evaluate(()=>{
@@ -76,7 +76,7 @@ async function applyQuestions(page,labels){
       }
       return {xs:xs.length,ys:ys.length,overlaps,zoom:Number(snap.rowZoom)||0};
     });
-    assert.ok(denseAudit.xs>=8,`40-position automatic layout should use the board width; columns=${denseAudit.xs}`);
+    assert.ok(denseAudit.xs>=8,`50-position automatic layout should use the board width; columns=${denseAudit.xs}`);
     assert.ok(denseAudit.ys<=5,`40-position automatic layout should avoid a tall four-column stack; rows=${denseAudit.ys}`);
     assert.deepEqual(denseAudit.overlaps,[],'automatic 40-position layout must not overlap card/label envelopes');
     assert.ok(denseAudit.zoom>=.45,'dense layout should remain within supported board zoom');
@@ -108,7 +108,7 @@ async function applyQuestions(page,labels){
         activeId:snap.rowActiveLayout?.id||''
       };
     });
-    assert.ok(migrated.columns>=8,'legacy locked four-column custom readings should migrate to the dense pack in place');
+    assert.ok(migrated.columns>=8,'legacy locked four-column dense custom readings should migrate to the dense pack in place');
     assert.equal(migrated.activeId,'custom-active','dense migration must preserve the active reading identity');
 
     await resetBoard(page);
