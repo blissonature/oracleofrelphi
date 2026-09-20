@@ -224,7 +224,19 @@
     list.dataset.placementList='combined';
     const header=document.createElement('div');
     header.className='sky-chart-placement-list-header';
-    header.innerHTML=bActive()?'<strong>Placement</strong><span>All</span><span>A</span><span>B</span>':'<strong>Placement</strong><span>All</span><span>A</span>';
+    header.dataset.placementListHeader='true';
+    const headerLabel=document.createElement('strong');
+    headerLabel.className='sky-chart-placement-list-header-label';
+    headerLabel.textContent='Placement';
+    const headerChoices=document.createElement('div');
+    headerChoices.className='sky-chart-placement-list-header-choices';
+    activeKinds().forEach(kindName=>{
+      const heading=document.createElement('span');
+      heading.className=`sky-chart-placement-list-header-choice sky-chart-placement-list-header-choice-${kindName}`;
+      heading.textContent=kindName==='all'?'All':kindName.toUpperCase();
+      headerChoices.appendChild(heading);
+    });
+    header.append(headerLabel,headerChoices);
     list.append(header,row('all','all','All placements','master'));
     GROUPS.forEach(group=>{
       const entries=listEntries(group.id);

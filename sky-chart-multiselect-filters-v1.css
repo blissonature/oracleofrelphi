@@ -48,7 +48,7 @@
 /* In single-sky mode the B column is not applicable, so the placement table collapses to All + A. */
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-summary-choices .sky-chart-placement-choice-b,
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list .sky-chart-placement-choice-b,
-html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-header span:last-child{display:none!important}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-header-choice-b{display:none!important}
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-header,
 html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) repeat(2,38px)}
 @media(prefers-reduced-motion:reduce){.sky-chart-placement-filter-toggle::before{transition:none}}
