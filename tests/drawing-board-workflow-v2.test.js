@@ -48,6 +48,7 @@ assert.match(board, /function installExportArea/);
 assert.match(board, /drawing-board-post-export/);
 assert.match(css, /relphi-board-reading-text/);
 assert.match(css, /relphi-reading-text-association/);
+assert.doesNotMatch(css, /relphi-reading-text-card\.is-reversed\{[^}]*border-left/);
 assert.match(app, /function drawingBoardAssociationText/);
 assert.match(app, /function serializeDrawingBoardReadingText/);
 assert.match(app, /drawingBoardReadingEntries/);
