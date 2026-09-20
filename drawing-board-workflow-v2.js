@@ -14,7 +14,7 @@
   const CANVAS_H = 760;
   const CARD_W = 174;
   const CARD_H = CARD_W * 866 / 500;
-  const LABEL_H = 38;
+  const LABEL_H = 68;
   const GUTTER = 12;
   const MIN_ZOOM = .45;
   const MAX_ZOOM = 2.4;
@@ -48,7 +48,7 @@
     return { id, label, drawOrder, transform:point, ...extra };
   }
 
-  function genericPositions(labels) {
+  function legacyGenericPositions(labels) {
     const count = Math.max(1, labels.length);
     if (count === 1) return [position('position-1', labels[0], 1, transform(.40,.22,1))];
     if (count <= 3) {
@@ -65,6 +65,73 @@
     const ys = rows <= 2 ? [.12,.56] : rows === 3 ? [.02,.34,.66] : Array.from({length:rows},(_,i)=>.015+i*(.93/Math.max(1,rows-1)));
     const scale = rows <= 3 ? .62 : .52;
     return labels.map((label,index) => position(`position-${index+1}`,label,index+1,transform(xs[index%cols],ys[Math.floor(index/cols)],scale)));
+  }
+  function genericPositions(labels) {
+    const count = Math.max(1, labels.length);
+    if (count <= 12) return legacyGenericPositions(labels);
+    let best=null;
+    const maxCols=Math.min(10,count);
+    for (let cols=3;cols<=maxCols;cols++) {
+      const rows=Math.ceil(count/cols);
+      const scaleX=(CANVAS_W-GUTTER*2-GUTTER*Math.max(0,cols-1))/(CARD_W*cols);
+      const scaleY=(CANVAS_H-GUTTER*2-GUTTER*Math.max(0,rows-1))/((CARD_H+LABEL_H)*rows);
+      const scale=Math.min(.62,scaleX,scaleY);
+      if (!best || scale>best.scale+.002 || (Math.abs(scale-best.scale)<=.002 && cols<best.cols)) best={cols,rows,scale};
+    }
+    const cols=best?.cols || 4;
+    const rows=best?.rows || Math.ceil(count/cols);
+    const scale=clamp(best?.scale || .52,.32,.62);
+    const cardW=CARD_W*scale;
+    const rowH=(CARD_H+LABEL_H)*scale;
+    const gapX=cols>1?Math.max(GUTTER,(CANVAS_W-GUTTER*2-cardW*cols)/(cols-1)):0;
+    const gapY=rows>1?Math.max(GUTTER,(CANVAS_H-GUTTER*2-rowH*rows)/(rows-1)):0;
+    return labels.map((label,index)=>{
+      const col=index%cols,row=Math.floor(index/cols);
+      const x=(GUTTER+col*(cardW+gapX))/CANVAS_W;
+      const y=(GUTTER+LABEL_H*scale+row*(rowH+gapY))/CANVAS_H;
+      return position(`position-${index+1}`,label,index+1,transform(x,y,scale));
+    });
+  }
+  function legacyDenseAutoLayout(layout) {
+    const positions=Array.isArray(layout?.positions)?layout.positions.slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder)):[];
+    if (layout?.id!=='custom-active' || positions.length<=12) return false;
+    const labels=positions.map((item,index)=>String(item.label || `Position ${index+1}`));
+    const expected=legacyGenericPositions(labels);
+    const close=(a,b)=>Math.abs(Number(a)-Number(b))<.0015;
+    return positions.every((item,index)=>{
+      const actual=item?.transform || {};
+      const old=expected[index]?.transform || {};
+      return close(actual.x,old.x)&&close(actual.y,old.y)&&close(actual.scale,old.scale)&&close(actual.rotation||0,old.rotation||0);
+    });
+  }
+  function migrateLegacyDenseAutoLayout(root) {
+    const state=currentPrefabState();
+    const layout=state.activeLayout;
+    if (!root || !layout || !legacyDenseAutoLayout(layout)) return false;
+    const bridge=optionsBridge();
+    const snap=bridge?.capture?.();
+    if (!snap) return false;
+    const ordered=layout.positions.slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder));
+    const packed=genericPositions(ordered.map((item,index)=>String(item.label || `Position ${index+1}`)));
+    const nextLayout=clone(layout);
+    nextLayout.positions=ordered.map((item,index)=>({
+      ...clone(item),
+      transform:clone(packed[index].transform),
+      drawOrder:index+1
+    }));
+    snap.rowActiveLayout=nextLayout;
+    snap.rowEnvelopeLayout={};
+    snap.rowCardTransforms={};
+    nextLayout.positions.forEach((item,index)=>{
+      const value=item.transform;
+      snap.rowEnvelopeLayout[index]={x:value.x*CANVAS_W,y:value.y*CANVAS_H};
+      snap.rowCardTransforms[index]={scale:value.scale,rotation:value.rotation||0,zIndex:value.zIndex||1};
+    });
+    snap.rowPanX=0;
+    snap.rowPanY=0;
+    bridge.restore(snap);
+    setTimeout(zoomExtents,0);
+    return true;
   }
 
   const CELTIC_LABELS = [
@@ -1156,6 +1223,7 @@
     }
     root.hidden=false;
     root.removeAttribute('hidden');
+    if (migrateLegacyDenseAutoLayout(root)) return;
     root.classList.toggle('relphi-hide-position-stickers',!showPositionStickers);
     markSemanticPositions(root);
     updateLayoutClasses(root);
