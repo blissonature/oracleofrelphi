@@ -169,6 +169,24 @@
 #shortListPanel .relphi-options-body{flex:1 1 auto!important;min-height:0!important;overscroll-behavior:contain!important;scroll-padding-bottom:1rem!important}
 #shortListPanel .relphi-options-commitbar{position:relative!important;z-index:2!important;width:100%!important;box-sizing:border-box!important;box-shadow:0 -6px 16px rgba(250,246,241,.96)!important}
 
+/* Reading text mirrors the active cards in a compact, copyable form below the board. */
+#shortListPanel .relphi-board-reading-text{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.8rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
+#shortListPanel .relphi-board-reading-text[hidden]{display:none!important}
+#shortListPanel .relphi-board-reading-text>header{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:.7rem!important;flex-wrap:wrap!important;text-align:left!important}
+#shortListPanel .relphi-board-reading-text>header>div{display:grid!important;gap:.12rem!important}
+#shortListPanel .relphi-board-reading-text>header strong{font-size:.9rem!important}
+#shortListPanel .relphi-board-reading-text>header span{font-size:.7rem!important;color:#655d56!important}
+#shortListPanel .relphi-copy-reading{min-height:2.15rem!important;margin:0!important;padding:.4rem .72rem!important;border:1.5px solid var(--relphi-board-red)!important;border-radius:8px!important;background:var(--relphi-board-red)!important;color:#fff!important;font:inherit!important;font-size:.72rem!important;font-weight:900!important;line-height:1!important}
+#shortListPanel .relphi-reading-text-list{display:grid!important;gap:.55rem!important}
+#shortListPanel .relphi-reading-text-card{display:grid!important;gap:.28rem!important;padding:.68rem .75rem!important;border:1px solid #ded5cc!important;border-radius:9px!important;background:#fff!important;text-align:left!important}
+#shortListPanel .relphi-reading-text-card.is-reversed{border-left:3px solid var(--relphi-board-red)!important}
+#shortListPanel .relphi-reading-text-position{margin:0!important;color:#5f5751!important;font-size:.7rem!important;font-weight:850!important;line-height:1.25!important}
+#shortListPanel .relphi-reading-text-card h3{margin:0!important;color:#171412!important;font-size:.9rem!important;line-height:1.2!important}
+#shortListPanel .relphi-reading-text-association{margin:0!important;color:#655d56!important;font-size:.72rem!important;font-weight:750!important;line-height:1.35!important}
+#shortListPanel .relphi-reading-text-interpretation{margin:.08rem 0 0!important;color:#171412!important;font-size:.82rem!important;line-height:1.48!important}
+#shortListPanel .relphi-copy-reading-status{min-height:1em!important;color:#655d56!important;font-size:.68rem!important}
+@media(max-width:700px){#shortListPanel .relphi-board-reading-text>header{align-items:stretch!important}#shortListPanel .relphi-copy-reading{width:100%!important}}
+
 /* Save/export is permanent document chrome below the pannable canvas. */
 #shortListPanel .relphi-board-export{display:grid!important;gap:.65rem!important;margin:.8rem .5rem .5rem!important;padding:.75rem!important;border:1px solid var(--relphi-board-line)!important;border-radius:12px!important;background:var(--relphi-board-paper)!important;color:var(--relphi-board-ink)!important}
 #shortListPanel .relphi-board-export>header{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:.7rem!important;flex-wrap:wrap!important;text-align:left!important}
