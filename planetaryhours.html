@@ -1373,15 +1373,17 @@
 
   /* Keep the 24-hour table as a full-width section below the complete three-column summary. */
   #tableSection { width: 100%; max-width: 1100px; clear: both; }
-  .ph-summary-grid-consolidated > #tableSection { grid-column: 1 / -1 !important; width: 100% !important; max-width: none !important; }
+  .ph-summary-grid-consolidated > #tableSection { grid-column: 1 / -1 !important; width: 100% !important; max-width: none !important; margin:0 !important; }
+  #daySummary > .ph-summary-grid-consolidated > #tableSection { border-top:1px solid var(--relphi-line); border-radius:0; box-shadow:none; background:transparent; padding-top:1.15rem; }
 
   /* v320 mobile priority: the living instrument leads; day context follows compactly. */
   @media (max-width: 760px) {
     .ph-summary-grid-consolidated > .ph-living-heptagram-frame { order: 1; }
-    .ph-summary-grid-consolidated > .ph-day-frame { order: 2; }
-    .ph-summary-grid-consolidated > .ph-moon-frame { order: 3; }
-    .ph-summary-grid-consolidated > .ph-wanderer-strip { order: 4; }
-    .ph-summary-grid-consolidated > .ph-sky-orientation-inline { order: 5; }
+    .ph-summary-grid-consolidated > #tableSection { order: 2; }
+    .ph-summary-grid-consolidated > .ph-day-frame { order: 3; }
+    .ph-summary-grid-consolidated > .ph-moon-frame { order: 4; }
+    .ph-summary-grid-consolidated > .ph-wanderer-strip { order: 5; }
+    .ph-summary-grid-consolidated > .ph-sky-orientation-inline { order: 6; }
 
     .ph-day-frame { padding: .75rem; }
     .ph-day-frame h2 { font-size: 1.3rem; margin-bottom: .2rem; }
@@ -1804,12 +1806,7 @@
       </article>
     </div>
       </section>
-    </div>
-  </section>
-
-
-
-  <section class="ph-panel ph-planetary-calendar" id="tableSection" aria-labelledby="planetaryCalendarHeading">
+      <section class="ph-panel ph-planetary-calendar" id="tableSection" aria-labelledby="planetaryCalendarHeading">
     <div class="ph-calendar-header">
       <div>
         <p class="eyebrow">Planetary calendar · Day</p>
@@ -1855,7 +1852,11 @@
     </div>
 
     <div class="ph-calendar-timeline" id="planetaryDayTimeline" aria-label="Twenty-four planetary hours"></div>
+      </section>
+    </div>
   </section>
+
+
 
   <section class="ph-panel">
     <details class="ph-help">
