@@ -120,7 +120,7 @@ async function applyQuestions(page,labels){
 
     await resetBoard(page);
     const short='What matters here?';
-    const long='Is the apparent world governed by an intelligence that mistakes itself for ultimate reality and then generates a secondary ordering principle that preserves the illusion through memory, repetition, symbolic inheritance, and the apparent continuity of individual experience?';
+    const long='Is the apparent world governed by an intelligence that mistakes itself for ultimate reality and then generates a secondary ordering principle that preserves the illusion through memory and repetition and symbolic inheritance and the apparent continuity of individual experience?';
     await applyQuestions(page,[short,long]);
 
     await page.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').click();
