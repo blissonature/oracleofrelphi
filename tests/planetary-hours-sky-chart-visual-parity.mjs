@@ -31,7 +31,9 @@ assert.doesNotMatch(standardizer,/planetary-hours-sky-chart-visual-parity|loadPl
 
 assert.match(page,/function canonicalPlanetGlyphMarkup/);
 assert.match(page,/assets\/planet-glyphs\//);
-assert.match(page,/#dayRulerProfileName \.ph-direct-canonical-glyph \{ color:#fff; \}/);
+assert.match(page,/ph-calendar-day-ruler-context/);
+assert.match(page,/ph-calendar-day-ruler-context #dayRulerProfileName \.ph-direct-canonical-glyph/);
+assert.doesNotMatch(page,/#dayRulerProfileName \.ph-direct-canonical-glyph \{ color:#fff; \}/);
 assert.match(page,/#hourRulerProfileName \.ph-direct-canonical-glyph \{ color:#111; \}/);
 assert.match(page,/width:2\.15em/);
 assert.match(page,/transform:scale\(1\.42\)/);
@@ -89,6 +91,12 @@ assert.doesNotMatch(page,/const phSignGlyphs/);
 assert.doesNotMatch(page,/Planet wheel loads when Astronomy Engine is available/);
 assert.doesNotMatch(page,/class=\"planet-marker/);
 assert.match(page,/Planetary Calendar day view: the 24 hours are a chronological journal surface/);
+assert.match(page,/class=\"ph-calendar-day-ruler-context\"/);
+assert.match(page,/id=\"dayRulerProfileName\"/);
+assert.match(page,/id=\"dayRulerFocus\"/);
+assert.match(page,/id=\"sunTimes\"/);
+assert.match(page,/<h2>Current sky<\/h2>/);
+assert.doesNotMatch(page,/<h2>Day ruler and Sun frame<\/h2>/);
 assert.match(page,/id=\"planetaryDayTimeline\"/);
 assert.match(page,/function renderHoursCalendar\(frame, rows, dayKey, idx\)/);
 assert.match(page,/relphiPlanetaryCalendarNotesV1/);
