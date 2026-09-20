@@ -16,7 +16,7 @@
   const CARD_H = CARD_W * 866 / 500;
   const LABEL_H = 68;
   const GUTTER = 12;
-  const MAX_POSITIONS = 50;
+  const MAX_POSITIONS = 50; // 10×5 dense packing stays above the supported .32 card scale.
   const MIN_ZOOM = .45;
   const MAX_ZOOM = 2.4;
 
