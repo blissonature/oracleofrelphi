@@ -1887,7 +1887,7 @@
   }
   function rowCardTransform(index) {
     const saved = state.rowCardTransforms?.[index] || {};
-    const scale = Math.max(.45, Math.min(2.5, Number(saved.scale) || 1));
+    const scale = Math.max(.32, Math.min(2.5, Number(saved.scale) || 1));
     const rotation = Math.max(-180, Math.min(180, Number(saved.rotation) || 0));
     const zIndex = Math.max(0, Math.min(100, Number(saved.zIndex) || 1));
     return { scale, rotation, zIndex };
@@ -2036,7 +2036,7 @@
       x: Math.max(0, Math.min(1, Number(value.x) || 0)),
       y: Math.max(0, Math.min(1, Number(value.y) || 0)),
       rotation: Math.max(-180, Math.min(180, Number(value.rotation) || 0)),
-      scale: Math.max(.45, Math.min(2.5, Number(value.scale) || 1)),
+      scale: Math.max(.32, Math.min(2.5, Number(value.scale) || 1)),
       zIndex: Math.max(0, Math.min(100, Number(value.zIndex) || 1))
     };
   }
