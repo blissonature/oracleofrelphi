@@ -702,7 +702,7 @@
   }
   function labelsMarkup(labels) {
     const rows=labels.length ? labels : [''];
-    return rows.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" maxlength="${MAX_QUESTION_LENGTH}" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
+    return rows.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" ${index===0?'':`maxlength="${MAX_QUESTION_LENGTH}" `}value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
   }
   function parseBulkQuestions(value) {
     return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,MAX_POSITIONS).map(item=>item.slice(0,MAX_QUESTION_LENGTH));
