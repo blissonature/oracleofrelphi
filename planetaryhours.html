@@ -739,6 +739,9 @@
   .ph-wanderer-card:focus-visible { outline: 3px solid rgba(30,136,229,.45); outline-offset: 2px; }
   .ph-wanderer-title { align-items: flex-start; }
   .ph-wanderer-title-main { display: flex; align-items: center; gap: .35rem; }
+  .ph-wanderer-placement { display:inline-flex; align-items:center; gap:.14rem; margin-left:.06rem; color:#555; font-size:.74rem; font-weight:850; line-height:1; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .ph-wanderer-placement .ph-direct-canonical-glyph,
+  .ph-moon-frame .ph-wanderer-placement .ph-direct-canonical-glyph { width:.98em; height:.98em; margin:0; vertical-align:-.08em; transform:none; }
   .ph-wanderer-status-stack { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .28rem; }
   .ph-wanderer-status.viewing { background: #f7f4ee; }
   .ph-wanderer-card.is-viewable .ph-wanderer-status.viewing { background: rgba(255,193,7,.14); color: #7a5200; border-color: rgba(122,82,0,.18); }
@@ -2341,7 +2344,7 @@
   function phNormDeg(value) { const n = Number(value) || 0; return ((n % 360) + 360) % 360; }
   const phSigns = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
   function phZodiacPoint(lon, r, cx, cy) { const a = (phNormDeg(lon) + 180) * Math.PI / 180; return {x:cx + Math.cos(a)*r, y:cy + Math.sin(a)*r}; }
-  function phLongitudeToPlacement(lon) { lon = phNormDeg(lon); const index = Math.floor(lon / 30) % 12; const inSign = lon - index * 30; return {sign:phSigns[index], degree:Math.floor(inSign), minute:Math.round((inSign - Math.floor(inSign))*60)}; }
+  function phLongitudeToPlacement(lon) { const totalMinutes = Math.round(phNormDeg(lon) * 60) % 21600; const index = Math.floor(totalMinutes / 1800) % 12; const inSignMinutes = totalMinutes - index * 1800; return {sign:phSigns[index], degree:Math.floor(inSignMinutes / 60), minute:inSignMinutes % 60}; }
   function phAstronomyLongitude(body, date) {
     const A = window.Astronomy;
     if (!A) throw new Error('Astronomy Engine is unavailable.');
@@ -2599,7 +2602,9 @@
       const visibility = skyVisibility(body, altitude, sunAlt);
       const obstructionCue = skyObstructionCue(altitude, body);
       const obstructionIcon = skyObstructionIcon(altitude);
-      return { body: body, altitude: altitude, azimuth: azimuth, direction: direction, above: above, rise: rise, set: set, risePct: risePct, setPct: setPct, visibility: visibility, obstructionCue: obstructionCue, obstructionIcon: obstructionIcon };
+      let placement = null;
+      try { placement = phLongitudeToPlacement(phAstronomyLongitude(body, now)); } catch (error) {}
+      return { body: body, altitude: altitude, azimuth: azimuth, direction: direction, above: above, rise: rise, set: set, risePct: risePct, setPct: setPct, visibility: visibility, obstructionCue: obstructionCue, obstructionIcon: obstructionIcon, placement: placement };
     }).sort(function (a, b) {
       function viewingRank(item) {
         if (!item.above) return 5;
@@ -2619,8 +2624,10 @@
       const expanded = state.wandererExpandedBody === body;
       const collapsed = naturallyCollapsed && !expanded;
       const openAction = expanded ? (naturallyCollapsed ? 'Collapse ' : 'Return to summary for ') : 'Expand ';
+      const placement = item.placement;
+      const placementMarkup = placement ? '<span class="ph-wanderer-placement" title="' + attrText(placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′') + '">' + canonicalSignGlyphMarkup(placement.sign) + '<span class="ph-wanderer-degree">' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′</span></span>' : '';
       return '<button class="ph-wanderer-card ' + (item.above ? 'is-above ' : '') + (item.visibility.practical ? 'is-viewable ' : '') + (collapsed ? 'is-collapsed ' : '') + '" type="button" data-sky-body="' + body + '" aria-pressed="' + (expanded ? 'true' : 'false') + '" aria-expanded="' + (expanded ? 'true' : 'false') + '" aria-label="' + openAction + body + '">' +
-        '<div class="ph-wanderer-title"><span class="ph-wanderer-title-main"><span class="glyph">' + (skyGlyphs[body] || '') + '</span><span>' + body + '</span></span><span class="ph-wanderer-status-stack"><span class="ph-wanderer-status sky-state">' + (item.above ? 'above' : 'below') + '</span><span class="ph-wanderer-status viewing">' + item.visibility.viewing + '</span></span></div>' +
+        '<div class="ph-wanderer-title"><span class="ph-wanderer-title-main"><span class="glyph">' + (skyGlyphs[body] || '') + '</span><span>' + body + '</span>' + placementMarkup + '</span><span class="ph-wanderer-status-stack"><span class="ph-wanderer-status sky-state">' + (item.above ? 'above' : 'below') + '</span><span class="ph-wanderer-status viewing">' + item.visibility.viewing + '</span></span></div>' +
         '<div class="ph-wanderer-rail" aria-label="Rise/set visualization for ' + body + '">' +
           aboveSegmentsMarkup(item.rise, item.set, start) +
           (item.risePct === null ? '' : '<span class="ph-wanderer-crossing rise" title="Rise ' + fmtHM(item.rise) + '" style="left:' + item.risePct + '%"></span>') +
@@ -2988,6 +2995,11 @@
     const id = String(key || '').toLowerCase();
     if (!/^(sun|moon|mercury|venus|mars|jupiter|saturn|uranus|neptune|pluto)$/.test(id)) return '';
     return '<span class="ph-direct-canonical-glyph p-' + id + '" style="--ph-canonical-glyph:url(\'assets/planet-glyphs/' + id + '.svg\')" role="img" aria-label="' + attrText(label || id) + '"></span>';
+  }
+  function canonicalSignGlyphMarkup(sign) {
+    const id = String(sign || '').toLowerCase();
+    if (!/^(aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)$/.test(id)) return '';
+    return '<span class="ph-wanderer-sign-glyph ph-direct-canonical-glyph" style="--ph-canonical-glyph:url(\'assets/zodiac-glyphs/' + id + '.svg\')" role="img" aria-label="' + attrText(sign || id) + '"></span>';
   }
 
   function directHeptagramPlanetMarkup(key, dayKey, hourKey) {
