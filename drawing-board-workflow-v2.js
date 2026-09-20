@@ -522,17 +522,86 @@
     nativeOptions.setAttribute('aria-hidden','true');
   }
 
+  async function writeDrawingBoardClipboard(text) {
+    const value=String(text || '').trim();
+    if (!value) return false;
+    if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(value); return true; } catch (_) {}
+    }
+    const area=document.createElement('textarea');
+    area.value=value;
+    area.setAttribute('readonly','');
+    area.style.position='fixed';
+    area.style.left='-9999px';
+    area.style.top='0';
+    document.body.appendChild(area);
+    area.select();
+    let copied=false;
+    try { copied=document.execCommand('copy'); } catch (_) {}
+    area.remove();
+    return copied;
+  }
+  function readingTextEntryMarkup(entry,index) {
+    const position=String(entry?.position || `Position ${index + 1}`).trim();
+    const title=String(entry?.title || 'Card').trim();
+    const reversed=!!entry?.reversed;
+    const association=String(entry?.association || '').trim();
+    const interpretation=String(entry?.interpretation || '').trim();
+    return `<article class="relphi-reading-text-card${reversed ? ' is-reversed' : ''}">
+      <p class="relphi-reading-text-position">${escapeHtml(position)}</p>
+      <h3>${escapeHtml(title)}${reversed ? ' · reversed' : ''}</h3>
+      ${association ? `<p class="relphi-reading-text-association">${escapeHtml(association)}</p>` : ''}
+      ${interpretation ? `<p class="relphi-reading-text-interpretation">${escapeHtml(interpretation)}</p>` : ''}
+    </article>`;
+  }
+  function installReadingTextArea(root) {
+    const workspace=root.querySelector('.card-row-workspace');
+    if (!workspace) return;
+    const entries=ledgerBridge()?.drawingBoardReadingEntries?.() || [];
+    const serialized=ledgerBridge()?.serializeDrawingBoardReading?.() || '';
+    let section=root.querySelector('#drawing-board-reading-text');
+    if (!section) {
+      section=document.createElement('section');
+      section.id='drawing-board-reading-text';
+      section.className='relphi-board-reading-text';
+      workspace.insertAdjacentElement('afterend',section);
+    } else if (section.previousElementSibling !== workspace) {
+      workspace.insertAdjacentElement('afterend',section);
+    }
+    section.hidden=!entries.length;
+    section.innerHTML=`<header>
+      <div><strong>Reading text</strong><span>Question, card, association, and Relphi interpretation.</span></div>
+      <button type="button" class="relphi-copy-reading" ${entries.length ? '' : 'disabled'}>Copy</button>
+    </header>
+    <div class="relphi-reading-text-list">${entries.map(readingTextEntryMarkup).join('')}</div>
+    <small class="relphi-copy-reading-status" aria-live="polite"></small>`;
+    const copy=section.querySelector('.relphi-copy-reading');
+    const status=section.querySelector('.relphi-copy-reading-status');
+    copy?.addEventListener('click',async()=>{
+      const ok=await writeDrawingBoardClipboard(serialized);
+      if (status) status.textContent=ok ? 'Copied.' : 'Copy failed.';
+      if (ok) {
+        copy.textContent='Copied';
+        window.setTimeout(()=>{ if(copy.isConnected) copy.textContent='Copy'; },1200);
+      }
+    });
+  }
+
   function installExportArea(root) {
     const drawer = root.querySelector('.card-row-drawing-board');
     const workspace = root.querySelector('.card-row-workspace');
     if (!drawer || !workspace) return;
+    const readingText = root.querySelector('#drawing-board-reading-text');
+    const anchor = readingText || workspace;
     let section = root.querySelector('#drawing-board-post-export');
     if (!section) {
       section = document.createElement('section');
       section.id = 'drawing-board-post-export';
       section.className = 'relphi-board-export';
       section.innerHTML = '<header><strong>Save & export</strong><span>Keep the arranged board or export the cards.</span></header><div class="board-options-body"></div>';
-      workspace.insertAdjacentElement('afterend',section);
+      anchor.insertAdjacentElement('afterend',section);
+    } else if (section.previousElementSibling !== anchor) {
+      anchor.insertAdjacentElement('afterend',section);
     }
     const destination = section.querySelector('.board-options-body');
     const labels = {
@@ -1093,6 +1162,7 @@
     installTopActions(root);
     installPermanentControls(root);
     installPinchZoom(root);
+    installReadingTextArea(root);
     installExportArea(root);
     installLockedLayoutPointerGuards(root);
     installBoardCapture(root);

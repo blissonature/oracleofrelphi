@@ -35,6 +35,7 @@ jobs:
           node --check tests/drawing-board-bulk-questions.test.js
           node --check tests/drawing-board-clear-cards.test.js
           node --check tests/drawing-board-crossing-label.test.js
+          node --check tests/drawing-board-reading-text.test.js
       - name: Run static Drawing Board contracts
         run: |
           node tests/drawing-board-single-owner.test.js
@@ -52,6 +53,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           node tests/drawing-board-crossing-label.test.js
+          node tests/drawing-board-reading-text.test.js
           node tests/drawing-board-clear-cards.test.js
           node tests/drawing-board-runtime.test.js
           node tests/drawing-board-iphone-regressions.test.js

@@ -1123,6 +1123,83 @@
     for (let r=1; r<=n; r++) if (n % r === 0) pairs.push([r, n/r]);
     return pairs.length ? pairs : [[1, Math.max(1,n)]];
   }
+  function compactAssociationRange(value) {
+    const text = String(value || '').trim();
+    if (!text) return '';
+    return text
+      .replace(/\bdegrees?\b/gi, '°')
+      .replace(/\s*°\s*/g, '° ')
+      .replace(/\s+through\s+/gi, '–')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+  function drawingBoardAssociationText(card) {
+    if (!card) return '';
+    const a = card.astrology || {};
+    if (card.card_type === 'Pip') {
+      const ruler = String(a.decan_ruler || a.planet || '').trim();
+      const sign = String(a.sign || '').trim();
+      const range = compactAssociationRange(a.degree_span || a.zodiac_range);
+      return [
+        ruler ? `Decan ruler: ${ruler}` : '',
+        sign ? `Sign: ${sign}` : '',
+        range ? `Range: ${range}` : ''
+      ].filter(Boolean).join(' · ');
+    }
+    if (card.card_type === 'Court') {
+      const formula = String(card.elemental_formula || card.systems?.thoth?.title || [card.rank_element,card.element].filter(Boolean).join(' of ')).trim();
+      const range = compactAssociationRange(a.zodiac_range || a.degree_span);
+      return [
+        formula ? `Elemental association: ${formula}` : '',
+        range ? `Zodiac range: ${range}` : ''
+      ].filter(Boolean).join(' · ');
+    }
+    if (card.card_type === 'Ace') {
+      const element = String(card.element || a.element || '').trim();
+      return element ? `Elemental association: ${element}` : '';
+    }
+    const type = String(a.attribution_type || '').trim().toLowerCase();
+    const planet = String(a.planet || '').trim();
+    const sign = String(a.sign || '').trim();
+    const element = String(a.element || card.element || (type === 'element' ? a.zodiac_range : '') || '').trim();
+    if ((type === 'planet' || (!type && planet)) && planet) return `Planetary association: ${planet}`;
+    if ((type === 'sign' || (!type && sign)) && sign) return `Sign association: ${sign}`;
+    if ((type === 'element' || element) && element) return `Elemental association: ${element}`;
+    if (planet) return `Planetary association: ${planet}`;
+    if (sign) return `Sign association: ${sign}`;
+    return '';
+  }
+  function drawingBoardReadingEntries() {
+    return (state.shortList || []).map((cardId,index) => {
+      const card = cardById(cardId);
+      if (!card) return null;
+      const reversed = rowCardIsReversed(index);
+      return {
+        index,
+        position:String(state.shortListPositionLabels?.[index] || `Position ${index + 1}`).trim(),
+        cardId:card.card_id,
+        title:title(card),
+        reversed,
+        association:drawingBoardAssociationText(card),
+        interpretation:rowCardInterpretation(card,index)
+      };
+    }).filter(Boolean);
+  }
+  function serializeDrawingBoardReadingText(entries = drawingBoardReadingEntries()) {
+    const blocks = entries.map((entry,index) => [
+      entry.position || `Position ${index + 1}`,
+      `${entry.title}${entry.reversed ? ' · reversed' : ''}`,
+      entry.association,
+      entry.interpretation ? `Relphi interpretation: ${entry.interpretation}` : ''
+    ].filter(Boolean).join('\n'));
+    const parts = [];
+    const name = String(state.shortListName || '').trim();
+    const notes = String(state.shortListNotes || '').trim();
+    if (name) parts.push(name);
+    if (blocks.length) parts.push(blocks.join('\n\n'));
+    if (notes) parts.push(`Notes: ${notes}`);
+    return parts.join('\n\n').trim();
+  }
   function shortListExportData() {
     const full = state.shortList.map(cardById).filter(Boolean);
     const selected = state.shortListSelection.map(cardById).filter(Boolean);
@@ -1146,15 +1223,8 @@
       layout: state.rowEnvelopeLayout || {},
       transforms: state.rowCardTransforms || {},
       stats: rowStats(active),
-      cards: active.map((card, i) => ({ position: state.shortListPositionLabels[i] || String(i+1), positionStickerCardId: state.shortListPositionCardIds?.[i] || '', cardId: card.card_id, title: title(card), reversed: rowCardIsReversed(i), orientation: rowCardIsReversed(i) ? 'reversed' : 'upright', transform: rowCardTransform(i), interpretation: rowCardInterpretation(card, i) }))
+      cards: active.map((card, i) => ({ position: state.shortListPositionLabels[i] || String(i+1), positionStickerCardId: state.shortListPositionCardIds?.[i] || '', cardId: card.card_id, title: title(card), reversed: rowCardIsReversed(i), orientation: rowCardIsReversed(i) ? 'reversed' : 'upright', transform: rowCardTransform(i), association: drawingBoardAssociationText(card), interpretation: rowCardInterpretation(card, i) }))
     };
-  }
-
-  function rowOrientationMethodText() {
-    return 'Same card, same ingredients, inverted orientation. Begin with the card’s raw symbolism, then consider what changes when above and below are exchanged.';
-  }
-  function rowCardOrientationLabel(index) {
-    return rowCardIsReversed(index) ? 'Reversed orientation' : 'Upright orientation';
   }
 
   async function imageDataUrlForExport(src) {
@@ -1212,12 +1282,11 @@
     const createdLabel = localTimestampLabel(createdAt);
     const createdSlug = localTimestampSlug(createdAt);
     const positionClass = value => positionLengthClass(value) ? ' ' + positionLengthClass(value) : '';
-    const orientationMethod = rowOrientationMethodText();
     const titleLine = c => `${escapeHtml(c.title)}${c.reversed ? ' · reversed' : ''}`;
-    const reverseLine = c => c.reversed ? `<p class="orientation-note"><strong>Reversed:</strong> ${escapeHtml(orientationMethod)}</p>` : '';
+    const associationLine = c => c.association ? `<p class="relphi-association">${escapeHtml(c.association)}</p>` : '';
     const interpretationLine = c => `<p class="relphi-definition">${escapeHtml(c.interpretation || '')}</p>`;
-    const cardsHtml = data.cards.map((c, i) => `<article class="export-card${c.reversed ? ' is-reversed' : ''}${includeArt ? '' : ' export-card-text-only'}"><div class="export-position${positionClass(c.position)}"><strong>${escapeHtml(c.position || ('Position ' + (i + 1)))}</strong></div>${includeArt ? `<img class="export-card-art${c.reversed ? ' is-reversed' : ''}" src="${imageSources[i] || ''}" alt="${escapeHtml(c.title)} card art${c.reversed ? ', reversed' : ''}">` : ''}<h2>${titleLine(c)}</h2>${reverseLine(c)}${interpretationLine(c)}</article>`).join('');
-    const style = `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&display=swap');body{font-family:'Montserrat',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:${includeArt ? '1120' : '860'}px;margin:40px auto;line-height:1.52;background:#fffaf0;color:#111;padding:0 1rem}h1{font-family:'Montserrat',system-ui,sans-serif;letter-spacing:.04em}.meta{border:1px solid rgba(220,31,24,.45);border-radius:18px;padding:1rem;margin:1rem 0;background:#fffdf8}.stamp{font-size:.9rem;color:#666}.card-grid{display:grid;grid-template-columns:${includeArt ? 'repeat(auto-fill,minmax(180px,205px))' : '1fr'};justify-content:start;align-items:start;gap:1.1rem;margin:1.2rem 0}.export-card{border:1px solid rgba(17,17,17,.82);border-radius:14px;padding:.8rem;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.07);max-width:${includeArt ? '205px' : 'none'}}.export-card-text-only{max-width:none}.export-card.is-reversed{border-width:2px}.export-position{font-weight:800;margin-bottom:.55rem;border:1px solid rgba(17,17,17,.22);border-radius:10px;background:#fffaf0;padding:.42rem .55rem;min-height:2.4rem;display:grid;place-items:center;text-align:center;box-sizing:border-box;line-height:1.15}.export-position.is-md{font-size:.82rem}.export-position.is-sm{font-size:.72rem}.export-position.is-xs{font-size:.62rem;line-height:1.02}.export-card img{display:block;width:100%;max-width:172px;max-height:295px;margin:0 auto;border-radius:10px;border:1px solid #222;object-fit:contain}.export-card img.is-reversed{transform:rotate(180deg)}.export-card h2{font-size:1.05rem;margin:.6rem 0 .3rem;text-transform:capitalize}.export-card p{font-size:.95rem}.orientation-note{border-left:3px solid #111;padding-left:.55rem;background:#fffaf0}.relphi-definition{margin:.55rem 0 0}`;
+    const cardsHtml = data.cards.map((c, i) => `<article class="export-card${c.reversed ? ' is-reversed' : ''}${includeArt ? '' : ' export-card-text-only'}"><div class="export-position${positionClass(c.position)}"><strong>${escapeHtml(c.position || ('Position ' + (i + 1)))}</strong></div>${includeArt ? `<img class="export-card-art${c.reversed ? ' is-reversed' : ''}" src="${imageSources[i] || ''}" alt="${escapeHtml(c.title)} card art${c.reversed ? ', reversed' : ''}">` : ''}<h2>${titleLine(c)}</h2>${associationLine(c)}${interpretationLine(c)}</article>`).join('');
+    const style = `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&display=swap');body{font-family:'Montserrat',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:${includeArt ? '1120' : '860'}px;margin:40px auto;line-height:1.52;background:#fffaf0;color:#111;padding:0 1rem}h1{font-family:'Montserrat',system-ui,sans-serif;letter-spacing:.04em}.meta{border:1px solid rgba(220,31,24,.45);border-radius:18px;padding:1rem;margin:1rem 0;background:#fffdf8}.stamp{font-size:.9rem;color:#666}.card-grid{display:grid;grid-template-columns:${includeArt ? 'repeat(auto-fill,minmax(180px,205px))' : '1fr'};justify-content:start;align-items:start;gap:1.1rem;margin:1.2rem 0}.export-card{border:1px solid rgba(17,17,17,.82);border-radius:14px;padding:.8rem;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.07);max-width:${includeArt ? '205px' : 'none'}}.export-card-text-only{max-width:none}.export-card.is-reversed{border-width:2px}.export-position{font-weight:800;margin-bottom:.55rem;border:1px solid rgba(17,17,17,.22);border-radius:10px;background:#fffaf0;padding:.42rem .55rem;min-height:2.4rem;display:grid;place-items:center;text-align:center;box-sizing:border-box;line-height:1.15}.export-position.is-md{font-size:.82rem}.export-position.is-sm{font-size:.72rem}.export-position.is-xs{font-size:.62rem;line-height:1.02}.export-card img{display:block;width:100%;max-width:172px;max-height:295px;margin:0 auto;border-radius:10px;border:1px solid #222;object-fit:contain}.export-card img.is-reversed{transform:rotate(180deg)}.export-card h2{font-size:1.05rem;margin:.6rem 0 .3rem;text-transform:capitalize}.export-card p{font-size:.95rem}.relphi-association{margin:.35rem 0;color:#5f5751;font-size:.82rem!important;font-weight:700}.relphi-definition{margin:.55rem 0 0}`;
     const fileSuffix = includeArt ? 'with-art' : 'text-only';
     download(`drawing-board-${fileSuffix}-${createdSlug}.html`, `<!doctype html><html><head><meta charset="utf-8"><title>Drawing Board</title><style>${style}</style></head><body><h1>Drawing Board</h1><div class="meta">${data.name ? `<p><strong>${escapeHtml(data.name)}</strong></p>` : ''}<p>${escapeHtml(data.scope)} · ${data.count} cards</p><p class="stamp">Created ${escapeHtml(createdLabel)}</p>${data.notes ? `<p><strong>Notes:</strong> ${escapeHtml(data.notes)}</p>` : ''}</div><section class="card-grid">${cardsHtml}</section></body></html>`, 'text/html');
   }
@@ -3802,6 +3871,12 @@
     titleFor(cardId) {
       const card = cardById(String(cardId || ''));
       return card ? title(card) : '';
+    },
+    drawingBoardReadingEntries() {
+      return drawingBoardReadingEntries().map(entry => ({ ...entry }));
+    },
+    serializeDrawingBoardReading() {
+      return serializeDrawingBoardReadingText();
     },
     bindCardEntry(root) {
       if (!root) return;
