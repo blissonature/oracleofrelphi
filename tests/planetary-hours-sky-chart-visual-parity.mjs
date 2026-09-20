@@ -97,6 +97,12 @@ assert.match(page,/\.ph-table-wrap \{ max-height: none; overflow: visible; \}/);
 assert.doesNotMatch(page,/r\.ruler\.key \+ '\\"><span class=\"ph-dot\"><\/span>/);
 
 assert.match(page,/wandererExpandedBody: null/);
+assert.match(page,/function canonicalSignGlyphMarkup/);
+assert.match(page,/assets\\/zodiac-glyphs\\//);
+assert.match(page,/ph-wanderer-placement/);
+assert.match(page,/phAstronomyLongitude\\(body, now\\)/);
+assert.match(page,/placement: placement/);
+assert.match(page,/placement\\.degree \\+ '°' \\+ String\\(placement\\.minute\\)\\.padStart\\(2,'0'\\) \\+ '′'/);
 assert.doesNotMatch(page,/wandererCollapsedBodies/);
 assert.match(page,/const naturallyCollapsed = !item\.visibility\.practical \|\| !item\.above/);
 assert.match(page,/const expanded = state\.wandererExpandedBody === body/);
@@ -122,4 +128,4 @@ assert.match(whereWhen,/options\.replaceExisting\?\{\}:\(payload\(slot\)\|\|\{\}
 assert.match(whereWhen,/if\(choice\.clearBoth\)\{localStorage\.removeItem\(SLOT_KEYS\.A\);localStorage\.removeItem\(SLOT_KEYS\.B\)\}/);
 assert.match(whereWhen,/writeMode\(hasB\?'comparison':'single'\)/);
 assert.match(skyChart,/sky-chart-where-when-v3\.js\?v=3/);
-console.log('Planetary Hours direct heptagram, enlarged canonical glyphs, rainbow houses, and direct mini-wheel ownership contract passed.');
+console.log('Planetary Hours direct heptagram, canonical glyphs, Wanderer zodiac positions, rainbow houses, and direct mini-wheel ownership contract passed.');
