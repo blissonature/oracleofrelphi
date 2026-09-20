@@ -623,7 +623,7 @@
 
 
   /* v195 consolidated planetary-hours top frame and embedded sky orientation */
-  .ph-summary-grid-consolidated { grid-template-columns: minmax(220px,.85fr) minmax(420px,1.65fr) minmax(220px,.85fr) !important; align-items: stretch; }
+  .ph-summary-grid-consolidated { grid-template-columns: minmax(420px,1.65fr) minmax(280px,.85fr) !important; align-items: stretch; }
   .ph-hour-frame-merged { text-align: center; }
   .ph-hour-frame-merged h2 { margin-bottom: .35rem; }
   .ph-hour-frame-merged .ph-ticker-shell { margin-top: .3rem; }
@@ -632,7 +632,6 @@
   .ph-countdown-main { display: block; font-size: 1em; }
   .ph-countdown-sub { display: block; margin-top: .18rem; color: var(--relphi-muted); font-size: .72em; font-weight: 700; }
   .ph-current-meta-line { font-size: .98rem; font-weight: 700; color: #333; margin: .3rem 0 .45rem; }
-  .ph-current-sky-frame .ph-current-wheel-card { margin-top:.35rem; }
   .ph-edge-day { border: 0; background: transparent; font: inherit; font-weight: 900; color: #555; cursor: pointer; }
   .ph-edge-day:hover, .ph-edge-day:focus-visible { color: var(--relphi-red); outline: 2px solid var(--relphi-red); outline-offset: 3px; border-radius: 999px; }
   .ph-section-heading { text-align: center; }
@@ -1378,13 +1377,9 @@
   /* v320 mobile priority: the living instrument leads; day context follows compactly. */
   @media (max-width: 760px) {
     .ph-summary-grid-consolidated > .ph-living-heptagram-frame { order: 1; }
-    .ph-summary-grid-consolidated > .ph-day-frame { order: 2; }
-    .ph-summary-grid-consolidated > .ph-moon-frame { order: 3; }
-    .ph-summary-grid-consolidated > .ph-wanderer-strip { order: 4; }
-    .ph-summary-grid-consolidated > .ph-sky-orientation-inline { order: 5; }
-
-    .ph-day-frame { padding: .75rem; }
-    .ph-day-frame h2 { font-size: 1.3rem; margin-bottom: .2rem; }
+    .ph-summary-grid-consolidated > .ph-moon-frame { order: 2; }
+    .ph-summary-grid-consolidated > .ph-wanderer-strip { order: 3; }
+    .ph-summary-grid-consolidated > .ph-sky-orientation-inline { order: 4; }
   }
 
 
@@ -1536,6 +1531,8 @@
     font-weight:700;
   }
   .ph-calendar-sun-frame { margin:.35rem 0 0; color:#514a44; font-size:.78rem; line-height:1.4; font-weight:700; }
+  .ph-calendar-day-wheel { width:100%; max-width:290px; margin:.65rem auto 0; box-sizing:border-box; }
+  .ph-calendar-day-wheel .ph-current-wheel { width:min(270px,100%); }
   .ph-calendar-moon-context .ph-moon-wrap { justify-content:flex-start; }
   .ph-calendar-moon-context .ph-moon-disc { width:4.3rem; height:4.3rem; flex:0 0 auto; }
   .ph-calendar-moon-context .ph-moon-facts { min-width:0; }
@@ -1668,10 +1665,6 @@
 
   <section class="ph-panel" id="daySummary">
     <div class="ph-summary-grid ph-summary-grid-merged ph-summary-grid-consolidated">
-      <div class="ph-day-frame ph-current-sky-frame">
-        <h2>Current sky</h2>
-        <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div><span class="ph-current-wheel-jump">Jump to this moment in Sky Chart</span></a>
-      </div>
       <div class="ph-hour-frame ph-hour-frame-merged ph-living-heptagram-frame">
         <p class="eyebrow">Living planetary hour</p>
         <h2>Current time and planetary hour</h2>
@@ -1835,6 +1828,7 @@
           <div class="ph-day-ruler-photo-label"><strong id="dayRulerProfileName">—</strong><span class="ph-ruler-focus-line" id="dayRulerFocus">—</span></div>
         </div>
         <p class="ph-calendar-sun-frame" id="sunTimes">—</p>
+        <a class="ph-current-wheel-card ph-calendar-day-wheel" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div><span class="ph-current-wheel-jump">Jump to this moment in Sky Chart</span></a>
         <div class="ph-day-line ph-sr-only"><p class="ph-tiny" id="dayRulerMeta">—</p></div>
         <p class="ph-tiny ph-sr-only" id="bridgeInfo">—</p>
         <div class="ph-sr-only" id="dayCalendarDate">—</div>
