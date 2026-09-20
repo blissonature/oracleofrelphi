@@ -479,7 +479,7 @@ main { margin-top: 2.6em; }
 }
 .relphi-tool-brandline {
   margin: 0.16rem auto 0.22rem;
-  color: #6a2424;
+  color: var(--relphi-red);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.035em;

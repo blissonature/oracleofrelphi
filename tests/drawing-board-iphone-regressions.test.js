@@ -194,6 +194,8 @@ async function assertFocusReadingView(page) {
   assert.match(textHtml,/Drawing Board · Oracle of Relphi/,'text HTML export should carry Oracle of Relphi document branding');
   assert.match(textHtml,/class="brand-logo" src="data:image\/png;base64,/,'text HTML export should embed the actual Oracle of Relphi logo');
   assert.match(textHtml,/Oracle of <span>Relphi<\/span>/,'text HTML export should use the established black/red wordmark treatment');
+  assert.equal((textHtml.match(/>Drawing Board</g)||[]).length,1,'Drawing Board should appear once in the export header, not again inside the Oracle of Relphi lockup');
+  assert.doesNotMatch(textHtml,/class="brand-tool">Drawing Board<\/div>/,'Oracle of Relphi brand lockup must not repeat the tool name');
   assert.doesNotMatch(textHtml,/an Oracle of Relphi tool/,'Oracle of Relphi itself must not be labeled as an Oracle of Relphi tool');
   assert.match(textHtml,/oracleofrelphi\.com/,'text HTML export should carry the Oracle of Relphi site address');
 
