@@ -14,7 +14,9 @@
       hit.removeAttribute('class');
       hit.classList.add('sky-foundation-aspect-hit');
       hit.setAttribute('stroke', 'transparent');
-      hit.setAttribute('stroke-width', '16');
+      hit.setAttribute('stroke-width', '28');
+      hit.setAttribute('stroke-linecap', 'round');
+      hit.setAttribute('vector-effect', 'non-scaling-stroke');
       hit.setAttribute('pointer-events', 'stroke');
       hit.setAttribute('tabindex', '-1');
       hit.setAttribute('aria-hidden', 'true');

@@ -9,7 +9,8 @@
   window.__relphiSkyHoverFastPathV1=true;
 
   const GRID=64;
-  const ASPECT_RADIUS_PX=9;
+  const ASPECT_ACQUIRE_RADIUS_PX=14;
+  const ASPECT_RETAIN_RADIUS_PX=18;
   const SECONDARY_DELAY_MS=36;
   const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 
@@ -371,11 +372,11 @@
   }
   function directNode(target){return target instanceof Element?target.closest('[data-interactive]'):null}
 
-  function nearestAspectAt(clientX,clientY){
+  function nearestAspectAt(clientX,clientY,radiusPx=ASPECT_ACQUIRE_RADIUS_PX,identity=''){
     if(!cache||!Number.isFinite(clientX)||!Number.isFinite(clientY))return null;
     const local=clientToWheel(clientX,clientY);
     if(!local)return null;
-    const radius=ASPECT_RADIUS_PX/local.scale;
+    const radius=Math.max(1,Number(radiusPx)||ASPECT_ACQUIRE_RADIUS_PX)/local.scale;
     const baseX=Math.floor(local.x/GRID),baseY=Math.floor(local.y/GRID),range=Math.max(1,Math.ceil(radius/GRID));
     const candidates=new Set();
     for(let gx=baseX-range;gx<=baseX+range;gx++)for(let gy=baseY-range;gy<=baseY+range;gy++){
@@ -383,8 +384,9 @@
     }
     let best=null,bestDistance=Infinity;
     for(const segment of candidates){
+      if(identity&&segment.identity!==identity)continue;
       const line=segment.line;
-      if(!line.isConnected||line.hidden||line.style.display==='none'||line.classList.contains('sky-chart-filter-hidden')||line.classList.contains('sky-chart-orb-hidden')||line.classList.contains('sky-orb-filter-hidden'))continue;
+      if(!lineEligible(line))continue;
       const distance=distanceToSegment(local.x,local.y,segment.a,segment.b);
       if(distance<bestDistance){bestDistance=distance;best=segment}
     }
@@ -395,7 +397,10 @@
     const probe=pendingProbe;
     pendingProbe=null;
     if(!probe||!cache)return;
-    const nearest=nearestAspectAt(probe.x,probe.y);
+    let nearest=nearestAspectAt(probe.x,probe.y,ASPECT_ACQUIRE_RADIUS_PX);
+    if(!nearest&&hoverState?.kind==='aspect'){
+      nearest=nearestAspectAt(probe.x,probe.y,ASPECT_RETAIN_RADIUS_PX,hoverState.value);
+    }
     immediate(nearest?{kind:'aspect',sky:null,value:nearest.identity}:null);
   }
   function scheduleProbe(event){
@@ -413,6 +418,14 @@
     if(node){
       if(probeFrame){cancelAnimationFrame(probeFrame);probeFrame=0}
       pendingProbe=null;
+      const kind=node.dataset.interactive;
+      if(kind==='aspect'||kind==='house'||kind==='sign'){
+        const nearest=nearestAspectAt(event.clientX,event.clientY,ASPECT_ACQUIRE_RADIUS_PX);
+        if(nearest){
+          immediate({kind:'aspect',sky:null,value:nearest.identity});
+          return;
+        }
+      }
       immediate(stateFromNode(node));
       return;
     }
