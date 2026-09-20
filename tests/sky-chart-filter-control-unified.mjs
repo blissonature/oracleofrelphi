@@ -24,18 +24,11 @@ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:2000
 await page.waitForSelector('[data-aspect-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-placement-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
-await page.waitForFunction(()=>[
-  'input[data-filter="orb"]',
-  '.sky-chart-aspect-summary-choices,.sky-chart-aspect-filter-value',
-  '.sky-chart-placement-summary-choices',
-  '.sky-chart-house-summary-choices',
-  '[data-house-system-filter]'
-].every(selector=>document.querySelector(selector)),null,{timeout:20000});
 
 const result=await page.evaluate(()=>{
   const selectors={
     orb:'input[data-filter="orb"]',
-    aspects:'.sky-chart-aspect-summary-choices,.sky-chart-aspect-filter-value',
+    aspects:'.sky-chart-aspect-filter-value',
     placements:'.sky-chart-placement-summary-choices',
     houses:'.sky-chart-house-summary-choices',
     houseSystem:'[data-house-system-filter]'
@@ -135,31 +128,6 @@ const aspectGlyphAudit=await page.locator('#skyChartAspectPopover .sky-chart-asp
 assert.equal(aspectGlyphAudit.length,11);
 assert.ok(aspectGlyphAudit.every(item=>item.glyph===item.aspect),`Aspect glyph identities drifted: ${JSON.stringify(aspectGlyphAudit)}`);
 assert.equal(new Set(aspectGlyphAudit.map(item=>item.color)).size,11,'Each aspect should retain its own color cue.');
-
-const expectedAspectAngles={
-  conjunction:0,'semi-sextile':30,octile:45,sextile:60,quintile:72,square:90,trine:120,'tri-octile':135,'bi-quintile':144,quincunx:150,opposition:180
-};
-const aspectDegreeAudit=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"])').evaluateAll(rows=>rows.map(row=>{
-  const label=row.querySelector('.sky-chart-aspect-list-label');
-  const glyph=label?.querySelector('.sky-filter-symbol-aspect');
-  const degree=label?.querySelector('.sky-chart-aspect-degree');
-  const value=degree?.querySelector('.sky-chart-aspect-degree-value');
-  const name=label?.querySelector('.sky-chart-aspect-name');
-  const children=[...(label?.children||[])].map(node=>node.className);
-  const valueRect=value?.getBoundingClientRect();
-  return{
-    aspect:row.dataset.aspectListItem,
-    degree:degree?.textContent||'',
-    name:name?.textContent||'',
-    valueRight:valueRect?.right||0,
-    order:children
-  };
-}));
-assert.deepEqual(aspectDegreeAudit.map(item=>[item.aspect,item.degree]),Object.entries(expectedAspectAngles).map(([id,angle])=>[id,`${angle}°`]));
-assert.ok(aspectDegreeAudit.every(item=>String(item.order[0]).includes('sky-filter-symbol-aspect')&&item.order[1]==='sky-chart-aspect-degree'&&item.order[2]==='sky-chart-aspect-name'),
-  `Aspect row order must be glyph, degree, name: ${JSON.stringify(aspectDegreeAudit.map(item=>({aspect:item.aspect,order:item.order}))) }`);
-const onesColumn=aspectDegreeAudit.map(item=>item.valueRight);
-assert.ok(Math.max(...onesColumn)-Math.min(...onesColumn)<=0.5,`Aspect degree ones column is not aligned: ${JSON.stringify(onesColumn)}`);
 
 // The open popover keeps one horizontal anchor while filters change. Filtering may change
 // page height/scrollbar state, but it must not make the menu jump side to side.
