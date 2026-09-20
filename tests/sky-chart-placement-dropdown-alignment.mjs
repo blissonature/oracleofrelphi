@@ -45,13 +45,22 @@ try{
       const headerNodes=kinds.map(kind=>header?.querySelector(`.sky-chart-placement-list-header-choice-${kind}`));
       const inputNodes=kinds.map(kind=>master?.querySelector(`input[data-placement-choice="${kind}"]`));
       const center=node=>{const r=node?.getBoundingClientRect();return r?r.left+r.width/2:NaN};
+      const headerChoices=header?.querySelector('.sky-chart-placement-list-header-choices');
+      const rowChoices=master?.querySelector('.sky-chart-placement-list-choices');
       return{
         headerCount:header?.querySelectorAll('.sky-chart-placement-list-header-choice').length||0,
         headerKinds:headerNodes.map(node=>node?.textContent?.trim()||''),
         headerCenters:headerNodes.map(center),
         inputCenters:inputNodes.map(center),
         aVisible:!!header?.querySelector('.sky-chart-placement-list-header-choice-a')&&getComputedStyle(header.querySelector('.sky-chart-placement-list-header-choice-a')).display!=='none',
-        bPresent:!!header?.querySelector('.sky-chart-placement-list-header-choice-b')
+        bPresent:!!header?.querySelector('.sky-chart-placement-list-header-choice-b'),
+        headerGrid:getComputedStyle(header).gridTemplateColumns,
+        rowGrid:getComputedStyle(master).gridTemplateColumns,
+        headerChoicesDisplay:getComputedStyle(headerChoices).display,
+        headerChoicesGrid:getComputedStyle(headerChoices).gridTemplateColumns,
+        rowChoicesDisplay:getComputedStyle(rowChoices).display,
+        rowChoicesGrid:getComputedStyle(rowChoices).gridTemplateColumns,
+        rowChoiceWidths:[...master.querySelectorAll('.sky-chart-placement-choice')].map(node=>node.getBoundingClientRect().width)
       };
     },mode);
 
