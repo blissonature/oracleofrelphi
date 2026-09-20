@@ -1022,9 +1022,27 @@
       entry.scrollTop=0;
     }
   }
-  function renderFocusStrip(reader, index) {
+  function keepFocusStripCurrentVisible(strip, centerCurrent = false) {
+    requestAnimationFrame(()=>{
+      if (!strip?.isConnected) return;
+      const current=strip.querySelector('.is-current');
+      if (!current) return;
+      if (centerCurrent) {
+        current.scrollIntoView({block:'nearest',inline:'center'});
+        return;
+      }
+      const stripRect=strip.getBoundingClientRect();
+      const currentRect=current.getBoundingClientRect();
+      if (currentRect.left < stripRect.left) strip.scrollLeft -= stripRect.left-currentRect.left;
+      else if (currentRect.right > stripRect.right) strip.scrollLeft += currentRect.right-stripRect.right;
+    });
+  }
+  function renderFocusStrip(reader, index, options = {}) {
     const order=orderedNativePositionIndices();
     const strip=reader.querySelector('.relphi-focus-strip');
+    if (!strip) return;
+    const preserveScroll=options.preserveScroll !== false;
+    const previousScroll=preserveScroll ? strip.scrollLeft : 0;
     strip.replaceChildren();
     order.forEach((nativeIndex,logicalIndex)=>{
       const button=document.createElement('button');
@@ -1039,7 +1057,8 @@
       button.addEventListener('click',()=>navigateFocusTo(nativeIndex));
       strip.appendChild(button);
     });
-    setTimeout(()=>strip.querySelector('.is-current')?.scrollIntoView({block:'nearest',inline:'center'}),0);
+    if (preserveScroll) strip.scrollLeft=previousScroll;
+    keepFocusStripCurrentVisible(strip,!preserveScroll);
   }
   function installFocusSwipe(reader) {
     const main=reader.querySelector('.relphi-focus-main');
@@ -1066,6 +1085,14 @@
     if (!root || !card || !ledgerBridge()) return false;
     const existingReader=document.querySelector('.relphi-focus-reader');
     focusIndex=index;
+    if (existingReader) {
+      existingReader.dataset.focusIndex=String(index);
+      existingReader.setAttribute('aria-label',positionLabel(index,root));
+      renderFocusEntry(existingReader,index);
+      renderFocusStrip(existingReader,index,{preserveScroll:true});
+      document.body.classList.add('relphi-focus-open');
+      return true;
+    }
     const reader=document.createElement('section');
     reader.className='relphi-focus-reader';
     reader.dataset.focusIndex=String(index);
@@ -1074,13 +1101,13 @@
     reader.setAttribute('aria-label',positionLabel(index,root));
     reader.innerHTML=`<div class="relphi-focus-shell"><header><span class="relphi-focus-reversed-badge" hidden>Reversed</span><div class="relphi-focus-actions"><button type="button" class="relphi-focus-draw">Draw</button><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></div></header><section class="relphi-focus-position-panel" aria-label="Reading question or position"><strong class="relphi-focus-position"></strong></section><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-strip" aria-label="Reading positions"></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
     renderFocusEntry(reader,index);
-    renderFocusStrip(reader,index);
+    renderFocusStrip(reader,index,{preserveScroll:false});
     reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
     reader.querySelector('.relphi-focus-prev').addEventListener('click',()=>navigateFocusBy(-1));
     reader.querySelector('.relphi-focus-next').addEventListener('click',()=>navigateFocusBy(1));
     reader.querySelector('.relphi-focus-draw').addEventListener('click',()=>drawNextLogical(panel()));
     installFocusSwipe(reader);
-    if (existingReader) existingReader.replaceWith(reader); else document.body.appendChild(reader);
+    document.body.appendChild(reader);
     document.body.classList.add('relphi-focus-open');
     return true;
   }
