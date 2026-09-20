@@ -7,6 +7,9 @@ on:
       - 'sky-chart-foundation-v2.js'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-orb-control-v1.js'
+      - 'sky-chart-aspect-scope-matrix-v1.js'
+      - 'sky-chart-aspect-multiselect-v1.css'
+      - 'sky-chart-filter-glyphs-v1.js'
       - 'sky-chart-highlight-without-filtering-v1.js'
       - 'sky-chart-hover-fast-path-v2.js'
       - 'sky-chart-selected-relationship-wheel-bridge-v1.js'
@@ -14,6 +17,7 @@ on:
       - 'sky-chart-relationship-state-contract-v1.js'
       - 'tests/sky-chart-aspect-line-visibility.mjs'
       - 'tests/sky-chart-aspect-hover-hit-envelope.mjs'
+      - 'tests/sky-chart-aspect-filter-degrees.mjs'
       - '.github/workflows/sky-chart-aspect-line-check.yml'
   push:
     branches:
@@ -23,6 +27,9 @@ on:
       - 'sky-chart-foundation-v2.js'
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-orb-control-v1.js'
+      - 'sky-chart-aspect-scope-matrix-v1.js'
+      - 'sky-chart-aspect-multiselect-v1.css'
+      - 'sky-chart-filter-glyphs-v1.js'
       - 'sky-chart-highlight-without-filtering-v1.js'
       - 'sky-chart-hover-fast-path-v2.js'
       - 'sky-chart-selected-relationship-wheel-bridge-v1.js'
@@ -30,6 +37,7 @@ on:
       - 'sky-chart-relationship-state-contract-v1.js'
       - 'tests/sky-chart-aspect-line-visibility.mjs'
       - 'tests/sky-chart-aspect-hover-hit-envelope.mjs'
+      - 'tests/sky-chart-aspect-filter-degrees.mjs'
       - '.github/workflows/sky-chart-aspect-line-check.yml'
 
 jobs:
@@ -45,12 +53,15 @@ jobs:
           node --check sky-chart-foundation-v2.js
           node --check sky-chart-foundation-interactions-v2.js
           node --check sky-chart-orb-control-v1.js
+          node --check sky-chart-aspect-scope-matrix-v1.js
+          node --check sky-chart-filter-glyphs-v1.js
           node --check sky-chart-highlight-without-filtering-v1.js
           node --check sky-chart-hover-fast-path-v2.js
           node --check sky-chart-selected-relationship-wheel-bridge-v1.js
           node --check sky-chart-relationship-state-contract-v1.js
           node --check tests/sky-chart-aspect-line-visibility.mjs
           node --check tests/sky-chart-aspect-hover-hit-envelope.mjs
+          node --check tests/sky-chart-aspect-filter-degrees.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -58,6 +69,7 @@ jobs:
       - name: Run visible aspect-line assertions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-aspect-line-server.log 2>&1 &
+          node tests/sky-chart-aspect-filter-degrees.mjs
           node tests/sky-chart-aspect-line-visibility.mjs
           node tests/sky-chart-aspect-hover-hit-envelope.mjs
       - uses: actions/upload-artifact@v4
