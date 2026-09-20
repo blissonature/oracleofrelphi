@@ -1500,6 +1500,90 @@
     color:var(--relphi-red-dark) !important;
     border-color:rgba(220,31,24,.38) !important;
   }
+
+  /* Planetary Calendar day view: the 24 hours are a chronological journal surface. */
+  .ph-planetary-calendar { padding: clamp(.8rem, 2.5vw, 1.25rem); }
+  .ph-calendar-header { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; flex-wrap:wrap; border-bottom:1px solid var(--relphi-line); padding-bottom:.9rem; }
+  .ph-calendar-header h2 { text-align:left; margin:.05rem 0 .15rem; }
+  .ph-calendar-header .eyebrow { margin:0; }
+  .ph-calendar-date { margin:.05rem 0; font-size:clamp(1.05rem, 2.2vw, 1.35rem); font-weight:850; }
+  .ph-calendar-frame-note { margin:.15rem 0 0; }
+  .ph-calendar-nav { display:flex; align-items:center; gap:.38rem; flex-wrap:wrap; }
+  .ph-calendar-nav button,
+  .ph-calendar-date-control input { min-height:42px; border:1px solid rgba(17,17,17,.15); border-radius:999px; background:#fff; color:#211d19; font:800 .82rem/1 system-ui,sans-serif; }
+  .ph-calendar-nav button { min-width:42px; padding:.55rem .72rem; cursor:pointer; }
+  .ph-calendar-today { padding-inline:.9rem !important; }
+  .ph-calendar-date-control input { padding:.46rem .72rem; font-variant-numeric:tabular-nums; }
+  .ph-calendar-nav button:hover,
+  .ph-calendar-nav button:focus-visible,
+  .ph-calendar-date-control input:focus-visible { outline:none; border-color:var(--relphi-red); box-shadow:0 0 0 3px rgba(220,31,24,.1); }
+  .ph-calendar-day-context { display:grid; grid-template-columns:minmax(220px,.75fr) minmax(0,1.25fr); gap:.9rem; align-items:stretch; margin:.9rem 0 1rem; }
+  .ph-calendar-moon-context,
+  .ph-calendar-events-context { background:#fff; border:1px solid var(--relphi-line); border-radius:1rem; padding:.8rem; min-width:0; }
+  .ph-calendar-moon-context .ph-moon-wrap { justify-content:flex-start; }
+  .ph-calendar-moon-context .ph-moon-disc { width:4.3rem; height:4.3rem; flex:0 0 auto; }
+  .ph-calendar-moon-context .ph-moon-facts { min-width:0; }
+  .ph-calendar-moon-context .ph-moon-facts p { margin:.22rem 0; }
+  .ph-calendar-context-label { margin:0 0 .48rem; color:#514b46; font:850 .76rem/1.2 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.07em; }
+  .ph-calendar-event-lane { display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; min-height:2rem; }
+  .ph-calendar-event { display:inline-flex; align-items:center; gap:.32rem; padding:.34rem .55rem; border:1px solid rgba(17,17,17,.12); border-radius:999px; background:#faf8f5; color:#302a25; font:750 .75rem/1.15 system-ui,sans-serif; white-space:nowrap; }
+  .ph-calendar-event strong { color:var(--relphi-red-dark); font-weight:900; }
+  .ph-calendar-note-summary { margin:.55rem 0 0; color:#655d56; font-size:.8rem; font-weight:700; }
+  .ph-calendar-timeline { position:relative; display:grid; gap:.48rem; }
+  .ph-calendar-timeline::before { content:""; position:absolute; left:5.15rem; top:.7rem; bottom:.7rem; width:1px; background:rgba(17,17,17,.12); }
+  .ph-calendar-hour { position:relative; display:grid; grid-template-columns:4.55rem minmax(0,1fr); gap:.72rem; min-width:0; scroll-margin-block:6rem; }
+  .ph-calendar-hour-time { padding-top:.78rem; color:#514b46; text-align:right; font:800 .72rem/1.2 system-ui,sans-serif; font-variant-numeric:tabular-nums; }
+  .ph-calendar-hour-time span { display:block; }
+  .ph-calendar-hour-card { position:relative; min-width:0; background:#fff; border:1px solid rgba(17,17,17,.13); border-left:4px solid currentColor; border-radius:.9rem; padding:.68rem .72rem; color:#211d19; }
+  .ph-calendar-hour.active .ph-calendar-hour-card { border-color:rgba(220,31,24,.45); border-left-color:var(--relphi-red); box-shadow:0 0 0 3px rgba(220,31,24,.08); }
+  .ph-calendar-hour.previous .ph-calendar-hour-card,
+  .ph-calendar-hour.next .ph-calendar-hour-card { background:#fffdfa; }
+  .ph-calendar-hour.jump-target .ph-calendar-hour-card { box-shadow:0 0 0 4px rgba(220,31,24,.15); }
+  .ph-calendar-hour-head { display:flex; align-items:center; justify-content:space-between; gap:.6rem; flex-wrap:wrap; }
+  .ph-calendar-hour-ruler { display:inline-flex; align-items:center; gap:.38rem; min-width:0; font-size:1rem; font-weight:900; }
+  .ph-calendar-hour-ruler .ph-direct-canonical-glyph { width:1.25em; height:1.25em; margin:0; }
+  .ph-calendar-hour-meta { display:flex; align-items:center; gap:.35rem; flex-wrap:wrap; color:#615952; font:750 .72rem/1.2 system-ui,sans-serif; }
+  .ph-calendar-hour-number { color:#655d56; }
+  .ph-calendar-hour-focus { margin:.42rem 0 .08rem; color:#39332e; font-size:.84rem; line-height:1.42; }
+  .ph-calendar-hour-focus b { color:var(--relphi-red-dark); }
+  .ph-calendar-hour-actions { display:flex; align-items:center; gap:.38rem; flex-wrap:wrap; margin-top:.5rem; }
+  .ph-calendar-hour-actions button,
+  .ph-calendar-hour-actions a,
+  .ph-calendar-note-actions button { appearance:none; border:1px solid rgba(17,17,17,.15); border-radius:999px; background:#fff; color:#332d28; min-height:34px; padding:.4rem .68rem; text-decoration:none; cursor:pointer; font:800 .72rem/1 system-ui,sans-serif; }
+  .ph-calendar-hour-actions button:hover,
+  .ph-calendar-hour-actions button:focus-visible,
+  .ph-calendar-hour-actions a:hover,
+  .ph-calendar-hour-actions a:focus-visible,
+  .ph-calendar-note-actions button:hover,
+  .ph-calendar-note-actions button:focus-visible { outline:none; border-color:var(--relphi-red); box-shadow:0 0 0 2px rgba(220,31,24,.08); }
+  .ph-calendar-note-count { color:#655d56; font:750 .72rem/1.2 system-ui,sans-serif; }
+  .ph-calendar-notes { display:grid; gap:.36rem; margin-top:.5rem; }
+  .ph-calendar-note { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.55rem; align-items:start; border-left:2px solid rgba(220,31,24,.35); background:#fffaf7; border-radius:.2rem .65rem .65rem .2rem; padding:.5rem .58rem; }
+  .ph-calendar-note p { margin:0; color:#2f2a26; font-size:.82rem; line-height:1.42; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .ph-calendar-note small { display:block; margin-top:.2rem; color:#756c65; font-size:.68rem; }
+  .ph-calendar-note-delete { min-width:30px !important; min-height:30px !important; padding:.3rem !important; }
+  .ph-calendar-note-editor { display:none; gap:.45rem; margin-top:.55rem; }
+  .ph-calendar-hour.is-editing .ph-calendar-note-editor { display:grid; }
+  .ph-calendar-note-editor textarea { width:100%; min-height:86px; box-sizing:border-box; resize:vertical; border:1px solid rgba(17,17,17,.18); border-radius:.7rem; padding:.62rem .68rem; background:#fff; color:#211d19; font:500 16px/1.4 system-ui,sans-serif; }
+  .ph-calendar-note-editor textarea:focus { outline:2px solid rgba(220,31,24,.16); border-color:var(--relphi-red); }
+  .ph-calendar-note-actions { display:flex; gap:.4rem; flex-wrap:wrap; justify-content:flex-end; }
+  .ph-calendar-note-save { background:var(--relphi-red) !important; color:#fff !important; border-color:var(--relphi-red) !important; }
+  .ph-wanderer-frame > h2 { margin-bottom:.2rem; }
+  .ph-wanderer-frame .ph-wanderer-strip { margin-top:.25rem; border-top:0; padding-top:.25rem; }
+  @media (max-width:760px) {
+    .ph-calendar-header { align-items:flex-start; }
+    .ph-calendar-nav { width:100%; display:grid; grid-template-columns:42px minmax(0,1fr) auto 42px; }
+    .ph-calendar-date-control input { width:100%; min-width:0; box-sizing:border-box; }
+    .ph-calendar-day-context { grid-template-columns:1fr; }
+    .ph-calendar-timeline::before { left:3.7rem; }
+    .ph-calendar-hour { grid-template-columns:3.15rem minmax(0,1fr); gap:.55rem; }
+    .ph-calendar-hour-time { font-size:.67rem; padding-top:.7rem; }
+    .ph-calendar-hour-card { padding:.62rem; }
+    .ph-calendar-hour-head { align-items:flex-start; }
+    .ph-calendar-hour-meta { width:100%; }
+    .ph-calendar-hour-focus { font-size:.8rem; }
+  }
+
 </style>
 <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
@@ -1634,19 +1718,11 @@
             <button class="ph-mini-card current" id="currentHourCard" type="button">Current<br>—</button>
             <button class="ph-mini-card" id="nextHourCard" type="button">Next<br>—</button>
           </div>
-          <button class="ph-btn ph-hour-jump" id="topHourJump" type="button">Show in 24-hour list</button>
+          <button class="ph-btn ph-hour-jump" id="topHourJump" type="button">Show in calendar</button>
         </div>
       </div>
-      <div class="ph-moon-frame">
-        <h2>Moon calendar</h2>
-        <div class="ph-moon-wrap">
-          <div class="ph-moon-disc" id="moonDisc"></div>
-          <div class="ph-moon-facts">
-            <p id="moonPhase">—</p>
-            <p class="ph-tiny" id="moonTimes">—</p>
-            <p class="ph-tiny" id="moonVisibility">—</p>
-          </div>
-        </div>
+      <div class="ph-moon-frame ph-wanderer-frame">
+        <h2>Where’s the Wanderer?</h2>
       <div class="ph-wanderer-strip" aria-label="Traditional wanderer rise and set times">
         <div class="ph-section-heading compact">
           <p class="eyebrow">Wanderer visibility</p>
@@ -1715,17 +1791,41 @@
 
 
 
-  <section class="ph-panel" id="tableSection">
-    <h2>Twenty-four planetary hours</h2>
-    <div class="ph-table-wrap">
-      <table class="ph-table" id="hoursTable">
-        <colgroup><col class="ph-col-number"><col class="ph-col-time"><col class="ph-col-ruler"><col class="ph-col-light"><col></colgroup>
-        <thead>
-          <tr><th>#</th><th>Start–End</th><th>Ruler</th><th>Bright/Dark</th><th>Focus</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+  <section class="ph-panel ph-planetary-calendar" id="tableSection" aria-labelledby="planetaryCalendarHeading">
+    <div class="ph-calendar-header">
+      <div>
+        <p class="eyebrow">Planetary calendar · Day</p>
+        <h2 id="planetaryCalendarHeading">Planetary calendar</h2>
+        <p class="ph-calendar-date" id="calendarDayTitle">—</p>
+        <p class="ph-tiny ph-calendar-frame-note">The planetary day runs from local sunrise to the following sunrise.</p>
+      </div>
+      <div class="ph-calendar-nav" aria-label="Planetary calendar day navigation">
+        <button class="ph-calendar-nav-button" id="calendarPrevDay" type="button" aria-label="Previous planetary day">←</button>
+        <label class="ph-calendar-date-control"><span class="ph-sr-only">Jump to date</span><input id="calendarDatePick" type="date"/></label>
+        <button class="ph-calendar-today" id="calendarToday" type="button">Today</button>
+        <button class="ph-calendar-nav-button" id="calendarNextDay" type="button" aria-label="Next planetary day">→</button>
+      </div>
     </div>
+
+    <div class="ph-calendar-day-context">
+      <div class="ph-calendar-moon-context" aria-label="Moon condition for this calendar day">
+        <div class="ph-moon-wrap">
+          <div class="ph-moon-disc" id="moonDisc"></div>
+          <div class="ph-moon-facts">
+            <p id="moonPhase">—</p>
+            <p class="ph-tiny" id="moonTimes">—</p>
+            <p class="ph-tiny" id="moonVisibility">—</p>
+          </div>
+        </div>
+      </div>
+      <div class="ph-calendar-events-context">
+        <p class="ph-calendar-context-label">Events in this planetary day</p>
+        <div class="ph-calendar-event-lane" id="calendarEventLane" aria-live="polite"></div>
+        <p class="ph-calendar-note-summary" id="calendarNoteSummary">No journal notes on this planetary day yet.</p>
+      </div>
+    </div>
+
+    <div class="ph-calendar-timeline" id="planetaryDayTimeline" aria-label="Twenty-four planetary hours"></div>
   </section>
 
   <section class="ph-panel">
@@ -1734,7 +1834,7 @@
       <p><b>Sunrise-to-sunrise frame.</b> The planetary day begins at local sunrise and ends at the next local sunrise.</p>
       <p><b>Bright and dark.</b> Bright hours run from sunrise to sunset. Dark hours run from sunset to the following sunrise.</p>
       <p><b>Location packets.</b> Manual Location Mode pairs a named place with latitude, longitude, and timezone so historical dates and birth times are not mixed with the wrong local frame.</p>
-      <p><b>Moon calendar.</b> The Moon panel uses SunCalc for moon phase, illumination, moonrise, moonset, and above/below-horizon clues for the same selected place and time.</p>
+      <p><b>Planetary calendar.</b> The Day view combines the sunrise-to-sunrise planetary hours with the Moon condition, timed sky events, and journal notes attached directly to individual planetary hours.</p>
       <p><b>Statements.</b> Each focus statement combines the day ruler as the broad field, the hour ruler as the method, and the ruler's ordinal appearance in the planetary day. The page says “Moon hour,” “Jupiter day,” and so on to keep timing conditions distinct from planets as bodies.</p>
       <p><b>Animated heptagram.</b> The ring keeps the Chaldean order. The hour ruler glows inside the current day. The heptagram advances one day-ruler step per sunrise-to-sunrise day, so the full star is drawn over seven planetary days.</p>
     </details>
@@ -1769,7 +1869,7 @@
     saturn: 'https://commons.wikimedia.org/wiki/Special:FilePath/Chronos_MET_DP-932-001.jpg?width=640'
   };
   const browserTimeZone = (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
-  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h' };
+  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h', calendarEditingHourKey: null, calendarDrafts: {} };
   const locationPresets = [
     {name:'Greenwich, London, UK', lat:51.4769, lon:-0.0005, tz:'Europe/London'},
     {name:'Boston, Massachusetts, USA', lat:42.3601, lon:-71.0589, tz:'America/New_York'},
@@ -1846,7 +1946,14 @@
     currentInterpretation: document.getElementById('currentInterpretation'),
     dayCountdown: document.getElementById('dayCountdown'),
     legendChips: document.getElementById('legendChips'),
-    hoursTable: document.querySelector('#hoursTable tbody'),
+    calendarDayTitle: document.getElementById('calendarDayTitle'),
+    calendarDatePick: document.getElementById('calendarDatePick'),
+    calendarPrevDay: document.getElementById('calendarPrevDay'),
+    calendarNextDay: document.getElementById('calendarNextDay'),
+    calendarToday: document.getElementById('calendarToday'),
+    calendarEventLane: document.getElementById('calendarEventLane'),
+    calendarNoteSummary: document.getElementById('calendarNoteSummary'),
+    calendarTimeline: document.getElementById('planetaryDayTimeline'),
     skyQuery: document.getElementById('skyQuery'),
     runSkyQuery: document.getElementById('runSkyQuery'),
     skyObserveTitle: document.getElementById('skyObserveTitle'),
@@ -2919,6 +3026,91 @@
     return String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   }
 
+  const calendarNoteStorageKey = 'relphiPlanetaryCalendarNotesV1';
+  let lastCalendarRender = null;
+
+  function htmlText(value) {
+    return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function loadCalendarNotes() {
+    try {
+      const value = JSON.parse(localStorage.getItem(calendarNoteStorageKey) || '{}');
+      return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    } catch (error) { return {}; }
+  }
+
+  function saveCalendarNotes(notes) {
+    try { localStorage.setItem(calendarNoteStorageKey, JSON.stringify(notes || {})); } catch (error) {}
+  }
+
+  function calendarDayKey(frame) {
+    return [state.tz || '', Number(state.lat).toFixed(4), Number(state.lon).toFixed(4), frame.start.toISOString()].join('|');
+  }
+
+  function calendarHourKey(frame, row) {
+    return calendarDayKey(frame) + '|hour:' + row.index + '|' + row.start.toISOString();
+  }
+
+  function calendarNotesForHour(frame, row, store) {
+    const list = (store || loadCalendarNotes())[calendarHourKey(frame, row)];
+    return Array.isArray(list) ? list : [];
+  }
+
+  function calendarNoteCount(frame, rows, store) {
+    return rows.reduce(function (count, row) { return count + calendarNotesForHour(frame, row, store).length; }, 0);
+  }
+
+  function calendarSkyHref(row) {
+    const skyDateTime = dateInputValueFor(row.start, state.tz) + 'T' + timeInputValueFor(row.start, state.tz);
+    return 'sky-chart.html?' + new URLSearchParams({
+      source:'planetary-hours-calendar',
+      datetime:skyDateTime,
+      lat:String(state.lat),
+      lon:String(state.lon),
+      tz:state.tz || '',
+      loc:state.locationName || '',
+      calc:'1',
+      name:'Planetary Hour ' + row.index + ' · ' + row.ruler.name + ' · ' + skyDateTime.replace('T',' ')
+    }).toString() + '#sky-calc';
+  }
+
+  function renderCalendarEvents(frame) {
+    if (!el.calendarEventLane) return;
+    const events = [
+      {time:frame.sunrise, label:'Sunrise'},
+      {time:frame.sunset, label:'Sunset'},
+      {time:frame.end, label:'Next sunrise'}
+    ];
+    if (window.SunCalc) {
+      [-1,0,1,2].forEach(function (offset) {
+        try {
+          const base = localNoonFor(frame.start, state.tz, offset);
+          const mt = SunCalc.getMoonTimes(base, state.lat, state.lon);
+          if (mt.rise && mt.rise >= frame.start && mt.rise <= frame.end) events.push({time:mt.rise,label:'Moonrise'});
+          if (mt.set && mt.set >= frame.start && mt.set <= frame.end) events.push({time:mt.set,label:'Moonset'});
+        } catch (error) {}
+      });
+    }
+    const seen = new Set();
+    const ordered = events.filter(function (event) {
+      if (!event.time || Number.isNaN(new Date(event.time).getTime())) return false;
+      const key = event.label + '|' + new Date(event.time).getTime();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).sort(function (a,b) { return new Date(a.time) - new Date(b.time); });
+    el.calendarEventLane.innerHTML = ordered.map(function (event) {
+      return '<span class="ph-calendar-event"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + htmlText(event.label) + '</span>';
+    }).join('');
+  }
+
+  function updateCalendarNoteSummary(frame, rows) {
+    if (!el.calendarNoteSummary) return;
+    const count = calendarNoteCount(frame, rows, loadCalendarNotes());
+    el.calendarNoteSummary.textContent = count ? count + ' journal note' + (count === 1 ? '' : 's') + ' attached to this planetary day.' : 'No journal notes on this planetary day yet.';
+  }
+
   function scrollToHour(index) {
     const row = document.getElementById('ph-hour-row-' + index);
     if (!row) return;
@@ -2931,7 +3123,7 @@
     if (!elm || !row) return;
     elm.dataset.hourJump = String(row.index);
     elm.disabled = false;
-    elm.setAttribute('aria-label', 'Show hour ' + row.index + ' in the 24-hour list');
+    elm.setAttribute('aria-label', 'Show hour ' + row.index + ' in the Planetary Calendar');
   }
 
 
@@ -3118,7 +3310,7 @@
       const left = percent(r.start);
       const width = Math.max(0.15, percent(r.end) - left);
       const label = (r.isBright ? 'Bright' : 'Dark') + ' hour ' + r.index + ': ' + r.ruler.name + ', ' + fmtHM(r.start) + '–' + fmtHM(r.end);
-      return '<button class="ph-hour-zone" type="button" data-hour-jump="' + r.index + '" style="left:' + left.toFixed(3) + '%;width:' + width.toFixed(3) + '%" title="' + attrText(label) + '" aria-label="' + attrText('Show ' + label + ' in the 24-hour list') + '"></button>';
+      return '<button class="ph-hour-zone" type="button" data-hour-jump="' + r.index + '" style="left:' + left.toFixed(3) + '%;width:' + width.toFixed(3) + '%" title="' + attrText(label) + '" aria-label="' + attrText('Show ' + label + ' in the Planetary Calendar') + '"></button>';
     }).join('');
     const marks = rows.slice(1).map(function (r) {
       return '<span class="ph-hour-mark" style="left:' + percent(r.start).toFixed(3) + '%"></span>';
@@ -3126,22 +3318,45 @@
     el.hourMarks.innerHTML = zones + marks;
   }
 
-  function renderHoursTable(rows, dayKey, idx) {
-    el.hoursTable.innerHTML = '';
-    rows.forEach(function (r, i) {
-      const tr = document.createElement('tr');
-      tr.id = 'ph-hour-row-' + r.index;
-      tr.dataset.hourIndex = String(r.index);
-      if (i === idx) tr.className = 'active';
-      if (i === idx - 1) tr.className = 'previous';
-      if (i === idx + 1) tr.className = 'next';
-      tr.innerHTML = '<td>' + r.index + '</td>' +
-        '<td>' + fmtHM(r.start) + '–' + fmtHM(r.end) + '</td>' +
-        '<td class="p-' + r.ruler.key + '">' + canonicalPlanetGlyphMarkup(r.ruler.key, r.ruler.name) + ' ' + r.ruler.name + '</td>' +
-        '<td><span class="ph-badge ' + (r.isBright ? 'bright' : 'dark') + '">' + (r.isBright ? 'Bright' : 'Dark') + '</span></td>' +
-        '<td>' + fullContextStatement(byKey[dayKey], r, rows) + '</td>';
-      el.hoursTable.appendChild(tr);
-    });
+  function renderHoursCalendar(frame, rows, dayKey, idx) {
+    if (!el.calendarTimeline) return;
+    lastCalendarRender = {frame:frame, rows:rows, dayKey:dayKey, idx:idx};
+    const store = loadCalendarNotes();
+    el.calendarTimeline.innerHTML = rows.map(function (r, i) {
+      const notes = calendarNotesForHour(frame, r, store);
+      const hourKey = calendarHourKey(frame, r);
+      const classes = ['ph-calendar-hour','p-' + r.ruler.key];
+      if (i === idx) classes.push('active');
+      if (i === idx - 1) classes.push('previous');
+      if (i === idx + 1) classes.push('next');
+      if (state.calendarEditingHourKey === hourKey) classes.push('is-editing');
+      const noteMarkup = notes.map(function (note) {
+        const stamp = note.createdAt ? new Date(note.createdAt).toLocaleString(undefined,{timeZone:state.tz,month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '';
+        return '<article class="ph-calendar-note"><div><p>' + htmlText(note.text || '') + '</p><small>' + htmlText(stamp) + '</small></div><button class="ph-calendar-note-delete" type="button" data-calendar-note-delete="' + htmlText(note.id || '') + '" data-hour-key="' + htmlText(hourKey) + '" aria-label="Delete this note">×</button></article>';
+      }).join('');
+      const draft = state.calendarDrafts && state.calendarDrafts[hourKey] ? state.calendarDrafts[hourKey] : '';
+      return '<article class="' + classes.join(' ') + '" id="ph-hour-row-' + r.index + '" data-hour-index="' + r.index + '" data-hour-key="' + htmlText(hourKey) + '">' +
+        '<div class="ph-calendar-hour-time"><span>' + htmlText(fmtHM(r.start)) + '</span><span>' + htmlText(fmtHM(r.end)) + '</span></div>' +
+        '<div class="ph-calendar-hour-card">' +
+          '<div class="ph-calendar-hour-head">' +
+            '<div class="ph-calendar-hour-ruler">' + canonicalPlanetGlyphMarkup(r.ruler.key, r.ruler.name) + '<span>' + htmlText(r.ruler.name) + ' hour</span></div>' +
+            '<div class="ph-calendar-hour-meta"><span class="ph-calendar-hour-number">Hour ' + r.index + '</span><span class="ph-badge ' + (r.isBright ? 'bright' : 'dark') + '">' + (r.isBright ? 'Bright' : 'Dark') + '</span></div>' +
+          '</div>' +
+          '<div class="ph-calendar-hour-focus">' + fullContextStatement(byKey[dayKey], r, rows) + '</div>' +
+          (noteMarkup ? '<div class="ph-calendar-notes">' + noteMarkup + '</div>' : '') +
+          '<div class="ph-calendar-hour-actions">' +
+            '<button type="button" data-calendar-note-add="' + htmlText(hourKey) + '">' + (notes.length ? 'Add another note' : 'Add note') + '</button>' +
+            '<a href="' + htmlText(calendarSkyHref(r)) + '">Sky at hour start</a>' +
+            '<span class="ph-calendar-note-count">' + (notes.length ? notes.length + ' note' + (notes.length === 1 ? '' : 's') : 'No notes') + '</span>' +
+          '</div>' +
+          '<div class="ph-calendar-note-editor">' +
+            '<textarea data-calendar-note-draft="' + htmlText(hourKey) + '" placeholder="What happened during this ' + htmlText(r.ruler.name) + ' hour?">' + htmlText(draft) + '</textarea>' +
+            '<div class="ph-calendar-note-actions"><button type="button" data-calendar-note-cancel="' + htmlText(hourKey) + '">Cancel</button><button class="ph-calendar-note-save" type="button" data-calendar-note-save="' + htmlText(hourKey) + '">Save note</button></div>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+    updateCalendarNoteSummary(frame, rows);
   }
 
   function syncHash() {
@@ -3164,7 +3379,10 @@
     const idx = currentIndex(rows, frame.localNow);
     const cur = rows[idx];
 
-    if (el.dayCalendarDate) el.dayCalendarDate.textContent = new Date(frame.localNow).toLocaleDateString('en-US', {timeZone: state.tz, weekday:'long', month:'long', day:'numeric', year:'numeric'});
+    const calendarDateLabel = new Date(frame.localNow).toLocaleDateString('en-US', {timeZone: state.tz, weekday:'long', month:'long', day:'numeric', year:'numeric'});
+    if (el.dayCalendarDate) el.dayCalendarDate.textContent = calendarDateLabel;
+    if (el.calendarDayTitle) el.calendarDayTitle.textContent = calendarDateLabel + ' · ' + day.name + ' day';
+    if (el.calendarDatePick) el.calendarDatePick.value = dateInputValueFor(frame.localNow, state.tz);
     if (el.dayRuler) el.dayRuler.innerHTML = pillFor(day, day.name + ' day');
     el.dayRulerMeta.textContent = '';
     el.sunTimes.textContent = 'Bright hours are from sunrise at ' + fmtHMText(frame.sunrise) + ' to sunset at ' + fmtHMText(frame.sunset) + ', followed by dark hours until next sunrise at ' + fmtHMText(frame.end);
@@ -3195,6 +3413,7 @@
     if (el.prevDayCue) el.prevDayCue.textContent = '← Day';
     if (el.nextDayCue) el.nextDayCue.textContent = 'Day →';
     renderMoonFrame(frame.localNow, state.lat, state.lon);
+    renderCalendarEvents(frame);
     renderWandererGrid(frame);
     phRenderCurrentWheel(Object.assign({}, frame, { localNow: skyMoment }));
     let prev = rows[idx - 1];
@@ -3233,7 +3452,7 @@
 
     renderAnimatedHeptagram(frame, rows, dayKey, idx);
     renderTicker(frame, rows);
-    renderHoursTable(rows, dayKey, idx);
+    renderHoursCalendar(frame, rows, dayKey, idx);
     renderSkyOrientation(true);
     syncHash();
 
@@ -3304,6 +3523,80 @@
       button.addEventListener('click', function () { if (button.dataset.hourJump) scrollToHour(Number(button.dataset.hourJump)); });
     });
 
+    if (el.calendarTimeline) {
+      el.calendarTimeline.addEventListener('input', function (event) {
+        const isDraft = event.target && event.target.matches ? event.target.matches('[data-calendar-note-draft]') : false;
+        if (!isDraft) return;
+        state.calendarDrafts[event.target.dataset.calendarNoteDraft] = event.target.value;
+      });
+      el.calendarTimeline.addEventListener('click', function (event) {
+        const add = event.target.closest('[data-calendar-note-add]');
+        if (add) {
+          const key = add.dataset.calendarNoteAdd;
+          state.calendarEditingHourKey = key;
+          if (!(key in state.calendarDrafts)) state.calendarDrafts[key] = '';
+          if (lastCalendarRender) renderHoursCalendar(lastCalendarRender.frame,lastCalendarRender.rows,lastCalendarRender.dayKey,lastCalendarRender.idx);
+          const editor = el.calendarTimeline.querySelector('[data-calendar-note-draft="' + CSS.escape(key) + '"]');
+          if (editor) { editor.focus(); editor.scrollIntoView({block:'nearest'}); }
+          return;
+        }
+        const cancel = event.target.closest('[data-calendar-note-cancel]');
+        if (cancel) {
+          const key = cancel.dataset.calendarNoteCancel;
+          state.calendarEditingHourKey = null;
+          state.calendarDrafts[key] = '';
+          if (lastCalendarRender) renderHoursCalendar(lastCalendarRender.frame,lastCalendarRender.rows,lastCalendarRender.dayKey,lastCalendarRender.idx);
+          return;
+        }
+        const save = event.target.closest('[data-calendar-note-save]');
+        if (save && lastCalendarRender) {
+          const key = save.dataset.calendarNoteSave;
+          const text = String(state.calendarDrafts[key] || '').trim();
+          if (!text) {
+            const editor = el.calendarTimeline.querySelector('[data-calendar-note-draft="' + CSS.escape(key) + '"]');
+            if (editor) editor.focus();
+            return;
+          }
+          const row = lastCalendarRender.rows.find(function (candidate) { return calendarHourKey(lastCalendarRender.frame,candidate) === key; });
+          if (!row) return;
+          const store = loadCalendarNotes();
+          const list = Array.isArray(store[key]) ? store[key] : [];
+          list.push({
+            id:'note-' + Date.now() + '-' + Math.random().toString(36).slice(2,8),
+            text:text,
+            createdAt:new Date().toISOString(),
+            dayStart:lastCalendarRender.frame.start.toISOString(),
+            hourStart:row.start.toISOString(),
+            hourEnd:row.end.toISOString(),
+            hourIndex:row.index,
+            ruler:row.ruler.key,
+            location:state.locationName || '',
+            lat:Number(state.lat),
+            lon:Number(state.lon),
+            tz:state.tz || ''
+          });
+          store[key] = list;
+          saveCalendarNotes(store);
+          state.calendarDrafts[key] = '';
+          state.calendarEditingHourKey = null;
+          renderHoursCalendar(lastCalendarRender.frame,lastCalendarRender.rows,lastCalendarRender.dayKey,lastCalendarRender.idx);
+          return;
+        }
+        const remove = event.target.closest('[data-calendar-note-delete]');
+        if (remove && lastCalendarRender) {
+          const key = remove.dataset.hourKey;
+          const id = remove.dataset.calendarNoteDelete;
+          const store = loadCalendarNotes();
+          if (Array.isArray(store[key])) {
+            store[key] = store[key].filter(function (note) { return note.id !== id; });
+            if (!store[key].length) delete store[key];
+            saveCalendarNotes(store);
+            renderHoursCalendar(lastCalendarRender.frame,lastCalendarRender.rows,lastCalendarRender.dayKey,lastCalendarRender.idx);
+          }
+        }
+      });
+    }
+
     function shiftManualDay(delta, hourOverride) {
       const base = state.useSystem ? localNow() : new Date(state.now);
       state.useSystem = false;
@@ -3317,6 +3610,31 @@
     }
     if (el.prevDayCue) el.prevDayCue.addEventListener('click', function () { shiftManualDay(-1); });
     if (el.nextDayCue) el.nextDayCue.addEventListener('click', function () { shiftManualDay(1); });
+    if (el.calendarPrevDay) el.calendarPrevDay.addEventListener('click', function () { shiftManualDay(-1); });
+    if (el.calendarNextDay) el.calendarNextDay.addEventListener('click', function () { shiftManualDay(1); });
+    if (el.calendarToday) el.calendarToday.addEventListener('click', function () {
+      state.useSystem = true;
+      state.heptagramHourOverride = null;
+      state.calendarEditingHourKey = null;
+      if (el.useSystem) el.useSystem.checked = true;
+      if (el.datePick) el.datePick.disabled = true;
+      if (el.timePick) el.timePick.disabled = true;
+      rebuild();
+    });
+    if (el.calendarDatePick) el.calendarDatePick.addEventListener('change', function () {
+      if (!el.calendarDatePick.value) return;
+      state.useSystem = false;
+      if (el.useSystem) el.useSystem.checked = false;
+      const timeValue = el.timePick && el.timePick.value ? el.timePick.value : '12:00';
+      if (el.datePick) el.datePick.value = el.calendarDatePick.value;
+      if (el.timePick && !el.timePick.value) el.timePick.value = timeValue;
+      setManualDateFromInputs();
+      state.heptagramHourOverride = null;
+      state.calendarEditingHourKey = null;
+      if (el.datePick) el.datePick.disabled = false;
+      if (el.timePick) el.timePick.disabled = false;
+      rebuild();
+    });
     if (el.heptagramHour) el.heptagramHour.addEventListener('input', function () { state.heptagramHourOverride = Number(el.heptagramHour.value) || null; rebuild(); });
     if (el.heptagramPrev) el.heptagramPrev.addEventListener('click', function () {
       const current = state.heptagramHourOverride || Number(el.heptagramHour && el.heptagramHour.value) || 1;
@@ -3348,6 +3666,7 @@
     const now = localNow();
     el.datePick.value = dateInputValueFor(now, state.tz);
     el.timePick.value = timeInputValueFor(now, state.tz);
+    if (el.calendarDatePick) el.calendarDatePick.value = dateInputValueFor(now, state.tz);
     bindEvents();
     tickLocalClock();
     setInterval(tickLocalClock, 15000);
