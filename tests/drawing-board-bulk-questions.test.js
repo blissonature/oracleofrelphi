@@ -9,6 +9,9 @@ const runtime = fs.readFileSync(path.join(root, 'tests/drawing-board-runtime.tes
 assert.doesNotMatch(board, /relphiBulkQuestions/);
 assert.match(board, /function parseBulkQuestions\(value\)/);
 assert.match(board, /const MAX_POSITIONS = 50;/);
+assert.match(board, /const MAX_QUESTION_LENGTH = 240;/);
+assert.match(board, /maxlength="\$\{MAX_QUESTION_LENGTH\}"/);
+assert.doesNotMatch(board, /slice\(0,90\)|maxlength="90"/);
 assert.match(board, /slice\(0,MAX_POSITIONS\)/);
 assert.match(board, /draft\.labels\.length>=MAX_POSITIONS/);
 assert.match(board, /split\(','\)/);
