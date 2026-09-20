@@ -54,7 +54,7 @@ assert.match(page,/class=\"ph-sr-only\" id=\"localClock\"/);
 assert.doesNotMatch(page,/class=\"ph-clock\" id=\"localClock\"/);
 assert.match(page,/#controls \.ph-btn\.ph-btn-secondary/);
 assert.doesNotMatch(page,/id=\"dateFieldLink\"|ph-datefield-link|ph-datefield-jump/);
-assert.match(page,/<a class=\"ph-current-wheel-card\" id=\"phCurrentWheelCard\"[\s\S]*<div id=\"phCurrentWheel\"><\/div><span class=\"ph-current-wheel-jump\">Jump to this moment in Sky Chart<\/span><\/a>/);
+assert.match(page,/<a class=\"ph-current-wheel-card ph-calendar-day-wheel\" id=\"phCurrentWheelCard\"[\s\S]*<div id=\"phCurrentWheel\"><\/div><span class=\"ph-current-wheel-jump\">Jump to this moment in Sky Chart<\/span><\/a>/);
 assert.match(page,/\.ph-current-wheel-jump \{[\s\S]*max-width:100%;[\s\S]*font-size:\.64rem;[\s\S]*white-space:nowrap;[\s\S]*text-align:center;/);
 assert.doesNotMatch(page,/Preview only\. Use Sky Chart for the full reading\./);
 assert.match(page,/el\.phCurrentWheel\.replaceChildren\(root\);/);
@@ -96,7 +96,8 @@ assert.match(page,/\.ph-calendar-day-ruler-context #dayRulerFocus \{ display:blo
 assert.match(page,/id=\"dayRulerProfileName\"/);
 assert.match(page,/id=\"dayRulerFocus\"/);
 assert.match(page,/id=\"sunTimes\"/);
-assert.match(page,/<h2>Current sky<\/h2>/);
+assert.doesNotMatch(page,/<h2>Current sky<\/h2>/);
+assert.match(page,/ph-calendar-day-ruler-context[\s\S]*ph-current-wheel-card ph-calendar-day-wheel[\s\S]*phCurrentWheel/);
 assert.doesNotMatch(page,/<h2>Day ruler and Sun frame<\/h2>/);
 assert.match(page,/id=\"planetaryDayTimeline\"/);
 assert.match(page,/function renderHoursCalendar\(frame, rows, dayKey, idx\)/);
