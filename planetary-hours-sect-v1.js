@@ -15,6 +15,9 @@
     Object.freeze({ id:'saturn', body:'Saturn', sect:'diurnal', gender:'masculine' })
   ]);
   const PLANET_BY_ID = new Map(PLANETS.map(planet => [planet.id, planet]));
+  const PLANET_UNICODE = Object.freeze({
+    sun:'☉', moon:'☽', mercury:'☿', venus:'♀', mars:'♂', jupiter:'♃', saturn:'♄'
+  });
   const WATCH_IDS = new Set([
     'useSystem','datePick','timePick','tzSelect','lat','lon','setLatLon','useGeo','applyLocation','applyDT',
     'heptagramHour','heptagramPrev','heptagramNext','heptagramNow','prevDayCue','nextDayCue'
@@ -22,6 +25,7 @@
   let renderGeneration = 0;
   let scheduled = false;
   let lastSignature = '';
+  let lastResult = null;
 
   function normDeg(value) { const n = Number(value) || 0; return ((n % 360) + 360) % 360; }
   function signedDeg(value) { const n = normDeg(value); return n > 180 ? n - 360 : n; }
@@ -229,6 +233,58 @@
     container.appendChild(item);
   }
 
+  function serializeSect(result) {
+    if (!result?.positions) return '';
+    const heading = result.chartSect === 'diurnal' ? 'Day Sect' : 'Night Sect';
+    const tokens = PLANETS.map(definition => {
+      const position = result.positions.get(definition.id);
+      if (!position) return '';
+      const parts = [PLANET_UNICODE[position.id] || position.body];
+      if (position.isLight) parts.push('Light');
+      if (position.isBenefic) parts.push('Benefic');
+      if (position.isMalefic) parts.push('Malefic');
+      if (position.id === 'mercury') parts.push(position.sect === 'diurnal' ? 'Diurnal' : 'Nocturnal');
+      parts.push(position.ofSect ? 'Sect' : 'Contrary');
+      if (position.halb) parts.push('Halb');
+      if (position.hayz) parts.push('Hayz');
+      return parts.join(' ');
+    }).filter(Boolean);
+    return [heading, ...tokens].join(' · ');
+  }
+
+  function selectionIntersectsSectLine() {
+    const selection = window.getSelection?.();
+    const line = document.getElementById('phSectLine');
+    if (!selection || selection.isCollapsed || !selection.rangeCount || !line) return false;
+    try { return selection.getRangeAt(0).intersectsNode(line); }
+    catch (_) { return false; }
+  }
+
+  function htmlForCopy(text) {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function copySectSelection(event) {
+    if (!event.clipboardData || !selectionIntersectsSectLine()) return;
+    let result = lastResult;
+    if (!result) {
+      const context = activeContext();
+      if (!context) return;
+      try { result = calculate(context); }
+      catch (_) { return; }
+    }
+    const text = serializeSect(result);
+    if (!text) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.clipboardData.setData('text/plain', text);
+    event.clipboardData.setData('text/html', htmlForCopy(text));
+  }
+
   function planetToken(position, result, generation) {
     const token = document.createElement('span');
     token.className = 'ph-sect-planet';
@@ -270,6 +326,7 @@
     const generation = ++renderGeneration;
     try {
       const result = calculate(context);
+      lastResult = result;
       line.replaceChildren();
       line.removeAttribute('title');
       const heading = document.createElement('span');
@@ -331,6 +388,7 @@
     ensureStyle();
     ensureLine();
     observeAuthoritativeMoment();
+    document.addEventListener('copy', copySectSelection, true);
     document.addEventListener('change', event => { if (WATCH_IDS.has(event.target?.id)) schedule(true); }, true);
     document.addEventListener('input', event => { if (WATCH_IDS.has(event.target?.id)) schedule(false); }, true);
     document.addEventListener('click', event => { if (WATCH_IDS.has(event.target?.id)) setTimeout(() => schedule(true), 40); }, true);
@@ -341,7 +399,7 @@
     }, 15000);
   }
 
-  window.RelphiPlanetaryHoursSect = Object.freeze({ calculate, render });
+  window.RelphiPlanetaryHoursSect = Object.freeze({ calculate, render, serializeCopy:serializeSect });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once:true });
   else start();
 })();
