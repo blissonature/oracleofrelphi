@@ -68,7 +68,7 @@
   }
   function genericPositions(labels) {
     const count = Math.max(1, labels.length);
-    if (count <= 6) return legacyGenericPositions(labels);
+    if (count <= 12) return legacyGenericPositions(labels);
     let best=null;
     const maxCols=Math.min(10,count);
     for (let cols=3;cols<=maxCols;cols++) {
@@ -94,7 +94,7 @@
   }
   function legacyDenseAutoLayout(layout) {
     const positions=Array.isArray(layout?.positions)?layout.positions.slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder)):[];
-    if (layout?.id!=='custom-active' || positions.length<=6) return false;
+    if (layout?.id!=='custom-active' || positions.length<=12) return false;
     const labels=positions.map((item,index)=>String(item.label || `Position ${index+1}`));
     const expected=legacyGenericPositions(labels);
     const close=(a,b)=>Math.abs(Number(a)-Number(b))<.0015;
