@@ -632,8 +632,7 @@
   .ph-countdown-main { display: block; font-size: 1em; }
   .ph-countdown-sub { display: block; margin-top: .18rem; color: var(--relphi-muted); font-size: .72em; font-weight: 700; }
   .ph-current-meta-line { font-size: .98rem; font-weight: 700; color: #333; margin: .3rem 0 .45rem; }
-  .ph-day-frame #sunTimes { margin-bottom: .2rem; }
-  .ph-day-frame #bridgeInfo:empty { display: none; }
+  .ph-current-sky-frame .ph-current-wheel-card { margin-top:.35rem; }
   .ph-edge-day { border: 0; background: transparent; font: inherit; font-weight: 900; color: #555; cursor: pointer; }
   .ph-edge-day:hover, .ph-edge-day:focus-visible { color: var(--relphi-red); outline: 2px solid var(--relphi-red); outline-offset: 3px; border-radius: 999px; }
   .ph-section-heading { text-align: center; }
@@ -1386,46 +1385,6 @@
 
     .ph-day-frame { padding: .75rem; }
     .ph-day-frame h2 { font-size: 1.3rem; margin-bottom: .2rem; }
-    .ph-day-frame .ph-calendar-date { font-size: 1rem; margin: 0 0 .45rem; }
-    .ph-day-frame #sunTimes { font-size: .94rem; line-height: 1.35; }
-
-    .ph-day-ruler-profile-left {
-      display: grid;
-      grid-template-columns: 5.75rem minmax(0, 1fr);
-      align-items: stretch;
-      width: 100%;
-      max-width: 28rem;
-      min-height: 0;
-      margin: .25rem auto .55rem;
-      overflow: hidden;
-      border-radius: .9rem;
-      background: #fff;
-      box-shadow: 0 .35rem 1rem rgba(0,0,0,.07);
-    }
-    .ph-day-ruler-profile-left img {
-      width: 5.75rem;
-      height: 7rem;
-      object-fit: cover;
-      object-position: center 10%;
-    }
-    .ph-day-ruler-photo-label {
-      position: static;
-      inset: auto;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-width: 0;
-      padding: .65rem .75rem;
-      border: 0;
-      border-radius: 0;
-      color: #111;
-      background: #fff;
-      box-shadow: none;
-      backdrop-filter: none;
-    }
-    .ph-day-ruler-photo-label .ph-profile-label { color: var(--relphi-red) !important; }
-    .ph-day-ruler-photo-label strong { color: #111; font-size: 1.05rem; }
-    .ph-day-ruler-photo-label .ph-ruler-focus-line { color: #555; font-size: .78rem; }
   }
 
 
@@ -1463,11 +1422,9 @@
     transform:scale(1.9);
     transform-origin:center;
   }
-  #dayRulerProfileName .ph-direct-canonical-glyph { color:#fff; }
   #hourRulerProfileName .ph-direct-canonical-glyph { color:#111; }
   .ph-moon-frame .ph-direct-canonical-glyph { width:1.08em; height:1.08em; }
   @media (max-width:760px) {
-    #dayRulerProfileName .ph-direct-canonical-glyph { color:#111; }
   }
 
   /* Direct Sky Chart-matched heptagram renderer: core presentation, no post-processing. */
@@ -1517,9 +1474,68 @@
   .ph-calendar-nav button:hover,
   .ph-calendar-nav button:focus-visible,
   .ph-calendar-date-control input:focus-visible { outline:none; border-color:var(--relphi-red); box-shadow:0 0 0 3px rgba(220,31,24,.1); }
-  .ph-calendar-day-context { display:grid; grid-template-columns:minmax(220px,.75fr) minmax(0,1.25fr); gap:.9rem; align-items:stretch; margin:.9rem 0 1rem; }
+  .ph-calendar-day-context { display:grid; grid-template-columns:minmax(220px,.9fr) minmax(220px,.9fr) minmax(280px,1.2fr); gap:.9rem; align-items:stretch; margin:.9rem 0 1rem; }
+  .ph-calendar-day-ruler-context,
   .ph-calendar-moon-context,
   .ph-calendar-events-context { background:#fff; border:1px solid var(--relphi-line); border-radius:1rem; padding:.8rem; min-width:0; }
+  .ph-calendar-day-ruler-context .ph-day-ruler-profile-left {
+    position:static;
+    display:grid;
+    grid-template-columns:4.3rem minmax(0,1fr);
+    align-items:center;
+    width:100%;
+    max-width:none;
+    min-height:0;
+    margin:.15rem 0 .55rem;
+    padding:0;
+    overflow:visible;
+    border:0 !important;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none !important;
+  }
+  .ph-calendar-day-ruler-context .ph-day-ruler-profile-left img {
+    width:4.3rem;
+    height:4.3rem;
+    border:1px solid rgba(17,17,17,.1);
+    border-radius:.85rem;
+    object-fit:cover;
+    object-position:center 10%;
+    box-shadow:none;
+  }
+  .ph-calendar-day-ruler-context .ph-day-ruler-photo-label {
+    position:static;
+    inset:auto;
+    min-width:0;
+    padding:.15rem 0 .15rem .7rem;
+    border:0;
+    border-radius:0;
+    color:#111;
+    background:transparent;
+    box-shadow:none;
+    backdrop-filter:none;
+  }
+  .ph-calendar-day-ruler-context .ph-day-ruler-photo-label strong {
+    display:inline-flex;
+    align-items:center;
+    color:#111;
+    font-size:1rem;
+    line-height:1.2;
+  }
+  .ph-calendar-day-ruler-context #dayRulerProfileName .ph-direct-canonical-glyph {
+    width:1.35em;
+    height:1.35em;
+    margin:0 .28em 0 0;
+    transform:none;
+  }
+  .ph-calendar-day-ruler-context .ph-ruler-focus-line {
+    margin-top:.24rem;
+    color:#555;
+    font-size:.8rem;
+    line-height:1.35;
+    font-weight:700;
+  }
+  .ph-calendar-sun-frame { margin:.35rem 0 0; color:#514a44; font-size:.78rem; line-height:1.4; font-weight:700; }
   .ph-calendar-moon-context .ph-moon-wrap { justify-content:flex-start; }
   .ph-calendar-moon-context .ph-moon-disc { width:4.3rem; height:4.3rem; flex:0 0 auto; }
   .ph-calendar-moon-context .ph-moon-facts { min-width:0; }
@@ -1576,6 +1592,10 @@
   .ph-calendar-note-save { background:var(--relphi-red) !important; color:#fff !important; border-color:var(--relphi-red) !important; }
   .ph-wanderer-frame > h2 { margin-bottom:.2rem; }
   .ph-wanderer-frame .ph-wanderer-strip { margin-top:.25rem; border-top:0; padding-top:.25rem; }
+  @media (max-width:920px) {
+    .ph-calendar-day-context { grid-template-columns:1fr 1fr; }
+    .ph-calendar-events-context { grid-column:1 / -1; }
+  }
   @media (max-width:760px) {
     .ph-calendar-header { align-items:flex-start; }
     .ph-calendar-nav { width:100%; display:grid; grid-template-columns:42px minmax(0,1fr) auto 42px; }
@@ -1646,16 +1666,8 @@
 
   <section class="ph-panel" id="daySummary">
     <div class="ph-summary-grid ph-summary-grid-merged ph-summary-grid-consolidated">
-      <div class="ph-day-frame">
-        <h2>Day ruler and Sun frame</h2>
-        <div class="ph-calendar-date" id="dayCalendarDate">—</div>
-        <div class="ph-ruler-profile ph-day-ruler-profile-left" id="dayRulerProfile">
-          <img id="dayRulerPortrait" alt="" loading="lazy"/>
-          <div class="ph-day-ruler-photo-label"><span class="ph-profile-label">Day ruler</span><strong id="dayRulerProfileName">—</strong><span class="ph-ruler-focus-line" id="dayRulerFocus">—</span></div>
-        </div>
-        <div class="ph-day-line"><p class="ph-tiny" id="dayRulerMeta">—</p></div>
-        <p id="sunTimes">—</p>
-        <p class="ph-tiny" id="bridgeInfo">—</p>
+      <div class="ph-day-frame ph-current-sky-frame">
+        <h2>Current sky</h2>
         <a class="ph-current-wheel-card" id="phCurrentWheelCard" href="sky-chart.html#sky-calc" aria-label="Open this moment and location in Sky Chart"><h3>Current placements</h3><div id="phCurrentWheel"></div><span class="ph-current-wheel-jump">Jump to this moment in Sky Chart</span></a>
       </div>
       <div class="ph-hour-frame ph-hour-frame-merged ph-living-heptagram-frame">
@@ -1814,6 +1826,17 @@
     </div>
 
     <div class="ph-calendar-day-context">
+      <div class="ph-calendar-day-ruler-context" aria-label="Planetary day ruler and solar frame">
+        <p class="ph-calendar-context-label">Day ruler</p>
+        <div class="ph-ruler-profile ph-day-ruler-profile-left" id="dayRulerProfile">
+          <img id="dayRulerPortrait" alt="" loading="lazy"/>
+          <div class="ph-day-ruler-photo-label"><strong id="dayRulerProfileName">—</strong><span class="ph-ruler-focus-line" id="dayRulerFocus">—</span></div>
+        </div>
+        <p class="ph-calendar-sun-frame" id="sunTimes">—</p>
+        <div class="ph-day-line ph-sr-only"><p class="ph-tiny" id="dayRulerMeta">—</p></div>
+        <p class="ph-tiny ph-sr-only" id="bridgeInfo">—</p>
+        <div class="ph-sr-only" id="dayCalendarDate">—</div>
+      </div>
       <div class="ph-calendar-moon-context" aria-label="Moon condition for this calendar day">
         <div class="ph-moon-wrap">
           <div class="ph-moon-disc" id="moonDisc"></div>
