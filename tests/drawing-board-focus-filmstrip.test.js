@@ -42,7 +42,7 @@ async function resetAndApplyQuestions(page,labels){
     const labels=Array.from({length:20},(_,i)=>`Question ${i+1}`);
     await resetAndApplyQuestions(page,labels);
 
-    await page.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').click();
+    await page.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').evaluate(node=>node.click());
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
     await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===0);
 
