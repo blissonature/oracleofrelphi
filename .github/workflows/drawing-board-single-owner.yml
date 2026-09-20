@@ -11,6 +11,10 @@ on:
       - 'drawing-board.html'
       - 'navloader.js'
       - 'tarot-app.js'
+      - 'tarot.html'
+      - 'sky-chart.html'
+      - 'planetaryhours.html'
+      - 'style.css'
       - 'tests/drawing-board-*.js'
       - '.github/workflows/drawing-board-single-owner.yml'
 

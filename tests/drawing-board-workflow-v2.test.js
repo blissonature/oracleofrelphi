@@ -6,6 +6,10 @@ const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const board = read('drawing-board-workflow-v2.js');
 const app = read('tarot-app.js');
 const css = read('drawing-board-workflow-v2.css');
+const tarotPage = read('tarot.html');
+const skyPage = read('sky-chart.html');
+const hoursPage = read('planetaryhours.html');
+const sharedStyle = read('style.css');
 
 assert.match(board, /Native board state and rendering remain owned by tarot-app\.js/);
 assert.match(app, /function renderShortList\(/);
@@ -85,4 +89,18 @@ assert.match(css, /relphi-focus-reader/);
 assert.match(css, /card-row-workspace-toolbar:not\(\.relphi-board-controller\).*visibility:hidden!important/);
 assert.match(css, /relphi-board-export/);
 assert.match(css, /card-row-card \.or-card-art\.relphi-surface-face\{[^}]*aspect-ratio:500\/866!important/);
+
+assert.match(app, /const RELPHI_EXPORT_BRAND = Object\.freeze\(\{/);
+assert.match(app, /name:'Oracle of Relphi'/);
+assert.match(app, /designation:'an Oracle of Relphi tool'/);
+assert.match(app, /brand:\{\.\.\.RELPHI_EXPORT_BRAND\}/);
+assert.match(app, /<title>Drawing Board · Oracle of Relphi<\/title>/);
+assert.match(app, /Created with <strong>Oracle of Relphi<\/strong>/);
+assert.match(app, /Drawing Board · an Oracle of Relphi tool · oracleofrelphi\.com/);
+assert.equal((app.match(/drawRelphiExportBrand\(ctx,canvas,brandFooterH\)/g) || []).length,2,'both Drawing Board image exports must carry the Oracle of Relphi footer');
+for (const [name,source] of [['Tarot Ledger',tarotPage],['Sky Chart',skyPage],['Planetary Hours',hoursPage]]) {
+  assert.match(source, /<p class="relphi-tool-brandline">an Oracle of Relphi tool<\/p>/, name + ' must identify itself as an Oracle of Relphi tool');
+}
+assert.match(sharedStyle, /\.relphi-tool-brandline\s*\{/);
+
 console.log('Drawing Board workflow v2 checks passed.');

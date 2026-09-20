@@ -186,10 +186,27 @@ async function assertFocusReadingView(page) {
   await page.click('.relphi-focus-close');
   await page.waitForSelector('.relphi-focus-reader',{state:'detached'});
 
+  const textHtmlDownload=page.waitForEvent('download');
+  await page.click('#drawing-board-post-export #downloadRowTextHtml');
+  const textHtmlFile=await textHtmlDownload;
+  const textHtmlPath=await textHtmlFile.path();
+  const textHtml=fs.readFileSync(textHtmlPath,'utf8');
+  assert.match(textHtml,/Drawing Board · Oracle of Relphi/,'text HTML export should carry Oracle of Relphi document branding');
+  assert.match(textHtml,/an Oracle of Relphi tool/,'text HTML export should identify Drawing Board as an Oracle of Relphi tool');
+  assert.match(textHtml,/oracleofrelphi\.com/,'text HTML export should carry the Oracle of Relphi site address');
+
   const jsonDownload=page.waitForEvent('download');
   await page.click('#drawing-board-post-export #downloadRowJson');
   const jsonFile=await jsonDownload;
   assert.match(jsonFile.suggestedFilename(),/\.json$/i,'board-data export should still download');
+  const jsonPath=await jsonFile.path();
+  const json=JSON.parse(fs.readFileSync(jsonPath,'utf8'));
+  assert.deepEqual(json.brand,{
+    name:'Oracle of Relphi',
+    tool:'Drawing Board',
+    designation:'an Oracle of Relphi tool',
+    website:'https://oracleofrelphi.com/'
+  },'board-data export should preserve Oracle of Relphi provenance');
 
   // Reset leaves Options usable, including the last save-template control. Reset
   // intentionally re-renders the drawer, so query the replacement DOM only after
