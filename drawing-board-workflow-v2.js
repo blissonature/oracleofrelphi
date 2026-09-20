@@ -17,7 +17,7 @@
   const LABEL_H = 68;
   const GUTTER = 12;
   const MAX_POSITIONS = 50; // 10×5 dense packing stays above the supported .32 card scale.
-  const MAX_QUESTION_LENGTH = 240;
+  const MAX_QUESTION_LENGTH = 1000;
   const MIN_ZOOM = .45;
   const MAX_ZOOM = 2.4;
 

@@ -120,27 +120,37 @@ async function applyQuestions(page,labels){
 
     await resetBoard(page);
     const short='What matters here?';
-    const long='Is the apparent world governed by an intelligence that mistakes itself for ultimate reality and then generates a secondary ordering principle that preserves the illusion through memory and repetition and symbolic inheritance and the apparent continuity of individual experience?';
+    const long='Is the apparent world governed by an intelligence that mistakes itself for ultimate reality and then generates a secondary ordering principle that preserves the illusion through memory and repetition and symbolic inheritance and the apparent continuity of individual experience while also reproducing the conditions under which consciousness mistakes inherited structures for independent beings and mistakes patterned recurrence for evidence of an external governing agency and if so what part of that process is actually objective rather than projected or culturally transmitted?';
+    assert.ok(long.length>400,'long-question fixture must exceed every former 90 96 and 240 character clamp');
     await applyQuestions(page,[short,long]);
+
+    const storedQuestions=await page.evaluate(()=> {
+      const snap=window.RelphiDrawingBoardOptionsBridge.capture();
+      return {
+        labels:(snap.shortListPositionLabels||[]).slice(),
+        layout:(snap.rowActiveLayout?.positions||[]).slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder)).map(item=>String(item.label||''))
+      };
+    });
+    assert.equal(storedQuestions.labels[1],long,'applied Drawing Board state must retain the complete long question');
+    assert.equal(storedQuestions.layout[1],long,'active layout must retain the complete long question');
 
     await page.locator('.card-row-item[data-row-index="0"] .card-row-drop-card').click();
     await page.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
     await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
     await page.click('.relphi-focus-close');
 
-    const duplicate=await page.evaluate(({short,long})=>{
+    const duplicate=await page.evaluate(()=>{
       const bridge=window.RelphiDrawingBoardOptionsBridge;
       const snap=bridge.capture();
       const cardId=String(snap.shortList?.[0]||'');
       if(!cardId)return false;
       snap.shortList=[cardId,cardId];
-      snap.shortListPositionLabels=[short,long];
       snap.shortListPositionCardIds=['',''];
       snap.rowCardReversals={0:false,1:false};
       snap.rowAllowRepeats=true;
       bridge.restore(snap);
       return cardId;
-    },{short,long});
+    });
     assert.ok(duplicate,'fixture must draw one card before duplicating it');
     await page.waitForFunction(()=>document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===2);
     await page.waitForSelector('#drawing-board-reading-text:not([hidden])',{state:'visible'});
