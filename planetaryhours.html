@@ -1544,6 +1544,28 @@
   .ph-calendar-event { display:inline-flex; align-items:center; gap:.32rem; padding:.34rem .55rem; border:1px solid rgba(17,17,17,.12); border-radius:999px; background:#faf8f5; color:#302a25; font:750 .75rem/1.15 system-ui,sans-serif; white-space:nowrap; }
   .ph-calendar-event strong { color:var(--relphi-red-dark); font-weight:900; }
   .ph-calendar-note-summary { margin:.55rem 0 0; color:#655d56; font-size:.8rem; font-weight:700; }
+  .ph-calendar-alerts { margin-top:.6rem; border-top:1px solid rgba(17,17,17,.08); padding-top:.5rem; }
+  .ph-calendar-alerts > summary { display:flex; align-items:center; justify-content:space-between; gap:.5rem; cursor:pointer; color:#39332e; font:850 .78rem/1.2 system-ui,sans-serif; }
+  .ph-calendar-alert-count { display:inline-grid; place-items:center; min-width:1.65rem; min-height:1.65rem; border-radius:999px; background:#f5f1ec; color:#5d544d; font-size:.7rem; }
+  .ph-calendar-alert-body { display:grid; gap:.55rem; margin-top:.55rem; }
+  .ph-calendar-alert-list { display:grid; gap:.38rem; }
+  .ph-calendar-alert-empty { margin:0; color:#756c65; font-size:.76rem; }
+  .ph-calendar-alert-item { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.55rem; align-items:center; border:1px solid rgba(17,17,17,.09); border-radius:.7rem; background:#fff; padding:.48rem .55rem; }
+  .ph-calendar-alert-item strong { display:block; color:#2d2824; font-size:.78rem; }
+  .ph-calendar-alert-item small { display:block; margin-top:.18rem; color:#756c65; font-size:.69rem; line-height:1.35; }
+  .ph-calendar-alert-item button,
+  .ph-calendar-alert-add,
+  .ph-calendar-alert-notify-row button { appearance:none; border:1px solid rgba(17,17,17,.14); border-radius:999px; background:#fff; color:#332d28; min-height:34px; padding:.4rem .65rem; cursor:pointer; font:800 .7rem/1 system-ui,sans-serif; }
+  .ph-calendar-alert-add { align-self:end; background:var(--relphi-red) !important; border-color:var(--relphi-red) !important; color:#fff !important; }
+  .ph-calendar-alert-builder { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.45rem; align-items:end; }
+  .ph-calendar-alert-builder label { display:grid; gap:.2rem; min-width:0; }
+  .ph-calendar-alert-builder label > span { color:#655d56; font:800 .67rem/1.15 system-ui,sans-serif; }
+  .ph-calendar-alert-builder select,
+  .ph-calendar-alert-builder input { width:100%; min-width:0; box-sizing:border-box; min-height:36px; border:1px solid rgba(17,17,17,.15); border-radius:.55rem; background:#fff; color:#211d19; padding:.35rem .45rem; font:700 .76rem/1 system-ui,sans-serif; }
+  .ph-calendar-alert-notify-row { display:flex; gap:.45rem; align-items:center; flex-wrap:wrap; }
+  .ph-calendar-alert-builder .is-hidden { display:none; }
+  .ph-calendar-event.is-alert { border-color:rgba(220,31,24,.28); background:#fff3f0; }
+  @media (max-width:760px) { .ph-calendar-alert-builder { grid-template-columns:1fr 1fr; } .ph-calendar-alert-add { grid-column:1 / -1; } }
   .ph-calendar-timeline { position:relative; display:grid; gap:.48rem; }
   .ph-calendar-timeline::before { content:""; position:absolute; left:5.15rem; top:.7rem; bottom:.7rem; width:1px; background:rgba(17,17,17,.12); }
   .ph-calendar-hour { position:relative; display:grid; grid-template-columns:4.55rem minmax(0,1fr); gap:.72rem; min-width:0; scroll-margin-block:6rem; }
@@ -1849,6 +1871,39 @@
       <div class="ph-calendar-events-context">
         <p class="ph-calendar-context-label">Events in this planetary day</p>
         <div class="ph-calendar-event-lane" id="calendarEventLane" aria-live="polite"></div>
+        <details class="ph-calendar-alerts" id="calendarAlerts">
+          <summary><span>Alerts</span><span class="ph-calendar-alert-count" id="calendarAlertCount">0</span></summary>
+          <div class="ph-calendar-alert-body">
+            <div class="ph-calendar-alert-list" id="calendarAlertList"></div>
+            <div class="ph-calendar-alert-builder">
+              <label><span>Event</span><select id="calendarAlertType">
+                <option value="ingress">Ingress</option>
+                <option value="aspect">Exact aspect</option>
+                <option value="station">Station</option>
+                <option value="degree">Reaches degree</option>
+                <option value="rise">Rise</option>
+                <option value="set">Set</option>
+              </select></label>
+              <label><span>Body</span><select id="calendarAlertBody"></select></label>
+              <label class="ph-alert-target-body"><span>Other body</span><select id="calendarAlertTargetBody"></select></label>
+              <label class="ph-alert-aspect"><span>Aspect</span><select id="calendarAlertAspect">
+                <option value="0">Conjunction · 0°</option>
+                <option value="60">Sextile · 60°</option>
+                <option value="90">Square · 90°</option>
+                <option value="120">Trine · 120°</option>
+                <option value="180">Opposition · 180°</option>
+              </select></label>
+              <label class="ph-alert-sign"><span>Sign</span><select id="calendarAlertSign"></select></label>
+              <label class="ph-alert-degree"><span>Degree</span><input id="calendarAlertDegree" type="number" min="0" max="29" step="1" value="0"/></label>
+              <label class="ph-alert-minute"><span>Minute</span><input id="calendarAlertMinute" type="number" min="0" max="59" step="1" value="0"/></label>
+              <button class="ph-calendar-alert-add" id="calendarAlertAdd" type="button">Add alert</button>
+            </div>
+            <div class="ph-calendar-alert-notify-row">
+              <button id="calendarAlertNotifications" type="button">Enable browser notifications</button>
+              <span class="ph-tiny" id="calendarAlertStatus">Astronomy Engine calculates the next exact event.</span>
+            </div>
+          </div>
+        </details>
         <p class="ph-calendar-note-summary" id="calendarNoteSummary">No journal notes on this planetary day yet.</p>
       </div>
     </div>
@@ -1981,6 +2036,18 @@
     calendarNextDay: document.getElementById('calendarNextDay'),
     calendarToday: document.getElementById('calendarToday'),
     calendarEventLane: document.getElementById('calendarEventLane'),
+    calendarAlertCount: document.getElementById('calendarAlertCount'),
+    calendarAlertList: document.getElementById('calendarAlertList'),
+    calendarAlertType: document.getElementById('calendarAlertType'),
+    calendarAlertBody: document.getElementById('calendarAlertBody'),
+    calendarAlertTargetBody: document.getElementById('calendarAlertTargetBody'),
+    calendarAlertAspect: document.getElementById('calendarAlertAspect'),
+    calendarAlertSign: document.getElementById('calendarAlertSign'),
+    calendarAlertDegree: document.getElementById('calendarAlertDegree'),
+    calendarAlertMinute: document.getElementById('calendarAlertMinute'),
+    calendarAlertAdd: document.getElementById('calendarAlertAdd'),
+    calendarAlertNotifications: document.getElementById('calendarAlertNotifications'),
+    calendarAlertStatus: document.getElementById('calendarAlertStatus'),
     calendarNoteSummary: document.getElementById('calendarNoteSummary'),
     calendarTimeline: document.getElementById('planetaryDayTimeline'),
     skyQuery: document.getElementById('skyQuery'),
@@ -3113,6 +3180,221 @@
     }).toString() + '#sky-calc';
   }
 
+
+  const calendarAlertStorageKey = 'relphiPlanetaryCalendarAlertsV1';
+  const alertBodies = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
+
+  function loadCalendarAlerts() {
+    try {
+      const value = JSON.parse(localStorage.getItem(calendarAlertStorageKey) || '[]');
+      return Array.isArray(value) ? value : [];
+    } catch (error) { return []; }
+  }
+
+  function saveCalendarAlerts(alerts) {
+    try { localStorage.setItem(calendarAlertStorageKey, JSON.stringify(alerts || [])); } catch (error) {}
+  }
+
+  function phSignedAngle(value) {
+    const x = phNormDeg(Number(value) || 0);
+    return x >= 180 ? x - 360 : x;
+  }
+
+  function phAlertAstroDate(value) {
+    if (!value) return null;
+    if (value.date instanceof Date) return new Date(value.date);
+    const d = new Date(value.date || value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function phAlertBisect(fn, left, right, leftValue, rightValue) {
+    let a = new Date(left), b = new Date(right), fa = Number(leftValue), fb = Number(rightValue);
+    for (let i = 0; i < 48; i += 1) {
+      const mid = new Date((a.getTime() + b.getTime()) / 2);
+      const fm = Number(fn(mid));
+      if (!Number.isFinite(fm)) return null;
+      if (Math.abs(fm) < 1e-7 || (b.getTime() - a.getTime()) < 1000) return mid;
+      if ((fa <= 0 && fm >= 0) || (fa >= 0 && fm <= 0)) { b = mid; fb = fm; }
+      else { a = mid; fa = fm; }
+    }
+    return new Date((a.getTime() + b.getTime()) / 2);
+  }
+
+  function phAlertFindRoot(fn, startDate, horizonDays, stepHours, maxJump) {
+    const start = new Date(startDate.getTime() + 60000);
+    const endMs = start.getTime() + horizonDays * 86400000;
+    let a = start;
+    let fa = Number(fn(a));
+    const jump = Number.isFinite(maxJump) ? maxJump : 170;
+    for (let t = a.getTime() + stepHours * 3600000; t <= endMs; t += stepHours * 3600000) {
+      const b = new Date(t);
+      const fb = Number(fn(b));
+      if (Number.isFinite(fa) && Number.isFinite(fb)) {
+        if (Math.abs(fa) < 1e-5) return a;
+        if (((fa < 0 && fb > 0) || (fa > 0 && fb < 0) || fb === 0) && Math.abs(fb - fa) <= jump) {
+          return phAlertBisect(fn, a, b, fa, fb);
+        }
+      }
+      a = b;
+      fa = fb;
+    }
+    return null;
+  }
+
+  function phAlertLongitudeTarget(body, targetLongitude, startDate) {
+    const step = body === 'Moon' ? 3 : (['Mercury','Venus','Mars'].includes(body) ? 6 : 18);
+    const horizon = body === 'Moon' ? 40 : (['Mercury','Venus','Mars','Sun'].includes(body) ? 500 : 1600);
+    return phAlertFindRoot(function (date) {
+      return phSignedAngle(phAstronomyLongitude(body, date) - targetLongitude);
+    }, startDate, horizon, step, 90);
+  }
+
+  function phAlertAspect(bodyA, bodyB, aspect, startDate) {
+    const targets = aspect === 0 || aspect === 180 ? [aspect] : [aspect, -aspect];
+    const candidates = targets.map(function (target) {
+      return phAlertFindRoot(function (date) {
+        const difference = phSignedAngle(phAstronomyLongitude(bodyA, date) - phAstronomyLongitude(bodyB, date));
+        return phSignedAngle(difference - target);
+      }, startDate, 1600, (bodyA === 'Moon' || bodyB === 'Moon') ? 3 : 9, 90);
+    }).filter(Boolean);
+    candidates.sort(function (a,b) { return a - b; });
+    return candidates[0] || null;
+  }
+
+  function phAlertLongitudeSpeed(body, date) {
+    const deltaHours = body === 'Mercury' || body === 'Venus' ? 3 : 9;
+    const before = new Date(date.getTime() - deltaHours * 3600000);
+    const after = new Date(date.getTime() + deltaHours * 3600000);
+    return phSignedAngle(phAstronomyLongitude(body, after) - phAstronomyLongitude(body, before)) / ((2 * deltaHours) / 24);
+  }
+
+  function phAlertStation(body, startDate) {
+    if (body === 'Sun' || body === 'Moon') return null;
+    return phAlertFindRoot(function (date) { return phAlertLongitudeSpeed(body, date); }, startDate, 1600, 18, 5);
+  }
+
+  function phAlertNextOccurrence(rule, afterDate) {
+    if (!window.Astronomy) return null;
+    const start = new Date(afterDate || Date.now());
+    try {
+      if (rule.type === 'rise' || rule.type === 'set') {
+        const observer = new Astronomy.Observer(Number(state.lat), Number(state.lon), 0);
+        return phAlertAstroDate(Astronomy.SearchRiseSet(rule.body, observer, rule.type === 'rise' ? +1 : -1, start, 370));
+      }
+      if (rule.type === 'ingress') {
+        const signIndex = phSigns.indexOf(rule.sign);
+        if (signIndex < 0) return null;
+        return phAlertLongitudeTarget(rule.body, signIndex * 30, start);
+      }
+      if (rule.type === 'degree') {
+        const signIndex = phSigns.indexOf(rule.sign);
+        if (signIndex < 0) return null;
+        const target = signIndex * 30 + Math.max(0, Math.min(29, Number(rule.degree) || 0)) + Math.max(0, Math.min(59, Number(rule.minute) || 0)) / 60;
+        return phAlertLongitudeTarget(rule.body, target, start);
+      }
+      if (rule.type === 'aspect') return phAlertAspect(rule.body, rule.targetBody, Number(rule.aspect) || 0, start);
+      if (rule.type === 'station') return phAlertStation(rule.body, start);
+    } catch (error) {}
+    return null;
+  }
+
+  function phAlertRuleLabel(rule) {
+    if (rule.type === 'rise') return rule.body + ' rises';
+    if (rule.type === 'set') return rule.body + ' sets';
+    if (rule.type === 'station') return rule.body + ' stations';
+    if (rule.type === 'ingress') return rule.body + ' enters ' + rule.sign;
+    if (rule.type === 'degree') return rule.body + ' reaches ' + rule.sign + ' ' + Number(rule.degree || 0) + '°' + String(Number(rule.minute || 0)).padStart(2,'0') + '′';
+    if (rule.type === 'aspect') {
+      const names = {0:'conjunct',60:'sextile',90:'square',120:'trine',180:'opposite'};
+      return rule.body + ' ' + (names[Number(rule.aspect)] || (rule.aspect + '° from')) + ' ' + rule.targetBody;
+    }
+    return 'Astronomical alert';
+  }
+
+  function resolveCalendarAlerts() {
+    const now = new Date();
+    const alerts = loadCalendarAlerts();
+    let changed = false;
+    alerts.forEach(function (rule) {
+      const next = rule.nextAt ? new Date(rule.nextAt) : null;
+      if (!next || Number.isNaN(next.getTime()) || next <= new Date(now.getTime() - 60000)) {
+        const after = rule.nextAt ? new Date(new Date(rule.nextAt).getTime() + 60000) : now;
+        const found = phAlertNextOccurrence(rule, after);
+        rule.nextAt = found ? found.toISOString() : null;
+        changed = true;
+      }
+    });
+    if (changed) saveCalendarAlerts(alerts);
+    return alerts;
+  }
+
+  function renderCalendarAlerts() {
+    const alerts = resolveCalendarAlerts();
+    if (el.calendarAlertCount) el.calendarAlertCount.textContent = String(alerts.length);
+    if (!el.calendarAlertList) return alerts;
+    if (!alerts.length) {
+      el.calendarAlertList.innerHTML = '<p class="ph-calendar-alert-empty">No saved alerts yet.</p>';
+      return alerts;
+    }
+    el.calendarAlertList.innerHTML = alerts.map(function (rule) {
+      const when = rule.nextAt ? new Date(rule.nextAt) : null;
+      const whenText = when && !Number.isNaN(when.getTime())
+        ? when.toLocaleString(undefined,{timeZone:state.tz,weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})
+        : 'No occurrence found in the search window';
+      return '<div class="ph-calendar-alert-item"><div><strong>' + htmlText(phAlertRuleLabel(rule)) + '</strong><small>Next: ' + htmlText(whenText) + '</small></div><button type="button" data-calendar-alert-delete="' + htmlText(rule.id) + '" aria-label="Delete alert">×</button></div>';
+    }).join('');
+    return alerts;
+  }
+
+  function fireDueCalendarAlerts() {
+    const now = new Date();
+    const alerts = loadCalendarAlerts();
+    let changed = false;
+    alerts.forEach(function (rule) {
+      if (!rule.nextAt) return;
+      const due = new Date(rule.nextAt);
+      if (Number.isNaN(due.getTime()) || due > now) return;
+      if (rule.lastFiredAt === rule.nextAt) return;
+      const label = phAlertRuleLabel(rule);
+      rule.lastFiredAt = rule.nextAt;
+      rule.lastEventAt = rule.nextAt;
+      const next = phAlertNextOccurrence(rule, new Date(due.getTime() + 60000));
+      rule.nextAt = next ? next.toISOString() : null;
+      changed = true;
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try { new Notification('Relphi planetary alert', {body:label + ' · ' + fmtHM(due)}); } catch (error) {}
+      }
+    });
+    if (changed) saveCalendarAlerts(alerts);
+  }
+
+  function syncCalendarAlertBuilder() {
+    if (!el.calendarAlertType) return;
+    const type = el.calendarAlertType.value;
+    document.querySelectorAll('.ph-alert-target-body,.ph-alert-aspect,.ph-alert-sign,.ph-alert-degree,.ph-alert-minute').forEach(function (node) { node.classList.add('is-hidden'); });
+    if (type === 'aspect') {
+      document.querySelector('.ph-alert-target-body')?.classList.remove('is-hidden');
+      document.querySelector('.ph-alert-aspect')?.classList.remove('is-hidden');
+    }
+    if (type === 'ingress' || type === 'degree') document.querySelector('.ph-alert-sign')?.classList.remove('is-hidden');
+    if (type === 'degree') {
+      document.querySelector('.ph-alert-degree')?.classList.remove('is-hidden');
+      document.querySelector('.ph-alert-minute')?.classList.remove('is-hidden');
+    }
+  }
+
+  function populateCalendarAlertBuilder() {
+    const bodyOptions = alertBodies.map(function (body) { return '<option value="' + body + '">' + body + '</option>'; }).join('');
+    if (el.calendarAlertBody) { el.calendarAlertBody.innerHTML = bodyOptions; el.calendarAlertBody.value = 'Mars'; }
+    if (el.calendarAlertTargetBody) { el.calendarAlertTargetBody.innerHTML = bodyOptions; el.calendarAlertTargetBody.value = 'Moon'; }
+    if (el.calendarAlertSign) el.calendarAlertSign.innerHTML = phSigns.map(function (sign) { return '<option value="' + sign + '">' + sign + '</option>'; }).join('');
+    syncCalendarAlertBuilder();
+    renderCalendarAlerts();
+    if (el.calendarAlertStatus && 'Notification' in window) {
+      el.calendarAlertStatus.textContent = Notification.permission === 'granted' ? 'Browser notifications enabled.' : 'Astronomy Engine calculates the next exact event.';
+    }
+  }
+
   function renderCalendarEvents(frame) {
     if (!el.calendarEventLane) return;
     const events = [
@@ -3130,6 +3412,12 @@
         } catch (error) {}
       });
     }
+    const savedAlerts = renderCalendarAlerts();
+    savedAlerts.forEach(function (rule) {
+      if (!rule.nextAt) return;
+      const time = new Date(rule.nextAt);
+      if (!Number.isNaN(time.getTime()) && time >= frame.start && time <= frame.end) events.push({time:time,label:phAlertRuleLabel(rule),isAlert:true});
+    });
     const seen = new Set();
     const ordered = events.filter(function (event) {
       if (!event.time || Number.isNaN(new Date(event.time).getTime())) return false;
@@ -3140,7 +3428,7 @@
     }).sort(function (a,b) { return new Date(a.time) - new Date(b.time); });
     state.calendarEvents = ordered;
     el.calendarEventLane.innerHTML = ordered.map(function (event) {
-      return '<span class="ph-calendar-event"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + htmlText(event.label) + '</span>';
+      return '<span class="ph-calendar-event' + (event.isAlert ? ' is-alert' : '') + '"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + htmlText(event.label) + '</span>';
     }).join('');
   }
 
@@ -3461,6 +3749,7 @@
     if (el.prevDayCue) el.prevDayCue.textContent = '← Day';
     if (el.nextDayCue) el.nextDayCue.textContent = 'Day →';
     renderMoonFrame(frame.localNow, state.lat, state.lon);
+    fireDueCalendarAlerts();
     renderCalendarEvents(frame);
     renderWandererGrid(frame);
     phRenderCurrentWheel(Object.assign({}, frame, { localNow: skyMoment }));
@@ -3569,6 +3858,54 @@
     [el.prevHourCard, el.currentHourCard, el.nextHourCard, el.topHourJump].forEach(function (button) {
       if (!button) return;
       button.addEventListener('click', function () { if (button.dataset.hourJump) scrollToHour(Number(button.dataset.hourJump)); });
+    });
+
+    if (el.calendarAlertType) el.calendarAlertType.addEventListener('change', syncCalendarAlertBuilder);
+    if (el.calendarAlertAdd) el.calendarAlertAdd.addEventListener('click', function () {
+      const type = el.calendarAlertType.value;
+      const body = el.calendarAlertBody.value;
+      if (type === 'station' && (body === 'Sun' || body === 'Moon')) {
+        if (el.calendarAlertStatus) el.calendarAlertStatus.textContent = body + ' does not have a geocentric retrograde station.';
+        return;
+      }
+      const rule = {
+        id:'alert-' + Date.now() + '-' + Math.random().toString(36).slice(2,8),
+        type:type,
+        body:body,
+        targetBody:el.calendarAlertTargetBody ? el.calendarAlertTargetBody.value : 'Moon',
+        aspect:el.calendarAlertAspect ? Number(el.calendarAlertAspect.value) : 0,
+        sign:el.calendarAlertSign ? el.calendarAlertSign.value : 'Aries',
+        degree:el.calendarAlertDegree ? Math.max(0,Math.min(29,Number(el.calendarAlertDegree.value)||0)) : 0,
+        minute:el.calendarAlertMinute ? Math.max(0,Math.min(59,Number(el.calendarAlertMinute.value)||0)) : 0,
+        createdAt:new Date().toISOString(),
+        nextAt:null
+      };
+      if (rule.type === 'aspect' && rule.body === rule.targetBody) {
+        if (el.calendarAlertStatus) el.calendarAlertStatus.textContent = 'Choose two different bodies for an aspect alert.';
+        return;
+      }
+      const found = phAlertNextOccurrence(rule, new Date());
+      rule.nextAt = found ? found.toISOString() : null;
+      const alerts = loadCalendarAlerts();
+      alerts.push(rule);
+      saveCalendarAlerts(alerts);
+      if (el.calendarAlertStatus) el.calendarAlertStatus.textContent = found ? 'Alert saved for ' + found.toLocaleString(undefined,{timeZone:state.tz,month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) + '.' : 'Alert saved; no occurrence was found in the search window.';
+      rebuild();
+    });
+    if (el.calendarAlertList) el.calendarAlertList.addEventListener('click', function (event) {
+      const button = event.target.closest('[data-calendar-alert-delete]');
+      if (!button) return;
+      saveCalendarAlerts(loadCalendarAlerts().filter(function (rule) { return rule.id !== button.dataset.calendarAlertDelete; }));
+      rebuild();
+    });
+    if (el.calendarAlertNotifications) el.calendarAlertNotifications.addEventListener('click', function () {
+      if (!('Notification' in window)) {
+        if (el.calendarAlertStatus) el.calendarAlertStatus.textContent = 'Browser notifications are not available here; calendar alerts still remain active in Relphi.';
+        return;
+      }
+      Notification.requestPermission().then(function (permission) {
+        if (el.calendarAlertStatus) el.calendarAlertStatus.textContent = permission === 'granted' ? 'Browser notifications enabled.' : 'Calendar alerts remain active inside Relphi.';
+      });
     });
 
     if (el.calendarTimeline) {
@@ -3715,6 +4052,7 @@
     el.datePick.value = dateInputValueFor(now, state.tz);
     el.timePick.value = timeInputValueFor(now, state.tz);
     if (el.calendarDatePick) el.calendarDatePick.value = dateInputValueFor(now, state.tz);
+    populateCalendarAlertBuilder();
     bindEvents();
     tickLocalClock();
     setInterval(tickLocalClock, 15000);
