@@ -16,6 +16,7 @@
   const CARD_H = CARD_W * 866 / 500;
   const LABEL_H = 68;
   const GUTTER = 12;
+  const MAX_POSITIONS = 50; // 10×5 dense packing stays above the supported .32 card scale.
   const MIN_ZOOM = .45;
   const MAX_ZOOM = 2.4;
 
@@ -703,7 +704,7 @@
     return rows.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" ${index===0?'':'maxlength="90" '}value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
   }
   function parseBulkQuestions(value) {
-    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,40).map(item=>item.slice(0,90));
+    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,MAX_POSITIONS).map(item=>item.slice(0,90));
   }
   function markQuestionEditCustom(drawer,draft) {
     if (draft.templateId) draft.basedOnTemplateId=draft.templateId;
@@ -732,7 +733,7 @@
       ${hasCards ? '<p class="relphi-options-note">Reset Board before changing spread positions. Draw settings can still be changed.</p>' : ''}
       <div class="relphi-options-body">
         <div class="relphi-labels-section">
-          <div class="relphi-options-subhead"><strong>Questions / position labels</strong><button type="button" id="relphiAddPosition" ${hasCards?'disabled':''}>Add position</button></div>
+          <div class="relphi-options-subhead"><strong>Questions / position labels</strong><button type="button" id="relphiAddPosition" ${hasCards || draft.labels.length>=MAX_POSITIONS?'disabled':''}>Add position</button></div>
           <div id="relphiPositionLabels">${labelsMarkup(draft.labels)}</div>
         </div>
         <label class="relphi-options-field">Spread Template<select id="relphiSpreadTemplateSelect" ${hasCards?'disabled':''}>${optionTemplateMarkup(draft)}</select></label>
@@ -810,6 +811,7 @@
       renderOptions(root);
     });
     drawer.querySelector('#relphiAddPosition')?.addEventListener('click',()=>{
+      if (draft.labels.length>=MAX_POSITIONS) return;
       draft.labels.push(`Position ${draft.labels.length+1}`);
       markQuestionEditCustom(drawer,draft);
       renderOptions(root);
@@ -891,7 +893,7 @@
 
   function draftPrefab(draft) {
     const based=templateById(draft.templateId || draft.basedOnTemplateId);
-    const labels=draft.labels.map((value,index)=>String(value || `Position ${index+1}`).trim().slice(0,90));
+    const labels=draft.labels.slice(0,MAX_POSITIONS).map((value,index)=>String(value || `Position ${index+1}`).trim().slice(0,90));
     if (based && based.positions.length===labels.length) {
       const next=clone(based);
       next.positions.forEach((item,index)=>{item.label=labels[index]; item.drawOrder=index+1;});
