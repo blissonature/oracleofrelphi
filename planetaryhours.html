@@ -1544,8 +1544,14 @@
   .ph-calendar-hour-ruler .ph-direct-canonical-glyph { width:1.25em; height:1.25em; margin:0; }
   .ph-calendar-hour-meta { display:flex; align-items:center; gap:.35rem; flex-wrap:wrap; color:#615952; font:750 .72rem/1.2 system-ui,sans-serif; }
   .ph-calendar-hour-number { color:#655d56; }
-  .ph-calendar-hour-focus { margin:.42rem 0 .08rem; color:#39332e; font-size:.84rem; line-height:1.42; }
-  .ph-calendar-hour-focus b { color:var(--relphi-red-dark); }
+  .ph-calendar-hour-focus { margin:.4rem 0 .08rem; color:#39332e; font-size:.84rem; line-height:1.35; font-weight:800; }
+  .ph-calendar-hour-events { display:flex; gap:.32rem; flex-wrap:wrap; margin:.38rem 0 .05rem; }
+  .ph-calendar-hour-event { display:inline-flex; align-items:center; gap:.28rem; border:1px solid rgba(220,31,24,.18); border-radius:999px; background:#fff8f5; padding:.28rem .48rem; color:#51453f; font:800 .69rem/1.1 system-ui,sans-serif; }
+  .ph-calendar-hour-event strong { color:var(--relphi-red-dark); }
+  .ph-calendar-hour-reading { margin:.34rem 0 0; border-top:1px solid rgba(17,17,17,.08); padding-top:.34rem; }
+  .ph-calendar-hour-reading summary { width:max-content; max-width:100%; cursor:pointer; color:#665d55; font:800 .7rem/1.2 system-ui,sans-serif; }
+  .ph-calendar-hour-reading div { margin-top:.35rem; color:#514a44; font-size:.78rem; line-height:1.42; }
+  .ph-calendar-hour-reading b { color:var(--relphi-red-dark); }
   .ph-calendar-hour-actions { display:flex; align-items:center; gap:.38rem; flex-wrap:wrap; margin-top:.5rem; }
   .ph-calendar-hour-actions button,
   .ph-calendar-hour-actions a,
@@ -1869,7 +1875,7 @@
     saturn: 'https://commons.wikimedia.org/wiki/Special:FilePath/Chronos_MET_DP-932-001.jpg?width=640'
   };
   const browserTimeZone = (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
-  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h', calendarEditingHourKey: null, calendarDrafts: {} };
+  const state = { tz: browserTimeZone, lat: 51.4769, lon: -0.0005, useSystem: true, now: new Date(), locationName: 'Greenwich demo', moonOrientation: 'auto', skyBody: 'Saturn', skyHasRun: false, wandererExpandedBody: null, heptagramHourOverride: null, timeFormat: '12h', calendarEditingHourKey: null, calendarDrafts: {}, calendarEvents: [] };
   const locationPresets = [
     {name:'Greenwich, London, UK', lat:51.4769, lon:-0.0005, tz:'Europe/London'},
     {name:'Boston, Massachusetts, USA', lat:42.3601, lon:-71.0589, tz:'America/New_York'},
@@ -3100,6 +3106,7 @@
       seen.add(key);
       return true;
     }).sort(function (a,b) { return new Date(a.time) - new Date(b.time); });
+    state.calendarEvents = ordered;
     el.calendarEventLane.innerHTML = ordered.map(function (event) {
       return '<span class="ph-calendar-event"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + htmlText(event.label) + '</span>';
     }).join('');
@@ -3335,6 +3342,13 @@
         return '<article class="ph-calendar-note"><div><p>' + htmlText(note.text || '') + '</p><small>' + htmlText(stamp) + '</small></div><button class="ph-calendar-note-delete" type="button" data-calendar-note-delete="' + htmlText(note.id || '') + '" data-hour-key="' + htmlText(hourKey) + '" aria-label="Delete this note">×</button></article>';
       }).join('');
       const draft = state.calendarDrafts && state.calendarDrafts[hourKey] ? state.calendarDrafts[hourKey] : '';
+      const hourEvents = (state.calendarEvents || []).filter(function (event) {
+        const when = new Date(event.time).getTime();
+        return when >= r.start.getTime() && (when < r.end.getTime() || (r.index === 24 && when === r.end.getTime()));
+      });
+      const hourEventMarkup = hourEvents.map(function (event) {
+        return '<span class="ph-calendar-hour-event"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + htmlText(event.label) + '</span>';
+      }).join('');
       return '<article class="' + classes.join(' ') + '" id="ph-hour-row-' + r.index + '" data-hour-index="' + r.index + '" data-hour-key="' + htmlText(hourKey) + '">' +
         '<div class="ph-calendar-hour-time"><span>' + htmlText(fmtHM(r.start)) + '</span><span>' + htmlText(fmtHM(r.end)) + '</span></div>' +
         '<div class="ph-calendar-hour-card">' +
@@ -3342,7 +3356,9 @@
             '<div class="ph-calendar-hour-ruler">' + canonicalPlanetGlyphMarkup(r.ruler.key, r.ruler.name) + '<span>' + htmlText(r.ruler.name) + ' hour</span></div>' +
             '<div class="ph-calendar-hour-meta"><span class="ph-calendar-hour-number">Hour ' + r.index + '</span><span class="ph-badge ' + (r.isBright ? 'bright' : 'dark') + '">' + (r.isBright ? 'Bright' : 'Dark') + '</span></div>' +
           '</div>' +
-          '<div class="ph-calendar-hour-focus">' + fullContextStatement(byKey[dayKey], r, rows) + '</div>' +
+          (hourEventMarkup ? '<div class="ph-calendar-hour-events">' + hourEventMarkup + '</div>' : '') +
+          '<div class="ph-calendar-hour-focus">' + htmlText(contextFocus(byKey[dayKey], r.ruler)) + '</div>' +
+          '<details class="ph-calendar-hour-reading"><summary>Hour reading</summary><div>' + fullContextStatement(byKey[dayKey], r, rows) + '</div></details>' +
           (noteMarkup ? '<div class="ph-calendar-notes">' + noteMarkup + '</div>' : '') +
           '<div class="ph-calendar-hour-actions">' +
             '<button type="button" data-calendar-note-add="' + htmlText(hourKey) + '">' + (notes.length ? 'Add another note' : 'Add note') + '</button>' +
