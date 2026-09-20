@@ -149,17 +149,28 @@
     return c.map(normDeg);
   }
   function kochCusps(asc, mc, lst, lat, eps){
-    if (Math.abs(Number(lat)) >= 66.55) throw new Error('Koch can become undefined near polar latitudes.');
-    const ref = refPorphyry(asc, mc);
-    const adAsc = ascensionalDifference(asc, lat, eps);
-    if (adAsc === null) throw new Error('Koch is undefined for this latitude/time.');
+    const phi = Number(lat);
+    const obliquity = Number(eps);
+    if (Math.abs(phi) >= 90 - Math.abs(obliquity)) throw new Error('Koch can become undefined near polar latitudes.');
+
+    // Koch trisects the diurnal/nocturnal time arc of the Midheaven degree.
+    // ad3 is one third of that degree's ascensional difference at this latitude.
+    const cosLat = cosDeg(phi);
+    if (Math.abs(cosLat) < 1e-12) throw new Error('Koch is undefined for this latitude/time.');
+    const sinA = Math.max(-1, Math.min(1, sinDeg(mc) * sinDeg(obliquity) / cosLat));
+    const cosA = Math.sqrt(Math.max(0, 1 - sinA * sinA));
+    const cAngle = atan2Deg(tanDeg(phi), cosA);
+    const ad3 = asinDeg(sinDeg(cAngle) * sinA) / 3;
+
+    // ascFromLst(t, lat, eps) is the ecliptic intersection of the eastern horizon
+    // for local sidereal angle t. These four times are the Koch trisections.
+    const cuspAt = x => ascFromLst(x - 90, phi, obliquity);
     const c = Array(12).fill(null);
-    const lonForRa = (ra, refLon) => chooseCandidate([eclFromRa(ra, eps), normDeg(eclFromRa(ra, eps)+180)], refLon);
     c[0]=normDeg(asc); c[3]=normDeg(mc+180); c[6]=normDeg(asc+180); c[9]=normDeg(mc);
-    c[10]=lonForRa(lst + 30 + adAsc/3, ref[10]);
-    c[11]=lonForRa(lst + 60 + 2*adAsc/3, ref[11]);
-    c[1]=lonForRa(lst + 120 - 2*adAsc/3, ref[1]);
-    c[2]=lonForRa(lst + 150 - adAsc/3, ref[2]);
+    c[10]=cuspAt(lst + 30 - 2 * ad3);
+    c[11]=cuspAt(lst + 60 - ad3);
+    c[1]=cuspAt(lst + 120 + ad3);
+    c[2]=cuspAt(lst + 150 + 2 * ad3);
     c[4]=normDeg(c[10]+180); c[5]=normDeg(c[11]+180); c[7]=normDeg(c[1]+180); c[8]=normDeg(c[2]+180);
     return c.map(normDeg);
   }
