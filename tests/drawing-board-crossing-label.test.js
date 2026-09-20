@@ -15,8 +15,11 @@ fs.mkdirSync(out,{recursive:true});
     await page.goto('http://127.0.0.1:8000/drawing-board.html',{waitUntil:'domcontentloaded',timeout:30000});
     const frame=page.frames().find(candidate=>candidate!==page.mainFrame());
     assert.ok(frame,'standalone Drawing Board iframe must load');
-    await frame.waitForSelector('#shortListPanel',{state:'visible',timeout:20000});
-    await frame.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#drawingBoardOptionsButton'),null,{timeout:20000});
+    await frame.waitForFunction(()=>!!window.RelphiDrawingBoardOptionsBridge && !!document.querySelector('#drawingBoardOptionsButton') && !!document.querySelector('#relphiOpenDrawingBoardCurrent'),null,{timeout:20000});
+    const panel=frame.locator('#shortListPanel');
+    if(!(await panel.isVisible())) await frame.click('#relphiOpenDrawingBoardCurrent');
+    await panel.waitFor({state:'visible',timeout:10000});
+    await frame.waitForSelector('#shortListPanel #drawingBoardOptionsButton',{state:'visible',timeout:10000});
 
     await frame.click('#drawingBoardOptionsButton');
     await frame.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open #relphiSpreadTemplateSelect',{state:'visible',timeout:10000});
