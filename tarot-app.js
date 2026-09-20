@@ -1188,20 +1188,34 @@
   const RELPHI_EXPORT_BRAND = Object.freeze({
     name:'Oracle of Relphi',
     tool:'Drawing Board',
-    designation:'an Oracle of Relphi tool',
+    logo:'logo.png',
     website:'https://oracleofrelphi.com/'
   });
-  function drawRelphiExportBrand(ctx, canvas, height = 38) {
-    const h=Math.max(30,Number(height)||38);
+  function drawRelphiExportBrand(ctx, canvas, height = 54, logoImage = null) {
+    const h=Math.max(46,Number(height)||54);
     const y=canvas.height-h;
+    const pad=12;
+    const logoSize=Math.min(34,h-16);
     ctx.save();
-    ctx.fillStyle='#111';
+    ctx.fillStyle='#fffdf9';
     ctx.fillRect(0,y,canvas.width,h);
-    ctx.fillStyle='#fff';
-    ctx.textAlign='center';
+    ctx.strokeStyle='rgba(17,17,17,.18)';
+    ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,y+.5); ctx.lineTo(canvas.width,y+.5); ctx.stroke();
+    if (logoImage) ctx.drawImage(logoImage,pad,y+(h-logoSize)/2,logoSize,logoSize);
+    const textX=pad+(logoImage ? logoSize+10 : 0);
+    ctx.textAlign='left';
     ctx.textBaseline='middle';
-    ctx.font='800 12px Montserrat, Arial, sans-serif';
-    ctx.fillText('Drawing Board · an Oracle of Relphi tool · oracleofrelphi.com',canvas.width/2,y+h/2);
+    ctx.font='800 13px Montserrat, Arial, sans-serif';
+    ctx.fillStyle='#111';
+    const prefix='Oracle of ';
+    ctx.fillText(prefix,textX,y+h/2-7);
+    const prefixW=ctx.measureText(prefix).width;
+    ctx.fillStyle='#dc1f18';
+    ctx.fillText('Relphi',textX+prefixW,y+h/2-7);
+    ctx.fillStyle='#5f5751';
+    ctx.font='700 10px Montserrat, Arial, sans-serif';
+    ctx.fillText('Drawing Board · oracleofrelphi.com',textX,y+h/2+10);
     ctx.restore();
   }
 
@@ -1299,6 +1313,7 @@
     if (!data.cards.length) return;
     const cardsForExport = shortListCards('active');
     const imageSources = includeArt ? await Promise.all(cardsForExport.map(card => imageDataUrlForExport(rwsExportImagePath(card)))) : [];
+    const brandLogoSource = await imageDataUrlForExport(RELPHI_EXPORT_BRAND.logo);
     const createdAt = new Date();
     const createdLabel = localTimestampLabel(createdAt);
     const createdSlug = localTimestampSlug(createdAt);
@@ -1307,9 +1322,9 @@
     const associationLine = c => c.association ? `<p class="relphi-association">${escapeHtml(c.association)}</p>` : '';
     const interpretationLine = c => `<p class="relphi-definition">${escapeHtml(c.interpretation || '')}</p>`;
     const cardsHtml = data.cards.map((c, i) => `<article class="export-card${c.reversed ? ' is-reversed' : ''}${includeArt ? '' : ' export-card-text-only'}"><div class="export-position${positionClass(c.position)}"><strong>${escapeHtml(c.position || ('Position ' + (i + 1)))}</strong></div>${includeArt ? `<img class="export-card-art${c.reversed ? ' is-reversed' : ''}" src="${imageSources[i] || ''}" alt="${escapeHtml(c.title)} card art${c.reversed ? ', reversed' : ''}">` : ''}<h2>${titleLine(c)}</h2>${associationLine(c)}${interpretationLine(c)}</article>`).join('');
-    const style = `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&display=swap');body{font-family:'Montserrat',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:${includeArt ? '1120' : '860'}px;margin:40px auto;line-height:1.52;background:#fffaf0;color:#111;padding:0 1rem}.brand-header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;border-bottom:2px solid #111;padding-bottom:.7rem;margin-bottom:1rem}.brand-header h1{margin:0;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:.04em}.brand-lockup{text-align:right}.brand-name{font-size:.92rem;font-weight:800}.brand-designation{font-size:.72rem;color:#6a2424;font-weight:700}.brand-footer{margin:2rem 0 .5rem;padding-top:.8rem;border-top:1px solid rgba(17,17,17,.24);font-size:.76rem;color:#5f5751}.brand-footer a{color:inherit}.meta{border:1px solid rgba(220,31,24,.45);border-radius:18px;padding:1rem;margin:1rem 0;background:#fffdf8}.stamp{font-size:.9rem;color:#666}.card-grid{display:grid;grid-template-columns:${includeArt ? 'repeat(auto-fill,minmax(180px,205px))' : '1fr'};justify-content:start;align-items:start;gap:1.1rem;margin:1.2rem 0}.export-card{border:1px solid rgba(17,17,17,.82);border-radius:14px;padding:.8rem;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.07);max-width:${includeArt ? '205px' : 'none'}}.export-card-text-only{max-width:none}.export-card.is-reversed{border-width:2px}.export-position{font-weight:800;margin-bottom:.55rem;border:1px solid rgba(17,17,17,.22);border-radius:10px;background:#fffaf0;padding:.42rem .55rem;min-height:2.4rem;display:grid;place-items:center;text-align:center;box-sizing:border-box;line-height:1.15}.export-position.is-md{font-size:.82rem}.export-position.is-sm{font-size:.72rem}.export-position.is-xs{font-size:.62rem;line-height:1.02}.export-card img{display:block;width:100%;max-width:172px;max-height:295px;margin:0 auto;border-radius:10px;border:1px solid #222;object-fit:contain}.export-card img.is-reversed{transform:rotate(180deg)}.export-card h2{font-size:1.05rem;margin:.6rem 0 .3rem;text-transform:capitalize}.export-card p{font-size:.95rem}.relphi-association{margin:.35rem 0;color:#5f5751;font-size:.82rem!important;font-weight:700}.relphi-definition{margin:.55rem 0 0}`;
+    const style = `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&display=swap');body{font-family:'Montserrat',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:${includeArt ? '1120' : '860'}px;margin:40px auto;line-height:1.52;background:#fffaf0;color:#111;padding:0 1rem}.brand-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;border-bottom:1px solid rgba(17,17,17,.18);padding-bottom:.8rem;margin-bottom:1rem}.brand-header h1{margin:0;font-family:'Montserrat',system-ui,sans-serif;letter-spacing:.04em}.brand-lockup{display:flex;align-items:center;gap:.65rem;text-align:left}.brand-logo{display:block;width:46px;height:46px;object-fit:contain}.brand-wordmark{font-size:.92rem;font-weight:800;line-height:1.1}.brand-wordmark span{color:#dc1f18}.brand-tool{margin-top:.18rem;color:#5f5751;font-size:.7rem;font-weight:700}.brand-footer{display:flex;align-items:center;gap:.5rem;margin:2rem 0 .5rem;padding-top:.8rem;border-top:1px solid rgba(17,17,17,.24);font-size:.76rem;color:#5f5751}.brand-footer img{width:24px;height:24px;object-fit:contain}.brand-footer a{color:inherit}.meta{border:1px solid rgba(220,31,24,.45);border-radius:18px;padding:1rem;margin:1rem 0;background:#fffdf8}.stamp{font-size:.9rem;color:#666}.card-grid{display:grid;grid-template-columns:${includeArt ? 'repeat(auto-fill,minmax(180px,205px))' : '1fr'};justify-content:start;align-items:start;gap:1.1rem;margin:1.2rem 0}.export-card{border:1px solid rgba(17,17,17,.82);border-radius:14px;padding:.8rem;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.07);max-width:${includeArt ? '205px' : 'none'}}.export-card-text-only{max-width:none}.export-card.is-reversed{border-width:2px}.export-position{font-weight:800;margin-bottom:.55rem;border:1px solid rgba(17,17,17,.22);border-radius:10px;background:#fffaf0;padding:.42rem .55rem;min-height:2.4rem;display:grid;place-items:center;text-align:center;box-sizing:border-box;line-height:1.15}.export-position.is-md{font-size:.82rem}.export-position.is-sm{font-size:.72rem}.export-position.is-xs{font-size:.62rem;line-height:1.02}.export-card img{display:block;width:100%;max-width:172px;max-height:295px;margin:0 auto;border-radius:10px;border:1px solid #222;object-fit:contain}.export-card img.is-reversed{transform:rotate(180deg)}.export-card h2{font-size:1.05rem;margin:.6rem 0 .3rem;text-transform:capitalize}.export-card p{font-size:.95rem}.relphi-association{margin:.35rem 0;color:#5f5751;font-size:.82rem!important;font-weight:700}.relphi-definition{margin:.55rem 0 0}`;
     const fileSuffix = includeArt ? 'with-art' : 'text-only';
-    download(`drawing-board-${fileSuffix}-${createdSlug}.html`, `<!doctype html><html><head><meta charset="utf-8"><title>Drawing Board · Oracle of Relphi</title><style>${style}</style></head><body><header class="brand-header"><h1>Drawing Board</h1><div class="brand-lockup"><div class="brand-name">Oracle of Relphi</div><div class="brand-designation">an Oracle of Relphi tool</div></div></header><div class="meta">${data.name ? `<p><strong>${escapeHtml(data.name)}</strong></p>` : ''}<p>${escapeHtml(data.scope)} · ${data.count} cards</p><p class="stamp">Created ${escapeHtml(createdLabel)}</p>${data.notes ? `<p><strong>Notes:</strong> ${escapeHtml(data.notes)}</p>` : ''}</div><section class="card-grid">${cardsHtml}</section><footer class="brand-footer">Created with <strong>Oracle of Relphi</strong> · <a href="https://oracleofrelphi.com/">oracleofrelphi.com</a></footer></body></html>`, 'text/html');
+    download(`drawing-board-${fileSuffix}-${createdSlug}.html`, `<!doctype html><html><head><meta charset="utf-8"><title>Drawing Board · Oracle of Relphi</title><style>${style}</style></head><body><header class="brand-header"><h1>Drawing Board</h1><div class="brand-lockup"><img class="brand-logo" src="${brandLogoSource}" alt="Oracle of Relphi logo"><div><div class="brand-wordmark">Oracle of <span>Relphi</span></div><div class="brand-tool">Drawing Board</div></div></div></header><div class="meta">${data.name ? `<p><strong>${escapeHtml(data.name)}</strong></p>` : ''}<p>${escapeHtml(data.scope)} · ${data.count} cards</p><p class="stamp">Created ${escapeHtml(createdLabel)}</p>${data.notes ? `<p><strong>Notes:</strong> ${escapeHtml(data.notes)}</p>` : ''}</div><section class="card-grid">${cardsHtml}</section><footer class="brand-footer"><img src="${brandLogoSource}" alt=""><span><strong>Oracle of Relphi</strong> · <a href="https://oracleofrelphi.com/">oracleofrelphi.com</a></span></footer></body></html>`, 'text/html');
   }
 
   function downloadShortListJson() {
@@ -1400,7 +1415,7 @@
     const topPad = includeStats ? 128 : 28;
     const groupW = cardW + groupPad * 2;
     const groupH = groupPad + positionH + panelGap + nameH + panelGap + cardH + groupPad;
-    const brandFooterH = 38;
+    const brandFooterH = 54;
     const canvas = document.createElement('canvas');
     canvas.width = cols * groupW + (cols + 1) * gap;
     canvas.height = topPad + rows * groupH + (rows + 1) * gap + brandFooterH;
@@ -1417,7 +1432,10 @@
       ctx.fillText(`Elements: ${stats.elements}   Planets: ${stats.planets}`, gap, 80);
       ctx.fillText(`Suits: ${stats.suits}   Signs: ${stats.signs}`, gap, 100);
     }
-    const images = await Promise.all(items.map(card => loadImage(rwsExportImagePath(card)).catch(() => null)));
+    const [brandLogoImage, images] = await Promise.all([
+      loadImage(RELPHI_EXPORT_BRAND.logo).catch(() => null),
+      Promise.all(items.map(card => loadImage(rwsExportImagePath(card)).catch(() => null)))
+    ]);
     items.forEach((card, i) => {
       const r = Math.floor(i / cols), c = i % cols;
       const gx = gap + c * (groupW + gap), gy = topPad + gap + r * groupH;
@@ -1455,7 +1473,7 @@
         title(card).split(' ').forEach((word, line) => ctx.fillText(word, x + 18, artY + 36 + line * 22));
       }
     });
-    drawRelphiExportBrand(ctx,canvas,brandFooterH);
+    drawRelphiExportBrand(ctx,canvas,brandFooterH,brandLogoImage);
     const finish = blob => {
       const stamp = localTimestampSlug(createdAt);
       const filename = `drawing-board-${stamp}.${type === 'image/jpeg' ? 'jpg' : 'png'}`;
@@ -1487,7 +1505,7 @@
     const margin = 36;
     const headerH = state.shortListNotes ? 118 : 82;
     const scale = 1.08;
-    const brandFooterH = 38;
+    const brandFooterH = 54;
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil((maxX - minX) * scale + margin * 2);
     canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH + brandFooterH);
@@ -1518,11 +1536,14 @@
       const w = tableImage.width * s, h = tableImage.height * s;
       ctx.drawImage(tableImage, bgX + (bgW - w) / 2, bgY + (bgH - h) / 2, w, h);
     }
-    const images = await Promise.all(Array.from({ length: slots }, (_, i) => {
-      const card = cards[i];
-      const envelopeArt = rowEnvelopeArtFor(i);
-      return card ? loadImage(rwsExportImagePath(card)).catch(() => null) : envelopeArt ? loadImage(envelopeArt).catch(() => null) : Promise.resolve(null);
-    }));
+    const [brandLogoImage, images] = await Promise.all([
+      loadImage(RELPHI_EXPORT_BRAND.logo).catch(() => null),
+      Promise.all(Array.from({ length: slots }, (_, i) => {
+        const card = cards[i];
+        const envelopeArt = rowEnvelopeArtFor(i);
+        return card ? loadImage(rwsExportImagePath(card)).catch(() => null) : envelopeArt ? loadImage(envelopeArt).catch(() => null) : Promise.resolve(null);
+      }))
+    ]);
     const groupW = CARD_ROW_ENVELOPE_W * scale;
     const positionH = 54 * scale;
     const gap = 10 * scale;
@@ -1589,7 +1610,7 @@
       }
       ctx.restore();
     });
-    drawRelphiExportBrand(ctx,canvas,brandFooterH);
+    drawRelphiExportBrand(ctx,canvas,brandFooterH,brandLogoImage);
     const finish = blob => {
       const filename = `drawing-board-arrangement-${localTimestampSlug(createdAt)}.png`;
       if (!blob) {
