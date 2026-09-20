@@ -6,6 +6,8 @@
   const CUSTOM_KEY = 'relphiDrawingBoardSpreadPrefabsV2';
   const LEGACY_KEY = 'relphiDrawingBoardStickerPrefabsV1';
   const MAX_CUSTOM = 40;
+  const MAX_POSITIONS = 50;
+  const MAX_QUESTION_LENGTH = 1000;
   const RETIRED_PREFAB_IDS = new Set(['celtic-cross-11']);
   let selectedId = '';
   let enhancing = false;
@@ -202,15 +204,15 @@
   }
   function sanitizeCustom(prefab) {
     if (!prefab || !Array.isArray(prefab.positions) || !prefab.positions.length) return null;
-    const positions = prefab.positions.slice(0, 40).map((item, index) => ({
+    const positions = prefab.positions.slice(0, MAX_POSITIONS).map((item, index) => ({
       id:String(item.id || 'position-' + (index + 1)).slice(0, 80),
-      label:String(item.label || 'Position ' + (index + 1)).slice(0, 90),
+      label:String(item.label || 'Position ' + (index + 1)).slice(0, MAX_QUESTION_LENGTH),
       drawOrder:index + 1,
       transform:{
         x:Math.max(0, Math.min(1, Number(item.transform?.x) || 0)),
         y:Math.max(0, Math.min(1, Number(item.transform?.y) || 0)),
         rotation:Math.max(-180, Math.min(180, Number(item.transform?.rotation) || 0)),
-        scale:Math.max(.45, Math.min(2.5, Number(item.transform?.scale) || 1)),
+        scale:Math.max(.32, Math.min(2.5, Number(item.transform?.scale) || 1)),
         zIndex:Math.max(0, Math.min(100, Number(item.transform?.zIndex) || 1))
       },
       ...(item.role ? { role:String(item.role) } : {}),
@@ -241,13 +243,13 @@
     if (!Array.isArray(legacy) || !legacy.length) return;
     const converted = legacy.flatMap(item => {
       if (!item?.name || !Array.isArray(item.labels) || !item.labels.length) return [];
-      const count = Math.min(40, item.labels.length);
+      const count = Math.min(MAX_POSITIONS, item.labels.length);
       const cols = Math.min(3, count);
       const rows = Math.ceil(count / cols);
       return [sanitizeCustom({
         id:uniqueId(item.name),
         name:item.name,
-        positions:item.labels.slice(0, 40).map((label, index) => position(
+        positions:item.labels.slice(0, MAX_POSITIONS).map((label, index) => position(
           'position-' + (index + 1),
           label,
           index + 1,
