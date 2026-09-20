@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=88/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=89/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -29,6 +29,8 @@ assert.doesNotMatch(nav, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-
 });
 
 assert.match(app, /rowEnvelopeLayout:/);
+assert.match(app, /const DRAWING_BOARD_QUESTION_MAX = 1000;/);
+assert.doesNotMatch(app, /shortListPositionLabels[^\n]{0,180}slice\(0,\s*(?:90|96)\)/);
 assert.match(app, /rowCardTransforms:/);
 assert.match(app, /function rowCardTransform\(index\)[\s\S]{0,180}Math\.max\(\.32,/);
 assert.match(app, /function normalizedPrefabTransform\(value = \{\}\)[\s\S]{0,260}scale: Math\.max\(\.32,/);
