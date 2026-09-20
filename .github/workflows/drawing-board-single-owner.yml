@@ -8,6 +8,7 @@ on:
     paths:
       - 'drawing-board-workflow-v2.js'
       - 'drawing-board-workflow-v2.css'
+      - 'drawing-board.html'
       - 'navloader.js'
       - 'tarot-app.js'
       - 'tests/drawing-board-*.js'
@@ -33,6 +34,7 @@ jobs:
           node --check tests/drawing-board-alignment.test.js
           node --check tests/drawing-board-bulk-questions.test.js
           node --check tests/drawing-board-clear-cards.test.js
+          node --check tests/drawing-board-crossing-label.test.js
       - name: Run static Drawing Board contracts
         run: |
           node tests/drawing-board-single-owner.test.js
@@ -49,6 +51,7 @@ jobs:
           python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/relphi-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
+          node tests/drawing-board-crossing-label.test.js
           node tests/drawing-board-clear-cards.test.js
           node tests/drawing-board-runtime.test.js
           node tests/drawing-board-iphone-regressions.test.js
