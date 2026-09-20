@@ -82,6 +82,16 @@
   height:14px;
   min-width:14px;
 }
+/* The controller renders only the active scope columns. Keep single-sky rows and
+   their header on the same two-column scope grid instead of reserving an empty B slot. */
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-header,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-item{
+  grid-template-columns:minmax(0,1fr) 68px;
+}
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-header-choices,
+html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-choices{
+  grid-template-columns:repeat(2,34px);
+}
 @media(max-width:410px){
   .sky-chart-placement-filter-popover{
     width:min(330px,calc(100vw - 16px))!important;
@@ -93,6 +103,14 @@
   .sky-chart-placement-list-header-choices,
   .sky-chart-placement-list-choices{
     grid-template-columns:repeat(3,32px);
+  }
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-header,
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-item{
+    grid-template-columns:minmax(0,1fr) 64px;
+  }
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-header-choices,
+  html[data-sky-b-present="false"]:not([data-sky-b-editing="true"]) .sky-chart-placement-list-choices{
+    grid-template-columns:repeat(2,32px);
   }
   .sky-chart-placement-list-item .sky-chart-placement-choice{
     width:32px;
