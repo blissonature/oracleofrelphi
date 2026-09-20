@@ -44,14 +44,16 @@ fs.mkdirSync(out,{recursive:true});
 
     assert.ok(geometry,'crossing label geometry must be measurable');
     assert.match(geometry.labelText,/crosses/i);
-    assert.ok(geometry.label.left>=geometry.face.right+1,'What crosses you should sit to the right of the horizontal crossing card: '+JSON.stringify(geometry));
-    assert.ok(geometry.label.right<=geometry.before.left-1,'What crosses you must stay inside the clear corridor before What is before you: '+JSON.stringify(geometry));
-    assert.ok(Math.abs(geometry.label.cy-geometry.face.cy)<=3,'crossing label should be vertically centered on the horizontal card: '+JSON.stringify(geometry));
-    assert.ok(geometry.label.top>=geometry.coverLabel.bottom+1 || geometry.label.left>=geometry.coverLabel.right+1,'covering and crossing labels must not stack on the same central axis: '+JSON.stringify(geometry));
+    assert.ok(geometry.label.bottom<=geometry.face.top+3,'What crosses you should sit immediately above the horizontal crossing card: '+JSON.stringify(geometry));
+    assert.ok(geometry.label.left>=geometry.face.cx,'What crosses you should occupy the right half of the crossing card instead of the center axis: '+JSON.stringify(geometry));
+    assert.ok(geometry.label.right<=geometry.face.right+3,'crossing label should stay over the horizontal card footprint: '+JSON.stringify(geometry));
+    assert.ok(geometry.label.top>=geometry.coverLabel.bottom-1,'covering and crossing labels must not overlap vertically: '+JSON.stringify(geometry));
+    assert.ok(geometry.label.cx>=geometry.coverLabel.cx+geometry.face.width*.18,'crossing label must be visibly offset from the covering label: '+JSON.stringify(geometry));
+    assert.ok(geometry.label.right<=geometry.before.left-1,'crossing label must not intrude into What is before you: '+JSON.stringify(geometry));
     assert.deepEqual(errors,[]);
 
     await page.screenshot({path:path.join(out,'drawing-board-crossing-label.png'),fullPage:true});
-    console.log('Drawing Board crossing label sits beside the horizontal card.');
+    console.log('Drawing Board crossing label is offset above the right end of the horizontal card.');
   }finally{
     await browser.close();
   }
