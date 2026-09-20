@@ -81,6 +81,36 @@ async function applyQuestions(page,labels){
     assert.deepEqual(denseAudit.overlaps,[],'automatic 40-position layout must not overlap card/label envelopes');
     assert.ok(denseAudit.zoom>=.45,'dense layout should remain within supported board zoom');
 
+    await page.evaluate(()=>{
+      const bridge=window.RelphiDrawingBoardOptionsBridge;
+      const snap=bridge.capture();
+      const positions=snap.rowActiveLayout.positions.slice().sort((a,b)=>Number(a.drawOrder)-Number(b.drawOrder));
+      const rows=Math.ceil(positions.length/4);
+      const xs=[.015,.25,.485,.72];
+      const ys=Array.from({length:rows},(_,i)=>.015+i*(.93/Math.max(1,rows-1)));
+      positions.forEach((item,index)=>{
+        item.transform={x:xs[index%4],y:ys[Math.floor(index/4)],scale:.52,rotation:0,zIndex:1};
+        snap.rowEnvelopeLayout[index]={x:item.transform.x*900,y:item.transform.y*760};
+        snap.rowCardTransforms[index]={scale:.52,rotation:0,zIndex:1};
+      });
+      snap.rowActiveLayout.positions=positions;
+      bridge.restore(snap);
+    });
+    await page.waitForFunction(()=>{
+      const snap=window.RelphiDrawingBoardOptionsBridge?.capture?.();
+      const xs=new Set(Object.values(snap?.rowEnvelopeLayout||{}).map(point=>Math.round(Number(point.x))));
+      return xs.size>=8;
+    },null,{timeout:5000});
+    const migrated=await page.evaluate(()=>{
+      const snap=window.RelphiDrawingBoardOptionsBridge.capture();
+      return {
+        columns:new Set(Object.values(snap.rowEnvelopeLayout||{}).map(point=>Math.round(Number(point.x)))).size,
+        activeId:snap.rowActiveLayout?.id||''
+      };
+    });
+    assert.ok(migrated.columns>=8,'legacy locked four-column custom readings should migrate to the dense pack in place');
+    assert.equal(migrated.activeId,'custom-active','dense migration must preserve the active reading identity');
+
     await resetBoard(page);
     const short='What matters here?';
     const long='Is the apparent world governed by an intelligence that mistakes itself for ultimate reality?';
