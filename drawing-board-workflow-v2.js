@@ -14,7 +14,7 @@
   const CANVAS_H = 760;
   const CARD_W = 174;
   const CARD_H = CARD_W * 866 / 500;
-  const LABEL_H = 38;
+  const LABEL_H = 68;
   const GUTTER = 12;
   const MIN_ZOOM = .45;
   const MAX_ZOOM = 2.4;
