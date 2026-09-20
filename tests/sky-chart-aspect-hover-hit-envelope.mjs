@@ -118,12 +118,25 @@ try{
   assert.ok(probe,'fixture should provide an aspect segment with an off-line hover probe');
   assert.ok(probe.clearance>12,`the chosen aspect must still be the nearest line at the 12px off-line probe; clearance=${probe.clearance}`);
 
+  const targetBefore=await page.evaluate(({x,y})=>{
+    const node=document.elementFromPoint(x,y);
+    return node?{tag:node.tagName,className:String(node.getAttribute('class')||''),interactive:String(node.dataset?.interactive||''),relationIndex:String(node.dataset?.relationIndex||'')}:null;
+  },probe.acquire);
   await page.mouse.move(probe.acquire.x,probe.acquire.y);
-  await page.waitForFunction(index=>{
-    const wheel=document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel');
-    return wheel?.classList.contains('has-isolation')&&
-      [...document.querySelectorAll('#skyFoundationWheelMount [data-interactive="aspect"].is-hovered')].some(node=>node.dataset.relationIndex===index);
-  },probe.relationIndex,{timeout:5000});
+  await page.waitForTimeout(250);
+  const hoverState=await page.evaluate(()=>({
+    isolated:document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')?.classList.contains('has-isolation')||false,
+    hovered:[...document.querySelectorAll('#skyFoundationWheelMount [data-interactive].is-hovered')].map(node=>({
+      interactive:String(node.dataset.interactive||''),
+      relationIndex:String(node.dataset.relationIndex||''),
+      placement:String(node.dataset.placement||''),
+      house:String(node.dataset.house||''),
+      sign:String(node.dataset.sign||'')
+    }))
+  }));
+  console.log('ASPECT_HOVER_PROBE',JSON.stringify({probe,targetBefore,hoverState}));
+  assert.equal(hoverState.isolated,true,'12px off-line pointer should engage wheel isolation');
+  assert.ok(hoverState.hovered.some(node=>node.interactive==='aspect'&&node.relationIndex===probe.relationIndex),'12px off-line pointer should highlight the nearest aspect relation');
 
   console.log('Comparison-wheel aspect hover acquires 12px off the visible line.');
 }finally{
