@@ -6,17 +6,17 @@ if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyAspectSc
 window.__relphiSkyAspectScopeMatrixV1=true;window.__relphiSkyAspectScopeMatrixV2=true;
 
 const ASPECTS=Object.freeze([
-  {id:'conjunction',label:'Conjunction'},
-  {id:'semi-sextile',label:'Semi-Sextile'},
-  {id:'octile',label:'Octile'},
-  {id:'sextile',label:'Sextile'},
-  {id:'quintile',label:'Quintile'},
-  {id:'square',label:'Square'},
-  {id:'trine',label:'Trine'},
-  {id:'tri-octile',label:'Tri-Octile'},
-  {id:'bi-quintile',label:'Bi-Quintile'},
-  {id:'quincunx',label:'Quincunx'},
-  {id:'opposition',label:'Opposition'}
+  {id:'conjunction',label:'Conjunction',angle:0},
+  {id:'semi-sextile',label:'Semi-Sextile',angle:30},
+  {id:'octile',label:'Octile',angle:45},
+  {id:'sextile',label:'Sextile',angle:60},
+  {id:'quintile',label:'Quintile',angle:72},
+  {id:'square',label:'Square',angle:90},
+  {id:'trine',label:'Trine',angle:120},
+  {id:'tri-octile',label:'Tri-Octile',angle:135},
+  {id:'bi-quintile',label:'Bi-Quintile',angle:144},
+  {id:'quincunx',label:'Quincunx',angle:150},
+  {id:'opposition',label:'Opposition',angle:180}
 ]);
 const IDS=Object.freeze(ASPECTS.map(item=>item.id));
 const SCOPES=Object.freeze([
@@ -75,13 +75,23 @@ function choice(scope,aspect,labelText,summary=false){
   text.textContent=scope==='all'?'All':SCOPES.find(item=>item.id===scope)?.label||scope;
   label.append(input,text);return label;
 }
-function matrixRow(aspect,labelText,master=false){
+function matrixRow(aspect,labelText,master=false,angle=null){
   const row=document.createElement('div');
   row.className=`sky-chart-aspect-list-item${master?' sky-chart-aspect-list-item-master':''}`;
   row.dataset.aspectMatrixRow=aspect;
   row.dataset.aspectListItem=aspect;
-  const label=document.createElement('strong');label.className='sky-chart-aspect-list-label';label.textContent=labelText;
-  const choices=document.createElement('div');choices.className='sky-chart-aspect-list-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label',labelText);
+  const label=document.createElement('strong');label.className='sky-chart-aspect-list-label';
+  if(Number.isFinite(angle)){
+    const degree=document.createElement('span');
+    degree.className='sky-chart-aspect-degree';
+    degree.setAttribute('aria-hidden','true');
+    const value=document.createElement('span');value.className='sky-chart-aspect-degree-value';value.textContent=String(angle);
+    const mark=document.createElement('span');mark.className='sky-chart-aspect-degree-mark';mark.textContent='°';
+    degree.append(value,mark);
+    label.appendChild(degree);
+  }
+  const name=document.createElement('span');name.className='sky-chart-aspect-name';name.textContent=labelText;label.appendChild(name);
+  const choices=document.createElement('div');choices.className='sky-chart-aspect-list-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label',Number.isFinite(angle)?`${labelText}, ${angle} degrees`:labelText);
   const scopes=SCOPES.filter(scope=>activeScopes().includes(scope.id));
   choices.append(choice('all',aspect,`${labelText}: all relationship scopes`),...scopes.map(scope=>choice(scope.id,aspect,`${labelText}: ${scope.label}`)));
   row.append(label,choices);return row;
@@ -94,7 +104,7 @@ function renderPopover(){
   const cols=document.createElement('div');cols.className='sky-chart-aspect-list-header-choices';
   const labels=bActive()?['All','A↔A','B↔B','A↔B']:['All','A↔A'];
   labels.forEach(text=>{const span=document.createElement('span');span.textContent=text;cols.appendChild(span)});
-  header.append(title,cols);list.append(header,matrixRow('all','All aspects',true));ASPECTS.forEach(aspect=>list.appendChild(matrixRow(aspect.id,aspect.label)));
+  header.append(title,cols);list.append(header,matrixRow('all','All aspects',true));ASPECTS.forEach(aspect=>list.appendChild(matrixRow(aspect.id,aspect.label,false,aspect.angle)));
   body.replaceChildren(list);
   window.dispatchEvent(new Event('relphi:sky-aspect-filter-rendered'));
 }

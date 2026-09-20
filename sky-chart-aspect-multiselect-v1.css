@@ -30,6 +30,10 @@
 .sky-chart-aspect-list-item:first-of-type{border-top:0}
 .sky-chart-aspect-list-item-master{min-height:39px;background:#f4efe8;font-weight:900}
 .sky-chart-aspect-list-label{min-width:0;padding:7px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#29231e;font:750 .67rem/1.15 system-ui,sans-serif}
+.sky-chart-aspect-degree{display:inline-grid;grid-template-columns:3ch .75ch;flex:0 0 3.75ch;width:3.75ch;margin-right:.48em;color:#6b625a;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.sky-chart-aspect-degree-value{text-align:right}
+.sky-chart-aspect-degree-mark{text-align:left}
+.sky-chart-aspect-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sky-chart-aspect-matrix-choice{display:flex;align-items:center;justify-content:center;min-width:0;margin:0;padding:0;border-left:1px solid rgba(31,27,24,.06);cursor:pointer}
 .sky-chart-aspect-matrix-choice:first-child{border-left:0}
 .sky-chart-aspect-list-choices .sky-chart-aspect-matrix-choice>span{display:none}
