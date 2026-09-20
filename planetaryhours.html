@@ -1537,6 +1537,8 @@
   .ph-calendar-moon-context .ph-moon-disc { width:4.3rem; height:4.3rem; flex:0 0 auto; }
   .ph-calendar-moon-context .ph-moon-facts { min-width:0; }
   .ph-calendar-moon-context .ph-moon-facts p { margin:.22rem 0; }
+  .ph-calendar-moon-placement { display:flex; align-items:center; gap:.28rem; color:#211d19; font-size:.92rem; font-weight:900; font-variant-numeric:tabular-nums; }
+  .ph-calendar-moon-placement .ph-direct-canonical-glyph { width:1.15em; height:1.15em; margin:0; transform:none; }
   .ph-calendar-context-label { margin:0 0 .48rem; color:#514b46; font:850 .76rem/1.2 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.07em; }
   .ph-calendar-event-lane { display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; min-height:2rem; }
   .ph-calendar-event { display:inline-flex; align-items:center; gap:.32rem; padding:.34rem .55rem; border:1px solid rgba(17,17,17,.12); border-radius:999px; background:#faf8f5; color:#302a25; font:750 .75rem/1.15 system-ui,sans-serif; white-space:nowrap; }
@@ -1837,6 +1839,7 @@
         <div class="ph-moon-wrap">
           <div class="ph-moon-disc" id="moonDisc"></div>
           <div class="ph-moon-facts">
+            <p class="ph-calendar-moon-placement" id="moonPlacement">—</p>
             <p id="moonPhase">—</p>
             <p class="ph-tiny" id="moonTimes">—</p>
             <p class="ph-tiny" id="moonVisibility">—</p>
@@ -1945,6 +1948,7 @@
     topHourFocus: document.getElementById('topHourFocus'),
     topHourJump: document.getElementById('topHourJump'),
     moonDisc: document.getElementById('moonDisc'),
+    moonPlacement: document.getElementById('moonPlacement'),
     moonPhase: document.getElementById('moonPhase'),
     moonTimes: document.getElementById('moonTimes'),
     moonVisibility: document.getElementById('moonVisibility'),
@@ -2256,6 +2260,15 @@
   }
 
   function renderMoonFrame(base, lat, lon) {
+    if (el.moonPlacement) {
+      try {
+        const placement = phLongitudeToPlacement(phAstronomyLongitude('Moon', base));
+        el.moonPlacement.innerHTML = canonicalSignGlyphMarkup(placement.sign) + '<span>' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′</span>';
+        el.moonPlacement.title = 'Moon in ' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′';
+      } catch (error) {
+        el.moonPlacement.textContent = 'Moon position unavailable.';
+      }
+    }
     if (!window.SunCalc) {
       el.moonPhase.textContent = 'Moon data unavailable.';
       el.moonTimes.textContent = 'SunCalc did not load.';
