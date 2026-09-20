@@ -56,6 +56,7 @@ try{
     },mode);
 
     const expectedKinds=mode==='comparison'?['All','A','B']:['All','A'];
+    console.log(mode,JSON.stringify(result));
     assert.equal(result.headerCount,expectedKinds.length,`${mode}: header should contain exactly the active scope columns`);
     assert.deepEqual(result.headerKinds,expectedKinds,`${mode}: Placement header labels should be canonical`);
     result.headerCenters.forEach((value,index)=>{
