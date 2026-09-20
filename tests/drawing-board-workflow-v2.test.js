@@ -92,12 +92,15 @@ assert.match(css, /card-row-card \.or-card-art\.relphi-surface-face\{[^}]*aspect
 
 assert.match(app, /const RELPHI_EXPORT_BRAND = Object\.freeze\(\{/);
 assert.match(app, /name:'Oracle of Relphi'/);
-assert.match(app, /designation:'an Oracle of Relphi tool'/);
+assert.match(app, /logo:'logo\.png'/);
+assert.doesNotMatch(app, /designation:'an Oracle of Relphi tool'/);
 assert.match(app, /brand:\{\.\.\.RELPHI_EXPORT_BRAND\}/);
 assert.match(app, /<title>Drawing Board · Oracle of Relphi<\/title>/);
-assert.match(app, /Created with <strong>Oracle of Relphi<\/strong>/);
-assert.match(app, /Drawing Board · an Oracle of Relphi tool · oracleofrelphi\.com/);
-assert.equal((app.match(/drawRelphiExportBrand\(ctx,canvas,brandFooterH\)/g) || []).length,2,'both Drawing Board image exports must carry the Oracle of Relphi footer');
+assert.match(app, /class="brand-logo"/);
+assert.match(app, /class="brand-wordmark">Oracle of <span>Relphi<\/span>/);
+assert.match(app, /Drawing Board · oracleofrelphi\.com/);
+assert.doesNotMatch(app, /Drawing Board · an Oracle of Relphi tool · oracleofrelphi\.com/);
+assert.equal((app.match(/drawRelphiExportBrand\(ctx,canvas,brandFooterH,brandLogoImage\)/g) || []).length,2,'both Drawing Board image exports must draw the real Oracle of Relphi logo footer');
 for (const [name,source] of [['Tarot Ledger',tarotPage],['Sky Chart',skyPage],['Planetary Hours',hoursPage]]) {
   assert.match(source, /<p class="relphi-tool-brandline">an Oracle of Relphi tool<\/p>/, name + ' must identify itself as an Oracle of Relphi tool');
 }
