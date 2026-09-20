@@ -418,12 +418,15 @@
     if(node){
       if(probeFrame){cancelAnimationFrame(probeFrame);probeFrame=0}
       pendingProbe=null;
-      if(node.dataset.interactive==='aspect'){
+      const kind=node.dataset.interactive;
+      if(kind==='aspect'||kind==='house'||kind==='sign'){
         const nearest=nearestAspectAt(event.clientX,event.clientY,ASPECT_ACQUIRE_RADIUS_PX);
-        immediate(nearest?{kind:'aspect',sky:null,value:nearest.identity}:stateFromNode(node));
-      }else{
-        immediate(stateFromNode(node));
+        if(nearest){
+          immediate({kind:'aspect',sky:null,value:nearest.identity});
+          return;
+        }
       }
+      immediate(stateFromNode(node));
       return;
     }
     scheduleProbe(event);
