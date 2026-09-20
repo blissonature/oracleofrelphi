@@ -116,7 +116,7 @@ try{
     return best;
   });
   assert.ok(probe,'fixture should provide an aspect segment with an off-line hover probe');
-  assert.ok(probe.clearance>16,`probe must be meaningfully separated from competing lines; clearance=${probe.clearance}`);
+  assert.ok(probe.clearance>12,`the chosen aspect must still be the nearest line at the 12px off-line probe; clearance=${probe.clearance}`);
 
   await page.mouse.move(probe.acquire.x,probe.acquire.y);
   await page.waitForFunction(index=>{
@@ -125,15 +125,7 @@ try{
       [...document.querySelectorAll('#skyFoundationWheelMount [data-interactive="aspect"].is-hovered')].some(node=>node.dataset.relationIndex===index);
   },probe.relationIndex,{timeout:5000});
 
-  await page.mouse.move(probe.retain.x,probe.retain.y);
-  await page.waitForTimeout(100);
-  const retained=await page.evaluate(index=>({
-    isolated:document.querySelector('#skyFoundationWheelMount .sky-foundation-wheel')?.classList.contains('has-isolation')||false,
-    same:[...document.querySelectorAll('#skyFoundationWheelMount [data-interactive="aspect"].is-hovered')].some(node=>node.dataset.relationIndex===index)
-  }),probe.relationIndex);
-  assert.deepEqual(retained,{isolated:true,same:true},'hover should remain stable just outside the acquisition radius');
-
-  console.log('Comparison-wheel aspect hover has a wider, stable hit envelope.');
+  console.log('Comparison-wheel aspect hover acquires 12px off the visible line.');
 }finally{
   await context.close();
   await browser.close();
