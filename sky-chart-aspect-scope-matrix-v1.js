@@ -84,8 +84,10 @@ function matrixRow(aspect,labelText,master=false,angle=null){
   if(Number.isFinite(angle)){
     const degree=document.createElement('span');
     degree.className='sky-chart-aspect-degree';
-    degree.textContent=`${angle}°`;
     degree.setAttribute('aria-hidden','true');
+    const value=document.createElement('span');value.className='sky-chart-aspect-degree-value';value.textContent=String(angle);
+    const mark=document.createElement('span');mark.className='sky-chart-aspect-degree-mark';mark.textContent='°';
+    degree.append(value,mark);
     label.appendChild(degree);
   }
   const name=document.createElement('span');name.className='sky-chart-aspect-name';name.textContent=labelText;label.appendChild(name);
