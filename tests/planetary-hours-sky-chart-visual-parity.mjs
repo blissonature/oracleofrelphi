@@ -92,6 +92,9 @@ assert.doesNotMatch(page,/Planet wheel loads when Astronomy Engine is available/
 assert.doesNotMatch(page,/class=\"planet-marker/);
 assert.match(page,/Planetary Calendar day view: the 24 hours are a chronological journal surface/);
 assert.match(page,/class=\"ph-calendar-day-ruler-context\"/);
+assert.match(page,/\.ph-summary-grid-consolidated > #tableSection \{ order: 2; \}/);
+assert.match(page,/\.ph-summary-grid-consolidated > \.ph-day-frame \{ order: 3; \}/);
+assert.match(page,/\.ph-summary-grid-consolidated > \.ph-moon-frame \{ order: 4; \}/);
 assert.match(page,/id=\"dayRulerProfileName\"/);
 assert.match(page,/id=\"dayRulerFocus\"/);
 assert.match(page,/id=\"sunTimes\"/);
