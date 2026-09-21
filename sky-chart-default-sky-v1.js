@@ -10,7 +10,19 @@ const DEFAULT_KEY='relphiDefaultSkyIdV1';
 
 function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||'')}
-function library(){const api=window.RelphiSkySavedSkyIdentity?.library?.();const list=Array.isArray(api)?api:readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list:[]}
+function ensureLibraryIds(){
+  const list=readJson(LIBRARY_KEY,[]);
+  if(!Array.isArray(list))return[];
+  let changed=false;
+  list.forEach((record,index)=>{
+    if(!record||recordRef(record))return;
+    record.id='sky-'+Date.now().toString(36)+'-'+index.toString(36)+'-'+Math.random().toString(36).slice(2,8);
+    changed=true;
+  });
+  if(changed){try{localStorage.setItem(LIBRARY_KEY,JSON.stringify(list))}catch(_){}}
+  return list;
+}
+function library(){return ensureLibraryIds()}
 function payload(slot){return readJson(SLOT_KEYS[slot],null)}
 function defaultId(){try{return String(localStorage.getItem(DEFAULT_KEY)||'')}catch(_){return''}}
 function currentRecord(slot){
