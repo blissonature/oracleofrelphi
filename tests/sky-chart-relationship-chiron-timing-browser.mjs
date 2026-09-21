@@ -81,6 +81,15 @@ try{
   });
   assert.equal(glyphCopyState.level,0,`Glyphs display must keep expanded rows at compact copy level: ${JSON.stringify(glyphCopyState)}`);
   assert.equal(glyphCopyState.semantic,'',`Glyphs display must not serialize expanded timing/card detail: ${JSON.stringify(glyphCopyState)}`);
+  const glyphHouseState=await page.evaluate(()=>{
+    const row=[...document.querySelectorAll('#skyFoundationRelationshipList .sky-foundation-relationship-row')].find(node=>{
+      const pair=new Set([node.dataset.leftPlacement,node.dataset.rightPlacement]);
+      return node.dataset.relationshipMode==='B-B'&&node.dataset.aspect==='opposition'&&pair.has('venus')&&pair.has('chiron');
+    });
+    return {left:row?.dataset.leftHouse||'',right:row?.dataset.rightHouse||''};
+  });
+  assert.match(glyphHouseState.left,/^(?:[1-9]|1[0-2])$/);
+  assert.match(glyphHouseState.right,/^(?:[1-9]|1[0-2])$/);
 
   // Collapse the timing tile so Copy uses the same compact representation for every row.
   await element.click();
@@ -136,7 +145,10 @@ try{
         .slice(0,30)
         .map(row=>{
           const left=row.dataset.leftPlacement||'',right=row.dataset.rightPlacement||'',aspect=row.dataset.aspect||'';
-          return `${placementSymbols[left]||left} in ${signSymbols[Number(row.dataset.leftSign)]||''} ${coordinate(row,'left')} ${aspectSymbols[aspect]||aspect} ${placementSymbols[right]||right} in ${signSymbols[Number(row.dataset.rightSign)]||''} ${coordinate(row,'right')}`.replace(/\s+/g,' ').trim();
+          const leftHouse=Number(row.dataset.leftHouse),rightHouse=Number(row.dataset.rightHouse);
+          const leftHouseToken=Number.isInteger(leftHouse)&&leftHouse>=1&&leftHouse<=12?` H${leftHouse}`:'';
+          const rightHouseToken=Number.isInteger(rightHouse)&&rightHouse>=1&&rightHouse<=12?` H${rightHouse}`:'';
+          return `${placementSymbols[left]||left} in ${signSymbols[Number(row.dataset.leftSign)]||''} ${coordinate(row,'left')}${leftHouseToken} ${aspectSymbols[aspect]||aspect} ${placementSymbols[right]||right} in ${signSymbols[Number(row.dataset.rightSign)]||''} ${coordinate(row,'right')}${rightHouseToken}`.replace(/\s+/g,' ').trim();
         })
         .filter(Boolean);
     });
