@@ -798,6 +798,11 @@
       draft.labels[index]=event.target.value;
       markQuestionEditCustom(drawer,draft);
     });
+    labelsList?.addEventListener('change',event=>{
+      const row=event.target.closest('.relphi-label-row');
+      if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
+      acceptCommaList(event.target.value);
+    });
     labelsList?.addEventListener('click',event=>{
       const button=event.target.closest('[data-remove-label]');
       if (!button) return;
