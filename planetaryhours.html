@@ -1568,8 +1568,10 @@
   .ph-calendar-month-event.conjunction { border-left-color:#b23b79; background:#fff7fb; }
   .ph-calendar-month-event.lunation { border-left-color:#58628a; background:#f7f7fc; }
   .ph-calendar-month-event.alert { border-left-color:var(--relphi-red); background:#fff1ed; }
+  .ph-calendar-month-event.personal { border-left-color:#211d19; background:#f4f1ed; font-weight:850; }
   .ph-calendar-month-more { color:#756c65; font:800 .59rem/1.2 system-ui,sans-serif; }
-  .ph-calendar-month-help { margin:.55rem 0 0; text-align:center; }
+  .ph-calendar-personal-source { margin:.6rem 0 0; color:#514a44; text-align:center; font:800 .7rem/1.3 system-ui,sans-serif; }
+  .ph-calendar-month-help { margin:.25rem 0 0; text-align:center; }
   @media (max-width:760px) {
     .ph-calendar-weekdays, .ph-calendar-month-grid { gap:.16rem; }
     .ph-calendar-weekdays span { font-size:.58rem; letter-spacing:0; padding:.12rem 0; }
@@ -1600,6 +1602,7 @@
   .ph-calendar-alert-notify-row { display:flex; gap:.45rem; align-items:center; flex-wrap:wrap; }
   .ph-calendar-alert-builder .is-hidden { display:none; }
   .ph-calendar-event.is-alert { border-color:rgba(220,31,24,.28); background:#fff3f0; }
+  .ph-calendar-event.is-personal { border-color:rgba(33,29,25,.25); background:#f4f1ed; font-weight:850; }
   @media (max-width:760px) { .ph-calendar-alert-builder { grid-template-columns:1fr 1fr; } .ph-calendar-alert-add { grid-column:1 / -1; } }
   .ph-calendar-timeline { position:relative; display:grid; gap:.48rem; }
   .ph-calendar-timeline::before { content:""; position:absolute; left:5.15rem; top:.7rem; bottom:.7rem; width:1px; background:rgba(17,17,17,.12); }
@@ -1955,6 +1958,7 @@
     <div class="ph-calendar-month-view" id="calendarMonthView" hidden aria-label="Planetary calendar month view">
       <div class="ph-calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
       <div class="ph-calendar-month-grid" id="calendarMonthGrid"></div>
+      <p class="ph-calendar-personal-source" id="calendarPersonalSource">Personal transits load from My birth chart in Saved Skies.</p>
       <p class="ph-tiny ph-calendar-month-help">Tap a date to open its planetary hours.</p>
     </div>
   </section>
@@ -1965,7 +1969,7 @@
       <p><b>Sunrise-to-sunrise frame.</b> The planetary day begins at local sunrise and ends at the next local sunrise.</p>
       <p><b>Bright and dark.</b> Bright hours run from sunrise to sunset. Dark hours run from sunset to the following sunrise.</p>
       <p><b>Location packets.</b> Manual Location Mode pairs a named place with latitude, longitude, and timezone so historical dates and birth times are not mixed with the wrong local frame.</p>
-      <p><b>Planetary calendar.</b> Month view shows Astronomy Engine ingresses, stations, conjunctions, lunations, saved alerts, and journal activity at a glance. Tap a date to drill into the sunrise-to-sunrise Day view with its planetary hours and notes.</p>
+      <p><b>Planetary calendar.</b> Month view shows Astronomy Engine ingresses, stations, conjunctions, lunations, exact major transits to My birth chart, saved alerts, and journal activity at a glance. Tap a date to drill into the sunrise-to-sunrise Day view with its planetary hours and notes.</p>
       <p><b>Statements.</b> Each focus statement combines the day ruler as the broad field, the hour ruler as the method, and the ruler's ordinal appearance in the planetary day. The page says “Moon hour,” “Jupiter day,” and so on to keep timing conditions distinct from planets as bodies.</p>
       <p><b>Animated heptagram.</b> The ring keeps the Chaldean order. The hour ruler glows inside the current day. The heptagram advances one day-ruler step per sunrise-to-sunrise day, so the full star is drawn over seven planetary days.</p>
     </details>
@@ -2086,6 +2090,7 @@
     calendarDayView: document.getElementById('calendarDayView'),
     calendarMonthView: document.getElementById('calendarMonthView'),
     calendarMonthGrid: document.getElementById('calendarMonthGrid'),
+    calendarPersonalSource: document.getElementById('calendarPersonalSource'),
     calendarDatePick: document.getElementById('calendarDatePick'),
     calendarPrevDay: document.getElementById('calendarPrevDay'),
     calendarNextDay: document.getElementById('calendarNextDay'),
@@ -3452,6 +3457,126 @@
 
 
   const planetaryMonthEventCache = new Map();
+  const personalTransitEventCache = new Map();
+  const personalTransitBodies = ['Sun','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
+  const personalAspectAngles = [
+    {angle:0,name:'conjunct'},
+    {angle:60,name:'sextile'},
+    {angle:90,name:'square'},
+    {angle:120,name:'trine'},
+    {angle:180,name:'opposite'}
+  ];
+
+  function readStoredJson(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (error) { return fallback; }
+  }
+
+  function natalPlacementLongitude(item) {
+    if (!item || typeof item !== 'object') return NaN;
+    if (Number.isFinite(Number(item.longitude))) return phNormDeg(Number(item.longitude));
+    const signIndex = phSigns.findIndex(function (sign) { return sign.toLowerCase() === String(item.sign || '').trim().toLowerCase(); });
+    if (signIndex < 0 || !Number.isFinite(Number(item.degree))) return NaN;
+    return phNormDeg(signIndex * 30 + Number(item.degree) + (Number(item.minute) || 0) / 60 + (Number(item.second) || 0) / 3600);
+  }
+
+  function natalChartRecord() {
+    const library = readStoredJson('relphiSkyLibraryV1', []);
+    if (Array.isArray(library)) {
+      const saved = library.find(function (record) { return String(record && record.name || '').trim().toLowerCase() === 'my birth chart'; });
+      if (saved && saved.placements) return saved;
+    }
+    const active = readStoredJson('relphiSkyChartA', null);
+    const activeName = String(active && (active.name || active.title || active.displayName || active.skyName) || '').trim().toLowerCase();
+    if (active && active.placements && (activeName.includes('birth') || activeName.includes('natal'))) return active;
+    return null;
+  }
+
+  function natalTargets() {
+    const record = natalChartRecord();
+    const placements = record && record.placements && typeof record.placements === 'object' ? record.placements : {};
+    const targets = Object.entries(placements).map(function (entry) {
+      const item = entry[1] || {};
+      const longitude = natalPlacementLongitude(item);
+      const rawName = String(item.name || entry[0] || '').trim();
+      if (!Number.isFinite(longitude) || !rawName) return null;
+      const nameMap = {
+        Asc:'Ascendant',ASC:'Ascendant',Ascendant:'Ascendant',
+        Dsc:'Descendant',DSC:'Descendant',Descendant:'Descendant',
+        Mc:'MC',MC:'MC',Midheaven:'MC',
+        Ic:'IC',IC:'IC',
+        NorthNode:'North Node','North Node':'North Node',Node:'North Node',
+        SouthNode:'South Node','South Node':'South Node',
+        PartOfFortune:'Part of Fortune',Fortune:'Part of Fortune'
+      };
+      const name = nameMap[rawName] || rawName.replace(/([a-z])([A-Z])/g,'$1 $2');
+      return {name:name, longitude:longitude};
+    }).filter(Boolean);
+    const seen = new Set();
+    return targets.filter(function (target) {
+      const key = target.name.toLowerCase() + '|' + target.longitude.toFixed(5);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function natalChartSignature() {
+    const record = natalChartRecord();
+    return natalTargets().map(function (target) { return target.name + ':' + target.longitude.toFixed(5); }).join('|') + '|' + String(record && record.name || '');
+  }
+
+  function personalTransitEventsForRange(startDate, endDate) {
+    const targets = natalTargets();
+    if (!window.Astronomy || !targets.length) return [];
+    const cacheKey = startDate.toISOString() + '|' + endDate.toISOString() + '|' + natalChartSignature();
+    if (personalTransitEventCache.has(cacheKey)) return personalTransitEventCache.get(cacheKey);
+    const events = [];
+    personalTransitBodies.forEach(function (body) {
+      const stepHours = ['Mercury','Venus','Mars'].includes(body) ? 6 : (body === 'Sun' ? 8 : 18);
+      let a = new Date(startDate);
+      let lonA = phAstronomyLongitude(body, a);
+      for (let t = a.getTime() + stepHours * 3600000; t <= endDate.getTime(); t += stepHours * 3600000) {
+        const b = new Date(t);
+        const lonB = phAstronomyLongitude(body, b);
+        targets.forEach(function (target) {
+          personalAspectAngles.forEach(function (aspect) {
+            const targetLongitudes = (aspect.angle === 0 || aspect.angle === 180)
+              ? [phNormDeg(target.longitude + aspect.angle)]
+              : [phNormDeg(target.longitude + aspect.angle), phNormDeg(target.longitude - aspect.angle)];
+            targetLongitudes.forEach(function (exactLongitude) {
+              const fa = phSignedAngle(lonA - exactLongitude);
+              const fb = phSignedAngle(lonB - exactLongitude);
+              const crossing = fa === 0 || fb === 0 || (fa < 0 && fb > 0) || (fa > 0 && fb < 0);
+              if (!crossing || Math.abs(fb - fa) > 90) return;
+              const root = Math.abs(fa) < 1e-7 ? new Date(a) : phAlertBisect(function (date) {
+                return phSignedAngle(phAstronomyLongitude(body, date) - exactLongitude);
+              }, a, b, fa, fb);
+              if (!root || root < startDate || root >= endDate) return;
+              const duplicate = events.find(function (event) {
+                return event.body === body && event.targetName === target.name && event.aspect === aspect.angle && Math.abs(event.time - root) < 5 * 60000;
+              });
+              if (!duplicate) events.push({
+                time:root,
+                type:'personal',
+                body:body,
+                targetName:target.name,
+                aspect:aspect.angle,
+                label:body + ' ' + aspect.name + ' natal ' + target.name
+              });
+            });
+          });
+        });
+        a = b;
+        lonA = lonB;
+      }
+    });
+    events.sort(function (a,b) { return a.time - b.time; });
+    personalTransitEventCache.set(cacheKey, events);
+    return events;
+  }
 
   function calendarMonthRange(base) {
     if (window.luxon && window.luxon.DateTime) {
@@ -3603,6 +3728,13 @@
     if (!el.calendarMonthGrid) return;
     const range = calendarMonthRange(base);
     const automatic = automaticPlanetaryMonthEvents(range);
+    const personal = personalTransitEventsForRange(range.start, range.end);
+    const birthRecord = natalChartRecord();
+    if (el.calendarPersonalSource) {
+      el.calendarPersonalSource.textContent = birthRecord
+        ? 'Personal transits to ' + String(birthRecord.name || 'My birth chart') + ' · exact major aspects from Sun through Pluto.'
+        : 'Save “My birth chart” in Sky Chart to add personal transits here.';
+    }
     const alerts = resolveCalendarAlerts().filter(function (rule) {
       if (!rule.nextAt) return false;
       const time = new Date(rule.nextAt);
@@ -3610,7 +3742,7 @@
     }).map(function (rule) {
       return {time:new Date(rule.nextAt), type:'alert', label:phAlertRuleLabel(rule), isAlert:true};
     });
-    const allEvents = automatic.concat(alerts).sort(function (a,b) { return a.time - b.time; });
+    const allEvents = automatic.concat(personal, alerts).sort(function (a,b) { return a.time - b.time; });
     const byDate = {};
     allEvents.forEach(function (event) {
       const key = dateInputValueFor(event.time, state.tz);
@@ -3666,7 +3798,7 @@
       const range = calendarMonthRange(base);
       const monthLabel = new Date(range.start).toLocaleDateString('en-US',{timeZone:state.tz,month:'long',year:'numeric'});
       if (el.calendarDayTitle) el.calendarDayTitle.textContent = monthLabel;
-      if (el.calendarFrameNote) el.calendarFrameNote.textContent = 'Ingresses, stations, conjunctions, lunations, saved alerts, and journal activity at a glance.';
+      if (el.calendarFrameNote) el.calendarFrameNote.textContent = 'Ingresses, stations, conjunctions, lunations, personal natal transits, saved alerts, and journal activity at a glance.';
       if (el.calendarPrevDay) el.calendarPrevDay.setAttribute('aria-label','Previous month');
       if (el.calendarNextDay) el.calendarNextDay.setAttribute('aria-label','Next month');
       renderCalendarMonth(base);
@@ -3686,6 +3818,9 @@
       {time:frame.sunset, label:'Sunset'},
       {time:frame.end, label:'Next sunrise'}
     ];
+    personalTransitEventsForRange(frame.start, frame.end).forEach(function (event) {
+      events.push({time:event.time,label:event.label,isPersonal:true});
+    });
     if (window.SunCalc) {
       [-1,0,1,2].forEach(function (offset) {
         try {
@@ -3712,7 +3847,7 @@
     }).sort(function (a,b) { return new Date(a.time) - new Date(b.time); });
     state.calendarEvents = ordered;
     el.calendarEventLane.innerHTML = ordered.map(function (event) {
-      return '<span class="ph-calendar-event' + (event.isAlert ? ' is-alert' : '') + '"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + htmlText(event.label) + '</span>';
+      return '<span class="ph-calendar-event' + (event.isAlert ? ' is-alert' : '') + (event.isPersonal ? ' is-personal' : '') + '"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + htmlText(event.label) + '</span>';
     }).join('');
   }
 
