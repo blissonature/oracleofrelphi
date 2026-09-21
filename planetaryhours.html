@@ -3490,7 +3490,17 @@
 
   function savedSkyLibrary() {
     const list = readStoredJson('relphiSkyLibraryV1', []);
-    return Array.isArray(list) ? list.filter(function (record) { return record && record.placements && savedSkyRecordRef(record); }) : [];
+    if (!Array.isArray(list)) return [];
+    let changed = false;
+    list.forEach(function (record, index) {
+      if (!record || savedSkyRecordRef(record)) return;
+      record.id = 'sky-' + Date.now().toString(36) + '-' + index.toString(36) + '-' + Math.random().toString(36).slice(2,8);
+      changed = true;
+    });
+    if (changed) {
+      try { localStorage.setItem('relphiSkyLibraryV1', JSON.stringify(list)); } catch (error) {}
+    }
+    return list.filter(function (record) { return record && record.placements && savedSkyRecordRef(record); });
   }
 
   function defaultSkyId() {
