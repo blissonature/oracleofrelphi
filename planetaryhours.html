@@ -2398,9 +2398,11 @@
   function renderMoonFrame(base, lat, lon) {
     if (el.moonPlacement) {
       try {
-        const placement = phLongitudeToPlacement(phAstronomyLongitude('Moon', base));
-        el.moonPlacement.innerHTML = canonicalSignGlyphMarkup(placement.sign) + '<span>' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′</span>';
-        el.moonPlacement.title = 'Moon in ' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′';
+        const moonMeta = phEventBodyMeta('Moon', base);
+        const placement = moonMeta || phLongitudeToPlacement(phAstronomyLongitude('Moon', base));
+        const houseText = moonMeta && moonMeta.house ? ' H' + moonMeta.house : '';
+        el.moonPlacement.innerHTML = canonicalSignGlyphMarkup(placement.sign) + '<span>' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′' + houseText + '</span>';
+        el.moonPlacement.title = 'Moon in ' + placement.sign + ' ' + placement.degree + '°' + String(placement.minute).padStart(2,'0') + '′' + houseText;
       } catch (error) {
         el.moonPlacement.textContent = 'Moon position unavailable.';
       }
@@ -2646,6 +2648,33 @@
     const theta = phSiderealDegrees(date, lon) * Math.PI / 180;
     const eps = phObliquity(date) * Math.PI / 180;
     return phNormDeg(Math.atan2(Math.sin(theta), Math.cos(theta) * Math.cos(eps)) * 180 / Math.PI);
+  }
+
+  function phEventHouse(longitude, date) {
+    const asc = phAscendantLongitude(date, state.lat, state.lon);
+    if (!Number.isFinite(asc) || !Number.isFinite(Number(longitude))) return null;
+    return Math.floor(phNormDeg(Number(longitude) - asc) / 30) + 1;
+  }
+
+  function phEventBodyMeta(body, date) {
+    try {
+      const longitude = phAstronomyLongitude(body, date);
+      const placement = phLongitudeToPlacement(longitude);
+      return {
+        body:body,
+        longitude:longitude,
+        sign:placement.sign,
+        degree:placement.degree,
+        minute:placement.minute,
+        house:phEventHouse(longitude, date)
+      };
+    } catch (error) { return null; }
+  }
+
+  function phPlacementLabel(meta) {
+    if (!meta) return '';
+    const house = Number.isFinite(Number(meta.house)) ? ' H' + Number(meta.house) : '';
+    return String(meta.body || meta.name || '') + ' ' + String(meta.sign || '') + ' ' + Number(meta.degree || 0) + '°' + String(Number(meta.minute || 0)).padStart(2,'0') + '′' + house;
   }
   function phWheelDisplayAngles(items, minGapDeg) {
     const gap = Math.max(0, Number(minGapDeg) || 9);
@@ -3488,6 +3517,23 @@
     return 'Astronomical alert';
   }
 
+  function phAlertOccurrenceLabel(rule, when) {
+    if (!when || Number.isNaN(new Date(when).getTime())) return phAlertRuleLabel(rule);
+    const date = new Date(when);
+    const primary = phEventBodyMeta(rule.body, date);
+    if (rule.type === 'aspect') {
+      const secondary = phEventBodyMeta(rule.targetBody, date);
+      const names = {0:'conjunct',60:'sextile',90:'square',120:'trine',180:'opposite'};
+      return phPlacementLabel(primary) + ' ' + (names[Number(rule.aspect)] || (rule.aspect + '° from')) + ' ' + phPlacementLabel(secondary);
+    }
+    if (rule.type === 'rise') return phPlacementLabel(primary) + ' rises';
+    if (rule.type === 'set') return phPlacementLabel(primary) + ' sets';
+    if (rule.type === 'station') return phPlacementLabel(primary) + ' stations';
+    if (rule.type === 'ingress') return phPlacementLabel(primary) + ' enters ' + rule.sign;
+    if (rule.type === 'degree') return phPlacementLabel(primary) + ' reaches target degree';
+    return phAlertRuleLabel(rule);
+  }
+
   function resolveCalendarAlerts() {
     const now = new Date();
     const alerts = loadCalendarAlerts();
@@ -3518,7 +3564,7 @@
       const whenText = when && !Number.isNaN(when.getTime())
         ? when.toLocaleString(undefined,{timeZone:state.tz,weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})
         : 'No occurrence found in the search window';
-      return '<div class="ph-calendar-alert-item"><div><strong>' + htmlText(phAlertRuleLabel(rule)) + '</strong><small>Next: ' + htmlText(whenText) + '</small></div><button type="button" data-calendar-alert-delete="' + htmlText(rule.id) + '" aria-label="Delete alert">×</button></div>';
+      return '<div class="ph-calendar-alert-item"><div><strong>' + htmlText(when ? phAlertOccurrenceLabel(rule, when) : phAlertRuleLabel(rule)) + '</strong><small>Next: ' + htmlText(whenText) + '</small></div><button type="button" data-calendar-alert-delete="' + htmlText(rule.id) + '" aria-label="Delete alert">×</button></div>';
     }).join('');
     return alerts;
   }
@@ -3532,7 +3578,7 @@
       const due = new Date(rule.nextAt);
       if (Number.isNaN(due.getTime()) || due > now) return;
       if (rule.lastFiredAt === rule.nextAt) return;
-      const label = phAlertRuleLabel(rule);
+      const label = phAlertOccurrenceLabel(rule, due);
       rule.lastFiredAt = rule.nextAt;
       rule.lastEventAt = rule.nextAt;
       const next = phAlertNextOccurrence(rule, new Date(due.getTime() + 60000));
@@ -3688,6 +3734,39 @@
     return vertex;
   }
 
+  function referenceHouseCusps(record) {
+    const profile = record && record.calcProfile && typeof record.calcProfile === 'object' ? record.calcProfile : {};
+    const cusps = profile.houseCusps || profile.cusps || record && (record.houseCusps || record.cusps);
+    return Array.isArray(cusps) && cusps.length === 12 ? cusps.map(Number) : null;
+  }
+
+  function referenceAscendantLongitude(record) {
+    const placements = record && record.placements && typeof record.placements === 'object' ? record.placements : {};
+    const entry = Object.entries(placements).find(function (pair) {
+      const raw = String((pair[1] && (pair[1].name || pair[1].label)) || pair[0] || '').toLowerCase().replace(/[^a-z]/g,'');
+      return raw === 'asc' || raw === 'ascendant' || raw === 'rising';
+    });
+    return entry ? referencePlacementLongitude(entry[1]) : NaN;
+  }
+
+  function referenceHouseForLongitude(record, item, longitude, forceRecalculate) {
+    if (!forceRecalculate && item && Number.isFinite(Number(item.house)) && Number(item.house) >= 1 && Number(item.house) <= 12) return Number(item.house);
+    const cusps = referenceHouseCusps(record);
+    if (cusps) {
+      for (let index = 0; index < 12; index += 1) {
+        const start = phNormDeg(cusps[index]);
+        const span = phNormDeg(cusps[(index + 1) % 12] - start) || 30;
+        if (phNormDeg(Number(longitude) - start) < span) return index + 1;
+      }
+    }
+    const asc = referenceAscendantLongitude(record);
+    if (!Number.isFinite(asc)) return item && Number.isFinite(Number(item.house)) ? Number(item.house) : null;
+    const profile = record && record.calcProfile && typeof record.calcProfile === 'object' ? record.calcProfile : {};
+    const system = String(record && record.houseSystem || profile.houseSystem || '').toLowerCase();
+    const cusp = system.includes('whole') ? Math.floor(phNormDeg(asc) / 30) * 30 : asc;
+    return Math.floor(phNormDeg(Number(longitude) - cusp) / 30) + 1;
+  }
+
   function defaultSkyTargets() {
     const record = defaultSkyRecord();
     const placements = record && record.placements && typeof record.placements === 'object' ? record.placements : {};
@@ -3707,12 +3786,31 @@
         PartOfFortune:'Part of Fortune',Fortune:'Part of Fortune'
       };
       const name = nameMap[rawName] || rawName.replace(/([a-z])([A-Z])/g,'$1 $2');
-      const longitude = name === 'Vertex' && Number.isFinite(freshVertex) ? freshVertex : referencePlacementLongitude(item);
+      const isFreshVertex = name === 'Vertex' && Number.isFinite(freshVertex);
+      const longitude = isFreshVertex ? freshVertex : referencePlacementLongitude(item);
       if (!Number.isFinite(longitude)) return null;
-      return {name:name, longitude:longitude};
+      const placement = phLongitudeToPlacement(longitude);
+      return {
+        name:name,
+        body:name,
+        longitude:longitude,
+        sign:placement.sign,
+        degree:placement.degree,
+        minute:placement.minute,
+        house:referenceHouseForLongitude(record, item, longitude, isFreshVertex)
+      };
     }).filter(Boolean);
     if (Number.isFinite(freshVertex) && !targets.some(function (target) { return target.name === 'Vertex'; })) {
-      targets.push({name:'Vertex',longitude:freshVertex});
+      const vertexPlacement = phLongitudeToPlacement(freshVertex);
+      targets.push({
+        name:'Vertex',
+        body:'Vertex',
+        longitude:freshVertex,
+        sign:vertexPlacement.sign,
+        degree:vertexPlacement.degree,
+        minute:vertexPlacement.minute,
+        house:referenceHouseForLongitude(record, null, freshVertex, true)
+      });
     }
     const seen = new Set();
     return targets.filter(function (target) {
@@ -3777,15 +3875,28 @@
               const duplicate = events.find(function (event) {
                 return event.body === body && event.targetName === target.name && event.aspect === aspect.angle && Math.abs(event.time - root) < 5 * 60000;
               });
-              if (!duplicate) events.push({
-                time:root,
-                type:'personal',
-                body:body,
-                targetName:target.name,
-                aspect:aspect.angle,
-                referenceName:referenceName,
-                label:body + ' ' + aspect.name + ' ' + target.name + ' · ' + referenceName
-              });
+              if (!duplicate) {
+                const transitMeta = phEventBodyMeta(body, root);
+                const targetMeta = {
+                  body:target.name,
+                  name:target.name,
+                  sign:target.sign,
+                  degree:target.degree,
+                  minute:target.minute,
+                  house:target.house
+                };
+                events.push({
+                  time:root,
+                  type:'personal',
+                  body:body,
+                  targetName:target.name,
+                  aspect:aspect.angle,
+                  referenceName:referenceName,
+                  transitMeta:transitMeta,
+                  targetMeta:targetMeta,
+                  label:phPlacementLabel(transitMeta) + ' ' + aspect.name + ' ' + phPlacementLabel(targetMeta) + ' · ' + referenceName
+                });
+              }
             });
           });
         });
@@ -3897,6 +4008,25 @@
     });
   }
 
+  function detailedAutomaticEvent(event) {
+    if (!event || !event.time) return event;
+    const primary = event.body ? phEventBodyMeta(event.body, event.time) : null;
+    const secondary = event.targetBody ? phEventBodyMeta(event.targetBody, event.time) : null;
+    if (event.type === 'conjunction' && primary && secondary) {
+      event.label = phPlacementLabel(primary) + ' conjunct ' + phPlacementLabel(secondary);
+    } else if (event.type === 'lunation' && primary && secondary) {
+      event.label = String(event.label || 'Lunation') + ' · ' + phPlacementLabel(primary) + ' · ' + phPlacementLabel(secondary);
+    } else if (event.type === 'ingress' && primary) {
+      if (event.sign) { primary.sign = event.sign; primary.degree = 0; primary.minute = 0; }
+      event.label = String(primary.body) + ' enters ' + String(primary.sign) + ' ' + Number(primary.degree || 0) + '°' + String(Number(primary.minute || 0)).padStart(2,'0') + '′' + (primary.house ? ' H' + primary.house : '');
+    } else if (event.type === 'station' && primary) {
+      event.label = phPlacementLabel(primary) + ' stations ' + String(event.direction || '');
+    }
+    event.primaryMeta = primary;
+    event.secondaryMeta = secondary;
+    return event;
+  }
+
   function automaticPlanetaryEventsForRange(startDate, endDate) {
     if (!window.Astronomy) return [];
     let events = [];
@@ -3907,6 +4037,7 @@
       events = events.concat(phMonthFullMoonEvents(startDate, endDate));
     } catch (error) {}
     const seen = new Set();
+    events = events.map(detailedAutomaticEvent);
     return events.filter(function (event) {
       if (!event || !event.time || Number.isNaN(new Date(event.time).getTime())) return false;
       const key = String(event.type || '') + '|' + String(event.label || '') + '|' + Math.round(new Date(event.time).getTime() / 60000);
@@ -3973,7 +4104,8 @@
       const time = new Date(rule.nextAt);
       return !Number.isNaN(time.getTime()) && time >= range.start && time < range.end;
     }).map(function (rule) {
-      return {time:new Date(rule.nextAt), type:'alert', label:phAlertRuleLabel(rule), isAlert:true};
+      const time = new Date(rule.nextAt);
+      return {time:time, type:'alert', label:phAlertOccurrenceLabel(rule, time), isAlert:true};
     });
     const allEvents = automatic.concat(personal, alerts).sort(function (a,b) { return a.time - b.time; });
     const byDate = {};
@@ -4046,10 +4178,13 @@
 
   function renderCalendarEvents(frame) {
     if (!el.calendarEventLane) return;
+    const sunriseMeta = phEventBodyMeta('Sun', frame.sunrise);
+    const sunsetMeta = phEventBodyMeta('Sun', frame.sunset);
+    const nextSunriseMeta = phEventBodyMeta('Sun', frame.end);
     const events = [
-      {time:frame.sunrise, label:'Sunrise', type:'rise-set'},
-      {time:frame.sunset, label:'Sunset', type:'rise-set'},
-      {time:frame.end, label:'Next sunrise', type:'rise-set'}
+      {time:frame.sunrise, label:phPlacementLabel(sunriseMeta) + ' · Sunrise', type:'rise-set'},
+      {time:frame.sunset, label:phPlacementLabel(sunsetMeta) + ' · Sunset', type:'rise-set'},
+      {time:frame.end, label:phPlacementLabel(nextSunriseMeta) + ' · Next sunrise', type:'rise-set'}
     ];
     automaticPlanetaryEventsForRange(frame.start, frame.end).forEach(function (event) {
       events.push({
@@ -4067,8 +4202,8 @@
         try {
           const base = localNoonFor(frame.start, state.tz, offset);
           const mt = SunCalc.getMoonTimes(base, state.lat, state.lon);
-          if (mt.rise && mt.rise >= frame.start && mt.rise <= frame.end) events.push({time:mt.rise,label:'Moonrise'});
-          if (mt.set && mt.set >= frame.start && mt.set <= frame.end) events.push({time:mt.set,label:'Moonset'});
+          if (mt.rise && mt.rise >= frame.start && mt.rise <= frame.end) events.push({time:mt.rise,label:phPlacementLabel(phEventBodyMeta('Moon', mt.rise)) + ' · Moonrise'});
+          if (mt.set && mt.set >= frame.start && mt.set <= frame.end) events.push({time:mt.set,label:phPlacementLabel(phEventBodyMeta('Moon', mt.set)) + ' · Moonset'});
         } catch (error) {}
       });
     }
@@ -4076,7 +4211,7 @@
     savedAlerts.forEach(function (rule) {
       if (!rule.nextAt) return;
       const time = new Date(rule.nextAt);
-      if (!Number.isNaN(time.getTime()) && time >= frame.start && time <= frame.end) events.push({time:time,label:phAlertRuleLabel(rule),type:'alert',isAlert:true});
+      if (!Number.isNaN(time.getTime()) && time >= frame.start && time <= frame.end) events.push({time:time,label:phAlertOccurrenceLabel(rule, time),type:'alert',isAlert:true});
     });
     const seen = new Set();
     const ordered = events.filter(function (event) {
