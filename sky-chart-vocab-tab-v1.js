@@ -176,10 +176,10 @@ function records(slot){
   const first=source(value).map(([key,item])=>{
     const v=longitude(item);if(!Number.isFinite(v))return null;
     const name=rawName(key,item),ident=identity(key,item,name),explicitHouse=Number(item?.house??item?.houseNumber??item?.house_number);
-    return{key,item,value:v,name:ident.name,id:ident.id,glyphId:ident.glyphId,sign:Math.floor(v/30),house:Number.isFinite(explicitHouse)&&explicitHouse>=1&&explicitHouse<=12?Math.trunc(explicitHouse):0};
+    return{key,item,value:v,name:ident.name,id:ident.id,glyphId:ident.glyphId,sign:Math.floor(v/30),explicitHouse:Number.isFinite(explicitHouse)&&explicitHouse>=1&&explicitHouse<=12?Math.trunc(explicitHouse):0,house:0};
   }).filter(Boolean);
   const houseCusps=cusps(value,first);
-  first.forEach(record=>{if(!record.house)record.house=houseFor(record.value,houseCusps)});
+  first.forEach(record=>{record.house=houseCusps.length?houseFor(record.value,houseCusps):record.explicitHouse});
   return first.sort((a,b)=>{const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value});
 }
 function relations(list){
