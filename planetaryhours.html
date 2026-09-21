@@ -1606,6 +1606,7 @@
   .ph-calendar-alert-builder .is-hidden { display:none; }
   .ph-calendar-event.is-alert { border-color:rgba(220,31,24,.28); background:#fff3f0; }
   .ph-calendar-event.is-personal { border-color:rgba(33,29,25,.25); background:#f4f1ed; font-weight:850; }
+  .ph-calendar-event.is-sky-event { border-color:rgba(39,115,144,.24); background:#f5fafc; }
   @media (max-width:760px) { .ph-calendar-alert-builder { grid-template-columns:1fr 1fr; } .ph-calendar-alert-add { grid-column:1 / -1; } }
   .ph-calendar-timeline { position:relative; display:grid; gap:.48rem; }
   .ph-calendar-timeline::before { content:""; position:absolute; left:5.15rem; top:.7rem; bottom:.7rem; width:1px; background:rgba(17,17,17,.12); }
@@ -3896,18 +3897,30 @@
     });
   }
 
+  function automaticPlanetaryEventsForRange(startDate, endDate) {
+    if (!window.Astronomy) return [];
+    let events = [];
+    try {
+      events = events.concat(phMonthIngressEvents(startDate, endDate));
+      events = events.concat(phMonthStationEvents(startDate, endDate));
+      events = events.concat(phMonthConjunctionEvents(startDate, endDate));
+      events = events.concat(phMonthFullMoonEvents(startDate, endDate));
+    } catch (error) {}
+    const seen = new Set();
+    return events.filter(function (event) {
+      if (!event || !event.time || Number.isNaN(new Date(event.time).getTime())) return false;
+      const key = String(event.type || '') + '|' + String(event.label || '') + '|' + Math.round(new Date(event.time).getTime() / 60000);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).sort(function (a,b) { return a.time - b.time; });
+  }
+
   function automaticPlanetaryMonthEvents(range) {
     if (!window.Astronomy) return [];
     const key = [range.year, range.month, state.tz].join('|');
     if (planetaryMonthEventCache.has(key)) return planetaryMonthEventCache.get(key);
-    let events = [];
-    try {
-      events = events.concat(phMonthIngressEvents(range.start, range.end));
-      events = events.concat(phMonthStationEvents(range.start, range.end));
-      events = events.concat(phMonthConjunctionEvents(range.start, range.end));
-      events = events.concat(phMonthFullMoonEvents(range.start, range.end));
-    } catch (error) {}
-    events.sort(function (a,b) { return a.time - b.time; });
+    const events = automaticPlanetaryEventsForRange(range.start, range.end);
     planetaryMonthEventCache.set(key, events);
     return events;
   }
@@ -4034,12 +4047,20 @@
   function renderCalendarEvents(frame) {
     if (!el.calendarEventLane) return;
     const events = [
-      {time:frame.sunrise, label:'Sunrise'},
-      {time:frame.sunset, label:'Sunset'},
-      {time:frame.end, label:'Next sunrise'}
+      {time:frame.sunrise, label:'Sunrise', type:'rise-set'},
+      {time:frame.sunset, label:'Sunset', type:'rise-set'},
+      {time:frame.end, label:'Next sunrise', type:'rise-set'}
     ];
+    automaticPlanetaryEventsForRange(frame.start, frame.end).forEach(function (event) {
+      events.push({
+        time:event.time,
+        label:event.label,
+        type:event.type || 'sky-event',
+        isSkyEvent:true
+      });
+    });
     personalTransitEventsForRange(frame.start, frame.end).forEach(function (event) {
-      events.push({time:event.time,label:event.label,isPersonal:true});
+      events.push({time:event.time,label:event.label,type:'personal',isPersonal:true});
     });
     if (window.SunCalc) {
       [-1,0,1,2].forEach(function (offset) {
@@ -4055,7 +4076,7 @@
     savedAlerts.forEach(function (rule) {
       if (!rule.nextAt) return;
       const time = new Date(rule.nextAt);
-      if (!Number.isNaN(time.getTime()) && time >= frame.start && time <= frame.end) events.push({time:time,label:phAlertRuleLabel(rule),isAlert:true});
+      if (!Number.isNaN(time.getTime()) && time >= frame.start && time <= frame.end) events.push({time:time,label:phAlertRuleLabel(rule),type:'alert',isAlert:true});
     });
     const seen = new Set();
     const ordered = events.filter(function (event) {
@@ -4067,7 +4088,7 @@
     }).sort(function (a,b) { return new Date(a.time) - new Date(b.time); });
     state.calendarEvents = ordered;
     el.calendarEventLane.innerHTML = ordered.map(function (event) {
-      return '<span class="ph-calendar-event' + (event.isAlert ? ' is-alert' : '') + (event.isPersonal ? ' is-personal' : '') + '"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + htmlText(event.label) + '</span>';
+      return '<span class="ph-calendar-event' + (event.isAlert ? ' is-alert' : '') + (event.isPersonal ? ' is-personal' : '') + (event.isSkyEvent ? ' is-sky-event' : '') + '"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + htmlText(event.label) + '</span>';
     }).join('');
   }
 
