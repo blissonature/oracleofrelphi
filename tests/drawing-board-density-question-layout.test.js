@@ -120,8 +120,8 @@ async function applyQuestions(page,labels){
 
     await resetBoard(page);
     const short='What matters here?';
-    const long='Is the apparent world governed by an intelligence that mistakes itself for ultimate reality and then generates a secondary ordering principle that preserves the illusion through memory and repetition and symbolic inheritance and the apparent continuity of individual experience while also reproducing the conditions under which consciousness mistakes inherited structures for independent beings and mistakes patterned recurrence for evidence of an external governing agency and if so what part of that process is actually objective rather than projected or culturally transmitted?';
-    assert.ok(long.length>400,'long-question fixture must exceed every former 90 96 and 240 character clamp');
+    const long=('Is the apparent world governed by an intelligence that mistakes itself for ultimate reality and then reproduces that mistake through memory repetition symbolic inheritance and the apparent continuity of individual experience while consciousness mistakes inherited structures for independent beings and patterned recurrence for external agency? '.repeat(5)).trim();
+    assert.ok(long.length>1200,'long-question fixture must exceed the former 1000 character clamp');
     await applyQuestions(page,[short,long]);
 
     const storedQuestions=await page.evaluate(()=> {
@@ -193,7 +193,7 @@ async function applyQuestions(page,labels){
     });
     assert.equal(secondAudit.text,long,'focus view must preserve the complete question');
     assert.ok(secondAudit.positionScrollWidth<=secondAudit.positionClientWidth+1,'focus question must wrap instead of clipping horizontally');
-    assert.ok(secondAudit.panelScrollHeight>=secondAudit.panelClientHeight,'long Focus questions may scroll vertically but must not be truncated from the stored/displayed text');
+    assert.ok(secondAudit.panelScrollHeight<=secondAudit.panelClientHeight+1,'Focus question panel must expand to expose the full question instead of clipping or requiring an inner scroll');
     assert.ok(Math.abs(secondAudit.art.width-firstArt.width)<=1 && Math.abs(secondAudit.art.height-firstArt.height)<=1,
       `same card/orientation must keep the same focus art scale regardless of question length: short=${JSON.stringify(firstArt)} long=${JSON.stringify(secondAudit.art)}`);
 
