@@ -412,9 +412,9 @@
 .sky-ph-hour-segment { stroke:#27221e; stroke-width:2.2; stroke-linecap:round; opacity:.28; vector-effect:non-scaling-stroke; }
 .sky-ph-hour-segment.past { opacity:.72; }
 .sky-ph-hour-segment.current { stroke:#c9211e; stroke-width:5; opacity:1; filter:drop-shadow(0 0 4px rgba(201,33,30,.3)); }
-.sky-ph-node { fill:#fff; stroke:currentColor; stroke-width:2.2; vector-effect:non-scaling-stroke; }
+.sky-ph-node { fill:currentColor; stroke:currentColor; stroke-width:2.2; vector-effect:non-scaling-stroke; }
 .sky-ph-node.day { stroke-width:5; }
-.sky-ph-node.hour { fill:currentColor; filter:drop-shadow(0 0 5px rgba(0,0,0,.22)); }
+.sky-ph-node.hour { fill:#fff; filter:drop-shadow(0 0 5px rgba(0,0,0,.22)); }
 .sky-ph-node-glyph { pointer-events:none; }
 .sky-ph-node-label { fill:#24201c; font:800 13px/1 system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; }
 .sky-ph-center-label { fill:#29241f; font:850 12px/1.2 system-ui,sans-serif; text-anchor:middle; }
