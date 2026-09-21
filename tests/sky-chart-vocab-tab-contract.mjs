@@ -21,4 +21,11 @@ assert.match(vocab,/AXIS_PAIRS/,'Definitional axes must be treated as axes rathe
 assert.match(vocab,/houseCusps\.length\?houseFor/,'Vocab houses must follow the active house system when cusps are available');
 assert.match(vocab,/data\.vocabLocalStage/,'Vocab tokens must support local progressive reveal');
 
+assert.match(vocab,/const SIGN_COLORS=\['#e53935'/,'Vocab signs must use the established zodiac palette');
+assert.match(vocab,/const HOUSE_COLORS=\['#e53935'/,'Vocab houses must use the established house palette');
+assert.match(vocab,/color:String\(aspect\?\.color\|\|''\)/,'Vocab aspects must use their established aspect colors');
+assert.match(vocab,/sky-vocab-level\.is-color-coded/,'Color must be confined to Vocab vocabulary tokens');
+assert.equal(vocab.includes('sky-foundation-relationship-row'),false,'Vocab feature must not restyle Relationship rows');
+assert.equal(vocab.includes('#skyFoundationRelationships'),false,'Vocab feature must not alter the Relationships panel');
+
 console.log('Sky Chart Vocab tab contract passed.');
