@@ -20,6 +20,7 @@ const progressiveCss = fs.readFileSync(path.join(root, 'sky-chart-progressive-co
 const progressiveContract = fs.readFileSync(path.join(root, 'sky-chart-progressive-reveal-contract-v1.js'), 'utf8');
 const heptagram = fs.readFileSync(path.join(root, 'sky-chart-heptagram-canonical-v1.js'), 'utf8');
 const heptagramCss = fs.readFileSync(path.join(root, 'sky-chart-heptagram-canonical-v1.css'), 'utf8');
+const whereWhenCss = fs.readFileSync(path.join(root, 'sky-chart-where-when-v1.css'), 'utf8');
 const registry = fs.readFileSync(path.join(root, 'relphi-glyph-registry-v1.js'), 'utf8');
 const component = fs.readFileSync(path.join(root, 'relphi-glyph-component-v1.js'), 'utf8');
 const fortune = fs.readFileSync(path.join(root, 'assets/planet-glyphs/part-of-fortune.svg'), 'utf8');
@@ -244,6 +245,8 @@ test('Planetary Hours heptagram keeps day and hour states visibly distinct witho
   assert.match(heptagram, /day-and-hour-ruler/);
   assert.match(heptagramCss, /\.sky-ph-day-ruler-ring--inner/);
   assert.match(heptagramCss, /\.sky-ph-day-ruler-ring--outer/);
+  assert.match(whereWhenCss, /\.sky-ph-node \{ fill:currentColor;/, 'Fallback nodes must use the same colored-background default as the canonical renderer');
+  assert.match(whereWhenCss, /\.sky-ph-node\.hour \{ fill:#fff;/, 'Fallback hour ruler must use a white background');
 });
 
 test('Planetary Hours heptagram is glyph-only inside the SVG', () => {
@@ -339,6 +342,6 @@ test('Sky Chart cache keys point at the compact relationship, copy, coordinate, 
   assert.match(html, /sky-chart-selected-relationship-v4\.js\?v=9/);
   assert.match(html, /sky-chart-progressive-comparison-v1\.js\?v=10/);
   assert.match(html, /sky-chart-progressive-reveal-contract-v1\.js\?v=2/);
-  assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=14/);
+  assert.match(html, /sky-chart-heptagram-canonical-v1\.js\?v=17/);
   assert.match(html, /sky-chart-card-hits-v2\.js\?v=10/);
 });
