@@ -102,9 +102,12 @@
     const leftId=row.dataset.leftPlacement||'',rightId=row.dataset.rightPlacement||'',aspect=row.dataset.aspect||'';
     const leftSign=SIGN_SYMBOLS[Number(row.dataset.leftSign)]||'',rightSign=SIGN_SYMBOLS[Number(row.dataset.rightSign)]||'';
     const leftCoordinate=coordinate(row,'left'),rightCoordinate=coordinate(row,'right');
+    const leftHouse=Number(row.dataset.leftHouse),rightHouse=Number(row.dataset.rightHouse);
+    const leftHouseToken=Number.isInteger(leftHouse)&&leftHouse>=1&&leftHouse<=12?` H${leftHouse}`:'';
+    const rightHouseToken=Number.isInteger(rightHouse)&&rightHouse>=1&&rightHouse<=12?` H${rightHouse}`:'';
     const aspectSymbol=ASPECT_SYMBOLS[aspect]||aspect;
     if(!leftId||!rightId||!leftCoordinate||!rightCoordinate)return'';
-    return `${placementSymbol(leftId)} in ${leftSign} ${leftCoordinate}  ${aspectSymbol}  ${placementSymbol(rightId)} in ${rightSign} ${rightCoordinate}`.replace(/\s+/g,' ').trim();
+    return `${placementSymbol(leftId)} in ${leftSign} ${leftCoordinate}${leftHouseToken}  ${aspectSymbol}  ${placementSymbol(rightId)} in ${rightSign} ${rightCoordinate}${rightHouseToken}`.replace(/\s+/g,' ').trim();
   }
 
   function relationshipMode(row){
