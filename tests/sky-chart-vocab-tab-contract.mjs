@@ -5,7 +5,7 @@ const html=readFileSync(new URL('../sky-chart.html',import.meta.url),'utf8');
 const vocab=readFileSync(new URL('../sky-chart-vocab-tab-v1.js',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=1/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=2/,'Sky Chart must load the Vocab subtab');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
@@ -25,6 +25,8 @@ assert.match(vocab,/const SIGN_COLORS=\['#e53935'/,'Vocab signs must use the est
 assert.match(vocab,/const HOUSE_COLORS=\['#e53935'/,'Vocab houses must use the established house palette');
 assert.match(vocab,/color:String\(aspect\?\.color\|\|''\)/,'Vocab aspects must use their established aspect colors');
 assert.match(vocab,/sky-vocab-level\.is-color-coded/,'Color must be confined to Vocab vocabulary tokens');
+assert.match(vocab,/style\.setProperty\('color',color,'important'\)/,'Color must be applied directly so Vocab tokens survive tab/view repainting');
+assert.match(vocab,/visibilitychange/,'Vocab must repaint when a browser tab becomes visible again');
 assert.equal(vocab.includes('sky-foundation-relationship-row'),false,'Vocab feature must not restyle Relationship rows');
 assert.equal(vocab.includes('#skyFoundationRelationships'),false,'Vocab feature must not alter the Relationships panel');
 
