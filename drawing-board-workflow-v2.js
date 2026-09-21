@@ -704,7 +704,7 @@
     return rows.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
   }
   function parseBulkQuestions(value) {
-    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,MAX_POSITIONS).map(item=>item);
+    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,MAX_POSITIONS);
   }
   function markQuestionEditCustom(drawer,draft) {
     if (draft.templateId) draft.basedOnTemplateId=draft.templateId;
@@ -797,11 +797,6 @@
       while (draft.labels.length<=index) draft.labels.push('');
       draft.labels[index]=event.target.value;
       markQuestionEditCustom(drawer,draft);
-    });
-    labelsList?.addEventListener('change',event=>{
-      const row=event.target.closest('.relphi-label-row');
-      if (!row || event.target.tagName!=='INPUT' || Number(row.dataset.labelRow)!==0) return;
-      acceptCommaList(event.target.value);
     });
     labelsList?.addEventListener('click',event=>{
       const button=event.target.closest('[data-remove-label]');
