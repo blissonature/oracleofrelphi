@@ -17,7 +17,6 @@
   const LABEL_H = 68;
   const GUTTER = 12;
   const MAX_POSITIONS = 50; // 10×5 dense packing stays above the supported .32 card scale.
-  const MAX_QUESTION_LENGTH = 1000;
   const MIN_ZOOM = .45;
   const MAX_ZOOM = 2.4;
 
@@ -702,10 +701,10 @@
   }
   function labelsMarkup(labels) {
     const rows=labels.length ? labels : [''];
-    return rows.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" ${index===0?'':`maxlength="${MAX_QUESTION_LENGTH}" `}value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
+    return rows.map((label,index)=>`<div class="relphi-label-row" data-label-row="${index}"><span>${index+1}</span><input type="text" value="${escapeHtml(label)}" aria-label="Position ${index+1} label"><button type="button" data-remove-label="${index}" aria-label="Remove position ${index+1}">×</button></div>`).join('');
   }
   function parseBulkQuestions(value) {
-    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,MAX_POSITIONS).map(item=>item.slice(0,MAX_QUESTION_LENGTH));
+    return String(value || '').split(',').map(item=>item.trim()).filter(Boolean).slice(0,MAX_POSITIONS).map(item=>item);
   }
   function markQuestionEditCustom(drawer,draft) {
     if (draft.templateId) draft.basedOnTemplateId=draft.templateId;
@@ -796,7 +795,7 @@
       if (!row || event.target.tagName!=='INPUT') return;
       const index=Number(row.dataset.labelRow);
       while (draft.labels.length<=index) draft.labels.push('');
-      draft.labels[index]=event.target.value.slice(0,MAX_QUESTION_LENGTH);
+      draft.labels[index]=event.target.value;
       markQuestionEditCustom(drawer,draft);
     });
     labelsList?.addEventListener('change',event=>{
@@ -894,7 +893,7 @@
 
   function draftPrefab(draft) {
     const based=templateById(draft.templateId || draft.basedOnTemplateId);
-    const labels=draft.labels.slice(0,MAX_POSITIONS).map((value,index)=>String(value || `Position ${index+1}`).trim().slice(0,MAX_QUESTION_LENGTH));
+    const labels=draft.labels.slice(0,MAX_POSITIONS).map((value,index)=>String(value || `Position ${index+1}`).trim());
     if (based && based.positions.length===labels.length) {
       const next=clone(based);
       next.positions.forEach((item,index)=>{item.label=labels[index]; item.drawOrder=index+1;});
