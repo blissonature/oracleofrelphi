@@ -183,7 +183,7 @@ function records(slot){
   return first.sort((a,b)=>{const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value});
 }
 function relations(list){
-  const model=HARMONIC(),aspects=model?.aspects||[],windowValue=model?.windowFromControl?.()??Number(document.documentElement.dataset.skyHarmonicWindow)||6,result=[];
+  const model=HARMONIC(),aspects=model?.aspects||[],windowValue=(model?.windowFromControl?.()??Number(document.documentElement.dataset.skyHarmonicWindow))||6,result=[];
   for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
     const left=list[i],right=list[j],distance=separation(left.value,right.value);
     for(const aspect of aspects){
