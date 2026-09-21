@@ -7,7 +7,6 @@
   const LEGACY_KEY = 'relphiDrawingBoardStickerPrefabsV1';
   const MAX_CUSTOM = 40;
   const MAX_POSITIONS = 50;
-  const MAX_QUESTION_LENGTH = 1000;
   const RETIRED_PREFAB_IDS = new Set(['celtic-cross-11']);
   let selectedId = '';
   let enhancing = false;
@@ -206,7 +205,7 @@
     if (!prefab || !Array.isArray(prefab.positions) || !prefab.positions.length) return null;
     const positions = prefab.positions.slice(0, MAX_POSITIONS).map((item, index) => ({
       id:String(item.id || 'position-' + (index + 1)).slice(0, 80),
-      label:String(item.label || 'Position ' + (index + 1)).slice(0, MAX_QUESTION_LENGTH),
+      label:String(item.label || 'Position ' + (index + 1)),
       drawOrder:index + 1,
       transform:{
         x:Math.max(0, Math.min(1, Number(item.transform?.x) || 0)),
