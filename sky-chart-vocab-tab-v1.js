@@ -10,6 +10,8 @@ const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const DISPLAY_KEY='relphiSkyVocabDisplayV1';
 const VIEW_KEY='relphiSkyVocabViewV1';
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const SIGN_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const SIGN_REFERENTS={
   Aries:'initiative, directness, courage, impulse, and beginning',
   Taurus:'embodiment, value, pleasure, endurance, and material continuity',
@@ -195,10 +197,10 @@ function relations(list){
   return result.sort((a,b)=>a.metrics.phaseError-b.metrics.phaseError||a.metrics.harmonicOrder-b.metrics.harmonicOrder||a.metrics.ordinaryOrb-b.metrics.ordinaryOrb);
 }
 function placementReferent(record){return PLACEMENT_REFERENTS[record.id]||String(record.name||'placement').toLowerCase()}
-function signInfo(index){const name=SIGNS[index]||'Sign';return{id:slug(name),glyphId:slug(name),name,referent:SIGN_REFERENTS[name]||'zodiacal setting'}}
-function houseInfo(number){return{id:'house-'+number,glyphId:null,name:HOUSE_NAMES[number]||'House',referent:HOUSE_REFERENTS[number]||'life area',fallbackGlyph:String(number||'')}}
-function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.name}}
-function aspectInfo(aspect){return{id:aspect.id,glyphId:aspect.id,name:ASPECT_NAMES[aspect.id]||aspect.id,referent:ASPECT_REFERENTS[aspect.id]||'relationship',fallbackGlyph:ASPECT_NAMES[aspect.id]||aspect.id}}
+function signInfo(index){const name=SIGNS[index]||'Sign';return{id:slug(name),glyphId:slug(name),name,referent:SIGN_REFERENTS[name]||'zodiacal setting',color:SIGN_COLORS[index]||''}}
+function houseInfo(number){return{id:'house-'+number,glyphId:null,name:HOUSE_NAMES[number]||'House',referent:HOUSE_REFERENTS[number]||'life area',fallbackGlyph:String(number||''),color:HOUSE_COLORS[number-1]||''}}
+function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.name,color:''}}
+function aspectInfo(aspect){return{id:aspect.id,glyphId:aspect.id,name:ASPECT_NAMES[aspect.id]||aspect.id,referent:ASPECT_REFERENTS[aspect.id]||'relationship',fallbackGlyph:ASPECT_NAMES[aspect.id]||aspect.id,color:String(aspect?.color||'')}}
 
 function displayState(){
   const value=readJson(localStorage,DISPLAY_KEY,null);
@@ -220,12 +222,14 @@ function token(info,kind='term'){
   node.dataset.vocabName=String(info.name||'');
   node.dataset.vocabReferent=String(info.referent||'');
   node.dataset.vocabFallbackGlyph=String(info.fallbackGlyph||info.name||'');
+  node.dataset.vocabColor=String(info.color||'');
+  if(info.color)node.style.setProperty('--vocab-token-color',String(info.color));
   node.dataset.vocabLocalStage='0';
   renderToken(node);
   return node;
 }
 function glyphNode(tokenNode){
-  const holder=document.createElement('span');holder.className='sky-vocab-level sky-vocab-glyph';holder.dataset.vocabLevel='glyph';holder.setAttribute('role','button');holder.tabIndex=0;holder.setAttribute('aria-label','Reveal name');
+  const holder=document.createElement('span');holder.className='sky-vocab-level sky-vocab-glyph';holder.dataset.vocabLevel='glyph';holder.setAttribute('role','button');holder.tabIndex=0;holder.setAttribute('aria-label','Reveal name');if(tokenNode.dataset.vocabColor)holder.classList.add('is-color-coded');
   const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName;
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
   if(entry&&component){
@@ -235,7 +239,7 @@ function glyphNode(tokenNode){
   return holder;
 }
 function nameNode(tokenNode){
-  const node=document.createElement('span');node.className='sky-vocab-level sky-vocab-name';node.dataset.vocabLevel='name';node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label','Reveal referent');node.textContent=tokenNode.dataset.vocabName;return node;
+  const node=document.createElement('span');node.className='sky-vocab-level sky-vocab-name';node.dataset.vocabLevel='name';node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label','Reveal referent');if(tokenNode.dataset.vocabColor)node.classList.add('is-color-coded');node.textContent=tokenNode.dataset.vocabName;return node;
 }
 function referentNode(tokenNode){
   const node=document.createElement('span');node.className='sky-vocab-level sky-vocab-referent';node.dataset.vocabLevel='referent';node.setAttribute('role','button');node.tabIndex=0;node.textContent=tokenNode.dataset.vocabReferent;return node;
@@ -374,14 +378,16 @@ function installStyles(){
     .sky-vocab-controls{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;padding:.18rem 0 .1rem}
     .sky-vocab-check{display:inline-flex;align-items:center;gap:.28rem;color:#4e463f;font:800 .64rem/1.2 system-ui,sans-serif;cursor:pointer}
     .sky-vocab-check input{margin:0}
-    .sky-vocab-paragraph{margin:0;color:#2c2723;font:650 .78rem/1.58 system-ui,sans-serif}
+    .sky-vocab-paragraph{margin:0;color:#2c2723;font:500 .78rem/1.62 system-ui,sans-serif}
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
     .sky-vocab-glyph{display:inline-flex;align-items:center;justify-content:center;vertical-align:-.13em;min-width:.9em}
     .sky-vocab-glyph svg{display:inline-block;width:1.05em;height:1.05em;overflow:visible}
-    .sky-vocab-name{font-weight:800}
-    .sky-vocab-referent{font-weight:650}
+    .sky-vocab-name{font-weight:760}
+    .sky-vocab-referent{font-weight:520;color:#2c2723}
+    .sky-vocab-level.is-color-coded{color:var(--vocab-token-color)!important;-webkit-text-fill-color:var(--vocab-token-color)!important}
+    .sky-vocab-level.is-color-coded svg{color:var(--vocab-token-color)!important}
     .sky-vocab-empty{color:#766c64;font-style:italic}
     @media(max-width:620px){
       .sky-placement-vocab-tab{font-size:.7rem;padding:.34rem .52rem}
