@@ -3634,32 +3634,85 @@
 
   function referencePlacementLongitude(item) {
     if (!item || typeof item !== 'object') return NaN;
-    if (Number.isFinite(Number(item.longitude))) return phNormDeg(Number(item.longitude));
+    if (item.longitude !== '' && item.longitude != null && Number.isFinite(Number(item.longitude))) return phNormDeg(Number(item.longitude));
     const signIndex = phSigns.findIndex(function (sign) { return sign.toLowerCase() === String(item.sign || '').trim().toLowerCase(); });
     if (signIndex < 0 || !Number.isFinite(Number(item.degree))) return NaN;
     return phNormDeg(signIndex * 30 + Number(item.degree) + (Number(item.minute) || 0) / 60 + (Number(item.second) || 0) / 3600);
   }
 
+  function referenceSkyInstant(record) {
+    const profile = record && record.calcProfile && typeof record.calcProfile === 'object' ? record.calcProfile : {};
+    const direct = String(profile.instant || record && record.instant || '').trim();
+    if (direct) {
+      const date = new Date(direct);
+      if (!Number.isNaN(date.getTime())) return date;
+    }
+    const local = String(profile.dateTime || record && record.dateTime || '').trim();
+    const zone = String(profile.timeZone || record && record.timeZone || '').trim();
+    if (local && zone && window.luxon && window.luxon.DateTime) {
+      const dt = window.luxon.DateTime.fromISO(local, {zone:zone,setZone:true});
+      if (dt && dt.isValid) return dt.toUTC().toJSDate();
+    }
+    if (local) {
+      const date = new Date(local);
+      if (!Number.isNaN(date.getTime())) return date;
+    }
+    return null;
+  }
+
+  function referenceVertexLongitude(record) {
+    if (!record || !window.Astronomy) return NaN;
+    const profile = record.calcProfile && typeof record.calcProfile === 'object' ? record.calcProfile : {};
+    const date = referenceSkyInstant(record);
+    const latitude = Number(profile.latitude != null ? profile.latitude : record.latitude);
+    const longitude = Number(profile.longitude != null ? profile.longitude : record.longitude);
+    if (!date || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return NaN;
+
+    const armc = phNormDeg(window.Astronomy.SiderealTime(date) * 15 + longitude);
+    const epsilon = Number(window.Astronomy.e_tilt(date).tobl);
+    if (!Number.isFinite(armc) || !Number.isFinite(epsilon)) return NaN;
+
+    const toRad = function (degrees) { return degrees * Math.PI / 180; };
+    const toDeg = function (radians) { return radians * 180 / Math.PI; };
+    const x = phNormDeg(armc - 90);
+    const poleLatitude = latitude >= 0 ? 90 - latitude : -90 - latitude;
+    const numerator = Math.sin(toRad(x));
+    const denominator = Math.cos(toRad(epsilon)) * Math.cos(toRad(x)) - Math.sin(toRad(epsilon)) * Math.tan(toRad(poleLatitude));
+    let vertex = phNormDeg(toDeg(Math.atan2(numerator, denominator)));
+
+    if (Math.abs(latitude) <= epsilon) {
+      const mc = phNormDeg(toDeg(Math.atan2(Math.sin(toRad(armc)), Math.cos(toRad(armc)) * Math.cos(toRad(epsilon)))));
+      if (phSignedAngle(vertex - mc) > 0) vertex = phNormDeg(vertex + 180);
+    }
+    return vertex;
+  }
+
   function defaultSkyTargets() {
     const record = defaultSkyRecord();
     const placements = record && record.placements && typeof record.placements === 'object' ? record.placements : {};
+    const freshVertex = referenceVertexLongitude(record);
     const targets = Object.entries(placements).map(function (entry) {
       const item = entry[1] || {};
-      const longitude = referencePlacementLongitude(item);
       const rawName = String(item.name || entry[0] || '').trim();
-      if (!Number.isFinite(longitude) || !rawName) return null;
+      if (!rawName) return null;
       const nameMap = {
         Asc:'Ascendant',ASC:'Ascendant',Ascendant:'Ascendant',
         Dsc:'Descendant',DSC:'Descendant',Descendant:'Descendant',
         Mc:'MC',MC:'MC',Midheaven:'MC',
         Ic:'IC',IC:'IC',
+        Vx:'Vertex',Vertex:'Vertex',
         NorthNode:'North Node','North Node':'North Node',Node:'North Node',
         SouthNode:'South Node','South Node':'South Node',
         PartOfFortune:'Part of Fortune',Fortune:'Part of Fortune'
       };
       const name = nameMap[rawName] || rawName.replace(/([a-z])([A-Z])/g,'$1 $2');
+      const longitude = name === 'Vertex' && Number.isFinite(freshVertex) ? freshVertex : referencePlacementLongitude(item);
+      if (!Number.isFinite(longitude)) return null;
       return {name:name, longitude:longitude};
     }).filter(Boolean);
+    if (Number.isFinite(freshVertex) && !targets.some(function (target) { return target.name === 'Vertex'; })) {
+      targets.push({name:'Vertex',longitude:freshVertex});
+    }
     const seen = new Set();
     return targets.filter(function (target) {
       const key = target.name.toLowerCase() + '|' + target.longitude.toFixed(5);
@@ -3683,6 +3736,11 @@
       return '<option value="' + htmlText(id) + '">' + htmlText(String(record.name || 'Saved sky')) + '</option>';
     }).join('');
     el.calendarPersonalSkySelect.value = records.some(function (record) { return savedSkyRecordRef(record) === selected; }) ? selected : '';
+  }
+
+  function personalAspectError(body, targetLongitude, aspectAngle, date) {
+    const separation = Math.abs(phSignedAngle(phAstronomyLongitude(body, date) - targetLongitude));
+    return Math.abs(separation - Number(aspectAngle));
   }
 
   function personalTransitEventsForRange(startDate, endDate) {
@@ -3714,6 +3772,7 @@
                 return phSignedAngle(phAstronomyLongitude(body, date) - exactLongitude);
               }, a, b, fa, fb);
               if (!root || root < startDate || root >= endDate) return;
+              if (personalAspectError(body, target.longitude, aspect.angle, root) > 0.002) return;
               const duplicate = events.find(function (event) {
                 return event.body === body && event.targetName === target.name && event.aspect === aspect.angle && Math.abs(event.time - root) < 5 * 60000;
               });
