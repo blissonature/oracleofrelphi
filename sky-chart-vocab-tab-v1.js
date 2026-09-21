@@ -213,6 +213,13 @@ function displayState(){
 function saveDisplay(next){writeJson(localStorage,DISPLAY_KEY,next);document.documentElement.dataset.skyVocabGlyphs=next.glyphs?'true':'false';document.documentElement.dataset.skyVocabNames=next.names?'true':'false';document.documentElement.dataset.skyVocabReferents=next.referents?'true':'false'}
 function viewState(){return readJson(sessionStorage,VIEW_KEY,{A:'placements',B:'placements'})}
 function saveView(slot,view){const state=viewState();state[slot]=view;writeJson(sessionStorage,VIEW_KEY,state)}
+function applyTokenColor(node,tokenNode){
+  const color=String(tokenNode?.dataset?.vocabColor||'').trim();
+  if(!color)return;
+  node.classList.add('is-color-coded');
+  node.style.setProperty('color',color,'important');
+  node.style.setProperty('-webkit-text-fill-color',color,'important');
+}
 function token(info,kind='term'){
   const node=document.createElement('span');
   node.className='sky-vocab-token';
@@ -229,7 +236,7 @@ function token(info,kind='term'){
   return node;
 }
 function glyphNode(tokenNode){
-  const holder=document.createElement('span');holder.className='sky-vocab-level sky-vocab-glyph';holder.dataset.vocabLevel='glyph';holder.setAttribute('role','button');holder.tabIndex=0;holder.setAttribute('aria-label','Reveal name');if(tokenNode.dataset.vocabColor)holder.classList.add('is-color-coded');
+  const holder=document.createElement('span');holder.className='sky-vocab-level sky-vocab-glyph';holder.dataset.vocabLevel='glyph';holder.setAttribute('role','button');holder.tabIndex=0;holder.setAttribute('aria-label','Reveal name');applyTokenColor(holder,tokenNode);
   const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName;
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
   if(entry&&component){
@@ -239,7 +246,7 @@ function glyphNode(tokenNode){
   return holder;
 }
 function nameNode(tokenNode){
-  const node=document.createElement('span');node.className='sky-vocab-level sky-vocab-name';node.dataset.vocabLevel='name';node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label','Reveal referent');if(tokenNode.dataset.vocabColor)node.classList.add('is-color-coded');node.textContent=tokenNode.dataset.vocabName;return node;
+  const node=document.createElement('span');node.className='sky-vocab-level sky-vocab-name';node.dataset.vocabLevel='name';node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label','Reveal referent');applyTokenColor(node,tokenNode);node.textContent=tokenNode.dataset.vocabName;return node;
 }
 function referentNode(tokenNode){
   const node=document.createElement('span');node.className='sky-vocab-level sky-vocab-referent';node.dataset.vocabLevel='referent';node.setAttribute('role','button');node.tabIndex=0;node.textContent=tokenNode.dataset.vocabReferent;return node;
@@ -407,6 +414,8 @@ function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
   'relphi:sky-b-restored','relphi:sky-session-recovered'
 ].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY)schedule()});
+window.addEventListener('pageshow',schedule);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
 window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
 })();
