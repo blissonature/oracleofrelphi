@@ -10,7 +10,7 @@ const board = read('drawing-board-workflow-v2.js');
 const css = read('drawing-board-workflow-v2.css');
 const app = read('tarot-app.js');
 
-assert.match(nav, /drawing-board-workflow-v2\.js\?v=89/);
+assert.match(nav, /drawing-board-workflow-v2\.js\?v=90/);
 [
   'drawing-board-interactions-v1.js',
   'drawing-board-template-lifecycle-v1.js',
@@ -29,7 +29,7 @@ assert.doesNotMatch(nav, /relphi-drawing-board-ui-ready|relphi-drawing-board-ui-
 });
 
 assert.match(app, /rowEnvelopeLayout:/);
-assert.match(app, /const DRAWING_BOARD_QUESTION_MAX = 1000;/);
+assert.doesNotMatch(app, /DRAWING_BOARD_QUESTION_MAX/);
 assert.doesNotMatch(app, /shortListPositionLabels[^\n]{0,180}slice\(0,\s*(?:90|96)\)/);
 assert.match(app, /rowCardTransforms:/);
 assert.match(app, /function rowCardTransform\(index\)[\s\S]{0,180}Math\.max\(\.32,/);
@@ -95,6 +95,9 @@ assert.match(css, /\.relphi-focus-main\{/);
 assert.match(css, /\.relphi-focus-art\{/);
 assert.match(css, /\.relphi-focus-entry\{/);
 assert.match(css, /\.relphi-focus-position-panel\{/);
+assert.match(css, /\.relphi-focus-shell\{[^}]*grid-template-rows:auto auto minmax\(0,1fr\) auto/);
+assert.match(css, /\.relphi-focus-position-panel\{[^}]*overflow:visible!important/);
+assert.match(css, /\.relphi-focus-art-frame\{[^}]*max-height:none!important/);
 assert.doesNotMatch(css, /position-anchor:--relphi-focus-card-title/);
 assert.match(css, /\.relphi-focus-art\.is-reversed\{/);
 assert.match(css, /\.relphi-focus-strip\{/);

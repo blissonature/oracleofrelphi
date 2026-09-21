@@ -178,9 +178,8 @@
     if (!normalized) return null;
     return STICKER_PRESETS.find(preset => stickerPresetDisplay(preset).toLowerCase() === normalized || preset.name.toLowerCase() === normalized) || null;
   }
-  const DRAWING_BOARD_QUESTION_MAX = 1000;
   function parsePositionLabels(value) {
-    return String(value || '').split(',').map(x => x.trim().slice(0,DRAWING_BOARD_QUESTION_MAX)).filter((x, i, arr) => x || i < arr.length - 1);
+    return String(value || '').split(',').map(x => x.trim()).filter((x, i, arr) => x || i < arr.length - 1);
   }
 
   const HEBREW_SPELL_LETTERS = [
@@ -252,7 +251,7 @@
     if (!sequence.length) return false;
     state.rowAllowRepeats = true;
     state.shortListName = `Spell: ${source}`.slice(0, 80);
-    state.shortListPositionLabels = sequence.map(item => `${item.input} / ${item.name}`.slice(0, DRAWING_BOARD_QUESTION_MAX));
+    state.shortListPositionLabels = sequence.map(item => `${item.input} / ${item.name}`);
     state.shortListPositionCardIds = [];
     commitShortList(sequence.map(item => item.cardId));
     state.shortListSelection = [];
@@ -743,7 +742,7 @@
     const dragAttrs = context === 'short-list'
       ? ' draggable="true" data-row-card="' + escapeHtml(card.card_id) + '"'
       : (context === 'browse' ? ' draggable="true" data-drag-card="' + escapeHtml(card.card_id) + '"' : '');
-    const positionLabel = String(options.positionLabel || '').trim().slice(0, DRAWING_BOARD_QUESTION_MAX);
+    const positionLabel = String(options.positionLabel || '').trim();
     const placementText = String(options.placementText || positionLabel || '').trim();
     const placementGlyph = String(options.placementGlyph || options.positionGlyph || '').trim();
     const placementLines = uniqueHitSources.length ? uniqueHitSources : (placementText ? [placementText] : []);
@@ -2053,7 +2052,7 @@
       const transform = rowCardTransform(index);
       const result = {
         id: prefabPositionId(meta, index),
-        label: String(state.shortListPositionLabels?.[index] || `Position ${index + 1}`).trim().slice(0, DRAWING_BOARD_QUESTION_MAX),
+        label: String(state.shortListPositionLabels?.[index] || `Position ${index + 1}`).trim(),
         drawOrder: index + 1,
         transform: normalizedPrefabTransform({
           x:point.x / PREFAB_CANVAS_WIDTH,
@@ -2090,7 +2089,7 @@
     const positions = prefab.positions.slice().sort((a,b) => Number(a.drawOrder) - Number(b.drawOrder));
     state.shortList = [];
     state.shortListSelection = [];
-    state.shortListPositionLabels = positions.map((position, index) => String(position.label || `Position ${index + 1}`).slice(0, DRAWING_BOARD_QUESTION_MAX));
+    state.shortListPositionLabels = positions.map((position, index) => String(position.label || `Position ${index + 1}`));
     state.shortListPositionCardIds = positions.map(() => '');
     state.rowEnvelopeLayout = {};
     state.rowCardTransforms = {};
@@ -2827,7 +2826,7 @@
       });
     });
     function normalizeInlinePositionLabel(value) {
-      return String(value || '').replace(/\s+/g, ' ').trim().slice(0, DRAWING_BOARD_QUESTION_MAX);
+      return String(value || '').replace(/\s+/g, ' ').trim();
     }
     function syncPositionLabelInput() {
       const positionInput = $('rowPositionLabels');

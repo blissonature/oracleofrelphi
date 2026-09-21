@@ -350,15 +350,15 @@ async function assertReadableFocus(page) {
       entryText:document.querySelector('.relphi-focus-entry')?.textContent?.trim().length||0,
       objectFit:getComputedStyle(artEl).objectFit,
       paneOverflow:getComputedStyle(paneEl).overflow,
-      artContained:rendered.top>=pane.top-2&&rendered.bottom<=pane.bottom+2&&rendered.left>=pane.left-2&&rendered.right<=pane.right+2,
+      paneScrollable:paneEl.scrollHeight>=paneEl.clientHeight&&paneEl.scrollWidth>=paneEl.clientWidth,
       rendered,pane:{left:pane.left,right:pane.right,top:pane.top,bottom:pane.bottom}
     };
   });
   await desktop.screenshot({path:path.join(out,'drawing-board-desktop-focus-full-entry.png'),fullPage:true});
   assert.ok(desktopFocus?.sideBySide,'desktop focus view must show full art beside the Ledger entry: '+JSON.stringify(desktopFocus));
   assert.equal(desktopFocus?.objectFit,'contain','desktop focus art must use contain rather than crop');
-  assert.equal(desktopFocus?.paneOverflow,'hidden','desktop focus art pane must clip its viewport boundary');
-  assert.ok(desktopFocus?.artContained,'desktop focus view must contain the entire rendered card art above the film strip: '+JSON.stringify(desktopFocus));
+  assert.equal(desktopFocus?.paneOverflow,'auto','desktop focus art pane must remain a bounded scroll container if a long question reduces available height');
+  assert.ok(desktopFocus?.paneScrollable,'desktop focus art must remain reachable without shrinking when available height is reduced: '+JSON.stringify(desktopFocus));
   assert.ok(desktopFocus.entryText>100,'desktop focus view must show the full Ledger entry');
   let semantic=await boardState(desktop);
   const outcomeIndex=semantic.snap.rowPositionMeta.findIndex(meta=>meta?.id==='outcome');
