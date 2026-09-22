@@ -846,9 +846,18 @@ function wheelNodeFromEvent(event){
   const path=typeof event.composedPath==='function'?event.composedPath():[];
   return path.find(node=>node?.dataset&&allowed.has(node.dataset.interactive)&&node.closest?.('#skyFoundationWheelMount'))||null;
 }
+function vocabClearableBlank(target){
+  const root=document.getElementById('skyFoundationRoot');
+  if(!root?.contains(target))return false;
+  if(target.closest?.('[data-interactive],button,input,select,textarea,a,label,summary,details,.sky-foundation-relationship-row,#skySelectedRelationship,.sky-chart-filter-bar,.sky-card-hits-structure,.sky-foundation-relationships-heading'))return false;
+  return !!target.closest?.('#skyFoundationWheelMount,#skyFoundationA,#skyFoundationB,#skyFoundationComparison');
+}
 function mirrorDirectWheelClick(event){
   const node=wheelNodeFromEvent(event);
-  if(!node)return;
+  if(!node){
+    if((wheelFilterState||wheelFilterSpec)&&vocabClearableBlank(event.target))applyWheelSpec(null);
+    return;
+  }
   const spec=wheelSpecFromNode(node);if(!spec)return;
   if(sameWheelSpec(wheelFilterSpec,spec)){
     wheelFilterSpec=null;wheelFilterState=null;
