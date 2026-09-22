@@ -352,20 +352,23 @@ function renderToken(node){
   node.replaceChildren();node.hidden=!(showGlyph||showName||showReferent);
   if(node.hidden)return;
   const g=showGlyph?glyphNode(node):null,n=showName?nameNode(node):null,r=showReferent?referentNode(node):null;
-  const astro=[];
-  if(g)astro.push(g);
+  if(g)node.appendChild(g);
+  const details=[];
   if(n){
     const duplicateFallback=g&&g.textContent&&g.textContent.trim()===n.textContent.trim()&&!g.querySelector('svg');
-    if(!duplicateFallback)astro.push(n);
+    if(!duplicateFallback)details.push(n);
   }
-  if(astro.length){
-    const meta=document.createElement('span');meta.className='sky-vocab-meta';meta.setAttribute('aria-label','Astrological vocabulary');
-    astro.forEach(part=>meta.appendChild(part));
+  if(r)details.push(r);
+  if(details.length){
+    if(g)node.appendChild(document.createTextNode(' '));
+    const meta=document.createElement('span');meta.className='sky-vocab-meta sky-vocab-parenthetical';meta.setAttribute('aria-label','Astrological vocabulary detail');
+    meta.appendChild(document.createTextNode('('));
+    details.forEach((part,index)=>{
+      if(index)meta.appendChild(document.createTextNode(' · '));
+      meta.appendChild(part);
+    });
+    meta.appendChild(document.createTextNode(')'));
     node.appendChild(meta);
-  }
-  if(r){
-    if(astro.length)node.appendChild(document.createTextNode(' '));
-    node.appendChild(r);
   }
 }
 function rerenderTokens(root=document){root.querySelectorAll?.('.sky-vocab-token').forEach(renderToken)}
@@ -822,8 +825,10 @@ function installStyles(){
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
-    .sky-vocab-meta{--vocab-mark-size:1.68em;display:inline-flex;align-items:center;gap:.16em;white-space:nowrap;vertical-align:-.06em;line-height:1}
-    .sky-vocab-line>.sky-vocab-token:first-child>.sky-vocab-meta{margin-left:-.12em}
+    .sky-vocab-token{--vocab-mark-size:1.68em}
+    .sky-vocab-parenthetical{display:inline;white-space:normal;vertical-align:baseline;color:#6a6058}
+    .sky-vocab-parenthetical .sky-vocab-name,.sky-vocab-parenthetical .sky-vocab-referent{color:inherit}
+    .sky-vocab-line>.sky-vocab-token:first-child>.sky-vocab-glyph{margin-left:-.12em}
     .sky-vocab-glyph{display:inline-grid;place-items:center;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);margin:0;vertical-align:baseline;font-weight:800;line-height:1}
     .sky-vocab-glyph.has-svg-glyph{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size)}
     .sky-vocab-glyph svg{display:block;width:var(--vocab-mark-size);height:var(--vocab-mark-size);overflow:visible;transform:translateY(-.035em)}
