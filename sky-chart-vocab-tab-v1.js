@@ -865,7 +865,7 @@ function driveFiltersFromWheel(detail){
   const state=detail?.state;
   if(state?.mode==='hover')return;
   if(!state){
-    if(wheelFilterSpec?.kind==='aspect')applyWheelSpec(null);
+    if(wheelFilterState||wheelFilterSpec)applyWheelSpec(null);
     return;
   }
   if(state.mode!=='selected')return;
@@ -901,6 +901,7 @@ function mirrorZodiacBridge(detail){
   }
 }
 window.addEventListener('relphi:sky-foundation-filter-changed',event=>driveFiltersFromWheel(event.detail));
+window.addEventListener('relphi:sky-foundation-clear-selection',()=>{if(wheelFilterState||wheelFilterSpec)applyWheelSpec(null)});
 window.addEventListener('relphi:sky-house-focus-bridge-changed',event=>mirrorHouseBridge(event.detail));
 window.addEventListener('relphi:sky-zodiac-filter-changed',event=>mirrorZodiacBridge(event.detail));
 document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
