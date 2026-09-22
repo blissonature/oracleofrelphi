@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=29/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=30/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -103,7 +103,8 @@ assert.match(vocab,/--vocab-mark-size:1\.68em/,'Vocab glyphs must use the larger
 assert.match(vocab,/display:inline-flex;align-items:center;gap:\.16em;white-space:nowrap;vertical-align:-\.06em/,'Vocab glyph and name must use one raised shared optical alignment box');
 assert.match(vocab,/-webkit-text-fill-color:var\(--house-ink\)!important/,'House medallion numerals must keep their canonical contrasting ink inside Vocab');
 assert.match(vocab,/sky-vocab-glyph\.is-house-medallion/,'Vocab must size House Medallions explicitly for inline reading');
-assert.match(vocab,/width:90%!important;height:90%!important/,'House Medallions must sit inside the shared mark box without inheriting their numeral font size as geometry');
+assert.match(vocab,/sky-vocab-glyph\.is-house-medallion\{position:relative;display:inline-block;[^}]*height:1em/,'House Medallion hosts must stay at text-line height so they cannot stretch the paragraph rhythm');
+assert.match(vocab,/relphi-house-medallion\{position:absolute!important;[^}]*transform:translate\(-50%,-61%\)/,'House Medallions must be visually positioned without participating in line-box height');
 assert.match(vocab,/sky-vocab-level\.is-color-coded/,'Color must be confined to Vocab vocabulary tokens');
 assert.match(vocab,/style\.setProperty\('color',color,'important'\)/,'Color must be applied directly so Vocab tokens survive tab/view repainting');
 assert.match(vocab,/visibilitychange/,'Vocab must repaint when a browser tab becomes visible again');
