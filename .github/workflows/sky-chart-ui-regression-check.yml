@@ -19,6 +19,7 @@ on:
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-stability-now.mjs'
       - 'tests/sky-chart-vocab-tab-browser.mjs'
+      - 'tests/sky-chart-vocab-tab-contract.mjs'
       - 'tools/check-single-glyph-canon.mjs'
       - 'tools/check-sky-chart-glyph-readiness.mjs'
       - '.github/workflows/sky-chart-ui-regression-check.yml'
@@ -50,6 +51,8 @@ jobs:
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-stability-now.mjs
           node --check tests/sky-chart-vocab-tab-browser.mjs
+          node --check tests/sky-chart-vocab-tab-contract.mjs
+          node tests/sky-chart-vocab-tab-contract.mjs
           node tools/check-single-glyph-canon.mjs
           node tools/check-sky-chart-glyph-readiness.mjs
 
@@ -61,10 +64,10 @@ jobs:
       - name: Run focused browser regressions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-ui-regression-server.log 2>&1 &
+          node tests/sky-chart-vocab-tab-browser.mjs
           node tests/sky-chart-single-canon-browser.mjs
           node tests/sky-chart-filter-control-unified.mjs
           node tests/sky-chart-stability-now.mjs
-          node tests/sky-chart-vocab-tab-browser.mjs
 
       - uses: actions/upload-artifact@v4
         if: always()
