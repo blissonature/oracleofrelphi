@@ -10,7 +10,7 @@ const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
 const DISPLAY_KEY='relphiSkyVocabDisplayV1';
 const VIEW_KEY='relphiSkyVocabViewV1';
 const FILTER_KEY='relphiSkyVocabFilterV1';
-const PLACEMENT_FILTER_KEY='relphiSkyVocabPlacementFilterV1';
+const SCOPE_FILTER_KEY='relphiSkyVocabScopeFilterV1';
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const SIGN_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
@@ -120,7 +120,7 @@ const HARMONIC=()=>window.RelphiHarmonicOrb;
 let queued=false;
 let openDropdownState=null;
 let dropdownPositionQueued=false;
-let wheelDrivenSlots=new Set();
+let wheelFilterState=null;
 
 const norm=value=>((Number(value)%360)+360)%360;
 const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
@@ -225,11 +225,20 @@ function filterState(){
   return{relationships:value?.relationships!==false};
 }
 function saveFilter(next){writeJson(sessionStorage,FILTER_KEY,next)}
-function placementFilterState(){
-  const value=readJson(sessionStorage,PLACEMENT_FILTER_KEY,null);
-  return{A:Array.isArray(value?.A)?value.A:null,B:Array.isArray(value?.B)?value.B:null};
+function emptyScope(){return{placements:null,signs:null,houses:null}}
+function normalizeScopeSlot(raw){
+  if(Array.isArray(raw))return{placements:raw,signs:null,houses:null};
+  return{
+    placements:Array.isArray(raw?.placements)?raw.placements:null,
+    signs:Array.isArray(raw?.signs)?raw.signs.map(Number).filter(Number.isInteger):null,
+    houses:Array.isArray(raw?.houses)?raw.houses.map(Number).filter(Number.isInteger):null
+  };
 }
-function savePlacementFilter(next){writeJson(sessionStorage,PLACEMENT_FILTER_KEY,next)}
+function scopeFilterState(){
+  const value=readJson(sessionStorage,SCOPE_FILTER_KEY,null);
+  return{A:normalizeScopeSlot(value?.A),B:normalizeScopeSlot(value?.B)};
+}
+function saveScopeFilter(next){writeJson(sessionStorage,SCOPE_FILTER_KEY,next)}
 function categoryOf(record){
   if(NODE_IDS.has(record.id))return'nodes';
   if(AXIS_IDS.has(record.id))return'axes';
@@ -239,17 +248,32 @@ function categoryOf(record){
 }
 const CATEGORY_LABELS={nodes:'Nodes',axes:'Axes',luminaries:'Luminaries',planets:'Planets',other:'Other points'};
 const CATEGORY_ORDER=['nodes','axes','luminaries','planets','other'];
-function selectedPlacementIds(slot,list=records(slot)){
-  const state=placementFilterState(),available=new Set(list.map(record=>record.id));
-  if(state[slot]===null)return new Set(available);
-  return new Set(state[slot].filter(id=>available.has(id)));
+const ALL_SIGNS=Array.from({length:12},(_,index)=>index);
+const ALL_HOUSES=Array.from({length:12},(_,index)=>index+1);
+function manualScope(slot){return scopeFilterState()[slot]||emptyScope()}
+function activeScope(slot){
+  const wheel=wheelFilterState?.[slot];
+  return wheel||manualScope(slot);
 }
-function setSelectedPlacementIds(slot,ids,list=records(slot)){
-  const available=list.map(record=>record.id),next=placementFilterState(),chosen=Array.from(new Set(ids)).filter(id=>available.includes(id));
-  next[slot]=chosen.length===available.length?null:chosen;
-  savePlacementFilter(next);
+function scopeSelection(slot,kind,list=records(slot)){
+  const scope=activeScope(slot),raw=scope[kind];
+  if(kind==='placements'){
+    const available=list.map(record=>record.id);
+    return new Set(raw===null?available:raw.filter(id=>available.includes(id)));
+  }
+  const all=kind==='signs'?ALL_SIGNS:ALL_HOUSES;
+  return new Set(raw===null?all:raw.filter(value=>all.includes(Number(value))).map(Number));
 }
-function allPlacementIds(slot){return records(slot).map(record=>record.id)}
+function eligibleRecords(slot,list=records(slot)){
+  const placements=scopeSelection(slot,'placements',list),signs=scopeSelection(slot,'signs',list),houses=scopeSelection(slot,'houses',list);
+  return list.filter(record=>placements.has(record.id)&&signs.has(record.sign)&&(!record.house||houses.has(record.house)));
+}
+function saveManualDimension(slot,kind,values,list=records(slot)){
+  const state=scopeFilterState(),next={...state[slot]},all=kind==='placements'?list.map(record=>record.id):kind==='signs'?ALL_SIGNS:ALL_HOUSES;
+  const normalized=Array.from(new Set(values)).filter(value=>all.includes(kind==='placements'?value:Number(value))).map(value=>kind==='placements'?value:Number(value));
+  next[kind]=normalized.length===all.length?null:normalized;
+  state[slot]=next;saveScopeFilter(state);
+}
 function viewState(){return readJson(sessionStorage,VIEW_KEY,{A:'placements',B:'placements'})}
 function saveView(slot,view){const state=viewState();state[slot]=view;writeJson(sessionStorage,VIEW_KEY,state)}
 function applyTokenColor(node,tokenNode){
@@ -259,7 +283,8 @@ function applyTokenColor(node,tokenNode){
   node.style.setProperty('color',color,'important');
   node.style.setProperty('-webkit-text-fill-color',color,'important');
 }
-function token(info,kind='term'){
+function capitalizeStart(value){return String(value||'').replace(/[A-Za-z]/,letter=>letter.toUpperCase())}
+function token(info,kind='term',sentenceStart=false){
   const node=document.createElement('span');
   node.className='sky-vocab-token';
   node.dataset.vocabKind=kind;
@@ -271,6 +296,7 @@ function token(info,kind='term'){
   node.dataset.vocabColor=String(info.color||'');
   if(info.color)node.style.setProperty('--vocab-token-color',String(info.color));
   node.dataset.vocabLocalStage='0';
+  node.dataset.vocabSentenceStart=sentenceStart?'true':'false';
   renderToken(node);
   return node;
 }
@@ -288,7 +314,7 @@ function nameNode(tokenNode){
   const node=document.createElement('span');node.className='sky-vocab-level sky-vocab-name';node.dataset.vocabLevel='name';node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label','Reveal referent');applyTokenColor(node,tokenNode);node.textContent=tokenNode.dataset.vocabName;return node;
 }
 function referentNode(tokenNode){
-  const node=document.createElement('span');node.className='sky-vocab-level sky-vocab-referent';node.dataset.vocabLevel='referent';node.setAttribute('role','button');node.tabIndex=0;node.textContent=tokenNode.dataset.vocabReferent;return node;
+  const node=document.createElement('span');node.className='sky-vocab-level sky-vocab-referent';node.dataset.vocabLevel='referent';node.setAttribute('role','button');node.tabIndex=0;node.textContent=tokenNode.dataset.vocabSentenceStart==='true'?capitalizeStart(tokenNode.dataset.vocabReferent):tokenNode.dataset.vocabReferent;return node;
 }
 function renderToken(node){
   if(!(node instanceof HTMLElement))return;
@@ -321,14 +347,14 @@ function rerenderTokens(root=document){root.querySelectorAll?.('.sky-vocab-token
 
 function phrasePlacement(record){
   const frag=document.createDocumentFragment();
-  frag.append(token(placementInfo(record),'placement'),document.createTextNode(' in '),token(signInfo(record.sign),'sign'));
+  frag.append(token(placementInfo(record),'placement',true),document.createTextNode(' in '),token(signInfo(record.sign),'sign'));
   if(record.house)frag.append(document.createTextNode(' in '),token(houseInfo(record.house),'house'));
   return frag;
 }
-function appendSentence(paragraph,fragment){paragraph.append(fragment,document.createTextNode('. '))}
+function appendSentence(container,fragment){const line=document.createElement('div');line.className='sky-vocab-line';line.append(fragment,document.createTextNode('.'));container.appendChild(line)}
 function axisSentence(first,second){
   const frag=document.createDocumentFragment();
-  frag.append(token(placementInfo(first),'placement'),document.createTextNode(' is in '),token(signInfo(first.sign),'sign'));
+  frag.append(token(placementInfo(first),'placement',true),document.createTextNode(' is in '),token(signInfo(first.sign),'sign'));
   if(first.house)frag.append(document.createTextNode(' in '),token(houseInfo(first.house),'house'));
   frag.append(document.createTextNode(', while '),token(placementInfo(second),'placement'),document.createTextNode(' is in '),token(signInfo(second.sign),'sign'));
   if(second.house)frag.append(document.createTextNode(' in '),token(houseInfo(second.house),'house'));
@@ -336,42 +362,42 @@ function axisSentence(first,second){
 }
 function relationSentence(relation){
   const frag=document.createDocumentFragment();
-  frag.append(token(placementInfo(relation.left),'placement'),document.createTextNode(' is in '),token(aspectInfo(relation.aspect),'aspect'),document.createTextNode(' with '),token(placementInfo(relation.right),'placement'));
+  frag.append(token(placementInfo(relation.left),'placement',true),document.createTextNode(' is in '),token(aspectInfo(relation.aspect),'aspect'),document.createTextNode(' with '),token(placementInfo(relation.right),'placement'));
   return frag;
 }
-function renderGroup(paragraph,list,category){
-  list.filter(record=>categoryOf(record)===category).forEach(record=>appendSentence(paragraph,phrasePlacement(record)));
+function renderGroup(container,list,category){
+  list.filter(record=>categoryOf(record)===category).forEach(record=>appendSentence(container,phrasePlacement(record)));
 }
-function renderAxisPair(paragraph,list,aId,bId){
+function renderAxisPair(container,list,aId,bId){
   const a=list.find(record=>record.id===aId),b=list.find(record=>record.id===bId);
-  if(a&&b){appendSentence(paragraph,axisSentence(a,b));return}
-  if(a)appendSentence(paragraph,phrasePlacement(a));
-  if(b)appendSentence(paragraph,phrasePlacement(b));
+  if(a&&b){appendSentence(container,axisSentence(a,b));return}
+  if(a)appendSentence(container,phrasePlacement(a));
+  if(b)appendSentence(container,phrasePlacement(b));
 }
-function renderFullPlacements(paragraph,list){
-  renderGroup(paragraph,list,'nodes');
-  renderAxisPair(paragraph,list,'asc','dsc');
-  renderAxisPair(paragraph,list,'mc','ic');
-  renderGroup(paragraph,list,'luminaries');
-  renderGroup(paragraph,list,'planets');
-  renderGroup(paragraph,list,'other');
+function renderFullPlacements(container,list){
+  renderGroup(container,list,'nodes');
+  renderAxisPair(container,list,'asc','dsc');
+  renderAxisPair(container,list,'mc','ic');
+  renderGroup(container,list,'luminaries');
+  renderGroup(container,list,'planets');
+  renderGroup(container,list,'other');
 }
 function renderParagraph(slot,panel){
-  const list=records(slot),paragraph=panel.querySelector('[data-sky-vocab-paragraph]'),filters=filterState();
-  if(!paragraph)return;
-  paragraph.replaceChildren();
-  if(!list.length){paragraph.textContent='Add or calculate placements to read this sky as vocabulary.';return}
-  const selected=selectedPlacementIds(slot,list),permitted=list.filter(record=>selected.has(record.id));
-  renderFullPlacements(paragraph,permitted);
-  if(filters.relationships!==false&&selected.size){
-    const allSelected=selected.size===list.length;
-    relations(list).filter(relation=>allSelected||selected.has(relation.left.id)||selected.has(relation.right.id)).forEach(relation=>appendSentence(paragraph,relationSentence(relation)));
+  const list=records(slot),container=panel.querySelector('[data-sky-vocab-paragraph]'),filters=filterState();
+  if(!container)return;
+  container.replaceChildren();
+  if(!list.length){container.textContent='Add or calculate placements to read this sky as vocabulary.';return}
+  const permitted=eligibleRecords(slot,list),eligible=new Set(permitted.map(record=>record.id));
+  renderFullPlacements(container,permitted);
+  if(filters.relationships!==false&&eligible.size){
+    const allSelected=eligible.size===list.length;
+    relations(list).filter(relation=>allSelected||eligible.has(relation.left.id)||eligible.has(relation.right.id)).forEach(relation=>appendSentence(container,relationSentence(relation)));
   }
   if(!displayState().glyphs&&!displayState().names&&!displayState().referents){
-    paragraph.replaceChildren();
-    const empty=document.createElement('span');empty.className='sky-vocab-empty';empty.textContent='Turn on Glyphs, Names, or Referents to display the vocabulary.';paragraph.appendChild(empty);
-  }else if(!paragraph.childNodes.length){
-    paragraph.textContent='No placements are selected.';
+    container.replaceChildren();
+    const empty=document.createElement('span');empty.className='sky-vocab-empty';empty.textContent='Turn on Glyphs, Names, or Referents to display the vocabulary.';container.appendChild(empty);
+  }else if(!container.childNodes.length){
+    container.textContent='No placements match the current filters.';
   }
 }
 function htmlEscape(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
@@ -382,61 +408,60 @@ function layerSummary(){
   if(!selected.length)return'None';
   return selected.map(optionLabel).join(' · ');
 }
-function placementSummary(slot){
-  const list=records(slot),selected=selectedPlacementIds(slot,list),relationsOn=filterState().relationships!==false;
-  if(!list.length)return'None';
-  if(selected.size===list.length)return relationsOn?'All':'All placements';
-  if(!selected.size)return relationsOn?'Intrasky only':'None';
+function dimensionSummary(slot,kind){
+  const list=records(slot),selected=scopeSelection(slot,kind,list),all=kind==='placements'?list.map(record=>record.id):kind==='signs'?ALL_SIGNS:ALL_HOUSES;
+  if(!all.length||!selected.size)return'None';
+  if(selected.size===all.length)return'All';
   if(selected.size===1){
-    const id=Array.from(selected)[0],name=list.find(record=>record.id===id)?.name||id;
-    return name+(relationsOn?' + Intrasky':'');
+    const value=Array.from(selected)[0];
+    if(kind==='placements')return list.find(record=>record.id===value)?.name||String(value);
+    if(kind==='signs')return SIGNS[Number(value)]||String(value);
+    return 'House '+value;
   }
-  return selected.size+' of '+list.length+(relationsOn?' + Intrasky':'');
+  return selected.size+' of '+all.length;
+}
+function basicDropdownShell(slot,kind,label,summary,body){
+  const menuId='skyVocab'+kind[0].toUpperCase()+kind.slice(1)+'Menu'+slot;
+  return '<div class="sky-vocab-dropdown" data-vocab-dropdown="'+kind+'" data-vocab-dropdown-slot="'+slot+'">'+
+    '<span class="sky-vocab-dropdown-label">'+label+'</span>'+
+    '<button type="button" class="sky-vocab-dropdown-field" data-vocab-dropdown-toggle="'+kind+'" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'">'+
+      '<span class="sky-vocab-dropdown-summary" data-vocab-dropdown-summary="'+kind+'" data-vocab-summary-slot="'+slot+'">'+htmlEscape(summary)+'</span>'+
+      '<span class="sky-vocab-dropdown-chevron" aria-hidden="true"></span>'+
+    '</button>'+
+    '<div id="'+menuId+'" class="sky-vocab-dropdown-menu" data-vocab-dropdown-menu="'+kind+'" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="'+label+'" hidden>'+body+'</div>'+
+  '</div>';
 }
 function layerDropdownMarkup(slot){
-  const state=displayState(),menuId='skyVocabDisplayMenu'+slot;
-  return '<div class="sky-vocab-dropdown" data-vocab-dropdown="layers" data-vocab-dropdown-slot="'+slot+'">'+
-    '<span class="sky-vocab-dropdown-label">Display</span>'+
-    '<button type="button" class="sky-vocab-dropdown-field" data-vocab-dropdown-toggle="layers" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'">'+
-      '<span class="sky-vocab-dropdown-summary" data-vocab-dropdown-summary="layers" data-vocab-summary-slot="'+slot+'">'+layerSummary()+'</span>'+
-      '<span class="sky-vocab-dropdown-chevron" aria-hidden="true"></span>'+
-    '</button>'+
-    '<div id="'+menuId+'" class="sky-vocab-dropdown-menu" data-vocab-dropdown-menu="layers" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Display" hidden>'+
-      '<div class="sky-vocab-filter-list">'+
-        '<div class="sky-vocab-filter-header"><strong>DISPLAY</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-layer-all="'+slot+'">All</button><button type="button" data-vocab-layer-none="'+slot+'">None</button></span></div>'+
-        ['glyphs','names','referents'].map(id=>'<label class="sky-vocab-filter-row"><span class="sky-vocab-filter-name">'+optionLabel(id)+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-layer="'+id+'" data-vocab-slot="'+slot+'" '+(state[id]?'checked':'')+' aria-label="'+optionLabel(id)+'"></span></label>').join('')+
-      '</div>'+
-    '</div>'+
-  '</div>';
+  const state=displayState(),rows=['glyphs','names','referents'].map(id=>'<label class="sky-vocab-filter-row"><span class="sky-vocab-filter-name">'+optionLabel(id)+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-layer="'+id+'" data-vocab-slot="'+slot+'" '+(state[id]?'checked':'')+' aria-label="'+optionLabel(id)+'"></span></label>').join('');
+  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>DISPLAY</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-layer-all="'+slot+'">All</button><button type="button" data-vocab-layer-none="'+slot+'">None</button></span></div>'+rows+'</div>';
+  return basicDropdownShell(slot,'layers','Display',layerSummary(),body);
 }
 function placementDropdownMarkup(slot){
-  const list=records(slot),selected=selectedPlacementIds(slot,list),menuId='skyVocabPlacementMenu'+slot;
+  const list=records(slot),selected=scopeSelection(slot,'placements',list);
   const groups=CATEGORY_ORDER.map(category=>{
-    const members=list.filter(record=>categoryOf(record)===category);
-    if(!members.length)return'';
+    const members=list.filter(record=>categoryOf(record)===category);if(!members.length)return'';
     const chosen=members.filter(record=>selected.has(record.id)).length,all=chosen===members.length,some=chosen>0&&chosen<members.length;
-    return '<div class="sky-vocab-placement-group" data-vocab-placement-group="'+category+'">'+
-      '<label class="sky-vocab-filter-row sky-vocab-filter-row-group"><span class="sky-vocab-filter-name">'+CATEGORY_LABELS[category]+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-group="'+category+'" data-vocab-slot="'+slot+'" '+(all?'checked':'')+' '+(some?'data-indeterminate="true"':'')+' aria-label="'+CATEGORY_LABELS[category]+'"></span></label>'+
-      members.map(record=>'<label class="sky-vocab-filter-row sky-vocab-filter-row-placement"><span class="sky-vocab-filter-name">'+htmlEscape(record.name)+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-placement="'+htmlEscape(record.id)+'" data-vocab-slot="'+slot+'" '+(selected.has(record.id)?'checked':'')+' aria-label="'+htmlEscape(record.name)+'"></span></label>').join('')+
+    return '<div class="sky-vocab-placement-group">'+
+      '<label class="sky-vocab-filter-row sky-vocab-filter-row-group"><span class="sky-vocab-filter-name">'+CATEGORY_LABELS[category]+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-group="'+category+'" data-vocab-slot="'+slot+'" '+(all?'checked':'')+' '+(some?'data-indeterminate="true"':'')+'></span></label>'+
+      members.map(record=>'<label class="sky-vocab-filter-row sky-vocab-filter-row-placement"><span class="sky-vocab-filter-name">'+htmlEscape(record.name)+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-placement="'+htmlEscape(record.id)+'" data-vocab-slot="'+slot+'" '+(selected.has(record.id)?'checked':'')+'></span></label>').join('')+
     '</div>';
   }).join('');
-  const relationsOn=filterState().relationships!==false;
-  return '<div class="sky-vocab-dropdown" data-vocab-dropdown="placements" data-vocab-dropdown-slot="'+slot+'">'+
-    '<span class="sky-vocab-dropdown-label">Placements</span>'+
-    '<button type="button" class="sky-vocab-dropdown-field" data-vocab-dropdown-toggle="placements" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'">'+
-      '<span class="sky-vocab-dropdown-summary" data-vocab-dropdown-summary="placements" data-vocab-summary-slot="'+slot+'">'+htmlEscape(placementSummary(slot))+'</span>'+
-      '<span class="sky-vocab-dropdown-chevron" aria-hidden="true"></span>'+
-    '</button>'+
-    '<div id="'+menuId+'" class="sky-vocab-dropdown-menu" data-vocab-dropdown-menu="placements" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Placements" hidden>'+
-      '<div class="sky-vocab-filter-list">'+
-        '<div class="sky-vocab-filter-header"><strong>PLACEMENT</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-placement-all="'+slot+'">All</button><button type="button" data-vocab-placement-none="'+slot+'">None</button></span></div>'+
-        groups+
-        '<label class="sky-vocab-filter-row sky-vocab-filter-row-relation"><span class="sky-vocab-filter-name">Intrasky relationships</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-filter="relationships" data-vocab-slot="'+slot+'" '+(relationsOn?'checked':'')+' aria-label="Intrasky relationships"></span></label>'+
-      '</div>'+
-    '</div>'+
-  '</div>';
+  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>PLACEMENT</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-dimension-all="placements" data-vocab-slot="'+slot+'">All</button><button type="button" data-vocab-dimension-none="placements" data-vocab-slot="'+slot+'">None</button></span></div>'+groups+'</div>';
+  return basicDropdownShell(slot,'placements','Placement',dimensionSummary(slot,'placements'),body);
 }
-function controlsMarkup(slot){return '<div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+placementDropdownMarkup(slot)+'</div>'}
+function signDropdownMarkup(slot){
+  const selected=scopeSelection(slot,'signs'),rows=ALL_SIGNS.map(index=>'<label class="sky-vocab-filter-row"><span class="sky-vocab-filter-name">'+SIGNS[index]+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-sign="'+index+'" data-vocab-slot="'+slot+'" '+(selected.has(index)?'checked':'')+'></span></label>').join('');
+  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>ZODIAC SIGN</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-dimension-all="signs" data-vocab-slot="'+slot+'">All</button><button type="button" data-vocab-dimension-none="signs" data-vocab-slot="'+slot+'">None</button></span></div>'+rows+'</div>';
+  return basicDropdownShell(slot,'signs','Zodiac Sign',dimensionSummary(slot,'signs'),body);
+}
+function houseDropdownMarkup(slot){
+  const selected=scopeSelection(slot,'houses'),rows=ALL_HOUSES.map(number=>'<label class="sky-vocab-filter-row"><span class="sky-vocab-filter-name">'+number+' · '+htmlEscape(HOUSE_REFERENTS[number].split(',')[0])+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-house="'+number+'" data-vocab-slot="'+slot+'" '+(selected.has(number)?'checked':'')+'></span></label>').join('');
+  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>HOUSE</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-dimension-all="houses" data-vocab-slot="'+slot+'">All</button><button type="button" data-vocab-dimension-none="houses" data-vocab-slot="'+slot+'">None</button></span></div>'+rows+'<label class="sky-vocab-filter-row sky-vocab-filter-row-relation"><span class="sky-vocab-filter-name">Intrasky relationships</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-filter="relationships" data-vocab-slot="'+slot+'" '+(filterState().relationships!==false?'checked':'')+'></span></label></div>';
+  return basicDropdownShell(slot,'houses','House',dimensionSummary(slot,'houses'),body);
+}
+function controlsMarkup(slot){
+  return '<div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+placementDropdownMarkup(slot)+signDropdownMarkup(slot)+houseDropdownMarkup(slot)+'</div>';
+}
 function dropdownOwner(slot,kind){return document.querySelector('[data-sky-vocab-panel="'+slot+'"] [data-vocab-dropdown="'+kind+'"]')}
 function dropdownMenu(slot,kind){return document.querySelector('[data-vocab-dropdown-menu="'+kind+'"][data-vocab-menu-slot="'+slot+'"]')}
 function closeDropdown(){
@@ -449,7 +474,7 @@ function positionDropdown(){
   dropdownPositionQueued=false;if(!openDropdownState)return;
   const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),field=owner?.querySelector('.sky-vocab-dropdown-field');
   if(!owner||!menu||!field||menu.hidden)return;
-  const rect=field.getBoundingClientRect(),margin=10,targetWidth=kind==='placements'?340:260,width=Math.max(220,Math.min(targetWidth,window.innerWidth-margin*2)),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
+  const rect=field.getBoundingClientRect(),margin=10,targetWidth=kind==='placements'?340:kind==='houses'||kind==='signs'?320:260,width=Math.max(220,Math.min(targetWidth,window.innerWidth-margin*2)),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
   menu.style.height='auto';menu.style.maxHeight='none';menu.style.overflowY='hidden';
   const natural=Math.ceil(menu.scrollHeight+2),available=Math.max(180,window.innerHeight-margin*2),rendered=Math.min(natural,available);
   if(natural>available){menu.style.height=available+'px';menu.style.maxHeight=available+'px';menu.style.overflowY='auto'}
@@ -467,44 +492,58 @@ function syncControlState(){
   document.querySelectorAll('[data-vocab-layer]').forEach(input=>{input.checked=!!display[input.dataset.vocabLayer]});
   document.querySelectorAll('[data-vocab-filter="relationships"]').forEach(input=>{input.checked=filters.relationships!==false});
   ['A','B'].forEach(slot=>{
-    const list=records(slot),selected=selectedPlacementIds(slot,list);
-    document.querySelectorAll('[data-vocab-placement][data-vocab-slot="'+slot+'"]').forEach(input=>{input.checked=selected.has(input.dataset.vocabPlacement)});
+    const list=records(slot);
+    const placements=scopeSelection(slot,'placements',list),signs=scopeSelection(slot,'signs',list),houses=scopeSelection(slot,'houses',list);
+    document.querySelectorAll('[data-vocab-placement][data-vocab-slot="'+slot+'"]').forEach(input=>{input.checked=placements.has(input.dataset.vocabPlacement)});
+    document.querySelectorAll('[data-vocab-sign][data-vocab-slot="'+slot+'"]').forEach(input=>{input.checked=signs.has(Number(input.dataset.vocabSign))});
+    document.querySelectorAll('[data-vocab-house][data-vocab-slot="'+slot+'"]').forEach(input=>{input.checked=houses.has(Number(input.dataset.vocabHouse))});
     document.querySelectorAll('[data-vocab-group][data-vocab-slot="'+slot+'"]').forEach(input=>{
-      const members=list.filter(record=>categoryOf(record)===input.dataset.vocabGroup),chosen=members.filter(record=>selected.has(record.id)).length;
+      const members=list.filter(record=>categoryOf(record)===input.dataset.vocabGroup),chosen=members.filter(record=>placements.has(record.id)).length;
       input.checked=members.length>0&&chosen===members.length;input.indeterminate=chosen>0&&chosen<members.length;
     });
-    document.querySelectorAll('[data-vocab-dropdown-summary="placements"][data-vocab-summary-slot="'+slot+'"]').forEach(node=>{node.textContent=placementSummary(slot)});
+    ['placements','signs','houses'].forEach(kind=>document.querySelectorAll('[data-vocab-dropdown-summary="'+kind+'"][data-vocab-summary-slot="'+slot+'"]').forEach(node=>{node.textContent=dimensionSummary(slot,kind)}));
   });
   document.querySelectorAll('[data-vocab-dropdown-summary="layers"]').forEach(node=>{node.textContent=layerSummary()});
 }
 function rerenderPanels(){syncControlState();document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel))}
 function releaseWheelIsolationForManualFilter(){
-  if(!wheelDrivenSlots.size)return;
-  wheelDrivenSlots.clear();const clear=document.getElementById('skyFoundationClearIsolation');if(clear&&!clear.hidden)clear.click();
+  if(!wheelFilterState)return;
+  wheelFilterState=null;
+  const clear=document.getElementById('skyFoundationClearIsolation');if(clear&&!clear.hidden)clear.click();
 }
 function setLayerAll(checked){const state=displayState();['glyphs','names','referents'].forEach(id=>{state[id]=checked});saveDisplay(state);rerenderPanels()}
-function setPlacementsAll(slot,checked){releaseWheelIsolationForManualFilter();setSelectedPlacementIds(slot,checked?allPlacementIds(slot):[]);rerenderPanels()}
-function toggleGroup(slot,category,checked){
-  releaseWheelIsolationForManualFilter();const list=records(slot),selected=selectedPlacementIds(slot,list),members=list.filter(record=>categoryOf(record)===category).map(record=>record.id);
-  members.forEach(id=>checked?selected.add(id):selected.delete(id));setSelectedPlacementIds(slot,selected,list);rerenderPanels();
+function setDimensionAll(slot,kind,checked){
+  releaseWheelIsolationForManualFilter();
+  const all=kind==='placements'?records(slot).map(record=>record.id):kind==='signs'?ALL_SIGNS:ALL_HOUSES;
+  saveManualDimension(slot,kind,checked?all:[]);rerenderPanels();
 }
-function togglePlacement(slot,id,checked){
-  releaseWheelIsolationForManualFilter();const list=records(slot),selected=selectedPlacementIds(slot,list);checked?selected.add(id):selected.delete(id);setSelectedPlacementIds(slot,selected,list);rerenderPanels();
+function toggleDimension(slot,kind,value,checked){
+  releaseWheelIsolationForManualFilter();
+  const list=records(slot),selected=new Set(scopeSelection(slot,kind,list));
+  const normalized=kind==='placements'?value:Number(value);checked?selected.add(normalized):selected.delete(normalized);
+  saveManualDimension(slot,kind,selected,list);rerenderPanels();
+}
+function toggleGroup(slot,category,checked){
+  releaseWheelIsolationForManualFilter();
+  const list=records(slot),selected=new Set(scopeSelection(slot,'placements',list)),members=list.filter(record=>categoryOf(record)===category).map(record=>record.id);
+  members.forEach(id=>checked?selected.add(id):selected.delete(id));saveManualDimension(slot,'placements',selected,list);rerenderPanels();
 }
 function ensurePanel(slot,view){
   let panel=view.querySelector('[data-sky-vocab-panel]');if(panel)return panel;
   panel=document.createElement('section');panel.className='sky-vocab-panel';panel.dataset.skyVocabPanel=slot;panel.hidden=true;
-  panel.innerHTML=controlsMarkup(slot)+'<p class="sky-vocab-paragraph" data-sky-vocab-paragraph></p>';
+  panel.innerHTML=controlsMarkup(slot)+'<div class="sky-vocab-paragraph" data-sky-vocab-paragraph></div>';
   const mount=view.querySelector('[data-sky-drawer-mount="placements"]');mount?.insertAdjacentElement('afterend',panel);
   panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);rerenderPanels()}));
   panel.querySelectorAll('[data-vocab-filter="relationships"]').forEach(input=>input.addEventListener('change',()=>{const state=filterState();state.relationships=input.checked;saveFilter(state);rerenderPanels()}));
-  panel.querySelectorAll('[data-vocab-placement]').forEach(input=>input.addEventListener('change',()=>togglePlacement(slot,input.dataset.vocabPlacement,input.checked)));
+  panel.querySelectorAll('[data-vocab-placement]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'placements',input.dataset.vocabPlacement,input.checked)));
+  panel.querySelectorAll('[data-vocab-sign]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'signs',input.dataset.vocabSign,input.checked)));
+  panel.querySelectorAll('[data-vocab-house]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'houses',input.dataset.vocabHouse,input.checked)));
   panel.querySelectorAll('[data-vocab-group]').forEach(input=>input.addEventListener('change',()=>toggleGroup(slot,input.dataset.vocabGroup,input.checked)));
+  panel.querySelectorAll('[data-vocab-dimension-all]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setDimensionAll(slot,button.dataset.vocabDimensionAll,true)}));
+  panel.querySelectorAll('[data-vocab-dimension-none]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setDimensionAll(slot,button.dataset.vocabDimensionNone,false)}));
   panel.querySelectorAll('[data-vocab-dropdown-toggle]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openDropdown(slot,button.dataset.vocabDropdownToggle)}));
   panel.querySelector('[data-vocab-layer-all]')?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setLayerAll(true)});
   panel.querySelector('[data-vocab-layer-none]')?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setLayerAll(false)});
-  panel.querySelector('[data-vocab-placement-all]')?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setPlacementsAll(slot,true)});
-  panel.querySelector('[data-vocab-placement-none]')?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setPlacementsAll(slot,false)});
   panel.querySelectorAll('[data-indeterminate="true"]').forEach(input=>{input.indeterminate=true});
   panel.addEventListener('click',event=>progressive(event));panel.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ')progressive(event)});
   return panel;
@@ -588,7 +627,8 @@ function installStyles(){
     .sky-vocab-focus-bar{display:flex;align-items:center;gap:.48rem;width:max-content;max-width:100%;padding:.34rem .5rem;border-radius:999px;background:#f4eee7;color:#332c27;font:800 .64rem/1.2 system-ui,sans-serif}
     .sky-vocab-focus-bar[hidden]{display:none!important}
     .sky-vocab-focus-bar button{appearance:none;border:0;background:transparent;color:#6c5e54;text-decoration:underline;font:800 inherit;cursor:pointer;padding:0}
-    .sky-vocab-paragraph{margin:0;color:#2c2723;font:500 .78rem/1.62 system-ui,sans-serif}
+    .sky-vocab-paragraph{display:grid;gap:.34rem;margin:0;color:#2c2723;font:500 .78rem/1.48 system-ui,sans-serif}
+    .sky-vocab-line{display:block;margin:0}
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
@@ -616,42 +656,38 @@ function render(){
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relationshipRowSlots(row){
   const mode=String(row?.dataset?.relationshipMode||'A-B').toUpperCase();
-  return{
-    left:String(row?.dataset?.leftSky||(mode==='B-B'?'B':'A')).toUpperCase(),
-    right:String(row?.dataset?.rightSky||(mode==='A-A'?'A':mode==='B-B'?'B':'B')).toUpperCase()
-  };
+  return{left:String(row?.dataset?.leftSky||(mode==='B-B'?'B':'A')).toUpperCase(),right:String(row?.dataset?.rightSky||(mode==='A-A'?'A':mode==='B-B'?'B':'B')).toUpperCase()};
 }
-function drivePlacementsFromWheel(detail){
+function allWheelScope(){return{A:emptyScope(),B:emptyScope()}}
+function driveFiltersFromWheel(detail){
   const state=detail?.state;
   if(state?.mode==='hover')return;
   if(!state){
-    if(!wheelDrivenSlots.size)return;
-    const driven=Array.from(wheelDrivenSlots);wheelDrivenSlots.clear();
-    driven.forEach(slot=>setSelectedPlacementIds(slot,allPlacementIds(slot)));
-    rerenderPanels();return;
+    if(!wheelFilterState)return;
+    wheelFilterState=null;rerenderPanels();return;
   }
   if(state.mode!=='selected')return;
-  const updates=new Map(),add=(slot,ids)=>{if(!KEYS[slot])return;if(!updates.has(slot))updates.set(slot,new Set());ids.forEach(id=>updates.get(slot).add(id))};
-  if(state.kind==='placement'&&KEYS[state.sky])add(state.sky,[String(state.value||'')]);
-  else if(state.kind==='sign'){
-    ['A','B'].forEach(slot=>add(slot,records(slot).filter(record=>record.sign===Number(state.value)).map(record=>record.id)));
+  const next=allWheelScope();
+  if(state.kind==='placement'&&KEYS[state.sky]){
+    next[state.sky]={placements:[String(state.value||'')],signs:null,houses:null};
+  }else if(state.kind==='sign'){
+    next.A={placements:null,signs:[Number(state.value)],houses:null};
+    next.B={placements:null,signs:[Number(state.value)],houses:null};
   }else if(state.kind==='house'&&KEYS[state.sky]){
-    add(state.sky,records(state.sky).filter(record=>record.house===Number(state.value)).map(record=>record.id));
+    next[state.sky]={placements:null,signs:null,houses:[Number(state.value)]};
   }else if(state.kind==='aspect'){
+    const endpoints={A:new Set(),B:new Set()};
     (detail.relationshipIndexes||[]).forEach(index=>{
       const row=document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index="'+CSS.escape(String(index))+'"]');if(!row)return;
       const slots=relationshipRowSlots(row);
-      if(row.dataset.leftPlacement)add(slots.left,[row.dataset.leftPlacement]);
-      if(row.dataset.rightPlacement)add(slots.right,[row.dataset.rightPlacement]);
+      if(row.dataset.leftPlacement&&KEYS[slots.left])endpoints[slots.left].add(row.dataset.leftPlacement);
+      if(row.dataset.rightPlacement&&KEYS[slots.right])endpoints[slots.right].add(row.dataset.rightPlacement);
     });
-  }
-  if(!updates.size)return;
-  Array.from(wheelDrivenSlots).filter(slot=>!updates.has(slot)).forEach(slot=>setSelectedPlacementIds(slot,allPlacementIds(slot)));
-  wheelDrivenSlots=new Set(updates.keys());
-  updates.forEach((ids,slot)=>setSelectedPlacementIds(slot,ids));
-  rerenderPanels();
+    ['A','B'].forEach(slot=>{if(endpoints[slot].size)next[slot]={placements:Array.from(endpoints[slot]),signs:null,houses:null}});
+  }else return;
+  wheelFilterState=next;rerenderPanels();
 }
-window.addEventListener('relphi:sky-foundation-filter-changed',event=>drivePlacementsFromWheel(event.detail));
+window.addEventListener('relphi:sky-foundation-filter-changed',event=>driveFiltersFromWheel(event.detail));
 [
   'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready',
   'relphi:sky-orb-limit-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
@@ -669,6 +705,6 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDropdow
 window.addEventListener('resize',scheduleDropdownPosition);
 window.addEventListener('scroll',scheduleDropdownPosition,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
-window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getPlacementFilters:placementFilterState});
+window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
 })();
