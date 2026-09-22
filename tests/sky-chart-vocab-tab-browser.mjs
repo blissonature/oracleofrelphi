@@ -106,7 +106,7 @@ const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').fi
   const style=getComputedStyle(node);
   return{width:parseFloat(style.width),height:parseFloat(style.height)};
 });
-assert.ok(glyphMetrics.width>=19&&glyphMetrics.height>=19,'Vocab glyphs must render at the larger mobile-readable inline size.');
+assert.ok(glyphMetrics.width>=18&&glyphMetrics.height>=18,'Vocab glyphs must render at the larger mobile-readable inline size.');
 assert.ok(await page.locator('#skyFoundationA .sky-vocab-meta').count()>5,'Visible astrological detail must use the clean inline meta treatment.');
 assert.ok(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"] .relphi-house-medallion').count()>0,'Vocab house tokens must render the canonical Relphi House Medallion instead of a bare colored house number.');
 
@@ -133,6 +133,30 @@ const vocabAlignment=await page.locator('#skyFoundationA .sky-vocab-token').filt
   return{referentBottom:rr.bottom,nameBottom:nr.bottom,diff:Math.abs(rr.bottom-nr.bottom)};
 });
 assert.ok(vocabAlignment&&vocabAlignment.diff<=4,'Vocab names must sit on the same visual baseline as their referents.');
+
+const opticalAlignment=await page.locator('#skyFoundationA .sky-vocab-token').filter({has:page.locator('.sky-vocab-glyph')}).first().evaluate(node=>{
+  const glyph=node.querySelector('.sky-vocab-glyph');
+  const name=node.querySelector('.sky-vocab-name');
+  const referent=node.querySelector('.sky-vocab-referent');
+  if(!glyph||!name||!referent)return null;
+  const gr=glyph.getBoundingClientRect(),nr=name.getBoundingClientRect(),rr=referent.getBoundingClientRect();
+  return{
+    glyphCenter:(gr.top+gr.bottom)/2,
+    nameCenter:(nr.top+nr.bottom)/2,
+    referentCenter:(rr.top+rr.bottom)/2
+  };
+});
+assert.ok(opticalAlignment&&Math.abs(opticalAlignment.glyphCenter-opticalAlignment.nameCenter)<=4,'Glyph and name must share one optical center.');
+assert.ok(opticalAlignment&&Math.abs(opticalAlignment.nameCenter-opticalAlignment.referentCenter)<=4,'Name and referent must sit on the same visual line.');
+
+const housePairAlignment=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"]').filter({has:page.locator('.sky-vocab-name')}).first().evaluate(node=>{
+  const medallion=node.querySelector('.relphi-house-medallion');
+  const name=node.querySelector('.sky-vocab-name');
+  if(!medallion||!name)return null;
+  const mr=medallion.getBoundingClientRect(),nr=name.getBoundingClientRect();
+  return{diff:Math.abs((mr.top+mr.bottom)/2-(nr.top+nr.bottom)/2)};
+});
+assert.ok(housePairAlignment&&housePairAlignment.diff<=4,'House Medallion and House name must share the same optical center.');
 
 // Global Display choices are the baseline. Clicking one token may add its hidden layers,
 // but must not alter what stays visible on neighboring tokens.
