@@ -62,7 +62,8 @@ assert.ok(await placementMenu.locator('[data-vocab-placement]').count()>10,'Plac
 assert.equal(await placementMenu.locator('.sky-chart-placement-list').count(),1,'Vocab Placement must reuse the Relationships Placement list.');
 assert.ok(await placementMenu.locator('.sky-chart-placement-list-item-group').count()>=4,'Vocab Placement must use Relationships group rows.');
 assert.equal(await placementMenu.locator('[data-vocab-dimension-master="placements"]').count(),1,'Placement list must use the Relationships-style All placements master row.');
-await placements.click();
+await page.keyboard.press('Escape');
+await placementMenu.waitFor({state:'hidden'});
 
 const signs=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="signs"]');
 await signs.click();
@@ -72,7 +73,8 @@ assert.equal(await signMenu.locator('[data-vocab-sign]').count(),12,'Zodiac Sign
 assert.equal(await signMenu.locator('.sky-chart-zodiac-filter-row').count(),12,'Vocab Zodiac must reuse the Relationships Zodiac rows.');
 assert.equal(await signMenu.locator('.sky-chart-zodiac-filter-glyph svg').count(),12,'Every Vocab Zodiac row must use the canonical Relationships glyph cell.');
 assert.equal(await signMenu.locator('.sky-chart-sign-list-figure').count(),12,'Every Vocab Zodiac row must carry the Relationships figure label.');
-await signs.click();
+await page.keyboard.press('Escape');
+await signMenu.waitFor({state:'hidden'});
 
 const houses=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="houses"]');
 await houses.click();
@@ -82,7 +84,8 @@ assert.equal(await houseMenu.locator('[data-vocab-house]').count(),12,'House mat
 assert.equal(await houseMenu.locator('.sky-chart-house-list').count(),1,'Vocab Houses must reuse the Relationships House list.');
 assert.equal(await houseMenu.locator('.sky-chart-house-menu-medallion').count(),12,'Every Vocab House row must use the Relationships house medallion.');
 assert.match(await houseMenu.locator('.sky-chart-house-menu-description').nth(0).textContent(),/^self, body, approach$/,'House descriptions must match Relationships wording.');
-await houses.click();
+await page.keyboard.press('Escape');
+await houseMenu.waitFor({state:'hidden'});
 
 const initialLines=page.locator('#skyFoundationA .sky-vocab-line');
 assert.ok(await initialLines.count()>5,'Vocab must render multiple sentence lines.');
