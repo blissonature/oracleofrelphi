@@ -436,10 +436,43 @@ function independentClusters(list,polarities){
   const polaritySets=polarityMemberSets(polarities);
   return proximityClusters(list).filter(cluster=>!polaritySets.some(set=>cluster.every(record=>set.has(record.id))));
 }
+function compactStructureContext(info,kind){
+  const wrap=document.createElement('span');wrap.className='sky-vocab-structure-context';wrap.dataset.vocabContextKind=kind;
+  const proxy=document.createElement('span');
+  proxy.dataset.vocabKind=kind;
+  proxy.dataset.vocabId=String(info.id||'');
+  proxy.dataset.vocabGlyphId=String(info.glyphId||'');
+  proxy.dataset.vocabName=String(info.name||'');
+  proxy.dataset.vocabFallbackGlyph=String(info.fallbackGlyph||info.name||'');
+  proxy.dataset.vocabColor=String(info.color||'');
+  const glyph=glyphNode(proxy);
+  const name=document.createElement('span');name.className='sky-vocab-structure-context-name';name.textContent=String(info.name||'');
+  if(info.color){
+    name.style.setProperty('color',String(info.color),'important');
+    name.style.setProperty('-webkit-text-fill-color',String(info.color),'important');
+  }
+  wrap.append(glyph,document.createTextNode(' '),name);
+  return wrap;
+}
+function appendStructureMember(frag,record){
+  frag.appendChild(token(placementInfo(record),'placement',false));
+  const context=document.createElement('span');context.className='sky-vocab-structure-member-context';
+  context.append(
+    document.createTextNode(' · '),
+    compactStructureContext(signInfo(record.sign),'sign')
+  );
+  if(record.house){
+    context.append(
+      document.createTextNode(' · '),
+      compactStructureContext(houseInfo(record.house),'house')
+    );
+  }
+  frag.appendChild(context);
+}
 function appendStructureMembers(frag,members){
   members.forEach((record,index)=>{
     if(index)frag.appendChild(document.createTextNode(index===members.length-1?' and ':', '));
-    frag.appendChild(token(placementInfo(record),'placement',false));
+    appendStructureMember(frag,record);
   });
 }
 function clusterSentence(members){
@@ -829,6 +862,10 @@ function installStyles(){
     .sky-vocab-line{display:block;margin:0}
     .sky-vocab-structures-heading{margin:.34rem 0 -.08rem;padding-top:.42rem;border-top:1px solid rgba(31,27,24,.12);color:#6a6058;font:900 .62rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.055em}
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035)}
+    .sky-vocab-structure-member-context{white-space:normal;color:#6a6058}
+    .sky-vocab-structure-context{display:inline-flex;align-items:baseline;white-space:nowrap;font-size:.88em;font-weight:720}
+    .sky-vocab-structure-context .sky-vocab-glyph{--vocab-mark-size:1.38em}
+    .sky-vocab-structure-context-name{display:inline;vertical-align:baseline}
     .sky-vocab-structure-line:first-letter{font-weight:800}
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
