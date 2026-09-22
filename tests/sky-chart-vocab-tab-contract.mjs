@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=31/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=32/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -34,6 +34,8 @@ assert.match(vocab,/meta\.append\(document\.createTextNode\('\('\),n,document\.c
 assert.match(vocab,/if\(r\)\{[\s\S]*node\.appendChild\(r\)/,'The referent must render outside and after the parenthetical name');
 assert.match(vocab,/sky-vocab-symbol-label/,'Glyph and parenthetical name must have a shared inline wrapper');
 assert.match(vocab,/sky-vocab-symbol-label\{display:inline;white-space:nowrap\}/,'Glyph and parenthetical name must not split across lines');
+assert.match(vocab,/document\.createTextNode\(' in\\u00A0'\)/,'House prepositions must stay attached to the following medallion/name unit');
+assert.match(vocab,/document\.createTextNode\(', while\\u00A0'\)/,'Axis transition “while” must stay attached to the second axis token');
 assert.match(vocab,/sky-vocab-parenthetical\{display:inline;white-space:nowrap/,'Multiword names such as Ninth House must stay intact inside the parentheses');
 assert.match(vocab,/missingCount/,'Local reveal must cycle through only globally hidden layers');
 assert.match(vocab,/function controlsMarkup\(slot\)/,'Vocab must define the control markup initializer used when the panel opens');
@@ -95,7 +97,7 @@ assert.match(vocab,/dataset\.vocabStructure='cluster'/,'Detected natural cluster
 assert.match(vocab,/renderStructures/,'Filtered Vocab must synthesize clusters and polarities after the placement reading');
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
 assert.doesNotMatch(vocab,/relations\(list\)\.filter/,'Vocab must not append the raw intrasky aspect list after the structural synthesis');
-assert.match(vocab,/document\.createTextNode\(' is in '\)/,'Ordinary placement sentences must use the same is-in grammar as axes');
+assert.match(vocab,/document\.createTextNode\(' is\\u00A0in\\u00A0'\)/,'Ordinary placement sentences must keep “is in” attached to the following vocabulary token');
 assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','sun','moon'/,'Full Vocab must begin with nodes, axes, then luminaries');
 
 assert.match(vocab,/const SIGN_COLORS=\['#e53935'/,'Vocab signs must use the established zodiac palette');
