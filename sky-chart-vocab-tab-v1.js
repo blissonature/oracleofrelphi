@@ -402,6 +402,14 @@ function dropdownMarkup(slot,kind,label,ids,state){
     '</div>'+
   '</div>';
 }
+function controlsMarkup(slot){
+  const state=displayState(),filters=filterState();
+  return '<div class="sky-vocab-dropdown-row">'+
+    dropdownMarkup(slot,'layers','Display',['glyphs','names','referents'],state)+
+    dropdownMarkup(slot,'filters','Include',['nodes','axes','luminaries','planets','other','relationships'],filters)+
+    '</div>'+
+    '<div class="sky-vocab-focus-bar" data-vocab-focus-bar hidden><span data-vocab-focus-label></span><button type="button" data-vocab-clear-focus>Show all</button></div>';
+}
 function dropdownOwner(slot,kind){
   return document.querySelector('[data-sky-vocab-panel="'+slot+'"] [data-vocab-dropdown="'+kind+'"]');
 }
