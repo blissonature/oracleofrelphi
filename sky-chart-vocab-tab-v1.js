@@ -352,18 +352,21 @@ function renderToken(node){
   node.replaceChildren();node.hidden=!(showGlyph||showName||showReferent);
   if(node.hidden)return;
   const g=showGlyph?glyphNode(node):null,n=showName?nameNode(node):null,r=showReferent?referentNode(node):null;
-  if(g)node.appendChild(g);
+  const head=document.createElement('span');head.className='sky-vocab-symbol-label';
+  let hasHead=false;
+  if(g){head.appendChild(g);hasHead=true}
   if(n){
     const duplicateFallback=g&&g.textContent&&g.textContent.trim()===n.textContent.trim()&&!g.querySelector('svg');
     if(!duplicateFallback){
-      if(g)node.appendChild(document.createTextNode(' '));
+      if(hasHead)head.appendChild(document.createTextNode(' '));
       const meta=document.createElement('span');meta.className='sky-vocab-meta sky-vocab-parenthetical';meta.setAttribute('aria-label','Astrological vocabulary name');
       meta.append(document.createTextNode('('),n,document.createTextNode(')'));
-      node.appendChild(meta);
+      head.appendChild(meta);hasHead=true;
     }
   }
+  if(hasHead)node.appendChild(head);
   if(r){
-    if(g||n)node.appendChild(document.createTextNode(' '));
+    if(hasHead)node.appendChild(document.createTextNode(' '));
     node.appendChild(r);
   }
 }
@@ -822,7 +825,8 @@ function installStyles(){
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
     .sky-vocab-token{--vocab-mark-size:1.68em}
-    .sky-vocab-parenthetical{display:inline;white-space:normal;vertical-align:baseline;color:#6a6058}
+    .sky-vocab-symbol-label{display:inline;white-space:nowrap}
+    .sky-vocab-parenthetical{display:inline;white-space:nowrap;vertical-align:baseline;color:#6a6058}
     .sky-vocab-parenthetical .sky-vocab-name,.sky-vocab-parenthetical .sky-vocab-referent{display:inline;vertical-align:baseline;color:inherit}
     .sky-vocab-line>.sky-vocab-token:first-child>.sky-vocab-glyph{margin-left:-.12em}
     .sky-vocab-glyph{display:inline-grid;place-items:center;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);margin:0;vertical-align:baseline;font-weight:800;line-height:1}
