@@ -374,17 +374,17 @@ function rerenderTokens(root=document){root.querySelectorAll?.('.sky-vocab-token
 
 function phrasePlacement(record){
   const frag=document.createDocumentFragment();
-  frag.append(token(placementInfo(record),'placement',true),document.createTextNode(' is in '),token(signInfo(record.sign),'sign'));
-  if(record.house)frag.append(document.createTextNode(' in '),token(houseInfo(record.house),'house'));
+  frag.append(token(placementInfo(record),'placement',true),document.createTextNode(' is\u00A0in\u00A0'),token(signInfo(record.sign),'sign'));
+  if(record.house)frag.append(document.createTextNode(' in\u00A0'),token(houseInfo(record.house),'house'));
   return frag;
 }
 function appendSentence(container,fragment){const line=document.createElement('div');line.className='sky-vocab-line';line.append(fragment,document.createTextNode('.'));container.appendChild(line)}
 function axisSentence(first,second){
   const frag=document.createDocumentFragment();
-  frag.append(token(placementInfo(first),'placement',true),document.createTextNode(' is in '),token(signInfo(first.sign),'sign'));
-  if(first.house)frag.append(document.createTextNode(' in '),token(houseInfo(first.house),'house'));
-  frag.append(document.createTextNode(', while '),token(placementInfo(second),'placement'),document.createTextNode(' is in '),token(signInfo(second.sign),'sign'));
-  if(second.house)frag.append(document.createTextNode(' in '),token(houseInfo(second.house),'house'));
+  frag.append(token(placementInfo(first),'placement',true),document.createTextNode(' is\u00A0in\u00A0'),token(signInfo(first.sign),'sign'));
+  if(first.house)frag.append(document.createTextNode(' in\u00A0'),token(houseInfo(first.house),'house'));
+  frag.append(document.createTextNode(', while\u00A0'),token(placementInfo(second),'placement'),document.createTextNode(' is\u00A0in\u00A0'),token(signInfo(second.sign),'sign'));
+  if(second.house)frag.append(document.createTextNode(' in\u00A0'),token(houseInfo(second.house),'house'));
   return frag;
 }
 function relationSentence(relation){
