@@ -5,7 +5,7 @@ const html=readFileSync(new URL('../sky-chart.html',import.meta.url),'utf8');
 const vocab=readFileSync(new URL('../sky-chart-vocab-tab-v1.js',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=14/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=15/,'Sky Chart must load the Vocab subtab');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
@@ -43,6 +43,10 @@ assert.match(vocab,/sky-chart-zodiac-filter-glyph/,'Vocab Zodiac rows must reuse
 assert.match(vocab,/SIGN_FIGURES/,'Vocab Zodiac rows must use the same figure labels as Relationships');
 
 assert.match(vocab,/relphi:sky-foundation-filter-changed/,'Vocab must follow the existing wheel filter contract');
+assert.match(vocab,/relphi:sky-house-focus-bridge-changed/,'Vocab must mirror the established House Focus Bridge used by the Relationships House filter');
+assert.match(vocab,/mirrorHouseBridge/,'Vocab must translate House Focus Bridge state into the Vocab House filter');
+assert.match(vocab,/relphi:sky-zodiac-filter-changed/,'Vocab must mirror the established Zodiac wheel-filter event');
+assert.match(vocab,/mirrorZodiacBridge/,'Vocab must translate Zodiac wheel state into the Vocab Zodiac Sign filter');
 assert.match(vocab,/driveFiltersFromWheel/,'Wheel state must drive Vocab filters');
 assert.match(vocab,/mirrorDirectWheelClick/,'Wheel clicks must directly mirror into Vocab filters');
 assert.match(vocab,/wheelSpecFromNode/,'Direct wheel mirroring must map Placement, Sign, and House nodes to their matching Vocab dimensions');
@@ -51,7 +55,7 @@ assert.match(vocab,/document\.addEventListener\('pointerdown',mirrorDirectWheelC
 assert.match(vocab,/kind==='placement'/,'Placement wheel clicks must drive the Placement filter');
 assert.match(vocab,/kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign filter');
 assert.match(vocab,/kind==='house'/,'House wheel clicks must drive the House filter');
-assert.match(vocab,/state\.mode!==\'selected\'\|\|state\.kind!==\'aspect\'/,'The foundation event bridge must reserve aspect selections for endpoint Placement filtering');
+assert.match(vocab,/if\(state\.kind!==\'aspect\'\)return/,'Aspect selections must continue to drive endpoint Placement filtering after direct Placement, Sign, and House handling');
 assert.match(vocab,/wheelFilterSpec=null;wheelFilterState=null/,'Clearing the wheel must restore the manual Vocab filters');
 assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','sun','moon'/,'Full Vocab must begin with nodes, axes, then luminaries');
 
