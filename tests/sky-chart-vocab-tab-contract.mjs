@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=32/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=33/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -29,13 +29,16 @@ assert.match(vocab,/if\(g\)node\.appendChild\(g\)/,'Vocab progressive reveal mus
 assert.match(vocab,/sky-vocab-meta sky-vocab-parenthetical/,'Expanded Vocab names must use the parenthetical treatment');
 assert.match(vocab,/sky-vocab-parenthetical \.sky-vocab-name,\.sky-vocab-parenthetical \.sky-vocab-referent\{display:inline/,'Parenthetical names and referents must remain true inline text so an opening parenthesis cannot be stranded before an inline-block');
 assert.match(vocab,/translateY\(-\.17em\)/,'Inline House Medallions must be lifted to the corrected text baseline');
-assert.match(vocab,/sky-vocab-glyph\.has-svg-glyph\{[^}]*transform:translateY\(\.24em\)/,'Canonical SVG glyphs must be lowered independently from House Medallions');
+assert.match(vocab,/sky-vocab-glyph\{position:relative;display:inline-block;[^}]*height:1em/,'Canonical glyph hosts must stay at text-line height so large SVG artwork cannot stretch the paragraph rhythm');
+assert.match(vocab,/sky-vocab-glyph svg\{position:absolute;[^}]*transform:translate\(-50%,-36%\)/,'Canonical SVG glyph artwork must be optically positioned inside its layout-neutral host');
 assert.match(vocab,/meta\.append\(document\.createTextNode\('\('\),n,document\.createTextNode\('\)'\)\)/,'Only the revealed name belongs inside the Vocab parentheses');
 assert.match(vocab,/if\(r\)\{[\s\S]*node\.appendChild\(r\)/,'The referent must render outside and after the parenthetical name');
 assert.match(vocab,/sky-vocab-symbol-label/,'Glyph and parenthetical name must have a shared inline wrapper');
 assert.match(vocab,/sky-vocab-symbol-label\{display:inline;white-space:nowrap\}/,'Glyph and parenthetical name must not split across lines');
-assert.match(vocab,/document\.createTextNode\(' in\\u00A0'\)/,'House prepositions must stay attached to the following medallion/name unit');
-assert.match(vocab,/document\.createTextNode\(', while\\u00A0'\)/,'Axis transition “while” must stay attached to the second axis token');
+assert.match(vocab,/if\(lead&&\(g\|\|n\)\)\{head\.appendChild\(document\.createTextNode\(lead\)\)/,'The grammatical lead must live inside the same no-wrap symbol/name head');
+assert.match(vocab,/token\(signInfo\(record\.sign\),'sign',false,' is in '\)/,'Ordinary placement “is in” must be structurally bound to its sign token');
+assert.match(vocab,/token\(houseInfo\(record\.house\),'house',false,' in '\)/,'House prepositions must be structurally bound to the following medallion/name token');
+assert.match(vocab,/token\(placementInfo\(second\),'placement',false,', while '\)/,'Axis transition “while” must be structurally bound to the second axis token');
 assert.match(vocab,/sky-vocab-parenthetical\{display:inline;white-space:nowrap/,'Multiword names such as Ninth House must stay intact inside the parentheses');
 assert.match(vocab,/missingCount/,'Local reveal must cycle through only globally hidden layers');
 assert.match(vocab,/function controlsMarkup\(slot\)/,'Vocab must define the control markup initializer used when the panel opens');
@@ -97,7 +100,7 @@ assert.match(vocab,/dataset\.vocabStructure='cluster'/,'Detected natural cluster
 assert.match(vocab,/renderStructures/,'Filtered Vocab must synthesize clusters and polarities after the placement reading');
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
 assert.doesNotMatch(vocab,/relations\(list\)\.filter/,'Vocab must not append the raw intrasky aspect list after the structural synthesis');
-assert.match(vocab,/document\.createTextNode\(' is\\u00A0in\\u00A0'\)/,'Ordinary placement sentences must keep “is in” attached to the following vocabulary token');
+assert.match(vocab,/node\.dataset\.vocabLead=String\(lead\|\|''\)/,'Vocab tokens must carry their grammatical lead so it can share the token head');
 assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','sun','moon'/,'Full Vocab must begin with nodes, axes, then luminaries');
 
 assert.match(vocab,/const SIGN_COLORS=\['#e53935'/,'Vocab signs must use the established zodiac palette');
