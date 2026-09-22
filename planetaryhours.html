@@ -1584,7 +1584,7 @@
   .ph-calendar-sky-overlay-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:800 .72rem/1.2 system-ui,sans-serif; }
   .ph-calendar-sky-default-badge { padding:.18rem .38rem; border-radius:999px; background:#fff; border:1px solid rgba(17,17,17,.10); color:#6a6159; font:800 .57rem/1 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
   .ph-calendar-sky-note { margin:0; color:#756c65; }
-  .ph-calendar-personal-source { margin:.45rem 0 0; color:#514a44; text-align:center; font:800 .7rem/1.3 system-ui,sans-serif; }
+  .ph-calendar-personal-source { margin:0; color:#514a44; text-align:left; font:800 .7rem/1.3 system-ui,sans-serif; }
   .ph-calendar-month-help { margin:.25rem 0 0; text-align:center; }
   @media (max-width:760px) {
     .ph-calendar-weekdays, .ph-calendar-month-grid { gap:.16rem; }
@@ -1902,6 +1902,19 @@
       </div>
     </div>
 
+    <details class="ph-calendar-sky-calendars" id="calendarSkyCalendars">
+      <summary><span>Calendars</span><span class="ph-calendar-sky-count" id="calendarSkyCount">0 shown</span></summary>
+      <div class="ph-calendar-sky-calendars-body">
+        <div class="ph-calendar-default-sky-control">
+          <label for="calendarPersonalSkySelect">Default</label>
+          <select id="calendarPersonalSkySelect" aria-label="Default saved sky"></select>
+        </div>
+        <div class="ph-calendar-sky-overlay-list" id="calendarSkyOverlayList" aria-label="Saved sky calendar overlays"></div>
+        <p class="ph-calendar-personal-source" id="calendarPersonalSource">Turn on saved skies to overlay their transits.</p>
+        <p class="ph-tiny ph-calendar-sky-note">Default marks the primary saved sky. Shown calendars are independent and can be combined.</p>
+      </div>
+    </details>
+
     <div class="ph-calendar-day-view" id="calendarDayView">
     <div class="ph-calendar-day-context">
       <div class="ph-calendar-day-ruler-context" aria-label="Planetary day ruler and solar frame">
@@ -1973,18 +1986,6 @@
     <div class="ph-calendar-month-view" id="calendarMonthView" hidden aria-label="Planetary calendar month view">
       <div class="ph-calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
       <div class="ph-calendar-month-grid" id="calendarMonthGrid"></div>
-      <details class="ph-calendar-sky-calendars" id="calendarSkyCalendars">
-        <summary><span>Calendars</span><span class="ph-calendar-sky-count" id="calendarSkyCount">0 shown</span></summary>
-        <div class="ph-calendar-sky-calendars-body">
-          <div class="ph-calendar-default-sky-control">
-            <label for="calendarPersonalSkySelect">Default</label>
-            <select id="calendarPersonalSkySelect" aria-label="Default saved sky"></select>
-          </div>
-          <div class="ph-calendar-sky-overlay-list" id="calendarSkyOverlayList" aria-label="Saved sky calendar overlays"></div>
-          <p class="ph-tiny ph-calendar-sky-note">Default marks the primary saved sky. Shown calendars are independent and can be combined.</p>
-        </div>
-      </details>
-      <p class="ph-calendar-personal-source" id="calendarPersonalSource">Turn on saved skies to overlay their transits.</p>
       <p class="ph-tiny ph-calendar-month-help">Tap a date to open its planetary hours.</p>
     </div>
   </section>
