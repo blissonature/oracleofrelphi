@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'sky-chart.html'
+      - 'sky-chart-vocab-tab-v1.js'
       - 'relphi-glyph-registry-v1.js'
       - 'relphi-glyph-component-v1.js'
       - 'relphi-glyph-source-integrity-v1.js'
@@ -17,6 +18,7 @@ on:
       - 'tests/sky-chart-single-canon-browser.mjs'
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-stability-now.mjs'
+      - 'tests/sky-chart-vocab-tab-browser.mjs'
       - 'tools/check-single-glyph-canon.mjs'
       - 'tools/check-sky-chart-glyph-readiness.mjs'
       - '.github/workflows/sky-chart-ui-regression-check.yml'
@@ -47,6 +49,7 @@ jobs:
           node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-stability-now.mjs
+          node --check tests/sky-chart-vocab-tab-browser.mjs
           node tools/check-single-glyph-canon.mjs
           node tools/check-sky-chart-glyph-readiness.mjs
 
@@ -61,6 +64,7 @@ jobs:
           node tests/sky-chart-single-canon-browser.mjs
           node tests/sky-chart-filter-control-unified.mjs
           node tests/sky-chart-stability-now.mjs
+          node tests/sky-chart-vocab-tab-browser.mjs
 
       - uses: actions/upload-artifact@v4
         if: always()
