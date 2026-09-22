@@ -123,6 +123,7 @@ const AXIS_STRUCTURES=[
   {left:'asc',right:'dsc',label:'Horizon polarity'}
 ];
 const POLARITY_ATTACH_ORB=3;
+const CLUSTER_ORB=3;
 const HARMONIC=()=>window.RelphiHarmonicOrb;
 let queued=false;
 let openDropdownState=null;
@@ -371,7 +372,7 @@ function rerenderTokens(root=document){root.querySelectorAll?.('.sky-vocab-token
 
 function phrasePlacement(record){
   const frag=document.createDocumentFragment();
-  frag.append(token(placementInfo(record),'placement',true),document.createTextNode(' in '),token(signInfo(record.sign),'sign'));
+  frag.append(token(placementInfo(record),'placement',true),document.createTextNode(' is in '),token(signInfo(record.sign),'sign'));
   if(record.house)frag.append(document.createTextNode(' in '),token(houseInfo(record.house),'house'));
   return frag;
 }
@@ -402,23 +403,61 @@ function polarityStructures(list){
     return{...axis,left,right};
   }).filter(Boolean);
 }
-function polaritySentence(structure){
-  const frag=document.createDocumentFragment();
-  const appendPole=members=>members.forEach((record,index)=>{
+function proximityClusters(list){
+  const remaining=new Set(list.map(record=>record.id)),byId=new Map(list.map(record=>[record.id,record])),clusters=[];
+  while(remaining.size){
+    const seed=remaining.values().next().value,stack=[seed],members=[];remaining.delete(seed);
+    while(stack.length){
+      const id=stack.pop(),record=byId.get(id);if(!record)continue;members.push(record);
+      Array.from(remaining).forEach(otherId=>{
+        const other=byId.get(otherId);
+        if(other&&separation(record.value,other.value)<=CLUSTER_ORB){remaining.delete(otherId);stack.push(otherId)}
+      });
+    }
+    if(members.length>=2)clusters.push(members.sort((a,b)=>a.value-b.value));
+  }
+  return clusters;
+}
+function polarityMemberSets(structures){
+  return structures.map(structure=>new Set([...structure.left,...structure.right].map(record=>record.id)));
+}
+function independentClusters(list,polarities){
+  const polaritySets=polarityMemberSets(polarities);
+  return proximityClusters(list).filter(cluster=>!polaritySets.some(set=>cluster.every(record=>set.has(record.id))));
+}
+function appendStructureMembers(frag,members){
+  members.forEach((record,index)=>{
     if(index)frag.appendChild(document.createTextNode(index===members.length-1?' and ':', '));
     frag.appendChild(token(placementInfo(record),'placement',false));
   });
-  frag.appendChild(document.createTextNode(structure.label+': '));
-  appendPole(structure.left);
-  frag.appendChild(document.createTextNode(' form one pole, opposite '));
-  appendPole(structure.right);
+}
+function clusterSentence(members){
+  const frag=document.createDocumentFragment();
+  frag.appendChild(document.createTextNode('Cluster: '));appendStructureMembers(frag,members);
+  frag.appendChild(document.createTextNode(' form one concentrated group'));
   return frag;
 }
-function renderPolarityStructures(container,list,permitted){
+function polaritySentence(structure){
+  const frag=document.createDocumentFragment();
+  frag.appendChild(document.createTextNode(structure.label+': '));
+  appendStructureMembers(frag,structure.left);
+  frag.appendChild(document.createTextNode(' form one pole, opposite '));
+  appendStructureMembers(frag,structure.right);
+  return frag;
+}
+function renderStructures(container,list,permitted){
   const selected=new Set(permitted.map(record=>record.id)),showAll=selected.size===list.length;
-  polarityStructures(list).forEach(structure=>{
-    const members=[...structure.left,...structure.right];
-    if(!showAll&&!members.some(record=>selected.has(record.id)))return;
+  const polarities=polarityStructures(list),clusters=independentClusters(list,polarities);
+  const visibleClusters=clusters.filter(members=>showAll||members.some(record=>selected.has(record.id)));
+  const visiblePolarities=polarities.filter(structure=>showAll||[...structure.left,...structure.right].some(record=>selected.has(record.id)));
+  if(!visibleClusters.length&&!visiblePolarities.length)return;
+  const heading=document.createElement('div');heading.className='sky-vocab-structures-heading';heading.textContent='Structures';container.appendChild(heading);
+  visibleClusters.forEach(members=>{
+    const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='cluster';
+    line.dataset.vocabMembers=members.map(record=>record.id).join(',');
+    line.append(clusterSentence(members),document.createTextNode('.'));container.appendChild(line);
+  });
+  visiblePolarities.forEach(structure=>{
     const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='axis-polarity';line.dataset.vocabAxis=structure.left[0].id+'-'+structure.right[0].id;
     line.append(polaritySentence(structure),document.createTextNode('.'));container.appendChild(line);
   });
@@ -445,18 +484,9 @@ function renderParagraph(slot,panel){
   if(!container)return;
   container.replaceChildren();
   if(!list.length){container.textContent='Add or calculate placements to read this sky as vocabulary.';return}
-  const permitted=eligibleRecords(slot,list),eligible=new Set(permitted.map(record=>record.id));
+  const permitted=eligibleRecords(slot,list);
   renderFullPlacements(container,permitted);
-  renderPolarityStructures(container,list,permitted);
-  if(filters.relationships!==false&&eligible.size){
-    const scope=activeScope(slot),allSelected=eligible.size===list.length;
-    const boundedContext=scope.signs!==null||scope.houses!==null;
-    relations(list).filter(relation=>{
-      if(allSelected)return true;
-      if(boundedContext)return eligible.has(relation.left.id)&&eligible.has(relation.right.id);
-      return eligible.has(relation.left.id)||eligible.has(relation.right.id);
-    }).forEach(relation=>appendSentence(container,relationSentence(relation)));
-  }
+  renderStructures(container,list,permitted);
   if(!displayState().glyphs&&!displayState().names&&!displayState().referents){
     container.replaceChildren();
     const empty=document.createElement('span');empty.className='sky-vocab-empty';empty.textContent='Turn on Glyphs, Names, or Referents to display the vocabulary.';container.appendChild(empty);
@@ -576,7 +606,6 @@ function houseDropdownMarkup(slot){
     '<div class="sky-chart-house-list-header"><strong>House</strong><span>All</span></div>'+
     '<div class="sky-chart-house-list-item sky-chart-house-list-item-master"><strong class="sky-chart-house-list-label">All houses</strong><div class="sky-chart-house-list-choices">'+relationshipChoice(allInput,'sky-chart-house-choice sky-chart-house-choice-all')+'</div></div>'+
     rows+
-    '<div class="sky-chart-house-list-item sky-chart-house-list-item-house"><strong class="sky-chart-house-list-label">Intrasky relationships</strong><div class="sky-chart-house-list-choices">'+relationshipChoice('<input type="checkbox" data-vocab-filter="relationships" data-vocab-slot="'+slot+'" '+(filterState().relationships!==false?'checked':'')+' aria-label="Intrasky relationships">','sky-chart-house-choice sky-chart-house-choice-all')+'</div></div>'+
   '</div></div>';
   const menuId='skyVocabHousesMenu'+slot;
   return '<div class="sky-chart-house-filter sky-vocab-rel-filter" data-vocab-dropdown="houses" data-vocab-dropdown-slot="'+slot+'">'+
@@ -601,14 +630,21 @@ function positionDropdown(){
   dropdownPositionQueued=false;if(!openDropdownState)return;
   const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),field=owner?.querySelector('[data-vocab-dropdown-toggle]');
   if(!owner||!menu||!field||menu.hidden)return;
+  const previousScroll=menu.scrollTop;
   const rect=field.getBoundingClientRect(),margin=kind==='houses'?8:12,targetWidth=kind==='placements'?350:kind==='houses'?430:kind==='signs'?330:260,width=Math.max(220,Math.min(targetWidth,window.innerWidth-margin*2)),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
   menu.style.height='auto';menu.style.maxHeight='none';menu.style.overflowY='hidden';
   const natural=Math.ceil(menu.scrollHeight+2),available=Math.max(180,window.innerHeight-margin*2),rendered=Math.min(natural,available);
   if(natural>available){menu.style.height=available+'px';menu.style.maxHeight=available+'px';menu.style.overflowY='auto'}
   const useAbove=below<Math.min(220,rendered)&&above>below,top=useAbove?Math.max(margin,rect.top-rendered-5):Math.min(window.innerHeight-rendered-margin,rect.bottom+5),left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left));
   Object.assign(menu.style,{position:'fixed',width:width+'px',left:left+'px',top:Math.max(margin,top)+'px',zIndex:'10050'});
+  if(previousScroll)menu.scrollTop=Math.min(previousScroll,Math.max(0,menu.scrollHeight-menu.clientHeight));
 }
-function scheduleDropdownPosition(){if(dropdownPositionQueued||!openDropdownState)return;dropdownPositionQueued=true;requestAnimationFrame(positionDropdown)}
+function scheduleDropdownPosition(event){
+  if(dropdownPositionQueued||!openDropdownState)return;
+  const menu=dropdownMenu(openDropdownState.slot,openDropdownState.kind);
+  if(event?.type==='scroll'&&(event.target===menu||menu?.contains?.(event.target)))return;
+  dropdownPositionQueued=true;requestAnimationFrame(positionDropdown)
+}
 function openDropdown(slot,kind){
   if(openDropdownState?.slot===slot&&openDropdownState?.kind===kind){closeDropdown();return}
   closeDropdown();const owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind);if(!owner||!menu)return;
@@ -680,7 +716,6 @@ function ensurePanel(slot,view){
   decorateRelationshipStyleMenus(panel);
   const mount=view.querySelector('[data-sky-drawer-mount="placements"]');mount?.insertAdjacentElement('afterend',panel);
   panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);rerenderPanels()}));
-  panel.querySelectorAll('[data-vocab-filter="relationships"]').forEach(input=>input.addEventListener('change',()=>{const state=filterState();state.relationships=input.checked;saveFilter(state);rerenderPanels()}));
   panel.querySelectorAll('[data-vocab-placement]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'placements',input.dataset.vocabPlacement,input.checked)));
   panel.querySelectorAll('[data-vocab-sign]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'signs',input.dataset.vocabSign,input.checked)));
   panel.querySelectorAll('[data-vocab-house]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'houses',input.dataset.vocabHouse,input.checked)));
@@ -781,17 +816,19 @@ function installStyles(){
 
     .sky-vocab-paragraph{display:grid;gap:.48rem;margin:0;color:#2c2723;font:500 .81rem/1.52 system-ui,sans-serif}
     .sky-vocab-line{display:block;margin:0}
+    .sky-vocab-structures-heading{margin:.34rem 0 -.08rem;padding-top:.42rem;border-top:1px solid rgba(31,27,24,.12);color:#6a6058;font:900 .62rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.055em}
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035)}
     .sky-vocab-structure-line:first-letter{font-weight:800}
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
-    .sky-vocab-meta{--vocab-mark-size:1.5em;display:inline-flex;align-items:center;gap:.16em;white-space:nowrap;vertical-align:-.18em;line-height:1}
+    .sky-vocab-meta{--vocab-mark-size:1.68em;display:inline-flex;align-items:center;gap:.16em;white-space:nowrap;vertical-align:-.06em;line-height:1}
+    .sky-vocab-line>.sky-vocab-token:first-child>.sky-vocab-meta{margin-left:-.12em}
     .sky-vocab-glyph{display:inline-grid;place-items:center;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);margin:0;vertical-align:baseline;font-weight:800;line-height:1}
     .sky-vocab-glyph.has-svg-glyph{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size)}
-    .sky-vocab-glyph svg{display:block;width:var(--vocab-mark-size);height:var(--vocab-mark-size);overflow:visible}
+    .sky-vocab-glyph svg{display:block;width:var(--vocab-mark-size);height:var(--vocab-mark-size);overflow:visible;transform:translateY(-.035em)}
     .sky-vocab-glyph.is-house-medallion{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);vertical-align:baseline}
-    .sky-vocab-glyph>.relphi-house-medallion{display:inline-grid!important;width:var(--vocab-mark-size)!important;height:var(--vocab-mark-size)!important;margin:0!important;place-items:center!important;vertical-align:baseline!important;color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.62em!important;line-height:1!important}
+    .sky-vocab-glyph>.relphi-house-medallion{display:inline-grid!important;width:1.5em!important;height:1.5em!important;margin:0!important;place-items:center!important;vertical-align:baseline!important;transform:translateY(-.11em);color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.62em!important;line-height:1!important}
     .sky-vocab-glyph>.relphi-house-medallion[data-house="10"],.sky-vocab-glyph>.relphi-house-medallion[data-house="11"],.sky-vocab-glyph>.relphi-house-medallion[data-house="12"]{font-size:.54em!important;letter-spacing:-.02em!important}
     .sky-vocab-name{display:inline-block;font-weight:720;font-size:.94em;line-height:1;vertical-align:baseline;color:#62584f}
     .sky-vocab-referent{font-weight:560;color:#211d19}
