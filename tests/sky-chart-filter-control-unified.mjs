@@ -25,22 +25,19 @@ await page.waitForSelector('[data-aspect-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-placement-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-harmonic-window-input]',{timeout:20000});
-await page.waitForSelector('[data-house-system-filter]',{timeout:20000});
 
 const result=await page.evaluate(()=>{
   const selectors={
     orb:'[data-harmonic-window-input]',
     aspects:'.sky-chart-aspect-filter-value',
     placements:'.sky-chart-placement-summary-choices',
-    houses:'.sky-chart-house-summary-choices',
-    houseSystem:'[data-house-system-filter]'
+    houses:'.sky-chart-house-summary-choices'
   };
   const labelSelectors={
     orb:'[data-harmonic-window-input]',
     aspects:'.sky-chart-aspect-filter-label',
     placements:'.sky-chart-placement-filter-label',
-    houses:'.sky-chart-house-filter-label',
-    houseSystem:'[data-house-system-filter]'
+    houses:'.sky-chart-house-filter-label'
   };
   const fields={};
   const labels={};
@@ -69,7 +66,7 @@ const result=await page.evaluate(()=>{
   }
   for(const [name,selector] of Object.entries(labelSelectors)){
     const source=document.querySelector(selector);
-    const node=(name==='orb'||name==='houseSystem')?source.closest('label'):source;
+    const node=name==='orb'?source.closest('label'):source;
     const style=getComputedStyle(node);
     labels[name]={
       color:style.color,
