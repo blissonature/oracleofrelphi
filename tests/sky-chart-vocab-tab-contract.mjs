@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=16/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=17/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -24,6 +24,8 @@ assert.match(vocab,/child:'children'/);
 assert.match(vocab,/AXIS_PAIRS/,'Definitional axes must be treated as axes rather than ordinary opposition rows');
 assert.match(vocab,/houseCusps\.length\?houseFor/,'Vocab houses must follow the active house system when cusps are available');
 assert.match(vocab,/vocabLocalStage/,'Vocab tokens must support local progressive reveal');
+assert.match(vocab,/function localVisibility\(node\)/,'Local reveal must preserve globally enabled layers and add only missing layers');
+assert.match(vocab,/missingCount/,'Local reveal must cycle through only globally hidden layers');
 assert.match(vocab,/function controlsMarkup\(slot\)/,'Vocab must define the control markup initializer used when the panel opens');
 assert.match(vocab,/data-vocab-dropdown-toggle/,'Vocab controls must be dropdowns');
 assert.match(vocab,/data-vocab-dropdown-menu/,'Vocab dropdowns must open checklist menus');
@@ -64,11 +66,15 @@ assert.match(vocab,/kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign
 assert.match(vocab,/kind==='house'/,'House wheel clicks must drive the House filter');
 assert.match(vocab,/if\(state\.kind!==\'aspect\'\)return/,'Aspect selections must continue to drive endpoint Placement filtering after direct Placement, Sign, and House handling');
 assert.match(vocab,/wheelFilterSpec=null;wheelFilterState=null/,'Clearing the wheel must restore the manual Vocab filters');
+assert.match(vocab,/boundedContext=scope\.signs!==null\|\|scope\.houses!==null/,'House and Zodiac filters must bound relationships to the selected context');
+assert.match(vocab,/eligible\.has\(relation\.left\.id\)&&eligible\.has\(relation\.right\.id\)/,'Bounded Vocab context must require both relationship endpoints to remain inside the selection');
 assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','sun','moon'/,'Full Vocab must begin with nodes, axes, then luminaries');
 
 assert.match(vocab,/const SIGN_COLORS=\['#e53935'/,'Vocab signs must use the established zodiac palette');
 assert.match(vocab,/const HOUSE_COLORS=\['#e53935'/,'Vocab houses must use the established house palette');
 assert.match(vocab,/color:String\(aspect\?\.color\|\|''\)/,'Vocab aspects must use their established aspect colors');
+assert.match(vocab,/sky-vocab-meta/,'Astrological glyph/name detail must use a clean inline meta wrapper instead of punctuation clutter');
+assert.match(vocab,/width:1\.34em;height:1\.34em/,'Vocab glyphs must be materially larger than the original inline glyphs');
 assert.match(vocab,/sky-vocab-level\.is-color-coded/,'Color must be confined to Vocab vocabulary tokens');
 assert.match(vocab,/style\.setProperty\('color',color,'important'\)/,'Color must be applied directly so Vocab tokens survive tab/view repainting');
 assert.match(vocab,/visibilitychange/,'Vocab must repaint when a browser tab becomes visible again');
