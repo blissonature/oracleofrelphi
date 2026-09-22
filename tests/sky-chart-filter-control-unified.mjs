@@ -24,26 +24,26 @@ await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:2000
 await page.waitForSelector('[data-aspect-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-placement-filter="combined"]',{timeout:20000});
 await page.waitForSelector('[data-house-filter="combined"]',{timeout:20000});
-await page.waitForSelector('[data-harmonic-window-input]',{timeout:20000});
-await page.waitForSelector('.sky-chart-aspect-summary-choices',{timeout:20000});
-await page.waitForSelector('.sky-chart-placement-summary-choices',{timeout:20000});
-await page.waitForSelector('.sky-chart-house-summary-choices',{timeout:20000});
-await page.waitForSelector('.sky-chart-aspect-filter-label',{timeout:20000});
-await page.waitForSelector('.sky-chart-placement-filter-label',{timeout:20000});
-await page.waitForSelector('.sky-chart-house-filter-label',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships [data-harmonic-window-input]',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-aspect-summary-choices',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-placement-summary-choices',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-house-summary-choices',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-aspect-filter-label',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-placement-filter-label',{timeout:20000});
+await page.waitForSelector('#skyFoundationRelationships .sky-chart-house-filter-label',{timeout:20000});
 
 const result=await page.evaluate(()=>{
   const selectors={
-    orb:'[data-harmonic-window-input]',
-    aspects:'.sky-chart-aspect-summary-choices',
-    placements:'.sky-chart-placement-summary-choices',
-    houses:'.sky-chart-house-summary-choices'
+    orb:'#skyFoundationRelationships [data-harmonic-window-input]',
+    aspects:'#skyFoundationRelationships .sky-chart-aspect-summary-choices',
+    placements:'#skyFoundationRelationships .sky-chart-placement-summary-choices',
+    houses:'#skyFoundationRelationships .sky-chart-house-summary-choices'
   };
   const labelSelectors={
-    orb:'[data-harmonic-window-input]',
-    aspects:'.sky-chart-aspect-filter-label',
-    placements:'.sky-chart-placement-filter-label',
-    houses:'.sky-chart-house-filter-label'
+    orb:'#skyFoundationRelationships [data-harmonic-window-input]',
+    aspects:'#skyFoundationRelationships .sky-chart-aspect-filter-label',
+    placements:'#skyFoundationRelationships .sky-chart-placement-filter-label',
+    houses:'#skyFoundationRelationships .sky-chart-house-filter-label'
   };
   const fields={};
   const labels={};
@@ -84,9 +84,9 @@ const result=await page.evaluate(()=>{
   }
   const toggles={};
   for(const [name,selector] of Object.entries({
-    aspects:'.sky-chart-aspect-filter-toggle',
-    placements:'.sky-chart-placement-filter-toggle',
-    houses:'.sky-chart-house-filter-toggle'
+    aspects:'#skyFoundationRelationships .sky-chart-aspect-filter-toggle',
+    placements:'#skyFoundationRelationships .sky-chart-placement-filter-toggle',
+    houses:'#skyFoundationRelationships .sky-chart-house-filter-toggle'
   })){
     const node=document.querySelector(selector);
     const style=getComputedStyle(node);
@@ -123,7 +123,7 @@ for(const [name,toggle] of Object.entries(result.toggles)){
 
 // Aspect matrix rows retain the canonical aspect identity so the shared glyph decorator
 // can restore the symbol and its aspect-specific color.
-await page.locator('.sky-chart-aspect-filter-toggle').click();
+await page.locator('#skyFoundationRelationships .sky-chart-aspect-filter-toggle').click();
 await page.waitForSelector('#skyChartAspectPopover:not([hidden]) [data-aspect-list="matrix"]');
 await page.waitForFunction(()=>document.querySelectorAll('#skyChartAspectPopover .sky-filter-symbol-aspect[data-glyph-color]').length===11);
 const aspectGlyphAudit=await page.locator('#skyChartAspectPopover .sky-chart-aspect-list-item[data-aspect-list-item]:not([data-aspect-list-item="all"])').evaluateAll(rows=>rows.map(row=>{
