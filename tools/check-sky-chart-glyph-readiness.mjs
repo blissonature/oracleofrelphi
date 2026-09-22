@@ -18,6 +18,7 @@ const requiredFiles = [
   'relphi-glyph-source-integrity-v1.js',
   'glyphs-unified-preview.html',
   'assets/planet-glyphs/part-of-fortune.svg',
+  'assets/planet-glyphs/anti-vertex.svg',
   'sky-chart.html',
   'sky-chart-foundation-v2.js',
   'sky-chart-calculated-points-v1.js',
@@ -45,7 +46,7 @@ if (fs.existsSync(required('relphi-glyph-registry-v1.js'))) {
 
 const skyIdentities = [
   'sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto',
-  'chiron','north-node','south-node','lilith','part-of-fortune','vertex','asc','dsc','mc','ic'
+  'chiron','north-node','south-node','lilith','part-of-fortune','vertex','anti-vertex','asc','dsc','mc','ic'
 ];
 
 if (registry) {
@@ -54,7 +55,7 @@ if (registry) {
     if (!entry) fail(`Sky Chart identity missing from the one registry: ${id}`);
   }
 
-  const staticMasters = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith','part-of-fortune'];
+  const staticMasters = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith','part-of-fortune','anti-vertex'];
   for (const id of staticMasters) {
     const entry = registry.get(id);
     if (!entry?.asset || entry.fitMode !== 'static-master' || entry.scale !== 1 || entry.dx !== 0 || entry.dy !== 0) {
