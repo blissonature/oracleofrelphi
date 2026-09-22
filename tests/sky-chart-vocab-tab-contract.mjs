@@ -47,7 +47,7 @@ assert.match(vocab,/driveFiltersFromWheel/,'Wheel state must drive Vocab filters
 assert.match(vocab,/mirrorDirectWheelClick/,'Wheel clicks must directly mirror into Vocab filters');
 assert.match(vocab,/wheelSpecFromNode/,'Direct wheel mirroring must map Placement, Sign, and House nodes to their matching Vocab dimensions');
 assert.match(vocab,/wheelNodeFromEvent/,'Wheel mirroring must resolve annotated SVG nodes from the event path');
-assert.match(vocab,/document\.addEventListener\('click',mirrorDirectWheelClick,true\)/,'The direct wheel mirror must run in capture phase before downstream wheel handlers can consume the click');
+assert.match(vocab,/document\.addEventListener\('pointerdown',mirrorDirectWheelClick,true\)/,'The direct wheel mirror must run on capture-phase pointerdown before downstream wheel handlers can consume the interaction');
 assert.match(vocab,/kind==='placement'/,'Placement wheel clicks must drive the Placement filter');
 assert.match(vocab,/kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign filter');
 assert.match(vocab,/kind==='house'/,'House wheel clicks must drive the House filter');
