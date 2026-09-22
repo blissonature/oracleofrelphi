@@ -47,9 +47,9 @@ assert.match(vocab,/driveFiltersFromWheel/,'Wheel state must drive Vocab filters
 assert.match(vocab,/mirrorDirectWheelClick/,'Wheel clicks must directly mirror into Vocab filters');
 assert.match(vocab,/wheelSpecFromNode/,'Direct wheel mirroring must map Placement, Sign, and House nodes to their matching Vocab dimensions');
 assert.match(vocab,/document\.addEventListener\('click',mirrorDirectWheelClick\)/,'The direct wheel mirror must actually be attached');
-assert.match(vocab,/state\.kind==='placement'/,'Placement wheel clicks must drive the Placement filter');
-assert.match(vocab,/state\.kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign filter');
-assert.match(vocab,/state\.kind==='house'/,'House wheel clicks must drive the House filter');
+assert.match(vocab,/kind==='placement'/,'Placement wheel clicks must drive the Placement filter');
+assert.match(vocab,/kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign filter');
+assert.match(vocab,/kind==='house'/,'House wheel clicks must drive the House filter');
 assert.match(vocab,/state\.kind==='aspect'/,'Aspect wheel clicks must drive endpoint Placement filters');
 assert.match(vocab,/wheelFilterState=null;rerenderPanels/,'Clearing the wheel must restore the manual Vocab filters');
 assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','sun','moon'/,'Full Vocab must begin with nodes, axes, then luminaries');
