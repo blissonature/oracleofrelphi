@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=24/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=25/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -35,7 +35,7 @@ assert.match(vocab,/data-vocab-sign/,'Vocab must expose a Zodiac Sign checkbox m
 assert.match(vocab,/data-vocab-house/,'Vocab must expose a House checkbox matrix');
 assert.match(vocab,/data-vocab-group/,'Placement matrix must expose group checkboxes');
 assert.match(vocab,/CATEGORY_ORDER=\['nodes','axes','luminaries','planets','other'\]/,'Placement groups must follow Nodes, Axes, Luminaries, Planets, Other points');
-assert.match(vocab,/Intrasky relationships/,'Vocab must retain an Intrasky relationships toggle');
+assert.doesNotMatch(vocab,/Intrasky relationships/,'Vocab must not duplicate the Relationships panel as a raw relationship list');
 
 assert.match(vocab,/sky-chart-placement-filter-popover sky-vocab-rel-popover/,'Vocab Placement dropdown must reuse the Relationships Placement popover class');
 assert.match(vocab,/sky-chart-placement-list/,'Vocab Placement dropdown must reuse the Relationships Placement list structure');
@@ -64,6 +64,10 @@ assert.match(vocab,/mirrorDirectWheelClick/,'Wheel clicks must directly mirror i
 assert.match(vocab,/wheelSpecFromNode/,'Direct wheel mirroring must map Placement, Sign, and House nodes to their matching Vocab dimensions');
 assert.match(vocab,/wheelNodeFromEvent/,'Wheel mirroring must resolve annotated SVG nodes from the event path');
 assert.match(vocab,/document\.addEventListener\('pointerdown',mirrorDirectWheelClick,true\)/,'The direct wheel mirror must run on capture-phase pointerdown before downstream wheel handlers can consume the interaction');
+assert.match(vocab,/event\?\.type==='scroll'.*event\.target===menu/,'Scrolling inside an open Vocab dropdown must not trigger portal repositioning');
+assert.match(vocab,/const previousScroll=menu\.scrollTop/,'Vocab dropdown repositioning must preserve the user’s current scroll position');
+assert.match(vocab,/margin-left:-\.12em/,'The first visible glyph must optically align with the text margin');
+assert.match(vocab,/translateY\(-\.11em\)/,'House Medallions must be raised relative to the sentence baseline');
 assert.match(vocab,/kind==='placement'/,'Placement wheel clicks must drive the Placement filter');
 assert.match(vocab,/kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign filter');
 assert.match(vocab,/kind==='house'/,'House wheel clicks must drive the House filter');
@@ -73,23 +77,27 @@ assert.match(vocab,/relphi:sky-foundation-clear-selection/,'Blank-space selectio
 assert.match(vocab,/function vocabClearableBlank\(target\)/,'Vocab must recognize the same non-interactive chart space used to drop a wheel selection');
 assert.match(vocab,/if\(\(wheelFilterState\|\|wheelFilterSpec\)&&vocabClearableBlank\(event\.target\)\)applyWheelSpec\(null\)/,'Blank-space pointerdown must immediately reset Vocab wheel filters without waiting for another controller');
 assert.match(vocab,/if\(wheelFilterState\|\|wheelFilterSpec\)applyWheelSpec\(null\)/,'A null foundation selection must clear any wheel-driven Placement, Sign, House, or Aspect filter');
-assert.match(vocab,/boundedContext=scope\.signs!==null\|\|scope\.houses!==null/,'House and Zodiac filters must bound relationships to the selected context');
 assert.match(vocab,/const AXIS_STRUCTURES=/,'Vocab must define higher-order axis polarity structures separately from ordinary relationships');
 assert.match(vocab,/POLARITY_ATTACH_ORB=3/,'Axis polarity structure attachments must use the three-degree structural cluster window');
-assert.match(vocab,/renderPolarityStructures/,'Filtered Vocab must preserve relevant whole-axis structures');
+assert.match(vocab,/CLUSTER_ORB=3/,'Natural Vocab clusters must use the same three-degree local geometry window');
+assert.match(vocab,/function proximityClusters\(list\)/,'Vocab must detect natural connected placement clusters rather than enumerating every aspect');
+assert.match(vocab,/function independentClusters\(list,polarities\)/,'Clusters already represented as a pole must not be duplicated as a separate cluster');
+assert.match(vocab,/dataset\.vocabStructure='cluster'/,'Detected natural clusters must render as explicit structure rows');
+assert.match(vocab,/renderStructures/,'Filtered Vocab must synthesize clusters and polarities after the placement reading');
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
-assert.match(vocab,/eligible\.has\(relation\.left\.id\)&&eligible\.has\(relation\.right\.id\)/,'Bounded Vocab context must require both relationship endpoints to remain inside the selection');
+assert.doesNotMatch(vocab,/relations\(list\)\.filter/,'Vocab must not append the raw intrasky aspect list after the structural synthesis');
+assert.match(vocab,/document\.createTextNode\(' is in '\)/,'Ordinary placement sentences must use the same is-in grammar as axes');
 assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','sun','moon'/,'Full Vocab must begin with nodes, axes, then luminaries');
 
 assert.match(vocab,/const SIGN_COLORS=\['#e53935'/,'Vocab signs must use the established zodiac palette');
 assert.match(vocab,/const HOUSE_COLORS=\['#e53935'/,'Vocab houses must use the established house palette');
 assert.match(vocab,/color:String\(aspect\?\.color\|\|''\)/,'Vocab aspects must use their established aspect colors');
 assert.match(vocab,/sky-vocab-meta/,'Astrological glyph/name detail must use a clean inline meta wrapper instead of punctuation clutter');
-assert.match(vocab,/--vocab-mark-size:1\.5em/,'Vocab glyphs and House Medallions must share one optical inline size');
-assert.match(vocab,/display:inline-flex;align-items:center;gap:\.16em;white-space:nowrap;vertical-align:-\.18em/,'Vocab glyph and name must use one shared optical alignment box');
+assert.match(vocab,/--vocab-mark-size:1\.68em/,'Vocab glyphs must use the larger mobile-readable inline mark box');
+assert.match(vocab,/display:inline-flex;align-items:center;gap:\.16em;white-space:nowrap;vertical-align:-\.06em/,'Vocab glyph and name must use one raised shared optical alignment box');
 assert.match(vocab,/-webkit-text-fill-color:var\(--house-ink\)!important/,'House medallion numerals must keep their canonical contrasting ink inside Vocab');
 assert.match(vocab,/sky-vocab-glyph\.is-house-medallion/,'Vocab must size House Medallions explicitly for inline reading');
-assert.match(vocab,/width:var\(--vocab-mark-size\)!important;height:var\(--vocab-mark-size\)!important/,'House Medallions must use the exact same inline mark box as canonical glyphs');
+assert.match(vocab,/width:90%!important;height:90%!important/,'House Medallions must sit inside the shared mark box without inheriting their numeral font size as geometry');
 assert.match(vocab,/sky-vocab-level\.is-color-coded/,'Color must be confined to Vocab vocabulary tokens');
 assert.match(vocab,/style\.setProperty\('color',color,'important'\)/,'Color must be applied directly so Vocab tokens survive tab/view repainting');
 assert.match(vocab,/visibilitychange/,'Vocab must repaint when a browser tab becomes visible again');
