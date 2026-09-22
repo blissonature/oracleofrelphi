@@ -786,14 +786,14 @@ function installStyles(){
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
-    .sky-vocab-meta{display:inline;white-space:nowrap;vertical-align:baseline}
-    .sky-vocab-glyph{display:inline-flex;align-items:center;justify-content:center;min-width:1em;min-height:1.5em;margin:0 .16em 0 .03em;vertical-align:-.31em;font-weight:800;line-height:1}
-    .sky-vocab-glyph.has-svg-glyph{width:1.55em;min-width:1.55em}
-    .sky-vocab-glyph svg{display:block;width:1.55em;height:1.55em;overflow:visible}
-    .sky-vocab-glyph.is-house-medallion{width:20px;min-width:20px;height:20px;min-height:20px;vertical-align:-.27em}
-    .sky-vocab-glyph>.relphi-house-medallion{display:inline-grid!important;width:20px!important;height:20px!important;margin:0!important;place-items:center!important;vertical-align:middle!important;color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.59rem!important;line-height:1!important}
-    .sky-vocab-glyph>.relphi-house-medallion[data-house="10"],.sky-vocab-glyph>.relphi-house-medallion[data-house="11"],.sky-vocab-glyph>.relphi-house-medallion[data-house="12"]{font-size:.52rem!important;letter-spacing:-.02em!important}
-    .sky-vocab-name{display:inline;font-weight:720;font-size:.94em;line-height:inherit;vertical-align:baseline;color:#62584f}
+    .sky-vocab-meta{--vocab-mark-size:1.5em;display:inline-flex;align-items:center;gap:.16em;white-space:nowrap;vertical-align:-.18em;line-height:1}
+    .sky-vocab-glyph{display:inline-grid;place-items:center;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);margin:0;vertical-align:baseline;font-weight:800;line-height:1}
+    .sky-vocab-glyph.has-svg-glyph{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size)}
+    .sky-vocab-glyph svg{display:block;width:var(--vocab-mark-size);height:var(--vocab-mark-size);overflow:visible}
+    .sky-vocab-glyph.is-house-medallion{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);vertical-align:baseline}
+    .sky-vocab-glyph>.relphi-house-medallion{display:inline-grid!important;width:var(--vocab-mark-size)!important;height:var(--vocab-mark-size)!important;margin:0!important;place-items:center!important;vertical-align:baseline!important;color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.62em!important;line-height:1!important}
+    .sky-vocab-glyph>.relphi-house-medallion[data-house="10"],.sky-vocab-glyph>.relphi-house-medallion[data-house="11"],.sky-vocab-glyph>.relphi-house-medallion[data-house="12"]{font-size:.54em!important;letter-spacing:-.02em!important}
+    .sky-vocab-name{display:inline-block;font-weight:720;font-size:.94em;line-height:1;vertical-align:baseline;color:#62584f}
     .sky-vocab-referent{font-weight:560;color:#211d19}
     .sky-vocab-level.is-color-coded{color:var(--vocab-token-color)!important;-webkit-text-fill-color:var(--vocab-token-color)!important}
     .sky-vocab-level.is-color-coded svg{color:var(--vocab-token-color)!important}
