@@ -93,42 +93,6 @@ assert.ok(await initialLines.count()>5,'Vocab must render multiple sentence line
 const lineStarts=await initialLines.evaluateAll(lines=>lines.map(line=>(line.textContent||'').trim()).filter(Boolean).map(text=>text.match(/[A-Za-z]/)?.[0]||''));
 assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab line must begin with a capital letter.');
 
-await page.evaluate(()=>{
-  window.__vocabWheelEvents=[];
-  window.addEventListener('relphi:sky-foundation-filter-changed',event=>window.__vocabWheelEvents.push(JSON.parse(JSON.stringify(event.detail||null))));
-});
-const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
-await mercury.click();
-await page.waitForTimeout(100);
-console.log('VOCAB_WHEEL_DEBUG',JSON.stringify(await page.evaluate(()=>({
-  selectedMercury:Array.from(document.querySelectorAll('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]')).map(node=>node.classList.contains('is-selected')),
-  selectedNodes:Array.from(document.querySelectorAll('#skyFoundationWheelMount .is-selected')).map(node=>({kind:node.dataset.interactive,sky:node.dataset.sky,value:node.dataset.placement||node.dataset.house||node.dataset.sign||node.dataset.relationIndex})),
-  vocabWheel:window.RelphiSkyVocab?.getWheelFilters?.(),
-  placementSummary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent,
-  signSummary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent,
-  houseSummary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent,
-  foundationEvents:window.__vocabWheelEvents
-}))));
-await page.waitForFunction(()=> {
-  const summary=document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]');
-  return /Mercury/i.test(summary?.textContent||'');
-});
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A placement click must drive Placement without pretending it was a Sign filter.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','A placement click must drive Placement without pretending it was a House filter.');
-
-await mercury.click();
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='All');
-
-const libra=page.locator('#skyFoundationWheelMount [data-interactive="sign"][data-sign="6"]').first();
-await libra.click();
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='Libra');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','A Sign wheel click must leave the Placement dimension at All.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="6"]').isChecked(),true,'Libra must be checked when the Libra wheel sector is selected.');
-assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="5"]').isChecked(),false,'Virgo must be unchecked when the Libra wheel sector is selected.');
-
-await libra.click();
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='All');
-
 const houseNine=page.locator('#skyFoundationWheelMount [data-interactive="house"][data-sky="A"][data-house="9"]').first();
 await houseNine.click();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='House 9');
@@ -140,6 +104,24 @@ assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="s
 await houseNine.click();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='All');
 
+const libra=page.locator('#skyFoundationWheelMount [data-interactive="sign"][data-sign="6"]').first();
+await libra.click();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='Libra');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="6"]').isChecked(),true,'Libra must be checked when the Libra wheel sector is selected.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="5"]').isChecked(),false,'Virgo must be unchecked when the Libra wheel sector is selected.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','A Sign wheel click must leave the Placement dimension at All.');
+
+await libra.click();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='All');
+
+const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
+await mercury.evaluate(node=>node.click());
+await page.waitForFunction(()=>/Mercury/i.test(document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent||''));
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A Placement wheel click must not rewrite the Sign filter.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','A Placement wheel click must not rewrite the House filter.');
+await mercury.evaluate(node=>node.click());
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='All');
+
 assert.deepEqual(errors,[],'Opening Vocab and driving its filters from the wheel must not produce page errors.');
 await browser.close();
-console.log('Vocab opens; wheel clicks drive their matching filter dimensions; output is one capitalized sentence per line.');
+console.log('Vocab opens; House, Sign, and Placement wheel selections drive their matching filters; output is one capitalized sentence per line.');
