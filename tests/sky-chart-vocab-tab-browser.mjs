@@ -164,6 +164,8 @@ const opticalAlignment=await page.locator('#skyFoundationA .sky-vocab-token').fi
   };
 });
 assert.ok(opticalAlignment&&Math.abs(opticalAlignment.glyphCenter-opticalAlignment.nameCenter)<=4,'Glyph and name must share one optical center.');
+const svgGlyphTransform=await page.locator('#skyFoundationA .sky-vocab-glyph.has-svg-glyph').first().evaluate(node=>getComputedStyle(node).transform);
+assert.notEqual(svgGlyphTransform,'none','Canonical SVG glyphs must carry their own lowered optical offset instead of sharing the House Medallion lift.');
 assert.ok(opticalAlignment&&Math.abs(opticalAlignment.nameCenter-opticalAlignment.referentCenter)<=4,'Name and referent must sit on the same visual line.');
 
 const housePairAlignment=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"]').filter({has:page.locator('.sky-vocab-name')}).first().evaluate(node=>{
