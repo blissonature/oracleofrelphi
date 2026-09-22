@@ -50,18 +50,43 @@ await display.click();
 const displayMenu=page.locator('[data-vocab-dropdown-menu="layers"][data-vocab-menu-slot="A"]');
 await displayMenu.waitFor({state:'visible'});
 assert.equal(await displayMenu.locator('.sky-vocab-filter-row').count(),3,'Display matrix must contain Glyphs, Names, and Referents.');
-assert.equal(await displayMenu.locator('[data-vocab-set-all="layers"]').count(),1);
-assert.equal(await displayMenu.locator('[data-vocab-set-none="layers"]').count(),1);
+assert.equal(await displayMenu.locator('[data-vocab-layer-all="A"]').count(),1);
+assert.equal(await displayMenu.locator('[data-vocab-layer-none="A"]').count(),1);
 
 await display.click();
-const include=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="filters"]');
-await include.click();
-const includeMenu=page.locator('[data-vocab-dropdown-menu="filters"][data-vocab-menu-slot="A"]');
-await includeMenu.waitFor({state:'visible'});
-assert.equal(await includeMenu.locator('.sky-vocab-filter-row').count(),6,'Include matrix must contain six Vocab scope filters.');
-assert.equal(await includeMenu.locator('[data-vocab-set-all="filters"]').count(),1);
-assert.equal(await includeMenu.locator('[data-vocab-set-none="filters"]').count(),1);
+const placements=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="placements"]');
+await placements.click();
+const placementMenu=page.locator('[data-vocab-dropdown-menu="placements"][data-vocab-menu-slot="A"]');
+await placementMenu.waitFor({state:'visible'});
+assert.ok(await placementMenu.locator('[data-vocab-placement]').count()>10,'Placement matrix must expose the chart placements.');
+assert.equal(await placementMenu.locator('[data-vocab-placement-all="A"]').count(),1);
+assert.equal(await placementMenu.locator('[data-vocab-placement-none="A"]').count(),1);
+assert.equal(await placementMenu.locator('[data-vocab-filter="relationships"]').count(),1,'Placement matrix must retain Intrasky relationships.');
 
-assert.deepEqual(errors,[],'Opening Vocab and its filter matrices must not produce page errors.');
+await placements.click();
+
+const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
+await mercury.click();
+await page.waitForFunction(()=> {
+  const selected=Array.from(document.querySelectorAll('[data-vocab-placement][data-vocab-slot="A"]')).filter(input=>input.checked);
+  return selected.length===1&&selected[0].dataset.vocabPlacement==='mercury';
+});
+assert.match(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),/Mercury/i,'Wheel placement click must drive the Placement filter summary.');
+
+await mercury.click();
+await page.waitForFunction(()=> {
+  const all=Array.from(document.querySelectorAll('[data-vocab-placement][data-vocab-slot="A"]'));
+  return all.length>0&&all.every(input=>input.checked);
+});
+
+const libra=page.locator('#skyFoundationWheelMount [data-interactive="sign"][data-sign="6"]').first();
+await libra.click();
+await page.waitForFunction(()=> {
+  const selected=Array.from(document.querySelectorAll('[data-vocab-placement][data-vocab-slot="A"]')).filter(input=>input.checked);
+  return selected.length>=2&&selected.some(input=>input.dataset.vocabPlacement==='sun')&&selected.some(input=>input.dataset.vocabPlacement==='mercury');
+});
+assert.equal(await page.locator('#skyFoundationA [data-vocab-placement="mars"]').isChecked(),false,'A Libra wheel click must exclude non-Libra placements from the Vocab filter.');
+
+assert.deepEqual(errors,[],'Opening Vocab and driving its filters from the wheel must not produce page errors.');
 await browser.close();
-console.log('Vocab opens and both Relationships-style filter matrices are interactive.');
+console.log('Vocab opens; Relationships-style matrices work; wheel selections drive placement filters.');
