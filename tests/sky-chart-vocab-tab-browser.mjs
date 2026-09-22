@@ -94,6 +94,15 @@ assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab li
 
 const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
 await mercury.click();
+await page.waitForTimeout(100);
+console.log('VOCAB_WHEEL_DEBUG',JSON.stringify(await page.evaluate(()=>({
+  selectedMercury:Array.from(document.querySelectorAll('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]')).map(node=>node.classList.contains('is-selected')),
+  selectedNodes:Array.from(document.querySelectorAll('#skyFoundationWheelMount .is-selected')).map(node=>({kind:node.dataset.interactive,sky:node.dataset.sky,value:node.dataset.placement||node.dataset.house||node.dataset.sign||node.dataset.relationIndex})),
+  vocabWheel:window.RelphiSkyVocab?.getWheelFilters?.(),
+  placementSummary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent,
+  signSummary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent,
+  houseSummary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent
+}))));
 await page.waitForFunction(()=> {
   const summary=document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]');
   return /Mercury/i.test(summary?.textContent||'');
