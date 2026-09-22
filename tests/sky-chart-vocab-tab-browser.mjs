@@ -289,6 +289,13 @@ assert.deepEqual(
   'The preserved meridian polarity must carry the whole MC + Chiron ↔ IC + Uranus structure without reopening unrelated relationships.'
 );
 
+const meridianStructure=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="mc-ic"]');
+assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"]').count()>=4,'Every visible meridian-polarity member must carry compact sign context.');
+assert.ok(await meridianStructure.locator('[data-vocab-context-kind="house"]').count()>=4,'Every visible meridian-polarity member must carry compact house context.');
+assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-structure-context-name').filter({hasText:'Gemini'}).count()>=1,'MC/Chiron pole must expose its Gemini context.');
+assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-structure-context-name').filter({hasText:'Sagittarius'}).count()>=1,'IC/Uranus pole must expose its Sagittarius context.');
+assert.ok(await meridianStructure.locator('[data-vocab-context-kind="house"] .relphi-house-medallion').count()>=4,'Structure house context must reuse canonical House Medallions.');
+
 await clickBlankComparison();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='All');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','Blank space must restore the Vocab Placement filter after a House selection.');
