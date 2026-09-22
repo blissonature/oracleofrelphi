@@ -118,6 +118,8 @@ const AXIS_PAIRS=new Set(['asc|dsc','dsc|asc','mc|ic','ic|mc']);
 const HARMONIC=()=>window.RelphiHarmonicOrb;
 let queued=false;
 const focusState={A:'',B:''};
+let openDropdownState=null;
+let dropdownPositionQueued=false;
 
 const norm=value=>((Number(value)%360)+360)%360;
 const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
@@ -370,24 +372,93 @@ function renderParagraph(slot,panel){
     paragraph.textContent='No Vocab content matches the current filters.';
   }
 }
-function controlsMarkup(){
-  const state=displayState(),filters=filterState();
-  const filterLabels={nodes:'Nodes',axes:'Axes',luminaries:'Luminaries',planets:'Planets',other:'Other points',relationships:'Intrasky'};
-  return '<div class="sky-vocab-controls" role="group" aria-label="Vocabulary layers">'+
-    ['glyphs','names','referents'].map(id=>'<label class="sky-vocab-check"><input type="checkbox" data-vocab-layer="'+id+'" '+(state[id]?'checked':'')+'><span>'+id[0].toUpperCase()+id.slice(1)+'</span></label>').join('')+
+function optionLabel(id,kind){
+  if(kind==='layers')return{id:'glyphs',label:'Glyphs'}.id===id?'Glyphs':id==='names'?'Names':'Referents';
+  return({nodes:'Nodes',axes:'Axes',luminaries:'Luminaries',planets:'Planets',other:'Other points',relationships:'Intrasky'})[id]||id;
+}
+function dropdownSummary(kind){
+  const ids=kind==='layers'?['glyphs','names','referents']:['nodes','axes','luminaries','planets','other','relationships'];
+  const state=kind==='layers'?displayState():filterState(),selected=ids.filter(id=>state[id]);
+  if(selected.length===ids.length)return'All';
+  if(!selected.length)return'None';
+  if(kind==='layers'&&selected.length<=2)return selected.map(id=>optionLabel(id,kind)).join(' · ');
+  return selected.length+' of '+ids.length;
+}
+function dropdownMarkup(slot,kind,label,ids,state){
+  const menuId='skyVocab'+(kind==='layers'?'Display':'Include')+'Menu'+slot;
+  const dataAttr=kind==='layers'?'data-vocab-layer':'data-vocab-filter';
+  return '<div class="sky-vocab-dropdown" data-vocab-dropdown="'+kind+'" data-vocab-dropdown-slot="'+slot+'">'+
+    '<span class="sky-vocab-dropdown-label">'+label+'</span>'+
+    '<button type="button" class="sky-vocab-dropdown-field" data-vocab-dropdown-toggle="'+kind+'" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'">'+
+      '<span class="sky-vocab-dropdown-summary" data-vocab-dropdown-summary="'+kind+'">'+dropdownSummary(kind)+'</span>'+
+      '<span class="sky-vocab-dropdown-chevron" aria-hidden="true"></span>'+
+    '</button>'+
+    '<div id="'+menuId+'" class="sky-vocab-dropdown-menu" data-vocab-dropdown-menu="'+kind+'" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="'+label+'" hidden>'+
+      ids.map(id=>'<label class="sky-vocab-menu-choice"><input type="checkbox" '+dataAttr+'="'+id+'" '+(state[id]?'checked':'')+'><span>'+optionLabel(id,kind)+'</span></label>').join('')+
     '</div>'+
-    '<div class="sky-vocab-filter-controls" role="group" aria-label="Vocabulary filters">'+
-    ['nodes','axes','luminaries','planets','other','relationships'].map(id=>'<label class="sky-vocab-check"><input type="checkbox" data-vocab-filter="'+id+'" '+(filters[id]?'checked':'')+'><span>'+filterLabels[id]+'</span></label>').join('')+
+  '</div>';
+}
+function controlsMarkup(slot){
+  const state=displayState(),filters=filterState();
+  return '<div class="sky-vocab-dropdown-row">'+
+    dropdownMarkup(slot,'layers','Display',['glyphs','names','referents'],state)+
+    dropdownMarkup(slot,'filters','Include',['nodes','axes','luminaries','planets','other','relationships'],filters)+
     '</div>'+
     '<div class="sky-vocab-focus-bar" data-vocab-focus-bar hidden><span data-vocab-focus-label></span><button type="button" data-vocab-clear-focus>Show all</button></div>';
 }
+function dropdownOwner(slot,kind){
+  return document.querySelector('[data-sky-vocab-panel="'+slot+'"] [data-vocab-dropdown="'+kind+'"]');
+}
+function dropdownMenu(slot,kind){
+  return document.querySelector('[data-vocab-dropdown-menu="'+kind+'"][data-vocab-menu-slot="'+slot+'"]');
+}
+function closeDropdown(){
+  if(!openDropdownState)return;
+  const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind);
+  if(menu){
+    menu.hidden=true;
+    menu.classList.remove('is-portaled');
+    menu.removeAttribute('style');
+    owner?.appendChild(menu);
+  }
+  owner?.classList.remove('is-open');
+  owner?.querySelector('[data-vocab-dropdown-toggle]')?.setAttribute('aria-expanded','false');
+  openDropdownState=null;
+}
+function positionDropdown(){
+  dropdownPositionQueued=false;
+  if(!openDropdownState)return;
+  const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),field=owner?.querySelector('.sky-vocab-dropdown-field');
+  if(!owner||!menu||!field||menu.hidden)return;
+  const rect=field.getBoundingClientRect(),margin=10,width=Math.max(180,Math.min(280,Math.max(rect.width,220))),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
+  const natural=Math.min(menu.scrollHeight+4,320),maxHeight=Math.max(140,Math.min(320,Math.max(below,above)));
+  const useAbove=below<Math.min(180,natural)&&above>below;
+  const top=useAbove?Math.max(margin,rect.top-Math.min(natural,maxHeight)-5):Math.min(window.innerHeight-Math.min(natural,maxHeight)-margin,rect.bottom+5);
+  const left=Math.min(window.innerWidth-width-margin,Math.max(margin,rect.left));
+  Object.assign(menu.style,{position:'fixed',width:width+'px',maxHeight:maxHeight+'px',left:left+'px',top:Math.max(margin,top)+'px',zIndex:'10050'});
+}
+function scheduleDropdownPosition(){
+  if(dropdownPositionQueued||!openDropdownState)return;
+  dropdownPositionQueued=true;requestAnimationFrame(positionDropdown);
+}
+function openDropdown(slot,kind){
+  if(openDropdownState?.slot===slot&&openDropdownState?.kind===kind){closeDropdown();return}
+  closeDropdown();
+  const owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind);
+  if(!owner||!menu)return;
+  openDropdownState={slot,kind};owner.classList.add('is-open');menu.hidden=false;menu.classList.add('is-portaled');document.body.appendChild(menu);
+  owner.querySelector('[data-vocab-dropdown-toggle]')?.setAttribute('aria-expanded','true');
+  scheduleDropdownPosition();
+}
+function updateDropdownSummaries(){
+  document.querySelectorAll('[data-vocab-dropdown-summary]').forEach(node=>{node.textContent=dropdownSummary(node.dataset.vocabDropdownSummary)});
+}
 function rerenderPanels(){
-  document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>{
-    const display=displayState(),filters=filterState();
-    panel.querySelectorAll('[data-vocab-layer]').forEach(control=>{control.checked=!!display[control.dataset.vocabLayer]});
-    panel.querySelectorAll('[data-vocab-filter]').forEach(control=>{control.checked=!!filters[control.dataset.vocabFilter]});
-    renderParagraph(panel.dataset.skyVocabPanel,panel);
-  });
+  const display=displayState(),filters=filterState();
+  document.querySelectorAll('[data-vocab-layer]').forEach(control=>{control.checked=!!display[control.dataset.vocabLayer]});
+  document.querySelectorAll('[data-vocab-filter]').forEach(control=>{control.checked=!!filters[control.dataset.vocabFilter]});
+  updateDropdownSummaries();
+  document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel));
 }
 function clearVocabFocus(slot){
   focusState[slot]='';
@@ -398,13 +469,16 @@ function ensurePanel(slot,view){
   let panel=view.querySelector('[data-sky-vocab-panel]');
   if(panel)return panel;
   panel=document.createElement('section');panel.className='sky-vocab-panel';panel.dataset.skyVocabPanel=slot;panel.hidden=true;
-  panel.innerHTML=controlsMarkup()+'<p class="sky-vocab-paragraph" data-sky-vocab-paragraph></p>';
+  panel.innerHTML=controlsMarkup(slot)+'<p class="sky-vocab-paragraph" data-sky-vocab-paragraph></p>';
   const mount=view.querySelector('[data-sky-drawer-mount="placements"]');mount?.insertAdjacentElement('afterend',panel);
   panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{
     const state=displayState();state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);rerenderPanels();
   }));
   panel.querySelectorAll('[data-vocab-filter]').forEach(input=>input.addEventListener('change',()=>{
     const state=filterState();state[input.dataset.vocabFilter]=input.checked;saveFilter(state);rerenderPanels();
+  }));
+  panel.querySelectorAll('[data-vocab-dropdown-toggle]').forEach(button=>button.addEventListener('click',event=>{
+    event.preventDefault();event.stopPropagation();openDropdown(slot,button.dataset.vocabDropdownToggle);
   }));
   panel.querySelector('[data-vocab-clear-focus]')?.addEventListener('click',()=>clearVocabFocus(slot));
   panel.addEventListener('click',event=>progressive(event));
@@ -454,13 +528,22 @@ function installStyles(){
     .sky-placement-vocab-tab.is-active{background:#241f1b;color:#fff}
     .sky-vocab-panel{display:grid;gap:.72rem;padding:.52rem .7rem .82rem;min-width:0}
     .sky-vocab-panel[hidden]{display:none!important}
-    .sky-vocab-controls,.sky-vocab-filter-controls{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;padding:.18rem 0 .1rem}
-    .sky-vocab-filter-controls{padding-top:.52rem;border-top:1px solid rgba(65,55,48,.1)}
-    .sky-vocab-check{display:inline-flex;align-items:center;gap:.28rem;color:#4e463f;font:800 .64rem/1.2 system-ui,sans-serif;cursor:pointer}
+    .sky-vocab-dropdown-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:end}
+    .sky-vocab-dropdown{position:relative;display:grid;grid-template-rows:auto 32px;gap:4px;min-width:0}
+    .sky-vocab-dropdown-label{min-width:0;color:#665d56;font:800 .62rem/1.15 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sky-vocab-dropdown-field{appearance:none;display:grid;grid-template-columns:minmax(0,1fr) 30px;align-items:center;width:100%;height:32px;min-width:0;margin:0;padding:0;border:1px solid rgba(56,48,42,.24);border-radius:7px;background:#fff;color:#332d28;font:750 .66rem/1.2 system-ui,sans-serif;text-align:left;cursor:pointer}
+    .sky-vocab-dropdown-summary{min-width:0;padding:0 .5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sky-vocab-dropdown-chevron{align-self:stretch;border-left:1px solid rgba(56,48,42,.08);background-image:var(--sky-chart-filter-chevron);background-repeat:no-repeat;background-position:center;background-size:14px 14px}
+    .sky-vocab-dropdown-field:hover,.sky-vocab-dropdown-field:focus-visible,.sky-vocab-dropdown.is-open .sky-vocab-dropdown-field{background-color:#f5f1eb;outline:none}
+    .sky-vocab-dropdown.is-open .sky-vocab-dropdown-field{border-color:rgba(31,27,24,.42);box-shadow:0 0 0 2px rgba(31,27,24,.08)}
+    .sky-vocab-dropdown-menu{box-sizing:border-box;display:grid;gap:2px;padding:6px;border:1px solid rgba(56,48,42,.2);border-radius:9px;background:#fff;box-shadow:0 12px 30px rgba(35,29,24,.18);overflow:auto}
+    .sky-vocab-dropdown-menu[hidden]{display:none!important}
+    .sky-vocab-menu-choice{display:flex;align-items:center;gap:.45rem;min-height:30px;padding:.28rem .42rem;border-radius:6px;color:#413934;font:750 .68rem/1.2 system-ui,sans-serif;cursor:pointer}
+    .sky-vocab-menu-choice:hover{background:#f5f1eb}
+    .sky-vocab-menu-choice input{margin:0;flex:0 0 auto}
     .sky-vocab-focus-bar{display:flex;align-items:center;gap:.48rem;width:max-content;max-width:100%;padding:.34rem .5rem;border-radius:999px;background:#f4eee7;color:#332c27;font:800 .64rem/1.2 system-ui,sans-serif}
     .sky-vocab-focus-bar[hidden]{display:none!important}
     .sky-vocab-focus-bar button{appearance:none;border:0;background:transparent;color:#6c5e54;text-decoration:underline;font:800 inherit;cursor:pointer;padding:0}
-    .sky-vocab-check input{margin:0}
     .sky-vocab-paragraph{margin:0;color:#2c2723;font:500 .78rem/1.62 system-ui,sans-serif}
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -475,7 +558,9 @@ function installStyles(){
     @media(max-width:620px){
       .sky-placement-vocab-tab{font-size:.7rem;padding:.34rem .52rem}
       .sky-vocab-panel{padding:.48rem .58rem .74rem}
-      .sky-vocab-controls,.sky-vocab-filter-controls{gap:.58rem}
+      .sky-vocab-dropdown-row{gap:6px}
+      .sky-vocab-dropdown-label{font-size:.6rem}
+      .sky-vocab-dropdown-field{font-size:.64rem}
       .sky-vocab-paragraph{font-size:.75rem;line-height:1.55}
     }
   `;document.head.appendChild(style);
@@ -502,6 +587,15 @@ window.addEventListener('relphi:sky-foundation-clear-selection',()=>{if(focusSta
 ].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY||event.key===FILTER_KEY)schedule()});
 window.addEventListener('pageshow',schedule);
+document.addEventListener('pointerdown',event=>{
+  if(!openDropdownState)return;
+  const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),path=typeof event.composedPath==='function'?event.composedPath():[];
+  if(path.includes(owner)||path.includes(menu)||owner?.contains(event.target)||menu?.contains(event.target))return;
+  closeDropdown();
+},true);
+document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDropdown()});
+window.addEventListener('resize',scheduleDropdownPosition);
+window.addEventListener('scroll',scheduleDropdownPosition,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
 window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getFocus:()=>({...focusState})});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
