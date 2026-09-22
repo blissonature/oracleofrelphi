@@ -115,6 +115,19 @@ assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab li
 
 const sunLine=page.locator('#skyFoundationA .sky-vocab-line').filter({has:page.locator('.sky-vocab-token[data-vocab-kind="placement"][data-vocab-id="sun"]')}).first();
 assert.match(await sunLine.textContent(),/is in/i,'Ordinary placements must use the same “is in” grammar as Ascendant and MC.');
+
+const sunBridge=await sunLine.evaluate(line=>{
+  const sign=line.querySelector('.sky-vocab-token[data-vocab-kind="sign"]');
+  const previous=sign?.previousSibling;
+  return previous?.nodeType===Node.TEXT_NODE?previous.nodeValue:'';
+});
+assert.match(sunBridge,/is\u00A0in\u00A0$/,'The “is in” bridge must use non-breaking spaces so it cannot be stranded before the sign token.');
+
+const firstHouseBridge=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"]').first().evaluate(token=>{
+  const previous=token.previousSibling;
+  return previous?.nodeType===Node.TEXT_NODE?previous.nodeValue:'';
+});
+assert.match(firstHouseBridge,/in\u00A0$/,'The house preposition must be glued to the following medallion/name unit.');
 assert.equal(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="aspect"]').count(),0,'Vocab must not reproduce the raw aspect list already available in Relationships.');
 const sunMercuryCluster=page.locator('#skyFoundationA [data-vocab-structure="cluster"][data-vocab-members*="sun"][data-vocab-members*="mercury"]');
 assert.equal(await sunMercuryCluster.count(),1,'A natural non-axis Sun–Mercury concentration must be synthesized as one cluster.');
