@@ -201,7 +201,9 @@ assert.equal(await firstToken.locator('.sky-vocab-name').count(),1,'Second local
 const expandedOrder=await firstToken.evaluate(node=>Array.from(node.querySelectorAll(':scope .sky-vocab-glyph,:scope .sky-vocab-name,:scope .sky-vocab-referent')).map(child=>
   child.classList.contains('sky-vocab-glyph')?'glyph':child.classList.contains('sky-vocab-name')?'name':'referent'
 ));
-assert.deepEqual(expandedOrder,['glyph','name','referent'],'Expanded Vocab tokens must follow the Relationships progressive order: glyph, name, referent.');
+assert.deepEqual(expandedOrder,['glyph','name','referent'],'Expanded Vocab tokens must preserve glyph → name → referent order.');
+const parentheticalText=await firstToken.textContent();
+assert.match(parentheticalText,/\(.+\)/,'Expanded Vocab detail must be enclosed in parentheses.');
 await firstToken.locator('.sky-vocab-referent').click();
 assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),0,'After all hidden layers are shown, the next click must return to the global Display baseline.');
 assert.equal(await firstToken.locator('.sky-vocab-referent').count(),1,'Returning to baseline must preserve the globally enabled referent.');
