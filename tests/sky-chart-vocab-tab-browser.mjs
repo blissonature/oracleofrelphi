@@ -68,7 +68,7 @@ const rawLoadedSky={
 };
 await page.evaluate(raw=>{
   localStorage.setItem('relphiSkyChartA',JSON.stringify(raw));
-  window.dispatchEvent(new CustomEvent('relphi:saved-sky-loaded',{detail:{slot:'A',source:'test'}}));
+  window.RelphiSkyVocab?.render?.();
 },rawLoadedSky);
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="sun"]'));
 assert.equal(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-id="_housecontext"]').count(),0,'Internal _houseContext metadata must never render as a Vocab placement after a sky load.');
