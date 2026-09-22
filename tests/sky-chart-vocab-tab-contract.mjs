@@ -51,7 +51,7 @@ assert.match(vocab,/kind==='placement'/,'Placement wheel clicks must drive the P
 assert.match(vocab,/kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign filter');
 assert.match(vocab,/kind==='house'/,'House wheel clicks must drive the House filter');
 assert.match(vocab,/state\.mode!==\'selected\'\|\|state\.kind!==\'aspect\'/,'The foundation event bridge must reserve aspect selections for endpoint Placement filtering');
-assert.match(vocab,/wheelFilterState=null;rerenderPanels/,'Clearing the wheel must restore the manual Vocab filters');
+assert.match(vocab,/wheelFilterSpec=null;wheelFilterState=null/,'Clearing the wheel must restore the manual Vocab filters');
 assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','sun','moon'/,'Full Vocab must begin with nodes, axes, then luminaries');
 
 assert.match(vocab,/const SIGN_COLORS=\['#e53935'/,'Vocab signs must use the established zodiac palette');
