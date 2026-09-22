@@ -746,6 +746,39 @@ function relationshipRowSlots(row){
   return{left:String(row?.dataset?.leftSky||(mode==='B-B'?'B':'A')).toUpperCase(),right:String(row?.dataset?.rightSky||(mode==='A-A'?'A':mode==='B-B'?'B':'B')).toUpperCase()};
 }
 function allWheelScope(){return{A:emptyScope(),B:emptyScope()}}
+function wheelScopeFromNode(node){
+  if(!node?.classList?.contains('is-selected'))return null;
+  const kind=String(node.dataset.interactive||'');
+  if(kind==='placement'&&KEYS[node.dataset.sky]){
+    const next=allWheelScope();
+    next[node.dataset.sky]={placements:[String(node.dataset.placement||'')],signs:null,houses:null};
+    return next;
+  }
+  if(kind==='sign'){
+    const sign=Number(node.dataset.sign);if(!Number.isInteger(sign))return null;
+    const next=allWheelScope();
+    next.A={placements:null,signs:[sign],houses:null};
+    next.B={placements:null,signs:[sign],houses:null};
+    return next;
+  }
+  if(kind==='house'&&KEYS[node.dataset.sky]){
+    const house=Number(node.dataset.house);if(!Number.isInteger(house))return null;
+    const next=allWheelScope();
+    next[node.dataset.sky]={placements:null,signs:null,houses:[house]};
+    return next;
+  }
+  return null;
+}
+function mirrorDirectWheelClick(event){
+  const node=event.target.closest?.('#skyFoundationWheelMount [data-interactive="placement"],#skyFoundationWheelMount [data-interactive="sign"],#skyFoundationWheelMount [data-interactive="house"]');
+  if(!node)return;
+  queueMicrotask(()=>{
+    const next=wheelScopeFromNode(node);
+    if(next)wheelFilterState=next;
+    else if(wheelFilterState)wheelFilterState=null;
+    rerenderPanels();
+  });
+}
 function driveFiltersFromWheel(detail){
   const state=detail?.state;
   if(state?.mode==='hover')return;
