@@ -5,7 +5,7 @@ const html=readFileSync(new URL('../sky-chart.html',import.meta.url),'utf8');
 const vocab=readFileSync(new URL('../sky-chart-vocab-tab-v1.js',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=9/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=10/,'Sky Chart must load the Vocab subtab');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
@@ -19,7 +19,7 @@ assert.match(vocab,/'asteroid-lilith':'equality'/);
 assert.match(vocab,/child:'children'/);
 assert.match(vocab,/AXIS_PAIRS/,'Definitional axes must be treated as axes rather than ordinary opposition rows');
 assert.match(vocab,/houseCusps\.length\?houseFor/,'Vocab houses must follow the active house system when cusps are available');
-assert.match(vocab,/data\.vocabLocalStage/,'Vocab tokens must support local progressive reveal');
+assert.match(vocab,/vocabLocalStage/,'Vocab tokens must support local progressive reveal');
 assert.match(vocab,/function controlsMarkup\(slot\)/,'Vocab must define the control markup initializer used when the panel opens');
 assert.match(vocab,/data-vocab-dropdown-toggle/,'Vocab controls must be dropdowns');
 assert.match(vocab,/data-vocab-dropdown-menu/,'Vocab dropdowns must open checklist menus');
@@ -44,6 +44,9 @@ assert.match(vocab,/SIGN_FIGURES/,'Vocab Zodiac rows must use the same figure la
 
 assert.match(vocab,/relphi:sky-foundation-filter-changed/,'Vocab must follow the existing wheel filter contract');
 assert.match(vocab,/driveFiltersFromWheel/,'Wheel state must drive Vocab filters');
+assert.match(vocab,/mirrorDirectWheelClick/,'Wheel clicks must directly mirror into Vocab after the wheel updates its selected state');
+assert.match(vocab,/wheelScopeFromNode/,'Direct wheel mirroring must map Placement, Sign, and House nodes to their matching Vocab dimensions');
+assert.match(vocab,/queueMicrotask/,'Vocab must mirror wheel clicks after the foundation interaction controller has updated selection state');
 assert.match(vocab,/state\.kind==='placement'/,'Placement wheel clicks must drive the Placement filter');
 assert.match(vocab,/state\.kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign filter');
 assert.match(vocab,/state\.kind==='house'/,'House wheel clicks must drive the House filter');
