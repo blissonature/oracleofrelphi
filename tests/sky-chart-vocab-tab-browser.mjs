@@ -204,6 +204,9 @@ const expandedOrder=await firstToken.evaluate(node=>Array.from(node.querySelecto
 assert.deepEqual(expandedOrder,['glyph','name','referent'],'Expanded Vocab tokens must preserve glyph → name → referent order.');
 const parentheticalText=await firstToken.textContent();
 assert.match(parentheticalText,/\(.+\)/,'Expanded Vocab detail must be enclosed in parentheses.');
+
+const parentheticalNameDisplay=await firstToken.locator('.sky-vocab-parenthetical .sky-vocab-name').evaluate(node=>getComputedStyle(node).display);
+assert.equal(parentheticalNameDisplay,'inline','The revealed name must remain inline so the opening parenthesis stays attached to its content.');
 await firstToken.locator('.sky-vocab-referent').click();
 assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),0,'After all hidden layers are shown, the next click must return to the global Display baseline.');
 assert.equal(await firstToken.locator('.sky-vocab-referent').count(),1,'Returning to baseline must preserve the globally enabled referent.');
