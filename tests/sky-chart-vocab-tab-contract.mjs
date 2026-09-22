@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=34/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=35/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -25,16 +25,16 @@ assert.match(vocab,/AXIS_PAIRS/,'Definitional axes must be treated as axes rathe
 assert.match(vocab,/houseCusps\.length\?houseFor/,'Vocab houses must follow the active house system when cusps are available');
 assert.match(vocab,/vocabLocalStage/,'Vocab tokens must support local progressive reveal');
 assert.match(vocab,/function localVisibility\(node\)/,'Local reveal must preserve globally enabled layers and add only missing layers');
-assert.match(vocab,/visible=\[state\.referents,state\.names,state\.glyphs\]/,'Local Vocab reveal order must be Referent, Name, Glyph');
-assert.match(vocab,/ids=\['referents','names','glyphs'\]/,'Display summary order must be Referent, Name, Glyph');
-assert.match(vocab,/rows=\['referents','names','glyphs'\]/,'Display menu order must be Referent, Name, Glyph');
+assert.match(vocab,/visible=\[state\.glyphs,state\.referents,state\.names\]/,'Local Vocab reveal order must be Glyph, Referent, Name');
+assert.match(vocab,/ids=\['glyphs','referents','names'\]/,'Display summary order must be Glyph, Referent, Name');
+assert.match(vocab,/rows=\['glyphs','referents','names'\]/,'Display menu order must be Glyph, Referent, Name');
 assert.match(vocab,/sky-vocab-meta sky-vocab-parenthetical/,'Expanded Vocab names must use the parenthetical treatment');
 assert.match(vocab,/sky-vocab-parenthetical \.sky-vocab-name,\.sky-vocab-parenthetical \.sky-vocab-referent\{display:inline/,'Parenthetical names and referents must remain true inline text so an opening parenthesis cannot be stranded before an inline-block');
 assert.match(vocab,/translateY\(-\.17em\)/,'Inline House Medallions must be lifted to the corrected text baseline');
 assert.match(vocab,/sky-vocab-glyph\{position:relative;display:inline-block;[^}]*height:1em/,'Canonical glyph hosts must stay at text-line height so large SVG artwork cannot stretch the paragraph rhythm');
 assert.match(vocab,/sky-vocab-glyph svg\{position:absolute;[^}]*transform:translate\(-50%,-36%\)/,'Canonical SVG glyph artwork must be optically positioned inside its layout-neutral host');
 assert.match(vocab,/meta\.append\(document\.createTextNode\('\('\),n,document\.createTextNode\('\)'\)\)/,'Only the revealed name belongs inside the Vocab parentheses');
-assert.match(vocab,/node\.appendChild\(r\)[\s\S]*tail\.appendChild\(meta\)[\s\S]*tail\.appendChild\(g\)/,'Visible Vocab token order must be Referent, parenthetical Name, then Glyph');
+assert.match(vocab,/head\.appendChild\(g\)[\s\S]*node\.appendChild\(r\)[\s\S]*node\.appendChild\(meta\)/,'Visible Vocab token order must be Glyph, Referent, then parenthetical Name');
 assert.match(vocab,/rawLead\.replace\(\/ \/g,'\\u00A0'\)/,'Grammar leads must stay attached to the first visible Vocab layer');
 assert.match(vocab,/if\(r\)\{[\s\S]*node\.appendChild\(r\)/,'The referent must render outside and after the parenthetical name');
 assert.match(vocab,/sky-vocab-symbol-label/,'Glyph and parenthetical name must have a shared inline wrapper');
