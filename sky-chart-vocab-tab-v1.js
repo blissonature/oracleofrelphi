@@ -796,14 +796,22 @@ function mirrorDirectWheelClick(event){
   }
   rerenderPanels();
 }
+function applyWheelSpec(spec){
+  if(!spec){wheelFilterSpec=null;wheelFilterState=null;rerenderPanels();return}
+  wheelFilterSpec=spec;wheelFilterState=wheelScopeFromSpec(spec);rerenderPanels();
+}
 function driveFiltersFromWheel(detail){
   const state=detail?.state;
   if(state?.mode==='hover')return;
   if(!state){
-    if(wheelFilterSpec?.kind==='aspect'){wheelFilterState=null;wheelFilterSpec=null;rerenderPanels()}
+    if(wheelFilterSpec?.kind==='aspect')applyWheelSpec(null);
     return;
   }
-  if(state.mode!=='selected'||state.kind!=='aspect')return;
+  if(state.mode!=='selected')return;
+  if(state.kind==='placement'&&KEYS[state.sky]){applyWheelSpec({kind:'placement',sky:state.sky,value:String(state.value||'')});return}
+  if(state.kind==='sign'){applyWheelSpec({kind:'sign',sky:null,value:Number(state.value)});return}
+  if(state.kind==='house'&&KEYS[state.sky]){applyWheelSpec({kind:'house',sky:state.sky,value:Number(state.value)});return}
+  if(state.kind!=='aspect')return;
   const next=allWheelScope(),endpoints={A:new Set(),B:new Set()};
   (detail.relationshipIndexes||[]).forEach(index=>{
     const row=document.querySelector('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index="'+CSS.escape(String(index))+'"]');if(!row)return;
@@ -814,7 +822,26 @@ function driveFiltersFromWheel(detail){
   ['A','B'].forEach(slot=>{if(endpoints[slot].size)next[slot]={placements:Array.from(endpoints[slot]),signs:null,houses:null}});
   wheelFilterState=next;wheelFilterSpec={kind:'aspect',sky:null,value:String(state.value||'')};rerenderPanels();
 }
+function mirrorHouseBridge(detail){
+  if(detail?.source!=='comparison-wheel')return;
+  const slot=String(detail.slot||'').toUpperCase();
+  if(detail.active&&KEYS[slot]&&Number.isInteger(Number(detail.house))){
+    applyWheelSpec({kind:'house',sky:slot,value:Number(detail.house)});
+  }else if(wheelFilterSpec?.kind==='house'){
+    applyWheelSpec(null);
+  }
+}
+function mirrorZodiacBridge(detail){
+  const signs=Array.isArray(detail?.signs)?detail.signs.map(Number).filter(Number.isInteger):[];
+  if(detail?.source==='wheel'&&signs.length===1){
+    applyWheelSpec({kind:'sign',sky:null,value:signs[0]});
+  }else if(wheelFilterSpec?.kind==='sign'&&signs.length===12){
+    applyWheelSpec(null);
+  }
+}
 window.addEventListener('relphi:sky-foundation-filter-changed',event=>driveFiltersFromWheel(event.detail));
+window.addEventListener('relphi:sky-house-focus-bridge-changed',event=>mirrorHouseBridge(event.detail));
+window.addEventListener('relphi:sky-zodiac-filter-changed',event=>mirrorZodiacBridge(event.detail));
 document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
 [
   'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready',
