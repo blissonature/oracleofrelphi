@@ -5,7 +5,7 @@ const html=readFileSync(new URL('../sky-chart.html',import.meta.url),'utf8');
 const vocab=readFileSync(new URL('../sky-chart-vocab-tab-v1.js',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=6/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=7/,'Sky Chart must load the Vocab subtab');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
@@ -31,9 +31,12 @@ assert.match(vocab,/sky-vocab-dropdown-chevron/,'Vocab dropdowns must use a Rela
 assert.match(vocab,/data-vocab-filter/,'Vocab must expose filter controls inside the dropdown');
 assert.match(vocab,/\['nodes','axes','luminaries','planets','other','relationships'\]/,'Vocab filters must cover nodes, axes, luminaries, planets, other points, and intrasky relationships');
 assert.match(vocab,/relationships:'Intrasky'/,'The relationship filter must be labeled Intrasky');
-assert.match(vocab,/relphi:sky-foundation-filter-changed/,'Vocab must follow the existing wheel focus contract');
-assert.match(vocab,/state\?\.kind==='placement'/,'Only an explicit placement selection should drive Vocab placement focus');
-assert.match(vocab,/data-vocab-focus-bar/,'Focused Vocab must identify the active placement and provide a path back to the full story');
+assert.match(vocab,/relphi:sky-foundation-filter-changed/,'Vocab must follow the existing wheel filter contract');
+assert.match(vocab,/drivePlacementsFromWheel/,'Wheel state must drive Vocab placement filters');
+assert.match(vocab,/state\.kind==='placement'/,'Placement wheel clicks must select the matching placement filter');
+assert.match(vocab,/state\.kind==='sign'/,'Sign wheel clicks must select placements in the matching sign');
+assert.match(vocab,/state\.kind==='house'/,'House wheel clicks must select placements in the matching house');
+assert.match(vocab,/state\.kind==='aspect'/,'Aspect wheel clicks must select relationship endpoint placements');
 assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','sun','moon'/,'Full Vocab must begin with nodes, axes, then luminaries');
 
 assert.match(vocab,/const SIGN_COLORS=\['#e53935'/,'Vocab signs must use the established zodiac palette');
