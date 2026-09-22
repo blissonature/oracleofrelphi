@@ -827,13 +827,13 @@ function installStyles(){
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
     .sky-vocab-token{--vocab-mark-size:1.68em}
     .sky-vocab-parenthetical{display:inline;white-space:normal;vertical-align:baseline;color:#6a6058}
-    .sky-vocab-parenthetical .sky-vocab-name,.sky-vocab-parenthetical .sky-vocab-referent{color:inherit}
+    .sky-vocab-parenthetical .sky-vocab-name,.sky-vocab-parenthetical .sky-vocab-referent{display:inline;vertical-align:baseline;color:inherit}
     .sky-vocab-line>.sky-vocab-token:first-child>.sky-vocab-glyph{margin-left:-.12em}
     .sky-vocab-glyph{display:inline-grid;place-items:center;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);margin:0;vertical-align:baseline;font-weight:800;line-height:1}
     .sky-vocab-glyph.has-svg-glyph{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size)}
     .sky-vocab-glyph svg{display:block;width:var(--vocab-mark-size);height:var(--vocab-mark-size);overflow:visible;transform:translateY(-.035em)}
     .sky-vocab-glyph.is-house-medallion{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);vertical-align:baseline}
-    .sky-vocab-glyph>.relphi-house-medallion{display:inline-grid!important;width:90%!important;height:90%!important;margin:0!important;place-items:center!important;vertical-align:baseline!important;transform:translateY(-.11em);color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.72em!important;line-height:1!important}
+    .sky-vocab-glyph>.relphi-house-medallion{display:inline-grid!important;width:90%!important;height:90%!important;margin:0!important;place-items:center!important;vertical-align:baseline!important;transform:translateY(-.17em);color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.72em!important;line-height:1!important}
     .sky-vocab-glyph>.relphi-house-medallion[data-house="10"],.sky-vocab-glyph>.relphi-house-medallion[data-house="11"],.sky-vocab-glyph>.relphi-house-medallion[data-house="12"]{font-size:.61em!important;letter-spacing:-.02em!important}
     .sky-vocab-name{display:inline-block;font-weight:720;font-size:.94em;line-height:1;vertical-align:baseline;color:#62584f}
     .sky-vocab-referent{font-weight:560;color:#211d19}
