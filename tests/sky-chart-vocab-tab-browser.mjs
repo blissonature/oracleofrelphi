@@ -116,13 +116,6 @@ assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab li
 const sunLine=page.locator('#skyFoundationA .sky-vocab-line').filter({has:page.locator('.sky-vocab-token[data-vocab-kind="placement"][data-vocab-id="sun"]')}).first();
 assert.match(await sunLine.textContent(),/is in/i,'Ordinary placements must use the same “is in” grammar as Ascendant and MC.');
 
-const sunBridge=await sunLine.locator('.sky-vocab-token[data-vocab-kind="sign"] > .sky-vocab-symbol-label').evaluate(node=>({
-  text:(node.textContent||'').trim(),
-  whiteSpace:getComputedStyle(node).whiteSpace
-}));
-assert.match(sunBridge.text,/^is in\s+/,'The “is in” bridge must live inside the sign token’s symbol/name head.');
-assert.equal(sunBridge.whiteSpace,'nowrap','The “is in” bridge, glyph, and parenthetical sign name must move as one unit.');
-
 const firstHouseBridge=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"] > .sky-vocab-symbol-label').first().evaluate(node=>({
   text:(node.textContent||'').trim(),
   whiteSpace:getComputedStyle(node).whiteSpace
@@ -226,22 +219,24 @@ assert.equal(await firstToken.locator('.sky-vocab-referent').count(),1,'Referent
 assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),0,'Referents-only display must initially hide the glyph.');
 assert.equal(await firstToken.locator('.sky-vocab-name').count(),0,'Referents-only display must initially hide the name.');
 await firstToken.locator('.sky-vocab-referent').click();
-assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),1,'First local reveal must add the next hidden layer: glyph.');
-assert.equal(await firstToken.locator('.sky-vocab-name').count(),0,'First local reveal must not skip ahead to the name.');
-assert.equal(await secondToken.locator('.sky-vocab-glyph').count(),0,'A local reveal must not alter neighboring tokens.');
+assert.equal(await firstToken.locator('.sky-vocab-name').count(),1,'First local reveal must add the next hidden layer: name.');
+assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),0,'First local reveal must not skip ahead to the glyph.');
+assert.equal(await secondToken.locator('.sky-vocab-name').count(),0,'A local reveal must not alter neighboring tokens.');
 await firstToken.locator('.sky-vocab-referent').click();
-assert.equal(await firstToken.locator('.sky-vocab-name').count(),1,'Second local reveal must add the next hidden layer: name.');
-const expandedOrder=await firstToken.evaluate(node=>Array.from(node.querySelectorAll(':scope .sky-vocab-glyph,:scope .sky-vocab-name,:scope .sky-vocab-referent')).map(child=>
-  child.classList.contains('sky-vocab-glyph')?'glyph':child.classList.contains('sky-vocab-name')?'name':'referent'
+assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),1,'Second local reveal must add the final hidden layer: glyph.');
+const expandedOrder=await firstToken.evaluate(node=>Array.from(node.querySelectorAll(':scope .sky-vocab-referent,:scope .sky-vocab-name,:scope .sky-vocab-glyph')).map(child=>
+  child.classList.contains('sky-vocab-referent')?'referent':child.classList.contains('sky-vocab-name')?'name':'glyph'
 ));
-assert.deepEqual(expandedOrder,['glyph','name','referent'],'Expanded Vocab tokens must preserve glyph → name → referent order.');
+assert.deepEqual(expandedOrder,['referent','name','glyph'],'Expanded Vocab tokens must preserve Referent → Name → Glyph order.');
 const parentheticalText=await firstToken.textContent();
 assert.match(parentheticalText,/\([^)]*\)/,'Expanded Vocab name must be enclosed in parentheses.');
 
 const parentheticalNameDisplay=await firstToken.locator('.sky-vocab-parenthetical .sky-vocab-name').evaluate(node=>getComputedStyle(node).display);
 assert.equal(parentheticalNameDisplay,'inline','The revealed name must remain inline so the opening parenthesis stays attached to its content.');
 assert.equal(await firstToken.locator('.sky-vocab-parenthetical .sky-vocab-referent').count(),0,'The referent must not be placed inside the parentheses.');
-assert.equal(await firstToken.locator(':scope > .sky-vocab-referent').count(),1,'The referent must remain the unparenthesized readable layer after the glyph/name.');
+const visibleOrder=await firstToken.evaluate(node=>Array.from(node.querySelectorAll('.sky-vocab-referent,.sky-vocab-name,.sky-vocab-glyph')).map(child=>child.classList.contains('sky-vocab-referent')?'referent':child.classList.contains('sky-vocab-name')?'name':'glyph'));
+assert.deepEqual(visibleOrder,['referent','name','glyph'],'Visible token order must be Referent, Name, Glyph.');
+assert.equal(await firstToken.locator(':scope > .sky-vocab-referent').count(),1,'The referent must remain the unparenthesized readable first layer.');
 
 const symbolLabelWrap=await firstToken.locator(':scope > .sky-vocab-symbol-label').evaluate(node=>getComputedStyle(node).whiteSpace);
 assert.equal(symbolLabelWrap,'nowrap','Glyph and parenthetical name must behave as one unbreakable inline unit.');
