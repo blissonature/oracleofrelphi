@@ -116,18 +116,19 @@ assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab li
 const sunLine=page.locator('#skyFoundationA .sky-vocab-line').filter({has:page.locator('.sky-vocab-token[data-vocab-kind="placement"][data-vocab-id="sun"]')}).first();
 assert.match(await sunLine.textContent(),/is in/i,'Ordinary placements must use the same “is in” grammar as Ascendant and MC.');
 
-const sunBridge=await sunLine.evaluate(line=>{
-  const sign=line.querySelector('.sky-vocab-token[data-vocab-kind="sign"]');
-  const previous=sign?.previousSibling;
-  return previous?.nodeType===Node.TEXT_NODE?previous.nodeValue:'';
-});
-assert.match(sunBridge,/is\u00A0in\u00A0$/,'The “is in” bridge must use non-breaking spaces so it cannot be stranded before the sign token.');
+const sunBridge=await sunLine.locator('.sky-vocab-token[data-vocab-kind="sign"] > .sky-vocab-symbol-label').evaluate(node=>({
+  text:(node.textContent||'').trim(),
+  whiteSpace:getComputedStyle(node).whiteSpace
+}));
+assert.match(sunBridge.text,/^is in\s+/,'The “is in” bridge must live inside the sign token’s symbol/name head.');
+assert.equal(sunBridge.whiteSpace,'nowrap','The “is in” bridge, glyph, and parenthetical sign name must move as one unit.');
 
-const firstHouseBridge=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"]').first().evaluate(token=>{
-  const previous=token.previousSibling;
-  return previous?.nodeType===Node.TEXT_NODE?previous.nodeValue:'';
-});
-assert.match(firstHouseBridge,/in\u00A0$/,'The house preposition must be glued to the following medallion/name unit.');
+const firstHouseBridge=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"] > .sky-vocab-symbol-label').first().evaluate(node=>({
+  text:(node.textContent||'').trim(),
+  whiteSpace:getComputedStyle(node).whiteSpace
+}));
+assert.match(firstHouseBridge.text,/^in\s+/,'The house preposition must live inside the house token’s medallion/name head.');
+assert.equal(firstHouseBridge.whiteSpace,'nowrap','The house preposition, medallion, and parenthetical House name must move as one unit.');
 assert.equal(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="aspect"]').count(),0,'Vocab must not reproduce the raw aspect list already available in Relationships.');
 const sunMercuryCluster=page.locator('#skyFoundationA [data-vocab-structure="cluster"][data-vocab-members*="sun"][data-vocab-members*="mercury"]');
 assert.equal(await sunMercuryCluster.count(),1,'A natural non-axis Sun–Mercury concentration must be synthesized as one cluster.');
@@ -177,8 +178,11 @@ const opticalAlignment=await page.locator('#skyFoundationA .sky-vocab-token').fi
   };
 });
 assert.ok(opticalAlignment,'Expanded Vocab must expose glyph, name, and referent geometry for visual checks.');
-const svgGlyphTransform=await page.locator('#skyFoundationA .sky-vocab-glyph.has-svg-glyph').first().evaluate(node=>getComputedStyle(node).transform);
-assert.notEqual(svgGlyphTransform,'none','Canonical SVG glyphs must carry their own lowered optical offset instead of sharing the House Medallion lift.');
+const svgGlyphLayout=await page.locator('#skyFoundationA .sky-vocab-glyph.has-svg-glyph').first().evaluate(node=>{const host=getComputedStyle(node),svg=getComputedStyle(node.querySelector('svg'));return{hostHeight:parseFloat(host.height),hostPosition:host.position,svgPosition:svg.position,svgTransform:svg.transform,lineHeight:parseFloat(getComputedStyle(node.closest('.sky-vocab-line')).lineHeight)}});
+assert.equal(svgGlyphLayout.hostPosition,'relative','Canonical glyph host must provide a layout-neutral positioning context.');
+assert.equal(svgGlyphLayout.svgPosition,'absolute','Canonical SVG artwork must be removed from line-box sizing.');
+assert.ok(svgGlyphLayout.hostHeight<=svgGlyphLayout.lineHeight,'Canonical glyph host must not make the Vocab line taller than normal text.');
+assert.notEqual(svgGlyphLayout.svgTransform,'none','Canonical SVG artwork must retain its independent optical vertical placement.');
 assert.ok(opticalAlignment&&Math.abs(opticalAlignment.nameCenter-opticalAlignment.referentCenter)<=4,'Name and referent must sit on the same visual line.');
 
 const housePairAlignment=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"]').filter({has:page.locator('.sky-vocab-name')}).first().evaluate(node=>{
