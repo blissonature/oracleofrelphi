@@ -45,6 +45,21 @@ assert.equal(await vocabButton.getAttribute('aria-selected'),'true','Vocab tab m
 assert.equal(await page.locator('#skyFoundationA [data-sky-drawer-mount="placements"]').evaluate(node=>node.hidden),true,'Placements ledger must hide while Vocab is active.');
 assert.equal(await page.locator('#skyFoundationA [data-sky-vocab-panel="A"]').evaluate(node=>node.hidden),false,'Vocab panel must be visible after clicking Vocab.');
 
+const rawLoadedSky={
+  ...Object.fromEntries(Object.entries(skyA.placements)),
+  _houseContext:{name:'_houseContext',longitude:255,sign:'Sagittarius',house:6},
+  calcProfile:skyA.calcProfile,
+  houseCusps:skyA.houseCusps,
+  name:'Loaded natal sky'
+};
+await page.evaluate(raw=>{
+  localStorage.setItem('relphiSkyChartA',JSON.stringify(raw));
+  window.dispatchEvent(new StorageEvent('storage',{key:'relphiSkyChartA',newValue:JSON.stringify(raw),storageArea:localStorage}));
+},rawLoadedSky);
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-sky-vocab-panel="A"]')?.textContent?.includes('Identity'));
+assert.equal(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-id="_housecontext"]').count(),0,'Internal _houseContext metadata must never render as a Vocab placement after a sky load.');
+assert.equal((await page.locator('#skyFoundationA [data-sky-vocab-paragraph]').textContent()).includes('_houseContext'),false,'Private sky metadata text must not leak into the Vocab paragraph.');
+
 async function clickBlankComparison(){
   await page.locator('#skyFoundationComparison').evaluate(node=>{
     const pointer={bubbles:true,cancelable:true,composed:true,pointerId:91,pointerType:'mouse',isPrimary:true,buttons:1};
