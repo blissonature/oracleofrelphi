@@ -470,17 +470,36 @@ function compactStructureContext(info,kind){
   wrap.append(glyph,document.createTextNode(' '),name);
   return wrap;
 }
-function appendStructureMember(frag,record){
-  frag.appendChild(token(placementInfo(record),'placement',false));
+function structureMemberGroups(members){
+  const groups=[],byContext=new Map();
+  members.forEach(record=>{
+    const key=record.sign+'|'+(record.house||0);
+    let group=byContext.get(key);
+    if(!group){
+      group={sign:record.sign,house:record.house||0,members:[]};
+      byContext.set(key,group);groups.push(group);
+    }
+    group.members.push(record);
+  });
+  return groups;
+}
+function appendStructureMemberGroup(frag,group){
+  const wrap=document.createElement('span');wrap.className='sky-vocab-structure-member-group';
+  wrap.dataset.vocabStructureContextGroup=group.sign+'|'+group.house;
+  group.members.forEach((record,index)=>{
+    if(index)wrap.appendChild(document.createTextNode(index===group.members.length-1?' and ':', '));
+    wrap.appendChild(token(placementInfo(record),'placement',false));
+  });
   const context=document.createElement('span');context.className='sky-vocab-structure-member-context';
-  context.append(document.createTextNode(' · '),compactStructureContext(signInfo(record.sign),'sign'));
-  if(record.house)context.append(document.createTextNode(' · '),compactStructureContext(houseInfo(record.house),'house'));
-  frag.appendChild(context);
+  context.append(document.createTextNode(' · '),compactStructureContext(signInfo(group.sign),'sign'));
+  if(group.house)context.append(document.createTextNode(' · '),compactStructureContext(houseInfo(group.house),'house'));
+  wrap.appendChild(context);frag.appendChild(wrap);
 }
 function appendStructureMembers(frag,members){
-  members.forEach((record,index)=>{
-    if(index)frag.appendChild(document.createTextNode(index===members.length-1?' and ':', '));
-    appendStructureMember(frag,record);
+  const groups=structureMemberGroups(members);
+  groups.forEach((group,index)=>{
+    if(index)frag.appendChild(document.createTextNode(index===groups.length-1?' and ':', '));
+    appendStructureMemberGroup(frag,group);
   });
 }
 function clusterSignProfile(members){
@@ -982,6 +1001,7 @@ function installStyles(){
     .sky-vocab-structure-subheading,.sky-vocab-placements-heading{margin:.12rem 0 -.18rem;color:#756b62;font:850 .58rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.045em}
     .sky-vocab-placements-heading{margin-top:.32rem;padding-top:.5rem;border-top:1px solid rgba(31,27,24,.12)}
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035)}
+    .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:#6a6058}
     .sky-vocab-structure-context{display:inline-flex;align-items:baseline;white-space:nowrap;font-size:.88em;font-weight:720}
     .sky-vocab-structure-context .sky-vocab-glyph{--vocab-mark-size:1.38em}
