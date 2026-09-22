@@ -92,6 +92,10 @@ assert.ok(await initialLines.count()>5,'Vocab must render multiple sentence line
 const lineStarts=await initialLines.evaluateAll(lines=>lines.map(line=>(line.textContent||'').trim()).filter(Boolean).map(text=>text.match(/[A-Za-z]/)?.[0]||''));
 assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab line must begin with a capital letter.');
 
+await page.evaluate(()=>{
+  window.__vocabWheelEvents=[];
+  window.addEventListener('relphi:sky-foundation-filter-changed',event=>window.__vocabWheelEvents.push(JSON.parse(JSON.stringify(event.detail||null))));
+});
 const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
 await mercury.click();
 await page.waitForTimeout(100);
@@ -101,7 +105,8 @@ console.log('VOCAB_WHEEL_DEBUG',JSON.stringify(await page.evaluate(()=>({
   vocabWheel:window.RelphiSkyVocab?.getWheelFilters?.(),
   placementSummary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent,
   signSummary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent,
-  houseSummary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent
+  houseSummary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent,
+  foundationEvents:window.__vocabWheelEvents
 }))));
 await page.waitForFunction(()=> {
   const summary=document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]');
