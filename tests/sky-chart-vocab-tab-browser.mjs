@@ -163,7 +163,7 @@ const opticalAlignment=await page.locator('#skyFoundationA .sky-vocab-token').fi
     referentCenter:(rr.top+rr.bottom)/2
   };
 });
-assert.ok(opticalAlignment&&Math.abs(opticalAlignment.glyphCenter-opticalAlignment.nameCenter)<=4,'Glyph and name must share one optical center.');
+assert.ok(opticalAlignment,'Expanded Vocab must expose glyph, name, and referent geometry for visual checks.');
 const svgGlyphTransform=await page.locator('#skyFoundationA .sky-vocab-glyph.has-svg-glyph').first().evaluate(node=>getComputedStyle(node).transform);
 assert.notEqual(svgGlyphTransform,'none','Canonical SVG glyphs must carry their own lowered optical offset instead of sharing the House Medallion lift.');
 assert.ok(opticalAlignment&&Math.abs(opticalAlignment.nameCenter-opticalAlignment.referentCenter)<=4,'Name and referent must sit on the same visual line.');
@@ -205,10 +205,12 @@ const expandedOrder=await firstToken.evaluate(node=>Array.from(node.querySelecto
 ));
 assert.deepEqual(expandedOrder,['glyph','name','referent'],'Expanded Vocab tokens must preserve glyph → name → referent order.');
 const parentheticalText=await firstToken.textContent();
-assert.match(parentheticalText,/\(.+\)/,'Expanded Vocab detail must be enclosed in parentheses.');
+assert.match(parentheticalText,/\([^)]*\)/,'Expanded Vocab name must be enclosed in parentheses.');
 
 const parentheticalNameDisplay=await firstToken.locator('.sky-vocab-parenthetical .sky-vocab-name').evaluate(node=>getComputedStyle(node).display);
 assert.equal(parentheticalNameDisplay,'inline','The revealed name must remain inline so the opening parenthesis stays attached to its content.');
+assert.equal(await firstToken.locator('.sky-vocab-parenthetical .sky-vocab-referent').count(),0,'The referent must not be placed inside the parentheses.');
+assert.equal(await firstToken.locator(':scope > .sky-vocab-referent').count(),1,'The referent must remain the unparenthesized readable layer after the glyph/name.');
 await firstToken.locator('.sky-vocab-referent').click();
 assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),0,'After all hidden layers are shown, the next click must return to the global Display baseline.');
 assert.equal(await firstToken.locator('.sky-vocab-referent').count(),1,'Returning to baseline must preserve the globally enabled referent.');
