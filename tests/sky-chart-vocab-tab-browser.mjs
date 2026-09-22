@@ -341,6 +341,19 @@ await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-voc
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','Blank space must restore Zodiac after a Placement selection.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','Blank space must restore Houses after a Placement selection.');
 
+const cuspSky=structuredClone(skyA);
+cuspSky.placements.Venus=placement('Venus',179.2);
+cuspSky.placements.Mars=placement('Mars',180.8);
+cuspSky.placements.Mercury=placement('Mercury',180.1);
+await page.evaluate(raw=>{
+  localStorage.setItem('relphiSkyChartA',JSON.stringify(raw));
+  window.dispatchEvent(new StorageEvent('storage',{key:'relphiSkyChartA',newValue:JSON.stringify(raw),storageArea:localStorage}));
+},cuspSky);
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-structure="stellium"][data-vocab-cluster-type="cusp"][data-vocab-signs="Virgo|Libra"]'));
+const cuspStellium=page.locator('#skyFoundationA [data-vocab-structure="stellium"][data-vocab-cluster-type="cusp"][data-vocab-signs="Virgo|Libra"]');
+assert.equal(await cuspStellium.count(),1,'Three major bodies crossing Virgo–Libra must be surfaced as one cusp stellium.');
+assert.match(await cuspStellium.textContent(),/Stellium · cusp · Virgo–Libra/i,'A cusp stellium must explicitly name both affected signs.');
+
 assert.deepEqual(errors,[],'Opening Vocab and driving its filters from the wheel must not produce page errors.');
 await browser.close();
 console.log('Vocab opens; House, Sign, and Placement wheel selections drive their matching filters; output is one capitalized sentence per line.');
