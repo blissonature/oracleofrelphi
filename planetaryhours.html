@@ -1570,9 +1570,20 @@
   .ph-calendar-month-event.alert { border-left-color:var(--relphi-red); background:#fff1ed; }
   .ph-calendar-month-event.personal { border-left-color:#211d19; background:#f4f1ed; font-weight:850; }
   .ph-calendar-month-more { color:#756c65; font:800 .59rem/1.2 system-ui,sans-serif; }
-  .ph-calendar-default-sky-control { display:flex; align-items:center; justify-content:center; gap:.48rem; margin:.7rem auto 0; flex-wrap:wrap; }
+  .ph-calendar-sky-calendars { max-width:34rem; margin:.72rem auto 0; border:1px solid rgba(17,17,17,.11); border-radius:.85rem; background:#fff; overflow:hidden; }
+  .ph-calendar-sky-calendars > summary { display:flex; align-items:center; justify-content:space-between; gap:.7rem; padding:.62rem .78rem; cursor:pointer; list-style:none; color:#39332e; font:850 .75rem/1.2 system-ui,sans-serif; }
+  .ph-calendar-sky-calendars > summary::-webkit-details-marker { display:none; }
+  .ph-calendar-sky-count { color:#756c65; font-size:.66rem; font-weight:800; }
+  .ph-calendar-sky-calendars-body { display:grid; gap:.6rem; padding:0 .78rem .75rem; border-top:1px solid rgba(17,17,17,.07); }
+  .ph-calendar-default-sky-control { display:flex; align-items:center; gap:.48rem; padding-top:.62rem; flex-wrap:wrap; }
   .ph-calendar-default-sky-control label { color:#514a44; font:850 .7rem/1.2 system-ui,sans-serif; }
-  .ph-calendar-default-sky-control select { min-height:36px; max-width:min(100%,22rem); border:1px solid rgba(17,17,17,.15); border-radius:999px; background:#fff; color:#211d19; padding:.38rem 1.9rem .38rem .7rem; font:750 .72rem/1.2 system-ui,sans-serif; }
+  .ph-calendar-default-sky-control select { flex:1 1 14rem; min-height:36px; max-width:100%; border:1px solid rgba(17,17,17,.15); border-radius:999px; background:#fff; color:#211d19; padding:.38rem 1.9rem .38rem .7rem; font:750 .72rem/1.2 system-ui,sans-serif; }
+  .ph-calendar-sky-overlay-list { display:grid; gap:.3rem; }
+  .ph-calendar-sky-overlay { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:.48rem; min-width:0; padding:.4rem .48rem; border-radius:.58rem; background:#faf8f5; color:#302a26; cursor:pointer; }
+  .ph-calendar-sky-overlay input { width:1rem; height:1rem; margin:0; accent-color:var(--relphi-red); }
+  .ph-calendar-sky-overlay-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:800 .72rem/1.2 system-ui,sans-serif; }
+  .ph-calendar-sky-default-badge { padding:.18rem .38rem; border-radius:999px; background:#fff; border:1px solid rgba(17,17,17,.10); color:#6a6159; font:800 .57rem/1 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+  .ph-calendar-sky-note { margin:0; color:#756c65; }
   .ph-calendar-personal-source { margin:.45rem 0 0; color:#514a44; text-align:center; font:800 .7rem/1.3 system-ui,sans-serif; }
   .ph-calendar-month-help { margin:.25rem 0 0; text-align:center; }
   @media (max-width:760px) {
@@ -1962,11 +1973,18 @@
     <div class="ph-calendar-month-view" id="calendarMonthView" hidden aria-label="Planetary calendar month view">
       <div class="ph-calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
       <div class="ph-calendar-month-grid" id="calendarMonthGrid"></div>
-      <div class="ph-calendar-default-sky-control">
-        <label for="calendarPersonalSkySelect">Default sky</label>
-        <select id="calendarPersonalSkySelect" aria-label="Default saved sky for personal calendar events"></select>
-      </div>
-      <p class="ph-calendar-personal-source" id="calendarPersonalSource">Choose a saved sky as Default to add personal transits.</p>
+      <details class="ph-calendar-sky-calendars" id="calendarSkyCalendars">
+        <summary><span>Calendars</span><span class="ph-calendar-sky-count" id="calendarSkyCount">0 shown</span></summary>
+        <div class="ph-calendar-sky-calendars-body">
+          <div class="ph-calendar-default-sky-control">
+            <label for="calendarPersonalSkySelect">Default</label>
+            <select id="calendarPersonalSkySelect" aria-label="Default saved sky"></select>
+          </div>
+          <div class="ph-calendar-sky-overlay-list" id="calendarSkyOverlayList" aria-label="Saved sky calendar overlays"></div>
+          <p class="ph-tiny ph-calendar-sky-note">Default marks the primary saved sky. Shown calendars are independent and can be combined.</p>
+        </div>
+      </details>
+      <p class="ph-calendar-personal-source" id="calendarPersonalSource">Turn on saved skies to overlay their transits.</p>
       <p class="ph-tiny ph-calendar-month-help">Tap a date to open its planetary hours.</p>
     </div>
   </section>
@@ -1977,7 +1995,7 @@
       <p><b>Sunrise-to-sunrise frame.</b> The planetary day begins at local sunrise and ends at the next local sunrise.</p>
       <p><b>Bright and dark.</b> Bright hours run from sunrise to sunset. Dark hours run from sunset to the following sunrise.</p>
       <p><b>Location packets.</b> Manual Location Mode pairs a named place with latitude, longitude, and timezone so historical dates and birth times are not mixed with the wrong local frame.</p>
-      <p><b>Planetary calendar.</b> Month view shows Astronomy Engine ingresses, stations, conjunctions, lunations, exact major transits to the saved Default sky, saved alerts, and journal activity at a glance. Tap a date to drill into the sunrise-to-sunrise Day view with its planetary hours and notes.</p>
+      <p><b>Planetary calendar.</b> Month view shows Astronomy Engine ingresses, stations, conjunctions, lunations, exact major transits to any shown saved-sky calendars, saved alerts, and journal activity at a glance. Default marks the primary saved sky; shown calendars can be combined independently. Tap a date to drill into the sunrise-to-sunrise Day view with its planetary hours and notes.</p>
       <p><b>Statements.</b> Each focus statement combines the day ruler as the broad field, the hour ruler as the method, and the ruler's ordinal appearance in the planetary day. The page says “Moon hour,” “Jupiter day,” and so on to keep timing conditions distinct from planets as bodies.</p>
       <p><b>Animated heptagram.</b> The ring keeps the Chaldean order. The hour ruler glows inside the current day. The heptagram advances one day-ruler step per sunrise-to-sunrise day, so the full star is drawn over seven planetary days.</p>
     </details>
@@ -2099,6 +2117,8 @@
     calendarMonthView: document.getElementById('calendarMonthView'),
     calendarMonthGrid: document.getElementById('calendarMonthGrid'),
     calendarPersonalSkySelect: document.getElementById('calendarPersonalSkySelect'),
+    calendarSkyOverlayList: document.getElementById('calendarSkyOverlayList'),
+    calendarSkyCount: document.getElementById('calendarSkyCount'),
     calendarPersonalSource: document.getElementById('calendarPersonalSource'),
     calendarDatePick: document.getElementById('calendarDatePick'),
     calendarPrevDay: document.getElementById('calendarPrevDay'),
@@ -3638,6 +3658,7 @@
   }
 
   const defaultSkyStorageKey = 'relphiDefaultSkyIdV1';
+  const calendarSkyOverlayStorageKey = 'relphiPlanetaryCalendarSkyOverlaysV1';
 
   function savedSkyRecordRef(record) {
     return String(record && (record.id || record.savedSkyId || (record.metadata && record.metadata.savedSkyId)) || '');
@@ -3677,6 +3698,49 @@
     const record = savedSkyLibrary().find(function (item) { return savedSkyRecordRef(item) === id; }) || null;
     if (!record) setDefaultSkyId('');
     return record;
+  }
+
+  function calendarSkyOverlayIds() {
+    const records = savedSkyLibrary();
+    const valid = new Set(records.map(savedSkyRecordRef));
+    let raw = null;
+    try { raw = localStorage.getItem(calendarSkyOverlayStorageKey); } catch (error) {}
+    if (raw == null) {
+      const primary = defaultSkyId();
+      return primary && valid.has(primary) ? [primary] : [];
+    }
+    let ids = [];
+    try {
+      const parsed = JSON.parse(raw);
+      ids = Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch (error) {}
+    const clean = ids.filter(function (id, index) { return valid.has(id) && ids.indexOf(id) === index; });
+    if (clean.length !== ids.length) setCalendarSkyOverlayIds(clean);
+    return clean;
+  }
+
+  function setCalendarSkyOverlayIds(ids) {
+    const records = savedSkyLibrary();
+    const valid = new Set(records.map(savedSkyRecordRef));
+    const clean = (Array.isArray(ids) ? ids : []).map(String).filter(function (id, index, list) {
+      return valid.has(id) && list.indexOf(id) === index;
+    });
+    try { localStorage.setItem(calendarSkyOverlayStorageKey, JSON.stringify(clean)); } catch (error) {}
+    personalTransitEventCache.clear();
+    return clean;
+  }
+
+  function visibleCalendarSkyRecords() {
+    const ids = calendarSkyOverlayIds();
+    const byId = new Map(savedSkyLibrary().map(function (record) { return [savedSkyRecordRef(record), record]; }));
+    return ids.map(function (id) { return byId.get(id); }).filter(Boolean);
+  }
+
+  function ensureCalendarSkyShown(id) {
+    const value = String(id || '');
+    if (!value) return;
+    const ids = calendarSkyOverlayIds();
+    if (!ids.includes(value)) setCalendarSkyOverlayIds(ids.concat(value));
   }
 
   function referencePlacementLongitude(item) {
@@ -3767,8 +3831,7 @@
     return Math.floor(phNormDeg(Number(longitude) - cusp) / 30) + 1;
   }
 
-  function defaultSkyTargets() {
-    const record = defaultSkyRecord();
+  function referenceSkyTargets(record) {
     const placements = record && record.placements && typeof record.placements === 'object' ? record.placements : {};
     const freshVertex = referenceVertexLongitude(record);
     const targets = Object.entries(placements).map(function (entry) {
@@ -3821,20 +3884,30 @@
     });
   }
 
-  function defaultSkySignature() {
-    const record = defaultSkyRecord();
-    return defaultSkyTargets().map(function (target) { return target.name + ':' + target.longitude.toFixed(5); }).join('|') + '|' + savedSkyRecordRef(record);
+  function referenceSkySignature(record) {
+    return referenceSkyTargets(record).map(function (target) { return target.name + ':' + target.longitude.toFixed(5) + ':H' + String(target.house || ''); }).join('|') + '|' + savedSkyRecordRef(record);
   }
 
   function populateCalendarPersonalSkySelect() {
-    if (!el.calendarPersonalSkySelect) return;
     const records = savedSkyLibrary();
     const selected = defaultSkyId();
-    el.calendarPersonalSkySelect.innerHTML = '<option value="">No default</option>' + records.map(function (record) {
-      const id = savedSkyRecordRef(record);
-      return '<option value="' + htmlText(id) + '">' + htmlText(String(record.name || 'Saved sky')) + '</option>';
-    }).join('');
-    el.calendarPersonalSkySelect.value = records.some(function (record) { return savedSkyRecordRef(record) === selected; }) ? selected : '';
+    if (el.calendarPersonalSkySelect) {
+      el.calendarPersonalSkySelect.innerHTML = '<option value="">No default</option>' + records.map(function (record) {
+        const id = savedSkyRecordRef(record);
+        return '<option value="' + htmlText(id) + '">' + htmlText(String(record.name || 'Saved sky')) + '</option>';
+      }).join('');
+      el.calendarPersonalSkySelect.value = records.some(function (record) { return savedSkyRecordRef(record) === selected; }) ? selected : '';
+    }
+    if (el.calendarSkyOverlayList) {
+      const shown = new Set(calendarSkyOverlayIds());
+      el.calendarSkyOverlayList.innerHTML = records.length ? records.map(function (record) {
+        const id = savedSkyRecordRef(record);
+        const name = String(record.name || 'Saved sky');
+        const badge = id === selected ? '<span class="ph-calendar-sky-default-badge">Default</span>' : '';
+        return '<label class="ph-calendar-sky-overlay"><input type="checkbox" data-calendar-sky-overlay="' + htmlText(id) + '"' + (shown.has(id) ? ' checked' : '') + '><span class="ph-calendar-sky-overlay-name">' + htmlText(name) + '</span>' + badge + '</label>';
+      }).join('') : '<p class="ph-calendar-alert-empty">No saved skies yet.</p>';
+      if (el.calendarSkyCount) el.calendarSkyCount.textContent = shown.size + ' shown';
+    }
   }
 
   function personalAspectError(body, targetLongitude, aspectAngle, date) {
@@ -3842,13 +3915,13 @@
     return Math.abs(separation - Number(aspectAngle));
   }
 
-  function personalTransitEventsForRange(startDate, endDate) {
-    const record = defaultSkyRecord();
-    const targets = defaultSkyTargets();
+  function personalTransitEventsForRecord(record, startDate, endDate) {
+    const targets = referenceSkyTargets(record);
     if (!window.Astronomy || !record || !targets.length) return [];
-    const cacheKey = startDate.toISOString() + '|' + endDate.toISOString() + '|' + defaultSkySignature();
+    const recordId = savedSkyRecordRef(record);
+    const cacheKey = startDate.toISOString() + '|' + endDate.toISOString() + '|' + referenceSkySignature(record);
     if (personalTransitEventCache.has(cacheKey)) return personalTransitEventCache.get(cacheKey);
-    const referenceName = String(record.name || 'Default sky');
+    const referenceName = String(record.name || 'Saved sky');
     const events = [];
     personalTransitBodies.forEach(function (body) {
       const stepHours = ['Mercury','Venus','Mars'].includes(body) ? 6 : (body === 'Sun' ? 8 : 18);
@@ -3891,6 +3964,7 @@
                   body:body,
                   targetName:target.name,
                   aspect:aspect.angle,
+                  referenceId:recordId,
                   referenceName:referenceName,
                   transitMeta:transitMeta,
                   targetMeta:targetMeta,
@@ -3907,6 +3981,18 @@
     events.sort(function (a,b) { return a.time - b.time; });
     personalTransitEventCache.set(cacheKey, events);
     return events;
+  }
+
+  function personalTransitEventsForRange(startDate, endDate) {
+    const records = visibleCalendarSkyRecords();
+    const events = [];
+    records.forEach(function (record) {
+      personalTransitEventsForRecord(record, startDate, endDate).forEach(function (event) { events.push(event); });
+    });
+    return events.sort(function (a,b) {
+      const time = a.time - b.time;
+      return time || String(a.referenceName || '').localeCompare(String(b.referenceName || ''));
+    });
   }
 
   function calendarMonthRange(base) {
@@ -4093,11 +4179,15 @@
     const automatic = automaticPlanetaryMonthEvents(range);
     populateCalendarPersonalSkySelect();
     const personal = personalTransitEventsForRange(range.start, range.end);
+    const shownRecords = visibleCalendarSkyRecords();
     const referenceRecord = defaultSkyRecord();
     if (el.calendarPersonalSource) {
-      el.calendarPersonalSource.textContent = referenceRecord
-        ? 'Personal transits to ' + String(referenceRecord.name || 'Default sky') + ' · exact major aspects from Sun through Pluto.'
-        : 'Choose any saved sky as Default to add personal transits here.';
+      if (shownRecords.length) {
+        const names = shownRecords.map(function (record) { return String(record.name || 'Saved sky'); });
+        el.calendarPersonalSource.textContent = 'Showing ' + shownRecords.length + ' saved sky' + (shownRecords.length === 1 ? '' : 's') + ': ' + names.join(', ') + (referenceRecord ? '. Default: ' + String(referenceRecord.name || 'Saved sky') + '.' : '.');
+      } else {
+        el.calendarPersonalSource.textContent = 'No saved-sky calendars are shown.';
+      }
     }
     const alerts = resolveCalendarAlerts().filter(function (rule) {
       if (!rule.nextAt) return false;
@@ -4163,7 +4253,7 @@
       const range = calendarMonthRange(base);
       const monthLabel = new Date(range.start).toLocaleDateString('en-US',{timeZone:state.tz,month:'long',year:'numeric'});
       if (el.calendarDayTitle) el.calendarDayTitle.textContent = monthLabel;
-      if (el.calendarFrameNote) el.calendarFrameNote.textContent = 'Ingresses, stations, conjunctions, lunations, transits to the Default sky, saved alerts, and journal activity at a glance.';
+      if (el.calendarFrameNote) el.calendarFrameNote.textContent = 'Ingresses, stations, conjunctions, lunations, transits to shown saved-sky calendars, saved alerts, and journal activity at a glance.';
       if (el.calendarPrevDay) el.calendarPrevDay.setAttribute('aria-label','Previous month');
       if (el.calendarNextDay) el.calendarNextDay.setAttribute('aria-label','Next month');
       renderCalendarMonth(base);
@@ -4805,7 +4895,18 @@
     if (el.prevDayCue) el.prevDayCue.addEventListener('click', function () { shiftManualDay(-1); });
     if (el.nextDayCue) el.nextDayCue.addEventListener('click', function () { shiftManualDay(1); });
     if (el.calendarPersonalSkySelect) el.calendarPersonalSkySelect.addEventListener('change', function () {
-      setDefaultSkyId(el.calendarPersonalSkySelect.value);
+      const id = el.calendarPersonalSkySelect.value;
+      setDefaultSkyId(id);
+      if (id) ensureCalendarSkyShown(id);
+      rebuild();
+    });
+    if (el.calendarSkyOverlayList) el.calendarSkyOverlayList.addEventListener('change', function (event) {
+      const input = event.target.closest('[data-calendar-sky-overlay]');
+      if (!input) return;
+      const id = String(input.dataset.calendarSkyOverlay || '');
+      const ids = calendarSkyOverlayIds().filter(function (value) { return value !== id; });
+      if (input.checked && id) ids.push(id);
+      setCalendarSkyOverlayIds(ids);
       rebuild();
     });
     if (el.calendarMonthViewButton) el.calendarMonthViewButton.addEventListener('click', function () { state.calendarView = 'month'; rebuild(); });
@@ -4870,9 +4971,9 @@
     });
     if (el.heptagramNow) el.heptagramNow.addEventListener('click', function () { state.heptagramHourOverride = null; state.useSystem = true; if (el.useSystem) el.useSystem.checked = true; if (el.manualTime) { el.manualTime.style.display = 'inline-flex'; if (el.datePick) el.datePick.disabled = true; if (el.timePick) el.timePick.disabled = true; } rebuild(); });
     window.addEventListener('storage', function (event) {
-      if (event.key === defaultSkyStorageKey || event.key === 'relphiSkyLibraryV1') {
+      if (event.key === defaultSkyStorageKey || event.key === calendarSkyOverlayStorageKey || event.key === 'relphiSkyLibraryV1') {
         personalTransitEventCache.clear();
-        if (state.calendarView === 'month' || event.key === defaultSkyStorageKey) rebuild();
+        rebuild();
       }
     });
     window.addEventListener('resize', rebuild);
