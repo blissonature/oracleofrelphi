@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=36/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=37/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -99,6 +99,10 @@ assert.match(vocab,/CLUSTER_ORB=3/,'Natural Vocab clusters must use the same thr
 assert.match(vocab,/function proximityClusters\(list\)/,'Vocab must detect natural connected placement clusters rather than enumerating every aspect');
 assert.match(vocab,/function independentClusters\(list,polarities\)/,'Clusters already represented as a pole must not be duplicated as a separate cluster');
 assert.match(vocab,/dataset\.vocabStructure='cluster'/,'Detected natural clusters must render as explicit structure rows');
+assert.match(vocab,/function compactStructureContext\(info,kind\)/,'Structures must provide compact sign and house context without duplicating full Vocab referent prose');
+assert.match(vocab,/compactStructureContext\(signInfo\(record\.sign\),'sign'\)/,'Every structure member must include its zodiac sign context');
+assert.match(vocab,/compactStructureContext\(houseInfo\(record\.house\),'house'\)/,'Every housed structure member must include its house context');
+assert.match(vocab,/sky-vocab-structure-context\{display:inline-flex;align-items:baseline;white-space:nowrap/,'Sign and house context glyph/name pairs must remain compact and unbroken');
 assert.match(vocab,/renderStructures/,'Filtered Vocab must synthesize clusters and polarities after the placement reading');
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
 assert.doesNotMatch(vocab,/relations\(list\)\.filter/,'Vocab must not append the raw intrasky aspect list after the structural synthesis');
