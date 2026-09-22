@@ -177,6 +177,20 @@ const housePairAlignment=await page.locator('#skyFoundationA .sky-vocab-token[da
 });
 assert.ok(housePairAlignment&&housePairAlignment.diff<=4,'House Medallion and House name must share the same optical center.');
 
+const medallionLineImpact=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"]').first().evaluate(node=>{
+  const host=node.querySelector('.sky-vocab-glyph.is-house-medallion');
+  const line=node.closest('.sky-vocab-line');
+  if(!host||!line)return null;
+  const hs=getComputedStyle(host),ls=getComputedStyle(line);
+  return{
+    hostHeight:parseFloat(hs.height),
+    lineHeight:parseFloat(ls.lineHeight),
+    hostPosition:hs.position
+  };
+});
+assert.ok(medallionLineImpact&&medallionLineImpact.hostPosition==='relative','House Medallion host must provide a positioning context.');
+assert.ok(medallionLineImpact&&medallionLineImpact.hostHeight<=medallionLineImpact.lineHeight,'House Medallion host must not make the Vocab line taller than its normal text line.');
+
 // Global Display choices are the baseline. Clicking one token may add its hidden layers,
 // but must not alter what stays visible on neighboring tokens.
 await display.click();
