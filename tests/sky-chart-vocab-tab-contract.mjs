@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=22/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=23/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -25,6 +25,7 @@ assert.match(vocab,/AXIS_PAIRS/,'Definitional axes must be treated as axes rathe
 assert.match(vocab,/houseCusps\.length\?houseFor/,'Vocab houses must follow the active house system when cusps are available');
 assert.match(vocab,/vocabLocalStage/,'Vocab tokens must support local progressive reveal');
 assert.match(vocab,/function localVisibility\(node\)/,'Local reveal must preserve globally enabled layers and add only missing layers');
+assert.match(vocab,/node\.appendChild\(meta\);[\s\S]*if\(r\)[\s\S]*node\.appendChild\(r\)/,'Vocab must render progressive content in Relationships order: glyph, name, then referent');
 assert.match(vocab,/missingCount/,'Local reveal must cycle through only globally hidden layers');
 assert.match(vocab,/function controlsMarkup\(slot\)/,'Vocab must define the control markup initializer used when the panel opens');
 assert.match(vocab,/data-vocab-dropdown-toggle/,'Vocab controls must be dropdowns');
