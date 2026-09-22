@@ -59,8 +59,9 @@ await placements.click();
 const placementMenu=page.locator('[data-vocab-dropdown-menu="placements"][data-vocab-menu-slot="A"]');
 await placementMenu.waitFor({state:'visible'});
 assert.ok(await placementMenu.locator('[data-vocab-placement]').count()>10,'Placement matrix must expose the chart placements.');
-assert.equal(await placementMenu.locator('[data-vocab-dimension-all="placements"]').count(),1);
-assert.equal(await placementMenu.locator('[data-vocab-dimension-none="placements"]').count(),1);
+assert.equal(await placementMenu.locator('.sky-chart-placement-list').count(),1,'Vocab Placement must reuse the Relationships Placement list.');
+assert.ok(await placementMenu.locator('.sky-chart-placement-list-item-group').count()>=4,'Vocab Placement must use Relationships group rows.');
+assert.equal(await placementMenu.locator('[data-vocab-dimension-master="placements"]').count(),1,'Placement list must use the Relationships-style All placements master row.');
 await placements.click();
 
 const signs=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="signs"]');
@@ -68,6 +69,9 @@ await signs.click();
 const signMenu=page.locator('[data-vocab-dropdown-menu="signs"][data-vocab-menu-slot="A"]');
 await signMenu.waitFor({state:'visible'});
 assert.equal(await signMenu.locator('[data-vocab-sign]').count(),12,'Zodiac Sign matrix must contain twelve signs.');
+assert.equal(await signMenu.locator('.sky-chart-zodiac-filter-row').count(),12,'Vocab Zodiac must reuse the Relationships Zodiac rows.');
+assert.equal(await signMenu.locator('.sky-chart-zodiac-filter-glyph svg').count(),12,'Every Vocab Zodiac row must use the canonical Relationships glyph cell.');
+assert.equal(await signMenu.locator('.sky-chart-sign-list-figure').count(),12,'Every Vocab Zodiac row must carry the Relationships figure label.');
 await signs.click();
 
 const houses=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="houses"]');
@@ -75,7 +79,9 @@ await houses.click();
 const houseMenu=page.locator('[data-vocab-dropdown-menu="houses"][data-vocab-menu-slot="A"]');
 await houseMenu.waitFor({state:'visible'});
 assert.equal(await houseMenu.locator('[data-vocab-house]').count(),12,'House matrix must contain twelve houses.');
-assert.equal(await houseMenu.locator('[data-vocab-filter="relationships"]').count(),1,'House matrix must retain Intrasky relationships.');
+assert.equal(await houseMenu.locator('.sky-chart-house-list').count(),1,'Vocab Houses must reuse the Relationships House list.');
+assert.equal(await houseMenu.locator('.sky-chart-house-menu-medallion').count(),12,'Every Vocab House row must use the Relationships house medallion.');
+assert.match(await houseMenu.locator('.sky-chart-house-menu-description').nth(0).textContent(),/^self, body, approach$/,'House descriptions must match Relationships wording.');
 await houses.click();
 
 const initialLines=page.locator('#skyFoundationA .sky-vocab-line');
