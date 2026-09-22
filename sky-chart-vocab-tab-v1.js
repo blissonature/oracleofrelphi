@@ -123,6 +123,7 @@ let queued=false;
 let openDropdownState=null;
 let dropdownPositionQueued=false;
 let wheelFilterState=null;
+let wheelFilterSpec=null;
 
 const norm=value=>((Number(value)%360)+360)%360;
 const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
@@ -575,7 +576,7 @@ function syncControlState(){
 function rerenderPanels(){syncControlState();document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel))}
 function releaseWheelIsolationForManualFilter(){
   if(!wheelFilterState)return;
-  wheelFilterState=null;
+  wheelFilterState=null;wheelFilterSpec=null;
   const clear=document.getElementById('skyFoundationClearIsolation');if(clear&&!clear.hidden)clear.click();
 }
 function setLayerAll(checked){const state=displayState();['glyphs','names','referents'].forEach(id=>{state[id]=checked});saveDisplay(state);rerenderPanels()}
@@ -746,25 +747,33 @@ function relationshipRowSlots(row){
   return{left:String(row?.dataset?.leftSky||(mode==='B-B'?'B':'A')).toUpperCase(),right:String(row?.dataset?.rightSky||(mode==='A-A'?'A':mode==='B-B'?'B':'B')).toUpperCase()};
 }
 function allWheelScope(){return{A:emptyScope(),B:emptyScope()}}
-function wheelScopeFromNode(node){
-  if(!node?.classList?.contains('is-selected'))return null;
-  const kind=String(node.dataset.interactive||'');
-  if(kind==='placement'&&KEYS[node.dataset.sky]){
-    const next=allWheelScope();
-    next[node.dataset.sky]={placements:[String(node.dataset.placement||'')],signs:null,houses:null};
+function wheelSpecFromNode(node){
+  const kind=String(node?.dataset?.interactive||'');
+  if(kind==='placement'&&KEYS[node.dataset.sky])return{kind,sky:node.dataset.sky,value:String(node.dataset.placement||'')};
+  if(kind==='sign'){
+    const value=Number(node.dataset.sign);return Number.isInteger(value)?{kind,sky:null,value}:null;
+  }
+  if(kind==='house'&&KEYS[node.dataset.sky]){
+    const value=Number(node.dataset.house);return Number.isInteger(value)?{kind,sky:node.dataset.sky,value}:null;
+  }
+  return null;
+}
+function sameWheelSpec(a,b){return!!a&&!!b&&a.kind===b.kind&&a.sky===b.sky&&String(a.value)===String(b.value)}
+function wheelScopeFromSpec(spec){
+  if(!spec)return null;
+  const next=allWheelScope();
+  if(spec.kind==='placement'){
+    next[spec.sky]={placements:[String(spec.value)],signs:null,houses:null};
     return next;
   }
-  if(kind==='sign'){
-    const sign=Number(node.dataset.sign);if(!Number.isInteger(sign))return null;
-    const next=allWheelScope();
+  if(spec.kind==='sign'){
+    const sign=Number(spec.value);
     next.A={placements:null,signs:[sign],houses:null};
     next.B={placements:null,signs:[sign],houses:null};
     return next;
   }
-  if(kind==='house'&&KEYS[node.dataset.sky]){
-    const house=Number(node.dataset.house);if(!Number.isInteger(house))return null;
-    const next=allWheelScope();
-    next[node.dataset.sky]={placements:null,signs:null,houses:[house]};
+  if(spec.kind==='house'){
+    next[spec.sky]={placements:null,signs:null,houses:[Number(spec.value)]};
     return next;
   }
   return null;
@@ -772,19 +781,20 @@ function wheelScopeFromNode(node){
 function mirrorDirectWheelClick(event){
   const node=event.target.closest?.('#skyFoundationWheelMount [data-interactive="placement"],#skyFoundationWheelMount [data-interactive="sign"],#skyFoundationWheelMount [data-interactive="house"]');
   if(!node)return;
-  queueMicrotask(()=>{
-    const next=wheelScopeFromNode(node);
-    if(next)wheelFilterState=next;
-    else if(wheelFilterState)wheelFilterState=null;
-    rerenderPanels();
-  });
+  const spec=wheelSpecFromNode(node);if(!spec)return;
+  if(sameWheelSpec(wheelFilterSpec,spec)){
+    wheelFilterSpec=null;wheelFilterState=null;
+  }else{
+    wheelFilterSpec=spec;wheelFilterState=wheelScopeFromSpec(spec);
+  }
+  rerenderPanels();
 }
 function driveFiltersFromWheel(detail){
   const state=detail?.state;
   if(state?.mode==='hover')return;
   if(!state){
     if(!wheelFilterState)return;
-    wheelFilterState=null;rerenderPanels();return;
+    wheelFilterState=null;wheelFilterSpec=null;rerenderPanels();return;
   }
   if(state.mode!=='selected')return;
   const next=allWheelScope();
@@ -805,9 +815,10 @@ function driveFiltersFromWheel(detail){
     });
     ['A','B'].forEach(slot=>{if(endpoints[slot].size)next[slot]={placements:Array.from(endpoints[slot]),signs:null,houses:null}});
   }else return;
-  wheelFilterState=next;rerenderPanels();
+  wheelFilterState=next;wheelFilterSpec={kind:state.kind,sky:state.sky??null,value:state.value};rerenderPanels();
 }
 window.addEventListener('relphi:sky-foundation-filter-changed',event=>driveFiltersFromWheel(event.detail));
+document.addEventListener('click',mirrorDirectWheelClick);
 [
   'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready',
   'relphi:sky-orb-limit-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
@@ -815,6 +826,7 @@ window.addEventListener('relphi:sky-foundation-filter-changed',event=>driveFilte
 ].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY)schedule()});
 window.addEventListener('pageshow',schedule);
+window.addEventListener('relphi:sky-foundation-clear-selection',()=>{if(wheelFilterState||wheelFilterSpec){wheelFilterState=null;wheelFilterSpec=null;rerenderPanels()}});
 document.addEventListener('pointerdown',event=>{
   if(!openDropdownState)return;
   const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),path=typeof event.composedPath==='function'?event.composedPath():[];
@@ -825,6 +837,6 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDropdow
 window.addEventListener('resize',scheduleDropdownPosition);
 window.addEventListener('scroll',scheduleDropdownPosition,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
-window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState});
+window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState,getWheelFilterSpec:()=>wheelFilterSpec});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',schedule,{once:true}):schedule();
 })();
