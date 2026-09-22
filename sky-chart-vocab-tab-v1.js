@@ -643,9 +643,12 @@ function renderParagraph(slot,panel){
   if(!container)return;
   container.replaceChildren();
   if(!list.length){container.textContent='Add or calculate placements to read this sky as vocabulary.';return}
-  const permitted=eligibleRecords(slot,list);
-  renderFullPlacements(container,permitted);
-  renderStructures(container,list,permitted);
+  const permitted=eligibleRecords(slot,list),structureList=structuralRecords(slot,list);
+  renderStructures(container,structureList,permitted,slot);
+  if(permitted.length){
+    const heading=document.createElement('div');heading.className='sky-vocab-placements-heading';heading.textContent='Placements';container.appendChild(heading);
+    renderFullPlacements(container,permitted);
+  }
   if(!displayState().glyphs&&!displayState().names&&!displayState().referents){
     container.replaceChildren();
     const empty=document.createElement('span');empty.className='sky-vocab-empty';empty.textContent='Turn on Glyphs, Names, or Referents to display the vocabulary.';container.appendChild(empty);
@@ -975,7 +978,9 @@ function installStyles(){
 
     .sky-vocab-paragraph{display:grid;gap:.48rem;margin:0;color:#2c2723;font:500 .81rem/1.52 system-ui,sans-serif}
     .sky-vocab-line{display:block;margin:0}
-    .sky-vocab-structures-heading{margin:.34rem 0 -.08rem;padding-top:.42rem;border-top:1px solid rgba(31,27,24,.12);color:#6a6058;font:900 .62rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.055em}
+    .sky-vocab-structures-heading{margin:0 0 -.08rem;padding-top:0;border-top:0;color:#6a6058;font:900 .62rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.055em}
+    .sky-vocab-structure-subheading,.sky-vocab-placements-heading{margin:.12rem 0 -.18rem;color:#756b62;font:850 .58rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.045em}
+    .sky-vocab-placements-heading{margin-top:.32rem;padding-top:.5rem;border-top:1px solid rgba(31,27,24,.12)}
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035)}
     .sky-vocab-structure-member-context{white-space:normal;color:#6a6058}
     .sky-vocab-structure-context{display:inline-flex;align-items:baseline;white-space:nowrap;font-size:.88em;font-weight:720}
