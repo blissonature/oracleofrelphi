@@ -154,6 +154,16 @@ assert.equal(
   'House 9 relationships must stay bounded to placements actually in House 9 instead of pulling in the selected placements’ entire chart network.'
 );
 
+const houseNinePolarity=await page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="mc-ic"]').evaluateAll(lines=>lines.map(line=>
+  Array.from(line.querySelectorAll('.sky-vocab-token[data-vocab-kind="placement"]'),token=>token.dataset.vocabId)
+));
+assert.equal(houseNinePolarity.length,1,'Selecting the MC/Chiron house must preserve the single higher-order MC–IC polarity structure.');
+assert.deepEqual(
+  new Set(houseNinePolarity[0]),
+  new Set(['mc','chiron','ic','uranus']),
+  'The preserved meridian polarity must carry the whole MC + Chiron ↔ IC + Uranus structure without reopening unrelated relationships.'
+);
+
 await houseNine.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='All');
 
