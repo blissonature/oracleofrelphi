@@ -223,3 +223,5 @@ assert.match(page,/setCalendarSkyOverlayIds\(ids\)/);
 assert.equal((page.match(/id="calendarSkyCalendars"/g)||[]).length,1);
 assert.ok(page.indexOf('id="calendarSkyCalendars"') < page.indexOf('id="calendarDayView"'));
 assert.ok(page.indexOf('id="calendarSkyCalendars"') < page.indexOf('id="calendarMonthView"'));
+
+assert.match(page,/renderMoonFrame\(frame\.localNow, state\.lat, state\.lon\);\s+populateCalendarPersonalSkySelect\(\);/);
