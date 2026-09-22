@@ -13,6 +13,7 @@ const FILTER_KEY='relphiSkyVocabFilterV1';
 const SCOPE_FILTER_KEY='relphiSkyVocabScopeFilterV1';
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const SIGN_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+const SIGN_FIGURES=['Lamb','Bull','Twins','Crab','Lion','Maiden','Scales','Scorpion','Bow','Kid','Bucket','Fishes'];
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const SIGN_REFERENTS={
   Aries:'initiative, directness, courage, impulse, and beginning',
@@ -436,32 +437,95 @@ function layerDropdownMarkup(slot){
   const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>DISPLAY</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-layer-all="'+slot+'">All</button><button type="button" data-vocab-layer-none="'+slot+'">None</button></span></div>'+rows+'</div>';
   return basicDropdownShell(slot,'layers','Display',layerSummary(),body);
 }
+function relationshipChoice(inputMarkup,choiceClass=''){
+  return '<label class="'+choiceClass+'">'+inputMarkup+'<span></span></label>';
+}
 function placementDropdownMarkup(slot){
   const list=records(slot),selected=scopeSelection(slot,'placements',list);
-  const groups=CATEGORY_ORDER.map(category=>{
+  const groupRows=CATEGORY_ORDER.map(category=>{
     const members=list.filter(record=>categoryOf(record)===category);if(!members.length)return'';
     const chosen=members.filter(record=>selected.has(record.id)).length,all=chosen===members.length,some=chosen>0&&chosen<members.length;
-    return '<div class="sky-vocab-placement-group">'+
-      '<label class="sky-vocab-filter-row sky-vocab-filter-row-group"><span class="sky-vocab-filter-name">'+CATEGORY_LABELS[category]+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-group="'+category+'" data-vocab-slot="'+slot+'" '+(all?'checked':'')+' '+(some?'data-indeterminate="true"':'')+'></span></label>'+
-      members.map(record=>'<label class="sky-vocab-filter-row sky-vocab-filter-row-placement"><span class="sky-vocab-filter-name">'+htmlEscape(record.name)+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-placement="'+htmlEscape(record.id)+'" data-vocab-slot="'+slot+'" '+(selected.has(record.id)?'checked':'')+'></span></label>').join('')+
+    const groupInput='<input type="checkbox" data-vocab-group="'+category+'" data-vocab-slot="'+slot+'" '+(all?'checked':'')+' '+(some?'data-indeterminate="true"':'')+' aria-label="'+htmlEscape(CATEGORY_LABELS[category])+'">';
+    const groupRow='<div class="sky-chart-placement-list-item sky-chart-placement-list-item-group" data-vocab-placement-group-row="'+category+'">'+
+      '<strong class="sky-chart-placement-list-label">'+CATEGORY_LABELS[category]+'</strong>'+
+      '<div class="sky-chart-placement-list-choices">'+relationshipChoice(groupInput,'sky-chart-placement-choice sky-chart-placement-choice-all')+'</div>'+
     '</div>';
+    const placementRows=members.map(record=>{
+      const input='<input type="checkbox" data-vocab-placement="'+htmlEscape(record.id)+'" data-vocab-slot="'+slot+'" '+(selected.has(record.id)?'checked':'')+' aria-label="'+htmlEscape(record.name)+'">';
+      return '<div class="sky-chart-placement-list-item sky-chart-placement-list-item-placement" data-placement-list-item="'+htmlEscape(record.id)+'">'+
+        '<strong class="sky-chart-placement-list-label">'+htmlEscape(record.name)+'</strong>'+
+        '<div class="sky-chart-placement-list-choices">'+relationshipChoice(input,'sky-chart-placement-choice sky-chart-placement-choice-all')+'</div>'+
+      '</div>';
+    }).join('');
+    return groupRow+placementRows;
   }).join('');
-  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>PLACEMENT</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-dimension-all="placements" data-vocab-slot="'+slot+'">All</button><button type="button" data-vocab-dimension-none="placements" data-vocab-slot="'+slot+'">None</button></span></div>'+groups+'</div>';
-  return basicDropdownShell(slot,'placements','Placement',dimensionSummary(slot,'placements'),body);
+  const allChecked=selected.size===list.length,allIndeterminate=selected.size>0&&selected.size<list.length;
+  const allInput='<input type="checkbox" data-vocab-dimension-master="placements" data-vocab-slot="'+slot+'" '+(allChecked?'checked':'')+' '+(allIndeterminate?'data-indeterminate="true"':'')+' aria-label="All placements">';
+  const body='<div class="sky-chart-placement-filter-body"><div class="sky-chart-placement-list" data-placement-list="vocab">'+
+    '<div class="sky-chart-placement-list-header"><strong>Placement</strong><span>All</span></div>'+
+    '<div class="sky-chart-placement-list-item sky-chart-placement-list-item-master">'+
+      '<strong class="sky-chart-placement-list-label">All placements</strong>'+
+      '<div class="sky-chart-placement-list-choices">'+relationshipChoice(allInput,'sky-chart-placement-choice sky-chart-placement-choice-all')+'</div>'+
+    '</div>'+groupRows+
+  '</div></div>';
+  const menuId='skyVocabPlacementsMenu'+slot;
+  return '<div class="sky-chart-placement-filter sky-vocab-rel-filter" data-vocab-dropdown="placements" data-vocab-dropdown-slot="'+slot+'">'+
+    '<div class="sky-chart-placement-filter-head">'+
+      '<span class="sky-chart-placement-filter-label">Placements</span>'+
+      '<div class="sky-chart-placement-summary-choices"><span data-vocab-dropdown-summary="placements" data-vocab-summary-slot="'+slot+'">'+htmlEscape(dimensionSummary(slot,'placements'))+'</span></div>'+
+      '<button type="button" class="sky-chart-placement-filter-toggle" data-vocab-dropdown-toggle="placements" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'" aria-label="Open Placements"></button>'+
+    '</div>'+
+    '<div id="'+menuId+'" class="sky-chart-placement-filter-popover" data-vocab-dropdown-menu="placements" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Placements" hidden>'+body+'</div>'+
+  '</div>';
 }
 function signDropdownMarkup(slot){
-  const selected=scopeSelection(slot,'signs'),rows=ALL_SIGNS.map(index=>'<label class="sky-vocab-filter-row"><span class="sky-vocab-filter-name">'+SIGNS[index]+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-sign="'+index+'" data-vocab-slot="'+slot+'" '+(selected.has(index)?'checked':'')+'></span></label>').join('');
-  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>ZODIAC SIGN</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-dimension-all="signs" data-vocab-slot="'+slot+'">All</button><button type="button" data-vocab-dimension-none="signs" data-vocab-slot="'+slot+'">None</button></span></div>'+rows+'</div>';
-  return basicDropdownShell(slot,'signs','Zodiac Sign',dimensionSummary(slot,'signs'),body);
+  const selected=scopeSelection(slot,'signs'),rows=ALL_SIGNS.map(index=>{
+    return '<label class="sky-chart-zodiac-filter-row" data-sign-list-item="'+String(SIGNS[index]||'').toLowerCase()+'">'+
+      '<span class="sky-chart-zodiac-filter-name">'+
+        '<span class="sky-chart-zodiac-filter-glyph" data-vocab-zodiac-glyph="'+index+'"></span>'+
+        '<span class="sky-chart-zodiac-filter-copy"><span class="sky-chart-sign-list-label">'+SIGNS[index]+'</span><span class="sky-chart-sign-list-figure">'+SIGN_FIGURES[index]+'</span></span>'+
+      '</span>'+
+      '<span class="sky-chart-zodiac-filter-check"><input type="checkbox" data-vocab-sign="'+index+'" data-vocab-slot="'+slot+'" '+(selected.has(index)?'checked':'')+' aria-label="'+SIGNS[index]+', '+SIGN_FIGURES[index]+'"></span>'+
+    '</label>';
+  }).join('');
+  const body='<div class="sky-chart-zodiac-filter-list">'+
+    '<div class="sky-chart-zodiac-filter-header"><strong>ZODIAC SIGN</strong><span class="sky-chart-zodiac-filter-actions"><button type="button" data-vocab-dimension-all="signs" data-vocab-slot="'+slot+'">All</button><button type="button" data-vocab-dimension-none="signs" data-vocab-slot="'+slot+'">None</button></span></div>'+
+    rows+'</div>';
+  const menuId='skyVocabSignsMenu'+slot;
+  return '<div class="sky-chart-zodiac-filter sky-vocab-rel-filter" data-vocab-dropdown="signs" data-vocab-dropdown-slot="'+slot+'">'+
+    '<span class="sky-chart-zodiac-filter-label">Zodiac Signs</span>'+
+    '<button type="button" class="sky-chart-zodiac-filter-toggle" data-vocab-dropdown-toggle="signs" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'"><span data-vocab-dropdown-summary="signs" data-vocab-summary-slot="'+slot+'">'+htmlEscape(dimensionSummary(slot,'signs'))+'</span></button>'+
+    '<div id="'+menuId+'" class="sky-chart-zodiac-filter-menu" data-vocab-dropdown-menu="signs" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Zodiac Signs" hidden>'+body+'</div>'+
+  '</div>';
 }
 function houseDropdownMarkup(slot){
-  const selected=scopeSelection(slot,'houses'),rows=ALL_HOUSES.map(number=>'<label class="sky-vocab-filter-row"><span class="sky-vocab-filter-name">'+number+' · '+htmlEscape(HOUSE_REFERENTS[number].split(',')[0])+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-house="'+number+'" data-vocab-slot="'+slot+'" '+(selected.has(number)?'checked':'')+'></span></label>').join('');
-  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>HOUSE</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-dimension-all="houses" data-vocab-slot="'+slot+'">All</button><button type="button" data-vocab-dimension-none="houses" data-vocab-slot="'+slot+'">None</button></span></div>'+rows+'<label class="sky-vocab-filter-row sky-vocab-filter-row-relation"><span class="sky-vocab-filter-name">Intrasky relationships</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-filter="relationships" data-vocab-slot="'+slot+'" '+(filterState().relationships!==false?'checked':'')+'></span></label></div>';
-  return basicDropdownShell(slot,'houses','House',dimensionSummary(slot,'houses'),body);
+  const selected=scopeSelection(slot,'houses');
+  const allChecked=selected.size===ALL_HOUSES.length,allIndeterminate=selected.size>0&&selected.size<ALL_HOUSES.length;
+  const rows=ALL_HOUSES.map(number=>{
+    const input='<input type="checkbox" data-vocab-house="'+number+'" data-vocab-slot="'+slot+'" '+(selected.has(number)?'checked':'')+' aria-label="House '+number+': '+htmlEscape(HOUSE_REFERENTS[number])+'">';
+    return '<div class="sky-chart-house-list-item sky-chart-house-list-item-house" data-house-list-item="'+number+'">'+
+      '<strong class="sky-chart-house-list-label"><span class="sky-chart-house-menu-medallion" data-vocab-house-medallion="'+number+'" aria-hidden="true"></span><span class="sky-chart-house-menu-description">'+htmlEscape(HOUSE_REFERENTS[number])+'</span></strong>'+
+      '<div class="sky-chart-house-list-choices">'+relationshipChoice(input,'sky-chart-house-choice sky-chart-house-choice-all')+'</div>'+
+    '</div>';
+  }).join('');
+  const allInput='<input type="checkbox" data-vocab-dimension-master="houses" data-vocab-slot="'+slot+'" '+(allChecked?'checked':'')+' '+(allIndeterminate?'data-indeterminate="true"':'')+' aria-label="All houses">';
+  const body='<div class="sky-chart-house-filter-body"><div class="sky-chart-house-list" data-house-list="vocab">'+
+    '<div class="sky-chart-house-list-header"><strong>House</strong><span>All</span></div>'+
+    '<div class="sky-chart-house-list-item sky-chart-house-list-item-master"><strong class="sky-chart-house-list-label">All houses</strong><div class="sky-chart-house-list-choices">'+relationshipChoice(allInput,'sky-chart-house-choice sky-chart-house-choice-all')+'</div></div>'+
+    rows+
+    '<div class="sky-chart-house-list-item sky-chart-house-list-item-house"><strong class="sky-chart-house-list-label">Intrasky relationships</strong><div class="sky-chart-house-list-choices">'+relationshipChoice('<input type="checkbox" data-vocab-filter="relationships" data-vocab-slot="'+slot+'" '+(filterState().relationships!==false?'checked':'')+' aria-label="Intrasky relationships">','sky-chart-house-choice sky-chart-house-choice-all')+'</div></div>'+
+  '</div></div>';
+  const menuId='skyVocabHousesMenu'+slot;
+  return '<div class="sky-chart-house-filter sky-vocab-rel-filter" data-vocab-dropdown="houses" data-vocab-dropdown-slot="'+slot+'">'+
+    '<div class="sky-chart-house-filter-head">'+
+      '<span class="sky-chart-house-filter-label">Houses</span>'+
+      '<div class="sky-chart-house-summary-choices"><span data-vocab-dropdown-summary="houses" data-vocab-summary-slot="'+slot+'">'+htmlEscape(dimensionSummary(slot,'houses'))+'</span></div>'+
+      '<button type="button" class="sky-chart-house-filter-toggle" data-vocab-dropdown-toggle="houses" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'" aria-label="Open Houses">⌄</button>'+
+    '</div>'+
+    '<div id="'+menuId+'" class="sky-chart-house-filter-popover" data-vocab-dropdown-menu="houses" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Houses" hidden>'+body+'</div>'+
+  '</div>';
 }
-function controlsMarkup(slot){
-  return '<div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+placementDropdownMarkup(slot)+signDropdownMarkup(slot)+houseDropdownMarkup(slot)+'</div>';
-}
+function controlsMarkup(slot){return '<div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+placementDropdownMarkup(slot)+signDropdownMarkup(slot)+houseDropdownMarkup(slot)+'</div>'}
 function dropdownOwner(slot,kind){return document.querySelector('[data-sky-vocab-panel="'+slot+'"] [data-vocab-dropdown="'+kind+'"]')}
 function dropdownMenu(slot,kind){return document.querySelector('[data-vocab-dropdown-menu="'+kind+'"][data-vocab-menu-slot="'+slot+'"]')}
 function closeDropdown(){
@@ -472,9 +536,9 @@ function closeDropdown(){
 }
 function positionDropdown(){
   dropdownPositionQueued=false;if(!openDropdownState)return;
-  const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),field=owner?.querySelector('.sky-vocab-dropdown-field');
+  const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),field=owner?.querySelector('[data-vocab-dropdown-toggle]');
   if(!owner||!menu||!field||menu.hidden)return;
-  const rect=field.getBoundingClientRect(),margin=10,targetWidth=kind==='placements'?340:kind==='houses'||kind==='signs'?320:260,width=Math.max(220,Math.min(targetWidth,window.innerWidth-margin*2)),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
+  const rect=field.getBoundingClientRect(),margin=kind==='houses'?8:12,targetWidth=kind==='placements'?360:kind==='houses'?430:kind==='signs'?330:260,width=Math.max(220,Math.min(targetWidth,window.innerWidth-margin*2)),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
   menu.style.height='auto';menu.style.maxHeight='none';menu.style.overflowY='hidden';
   const natural=Math.ceil(menu.scrollHeight+2),available=Math.max(180,window.innerHeight-margin*2),rendered=Math.min(natural,available);
   if(natural>available){menu.style.height=available+'px';menu.style.maxHeight=available+'px';menu.style.overflowY='auto'}
@@ -528,10 +592,27 @@ function toggleGroup(slot,category,checked){
   const list=records(slot),selected=new Set(scopeSelection(slot,'placements',list)),members=list.filter(record=>categoryOf(record)===category).map(record=>record.id);
   members.forEach(id=>checked?selected.add(id):selected.delete(id));saveManualDimension(slot,'placements',selected,list);rerenderPanels();
 }
+function decorateRelationshipStyleMenus(root){
+  root.querySelectorAll('[data-vocab-zodiac-glyph]').forEach(host=>{
+    if(host.dataset.vocabDecorated==='true')return;
+    const index=Number(host.dataset.vocabZodiacGlyph),id=String(SIGNS[index]||'').toLowerCase(),registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=registry&&(registry.get(id)||registry.resolve(id));
+    if(!entry||!component?.createBubble)return;
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-20 -20 40 40');svg.setAttribute('aria-hidden','true');host.appendChild(svg);
+    const bubble=component.createBubble(svg,entry.id,{radius:15,padding:1,color:SIGN_COLORS[index]});bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true');host.dataset.vocabDecorated='true';
+  });
+  root.querySelectorAll('[data-vocab-house-medallion]').forEach(host=>{
+    if(host.dataset.vocabDecorated==='true')return;
+    const marker=window.RelphiHouseMedallion?.create?.(Number(host.dataset.vocabHouseMedallion));
+    if(!marker)return;
+    marker.classList.add('sky-chart-house-menu-medallion');marker.setAttribute('aria-hidden','true');marker.removeAttribute('aria-label');marker.removeAttribute('title');
+    host.replaceWith(marker);marker.dataset.vocabDecorated='true';
+  });
+}
 function ensurePanel(slot,view){
   let panel=view.querySelector('[data-sky-vocab-panel]');if(panel)return panel;
   panel=document.createElement('section');panel.className='sky-vocab-panel';panel.dataset.skyVocabPanel=slot;panel.hidden=true;
   panel.innerHTML=controlsMarkup(slot)+'<div class="sky-vocab-paragraph" data-sky-vocab-paragraph></div>';
+  decorateRelationshipStyleMenus(panel);
   const mount=view.querySelector('[data-sky-drawer-mount="placements"]');mount?.insertAdjacentElement('afterend',panel);
   panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);rerenderPanels()}));
   panel.querySelectorAll('[data-vocab-filter="relationships"]').forEach(input=>input.addEventListener('change',()=>{const state=filterState();state.relationships=input.checked;saveFilter(state);rerenderPanels()}));
@@ -540,6 +621,7 @@ function ensurePanel(slot,view){
   panel.querySelectorAll('[data-vocab-house]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'houses',input.dataset.vocabHouse,input.checked)));
   panel.querySelectorAll('[data-vocab-group]').forEach(input=>input.addEventListener('change',()=>toggleGroup(slot,input.dataset.vocabGroup,input.checked)));
   panel.querySelectorAll('[data-vocab-dimension-all]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setDimensionAll(slot,button.dataset.vocabDimensionAll,true)}));
+  panel.querySelectorAll('[data-vocab-dimension-master]').forEach(input=>input.addEventListener('change',()=>setDimensionAll(slot,input.dataset.vocabDimensionMaster,input.checked)));
   panel.querySelectorAll('[data-vocab-dimension-none]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setDimensionAll(slot,button.dataset.vocabDimensionNone,false)}));
   panel.querySelectorAll('[data-vocab-dropdown-toggle]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openDropdown(slot,button.dataset.vocabDropdownToggle)}));
   panel.querySelector('[data-vocab-layer-all]')?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setLayerAll(true)});
@@ -591,42 +673,42 @@ function installStyles(){
     .sky-placement-vocab-tab.is-active{background:#241f1b;color:#fff}
     .sky-vocab-panel{display:grid;gap:.72rem;padding:.52rem .7rem .82rem;min-width:0}
     .sky-vocab-panel[hidden]{display:none!important}
-
     .sky-vocab-dropdown-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:end}
-    .sky-vocab-dropdown{position:relative;display:grid;grid-template-rows:auto 32px;gap:4px;min-width:0}
-    .sky-vocab-dropdown-label{min-width:0;color:#665d56;font:800 .62rem/1.15 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .sky-vocab-dropdown-field{appearance:none;display:grid;grid-template-columns:minmax(0,1fr) 30px;align-items:center;width:100%;height:32px;min-width:0;margin:0;padding:0;border:1px solid rgba(56,48,42,.24);border-radius:7px;background:#fff;color:#332d28;font:750 .66rem/1.2 system-ui,sans-serif;text-align:left;cursor:pointer}
-    .sky-vocab-dropdown-summary{min-width:0;padding:0 .5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .sky-vocab-dropdown-chevron{align-self:stretch;border-left:1px solid rgba(56,48,42,.08);background-image:var(--sky-chart-filter-chevron);background-repeat:no-repeat;background-position:center;background-size:14px 14px}
-    .sky-vocab-dropdown-field:hover,.sky-vocab-dropdown-field:focus-visible,.sky-vocab-dropdown.is-open .sky-vocab-dropdown-field{background-color:#f5f1eb;outline:none}
-    .sky-vocab-dropdown.is-open .sky-vocab-dropdown-field{border-color:rgba(31,27,24,.42);box-shadow:0 0 0 2px rgba(31,27,24,.08)}
 
-    .sky-vocab-dropdown-menu{box-sizing:border-box;padding:10px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
+    /* Display remains Vocab-specific. Placement / Houses / Zodiac use the Relationships classes directly. */
+    .sky-vocab-dropdown{position:relative;display:grid;grid-template-rows:auto 35px;gap:4px;min-width:0}
+    .sky-vocab-dropdown-label{align-self:end;color:#4e463f;font:800 .62rem/1.2 system-ui,sans-serif}
+    .sky-vocab-dropdown-field{appearance:none;width:100%;height:35px;box-sizing:border-box;margin:0;padding:.52rem 2rem .52rem .58rem;border:1px solid rgba(31,27,24,.2);border-radius:9px;background:#fff var(--sky-chart-filter-chevron) no-repeat right 9px center/15px 15px;color:#191613;font:700 .68rem/1.2 system-ui,sans-serif;text-align:left;cursor:pointer}
+    .sky-vocab-dropdown-menu{position:fixed;z-index:10000;width:min(260px,calc(100vw - 24px));max-height:min(560px,calc(100vh - 24px));overflow:auto;box-sizing:border-box;padding:10px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2)}
     .sky-vocab-dropdown-menu[hidden]{display:none!important}
     .sky-vocab-filter-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:10px;background:#fff}
-    .sky-vocab-filter-header{position:sticky;top:-10px;z-index:3;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;min-height:38px;border-bottom:1px solid rgba(31,27,24,.16);background:#e9e3da;color:#29231e;font:900 .61rem/1 system-ui,sans-serif}
-    .sky-vocab-filter-header strong{padding:7px 10px;text-align:left}
+    .sky-vocab-filter-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;min-height:38px;border-bottom:1px solid rgba(31,27,24,.16);background:#e9e3da;color:#29231e;font:900 .61rem/1 system-ui,sans-serif}
+    .sky-vocab-filter-header strong{padding:7px 10px}
     .sky-vocab-filter-actions{align-self:stretch;display:flex;align-items:center;gap:4px;padding:4px 6px;border-left:1px solid rgba(31,27,24,.1)}
-    .sky-vocab-filter-actions button{min-height:26px;margin:0;padding:4px 7px;border:1px solid rgba(31,27,24,.25);border-radius:6px;background:#fff;color:#29231e;font:800 .58rem/1 system-ui,sans-serif;cursor:pointer}
-    .sky-vocab-filter-actions button:hover{background:#f7f2ea}
-    .sky-vocab-filter-actions button:focus-visible{outline:2px solid #625a52;outline-offset:1px}
+    .sky-vocab-filter-actions button{min-height:26px;margin:0;padding:4px 7px;border:1px solid rgba(31,27,24,.25);border-radius:6px;background:#fff;color:#29231e;font:800 .58rem/1 system-ui,sans-serif}
     .sky-vocab-filter-row{display:grid;grid-template-columns:minmax(0,1fr) 40px;align-items:center;min-height:42px;border-top:1px solid rgba(31,27,24,.075);color:#29231e;cursor:pointer}
-    .sky-vocab-filter-row:first-of-type{border-top:0}
-    .sky-vocab-filter-row:hover{background:#f4efe8}
-    .sky-vocab-filter-row-group{background:#f4efe8}
-    .sky-vocab-filter-row-group .sky-vocab-filter-name{font-weight:900}
-    .sky-vocab-filter-row-placement .sky-vocab-filter-name{padding-left:22px}
-    .sky-vocab-filter-row-relation{margin-top:4px;border-top:1px solid rgba(31,27,24,.18);background:#fbf8f3}
-    .sky-vocab-filter-name{display:flex;align-items:center;justify-content:flex-start;min-width:0;padding:7px 10px;font:750 .67rem/1.15 system-ui,sans-serif;text-align:left}
-    .sky-vocab-filter-check{align-self:stretch;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(31,27,24,.1)}
-    .sky-vocab-filter-row input[type="checkbox"]{appearance:none;-webkit-appearance:none;position:relative;width:15px;height:15px;min-width:15px;margin:0;border:1px solid #211d19;border-radius:3px;background:#fff!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);color:#111;cursor:pointer;accent-color:transparent!important}
-    .sky-vocab-filter-row input[type="checkbox"]::after{content:"";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#111;font:900 13px/13px Arial,sans-serif}
+    .sky-vocab-filter-name{padding:7px 10px;font:750 .67rem/1.15 system-ui,sans-serif}
+    .sky-vocab-filter-check{align-self:stretch;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(31,27,24,.08);background:rgba(31,27,24,.018)}
+    .sky-vocab-filter-row input[type="checkbox"]{appearance:none;-webkit-appearance:none;position:relative;width:15px;height:15px;min-width:15px;margin:0;border:1px solid #211d19;border-radius:3px;background:#fff!important;color:#111}
+    .sky-vocab-filter-row input[type="checkbox"]::after{content:"";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:900 13px/13px Arial,sans-serif}
     .sky-vocab-filter-row input[type="checkbox"]:checked::after{content:"✓"}
-    .sky-vocab-filter-row input[type="checkbox"]:focus-visible{outline:2px solid #625a52;outline-offset:2px}
 
-    .sky-vocab-focus-bar{display:flex;align-items:center;gap:.48rem;width:max-content;max-width:100%;padding:.34rem .5rem;border-radius:999px;background:#f4eee7;color:#332c27;font:800 .64rem/1.2 system-ui,sans-serif}
-    .sky-vocab-focus-bar[hidden]{display:none!important}
-    .sky-vocab-focus-bar button{appearance:none;border:0;background:transparent;color:#6c5e54;text-decoration:underline;font:800 inherit;cursor:pointer;padding:0}
+    /* Make the reused Relationships controls match the unified Relationships closed-field treatment. */
+    .sky-vocab-panel .sky-chart-placement-filter-head,.sky-vocab-panel .sky-chart-house-filter-head{display:grid!important;grid-template-columns:minmax(0,1fr) 32px!important;grid-template-rows:auto 35px!important;grid-template-areas:"label label" "field field"!important;align-items:center!important;gap:4px 0!important;min-height:0!important}
+    .sky-vocab-panel .sky-chart-placement-filter-label,.sky-vocab-panel .sky-chart-house-filter-label{grid-area:label!important;align-self:end!important;padding:0!important;color:#4e463f!important;font:800 .62rem/1.2 system-ui,sans-serif!important}
+    .sky-vocab-panel .sky-chart-placement-summary-choices,.sky-vocab-panel .sky-chart-house-summary-choices{grid-area:field!important;grid-column:1/3!important;grid-row:2!important;height:35px!important;min-height:35px!important;padding:.52rem .58rem!important;padding-right:36px!important;border:1px solid rgba(31,27,24,.2)!important;border-radius:9px!important;background:#fff!important;color:#191613!important;font:700 .68rem/1.2 system-ui,sans-serif!important}
+    .sky-vocab-panel .sky-chart-placement-filter-toggle,.sky-vocab-panel .sky-chart-house-filter-toggle{grid-column:2!important;grid-row:2!important;z-index:2!important;width:32px!important;min-width:32px!important;height:35px!important;min-height:35px!important;border:0!important;border-radius:0 9px 9px 0!important;background-color:transparent!important;background-image:var(--sky-chart-filter-chevron)!important;background-repeat:no-repeat!important;background-position:center!important;background-size:15px 15px!important;color:transparent!important;font-size:0!important}
+    .sky-vocab-panel .sky-chart-placement-filter-toggle::before{display:none!important}
+    .sky-vocab-panel .sky-chart-zodiac-filter{display:grid;grid-template-rows:auto 35px;gap:4px;align-self:end;min-width:0;color:#4e463f;font:800 .62rem/1.2 system-ui,sans-serif}
+    .sky-vocab-panel .sky-chart-zodiac-filter-label{align-self:end}
+    .sky-vocab-panel .sky-chart-zodiac-filter-toggle{height:35px}
+
+    /* Vocab has one sky-specific checkbox column; row visuals remain the Relationships visuals. */
+    .sky-vocab-panel .sky-chart-placement-list-header,.sky-vocab-panel .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) 40px}
+    .sky-vocab-panel .sky-chart-house-list-header,.sky-vocab-panel .sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) 40px}
+    .sky-vocab-panel .sky-chart-placement-list-header span,.sky-vocab-panel .sky-chart-house-list-header span{display:flex}
+    .sky-vocab-panel .sky-chart-placement-choice,.sky-vocab-panel .sky-chart-house-choice{min-width:40px}
+
     .sky-vocab-paragraph{display:grid;gap:.34rem;margin:0;color:#2c2723;font:500 .78rem/1.48 system-ui,sans-serif}
     .sky-vocab-line{display:block;margin:0}
     .sky-vocab-token{display:inline;white-space:normal}
@@ -642,11 +724,8 @@ function installStyles(){
     @media(max-width:620px){
       .sky-placement-vocab-tab{font-size:.7rem;padding:.34rem .52rem}
       .sky-vocab-panel{padding:.48rem .58rem .74rem}
-      .sky-vocab-dropdown-row{gap:6px}
-      .sky-vocab-dropdown-label{font-size:.6rem}
-      .sky-vocab-dropdown-field{font-size:.64rem}
-      .sky-vocab-filter-name{padding:7px 8px;font-size:.63rem}
-      .sky-vocab-paragraph{font-size:.75rem;line-height:1.55}
+      .sky-vocab-dropdown-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+      .sky-vocab-paragraph{font-size:.75rem;line-height:1.48}
     }
   `;document.head.appendChild(style);
 }
