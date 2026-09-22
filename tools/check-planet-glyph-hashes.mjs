@@ -13,7 +13,8 @@ const expected = Object.freeze({
   'assets/planet-glyphs/neptune.svg':'1e8b13349792de54562d829829ac1cb60f48b2cb',
   'assets/planet-glyphs/pluto.svg':'7b7729d393461767d65083c720fe9ca099048f50',
   'assets/planet-glyphs/lilith.svg':'242047703cd9e6d5fd37f7fac2191addefdbdea7',
-  'assets/planet-glyphs/part-of-fortune.svg':'f02feda06f79c886695d51e7eb2dff748c6fa873'
+  'assets/planet-glyphs/part-of-fortune.svg':'f02feda06f79c886695d51e7eb2dff748c6fa873',
+  'assets/planet-glyphs/anti-vertex.svg':'ae592b590d1ac855a7917285c759fd820aa32da1'
 });
 
 function gitBlobSha(buffer) {
