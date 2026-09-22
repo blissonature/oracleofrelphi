@@ -808,7 +808,7 @@ function driveFiltersFromWheel(detail){
   wheelFilterState=next;wheelFilterSpec={kind:'aspect',sky:null,value:String(state.value||'')};rerenderPanels();
 }
 window.addEventListener('relphi:sky-foundation-filter-changed',event=>driveFiltersFromWheel(event.detail));
-document.addEventListener('click',mirrorDirectWheelClick);
+document.addEventListener('click',mirrorDirectWheelClick,true);
 [
   'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready',
   'relphi:sky-orb-limit-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
