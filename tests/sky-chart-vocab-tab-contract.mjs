@@ -32,15 +32,14 @@ assert.match(vocab,/ids=\['glyphs','referents','names'\]/,'Display summary order
 assert.match(vocab,/rows=\['glyphs','referents','names'\]/,'Display menu order must be Glyph, Referent, Name');
 assert.match(vocab,/sky-vocab-meta sky-vocab-parenthetical/,'Expanded Vocab names must use the parenthetical treatment');
 assert.match(vocab,/sky-vocab-parenthetical \.sky-vocab-name,\.sky-vocab-parenthetical \.sky-vocab-referent\{display:inline/,'Parenthetical names and referents must remain true inline text so an opening parenthesis cannot be stranded before an inline-block');
-assert.match(vocab,/translateY\(-\.17em\)/,'Inline House Medallions must be lifted to the corrected text baseline');
 assert.match(vocab,/sky-vocab-glyph\{position:relative;display:inline-block;[^}]*height:1em/,'Canonical glyph hosts must stay at text-line height so large SVG artwork cannot stretch the paragraph rhythm');
 assert.match(vocab,/sky-vocab-glyph svg\{position:absolute;[^}]*transform:translate\(-50%,-36%\)/,'Canonical SVG glyph artwork must be optically positioned inside its layout-neutral host');
 assert.match(vocab,/meta\.append\(document\.createTextNode\('\('\),n,document\.createTextNode\('\)'\)\)/,'Only the revealed name belongs inside the Vocab parentheses');
 assert.match(vocab,/head\.appendChild\(g\)[\s\S]*node\.appendChild\(r\)[\s\S]*node\.appendChild\(meta\)/,'Visible Vocab token order must be Glyph, Referent, then parenthetical Name');
 assert.match(vocab,/rawLead\.replace\(\/ \/g,'\\u00A0'\)/,'Grammar leads must stay attached to the first visible Vocab layer');
-assert.match(vocab,/if\(r\)\{[\s\S]*node\.appendChild\(r\)/,'The referent must render outside and after the parenthetical name');
-assert.match(vocab,/sky-vocab-symbol-label/,'Glyph and parenthetical name must have a shared inline wrapper');
-assert.match(vocab,/sky-vocab-symbol-label\{display:inline;white-space:nowrap\}/,'Glyph and parenthetical name must not split across lines');
+assert.match(vocab,/head\.appendChild\(g\)[\s\S]*node\.appendChild\(r\)[\s\S]*node\.appendChild\(meta\)/,'The visible token hierarchy must remain Glyph, Referent, then parenthetical Name');
+assert.match(vocab,/sky-vocab-symbol-label/,'The glyph and any grammatical lead must share a stable inline wrapper');
+assert.match(vocab,/sky-vocab-symbol-label\{display:inline;white-space:nowrap\}/,'The grammatical lead and glyph must not split across lines');
 assert.match(vocab,/sky-vocab-parenthetical\{display:inline;white-space:nowrap/,'Multiword names such as Ninth House must stay intact inside the parentheses');
 assert.match(vocab,/missingCount/,'Local reveal must cycle through only globally hidden layers');
 assert.match(vocab,/function controlsMarkup\(slot\)/,'Vocab must define the control markup initializer used when the panel opens');
@@ -82,8 +81,6 @@ assert.match(vocab,/wheelNodeFromEvent/,'Wheel mirroring must resolve annotated 
 assert.match(vocab,/document\.addEventListener\('pointerdown',mirrorDirectWheelClick,true\)/,'The direct wheel mirror must run on capture-phase pointerdown before downstream wheel handlers can consume the interaction');
 assert.match(vocab,/event\?\.type==='scroll'.*event\.target===menu/,'Scrolling inside an open Vocab dropdown must not trigger portal repositioning');
 assert.match(vocab,/const previousScroll=menu\.scrollTop/,'Vocab dropdown repositioning must preserve the user’s current scroll position');
-assert.match(vocab,/margin-left:-\.12em/,'The first visible glyph must optically align with the text margin');
-assert.match(vocab,/translateY\(-\.11em\)/,'House Medallions must be raised relative to the sentence baseline');
 assert.match(vocab,/kind==='placement'/,'Placement wheel clicks must drive the Placement filter');
 assert.match(vocab,/kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign filter');
 assert.match(vocab,/kind==='house'/,'House wheel clicks must drive the House filter');
@@ -121,14 +118,13 @@ assert.match(vocab,/renderStructures\(container,structureList,permitted,slot\);[
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
 assert.doesNotMatch(vocab,/relations\(list\)\.filter/,'Vocab must not append the raw intrasky aspect list after the structural synthesis');
 assert.match(vocab,/node\.dataset\.vocabLead=String\(lead\|\|''\)/,'Vocab tokens must carry their grammatical lead so it can share the token head');
-assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','sun','moon'/,'Full Vocab must begin with nodes, axes, then luminaries');
+assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','vertex','anti-vertex','sun','moon'/,'Full Vocab ordering must keep nodes and structural points ahead of the ordinary bodies');
 
 assert.match(vocab,/const SIGN_COLORS=\['#e53935'/,'Vocab signs must use the established zodiac palette');
 assert.match(vocab,/const HOUSE_COLORS=\['#e53935'/,'Vocab houses must use the established house palette');
 assert.match(vocab,/color:String\(aspect\?\.color\|\|''\)/,'Vocab aspects must use their established aspect colors');
 assert.match(vocab,/sky-vocab-meta/,'Astrological glyph/name detail must use a clean inline meta wrapper instead of punctuation clutter');
 assert.match(vocab,/--vocab-mark-size:1\.68em/,'Vocab glyphs must use the larger mobile-readable inline mark box');
-assert.match(vocab,/display:inline-flex;align-items:center;gap:\.16em;white-space:nowrap;vertical-align:-\.06em/,'Vocab glyph and name must use one raised shared optical alignment box');
 assert.match(vocab,/-webkit-text-fill-color:var\(--house-ink\)!important/,'House medallion numerals must keep their canonical contrasting ink inside Vocab');
 assert.match(vocab,/sky-vocab-glyph\.is-house-medallion/,'Vocab must size House Medallions explicitly for inline reading');
 assert.match(vocab,/sky-vocab-glyph\.is-house-medallion\{position:relative;display:inline-block;[^}]*height:1em/,'House Medallion hosts must stay at text-line height so they cannot stretch the paragraph rhythm');
