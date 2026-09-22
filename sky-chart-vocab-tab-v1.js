@@ -15,6 +15,7 @@ const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio',
 const SIGN_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const SIGN_FIGURES=['Lamb','Bull','Twins','Crab','Lion','Maiden','Scales','Scorpion','Bow','Kid','Bucket','Fishes'];
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+const HOUSE_MENU_DESCRIPTIONS=['','self, body, approach','money, possessions, worth','communication, siblings, local life','home, family, roots','pleasure, creativity, children','work, health, routine','partners, bonds, agreements','loss, death, other people’s resources','travel, belief, higher learning','career, reputation, public life','friends, groups, hopes','solitude, sorrow, hidden things'];
 const SIGN_REFERENTS={
   Aries:'initiative, directness, courage, impulse, and beginning',
   Taurus:'embodiment, value, pleasure, endurance, and material continuity',
@@ -208,7 +209,7 @@ function relations(list){
 }
 function placementReferent(record){return PLACEMENT_REFERENTS[record.id]||String(record.name||'placement').toLowerCase()}
 function signInfo(index){const name=SIGNS[index]||'Sign';return{id:slug(name),glyphId:slug(name),name,referent:SIGN_REFERENTS[name]||'zodiacal setting',color:SIGN_COLORS[index]||''}}
-function houseInfo(number){return{id:'house-'+number,glyphId:null,name:HOUSE_NAMES[number]||'House',referent:HOUSE_REFERENTS[number]||'life area',fallbackGlyph:String(number||''),color:HOUSE_COLORS[number-1]||''}}
+function houseInfo(number){return{id:'house-'+number,glyphId:null,name:HOUSE_NAMES[number]||'House',referent:HOUSE_MENU_DESCRIPTIONS[number]||'life area',fallbackGlyph:String(number||''),color:HOUSE_COLORS[number-1]||''}}
 function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.name,color:''}}
 function aspectInfo(aspect){return{id:aspect.id,glyphId:aspect.id,name:ASPECT_NAMES[aspect.id]||aspect.id,referent:ASPECT_REFERENTS[aspect.id]||'relationship',fallbackGlyph:ASPECT_NAMES[aspect.id]||aspect.id,color:String(aspect?.color||'')}}
 
@@ -475,7 +476,7 @@ function placementDropdownMarkup(slot){
       '<div class="sky-chart-placement-summary-choices"><span data-vocab-dropdown-summary="placements" data-vocab-summary-slot="'+slot+'">'+htmlEscape(dimensionSummary(slot,'placements'))+'</span></div>'+
       '<button type="button" class="sky-chart-placement-filter-toggle" data-vocab-dropdown-toggle="placements" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'" aria-label="Open Placements"></button>'+
     '</div>'+
-    '<div id="'+menuId+'" class="sky-chart-placement-filter-popover" data-vocab-dropdown-menu="placements" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Placements" hidden>'+body+'</div>'+
+    '<div id="'+menuId+'" class="sky-chart-placement-filter-popover sky-vocab-rel-popover" data-vocab-dropdown-menu="placements" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Placements" hidden>'+body+'</div>'+
   '</div>';
 }
 function signDropdownMarkup(slot){
@@ -495,16 +496,16 @@ function signDropdownMarkup(slot){
   return '<div class="sky-chart-zodiac-filter sky-vocab-rel-filter" data-vocab-dropdown="signs" data-vocab-dropdown-slot="'+slot+'">'+
     '<span class="sky-chart-zodiac-filter-label">Zodiac Signs</span>'+
     '<button type="button" class="sky-chart-zodiac-filter-toggle" data-vocab-dropdown-toggle="signs" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'"><span data-vocab-dropdown-summary="signs" data-vocab-summary-slot="'+slot+'">'+htmlEscape(dimensionSummary(slot,'signs'))+'</span></button>'+
-    '<div id="'+menuId+'" class="sky-chart-zodiac-filter-menu" data-vocab-dropdown-menu="signs" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Zodiac Signs" hidden>'+body+'</div>'+
+    '<div id="'+menuId+'" class="sky-chart-zodiac-filter-menu sky-vocab-rel-popover" data-vocab-dropdown-menu="signs" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Zodiac Signs" hidden>'+body+'</div>'+
   '</div>';
 }
 function houseDropdownMarkup(slot){
   const selected=scopeSelection(slot,'houses');
   const allChecked=selected.size===ALL_HOUSES.length,allIndeterminate=selected.size>0&&selected.size<ALL_HOUSES.length;
   const rows=ALL_HOUSES.map(number=>{
-    const input='<input type="checkbox" data-vocab-house="'+number+'" data-vocab-slot="'+slot+'" '+(selected.has(number)?'checked':'')+' aria-label="House '+number+': '+htmlEscape(HOUSE_REFERENTS[number])+'">';
+    const input='<input type="checkbox" data-vocab-house="'+number+'" data-vocab-slot="'+slot+'" '+(selected.has(number)?'checked':'')+' aria-label="House '+number+': '+htmlEscape(HOUSE_MENU_DESCRIPTIONS[number])+'">';
     return '<div class="sky-chart-house-list-item sky-chart-house-list-item-house" data-house-list-item="'+number+'">'+
-      '<strong class="sky-chart-house-list-label"><span class="sky-chart-house-menu-medallion" data-vocab-house-medallion="'+number+'" aria-hidden="true"></span><span class="sky-chart-house-menu-description">'+htmlEscape(HOUSE_REFERENTS[number])+'</span></strong>'+
+      '<strong class="sky-chart-house-list-label"><span class="sky-chart-house-menu-medallion" data-vocab-house-medallion="'+number+'" aria-hidden="true"></span><span class="sky-chart-house-menu-description">'+htmlEscape(HOUSE_MENU_DESCRIPTIONS[number])+'</span></strong>'+
       '<div class="sky-chart-house-list-choices">'+relationshipChoice(input,'sky-chart-house-choice sky-chart-house-choice-all')+'</div>'+
     '</div>';
   }).join('');
@@ -522,7 +523,7 @@ function houseDropdownMarkup(slot){
       '<div class="sky-chart-house-summary-choices"><span data-vocab-dropdown-summary="houses" data-vocab-summary-slot="'+slot+'">'+htmlEscape(dimensionSummary(slot,'houses'))+'</span></div>'+
       '<button type="button" class="sky-chart-house-filter-toggle" data-vocab-dropdown-toggle="houses" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'" aria-label="Open Houses">⌄</button>'+
     '</div>'+
-    '<div id="'+menuId+'" class="sky-chart-house-filter-popover" data-vocab-dropdown-menu="houses" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Houses" hidden>'+body+'</div>'+
+    '<div id="'+menuId+'" class="sky-chart-house-filter-popover sky-vocab-rel-popover" data-vocab-dropdown-menu="houses" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Houses" hidden>'+body+'</div>'+
   '</div>';
 }
 function controlsMarkup(slot){return '<div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+placementDropdownMarkup(slot)+signDropdownMarkup(slot)+houseDropdownMarkup(slot)+'</div>'}
@@ -565,6 +566,8 @@ function syncControlState(){
       const members=list.filter(record=>categoryOf(record)===input.dataset.vocabGroup),chosen=members.filter(record=>placements.has(record.id)).length;
       input.checked=members.length>0&&chosen===members.length;input.indeterminate=chosen>0&&chosen<members.length;
     });
+    document.querySelectorAll('[data-vocab-dimension-master="placements"][data-vocab-slot="'+slot+'"]').forEach(input=>{input.checked=list.length>0&&placements.size===list.length;input.indeterminate=placements.size>0&&placements.size<list.length});
+    document.querySelectorAll('[data-vocab-dimension-master="houses"][data-vocab-slot="'+slot+'"]').forEach(input=>{input.checked=houses.size===ALL_HOUSES.length;input.indeterminate=houses.size>0&&houses.size<ALL_HOUSES.length});
     ['placements','signs','houses'].forEach(kind=>document.querySelectorAll('[data-vocab-dropdown-summary="'+kind+'"][data-vocab-summary-slot="'+slot+'"]').forEach(node=>{node.textContent=dimensionSummary(slot,kind)}));
   });
   document.querySelectorAll('[data-vocab-dropdown-summary="layers"]').forEach(node=>{node.textContent=layerSummary()});
@@ -708,6 +711,11 @@ function installStyles(){
     .sky-vocab-panel .sky-chart-house-list-header,.sky-vocab-panel .sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) 40px}
     .sky-vocab-panel .sky-chart-placement-list-header span,.sky-vocab-panel .sky-chart-house-list-header span{display:flex}
     .sky-vocab-panel .sky-chart-placement-choice,.sky-vocab-panel .sky-chart-house-choice{min-width:40px}
+    .sky-vocab-rel-popover .sky-chart-placement-list-header,.sky-vocab-rel-popover .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) 40px!important}
+    .sky-vocab-rel-popover .sky-chart-house-list-header,.sky-vocab-rel-popover .sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) 40px!important}
+    .sky-vocab-rel-popover .sky-chart-placement-list-header span,.sky-vocab-rel-popover .sky-chart-house-list-header span{display:flex!important}
+    .sky-vocab-rel-popover .sky-chart-placement-choice,.sky-vocab-rel-popover .sky-chart-house-choice{min-width:40px!important}
+    .sky-vocab-rel-popover .sky-chart-house-menu-description{white-space:normal}
 
     .sky-vocab-paragraph{display:grid;gap:.34rem;margin:0;color:#2c2723;font:500 .78rem/1.48 system-ui,sans-serif}
     .sky-vocab-line{display:block;margin:0}
