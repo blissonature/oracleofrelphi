@@ -115,11 +115,11 @@ await libra.click();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='All');
 
 const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
-await mercury.evaluate(node=>node.click());
+await mercury.click({force:true});
 await page.waitForFunction(()=>/Mercury/i.test(document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent||''));
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A Placement wheel click must not rewrite the Sign filter.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','A Placement wheel click must not rewrite the House filter.');
-await mercury.evaluate(node=>node.click());
+await mercury.click({force:true});
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='All');
 
 assert.deepEqual(errors,[],'Opening Vocab and driving its filters from the wheel must not produce page errors.');
