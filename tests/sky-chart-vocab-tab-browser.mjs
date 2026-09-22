@@ -106,9 +106,33 @@ const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').fi
   const style=getComputedStyle(node);
   return{width:parseFloat(style.width),height:parseFloat(style.height)};
 });
-assert.ok(glyphMetrics.width>=16&&glyphMetrics.height>=16,'Vocab glyphs must render materially larger than the previous tiny inline glyphs.');
+assert.ok(glyphMetrics.width>=19&&glyphMetrics.height>=19,'Vocab glyphs must render at the larger mobile-readable inline size.');
 assert.ok(await page.locator('#skyFoundationA .sky-vocab-meta').count()>5,'Visible astrological detail must use the clean inline meta treatment.');
 assert.ok(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"] .relphi-house-medallion').count()>0,'Vocab house tokens must render the canonical Relphi House Medallion instead of a bare colored house number.');
+
+const houseMedallionVisual=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"] .relphi-house-medallion').first().evaluate(node=>{
+  const style=getComputedStyle(node);
+  return{
+    text:(node.textContent||'').trim(),
+    color:style.color,
+    fill:style.webkitTextFillColor||style.color,
+    background:style.backgroundColor,
+    width:parseFloat(style.width),
+    height:parseFloat(style.height)
+  };
+});
+assert.match(houseMedallionVisual.text,/^\d{1,2}$/,'The canonical house number must remain inside the medallion.');
+assert.ok(houseMedallionVisual.width>=19&&houseMedallionVisual.height>=19,'Inline House Medallions must be large enough to read on mobile.');
+assert.notEqual(houseMedallionVisual.fill,houseMedallionVisual.background,'The house number ink must contrast with the medallion background instead of disappearing into it.');
+
+const vocabAlignment=await page.locator('#skyFoundationA .sky-vocab-token').filter({has:page.locator('.sky-vocab-name')}).first().evaluate(node=>{
+  const referent=node.querySelector('.sky-vocab-referent');
+  const name=node.querySelector('.sky-vocab-name');
+  if(!referent||!name)return null;
+  const rr=referent.getBoundingClientRect(),nr=name.getBoundingClientRect();
+  return{referentBottom:rr.bottom,nameBottom:nr.bottom,diff:Math.abs(rr.bottom-nr.bottom)};
+});
+assert.ok(vocabAlignment&&vocabAlignment.diff<=4,'Vocab names must sit on the same visual baseline as their referents.');
 
 // Global Display choices are the baseline. Clicking one token may add its hidden layers,
 // but must not alter what stays visible on neighboring tokens.
