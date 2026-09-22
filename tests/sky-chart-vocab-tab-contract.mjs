@@ -5,7 +5,7 @@ const html=readFileSync(new URL('../sky-chart.html',import.meta.url),'utf8');
 const vocab=readFileSync(new URL('../sky-chart-vocab-tab-v1.js',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=5/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=6/,'Sky Chart must load the Vocab subtab');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
@@ -20,6 +20,7 @@ assert.match(vocab,/child:'children'/);
 assert.match(vocab,/AXIS_PAIRS/,'Definitional axes must be treated as axes rather than ordinary opposition rows');
 assert.match(vocab,/houseCusps\.length\?houseFor/,'Vocab houses must follow the active house system when cusps are available');
 assert.match(vocab,/data\.vocabLocalStage/,'Vocab tokens must support local progressive reveal');
+assert.match(vocab,/function controlsMarkup\(slot\)/,'Vocab must define the control markup initializer used when the panel opens');
 assert.match(vocab,/data-vocab-dropdown-toggle/,'Vocab controls must be compact dropdowns');
 assert.match(vocab,/data-vocab-dropdown-menu/,'Vocab dropdowns must open checklist menus');
 assert.match(vocab,/sky-vocab-filter-header/,'Vocab dropdowns must use a Relationships-style matrix header');
