@@ -778,8 +778,15 @@ function wheelScopeFromSpec(spec){
   }
   return null;
 }
+function wheelNodeFromEvent(event){
+  const allowed=new Set(['placement','sign','house']);
+  const direct=event.target.closest?.('#skyFoundationWheelMount [data-interactive="placement"],#skyFoundationWheelMount [data-interactive="sign"],#skyFoundationWheelMount [data-interactive="house"]');
+  if(direct)return direct;
+  const path=typeof event.composedPath==='function'?event.composedPath():[];
+  return path.find(node=>node?.dataset&&allowed.has(node.dataset.interactive)&&node.closest?.('#skyFoundationWheelMount'))||null;
+}
 function mirrorDirectWheelClick(event){
-  const node=event.target.closest?.('#skyFoundationWheelMount [data-interactive="placement"],#skyFoundationWheelMount [data-interactive="sign"],#skyFoundationWheelMount [data-interactive="house"]');
+  const node=wheelNodeFromEvent(event);
   if(!node)return;
   const spec=wheelSpecFromNode(node);if(!spec)return;
   if(sameWheelSpec(wheelFilterSpec,spec)){
@@ -808,7 +815,7 @@ function driveFiltersFromWheel(detail){
   wheelFilterState=next;wheelFilterSpec={kind:'aspect',sky:null,value:String(state.value||'')};rerenderPanels();
 }
 window.addEventListener('relphi:sky-foundation-filter-changed',event=>driveFiltersFromWheel(event.detail));
-document.addEventListener('click',mirrorDirectWheelClick,true);
+document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
 [
   'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready',
   'relphi:sky-orb-limit-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
