@@ -353,22 +353,18 @@ function renderToken(node){
   if(node.hidden)return;
   const g=showGlyph?glyphNode(node):null,n=showName?nameNode(node):null,r=showReferent?referentNode(node):null;
   if(g)node.appendChild(g);
-  const details=[];
   if(n){
     const duplicateFallback=g&&g.textContent&&g.textContent.trim()===n.textContent.trim()&&!g.querySelector('svg');
-    if(!duplicateFallback)details.push(n);
+    if(!duplicateFallback){
+      if(g)node.appendChild(document.createTextNode(' '));
+      const meta=document.createElement('span');meta.className='sky-vocab-meta sky-vocab-parenthetical';meta.setAttribute('aria-label','Astrological vocabulary name');
+      meta.append(document.createTextNode('('),n,document.createTextNode(')'));
+      node.appendChild(meta);
+    }
   }
-  if(r)details.push(r);
-  if(details.length){
-    if(g)node.appendChild(document.createTextNode(' '));
-    const meta=document.createElement('span');meta.className='sky-vocab-meta sky-vocab-parenthetical';meta.setAttribute('aria-label','Astrological vocabulary detail');
-    meta.appendChild(document.createTextNode('('));
-    details.forEach((part,index)=>{
-      if(index)meta.appendChild(document.createTextNode(' · '));
-      meta.appendChild(part);
-    });
-    meta.appendChild(document.createTextNode(')'));
-    node.appendChild(meta);
+  if(r){
+    if(g||n)node.appendChild(document.createTextNode(' '));
+    node.appendChild(r);
   }
 }
 function rerenderTokens(root=document){root.querySelectorAll?.('.sky-vocab-token').forEach(renderToken)}
@@ -830,7 +826,7 @@ function installStyles(){
     .sky-vocab-parenthetical .sky-vocab-name,.sky-vocab-parenthetical .sky-vocab-referent{display:inline;vertical-align:baseline;color:inherit}
     .sky-vocab-line>.sky-vocab-token:first-child>.sky-vocab-glyph{margin-left:-.12em}
     .sky-vocab-glyph{display:inline-grid;place-items:center;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);margin:0;vertical-align:baseline;font-weight:800;line-height:1}
-    .sky-vocab-glyph.has-svg-glyph{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);transform:translateY(.12em)}
+    .sky-vocab-glyph.has-svg-glyph{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);transform:translateY(.24em)}
     .sky-vocab-glyph svg{display:block;width:var(--vocab-mark-size);height:var(--vocab-mark-size);overflow:visible}
     .sky-vocab-glyph.is-house-medallion{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);vertical-align:baseline}
     .sky-vocab-glyph>.relphi-house-medallion{display:inline-grid!important;width:90%!important;height:90%!important;margin:0!important;place-items:center!important;vertical-align:baseline!important;transform:translateY(-.17em);color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.72em!important;line-height:1!important}
