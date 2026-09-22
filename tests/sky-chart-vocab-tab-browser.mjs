@@ -93,6 +93,45 @@ assert.ok(await initialLines.count()>5,'Vocab must render multiple sentence line
 const lineStarts=await initialLines.evaluateAll(lines=>lines.map(line=>(line.textContent||'').trim()).filter(Boolean).map(text=>text.match(/[A-Za-z]/)?.[0]||''));
 assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab line must begin with a capital letter.');
 
+const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').first().evaluate(node=>{
+  const style=getComputedStyle(node);
+  return{width:parseFloat(style.width),height:parseFloat(style.height)};
+});
+assert.ok(glyphMetrics.width>=16&&glyphMetrics.height>=16,'Vocab glyphs must render materially larger than the previous tiny inline glyphs.');
+assert.ok(await page.locator('#skyFoundationA .sky-vocab-meta').count()>5,'Visible astrological detail must use the clean inline meta treatment.');
+
+// Global Display choices are the baseline. Clicking one token may add its hidden layers,
+// but must not alter what stays visible on neighboring tokens.
+await display.click();
+await displayMenu.waitFor({state:'visible'});
+const glyphToggle=displayMenu.locator('[data-vocab-layer="glyphs"]');
+const nameToggle=displayMenu.locator('[data-vocab-layer="names"]');
+const referentToggle=displayMenu.locator('[data-vocab-layer="referents"]');
+if(await glyphToggle.isChecked())await glyphToggle.uncheck();
+if(await nameToggle.isChecked())await nameToggle.uncheck();
+if(!(await referentToggle.isChecked()))await referentToggle.check();
+await page.keyboard.press('Escape');
+await displayMenu.waitFor({state:'hidden'});
+const firstToken=page.locator('#skyFoundationA .sky-vocab-token').first();
+const secondToken=page.locator('#skyFoundationA .sky-vocab-token').nth(1);
+assert.equal(await firstToken.locator('.sky-vocab-referent').count(),1,'Referents-only display must keep the referent visible.');
+assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),0,'Referents-only display must initially hide the glyph.');
+assert.equal(await firstToken.locator('.sky-vocab-name').count(),0,'Referents-only display must initially hide the name.');
+await firstToken.locator('.sky-vocab-referent').click();
+assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),1,'First local reveal must add the next hidden layer: glyph.');
+assert.equal(await firstToken.locator('.sky-vocab-name').count(),0,'First local reveal must not skip ahead to the name.');
+assert.equal(await secondToken.locator('.sky-vocab-glyph').count(),0,'A local reveal must not alter neighboring tokens.');
+await firstToken.locator('.sky-vocab-referent').click();
+assert.equal(await firstToken.locator('.sky-vocab-name').count(),1,'Second local reveal must add the next hidden layer: name.');
+await firstToken.locator('.sky-vocab-referent').click();
+assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),0,'After all hidden layers are shown, the next click must return to the global Display baseline.');
+assert.equal(await firstToken.locator('.sky-vocab-referent').count(),1,'Returning to baseline must preserve the globally enabled referent.');
+await display.click();
+await displayMenu.waitFor({state:'visible'});
+await displayMenu.locator('[data-vocab-layer-all="A"]').click();
+await page.keyboard.press('Escape');
+await displayMenu.waitFor({state:'hidden'});
+
 const houseNine=page.locator('#skyFoundationWheelMount [data-interactive="house"][data-sky="A"][data-house="9"]').first();
 await houseNine.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='House 9');
@@ -100,6 +139,19 @@ assert.equal(await page.locator('#skyFoundationA [data-vocab-house="9"]').isChec
 assert.equal(await page.locator('#skyFoundationA [data-vocab-house="8"]').isChecked(),false,'House 8 must be unchecked when House 9 is selected on the wheel.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','A House wheel click must leave the Placement dimension at All.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A House wheel click must leave the Zodiac Sign dimension at All.');
+
+const houseNineScope=await page.locator('#skyFoundationA .sky-vocab-line').evaluateAll(lines=>{
+  const rows=lines.map(line=>Array.from(line.querySelectorAll('.sky-vocab-token[data-vocab-kind="placement"]'),token=>token.dataset.vocabId).filter(Boolean));
+  const selected=new Set(rows.filter(ids=>ids.length===1).flat());
+  const relationships=rows.filter(ids=>ids.length===2);
+  return{selected:Array.from(selected),relationships};
+});
+assert.ok(houseNineScope.selected.length>0,'House 9 must retain its own placement statements.');
+assert.equal(
+  houseNineScope.relationships.every(ids=>ids.every(id=>houseNineScope.selected.includes(id))),
+  true,
+  'House 9 relationships must stay bounded to placements actually in House 9 instead of pulling in the selected placements’ entire chart network.'
+);
 
 await houseNine.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='All');
