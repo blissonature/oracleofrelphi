@@ -6,7 +6,7 @@ const SELF = 'tools/check-single-glyph-canon.mjs';
 const failures = [];
 const productionExt = /\.(?:html|js|mjs|css|json|yml|yaml)$/i;
 const skipDirs = new Set(['.git', 'node_modules', 'coverage', 'tests', 'test', 'review', 'scripts']);
-const staticMasterIds = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith','part-of-fortune'];
+const staticMasterIds = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith','part-of-fortune','anti-vertex'];
 
 function rel(file) {
   return path.relative(ROOT, file).split(path.sep).join('/');
@@ -212,10 +212,10 @@ if (fs.existsSync(integrityPath)) {
 if (fs.existsSync(navloaderPath)) {
   const nav = text(navloaderPath);
   for (const snippet of [
-    "appendScript('relphi-glyph-registry-v1.js?v=28'",
+    "appendScript('relphi-glyph-registry-v1.js?v=29'",
     "appendScript('relphi-glyph-component-v1.js?v=32'",
     "appendScript('relphi-glyph-source-integrity-v1.js?v=2'",
-    "appendScript('relphi-inline-glyph-consumer-v1.js?v=2'",
+    "appendScript('relphi-inline-glyph-consumer-v1.js?v=3'",
     "appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2'"
   ]) {
     if (!nav.includes(snippet)) fail(`navloader lost required single-canon route: ${snippet}`);
