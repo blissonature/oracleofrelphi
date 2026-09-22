@@ -50,6 +50,11 @@ assert.equal(await vocabParagraph.locator(':scope > :first-child').evaluate(node
 const primaryAxes=await vocabParagraph.locator('[data-vocab-structure="axis-polarity"]').evaluateAll(lines=>lines.map(line=>line.dataset.vocabAxis));
 assert.deepEqual(primaryAxes.slice(0,4),['vertex-anti-vertex','asc-dsc','mc-ic','north-node-south-node'],'Primary structures must lead with Vertex/Anti-Vertex, chart angles, then nodes.');
 assert.equal(await vocabParagraph.locator('[data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"] .sky-vocab-token[data-vocab-id="anti-vertex"]').count(),1,'Vertex polarity must include a derived Anti-Vertex when the sky stores only Vertex.');
+const antiVertexToken=vocabParagraph.locator('[data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"] .sky-vocab-token[data-vocab-id="anti-vertex"]').first();
+await antiVertexToken.locator('.relphi-glyph-anti-vertex').waitFor({state:'attached'});
+assert.equal(await antiVertexToken.locator('.sky-vocab-glyph.has-svg-glyph').count(),1,'Anti-Vertex must render through the canonical SVG glyph path.');
+assert.equal((await antiVertexToken.textContent()).includes('AVx'),false,'Anti-Vertex must not expose the temporary AVx text fallback.');
+assert.deepEqual(await page.evaluate(()=>{const entry=window.RelphiGlyphRegistry.get('anti-vertex');return{asset:entry?.asset,fitMode:entry?.fitMode,fallback:entry?.fallback??null}}),{asset:'assets/planet-glyphs/anti-vertex.svg',fitMode:'static-master',fallback:null},'Anti-Vertex must resolve to its static canonical master with no text fallback.');
 
 const ariesLibra=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"][data-vocab-signs="Aries|Libra"]');
 assert.equal(await ariesLibra.count(),1,'All sign polarities must be represented structurally.');
