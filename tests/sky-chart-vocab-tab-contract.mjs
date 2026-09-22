@@ -5,7 +5,7 @@ const html=readFileSync(new URL('../sky-chart.html',import.meta.url),'utf8');
 const vocab=readFileSync(new URL('../sky-chart-vocab-tab-v1.js',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=7/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=8/,'Sky Chart must load the Vocab subtab');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
@@ -34,11 +34,12 @@ assert.match(vocab,/data-vocab-filter/,'Vocab must expose filter controls inside
 assert.match(vocab,/CATEGORY_ORDER=\['nodes','axes','luminaries','planets','other'\]/,'Placement groups must follow Nodes, Axes, Luminaries, Planets, Other points');
 assert.match(vocab,/Intrasky relationships/,'The placement matrix must retain an Intrasky relationships toggle');
 assert.match(vocab,/relphi:sky-foundation-filter-changed/,'Vocab must follow the existing wheel filter contract');
-assert.match(vocab,/drivePlacementsFromWheel/,'Wheel state must drive Vocab placement filters');
-assert.match(vocab,/state\.kind==='placement'/,'Placement wheel clicks must select the matching placement filter');
-assert.match(vocab,/state\.kind==='sign'/,'Sign wheel clicks must select placements in the matching sign');
-assert.match(vocab,/state\.kind==='house'/,'House wheel clicks must select placements in the matching house');
-assert.match(vocab,/state\.kind==='aspect'/,'Aspect wheel clicks must select relationship endpoint placements');
+assert.match(vocab,/driveFiltersFromWheel/,'Wheel state must drive Vocab filters');
+assert.match(vocab,/state\.kind==='placement'/,'Placement wheel clicks must drive the Placement filter');
+assert.match(vocab,/state\.kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign filter');
+assert.match(vocab,/state\.kind==='house'/,'House wheel clicks must drive the House filter');
+assert.match(vocab,/state\.kind==='aspect'/,'Aspect wheel clicks must drive endpoint Placement filters');
+assert.match(vocab,/wheelFilterState=null;rerenderPanels/,'Clearing the wheel must restore the manual Vocab filters');
 assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','sun','moon'/,'Full Vocab must begin with nodes, axes, then luminaries');
 
 assert.match(vocab,/const SIGN_COLORS=\['#e53935'/,'Vocab signs must use the established zodiac palette');
@@ -47,6 +48,9 @@ assert.match(vocab,/color:String\(aspect\?\.color\|\|''\)/,'Vocab aspects must u
 assert.match(vocab,/sky-vocab-level\.is-color-coded/,'Color must be confined to Vocab vocabulary tokens');
 assert.match(vocab,/style\.setProperty\('color',color,'important'\)/,'Color must be applied directly so Vocab tokens survive tab/view repainting');
 assert.match(vocab,/visibilitychange/,'Vocab must repaint when a browser tab becomes visible again');
+assert.match(vocab,/sky-vocab-line/,'Each Vocab sentence must render on its own line');
+assert.match(vocab,/vocabSentenceStart/,'Sentence-start tokens must preserve capitalization across progressive rerenders');
+assert.match(vocab,/capitalizeStart/,'Referent-led Vocab lines must begin with a capital letter');
 assert.equal(/\.sky-foundation-relationship-row\s*\{/.test(vocab),false,'Vocab feature must not restyle Relationship rows');
 assert.equal(/#skyFoundationRelationships\s+[^'"]*\{/.test(vocab),false,'Vocab feature must not style the Relationships panel');
 
