@@ -13,6 +13,9 @@ const FILTER_KEY='relphiSkyVocabFilterV1';
 const SCOPE_FILTER_KEY='relphiSkyVocabScopeFilterV1';
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const SIGN_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+const SIGN_RULERS=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+const SIGN_POLARITIES=[[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]];
+const HOUSE_POLARITIES=[[1,7],[2,8],[3,9],[4,10],[5,11],[6,12]];
 const SIGN_FIGURES=['Lamb','Bull','Twins','Crab','Lion','Maiden','Scales','Scorpion','Bow','Kid','Bucket','Fishes'];
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const HOUSE_MENU_DESCRIPTIONS=['','self, body, approach','money, possessions, worth','communication, siblings, local life','home, family, roots','pleasure, creativity, children','work, health, routine','partners, bonds, agreements','loss, death, other people’s resources','travel, belief, higher learning','career, reputation, public life','friends, groups, hopes','solitude, sorrow, hidden things'];
@@ -67,6 +70,7 @@ const PLACEMENT_REFERENTS={
   'asteroid-lilith':'equality',
   'part-of-fortune':'fortune and openings',
   vertex:'consequential encounters',
+  'anti-vertex':'counterpoint to consequential encounters',
   child:'children',
   hidalgo:'independence',
   victoria:'victory',
@@ -104,7 +108,7 @@ const ALIASES={
   descendant:'dsc',dc:'dsc',
   midheaven:'mc','medium coeli':'mc',
   'imum coeli':'ic',imumcoeli:'ic',
-  vx:'vertex',
+  vx:'vertex',vertex:'vertex','anti vertex':'anti-vertex','anti-vertex':'anti-vertex',antivertex:'anti-vertex',avx:'anti-vertex',
   'north node':'north-node','true node':'north-node','mean node':'north-node',node:'north-node',
   'south node':'south-node',
   fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune',
@@ -112,16 +116,19 @@ const ALIASES={
   'asteroid lilith':'asteroid-lilith','lilith 1181':'asteroid-lilith','1181 lilith':'asteroid-lilith',
   'child asteroid':'child','asteroid child':'child'
 };
-const ORDER=['north-node','south-node','asc','dsc','mc','ic','sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','lilith','asteroid-lilith','part-of-fortune','vertex','child','hidalgo','victoria','daphne','vesta'];
+const ORDER=['north-node','south-node','asc','dsc','mc','ic','vertex','anti-vertex','sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','lilith','asteroid-lilith','part-of-fortune','child','hidalgo','victoria','daphne','vesta'];
 const NODE_IDS=new Set(['north-node','south-node']);
 const AXIS_IDS=new Set(['asc','dsc','mc','ic']);
 const LUMINARY_IDS=new Set(['sun','moon']);
 const PLANET_IDS=new Set(['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']);
 const AXIS_PAIRS=new Set(['asc|dsc','dsc|asc','mc|ic','ic|mc']);
 const AXIS_STRUCTURES=[
+  {left:'vertex',right:'anti-vertex',label:'Vertex polarity'},
+  {left:'asc',right:'dsc',label:'Horizon polarity'},
   {left:'mc',right:'ic',label:'Meridian polarity'},
-  {left:'asc',right:'dsc',label:'Horizon polarity'}
+  {left:'north-node',right:'south-node',label:'Nodal polarity'}
 ];
+const STELLIUM_IDS=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']);
 const POLARITY_ATTACH_ORB=3;
 const CLUSTER_ORB=3;
 const HARMONIC=()=>window.RelphiHarmonicOrb;
@@ -205,6 +212,16 @@ function records(slot){
   first.forEach(record=>{record.house=houseCusps.length?houseFor(record.value,houseCusps):record.explicitHouse});
   return first.sort((a,b)=>{const ai=ORDER.indexOf(a.id),bi=ORDER.indexOf(b.id);return(ai<0?999:ai)-(bi<0?999:bi)||a.value-b.value});
 }
+function structuralRecords(slot,list){
+  if(list.some(record=>record.id==='anti-vertex'))return list;
+  const vertex=list.find(record=>record.id==='vertex');if(!vertex)return list;
+  const value=norm(vertex.value+180),houseCusps=cusps(payload(slot),list);
+  const anti={
+    key:'Anti-Vertex',item:{derived:true},value,name:'Anti-Vertex',id:'anti-vertex',glyphId:null,fallbackGlyph:'AVx',
+    sign:Math.floor(value/30),explicitHouse:0,house:houseCusps.length?houseFor(value,houseCusps):0
+  };
+  return[...list,anti];
+}
 function relations(list){
   const model=HARMONIC(),aspects=model?.aspects||[],windowValue=(model?.windowFromControl?.()??Number(document.documentElement.dataset.skyHarmonicWindow))||6,result=[];
   for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
@@ -220,7 +237,7 @@ function relations(list){
 function placementReferent(record){return PLACEMENT_REFERENTS[record.id]||String(record.name||'placement').toLowerCase()}
 function signInfo(index){const name=SIGNS[index]||'Sign';return{id:slug(name),glyphId:slug(name),name,referent:SIGN_REFERENTS[name]||'zodiacal setting',color:SIGN_COLORS[index]||''}}
 function houseInfo(number){return{id:'house-'+number,glyphId:null,name:HOUSE_NAMES[number]||'House',referent:HOUSE_MENU_DESCRIPTIONS[number]||'life area',fallbackGlyph:String(number||''),color:HOUSE_COLORS[number-1]||''}}
-function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.name,color:''}}
+function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.fallbackGlyph||record.name,color:''}}
 function aspectInfo(aspect){return{id:aspect.id,glyphId:aspect.id,name:ASPECT_NAMES[aspect.id]||aspect.id,referent:ASPECT_REFERENTS[aspect.id]||'relationship',fallbackGlyph:ASPECT_NAMES[aspect.id]||aspect.id,color:String(aspect?.color||'')}}
 
 function displayState(){
