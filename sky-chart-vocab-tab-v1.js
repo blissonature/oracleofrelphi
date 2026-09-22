@@ -464,7 +464,7 @@ function placementDropdownMarkup(slot){
   const allChecked=selected.size===list.length,allIndeterminate=selected.size>0&&selected.size<list.length;
   const allInput='<input type="checkbox" data-vocab-dimension-master="placements" data-vocab-slot="'+slot+'" '+(allChecked?'checked':'')+' '+(allIndeterminate?'data-indeterminate="true"':'')+' aria-label="All placements">';
   const body='<div class="sky-chart-placement-filter-body"><div class="sky-chart-placement-list" data-placement-list="vocab">'+
-    '<div class="sky-chart-placement-list-header"><strong>Placement</strong><span>All</span></div>'+
+    '<div class="sky-chart-placement-list-header"><strong class="sky-chart-placement-list-header-label">Placement</strong><div class="sky-chart-placement-list-header-choices"><span class="sky-chart-placement-list-header-choice sky-chart-placement-list-header-choice-all">All</span></div></div>'+
     '<div class="sky-chart-placement-list-item sky-chart-placement-list-item-master">'+
       '<strong class="sky-chart-placement-list-label">All placements</strong>'+
       '<div class="sky-chart-placement-list-choices">'+relationshipChoice(allInput,'sky-chart-placement-choice sky-chart-placement-choice-all')+'</div>'+
@@ -540,7 +540,7 @@ function positionDropdown(){
   dropdownPositionQueued=false;if(!openDropdownState)return;
   const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),field=owner?.querySelector('[data-vocab-dropdown-toggle]');
   if(!owner||!menu||!field||menu.hidden)return;
-  const rect=field.getBoundingClientRect(),margin=kind==='houses'?8:12,targetWidth=kind==='placements'?360:kind==='houses'?430:kind==='signs'?330:260,width=Math.max(220,Math.min(targetWidth,window.innerWidth-margin*2)),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
+  const rect=field.getBoundingClientRect(),margin=kind==='houses'?8:12,targetWidth=kind==='placements'?350:kind==='houses'?430:kind==='signs'?330:260,width=Math.max(220,Math.min(targetWidth,window.innerWidth-margin*2)),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
   menu.style.height='auto';menu.style.maxHeight='none';menu.style.overflowY='hidden';
   const natural=Math.ceil(menu.scrollHeight+2),available=Math.max(180,window.innerHeight-margin*2),rendered=Math.min(natural,available);
   if(natural>available){menu.style.height=available+'px';menu.style.maxHeight=available+'px';menu.style.overflowY='auto'}
@@ -713,6 +713,8 @@ function installStyles(){
     .sky-vocab-panel .sky-chart-placement-list-header span,.sky-vocab-panel .sky-chart-house-list-header span{display:flex}
     .sky-vocab-panel .sky-chart-placement-choice,.sky-vocab-panel .sky-chart-house-choice{min-width:40px}
     .sky-vocab-rel-popover .sky-chart-placement-list-header,.sky-vocab-rel-popover .sky-chart-placement-list-item{grid-template-columns:minmax(0,1fr) 40px!important}
+    .sky-vocab-rel-popover .sky-chart-placement-list-header-choices,.sky-vocab-rel-popover .sky-chart-placement-list-choices{grid-template-columns:40px!important}
+    .sky-vocab-rel-popover .sky-chart-placement-list-header-choice,.sky-vocab-rel-popover .sky-chart-placement-choice{width:40px!important;min-width:40px!important}
     .sky-vocab-rel-popover .sky-chart-house-list-header,.sky-vocab-rel-popover .sky-chart-house-list-item{grid-template-columns:minmax(0,1fr) 40px!important}
     .sky-vocab-rel-popover .sky-chart-placement-list-header span,.sky-vocab-rel-popover .sky-chart-house-list-header span{display:flex!important}
     .sky-vocab-rel-popover .sky-chart-placement-choice,.sky-vocab-rel-popover .sky-chart-house-choice{min-width:40px!important}
