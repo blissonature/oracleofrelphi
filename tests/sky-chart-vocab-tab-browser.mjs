@@ -52,41 +52,59 @@ await displayMenu.waitFor({state:'visible'});
 assert.equal(await displayMenu.locator('.sky-vocab-filter-row').count(),3,'Display matrix must contain Glyphs, Names, and Referents.');
 assert.equal(await displayMenu.locator('[data-vocab-layer-all="A"]').count(),1);
 assert.equal(await displayMenu.locator('[data-vocab-layer-none="A"]').count(),1);
-
 await display.click();
+
 const placements=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="placements"]');
 await placements.click();
 const placementMenu=page.locator('[data-vocab-dropdown-menu="placements"][data-vocab-menu-slot="A"]');
 await placementMenu.waitFor({state:'visible'});
 assert.ok(await placementMenu.locator('[data-vocab-placement]').count()>10,'Placement matrix must expose the chart placements.');
-assert.equal(await placementMenu.locator('[data-vocab-placement-all="A"]').count(),1);
-assert.equal(await placementMenu.locator('[data-vocab-placement-none="A"]').count(),1);
-assert.equal(await placementMenu.locator('[data-vocab-filter="relationships"]').count(),1,'Placement matrix must retain Intrasky relationships.');
-
+assert.equal(await placementMenu.locator('[data-vocab-dimension-all="placements"]').count(),1);
+assert.equal(await placementMenu.locator('[data-vocab-dimension-none="placements"]').count(),1);
 await placements.click();
+
+const signs=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="signs"]');
+await signs.click();
+const signMenu=page.locator('[data-vocab-dropdown-menu="signs"][data-vocab-menu-slot="A"]');
+await signMenu.waitFor({state:'visible'});
+assert.equal(await signMenu.locator('[data-vocab-sign]').count(),12,'Zodiac Sign matrix must contain twelve signs.');
+await signs.click();
+
+const houses=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="houses"]');
+await houses.click();
+const houseMenu=page.locator('[data-vocab-dropdown-menu="houses"][data-vocab-menu-slot="A"]');
+await houseMenu.waitFor({state:'visible'});
+assert.equal(await houseMenu.locator('[data-vocab-house]').count(),12,'House matrix must contain twelve houses.');
+assert.equal(await houseMenu.locator('[data-vocab-filter="relationships"]').count(),1,'House matrix must retain Intrasky relationships.');
+await houses.click();
+
+const initialLines=page.locator('#skyFoundationA .sky-vocab-line');
+assert.ok(await initialLines.count()>5,'Vocab must render multiple sentence lines.');
+const lineStarts=await initialLines.evaluateAll(lines=>lines.map(line=>(line.textContent||'').trim()).filter(Boolean).map(text=>text.match(/[A-Za-z]/)?.[0]||''));
+assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab line must begin with a capital letter.');
 
 const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
 await mercury.click();
 await page.waitForFunction(()=> {
-  const selected=Array.from(document.querySelectorAll('[data-vocab-placement][data-vocab-slot="A"]')).filter(input=>input.checked);
-  return selected.length===1&&selected[0].dataset.vocabPlacement==='mercury';
+  const summary=document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]');
+  return /Mercury/i.test(summary?.textContent||'');
 });
-assert.match(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),/Mercury/i,'Wheel placement click must drive the Placement filter summary.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A placement click must drive Placement without pretending it was a Sign filter.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','A placement click must drive Placement without pretending it was a House filter.');
 
 await mercury.click();
-await page.waitForFunction(()=> {
-  const all=Array.from(document.querySelectorAll('[data-vocab-placement][data-vocab-slot="A"]'));
-  return all.length>0&&all.every(input=>input.checked);
-});
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='All');
 
 const libra=page.locator('#skyFoundationWheelMount [data-interactive="sign"][data-sign="6"]').first();
 await libra.click();
-await page.waitForFunction(()=> {
-  const selected=Array.from(document.querySelectorAll('[data-vocab-placement][data-vocab-slot="A"]')).filter(input=>input.checked);
-  return selected.length>=2&&selected.some(input=>input.dataset.vocabPlacement==='sun')&&selected.some(input=>input.dataset.vocabPlacement==='mercury');
-});
-assert.equal(await page.locator('#skyFoundationA [data-vocab-placement="mars"]').isChecked(),false,'A Libra wheel click must exclude non-Libra placements from the Vocab filter.');
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='Libra');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','A Sign wheel click must leave the Placement dimension at All.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="6"]').isChecked(),true,'Libra must be checked when the Libra wheel sector is selected.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="5"]').isChecked(),false,'Virgo must be unchecked when the Libra wheel sector is selected.');
+
+await libra.click();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='All');
 
 assert.deepEqual(errors,[],'Opening Vocab and driving its filters from the wheel must not produce page errors.');
 await browser.close();
-console.log('Vocab opens; Relationships-style matrices work; wheel selections drive placement filters.');
+console.log('Vocab opens; wheel clicks drive their matching filter dimensions; output is one capitalized sentence per line.');
