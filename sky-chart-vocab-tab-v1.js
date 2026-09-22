@@ -646,7 +646,9 @@ function drivePlacementsFromWheel(detail){
     });
   }
   if(!updates.size)return;
-  updates.forEach((ids,slot)=>{setSelectedPlacementIds(slot,ids);wheelDrivenSlots.add(slot)});
+  Array.from(wheelDrivenSlots).filter(slot=>!updates.has(slot)).forEach(slot=>setSelectedPlacementIds(slot,allPlacementIds(slot)));
+  wheelDrivenSlots=new Set(updates.keys());
+  updates.forEach((ids,slot)=>setSelectedPlacementIds(slot,ids));
   rerenderPanels();
 }
 window.addEventListener('relphi:sky-foundation-filter-changed',event=>drivePlacementsFromWheel(event.detail));
