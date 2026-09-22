@@ -118,6 +118,11 @@ const AXIS_IDS=new Set(['asc','dsc','mc','ic']);
 const LUMINARY_IDS=new Set(['sun','moon']);
 const PLANET_IDS=new Set(['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']);
 const AXIS_PAIRS=new Set(['asc|dsc','dsc|asc','mc|ic','ic|mc']);
+const AXIS_STRUCTURES=[
+  {left:'mc',right:'ic',label:'Meridian polarity'},
+  {left:'asc',right:'dsc',label:'Horizon polarity'}
+];
+const POLARITY_ATTACH_ORB=3;
 const HARMONIC=()=>window.RelphiHarmonicOrb;
 let queued=false;
 let openDropdownState=null;
@@ -380,6 +385,40 @@ function relationSentence(relation){
   frag.append(token(placementInfo(relation.left),'placement',true),document.createTextNode(' is in '),token(aspectInfo(relation.aspect),'aspect'),document.createTextNode(' with '),token(placementInfo(relation.right),'placement'));
   return frag;
 }
+function polarityPole(list,angleId){
+  const angle=list.find(record=>record.id===angleId);if(!angle)return[];
+  const attached=list.filter(record=>record.id!==angleId&&!AXIS_IDS.has(record.id)&&separation(record.value,angle.value)<=POLARITY_ATTACH_ORB);
+  return[angle,...attached];
+}
+function polarityStructures(list){
+  return AXIS_STRUCTURES.map(axis=>{
+    const left=polarityPole(list,axis.left),right=polarityPole(list,axis.right);
+    if(!left.length||!right.length)return null;
+    if(left.length===1&&right.length===1)return null;
+    return{...axis,left,right};
+  }).filter(Boolean);
+}
+function polaritySentence(structure){
+  const frag=document.createDocumentFragment();
+  const appendPole=members=>members.forEach((record,index)=>{
+    if(index)frag.appendChild(document.createTextNode(index===members.length-1?' and ':', '));
+    frag.appendChild(token(placementInfo(record),'placement',false));
+  });
+  frag.appendChild(document.createTextNode(structure.label+': '));
+  appendPole(structure.left);
+  frag.appendChild(document.createTextNode(' form one pole, opposite '));
+  appendPole(structure.right);
+  return frag;
+}
+function renderPolarityStructures(container,list,permitted){
+  const selected=new Set(permitted.map(record=>record.id)),showAll=selected.size===list.length;
+  polarityStructures(list).forEach(structure=>{
+    const members=[...structure.left,...structure.right];
+    if(!showAll&&!members.some(record=>selected.has(record.id)))return;
+    const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='axis-polarity';line.dataset.vocabAxis=structure.left[0].id+'-'+structure.right[0].id;
+    line.append(polaritySentence(structure),document.createTextNode('.'));container.appendChild(line);
+  });
+}
 function renderGroup(container,list,category){
   list.filter(record=>categoryOf(record)===category).forEach(record=>appendSentence(container,phrasePlacement(record)));
 }
@@ -404,6 +443,7 @@ function renderParagraph(slot,panel){
   if(!list.length){container.textContent='Add or calculate placements to read this sky as vocabulary.';return}
   const permitted=eligibleRecords(slot,list),eligible=new Set(permitted.map(record=>record.id));
   renderFullPlacements(container,permitted);
+  renderPolarityStructures(container,list,permitted);
   if(filters.relationships!==false&&eligible.size){
     const scope=activeScope(slot),allSelected=eligible.size===list.length;
     const boundedContext=scope.signs!==null||scope.houses!==null;
@@ -737,6 +777,8 @@ function installStyles(){
 
     .sky-vocab-paragraph{display:grid;gap:.48rem;margin:0;color:#2c2723;font:500 .81rem/1.52 system-ui,sans-serif}
     .sky-vocab-line{display:block;margin:0}
+    .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035)}
+    .sky-vocab-structure-line:first-letter{font-weight:800}
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
