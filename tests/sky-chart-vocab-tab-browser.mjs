@@ -45,6 +45,15 @@ assert.equal(await vocabButton.getAttribute('aria-selected'),'true','Vocab tab m
 assert.equal(await page.locator('#skyFoundationA [data-sky-drawer-mount="placements"]').evaluate(node=>node.hidden),true,'Placements ledger must hide while Vocab is active.');
 assert.equal(await page.locator('#skyFoundationA [data-sky-vocab-panel="A"]').evaluate(node=>node.hidden),false,'Vocab panel must be visible after clicking Vocab.');
 
+async function clickBlankComparison(){
+  await page.locator('#skyFoundationComparison').evaluate(node=>{
+    const pointer={bubbles:true,cancelable:true,composed:true,pointerId:91,pointerType:'mouse',isPrimary:true,buttons:1};
+    node.dispatchEvent(new PointerEvent('pointerdown',pointer));
+    node.dispatchEvent(new PointerEvent('pointerup',{...pointer,buttons:0}));
+    node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true}));
+  });
+}
+
 const display=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="layers"]');
 await display.click();
 const displayMenu=page.locator('[data-vocab-dropdown-menu="layers"][data-vocab-menu-slot="A"]');
@@ -164,8 +173,12 @@ assert.deepEqual(
   'The preserved meridian polarity must carry the whole MC + Chiron ↔ IC + Uranus structure without reopening unrelated relationships.'
 );
 
-await houseNine.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
+await clickBlankComparison();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='All');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','Blank space must restore the Vocab Placement filter after a House selection.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','Blank space must restore the Vocab Zodiac filter after a House selection.');
+assert.equal(await page.evaluate(()=>window.RelphiSkyVocab?.getWheelFilterSpec?.()??null),null,'Blank space must drop the Vocab wheel-filter selection itself.');
+await page.waitForFunction(()=>document.querySelector('[data-house-filter="combined"] input[data-house-choice="a"][data-house-scope="all"][data-house-target="all"]')?.checked===true);
 
 const libra=page.locator('#skyFoundationWheelMount [data-interactive="sign"][data-sign="6"]').first();
 await libra.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
@@ -174,16 +187,20 @@ assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="6"]').isCheck
 assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="5"]').isChecked(),false,'Virgo must be unchecked when the Libra wheel sector is selected.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','A Sign wheel click must leave the Placement dimension at All.');
 
-await libra.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
+await clickBlankComparison();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='All');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','Blank space must restore Placement after a Zodiac selection.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','Blank space must restore Houses after a Zodiac selection.');
 
 const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
 await mercury.click({force:true});
 await page.waitForFunction(()=>/Mercury/i.test(document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent||''));
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A Placement wheel click must not rewrite the Sign filter.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','A Placement wheel click must not rewrite the House filter.');
-await mercury.click({force:true});
+await clickBlankComparison();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent==='All');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','Blank space must restore Zodiac after a Placement selection.');
+assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','Blank space must restore Houses after a Placement selection.');
 
 assert.deepEqual(errors,[],'Opening Vocab and driving its filters from the wheel must not produce page errors.');
 await browser.close();
