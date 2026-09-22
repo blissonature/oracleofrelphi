@@ -9,7 +9,7 @@ function placement(name,longitude){
 }
 function sample(name,offset){
   const asc=(168.38+offset)%360,cusps=Array.from({length:12},(_,index)=>(asc+index*30)%360);
-  const raw={Sun:195,Moon:118.42,Mercury:206.17,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Descendant:348.38,Midheaven:76.28,IC:256.28,'North Node':40.3,'South Node':220.3,Chiron:74.48,Lilith:44.23,'Part of Fortune':244.97,Vertex:330.33};
+  const raw={Sun:195,Moon:118.42,Mercury:196.5,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,Ascendant:168.38,Descendant:348.38,Midheaven:76.28,IC:256.28,'North Node':40.3,'South Node':220.3,Chiron:74.48,Lilith:44.23,'Part of Fortune':244.97,Vertex:330.33};
   return{name,houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime:'1985-10-08T04:37',instant:'1985-10-08T08:37:00.000Z',location:'Malden, Massachusetts, United States',timeZone:'America/New_York',latitude:42.4251,longitude:-71.0662,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(raw).map(([key,value])=>[key,placement(key,value+offset)]))};
 }
 const skyA=sample('Sky A',0),skyB=sample('Sky B',29.27);
@@ -72,6 +72,17 @@ assert.ok(await placementMenu.locator('[data-vocab-placement]').count()>10,'Plac
 assert.equal(await placementMenu.locator('.sky-chart-placement-list').count(),1,'Vocab Placement must reuse the Relationships Placement list.');
 assert.ok(await placementMenu.locator('.sky-chart-placement-list-item-group').count()>=4,'Vocab Placement must use Relationships group rows.');
 assert.equal(await placementMenu.locator('[data-vocab-dimension-master="placements"]').count(),1,'Placement list must use the Relationships-style All placements master row.');
+const placementScroll=await placementMenu.evaluate(async menu=>{
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  const max=Math.max(0,menu.scrollHeight-menu.clientHeight);
+  menu.scrollTop=max;
+  const before=menu.scrollTop;
+  menu.dispatchEvent(new Event('scroll',{bubbles:false}));
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  return{before,after:menu.scrollTop,max};
+});
+assert.ok(placementScroll.max>0,'The Placements dropdown test fixture must be scrollable.');
+assert.ok(placementScroll.before>0&&placementScroll.after>=placementScroll.before-2,'Scrolling the Placements dropdown must not snap back to the top.');
 await page.keyboard.press('Escape');
 await placementMenu.waitFor({state:'hidden'});
 
@@ -101,6 +112,12 @@ const initialLines=page.locator('#skyFoundationA .sky-vocab-line');
 assert.ok(await initialLines.count()>5,'Vocab must render multiple sentence lines.');
 const lineStarts=await initialLines.evaluateAll(lines=>lines.map(line=>(line.textContent||'').trim()).filter(Boolean).map(text=>text.match(/[A-Za-z]/)?.[0]||''));
 assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab line must begin with a capital letter.');
+
+const sunLine=page.locator('#skyFoundationA .sky-vocab-line').filter({has:page.locator('.sky-vocab-token[data-vocab-kind="placement"][data-vocab-id="sun"]')}).first();
+assert.match(await sunLine.textContent(),/is in/i,'Ordinary placements must use the same “is in” grammar as Ascendant and MC.');
+assert.equal(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="aspect"]').count(),0,'Vocab must not reproduce the raw aspect list already available in Relationships.');
+const sunMercuryCluster=page.locator('#skyFoundationA [data-vocab-structure="cluster"][data-vocab-members*="sun"][data-vocab-members*="mercury"]');
+assert.equal(await sunMercuryCluster.count(),1,'A natural non-axis Sun–Mercury concentration must be synthesized as one cluster.');
 
 const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').first().evaluate(node=>{
   const style=getComputedStyle(node);
@@ -202,18 +219,9 @@ assert.equal(await page.locator('#skyFoundationA [data-vocab-house="8"]').isChec
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','A House wheel click must leave the Placement dimension at All.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A House wheel click must leave the Zodiac Sign dimension at All.');
 
-const houseNineScope=await page.locator('#skyFoundationA .sky-vocab-line').evaluateAll(lines=>{
-  const rows=lines.map(line=>Array.from(line.querySelectorAll('.sky-vocab-token[data-vocab-kind="placement"]'),token=>token.dataset.vocabId).filter(Boolean));
-  const selected=new Set(rows.filter(ids=>ids.length===1).flat());
-  const relationships=rows.filter(ids=>ids.length===2);
-  return{selected:Array.from(selected),relationships};
-});
-assert.ok(houseNineScope.selected.length>0,'House 9 must retain its own placement statements.');
-assert.equal(
-  houseNineScope.relationships.every(ids=>ids.every(id=>houseNineScope.selected.includes(id))),
-  true,
-  'House 9 relationships must stay bounded to placements actually in House 9 instead of pulling in the selected placements’ entire chart network.'
-);
+const houseNinePlacements=await page.locator('#skyFoundationA .sky-vocab-line:not([data-vocab-structure]) .sky-vocab-token[data-vocab-kind="placement"]').evaluateAll(tokens=>Array.from(new Set(tokens.map(token=>token.dataset.vocabId))));
+assert.ok(houseNinePlacements.length>0,'House 9 must retain its own placement statements.');
+assert.equal(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="aspect"]').count(),0,'House filtering must still avoid reopening the raw relationship list.');
 
 const houseNinePolarity=await page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="mc-ic"]').evaluateAll(lines=>lines.map(line=>
   Array.from(line.querySelectorAll('.sky-vocab-token[data-vocab-kind="placement"]'),token=>token.dataset.vocabId)
