@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=19/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=20/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -68,6 +68,8 @@ assert.match(vocab,/kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign
 assert.match(vocab,/kind==='house'/,'House wheel clicks must drive the House filter');
 assert.match(vocab,/if\(state\.kind!==\'aspect\'\)return/,'Aspect selections must continue to drive endpoint Placement filtering after direct Placement, Sign, and House handling');
 assert.match(vocab,/wheelFilterSpec=null;wheelFilterState=null/,'Clearing the wheel must restore the manual Vocab filters');
+assert.match(vocab,/relphi:sky-foundation-clear-selection/,'Blank-space selection clearing must explicitly reset wheel-driven Vocab filters');
+assert.match(vocab,/if\(wheelFilterState\|\|wheelFilterSpec\)applyWheelSpec\(null\)/,'A null foundation selection must clear any wheel-driven Placement, Sign, House, or Aspect filter');
 assert.match(vocab,/boundedContext=scope\.signs!==null\|\|scope\.houses!==null/,'House and Zodiac filters must bound relationships to the selected context');
 assert.match(vocab,/const AXIS_STRUCTURES=/,'Vocab must define higher-order axis polarity structures separately from ordinary relationships');
 assert.match(vocab,/POLARITY_ATTACH_ORB=3/,'Axis polarity structure attachments must use the three-degree structural cluster window');
