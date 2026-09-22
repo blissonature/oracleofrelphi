@@ -45,6 +45,20 @@ assert.equal(await vocabButton.getAttribute('aria-selected'),'true','Vocab tab m
 assert.equal(await page.locator('#skyFoundationA [data-sky-drawer-mount="placements"]').evaluate(node=>node.hidden),true,'Placements ledger must hide while Vocab is active.');
 assert.equal(await page.locator('#skyFoundationA [data-sky-vocab-panel="A"]').evaluate(node=>node.hidden),false,'Vocab panel must be visible after clicking Vocab.');
 
+const vocabParagraph=page.locator('#skyFoundationA [data-sky-vocab-paragraph]');
+assert.equal(await vocabParagraph.locator(':scope > :first-child').evaluate(node=>node.classList.contains('sky-vocab-structures-heading')),true,'Structures must be the first reading layer before Placements.');
+const primaryAxes=await vocabParagraph.locator('[data-vocab-structure="axis-polarity"]').evaluateAll(lines=>lines.map(line=>line.dataset.vocabAxis));
+assert.deepEqual(primaryAxes.slice(0,4),['vertex-anti-vertex','asc-dsc','mc-ic','north-node-south-node'],'Primary structures must lead with Vertex/Anti-Vertex, chart angles, then nodes.');
+assert.equal(await vocabParagraph.locator('[data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"] .sky-vocab-token[data-vocab-id="anti-vertex"]').count(),1,'Vertex polarity must include a derived Anti-Vertex when the sky stores only Vertex.');
+
+const ariesLibra=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"][data-vocab-signs="Aries|Libra"]');
+assert.equal(await ariesLibra.count(),1,'All sign polarities must be represented structurally.');
+assert.match(await ariesLibra.textContent(),/Aries[^.]*no placements[^.]*default ruler Mars/i,'An empty Aries pole must state both the absence and Mars as its default ruler.');
+
+const houseFourTen=page.locator('#skyFoundationA [data-vocab-structure="house-polarity"][data-vocab-houses="4|10"]');
+assert.equal(await houseFourTen.count(),1,'All house polarities must be represented structurally.');
+assert.match(await houseFourTen.textContent(),/Tenth House[^.]*no placements[^.]*default ruler Mercury/i,'An empty Tenth House in the fixture must state its Gemini-cusp default ruler, Mercury.');
+
 const rawLoadedSky={
   ...Object.fromEntries(Object.entries(skyA.placements)),
   _houseContext:{name:'_houseContext',longitude:255,sign:'Sagittarius',house:6},
@@ -140,6 +154,8 @@ assert.equal(firstHouseBridge.whiteSpace,'nowrap','The house preposition, medall
 assert.equal(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="aspect"]').count(),0,'Vocab must not reproduce the raw aspect list already available in Relationships.');
 const sunMercuryCluster=page.locator('#skyFoundationA [data-vocab-structure="cluster"][data-vocab-members*="sun"][data-vocab-members*="mercury"]');
 assert.equal(await sunMercuryCluster.count(),1,'A natural non-axis Sun–Mercury concentration must be synthesized as one cluster.');
+assert.equal(await sunMercuryCluster.getAttribute('data-vocab-cluster-type'),'mid-sign','A concentration wholly inside Libra must be marked as mid-sign.');
+assert.equal(await sunMercuryCluster.getAttribute('data-vocab-signs'),'Libra','A mid-sign concentration must name its one affected sign.');
 
 const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').first().evaluate(node=>{
   const style=getComputedStyle(node);
