@@ -135,7 +135,7 @@
 
   function loadCanonicalGlyphRuntime(onready) {
     ensureCanonicalSkyBootStyle();
-    appendScript('relphi-glyph-registry-v1.js?v=28', function () {
+    appendScript('relphi-glyph-registry-v1.js?v=29', function () {
       appendScript('relphi-glyph-component-v1.js?v=32', function () {
         appendScript('relphi-glyph-source-integrity-v1.js?v=2', onready);
       });
@@ -176,7 +176,7 @@
     if (isPlanetaryHoursContext()) {
       loadCanonicalGlyphRuntime(function () {
         appendScript('standardize-zodiac-wheels.js?v=7');
-        appendScript('relphi-inline-glyph-consumer-v1.js?v=2');
+        appendScript('relphi-inline-glyph-consumer-v1.js?v=3');
         appendScript('planetary-hours-sect-v1.js?v=4');
       });
       appendScript('planetary-hours-location-prompt.js?v=4');
