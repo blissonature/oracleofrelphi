@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=17/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=18/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -46,6 +46,8 @@ assert.match(vocab,/sky-chart-house-filter-popover sky-vocab-rel-popover/,'Vocab
 assert.match(vocab,/sky-chart-house-list/,'Vocab House dropdown must reuse the Relationships House list structure');
 assert.match(vocab,/sky-chart-house-menu-medallion/,'Vocab House rows must reuse the Relationships house medallion primitive');
 assert.match(vocab,/HOUSE_MENU_DESCRIPTIONS/,'Vocab House rows must use the same compact descriptions as Relationships');
+assert.match(vocab,/RelphiHouseMedallion\?\.create\?\.\(house,'',false\)/,'Vocab house vocabulary must use the canonical House Medallion primitive');
+assert.match(vocab,/sky-vocab-house-medallion/,'Vocab house medallions must be explicitly marked for inline Vocab use');
 assert.match(vocab,/sky-chart-zodiac-filter-menu sky-vocab-rel-popover/,'Vocab Zodiac dropdown must reuse the Relationships Zodiac popover class');
 assert.match(vocab,/sky-chart-zodiac-filter-list/,'Vocab Zodiac dropdown must reuse the Relationships Zodiac list structure');
 assert.match(vocab,/sky-chart-zodiac-filter-glyph/,'Vocab Zodiac rows must reuse the Relationships glyph cell');
