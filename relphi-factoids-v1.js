@@ -138,9 +138,11 @@
   }
 
   function schedule(context, delay) {
-    if (shownThisView || activeToast) return;
-    clearTimeout(pendingTimer);
-    pendingTimer = window.setTimeout(function () { show(context); }, Math.max(0, Number(delay) || 0));
+    if (shownThisView || activeToast || pendingTimer) return;
+    pendingTimer = window.setTimeout(function () {
+      pendingTimer = 0;
+      show(context);
+    }, Math.max(0, Number(delay) || 0));
   }
 
   function observe(selector, context, delay) {
@@ -161,10 +163,20 @@
     observer.observe(target);
   }
 
+  function bindContextClick(selector, context) {
+    const target = document.querySelector(selector);
+    if (!target) return;
+    target.addEventListener('click', function () {
+      if (!activeToast) show(context, { force:true });
+    });
+  }
+
   function initPlanetaryHours() {
+    // The Sun frame gets the quiet introductory factoid. More specific facts appear
+    // only when the person actually engages with those parts of the tool.
     observe('.ph-day-frame', 'planetary-sun-frame', 900);
-    observe('.ph-moon-frame', 'planetary-moon', 900);
-    observe('#wandererGrid', 'planetary-wanderers', 900);
+    bindContextClick('#moonDisc', 'planetary-moon');
+    bindContextClick('#wandererGrid', 'planetary-wanderers');
   }
 
   function initSkyChart() {
