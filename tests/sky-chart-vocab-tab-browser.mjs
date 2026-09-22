@@ -99,6 +99,7 @@ const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').fi
 });
 assert.ok(glyphMetrics.width>=16&&glyphMetrics.height>=16,'Vocab glyphs must render materially larger than the previous tiny inline glyphs.');
 assert.ok(await page.locator('#skyFoundationA .sky-vocab-meta').count()>5,'Visible astrological detail must use the clean inline meta treatment.');
+assert.ok(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"] .relphi-house-medallion').count()>0,'Vocab house tokens must render the canonical Relphi House Medallion instead of a bare colored house number.');
 
 // Global Display choices are the baseline. Clicking one token may add its hidden layers,
 // but must not alter what stays visible on neighboring tokens.
