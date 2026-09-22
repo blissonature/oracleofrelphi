@@ -823,7 +823,6 @@ document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
 ].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY)schedule()});
 window.addEventListener('pageshow',schedule);
-window.addEventListener('relphi:sky-foundation-clear-selection',()=>{if(wheelFilterState||wheelFilterSpec){wheelFilterState=null;wheelFilterSpec=null;rerenderPanels()}});
 document.addEventListener('pointerdown',event=>{
   if(!openDropdownState)return;
   const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),path=typeof event.composedPath==='function'?event.composedPath():[];
