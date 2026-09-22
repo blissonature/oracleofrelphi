@@ -306,11 +306,12 @@ assert.deepEqual(
 );
 
 const meridianStructure=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="mc-ic"]');
-assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"]').count()>=4,'Every visible meridian-polarity member must carry compact sign context.');
-assert.ok(await meridianStructure.locator('[data-vocab-context-kind="house"]').count()>=4,'Every visible meridian-polarity member must carry compact house context.');
+assert.equal(await meridianStructure.locator('[data-vocab-context-kind="sign"]').count(),2,'MC + Chiron and IC + Uranus must each share one sign context instead of repeating it per member.');
+assert.equal(await meridianStructure.locator('[data-vocab-context-kind="house"]').count(),2,'MC + Chiron and IC + Uranus must each share one house context instead of repeating it per member.');
+assert.equal(await meridianStructure.locator('[data-vocab-structure-context-group]').count(),2,'The meridian polarity fixture must collapse its four members into two shared-location groups.');
 assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-structure-context-name').filter({hasText:'Gemini'}).count()>=1,'MC/Chiron pole must expose its Gemini context.');
 assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-structure-context-name').filter({hasText:'Sagittarius'}).count()>=1,'IC/Uranus pole must expose its Sagittarius context.');
-assert.ok(await meridianStructure.locator('[data-vocab-context-kind="house"] .relphi-house-medallion').count()>=4,'Structure house context must reuse canonical House Medallions.');
+assert.equal(await meridianStructure.locator('[data-vocab-context-kind="house"] .relphi-house-medallion').count(),2,'Grouped structure house context must reuse one canonical House Medallion per shared location.');
 
 await clickBlankComparison();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='All');
