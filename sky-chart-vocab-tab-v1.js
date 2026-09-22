@@ -138,12 +138,15 @@ function readJson(storage,key,fallback){try{const raw=storage.getItem(key);retur
 function writeJson(storage,key,value){try{storage.setItem(key,JSON.stringify(value))}catch(_){}}
 function payload(slot){return readJson(localStorage,KEYS[slot],null)}
 function profile(value){return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}
+function internalPlacementEntry(key,item){
+  return[key,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point].some(value=>/^[_$]/.test(String(value||'').trim()));
+}
 function source(value){
   if(!value||typeof value!=='object')return[];
   const known=[value.placements,value.positions,value.points,value.bodies].find(candidate=>candidate&&typeof candidate==='object');
   const raw=known||value;
-  if(Array.isArray(raw))return raw.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]);
-  return Object.entries(raw).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac));
+  if(Array.isArray(raw))return raw.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]).filter(([key,item])=>!internalPlacementEntry(key,item));
+  return Object.entries(raw).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!internalPlacementEntry(key,item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac));
 }
 function longitude(item){
   if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);
