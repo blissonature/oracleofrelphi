@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=35/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=36/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -24,6 +24,8 @@ assert.match(vocab,/child:'children'/);
 assert.match(vocab,/AXIS_PAIRS/,'Definitional axes must be treated as axes rather than ordinary opposition rows');
 assert.match(vocab,/houseCusps\.length\?houseFor/,'Vocab houses must follow the active house system when cusps are available');
 assert.match(vocab,/vocabLocalStage/,'Vocab tokens must support local progressive reveal');
+assert.match(vocab,/function internalPlacementEntry\(key,item\)/,'Vocab must explicitly distinguish internal sky metadata from placements');
+assert.match(vocab,/\^\[_\$\]/,'Private underscore/dollar-prefixed sky entries must never become Vocab placements');
 assert.match(vocab,/function localVisibility\(node\)/,'Local reveal must preserve globally enabled layers and add only missing layers');
 assert.match(vocab,/visible=\[state\.glyphs,state\.referents,state\.names\]/,'Local Vocab reveal order must be Glyph, Referent, Name');
 assert.match(vocab,/ids=\['glyphs','referents','names'\]/,'Display summary order must be Glyph, Referent, Name');
