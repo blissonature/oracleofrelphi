@@ -52,7 +52,8 @@ await displayMenu.waitFor({state:'visible'});
 assert.equal(await displayMenu.locator('.sky-vocab-filter-row').count(),3,'Display matrix must contain Glyphs, Names, and Referents.');
 assert.equal(await displayMenu.locator('[data-vocab-layer-all="A"]').count(),1);
 assert.equal(await displayMenu.locator('[data-vocab-layer-none="A"]').count(),1);
-await display.click();
+await page.keyboard.press('Escape');
+await displayMenu.waitFor({state:'hidden'});
 
 const placements=page.locator('#skyFoundationA [data-vocab-dropdown-toggle="placements"]');
 await placements.click();
