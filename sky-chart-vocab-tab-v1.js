@@ -828,8 +828,8 @@ function installStyles(){
     .sky-vocab-glyph{display:inline-grid;place-items:center;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);margin:0;vertical-align:baseline;font-weight:800;line-height:1}
     .sky-vocab-glyph.has-svg-glyph{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);transform:translateY(.24em)}
     .sky-vocab-glyph svg{display:block;width:var(--vocab-mark-size);height:var(--vocab-mark-size);overflow:visible}
-    .sky-vocab-glyph.is-house-medallion{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);vertical-align:baseline}
-    .sky-vocab-glyph>.relphi-house-medallion{display:inline-grid!important;width:90%!important;height:90%!important;margin:0!important;place-items:center!important;vertical-align:baseline!important;transform:translateY(-.17em);color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.72em!important;line-height:1!important}
+    .sky-vocab-glyph.is-house-medallion{position:relative;display:inline-block;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:1em;min-height:1em;vertical-align:baseline;overflow:visible}
+    .sky-vocab-glyph>.relphi-house-medallion{position:absolute!important;left:50%!important;top:50%!important;display:inline-grid!important;width:1.5em!important;height:1.5em!important;margin:0!important;place-items:center!important;vertical-align:baseline!important;transform:translate(-50%,-61%);color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.72em!important;line-height:1!important}
     .sky-vocab-glyph>.relphi-house-medallion[data-house="10"],.sky-vocab-glyph>.relphi-house-medallion[data-house="11"],.sky-vocab-glyph>.relphi-house-medallion[data-house="12"]{font-size:.61em!important;letter-spacing:-.02em!important}
     .sky-vocab-name{display:inline-block;font-weight:720;font-size:.94em;line-height:1;vertical-align:baseline;color:#62584f}
     .sky-vocab-referent{font-weight:560;color:#211d19}
