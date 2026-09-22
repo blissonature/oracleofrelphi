@@ -14,7 +14,7 @@
     '♎':'libra','♏':'scorpio','♐':'sagittarius','♑':'capricorn','♒':'aquarius','♓':'pisces'
   });
   const SVG_TEXT_IDENTITIES = Object.freeze(Object.assign({}, TOKENS, {
-    'ASC':'asc','Asc':'asc','DSC':'dsc','Dsc':'dsc','MC':'mc','IC':'ic','Vx':'vertex'
+    'ASC':'asc','Asc':'asc','DSC':'dsc','Dsc':'dsc','MC':'mc','IC':'ic','Vx':'vertex','AVx':'anti-vertex','Avx':'anti-vertex'
   }));
   const pattern = new RegExp('(' + Object.keys(TOKENS).map(token => token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'g');
   let queued = false;
