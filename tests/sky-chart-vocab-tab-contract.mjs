@@ -5,7 +5,7 @@ const html=readFileSync(new URL('../sky-chart.html',import.meta.url),'utf8');
 const vocab=readFileSync(new URL('../sky-chart-vocab-tab-v1.js',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=8/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=9/,'Sky Chart must load the Vocab subtab');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
@@ -21,18 +21,27 @@ assert.match(vocab,/AXIS_PAIRS/,'Definitional axes must be treated as axes rathe
 assert.match(vocab,/houseCusps\.length\?houseFor/,'Vocab houses must follow the active house system when cusps are available');
 assert.match(vocab,/data\.vocabLocalStage/,'Vocab tokens must support local progressive reveal');
 assert.match(vocab,/function controlsMarkup\(slot\)/,'Vocab must define the control markup initializer used when the panel opens');
-assert.match(vocab,/data-vocab-dropdown-toggle/,'Vocab controls must be compact dropdowns');
+assert.match(vocab,/data-vocab-dropdown-toggle/,'Vocab controls must be dropdowns');
 assert.match(vocab,/data-vocab-dropdown-menu/,'Vocab dropdowns must open checklist menus');
-assert.match(vocab,/sky-vocab-filter-header/,'Vocab dropdowns must use a Relationships-style matrix header');
-assert.match(vocab,/data-vocab-placement-all/,'Placement matrix must provide All control');
-assert.match(vocab,/data-vocab-placement-none/,'Placement matrix must provide None control');
-assert.match(vocab,/sky-vocab-filter-row/,'Vocab options must render as one checkbox row per item');
 assert.match(vocab,/data-vocab-placement/,'Placement matrix must expose individual placement checkboxes');
+assert.match(vocab,/data-vocab-sign/,'Vocab must expose a Zodiac Sign checkbox matrix');
+assert.match(vocab,/data-vocab-house/,'Vocab must expose a House checkbox matrix');
 assert.match(vocab,/data-vocab-group/,'Placement matrix must expose group checkboxes');
-assert.match(vocab,/sky-vocab-dropdown-chevron/,'Vocab dropdowns must use a Relationships-style chevron field');
-assert.match(vocab,/data-vocab-filter/,'Vocab must expose filter controls inside the dropdown');
 assert.match(vocab,/CATEGORY_ORDER=\['nodes','axes','luminaries','planets','other'\]/,'Placement groups must follow Nodes, Axes, Luminaries, Planets, Other points');
-assert.match(vocab,/Intrasky relationships/,'The placement matrix must retain an Intrasky relationships toggle');
+assert.match(vocab,/Intrasky relationships/,'Vocab must retain an Intrasky relationships toggle');
+
+assert.match(vocab,/sky-chart-placement-filter-popover sky-vocab-rel-popover/,'Vocab Placement dropdown must reuse the Relationships Placement popover class');
+assert.match(vocab,/sky-chart-placement-list/,'Vocab Placement dropdown must reuse the Relationships Placement list structure');
+assert.match(vocab,/sky-chart-placement-list-item-group/,'Vocab Placement groups must reuse Relationships group rows');
+assert.match(vocab,/sky-chart-house-filter-popover sky-vocab-rel-popover/,'Vocab House dropdown must reuse the Relationships House popover class');
+assert.match(vocab,/sky-chart-house-list/,'Vocab House dropdown must reuse the Relationships House list structure');
+assert.match(vocab,/sky-chart-house-menu-medallion/,'Vocab House rows must reuse the Relationships house medallion primitive');
+assert.match(vocab,/HOUSE_MENU_DESCRIPTIONS/,'Vocab House rows must use the same compact descriptions as Relationships');
+assert.match(vocab,/sky-chart-zodiac-filter-menu sky-vocab-rel-popover/,'Vocab Zodiac dropdown must reuse the Relationships Zodiac popover class');
+assert.match(vocab,/sky-chart-zodiac-filter-list/,'Vocab Zodiac dropdown must reuse the Relationships Zodiac list structure');
+assert.match(vocab,/sky-chart-zodiac-filter-glyph/,'Vocab Zodiac rows must reuse the Relationships glyph cell');
+assert.match(vocab,/SIGN_FIGURES/,'Vocab Zodiac rows must use the same figure labels as Relationships');
+
 assert.match(vocab,/relphi:sky-foundation-filter-changed/,'Vocab must follow the existing wheel filter contract');
 assert.match(vocab,/driveFiltersFromWheel/,'Wheel state must drive Vocab filters');
 assert.match(vocab,/state\.kind==='placement'/,'Placement wheel clicks must drive the Placement filter');
