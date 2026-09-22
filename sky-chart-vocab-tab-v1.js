@@ -357,12 +357,14 @@ function renderToken(node){
     const duplicateFallback=g&&g.textContent&&g.textContent.trim()===n.textContent.trim()&&!g.querySelector('svg');
     if(!duplicateFallback)astro.push(n);
   }
-  if(r)node.appendChild(r);
   if(astro.length){
     const meta=document.createElement('span');meta.className='sky-vocab-meta';meta.setAttribute('aria-label','Astrological vocabulary');
     astro.forEach(part=>meta.appendChild(part));
-    if(r)node.appendChild(document.createTextNode(' '));
     node.appendChild(meta);
+  }
+  if(r){
+    if(astro.length)node.appendChild(document.createTextNode(' '));
+    node.appendChild(r);
   }
 }
 function rerenderTokens(root=document){root.querySelectorAll?.('.sky-vocab-token').forEach(renderToken)}
