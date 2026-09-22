@@ -3,9 +3,13 @@ import { readFileSync } from 'node:fs';
 
 const html=readFileSync(new URL('../sky-chart.html',import.meta.url),'utf8');
 const vocab=readFileSync(new URL('../sky-chart-vocab-tab-v1.js',import.meta.url),'utf8');
+const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',import.meta.url),'utf8');
+const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=15/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=16/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
+assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
@@ -33,6 +37,9 @@ assert.match(vocab,/Intrasky relationships/,'Vocab must retain an Intrasky relat
 assert.match(vocab,/sky-chart-placement-filter-popover sky-vocab-rel-popover/,'Vocab Placement dropdown must reuse the Relationships Placement popover class');
 assert.match(vocab,/sky-chart-placement-list/,'Vocab Placement dropdown must reuse the Relationships Placement list structure');
 assert.match(vocab,/sky-chart-placement-list-item-group/,'Vocab Placement groups must reuse Relationships group rows');
+assert.match(vocab,/sky-chart-placement-list-header-label/,'Vocab Placement header must reuse the Relationships header label primitive');
+assert.match(vocab,/sky-chart-placement-list-header-choices/,'Vocab Placement header must reuse the Relationships header choices primitive');
+assert.match(vocab,/grid-template-columns:40px!important/,'Vocab Placement choices must collapse the Relationships scope grid to one checkbox column');
 assert.match(vocab,/sky-chart-house-filter-popover sky-vocab-rel-popover/,'Vocab House dropdown must reuse the Relationships House popover class');
 assert.match(vocab,/sky-chart-house-list/,'Vocab House dropdown must reuse the Relationships House list structure');
 assert.match(vocab,/sky-chart-house-menu-medallion/,'Vocab House rows must reuse the Relationships house medallion primitive');
@@ -70,5 +77,7 @@ assert.match(vocab,/vocabSentenceStart/,'Sentence-start tokens must preserve cap
 assert.match(vocab,/capitalizeStart/,'Referent-led Vocab lines must begin with a capital letter');
 assert.equal(/\.sky-foundation-relationship-row\s*\{/.test(vocab),false,'Vocab feature must not restyle Relationship rows');
 assert.equal(/#skyFoundationRelationships\s+[^'"]*\{/.test(vocab),false,'Vocab feature must not style the Relationships panel');
+assert.match(unified,/:is\(#skyFoundationRelationships,\.sky-vocab-panel\)/,'Unified relationship control styling must also target Vocab');
+assert.match(zodiacCss,/:is\(#skyFoundationRelationships,\.sky-vocab-panel\) \.sky-chart-zodiac-filter/,'Canonical Zodiac styling must also target Vocab');
 
 console.log('Sky Chart Vocab tab contract passed.');
