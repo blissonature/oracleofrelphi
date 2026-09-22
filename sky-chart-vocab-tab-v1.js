@@ -306,6 +306,18 @@ function token(info,kind='term',sentenceStart=false){
 function glyphNode(tokenNode){
   const holder=document.createElement('span');holder.className='sky-vocab-level sky-vocab-glyph';holder.dataset.vocabLevel='glyph';holder.setAttribute('role','button');holder.tabIndex=0;holder.setAttribute('aria-label','Reveal name');applyTokenColor(holder,tokenNode);
   const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName;
+  if(tokenNode.dataset.vocabKind==='house'){
+    const house=Number(String(tokenNode.dataset.vocabId||'').replace(/^house-/,'')||fallback);
+    const marker=window.RelphiHouseMedallion?.create?.(house,'',false);
+    if(marker){
+      marker.classList.add('sky-vocab-house-medallion');
+      marker.setAttribute('aria-hidden','true');
+      marker.removeAttribute('aria-label');
+      marker.removeAttribute('title');
+      holder.replaceChildren(marker);
+      return holder;
+    }
+  }
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
   if(entry&&component){
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-18 -18 36 36');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');holder.appendChild(svg);
@@ -731,6 +743,7 @@ function installStyles(){
     .sky-vocab-meta{display:inline-flex;align-items:center;gap:.18em;white-space:nowrap;vertical-align:-.11em}
     .sky-vocab-glyph{display:inline-flex;align-items:center;justify-content:center;vertical-align:-.12em;min-width:1.18em;font-weight:800;line-height:1}
     .sky-vocab-glyph svg{display:inline-block;width:1.34em;height:1.34em;overflow:visible}
+    .sky-vocab-glyph>.relphi-house-medallion{display:inline-grid;vertical-align:middle;margin:0}
     .sky-vocab-name{font-weight:720;font-size:.88em;color:#62584f}
     .sky-vocab-referent{font-weight:560;color:#211d19}
     .sky-vocab-level.is-color-coded{color:var(--vocab-token-color)!important;-webkit-text-fill-color:var(--vocab-token-color)!important}
