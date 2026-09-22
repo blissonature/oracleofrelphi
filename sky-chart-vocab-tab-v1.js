@@ -387,6 +387,7 @@ function dropdownSummary(kind){
 function dropdownMarkup(slot,kind,label,ids,state){
   const menuId='skyVocab'+(kind==='layers'?'Display':'Include')+'Menu'+slot;
   const dataAttr=kind==='layers'?'data-vocab-layer':'data-vocab-filter';
+  const header=kind==='layers'?'DISPLAY':'INCLUDE';
   return '<div class="sky-vocab-dropdown" data-vocab-dropdown="'+kind+'" data-vocab-dropdown-slot="'+slot+'">'+
     '<span class="sky-vocab-dropdown-label">'+label+'</span>'+
     '<button type="button" class="sky-vocab-dropdown-field" data-vocab-dropdown-toggle="'+kind+'" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'">'+
@@ -394,17 +395,12 @@ function dropdownMarkup(slot,kind,label,ids,state){
       '<span class="sky-vocab-dropdown-chevron" aria-hidden="true"></span>'+
     '</button>'+
     '<div id="'+menuId+'" class="sky-vocab-dropdown-menu" data-vocab-dropdown-menu="'+kind+'" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="'+label+'" hidden>'+
-      ids.map(id=>'<label class="sky-vocab-menu-choice"><input type="checkbox" '+dataAttr+'="'+id+'" '+(state[id]?'checked':'')+'><span>'+optionLabel(id,kind)+'</span></label>').join('')+
+      '<div class="sky-vocab-filter-list">'+
+        '<div class="sky-vocab-filter-header"><strong>'+header+'</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-set-all="'+kind+'">All</button><button type="button" data-vocab-set-none="'+kind+'">None</button></span></div>'+
+        ids.map(id=>'<label class="sky-vocab-filter-row"><span class="sky-vocab-filter-name">'+optionLabel(id,kind)+'</span><span class="sky-vocab-filter-check"><input type="checkbox" '+dataAttr+'="'+id+'" '+(state[id]?'checked':'')+' aria-label="'+optionLabel(id,kind)+'"></span></label>').join('')+
+      '</div>'+
     '</div>'+
   '</div>';
-}
-function controlsMarkup(slot){
-  const state=displayState(),filters=filterState();
-  return '<div class="sky-vocab-dropdown-row">'+
-    dropdownMarkup(slot,'layers','Display',['glyphs','names','referents'],state)+
-    dropdownMarkup(slot,'filters','Include',['nodes','axes','luminaries','planets','other','relationships'],filters)+
-    '</div>'+
-    '<div class="sky-vocab-focus-bar" data-vocab-focus-bar hidden><span data-vocab-focus-label></span><button type="button" data-vocab-clear-focus>Show all</button></div>';
 }
 function dropdownOwner(slot,kind){
   return document.querySelector('[data-sky-vocab-panel="'+slot+'"] [data-vocab-dropdown="'+kind+'"]');
@@ -430,7 +426,7 @@ function positionDropdown(){
   if(!openDropdownState)return;
   const {slot,kind}=openDropdownState,owner=dropdownOwner(slot,kind),menu=dropdownMenu(slot,kind),field=owner?.querySelector('.sky-vocab-dropdown-field');
   if(!owner||!menu||!field||menu.hidden)return;
-  const rect=field.getBoundingClientRect(),margin=10,width=Math.max(180,Math.min(280,Math.max(rect.width,220))),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
+  const rect=field.getBoundingClientRect(),margin=10,targetWidth=kind==='filters'?320:260,width=Math.max(220,Math.min(targetWidth,window.innerWidth-margin*2)),below=window.innerHeight-rect.bottom-margin,above=rect.top-margin;
   const natural=Math.min(menu.scrollHeight+4,320),maxHeight=Math.max(140,Math.min(320,Math.max(below,above)));
   const useAbove=below<Math.min(180,natural)&&above>below;
   const top=useAbove?Math.max(margin,rect.top-Math.min(natural,maxHeight)-5):Math.min(window.innerHeight-Math.min(natural,maxHeight)-margin,rect.bottom+5);
@@ -452,6 +448,13 @@ function openDropdown(slot,kind){
 }
 function updateDropdownSummaries(){
   document.querySelectorAll('[data-vocab-dropdown-summary]').forEach(node=>{node.textContent=dropdownSummary(node.dataset.vocabDropdownSummary)});
+}
+function setDropdownAll(kind,checked){
+  const ids=kind==='layers'?['glyphs','names','referents']:['nodes','axes','luminaries','planets','other','relationships'];
+  const state=kind==='layers'?displayState():filterState();
+  ids.forEach(id=>{state[id]=checked});
+  kind==='layers'?saveDisplay(state):saveFilter(state);
+  rerenderPanels();
 }
 function rerenderPanels(){
   const display=displayState(),filters=filterState();
@@ -479,6 +482,12 @@ function ensurePanel(slot,view){
   }));
   panel.querySelectorAll('[data-vocab-dropdown-toggle]').forEach(button=>button.addEventListener('click',event=>{
     event.preventDefault();event.stopPropagation();openDropdown(slot,button.dataset.vocabDropdownToggle);
+  }));
+  panel.querySelectorAll('[data-vocab-set-all]').forEach(button=>button.addEventListener('click',event=>{
+    event.preventDefault();event.stopPropagation();setDropdownAll(button.dataset.vocabSetAll,true);
+  }));
+  panel.querySelectorAll('[data-vocab-set-none]').forEach(button=>button.addEventListener('click',event=>{
+    event.preventDefault();event.stopPropagation();setDropdownAll(button.dataset.vocabSetNone,false);
   }));
   panel.querySelector('[data-vocab-clear-focus]')?.addEventListener('click',()=>clearVocabFocus(slot));
   panel.addEventListener('click',event=>progressive(event));
@@ -528,6 +537,7 @@ function installStyles(){
     .sky-placement-vocab-tab.is-active{background:#241f1b;color:#fff}
     .sky-vocab-panel{display:grid;gap:.72rem;padding:.52rem .7rem .82rem;min-width:0}
     .sky-vocab-panel[hidden]{display:none!important}
+
     .sky-vocab-dropdown-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:end}
     .sky-vocab-dropdown{position:relative;display:grid;grid-template-rows:auto 32px;gap:4px;min-width:0}
     .sky-vocab-dropdown-label{min-width:0;color:#665d56;font:800 .62rem/1.15 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -536,11 +546,26 @@ function installStyles(){
     .sky-vocab-dropdown-chevron{align-self:stretch;border-left:1px solid rgba(56,48,42,.08);background-image:var(--sky-chart-filter-chevron);background-repeat:no-repeat;background-position:center;background-size:14px 14px}
     .sky-vocab-dropdown-field:hover,.sky-vocab-dropdown-field:focus-visible,.sky-vocab-dropdown.is-open .sky-vocab-dropdown-field{background-color:#f5f1eb;outline:none}
     .sky-vocab-dropdown.is-open .sky-vocab-dropdown-field{border-color:rgba(31,27,24,.42);box-shadow:0 0 0 2px rgba(31,27,24,.08)}
-    .sky-vocab-dropdown-menu{box-sizing:border-box;display:grid;gap:2px;padding:6px;border:1px solid rgba(56,48,42,.2);border-radius:9px;background:#fff;box-shadow:0 12px 30px rgba(35,29,24,.18);overflow:auto}
+
+    .sky-vocab-dropdown-menu{box-sizing:border-box;padding:10px;border:1px solid rgba(31,27,24,.22);border-radius:13px;background:#fffdf8;box-shadow:0 16px 38px rgba(31,27,24,.2);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
     .sky-vocab-dropdown-menu[hidden]{display:none!important}
-    .sky-vocab-menu-choice{display:flex;align-items:center;gap:.45rem;min-height:30px;padding:.28rem .42rem;border-radius:6px;color:#413934;font:750 .68rem/1.2 system-ui,sans-serif;cursor:pointer}
-    .sky-vocab-menu-choice:hover{background:#f5f1eb}
-    .sky-vocab-menu-choice input{margin:0;flex:0 0 auto}
+    .sky-vocab-filter-list{overflow:hidden;border:1px solid rgba(31,27,24,.17);border-radius:10px;background:#fff}
+    .sky-vocab-filter-header{position:sticky;top:-10px;z-index:3;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;min-height:38px;border-bottom:1px solid rgba(31,27,24,.16);background:#e9e3da;color:#29231e;font:900 .61rem/1 system-ui,sans-serif}
+    .sky-vocab-filter-header strong{padding:7px 10px;text-align:left}
+    .sky-vocab-filter-actions{align-self:stretch;display:flex;align-items:center;gap:4px;padding:4px 6px;border-left:1px solid rgba(31,27,24,.1)}
+    .sky-vocab-filter-actions button{min-height:26px;margin:0;padding:4px 7px;border:1px solid rgba(31,27,24,.25);border-radius:6px;background:#fff;color:#29231e;font:800 .58rem/1 system-ui,sans-serif;cursor:pointer}
+    .sky-vocab-filter-actions button:hover{background:#f7f2ea}
+    .sky-vocab-filter-actions button:focus-visible{outline:2px solid #625a52;outline-offset:1px}
+    .sky-vocab-filter-row{display:grid;grid-template-columns:minmax(0,1fr) 40px;align-items:center;min-height:42px;border-top:1px solid rgba(31,27,24,.075);color:#29231e;cursor:pointer}
+    .sky-vocab-filter-row:first-of-type{border-top:0}
+    .sky-vocab-filter-row:hover{background:#f4efe8}
+    .sky-vocab-filter-name{display:flex;align-items:center;justify-content:flex-start;min-width:0;padding:7px 10px;font:750 .67rem/1.15 system-ui,sans-serif;text-align:left}
+    .sky-vocab-filter-check{align-self:stretch;display:flex;align-items:center;justify-content:center;border-left:1px solid rgba(31,27,24,.1)}
+    .sky-vocab-filter-row input[type="checkbox"]{appearance:none;-webkit-appearance:none;position:relative;width:15px;height:15px;min-width:15px;margin:0;border:1px solid #211d19;border-radius:3px;background:#fff!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);color:#111;cursor:pointer;accent-color:transparent!important}
+    .sky-vocab-filter-row input[type="checkbox"]::after{content:"";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#111;font:900 13px/13px Arial,sans-serif}
+    .sky-vocab-filter-row input[type="checkbox"]:checked::after{content:"✓"}
+    .sky-vocab-filter-row input[type="checkbox"]:focus-visible{outline:2px solid #625a52;outline-offset:2px}
+
     .sky-vocab-focus-bar{display:flex;align-items:center;gap:.48rem;width:max-content;max-width:100%;padding:.34rem .5rem;border-radius:999px;background:#f4eee7;color:#332c27;font:800 .64rem/1.2 system-ui,sans-serif}
     .sky-vocab-focus-bar[hidden]{display:none!important}
     .sky-vocab-focus-bar button{appearance:none;border:0;background:transparent;color:#6c5e54;text-decoration:underline;font:800 inherit;cursor:pointer;padding:0}
@@ -561,6 +586,7 @@ function installStyles(){
       .sky-vocab-dropdown-row{gap:6px}
       .sky-vocab-dropdown-label{font-size:.6rem}
       .sky-vocab-dropdown-field{font-size:.64rem}
+      .sky-vocab-filter-name{padding:7px 8px;font-size:.63rem}
       .sky-vocab-paragraph{font-size:.75rem;line-height:1.55}
     }
   `;document.head.appendChild(style);
