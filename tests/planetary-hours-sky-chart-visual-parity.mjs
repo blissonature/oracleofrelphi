@@ -219,3 +219,7 @@ console.log('Planetary Hours direct heptagram, Planetary Calendar journal, Wande
 assert.match(page,/Default marks the primary saved sky\. Shown calendars are independent and can be combined/);
 assert.match(page,/if \(id\) ensureCalendarSkyShown\(id\)/);
 assert.match(page,/setCalendarSkyOverlayIds\(ids\)/);
+
+assert.equal((page.match(/id="calendarSkyCalendars"/g)||[]).length,1);
+assert.ok(page.indexOf('id="calendarSkyCalendars"') < page.indexOf('id="calendarDayView"'));
+assert.ok(page.indexOf('id="calendarSkyCalendars"') < page.indexOf('id="calendarMonthView"'));
