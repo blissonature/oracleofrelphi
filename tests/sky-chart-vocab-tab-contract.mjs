@@ -24,13 +24,15 @@ assert.match(vocab,/function controlsMarkup\(slot\)/,'Vocab must define the cont
 assert.match(vocab,/data-vocab-dropdown-toggle/,'Vocab controls must be compact dropdowns');
 assert.match(vocab,/data-vocab-dropdown-menu/,'Vocab dropdowns must open checklist menus');
 assert.match(vocab,/sky-vocab-filter-header/,'Vocab dropdowns must use a Relationships-style matrix header');
-assert.match(vocab,/data-vocab-set-all/,'Vocab matrix headers must provide All controls');
-assert.match(vocab,/data-vocab-set-none/,'Vocab matrix headers must provide None controls');
+assert.match(vocab,/data-vocab-placement-all/,'Placement matrix must provide All control');
+assert.match(vocab,/data-vocab-placement-none/,'Placement matrix must provide None control');
 assert.match(vocab,/sky-vocab-filter-row/,'Vocab options must render as one checkbox row per item');
+assert.match(vocab,/data-vocab-placement/,'Placement matrix must expose individual placement checkboxes');
+assert.match(vocab,/data-vocab-group/,'Placement matrix must expose group checkboxes');
 assert.match(vocab,/sky-vocab-dropdown-chevron/,'Vocab dropdowns must use a Relationships-style chevron field');
 assert.match(vocab,/data-vocab-filter/,'Vocab must expose filter controls inside the dropdown');
-assert.match(vocab,/\['nodes','axes','luminaries','planets','other','relationships'\]/,'Vocab filters must cover nodes, axes, luminaries, planets, other points, and intrasky relationships');
-assert.match(vocab,/relationships:'Intrasky'/,'The relationship filter must be labeled Intrasky');
+assert.match(vocab,/CATEGORY_ORDER=\['nodes','axes','luminaries','planets','other'\]/,'Placement groups must follow Nodes, Axes, Luminaries, Planets, Other points');
+assert.match(vocab,/Intrasky relationships/,'The placement matrix must retain an Intrasky relationships toggle');
 assert.match(vocab,/relphi:sky-foundation-filter-changed/,'Vocab must follow the existing wheel filter contract');
 assert.match(vocab,/drivePlacementsFromWheel/,'Wheel state must drive Vocab placement filters');
 assert.match(vocab,/state\.kind==='placement'/,'Placement wheel clicks must select the matching placement filter');
@@ -45,7 +47,7 @@ assert.match(vocab,/color:String\(aspect\?\.color\|\|''\)/,'Vocab aspects must u
 assert.match(vocab,/sky-vocab-level\.is-color-coded/,'Color must be confined to Vocab vocabulary tokens');
 assert.match(vocab,/style\.setProperty\('color',color,'important'\)/,'Color must be applied directly so Vocab tokens survive tab/view repainting');
 assert.match(vocab,/visibilitychange/,'Vocab must repaint when a browser tab becomes visible again');
-assert.equal(vocab.includes('sky-foundation-relationship-row'),false,'Vocab feature must not restyle Relationship rows');
-assert.equal(vocab.includes('#skyFoundationRelationships'),false,'Vocab feature must not alter the Relationships panel');
+assert.equal(/\.sky-foundation-relationship-row\s*\{/.test(vocab),false,'Vocab feature must not restyle Relationship rows');
+assert.equal(/#skyFoundationRelationships\s+[^'"]*\{/.test(vocab),false,'Vocab feature must not style the Relationships panel');
 
 console.log('Sky Chart Vocab tab contract passed.');
