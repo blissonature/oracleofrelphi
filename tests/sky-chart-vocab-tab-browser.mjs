@@ -68,9 +68,9 @@ const rawLoadedSky={
 };
 await page.evaluate(raw=>{
   localStorage.setItem('relphiSkyChartA',JSON.stringify(raw));
-  window.dispatchEvent(new StorageEvent('storage',{key:'relphiSkyChartA',newValue:JSON.stringify(raw),storageArea:localStorage}));
+  window.dispatchEvent(new CustomEvent('relphi:saved-sky-loaded',{detail:{slot:'A',source:'test'}}));
 },rawLoadedSky);
-await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-sky-vocab-panel="A"]')?.textContent?.includes('Identity'));
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-id="sun"]'));
 assert.equal(await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-id="_housecontext"]').count(),0,'Internal _houseContext metadata must never render as a Vocab placement after a sky load.');
 assert.equal((await page.locator('#skyFoundationA [data-sky-vocab-paragraph]').textContent()).includes('_houseContext'),false,'Private sky metadata text must not leak into the Vocab paragraph.');
 
@@ -347,7 +347,7 @@ cuspSky.placements.Mars=placement('Mars',180.8);
 cuspSky.placements.Mercury=placement('Mercury',180.1);
 await page.evaluate(raw=>{
   localStorage.setItem('relphiSkyChartA',JSON.stringify(raw));
-  window.dispatchEvent(new StorageEvent('storage',{key:'relphiSkyChartA',newValue:JSON.stringify(raw),storageArea:localStorage}));
+  window.dispatchEvent(new CustomEvent('relphi:saved-sky-loaded',{detail:{slot:'A',source:'test'}}));
 },cuspSky);
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-structure="stellium"][data-vocab-cluster-type="cusp"][data-vocab-signs="Virgo|Libra"]'));
 const cuspStellium=page.locator('#skyFoundationA [data-vocab-structure="stellium"][data-vocab-cluster-type="cusp"][data-vocab-signs="Virgo|Libra"]');
