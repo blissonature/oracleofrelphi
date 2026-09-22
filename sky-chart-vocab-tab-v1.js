@@ -218,7 +218,7 @@ function structuralRecords(slot,list){
   const vertex=list.find(record=>record.id==='vertex');if(!vertex)return list;
   const value=norm(vertex.value+180),houseCusps=cusps(payload(slot),list);
   const anti={
-    key:'Anti-Vertex',item:{derived:true},value,name:'Anti-Vertex',id:'anti-vertex',glyphId:null,fallbackGlyph:'AVx',
+    key:'Anti-Vertex',item:{derived:true},value,name:'Anti-Vertex',id:'anti-vertex',glyphId:'anti-vertex',
     sign:Math.floor(value/30),explicitHouse:0,house:houseCusps.length?houseFor(value,houseCusps):0
   };
   return[...list,anti];
