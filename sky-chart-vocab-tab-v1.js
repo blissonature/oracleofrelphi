@@ -293,7 +293,7 @@ function applyTokenColor(node,tokenNode){
   node.style.setProperty('-webkit-text-fill-color',color,'important');
 }
 function capitalizeStart(value){return String(value||'').replace(/[A-Za-z]/,letter=>letter.toUpperCase())}
-function token(info,kind='term',sentenceStart=false){
+function token(info,kind='term',sentenceStart=false,lead=''){
   const node=document.createElement('span');
   node.className='sky-vocab-token';
   node.dataset.vocabKind=kind;
@@ -303,6 +303,7 @@ function token(info,kind='term',sentenceStart=false){
   node.dataset.vocabReferent=String(info.referent||'');
   node.dataset.vocabFallbackGlyph=String(info.fallbackGlyph||info.name||'');
   node.dataset.vocabColor=String(info.color||'');
+  node.dataset.vocabLead=String(lead||'');
   if(info.color)node.style.setProperty('--vocab-token-color',String(info.color));
   node.dataset.vocabLocalStage='0';
   node.dataset.vocabSentenceStart=sentenceStart?'true':'false';
@@ -351,14 +352,16 @@ function renderToken(node){
   const {showGlyph,showName,showReferent}=localVisibility(node);
   node.replaceChildren();node.hidden=!(showGlyph||showName||showReferent);
   if(node.hidden)return;
+  const lead=String(node.dataset.vocabLead||'');
   const g=showGlyph?glyphNode(node):null,n=showName?nameNode(node):null,r=showReferent?referentNode(node):null;
   const head=document.createElement('span');head.className='sky-vocab-symbol-label';
   let hasHead=false;
+  if(lead&&(g||n)){head.appendChild(document.createTextNode(lead));hasHead=true}
   if(g){head.appendChild(g);hasHead=true}
   if(n){
     const duplicateFallback=g&&g.textContent&&g.textContent.trim()===n.textContent.trim()&&!g.querySelector('svg');
     if(!duplicateFallback){
-      if(hasHead)head.appendChild(document.createTextNode(' '));
+      if(g)head.appendChild(document.createTextNode(' '));
       const meta=document.createElement('span');meta.className='sky-vocab-meta sky-vocab-parenthetical';meta.setAttribute('aria-label','Astrological vocabulary name');
       meta.append(document.createTextNode('('),n,document.createTextNode(')'));
       head.appendChild(meta);hasHead=true;
@@ -366,7 +369,8 @@ function renderToken(node){
   }
   if(hasHead)node.appendChild(head);
   if(r){
-    if(hasHead)node.appendChild(document.createTextNode(' '));
+    if(!hasHead&&lead)node.appendChild(document.createTextNode(lead));
+    else if(hasHead)node.appendChild(document.createTextNode(' '));
     node.appendChild(r);
   }
 }
@@ -374,17 +378,17 @@ function rerenderTokens(root=document){root.querySelectorAll?.('.sky-vocab-token
 
 function phrasePlacement(record){
   const frag=document.createDocumentFragment();
-  frag.append(token(placementInfo(record),'placement',true),document.createTextNode(' is\u00A0in\u00A0'),token(signInfo(record.sign),'sign'));
-  if(record.house)frag.append(document.createTextNode(' in\u00A0'),token(houseInfo(record.house),'house'));
+  frag.append(token(placementInfo(record),'placement',true),token(signInfo(record.sign),'sign',false,' is in '));
+  if(record.house)frag.append(token(houseInfo(record.house),'house',false,' in '));
   return frag;
 }
 function appendSentence(container,fragment){const line=document.createElement('div');line.className='sky-vocab-line';line.append(fragment,document.createTextNode('.'));container.appendChild(line)}
 function axisSentence(first,second){
   const frag=document.createDocumentFragment();
-  frag.append(token(placementInfo(first),'placement',true),document.createTextNode(' is\u00A0in\u00A0'),token(signInfo(first.sign),'sign'));
-  if(first.house)frag.append(document.createTextNode(' in\u00A0'),token(houseInfo(first.house),'house'));
-  frag.append(document.createTextNode(', while\u00A0'),token(placementInfo(second),'placement'),document.createTextNode(' is\u00A0in\u00A0'),token(signInfo(second.sign),'sign'));
-  if(second.house)frag.append(document.createTextNode(' in\u00A0'),token(houseInfo(second.house),'house'));
+  frag.append(token(placementInfo(first),'placement',true),token(signInfo(first.sign),'sign',false,' is in '));
+  if(first.house)frag.append(token(houseInfo(first.house),'house',false,' in '));
+  frag.append(token(placementInfo(second),'placement',false,', while '),token(signInfo(second.sign),'sign',false,' is in '));
+  if(second.house)frag.append(token(houseInfo(second.house),'house',false,' in '));
   return frag;
 }
 function relationSentence(relation){
@@ -829,9 +833,9 @@ function installStyles(){
     .sky-vocab-parenthetical{display:inline;white-space:nowrap;vertical-align:baseline;color:#6a6058}
     .sky-vocab-parenthetical .sky-vocab-name,.sky-vocab-parenthetical .sky-vocab-referent{display:inline;vertical-align:baseline;color:inherit}
     .sky-vocab-line>.sky-vocab-token:first-child>.sky-vocab-glyph{margin-left:-.12em}
-    .sky-vocab-glyph{display:inline-grid;place-items:center;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:var(--vocab-mark-size);min-height:var(--vocab-mark-size);margin:0;vertical-align:baseline;font-weight:800;line-height:1}
-    .sky-vocab-glyph.has-svg-glyph{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);transform:translateY(.24em)}
-    .sky-vocab-glyph svg{display:block;width:var(--vocab-mark-size);height:var(--vocab-mark-size);overflow:visible}
+    .sky-vocab-glyph{position:relative;display:inline-block;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:1em;min-height:1em;margin:0;vertical-align:baseline;overflow:visible;font-weight:800;line-height:1}
+    .sky-vocab-glyph.has-svg-glyph{width:var(--vocab-mark-size);min-width:var(--vocab-mark-size)}
+    .sky-vocab-glyph svg{position:absolute;left:50%;top:50%;display:block;width:var(--vocab-mark-size);height:var(--vocab-mark-size);overflow:visible;transform:translate(-50%,-36%)}
     .sky-vocab-glyph.is-house-medallion{position:relative;display:inline-block;width:var(--vocab-mark-size);min-width:var(--vocab-mark-size);height:1em;min-height:1em;vertical-align:baseline;overflow:visible}
     .sky-vocab-glyph>.relphi-house-medallion{position:absolute!important;left:50%!important;top:50%!important;display:inline-grid!important;width:1.5em!important;height:1.5em!important;margin:0!important;place-items:center!important;vertical-align:baseline!important;transform:translate(-50%,-61%);color:var(--house-ink)!important;-webkit-text-fill-color:var(--house-ink)!important;font-size:.72em!important;line-height:1!important}
     .sky-vocab-glyph>.relphi-house-medallion[data-house="10"],.sky-vocab-glyph>.relphi-house-medallion[data-house="11"],.sky-vocab-glyph>.relphi-house-medallion[data-house="12"]{font-size:.61em!important;letter-spacing:-.02em!important}
