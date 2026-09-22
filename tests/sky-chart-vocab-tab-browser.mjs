@@ -94,24 +94,24 @@ const lineStarts=await initialLines.evaluateAll(lines=>lines.map(line=>(line.tex
 assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab line must begin with a capital letter.');
 
 const houseNine=page.locator('#skyFoundationWheelMount [data-interactive="house"][data-sky="A"][data-house="9"]').first();
-await houseNine.evaluate(node=>node.click());
+await houseNine.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='House 9');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-house="9"]').isChecked(),true,'House 9 must be checked when House 9 is selected on the wheel.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-house="8"]').isChecked(),false,'House 8 must be unchecked when House 9 is selected on the wheel.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','A House wheel click must leave the Placement dimension at All.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="signs"]').textContent(),'All','A House wheel click must leave the Zodiac Sign dimension at All.');
 
-await houseNine.evaluate(node=>node.click());
+await houseNine.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="houses"]')?.textContent==='All');
 
 const libra=page.locator('#skyFoundationWheelMount [data-interactive="sign"][data-sign="6"]').first();
-await libra.evaluate(node=>node.click());
+await libra.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='Libra');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="6"]').isChecked(),true,'Libra must be checked when the Libra wheel sector is selected.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-sign="5"]').isChecked(),false,'Virgo must be unchecked when the Libra wheel sector is selected.');
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="placements"]').textContent(),'All','A Sign wheel click must leave the Placement dimension at All.');
 
-await libra.evaluate(node=>node.click());
+await libra.evaluate(node=>node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true})));
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="signs"]')?.textContent==='All');
 
 const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
