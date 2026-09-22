@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=38/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=39/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -107,8 +107,10 @@ assert.match(vocab,/function proximityClusters\(list\)/,'Vocab must detect natur
 assert.match(vocab,/function independentClusters\(list\)\{return proximityClusters\(list\)\}/,'Local concentrations must remain visible even when they also participate in a larger polarity');
 assert.match(vocab,/line\.dataset\.vocabStructure=isStellium\(members\)\?'stellium':'cluster'/,'Detected concentrations must distinguish stelliums from ordinary clusters');
 assert.match(vocab,/function compactStructureContext\(info,kind\)/,'Structures must provide compact sign and house context without duplicating full Vocab referent prose');
-assert.match(vocab,/compactStructureContext\(signInfo\(record\.sign\),'sign'\)/,'Every structure member must include its zodiac sign context');
-assert.match(vocab,/compactStructureContext\(houseInfo\(record\.house\),'house'\)/,'Every housed structure member must include its house context');
+assert.match(vocab,/function structureMemberGroups\(members\)/,'Structure members sharing one sign and house must be grouped before context is rendered');
+assert.match(vocab,/const key=record\.sign\+'\\|'\+\(record\.house\|\|0\)/,'Structure grouping must use the shared sign-plus-house location');
+assert.match(vocab,/compactStructureContext\(signInfo\(group\.sign\),'sign'\)/,'Each shared structure group must print its zodiac sign context once');
+assert.match(vocab,/compactStructureContext\(houseInfo\(group\.house\),'house'\)/,'Each shared housed structure group must print its house context once');
 assert.match(vocab,/no placements · default ruler '\+SIGN_RULERS\[signIndex\]/,'An empty sign pole must explicitly state its absence and default ruler');
 assert.match(vocab,/no placements · default ruler '\+ruler/,'An empty house pole must explicitly state its absence and cusp-sign ruler');
 assert.match(vocab,/appendStructureSubheading\(container,'Sign polarities'\)/,'Sign polarities must be an explicit Structures subsection');
