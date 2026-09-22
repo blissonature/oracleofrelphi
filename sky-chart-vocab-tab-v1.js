@@ -309,7 +309,7 @@ function glyphNode(tokenNode){
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=glyphId&&(registry?.get?.(glyphId)||registry?.resolve?.(glyphId));
   if(entry&&component){
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-18 -18 36 36');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');holder.appendChild(svg);
-    component.draw(svg,entry.id,{radius:13,padding:1,color:'currentColor'}).catch(()=>{holder.replaceChildren(document.createTextNode(fallback))});
+    component.draw(svg,entry.id,{radius:14.5,padding:.5,color:'currentColor'}).catch(()=>{holder.replaceChildren(document.createTextNode(fallback))});
   }else holder.textContent=fallback;
   return holder;
 }
@@ -319,31 +319,31 @@ function nameNode(tokenNode){
 function referentNode(tokenNode){
   const node=document.createElement('span');node.className='sky-vocab-level sky-vocab-referent';node.dataset.vocabLevel='referent';node.setAttribute('role','button');node.tabIndex=0;node.textContent=tokenNode.dataset.vocabSentenceStart==='true'?capitalizeStart(tokenNode.dataset.vocabReferent):tokenNode.dataset.vocabReferent;return node;
 }
+function localVisibility(node){
+  const state=displayState(),visible=[state.glyphs,state.names,state.referents],missing=[];
+  visible.forEach((shown,index)=>{if(!shown)missing.push(index)});
+  const stage=Math.max(0,Math.min(Number(node.dataset.vocabLocalStage||0),missing.length));
+  missing.slice(0,stage).forEach(index=>{visible[index]=true});
+  return{showGlyph:visible[0],showName:visible[1],showReferent:visible[2],missingCount:missing.length,stage};
+}
 function renderToken(node){
   if(!(node instanceof HTMLElement))return;
-  const state=displayState(),stage=Number(node.dataset.vocabLocalStage||0),showGlyph=state.glyphs,showName=state.names||stage>=1,showReferent=state.referents||stage>=2;
+  const {showGlyph,showName,showReferent}=localVisibility(node);
   node.replaceChildren();node.hidden=!(showGlyph||showName||showReferent);
   if(node.hidden)return;
   const g=showGlyph?glyphNode(node):null,n=showName?nameNode(node):null,r=showReferent?referentNode(node):null;
-  if(r){
-    node.appendChild(r);
-    const astro=[];
-    if(g)astro.push(g);
-    if(n){
-      const duplicateFallback=g&&g.textContent&&g.textContent.trim()===n.textContent.trim()&&!g.querySelector('svg');
-      if(!duplicateFallback)astro.push(n);
-    }
-    if(astro.length){
-      node.appendChild(document.createTextNode(' ('));
-      astro.forEach((part,index)=>{if(index)node.appendChild(document.createTextNode(' '));node.appendChild(part)});
-      node.appendChild(document.createTextNode(')'));
-    }
-  }else{
-    if(g)node.appendChild(g);
-    if(g&&n){
-      const duplicateFallback=g.textContent&&g.textContent.trim()===n.textContent.trim()&&!g.querySelector('svg');
-      if(!duplicateFallback)node.append(document.createTextNode(' '),n);
-    }else if(n)node.appendChild(n);
+  const astro=[];
+  if(g)astro.push(g);
+  if(n){
+    const duplicateFallback=g&&g.textContent&&g.textContent.trim()===n.textContent.trim()&&!g.querySelector('svg');
+    if(!duplicateFallback)astro.push(n);
+  }
+  if(r)node.appendChild(r);
+  if(astro.length){
+    const meta=document.createElement('span');meta.className='sky-vocab-meta';meta.setAttribute('aria-label','Astrological vocabulary');
+    astro.forEach(part=>meta.appendChild(part));
+    if(r)node.appendChild(document.createTextNode(' '));
+    node.appendChild(meta);
   }
 }
 function rerenderTokens(root=document){root.querySelectorAll?.('.sky-vocab-token').forEach(renderToken)}
@@ -393,8 +393,13 @@ function renderParagraph(slot,panel){
   const permitted=eligibleRecords(slot,list),eligible=new Set(permitted.map(record=>record.id));
   renderFullPlacements(container,permitted);
   if(filters.relationships!==false&&eligible.size){
-    const allSelected=eligible.size===list.length;
-    relations(list).filter(relation=>allSelected||eligible.has(relation.left.id)||eligible.has(relation.right.id)).forEach(relation=>appendSentence(container,relationSentence(relation)));
+    const scope=activeScope(slot),allSelected=eligible.size===list.length;
+    const boundedContext=scope.signs!==null||scope.houses!==null;
+    relations(list).filter(relation=>{
+      if(allSelected)return true;
+      if(boundedContext)return eligible.has(relation.left.id)&&eligible.has(relation.right.id);
+      return eligible.has(relation.left.id)||eligible.has(relation.right.id);
+    }).forEach(relation=>appendSentence(container,relationSentence(relation)));
   }
   if(!displayState().glyphs&&!displayState().names&&!displayState().referents){
     container.replaceChildren();
@@ -638,10 +643,8 @@ function progressive(event){
   const level=event.target.closest?.('[data-vocab-level]');if(!level)return;
   const tokenNode=level.closest('.sky-vocab-token');if(!tokenNode)return;
   event.preventDefault();event.stopPropagation();
-  const current=Number(tokenNode.dataset.vocabLocalStage||0),which=level.dataset.vocabLevel;
-  if(which==='glyph')tokenNode.dataset.vocabLocalStage=String(current>0?0:1);
-  else if(which==='name')tokenNode.dataset.vocabLocalStage=String(current>=2?1:2);
-  else if(which==='referent'&&current>2)tokenNode.dataset.vocabLocalStage='2';
+  const local=localVisibility(tokenNode);
+  tokenNode.dataset.vocabLocalStage=String(local.missingCount?local.stage>=local.missingCount?0:local.stage+1:0);
   renderToken(tokenNode);
 }
 function installSubtabs(slot,view){
@@ -720,15 +723,16 @@ function installStyles(){
     .sky-vocab-rel-popover .sky-chart-placement-choice,.sky-vocab-rel-popover .sky-chart-house-choice{min-width:40px!important}
     .sky-vocab-rel-popover .sky-chart-house-menu-description{white-space:normal}
 
-    .sky-vocab-paragraph{display:grid;gap:.34rem;margin:0;color:#2c2723;font:500 .78rem/1.48 system-ui,sans-serif}
+    .sky-vocab-paragraph{display:grid;gap:.48rem;margin:0;color:#2c2723;font:500 .81rem/1.52 system-ui,sans-serif}
     .sky-vocab-line{display:block;margin:0}
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
-    .sky-vocab-glyph{display:inline-flex;align-items:center;justify-content:center;vertical-align:-.13em;min-width:.9em}
-    .sky-vocab-glyph svg{display:inline-block;width:1.05em;height:1.05em;overflow:visible}
-    .sky-vocab-name{font-weight:760}
-    .sky-vocab-referent{font-weight:520;color:#2c2723}
+    .sky-vocab-meta{display:inline-flex;align-items:center;gap:.18em;white-space:nowrap;vertical-align:-.11em}
+    .sky-vocab-glyph{display:inline-flex;align-items:center;justify-content:center;vertical-align:-.12em;min-width:1.18em;font-weight:800;line-height:1}
+    .sky-vocab-glyph svg{display:inline-block;width:1.34em;height:1.34em;overflow:visible}
+    .sky-vocab-name{font-weight:720;font-size:.88em;color:#62584f}
+    .sky-vocab-referent{font-weight:560;color:#211d19}
     .sky-vocab-level.is-color-coded{color:var(--vocab-token-color)!important;-webkit-text-fill-color:var(--vocab-token-color)!important}
     .sky-vocab-level.is-color-coded svg{color:var(--vocab-token-color)!important}
     .sky-vocab-empty{color:#766c64;font-style:italic}
@@ -736,7 +740,7 @@ function installStyles(){
       .sky-placement-vocab-tab{font-size:.7rem;padding:.34rem .52rem}
       .sky-vocab-panel{padding:.48rem .58rem .74rem}
       .sky-vocab-dropdown-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-      .sky-vocab-paragraph{font-size:.75rem;line-height:1.48}
+      .sky-vocab-paragraph{font-size:.79rem;line-height:1.5}
     }
   `;document.head.appendChild(style);
 }
