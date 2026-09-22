@@ -419,16 +419,20 @@ function relationSentence(relation){
   frag.append(token(placementInfo(relation.left),'placement',true),document.createTextNode(' is in '),token(aspectInfo(relation.aspect),'aspect'),document.createTextNode(' with '),token(placementInfo(relation.right),'placement'));
   return frag;
 }
-function polarityPole(list,angleId){
-  const angle=list.find(record=>record.id===angleId);if(!angle)return[];
-  const attached=list.filter(record=>record.id!==angleId&&!AXIS_IDS.has(record.id)&&separation(record.value,angle.value)<=POLARITY_ATTACH_ORB);
-  return[angle,...attached];
+function polarityPole(list,anchorId,oppositeId){
+  const anchor=list.find(record=>record.id===anchorId);if(!anchor)return[];
+  const attached=list.filter(record=>
+    record.id!==anchorId&&
+    record.id!==oppositeId&&
+    !STRUCTURAL_ANCHOR_IDS.has(record.id)&&
+    separation(record.value,anchor.value)<=POLARITY_ATTACH_ORB
+  );
+  return[anchor,...attached];
 }
 function polarityStructures(list){
   return AXIS_STRUCTURES.map(axis=>{
-    const left=polarityPole(list,axis.left),right=polarityPole(list,axis.right);
+    const left=polarityPole(list,axis.left,axis.right),right=polarityPole(list,axis.right,axis.left);
     if(!left.length||!right.length)return null;
-    if(left.length===1&&right.length===1)return null;
     return{...axis,left,right};
   }).filter(Boolean);
 }
@@ -447,13 +451,7 @@ function proximityClusters(list){
   }
   return clusters;
 }
-function polarityMemberSets(structures){
-  return structures.map(structure=>new Set([...structure.left,...structure.right].map(record=>record.id)));
-}
-function independentClusters(list,polarities){
-  const polaritySets=polarityMemberSets(polarities);
-  return proximityClusters(list).filter(cluster=>!polaritySets.some(set=>cluster.every(record=>set.has(record.id))));
-}
+function independentClusters(list){return proximityClusters(list)}
 function compactStructureContext(info,kind){
   const wrap=document.createElement('span');wrap.className='sky-vocab-structure-context';wrap.dataset.vocabContextKind=kind;
   const proxy=document.createElement('span');
@@ -475,16 +473,8 @@ function compactStructureContext(info,kind){
 function appendStructureMember(frag,record){
   frag.appendChild(token(placementInfo(record),'placement',false));
   const context=document.createElement('span');context.className='sky-vocab-structure-member-context';
-  context.append(
-    document.createTextNode(' · '),
-    compactStructureContext(signInfo(record.sign),'sign')
-  );
-  if(record.house){
-    context.append(
-      document.createTextNode(' · '),
-      compactStructureContext(houseInfo(record.house),'house')
-    );
-  }
+  context.append(document.createTextNode(' · '),compactStructureContext(signInfo(record.sign),'sign'));
+  if(record.house)context.append(document.createTextNode(' · '),compactStructureContext(houseInfo(record.house),'house'));
   frag.appendChild(context);
 }
 function appendStructureMembers(frag,members){
@@ -493,10 +483,18 @@ function appendStructureMembers(frag,members){
     appendStructureMember(frag,record);
   });
 }
+function clusterSignProfile(members){
+  const signs=Array.from(new Set(members.map(record=>record.sign)));
+  if(signs.length===1)return{type:'mid-sign',signs,names:[SIGNS[signs[0]]]};
+  const ordered=signs.length===2&&signs.includes(0)&&signs.includes(11)?[11,0]:signs.slice().sort((a,b)=>a-b);
+  return{type:'cusp',signs:ordered,names:ordered.map(index=>SIGNS[index])};
+}
+function isStellium(members){return members.filter(record=>STELLIUM_IDS.has(record.id)).length>=3}
 function clusterSentence(members){
-  const frag=document.createDocumentFragment();
-  frag.appendChild(document.createTextNode('Cluster: '));appendStructureMembers(frag,members);
-  frag.appendChild(document.createTextNode(' form one concentrated group'));
+  const frag=document.createDocumentFragment(),profile=clusterSignProfile(members),kind=isStellium(members)?'Stellium':'Cluster';
+  frag.appendChild(document.createTextNode(kind+' · '+profile.type+' · '+profile.names.join('–')+': '));
+  appendStructureMembers(frag,members);
+  frag.appendChild(document.createTextNode(kind==='Stellium'?' form one stellium':' form one concentrated group'));
   return frag;
 }
 function polaritySentence(structure){
@@ -507,22 +505,121 @@ function polaritySentence(structure){
   appendStructureMembers(frag,structure.right);
   return frag;
 }
-function renderStructures(container,list,permitted){
-  const selected=new Set(permitted.map(record=>record.id)),showAll=selected.size===list.length;
-  const polarities=polarityStructures(list),clusters=independentClusters(list,polarities);
-  const visibleClusters=clusters.filter(members=>showAll||members.some(record=>selected.has(record.id)));
+function appendStructureSubheading(container,label){
+  const heading=document.createElement('div');heading.className='sky-vocab-structure-subheading';heading.textContent=label;container.appendChild(heading);
+}
+function appendSimplePlacementList(frag,members,contextKind){
+  members.forEach((record,index)=>{
+    if(index)frag.appendChild(document.createTextNode(index===members.length-1?' and ':', '));
+    frag.appendChild(token(placementInfo(record),'placement',false));
+    if(contextKind==='house'&&record.house)frag.append(document.createTextNode(' · '),compactStructureContext(houseInfo(record.house),'house'));
+    if(contextKind==='sign')frag.append(document.createTextNode(' · '),compactStructureContext(signInfo(record.sign),'sign'));
+  });
+}
+function appendSignPole(frag,signIndex,list){
+  frag.appendChild(compactStructureContext(signInfo(signIndex),'sign'));
+  const members=list.filter(record=>record.sign===signIndex);
+  if(members.length){
+    frag.appendChild(document.createTextNode(': '));appendSimplePlacementList(frag,members,'house');
+  }else{
+    frag.appendChild(document.createTextNode(': no placements · default ruler '+SIGN_RULERS[signIndex]));
+  }
+}
+function signPolaritySentence(pair,list){
+  const frag=document.createDocumentFragment();
+  frag.appendChild(document.createTextNode('Sign polarity: '));appendSignPole(frag,pair[0],list);
+  frag.appendChild(document.createTextNode(' ↔ '));appendSignPole(frag,pair[1],list);
+  return frag;
+}
+function houseCuspSign(slot,list,house){
+  const values=cusps(payload(slot),list);if(values.length!==12)return null;
+  const value=Number(values[house-1]);return Number.isFinite(value)?Math.floor(norm(value)/30):null;
+}
+function houseOccupants(list,house){
+  return list.filter(record=>record.house===house&&!AXIS_IDS.has(record.id));
+}
+function appendHousePole(frag,house,slot,list){
+  frag.appendChild(compactStructureContext(houseInfo(house),'house'));
+  const cuspSign=houseCuspSign(slot,list,house);
+  if(Number.isInteger(cuspSign)){
+    frag.append(document.createTextNode(' · cusp '),compactStructureContext(signInfo(cuspSign),'sign'));
+  }
+  const members=houseOccupants(list,house);
+  if(members.length){
+    frag.appendChild(document.createTextNode(': '));appendSimplePlacementList(frag,members,'sign');
+  }else{
+    const ruler=Number.isInteger(cuspSign)?SIGN_RULERS[cuspSign]:'unknown';
+    frag.appendChild(document.createTextNode(': no placements · default ruler '+ruler));
+  }
+}
+function housePolaritySentence(pair,slot,list){
+  const frag=document.createDocumentFragment();
+  frag.appendChild(document.createTextNode('House polarity: '));appendHousePole(frag,pair[0],slot,list);
+  frag.appendChild(document.createTextNode(' ↔ '));appendHousePole(frag,pair[1],slot,list);
+  return frag;
+}
+function structureScopeIsAll(slot){
+  const scope=activeScope(slot);return scope.placements===null&&scope.signs===null&&scope.houses===null;
+}
+function signPairVisible(slot,pair,permitted,showAll){
+  if(showAll)return true;
+  const scope=activeScope(slot);
+  if(scope.signs!==null)return pair.some(sign=>scope.signs.includes(sign));
+  return permitted.some(record=>pair.includes(record.sign));
+}
+function housePairVisible(slot,pair,permitted,showAll){
+  if(showAll)return true;
+  const scope=activeScope(slot);
+  if(scope.houses!==null)return pair.some(house=>scope.houses.includes(house));
+  return permitted.some(record=>pair.includes(record.house));
+}
+function renderStructures(container,list,permitted,slot){
+  const selected=new Set(permitted.map(record=>record.id)),showAll=structureScopeIsAll(slot);
+  const polarities=polarityStructures(list),clusters=independentClusters(list);
   const visiblePolarities=polarities.filter(structure=>showAll||[...structure.left,...structure.right].some(record=>selected.has(record.id)));
-  if(!visibleClusters.length&&!visiblePolarities.length)return;
+  const visibleClusters=clusters.filter(members=>showAll||members.some(record=>selected.has(record.id))).sort((a,b)=>{
+    const aStellium=isStellium(a),bStellium=isStellium(b);
+    return Number(bStellium)-Number(aStellium)||b.length-a.length||a[0].value-b[0].value;
+  });
+  const visibleSignPairs=SIGN_POLARITIES.filter(pair=>signPairVisible(slot,pair,permitted,showAll));
+  const visibleHousePairs=HOUSE_POLARITIES.filter(pair=>housePairVisible(slot,pair,permitted,showAll));
+  if(!visiblePolarities.length&&!visibleClusters.length&&!visibleSignPairs.length&&!visibleHousePairs.length)return;
+
   const heading=document.createElement('div');heading.className='sky-vocab-structures-heading';heading.textContent='Structures';container.appendChild(heading);
-  visibleClusters.forEach(members=>{
-    const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='cluster';
-    line.dataset.vocabMembers=members.map(record=>record.id).join(',');
-    line.append(clusterSentence(members),document.createTextNode('.'));container.appendChild(line);
-  });
-  visiblePolarities.forEach(structure=>{
-    const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='axis-polarity';line.dataset.vocabAxis=structure.left[0].id+'-'+structure.right[0].id;
-    line.append(polaritySentence(structure),document.createTextNode('.'));container.appendChild(line);
-  });
+
+  if(visiblePolarities.length){
+    appendStructureSubheading(container,'Primary polarities');
+    visiblePolarities.forEach(structure=>{
+      const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='axis-polarity';line.dataset.vocabAxis=structure.left[0].id+'-'+structure.right[0].id;
+      line.append(polaritySentence(structure),document.createTextNode('.'));container.appendChild(line);
+    });
+  }
+
+  if(visibleClusters.length){
+    appendStructureSubheading(container,'Concentrations');
+    visibleClusters.forEach(members=>{
+      const profile=clusterSignProfile(members),line=document.createElement('div');
+      line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure=isStellium(members)?'stellium':'cluster';
+      line.dataset.vocabClusterType=profile.type;line.dataset.vocabSigns=profile.names.join('|');line.dataset.vocabMembers=members.map(record=>record.id).join(',');
+      line.append(clusterSentence(members),document.createTextNode('.'));container.appendChild(line);
+    });
+  }
+
+  if(visibleSignPairs.length){
+    appendStructureSubheading(container,'Sign polarities');
+    visibleSignPairs.forEach(pair=>{
+      const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='sign-polarity';line.dataset.vocabSigns=pair.map(index=>SIGNS[index]).join('|');
+      line.append(signPolaritySentence(pair,list),document.createTextNode('.'));container.appendChild(line);
+    });
+  }
+
+  if(visibleHousePairs.length){
+    appendStructureSubheading(container,'House polarities');
+    visibleHousePairs.forEach(pair=>{
+      const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='house-polarity';line.dataset.vocabHouses=pair.join('|');
+      line.append(housePolaritySentence(pair,slot,list),document.createTextNode('.'));container.appendChild(line);
+    });
+  }
 }
 function renderGroup(container,list,category){
   list.filter(record=>categoryOf(record)===category).forEach(record=>appendSentence(container,phrasePlacement(record)));
