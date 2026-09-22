@@ -3909,6 +3909,16 @@
       }).join('') : '<p class="ph-calendar-alert-empty">No saved skies yet.</p>';
       if (el.calendarSkyCount) el.calendarSkyCount.textContent = shown.size + ' shown';
     }
+    if (el.calendarPersonalSource) {
+      const shownRecords = visibleCalendarSkyRecords();
+      const primary = defaultSkyRecord();
+      if (shownRecords.length) {
+        const names = shownRecords.map(function (record) { return String(record.name || 'Saved sky'); });
+        el.calendarPersonalSource.textContent = 'Showing ' + shownRecords.length + ' saved sky' + (shownRecords.length === 1 ? '' : 's') + ': ' + names.join(', ') + (primary ? '. Default: ' + String(primary.name || 'Saved sky') + '.' : '.');
+      } else {
+        el.calendarPersonalSource.textContent = 'No saved-sky calendars are shown.';
+      }
+    }
   }
 
   function personalAspectError(body, targetLongitude, aspectAngle, date) {
@@ -4180,16 +4190,6 @@
     const automatic = automaticPlanetaryMonthEvents(range);
     populateCalendarPersonalSkySelect();
     const personal = personalTransitEventsForRange(range.start, range.end);
-    const shownRecords = visibleCalendarSkyRecords();
-    const referenceRecord = defaultSkyRecord();
-    if (el.calendarPersonalSource) {
-      if (shownRecords.length) {
-        const names = shownRecords.map(function (record) { return String(record.name || 'Saved sky'); });
-        el.calendarPersonalSource.textContent = 'Showing ' + shownRecords.length + ' saved sky' + (shownRecords.length === 1 ? '' : 's') + ': ' + names.join(', ') + (referenceRecord ? '. Default: ' + String(referenceRecord.name || 'Saved sky') + '.' : '.');
-      } else {
-        el.calendarPersonalSource.textContent = 'No saved-sky calendars are shown.';
-      }
-    }
     const alerts = resolveCalendarAlerts().filter(function (rule) {
       if (!rule.nextAt) return false;
       const time = new Date(rule.nextAt);
@@ -4634,6 +4634,7 @@
     if (el.prevDayCue) el.prevDayCue.textContent = '← Day';
     if (el.nextDayCue) el.nextDayCue.textContent = 'Day →';
     renderMoonFrame(frame.localNow, state.lat, state.lon);
+    populateCalendarPersonalSkySelect();
     fireDueCalendarAlerts();
     renderCalendarEvents(frame);
     renderWandererGrid(frame);
