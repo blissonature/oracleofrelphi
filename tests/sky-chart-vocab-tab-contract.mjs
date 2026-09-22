@@ -5,7 +5,7 @@ const html=readFileSync(new URL('../sky-chart.html',import.meta.url),'utf8');
 const vocab=readFileSync(new URL('../sky-chart-vocab-tab-v1.js',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=4/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=5/,'Sky Chart must load the Vocab subtab');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
@@ -22,6 +22,10 @@ assert.match(vocab,/houseCusps\.length\?houseFor/,'Vocab houses must follow the 
 assert.match(vocab,/data\.vocabLocalStage/,'Vocab tokens must support local progressive reveal');
 assert.match(vocab,/data-vocab-dropdown-toggle/,'Vocab controls must be compact dropdowns');
 assert.match(vocab,/data-vocab-dropdown-menu/,'Vocab dropdowns must open checklist menus');
+assert.match(vocab,/sky-vocab-filter-header/,'Vocab dropdowns must use a Relationships-style matrix header');
+assert.match(vocab,/data-vocab-set-all/,'Vocab matrix headers must provide All controls');
+assert.match(vocab,/data-vocab-set-none/,'Vocab matrix headers must provide None controls');
+assert.match(vocab,/sky-vocab-filter-row/,'Vocab options must render as one checkbox row per item');
 assert.match(vocab,/sky-vocab-dropdown-chevron/,'Vocab dropdowns must use a Relationships-style chevron field');
 assert.match(vocab,/data-vocab-filter/,'Vocab must expose filter controls inside the dropdown');
 assert.match(vocab,/\['nodes','axes','luminaries','planets','other','relationships'\]/,'Vocab filters must cover nodes, axes, luminaries, planets, other points, and intrasky relationships');
