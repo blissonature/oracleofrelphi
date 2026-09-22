@@ -7,7 +7,7 @@ const unified=readFileSync(new URL('../sky-chart-filter-control-unified-v1.css',
 const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=30/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=31/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(vocab,/Glyphs/);
@@ -32,6 +32,9 @@ assert.match(vocab,/translateY\(-\.17em\)/,'Inline House Medallions must be lift
 assert.match(vocab,/sky-vocab-glyph\.has-svg-glyph\{[^}]*transform:translateY\(\.24em\)/,'Canonical SVG glyphs must be lowered independently from House Medallions');
 assert.match(vocab,/meta\.append\(document\.createTextNode\('\('\),n,document\.createTextNode\('\)'\)\)/,'Only the revealed name belongs inside the Vocab parentheses');
 assert.match(vocab,/if\(r\)\{[\s\S]*node\.appendChild\(r\)/,'The referent must render outside and after the parenthetical name');
+assert.match(vocab,/sky-vocab-symbol-label/,'Glyph and parenthetical name must have a shared inline wrapper');
+assert.match(vocab,/sky-vocab-symbol-label\{display:inline;white-space:nowrap\}/,'Glyph and parenthetical name must not split across lines');
+assert.match(vocab,/sky-vocab-parenthetical\{display:inline;white-space:nowrap/,'Multiword names such as Ninth House must stay intact inside the parentheses');
 assert.match(vocab,/missingCount/,'Local reveal must cycle through only globally hidden layers');
 assert.match(vocab,/function controlsMarkup\(slot\)/,'Vocab must define the control markup initializer used when the panel opens');
 assert.match(vocab,/data-vocab-dropdown-toggle/,'Vocab controls must be dropdowns');
