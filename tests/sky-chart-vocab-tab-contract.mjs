@@ -5,7 +5,7 @@ const html=readFileSync(new URL('../sky-chart.html',import.meta.url),'utf8');
 const vocab=readFileSync(new URL('../sky-chart-vocab-tab-v1.js',import.meta.url),'utf8');
 new Function(vocab);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=11/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=12/,'Sky Chart must load the Vocab subtab');
 assert.match(vocab,/Glyphs/);
 assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
@@ -46,7 +46,7 @@ assert.match(vocab,/relphi:sky-foundation-filter-changed/,'Vocab must follow the
 assert.match(vocab,/driveFiltersFromWheel/,'Wheel state must drive Vocab filters');
 assert.match(vocab,/mirrorDirectWheelClick/,'Wheel clicks must directly mirror into Vocab filters');
 assert.match(vocab,/wheelSpecFromNode/,'Direct wheel mirroring must map Placement, Sign, and House nodes to their matching Vocab dimensions');
-assert.match(vocab,/document\.addEventListener\('click',mirrorDirectWheelClick\)/,'The direct wheel mirror must actually be attached');
+assert.match(vocab,/document\.addEventListener\('click',mirrorDirectWheelClick,true\)/,'The direct wheel mirror must run in capture phase before downstream wheel handlers can consume the click');
 assert.match(vocab,/kind==='placement'/,'Placement wheel clicks must drive the Placement filter');
 assert.match(vocab,/kind==='sign'/,'Sign wheel clicks must drive the Zodiac Sign filter');
 assert.match(vocab,/kind==='house'/,'House wheel clicks must drive the House filter');
