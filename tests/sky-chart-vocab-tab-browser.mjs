@@ -233,6 +233,19 @@ assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-
 await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 
+// Retained/touch-style context must clear on blank Vocab space.
+await sunMercuryCluster.evaluate(node=>node.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerType:'touch',pointerId:77,isPrimary:true})));
+await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
+await page.locator('#skyFoundationA .sky-vocab-placements-heading').dispatchEvent('pointerdown',{pointerType:'touch',pointerId:78,isPrimary:true});
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
+
+// Blank wheel space must clear the same retained context without requiring a second Vocab tap.
+await sunMercuryCluster.evaluate(node=>node.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerType:'touch',pointerId:79,isPrimary:true})));
+await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
+const wheelBlank=page.locator('#skyFoundationWheelMount>.sky-foundation-wheel');
+await wheelBlank.dispatchEvent('pointerdown',{pointerType:'mouse',clientX:1,clientY:1,button:0});
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
+
 
 const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').first().evaluate(node=>{
   const style=getComputedStyle(node);
