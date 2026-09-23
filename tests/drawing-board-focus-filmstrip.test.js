@@ -51,6 +51,38 @@ async function resetAndApplyQuestions(page,labels){
       await page.waitForFunction(index=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===index,next);
     }
 
+    const fanBefore=await page.evaluate(()=>{
+      const reader=document.querySelector('.relphi-focus-reader');
+      const fan=reader?.querySelector('.relphi-focus-fan');
+      const current=fan?.querySelector('.is-current');
+      const visible=[...(fan?.querySelectorAll('[data-focus-position]')||[])].filter(button=>Number(getComputedStyle(button).opacity)>.25);
+      return {
+        mode:reader?.dataset.focusNavMode||'',
+        visible:visible.length,
+        current:String(current?.dataset.focusPosition||''),
+        currentTransform:current?.style.transform||'',
+        transition:getComputedStyle(current).transitionProperty
+      };
+    });
+    assert.equal(fanBefore.mode,'fan','Card Focus should open in fan mode by default');
+    assert.ok(fanBefore.visible>=3,`fan mode must juxtapose neighboring cards; visible=${fanBefore.visible}`);
+    assert.equal(fanBefore.current,'6');
+    assert.match(fanBefore.transition,/transform/,'fan cards must animate position changes');
+
+    await page.click('.relphi-focus-next');
+    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===7);
+    await page.waitForTimeout(120);
+    const fanAfter=await page.evaluate(()=>({
+      current:String(document.querySelector('.relphi-focus-fan .is-current')?.dataset.focusPosition||''),
+      previousTransform:document.querySelector('.relphi-focus-fan [data-focus-position="6"]')?.style.transform||''
+    }));
+    assert.equal(fanAfter.current,'7','next arrow must advance the selected card through the fan');
+    assert.notEqual(fanAfter.previousTransform,fanBefore.currentTransform,'the prior current card must animate into its neighboring fan position');
+
+    await page.click('[data-focus-nav-mode="strip"]');
+    await page.waitForFunction(()=>document.querySelector('.relphi-focus-reader')?.dataset.focusNavMode==='strip');
+    assert.equal(await page.locator('.relphi-focus-strip').isVisible(),true,'Strip must remain available as an alternate navigation mode');
+
     const before=await page.evaluate(()=>{
       const strip=document.querySelector('.relphi-focus-strip');
       const current=strip?.querySelector('.is-current');
@@ -69,11 +101,11 @@ async function resetAndApplyQuestions(page,labels){
     assert.ok(before,'focus filmstrip should exist');
     assert.ok(before.max>100,`fixture must overflow horizontally; max=${before.max}`);
     assert.ok(before.scrollLeft>50,`fixture must begin away from strip origin; scrollLeft=${before.scrollLeft}`);
-    assert.equal(before.readerIndex,6);
-    assert.equal(before.current,'6');
+    assert.equal(before.readerIndex,7);
+    assert.equal(before.current,'7');
 
     await page.click('.relphi-focus-next');
-    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===7);
+    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===8);
     await page.waitForTimeout(120);
 
     const after=await page.evaluate(()=>{
@@ -86,18 +118,20 @@ async function resetAndApplyQuestions(page,labels){
         before:Number(window.__relphiFilmstripScrollBefore)||0,
         scrollLeft:Number(strip?.scrollLeft)||0,
         current:String(current?.dataset.focusPosition||''),
-        currentVisible:!!(sr&&cr&&cr.left>=sr.left-1&&cr.right<=sr.right+1)
+        currentVisible:!!(sr&&cr&&cr.left>=sr.left-1&&cr.right<=sr.right+1),
+        mode:document.querySelector('.relphi-focus-reader')?.dataset.focusNavMode||''
       };
     });
 
     assert.equal(after.sameNode,true,'drawing in Focus View must update the existing filmstrip instead of replacing it');
-    assert.equal(after.current,'7','newly drawn position must become the current filmstrip item');
+    assert.equal(after.current,'8','newly drawn position must become the current filmstrip item');
+    assert.equal(after.mode,'strip','the chosen navigation mode must persist while moving through cards');
     assert.ok(after.scrollLeft>50,`drawing a new card must not reset filmstrip scroll to the beginning; before=${after.before}, after=${after.scrollLeft}`);
     assert.ok(Math.abs(after.scrollLeft-after.before)<100,`filmstrip should move only as much as needed to reveal the next position; before=${after.before}, after=${after.scrollLeft}`);
     assert.equal(after.currentVisible,true,'new current position must remain visible after preserving filmstrip scroll');
 
     await page.click('.relphi-focus-prev');
-    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===6);
+    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===7);
     const artBeforeNext=await page.evaluate(()=>{
       const art=document.querySelector('.relphi-focus-art');
       window.__relphiFocusArtNode=art;
@@ -107,7 +141,7 @@ async function resetAndApplyQuestions(page,labels){
     assert.ok(artBeforeNext.src,'fixture must expose Focus card art before navigating next');
 
     await page.click('.relphi-focus-next');
-    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===7);
+    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===8);
     const artAfterNext=await page.evaluate(()=> {
       const art=document.querySelector('.relphi-focus-art');
       return {
@@ -120,7 +154,7 @@ async function resetAndApplyQuestions(page,labels){
     assert.equal(artAfterNext.sameNode,false,'Focus View must replace the image node immediately when moving to the next question so the previous card cannot linger');
     assert.notEqual(artAfterNext.src,artAfterNext.beforeSrc,'next Focus question must point at its own card art');
 
-    console.log('Focus View filmstrip keeps its scroll position and swaps card art immediately while navigating.');
+    console.log('Focus View fan animates neighboring cards, Strip preserves scroll, and card art swaps immediately while navigating.');
   }finally{
     await browser.close();
   }
