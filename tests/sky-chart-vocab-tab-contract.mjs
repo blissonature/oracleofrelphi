@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=57/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=58/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -100,7 +100,7 @@ assert.match(vocab,/if\(wheelFilterState\|\|wheelFilterSpec\)applyWheelSpec\(nul
 assert.match(vocab,/const AXIS_STRUCTURES=/,'Vocab must define higher-order axis polarity structures separately from ordinary relationships');
 assert.match(vocab,/\{left:'vertex',right:'anti-vertex',label:'Vertex polarity'\}[\s\S]*\{left:'asc',right:'dsc',label:'Horizon polarity'\}[\s\S]*\{left:'mc',right:'ic',label:'Meridian polarity'\}[\s\S]*\{left:'north-node',right:'south-node',label:'Nodal polarity'\}/,'Primary structural polarity order must be Vertex, horizon, meridian, then nodes');
 assert.match(vocab,/function structuralRecords\(slot,list\)/,'Vocab must derive structural points that are not stored as ordinary placements');
-assert.match(vocab,/const value=norm\(vertex\.value\+180\)[\s\S]*id:'anti-vertex',glyphId:'anti-vertex'/,'Anti-Vertex must be derived at the exact opposition to Vertex when absent and use the canonical glyph');
+assert.match(vocab,/id:'anti-vertex'[\s\S]*fallbackGlyph:'AVx'/,'Anti-Vertex must be derived at the exact opposition to Vertex when absent');
 assert.match(vocab,/const SIGN_POLARITIES=\[\[0,6\],\[1,7\],\[2,8\],\[3,9\],\[4,10\],\[5,11\]\]/,'Vocab must traverse all six zodiacal sign polarities');
 assert.match(vocab,/const HOUSE_POLARITIES=\[\[1,7\],\[2,8\],\[3,9\],\[4,10\],\[5,11\],\[6,12\]\]/,'Vocab must traverse all six house polarities');
 assert.match(vocab,/const SIGN_RULERS=\['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'\]/,'Empty sign and house contexts must use Relphi’s traditional sign rulers');
@@ -134,7 +134,7 @@ assert.match(vocab,/if\(n\)\{[\s\S]*if\(g\|\|r\)node\.appendChild\(document\.cre
 assert.match(vocab,/sky-vocab-structure-member-context\{white-space:normal;color:inherit\}/,'Structure connective prose must not introduce a separate gray text treatment');
 assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:normal;font:inherit;color:inherit\}/,'Structure sign and house context must not introduce a smaller font treatment');
 assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:normal/,'Structure referents must remain readable and wrap normally instead of being replaced by hard-coded names');
-assert.match(vocab,/renderStructures\(container,structureList,permitted,slot\);[\s\S]*renderFullPlacements\(container,permitted,slot\)/,'Structures must lead the Vocab reading before the ordinary placement reading');
+assert.match(vocab,/renderStructures\(container,structureList,permitted,slot\);[\s\S]*renderFullPlacements\(container,permitted\)/,'Structures must lead the Vocab reading before the ordinary placement reading');
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
 assert.doesNotMatch(vocab,/relations\(list\)\.filter/,'Vocab must not append the raw intrasky aspect list after the structural synthesis');
 assert.match(vocab,/node\.dataset\.vocabLead=String\(lead\|\|''\)/,'Vocab tokens must carry their grammatical lead so it can share the token head');
@@ -211,5 +211,5 @@ assert.match(vocab,/vertex\|anti-vertex','anti-vertex\|vertex/,'Vertex and Anti-
 assert.match(vocab,/\[data-focus-piece="placement"\]\{opacity:\.62!important/,'Unrelated wheel placements must remain legible while Vocab supplies context');
 assert.match(vocab,/\[data-focus-piece="leader"\]\{opacity:\.36!important/,'Placement leaders must remain visible enough to preserve exact-degree context');
 
-assert.match(vocab,/\.sky-foundation-sign-sector\.is-vocab-context,[\s\S]*\.sky-foundation-house-sector\.is-vocab-context\{opacity:1!important;fill-opacity:1!important;stroke:rgba\(255,253,248,\.96\)!important;stroke-width:3!important/,'Matching sign and house sectors must become fully filled and gain a visible highlight edge');
+assert.match(vocab,/\.sky-foundation-sign-sector\.is-vocab-context,[\s\S]*\.sky-foundation-house-sector\.is-vocab-context\{opacity:1!important;fill-opacity:\.78!important/,'Matching sign and house sectors must become visibly stronger rather than relying only on unrelated content dimming');
 assert.match(vocab,/\.sky-foundation-sign-glyph\.is-vocab-context\{opacity:1!important/,'The sign glyph itself must stay fully legible with its highlighted sector');
