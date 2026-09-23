@@ -130,7 +130,7 @@ const AXIS_STRUCTURES=[
 ];
 const STELLIUM_IDS=new Set(['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']);
 const STRUCTURAL_ANCHOR_IDS=new Set(AXIS_STRUCTURES.flatMap(axis=>[axis.left,axis.right]));
-const POLARITY_ATTACH_ORB=3;
+const POLARITY_ATTACH_ORB=6;
 const CLUSTER_ORB=3;
 const HARMONIC=()=>window.RelphiHarmonicOrb;
 let queued=false;
