@@ -42,8 +42,8 @@ try{
   const vertex=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
   assert.equal(await vertex.count(),1,'Vertex polarity must render.');
   const members=(await vertex.getAttribute('data-vocab-members')||'').split('|').filter(Boolean);
-  assert.ok(members.includes('north-node'),`South Node must attach to Vertex pole: ${JSON.stringify(members)}`);
-  assert.ok(members.includes('south-node'),`North Node must attach to Anti-Vertex pole: ${JSON.stringify(members)}`);
+  assert.ok(members.includes('south-node'),`South Node must attach to Vertex pole: ${JSON.stringify(members)}`);
+  assert.ok(members.includes('north-node'),`North Node must attach to Anti-Vertex pole: ${JSON.stringify(members)}`);
 
   await vertex.hover();
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
