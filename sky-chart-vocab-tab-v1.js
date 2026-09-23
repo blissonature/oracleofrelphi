@@ -950,12 +950,12 @@ function bindVocabWheelContext(panel){
   panel.addEventListener('click',event=>{
     const tokenNode=interactiveToken(event.target);
     if(tokenNode&&panel.contains(tokenNode))togglePinnedVocabToken(tokenNode);
-  });
+  },true);
   panel.addEventListener('keydown',event=>{
     if(event.key!=='Enter'&&event.key!==' ')return;
     const tokenNode=interactiveToken(event.target);
     if(tokenNode&&panel.contains(tokenNode))togglePinnedVocabToken(tokenNode);
-  });
+  },true);
 }
 function clearVocabWheelContextFromBlank(event){
   if(!vocabWheelContextLine)return;
