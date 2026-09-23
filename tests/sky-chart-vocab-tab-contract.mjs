@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=62/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=63/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -215,5 +215,6 @@ assert.match(vocab,/\[data-focus-piece="placement"\]\{opacity:\.62!important/,'U
 assert.match(vocab,/\[data-focus-piece="leader"\]\{opacity:\.36!important/,'Placement leaders must remain visible enough to preserve exact-degree context');
 assert.match(vocab,/\.has-vocab-axis-context:not\(\.has-isolation\) \[data-focus-piece="placement"\]:not\(\.is-vocab-context\)\{opacity:\.18!important/,'Axis-polarity context must recede placements that do not participate in the active axis');
 
-assert.match(vocab,/\.sky-foundation-sign-sector\.is-vocab-context,[\s\S]*\.sky-foundation-house-sector\.is-vocab-context\{opacity:1!important;fill-opacity:\.78!important/,'Matching sign and house sectors must become visibly stronger rather than relying only on unrelated content dimming');
+assert.match(vocab,/\.sky-foundation-sign-sector\.is-vocab-context\{opacity:1!important;fill-opacity:\.82!important;filter:none!important\}/,'Matching sign sectors must retain the native zodiac fill and color treatment');
+assert.match(vocab,/\.sky-foundation-house-sector\.is-vocab-context\{opacity:1!important;fill-opacity:\.5!important;filter:none!important\}/,'Matching house sectors must retain the native house fill and color treatment');
 assert.match(vocab,/\.sky-foundation-sign-glyph\.is-vocab-context\{opacity:1!important/,'The sign glyph itself must stay fully legible with its highlighted sector');
