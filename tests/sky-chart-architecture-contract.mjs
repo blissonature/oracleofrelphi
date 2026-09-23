@@ -96,3 +96,6 @@ assert.equal(quickCopy.includes("title.textContent='Placements'"),false,'Copy be
 assert.equal(quickCopy.includes('sky-placement-copy-row'),false,'Copy behavior must not own persistent Placements chrome');
 
 console.log('Sky Chart architecture contract passed.');
+assert.match(extraPoints,/placement\('Anti-Vertex',Number\(resolvedVertex\.longitude\)\+180,'vertex-opposition'\)/,'Anti-Vertex must be derived exactly opposite Vertex during state preparation');
+assert.match(foundation,/anti-vertex\|vertex/,'The foundation must omit the constitutive Vertex–Anti-Vertex opposition from intrasky aspects');
+assert.match(foundation,/vertex','anti-vertex','mc'/,'Anti-Vertex must be a first-class ordered wheel placement beside Vertex');
