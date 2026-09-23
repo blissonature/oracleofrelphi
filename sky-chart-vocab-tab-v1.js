@@ -1230,15 +1230,15 @@ function installStyles(){
     .sky-vocab-structure-line[data-vocab-polarity-colors="true"]{position:relative;border-left:0;padding-left:.76rem}
     .sky-vocab-structure-line[data-vocab-polarity-colors="true"]::before,.sky-vocab-structure-line[data-vocab-polarity-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
     .sky-vocab-structure-line[data-vocab-polarity-colors="true"]::before{left:0;border-radius:3px 0 0 3px;background:var(--vocab-polarity-signs)}
-    .sky-vocab-structure-line[data-vocab-polarity-colors="true"]::after{left:4px;background:var(--vocab-polarity-houses)}
+    .sky-vocab-structure-line[data-vocab-polarity-colors="true"]::after{left:4px;background:var(--vocab-polarity-houses);opacity:.5}
     .sky-vocab-structure-line[data-vocab-concentration-colors="true"]{position:relative;border-left:0;padding-left:.76rem}
     .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::before,.sky-vocab-structure-line[data-vocab-concentration-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
     .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::before{left:0;border-radius:3px 0 0 3px;background:var(--vocab-concentration-signs)}
-    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::after{left:4px;background:var(--vocab-concentration-houses)}
+    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::after{left:4px;background:var(--vocab-concentration-houses);opacity:.5}
     .sky-vocab-line[data-vocab-placement-colors="true"]{position:relative;padding-left:.76rem}
     .sky-vocab-line[data-vocab-placement-colors="true"]::before,.sky-vocab-line[data-vocab-placement-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
     .sky-vocab-line[data-vocab-placement-colors="true"]::before{left:0;background:var(--vocab-placement-signs)}
-    .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses)}
+    .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses);opacity:.5}
     .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not(.is-vocab-context):not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.12!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="placement"]{opacity:.62!important;transition:opacity .07s ease-out,filter .07s ease-out}
