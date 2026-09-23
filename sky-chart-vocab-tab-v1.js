@@ -1512,7 +1512,7 @@ window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
 });
 window.addEventListener('relphi:sky-house-focus-bridge-changed',event=>mirrorHouseBridge(event.detail));
 window.addEventListener('relphi:sky-zodiac-filter-changed',event=>mirrorZodiacBridge(event.detail));
-document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
+document.addEventListener('click',mirrorDirectWheelClick,true);
 document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 [
   'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready',
