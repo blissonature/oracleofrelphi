@@ -48,6 +48,16 @@ try{
   assert.ok(direct.includes('Vertex'),'Custom Relphi letter glyphs must serialize to their semantic names.');
   assert.ok(!direct.includes('[object SVG'),`Copy must never expose raw SVG objects: ${direct}`);
 
+  const liveTitle=await page.evaluate(()=>{
+    const key='relphiSkyChartA',value=JSON.parse(localStorage.getItem(key)||'null'),at=new Date(Date.now()-11*60*1000).toISOString();
+    value.name='Now';value.title='Now';value.displayName='Now';value.skyName='Now';
+    value.metadata={...(value.metadata||{}),liveNowOrigin:'use-now',liveNowAt:at,liveAgeAnchorAt:at};
+    value.calcProfile={...(value.calcProfile||{}),name:'Now',title:'Now',liveNowOrigin:'use-now',liveNowAt:at,instant:at};
+    localStorage.setItem(key,JSON.stringify(value));
+    return window.RelphiVocabCopySerializer?.serializePanel?.(document.querySelector('#skyFoundationA [data-sky-vocab-panel="A"]'))||'';
+  });
+  assert.ok(liveTitle.startsWith('10 mins. ago — Vocab'),`Live Vocab copy must use the canonical age title instead of the payload name Now: ${liveTitle.split('\\n')[0]}`);
+
   await copy.click();
   await page.waitForFunction(()=>Boolean(window.__relphiCopiedText));
   const copied=await page.evaluate(()=>window.__relphiCopiedText);
