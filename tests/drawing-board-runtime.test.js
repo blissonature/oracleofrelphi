@@ -141,6 +141,27 @@ async function assertReadableFocus(page) {
   const bg=await mobile.locator('.card-row-workspace').evaluate(node=>getComputedStyle(node).backgroundColor);
   assert.notEqual(bg,'rgba(0, 0, 0, 0)');
 
+  // Free-draw Focus: no predefined positions, but Focus must remain closable and Next must append.
+  await mobile.click('#drawingBoardOptionsButton');
+  await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await mobile.click('#relphiResetBoard');
+  await mobile.waitForFunction(()=>{
+    const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
+  });
+  if (await mobile.locator('#relphiCancelOptions').isVisible().catch(()=>false)) await mobile.click('#relphiCancelOptions');
+  await mobile.click('#drawRandomRowCard');
+  await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
+  await mobile.waitForFunction(()=>document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===1);
+  assert.equal(await mobile.locator('.relphi-focus-position-panel>.relphi-focus-close').isVisible(),true,'Free-draw Focus must always expose its close control even without position stickers');
+  assert.equal(await mobile.locator('.relphi-focus-position').textContent(),'Position 1','Free draw should supply a neutral position label without creating a position sticker');
+  await mobile.click('.relphi-focus-next');
+  await mobile.waitForFunction(()=>document.querySelectorAll('#shortListPanel .card-row-board [data-row-card]').length===2);
+  await mobile.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===1);
+  assert.equal(await mobile.locator('.relphi-focus-position').textContent(),'Position 2','Next on the final free-draw card must append and advance to a new card');
+  await mobile.click('.relphi-focus-close');
+  await mobile.waitForSelector('.relphi-focus-reader',{state:'detached'});
+
   await applyCeltic(mobile);
   let state=await boardState(mobile);
   assert.equal(state.prefab.slotCount,10);
