@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=48/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=49/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -179,3 +179,6 @@ assert.match(vocab,/--vocab-polarity-houses/,'Inner polarity rail must encode ho
 assert.match(vocab,/halfWeightedStructureGradient\(structure\.left,structure\.right,record=>record\.house\|\|null/,'Primary polarity house rail must use live member house assignments');
 assert.match(vocab,/leftCuspSign=houseCuspSign\(slot,list,pair\[0\]\)/,'House-polarity sign rail must derive from the active house-system cusps');
 assert.match(vocab,/line\.dataset\.vocabHouseSystem=activeHouseSystem\(slot\)/,'Structure rails must identify the active house system they were derived from');
+
+assert.match(vocab,/'anti-vertex':'what becomes accessible through the back door'/,'Anti-Vertex referent must describe the back-door or lateral route rather than a generic counterpoint');
+assert.doesNotMatch(vocab,/'anti-vertex':'counterpoint to consequential encounters'/,'The temporary Anti-Vertex counterpoint referent must not return');
