@@ -378,7 +378,7 @@ const housePairAlignment=await page.locator('#skyFoundationA .sky-vocab-token[da
   const mr=medallion.getBoundingClientRect(),nr=name.getBoundingClientRect();
   return{diff:Math.abs((mr.top+mr.bottom)/2-(nr.top+nr.bottom)/2)};
 });
-assert.ok(housePairAlignment&&housePairAlignment.diff<=4,'House Medallion and House name must share the same optical center.');
+assert.ok(housePairAlignment&&housePairAlignment.diff<=4,`House Medallion and House name must share the same optical center: ${JSON.stringify(housePairAlignment)}`);
 
 const medallionLineImpact=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"]').first().evaluate(node=>{
   const host=node.querySelector('.sky-vocab-glyph.is-house-medallion');
