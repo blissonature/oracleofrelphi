@@ -64,6 +64,24 @@ assert.match(ascDscRail,/linear-gradient/i,'A paired placement sentence must spl
 
 const primaryAxes=await vocabParagraph.locator('[data-vocab-structure="axis-polarity"]').evaluateAll(lines=>lines.map(line=>line.dataset.vocabAxis));
 assert.deepEqual(primaryAxes.slice(0,4),['vertex-anti-vertex','asc-dsc','mc-ic','north-node-south-node'],'Primary structures must lead with Vertex/Anti-Vertex, chart angles, then nodes.');
+for(const axis of primaryAxes.slice(0,4)){
+  const row=page.locator(`#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="${axis}"]`);
+  await row.hover();
+  await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
+  const memberIds=await row.locator('.sky-vocab-token[data-vocab-kind="placement"]').evaluateAll(nodes=>[...new Set(nodes.map(node=>node.dataset.vocabId).filter(Boolean))]);
+  const memberStates=await page.evaluate(ids=>ids.map(id=>{
+    const node=document.querySelector(`#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="${id}"]`);
+    return{id,exists:!!node,kept:node?.classList.contains('is-vocab-context')||false,opacity:node?Number(getComputedStyle(node).opacity):null};
+  }),memberIds);
+  assert.ok(memberStates.length>=2,`Axis ${axis} must expose its placement members: ${JSON.stringify(memberStates)}`);
+  memberStates.forEach(state=>{
+    assert.equal(state.exists,true,`Axis member ${state.id} must exist on the wheel for ${axis}: ${JSON.stringify(memberStates)}`);
+    assert.equal(state.kept,true,`Axis member ${state.id} must retain Vocab context for ${axis}: ${JSON.stringify(memberStates)}`);
+    assert.equal(state.opacity,1,`Axis member ${state.id} must remain fully emphasized for ${axis}: ${JSON.stringify(memberStates)}`);
+  });
+  await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
+  await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
+}
 const vertexAxis=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
 await vertexAxis.hover();
 await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
