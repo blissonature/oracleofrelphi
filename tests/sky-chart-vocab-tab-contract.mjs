@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=46/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=47/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -171,3 +171,9 @@ assert.match(vocab,/SIGN_COLORS\[structure\.left\[0\]\.sign\],SIGN_COLORS\[struc
 assert.match(vocab,/SIGN_COLORS\[pair\[0\]\],SIGN_COLORS\[pair\[1\]\]/,'Sign polarity stripe must use the two sign colors');
 assert.match(vocab,/HOUSE_COLORS\[pair\[0\]-1\],HOUSE_COLORS\[pair\[1\]-1\]/,'House polarity stripe must use the two house colors');
 assert.match(vocab,/linear-gradient\(to bottom,var\(--vocab-polarity-a\) 0 50%,var\(--vocab-polarity-b\) 50% 100%\)/,'Polarity stripe must show the first end above the second end without blending them');
+
+assert.match(vocab,/function weightedStructureGradient\(members,keyOf,colorOf,preferredOrder=\[\]\)/,'Concentrations must derive stripe segment lengths from member occupancy');
+assert.match(vocab,/start=used\/total\*100[\s\S]*end=used\/total\*100/,'Each concentration stripe segment must be proportional to its member count');
+assert.match(vocab,/--vocab-concentration-signs/,'Concentrations must expose a sign-distribution rail');
+assert.match(vocab,/--vocab-concentration-houses/,'Concentrations must expose a house-distribution rail');
+assert.match(vocab,/data-vocab-concentration-colors="true"/,'Concentration cards must replace the neutral stripe with occupancy rails');
