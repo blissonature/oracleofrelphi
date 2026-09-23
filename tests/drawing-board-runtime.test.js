@@ -170,13 +170,14 @@ async function assertReadableFocus(page) {
   assert.equal(await mobile.locator(`.relphi-focus-entry [data-ingredient-panel="${secondTarget}"]`).isVisible(),true,'Selected ingredient panel must become visible in Card Focus');
   await secondFocusTab.press('ArrowLeft');
   assert.equal(await firstFocusTab.getAttribute('aria-selected'),'true','Ingredient tabs in Card Focus must support arrow-key navigation');
-  assert.equal(await mobile.locator('.relphi-focus-draw').count(),1,'Card Focus must keep Draw available');
+  assert.equal(await mobile.locator('.relphi-focus-draw').count(),0,'Card Focus must not duplicate drawing in a separate top-row button');
+  assert.equal(await mobile.locator('.relphi-focus-position-panel>.relphi-focus-close').count(),1,'Card Focus close control must live beside the question');
   assert.equal(await mobile.locator('#shortListPanel [data-row-reverse]').count(),0,'randomly drawn cards must not show the manual card flipper');
   await assertReadableFocus(mobile);
   const transformDisplay=await mobile.locator('.card-row-item[data-row-index="0"] .card-row-transform-box').evaluate(node=>getComputedStyle(node).display);
   assert.equal(transformDisplay,'none','rotation/scale gizmos must start hidden');
   await mobile.screenshot({path:path.join(out,'drawing-board-mobile-focus.png'),fullPage:true});
-  await mobile.click('.relphi-focus-draw');
+  await mobile.click('.relphi-focus-next');
   await mobile.waitForFunction(() => Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===1);
   assert.equal(await mobile.locator('.card-row-item[data-row-index="1"] [data-row-card]').count(),1,'Draw in Card Focus must draw the next position');
   const titleGeometry=await mobile.locator('.card-row-item[data-row-index="0"] [data-row-card]').evaluate(card=>{
