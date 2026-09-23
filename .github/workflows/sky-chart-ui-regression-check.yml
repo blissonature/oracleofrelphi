@@ -54,6 +54,7 @@ jobs:
           node --check tests/sky-chart-single-canon-browser.mjs
           node --check tests/sky-chart-filter-control-unified.mjs
           node --check tests/sky-chart-stability-now.mjs
+          node --check tests/sky-chart-placement-ledger-colors.mjs
           node --check sky-chart-vocab-copy-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
           node --check tests/sky-chart-vocab-tab-browser.mjs
@@ -78,6 +79,7 @@ jobs:
           node tests/sky-chart-single-canon-browser.mjs
           node tests/sky-chart-filter-control-unified.mjs
           node tests/sky-chart-stability-now.mjs
+          node tests/sky-chart-placement-ledger-colors.mjs
 
       - uses: actions/upload-artifact@v4
         if: always()
