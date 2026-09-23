@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=60/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=61/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -105,6 +105,7 @@ assert.match(vocab,/const SIGN_POLARITIES=\[\[0,6\],\[1,7\],\[2,8\],\[3,9\],\[4,
 assert.match(vocab,/const HOUSE_POLARITIES=\[\[1,7\],\[2,8\],\[3,9\],\[4,10\],\[5,11\],\[6,12\]\]/,'Vocab must traverse all six house polarities');
 assert.match(vocab,/const SIGN_RULERS=\['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'\]/,'Empty sign and house contexts must use Relphi’s traditional sign rulers');
 assert.match(vocab,/POLARITY_ATTACH_ORB=3/,'Axis polarity structure attachments must use the three-degree structural cluster window');
+assert.doesNotMatch(vocab,/polarityPole[\s\S]{0,500}!STRUCTURAL_ANCHOR_IDS\.has\(record\.id\)/,'Other structural anchors such as Nodes or angles must be allowed to attach to a polarity when they fall within its pole orb');
 assert.match(vocab,/CLUSTER_ORB=3/,'Natural Vocab clusters must use the same three-degree local geometry window');
 assert.match(vocab,/return\{type:'mid-sign',signs,names:\[SIGNS\[signs\[0\]\]\]\}/,'A concentration wholly inside one sign must be classified as mid-sign');
 assert.match(vocab,/return\{type:'cusp',signs:ordered,names:ordered\.map\(index=>SIGNS\[index\]\)\}/,'A concentration spanning a sign boundary must be classified as cusp and name the affected signs');
