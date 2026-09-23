@@ -243,8 +243,8 @@ assert.match(vocab,/target\.closest\('#skyFoundationWheelMount \[data-focus-piec
 assert.match(vocab,/document\.addEventListener\('pointerdown',clearVocabWheelContextFromBlank,true\)/,'Mouse, touch, and pen blank-space presses must share one clearing path');
 
 assert.match(vocab,/vertex\|anti-vertex','anti-vertex\|vertex/,'Vertex and Anti-Vertex must be treated as an automatic polarity rather than a counted raw relationship');
-assert.match(vocab,/\[data-focus-piece="placement"\]\{opacity:\.62!important/,'Unrelated wheel placements must remain legible while Vocab supplies context');
-assert.match(vocab,/\[data-focus-piece="leader"\]\{opacity:\.36!important/,'Placement leaders must remain visible enough to preserve exact-degree context');
+assert.doesNotMatch(vocab,/has-vocab-(?:token-)?context[^\n]*\[data-focus-piece="placement"\][^{]*\{[^}]*opacity:/,'Vocab context must not dim unrelated wheel placements');
+assert.doesNotMatch(vocab,/has-vocab-(?:token-)?context[^\n]*\[data-focus-piece="leader"\][^{]*\{[^}]*opacity:/,'Vocab context must preserve native placement-leader opacity');
 
 
 
