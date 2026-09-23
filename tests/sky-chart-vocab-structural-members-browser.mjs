@@ -96,6 +96,8 @@ try{
     structureHouses:document.querySelectorAll('#skyFoundationWheelMount .sky-foundation-house-sector.is-vocab-context').length
   }));
   assert.ok(additive.structurePlacements>1&&additive.structureSigns>0&&additive.structureHouses>0,`Token hover must keep the whole polarity visible: ${JSON.stringify(additive)}`);
+  const retainedOpacity=await page.evaluate(()=>[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"].is-vocab-context:not(.is-vocab-token-context)')].map(node=>Number(getComputedStyle(node).opacity)));
+  assert.ok(retainedOpacity.length>0&&retainedOpacity.every(value=>value===1),`Token hover must not dim the other active polarity placements: ${JSON.stringify(retainedOpacity)}`);
 
   const placementLevel=vertex.locator('.sky-vocab-token[data-vocab-kind="placement"]').first().locator('[data-vocab-level]').first();
   await placementLevel.click();
