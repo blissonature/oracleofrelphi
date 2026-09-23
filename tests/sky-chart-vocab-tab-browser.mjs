@@ -332,6 +332,21 @@ const meridianText=(await meridianStructure.textContent()).replace(/\s+/g,' ').t
 assert.match(meridianText,/are in/i,'A grouped structural pole must read as prose using “are in”.');
 assert.match(meridianText,/concerning/i,'Structure house context must be introduced with “concerning” instead of a bare separator.');
 
+const structureTypography=await meridianStructure.evaluate(line=>{
+  const refs=Array.from(line.querySelectorAll('.sky-vocab-referent'));
+  const connective=line.querySelector('.sky-vocab-structure-member-context');
+  const label=line.querySelector('.sky-vocab-structure-label');
+  return{
+    referents:refs.map(node=>{const s=getComputedStyle(node);return[s.fontSize,s.fontWeight,s.lineHeight,s.color]}),
+    connective:connective?(()=>{const s=getComputedStyle(connective);return[s.fontSize,s.fontWeight,s.lineHeight,s.color]})():null,
+    label:label?(()=>{const s=getComputedStyle(label);return[s.fontSize,s.fontWeight,s.lineHeight,s.color]})():null
+  };
+});
+assert.ok(structureTypography.referents.length>=4,'Structure typography fixture must expose several referents.');
+assert.equal(new Set(structureTypography.referents.map(v=>v.join('|'))).size,1,'Placement, sign, and house referents in Structures must use one typography.');
+assert.deepEqual(structureTypography.connective,structureTypography.referents[0],'Connective prose such as “concerning” must use the same body typography as Structure referents.');
+assert.equal(structureTypography.label[0],structureTypography.referents[0][0],'Structure labels may differ by weight but not by body size.');
+
 const structureSignSize=await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-glyph').first().evaluate(node=>({
   width:parseFloat(getComputedStyle(node).width),
   normal:parseFloat(getComputedStyle(document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-kind="sign"]:not(.sky-vocab-structure-context) .sky-vocab-glyph')).width)
