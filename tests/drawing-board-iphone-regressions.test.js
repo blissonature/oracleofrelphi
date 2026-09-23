@@ -176,6 +176,39 @@ async function assertFocusReadingView(page) {
   assert.equal(allLabels.filter(item=>item.visible).length,10,'all ten Celtic position labels must remain visible');
   await page.screenshot({path:path.join(out,'drawing-board-mobile-celtic-full.png'),fullPage:true});
 
+  assert.equal(await page.locator('script[src^="drawing-board-export-preserver"]').count(),0,'obsolete snapshot sidecars must not load');
+  assert.equal(await page.locator('#saveDrawingBoardSnapshotToDevice').count(),0,'native snapshot export must not be replaced by a second save control');
+  await page.evaluate(()=>{
+    try { Object.defineProperty(navigator,'share',{value:undefined,configurable:true}); } catch (_) {}
+    try { Object.defineProperty(navigator,'canShare',{value:undefined,configurable:true}); } catch (_) {}
+  });
+  const snapshotDownload=page.waitForEvent('download');
+  await page.click('#drawing-board-post-export #snapshotCardRowArrangement');
+  const snapshotFile=await snapshotDownload;
+  assert.match(snapshotFile.suggestedFilename(),/\.png$/i,'arrangement snapshot must download as PNG when system sharing is unavailable');
+  const snapshotPath=await snapshotFile.path();
+  const snapshotBytes=fs.readFileSync(snapshotPath);
+  assert.ok(snapshotBytes.length>5000,'arrangement snapshot must contain rendered board pixels, not an empty file');
+  const snapshotStats=await page.evaluate(async dataUrl=>{
+    const image=new Image();
+    await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=dataUrl;});
+    const canvas=document.createElement('canvas');
+    canvas.width=64; canvas.height=64;
+    const context=canvas.getContext('2d');
+    context.drawImage(image,0,0,64,64);
+    const pixels=context.getImageData(0,0,64,64).data;
+    const colors=new Set();
+    let opaque=0;
+    for(let i=0;i<pixels.length;i+=16){
+      const a=pixels[i+3];
+      if(a) opaque+=1;
+      colors.add(`${pixels[i]},${pixels[i+1]},${pixels[i+2]},${a}`);
+    }
+    return {width:image.naturalWidth,height:image.naturalHeight,opaque,colors:colors.size};
+  },'data:image/png;base64,'+snapshotBytes.toString('base64'));
+  assert.ok(snapshotStats.width>100&&snapshotStats.height>100,'arrangement snapshot must have real image dimensions');
+  assert.ok(snapshotStats.opaque>100&&snapshotStats.colors>8,`arrangement snapshot must contain visible, nonblank board content: ${JSON.stringify(snapshotStats)}`);
+
   await page.click('#shortListPanel .card-row-item[data-relphi-position-id="self"] [data-row-card]');
   await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
   await assertFocusReadingView(page);
