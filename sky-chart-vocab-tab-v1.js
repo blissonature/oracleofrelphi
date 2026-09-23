@@ -794,6 +794,16 @@ function vocabLineContext(line){
       if(Number.isInteger(number)&&number>=1&&number<=12)houses.add(number);
     }
   });
+  /* A placement implies its wheel sign and house even when the sentence does not
+     spell those context tokens out (for example, relationship-derived lines).
+     Vocab wheel emphasis should therefore always illuminate the complete spatial
+     context of every placement named by the active line. */
+  document.querySelectorAll(`#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="${slot}"]`).forEach(node=>{
+    if(!placements.has(String(node.dataset.placement||'')))return;
+    const sign=Number(node.dataset.sign),house=Number(node.dataset.house);
+    if(Number.isInteger(sign)&&sign>=0&&sign<12)signs.add(sign);
+    if(Number.isInteger(house)&&house>=1&&house<=12)houses.add(house);
+  });
   return{slot,placements,signs,houses};
 }
 function clearVocabWheelContext(){
@@ -1227,14 +1237,14 @@ function installStyles(){
     .sky-vocab-line[data-vocab-placement-colors="true"]::before{left:0;background:var(--vocab-placement-signs)}
     .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses)}
     .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.12!important;transition:opacity .07s ease-out,filter .07s ease-out}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.08!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="placement"]{opacity:.62!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="leader"]{opacity:.36!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context{opacity:1!important;filter:saturate(1.18) brightness(1.03) drop-shadow(0 0 5px rgba(20,17,14,.26))!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-sign-sector.is-vocab-context,
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-house-sector.is-vocab-context{opacity:1!important;fill-opacity:.78!important;filter:saturate(1.55) brightness(1.04) drop-shadow(0 0 5px rgba(20,17,14,.3))!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-house-sector.is-vocab-context{opacity:1!important;fill-opacity:1!important;stroke:rgba(255,253,248,.96)!important;stroke-width:3!important;vector-effect:non-scaling-stroke;filter:saturate(1.72) brightness(1.1) drop-shadow(0 0 2px rgba(255,255,255,.98)) drop-shadow(0 0 8px rgba(20,17,14,.34))!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-sign-glyph.is-vocab-context{opacity:1!important;filter:saturate(1.35) brightness(.92) drop-shadow(0 0 4px rgba(20,17,14,.22))!important}
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context-exact{filter:saturate(1.28) brightness(1.06) drop-shadow(0 0 7px rgba(20,17,14,.38))!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context-exact{filter:saturate(1.42) brightness(1.1) drop-shadow(0 0 2px rgba(255,255,255,.96)) drop-shadow(0 0 8px rgba(20,17,14,.42))!important}
     .sky-vocab-structure-label{font:inherit;color:inherit}
     .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:inherit}
