@@ -386,12 +386,12 @@ function renderToken(node){
   }
 
   if(r){
-    if(g||lead)node.appendChild(document.createTextNode(' '));
+    if(g)node.appendChild(document.createTextNode(' '));
     node.appendChild(r);
   }
 
   if(n){
-    if(g||r||lead)node.appendChild(document.createTextNode(' '));
+    if(g||r)node.appendChild(document.createTextNode(' '));
     const meta=document.createElement('span');meta.className='sky-vocab-meta sky-vocab-parenthetical';meta.setAttribute('aria-label','Astrological vocabulary name');
     meta.append(document.createTextNode('('),n,document.createTextNode(')'));
     node.appendChild(meta);
@@ -1001,7 +1001,7 @@ function installStyles(){
     .sky-vocab-structure-subheading,.sky-vocab-placements-heading{margin:.12rem 0 -.18rem;color:#756b62;font:850 .58rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.045em}
     .sky-vocab-placements-heading{margin-top:.32rem;padding-top:.5rem;border-top:1px solid rgba(31,27,24,.12)}
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035);color:#211d19;font-size:1em;font-weight:500;line-height:1.52}
-    .sky-vocab-structure-label{font:700 1em/1.52 system-ui,sans-serif;color:#211d19}
+    .sky-vocab-structure-label{font:inherit;color:inherit}
     .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:inherit}
     .sky-vocab-structure-context{display:inline;white-space:normal;font:inherit;color:inherit}
