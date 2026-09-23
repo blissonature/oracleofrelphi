@@ -337,6 +337,24 @@ assert.deepEqual(
 );
 
 const meridianStructure=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="mc-ic"]');
+const meridianStripe=await meridianStructure.evaluate(node=>({
+  enabled:node.dataset.vocabPolarityColors,
+  a:getComputedStyle(node).getPropertyValue('--vocab-polarity-a').trim(),
+  b:getComputedStyle(node).getPropertyValue('--vocab-polarity-b').trim(),
+  borderLeft:getComputedStyle(node).borderLeftWidth
+}));
+assert.equal(meridianStripe.enabled,'true','Primary polarity cards must opt into the two-color stripe.');
+assert.notEqual(meridianStripe.a,meridianStripe.b,'Primary polarity stripe must retain distinct colors for its two ends.');
+assert.equal(meridianStripe.borderLeft,'0px','Colored polarity cards must replace, not sit on top of, the old gray border.');
+
+const signStripe=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"]').first();
+assert.equal(await signStripe.getAttribute('data-vocab-polarity-colors'),'true','Sign polarity cards must use the two-color stripe.');
+
+const houseStripe=page.locator('#skyFoundationA [data-vocab-structure="house-polarity"]').first();
+assert.equal(await houseStripe.getAttribute('data-vocab-polarity-colors'),'true','House polarity cards must use the two-color stripe.');
+
+const concentrationStripe=page.locator('#skyFoundationA [data-vocab-structure="cluster"],#skyFoundationA [data-vocab-structure="stellium"]').first();
+if(await concentrationStripe.count())assert.equal(await concentrationStripe.getAttribute('data-vocab-polarity-colors'),null,'Concentrations must keep the neutral stripe because they are not two-ended polarities.');
 assert.equal(await meridianStructure.locator('[data-vocab-context-kind="sign"]').count(),2,'MC + Chiron and IC + Uranus must each share one sign context instead of repeating it per member.');
 assert.equal(await meridianStructure.locator('[data-vocab-context-kind="house"]').count(),2,'MC + Chiron and IC + Uranus must each share one house context instead of repeating it per member.');
 assert.equal(await meridianStructure.locator('[data-vocab-structure-context-group]').count(),2,'The meridian polarity fixture must collapse its four members into two shared-location groups.');
