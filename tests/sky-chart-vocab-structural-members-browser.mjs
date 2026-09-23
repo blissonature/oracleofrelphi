@@ -12,7 +12,7 @@ function sky(){
   const raw={
     Sun:195,Moon:118.42,Mercury:196.5,Venus:169.88,Mars:167.87,Jupiter:307.15,Saturn:235.57,Uranus:254.85,Neptune:271.02,Pluto:213.88,
     Ascendant:168.38,Descendant:348.38,Midheaven:76.28,IC:256.28,
-    'North Node':331.4,'South Node':151.4,Chiron:74.48,Lilith:44.23,'Part of Fortune':244.97,Vertex:330.33
+    'North Node':135.4,'South Node':315.4,Chiron:74.48,Lilith:44.23,'Part of Fortune':244.97,Vertex:310.983333
   };
   return{name:'Structural polarity fixture',houseSystem:'equal-house',houseCusps:cusps,calcProfile:{dateTime:'1985-10-08T04:37',instant:'1985-10-08T08:37:00.000Z',location:'Malden, Massachusetts, United States',timeZone:'America/New_York',latitude:42.4251,longitude:-71.0662,houseCusps:cusps,houseSystem:'equal-house'},placements:Object.fromEntries(Object.entries(raw).map(([key,value])=>[key,placement(key,value)]))};
 }
@@ -42,8 +42,8 @@ try{
   const vertex=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
   assert.equal(await vertex.count(),1,'Vertex polarity must render.');
   const members=(await vertex.getAttribute('data-vocab-members')||'').split('|').filter(Boolean);
-  assert.ok(members.includes('north-node'),`North Node must attach to Vertex pole: ${JSON.stringify(members)}`);
-  assert.ok(members.includes('south-node'),`South Node must attach to Anti-Vertex pole: ${JSON.stringify(members)}`);
+  assert.ok(members.includes('north-node'),`South Node must attach to Vertex pole: ${JSON.stringify(members)}`);
+  assert.ok(members.includes('south-node'),`North Node must attach to Anti-Vertex pole: ${JSON.stringify(members)}`);
 
   await vertex.hover();
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
