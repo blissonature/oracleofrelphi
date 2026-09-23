@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=52/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=53/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -201,3 +201,8 @@ assert.match(vocab,/\.has-vocab-context:not\(\.has-isolation\) \[data-focus-piec
 assert.match(vocab,/\.is-vocab-context-exact/,'Vocab context must emphasize exact placement loci above their sign and house context');
 assert.match(vocab,/event\.pointerType!=='touch'&&event\.pointerType!=='pen'/,'Touch and pen taps must retain a Vocab wheel context instead of relying on hover');
 assert.doesNotMatch(vocab,/applyWheelSpec\([^)]*vocab/i,'Vocab-to-wheel context highlighting must not mutate the Vocab filter state');
+
+assert.match(vocab,/function clearVocabWheelContextFromBlank\(event\)/,'Retained Vocab wheel context must clear from blank space');
+assert.match(vocab,/target\.closest\('\.sky-vocab-line,[^']*button,input,select,textarea/,'Blank-space clearing must not cancel a real Vocab row or control interaction');
+assert.match(vocab,/target\.closest\('#skyFoundationWheelMount \[data-focus-piece\],#skyFoundationWheelMount \[data-interactive\]'\)/,'Blank-space clearing must not cancel interaction with a real wheel object');
+assert.match(vocab,/document\.addEventListener\('pointerdown',clearVocabWheelContextFromBlank,true\)/,'Mouse, touch, and pen blank-space presses must share one clearing path');
