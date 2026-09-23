@@ -74,6 +74,7 @@ assert.match(board, /relphi-focus-fan/);
 assert.match(board, /function renderFocusFan/);
 assert.match(board, /function installFocusFanSwipe/);
 assert.match(board, /FOCUS_NAV_MODE_KEY/);
+assert.match(board, /delta>0 && current>=order\.length-1[\s\S]{0,160}configuredPositionCount\(\)===0[\s\S]{0,80}drawNextLogical\(panel\(\)\)/);
 assert.match(css, /\.relphi-focus-fan>button/);
 assert.match(css, /transition:transform/);
 assert.match(board, /keepFocusStripCurrentVisible/);
