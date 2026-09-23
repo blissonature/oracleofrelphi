@@ -42,7 +42,7 @@ assert.match(app, /document\.dispatchEvent\(new CustomEvent\('relphi:drawing-boa
 
 assert.match(board, /Zoom Extents/);
 assert.match(board, /zoomCardRowExtents/);
-assert.match(board, /stateContentBounds/);
+assert.match(board, /renderedContentBounds/);
 assert.match(board, /workspace\.clientWidth/);
 assert.match(board, /workspace\.clientHeight/);
 assert.match(board, /relphi-workspace-tools/);
