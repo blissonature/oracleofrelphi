@@ -515,9 +515,12 @@ function clusterSentence(members){
 }
 function polaritySentence(structure){
   const frag=document.createDocumentFragment();
-  frag.append(structureLabel(structure.label+':'),document.createTextNode(' '));
+  frag.append(
+    structureLabel(structure.label+':'),
+    document.createTextNode(' At one end of the polarity, ')
+  );
   appendStructureMembers(frag,structure.left);
-  frag.appendChild(document.createTextNode(' form one pole, opposite '));
+  frag.appendChild(document.createTextNode('; at the other, '));
   appendStructureMembers(frag,structure.right);
   return frag;
 }
