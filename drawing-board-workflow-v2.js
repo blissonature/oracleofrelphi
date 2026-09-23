@@ -1282,6 +1282,10 @@
     if (!order.length) return closeFocus({acknowledge:true});
     const currentIndex=order.indexOf(focusIndex);
     const current=currentIndex>=0 ? currentIndex : 0;
+    if (delta>0 && current>=order.length-1) {
+      if (configuredPositionCount()===0) drawNextLogical(panel());
+      return;
+    }
     const logical=Math.max(0,Math.min(order.length-1,current+delta));
     navigateFocusTo(order[logical]);
   }
