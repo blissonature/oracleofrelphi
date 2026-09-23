@@ -83,11 +83,11 @@ const storedAntiVertex=await page.evaluate(()=>{
   const value=JSON.parse(localStorage.getItem('relphiSkyChartA'));
   return value?.placements?.['Anti-Vertex']||Object.values(value?.placements||{}).find(item=>String(item?.name||'').toLowerCase().replace(/[^a-z]/g,'')==='antivertex')||null;
 });
-assert.ok(storedAntiVertex,'Anti-Vertex must be persisted as a real derived placement, not exist only inside Vocab.');
-assert.ok(Math.abs((((Number(storedAntiVertex.longitude)-150.33)+180)%360+360)%360-180)<1e-6,'Stored Anti-Vertex must be exactly 180° from the fixture Vertex.');
+const antiVertexPersisted=!!storedAntiVertex;
+const antiVertexOppositionExact=!!storedAntiVertex&&Math.abs((((Number(storedAntiVertex.longitude)-150.33)+180)%360+360)%360-180)<1e-6;
 const antiVertexWheel=page.locator('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="anti-vertex"]');
-assert.equal(await antiVertexWheel.count(),1,'Anti-Vertex must render as a normal wheel placement.');
-assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"][data-aspect="opposition"]').evaluateAll(rows=>rows.filter(row=>[row.dataset.leftPlacement,row.dataset.rightPlacement].sort().join('|')==='anti-vertex|vertex').length),0,'Vertex–Anti-Vertex opposition must not count as an intrasky relationship because it is constitutive.');
+const antiVertexWheelCount=await antiVertexWheel.count();
+const antiVertexOppositionRows=await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"][data-aspect="opposition"]').evaluateAll(rows=>rows.filter(row=>[row.dataset.leftPlacement,row.dataset.rightPlacement].sort().join('|')==='anti-vertex|vertex').length);
 
 
 const ariesLibra=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"][data-vocab-signs="Aries|Libra"]');
@@ -267,6 +267,10 @@ assert.notEqual(selectedContextStrength.houseFilter,'none','Matching house secto
 assert.ok(selectedContextStrength.unrelatedSignOpacity<=.1,'Unrelated sign sectors must recede strongly enough that the matching sign is immediately apparent.');
 console.log('VOCAB_HIGHLIGHT_CHECK_PASSED');
 assert.ok(antiVertexOpticalParity,'Anti-Vertex must be optically the same height class as Asc, not a shrunken static master.');
+assert.ok(antiVertexPersisted,'Anti-Vertex must be persisted as a real derived placement, not exist only inside Vocab.');
+assert.ok(antiVertexOppositionExact,'Stored Anti-Vertex must be exactly 180° from the fixture Vertex.');
+assert.equal(antiVertexWheelCount,1,'Anti-Vertex must render as a normal wheel placement.');
+assert.equal(antiVertexOppositionRows,0,'Vertex–Anti-Vertex opposition must not count as an intrasky relationship because it is constitutive.');
 assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel highlighting must not filter the Relationships list.');
 await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
