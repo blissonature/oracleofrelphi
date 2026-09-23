@@ -215,6 +215,8 @@ const sunMercuryCluster=page.locator('#skyFoundationA [data-vocab-structure="clu
 assert.equal(await sunMercuryCluster.count(),1,'A natural non-axis Sun–Mercury concentration must be synthesized as one cluster.');
 assert.equal(await sunMercuryCluster.getAttribute('data-vocab-cluster-type'),'mid-sign','A concentration wholly inside Libra must be marked as mid-sign.');
 assert.equal(await sunMercuryCluster.getAttribute('data-vocab-signs'),'Libra','A mid-sign concentration must name its one affected sign.');
+assert.match(await sunMercuryCluster.textContent(),/^Mid-sign · Libra:/i,'An ordinary concentration card must begin with its subtype and sign, not repeat Cluster.');
+assert.doesNotMatch(await sunMercuryCluster.textContent(),/form one concentrated group/i,'An ordinary concentration card must not restate the section heading at the end.');
 
 const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').first().evaluate(node=>{
   const style=getComputedStyle(node);
@@ -397,9 +399,11 @@ assert.equal(meridianStripe.borderLeft,'0px','Colored structure rails must repla
 
 const signStripe=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"]').first();
 assert.equal(await signStripe.getAttribute('data-vocab-polarity-colors'),'true','Sign polarity cards must use the two-color stripe.');
+assert.doesNotMatch(await signStripe.textContent(),/^Sign polarity:/i,'Sign-polarity cards must not repeat their section heading.');
 
 const houseStripe=page.locator('#skyFoundationA [data-vocab-structure="house-polarity"]').first();
 assert.equal(await houseStripe.getAttribute('data-vocab-polarity-colors'),'true','House polarity cards must use the two-color stripe.');
+assert.doesNotMatch(await houseStripe.textContent(),/^House polarity:/i,'House-polarity cards must not repeat their section heading.');
 
 const concentrationStripe=page.locator('#skyFoundationA [data-vocab-structure="cluster"],#skyFoundationA [data-vocab-structure="stellium"]').first();
 if(await concentrationStripe.count()){
@@ -488,7 +492,7 @@ await page.evaluate(raw=>{
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-structure="stellium"][data-vocab-cluster-type="cusp"][data-vocab-signs="Virgo|Libra"]'));
 const cuspStellium=page.locator('#skyFoundationA [data-vocab-structure="stellium"][data-vocab-cluster-type="cusp"][data-vocab-signs="Virgo|Libra"]');
 assert.equal(await cuspStellium.count(),1,'Three major bodies crossing Virgo–Libra must be surfaced as one cusp stellium.');
-assert.match(await cuspStellium.textContent(),/Stellium · cusp · Virgo–Libra/i,'A cusp stellium must explicitly name both affected signs.');
+assert.match(await cuspStellium.textContent(),/Stellium · Cusp · Virgo–Libra/i,'A cusp stellium must explicitly name both affected signs without repeating Concentration or Cluster.');
 const cuspDistribution=await cuspStellium.getAttribute('data-vocab-sign-distribution');
 assert.match(cuspDistribution,/Virgo:\d+\|Libra:\d+/,'Cusp concentration must expose member counts for both signs so stripe lengths follow occupancy.');
 const cuspGradient=await cuspStellium.evaluate(node=>getComputedStyle(node).getPropertyValue('--vocab-concentration-signs').trim());
