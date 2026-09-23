@@ -152,6 +152,15 @@
       delete placements[vertexEntry[0]];
     }
 
+    const resolvedVertex=find(placements,['Vertex']);
+    const antiVertexEntry=findEntry(placements,['Anti-Vertex','Anti Vertex','Antivertex','AVx']);
+    if(resolvedVertex&&Number.isFinite(Number(resolvedVertex.longitude))){
+      const key=antiVertexEntry?.[0]||'Anti-Vertex';
+      placements[key]=placement('Anti-Vertex',Number(resolvedVertex.longitude)+180,'vertex-opposition');
+    }else if(antiVertexEntry?.[1]?.source==='vertex-opposition'){
+      delete placements[antiVertexEntry[0]];
+    }
+
     if(!find(placements,['Part of Fortune'])&&asc&&sun&&moon){
       let day=true;
       try{
@@ -178,6 +187,7 @@
       lilith:finalLilith?(['mean-lunar-apogee','mean-lunar-apogee-projected'].includes(finalLilith.source)?'mean':'provided'):'not-provided',
       lilithMethod:finalLilith?.source==='mean-lunar-apogee-projected'?'mean-lunar-apogee-projected':'',
       vertex:finalVertex?(finalVertex.source==='prime-vertical-swiss'?'calculated':'provided'):'not-provided',
+      antiVertex:finalVertex?'derived-opposition':'not-provided',
       partOfFortune:'calculated',
       chiron:(()=>{const item=find(placements,['Chiron']);return item?(item.source==='swiss-ephemeris-chiron'?'calculated':'provided'):'not-provided'})()
     };
