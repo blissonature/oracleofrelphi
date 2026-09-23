@@ -327,6 +327,16 @@ const meridianStructure=page.locator('#skyFoundationA [data-vocab-structure="axi
 assert.equal(await meridianStructure.locator('[data-vocab-context-kind="sign"]').count(),2,'MC + Chiron and IC + Uranus must each share one sign context instead of repeating it per member.');
 assert.equal(await meridianStructure.locator('[data-vocab-context-kind="house"]').count(),2,'MC + Chiron and IC + Uranus must each share one house context instead of repeating it per member.');
 assert.equal(await meridianStructure.locator('[data-vocab-structure-context-group]').count(),2,'The meridian polarity fixture must collapse its four members into two shared-location groups.');
+
+const meridianText=(await meridianStructure.textContent()).replace(/\s+/g,' ').trim();
+assert.match(meridianText,/are in/i,'A grouped structural pole must read as prose using “are in”.');
+assert.match(meridianText,/concerning/i,'Structure house context must be introduced with “concerning” instead of a bare separator.');
+
+const structureSignSize=await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-glyph').first().evaluate(node=>({
+  width:parseFloat(getComputedStyle(node).width),
+  normal:parseFloat(getComputedStyle(document.querySelector('#skyFoundationA .sky-vocab-token[data-vocab-kind="sign"]:not(.sky-vocab-structure-context) .sky-vocab-glyph')).width)
+}));
+assert.ok(Math.abs(structureSignSize.width-structureSignSize.normal)<=1,'Structure sign glyphs must use the same mark size as ordinary Vocab sign glyphs.');
 assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-name').filter({hasText:'Gemini'}).count()>=1,'MC/Chiron pole must expose its Gemini context.');
 assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-name').filter({hasText:'Sagittarius'}).count()>=1,'IC/Uranus pole must expose its Sagittarius context.');
 assert.equal(await meridianStructure.locator('[data-vocab-context-kind="house"] .relphi-house-medallion').count(),2,'Grouped structure house context must reuse one canonical House Medallion per shared location.');
