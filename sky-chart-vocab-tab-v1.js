@@ -70,7 +70,7 @@ const PLACEMENT_REFERENTS={
   'asteroid-lilith':'equality',
   'part-of-fortune':'fortune and openings',
   vertex:'consequential encounters',
-  'anti-vertex':'counterpoint to consequential encounters',
+  'anti-vertex':'what becomes accessible through the back door',
   child:'children',
   hidalgo:'independence',
   victoria:'victory',
