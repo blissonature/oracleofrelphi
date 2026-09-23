@@ -54,8 +54,8 @@ function installStyles(){
 function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
 function writeJson(key,value){localStorage.setItem(key,JSON.stringify(value))}
 function payload(slot){return readJson(SLOT_KEYS[slot],null)}
-function profileFor(slot){const value=payload(slot);return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}
-function completeProfile(p){return!!(p&&p.dateTime&&p.location&&p.timeZone&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude)))}
+function profileFor(slot){const value=payload(slot);return window.RelphiSkyCardShell?.profile?.(value)||(value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{})}
+function completeProfile(p){return!!(p&&(p.instant||p.dateTime)&&p.location&&p.timeZone&&Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude)))}
 function panel(slot){return document.getElementById(`skyFoundation${slot}`)}
 function shell(slot){return window.RelphiSkyCardShell?.ensure?.(slot,payload(slot))||null}
 function formFor(slot){return shell(slot)?.editor?.querySelector('.sky-where-when-editor')||null}
