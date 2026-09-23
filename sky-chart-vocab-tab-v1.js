@@ -809,7 +809,7 @@ function vocabLineContext(line){
 function clearVocabWheelContext(){
   const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
   if(wheel){
-    wheel.classList.remove('has-vocab-context');
+    wheel.classList.remove('has-vocab-context','has-vocab-axis-context');
     wheel.querySelectorAll('.is-vocab-context').forEach(node=>node.classList.remove('is-vocab-context'));
     wheel.querySelectorAll('.is-vocab-context-exact').forEach(node=>node.classList.remove('is-vocab-context-exact'));
   }
@@ -832,6 +832,7 @@ function applyVocabWheelContext(line){
   });
   if(!matched)return;
   wheel.classList.add('has-vocab-context');
+  wheel.classList.toggle('has-vocab-axis-context',line.dataset.vocabStructure==='axis-polarity');
   line.classList.add('is-wheel-context-active');
   vocabWheelContextLine=line;
 }
@@ -1240,6 +1241,8 @@ function installStyles(){
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not(.is-vocab-context):not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.12!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="placement"]{opacity:.62!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="leader"]{opacity:.36!important;transition:opacity .07s ease-out,filter .07s ease-out}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-axis-context:not(.has-isolation) [data-focus-piece="placement"]:not(.is-vocab-context){opacity:.18!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-axis-context:not(.has-isolation) [data-focus-piece="leader"]:not(.is-vocab-context){opacity:.12!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context{opacity:1!important;filter:saturate(1.18) brightness(1.03) drop-shadow(0 0 5px rgba(20,17,14,.26))!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-sign-sector.is-vocab-context,
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-house-sector.is-vocab-context{opacity:1!important;fill-opacity:.78!important;filter:saturate(1.55) brightness(1.04) drop-shadow(0 0 5px rgba(20,17,14,.3))!important}
