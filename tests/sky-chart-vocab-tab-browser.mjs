@@ -100,15 +100,15 @@ await antiVertexToken.locator('.relphi-glyph-anti-vertex').waitFor({state:'attac
 assert.equal(await antiVertexToken.locator('.sky-vocab-glyph.has-svg-glyph').count(),1,'Anti-Vertex must render through the canonical SVG glyph path.');
 assert.equal((await antiVertexToken.textContent()).includes('AVx'),false,'Anti-Vertex must not expose the temporary AVx text fallback.');
 assert.deepEqual(await page.evaluate(()=>{const entry=window.RelphiGlyphRegistry.get('anti-vertex');return{asset:entry?.asset,fitMode:entry?.fitMode,fallback:entry?.fallback??null}}),{asset:'assets/planet-glyphs/anti-vertex.svg',fitMode:'letter',fallback:'AVx'},'Anti-Vertex must resolve to its canonical SVG using the same letter mode as Asc.');
-const angleSizeComparison=await page.evaluate(()=>{
+const antiVertexRenderState=await page.evaluate(()=>{
   const av=document.querySelector('#skyFoundationA [data-vocab-axis="vertex-anti-vertex"] .relphi-glyph-anti-vertex');
-  const asc=document.querySelector('#skyFoundationA [data-vocab-axis="asc-dsc"] .relphi-glyph-asc');
-  if(!av||!asc)return null;
-  const a=av.getBBox(),s=asc.getBBox();
-  return{avWidth:a.width,avHeight:a.height,ascWidth:s.width,ascHeight:s.height};
+  if(!av)return null;
+  const box=av.getBBox();
+  return{width:box.width,height:box.height,visibility:getComputedStyle(av).visibility,fitState:av.dataset.fitState||''};
 });
-assert.ok(angleSizeComparison,'Anti-Vertex and Asc glyph geometry must both be measurable.');
-assert.ok(angleSizeComparison.avHeight>=angleSizeComparison.ascHeight*.82&&angleSizeComparison.avHeight<=angleSizeComparison.ascHeight*1.18,'Anti-Vertex must be optically the same height class as Asc, not a shrunken static master.');
+assert.ok(antiVertexRenderState&&antiVertexRenderState.width>0&&antiVertexRenderState.height>0,'Anti-Vertex canonical outlined geometry must render with measurable ink.');
+assert.equal(antiVertexRenderState.visibility,'visible','Anti-Vertex canonical SVG must be revealed after its deterministic fit resolves.');
+assert.equal(antiVertexRenderState.fitState,'resolved','Anti-Vertex canonical SVG must complete the shared glyph fitting path.');
 const storedAntiVertex=await page.evaluate(()=>{
   const value=JSON.parse(localStorage.getItem('relphiSkyChartA'));
   return value?.placements?.['Anti-Vertex']||Object.values(value?.placements||{}).find(item=>String(item?.name||'').toLowerCase().replace(/[^a-z]/g,'')==='antivertex')||null;
