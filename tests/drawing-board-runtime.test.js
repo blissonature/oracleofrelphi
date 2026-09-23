@@ -157,6 +157,9 @@ async function assertReadableFocus(page) {
   await mobile.waitForSelector('.card-row-item[data-row-index="0"] [data-row-card]',{state:'visible'});
   await mobile.waitForSelector('.relphi-focus-reader',{state:'visible'});
   assert.equal(await mobile.locator('.relphi-focus-strip>button').count(),10);
+  assert.equal(await mobile.locator('.relphi-focus-fan>button').count(),10,'Fan navigation must represent every reading position');
+  assert.equal(await mobile.locator('.relphi-focus-reader').getAttribute('data-focus-nav-mode'),'fan','Fan navigation should be the default Card Focus mode');
+  assert.ok(await mobile.locator('.relphi-focus-fan>button').evaluateAll(buttons=>buttons.filter(button=>Number(getComputedStyle(button).opacity)>.25).length)>=3,'Fan navigation must keep neighboring cards visible together');
   const focusIngredientTabs=mobile.locator('.relphi-focus-entry [data-ingredient-tab]');
   assert.ok(await focusIngredientTabs.count()>=2,'Focused full Ledger entry must expose multiple ingredient tabs for the drawn card');
   const firstFocusTab=focusIngredientTabs.nth(0), secondFocusTab=focusIngredientTabs.nth(1);
