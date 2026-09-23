@@ -61,6 +61,10 @@ assert.match(whereWhen,/Location inferred from pasted placements/,'Inference con
 assert.match(whereWhen,/window\.RelphiSkyWhereWhen=Object\.freeze/,'Where and When must expose an explicit extension contract');
 assert.match(whereWhen,/finishExternalCommit/,'External placement imports must finish through the controller lifecycle');
 assert.match(whereWhen,/relphi:sky-where-when-location-selected/,'Location state changes must be published explicitly');
+assert.match(whereWhen,/data-ww-action="use-here">Use Here<\/button>/,'Where and When must own a single Use Here browser-location control');
+assert.match(whereWhen,/data-current-location="\$\{slot\}"/,'Use Here must suppress the legacy current-location injector');
+assert.match(whereWhen,/async function useHere\(slot,button\)[\s\S]*currentLocationPacket\(\)[\s\S]*selectLocation\(slot,packet\)/,'Use Here must resolve and apply only browser location state');
+assert.match(whereWhen,/const dateValue=dateField\?\.value\|\|'',timeValue=timeField\?\.value\|\|''[\s\S]*dateField\.value=dateValue[\s\S]*timeField\.value=timeValue/,'Use Here must preserve existing date and time values');
 
 assert.equal(draft.includes('MutationObserver'),false,'Draft heptagram must render from explicit events, not DOM repair observation');
 assert.equal(draft.includes('preview.before(advanced)'),false,'Draft heptagram must not reorder the editor after creation');
