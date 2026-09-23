@@ -40,13 +40,13 @@ try{
     const result=await page.evaluate(mode=>{
       const list=document.querySelector('[data-placement-list="combined"]');
       const header=list?.querySelector(':scope>.sky-chart-placement-list-header');
-      const master=list?.querySelector(':scope>.sky-chart-placement-list-item-master');
+      const sample=list?.querySelector(':scope>.sky-chart-placement-list-item-group')||list?.querySelector(':scope>.sky-chart-placement-list-item-placement');
       const kinds=mode==='comparison'?['all','a','b']:['all','a'];
       const headerNodes=kinds.map(kind=>header?.querySelector(`.sky-chart-placement-list-header-choice-${kind}`));
-      const inputNodes=kinds.map(kind=>master?.querySelector(`input[data-placement-choice="${kind}"]`));
+      const inputNodes=kinds.map(kind=>sample?.querySelector(`button[data-placement-choice="${kind}"]`));
       const center=node=>{const r=node?.getBoundingClientRect();return r?r.left+r.width/2:NaN};
       const headerChoices=header?.querySelector('.sky-chart-placement-list-header-choices');
-      const rowChoices=master?.querySelector('.sky-chart-placement-list-choices');
+      const rowChoices=sample?.querySelector('.sky-chart-placement-list-choices');
       return{
         headerCount:header?.querySelectorAll('.sky-chart-placement-list-header-choice').length||0,
         headerKinds:headerNodes.map(node=>node?.textContent?.trim()||''),
@@ -55,12 +55,12 @@ try{
         aVisible:!!header?.querySelector('.sky-chart-placement-list-header-choice-a')&&getComputedStyle(header.querySelector('.sky-chart-placement-list-header-choice-a')).display!=='none',
         bPresent:!!header?.querySelector('.sky-chart-placement-list-header-choice-b'),
         headerGrid:getComputedStyle(header).gridTemplateColumns,
-        rowGrid:getComputedStyle(master).gridTemplateColumns,
+        rowGrid:getComputedStyle(sample).gridTemplateColumns,
         headerChoicesDisplay:getComputedStyle(headerChoices).display,
         headerChoicesGrid:getComputedStyle(headerChoices).gridTemplateColumns,
         rowChoicesDisplay:getComputedStyle(rowChoices).display,
         rowChoicesGrid:getComputedStyle(rowChoices).gridTemplateColumns,
-        rowChoiceWidths:[...master.querySelectorAll('.sky-chart-placement-choice')].map(node=>node.getBoundingClientRect().width)
+        rowChoiceWidths:[...sample.querySelectorAll('.sky-chart-placement-choice')].map(node=>node.getBoundingClientRect().width)
       };
     },mode);
 
@@ -70,14 +70,14 @@ try{
     assert.deepEqual(result.headerKinds,expectedKinds,`${mode}: Placement header labels should be canonical`);
     result.headerCenters.forEach((value,index)=>{
       assert.ok(Number.isFinite(value)&&Number.isFinite(result.inputCenters[index]),`${mode}: scope center must be measurable`);
-      assert.ok(Math.abs(value-result.inputCenters[index])<=1,`${mode}: ${expectedKinds[index]} header must align over its checkbox column`);
+      assert.ok(Math.abs(value-result.inputCenters[index])<=1,`${mode}: ${expectedKinds[index]} header must align over its logic-control column`);
     });
     assert.equal(result.aVisible,true,`${mode}: A header must stay visible`);
     assert.equal(result.bPresent,mode==='comparison',`${mode}: B header presence must follow Sky B`);
     assert.deepEqual(errors,[],`${mode}: page should not raise errors`);
     await context.close();
   }
-  console.log('Placement dropdown header and checkbox columns align in comparison and single-sky modes.');
+  console.log('Placement dropdown header and logic-control columns align in comparison and single-sky modes.');
 }finally{
   await browser.close();
 }
