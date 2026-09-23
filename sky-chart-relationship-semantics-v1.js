@@ -37,8 +37,15 @@ function endpointSlots(row){
 function isSingleSkyRow(row){const slots=endpointSlots(row);return slots.left===slots.right}
 function constitutiveMeta(row){if(!isSingleSkyRow(row))return null;return CONSTITUTIVE.get(pairKey(row.dataset.leftPlacement,row.dataset.rightPlacement))||null}
 function rowHasAngle(row){return ANGLES.has(canonical(row.dataset.leftPlacement))||ANGLES.has(canonical(row.dataset.rightPlacement))}
+function placementLogic(){return window.RelphiSkyPlacementLogic||null}
+function placementLogicActive(){try{return(placementLogic()?.rules?.()||[]).length>0}catch(_){return false}}
+function placementLogicVetoed(slot,id){try{return placementLogic()?.endpointVetoed?.(slot,canonical(id))===true}catch(_){return false}}
+function placementLogicPositive(slot,id){try{return placementLogic()?.endpointPositive?.(slot,canonical(id))===true}catch(_){return false}}
 function placementInput(slot,id){return document.querySelector(`[data-placement-option="${canonical(id)}"][data-slot="${slot}"]`)}
-function filterSelected(slot,id){const input=placementInput(slot,id);return input?input.checked:true}
+function filterSelected(slot,id){
+  if(placementLogic())return!placementLogicVetoed(slot,id);
+  const input=placementInput(slot,id);return input?input.checked:true
+}
 function interactionMatchesEndpoint(slot,id){return!!interactionIntent&&interactionIntent.slot===slot&&interactionIntent.id===canonical(id)}
 function interactionMatchesRow(row){
   if(!interactionIntent)return false;
@@ -51,7 +58,8 @@ function angleFilterMatchesRow(row){
 }
 function nodeFilterMatchesRow(row){
   const slots=endpointSlots(row),left=canonical(row.dataset.leftPlacement),right=canonical(row.dataset.rightPlacement);
-  return(NODES.has(left)&&explicitNodeFilters.has(selectionKey(slots.left,left)))||(NODES.has(right)&&explicitNodeFilters.has(selectionKey(slots.right,right)));
+  return(NODES.has(left)&&(placementLogicPositive(slots.left,left)||explicitNodeFilters.has(selectionKey(slots.left,left))))||
+    (NODES.has(right)&&(placementLogicPositive(slots.right,right)||explicitNodeFilters.has(selectionKey(slots.right,right))));
 }
 function semanticVisible(row){
   const meta=constitutiveMeta(row);
@@ -72,11 +80,14 @@ function missingPlacementEndpoints(row){
 }
 function reconcilePlacementFilter(row,meta){
   if(!row.classList.contains('sky-chart-multiselect-hidden'))return;
+  // Explicit OR / AND / NOT placement logic is authoritative. Structural-axis
+  // semantics may annotate a surviving row, but may not resurrect one rejected by logic.
+  if(placementLogicActive())return;
   if(meta&&semanticVisible(row)){row.classList.remove('sky-chart-multiselect-hidden');return}
   if(!interactionMatchesRow(row))return;
   const missing=missingPlacementEndpoints(row);
-  // Intentional axis focus may open another quiet chart angle, but it must not override
-  // an ordinary placement the user deliberately filtered out.
+  // Intentional axis focus may open another quiet chart angle only when no explicit
+  // placement logic is active.
   if(missing.length&&missing.every(endpoint=>ANGLES.has(endpoint.id)))row.classList.remove('sky-chart-multiselect-hidden');
 }
 function annotateRow(row){
