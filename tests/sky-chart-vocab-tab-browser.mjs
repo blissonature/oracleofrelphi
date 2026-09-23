@@ -241,6 +241,21 @@ assert.ok(vocabWheelHighlight.signs.includes(6),'Hovering the Libra concentratio
 assert.ok(vocabWheelHighlight.exact.includes('sun')&&vocabWheelHighlight.exact.includes('mercury'),'Placement loci must receive the strongest Vocab-context emphasis.');
 const unrelatedMoonOpacity=Number(await page.locator('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="moon"]').evaluate(node=>getComputedStyle(node).opacity));
 assert.ok(unrelatedMoonOpacity>=.6,'Unrelated placement glyphs must remain visible while a Vocab row highlights its context.');
+const selectedContextStrength=await page.evaluate(()=>{
+  const sign=document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector[data-sign="6"]');
+  const house=document.querySelector('#skyFoundationWheelMount .sky-foundation-house-sector[data-sky="A"][data-house="1"]');
+  const unrelatedSign=document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector[data-sign="0"]');
+  return{
+    signFill:Number(getComputedStyle(sign).fillOpacity),
+    houseFill:Number(getComputedStyle(house).fillOpacity),
+    signOpacity:Number(getComputedStyle(sign).opacity),
+    houseOpacity:Number(getComputedStyle(house).opacity),
+    unrelatedSignOpacity:Number(getComputedStyle(unrelatedSign).opacity)
+  };
+});
+assert.ok(selectedContextStrength.signFill>=.75&&selectedContextStrength.signOpacity===1,'Matching sign sector must become substantially opaque and fully visible.');
+assert.ok(selectedContextStrength.houseFill>=.75&&selectedContextStrength.houseOpacity===1,'Matching house sector must become substantially opaque and fully visible.');
+assert.ok(selectedContextStrength.unrelatedSignOpacity<=.2,'Unrelated sign sectors must still recede so the matching sign remains immediately apparent.');
 assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel highlighting must not filter the Relationships list.');
 await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
