@@ -136,6 +136,8 @@ assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:norm
 assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:normal/,'Structure referents must remain readable and wrap normally instead of being replaced by hard-coded names');
 assert.match(vocab,/renderStructures\(container,structureList,permitted,slot\);[\s\S]*renderFullPlacements\(container,permitted,slot\)/,'Structures must lead the Vocab reading before the ordinary placement reading');
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
+assert.match(vocab,/line\.dataset\.vocabMembers=\[\.\.\.structure\.left,\.\.\.structure\.right\]\.map\(record=>record\.id\)\.join\('\|'\)/,'Axis polarity rows must carry every attached placement member as explicit wheel context');
+assert.match(vocab,/line\.dataset\.vocabStructure==='axis-polarity'[\s\S]*line\.dataset\.vocabMembers[\s\S]*placements\.add\(id\)/,'Axis wheel context must read explicit structure membership rather than depend only on rendered tokens');
 assert.doesNotMatch(vocab,/relations\(list\)\.filter/,'Vocab must not append the raw intrasky aspect list after the structural synthesis');
 assert.match(vocab,/node\.dataset\.vocabLead=String\(lead\|\|''\)/,'Vocab tokens must carry their grammatical lead so it can share the token head');
 assert.match(vocab,/const ORDER=\['north-node','south-node','asc','dsc','mc','ic','vertex','anti-vertex','sun','moon'/,'Full Vocab ordering must keep nodes and structural points ahead of the ordinary bodies');
