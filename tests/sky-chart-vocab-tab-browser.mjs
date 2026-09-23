@@ -47,6 +47,21 @@ assert.equal(await page.locator('#skyFoundationA [data-sky-vocab-panel="A"]').ev
 
 const vocabParagraph=page.locator('#skyFoundationA [data-sky-vocab-paragraph]');
 assert.equal(await vocabParagraph.locator(':scope > :first-child').evaluate(node=>node.classList.contains('sky-vocab-structures-heading')),true,'Structures must be the first reading layer before Placements.');
+const placementRows=vocabParagraph.locator('.sky-vocab-line[data-vocab-placement-colors="true"]');
+assert.ok(await placementRows.count()>5,'Placements must remain a complete atomic reading layer beneath Structures.');
+const firstPlacementRails=await placementRows.first().evaluate(node=>({
+  sign:getComputedStyle(node).getPropertyValue('--vocab-placement-signs').trim(),
+  house:getComputedStyle(node).getPropertyValue('--vocab-placement-houses').trim(),
+  system:node.dataset.vocabHouseSystem
+}));
+assert.ok(firstPlacementRails.sign,'Each placement row must expose a sign rail.');
+assert.ok(firstPlacementRails.house,'Each placement row must expose a house rail.');
+assert.equal(firstPlacementRails.system,'equal-house','Placement rails must use the active house system.');
+const ascDscPlacementRow=placementRows.filter({has:page.locator('[data-vocab-id="asc"]')}).filter({has:page.locator('[data-vocab-id="dsc"]')}).first();
+assert.equal(await ascDscPlacementRow.count(),1,'Ascendant and Descendant must remain one paired placement sentence.');
+const ascDscRail=await ascDscPlacementRow.evaluate(node=>getComputedStyle(node).getPropertyValue('--vocab-placement-signs').trim());
+assert.match(ascDscRail,/linear-gradient/i,'A paired placement sentence must split its sign rail across both placements.');
+
 const primaryAxes=await vocabParagraph.locator('[data-vocab-structure="axis-polarity"]').evaluateAll(lines=>lines.map(line=>line.dataset.vocabAxis));
 assert.deepEqual(primaryAxes.slice(0,4),['vertex-anti-vertex','asc-dsc','mc-ic','north-node-south-node'],'Primary structures must lead with Vertex/Anti-Vertex, chart angles, then nodes.');
 assert.equal(await vocabParagraph.locator('[data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"] .sky-vocab-token[data-vocab-id="anti-vertex"]').count(),1,'Vertex polarity must include a derived Anti-Vertex when the sky stores only Vertex.');
@@ -77,6 +92,7 @@ const beforeHouseSystemRails=await meridianStructure.evaluate(node=>({
   sign:getComputedStyle(node).getPropertyValue('--vocab-polarity-signs').trim(),
   house:getComputedStyle(node).getPropertyValue('--vocab-polarity-houses').trim()
 }));
+const beforePlacementHouseRail=await page.locator('#skyFoundationA .sky-vocab-line[data-vocab-placement-colors="true"]').first().evaluate(node=>getComputedStyle(node).getPropertyValue('--vocab-placement-houses').trim());
 const alternateCusps=skyA.houseCusps.map((value,index)=>(value+(index%2===0?12:-8)+360)%360);
 await page.evaluate(({cusps})=>{
   const key='relphiSkyChartA',value=JSON.parse(localStorage.getItem(key));
@@ -95,6 +111,12 @@ const afterHouseSystemRails=await page.locator('#skyFoundationA [data-vocab-axis
 assert.equal(afterHouseSystemRails.system,'placidus','Vocab structure rails must rerender for a changed house system.');
 assert.equal(afterHouseSystemRails.sign,beforeHouseSystemRails.sign,'Changing house system must not alter the zodiac-sign rail for fixed longitudes.');
 assert.notEqual(afterHouseSystemRails.house,beforeHouseSystemRails.house,'Changing house cusps must be able to alter the house rail independently of the sign rail.');
+const afterPlacementRail=await page.locator('#skyFoundationA .sky-vocab-line[data-vocab-placement-colors="true"]').first().evaluate(node=>({
+  house:getComputedStyle(node).getPropertyValue('--vocab-placement-houses').trim(),
+  system:node.dataset.vocabHouseSystem
+}));
+assert.equal(afterPlacementRail.system,'placidus','Placement rails must rerender under the changed house system.');
+assert.notEqual(afterPlacementRail.house,beforePlacementHouseRail,'A changed house assignment must be able to alter the placement house rail.');
 
 const rawLoadedSky={
   ...Object.fromEntries(Object.entries(skyA.placements)),
