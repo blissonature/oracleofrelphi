@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=40/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=41/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -113,7 +113,7 @@ assert.match(vocab,/Number\(bStellium\)-Number\(aStellium\)/,'Stelliums must sor
 assert.match(vocab,/function proximityClusters\(list\)/,'Vocab must detect natural connected placement clusters rather than enumerating every aspect');
 assert.match(vocab,/function independentClusters\(list\)\{return proximityClusters\(list\)\}/,'Local concentrations must remain visible even when they also participate in a larger polarity');
 assert.match(vocab,/line\.dataset\.vocabStructure=isStellium\(members\)\?'stellium':'cluster'/,'Detected concentrations must distinguish stelliums from ordinary clusters');
-assert.match(vocab,/function compactStructureContext\(info,kind\)/,'Structures must provide compact sign and house context without duplicating full Vocab referent prose');
+assert.match(vocab,/function compactStructureContext\(info,kind\)/,'Structures must provide sign and house context through the same Vocab layer system');
 assert.match(vocab,/function structureMemberGroups\(members\)/,'Structure members sharing one sign and house must be grouped before context is rendered');
 assert.match(vocab,/const key=record\.sign\+'\\|'\+\(record\.house\|\|0\)/,'Structure grouping must use the shared sign-plus-house location');
 assert.match(vocab,/compactStructureContext\(signInfo\(group\.sign\),'sign'\)/,'Each shared structure group must print its zodiac sign context once');
@@ -122,7 +122,8 @@ assert.match(vocab,/no placements · default ruler '\+SIGN_RULERS\[signIndex\]/,
 assert.match(vocab,/no placements · default ruler '\+ruler/,'An empty house pole must explicitly state its absence and cusp-sign ruler');
 assert.match(vocab,/appendStructureSubheading\(container,'Sign polarities'\)/,'Sign polarities must be an explicit Structures subsection');
 assert.match(vocab,/appendStructureSubheading\(container,'House polarities'\)/,'House polarities must be an explicit Structures subsection');
-assert.match(vocab,/sky-vocab-structure-context\{display:inline-flex;align-items:baseline;white-space:nowrap/,'Sign and house context glyph/name pairs must remain compact and unbroken');
+assert.match(vocab,/const wrap=token\(info,kind,false\)/,'Structure sign and house context must reuse normal Vocab tokens so Glyphs, Referents, and Names obey Display');
+assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:normal/,'Structure referents must remain readable and wrap normally instead of being replaced by hard-coded names');
 assert.match(vocab,/renderStructures\(container,structureList,permitted,slot\);[\s\S]*renderFullPlacements\(container,permitted\)/,'Structures must lead the Vocab reading before the ordinary placement reading');
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
 assert.doesNotMatch(vocab,/relations\(list\)\.filter/,'Vocab must not append the raw intrasky aspect list after the structural synthesis');
