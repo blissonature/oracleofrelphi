@@ -21,6 +21,7 @@ on:
       - 'tests/sky-chart-filter-control-unified.mjs'
       - 'tests/sky-chart-stability-now.mjs'
       - 'tests/sky-chart-vocab-tab-browser.mjs'
+      - 'tests/sky-chart-vocab-copy-browser.mjs'
       - 'tests/sky-chart-vocab-structural-members-browser.mjs'
       - 'tests/sky-chart-vocab-tab-contract.mjs'
       - 'tools/check-single-glyph-canon.mjs'
@@ -56,6 +57,7 @@ jobs:
           node --check sky-chart-vocab-copy-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
           node --check tests/sky-chart-vocab-tab-browser.mjs
+          node --check tests/sky-chart-vocab-copy-browser.mjs
           node --check tests/sky-chart-vocab-structural-members-browser.mjs
           node --check tests/sky-chart-vocab-tab-contract.mjs
           node tests/sky-chart-vocab-tab-contract.mjs
@@ -70,6 +72,7 @@ jobs:
       - name: Run focused browser regressions
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-ui-regression-server.log 2>&1 &
+          node tests/sky-chart-vocab-copy-browser.mjs
           node tests/sky-chart-vocab-structural-members-browser.mjs
           node tests/sky-chart-vocab-tab-browser.mjs
           node tests/sky-chart-single-canon-browser.mjs
