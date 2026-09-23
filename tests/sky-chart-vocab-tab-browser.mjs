@@ -267,6 +267,10 @@ await firstToken.locator('.sky-vocab-referent').click();
 assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),1,'First local reveal must add the next hidden layer: glyph.');
 assert.equal(await firstToken.locator('.sky-vocab-name').count(),0,'First local reveal must not skip ahead to the name.');
 assert.equal(await secondToken.locator('.sky-vocab-glyph').count(),0,'A local reveal must not alter neighboring tokens.');
+
+const structureContextReferentOnly=page.locator('#skyFoundationA [data-vocab-structure] [data-vocab-context-kind="sign"]').first();
+assert.equal(await structureContextReferentOnly.locator('.sky-vocab-name').count(),0,'Turning Names off must also remove sign names inside Structures.');
+assert.equal(await structureContextReferentOnly.locator('.sky-vocab-referent').count(),1,'Turning Referents on must show the sign referent inside Structures.');
 await firstToken.locator('.sky-vocab-referent').click();
 assert.equal(await firstToken.locator('.sky-vocab-name').count(),1,'Second local reveal must add the final hidden layer: name.');
 const expandedOrder=await firstToken.evaluate(node=>Array.from(node.querySelectorAll(':scope .sky-vocab-glyph,:scope .sky-vocab-referent,:scope .sky-vocab-name')).map(child=>
@@ -323,8 +327,8 @@ const meridianStructure=page.locator('#skyFoundationA [data-vocab-structure="axi
 assert.equal(await meridianStructure.locator('[data-vocab-context-kind="sign"]').count(),2,'MC + Chiron and IC + Uranus must each share one sign context instead of repeating it per member.');
 assert.equal(await meridianStructure.locator('[data-vocab-context-kind="house"]').count(),2,'MC + Chiron and IC + Uranus must each share one house context instead of repeating it per member.');
 assert.equal(await meridianStructure.locator('[data-vocab-structure-context-group]').count(),2,'The meridian polarity fixture must collapse its four members into two shared-location groups.');
-assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-structure-context-name').filter({hasText:'Gemini'}).count()>=1,'MC/Chiron pole must expose its Gemini context.');
-assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-structure-context-name').filter({hasText:'Sagittarius'}).count()>=1,'IC/Uranus pole must expose its Sagittarius context.');
+assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-name').filter({hasText:'Gemini'}).count()>=1,'MC/Chiron pole must expose its Gemini context.');
+assert.ok(await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-name').filter({hasText:'Sagittarius'}).count()>=1,'IC/Uranus pole must expose its Sagittarius context.');
 assert.equal(await meridianStructure.locator('[data-vocab-context-kind="house"] .relphi-house-medallion').count(),2,'Grouped structure house context must reuse one canonical House Medallion per shared location.');
 
 await clickBlankComparison();
