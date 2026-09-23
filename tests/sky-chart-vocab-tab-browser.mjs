@@ -253,7 +253,7 @@ assert.ok(await initialLines.count()>5,'Vocab must render multiple sentence line
 const lineStarts=await initialLines.evaluateAll(lines=>lines.map(line=>(line.textContent||'').trim()).filter(Boolean).map(text=>text.match(/[A-Za-z]/)?.[0]||''));
 assert.equal(lineStarts.every(letter=>/[A-Z]/.test(letter)),true,'Every Vocab line must begin with a capital letter.');
 
-const sunLine=page.locator('#skyFoundationA .sky-vocab-line').filter({has:page.locator('.sky-vocab-token[data-vocab-kind="placement"][data-vocab-id="sun"]')}).first();
+const sunLine=page.locator('#skyFoundationA .sky-vocab-line:not([data-vocab-structure])').filter({has:page.locator('.sky-vocab-token[data-vocab-kind="placement"][data-vocab-id="sun"]')}).first();
 assert.match(await sunLine.textContent(),/is in/i,'Ordinary placements must use the same “is in” grammar as Ascendant and MC.');
 
 const firstHouseBridge=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"] > .sky-vocab-symbol-label').first().evaluate(node=>({
