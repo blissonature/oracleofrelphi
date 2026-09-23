@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=68/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=69/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -209,8 +209,8 @@ assert.match(vocab,/panel\.addEventListener\('click'[\s\S]*togglePinnedVocabToke
 assert.match(vocab,/panel\.addEventListener\('pointerover'[\s\S]*applyVocabTokenWheelContext\(tokenNode\)/,'Hovering an individual Vocab token must temporarily highlight that wheel piece');
 assert.match(vocab,/function clearVocabWheelTokenContext\(\)/,'Individual Vocab focus must have its own overlay lifecycle instead of replacing the structure context');
 assert.match(vocab,/if\(vocabWheelContextLine!==line\)applyVocabWheelContext\(line\)[\s\S]*is-vocab-token-context/,'Token focus must preserve or establish its parent structure context before adding local emphasis');
-assert.match(vocab,/has-vocab-token-context \[data-focus-piece\]\.is-vocab-context:not\(\.is-vocab-token-context\)\{opacity:\.5!important\}/,'Token focus must keep the rest of the active structure visible at secondary emphasis');
-assert.match(vocab,/has-vocab-axis-context\.has-vocab-token-context \[data-focus-piece\]\.is-vocab-token-context\{filter:none!important\}/,'Token focus inside polarity whiteout must not reintroduce saturation or brightness');
+assert.doesNotMatch(vocab,/has-vocab-token-context [^{]*is-vocab-context:not\(\.is-vocab-token-context\)[^{]*\{[^}]*opacity:/,'Token focus must not dim any non-selected member of the active structure');
+assert.match(vocab,/has-vocab-token-context \[data-focus-piece="placement"\]\.is-vocab-token-context,[\s\S]*drop-shadow/,'Placement token focus must add a neutral visual highlight without dimming surrounding structure members');
 assert.match(vocab,/\.has-vocab-context:not\(\.has-isolation\) \[data-focus-piece\]/,'Vocab context must dim unrelated wheel pieces without taking ownership from a pre-existing wheel isolation');
 assert.match(vocab,/\.is-vocab-context-exact/,'Vocab context must emphasize exact placement loci above their sign and house context');
 assert.match(vocab,/event\.pointerType!=='touch'&&event\.pointerType!=='pen'/,'Touch and pen taps must retain a Vocab wheel context instead of relying on hover');
