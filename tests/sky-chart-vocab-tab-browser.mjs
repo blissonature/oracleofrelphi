@@ -257,7 +257,7 @@ const sunLine=page.locator('#skyFoundationA .sky-vocab-line:not([data-vocab-stru
 const sunLineText=(await sunLine.textContent()).replace(/\s+/g,' ');
 assert.match(sunLineText,/is in/i,'Ordinary placements must use the same “is in” grammar as Ascendant and MC.');
 
-const firstHouseBridge=await page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"] > .sky-vocab-symbol-label').first().evaluate(node=>({
+const firstHouseBridge=await page.locator('#skyFoundationA .sky-vocab-line:not([data-vocab-structure]) .sky-vocab-token[data-vocab-kind="house"] > .sky-vocab-symbol-label').first().evaluate(node=>({
   text:(node.textContent||'').trim(),
   whiteSpace:getComputedStyle(node).whiteSpace
 }));
