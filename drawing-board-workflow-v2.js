@@ -1097,6 +1097,10 @@
     syncFocusNavMode(reader);
     if (focusNavMode==='strip') keepFocusStripCurrentVisible(reader?.querySelector('.relphi-focus-strip'),true);
   }
+  function focusFanSpacing(fan, reader) {
+    const width=Math.max(280,fan?.clientWidth||reader?.clientWidth||390);
+    return Math.max(30,Math.min(62,width*.115));
+  }
   function renderFocusFan(reader, index) {
     const fan=reader.querySelector('.relphi-focus-fan');
     if (!fan) return;
@@ -1119,8 +1123,7 @@
       existing.delete(key);
       const offset=logicalIndex-currentLogical;
       const distance=Math.abs(offset);
-      const width=Math.max(280,fan.clientWidth||reader.clientWidth||390);
-      const spacing=Math.max(30,Math.min(62,width*.115));
+      const spacing=focusFanSpacing(fan,reader);
       const x=offset*spacing;
       const y=Math.min(18,distance*4);
       const rotation=Math.max(-18,Math.min(18,offset*4));
@@ -1155,46 +1158,76 @@
     });
     existing.forEach(node=>node.remove());
   }
-  function installFocusFanSwipe(reader) {
+  function installFocusFanScrub(reader) {
     const fan=reader.querySelector('.relphi-focus-fan');
-    if (!fan || fan.dataset.swipeReady==='true') return;
-    fan.dataset.swipeReady='true';
+    if (!fan || fan.dataset.scrubReady==='true') return;
+    fan.dataset.scrubReady='true';
     let gesture=null;
+    const drawnOrder=()=>orderedNativePositionIndices().filter(index=>!!cardAt(index));
+    const setFingerCard=nativeIndex=>{
+      fan.querySelectorAll('[data-focus-position]').forEach(button=>{
+        button.classList.toggle('is-under-finger',Number(button.dataset.focusPosition)===nativeIndex);
+      });
+    };
+    const activateDrawn=nativeIndex=>{
+      if (!Number.isInteger(nativeIndex) || !cardAt(nativeIndex) || nativeIndex===focusIndex) return;
+      const leaving=focusIndex;
+      if (leaving>=0 && leaving!==nativeIndex && isCrossingPosition(leaving)) acknowledgeCelticCrossing();
+      openFocus(nativeIndex);
+    };
     fan.addEventListener('pointerdown',event=>{
       if (event.button!=null && event.button!==0) return;
-      gesture={id:event.pointerId,x:event.clientX,y:event.clientY,moved:false};
+      const pressed=event.target.closest?.('[data-focus-position]');
+      if (!pressed || !fan.contains(pressed)) return;
+      const nativeIndex=Number(pressed.dataset.focusPosition);
+      const order=drawnOrder();
+      const pressedLogical=order.indexOf(nativeIndex);
+      if (pressedLogical<0) return;
+      activateDrawn(nativeIndex);
+      setFingerCard(nativeIndex);
+      gesture={
+        id:event.pointerId,
+        x:event.clientX,
+        y:event.clientY,
+        startLogical:pressedLogical,
+        targetLogical:pressedLogical,
+        order,
+        spacing:focusFanSpacing(fan,reader),
+        moved:false
+      };
+      fan.classList.add('is-scrubbing');
       fan.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
     });
     fan.addEventListener('pointermove',event=>{
       if (!gesture || event.pointerId!==gesture.id) return;
       const dx=event.clientX-gesture.x;
       const dy=event.clientY-gesture.y;
-      if (Math.abs(dx)<5 && Math.abs(dy)<5) return;
-      gesture.moved=true;
-      if (Math.abs(dx)>Math.abs(dy)) {
-        fan.classList.add('is-dragging');
-        fan.style.transform=`translateX(${Math.max(-70,Math.min(70,dx*.28))}px)`;
-        event.preventDefault();
+      if (!gesture.moved && Math.hypot(dx,dy)>=4) gesture.moved=true;
+      if (!gesture.moved) return;
+      const rawLogical=gesture.startLogical+dx/Math.max(1,gesture.spacing);
+      const targetLogical=Math.max(0,Math.min(gesture.order.length-1,Math.round(rawLogical)));
+      const targetNative=gesture.order[targetLogical];
+      const residual=dx-(targetLogical-gesture.startLogical)*gesture.spacing;
+      fan.style.transform=`translateX(${Math.max(-gesture.spacing/2,Math.min(gesture.spacing/2,residual))}px)`;
+      setFingerCard(targetNative);
+      if (targetLogical!==gesture.targetLogical) {
+        gesture.targetLogical=targetLogical;
+        activateDrawn(targetNative);
       }
+      event.preventDefault();
     });
     const finish=event=>{
       if (!gesture || event.pointerId!==gesture.id) return;
-      const dx=event.clientX-gesture.x;
-      const dy=event.clientY-gesture.y;
       const moved=gesture.moved;
       gesture=null;
-      fan.classList.remove('is-dragging');
+      fan.classList.remove('is-scrubbing');
       fan.style.transform='';
+      fan.querySelectorAll('.is-under-finger').forEach(button=>button.classList.remove('is-under-finger'));
       if (moved) suppressFanClickUntil=Date.now()+280;
-      if (moved && Math.abs(dx)>=42 && Math.abs(dx)>Math.abs(dy)*1.1) navigateFocusBy(dx<0?1:-1);
     };
     fan.addEventListener('pointerup',finish);
-    fan.addEventListener('pointercancel',event=>{
-      if (!gesture || event.pointerId!==gesture.id) return;
-      gesture=null;
-      fan.classList.remove('is-dragging');
-      fan.style.transform='';
-    });
+    fan.addEventListener('pointercancel',finish);
   }
   function bindFocusNavModes(reader) {
     reader.querySelectorAll('[data-focus-nav-mode]').forEach(button=>{
@@ -1248,7 +1281,7 @@
     renderFocusStrip(reader,index,{preserveScroll:false});
     renderFocusFan(reader,index);
     bindFocusNavModes(reader);
-    installFocusFanSwipe(reader);
+    installFocusFanScrub(reader);
     reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
     reader.querySelector('.relphi-focus-prev').addEventListener('click',()=>navigateFocusBy(-1));
     reader.querySelector('.relphi-focus-next').addEventListener('click',()=>navigateFocusBy(1));
