@@ -136,7 +136,11 @@ const beforeHouseSystemRails=await meridianStructure.evaluate(node=>({
   sign:getComputedStyle(node).getPropertyValue('--vocab-polarity-signs').trim(),
   house:getComputedStyle(node).getPropertyValue('--vocab-polarity-houses').trim()
 }));
-const beforePlacementHouseRail=await page.locator('#skyFoundationA .sky-vocab-line[data-vocab-placement-colors="true"]').first().evaluate(node=>getComputedStyle(node).getPropertyValue('--vocab-placement-houses').trim());
+const placementRailSnapshot=()=>page.locator('#skyFoundationA .sky-vocab-line[data-vocab-placement-colors="true"]').evaluateAll(rows=>rows.map(node=>({
+  ids:[...node.querySelectorAll('.sky-vocab-token[data-vocab-kind="placement"]')].map(token=>token.dataset.vocabId).filter(Boolean).join('|'),
+  house:getComputedStyle(node).getPropertyValue('--vocab-placement-houses').trim()
+})));
+const beforePlacementHouseRails=await placementRailSnapshot();
 const alternateCusps=skyA.houseCusps.map((value,index)=>(value+(index%2===0?12:-8)+360)%360);
 await page.evaluate(({cusps})=>{
   const key='relphiSkyChartA',value=JSON.parse(localStorage.getItem(key));
@@ -158,12 +162,10 @@ const afterHouseSystemRails=await page.locator('#skyFoundationA [data-vocab-axis
 assert.equal(afterHouseSystemRails.system,'placidus','Vocab structure rails must rerender for a changed house system.');
 assert.equal(afterHouseSystemRails.sign,beforeHouseSystemRails.sign,'Changing house system must not alter the zodiac-sign rail for fixed longitudes.');
 assert.notEqual(afterHouseSystemRails.house,beforeHouseSystemRails.house,'Changing house cusps must be able to alter the house rail independently of the sign rail.');
-const afterPlacementRail=await page.locator('#skyFoundationA .sky-vocab-line[data-vocab-placement-colors="true"]').first().evaluate(node=>({
-  house:getComputedStyle(node).getPropertyValue('--vocab-placement-houses').trim(),
-  system:node.dataset.vocabHouseSystem
-}));
-assert.equal(afterPlacementRail.system,'placidus','Placement rails must rerender under the changed house system.');
-assert.notEqual(afterPlacementRail.house,beforePlacementHouseRail,'A changed house assignment must be able to alter the placement house rail.');
+const afterPlacementHouseRails=await placementRailSnapshot();
+assert.ok(afterPlacementHouseRails.length>0&&await page.locator('#skyFoundationA .sky-vocab-line[data-vocab-placement-colors="true"]').first().getAttribute('data-vocab-house-system')==='placidus','Placement rails must rerender under the changed house system.');
+const beforePlacementRailMap=new Map(beforePlacementHouseRails.map(item=>[item.ids,item.house]));
+assert.ok(afterPlacementHouseRails.some(item=>beforePlacementRailMap.has(item.ids)&&beforePlacementRailMap.get(item.ids)!==item.house),'At least one placement whose house assignment changes must update its house rail.');
 
 const rawLoadedSky={
   ...Object.fromEntries(Object.entries(skyA.placements)),
