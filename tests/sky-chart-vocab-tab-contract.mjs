@@ -231,7 +231,7 @@ assert.match(vocab,/panel\.addEventListener\('pointerover'[\s\S]*applyVocabToken
 
 
 assert.doesNotMatch(vocab,/has-vocab-token-context [^{]*is-vocab-context:not\(\.is-vocab-token-context\)[^{]*\{[^}]*opacity:/,'Token focus must not dim any non-selected member of the active structure');
-assert.match(vocab,/has-vocab-token-context \[data-focus-piece="placement"\]\.is-vocab-token-context,[\s\S]*drop-shadow/,'Placement token focus must add a neutral visual highlight without dimming surrounding structure members');
+assert.match(vocab,/context\.kind==='placement'&&\(type==='placement'\|\|type==='leader'\)/,'Placement token focus must target the placement and its leader while the shared token-context rule supplies the neutral glow');
 
 
 assert.match(vocab,/event\.pointerType!=='touch'&&event\.pointerType!=='pen'/,'Touch and pen taps must retain a Vocab wheel context instead of relying on hover');
