@@ -330,6 +330,9 @@ assert.equal(await meridianStructure.locator('[data-vocab-structure-context-grou
 
 const meridianText=(await meridianStructure.textContent()).replace(/\s+/g,' ').trim();
 assert.match(meridianText,/are in/i,'A grouped structural pole must read as prose using “are in”.');
+assert.match(meridianText,/At one end of the polarity,/,'Primary polarity prose must give the first side an explicit grammatical role.');
+assert.match(meridianText,/; at the other,/,'Primary polarity prose must give the second side an equal grammatical role.');
+assert.equal(meridianText.includes('form one pole, opposite'),false,'Primary polarity prose must not use the old asymmetric wording.');
 assert.match(meridianText,/concerning/i,'Structure house context must be introduced with “concerning” instead of a bare separator.');
 
 const structureTypography=await meridianStructure.evaluate(line=>{
