@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=70/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=71/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -203,6 +203,11 @@ assert.match(vocab,/stellium\?'Stellium · ':'/,'Stellium must remain visible be
 
 assert.match(vocab,/function vocabLineContext\(line\)/,'Vocab rows must derive wheel context from the placements, signs, and houses they display');
 assert.match(vocab,/function applyVocabWheelContext\(line\)/,'Vocab rows must be able to highlight their context on the comparison wheel');
+assert.doesNotMatch(vocab,/has-vocab-context[^\n]*opacity:/,'Structure highlighting must never dim or force opacity on the wheel');
+assert.doesNotMatch(vocab,/has-vocab-context[^\n]*saturate|has-vocab-context[^\n]*brightness/,'Structure highlighting must not recolor the wheel through saturation or brightness');
+assert.doesNotMatch(vocab,/has-vocab-context[^\n]*fill-opacity/,'Structure highlighting must preserve native sign and house fill opacity');
+assert.match(vocab,/has-vocab-context \[data-focus-piece\]\.is-vocab-context\{filter:drop-shadow/,'Structure highlighting must use only a restrained glow');
+assert.match(vocab,/has-vocab-token-context \[data-focus-piece\]\.is-vocab-token-context\{filter:drop-shadow/,'Individual token highlighting must use a slightly stronger restrained glow');
 assert.match(vocab,/function vocabTokenWheelContext\(tokenNode\)/,'Vocab must derive wheel context from individual placement, sign, and house tokens');
 assert.match(vocab,/function applyVocabTokenWheelContext\(tokenNode\)[\s\S]*clearVocabWheelContext\(\)[\s\S]*is-vocab-token-context/,'Individual token focus must clear structure whiteout and add only a local highlight');
 assert.doesNotMatch(vocab,/applyVocabTokenWheelContext\(tokenNode\)[\s\S]{0,500}applyVocabWheelContext\(line\)/,'Individual token focus must not establish row-level dimming');
@@ -213,8 +218,8 @@ assert.match(vocab,/panel\.addEventListener\('pointerover'[\s\S]*applyVocabToken
 
 assert.doesNotMatch(vocab,/has-vocab-token-context [^{]*is-vocab-context:not\(\.is-vocab-token-context\)[^{]*\{[^}]*opacity:/,'Token focus must not dim any non-selected member of the active structure');
 assert.match(vocab,/has-vocab-token-context \[data-focus-piece="placement"\]\.is-vocab-token-context,[\s\S]*drop-shadow/,'Placement token focus must add a neutral visual highlight without dimming surrounding structure members');
-assert.match(vocab,/\.has-vocab-context:not\(\.has-isolation\) \[data-focus-piece\]/,'Vocab context must dim unrelated wheel pieces without taking ownership from a pre-existing wheel isolation');
-assert.match(vocab,/\.is-vocab-context-exact/,'Vocab context must emphasize exact placement loci above their sign and house context');
+
+
 assert.match(vocab,/event\.pointerType!=='touch'&&event\.pointerType!=='pen'/,'Touch and pen taps must retain a Vocab wheel context instead of relying on hover');
 assert.doesNotMatch(vocab,/applyWheelSpec\([^)]*vocab/i,'Vocab-to-wheel context highlighting must not mutate the Vocab filter state');
 
@@ -226,10 +231,10 @@ assert.match(vocab,/document\.addEventListener\('pointerdown',clearVocabWheelCon
 assert.match(vocab,/vertex\|anti-vertex','anti-vertex\|vertex/,'Vertex and Anti-Vertex must be treated as an automatic polarity rather than a counted raw relationship');
 assert.match(vocab,/\[data-focus-piece="placement"\]\{opacity:\.62!important/,'Unrelated wheel placements must remain legible while Vocab supplies context');
 assert.match(vocab,/\[data-focus-piece="leader"\]\{opacity:\.36!important/,'Placement leaders must remain visible enough to preserve exact-degree context');
-assert.match(vocab,/\.has-vocab-axis-context:not\(\.has-isolation\) \[data-focus-piece="placement"\]:not\(\.is-vocab-context\)\{opacity:\.18!important/,'Axis-polarity context must recede placements that do not participate in the active axis');
 
-assert.match(vocab,/has-vocab-context:not\(\.has-vocab-axis-context\)[\s\S]*fill-opacity:\.78!important;filter:saturate\(1\.55\)/,'Normal Vocab emphasis must retain the stronger color treatment while unrelated components remain visible');
-assert.match(vocab,/has-vocab-axis-context \.sky-foundation-sign-sector\.is-vocab-context\{fill-opacity:\.82!important\}/,'Whiteout polarity mode must restore the native zodiac fill');
-assert.match(vocab,/has-vocab-axis-context \.sky-foundation-house-sector\.is-vocab-context\{fill-opacity:\.5!important\}/,'Whiteout polarity mode must restore the native house fill');
-assert.match(vocab,/has-vocab-axis-context \[data-focus-piece\]\.is-vocab-context\{opacity:1!important;filter:none!important\}/,'Whiteout polarity mode must not add saturation or brightness to retained components');
-assert.match(vocab,/\.sky-foundation-sign-glyph\.is-vocab-context\{opacity:1!important/,'The sign glyph itself must stay fully legible with its highlighted sector');
+
+
+
+
+
+
