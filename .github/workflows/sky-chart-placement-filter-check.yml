@@ -6,6 +6,9 @@ on:
       - 'sky-chart.html'
       - 'sky-chart-placement-multiselect-v4.js'
       - 'sky-chart-placement-compact-v1.css'
+      - 'sky-chart-filter-neutral-final-v1.css'
+      - 'sky-chart-relationship-semantics-v1.js'
+      - 'tests/sky-chart-placement-logic-browser.mjs'
       - 'sky-chart-single-sky-mode-v1.css'
       - 'sky-chart-multiselect-filters-v1.css'
       - 'tests/sky-chart-placement-dropdown-alignment.mjs'
@@ -34,7 +37,9 @@ jobs:
       - name: Check syntax
         run: |
           node --check sky-chart-placement-multiselect-v4.js
+          node --check sky-chart-relationship-semantics-v1.js
           node --check tests/sky-chart-placement-dropdown-alignment.mjs
+          node --check tests/sky-chart-placement-logic-browser.mjs
       - name: Install browser dependencies
         run: |
           npm install --no-save playwright@1.52.0 luxon@3 suncalc@1.9.0
@@ -43,3 +48,4 @@ jobs:
         run: |
           python3 -m http.server 4173 > /tmp/sky-chart-placement-filter-server.log 2>&1 &
           node tests/sky-chart-placement-dropdown-alignment.mjs
+          node tests/sky-chart-placement-logic-browser.mjs
