@@ -86,18 +86,26 @@ try{
       };
     });
   }
-  assert.deepEqual(tokenKinds.placement,{axisMode:false,keptPlacements:1,keptSigns:0,keptHouses:0},`Placement token hover must highlight only that placement: ${JSON.stringify(tokenKinds)}`);
-  assert.deepEqual(tokenKinds.sign,{axisMode:false,keptPlacements:0,keptSigns:1,keptHouses:0},`Sign token hover must highlight only that sign: ${JSON.stringify(tokenKinds)}`);
-  assert.deepEqual(tokenKinds.house,{axisMode:false,keptPlacements:0,keptSigns:0,keptHouses:1},`House token hover must highlight only that house: ${JSON.stringify(tokenKinds)}`);
+  for(const kind of ['placement','sign','house']){
+    assert.equal(tokenKinds[kind].axisMode,true,`${kind} token hover must preserve the parent polarity whiteout: ${JSON.stringify(tokenKinds)}`);
+  }
+  const additive=await page.evaluate(()=>({
+    structurePlacements:document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"].is-vocab-context').length,
+    tokenPlacements:document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"].is-vocab-token-context').length,
+    structureSigns:document.querySelectorAll('#skyFoundationWheelMount .sky-foundation-sign-sector.is-vocab-context').length,
+    structureHouses:document.querySelectorAll('#skyFoundationWheelMount .sky-foundation-house-sector.is-vocab-context').length
+  }));
+  assert.ok(additive.structurePlacements>1&&additive.structureSigns>0&&additive.structureHouses>0,`Token hover must keep the whole polarity visible: ${JSON.stringify(additive)}`);
 
   const placementLevel=vertex.locator('.sky-vocab-token[data-vocab-kind="placement"]').first().locator('[data-vocab-level]').first();
   await placementLevel.click();
   await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
   const pinnedPlacement=await page.evaluate(()=>({
-    kept:document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"].is-vocab-context').length,
+    structure:document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece].is-vocab-context').length,
+    token:document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece].is-vocab-token-context').length,
     axis:document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context')||false
   }));
-  assert.deepEqual(pinnedPlacement,{kept:1,axis:false},`Clicking a placement token must pin that individual highlight: ${JSON.stringify(pinnedPlacement)}`);
+  assert.ok(pinnedPlacement.structure>pinnedPlacement.token&&pinnedPlacement.token>=1&&pinnedPlacement.axis,`Pinned placement must stay focused inside the retained polarity context: ${JSON.stringify(pinnedPlacement)}`);
 
   console.log('Structural polarity member regression passed:',JSON.stringify({states,tokenKinds,pinnedPlacement}));
 }finally{
