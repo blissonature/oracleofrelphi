@@ -597,6 +597,47 @@ function applyPolarityStripe(line,colorA,colorB){
   line.style.setProperty('--vocab-polarity-a',colorA);
   line.style.setProperty('--vocab-polarity-b',colorB);
 }
+function weightedStructureGradient(members,keyOf,colorOf,preferredOrder=[]){
+  const counts=new Map(),seen=[];
+  members.forEach(record=>{
+    const key=keyOf(record);
+    if(key===null||key===undefined||!colorOf(key))return;
+    if(!counts.has(key))seen.push(key);
+    counts.set(key,(counts.get(key)||0)+1);
+  });
+  const keys=[...preferredOrder.filter(key=>counts.has(key)),...seen.filter(key=>!preferredOrder.includes(key))];
+  const total=keys.reduce((sum,key)=>sum+counts.get(key),0);
+  if(!total)return'linear-gradient(to bottom,rgba(31,27,24,.24) 0 100%)';
+  let used=0;
+  const stops=[];
+  keys.forEach(key=>{
+    const start=used/total*100;
+    used+=counts.get(key);
+    const end=used/total*100;
+    const color=colorOf(key);
+    stops.push(color+' '+start+'% '+end+'%');
+  });
+  return'linear-gradient(to bottom,'+stops.join(',')+')';
+}
+function concentrationDistribution(members,keyOf,labelOf,preferredOrder=[]){
+  const counts=new Map(),seen=[];
+  members.forEach(record=>{
+    const key=keyOf(record);
+    if(key===null||key===undefined)return;
+    if(!counts.has(key))seen.push(key);
+    counts.set(key,(counts.get(key)||0)+1);
+  });
+  const keys=[...preferredOrder.filter(key=>counts.has(key)),...seen.filter(key=>!preferredOrder.includes(key))];
+  return keys.map(key=>labelOf(key)+':'+counts.get(key)).join('|');
+}
+function applyConcentrationStripe(line,members,profile){
+  const signOrder=profile?.signs||[];
+  line.dataset.vocabConcentrationColors='true';
+  line.dataset.vocabSignDistribution=concentrationDistribution(members,record=>record.sign,key=>SIGNS[key],signOrder);
+  line.dataset.vocabHouseDistribution=concentrationDistribution(members,record=>record.house||null,key=>'H'+key);
+  line.style.setProperty('--vocab-concentration-signs',weightedStructureGradient(members,record=>record.sign,key=>SIGN_COLORS[key],signOrder));
+  line.style.setProperty('--vocab-concentration-houses',weightedStructureGradient(members,record=>record.house||null,key=>HOUSE_COLORS[key-1]));
+}
 function renderStructures(container,list,permitted,slot){
   const selected=new Set(permitted.map(record=>record.id)),showAll=structureScopeIsAll(slot);
   const polarities=polarityStructures(list),clusters=independentClusters(list);
@@ -626,6 +667,7 @@ function renderStructures(container,list,permitted,slot){
       const profile=clusterSignProfile(members),line=document.createElement('div');
       line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure=isStellium(members)?'stellium':'cluster';
       line.dataset.vocabClusterType=profile.type;line.dataset.vocabSigns=profile.names.join('|');line.dataset.vocabMembers=members.map(record=>record.id).join(',');
+      applyConcentrationStripe(line,members,profile);
       line.append(clusterSentence(members),document.createTextNode('.'));container.appendChild(line);
     });
   }
@@ -1011,6 +1053,10 @@ function installStyles(){
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035);color:#211d19;font-size:1em;font-weight:500;line-height:1.52}
     .sky-vocab-structure-line[data-vocab-polarity-colors="true"]{position:relative;border-left:0;padding-left:.62rem}
     .sky-vocab-structure-line[data-vocab-polarity-colors="true"]::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:3px 0 0 3px;background:linear-gradient(to bottom,var(--vocab-polarity-a) 0 50%,var(--vocab-polarity-b) 50% 100%)}
+    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]{position:relative;border-left:0;padding-left:.76rem}
+    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::before,.sky-vocab-structure-line[data-vocab-concentration-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
+    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::before{left:0;border-radius:3px 0 0 3px;background:var(--vocab-concentration-signs)}
+    .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::after{left:4px;background:var(--vocab-concentration-houses)}
     .sky-vocab-structure-label{font:inherit;color:inherit}
     .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:inherit}
