@@ -453,21 +453,9 @@ function proximityClusters(list){
 }
 function independentClusters(list){return proximityClusters(list)}
 function compactStructureContext(info,kind){
-  const wrap=document.createElement('span');wrap.className='sky-vocab-structure-context';wrap.dataset.vocabContextKind=kind;
-  const proxy=document.createElement('span');
-  proxy.dataset.vocabKind=kind;
-  proxy.dataset.vocabId=String(info.id||'');
-  proxy.dataset.vocabGlyphId=String(info.glyphId||'');
-  proxy.dataset.vocabName=String(info.name||'');
-  proxy.dataset.vocabFallbackGlyph=String(info.fallbackGlyph||info.name||'');
-  proxy.dataset.vocabColor=String(info.color||'');
-  const glyph=glyphNode(proxy);
-  const name=document.createElement('span');name.className='sky-vocab-structure-context-name';name.textContent=String(info.name||'');
-  if(info.color){
-    name.style.setProperty('color',String(info.color),'important');
-    name.style.setProperty('-webkit-text-fill-color',String(info.color),'important');
-  }
-  wrap.append(glyph,document.createTextNode(' '),name);
+  const wrap=token(info,kind,false);
+  wrap.classList.add('sky-vocab-structure-context');
+  wrap.dataset.vocabContextKind=kind;
   return wrap;
 }
 function structureMemberGroups(members){
@@ -1003,9 +991,8 @@ function installStyles(){
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035)}
     .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:#6a6058}
-    .sky-vocab-structure-context{display:inline-flex;align-items:baseline;white-space:nowrap;font-size:.88em;font-weight:720}
+    .sky-vocab-structure-context{display:inline;white-space:normal;font-size:.88em}
     .sky-vocab-structure-context .sky-vocab-glyph{--vocab-mark-size:1.38em}
-    .sky-vocab-structure-context-name{display:inline;vertical-align:baseline}
     .sky-vocab-structure-line:first-letter{font-weight:800}
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
