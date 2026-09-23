@@ -54,7 +54,16 @@ const antiVertexToken=vocabParagraph.locator('[data-vocab-structure="axis-polari
 await antiVertexToken.locator('.relphi-glyph-anti-vertex').waitFor({state:'attached'});
 assert.equal(await antiVertexToken.locator('.sky-vocab-glyph.has-svg-glyph').count(),1,'Anti-Vertex must render through the canonical SVG glyph path.');
 assert.equal((await antiVertexToken.textContent()).includes('AVx'),false,'Anti-Vertex must not expose the temporary AVx text fallback.');
-assert.deepEqual(await page.evaluate(()=>{const entry=window.RelphiGlyphRegistry.get('anti-vertex');return{asset:entry?.asset,fitMode:entry?.fitMode,fallback:entry?.fallback??null}}),{asset:'assets/planet-glyphs/anti-vertex.svg',fitMode:'static-master',fallback:null},'Anti-Vertex must resolve to its static canonical master with no text fallback.');
+assert.deepEqual(await page.evaluate(()=>{const entry=window.RelphiGlyphRegistry.get('anti-vertex');return{asset:entry?.asset,fitMode:entry?.fitMode,fallback:entry?.fallback??null}}),{asset:'assets/planet-glyphs/anti-vertex.svg',fitMode:'letter',fallback:'AVx'},'Anti-Vertex must resolve to its canonical SVG using the same letter mode as Asc.');
+const angleSizeComparison=await page.evaluate(()=>{
+  const av=document.querySelector('#skyFoundationA [data-vocab-axis="vertex-anti-vertex"] .relphi-glyph-anti-vertex');
+  const asc=document.querySelector('#skyFoundationA [data-vocab-axis="asc-dsc"] .relphi-glyph-asc');
+  if(!av||!asc)return null;
+  const a=av.getBBox(),s=asc.getBBox();
+  return{avWidth:a.width,avHeight:a.height,ascWidth:s.width,ascHeight:s.height};
+});
+assert.ok(angleSizeComparison,'Anti-Vertex and Asc glyph geometry must both be measurable.');
+assert.ok(angleSizeComparison.avHeight>=angleSizeComparison.ascHeight*.82&&angleSizeComparison.avHeight<=angleSizeComparison.ascHeight*1.18,'Anti-Vertex must be optically the same height class as Asc, not a shrunken static master.');
 
 const ariesLibra=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"][data-vocab-signs="Aries|Libra"]');
 assert.equal(await ariesLibra.count(),1,'All sign polarities must be represented structurally.');
