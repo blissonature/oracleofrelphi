@@ -64,6 +64,18 @@ assert.match(ascDscRail,/linear-gradient/i,'A paired placement sentence must spl
 
 const primaryAxes=await vocabParagraph.locator('[data-vocab-structure="axis-polarity"]').evaluateAll(lines=>lines.map(line=>line.dataset.vocabAxis));
 assert.deepEqual(primaryAxes.slice(0,4),['vertex-anti-vertex','asc-dsc','mc-ic','north-node-south-node'],'Primary structures must lead with Vertex/Anti-Vertex, chart angles, then nodes.');
+const vertexAxis=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
+await vertexAxis.hover();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
+const axisWheelEmphasis=await page.evaluate(()=>{
+  const opacity=id=>Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="'+id+'"]')).opacity);
+  return{vertex:opacity('vertex'),antiVertex:opacity('anti-vertex'),moon:opacity('moon')};
+});
+assert.equal(axisWheelEmphasis.vertex,1,'The active Vertex axis endpoint must remain fully emphasized.');
+assert.equal(axisWheelEmphasis.antiVertex,1,'The active Anti-Vertex axis endpoint must remain fully emphasized.');
+assert.ok(axisWheelEmphasis.moon<=.2,'Placements outside the active axis must recede rather than remain generically highlighted.');
+await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 assert.equal(await vocabParagraph.locator('[data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"] .sky-vocab-token[data-vocab-id="anti-vertex"]').count(),1,'Vertex polarity must include a derived Anti-Vertex when the sky stores only Vertex.');
 const antiVertexToken=vocabParagraph.locator('[data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"] .sky-vocab-token[data-vocab-id="anti-vertex"]').first();
 await antiVertexToken.locator('.relphi-glyph-anti-vertex').waitFor({state:'attached'});
