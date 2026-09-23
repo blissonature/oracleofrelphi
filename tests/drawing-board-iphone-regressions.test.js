@@ -138,6 +138,34 @@ async function assertFocusReadingView(page) {
   assert.equal(toolbarState.visibility,'visible');
   assert.ok(toolbarState.opacity>.9);
 
+  // Focus close remains an explicit control and lives on the question row.
+  await applyTemplate(page,'celtic-cross-10');
+  await page.click('.card-row-item[data-row-index="0"] .card-row-drop-card');
+  await page.waitForSelector('.relphi-focus-reader',{state:'visible'});
+  const focusCloseGeometry=await page.evaluate(()=>{
+    const panel=document.querySelector('.relphi-focus-position-panel');
+    const question=document.querySelector('.relphi-focus-position');
+    const close=document.querySelector('.relphi-focus-close');
+    if(!panel||!question||!close)return null;
+    const pr=panel.getBoundingClientRect(),qr=question.getBoundingClientRect(),cr=close.getBoundingClientRect();
+    return {
+      closeInQuestionRow:close.parentElement===panel,
+      questionCenter:qr.left+qr.width/2,
+      panelCenter:pr.left+pr.width/2,
+      verticalDelta:Math.abs((cr.top+cr.height/2)-(qr.top+qr.height/2))
+    };
+  });
+  assert.ok(focusCloseGeometry?.closeInQuestionRow,'Focus close control must belong to the question row');
+  assert.ok(Math.abs(focusCloseGeometry.questionCenter-focusCloseGeometry.panelCenter)<=2,'Focus question must remain centered when the close control shares its row');
+  assert.ok(focusCloseGeometry.verticalDelta<=3,'Focus close control must sit on the same visual level as the question');
+  await page.click('.relphi-focus-close');
+  await page.waitForSelector('.relphi-focus-reader',{state:'detached'});
+  await page.click('#drawingBoardOptionsButton');
+  await page.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await page.click('#relphiResetBoard');
+  await page.waitForFunction(()=>window.RelphiDrawingBoardPrefabsBridge?.getState?.()?.slotCount===0);
+  await page.waitForSelector('.relphi-reading-options-drawer',{state:'detached'}).catch(()=>{});
+
   // Export controls are permanent document chrome, not trapped in hidden Options.
   for (const id of ['snapshotCardRowArrangement','downloadRowHtml','downloadRowTextHtml','downloadRowJson','printCardRowImage']) {
     await page.waitForSelector(`#drawing-board-post-export #${id}`,{state:'visible',timeout:10000});
