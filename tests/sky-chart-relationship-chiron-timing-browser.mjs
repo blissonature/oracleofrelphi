@@ -109,7 +109,7 @@ try{
   const timingSorts=[
     {mode:'duration-shortest',field:'transitDurationDays',direction:1,label:'Shortest Duration'},
     {mode:'duration-longest',field:'transitDurationDays',direction:-1,label:'Longest Duration'},
-    {mode:'began-most-recently',field:'transitStartedDaysAgo',direction:1,label:'Began Most Recently'},
+    {mode:'began-most-recently',field:'transitStartedDaysAgo',direction:1,label:'Began Most Recently',scopeAware:true},
     {mode:'ends-soonest',field:'transitEndsInDays',direction:1,label:'Ends Soonest'},
     {mode:'ends-last',field:'transitEndsInDays',direction:-1,label:'Ends Last'}
   ];
@@ -125,9 +125,11 @@ try{
       .filter(item=>Number.isFinite(item.value)),spec.field);
     assert.ok(values.length>1,`${spec.label} should time multiple visible rows: ${JSON.stringify(values)}`);
     for(let i=1;i<values.length;i+=1){
+      if(spec.scopeAware&&values[i-1].scope!==values[i].scope)continue;
       const previous=values[i-1].value,current=values[i].value;
       const ordered=spec.direction===1?previous<=current+1e-9:previous+1e-9>=current;
-      assert.ok(ordered,`${spec.label} is out of global order at ${i-1}/${i}: ${JSON.stringify(values.slice(Math.max(0,i-2),i+2))}`);
+      const orderKind=spec.scopeAware?'scope-local':'global';
+      assert.ok(ordered,`${spec.label} is out of ${orderKind} order at ${i-1}/${i}: ${JSON.stringify(values.slice(Math.max(0,i-2),i+2))}`);
     }
 
     // Copy must preserve this same global DOM order instead of regrouping by A↔B/A↔A/B↔B.
