@@ -338,6 +338,7 @@ function token(info,kind='term',sentenceStart=false,lead=''){
 function glyphNode(tokenNode){
   const holder=document.createElement('span');holder.className='sky-vocab-level sky-vocab-glyph';holder.dataset.vocabLevel='glyph';holder.setAttribute('role','button');holder.tabIndex=0;holder.setAttribute('aria-label','Reveal name');applyTokenColor(holder,tokenNode);
   const glyphId=tokenNode.dataset.vocabGlyphId,fallback=tokenNode.dataset.vocabFallbackGlyph||tokenNode.dataset.vocabName;
+  if(glyphId)holder.dataset.relphiCopyId=glyphId;
   if(tokenNode.dataset.vocabKind==='house'){
     const house=Number(String(tokenNode.dataset.vocabId||'').replace(/^house-/,'')||fallback);
     const marker=window.RelphiHouseMedallion?.create?.(house,'',false);
@@ -1254,11 +1255,14 @@ function installSubtabs(slot,view){
     row.insertBefore(tabs,row.querySelector('[data-copy-placements]')||null);
     tabs.addEventListener('click',event=>{const button=event.target.closest('[data-sky-vocab-view-button]');if(button)activate(slot,button.dataset.skyVocabViewButton)});
   }
+  if(!row.querySelector('[data-copy-vocab]')){
+    const copy=document.createElement('button');copy.type='button';copy.className='sky-quick-copy-button sky-vocab-copy';copy.dataset.copyVocab=slot;copy.textContent='Copy';copy.hidden=true;copy.setAttribute('aria-label','Copy visible Vocab for Sky '+slot);row.appendChild(copy);
+  }
 }
 function activate(slot,mode){
   const refs=window.RelphiSkyCardShell?.get?.(slot),view=refs?.placementsView;if(!view)return;
-  const placement=refs.placements,panel=ensurePanel(slot,view),copy=view.querySelector('[data-copy-placements]'),next=mode==='vocab'?'vocab':'placements';
-  if(placement)placement.hidden=next==='vocab';panel.hidden=next!=='vocab';if(copy)copy.hidden=next==='vocab';
+  const placement=refs.placements,panel=ensurePanel(slot,view),copy=view.querySelector('[data-copy-placements]'),vocabCopy=view.querySelector('[data-copy-vocab]'),next=mode==='vocab'?'vocab':'placements';
+  if(placement)placement.hidden=next==='vocab';panel.hidden=next!=='vocab';if(copy)copy.hidden=next==='vocab';if(vocabCopy)vocabCopy.hidden=next!=='vocab';
   view.querySelectorAll('[data-sky-vocab-view-button]').forEach(button=>{const active=button.dataset.skyVocabViewButton===next;button.classList.toggle('is-active',active);button.setAttribute('aria-selected',active?'true':'false');button.tabIndex=active?0:-1});
   view.dataset.skyVocabView=next;saveView(slot,next);
   if(next==='vocab')renderParagraph(slot,panel);else if(vocabWheelContextLine?.closest?.('[data-sky-vocab-panel]')===panel){vocabWheelTouchLine=null;clearVocabWheelContext()}
@@ -1272,6 +1276,7 @@ function installStyles(){
   if(document.getElementById('skyVocabTabV1Styles'))return;
   const style=document.createElement('style');style.id='skyVocabTabV1Styles';style.textContent=`
     .sky-placement-vocab-tabs{display:inline-flex;align-items:center;gap:.18rem;min-width:0}
+    .sky-vocab-copy{margin-left:auto}
     .sky-placement-vocab-tab{appearance:none;border:0;border-radius:999px;background:transparent;color:#5e554e;padding:.34rem .58rem;font:850 .72rem/1 system-ui,sans-serif;cursor:pointer}
     .sky-placement-vocab-tab:hover,.sky-placement-vocab-tab:focus-visible{background:#f4eee7;outline:none}
     .sky-placement-vocab-tab.is-active{background:#241f1b;color:#fff}
