@@ -479,8 +479,14 @@ function appendStructureMemberGroup(frag,group){
     wrap.appendChild(token(placementInfo(record),'placement',false));
   });
   const context=document.createElement('span');context.className='sky-vocab-structure-member-context';
-  context.append(document.createTextNode(' · '),compactStructureContext(signInfo(group.sign),'sign'));
-  if(group.house)context.append(document.createTextNode(' · '),compactStructureContext(houseInfo(group.house),'house'));
+  context.append(
+    document.createTextNode(group.members.length===1?' is in ':' are in '),
+    compactStructureContext(signInfo(group.sign),'sign')
+  );
+  if(group.house)context.append(
+    document.createTextNode(', concerning '),
+    compactStructureContext(houseInfo(group.house),'house')
+  );
   wrap.appendChild(context);frag.appendChild(wrap);
 }
 function appendStructureMembers(frag,members){
@@ -992,7 +998,6 @@ function installStyles(){
     .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:#6a6058}
     .sky-vocab-structure-context{display:inline;white-space:normal;font-size:.88em}
-    .sky-vocab-structure-context .sky-vocab-glyph{--vocab-mark-size:1.38em}
     .sky-vocab-structure-line:first-letter{font-weight:800}
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
