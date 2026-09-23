@@ -847,7 +847,7 @@
     state.rowLayoutLocked = !!snapshot.rowLayoutLocked || !!(state.shortList || []).length;
     state.rowCenterOpen = false;
     state.rowTransformTarget = Number(snapshot.rowTransformTarget) || 0;
-    if (has('rowZoom')) state.rowZoom = Math.max(.25, Math.min(4, Number(snapshot.rowZoom) || 1));
+    if (has('rowZoom')) state.rowZoom = rowZoomValue(snapshot.rowZoom);
     if (has('rowPanX')) state.rowPanX = Number(snapshot.rowPanX) || 0;
     if (has('rowPanY')) state.rowPanY = Number(snapshot.rowPanY) || 0;
     if (has('rowSnapEnabled')) state.rowSnapEnabled = snapshot.rowSnapEnabled !== false;
@@ -1493,19 +1493,58 @@
     if (canvas.toBlob) canvas.toBlob(finish, type, .92);
     else finish(null);
   }
+  function drawingBoardArrangementBounds(slots) {
+    if (!slots) return { minX:0, minY:0, maxX:CARD_ROW_ENVELOPE_W, maxY:CARD_ROW_ENVELOPE_H };
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    for (let i=0;i<slots;i++) {
+      const pos=rowEnvelopePosition(i);
+      const t=rowCardTransform(i);
+      const radians=Math.abs(Number(t.rotation)||0)*Math.PI/180;
+      const width=(Math.abs(Math.cos(radians))*CARD_ROW_ENVELOPE_W+Math.abs(Math.sin(radians))*CARD_ROW_ENVELOPE_H)*t.scale;
+      const height=(Math.abs(Math.sin(radians))*CARD_ROW_ENVELOPE_W+Math.abs(Math.cos(radians))*CARD_ROW_ENVELOPE_H)*t.scale;
+      const cx=pos.x+CARD_ROW_ENVELOPE_W/2;
+      const cy=pos.y+CARD_ROW_ENVELOPE_H/2;
+      minX=Math.min(minX,cx-width/2);
+      maxX=Math.max(maxX,cx+width/2);
+      minY=Math.min(minY,cy-height/2);
+      maxY=Math.max(maxY,cy+height/2);
+    }
+    return { minX, minY, maxX, maxY };
+  }
+  function drawingBoardSnapshotScale(contentW, contentH, headerH, brandFooterH, margin) {
+    const mobile = !!window.matchMedia?.('(max-width:700px)').matches || Number(navigator.maxTouchPoints || 0) > 1;
+    const maxDimension = mobile ? 4096 : 8192;
+    const maxPixels = mobile ? 12000000 : 24000000;
+    const fixedW = margin * 2;
+    const fixedH = margin * 2 + headerH + brandFooterH;
+    let scale = 1.08;
+    scale = Math.min(scale,
+      Math.max(.001,(maxDimension-fixedW)/Math.max(1,contentW)),
+      Math.max(.001,(maxDimension-fixedH)/Math.max(1,contentH))
+    );
+    let width = contentW * scale + fixedW;
+    let height = contentH * scale + fixedH;
+    if (width * height > maxPixels) {
+      scale *= Math.sqrt(maxPixels / Math.max(1,width * height));
+      width = contentW * scale + fixedW;
+      height = contentH * scale + fixedH;
+    }
+    return Math.max(.001,scale);
+  }
   async function downloadCardRowArrangementSnapshot() {
     const slots = rowSlotCount();
     if (!slots) return;
     const createdAt = new Date();
     const positions = Array.from({ length: slots }, (_, i) => rowEnvelopePosition(i));
-    const minX = Math.min(...positions.map(pos => pos.x), 0);
-    const minY = Math.min(...positions.map(pos => pos.y), 0);
-    const maxX = Math.max(...positions.map(pos => pos.x + CARD_ROW_ENVELOPE_W), CARD_ROW_ENVELOPE_W);
-    const maxY = Math.max(...positions.map(pos => pos.y + CARD_ROW_ENVELOPE_H), CARD_ROW_ENVELOPE_H);
+    const bounds = drawingBoardArrangementBounds(slots);
+    const minX = Math.min(bounds.minX, 0);
+    const minY = Math.min(bounds.minY, 0);
+    const maxX = Math.max(bounds.maxX, CARD_ROW_ENVELOPE_W);
+    const maxY = Math.max(bounds.maxY, CARD_ROW_ENVELOPE_H);
     const margin = 36;
     const headerH = state.shortListNotes ? 118 : 82;
-    const scale = 1.08;
     const brandFooterH = 54;
+    const scale = drawingBoardSnapshotScale(maxX-minX,maxY-minY,headerH,brandFooterH,margin);
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil((maxX - minX) * scale + margin * 2);
     canvas.height = Math.ceil((maxY - minY) * scale + margin * 2 + headerH + brandFooterH);
@@ -1814,6 +1853,8 @@
 
   const CARD_ROW_ENVELOPE_W = 174;
   const CARD_ROW_ENVELOPE_H = 390;
+  const CARD_ROW_ZOOM_MIN = .02;
+  const CARD_ROW_ZOOM_MAX = 2.4;
   const CARD_ROW_TABLE_COLS = 3;
   const CARD_ROW_TABLE_ROWS = 5;
   const CARD_ROW_SNAP_GRIDS = { 'one-sixteenth': { label: '1/16 card', fraction: 1/16 }, 'one-eighth': { label: '1/8 card', fraction: 1/8 }, 'one-sixth': { label: '1/6 card', fraction: 1/6 }, 'one-fourth': { label: '1/4 card', fraction: 1/4 }, 'one-third': { label: '1/3 card', fraction: 1/3 }, 'one-half': { label: '1/2 card', fraction: 1/2 }, 'one-card': { label: '1 card', fraction: 1 } };
@@ -1825,7 +1866,7 @@
   ];
   const CARD_ROW_DEFAULT_GAP_X_PX = 0;
   const CARD_ROW_DEFAULT_GAP_Y_PX = 0;
-  function rowZoomValue() { return Math.max(.45, Math.min(2.4, Number(state.rowZoom) || 1)); }
+  function rowZoomValue(value = state.rowZoom) { return Math.max(CARD_ROW_ZOOM_MIN, Math.min(CARD_ROW_ZOOM_MAX, Number(value) || 1)); }
   function rowPanXValue() { return Number.isFinite(Number(state.rowPanX)) ? Number(state.rowPanX) : 0; }
   function rowPanYValue() { return Number.isFinite(Number(state.rowPanY)) ? Number(state.rowPanY) : 0; }
   function rowSnapGridValue() { return CARD_ROW_SNAP_GRIDS[state.rowSnapGrid] ? state.rowSnapGrid : 'one-eighth'; }
@@ -2130,7 +2171,7 @@
       const transform = normalizedPrefabTransform(position.canonicalTransform || position.transform);
       return transform.x * PREFAB_CANVAS_WIDTH + CARD_ROW_ENVELOPE_W * transform.scale;
     }), CARD_ROW_ENVELOPE_W);
-    state.rowZoom = Math.max(.45, Math.min(1, (cardRowAvailableWidth() - 24) / Math.max(maxX, 1)));
+    state.rowZoom = Math.max(CARD_ROW_ZOOM_MIN, Math.min(1, (cardRowAvailableWidth() - 24) / Math.max(maxX, 1)));
     renderShortList();
     return true;
   }
@@ -2288,6 +2329,7 @@
     return true;
   }
   window.RelphiDrawingBoardOptionsBridge = Object.freeze({
+    zoomLimits:Object.freeze({ min:CARD_ROW_ZOOM_MIN, max:CARD_ROW_ZOOM_MAX }),
     capture() { return cloneBoardValue(boardSnapshot(), {}); },
     restore:restoreDrawingBoardOptionsSnapshot,
     changedFrom:drawingBoardOptionsChangedFrom,
@@ -2409,8 +2451,8 @@
       if (!pinchZoomGesture) return;
       event.preventDefault();
       const current = rowZoomValue();
-      const delta = event.deltaY < 0 ? 0.08 : -0.08;
-      state.rowZoom = Math.max(.45, Math.min(2.4, current + delta));
+      const factor = Math.exp(-event.deltaY * .0025);
+      state.rowZoom = rowZoomValue(current * factor);
       const zoomInput = $('rowZoom');
       const zoomValue = $('rowZoomValue');
       if (zoomInput) zoomInput.value = String(rowZoomValue());
@@ -2616,7 +2658,7 @@
     const boardDrawerOpen = boardDrawerWasOpen !== false || state.cardRowBoardOpen;
     const optionsOpen = !!(optionsWasOpen || state.cardRowSettingsOpen);
     const boardStatsHtml = items.length ? rowStatsHtml(items, selectedItems) : '';
-    const boardHtml = `${items.length ? '' : '<p class="short-list-empty card-row-board-empty">Draw a card or add placeholders. The board is ready.</p>'}<div class="card-row-workspace" style="${cardRowWorkspaceStyle(displaySlots)}" aria-label="Pan-and-zoom Drawing Board workspace"><div class="card-row-workspace-toolbar"><label class="card-row-zoom-label" title="Zoom the board">Zoom <input id="rowZoom" type="range" min="0.45" max="2.4" step="0.01" value="${rowZoom}"><span id="rowZoomValue">${Math.round(rowZoom * 100)}%</span></label><button type="button" id="resetCardRowPan" title="Center the Drawing Board">Center</button><span class="card-row-pan-note">Drag the table background to pan. Position stickers appear only when you add a placeholder or type a sticker.</span></div><div class="short-list-row card-row-board" style="${cardRowBoardStyle(displaySlots)}" aria-label="Movable Drawing Board">${Array.from({ length: displaySlots }).map((_, i) => { const card = items[i]; const envelopeArt = rowEnvelopeArtFor(i); const panel = rowPositionPanelHtml(i, { force: !card }); if (card) { return rowCardEnvelopeHtml(card, i, panel); } return `<div class="card-row-item card-row-placeholder-item" data-row-index="${i}" data-row-placeholder="${i}" style="${cardRowItemStyle(i)}">${panel}<div class="card-row-drop-card${envelopeArt ? ' has-custom-envelope-art' : ''}" tabindex="0">${envelopeArt ? `<img src="${escapeHtml(envelopeArt)}" alt="Custom placeholder art for position ${i + 1}">` : '<span class="card-row-drop-card-inner">Position placeholder</span>'}</div></div>`; }).join('')}</div></div>${boardStatsHtml}`;
+    const boardHtml = `${items.length ? '' : '<p class="short-list-empty card-row-board-empty">Draw a card or add placeholders. The board is ready.</p>'}<div class="card-row-workspace" style="${cardRowWorkspaceStyle(displaySlots)}" aria-label="Pan-and-zoom Drawing Board workspace"><div class="card-row-workspace-toolbar"><label class="card-row-zoom-label" title="Zoom the board">Zoom <input id="rowZoom" type="range" min="${CARD_ROW_ZOOM_MIN}" max="${CARD_ROW_ZOOM_MAX}" step="0.01" value="${rowZoom}"><span id="rowZoomValue">${Math.round(rowZoom * 100)}%</span></label><button type="button" id="resetCardRowPan" title="Center the Drawing Board">Center</button><span class="card-row-pan-note">Drag the table background to pan. Position stickers appear only when you add a placeholder or type a sticker.</span></div><div class="short-list-row card-row-board" style="${cardRowBoardStyle(displaySlots)}" aria-label="Movable Drawing Board">${Array.from({ length: displaySlots }).map((_, i) => { const card = items[i]; const envelopeArt = rowEnvelopeArtFor(i); const panel = rowPositionPanelHtml(i, { force: !card }); if (card) { return rowCardEnvelopeHtml(card, i, panel); } return `<div class="card-row-item card-row-placeholder-item" data-row-index="${i}" data-row-placeholder="${i}" style="${cardRowItemStyle(i)}">${panel}<div class="card-row-drop-card${envelopeArt ? ' has-custom-envelope-art' : ''}" tabindex="0">${envelopeArt ? `<img src="${escapeHtml(envelopeArt)}" alt="Custom placeholder art for position ${i + 1}">` : '<span class="card-row-drop-card-inner">Position placeholder</span>'}</div></div>`; }).join('')}</div></div>${boardStatsHtml}`;
     const moreOptionsHtml = `<details class="card-row-more-options card-row-settings-panel"><summary>More Board Options</summary><div class="card-row-tools card-row-composer"><label class="card-row-name-label">Name <input id="rowName" type="text" value="${escapeHtml(rowName)}" placeholder="Reading name"></label><label class="card-row-position-label">Position stickers <input id="rowPositionLabels" type="text" list="rowStickerPresetList" value="${escapeHtml(positionValue)}" placeholder="Type stickers, or choose a spread…"><datalist id="rowStickerPresetList">${STICKER_PRESETS.map(preset => `<option value="${escapeHtml(stickerPresetDisplay(preset))}">${escapeHtml(preset.labels.join(', '))}</option>`).join('')}</datalist></label><label class="card-row-draw-scope-label">Pack <select id="rowDrawScope">${option('full','Full Pack')}${option('shown','Shown cards')}${option('uhn','Universal Human Needs')}${option('majors','Majors')}${option('planetary-majors','Planetary Majors')}${option('zodiac-majors','Zodiac Majors')}${option('aces','Aces')}${option('courts','Courts')}${option('pips','Pips')}${option('decans','Decan pips')}${option('wands','Wands')}${option('cups','Cups')}${option('swords','Swords')}${option('pentacles','Pentacles / Disks')}</select></label><label class="spread-toggle"><input id="rowAllowRepeats" type="checkbox" ${state.rowAllowRepeats ? 'checked' : ''}> Repeats</label><label class="spread-toggle"><input id="rowSnapEnabled" type="checkbox" ${state.rowSnapEnabled ? 'checked' : ''}> Align</label><label class="spread-toggle"><input id="rowRotationSnapEnabled" type="checkbox" ${state.rowRotationSnapEnabled ? 'checked' : ''}> Rotation snap</label><span class="card-row-snap-steppers"><button type="button" id="rowSnapGridMinus" aria-label="Smaller alignment snap">−</button><span id="rowSnapGridValue">${escapeHtml(rowSnapGrid().label)}</span><button type="button" id="rowSnapGridPlus" aria-label="Larger alignment snap">+</button><button type="button" id="rowRotationSnapMinus" aria-label="Smaller rotation snap">−</button><span id="rowRotationSnapValue">${rowRotationSnapDegrees()}°</span><button type="button" id="rowRotationSnapPlus" aria-label="Larger rotation snap">+</button></span><label class="card-row-color-label">Placeholder color <input id="rowEnvelopeColor" type="color" value="${escapeHtml(state.rowEnvelopeColor || '#f3f0ea')}"></label><label class="card-row-table-color-label">Table <input id="rowTableColor" type="color" value="${escapeHtml(state.rowTableColor || '#7d1f28')}"></label><button type="button" id="rowTableImageUpload">Upload table image</button><button type="button" id="rowTableImageReset" ${state.rowTableImage ? '' : 'disabled'}>Reset table</button><button type="button" id="resetCardRowLayout" ${displaySlots ? '' : 'disabled'}>Reset layout</button><button type="button" id="resetRowCardTransform" ${displaySlots ? '' : 'disabled'}>Reset selected card</button><button type="button" id="selectAllRow" ${items.length ? '' : 'disabled'}>Select all</button><button type="button" id="clearRowSelection" ${state.shortListSelection.length ? '' : 'disabled'}>Clear selection</button><button type="button" id="snapshotCardRowArrangement" ${displaySlots ? '' : 'disabled'}>Snapshot</button><button type="button" id="downloadRowHtml" ${items.length ? '' : 'disabled'}>Board with art</button><button type="button" id="downloadRowTextHtml" ${items.length ? '' : 'disabled'}>Text only</button><button type="button" id="downloadRowJson" ${items.length ? '' : 'disabled'}>Board data</button><button type="button" id="printCardRowImage" ${items.length ? '' : 'disabled'}>Image</button><label class="card-row-notes-label">Notes <textarea id="rowNotes" rows="1" placeholder="Board notes">${escapeHtml(rowNotes)}</textarea></label><input id="rowTableImageFile" type="file" accept="image/*" hidden></div></details>`;
     wrap.innerHTML = `<details class="short-list-drawer card-row-drawing-board"><summary><strong>Drawing Board <span class="card-row-count">${items.length}</span></strong></summary><div class="drawing-board-top-actions" aria-label="Drawing Board actions"><button type="button" id="drawingBoardOptionsButton" aria-controls="drawingBoardReadingOptions" aria-expanded="false">Options</button><button type="button" id="drawRandomRowCard" title="Draw random card" aria-label="Draw random card">Draw</button><button type="button" id="undoShortList" class="board-history-icon" ${state.shortListUndo.length ? '' : 'disabled'} title="Undo" aria-label="Undo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h9a7 7 0 0 1 7 7"></path></svg></button><button type="button" id="redoShortList" class="board-history-icon" ${state.shortListRedo.length ? '' : 'disabled'} title="Redo" aria-label="Redo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m15 7 5 5-5 5"></path><path d="M20 12h-9a7 7 0 0 0-7 7"></path></svg></button><button type="button" id="clearShortListCardsOnly" ${items.length ? '' : 'disabled'} title="Remove drawn cards and keep the spread positions" aria-label="Clear cards and keep spread positions">Clear Cards</button></div><span class="short-list-actions card-row-icon-toolbar card-row-action-staging" aria-label="Drawing Board staging controls" hidden><button type="button" id="addCardPlaceholder" title="Add placeholder" aria-label="Add placeholder">Add placeholder</button><label class="quick-reversal-toggle" title="Allow reversed cards in future draws"><input id="rowAllowReversalsQuick" type="checkbox" ${state.rowAllowReversals ? 'checked' : ''}> Reversals</label><button type="button" id="clearShortList" ${displaySlots ? '' : 'disabled'} title="Clear board" aria-label="Clear Drawing Board">Clear</button></span>${moreOptionsHtml}${boardHtml}</details>`;
     bindRenderedDrawingBoardActions(wrap);
@@ -2681,13 +2723,13 @@
     const zoomInput = $('rowZoom');
     if (zoomInput) {
       zoomInput.addEventListener('input', () => {
-        state.rowZoom = Math.max(.45, Math.min(2.4, Number(zoomInput.value) || 1));
+        state.rowZoom = rowZoomValue(zoomInput.value);
         const zoomValue = $('rowZoomValue');
         if (zoomValue) zoomValue.textContent = `${Math.round(rowZoomValue() * 100)}%`;
         applyCardRowLayoutLive(wrap);
       });
       zoomInput.addEventListener('change', () => {
-        state.rowZoom = Math.max(.45, Math.min(2.4, Number(zoomInput.value) || 1));
+        state.rowZoom = rowZoomValue(zoomInput.value);
         applyCardRowLayoutLive(wrap);
       });
     }
