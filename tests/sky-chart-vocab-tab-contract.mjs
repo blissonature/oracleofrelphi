@@ -26,7 +26,7 @@ assert.match(vocab,/Names/);
 assert.match(vocab,/Referents/);
 assert.match(vocab,/data-sky-vocab-view-button="placements"/);
 assert.match(vocab,/data-sky-vocab-view-button="vocab"/);
-assert.match(vocab,/data\.copyVocab=slot/,'Vocab must expose one header-row Copy button per Sky');
+assert.match(vocab,/dataset\.copyVocab=slot/,'Vocab must expose one header-row Copy button per Sky');
 assert.match(vocab,/vocabCopy\.hidden=next!=='vocab'/,'The Vocab Copy button must be visible only in Vocab mode');
 assert.match(vocab,/holder\.dataset\.relphiCopyId=glyphId/,'Rendered Vocab glyphs must expose canonical copy identities');
 assert.match(html,/relphi-glyph-copy-serializer-v1\.js\?v=1/,'Sky Chart must load the canonical glyph copy serializer');
