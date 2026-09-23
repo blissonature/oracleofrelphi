@@ -123,7 +123,9 @@ const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorA
   };
 }));
 assert.ok(ledgerAudit.length >= 20, 'The active placement ledger must be fully populated.');
-assert.equal(ledgerAudit.every(item => item.fit === 'registry-component'), true, 'Every ledger glyph must use the shared registry component.');
+const ledgerFitFailures = ledgerAudit.filter(item => item.fit !== 'registry-component');
+if (ledgerFitFailures.length) console.log('LEDGER_FIT_FAILURES', JSON.stringify(ledgerFitFailures));
+assert.equal(ledgerFitFailures.length, 0, 'Every ledger glyph must use the shared registry component.');
 const ledgerStructuralAnomalies = ledgerAudit.filter(item => item.committed !== 'true' || !item.transform || item.count !== 1);
 if (ledgerStructuralAnomalies.length) console.log('LEDGER_STRUCTURAL_ANOMALIES', JSON.stringify(ledgerStructuralAnomalies));
 assert.equal(ledgerAudit.every(item => item.committed === 'true' && item.count >= 1), true, 'Every ledger glyph must contain committed canonical artwork.');
