@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=64/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=65/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -179,6 +179,9 @@ assert.match(vocab,/data-vocab-concentration-colors="true"/,'Concentration cards
 assert.match(vocab,/function applyPolarityRails\(line,signGradient,houseGradient,slot\)/,'Primary polarity cards must expose parallel sign and house rails');
 assert.match(vocab,/--vocab-polarity-signs/,'Outer polarity rail must encode sign context');
 assert.match(vocab,/--vocab-polarity-houses/,'Inner polarity rail must encode house context');
+assert.match(vocab,/data-vocab-polarity-colors="true"\]\::after\{left:4px;background:var\(--vocab-polarity-houses\);opacity:\.5\}/,'Polarity house stripe must use 50% opacity to match house-sector fill');
+assert.match(vocab,/data-vocab-concentration-colors="true"\]\::after\{left:4px;background:var\(--vocab-concentration-houses\);opacity:\.5\}/,'Concentration house stripe must use 50% opacity to match house-sector fill');
+assert.match(vocab,/data-vocab-placement-colors="true"\]\::after\{left:4px;background:var\(--vocab-placement-houses\);opacity:\.5\}/,'Placement house stripe must use 50% opacity to match house-sector fill');
 assert.match(vocab,/halfWeightedStructureGradient\(structure\.left,structure\.right,record=>record\.house\|\|null/,'Primary polarity house rail must use live member house assignments');
 assert.match(vocab,/leftCuspSign=houseCuspSign\(slot,list,pair\[0\]\)/,'House-polarity sign rail must derive from the active house-system cusps');
 assert.match(vocab,/line\.dataset\.vocabHouseSystem=activeHouseSystem\(slot\)/,'Structure rails must identify the active house system they were derived from');
