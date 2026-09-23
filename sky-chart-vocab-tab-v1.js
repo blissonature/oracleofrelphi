@@ -1350,12 +1350,14 @@ function installStyles(){
     .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses);opacity:.5}
     .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
     .sky-vocab-token.is-wheel-token-active>.sky-vocab-level{background:rgba(45,39,34,.09);box-shadow:inset 0 -2px 0 rgba(31,27,24,.22)}
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context [data-focus-piece].is-vocab-context:not(.is-vocab-token-context){opacity:.5!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context [data-focus-piece].is-vocab-token-context{opacity:1!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context .sky-foundation-sign-sector.is-vocab-token-context,
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context .sky-foundation-house-sector.is-vocab-token-context{stroke:#302922!important;stroke-width:2.2!important;vector-effect:non-scaling-stroke}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context [data-focus-piece="placement"].is-vocab-token-context,
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context [data-focus-piece="leader"].is-vocab-token-context{filter:drop-shadow(0 0 2px rgba(255,255,255,.98)) drop-shadow(0 0 4px rgba(31,27,24,.42))!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context [data-focus-piece="leader"].is-vocab-token-context{stroke-width:3.2!important}
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-axis-context.has-vocab-token-context [data-focus-piece].is-vocab-token-context{filter:none!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-axis-context.has-vocab-token-context .sky-foundation-sign-sector.is-vocab-token-context,
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-axis-context.has-vocab-token-context .sky-foundation-house-sector.is-vocab-token-context{filter:none!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not(.is-vocab-context):not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.12!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="placement"]{opacity:.62!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="leader"]{opacity:.36!important;transition:opacity .07s ease-out,filter .07s ease-out}
