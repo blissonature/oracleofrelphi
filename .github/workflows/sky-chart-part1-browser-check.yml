@@ -13,9 +13,12 @@ on:
       - 'sky-chart-foundation-interactions-v2.js'
       - 'sky-chart-foundation-interactions-v1.css'
       - 'sky-chart-relationship-list-layout-v1.js'
-      - 'relphi-canonical-glyph-state-v1.js'
-      - 'tools/export-canonical-glyph-state-manifest.mjs'
-      - 'tests/relationship-canonical-state-contract.mjs'
+      - 'relphi-glyph-registry-v1.js'
+      - 'relphi-glyph-component-v1.js'
+      - 'relphi-glyph-source-integrity-v1.js'
+      - 'tools/check-single-glyph-canon.mjs'
+      - 'tools/check-planet-glyph-hashes.mjs'
+      - 'tools/check-sky-chart-glyph-readiness.mjs'
       - '.github/workflows/sky-chart-part1-browser-check.yml'
 
 jobs:
@@ -65,7 +68,13 @@ jobs:
           const page=await browser.newPage({viewport:{width:1440,height:1100}});
           const errors=[];
           page.on('pageerror',error=>errors.push(error.message));
-          page.on('console',message=>{if(message.type()==='error')errors.push(message.text())});
+          page.on('response',response=>{if(response.status()===404)errors.push(`HTTP 404 ${response.url()}`)});
+          page.on('console',message=>{
+            if(message.type()!=='error')return;
+            const text=message.text();
+            if(/Failed to load resource: the server responded with a status of 404/.test(text))return;
+            errors.push(text);
+          });
           await page.addInitScript(({a,b})=>{
             localStorage.setItem('relphiSkyChartA',JSON.stringify(a));
             localStorage.setItem('relphiSkyChartB',JSON.stringify(b));
@@ -163,30 +172,23 @@ jobs:
             sky-chart-part1-desktop.png
             sky-chart-part1-mobile.png
 
-  canonical-glyph-state-export:
+  canonical-glyph-integrity:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate clean Relationships source
+      - name: Validate current glyph sources
         run: |
-          node --check relphi-canonical-glyph-state-v1.js
+          node --check relphi-glyph-registry-v1.js
+          node --check relphi-glyph-component-v1.js
+          node --check relphi-glyph-source-integrity-v1.js
           node --check sky-chart-foundation-interactions-v2.js
           node --check sky-chart-relationship-list-layout-v1.js
-          node --check tests/relationship-canonical-state-contract.mjs
-          node tests/relationship-canonical-state-contract.mjs
-      - name: Install Chromium
-        run: |
-          npm install --no-save playwright@1.52.0
-          npx playwright install --with-deps chromium
-      - name: Export exact canonical state assets
-        run: node tools/export-canonical-glyph-state-manifest.mjs relphi-canonical-glyph-manifest-v1.js
-      - name: Validate generated manifest
-        run: node --check relphi-canonical-glyph-manifest-v1.js
-      - uses: actions/upload-artifact@v4
-        with:
-          name: canonical-glyph-state-manifest
-          path: relphi-canonical-glyph-manifest-v1.js
-          if-no-files-found: error
+      - name: Enforce one canonical glyph runtime
+        run: node tools/check-single-glyph-canon.mjs
+      - name: Pin approved planetary master bytes
+        run: node tools/check-planet-glyph-hashes.mjs
+      - name: Check Sky Chart glyph readiness
+        run: node tools/check-sky-chart-glyph-readiness.mjs
