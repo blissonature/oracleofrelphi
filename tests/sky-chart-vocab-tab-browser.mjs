@@ -79,6 +79,16 @@ const angleSizeComparison=await page.evaluate(()=>{
 });
 assert.ok(angleSizeComparison,'Anti-Vertex and Asc glyph geometry must both be measurable.');
 assert.ok(angleSizeComparison.avHeight>=angleSizeComparison.ascHeight*.82&&angleSizeComparison.avHeight<=angleSizeComparison.ascHeight*1.18,'Anti-Vertex must be optically the same height class as Asc, not a shrunken static master.');
+const storedAntiVertex=await page.evaluate(()=>{
+  const value=JSON.parse(localStorage.getItem('relphiSkyChartA'));
+  return value?.placements?.['Anti-Vertex']||Object.values(value?.placements||{}).find(item=>String(item?.name||'').toLowerCase().replace(/[^a-z]/g,'')==='antivertex')||null;
+});
+assert.ok(storedAntiVertex,'Anti-Vertex must be persisted as a real derived placement, not exist only inside Vocab.');
+assert.ok(Math.abs((((Number(storedAntiVertex.longitude)-150.33)+180)%360+360)%360-180)<1e-6,'Stored Anti-Vertex must be exactly 180° from the fixture Vertex.');
+const antiVertexWheel=page.locator('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="anti-vertex"]');
+assert.equal(await antiVertexWheel.count(),1,'Anti-Vertex must render as a normal wheel placement.');
+assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"][data-aspect="opposition"]').evaluateAll(rows=>rows.filter(row=>[row.dataset.leftPlacement,row.dataset.rightPlacement].sort().join('|')==='anti-vertex|vertex').length),0,'Vertex–Anti-Vertex opposition must not count as an intrasky relationship because it is constitutive.');
+
 
 const ariesLibra=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"][data-vocab-signs="Aries|Libra"]');
 assert.equal(await ariesLibra.count(),1,'All sign polarities must be represented structurally.');
@@ -229,6 +239,8 @@ const vocabWheelHighlight=await page.evaluate(()=>({
 assert.ok(vocabWheelHighlight.placements.includes('sun')&&vocabWheelHighlight.placements.includes('mercury'),'Hovering a concentration must highlight each member placement on the wheel.');
 assert.ok(vocabWheelHighlight.signs.includes(6),'Hovering the Libra concentration must highlight Libra on the wheel.');
 assert.ok(vocabWheelHighlight.exact.includes('sun')&&vocabWheelHighlight.exact.includes('mercury'),'Placement loci must receive the strongest Vocab-context emphasis.');
+const unrelatedMoonOpacity=Number(await page.locator('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="moon"]').evaluate(node=>getComputedStyle(node).opacity));
+assert.ok(unrelatedMoonOpacity>=.6,'Unrelated placement glyphs must remain visible while a Vocab row highlights its context.');
 assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel highlighting must not filter the Relationships list.');
 await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
