@@ -73,6 +73,29 @@ const houseFourTen=page.locator('#skyFoundationA [data-vocab-structure="house-po
 assert.equal(await houseFourTen.count(),1,'All house polarities must be represented structurally.');
 assert.match(await houseFourTen.textContent(),/Tenth House[^.]*no placements[^.]*default ruler Mercury/i,'An empty Tenth House in the fixture must state its Gemini-cusp default ruler, Mercury.');
 
+const beforeHouseSystemRails=await meridianStructure.evaluate(node=>({
+  sign:getComputedStyle(node).getPropertyValue('--vocab-polarity-signs').trim(),
+  house:getComputedStyle(node).getPropertyValue('--vocab-polarity-houses').trim()
+}));
+const alternateCusps=skyA.houseCusps.map((value,index)=>(value+(index%2===0?12:-8)+360)%360);
+await page.evaluate(({cusps})=>{
+  const key='relphiSkyChartA',value=JSON.parse(localStorage.getItem(key));
+  value.houseSystem='placidus';
+  value.houseCusps=cusps;
+  value.calcProfile={...(value.calcProfile||{}),houseSystem:'placidus',houseCusps:cusps,cusps};
+  localStorage.setItem(key,JSON.stringify(value));
+  window.dispatchEvent(new StorageEvent('storage',{key,newValue:JSON.stringify(value),storageArea:localStorage}));
+},{cusps:alternateCusps});
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-axis="mc-ic"]')?.dataset.vocabHouseSystem==='placidus');
+const afterHouseSystemRails=await page.locator('#skyFoundationA [data-vocab-axis="mc-ic"]').evaluate(node=>({
+  sign:getComputedStyle(node).getPropertyValue('--vocab-polarity-signs').trim(),
+  house:getComputedStyle(node).getPropertyValue('--vocab-polarity-houses').trim(),
+  system:node.dataset.vocabHouseSystem
+}));
+assert.equal(afterHouseSystemRails.system,'placidus','Vocab structure rails must rerender for a changed house system.');
+assert.equal(afterHouseSystemRails.sign,beforeHouseSystemRails.sign,'Changing house system must not alter the zodiac-sign rail for fixed longitudes.');
+assert.notEqual(afterHouseSystemRails.house,beforeHouseSystemRails.house,'Changing house cusps must be able to alter the house rail independently of the sign rail.');
+
 const rawLoadedSky={
   ...Object.fromEntries(Object.entries(skyA.placements)),
   _houseContext:{name:'_houseContext',longitude:255,sign:'Sagittarius',house:6},
@@ -339,13 +362,16 @@ assert.deepEqual(
 const meridianStructure=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="mc-ic"]');
 const meridianStripe=await meridianStructure.evaluate(node=>({
   enabled:node.dataset.vocabPolarityColors,
-  a:getComputedStyle(node).getPropertyValue('--vocab-polarity-a').trim(),
-  b:getComputedStyle(node).getPropertyValue('--vocab-polarity-b').trim(),
+  sign:getComputedStyle(node).getPropertyValue('--vocab-polarity-signs').trim(),
+  house:getComputedStyle(node).getPropertyValue('--vocab-polarity-houses').trim(),
+  system:node.dataset.vocabHouseSystem,
   borderLeft:getComputedStyle(node).borderLeftWidth
 }));
-assert.equal(meridianStripe.enabled,'true','Primary polarity cards must opt into the two-color stripe.');
-assert.notEqual(meridianStripe.a,meridianStripe.b,'Primary polarity stripe must retain distinct colors for its two ends.');
-assert.equal(meridianStripe.borderLeft,'0px','Colored polarity cards must replace, not sit on top of, the old gray border.');
+assert.equal(meridianStripe.enabled,'true','Primary polarity cards must opt into dual sign/house rails.');
+assert.match(meridianStripe.sign,/linear-gradient/i,'Outer primary-polarity rail must encode signs.');
+assert.match(meridianStripe.house,/linear-gradient/i,'Inner primary-polarity rail must encode houses.');
+assert.equal(meridianStripe.system,'equal-house','Structure rails must record the house system used by the fixture.');
+assert.equal(meridianStripe.borderLeft,'0px','Colored structure rails must replace, not sit on top of, the old gray border.');
 
 const signStripe=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"]').first();
 assert.equal(await signStripe.getAttribute('data-vocab-polarity-colors'),'true','Sign polarity cards must use the two-color stripe.');
@@ -357,6 +383,7 @@ const concentrationStripe=page.locator('#skyFoundationA [data-vocab-structure="c
 if(await concentrationStripe.count()){
   assert.equal(await concentrationStripe.getAttribute('data-vocab-polarity-colors'),null,'Concentrations must not masquerade as two-ended polarity stripes.');
   assert.equal(await concentrationStripe.getAttribute('data-vocab-concentration-colors'),'true','Concentrations must expose sign and house occupancy rails.');
+  assert.equal(await concentrationStripe.getAttribute('data-vocab-house-system'),'equal-house','Concentration rails must record the active house system used for their house distribution.');
   const gradients=await concentrationStripe.evaluate(node=>({
     sign:getComputedStyle(node).getPropertyValue('--vocab-concentration-signs').trim(),
     house:getComputedStyle(node).getPropertyValue('--vocab-concentration-houses').trim()
