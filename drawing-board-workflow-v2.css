@@ -131,9 +131,11 @@
 .relphi-focus-nav-modes>button{min-height:1.55rem!important;margin:0!important;padding:.16rem .5rem!important;border:1px solid #c9bfb6!important;border-radius:999px!important;background:#fff!important;color:#5f5751!important;font:inherit!important;font-size:.62rem!important;font-weight:850!important;line-height:1!important}
 .relphi-focus-nav-modes>button.is-active{border-color:#b81712!important;background:#fff3f1!important;color:#a51612!important}
 .relphi-focus-fan{position:relative!important;display:block!important;width:100%!important;height:7.35rem!important;min-width:0!important;overflow:hidden!important;touch-action:pan-y!important;transition:transform .18s ease-out!important}
-.relphi-focus-fan.is-dragging{transition:none!important}
+.relphi-focus-fan.is-scrubbing{transition:none!important;cursor:grabbing!important}
 .relphi-focus-fan>button{position:absolute!important;left:50%!important;top:.15rem!important;width:4.15rem!important;height:7.18rem!important;margin:0!important;padding:.12rem!important;border:1.5px solid rgba(17,17,17,.38)!important;border-radius:.48rem!important;background:#eee7df!important;color:#111!important;box-shadow:0 5px 14px rgba(0,0,0,.18)!important;overflow:hidden!important;transform-origin:50% 100%!important;transition:transform .28s cubic-bezier(.2,.75,.2,1),opacity .2s ease,border-color .2s ease,box-shadow .2s ease!important;will-change:transform!important}
 .relphi-focus-fan>button.is-current{border-color:#dc1f18!important;box-shadow:0 8px 20px rgba(0,0,0,.26),0 0 0 2px rgba(220,31,24,.16)!important}
+.relphi-focus-fan>button.is-under-finger{top:0!important;border-color:#111!important;box-shadow:0 11px 24px rgba(0,0,0,.34),0 0 0 2px rgba(255,255,255,.8)!important;filter:brightness(1.045)!important}
+.relphi-focus-fan.is-scrubbing>button{transition:opacity .08s linear,border-color .08s linear,box-shadow .08s linear,top .08s linear!important}
 .relphi-focus-fan>button img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;border-radius:.32rem!important;transform:none!important;pointer-events:none!important}
 .relphi-focus-fan>button.is-reversed img{transform:rotate(180deg)!important}
 .relphi-focus-fan-back{display:grid!important;place-items:center!important;width:100%!important;height:100%!important;border-radius:.32rem!important;background:linear-gradient(135deg,#791b22,#b42b31 48%,#791b22)!important;color:#fffdf8!important;font-size:1.15rem!important;font-weight:950!important;pointer-events:none!important}
