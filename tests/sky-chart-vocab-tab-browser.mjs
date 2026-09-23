@@ -78,16 +78,16 @@ const angleSizeComparison=await page.evaluate(()=>{
   return{avWidth:a.width,avHeight:a.height,ascWidth:s.width,ascHeight:s.height};
 });
 assert.ok(angleSizeComparison,'Anti-Vertex and Asc glyph geometry must both be measurable.');
-const antiVertexOpticalParity=angleSizeComparison.avHeight>=angleSizeComparison.ascHeight*.82&&angleSizeComparison.avHeight<=angleSizeComparison.ascHeight*1.18;
+assert.ok(angleSizeComparison.avHeight>=angleSizeComparison.ascHeight*.82&&angleSizeComparison.avHeight<=angleSizeComparison.ascHeight*1.18,'Anti-Vertex must be optically the same height class as Asc, not a shrunken static master.');
 const storedAntiVertex=await page.evaluate(()=>{
   const value=JSON.parse(localStorage.getItem('relphiSkyChartA'));
   return value?.placements?.['Anti-Vertex']||Object.values(value?.placements||{}).find(item=>String(item?.name||'').toLowerCase().replace(/[^a-z]/g,'')==='antivertex')||null;
 });
-const antiVertexPersisted=!!storedAntiVertex;
-const antiVertexOppositionExact=!!storedAntiVertex&&Math.abs((((Number(storedAntiVertex.longitude)-150.33)+180)%360+360)%360-180)<1e-6;
+assert.ok(storedAntiVertex,'Anti-Vertex must be persisted as a real derived placement, not exist only inside Vocab.');
+assert.ok(Math.abs((((Number(storedAntiVertex.longitude)-150.33)+180)%360+360)%360-180)<1e-6,'Stored Anti-Vertex must be exactly 180° from the fixture Vertex.');
 const antiVertexWheel=page.locator('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="anti-vertex"]');
-const antiVertexWheelCount=await antiVertexWheel.count();
-const antiVertexOppositionRows=await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"][data-aspect="opposition"]').evaluateAll(rows=>rows.filter(row=>[row.dataset.leftPlacement,row.dataset.rightPlacement].sort().join('|')==='anti-vertex|vertex').length);
+assert.equal(await antiVertexWheel.count(),1,'Anti-Vertex must render as a normal wheel placement.');
+assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"][data-aspect="opposition"]').evaluateAll(rows=>rows.filter(row=>[row.dataset.leftPlacement,row.dataset.rightPlacement].sort().join('|')==='anti-vertex|vertex').length),0,'Vertex–Anti-Vertex opposition must not count as an intrasky relationship because it is constitutive.');
 
 
 const ariesLibra=page.locator('#skyFoundationA [data-vocab-structure="sign-polarity"][data-vocab-signs="Aries|Libra"]');
@@ -265,12 +265,7 @@ assert.ok(selectedContextStrength.signStrokeWidth>=2.5&&selectedContextStrength.
 assert.notEqual(selectedContextStrength.signFilter,'none','Matching sign sector must have a visible emphasis filter.');
 assert.notEqual(selectedContextStrength.houseFilter,'none','Matching house sector must have a visible emphasis filter.');
 assert.ok(selectedContextStrength.unrelatedSignOpacity<=.1,'Unrelated sign sectors must recede strongly enough that the matching sign is immediately apparent.');
-console.log('VOCAB_HIGHLIGHT_CHECK_PASSED');
-assert.ok(antiVertexOpticalParity,'Anti-Vertex must be optically the same height class as Asc, not a shrunken static master.');
-assert.ok(antiVertexPersisted,'Anti-Vertex must be persisted as a real derived placement, not exist only inside Vocab.');
-assert.ok(antiVertexOppositionExact,'Stored Anti-Vertex must be exactly 180° from the fixture Vertex.');
-assert.equal(antiVertexWheelCount,1,'Anti-Vertex must render as a normal wheel placement.');
-assert.equal(antiVertexOppositionRows,0,'Vertex–Anti-Vertex opposition must not count as an intrasky relationship because it is constitutive.');
+
 assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel highlighting must not filter the Relationships list.');
 await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
