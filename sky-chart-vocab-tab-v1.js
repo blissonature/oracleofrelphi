@@ -592,6 +592,11 @@ function housePairVisible(slot,pair,permitted,showAll){
   if(scope.houses!==null)return pair.some(house=>scope.houses.includes(house));
   return permitted.some(record=>pair.includes(record.house));
 }
+function applyPolarityStripe(line,colorA,colorB){
+  line.dataset.vocabPolarityColors='true';
+  line.style.setProperty('--vocab-polarity-a',colorA);
+  line.style.setProperty('--vocab-polarity-b',colorB);
+}
 function renderStructures(container,list,permitted,slot){
   const selected=new Set(permitted.map(record=>record.id)),showAll=structureScopeIsAll(slot);
   const polarities=polarityStructures(list),clusters=independentClusters(list);
@@ -610,6 +615,7 @@ function renderStructures(container,list,permitted,slot){
     appendStructureSubheading(container,'Primary polarities');
     visiblePolarities.forEach(structure=>{
       const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='axis-polarity';line.dataset.vocabAxis=structure.left[0].id+'-'+structure.right[0].id;
+      applyPolarityStripe(line,SIGN_COLORS[structure.left[0].sign],SIGN_COLORS[structure.right[0].sign]);
       line.append(polaritySentence(structure),document.createTextNode('.'));container.appendChild(line);
     });
   }
@@ -628,6 +634,7 @@ function renderStructures(container,list,permitted,slot){
     appendStructureSubheading(container,'Sign polarities');
     visibleSignPairs.forEach(pair=>{
       const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='sign-polarity';line.dataset.vocabSigns=pair.map(index=>SIGNS[index]).join('|');
+      applyPolarityStripe(line,SIGN_COLORS[pair[0]],SIGN_COLORS[pair[1]]);
       line.append(signPolaritySentence(pair,list),document.createTextNode('.'));container.appendChild(line);
     });
   }
@@ -636,6 +643,7 @@ function renderStructures(container,list,permitted,slot){
     appendStructureSubheading(container,'House polarities');
     visibleHousePairs.forEach(pair=>{
       const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='house-polarity';line.dataset.vocabHouses=pair.join('|');
+      applyPolarityStripe(line,HOUSE_COLORS[pair[0]-1],HOUSE_COLORS[pair[1]-1]);
       line.append(housePolaritySentence(pair,slot,list),document.createTextNode('.'));container.appendChild(line);
     });
   }
@@ -1001,6 +1009,8 @@ function installStyles(){
     .sky-vocab-structure-subheading,.sky-vocab-placements-heading{margin:.12rem 0 -.18rem;color:#756b62;font:850 .58rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.045em}
     .sky-vocab-placements-heading{margin-top:.32rem;padding-top:.5rem;border-top:1px solid rgba(31,27,24,.12)}
     .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035);color:#211d19;font-size:1em;font-weight:500;line-height:1.52}
+    .sky-vocab-structure-line[data-vocab-polarity-colors="true"]{position:relative;border-left:0;padding-left:.62rem}
+    .sky-vocab-structure-line[data-vocab-polarity-colors="true"]::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:3px 0 0 3px;background:linear-gradient(to bottom,var(--vocab-polarity-a) 0 50%,var(--vocab-polarity-b) 50% 100%)}
     .sky-vocab-structure-label{font:inherit;color:inherit}
     .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:inherit}
