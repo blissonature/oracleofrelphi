@@ -131,6 +131,7 @@ const houseFourTen=page.locator('#skyFoundationA [data-vocab-structure="house-po
 assert.equal(await houseFourTen.count(),1,'All house polarities must be represented structurally.');
 assert.match(await houseFourTen.textContent(),/Tenth House[^.]*no placements[^.]*default ruler Mercury/i,'An empty Tenth House in the fixture must state its Gemini-cusp default ruler, Mercury.');
 
+const meridianStructure=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="mc-ic"]');
 const beforeHouseSystemRails=await meridianStructure.evaluate(node=>({
   sign:getComputedStyle(node).getPropertyValue('--vocab-polarity-signs').trim(),
   house:getComputedStyle(node).getPropertyValue('--vocab-polarity-houses').trim()
@@ -474,7 +475,6 @@ assert.deepEqual(
   'The preserved meridian polarity must carry the whole MC + Chiron ↔ IC + Uranus structure without reopening unrelated relationships.'
 );
 
-const meridianStructure=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="mc-ic"]');
 const meridianStripe=await meridianStructure.evaluate(node=>({
   enabled:node.dataset.vocabPolarityColors,
   sign:getComputedStyle(node).getPropertyValue('--vocab-polarity-signs').trim(),
