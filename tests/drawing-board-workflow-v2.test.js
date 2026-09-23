@@ -59,7 +59,7 @@ assert.match(app, /drawingBoardReadingEntries/);
 assert.match(app, /Relphi interpretation:/);
 assert.doesNotMatch(app, /Same card, same ingredients, inverted orientation/);
 assert.doesNotMatch(app, /function rowOrientationMethodText/);
-assert.match(board, /stateContentBounds\(snapshot,count\)/);
+assert.match(board, /renderedContentBounds\(root\)/);
 assert.doesNotMatch(board, /querySelectorAll\([^\n]*card-row-item[^\n]*\)\s*\.map\([^\n]*getBoundingClientRect/);
 assert.match(board, /function openFocus/);
 assert.match(app, /window\.RelphiTarotLedgerBridge/);
