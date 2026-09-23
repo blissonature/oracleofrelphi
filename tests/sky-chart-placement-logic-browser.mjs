@@ -50,7 +50,7 @@ try{
   assert.equal(await asc.getAttribute('data-logic-state'),'neutral','Category logic must not rewrite child placement states.');
 
   await page.waitForTimeout(120);
-  const visibleAfterNot=await page.locator('.sky-foundation-relationship-row:not(.sky-chart-multiselect-hidden):not(.sky-chart-filter-hidden):not(.sky-chart-orb-hidden):not(.sky-orb-filter-hidden):not([hidden])').evaluateAll(rows=>rows.map(row=>({left:row.dataset.leftPlacement,right:row.dataset.rightPlacement})));
+  const visibleAfterNot=await page.locator('.sky-foundation-relationship-row:not(.sky-chart-multiselect-hidden):not(.sky-chart-filter-hidden):not(.sky-chart-orb-hidden):not(.sky-orb-filter-hidden):not(.sky-chart-semantic-hidden):not([hidden])').evaluateAll(rows=>rows.map(row=>({left:row.dataset.leftPlacement,right:row.dataset.rightPlacement})));
   assert.ok(visibleAfterNot.length>0,'Chart Angles NOT should leave ordinary relationships visible.');
   const angleIds=new Set(['asc','dsc','mc','ic']);
   assert.equal(visibleAfterNot.some(row=>angleIds.has(row.left)||angleIds.has(row.right)),false,'Chart Angles NOT must veto every relationship containing an angle in standalone mode.');
