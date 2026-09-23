@@ -271,6 +271,19 @@ assert.equal(await secondToken.locator('.sky-vocab-glyph').count(),0,'A local re
 const structureContextReferentOnly=page.locator('#skyFoundationA [data-vocab-structure] [data-vocab-context-kind="sign"]').first();
 assert.equal(await structureContextReferentOnly.locator('.sky-vocab-name').count(),0,'Turning Names off must also remove sign names inside Structures.');
 assert.equal(await structureContextReferentOnly.locator('.sky-vocab-referent').count(),1,'Turning Referents on must show the sign referent inside Structures.');
+
+const hiddenGlyphSpacing=await structureContextReferentOnly.evaluate(node=>{
+  const referent=node.querySelector('.sky-vocab-referent');
+  if(!referent)return null;
+  const prev=referent.previousSibling;
+  return{
+    glyphs:node.querySelectorAll('.sky-vocab-glyph').length,
+    previousText:prev?.nodeType===Node.TEXT_NODE?prev.nodeValue:'',
+    text:node.textContent
+  };
+});
+assert.equal(hiddenGlyphSpacing.glyphs,0,'Glyphs-off Structure context must contain no glyph host at all.');
+assert.equal(/\s{2,}$/.test(hiddenGlyphSpacing.previousText||''),false,'Glyphs-off Structure context must not leave doubled trailing spacing before the referent.');
 await firstToken.locator('.sky-vocab-referent').click();
 assert.equal(await firstToken.locator('.sky-vocab-name').count(),1,'Second local reveal must add the final hidden layer: name.');
 const expandedOrder=await firstToken.evaluate(node=>Array.from(node.querySelectorAll(':scope .sky-vocab-glyph,:scope .sky-vocab-referent,:scope .sky-vocab-name')).map(child=>
@@ -348,7 +361,7 @@ const structureTypography=await meridianStructure.evaluate(line=>{
 assert.ok(structureTypography.referents.length>=4,'Structure typography fixture must expose several referents.');
 assert.equal(new Set(structureTypography.referents.map(v=>v.join('|'))).size,1,'Placement, sign, and house referents in Structures must use one typography.');
 assert.deepEqual(structureTypography.connective,structureTypography.referents[0],'Connective prose such as “concerning” must use the same body typography as Structure referents.');
-assert.equal(structureTypography.label[0],structureTypography.referents[0][0],'Structure labels may differ by weight but not by body size.');
+assert.deepEqual(structureTypography.label,structureTypography.referents[0],'Structure labels must use exactly the same body typography as the rest of the card.');
 
 const structureSignSize=await meridianStructure.locator('[data-vocab-context-kind="sign"] .sky-vocab-glyph').first().evaluate(node=>({
   width:parseFloat(getComputedStyle(node).width),
