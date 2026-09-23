@@ -47,7 +47,7 @@ async function resetAndApplyQuestions(page,labels){
     await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===0);
 
     for(let next=1;next<=6;next++){
-      await page.click('.relphi-focus-draw');
+      await page.click('.relphi-focus-next');
       await page.waitForFunction(index=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===index,next);
     }
 
@@ -72,7 +72,7 @@ async function resetAndApplyQuestions(page,labels){
     assert.equal(before.readerIndex,6);
     assert.equal(before.current,'6');
 
-    await page.click('.relphi-focus-draw');
+    await page.click('.relphi-focus-next');
     await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===7);
     await page.waitForTimeout(120);
 
