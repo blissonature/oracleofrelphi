@@ -949,6 +949,15 @@ function bindVocabWheelContext(panel){
     const line=event.target.closest?.('.sky-vocab-line');
     if(line&&!line.contains(event.relatedTarget)&&vocabWheelTouchLine!==line&&!vocabWheelPinnedToken?.isConnected)clearVocabWheelContext();
   });
+  panel.addEventListener('pointerdown',event=>{
+    if(event.pointerType!=='touch'&&event.pointerType!=='pen')return;
+    if(interactiveToken(event.target))return;
+    const line=event.target.closest?.('.sky-vocab-line');
+    if(line&&panel.contains(line))return;
+    vocabWheelTouchLine=null;
+    vocabWheelPinnedToken=null;
+    clearVocabWheelContext();
+  });
   panel.addEventListener('pointerup',event=>{
     if(event.pointerType!=='touch'&&event.pointerType!=='pen')return;
     if(interactiveToken(event.target))return;
