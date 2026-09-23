@@ -55,12 +55,16 @@
     return value.placements;
   }
 
-  function find(source, names) {
+  function findEntry(source, names) {
     const wanted = new Set(names.map(normalizedName));
     for (const [key, item] of Object.entries(source || {})) {
-      if (wanted.has(normalizedName(item?.name || item?.label || key))) return item;
+      if (wanted.has(normalizedName(item?.name || item?.label || key))) return [key,item];
     }
     return null;
+  }
+
+  function find(source, names) {
+    return findEntry(source,names)?.[1] || null;
   }
 
   function placementObject(name, longitude) {
@@ -117,6 +121,16 @@
       const prior = previousPlacement(previous, [name]);
       if (prior) source[name] = { ...prior };
     });
+
+    const vertex = find(source, ['Vertex']);
+    const antiVertexEntry = findEntry(source, ['Anti-Vertex','Anti Vertex','Antivertex','AVx']);
+    if (vertex && Number.isFinite(Number(vertex.longitude))) {
+      const key = antiVertexEntry?.[0] || 'Anti-Vertex';
+      source[key] = placementObject('Anti-Vertex', Number(vertex.longitude) + 180);
+      source[key].source = 'vertex-opposition';
+    } else if (antiVertexEntry?.[1]?.source === 'vertex-opposition') {
+      delete source[antiVertexEntry[0]];
+    }
 
     if (asc && sun && moon && Number.isFinite(Number(asc.longitude)) && Number.isFinite(Number(sun.longitude)) && Number.isFinite(Number(moon.longitude))) {
       let isDay = true;
