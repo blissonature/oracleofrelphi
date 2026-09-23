@@ -354,7 +354,16 @@ const houseStripe=page.locator('#skyFoundationA [data-vocab-structure="house-pol
 assert.equal(await houseStripe.getAttribute('data-vocab-polarity-colors'),'true','House polarity cards must use the two-color stripe.');
 
 const concentrationStripe=page.locator('#skyFoundationA [data-vocab-structure="cluster"],#skyFoundationA [data-vocab-structure="stellium"]').first();
-if(await concentrationStripe.count())assert.equal(await concentrationStripe.getAttribute('data-vocab-polarity-colors'),null,'Concentrations must keep the neutral stripe because they are not two-ended polarities.');
+if(await concentrationStripe.count()){
+  assert.equal(await concentrationStripe.getAttribute('data-vocab-polarity-colors'),null,'Concentrations must not masquerade as two-ended polarity stripes.');
+  assert.equal(await concentrationStripe.getAttribute('data-vocab-concentration-colors'),'true','Concentrations must expose sign and house occupancy rails.');
+  const gradients=await concentrationStripe.evaluate(node=>({
+    sign:getComputedStyle(node).getPropertyValue('--vocab-concentration-signs').trim(),
+    house:getComputedStyle(node).getPropertyValue('--vocab-concentration-houses').trim()
+  }));
+  assert.match(gradients.sign,/linear-gradient/i,'Concentration sign occupancy must render as a segmented gradient rail.');
+  assert.match(gradients.house,/linear-gradient/i,'Concentration house occupancy must render as a segmented gradient rail.');
+}
 assert.equal(await meridianStructure.locator('[data-vocab-context-kind="sign"]').count(),2,'MC + Chiron and IC + Uranus must each share one sign context instead of repeating it per member.');
 assert.equal(await meridianStructure.locator('[data-vocab-context-kind="house"]').count(),2,'MC + Chiron and IC + Uranus must each share one house context instead of repeating it per member.');
 assert.equal(await meridianStructure.locator('[data-vocab-structure-context-group]').count(),2,'The meridian polarity fixture must collapse its four members into two shared-location groups.');
@@ -431,6 +440,10 @@ await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-voc
 const cuspStellium=page.locator('#skyFoundationA [data-vocab-structure="stellium"][data-vocab-cluster-type="cusp"][data-vocab-signs="Virgo|Libra"]');
 assert.equal(await cuspStellium.count(),1,'Three major bodies crossing Virgo–Libra must be surfaced as one cusp stellium.');
 assert.match(await cuspStellium.textContent(),/Stellium · cusp · Virgo–Libra/i,'A cusp stellium must explicitly name both affected signs.');
+const cuspDistribution=await cuspStellium.getAttribute('data-vocab-sign-distribution');
+assert.match(cuspDistribution,/Virgo:\d+\|Libra:\d+/,'Cusp concentration must expose member counts for both signs so stripe lengths follow occupancy.');
+const cuspGradient=await cuspStellium.evaluate(node=>getComputedStyle(node).getPropertyValue('--vocab-concentration-signs').trim());
+assert.match(cuspGradient,/%/,'Cusp concentration sign rail must encode proportional percentage stops rather than an even split.');
 
 assert.deepEqual(errors,[],'Opening Vocab and driving its filters from the wheel must not produce page errors.');
 await browser.close();
