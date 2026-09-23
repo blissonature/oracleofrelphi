@@ -48,7 +48,9 @@ try{
   assert.ok(members.includes('south-node'),`South Node must attach to Vertex pole: ${JSON.stringify(members)}`);
   assert.ok(members.includes('north-node'),`North Node must attach to Anti-Vertex pole: ${JSON.stringify(members)}`);
 
-  await vertex.hover();
+  // Dispatch from the structure row itself so the test exercises row context rather
+  // than accidentally landing on one of the many child tokens at the row's center.
+  await vertex.dispatchEvent('pointerover',{pointerType:'mouse'});
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
   const states=await page.evaluate(()=>Object.fromEntries(['vertex','anti-vertex','north-node','south-node'].map(id=>{
     const node=document.querySelector(`#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="${id}"]`);
