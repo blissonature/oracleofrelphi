@@ -66,7 +66,7 @@ const primaryAxes=await vocabParagraph.locator('[data-vocab-structure="axis-pola
 assert.deepEqual(primaryAxes.slice(0,4),['vertex-anti-vertex','asc-dsc','mc-ic','north-node-south-node'],'Primary structures must lead with Vertex/Anti-Vertex, chart angles, then nodes.');
 for(const axis of primaryAxes.slice(0,4)){
   const row=page.locator(`#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="${axis}"]`);
-  await row.hover();
+  await row.dispatchEvent('pointerover',{pointerType:'mouse'});
   await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
   const memberIds=await row.locator('.sky-vocab-token[data-vocab-kind="placement"]').evaluateAll(nodes=>[...new Set(nodes.map(node=>node.dataset.vocabId).filter(Boolean))]);
   const memberStates=await page.evaluate(ids=>ids.map(id=>{
@@ -79,11 +79,11 @@ for(const axis of primaryAxes.slice(0,4)){
     assert.equal(state.kept,true,`Axis member ${state.id} must retain Vocab context for ${axis}: ${JSON.stringify(memberStates)}`);
     assert.equal(state.opacity,1,`Axis member ${state.id} must remain fully emphasized for ${axis}: ${JSON.stringify(memberStates)}`);
   });
-  await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
+  await row.dispatchEvent('pointerout',{pointerType:'mouse'});
   await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 }
 const vertexAxis=page.locator('#skyFoundationA [data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"]');
-await vertexAxis.hover();
+await vertexAxis.dispatchEvent('pointerover',{pointerType:'mouse'});
 await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-axis-context'));
 const axisWheelEmphasis=await page.evaluate(()=>{
   const opacity=id=>Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="'+id+'"]')).opacity);
@@ -91,8 +91,8 @@ const axisWheelEmphasis=await page.evaluate(()=>{
 });
 assert.equal(axisWheelEmphasis.vertex,1,'The active Vertex axis endpoint must remain fully emphasized.');
 assert.equal(axisWheelEmphasis.antiVertex,1,'The active Anti-Vertex axis endpoint must remain fully emphasized.');
-assert.ok(axisWheelEmphasis.moon<=.2,'Placements outside the active axis must recede rather than remain generically highlighted.');
-await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
+assert.equal(axisWheelEmphasis.moon,1,'Placements outside the active axis must keep their native opacity; glow alone identifies Vocab context.');
+await vertexAxis.dispatchEvent('pointerout',{pointerType:'mouse'});
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 assert.equal(await vocabParagraph.locator('[data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"] .sky-vocab-token[data-vocab-id="anti-vertex"]').count(),1,'Vertex polarity must include a derived Anti-Vertex when the sky stores only Vertex.');
 const antiVertexToken=vocabParagraph.locator('[data-vocab-structure="axis-polarity"][data-vocab-axis="vertex-anti-vertex"] .sky-vocab-token[data-vocab-id="anti-vertex"]').first();
@@ -258,7 +258,7 @@ assert.equal(await sunMercuryCluster.getAttribute('data-vocab-signs'),'Libra','A
 assert.match(await sunMercuryCluster.textContent(),/^Mid-sign · Libra:/i,'An ordinary concentration card must begin with its subtype and sign, not repeat Cluster.');
 assert.doesNotMatch(await sunMercuryCluster.textContent(),/form one concentrated group/i,'An ordinary concentration card must not restate the section heading at the end.');
 const relationshipCountBeforeVocabHover=await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count();
-await sunMercuryCluster.hover();
+await sunMercuryCluster.dispatchEvent('pointerover',{pointerType:'mouse'});
 await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 const vocabWheelHighlight=await page.evaluate(()=>({
   placements:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"].is-vocab-context')].map(node=>node.dataset.placement),
@@ -270,7 +270,7 @@ assert.ok(vocabWheelHighlight.placements.includes('sun')&&vocabWheelHighlight.pl
 assert.ok(vocabWheelHighlight.signs.includes(6),'Hovering the Libra concentration must highlight Libra on the wheel.');
 assert.ok(vocabWheelHighlight.exact.includes('sun')&&vocabWheelHighlight.exact.includes('mercury'),'Placement loci must receive the strongest Vocab-context emphasis.');
 const unrelatedMoonOpacity=Number(await page.locator('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="moon"]').evaluate(node=>getComputedStyle(node).opacity));
-assert.ok(unrelatedMoonOpacity>=.6,'Unrelated placement glyphs must remain visible while a Vocab row highlights its context.');
+assert.equal(unrelatedMoonOpacity,1,'Unrelated placement glyphs must keep native opacity while a Vocab row highlights its context.');
 const selectedContextStrength=await page.evaluate(()=>{
   const sign=document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector[data-sign="6"]');
   const house=document.querySelector('#skyFoundationWheelMount .sky-foundation-house-sector[data-sky="A"][data-house="1"]');
@@ -283,11 +283,13 @@ const selectedContextStrength=await page.evaluate(()=>{
     unrelatedSignOpacity:Number(getComputedStyle(unrelatedSign).opacity)
   };
 });
-assert.ok(selectedContextStrength.signFill>=.75&&selectedContextStrength.signOpacity===1,'Matching sign sector must become substantially opaque and fully visible.');
-assert.ok(selectedContextStrength.houseFill>=.75&&selectedContextStrength.houseOpacity===1,'Matching house sector must become substantially opaque and fully visible.');
-assert.ok(selectedContextStrength.unrelatedSignOpacity<=.2,'Unrelated sign sectors must still recede so the matching sign remains immediately apparent.');
+assert.equal(selectedContextStrength.signFill,.82,'Matching sign sector must retain its native zodiac fill opacity while receiving the Vocab glow.');
+assert.equal(selectedContextStrength.houseFill,.5,'Matching house sector must retain its native house fill opacity while receiving the Vocab glow.');
+assert.equal(selectedContextStrength.signOpacity,1,'Matching sign sector must remain fully visible.');
+assert.equal(selectedContextStrength.houseOpacity,1,'Matching house sector must remain fully visible.');
+assert.equal(selectedContextStrength.unrelatedSignOpacity,1,'Unrelated sign sectors must keep native opacity; Vocab context must not dim them.');
 assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel highlighting must not filter the Relationships list.');
-await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
+await sunMercuryCluster.dispatchEvent('pointerout',{pointerType:'mouse'});
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
 
 // Retained/touch-style context must clear on blank Vocab space.
