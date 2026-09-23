@@ -451,8 +451,10 @@ assert.equal(await firstToken.locator(':scope > .sky-vocab-referent').count(),1,
 const symbolLabelWrap=await firstToken.locator(':scope > .sky-vocab-symbol-label').evaluate(node=>getComputedStyle(node).whiteSpace);
 assert.equal(symbolLabelWrap,'nowrap','Glyph and parenthetical name must behave as one unbreakable inline unit.');
 
-const houseSymbolLabel=page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"] .sky-vocab-symbol-label').first();
-assert.equal(await houseSymbolLabel.evaluate(node=>getComputedStyle(node).whiteSpace),'nowrap','House medallion and parenthetical House name must never split across lines.');
+const houseTokenForWrap=page.locator('#skyFoundationA .sky-vocab-token[data-vocab-kind="house"]').filter({has:page.locator('.sky-vocab-referent')}).first();
+await houseTokenForWrap.locator('.sky-vocab-referent').click();
+const houseSymbolLabel=houseTokenForWrap.locator(':scope > .sky-vocab-symbol-label');
+assert.equal(await houseSymbolLabel.evaluate(node=>getComputedStyle(node).whiteSpace),'nowrap','House medallion and its grammatical lead must never split across lines.');
 await firstToken.locator('.sky-vocab-referent').click();
 assert.equal(await firstToken.locator('.sky-vocab-glyph').count(),0,'After all hidden layers are shown, the next click must return to the global Display baseline.');
 assert.equal(await firstToken.locator('.sky-vocab-referent').count(),1,'Returning to baseline must preserve the globally enabled referent.');
