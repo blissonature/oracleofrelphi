@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=65/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=66/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -203,6 +203,10 @@ assert.match(vocab,/stellium\?'Stellium · ':'/,'Stellium must remain visible be
 
 assert.match(vocab,/function vocabLineContext\(line\)/,'Vocab rows must derive wheel context from the placements, signs, and houses they display');
 assert.match(vocab,/function applyVocabWheelContext\(line\)/,'Vocab rows must be able to highlight their context on the comparison wheel');
+assert.match(vocab,/function vocabTokenWheelContext\(tokenNode\)/,'Vocab must derive wheel context from individual placement, sign, and house tokens');
+assert.match(vocab,/context\.kind==='placement'[\s\S]*context\.kind==='sign'[\s\S]*context\.kind==='house'/,'Individual Vocab token context must address placement, sign, and house wheel pieces');
+assert.match(vocab,/panel\.addEventListener\('click'[\s\S]*togglePinnedVocabToken\(tokenNode\)/,'Clicking or tapping an individual Vocab token must pin its wheel highlight');
+assert.match(vocab,/panel\.addEventListener\('pointerover'[\s\S]*applyVocabTokenWheelContext\(tokenNode\)/,'Hovering an individual Vocab token must temporarily highlight that wheel piece');
 assert.match(vocab,/\.has-vocab-context:not\(\.has-isolation\) \[data-focus-piece\]/,'Vocab context must dim unrelated wheel pieces without taking ownership from a pre-existing wheel isolation');
 assert.match(vocab,/\.is-vocab-context-exact/,'Vocab context must emphasize exact placement loci above their sign and house context');
 assert.match(vocab,/event\.pointerType!=='touch'&&event\.pointerType!=='pen'/,'Touch and pen taps must retain a Vocab wheel context instead of relying on hover');
