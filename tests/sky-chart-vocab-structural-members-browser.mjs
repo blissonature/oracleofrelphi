@@ -56,6 +56,20 @@ try{
     assert.equal(states[id].kept,true,`${id} must remain in active Vertex polarity context: ${JSON.stringify(states)}`);
     assert.equal(states[id].opacity,1,`${id} must remain fully emphasized: ${JSON.stringify(states)}`);
   }
+  const sectorStyle=await page.evaluate(()=>{
+    const sign=document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector.is-vocab-context');
+    const house=document.querySelector('#skyFoundationWheelMount .sky-foundation-house-sector.is-vocab-context');
+    const s=sign?getComputedStyle(sign):null,h=house?getComputedStyle(house):null;
+    return{
+      sign:sign?{fillOpacity:Number(s.fillOpacity),filter:s.filter,opacity:Number(s.opacity)}:null,
+      house:house?{fillOpacity:Number(h.fillOpacity),filter:h.filter,opacity:Number(h.opacity)}:null
+    };
+  });
+  assert.ok(sectorStyle.sign&&sectorStyle.house,`Active polarity must expose sign and house sectors: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.sign.fillOpacity,.82,`Highlighted sign must retain native zodiac fill opacity: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.house.fillOpacity,.5,`Highlighted house must retain native house fill opacity: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.sign.filter,'none',`Highlighted sign must not be recolored by a filter: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.house.filter,'none',`Highlighted house must not be recolored by a filter: ${JSON.stringify(sectorStyle)}`);
   console.log('Structural polarity member regression passed:',JSON.stringify(states));
 }finally{
   await browser.close();
