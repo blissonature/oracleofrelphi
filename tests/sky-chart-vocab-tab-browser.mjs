@@ -109,12 +109,15 @@ const antiVertexRenderState=await page.evaluate(()=>{
 assert.ok(antiVertexRenderState&&antiVertexRenderState.width>0&&antiVertexRenderState.height>0,'Anti-Vertex canonical outlined geometry must render with measurable ink.');
 assert.equal(antiVertexRenderState.visibility,'visible','Anti-Vertex canonical SVG must be revealed after its deterministic fit resolves.');
 assert.equal(antiVertexRenderState.fitState,'resolved','Anti-Vertex canonical SVG must complete the shared glyph fitting path.');
-const storedAntiVertex=await page.evaluate(()=>{
-  const value=JSON.parse(localStorage.getItem('relphiSkyChartA'));
-  return value?.placements?.['Anti-Vertex']||Object.values(value?.placements||{}).find(item=>String(item?.name||'').toLowerCase().replace(/[^a-z]/g,'')==='antivertex')||null;
+const storedVertexPair=await page.evaluate(()=>{
+  const value=JSON.parse(localStorage.getItem('relphiSkyChartA')),placements=value?.placements||{};
+  const pick=name=>Object.values(placements).find(item=>String(item?.name||'').toLowerCase().replace(/[^a-z]/g,'')===name)||null;
+  return{vertex:placements.Vertex||pick('vertex'),antiVertex:placements['Anti-Vertex']||pick('antivertex')};
 });
-assert.ok(storedAntiVertex,'Anti-Vertex must be persisted as a real derived placement, not exist only inside Vocab.');
-assert.ok(Math.abs((((Number(storedAntiVertex.longitude)-150.33)+180)%360+360)%360-180)<1e-6,'Stored Anti-Vertex must be exactly 180° from the fixture Vertex.');
+assert.ok(storedVertexPair.antiVertex,'Anti-Vertex must be persisted as a real derived placement, not exist only inside Vocab.');
+assert.ok(storedVertexPair.vertex,'Vertex must remain present when its Anti-Vertex is derived.');
+const storedVertexOpposition=Math.abs(((((Number(storedVertexPair.antiVertex.longitude)-Number(storedVertexPair.vertex.longitude))-180)+180)%360+360)%360-180);
+assert.ok(storedVertexOpposition<1e-6,'Stored Anti-Vertex must remain exactly 180° from the stored Vertex after any normal Vertex recalculation.');
 const antiVertexWheel=page.locator('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="anti-vertex"]');
 assert.equal(await antiVertexWheel.count(),1,'Anti-Vertex must render as a normal wheel placement.');
 assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relationship-mode="A-A"][data-aspect="opposition"]').evaluateAll(rows=>rows.filter(row=>[row.dataset.leftPlacement,row.dataset.rightPlacement].sort().join('|')==='anti-vertex|vertex').length),0,'Vertex–Anti-Vertex opposition must not count as an intrasky relationship because it is constitutive.');
