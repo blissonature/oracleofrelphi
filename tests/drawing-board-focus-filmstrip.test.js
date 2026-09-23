@@ -69,6 +69,40 @@ async function resetAndApplyQuestions(page,labels){
     assert.equal(fanBefore.current,'6');
     assert.match(fanBefore.transition,/transform/,'fan cards must animate position changes');
 
+    // Direct manipulation: one held drag may scrub across several cards before release.
+    const dragStart=await page.locator('.relphi-focus-fan [data-focus-position="6"]').boundingBox();
+    const dragNeighbor=await page.locator('.relphi-focus-fan [data-focus-position="5"]').boundingBox();
+    assert.ok(dragStart&&dragNeighbor,'fan scrub fixture must expose adjacent drawn cards');
+    const spacing=Math.abs((dragStart.x+dragStart.width/2)-(dragNeighbor.x+dragNeighbor.width/2));
+    assert.ok(spacing>15,`fan scrub spacing must be measurable; spacing=${spacing}`);
+    const startX=dragStart.x+dragStart.width/2;
+    const startY=dragStart.y+dragStart.height*.42;
+    await page.mouse.move(startX,startY);
+    await page.mouse.down();
+    await page.mouse.move(startX-spacing*3,startY,{steps:12});
+    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===3);
+    const heldAtThree=await page.evaluate(()=>({
+      current:String(document.querySelector('.relphi-focus-fan .is-current')?.dataset.focusPosition||''),
+      finger:String(document.querySelector('.relphi-focus-fan .is-under-finger')?.dataset.focusPosition||''),
+      scrubbing:document.querySelector('.relphi-focus-fan')?.classList.contains('is-scrubbing')||false
+    }));
+    assert.equal(heldAtThree.current,'3','held fan drag must traverse multiple card positions before release');
+    assert.equal(heldAtThree.finger,'3','the card beneath the held finger must identify itself immediately');
+    assert.equal(heldAtThree.scrubbing,true,'fan must remain in direct-manipulation state while the pointer is held');
+    await page.mouse.up();
+
+    const dragBack=await page.locator('.relphi-focus-fan [data-focus-position="3"]').boundingBox();
+    const dragBackNeighbor=await page.locator('.relphi-focus-fan [data-focus-position="4"]').boundingBox();
+    assert.ok(dragBack&&dragBackNeighbor,'fan scrub return fixture must expose adjacent cards');
+    const backSpacing=Math.abs((dragBackNeighbor.x+dragBackNeighbor.width/2)-(dragBack.x+dragBack.width/2));
+    const backX=dragBack.x+dragBack.width/2;
+    const backY=dragBack.y+dragBack.height*.42;
+    await page.mouse.move(backX,backY);
+    await page.mouse.down();
+    await page.mouse.move(backX+backSpacing*3,backY,{steps:12});
+    await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===6);
+    await page.mouse.up();
+
     await page.click('.relphi-focus-next');
     await page.waitForFunction(()=>Number(document.querySelector('.relphi-focus-reader')?.dataset.focusIndex)===7);
     await page.waitForTimeout(120);
