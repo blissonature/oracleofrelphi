@@ -138,6 +138,8 @@ let openDropdownState=null;
 let dropdownPositionQueued=false;
 let wheelFilterState=null;
 let wheelFilterSpec=null;
+let vocabWheelContextLine=null;
+let vocabWheelTouchLine=null;
 
 const norm=value=>((Number(value)%360)+360)%360;
 const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
@@ -775,6 +777,85 @@ function renderFullPlacements(container,list,slot){
   renderGroup(container,list,'planets',slot);
   renderGroup(container,list,'other',slot);
 }
+function vocabLineContext(line){
+  if(!(line instanceof HTMLElement))return null;
+  const panel=line.closest('[data-sky-vocab-panel]'),slot=String(panel?.dataset?.skyVocabPanel||'').toUpperCase();
+  if(!KEYS[slot])return null;
+  const placements=new Set(),signs=new Set(),houses=new Set();
+  line.querySelectorAll('.sky-vocab-token').forEach(tokenNode=>{
+    const kind=tokenNode.dataset.vocabKind,id=String(tokenNode.dataset.vocabId||'');
+    if(kind==='placement'&&id)placements.add(id);
+    if(kind==='sign'){
+      const index=SIGNS.findIndex(name=>slug(name)===id);
+      if(index>=0)signs.add(index);
+    }
+    if(kind==='house'){
+      const number=Number(id.replace(/^house-/,''));
+      if(Number.isInteger(number)&&number>=1&&number<=12)houses.add(number);
+    }
+  });
+  return{slot,placements,signs,houses};
+}
+function clearVocabWheelContext(){
+  const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+  if(wheel){
+    wheel.classList.remove('has-vocab-context');
+    wheel.querySelectorAll('.is-vocab-context').forEach(node=>node.classList.remove('is-vocab-context'));
+    wheel.querySelectorAll('.is-vocab-context-exact').forEach(node=>node.classList.remove('is-vocab-context-exact'));
+  }
+  vocabWheelContextLine?.classList.remove('is-wheel-context-active');
+  vocabWheelContextLine=null;
+}
+function applyVocabWheelContext(line){
+  if(line===vocabWheelContextLine)return;
+  clearVocabWheelContext();
+  const context=vocabLineContext(line),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+  if(!context||!wheel)return;
+  let matched=0;
+  wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
+    const type=String(node.dataset.focusPiece||''),sky=String(node.dataset.sky||'').toUpperCase();
+    let keep=false,exact=false;
+    if((type==='placement'||type==='leader')&&sky===context.slot&&context.placements.has(String(node.dataset.placement||''))){keep=true;exact=true}
+    if(type==='house'&&sky===context.slot&&context.houses.has(Number(node.dataset.house))){keep=true}
+    if(type==='sign'&&context.signs.has(Number(node.dataset.sign))){keep=true}
+    if(keep){node.classList.add('is-vocab-context');if(exact)node.classList.add('is-vocab-context-exact');matched++}
+  });
+  if(!matched)return;
+  wheel.classList.add('has-vocab-context');
+  line.classList.add('is-wheel-context-active');
+  vocabWheelContextLine=line;
+}
+function bindVocabWheelContext(panel){
+  if(panel.dataset.vocabWheelContextBound==='true')return;
+  panel.dataset.vocabWheelContextBound='true';
+  panel.addEventListener('pointerover',event=>{
+    if(event.pointerType==='touch')return;
+    const line=event.target.closest?.('.sky-vocab-line');
+    if(!line||!panel.contains(line)||line.contains(event.relatedTarget))return;
+    applyVocabWheelContext(line);
+  });
+  panel.addEventListener('pointerout',event=>{
+    if(event.pointerType==='touch')return;
+    const line=event.target.closest?.('.sky-vocab-line');
+    if(!line||line.contains(event.relatedTarget)||vocabWheelTouchLine===line)return;
+    clearVocabWheelContext();
+  });
+  panel.addEventListener('focusin',event=>{
+    const line=event.target.closest?.('.sky-vocab-line');
+    if(line&&panel.contains(line))applyVocabWheelContext(line);
+  });
+  panel.addEventListener('focusout',event=>{
+    const line=event.target.closest?.('.sky-vocab-line');
+    if(line&&!line.contains(event.relatedTarget)&&vocabWheelTouchLine!==line)clearVocabWheelContext();
+  });
+  panel.addEventListener('pointerup',event=>{
+    if(event.pointerType!=='touch'&&event.pointerType!=='pen')return;
+    const line=event.target.closest?.('.sky-vocab-line');
+    if(!line||!panel.contains(line)){vocabWheelTouchLine=null;clearVocabWheelContext();return}
+    vocabWheelTouchLine=line;
+    applyVocabWheelContext(line);
+  });
+}
 function renderParagraph(slot,panel){
   const list=records(slot),container=panel.querySelector('[data-sky-vocab-paragraph]'),filters=filterState();
   if(!container)return;
@@ -969,7 +1050,7 @@ function syncControlState(){
   });
   document.querySelectorAll('[data-vocab-dropdown-summary="layers"]').forEach(node=>{node.textContent=layerSummary()});
 }
-function rerenderPanels(){syncControlState();document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel))}
+function rerenderPanels(){vocabWheelTouchLine=null;clearVocabWheelContext();syncControlState();document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel))}
 function releaseWheelIsolationForManualFilter(){
   if(!wheelFilterState)return;
   wheelFilterState=null;wheelFilterSpec=null;
@@ -1027,6 +1108,7 @@ function ensurePanel(slot,view){
   panel.querySelector('[data-vocab-layer-none]')?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setLayerAll(false)});
   panel.querySelectorAll('[data-indeterminate="true"]').forEach(input=>{input.indeterminate=true});
   panel.addEventListener('click',event=>progressive(event));panel.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ')progressive(event)});
+  bindVocabWheelContext(panel);
   return panel;
 }
 function progressive(event){
@@ -1054,7 +1136,7 @@ function activate(slot,mode){
   if(placement)placement.hidden=next==='vocab';panel.hidden=next!=='vocab';if(copy)copy.hidden=next==='vocab';
   view.querySelectorAll('[data-sky-vocab-view-button]').forEach(button=>{const active=button.dataset.skyVocabViewButton===next;button.classList.toggle('is-active',active);button.setAttribute('aria-selected',active?'true':'false');button.tabIndex=active?0:-1});
   view.dataset.skyVocabView=next;saveView(slot,next);
-  if(next==='vocab')renderParagraph(slot,panel);
+  if(next==='vocab')renderParagraph(slot,panel);else if(vocabWheelContextLine?.closest?.('[data-sky-vocab-panel]')===panel){vocabWheelTouchLine=null;clearVocabWheelContext()}
 }
 function ensureSlot(slot){
   const refs=window.RelphiSkyCardShell?.get?.(slot),view=refs?.placementsView;if(!view)return;
@@ -1131,6 +1213,10 @@ function installStyles(){
     .sky-vocab-line[data-vocab-placement-colors="true"]::before,.sky-vocab-line[data-vocab-placement-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
     .sky-vocab-line[data-vocab-placement-colors="true"]::before{left:0;background:var(--vocab-placement-signs)}
     .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses)}
+    .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]{opacity:.12!important;transition:opacity .07s ease-out,filter .07s ease-out}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context{opacity:1!important;filter:saturate(1.18) brightness(1.03) drop-shadow(0 0 5px rgba(20,17,14,.26))!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context-exact{filter:saturate(1.28) brightness(1.06) drop-shadow(0 0 7px rgba(20,17,14,.38))!important}
     .sky-vocab-structure-label{font:inherit;color:inherit}
     .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:inherit}
@@ -1165,7 +1251,7 @@ function installStyles(){
   `;document.head.appendChild(style);
 }
 function render(){
-  queued=false;installStyles();saveDisplay(displayState());['A','B'].forEach(ensureSlot);
+  queued=false;if(vocabWheelContextLine&&!vocabWheelContextLine.isConnected){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();saveDisplay(displayState());['A','B'].forEach(ensureSlot);
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relationshipRowSlots(row){
