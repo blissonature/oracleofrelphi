@@ -217,6 +217,22 @@ assert.equal(await sunMercuryCluster.getAttribute('data-vocab-cluster-type'),'mi
 assert.equal(await sunMercuryCluster.getAttribute('data-vocab-signs'),'Libra','A mid-sign concentration must name its one affected sign.');
 assert.match(await sunMercuryCluster.textContent(),/^Mid-sign · Libra:/i,'An ordinary concentration card must begin with its subtype and sign, not repeat Cluster.');
 assert.doesNotMatch(await sunMercuryCluster.textContent(),/form one concentrated group/i,'An ordinary concentration card must not restate the section heading at the end.');
+const relationshipCountBeforeVocabHover=await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count();
+await sunMercuryCluster.hover();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
+const vocabWheelHighlight=await page.evaluate(()=>({
+  placements:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="placement"].is-vocab-context')].map(node=>node.dataset.placement),
+  signs:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="sign"].is-vocab-context')].map(node=>Number(node.dataset.sign)),
+  houses:[...document.querySelectorAll('#skyFoundationWheelMount [data-focus-piece="house"].is-vocab-context')].map(node=>({sky:node.dataset.sky,house:Number(node.dataset.house)})),
+  exact:[...document.querySelectorAll('#skyFoundationWheelMount .is-vocab-context-exact')].map(node=>node.dataset.placement||'')
+}));
+assert.ok(vocabWheelHighlight.placements.includes('sun')&&vocabWheelHighlight.placements.includes('mercury'),'Hovering a concentration must highlight each member placement on the wheel.');
+assert.ok(vocabWheelHighlight.signs.includes(6),'Hovering the Libra concentration must highlight Libra on the wheel.');
+assert.ok(vocabWheelHighlight.exact.includes('sun')&&vocabWheelHighlight.exact.includes('mercury'),'Placement loci must receive the strongest Vocab-context emphasis.');
+assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel highlighting must not filter the Relationships list.');
+await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
+await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
+
 
 const glyphMetrics=await page.locator('#skyFoundationA .sky-vocab-glyph svg').first().evaluate(node=>{
   const style=getComputedStyle(node);
