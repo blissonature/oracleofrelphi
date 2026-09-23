@@ -196,7 +196,10 @@
 
   function predicateAvailable(scope,target,choice){
     const slots=choice==='all'?activeSlots():[choice.toUpperCase()];
-    return slots.some(slot=>slot!=='B'||bActive()?idsFor(scope,target,slot).length>0:false);
+    return slots.some(slot=>{
+      if(slot==='B'&&!bActive())return false;
+      return idsFor(scope,target,slot).length>0;
+    });
   }
   function rowLabelFor(scope,target){
     if(scope==='group')return GROUPS.find(group=>group.id===target)?.label||titleCase(target);
@@ -216,7 +219,7 @@
     const out=[];
     logicRules.forEach((op,key)=>{
       const [scope,target,choice]=key.split('|');
-      if(!op||choice==='b'&&!bActive())return;
+      if(!op||choice==='b'&&!bActive()||!predicateAvailable(scope,target,choice))return;
       out.push({scope,target,choice,op});
     });
     return out;
