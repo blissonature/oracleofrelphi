@@ -708,7 +708,7 @@ function renderStructures(container,list,permitted,slot){
   if(visiblePolarities.length){
     appendStructureSubheading(container,'Primary polarities');
     visiblePolarities.forEach(structure=>{
-      const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='axis-polarity';line.dataset.vocabAxis=structure.left[0].id+'-'+structure.right[0].id;
+      const line=document.createElement('div');line.className='sky-vocab-line sky-vocab-structure-line';line.dataset.vocabStructure='axis-polarity';line.dataset.vocabAxis=structure.left[0].id+'-'+structure.right[0].id;line.dataset.vocabMembers=[...structure.left,...structure.right].map(record=>record.id).join('|');
       applyPolarityRails(
         line,
         halfWeightedStructureGradient(structure.left,structure.right,record=>record.sign,key=>SIGN_COLORS[key]),
@@ -782,6 +782,9 @@ function vocabLineContext(line){
   const panel=line.closest('[data-sky-vocab-panel]'),slot=String(panel?.dataset?.skyVocabPanel||'').toUpperCase();
   if(!KEYS[slot])return null;
   const placements=new Set(),signs=new Set(),houses=new Set();
+  if(line.dataset.vocabStructure==='axis-polarity'){
+    String(line.dataset.vocabMembers||'').split('|').map(value=>value.trim()).filter(Boolean).forEach(id=>placements.add(id));
+  }
   line.querySelectorAll('.sky-vocab-token').forEach(tokenNode=>{
     const kind=tokenNode.dataset.vocabKind,id=String(tokenNode.dataset.vocabId||'');
     if(kind==='placement'&&id)placements.add(id);
