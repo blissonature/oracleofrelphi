@@ -127,7 +127,7 @@ assert.match(vocab,/Number\(bStellium\)-Number\(aStellium\)/,'Stelliums must sor
 assert.match(vocab,/function proximityClusters\(list\)/,'Vocab must detect natural connected placement clusters rather than enumerating every aspect');
 assert.match(vocab,/function independentClusters\(list\)\{return proximityClusters\(list\)\}/,'Local concentrations must remain visible even when they also participate in a larger polarity');
 assert.match(vocab,/line\.dataset\.vocabStructure=isStellium\(members\)\?'stellium':'cluster'/,'Detected concentrations must distinguish stelliums from ordinary clusters');
-assert.match(vocab,/function compactStructureContext\(info,kind\)/,'Structures must provide sign and house context through the same Vocab layer system');
+assert.match(vocab,/function compactStructureContext\(info,kind,sentenceStart=false\)/,'Structures must provide sign and house context through the same Vocab layer system while allowing sentence-start capitalization');
 assert.match(vocab,/function structureMemberGroups\(members\)/,'Structure members sharing one sign and house must be grouped before context is rendered');
 assert.match(vocab,/const key=record\.sign\+'\\|'\+\(record\.house\|\|0\)/,'Structure grouping must use the shared sign-plus-house location');
 assert.match(vocab,/compactStructureContext\(signInfo\(group\.sign\),'sign'\)/,'Each shared structure group must print its zodiac sign context once');
