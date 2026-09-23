@@ -6,9 +6,18 @@ window.__relphiSkyVocabCopyV1=true;
 
 function clean(value){return String(value||'').replace(/[\t\f\v ]+/g,' ').replace(/ *\n */g,'\n').trim()}
 function slotFor(node){return node?.closest('#skyFoundationA')?'A':node?.closest('#skyFoundationB')?'B':''}
+function readSky(slot){try{return JSON.parse(localStorage.getItem(slot==='A'?'relphiSkyChartA':'relphiSkyChartB')||'null')}catch(_){return null}}
 function skyName(slot){
+  const value=readSky(slot);
+  try{
+    const resolved=clean(window.RelphiSkyCardTitle?.nameFor?.(slot,value));
+    if(resolved)return resolved;
+  }catch(_){}
   const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');
-  return clean(panel?.querySelector('.sky-foundation-name')?.textContent)||`Sky ${slot}`;
+  const visible=clean(panel?.querySelector('.sky-card-title-stable .sky-saved-name-label')?.textContent);
+  if(visible)return visible;
+  const metadata=value?.metadata&&typeof value.metadata==='object'?value.metadata:{};
+  return clean(metadata.savedSkyName||value?.name||value?.displayName||value?.skyName||value?.title)||`Sky ${slot}`;
 }
 function canonicalGlyph(tokenNode,nameVisible){
   const kind=String(tokenNode?.dataset?.vocabKind||''),name=clean(tokenNode?.dataset?.vocabName),fallback=clean(tokenNode?.dataset?.vocabFallbackGlyph),id=clean(tokenNode?.dataset?.vocabGlyphId);
