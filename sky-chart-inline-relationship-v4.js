@@ -19,7 +19,11 @@ const ASPECT_REFERENTS={conjunction:'the two functions operate together','semi-s
 const DECANS=[[['two_of_wands','Two of Wands'],['three_of_wands','Three of Wands'],['four_of_wands','Four of Wands']],[['five_of_pentacles','Five of Pentacles'],['six_of_pentacles','Six of Pentacles'],['seven_of_pentacles','Seven of Pentacles']],[['eight_of_swords','Eight of Swords'],['nine_of_swords','Nine of Swords'],['ten_of_swords','Ten of Swords']],[['two_of_cups','Two of Cups'],['three_of_cups','Three of Cups'],['four_of_cups','Four of Cups']],[['five_of_wands','Five of Wands'],['six_of_wands','Six of Wands'],['seven_of_wands','Seven of Wands']],[['eight_of_pentacles','Eight of Pentacles'],['nine_of_pentacles','Nine of Pentacles'],['ten_of_pentacles','Ten of Pentacles']],[['two_of_swords','Two of Swords'],['three_of_swords','Three of Swords'],['four_of_swords','Four of Swords']],[['five_of_cups','Five of Cups'],['six_of_cups','Six of Cups'],['seven_of_cups','Seven of Cups']],[['eight_of_wands','Eight of Wands'],['nine_of_wands','Nine of Wands'],['ten_of_wands','Ten of Wands']],[['two_of_pentacles','Two of Pentacles'],['three_of_pentacles','Three of Pentacles'],['four_of_pentacles','Four of Pentacles']],[['five_of_swords','Five of Swords'],['six_of_swords','Six of Swords'],['seven_of_swords','Seven of Swords']],[['eight_of_cups','Eight of Cups'],['nine_of_cups','Nine of Cups'],['ten_of_cups','Ten of Cups']]];
 const ALIAS={rising:'asc',ascendant:'asc',ac:'asc',descendant:'dsc',dc:'dsc',midheaven:'mc','imum coeli':'ic',imumcoeli:'ic',vx:'vertex','north node':'north-node',node:'north-node','true node':'north-node','south node':'south-node',fortune:'part-of-fortune','part of fortune':'part-of-fortune',pof:'part-of-fortune'};
 const OVERLAP_DISTANCE=30;
+const TOUCH_DRAG_SLOP=10;
 let openRow=null;
+let touchGesture=null;
+let fastTouchRow=null;
+let fastTouchAt=0;
 
 const norm=n=>((Number(n)%360)+360)%360;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
@@ -115,6 +119,36 @@ function decorateTopReveal(row){
   fields.forEach(([field,selector])=>{const node=row.querySelector(selector);if(!node)return;node.dataset.inlineTopReveal=field;node.setAttribute('title','Tap to reveal name, then meaning')});
 }
 function close(row){clearReveal(row);row?.querySelector(':scope>.inline-rel-detail')?.remove();row?.classList.remove('is-inline-expanded');row?.setAttribute('aria-expanded','false')}
+function ensureRowState(row){if(row&&!row.hasAttribute('aria-expanded'))row.setAttribute('aria-expanded',row.classList.contains('is-inline-expanded')?'true':'false')}
+function rowForTarget(target){return target?.closest?.('.sky-foundation-relationship-row[data-relation-index]')||null}
+function childControl(target,row){
+  const control=target?.closest?.('a,button,input,select,textarea,[role="button"],[contenteditable="true"]');
+  return Boolean(control&&control!==row);
+}
+function decorateRows(){document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(ensureRowState)}
+function handleRowPointerDown(event){
+  if((event.pointerType!=='touch'&&event.pointerType!=='pen')||event.isPrimary===false)return;
+  const row=rowForTarget(event.target);if(!row||childControl(event.target,row))return;
+  ensureRowState(row);
+  touchGesture={pointerId:event.pointerId,row,x:Number(event.clientX)||0,y:Number(event.clientY)||0,moved:false};
+}
+function handleRowPointerMove(event){
+  const gesture=touchGesture;if(!gesture||event.pointerId!==gesture.pointerId)return;
+  const dx=(Number(event.clientX)||0)-gesture.x,dy=(Number(event.clientY)||0)-gesture.y;
+  if(Math.hypot(dx,dy)>TOUCH_DRAG_SLOP)gesture.moved=true;
+}
+function handleRowPointerUp(event){
+  const gesture=touchGesture;if(!gesture||event.pointerId!==gesture.pointerId)return;
+  touchGesture=null;
+  const row=gesture.row;if(!row?.isConnected)return;
+  const dx=(Number(event.clientX)||0)-gesture.x,dy=(Number(event.clientY)||0)-gesture.y;
+  const moved=gesture.moved||Math.hypot(dx,dy)>TOUCH_DRAG_SLOP;
+  ensureRowState(row);
+  fastTouchRow=row;fastTouchAt=performance.now();
+  if(moved||childControl(event.target,row))return;
+  void open(row);
+}
+function handleRowPointerCancel(event){if(touchGesture&&event.pointerId===touchGesture.pointerId)touchGesture=null}
 
 async function open(row){
   if(openRow&&openRow!==row)close(openRow);
@@ -140,7 +174,16 @@ function openLedger(cardId){
   location.assign(url.href);
 }
 
+document.addEventListener('pointerdown',handleRowPointerDown,true);
+document.addEventListener('pointermove',handleRowPointerMove,true);
+document.addEventListener('pointerup',handleRowPointerUp,true);
+document.addEventListener('pointercancel',handleRowPointerCancel,true);
 document.addEventListener('click',e=>{
+  const touchRow=rowForTarget(e.target);
+  if(fastTouchRow){
+    if(performance.now()-fastTouchAt<900&&touchRow===fastTouchRow){e.preventDefault();e.stopImmediatePropagation();fastTouchRow=null;return}
+    if(performance.now()-fastTouchAt>=900)fastTouchRow=null;
+  }
   const ledger=e.target.closest('[data-inline-ledger]');
   if(ledger){e.preventDefault();e.stopImmediatePropagation();openLedger(ledger.dataset.inlineLedger);return}
   const topGlyph=e.target.closest('[data-inline-top-reveal],.sky-foundation-relationship-glyph--left,.sky-foundation-relationship-glyph--aspect,.sky-foundation-relationship-glyph--right');
@@ -151,6 +194,6 @@ document.addEventListener('click',e=>{
 },true);
 function suppress(){const p=document.getElementById('skySelectedRelationship');if(p)p.hidden=true}
 window.addEventListener('relphi:selected-relationship-rendered',suppress);
-window.addEventListener('relphi:sky-foundation-ready',()=>{if(openRow&&!openRow.isConnected)openRow=null;suppress()});
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',suppress,{once:true});else suppress();
+window.addEventListener('relphi:sky-foundation-ready',()=>{if(openRow&&!openRow.isConnected)openRow=null;suppress();decorateRows()});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{suppress();decorateRows()},{once:true});else{suppress();decorateRows()}
 })();
