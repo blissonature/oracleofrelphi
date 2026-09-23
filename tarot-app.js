@@ -1650,7 +1650,7 @@
       ctx.restore();
     });
     drawRelphiExportBrand(ctx,canvas,brandFooterH,brandLogoImage);
-    const finish = blob => {
+    const finish = async blob => {
       const filename = `drawing-board-arrangement-${localTimestampSlug(createdAt)}.png`;
       if (!blob) {
         const a = document.createElement('a');
@@ -1658,13 +1658,24 @@
         a.download = filename;
         document.body.appendChild(a); a.click(); a.remove(); return;
       }
+      const file = typeof File === 'function' ? new File([blob],filename,{type:'image/png',lastModified:Date.now()}) : null;
+      if (file && navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
+        try {
+          await navigator.share({files:[file],title:'Drawing Board arrangement'});
+          return;
+        } catch (error) {
+          if (error?.name === 'AbortError') return;
+          console.warn('Drawing Board share failed; falling back to download.',error);
+        }
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = filename; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
       const status = $('downloadStatus');
       if (status) status.innerHTML = `Arrangement snapshot created. If it did not save automatically, use this link: <a href="${url}" download="${filename}">${filename}</a>`;
+      window.setTimeout(()=>URL.revokeObjectURL(url),60000);
     };
-    if (canvas.toBlob) canvas.toBlob(finish, 'image/png'); else finish(null);
+    if (canvas.toBlob) canvas.toBlob(blob=>{ void finish(blob); }, 'image/png'); else void finish(null);
   }
 
   function rowDrawPool(scope, options = {}) {
