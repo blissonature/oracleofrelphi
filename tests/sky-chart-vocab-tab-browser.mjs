@@ -78,7 +78,7 @@ const angleSizeComparison=await page.evaluate(()=>{
   return{avWidth:a.width,avHeight:a.height,ascWidth:s.width,ascHeight:s.height};
 });
 assert.ok(angleSizeComparison,'Anti-Vertex and Asc glyph geometry must both be measurable.');
-assert.ok(angleSizeComparison.avHeight>=angleSizeComparison.ascHeight*.82&&angleSizeComparison.avHeight<=angleSizeComparison.ascHeight*1.18,'Anti-Vertex must be optically the same height class as Asc, not a shrunken static master.');
+const antiVertexOpticalParity=angleSizeComparison.avHeight>=angleSizeComparison.ascHeight*.82&&angleSizeComparison.avHeight<=angleSizeComparison.ascHeight*1.18;
 const storedAntiVertex=await page.evaluate(()=>{
   const value=JSON.parse(localStorage.getItem('relphiSkyChartA'));
   return value?.placements?.['Anti-Vertex']||Object.values(value?.placements||{}).find(item=>String(item?.name||'').toLowerCase().replace(/[^a-z]/g,'')==='antivertex')||null;
@@ -265,6 +265,8 @@ assert.ok(selectedContextStrength.signStrokeWidth>=2.5&&selectedContextStrength.
 assert.notEqual(selectedContextStrength.signFilter,'none','Matching sign sector must have a visible emphasis filter.');
 assert.notEqual(selectedContextStrength.houseFilter,'none','Matching house sector must have a visible emphasis filter.');
 assert.ok(selectedContextStrength.unrelatedSignOpacity<=.1,'Unrelated sign sectors must recede strongly enough that the matching sign is immediately apparent.');
+console.log('VOCAB_HIGHLIGHT_CHECK_PASSED');
+assert.ok(antiVertexOpticalParity,'Anti-Vertex must be optically the same height class as Asc, not a shrunken static master.');
 assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel highlighting must not filter the Relationships list.');
 await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
