@@ -68,8 +68,8 @@ try{
   assert.ok(sectorStyle.sign&&sectorStyle.house,`Active polarity must expose sign and house sectors: ${JSON.stringify(sectorStyle)}`);
   assert.equal(sectorStyle.sign.fillOpacity,.82,`Highlighted sign must retain native zodiac fill opacity: ${JSON.stringify(sectorStyle)}`);
   assert.equal(sectorStyle.house.fillOpacity,.5,`Highlighted house must retain native house fill opacity: ${JSON.stringify(sectorStyle)}`);
-  assert.equal(sectorStyle.sign.filter,'none',`Highlighted sign must not be recolored by a filter: ${JSON.stringify(sectorStyle)}`);
-  assert.equal(sectorStyle.house.filter,'none',`Highlighted house must not be recolored by a filter: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.sign.filter,'none',`Whiteout polarity sign must not be recolored by a filter: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.house.filter,'none',`Whiteout polarity house must not be recolored by a filter: ${JSON.stringify(sectorStyle)}`);
   console.log('Structural polarity member regression passed:',JSON.stringify(states));
 }finally{
   await browser.close();
