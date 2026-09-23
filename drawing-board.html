@@ -296,18 +296,6 @@ html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
             item.classList.toggle('relphi-celtic-crossing-rotated',id==='crossing'&&!state.centerOpen);
           });
 
-          if(!win.matchMedia('(max-width:700px)').matches&&!panel.dataset.relphiCelticZoomInitialized){
-            var zoom=doc.getElementById('rowZoom');
-            if(zoom){
-              var current=Number(zoom.value)||1;
-              if(current<1){
-                zoom.value='1';
-                zoom.dispatchEvent(new win.Event('input',{bubbles:true}));
-                zoom.dispatchEvent(new win.Event('change',{bubbles:true}));
-              }
-            }
-            panel.dataset.relphiCelticZoomInitialized='true';
-          }
         }
 
         function upgradeActiveLayout(){
@@ -340,52 +328,6 @@ html body #shortListPanel.relphi-celtic-readable .relphi-center-helper{
         doc.addEventListener('relphi:drawing-board-center-view',schedule);
         doc.addEventListener('change',function(event){
           if(event.target&&event.target.matches&&event.target.matches('#relphiSpreadTemplateSelect,#rowZoom'))schedule();
-        },true);
-
-        /* Celtic extents uses the actual rendered faces, not obsolete fixed card dimensions. */
-        doc.addEventListener('click',function(event){
-          var button=event.target&&event.target.closest&&event.target.closest('#zoomCardRowExtents');
-          if(!button)return;
-          var api=win.RelphiDrawingBoardPrefabsBridge;
-          var state=api&&api.getState&&api.getState();
-          if(!state||!state.activeLayout||state.activeLayout.id!==TARGET)return;
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          doc.getElementById('resetCardRowPan')&&doc.getElementById('resetCardRowPan').click();
-          var workspace=doc.querySelector('#shortListPanel .card-row-workspace');
-          var board=doc.querySelector('#shortListPanel .card-row-board');
-          var zoom=doc.getElementById('rowZoom');
-          if(!workspace||!board||!zoom)return;
-          var rects=Array.from(board.querySelectorAll('.card-row-item')).map(function(item){
-            var face=item.querySelector('.card-row-card-wrap,.card-row-drop-card');
-            var sticker=item.querySelector(':scope > .card-row-position-panel');
-            var faceRect=(face||item).getBoundingClientRect();
-            var stickerRect=sticker&&sticker.getBoundingClientRect();
-            if(!stickerRect)return faceRect;
-            return {
-              left:Math.min(faceRect.left,stickerRect.left),
-              top:Math.min(faceRect.top,stickerRect.top),
-              right:Math.max(faceRect.right,stickerRect.right),
-              bottom:Math.max(faceRect.bottom,stickerRect.bottom)
-            };
-          });
-          if(!rects.length)return;
-          var workspaceRect=workspace.getBoundingClientRect();
-          var minX=Math.min.apply(null,rects.map(function(r){return r.left-workspaceRect.left;}));
-          var minY=Math.min.apply(null,rects.map(function(r){return r.top-workspaceRect.top;}));
-          var maxX=Math.max.apply(null,rects.map(function(r){return r.right-workspaceRect.left;}));
-          var maxY=Math.max.apply(null,rects.map(function(r){return r.bottom-workspaceRect.top;}));
-          var width=Math.max(1,maxX-minX);
-          var height=Math.max(1,maxY-minY);
-          var availableWidth=Math.max(220,workspace.clientWidth-24);
-          var availableHeight=Math.max(240,workspace.clientHeight-24);
-          var fit=Math.min(2.4,availableWidth/width,availableHeight/height);
-          if(!win.matchMedia('(max-width:700px)').matches)fit=Math.max(1,fit);
-          fit=Math.max(.35,fit);
-          zoom.value=String(fit);
-          zoom.dispatchEvent(new win.Event('input',{bubbles:true}));
-          zoom.dispatchEvent(new win.Event('change',{bubbles:true}));
-          schedule();
         },true);
 
         new win.MutationObserver(schedule).observe(doc.body,{childList:true,subtree:true});
