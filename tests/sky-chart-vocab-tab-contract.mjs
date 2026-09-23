@@ -13,7 +13,7 @@ new Function(registry);
 assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=40/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
-assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,null,'static-master'\]/,'Anti-Vertex must use its canonical static SVG master');
+assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
 assert.doesNotMatch(antiVertexSvg,/<text\b|font-family|font-size|transform=/i,'Anti-Vertex canonical SVG must contain outlined geometry only, with no runtime font or transform dependency');
 assert.match(antiVertexSvg,/<path\b[^>]*fill="#111111"/,'Anti-Vertex canonical SVG must expose directly paintable path geometry');
 assert.match(vocab,/id:'anti-vertex',glyphId:'anti-vertex'/,'Derived Anti-Vertex must request the canonical registry identity instead of an AVx text fallback');
