@@ -161,6 +161,14 @@ async function assertReadableFocus(page) {
   assert.equal(await mobile.locator('.relphi-focus-position').textContent(),'Position 2','Next on the final free-draw card must append and advance to a new card');
   await mobile.click('.relphi-focus-close');
   await mobile.waitForSelector('.relphi-focus-reader',{state:'detached'});
+  await mobile.click('#drawingBoardOptionsButton');
+  await mobile.waitForSelector('.relphi-reading-options-drawer.is-reading-options-open',{state:'visible'});
+  await mobile.click('#relphiResetBoard');
+  await mobile.waitForFunction(()=>{
+    const state=window.RelphiDrawingBoardPrefabsBridge?.getState?.();
+    return state && !state.activeLayout && state.slotCount===0 && state.hasCards===false;
+  });
+  if (await mobile.locator('#relphiCancelOptions').isVisible().catch(()=>false)) await mobile.click('#relphiCancelOptions');
 
   await applyCeltic(mobile);
   let state=await boardState(mobile);
