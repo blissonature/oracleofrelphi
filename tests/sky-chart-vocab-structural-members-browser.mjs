@@ -66,10 +66,15 @@ try{
     };
   });
   assert.ok(sectorStyle.sign&&sectorStyle.house,`Active polarity must expose sign and house sectors: ${JSON.stringify(sectorStyle)}`);
-  assert.equal(sectorStyle.sign.fillOpacity,.82,`Highlighted sign must retain native zodiac fill opacity: ${JSON.stringify(sectorStyle)}`);
-  assert.equal(sectorStyle.house.fillOpacity,.5,`Highlighted house must retain native house fill opacity: ${JSON.stringify(sectorStyle)}`);
-  assert.equal(sectorStyle.sign.filter,'none',`Whiteout polarity sign must not be recolored by a filter: ${JSON.stringify(sectorStyle)}`);
-  assert.equal(sectorStyle.house.filter,'none',`Whiteout polarity house must not be recolored by a filter: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.sign.fillOpacity,.82,`Structure highlight must retain native zodiac fill opacity: ${JSON.stringify(sectorStyle)}`);
+  assert.equal(sectorStyle.house.fillOpacity,.5,`Structure highlight must retain native house fill opacity: ${JSON.stringify(sectorStyle)}`);
+  assert.notEqual(sectorStyle.sign.filter,'none',`Structure sign must receive a subtle glow: ${JSON.stringify(sectorStyle)}`);
+  assert.notEqual(sectorStyle.house.filter,'none',`Structure house must receive a subtle glow: ${JSON.stringify(sectorStyle)}`);
+  const untouched=await page.evaluate(()=>({
+    placement:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount [data-focus-piece="placement"][data-sky="A"][data-placement="moon"]:not(.is-vocab-context)')).opacity),
+    sign:Number(getComputedStyle(document.querySelector('#skyFoundationWheelMount .sky-foundation-sign-sector:not(.is-vocab-context)')).opacity)
+  }));
+  assert.deepEqual(untouched,{placement:1,sign:1},`Structure highlight must not dim unrelated wheel content: ${JSON.stringify(untouched)}`);
   const tokenKinds={};
   for(const kind of ['placement','sign','house']){
     const token=vertex.locator(`.sky-vocab-token[data-vocab-kind="${kind}"]`).first();
