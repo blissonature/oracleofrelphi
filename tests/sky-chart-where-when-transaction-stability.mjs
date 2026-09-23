@@ -16,10 +16,13 @@ const skyA=sample('Alpha sky',0,'1985-10-08T04:37','1985-10-08T08:37:00.000Z','M
 const skyB=sample('Beta sky',29.27,'2026-08-27T08:00','2026-08-27T14:00:00.000Z','Salt Lake City, Utah, United States','America/Denver',40.7608,-111.891);
 
 const browser=await chromium.launch({headless:true});
-const page=await browser.newPage({viewport:{width:1440,height:1100}});
+const context=await browser.newContext({viewport:{width:1440,height:1100},geolocation:{latitude:40.7608,longitude:-111.891},permissions:['geolocation'],timezoneId:'America/Denver'});
+const page=await context.newPage();
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
 await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',route=>route.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
 await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',route=>route.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+await page.route('https://api.bigdatacloud.net/data/reverse-geocode-client**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({locality:'Salt Lake City',principalSubdivision:'Utah',countryName:'United States'})}));
+await page.route('https://api.open-meteo.com/v1/forecast**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({timezone:'America/Denver',current:{temperature_2m:20}})}));
 await page.addInitScript(({a,b})=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartB',JSON.stringify(b));localStorage.setItem('relphiSkyChartLastModeV1','comparison')},{a:skyA,b:skyB});
 await page.goto('http://127.0.0.1:4173/sky-chart.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#skyFoundationRoot[aria-busy="false"]',{timeout:20000});
@@ -32,6 +35,18 @@ const whereTabA=page.locator('#skyFoundationA [data-sky-drawer-tab="where"]'),wh
 
 await whereTabA.click();
 const firstEditorA=page.locator('#skyFoundationA .sky-where-when-editor');await firstEditorA.waitFor();
+const useHere=firstEditorA.locator('[data-ww-action="use-here"]');
+assert.equal(await useHere.count(),1,'Where must expose exactly one Use Here button.');
+assert.equal((await useHere.textContent()).trim(),'Use Here');
+assert.equal(await firstEditorA.locator('[data-current-location]').count(),1,'Legacy current-location injection must not create a second browser-location button.');
+const beforeUseHere=await firstEditorA.evaluate(form=>({date:form.querySelector('[data-ww-field="date"]')?.value||'',time:form.querySelector('[data-ww-field="time"]')?.value||'',stored:localStorage.getItem('relphiSkyChartA')}));
+await useHere.click();
+await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-ww-field="timezone"]')?.value==='America/Denver');
+const afterUseHere=await firstEditorA.evaluate(form=>({date:form.querySelector('[data-ww-field="date"]')?.value||'',time:form.querySelector('[data-ww-field="time"]')?.value||'',lat:Number(form.querySelector('[data-ww-field="latitude"]')?.value),lon:Number(form.querySelector('[data-ww-field="longitude"]')?.value),query:form.querySelector('[data-ww-field="location-query"]')?.value||'',stored:localStorage.getItem('relphiSkyChartA')}));
+assert.equal(afterUseHere.date,beforeUseHere.date,'Use Here must not change the date field.');
+assert.equal(afterUseHere.time,beforeUseHere.time,'Use Here must not change the time field.');
+assert.ok(Math.abs(afterUseHere.lat-40.7608)<1e-5&&Math.abs(afterUseHere.lon+111.891)<1e-5,'Use Here must apply browser coordinates.');
+assert.equal(afterUseHere.stored,beforeUseHere.stored,'Use Here must not commit or recalculate the sky before confirmation.');
 const footerContract=await firstEditorA.evaluate(form=>{const footer=form.querySelector('.sky-where-when-footer');return{hasHeptagramMount:!!footer?.querySelector('[data-ww-heptagram-slot="A"]'),hasCommittedFrame:!!footer?.querySelector('[data-sky-heptagram-frame="A"]'),buttons:[...footer.querySelectorAll('.sky-where-when-footer-actions button')].map(button=>button.textContent.trim()),advancedBeforeFooter:!!form.querySelector('.sky-where-when-advanced')&&!!(form.querySelector('.sky-where-when-advanced').compareDocumentPosition(footer)&Node.DOCUMENT_POSITION_FOLLOWING)}});
 assert.equal(footerContract.hasHeptagramMount,true);assert.equal(footerContract.hasCommittedFrame,true);assert.deepEqual(footerContract.buttons,['Cancel','Use This Where and When']);assert.equal(footerContract.advancedBeforeFooter,true);
 await page.evaluate(()=>{document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel').dataset.unchangedCloseMarker='keep'});
