@@ -100,7 +100,7 @@ assert.match(vocab,/if\(wheelFilterState\|\|wheelFilterSpec\)applyWheelSpec\(nul
 assert.match(vocab,/const AXIS_STRUCTURES=/,'Vocab must define higher-order axis polarity structures separately from ordinary relationships');
 assert.match(vocab,/\{left:'vertex',right:'anti-vertex',label:'Vertex polarity'\}[\s\S]*\{left:'asc',right:'dsc',label:'Horizon polarity'\}[\s\S]*\{left:'mc',right:'ic',label:'Meridian polarity'\}[\s\S]*\{left:'north-node',right:'south-node',label:'Nodal polarity'\}/,'Primary structural polarity order must be Vertex, horizon, meridian, then nodes');
 assert.match(vocab,/function structuralRecords\(slot,list\)/,'Vocab must derive structural points that are not stored as ordinary placements');
-assert.match(vocab,/id:'anti-vertex'[\s\S]*fallbackGlyph:'AVx'/,'Anti-Vertex must be derived at the exact opposition to Vertex when absent');
+assert.match(vocab,/const value=norm\(vertex\.value\+180\)[\s\S]*id:'anti-vertex',glyphId:'anti-vertex'/,'Anti-Vertex must be derived at the exact opposition to Vertex when absent and use the canonical glyph');
 assert.match(vocab,/const SIGN_POLARITIES=\[\[0,6\],\[1,7\],\[2,8\],\[3,9\],\[4,10\],\[5,11\]\]/,'Vocab must traverse all six zodiacal sign polarities');
 assert.match(vocab,/const HOUSE_POLARITIES=\[\[1,7\],\[2,8\],\[3,9\],\[4,10\],\[5,11\],\[6,12\]\]/,'Vocab must traverse all six house polarities');
 assert.match(vocab,/const SIGN_RULERS=\['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'\]/,'Empty sign and house contexts must use Relphi’s traditional sign rulers');
@@ -134,7 +134,7 @@ assert.match(vocab,/if\(n\)\{[\s\S]*if\(g\|\|r\)node\.appendChild\(document\.cre
 assert.match(vocab,/sky-vocab-structure-member-context\{white-space:normal;color:inherit\}/,'Structure connective prose must not introduce a separate gray text treatment');
 assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:normal;font:inherit;color:inherit\}/,'Structure sign and house context must not introduce a smaller font treatment');
 assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:normal/,'Structure referents must remain readable and wrap normally instead of being replaced by hard-coded names');
-assert.match(vocab,/renderStructures\(container,structureList,permitted,slot\);[\s\S]*renderFullPlacements\(container,permitted\)/,'Structures must lead the Vocab reading before the ordinary placement reading');
+assert.match(vocab,/renderStructures\(container,structureList,permitted,slot\);[\s\S]*renderFullPlacements\(container,permitted,slot\)/,'Structures must lead the Vocab reading before the ordinary placement reading');
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
 assert.doesNotMatch(vocab,/relations\(list\)\.filter/,'Vocab must not append the raw intrasky aspect list after the structural synthesis');
 assert.match(vocab,/node\.dataset\.vocabLead=String\(lead\|\|''\)/,'Vocab tokens must carry their grammatical lead so it can share the token head');
