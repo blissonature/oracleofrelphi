@@ -528,10 +528,9 @@ function structureLabel(text){
   const label=document.createElement('span');label.className='sky-vocab-structure-label';label.textContent=text;return label;
 }
 function clusterSentence(members){
-  const frag=document.createDocumentFragment(),profile=clusterSignProfile(members),kind=isStellium(members)?'Stellium':'Cluster';
-  frag.append(structureLabel(kind+' · '+profile.type+' · '+profile.names.join('–')+':'),document.createTextNode(' '));
+  const frag=document.createDocumentFragment(),profile=clusterSignProfile(members),stellium=isStellium(members),type=profile.type==='mid-sign'?'Mid-sign':'Cusp';
+  frag.append(structureLabel((stellium?'Stellium · ':'')+type+' · '+profile.names.join('–')+':'),document.createTextNode(' '));
   appendStructureMembers(frag,members);
-  frag.appendChild(document.createTextNode(kind==='Stellium'?' form one stellium':' form one concentrated group'));
   return frag;
 }
 function polaritySentence(structure){
@@ -567,7 +566,7 @@ function appendSignPole(frag,signIndex,list){
 }
 function signPolaritySentence(pair,list){
   const frag=document.createDocumentFragment();
-  frag.append(structureLabel('Sign polarity:'),document.createTextNode(' '));appendSignPole(frag,pair[0],list);
+  appendSignPole(frag,pair[0],list);
   frag.appendChild(document.createTextNode(' ↔ '));appendSignPole(frag,pair[1],list);
   return frag;
 }
@@ -594,7 +593,7 @@ function appendHousePole(frag,house,slot,list){
 }
 function housePolaritySentence(pair,slot,list){
   const frag=document.createDocumentFragment();
-  frag.append(structureLabel('House polarity:'),document.createTextNode(' '));appendHousePole(frag,pair[0],slot,list);
+  appendHousePole(frag,pair[0],slot,list);
   frag.appendChild(document.createTextNode(' ↔ '));appendHousePole(frag,pair[1],slot,list);
   return frag;
 }
