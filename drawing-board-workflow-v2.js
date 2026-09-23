@@ -10,6 +10,7 @@
   const PANEL_ID = 'shortListPanel';
   const CUSTOM_TEMPLATE_KEY = 'relphiDrawingBoardSpreadTemplatesV3';
   const STICKER_VISIBILITY_KEY = 'relphiDrawingBoardPositionStickersV3';
+  const FOCUS_NAV_MODE_KEY = 'relphiDrawingBoardFocusNavModeV1';
   const CANVAS_W = 900;
   const CANVAS_H = 760;
   const CARD_W = 174;
@@ -22,6 +23,8 @@
   let initialized = false;
   let optionsSession = null;
   let focusIndex = -1;
+  let focusNavMode = readFocusNavMode();
+  let suppressFanClickUntil = 0;
   let pendingFocusIndex = null;
   let activeDraw = false;
   let openTool = '';
@@ -1067,6 +1070,138 @@
     if (preserveScroll) strip.scrollLeft=previousScroll;
     keepFocusStripCurrentVisible(strip,!preserveScroll);
   }
+  function readFocusNavMode() {
+    try { return localStorage.getItem(FOCUS_NAV_MODE_KEY)==='strip' ? 'strip' : 'fan'; }
+    catch (_) { return 'fan'; }
+  }
+  function writeFocusNavMode(mode) {
+    try { localStorage.setItem(FOCUS_NAV_MODE_KEY,mode); } catch (_) {}
+  }
+  function syncFocusNavMode(reader) {
+    if (!reader) return;
+    const fan=reader.querySelector('.relphi-focus-fan');
+    const strip=reader.querySelector('.relphi-focus-strip');
+    const fanActive=focusNavMode==='fan';
+    if (fan) fan.hidden=!fanActive;
+    if (strip) strip.hidden=fanActive;
+    reader.dataset.focusNavMode=focusNavMode;
+    reader.querySelectorAll('[data-focus-nav-mode]').forEach(button=>{
+      const active=button.dataset.focusNavMode===focusNavMode;
+      button.classList.toggle('is-active',active);
+      button.setAttribute('aria-pressed',active?'true':'false');
+    });
+  }
+  function setFocusNavMode(reader, mode) {
+    focusNavMode=mode==='strip' ? 'strip' : 'fan';
+    writeFocusNavMode(focusNavMode);
+    syncFocusNavMode(reader);
+    if (focusNavMode==='strip') keepFocusStripCurrentVisible(reader?.querySelector('.relphi-focus-strip'),true);
+  }
+  function renderFocusFan(reader, index) {
+    const fan=reader.querySelector('.relphi-focus-fan');
+    if (!fan) return;
+    const order=orderedNativePositionIndices();
+    const currentLogical=Math.max(0,order.indexOf(index));
+    const existing=new Map(Array.from(fan.querySelectorAll('[data-focus-position]')).map(node=>[node.dataset.focusPosition,node]));
+    order.forEach((nativeIndex,logicalIndex)=>{
+      const key=String(nativeIndex);
+      let button=existing.get(key);
+      if (!button) {
+        button=document.createElement('button');
+        button.type='button';
+        button.dataset.focusPosition=key;
+        button.addEventListener('click',event=>{
+          if (Date.now()<suppressFanClickUntil) { event.preventDefault(); return; }
+          navigateFocusTo(Number(button.dataset.focusPosition));
+        });
+        fan.appendChild(button);
+      }
+      existing.delete(key);
+      const offset=logicalIndex-currentLogical;
+      const distance=Math.abs(offset);
+      const width=Math.max(280,fan.clientWidth||reader.clientWidth||390);
+      const spacing=Math.max(30,Math.min(62,width*.115));
+      const x=offset*spacing;
+      const y=Math.min(18,distance*4);
+      const rotation=Math.max(-18,Math.min(18,offset*4));
+      const scale=Math.max(.62,1-distance*.075);
+      button.classList.toggle('is-current',nativeIndex===index);
+      button.classList.toggle('is-reversed',focusCardIsReversed(nativeIndex));
+      const card=cardAt(nativeIndex);
+      button.classList.toggle('is-empty',!card);
+      button.replaceChildren();
+      const img=focusArtImage(card)?.cloneNode(true);
+      if (img) {
+        img.removeAttribute('loading');
+        img.removeAttribute('decoding');
+        button.appendChild(img);
+      } else {
+        const back=document.createElement('span');
+        back.className='relphi-focus-fan-back';
+        back.textContent=String(logicalIndex+1);
+        button.appendChild(back);
+      }
+      const badge=document.createElement('span');
+      badge.className='relphi-focus-fan-index';
+      badge.textContent=String(logicalIndex+1);
+      button.appendChild(badge);
+      button.title=positionLabel(nativeIndex);
+      button.setAttribute('aria-label',positionLabel(nativeIndex)+(card?'':' · draw this position'));
+      button.style.transform=`translate(calc(-50% + ${x}px), ${y}px) rotate(${rotation}deg) scale(${nativeIndex===index?1.06:scale})`;
+      button.style.opacity=distance>5?'0':String(Math.max(.28,1-distance*.13));
+      button.style.zIndex=String(100-distance);
+      button.style.pointerEvents=distance>5?'none':'auto';
+      button.tabIndex=nativeIndex===index?0:-1;
+    });
+    existing.forEach(node=>node.remove());
+  }
+  function installFocusFanSwipe(reader) {
+    const fan=reader.querySelector('.relphi-focus-fan');
+    if (!fan || fan.dataset.swipeReady==='true') return;
+    fan.dataset.swipeReady='true';
+    let gesture=null;
+    fan.addEventListener('pointerdown',event=>{
+      if (event.button!=null && event.button!==0) return;
+      gesture={id:event.pointerId,x:event.clientX,y:event.clientY,moved:false};
+      fan.setPointerCapture?.(event.pointerId);
+    });
+    fan.addEventListener('pointermove',event=>{
+      if (!gesture || event.pointerId!==gesture.id) return;
+      const dx=event.clientX-gesture.x;
+      const dy=event.clientY-gesture.y;
+      if (Math.abs(dx)<5 && Math.abs(dy)<5) return;
+      gesture.moved=true;
+      if (Math.abs(dx)>Math.abs(dy)) {
+        fan.classList.add('is-dragging');
+        fan.style.transform=`translateX(${Math.max(-70,Math.min(70,dx*.28))}px)`;
+        event.preventDefault();
+      }
+    });
+    const finish=event=>{
+      if (!gesture || event.pointerId!==gesture.id) return;
+      const dx=event.clientX-gesture.x;
+      const dy=event.clientY-gesture.y;
+      const moved=gesture.moved;
+      gesture=null;
+      fan.classList.remove('is-dragging');
+      fan.style.transform='';
+      if (moved) suppressFanClickUntil=Date.now()+280;
+      if (moved && Math.abs(dx)>=42 && Math.abs(dx)>Math.abs(dy)*1.1) navigateFocusBy(dx<0?1:-1);
+    };
+    fan.addEventListener('pointerup',finish);
+    fan.addEventListener('pointercancel',event=>{
+      if (!gesture || event.pointerId!==gesture.id) return;
+      gesture=null;
+      fan.classList.remove('is-dragging');
+      fan.style.transform='';
+    });
+  }
+  function bindFocusNavModes(reader) {
+    reader.querySelectorAll('[data-focus-nav-mode]').forEach(button=>{
+      button.addEventListener('click',()=>setFocusNavMode(reader,button.dataset.focusNavMode));
+    });
+    syncFocusNavMode(reader);
+  }
   function installFocusSwipe(reader) {
     const main=reader.querySelector('.relphi-focus-main');
     if (!main) return;
@@ -1097,6 +1232,8 @@
       existingReader.setAttribute('aria-label',positionLabel(index,root));
       renderFocusEntry(existingReader,index);
       renderFocusStrip(existingReader,index,{preserveScroll:true});
+      renderFocusFan(existingReader,index);
+      syncFocusNavMode(existingReader);
       document.body.classList.add('relphi-focus-open');
       return true;
     }
@@ -1106,9 +1243,12 @@
     reader.setAttribute('role','dialog');
     reader.setAttribute('aria-modal','true');
     reader.setAttribute('aria-label',positionLabel(index,root));
-    reader.innerHTML=`<div class="relphi-focus-shell"><section class="relphi-focus-position-panel" aria-label="Reading question or position"><span class="relphi-focus-reversed-badge" hidden>Reversed</span><strong class="relphi-focus-position"></strong><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></section><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-strip" aria-label="Reading positions"></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
+    reader.innerHTML=`<div class="relphi-focus-shell"><section class="relphi-focus-position-panel" aria-label="Reading question or position"><span class="relphi-focus-reversed-badge" hidden>Reversed</span><strong class="relphi-focus-position"></strong><button type="button" class="relphi-focus-close" aria-label="Close focused card">×</button></section><div class="relphi-focus-main"><section class="relphi-focus-art-pane" aria-label="Card art"><div class="relphi-focus-art-frame"><img class="relphi-focus-art" alt=""></div></section><article class="relphi-focus-entry tarot-detail" aria-label="Full Tarot Ledger entry"></article></div><footer><button type="button" class="relphi-focus-prev" aria-label="Previous position">‹</button><div class="relphi-focus-navigator"><div class="relphi-focus-nav-modes" role="group" aria-label="Card navigation view"><button type="button" data-focus-nav-mode="fan">Fan</button><button type="button" data-focus-nav-mode="strip">Strip</button></div><div class="relphi-focus-fan" aria-label="Reading positions as a card fan"></div><div class="relphi-focus-strip" aria-label="Reading positions"></div></div><button type="button" class="relphi-focus-next" aria-label="Next position">›</button></footer></div>`;
     renderFocusEntry(reader,index);
     renderFocusStrip(reader,index,{preserveScroll:false});
+    renderFocusFan(reader,index);
+    bindFocusNavModes(reader);
+    installFocusFanSwipe(reader);
     reader.querySelector('.relphi-focus-close').addEventListener('click',()=>closeFocus({acknowledge:true}));
     reader.querySelector('.relphi-focus-prev').addEventListener('click',()=>navigateFocusBy(-1));
     reader.querySelector('.relphi-focus-next').addEventListener('click',()=>navigateFocusBy(1));
