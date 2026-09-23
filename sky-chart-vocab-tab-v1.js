@@ -1231,6 +1231,9 @@ function installStyles(){
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="placement"]{opacity:.62!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="leader"]{opacity:.36!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context{opacity:1!important;filter:saturate(1.18) brightness(1.03) drop-shadow(0 0 5px rgba(20,17,14,.26))!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-sign-sector.is-vocab-context,
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-house-sector.is-vocab-context{opacity:1!important;fill-opacity:.78!important;filter:saturate(1.55) brightness(1.04) drop-shadow(0 0 5px rgba(20,17,14,.3))!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-sign-glyph.is-vocab-context{opacity:1!important;filter:saturate(1.35) brightness(.92) drop-shadow(0 0 4px rgba(20,17,14,.22))!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context-exact{filter:saturate(1.28) brightness(1.06) drop-shadow(0 0 7px rgba(20,17,14,.38))!important}
     .sky-vocab-structure-label{font:inherit;color:inherit}
     .sky-vocab-structure-member-group{display:inline}
