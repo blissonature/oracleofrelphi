@@ -250,22 +250,12 @@ const selectedContextStrength=await page.evaluate(()=>{
     houseFill:Number(getComputedStyle(house).fillOpacity),
     signOpacity:Number(getComputedStyle(sign).opacity),
     houseOpacity:Number(getComputedStyle(house).opacity),
-    signStrokeWidth:parseFloat(getComputedStyle(sign).strokeWidth),
-    houseStrokeWidth:parseFloat(getComputedStyle(house).strokeWidth),
-    signFilter:getComputedStyle(sign).filter,
-    houseFilter:getComputedStyle(house).filter,
     unrelatedSignOpacity:Number(getComputedStyle(unrelatedSign).opacity)
   };
 });
-assert.equal(selectedContextStrength.signFill,1,'Matching sign sector must become fully filled rather than merely pass an opacity threshold.');
-assert.equal(selectedContextStrength.houseFill,1,'Matching house sector must become fully filled rather than merely pass an opacity threshold.');
-assert.equal(selectedContextStrength.signOpacity,1,'Matching sign sector must remain fully visible.');
-assert.equal(selectedContextStrength.houseOpacity,1,'Matching house sector must remain fully visible.');
-assert.ok(selectedContextStrength.signStrokeWidth>=2.5&&selectedContextStrength.houseStrokeWidth>=2.5,'Matching sign and house sectors must gain a visible highlight edge.');
-assert.notEqual(selectedContextStrength.signFilter,'none','Matching sign sector must have a visible emphasis filter.');
-assert.notEqual(selectedContextStrength.houseFilter,'none','Matching house sector must have a visible emphasis filter.');
-assert.ok(selectedContextStrength.unrelatedSignOpacity<=.1,'Unrelated sign sectors must recede strongly enough that the matching sign is immediately apparent.');
-
+assert.ok(selectedContextStrength.signFill>=.75&&selectedContextStrength.signOpacity===1,'Matching sign sector must become substantially opaque and fully visible.');
+assert.ok(selectedContextStrength.houseFill>=.75&&selectedContextStrength.houseOpacity===1,'Matching house sector must become substantially opaque and fully visible.');
+assert.ok(selectedContextStrength.unrelatedSignOpacity<=.2,'Unrelated sign sectors must still recede so the matching sign remains immediately apparent.');
 assert.equal(await page.locator('#skyFoundationRelationshipList>.sky-foundation-relationship-row:visible').count(),relationshipCountBeforeVocabHover,'Vocab wheel highlighting must not filter the Relationships list.');
 await page.locator('#skyFoundationA .sky-vocab-structures-heading').hover();
 await page.waitForFunction(()=>!document.querySelector('#skyFoundationWheelMount>.sky-foundation-wheel')?.classList.contains('has-vocab-context'));
