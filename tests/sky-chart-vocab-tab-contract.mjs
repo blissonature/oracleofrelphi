@@ -134,7 +134,7 @@ assert.match(vocab,/if\(n\)\{[\s\S]*if\(g\|\|r\)node\.appendChild\(document\.cre
 assert.match(vocab,/sky-vocab-structure-member-context\{white-space:normal;color:inherit\}/,'Structure connective prose must not introduce a separate gray text treatment');
 assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:normal;font:inherit;color:inherit\}/,'Structure sign and house context must not introduce a smaller font treatment');
 assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:normal/,'Structure referents must remain readable and wrap normally instead of being replaced by hard-coded names');
-assert.match(vocab,/renderStructures\(container,structureList,permitted,slot\);[\s\S]*renderFullPlacements\(container,permitted\)/,'Structures must lead the Vocab reading before the ordinary placement reading');
+assert.match(vocab,/renderStructures\(container,structureList,permitted,slot\);[\s\S]*renderFullPlacements\(container,permitted,slot\)/,'Structures must lead the Vocab reading before the ordinary placement reading');
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
 assert.doesNotMatch(vocab,/relations\(list\)\.filter/,'Vocab must not append the raw intrasky aspect list after the structural synthesis');
 assert.match(vocab,/node\.dataset\.vocabLead=String\(lead\|\|''\)/,'Vocab tokens must carry their grammatical lead so it can share the token head');
