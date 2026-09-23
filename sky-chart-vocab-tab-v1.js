@@ -856,6 +856,19 @@ function bindVocabWheelContext(panel){
     applyVocabWheelContext(line);
   });
 }
+function clearVocabWheelContextFromBlank(event){
+  if(!vocabWheelContextLine)return;
+  const target=event.target instanceof Element?event.target:null;
+  if(!target)return;
+  if(target.closest('.sky-vocab-line,[data-vocab-dropdown],[data-vocab-dropdown-menu],[data-sky-vocab-tabs],button,input,select,textarea,a,label,summary,details'))return;
+  if(target.closest('#skyFoundationWheelMount [data-focus-piece],#skyFoundationWheelMount [data-interactive]'))return;
+  const blankVocab=target.closest('[data-sky-vocab-panel]');
+  const blankWheel=target.closest('#skyFoundationWheelMount');
+  const blankChart=vocabClearableBlank(target);
+  if(!blankVocab&&!blankWheel&&!blankChart)return;
+  vocabWheelTouchLine=null;
+  clearVocabWheelContext();
+}
 function renderParagraph(slot,panel){
   const list=records(slot),container=panel.querySelector('[data-sky-vocab-paragraph]'),filters=filterState();
   if(!container)return;
@@ -1361,10 +1374,14 @@ function mirrorZodiacBridge(detail){
   }
 }
 window.addEventListener('relphi:sky-foundation-filter-changed',event=>driveFiltersFromWheel(event.detail));
-window.addEventListener('relphi:sky-foundation-clear-selection',()=>{if(wheelFilterState||wheelFilterSpec)applyWheelSpec(null)});
+window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
+  if(wheelFilterState||wheelFilterSpec)applyWheelSpec(null);
+  vocabWheelTouchLine=null;clearVocabWheelContext();
+});
 window.addEventListener('relphi:sky-house-focus-bridge-changed',event=>mirrorHouseBridge(event.detail));
 window.addEventListener('relphi:sky-zodiac-filter-changed',event=>mirrorZodiacBridge(event.detail));
 document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
+document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 [
   'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready',
   'relphi:sky-orb-limit-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
