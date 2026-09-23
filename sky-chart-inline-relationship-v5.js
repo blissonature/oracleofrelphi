@@ -80,8 +80,23 @@ document.addEventListener('pointerup',onPointerUp,true);
 document.addEventListener('pointercancel',onPointerCancel,true);
 document.addEventListener('click',onClick,true);
 function suppress(){const p=document.getElementById('skySelectedRelationship');if(p)p.hidden=true}
+let rowObserver=null;
+function initializeRows(root=document){
+  root.querySelectorAll?.('.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{
+    if(!row.hasAttribute('aria-expanded'))row.setAttribute('aria-expanded',row.classList.contains('is-inline-expanded')?'true':'false');
+  });
+}
+function observeRows(){
+  const list=document.getElementById('skyFoundationRelationshipList');
+  if(!list||rowObserver)return;
+  initializeRows(list);
+  rowObserver=new MutationObserver(()=>initializeRows(list));
+  rowObserver.observe(list,{childList:true,subtree:false});
+}
 window.addEventListener('relphi:selected-relationship-rendered',suppress);
-window.addEventListener('relphi:sky-foundation-ready',()=>{if(openRow&&!openRow.isConnected)openRow=null;warmCurrentCardArt();suppress()});
-function start(){warmCurrentCardArt();suppress()}
+window.addEventListener('relphi:sky-foundation-ready',()=>{if(openRow&&!openRow.isConnected)openRow=null;warmCurrentCardArt();suppress();observeRows();initializeRows()});
+window.addEventListener('relphi:sky-intrasky-relationships-ready',()=>initializeRows());
+window.addEventListener('relphi:sky-intrasky-b-relationships-ready',()=>initializeRows());
+function start(){warmCurrentCardArt();suppress();observeRows();initializeRows()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
