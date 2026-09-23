@@ -55,7 +55,7 @@ if (registry) {
     if (!entry) fail(`Sky Chart identity missing from the one registry: ${id}`);
   }
 
-  const staticMasters = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith','part-of-fortune','anti-vertex'];
+  const staticMasters = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','lilith','part-of-fortune'];
   for (const id of staticMasters) {
     const entry = registry.get(id);
     if (!entry?.asset || entry.fitMode !== 'static-master' || entry.scale !== 1 || entry.dx !== 0 || entry.dy !== 0) {
@@ -68,6 +68,7 @@ if (registry) {
     'north-node': ['☊','symbol','400'],
     'south-node': ['☋','symbol','400'],
     vertex: ['Vx','letter','700'],
+    'anti-vertex': ['AVx','letter','700'],
     asc: ['Asc','letter','700'],
     dsc: ['Dsc','letter','700'],
     mc: ['MC','letter','700'],
