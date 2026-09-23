@@ -574,7 +574,12 @@ assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="p
 assert.equal(await page.locator('#skyFoundationA [data-vocab-dropdown-summary="houses"]').textContent(),'All','Blank space must restore Houses after a Zodiac selection.');
 
 const mercury=page.locator('#skyFoundationWheelMount [data-interactive="placement"][data-sky="A"][data-placement="mercury"]').first();
-await mercury.click({force:true});
+await mercury.evaluate(node=>{
+  const pointer={bubbles:true,cancelable:true,composed:true,pointerId:92,pointerType:'mouse',isPrimary:true,buttons:1};
+  node.dispatchEvent(new PointerEvent('pointerdown',pointer));
+  node.dispatchEvent(new PointerEvent('pointerup',{...pointer,buttons:0}));
+  node.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true}));
+});
 await page.waitForTimeout(120);
 const mercurySelectionState=await page.evaluate(()=>({
   summary:document.querySelector('#skyFoundationA [data-vocab-dropdown-summary="placements"]')?.textContent||'',
