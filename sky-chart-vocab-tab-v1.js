@@ -139,6 +139,8 @@ let dropdownPositionQueued=false;
 let wheelFilterState=null;
 let wheelFilterSpec=null;
 let vocabWheelContextLine=null;
+let vocabWheelContextToken=null;
+let vocabWheelPinnedToken=null;
 let vocabWheelTouchLine=null;
 
 const norm=value=>((Number(value)%360)+360)%360;
@@ -816,7 +818,58 @@ function clearVocabWheelContext(){
     wheel.querySelectorAll('.is-vocab-context-exact').forEach(node=>node.classList.remove('is-vocab-context-exact'));
   }
   vocabWheelContextLine?.classList.remove('is-wheel-context-active');
+  vocabWheelContextToken?.classList.remove('is-wheel-token-active');
   vocabWheelContextLine=null;
+  vocabWheelContextToken=null;
+}
+function vocabTokenWheelContext(tokenNode){
+  if(!(tokenNode instanceof HTMLElement))return null;
+  const kind=String(tokenNode.dataset.vocabKind||''),id=String(tokenNode.dataset.vocabId||'');
+  if(!['placement','sign','house'].includes(kind)||!id)return null;
+  const panel=tokenNode.closest('[data-sky-vocab-panel]'),slot=String(panel?.dataset?.skyVocabPanel||'').toUpperCase();
+  if(!KEYS[slot])return null;
+  if(kind==='placement')return{kind,slot,id};
+  if(kind==='sign'){
+    const sign=SIGNS.findIndex(name=>slug(name)===id);
+    return sign>=0?{kind,slot,sign}:null;
+  }
+  const house=Number(id.replace(/^house-/,''));
+  return Number.isInteger(house)&&house>=1&&house<=12?{kind,slot,house}:null;
+}
+function applyVocabTokenWheelContext(tokenNode){
+  if(tokenNode===vocabWheelContextToken)return;
+  clearVocabWheelContext();
+  const context=vocabTokenWheelContext(tokenNode),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+  if(!context||!wheel)return;
+  let matched=0;
+  wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
+    const type=String(node.dataset.focusPiece||''),sky=String(node.dataset.sky||'').toUpperCase();
+    let keep=false,exact=false;
+    if(context.kind==='placement'&&(type==='placement'||type==='leader')&&sky===context.slot&&String(node.dataset.placement||'')===context.id){keep=true;exact=true}
+    if(context.kind==='sign'&&type==='sign'&&Number(node.dataset.sign)===context.sign)keep=true;
+    if(context.kind==='house'&&type==='house'&&sky===context.slot&&Number(node.dataset.house)===context.house)keep=true;
+    if(keep){node.classList.add('is-vocab-context');if(exact)node.classList.add('is-vocab-context-exact');matched++}
+  });
+  if(!matched)return;
+  wheel.classList.add('has-vocab-context');
+  tokenNode.classList.add('is-wheel-token-active');
+  vocabWheelContextToken=tokenNode;
+}
+function restoreVocabWheelContext(line=null){
+  if(vocabWheelPinnedToken?.isConnected){applyVocabTokenWheelContext(vocabWheelPinnedToken);return}
+  if(line?.isConnected){applyVocabWheelContext(line);return}
+  clearVocabWheelContext();
+}
+function togglePinnedVocabToken(tokenNode){
+  if(!(tokenNode instanceof HTMLElement))return;
+  if(vocabWheelPinnedToken===tokenNode){
+    vocabWheelPinnedToken=null;
+    restoreVocabWheelContext(tokenNode.closest('.sky-vocab-line'));
+    return;
+  }
+  vocabWheelPinnedToken=tokenNode;
+  vocabWheelTouchLine=null;
+  applyVocabTokenWheelContext(tokenNode);
 }
 function applyVocabWheelContext(line){
   if(line===vocabWheelContextLine)return;
@@ -841,32 +894,67 @@ function applyVocabWheelContext(line){
 function bindVocabWheelContext(panel){
   if(panel.dataset.vocabWheelContextBound==='true')return;
   panel.dataset.vocabWheelContextBound='true';
+  const interactiveToken=target=>target.closest?.('.sky-vocab-token[data-vocab-kind="placement"],.sky-vocab-token[data-vocab-kind="sign"],.sky-vocab-token[data-vocab-kind="house"]');
   panel.addEventListener('pointerover',event=>{
     if(event.pointerType==='touch')return;
+    const tokenNode=interactiveToken(event.target);
+    if(tokenNode&&panel.contains(tokenNode)){
+      if(!tokenNode.contains(event.relatedTarget))applyVocabTokenWheelContext(tokenNode);
+      return;
+    }
+    if(vocabWheelPinnedToken?.isConnected)return;
     const line=event.target.closest?.('.sky-vocab-line');
     if(!line||!panel.contains(line)||line.contains(event.relatedTarget))return;
     applyVocabWheelContext(line);
   });
   panel.addEventListener('pointerout',event=>{
     if(event.pointerType==='touch')return;
+    const tokenNode=interactiveToken(event.target);
+    if(tokenNode&&panel.contains(tokenNode)){
+      if(tokenNode.contains(event.relatedTarget))return;
+      const line=tokenNode.closest('.sky-vocab-line');
+      restoreVocabWheelContext(line&&line.contains(event.relatedTarget)?line:null);
+      return;
+    }
     const line=event.target.closest?.('.sky-vocab-line');
-    if(!line||line.contains(event.relatedTarget)||vocabWheelTouchLine===line)return;
+    if(!line||line.contains(event.relatedTarget)||vocabWheelTouchLine===line||vocabWheelPinnedToken?.isConnected)return;
     clearVocabWheelContext();
   });
   panel.addEventListener('focusin',event=>{
+    const tokenNode=interactiveToken(event.target);
+    if(tokenNode&&panel.contains(tokenNode)){applyVocabTokenWheelContext(tokenNode);return}
+    if(vocabWheelPinnedToken?.isConnected)return;
     const line=event.target.closest?.('.sky-vocab-line');
     if(line&&panel.contains(line))applyVocabWheelContext(line);
   });
   panel.addEventListener('focusout',event=>{
+    const tokenNode=interactiveToken(event.target);
+    if(tokenNode&&panel.contains(tokenNode)){
+      if(tokenNode.contains(event.relatedTarget))return;
+      const line=tokenNode.closest('.sky-vocab-line');
+      restoreVocabWheelContext(line&&line.contains(event.relatedTarget)?line:null);
+      return;
+    }
     const line=event.target.closest?.('.sky-vocab-line');
-    if(line&&!line.contains(event.relatedTarget)&&vocabWheelTouchLine!==line)clearVocabWheelContext();
+    if(line&&!line.contains(event.relatedTarget)&&vocabWheelTouchLine!==line&&!vocabWheelPinnedToken?.isConnected)clearVocabWheelContext();
   });
   panel.addEventListener('pointerup',event=>{
     if(event.pointerType!=='touch'&&event.pointerType!=='pen')return;
+    if(interactiveToken(event.target))return;
     const line=event.target.closest?.('.sky-vocab-line');
-    if(!line||!panel.contains(line)){vocabWheelTouchLine=null;clearVocabWheelContext();return}
+    if(!line||!panel.contains(line)){vocabWheelTouchLine=null;vocabWheelPinnedToken=null;clearVocabWheelContext();return}
     vocabWheelTouchLine=line;
+    vocabWheelPinnedToken=null;
     applyVocabWheelContext(line);
+  });
+  panel.addEventListener('click',event=>{
+    const tokenNode=interactiveToken(event.target);
+    if(tokenNode&&panel.contains(tokenNode))togglePinnedVocabToken(tokenNode);
+  });
+  panel.addEventListener('keydown',event=>{
+    if(event.key!=='Enter'&&event.key!==' ')return;
+    const tokenNode=interactiveToken(event.target);
+    if(tokenNode&&panel.contains(tokenNode))togglePinnedVocabToken(tokenNode);
   });
 }
 function clearVocabWheelContextFromBlank(event){
@@ -880,6 +968,7 @@ function clearVocabWheelContextFromBlank(event){
   const blankChart=vocabClearableBlank(target);
   if(!blankVocab&&!blankWheel&&!blankChart)return;
   vocabWheelTouchLine=null;
+  vocabWheelPinnedToken=null;
   clearVocabWheelContext();
 }
 function renderParagraph(slot,panel){
@@ -1240,6 +1329,7 @@ function installStyles(){
     .sky-vocab-line[data-vocab-placement-colors="true"]::before{left:0;background:var(--vocab-placement-signs)}
     .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses);opacity:.5}
     .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
+    .sky-vocab-token.is-wheel-token-active>.sky-vocab-level{background:rgba(45,39,34,.09);box-shadow:inset 0 -2px 0 rgba(31,27,24,.22)}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not(.is-vocab-context):not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.12!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="placement"]{opacity:.62!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="leader"]{opacity:.36!important;transition:opacity .07s ease-out,filter .07s ease-out}
