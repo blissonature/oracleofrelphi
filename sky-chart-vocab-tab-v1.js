@@ -121,7 +121,7 @@ const NODE_IDS=new Set(['north-node','south-node']);
 const AXIS_IDS=new Set(['asc','dsc','mc','ic']);
 const LUMINARY_IDS=new Set(['sun','moon']);
 const PLANET_IDS=new Set(['mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']);
-const AXIS_PAIRS=new Set(['asc|dsc','dsc|asc','mc|ic','ic|mc']);
+const AXIS_PAIRS=new Set(['asc|dsc','dsc|asc','mc|ic','ic|mc','north-node|south-node','south-node|north-node','vertex|anti-vertex','anti-vertex|vertex']);
 const AXIS_STRUCTURES=[
   {left:'vertex',right:'anti-vertex',label:'Vertex polarity'},
   {left:'asc',right:'dsc',label:'Horizon polarity'},
@@ -1227,7 +1227,9 @@ function installStyles(){
     .sky-vocab-line[data-vocab-placement-colors="true"]::before{left:0;background:var(--vocab-placement-signs)}
     .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses)}
     .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]{opacity:.12!important;transition:opacity .07s ease-out,filter .07s ease-out}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.12!important;transition:opacity .07s ease-out,filter .07s ease-out}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="placement"]{opacity:.62!important;transition:opacity .07s ease-out,filter .07s ease-out}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="leader"]{opacity:.36!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context{opacity:1!important;filter:saturate(1.18) brightness(1.03) drop-shadow(0 0 5px rgba(20,17,14,.26))!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context-exact{filter:saturate(1.28) brightness(1.06) drop-shadow(0 0 7px rgba(20,17,14,.38))!important}
     .sky-vocab-structure-label{font:inherit;color:inherit}
