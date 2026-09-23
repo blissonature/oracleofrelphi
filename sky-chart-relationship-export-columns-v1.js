@@ -50,7 +50,8 @@ const PLACEMENT_MEAN={
   'south-node':'familiar patterns, inherited capacity, and the known path',
   lilith:'instinctive autonomy, refusal, exile, and uncompromised desire',
   'part-of-fortune':'the meeting place of body, feeling, circumstance, and ease',
-  vertex:'encounters that feel consequential or outside ordinary control'
+  vertex:'encounters that feel consequential or outside ordinary control',
+  'anti-vertex':'what becomes accessible through the back door'
 };
 const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
 const HOUSE_MEAN=[
