@@ -503,16 +503,19 @@ function clusterSignProfile(members){
   return{type:'cusp',signs:ordered,names:ordered.map(index=>SIGNS[index])};
 }
 function isStellium(members){return members.filter(record=>STELLIUM_IDS.has(record.id)).length>=3}
+function structureLabel(text){
+  const label=document.createElement('span');label.className='sky-vocab-structure-label';label.textContent=text;return label;
+}
 function clusterSentence(members){
   const frag=document.createDocumentFragment(),profile=clusterSignProfile(members),kind=isStellium(members)?'Stellium':'Cluster';
-  frag.appendChild(document.createTextNode(kind+' · '+profile.type+' · '+profile.names.join('–')+': '));
+  frag.append(structureLabel(kind+' · '+profile.type+' · '+profile.names.join('–')+':'),document.createTextNode(' '));
   appendStructureMembers(frag,members);
   frag.appendChild(document.createTextNode(kind==='Stellium'?' form one stellium':' form one concentrated group'));
   return frag;
 }
 function polaritySentence(structure){
   const frag=document.createDocumentFragment();
-  frag.appendChild(document.createTextNode(structure.label+': '));
+  frag.append(structureLabel(structure.label+':'),document.createTextNode(' '));
   appendStructureMembers(frag,structure.left);
   frag.appendChild(document.createTextNode(' form one pole, opposite '));
   appendStructureMembers(frag,structure.right);
@@ -540,7 +543,7 @@ function appendSignPole(frag,signIndex,list){
 }
 function signPolaritySentence(pair,list){
   const frag=document.createDocumentFragment();
-  frag.appendChild(document.createTextNode('Sign polarity: '));appendSignPole(frag,pair[0],list);
+  frag.append(structureLabel('Sign polarity:'),document.createTextNode(' '));appendSignPole(frag,pair[0],list);
   frag.appendChild(document.createTextNode(' ↔ '));appendSignPole(frag,pair[1],list);
   return frag;
 }
@@ -567,7 +570,7 @@ function appendHousePole(frag,house,slot,list){
 }
 function housePolaritySentence(pair,slot,list){
   const frag=document.createDocumentFragment();
-  frag.appendChild(document.createTextNode('House polarity: '));appendHousePole(frag,pair[0],slot,list);
+  frag.append(structureLabel('House polarity:'),document.createTextNode(' '));appendHousePole(frag,pair[0],slot,list);
   frag.appendChild(document.createTextNode(' ↔ '));appendHousePole(frag,pair[1],slot,list);
   return frag;
 }
@@ -994,11 +997,14 @@ function installStyles(){
     .sky-vocab-structures-heading{margin:0 0 -.08rem;padding-top:0;border-top:0;color:#6a6058;font:900 .62rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.055em}
     .sky-vocab-structure-subheading,.sky-vocab-placements-heading{margin:.12rem 0 -.18rem;color:#756b62;font:850 .58rem/1.2 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.045em}
     .sky-vocab-placements-heading{margin-top:.32rem;padding-top:.5rem;border-top:1px solid rgba(31,27,24,.12)}
-    .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035)}
+    .sky-vocab-structure-line{padding:.34rem .42rem;border-left:3px solid rgba(31,27,24,.24);border-radius:0 6px 6px 0;background:rgba(31,27,24,.035);color:#211d19;font-size:1em;font-weight:500;line-height:1.52}
+    .sky-vocab-structure-label{font:700 1em/1.52 system-ui,sans-serif;color:#211d19}
     .sky-vocab-structure-member-group{display:inline}
-    .sky-vocab-structure-member-context{white-space:normal;color:#6a6058}
-    .sky-vocab-structure-context{display:inline;white-space:normal;font-size:.88em}
-    .sky-vocab-structure-line:first-letter{font-weight:800}
+    .sky-vocab-structure-member-context{white-space:normal;color:inherit}
+    .sky-vocab-structure-context{display:inline;white-space:normal;font:inherit;color:inherit}
+    .sky-vocab-structure-line .sky-vocab-referent{font:inherit;color:inherit}
+    .sky-vocab-structure-line .sky-vocab-name{font:inherit;vertical-align:baseline}
+    .sky-vocab-structure-line .sky-vocab-parenthetical{font:inherit}
     .sky-vocab-token{display:inline;white-space:normal}
     .sky-vocab-level{border-radius:4px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .sky-vocab-level:hover,.sky-vocab-level:focus-visible{background:rgba(45,39,34,.07);outline:none}
