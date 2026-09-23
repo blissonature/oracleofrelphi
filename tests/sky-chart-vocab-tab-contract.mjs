@@ -136,7 +136,7 @@ assert.match(vocab,/no placements · default ruler '\+SIGN_RULERS\[signIndex\]/,
 assert.match(vocab,/no placements · default ruler '\+ruler/,'An empty house pole must explicitly state its absence and cusp-sign ruler');
 assert.match(vocab,/appendStructureSubheading\(container,'Sign polarities'\)/,'Sign polarities must be an explicit Structures subsection');
 assert.match(vocab,/appendStructureSubheading\(container,'House polarities'\)/,'House polarities must be an explicit Structures subsection');
-assert.match(vocab,/const wrap=token\(info,kind,false\)/,'Structure sign and house context must reuse normal Vocab tokens so Glyphs, Referents, and Names obey Display');
+assert.match(vocab,/const wrap=token\(info,kind,sentenceStart\)/,'Structure sign and house context must reuse normal Vocab tokens so Glyphs, Referents, and Names obey Display');
 assert.doesNotMatch(vocab,/sky-vocab-structure-context \.sky-vocab-glyph\{--vocab-mark-size:/,'Structures must not shrink canonical sign glyphs below the normal Vocab mark size');
 assert.match(vocab,/group\.members\.length===1\?' is in ':' are in '/,'Structure groups must use grammatical is-in/are-in prose');
 assert.match(vocab,/document\.createTextNode\(', concerning '\)/,'House context in Structures must be introduced as prose rather than a separator list');
