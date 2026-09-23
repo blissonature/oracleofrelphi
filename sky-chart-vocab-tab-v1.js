@@ -378,7 +378,7 @@ function renderToken(node){
   const {showGlyph,showName,showReferent}=localVisibility(node);
   node.replaceChildren();node.hidden=!(showGlyph||showName||showReferent);
   if(node.hidden)return;
-  const rawLead=String(node.dataset.vocabLead||''),lead=rawLead.replace(/ /g,'\u00A0');
+  const lead=String(node.dataset.vocabLead||'');
   const g=showGlyph?glyphNode(node):null,n=showName?nameNode(node):null,r=showReferent?referentNode(node):null;
 
   if(g){
