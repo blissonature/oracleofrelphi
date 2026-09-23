@@ -1237,7 +1237,7 @@ function installStyles(){
     .sky-vocab-line[data-vocab-placement-colors="true"]::before{left:0;background:var(--vocab-placement-signs)}
     .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses)}
     .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.08!important;transition:opacity .07s ease-out,filter .07s ease-out}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not(.is-vocab-context):not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.08!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="placement"]{opacity:.62!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="leader"]{opacity:.36!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context{opacity:1!important;filter:saturate(1.18) brightness(1.03) drop-shadow(0 0 5px rgba(20,17,14,.26))!important}
