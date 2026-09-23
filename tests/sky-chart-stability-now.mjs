@@ -117,6 +117,9 @@ const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorA
     placement,
     name:row?.querySelector('.sky-foundation-row-name')?.textContent?.trim() || '',
     viewBox:svg.getAttribute('viewBox') || '',
+    fit:svg.dataset.canonicalFit || '',
+    glyphId:svg.dataset.canonicalGlyphId || '',
+    committed:art?.dataset.relphiAtomicCommit || '',
     transform:art?.getAttribute('transform') || '',
     count:svg.querySelectorAll('.relphi-canonical-glyph').length,
     canonicalClass:!!art?.classList.contains('relphi-canonical-glyph'),
@@ -127,6 +130,9 @@ const ledgerAudit = await page.evaluate(() => Array.from(document.querySelectorA
 assert.ok(ledgerAudit.length >= 20, 'The active placement ledger must be fully populated.');
 const ledgerStructuralAnomalies = ledgerAudit.filter(item =>
   item.viewBox !== '-20 -20 40 40' ||
+  item.fit !== 'registry-component' ||
+  item.glyphId !== item.placement ||
+  item.committed !== 'true' ||
   !item.canonicalClass ||
   !item.identityClass ||
   !item.transform ||
