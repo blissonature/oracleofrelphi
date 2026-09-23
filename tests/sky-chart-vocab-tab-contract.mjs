@@ -211,5 +211,5 @@ assert.match(vocab,/vertex\|anti-vertex','anti-vertex\|vertex/,'Vertex and Anti-
 assert.match(vocab,/\[data-focus-piece="placement"\]\{opacity:\.62!important/,'Unrelated wheel placements must remain legible while Vocab supplies context');
 assert.match(vocab,/\[data-focus-piece="leader"\]\{opacity:\.36!important/,'Placement leaders must remain visible enough to preserve exact-degree context');
 
-assert.match(vocab,/\.sky-foundation-sign-sector\.is-vocab-context,[\s\S]*\.sky-foundation-house-sector\.is-vocab-context\{opacity:1!important;fill-opacity:\.78!important/,'Matching sign and house sectors must become visibly stronger rather than relying only on unrelated content dimming');
+assert.match(vocab,/\.sky-foundation-sign-sector\.is-vocab-context,[\s\S]*\.sky-foundation-house-sector\.is-vocab-context\{opacity:1!important;fill-opacity:1!important;stroke:rgba\(255,253,248,\.96\)!important;stroke-width:3!important/,'Matching sign and house sectors must become fully filled and gain a visible highlight edge');
 assert.match(vocab,/\.sky-foundation-sign-glyph\.is-vocab-context\{opacity:1!important/,'The sign glyph itself must stay fully legible with its highlighted sector');
