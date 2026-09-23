@@ -477,8 +477,8 @@ function proximityClusters(list){
   return clusters;
 }
 function independentClusters(list){return proximityClusters(list)}
-function compactStructureContext(info,kind){
-  const wrap=token(info,kind,false);
+function compactStructureContext(info,kind,sentenceStart=false){
+  const wrap=token(info,kind,sentenceStart);
   wrap.classList.add('sky-vocab-structure-context');
   wrap.dataset.vocabContextKind=kind;
   return wrap;
@@ -559,8 +559,8 @@ function appendSimplePlacementList(frag,members,contextKind){
     if(contextKind==='sign')frag.append(document.createTextNode(' · '),compactStructureContext(signInfo(record.sign),'sign'));
   });
 }
-function appendSignPole(frag,signIndex,list){
-  frag.appendChild(compactStructureContext(signInfo(signIndex),'sign'));
+function appendSignPole(frag,signIndex,list,sentenceStart=false){
+  frag.appendChild(compactStructureContext(signInfo(signIndex),'sign',sentenceStart));
   const members=list.filter(record=>record.sign===signIndex);
   if(members.length){
     frag.appendChild(document.createTextNode(': '));appendSimplePlacementList(frag,members,'house');
@@ -570,7 +570,7 @@ function appendSignPole(frag,signIndex,list){
 }
 function signPolaritySentence(pair,list){
   const frag=document.createDocumentFragment();
-  appendSignPole(frag,pair[0],list);
+  appendSignPole(frag,pair[0],list,true);
   frag.appendChild(document.createTextNode(' ↔ '));appendSignPole(frag,pair[1],list);
   return frag;
 }
@@ -581,8 +581,8 @@ function houseCuspSign(slot,list,house){
 function houseOccupants(list,house){
   return list.filter(record=>record.house===house&&!AXIS_IDS.has(record.id));
 }
-function appendHousePole(frag,house,slot,list){
-  frag.appendChild(compactStructureContext(houseInfo(house),'house'));
+function appendHousePole(frag,house,slot,list,sentenceStart=false){
+  frag.appendChild(compactStructureContext(houseInfo(house),'house',sentenceStart));
   const cuspSign=houseCuspSign(slot,list,house);
   if(Number.isInteger(cuspSign)){
     frag.append(document.createTextNode(' · cusp '),compactStructureContext(signInfo(cuspSign),'sign'));
@@ -597,7 +597,7 @@ function appendHousePole(frag,house,slot,list){
 }
 function housePolaritySentence(pair,slot,list){
   const frag=document.createDocumentFragment();
-  appendHousePole(frag,pair[0],slot,list);
+  appendHousePole(frag,pair[0],slot,list,true);
   frag.appendChild(document.createTextNode(' ↔ '));appendHousePole(frag,pair[1],slot,list);
   return frag;
 }
