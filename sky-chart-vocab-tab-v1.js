@@ -447,7 +447,6 @@ function polarityPole(list,anchorId,oppositeId){
   const attached=list.filter(record=>
     record.id!==anchorId&&
     record.id!==oppositeId&&
-    !STRUCTURAL_ANCHOR_IDS.has(record.id)&&
     separation(record.value,anchor.value)<=POLARITY_ATTACH_ORB
   );
   return[anchor,...attached];
