@@ -380,8 +380,8 @@
     const items = locked.ingredient_refs.map(ref => ({ ref, item: LOCKED_INGREDIENTS[ref] })).filter(entry => entry.item);
     if (!items.length) return '';
     const baseId = `ingredients-${escapeHtml(card.card_id || 'card')}`;
-    const tabs = items.map((entry, index) => `<button class="locked-ingredient-tab ${index === 0 ? 'is-active' : ''}" type="button" data-ingredient-tab="${baseId}-${index}" aria-selected="${index === 0 ? 'true' : 'false'}">${escapeHtml(ingredientTypeLabel(entry.ref, entry.item, index))}</button>`).join('');
-    const panels = items.map((entry, index) => { const item = entry.item; return `<article class="locked-ingredient-panel ${index === 0 ? 'is-active' : ''}" data-ingredient-panel="${baseId}-${index}" ${index === 0 ? '' : 'hidden'}><h4>${escapeHtml(item.name)}</h4><dl><dt>Operation</dt><dd>${escapeHtml(item.operation)}</dd><dt>Question</dt><dd>${escapeHtml(item.question)}</dd><dt>Contribution</dt><dd>${escapeHtml(item.contribution)}</dd></dl></article>`; }).join('');
+    const tabs = items.map((entry, index) => { const id=`${baseId}-${index}`; return `<button id="${id}-tab" class="locked-ingredient-tab ${index === 0 ? 'is-active' : ''}" type="button" role="tab" data-ingredient-tab="${id}" aria-controls="${id}-panel" aria-selected="${index === 0 ? 'true' : 'false'}" tabindex="${index === 0 ? '0' : '-1'}">${escapeHtml(ingredientTypeLabel(entry.ref, entry.item, index))}</button>`; }).join('');
+    const panels = items.map((entry, index) => { const item = entry.item; const id=`${baseId}-${index}`; return `<article id="${id}-panel" class="locked-ingredient-panel ${index === 0 ? 'is-active' : ''}" role="tabpanel" aria-labelledby="${id}-tab" data-ingredient-panel="${id}" ${index === 0 ? '' : 'hidden'}><h4>${escapeHtml(item.name)}</h4><dl><dt>Operation</dt><dd>${escapeHtml(item.operation)}</dd><dt>Question</dt><dd>${escapeHtml(item.question)}</dd><dt>Contribution</dt><dd>${escapeHtml(item.contribution)}</dd></dl></article>`; }).join('');
     return `<section class="locked-ingredients locked-ingredients--tabs"><h3>Ingredients</h3><div class="locked-ingredient-tabs" role="tablist">${tabs}</div><div class="locked-ingredient-panels">${panels}</div></section>`;
   }
   function lockedTraditionalTitleHtml(locked) {
@@ -3847,6 +3847,55 @@
     });
   }
 
+  function activateIngredientTab(root, tab, focus = false) {
+    if (!root || !tab || !root.contains(tab)) return false;
+    const tabsRoot = tab.closest('.locked-ingredients--tabs');
+    const targetId = tab.dataset.ingredientTab;
+    if (!tabsRoot || !targetId || !root.contains(tabsRoot)) return false;
+    tabsRoot.querySelectorAll('[data-ingredient-tab]').forEach(candidate => {
+      const active = candidate === tab;
+      candidate.classList.toggle('is-active', active);
+      candidate.setAttribute('aria-selected', active ? 'true' : 'false');
+      candidate.setAttribute('tabindex', active ? '0' : '-1');
+    });
+    tabsRoot.querySelectorAll('[data-ingredient-panel]').forEach(panel => {
+      const active = panel.dataset.ingredientPanel === targetId;
+      panel.hidden = !active;
+      panel.classList.toggle('is-active', active);
+    });
+    if (focus) tab.focus();
+    return true;
+  }
+  function bindCardEntry(root) {
+    if (!root) return;
+    bindCardNoteEditor(root);
+    if (root.dataset.cardEntryInteractionsReady === 'true') return;
+    root.dataset.cardEntryInteractionsReady = 'true';
+    root.addEventListener('click', event => {
+      const tab = event.target.closest?.('[data-ingredient-tab]');
+      if (!tab || !root.contains(tab)) return;
+      if (!activateIngredientTab(root, tab)) return;
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    root.addEventListener('keydown', event => {
+      const tab = event.target.closest?.('[data-ingredient-tab]');
+      if (!tab || !root.contains(tab)) return;
+      const tabsRoot = tab.closest('.locked-ingredients--tabs');
+      const tabs = tabsRoot ? Array.from(tabsRoot.querySelectorAll('[data-ingredient-tab]')) : [];
+      const index = tabs.indexOf(tab);
+      if (index < 0 || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+      let next = index;
+      if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+      if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = tabs.length - 1;
+      event.preventDefault();
+      event.stopPropagation();
+      activateIngredientTab(root, tabs[next], true);
+    });
+  }
+
   function cardDetailHtml(card, eyebrow = 'Selected card') {
     if (!card) return '<h2>No card selected</h2><p>Search, show all, or draw a spread to inspect cards.</p>';
     const inShortList = state.shortList.includes(card.card_id);
@@ -3906,9 +3955,10 @@
   function renderDetail(card) {
     const panel = $('cardDetail');
     panel.innerHTML = cardDetailHtml(card);
-    bindCardNoteEditor(panel);
+    bindCardEntry(panel);
 
   }
+  const bindRenderedCardEntry = bindCardEntry;
   window.RelphiTarotLedgerBridge = Object.freeze({
     renderCardEntry(cardId, eyebrow = 'Tarot Ledger entry') {
       const card = cardById(String(cardId || ''));
@@ -3925,8 +3975,7 @@
       return serializeDrawingBoardReadingText();
     },
     bindCardEntry(root) {
-      if (!root) return;
-      bindCardNoteEditor(root);
+      bindRenderedCardEntry(root);
     }
   });
   function spreadPositionDetailHtml(item) {
@@ -3943,7 +3992,7 @@
     if (!panel) return;
     panel.hidden = false;
     panel.innerHTML = spreadPositionDetailHtml(item) + cardDetailHtml(card, 'Spread card database entry');
-    bindCardNoteEditor(panel);
+    bindCardEntry(panel);
 
     panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -9511,7 +9560,7 @@ ${notes || ''}`;
     }
     const panel = dialog.querySelector('.sky-card-inspector-detail');
     panel.innerHTML = cardDetailHtml(card, 'Card database entry');
-    bindCardNoteEditor(panel);
+    bindCardEntry(panel);
     if (typeof dialog.showModal === 'function') { if (!dialog.open) dialog.showModal(); }
     else dialog.setAttribute('open', '');
   }
@@ -9673,17 +9722,6 @@ ${notes || ''}`;
     $('drawMode')?.addEventListener('click', openSpread); $('spreadSelect').addEventListener('change', () => { syncSpreadControls(); if (state.currentSpread.length) renderSpread(); }); $('spreadOutput').addEventListener('click', handleSpreadClick); $('spreadOutput').addEventListener('keydown', handleSpreadKeydown); $('drawSpread').addEventListener('click', drawSpread); if ($('revealSpread')) $('revealSpread').addEventListener('click', revealAllSpreadCards); $('clearSpread').addEventListener('click', clearSpread); $('downloadSpreadHtml').addEventListener('click', downloadSpreadHtml); $('downloadSpreadJson').addEventListener('click', () => state.currentSpread.length && download('spread-data.json', JSON.stringify(spreadData(), null, 2), 'application/json')); if ($('crossedLayoutToggle')) $('crossedLayoutToggle').addEventListener('change', e => { state.crossedLayout = e.target.checked; renderSpread(); }); if ($('positionStickerToggle')) $('positionStickerToggle').addEventListener('change', e => { state.positionStickers = e.target.checked; renderSpread(); }); if ($('tutorialOrderToggle')) $('tutorialOrderToggle').addEventListener('change', e => { state.revealGuideEnabled = e.target.checked; state.revealGuideActive = e.target.checked && state.currentSpread.some(x => !x.revealed); renderSpread(); });
 
     ['cardDetail','spreadCardDetail','shortListPanel'].forEach(id => { const el = $(id); if (el) el.addEventListener('click', event => {
-      const ingredientTab = event.target.closest('[data-ingredient-tab]');
-      if (ingredientTab) {
-        event.preventDefault(); event.stopPropagation();
-        const tabsRoot = ingredientTab.closest('.locked-ingredients--tabs');
-        const targetId = ingredientTab.dataset.ingredientTab;
-        if (tabsRoot && targetId) {
-          tabsRoot.querySelectorAll('[data-ingredient-tab]').forEach(tab => { const active = tab === ingredientTab; tab.classList.toggle('is-active', active); tab.setAttribute('aria-selected', active ? 'true' : 'false'); });
-          tabsRoot.querySelectorAll('[data-ingredient-panel]').forEach(panel => { const active = panel.dataset.ingredientPanel === targetId; panel.hidden = !active; panel.classList.toggle('is-active', active); });
-        }
-        return;
-      }
       const filter = event.target.closest('[data-filter]');
       if (filter) { event.preventDefault(); event.stopPropagation(); applyChipFilter(filter.dataset.filter); return; }
       const btn = event.target.closest('[data-shortlist]');
