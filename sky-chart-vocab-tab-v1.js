@@ -810,6 +810,15 @@ function vocabLineContext(line){
   });
   return{slot,placements,signs,houses};
 }
+function clearVocabWheelTokenContext(){
+  const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+  if(wheel){
+    wheel.classList.remove('has-vocab-token-context');
+    wheel.querySelectorAll('.is-vocab-token-context').forEach(node=>node.classList.remove('is-vocab-token-context'));
+  }
+  vocabWheelContextToken?.classList.remove('is-wheel-token-active');
+  vocabWheelContextToken=null;
+}
 function clearVocabWheelContext(){
   const wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
   if(wheel){
@@ -817,10 +826,9 @@ function clearVocabWheelContext(){
     wheel.querySelectorAll('.is-vocab-context').forEach(node=>node.classList.remove('is-vocab-context'));
     wheel.querySelectorAll('.is-vocab-context-exact').forEach(node=>node.classList.remove('is-vocab-context-exact'));
   }
+  clearVocabWheelTokenContext();
   vocabWheelContextLine?.classList.remove('is-wheel-context-active');
-  vocabWheelContextToken?.classList.remove('is-wheel-token-active');
   vocabWheelContextLine=null;
-  vocabWheelContextToken=null;
 }
 function vocabTokenWheelContext(tokenNode){
   if(!(tokenNode instanceof HTMLElement))return null;
@@ -837,38 +845,50 @@ function vocabTokenWheelContext(tokenNode){
   return Number.isInteger(house)&&house>=1&&house<=12?{kind,slot,house}:null;
 }
 function applyVocabTokenWheelContext(tokenNode){
-  if(tokenNode===vocabWheelContextToken)return;
-  clearVocabWheelContext();
-  const context=vocabTokenWheelContext(tokenNode),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
-  if(!context||!wheel)return;
+  const context=vocabTokenWheelContext(tokenNode),line=tokenNode?.closest?.('.sky-vocab-line'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+  if(!context||!line||!wheel)return;
+  if(vocabWheelContextLine!==line)applyVocabWheelContext(line);
+  clearVocabWheelTokenContext();
   let matched=0;
   wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
     const type=String(node.dataset.focusPiece||''),sky=String(node.dataset.sky||'').toUpperCase();
-    let keep=false,exact=false;
-    if(context.kind==='placement'&&(type==='placement'||type==='leader')&&sky===context.slot&&String(node.dataset.placement||'')===context.id){keep=true;exact=true}
-    if(context.kind==='sign'&&type==='sign'&&Number(node.dataset.sign)===context.sign)keep=true;
-    if(context.kind==='house'&&type==='house'&&sky===context.slot&&Number(node.dataset.house)===context.house)keep=true;
-    if(keep){node.classList.add('is-vocab-context');if(exact)node.classList.add('is-vocab-context-exact');matched++}
+    let focus=false;
+    if(context.kind==='placement'&&(type==='placement'||type==='leader')&&sky===context.slot&&String(node.dataset.placement||'')===context.id)focus=true;
+    if(context.kind==='sign'&&type==='sign'&&Number(node.dataset.sign)===context.sign)focus=true;
+    if(context.kind==='house'&&type==='house'&&sky===context.slot&&Number(node.dataset.house)===context.house)focus=true;
+    if(focus){node.classList.add('is-vocab-token-context');matched++}
   });
   if(!matched)return;
-  wheel.classList.add('has-vocab-context');
+  wheel.classList.add('has-vocab-token-context');
   tokenNode.classList.add('is-wheel-token-active');
   vocabWheelContextToken=tokenNode;
 }
 function restoreVocabWheelContext(line=null){
-  if(vocabWheelPinnedToken?.isConnected){applyVocabTokenWheelContext(vocabWheelPinnedToken);return}
-  if(line?.isConnected){applyVocabWheelContext(line);return}
+  if(vocabWheelPinnedToken?.isConnected){
+    const pinnedLine=vocabWheelPinnedToken.closest('.sky-vocab-line');
+    if(pinnedLine&&vocabWheelContextLine!==pinnedLine)applyVocabWheelContext(pinnedLine);
+    applyVocabTokenWheelContext(vocabWheelPinnedToken);
+    return;
+  }
+  clearVocabWheelTokenContext();
+  if(line?.isConnected){
+    if(vocabWheelContextLine!==line)applyVocabWheelContext(line);
+    return;
+  }
   clearVocabWheelContext();
 }
 function togglePinnedVocabToken(tokenNode){
   if(!(tokenNode instanceof HTMLElement))return;
+  const line=tokenNode.closest('.sky-vocab-line');
   if(vocabWheelPinnedToken===tokenNode){
     vocabWheelPinnedToken=null;
-    restoreVocabWheelContext(tokenNode.closest('.sky-vocab-line'));
+    clearVocabWheelTokenContext();
+    if(line&&vocabWheelContextLine!==line)applyVocabWheelContext(line);
     return;
   }
   vocabWheelPinnedToken=tokenNode;
   vocabWheelTouchLine=null;
+  if(line&&vocabWheelContextLine!==line)applyVocabWheelContext(line);
   applyVocabTokenWheelContext(tokenNode);
 }
 function applyVocabWheelContext(line){
@@ -1330,6 +1350,12 @@ function installStyles(){
     .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses);opacity:.5}
     .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
     .sky-vocab-token.is-wheel-token-active>.sky-vocab-level{background:rgba(45,39,34,.09);box-shadow:inset 0 -2px 0 rgba(31,27,24,.22)}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context [data-focus-piece].is-vocab-context:not(.is-vocab-token-context){opacity:.5!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context [data-focus-piece].is-vocab-token-context{opacity:1!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context .sky-foundation-sign-sector.is-vocab-token-context,
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context .sky-foundation-house-sector.is-vocab-token-context{stroke:#302922!important;stroke-width:2.2!important;vector-effect:non-scaling-stroke}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-token-context [data-focus-piece="leader"].is-vocab-token-context{stroke-width:3.2!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-axis-context.has-vocab-token-context [data-focus-piece].is-vocab-token-context{filter:none!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not(.is-vocab-context):not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.12!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="placement"]{opacity:.62!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="leader"]{opacity:.36!important;transition:opacity .07s ease-out,filter .07s ease-out}
