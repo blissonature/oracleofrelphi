@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=53/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=54/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -206,3 +206,7 @@ assert.match(vocab,/function clearVocabWheelContextFromBlank\(event\)/,'Retained
 assert.match(vocab,/target\.closest\('\.sky-vocab-line,[^']*button,input,select,textarea/,'Blank-space clearing must not cancel a real Vocab row or control interaction');
 assert.match(vocab,/target\.closest\('#skyFoundationWheelMount \[data-focus-piece\],#skyFoundationWheelMount \[data-interactive\]'\)/,'Blank-space clearing must not cancel interaction with a real wheel object');
 assert.match(vocab,/document\.addEventListener\('pointerdown',clearVocabWheelContextFromBlank,true\)/,'Mouse, touch, and pen blank-space presses must share one clearing path');
+
+assert.match(vocab,/vertex\|anti-vertex','anti-vertex\|vertex/,'Vertex and Anti-Vertex must be treated as an automatic polarity rather than a counted raw relationship');
+assert.match(vocab,/\[data-focus-piece="placement"\]\{opacity:\.62!important/,'Unrelated wheel placements must remain legible while Vocab supplies context');
+assert.match(vocab,/\[data-focus-piece="leader"\]\{opacity:\.36!important/,'Placement leaders must remain visible enough to preserve exact-degree context');
