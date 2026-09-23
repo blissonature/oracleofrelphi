@@ -845,10 +845,9 @@ function vocabTokenWheelContext(tokenNode){
   return Number.isInteger(house)&&house>=1&&house<=12?{kind,slot,house}:null;
 }
 function applyVocabTokenWheelContext(tokenNode){
-  const context=vocabTokenWheelContext(tokenNode),line=tokenNode?.closest?.('.sky-vocab-line'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
-  if(!context||!line||!wheel)return;
-  if(vocabWheelContextLine!==line)applyVocabWheelContext(line);
-  clearVocabWheelTokenContext();
+  const context=vocabTokenWheelContext(tokenNode),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+  if(!context||!wheel)return;
+  clearVocabWheelContext();
   let matched=0;
   wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
     const type=String(node.dataset.focusPiece||''),sky=String(node.dataset.sky||'').toUpperCase();
@@ -864,17 +863,9 @@ function applyVocabTokenWheelContext(tokenNode){
   vocabWheelContextToken=tokenNode;
 }
 function restoreVocabWheelContext(line=null){
-  if(vocabWheelPinnedToken?.isConnected){
-    const pinnedLine=vocabWheelPinnedToken.closest('.sky-vocab-line');
-    if(pinnedLine&&vocabWheelContextLine!==pinnedLine)applyVocabWheelContext(pinnedLine);
-    applyVocabTokenWheelContext(vocabWheelPinnedToken);
-    return;
-  }
+  if(vocabWheelPinnedToken?.isConnected){applyVocabTokenWheelContext(vocabWheelPinnedToken);return}
   clearVocabWheelTokenContext();
-  if(line?.isConnected){
-    if(vocabWheelContextLine!==line)applyVocabWheelContext(line);
-    return;
-  }
+  if(line?.isConnected){applyVocabWheelContext(line);return}
   clearVocabWheelContext();
 }
 function togglePinnedVocabToken(tokenNode){
@@ -883,12 +874,11 @@ function togglePinnedVocabToken(tokenNode){
   if(vocabWheelPinnedToken===tokenNode){
     vocabWheelPinnedToken=null;
     clearVocabWheelTokenContext();
-    if(line&&vocabWheelContextLine!==line)applyVocabWheelContext(line);
+    if(line)applyVocabWheelContext(line);
     return;
   }
   vocabWheelPinnedToken=tokenNode;
   vocabWheelTouchLine=null;
-  if(line&&vocabWheelContextLine!==line)applyVocabWheelContext(line);
   applyVocabTokenWheelContext(tokenNode);
 }
 function applyVocabWheelContext(line){
