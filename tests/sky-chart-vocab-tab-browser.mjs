@@ -144,7 +144,10 @@ await page.evaluate(({cusps})=>{
   value.houseCusps=cusps;
   value.calcProfile={...(value.calcProfile||{}),houseSystem:'placidus',houseCusps:cusps,cusps};
   localStorage.setItem(key,JSON.stringify(value));
-  window.dispatchEvent(new StorageEvent('storage',{key,newValue:JSON.stringify(value),storageArea:localStorage}));
+  // This assertion is about Vocab rail derivation, not the app-wide house-system
+  // transaction. Render Vocab from the stored fixture without inviting another
+  // integration layer to normalize the synthetic test mutation.
+  window.RelphiSkyVocab?.render?.();
 },{cusps:alternateCusps});
 await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-axis="mc-ic"]')?.dataset.vocabHouseSystem==='placidus');
 const afterHouseSystemRails=await page.locator('#skyFoundationA [data-vocab-axis="mc-ic"]').evaluate(node=>({
