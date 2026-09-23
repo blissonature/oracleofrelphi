@@ -1237,14 +1237,14 @@ function installStyles(){
     .sky-vocab-line[data-vocab-placement-colors="true"]::before{left:0;background:var(--vocab-placement-signs)}
     .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses)}
     .sky-vocab-line.is-wheel-context-active{box-shadow:inset 0 0 0 1px rgba(31,27,24,.14)}
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not(.is-vocab-context):not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.08!important;transition:opacity .07s ease-out,filter .07s ease-out}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece]:not(.is-vocab-context):not([data-focus-piece="placement"]):not([data-focus-piece="leader"]){opacity:.12!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="placement"]{opacity:.62!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context:not(.has-isolation) [data-focus-piece="leader"]{opacity:.36!important;transition:opacity .07s ease-out,filter .07s ease-out}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context{opacity:1!important;filter:saturate(1.18) brightness(1.03) drop-shadow(0 0 5px rgba(20,17,14,.26))!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-sign-sector.is-vocab-context,
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-house-sector.is-vocab-context{opacity:1!important;fill-opacity:1!important;stroke:rgba(255,253,248,.96)!important;stroke-width:3!important;vector-effect:non-scaling-stroke;filter:saturate(1.72) brightness(1.1) drop-shadow(0 0 2px rgba(255,255,255,.98)) drop-shadow(0 0 8px rgba(20,17,14,.34))!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-house-sector.is-vocab-context{opacity:1!important;fill-opacity:.78!important;filter:saturate(1.55) brightness(1.04) drop-shadow(0 0 5px rgba(20,17,14,.3))!important}
     #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context .sky-foundation-sign-glyph.is-vocab-context{opacity:1!important;filter:saturate(1.35) brightness(.92) drop-shadow(0 0 4px rgba(20,17,14,.22))!important}
-    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context-exact{filter:saturate(1.42) brightness(1.1) drop-shadow(0 0 2px rgba(255,255,255,.96)) drop-shadow(0 0 8px rgba(20,17,14,.42))!important}
+    #skyFoundationWheelMount>.sky-foundation-wheel.has-vocab-context [data-focus-piece].is-vocab-context-exact{filter:saturate(1.28) brightness(1.06) drop-shadow(0 0 7px rgba(20,17,14,.38))!important}
     .sky-vocab-structure-label{font:inherit;color:inherit}
     .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:inherit}
