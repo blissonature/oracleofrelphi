@@ -10,7 +10,7 @@ const zodiacCss=readFileSync(new URL('../sky-chart-zodiac-filter-v1.css',import.
 new Function(vocab);
 new Function(registry);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=42/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=43/,'Sky Chart must load the Vocab subtab');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
 assert.match(html,/sky-chart-zodiac-filter-v1\.css\?v=3/,'Sky Chart must load the shared Vocab/Relationships zodiac styling');
 assert.match(registry,/\['anti-vertex','Anti-Vertex',\['anti-vertex','anti vertex','antivertex','avx'\],'assets\/planet-glyphs\/anti-vertex\.svg',1,0,0,'AVx','letter','700'\]/,'Anti-Vertex must use its canonical SVG with the same 16px bold letter treatment as chart angles');
@@ -126,6 +126,10 @@ assert.match(vocab,/const wrap=token\(info,kind,false\)/,'Structure sign and hou
 assert.doesNotMatch(vocab,/sky-vocab-structure-context \.sky-vocab-glyph\{--vocab-mark-size:/,'Structures must not shrink canonical sign glyphs below the normal Vocab mark size');
 assert.match(vocab,/group\.members\.length===1\?' is in ':' are in '/,'Structure groups must use grammatical is-in/are-in prose');
 assert.match(vocab,/document\.createTextNode\(', concerning '\)/,'House context in Structures must be introduced as prose rather than a separator list');
+assert.match(vocab,/function structureLabel\(text\)/,'Structures must isolate the label as the only emphasized prose role');
+assert.match(vocab,/sky-vocab-structure-line \.sky-vocab-referent\{font:inherit;color:inherit\}/,'Structure referents must share one body typography regardless of placement, sign, or house kind');
+assert.match(vocab,/sky-vocab-structure-member-context\{white-space:normal;color:inherit\}/,'Structure connective prose must not introduce a separate gray text treatment');
+assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:normal;font:inherit;color:inherit\}/,'Structure sign and house context must not introduce a smaller font treatment');
 assert.match(vocab,/sky-vocab-structure-context\{display:inline;white-space:normal/,'Structure referents must remain readable and wrap normally instead of being replaced by hard-coded names');
 assert.match(vocab,/renderStructures\(container,structureList,permitted,slot\);[\s\S]*renderFullPlacements\(container,permitted\)/,'Structures must lead the Vocab reading before the ordinary placement reading');
 assert.match(vocab,/data\.vocabStructure='axis-polarity'|dataset\.vocabStructure='axis-polarity'/,'Axis polarity summaries must be identifiable as structure rows');
