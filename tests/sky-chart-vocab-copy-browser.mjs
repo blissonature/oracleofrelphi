@@ -61,7 +61,7 @@ try{
   await copy.click();
   await page.waitForFunction(()=>Boolean(window.__relphiCopiedText));
   const copied=await page.evaluate(()=>window.__relphiCopiedText);
-  assert.equal(copied,direct,'One-click Copy must write exactly the semantic Vocab serialization.');
+  assert.equal(copied,liveTitle,'One-click Copy must write the semantic Vocab serialization with the current canonical Sky title.');
   assert.equal((await copy.textContent()).trim(),'Copied','Copy button must confirm completion.');
   console.log('Vocab semantic glyph copy regression passed.');
 }finally{
