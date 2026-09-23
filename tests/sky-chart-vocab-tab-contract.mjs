@@ -30,7 +30,7 @@ assert.match(vocab,/data\.copyVocab=slot/,'Vocab must expose one header-row Copy
 assert.match(vocab,/vocabCopy\.hidden=next!=='vocab'/,'The Vocab Copy button must be visible only in Vocab mode');
 assert.match(vocab,/holder\.dataset\.relphiCopyId=glyphId/,'Rendered Vocab glyphs must expose canonical copy identities');
 assert.match(html,/relphi-glyph-copy-serializer-v1\.js\?v=1/,'Sky Chart must load the canonical glyph copy serializer');
-assert.match(html,/sky-chart-vocab-copy-v1\.js\?v=1/,'Sky Chart must load the Vocab copy serializer after Vocab');
+assert.match(html,/sky-chart-vocab-copy-v1\.js\?v=2/,'Sky Chart must load the current Vocab copy serializer after Vocab');
 assert.match(vocabCopy,/RelphiGlyphCopySerializer/,'Vocab copy must delegate glyph conversion to the canonical glyph copy serializer');
 assert.match(vocabCopy,/window\.RelphiVocabCopySerializer=Object\.freeze\(\{serializeToken,serializePanel\}\)/,'Vocab copy must expose an explicit semantic serializer');
 assert.match(vocabCopy,/\[data-copy-vocab\]/,'Vocab copy must be one-click from its dedicated button');
