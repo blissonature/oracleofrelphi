@@ -223,7 +223,8 @@ assert.match(vocab,/has-vocab-context \[data-focus-piece\]\.is-vocab-context\{fi
 assert.match(vocab,/has-vocab-token-context \[data-focus-piece\]\.is-vocab-token-context\{filter:drop-shadow/,'Individual token highlighting must use a slightly stronger restrained glow');
 assert.match(vocab,/function vocabTokenWheelContext\(tokenNode\)/,'Vocab must derive wheel context from individual placement, sign, and house tokens');
 assert.match(vocab,/function applyVocabTokenWheelContext\(tokenNode\)[\s\S]*clearVocabWheelContext\(\)[\s\S]*is-vocab-token-context/,'Individual token focus must clear structure whiteout and add only a local highlight');
-assert.doesNotMatch(vocab,/applyVocabTokenWheelContext\(tokenNode\)[\s\S]{0,500}applyVocabWheelContext\(line\)/,'Individual token focus must not establish row-level dimming');
+const tokenContextSource=vocab.slice(vocab.indexOf('function applyVocabTokenWheelContext(tokenNode)'),vocab.indexOf('function restoreVocabWheelContext'));
+assert.doesNotMatch(tokenContextSource,/applyVocabWheelContext\(line\)/,'Individual token focus must not establish row-level dimming');
 assert.match(vocab,/context\.kind==='placement'[\s\S]*context\.kind==='sign'[\s\S]*context\.kind==='house'/,'Individual Vocab token context must address placement, sign, and house wheel pieces');
 assert.match(vocab,/panel\.addEventListener\('click'[\s\S]*togglePinnedVocabToken\(tokenNode\)/,'Clicking or tapping an individual Vocab token must pin its wheel highlight');
 assert.match(vocab,/panel\.addEventListener\('pointerover'[\s\S]*applyVocabTokenWheelContext\(tokenNode\)/,'Hovering an individual Vocab token must temporarily highlight that wheel piece');
