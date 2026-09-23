@@ -405,7 +405,28 @@ function phrasePlacement(record){
   if(record.house)frag.append(token(houseInfo(record.house),'house',false,' in '));
   return frag;
 }
-function appendSentence(container,fragment){const line=document.createElement('div');line.className='sky-vocab-line';line.append(fragment,document.createTextNode('.'));container.appendChild(line)}
+function placementRailGradient(records,keyOf,colorOf){
+  const members=records.filter(Boolean);
+  if(!members.length)return structureNeutralColor();
+  if(members.length===1)return colorOf(keyOf(members[0]))||structureNeutralColor();
+  const step=100/members.length,stops=[];
+  members.forEach((record,index)=>{
+    const color=colorOf(keyOf(record))||structureNeutralColor(),start=index*step,end=(index+1)*step;
+    stops.push(color+' '+start+'% '+end+'%');
+  });
+  return'linear-gradient(to bottom,'+stops.join(',')+')';
+}
+function applyPlacementRails(line,records,slot){
+  line.dataset.vocabPlacementColors='true';
+  line.dataset.vocabHouseSystem=activeHouseSystem(slot);
+  line.style.setProperty('--vocab-placement-signs',placementRailGradient(records,record=>record.sign,key=>SIGN_COLORS[key]));
+  line.style.setProperty('--vocab-placement-houses',placementRailGradient(records,record=>record.house||null,key=>HOUSE_COLORS[key-1]));
+}
+function appendSentence(container,fragment,records=[],slot='A'){
+  const line=document.createElement('div');line.className='sky-vocab-line';
+  if(records.length)applyPlacementRails(line,records,slot);
+  line.append(fragment,document.createTextNode('.'));container.appendChild(line)
+}
 function axisSentence(first,second){
   const frag=document.createDocumentFragment();
   frag.append(token(placementInfo(first),'placement',true),token(signInfo(first.sign),'sign',false,' is in '));
@@ -738,22 +759,22 @@ function renderStructures(container,list,permitted,slot){
     });
   }
 }
-function renderGroup(container,list,category){
-  list.filter(record=>categoryOf(record)===category).forEach(record=>appendSentence(container,phrasePlacement(record)));
+function renderGroup(container,list,category,slot){
+  list.filter(record=>categoryOf(record)===category).forEach(record=>appendSentence(container,phrasePlacement(record),[record],slot));
 }
-function renderAxisPair(container,list,aId,bId){
+function renderAxisPair(container,list,aId,bId,slot){
   const a=list.find(record=>record.id===aId),b=list.find(record=>record.id===bId);
-  if(a&&b){appendSentence(container,axisSentence(a,b));return}
-  if(a)appendSentence(container,phrasePlacement(a));
-  if(b)appendSentence(container,phrasePlacement(b));
+  if(a&&b){appendSentence(container,axisSentence(a,b),[a,b],slot);return}
+  if(a)appendSentence(container,phrasePlacement(a),[a],slot);
+  if(b)appendSentence(container,phrasePlacement(b),[b],slot);
 }
-function renderFullPlacements(container,list){
-  renderGroup(container,list,'nodes');
-  renderAxisPair(container,list,'asc','dsc');
-  renderAxisPair(container,list,'mc','ic');
-  renderGroup(container,list,'luminaries');
-  renderGroup(container,list,'planets');
-  renderGroup(container,list,'other');
+function renderFullPlacements(container,list,slot){
+  renderGroup(container,list,'nodes',slot);
+  renderAxisPair(container,list,'asc','dsc',slot);
+  renderAxisPair(container,list,'mc','ic',slot);
+  renderGroup(container,list,'luminaries',slot);
+  renderGroup(container,list,'planets',slot);
+  renderGroup(container,list,'other',slot);
 }
 function renderParagraph(slot,panel){
   const list=records(slot),container=panel.querySelector('[data-sky-vocab-paragraph]'),filters=filterState();
@@ -764,7 +785,7 @@ function renderParagraph(slot,panel){
   renderStructures(container,structureList,permitted,slot);
   if(permitted.length){
     const heading=document.createElement('div');heading.className='sky-vocab-placements-heading';heading.textContent='Placements';container.appendChild(heading);
-    renderFullPlacements(container,permitted);
+    renderFullPlacements(container,permitted,slot);
   }
   if(!displayState().glyphs&&!displayState().names&&!displayState().referents){
     container.replaceChildren();
@@ -1107,6 +1128,10 @@ function installStyles(){
     .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::before,.sky-vocab-structure-line[data-vocab-concentration-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
     .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::before{left:0;border-radius:3px 0 0 3px;background:var(--vocab-concentration-signs)}
     .sky-vocab-structure-line[data-vocab-concentration-colors="true"]::after{left:4px;background:var(--vocab-concentration-houses)}
+    .sky-vocab-line[data-vocab-placement-colors="true"]{position:relative;padding-left:.76rem}
+    .sky-vocab-line[data-vocab-placement-colors="true"]::before,.sky-vocab-line[data-vocab-placement-colors="true"]::after{content:"";position:absolute;top:0;bottom:0;width:3px}
+    .sky-vocab-line[data-vocab-placement-colors="true"]::before{left:0;background:var(--vocab-placement-signs)}
+    .sky-vocab-line[data-vocab-placement-colors="true"]::after{left:4px;background:var(--vocab-placement-houses)}
     .sky-vocab-structure-label{font:inherit;color:inherit}
     .sky-vocab-structure-member-group{display:inline}
     .sky-vocab-structure-member-context{white-space:normal;color:inherit}
