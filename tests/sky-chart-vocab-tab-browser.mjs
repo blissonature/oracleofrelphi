@@ -168,10 +168,13 @@ const beforePlacementRailMap=new Map(beforePlacementHouseRails.map(item=>[item.i
 assert.ok(afterPlacementHouseRails.some(item=>beforePlacementRailMap.has(item.ids)&&beforePlacementRailMap.get(item.ids)!==item.house),'At least one placement whose house assignment changes must update its house rail.');
 
 const rawLoadedSky={
-  ...Object.fromEntries(Object.entries(skyA.placements)),
-  _houseContext:{name:'_houseContext',longitude:255,sign:'Sagittarius',house:6},
+  placements:{
+    ...Object.fromEntries(Object.entries(skyA.placements)),
+    _houseContext:{name:'_houseContext',longitude:255,sign:'Sagittarius',house:6}
+  },
   calcProfile:skyA.calcProfile,
   houseCusps:skyA.houseCusps,
+  houseSystem:skyA.houseSystem,
   name:'Loaded natal sky'
 };
 await page.evaluate(raw=>{
