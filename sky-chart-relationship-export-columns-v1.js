@@ -228,7 +228,7 @@ function visibleRows(){
   });
 }
 function summary(){
-  const b=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
+  const b=(document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'));
   if(!b)return'';
   const p=[],h=b.querySelector('[data-harmonic-window-input]'),limit=document.querySelector('#skyFoundationRelationships [data-relationship-limit]');
   if(h?.value)p.push(`Harmonic window ${h.value}°`);
