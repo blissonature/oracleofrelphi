@@ -13,6 +13,7 @@ const interactions=readFileSync(new URL('../sky-chart-foundation-interactions-v2
 const drawersCss=readFileSync(new URL('../sky-chart-card-drawers-v1.css',import.meta.url),'utf8');
 const harmonic=readFileSync(new URL('../sky-chart-harmonic-orb-v1.js',import.meta.url),'utf8');
 const harmonicCeiling=readFileSync(new URL('../sky-chart-harmonic-window-ceiling-v1.js',import.meta.url),'utf8');
+const orbControl=readFileSync(new URL('../sky-chart-orb-control-v1.js',import.meta.url),'utf8');
 new Function(vocab);
 new Function(vocabCopy);
 new Function(glyphCopy);
@@ -20,10 +21,11 @@ new Function(registry);
 new Function(interactions);
 new Function(harmonic);
 new Function(harmonicCeiling);
+new Function(orbControl);
 
-assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=81/,'Sky Chart must load the Vocab subtab');
-assert.match(html,/sky-chart-harmonic-orb-v1\.js\?v=6/,'Sky Chart must load the shared Harmonic Window model fix');
-assert.match(html,/sky-chart-orb-control-v1\.js\?v=16/,'Relationships must load the source-aware shared Harmonic Window controller');
+assert.match(html,/sky-chart-vocab-tab-v1\.js\?v=82/,'Sky Chart must load the Vocab subtab');
+assert.match(html,/sky-chart-harmonic-orb-v1\.js\?v=7/,'Sky Chart must load the shared Harmonic Window model fix');
+assert.match(html,/sky-chart-orb-control-v1\.js\?v=17/,'Relationships must load the source-aware shared Harmonic Window controller');
 assert.match(html,/sky-chart-foundation-interactions-v2\.js\?v=22/,'Sky Chart must load the interaction owner exposing native wheel isolation');
 assert.match(html,/sky-chart-card-drawers-v1\.css\?v=15/,'Sky Chart must load the microheptagram sizing fix');
 assert.match(html,/sky-chart-filter-control-unified-v1\.css\?v=9/,'Sky Chart must load the shared Vocab/Relationships control styling');
@@ -131,7 +133,7 @@ assert.match(vocab,/const SIGN_RULERS=\['Mars','Venus','Mercury','Moon','Sun','M
 assert.doesNotMatch(vocab,/POLARITY_ATTACH_ORB=6/,'Vocab must not keep a static six-degree Harmonic Window');
 assert.match(vocab,/function harmonicWindow\(\)/,'Vocab must read the live shared Harmonic Window');
 assert.match(vocab,/model\?\.getWindow/,'Vocab must read the Harmonic Window from the shared harmonic model rather than owning a second value');
-assert.match(harmonic,/function syncVisibleControls\(\)/,'The harmonic model must own synchronization of all visible Harmonic Window controllers');
+assert.match(harmonic,/function syncVisibleControls\(sourceInput=null\)/,'The harmonic model must own synchronization of all visible Harmonic Window controllers');
 assert.match(harmonic,/\[data-harmonic-window-input\],\[data-vocab-harmonic-window-input\]/,'Relationships and Vocab must be synchronized from the same model value');
 assert.match(harmonic,/function setWindow\(value,sourceInput=null\)/,'The shared Harmonic Window must support source-aware mirroring while a controller is being edited');
 assert.match(vocab,/model\?\.setWindow\?\.\(value,input\)/,'Vocab must write directly into the shared Harmonic Window model');
@@ -141,9 +143,12 @@ assert.doesNotMatch(candidateReader,/setWindow\(/,'Reading the maximum relations
 assert.match(harmonicCeiling,/data\.filter='orb'/,'The hidden orb field must remain only the stable maximum candidate ceiling');
 assert.doesNotMatch(vocab,/defaultWindow\?\?0/,'An unset Harmonic Window must never fall through to zero');
 assert.match(vocab,/separation\(record\.value,anchor\.value\)<=windowValue/,'Axis polarity attachment eligibility must use the live Harmonic Window');
-assert.match(vocab,/data-vocab-harmonic-window-input/,'Vocab must expose its own controller for the shared Harmonic Window');
-assert.match(vocab,/canonicalHarmonicWindowInput\(\)/,'The Vocab controller must forward into the canonical Relationships Harmonic Window');
-assert.match(vocab,/relphi:sky-harmonic-window-visibility-changed/,'Vocab must rerender when the shared Harmonic Window changes');
+assert.match(vocab,/data-vocab-harmonic-window-input/,'Vocab must expose a controller for the shared Harmonic Window');
+assert.doesNotMatch(vocab,/canonicalHarmonicWindowInput/,'Neither visible controller may own a second or canonical Harmonic Window value');
+assert.match(harmonic,/relphi:sky-harmonic-window-model-changed/,'The shared model must publish live Harmonic Window changes');
+assert.match(orbControl,/const limit=Number\(model\(\)\?\.getWindow/,'Relationships filtering must read the shared model rather than reread its own control as state');
+assert.match(orbControl,/model\(\)\?\.setWindow\?\.\(value,input\)/,'The Relationships controller must write directly to the shared model');
+assert.match(vocab,/relphi:sky-harmonic-window-model-changed/,'Vocab must rerender when the shared model changes');
 assert.doesNotMatch(vocab,/polarityPole[\s\S]{0,500}!STRUCTURAL_ANCHOR_IDS\.has\(record\.id\)/,'Other structural anchors such as Nodes or angles must be allowed to attach to a polarity when they fall within its pole orb');
 assert.match(vocab,/CLUSTER_ORB=3/,'Natural Vocab clusters must use the same three-degree local geometry window');
 assert.match(vocab,/return\{type:'mid-sign',signs,names:\[SIGNS\[signs\[0\]\]\]\}/,'A concentration wholly inside one sign must be classified as mid-sign');
