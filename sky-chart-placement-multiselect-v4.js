@@ -60,6 +60,7 @@
   let applyQueued=false;
   let positionQueued=false;
   let portalOwner=null;
+  let portalAnchor=null;
   let rootObserver=null;
   let modeObserver=null;
   let lockedPopoverWidth=0;
@@ -331,6 +332,16 @@
     const positives=activeRules().some(rule=>rule.op==='or'||rule.op==='and');
     return Array.from(state[slot].available.keys()).filter(id=>!endpointVetoed(slot,id)&&(!positives||endpointPositive(slot,id)));
   }
+  function effectiveSelection(slot){
+    const scoped=activeRules().filter(rule=>rule.choice==='all'||rule.choice.toUpperCase()===slot);
+    const positives=scoped.some(rule=>rule.op==='or'||rule.op==='and');
+    return Array.from(state[slot].available.keys()).filter(id=>{
+      const endpoint={slot,id,group:state[slot]?.available.get(id)?.group||groupFor(id)};
+      const matching=scoped.filter(rule=>ruleMatchesEndpoint(rule,endpoint));
+      if(matching.some(rule=>rule.op==='not'))return false;
+      return!positives||matching.some(rule=>rule.op==='or'||rule.op==='and');
+    });
+  }
   function serializedLogic(){return activeRules().map(rule=>({...rule}))}
   function updateCount(rows){
     requestAnimationFrame(()=>{
@@ -378,7 +389,7 @@
     return Math.max(280,Math.min(360,window.innerWidth-margin*2));
   }
   function position(remeasureWidth=false){
-    const owner=portalOwner,menu=popover(),head=owner?.querySelector('.sky-chart-placement-filter-head');
+    const owner=portalOwner,menu=popover(),head=portalAnchor?.isConnected?portalAnchor:owner?.querySelector('.sky-chart-placement-filter-head');
     if(!isOpen(owner)||!menu?.classList.contains('is-portaled')||!head)return;
     if(remeasureWidth||!lockedPopoverWidth)lockedPopoverWidth=stablePopoverWidth();
     const rect=head.getBoundingClientRect();
@@ -395,29 +406,40 @@
     positionQueued=true;
     requestAnimationFrame(()=>{positionQueued=false;position(remeasureWidth)});
   }
-  function open(owner){
+  function open(owner,anchor=null){
     const menu=owner.querySelector('.sky-chart-placement-filter-popover')||popover();
     if(!menu)return;
     portalOwner=owner;
+    portalAnchor=anchor||owner.querySelector('.sky-chart-placement-filter-head');
     lockedPopoverWidth=stablePopoverWidth();
     owner.classList.add('is-open');
     menu.hidden=false;
     menu.classList.add('is-portaled');
     document.body.appendChild(menu);
     owner.querySelector('[data-placement-filter-toggle]')?.setAttribute('aria-expanded','true');
+    portalAnchor?.querySelector?.('[data-vocab-shared-placement-toggle]')?.setAttribute('aria-expanded','true');
     requestAnimationFrame(()=>position(false));
   }
   function close(owner){
     const menu=popover();
     if(!menu||!owner)return;
+    const anchor=portalAnchor;
     menu.hidden=true;
     menu.classList.remove('is-portaled');
     menu.removeAttribute('style');
     owner.appendChild(menu);
     owner.classList.remove('is-open');
     owner.querySelector('[data-placement-filter-toggle]')?.setAttribute('aria-expanded','false');
+    anchor?.querySelector?.('[data-vocab-shared-placement-toggle]')?.setAttribute('aria-expanded','false');
     portalOwner=null;
+    portalAnchor=null;
     lockedPopoverWidth=0;
+  }
+  function openAt(anchor){
+    const owner=control();if(!owner||!anchor)return false;
+    if(isOpen(owner))close(owner);
+    open(owner,anchor);
+    return true;
   }
 
   function createControl(){
@@ -485,10 +507,10 @@
   }
 
   function eventInsidePlacementUI(event){
-    const owner=portalOwner,menu=popover();
+    const owner=portalOwner,menu=popover(),anchor=portalAnchor;
     if(!owner||!menu)return false;
     const path=typeof event.composedPath==='function'?event.composedPath():[];
-    if(path.includes(owner)||path.includes(menu)||owner.contains(event.target)||menu.contains(event.target))return true;
+    if(path.includes(owner)||path.includes(menu)||path.includes(anchor)||owner.contains(event.target)||menu.contains(event.target)||anchor?.contains?.(event.target))return true;
     if(Number.isFinite(event.clientX)&&Number.isFinite(event.clientY)){
       const rect=menu.getBoundingClientRect();
       if(event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom)return true;
@@ -523,9 +545,9 @@
     },true);
     document.addEventListener('keydown',event=>{
       if(event.key!=='Escape'||!isOpen(portalOwner))return;
-      const owner=portalOwner;
+      const owner=portalOwner,focusTarget=portalAnchor?.querySelector?.('[data-vocab-shared-placement-toggle]')||owner.querySelector('[data-placement-filter-toggle]');
       close(owner);
-      owner.querySelector('[data-placement-filter-toggle]')?.focus();
+      focusTarget?.focus();
     });
     window.addEventListener('resize',()=>schedulePosition(true));
     window.addEventListener('scroll',event=>{
@@ -540,9 +562,13 @@
 
   window.RelphiSkyPlacementLogic=Object.freeze({
     rules:serializedLogic,
+    summary:combinedSummary,
+    selection:effectiveSelection,
     endpointVetoed,
     endpointPositive,
     relationshipMatches,
+    openAt,
+    close:()=>{if(portalOwner)close(portalOwner)},
     clear:()=>{logicRules.clear();saveLogic();updateControl();scheduleApply()}
   });
 
