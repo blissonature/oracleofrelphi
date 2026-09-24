@@ -255,7 +255,6 @@
     }
     return commitCanonical(parent, art, entry, fitted);
   }
-  }
 
   function createBubble(parent, identity, options) {
     const registry = window.RelphiGlyphRegistry;
