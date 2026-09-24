@@ -302,3 +302,13 @@ assert.doesNotMatch(page,/current zodiac position/i);
 const moonPositionHelper=fs.readFileSync('planetary-hours-moon-position-v1.js','utf8');
 assert.match(moonPositionHelper,/if \(document\.getElementById\('moonPlacement'\)\) \{/);
 assert.match(moonPositionHelper,/document\.getElementById\('moonZodiacPosition'\)\?\.remove\(\)/);
+
+assert.match(page,/class="ph-where-when-title">Where and when<\/span>/);
+assert.match(page,/<legend>Where<\/legend>/);
+assert.match(page,/<legend>When<\/legend>/);
+assert.match(page,/class="ph-where-when-advanced"/);
+assert.match(page,/\.ph-where-when-section \{/);
+assert.match(page,/\.ph-where-when-input:focus/);
+assert.match(page,/\.ph-where-when-button\.primary \{ background:#c9211e; \}/);
+assert.match(page,/class="ph-location-confirmation"/);
+assert.match(page,/el\.manualTime\.style\.display = 'grid';/);
