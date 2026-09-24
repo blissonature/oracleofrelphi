@@ -340,20 +340,35 @@ function installStyles(){
   const style=document.createElement('style');
   style.id='skyRelationshipSortV1Styles';
   style.textContent=`
-#skyFoundationRelationships .sky-relationship-controls>.sky-relationship-sort-control{align-self:end!important;min-width:0!important}
-#skyFoundationRelationships .sky-relationship-sort-control>span{align-self:end;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sky-filter-label-color,#4e463f);font:var(--sky-filter-label-font,800 .62rem/1.2 system-ui,sans-serif)}
+#skyFoundationRelationships .sky-relationship-heading-actions>.sky-relationship-sort-control{display:inline-flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}
+#skyFoundationRelationships .sky-relationship-sort-control>span{color:#5a524b;font:800 .61rem/1 system-ui,sans-serif}
+#skyFoundationRelationships .sky-relationship-sort-select{appearance:none;-webkit-appearance:none;width:auto;max-width:178px;height:29px;box-sizing:border-box;margin:0;padding:0 27px 0 9px;border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff var(--sky-chart-filter-chevron) no-repeat right 7px center/14px 14px;color:#332e2a;font:800 .67rem/1 system-ui,sans-serif;cursor:pointer}
+#skyFoundationRelationships .sky-relationship-sort-select:hover,#skyFoundationRelationships .sky-relationship-sort-select:focus-visible{border-color:#6b625a;outline:none}
 #skyFoundationRelationships .sky-relationship-sort-select[aria-busy="true"]{cursor:progress!important;opacity:.66}
+@media(max-width:620px){#skyFoundationRelationships .sky-relationship-sort-control>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%)}#skyFoundationRelationships .sky-relationship-sort-select{max-width:150px}}
 `;
   document.head.appendChild(style);
+}
+function ensureHeadingActions(relationships){
+  const heading=relationships?.querySelector(':scope > .sky-foundation-relationships-heading');
+  if(!heading)return null;
+  let actions=heading.querySelector(':scope > .sky-relationship-heading-actions');
+  if(!actions){
+    actions=document.createElement('span');
+    actions.className='sky-relationship-heading-actions';
+    const clear=heading.querySelector(':scope > #skyFoundationClearIsolation');
+    heading.insertBefore(actions,clear||null);
+  }
+  return actions;
 }
 function ensureControl(){
   installStyles();
   const relationships=document.getElementById('skyFoundationRelationships');
-  const controls=relationships?.querySelector(':scope > .sky-relationship-controls');
-  if(!controls)return null;
+  const actions=ensureHeadingActions(relationships);
+  if(!actions)return null;
 
-  const legacy=relationships.querySelector('.sky-chart-filter-bar .sky-relationship-sort-control');
-  let control=controls.querySelector(':scope>.sky-relationship-sort-control')||legacy;
+  const legacy=relationships.querySelector('.sky-relationship-controls .sky-relationship-sort-control,.sky-chart-filter-bar .sky-relationship-sort-control');
+  let control=actions.querySelector(':scope>.sky-relationship-sort-control')||legacy;
   if(!control){
     control=document.createElement('label');
     control.className='sky-relationship-sort-control';
@@ -387,7 +402,7 @@ function ensureControl(){
     select.addEventListener('change',()=>setMode(select.value));
     control.append(label,select);
   }
-  if(control.parentElement!==controls)controls.appendChild(control);
+  if(control.parentElement!==actions)actions.prepend(control);
 
   const select=control.querySelector('select');
   if(select&&select.value!==mode)select.value=mode;
