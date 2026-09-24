@@ -67,6 +67,21 @@ try{
   await page.waitForFunction(()=>document.querySelector('#skyFoundationA [data-vocab-harmonic-window-input="A"]')?.value==='4');
   assert.equal(await vocabWindow.inputValue(),'4','Changing Relationships Harmonic Window must update Vocab.');
 
+  await relationshipWindow.press('ArrowUp');
+  await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='4.05');
+  assert.equal(await relationshipWindow.inputValue(),'4.05','ArrowUp on Relationships must increase the Harmonic Window by 0.05°.');
+  assert.equal(await vocabWindow.inputValue(),'4.05','Relationships arrow stepping must mirror into Vocab.');
+  await relationshipWindow.press('ArrowDown');
+  await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='4');
+  assert.equal(await vocabWindow.inputValue(),'4','ArrowDown must restore the shared Harmonic Window by 0.05°.');
+
+  await vocabWindow.press('ArrowDown');
+  await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='3.95');
+  assert.equal(await relationshipWindow.inputValue(),'3.95','Vocab arrow stepping must mirror into Relationships.');
+  await vocabWindow.press('ArrowUp');
+  await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='4');
+  assert.equal(await relationshipWindow.inputValue(),'4','ArrowUp in Vocab must restore the shared Harmonic Window by 0.05°.');
+
   await vocabWindow.fill('0');
   await page.waitForFunction(()=>document.documentElement.dataset.skyHarmonicWindow==='0');
   await page.waitForFunction(()=>{
