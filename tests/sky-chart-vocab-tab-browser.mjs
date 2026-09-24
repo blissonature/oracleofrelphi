@@ -296,8 +296,8 @@ const selectedContextStrength=await page.evaluate(()=>{
     unrelatedSignOpacity:Number(getComputedStyle(unrelatedSign).opacity)
   };
 });
-assert.equal(selectedContextStrength.signFill,.82,'Matching sign sector must retain its native zodiac fill opacity while receiving the Vocab glow.');
-assert.equal(selectedContextStrength.houseFill,.5,'Matching house sector must retain its native house fill opacity while receiving the Vocab glow.');
+assert.equal(selectedContextStrength.signFill,1,'Matching sign sector must become fully luminous while receiving the Vocab glow.');
+assert.equal(selectedContextStrength.houseFill,1,'Matching house sector must become fully luminous while receiving the Vocab glow.');
 assert.equal(selectedContextStrength.signOpacity,1,'Matching sign sector must remain fully visible.');
 assert.equal(selectedContextStrength.houseOpacity,1,'Matching house sector must remain fully visible.');
 assert.equal(selectedContextStrength.unrelatedSignOpacity,1,'Unrelated sign sectors must keep native opacity; Vocab context must not dim them.');
