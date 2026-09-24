@@ -8,6 +8,9 @@ on:
       - 'sky-chart-harmonic-orb-v1.js'
       - 'sky-chart-harmonic-window-ceiling-v1.js'
       - 'sky-chart-orb-control-v1.js'
+      - 'sky-chart-relationship-limit-v1.js'
+      - 'sky-chart-relationship-scope-sections-v1.js'
+      - 'sky-chart-relationship-export-columns-v1.js'
       - 'sky-chart-placement-multiselect-v4.js'
       - 'sky-chart-vocab-copy-v1.js'
       - 'relphi-glyph-copy-serializer-v1.js'
@@ -62,6 +65,9 @@ jobs:
           node --check sky-chart-harmonic-orb-v1.js
           node --check sky-chart-harmonic-window-ceiling-v1.js
           node --check sky-chart-orb-control-v1.js
+          node --check sky-chart-relationship-limit-v1.js
+          node --check sky-chart-relationship-scope-sections-v1.js
+          node --check sky-chart-relationship-export-columns-v1.js
           node --check sky-chart-placement-multiselect-v4.js
           node --check sky-chart-vocab-copy-v1.js
           node --check relphi-glyph-copy-serializer-v1.js
