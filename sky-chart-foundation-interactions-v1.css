@@ -435,12 +435,39 @@
 
 @media(max-width:620px) {
   .sky-foundation-relationships-heading{
-    grid-template-columns:minmax(0,1fr) auto auto auto;
-    gap:4px;
-    padding-inline:8px;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:
+      "title count"
+      "actions actions"
+      "clear clear";
+    gap:6px 8px;
+    min-height:0;
+    padding:8px;
   }
-  #skyFoundationRelationshipCount{min-width:38px;padding-inline:6px}
-  #skyFoundationClearIsolation{padding-inline:.55rem}
+  .sky-foundation-relationships-heading>h2{
+    grid-area:title;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  #skyFoundationRelationshipCount{
+    grid-area:count;
+    min-width:38px;
+    padding-inline:6px;
+    justify-self:end;
+  }
+  .sky-foundation-relationships-heading>.sky-relationship-heading-actions{
+    grid-area:actions;
+    width:100%;
+    max-width:100%;
+    justify-content:flex-start;
+    overflow:visible;
+  }
+  #skyFoundationClearIsolation{
+    grid-area:clear;
+    justify-self:start;
+    padding-inline:.55rem;
+  }
   #skyFoundationRelationshipList {
     grid-template-columns:1fr;
     max-height:420px;
