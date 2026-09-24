@@ -117,7 +117,12 @@ assert.match(vocab,/const value=norm\(vertex\.value\+180\)[\s\S]*id:'anti-vertex
 assert.match(vocab,/const SIGN_POLARITIES=\[\[0,6\],\[1,7\],\[2,8\],\[3,9\],\[4,10\],\[5,11\]\]/,'Vocab must traverse all six zodiacal sign polarities');
 assert.match(vocab,/const HOUSE_POLARITIES=\[\[1,7\],\[2,8\],\[3,9\],\[4,10\],\[5,11\],\[6,12\]\]/,'Vocab must traverse all six house polarities');
 assert.match(vocab,/const SIGN_RULERS=\['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'\]/,'Empty sign and house contexts must use Relphi’s traditional sign rulers');
-assert.match(vocab,/POLARITY_ATTACH_ORB=6/,'Axis polarity structure attachments must use the six-degree structural window');
+assert.doesNotMatch(vocab,/POLARITY_ATTACH_ORB=6/,'Vocab must not keep a static six-degree Harmonic Window');
+assert.match(vocab,/function harmonicWindow\(\)/,'Vocab must read the live shared Harmonic Window');
+assert.match(vocab,/separation\(record\.value,anchor\.value\)<=windowValue/,'Axis polarity attachment eligibility must use the live Harmonic Window');
+assert.match(vocab,/data-vocab-harmonic-window-input/,'Vocab must expose its own controller for the shared Harmonic Window');
+assert.match(vocab,/canonicalHarmonicWindowInput\(\)/,'The Vocab controller must forward into the canonical Relationships Harmonic Window');
+assert.match(vocab,/relphi:sky-harmonic-window-visibility-changed/,'Vocab must rerender when the shared Harmonic Window changes');
 assert.doesNotMatch(vocab,/polarityPole[\s\S]{0,500}!STRUCTURAL_ANCHOR_IDS\.has\(record\.id\)/,'Other structural anchors such as Nodes or angles must be allowed to attach to a polarity when they fall within its pole orb');
 assert.match(vocab,/CLUSTER_ORB=3/,'Natural Vocab clusters must use the same three-degree local geometry window');
 assert.match(vocab,/return\{type:'mid-sign',signs,names:\[SIGNS\[signs\[0\]\]\]\}/,'A concentration wholly inside one sign must be classified as mid-sign');
