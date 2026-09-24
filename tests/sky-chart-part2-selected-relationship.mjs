@@ -74,6 +74,20 @@ assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-hea
 assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-sort]').count(),1,'Sort must share the Relationships heading line.');
 assert.equal(await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-limit]').count(),1,'Max must share the Relationships heading line.');
 
+await page.waitForFunction(()=>{
+  const count=document.getElementById('skyFoundationRelationshipCount');
+  return count?.dataset?.countLabel==='matches'&&/^\\d+$/.test(count.dataset.matchCount||'');
+});
+const matchCountPresentation=await page.locator('#skyFoundationRelationshipCount').evaluate(node=>({
+  raw:node.textContent.trim(),
+  matchCount:node.dataset.matchCount,
+  after:getComputedStyle(node,'::after').content,
+  fontSize:getComputedStyle(node).fontSize
+}));
+assert.match(matchCountPresentation.raw,/^\\d+(?:\\/\\d+)?$/,'Underlying relationship count may still be written by legacy filters, but presentation owns the visible label.');
+assert.equal(matchCountPresentation.after,'"' + matchCountPresentation.matchCount + ' matches"','Visible relationship count must be a single “N matches” phrase with one normal space and no slash total.');
+assert.equal(matchCountPresentation.fontSize,'0px','Legacy slash-total text must be visually suppressed.');
+
 await page.setViewportSize({width:360,height:900});
 await page.waitForTimeout(80);
 const mobileRelationshipHeading=await page.locator('#skyFoundationRelationships > .sky-foundation-relationships-heading').evaluate(heading=>{
