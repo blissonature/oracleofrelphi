@@ -155,10 +155,11 @@ jobs:
           assert.equal(drawer.open,true);
           assert.equal(drawer.structure,true);
 
+          await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-ruler-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
           const rulerArt=await page.evaluate(()=>{
             const wrap=document.querySelector('#skyFoundationA .sky-card-ruler-art'),img=wrap?.querySelector('img');
             const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null;
-            return{wrapRadius:ws?.borderRadius,wrapShadow:ws?.boxShadow,imgRadius:is?.borderRadius,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,hasForcedHeight:u?.searchParams.has('h')||false,fitParam:u?.searchParams.get('fit')||''};
+            return{wrapRadius:ws?.borderRadius,wrapShadow:ws?.boxShadow,imgRadius:is?.borderRadius,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||''};
           });
           assert.equal(rulerArt.wrapRadius,'0px');
           assert.equal(rulerArt.wrapShadow,'none');
@@ -166,15 +167,18 @@ jobs:
           assert.equal(rulerArt.imgShadow,'none');
           assert.equal(rulerArt.imgFit,'contain');
           assert.equal(rulerArt.imgClip,'none');
-          assert.equal(rulerArt.hasForcedHeight,false);
-          assert.equal(rulerArt.fitParam,'');
+          assert.match(rulerArt.src,/\/assets\/tarot\/rws\/.+\.webp$/);
+          assert.equal(rulerArt.src.includes('wsrv.nl'),false);
+          assert.ok(rulerArt.naturalWidth>0);
+          assert.equal(rulerArt.media,'local-ruler-art');
 
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
           await page.waitForTimeout(80);
+          await page.waitForFunction(()=>{const img=document.querySelector('#skyFoundationA .sky-card-house-decan-art img');return !!img&&img.complete&&img.naturalWidth>0},{timeout:10000});
           const houseArt=await page.evaluate(()=>{
             const wrap=document.querySelector('#skyFoundationA .sky-card-house-decan-art'),img=wrap?.querySelector('img');
             const ws=wrap?getComputedStyle(wrap):null,is=img?getComputedStyle(img):null,u=img?new URL(img.src):null;
-            return{wrapRadius:ws?.borderRadius,wrapShadow:ws?.boxShadow,imgRadius:is?.borderRadius,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,hasForcedHeight:u?.searchParams.has('h')||false,fitParam:u?.searchParams.get('fit')||''};
+            return{wrapRadius:ws?.borderRadius,wrapShadow:ws?.boxShadow,imgRadius:is?.borderRadius,imgShadow:is?.boxShadow,imgFit:is?.objectFit,imgClip:is?.clipPath,src:u?.href||'',naturalWidth:img?.naturalWidth||0,media:img?.dataset?.cardMedia||''};
           });
           assert.equal(houseArt.wrapRadius,'0px');
           assert.equal(houseArt.wrapShadow,'none');
@@ -182,8 +186,10 @@ jobs:
           assert.equal(houseArt.imgShadow,'none');
           assert.equal(houseArt.imgFit,'contain');
           assert.equal(houseArt.imgClip,'none');
-          assert.equal(houseArt.hasForcedHeight,false);
-          assert.equal(houseArt.fitParam,'');
+          assert.match(houseArt.src,/\/assets\/tarot\/rws\/.+\.webp$/);
+          assert.equal(houseArt.src.includes('wsrv.nl'),false);
+          assert.ok(houseArt.naturalWidth>0);
+          assert.equal(houseArt.media,'local-house-art');
 
           assert.deepEqual(errors,[]);
           await browser.close();
