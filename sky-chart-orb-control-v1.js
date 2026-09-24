@@ -9,7 +9,6 @@
 
   let queued=false,wheelIndexes=null,wheelState=null,installQueued=false,filterObserver=null,lastApplied=null;
   const model=()=>window.RelphiHarmonicOrb;
-  const visibleInput=()=>document.querySelector('[data-harmonic-window-input]');
 
   function initialWindow(){
     return model()?.getWindow?.()??model()?.defaultWindow??6;
