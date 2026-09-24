@@ -32,22 +32,40 @@ function installStyles(){
   style.id='skyRelationshipLimitV1Styles';
   style.textContent=`
 .sky-chart-result-limit-hidden{display:none!important}
-#skyFoundationRelationships .sky-relationship-limit-control{align-self:end!important;min-width:0!important}
-#skyFoundationRelationships .sky-relationship-limit-control>span{align-self:end;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sky-filter-label-color,#4e463f);font:var(--sky-filter-label-font,800 .62rem/1.2 system-ui,sans-serif)}
-@media(min-width:621px){
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-orb-number-field{grid-column:1/span 3!important;grid-row:2!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-display-control{grid-column:4/span 3!important;grid-row:2!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-sort-control{grid-column:7/span 4!important;grid-row:2!important}
-  body.sky-chart-page #skyFoundationRelationships .sky-chart-filter-bar>.sky-relationship-limit-control{grid-column:11/span 2!important;grid-row:2!important}
+#skyFoundationRelationships .sky-relationship-limit-control{display:inline-flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}
+#skyFoundationRelationships .sky-relationship-limit-control>span{color:#5a524b;font:800 .61rem/1 system-ui,sans-serif}
+#skyFoundationRelationships .sky-relationship-limit-control>select{
+  width:auto;min-width:54px;height:29px;box-sizing:border-box;margin:0;padding:0 22px 0 8px;
+  border:1px solid rgba(31,27,24,.18);border-radius:999px;background:#fff;color:#332e2a;
+  font:800 .67rem/1 system-ui,sans-serif;cursor:pointer
 }
+#skyFoundationRelationships .sky-relationship-limit-control>select:hover,
+#skyFoundationRelationships .sky-relationship-limit-control>select:focus-visible{border-color:#6b625a;outline:none}
+@media(max-width:420px){#skyFoundationRelationships .sky-relationship-limit-control>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%)}}
 `;
   document.head.appendChild(style);
 }
+function ensureHeadingActions(){
+  const heading=document.querySelector('#skyFoundationRelationships .sky-foundation-relationships-heading');
+  if(!heading)return null;
+  let actions=heading.querySelector(':scope>.sky-relationship-heading-actions');
+  if(!actions){
+    actions=document.createElement('span');
+    actions.className='sky-relationship-heading-actions';
+    const clear=heading.querySelector(':scope>#skyFoundationClearIsolation');
+    heading.insertBefore(actions,clear||null);
+    const copy=heading.querySelector(':scope>.sky-relationship-copy-button');
+    const download=heading.querySelector(':scope>#skyChartRelationshipsExport');
+    if(copy)actions.appendChild(copy);
+    if(download)actions.appendChild(download);
+  }
+  return actions;
+}
 function ensureControl(){
   installStyles();
-  const bar=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
-  if(!bar)return null;
-  let control=bar.querySelector(':scope>.sky-relationship-limit-control');
+  const actions=ensureHeadingActions();
+  if(!actions)return null;
+  let control=document.querySelector('#skyFoundationRelationships .sky-relationship-limit-control');
   if(!control){
     control=document.createElement('label');
     control.className='sky-relationship-limit-control';
@@ -62,9 +80,8 @@ function ensureControl(){
     select.addEventListener('change',()=>setLimit(select.value));
     control.append(label,select);
   }
-  const sort=bar.querySelector(':scope>.sky-relationship-sort-control');
-  if(sort&&control.previousElementSibling!==sort)sort.after(control);
-  else if(control.parentElement!==bar)bar.appendChild(control);
+  const anchor=actions.querySelector('.sky-relationship-copy-button,#skyChartRelationshipsExport');
+  if(control.parentElement!==actions||control.nextElementSibling!==anchor)actions.insertBefore(control,anchor||actions.firstChild);
   syncControl();
   return control;
 }
@@ -111,9 +128,10 @@ function apply(){
   const hiddenByLimit=Math.max(0,eligible.length-shown);
   const count=document.getElementById('skyFoundationRelationshipCount');
   if(count){
-    const next=`${shown}/${all.length}`;
+    const next=String(eligible.length);
     if(count.textContent!==next)count.textContent=next;
-    count.dataset.countLabel='shown';
+    count.dataset.countLabel='matches';
+    count.setAttribute('aria-label',eligible.length+' matching relationships');
   }
   const helper=ensureHelper();
   if(helper){
