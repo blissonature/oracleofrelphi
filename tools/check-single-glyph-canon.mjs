@@ -214,7 +214,7 @@ if (fs.existsSync(navloaderPath)) {
   const nav = text(navloaderPath);
   for (const snippet of [
     "appendScript('relphi-glyph-registry-v1.js?v=30'",
-    "appendScript('relphi-glyph-component-v1.js?v=32'",
+    "appendScript('relphi-glyph-component-v1.js?v=33'",
     "appendScript('relphi-glyph-source-integrity-v1.js?v=2'",
     "appendScript('relphi-inline-glyph-consumer-v1.js?v=3'",
     "appendScript('astrology-foundations-canonical-glyphs-v1.js?v=2'"
