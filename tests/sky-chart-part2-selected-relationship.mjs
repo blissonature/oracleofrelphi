@@ -121,6 +121,47 @@ await page.waitForSelector('.sky-ph-heptagram[data-canonical-heptagram-v1="true"
 await page.waitForSelector('#skySelectedRelationship:not([hidden])', {timeout:10000});
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card').count(), 2);
 assert.equal(await page.locator('#skySelectedRelationship .sky-selected-card img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
+await page.waitForFunction(()=>[...document.querySelectorAll('#skySelectedRelationship .correspondence-card-art img')].length===2&&[...document.querySelectorAll('#skySelectedRelationship .correspondence-card-art img')].every(img=>img.complete&&img.naturalWidth>0),null,{timeout:10000});
+const dualComparisonArt=await page.locator('#skySelectedRelationship .correspondence-card-art').evaluateAll(figures=>figures.map(figure=>{
+  const img=figure.querySelector('img'),fs=getComputedStyle(figure),is=getComputedStyle(img),fr=figure.getBoundingClientRect(),ir=img.getBoundingClientRect();
+  const bl=parseFloat(fs.borderLeftWidth)||0,br=parseFloat(fs.borderRightWidth)||0,bt=parseFloat(fs.borderTopWidth)||0,bb=parseFloat(fs.borderBottomWidth)||0;
+  return{
+    figureRadius:fs.borderRadius,
+    figurePadding:[fs.paddingTop,fs.paddingRight,fs.paddingBottom,fs.paddingLeft],
+    figureOverflow:fs.overflow,
+    borderWidth:[fs.borderTopWidth,fs.borderRightWidth,fs.borderBottomWidth,fs.borderLeftWidth],
+    borderColor:fs.borderTopColor,
+    imageRadius:is.borderRadius,
+    imageFit:is.objectFit,
+    imageAspect:is.aspectRatio,
+    imageBorder:is.borderWidth,
+    imageClip:is.clipPath,
+    sourceRatio:img.naturalWidth/img.naturalHeight,
+    renderedRatio:ir.width/ir.height,
+    flush:{
+      left:Math.abs(ir.left-(fr.left+bl)),
+      right:Math.abs(ir.right-(fr.right-br)),
+      top:Math.abs(ir.top-(fr.top+bt)),
+      bottom:Math.abs(ir.bottom-(fr.bottom-bb))
+    }
+  };
+}));
+assert.equal(dualComparisonArt.length,2);
+dualComparisonArt.forEach(item=>{
+  assert.equal(item.figureRadius,'0px','Dual comparison Sky stroke must have sharp corners.');
+  assert.deepEqual(item.figurePadding,['0px','0px','0px','0px'],'Dual comparison art must have no gap inside the Sky stroke.');
+  assert.equal(item.figureOverflow,'visible');
+  assert.deepEqual(item.borderWidth,['3px','3px','3px','3px'],'Sky identity stroke must remain visible.');
+  assert.equal(item.imageRadius,'0px','Tarot art itself must have sharp corners.');
+  assert.equal(item.imageFit,'contain');
+  assert.equal(item.imageAspect,'auto');
+  assert.equal(item.imageBorder,'0px');
+  assert.equal(item.imageClip,'none');
+  assert.ok(Math.abs(item.renderedRatio-item.sourceRatio)<0.01,'Dual comparison art must preserve the source image aspect ratio.');
+  assert.ok(Object.values(item.flush).every(delta=>delta<=0.75),'Tarot art must sit flush against the inside edge of the Sky identity stroke.');
+});
+assert.equal(dualComparisonArt[0].borderColor,'rgb(201, 33, 30)','Sky A comparison stroke must stay red.');
+assert.equal(dualComparisonArt[1].borderColor,'rgb(36, 98, 208)','Sky B comparison stroke must stay blue.');
 assert.equal(await page.locator('#skySelectedRelationship').getAttribute('data-selection-source'), 'initial-relationship');
 const ledgerGlyphs = await page.locator('.sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => nodes.map(svg => {
   const art=svg.querySelector('.relphi-canonical-glyph');
