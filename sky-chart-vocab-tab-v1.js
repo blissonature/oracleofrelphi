@@ -133,12 +133,14 @@ const STRUCTURAL_ANCHOR_IDS=new Set(AXIS_STRUCTURES.flatMap(axis=>[axis.left,axi
 const CLUSTER_ORB=3;
 const HARMONIC=()=>window.RelphiHarmonicOrb;
 function harmonicWindow(){
-  const model=HARMONIC(),live=Number(document.documentElement.dataset.skyHarmonicWindow);
-  if(Number.isFinite(live))return model?.clampWindow?.(live)??live;
-  const canonical=document.querySelector('#skyFoundationRelationships [data-harmonic-window-input]');
-  const raw=Number(String(canonical?.value??'').trim().replace(',','.'));
-  if(Number.isFinite(raw))return model?.clampWindow?.(raw)??raw;
-  return Number(model?.defaultWindow??0);
+  const model=HARMONIC();
+  if(model?.getWindow)return model.getWindow();
+  const liveRaw=String(document.documentElement.dataset.skyHarmonicWindow??'').trim();
+  if(liveRaw!==''){
+    const live=Number(liveRaw.replace(',','.'));
+    if(Number.isFinite(live))return model?.clampWindow?.(live)??live;
+  }
+  return Number(model?.defaultWindow??6);
 }
 let queued=false;
 let openDropdownState=null;
@@ -1196,14 +1198,14 @@ function setHarmonicWindowFromVocab(input,commit=false){
   input.setAttribute('aria-invalid',valid?'false':'true');
   if(!valid)return;
   input.setAttribute('aria-valuenow',String(value));
+  model?.setWindow?.(value);
   const canonical=canonicalHarmonicWindowInput();
   if(canonical){
     canonical.value=String(value);
+    canonical.setAttribute('aria-valuenow',String(value));
     canonical.dispatchEvent(new Event(commit?'change':'input',{bubbles:true}));
     return;
   }
-  model?.setWindow?.(value);
-  document.documentElement.dataset.skyHarmonicWindow=String(value);
   window.dispatchEvent(new CustomEvent('relphi:sky-harmonic-window-visibility-changed',{detail:{harmonicWindow:value}}));
 }
 function syncControlState(){
