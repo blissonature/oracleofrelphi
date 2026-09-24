@@ -230,8 +230,9 @@ function visibleRows(){
 function summary(){
   const b=document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar');
   if(!b)return'';
-  const p=[],h=b.querySelector('[data-harmonic-window-input]');
+  const p=[],h=b.querySelector('[data-harmonic-window-input]'),limit=b.querySelector('[data-relationship-limit]');
   if(h?.value)p.push(`Harmonic window ${h.value}°`);
+  if(limit?.value&&limit.value!=='all')p.push(`Limit ${limit.value}`);
   for(const[q,label]of[['[data-placement-filter-summary]','Placements'],['[data-house-filter-summary]','Houses'],['[data-aspect-filter-summary]','Aspects']]){
     const text=(b.querySelector(q)?.textContent||'').replace(/\s+/g,' ').trim();
     if(text&&!/^all$/i.test(text))p.push(`${label}: ${text}`);
@@ -314,7 +315,7 @@ async function build(){
   document.body.appendChild(host);
   sheet.className='rex-sheet';
   sheet.style.width=width+'px';
-  sheet.innerHTML=`<div class="rex-title"><h1>${esc(name('A'))} ↔ ${esc(name('B'))} — Relationships</h1><p>Complete relationship export · referents · timing · Tarot correspondences · isolated aspect geometry</p></div><div class="rex-context"><span><b>${esc(name('A'))}</b>${context('A')?' · '+esc(context('A')):''}</span><span><b>${esc(name('B'))}</b>${context('B')?' · '+esc(context('B')):''}</span></div><div class="rex-head"><strong>Relationships</strong><em>${esc(document.getElementById('skyFoundationRelationshipCount')?.textContent||rows.length)}</em></div>`;
+  sheet.innerHTML=`<div class="rex-title"><h1>${esc(name('A'))} ↔ ${esc(name('B'))} — Relationships</h1><p>Current relationship export · referents · timing · Tarot correspondences · isolated aspect geometry</p></div><div class="rex-context"><span><b>${esc(name('A'))}</b>${context('A')?' · '+esc(context('A')):''}</span><span><b>${esc(name('B'))}</b>${context('B')?' · '+esc(context('B')):''}</span></div><div class="rex-head"><strong>Relationships</strong><em>${esc((document.getElementById('skyFoundationRelationshipCount')?.textContent||rows.length)+' shown')}</em></div>`;
   const filter=summary();
   if(filter){
     const n=document.createElement('div');
@@ -417,7 +418,9 @@ document.addEventListener('click',e=>{
   'relphi:sky-aspect-multiselect-changed',
   'relphi:sky-zodiac-filter-changed',
   'relphi:sky-where-when-committed',
-  'relphi:sky-name-updated'
+  'relphi:sky-name-updated',
+  'relphi:relationship-limit-changed',
+  'relphi:relationship-limit-applied'
 ].forEach(eventName=>window.addEventListener(eventName,()=>{pending=null}));
 load().catch(()=>{});
 })();
