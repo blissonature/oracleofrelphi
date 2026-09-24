@@ -69,10 +69,10 @@ function ensureControl(){
   if(!control){
     control=document.createElement('label');
     control.className='sky-relationship-limit-control';
-    const label=document.createElement('span');label.textContent='Limit';
+    const label=document.createElement('span');label.textContent='Max';
     const select=document.createElement('select');
     select.dataset.relationshipLimit='true';
-    select.setAttribute('aria-label','Limit shown relationships');
+    select.setAttribute('aria-label','Maximum shown relationships');
     [['10','10'],['20','20'],['50','50'],['all','All']].forEach(([value,text])=>{
       const option=document.createElement('option');option.value=value;option.textContent=text;select.appendChild(option);
     });
