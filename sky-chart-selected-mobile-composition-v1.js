@@ -126,8 +126,9 @@
         }
         #skySelectedRelationship .sky-selected-card{
           width:100%!important;
-          padding:.55rem!important;
-          border-radius:1rem!important;
+          padding:0!important;
+          border-radius:0!important;
+          overflow:visible!important;
         }
         #skySelectedRelationship .sky-selected-card-label{
           margin:.05rem 0 .35rem!important;
