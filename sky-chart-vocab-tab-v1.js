@@ -298,10 +298,20 @@ function activeScope(slot){
   const wheel=wheelFilterState?.[slot];
   return wheel||manualScope(slot);
 }
+function relationshipPlacementLogic(){return window.RelphiSkyPlacementLogic||null}
+function inheritedPlacementSelection(slot,list=records(slot)){
+  const available=list.map(record=>record.id),logic=relationshipPlacementLogic();
+  const inherited=logic?.selection?.(slot);
+  if(!Array.isArray(inherited))return null;
+  return new Set(inherited.filter(id=>available.includes(id)));
+}
 function scopeSelection(slot,kind,list=records(slot)){
   const scope=activeScope(slot),raw=scope[kind];
   if(kind==='placements'){
     const available=list.map(record=>record.id);
+    if(wheelFilterState?.[slot])return new Set(raw===null?available:raw.filter(id=>available.includes(id)));
+    const inherited=inheritedPlacementSelection(slot,list);
+    if(inherited)return inherited;
     return new Set(raw===null?available:raw.filter(id=>available.includes(id)));
   }
   const all=kind==='signs'?ALL_SIGNS:ALL_HOUSES;
@@ -1063,43 +1073,23 @@ function layerDropdownMarkup(slot){
 function relationshipChoice(inputMarkup,choiceClass=''){
   return '<label class="'+choiceClass+'">'+inputMarkup+'<span></span></label>';
 }
+function relationshipPlacementSummary(){
+  return relationshipPlacementLogic()?.summary?.()||'All';
+}
 function placementDropdownMarkup(slot){
-  const list=records(slot),selected=scopeSelection(slot,'placements',list);
-  const groupRows=CATEGORY_ORDER.map(category=>{
-    const members=list.filter(record=>categoryOf(record)===category);if(!members.length)return'';
-    const chosen=members.filter(record=>selected.has(record.id)).length,all=chosen===members.length,some=chosen>0&&chosen<members.length;
-    const groupInput='<input type="checkbox" data-vocab-group="'+category+'" data-vocab-slot="'+slot+'" '+(all?'checked':'')+' '+(some?'data-indeterminate="true"':'')+' aria-label="'+htmlEscape(CATEGORY_LABELS[category])+'">';
-    const groupRow='<div class="sky-chart-placement-list-item sky-chart-placement-list-item-group" data-vocab-placement-group-row="'+category+'">'+
-      '<strong class="sky-chart-placement-list-label">'+CATEGORY_LABELS[category]+'</strong>'+
-      '<div class="sky-chart-placement-list-choices">'+relationshipChoice(groupInput,'sky-chart-placement-choice sky-chart-placement-choice-all')+'</div>'+
-    '</div>';
-    const placementRows=members.map(record=>{
-      const input='<input type="checkbox" data-vocab-placement="'+htmlEscape(record.id)+'" data-vocab-slot="'+slot+'" '+(selected.has(record.id)?'checked':'')+' aria-label="'+htmlEscape(record.name)+'">';
-      return '<div class="sky-chart-placement-list-item sky-chart-placement-list-item-placement" data-placement-list-item="'+htmlEscape(record.id)+'">'+
-        '<strong class="sky-chart-placement-list-label">'+htmlEscape(record.name)+'</strong>'+
-        '<div class="sky-chart-placement-list-choices">'+relationshipChoice(input,'sky-chart-placement-choice sky-chart-placement-choice-all')+'</div>'+
-      '</div>';
-    }).join('');
-    return groupRow+placementRows;
-  }).join('');
-  const allChecked=selected.size===list.length,allIndeterminate=selected.size>0&&selected.size<list.length;
-  const allInput='<input type="checkbox" data-vocab-dimension-master="placements" data-vocab-slot="'+slot+'" '+(allChecked?'checked':'')+' '+(allIndeterminate?'data-indeterminate="true"':'')+' aria-label="All placements">';
-  const body='<div class="sky-chart-placement-filter-body"><div class="sky-chart-placement-list" data-placement-list="vocab">'+
-    '<div class="sky-chart-placement-list-header"><strong class="sky-chart-placement-list-header-label">Placement</strong><div class="sky-chart-placement-list-header-choices"><span class="sky-chart-placement-list-header-choice sky-chart-placement-list-header-choice-all">All</span></div></div>'+
-    '<div class="sky-chart-placement-list-item sky-chart-placement-list-item-master">'+
-      '<strong class="sky-chart-placement-list-label">All placements</strong>'+
-      '<div class="sky-chart-placement-list-choices">'+relationshipChoice(allInput,'sky-chart-placement-choice sky-chart-placement-choice-all')+'</div>'+
-    '</div>'+groupRows+
-  '</div></div>';
-  const menuId='skyVocabPlacementsMenu'+slot;
-  return '<div class="sky-chart-placement-filter sky-vocab-rel-filter" data-vocab-dropdown="placements" data-vocab-dropdown-slot="'+slot+'">'+
-    '<div class="sky-chart-placement-filter-head">'+
+  return '<div class="sky-chart-placement-filter sky-vocab-rel-filter" data-vocab-shared-placement="'+slot+'">'+
+    '<div class="sky-chart-placement-filter-head" data-vocab-shared-placement-anchor="'+slot+'">'+
       '<span class="sky-chart-placement-filter-label">Placements</span>'+
-      '<div class="sky-chart-placement-summary-choices"><span data-vocab-dropdown-summary="placements" data-vocab-summary-slot="'+slot+'">'+htmlEscape(dimensionSummary(slot,'placements'))+'</span></div>'+
-      '<button type="button" class="sky-chart-placement-filter-toggle" data-vocab-dropdown-toggle="placements" aria-haspopup="dialog" aria-expanded="false" aria-controls="'+menuId+'" aria-label="Open Placements"></button>'+
+      '<div class="sky-chart-placement-summary-choices"><span data-vocab-dropdown-summary="placements" data-vocab-summary-slot="'+slot+'" aria-live="polite">'+htmlEscape(relationshipPlacementSummary())+'</span></div>'+
+      '<button type="button" class="sky-chart-placement-filter-toggle" data-vocab-shared-placement-toggle="'+slot+'" aria-haspopup="dialog" aria-expanded="false" aria-controls="skyChartPlacementPopover" aria-label="Open shared Placements filter"></button>'+
     '</div>'+
-    '<div id="'+menuId+'" class="sky-chart-placement-filter-popover sky-vocab-rel-popover" data-vocab-dropdown-menu="placements" data-vocab-menu-slot="'+slot+'" role="dialog" aria-label="Placements" hidden>'+body+'</div>'+
   '</div>';
+}
+function openSharedPlacementDropdown(button){
+  const logic=relationshipPlacementLogic(),anchor=button?.closest?.('[data-vocab-shared-placement-anchor]');
+  if(!logic?.openAt||!anchor)return;
+  closeDropdown();
+  logic.openAt(anchor);
 }
 function signDropdownMarkup(slot){
   const selected=scopeSelection(slot,'signs'),rows=ALL_SIGNS.map(index=>{
@@ -1221,7 +1211,8 @@ function syncControlState(){
     });
     document.querySelectorAll('[data-vocab-dimension-master="placements"][data-vocab-slot="'+slot+'"]').forEach(input=>{input.checked=list.length>0&&placements.size===list.length;input.indeterminate=placements.size>0&&placements.size<list.length});
     document.querySelectorAll('[data-vocab-dimension-master="houses"][data-vocab-slot="'+slot+'"]').forEach(input=>{input.checked=houses.size===ALL_HOUSES.length;input.indeterminate=houses.size>0&&houses.size<ALL_HOUSES.length});
-    ['placements','signs','houses'].forEach(kind=>document.querySelectorAll('[data-vocab-dropdown-summary="'+kind+'"][data-vocab-summary-slot="'+slot+'"]').forEach(node=>{node.textContent=dimensionSummary(slot,kind)}));
+    document.querySelectorAll('[data-vocab-dropdown-summary="placements"][data-vocab-summary-slot="'+slot+'"]').forEach(node=>{node.textContent=relationshipPlacementSummary()});
+    ['signs','houses'].forEach(kind=>document.querySelectorAll('[data-vocab-dropdown-summary="'+kind+'"][data-vocab-summary-slot="'+slot+'"]').forEach(node=>{node.textContent=dimensionSummary(slot,kind)}));
   });
   document.querySelectorAll('[data-vocab-dropdown-summary="layers"]').forEach(node=>{node.textContent=layerSummary()});
 }
@@ -1276,10 +1267,9 @@ function ensurePanel(slot,view){
     input.addEventListener('blur',()=>setHarmonicWindowFromVocab(input,true));
   });
   panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);rerenderPanels()}));
-  panel.querySelectorAll('[data-vocab-placement]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'placements',input.dataset.vocabPlacement,input.checked)));
+  panel.querySelectorAll('[data-vocab-shared-placement-toggle]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openSharedPlacementDropdown(button)}));
   panel.querySelectorAll('[data-vocab-sign]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'signs',input.dataset.vocabSign,input.checked)));
   panel.querySelectorAll('[data-vocab-house]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'houses',input.dataset.vocabHouse,input.checked)));
-  panel.querySelectorAll('[data-vocab-group]').forEach(input=>input.addEventListener('change',()=>toggleGroup(slot,input.dataset.vocabGroup,input.checked)));
   panel.querySelectorAll('[data-vocab-dimension-all]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setDimensionAll(slot,button.dataset.vocabDimensionAll,true)}));
   panel.querySelectorAll('[data-vocab-dimension-master]').forEach(input=>input.addEventListener('change',()=>setDimensionAll(slot,input.dataset.vocabDimensionMaster,input.checked)));
   panel.querySelectorAll('[data-vocab-dimension-none]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setDimensionAll(slot,button.dataset.vocabDimensionNone,false)}));
@@ -1558,7 +1548,7 @@ document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
 document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 [
   'relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready',
-  'relphi:sky-orb-limit-changed','relphi:sky-harmonic-window-model-changed','relphi:sky-harmonic-window-visibility-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
+  'relphi:sky-orb-limit-changed','relphi:sky-harmonic-window-model-changed','relphi:sky-harmonic-window-visibility-changed','relphi:sky-placement-multiselect-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
   'relphi:sky-b-restored','relphi:sky-session-recovered'
 ].forEach(name=>window.addEventListener(name,schedule));
 window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY)schedule()});
