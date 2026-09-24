@@ -148,6 +148,7 @@ let openDropdownState=null;
 let dropdownPositionQueued=false;
 let wheelFilterState=null;
 let wheelFilterSpec=null;
+let focusScopeState={signs:null,houses:{A:null,B:null}};
 let vocabWheelContextLine=null;
 let vocabWheelContextToken=null;
 let vocabWheelPinnedToken=null;
@@ -297,7 +298,12 @@ const ALL_HOUSES=Array.from({length:12},(_,index)=>index+1);
 function manualScope(slot){return scopeFilterState()[slot]||emptyScope()}
 function activeScope(slot){
   const wheel=wheelFilterState?.[slot];
-  return wheel||manualScope(slot);
+  if(wheel)return wheel;
+  return{
+    placements:null,
+    signs:Array.isArray(focusScopeState.signs)?focusScopeState.signs:null,
+    houses:Array.isArray(focusScopeState.houses?.[slot])?focusScopeState.houses[slot]:null
+  };
 }
 function relationshipPlacementLogic(){return window.RelphiSkyPlacementLogic||null}
 function inheritedPlacementSelection(slot,list=records(slot)){
@@ -312,8 +318,7 @@ function scopeSelection(slot,kind,list=records(slot)){
     const available=list.map(record=>record.id);
     if(wheelFilterState?.[slot])return new Set(raw===null?available:raw.filter(id=>available.includes(id)));
     const inherited=inheritedPlacementSelection(slot,list);
-    if(inherited)return inherited;
-    return new Set(raw===null?available:raw.filter(id=>available.includes(id)));
+    return inherited||new Set(available);
   }
   const all=kind==='signs'?ALL_SIGNS:ALL_HOUSES;
   return new Set(raw===null?all:raw.filter(value=>all.includes(Number(value))).map(Number));
@@ -1216,7 +1221,7 @@ function harmonicWindowMarkup(slot){
     '<input class="sky-vocab-dropdown-field sky-vocab-harmonic-input" type="text" inputmode="decimal" autocomplete="off" value="'+htmlEscape(value)+'" data-vocab-harmonic-window-input="'+slot+'" role="spinbutton" aria-valuemin="0" aria-valuemax="'+htmlEscape(max)+'" aria-valuenow="'+htmlEscape(value)+'" aria-label="Master harmonic phase window in degrees, maximum '+htmlEscape(max)+'">'+
   '</label>';
 }
-function controlsMarkup(slot){return '<div class="sky-vocab-harmonic-row">'+harmonicWindowMarkup(slot)+'</div><div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+placementDropdownMarkup(slot)+signDropdownMarkup(slot)+houseDropdownMarkup(slot)+'</div>'}
+function controlsMarkup(slot){return '<div class="sky-vocab-dropdown-row">'+layerDropdownMarkup(slot)+'</div>'}
 function dropdownOwner(slot,kind){return document.querySelector('[data-sky-vocab-panel="'+slot+'"] [data-vocab-dropdown="'+kind+'"]')}
 function dropdownMenu(slot,kind){return document.querySelector('[data-vocab-dropdown-menu="'+kind+'"][data-vocab-menu-slot="'+slot+'"]')}
 function closeDropdown(){
@@ -1401,7 +1406,7 @@ function installStyles(){
     .sky-vocab-harmonic-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:end}
     .sky-vocab-harmonic-field{width:auto;min-width:0;margin:0}
     .sky-vocab-harmonic-input{width:100%;box-sizing:border-box;background:#fff!important;padding-right:.58rem}
-    .sky-vocab-dropdown-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;align-items:end}
+    .sky-vocab-dropdown-row{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;align-items:end}
 
     /* Display remains Vocab-specific. Placement / Houses / Zodiac use the Relationships classes directly. */
     .sky-vocab-dropdown{position:relative;display:grid;grid-template-rows:auto 35px;gap:4px;min-width:0}
@@ -1619,11 +1624,21 @@ function mirrorHouseBridge(detail){
 }
 function mirrorZodiacBridge(detail){
   const signs=Array.isArray(detail?.signs)?detail.signs.map(Number).filter(Number.isInteger):[];
+  focusScopeState.signs=signs.length===ALL_SIGNS.length?null:signs;
   if(detail?.source==='wheel'&&signs.length===1){
     applyWheelSpec({kind:'sign',sky:null,value:signs[0]});
   }else if(wheelFilterSpec?.kind==='sign'&&signs.length===12){
     applyWheelSpec(null);
+  }else{
+    schedule();
   }
+}
+function mirrorSharedHouseFilters(detail){
+  ['A','B'].forEach(slot=>{
+    const values=Array.isArray(detail?.[slot])?detail[slot].map(Number).filter(Number.isInteger):[];
+    focusScopeState.houses[slot]=values.length===ALL_HOUSES.length?null:values;
+  });
+  schedule();
 }
 window.addEventListener('relphi:sky-foundation-filter-changed',event=>driveFiltersFromWheel(event.detail));
 window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
@@ -1632,6 +1647,7 @@ window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
 });
 window.addEventListener('relphi:sky-house-focus-bridge-changed',event=>mirrorHouseBridge(event.detail));
 window.addEventListener('relphi:sky-zodiac-filter-changed',event=>mirrorZodiacBridge(event.detail));
+window.addEventListener('relphi:sky-house-multiselect-changed',event=>mirrorSharedHouseFilters(event.detail));
 document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
 document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 [
