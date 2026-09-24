@@ -207,6 +207,8 @@ function ensureStyles(){
 .sky-card-house-span{display:grid;gap:.42rem;min-width:0;padding-top:.68rem;border-top:1px solid rgba(31,27,24,.09)}
 .sky-card-house-span:first-of-type{padding-top:0;border-top:0}
 .sky-card-house-span-heading{min-width:0;color:#554d46;font:850 .57rem/1.28 system-ui,sans-serif}
+.sky-card-house-span-major-art,.sky-card-house-detail-row .sky-card-house-decan-art{display:grid!important;place-items:center!important;border:0!important;outline:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;clip-path:none!important;mask:none!important;-webkit-mask:none!important;overflow:visible!important}
+.sky-card-house-span-major-art>.sky-card-house-art-native,.sky-card-house-detail-row .sky-card-house-decan-art>.sky-card-house-art-native{border:0!important;outline:0!important;border-radius:0!important;box-shadow:none!important;clip-path:none!important;mask:none!important;-webkit-mask:none!important;overflow:visible!important}
 @media(max-width:520px){.sky-card-house-toggle{gap:.38rem;padding:.5rem .55rem}.sky-card-house-toggle-range{gap:.18rem;font-size:.54rem}.sky-card-house-toggle-glyph{flex-basis:29px;width:29px;height:29px}.sky-card-house-detail-glyph{flex-basis:31px;width:31px;height:31px}}
 `;
   document.head.appendChild(style);
