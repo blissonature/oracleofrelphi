@@ -1125,11 +1125,8 @@ function renderParagraph(slot,panel){
     const heading=document.createElement('div');heading.className='sky-vocab-placements-heading';heading.textContent='Placements';container.appendChild(heading);
     renderFullPlacements(container,permitted,slot);
   }
-  if(!displayState().glyphs&&!displayState().names&&!displayState().referents){
-    container.replaceChildren();
-    const empty=document.createElement('span');empty.className='sky-vocab-empty';empty.textContent='Turn on Glyphs, Names, or Referents to display the vocabulary.';container.appendChild(empty);
-  }else if(!container.childNodes.length){
-    container.textContent='No placements match the current filters.';
+  if(!container.childNodes.length){
+    container.textContent='No placements match the current Focus.';
   }
 }
 function htmlEscape(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
