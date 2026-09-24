@@ -1543,8 +1543,10 @@
   .ph-calendar-moon-placement { display:flex; align-items:center; gap:.28rem; color:#211d19; font-size:.92rem; font-weight:900; font-variant-numeric:tabular-nums; }
   .ph-calendar-moon-placement .ph-direct-canonical-glyph { width:1.15em; height:1.15em; margin:0; transform:none; }
   .ph-calendar-context-label { margin:0 0 .48rem; color:#514b46; font:850 .76rem/1.2 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.07em; }
-  .ph-calendar-event-lane { display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; min-height:2rem; }
-  .ph-calendar-event { display:inline-flex; align-items:center; gap:.32rem; padding:.34rem .55rem; border:1px solid rgba(17,17,17,.12); border-radius:999px; background:#faf8f5; color:#302a25; font:750 .75rem/1.15 system-ui,sans-serif; white-space:nowrap; }
+  .ph-calendar-event-lane { display:flex; gap:.4rem; flex-wrap:wrap; align-items:flex-start; min-width:0; min-height:2rem; overflow:hidden; }
+  .ph-calendar-event-lane > * { min-width:0; max-width:100%; }
+  .ph-calendar-event { display:block; min-width:0; max-width:100%; box-sizing:border-box; padding:.34rem .55rem; border:1px solid rgba(17,17,17,.12); border-left-width:3px; border-radius:.55rem; background:#faf8f5; color:#302a25; font:750 .75rem/1.2 system-ui,sans-serif; white-space:normal; overflow-wrap:anywhere; }
+  .ph-calendar-event.has-aspect { border-left-color:var(--ph-calendar-aspect-color,rgba(17,17,17,.12)); }
   .ph-calendar-event strong { color:var(--relphi-red-dark); font-weight:900; }
   .ph-calendar-note-summary { margin:.55rem 0 0; color:#655d56; font-size:.8rem; font-weight:700; }
   .ph-calendar-month-view { margin-top:.9rem; }
@@ -1552,7 +1554,7 @@
   .ph-calendar-month-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:.34rem; }
   .ph-calendar-weekdays { margin-bottom:.34rem; }
   .ph-calendar-weekdays span { padding:.2rem; color:#756c65; text-align:center; font:850 .66rem/1 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.05em; }
-  .ph-calendar-month-day { appearance:none; display:flex; flex-direction:column; align-items:stretch; gap:.28rem; min-width:0; min-height:8.7rem; padding:.48rem; border:1px solid rgba(17,17,17,.11); border-radius:.8rem; background:#fff; color:#211d19; text-align:left; cursor:pointer; overflow:hidden; }
+  .ph-calendar-month-day { appearance:none; display:flex; flex-direction:column; align-items:stretch; gap:.28rem; min-width:0; height:11.6rem; max-height:11.6rem; padding:.48rem; box-sizing:border-box; border:1px solid rgba(17,17,17,.11); border-radius:.8rem; background:#fff; color:#211d19; text-align:left; cursor:pointer; overflow:hidden; }
   .ph-calendar-month-day:hover,
   .ph-calendar-month-day:focus-visible { outline:none; border-color:rgba(220,31,24,.42); box-shadow:0 0 0 3px rgba(220,31,24,.07); }
   .ph-calendar-month-day.is-outside { background:#faf8f5; color:#938b84; }
@@ -1561,14 +1563,17 @@
   .ph-calendar-month-top { display:flex; align-items:center; justify-content:space-between; gap:.25rem; min-width:0; }
   .ph-calendar-month-number { display:inline-grid; place-items:center; min-width:1.55rem; min-height:1.55rem; border-radius:999px; font:900 .75rem/1 system-ui,sans-serif; }
   .ph-calendar-month-note-badge { color:#7a6f66; font:800 .61rem/1 system-ui,sans-serif; white-space:nowrap; }
-  .ph-calendar-month-events { display:grid; gap:.22rem; min-width:0; }
-  .ph-calendar-month-event { display:block; min-width:0; padding:.23rem .3rem; border-left:2px solid rgba(220,31,24,.30); border-radius:.22rem .42rem .42rem .22rem; background:#fff8f5; color:#453d37; font:750 .61rem/1.22 system-ui,sans-serif; overflow:hidden; text-overflow:ellipsis; }
-  .ph-calendar-month-event.ingress { border-left-color:#277390; background:#f5fafc; }
-  .ph-calendar-month-event.station { border-left-color:#8c7a42; background:#fbf9f1; }
-  .ph-calendar-month-event.conjunction { border-left-color:#b23b79; background:#fff7fb; }
-  .ph-calendar-month-event.lunation { border-left-color:#58628a; background:#f7f7fc; }
-  .ph-calendar-month-event.alert { border-left-color:var(--relphi-red); background:#fff1ed; }
-  .ph-calendar-month-event.personal { border-left-color:#211d19; background:#f4f1ed; font-weight:850; }
+  .ph-calendar-month-events { display:grid; gap:.22rem; min-width:0; overflow:hidden; }
+  .ph-calendar-month-event { display:block; min-width:0; max-width:100%; padding:.25rem .32rem; box-sizing:border-box; border:1px solid rgba(17,17,17,.08); border-left:3px solid rgba(17,17,17,.16); border-radius:.28rem .46rem .46rem .28rem; background:#faf8f5; color:#453d37; font:750 .61rem/1.22 system-ui,sans-serif; overflow:hidden; overflow-wrap:anywhere; }
+  .ph-calendar-month-event.has-aspect { border-left-color:var(--ph-calendar-aspect-color,rgba(17,17,17,.16)); }
+  .ph-calendar-month-event.alert { background:#fff7f4; }
+  .ph-calendar-month-event.personal { background:#f7f5f2; font-weight:850; }
+  .ph-calendar-month-event .ph-calendar-event-main { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+  .ph-calendar-month-event .ph-calendar-event-referents { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; margin-top:.14rem; }
+  .ph-calendar-month-event .ph-calendar-placement,
+  .ph-calendar-month-event .ph-calendar-aspect { white-space:normal; }
+  .ph-calendar-month-event .ph-calendar-coordinate,
+  .ph-calendar-month-event .ph-calendar-house-token { white-space:nowrap; }
   .ph-calendar-month-more { color:#756c65; font:800 .59rem/1.2 system-ui,sans-serif; }
   .ph-calendar-secondary-controls { display:flex; align-items:flex-start; justify-content:center; gap:.48rem; margin:.72rem auto 0; max-width:48rem; }
   .ph-calendar-sky-calendars,
@@ -1612,7 +1617,9 @@
   .ph-calendar-house-medallion[data-house="11"],
   .ph-calendar-house-medallion[data-house="12"] { font-size:.49rem !important; letter-spacing:-.035em; }
   #tableSection[data-calendar-glyphs="false"] .ph-calendar-house-medallion { display:none !important; }
-  .ph-calendar-placement { display:inline; }
+  .ph-calendar-placement { display:inline; min-width:0; }
+  .ph-calendar-spatial-rails { display:inline-flex; align-items:stretch; gap:2px; width:7px; height:1.28em; margin:0 .2em 0 .02em; vertical-align:-.22em; }
+  .ph-calendar-spatial-rail { display:block; flex:0 0 2px; width:2px; border-radius:999px; background:var(--rail-color,#777); }
   .ph-calendar-coordinate { white-space:nowrap; }
   .ph-calendar-aspect { display:inline-flex; align-items:center; gap:.08em; white-space:nowrap; }
   .ph-calendar-source { white-space:nowrap; font-weight:900; }
@@ -1640,7 +1647,7 @@
     .ph-calendar-sky-calendars, .ph-calendar-display { max-width:none; width:100%; box-sizing:border-box; }
     .ph-calendar-weekdays, .ph-calendar-month-grid { gap:.16rem; }
     .ph-calendar-weekdays span { font-size:.58rem; letter-spacing:0; padding:.12rem 0; }
-    .ph-calendar-month-day { min-height:6.9rem; padding:.28rem .22rem; border-radius:.52rem; gap:.18rem; }
+    .ph-calendar-month-day { height:8.2rem; max-height:8.2rem; min-height:8.2rem; padding:.28rem .22rem; border-radius:.52rem; gap:.18rem; }
     .ph-calendar-month-number { min-width:1.32rem; min-height:1.32rem; font-size:.68rem; }
     .ph-calendar-month-note-badge { font-size:.52rem; }
     .ph-calendar-month-event { padding:.16rem .18rem; font-size:.53rem; line-height:1.18; }
@@ -2456,29 +2463,28 @@
 
   function moonSvgMarkup(phase, orientation) {
     const p = ((phase % 1) + 1) % 1;
-    const glow = '<defs><radialGradient id="phMoonGlow" cx="35%" cy="35%" r="80%"><stop offset="0%" stop-color="#fff"/><stop offset="52%" stop-color="#ececec"/><stop offset="100%" stop-color="#9fa6b3"/></radialGradient><clipPath id="phMoonClipRight"><rect x="50" y="0" width="50" height="100"></rect></clipPath><clipPath id="phMoonClipLeft"><rect x="0" y="0" width="50" height="100"></rect></clipPath></defs>';
+    const glow = '<defs><radialGradient id="phMoonGlow" cx="35%" cy="35%" r="80%"><stop offset="0%" stop-color="#fff"/><stop offset="52%" stop-color="#ececec"/><stop offset="100%" stop-color="#9fa6b3"/></radialGradient><clipPath id="phMoonClipRight"><rect x="49.25" y="0" width="50.75" height="100"></rect></clipPath><clipPath id="phMoonClipLeft"><rect x="0" y="0" width="50.75" height="100"></rect></clipPath></defs>';
     const span = (value) => Math.max(0, Math.min(48, 48 * value));
+    const sphere = '<circle class="ph-moon-sphere" cx="50" cy="50" r="48"></circle>';
     const rightWhite = '<circle class="ph-moon-litshape" cx="50" cy="50" r="48" clip-path="url(#phMoonClipRight)"></circle>';
     const leftWhite = '<circle class="ph-moon-litshape" cx="50" cy="50" r="48" clip-path="url(#phMoonClipLeft)"></circle>';
-    const rightBlack = '<circle class="ph-moon-sphere" cx="50" cy="50" r="48" clip-path="url(#phMoonClipRight)"></circle>';
-    const leftBlack = '<circle class="ph-moon-sphere" cx="50" cy="50" r="48" clip-path="url(#phMoonClipLeft)"></circle>';
     const overlay = (side, tone, rx) => `<ellipse class="${tone==='white'?'ph-moon-litshape':'ph-moon-shadowshape'}" cx="50" cy="50" rx="${rx.toFixed(2)}" ry="48" clip-path="url(#${side==='right'?'phMoonClipRight':'phMoonClipLeft'})"></ellipse>`;
-    let body = '';
+    let light = '';
     if (p < 0.25) {
       const rx = span(1 - p / 0.25);
-      body = `${leftBlack}${rightWhite}${rx > 0.02 ? overlay('right','black',rx) : ''}`;
+      light = `${rightWhite}${rx > 0.02 ? overlay('right','black',rx) : ''}`;
     } else if (p < 0.5) {
       const rx = span((p - 0.25) / 0.25);
-      body = `${leftBlack}${rightWhite}${rx > 0.02 ? overlay('left','white',rx) : ''}`;
+      light = `${rightWhite}${rx > 0.02 ? overlay('left','white',rx) : ''}`;
     } else if (p < 0.75) {
       const rx = span(1 - (p - 0.5) / 0.25);
-      body = `${leftWhite}${rightBlack}${rx > 0.02 ? overlay('right','white',rx) : ''}`;
+      light = `${leftWhite}${rx > 0.02 ? overlay('right','white',rx) : ''}`;
     } else {
       const rx = span((p - 0.75) / 0.25);
-      body = `${leftWhite}${rightBlack}${rx > 0.02 ? overlay('left','black',rx) : ''}`;
+      light = `${leftWhite}${rx > 0.02 ? overlay('left','black',rx) : ''}`;
     }
     const transform = orientation === 'south' ? ' transform="rotate(180 50 50)"' : '';
-    return `<svg viewBox="0 0 100 100" aria-hidden="true"><g${transform}>${glow}${body}<circle class="ph-moon-stroke" cx="50" cy="50" r="48"></circle></g></svg>`;
+    return `<svg viewBox="0 0 100 100" aria-hidden="true"><g${transform}>${glow}${sphere}${light}<circle class="ph-moon-stroke" cx="50" cy="50" r="48"></circle></g></svg>`;
   }
 
   function renderMoonFrame(base, lat, lon) {
@@ -2819,6 +2825,38 @@
     return ({conjunction:'conjunct',sextile:'sextile',square:'square',trine:'trine',opposition:'opposite'})[calendarAspectId(value)] || String(value || '');
   }
 
+  function calendarEventAspectId(event) {
+    if (!event) return '';
+    if (event.aspectId) return calendarAspectId(event.aspectId);
+    if (event.aspect != null) return calendarAspectId(event.aspect);
+    if (event.type === 'conjunction') return 'conjunction';
+    if (event.type === 'lunation') return String(event.lunationName || event.label || '').toLowerCase().includes('full') ? 'opposition' : 'conjunction';
+    if (event.type === 'alert' && event.rule && event.rule.type === 'aspect') return calendarAspectId(event.rule.aspect);
+    return '';
+  }
+
+  function calendarEventClassAndStyle(event) {
+    const aspectId = calendarEventAspectId(event);
+    const color = calendarAspectColors[aspectId] || '';
+    return {
+      className: aspectId ? ' has-aspect' : '',
+      style: color ? ' style="--ph-calendar-aspect-color:' + color + '"' : ''
+    };
+  }
+
+  function calendarSpatialRailsMarkup(meta) {
+    if (!meta) return '';
+    const signIndex = phSigns.indexOf(String(meta.sign || ''));
+    const house = calendarHouseNumber(meta.house);
+    const signColor = signIndex >= 0 ? calendarSignColors[signIndex] : '#777';
+    const houseColor = house ? calendarHouseColors[house - 1] : '#777';
+    const title = [String(meta.sign || ''), calendarHouseName(house)].filter(Boolean).join(' · ');
+    return '<span class="ph-calendar-spatial-rails" aria-hidden="true" title="' + attrText(title) + '">' +
+      '<span class="ph-calendar-spatial-rail sign" style="--rail-color:' + signColor + '"></span>' +
+      '<span class="ph-calendar-spatial-rail house" style="--rail-color:' + houseColor + '"></span>' +
+      '</span>';
+  }
+
   function calendarPlacementMarkup(meta) {
     if (!meta) return '';
     const body = String(meta.body || meta.name || '');
@@ -2830,6 +2868,7 @@
       ? ' <span class="ph-calendar-house-token">' + calendarHouseMedallionMarkup(house) + '<span class="ph-calendar-display-name">' + htmlText(calendarHouseNames[house]) + '</span></span>'
       : '';
     return '<span class="ph-calendar-placement">' +
+      calendarSpatialRailsMarkup(meta) +
       bodyGlyph + '<span class="ph-calendar-display-name">' + htmlText(body) + '</span> ' +
       signGlyph + '<span class="ph-calendar-display-name">' + htmlText(sign) + '</span> ' +
       '<span class="ph-calendar-coordinate">' + Number(meta.degree || 0) + '°' + String(Number(meta.minute || 0)).padStart(2,'0') + '′</span>' +
@@ -3926,6 +3965,14 @@
   ]);
   const calendarHouseNames = Object.freeze(['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House']);
   const calendarHouseColors = Object.freeze(['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e']);
+  const calendarSignColors = calendarHouseColors;
+  const calendarAspectColors = Object.freeze({
+    conjunction:'#d7263d',
+    sextile:'#f59e0b',
+    square:'#d4a017',
+    trine:'#84cc16',
+    opposition:'#0d9488'
+  });
   const calendarHouseReferents = Object.freeze([
     '',
     'self, embodiment, appearance, approach, and the immediate way life is entered',
@@ -4555,11 +4602,13 @@
       const dayNumber = dt ? dt.day : toLocalWallDate(date,state.tz).getDate();
       const monthNumber = dt ? dt.month : toLocalWallDate(date,state.tz).getMonth()+1;
       const events = byDate[key] || [];
-      const visible = events.slice(0,3);
+      const visibleLimit = calendarDisplayState().referents ? 2 : 3;
+      const visible = events.slice(0,visibleLimit);
       const eventMarkup = visible.map(function (event) {
-        return '<span class="ph-calendar-month-event ' + htmlText(event.isAlert ? 'alert' : event.type) + '"><strong class="ph-calendar-event-time">' + htmlText(fmtHM(event.time)) + '</strong> ' + calendarEventMarkup(event) + '</span>';
+        const aspectPresentation = calendarEventClassAndStyle(event);
+        return '<span class="ph-calendar-month-event ' + htmlText(event.isAlert ? 'alert' : event.type) + aspectPresentation.className + '"' + aspectPresentation.style + '><strong class="ph-calendar-event-time">' + htmlText(fmtHM(event.time)) + '</strong> ' + calendarEventMarkup(event) + '</span>';
       }).join('');
-      const more = events.length > 3 ? '<span class="ph-calendar-month-more">+' + (events.length - 3) + ' more</span>' : '';
+      const more = events.length > visibleLimit ? '<span class="ph-calendar-month-more">+' + (events.length - visibleLimit) + ' more</span>' : '';
       const notes = noteCounts[key] || 0;
       const classes = ['ph-calendar-month-day'];
       if (monthNumber !== range.month) classes.push('is-outside');
@@ -4651,7 +4700,8 @@
     }).sort(function (a,b) { return new Date(a.time) - new Date(b.time); });
     state.calendarEvents = ordered;
     el.calendarEventLane.innerHTML = ordered.map(function (event) {
-      return '<span class="ph-calendar-event' + (event.isAlert ? ' is-alert' : '') + (event.isPersonal ? ' is-personal' : '') + (event.isSkyEvent ? ' is-sky-event' : '') + '"><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + calendarEventMarkup(event) + '</span>';
+      const aspectPresentation = calendarEventClassAndStyle(event);
+      return '<span class="ph-calendar-event' + (event.isAlert ? ' is-alert' : '') + (event.isPersonal ? ' is-personal' : '') + (event.isSkyEvent ? ' is-sky-event' : '') + aspectPresentation.className + '"' + aspectPresentation.style + '><strong>' + htmlText(fmtHM(event.time)) + '</strong> ' + calendarEventMarkup(event) + '</span>';
     }).join('');
   }
 
