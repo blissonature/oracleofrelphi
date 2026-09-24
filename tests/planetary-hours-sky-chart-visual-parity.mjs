@@ -298,3 +298,7 @@ assert.match(page,/\.ph-calendar-moon-placement \{[^}]*flex-wrap:nowrap;[^}]*whi
 assert.match(page,/const houseMarkup = house \? calendarHouseMedallionMarkup\(house\) : '';/);
 assert.doesNotMatch(page,/calendarHouseMedallionMarkup\(house\) \+ '<span>' \+ htmlText\(calendarHouseNames\[house\]\)/);
 assert.doesNotMatch(page,/current zodiac position/i);
+
+const moonPositionHelper=fs.readFileSync('planetary-hours-moon-position-v1.js','utf8');
+assert.match(moonPositionHelper,/if \(document\.getElementById\('moonPlacement'\)\) \{/);
+assert.match(moonPositionHelper,/document\.getElementById\('moonZodiacPosition'\)\?\.remove\(\)/);
