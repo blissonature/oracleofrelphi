@@ -195,8 +195,8 @@ jobs:
           assert.equal(rulerRails.sample.houseRadius,'0px');
           assert.equal(rulerRails.sample.signShadow,'none');
           assert.equal(rulerRails.sample.houseShadow,'none');
-          assert.ok(rulerRails.sample.signBottom<=rulerRails.sample.imgTop,'Top sign rail must not overlap card art.');
-          assert.ok(rulerRails.sample.imgBottom<=rulerRails.sample.houseTop,'Bottom house rail must not overlap card art.');
+          assert.ok(Math.abs(rulerRails.sample.signBottom-rulerRails.sample.imgTop)<=0.75,'Top sign rail must sit flush against card art.');
+          assert.ok(Math.abs(rulerRails.sample.imgBottom-rulerRails.sample.houseTop)<=0.75,'Bottom house rail must sit flush against card art.');
 
           await page.locator('#skyFoundationA [data-card-hits-view="houses"]').click();
           await page.waitForTimeout(80);
