@@ -60,6 +60,17 @@ const continuation=page.locator('#skyFoundationRelationshipList>[data-result-lim
 await continuation.waitFor({state:'visible'});
 assert.match((await continuation.textContent()||'').trim(),/^\d+ more matching results · Show more$/,'A capped list must end with a direct Show more continuation.');
 
+await page.evaluate(()=>{
+  window.__relphiLimitCopiedText='';
+  document.execCommand=()=>false;
+  const clipboard={writeText:async text=>{window.__relphiLimitCopiedText=String(text)}};
+  try{Object.defineProperty(navigator,'clipboard',{configurable:true,value:clipboard})}catch(_){try{navigator.clipboard.writeText=clipboard.writeText}catch(__){}}
+});
+const copyButton=page.locator('.sky-relationship-copy-button');
+await copyButton.click();
+await page.waitForFunction(()=>Boolean(window.__relphiLimitCopiedText),null,{timeout:3000});
+assert.equal((await copyButton.textContent()||'').trim(),'Copied 20','Copy feedback must confirm that only the 20 capped relationships were copied.');
+
 await button.click();
 await page.waitForTimeout(3000);
 const diagnostics=await page.evaluate(()=>({
