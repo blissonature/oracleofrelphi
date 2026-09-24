@@ -162,6 +162,29 @@ dualComparisonArt.forEach(item=>{
 });
 assert.equal(dualComparisonArt[0].borderColor,'rgb(201, 33, 30)','Sky A comparison stroke must stay red.');
 assert.equal(dualComparisonArt[1].borderColor,'rgb(36, 98, 208)','Sky B comparison stroke must stay blue.');
+
+await page.setViewportSize({width:360,height:900});
+await page.waitForTimeout(80);
+const mobileDualCorners=await page.locator('#skySelectedRelationship [data-selected-card]').evaluateAll(cards=>cards.map(card=>{
+  const figure=card.querySelector('.correspondence-card-art'),img=card.querySelector('img');
+  return{
+    cardRadius:getComputedStyle(card).borderRadius,
+    buttonRadius:card.querySelector('.sky-selected-card-button')?getComputedStyle(card.querySelector('.sky-selected-card-button')).borderRadius:null,
+    figureRadius:figure?getComputedStyle(figure).borderRadius:null,
+    figurePadding:figure?[getComputedStyle(figure).paddingTop,getComputedStyle(figure).paddingRight,getComputedStyle(figure).paddingBottom,getComputedStyle(figure).paddingLeft]:null,
+    imageRadius:img?getComputedStyle(img).borderRadius:null
+  };
+}));
+mobileDualCorners.forEach(item=>{
+  assert.equal(item.cardRadius,'0px','Mobile selected-card wrapper must have sharp corners.');
+  if(item.buttonRadius!==null)assert.equal(item.buttonRadius,'0px','Mobile selected-card button must have sharp corners.');
+  if(item.figureRadius!==null)assert.equal(item.figureRadius,'0px','Mobile Sky identity stroke must have sharp corners.');
+  if(item.figurePadding!==null)assert.deepEqual(item.figurePadding,['0px','0px','0px','0px'],'Mobile Sky stroke must sit flush to the art.');
+  assert.equal(item.imageRadius,'0px','Mobile tarot art must have sharp corners.');
+});
+await page.setViewportSize({width:1440,height:1300});
+await page.waitForTimeout(80);
+
 assert.equal(await page.locator('#skySelectedRelationship').getAttribute('data-selection-source'), 'initial-relationship');
 const ledgerGlyphs = await page.locator('.sky-foundation-row > svg[data-canonical-ledger-glyph="true"]').evaluateAll(nodes => nodes.map(svg => {
   const art=svg.querySelector('.relphi-canonical-glyph');
