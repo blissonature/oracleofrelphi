@@ -70,13 +70,13 @@
   max-width:none!important;
   height:auto!important;
   margin:0!important;
-  padding:clamp(.25rem,1vw,.45rem)!important;
+  padding:0!important;
   border:3px solid currentColor!important;
-  border-radius:15px!important;
+  border-radius:0!important;
   background:#fff!important;
   color:inherit!important;
   box-sizing:border-box!important;
-  overflow:hidden!important;
+  overflow:visible!important;
   transform:none!important;
   cursor:pointer!important;
 }
@@ -97,7 +97,7 @@
   margin:0!important;
   padding:0!important;
   border:0!important;
-  border-radius:9px!important;
+  border-radius:0!important;
   box-shadow:none!important;
   transform:none!important;
 }
@@ -199,8 +199,8 @@
 @media(max-width:520px){
   #skySelectedRelationship{padding:.55rem!important;border-radius:17px!important}
   #skySelectedRelationship .sky-selected-cards{gap:.4rem!important}
-  #skySelectedRelationship .sky-selected-card-button{padding:.2rem!important;border-width:3px!important;border-radius:12px!important}
-  #skySelectedRelationship .sky-selected-card img{border-radius:7px!important}
+  #skySelectedRelationship .sky-selected-card-button{padding:0!important;border-width:3px!important;border-radius:0!important}
+  #skySelectedRelationship .sky-selected-card img{border-radius:0!important}
   #skySelectedRelationship .sky-selected-symbols{grid-template-columns:minmax(0,1fr) 66px minmax(0,1fr)!important;gap:.15rem!important;padding:.42rem .18rem!important}
   #skySelectedRelationship .sky-selected-symbol-item{gap:.15rem!important;padding:.05rem!important}
   #skySelectedRelationship .sky-selected-glyph-button svg{width:38px!important;height:38px!important}
