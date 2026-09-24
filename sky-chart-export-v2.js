@@ -258,7 +258,7 @@
   function button(id,label){const b=document.createElement('button');b.type='button';b.id=id;b.className='sky-export-icon-button';b.innerHTML=ICON;b.setAttribute('aria-label',label);b.title=label;return b}
   function ensureWheelControl(){
     const heading=document.querySelector('#skyFoundationComparison>.sky-foundation-heading');if(!heading)return;
-    heading.querySelector('.sky-snapshot-actions')?.remove();heading.querySelector(`#${STATUS_ID}`)?.remove();
+    heading.querySelector('.sky-snapshot-actions')?.remove();
     let slot=heading.querySelector('.sky-export-wheel-slot');
     if(!slot){slot=document.createElement('span');slot.className='sky-export-wheel-slot';heading.appendChild(slot)}
     if(!slot.querySelector(`#${WHEEL_COPY_ID}`)){
