@@ -245,3 +245,12 @@ assert.match(page,/#tableSection\[data-calendar-names="false"\] \.ph-calendar-re
 assert.match(page,/function calendarReferentMarkup/);
 assert.match(page,/kind:'coordinate'/);
 assert.doesNotMatch(page,/referents\.map\(htmlText\)\.join\(' · '\)/);
+
+assert.match(page,/const calendarHouseNames = Object\.freeze\(\['','First House'.*'Eleventh House'.*'Twelfth House'\]\)/s);
+assert.match(page,/const calendarHouseColors = Object\.freeze\(\['#e53935'.*'#8c4fb4'.*'#bd438e'\]\)/s);
+assert.match(page,/function calendarHouseMedallionMarkup/);
+assert.match(page,/class="relphi-house-medallion ph-calendar-house-medallion"/);
+assert.match(page,/calendarHouseMedallionMarkup\(house\)/);
+assert.match(page,/name:calendarHouseNames\[house\]/);
+assert.doesNotMatch(page,/' H' \+/);
+assert.doesNotMatch(page,/name:'H' \+ house/);
