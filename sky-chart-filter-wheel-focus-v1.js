@@ -164,7 +164,7 @@
       'relphi:sky-zodiac-filter-changed'
     ].forEach(name=>window.addEventListener(name,schedule));
     document.addEventListener('change',event=>{
-      if(event.target.closest?.('#skyFoundationRelationships .sky-chart-filter-bar')&&!event.target.matches?.('[data-harmonic-window-input]'))schedule();
+      if(event.target.closest?.('#skyFoundationFocus .sky-chart-filter-bar,#skyFoundationRelationships .sky-chart-filter-bar')&&!event.target.matches?.('[data-harmonic-window-input]'))schedule();
     },true);
     window.addEventListener('storage',schedule);
     schedule();
